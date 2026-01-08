@@ -115,4 +115,11 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 用户ID，不存在则返回null
      */
     Long getUserIdByAccount(String account);
+    
+    /**
+     * 重置用户密码
+     * 
+     * @param id 用户ID
+     */
+    void resetPassword(Long id);
 }

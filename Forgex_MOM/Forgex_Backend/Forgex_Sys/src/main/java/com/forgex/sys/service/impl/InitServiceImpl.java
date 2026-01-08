@@ -75,11 +75,10 @@ public class InitServiceImpl implements InitService {
 
     /**
      * 查询初始化状态
-     * 作用：读取合并后的初始化状态配置 `sys.init.status` 并计算是否首次使用
-     * 行号说明：
-     * - 1-2：读取配置实体并判空
-     * - 3-4：提取使用次数与完成标志并设置默认值
-     * - 5-8：封装返回对象并计算 firstUse
+     * <p>读取合并后的初始化状态配置 {@code sys.init.status} 并计算是否首次使用。</p>
+     * <p>返回结果包含使用次数和是否首次使用标志。</p>
+     * @return 初始化状态信息，包含使用次数和是否首次使用标志
+     * @see InitStatusVO
      */
     @Override
     public R<InitStatusVO> status() {

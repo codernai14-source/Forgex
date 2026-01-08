@@ -35,9 +35,24 @@ import java.util.stream.Collectors;
 
 /**
  * 模块Service实现类
+ * <p>负责系统模块的增删改查、分页查询、批量删除等操作。</p>
+ * <p><strong>主要功能：</strong></p>
+ * <ul>
+ *   <li>模块分页查询</li>
+ *   <li>模块列表查询</li>
+ *   <li>根据ID查询模块</li>
+ *   <li>新增模块</li>
+ *   <li>更新模块</li>
+ *   <li>删除模块</li>
+ *   <li>批量删除模块</li>
+ *   <li>验证模块是否存在</li>
+ *   <li>验证模块编码是否存在</li>
+ *   <li>检查模块是否关联菜单</li>
+ * </ul>
  * 
  * @author coder_nai@163.com
  * @date 2025-01-07
+ * @see ISysModuleService
  */
 @Service
 @RequiredArgsConstructor
@@ -47,6 +62,22 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     private final SysModuleMapper moduleMapper;
     private final SysMenuMapper menuMapper;
     
+    /**
+     * 模块分页查询
+     * <p>根据查询条件分页查询模块列表，并将结果转换为DTO返回。</p>
+     * <p>查询条件支持：</p>
+     * <ul>
+     *   <li>模块编码模糊查询</li>
+     *   <li>模块名称模糊查询</li>
+     *   <li>状态精确查询</li>
+     *   <li>租户ID精确查询</li>
+     * </ul>
+     * @param page 分页对象
+     * @param query 查询条件
+     * @return 分页模块DTO列表
+     * @see #buildQueryWrapper(SysModuleQueryDTO)
+     * @see #convertToDTO(SysModule)
+     */
     @Override
     public IPage<SysModuleDTO> pageModules(Page<SysModule> page, SysModuleQueryDTO query) {
         LambdaQueryWrapper<SysModule> wrapper = buildQueryWrapper(query);
@@ -54,6 +85,21 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         return modulePage.convert(this::convertToDTO);
     }
     
+    /**
+     * 模块列表查询
+     * <p>根据查询条件查询模块列表，并将结果转换为DTO返回。</p>
+     * <p>查询条件支持：</p>
+     * <ul>
+     *   <li>模块编码模糊查询</li>
+     *   <li>模块名称模糊查询</li>
+     *   <li>状态精确查询</li>
+     *   <li>租户ID精确查询</li>
+     * </ul>
+     * @param query 查询条件
+     * @return 模块DTO列表
+     * @see #buildQueryWrapper(SysModuleQueryDTO)
+     * @see #convertToDTO(SysModule)
+     */
     @Override
     public List<SysModuleDTO> listModules(SysModuleQueryDTO query) {
         LambdaQueryWrapper<SysModule> wrapper = buildQueryWrapper(query);
@@ -61,12 +107,24 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         return modules.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     
+    /**
+     * 根据ID查询模块
+     * <p>根据模块ID查询模块信息，并将结果转换为DTO返回。</p>
+     * @param id 模块ID
+     * @return 模块DTO，若不存在则返回null
+     * @see #convertToDTO(SysModule)
+     */
     @Override
     public SysModuleDTO getModuleById(Long id) {
         SysModule module = moduleMapper.selectById(id);
         return module != null ? convertToDTO(module) : null;
     }
     
+    /**
+     * 新增模块
+     * <p>将模块DTO转换为实体，并插入数据库。</p>
+     * @param moduleDTO 模块DTO
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addModule(SysModuleDTO moduleDTO) {
@@ -75,6 +133,11 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         moduleMapper.insert(module);
     }
     
+    /**
+     * 更新模块
+     * <p>将模块DTO转换为实体，并更新数据库。</p>
+     * @param moduleDTO 模块DTO
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateModule(SysModuleDTO moduleDTO) {
@@ -83,18 +146,34 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         moduleMapper.updateById(module);
     }
     
+    /**
+     * 删除模块
+     * <p>根据模块ID删除模块。</p>
+     * @param id 模块ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteModule(Long id) {
         moduleMapper.deleteById(id);
     }
     
+    /**
+     * 批量删除模块
+     * <p>根据模块ID列表批量删除模块。</p>
+     * @param ids 模块ID列表
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteModules(List<Long> ids) {
         moduleMapper.deleteBatchIds(ids);
     }
     
+    /**
+     * 根据编码验证模块是否存在
+     * <p>根据模块编码验证模块是否存在。</p>
+     * @param code 模块编码
+     * @return 存在返回true，否则返回false
+     */
     @Override
     public boolean existsByCode(String code) {
         LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
@@ -102,6 +181,13 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         return moduleMapper.selectCount(wrapper) > 0;
     }
     
+    /**
+     * 根据编码验证模块是否存在（排除指定ID）
+     * <p>根据模块编码验证模块是否存在，排除指定ID的模块。</p>
+     * @param code 模块编码
+     * @param excludeId 排除的模块ID
+     * @return 存在返回true，否则返回false
+     */
     @Override
     public boolean existsByCodeExcludeId(String code, Long excludeId) {
         LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
@@ -110,11 +196,23 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         return moduleMapper.selectCount(wrapper) > 0;
     }
     
+    /**
+     * 验证模块是否存在
+     * <p>根据模块ID验证模块是否存在。</p>
+     * @param id 模块ID
+     * @return 存在返回true，否则返回false
+     */
     @Override
     public boolean existsById(Long id) {
         return moduleMapper.selectById(id) != null;
     }
     
+    /**
+     * 检查模块是否关联菜单
+     * <p>检查指定模块是否关联了菜单。</p>
+     * @param id 模块ID
+     * @return 关联菜单返回true，否则返回false
+     */
     @Override
     public boolean hasMenus(Long id) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -124,6 +222,9 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     
     /**
      * 构建查询条件
+     * <p>根据查询DTO构建Lambda查询条件。</p>
+     * @param query 查询条件DTO
+     * @return Lambda查询条件
      */
     private LambdaQueryWrapper<SysModule> buildQueryWrapper(SysModuleQueryDTO query) {
         LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
@@ -145,6 +246,9 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     
     /**
      * 实体转DTO
+     * <p>将模块实体转换为DTO。</p>
+     * @param module 模块实体
+     * @return 模块DTO
      */
     private SysModuleDTO convertToDTO(SysModule module) {
         SysModuleDTO dto = new SysModuleDTO();

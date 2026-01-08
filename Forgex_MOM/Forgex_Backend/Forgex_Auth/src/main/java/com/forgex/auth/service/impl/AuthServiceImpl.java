@@ -250,6 +250,20 @@ public class AuthServiceImpl implements AuthService {
         return R.ok(true);
     }
 
+    /**
+     * 更新租户偏好设置
+     * <p>用于更新用户的租户排序和默认租户设置。</p>
+     * <p>参数说明：</p>
+     * <ul>
+     *   <li>account：用户账号</li>
+     *   <li>ordered：租户ID排序列表</li>
+     *   <li>defaultTenantId：默认租户ID</li>
+     * </ul>
+     * @param account 用户账号
+     * @param ordered 租户ID排序列表
+     * @param defaultTenantId 默认租户ID
+     * @return 更新结果
+     */
     @Override
     public R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId) {
         if (!StringUtils.hasText(account) || ordered == null) return R.fail(500, "参数错误");
@@ -280,6 +294,12 @@ public class AuthServiceImpl implements AuthService {
         return R.ok(true);
     }
 
+    /**
+     * 根据用户ID重置密码
+     * <p>将指定用户的密码重置为默认密码 "123456"，使用 BCrypt 算法进行哈希存储。</p>
+     * @param userId 用户ID
+     * @return 重置结果
+     */
     @Override
     public R<Boolean> resetPasswordById(Long userId) {
         if (userId == null) {
@@ -299,6 +319,12 @@ public class AuthServiceImpl implements AuthService {
         return R.fail(500, "重置失败");
     }
 
+    /**
+     * 用户登出
+     * <p>清除用户登录状态，删除Redis中的登录上下文信息，并移除租户上下文。</p>
+     * @return 登出结果
+     * @see StpUtil#logout()
+     */
     @Override
     public R<Boolean> logout() {
         try {

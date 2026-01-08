@@ -50,6 +50,16 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     private final SysUserRoleMapper userRoleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     
+    /**
+     * 获取用户路由信息
+     * <p>
+     * 根据用户账号和租户ID获取可访问的菜单路由、模块信息和按钮权限
+     * </p>
+     * 
+     * @param account   用户账号
+     * @param tenantId  租户ID
+     * @return 用户路由信息，包含模块列表、路由列表和按钮权限列表
+     */
     @Override
     public UserRoutesVO getUserRoutes(String account, Long tenantId) {
         // 1. 查询用户
@@ -118,6 +128,16 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         return buildUserRoutes(modules, menus);
     }
     
+    /**
+     * 获取菜单树结构
+     * <p>
+     * 根据租户ID和模块ID获取菜单列表，并构建成树形结构
+     * </p>
+     * 
+     * @param tenantId  租户ID，可为null
+     * @param moduleId  模块ID，可为null
+     * @return 菜单树结构列表
+     */
     @Override
     public List<MenuTreeVO> getMenuTree(Long tenantId, Long moduleId) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -129,6 +149,16 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         return buildMenuTree(menus, 0L);
     }
     
+    /**
+     * 分页查询菜单列表
+     * <p>
+     * 根据查询条件分页获取菜单列表，并转换为DTO对象
+     * </p>
+     * 
+     * @param page  分页参数
+     * @param query 查询条件
+     * @return 分页菜单列表
+     */
     @Override
     public IPage<SysMenuDTO> pageMenus(Page<SysMenu> page, SysMenuQueryDTO query) {
         LambdaQueryWrapper<SysMenu> wrapper = buildQueryWrapper(query);
@@ -136,6 +166,15 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         return menuPage.convert(this::convertToDTO);
     }
     
+    /**
+     * 查询菜单列表
+     * <p>
+     * 根据查询条件获取菜单列表，并转换为DTO对象
+     * </p>
+     * 
+     * @param query 查询条件
+     * @return 菜单列表
+     */
     @Override
     public List<SysMenuDTO> listMenus(SysMenuQueryDTO query) {
         LambdaQueryWrapper<SysMenu> wrapper = buildQueryWrapper(query);
@@ -143,12 +182,29 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         return menus.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     
+    /**
+     * 根据ID获取菜单详情
+     * <p>
+     * 根据菜单ID查询菜单信息，并转换为DTO对象
+     * </p>
+     * 
+     * @param id 菜单ID
+     * @return 菜单DTO对象，不存在则返回null
+     */
     @Override
     public SysMenuDTO getMenuById(Long id) {
         SysMenu menu = menuMapper.selectById(id);
         return menu != null ? convertToDTO(menu) : null;
     }
     
+    /**
+     * 添加菜单
+     * <p>
+     * 根据菜单DTO创建新的菜单记录
+     * </p>
+     * 
+     * @param menuDTO 菜单DTO对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMenu(SysMenuDTO menuDTO) {
@@ -157,6 +213,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         menuMapper.insert(menu);
     }
     
+    /**
+     * 更新菜单
+     * <p>
+     * 根据菜单DTO更新现有菜单记录
+     * </p>
+     * 
+     * @param menuDTO 菜单DTO对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateMenu(SysMenuDTO menuDTO) {
@@ -165,6 +229,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         menuMapper.updateById(menu);
     }
     
+    /**
+     * 删除菜单
+     * <p>
+     * 根据菜单ID删除菜单及其子菜单
+     * </p>
+     * 
+     * @param id 菜单ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMenu(Long id) {
@@ -177,6 +249,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         menuMapper.delete(wrapper);
     }
     
+    /**
+     * 批量删除菜单
+     * <p>
+     * 批量删除多个菜单及其子菜单
+     * </p>
+     * 
+     * @param ids 菜单ID列表
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteMenus(List<Long> ids) {
@@ -185,11 +265,29 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         }
     }
     
+    /**
+     * 检查菜单是否存在
+     * <p>
+     * 根据菜单ID检查菜单是否存在
+     * </p>
+     * 
+     * @param id 菜单ID
+     * @return 菜单是否存在
+     */
     @Override
     public boolean existsById(Long id) {
         return menuMapper.selectById(id) != null;
     }
     
+    /**
+     * 检查菜单是否有子菜单
+     * <p>
+     * 根据菜单ID检查是否存在子菜单
+     * </p>
+     * 
+     * @param id 菜单ID
+     * @return 是否有子菜单
+     */
     @Override
     public boolean hasChildren(Long id) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -198,7 +296,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 创建空路由
+     * 创建空路由对象
+     * <p>
+     * 创建一个包含空模块列表、空路由列表和空按钮权限列表的UserRoutesVO对象
+     * </p>
+     * 
+     * @return 空路由对象
      */
     private UserRoutesVO createEmptyRoutes() {
         UserRoutesVO vo = new UserRoutesVO();
@@ -210,6 +313,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     
     /**
      * 构建用户路由
+     * <p>
+     * 根据模块列表和菜单列表构建用户路由信息，包括模块列表、路由列表和按钮权限列表
+     * </p>
+     * 
+     * @param modules 模块列表
+     * @param menus   菜单列表
+     * @return 用户路由信息
      */
     private UserRoutesVO buildUserRoutes(List<SysModule> modules, List<SysMenu> menus) {
         UserRoutesVO vo = new UserRoutesVO();
@@ -242,7 +352,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 构建模块Map
+     * 构建模块Map对象
+     * <p>
+     * 将SysModule对象转换为包含模块基本信息的Map对象
+     * </p>
+     * 
+     * @param module 模块实体
+     * @return 模块Map对象
      */
     private Map<String, Object> buildModuleMap(SysModule module) {
         Map<String, Object> map = new HashMap<>();
@@ -254,7 +370,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 构建模块路由
+     * 构建模块路由对象
+     * <p>
+     * 根据模块信息和菜单列表构建模块级别的路由对象
+     * </p>
+     * 
+     * @param module   模块实体
+     * @param allMenus 所有菜单列表
+     * @return 模块路由对象
      */
     private Map<String, Object> buildModuleRoute(SysModule module, List<SysMenu> allMenus) {
         Map<String, Object> route = new HashMap<>();
@@ -280,7 +403,15 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 构建菜单路由
+     * 构建菜单路由对象
+     * <p>
+     * 根据菜单信息和模块代码构建菜单级别的路由对象，包含子菜单和按钮权限
+     * </p>
+     * 
+     * @param menu        菜单实体
+     * @param allMenus    所有菜单列表
+     * @param moduleCode  模块代码
+     * @return 菜单路由对象
      */
     private Map<String, Object> buildMenuRoute(SysMenu menu, List<SysMenu> allMenus, String moduleCode) {
         Map<String, Object> route = new HashMap<>();
@@ -318,12 +449,33 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 构建Meta信息
+     * 构建路由Meta信息
+     * <p>
+     * 构建包含标题、图标和模块信息的路由Meta对象
+     * </p>
+     * 
+     * @param title  标题
+     * @param icon   图标
+     * @param module 模块
+     * @return 路由Meta对象
      */
     private Map<String, Object> buildMeta(String title, String icon, String module) {
         return buildMeta(title, icon, module, null, null);
     }
     
+    /**
+     * 构建路由Meta信息
+     * <p>
+     * 构建包含标题、图标、模块、菜单级别和权限信息的路由Meta对象
+     * </p>
+     * 
+     * @param title      标题
+     * @param icon       图标
+     * @param module     模块
+     * @param menuLevel  菜单级别
+     * @param perms      权限列表
+     * @return 路由Meta对象
+     */
     private Map<String, Object> buildMeta(String title, String icon, String module, 
                                          Integer menuLevel, List<String> perms) {
         Map<String, Object> meta = new HashMap<>();
@@ -336,7 +488,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 首字母大写
+     * 将字符串首字母大写
+     * <p>
+     * 将输入字符串的第一个字符转换为大写，其余字符保持不变
+     * </p>
+     * 
+     * @param str 输入字符串
+     * @return 首字母大写的字符串
      */
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
@@ -346,7 +504,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 构建菜单树
+     * 构建菜单树结构
+     * <p>
+     * 根据菜单列表和父菜单ID递归构建菜单树结构
+     * </p>
+     * 
+     * @param menus     菜单列表
+     * @param parentId  父菜单ID
+     * @return 菜单树结构列表
      */
     private List<MenuTreeVO> buildMenuTree(List<SysMenu> menus, Long parentId) {
         return menus.stream()
@@ -368,7 +533,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 构建查询条件
+     * 构建菜单查询条件
+     * <p>
+     * 根据查询DTO构建菜单查询条件
+     * </p>
+     * 
+     * @param query 查询DTO
+     * @return 菜单查询条件
      */
     private LambdaQueryWrapper<SysMenu> buildQueryWrapper(SysMenuQueryDTO query) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -391,7 +562,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 实体转DTO
+     * 菜单实体转DTO对象
+     * <p>
+     * 将SysMenu实体转换为SysMenuDTO对象，并关联查询模块名称和父菜单名称
+     * </p>
+     * 
+     * @param menu 菜单实体
+     * @return 菜单DTO对象
      */
     private SysMenuDTO convertToDTO(SysMenu menu) {
         SysMenuDTO dto = new SysMenuDTO();

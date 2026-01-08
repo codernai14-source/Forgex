@@ -32,6 +32,14 @@ public class TenantIgnoreServiceImpl implements TenantIgnoreService {
     @Autowired
     private SysTenantIgnoreMapper mapper;
 
+    /**
+     * 重新加载租户忽略规则
+     * <p>
+     * 从数据库中读取所有启用的租户忽略规则，并更新到租户忽略注册表中
+     * </p>
+     * 
+     * @return 重新加载结果
+     */
     @Override
     public R<Boolean> reload() {
         TenantIgnoreRegistry.reset();

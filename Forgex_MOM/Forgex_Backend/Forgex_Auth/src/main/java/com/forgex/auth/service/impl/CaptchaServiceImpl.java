@@ -33,10 +33,17 @@ import cloud.tianai.captcha.common.constant.CaptchaTypeConstant;
 
 /**
  * 验证码服务实现
- * 作用：实现图片验证码生成/校验与滑块令牌校验；
- * 逻辑：
- * 1. 图片：使用本地生成图片验证码，答案写入Redis；校验比对后删除防复用。
- * 2. 滑块：根据配置读取令牌前缀与过期设置，判断令牌是否存在。
+ * <p>实现图片验证码生成/校验与滑块令牌校验。</p>
+ * <h3>验证码生成逻辑：</h3>
+ * <ol>
+ *   <li><strong>图片验证码</strong>：使用本地生成图片验证码，答案写入Redis；校验比对后删除防复用。</li>
+ *   <li><strong>滑块验证码</strong>：调用tianai-captcha生成滑块数据，返回渲染所需结构（含id）。</li>
+ * </ol>
+ * <h3>验证码校验逻辑：</h3>
+ * <ol>
+ *   <li><strong>图片验证码</strong>：按前缀读取Redis中的答案，忽略大小写比对，通过后删除键防复用。</li>
+ *   <li><strong>滑块验证码</strong>：根据配置读取令牌前缀与过期设置，判断令牌是否存在。</li>
+ * </ol>
  */
 @Service
 public class CaptchaServiceImpl implements CaptchaService {
@@ -50,13 +57,20 @@ public class CaptchaServiceImpl implements CaptchaService {
     @Autowired
     private cloud.tianai.captcha.application.ImageCaptchaApplication captchaApplication;
 
-    @Override
     /**
      * 生成图片验证码
-     * 逻辑：读取图片参数 -> 生成图片与答案 -> 写入Redis并返回ID与图片Base64
-     * @return Map，包含 `captchaId` 与 `imageBase64`
-     * @see cn.hutool.captcha.CaptchaUtil#createLineCaptcha(int, int, int, int)
+     * <p>生成图片验证码，将答案写入Redis，并返回验证码ID与图片Base64。</p>
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>读取配置获取图片参数（宽度、高度、字符长度）</li>
+     *   <li>生成图片验证码与答案</li>
+     *   <li>将验证码答案写入Redis并设置过期时间</li>
+     *   <li>返回包含验证码ID与图片Base64的Map</li>
+     * </ol>
+     * @return Map，包含 {@code captchaId} 与 {@code imageBase64}
+     * @see CaptchaUtil#createLineCaptcha(int, int, int, int)
      */
+    @Override
     public Map<String, String> generateImageCaptcha() {
         CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
         int w = cfg.getImage() != null ? cfg.getImage().getWidth() : 120;
@@ -77,7 +91,12 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 生成滑块验证码
-     * 逻辑：调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）
+     * <p>调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）。</p>
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>调用 tianai-captcha 生成滑块验证码</li>
+     *   <li>返回包含验证码ID与渲染数据的Map</li>
+     * </ol>
      * @return 验证码渲染数据
      */
     @Override
@@ -88,7 +107,13 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 校验滑块轨迹并发放令牌
-     * 逻辑：校验前端轨迹 -> 成功后生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）
+     * <p>校验前端滑块轨迹是否正确，若通过则生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）。</p>
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>根据验证码ID从Redis中读取预期轨迹</li>
+     *   <li>校验用户轨迹与预期轨迹是否匹配</li>
+     *   <li>如果匹配成功，生成令牌并写入Redis，返回令牌字符串（登录时作为验证码使用）</li>
+     * </ol>
      * @param id 验证码ID
      * @param track 滑块轨迹
      * @return 令牌字符串（登录时作为验证码使用），校验失败返回null
@@ -112,10 +137,16 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 校验图片验证码
-     * 逻辑：按前缀读取答案 -> 忽略大小写比对 -> 通过后删除Redis键
+     * <p>校验用户输入的图片验证码是否正确，校验通过后删除Redis中的验证码记录。</p>
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>根据验证码ID从Redis中读取预期答案</li>
+     *   <li>忽略大小写比较用户输入与预期答案</li>
+     *   <li>如果匹配成功，删除Redis中的验证码记录</li>
+     * </ol>
      * @param id 验证码ID
      * @param value 用户输入的验证码
-     * @return 是否通过
+     * @return 是否通过校验
      */
     @Override
     public boolean verifyImage(String id, String value) {
@@ -132,9 +163,15 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 校验滑块令牌
-     * 逻辑：读取 `login.captcha` 配置 -> 根据是否二次验证选择前缀 -> 判断令牌键是否存在
+     * <p>校验用户输入的滑块令牌是否正确，校验通过后删除Redis中的令牌记录。</p>
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>根据令牌ID从Redis中读取令牌值</li>
+     *   <li>判断令牌值是否存在</li>
+     *   <li>如果存在，删除Redis中的令牌记录</li>
+     * </ol>
      * @param token 一次性令牌
-     * @return 是否通过
+     * @return 是否通过校验
      */
     @Override
     public boolean verifySlider(String token) {

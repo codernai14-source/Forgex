@@ -28,9 +28,17 @@ import java.util.stream.Collectors;
 
 /**
  * 角色菜单Service实现类
+ * <p>负责角色与菜单的关联关系管理，包括查询角色菜单权限、授予角色菜单权限、删除角色菜单权限等操作。</p>
+ * <p><strong>主要功能：</strong></p>
+ * <ul>
+ *   <li>查询角色拥有的菜单ID列表</li>
+ *   <li>授予角色菜单权限（先删除原有权限，再插入新权限）</li>
+ *   <li>删除角色菜单权限</li>
+ * </ul>
  * 
  * @author coder_nai@163.com
  * @date 2025-01-07
+ * @see ISysRoleMenuService
  */
 @Service
 @RequiredArgsConstructor
@@ -39,6 +47,13 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     
     private final SysRoleMenuMapper roleMenuMapper;
     
+    /**
+     * 查询角色拥有的菜单ID列表
+     * <p>根据角色ID和租户ID查询角色拥有的所有菜单ID。</p>
+     * @param roleId 角色ID
+     * @param tenantId 租户ID
+     * @return 角色拥有的菜单ID列表
+     */
     @Override
     public List<Long> getRoleMenuIds(Long roleId, Long tenantId) {
         LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
@@ -51,6 +66,17 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
             .collect(Collectors.toList());
     }
     
+    /**
+     * 授予角色菜单权限
+     * <p>先删除角色原有的菜单权限，再插入新的菜单权限。</p>
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>删除角色原有的菜单权限</li>
+     *   <li>遍历新的菜单ID列表，为角色添加菜单权限</li>
+     * </ol>
+     * @param permissionDTO 角色权限DTO，包含角色ID、租户ID和菜单ID列表
+     * @see #deleteRolePermissions(Long, Long)
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantPermission(RolePermissionDTO permissionDTO) {
@@ -73,6 +99,12 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         }
     }
     
+    /**
+     * 删除角色菜单权限
+     * <p>根据角色ID和租户ID删除角色的所有菜单权限。</p>
+     * @param roleId 角色ID
+     * @param tenantId 租户ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRolePermissions(Long roleId, Long tenantId) {

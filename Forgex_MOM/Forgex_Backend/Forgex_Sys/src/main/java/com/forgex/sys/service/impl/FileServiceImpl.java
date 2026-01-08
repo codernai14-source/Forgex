@@ -28,8 +28,19 @@ import java.util.UUID;
 
 /**
  * 文件服务实现类
- * 
- * 提供文件上传、下载等功能，根据操作系统自动选择存储目录
+ * <p>提供文件上传、下载、获取媒体类型等功能，根据操作系统自动选择存储目录。</p>
+ * <p><strong>存储目录选择规则：</strong></p>
+ * <ul>
+ *   <li>Windows系统：{@code D:\forgex\cache}</li>
+ *   <li>其他系统：{@code ${user.home}/forgex/cache}，若用户目录为空则使用 {@code /tmp}</li>
+ * </ul>
+ * <p><strong>主要功能：</strong></p>
+ * <ul>
+ *   <li>获取基础存储目录</li>
+ *   <li>上传文件并返回可访问URL</li>
+ *   <li>根据文件名获取文件资源</li>
+ *   <li>获取文件的Media Type</li>
+ * </ul>
  * 
  * @author coder_nai@163.com
  * @date 2026-01-08

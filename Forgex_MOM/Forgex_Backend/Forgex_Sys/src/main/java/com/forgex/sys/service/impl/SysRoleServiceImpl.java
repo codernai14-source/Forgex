@@ -44,6 +44,16 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     
     private final SysRoleMapper roleMapper;
     
+    /**
+     * 分页查询角色列表
+     * <p>
+     * 根据查询条件分页获取角色列表，并转换为DTO对象
+     * </p>
+     * 
+     * @param page  分页参数
+     * @param query 查询条件
+     * @return 分页角色列表
+     */
     @Override
     public IPage<SysRoleDTO> pageRoles(Page<SysRole> page, SysRoleQueryDTO query) {
         LambdaQueryWrapper<SysRole> wrapper = buildQueryWrapper(query);
@@ -51,6 +61,15 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         return rolePage.convert(this::convertToDTO);
     }
     
+    /**
+     * 查询角色列表
+     * <p>
+     * 根据查询条件获取角色列表，并转换为DTO对象
+     * </p>
+     * 
+     * @param query 查询条件
+     * @return 角色列表
+     */
     @Override
     public List<SysRoleDTO> listRoles(SysRoleQueryDTO query) {
         LambdaQueryWrapper<SysRole> wrapper = buildQueryWrapper(query);
@@ -58,12 +77,29 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         return roles.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     
+    /**
+     * 根据ID获取角色详情
+     * <p>
+     * 根据角色ID查询角色信息，并转换为DTO对象
+     * </p>
+     * 
+     * @param id 角色ID
+     * @return 角色DTO对象，不存在则返回null
+     */
     @Override
     public SysRoleDTO getRoleById(Long id) {
         SysRole role = roleMapper.selectById(id);
         return role != null ? convertToDTO(role) : null;
     }
     
+    /**
+     * 添加角色
+     * <p>
+     * 根据角色DTO创建新的角色记录
+     * </p>
+     * 
+     * @param roleDTO 角色DTO对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addRole(SysRoleDTO roleDTO) {
@@ -72,6 +108,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         roleMapper.insert(role);
     }
     
+    /**
+     * 更新角色
+     * <p>
+     * 根据角色DTO更新现有角色记录
+     * </p>
+     * 
+     * @param roleDTO 角色DTO对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateRole(SysRoleDTO roleDTO) {
@@ -80,23 +124,57 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         roleMapper.updateById(role);
     }
     
+    /**
+     * 删除角色
+     * <p>
+     * 根据角色ID删除角色记录
+     * </p>
+     * 
+     * @param id 角色ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long id) {
         roleMapper.deleteById(id);
     }
     
+    /**
+     * 批量删除角色
+     * <p>
+     * 批量删除多个角色记录
+     * </p>
+     * 
+     * @param ids 角色ID列表
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteRoles(List<Long> ids) {
         roleMapper.deleteBatchIds(ids);
     }
     
+    /**
+     * 检查角色是否存在
+     * <p>
+     * 根据角色ID检查角色是否存在
+     * </p>
+     * 
+     * @param id 角色ID
+     * @return 角色是否存在
+     */
     @Override
     public boolean existsById(Long id) {
         return roleMapper.selectById(id) != null;
     }
     
+    /**
+     * 检查角色标识是否存在
+     * <p>
+     * 根据角色标识检查角色是否存在
+     * </p>
+     * 
+     * @param roleKey 角色标识
+     * @return 角色标识是否存在
+     */
     @Override
     public boolean existsByRoleKey(String roleKey) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
@@ -104,6 +182,16 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         return roleMapper.selectCount(wrapper) > 0;
     }
     
+    /**
+     * 检查角色标识是否存在（排除指定ID）
+     * <p>
+     * 根据角色标识检查角色是否存在，排除指定的角色ID
+     * </p>
+     * 
+     * @param roleKey   角色标识
+     * @param excludeId 排除的角色ID
+     * @return 角色标识是否存在（排除指定ID后）
+     */
     @Override
     public boolean existsByRoleKeyExcludeId(String roleKey, Long excludeId) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
@@ -113,7 +201,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     }
     
     /**
-     * 构建查询条件
+     * 构建角色查询条件
+     * <p>
+     * 根据查询DTO构建角色查询条件
+     * </p>
+     * 
+     * @param query 查询DTO
+     * @return 角色查询条件
      */
     private LambdaQueryWrapper<SysRole> buildQueryWrapper(SysRoleQueryDTO query) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
@@ -121,8 +215,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         if (query != null) {
             wrapper.like(StringUtils.hasText(query.getRoleName()), 
                 SysRole::getRoleName, query.getRoleName());
-            wrapper.like(StringUtils.hasText(query.getRoleKey()), 
-                SysRole::getRoleKey, query.getRoleKey());
+            wrapper.like(StringUtils.hasText(query.getRoleCode()), 
+                SysRole::getRoleKey, query.getRoleCode());
             wrapper.eq(query.getStatus() != null, 
                 SysRole::getStatus, query.getStatus());
             wrapper.eq(query.getTenantId() != null, 
@@ -134,7 +228,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     }
     
     /**
-     * 实体转DTO
+     * 角色实体转DTO对象
+     * <p>
+     * 将SysRole实体转换为SysRoleDTO对象
+     * </p>
+     * 
+     * @param role 角色实体
+     * @return 角色DTO对象
      */
     private SysRoleDTO convertToDTO(SysRole role) {
         SysRoleDTO dto = new SysRoleDTO();
