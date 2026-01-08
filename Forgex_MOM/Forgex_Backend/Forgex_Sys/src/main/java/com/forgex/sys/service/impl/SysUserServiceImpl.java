@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * 用户Service实现类
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Service
@@ -116,6 +116,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         wrapper.eq(SysUser::getAccount, account);
         wrapper.ne(SysUser::getId, excludeId);
         return userMapper.selectCount(wrapper) > 0;
+    }
+
+    @Override
+    public Long getUserIdByAccount(String account) {
+        if (account == null || account.isEmpty()) {
+            return null;
+        }
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(SysUser::getId).eq(SysUser::getAccount, account).last("limit 1");
+        SysUser user = userMapper.selectOne(wrapper);
+        return user != null ? user.getId() : null;
     }
     
     /**

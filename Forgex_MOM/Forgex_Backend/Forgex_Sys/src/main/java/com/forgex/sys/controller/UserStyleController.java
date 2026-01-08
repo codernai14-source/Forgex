@@ -13,13 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.config.UserStyleConfigService;
 import com.forgex.common.domain.config.LayoutStyleConfig;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.param.UserLayoutStyleParam;
-import com.forgex.sys.domain.entity.SysUser;
-import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,7 +40,7 @@ public class UserStyleController {
     private UserStyleConfigService userStyleConfigService;
 
     @Autowired
-    private SysUserMapper userMapper;
+    private ISysUserService userService;
 
     /**
      * 读取用户在指定租户下的布局样式配置。
@@ -55,7 +53,7 @@ public class UserStyleController {
         if (param == null || param.getAccount() == null || param.getTenantId() == null) {
             return R.fail(500, "account/tenantId 不能为空");
         }
-        Long userId = resolveUserId(param.getAccount());
+        Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
             return R.fail(404, "用户不存在");
         }
@@ -74,27 +72,11 @@ public class UserStyleController {
         if (param == null || param.getAccount() == null || param.getTenantId() == null || param.getConfig() == null) {
             return R.fail(500, "account/tenantId/config 不能为空");
         }
-        Long userId = resolveUserId(param.getAccount());
+        Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
             return R.fail(404, "用户不存在");
         }
         userStyleConfigService.saveLayoutConfig(userId, param.getTenantId(), param.getConfig());
         return R.ok(Boolean.TRUE);
-    }
-
-    /**
-     * 根据账号解析用户ID。
-     *
-     * @param account 用户账号
-     * @return 对应的用户ID，若不存在则返回 null
-     */
-    private Long resolveUserId(String account) {
-        if (account == null || account.isEmpty()) {
-            return null;
-        }
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUser::getAccount, account).last("limit 1");
-        SysUser user = userMapper.selectOne(wrapper);
-        return user != null ? user.getId() : null;
     }
 }

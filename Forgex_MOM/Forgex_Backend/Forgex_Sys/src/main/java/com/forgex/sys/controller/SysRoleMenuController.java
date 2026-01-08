@@ -36,7 +36,7 @@ import java.util.Map;
  * - 查询指定角色在某租户下已授权的菜单/按钮ID列表
  * - 重新授予角色在某租户下的菜单/按钮权限（先清空再写入）
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @RestController

@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 模块Service接口
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 public interface ISysModuleService extends IService<SysModule> {

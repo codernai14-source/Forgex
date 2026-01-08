@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 /**
  * 用户DTO
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Data

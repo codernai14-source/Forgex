@@ -13,10 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.entity.SysTenantIgnore;
-import com.forgex.sys.mapper.SysTenantIgnoreMapper;
 import com.forgex.sys.service.SysTenantIgnoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -32,32 +30,30 @@ import java.util.List;
 @RequestMapping({"/sys/tenant/ignore","/sys/tenant-ignore"})
 public class SysTenantIgnoreController {
     @Autowired
-    private SysTenantIgnoreMapper mapper;
-    @Autowired
     private SysTenantIgnoreService service;
 
     @GetMapping
     public R<List<SysTenantIgnore>> list() {
-        List<SysTenantIgnore> list = mapper.selectList(new LambdaQueryWrapper<>());
+        List<SysTenantIgnore> list = service.list();
         return R.ok(list);
     }
 
     @PostMapping
     public R<Boolean> create(@RequestBody SysTenantIgnore entity) {
-        mapper.insert(entity);
-        return R.ok(true);
+        Boolean result = service.create(entity);
+        return R.ok(result);
     }
 
     @PutMapping
     public R<Boolean> update(@RequestBody SysTenantIgnore entity) {
-        mapper.updateById(entity);
-        return R.ok(true);
+        Boolean result = service.update(entity);
+        return R.ok(result);
     }
 
     @DeleteMapping("/{id}")
     public R<Boolean> delete(@PathVariable Long id) {
-        mapper.deleteById(id);
-        return R.ok(true);
+        Boolean result = service.delete(id);
+        return R.ok(result);
     }
 
     @PostMapping("/reload")

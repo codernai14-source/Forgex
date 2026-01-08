@@ -42,6 +42,9 @@ public class CaptchaServiceImpl implements CaptchaService {
     /** 通用配置服务，用于读取单键JSON的验证码配置 */
     @Autowired
     private ConfigService configService;
+    /** 滑块验证码应用，用于生成和校验滑块验证码 */
+    @Autowired
+    private cloud.tianai.captcha.application.ImageCaptchaApplication captchaApplication;
 
     @Override
     /**
@@ -66,6 +69,41 @@ public class CaptchaServiceImpl implements CaptchaService {
         map.put("captchaId", id);
         map.put("imageBase64", captcha.getImageBase64());
         return map;
+    }
+
+    /**
+     * 生成滑块验证码
+     * 逻辑：调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）
+     * @return 验证码渲染数据
+     */
+    @Override
+    public Object generateSliderCaptcha() {
+        var res = captchaApplication.generateCaptcha(cloud.tianai.captcha.common.constant.CaptchaTypeConstant.SLIDER);
+        return res.getData();
+    }
+
+    /**
+     * 校验滑块轨迹并发放令牌
+     * 逻辑：校验前端轨迹 -> 成功后生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）
+     * @param id 验证码ID
+     * @param track 滑块轨迹
+     * @return 令牌字符串（登录时作为验证码使用），校验失败返回null
+     */
+    @Override
+    public String validateSlider(String id, Object track) {
+        var matching = captchaApplication.matching(id, track);
+        if (matching != null && matching.isSuccess()) {
+            String token = IdUtil.fastUUID();
+            com.forgex.auth.domain.config.CaptchaConfig cfg = configService.getJson("login.captcha", com.forgex.auth.domain.config.CaptchaConfig.class, com.forgex.auth.domain.config.CaptchaConfig.defaults());
+            boolean secondary = cfg.getSlider() != null && cfg.getSlider().isSecondaryEnabled();
+            String keyPrefix = secondary
+                    ? (cfg.getSlider() != null && StringUtils.hasText(cfg.getSlider().getSecondaryKeyPrefix()) ? cfg.getSlider().getSecondaryKeyPrefix() : "captcha:secondary")
+                    : (cfg.getSlider() != null && StringUtils.hasText(cfg.getSlider().getKeyPrefix()) ? cfg.getSlider().getKeyPrefix() : "captcha:slider");
+            int expireSec = cfg.getSlider() != null ? cfg.getSlider().getTokenExpireSeconds() : 120;
+            redis.opsForValue().set(keyPrefix + ":" + token, "1", expireSec, TimeUnit.SECONDS);
+            return token;
+        }
+        return null;
     }
 
     /**

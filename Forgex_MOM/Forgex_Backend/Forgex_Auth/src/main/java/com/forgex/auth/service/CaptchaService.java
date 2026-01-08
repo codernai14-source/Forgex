@@ -29,6 +29,22 @@ public interface CaptchaService {
     Map<String, String> generateImageCaptcha();
 
     /**
+     * 生成滑块验证码
+     * 逻辑：调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）
+     * @return 验证码渲染数据
+     */
+    Object generateSliderCaptcha();
+
+    /**
+     * 校验滑块轨迹并发放令牌
+     * 逻辑：校验前端轨迹 -> 成功后生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）
+     * @param id 验证码ID
+     * @param track 滑块轨迹
+     * @return 令牌字符串（登录时作为验证码使用），校验失败返回null
+     */
+    String validateSlider(String id, Object track);
+
+    /**
      * 校验图片验证码
      * 逻辑：读取Redis中 `captchaId` 对应的答案 -> 比对成功后删除键
      * @param id 验证码ID

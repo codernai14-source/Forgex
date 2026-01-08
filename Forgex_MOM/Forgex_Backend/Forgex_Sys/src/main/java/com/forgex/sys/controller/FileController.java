@@ -14,19 +14,14 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.forgex.common.web.R;
-import org.springframework.core.io.InputStreamResource;
+import com.forgex.sys.service.FileService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 /**
  * 文件控制器。
@@ -41,19 +36,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/sys/file")
 public class FileController {
-    /**
-     * 计算基础存储目录（按系统类型）。
-     * @return 存储目录路径
-     */
-    private Path baseDir() {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return Paths.get("D:", "forgex", "cache");
-        } else {
-            String home = System.getProperty("user.home");
-            return Paths.get(home == null ? "/tmp" : home, "forgex", "cache");
-        }
+    
+    private final FileService fileService;
+    
+    public FileController(FileService fileService) {
+        this.fileService = fileService;
     }
+    
     /**
      * 上传文件并返回可访问 URL。
      * 文件名采用随机 UUID，保留原扩展名；目录不存在时自动创建。
@@ -62,17 +51,7 @@ public class FileController {
      */
     @PostMapping("/upload")
     public R<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
-        Path dir = baseDir();
-        Files.createDirectories(dir);
-        String original = file.getOriginalFilename();
-        String ext = "";
-        if (StringUtils.hasText(original) && original.contains(".")) {
-            ext = original.substring(original.lastIndexOf('.'));
-        }
-        String name = UUID.randomUUID().toString().replace("-", "") + ext;
-        Path target = dir.resolve(name);
-        Files.copy(file.getInputStream(), target);
-        String url = "/api/sys/file/" + name;
+        String url = fileService.upload(file);
         return R.ok(url);
     }
 
@@ -84,14 +63,16 @@ public class FileController {
      */
     @GetMapping("/{name}")
     public ResponseEntity<Resource> get(@PathVariable("name") String name) throws IOException {
-        Path dir = baseDir();
-        Path p = dir.resolve(name);
-        if (!Files.exists(p)) {
+        Resource resource = fileService.getFile(name);
+        if (resource == null) {
             return ResponseEntity.notFound().build();
         }
-        String ct = Files.probeContentType(p);
-        MediaType mt = ct == null ? MediaType.APPLICATION_OCTET_STREAM : MediaType.parseMediaType(ct);
-        InputStreamResource r = new InputStreamResource(Files.newInputStream(p));
-        return ResponseEntity.ok().contentType(mt).body(r);
+        
+        String mediaTypeStr = fileService.getMediaType(name);
+        MediaType mediaType = MediaType.parseMediaType(mediaTypeStr);
+        
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .body(resource);
     }
 }

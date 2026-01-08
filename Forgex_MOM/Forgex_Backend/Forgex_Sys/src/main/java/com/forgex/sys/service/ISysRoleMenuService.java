@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * 角色菜单Service接口
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 public interface ISysRoleMenuService extends IService<SysRoleMenu> {

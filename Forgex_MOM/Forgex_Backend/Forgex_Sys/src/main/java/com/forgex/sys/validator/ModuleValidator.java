@@ -23,7 +23,7 @@ import org.springframework.util.Assert;
 /**
  * 模块数据校验器
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Component

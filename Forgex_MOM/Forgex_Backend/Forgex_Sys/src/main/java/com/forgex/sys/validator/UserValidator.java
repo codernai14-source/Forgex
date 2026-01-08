@@ -24,7 +24,7 @@ import org.springframework.util.StringUtils;
 /**
  * 用户数据校验器
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Component

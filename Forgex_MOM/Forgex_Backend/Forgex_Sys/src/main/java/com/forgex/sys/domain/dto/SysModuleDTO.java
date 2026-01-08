@@ -18,7 +18,7 @@ import lombok.Data;
 /**
  * 模块DTO
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Data

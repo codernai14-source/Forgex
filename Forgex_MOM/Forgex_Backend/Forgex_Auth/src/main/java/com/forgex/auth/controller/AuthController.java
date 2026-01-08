@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.forgex.common.domain.config.CryptoTransportConfig;
-import com.forgex.common.domain.config.CaptchaConfig;
 
 /**
  * 认证控制器。
@@ -47,10 +46,6 @@ public class AuthController {
     private AuthService authService;
     @Autowired
     private CaptchaService captchaService;
-    @Autowired
-    private cloud.tianai.captcha.application.ImageCaptchaApplication captchaApplication;
-    @Autowired
-    private org.springframework.data.redis.core.StringRedisTemplate redis;
     @Autowired
     private ConfigService configService;
 
@@ -129,38 +124,30 @@ public class AuthController {
 
     /**
      * 生成滑块验证码
-     * 逻辑：调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）
+     * 逻辑：委派验证码服务生成滑块数据，返回渲染所需结构（含 id）
      * @return 验证码渲染数据
-     * @see cloud.tianai.captcha.application.ImageCaptchaApplication#generateCaptcha(String)
+     * @see com.forgex.auth.service.CaptchaService#generateSliderCaptcha()
      */
     @PostMapping("/captcha/slider")
     public R<Object> captchaSlider() {
-        var res = captchaApplication.generateCaptcha(cloud.tianai.captcha.common.constant.CaptchaTypeConstant.SLIDER);
-        return R.ok(res.getData());
+        Object sliderData = captchaService.generateSliderCaptcha();
+        return R.ok(sliderData);
     }
 
     /**
      * 校验滑块轨迹并发放令牌
-     * 逻辑：校验前端轨迹 -> 成功后生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）
+     * 逻辑：委派验证码服务校验前端轨迹，成功后生成一次性令牌
      * @param param 滑块校验参数，包含 `id` 与 `track`
      * @return 令牌字符串（登录时作为验证码使用）
-     * @see cloud.tianai.captcha.application.ImageCaptchaApplication#matching(String, Object)
+     * @see com.forgex.auth.service.CaptchaService#validateSlider(String, Object)
      */
     @PostMapping("/captcha/slider/validate")
     public R<String> captchaSliderValidate(@RequestBody SliderValidateParam param) {
         if (param == null || param.getId() == null || param.getTrack() == null) {
             return R.fail(500, "验证码不能为空");
         }
-        var matching = captchaApplication.matching(param.getId(), param.getTrack());
-        if (matching != null && matching.isSuccess()) {
-            String token = cn.hutool.core.util.IdUtil.fastUUID();
-            CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
-            boolean secondary = cfg.getSlider() != null && cfg.getSlider().isSecondaryEnabled();
-            String keyPrefix = secondary
-                    ? (cfg.getSlider() != null && cfg.getSlider().getSecondaryKeyPrefix() != null ? cfg.getSlider().getSecondaryKeyPrefix() : "captcha:secondary")
-                    : (cfg.getSlider() != null && cfg.getSlider().getKeyPrefix() != null ? cfg.getSlider().getKeyPrefix() : "captcha:slider");
-            int expireSec = cfg.getSlider() != null ? cfg.getSlider().getTokenExpireSeconds() : 120;
-            redis.opsForValue().set(keyPrefix + ":" + token, "1", java.time.Duration.ofSeconds(expireSec));
+        String token = captchaService.validateSlider(param.getId(), param.getTrack());
+        if (token != null) {
             return R.ok(token);
         }
         return R.fail(500, "验证码不正确");

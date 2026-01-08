@@ -21,6 +21,7 @@ import com.forgex.sys.mapper.SysTenantIgnoreMapper;
 import com.forgex.sys.service.SysTenantIgnoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,9 +31,49 @@ import java.util.List;
  * 从 admin 库读取启用的忽略规则并写入注册表，支持热更新。
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class SysTenantIgnoreServiceImpl implements SysTenantIgnoreService {
     @Autowired
     private SysTenantIgnoreMapper mapper;
+
+    /**
+     * 获取所有租户忽略规则列表。
+     * @return 租户忽略规则列表
+     */
+    @Override
+    public List<SysTenantIgnore> list() {
+        return mapper.selectList(new LambdaQueryWrapper<>());
+    }
+    
+    /**
+     * 创建租户忽略规则。
+     * @param entity 租户忽略规则实体
+     * @return 创建结果
+     */
+    @Override
+    public Boolean create(SysTenantIgnore entity) {
+        return mapper.insert(entity) > 0;
+    }
+    
+    /**
+     * 更新租户忽略规则。
+     * @param entity 租户忽略规则实体
+     * @return 更新结果
+     */
+    @Override
+    public Boolean update(SysTenantIgnore entity) {
+        return mapper.updateById(entity) > 0;
+    }
+    
+    /**
+     * 删除租户忽略规则。
+     * @param id 租户忽略规则ID
+     * @return 删除结果
+     */
+    @Override
+    public Boolean delete(Long id) {
+        return mapper.deleteById(id) > 0;
+    }
 
     /**
      * 重新加载忽略规则。

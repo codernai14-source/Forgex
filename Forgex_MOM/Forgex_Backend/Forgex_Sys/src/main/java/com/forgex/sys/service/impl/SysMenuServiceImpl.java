@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * 菜单Service实现类
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Service

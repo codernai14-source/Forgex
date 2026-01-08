@@ -36,7 +36,7 @@ import java.util.Map;
  * - 参数统一封装为对象
  * - 分页查询使用 BaseGetParam（pageNum/pageSize）
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @RestController

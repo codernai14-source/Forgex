@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 用户Service接口
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 public interface ISysUserService extends IService<SysUser> {
@@ -107,4 +107,12 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 是否存在
      */
     boolean existsByAccountExcludeId(String account, Long excludeId);
+    
+    /**
+     * 根据账号获取用户ID
+     * 
+     * @param account 账号
+     * @return 用户ID，不存在则返回null
+     */
+    Long getUserIdByAccount(String account);
 }

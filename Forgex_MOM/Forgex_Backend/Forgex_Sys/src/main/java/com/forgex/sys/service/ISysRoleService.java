@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 角色Service接口
  * 
- * @author Forgex Team
+ * @author coder_nai@163.com
  * @date 2025-01-07
  */
 public interface ISysRoleService extends IService<SysRole> {
