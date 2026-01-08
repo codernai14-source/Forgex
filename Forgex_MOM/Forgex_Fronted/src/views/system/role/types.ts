@@ -12,7 +12,9 @@ export interface Role {
   description?: string
   status: number
   createTime?: string
+  createBy?: string
   updateTime?: string
+  updateBy?: string
 }
 
 /**

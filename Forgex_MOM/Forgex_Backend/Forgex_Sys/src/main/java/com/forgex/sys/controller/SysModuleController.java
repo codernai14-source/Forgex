@@ -13,9 +13,15 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 模块管理Controller
+ * 
+ * 接口规范：
+ * - 所有接口统一使用 POST 方法
+ * - 参数统一封装为对象
+ * - 分页查询使用 BaseGetParam（pageNum/pageSize）
  * 
  * @author Forgex Team
  * @date 2025-01-07
@@ -30,47 +36,37 @@ public class SysModuleController {
     
     /**
      * 分页查询模块列表
-     * 
-     * @param page 分页参数
-     * @param query 查询条件
-     * @return 分页结果
      */
-    @GetMapping("/page")
-    public R<IPage<SysModuleDTO>> page(Page<SysModule> page, SysModuleQueryDTO query) {
+    @PostMapping("/page")
+    public R<IPage<SysModuleDTO>> page(@RequestBody SysModuleQueryDTO query) {
+        // 使用 BaseGetParam 中的 pageNum 和 pageSize
+        Page<SysModule> page = new Page<>(query.getPageNum(), query.getPageSize());
         return R.ok(moduleService.pageModules(page, query));
     }
     
     /**
-     * 查询所有模块列表
-     * 
-     * @param query 查询条件
-     * @return 模块列表
+     * 查询所有模块列表（不分页）
      */
-    @GetMapping("/list")
-    public R<List<SysModuleDTO>> list(SysModuleQueryDTO query) {
+    @PostMapping("/list")
+    public R<List<SysModuleDTO>> list(@RequestBody SysModuleQueryDTO query) {
         return R.ok(moduleService.listModules(query));
     }
     
     /**
      * 根据ID获取模块详情
-     * 
-     * @param id 模块ID
-     * @return 模块详情
      */
-    @GetMapping("/{id}")
-    public R<SysModuleDTO> getById(@PathVariable Long id) {
+    @PostMapping("/detail")
+    public R<SysModuleDTO> detail(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
         moduleValidator.validateId(id);
         return R.ok(moduleService.getModuleById(id));
     }
     
     /**
      * 新增模块
-     * 
-     * @param moduleDTO 模块信息
-     * @return 操作结果
      */
-    @PostMapping
-    public R<Void> add(@RequestBody @Validated SysModuleDTO moduleDTO) {
+    @PostMapping("/create")
+    public R<Void> create(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForAdd(moduleDTO);
         moduleService.addModule(moduleDTO);
         return R.ok();
@@ -78,11 +74,8 @@ public class SysModuleController {
     
     /**
      * 更新模块
-     * 
-     * @param moduleDTO 模块信息
-     * @return 操作结果
      */
-    @PutMapping
+    @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForUpdate(moduleDTO);
         moduleService.updateModule(moduleDTO);
@@ -91,12 +84,10 @@ public class SysModuleController {
     
     /**
      * 删除模块
-     * 
-     * @param id 模块ID
-     * @return 操作结果
      */
-    @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
+    @PostMapping("/delete")
+    public R<Void> delete(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
         moduleValidator.validateForDelete(id);
         moduleService.deleteModule(id);
         return R.ok();
@@ -104,15 +95,34 @@ public class SysModuleController {
     
     /**
      * 批量删除模块
-     * 
-     * @param ids 模块ID列表
-     * @return 操作结果
      */
-    @DeleteMapping("/batch")
-    public R<Void> batchDelete(@RequestBody List<Long> ids) {
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        List<Long> ids = (List<Long>) body.get("ids");
         // 逐个校验
         ids.forEach(moduleValidator::validateForDelete);
         moduleService.batchDeleteModules(ids);
         return R.ok();
+    }
+    
+    /**
+     * 解析Long类型参数
+     */
+    private Long parseLong(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof Number) {
+            return ((Number) obj).longValue();
+        }
+        if (obj instanceof String) {
+            try {
+                return Long.parseLong((String) obj);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 }

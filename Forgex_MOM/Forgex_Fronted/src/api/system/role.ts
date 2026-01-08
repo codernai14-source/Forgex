@@ -5,21 +5,21 @@ import type { Role } from '@/views/system/role/types'
  * 获取角色列表
  */
 export const getRoleList = (params?: any) => {
-  return http.get('/sys/role/list', { params })
+  return http.post('/sys/role/list', params || {})
 }
 
 /**
  * 分页查询角色
  */
 export const getRolePage = (params: any) => {
-  return http.get('/sys/role/page', { params })
+  return http.post('/sys/role/page', params)
 }
 
 /**
  * 根据ID获取角色详情
  */
 export const getRoleById = (id: number) => {
-  return http.get(`/sys/role/${id}`)
+  return http.post('/sys/role/detail', { id })
 }
 
 /**

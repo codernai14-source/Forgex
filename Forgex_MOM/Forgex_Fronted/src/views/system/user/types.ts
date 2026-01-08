@@ -8,7 +8,6 @@
 export interface User {
   id?: string
   username: string
-  realName: string
   email: string
   phone: string
   gender: 0 | 1 | 2  // 0=未知，1=男，2=女
@@ -53,7 +52,6 @@ export interface WorkHistory {
  */
 export interface UserQuery {
   username?: string
-  realName?: string
   phone?: string
   departmentId?: string
   status?: number

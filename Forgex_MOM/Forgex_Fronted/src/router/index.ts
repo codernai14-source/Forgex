@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ref } from 'vue'
+import { usePermissionStore } from '../stores/permission'
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -32,11 +33,14 @@ const router = createRouter({
 })
 
 // 路由守卫：检查登录状态和动态路由
+let isRestoringRoutes = false
+
 router.beforeEach(async (to, from, next) => {
   console.log('[Guard] Navigating to:', to.path, 'from:', from.path)
   
   const account = sessionStorage.getItem('account')
   const tenantId = sessionStorage.getItem('tenantId')
+  const permissionStore = usePermissionStore()
   
   console.log('[Guard] Session check - account:', account, 'tenantId:', tenantId)
   console.log('[Guard] Dynamic routes count:', dynamicRoutes.value.length)
@@ -55,37 +59,40 @@ router.beforeEach(async (to, from, next) => {
     return
   }
   
-  // 如果动态路由为空，尝试从 localStorage 恢复
-  if (dynamicRoutes.value.length === 0) {
-    console.log('[Guard] Dynamic routes empty, trying to restore from localStorage')
+  // 如果动态路由为空且不在恢复过程中，尝试从 Pinia store 恢复
+  if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
+    console.log('[Guard] Dynamic routes empty, trying to restore from Pinia store')
+    isRestoringRoutes = true
+    
     try {
-      const cachedRoutes = localStorage.getItem('fx-dynamic-routes')
-      const cachedModules = localStorage.getItem('fx-dynamic-modules')
+      const cached = permissionStore.restoreRoutesAndModules()
       
-      if (cachedRoutes && cachedModules) {
-        const routesPayload = JSON.parse(cachedRoutes)
-        const modulesPayload = JSON.parse(cachedModules)
+      if (cached.routes.length > 0 && cached.modules.length > 0) {
+        console.log('[Guard] Restoring routes from Pinia store:', cached.routes)
         
-        console.log('[Guard] Restoring routes from cache:', routesPayload)
-        
+        console.log('[Guard] Before injectDynamicRoutes')
         // 重新注入动态路由
         await injectDynamicRoutes(router, {
-          routes: routesPayload,
-          modules: modulesPayload
+          routes: cached.routes,
+          modules: cached.modules
         })
+        console.log('[Guard] After injectDynamicRoutes')
         
         console.log('[Guard] Routes restored, redirecting to:', to.fullPath)
+        isRestoringRoutes = false
         // 路由已恢复，重新导航到目标路径
         next({ ...to, replace: true })
         return
       } else {
-        console.log('[Guard] No cached routes found, redirecting to login')
+        console.log('[Guard] No cached routes found in Pinia store, redirecting to login')
+        isRestoringRoutes = false
         // 没有缓存的路由，需要重新登录
         next('/login')
         return
       }
     } catch (error) {
       console.error('[Guard] Failed to restore routes:', error)
+      isRestoringRoutes = false
       next('/login')
       return
     }
@@ -99,7 +106,8 @@ router.beforeEach(async (to, from, next) => {
   }
   
   // 如果已登录，直接放行（动态路由已经在登录时注入）
-  console.log('[Guard] User logged in, allowing access')
+  console.log('[Guard] User logged in, allowing access to:', to.path)
+  console.log('[Guard] Current route matched:', router.currentRoute.value.matched.length, 'components')
   next()
 })
 
@@ -107,14 +115,53 @@ export default router
 
 const EmptyView = { template: '<div style="padding:16px;color:#9ca3af;">暂无页面，请稍后</div>' }
 
-const componentMap: Record<string, any> = {
-  SystemDashboard: () => import('../views/system/dashboard/index.vue'),
-  SystemUser: () => import('../views/system/user/index.vue'),
-  SystemRole: () => import('../views/system/role/index.vue'),
-  SystemModule: () => import('../views/system/module/index.vue'),
-  SystemMenu: () => import('../views/system/menu/index.vue'),
-  SystemDepartment: () => import('../views/system/department/index.vue'),
-  SystemPosition: () => import('../views/system/position/index.vue')
+/**
+ * 模块代码映射表
+ * 将后端的模块代码映射到前端的目录名
+ */
+const modulePathMap: Record<string, string> = {
+  'sys': 'system',      // sys 模块对应 system 目录
+  'system': 'system',   // 兼容完整名称
+  // 未来可以添加更多映射，例如：
+  // 'prod': 'production',
+  // 'qc': 'quality',
+}
+
+/**
+ * 动态导入组件
+ * 约定：组件名格式为 ModulePage，例如 SystemUser, SysDashboard
+ * 自动映射到路径：../views/{module}/{page}/index.vue
+ * 
+ * @param componentName 组件名称，例如 "SystemUser", "SysDashboard"
+ * @returns 动态导入的组件
+ */
+function loadComponent(componentName: string) {
+  try {
+    // 解析组件名：支持多种格式
+    // SystemUser -> module: System, page: User
+    // SysDashboard -> module: Sys, page: Dashboard
+    const match = componentName.match(/^([A-Z][a-z]*[A-Z]?[a-z]*)([A-Z][a-z]+)$/)
+    
+    if (!match) {
+      console.warn(`[Route] Invalid component name format: ${componentName}`)
+      return EmptyView
+    }
+    
+    const modulePart = match[1].toLowerCase()  // System -> system, Sys -> sys
+    const pagePart = match[2].toLowerCase()    // User -> user, Dashboard -> dashboard
+    
+    // 使用映射表获取实际的目录名
+    const moduleDir = modulePathMap[modulePart] || modulePart
+    
+    const componentPath = `../views/${moduleDir}/${pagePart}/index.vue`
+    console.log(`[Route] Loading component: ${componentName} from ${componentPath}`)
+    
+    // 动态导入组件
+    return () => import(/* @vite-ignore */ componentPath)
+  } catch (error) {
+    console.error(`[Route] Failed to load component: ${componentName}`, error)
+    return EmptyView
+  }
 }
 
 export const dynamicModules = ref<any[]>([])
@@ -126,13 +173,10 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
   dynamicModules.value = mods
   dynamicRoutes.value = routesPayload
   
-  // 缓存到 localStorage
-  try {
-    localStorage.setItem('fx-dynamic-routes', JSON.stringify(routesPayload))
-    localStorage.setItem('fx-dynamic-modules', JSON.stringify(mods))
-  } catch (e) {
-    console.error('Failed to cache dynamic routes:', e)
-  }
+  // 缓存到 Pinia store（会自动持久化到 localStorage）
+  const permissionStore = usePermissionStore()
+  permissionStore.setRoutes(routesPayload)
+  permissionStore.setModules(mods)
   
   console.log('[Route] Starting to inject dynamic routes...')
   console.log('[Route] Modules:', mods)
@@ -146,7 +190,7 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
     
     // 为每个模块自动注册 dashboard 路由
     const dashboardComponentKey = `${moduleCode.charAt(0).toUpperCase() + moduleCode.slice(1)}Dashboard`
-    const dashboardComponent = componentMap[dashboardComponentKey] || componentMap['SystemDashboard']
+    const dashboardComponent = loadComponent(dashboardComponentKey)
     
     console.log(`[Route] Registering dashboard route: /workspace/${moduleCode}/dashboard (component: ${dashboardComponentKey})`)
     r.addRoute('Workspace', {
@@ -161,7 +205,7 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
     
     for (const c of children) {
       const key = c.component
-      const comp = componentMap[key] || EmptyView
+      const comp = loadComponent(key)
       const childPath = c.path
       
       // 注册路由：/workspace/{moduleCode}/{childPath}
@@ -179,9 +223,6 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
       })
     }
   }
-  
-  // 等待路由注册完成
-  await r.isReady()
   
   // 打印所有注册的路由
   console.log('[Route] All registered routes:')

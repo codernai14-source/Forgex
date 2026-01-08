@@ -221,6 +221,9 @@ const columns = [
   { title: '可见性', dataIndex: 'visible', key: 'visible', width: 100 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
+  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
+  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
   { title: '操作', key: 'action', width: 150, fixed: 'right' }
 ]
 

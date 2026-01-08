@@ -12,15 +12,6 @@
           />
         </a-form-item>
         
-        <a-form-item label="真实姓名">
-          <a-input
-            v-model:value="queryForm.realName"
-            placeholder="请输入真实姓名"
-            allow-clear
-            style="width: 200px;"
-          />
-        </a-form-item>
-        
         <a-form-item label="手机号">
           <a-input
             v-model:value="queryForm.phone"
@@ -201,14 +192,17 @@ function handleFormSuccess() {
 // 表格列定义
 const columns = [
   { title: '用户名', dataIndex: 'username', key: 'username', width: 120 },
-  { title: '真实姓名', dataIndex: 'realName', key: 'realName', width: 120 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
   { title: '性别', key: 'gender', width: 80 },
   { title: '部门', dataIndex: 'departmentName', key: 'departmentName', width: 120 },
   { title: '职位', dataIndex: 'positionName', key: 'positionName', width: 120 },
+  { title: '入职时间', dataIndex: 'entryDate', key: 'entryDate', width: 120 },
   { title: '状态', key: 'status', width: 80 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 100 },
+  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
+  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 100 },
   { title: '操作', key: 'action', width: 200, fixed: 'right' },
 ]
 

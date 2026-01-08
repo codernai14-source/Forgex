@@ -24,6 +24,11 @@ import java.util.Map;
  * - 调用Service层方法
  * - 返回响应结果
  * 
+ * 接口规范：
+ * - 所有接口统一使用 POST 方法
+ * - 参数统一封装为对象
+ * - 分页查询使用 BaseGetParam（pageNum/pageSize）
+ * 
  * @author Forgex Team
  * @date 2025-01-07
  */
@@ -36,47 +41,29 @@ public class SysRoleController {
     private final RoleValidator roleValidator;
     
     /**
-     * 查询角色列表（兼容旧接口）
-     */
-    @PostMapping("/list")
-    public R<List<SysRoleDTO>> list(@RequestBody Map<String, Object> body) {
-        // 1. 参数解析
-        Long tenantId = parseLong(body.get("tenantId"));
-        if (tenantId == null) {
-            return R.fail(500, "tenantId不能为空");
-        }
-        
-        SysRoleQueryDTO query = new SysRoleQueryDTO();
-        query.setTenantId(tenantId);
-        
-        // 2. 调用Service
-        List<SysRoleDTO> list = roleService.listRoles(query);
-        
-        // 3. 返回结果
-        return R.ok(list);
-    }
-    
-    /**
      * 分页查询角色列表
      */
-    @GetMapping("/page")
-    public R<IPage<SysRoleDTO>> page(Page<SysRole> page, SysRoleQueryDTO query) {
+    @PostMapping("/page")
+    public R<IPage<SysRoleDTO>> page(@RequestBody SysRoleQueryDTO query) {
+        // 使用 BaseGetParam 中的 pageNum 和 pageSize
+        Page<SysRole> page = new Page<>(query.getPageNum(), query.getPageSize());
         return R.ok(roleService.pageRoles(page, query));
     }
     
     /**
-     * 查询角色列表
+     * 查询角色列表（不分页）
      */
-    @GetMapping("/list")
-    public R<List<SysRoleDTO>> listRoles(SysRoleQueryDTO query) {
+    @PostMapping("/list")
+    public R<List<SysRoleDTO>> list(@RequestBody SysRoleQueryDTO query) {
         return R.ok(roleService.listRoles(query));
     }
     
     /**
      * 根据ID获取角色详情
      */
-    @GetMapping("/{id}")
-    public R<SysRoleDTO> getById(@PathVariable Long id) {
+    @PostMapping("/detail")
+    public R<SysRoleDTO> detail(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
         roleValidator.validateId(id);
         return R.ok(roleService.getRoleById(id));
     }
@@ -84,8 +71,8 @@ public class SysRoleController {
     /**
      * 新增角色
      */
-    @PostMapping
-    public R<Void> add(@RequestBody @Validated SysRoleDTO roleDTO) {
+    @PostMapping("/create")
+    public R<Void> create(@RequestBody @Validated SysRoleDTO roleDTO) {
         // 1. 数据校验
         roleValidator.validateForAdd(roleDTO);
         
@@ -97,19 +84,9 @@ public class SysRoleController {
     }
     
     /**
-     * 新增角色（兼容旧接口）
-     */
-    @PostMapping("/create")
-    public R<Boolean> create(@RequestBody SysRoleDTO roleDTO) {
-        roleValidator.validateForAdd(roleDTO);
-        roleService.addRole(roleDTO);
-        return R.ok(true);
-    }
-    
-    /**
      * 更新角色
      */
-    @PutMapping
+    @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysRoleDTO roleDTO) {
         // 1. 数据校验
         roleValidator.validateForUpdate(roleDTO);
@@ -122,55 +99,41 @@ public class SysRoleController {
     }
     
     /**
-     * 更新角色（兼容旧接口）
-     */
-    @PostMapping("/update")
-    public R<Boolean> updateOld(@RequestBody SysRoleDTO roleDTO) {
-        roleValidator.validateForUpdate(roleDTO);
-        roleService.updateRole(roleDTO);
-        return R.ok(true);
-    }
-    
-    /**
      * 删除角色
      */
-    @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
-        // 1. 数据校验
-        roleValidator.validateForDelete(id);
-        
-        // 2. 调用Service
-        roleService.deleteRole(id);
-        
-        // 3. 返回结果
-        return R.ok();
-    }
-    
-    /**
-     * 删除角色（兼容旧接口）
-     */
     @PostMapping("/delete")
-    public R<Boolean> deleteOld(@RequestBody Map<String, Object> body) {
+    public R<Void> delete(@RequestBody Map<String, Object> body) {
+        // 1. 解析参数
         Long id = parseLong(body.get("id"));
+        
+        // 2. 数据校验
         roleValidator.validateForDelete(id);
+        
+        // 3. 调用Service
         roleService.deleteRole(id);
-        return R.ok(true);
+        
+        // 4. 返回结果
+        return R.ok();
     }
     
     /**
      * 批量删除角色
      */
-    @DeleteMapping("/batch")
-    public R<Void> batchDelete(@RequestBody List<Long> ids) {
-        // 1. 校验每个ID
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
+        // 1. 解析参数
+        @SuppressWarnings("unchecked")
+        List<Long> ids = (List<Long>) body.get("ids");
+        
+        // 2. 校验每个ID
         for (Long id : ids) {
             roleValidator.validateForDelete(id);
         }
         
-        // 2. 调用Service
+        // 3. 调用Service
         roleService.batchDeleteRoles(ids);
         
-        // 3. 返回结果
+        // 4. 返回结果
         return R.ok();
     }
     

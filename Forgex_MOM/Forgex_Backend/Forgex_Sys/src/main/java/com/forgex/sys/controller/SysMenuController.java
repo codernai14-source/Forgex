@@ -26,6 +26,11 @@ import java.util.Map;
  * - 调用Service层方法
  * - 返回响应结果
  * 
+ * 接口规范：
+ * - 所有接口统一使用 POST 方法
+ * - 参数统一封装为对象
+ * - 分页查询使用 BaseGetParam（pageNum/pageSize）
+ * 
  * @author Forgex Team
  * @date 2025-01-07
  */
@@ -75,24 +80,27 @@ public class SysMenuController {
     /**
      * 分页查询菜单列表
      */
-    @GetMapping("/page")
-    public R<IPage<SysMenuDTO>> page(Page<SysMenu> page, SysMenuQueryDTO query) {
+    @PostMapping("/page")
+    public R<IPage<SysMenuDTO>> page(@RequestBody SysMenuQueryDTO query) {
+        // 使用 BaseGetParam 中的 pageNum 和 pageSize
+        Page<SysMenu> page = new Page<>(query.getPageNum(), query.getPageSize());
         return R.ok(menuService.pageMenus(page, query));
     }
     
     /**
-     * 查询菜单列表
+     * 查询菜单列表（不分页）
      */
-    @GetMapping("/list")
-    public R<List<SysMenuDTO>> list(SysMenuQueryDTO query) {
+    @PostMapping("/list")
+    public R<List<SysMenuDTO>> list(@RequestBody SysMenuQueryDTO query) {
         return R.ok(menuService.listMenus(query));
     }
     
     /**
      * 根据ID获取菜单详情
      */
-    @GetMapping("/{id}")
-    public R<SysMenuDTO> getById(@PathVariable Long id) {
+    @PostMapping("/detail")
+    public R<SysMenuDTO> detail(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
         menuValidator.validateId(id);
         return R.ok(menuService.getMenuById(id));
     }
@@ -100,8 +108,8 @@ public class SysMenuController {
     /**
      * 新增菜单
      */
-    @PostMapping
-    public R<Void> add(@RequestBody @Validated SysMenuDTO menuDTO) {
+    @PostMapping("/create")
+    public R<Void> create(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
         menuValidator.validateForAdd(menuDTO);
         
@@ -113,19 +121,9 @@ public class SysMenuController {
     }
     
     /**
-     * 新增菜单（兼容旧接口）
-     */
-    @PostMapping("/create")
-    public R<Boolean> create(@RequestBody SysMenuDTO menuDTO) {
-        menuValidator.validateForAdd(menuDTO);
-        menuService.addMenu(menuDTO);
-        return R.ok(true);
-    }
-    
-    /**
      * 更新菜单
      */
-    @PutMapping
+    @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
         menuValidator.validateForUpdate(menuDTO);
@@ -138,55 +136,41 @@ public class SysMenuController {
     }
     
     /**
-     * 更新菜单（兼容旧接口）
-     */
-    @PostMapping("/update")
-    public R<Boolean> updateOld(@RequestBody SysMenuDTO menuDTO) {
-        menuValidator.validateForUpdate(menuDTO);
-        menuService.updateMenu(menuDTO);
-        return R.ok(true);
-    }
-    
-    /**
      * 删除菜单
      */
-    @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
-        // 1. 数据校验
-        menuValidator.validateForDelete(id);
-        
-        // 2. 调用Service
-        menuService.deleteMenu(id);
-        
-        // 3. 返回结果
-        return R.ok();
-    }
-    
-    /**
-     * 删除菜单（兼容旧接口）
-     */
     @PostMapping("/delete")
-    public R<Boolean> deleteOld(@RequestBody Map<String, Object> body) {
+    public R<Void> delete(@RequestBody Map<String, Object> body) {
+        // 1. 解析参数
         Long id = parseLong(body.get("id"));
+        
+        // 2. 数据校验
         menuValidator.validateForDelete(id);
+        
+        // 3. 调用Service
         menuService.deleteMenu(id);
-        return R.ok(true);
+        
+        // 4. 返回结果
+        return R.ok();
     }
     
     /**
      * 批量删除菜单
      */
-    @DeleteMapping("/batch")
-    public R<Void> batchDelete(@RequestBody List<Long> ids) {
-        // 1. 校验每个ID
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
+        // 1. 解析参数
+        @SuppressWarnings("unchecked")
+        List<Long> ids = (List<Long>) body.get("ids");
+        
+        // 2. 校验每个ID
         for (Long id : ids) {
             menuValidator.validateForDelete(id);
         }
         
-        // 2. 调用Service
+        // 3. 调用Service
         menuService.batchDeleteMenus(ids);
         
-        // 3. 返回结果
+        // 4. 返回结果
         return R.ok();
     }
     

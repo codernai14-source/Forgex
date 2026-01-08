@@ -4,14 +4,34 @@
 
 import { ref, reactive } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { getMenuList, deleteMenu, batchDeleteMenus } from '@/api/system/menu'
+import { listMenusTree } from '@/api/sys/menu'
+import { deleteMenu, batchDeleteMenus } from '@/api/system/menu'
 import type { Menu, MenuQuery } from '../types'
+
+/**
+ * 构建树形结构
+ */
+function buildTree(list: any[], parentId: string | number = '0'): any[] {
+  const result: any[] = []
+  
+  for (const item of list) {
+    if (String(item.parentId || '0') === String(parentId)) {
+      const children = buildTree(list, item.id)
+      if (children.length > 0) {
+        item.children = children
+      }
+      result.push(item)
+    }
+  }
+  
+  return result.sort((a, b) => (a.orderNum || 0) - (b.orderNum || 0))
+}
 
 export function useMenu() {
   // 加载状态
   const loading = ref(false)
   
-  // 菜单列表
+  // 菜单列表（树形结构）
   const menuList = ref<Menu[]>([])
   
   // 查询参数
@@ -30,8 +50,30 @@ export function useMenu() {
   const loadMenuList = async () => {
     try {
       loading.value = true
-      const response = await getMenuList(queryParams)
-      menuList.value = response || []
+      const tenantId = sessionStorage.getItem('tenantId')
+      if (!tenantId) {
+        message.error('租户信息缺失')
+        return
+      }
+      
+      const params: any = {
+        tenantId,
+        moduleId: queryParams.moduleId
+      }
+      
+      if (queryParams.name) {
+        params.name = queryParams.name
+      }
+      
+      if (queryParams.status !== undefined) {
+        params.status = queryParams.status
+      }
+      
+      const response = await listMenusTree(params)
+      const flatList = response || []
+      
+      // 构建树形结构
+      menuList.value = buildTree(flatList)
     } catch (error) {
       console.error('加载菜单列表失败:', error)
       message.error('加载菜单列表失败')

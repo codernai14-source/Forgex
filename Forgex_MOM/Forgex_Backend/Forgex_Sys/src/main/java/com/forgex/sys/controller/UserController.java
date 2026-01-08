@@ -24,6 +24,11 @@ import java.util.Map;
  * - 调用Service层方法
  * - 返回响应结果
  * 
+ * 接口规范：
+ * - 所有接口统一使用 POST 方法
+ * - 参数统一封装为对象
+ * - 分页查询使用 BaseGetParam（pageNum/pageSize）
+ * 
  * @author Forgex Team
  * @date 2025-01-07
  */
@@ -36,48 +41,29 @@ public class UserController {
     private final UserValidator userValidator;
     
     /**
-     * 分页查询用户列表（兼容旧接口）
-     */
-    @PostMapping("/list")
-    public R<IPage<SysUserDTO>> list(@RequestBody Map<String, Object> body) {
-        // 1. 参数解析
-        int pageNo = parseInteger(body.get("pageNo"), 1);
-        int pageSize = parseInteger(body.get("pageSize"), 10);
-        Page<SysUser> page = new Page<>(pageNo, pageSize);
-        
-        SysUserQueryDTO query = new SysUserQueryDTO();
-        query.setAccount(parseString(body.get("account")));
-        query.setUsername(parseString(body.get("username")));
-        query.setStatus(parseInteger(body.get("status"), null));
-        
-        // 2. 调用Service
-        IPage<SysUserDTO> result = userService.pageUsers(page, query);
-        
-        // 3. 返回结果
-        return R.ok(result);
-    }
-    
-    /**
      * 分页查询用户列表
      */
-    @GetMapping("/page")
-    public R<IPage<SysUserDTO>> page(Page<SysUser> page, SysUserQueryDTO query) {
+    @PostMapping("/page")
+    public R<IPage<SysUserDTO>> page(@RequestBody SysUserQueryDTO query) {
+        // 使用 BaseGetParam 中的 pageNum 和 pageSize
+        Page<SysUser> page = new Page<>(query.getPageNum(), query.getPageSize());
         return R.ok(userService.pageUsers(page, query));
     }
     
     /**
-     * 查询用户列表
+     * 查询用户列表（不分页）
      */
-    @GetMapping("/list")
-    public R<List<SysUserDTO>> listUsers(SysUserQueryDTO query) {
+    @PostMapping("/list")
+    public R<List<SysUserDTO>> list(@RequestBody SysUserQueryDTO query) {
         return R.ok(userService.listUsers(query));
     }
     
     /**
      * 根据ID获取用户详情
      */
-    @GetMapping("/{id}")
-    public R<SysUserDTO> getById(@PathVariable Long id) {
+    @PostMapping("/detail")
+    public R<SysUserDTO> detail(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
         userValidator.validateId(id);
         return R.ok(userService.getUserById(id));
     }
@@ -85,8 +71,8 @@ public class UserController {
     /**
      * 新增用户
      */
-    @PostMapping
-    public R<Void> add(@RequestBody @Validated SysUserDTO userDTO) {
+    @PostMapping("/create")
+    public R<Void> create(@RequestBody @Validated SysUserDTO userDTO) {
         // 1. 数据校验
         userValidator.validateForAdd(userDTO);
         
@@ -98,19 +84,9 @@ public class UserController {
     }
     
     /**
-     * 新增用户（兼容旧接口）
-     */
-    @PostMapping("/create")
-    public R<Boolean> create(@RequestBody SysUserDTO userDTO) {
-        userValidator.validateForAdd(userDTO);
-        userService.addUser(userDTO);
-        return R.ok(true);
-    }
-    
-    /**
      * 更新用户
      */
-    @PutMapping
+    @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysUserDTO userDTO) {
         // 1. 数据校验
         userValidator.validateForUpdate(userDTO);
@@ -123,55 +99,52 @@ public class UserController {
     }
     
     /**
-     * 更新用户（兼容旧接口）
-     */
-    @PostMapping("/update")
-    public R<Boolean> updateOld(@RequestBody SysUserDTO userDTO) {
-        userValidator.validateForUpdate(userDTO);
-        userService.updateUser(userDTO);
-        return R.ok(true);
-    }
-    
-    /**
      * 删除用户
      */
-    @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
-        // 1. 数据校验
-        userValidator.validateForDelete(id);
-        
-        // 2. 调用Service
-        userService.deleteUser(id);
-        
-        // 3. 返回结果
-        return R.ok();
-    }
-    
-    /**
-     * 删除用户（兼容旧接口）
-     */
     @PostMapping("/delete")
-    public R<Boolean> deleteOld(@RequestBody Map<String, Object> body) {
+    public R<Void> delete(@RequestBody Map<String, Object> body) {
+        // 1. 解析参数
         Long id = parseLong(body.get("id"));
+        
+        // 2. 数据校验
         userValidator.validateForDelete(id);
+        
+        // 3. 调用Service
         userService.deleteUser(id);
-        return R.ok(true);
+        
+        // 4. 返回结果
+        return R.ok();
     }
     
     /**
      * 批量删除用户
      */
-    @DeleteMapping("/batch")
-    public R<Void> batchDelete(@RequestBody List<Long> ids) {
-        // 1. 校验每个ID
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
+        // 1. 解析参数
+        @SuppressWarnings("unchecked")
+        List<Long> ids = (List<Long>) body.get("ids");
+        
+        // 2. 校验每个ID
         for (Long id : ids) {
             userValidator.validateForDelete(id);
         }
         
-        // 2. 调用Service
+        // 3. 调用Service
         userService.batchDeleteUsers(ids);
         
-        // 3. 返回结果
+        // 4. 返回结果
+        return R.ok();
+    }
+    
+    /**
+     * 重置密码
+     */
+    @PostMapping("/resetPassword")
+    public R<Void> resetPassword(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
+        userValidator.validateId(id);
+        userService.resetPassword(id);
         return R.ok();
     }
     
@@ -193,36 +166,5 @@ public class UserController {
             }
         }
         return null;
-    }
-    
-    /**
-     * 解析Integer类型参数
-     */
-    private Integer parseInteger(Object obj, Integer defaultValue) {
-        if (obj == null) {
-            return defaultValue;
-        }
-        if (obj instanceof Number) {
-            return ((Number) obj).intValue();
-        }
-        if (obj instanceof String) {
-            try {
-                return Integer.parseInt((String) obj);
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
-    }
-    
-    /**
-     * 解析String类型参数
-     */
-    private String parseString(Object obj) {
-        if (obj == null) {
-            return null;
-        }
-        String str = obj.toString();
-        return str.isEmpty() ? null : str;
     }
 }

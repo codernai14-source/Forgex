@@ -1,6 +1,8 @@
 package com.forgex.sys.domain.dto;
 
+import com.forgex.common.base.BaseGetParam;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 模块查询DTO
@@ -9,7 +11,8 @@ import lombok.Data;
  * @date 2025-01-07
  */
 @Data
-public class SysModuleQueryDTO {
+@EqualsAndHashCode(callSuper = true)
+public class SysModuleQueryDTO extends BaseGetParam {
     
     /** 模块编码（模糊查询） */
     private String code;

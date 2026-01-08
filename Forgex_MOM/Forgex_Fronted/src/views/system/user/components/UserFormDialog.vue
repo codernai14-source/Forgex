@@ -29,17 +29,6 @@
             </a-col>
             
             <a-col :span="12">
-              <a-form-item label="真实姓名" name="realName">
-                <a-input
-                  v-model:value="formData.realName"
-                  placeholder="请输入真实姓名"
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-          
-          <a-row :gutter="16">
-            <a-col :span="12">
               <a-form-item label="邮箱" name="email">
                 <a-input
                   v-model:value="formData.email"
@@ -347,7 +336,6 @@ const profileFormRef = ref()
 // 基础信息表单数据
 const formData = reactive<Partial<User>>({
   username: '',
-  realName: '',
   email: '',
   phone: '',
   gender: 1,
@@ -379,9 +367,6 @@ const basicRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度在3-20个字符', trigger: 'blur' },
-  ],
-  realName: [
-    { required: true, message: '请输入真实姓名', trigger: 'blur' },
   ],
   email: [
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
@@ -431,7 +416,6 @@ async function loadUserData() {
       Object.assign(formData, {
         id: res.data.id,
         username: res.data.username,
-        realName: res.data.realName,
         email: res.data.email,
         phone: res.data.phone,
         gender: res.data.gender,
@@ -468,7 +452,6 @@ async function loadUserData() {
 function resetForm() {
   Object.assign(formData, {
     username: '',
-    realName: '',
     email: '',
     phone: '',
     gender: 1,

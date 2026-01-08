@@ -23,7 +23,6 @@ export function useUser() {
   // 查询条件
   const queryForm = reactive<Partial<UserQuery>>({
     username: '',
-    realName: '',
     phone: '',
     departmentId: undefined,
     status: undefined,
@@ -70,7 +69,6 @@ export function useUser() {
   function handleReset() {
     Object.assign(queryForm, {
       username: '',
-      realName: '',
       phone: '',
       departmentId: undefined,
       status: undefined,

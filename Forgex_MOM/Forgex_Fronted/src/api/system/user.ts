@@ -5,17 +5,17 @@ import http from '../http'
 import type { User, UserProfile, UserQuery, Department, Position } from '@/views/system/user/types'
 
 /**
- * 获取用户列表
+ * 获取用户分页列表
  */
 export async function getUserList(query: UserQuery) {
-  return http.get('/sys/user/page', { params: query })
+  return http.post('/sys/user/page', query)
 }
 
 /**
  * 获取用户详情
  */
 export async function getUserDetail(id: string) {
-  return http.get(`/sys/user/${id}`)
+  return http.post('/sys/user/detail', { id })
 }
 
 /**
@@ -57,14 +57,14 @@ export async function resetPassword(id: string) {
  * 获取部门列表
  */
 export async function getDepartmentList() {
-  return http.get('/sys/department/list')
+  return http.post('/sys/department/list', {})
 }
 
 /**
  * 获取职位列表
  */
 export async function getPositionList() {
-  return http.get('/sys/position/list')
+  return http.post('/sys/position/list', {})
 }
 
 // 导出API对象以保持兼容性

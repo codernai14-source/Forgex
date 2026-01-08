@@ -10,9 +10,6 @@
         <a-descriptions-item label="用户名">
           {{ userDetail?.username }}
         </a-descriptions-item>
-        <a-descriptions-item label="真实姓名">
-          {{ userDetail?.realName }}
-        </a-descriptions-item>
         <a-descriptions-item label="邮箱">
           {{ userDetail?.email }}
         </a-descriptions-item>

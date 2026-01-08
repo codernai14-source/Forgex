@@ -35,11 +35,6 @@ public class SysUserDTO {
     private String password;
     
     /**
-     * 真实姓名
-     */
-    private String realName;
-    
-    /**
      * 邮箱
      */
     private String email;

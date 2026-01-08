@@ -96,7 +96,7 @@
                 type="link"
                 size="small"
                 @click="openGrant(record)"
-                v-permission="'sys:role:grant'"
+                v-permission="'sys:role:authMenu'"
               >
                 菜单授权
               </a-button>
@@ -244,11 +244,14 @@ interface TreeNode {
 
 // 表格列定义
 const columns = [
-  { title: '角色编码', dataIndex: 'roleCode', key: 'roleCode' },
-  { title: '角色名称', dataIndex: 'roleName', key: 'roleName' },
+  { title: '角色编码', dataIndex: 'roleCode', key: 'roleCode', width: 150 },
+  { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 150 },
   { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
+  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
+  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
   { title: '操作', key: 'action', fixed: 'right', width: 240 }
 ]
 

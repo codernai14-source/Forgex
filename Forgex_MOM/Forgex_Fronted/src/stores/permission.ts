@@ -93,6 +93,13 @@ export const usePermissionStore = defineStore('permission', () => {
    */
   function setRoutes(routeList: any[]) {
     routes.value = routeList
+    
+    // 持久化到 localStorage
+    try {
+      localStorage.setItem('fx-dynamic-routes', JSON.stringify(routeList))
+    } catch (error) {
+      console.error('Failed to cache routes to localStorage:', error)
+    }
   }
   
   /**
@@ -100,6 +107,42 @@ export const usePermissionStore = defineStore('permission', () => {
    */
   function setModules(moduleList: any[]) {
     modules.value = moduleList
+    
+    // 持久化到 localStorage
+    try {
+      localStorage.setItem('fx-dynamic-modules', JSON.stringify(moduleList))
+    } catch (error) {
+      console.error('Failed to cache modules to localStorage:', error)
+    }
+  }
+  
+  /**
+   * 从 localStorage 恢复路由和模块
+   */
+  function restoreRoutesAndModules() {
+    try {
+      const cachedRoutes = localStorage.getItem('fx-dynamic-routes')
+      const cachedModules = localStorage.getItem('fx-dynamic-modules')
+      
+      if (cachedRoutes) {
+        routes.value = JSON.parse(cachedRoutes)
+      }
+      
+      if (cachedModules) {
+        modules.value = JSON.parse(cachedModules)
+      }
+      
+      return {
+        routes: routes.value,
+        modules: modules.value
+      }
+    } catch (error) {
+      console.error('Failed to restore routes and modules from localStorage:', error)
+      return {
+        routes: [],
+        modules: []
+      }
+    }
   }
   
   /**
@@ -112,6 +155,10 @@ export const usePermissionStore = defineStore('permission', () => {
     
     // 清除 sessionStorage
     sessionStorage.removeItem('permissions')
+    
+    // 清除 localStorage 中的路由和模块缓存
+    localStorage.removeItem('fx-dynamic-routes')
+    localStorage.removeItem('fx-dynamic-modules')
   }
   
   /**
@@ -152,7 +199,8 @@ export const usePermissionStore = defineStore('permission', () => {
     setRoutes,
     setModules,
     clearPermissions,
-    restoreFromSession
+    restoreFromSession,
+    restoreRoutesAndModules
   }
 }, {
   // 持久化配置（可选）

@@ -182,6 +182,8 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <encoding>UTF-8</encoding>
+                    <!-- 保留方法参数名称，用于Spring参数绑定 -->
+                    <parameters>true</parameters>
                 </configuration>
             </plugin>
         </plugins>
