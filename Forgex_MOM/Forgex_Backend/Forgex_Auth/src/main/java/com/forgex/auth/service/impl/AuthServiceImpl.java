@@ -53,6 +53,10 @@ import java.util.Map;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import com.forgex.common.crypto.CryptoPasswordProvider;
+import com.forgex.common.crypto.CryptoProviders;
 
 /**
  * 认证服务实现。
@@ -105,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
         }
         // 如果启用了传输加密（SM2），优先尝试解密入参密码
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
-        if (cryptoCfg != null && org.springframework.util.StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
+        if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
             try {
                 SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
                 String cipherFmt = cryptoCfg.getCipher();
@@ -129,7 +133,7 @@ public class AuthServiceImpl implements AuthService {
         // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
         String store = policy == null ? "bcrypt" : policy.getStore();
-        com.forgex.common.crypto.CryptoPasswordProvider provider = com.forgex.common.crypto.CryptoProviders.resolve(store, configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
             log.warn("登录失败: 密码不正确, account={}", account);
@@ -231,7 +235,7 @@ public class AuthServiceImpl implements AuthService {
             long timeout = StpUtil.getTokenTimeout();
             String key = "fx:login:ctx:" + token;
             if (timeout > 0) {
-                redis.opsForValue().set(key, json, java.time.Duration.ofSeconds(timeout));
+                redis.opsForValue().set(key, json, Duration.ofSeconds(timeout));
             } else {
                 redis.opsForValue().set(key, json);
             }
@@ -240,7 +244,7 @@ public class AuthServiceImpl implements AuthService {
         userTenantMapper.update(null, new LambdaUpdateWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .eq(SysUserTenant::getTenantId, tenantId)
-                .set(SysUserTenant::getLastUsed, java.time.LocalDateTime.now())
+                .set(SysUserTenant::getLastUsed, LocalDateTime.now())
                 .setSql("pref_order = pref_order + 1"));
         log.info("选择租户成功: account={}, tenantId={}", account, tenantId);
         return R.ok(true);

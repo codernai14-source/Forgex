@@ -26,6 +26,9 @@ import org.springframework.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import com.forgex.auth.domain.config.CaptchaConfig;
+import cloud.tianai.captcha.application.ImageCaptchaApplication;
+import cloud.tianai.captcha.common.constant.CaptchaTypeConstant;
 
 /**
  * 验证码服务实现
@@ -54,7 +57,7 @@ public class CaptchaServiceImpl implements CaptchaService {
      * @see cn.hutool.captcha.CaptchaUtil#createLineCaptcha(int, int, int, int)
      */
     public Map<String, String> generateImageCaptcha() {
-        com.forgex.auth.domain.config.CaptchaConfig cfg = configService.getJson("login.captcha", com.forgex.auth.domain.config.CaptchaConfig.class, com.forgex.auth.domain.config.CaptchaConfig.defaults());
+        CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
         int w = cfg.getImage() != null ? cfg.getImage().getWidth() : 120;
         int h = cfg.getImage() != null ? cfg.getImage().getHeight() : 40;
         int len = cfg.getImage() != null ? cfg.getImage().getLength() : 4;
@@ -78,7 +81,7 @@ public class CaptchaServiceImpl implements CaptchaService {
      */
     @Override
     public Object generateSliderCaptcha() {
-        var res = captchaApplication.generateCaptcha(cloud.tianai.captcha.common.constant.CaptchaTypeConstant.SLIDER);
+        var res = captchaApplication.generateCaptcha(CaptchaTypeConstant.SLIDER);
         return res.getData();
     }
 
@@ -94,7 +97,7 @@ public class CaptchaServiceImpl implements CaptchaService {
         var matching = captchaApplication.matching(id, track);
         if (matching != null && matching.isSuccess()) {
             String token = IdUtil.fastUUID();
-            com.forgex.auth.domain.config.CaptchaConfig cfg = configService.getJson("login.captcha", com.forgex.auth.domain.config.CaptchaConfig.class, com.forgex.auth.domain.config.CaptchaConfig.defaults());
+            CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
             boolean secondary = cfg.getSlider() != null && cfg.getSlider().isSecondaryEnabled();
             String keyPrefix = secondary
                     ? (cfg.getSlider() != null && StringUtils.hasText(cfg.getSlider().getSecondaryKeyPrefix()) ? cfg.getSlider().getSecondaryKeyPrefix() : "captcha:secondary")
@@ -116,7 +119,7 @@ public class CaptchaServiceImpl implements CaptchaService {
     @Override
     public boolean verifyImage(String id, String value) {
         if (!StringUtils.hasText(id) || !StringUtils.hasText(value)) return false;
-        com.forgex.auth.domain.config.CaptchaConfig cfg = configService.getJson("login.captcha", com.forgex.auth.domain.config.CaptchaConfig.class, com.forgex.auth.domain.config.CaptchaConfig.defaults());
+        CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
         String imagePrefix = cfg.getImage() != null && StringUtils.hasText(cfg.getImage().getKeyPrefix()) ? cfg.getImage().getKeyPrefix() : "captcha:image";
         String key = imagePrefix + ":" + id;
         String expect = redis.opsForValue().get(key);
@@ -135,7 +138,7 @@ public class CaptchaServiceImpl implements CaptchaService {
     @Override
     public boolean verifySlider(String token) {
         if (!StringUtils.hasText(token)) return false;
-        com.forgex.auth.domain.config.CaptchaConfig cfg = configService.getJson("login.captcha", com.forgex.auth.domain.config.CaptchaConfig.class, com.forgex.auth.domain.config.CaptchaConfig.defaults());
+        CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
         String provider = cfg.getSlider() != null && StringUtils.hasText(cfg.getSlider().getProvider()) ? cfg.getSlider().getProvider() : "redis-token";
         if ("redis-token".equalsIgnoreCase(provider)) {
             boolean secondary = cfg.getSlider() != null && cfg.getSlider().isSecondaryEnabled();

@@ -30,10 +30,17 @@ import com.forgex.common.tenant.TenantContextIgnore;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.*;
+import java.time.Duration;
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.core.util.HexUtil;
 import com.forgex.common.domain.config.CaptchaConfig;
+import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.domain.config.CryptoTransportConfig;
+import com.forgex.common.domain.config.InitStatusConfig;
+import com.forgex.common.crypto.CryptoPasswordProvider;
+import com.forgex.common.crypto.CryptoProviders;
 
 /**
  * 系统初始化服务实现。
@@ -76,8 +83,8 @@ public class InitServiceImpl implements InitService {
      */
     @Override
     public R<InitStatusVO> status() {
-        com.forgex.common.domain.config.InitStatusConfig cfg =
-                configService.getJson("sys.init.status", com.forgex.common.domain.config.InitStatusConfig.class, null); // 读取初始化状态配置实体
+        InitStatusConfig cfg =
+                configService.getJson("sys.init.status", InitStatusConfig.class, null); // 读取初始化状态配置实体
         Integer count = (cfg == null || cfg.getUsageCount() == null) ? 0 : cfg.getUsageCount(); // 提取使用次数（默认0）
         Boolean completed = (cfg == null || cfg.getInitCompleted() == null) ? false : cfg.getInitCompleted(); // 提取完成标志（默认false）
         InitStatusVO vo = new InitStatusVO(); // 创建返回对象
@@ -97,18 +104,18 @@ public class InitServiceImpl implements InitService {
     @DSTransactional(rollbackFor = Exception.class)
     public R<Boolean> apply(InitApplyParam param) {
         String lockKey = "sys:init:lock"; // 分布式锁键（避免并发初始化）
-        Boolean ok = redis.opsForValue().setIfAbsent(lockKey, "1", java.time.Duration.ofMinutes(2)); // 获取锁，设置2分钟过期
+        Boolean ok = redis.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMinutes(2)); // 获取锁，设置2分钟过期
         if (Boolean.FALSE.equals(ok)) { // 获取失败（正在初始化）
             return R.fail(500, "正在初始化中，请稍后再试"); // 返回失败提示
         }
         try {
             writeSecurityConfigsToCommon(param); // 写入安全配置到 common 配置库
-            com.forgex.common.domain.config.PasswordPolicyConfig policyCheck = configService.getJson("security.password.policy", com.forgex.common.domain.config.PasswordPolicyConfig.class, null);
+            PasswordPolicyConfig policyCheck = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
             String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456@" : param.getInitialPassword();
             if (!validatePassword(initPwd, policyCheck)) { return R.fail(500, "初始化密码不符合安全策略要求"); }
             clearAdminTables(); // 清空 admin 相关业务表（忽略租户过滤，保证幂等）
             seedAdminData(param); // 重建租户、用户、角色以及绑定关系
-            com.forgex.common.domain.config.InitStatusConfig status = new com.forgex.common.domain.config.InitStatusConfig(); // 创建初始化状态实体
+            InitStatusConfig status = new InitStatusConfig(); // 创建初始化状态实体
             status.setUsageCount(1); // 设置使用次数为1
             status.setInitCompleted(true); // 设置初始化完成标志
             configService.setJson("sys.init.status", status); // 合并写入到配置库
@@ -128,7 +135,7 @@ public class InitServiceImpl implements InitService {
         captcha.setMode(mode);
         configService.setJson("login.captcha", captcha);
 
-        com.forgex.common.domain.config.PasswordPolicyConfig pwdPolicy = new com.forgex.common.domain.config.PasswordPolicyConfig();
+        PasswordPolicyConfig pwdPolicy = new PasswordPolicyConfig();
         String strength = p == null ? null : p.getPwdStrength();
         if ("high".equalsIgnoreCase(strength)) {
             pwdPolicy.setMinLength(8);
@@ -155,9 +162,9 @@ public class InitServiceImpl implements InitService {
         configService.setJson("security.password.policy", pwdPolicy);
 
         if ("sm4".equalsIgnoreCase(storeLower)) {
-            byte[] k = new byte[16]; new java.security.SecureRandom().nextBytes(k);
-            String keyHex = cn.hutool.core.util.HexUtil.encodeHexStr(k);
-            java.util.Map<String, String> sm4Cfg = new java.util.HashMap<>();
+            byte[] k = new byte[16]; new SecureRandom().nextBytes(k);
+            String keyHex = HexUtil.encodeHexStr(k);
+            Map<String, String> sm4Cfg = new HashMap<>();
             sm4Cfg.put("keyHex", keyHex);
             configService.setJson("security.crypto.sm4", sm4Cfg);
         }
@@ -165,7 +172,7 @@ public class InitServiceImpl implements InitService {
         SM2 sm2 = new SM2();
         String pub = sm2.getPublicKeyBase64();
         String pri = sm2.getPrivateKeyBase64();
-        com.forgex.common.domain.config.CryptoTransportConfig crypto = new com.forgex.common.domain.config.CryptoTransportConfig();
+        CryptoTransportConfig crypto = new CryptoTransportConfig();
         crypto.setAlgorithm("SM2");
         crypto.setPublicKey(pub);
         crypto.setPrivateKey(pri);
@@ -196,7 +203,7 @@ public class InitServiceImpl implements InitService {
      * @param policy 策略配置（最小长度、是否要求数字/大小写/符号）
      * @return 是否合规
      */
-    private boolean validatePassword(String pwd, com.forgex.common.domain.config.PasswordPolicyConfig policy) {
+    private boolean validatePassword(String pwd, PasswordPolicyConfig policy) {
         if (pwd == null) return false;
         int len = pwd.length();
         Integer min = policy == null ? null : policy.getMinLength();
@@ -255,7 +262,7 @@ public class InitServiceImpl implements InitService {
         }
         Long defaultTenantId = tenants.get(0).getId();
 
-        com.forgex.common.domain.config.PasswordPolicyConfig policy = configService.getJson("security.password.policy", com.forgex.common.domain.config.PasswordPolicyConfig.class, null);
+        PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
         String store = policy == null ? "bcrypt" : policy.getStore();
         String rawInitPwd = (p == null || p.getInitialPassword() == null || p.getInitialPassword().isEmpty()) ? "Aa123456@" : p.getInitialPassword();
 
@@ -445,7 +452,7 @@ public class InitServiceImpl implements InitService {
         u.setPhone(null);
         u.setStatus(1);
         String s = store == null ? "bcrypt" : store.toLowerCase();
-        com.forgex.common.crypto.CryptoPasswordProvider provider = com.forgex.common.crypto.CryptoProviders.resolve(s, configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolve(s, configService);
         if (provider.supportsEncrypt()) {
             u.setPassword(provider.encrypt(rawPassword));
         } else {
