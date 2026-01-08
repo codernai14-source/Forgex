@@ -17,10 +17,16 @@ import lombok.Data;
 
 /**
  * 选择租户请求参数
+ * 
+ * @author Forgex Team
+ * @date 2026-01-08
  */
 @Data
 public class TenantChoiceParam {
-    private Long tenantId; // 选择的租户ID
-    private String account; // 当前登录账号
-    private String username; // 当前登录用户名（完成最终登录）
+    /** 选择的租户ID */
+    private Long tenantId;
+    /** 当前登录账号 */
+    private String account;
+    /** 当前登录用户名（完成最终登录） */
+    private String username;
 }

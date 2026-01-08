@@ -21,10 +21,14 @@ import lombok.Data;
 /**
  * 用户实体（持久化对象）
  * 对应数据库表：sys_user
+ * 
+ * @author Forgex Team
+ * @date 2026-01-08
  */
 @Data
 @TableName("sys_user")
 public class SysUser extends BaseEntity {
+    /** 账号 */
     private String account;
     /** 用户名 */
     private String username;
@@ -37,6 +41,7 @@ public class SysUser extends BaseEntity {
     /** 状态：1启用 0禁用 */
     private Integer status;
 
+    /** 租户ID（非持久化字段） */
     @TableField(exist = false)
     private Long tenantId;
 }

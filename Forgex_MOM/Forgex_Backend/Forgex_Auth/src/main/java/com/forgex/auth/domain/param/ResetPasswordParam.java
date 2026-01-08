@@ -15,7 +15,14 @@ package com.forgex.auth.domain.param;
 
 import lombok.Data;
 
+/**
+ * 重置密码请求参数
+ * 
+ * @author Forgex Team
+ * @date 2026-01-08
+ */
 @Data
 public class ResetPasswordParam {
+    /** 用户ID */
     private Long userId;
 }

@@ -17,13 +17,31 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
 import lombok.Data;
 
+/**
+ * 系统模块实体。
+ * <p>
+ * 映射表：{@code sys_module}。用于记录系统模块的基本信息。
+ * 字段：
+ * - {@code code} 模块编码；
+ * - {@code name} 模块名称；
+ * - {@code icon} 模块图标；
+ * - {@code orderNum} 排序号；
+ * - {@code visible} 是否可见；
+ * - {@code status} 状态。
+ */
 @Data
 @TableName("sys_module")
 public class SysModule extends BaseEntity {
+    /** 模块编码 */
     private String code;
+    /** 模块名称 */
     private String name;
+    /** 模块图标 */
     private String icon;
+    /** 排序号 */
     private Integer orderNum;
+    /** 是否可见 */
     private Integer visible;
+    /** 状态 */
     private Integer status;
 }

@@ -17,13 +17,27 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+/**
+ * 角色菜单关联实体。
+ * <p>
+ * 映射表：{@code sys_role_menu}。用于记录角色与菜单的关联关系。
+ * 字段：
+ * - {@code id} 主键ID；
+ * - {@code tenantId} 租户ID；
+ * - {@code roleId} 角色ID；
+ * - {@code menuId} 菜单ID。
+ */
 @Data
 @TableName("sys_role_menu")
 public class SysRoleMenu {
+    /** 主键ID */
     @TableId
     private Long id;
+    /** 租户ID */
     private Long tenantId;
+    /** 角色ID */
     private Long roleId;
+    /** 菜单ID */
     private Long menuId;
 }
 

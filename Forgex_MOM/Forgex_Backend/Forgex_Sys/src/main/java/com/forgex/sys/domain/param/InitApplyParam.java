@@ -34,12 +34,16 @@ public class InitApplyParam {
     /** 安全配置占位 */
     private boolean securityAccepted = true;
 
-    /** 安全策略 */
-    private String pwdStrength; // high/normal/low
-    private String initialPassword; // 默认 Aa123456@
-    private Boolean captchaEnabled; // 是否开启验证码
-    private String captchaMode; // image/slider
-    private String passwordStore; // sm2/sm4/bcrypt/argon2/scrypt/pbkdf2
+    /** 安全策略：high/normal/low */
+    private String pwdStrength;
+    /** 初始密码：默认 Aa123456@ */
+    private String initialPassword;
+    /** 是否开启验证码 */
+    private Boolean captchaEnabled;
+    /** 验证码模式：image/slider */
+    private String captchaMode;
+    /** 密码存储算法：sm2/sm4/bcrypt/argon2/scrypt/pbkdf2 */
+    private String passwordStore;
 
     /** 用户可选：test、dev、custom */
     private boolean addTest;
@@ -72,14 +76,26 @@ public class InitApplyParam {
      * 用户-租户绑定。
      * 将某账号绑定到一组租户名称（按名称匹配）。
      */
-    public static class UserTenantBind { public String account; public List<String> tenants; }
+    public static class UserTenantBind {
+        /** 账号 */
+        public String account;
+        /** 租户列表 */
+        public List<String> tenants;
+    }
     private List<UserTenantBind> userTenantBinds;
 
     /**
      * 用户-角色绑定（按租户）。
      * 指定账号、租户名称与角色键，建立三者绑定关系。
      */
-    public static class UserRoleBind { public String account; public String tenant; public String roleKey; }
+    public static class UserRoleBind {
+        /** 账号 */
+        public String account;
+        /** 租户名称 */
+        public String tenant;
+        /** 角色键 */
+        public String roleKey;
+    }
     private List<UserRoleBind> userRoleBinds;
 
 }

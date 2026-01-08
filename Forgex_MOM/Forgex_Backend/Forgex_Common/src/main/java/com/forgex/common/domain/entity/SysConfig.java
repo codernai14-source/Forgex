@@ -29,5 +29,6 @@ public class SysConfig extends BaseEntity {
     private String configKey;
     /** 配置值（文本或JSON，推荐JSON以承载复杂结构） */
     private String configValue;
+    /** 备注 */
     private String remark;
 }
