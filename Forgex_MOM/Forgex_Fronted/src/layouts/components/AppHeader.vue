@@ -1,0 +1,426 @@
+<template>
+  <a-layout-header class="app-header">
+    <!-- 左侧：Logo + 系统名称 -->
+    <div class="app-header-left">
+      <div class="app-logo">
+        <img v-if="logo" :src="logo" alt="Logo" class="logo-image" @error="onLogoError" />
+        <AppstoreOutlined v-else class="logo-icon" />
+      </div>
+      <div class="app-title">{{ title || 'Forgex MOM' }}</div>
+    </div>
+
+    <!-- 中间：模块导航（仅混合布局模式显示） -->
+    <div
+      v-if="showModuleNav"
+      class="app-header-middle"
+    >
+      <a-menu
+        mode="horizontal"
+        :selected-keys="props.activeModuleCode ? [props.activeModuleCode] : []"
+        class="module-menu"
+        @click="onModuleClick"
+      >
+        <a-menu-item
+          v-for="mod in modules"
+          :key="mod.code"
+          class="module-menu-item"
+        >
+          <template #icon>
+            <component v-if="mod.icon" :is="getIcon(mod.icon)" />
+            <AppstoreOutlined v-else />
+          </template>
+          <span>{{ mod.name }}</span>
+        </a-menu-item>
+      </a-menu>
+    </div>
+
+    <!-- 右侧：搜索 + 工具按钮 + 用户菜单 -->
+    <div class="app-header-right">
+      <a-space :size="12">
+        <!-- 全局搜索按钮 -->
+        <a-button
+          v-if="showSearch"
+          type="text"
+          class="header-btn"
+          @click="onSearchClick"
+        >
+          <template #icon>
+            <SearchOutlined />
+          </template>
+          <span class="search-text">搜索</span>
+          <span class="search-shortcut">Ctrl+K</span>
+        </a-button>
+
+        <!-- 语言切换 -->
+        <a-select
+          v-if="showLangSwitch"
+          v-model:value="currentLocale"
+          size="small"
+          class="lang-select"
+          @change="onLocaleChange"
+        >
+          <a-select-option value="zh-CN">简体中文</a-select-option>
+          <a-select-option value="en-US">English</a-select-option>
+        </a-select>
+
+        <!-- 刷新按钮 -->
+        <a-button
+          v-if="showRefresh"
+          type="text"
+          class="header-btn"
+          @click="onRefresh"
+        >
+          <template #icon>
+            <SyncOutlined />
+          </template>
+        </a-button>
+
+        <!-- 布局设置按钮 -->
+        <a-button
+          type="text"
+          class="header-btn"
+          @click="onSettingsClick"
+        >
+          <template #icon>
+            <SettingOutlined />
+          </template>
+        </a-button>
+
+        <!-- 用户下拉菜单 -->
+        <a-dropdown placement="bottomRight">
+          <div class="user-dropdown-trigger">
+            <a-avatar
+              v-if="user.avatar"
+              :src="user.avatar"
+              :size="32"
+              class="user-avatar"
+            />
+            <a-avatar
+              v-else
+              :size="32"
+              class="user-avatar user-avatar-default"
+            >
+              {{ userInitial }}
+            </a-avatar>
+            <span class="user-name">{{ user.name || user.account || '未登录' }}</span>
+            <DownOutlined class="user-dropdown-icon" />
+          </div>
+          <template #overlay>
+            <a-menu @click="onUserMenuClick">
+              <a-menu-item key="profile">
+                <UserOutlined />
+                <span>个人信息</span>
+              </a-menu-item>
+              <a-menu-item key="password">
+                <KeyOutlined />
+                <span>修改密码</span>
+              </a-menu-item>
+              <a-menu-divider />
+              <a-menu-item key="logout">
+                <LogoutOutlined />
+                <span>退出登录</span>
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </a-space>
+    </div>
+  </a-layout-header>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { getIcon } from '../../utils/icon'
+import {
+  SearchOutlined,
+  SettingOutlined,
+  DownOutlined,
+  UserOutlined,
+  KeyOutlined,
+  LogoutOutlined,
+  AppstoreOutlined,
+  SyncOutlined
+} from '@ant-design/icons-vue'
+
+interface Module {
+  code: string
+  name: string
+  icon?: string
+  order: number
+}
+
+interface User {
+  account: string
+  name?: string
+  avatar?: string
+}
+
+interface AppHeaderProps {
+  logo?: string
+  title?: string
+  modules?: Module[]
+  activeModuleCode?: string
+  layoutMode?: 'vertical' | 'vertical-mix' | 'top' | 'mix'
+  showSearch?: boolean
+  showLangSwitch?: boolean
+  showRefresh?: boolean
+  user: User
+}
+
+const props = withDefaults(defineProps<AppHeaderProps>(), {
+  logo: '',
+  title: 'Forgex MOM',
+  modules: () => [],
+  activeModuleCode: '',
+  layoutMode: 'mix',
+  showSearch: true,
+  showLangSwitch: true,
+  showRefresh: true,
+  user: () => ({ account: '', name: '', avatar: '' })
+})
+
+const emit = defineEmits<{
+  'module-click': [moduleCode: string]
+  'search-click': []
+  'settings-click': []
+  'user-menu-click': [key: string]
+  'locale-change': [locale: string]
+  'refresh': []
+}>()
+
+// 当前语言
+const currentLocale = ref<string>(localStorage.getItem('fx-locale') || 'zh-CN')
+
+// 是否显示模块导航
+const showModuleNav = computed(() => {
+  return (props.layoutMode === 'mix' || props.layoutMode === 'top') && props.modules.length > 0
+})
+
+// 用户名首字母
+const userInitial = computed(() => {
+  const name = props.user.name || props.user.account || ''
+  if (!name) return 'U'
+  return name.charAt(0).toUpperCase()
+})
+
+// Logo 加载失败处理
+const onLogoError = (e: Event) => {
+  const target = e.target as HTMLImageElement
+  target.style.display = 'none'
+}
+
+// 模块点击
+const onModuleClick = (info: any) => {
+  const key = info.key as string
+  if (key) {
+    emit('module-click', key)
+  }
+}
+
+// 搜索点击
+const onSearchClick = () => {
+  emit('search-click')
+}
+
+// 设置点击
+const onSettingsClick = () => {
+  emit('settings-click')
+}
+
+// 用户菜单点击
+const onUserMenuClick = (info: any) => {
+  const key = info.key as string
+  if (key) {
+    emit('user-menu-click', key)
+  }
+}
+
+// 语言切换
+const onLocaleChange = (locale: string) => {
+  emit('locale-change', locale)
+}
+
+// 刷新
+const onRefresh = () => {
+  emit('refresh')
+}
+</script>
+
+<style scoped lang="less">
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: var(--fx-header-bg, #ffffff);
+  // 移除边框，由 main-layout.less 中的 .fx-header 统一管理
+  // border-bottom: 1px solid var(--fx-border-color, #f0f0f0);
+  // box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.logo-icon {
+  font-size: 24px;
+  color: var(--fx-theme-color, #1677ff);
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fx-header-color, #1f2937);
+  white-space: nowrap;
+}
+
+.app-header-middle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0 24px;
+  overflow: hidden;
+}
+
+.module-menu {
+  border-bottom: none;
+  background: transparent;
+  
+  :deep(.ant-menu-item) {
+    border-bottom: 2px solid transparent;
+    font-size: var(--fx-font-size, 14px);
+    
+    &:hover {
+      color: var(--fx-theme-color, #1677ff);
+    }
+    
+    &.ant-menu-item-selected {
+      color: var(--fx-theme-color, #1677ff);
+      border-bottom-color: var(--fx-theme-color, #1677ff);
+    }
+  }
+}
+
+.module-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.module-icon {
+  font-size: calc(var(--fx-font-size, 14px) * 1.15);
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fx-header-color, #4b5563);
+  
+  &:hover {
+    color: var(--fx-theme-color, #1677ff);
+    background: rgba(22, 119, 255, 0.08);
+  }
+}
+
+.search-text {
+  font-size: var(--fx-font-size, 14px);
+}
+
+.search-shortcut {
+  padding: 2px 6px;
+  font-size: calc(var(--fx-font-size, 14px) * 0.85);
+  color: #9ca3af;
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.lang-select {
+  width: 120px;
+}
+
+.user-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.user-avatar-default {
+  background: linear-gradient(135deg, var(--fx-theme-color, #1677ff), #4b5563);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: var(--fx-font-size, 14px);
+  color: var(--fx-header-color, #1f2937);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown-icon {
+  font-size: calc(var(--fx-font-size, 14px) * 0.85);
+  color: #9ca3af;
+}
+
+// 响应式适配
+@media (max-width: 768px) {
+  .app-header {
+    padding: 0 12px;
+  }
+  
+  .app-title {
+    font-size: 16px;
+  }
+  
+  .search-text,
+  .search-shortcut {
+    display: none;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .app-header-middle {
+    display: none;
+  }
+}
+</style>

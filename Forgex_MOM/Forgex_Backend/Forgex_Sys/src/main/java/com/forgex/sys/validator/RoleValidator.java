@@ -1,0 +1,84 @@
+package com.forgex.sys.validator;
+
+import com.forgex.common.exception.BusinessException;
+import com.forgex.sys.domain.dto.SysRoleDTO;
+import com.forgex.sys.service.ISysRoleService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
+
+/**
+ * 角色数据校验器
+ * 
+ * @author Forgex Team
+ * @date 2025-01-07
+ */
+@Component
+@RequiredArgsConstructor
+public class RoleValidator {
+    
+    private final ISysRoleService roleService;
+    
+    /**
+     * 新增角色校验
+     * 
+     * @param roleDTO 角色信息
+     */
+    public void validateForAdd(SysRoleDTO roleDTO) {
+        // 1. 必填项校验
+        Assert.hasText(roleDTO.getRoleName(), "角色名称不能为空");
+        Assert.hasText(roleDTO.getRoleKey(), "角色键不能为空");
+        
+        // 2. 角色键唯一性校验
+        if (roleService.existsByRoleKey(roleDTO.getRoleKey())) {
+            throw new BusinessException("角色键已存在");
+        }
+    }
+    
+    /**
+     * 更新角色校验
+     * 
+     * @param roleDTO 角色信息
+     */
+    public void validateForUpdate(SysRoleDTO roleDTO) {
+        // 1. ID校验
+        Assert.notNull(roleDTO.getId(), "角色ID不能为空");
+        
+        // 2. 存在性校验
+        if (!roleService.existsById(roleDTO.getId())) {
+            throw new BusinessException("角色不存在");
+        }
+        
+        // 3. 角色键唯一性校验（排除自己）
+        if (roleService.existsByRoleKeyExcludeId(roleDTO.getRoleKey(), roleDTO.getId())) {
+            throw new BusinessException("角色键已被其他角色使用");
+        }
+    }
+    
+    /**
+     * 删除角色校验
+     * 
+     * @param id 角色ID
+     */
+    public void validateForDelete(Long id) {
+        // 1. ID校验
+        validateId(id);
+        
+        // 2. 存在性校验
+        if (!roleService.existsById(id)) {
+            throw new BusinessException("角色不存在");
+        }
+    }
+    
+    /**
+     * ID校验
+     * 
+     * @param id 角色ID
+     */
+    public void validateId(Long id) {
+        Assert.notNull(id, "角色ID不能为空");
+        if (id <= 0) {
+            throw new BusinessException("角色ID格式不正确");
+        }
+    }
+}

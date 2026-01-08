@@ -1,0 +1,122 @@
+package com.forgex.common.config.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.forgex.common.config.ConfigService;
+import com.forgex.common.domain.entity.SysConfig;
+import com.forgex.common.mapper.SysConfigMapper;
+import cn.hutool.json.JSONUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.baomidou.dynamic.datasource.annotation.DS;
+
+/**
+ * 系统配置读取服务实现（通用实现）
+ * 作用：提供对 `sys_config` 的统一读取能力，支持基础类型与 JSON 映射；
+ * 逻辑：按键查询配置表，空值时返回默认值，JSON 解析失败时返回默认对象。
+ */
+/**
+ * 系统配置服务实现
+ * 作用：统一从配置库读取系统配置（值为JSON或文本），并提供便捷方法。
+ * 数据源：读取自 `forgex_common` 库，因此通过 @DS("common") 指定动态数据源。
+ */
+@Service
+@DS("common")
+public class ConfigServiceImpl implements ConfigService {
+    /** 配置表 Mapper，负责 sys_config 基础CRUD */
+    @Autowired
+    private SysConfigMapper mapper;
+
+    /**
+     * 获取布尔配置
+     * 逻辑：读取配置值，按 'true'/'1' 判断为 true，其它为 false
+     * @param key 配置键
+     * @param def 默认值
+     * @return 布尔结果
+     * @see com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper
+     */
+    @Override
+    public boolean getBoolean(String key, boolean def) {
+        try { DynamicDataSourceContextHolder.push("common");
+            SysConfig cfg = mapper.getByKey(key);
+            if (cfg == null || cfg.getConfigValue() == null) return def;
+            String v = cfg.getConfigValue().trim();
+            return "true".equalsIgnoreCase(v) || "1".equals(v);
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+
+    /**
+     * 获取字符串配置
+     * 逻辑：读取文本值，空值返回默认
+     * @param key 配置键
+     * @param def 默认值
+     * @return 字符串
+     */
+    @Override
+    public String getString(String key, String def) {
+        try { DynamicDataSourceContextHolder.push("common");
+            SysConfig cfg = mapper.getByKey(key);
+            if (cfg == null || cfg.getConfigValue() == null) return def;
+            return cfg.getConfigValue();
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+
+    /**
+     * 获取整数配置
+     * 逻辑：尝试解析为整数，失败返回默认
+     * @param key 配置键
+     * @param def 默认值
+     * @return 整数值
+     */
+    @Override
+    public int getInt(String key, int def) {
+        try { DynamicDataSourceContextHolder.push("common");
+            SysConfig cfg = mapper.getByKey(key);
+            if (cfg == null || cfg.getConfigValue() == null) return def;
+            try {
+                return Integer.parseInt(cfg.getConfigValue().trim());
+            } catch (Exception e) {
+                return def;
+            }
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+
+    /**
+     * 获取 JSON 配置并反序列化为实体对象
+     * 逻辑：读取文本 -> 解析为目标类型；异常时返回默认对象
+     * @param key 配置键
+     * @param type 目标类型
+     * @param def 默认对象
+     * @return 解析后的实体
+     * @see cn.hutool.json.JSONUtil#toBean(String, Class)
+     */
+    @Override
+    public <T> T getJson(String key, Class<T> type, T def) {
+        try { DynamicDataSourceContextHolder.push("common");
+            SysConfig cfg = mapper.getByKey(key);
+            if (cfg == null || cfg.getConfigValue() == null) return def;
+            try {
+                return JSONUtil.toBean(cfg.getConfigValue(), type);
+            } catch (Exception e) {
+                return def;
+            }
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+
+    @Override
+    public void setJson(String key, Object value) {
+        try { DynamicDataSourceContextHolder.push("common");
+            String json = JSONUtil.toJsonStr(value);
+            SysConfig cfg = mapper.getByKey(key);
+            if (cfg == null) {
+                cfg = new SysConfig();
+                cfg.setConfigKey(key);
+                cfg.setConfigValue(json);
+                mapper.insert(cfg);
+            } else {
+                cfg.setConfigValue(json);
+                mapper.updateById(cfg);
+            }
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+}

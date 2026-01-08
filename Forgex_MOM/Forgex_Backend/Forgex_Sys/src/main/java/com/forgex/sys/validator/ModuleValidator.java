@@ -1,0 +1,107 @@
+package com.forgex.sys.validator;
+
+import com.forgex.common.exception.BusinessException;
+import com.forgex.sys.domain.dto.SysModuleDTO;
+import com.forgex.sys.service.ISysModuleService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
+
+/**
+ * 模块数据校验器
+ * 
+ * @author Forgex Team
+ * @date 2025-01-07
+ */
+@Component
+@RequiredArgsConstructor
+public class ModuleValidator {
+    
+    private final ISysModuleService moduleService;
+    
+    /**
+     * 新增模块校验
+     * 
+     * @param moduleDTO 模块信息
+     */
+    public void validateForAdd(SysModuleDTO moduleDTO) {
+        // 1. 必填项校验（@Validated注解已处理，这里做额外校验）
+        Assert.hasText(moduleDTO.getCode(), "模块编码不能为空");
+        Assert.hasText(moduleDTO.getName(), "模块名称不能为空");
+        
+        // 2. 业务规则校验：模块编码唯一性
+        if (moduleService.existsByCode(moduleDTO.getCode())) {
+            throw new BusinessException("模块编码已存在");
+        }
+        
+        // 3. 数据格式校验
+        validateModuleCode(moduleDTO.getCode());
+    }
+    
+    /**
+     * 更新模块校验
+     * 
+     * @param moduleDTO 模块信息
+     */
+    public void validateForUpdate(SysModuleDTO moduleDTO) {
+        // 1. ID校验
+        Assert.notNull(moduleDTO.getId(), "模块ID不能为空");
+        
+        // 2. 存在性校验
+        if (!moduleService.existsById(moduleDTO.getId())) {
+            throw new BusinessException("模块不存在");
+        }
+        
+        // 3. 唯一性校验（排除自己）
+        if (moduleService.existsByCodeExcludeId(moduleDTO.getCode(), moduleDTO.getId())) {
+            throw new BusinessException("模块编码已被其他模块使用");
+        }
+        
+        // 4. 数据格式校验
+        validateModuleCode(moduleDTO.getCode());
+    }
+    
+    /**
+     * 删除模块校验
+     * 
+     * @param id 模块ID
+     */
+    public void validateForDelete(Long id) {
+        // 1. ID校验
+        validateId(id);
+        
+        // 2. 存在性校验
+        if (!moduleService.existsById(id)) {
+            throw new BusinessException("模块不存在");
+        }
+        
+        // 3. 关联数据校验：检查是否有关联菜单
+        if (moduleService.hasMenus(id)) {
+            throw new BusinessException("该模块下存在菜单，无法删除");
+        }
+    }
+    
+    /**
+     * ID校验
+     * 
+     * @param id 模块ID
+     */
+    public void validateId(Long id) {
+        Assert.notNull(id, "模块ID不能为空");
+        if (id <= 0) {
+            throw new BusinessException("模块ID格式不正确");
+        }
+    }
+    
+    /**
+     * 模块编码格式校验
+     * 
+     * @param code 模块编码
+     */
+    private void validateModuleCode(String code) {
+        // 模块编码规则：只能包含字母、数字、下划线，长度2-50
+        if (!code.matches("^[a-zA-Z0-9_]{2,50}$")) {
+            throw new BusinessException("模块编码格式不正确，只能包含字母、数字、下划线，长度2-50");
+        }
+    }
+}
