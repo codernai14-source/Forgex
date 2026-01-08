@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.auth.service.impl;
 
+import cloud.tianai.captcha.validator.common.model.dto.MatchParam;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.util.IdUtil;
@@ -94,7 +95,7 @@ public class CaptchaServiceImpl implements CaptchaService {
      */
     @Override
     public String validateSlider(String id, Object track) {
-        var matching = captchaApplication.matching(id, track);
+        var matching = captchaApplication.matching(id, (MatchParam) track);
         if (matching != null && matching.isSuccess()) {
             String token = IdUtil.fastUUID();
             CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
