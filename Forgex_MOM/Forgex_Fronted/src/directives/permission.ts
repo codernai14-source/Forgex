@@ -10,6 +10,7 @@
  * ```
  */
 import { Directive, DirectiveBinding } from 'vue'
+import { usePermissionStore } from '@/stores/permission'
 
 /**
  * 检查是否有权限
@@ -17,20 +18,29 @@ import { Directive, DirectiveBinding } from 'vue'
  * @returns 是否有权限
  */
 function hasPermission(permKey: string): boolean {
-  // 从 sessionStorage 获取用户权限列表
-  const permissions = sessionStorage.getItem('permissions')
+  const permissionStore = usePermissionStore()
   
-  if (!permissions) {
-    return false
+  // 添加调试日志
+  console.log('[Permission] Checking permission:', permKey)
+  console.log('[Permission] hasPermission type:', typeof permissionStore.hasPermission)
+  console.log('[Permission] hasPermission.value type:', typeof permissionStore.hasPermission.value)
+  
+  // 兼容性检查：支持多种调用方式
+  const checkFn = permissionStore.hasPermission
+  
+  // 如果 hasPermission 本身就是函数（旧版本）
+  if (typeof checkFn === 'function') {
+    return checkFn(permKey)
   }
   
-  try {
-    const permList: string[] = JSON.parse(permissions)
-    return permList.includes(permKey)
-  } catch (error) {
-    console.error('Failed to parse permissions:', error)
-    return false
+  // 如果 hasPermission.value 是函数（新版本 computed）
+  if (checkFn && typeof checkFn.value === 'function') {
+    return checkFn.value(permKey)
   }
+  
+  // 降级：直接检查 permissions 数组
+  console.warn('[Permission] Fallback to direct permissions check')
+  return permissionStore.permissions.includes(permKey)
 }
 
 /**

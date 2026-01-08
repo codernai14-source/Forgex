@@ -43,6 +43,7 @@ router.beforeEach(async (to, from, next) => {
   
   // 如果访问登录页或初始化页，直接放行
   if (to.path === '/login' || to.path === '/init') {
+    console.log('[Guard] Accessing login/init page, allowing')
     next()
     return
   }
@@ -54,33 +55,51 @@ router.beforeEach(async (to, from, next) => {
     return
   }
   
-  // 如果已登录但动态路由未加载，尝试从 localStorage 恢复
+  // 如果动态路由为空，尝试从 localStorage 恢复
   if (dynamicRoutes.value.length === 0) {
-    console.log('[Guard] Dynamic routes not loaded, trying to restore from cache')
-    const cachedRoutes = localStorage.getItem('fx-dynamic-routes')
-    const cachedModules = localStorage.getItem('fx-dynamic-modules')
-    
-    if (cachedRoutes && cachedModules) {
-      try {
-        const routes = JSON.parse(cachedRoutes)
-        const modules = JSON.parse(cachedModules)
-        await injectDynamicRoutes(router, { routes, modules })
-        console.log('[Guard] Routes restored from cache, re-navigating')
-        // 重新导航到目标路由
+    console.log('[Guard] Dynamic routes empty, trying to restore from localStorage')
+    try {
+      const cachedRoutes = localStorage.getItem('fx-dynamic-routes')
+      const cachedModules = localStorage.getItem('fx-dynamic-modules')
+      
+      if (cachedRoutes && cachedModules) {
+        const routesPayload = JSON.parse(cachedRoutes)
+        const modulesPayload = JSON.parse(cachedModules)
+        
+        console.log('[Guard] Restoring routes from cache:', routesPayload)
+        
+        // 重新注入动态路由
+        await injectDynamicRoutes(router, {
+          routes: routesPayload,
+          modules: modulesPayload
+        })
+        
+        console.log('[Guard] Routes restored, redirecting to:', to.fullPath)
+        // 路由已恢复，重新导航到目标路径
         next({ ...to, replace: true })
         return
-      } catch (e) {
-        console.error('Failed to restore dynamic routes:', e)
+      } else {
+        console.log('[Guard] No cached routes found, redirecting to login')
+        // 没有缓存的路由，需要重新登录
+        next('/login')
+        return
       }
+    } catch (error) {
+      console.error('[Guard] Failed to restore routes:', error)
+      next('/login')
+      return
     }
-    
-    // 如果无法恢复动态路由，跳转到登录页
-    console.log('[Guard] Cannot restore routes, redirecting to login')
-    next('/login')
+  }
+  
+  // 如果访问 /workspace 根路径，重定向到系统管理主页
+  if (to.path === '/workspace' || to.path === '/workspace/') {
+    console.log('[Guard] Redirecting to system dashboard')
+    next('/workspace/sys/dashboard')
     return
   }
   
-  console.log('[Guard] All checks passed, proceeding')
+  // 如果已登录，直接放行（动态路由已经在登录时注入）
+  console.log('[Guard] User logged in, allowing access')
   next()
 })
 
@@ -93,7 +112,9 @@ const componentMap: Record<string, any> = {
   SystemUser: () => import('../views/system/user/index.vue'),
   SystemRole: () => import('../views/system/role/index.vue'),
   SystemModule: () => import('../views/system/module/index.vue'),
-  SystemMenu: () => import('../views/system/menu/index.vue')
+  SystemMenu: () => import('../views/system/menu/index.vue'),
+  SystemDepartment: () => import('../views/system/department/index.vue'),
+  SystemPosition: () => import('../views/system/position/index.vue')
 }
 
 export const dynamicModules = ref<any[]>([])
@@ -123,6 +144,21 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
     
     console.log(`[Route] Processing module: ${moduleCode}`)
     
+    // 为每个模块自动注册 dashboard 路由
+    const dashboardComponentKey = `${moduleCode.charAt(0).toUpperCase() + moduleCode.slice(1)}Dashboard`
+    const dashboardComponent = componentMap[dashboardComponentKey] || componentMap['SystemDashboard']
+    
+    console.log(`[Route] Registering dashboard route: /workspace/${moduleCode}/dashboard (component: ${dashboardComponentKey})`)
+    r.addRoute('Workspace', {
+      path: `${moduleCode}/dashboard`,
+      name: `${moduleCode}-dashboard`,
+      component: dashboardComponent,
+      meta: {
+        title: '主页',
+        module: moduleCode
+      }
+    })
+    
     for (const c of children) {
       const key = c.component
       const comp = componentMap[key] || EmptyView
@@ -144,6 +180,9 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
     }
   }
   
+  // 等待路由注册完成
+  await r.isReady()
+  
   // 打印所有注册的路由
   console.log('[Route] All registered routes:')
   r.getRoutes().forEach(route => {
@@ -151,4 +190,6 @@ export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, pa
       console.log(`  - ${route.path} (name: ${route.name})`)
     }
   })
+  
+  console.log('[Route] Route injection completed')
 }

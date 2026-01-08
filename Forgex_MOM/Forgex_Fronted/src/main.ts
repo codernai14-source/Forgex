@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import i18n from './locales'
@@ -8,6 +9,7 @@ import * as Icons from '@ant-design/icons-vue'
 import { permission } from './directives/permission'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 // 注册权限指令
 app.directive('permission', permission)
@@ -56,4 +58,4 @@ iconComponents.forEach(name => {
   }
 })
 
-app.use(router).use(Antd).use(i18n).mount('#app')
+app.use(pinia).use(router).use(Antd).use(i18n).mount('#app')

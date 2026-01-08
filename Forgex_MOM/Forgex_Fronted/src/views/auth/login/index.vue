@@ -177,6 +177,12 @@ import { getLoginCaptcha } from '../../../api/sys/config'
 import { reloadTenantIgnore } from '../../../api/sys/tenant'
 import { getInitStatus } from '../../../api/sys/init'
 import { sm2 } from 'sm-crypto'
+import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
+
+// 初始化 stores
+const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 const account = ref('admin')
 const password = ref('password')
@@ -250,6 +256,8 @@ async function onPreLogin() {
 }
 
 async function confirmTenant() {
+  console.log('[Login] confirmTenant called, chosenTenant:', chosenTenant.value)
+  
   if (!chosenTenant.value) {
     message.warning('请先选择一个租户')
     return
@@ -267,9 +275,13 @@ async function confirmTenant() {
     })
     // 后端返回 true 表示成功，token 通过 cookie 传递
     if (result === true) {
-      sessionStorage.setItem('account', account.value)
-      sessionStorage.setItem('tenantId', chosenTenant.value)
-      // 不需要手动设置 token，Sa-Token 会通过 cookie 自动管理
+      // 存储用户信息到 Pinia Store
+      userStore.setUserInfo({
+        account: account.value,
+        username: account.value,
+        tenantId: chosenTenant.value,
+        tenantName: current.name
+      })
       
       // 获取路由时需要传递 account 和 tenantId
       const routesRes = await getRoutes({
@@ -279,25 +291,53 @@ async function confirmTenant() {
       
       console.log('[Login] Routes response:', routesRes)
       
+      // 存储按钮权限到 Pinia Store
+      if (routesRes && routesRes.buttons) {
+        permissionStore.setPermissions(routesRes.buttons)
+        console.log('[Login] Permissions stored to Pinia:', routesRes.buttons)
+      } else {
+        // 如果没有权限数据，存储空数组
+        permissionStore.setPermissions([])
+        console.log('[Login] No permissions found, stored empty array')
+      }
+      
+      // 存储路由和模块信息
+      if (routesRes && routesRes.routes) {
+        permissionStore.setRoutes(routesRes.routes)
+      }
+      if (routesRes && routesRes.modules) {
+        permissionStore.setModules(routesRes.modules)
+      }
+      
       await injectDynamicRoutes(router, routesRes)
       
-      console.log('[Login] Dynamic routes injected, count:', dynamicRoutes.value.length)
-      
-      // 确保路由注入完成后再跳转
-      await router.isReady()
+      console.log('[Login] Dynamic routes injected successfully')
       
       tenantOpen.value = false
+      console.log('[Login] Tenant dialog closed')
+      
       if (remember.value) {
         localStorage.setItem('fx-remember-account', account.value)
       } else {
         localStorage.removeItem('fx-remember-account')
       }
       
-      // 使用 nextTick 确保 DOM 更新完成
+      // 等待 DOM 更新和路由准备完成
       await nextTick()
+      await router.isReady()
+      console.log('[Login] Router is ready')
       
-      console.log('[Login] About to navigate to /workspace')
-      router.replace('/workspace')
+      // 跳转到系统管理主页
+      const targetPath = '/workspace/sys/dashboard'
+      
+      console.log('[Login] Navigating to:', targetPath)
+      
+      // 直接导航，不需要 setTimeout
+      router.push(targetPath).then(() => {
+        console.log('[Login] Navigation completed')
+      }).catch((err) => {
+        console.error('[Login] Navigation error:', err)
+      })
     } else {
       message.error('选择租户失败，请稍后重试')
     }
