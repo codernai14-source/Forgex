@@ -28,8 +28,12 @@ export function useModule() {
     loading.value = true
     try {
       const response = await getModulePage(queryParams)
-      // http拦截器已经返回了data字段，不需要再访问response.data
-      dataSource.value = response.records || []
+      const records = response.records || []
+      dataSource.value = records.map((item: any) => ({
+        ...item,
+        visible: item.visible ? 1 : 0,
+        status: item.status ? 1 : 0
+      }))
       total.value = response.total || 0
     } catch (error) {
       console.error('加载模块列表失败:', error)

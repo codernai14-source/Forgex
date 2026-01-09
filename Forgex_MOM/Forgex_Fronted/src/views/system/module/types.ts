@@ -7,22 +7,25 @@
  */
 export interface Module {
   id?: string
-  moduleName: string
-  moduleCode: string
+  code: string
+  name: string
   icon?: string
   orderNum: number
+  visible: number
   status: number
-  remark?: string
+  tenantId?: string
   createTime?: string
+  createBy?: string
   updateTime?: string
+  updateBy?: string
 }
 
 /**
  * 模块查询参数
  */
 export interface ModuleQuery {
-  moduleName?: string
-  moduleCode?: string
+  code?: string
+  name?: string
   status?: number
   pageNum: number
   pageSize: number
