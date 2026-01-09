@@ -541,6 +541,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 vo.setType(m.getType());
                 vo.setMenuLevel(m.getMenuLevel());
                 vo.setOrderNum(m.getOrderNum());
+                vo.setMenuMode(m.getMenuMode());
+                vo.setPermKey(m.getPermKey());
+                vo.setVisible(m.getVisible());
+                vo.setStatus(m.getStatus());
+                vo.setCreateTime(m.getCreateTime());
+                vo.setCreateBy(m.getCreateBy());
+                vo.setUpdateTime(m.getUpdateTime());
+                vo.setUpdateBy(m.getUpdateBy());
                 vo.setChildren(buildMenuTree(menus, m.getId()));
                 return vo;
             })

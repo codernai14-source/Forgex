@@ -325,7 +325,8 @@ const highlightKeyword = (text: string) => {
   align-items: center;
   gap: 8px;
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--fx-border-color, #1f2937);
+  background: var(--fx-bg-container, #111827);
 }
 
 .search-icon {
@@ -358,10 +359,10 @@ const highlightKeyword = (text: string) => {
 .search-shortcut {
   padding: 4px 8px;
   font-size: 12px;
-  color: #9ca3af;
-  background: #f3f4f6;
+  color: var(--fx-header-shortcut-color, #9ca3af);
+  background: var(--fx-header-shortcut-bg, #1f2937);
   border-radius: 4px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--fx-border-color, #374151);
 }
 
 .search-results {

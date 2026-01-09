@@ -36,8 +36,8 @@ export function useMenuForm(emit: any) {
     menuMode: 'embedded',
     externalUrl: undefined,
     orderNum: 0,
-    visible: 1,
-    status: 1
+    visible: true,
+    status: true
   })
   
   // 表单标题
@@ -165,8 +165,8 @@ export function useMenuForm(emit: any) {
       menuMode: 'embedded',
       externalUrl: undefined,
       orderNum: 0,
-      visible: 1,
-      status: 1
+      visible: true,
+      status: true
     })
   }
   

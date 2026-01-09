@@ -21,8 +21,8 @@ export interface Menu {
   menuMode: 'embedded' | 'external'  // 菜单模式：embedded=内嵌，external=外联
   externalUrl?: string               // 外联URL
   orderNum: number
-  visible: number
-  status: number
+  visible: boolean
+  status: boolean
   createTime?: string
   updateTime?: string
   children?: Menu[]        // 子菜单
@@ -34,7 +34,7 @@ export interface Menu {
 export interface MenuQuery {
   moduleId?: string
   name?: string
-  status?: number
+  status?: boolean
 }
 
 /**

@@ -141,6 +141,11 @@ export function generateCSSVariables(
     // ==================== 其他 ====================
     '--fx-content-width': contentWidth,
     '--fx-bg-mask': tokens.colorBgMask,
+    
+    // 顶栏快捷键/按钮等辅助色
+    '--fx-header-shortcut-bg': tokens.colorFillSecondary,
+    '--fx-header-shortcut-color': tokens.colorTextSecondary,
+    '--fx-header-btn-hover-bg': tokens.colorFill,
   } as CSSProperties
 }
 

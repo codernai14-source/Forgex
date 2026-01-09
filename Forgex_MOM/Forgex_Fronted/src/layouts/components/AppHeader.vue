@@ -305,7 +305,7 @@ const onRefresh = () => {
   background: transparent;
   
   :deep(.ant-menu-item) {
-    border-bottom: 2px solid transparent;
+    border-bottom: none;
     font-size: var(--fx-font-size, 14px);
     
     &:hover {
@@ -314,7 +314,7 @@ const onRefresh = () => {
     
     &.ant-menu-item-selected {
       color: var(--fx-theme-color, #1677ff);
-      border-bottom-color: var(--fx-theme-color, #1677ff);
+      border-bottom: none;
     }
   }
 }
@@ -339,10 +339,11 @@ const onRefresh = () => {
   align-items: center;
   gap: 6px;
   color: var(--fx-header-color, #4b5563);
+  background: transparent;
   
   &:hover {
     color: var(--fx-theme-color, #1677ff);
-    background: rgba(22, 119, 255, 0.08);
+    background: var(--fx-header-btn-hover-bg, rgba(22, 119, 255, 0.08));
   }
 }
 
@@ -353,8 +354,8 @@ const onRefresh = () => {
 .search-shortcut {
   padding: 2px 6px;
   font-size: calc(var(--fx-font-size, 14px) * 0.85);
-  color: #9ca3af;
-  background: #f3f4f6;
+  color: var(--fx-header-shortcut-color, #9ca3af);
+  background: var(--fx-header-shortcut-bg, #f3f4f6);
   border-radius: 4px;
 }
 

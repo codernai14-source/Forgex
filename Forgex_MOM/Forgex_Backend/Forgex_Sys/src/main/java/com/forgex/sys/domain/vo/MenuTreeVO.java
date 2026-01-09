@@ -15,6 +15,7 @@ package com.forgex.sys.domain.vo;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -65,6 +66,46 @@ public class MenuTreeVO {
      * 排序号
      */
     private Integer orderNum;
+    
+    /**
+     * 菜单模式：embedded=内嵌，external=外联
+     */
+    private String menuMode;
+    
+    /**
+     * 权限标识
+     */
+    private String permKey;
+    
+    /**
+     * 是否可见：false=隐藏，true=显示
+     */
+    private Boolean visible;
+    
+    /**
+     * 状态：false=禁用，true=启用
+     */
+    private Boolean status;
+    
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+    
+    /**
+     * 创建人
+     */
+    private String createBy;
+    
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
+    
+    /**
+     * 更新人
+     */
+    private String updateBy;
     
     /**
      * 子菜单列表

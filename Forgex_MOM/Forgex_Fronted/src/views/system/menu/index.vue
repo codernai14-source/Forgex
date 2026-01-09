@@ -112,19 +112,19 @@
                 </template>
                 
                 <template v-else-if="column.key === 'icon'">
-                  <component v-if="record.icon" :is="record.icon" />
+                  <component v-if="record.icon" :is="getIcon(record.icon)" />
                   <span v-else>-</span>
                 </template>
                 
                 <template v-else-if="column.key === 'visible'">
-                  <a-tag v-if="record.visible === true" color="success">显示</a-tag>
-                  <a-tag v-else-if="record.visible === false" color="default">隐藏</a-tag>
+                  <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
+                  <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
                   <span v-else>-</span>
                 </template>
                 
                 <template v-else-if="column.key === 'status'">
-                  <a-tag v-if="record.status === true" color="success">启用</a-tag>
-                  <a-tag v-else-if="record.status === false" color="error">禁用</a-tag>
+                  <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
+                  <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
                   <span v-else>-</span>
                 </template>
                 
@@ -352,6 +352,7 @@ import { useMenu } from './hooks/useMenu'
 import { useMenuForm } from './hooks/useMenuForm'
 import { MENU_TYPE_OPTIONS, MENU_MODE_OPTIONS, MENU_LEVEL_OPTIONS } from './types'
 import { listModules } from '@/api/sys/module'
+import { getIcon } from '@/utils/icon'
 
 // 模块列表
 const modules = ref<any[]>([])
@@ -359,20 +360,20 @@ const activeModuleId = ref<string>('')
 
 // 表格列定义
 const columns = [
-  { title: '菜单名称', dataIndex: 'name', width: 200 },
-  { title: '菜单类型', dataIndex: 'type', width: 100, slots: { customRender: 'type' } },
-  { title: '路径', dataIndex: 'path', width: 150, ellipsis: true },
-  { title: '图标', dataIndex: 'icon', width: 80, slots: { customRender: 'icon' } },
-  { title: '菜单模式', dataIndex: 'menuMode', width: 100, slots: { customRender: 'menuMode' } },
-  { title: '权限标识', dataIndex: 'permKey', width: 150, ellipsis: true },
-  { title: '排序', dataIndex: 'orderNum', width: 80 },
-  { title: '可见', dataIndex: 'visible', width: 80, slots: { customRender: 'visible' } },
-  { title: '状态', dataIndex: 'status', width: 80, slots: { customRender: 'status' } },
-  { title: '创建时间', dataIndex: 'createTime', width: 180 },
-  { title: '创建人', dataIndex: 'createBy', width: 120 },
-  { title: '修改时间', dataIndex: 'updateTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateBy', width: 120 },
-  { title: '操作', key: 'action', width: 150, fixed: 'right', slots: { customRender: 'action' } }
+  { title: '菜单名称', dataIndex: 'name', key: 'name', width: 200 },
+  { title: '菜单类型', dataIndex: 'type', key: 'type', width: 100 },
+  { title: '路径', dataIndex: 'path', key: 'path', ellipsis: true },
+  { title: '图标', dataIndex: 'icon', key: 'icon', width: 80 },
+  { title: '菜单模式', dataIndex: 'menuMode', key: 'menuMode', width: 100 },
+  { title: '权限标识', dataIndex: 'permKey', key: 'permKey', ellipsis: true },
+  { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80 },
+  { title: '可见', dataIndex: 'visible', key: 'visible', width: 80 },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: '创建人', dataIndex: 'createBy', key: 'createBy' },
+  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
+  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy' },
+  { title: '操作', key: 'action', width: 200 }
 ]
 
 // 菜单树数据（用于父菜单选择）
@@ -465,25 +466,21 @@ onMounted(async () => {
 <style scoped lang="less">
 .menu-container {
   padding: 16px;
-  height: calc(100vh - 120px);
   
   .main-card {
-    height: 100%;
-    
     :deep(.ant-card-body) {
-      height: 100%;
       padding: 0;
     }
   }
   
   .menu-layout {
     display: flex;
-    height: 100%;
+    width: 100%;
     
     .module-tabs {
-      width: 180px;
-      border-right: 1px solid var(--border-color, #f0f0f0);
-      background: var(--bg-color-container, #fafafa);
+      width: 140px;
+      border-right: 1px solid var(--fx-border-color);
+      background: var(--fx-bg-container);
       
       :deep(.ant-tabs) {
         height: 100%;
@@ -505,14 +502,14 @@ onMounted(async () => {
           transition: all 0.3s;
           
           &:hover {
-            background: var(--primary-color-hover, #e6f7ff);
+            background: var(--fx-tab-hover-bg);
           }
           
           &.ant-tabs-tab-active {
-            background: #f0f0f0;
+            background: var(--fx-tab-bg);
             
             .ant-tabs-tab-btn {
-              color: rgba(0, 0, 0, 0.85);
+              color: var(--fx-theme-color, #1677ff);
             }
           }
         }
@@ -521,8 +518,8 @@ onMounted(async () => {
     
     .content-area {
       flex: 1;
-      padding: 16px;
-      overflow: auto;
+      padding: 12px 16px 8px;
+      background: var(--fx-bg-container);
       
       .search-bar {
         margin-bottom: 16px;
