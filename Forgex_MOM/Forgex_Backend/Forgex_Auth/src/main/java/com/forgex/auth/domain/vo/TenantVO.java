@@ -28,5 +28,5 @@ public class TenantVO {
     private String name;      // 租户名称
     private String logo;      // 租户Logo
     private String intro;     // 租户简介
-    private Integer isDefault; // 是否默认（1默认 0非默认）
+    private Boolean isDefault; // 是否默认（true 默认，false 非默认）
 }

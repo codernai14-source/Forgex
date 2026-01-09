@@ -125,10 +125,9 @@
               <a-button
                 size="small"
                 type="default"
-                :class="{ star: t.isDefault === 1 }"
+                :class="{ star: t.isDefault === true }"
                 @click="toggleDefault(t)"
-                >默认</a-button
-              >
+                >默认</a-button>
             </div>
           </div>
         </div>
@@ -191,7 +190,7 @@ const captcha = ref('')
 const captchaId = ref('')
 const imageBase64 = ref('')
 const mode = ref<'none' | 'image' | 'slider'>('none')
-const tenants = ref<{ id: string; name: string; logo?: string; intro?: string; isDefault?: number }[]>([])
+const tenants = ref<{ id: string; name: string; logo?: string; intro?: string; isDefault?: boolean }[]>([])
 const tenantOpen = ref(false)
 const chosenTenant = ref<string | null>(null)
 const sliderOpen = ref(false)
@@ -387,11 +386,11 @@ function moveDown(idx: number) {
 
 async function toggleDefault(t: any) {
   try {
-    const newVal = t.isDefault === 1 ? 0 : 1
+    const newVal = t.isDefault === true ? false : true
     await updateTenantPreferences({
       account: account.value,
       ordered: tenants.value.map(t => t.id),
-      defaultTenantId: newVal === 1 ? t.id : undefined
+      defaultTenantId: newVal === true ? t.id : undefined
     })
     await reloadTenantIgnore()
     t.isDefault = newVal
@@ -793,4 +792,3 @@ watch(sliderOpen, async open => {
   }
 }
 </style>
-
