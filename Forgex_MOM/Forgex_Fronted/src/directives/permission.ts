@@ -20,27 +20,16 @@ import { usePermissionStore } from '@/stores/permission'
 function hasPermission(permKey: string): boolean {
   const permissionStore = usePermissionStore()
   
-  // 添加调试日志
-  console.log('[Permission] Checking permission:', permKey)
-  console.log('[Permission] hasPermission type:', typeof permissionStore.hasPermission)
-  console.log('[Permission] hasPermission.value type:', typeof permissionStore.hasPermission.value)
-  
-  // 兼容性检查：支持多种调用方式
-  const checkFn = permissionStore.hasPermission
-  
-  // 如果 hasPermission 本身就是函数（旧版本）
-  if (typeof checkFn === 'function') {
-    return checkFn(permKey)
+  // 由于 store 中 hasPermission 是 computed，
+  // 这里统一通过 .value 调用
+  const checker = permissionStore.hasPermission
+  if (typeof checker === 'function') {
+    return checker(permKey)
   }
-  
-  // 如果 hasPermission.value 是函数（新版本 computed）
-  if (checkFn && typeof checkFn.value === 'function') {
-    return checkFn.value(permKey)
+  if (checker && typeof checker.value === 'function') {
+    return checker.value(permKey)
   }
-  
-  // 降级：直接检查 permissions 数组
-  console.warn('[Permission] Fallback to direct permissions check')
-  return permissionStore.permissions.includes(permKey)
+  return false
 }
 
 /**

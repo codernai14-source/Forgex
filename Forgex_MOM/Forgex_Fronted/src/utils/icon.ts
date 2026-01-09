@@ -55,11 +55,14 @@ export function getIcon(iconName?: string): Component | null {
     return null
   }
   
-  // 直接从 Icons 对象中获取对应的图标组件
-  const icon = Icons[iconName as keyof typeof Icons]
+  // 先通过映射表将简短名称转换为完整组件名
+  const mappedName = iconNameMap[iconName] || iconName
+  
+  // 再从 Icons 对象中获取对应的图标组件
+  const icon = Icons[mappedName as keyof typeof Icons]
   
   if (!icon) {
-    console.warn(`图标 "${iconName}" 不存在`)
+    console.warn(`图标 "${iconName}" 对应的组件 "${mappedName}" 不存在`)
     return null
   }
   

@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.auth.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 /**
@@ -23,14 +24,20 @@ import lombok.Data;
 @Data
 @TableName("sys_user_tenant")
 public class SysUserTenant {
+
     /** 用户ID */
     private Long userId;
+
     /** 租户ID */
     private Long tenantId;
+
     /** 喜好排序（越大越靠前） */
     private Integer prefOrder;
+
     /** 是否默认租户：1默认 0非默认 */
     private Boolean isDefault;
+
     /** 最后使用时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private java.time.LocalDateTime lastUsed;
 }

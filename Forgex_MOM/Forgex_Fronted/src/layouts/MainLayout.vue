@@ -701,6 +701,35 @@ function updateTabsByRoute(path: string) {
     return
   }
   activeTabKey.value = path
+
+  const clean = path.replace(/^\/workspace\//, '')
+  const parts = clean.split('/').filter(Boolean)
+  if (parts.length >= 1) {
+    const moduleCode = parts[0]
+    const dashboardPath = `/workspace/${moduleCode}/dashboard`
+    const idx = tabs.value.findIndex(t => t.key === dashboardPath)
+    if (idx === -1) {
+      const dashboardTitle = buildTitleFromRoute(dashboardPath)
+      const max = layoutConfig.value.tabBarMax || 10
+      if (tabs.value.length >= max) {
+        const removeIdx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
+        if (removeIdx >= 0) {
+          tabs.value.splice(removeIdx, 1)
+        } else {
+          tabs.value.shift()
+        }
+      }
+      tabs.value.unshift({
+        key: dashboardPath,
+        title: dashboardTitle,
+        closable: false
+      })
+    } else if (idx > 0) {
+      const [homeTab] = tabs.value.splice(idx, 1)
+      tabs.value.unshift({ ...homeTab, closable: false })
+    }
+  }
+
   const exists = tabs.value.find(t => t.key === path)
   if (exists) {
     return

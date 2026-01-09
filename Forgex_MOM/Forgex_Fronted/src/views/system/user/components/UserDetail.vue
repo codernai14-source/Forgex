@@ -132,11 +132,11 @@ async function loadUserDetail() {
   
   loading.value = true
   try {
-    const res = await userApi.getUserDetail(props.userId)
-    if (res.code === 200) {
-      userDetail.value = res.data
+    const data = await userApi.getUserDetail(props.userId)
+    if (data) {
+      userDetail.value = data
     } else {
-      message.error(res.message || '加载失败')
+      message.error('加载失败')
     }
   } catch (error) {
     console.error('加载用户详情失败:', error)

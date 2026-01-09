@@ -342,7 +342,7 @@ const formData = reactive<Partial<User>>({
   entryDate: '',
   departmentId: '',
   positionId: '',
-  status: 1,
+  status: true,
 })
 
 // 附属信息表单数据
@@ -410,31 +410,29 @@ async function loadUserData() {
   
   loading.value = true
   try {
-    const res = await userApi.getUserDetail(props.userId)
-    if (res.code === 200 && res.data) {
-      // 填充基础信息
+    const data = await userApi.getUserDetail(props.userId)
+    if (data) {
       Object.assign(formData, {
-        id: res.data.id,
-        username: res.data.username,
-        email: res.data.email,
-        phone: res.data.phone,
-        gender: res.data.gender,
-        entryDate: res.data.entryDate,
-        departmentId: res.data.departmentId,
-        positionId: res.data.positionId,
-        status: res.data.status,
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        gender: data.gender,
+        entryDate: data.entryDate,
+        departmentId: data.departmentId,
+        positionId: data.positionId,
+        status: data.status,
       })
       
-      // 填充附属信息
-      if (res.data.profile) {
+      if (data.profile) {
         Object.assign(profileData, {
-          politicalStatus: res.data.profile.politicalStatus || '',
-          homeAddress: res.data.profile.homeAddress || '',
-          emergencyContact: res.data.profile.emergencyContact || '',
-          emergencyPhone: res.data.profile.emergencyPhone || '',
-          referrer: res.data.profile.referrer || '',
-          education: res.data.profile.education || '',
-          workHistory: res.data.profile.workHistory || [],
+          politicalStatus: data.profile.politicalStatus || '',
+          homeAddress: data.profile.homeAddress || '',
+          emergencyContact: data.profile.emergencyContact || '',
+          emergencyPhone: data.profile.emergencyPhone || '',
+          referrer: data.profile.referrer || '',
+          education: data.profile.education || '',
+          workHistory: data.profile.workHistory || [],
         })
       }
     }
@@ -480,10 +478,8 @@ function resetForm() {
  */
 async function fetchDepartmentList() {
   try {
-    const res = await userApi.getDepartmentList()
-    if (res.code === 200) {
-      departmentList.value = res.data
-    }
+    const list = await userApi.getDepartmentList()
+    departmentList.value = Array.isArray(list) ? list : []
   } catch (error) {
     console.error('获取部门列表失败:', error)
   }
@@ -494,10 +490,8 @@ async function fetchDepartmentList() {
  */
 async function fetchPositionList() {
   try {
-    const res = await userApi.getPositionList()
-    if (res.code === 200) {
-      positionList.value = res.data
-    }
+    const list = await userApi.getPositionList()
+    positionList.value = Array.isArray(list) ? list : []
   } catch (error) {
     console.error('获取职位列表失败:', error)
   }
@@ -548,23 +542,21 @@ async function handleSubmit() {
   
   loading.value = true
   try {
-    // 合并基础信息和附属信息
     const submitData = {
       ...formData,
       profile: profileData,
     }
     
-    const res = props.isEdit
-      ? await userApi.updateUser(submitData as User)
-      : await userApi.addUser(submitData as User)
-    
-    if (res.code === 200) {
-      message.success(props.isEdit ? '编辑成功' : '新增成功')
-      visible.value = false
-      emit('success')
+    if (props.isEdit) {
+      await userApi.updateUser(submitData as User)
+      message.success('编辑成功')
     } else {
-      message.error(res.message || '操作失败')
+      await userApi.addUser(submitData as User)
+      message.success('新增成功')
     }
+    
+    visible.value = false
+    emit('success')
   } catch (error) {
     console.error('提交失败:', error)
     message.error('操作失败')

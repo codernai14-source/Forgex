@@ -51,7 +51,7 @@
           >
             <a-tab-pane
               v-for="module in modules"
-              :key="module.id"
+              :key="String(module.id)"
               :tab="module.name"
             />
           </a-tabs>
@@ -178,8 +178,8 @@
               >
                 <a-select-option
                   v-for="module in modules"
-                  :key="module.id"
-                  :value="module.id"
+                  :key="String(module.id)"
+                  :value="String(module.id)"
                 >
                   {{ module.name }}
                 </a-select-option>
@@ -427,7 +427,10 @@ const handleAdd = () => {
 
 // 编辑
 const handleEdit = (record: any) => {
-  openEdit(record)
+  openEdit({
+    ...record,
+    moduleId: String(record.moduleId ?? activeModuleId.value)
+  })
 }
 
 // 加载模块列表

@@ -15,42 +15,67 @@ package com.forgex.sys.domain.dto;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
  * 模块DTO
- * 
+ *
+ * 模块信息的数据传输对象，用于在控制层和服务层之间传递模块基础信息。
+ * 字段包括编码、名称、图标、排序、可见性、状态、租户ID以及创建和更新时间等。
+ *
  * @author coder_nai@163.com
  * @date 2025-01-07
  */
 @Data
 public class SysModuleDTO {
-    
-    /** 主键ID */
+
+    /**
+     * 主键ID
+     */
     private Long id;
-    
-    /** 模块编码 */
+
+    /**
+     * 模块编码
+     */
     private String code;
-    
-    /** 模块名称 */
+
+    /**
+     * 模块名称
+     */
     private String name;
-    
-    /** 图标 */
+
+    /**
+     * 图标
+     */
     private String icon;
-    
-    /** 排序号 */
+
+    /**
+     * 排序号
+     */
     private Integer orderNum;
-    
-    /** 是否可见：false=隐藏，true=显示 */
+
+    /**
+     * 是否可见：false=隐藏，true=显示
+     */
     private Boolean visible;
-    
-    /** 状态：false=禁用，true=启用 */
+
+    /**
+     * 状态：false=禁用，true=启用
+     */
     private Boolean status;
-    
-    /** 租户ID */
+
+    /**
+     * 租户ID
+     */
     private Long tenantId;
-    
-    /** 创建时间 */
-    private String createTime;
-    
-    /** 更新时间 */
-    private String updateTime;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
 }

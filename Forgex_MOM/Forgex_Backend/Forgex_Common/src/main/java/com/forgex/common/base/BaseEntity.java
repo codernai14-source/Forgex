@@ -18,16 +18,29 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
  * 通用实体父类
- * 包含所有表的通用字段，并统一由 MyBatis-Plus 自动填充
+ * <p>
+ * 包含所有表的通用字段，并统一由 MyBatis-Plus 自动填充。
+ * 字段说明：
+ * <ul>
+ *   <li>{@code id} 主键ID</li>
+ *   <li>{@code tenantId} 租户ID</li>
+ *   <li>{@code createTime} 创建时间</li>
+ *   <li>{@code createBy} 创建人</li>
+ *   <li>{@code updateTime} 更新时间</li>
+ *   <li>{@code updateBy} 更新人</li>
+ *   <li>{@code deleted} 逻辑删除标记</li>
+ * </ul>
  */
 @Data
 public class BaseEntity {
+
     /** 主键ID */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
@@ -37,6 +50,7 @@ public class BaseEntity {
     private Long tenantId;
 
     /** 创建时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
@@ -45,6 +59,7 @@ public class BaseEntity {
     private String createBy;
 
     /** 更新时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
