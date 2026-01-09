@@ -50,9 +50,9 @@ public class SysUserQueryDTO extends BaseGetParam {
     private Long departmentId;
     
     /**
-     * 状态：0=禁用，1=启用
+     * 状态：false=禁用，true=启用
      */
-    private Integer status;
+    private Boolean status;
     
     /**
      * 租户ID

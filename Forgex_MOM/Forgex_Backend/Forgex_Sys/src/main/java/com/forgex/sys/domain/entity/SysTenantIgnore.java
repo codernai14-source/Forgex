@@ -37,7 +37,7 @@ public class SysTenantIgnore extends BaseEntity {
     /** 匹配器表达式 */
     private String matcher;
     /** 是否启用 */
-    private Integer enabled;
+    private Boolean enabled;
     /** 备注 */
     private String remark;
     /** 绑定租户ID（非持久化） */

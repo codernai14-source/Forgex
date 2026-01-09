@@ -29,7 +29,7 @@ public class SysTenantIgnore extends BaseEntity {
     /** 匹配内容：表名 / 全限定类名 / 全限定类名#方法名 */
     private String matcher;
     /** 是否启用：1启用 0禁用 */
-    private Integer enabled;
+    private Boolean enabled;
     /** 备注说明 */
     private String remark;
 }

@@ -86,7 +86,7 @@ public class UserStyleConfigServiceImpl implements UserStyleConfigService {
             entity.setTenantId(tenantId);
             entity.setConfigKey("layout.style");
             entity.setConfigJson(json);
-            entity.setDeleted(0);
+            entity.setDeleted(false);
             mapper.insert(entity);
         } else {
             existing.setConfigJson(json);

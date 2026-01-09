@@ -37,14 +37,24 @@ public class SysRoleDTO {
     private String roleName;
     
     /**
-     * 角色键
+     * 角色编码（对应数据库role_key字段）
+     */
+    private String roleCode;
+    
+    /**
+     * 角色键（数据库字段）
      */
     private String roleKey;
     
     /**
-     * 状态：0=禁用，1=启用
+     * 描述
      */
-    private Integer status;
+    private String description;
+    
+    /**
+     * 状态：false=禁用，true=启用
+     */
+    private Boolean status;
     
     /**
      * 创建时间
@@ -52,9 +62,19 @@ public class SysRoleDTO {
     private LocalDateTime createTime;
     
     /**
+     * 创建人
+     */
+    private String createBy;
+    
+    /**
      * 更新时间
      */
     private LocalDateTime updateTime;
+    
+    /**
+     * 更新人
+     */
+    private String updateBy;
     
     /**
      * 租户ID

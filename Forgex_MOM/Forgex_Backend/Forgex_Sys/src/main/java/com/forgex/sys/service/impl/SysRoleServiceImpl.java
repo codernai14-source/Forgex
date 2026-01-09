@@ -239,6 +239,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     private SysRoleDTO convertToDTO(SysRole role) {
         SysRoleDTO dto = new SysRoleDTO();
         BeanUtils.copyProperties(role, dto);
+        // 手动映射：roleKey -> roleCode（前端使用roleCode字段）
+        dto.setRoleCode(role.getRoleKey());
         return dto;
     }
 }

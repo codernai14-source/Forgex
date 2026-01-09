@@ -30,7 +30,7 @@ public class SysUserTenant {
     /** 喜好排序（越大越靠前） */
     private Integer prefOrder;
     /** 是否默认租户：1默认 0非默认 */
-    private Integer isDefault;
+    private Boolean isDefault;
     /** 最后使用时间 */
     private java.time.LocalDateTime lastUsed;
 }

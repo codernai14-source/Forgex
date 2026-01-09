@@ -54,8 +54,10 @@
 
         <a-layout-content class="fx-content">
           <div class="fx-content-inner">
-            <div v-if="layoutConfig.watermarkEnabled" class="fx-watermark">
-              {{ layoutConfig.watermarkText }}
+            <div v-if="layoutConfig.watermarkEnabled" class="fx-watermark-container">
+              <div class="fx-watermark" v-for="i in 12" :key="i">
+                {{ layoutConfig.watermarkText }}
+              </div>
             </div>
             <router-view v-slot="{ Component, route }">
               <transition

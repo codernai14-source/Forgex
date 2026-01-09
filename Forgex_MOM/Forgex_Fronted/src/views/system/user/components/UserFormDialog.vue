@@ -114,8 +114,8 @@
             <a-col :span="12">
               <a-form-item label="状态" name="status">
                 <a-radio-group v-model:value="formData.status">
-                  <a-radio :value="1">启用</a-radio>
-                  <a-radio :value="0">禁用</a-radio>
+                  <a-radio :value="true">启用</a-radio>
+                  <a-radio :value="false">禁用</a-radio>
                 </a-radio-group>
               </a-form-item>
             </a-col>

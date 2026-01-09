@@ -1,5 +1,45 @@
 <template>
   <div class="menu-container">
+    <!-- 搜索区域 -->
+    <a-card :bordered="false" class="search-card">
+      <a-form layout="inline">
+        <a-form-item label="菜单名称">
+          <a-input
+            v-model:value="queryParams.name"
+            placeholder="请输入菜单名称"
+            style="width: 200px"
+            allow-clear
+          />
+        </a-form-item>
+        
+        <a-form-item label="状态">
+          <a-select
+            v-model:value="queryParams.status"
+            placeholder="请选择状态"
+            style="width: 120px"
+            allow-clear
+          >
+            <a-select-option :value="true">启用</a-select-option>
+            <a-select-option :value="false">禁用</a-select-option>
+          </a-select>
+        </a-form-item>
+        
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="handleReset">
+              <template #icon><ReloadOutlined /></template>
+              重置
+            </a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+    </a-card>
+    
+    <!-- 主内容区 -->
     <a-card :bordered="false" class="main-card">
       <div class="menu-layout">
         <!-- 左侧模块标签 -->
@@ -19,45 +59,6 @@
         
         <!-- 右侧内容区 -->
         <div class="content-area">
-          <!-- 搜索区域 -->
-          <div class="search-bar">
-            <a-form layout="inline">
-              <a-form-item label="菜单名称">
-                <a-input
-                  v-model:value="queryParams.name"
-                  placeholder="请输入菜单名称"
-                  style="width: 200px"
-                  allow-clear
-                />
-              </a-form-item>
-              
-              <a-form-item label="状态">
-                <a-select
-                  v-model:value="queryParams.status"
-                  placeholder="请选择状态"
-                  style="width: 120px"
-                  allow-clear
-                >
-                  <a-select-option :value="1">启用</a-select-option>
-                  <a-select-option :value="0">禁用</a-select-option>
-                </a-select>
-              </a-form-item>
-              
-              <a-form-item>
-                <a-space>
-                  <a-button type="primary" @click="handleSearch">
-                    <template #icon><SearchOutlined /></template>
-                    搜索
-                  </a-button>
-                  <a-button @click="handleReset">
-                    <template #icon><ReloadOutlined /></template>
-                    重置
-                  </a-button>
-                </a-space>
-              </a-form-item>
-            </a-form>
-          </div>
-          
           <!-- 操作按钮 -->
           <div class="table-toolbar">
             <a-space>
@@ -83,68 +84,71 @@
           </div>
           
           <!-- 树形表格 -->
-          <a-table
-            :columns="columns"
-            :data-source="menuList"
-            :loading="loading"
-            :row-selection="{
-              selectedRowKeys,
-              onChange: handleSelectionChange
-            }"
-            :pagination="false"
-            row-key="id"
-            :default-expand-all-rows="true"
-          >
-            <!-- 菜单类型 -->
-            <template #type="{ record }">
-              <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
-              <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
-              <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
-            </template>
-            
-            <!-- 菜单模式 -->
-            <template #menuMode="{ record }">
-              <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
-              <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
-            </template>
-            
-            <!-- 图标 -->
-            <template #icon="{ record }">
-              <component v-if="record.icon" :is="record.icon" />
-            </template>
-            
-            <!-- 可见性 -->
-            <template #visible="{ record }">
-              <a-tag v-if="record.visible === 1" color="success">显示</a-tag>
-              <a-tag v-else color="default">隐藏</a-tag>
-            </template>
-            
-            <!-- 状态 -->
-            <template #status="{ record }">
-              <a-tag v-if="record.status === 1" color="success">启用</a-tag>
-              <a-tag v-else color="error">禁用</a-tag>
-            </template>
-            
-            <!-- 操作 -->
-            <template #action="{ record }">
-              <a-space>
-                <a
-                  v-permission="'sys:menu:edit'"
-                  @click="handleEdit(record)"
-                >
-                  编辑
-                </a>
-                <a-divider type="vertical" />
-                <a
-                  v-permission="'sys:menu:delete'"
-                  class="danger-link"
-                  @click="handleDelete(record.id)"
-                >
-                  删除
-                </a>
-              </a-space>
-            </template>
-          </a-table>
+          <div class="table-wrapper">
+            <a-table
+              :columns="columns"
+              :data-source="menuList"
+              :loading="loading"
+              :row-selection="{
+                selectedRowKeys,
+                onChange: handleSelectionChange
+              }"
+              :pagination="false"
+              :scroll="{ y: 'calc(100vh - 380px)' }"
+              row-key="id"
+              :default-expand-all-rows="true"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'type'">
+                  <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
+                  <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
+                  <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
+                </template>
+                
+                <template v-else-if="column.key === 'menuMode'">
+                  <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
+                  <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
+                  <span v-else>-</span>
+                </template>
+                
+                <template v-else-if="column.key === 'icon'">
+                  <component v-if="record.icon" :is="record.icon" />
+                  <span v-else>-</span>
+                </template>
+                
+                <template v-else-if="column.key === 'visible'">
+                  <a-tag v-if="record.visible === true" color="success">显示</a-tag>
+                  <a-tag v-else-if="record.visible === false" color="default">隐藏</a-tag>
+                  <span v-else>-</span>
+                </template>
+                
+                <template v-else-if="column.key === 'status'">
+                  <a-tag v-if="record.status === true" color="success">启用</a-tag>
+                  <a-tag v-else-if="record.status === false" color="error">禁用</a-tag>
+                  <span v-else>-</span>
+                </template>
+                
+                <template v-else-if="column.key === 'action'">
+                  <a-space>
+                    <a
+                      v-permission="'sys:menu:edit'"
+                      @click="handleEdit(record)"
+                    >
+                      编辑
+                    </a>
+                    <a-divider type="vertical" />
+                    <a
+                      v-permission="'sys:menu:delete'"
+                      class="danger-link"
+                      @click="handleDelete(record.id)"
+                    >
+                      删除
+                    </a>
+                  </a-space>
+                </template>
+              </template>
+            </a-table>
+          </div>
         </div>
       </div>
     </a-card>
@@ -172,8 +176,13 @@
                 v-model:value="formData.moduleId"
                 placeholder="请选择所属模块"
               >
-                <a-select-option value="1">系统管理</a-select-option>
-                <a-select-option value="2">生产管理</a-select-option>
+                <a-select-option
+                  v-for="module in modules"
+                  :key="module.id"
+                  :value="module.id"
+                >
+                  {{ module.name }}
+                </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -310,8 +319,8 @@
           <a-col :span="12">
             <a-form-item label="是否可见" name="visible">
               <a-radio-group v-model:value="formData.visible">
-                <a-radio :value="1">显示</a-radio>
-                <a-radio :value="0">隐藏</a-radio>
+                <a-radio :value="true">显示</a-radio>
+                <a-radio :value="false">隐藏</a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
@@ -319,8 +328,8 @@
           <a-col :span="12">
             <a-form-item label="状态" name="status">
               <a-radio-group v-model:value="formData.status">
-                <a-radio :value="1">启用</a-radio>
-                <a-radio :value="0">禁用</a-radio>
+                <a-radio :value="true">启用</a-radio>
+                <a-radio :value="false">禁用</a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
@@ -473,30 +482,37 @@ onMounted(async () => {
     
     .module-tabs {
       width: 180px;
-      border-right: 1px solid #f0f0f0;
-      background: #fafafa;
+      border-right: 1px solid var(--border-color, #f0f0f0);
+      background: var(--bg-color-container, #fafafa);
       
       :deep(.ant-tabs) {
         height: 100%;
         
         .ant-tabs-nav {
           margin: 0;
+          width: 100%;
+        }
+        
+        .ant-tabs-nav-list {
+          width: 100%;
         }
         
         .ant-tabs-tab {
           padding: 12px 24px;
           margin: 0;
+          width: 100%;
+          justify-content: flex-start;
+          transition: all 0.3s;
           
           &:hover {
-            background: #e6f7ff;
+            background: var(--primary-color-hover, #e6f7ff);
           }
           
           &.ant-tabs-tab-active {
-            background: #1890ff;
-            color: #fff;
+            background: #f0f0f0;
             
             .ant-tabs-tab-btn {
-              color: #fff;
+              color: rgba(0, 0, 0, 0.85);
             }
           }
         }

@@ -275,7 +275,7 @@ public class AuthServiceImpl implements AuthService {
                     .eq(SysUserTenant::getUserId, user.getId())
                     .eq(SysUserTenant::getTenantId, tid)
                     .set(SysUserTenant::getPrefOrder, weight)
-                    .set(SysUserTenant::getIsDefault, (defaultTenantId != null && defaultTenantId.equals(tid)) ? 1 : 0));
+                    .set(SysUserTenant::getIsDefault, (defaultTenantId != null && defaultTenantId.equals(tid))));
             weight--;
         }
         return R.ok(true);

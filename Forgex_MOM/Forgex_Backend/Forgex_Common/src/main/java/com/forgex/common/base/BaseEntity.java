@@ -40,12 +40,20 @@ public class BaseEntity {
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
+    /** 创建人 */
+    @TableField(value = "create_by", fill = FieldFill.INSERT)
+    private String createBy;
+
     /** 更新时间 */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    /** 逻辑删除：0未删除 1已删除 */
+    /** 更新人 */
+    @TableField(value = "update_by", fill = FieldFill.INSERT_UPDATE)
+    private String updateBy;
+
+    /** 逻辑删除：false=未删除 true=已删除 */
     @TableLogic
     @TableField(value = "deleted")
-    private Integer deleted;
+    private Boolean deleted;
 }

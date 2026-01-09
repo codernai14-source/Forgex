@@ -40,8 +40,8 @@ public class SysModule extends BaseEntity {
     private String icon;
     /** 排序号 */
     private Integer orderNum;
-    /** 是否可见 */
-    private Integer visible;
-    /** 状态 */
-    private Integer status;
+    /** 是否可见：false=隐藏，true=显示 */
+    private Boolean visible;
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
 }

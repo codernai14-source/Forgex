@@ -88,9 +88,9 @@ public class SysUserDTO {
     private String positionName;
     
     /**
-     * 状态：0=禁用，1=启用
+     * 状态：false=禁用，true=启用
      */
-    private Integer status;
+    private Boolean status;
     
     /**
      * 创建时间

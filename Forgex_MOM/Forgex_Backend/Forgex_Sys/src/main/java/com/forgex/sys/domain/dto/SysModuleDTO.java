@@ -39,11 +39,11 @@ public class SysModuleDTO {
     /** 排序号 */
     private Integer orderNum;
     
-    /** 是否可见：0=隐藏，1=显示 */
-    private Integer visible;
+    /** 是否可见：false=隐藏，true=显示 */
+    private Boolean visible;
     
-    /** 状态：0=禁用，1=启用 */
-    private Integer status;
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
     
     /** 租户ID */
     private Long tenantId;

@@ -28,8 +28,8 @@
             allow-clear
             style="width: 120px;"
           >
-            <a-select-option :value="1">启用</a-select-option>
-            <a-select-option :value="0">禁用</a-select-option>
+            <a-select-option :value="true">启用</a-select-option>
+            <a-select-option :value="false">禁用</a-select-option>
           </a-select>
         </a-form-item>
         
@@ -96,7 +96,7 @@
           </template>
           
           <template v-else-if="column.key === 'status'">
-            <a-tag v-if="record.status === 1" color="success">启用</a-tag>
+            <a-tag v-if="record.status === true" color="success">启用</a-tag>
             <a-tag v-else color="error">禁用</a-tag>
           </template>
           

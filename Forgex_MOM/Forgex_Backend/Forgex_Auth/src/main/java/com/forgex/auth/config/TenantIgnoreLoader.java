@@ -42,7 +42,7 @@ public class TenantIgnoreLoader {
     public void init() {
         try {
             List<SysTenantIgnore> list = mapper.selectList(new LambdaQueryWrapper<SysTenantIgnore>()
-                    .eq(SysTenantIgnore::getEnabled, 1));
+                    .eq(SysTenantIgnore::getEnabled, true));
             for (SysTenantIgnore c : list) {
                 String scope = c.getScope();
                 String matcher = c.getMatcher();

@@ -25,6 +25,7 @@ import com.forgex.sys.domain.vo.UserRoutesVO;
 import com.forgex.sys.mapper.*;
 import com.forgex.sys.service.ISysMenuService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
  * @author coder_nai@163.com
  * @date 2025-01-07
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> 
@@ -106,8 +108,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             new LambdaQueryWrapper<SysMenu>()
                 .in(SysMenu::getId, menuIds)
                 .eq(SysMenu::getTenantId, tenantId)
-                .eq(SysMenu::getVisible, 1)
-                .eq(SysMenu::getStatus, 1)
+                .eq(SysMenu::getVisible, true)
+                .eq(SysMenu::getStatus, true)
         );
         
         // 5. 查询模块列表
@@ -120,8 +122,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 new LambdaQueryWrapper<SysModule>()
                     .in(SysModule::getId, moduleIds)
                     .eq(SysModule::getTenantId, tenantId)
-                    .eq(SysModule::getVisible, 1)
-                    .eq(SysModule::getStatus, 1)
+                    .eq(SysModule::getVisible, true)
+                    .eq(SysModule::getStatus, true)
             );
         
         // 6. 构建返回数据
@@ -146,7 +148,20 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         wrapper.orderByAsc(SysMenu::getOrderNum);
         
         List<SysMenu> menus = menuMapper.selectList(wrapper);
-        return buildMenuTree(menus, 0L);
+        
+        // 调试日志
+        log.info("=== 菜单树查询调试 ===");
+        log.info("查询参数 - tenantId: {}, moduleId: {}", tenantId, moduleId);
+        log.info("查询结果总数: {}", menus.size());
+        long buttonCount = menus.stream().filter(m -> "button".equals(m.getType())).count();
+        long menuCount = menus.stream().filter(m -> "menu".equals(m.getType())).count();
+        long catalogCount = menus.stream().filter(m -> "catalog".equals(m.getType())).count();
+        log.info("按钮数量: {}, 菜单数量: {}, 目录数量: {}", buttonCount, menuCount, catalogCount);
+        
+        List<MenuTreeVO> tree = buildMenuTree(menus, 0L);
+        log.info("构建的树形结构根节点数: {}", tree.size());
+        
+        return tree;
     }
     
     /**
@@ -573,6 +588,10 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     private SysMenuDTO convertToDTO(SysMenu menu) {
         SysMenuDTO dto = new SysMenuDTO();
         BeanUtils.copyProperties(menu, dto);
+        
+        // 确保visible和status字段被正确复制
+        dto.setVisible(menu.getVisible());
+        dto.setStatus(menu.getStatus());
         
         // 关联查询模块名称
         if (menu.getModuleId() != null) {

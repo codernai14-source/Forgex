@@ -225,18 +225,39 @@
   max-width: var(--fx-content-width, 100%);
 }
 
-.fx-watermark {
+.fx-watermark-container {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-30deg);
-  font-size: 40px;
-  color: rgba(148, 163, 184, 0.12);
-  white-space: nowrap;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   pointer-events: none;
   user-select: none;
   z-index: 999;
-  font-weight: 600;
+  overflow: hidden;
+}
+
+.fx-watermark {
+  position: absolute;
+  font-size: 32px;
+  color: rgba(148, 163, 184, 0.08);
+  white-space: nowrap;
+  font-weight: 500;
+  transform: rotate(-30deg);
+  
+  // 使用 nth-child 定位每个水印实例
+  &:nth-child(1) { top: 10%; left: 10%; }
+  &:nth-child(2) { top: 10%; left: 50%; }
+  &:nth-child(3) { top: 10%; right: 10%; }
+  &:nth-child(4) { top: 35%; left: 10%; }
+  &:nth-child(5) { top: 35%; left: 50%; }
+  &:nth-child(6) { top: 35%; right: 10%; }
+  &:nth-child(7) { top: 60%; left: 10%; }
+  &:nth-child(8) { top: 60%; left: 50%; }
+  &:nth-child(9) { top: 60%; right: 10%; }
+  &:nth-child(10) { top: 85%; left: 10%; }
+  &:nth-child(11) { top: 85%; left: 50%; }
+  &:nth-child(12) { top: 85%; right: 10%; }
 }
 
 .fx-footer {

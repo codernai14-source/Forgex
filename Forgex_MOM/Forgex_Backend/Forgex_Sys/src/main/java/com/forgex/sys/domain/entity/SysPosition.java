@@ -39,8 +39,8 @@ public class SysPosition extends BaseEntity {
     /** 排序号 */
     private Integer orderNum;
     
-    /** 状态（0=禁用，1=启用） */
-    private Integer status;
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
     
     /** 备注 */
     private String remark;

@@ -26,8 +26,8 @@
             allow-clear
             style="width: 120px"
           >
-            <a-select-option :value="1">启用</a-select-option>
-            <a-select-option :value="0">禁用</a-select-option>
+            <a-select-option :value="true">启用</a-select-option>
+            <a-select-option :value="false">禁用</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -78,8 +78,8 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '启用' : '禁用' }}
+            <a-tag :color="record.status === true ? 'green' : 'red'">
+              {{ record.status === true ? '启用' : '禁用' }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
@@ -159,8 +159,8 @@
         </a-form-item>
         <a-form-item label="状态" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio :value="true">启用</a-radio>
+            <a-radio :value="false">禁用</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -214,7 +214,7 @@ import {
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
-import { listRoleMenus, grantRoleMenus } from '@/api/sys/role'
+import { listRoleMenus, grantRoleMenus, getRoleAuthData } from '@/api/sys/role'
 import { listMenusTree } from '@/api/sys/menu'
 import { useRole } from './hooks/useRole'
 import { useRoleForm } from './hooks/useRoleForm'
@@ -316,19 +316,56 @@ async function loadMenusAndGrants() {
   }
   try {
     loadingMenus.value = true
-    const [menuList, grantedIds] = await Promise.all([
-      listMenusTree({ tenantId: currentTenantId.value }),
-      listRoleMenus({ tenantId: currentTenantId.value, roleId: grantRole.value.id })
-    ])
+    // 获取所有菜单树（包括按钮）
+    const menuList = await listMenusTree({ tenantId: currentTenantId.value })
     menus.value = Array.isArray(menuList) ? menuList : []
+    
+    // 调试：打印菜单数据
+    console.log('=== 菜单授权调试 ===')
+    console.log('总菜单数:', menus.value.length)
+    console.log('按钮数量:', menus.value.filter(m => m.type === 'button').length)
+    console.log('菜单数量:', menus.value.filter(m => m.type === 'menu').length)
+    console.log('目录数量:', menus.value.filter(m => m.type === 'catalog').length)
+    console.log('所有菜单数据:', menus.value)
+    
+    // 构建树形数据
     treeData.value = buildTree(menus.value)
-    const ids = Array.isArray(grantedIds) ? grantedIds.map((id: any) => String(id)) : []
-    checkedKeys.value = ids
+    console.log('树形数据:', treeData.value)
+    
+    // 获取已授权的菜单ID
+    const grantedIds = await listRoleMenus({ 
+      tenantId: currentTenantId.value, 
+      roleId: grantRole.value.id 
+    })
+    
+    // 设置选中的节点（只选中叶子节点，避免父节点自动选中子节点）
+    const leafIds = getLeafNodeIds(menus.value, grantedIds || [])
+    checkedKeys.value = leafIds.map((id: any) => String(id))
   } catch (e) {
     message.error('加载菜单授权数据失败')
   } finally {
     loadingMenus.value = false
   }
+}
+
+/**
+ * 获取叶子节点ID（只返回没有子节点的菜单ID）
+ */
+function getLeafNodeIds(allMenus: MenuEntity[], grantedIds: any[]): any[] {
+  const grantedSet = new Set(grantedIds.map((id: any) => String(id)))
+  const parentIds = new Set<string>()
+  
+  // 找出所有有子节点的父节点
+  allMenus.forEach(menu => {
+    if (menu.parentId && menu.parentId !== '0') {
+      parentIds.add(menu.parentId)
+    }
+  })
+  
+  // 只返回叶子节点（没有子节点的节点）
+  return allMenus
+    .filter(menu => grantedSet.has(String(menu.id)) && !parentIds.has(String(menu.id)))
+    .map(menu => menu.id)
 }
 
 /**
@@ -391,11 +428,16 @@ async function saveGrant() {
   }
   try {
     saving.value = true
-    const ids = checkedKeys.value.slice()
+    // 获取所有选中的节点（包括半选中的父节点）
+    const allCheckedKeys = [...checkedKeys.value]
+    
+    // 将字符串ID转换为数字
+    const menuIds = allCheckedKeys.map(id => Number(id))
+    
     await grantRoleMenus({
       tenantId: currentTenantId.value,
       roleId: grantRole.value.id,
-      menuIds: ids
+      menuIds: menuIds
     })
     message.success('授权成功')
     grantVisible.value = false

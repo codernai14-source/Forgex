@@ -89,6 +89,31 @@ public class SysRoleMenuController {
     }
 
     /**
+     * 获取角色菜单授权数据（包含所有菜单树和已授权的菜单ID）
+     *
+     * @param body 请求体参数，需包含 roleId、tenantId
+     * @return 包含所有菜单树和已授权菜单ID的数据
+     */
+    @PostMapping("/authData")
+    public R<Map<String, Object>> getAuthData(@RequestBody Map<String, Object> body) {
+        // 1. 参数解析
+        Long roleId = parseLong(body.get("roleId"));
+        Long tenantId = parseLong(body.get("tenantId"));
+        
+        // 2. 参数校验
+        roleMenuValidator.validateQueryParams(roleId, tenantId);
+        
+        // 3. 调用Service获取已授权的菜单ID
+        List<Long> grantedMenuIds = roleMenuService.getRoleMenuIds(roleId, tenantId);
+        
+        // 4. 返回结果（前端会自己调用菜单树接口获取所有菜单）
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("grantedMenuIds", grantedMenuIds);
+        
+        return R.ok(result);
+    }
+
+    /**
      * 授予角色菜单权限（兼容旧接口）
      *
      * @param body 请求体参数，包含 roleId、tenantId、menuIds（菜单ID列表）

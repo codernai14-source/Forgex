@@ -11,39 +11,23 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.sys.domain.dto;
+package com.forgex.sys.service;
 
-import com.forgex.common.base.BaseGetParam;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import java.util.Map;
 
 /**
- * 角色查询DTO
+ * 仪表盘Service接口
  * 
  * @author coder_nai@163.com
- * @date 2025-01-07
+ * @date 2025-01-08
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SysRoleQueryDTO extends BaseGetParam {
+public interface IDashboardService {
     
     /**
-     * 角色名称（模糊查询）
+     * 获取仪表盘统计数据
+     * 
+     * @param tenantId 租户ID
+     * @return 统计数据
      */
-    private String roleName;
-    
-    /**
-     * 角色编码（模糊查询）
-     */
-    private String roleCode;
-    
-    /**
-     * 状态：false=禁用，true=启用
-     */
-    private Boolean status;
-    
-    /**
-     * 租户ID
-     */
-    private Long tenantId;
+    Map<String, Object> getStatistics(Long tenantId);
 }

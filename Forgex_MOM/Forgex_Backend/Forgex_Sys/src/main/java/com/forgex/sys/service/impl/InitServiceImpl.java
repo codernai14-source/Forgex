@@ -343,8 +343,8 @@ public class InitServiceImpl implements InitService {
         sysModule.setName("系统");
         sysModule.setIcon("setting");
         sysModule.setOrderNum(10);
-        sysModule.setVisible(1);
-        sysModule.setStatus(1);
+        sysModule.setVisible(true);
+        sysModule.setStatus(true);
         moduleMapper.insert(sysModule);
         Long mid = sysModule.getId();
 
@@ -358,8 +358,8 @@ public class InitServiceImpl implements InitService {
         userMenu.setIcon("user");
         userMenu.setComponentKey("SysUser");
         userMenu.setOrderNum(10);
-        userMenu.setVisible(1);
-        userMenu.setStatus(1);
+        userMenu.setVisible(true);
+        userMenu.setStatus(true);
         menuMapper.insert(userMenu);
 
         SysMenu roleMenu = new SysMenu();
@@ -372,8 +372,8 @@ public class InitServiceImpl implements InitService {
         roleMenu.setIcon("team");
         roleMenu.setComponentKey("SysRole");
         roleMenu.setOrderNum(20);
-        roleMenu.setVisible(1);
-        roleMenu.setStatus(1);
+        roleMenu.setVisible(true);
+        roleMenu.setStatus(true);
         menuMapper.insert(roleMenu);
 
         SysMenu userView = new SysMenu();
@@ -384,8 +384,8 @@ public class InitServiceImpl implements InitService {
         userView.setName("用户查看");
         userView.setPermKey("user.view");
         userView.setOrderNum(1);
-        userView.setVisible(1);
-        userView.setStatus(1);
+        userView.setVisible(true);
+        userView.setStatus(true);
         menuMapper.insert(userView);
 
         SysMenu userEdit = new SysMenu();
@@ -396,8 +396,8 @@ public class InitServiceImpl implements InitService {
         userEdit.setName("用户编辑");
         userEdit.setPermKey("user.edit");
         userEdit.setOrderNum(2);
-        userEdit.setVisible(1);
-        userEdit.setStatus(1);
+        userEdit.setVisible(true);
+        userEdit.setStatus(true);
         menuMapper.insert(userEdit);
 
         SysMenu roleView = new SysMenu();
@@ -408,8 +408,8 @@ public class InitServiceImpl implements InitService {
         roleView.setName("角色查看");
         roleView.setPermKey("role.view");
         roleView.setOrderNum(1);
-        roleView.setVisible(1);
-        roleView.setStatus(1);
+        roleView.setVisible(true);
+        roleView.setStatus(true);
         menuMapper.insert(roleView);
 
         SysMenu roleEdit = new SysMenu();
@@ -420,8 +420,8 @@ public class InitServiceImpl implements InitService {
         roleEdit.setName("角色编辑");
         roleEdit.setPermKey("role.edit");
         roleEdit.setOrderNum(2);
-        roleEdit.setVisible(1);
-        roleEdit.setStatus(1);
+        roleEdit.setVisible(true);
+        roleEdit.setStatus(true);
         menuMapper.insert(roleEdit);
 
         Long adminRoleId = roleIdByKey.get("admin");
@@ -449,7 +449,7 @@ public class InitServiceImpl implements InitService {
         u.setUsername(accountName);
         u.setEmail(accountName + "@local");
         u.setPhone(null);
-        u.setStatus(1);
+        u.setStatus(true);
         String s = store == null ? "bcrypt" : store.toLowerCase();
         CryptoPasswordProvider provider = CryptoProviders.resolve(s, configService);
         if (provider.supportsEncrypt()) {
@@ -465,7 +465,7 @@ public class InitServiceImpl implements InitService {
         SysRole r = new SysRole();
         r.setRoleName(name);
         r.setRoleKey(key);
-        r.setStatus(1);
+        r.setStatus(true);
         r.setTenantId(tenantId);
         return r;
     }

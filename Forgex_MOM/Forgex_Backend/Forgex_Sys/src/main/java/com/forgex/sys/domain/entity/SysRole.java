@@ -23,6 +23,7 @@ import lombok.Data;
  * 映射表：{@code sys_role}。字段：
  * - {@code roleName} 角色名称；
  * - {@code roleKey} 角色键；
+ * - {@code description} 描述；
  * - {@code status} 状态；
  * - {@code tenantId} 租户ID。
  */
@@ -31,8 +32,13 @@ import lombok.Data;
 public class SysRole extends BaseEntity {
     /** 角色名称 */
     private String roleName;
-    /** 角色键 */
+    
+    /** 角色键（角色编码） */
     private String roleKey;
-    /** 状态 */
-    private Integer status;
+    
+    /** 描述 */
+    private String description;
+    
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
 }

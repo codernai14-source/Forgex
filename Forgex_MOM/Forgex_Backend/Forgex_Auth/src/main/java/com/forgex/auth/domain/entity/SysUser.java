@@ -38,8 +38,8 @@ public class SysUser extends BaseEntity {
     private String email;
     /** 手机号 */
     private String phone;
-    /** 状态：1启用 0禁用 */
-    private Integer status;
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
 
     /** 租户ID（非持久化字段） */
     @TableField(exist = false)

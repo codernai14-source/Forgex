@@ -29,8 +29,8 @@ public class SysTenant extends BaseEntity {
     private String tenantName;
     /** 描述 */
     private String description;
-    /** 状态：1启用 0禁用 */
-    private Integer status;
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
     /** 编码 */
     private String tenantCode;
     /** Logo */

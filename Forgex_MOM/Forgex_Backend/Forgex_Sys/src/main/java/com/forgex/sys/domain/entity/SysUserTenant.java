@@ -40,7 +40,7 @@ public class SysUserTenant {
     /** 偏好排序 */
     private Integer prefOrder;
     /** 是否默认 */
-    private Integer isDefault;
+    private Boolean isDefault;
     /** 最近使用时间 */
     private java.time.LocalDateTime lastUsed;
 }
