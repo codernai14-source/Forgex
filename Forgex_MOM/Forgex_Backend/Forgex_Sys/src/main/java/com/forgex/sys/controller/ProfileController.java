@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.service.ISysUserService;
@@ -42,7 +42,7 @@ public class ProfileController {
      */
     @PostMapping("/get")
     public R<SysUserDTO> get() {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = UserContext.get();
         SysUserDTO user = userService.getUserById(userId);
         return R.ok(user);
     }
@@ -52,7 +52,7 @@ public class ProfileController {
      */
     @PostMapping("/updateBasic")
     public R<Void> updateBasic(@RequestBody SysUserDTO userDTO) {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = UserContext.get();
         userDTO.setId(userId);
         
         // 不允许修改账号
@@ -80,7 +80,7 @@ public class ProfileController {
             return R.fail("新密码长度不能少于6位");
         }
         
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = UserContext.get();
         
         boolean success = userService.changePassword(userId, oldPassword, newPassword);
         if (!success) {

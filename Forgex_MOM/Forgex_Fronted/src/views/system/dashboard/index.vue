@@ -66,7 +66,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useUserStore } from '@/stores/user'
-import { getDashboardStatistics } from '@/api/sys/dashboard'
+import { getDashboardStatistics } from '@/api/system/dashboard'
+import {
+  UserOutlined,
+  TeamOutlined,
+} from '@ant-design/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()

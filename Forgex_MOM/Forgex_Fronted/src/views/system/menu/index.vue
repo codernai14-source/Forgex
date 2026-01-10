@@ -351,7 +351,7 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useMenu } from './hooks/useMenu'
 import { useMenuForm } from './hooks/useMenuForm'
 import { MENU_TYPE_OPTIONS, MENU_MODE_OPTIONS, MENU_LEVEL_OPTIONS } from './types'
-import { listModules } from '@/api/sys/module'
+import { listModules } from '@/api/system/module'
 import { getIcon } from '@/utils/icon'
 
 // 模块列表

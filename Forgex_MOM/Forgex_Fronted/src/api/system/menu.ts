@@ -66,3 +66,8 @@ export function deleteMenu(id: string) {
 export function batchDeleteMenus(ids: string[]) {
   return http.post('/sys/menu/batchDelete', { ids })
 }
+
+/**
+ * 获取菜单树（别名，兼容旧代码）
+ */
+export const listMenusTree = getMenuTree

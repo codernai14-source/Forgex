@@ -130,10 +130,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import { getCurrentUserInfo, updateBasicInfo, changePassword } from '@/api/profile'
 
+const route = useRoute()
 const loading = ref(false)
 const activeTab = ref('basic')
 
@@ -238,6 +240,9 @@ function validateConfirmPassword(_rule: any, value: string) {
 }
 
 onMounted(() => {
+  if (route.query.tab) {
+    activeTab.value = route.query.tab as string
+  }
   loadUserInfo()
 })
 </script>

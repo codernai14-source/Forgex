@@ -49,3 +49,8 @@ export function deleteModule(id: string) {
 export function batchDeleteModules(ids: string[]) {
   return http.post('/sys/module/batchDelete', { ids })
 }
+
+/**
+ * 查询所有模块列表（别名，兼容旧代码）
+ */
+export const listModules = getModuleList

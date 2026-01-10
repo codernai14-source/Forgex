@@ -154,8 +154,8 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { applyInit } from '../../../api/sys/init'
-import { uploadFile } from '../../../api/sys/file'
+import { applyInit } from '../../../api/system/init'
+import { uploadFile } from '../../../api/system/file'
 import { useRouter } from 'vue-router'
 
 const submitting = ref(false)

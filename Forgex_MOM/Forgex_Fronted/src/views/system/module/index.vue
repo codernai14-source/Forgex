@@ -281,8 +281,8 @@ const handleDeleteConfirm = (id: string) => {
   Modal.confirm({
     title: '确认删除',
     content: '确定要删除该模块吗？',
-    okText: '确定',
-    cancelText: '取消',
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: () => handleDelete(id)
   })
 }
@@ -294,8 +294,8 @@ const handleBatchDeleteConfirm = () => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？`,
-    okText: '确定',
-    cancelText: '取消',
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: handleBatchDelete
   })
 }

@@ -173,11 +173,22 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 用户管理页面
+ * 
+ * 功能：
+ * 1. 用户列表查询（分页、搜索）
+ * 2. 新增、编辑、删除用户
+ * 3. 用户状态管理、密码重置
+ * 
+ * @author Forgex
+ * @version 1.0.0
+ */
 import { ref, onMounted } from 'vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import { useUser } from './hooks/useUser'
-import { getDepartmentTree } from '@/api/sys/department'
-import { listPositions } from '@/api/sys/position'
+import { getDepartmentTree } from '@/api/system/department'
+import { listPositions } from '@/api/system/position'
 import type { Department, Position } from './types'
 
 // 用户列表逻辑

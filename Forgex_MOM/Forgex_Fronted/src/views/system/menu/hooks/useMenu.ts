@@ -4,8 +4,7 @@
 
 import { ref, reactive } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { listMenusTree } from '@/api/sys/menu'
-import { deleteMenu, batchDeleteMenus } from '@/api/system/menu'
+import { getMenuTree, deleteMenu, batchDeleteMenus } from '@/api/system/menu'
 import type { Menu, MenuQuery } from '../types'
 
 /**
@@ -69,7 +68,7 @@ export function useMenu() {
         params.status = queryParams.status
       }
       
-      const response = await listMenusTree(params)
+      const response = await getMenuTree(params)
       const flatList = response || []
       
       // 构建树形结构
