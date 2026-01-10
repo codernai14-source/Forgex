@@ -122,4 +122,12 @@ public interface ISysUserService extends IService<SysUser> {
      * @param id 用户ID
      */
     void resetPassword(Long id);
+    
+    /**
+     * 更新用户状态
+     * 
+     * @param id 用户ID
+     * @param status 状态：true=启用，false=禁用
+     */
+    void updateStatus(Long id, Boolean status);
 }

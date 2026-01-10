@@ -54,6 +54,7 @@ export interface UserQuery {
   username?: string
   phone?: string
   departmentId?: string
+  positionId?: string
   status?: number
   pageNum: number
   pageSize: number

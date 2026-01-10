@@ -21,6 +21,35 @@
           />
         </a-form-item>
         
+        <a-form-item label="部门">
+          <a-tree-select
+            v-model:value="queryForm.departmentId"
+            placeholder="请选择部门"
+            allow-clear
+            tree-default-expand-all
+            :tree-data="departmentTreeData"
+            :field-names="{ label: 'deptName', value: 'id', children: 'children' }"
+            style="width: 200px;"
+          />
+        </a-form-item>
+        
+        <a-form-item label="职位">
+          <a-select
+            v-model:value="queryForm.positionId"
+            placeholder="请选择职位"
+            allow-clear
+            style="width: 200px;"
+          >
+            <a-select-option
+              v-for="pos in positionList"
+              :key="pos.id"
+              :value="pos.id"
+            >
+              {{ pos.positionName }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        
         <a-form-item label="状态">
           <a-select
             v-model:value="queryForm.status"
@@ -109,17 +138,23 @@
                 编辑
               </a>
               <a
-                v-permission="'sys:user:delete'"
-                style="color: #ff4d4f;"
-                @click="handleDelete(record.id)"
+                v-permission="'sys:user:status'"
+                @click="handleUpdateStatus(record.id, !record.status)"
               >
-                删除
+                {{ record.status ? '禁用' : '启用' }}
               </a>
               <a
                 v-permission="'sys:user:resetPwd'"
                 @click="handleResetPassword(record.id)"
               >
                 重置密码
+              </a>
+              <a
+                v-permission="'sys:user:delete'"
+                style="color: #ff4d4f;"
+                @click="handleDelete(record.id)"
+              >
+                删除
               </a>
             </a-space>
           </template>
@@ -141,6 +176,9 @@
 import { ref, onMounted } from 'vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import { useUser } from './hooks/useUser'
+import { getDepartmentTree } from '@/api/sys/department'
+import { listPositions } from '@/api/sys/position'
+import type { Department, Position } from './types'
 
 // 用户列表逻辑
 const {
@@ -156,8 +194,15 @@ const {
   handleDelete,
   handleBatchDelete,
   handleResetPassword,
+  handleUpdateStatus,
   handleSelectionChange,
 } = useUser()
+
+// 部门树数据
+const departmentTreeData = ref<Department[]>([])
+
+// 职位列表
+const positionList = ref<Position[]>([])
 
 // 弹窗状态
 const dialogVisible = ref(false)
@@ -211,8 +256,34 @@ function handleTableChange(pag: any) {
   handlePageChange(pag.current, pag.pageSize)
 }
 
+/**
+ * 加载部门树数据
+ */
+async function loadDepartmentTree() {
+  try {
+    const result = await getDepartmentTree({ tenantId: '1' })
+    departmentTreeData.value = result || []
+  } catch (error) {
+    console.error('加载部门树失败:', error)
+  }
+}
+
+/**
+ * 加载职位列表
+ */
+async function loadPositionList() {
+  try {
+    const result = await listPositions({})
+    positionList.value = result || []
+  } catch (error) {
+    console.error('加载职位列表失败:', error)
+  }
+}
+
 // 初始化
 onMounted(() => {
+  loadDepartmentTree()
+  loadPositionList()
   fetchUserList()
 })
 </script>

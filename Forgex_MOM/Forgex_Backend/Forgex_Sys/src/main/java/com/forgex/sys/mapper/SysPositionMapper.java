@@ -18,7 +18,9 @@ import com.forgex.sys.domain.entity.SysPosition;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 职位 Mapper
+ * 职位Mapper
+ * 
+ * 提供职位数据访问接口
  */
 @Mapper
 public interface SysPositionMapper extends BaseMapper<SysPosition> {

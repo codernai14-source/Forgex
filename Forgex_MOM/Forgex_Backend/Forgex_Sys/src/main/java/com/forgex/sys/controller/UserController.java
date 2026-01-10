@@ -162,6 +162,23 @@ public class UserController {
     }
     
     /**
+     * 更新用户状态
+     */
+    @PostMapping("/updateStatus")
+    public R<Void> updateStatus(@RequestBody Map<String, Object> body) {
+        Long id = parseLong(body.get("id"));
+        Boolean status = (Boolean) body.get("status");
+        
+        userValidator.validateId(id);
+        if (status == null) {
+            return R.fail("状态不能为空");
+        }
+        
+        userService.updateStatus(id, status);
+        return R.ok();
+    }
+    
+    /**
      * 解析Long类型参数
      */
     private Long parseLong(Object obj) {

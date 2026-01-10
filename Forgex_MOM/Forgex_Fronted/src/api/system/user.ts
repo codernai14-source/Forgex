@@ -54,6 +54,20 @@ export async function resetPassword(id: string) {
 }
 
 /**
+ * 更新用户状态
+ */
+export async function updateUserStatus(id: string, status: boolean) {
+  return http.post('/sys/user/updateStatus', { id, status })
+}
+
+/**
+ * 获取部门树
+ */
+export async function getDepartmentTree(params: { tenantId: string }) {
+  return http.post('/sys/department/tree', params)
+}
+
+/**
  * 获取部门列表
  */
 export async function getDepartmentList() {
@@ -76,6 +90,8 @@ export const userApi = {
   deleteUser,
   batchDeleteUsers,
   resetPassword,
+  updateUserStatus,
+  getDepartmentTree,
   getDepartmentList,
   getPositionList
 }

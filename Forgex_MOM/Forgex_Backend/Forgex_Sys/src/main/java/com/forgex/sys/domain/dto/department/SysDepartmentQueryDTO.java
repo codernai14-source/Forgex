@@ -11,56 +11,36 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-
-
-package com.forgex.sys.domain.dto;
+package com.forgex.sys.domain.dto.department;
 
 import com.forgex.common.base.BaseGetParam;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 用户查询DTO
+ * 部门查询DTO
  * 
- * @author coder_nai@163.com
- * @date 2025-01-07
+ * 用于部门列表查询的参数封装
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class SysUserQueryDTO extends BaseGetParam {
+public class SysDepartmentQueryDTO extends BaseGetParam {
     
-    /**
-     * 账号（模糊查询）
-     */
-    private String account;
-    
-    /**
-     * 用户名（模糊查询）
-     */
-    private String username;
-    
-    /**
-     * 手机号（模糊查询）
-     */
-    private String phone;
-    
-    /**
-     * 部门ID
-     */
-    private Long departmentId;
-    
-    /**
-     * 职位ID
-     */
-    private Long positionId;
-    
-    /**
-     * 状态：false=禁用，true=启用
-     */
-    private Boolean status;
-    
-    /**
-     * 租户ID
-     */
+    /** 租户ID */
     private Long tenantId;
+    
+    /** 父部门ID */
+    private Long parentId;
+    
+    /** 部门名称（模糊查询） */
+    private String deptName;
+    
+    /** 部门编码（模糊查询） */
+    private String deptCode;
+    
+    /** 组织类型 */
+    private String orgType;
+    
+    /** 状态 */
+    private Boolean status;
 }

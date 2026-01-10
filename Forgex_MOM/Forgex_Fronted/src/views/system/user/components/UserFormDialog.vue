@@ -73,20 +73,15 @@
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="所属部门" name="departmentId">
-                <a-select
+                <a-tree-select
                   v-model:value="formData.departmentId"
                   placeholder="请选择部门"
                   show-search
-                  :filter-option="filterOption"
-                >
-                  <a-select-option
-                    v-for="dept in departmentList"
-                    :key="dept.id"
-                    :value="dept.id"
-                  >
-                    {{ dept.deptName }}
-                  </a-select-option>
-                </a-select>
+                  tree-default-expand-all
+                  :tree-data="departmentList"
+                  :field-names="{ label: 'deptName', value: 'id', children: 'children' }"
+                  :filter-tree-node="filterTreeNode"
+                />
               </a-form-item>
             </a-col>
             
@@ -478,7 +473,7 @@ function resetForm() {
  */
 async function fetchDepartmentList() {
   try {
-    const list = await userApi.getDepartmentList()
+    const list = await userApi.getDepartmentTree({ tenantId: '1' })
     departmentList.value = Array.isArray(list) ? list : []
   } catch (error) {
     console.error('获取部门列表失败:', error)
@@ -518,6 +513,13 @@ function addWorkHistory() {
  */
 function removeWorkHistory(index: number) {
   profileData.workHistory?.splice(index, 1)
+}
+
+/**
+ * 树形节点过滤
+ */
+function filterTreeNode(inputValue: string, treeNode: any) {
+  return treeNode.deptName.toLowerCase().indexOf(inputValue.toLowerCase()) >= 0
 }
 
 /**

@@ -11,17 +11,30 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.sys.mapper;
+package com.forgex.sys.domain.dto.position;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.forgex.sys.domain.entity.SysDepartment;
-import org.apache.ibatis.annotations.Mapper;
+import com.forgex.common.base.BaseGetParam;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * 部门Mapper
+ * 职位查询DTO
  * 
- * 提供部门数据访问接口
+ * 用于职位列表查询的参数封装
  */
-@Mapper
-public interface SysDepartmentMapper extends BaseMapper<SysDepartment> {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class SysPositionQueryDTO extends BaseGetParam {
+    
+    /** 租户ID */
+    private Long tenantId;
+    
+    /** 职位名称（模糊查询） */
+    private String positionName;
+    
+    /** 职位编码（模糊查询） */
+    private String positionCode;
+    
+    /** 状态 */
+    private Boolean status;
 }

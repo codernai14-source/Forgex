@@ -25,6 +25,7 @@ export function useUser() {
     username: '',
     phone: '',
     departmentId: undefined,
+    positionId: undefined,
     status: undefined,
   })
   
@@ -71,6 +72,7 @@ export function useUser() {
       username: '',
       phone: '',
       departmentId: undefined,
+      positionId: undefined,
       status: undefined,
     })
     pagination.current = 1
@@ -138,7 +140,7 @@ export function useUser() {
   async function handleResetPassword(id: string) {
     Modal.confirm({
       title: '确认重置密码',
-      content: '确定要重置该用户的密码吗？',
+      content: '确定要重置该用户的密码吗？密码将重置为：123456',
       onOk: async () => {
         try {
           await userApi.resetPassword(id)
@@ -146,6 +148,27 @@ export function useUser() {
         } catch (error) {
           console.error('密码重置失败:', error)
           message.error('密码重置失败')
+        }
+      },
+    })
+  }
+  
+  /**
+   * 更新用户状态
+   */
+  async function handleUpdateStatus(id: string, status: boolean) {
+    const statusText = status ? '启用' : '禁用'
+    Modal.confirm({
+      title: `确认${statusText}`,
+      content: `确定要${statusText}该用户吗？`,
+      onOk: async () => {
+        try {
+          await userApi.updateUserStatus(id, status)
+          message.success(`${statusText}成功`)
+          fetchUserList()
+        } catch (error) {
+          console.error(`${statusText}失败:`, error)
+          message.error(`${statusText}失败`)
         }
       },
     })
@@ -171,6 +194,7 @@ export function useUser() {
     handleDelete,
     handleBatchDelete,
     handleResetPassword,
+    handleUpdateStatus,
     handleSelectionChange,
   }
 }

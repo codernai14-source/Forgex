@@ -231,6 +231,55 @@ CREATE TABLE IF NOT EXISTS sys_position (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='职位表';
 
 -- 初始化数据
+-- 使用存储过程安全地添加缺失字段（兼容MySQL 5.7）
+DELIMITER $$
+
+-- 检查并添加字段的存储过程
+CREATE PROCEDURE add_column_if_not_exists(IN table_name VARCHAR(255), IN column_name VARCHAR(255), IN column_definition VARCHAR(500))
+BEGIN
+    DECLARE column_count INT;
+    
+    SELECT COUNT(*) INTO column_count 
+    FROM information_schema.columns 
+    WHERE table_schema = DATABASE() 
+    AND table_name = table_name 
+    AND column_name = column_name;
+    
+    IF column_count = 0 THEN
+        SET @sql = CONCAT('ALTER TABLE ', table_name, ' ADD COLUMN ', column_name, ' ', column_definition);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- 调用存储过程添加缺失字段
+CALL add_column_if_not_exists('sys_tenant', 'description', 'VARCHAR(255) COMMENT ''描述''');
+CALL add_column_if_not_exists('sys_role', 'description', 'VARCHAR(500) COMMENT ''描述''');
+
+CALL add_column_if_not_exists('sys_menu', 'component_key', 'VARCHAR(100) COMMENT ''前端组件键''');
+CALL add_column_if_not_exists('sys_menu', 'perm_key', 'VARCHAR(100) COMMENT ''按钮权限键''');
+CALL add_column_if_not_exists('sys_menu', 'menu_level', 'INT COMMENT ''菜单级别''');
+CALL add_column_if_not_exists('sys_menu', 'menu_mode', 'VARCHAR(20) COMMENT ''菜单模式''');
+CALL add_column_if_not_exists('sys_menu', 'external_url', 'VARCHAR(255) COMMENT ''外部链接''');
+
+CALL add_column_if_not_exists('sys_module', 'icon', 'VARCHAR(50) COMMENT ''图标''');
+CALL add_column_if_not_exists('sys_module', 'order_num', 'INT DEFAULT 0 COMMENT ''排序''');
+CALL add_column_if_not_exists('sys_module', 'visible', 'TINYINT DEFAULT 1 COMMENT ''是否可见''');
+CALL add_column_if_not_exists('sys_module', 'status', 'TINYINT DEFAULT 1 COMMENT ''状态''');
+
+CALL add_column_if_not_exists('sys_user', 'email', 'VARCHAR(100) COMMENT ''邮箱''');
+CALL add_column_if_not_exists('sys_user', 'phone', 'VARCHAR(20) COMMENT ''手机号''');
+
+CALL add_column_if_not_exists('sys_user_tenant', 'is_default', 'TINYINT DEFAULT 0 COMMENT ''是否默认租户''');
+CALL add_column_if_not_exists('sys_user_tenant', 'pref_order', 'INT DEFAULT 0 COMMENT ''喜好排序''');
+CALL add_column_if_not_exists('sys_user_tenant', 'last_used', 'DATETIME COMMENT ''最后使用时间''');
+
+-- 删除临时存储过程
+DROP PROCEDURE IF EXISTS add_column_if_not_exists;
+
 -- 1. 插入租户（如果不存在）
 INSERT IGNORE INTO sys_tenant (tenant_name, tenant_code, description, status) VALUES ('默认租户', 'default', '默认租户', 1);
 SET @TENANT_ID = (SELECT id FROM sys_tenant WHERE tenant_code = 'default');
@@ -262,44 +311,44 @@ INSERT IGNORE INTO sys_user_role (user_id, role_id, tenant_id) VALUES (@ADMIN_US
 INSERT IGNORE INTO sys_module (tenant_id, code, name, icon, order_num, visible, status) VALUES (@TENANT_ID, 'sys', '系统管理', 'SettingOutlined', 10, 1, 1);
 SET @SYS_MODULE_ID = (SELECT id FROM sys_module WHERE code = 'sys' AND tenant_id = @TENANT_ID);
 
--- 7. 插入菜单
+-- 7. 插入菜单（如果不存在）
 -- 系统管理主页
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'dashboard', '系统管理主页', 'DashboardOutlined', 'SystemDashboard', 'sys:dashboard:view', 1, 1, 1, 1, 'embedded');
-SET @DASHBOARD_MENU_ID = LAST_INSERT_ID();
+SET @DASHBOARD_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'dashboard' AND type = 'menu');
 
 -- 用户管理菜单
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'user', '用户管理', 'UserOutlined', 'SystemUser', 'sys:user:view', 10, 1, 1, 1, 'embedded');
-SET @USER_MENU_ID = LAST_INSERT_ID();
+SET @USER_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'user' AND type = 'menu');
 
 -- 角色管理菜单
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'role', '角色管理', 'TeamOutlined', 'SystemRole', 'sys:role:view', 20, 1, 1, 1, 'embedded');
-SET @ROLE_MENU_ID = LAST_INSERT_ID();
+SET @ROLE_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'role' AND type = 'menu');
 
 -- 模块管理菜单
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'module', '模块管理', 'AppstoreOutlined', 'SystemModule', 'sys:module:view', 30, 1, 1, 1, 'embedded');
-SET @MODULE_MENU_ID = LAST_INSERT_ID();
+SET @MODULE_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'module' AND type = 'menu');
 
 -- 菜单管理菜单
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'menu', '菜单管理', 'MenuOutlined', 'SystemMenu', 'sys:menu:view', 40, 1, 1, 1, 'embedded');
-SET @MENU_MENU_ID = LAST_INSERT_ID();
+SET @MENU_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'menu' AND type = 'menu');
 
 -- 部门管理菜单
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'department', '部门管理', 'ApartmentOutlined', 'SystemDepartment', 'sys:dept:view', 50, 1, 1, 1, 'embedded');
-SET @DEPT_MENU_ID = LAST_INSERT_ID();
+SET @DEPT_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'department' AND type = 'menu');
 
 -- 职位管理菜单
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'position', '职位管理', 'IdcardOutlined', 'SystemPosition', 'sys:position:view', 60, 1, 1, 1, 'embedded');
-SET @POSITION_MENU_ID = LAST_INSERT_ID();
+SET @POSITION_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'position' AND type = 'menu');
 
 -- 用户管理按钮权限
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '新增用户', 'sys:user:add', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '编辑用户', 'sys:user:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '删除用户', 'sys:user:delete', 3, 1, 1, 2, 'embedded'),
@@ -308,7 +357,7 @@ INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, ord
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '导出用户', 'sys:user:export', 6, 1, 1, 2, 'embedded');
 
 -- 角色管理按钮权限
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '新增角色', 'sys:role:add', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '编辑角色', 'sys:role:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '删除角色', 'sys:role:delete', 3, 1, 1, 2, 'embedded'),
@@ -316,47 +365,48 @@ INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, ord
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '菜单授权', 'sys:role:authMenu', 5, 1, 1, 2, 'embedded');
 
 -- 模块管理按钮权限
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '新增模块', 'sys:module:add', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '编辑模块', 'sys:module:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '删除模块', 'sys:module:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '批量删除模块', 'sys:module:batchDelete', 4, 1, 1, 2, 'embedded');
 
 -- 菜单管理按钮权限
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '新增菜单', 'sys:menu:add', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '编辑菜单', 'sys:menu:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '删除菜单', 'sys:menu:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '批量删除菜单', 'sys:menu:batchDelete', 4, 1, 1, 2, 'embedded');
 
 -- 部门管理按钮权限
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '新增部门', 'sys:dept:add', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '编辑部门', 'sys:dept:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '删除部门', 'sys:dept:delete', 3, 1, 1, 2, 'embedded');
 
 -- 职位管理按钮权限
-INSERT INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '新增职位', 'sys:position:add', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '编辑职位', 'sys:position:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '删除职位', 'sys:position:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '批量删除职位', 'sys:position:batchDelete', 4, 1, 1, 2, 'embedded');
 
 -- 8. 角色菜单关联（管理员角色拥有所有权限）
--- 关联所有菜单
+-- 先删除已存在的关联，再重新关联
+DELETE FROM sys_role_menu WHERE tenant_id = @TENANT_ID AND role_id = @ADMIN_ROLE_ID;
 INSERT INTO sys_role_menu (tenant_id, role_id, menu_id) SELECT @TENANT_ID, @ADMIN_ROLE_ID, id FROM sys_menu WHERE tenant_id = @TENANT_ID;
 
--- 9. 插入系统配置
-INSERT INTO sys_config (config_key, config_value, tenant_id) VALUES (
+-- 9. 插入系统配置（如果不存在）
+INSERT IGNORE INTO sys_config (config_key, config_value, tenant_id) VALUES (
   'login.captcha',
   '{"mode":"none","image":{"keyPrefix":"captcha:image","expireSeconds":120,"width":120,"height":40,"length":4},"slider":{"secondaryEnabled":false,"keyPrefix":"captcha:slider","secondaryKeyPrefix":"captcha:secondary","tokenExpireSeconds":120,"provider":"redis-token"}}',
   @TENANT_ID
 );
 
--- 10. 租户隔离跳过配置
-INSERT INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_user', 1, '用户表不带租户字段');
-INSERT INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_tenant', 1, '租户表不带租户字段');
-INSERT INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_user_tenant', 1, '用户-租户关联表不带租户字段');
+-- 10. 租户隔离跳过配置（如果不存在）
+INSERT IGNORE INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_user', 1, '用户表不带租户字段');
+INSERT IGNORE INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_tenant', 1, '租户表不带租户字段');
+INSERT IGNORE INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_user_tenant', 1, '用户-租户关联表不带租户字段');
 
 -- 切换到forgex_common库
 USE forgex_common;
@@ -374,8 +424,8 @@ CREATE TABLE IF NOT EXISTS sys_user_style_config (
     UNIQUE KEY uk_user_tenant_key (user_id, tenant_id, config_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户页面样式配置表';
 
--- 插入默认样式配置
-INSERT INTO sys_user_style_config (user_id, tenant_id, config_key, config_json) VALUES
+-- 插入默认样式配置（如果不存在）
+INSERT IGNORE INTO sys_user_style_config (user_id, tenant_id, config_key, config_json) VALUES
 (@ADMIN_USER_ID, @TENANT_ID, 'layout.style', '{"theme":"default","layout":"side","navTheme":"dark","fixedHeader":true,"autoHideHeader":false,"fixSiderbar":true}');
 
 -- 切换回forgex_admin库

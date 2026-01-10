@@ -136,6 +136,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     public void addUser(SysUserDTO userDTO) {
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
+        
+        // 设置默认密码并加密
+        if (!StringUtils.hasText(user.getPassword())) {
+            user.setPassword(BCrypt.hashpw("123456"));
+        } else {
+            user.setPassword(BCrypt.hashpw(user.getPassword()));
+        }
+        
         userMapper.insert(user);
     }
     
@@ -245,6 +253,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     }
     
     /**
+     * 更新用户状态
+     * <p>更新用户的启用/禁用状态。</p>
+     * @param id 用户ID
+     * @param status 状态：true=启用，false=禁用
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateStatus(Long id, Boolean status) {
+        SysUser user = new SysUser();
+        user.setId(id);
+        user.setStatus(status);
+        userMapper.updateById(user);
+    }
+    
+    /**
      * 构建查询条件
      * <p>根据查询DTO构建Lambda查询条件。</p>
      * @param query 查询条件DTO
@@ -260,6 +283,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                 SysUser::getUsername, query.getUsername());
             wrapper.eq(query.getDepartmentId() != null, 
                 SysUser::getDepartmentId, query.getDepartmentId());
+            wrapper.eq(query.getPositionId() != null, 
+                SysUser::getPositionId, query.getPositionId());
             wrapper.eq(query.getStatus() != null, 
                 SysUser::getStatus, query.getStatus());
             wrapper.eq(query.getTenantId() != null, 
