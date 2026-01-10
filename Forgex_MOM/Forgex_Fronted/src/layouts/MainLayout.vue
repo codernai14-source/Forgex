@@ -265,7 +265,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { dynamicModules, dynamicRoutes } from '../router'
-import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/sys/userStyle'
+import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
@@ -276,10 +276,12 @@ import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
 import type { LayoutConfig } from '../theme/types'
+import { useAppStore } from '../stores/app'
 
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
+const appStore = useAppStore()
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -689,12 +691,12 @@ function onUserMenuClick(key: string) {
   }
   
   if (key === 'profile') {
-    message.info('个人信息功能暂未实现')
+    router.push('/workspace/profile')
     return
   }
   
   if (key === 'password') {
-    message.info('修改密码功能暂未实现')
+    router.push('/workspace/profile?tab=security')
     return
   }
   

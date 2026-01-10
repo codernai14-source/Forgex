@@ -93,8 +93,8 @@
                     </a-button>
                     <a-popconfirm
                       title="确定要删除这个职位吗？"
-                      ok-text="确定"
-                      cancel-text="取消"
+                      :ok-text="$t('common.confirm')"
+                      :cancel-text="$t('common.cancel')"
                       @confirm="handleDelete(record.id)"
                     >
                       <a-button
@@ -116,7 +116,7 @@
     </a-card>
 
     <!-- 新增/编辑弹窗 -->
-    <FormContainer
+    <BaseFormDialog
       v-model:open="visible"
       :title="isEdit ? '编辑职位' : '新增职位'"
       :confirm-loading="formLoading"
@@ -195,7 +195,7 @@
           />
         </a-form-item>
       </a-form>
-    </FormContainer>
+    </BaseFormDialog>
   </div>
 </template>
 
@@ -208,14 +208,14 @@ import {
   PlusOutlined
 } from '@ant-design/icons-vue'
 import DeptTree from '@/components/system/DeptTree.vue'
-import FormContainer from '@/components/common/FormContainer.vue'
-import { getDepartmentTree } from '@/api/sys/department'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import { getDepartmentTree } from '@/api/system/department'
 import {
   listPositions,
   createPosition,
   updatePosition,
   deletePosition
-} from '@/api/sys/position'
+} from '@/api/system/position'
 import type { Position, PositionSaveParam } from './types'
 
 // 租户ID

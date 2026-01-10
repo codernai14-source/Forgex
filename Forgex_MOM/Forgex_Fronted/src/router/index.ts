@@ -10,7 +10,14 @@ const routes = [
     path: '/workspace',
     name: 'Workspace',
     component: () => import('../layouts/MainLayout.vue'),
-    children: []
+    children: [
+      {
+        path: 'profile',
+        name: 'UserProfile',
+        component: () => import('../views/profile/index.vue'),
+        meta: { title: '个人信息' }
+      }
+    ]
   },
   {
     path: '/redirect',

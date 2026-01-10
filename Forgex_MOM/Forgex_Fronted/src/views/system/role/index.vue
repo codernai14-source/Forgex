@@ -102,8 +102,8 @@
               </a-button>
               <a-popconfirm
                 title="确定要删除这个角色吗？"
-                ok-text="确定"
-                cancel-text="取消"
+                :ok-text="$t('common.confirm')"
+                :cancel-text="$t('common.cancel')"
                 @confirm="handleDelete(record.id)"
               >
                 <a-button
@@ -122,7 +122,7 @@
     </a-card>
 
     <!-- 新增/编辑弹窗 -->
-    <FormContainer
+    <BaseFormDialog
       v-model:open="visible"
       :title="isEdit ? '编辑角色' : '新增角色'"
       :confirm-loading="formLoading"
@@ -163,7 +163,7 @@
           </a-radio-group>
         </a-form-item>
       </a-form>
-    </FormContainer>
+    </BaseFormDialog>
 
     <!-- 菜单授权弹窗 -->
     <a-modal
@@ -224,7 +224,18 @@
 </template>
 
 <script setup lang="ts">
-import FormContainer from '@/components/common/FormContainer.vue'
+/**
+ * 角色管理页面
+ * 
+ * 功能：
+ * 1. 角色列表查询（分页、搜索）
+ * 2. 新增、编辑、删除角色
+ * 3. 角色菜单授权
+ * 
+ * @author Forgex
+ * @version 1.0.0
+ */
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -233,8 +244,7 @@ import {
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
-import { listRoleMenus, grantRoleMenus, getRoleAuthData } from '@/api/sys/role'
-import { listMenusTree } from '@/api/sys/menu'
+import { grantRoleMenus, getRoleAuthData } from '@/api/system/role'
 import { useRole } from './hooks/useRole'
 import { useRoleForm } from './hooks/useRoleForm'
 import type { Role } from './types'

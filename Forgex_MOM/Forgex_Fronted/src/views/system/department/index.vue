@@ -42,8 +42,8 @@
                     </a-button>
                     <a-popconfirm
                       title="确定要删除这个部门吗？"
-                      ok-text="确定"
-                      cancel-text="取消"
+                      :ok-text="$t('common.confirm')"
+                      :cancel-text="$t('common.cancel')"
                       @confirm="handleDelete"
                     >
                       <a-button
@@ -207,6 +207,17 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 部门管理页面
+ * 
+ * 功能：
+ * 1. 部门树形结构展示
+ * 2. 部门详情查看
+ * 3. 部门新增、编辑、删除
+ * 
+ * @author Forgex
+ * @version 1.0.0
+ */
 import DeptTree from '@/components/system/DeptTree.vue'
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
@@ -221,7 +232,7 @@ import {
   createDepartment,
   updateDepartment,
   deleteDepartment
-} from '@/api/sys/department'
+} from '@/api/system/department'
 import type { Department, DepartmentSaveParam } from './types'
 
 // 租户ID

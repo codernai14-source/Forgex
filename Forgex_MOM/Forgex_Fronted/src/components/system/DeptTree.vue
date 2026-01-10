@@ -52,7 +52,8 @@ import {
   ApartmentOutlined,
   TeamOutlined
 } from '@ant-design/icons-vue'
-import { getDepartmentTree } from '@/api/sys/department'
+import { getDepartmentTree } from '@/api/system/department'
+import type { Department } from '@/views/system/department/types'
 
 const props = defineProps<{
   showAdd?: boolean
