@@ -268,6 +268,38 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     }
     
     /**
+     * 修改密码
+     * <p>验证旧密码后更新新密码。</p>
+     * @param id 用户ID
+     * @param oldPassword 旧密码（明文）
+     * @param newPassword 新密码（明文）
+     * @return 是否成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean changePassword(Long id, String oldPassword, String newPassword) {
+        // 查询用户
+        SysUser user = userMapper.selectById(id);
+        if (user == null) {
+            return false;
+        }
+        
+        // 验证旧密码
+        if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
+            return false;
+        }
+        
+        // 更新新密码
+        String hashedPassword = BCrypt.hashpw(newPassword);
+        SysUser updateUser = new SysUser();
+        updateUser.setId(id);
+        updateUser.setPassword(hashedPassword);
+        userMapper.updateById(updateUser);
+        
+        return true;
+    }
+    
+    /**
      * 构建查询条件
      * <p>根据查询DTO构建Lambda查询条件。</p>
      * @param query 查询条件DTO

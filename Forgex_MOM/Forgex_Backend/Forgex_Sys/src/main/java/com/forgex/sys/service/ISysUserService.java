@@ -130,4 +130,14 @@ public interface ISysUserService extends IService<SysUser> {
      * @param status 状态：true=启用，false=禁用
      */
     void updateStatus(Long id, Boolean status);
+    
+    /**
+     * 修改密码
+     * 
+     * @param id 用户ID
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @return 是否成功
+     */
+    boolean changePassword(Long id, String oldPassword, String newPassword);
 }
