@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.forgex.common.config.UserStyleConfigService;
 import com.forgex.common.domain.config.LayoutStyleConfig;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.param.UserLayoutStyleParam;
 import com.forgex.sys.service.ISysUserService;
@@ -45,38 +46,40 @@ public class UserStyleController {
     /**
      * 读取用户在指定租户下的布局样式配置。
      *
-     * @param param 请求参数，需包含 account、tenantId
+     * @param param 请求参数，需包含 account
      * @return 布局样式配置，若未配置则返回默认值
      */
     @PostMapping("/get-layout")
     public R<LayoutStyleConfig> getLayout(@RequestBody UserLayoutStyleParam param) {
-        if (param == null || param.getAccount() == null || param.getTenantId() == null) {
-            return R.fail(500, "account/tenantId 不能为空");
+        if (param == null || param.getAccount() == null) {
+            return R.fail(500, "account 不能为空");
         }
         Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
             return R.fail(404, "用户不存在");
         }
-        LayoutStyleConfig config = userStyleConfigService.getLayoutConfig(userId, param.getTenantId());
+        Long tenantId = TenantContext.get();
+        LayoutStyleConfig config = userStyleConfigService.getLayoutConfig(userId, tenantId);
         return R.ok(config);
     }
 
     /**
      * 保存用户在指定租户下的布局样式配置。
      *
-     * @param param 请求参数，需包含 account、tenantId、config
+     * @param param 请求参数，需包含 account、config
      * @return 是否保存成功
      */
     @PostMapping("/save-layout")
     public R<Boolean> saveLayout(@RequestBody UserLayoutStyleParam param) {
-        if (param == null || param.getAccount() == null || param.getTenantId() == null || param.getConfig() == null) {
-            return R.fail(500, "account/tenantId/config 不能为空");
+        if (param == null || param.getAccount() == null || param.getConfig() == null) {
+            return R.fail(500, "account/config 不能为空");
         }
         Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
             return R.fail(404, "用户不存在");
         }
-        userStyleConfigService.saveLayoutConfig(userId, param.getTenantId(), param.getConfig());
+        Long tenantId = TenantContext.get();
+        userStyleConfigService.saveLayoutConfig(userId, tenantId, param.getConfig());
         return R.ok(Boolean.TRUE);
     }
 }

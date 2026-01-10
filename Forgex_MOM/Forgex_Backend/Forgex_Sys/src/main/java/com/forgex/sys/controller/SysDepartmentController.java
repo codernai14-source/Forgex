@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.department.SysDepartmentDTO;
 import com.forgex.sys.domain.dto.department.SysDepartmentQueryDTO;
@@ -45,12 +46,12 @@ public class SysDepartmentController {
     /**
      * 获取部门树
      * 
-     * @param params 参数（tenantId）
+     * @param params 参数
      * @return 部门树列表
      */
     @PostMapping("/tree")
     public R<List<SysDepartmentDTO>> tree(@RequestBody Map<String, Object> params) {
-        Long tenantId = Long.valueOf(params.get("tenantId").toString());
+        Long tenantId = TenantContext.get();
         List<SysDepartmentDTO> tree = departmentService.getDepartmentTree(tenantId);
         return R.ok(tree);
     }
@@ -63,6 +64,7 @@ public class SysDepartmentController {
      */
     @PostMapping("/list")
     public R<List<SysDepartmentDTO>> list(@RequestBody SysDepartmentQueryDTO queryDTO) {
+        queryDTO.setTenantId(TenantContext.get());
         List<SysDepartmentDTO> list = departmentService.list(queryDTO);
         return R.ok(list);
     }
@@ -70,13 +72,13 @@ public class SysDepartmentController {
     /**
      * 获取部门详情
      * 
-     * @param params 参数（id、tenantId）
+     * @param params 参数（id）
      * @return 部门详情
      */
     @PostMapping("/get")
     public R<SysDepartmentDTO> get(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
-        Long tenantId = Long.valueOf(params.get("tenantId").toString());
+        Long tenantId = TenantContext.get();
         
         SysDepartmentDTO department = departmentService.getById(id, tenantId);
         
@@ -96,6 +98,7 @@ public class SysDepartmentController {
     @PostMapping("/create")
     public R<Long> create(@Validated @RequestBody SysDepartmentSaveParam param) {
         try {
+            param.setTenantId(TenantContext.get());
             Long id = departmentService.create(param);
             return R.ok(id);
         } catch (Exception e) {
@@ -113,6 +116,7 @@ public class SysDepartmentController {
     @PostMapping("/update")
     public R<Boolean> update(@Validated @RequestBody SysDepartmentSaveParam param) {
         try {
+            param.setTenantId(TenantContext.get());
             Boolean success = departmentService.update(param);
             return R.ok(success);
         } catch (Exception e) {
@@ -124,14 +128,14 @@ public class SysDepartmentController {
     /**
      * 删除部门
      * 
-     * @param params 参数（id、tenantId）
+     * @param params 参数（id）
      * @return 是否成功
      */
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         try {
             Long id = Long.valueOf(params.get("id").toString());
-            Long tenantId = Long.valueOf(params.get("tenantId").toString());
+            Long tenantId = TenantContext.get();
             
             Boolean success = departmentService.delete(id, tenantId);
             return R.ok(success);

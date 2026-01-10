@@ -212,6 +212,13 @@
                 <a-input v-model:value="layoutConfig.watermarkText" style="width: 200px" />
               </div>
               <div class="fx-setting-row">
+                <span>表单模式</span>
+                <a-select v-model:value="appStore.formMode" style="width: 200px">
+                  <a-select-option value="modal">弹窗</a-select-option>
+                  <a-select-option value="drawer">抽屉</a-select-option>
+                </a-select>
+              </div>
+              <div class="fx-setting-row">
                 <span>页面动画</span>
                 <a-switch v-model:checked="layoutConfig.animateEnabled" />
               </div>

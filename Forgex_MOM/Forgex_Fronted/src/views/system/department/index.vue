@@ -3,41 +3,17 @@
     <a-card class="content-card" :bordered="false">
       <a-row :gutter="16">
         <!-- 左侧：部门树 -->
-        <a-col :span="8">
-          <div class="tree-container">
-            <div class="tree-header">
-              <span class="tree-title">组织架构</span>
-              <a-button
-                type="primary"
-                size="small"
-                @click="openAdd(null)"
-                v-permission="'sys:department:add'"
-              >
-                <template #icon><PlusOutlined /></template>
-                新增
-              </a-button>
-            </div>
-            <a-spin :spinning="treeLoading">
-              <a-tree
-                v-if="treeData.length > 0"
-                :tree-data="treeData"
-                :field-names="treeFieldNames"
-                :selected-keys="selectedKeys"
-                @select="onSelectNode"
-              >
-                <template #title="{ title, status }">
-                  <span :class="{ 'disabled-node': status === false }">
-                    {{ title }}
-                  </span>
-                </template>
-              </a-tree>
-              <a-empty v-else description="暂无数据" />
-            </a-spin>
-          </div>
+        <a-col :span="6">
+          <DeptTree
+            ref="deptTreeRef"
+            :show-add="true"
+            @select="onSelectNode"
+            @add="openAdd(null)"
+          />
         </a-col>
 
         <!-- 右侧：部门详情/编辑 -->
-        <a-col :span="16">
+        <a-col :span="18">
           <div class="detail-container">
             <div v-if="!selectedDept" class="empty-state">
               <a-empty description="请选择左侧部门查看详情" />
@@ -231,6 +207,7 @@
 </template>
 
 <script setup lang="ts">
+import DeptTree from '@/components/system/DeptTree.vue'
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -249,15 +226,7 @@ import type { Department, DepartmentSaveParam } from './types'
 
 // 租户ID
 const currentTenantId = ref<string | null>(null)
-
-// 树形数据
-const treeData = ref<Department[]>([])
-const treeLoading = ref(false)
-const treeFieldNames = {
-  key: 'id',
-  title: 'deptName',
-  children: 'children'
-}
+const deptTreeRef = ref()
 
 // 选中的节点
 const selectedKeys = ref<string[]>([])
@@ -429,7 +398,7 @@ async function handleDelete() {
     message.success('删除成功')
     selectedKeys.value = []
     selectedDept.value = null
-    await loadTree()
+    await refreshTree()
   } catch (e: any) {
     message.error(e.message || '删除失败')
   }
@@ -453,7 +422,7 @@ onMounted(async () => {
   const tid = sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
-    await loadTree()
+    // await loadTree() // Auto loaded by component
   }
 })
 </script>
@@ -461,46 +430,33 @@ onMounted(async () => {
 <style scoped>
 .page-wrap {
   padding: 16px;
+  height: calc(100vh - 84px); /* Adjust based on header height */
+  overflow: hidden;
 }
 
 .content-card {
-  min-height: calc(100vh - 120px);
-}
-
-.tree-container {
-  border-right: 1px solid #f0f0f0;
-  padding-right: 16px;
-  min-height: 600px;
-}
-
-.tree-header {
+  height: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  flex-direction: column;
 }
 
-.tree-title {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.disabled-node {
-  color: #999;
+:deep(.ant-card-body) {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
 }
 
 .detail-container {
   padding-left: 16px;
-  min-height: 600px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  height: 100%;
 }
 
 .detail-header,

@@ -13,10 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.domain.dto.position;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+
+
 
 /**
  * 职位保存参数
@@ -32,6 +34,9 @@ public class SysPositionSaveParam {
     /** 租户ID */
     @NotNull(message = "租户ID不能为空")
     private Long tenantId;
+    
+    /** 部门ID */
+    private Long departmentId;
     
     /** 职位名称 */
     @NotBlank(message = "职位名称不能为空")

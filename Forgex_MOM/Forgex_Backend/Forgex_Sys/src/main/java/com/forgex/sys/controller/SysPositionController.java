@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.position.SysPositionDTO;
 import com.forgex.sys.domain.dto.position.SysPositionQueryDTO;
@@ -51,6 +52,7 @@ public class SysPositionController {
      */
     @PostMapping("/list")
     public R<List<SysPositionDTO>> list(@RequestBody SysPositionQueryDTO queryDTO) {
+        queryDTO.setTenantId(TenantContext.get());
         List<SysPositionDTO> list = positionService.list(queryDTO);
         return R.ok(list);
     }
@@ -58,13 +60,13 @@ public class SysPositionController {
     /**
      * 获取职位详情
      * 
-     * @param params 参数（id、tenantId）
+     * @param params 参数（id）
      * @return 职位详情
      */
     @PostMapping("/get")
     public R<SysPositionDTO> get(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
-        Long tenantId = Long.valueOf(params.get("tenantId").toString());
+        Long tenantId = TenantContext.get();
         
         SysPositionDTO position = positionService.getById(id, tenantId);
         
@@ -84,6 +86,7 @@ public class SysPositionController {
     @PostMapping("/create")
     public R<Long> create(@Validated @RequestBody SysPositionSaveParam param) {
         try {
+            param.setTenantId(TenantContext.get());
             Long id = positionService.create(param);
             return R.ok(id);
         } catch (Exception e) {
@@ -101,6 +104,7 @@ public class SysPositionController {
     @PostMapping("/update")
     public R<Boolean> update(@Validated @RequestBody SysPositionSaveParam param) {
         try {
+            param.setTenantId(TenantContext.get());
             Boolean success = positionService.update(param);
             return R.ok(success);
         } catch (Exception e) {
@@ -112,14 +116,14 @@ public class SysPositionController {
     /**
      * 删除职位
      * 
-     * @param params 参数（id、tenantId）
+     * @param params 参数（id）
      * @return 是否成功
      */
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         try {
             Long id = Long.valueOf(params.get("id").toString());
-            Long tenantId = Long.valueOf(params.get("tenantId").toString());
+            Long tenantId = TenantContext.get();
             
             Boolean success = positionService.delete(id, tenantId);
             return R.ok(success);

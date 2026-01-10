@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysMenuDTO;
 import com.forgex.sys.domain.dto.SysMenuQueryDTO;
@@ -62,7 +63,7 @@ public class SysMenuController {
     public R<UserRoutesVO> routes(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
         String account = (String) body.get("account");
-        Long tenantId = parseLong(body.get("tenantId"));
+        Long tenantId = TenantContext.get();
         
         // 2. 参数校验
         menuValidator.validateRoutesParams(account, tenantId);
@@ -80,7 +81,7 @@ public class SysMenuController {
     @PostMapping("/tree")
     public R<List<MenuTreeVO>> tree(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
-        Long tenantId = parseLong(body.get("tenantId"));
+        Long tenantId = TenantContext.get();
         Long moduleId = parseLong(body.get("moduleId"));
         
         // 2. 调用Service

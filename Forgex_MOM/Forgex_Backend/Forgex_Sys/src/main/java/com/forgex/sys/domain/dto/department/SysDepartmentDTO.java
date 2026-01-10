@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * 部门DTO
  * 
- * 用于部门信息的数据传输
+ * 用于部门列表展示和树形结构
  */
 @Data
 public class SysDepartmentDTO {

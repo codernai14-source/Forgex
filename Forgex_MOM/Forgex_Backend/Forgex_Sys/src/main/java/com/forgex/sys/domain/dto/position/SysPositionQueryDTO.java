@@ -29,6 +29,9 @@ public class SysPositionQueryDTO extends BaseGetParam {
     /** 租户ID */
     private Long tenantId;
     
+    /** 部门ID */
+    private Long departmentId;
+    
     /** 职位名称（模糊查询） */
     private String positionName;
     

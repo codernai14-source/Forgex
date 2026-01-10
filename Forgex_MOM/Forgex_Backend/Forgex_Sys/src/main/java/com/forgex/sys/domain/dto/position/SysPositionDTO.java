@@ -47,6 +47,9 @@ public class SysPositionDTO {
     /** 备注 */
     private String remark;
     
+    /** 部门ID */
+    private Long departmentId;
+    
     /** 租户ID */
     private Long tenantId;
     

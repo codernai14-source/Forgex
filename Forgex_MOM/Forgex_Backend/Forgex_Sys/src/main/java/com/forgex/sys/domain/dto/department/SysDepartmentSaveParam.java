@@ -13,10 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.domain.dto.department;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 /**
  * 部门保存参数
@@ -30,7 +29,6 @@ public class SysDepartmentSaveParam {
     private Long id;
     
     /** 租户ID */
-    @NotNull(message = "租户ID不能为空")
     private Long tenantId;
     
     /** 父部门ID */

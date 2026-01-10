@@ -29,6 +29,11 @@ export const useAppStore = defineStore('app', () => {
    * 加载状态
    */
   const loading = ref(false)
+
+  /**
+   * 表单模式：modal-弹窗，drawer-抽屉
+   */
+  const formMode = ref<'modal' | 'drawer'>('drawer')
   
   // ============ Actions ============
   
@@ -95,7 +100,9 @@ export const useAppStore = defineStore('app', () => {
     setTheme,
     toggleLocale,
     setLocale,
-    setLoading
+    setLoading,
+    formMode,
+    setFormMode: (mode: 'modal' | 'drawer') => formMode.value = mode
   }
 }, {
   // 持久化配置（可选）

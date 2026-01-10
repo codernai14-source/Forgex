@@ -179,6 +179,19 @@ public class UserController {
     }
     
     /**
+     * 重置admin用户密码（临时接口）
+     */
+    @GetMapping("/resetAdminPassword")
+    public R<Void> resetAdminPassword() {
+        Long adminId = userService.getUserIdByAccount("admin");
+        if (adminId == null) {
+            return R.fail("admin用户不存在");
+        }
+        userService.resetPassword(adminId);
+        return R.ok();
+    }
+    
+    /**
      * 解析Long类型参数
      */
     private Long parseLong(Object obj) {

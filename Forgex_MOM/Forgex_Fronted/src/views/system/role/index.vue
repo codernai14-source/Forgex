@@ -122,13 +122,12 @@
     </a-card>
 
     <!-- 新增/编辑弹窗 -->
-    <a-modal
+    <FormContainer
       v-model:open="visible"
       :title="isEdit ? '编辑角色' : '新增角色'"
       :confirm-loading="formLoading"
       @ok="handleSubmit"
       @cancel="handleCancel"
-      width="600px"
     >
       <a-form
         ref="formRef"
@@ -164,48 +163,68 @@
           </a-radio-group>
         </a-form-item>
       </a-form>
-    </a-modal>
+    </FormContainer>
 
-    <!-- 菜单授权抽屉 -->
-    <a-drawer
+    <!-- 菜单授权弹窗 -->
+    <a-modal
       v-model:open="grantVisible"
       :title="`角色菜单授权 - ${grantRole?.roleName || ''}`"
-      placement="right"
-      width="420"
+      width="800px"
+      :confirm-loading="saving"
+      @ok="saveGrant"
+      @cancel="grantVisible = false"
     >
       <div v-if="!currentTenantId" style="color:#ef4444;">
         当前租户信息缺失，请从登录页重新进入系统。
       </div>
       <div v-else>
         <a-spin :spinning="loadingMenus">
-          <div class="toolbar">
-            <a-space>
-              <a-button size="small" @click="checkAll">全选</a-button>
-              <a-button size="small" @click="clearAll">清空</a-button>
-            </a-space>
-          </div>
-          <a-tree
-            checkable
-            v-model:checkedKeys="checkedKeys"
-            :tree-data="treeData"
-            :field-names="treeFieldNames"
-            :defaultExpandAll="true"
-          />
+          <a-row :gutter="16">
+            <!-- 左侧：全部权限（可勾选） -->
+            <a-col :span="12">
+              <a-card title="选择权限" :bordered="false" class="auth-card">
+                <template #extra>
+                  <a-space>
+                    <a-button size="small" @click="checkAll">全选</a-button>
+                    <a-button size="small" @click="clearAll">清空</a-button>
+                  </a-space>
+                </template>
+                <div class="tree-container">
+                  <a-tree
+                    checkable
+                    v-model:checkedKeys="checkedKeys"
+                    :tree-data="treeData"
+                    :field-names="treeFieldNames"
+                    :defaultExpandAll="true"
+                    :height="400"
+                  />
+                </div>
+              </a-card>
+            </a-col>
+            
+            <!-- 右侧：已拥有权限（只读） -->
+            <a-col :span="12">
+              <a-card title="已拥有权限" :bordered="false" class="auth-card">
+                <div class="tree-container">
+                  <a-tree
+                    :tree-data="ownedTreeData"
+                    :field-names="treeFieldNames"
+                    :defaultExpandAll="true"
+                    :height="400"
+                    :selectable="false"
+                  />
+                </div>
+              </a-card>
+            </a-col>
+          </a-row>
         </a-spin>
-        <div class="drawer-footer">
-          <a-space>
-            <a-button @click="grantVisible = false">取消</a-button>
-            <a-button type="primary" :loading="saving" @click="saveGrant">
-              保存授权
-            </a-button>
-          </a-space>
-        </div>
       </div>
-    </a-drawer>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
+import FormContainer from '@/components/common/FormContainer.vue'
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -287,19 +306,21 @@ const grantVisible = ref(false)
 const grantRole = ref<Role | null>(null)
 const loadingMenus = ref(false)
 const saving = ref(false)
-const menus = ref<MenuEntity[]>([])
-const treeData = ref<TreeNode[]>([])
+// const menus = ref<MenuEntity[]>([]) // Not needed as raw list anymore if using authData directly mapping to tree
+const allMenus = ref<MenuEntity[]>([]) // Store flattened menus for leaf calculation
+const treeData = ref<MenuEntity[]>([])
+const ownedTreeData = ref<MenuEntity[]>([])
 const checkedKeys = ref<string[]>([])
 const currentTenantId = ref<string | null>(null)
 
 const treeFieldNames = {
-  key: 'key',
-  title: 'title',
+  key: 'id',
+  title: 'name',
   children: 'children'
 }
 
 /**
- * 打开菜单授权抽屉
+ * 打开菜单授权弹窗
  */
 async function openGrant(role: Role) {
   grantRole.value = role
@@ -316,32 +337,28 @@ async function loadMenusAndGrants() {
   }
   try {
     loadingMenus.value = true
-    // 获取所有菜单树（包括按钮）
-    const menuList = await listMenusTree({ tenantId: currentTenantId.value })
-    menus.value = Array.isArray(menuList) ? menuList : []
     
-    // 调试：打印菜单数据
-    console.log('=== 菜单授权调试 ===')
-    console.log('总菜单数:', menus.value.length)
-    console.log('按钮数量:', menus.value.filter(m => m.type === 'button').length)
-    console.log('菜单数量:', menus.value.filter(m => m.type === 'menu').length)
-    console.log('目录数量:', menus.value.filter(m => m.type === 'catalog').length)
-    console.log('所有菜单数据:', menus.value)
+    // 调用新接口获取授权数据
+    const res = await getRoleAuthData({ 
+      roleId: grantRole.value.id,
+      tenantId: currentTenantId.value
+    }) as any
     
-    // 构建树形数据
-    treeData.value = buildTree(menus.value)
-    console.log('树形数据:', treeData.value)
+    const { allPermissions, ownedPermissions, grantedMenuIds } = res
     
-    // 获取已授权的菜单ID
-    const grantedIds = await listRoleMenus({ 
-      tenantId: currentTenantId.value, 
-      roleId: grantRole.value.id 
-    })
+    // 设置树形数据
+    treeData.value = allPermissions || []
+    ownedTreeData.value = ownedPermissions || []
+    
+    // 扁平化所有菜单以计算叶子节点 (for checkable tree)
+    allMenus.value = flattenTree(treeData.value)
     
     // 设置选中的节点（只选中叶子节点，避免父节点自动选中子节点）
-    const leafIds = getLeafNodeIds(menus.value, grantedIds || [])
+    const leafIds = getLeafNodeIds(allMenus.value, grantedMenuIds || [])
     checkedKeys.value = leafIds.map((id: any) => String(id))
+    
   } catch (e) {
+    console.error(e)
     message.error('加载菜单授权数据失败')
   } finally {
     loadingMenus.value = false
@@ -349,66 +366,41 @@ async function loadMenusAndGrants() {
 }
 
 /**
+ * 扁平化树结构
+ */
+function flattenTree(tree: MenuEntity[]): MenuEntity[] {
+  let res: MenuEntity[] = []
+  tree.forEach(node => {
+    res.push(node)
+    if (node.children && node.children.length > 0) {
+      res = res.concat(flattenTree(node.children))
+    }
+  })
+  return res
+}
+
+/**
  * 获取叶子节点ID（只返回没有子节点的菜单ID）
  */
 function getLeafNodeIds(allMenus: MenuEntity[], grantedIds: any[]): any[] {
   const grantedSet = new Set(grantedIds.map((id: any) => String(id)))
-  const parentIds = new Set<string>()
   
-  // 找出所有有子节点的父节点
-  allMenus.forEach(menu => {
-    if (menu.parentId && menu.parentId !== '0') {
-      parentIds.add(menu.parentId)
-    }
-  })
-  
-  // 只返回叶子节点（没有子节点的节点）
+  // 过滤出被授权且是叶子节点（没有children或children为空）的节点
   return allMenus
-    .filter(menu => grantedSet.has(String(menu.id)) && !parentIds.has(String(menu.id)))
+    .filter(menu => {
+      const isGranted = grantedSet.has(String(menu.id))
+      const isLeaf = !menu.children || menu.children.length === 0
+      return isGranted && isLeaf
+    })
     .map(menu => menu.id)
-}
-
-/**
- * 构建菜单树
- */
-function buildTree(list: MenuEntity[]): TreeNode[] {
-  const map = new Map<string, TreeNode>()
-  const roots: TreeNode[] = []
-
-  list.forEach(m => {
-    const node: TreeNode = {
-      key: m.id,
-      title: m.name
-    }
-    map.set(m.id, node)
-  })
-
-  list.forEach(m => {
-    const node = map.get(m.id)!
-    const parentId = m.parentId || '0'
-    if (parentId === '0') {
-      roots.push(node)
-    } else {
-      const parent = map.get(parentId)
-      if (parent) {
-        if (!parent.children) {
-          parent.children = []
-        }
-        parent.children.push(node)
-      } else {
-        roots.push(node)
-      }
-    }
-  })
-
-  return roots
 }
 
 /**
  * 全选
  */
 function checkAll() {
-  checkedKeys.value = menus.value.map(m => m.id)
+  // 选中所有节点ID
+  checkedKeys.value = allMenus.value.map(m => String(m.id))
 }
 
 /**
@@ -470,12 +462,19 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 
-.toolbar {
-  margin-bottom: 12px;
+.auth-card {
+  height: 100%;
+  /* Remove hardcoded background */
+  /* background: #f9f9f9; */
 }
 
-.drawer-footer {
-  margin-top: 16px;
-  text-align: right;
+.tree-container {
+  height: 400px;
+  overflow-y: auto;
+  /* Use theme variable for background or transparent */
+  background: var(--component-background);
+  padding: 8px;
+  border: 1px solid var(--border-color-split);
+  border-radius: 4px;
 }
 </style>

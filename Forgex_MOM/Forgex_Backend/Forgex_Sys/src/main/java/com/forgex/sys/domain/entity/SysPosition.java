@@ -44,4 +44,7 @@ public class SysPosition extends BaseEntity {
     
     /** 备注 */
     private String remark;
+    
+    /** 部门ID */
+    private Long departmentId;
 }

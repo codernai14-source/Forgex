@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.service.IDashboardService;
 import lombok.RequiredArgsConstructor;
@@ -36,13 +37,13 @@ public class DashboardController {
     /**
      * 获取仪表盘统计数据
      *
-     * @param body 请求体参数，需包含 tenantId
+     * @param body 请求体参数
      * @return 统计数据
      */
     @PostMapping("/statistics")
     public R<Map<String, Object>> getStatistics(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
-        Long tenantId = parseLong(body.get("tenantId"));
+        Long tenantId = TenantContext.get();
         
         if (tenantId == null) {
             return R.fail("租户ID不能为空");

@@ -51,6 +51,11 @@ public class MenuTreeVO {
      * 菜单图标
      */
     private String icon;
+
+    /**
+     * 组件键
+     */
+    private String componentKey;
     
     /**
      * 菜单类型

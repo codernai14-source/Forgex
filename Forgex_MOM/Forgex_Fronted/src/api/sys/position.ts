@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/api/http'
 
 /**
  * 查询职位列表

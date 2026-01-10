@@ -1,113 +1,127 @@
 <template>
   <div class="page-wrap">
-    <!-- 搜索区域 -->
-    <a-card class="search-card" :bordered="false">
-      <a-form layout="inline" :model="searchForm">
-        <a-form-item label="职位名称">
-          <a-input
-            v-model:value="searchForm.positionName"
-            placeholder="请输入职位名称"
-            allow-clear
-            style="width: 200px"
+    <a-card class="content-card" :bordered="false">
+      <a-row :gutter="16">
+        <!-- 左侧：部门树 -->
+        <a-col :span="6">
+          <DeptTree
+            ref="deptTreeRef"
+            @select="onSelectNode"
           />
-        </a-form-item>
-        <a-form-item label="职位编码">
-          <a-input
-            v-model:value="searchForm.positionCode"
-            placeholder="请输入职位编码"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="searchForm.status"
-            placeholder="请选择状态"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>
-              搜索
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
+        </a-col>
 
-    <!-- 操作按钮和表格 -->
-    <a-card class="table-card" :bordered="false">
-      <template #title>
-        <a-space>
-          <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
-            <template #icon><PlusOutlined /></template>
-            新增职位
-          </a-button>
-        </a-space>
-      </template>
-
-      <a-table
-        :columns="columns"
-        :data-source="positions"
-        :loading="loading"
-        row-key="id"
-        :pagination="false"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === true ? 'green' : 'red'">
-              {{ record.status === true ? '启用' : '禁用' }}
-            </a-tag>
-          </template>
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a-button
-                type="link"
-                size="small"
-                @click="openEdit(record)"
-                v-permission="'sys:position:edit'"
-              >
-                编辑
-              </a-button>
-              <a-popconfirm
-                title="确定要删除这个职位吗？"
-                ok-text="确定"
-                cancel-text="取消"
-                @confirm="handleDelete(record.id)"
-              >
-                <a-button
-                  type="link"
-                  size="small"
-                  danger
-                  v-permission="'sys:position:delete'"
+        <!-- 右侧：职位列表 -->
+        <a-col :span="18">
+          <!-- 搜索区域 -->
+          <div class="search-area">
+            <a-form layout="inline" :model="searchForm">
+              <a-form-item label="职位名称">
+                <a-input
+                  v-model:value="searchForm.positionName"
+                  placeholder="请输入职位名称"
+                  allow-clear
+                  style="width: 150px"
+                />
+              </a-form-item>
+              <a-form-item label="职位编码">
+                <a-input
+                  v-model:value="searchForm.positionCode"
+                  placeholder="请输入职位编码"
+                  allow-clear
+                  style="width: 150px"
+                />
+              </a-form-item>
+              <a-form-item label="状态">
+                <a-select
+                  v-model:value="searchForm.status"
+                  placeholder="请选择状态"
+                  allow-clear
+                  style="width: 100px"
                 >
-                  删除
+                  <a-select-option :value="true">启用</a-select-option>
+                  <a-select-option :value="false">禁用</a-select-option>
+                </a-select>
+              </a-form-item>
+              <a-form-item>
+                <a-space>
+                  <a-button type="primary" @click="handleSearch">
+                    <template #icon><SearchOutlined /></template>
+                    搜索
+                  </a-button>
+                  <a-button @click="handleReset">
+                    <template #icon><ReloadOutlined /></template>
+                    重置
+                  </a-button>
+                </a-space>
+              </a-form-item>
+            </a-form>
+          </div>
+
+          <!-- 操作按钮和表格 -->
+          <div class="table-area">
+            <div class="toolbar">
+              <a-space>
+                <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
+                  <template #icon><PlusOutlined /></template>
+                  新增职位
                 </a-button>
-              </a-popconfirm>
-            </a-space>
-          </template>
-        </template>
-      </a-table>
+              </a-space>
+            </div>
+
+            <a-table
+              :columns="columns"
+              :data-source="positions"
+              :loading="loading"
+              row-key="id"
+              :pagination="false"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'status'">
+                  <a-tag :color="record.status === true ? 'green' : 'red'">
+                    {{ record.status === true ? '启用' : '禁用' }}
+                  </a-tag>
+                </template>
+                <template v-else-if="column.key === 'action'">
+                  <a-space>
+                    <a-button
+                      type="link"
+                      size="small"
+                      @click="openEdit(record)"
+                      v-permission="'sys:position:edit'"
+                    >
+                      编辑
+                    </a-button>
+                    <a-popconfirm
+                      title="确定要删除这个职位吗？"
+                      ok-text="确定"
+                      cancel-text="取消"
+                      @confirm="handleDelete(record.id)"
+                    >
+                      <a-button
+                        type="link"
+                        size="small"
+                        danger
+                        v-permission="'sys:position:delete'"
+                      >
+                        删除
+                      </a-button>
+                    </a-popconfirm>
+                  </a-space>
+                </template>
+              </template>
+            </a-table>
+          </div>
+        </a-col>
+      </a-row>
     </a-card>
 
     <!-- 新增/编辑弹窗 -->
-    <a-modal
+    <FormContainer
       v-model:open="visible"
       :title="isEdit ? '编辑职位' : '新增职位'"
       :confirm-loading="formLoading"
       @ok="handleSubmit"
       @cancel="handleCancel"
-      width="600px"
     >
       <a-form
         ref="formRef"
@@ -116,6 +130,23 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
       >
+        <a-form-item label="所属部门" name="departmentId">
+           <a-tree-select
+            v-model:value="formData.departmentId"
+            style="width: 100%"
+            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+            :tree-data="treeData"
+            placeholder="请选择所属部门"
+            tree-default-expand-all
+            :field-names="{
+              children: 'children',
+              label: 'deptName',
+              value: 'id',
+            }"
+            allow-clear
+          />
+        </a-form-item>
+
         <a-form-item label="职位名称" name="positionName">
           <a-input
             v-model:value="formData.positionName"
@@ -164,7 +195,7 @@
           />
         </a-form-item>
       </a-form>
-    </a-modal>
+    </FormContainer>
   </div>
 </template>
 
@@ -176,6 +207,9 @@ import {
   ReloadOutlined,
   PlusOutlined
 } from '@ant-design/icons-vue'
+import DeptTree from '@/components/system/DeptTree.vue'
+import FormContainer from '@/components/common/FormContainer.vue'
+import { getDepartmentTree } from '@/api/sys/department'
 import {
   listPositions,
   createPosition,
@@ -186,6 +220,8 @@ import type { Position, PositionSaveParam } from './types'
 
 // 租户ID
 const currentTenantId = ref<string | null>(null)
+const deptTreeRef = ref()
+const treeData = ref<any[]>([])
 
 // 表格列定义
 const columns = [
@@ -196,9 +232,6 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
   { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
   { title: '操作', key: 'action', fixed: 'right', width: 150 }
 ]
 
@@ -206,7 +239,8 @@ const columns = [
 const searchForm = ref({
   positionName: '',
   positionCode: '',
-  status: undefined
+  status: undefined,
+  departmentId: undefined as string | undefined
 })
 
 // 表格数据
@@ -218,18 +252,50 @@ const visible = ref(false)
 const isEdit = ref(false)
 const formLoading = ref(false)
 const formRef = ref()
-const formData = ref<PositionSaveParam>({
+const formData = ref<PositionSaveParam & { departmentId?: string }>({
   tenantId: '',
   positionName: '',
   positionCode: '',
   orderNum: 0,
-  status: true
+  status: true,
+  departmentId: undefined
 })
 
 // 表单验证规则
 const rules = {
+  departmentId: [{ required: true, message: '请选择所属部门', trigger: 'change' }],
   positionName: [{ required: true, message: '请输入职位名称', trigger: 'blur' }],
   positionCode: [{ required: true, message: '请输入职位编码', trigger: 'blur' }]
+}
+
+/**
+ * 选择部门
+ */
+function onSelectNode(keys: string[], node: any) {
+  // node is the data object or dataRef depending on how it's passed
+  // In DeptTree, we emit (keys, info.node.dataRef || info.node)
+  // So 'node' here is the data object
+  
+  if (keys.length > 0) {
+    searchForm.value.departmentId = keys[0]
+  } else {
+    searchForm.value.departmentId = undefined
+  }
+  // Reset pagination if needed, but here we just reload
+  handleSearch()
+}
+
+/**
+ * 加载部门树数据（用于下拉选）
+ */
+async function loadDeptTreeData() {
+  if (!currentTenantId.value) return
+  try {
+    const data = await getDepartmentTree({ tenantId: currentTenantId.value })
+    treeData.value = data || []
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 /**
@@ -264,10 +330,12 @@ function handleSearch() {
  * 重置
  */
 function handleReset() {
+  const currentDeptId = searchForm.value.departmentId
   searchForm.value = {
     positionName: '',
     positionCode: '',
-    status: undefined
+    status: undefined,
+    departmentId: currentDeptId // Keep selected department
   }
   loadPositions()
 }
@@ -278,8 +346,12 @@ function handleReset() {
 function openAdd() {
   isEdit.value = false
   visible.value = true
+  // 如果选中了部门，自动填入
+  const defaultDeptId = searchForm.value.departmentId
+  
   formData.value = {
     tenantId: currentTenantId.value!,
+    departmentId: defaultDeptId,
     positionName: '',
     positionCode: '',
     orderNum: 0,
@@ -290,12 +362,13 @@ function openAdd() {
 /**
  * 编辑
  */
-function openEdit(record: Position) {
+function openEdit(record: any) { // Type assertion needed if Position type is not updated yet
   isEdit.value = true
   visible.value = true
   formData.value = {
     id: record.id,
     tenantId: record.tenantId,
+    departmentId: record.departmentId, // Ensure backend returns this
     positionName: record.positionName,
     positionCode: record.positionCode,
     positionLevel: record.positionLevel,
@@ -365,6 +438,7 @@ onMounted(async () => {
   if (tid) {
     currentTenantId.value = tid
     await loadPositions()
+    await loadDeptTreeData()
   }
 })
 </script>
@@ -374,11 +448,15 @@ onMounted(async () => {
   padding: 16px;
 }
 
-.search-card {
+.content-card {
+  min-height: calc(100vh - 120px);
+}
+
+.search-area {
   margin-bottom: 16px;
 }
 
-.table-card {
+.toolbar {
   margin-bottom: 16px;
 }
 </style>

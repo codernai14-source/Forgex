@@ -63,6 +63,11 @@ public class SysPositionServiceImpl implements SysPositionService {
             wrapper.eq(SysPosition::getStatus, queryDTO.getStatus());
         }
         
+        // 部门ID过滤
+        if (queryDTO.getDepartmentId() != null) {
+            wrapper.eq(SysPosition::getDepartmentId, queryDTO.getDepartmentId());
+        }
+        
         wrapper.orderByAsc(SysPosition::getOrderNum);
         
         List<SysPosition> positions = positionMapper.selectList(wrapper);

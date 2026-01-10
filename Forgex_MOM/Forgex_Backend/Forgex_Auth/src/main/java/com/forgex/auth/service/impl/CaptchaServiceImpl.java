@@ -91,12 +91,7 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 生成滑块验证码
-     * <p>调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）。</p>
-     * <p>处理流程：</p>
-     * <ol>
-     *   <li>调用 tianai-captcha 生成滑块验证码</li>
-     *   <li>返回包含验证码ID与渲染数据的Map</li>
-     * </ol>
+     * 逻辑：调用 tianai-captcha 生成滑块数据，返回渲染所需结构（含 id）
      * @return 验证码渲染数据
      */
     @Override
@@ -107,13 +102,7 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 校验滑块轨迹并发放令牌
-     * <p>校验前端滑块轨迹是否正确，若通过则生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）。</p>
-     * <p>处理流程：</p>
-     * <ol>
-     *   <li>根据验证码ID从Redis中读取预期轨迹</li>
-     *   <li>校验用户轨迹与预期轨迹是否匹配</li>
-     *   <li>如果匹配成功，生成令牌并写入Redis，返回令牌字符串（登录时作为验证码使用）</li>
-     * </ol>
+     * 逻辑：校验前端轨迹 -> 成功后生成一次性令牌并写入Redis（前缀/过期来自 JSON 配置）
      * @param id 验证码ID
      * @param track 滑块轨迹
      * @return 令牌字符串（登录时作为验证码使用），校验失败返回null
@@ -137,16 +126,10 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 校验图片验证码
-     * <p>校验用户输入的图片验证码是否正确，校验通过后删除Redis中的验证码记录。</p>
-     * <p>处理流程：</p>
-     * <ol>
-     *   <li>根据验证码ID从Redis中读取预期答案</li>
-     *   <li>忽略大小写比较用户输入与预期答案</li>
-     *   <li>如果匹配成功，删除Redis中的验证码记录</li>
-     * </ol>
+     * 逻辑：按前缀读取答案 -> 忽略大小写比对 -> 通过后删除Redis键
      * @param id 验证码ID
      * @param value 用户输入的验证码
-     * @return 是否通过校验
+     * @return 是否通过
      */
     @Override
     public boolean verifyImage(String id, String value) {
@@ -163,15 +146,9 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     /**
      * 校验滑块令牌
-     * <p>校验用户输入的滑块令牌是否正确，校验通过后删除Redis中的令牌记录。</p>
-     * <p>处理流程：</p>
-     * <ol>
-     *   <li>根据令牌ID从Redis中读取令牌值</li>
-     *   <li>判断令牌值是否存在</li>
-     *   <li>如果存在，删除Redis中的令牌记录</li>
-     * </ol>
+     * 逻辑：读取 `login.captcha` 配置 -> 根据是否二次验证选择前缀 -> 判断令牌键是否存在
      * @param token 一次性令牌
-     * @return 是否通过校验
+     * @return 是否通过
      */
     @Override
     public boolean verifySlider(String token) {

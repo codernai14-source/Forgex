@@ -13,15 +13,21 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.RolePermissionDTO;
+import com.forgex.sys.domain.vo.MenuTreeVO;
+import com.forgex.sys.service.ISysMenuService;
 import com.forgex.sys.service.ISysRoleMenuService;
 import com.forgex.sys.validator.RoleMenuValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 角色菜单权限Controller
@@ -45,19 +51,20 @@ import java.util.Map;
 public class SysRoleMenuController {
 
     private final ISysRoleMenuService roleMenuService;
+    private final ISysMenuService menuService;
     private final RoleMenuValidator roleMenuValidator;
 
     /**
      * 查询指定角色在某租户下已授权的菜单ID列表（兼容旧接口）
      *
-     * @param body 请求体参数，需包含 roleId、tenantId
+     * @param body 请求体参数，需包含 roleId
      * @return 已绑定的菜单ID集合
      */
     @PostMapping("/list")
     public R<List<Long>> list(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
         Long roleId = parseLong(body.get("roleId"));
-        Long tenantId = parseLong(body.get("tenantId"));
+        Long tenantId = TenantContext.get();
         
         // 2. 参数校验
         roleMenuValidator.validateQueryParams(roleId, tenantId);
@@ -73,11 +80,11 @@ public class SysRoleMenuController {
      * 查询角色菜单权限列表（RESTful风格）
      *
      * @param roleId 角色ID
-     * @param tenantId 租户ID
      * @return 已绑定的菜单ID集合
      */
     @GetMapping
-    public R<List<Long>> getRoleMenus(@RequestParam Long roleId, @RequestParam Long tenantId) {
+    public R<List<Long>> getRoleMenus(@RequestParam Long roleId) {
+        Long tenantId = TenantContext.get();
         // 1. 参数校验
         roleMenuValidator.validateQueryParams(roleId, tenantId);
         
@@ -91,14 +98,14 @@ public class SysRoleMenuController {
     /**
      * 获取角色菜单授权数据（包含所有菜单树和已授权的菜单ID）
      *
-     * @param body 请求体参数，需包含 roleId、tenantId
+     * @param body 请求体参数，需包含 roleId
      * @return 包含所有菜单树和已授权菜单ID的数据
      */
     @PostMapping("/authData")
     public R<Map<String, Object>> getAuthData(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
         Long roleId = parseLong(body.get("roleId"));
-        Long tenantId = parseLong(body.get("tenantId"));
+        Long tenantId = TenantContext.get();
         
         // 2. 参数校验
         roleMenuValidator.validateQueryParams(roleId, tenantId);
@@ -106,24 +113,68 @@ public class SysRoleMenuController {
         // 3. 调用Service获取已授权的菜单ID
         List<Long> grantedMenuIds = roleMenuService.getRoleMenuIds(roleId, tenantId);
         
-        // 4. 返回结果（前端会自己调用菜单树接口获取所有菜单）
+        // 4. 获取所有菜单树
+        List<MenuTreeVO> allMenuTree = menuService.getMenuTree(tenantId, null);
+        
+        // 5. 构建已拥有的权限树
+        Set<Long> grantedSet = grantedMenuIds.stream().collect(Collectors.toSet());
+        List<MenuTreeVO> ownedMenuTree = buildOwnedTree(allMenuTree, grantedSet);
+
+        // 6. 返回结果
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("grantedMenuIds", grantedMenuIds);
+        result.put("allPermissions", allMenuTree);
+        result.put("ownedPermissions", ownedMenuTree);
         
         return R.ok(result);
     }
 
     /**
+     * 构建已拥有的权限树
+     * 递归过滤出包含已授权节点的树结构
+     */
+    private List<MenuTreeVO> buildOwnedTree(List<MenuTreeVO> nodes, Set<Long> grantedSet) {
+        List<MenuTreeVO> result = new ArrayList<>();
+        if (nodes == null) {
+            return result;
+        }
+        
+        for (MenuTreeVO node : nodes) {
+            boolean isGranted = grantedSet.contains(node.getId());
+            List<MenuTreeVO> children = buildOwnedTree(node.getChildren(), grantedSet);
+            
+            // 如果当前节点被授权，或者有子节点被授权，则保留该节点
+            if (isGranted || !children.isEmpty()) {
+                MenuTreeVO newNode = new MenuTreeVO();
+                // 复制属性
+                newNode.setId(node.getId());
+                newNode.setParentId(node.getParentId());
+                newNode.setName(node.getName());
+                newNode.setPath(node.getPath());
+                newNode.setComponentKey(node.getComponentKey());
+                newNode.setIcon(node.getIcon());
+                newNode.setOrderNum(node.getOrderNum());
+                newNode.setType(node.getType());
+                newNode.setPermKey(node.getPermKey());
+                newNode.setStatus(node.getStatus());
+                newNode.setChildren(children);
+                result.add(newNode);
+            }
+        }
+        return result;
+    }
+
+    /**
      * 授予角色菜单权限（兼容旧接口）
      *
-     * @param body 请求体参数，包含 roleId、tenantId、menuIds（菜单ID列表）
+     * @param body 请求体参数，包含 roleId、menuIds（菜单ID列表）
      * @return 是否授权成功
      */
     @PostMapping("/grant")
     public R<Boolean> grant(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
         Long roleId = parseLong(body.get("roleId"));
-        Long tenantId = parseLong(body.get("tenantId"));
+        Long tenantId = TenantContext.get();
         @SuppressWarnings("unchecked")
         List<Integer> menuIdsInt = (List<Integer>) body.get("menuIds");
         
@@ -160,6 +211,7 @@ public class SysRoleMenuController {
      */
     @PostMapping
     public R<Void> grantPermission(@RequestBody RolePermissionDTO permissionDTO) {
+        permissionDTO.setTenantId(TenantContext.get());
         // 1. 参数校验
         roleMenuValidator.validateGrantParams(permissionDTO);
         
@@ -169,16 +221,16 @@ public class SysRoleMenuController {
         // 3. 返回结果
         return R.ok();
     }
-
+    
     /**
      * 删除角色的所有菜单权限
      *
      * @param roleId 角色ID
-     * @param tenantId 租户ID
      * @return 操作结果
      */
     @DeleteMapping
-    public R<Void> deletePermissions(@RequestParam Long roleId, @RequestParam Long tenantId) {
+    public R<Void> deletePermissions(@RequestParam Long roleId) {
+        Long tenantId = TenantContext.get();
         // 1. 参数校验
         roleMenuValidator.validateQueryParams(roleId, tenantId);
         
