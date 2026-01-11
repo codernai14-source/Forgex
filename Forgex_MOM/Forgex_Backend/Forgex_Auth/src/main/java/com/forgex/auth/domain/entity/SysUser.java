@@ -19,11 +19,19 @@ import com.forgex.common.base.BaseEntity;
 import lombok.Data;
 
 /**
- * 用户实体（持久化对象）
- * 对应数据库表：sys_user
- * 
- * @author Forgex Team
- * @date 2026-01-08
+ * 用户实体（Auth 模块持久化对象）
+ * <p>
+ * 对应管理库数据库表：sys_user，用于认证模块在登录、选择租户等场景下
+ * 读取用户的基础信息（账号、姓名、联系方式、头像、状态等）。
+ * </p>
+ *
+ * <p>
+ * 该实体与 Sys 模块中的 SysUser 保持字段含义一致，避免跨模块直接依赖。
+ * </p>
+ *
+ * @author coder_nai
+ * @version 1.0.0
+ * @see com.forgex.auth.service.impl.AuthServiceImpl
  */
 @Data
 @TableName("sys_user")
@@ -38,6 +46,9 @@ public class SysUser extends BaseEntity {
     private String email;
     /** 手机号 */
     private String phone;
+
+    /** 头像 URL */
+    private String avatar;
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
 

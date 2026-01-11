@@ -16,9 +16,22 @@ export interface User {
   departmentName?: string  // 部门名称（关联查询）
   positionId: string
   positionName?: string    // 职位名称（关联查询）
+  tenantId?: string    // 租户ID（用户绑定的主租户ID）
   status: number
   createTime?: string
   updateTime?: string
+}
+
+/**
+ * 用户租户关联信息
+ */
+export interface UserTenant {
+  userId: string
+  tenantId: string
+  tenantName?: string
+  prefOrder: number
+  isDefault: boolean
+  lastUsed?: string
 }
 
 /**

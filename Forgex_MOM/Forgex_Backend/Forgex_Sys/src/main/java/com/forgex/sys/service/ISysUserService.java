@@ -19,6 +19,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserTenant;
 
 import java.util.List;
 
@@ -115,6 +116,14 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 用户ID，不存在则返回null
      */
     Long getUserIdByAccount(String account);
+    
+    /**
+     * 查询用户关联的租户列表
+     * 
+     * @param userId 用户ID
+     * @return 租户列表
+     */
+    List<SysUserTenant> listUserTenants(Long userId);
     
     /**
      * 重置用户密码

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.auth.domain.vo;
 
+import com.forgex.common.enums.TenantTypeEnum;
 import lombok.Data;
 
 /**
@@ -21,12 +22,30 @@ import lombok.Data;
  * 说明：为避免前端 JavaScript 在处理 Long 类型 ID 时出现精度丢失问题，
  * 这里将租户ID以字符串形式返回。前端在回传租户ID时也应使用字符串，
  * 后端在需要时再转换为 Long 进行数据库查询。
+ * </p>
+ * 
+ * @author coder_nai
+ * @version 1.0
+ * @see com.forgex.common.enums.TenantTypeEnum
  */
 @Data
 public class TenantVO {
-    private String id;          // 租户ID（字符串，防止 Long 精度丢失）
-    private String name;      // 租户名称
-    private String logo;      // 租户Logo
-    private String intro;     // 租户简介
-    private Boolean isDefault; // 是否默认（true 默认，false 非默认）
+    
+    /** 租户ID（字符串，防止 Long 精度丢失） */
+    private String id;
+    
+    /** 租户名称 */
+    private String name;
+    
+    /** 租户Logo */
+    private String logo;
+    
+    /** 租户简介 */
+    private String intro;
+    
+    /** 是否默认（true 默认，false 非默认） */
+    private Boolean isDefault;
+    
+    /** 租户类别 */
+    private TenantTypeEnum tenantType;
 }

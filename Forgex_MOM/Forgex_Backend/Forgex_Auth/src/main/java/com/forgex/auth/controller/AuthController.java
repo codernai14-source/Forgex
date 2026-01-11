@@ -69,12 +69,12 @@ public class AuthController {
      * @see com.forgex.auth.service.AuthService#chooseTenant(TenantChoiceParam)
      */
     @PostMapping("/chooseTenant")
-    public R<Boolean> chooseTenant(@RequestBody TenantChoiceParam param) {
+    public R<com.forgex.auth.domain.dto.SysUserDTO> chooseTenant(@RequestBody TenantChoiceParam param) {
         return authService.chooseTenant(param);
     }
 
     @PostMapping("/choose-tenant")
-    public R<Boolean> chooseTenantAlias(@RequestBody TenantChoiceParam param) {
+    public R<com.forgex.auth.domain.dto.SysUserDTO> chooseTenantAlias(@RequestBody TenantChoiceParam param) {
         return authService.chooseTenant(param);
     }
 

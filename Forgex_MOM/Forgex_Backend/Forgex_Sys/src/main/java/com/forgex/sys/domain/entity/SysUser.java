@@ -76,5 +76,4 @@ public class SysUser extends BaseEntity {
 
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
-
 }

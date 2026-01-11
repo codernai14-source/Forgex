@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS sys_tenant (
     tenant_code VARCHAR(100) UNIQUE COMMENT '租户编码',
     description VARCHAR(255) COMMENT '描述',
     logo TEXT COMMENT 'Logo(Base64/URL)',
+    tenant_type VARCHAR(20) DEFAULT 'MAIN_TENANT' COMMENT '租户类别：MAIN_TENANT-主租户，CUSTOMER_TENANT-客户租户，SUPPLIER_TENANT-供应商租户',
     status TINYINT DEFAULT 1 COMMENT '状态 (1:启用, 0:禁用)',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -113,8 +114,8 @@ CREATE TABLE IF NOT EXISTS sys_job (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='定时任务表';
 
 -- 初始数据
-INSERT INTO sys_tenant (tenant_name, tenant_code, description, status) VALUES ('default', 'default', '默认租户', 1);
-INSERT INTO sys_tenant (tenant_name, tenant_code, description, status) VALUES ('tenant2', 'tenant2', '第二个租户', 1);
+INSERT INTO sys_tenant (tenant_name, tenant_code, description, tenant_type, status) VALUES ('default', 'default', '默认租户', 'MAIN_TENANT', 1);
+INSERT INTO sys_tenant (tenant_name, tenant_code, description, tenant_type, status) VALUES ('tenant2', 'tenant2', '第二个租户', 'CUSTOMER_TENANT', 1);
 
 INSERT INTO sys_user (account, username, password, email, status) VALUES ('admin', 'admin', '$2a$10$7EqJtq98hPqEX7fNLEyguOg03fZ7p.XN3okEV0H1Bs8Q5q8K9bL2u', 'admin@forgex.com', 1);
 
