@@ -2,10 +2,10 @@
  * 菜单表单逻辑Hook
  */
 
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { addMenu, updateMenu } from '@/api/system/menu'
-import type { Menu } from '../types'
+import { addMenu, updateMenu, getMenuTree } from '@/api/system/menu'
+import type { Menu, MenuTreeNode } from '../types'
 import type { FormInstance } from 'ant-design-vue'
 
 export function useMenuForm(emit: any) {
@@ -20,6 +20,19 @@ export function useMenuForm(emit: any) {
   
   // 提交加载状态
   const submitLoading = ref(false)
+  
+  // 父菜单树数据
+  const menuTreeData = ref<MenuTreeNode[]>([
+    {
+      key: '0',
+      title: '根目录',
+      value: '0',
+      children: []
+    }
+  ])
+  
+  // 当前模块的所有菜单（用于构建父菜单树）
+  const allMenus = ref<Menu[]>([])
   
   // 表单数据
   const formData = reactive<Menu>({
@@ -96,6 +109,10 @@ export function useMenuForm(emit: any) {
     mode.value = 'add'
     resetForm()
     visible.value = true
+    // 加载菜单树数据
+    if (formData.moduleId) {
+      loadMenuTreeData(formData.moduleId)
+    }
   }
   
   /**
@@ -105,6 +122,10 @@ export function useMenuForm(emit: any) {
     mode.value = 'edit'
     Object.assign(formData, record)
     visible.value = true
+    // 加载菜单树数据
+    if (formData.moduleId) {
+      loadMenuTreeData(formData.moduleId)
+    }
   }
   
   /**
@@ -194,6 +215,137 @@ export function useMenuForm(emit: any) {
     }
   }
   
+  /**
+   * 加载菜单树数据
+   * 用于构建父菜单选择器的数据源
+   */
+  const loadMenuTreeData = async (moduleId: string) => {
+    if (!moduleId) {
+      return
+    }
+    
+    try {
+      const tenantId = sessionStorage.getItem('tenantId')
+      if (!tenantId) {
+        message.warning('租户信息缺失')
+        return
+      }
+      
+      const response = await getMenuTree({ 
+        tenantId: Number(tenantId), 
+        moduleId: Number(moduleId) 
+      })
+      allMenus.value = response || []
+      buildParentMenuTree()
+    } catch (error) {
+      console.error('加载菜单树失败:', error)
+      // 失败时使用默认的根目录树
+      allMenus.value = []
+      buildParentMenuTree()
+    }
+  }
+  
+  /**
+   * 递归构建树节点
+   */
+  const buildTreeNodes = (menus: Menu[], parentId: string): MenuTreeNode[] => {
+    return menus
+      .filter(m => String(m.parentId || '0') === String(parentId))
+      .sort((a, b) => (a.orderNum || 0) - (b.orderNum || 0))
+      .map(menu => ({
+        key: String(menu.id),
+        title: menu.name,
+        value: String(menu.id),
+        children: buildTreeNodes(menus, String(menu.id))
+      }))
+  }
+  
+  /**
+   * 过滤当前菜单及其子菜单
+   * 防止循环引用
+   */
+  const filterCurrentMenuFromTree = (menus: Menu[], currentId?: string): Menu[] => {
+    if (!currentId) return menus
+    
+    // 收集当前菜单及其所有子菜单的ID
+    const excludeIds = new Set<string>()
+    const collectChildIds = (id: string) => {
+      excludeIds.add(id)
+      menus
+        .filter(m => String(m.parentId) === String(id))
+        .forEach(child => collectChildIds(String(child.id)))
+    }
+    
+    collectChildIds(currentId)
+    
+    // 过滤掉这些ID
+    return menus.filter(m => !excludeIds.has(String(m.id)))
+  }
+  
+  /**
+   * 构建父菜单树
+   * 将扁平化的菜单列表转换为树形结构
+   * 排除类型为 'button' 的菜单项
+   */
+  const buildParentMenuTree = () => {
+    const rootNode: MenuTreeNode = {
+      key: '0',
+      title: '根目录',
+      value: '0',
+      children: []
+    }
+    
+    // 过滤掉按钮类型的菜单
+    const validMenus = allMenus.value.filter(m => m.type !== 'button')
+    
+    // 如果是编辑模式，过滤掉当前菜单及其子菜单
+    const filteredMenus = mode.value === 'edit' 
+      ? filterCurrentMenuFromTree(validMenus, formData.id)
+      : validMenus
+    
+    // 构建树形结构
+    rootNode.children = buildTreeNodes(filteredMenus, '0')
+    menuTreeData.value = [rootNode]
+  }
+  
+  /**
+   * 自动计算菜单层级
+   * 根据父菜单ID计算当前菜单的层级
+   */
+  const calculateMenuLevel = (parentId: string): number => {
+    // 根目录下的菜单为一级菜单
+    if (!parentId || parentId === '0') {
+      return 1
+    }
+    
+    // 查找父菜单
+    const parentMenu = allMenus.value.find(m => String(m.id) === String(parentId))
+    if (!parentMenu) {
+      return 1
+    }
+    
+    // 父菜单层级 + 1
+    return (parentMenu.menuLevel || 1) + 1
+  }
+  
+  /**
+   * 监听父菜单变化，自动计算层级
+   */
+  watch(() => formData.parentId, (newParentId) => {
+    if (newParentId !== undefined) {
+      formData.menuLevel = calculateMenuLevel(newParentId)
+    }
+  })
+  
+  /**
+   * 监听模块变化，重新加载菜单树
+   */
+  watch(() => formData.moduleId, (newModuleId) => {
+    if (newModuleId) {
+      loadMenuTreeData(newModuleId)
+    }
+  })
+  
   return {
     formRef,
     visible,
@@ -206,6 +358,7 @@ export function useMenuForm(emit: any) {
     showPermKey,
     showExternalUrl,
     rules,
+    menuTreeData,
     openAdd,
     openEdit,
     handleCancel,
