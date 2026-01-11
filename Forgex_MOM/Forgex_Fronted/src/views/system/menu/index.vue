@@ -218,23 +218,6 @@
           </a-col>
           
           <a-col :span="12">
-            <a-form-item label="菜单层级" name="menuLevel">
-              <a-select
-                v-model:value="formData.menuLevel"
-                placeholder="请选择菜单层级"
-              >
-                <a-select-option
-                  v-for="item in MENU_LEVEL_OPTIONS"
-                  :key="item.value"
-                  :value="item.value"
-                >
-                  {{ item.label }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          
-          <a-col :span="12">
             <a-form-item label="菜单名称" name="name">
               <a-input
                 v-model:value="formData.name"
@@ -350,7 +333,7 @@ import {
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useMenu } from './hooks/useMenu'
 import { useMenuForm } from './hooks/useMenuForm'
-import { MENU_TYPE_OPTIONS, MENU_MODE_OPTIONS, MENU_LEVEL_OPTIONS } from './types'
+import { MENU_TYPE_OPTIONS, MENU_MODE_OPTIONS } from './types'
 import { listModules } from '@/api/system/module'
 import { getIcon } from '@/utils/icon'
 
@@ -375,15 +358,6 @@ const columns = [
   { title: '修改人', dataIndex: 'updateBy', key: 'updateBy' },
   { title: '操作', key: 'action', width: 200 }
 ]
-
-// 菜单树数据（用于父菜单选择）
-const menuTreeData = ref([
-  {
-    title: '根目录',
-    value: '0',
-    children: []
-  }
-])
 
 // 使用列表Hook
 const {
@@ -412,6 +386,7 @@ const {
   showPermKey,
   showExternalUrl,
   rules,
+  menuTreeData,
   openAdd,
   openEdit,
   handleCancel,
