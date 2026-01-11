@@ -6,6 +6,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getCurrentUserInfo } from '@/api/profile'
 
 export interface UserInfo {
   account: string
@@ -57,7 +58,19 @@ export const useUserStore = defineStore('user', () => {
    * 更新用户信息
    */
   function updateUserInfo(info: Partial<UserInfo>) {
-    if (userInfo.value) {
+    if (!userInfo.value) {
+      // 如果为空，尝试使用 sessionStorage 中的基本信息初始化
+      const account = sessionStorage.getItem('account') || ''
+      const tenantId = sessionStorage.getItem('tenantId') || ''
+      if (account && tenantId) {
+        userInfo.value = {
+          account,
+          username: account,
+          tenantId,
+          ...info
+        } as UserInfo
+      }
+    } else {
       userInfo.value = { ...userInfo.value, ...info }
     }
   }
@@ -76,15 +89,30 @@ export const useUserStore = defineStore('user', () => {
   /**
    * 从 sessionStorage 恢复用户信息（用于页面刷新）
    */
-  function restoreFromSession() {
+  async function restoreFromSession() {
     const account = sessionStorage.getItem('account')
     const tenantId = sessionStorage.getItem('tenantId')
     
     if (account && tenantId) {
+      // 先恢复基本信息，避免页面闪烁
       userInfo.value = {
         account,
         username: account, // 默认使用 account 作为 username
         tenantId
+      }
+      
+      // 异步获取完整用户信息（包含头像等）
+      try {
+        const res = await getCurrentUserInfo()
+        if (res) {
+          userInfo.value = {
+            ...userInfo.value,
+            ...res,
+            username: res.username || res.account || account
+          }
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
       }
     }
   }

@@ -1,78 +1,75 @@
-/*Copyright 2026 coder_nai@163.com
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.forgex.common.web.R;
-import com.forgex.sys.service.FileService;
-import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 /**
- * 文件控制器。
- * <p>
- * 提供文件上传与读取接口：根据系统类型选择默认存储目录（Windows: D:/forgex/cache；Linux/Unix: $HOME/forgex/cache 或 /tmp/forgex/cache），
- * 上传成功后返回可访问的 URL；读取接口按文件名返回内容并设置适当的 Content-Type。
- * <p>
- * 使用：前端以 multipart/form-data 上传文件至 {@code /sys/file/upload}，后端返回 URL；
- * 通过 {@code /sys/file/{name}} 读取文件内容。
- * 可扩展性：后续可接入对象存储、权限控制、文件加密等。
+ * 文件管理Controller
+ * <p>处理文件上传等操作。</p>
+ *
+ * @author coder_nai@163.com
+ * @date 2025-01-11
  */
 @RestController
 @RequestMapping("/sys/file")
 public class FileController {
-    
-    private final FileService fileService;
-    
-    public FileController(FileService fileService) {
-        this.fileService = fileService;
-    }
-    
-    /**
-     * 上传文件并返回可访问 URL。
-     * 文件名采用随机 UUID，保留原扩展名；目录不存在时自动创建。
-     * @param file 上传文件
-     * @return 可访问的文件 URL（相对路径）
-     */
-    @PostMapping("/upload")
-    public R<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
-        String url = fileService.upload(file);
-        return R.ok(url);
-    }
+
+    @Value("${file.upload.path:./uploads}")
+    private String uploadPath;
+
+    @Value("${file.access.prefix:/uploads}")
+    private String accessPrefix;
 
     /**
-     * 读取文件内容。
-     * 若文件不存在，返回 404；若无法探测类型，按八位字节流返回。
-     * @param name 文件名
-     * @return 文件资源响应
+     * 上传文件
+     *
+     * @param file 文件对象
+     * @return 文件访问URL
      */
-    @GetMapping("/{name}")
-    public ResponseEntity<Resource> get(@PathVariable("name") String name) throws IOException {
-        Resource resource = fileService.getFile(name);
-        if (resource == null) {
-            return ResponseEntity.notFound().build();
+    @PostMapping("/upload")
+    public R<String> upload(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return R.fail("上传文件不能为空");
         }
-        
-        String mediaTypeStr = fileService.getMediaType(name);
-        MediaType mediaType = MediaType.parseMediaType(mediaTypeStr);
-        
-        return ResponseEntity.ok()
-                .contentType(mediaType)
-                .body(resource);
+
+        try {
+            // 确保上传目录存在
+            File directory = new File(uploadPath);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            // 生成唯一文件名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.lastIndexOf(".") > 0) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String newFilename = UUID.randomUUID().toString() + extension;
+
+            // 保存文件
+            Path filePath = Paths.get(uploadPath, newFilename);
+            Files.copy(file.getInputStream(), filePath);
+
+            // 返回访问URL
+            String fileUrl = accessPrefix + "/" + newFilename;
+            return R.ok("上传成功", fileUrl);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return R.fail("文件上传失败: " + e.getMessage());
+        }
     }
 }

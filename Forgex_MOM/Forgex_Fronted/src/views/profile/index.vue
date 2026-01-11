@@ -130,12 +130,15 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import { getCurrentUserInfo, updateBasicInfo, changePassword } from '@/api/profile'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 const loading = ref(false)
 const activeTab = ref('basic')
 
@@ -189,6 +192,15 @@ async function handleSaveBasic() {
       gender: formData.gender,
       avatar: formData.avatar,
     })
+    
+    // 更新全局状态
+    userStore.updateUserInfo({
+      username: formData.username,
+      email: formData.email,
+      phone: formData.phone,
+      avatar: formData.avatar,
+    })
+    
     message.success('保存成功')
     loadUserInfo()
   } catch (error) {
@@ -222,7 +234,9 @@ async function handleChangePassword() {
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
     
-    // TODO: 跳转到登录页
+    // 退出登录
+    userStore.clearUserInfo()
+    router.push('/login')
   } catch (error) {
     console.error('密码修改失败:', error)
     message.error('密码修改失败')

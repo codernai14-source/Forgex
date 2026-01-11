@@ -118,7 +118,13 @@
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'gender'">
+          <template v-if="column.key === 'avatar'">
+            <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
+              <template #icon><UserOutlined /></template>
+            </a-avatar>
+          </template>
+          
+          <template v-else-if="column.key === 'gender'">
             <a-tag v-if="record.gender === 1" color="blue">男</a-tag>
             <a-tag v-else-if="record.gender === 2" color="pink">女</a-tag>
             <a-tag v-else color="default">未知</a-tag>
@@ -185,6 +191,7 @@
  * @version 1.0.0
  */
 import { ref, onMounted } from 'vue'
+import { UserOutlined } from '@ant-design/icons-vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import { useUser } from './hooks/useUser'
 import { getDepartmentTree } from '@/api/system/department'
@@ -247,6 +254,7 @@ function handleFormSuccess() {
 
 // 表格列定义
 const columns = [
+  { title: '头像', dataIndex: 'avatar', key: 'avatar', width: 80, align: 'center' },
   { title: '用户名', dataIndex: 'username', key: 'username', width: 120 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },

@@ -15,7 +15,7 @@ const routes = [
         path: 'profile',
         name: 'UserProfile',
         component: () => import('../views/profile/index.vue'),
-        meta: { title: '个人信息' }
+        meta: { title: '个人信息', module: 'sys' }
       }
     ]
   },

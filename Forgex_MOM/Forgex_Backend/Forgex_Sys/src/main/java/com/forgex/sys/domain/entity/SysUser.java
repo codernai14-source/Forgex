@@ -61,6 +61,9 @@ public class SysUser extends BaseEntity {
     /** 性别（0=未知，1=男，2=女） */
     private Integer gender;
 
+    /** 头像URL */
+    private String avatar;
+
     /** 入职时间 */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDate entryDate;

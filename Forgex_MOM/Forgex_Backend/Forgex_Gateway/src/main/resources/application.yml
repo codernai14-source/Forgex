@@ -63,6 +63,12 @@ spring:
             - Path=/api/sys/**
           filters:
             - StripPrefix=1
+        - id: api-files
+          uri: lb://forgex-sys
+          predicates:
+            - Path=/api/files/**
+          filters:
+            - StripPrefix=1
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:

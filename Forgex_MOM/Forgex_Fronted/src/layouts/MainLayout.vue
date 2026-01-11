@@ -277,11 +277,13 @@ import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
 import type { LayoutConfig } from '../theme/types'
 import { useAppStore } from '../stores/app'
+import { useUserStore } from '../stores/user'
 
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
 const appStore = useAppStore()
+const userStore = useUserStore()
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -524,22 +526,58 @@ const sidebarMenus = computed(() => {
 })
 
 // 当前用户信息
-const currentUser = computed(() => ({
-  account: currentAccount.value,
-  name: currentAccount.value,
-  avatar: ''
-}))
+const currentUser = computed(() => {
+  const info = userStore.userInfo || {
+    account: currentAccount.value,
+    username: currentAccount.value,
+    avatar: ''
+  }
+  
+  // 处理头像 URL
+  let avatar = info.avatar || ''
+  if (avatar) {
+    if (avatar.startsWith('http') || avatar.startsWith('data:')) {
+      // 已经是绝对路径或 base64，保持不变
+    } else if (avatar.startsWith('/api')) {
+      // 已经是 /api 开头，保持不变
+    } else if (avatar.startsWith('/')) {
+      // 相对路径，补充 /api
+      avatar = `/api${avatar}`
+    } else {
+      // 相对路径，补充 /api/
+      avatar = `/api/${avatar}`
+    }
+  }
+  
+  return {
+    account: info.account,
+    name: info.username || info.account,
+    avatar
+  }
+})
 
 watch(
   () => route.fullPath,
   (path) => {
     selectedKeys.value = [path]
-    const parts = path.split('/').filter(Boolean)
-    if (parts.length >= 2 && parts[0] === 'workspace') {
-      const code = parts[1]
+    
+    // 优先从路由 meta 中获取模块代码
+    if (route.meta && route.meta.module) {
+      const code = route.meta.module as string
       openKeys.value = [code]
       activeModuleCode.value = code
+      console.log('[MainLayout] Active module from meta:', code)
+    } else {
+      // 降级策略：从 URL 路径中解析
+      const parts = path.split('/').filter(Boolean)
+      if (parts.length >= 2 && parts[0] === 'workspace') {
+        const code = parts[1]
+        openKeys.value = [code]
+        activeModuleCode.value = code
+        console.log('[MainLayout] Active module from path:', code)
+      }
     }
+    
     updateTabsByRoute(path)
   },
   { immediate: true }
@@ -709,41 +747,57 @@ function updateTabsByRoute(path: string) {
   if (!path.startsWith('/workspace')) {
     return
   }
-  activeTabKey.value = path
+  
+  // 移除查询参数，确保 tab key 唯一且不包含参数
+  // 例如：/workspace/profile?tab=security -> /workspace/profile
+  const pathWithoutQuery = path.split('?')[0]
+  
+  // 仍然使用 activeTabKey 来高亮当前 tab，但 key 本身存储的是无参数路径
+  // 这样无论 query 怎么变，tab 都是同一个
+  // activeTabKey.value = pathWithoutQuery 
+  // 注意：Antdv Tabs 的 activeKey 必须匹配 TabPane 的 key
+  // 如果我们希望 tab 保持激活状态，我们需要让 activeTabKey 也指向无参数路径
+  activeTabKey.value = pathWithoutQuery
 
-  const clean = path.replace(/^\/workspace\//, '')
+  const clean = pathWithoutQuery.replace(/^\/workspace\//, '')
   const parts = clean.split('/').filter(Boolean)
   if (parts.length >= 1) {
     const moduleCode = parts[0]
-    const dashboardPath = `/workspace/${moduleCode}/dashboard`
-    const idx = tabs.value.findIndex(t => t.key === dashboardPath)
-    if (idx === -1) {
-      const dashboardTitle = buildTitleFromRoute(dashboardPath)
-      const max = layoutConfig.value.tabBarMax || 10
-      if (tabs.value.length >= max) {
-        const removeIdx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
-        if (removeIdx >= 0) {
-          tabs.value.splice(removeIdx, 1)
-        } else {
-          tabs.value.shift()
+    
+    // 排除 profile 模块，不自动添加仪表盘
+    if (moduleCode === 'profile') {
+      // 不添加仪表盘，直接处理 profile tab
+    } else {
+      const dashboardPath = `/workspace/${moduleCode}/dashboard`
+      const idx = tabs.value.findIndex(t => t.key === dashboardPath)
+      if (idx === -1) {
+        const dashboardTitle = buildTitleFromRoute(dashboardPath)
+        const max = layoutConfig.value.tabBarMax || 10
+        if (tabs.value.length >= max) {
+          const removeIdx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
+          if (removeIdx >= 0) {
+            tabs.value.splice(removeIdx, 1)
+          } else {
+            tabs.value.shift()
+          }
         }
+        tabs.value.unshift({
+          key: dashboardPath,
+          title: dashboardTitle,
+          closable: false
+        })
+      } else if (idx > 0) {
+        const [homeTab] = tabs.value.splice(idx, 1)
+        tabs.value.unshift({ ...homeTab, closable: false })
       }
-      tabs.value.unshift({
-        key: dashboardPath,
-        title: dashboardTitle,
-        closable: false
-      })
-    } else if (idx > 0) {
-      const [homeTab] = tabs.value.splice(idx, 1)
-      tabs.value.unshift({ ...homeTab, closable: false })
     }
   }
 
-  const exists = tabs.value.find(t => t.key === path)
+  const exists = tabs.value.find(t => t.key === pathWithoutQuery)
   if (exists) {
     return
   }
-  const title = buildTitleFromRoute(path)
+  const title = buildTitleFromRoute(pathWithoutQuery)
   const max = layoutConfig.value.tabBarMax || 10
   if (tabs.value.length >= max) {
     const idx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
@@ -754,15 +808,26 @@ function updateTabsByRoute(path: string) {
     }
   }
   tabs.value.push({
-    key: path,
+    key: pathWithoutQuery,
     title,
     closable: tabs.value.length > 0
   })
 }
 
 function buildTitleFromRoute(path: string): string {
+  // 确保传入的 path 不包含 query
+  const pathWithoutQuery = path.split('?')[0]
+  
+  // 1. 尝试直接从路由表中查找（支持静态路由和动态路由）
+  const allRoutes = router.getRoutes()
+  const match = allRoutes.find(r => r.path === pathWithoutQuery)
+  if (match && match.meta && match.meta.title) {
+    return match.meta.title as string
+  }
+
+  // 2. 如果没找到，尝试通过模块结构查找（降级策略）
   const routes = Array.isArray(dynamicRoutes.value) ? dynamicRoutes.value : []
-  const clean = path.replace(/^\/workspace\//, '')
+  const clean = pathWithoutQuery.replace(/^\/workspace\//, '')
   const parts = clean.split('/').filter(Boolean)
   if (parts.length < 1) {
     return '首页'
@@ -783,7 +848,7 @@ function buildTitleFromRoute(path: string): string {
   if (mod && mod.name) {
     return mod.name
   }
-  return clean || path
+  return clean || pathWithoutQuery
 }
 
 function onTabClick(tab: { key: string }) {

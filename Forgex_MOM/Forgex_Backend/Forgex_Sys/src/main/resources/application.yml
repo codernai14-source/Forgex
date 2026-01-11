@@ -26,6 +26,11 @@ spring:
       enabled: always
   main:
     allow-bean-definition-overriding: true
+file:
+  upload:
+    path: D:/forgex/uploads
+  access:
+    prefix: /files
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"

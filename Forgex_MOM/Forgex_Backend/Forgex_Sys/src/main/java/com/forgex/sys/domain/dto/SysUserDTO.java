@@ -63,6 +63,11 @@ public class SysUserDTO {
     private Integer gender;
     
     /**
+     * 头像URL
+     */
+    private String avatar;
+    
+    /**
      * 入职时间
      */
     private LocalDate entryDate;
