@@ -22,9 +22,11 @@ import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysPosition;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
 import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -65,6 +67,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     private final SysUserMapper userMapper;
     private final SysDepartmentMapper departmentMapper;
     private final SysPositionMapper positionMapper;
+    private final SysUserTenantMapper userTenantMapper;
     
     /**
      * 用户分页查询
@@ -300,6 +303,23 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     }
     
     /**
+     * 查询用户关联的租户列表
+     * <p>根据用户ID查询该用户关联的所有租户。</p>
+     * 
+     * @param userId 用户ID
+     * @return 租户列表
+     */
+    @Override
+    public List<SysUserTenant> listUserTenants(Long userId) {
+        LambdaQueryWrapper<SysUserTenant> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysUserTenant::getUserId, userId);
+        wrapper.orderByDesc(SysUserTenant::getIsDefault);
+        wrapper.orderByDesc(SysUserTenant::getLastUsed);
+        
+        return userTenantMapper.selectList(wrapper);
+    }
+    
+    /**
      * 构建查询条件
      * <p>根据查询DTO构建Lambda查询条件。</p>
      * @param query 查询条件DTO
@@ -329,11 +349,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     
     /**
      * 实体转DTO
-     * <p>将用户实体转换为DTO，并关联查询部门名称和职位名称。</p>
+     * <p>将用户实体转换为DTO，并关联查询部门名称、职位名称和租户列表。</p>
      * <p>关联查询：</p>
      * <ul>
      *   <li>根据部门ID查询部门名称</li>
      *   <li>根据职位ID查询职位名称</li>
+     *   <li>根据用户ID查询关联租户列表</li>
      * </ul>
      * @param user 用户实体
      * @return 用户DTO
@@ -357,6 +378,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                 dto.setPositionName(position.getPositionName());
             }
         }
+        
+        // 关联查询租户列表
+        List<SysUserTenant> tenantList = listUserTenants(user.getId());
+        dto.setTenantList(tenantList);
         
         return dto;
     }

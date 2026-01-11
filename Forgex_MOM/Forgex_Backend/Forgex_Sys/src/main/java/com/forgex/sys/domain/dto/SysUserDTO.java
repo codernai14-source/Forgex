@@ -13,10 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.domain.dto;
 
+import com.forgex.sys.domain.entity.SysUserTenant;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户DTO
@@ -108,7 +110,12 @@ public class SysUserDTO {
     private LocalDateTime updateTime;
     
     /**
-     * 租户ID
+     * 租户ID（用户绑定的主租户ID）
      */
     private Long tenantId;
+    
+    /**
+     * 关联租户列表
+     */
+    private List<SysUserTenant> tenantList;
 }

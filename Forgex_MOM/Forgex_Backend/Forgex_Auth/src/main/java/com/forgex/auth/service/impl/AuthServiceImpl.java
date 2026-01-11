@@ -20,6 +20,7 @@ import com.forgex.auth.domain.entity.SysTenant;
 import com.forgex.auth.domain.entity.SysUser;
 import com.forgex.auth.domain.entity.SysUserTenant;
 import com.forgex.auth.domain.param.LoginParam;
+import com.forgex.auth.domain.dto.SysUserDTO;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.mapper.SysTenantMapper;
@@ -185,6 +186,7 @@ public class AuthServiceImpl implements AuthService {
             vo.setName(t.getTenantName());
             vo.setIntro(t.getDescription());
             vo.setLogo(t.getLogo());
+            vo.setTenantType(t.getTenantType());
             // 设置默认标记
             for (SysUserTenant b : binds) { if (b.getTenantId().equals(t.getId())) { vo.setIsDefault(b.getIsDefault()); break; } }
             vos.add(vo);
@@ -201,7 +203,7 @@ public class AuthServiceImpl implements AuthService {
      * @see com.forgex.common.tenant.TenantContext#set(Long)
      */
     @Override
-    public R<Boolean> chooseTenant(TenantChoiceParam param) {
+    public R<SysUserDTO> chooseTenant(TenantChoiceParam param) {
         Long tenantId = param == null ? null : param.getTenantId();
         String account = param == null ? null : param.getAccount();
         if (tenantId == null) {
@@ -247,7 +249,16 @@ public class AuthServiceImpl implements AuthService {
                 .set(SysUserTenant::getLastUsed, LocalDateTime.now())
                 .setSql("pref_order = pref_order + 1"));
         log.info("选择租户成功: account={}, tenantId={}", account, tenantId);
-        return R.ok(true);
+        SysUserDTO result = new SysUserDTO();
+        result.setId(user.getId());
+        result.setAccount(user.getAccount());
+        result.setUsername(user.getUsername());
+        result.setEmail(user.getEmail());
+        result.setPhone(user.getPhone());
+        result.setAvatar(user.getAvatar());
+        result.setStatus(user.getStatus());
+        result.setTenantId(bind.getTenantId());
+        return R.ok(result);
     }
 
     /**

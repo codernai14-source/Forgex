@@ -30,6 +30,9 @@
         <a-descriptions-item label="职位">
           {{ userDetail?.positionName }}
         </a-descriptions-item>
+        <a-descriptions-item label="主租户">
+          {{ userDetail?.tenantId || '-' }}
+        </a-descriptions-item>
         <a-descriptions-item label="状态">
           <a-tag v-if="userDetail?.status === 1" color="success">启用</a-tag>
           <a-tag v-else color="error">禁用</a-tag>
@@ -38,6 +41,26 @@
           {{ userDetail?.createTime }}
         </a-descriptions-item>
       </a-descriptions>
+      
+      <a-divider orientation="left">关联租户</a-divider>
+      
+      <a-table
+        :columns="tenantColumns"
+        :data-source="userDetail?.tenantList || []"
+        :pagination="false"
+        size="small"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'isDefault'">
+            <a-tag v-if="record.isDefault" color="blue">默认</a-tag>
+            <a-tag v-else>非默认</a-tag>
+          </template>
+          
+          <template v-else-if="column.key === 'lastUsed'">
+            {{ record.lastUsed || '-' }}
+          </template>
+        </template>
+      </a-table>
       
       <a-divider orientation="left">附属信息</a-divider>
       
@@ -88,7 +111,7 @@
 import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
-import type { User, UserProfile } from '../types'
+import type { User, UserProfile, UserTenant } from '../types'
 
 // Props
 interface Props {
@@ -109,7 +132,14 @@ const emit = defineEmits<{
 // 响应式数据
 const visible = ref(props.open)
 const loading = ref(false)
-const userDetail = ref<(User & { profile?: UserProfile }) | null>(null)
+const userDetail = ref<(User & { profile?: UserProfile, tenantList?: UserTenant[] }) | null>(null)
+
+// 租户列表表格列定义
+const tenantColumns = [
+  { title: '租户ID', dataIndex: 'tenantId', key: 'tenantId', width: 120 },
+  { title: '是否默认', dataIndex: 'isDefault', key: 'isDefault', width: 100 },
+  { title: '最后使用时间', dataIndex: 'lastUsed', key: 'lastUsed', width: 160 },
+]
 
 // 监听 props.open 变化
 watch(() => props.open, (val) => {

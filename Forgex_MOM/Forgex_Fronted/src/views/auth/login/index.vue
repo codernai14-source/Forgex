@@ -106,7 +106,7 @@
             @click="choose(t)"
           >
             <div class="tenant-logo">
-              <img v-if="t.logo" :src="t.logo" alt="logo" />
+              <img v-if="t.logo" :src="formatTenantLogo(t.logo)" alt="logo" />
               <div v-else class="logo-fallback">
                 {{ t.name?.[0] || 'T' }}
               </div>
@@ -178,6 +178,7 @@ import { getInitStatus } from '../../../api/system/init'
 import { sm2 } from 'sm-crypto'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
+import { getCurrentUserInfo } from '@/api/profile'
 
 // 初始化 stores
 const userStore = useUserStore()
@@ -198,6 +199,17 @@ const sliderBox = ref<HTMLDivElement | null>(null)
 const logging = ref(false)
 const publicKeyCache = ref<string>('')
 const showSort = ref(false)
+
+function formatTenantLogo(url?: string) {
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
+}
 
 async function loadMode() {
   try {
@@ -272,13 +284,16 @@ async function confirmTenant() {
       tenantId: chosenTenant.value,
       account: account.value
     })
-    // 后端返回 true 表示成功，token 通过 cookie 传递
-    if (result === true) {
-      // 存储用户信息到 Pinia Store
+    // 后端返回当前用户完整信息，token 通过 cookie 传递
+    if (result && result.account) {
+      // 存储用户信息到 Pinia Store（包含头像等）
       userStore.setUserInfo({
-        account: account.value,
-        username: account.value,
-        tenantId: chosenTenant.value,
+        account: result.account,
+        username: result.username || result.account || account.value,
+        email: result.email,
+        phone: result.phone,
+        avatar: result.avatar,
+        tenantId: String(result.tenantId || chosenTenant.value),
         tenantName: current.name
       })
       

@@ -11,45 +11,48 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.auth.domain.entity;
+package com.forgex.sys.domain.dto.tenant;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.forgex.common.base.BaseEntity;
 import com.forgex.common.enums.TenantTypeEnum;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 租户实体（持久化对象）
- * 对应数据库表：sys_tenant
+ * 租户保存参数
+ * <p>
+ * 用于租户新增和编辑的参数封装
+ * </p>
  * 
  * @author coder_nai
  * @version 1.0
+ * @see com.forgex.sys.domain.entity.SysTenant
  * @see com.forgex.common.enums.TenantTypeEnum
  */
 @Data
-@TableName("sys_tenant")
-public class SysTenant extends BaseEntity {
+public class SysTenantSaveParam {
+    
+    /** 主键ID（编辑时必填） */
+    private Long id;
     
     /** 租户名称 */
+    @NotBlank(message = "租户名称不能为空")
     private String tenantName;
+    
+    /** 租户编码 */
+    @NotBlank(message = "租户编码不能为空")
+    private String tenantCode;
     
     /** 描述 */
     private String description;
-    
-    /** 状态：false=禁用，true=启用 */
-    private Boolean status;
-    
-    /** 编码 */
-    private String tenantCode;
     
     /** Logo */
     private String logo;
     
     /** 租户类别：MAIN_TENANT-主租户，CUSTOMER_TENANT-客户租户，SUPPLIER_TENANT-供应商租户 */
+    @NotNull(message = "租户类别不能为空")
     private TenantTypeEnum tenantType;
     
-    /** 租户ID */
-    @TableField(exist = false)
-    private Long tenantId;
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
 }

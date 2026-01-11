@@ -39,6 +39,8 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("sys_config");
         // 租户隔离跳过配置表本身不含租户字段
         IGNORE_TABLES.add("sys_tenant_ignore");
+        // 租户菜单复制规则配置表，作为管理库全局配置，不参与租户隔离
+        IGNORE_TABLES.add("sys_tenant_menu_copy_rule");
     }
 
     /**
@@ -97,5 +99,6 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("sys_user_tenant");
         IGNORE_TABLES.add("sys_config");
         IGNORE_TABLES.add("sys_tenant_ignore");
+        IGNORE_TABLES.add("sys_tenant_menu_copy_rule");
     }
 }

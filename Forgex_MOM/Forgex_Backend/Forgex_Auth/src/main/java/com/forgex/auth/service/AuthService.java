@@ -15,6 +15,7 @@ package com.forgex.auth.service;
 
 import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.param.TenantChoiceParam;
+import com.forgex.auth.domain.dto.SysUserDTO;
 import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.common.web.R;
 
@@ -37,9 +38,9 @@ public interface AuthService {
      * 选择租户，设置上下文
      * 逻辑：校验参数 -> 设置租户上下文
      * @param param 选择租户参数
-     * @return 选择结果
+     * @return 当前登录用户信息（含头像、当前租户ID 等）
      */
-    R<Boolean> chooseTenant(TenantChoiceParam param);
+    R<SysUserDTO> chooseTenant(TenantChoiceParam param);
 
     /**
      * 管理员权限校验

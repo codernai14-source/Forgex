@@ -4,8 +4,19 @@ export function login(data: { account: string; password: string; captcha?: strin
   return http.post('/auth/login', data)
 }
 
+export interface ChosenUserInfo {
+  id: number
+  account: string
+  username: string
+  email?: string
+  phone?: string
+  avatar?: string
+  status?: boolean
+  tenantId?: number
+}
+
 export function chooseTenant(data: { tenantId: string; account: string }) {
-  return http.post('/auth/choose-tenant', data)
+  return http.post<ChosenUserInfo>('/auth/choose-tenant', data)
 }
 
 export function getPublicKey() {

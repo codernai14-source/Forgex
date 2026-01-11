@@ -11,45 +11,60 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.auth.domain.entity;
+package com.forgex.sys.domain.dto.tenant;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.forgex.common.base.BaseEntity;
 import com.forgex.common.enums.TenantTypeEnum;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
- * 租户实体（持久化对象）
- * 对应数据库表：sys_tenant
+ * 租户返回对象
+ * <p>
+ * 用于前端展示的租户信息
+ * </p>
  * 
  * @author coder_nai
  * @version 1.0
+ * @see com.forgex.sys.domain.entity.SysTenant
  * @see com.forgex.common.enums.TenantTypeEnum
  */
 @Data
-@TableName("sys_tenant")
-public class SysTenant extends BaseEntity {
+public class SysTenantDTO {
+    
+    /** 租户ID */
+    private Long id;
     
     /** 租户名称 */
     private String tenantName;
     
+    /** 租户编码 */
+    private String tenantCode;
+    
     /** 描述 */
     private String description;
-    
-    /** 状态：false=禁用，true=启用 */
-    private Boolean status;
-    
-    /** 编码 */
-    private String tenantCode;
     
     /** Logo */
     private String logo;
     
-    /** 租户类别：MAIN_TENANT-主租户，CUSTOMER_TENANT-客户租户，SUPPLIER_TENANT-供应商租户 */
+    /** 租户类别 */
     private TenantTypeEnum tenantType;
     
-    /** 租户ID */
-    @TableField(exist = false)
-    private Long tenantId;
+    /** 租户类别描述 */
+    private String tenantTypeDesc;
+    
+    /** 状态：false=禁用，true=启用 */
+    private Boolean status;
+    
+    /** 创建时间 */
+    private LocalDateTime createTime;
+    
+    /** 更新时间 */
+    private LocalDateTime updateTime;
+    
+    /** 创建人 */
+    private String createBy;
+    
+    /** 更新人 */
+    private String updateBy;
 }
