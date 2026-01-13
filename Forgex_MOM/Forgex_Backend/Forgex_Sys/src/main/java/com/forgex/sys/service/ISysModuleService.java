@@ -115,4 +115,31 @@ public interface ISysModuleService extends IService<SysModule> {
      * @return 是否有菜单
      */
     boolean hasMenus(Long id);
+    
+    /**
+     * 检查模块名称是否存在
+     * 
+     * @param name 模块名称
+     * @param tenantId 租户ID
+     * @return 是否存在
+     */
+    boolean existsByName(String name, Long tenantId);
+    
+    /**
+     * 检查模块名称是否存在（排除指定ID）
+     * 
+     * @param name 模块名称
+     * @param tenantId 租户ID
+     * @param excludeId 排除的ID
+     * @return 是否存在
+     */
+    boolean existsByNameExcludeId(String name, Long tenantId, Long excludeId);
+    
+    /**
+     * 检查模块的菜单是否已被角色授权
+     * 
+     * @param id 模块ID
+     * @return 是否已被角色授权
+     */
+    boolean hasRoleAssociationThroughMenus(Long id);
 }

@@ -118,4 +118,31 @@ public interface ISysMenuService extends IService<SysMenu> {
      * @return 是否有子菜单
      */
     boolean hasChildren(Long id);
+    
+    /**
+     * 检查菜单是否已被角色授权
+     * 
+     * @param id 菜单ID
+     * @return 是否已被角色授权
+     */
+    boolean hasRoleAssociation(Long id);
+    
+    /**
+     * 检查权限标识是否已存在
+     * 
+     * @param permKey 权限标识
+     * @param tenantId 租户ID
+     * @return 是否已存在
+     */
+    boolean existsByPermKey(String permKey, Long tenantId);
+    
+    /**
+     * 检查权限标识是否已存在（排除指定ID）
+     * 
+     * @param permKey 权限标识
+     * @param tenantId 租户ID
+     * @param excludeId 排除的菜单ID
+     * @return 是否已存在
+     */
+    boolean existsByPermKeyExcludeId(String permKey, Long tenantId, Long excludeId);
 }

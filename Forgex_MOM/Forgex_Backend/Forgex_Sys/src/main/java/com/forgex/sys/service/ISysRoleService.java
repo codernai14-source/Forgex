@@ -107,4 +107,58 @@ public interface ISysRoleService extends IService<SysRole> {
      * @return 是否存在
      */
     boolean existsByRoleKeyExcludeId(String roleKey, Long excludeId);
+    
+    /**
+     * 检查角色编码是否存在
+     * 
+     * @param roleCode 角色编码
+     * @param tenantId 租户ID
+     * @return 是否存在
+     */
+    boolean existsByRoleCode(String roleCode, Long tenantId);
+    
+    /**
+     * 检查角色编码是否存在（排除指定ID）
+     * 
+     * @param roleCode 角色编码
+     * @param tenantId 租户ID
+     * @param excludeId 排除的角色ID
+     * @return 是否存在
+     */
+    boolean existsByRoleCodeExcludeId(String roleCode, Long tenantId, Long excludeId);
+    
+    /**
+     * 检查角色名称是否存在
+     * 
+     * @param roleName 角色名称
+     * @param tenantId 租户ID
+     * @return 是否存在
+     */
+    boolean existsByRoleName(String roleName, Long tenantId);
+    
+    /**
+     * 检查角色名称是否存在（排除指定ID）
+     * 
+     * @param roleName 角色名称
+     * @param tenantId 租户ID
+     * @param excludeId 排除的角色ID
+     * @return 是否存在
+     */
+    boolean existsByRoleNameExcludeId(String roleName, Long tenantId, Long excludeId);
+    
+    /**
+     * 检查角色是否有关联用户
+     * 
+     * @param id 角色ID
+     * @return 是否有关联用户
+     */
+    boolean hasUserAssociation(Long id);
+    
+    /**
+     * 根据ID获取角色编码
+     * 
+     * @param id 角色ID
+     * @return 角色编码
+     */
+    String getRoleCodeById(Long id);
 }

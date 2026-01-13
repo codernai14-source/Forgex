@@ -63,7 +63,7 @@
           <div class="table-toolbar">
             <a-space>
               <a-button
-                v-permission="'sys:menu:add'"
+                v-permission="'sys:menu:create'"
                 type="primary"
                 @click="handleAdd"
               >

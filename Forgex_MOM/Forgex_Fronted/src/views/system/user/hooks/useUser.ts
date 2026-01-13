@@ -181,6 +181,22 @@ export function useUser() {
     selectedRowKeys.value = keys
   }
   
+  /**
+   * 导出用户
+   */
+  async function handleExport() {
+    try {
+      loading.value = true
+      await userApi.exportUsers(queryForm)
+      message.success('导出成功')
+    } catch (error) {
+      console.error('导出失败:', error)
+      message.error('导出失败')
+    } finally {
+      loading.value = false
+    }
+  }
+  
   return {
     loading,
     userList,
@@ -196,5 +212,6 @@ export function useUser() {
     handleResetPassword,
     handleUpdateStatus,
     handleSelectionChange,
+    handleExport,
   }
 }

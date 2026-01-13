@@ -33,43 +33,71 @@ public class RoleValidator {
     private final ISysRoleService roleService;
     
     /**
-     * 新增角色校验
+     * 新增角色校验（任务 14）
      * 
      * @param roleDTO 角色信息
      */
     public void validateForAdd(SysRoleDTO roleDTO) {
         // 1. 必填项校验
         Assert.hasText(roleDTO.getRoleName(), "角色名称不能为空");
-        Assert.hasText(roleDTO.getRoleKey(), "角色键不能为空");
+        Assert.hasText(roleDTO.getRoleCode(), "角色编码不能为空");
+        Assert.notNull(roleDTO.getTenantId(), "租户ID不能为空");
         
-        // 2. 角色键唯一性校验
+        // 2. 角色编码唯一性校验（任务 14）
+        if (roleService.existsByRoleCode(roleDTO.getRoleCode(), roleDTO.getTenantId())) {
+            throw new BusinessException("角色编码已存在");
+        }
+        
+        // 3. 角色名称唯一性校验（任务 14）
+        if (roleService.existsByRoleName(roleDTO.getRoleName(), roleDTO.getTenantId())) {
+            throw new BusinessException("角色名称已存在");
+        }
+        
+        // 4. 角色键唯一性校验（保留原有逻辑）
         if (roleService.existsByRoleKey(roleDTO.getRoleKey())) {
             throw new BusinessException("角色键已存在");
         }
     }
     
     /**
-     * 更新角色校验
+     * 更新角色校验（任务 14、15）
      * 
      * @param roleDTO 角色信息
      */
     public void validateForUpdate(SysRoleDTO roleDTO) {
         // 1. ID校验
         Assert.notNull(roleDTO.getId(), "角色ID不能为空");
+        Assert.notNull(roleDTO.getTenantId(), "租户ID不能为空");
         
         // 2. 存在性校验
         if (!roleService.existsById(roleDTO.getId())) {
             throw new BusinessException("角色不存在");
         }
         
-        // 3. 角色键唯一性校验（排除自己）
+        // 3. 角色编码不可修改校验（任务 15）
+        String existingRoleCode = roleService.getRoleCodeById(roleDTO.getId());
+        if (existingRoleCode != null && !existingRoleCode.equals(roleDTO.getRoleCode())) {
+            throw new BusinessException("角色编码不可修改");
+        }
+        
+        // 4. 角色编码唯一性校验（排除自己）（任务 14）
+        if (roleService.existsByRoleCodeExcludeId(roleDTO.getRoleCode(), roleDTO.getTenantId(), roleDTO.getId())) {
+            throw new BusinessException("角色编码已被其他角色使用");
+        }
+        
+        // 5. 角色名称唯一性校验（排除自己）（任务 14）
+        if (roleService.existsByRoleNameExcludeId(roleDTO.getRoleName(), roleDTO.getTenantId(), roleDTO.getId())) {
+            throw new BusinessException("角色名称已被其他角色使用");
+        }
+        
+        // 6. 角色键唯一性校验（排除自己）（保留原有逻辑）
         if (roleService.existsByRoleKeyExcludeId(roleDTO.getRoleKey(), roleDTO.getId())) {
             throw new BusinessException("角色键已被其他角色使用");
         }
     }
     
     /**
-     * 删除角色校验
+     * 删除角色校验（任务 16）
      * 
      * @param id 角色ID
      */
@@ -80,6 +108,11 @@ public class RoleValidator {
         // 2. 存在性校验
         if (!roleService.existsById(id)) {
             throw new BusinessException("角色不存在");
+        }
+        
+        // 3. 关联用户检查（任务 16）
+        if (roleService.hasUserAssociation(id)) {
+            throw new BusinessException("该角色下还有用户，无法删除");
         }
     }
     

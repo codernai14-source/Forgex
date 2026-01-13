@@ -80,7 +80,7 @@
       <div style="margin-bottom: 16px;">
         <a-space>
           <a-button
-            v-permission="'sys:user:add'"
+            v-permission="'sys:user:create'"
             type="primary"
             @click="openAddDialog"
           >
@@ -93,6 +93,12 @@
             @click="handleBatchDelete"
           >
             批量删除
+          </a-button>
+          <a-button
+            v-permission="'sys:user:export'"
+            @click="handleExport"
+          >
+            导出
           </a-button>
         </a-space>
       </div>
@@ -144,7 +150,7 @@
                 编辑
               </a>
               <a
-                v-permission="'sys:user:status'"
+                v-permission="'sys:user:edit'"
                 @click="handleUpdateStatus(record.id, !record.status)"
               >
                 {{ record.status ? '禁用' : '启用' }}
@@ -214,6 +220,7 @@ const {
   handleResetPassword,
   handleUpdateStatus,
   handleSelectionChange,
+  handleExport,
 } = useUser()
 
 // 部门树数据

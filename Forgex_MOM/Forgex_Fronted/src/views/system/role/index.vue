@@ -49,7 +49,7 @@
     <a-card class="table-card" :bordered="false">
       <template #title>
         <a-space>
-          <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
+          <a-button type="primary" @click="openAdd" v-permission="'sys:role:create'">
             <template #icon><PlusOutlined /></template>
             新增角色
           </a-button>

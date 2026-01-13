@@ -43,6 +43,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     implements ISysRoleService {
     
     private final SysRoleMapper roleMapper;
+    private final com.forgex.sys.mapper.SysRoleMenuMapper roleMenuMapper;
+    private final com.forgex.sys.mapper.SysUserRoleMapper userRoleMapper;
     
     /**
      * 分页查询角色列表
@@ -125,9 +127,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     }
     
     /**
-     * 删除角色
+     * 删除角色（任务 16：添加级联删除逻辑）
      * <p>
-     * 根据角色ID删除角色记录
+     * 根据角色ID删除角色记录，删除前先删除 sys_role_menu 表中的关联记录
      * </p>
      * 
      * @param id 角色ID
@@ -135,6 +137,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long id) {
+        // 1. 先删除 sys_role_menu 表中的关联记录（任务 16）
+        LambdaQueryWrapper<com.forgex.sys.domain.entity.SysRoleMenu> wrapper = 
+            new LambdaQueryWrapper<>();
+        wrapper.eq(com.forgex.sys.domain.entity.SysRoleMenu::getRoleId, id);
+        roleMenuMapper.delete(wrapper);
+        
+        // 2. 再删除角色记录
         roleMapper.deleteById(id);
     }
     
@@ -198,6 +207,114 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         wrapper.eq(SysRole::getRoleKey, roleKey);
         wrapper.ne(SysRole::getId, excludeId);
         return roleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查角色编码是否存在
+     * <p>
+     * 根据角色编码和租户ID检查角色是否存在
+     * </p>
+     * 
+     * @param roleCode 角色编码
+     * @param tenantId 租户ID
+     * @return 角色编码是否存在
+     */
+    @Override
+    public boolean existsByRoleCode(String roleCode, Long tenantId) {
+        LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysRole::getRoleKey, roleCode);
+        wrapper.eq(SysRole::getTenantId, tenantId);
+        return roleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查角色编码是否存在（排除指定ID）
+     * <p>
+     * 根据角色编码和租户ID检查角色是否存在，排除指定的角色ID
+     * </p>
+     * 
+     * @param roleCode 角色编码
+     * @param tenantId 租户ID
+     * @param excludeId 排除的角色ID
+     * @return 角色编码是否存在（排除指定ID后）
+     */
+    @Override
+    public boolean existsByRoleCodeExcludeId(String roleCode, Long tenantId, Long excludeId) {
+        LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysRole::getRoleKey, roleCode);
+        wrapper.eq(SysRole::getTenantId, tenantId);
+        wrapper.ne(SysRole::getId, excludeId);
+        return roleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查角色名称是否存在
+     * <p>
+     * 根据角色名称和租户ID检查角色是否存在
+     * </p>
+     * 
+     * @param roleName 角色名称
+     * @param tenantId 租户ID
+     * @return 角色名称是否存在
+     */
+    @Override
+    public boolean existsByRoleName(String roleName, Long tenantId) {
+        LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysRole::getRoleName, roleName);
+        wrapper.eq(SysRole::getTenantId, tenantId);
+        return roleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查角色名称是否存在（排除指定ID）
+     * <p>
+     * 根据角色名称和租户ID检查角色是否存在，排除指定的角色ID
+     * </p>
+     * 
+     * @param roleName 角色名称
+     * @param tenantId 租户ID
+     * @param excludeId 排除的角色ID
+     * @return 角色名称是否存在（排除指定ID后）
+     */
+    @Override
+    public boolean existsByRoleNameExcludeId(String roleName, Long tenantId, Long excludeId) {
+        LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysRole::getRoleName, roleName);
+        wrapper.eq(SysRole::getTenantId, tenantId);
+        wrapper.ne(SysRole::getId, excludeId);
+        return roleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查角色是否有关联用户
+     * <p>
+     * 根据角色ID检查是否存在关联的用户
+     * </p>
+     * 
+     * @param id 角色ID
+     * @return 是否有关联用户
+     */
+    @Override
+    public boolean hasUserAssociation(Long id) {
+        LambdaQueryWrapper<com.forgex.sys.domain.entity.SysUserRole> wrapper = 
+            new LambdaQueryWrapper<>();
+        wrapper.eq(com.forgex.sys.domain.entity.SysUserRole::getRoleId, id);
+        return userRoleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 根据ID获取角色编码
+     * <p>
+     * 根据角色ID查询角色编码
+     * </p>
+     * 
+     * @param id 角色ID
+     * @return 角色编码，不存在则返回null
+     */
+    @Override
+    public String getRoleCodeById(Long id) {
+        SysRole role = roleMapper.selectById(id);
+        return role != null ? role.getRoleKey() : null;
     }
     
     /**

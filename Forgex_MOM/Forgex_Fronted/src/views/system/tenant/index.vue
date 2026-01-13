@@ -76,7 +76,7 @@
           <a-button
             type="primary"
             @click="openAdd"
-            v-permission="'sys:tenant:add'"
+            v-permission="'sys:tenant:create'"
           >
             <template #icon><PlusOutlined /></template>
             新增租户

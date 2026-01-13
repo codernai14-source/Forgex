@@ -28,7 +28,7 @@
                     <a-button
                       type="primary"
                       @click="openAdd(selectedDept.id)"
-                      v-permission="'sys:department:add'"
+                      v-permission="'sys:department:create'"
                     >
                       <template #icon><PlusOutlined /></template>
                       新增子部门

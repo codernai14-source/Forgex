@@ -56,6 +56,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
      * 获取用户路由信息
      * <p>
      * 根据用户账号和租户ID获取可访问的菜单路由、模块信息和按钮权限
+     * 超级管理员（admin账号）自动拥有所有权限
      * </p>
      * 
      * @param account   用户账号
@@ -73,7 +74,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             return createEmptyRoutes();
         }
         
-        // 2. 查询用户角色
+        // 2. 判断是否为超级管理员（admin账号拥有所有权限）
+        if ("admin".equalsIgnoreCase(account)) {
+            log.info("检测到超级管理员账号: {}, 返回所有权限", account);
+            return getSuperAdminRoutes(tenantId);
+        }
+        
+        // 3. 查询用户角色
         List<SysUserRole> userRoles = userRoleMapper.selectList(
             new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getUserId, user.getId())
@@ -88,7 +95,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             return createEmptyRoutes();
         }
         
-        // 3. 查询角色菜单权限
+        // 4. 查询角色菜单权限
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(
             new LambdaQueryWrapper<SysRoleMenu>()
                 .in(SysRoleMenu::getRoleId, roleIds)
@@ -103,7 +110,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             return createEmptyRoutes();
         }
         
-        // 4. 查询菜单列表
+        // 5. 查询菜单列表
         List<SysMenu> menus = menuMapper.selectList(
             new LambdaQueryWrapper<SysMenu>()
                 .in(SysMenu::getId, menuIds)
@@ -112,7 +119,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 .eq(SysMenu::getStatus, true)
         );
         
-        // 5. 查询模块列表
+        // 6. 查询模块列表
         Set<Long> moduleIds = menus.stream()
             .map(SysMenu::getModuleId)
             .collect(Collectors.toSet());
@@ -126,7 +133,37 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                     .eq(SysModule::getStatus, true)
             );
         
-        // 6. 构建返回数据
+        // 7. 构建返回数据
+        return buildUserRoutes(modules, menus);
+    }
+    
+    /**
+     * 获取超级管理员的路由信息
+     * <p>
+     * 超级管理员拥有所有菜单和按钮权限
+     * </p>
+     * 
+     * @param tenantId 租户ID
+     * @return 超级管理员路由信息
+     */
+    private UserRoutesVO getSuperAdminRoutes(Long tenantId) {
+        // 1. 查询所有启用的模块
+        List<SysModule> modules = moduleMapper.selectList(
+            new LambdaQueryWrapper<SysModule>()
+                .eq(SysModule::getTenantId, tenantId)
+                .eq(SysModule::getVisible, true)
+                .eq(SysModule::getStatus, true)
+        );
+        
+        // 2. 查询所有启用的菜单（包含按钮）
+        List<SysMenu> menus = menuMapper.selectList(
+            new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getTenantId, tenantId)
+                .eq(SysMenu::getVisible, true)
+                .eq(SysMenu::getStatus, true)
+        );
+        
+        // 3. 构建返回数据
         return buildUserRoutes(modules, menus);
     }
     
@@ -307,6 +344,60 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     public boolean hasChildren(Long id) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getParentId, id);
+        return menuMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查菜单是否已被角色授权
+     * <p>
+     * 根据菜单ID检查是否存在角色授权记录
+     * </p>
+     * 
+     * @param id 菜单ID
+     * @return 是否已被角色授权
+     */
+    @Override
+    public boolean hasRoleAssociation(Long id) {
+        LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysRoleMenu::getMenuId, id);
+        return roleMenuMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查权限标识是否已存在
+     * <p>
+     * 根据权限标识和租户ID检查是否存在相同的权限标识
+     * </p>
+     * 
+     * @param permKey 权限标识
+     * @param tenantId 租户ID
+     * @return 是否已存在
+     */
+    @Override
+    public boolean existsByPermKey(String permKey, Long tenantId) {
+        LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMenu::getPermKey, permKey);
+        wrapper.eq(SysMenu::getTenantId, tenantId);
+        return menuMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查权限标识是否已存在（排除指定ID）
+     * <p>
+     * 根据权限标识和租户ID检查是否存在相同的权限标识，排除指定的菜单ID
+     * </p>
+     * 
+     * @param permKey 权限标识
+     * @param tenantId 租户ID
+     * @param excludeId 排除的菜单ID
+     * @return 是否已存在
+     */
+    @Override
+    public boolean existsByPermKeyExcludeId(String permKey, Long tenantId, Long excludeId) {
+        LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMenu::getPermKey, permKey);
+        wrapper.eq(SysMenu::getTenantId, tenantId);
+        wrapper.ne(SysMenu::getId, excludeId);
         return menuMapper.selectCount(wrapper) > 0;
     }
     

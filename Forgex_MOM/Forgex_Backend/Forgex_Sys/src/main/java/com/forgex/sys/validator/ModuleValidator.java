@@ -33,7 +33,7 @@ public class ModuleValidator {
     private final ISysModuleService moduleService;
     
     /**
-     * 新增模块校验
+     * 新增模块校验（任务 12）
      * 
      * @param moduleDTO 模块信息
      */
@@ -41,24 +41,31 @@ public class ModuleValidator {
         // 1. 必填项校验（@Validated注解已处理，这里做额外校验）
         Assert.hasText(moduleDTO.getCode(), "模块编码不能为空");
         Assert.hasText(moduleDTO.getName(), "模块名称不能为空");
+        Assert.notNull(moduleDTO.getTenantId(), "租户ID不能为空");
         
         // 2. 业务规则校验：模块编码唯一性
         if (moduleService.existsByCode(moduleDTO.getCode())) {
             throw new BusinessException("模块编码已存在");
         }
         
-        // 3. 数据格式校验
+        // 3. 业务规则校验：模块名称唯一性（任务 12）
+        if (moduleService.existsByName(moduleDTO.getName(), moduleDTO.getTenantId())) {
+            throw new BusinessException("模块名称已存在");
+        }
+        
+        // 4. 数据格式校验
         validateModuleCode(moduleDTO.getCode());
     }
     
     /**
-     * 更新模块校验
+     * 更新模块校验（任务 12）
      * 
      * @param moduleDTO 模块信息
      */
     public void validateForUpdate(SysModuleDTO moduleDTO) {
         // 1. ID校验
         Assert.notNull(moduleDTO.getId(), "模块ID不能为空");
+        Assert.notNull(moduleDTO.getTenantId(), "租户ID不能为空");
         
         // 2. 存在性校验
         if (!moduleService.existsById(moduleDTO.getId())) {
@@ -70,12 +77,17 @@ public class ModuleValidator {
             throw new BusinessException("模块编码已被其他模块使用");
         }
         
-        // 4. 数据格式校验
+        // 4. 模块名称唯一性校验（排除自己）（任务 12）
+        if (moduleService.existsByNameExcludeId(moduleDTO.getName(), moduleDTO.getTenantId(), moduleDTO.getId())) {
+            throw new BusinessException("模块名称已被其他模块使用");
+        }
+        
+        // 5. 数据格式校验
         validateModuleCode(moduleDTO.getCode());
     }
     
     /**
-     * 删除模块校验
+     * 删除模块校验（任务 13）
      * 
      * @param id 模块ID
      */
@@ -90,7 +102,12 @@ public class ModuleValidator {
         
         // 3. 关联数据校验：检查是否有关联菜单
         if (moduleService.hasMenus(id)) {
-            throw new BusinessException("该模块下存在菜单，无法删除");
+            throw new BusinessException("该模块下还有菜单，无法删除");
+        }
+        
+        // 4. 角色关联检查：通过菜单查询是否有角色关联（任务 13）
+        if (moduleService.hasRoleAssociationThroughMenus(id)) {
+            throw new BusinessException("该模块的菜单已被角色授权，无法删除");
         }
     }
     

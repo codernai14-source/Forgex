@@ -61,6 +61,7 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     
     private final SysModuleMapper moduleMapper;
     private final SysMenuMapper menuMapper;
+    private final com.forgex.sys.mapper.SysRoleMenuMapper roleMenuMapper;
     
     /**
      * 模块分页查询
@@ -218,6 +219,69 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getModuleId, id);
         return menuMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查模块名称是否存在
+     * <p>根据模块名称和租户ID检查模块是否存在。</p>
+     * @param name 模块名称
+     * @param tenantId 租户ID
+     * @return 存在返回true，否则返回false
+     */
+    @Override
+    public boolean existsByName(String name, Long tenantId) {
+        LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysModule::getName, name);
+        wrapper.eq(SysModule::getTenantId, tenantId);
+        return moduleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查模块名称是否存在（排除指定ID）
+     * <p>根据模块名称和租户ID检查模块是否存在，排除指定ID的模块。</p>
+     * @param name 模块名称
+     * @param tenantId 租户ID
+     * @param excludeId 排除的模块ID
+     * @return 存在返回true，否则返回false
+     */
+    @Override
+    public boolean existsByNameExcludeId(String name, Long tenantId, Long excludeId) {
+        LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysModule::getName, name);
+        wrapper.eq(SysModule::getTenantId, tenantId);
+        wrapper.ne(SysModule::getId, excludeId);
+        return moduleMapper.selectCount(wrapper) > 0;
+    }
+    
+    /**
+     * 检查模块的菜单是否已被角色授权
+     * <p>检查指定模块下的菜单是否已被角色授权。</p>
+     * @param id 模块ID
+     * @return 已被角色授权返回true，否则返回false
+     */
+    @Override
+    public boolean hasRoleAssociationThroughMenus(Long id) {
+        // 1. 查询该模块下的所有菜单ID
+        LambdaQueryWrapper<SysMenu> menuWrapper = new LambdaQueryWrapper<>();
+        menuWrapper.eq(SysMenu::getModuleId, id);
+        menuWrapper.select(SysMenu::getId);
+        List<SysMenu> menus = menuMapper.selectList(menuWrapper);
+        
+        if (menus.isEmpty()) {
+            return false;
+        }
+        
+        // 2. 提取菜单ID列表
+        List<Long> menuIds = menus.stream()
+            .map(SysMenu::getId)
+            .collect(java.util.stream.Collectors.toList());
+        
+        // 3. 检查这些菜单是否被角色授权
+        LambdaQueryWrapper<com.forgex.sys.domain.entity.SysRoleMenu> roleMenuWrapper = 
+            new LambdaQueryWrapper<>();
+        roleMenuWrapper.in(com.forgex.sys.domain.entity.SysRoleMenu::getMenuId, menuIds);
+        
+        return roleMenuMapper.selectCount(roleMenuWrapper) > 0;
     }
     
     /**
