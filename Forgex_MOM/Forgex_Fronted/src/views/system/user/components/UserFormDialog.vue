@@ -162,6 +162,29 @@
               </a-form-item>
             </a-col>
           </a-row>
+
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="籍贯">
+                <a-input
+                  v-model:value="profileData.birthPlace"
+                  placeholder="请输入籍贯"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16">
+            <a-col :span="24">
+              <a-form-item label="个人简介" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
+                <a-textarea
+                  v-model:value="profileData.intro"
+                  placeholder="请输入个人简介"
+                  :rows="3"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
           
           <a-row :gutter="16">
             <a-col :span="24">
@@ -348,6 +371,8 @@ const profileData = reactive<Partial<UserProfile>>({
   emergencyPhone: '',
   referrer: '',
   education: '',
+  birthPlace: '',
+  intro: '',
   workHistory: [],
 })
 
@@ -427,6 +452,8 @@ async function loadUserData() {
           emergencyPhone: data.profile.emergencyPhone || '',
           referrer: data.profile.referrer || '',
           education: data.profile.education || '',
+          birthPlace: data.profile.birthPlace || '',
+          intro: data.profile.intro || '',
           workHistory: data.profile.workHistory || [],
         })
       }
@@ -451,7 +478,7 @@ function resetForm() {
     entryDate: '',
     departmentId: '',
     positionId: '',
-    status: 1,
+    status: true,
   })
   
   Object.assign(profileData, {
@@ -461,6 +488,8 @@ function resetForm() {
     emergencyPhone: '',
     referrer: '',
     education: '',
+    birthPlace: '',
+    intro: '',
     workHistory: [],
   })
   

@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysRoleDTO;
 import com.forgex.sys.domain.dto.SysRoleQueryDTO;
@@ -84,6 +85,7 @@ public class SysRoleController {
     /**
      * 新增角色
      */
+    @RequirePerm("sys:role:create")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysRoleDTO roleDTO) {
         // 1. 数据校验
@@ -99,6 +101,7 @@ public class SysRoleController {
     /**
      * 更新角色
      */
+    @RequirePerm("sys:role:edit")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysRoleDTO roleDTO) {
         // 1. 数据校验
@@ -114,6 +117,7 @@ public class SysRoleController {
     /**
      * 删除角色
      */
+    @RequirePerm("sys:role:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数
@@ -132,6 +136,7 @@ public class SysRoleController {
     /**
      * 批量删除角色
      */
+    @RequirePerm("sys:role:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数

@@ -22,10 +22,12 @@ import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysPosition;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserProfile;
 import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
 import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.mapper.SysUserProfileMapper;
 import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import com.forgex.common.tenant.TenantContext;
 
 import cn.hutool.crypto.digest.BCrypt;
 
@@ -61,12 +64,13 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> 
-    implements ISysUserService {
-    
+public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
+
     private final SysUserMapper userMapper;
+    private final SysUserTenantMapper userTenantMapper;
     private final SysDepartmentMapper departmentMapper;
     private final SysPositionMapper positionMapper;
+    private final SysUserProfileMapper userProfileMapper;
     private final SysUserTenantMapper userTenantMapper;
     
     /**
@@ -126,7 +130,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Override
     public SysUserDTO getUserById(Long id) {
         SysUser user = userMapper.selectById(id);
-        return user != null ? convertToDTO(user) : null;
+        if (user == null) {
+            return null;
+        }
+        SysUserDTO dto = convertToDTO(user);
+        dto.setProfile(getProfileByUserId(user.getId(), resolveTenantId(user)));
+        return dto;
     }
     
     /**
@@ -148,6 +157,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         }
         
         userMapper.insert(user);
+
+        // 保存附属信息（可选）
+        if (userDTO.getProfile() != null) {
+            saveOrUpdateProfile(user.getId(), resolveTenantId(user), userDTO.getProfile());
+        }
     }
     
     /**
@@ -161,6 +175,57 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
         userMapper.updateById(user);
+
+        // 保存附属信息（可选）
+        if (userDTO.getId() != null && userDTO.getProfile() != null) {
+            saveOrUpdateProfile(userDTO.getId(), resolveTenantId(user), userDTO.getProfile());
+        }
+    }
+
+    private Long resolveTenantId(SysUser user) {
+        Long tenantId = TenantContext.get();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        return user == null ? null : user.getTenantId();
+    }
+
+    private SysUserProfile getProfileByUserId(Long userId, Long tenantId) {
+        if (userId == null || tenantId == null) {
+            return null;
+        }
+        LambdaQueryWrapper<SysUserProfile> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysUserProfile::getUserId, userId)
+                .eq(SysUserProfile::getTenantId, tenantId)
+                .last("limit 1");
+        return userProfileMapper.selectOne(wrapper);
+    }
+
+    private void saveOrUpdateProfile(Long userId, Long tenantId, SysUserProfile profile) {
+        if (userId == null || tenantId == null || profile == null) {
+            return;
+        }
+
+        SysUserProfile exist = getProfileByUserId(userId, tenantId);
+        if (exist == null) {
+            SysUserProfile insert = new SysUserProfile();
+            BeanUtils.copyProperties(profile, insert);
+            insert.setId(null);
+            insert.setUserId(userId);
+            userProfileMapper.insert(insert);
+            return;
+        }
+
+        exist.setPoliticalStatus(profile.getPoliticalStatus());
+        exist.setHomeAddress(profile.getHomeAddress());
+        exist.setEmergencyContact(profile.getEmergencyContact());
+        exist.setEmergencyPhone(profile.getEmergencyPhone());
+        exist.setReferrer(profile.getReferrer());
+        exist.setEducation(profile.getEducation());
+        exist.setBirthPlace(profile.getBirthPlace());
+        exist.setIntro(profile.getIntro());
+        exist.setWorkHistory(profile.getWorkHistory());
+        userProfileMapper.updateById(exist);
     }
     
     /**

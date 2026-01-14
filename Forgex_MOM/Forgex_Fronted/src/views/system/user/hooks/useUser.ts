@@ -187,7 +187,16 @@ export function useUser() {
   async function handleExport() {
     try {
       loading.value = true
-      await userApi.exportUsers(queryForm)
+      const resp: any = await userApi.exportUsers(queryForm)
+      const blob = new Blob([resp.data], { type: resp.headers?.['content-type'] || 'application/octet-stream' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `sys-user-${Date.now()}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
       message.success('导出成功')
     } catch (error) {
       console.error('导出失败:', error)

@@ -17,7 +17,7 @@ export interface User {
   positionId: string
   positionName?: string    // 职位名称（关联查询）
   tenantId?: string    // 租户ID（用户绑定的主租户ID）
-  status: number
+  status: boolean | number
   createTime?: string
   updateTime?: string
 }
@@ -46,6 +46,8 @@ export interface UserProfile {
   emergencyPhone?: string   // 紧急联系人电话
   referrer?: string         // 引荐人
   education?: string        // 学历
+  birthPlace?: string       // 籍贯
+  intro?: string            // 个人简介
   workHistory?: WorkHistory[] // 历史工作信息
 }
 
@@ -68,7 +70,7 @@ export interface UserQuery {
   phone?: string
   departmentId?: string
   positionId?: string
-  status?: number
+  status?: boolean
   pageNum: number
   pageSize: number
 }

@@ -51,6 +51,13 @@ public class SysUser extends BaseEntity {
     private String avatar;
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+    
+    /** 最后登录IP */
+    private String lastLoginIp;
+    /** 最后登录地区 */
+    private String lastLoginRegion;
+    /** 最后登录时间 */
+    private java.time.LocalDateTime lastLoginTime;
 
     /** 租户ID（非持久化字段） */
     @TableField(exist = false)

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.domain.dto;
 
+import com.forgex.sys.domain.entity.SysUserProfile;
 import com.forgex.sys.domain.entity.SysUserTenant;
 import lombok.Data;
 
@@ -118,4 +119,11 @@ public class SysUserDTO {
      * 关联租户列表
      */
     private List<SysUserTenant> tenantList;
+
+    /**
+     * 用户附属信息（可选）。
+     *
+     * @see SysUserProfile
+     */
+    private SysUserProfile profile;
 }

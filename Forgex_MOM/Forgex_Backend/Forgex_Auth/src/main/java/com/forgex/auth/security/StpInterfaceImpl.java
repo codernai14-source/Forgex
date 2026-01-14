@@ -13,18 +13,27 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.auth.security;
 
+import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpInterface;
+import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.security.perm.PermKeyService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Sa-Token 权限与角色数据提供实现
  * 通过登录ID动态返回权限与角色列表
  */
 @Component
+@RequiredArgsConstructor
 public class StpInterfaceImpl implements StpInterface {
+
+    private final PermKeyService permKeyService;
+
     /**
      * 返回权限列表
      * @param loginId 登录ID
@@ -33,9 +42,23 @@ public class StpInterfaceImpl implements StpInterface {
      */
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
-        List<String> list = new ArrayList<>();
-        list.add("sys:read");
-        return list;
+        SaSession session = StpUtil.getSessionByLoginId(loginId, false);
+        if (session == null) {
+            return java.util.Collections.emptyList();
+        }
+
+        Long userId = parseLong(session.get("LOGIN_USER_ID"));
+        Long tenantId = parseLong(session.get("LOGIN_TENANT_ID"));
+        if (userId == null || tenantId == null) {
+            return java.util.Collections.emptyList();
+        }
+
+        Set<String> permKeys = permKeyService.getPermKeys(userId, tenantId);
+        if (permKeys == null || permKeys.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        return permKeys.stream().filter(StringUtils::hasText).sorted().toList();
     }
 
     /**
@@ -46,12 +69,29 @@ public class StpInterfaceImpl implements StpInterface {
      */
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
-        List<String> list = new ArrayList<>();
-        String uid = String.valueOf(loginId);
-        list.add("user");
-        if ("admin".equals(uid)) {
-            list.add("admin");
+        return java.util.Collections.emptyList();
+    }
+
+    /**
+     * 解析 Long 类型参数。
+     *
+     * @param obj 入参
+     * @return Long 值（无法解析返回 null）
+     */
+    private Long parseLong(Object obj) {
+        if (obj == null) {
+            return null;
         }
-        return list;
+        if (obj instanceof Number) {
+            return ((Number) obj).longValue();
+        }
+        if (obj instanceof String) {
+            try {
+                return Long.valueOf((String) obj);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
     }
 }

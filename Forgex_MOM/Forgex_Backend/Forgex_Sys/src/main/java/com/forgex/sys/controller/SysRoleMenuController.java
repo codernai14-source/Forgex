@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.RolePermissionDTO;
 import com.forgex.sys.domain.vo.MenuTreeVO;
@@ -101,6 +102,7 @@ public class SysRoleMenuController {
      * @param body 请求体参数，需包含 roleId
      * @return 包含所有菜单树和已授权菜单ID的数据
      */
+    @RequirePerm("sys:role:authMenu")
     @PostMapping("/authData")
     public R<Map<String, Object>> getAuthData(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
@@ -170,6 +172,7 @@ public class SysRoleMenuController {
      * @param body 请求体参数，包含 roleId、menuIds（菜单ID列表）
      * @return 是否授权成功
      */
+    @RequirePerm("sys:role:authMenu")
     @PostMapping("/grant")
     public R<Boolean> grant(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
@@ -209,6 +212,7 @@ public class SysRoleMenuController {
      * @param permissionDTO 权限信息
      * @return 操作结果
      */
+    @RequirePerm("sys:role:authMenu")
     @PostMapping
     public R<Void> grantPermission(@RequestBody RolePermissionDTO permissionDTO) {
         permissionDTO.setTenantId(TenantContext.get());

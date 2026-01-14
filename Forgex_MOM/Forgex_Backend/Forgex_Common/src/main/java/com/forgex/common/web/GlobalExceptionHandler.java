@@ -15,10 +15,14 @@ package com.forgex.common.web;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotRoleException;
+import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.security.LogoutAuditService;
+import com.forgex.common.security.LogoutReason;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -38,10 +42,47 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    /**
+     * 登出审计服务（可选）。
+     * <p>
+     * 由各业务模块按需实现并注入，用于在 token 超时等场景回写登录日志的登出信息。
+     * </p>
+     */
+    private final LogoutAuditService logoutAuditService;
+
+    /**
+     * 构造方法注入（登出审计服务可为空）。
+     *
+     * @param logoutAuditService 登出审计服务
+     */
+    public GlobalExceptionHandler(org.springframework.beans.factory.ObjectProvider<LogoutAuditService> logoutAuditService) {
+        this.logoutAuditService = logoutAuditService.getIfAvailable();
+    }
+
     /** 未登录或登录过期 */
     @ExceptionHandler(NotLoginException.class)
     public R<Object> handleNotLogin(NotLoginException e) {
         log.warn("未登录或登录过期: {}", e.getMessage());
+
+        // 仅在“token 超时/过期”场景尝试回写 logout_time/logout_reason（依赖模块实现）
+        try {
+            if (logoutAuditService != null) {
+                String msg = e.getMessage() == null ? "" : e.getMessage();
+                boolean maybeTimeout = msg.contains("过期") || msg.contains("超时") || msg.toLowerCase().contains("timeout");
+                if (maybeTimeout) {
+                    String tokenName = StpUtil.getTokenName();
+                    String tokenValue = cn.dev33.satoken.context.SaHolder.getRequest().getHeader(tokenName);
+                    if (!StringUtils.hasText(tokenValue)) {
+                        tokenValue = cn.dev33.satoken.context.SaHolder.getRequest().getParam(tokenName);
+                    }
+                    if (StringUtils.hasText(tokenValue)) {
+                        logoutAuditService.recordLogoutByToken(tokenValue, LogoutReason.TIMEOUT);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
         return R.fail(401, e.getMessage());
     }
 

@@ -51,7 +51,13 @@ public class SysUserProfile extends BaseEntity {
     
     /** 学历 */
     private String education;
-    
+
+    /** 籍贯 */
+    private String birthPlace;
+
+    /** 个人简介 */
+    private String intro;
+
     /** 工作经历（JSON格式） */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<WorkHistory> workHistory;

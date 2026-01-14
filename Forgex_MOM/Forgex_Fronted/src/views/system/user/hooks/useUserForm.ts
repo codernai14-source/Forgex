@@ -19,14 +19,13 @@ export function useUserForm(onSuccess: () => void) {
   // 表单数据
   const formData = reactive<Partial<User>>({
     username: '',
-    realName: '',
     email: '',
     phone: '',
     gender: 0,
     entryDate: '',
     departmentId: '',
     positionId: '',
-    status: 1,
+    status: true,
   })
   
   // 部门列表
@@ -66,14 +65,13 @@ export function useUserForm(onSuccess: () => void) {
     isEdit.value = false
     Object.assign(formData, {
       username: '',
-      realName: '',
       email: '',
       phone: '',
       gender: 0,
       entryDate: '',
       departmentId: '',
       positionId: '',
-      status: 1,
+      status: true,
     })
     dialogVisible.value = true
     fetchDepartmentList()

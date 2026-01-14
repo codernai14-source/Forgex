@@ -3,6 +3,7 @@
  */
 import http from '../http'
 import type { User, UserProfile, UserQuery, Department, Position } from '@/views/system/user/types'
+import { exportUser } from '@/api/system/excel'
 
 /**
  * 获取用户分页列表
@@ -61,6 +62,27 @@ export async function updateUserStatus(id: string, status: boolean) {
 }
 
 /**
+ * 查询用户已分配角色（当前租户维度）。
+ *
+ * @param userId 用户ID
+ * @returns { assignedRoleIds, tenantId }
+ */
+export async function getUserAssignedRoles(userId: string) {
+  return http.post('/sys/user/role/listByUser', { userId })
+}
+
+/**
+ * 保存用户角色分配结果（当前租户维度）。
+ *
+ * @param userId 用户ID
+ * @param roleIds 角色ID列表（为空表示清空）
+ * @returns 执行结果
+ */
+export async function saveUserRoles(userId: string, roleIds: number[]) {
+  return http.post('/sys/user/role/saveByUser', { userId, roleIds })
+}
+
+/**
  * 获取部门树
  */
 export async function getDepartmentTree(params: { tenantId: string }) {
@@ -81,6 +103,23 @@ export async function getPositionList() {
   return http.post('/sys/position/list', {})
 }
 
+/**
+ * 导出用户（按后台导出配置生成文件）。
+ *
+ * @param query 查询条件
+ * @returns 文件下载响应（blob）
+ */
+export async function exportUsers(query: Partial<UserQuery>) {
+  return exportUser({
+    tableCode: 'sys_user',
+    query: {
+      username: query.username,
+      account: (query as any).account,
+      status: query.status,
+    },
+  })
+}
+
 // 导出API对象以保持兼容性
 export const userApi = {
   getUserList,
@@ -91,7 +130,10 @@ export const userApi = {
   batchDeleteUsers,
   resetPassword,
   updateUserStatus,
+  getUserAssignedRoles,
+  saveUserRoles,
   getDepartmentTree,
   getDepartmentList,
-  getPositionList
+  getPositionList,
+  exportUsers
 }

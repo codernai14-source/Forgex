@@ -34,7 +34,7 @@
           {{ userDetail?.tenantId || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag v-if="userDetail?.status === 1" color="success">启用</a-tag>
+          <a-tag v-if="userDetail?.status === true || userDetail?.status === 1" color="success">启用</a-tag>
           <a-tag v-else color="error">禁用</a-tag>
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">
@@ -70,6 +70,12 @@
         </a-descriptions-item>
         <a-descriptions-item label="学历">
           {{ userDetail.profile.education || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="籍贯">
+          {{ userDetail.profile.birthPlace || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="个人简介">
+          {{ userDetail.profile.intro || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="家庭住址" :span="2">
           {{ userDetail.profile.homeAddress || '-' }}

@@ -162,6 +162,12 @@
                 重置密码
               </a>
               <a
+                v-permission="'sys:user:assignRole'"
+                @click="openAssignRoleDialog(record)"
+              >
+                分配角色
+              </a>
+              <a
                 v-permission="'sys:user:delete'"
                 style="color: #ff4d4f;"
                 @click="handleDelete(record.id)"
@@ -181,6 +187,13 @@
       :user-id="currentUserId"
       @success="handleFormSuccess"
     />
+
+    <!-- 分配角色弹窗 -->
+    <UserRoleAssignDialog
+      v-model:open="assignRoleDialogVisible"
+      :user-id="assignRoleUserId"
+      @success="handleAssignRoleSuccess"
+    />
   </div>
 </template>
 
@@ -199,6 +212,7 @@
 import { ref, onMounted } from 'vue'
 import { UserOutlined } from '@ant-design/icons-vue'
 import UserFormDialog from './components/UserFormDialog.vue'
+import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
 import { useUser } from './hooks/useUser'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
@@ -234,6 +248,9 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentUserId = ref<string>()
 
+const assignRoleDialogVisible = ref(false)
+const assignRoleUserId = ref<string>()
+
 /**
  * 打开新增弹窗
  */
@@ -250,6 +267,21 @@ function openEditDialog(record: any) {
   isEdit.value = true
   currentUserId.value = record.id
   dialogVisible.value = true
+}
+
+/**
+ * 打开分配角色弹窗
+ */
+function openAssignRoleDialog(record: any) {
+  assignRoleUserId.value = record.id
+  assignRoleDialogVisible.value = true
+}
+
+/**
+ * 分配角色成功回调
+ */
+function handleAssignRoleSuccess() {
+  fetchUserList()
 }
 
 /**
@@ -270,11 +302,14 @@ const columns = [
   { title: '职位', dataIndex: 'positionName', key: 'positionName', width: 120 },
   { title: '入职时间', dataIndex: 'entryDate', key: 'entryDate', width: 120 },
   { title: '状态', key: 'status', width: 80 },
+  { title: '最后登录时间', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 180 },
+  { title: '最后登录IP', dataIndex: 'lastLoginIp', key: 'lastLoginIp', width: 150 },
+  { title: '最后登录地区', dataIndex: 'lastLoginRegion', key: 'lastLoginRegion', width: 150 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
   { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 100 },
   { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
   { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 100 },
-  { title: '操作', key: 'action', width: 200, fixed: 'right' },
+  { title: '操作', key: 'action', width: 260, fixed: 'right' },
 ]
 
 // 表格分页改变

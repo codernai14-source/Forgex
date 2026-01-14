@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.department.SysDepartmentDTO;
 import com.forgex.sys.domain.dto.department.SysDepartmentQueryDTO;
@@ -96,6 +97,7 @@ public class SysDepartmentController {
      * @return 部门ID
      */
     @PostMapping("/create")
+    @RequirePerm("sys:department:create")
     public R<Long> create(@Validated @RequestBody SysDepartmentSaveParam param) {
         try {
             param.setTenantId(TenantContext.get());
@@ -114,6 +116,7 @@ public class SysDepartmentController {
      * @return 是否成功
      */
     @PostMapping("/update")
+    @RequirePerm("sys:department:edit")
     public R<Boolean> update(@Validated @RequestBody SysDepartmentSaveParam param) {
         try {
             param.setTenantId(TenantContext.get());
@@ -132,6 +135,7 @@ public class SysDepartmentController {
      * @return 是否成功
      */
     @PostMapping("/delete")
+    @RequirePerm("sys:department:delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         try {
             Long id = Long.valueOf(params.get("id").toString());

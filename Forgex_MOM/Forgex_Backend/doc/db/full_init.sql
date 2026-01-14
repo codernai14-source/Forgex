@@ -39,6 +39,28 @@ CREATE TABLE IF NOT EXISTS sys_user (
     update_by VARCHAR(50) COMMENT '更新人'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
+-- 用户附属信息表
+CREATE TABLE IF NOT EXISTS sys_user_profile (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    political_status VARCHAR(50) NULL COMMENT '政治面貌',
+    education VARCHAR(50) NULL COMMENT '学历',
+    birth_place VARCHAR(255) NULL COMMENT '籍贯',
+    intro VARCHAR(512) NULL COMMENT '个人简介',
+    home_address VARCHAR(255) NULL COMMENT '家庭住址',
+    emergency_contact VARCHAR(50) NULL COMMENT '紧急联系人',
+    emergency_phone VARCHAR(20) NULL COMMENT '紧急联系人电话',
+    referrer VARCHAR(50) NULL COMMENT '引荐人',
+    work_history JSON NULL COMMENT '工作经历(JSON)',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    create_by VARCHAR(50) COMMENT '创建人',
+    update_by VARCHAR(50) COMMENT '更新人',
+    UNIQUE KEY uk_profile_user_tenant (tenant_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户附属信息表';
+
 -- 用户租户关联表
 CREATE TABLE IF NOT EXISTS sys_user_tenant (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
@@ -193,6 +215,26 @@ CREATE TABLE IF NOT EXISTS sys_role_menu (
     menu_id BIGINT NOT NULL,
     INDEX idx_role_menu (tenant_id, role_id, menu_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单授权';
+
+-- 登录日志表
+CREATE TABLE IF NOT EXISTS sys_login_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    user_id BIGINT NULL COMMENT '用户ID',
+    account VARCHAR(50) NULL COMMENT '登录账号',
+    tenant_id BIGINT NULL COMMENT '租户ID',
+    login_ip VARCHAR(64) NULL COMMENT '登录IP',
+    login_region VARCHAR(255) NULL COMMENT 'IP归属地',
+    user_agent VARCHAR(512) NULL COMMENT '浏览器UA',
+    login_time DATETIME NULL COMMENT '登录时间',
+    logout_time DATETIME NULL COMMENT '登出时间',
+    token_value VARCHAR(512) NULL COMMENT 'tokenValue',
+    logout_reason VARCHAR(50) NULL COMMENT '登出原因',
+    status TINYINT DEFAULT 1 COMMENT '状态：1成功 0失败',
+    reason VARCHAR(255) NULL COMMENT '失败原因',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_login_tenant_time (tenant_id, login_time),
+    INDEX idx_login_user_tenant (user_id, tenant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='登录日志';
 
 -- 部门表
 CREATE TABLE IF NOT EXISTS sys_department (
@@ -349,16 +391,17 @@ SET @POSITION_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AN
 
 -- 用户管理按钮权限
 INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
-(@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '新增用户', 'sys:user:add', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '新增用户', 'sys:user:create', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '编辑用户', 'sys:user:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '删除用户', 'sys:user:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '批量删除用户', 'sys:user:batchDelete', 4, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '重置密码', 'sys:user:resetPwd', 5, 1, 1, 2, 'embedded'),
-(@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '导出用户', 'sys:user:export', 6, 1, 1, 2, 'embedded');
+(@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '导出用户', 'sys:user:export', 6, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @USER_MENU_ID, 'button', '分配角色', 'sys:user:assignRole', 7, 1, 1, 2, 'embedded');
 
 -- 角色管理按钮权限
 INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
-(@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '新增角色', 'sys:role:add', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '新增角色', 'sys:role:create', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '编辑角色', 'sys:role:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '删除角色', 'sys:role:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @ROLE_MENU_ID, 'button', '批量删除角色', 'sys:role:batchDelete', 4, 1, 1, 2, 'embedded'),
@@ -366,30 +409,51 @@ INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_k
 
 -- 模块管理按钮权限
 INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
-(@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '新增模块', 'sys:module:add', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '新增模块', 'sys:module:create', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '编辑模块', 'sys:module:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '删除模块', 'sys:module:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MODULE_MENU_ID, 'button', '批量删除模块', 'sys:module:batchDelete', 4, 1, 1, 2, 'embedded');
 
 -- 菜单管理按钮权限
 INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
-(@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '新增菜单', 'sys:menu:add', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '新增菜单', 'sys:menu:create', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '编辑菜单', 'sys:menu:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '删除菜单', 'sys:menu:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @MENU_MENU_ID, 'button', '批量删除菜单', 'sys:menu:batchDelete', 4, 1, 1, 2, 'embedded');
 
 -- 部门管理按钮权限
 INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
-(@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '新增部门', 'sys:dept:add', 1, 1, 1, 2, 'embedded'),
-(@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '编辑部门', 'sys:dept:edit', 2, 1, 1, 2, 'embedded'),
-(@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '删除部门', 'sys:dept:delete', 3, 1, 1, 2, 'embedded');
+(@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '新增部门', 'sys:department:create', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '编辑部门', 'sys:department:edit', 2, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @DEPT_MENU_ID, 'button', '删除部门', 'sys:department:delete', 3, 1, 1, 2, 'embedded');
 
 -- 职位管理按钮权限
 INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
-(@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '新增职位', 'sys:position:add', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '新增职位', 'sys:position:create', 1, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '编辑职位', 'sys:position:edit', 2, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '删除职位', 'sys:position:delete', 3, 1, 1, 2, 'embedded'),
 (@TENANT_ID, @SYS_MODULE_ID, @POSITION_MENU_ID, 'button', '批量删除职位', 'sys:position:batchDelete', 4, 1, 1, 2, 'embedded');
+
+-- Excel 配置菜单
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+(@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'excelExportConfig', '导出配置', 'FileExcelOutlined', 'SystemExcelExportConfig', 'sys:excel:exportConfig:view', 70, 1, 1, 1, 'embedded');
+SET @EXCEL_EXPORT_CFG_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'excelExportConfig' AND type = 'menu');
+
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, path, name, icon, component_key, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+(@TENANT_ID, @SYS_MODULE_ID, 0, 'menu', 'excelImportConfig', '导入配置', 'FileExcelOutlined', 'SystemExcelImportConfig', 'sys:excel:importConfig:view', 80, 1, 1, 1, 'embedded');
+SET @EXCEL_IMPORT_CFG_MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND path = 'excelImportConfig' AND type = 'menu');
+
+-- Excel 配置按钮权限
+INSERT IGNORE INTO sys_menu (tenant_id, module_id, parent_id, type, name, perm_key, order_num, visible, status, menu_level, menu_mode) VALUES
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_EXPORT_CFG_MENU_ID, 'button', '查看导出配置', 'sys:excel:exportConfig:list', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_EXPORT_CFG_MENU_ID, 'button', '编辑导出配置', 'sys:excel:exportConfig:edit', 2, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_EXPORT_CFG_MENU_ID, 'button', '删除导出配置', 'sys:excel:exportConfig:delete', 3, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_IMPORT_CFG_MENU_ID, 'button', '查看导入配置', 'sys:excel:importConfig:list', 1, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_IMPORT_CFG_MENU_ID, 'button', '编辑导入配置', 'sys:excel:importConfig:edit', 2, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_IMPORT_CFG_MENU_ID, 'button', '删除导入配置', 'sys:excel:importConfig:delete', 3, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_IMPORT_CFG_MENU_ID, 'button', '下载导入模板', 'sys:excel:template:download', 10, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_EXPORT_CFG_MENU_ID, 'button', '导出登录日志', 'sys:excel:export:loginLog', 11, 1, 1, 2, 'embedded'),
+(@TENANT_ID, @SYS_MODULE_ID, @EXCEL_EXPORT_CFG_MENU_ID, 'button', '导出用户', 'sys:excel:export:user', 12, 1, 1, 2, 'embedded');
 
 -- 8. 角色菜单关联（管理员角色拥有所有权限）
 -- 先删除已存在的关联，再重新关联
@@ -427,6 +491,124 @@ CREATE TABLE IF NOT EXISTS sys_user_style_config (
 -- 插入默认样式配置（如果不存在）
 INSERT IGNORE INTO sys_user_style_config (user_id, tenant_id, config_key, config_json) VALUES
 (@ADMIN_USER_ID, @TENANT_ID, 'layout.style', '{"theme":"default","layout":"side","navTheme":"dark","fixedHeader":true,"autoHideHeader":false,"fixSiderbar":true}');
+
+-- Excel 导入导出配置表
+CREATE TABLE IF NOT EXISTS fx_excel_export_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    table_name VARCHAR(255) NOT NULL COMMENT '表名',
+    table_code VARCHAR(100) NOT NULL COMMENT '表编号',
+    header_style_json TEXT NULL COMMENT '表头样式(JSON)',
+    title VARCHAR(255) NULL COMMENT '标题列名称',
+    subtitle VARCHAR(255) NULL COMMENT '标题列小字说明',
+    export_format VARCHAR(20) NOT NULL DEFAULT 'xlsx' COMMENT '导出格式(xlsx/csv)',
+    enable_total TINYINT NOT NULL DEFAULT 0 COMMENT '是否开启总计',
+    version INT NOT NULL DEFAULT 1 COMMENT '版本',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    UNIQUE KEY uk_export_tenant_code (tenant_id, table_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导出配置主表';
+
+CREATE TABLE IF NOT EXISTS fx_excel_export_config_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    config_id BIGINT NOT NULL COMMENT '主表ID',
+    export_field VARCHAR(128) NOT NULL COMMENT '导出字段',
+    field_name VARCHAR(255) NULL COMMENT '字段名(默认列头)',
+    i18n_json TEXT NULL COMMENT '字段多语言配置(JSON)',
+    header_style_json TEXT NULL COMMENT '列头样式(JSON)',
+    cell_style_json TEXT NULL COMMENT '列内容样式(JSON)',
+    order_num INT NOT NULL DEFAULT 0 COMMENT '顺序',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    INDEX idx_export_cfg (tenant_id, config_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导出配置子表';
+
+CREATE TABLE IF NOT EXISTS fx_excel_import_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    table_name VARCHAR(255) NOT NULL COMMENT '表名',
+    table_code VARCHAR(100) NOT NULL COMMENT '表编号',
+    title VARCHAR(255) NULL COMMENT '标题列名称',
+    subtitle VARCHAR(255) NULL COMMENT '标题列小字说明',
+    version INT NOT NULL DEFAULT 1 COMMENT '版本',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    UNIQUE KEY uk_import_tenant_code (tenant_id, table_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导入配置主表';
+
+CREATE TABLE IF NOT EXISTS fx_excel_import_config_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    config_id BIGINT NOT NULL COMMENT '主表ID',
+    i18n_json TEXT NULL COMMENT '字段多语言配置(JSON)',
+    import_field VARCHAR(128) NOT NULL COMMENT '导入字段',
+    field_type VARCHAR(50) NOT NULL DEFAULT 'string' COMMENT '字段类型(time/date/datetime/dict/...)',
+    dict_code VARCHAR(100) NULL COMMENT '字典编号',
+    required TINYINT NOT NULL DEFAULT 0 COMMENT '是否必填',
+    order_num INT NOT NULL DEFAULT 0 COMMENT '顺序',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    INDEX idx_import_cfg (tenant_id, config_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导入配置子表';
+
+-- 插入默认导出/导入配置（租户1）
+INSERT IGNORE INTO fx_excel_export_config (tenant_id, table_name, table_code, title, subtitle, export_format, enable_total, version)
+VALUES
+(@TENANT_ID, '用户导出', 'sys_user', '用户导出', '系统管理-用户管理', 'xlsx', 0, 1),
+(@TENANT_ID, '登录日志导出', 'sys_login_log', '登录日志导出', '系统管理-登录日志', 'xlsx', 0, 1);
+
+SET @EXPORT_USER_CFG_ID = (SELECT id FROM fx_excel_export_config WHERE tenant_id=@TENANT_ID AND table_code='sys_user' LIMIT 1);
+SET @EXPORT_LOGINLOG_CFG_ID = (SELECT id FROM fx_excel_export_config WHERE tenant_id=@TENANT_ID AND table_code='sys_login_log' LIMIT 1);
+
+INSERT IGNORE INTO fx_excel_export_config_item (tenant_id, config_id, export_field, field_name, order_num)
+VALUES
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'id', '用户ID', 1),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'account', '账号', 2),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'username', '用户名', 3),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'phone', '手机号', 4),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'email', '邮箱', 5),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'status', '状态', 6),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'lastLoginTime', '最后登录时间', 7),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'lastLoginIp', '最后登录IP', 8),
+(@TENANT_ID, @EXPORT_USER_CFG_ID, 'lastLoginRegion', '最后登录地区', 9);
+
+INSERT IGNORE INTO fx_excel_export_config_item (tenant_id, config_id, export_field, field_name, order_num)
+VALUES
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'account', '账号', 1),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'loginIp', '登录IP', 2),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'loginRegion', '归属地', 3),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'userAgent', '浏览器UA', 4),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'loginTime', '登录时间', 5),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'logoutTime', '登出时间', 6),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'logoutReason', '登出原因', 7),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'status', '状态', 8),
+(@TENANT_ID, @EXPORT_LOGINLOG_CFG_ID, 'reason', '失败原因', 9);
+
+INSERT IGNORE INTO fx_excel_import_config (tenant_id, table_name, table_code, title, subtitle, version)
+VALUES
+(@TENANT_ID, '用户导入模板', 'sys_user', '用户导入模板', '系统管理-用户管理', 1);
+
+SET @IMPORT_USER_CFG_ID = (SELECT id FROM fx_excel_import_config WHERE tenant_id=@TENANT_ID AND table_code='sys_user' LIMIT 1);
+
+INSERT IGNORE INTO fx_excel_import_config_item (tenant_id, config_id, import_field, field_type, dict_code, required, order_num)
+VALUES
+(@TENANT_ID, @IMPORT_USER_CFG_ID, 'account', 'string', NULL, 1, 1),
+(@TENANT_ID, @IMPORT_USER_CFG_ID, 'username', 'string', NULL, 1, 2),
+(@TENANT_ID, @IMPORT_USER_CFG_ID, 'phone', 'string', NULL, 0, 3),
+(@TENANT_ID, @IMPORT_USER_CFG_ID, 'email', 'string', NULL, 0, 4);
 
 -- 切换回forgex_admin库
 USE forgex_admin;

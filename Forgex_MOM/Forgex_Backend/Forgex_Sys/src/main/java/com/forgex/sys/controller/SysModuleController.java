@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysModuleDTO;
 import com.forgex.sys.domain.dto.SysModuleQueryDTO;
@@ -78,6 +79,7 @@ public class SysModuleController {
     /**
      * 新增模块
      */
+    @RequirePerm("sys:module:create")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForAdd(moduleDTO);
@@ -88,6 +90,7 @@ public class SysModuleController {
     /**
      * 更新模块
      */
+    @RequirePerm("sys:module:edit")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForUpdate(moduleDTO);
@@ -98,6 +101,7 @@ public class SysModuleController {
     /**
      * 删除模块
      */
+    @RequirePerm("sys:module:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         Long id = parseLong(body.get("id"));
@@ -109,6 +113,7 @@ public class SysModuleController {
     /**
      * 批量删除模块
      */
+    @RequirePerm("sys:module:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")

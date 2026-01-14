@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysMenuDTO;
@@ -122,6 +123,7 @@ public class SysMenuController {
     /**
      * 新增菜单
      */
+    @RequirePerm("sys:menu:create")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
@@ -137,6 +139,7 @@ public class SysMenuController {
     /**
      * 更新菜单
      */
+    @RequirePerm("sys:menu:edit")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
@@ -152,6 +155,7 @@ public class SysMenuController {
     /**
      * 删除菜单
      */
+    @RequirePerm("sys:menu:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数

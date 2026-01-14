@@ -33,6 +33,26 @@ CREATE TABLE IF NOT EXISTS sys_user (
     deleted TINYINT DEFAULT 0 COMMENT '逻辑删除'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
+-- 用户附属信息表
+CREATE TABLE IF NOT EXISTS sys_user_profile (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    political_status VARCHAR(50) NULL COMMENT '政治面貌',
+    education VARCHAR(50) NULL COMMENT '学历',
+    birth_place VARCHAR(255) NULL COMMENT '籍贯',
+    intro VARCHAR(512) NULL COMMENT '个人简介',
+    home_address VARCHAR(255) NULL COMMENT '家庭住址',
+    emergency_contact VARCHAR(50) NULL COMMENT '紧急联系人',
+    emergency_phone VARCHAR(20) NULL COMMENT '紧急联系人电话',
+    referrer VARCHAR(50) NULL COMMENT '引荐人',
+    work_history JSON NULL COMMENT '工作经历(JSON)',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    UNIQUE KEY uk_profile_user_tenant (tenant_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户附属信息表';
+
 CREATE TABLE IF NOT EXISTS sys_user_tenant (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
@@ -208,6 +228,31 @@ SET @ADMIN_ROLE_ID = (SELECT id FROM sys_role WHERE tenant_id=1 AND role_key='ad
 INSERT INTO sys_role_menu (tenant_id, role_id, menu_id)
  SELECT 1, @ADMIN_ROLE_ID, id FROM sys_menu WHERE tenant_id=1;
 
+-- 登录日志表
+CREATE TABLE IF NOT EXISTS sys_login_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    user_id BIGINT NULL COMMENT '用户ID',
+    account VARCHAR(50) NULL COMMENT '登录账号',
+    tenant_id BIGINT NULL COMMENT '租户ID',
+    login_ip VARCHAR(64) NULL COMMENT '登录IP',
+    login_region VARCHAR(255) NULL COMMENT 'IP归属地',
+    user_agent VARCHAR(512) NULL COMMENT '浏览器UA',
+    login_time DATETIME NULL COMMENT '登录时间',
+    logout_time DATETIME NULL COMMENT '登出时间',
+    token_value VARCHAR(512) NULL COMMENT 'tokenValue',
+    logout_reason VARCHAR(50) NULL COMMENT '登出原因',
+    status TINYINT DEFAULT 1 COMMENT '状态：1成功 0失败',
+    reason VARCHAR(255) NULL COMMENT '失败原因',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_login_tenant_time (tenant_id, login_time),
+    INDEX idx_login_user_tenant (user_id, tenant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='登录日志';
+
+-- 补齐 sys_user 最后登录信息字段（若缺失可手工执行）
+ALTER TABLE sys_user ADD COLUMN last_login_ip VARCHAR(64) NULL COMMENT '最后登录IP';
+ALTER TABLE sys_user ADD COLUMN last_login_region VARCHAR(255) NULL COMMENT '最后登录地区';
+ALTER TABLE sys_user ADD COLUMN last_login_time DATETIME NULL COMMENT '最后登录时间';
+
 -- ================================
 -- 切换至 forgex_common 库，创建用户页面样式配置表
 -- ================================
@@ -224,3 +269,124 @@ CREATE TABLE IF NOT EXISTS sys_user_style_config (
     deleted TINYINT DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
     UNIQUE KEY uk_user_tenant_key (user_id, tenant_id, config_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户页面样式配置表';
+
+-- ================================
+-- Excel 导入导出配置表（forgex_common）
+-- ================================
+
+CREATE TABLE IF NOT EXISTS fx_excel_export_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    table_name VARCHAR(255) NOT NULL COMMENT '表名',
+    table_code VARCHAR(100) NOT NULL COMMENT '表编号',
+    header_style_json TEXT NULL COMMENT '表头样式(JSON)',
+    title VARCHAR(255) NULL COMMENT '标题列名称',
+    subtitle VARCHAR(255) NULL COMMENT '标题列小字说明',
+    export_format VARCHAR(20) NOT NULL DEFAULT 'xlsx' COMMENT '导出格式(xlsx/csv)',
+    enable_total TINYINT NOT NULL DEFAULT 0 COMMENT '是否开启总计',
+    version INT NOT NULL DEFAULT 1 COMMENT '版本',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    UNIQUE KEY uk_export_tenant_code (tenant_id, table_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导出配置主表';
+
+CREATE TABLE IF NOT EXISTS fx_excel_export_config_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    config_id BIGINT NOT NULL COMMENT '主表ID',
+    export_field VARCHAR(128) NOT NULL COMMENT '导出字段',
+    field_name VARCHAR(255) NULL COMMENT '字段名(默认列头)',
+    i18n_json TEXT NULL COMMENT '字段多语言配置(JSON)',
+    header_style_json TEXT NULL COMMENT '列头样式(JSON)',
+    cell_style_json TEXT NULL COMMENT '列内容样式(JSON)',
+    order_num INT NOT NULL DEFAULT 0 COMMENT '顺序',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    INDEX idx_export_cfg (tenant_id, config_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导出配置子表';
+
+CREATE TABLE IF NOT EXISTS fx_excel_import_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    table_name VARCHAR(255) NOT NULL COMMENT '表名',
+    table_code VARCHAR(100) NOT NULL COMMENT '表编号',
+    title VARCHAR(255) NULL COMMENT '标题列名称',
+    subtitle VARCHAR(255) NULL COMMENT '标题列小字说明',
+    version INT NOT NULL DEFAULT 1 COMMENT '版本',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    UNIQUE KEY uk_import_tenant_code (tenant_id, table_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导入配置主表';
+
+CREATE TABLE IF NOT EXISTS fx_excel_import_config_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    config_id BIGINT NOT NULL COMMENT '主表ID',
+    i18n_json TEXT NULL COMMENT '字段多语言配置(JSON)',
+    import_field VARCHAR(128) NOT NULL COMMENT '导入字段',
+    field_type VARCHAR(50) NOT NULL DEFAULT 'string' COMMENT '字段类型(time/date/datetime/dict/...)',
+    dict_code VARCHAR(100) NULL COMMENT '字典编号',
+    required TINYINT NOT NULL DEFAULT 0 COMMENT '是否必填',
+    order_num INT NOT NULL DEFAULT 0 COMMENT '顺序',
+    create_by VARCHAR(64) NULL COMMENT '创建人',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by VARCHAR(64) NULL COMMENT '修改人',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0未删除 1已删除',
+    INDEX idx_import_cfg (tenant_id, config_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Excel导入配置子表';
+
+-- 默认导出/导入配置（租户1）
+INSERT IGNORE INTO fx_excel_export_config (tenant_id, table_name, table_code, title, subtitle, export_format, enable_total, version)
+VALUES
+(1, '用户导出', 'sys_user', '用户导出', '系统管理-用户管理', 'xlsx', 0, 1),
+(1, '登录日志导出', 'sys_login_log', '登录日志导出', '系统管理-登录日志', 'xlsx', 0, 1);
+
+SET @EXPORT_USER_CFG_ID = (SELECT id FROM fx_excel_export_config WHERE tenant_id=1 AND table_code='sys_user' LIMIT 1);
+SET @EXPORT_LOGINLOG_CFG_ID = (SELECT id FROM fx_excel_export_config WHERE tenant_id=1 AND table_code='sys_login_log' LIMIT 1);
+
+INSERT IGNORE INTO fx_excel_export_config_item (tenant_id, config_id, export_field, field_name, order_num)
+VALUES
+(1, @EXPORT_USER_CFG_ID, 'id', '用户ID', 1),
+(1, @EXPORT_USER_CFG_ID, 'account', '账号', 2),
+(1, @EXPORT_USER_CFG_ID, 'username', '用户名', 3),
+(1, @EXPORT_USER_CFG_ID, 'phone', '手机号', 4),
+(1, @EXPORT_USER_CFG_ID, 'email', '邮箱', 5),
+(1, @EXPORT_USER_CFG_ID, 'status', '状态', 6),
+(1, @EXPORT_USER_CFG_ID, 'lastLoginTime', '最后登录时间', 7),
+(1, @EXPORT_USER_CFG_ID, 'lastLoginIp', '最后登录IP', 8),
+(1, @EXPORT_USER_CFG_ID, 'lastLoginRegion', '最后登录地区', 9);
+
+INSERT IGNORE INTO fx_excel_export_config_item (tenant_id, config_id, export_field, field_name, order_num)
+VALUES
+(1, @EXPORT_LOGINLOG_CFG_ID, 'account', '账号', 1),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'loginIp', '登录IP', 2),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'loginRegion', '归属地', 3),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'userAgent', '浏览器UA', 4),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'loginTime', '登录时间', 5),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'logoutTime', '登出时间', 6),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'logoutReason', '登出原因', 7),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'status', '状态', 8),
+(1, @EXPORT_LOGINLOG_CFG_ID, 'reason', '失败原因', 9);
+
+INSERT IGNORE INTO fx_excel_import_config (tenant_id, table_name, table_code, title, subtitle, version)
+VALUES
+(1, '用户导入模板', 'sys_user', '用户导入模板', '系统管理-用户管理', 1);
+
+SET @IMPORT_USER_CFG_ID = (SELECT id FROM fx_excel_import_config WHERE tenant_id=1 AND table_code='sys_user' LIMIT 1);
+
+INSERT IGNORE INTO fx_excel_import_config_item (tenant_id, config_id, import_field, field_type, dict_code, required, order_num)
+VALUES
+(1, @IMPORT_USER_CFG_ID, 'account', 'string', NULL, 1, 1),
+(1, @IMPORT_USER_CFG_ID, 'username', 'string', NULL, 1, 2),
+(1, @IMPORT_USER_CFG_ID, 'phone', 'string', NULL, 0, 3),
+(1, @IMPORT_USER_CFG_ID, 'email', 'string', NULL, 0, 4);

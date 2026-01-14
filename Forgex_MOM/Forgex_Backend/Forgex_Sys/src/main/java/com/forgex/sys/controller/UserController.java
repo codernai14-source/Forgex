@@ -15,11 +15,17 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
+import com.forgex.sys.domain.dto.SysUserRoleQueryDTO;
+import com.forgex.sys.domain.dto.SysUserRoleSaveDTO;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.service.ISysUserService;
+import com.forgex.sys.service.ISysUserRoleService;
 import com.forgex.sys.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -27,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 用户管理Controller
@@ -51,6 +58,7 @@ import java.util.Map;
 public class UserController {
     
     private final ISysUserService userService;
+    private final ISysUserRoleService userRoleService;
     private final UserValidator userValidator;
     
     /**
@@ -84,6 +92,7 @@ public class UserController {
     /**
      * 新增用户
      */
+    @RequirePerm("sys:user:create")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysUserDTO userDTO) {
         // 1. 数据校验
@@ -95,10 +104,58 @@ public class UserController {
         // 3. 返回结果
         return R.ok();
     }
+
+    /**
+     * 查询用户在当前租户下已分配的角色ID列表。
+     *
+     * @param param 查询参数（用户ID）
+     * @return 返回对象：assignedRoleIds（角色ID列表）、tenantId（当前租户ID）
+     * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
+     */
+    @RequirePerm("sys:user:assignRole")
+    @PostMapping("/role/listByUser")
+    public R<Map<String, Object>> listUserRoles(@RequestBody @Validated SysUserRoleQueryDTO param) {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            tenantId = CurrentUserUtils.getTenantId();
+        }
+        if (tenantId == null) {
+            return R.fail("租户ID不能为空");
+        }
+        userValidator.validateId(param.getUserId());
+        List<Long> assignedRoleIds = userRoleService.listAssignedRoleIds(param.getUserId(), tenantId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("assignedRoleIds", assignedRoleIds);
+        data.put("tenantId", tenantId);
+        return R.ok(data);
+    }
+
+    /**
+     * 保存用户在当前租户下的角色分配结果（清空并重建绑定）。
+     *
+     * @param param 保存参数（用户ID、角色ID列表）
+     * @return 保存结果
+     * @throws com.forgex.common.exception.BusinessException 用户不存在、角色不存在或跨租户时抛出
+     */
+    @RequirePerm("sys:user:assignRole")
+    @PostMapping("/role/saveByUser")
+    public R<Void> saveUserRoles(@RequestBody @Validated SysUserRoleSaveDTO param) {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            tenantId = CurrentUserUtils.getTenantId();
+        }
+        if (tenantId == null) {
+            return R.fail("租户ID不能为空");
+        }
+        userValidator.validateId(param.getUserId());
+        userRoleService.saveUserRoles(param.getUserId(), tenantId, param.getRoleIds());
+        return R.ok();
+    }
     
     /**
      * 更新用户
      */
+    @RequirePerm("sys:user:edit")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysUserDTO userDTO) {
         // 1. 数据校验
@@ -114,6 +171,7 @@ public class UserController {
     /**
      * 删除用户
      */
+    @RequirePerm("sys:user:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数
@@ -132,6 +190,7 @@ public class UserController {
     /**
      * 批量删除用户
      */
+    @RequirePerm("sys:user:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数
@@ -153,6 +212,7 @@ public class UserController {
     /**
      * 重置密码
      */
+    @RequirePerm("sys:user:resetPwd")
     @PostMapping("/resetPassword")
     public R<Void> resetPassword(@RequestBody Map<String, Object> body) {
         Long id = parseLong(body.get("id"));
@@ -164,6 +224,7 @@ public class UserController {
     /**
      * 更新用户状态
      */
+    @RequirePerm("sys:user:edit")
     @PostMapping("/updateStatus")
     public R<Void> updateStatus(@RequestBody Map<String, Object> body) {
         Long id = parseLong(body.get("id"));
@@ -181,6 +242,7 @@ public class UserController {
     /**
      * 重置admin用户密码（临时接口）
      */
+    @RequirePerm("sys:user:resetPwd")
     @GetMapping("/resetAdminPassword")
     public R<Void> resetAdminPassword() {
         Long adminId = userService.getUserIdByAccount("admin");

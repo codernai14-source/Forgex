@@ -144,18 +144,28 @@ const modulePathMap: Record<string, string> = {
  */
 function loadComponent(componentName: string) {
   try {
-    // 解析组件名：支持多种格式
-    // SystemUser -> module: System, page: User
-    // SysDashboard -> module: Sys, page: Dashboard
-    const match = componentName.match(/^([A-Z][a-z]*[A-Z]?[a-z]*)([A-Z][a-z]+)$/)
-    
-    if (!match) {
-      console.warn(`[Route] Invalid component name format: ${componentName}`)
-      return EmptyView
+    // 解析组件名（优先支持 System*/Sys* 的多单词页面）
+    // - SystemUser -> module: system, page: User
+    // - SystemExcelExportConfig -> module: system, page: ExcelExportConfig
+    // - SysDashboard -> module: sys, page: Dashboard
+    let modulePart = ''
+    let pagePartRaw = ''
+    if (componentName.startsWith('System') && componentName.length > 6) {
+      modulePart = 'system'
+      pagePartRaw = componentName.slice(6)
+    } else if (componentName.startsWith('Sys') && componentName.length > 3) {
+      modulePart = 'sys'
+      pagePartRaw = componentName.slice(3)
+    } else {
+      const match = componentName.match(/^([A-Z][a-z]*[A-Z]?[a-z]*)([A-Z][a-z]+)$/)
+      if (!match) {
+        console.warn(`[Route] Invalid component name format: ${componentName}`)
+        return EmptyView
+      }
+      modulePart = match[1].toLowerCase()
+      pagePartRaw = match[2]
     }
-    
-    const modulePart = match[1].toLowerCase()  // System -> system, Sys -> sys
-    const pagePart = match[2].toLowerCase()    // User -> user, Dashboard -> dashboard
+    const pagePart = pagePartRaw.charAt(0).toLowerCase() + pagePartRaw.slice(1)
     
     // 使用映射表获取实际的目录名
     const moduleDir = modulePathMap[modulePart] || modulePart

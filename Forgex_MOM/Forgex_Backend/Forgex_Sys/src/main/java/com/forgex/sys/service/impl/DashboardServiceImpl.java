@@ -21,6 +21,7 @@ import com.forgex.sys.mapper.SysMenuMapper;
 import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.service.IDashboardService;
+import com.forgex.sys.service.IOnlineUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,7 @@ public class DashboardServiceImpl implements IDashboardService {
     private final SysUserMapper userMapper;
     private final SysRoleMapper roleMapper;
     private final SysMenuMapper menuMapper;
+    private final IOnlineUserService onlineUserService;
 
     @Override
     public Map<String, Object> getStatistics(Long tenantId) {
@@ -67,8 +69,7 @@ public class DashboardServiceImpl implements IDashboardService {
         );
         
         // 在线用户数（这里简化处理，实际应该从Redis或Session中获取）
-        // TODO: 实现真实的在线用户统计
-        Long onlineUsers = 0L;
+        Long onlineUsers = onlineUserService.countOnlineUsers(tenantId);
         
         result.put("userCount", userCount);
         result.put("roleCount", roleCount);

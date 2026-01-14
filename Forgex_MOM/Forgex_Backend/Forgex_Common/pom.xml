@@ -66,6 +66,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- Redis（用于通用工具与会话等场景） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <!-- Spring AOP（用于注解或切面控制租户隔离跳过） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

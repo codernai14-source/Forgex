@@ -89,6 +89,10 @@ public class AuthServiceImpl implements AuthService {
     private CaptchaService captchaService;
     @Autowired
     private StringRedisTemplate redis;
+    @Autowired
+    private LoginLogService loginLogService;
+    @Autowired
+    private com.forgex.common.util.IpLocationService ipLocationService;
 
 
     /**
@@ -104,8 +108,15 @@ public class AuthServiceImpl implements AuthService {
     public R<List<TenantVO>> login(LoginParam param) {
         String account = param == null ? null : param.getAccount();
         String password = param == null ? null : param.getPassword();
+        
+        // 获取客户端IP和User-Agent
+        String clientIp = getClientIp();
+        String userAgent = getUserAgent();
+        String region = ipLocationService.getLocationByIp(clientIp);
+        
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
             log.warn("登录失败: 账号或密码为空");
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号或密码为空");
             return R.fail(500, "账号或密码不能为空");
         }
         // 如果启用了传输加密（SM2），优先尝试解密入参密码
@@ -129,6 +140,7 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUser::getAccount, idKey));
             if (user == null) {
                 log.warn("登录失败: 用户不存在, account={}", idKey);
+                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
                 return R.fail(500, "用户不存在");
             }
         // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
@@ -138,6 +150,7 @@ public class AuthServiceImpl implements AuthService {
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
             log.warn("登录失败: 密码不正确, account={}", account);
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "密码不正确");
             return R.fail(500, "密码不正确");
         }
         // 验证码校验（由配置决定方式）
@@ -148,20 +161,24 @@ public class AuthServiceImpl implements AuthService {
             String captcha = param.getCaptcha();
             if (!StringUtils.hasText(captchaId) || !StringUtils.hasText(captcha)) {
                 log.warn("登录失败: 图片验证码缺失, account={}", account);
+                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
                 return R.fail(500, "验证码不能为空");
             }
             if (!captchaService.verifyImage(captchaId, captcha)) {
                 log.warn("登录失败: 图片验证码错误, account={}", account);
+                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
                 return R.fail(500, "验证码不正确");
             }
         } else if ("slider".equalsIgnoreCase(mode)) {
             String token = param.getCaptcha();
             if (!StringUtils.hasText(token)) {
                 log.warn("登录失败: 滑块令牌缺失, account={}", account);
+                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
                 return R.fail(500, "验证码不能为空");
             }
             if (!captchaService.verifySlider(token)) {
                 log.warn("登录失败: 滑块令牌校验失败, account={}", account);
+                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
                 return R.fail(500, "验证码不正确");
             }
         }
@@ -248,6 +265,20 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .set(SysUserTenant::getLastUsed, LocalDateTime.now())
                 .setSql("pref_order = pref_order + 1"));
+        
+        // 记录登录成功日志
+        String clientIp = getClientIp();
+        String userAgent = getUserAgent();
+        String region = ipLocationService.getLocationByIp(clientIp);
+        loginLogService.recordLoginSuccess(user.getId(), account, tenantId, clientIp, region, userAgent, token);
+        
+        // 更新用户最后登录信息
+        userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, user.getId())
+                .set(SysUser::getLastLoginIp, clientIp)
+                .set(SysUser::getLastLoginRegion, region)
+                .set(SysUser::getLastLoginTime, LocalDateTime.now()));
+        
         log.info("选择租户成功: account={}, tenantId={}", account, tenantId);
         SysUserDTO result = new SysUserDTO();
         result.setId(user.getId());
@@ -340,9 +371,36 @@ public class AuthServiceImpl implements AuthService {
     public R<Boolean> logout() {
         try {
             Object uid = StpUtil.getLoginIdDefaultNull();
-            String token = StpUtil.getTokenValue();
-            if (StringUtils.hasText(token)) {
-                String key = "fx:login:ctx:" + token;
+            SaSession session = StpUtil.getSession(false);
+            Long userId = null;
+            Long tenantId = null;
+            if (session != null) {
+                Object uidObj = session.get("LOGIN_USER_ID");
+                if (uidObj instanceof Long) {
+                    userId = (Long) uidObj;
+                } else if (uidObj instanceof Integer) {
+                    userId = ((Integer) uidObj).longValue();
+                } else if (uidObj instanceof String) {
+                    try { userId = Long.valueOf((String) uidObj); } catch (Exception ignored) { }
+                }
+                Object tidObj = session.get("LOGIN_TENANT_ID");
+                if (tidObj instanceof Long) {
+                    tenantId = (Long) tidObj;
+                } else if (tidObj instanceof Integer) {
+                    tenantId = ((Integer) tidObj).longValue();
+                } else if (tidObj instanceof String) {
+                    try { tenantId = Long.valueOf((String) tidObj); } catch (Exception ignored) { }
+                }
+            }
+            String account = uid == null ? null : String.valueOf(uid);
+
+            // 记录登出时间/原因（异步，不影响主流程）
+            String tokenValue = StpUtil.getTokenValue();
+            loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
+
+            String token = tokenValue;
+            if (StringUtils.hasText(tokenValue)) {
+                String key = "fx:login:ctx:" + tokenValue;
                 try {
                     redis.delete(key);
                 } catch (Exception ignored) {
@@ -354,5 +412,60 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             return R.fail(500, "退出失败");
         }
+    }
+    
+    /**
+     * 获取客户端真实IP
+     * <p>
+     * 从请求头 X-Client-IP 获取（由网关透传）。
+     * 如果获取失败，返回 "unknown"。
+     * </p>
+     * 
+     * @return 客户端IP地址
+     */
+    private String getClientIp() {
+        try {
+            org.springframework.web.context.request.RequestAttributes attrs = 
+                org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                jakarta.servlet.http.HttpServletRequest request = 
+                    ((org.springframework.web.context.request.ServletRequestAttributes) attrs).getRequest();
+                String ip = request.getHeader("X-Client-IP");
+                if (StringUtils.hasText(ip)) {
+                    return ip;
+                }
+                return request.getRemoteAddr();
+            }
+        } catch (Exception e) {
+            log.warn("获取客户端IP失败", e);
+        }
+        return "unknown";
+    }
+    
+    /**
+     * 获取User-Agent
+     * <p>
+     * 从请求头获取浏览器User-Agent信息。
+     * 如果获取失败，返回 "unknown"。
+     * </p>
+     * 
+     * @return User-Agent字符串
+     */
+    private String getUserAgent() {
+        try {
+            org.springframework.web.context.request.RequestAttributes attrs = 
+                org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                jakarta.servlet.http.HttpServletRequest request = 
+                    ((org.springframework.web.context.request.ServletRequestAttributes) attrs).getRequest();
+                String ua = request.getHeader("User-Agent");
+                if (StringUtils.hasText(ua)) {
+                    return ua;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("获取User-Agent失败", e);
+        }
+        return "unknown";
     }
 }

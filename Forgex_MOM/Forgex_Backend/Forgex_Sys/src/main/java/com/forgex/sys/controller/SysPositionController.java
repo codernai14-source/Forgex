@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.position.SysPositionDTO;
 import com.forgex.sys.domain.dto.position.SysPositionQueryDTO;
@@ -84,6 +85,7 @@ public class SysPositionController {
      * @return 职位ID
      */
     @PostMapping("/create")
+    @RequirePerm("sys:position:create")
     public R<Long> create(@Validated @RequestBody SysPositionSaveParam param) {
         try {
             param.setTenantId(TenantContext.get());
@@ -102,6 +104,7 @@ public class SysPositionController {
      * @return 是否成功
      */
     @PostMapping("/update")
+    @RequirePerm("sys:position:edit")
     public R<Boolean> update(@Validated @RequestBody SysPositionSaveParam param) {
         try {
             param.setTenantId(TenantContext.get());
@@ -120,6 +123,7 @@ public class SysPositionController {
      * @return 是否成功
      */
     @PostMapping("/delete")
+    @RequirePerm("sys:position:delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         try {
             Long id = Long.valueOf(params.get("id").toString());
