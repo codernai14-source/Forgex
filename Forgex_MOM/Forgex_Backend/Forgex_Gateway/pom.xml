@@ -16,6 +16,11 @@
   <description>锻冶项目网关模块</description>
 
     <dependencies>
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
         <!-- Spring Cloud Gateway（推荐的新版Starter） -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

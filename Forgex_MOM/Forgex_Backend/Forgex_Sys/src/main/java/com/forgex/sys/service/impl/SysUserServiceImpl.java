@@ -71,7 +71,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysDepartmentMapper departmentMapper;
     private final SysPositionMapper positionMapper;
     private final SysUserProfileMapper userProfileMapper;
-    private final SysUserTenantMapper userTenantMapper;
     
     /**
      * 用户分页查询
@@ -247,7 +246,20 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteUsers(List<Long> ids) {
-        userMapper.deleteBatchIds(ids);
+        // Delete user profiles
+        if (ids != null && !ids.isEmpty()) {
+            LambdaQueryWrapper<SysUserProfile> profileWrapper = new LambdaQueryWrapper<>();
+            profileWrapper.in(SysUserProfile::getUserId, ids);
+            userProfileMapper.delete(profileWrapper);
+            
+            // Delete user tenant associations
+            LambdaQueryWrapper<SysUserTenant> tenantWrapper = new LambdaQueryWrapper<>();
+            tenantWrapper.in(SysUserTenant::getUserId, ids);
+            userTenantMapper.delete(tenantWrapper);
+        }
+        
+        // Delete users
+        removeByIds(ids);
     }
     
     /**

@@ -166,7 +166,7 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteModules(List<Long> ids) {
-        moduleMapper.deleteBatchIds(ids);
+        removeByIds(ids);
     }
     
     /**

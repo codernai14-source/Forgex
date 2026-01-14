@@ -158,7 +158,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteRoles(List<Long> ids) {
-        roleMapper.deleteBatchIds(ids);
+        // 1. 先删除 sys_role_menu 表中的关联记录（任务 16）
+        LambdaQueryWrapper<com.forgex.sys.domain.entity.SysRoleMenu> wrapper = 
+            new LambdaQueryWrapper<>();
+        wrapper.in(com.forgex.sys.domain.entity.SysRoleMenu::getRoleId, ids);
+        roleMenuMapper.delete(wrapper);
+        
+        // 2. 再删除角色记录
+        removeByIds(ids);
     }
     
     /**

@@ -1,6 +1,8 @@
 package com.forgex.auth.security;
 
 import cn.dev33.satoken.listener.SaTokenListener;
+import cn.dev33.satoken.stp.SaLoginModel;
+import cn.dev33.satoken.stp.parameter.SaLoginParameter;
 import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
 import lombok.RequiredArgsConstructor;
@@ -30,21 +32,23 @@ public class SaTokenEventListener implements SaTokenListener {
 
     private final LogoutAuditService logoutAuditService;
 
+
     @Override
-    public void doLogin(String loginType, Object loginId, String tokenValue, String device) {
+    public void doLogin(String s, Object o, String s1, SaLoginParameter saLoginParameter) {
+
     }
 
     @Override
-    public void doLogout(String loginType, Object loginId, String tokenValue, String device) {
+    public void doLogout(String loginType, Object loginId, String tokenValue) {
     }
 
     @Override
-    public void doKickout(String loginType, Object loginId, String tokenValue, String device) {
+    public void doKickout(String loginType, Object loginId, String tokenValue) {
         logoutAuditService.recordLogoutByToken(tokenValue, LogoutReason.KICKOUT);
     }
 
     @Override
-    public void doReplaced(String loginType, Object loginId, String tokenValue, String device) {
+    public void doReplaced(String loginType, Object loginId, String tokenValue) {
         logoutAuditService.recordLogoutByToken(tokenValue, LogoutReason.REPLACED);
     }
 
@@ -73,7 +77,7 @@ public class SaTokenEventListener implements SaTokenListener {
     }
 
     @Override
-    public void doRenewTimeout(String tokenValue, Object loginId, long timeout) {
+    public void doRenewTimeout(String loginType, Object loginId, String tokenValue, long timeout) {
     }
 }
 
