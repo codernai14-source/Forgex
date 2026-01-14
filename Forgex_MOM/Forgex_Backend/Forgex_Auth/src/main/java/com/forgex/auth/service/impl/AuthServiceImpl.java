@@ -27,6 +27,7 @@ import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
 import com.forgex.auth.mapper.SysUserTenantMapper;
 import com.forgex.auth.service.AuthService;
+import com.forgex.auth.service.LoginLogService;
 import com.forgex.common.config.ConfigService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.tenant.TenantContext;
