@@ -33,11 +33,30 @@ import java.util.stream.Collectors;
 
 /**
  * 全局异常处理器
+ * <p>
  * 作用：统一捕获各类异常并返回项目约定的业务错误结构；同时打印详细日志，便于定位问题。
- * 返回规范：
- * - 未登录：401；无权限：403
- * - 参数错误：400（包含具体字段错误信息）
- * - 其它异常：500（返回异常具体信息，避免笼统“系统异常”）
+ * </p>
+ * <p>返回规范：</p>
+ * <ul>
+ *   <li>未登录：401</li>
+ *   <li>无权限：403</li>
+ *   <li>参数错误：400（包含具体字段错误信息）</li>
+ *   <li>其它异常：500（返回异常具体信息，避免笼统"系统异常"）</li>
+ * </ul>
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>{@link #handleNotLogin(NotLoginException)} - 处理未登录异常</li>
+ *   <li>{@link #handleNotRole(NotRoleException)} - 处理无权限异常</li>
+ *   <li>{@link #handleBadRequest(Exception)} - 处理参数校验异常</li>
+ *   <li>{@link #handleDbConnect(CannotGetJdbcConnectionException)} - 处理数据库连接异常</li>
+ *   <li>{@link #handleDataAccess(DataAccessException)} - 处理数据访问异常</li>
+ *   <li>{@link #handleDefault(Exception)} - 处理通用异常</li>
+ * </ul>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @see com.forgex.common.web.R
+ * @see com.forgex.common.security.LogoutAuditService
  */
 @RestControllerAdvice
 @Slf4j

@@ -64,15 +64,34 @@ import com.forgex.common.crypto.CryptoProviders;
  * 认证服务实现。
  * <p>
  * 负责登录流程与租户选择、验证码校验、密码校验等逻辑，数据源为 admin 库。
- * <p>
- * 使用：
- * - {@link #login(LoginParam)} 登录并返回可选租户列表；
- * - {@link #chooseTenant(TenantChoiceParam)} 选择默认租户；
- * - 按配置读取 {@code security.crypto.transport} 执行 SM2 传输解密，再按 {@code security.password.policy.store} 进行存储校验。
- * <p>
- * 可扩展性：
- * - 支持在配置库扩展验证码模式与密码策略；
- * - 新增密码算法时在 common 模块的 Provider 中扩展。
+ * </p>
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>{@link #login(LoginParam)} - 用户登录，返回绑定的租户列表</li>
+ *   <li>{@link #chooseTenant(TenantChoiceParam)} - 选择租户，设置当前租户上下文</li>
+ *   <li>{@link #secureAdmin()} - 管理员权限校验</li>
+ *   <li>{@link #resetPasswordById(Long)} - 重置用户密码</li>
+ *   <li>{@link #logout()} - 用户登出</li>
+ *   <li>{@link #updateTenantPreferences(String, List, Long)} - 更新租户偏好设置</li>
+ * </ul>
+ * <p>使用：</p>
+ * <ul>
+ *   <li>{@link #login(LoginParam)} 登录并返回可选租户列表；</li>
+ *   <li>{@link #chooseTenant(TenantChoiceParam)} 选择默认租户；</li>
+ *   <li>按配置读取 {@code security.crypto.transport} 执行 SM2 传输解密，再按 {@code security.password.policy.store} 进行存储校验。</li>
+ * </ul>
+ * <p>可扩展性：</p>
+ * <ul>
+ *   <li>支持在配置库扩展验证码模式与密码策略；</li>
+ *   <li>新增密码算法时在 common 模块的 Provider 中扩展。</li>
+ * </ul>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @see com.forgex.auth.service.AuthService
+ * @see com.forgex.common.crypto.CryptoPasswordProvider
+ * @see com.forgex.common.domain.config.CryptoTransportConfig
+ * @see com.forgex.common.domain.config.PasswordPolicyConfig
  */
 @Service
 @DS("admin")
@@ -102,21 +121,31 @@ public class AuthServiceImpl implements AuthService {
      * 流程：
      * 1) 参数校验；2) 传输解密（若启用 SM2）；3) 用户存在性校验；
      * 4) 依据存储策略对密码校验；5) 验证码校验（按配置）；6) 登录并返回租户列表。
+     * </p>
+     *
      * @param param 登录参数（可能为 SM2 加密密码）
      * @return 租户 VO 列表
+     * @see com.forgex.auth.domain.param.LoginParam
+     * @see com.forgex.auth.domain.vo.TenantVO
      */
     @Override
     public R<List<TenantVO>> login(LoginParam param) {
+        // 从参数中提取账号
         String account = param == null ? null : param.getAccount();
+        // 从参数中提取密码
         String password = param == null ? null : param.getPassword();
         
         // 获取客户端IP和User-Agent
         String clientIp = getClientIp();
+        // 获取User-Agent信息
         String userAgent = getUserAgent();
+        // 根据IP获取地理位置信息
         String region = ipLocationService.getLocationByIp(clientIp);
         
+        // 校验账号和密码是否为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
             log.warn("登录失败: 账号或密码为空");
+            // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号或密码为空");
             return R.fail(500, "账号或密码不能为空");
         }
@@ -124,12 +153,17 @@ public class AuthServiceImpl implements AuthService {
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
         if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
             try {
+                // 创建SM2加密对象
                 SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
+                // 获取密文格式
                 String cipherFmt = cryptoCfg.getCipher();
+                // 根据密文格式解密
                 if ("BCD".equalsIgnoreCase(cipherFmt)) {
+                    // BCD格式解密
                     byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
                     password = new String(plain, StandardCharsets.UTF_8);
                 } else {
+                    // 默认格式解密
                     password = sm2.decryptStr(password, KeyType.PrivateKey);
                 }
             } catch (Exception ignored) {}
@@ -139,46 +173,67 @@ public class AuthServiceImpl implements AuthService {
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .select(SysUser::getId, SysUser::getAccount, SysUser::getUsername, SysUser::getPassword, SysUser::getEmail, SysUser::getPhone, SysUser::getStatus)
                 .eq(SysUser::getAccount, idKey));
+            // 校验用户是否存在
             if (user == null) {
                 log.warn("登录失败: 用户不存在, account={}", idKey);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
                 return R.fail(500, "用户不存在");
             }
         // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
+        // 获取密码存储策略，默认为bcrypt
         String store = policy == null ? "bcrypt" : policy.getStore();
+        // 根据策略获取密码提供者
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
+        // 验证密码是否正确
         boolean passOk = provider.verify(password, user.getPassword());
+        // 密码验证失败
         if (!passOk) {
             log.warn("登录失败: 密码不正确, account={}", account);
+            // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "密码不正确");
             return R.fail(500, "密码不正确");
         }
         // 验证码校验（由配置决定方式）
         CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
+        // 获取验证码模式
         String mode = cfg.getMode();
+        // 图片验证码模式
         if ("image".equalsIgnoreCase(mode)) {
+            // 获取验证码ID
             String captchaId = param.getCaptchaId();
+            // 获取验证码
             String captcha = param.getCaptcha();
+            // 校验验证码是否为空
             if (!StringUtils.hasText(captchaId) || !StringUtils.hasText(captcha)) {
                 log.warn("登录失败: 图片验证码缺失, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
                 return R.fail(500, "验证码不能为空");
             }
+            // 验证图片验证码
             if (!captchaService.verifyImage(captchaId, captcha)) {
                 log.warn("登录失败: 图片验证码错误, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
                 return R.fail(500, "验证码不正确");
             }
         } else if ("slider".equalsIgnoreCase(mode)) {
+            // 滑块验证码模式
+            // 获取滑块令牌
             String token = param.getCaptcha();
+            // 校验令牌是否为空
             if (!StringUtils.hasText(token)) {
                 log.warn("登录失败: 滑块令牌缺失, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
                 return R.fail(500, "验证码不能为空");
             }
+            // 验证滑块令牌
             if (!captchaService.verifySlider(token)) {
                 log.warn("登录失败: 滑块令牌校验失败, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
                 return R.fail(500, "验证码不正确");
             }
@@ -188,8 +243,11 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUserTenant::getUserId, user.getId())
                 .orderByDesc(SysUserTenant::getPrefOrder)
                 .orderByDesc(SysUserTenant::getLastUsed));
+        // 初始化租户ID列表
         List<Long> tenantIds = new ArrayList<>();
+        // 提取租户ID
         for (SysUserTenant b : binds) tenantIds.add(b.getTenantId());
+        // 校验是否绑定租户
         if (tenantIds.isEmpty()) {
             log.warn("登录提示: 用户未绑定任何租户, account={}", account);
             return R.ok(Collections.emptyList());
@@ -197,16 +255,25 @@ public class AuthServiceImpl implements AuthService {
         // 查询对应租户信息
         List<SysTenant> tenants = tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
                 .in(SysTenant::getId, tenantIds));
+        // 初始化租户VO列表
         List<TenantVO> vos = new ArrayList<>();
+        // 将租户实体转换为VO
         for (SysTenant t : tenants) {
+            // 创建租户VO对象
             TenantVO vo = new TenantVO();
+            // 设置租户ID
             vo.setId(t.getId() == null ? null : String.valueOf(t.getId()));
+            // 设置租户名称
             vo.setName(t.getTenantName());
+            // 设置租户描述
             vo.setIntro(t.getDescription());
+            // 设置租户Logo
             vo.setLogo(t.getLogo());
+            // 设置租户类型
             vo.setTenantType(t.getTenantType());
             // 设置默认标记
             for (SysUserTenant b : binds) { if (b.getTenantId().equals(t.getId())) { vo.setIsDefault(b.getIsDefault()); break; } }
+            // 添加到列表
             vos.add(vo);
         }
         log.info("预登录成功（身份校验通过）: account={}, tenants={}", idKey, vos.size());
@@ -215,52 +282,83 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * 选择租户，设置上下文
+     * <p>
      * 逻辑：校验参数 -> 设置租户上下文
+     * </p>
+     *
      * @param param 选择租户参数
      * @return 选择结果
      * @see com.forgex.common.tenant.TenantContext#set(Long)
      */
     @Override
     public R<SysUserDTO> chooseTenant(TenantChoiceParam param) {
+        // 从参数中提取租户ID
         Long tenantId = param == null ? null : param.getTenantId();
+        // 从参数中提取账号
         String account = param == null ? null : param.getAccount();
+        // 校验租户ID是否为空
         if (tenantId == null) {
             return R.fail(500, "租户ID不能为空");
         }
         // 检查租户绑定关系
         if (!StringUtils.hasText(account)) return R.fail(500, "账号不能为空");
+        // 设置查询用的账号键
         String idKey = account;
+        // 查询用户信息
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getAccount, idKey));
+        // 校验用户是否存在
         if (user == null) return R.fail(500, "用户不存在");
+        // 查询用户与租户的绑定关系
         SysUserTenant bind = userTenantMapper.selectOne(new LambdaQueryWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .last("limit 1"));
+        // 校验是否绑定该租户
         if (bind == null) return R.fail(500, "未绑定该租户");
+        // 调用SaToken进行登录
         StpUtil.login(idKey);
+        // 获取SaSession对象
         SaSession session = StpUtil.getSession();
+        // 设置会话信息
         if (session != null) {
+            // 设置登录用户ID
             session.set("LOGIN_USER_ID", user.getId());
+            // 设置登录租户ID
             session.set("LOGIN_TENANT_ID", tenantId);
+            // 设置登录账号
             session.set("LOGIN_ACCOUNT", idKey);
         }
+        // 获取Token值
         String token = StpUtil.getTokenValue();
+        // 将登录上下文存入Redis
         if (StringUtils.hasText(token)) {
+            // 创建上下文Map
             Map<String, Object> ctx = new HashMap<>();
+            // 设置用户ID
             ctx.put("userId", user.getId());
+            // 设置租户ID
             ctx.put("tenantId", tenantId);
+            // 设置账号
             ctx.put("account", idKey);
+            // 转换为JSON字符串
             String json = JSONUtil.toJsonStr(ctx);
+            // 获取Token超时时间
             long timeout = StpUtil.getTokenTimeout();
+            // 构造Redis键
             String key = "fx:login:ctx:" + token;
+            // 设置Redis键值对
             if (timeout > 0) {
+                // 设置带过期时间的键值对
                 redis.opsForValue().set(key, json, Duration.ofSeconds(timeout));
             } else {
+                // 设置永不过期的键值对
                 redis.opsForValue().set(key, json);
             }
         }
+        // 设置租户上下文
         TenantContext.set(tenantId);
+        // 更新用户租户绑定关系
         userTenantMapper.update(null, new LambdaUpdateWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .eq(SysUserTenant::getTenantId, tenantId)
@@ -281,14 +379,23 @@ public class AuthServiceImpl implements AuthService {
                 .set(SysUser::getLastLoginTime, LocalDateTime.now()));
         
         log.info("选择租户成功: account={}, tenantId={}", account, tenantId);
+        // 创建用户DTO对象
         SysUserDTO result = new SysUserDTO();
+        // 设置用户ID
         result.setId(user.getId());
+        // 设置账号
         result.setAccount(user.getAccount());
+        // 设置用户名
         result.setUsername(user.getUsername());
+        // 设置邮箱
         result.setEmail(user.getEmail());
+        // 设置手机号
         result.setPhone(user.getPhone());
+        // 设置头像
         result.setAvatar(user.getAvatar());
+        // 设置状态
         result.setStatus(user.getStatus());
+        // 设置租户ID
         result.setTenantId(bind.getTenantId());
         return R.ok(result);
     }
@@ -302,6 +409,7 @@ public class AuthServiceImpl implements AuthService {
      *   <li>ordered：租户ID排序列表</li>
      *   <li>defaultTenantId：默认租户ID</li>
      * </ul>
+     *
      * @param account 用户账号
      * @param ordered 租户ID排序列表
      * @param defaultTenantId 默认租户ID
@@ -309,16 +417,23 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId) {
+        // 校验参数是否为空
         if (!StringUtils.hasText(account) || ordered == null) return R.fail(500, "参数错误");
+        // 查询用户信息
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getAccount, account));
+        // 校验用户是否存在
         if (user == null) return R.fail(500, "用户不存在");
+        // 计算权重（排序列表长度）
         int n = ordered.size(); int weight = n;
+        // 遍历排序列表，更新每个租户的偏好顺序
         for (Long tid : ordered) {
+            // 更新租户偏好顺序和默认标记
             userTenantMapper.update(null, new LambdaUpdateWrapper<SysUserTenant>()
                     .eq(SysUserTenant::getUserId, user.getId())
                     .eq(SysUserTenant::getTenantId, tid)
                     .set(SysUserTenant::getPrefOrder, weight)
                     .set(SysUserTenant::getIsDefault, (defaultTenantId != null && defaultTenantId.equals(tid))));
+            // 权重递减
             weight--;
         }
         return R.ok(true);
@@ -327,12 +442,14 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * 管理员权限校验
-     * 逻辑：检查是否拥有 admin 角色
+     * <p>逻辑：检查是否拥有 admin 角色</p>
+     *
      * @return 校验结果
      * @see cn.dev33.satoken.stp.StpUtil#checkRole(String)
      */
     @Override
     public R<Boolean> secureAdmin() {
+        // 检查当前用户是否拥有admin角色
         StpUtil.checkRole("admin");
         return R.ok(true);
     }
@@ -340,22 +457,29 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 根据用户ID重置密码
      * <p>将指定用户的密码重置为默认密码 "123456"，使用 BCrypt 算法进行哈希存储。</p>
+     *
      * @param userId 用户ID
      * @return 重置结果
      */
     @Override
     public R<Boolean> resetPasswordById(Long userId) {
+        // 校验用户ID是否为空
         if (userId == null) {
             return R.fail(500, "用户ID不能为空");
         }
+        // 查询用户信息
         SysUser user = userMapper.selectById(userId);
+        // 校验用户是否存在
         if (user == null) {
             return R.fail(500, "用户不存在");
         }
+        // 使用BCrypt算法对默认密码进行哈希
         String hashed = BCrypt.hashpw("123456");
+        // 更新用户密码
         int n = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
                 .set(SysUser::getPassword, hashed)
                 .eq(SysUser::getId, userId));
+        // 判断更新是否成功
         if (n > 0) {
             return R.ok(true);
         }
@@ -365,17 +489,23 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 用户登出
      * <p>清除用户登录状态，删除Redis中的登录上下文信息，并移除租户上下文。</p>
+     *
      * @return 登出结果
      * @see StpUtil#logout()
      */
     @Override
     public R<Boolean> logout() {
         try {
+            // 获取当前登录用户ID
             Object uid = StpUtil.getLoginIdDefaultNull();
+            // 获取SaSession对象
             SaSession session = StpUtil.getSession(false);
+            // 初始化用户ID和租户ID
             Long userId = null;
             Long tenantId = null;
+            // 从会话中提取用户ID和租户ID
             if (session != null) {
+                // 提取用户ID
                 Object uidObj = session.get("LOGIN_USER_ID");
                 if (uidObj instanceof Long) {
                     userId = (Long) uidObj;
@@ -384,6 +514,7 @@ public class AuthServiceImpl implements AuthService {
                 } else if (uidObj instanceof String) {
                     try { userId = Long.valueOf((String) uidObj); } catch (Exception ignored) { }
                 }
+                // 提取租户ID
                 Object tidObj = session.get("LOGIN_TENANT_ID");
                 if (tidObj instanceof Long) {
                     tenantId = (Long) tidObj;
@@ -393,20 +524,25 @@ public class AuthServiceImpl implements AuthService {
                     try { tenantId = Long.valueOf((String) tidObj); } catch (Exception ignored) { }
                 }
             }
+            // 获取账号
             String account = uid == null ? null : String.valueOf(uid);
 
             // 记录登出时间/原因（异步，不影响主流程）
             String tokenValue = StpUtil.getTokenValue();
             loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
 
+            // 删除Redis中的登录上下文
             String token = tokenValue;
             if (StringUtils.hasText(tokenValue)) {
+                // 构造Redis键
                 String key = "fx:login:ctx:" + tokenValue;
                 try {
+                    // 删除键
                     redis.delete(key);
                 } catch (Exception ignored) {
                 }
             }
+            // 调用SaToken登出
             StpUtil.logout();
             log.info("退出成功: account={}", uid);
             return R.ok(true);
