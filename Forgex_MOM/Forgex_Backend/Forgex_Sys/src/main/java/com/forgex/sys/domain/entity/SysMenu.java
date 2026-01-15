@@ -52,6 +52,7 @@ public class SysMenu extends BaseEntity {
     private String path;
     /** 菜单名称 */
     private String name;
+    private String nameI18nJson;
     /** 菜单图标 */
     private String icon;
     /** 组件键 */

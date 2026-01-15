@@ -58,6 +58,8 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import com.forgex.common.crypto.CryptoPasswordProvider;
+import com.forgex.common.util.CurrentUserUtils;
+import com.forgex.auth.enums.AuthPromptEnum;
 import com.forgex.common.crypto.CryptoProviders;
 
 /**
@@ -435,6 +437,54 @@ public class AuthServiceImpl implements AuthService {
                     .set(SysUserTenant::getIsDefault, (defaultTenantId != null && defaultTenantId.equals(tid))));
             // 权重递减
             weight--;
+        }
+        return R.ok(true);
+    }
+
+    @Override
+    public R<Boolean> changeLanguage(String lang) {
+        if (!StringUtils.hasText(lang)) {
+            return R.fail(500, AuthPromptEnum.LANG_EMPTY);
+        }
+        Long userId = CurrentUserUtils.getUserId();
+        Long tenantId = CurrentUserUtils.getTenantId();
+        if (userId == null || tenantId == null) {
+            return R.fail(401, AuthPromptEnum.NOT_LOGIN);
+        }
+
+        String prefKey = "fx:lang:" + tenantId + ":" + userId;
+        try {
+            redis.opsForValue().set(prefKey, lang);
+        } catch (Exception e) {
+            return R.fail(500, AuthPromptEnum.LANG_SET_FAILED);
+        }
+
+        String token = StpUtil.getTokenValue();
+        if (StringUtils.hasText(token)) {
+            String ctxKey = "fx:login:ctx:" + token;
+            try {
+                Map<String, Object> ctx = new HashMap<>();
+                String raw = redis.opsForValue().get(ctxKey);
+                if (StringUtils.hasText(raw)) {
+                    try {
+                        ctx.putAll(JSONUtil.parseObj(raw));
+                    } catch (Exception ignored) {}
+                }
+                ctx.put("userId", userId);
+                ctx.put("tenantId", tenantId);
+                String account = CurrentUserUtils.getAccount();
+                if (StringUtils.hasText(account)) {
+                    ctx.put("account", account);
+                }
+                ctx.put("lang", lang);
+                String json = JSONUtil.toJsonStr(ctx);
+                long timeout = StpUtil.getTokenTimeout();
+                if (timeout > 0) {
+                    redis.opsForValue().set(ctxKey, json, Duration.ofSeconds(timeout));
+                } else {
+                    redis.opsForValue().set(ctxKey, json);
+                }
+            } catch (Exception ignored) {}
         }
         return R.ok(true);
     }

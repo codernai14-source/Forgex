@@ -36,6 +36,7 @@ public class SysModule extends BaseEntity {
     private String code;
     /** 模块名称 */
     private String name;
+    private String nameI18nJson;
     /** 模块图标 */
     private String icon;
     /** 排序号 */

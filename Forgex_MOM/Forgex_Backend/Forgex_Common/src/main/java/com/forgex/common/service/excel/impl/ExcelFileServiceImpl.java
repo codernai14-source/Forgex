@@ -6,6 +6,7 @@ import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigItemDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigItemDTO;
+import com.forgex.common.i18n.LangContext;
 import com.forgex.common.service.excel.ExcelFileService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -331,13 +332,27 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         }
         try {
             JsonNode node = objectMapper.readTree(i18nJson);
-            JsonNode zh = node.get("zh-CN");
-            if (zh != null && zh.isTextual() && StringUtils.hasText(zh.asText())) {
-                return zh.asText();
+            String lang = LangContext.get();
+            String val = resolveTextByLang(node, lang);
+            if (StringUtils.hasText(val)) {
+                return val;
             }
-            JsonNode zh2 = node.get("zh");
-            if (zh2 != null && zh2.isTextual() && StringUtils.hasText(zh2.asText())) {
-                return zh2.asText();
+            if (StringUtils.hasText(lang)) {
+                int idx = lang.indexOf('-');
+                if (idx > 0) {
+                    val = resolveTextByLang(node, lang.substring(0, idx));
+                    if (StringUtils.hasText(val)) {
+                        return val;
+                    }
+                }
+            }
+            val = resolveTextByLang(node, "zh-CN");
+            if (StringUtils.hasText(val)) {
+                return val;
+            }
+            val = resolveTextByLang(node, "zh");
+            if (StringUtils.hasText(val)) {
+                return val;
             }
             if (node.isObject()) {
                 java.util.Iterator<Map.Entry<String, JsonNode>> it = node.fields();
@@ -352,6 +367,17 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         } catch (Exception e) {
             return fallbackText;
         }
+    }
+
+    private String resolveTextByLang(JsonNode node, String lang) {
+        if (node == null || !StringUtils.hasText(lang) || !node.isObject()) {
+            return null;
+        }
+        JsonNode v = node.get(lang);
+        if (v != null && v.isTextual() && StringUtils.hasText(v.asText())) {
+            return v.asText();
+        }
+        return null;
     }
 
     /**

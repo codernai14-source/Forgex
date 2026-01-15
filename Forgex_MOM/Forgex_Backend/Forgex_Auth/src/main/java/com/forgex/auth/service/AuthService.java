@@ -163,4 +163,6 @@ public interface AuthService {
      * @return {@link R} 更新是否成功
      */
     R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId);
+
+    R<Boolean> changeLanguage(String lang);
 }

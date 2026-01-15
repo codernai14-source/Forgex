@@ -16,6 +16,7 @@ package com.forgex.common.web;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotRoleException;
 import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
 import lombok.extern.slf4j.Slf4j;
@@ -110,6 +111,11 @@ public class GlobalExceptionHandler {
     public R<Object> handleNotRole(NotRoleException e) {
         log.warn("无权限: {}", e.getMessage());
         return R.fail(403, e.getMessage());
+    }
+
+    @ExceptionHandler(I18nBusinessException.class)
+    public R<Object> handleI18nBusiness(I18nBusinessException e) {
+        return R.fail(e.getCode(), e.getMsg(), e.getMsgArgs());
     }
 
     /** 参数解析/校验错误 */

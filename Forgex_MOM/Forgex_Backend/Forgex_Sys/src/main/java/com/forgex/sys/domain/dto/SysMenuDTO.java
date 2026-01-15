@@ -70,6 +70,8 @@ public class SysMenuDTO {
      * 名称
      */
     private String name;
+
+    private String nameI18nJson;
     
     /**
      * 图标

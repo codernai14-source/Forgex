@@ -24,12 +24,15 @@ import com.forgex.sys.domain.vo.MenuTreeVO;
 import com.forgex.sys.domain.vo.UserRoutesVO;
 import com.forgex.sys.mapper.*;
 import com.forgex.sys.service.ISysMenuService;
+import com.forgex.common.i18n.LangContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import cn.hutool.json.JSONUtil;
+import cn.hutool.json.JSONObject;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -469,7 +472,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     private Map<String, Object> buildModuleMap(SysModule module) {
         Map<String, Object> map = new HashMap<>();
         map.put("code", module.getCode());
-        map.put("name", module.getName());
+        map.put("name", resolveI18nText(module.getNameI18nJson(), module.getName()));
         map.put("icon", module.getIcon());
         map.put("order", module.getOrderNum() == null ? 0 : module.getOrderNum());
         return map;
@@ -489,7 +492,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         Map<String, Object> route = new HashMap<>();
         route.put("path", module.getCode());
         route.put("name", capitalize(module.getCode()));
-        route.put("meta", buildMeta(module.getName(), module.getIcon(), module.getCode()));
+        route.put("meta", buildMeta(resolveI18nText(module.getNameI18nJson(), module.getName()), module.getIcon(), module.getCode()));
         
         // 获取该模块下的根菜单
         List<SysMenu> rootMenus = allMenus.stream()
@@ -534,7 +537,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             .distinct()
             .collect(Collectors.toList());
         
-        route.put("meta", buildMeta(menu.getName(), menu.getIcon(), moduleCode, menu.getMenuLevel(), perms));
+        route.put("meta", buildMeta(resolveI18nText(menu.getNameI18nJson(), menu.getName()), menu.getIcon(), moduleCode, menu.getMenuLevel(), perms));
         
         // 获取子菜单
         List<SysMenu> childMenus = allMenus.stream()
@@ -626,7 +629,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 MenuTreeVO vo = new MenuTreeVO();
                 vo.setId(m.getId());
                 vo.setParentId(m.getParentId());
-                vo.setName(m.getName());
+                vo.setName(resolveI18nText(m.getNameI18nJson(), m.getName()));
                 vo.setPath(m.getPath());
                 vo.setIcon(m.getIcon());
                 vo.setType(m.getType());
@@ -644,6 +647,47 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 return vo;
             })
             .collect(Collectors.toList());
+    }
+
+    private String resolveI18nText(String i18nJson, String fallback) {
+        if (!StringUtils.hasText(i18nJson)) {
+            return fallback;
+        }
+        JSONObject obj;
+        try {
+            obj = JSONUtil.parseObj(i18nJson);
+        } catch (Exception e) {
+            return fallback;
+        }
+        String lang = LangContext.get();
+        if (StringUtils.hasText(lang) && obj.containsKey(lang)) {
+            String v = obj.getStr(lang);
+            if (StringUtils.hasText(v)) {
+                return v;
+            }
+        }
+        if (StringUtils.hasText(lang)) {
+            String prefix = lang;
+            int idx = prefix.indexOf('-');
+            if (idx > 0) {
+                prefix = prefix.substring(0, idx);
+            }
+            if (StringUtils.hasText(prefix) && obj.containsKey(prefix)) {
+                String v = obj.getStr(prefix);
+                if (StringUtils.hasText(v)) {
+                    return v;
+                }
+            }
+        }
+        try {
+            for (String key : obj.keySet()) {
+                String v = obj.getStr(key);
+                if (StringUtils.hasText(v)) {
+                    return v;
+                }
+            }
+        } catch (Exception ignored) {}
+        return fallback;
     }
     
     /**

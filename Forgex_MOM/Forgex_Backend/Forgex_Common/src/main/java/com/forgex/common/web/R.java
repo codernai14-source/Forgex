@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.web;
 
+import com.forgex.common.i18n.I18nPrompt;
 import lombok.Data;
 
 /**
@@ -48,6 +49,8 @@ public class R<T> {
     private int code;
     /** 返回消息：成功时为"OK"，失败时为错误信息 */
     private String message;
+    private I18nPrompt msg;
+    private Object[] msgArgs;
     /** 返回数据：泛型类型，可为null */
     private T data;
 
@@ -65,6 +68,14 @@ public class R<T> {
         r.code = 200;
         // 设置成功消息
         r.message = "OK";
+        return r;
+    }
+
+    public static <T> R<T> ok(I18nPrompt msg, Object... msgArgs) {
+        R<T> r = new R<>();
+        r.code = 200;
+        r.msg = msg;
+        r.msgArgs = msgArgs;
         return r;
     }
 
@@ -145,6 +156,14 @@ public class R<T> {
         return r;
     }
 
+    public static <T> R<T> fail(I18nPrompt msg, Object... msgArgs) {
+        R<T> r = new R<>();
+        r.code = 500;
+        r.msg = msg;
+        r.msgArgs = msgArgs;
+        return r;
+    }
+
     /**
      * 失败返回（自定义状态码）
      * <p>返回自定义状态码，消息为错误信息，数据为null</p>
@@ -161,6 +180,14 @@ public class R<T> {
         r.code = code;
         // 设置错误信息
         r.message = message;
+        return r;
+    }
+
+    public static <T> R<T> fail(int code, I18nPrompt msg, Object... msgArgs) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.msg = msg;
+        r.msgArgs = msgArgs;
         return r;
     }
 }

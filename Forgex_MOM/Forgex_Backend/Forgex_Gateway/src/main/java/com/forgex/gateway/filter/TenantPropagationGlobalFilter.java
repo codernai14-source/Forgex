@@ -50,6 +50,7 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
     private static final String HEADER_USER_ID = "X-User-Id";
     private static final String HEADER_TENANT_ID = "X-Tenant-Id";
     private static final String HEADER_ACCOUNT = "X-Account";
+    private static final String HEADER_LANG = "X-Lang";
 
     private static final String COOKIE_TOKEN = "satoken";
 
@@ -80,6 +81,7 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
         Long userId = null;
         Long tenantId = null;
         String account = null;
+        String lang = null;
         try {
             JSONObject obj = JSONUtil.parseObj(json);
             if (obj.containsKey("userId")) {
@@ -91,10 +93,13 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
             if (obj.containsKey("account")) {
                 account = obj.getStr("account");
             }
+            if (obj.containsKey("lang")) {
+                lang = obj.getStr("lang");
+            }
         } catch (Exception e) {
             return chain.filter(exchange);
         }
-        if (userId == null && tenantId == null && !StringUtils.hasText(account)) {
+        if (userId == null && tenantId == null && !StringUtils.hasText(account) && !StringUtils.hasText(lang)) {
             return chain.filter(exchange);
         }
         ServerHttpRequest.Builder builder = request.mutate();
@@ -106,6 +111,14 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
         }
         if (StringUtils.hasText(account)) {
             builder.header(HEADER_ACCOUNT, account);
+        }
+        if (!StringUtils.hasText(lang) && userId != null && tenantId != null) {
+            try {
+                lang = redis.opsForValue().get("fx:lang:" + tenantId + ":" + userId);
+            } catch (Exception ignored) {}
+        }
+        if (StringUtils.hasText(lang)) {
+            builder.header(HEADER_LANG, lang);
         }
         ServerHttpRequest newRequest = builder.build();
         return chain.filter(exchange.mutate().request(newRequest).build());

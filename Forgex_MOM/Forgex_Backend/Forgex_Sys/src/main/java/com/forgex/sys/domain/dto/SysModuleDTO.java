@@ -44,6 +44,8 @@ public class SysModuleDTO {
      */
     private String name;
 
+    private String nameI18nJson;
+
     /**
      * 图标
      */

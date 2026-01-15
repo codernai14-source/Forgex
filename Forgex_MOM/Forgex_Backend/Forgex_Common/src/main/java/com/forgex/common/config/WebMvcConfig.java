@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.config;
 
+import com.forgex.common.i18n.LangWebInterceptor;
 import com.forgex.common.tenant.UserTenantWebInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -38,6 +39,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new LangWebInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new UserTenantWebInterceptor()).addPathPatterns("/**");
     }
 }

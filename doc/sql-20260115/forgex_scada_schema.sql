@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS scada_realtime_data (
     point_id BIGINT NOT NULL COMMENT '点位ID',
     point_code VARCHAR(100) COMMENT '点位编码',
     value DECIMAL(20,4) COMMENT '数值',
-    quality TINYINT DEFAULT 192 COMMENT '质量码：192-好 0-坏',
+    quality TINYINT COMMENT '质量码：192-好 0-坏',
     collect_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '采集时间',
     tenant_id BIGINT COMMENT '租户ID',
     INDEX idx_device_point (device_id, point_id),

@@ -266,6 +266,8 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { dynamicModules, dynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
+import { changeLanguage } from '../api/auth/login'
+import { setLocale } from '../locales'
 import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
@@ -710,10 +712,12 @@ function onGlobalSearchSelect(menuKey: string, path: string) {
   globalSearchVisible.value = false
 }
 
-function onLocaleChange(val: string) {
+async function onLocaleChange(val: string) {
   currentLocale.value = val
-  locale.value = val as any
-  localStorage.setItem('fx-locale', val)
+  setLocale(val as any)
+  try {
+    await changeLanguage({ lang: val })
+  } catch (e) {}
 }
 
 function onUserMenuClick(key: string) {

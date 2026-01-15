@@ -27,3 +27,7 @@ export function updateTenantPreferences(data: { account: string; ordered: string
   return http.post('/auth/tenant/preferences', data)
 }
 
+export function changeLanguage(data: { lang: string }) {
+  return http.post('/auth/changeLanguage', data)
+}
+

@@ -16,6 +16,7 @@ package com.forgex.auth.controller;
 import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.param.SliderValidateParam;
+import com.forgex.auth.domain.param.ChangeLanguageParam;
 import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.CaptchaService;
@@ -300,6 +301,12 @@ public class AuthController {
     public R<Boolean> logout() {
         // 委派给服务层处理登出逻辑
         return authService.logout();
+    }
+
+    @PostMapping("/changeLanguage")
+    public R<Boolean> changeLanguage(@RequestBody ChangeLanguageParam param) {
+        String lang = param == null ? null : param.getLang();
+        return authService.changeLanguage(lang);
     }
 
     /**
