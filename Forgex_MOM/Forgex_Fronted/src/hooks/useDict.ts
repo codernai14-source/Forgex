@@ -4,6 +4,7 @@
  */
 import { ref } from 'vue'
 import http from '@/api/http'
+import { getLocale } from '@/locales'
 
 // 字典缓存
 const dictCache = new Map<string, any[]>()
@@ -18,9 +19,11 @@ export function useDict(dictCode: string) {
   const loading = ref(false)
 
   const loadDict = async () => {
+    const lang = getLocale()
+    const cacheKey = `${dictCode}@@${lang}`
     // 先从缓存读取
-    if (dictCache.has(dictCode)) {
-      dictItems.value = dictCache.get(dictCode) || []
+    if (dictCache.has(cacheKey)) {
+      dictItems.value = dictCache.get(cacheKey) || []
       return
     }
 
@@ -30,7 +33,7 @@ export function useDict(dictCode: string) {
       const res = await http.post('/sys/dict/items', { dictCode })
       dictItems.value = res
       // 写入缓存
-      dictCache.set(dictCode, res)
+      dictCache.set(cacheKey, res)
     } catch (error) {
       console.error(`加载字典失败: ${dictCode}`, error)
     } finally {
@@ -48,13 +51,45 @@ export function useDict(dictCode: string) {
   }
 }
 
+export function useDictByPath(nodePath: string) {
+  const dictItems = ref<any[]>([])
+  const loading = ref(false)
+
+  const loadDict = async () => {
+    const lang = getLocale()
+    const cacheKey = `${nodePath}@@${lang}`
+    if (dictCache.has(cacheKey)) {
+      dictItems.value = dictCache.get(cacheKey) || []
+      return
+    }
+    loading.value = true
+    try {
+      const res = await http.post('/sys/dict/itemsByPath', { nodePath })
+      dictItems.value = res
+      dictCache.set(cacheKey, res)
+    } catch (error) {
+      console.error(`加载字典失败: ${nodePath}`, error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  loadDict()
+
+  return { dictItems, loading, reload: loadDict }
+}
+
 /**
  * 清除字典缓存
  * @param dictCode 字典编码（可选，不传则清除所有）
  */
 export function clearDictCache(dictCode?: string) {
   if (dictCode) {
-    dictCache.delete(dictCode)
+    for (const k of Array.from(dictCache.keys())) {
+      if (k.startsWith(`${dictCode}@@`)) {
+        dictCache.delete(k)
+      }
+    }
   } else {
     dictCache.clear()
   }

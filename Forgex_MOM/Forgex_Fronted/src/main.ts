@@ -1,3 +1,9 @@
+/**
+ * 应用入口文件
+ * 负责创建和配置 Vue 应用实例，注册全局组件、指令和插件
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
@@ -8,54 +14,79 @@ import 'ant-design-vue/dist/reset.css'
 import * as Icons from '@ant-design/icons-vue'
 import { permission } from './directives/permission'
 
+/**
+ * 创建 Vue 应用实例
+ */
 const app = createApp(App)
+
+/**
+ * 创建 Pinia 状态管理实例
+ */
 const pinia = createPinia()
 
 // 注册权限指令
 app.directive('permission', permission)
 
-// 全局注册常用图标
+/**
+ * 全局注册常用图标组件列表
+ * 从 Ant Design Icons 中选择常用图标进行全局注册
+ */
 const iconComponents = [
-  'UserOutlined',
-  'UserAddOutlined',
-  'TeamOutlined',
-  'SettingOutlined',
-  'DashboardOutlined',
-  'MenuOutlined',
-  'MenuFoldOutlined',
-  'MenuUnfoldOutlined',
-  'EditOutlined',
-  'DeleteOutlined',
-  'PlusOutlined',
-  'SearchOutlined',
-  'CheckOutlined',
-  'CloseOutlined',
-  'WarningOutlined',
-  'InfoCircleOutlined',
-  'HomeOutlined',
-  'FolderOutlined',
-  'FileOutlined',
-  'LockOutlined',
-  'UnlockOutlined',
-  'EyeOutlined',
-  'EyeInvisibleOutlined',
-  'LogoutOutlined',
-  'KeyOutlined',
-  'SafetyOutlined',
-  'AppstoreOutlined',
-  'UnorderedListOutlined',
-  'DownOutlined',
-  'RightOutlined',
-  'LeftOutlined',
-  'UpOutlined',
-  'ReloadOutlined'
+  'UserOutlined',         // 用户图标
+  'UserAddOutlined',      // 添加用户图标
+  'TeamOutlined',         // 团队图标
+  'SettingOutlined',      // 设置图标
+  'DashboardOutlined',    // 仪表盘图标
+  'MenuOutlined',         // 菜单图标
+  'MenuFoldOutlined',     // 折叠菜单图标
+  'MenuUnfoldOutlined',   // 展开菜单图标
+  'EditOutlined',         // 编辑图标
+  'DeleteOutlined',       // 删除图标
+  'PlusOutlined',         // 加号图标
+  'SearchOutlined',       // 搜索图标
+  'CheckOutlined',        // 检查图标
+  'CloseOutlined',        // 关闭图标
+  'WarningOutlined',      // 警告图标
+  'InfoCircleOutlined',   // 信息圆图标
+  'HomeOutlined',         // 首页图标
+  'FolderOutlined',       // 文件夹图标
+  'FileOutlined',         // 文件图标
+  'LockOutlined',         // 锁定图标
+  'UnlockOutlined',       // 解锁图标
+  'EyeOutlined',          // 眼睛图标
+  'EyeInvisibleOutlined', // 眼睛隐藏图标
+  'LogoutOutlined',       // 登出图标
+  'KeyOutlined',          // 钥匙图标
+  'SafetyOutlined',       // 安全图标
+  'AppstoreOutlined',     // 应用商店图标
+  'UnorderedListOutlined',// 无序列表图标
+  'DownOutlined',         // 向下箭头图标
+  'RightOutlined',        // 向右箭头图标
+  'LeftOutlined',         // 向左箭头图标
+  'UpOutlined',           // 向上箭头图标
+  'ReloadOutlined'        // 刷新图标
 ]
 
+/**
+ * 遍历图标列表，将图标注册为全局组件
+ * @param name 图标组件名称
+ */
 iconComponents.forEach(name => {
+  // 根据名称从 Icons 对象中获取对应的图标组件
   const icon = Icons[name as keyof typeof Icons]
+  // 如果图标组件存在，则注册为全局组件
   if (icon) {
     app.component(name, icon)
   }
 })
 
+/**
+ * 配置并挂载 Vue 应用实例
+ * 依次使用：
+ * - pinia: 状态管理
+ * - router: 路由管理
+ * - Antd: Ant Design Vue 组件库
+ * - i18n: 国际化支持
+ * 最后将应用挂载到 id 为 'app' 的 DOM 元素上
+ */
 app.use(pinia).use(router).use(Antd).use(i18n).mount('#app')

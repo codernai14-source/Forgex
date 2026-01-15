@@ -13,9 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.DictDTO;
+import com.forgex.sys.domain.param.DictItemsByPathParam;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
 import com.forgex.sys.service.IDictService;
@@ -43,7 +44,7 @@ public class SysDictController {
      */
     @PostMapping("/tree")
     public R<List<DictTreeVO>> tree(@RequestBody Map<String, Object> params) {
-        Long tenantId = getTenantId();
+        Long tenantId = getCurrentTenantId();
         List<DictTreeVO> tree = dictService.getDictTree(tenantId);
         return R.ok(tree);
     }
@@ -58,9 +59,19 @@ public class SysDictController {
             return R.fail(500, "字典编码不能为空");
         }
         
-        Long tenantId = getTenantId();
+        Long tenantId = getCurrentTenantId();
         List<DictItemVO> items = dictService.getDictItemsByCode(dictCode, tenantId);
         return R.ok(items);
+    }
+
+    @PostMapping("/itemsByPath")
+    public R<List<DictItemVO>> itemsByPath(@RequestBody DictItemsByPathParam param) {
+        String nodePath = param == null ? null : param.getNodePath();
+        if (nodePath == null || nodePath.isEmpty()) {
+            return R.fail(500, "nodePath不能为空");
+        }
+        Long tenantId = getCurrentTenantId();
+        return R.ok(dictService.getDictItemsByPath(nodePath, tenantId));
     }
     
     /**
@@ -68,7 +79,7 @@ public class SysDictController {
      */
     @PostMapping("/create")
     public R<Boolean> create(@RequestBody DictDTO dictDTO) {
-        dictDTO.setTenantId(getTenantId());
+        dictDTO.setTenantId(getCurrentTenantId());
         dictService.addDict(dictDTO);
         return R.ok(true);
     }
@@ -107,14 +118,11 @@ public class SysDictController {
     
     /**
      * 获取当前租户ID
+     * 
+     * @return 当前租户ID，若获取失败则返回默认租户ID 1L
      */
-    private Long getTenantId() {
-        Object tenantId = StpUtil.getSession().get("LOGIN_TENANT_ID");
-        if (tenantId instanceof Long) {
-            return (Long) tenantId;
-        } else if (tenantId instanceof Integer) {
-            return ((Integer) tenantId).longValue();
-        }
-        return 1L; // 默认租户
+    private Long getCurrentTenantId() {
+        Long tenantId = CurrentUserUtils.getTenantId();
+        return tenantId != null ? tenantId : 1L; // 默认租户
     }
 }

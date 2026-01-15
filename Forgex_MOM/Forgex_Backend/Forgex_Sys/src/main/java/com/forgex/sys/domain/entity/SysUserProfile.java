@@ -15,8 +15,9 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.dict.DictI18n;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 import java.util.List;
@@ -35,7 +36,11 @@ public class SysUserProfile extends BaseEntity {
     private Long userId;
     
     /** 政治面貌 */
+    @DictI18n(nodePathConst = "political_status", targetField = "politicalStatusText")
     private String politicalStatus;
+    
+    /** 政治面貌文本（字典翻译结果） */
+    private String politicalStatusText;
     
     /** 家庭住址 */
     private String homeAddress;
@@ -50,7 +55,11 @@ public class SysUserProfile extends BaseEntity {
     private String referrer;
     
     /** 学历 */
+    @DictI18n(nodePathConst = "education", targetField = "educationText")
     private String education;
+    
+    /** 学历文本（字典翻译结果） */
+    private String educationText;
 
     /** 籍贯 */
     private String birthPlace;

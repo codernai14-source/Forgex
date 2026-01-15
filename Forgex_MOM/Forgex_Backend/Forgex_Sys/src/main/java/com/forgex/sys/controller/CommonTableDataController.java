@@ -1,12 +1,14 @@
 package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.domain.dto.table.FxTableConfigDTO;
 import com.forgex.common.service.table.FxTableConfigService;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.LoginLogQueryDTO;
+import com.forgex.sys.domain.entity.LoginLog;
 import com.forgex.sys.domain.param.CommonTableQueryParam;
 import com.forgex.sys.enums.SysPromptEnum;
 import com.forgex.sys.service.ILoginLogService;
@@ -82,8 +84,11 @@ public class CommonTableDataController {
             }
         }
 
-        IPage<?> page = (IPage<?>) loginLogService.pageLoginLogs(dto);
-        return R.ok(page);
+        // 创建分页对象
+        Page<LoginLog> page = new Page<>(dto.getCurrent(), dto.getSize());
+        // 调用分页查询方法
+        IPage<?> result = loginLogService.pageLoginLogs(page, dto);
+        return R.ok(result);
     }
 
     private LocalDateTime parseTime(Object v) {

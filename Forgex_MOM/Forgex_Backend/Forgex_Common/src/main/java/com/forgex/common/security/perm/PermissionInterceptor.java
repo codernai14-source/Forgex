@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -41,6 +42,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class PermissionInterceptor implements HandlerInterceptor {
 
+    private static final String HEADER_USER_ID = "X-User-Id";
+    private static final String HEADER_TENANT_ID = "X-Tenant-Id";
+
     private final PermKeyService permKeyService;
     private final ObjectMapper objectMapper;
 
@@ -67,6 +71,18 @@ public class PermissionInterceptor implements HandlerInterceptor {
         Long userId = UserContext.get();
         Long tenantId = TenantContext.get();
         if (userId == null || tenantId == null) {
+            Long headerUserId = parseLong(request == null ? null : request.getHeader(HEADER_USER_ID));
+            Long headerTenantId = parseLong(request == null ? null : request.getHeader(HEADER_TENANT_ID));
+            if (userId == null && headerUserId != null) {
+                UserContext.set(headerUserId);
+                userId = headerUserId;
+            }
+            if (tenantId == null && headerTenantId != null) {
+                TenantContext.set(headerTenantId);
+                tenantId = headerTenantId;
+            }
+        }
+        if (userId == null || tenantId == null) {
             writeFail(response, 401, "未登录或租户未选择");
             return false;
         }
@@ -78,6 +94,12 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        UserContext.clear();
+        TenantContext.clear();
     }
 
     /**
@@ -114,5 +136,15 @@ public class PermissionInterceptor implements HandlerInterceptor {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(objectMapper.writeValueAsString(R.fail(code, msg)));
     }
-}
 
+    private Long parseLong(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        try {
+            return Long.valueOf(raw.trim());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}

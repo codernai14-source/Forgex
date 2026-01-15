@@ -6,6 +6,7 @@ import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
+import com.forgex.sys.service.ExcelExportService;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
@@ -50,8 +51,7 @@ public class ExcelConfigController {
 
     private final ExcelConfigService excelConfigService;
     private final ExcelFileService excelFileService;
-    private final LoginLogMapper loginLogMapper;
-    private final SysUserMapper userMapper;
+    private final ExcelExportService excelExportService;
 
     /**
      * 分页查询导出配置。
@@ -188,23 +188,8 @@ public class ExcelConfigController {
     @RequirePerm("sys:excel:export:loginLog")
     @PostMapping("/export/loginLog")
     public void exportLoginLog(@RequestBody ExcelLoginLogExportDTO body, HttpServletResponse response) {
-        String tableCode = body == null ? null : body.getTableCode();
-        LoginLogQueryDTO query = body == null ? null : body.getQuery();
-        FxExcelExportConfigDTO cfg = excelConfigService.getExportConfigByCode(tableCode);
-        Long tenantId = TenantContext.get();
-        List<LoginLog> list = loginLogMapper.selectList(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<LoginLog>()
-                .like(query != null && StringUtils.hasText(query.getAccount()), LoginLog::getAccount, query.getAccount())
-                .eq(query != null && query.getStatus() != null, LoginLog::getStatus, query.getStatus())
-                .ge(query != null && query.getStartTime() != null, LoginLog::getLoginTime, query.getStartTime())
-                .le(query != null && query.getEndTime() != null, LoginLog::getLoginTime, query.getEndTime())
-                .eq(tenantId != null, LoginLog::getTenantId, tenantId)
-                .eq(tenantId == null && query != null && query.getTenantId() != null, LoginLog::getTenantId, query.getTenantId())
-                .orderByDesc(LoginLog::getLoginTime));
-
-        List<Map<String, Object>> rows = list.stream().map(this::toLoginLogMap).collect(Collectors.toList());
-        byte[] bytes = excelFileService.buildExportFile(cfg, rows);
-        String filename = "login-log-" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(java.time.LocalDateTime.now()) + ext(cfg);
-        writeFile(response, bytes, contentType(cfg), safeName(filename));
+        // 调用Excel导出服务处理登录日志导出
+        excelExportService.exportLoginLog(body, response);
     }
 
     /**
@@ -216,87 +201,8 @@ public class ExcelConfigController {
     @RequirePerm({"sys:user:export", "sys:excel:export:user"})
     @PostMapping("/export/user")
     public void exportUser(@RequestBody ExcelUserExportDTO body, HttpServletResponse response) {
-        String tableCode = body == null ? null : body.getTableCode();
-        SysUserQueryDTO query = body == null ? null : body.getQuery();
-        FxExcelExportConfigDTO cfg = excelConfigService.getExportConfigByCode(tableCode);
-        Long tenantId = TenantContext.get();
-        List<SysUser> list = userMapper.selectList(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
-                .like(query != null && StringUtils.hasText(query.getAccount()), SysUser::getAccount, query.getAccount())
-                .like(query != null && StringUtils.hasText(query.getUsername()), SysUser::getUsername, query.getUsername())
-                .eq(query != null && query.getStatus() != null, SysUser::getStatus, query.getStatus())
-                .eq(tenantId != null, SysUser::getTenantId, tenantId)
-                .eq(tenantId == null && query != null && query.getTenantId() != null, SysUser::getTenantId, query.getTenantId())
-                .orderByDesc(SysUser::getId));
-
-        List<Map<String, Object>> rows = list.stream().map(this::toUserMap).collect(Collectors.toList());
-        byte[] bytes = excelFileService.buildExportFile(cfg, rows);
-        String filename = "sys-user-" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(java.time.LocalDateTime.now()) + ext(cfg);
-        writeFile(response, bytes, contentType(cfg), safeName(filename));
-    }
-
-    private Map<String, Object> toLoginLogMap(LoginLog log) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("account", log.getAccount());
-        m.put("loginIp", log.getLoginIp());
-        m.put("loginRegion", log.getLoginRegion());
-        m.put("userAgent", log.getUserAgent());
-        m.put("loginTime", log.getLoginTime());
-        m.put("logoutTime", log.getLogoutTime());
-        m.put("logoutReason", log.getLogoutReason());
-        m.put("status", log.getStatus());
-        m.put("reason", log.getReason());
-        return m;
-    }
-
-    private Map<String, Object> toUserMap(SysUser u) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("id", u.getId());
-        m.put("account", u.getAccount());
-        m.put("username", u.getUsername());
-        m.put("phone", u.getPhone());
-        m.put("email", u.getEmail());
-        m.put("status", u.getStatus());
-        m.put("gender", u.getGender());
-        m.put("avatar", u.getAvatar());
-        m.put("departmentId", u.getDepartmentId());
-        m.put("positionId", u.getPositionId());
-        m.put("lastLoginTime", u.getLastLoginTime());
-        m.put("lastLoginIp", u.getLastLoginIp());
-        m.put("lastLoginRegion", u.getLastLoginRegion());
-        return m;
-    }
-
-    private String contentType(FxExcelExportConfigDTO cfg) {
-        if (cfg != null && "csv".equalsIgnoreCase(cfg.getExportFormat())) {
-            return "text/csv";
-        }
-        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    }
-
-    private String ext(FxExcelExportConfigDTO cfg) {
-        if (cfg != null && "csv".equalsIgnoreCase(cfg.getExportFormat())) {
-            return ".csv";
-        }
-        return ".xlsx";
-    }
-
-    private String safeName(String filename) {
-        try {
-            return URLEncoder.encode(filename, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
-        } catch (Exception e) {
-            return filename;
-        }
-    }
-
-    private void writeFile(HttpServletResponse response, byte[] bytes, String contentType, String filename) {
-        try {
-            response.setContentType(contentType);
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + filename);
-            response.getOutputStream().write(bytes == null ? new byte[0] : bytes);
-            response.flushBuffer();
-        } catch (Exception ignored) {
-        }
+        // 调用Excel导出服务处理用户数据导出
+        excelExportService.exportUser(body, response);
     }
 
     private Long parseLong(Object obj) {

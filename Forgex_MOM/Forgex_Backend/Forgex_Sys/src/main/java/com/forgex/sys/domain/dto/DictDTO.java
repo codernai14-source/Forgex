@@ -48,6 +48,8 @@ public class DictDTO {
      * 字典值（仅叶子节点）
      */
     private String dictValue;
+
+    private String dictValueI18nJson;
     
     /**
      * 排序号

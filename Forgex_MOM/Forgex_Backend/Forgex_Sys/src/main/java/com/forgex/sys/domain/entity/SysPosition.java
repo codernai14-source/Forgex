@@ -15,6 +15,7 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.dict.DictI18n;
 import lombok.Data;
 
 /**
@@ -34,7 +35,11 @@ public class SysPosition extends BaseEntity {
     private String positionCode;
     
     /** 职位级别 */
+    @DictI18n(nodePathConst = "position_level", targetField = "positionLevelText")
     private Integer positionLevel;
+    
+    /** 职位级别文本（字典翻译结果） */
+    private String positionLevelText;
     
     /** 排序号 */
     private Integer orderNum;
@@ -42,9 +47,15 @@ public class SysPosition extends BaseEntity {
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
     
+    /** 状态文本（字典翻译结果） */
+    private String statusText;
+    
     /** 备注 */
     private String remark;
     
     /** 部门ID */
     private Long departmentId;
+    
+    /** 部门名称（关联查询结果） */
+    private String departmentName;
 }

@@ -43,6 +43,8 @@ public interface IDictService {
      * @return 字典项列表
      */
     List<DictItemVO> getDictItemsByCode(String dictCode, Long tenantId);
+
+    List<DictItemVO> getDictItemsByPath(String nodePath, Long tenantId);
     
     /**
      * 新增字典

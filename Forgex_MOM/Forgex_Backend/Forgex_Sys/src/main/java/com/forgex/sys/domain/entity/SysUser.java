@@ -15,11 +15,13 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.dict.DictI18n;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 管理库用户实体。
@@ -59,7 +61,11 @@ public class SysUser extends BaseEntity {
     private String phone;
 
     /** 性别（0=未知，1=男，2=女） */
+    @DictI18n(nodePathConst = "gender", targetField = "genderText")
     private Integer gender;
+    
+    /** 性别文本（字典翻译结果） */
+    private String genderText;
 
     /** 头像URL */
     private String avatar;
@@ -70,12 +76,21 @@ public class SysUser extends BaseEntity {
 
     /** 所属部门ID */
     private Long departmentId;
+    
+    /** 所属部门名称（关联查询结果） */
+    private String departmentName;
 
     /** 职位ID */
     private Long positionId;
+    
+    /** 职位名称（关联查询结果） */
+    private String positionName;
 
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+    
+    /** 状态文本（字典翻译结果） */
+    private String statusText;
     
     /** 最后登录IP */
     private String lastLoginIp;

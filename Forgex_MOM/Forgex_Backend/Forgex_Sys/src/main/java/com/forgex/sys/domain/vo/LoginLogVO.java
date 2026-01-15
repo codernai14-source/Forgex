@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.domain.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.forgex.common.dict.DictI18n;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -83,7 +84,10 @@ public class LoginLogVO {
     /**
      * 登录状态：1-成功，0-失败
      */
+    @DictI18n(nodePathConst = "login_status", targetField = "statusText")
     private Integer status;
+
+    private String statusText;
     
     /**
      * 失败原因

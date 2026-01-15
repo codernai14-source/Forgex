@@ -59,6 +59,14 @@ public class SysDict extends BaseEntity {
      * 字典值（仅叶子节点）
      */
     private String dictValue;
+
+    private String dictValueI18nJson;
+
+    private String nodePath;
+
+    private Integer level;
+
+    private Integer childrenCount;
     
     /**
      * 排序号

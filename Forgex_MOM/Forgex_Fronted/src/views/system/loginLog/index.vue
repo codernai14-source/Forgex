@@ -14,7 +14,7 @@
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
           <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.status === 1 ? '成功' : '失败' }}
+            {{ record.statusText || (record.status === 1 ? '成功' : '失败') }}
           </a-tag>
         </template>
       </template>

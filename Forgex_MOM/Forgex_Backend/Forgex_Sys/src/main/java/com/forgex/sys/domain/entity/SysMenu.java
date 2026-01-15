@@ -15,6 +15,7 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.dict.DictI18n;
 import lombok.Data;
 
 /**
@@ -42,31 +43,65 @@ import lombok.Data;
 public class SysMenu extends BaseEntity {
     /** 模块ID */
     private Long moduleId;
+    
+    /** 模块名称（关联查询结果） */
+    private String moduleName;
+    
     /** 父菜单ID */
     private Long parentId;
+    
+    /** 父菜单名称（关联查询结果） */
+    private String parentName;
+    
     /** 菜单类型 */
+    @DictI18n(nodePathConst = "menu_type", targetField = "typeText")
     private String type;
+    
+    /** 菜单类型文本（字典翻译结果） */
+    private String typeText;
+    
     /** 菜单层级：1=一级菜单(目录), 2=二级菜单, 3=三级菜单 */
     private Integer menuLevel;
+    
     /** 菜单路径 */
     private String path;
+    
     /** 菜单名称 */
     private String name;
+    
     private String nameI18nJson;
+    
     /** 菜单图标 */
     private String icon;
+    
     /** 组件键 */
     private String componentKey;
+    
     /** 权限键 */
     private String permKey;
+    
     /** 菜单模式：embedded=内嵌，external=外联 */
+    @DictI18n(nodePathConst = "menu_mode", targetField = "menuModeText")
     private String menuMode;
+    
+    /** 菜单模式文本（字典翻译结果） */
+    private String menuModeText;
+    
     /** 外联URL */
     private String externalUrl;
+    
     /** 排序号 */
     private Integer orderNum;
+    
     /** 是否可见：false=隐藏，true=显示 */
     private Boolean visible;
+    
+    /** 是否可见文本（字典翻译结果） */
+    private String visibleText;
+    
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+    
+    /** 状态文本（字典翻译结果） */
+    private String statusText;
 }

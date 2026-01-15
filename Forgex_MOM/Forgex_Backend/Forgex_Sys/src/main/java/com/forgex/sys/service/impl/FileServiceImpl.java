@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.forgex.sys.service.FileService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -49,19 +50,25 @@ import java.util.UUID;
 public class FileServiceImpl implements FileService {
 
     /**
-     * 获取基础存储目录（按系统类型）
+     * 文件上传路径
+     */
+    @Value("${file.upload.path:./uploads}")
+    private String uploadPath;
+
+    /**
+     * 文件访问前缀
+     */
+    @Value("${file.access.prefix:/uploads}")
+    private String accessPrefix;
+
+    /**
+     * 获取基础存储目录
      * 
      * @return 存储目录路径
      */
     @Override
     public Path getBaseDir() {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return Paths.get("D:", "forgex", "cache");
-        } else {
-            String home = System.getProperty("user.home");
-            return Paths.get(home == null ? "/tmp" : home, "forgex", "cache");
-        }
+        return Paths.get(uploadPath);
     }
 
     /**
@@ -86,7 +93,7 @@ public class FileServiceImpl implements FileService {
         Path target = dir.resolve(name);
         Files.copy(file.getInputStream(), target);
         
-        return "/api/sys/file/" + name;
+        return accessPrefix + "/" + name;
     }
 
     /**

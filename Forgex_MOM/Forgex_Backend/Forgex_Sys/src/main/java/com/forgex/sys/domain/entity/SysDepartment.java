@@ -15,6 +15,7 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.dict.DictI18n;
 import lombok.Data;
 
 /**
@@ -31,11 +32,22 @@ public class SysDepartment extends BaseEntity {
     /** 父部门ID */
     private Long parentId;
     
+    /** 父部门名称（关联查询结果） */
+    private String parentName;
+    
     /** 组织类型：group=集团, company=公司, subsidiary=子公司, department=部门, team=班组 */
+    @DictI18n(nodePathConst = "org_type", targetField = "orgTypeText")
     private String orgType;
     
+    /** 组织类型文本（字典翻译结果） */
+    private String orgTypeText;
+    
     /** 组织层级：1=集团, 2=公司, 3=子公司, 4=部门, 5=班组 */
+    @DictI18n(nodePathConst = "org_level", targetField = "orgLevelText")
     private Integer orgLevel;
+    
+    /** 组织层级文本（字典翻译结果） */
+    private String orgLevelText;
     
     /** 部门名称 */
     private String deptName;
@@ -57,4 +69,7 @@ public class SysDepartment extends BaseEntity {
     
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+    
+    /** 状态文本（字典翻译结果） */
+    private String statusText;
 }

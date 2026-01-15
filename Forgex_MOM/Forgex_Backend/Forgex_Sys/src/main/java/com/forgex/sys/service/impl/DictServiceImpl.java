@@ -14,7 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.forgex.common.web.R;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.forgex.common.i18n.LangContext;
 import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.entity.SysDict;
 import com.forgex.sys.domain.vo.DictItemVO;
@@ -29,10 +30,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -98,8 +101,9 @@ public class DictServiceImpl implements IDictService {
      */
     @Override
     public List<DictItemVO> getDictItemsByCode(String dictCode, Long tenantId) {
+        String lang = LangContext.get();
         // 先从缓存读取
-        String cacheKey = String.format("dict:%d:%s", tenantId, dictCode);
+        String cacheKey = String.format("dict:%d:%s:code:%s", tenantId, lang, dictCode);
         try {
             String cacheValue = redisTemplate.opsForValue().get(cacheKey);
             if (StringUtils.hasText(cacheValue)) {
@@ -114,6 +118,7 @@ public class DictServiceImpl implements IDictService {
         // 1. 查询字典类型
         SysDict dictType = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getDictCode, dictCode)
+                .eq(SysDict::getParentId, 0L)
                 .eq(SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .last("limit 1"));
@@ -134,7 +139,7 @@ public class DictServiceImpl implements IDictService {
         // 3. 转换为 VO
         List<DictItemVO> items = dictItems.stream().map(dict -> {
             DictItemVO vo = new DictItemVO();
-            vo.setLabel(dict.getDictName());
+            vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
             vo.setValue(dict.getDictValue());
             return vo;
         }).collect(Collectors.toList());
@@ -150,6 +155,49 @@ public class DictServiceImpl implements IDictService {
         
         return items;
     }
+
+    @Override
+    public List<DictItemVO> getDictItemsByPath(String nodePath, Long tenantId) {
+        String lang = LangContext.get();
+        String cacheKey = String.format("dict:%d:%s:path:%s", tenantId, lang, nodePath);
+        try {
+            String cacheValue = redisTemplate.opsForValue().get(cacheKey);
+            if (StringUtils.hasText(cacheValue)) {
+                return objectMapper.readValue(cacheValue, new TypeReference<List<DictItemVO>>() {});
+            }
+        } catch (Exception e) {
+            log.warn("读取字典缓存失败：{}", cacheKey, e);
+        }
+
+        SysDict node = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getNodePath, nodePath)
+                .last("limit 1"));
+        if (node == null) {
+            return new ArrayList<>();
+        }
+        List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getParentId, node.getId())
+                .eq(SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getStatus, 1)
+                .orderByAsc(SysDict::getOrderNum));
+        List<DictItemVO> items = dictItems.stream().map(dict -> {
+            DictItemVO vo = new DictItemVO();
+            vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
+            vo.setValue(dict.getDictValue());
+            return vo;
+        }).collect(Collectors.toList());
+
+        try {
+            String jsonValue = objectMapper.writeValueAsString(items);
+            redisTemplate.opsForValue().set(cacheKey, jsonValue, 24, TimeUnit.HOURS);
+        } catch (Exception e) {
+            log.warn("写入字典缓存失败：{}", cacheKey, e);
+        }
+        return items;
+    }
     
     /**
      * 新增字典
@@ -162,24 +210,44 @@ public class DictServiceImpl implements IDictService {
      */
     @Override
     public void addDict(DictDTO dictDTO) {
+        Long tenantId = dictDTO.getTenantId();
         SysDict dict = new SysDict();
         BeanUtils.copyProperties(dictDTO, dict);
         dict.setCreateTime(LocalDateTime.now());
         dict.setUpdateTime(LocalDateTime.now());
         dict.setDeleted(false);
-        
-        dictMapper.insert(dict);
-        
-        // 如果是根节点，清除对应缓存
-        if (StringUtils.hasText(dictDTO.getDictCode())) {
-            clearDictCache(dictDTO.getDictCode(), dictDTO.getTenantId());
-        } else if (dictDTO.getParentId() != null && dictDTO.getParentId() > 0) {
-            // 如果是子节点，查询父节点的 dictCode 并清除缓存
-            SysDict parent = dictMapper.selectById(dictDTO.getParentId());
-            if (parent != null && StringUtils.hasText(parent.getDictCode())) {
-                clearDictCache(parent.getDictCode(), dictDTO.getTenantId());
+
+        if (!StringUtils.hasText(dict.getDictCode())) {
+            if (StringUtils.hasText(dict.getDictValue())) {
+                dict.setDictCode(dict.getDictValue());
+            } else if (StringUtils.hasText(dict.getDictName())) {
+                dict.setDictCode(dict.getDictName());
             }
         }
+
+        SysDict parent = null;
+        if (dict.getParentId() != null && dict.getParentId() > 0) {
+            parent = dictMapper.selectById(dict.getParentId());
+            if (parent == null || Boolean.TRUE.equals(parent.getDeleted())) {
+                throw new RuntimeException("父节点不存在");
+            }
+        }
+        String nodePath = parent == null ? dict.getDictCode() : parent.getNodePath() + "/" + dict.getDictCode();
+        dict.setNodePath(nodePath);
+        dict.setLevel(parent == null ? 1 : (parent.getLevel() == null ? 2 : parent.getLevel() + 1));
+        dict.setChildrenCount(0);
+        
+        dictMapper.insert(dict);
+
+        if (parent != null) {
+            dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
+                    .eq(SysDict::getId, parent.getId())
+                    .setSql("children_count = children_count + 1")
+                    .set(SysDict::getUpdateTime, LocalDateTime.now()));
+        }
+
+        clearDictCache(null, tenantId);
+        
     }
     
     /**
@@ -197,25 +265,76 @@ public class DictServiceImpl implements IDictService {
         if (dictDTO.getId() == null) {
             throw new RuntimeException("字典ID不能为空");
         }
-        
+
+        SysDict old = dictMapper.selectById(dictDTO.getId());
+        if (old == null || Boolean.TRUE.equals(old.getDeleted())) {
+            throw new RuntimeException("字典不存在");
+        }
+
         SysDict dict = new SysDict();
         BeanUtils.copyProperties(dictDTO, dict);
         dict.setUpdateTime(LocalDateTime.now());
-        
-        dictMapper.updateById(dict);
-        
-        // 清除缓存
-        SysDict oldDict = dictMapper.selectById(dictDTO.getId());
-        if (oldDict != null) {
-            if (StringUtils.hasText(oldDict.getDictCode())) {
-                clearDictCache(oldDict.getDictCode(), oldDict.getTenantId());
-            } else if (oldDict.getParentId() != null && oldDict.getParentId() > 0) {
-                SysDict parent = dictMapper.selectById(oldDict.getParentId());
-                if (parent != null && StringUtils.hasText(parent.getDictCode())) {
-                    clearDictCache(parent.getDictCode(), oldDict.getTenantId());
-                }
+
+        if (!StringUtils.hasText(dict.getDictCode())) {
+            dict.setDictCode(old.getDictCode());
+        }
+        if (dict.getParentId() == null) {
+            dict.setParentId(old.getParentId());
+        }
+
+        SysDict newParent = null;
+        if (dict.getParentId() != null && dict.getParentId() > 0) {
+            newParent = dictMapper.selectById(dict.getParentId());
+            if (newParent == null || Boolean.TRUE.equals(newParent.getDeleted())) {
+                throw new RuntimeException("父节点不存在");
             }
         }
+
+        String newPath = newParent == null ? dict.getDictCode() : newParent.getNodePath() + "/" + dict.getDictCode();
+        Integer newLevel = newParent == null ? 1 : (newParent.getLevel() == null ? 2 : newParent.getLevel() + 1);
+
+        boolean pathChanged = old.getNodePath() != null && !old.getNodePath().equals(newPath);
+        boolean parentChanged = old.getParentId() != null && !old.getParentId().equals(dict.getParentId());
+
+        dict.setNodePath(newPath);
+        dict.setLevel(newLevel);
+
+        dictMapper.updateById(dict);
+
+        if (pathChanged) {
+            List<SysDict> descendants = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
+                    .eq(SysDict::getTenantId, old.getTenantId())
+                    .eq(SysDict::getDeleted, false)
+                    .likeRight(SysDict::getNodePath, old.getNodePath() + "/"));
+            for (SysDict d : descendants) {
+                String suffix = d.getNodePath().substring(old.getNodePath().length());
+                SysDict u = new SysDict();
+                u.setId(d.getId());
+                u.setNodePath(newPath + suffix);
+                if (d.getLevel() != null && old.getLevel() != null) {
+                    u.setLevel(d.getLevel() - old.getLevel() + newLevel);
+                }
+                u.setUpdateTime(LocalDateTime.now());
+                dictMapper.updateById(u);
+            }
+        }
+
+        if (parentChanged) {
+            if (old.getParentId() != null && old.getParentId() > 0) {
+                dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
+                        .eq(SysDict::getId, old.getParentId())
+                        .setSql("children_count = GREATEST(children_count - 1, 0)")
+                        .set(SysDict::getUpdateTime, LocalDateTime.now()));
+            }
+            if (dict.getParentId() != null && dict.getParentId() > 0) {
+                dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
+                        .eq(SysDict::getId, dict.getParentId())
+                        .setSql("children_count = children_count + 1")
+                        .set(SysDict::getUpdateTime, LocalDateTime.now()));
+            }
+        }
+
+        clearDictCache(null, old.getTenantId());
     }
     
     /**
@@ -235,7 +354,11 @@ public class DictServiceImpl implements IDictService {
             throw new RuntimeException("字典ID不能为空");
         }
         
-        // 检查是否有子节点
+        SysDict old = dictMapper.selectById(id);
+        if (old == null || Boolean.TRUE.equals(old.getDeleted())) {
+            throw new RuntimeException("字典不存在");
+        }
+
         Long childCount = dictMapper.selectCount(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getParentId, id)
                 .eq(SysDict::getDeleted, false));
@@ -251,19 +374,15 @@ public class DictServiceImpl implements IDictService {
         dict.setUpdateTime(LocalDateTime.now());
         
         dictMapper.updateById(dict);
-        
-        // 清除缓存
-        SysDict oldDict = dictMapper.selectById(id);
-        if (oldDict != null) {
-            if (StringUtils.hasText(oldDict.getDictCode())) {
-                clearDictCache(oldDict.getDictCode(), oldDict.getTenantId());
-            } else if (oldDict.getParentId() != null && oldDict.getParentId() > 0) {
-                SysDict parent = dictMapper.selectById(oldDict.getParentId());
-                if (parent != null && StringUtils.hasText(parent.getDictCode())) {
-                    clearDictCache(parent.getDictCode(), oldDict.getTenantId());
-                }
-            }
+
+        if (old.getParentId() != null && old.getParentId() > 0) {
+            dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
+                    .eq(SysDict::getId, old.getParentId())
+                    .setSql("children_count = GREATEST(children_count - 1, 0)")
+                    .set(SysDict::getUpdateTime, LocalDateTime.now()));
         }
+
+        clearDictCache(null, old.getTenantId());
     }
     
     /**
@@ -271,12 +390,14 @@ public class DictServiceImpl implements IDictService {
      */
     @Override
     public void clearDictCache(String dictCode, Long tenantId) {
-        String cacheKey = String.format("dict:%d:%s", tenantId, dictCode);
         try {
-            redisTemplate.delete(cacheKey);
-            log.debug("清除字典缓存：{}", cacheKey);
+            String prefix = "dict:" + tenantId + ":";
+            Set<String> keys = redisTemplate.keys(prefix + "*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
         } catch (Exception e) {
-            log.warn("清除字典缓存失败：{}", cacheKey, e);
+            log.warn("清除字典缓存失败：tenantId={}", tenantId, e);
         }
     }
     
@@ -296,5 +417,59 @@ public class DictServiceImpl implements IDictService {
         }
         
         return result;
+    }
+
+    private String resolveI18nText(String i18nJson, String fallback) {
+        if (!StringUtils.hasText(i18nJson)) {
+            return fallback;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(i18nJson);
+            String lang = LangContext.get();
+            String v = getText(node, lang);
+            if (StringUtils.hasText(v)) {
+                return v;
+            }
+            if (StringUtils.hasText(lang)) {
+                int idx = lang.indexOf('-');
+                if (idx > 0) {
+                    v = getText(node, lang.substring(0, idx));
+                    if (StringUtils.hasText(v)) {
+                        return v;
+                    }
+                }
+            }
+            v = getText(node, "zh-CN");
+            if (StringUtils.hasText(v)) {
+                return v;
+            }
+            v = getText(node, "zh");
+            if (StringUtils.hasText(v)) {
+                return v;
+            }
+            if (node.isObject()) {
+                java.util.Iterator<java.util.Map.Entry<String, JsonNode>> it = node.fields();
+                if (it.hasNext()) {
+                    JsonNode first = it.next().getValue();
+                    if (first != null && first.isTextual() && StringUtils.hasText(first.asText())) {
+                        return first.asText();
+                    }
+                }
+            }
+            return fallback;
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private String getText(JsonNode node, String key) {
+        if (node == null || !node.isObject() || !StringUtils.hasText(key)) {
+            return null;
+        }
+        JsonNode v = node.get(key);
+        if (v != null && v.isTextual() && StringUtils.hasText(v.asText())) {
+            return v.asText();
+        }
+        return null;
     }
 }

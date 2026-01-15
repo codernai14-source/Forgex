@@ -190,6 +190,35 @@ CREATE TABLE IF NOT EXISTS sys_tenant_ignore (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='租户隔离跳过配置表';
 
 -- ================================================
+-- 数据字典表（树结构，支持多语言）
+-- ================================================
+CREATE TABLE IF NOT EXISTS sys_dict (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    parent_id BIGINT NOT NULL DEFAULT 0 COMMENT '父节点ID（0表示根节点）',
+    dict_name VARCHAR(100) NOT NULL COMMENT '字典名称(兼容字段)',
+    dict_code VARCHAR(50) NOT NULL COMMENT '字典编码',
+    dict_value VARCHAR(50) NULL COMMENT '字典键',
+    dict_value_i18n_json TEXT NULL COMMENT '字典显示值国际化(JSON)',
+    node_path VARCHAR(512) NOT NULL COMMENT '节点路径(dict_code路径，用/分割)',
+    level INT NOT NULL DEFAULT 1 COMMENT '层级',
+    children_count INT NOT NULL DEFAULT 0 COMMENT '直接子节点数量',
+    order_num INT NOT NULL DEFAULT 0 COMMENT '排序号',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1启用，0禁用',
+    remark VARCHAR(500) NULL COMMENT '备注',
+    tenant_id BIGINT NOT NULL COMMENT '租户ID',
+    create_by BIGINT NULL COMMENT '创建人',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_by BIGINT NULL COMMENT '修改人',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记：0未删除，1已删除',
+    INDEX idx_dict_parent (parent_id),
+    INDEX idx_dict_code (dict_code),
+    INDEX idx_dict_tenant (tenant_id),
+    UNIQUE KEY uk_dict_sibling_code (tenant_id, parent_id, dict_code, deleted),
+    UNIQUE KEY uk_dict_path (tenant_id, node_path, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据字典表';
+
+-- ================================================
 -- 模块表
 -- ================================================
 CREATE TABLE IF NOT EXISTS sys_module (
