@@ -11,32 +11,33 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.sys.domain.entity;
+package com.forgex.sys.domain.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.forgex.common.dict.DictI18n;
 import lombok.Data;
 
 import java.util.List;
 
 /**
- * 用户附属信息实体
- * 
- * 映射表：sys_user_profile
- * 用于存储用户的扩展信息，如政治面貌、家庭住址、工作经历等
- * 仅包含数据库表中实际存在的持久化字段
+ * 用户附属信息视图对象
+ * 用于向前端返回用户扩展信息，包含展示需要的衍生字段
+ *
+ * @author coder_nai
+ * @version 1.0.0
  */
 @Data
-@TableName(value = "sys_user_profile", autoResultMap = true)
-public class SysUserProfile extends BaseEntity {
+public class SysUserProfileVO extends BaseEntity {
     
     /** 用户ID */
     private Long userId;
     
     /** 政治面貌 */
+    @DictI18n(nodePathConst = "political_status", targetField = "politicalStatusText")
     private String politicalStatus;
+    
+    /** 政治面貌文本（字典翻译结果） */
+    private String politicalStatusText;
     
     /** 家庭住址 */
     private String homeAddress;
@@ -51,7 +52,11 @@ public class SysUserProfile extends BaseEntity {
     private String referrer;
     
     /** 学历 */
+    @DictI18n(nodePathConst = "education", targetField = "educationText")
     private String education;
+    
+    /** 学历文本（字典翻译结果） */
+    private String educationText;
 
     /** 籍贯 */
     private String birthPlace;
@@ -60,7 +65,6 @@ public class SysUserProfile extends BaseEntity {
     private String intro;
 
     /** 工作经历（JSON格式） */
-    @TableField(typeHandler = JacksonTypeHandler.class)
     private List<WorkHistory> workHistory;
     
     /**

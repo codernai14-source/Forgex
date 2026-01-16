@@ -24,6 +24,7 @@ import com.forgex.sys.domain.entity.SysPosition;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserProfile;
 import com.forgex.sys.domain.entity.SysUserTenant;
+import com.forgex.sys.domain.vo.SysUserVO;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
 import com.forgex.sys.mapper.SysUserMapper;
@@ -461,5 +462,64 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         dto.setTenantList(tenantList);
         
         return dto;
+    }
+    
+    /**
+     * DTO转VO
+     * <p>将用户DTO转换为VO，用于向前端返回数据。</p>
+     * @param dto 用户DTO
+     * @return 用户VO
+     */
+    private SysUserVO convertToVO(SysUserDTO dto) {
+        SysUserVO vo = new SysUserVO();
+        BeanUtils.copyProperties(dto, vo);
+        return vo;
+    }
+    
+    /**
+     * 实体转VO
+     * <p>将用户实体转换为VO，并关联查询部门名称、职位名称。</p>
+     * @param user 用户实体
+     * @return 用户VO
+     */
+    private SysUserVO convertToVO(SysUser user) {
+        return convertToVO(convertToDTO(user));
+    }
+    
+    /**
+     * 分页查询用户列表（返回VO）
+     * 
+     * @param page 分页参数
+     * @param query 查询条件
+     * @return 用户分页数据
+     */
+    @Override
+    public IPage<SysUserVO> pageUserVOs(Page<SysUser> page, SysUserQueryDTO query) {
+        IPage<SysUserDTO> dtoPage = pageUsers(page, query);
+        return dtoPage.convert(this::convertToVO);
+    }
+    
+    /**
+     * 查询用户列表（返回VO）
+     * 
+     * @param query 查询条件
+     * @return 用户列表
+     */
+    @Override
+    public List<SysUserVO> listUserVOs(SysUserQueryDTO query) {
+        List<SysUserDTO> dtos = listUsers(query);
+        return dtos.stream().map(this::convertToVO).collect(Collectors.toList());
+    }
+    
+    /**
+     * 根据ID获取用户详情（返回VO）
+     * 
+     * @param id 用户ID
+     * @return 用户详情
+     */
+    @Override
+    public SysUserVO getUserVOById(Long id) {
+        SysUserDTO dto = getUserById(id);
+        return convertToVO(dto);
     }
 }

@@ -24,6 +24,7 @@ import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.dto.SysUserRoleQueryDTO;
 import com.forgex.sys.domain.dto.SysUserRoleSaveDTO;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.vo.SysUserVO;
 import com.forgex.sys.service.ISysUserService;
 import com.forgex.sys.service.ISysUserRoleService;
 import com.forgex.sys.validator.UserValidator;
@@ -65,28 +66,28 @@ public class UserController {
      * 分页查询用户列表
      */
     @PostMapping("/page")
-    public R<IPage<SysUserDTO>> page(@RequestBody SysUserQueryDTO query) {
+    public R<IPage<SysUserVO>> page(@RequestBody SysUserQueryDTO query) {
         // 使用 BaseGetParam 中的 pageNum 和 pageSize
         Page<SysUser> page = new Page<>(query.getPageNum(), query.getPageSize());
-        return R.ok(userService.pageUsers(page, query));
+        return R.ok(userService.pageUserVOs(page, query));
     }
     
     /**
      * 查询用户列表（不分页）
      */
     @PostMapping("/list")
-    public R<List<SysUserDTO>> list(@RequestBody SysUserQueryDTO query) {
-        return R.ok(userService.listUsers(query));
+    public R<List<SysUserVO>> list(@RequestBody SysUserQueryDTO query) {
+        return R.ok(userService.listUserVOs(query));
     }
     
     /**
      * 根据ID获取用户详情
      */
     @PostMapping("/detail")
-    public R<SysUserDTO> detail(@RequestBody Map<String, Object> body) {
+    public R<SysUserVO> detail(@RequestBody Map<String, Object> body) {
         Long id = parseLong(body.get("id"));
         userValidator.validateId(id);
-        return R.ok(userService.getUserById(id));
+        return R.ok(userService.getUserVOById(id));
     }
     
     /**

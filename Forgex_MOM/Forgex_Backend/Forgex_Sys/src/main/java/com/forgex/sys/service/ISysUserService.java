@@ -20,6 +20,7 @@ import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserTenant;
+import com.forgex.sys.domain.vo.SysUserVO;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ import java.util.List;
 public interface ISysUserService extends IService<SysUser> {
     
     /**
-     * 分页查询用户列表
+     * 分页查询用户列表（返回DTO）
      * 
      * @param page 分页参数
      * @param query 查询条件
@@ -41,7 +42,7 @@ public interface ISysUserService extends IService<SysUser> {
     IPage<SysUserDTO> pageUsers(Page<SysUser> page, SysUserQueryDTO query);
     
     /**
-     * 查询用户列表
+     * 查询用户列表（返回DTO）
      * 
      * @param query 查询条件
      * @return 用户列表
@@ -49,12 +50,37 @@ public interface ISysUserService extends IService<SysUser> {
     List<SysUserDTO> listUsers(SysUserQueryDTO query);
     
     /**
-     * 根据ID获取用户详情
+     * 根据ID获取用户详情（返回DTO）
      * 
      * @param id 用户ID
      * @return 用户详情
      */
     SysUserDTO getUserById(Long id);
+    
+    /**
+     * 分页查询用户列表（返回VO）
+     * 
+     * @param page 分页参数
+     * @param query 查询条件
+     * @return 用户分页数据
+     */
+    IPage<SysUserVO> pageUserVOs(Page<SysUser> page, SysUserQueryDTO query);
+    
+    /**
+     * 查询用户列表（返回VO）
+     * 
+     * @param query 查询条件
+     * @return 用户列表
+     */
+    List<SysUserVO> listUserVOs(SysUserQueryDTO query);
+    
+    /**
+     * 根据ID获取用户详情（返回VO）
+     * 
+     * @param id 用户ID
+     * @return 用户详情
+     */
+    SysUserVO getUserVOById(Long id);
     
     /**
      * 新增用户
