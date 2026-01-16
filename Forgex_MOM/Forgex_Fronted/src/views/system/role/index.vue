@@ -65,10 +65,12 @@
         </a-space>
       </template>
 
-      <a-table
-        :columns="columns"
-        :data-source="roles"
-        :loading="loading"
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'RoleTable'"
+        :request="handleRequest"
+        :fallback-config="fallbackConfig"
+        :dict-options="dictOptions"
         :row-selection="{
           selectedRowKeys,
           onChange: onSelectChange
@@ -76,49 +78,47 @@
         row-key="id"
         :pagination="false"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === true ? 'green' : 'red'">
-              {{ record.status === true ? '启用' : '禁用' }}
-            </a-tag>
-          </template>
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a-button
-                type="link"
-                size="small"
-                @click="openEdit(record)"
-                v-permission="'sys:role:edit'"
-              >
-                编辑
-              </a-button>
-              <a-button
-                type="link"
-                size="small"
-                @click="openGrant(record)"
-                v-permission="'sys:role:authMenu'"
-              >
-                菜单授权
-              </a-button>
-              <a-popconfirm
-                title="确定要删除这个角色吗？"
-                :ok-text="$t('common.confirm')"
-                :cancel-text="$t('common.cancel')"
-                @confirm="handleDelete(record.id)"
-              >
-                <a-button
-                  type="link"
-                  size="small"
-                  danger
-                  v-permission="'sys:role:delete'"
-                >
-                  删除
-                </a-button>
-              </a-popconfirm>
-            </a-space>
-          </template>
+        <template #status="{ record }">
+          <a-tag :color="record.status === true ? 'green' : 'red'">
+            {{ record.status === true ? '启用' : '禁用' }}
+          </a-tag>
         </template>
-      </a-table>
+        <template #action="{ record }">
+          <a-space>
+            <a-button
+              type="link"
+              size="small"
+              @click="openEdit(record)"
+              v-permission="'sys:role:edit'"
+            >
+              编辑
+            </a-button>
+            <a-button
+              type="link"
+              size="small"
+              @click="openGrant(record)"
+              v-permission="'sys:role:authMenu'"
+            >
+              菜单授权
+            </a-button>
+            <a-popconfirm
+              title="确定要删除这个角色吗？"
+              :ok-text="$t('common.confirm')"
+              :cancel-text="$t('common.cancel')"
+              @confirm="handleDelete(record.id)"
+            >
+              <a-button
+                type="link"
+                size="small"
+                danger
+                v-permission="'sys:role:delete'"
+              >
+                删除
+              </a-button>
+            </a-popconfirm>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
     </a-card>
 
     <!-- 新增/编辑弹窗 -->
@@ -244,9 +244,7 @@ import {
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
-import { grantRoleMenus, getRoleAuthData } from '@/api/system/role'
-import { useRole } from './hooks/useRole'
-import { useRoleForm } from './hooks/useRoleForm'
+import { grantRoleMenus, getRoleAuthData, listRoles, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import type { Role } from './types'
 
 interface MenuEntity {
@@ -271,45 +269,188 @@ interface TreeNode {
   children?: TreeNode[]
 }
 
-// 表格列定义
-const columns = [
-  { title: '角色编码', dataIndex: 'roleCode', key: 'roleCode', width: 150 },
-  { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 150 },
-  { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
-  { title: '操作', key: 'action', fixed: 'right', width: 240 }
-]
+// 搜索表单
+const searchForm = ref({
+  roleCode: '',
+  roleName: '',
+  status: undefined
+})
 
-// 使用Hooks
-const {
-  loading,
-  roles,
-  searchForm,
-  selectedRowKeys,
-  loadRoles,
-  handleSearch,
-  handleReset,
-  handleDelete,
-  handleBatchDelete,
-  onSelectChange
-} = useRole()
+// 选中的行
+const selectedRowKeys = ref<string[]>([])
 
-const {
-  formRef,
-  visible,
-  loading: formLoading,
-  isEdit,
-  formData,
-  rules,
-  openAdd,
-  openEdit,
-  handleSubmit,
-  handleCancel
-} = useRoleForm(loadRoles)
+// 表格相关
+const tableRef = ref()
+const loading = ref(false)
+
+// fallback配置
+const fallbackConfig = ref({
+  columns: [
+    { title: '角色编码', dataIndex: 'roleCode', key: 'roleCode', width: 150 },
+    { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 150 },
+    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
+    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
+    { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
+    { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
+    { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
+    { title: '操作', key: 'action', fixed: 'right', width: 240 }
+  ]
+})
+
+// 字典配置
+const dictOptions = ref({
+  status: {
+    1: { text: '启用', color: 'green' },
+    0: { text: '禁用', color: 'red' }
+  }
+})
+
+/**
+ * 处理表格数据请求
+ */
+const handleRequest = async (params: any) => {
+  loading.value = true
+  try {
+    const res = await listRoles({
+      ...searchForm.value,
+      ...params
+    })
+    return {
+      success: true,
+      data: res.data,
+      total: res.total
+    }
+  } catch (error) {
+    message.error('获取角色列表失败')
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 搜索
+ */
+const handleSearch = async () => {
+  await tableRef.value?.refresh()
+}
+
+/**
+ * 重置搜索
+ */
+const handleReset = async () => {
+  searchForm.value = {
+    roleCode: '',
+    roleName: '',
+    status: undefined
+  }
+  await tableRef.value?.refresh()
+}
+
+/**
+ * 行选择变化
+ */
+const onSelectChange = (keys: string[]) => {
+  selectedRowKeys.value = keys
+}
+
+/**
+ * 删除角色
+ */
+const handleDelete = async (id: string) => {
+  try {
+    await deleteRole(id)
+    message.success('删除成功')
+    await tableRef.value?.refresh()
+  } catch (error) {
+    message.error('删除失败')
+  }
+}
+
+/**
+ * 批量删除角色
+ */
+const handleBatchDelete = async () => {
+  if (selectedRowKeys.value.length === 0) {
+    message.warning('请选择要删除的角色')
+    return
+  }
+  try {
+    await batchDeleteRoles(selectedRowKeys.value)
+    message.success('批量删除成功')
+    await tableRef.value?.refresh()
+    selectedRowKeys.value = []
+  } catch (error) {
+    message.error('批量删除失败')
+  }
+}
+
+// 表单相关
+const formRef = ref()
+const visible = ref(false)
+const formLoading = ref(false)
+const isEdit = ref(false)
+const formData = ref({
+  roleCode: '',
+  roleName: '',
+  description: '',
+  status: true
+})
+
+const rules = ref({
+  roleCode: [
+    { required: true, message: '请输入角色编码', trigger: 'blur' },
+    { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
+  ],
+  roleName: [
+    { required: true, message: '请输入角色名称', trigger: 'blur' },
+    { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
+  ]
+})
+
+/**
+ * 打开新增弹窗
+ */
+const openAdd = () => {
+  isEdit.value = false
+  formData.value = {
+    roleCode: '',
+    roleName: '',
+    description: '',
+    status: true
+  }
+  visible.value = true
+}
+
+/**
+ * 打开编辑弹窗
+ */
+const openEdit = (record: Role) => {
+  isEdit.value = true
+  formData.value = { ...record }
+  visible.value = true
+}
+
+/**
+ * 提交表单
+ */
+const handleSubmit = async () => {
+  // 这里需要根据实际情况实现表单提交逻辑
+  await tableRef.value?.refresh()
+  visible.value = false
+}
+
+/**
+ * 取消表单
+ */
+const handleCancel = () => {
+  visible.value = false
+}
 
 // 菜单授权相关
 const grantVisible = ref(false)

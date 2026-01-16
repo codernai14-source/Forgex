@@ -69,67 +69,55 @@
       </div>
 
       <!-- 数据表格 -->
-      <a-table
-        :columns="columns"
-        :data-source="dataSource"
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'ModuleTable'"
+        :request="handleRequest"
+        :fallback-config="fallbackConfig"
+        :dict-options="dictOptions"
         :loading="loading"
-        :pagination="{
-          current: queryParams.pageNum,
-          pageSize: queryParams.pageSize,
-          total: total,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total: number) => `共 ${total} 条`
-        }"
         :row-selection="{
           selectedRowKeys: selectedRowKeys,
           onChange: handleSelectionChange
         }"
         row-key="id"
-        @change="handleTableChange"
       >
-        <template #bodyCell="{ column, record }">
-          <!-- 图标 -->
-          <template v-if="column.key === 'icon'">
-            <component :is="record.icon" v-if="record.icon" />
-            <span v-else>-</span>
-          </template>
-
-          <!-- 可见性 -->
-          <template v-else-if="column.key === 'visible'">
-            <a-tag :color="record.visible === 1 ? 'success' : 'default'">
-              {{ record.visible === 1 ? '显示' : '隐藏' }}
-            </a-tag>
-          </template>
-
-          <!-- 状态 -->
-          <template v-else-if="column.key === 'status'">
-            <a-tag :color="record.status === 1 ? 'success' : 'error'">
-              {{ record.status === 1 ? '启用' : '禁用' }}
-            </a-tag>
-          </template>
-
-          <!-- 操作 -->
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a
-                v-permission="'sys:module:edit'"
-                @click="openEditDialog(record.id)"
-              >
-                编辑
-              </a>
-              <a-divider type="vertical" />
-              <a
-                v-permission="'sys:module:delete'"
-                style="color: #ff4d4f"
-                @click="handleDeleteConfirm(record.id)"
-              >
-                删除
-              </a>
-            </a-space>
-          </template>
+        <template #icon="{ record }">
+          <component :is="record.icon" v-if="record.icon" />
+          <span v-else>-</span>
         </template>
-      </a-table>
+
+        <template #visible="{ record }">
+          <a-tag :color="record.visible === 1 ? 'success' : 'default'">
+            {{ record.visible === 1 ? '显示' : '隐藏' }}
+          </a-tag>
+        </template>
+
+        <template #status="{ record }">
+          <a-tag :color="record.status === 1 ? 'success' : 'error'">
+            {{ record.status === 1 ? '启用' : '禁用' }}
+          </a-tag>
+        </template>
+
+        <template #action="{ record }">
+          <a-space>
+            <a
+              v-permission="'sys:module:edit'"
+              @click="openEditDialog(record.id)"
+            >
+              编辑
+            </a>
+            <a-divider type="vertical" />
+            <a
+              v-permission="'sys:module:delete'"
+              style="color: #ff4d4f"
+              @click="handleDeleteConfirm(record.id)"
+            >
+              删除
+            </a>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
     </a-card>
 
     <!-- 新增/编辑对话框 -->
@@ -200,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import {
   SearchOutlined,
@@ -211,33 +199,18 @@ import {
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'
+import { listModules, deleteModule, batchDeleteModules } from '@/api/system/module'
 
-// 表格列定义
-const columns = [
-  { title: '模块编码', dataIndex: 'code', key: 'code', width: 150 },
-  { title: '模块名称', dataIndex: 'name', key: 'name', width: 150 },
-  { title: '图标', dataIndex: 'icon', key: 'icon', width: 80 },
-  { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-  { title: '可见性', dataIndex: 'visible', key: 'visible', width: 100 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
-  { title: '操作', key: 'action', width: 150, fixed: 'right' }
-]
+// 表格相关
+const tableRef = ref()
 
 // 使用Hooks
 const {
   loading,
-  dataSource,
-  total,
   selectedRowKeys,
   queryParams,
-  loadData,
   handleSearch,
   handleReset,
-  handlePageChange,
   handleDelete,
   handleBatchDelete,
   handleSelectionChange
@@ -257,11 +230,51 @@ const {
   handleCancel
 } = useModuleForm()
 
-/**
- * 表格分页变化
- */
-const handleTableChange = (pagination: any) => {
-  handlePageChange(pagination.current, pagination.pageSize)
+// fallback配置
+const fallbackConfig = ref({
+  columns: [
+    { title: '模块编码', dataIndex: 'code', key: 'code', width: 150 },
+    { title: '模块名称', dataIndex: 'name', key: 'name', width: 150 },
+    { title: '图标', dataIndex: 'icon', key: 'icon', width: 80 },
+    { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
+    { title: '可见性', dataIndex: 'visible', key: 'visible', width: 100 },
+    { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
+    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
+    { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
+    { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
+    { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
+    { title: '操作', key: 'action', width: 150, fixed: 'right' }
+  ]
+})
+
+// 字典配置
+const dictOptions = ref({
+  status: {
+    1: { text: '启用', color: 'success' },
+    0: { text: '禁用', color: 'error' }
+  },
+  visible: {
+    1: { text: '显示', color: 'success' },
+    0: { text: '隐藏', color: 'default' }
+  }
+})
+
+// 处理表格数据请求
+const handleRequest = async (params: any) => {
+  try {
+    const res = await listModules({ ...queryParams, ...params })
+    return {
+      success: true,
+      data: res.records || [],
+      total: res.total || 0
+    }
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
+  }
 }
 
 /**
@@ -270,7 +283,7 @@ const handleTableChange = (pagination: any) => {
 const handleFormSubmit = async () => {
   const success = await handleSubmit()
   if (success) {
-    loadData()
+    await tableRef.value?.refresh()
   }
 }
 
@@ -281,9 +294,12 @@ const handleDeleteConfirm = (id: string) => {
   Modal.confirm({
     title: '确认删除',
     content: '确定要删除该模块吗？',
-    okText: t('common.confirm'),
-    cancelText: t('common.cancel'),
-    onOk: () => handleDelete(id)
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      await handleDelete(id)
+      await tableRef.value?.refresh()
+    }
   })
 }
 
@@ -294,15 +310,18 @@ const handleBatchDeleteConfirm = () => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？`,
-    okText: t('common.confirm'),
-    cancelText: t('common.cancel'),
-    onOk: handleBatchDelete
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      await handleBatchDelete()
+      await tableRef.value?.refresh()
+    }
   })
 }
 
 // 初始化加载数据
 onMounted(() => {
-  loadData()
+  tableRef.value?.refresh()
 })
 </script>
 

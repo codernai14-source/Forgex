@@ -6,6 +6,7 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { setLocale as setI18nLocale } from '../locales'
 
 export const useAppStore = defineStore('app', () => {
   // ============ State ============
@@ -69,14 +70,18 @@ export const useAppStore = defineStore('app', () => {
    * 切换语言
    */
   function toggleLocale() {
-    locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+    const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+    locale.value = newLocale
+    setI18nLocale(newLocale)
   }
   
   /**
    * 设置语言
+   * @param newLocale 新的语言代码
    */
   function setLocale(newLocale: 'zh-CN' | 'en-US') {
     locale.value = newLocale
+    setI18nLocale(newLocale)
   }
   
   /**

@@ -3,28 +3,28 @@
     <!-- 搜索栏 -->
     <a-card :bordered="false" style="margin-bottom: 16px;">
       <a-form layout="inline">
-        <a-form-item label="用户名">
+        <a-form-item :label="t('system.user.username')">
           <a-input
             v-model:value="queryForm.username"
-            placeholder="请输入用户名"
+            :placeholder="t('system.user.form.username')"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item label="手机号">
+        <a-form-item :label="t('system.user.phone')">
           <a-input
             v-model:value="queryForm.phone"
-            placeholder="请输入手机号"
+            :placeholder="t('system.user.form.phone')"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item label="部门">
+        <a-form-item :label="t('system.user.department')">
           <a-tree-select
             v-model:value="queryForm.departmentId"
-            placeholder="请选择部门"
+            :placeholder="t('system.user.form.department')"
             allow-clear
             tree-default-expand-all
             :tree-data="departmentTreeData"
@@ -33,10 +33,10 @@
           />
         </a-form-item>
         
-        <a-form-item label="职位">
+        <a-form-item :label="t('system.user.position')">
           <a-select
             v-model:value="queryForm.positionId"
-            placeholder="请选择职位"
+            :placeholder="t('system.user.form.position')"
             allow-clear
             style="width: 200px;"
           >
@@ -50,25 +50,25 @@
           </a-select>
         </a-form-item>
         
-        <a-form-item label="状态">
+        <a-form-item :label="t('system.user.status')">
           <a-select
             v-model:value="queryForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('system.user.form.status')"
             allow-clear
             style="width: 120px;"
           >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
+            <a-select-option :value="true">{{ t('system.user.statusActive') }}</a-select-option>
+            <a-select-option :value="false">{{ t('system.user.statusInactive') }}</a-select-option>
           </a-select>
         </a-form-item>
         
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
-              搜索
+              {{ t('common.search') }}
             </a-button>
             <a-button @click="handleReset">
-              重置
+              {{ t('common.reset') }}
             </a-button>
           </a-space>
         </a-form-item>
@@ -84,7 +84,7 @@
             type="primary"
             @click="openAddDialog"
           >
-            新增用户
+            {{ t('system.user.add') }}
           </a-button>
           <a-button
             v-permission="'sys:user:delete'"
@@ -92,92 +92,80 @@
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
           >
-            批量删除
+            {{ t('common.batchDelete') }}
           </a-button>
           <a-button
             v-permission="'sys:user:export'"
             @click="handleExport"
           >
-            导出
+            {{ t('system.user.export') }}
           </a-button>
         </a-space>
       </div>
       
       <!-- 表格 -->
-      <a-table
-        :columns="columns"
-        :data-source="userList"
-        :loading="loading"
-        :pagination="{
-          current: pagination.current,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total: number) => `共 ${total} 条`,
-        }"
-        :row-selection="{
-          selectedRowKeys,
-          onChange: handleSelectionChange,
-        }"
-        row-key="id"
-        @change="handleTableChange"
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'UserTable'"
+        :request="handleRequest"
+        :fallback-config="fallbackConfig"
+        :dict-options="dictOptions"
+        @row-selection-change="handleSelectionChange"
+        @row-action="handleRowAction"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'avatar'">
-            <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
-              <template #icon><UserOutlined /></template>
-            </a-avatar>
-          </template>
-          
-          <template v-else-if="column.key === 'gender'">
-            <a-tag v-if="record.gender === 1" color="blue">男</a-tag>
-            <a-tag v-else-if="record.gender === 2" color="pink">女</a-tag>
-            <a-tag v-else color="default">未知</a-tag>
-          </template>
-          
-          <template v-else-if="column.key === 'status'">
-            <a-tag v-if="record.status === true" color="success">启用</a-tag>
-            <a-tag v-else color="error">禁用</a-tag>
-          </template>
-          
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a
-                v-permission="'sys:user:edit'"
-                @click="openEditDialog(record)"
-              >
-                编辑
-              </a>
-              <a
-                v-permission="'sys:user:edit'"
-                @click="handleUpdateStatus(record.id, !record.status)"
-              >
-                {{ record.status ? '禁用' : '启用' }}
-              </a>
-              <a
-                v-permission="'sys:user:resetPwd'"
-                @click="handleResetPassword(record.id)"
-              >
-                重置密码
-              </a>
-              <a
-                v-permission="'sys:user:assignRole'"
-                @click="openAssignRoleDialog(record)"
-              >
-                分配角色
-              </a>
-              <a
-                v-permission="'sys:user:delete'"
-                style="color: #ff4d4f;"
-                @click="handleDelete(record.id)"
-              >
-                删除
-              </a>
-            </a-space>
-          </template>
+        <template #avatar="{ record }">
+          <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
+            <template #icon><UserOutlined /></template>
+          </a-avatar>
         </template>
-      </a-table>
+        
+        <template #gender="{ record }">
+          <a-tag v-if="record.gender === 1" color="blue">{{ t('system.user.genderOptions.male') }}</a-tag>
+          <a-tag v-else-if="record.gender === 2" color="pink">{{ t('system.user.genderOptions.female') }}</a-tag>
+          <a-tag v-else color="default">{{ t('system.user.genderOptions.unknown') }}</a-tag>
+        </template>
+        
+        <template #status="{ record }">
+          <a-tag v-if="record.status === true" color="success">{{ t('system.user.statusActive') }}</a-tag>
+          <a-tag v-else color="error">{{ t('system.user.statusInactive') }}</a-tag>
+        </template>
+        
+        <template #action="{ record }">
+          <a-space>
+            <a
+              v-permission="'sys:user:edit'"
+              @click="openEditDialog(record)"
+            >
+              {{ t('system.user.edit') }}
+            </a>
+            <a
+              v-permission="'sys:user:edit'"
+              @click="handleUpdateStatus(record.id, !record.status)"
+            >
+              {{ record.status ? t('system.user.statusInactive') : t('system.user.statusActive') }}
+            </a>
+            <a
+              v-permission="'sys:user:resetPwd'"
+              @click="handleResetPassword(record.id)"
+            >
+              {{ t('system.user.resetPassword') }}
+            </a>
+            <a
+              v-permission="'sys:user:assignRole'"
+              @click="openAssignRoleDialog(record)"
+            >
+              {{ t('system.user.assignRole') }}
+            </a>
+            <a
+              v-permission="'sys:user:delete'"
+              style="color: #ff4d4f;"
+              @click="handleDelete(record.id)"
+            >
+              {{ t('system.user.delete') }}
+            </a>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
     </a-card>
     
     <!-- 新增/编辑弹窗 -->
@@ -213,29 +201,11 @@ import { ref, onMounted } from 'vue'
 import { UserOutlined } from '@ant-design/icons-vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
-import { useUser } from './hooks/useUser'
+import { userApi } from '@/api/system/user'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
-import type { Department, Position } from './types'
-
-// 用户列表逻辑
-const {
-  loading,
-  userList,
-  pagination,
-  queryForm,
-  selectedRowKeys,
-  fetchUserList,
-  handleSearch,
-  handleReset,
-  handlePageChange,
-  handleDelete,
-  handleBatchDelete,
-  handleResetPassword,
-  handleUpdateStatus,
-  handleSelectionChange,
-  handleExport,
-} = useUser()
+import type { Department, Position, User } from './types'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
 // 部门树数据
 const departmentTreeData = ref<Department[]>([])
@@ -250,6 +220,101 @@ const currentUserId = ref<string>()
 
 const assignRoleDialogVisible = ref(false)
 const assignRoleUserId = ref<string>()
+
+// 选中的用户ID列表
+const selectedRowKeys = ref<string[]>([])
+
+// 搜索表单
+const queryForm = ref({
+  username: '',
+  phone: '',
+  departmentId: '',
+  positionId: '',
+  status: undefined
+})
+
+// 表格引用
+const tableRef = ref()
+
+// 字典选项配置
+const dictOptions = ref({
+  // 可根据需要添加字典选项
+})
+
+// 降级配置
+const fallbackConfig = {
+  tableCode: 'UserTable',
+  tableName: '用户管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'avatar', title: '头像', width: 80, align: 'center' },
+    { field: 'username', title: '用户名', width: 120 },
+    { field: 'email', title: '邮箱', width: 180 },
+    { field: 'phone', title: '手机号', width: 130 },
+    { field: 'gender', title: '性别', width: 80 },
+    { field: 'departmentName', title: '部门', width: 120 },
+    { field: 'positionName', title: '职位', width: 120 },
+    { field: 'entryDate', title: '入职时间', width: 120 },
+    { field: 'status', title: '状态', width: 80 },
+    { field: 'lastLoginTime', title: '最后登录时间', width: 180 },
+    { field: 'lastLoginIp', title: '最后登录IP', width: 150 },
+    { field: 'lastLoginRegion', title: '最后登录地区', width: 150 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'createBy', title: '创建人', width: 100 },
+    { field: 'updateTime', title: '修改时间', width: 180 },
+    { field: 'updateBy', title: '修改人', width: 100 },
+    { field: 'action', title: '操作', width: 260, fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'username', label: '用户名', queryType: 'input', queryOperator: 'like' },
+    { field: 'phone', label: '手机号', queryType: 'input', queryOperator: 'like' },
+    { field: 'departmentId', label: '部门', queryType: 'treeSelect', queryOperator: 'eq' },
+    { field: 'positionId', label: '职位', queryType: 'select', queryOperator: 'eq' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' },
+  ],
+  version: 1,
+}
+
+/**
+ * 数据请求函数
+ */
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
+  const params: any = {
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    ...payload.query,
+  }
+  
+  // 处理排序
+  if (payload.sorter) {
+    params.sortField = payload.sorter.field
+    params.sortOrder = payload.sorter.order
+  }
+  
+  // http拦截器已经返回了data字段
+  const data = await userApi.getUserList(params)
+  return { records: data.records || [], total: data.total || 0 }
+}
+
+/**
+ * 行选择变化
+ */
+function handleSelectionChange(keys: string[]) {
+  selectedRowKeys.value = keys
+}
+
+/**
+ * 行操作
+ */
+function handleRowAction(action: string, record: any) {
+  // 可根据需要添加行操作处理
+}
 
 /**
  * 打开新增弹窗
@@ -281,40 +346,48 @@ function openAssignRoleDialog(record: any) {
  * 分配角色成功回调
  */
 function handleAssignRoleSuccess() {
-  fetchUserList()
+  // 刷新表格数据
+  tableRef.value?.refresh()
 }
 
 /**
  * 表单提交成功回调
  */
 function handleFormSuccess() {
-  fetchUserList()
+  // 刷新表格数据
+  tableRef.value?.refresh()
 }
 
-// 表格列定义
-const columns = [
-  { title: '头像', dataIndex: 'avatar', key: 'avatar', width: 80, align: 'center' },
-  { title: '用户名', dataIndex: 'username', key: 'username', width: 120 },
-  { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
-  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
-  { title: '性别', key: 'gender', width: 80 },
-  { title: '部门', dataIndex: 'departmentName', key: 'departmentName', width: 120 },
-  { title: '职位', dataIndex: 'positionName', key: 'positionName', width: 120 },
-  { title: '入职时间', dataIndex: 'entryDate', key: 'entryDate', width: 120 },
-  { title: '状态', key: 'status', width: 80 },
-  { title: '最后登录时间', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 180 },
-  { title: '最后登录IP', dataIndex: 'lastLoginIp', key: 'lastLoginIp', width: 150 },
-  { title: '最后登录地区', dataIndex: 'lastLoginRegion', key: 'lastLoginRegion', width: 150 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 100 },
-  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 100 },
-  { title: '操作', key: 'action', width: 260, fixed: 'right' },
-]
+/**
+ * 删除用户
+ */
+async function handleDelete(id: string) {
+  // 实现删除逻辑
+  // 可参考原有useUser hook的实现
+}
 
-// 表格分页改变
-function handleTableChange(pag: any) {
-  handlePageChange(pag.current, pag.pageSize)
+/**
+ * 批量删除用户
+ */
+async function handleBatchDelete() {
+  // 实现批量删除逻辑
+  // 可参考原有useUser hook的实现
+}
+
+/**
+ * 重置密码
+ */
+async function handleResetPassword(id: string) {
+  // 实现重置密码逻辑
+  // 可参考原有useUser hook的实现
+}
+
+/**
+ * 更新用户状态
+ */
+async function handleUpdateStatus(id: string, status: boolean) {
+  // 实现更新状态逻辑
+  // 可参考原有useUser hook的实现
 }
 
 /**
@@ -345,7 +418,6 @@ async function loadPositionList() {
 onMounted(() => {
   loadDepartmentTree()
   loadPositionList()
-  fetchUserList()
 })
 </script>
 

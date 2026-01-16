@@ -6,6 +6,7 @@
  */
 import axios from 'axios'
 import { message, Modal } from 'ant-design-vue'
+import { getLocale } from '../locales'
 
 /**
  * 需要重新登录的错误码列表
@@ -86,6 +87,9 @@ http.interceptors.request.use(cfg => {
   if (enableLoader && gl && typeof gl.show === 'function') {
     gl.show()
   }
+  
+  // 添加语言头
+  cfg.headers['Accept-Language'] = getLocale()
   
   return cfg
 })

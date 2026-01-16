@@ -65,6 +65,47 @@ export default {
   contentWidthFluid: '流式',
   contentWidthFixed: '固定',
   
+  // 布局模式
+  layoutMode: '布局模式',
+  layoutVertical: '垂直',
+  layoutVerticalMix: '垂直双列',
+  layoutTop: '水平',
+  layoutMix: '混合',
+  
+  // 顶栏
+  header: '顶栏',
+  headerVisible: '显示顶栏',
+  headerMode: '模式',
+  headerModeFixed: '固定',
+  headerModeAuto: '自动',
+  headerModeHideOnScroll: '滚动隐藏',
+  headerMenuAlign: '菜单位置',
+  headerMenuAlignLeft: '居左',
+  headerMenuAlignCenter: '居中',
+  headerMenuAlignRight: '居右',
+  
+  // 主题颜色
+  themeColorDawnBlue: '拂晓蓝（默认）',
+  themeColorTwilightPurple: '薄暮紫',
+  themeColorCyan: '青色',
+  themeColorAuroraGreen: '极光绿',
+  themeColorSunsetOrange: '日暮橙',
+  themeColorVolcanoRed: '火山红',
+  themeColorNeutralGray: '中性灰',
+  
+  // 通用设置
+  common: '通用',
+  watermark: '水印',
+  watermarkEnabled: '水印',
+  watermarkText: '水印文本',
+  formMode: '表单模式',
+  formModeModal: '弹窗',
+  formModeDrawer: '抽屉',
+  animateEnabled: '页面动画',
+  pageTransition: '页面切换',
+  pageTransitionHorizontal: '水平',
+  pageTransitionFade: '渐隐',
+  
   // 操作按钮
   reset: '恢复默认',
   save: '保存',

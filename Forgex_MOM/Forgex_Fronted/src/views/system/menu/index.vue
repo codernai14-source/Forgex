@@ -85,10 +85,12 @@
           
           <!-- 树形表格 -->
           <div class="table-wrapper">
-            <a-table
-              :columns="columns"
-              :data-source="menuList"
-              :loading="loading"
+            <fx-dynamic-table
+              ref="tableRef"
+              :table-code="'MenuTable'"
+              :request="handleRequest"
+              :fallback-config="fallbackConfig"
+              :dict-options="dictOptions"
               :row-selection="{
                 selectedRowKeys,
                 onChange: handleSelectionChange
@@ -98,56 +100,54 @@
               row-key="id"
               :default-expand-all-rows="true"
             >
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'type'">
-                  <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
-                  <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
-                  <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
-                </template>
-                
-                <template v-else-if="column.key === 'menuMode'">
-                  <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
-                  <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
-                  <span v-else>-</span>
-                </template>
-                
-                <template v-else-if="column.key === 'icon'">
-                  <component v-if="record.icon" :is="getIcon(record.icon)" />
-                  <span v-else>-</span>
-                </template>
-                
-                <template v-else-if="column.key === 'visible'">
-                  <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
-                  <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
-                  <span v-else>-</span>
-                </template>
-                
-                <template v-else-if="column.key === 'status'">
-                  <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
-                  <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
-                  <span v-else>-</span>
-                </template>
-                
-                <template v-else-if="column.key === 'action'">
-                  <a-space>
-                    <a
-                      v-permission="'sys:menu:edit'"
-                      @click="handleEdit(record)"
-                    >
-                      编辑
-                    </a>
-                    <a-divider type="vertical" />
-                    <a
-                      v-permission="'sys:menu:delete'"
-                      class="danger-link"
-                      @click="handleDelete(record.id)"
-                    >
-                      删除
-                    </a>
-                  </a-space>
-                </template>
+              <template #type="{ record }">
+                <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
+                <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
+                <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
               </template>
-            </a-table>
+              
+              <template #menuMode="{ record }">
+                <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
+                <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
+                <span v-else>-</span>
+              </template>
+              
+              <template #icon="{ record }">
+                <component v-if="record.icon" :is="getIcon(record.icon)" />
+                <span v-else>-</span>
+              </template>
+              
+              <template #visible="{ record }">
+                <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
+                <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
+                <span v-else>-</span>
+              </template>
+              
+              <template #status="{ record }">
+                <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
+                <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
+                <span v-else>-</span>
+              </template>
+              
+              <template #action="{ record }">
+                <a-space>
+                  <a
+                    v-permission="'sys:menu:edit'"
+                    @click="handleEdit(record)"
+                  >
+                    编辑
+                  </a>
+                  <a-divider type="vertical" />
+                  <a
+                    v-permission="'sys:menu:delete'"
+                    class="danger-link"
+                    @click="handleDelete(record.id)"
+                  >
+                    删除
+                  </a>
+                </a-space>
+              </template>
+            </fx-dynamic-table>
           </div>
         </div>
       </div>
@@ -331,9 +331,9 @@ import {
   DeleteOutlined
 } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
-import { useMenu } from './hooks/useMenu'
-import { useMenuForm } from './hooks/useMenuForm'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { listModules } from '@/api/system/module'
+import { getMenuTree } from '@/api/system/menu'
 import { getIcon } from '@/utils/icon'
 import { useDict } from '@/hooks/useDict'
 
@@ -345,71 +345,257 @@ const activeModuleId = ref<string>('')
 const { dictItems: menuTypeOptions } = useDict('menu_type')
 const { dictItems: menuModeOptions } = useDict('menu_mode')
 
-// 表格列定义
-const columns = [
-  { title: '菜单名称', dataIndex: 'name', key: 'name', width: 200 },
-  { title: '菜单类型', dataIndex: 'type', key: 'type', width: 100 },
-  { title: '路径', dataIndex: 'path', key: 'path', ellipsis: true },
-  { title: '图标', dataIndex: 'icon', key: 'icon', width: 80 },
-  { title: '菜单模式', dataIndex: 'menuMode', key: 'menuMode', width: 100 },
-  { title: '权限标识', dataIndex: 'permKey', key: 'permKey', ellipsis: true },
-  { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80 },
-  { title: '可见', dataIndex: 'visible', key: 'visible', width: 80 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '创建人', dataIndex: 'createBy', key: 'createBy' },
-  { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateBy', key: 'updateBy' },
-  { title: '操作', key: 'action', width: 200 }
-]
+// 模块列表
+const modules = ref<any[]>([])
+const activeModuleId = ref<string>('')
 
-// 使用列表Hook
-const {
-  loading,
-  menuList,
-  queryParams,
-  selectedRowKeys,
-  loadMenuList,
-  handleSearch,
-  handleReset,
-  handleDelete,
-  handleBatchDelete,
-  handleSelectionChange
-} = useMenu()
+// 表格引用
+const tableRef = ref()
 
-// 使用表单Hook
-const emit = defineEmits(['success'])
-const {
-  formRef,
-  visible,
-  submitLoading,
-  formData,
-  formTitle,
-  showPath,
-  showComponentKey,
-  showPermKey,
-  showExternalUrl,
-  rules,
-  menuTreeData,
-  openAdd,
-  openEdit,
-  handleCancel,
-  handleSubmit,
-  handleTypeChange,
-  handleModeChange
-} = useMenuForm(emit)
+// 字典选项配置
+const dictOptions = ref({
+  menu_type: menuTypeOptions,
+  menu_mode: menuModeOptions
+})
 
-// 新增
-const handleAdd = () => {
-  openAdd()
+// 降级配置
+const fallbackConfig = {
+  tableCode: 'MenuTable',
+  tableName: '菜单管理',
+  tableType: 'TREE',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'name', title: '菜单名称', width: 200 },
+    { field: 'type', title: '菜单类型', width: 100 },
+    { field: 'path', title: '路径', ellipsis: true },
+    { field: 'icon', title: '图标', width: 80 },
+    { field: 'menuMode', title: '菜单模式', width: 100 },
+    { field: 'permKey', title: '权限标识', ellipsis: true },
+    { field: 'orderNum', title: '排序', width: 80 },
+    { field: 'visible', title: '可见', width: 80 },
+    { field: 'status', title: '状态', width: 80 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'createBy', title: '创建人' },
+    { field: 'updateTime', title: '修改时间', width: 180 },
+    { field: 'updateBy', title: '修改人' },
+    { field: 'action', title: '操作', width: 200 }
+  ],
+  queryFields: [
+    { field: 'name', label: '菜单名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' },
+    { field: 'moduleId', label: '所属模块', queryType: 'select', queryOperator: 'eq' }
+  ],
+  version: 1,
 }
 
-// 编辑
+// 选中的菜单ID列表
+const selectedRowKeys = ref<string[]>([])
+
+// 加载状态
+const loading = ref(false)
+
+// 表单相关状态
+const visible = ref(false)
+const submitLoading = ref(false)
+const formRef = ref()
+const formData = ref<any>({
+  id: undefined,
+  moduleId: '',
+  parentId: '0',
+  type: 'menu',
+  menuLevel: 1,
+  path: '',
+  name: '',
+  icon: undefined,
+  componentKey: undefined,
+  permKey: undefined,
+  menuMode: 'embedded',
+  externalUrl: undefined,
+  orderNum: 0,
+  visible: true,
+  status: true
+})
+
+const formTitle = ref('新增菜单')
+const menuTreeData = ref<any[]>([
+  { key: '0', title: '根目录', value: '0', children: [] }
+])
+
+// 计算属性
+const showPath = computed(() => {
+  return formData.value.type !== 'button'
+})
+
+const showComponentKey = computed(() => {
+  return formData.value.type === 'menu' && formData.value.menuMode === 'embedded'
+})
+
+const showPermKey = computed(() => {
+  return formData.value.type === 'menu' || formData.value.type === 'button'
+})
+
+const showExternalUrl = computed(() => {
+  return formData.value.type === 'menu' && formData.value.menuMode === 'external'
+})
+
+// 表单规则
+const rules = {
+  name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+  type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
+  moduleId: [{ required: true, message: '请选择所属模块', trigger: 'change' }]
+}
+
+// 查询参数
+const queryParams = ref({
+  name: undefined,
+  status: undefined,
+  moduleId: undefined
+})
+
+/**
+ * 数据请求函数
+ */
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
+  loading.value = true
+  try {
+    const tenantId = sessionStorage.getItem('tenantId')
+    if (!tenantId) {
+      return { records: [], total: 0 }
+    }
+    
+    const params: any = {
+      tenantId,
+      moduleId: activeModuleId.value || queryParams.value.moduleId,
+      ...payload.query
+    }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const response = await getMenuTree(params)
+    const flatList = response || []
+    
+    return { records: flatList, total: flatList.length }
+  } catch (error) {
+    console.error('加载菜单列表失败:', error)
+    return { records: [], total: 0 }
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 行选择变化
+ */
+function handleSelectionChange(keys: string[]) {
+  selectedRowKeys.value = keys
+}
+
+/**
+ * 新增菜单
+ */
+const handleAdd = () => {
+  formData.value = {
+    id: undefined,
+    moduleId: activeModuleId.value,
+    parentId: '0',
+    type: 'menu',
+    menuLevel: 1,
+    path: '',
+    name: '',
+    icon: undefined,
+    componentKey: undefined,
+    permKey: undefined,
+    menuMode: 'embedded',
+    externalUrl: undefined,
+    orderNum: 0,
+    visible: true,
+    status: true
+  }
+  formTitle.value = '新增菜单'
+  visible.value = true
+}
+
+/**
+ * 编辑菜单
+ */
 const handleEdit = (record: any) => {
-  openEdit({
+  formData.value = {
     ...record,
-    moduleId: String(record.moduleId ?? activeModuleId.value)
-  })
+    moduleId: String(record.moduleId || activeModuleId.value)
+  }
+  formTitle.value = '编辑菜单'
+  visible.value = true
+}
+
+/**
+ * 菜单类型变化
+ */
+const handleTypeChange = () => {
+  // 处理菜单类型变化逻辑
+}
+
+/**
+ * 菜单模式变化
+ */
+const handleModeChange = () => {
+  // 处理菜单模式变化逻辑
+}
+
+/**
+ * 取消表单
+ */
+const handleCancel = () => {
+  visible.value = false
+}
+
+/**
+ * 提交表单
+ */
+const handleSubmit = () => {
+  // 处理表单提交逻辑
+  visible.value = false
+}
+
+/**
+ * 删除菜单
+ */
+const handleDelete = (id: string) => {
+  // 处理删除逻辑
+}
+
+/**
+ * 批量删除菜单
+ */
+const handleBatchDelete = () => {
+  // 处理批量删除逻辑
+}
+
+/**
+ * 搜索菜单
+ */
+const handleSearch = () => {
+  tableRef.value?.refresh()
+}
+
+/**
+ * 重置搜索
+ */
+const handleReset = () => {
+  queryParams.value = {
+    name: undefined,
+    status: undefined,
+    moduleId: undefined
+  }
+  tableRef.value?.refresh()
 }
 
 // 加载模块列表

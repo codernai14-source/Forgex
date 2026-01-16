@@ -7,29 +7,29 @@
       </div>
 
       <!-- 树形表格 -->
-      <a-table
-        :columns="columns"
-        :data-source="tableData"
-        :loading="loading"
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'DictTable'"
+        :request="handleRequest"
+        :fallback-config="fallbackConfig"
+        :dict-options="dictOptions"
         row-key="id"
         :pagination="false"
         :default-expand-all-rows="true"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 1 ? 'success' : 'error'">
-              {{ record.status === 1 ? '启用' : '禁用' }}
-            </a-tag>
-          </template>
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
-              <a @click="handleEdit(record)">编辑</a>
-              <a style="color: #ff4d4f" @click="handleDelete(record)">删除</a>
-            </a-space>
-          </template>
+        <template #status="{ record }">
+          <a-tag :color="record.status === 1 ? 'success' : 'error'">
+            {{ record.status === 1 ? '启用' : '禁用' }}
+          </a-tag>
         </template>
-      </a-table>
+        <template #action="{ record }">
+          <a-space>
+            <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
+            <a @click="handleEdit(record)">编辑</a>
+            <a style="color: #ff4d4f" @click="handleDelete(record)">删除</a>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
     </a-card>
 
     <!-- 新增/编辑对话框 -->
@@ -79,20 +79,57 @@ import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
 
 const userStore = useUserStore()
 
-// 表格数据
-const tableData = ref<any[]>([])
+// 表格相关
+const tableRef = ref()
 const loading = ref(false)
 
-// 表格列定义
-const columns = [
-  { title: '字典名称', dataIndex: 'dictName', key: 'dictName', width: 200 },
-  { title: '字典编码', dataIndex: 'dictCode', key: 'dictCode', width: 150 },
-  { title: '字典值', dataIndex: 'dictValue', key: 'dictValue', width: 120 },
-  { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80, align: 'center' },
-  { title: '状态', key: 'status', width: 80, align: 'center' },
-  { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-  { title: '操作', key: 'action', width: 200, fixed: 'right' }
-]
+// fallback配置
+const fallbackConfig = ref({
+  columns: [
+    { title: '字典名称', dataIndex: 'dictName', key: 'dictName', width: 200 },
+    { title: '字典编码', dataIndex: 'dictCode', key: 'dictCode', width: 150 },
+    { title: '字典值', dataIndex: 'dictValue', key: 'dictValue', width: 120 },
+    { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80, align: 'center' },
+    { title: '状态', key: 'status', width: 80, align: 'center' },
+    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
+    { title: '操作', key: 'action', width: 200, fixed: 'right' }
+  ]
+})
+
+// 字典配置
+const dictOptions = ref({
+  status: {
+    1: { text: '启用', color: 'success' },
+    0: { text: '禁用', color: 'error' }
+  }
+})
+
+// 处理表格数据请求
+const handleRequest = async (params: any) => {
+  loading.value = true
+  try {
+    const res = await http.post('/sys/dict/tree', { tenantId: userStore.tenantId || 1, ...params })
+    return {
+      success: true,
+      data: res || [],
+      total: res?.length || 0
+    }
+  } catch (error) {
+    console.error('加载字典树失败', error)
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载字典树
+const loadDictTree = async () => {
+  await tableRef.value?.refresh()
+}
 
 // 对话框
 const dialogVisible = ref(false)
@@ -110,19 +147,6 @@ const form = reactive({
   status: 1,
   remark: ''
 })
-
-// 加载字典树
-const loadDictTree = async () => {
-  loading.value = true
-  try {
-    const res = await http.post('/sys/dict/tree', { tenantId: userStore.tenantId || 1 })
-    tableData.value = res
-  } catch (error) {
-    console.error('加载字典树失败', error)
-  } finally {
-    loading.value = false
-  }
-}
 
 // 新增
 const handleAdd = (row: any) => {
@@ -167,7 +191,7 @@ const handleDelete = async (row: any) => {
       try {
         await http.post('/sys/dict/delete', { id: row.id })
         message.success('删除成功')
-        loadDictTree()
+        await tableRef.value?.refresh()
       } catch (error) {
         console.error('删除失败', error)
       }
@@ -188,7 +212,7 @@ const handleSubmit = async () => {
     await http.post(url, submitData)
     message.success(form.id ? '更新成功' : '新增成功')
     dialogVisible.value = false
-    loadDictTree()
+    await tableRef.value?.refresh()
   } catch (error) {
     console.error('提交失败', error)
   }
@@ -200,8 +224,8 @@ const handleDialogClose = () => {
 }
 
 // 初始化
-onMounted(() => {
-  loadDictTree()
+onMounted(async () => {
+  await tableRef.value?.refresh()
 })
 </script>
 

@@ -122,13 +122,13 @@
               <div class="fx-setting-row">
                 <span>{{ t('layout.themeColor') }}</span>
                 <a-select v-model:value="layoutConfig.themeColor" style="width: 200px">
-                  <a-select-option value="#1677ff">拂晓蓝（默认）</a-select-option>
-                  <a-select-option value="#722ED1">薄暮紫</a-select-option>
-                  <a-select-option value="#13C2C2">青色</a-select-option>
-                  <a-select-option value="#52C41A">极光绿</a-select-option>
-                  <a-select-option value="#FA8C16">日暮橙</a-select-option>
-                  <a-select-option value="#F5222D">火山红</a-select-option>
-                  <a-select-option value="#8C8C8C">中性灰</a-select-option>
+                  <a-select-option value="#1677ff">{{ t('layout.themeColorDawnBlue') }}</a-select-option>
+                  <a-select-option value="#722ED1">{{ t('layout.themeColorTwilightPurple') }}</a-select-option>
+                  <a-select-option value="#13C2C2">{{ t('layout.themeColorCyan') }}</a-select-option>
+                  <a-select-option value="#52C41A">{{ t('layout.themeColorAuroraGreen') }}</a-select-option>
+                  <a-select-option value="#FA8C16">{{ t('layout.themeColorSunsetOrange') }}</a-select-option>
+                  <a-select-option value="#F5222D">{{ t('layout.themeColorVolcanoRed') }}</a-select-option>
+                  <a-select-option value="#8C8C8C">{{ t('layout.themeColorNeutralGray') }}</a-select-option>
                 </a-select>
               </div>
               <div class="fx-setting-row">
@@ -149,12 +149,12 @@
             <div class="fx-setting-block">
               <div class="fx-setting-title">{{ t('layout.menuLayout') }}</div>
               <div class="fx-setting-row">
-                <span>布局模式</span>
+                <span>{{ t('layout.layoutMode') }}</span>
                 <a-select v-model:value="layoutConfig.layoutMode" style="width: 200px">
-                  <a-select-option value="vertical">垂直</a-select-option>
-                  <a-select-option value="vertical-mix">垂直双列</a-select-option>
-                  <a-select-option value="top">水平</a-select-option>
-                  <a-select-option value="mix">混合</a-select-option>
+                  <a-select-option value="vertical">{{ t('layout.layoutVertical') }}</a-select-option>
+                  <a-select-option value="vertical-mix">{{ t('layout.layoutVerticalMix') }}</a-select-option>
+                  <a-select-option value="top">{{ t('layout.layoutTop') }}</a-select-option>
+                  <a-select-option value="mix">{{ t('layout.layoutMix') }}</a-select-option>
                 </a-select>
               </div>
               <div class="fx-setting-row">
@@ -162,33 +162,33 @@
                 <a-switch v-model:checked="layoutConfig.leftDoubleMenu" />
               </div>
               <div class="fx-setting-row">
-                <span>内容宽度</span>
+                <span>{{ t('layout.contentWidth') }}</span>
                 <a-select v-model:value="layoutConfig.contentWidth" style="width: 200px">
-                  <a-select-option value="fluid">流式</a-select-option>
-                  <a-select-option value="fixed">定宽</a-select-option>
+                  <a-select-option value="fluid">{{ t('layout.contentWidthFluid') }}</a-select-option>
+                  <a-select-option value="fixed">{{ t('layout.contentWidthFixed') }}</a-select-option>
                 </a-select>
               </div>
             </div>
             <div class="fx-setting-block">
-              <div class="fx-setting-title">顶栏</div>
+              <div class="fx-setting-title">{{ t('layout.header') }}</div>
               <div class="fx-setting-row">
-                <span>显示顶栏</span>
+                <span>{{ t('layout.headerVisible') }}</span>
                 <a-switch v-model:checked="layoutConfig.headerVisible" />
               </div>
               <div class="fx-setting-row">
-                <span>模式</span>
+                <span>{{ t('layout.headerMode') }}</span>
                 <a-select v-model:value="layoutConfig.headerMode" style="width: 200px">
-                  <a-select-option value="fixed">固定</a-select-option>
-                  <a-select-option value="auto">自动</a-select-option>
-                  <a-select-option value="hide-on-scroll">滚动隐藏</a-select-option>
+                  <a-select-option value="fixed">{{ t('layout.headerModeFixed') }}</a-select-option>
+                  <a-select-option value="auto">{{ t('layout.headerModeAuto') }}</a-select-option>
+                  <a-select-option value="hide-on-scroll">{{ t('layout.headerModeHideOnScroll') }}</a-select-option>
                 </a-select>
               </div>
               <div class="fx-setting-row">
-                <span>菜单位置</span>
+                <span>{{ t('layout.headerMenuAlign') }}</span>
                 <a-select v-model:value="layoutConfig.headerMenuAlign" style="width: 200px">
-                  <a-select-option value="left">居左</a-select-option>
-                  <a-select-option value="center">居中</a-select-option>
-                  <a-select-option value="right">居右</a-select-option>
+                  <a-select-option value="left">{{ t('layout.headerMenuAlignLeft') }}</a-select-option>
+                  <a-select-option value="center">{{ t('layout.headerMenuAlignCenter') }}</a-select-option>
+                  <a-select-option value="right">{{ t('layout.headerMenuAlignRight') }}</a-select-option>
                 </a-select>
               </div>
             </div>
@@ -202,31 +202,31 @@
           </a-tab-pane>
           <a-tab-pane :tab="t('layout.tabCommon')" key="common">
             <div class="fx-setting-block">
-              <div class="fx-setting-title">通用</div>
+              <div class="fx-setting-title">{{ t('layout.common') }}</div>
               <div class="fx-setting-row">
-                <span>水印</span>
+                <span>{{ t('layout.watermark') }}</span>
                 <a-switch v-model:checked="layoutConfig.watermarkEnabled" />
               </div>
               <div class="fx-setting-row">
-                <span>水印文本</span>
+                <span>{{ t('layout.watermarkText') }}</span>
                 <a-input v-model:value="layoutConfig.watermarkText" style="width: 200px" />
               </div>
               <div class="fx-setting-row">
-                <span>表单模式</span>
+                <span>{{ t('layout.formMode') }}</span>
                 <a-select v-model:value="appStore.formMode" style="width: 200px">
-                  <a-select-option value="modal">弹窗</a-select-option>
-                  <a-select-option value="drawer">抽屉</a-select-option>
+                  <a-select-option value="modal">{{ t('layout.formModeModal') }}</a-select-option>
+                  <a-select-option value="drawer">{{ t('layout.formModeDrawer') }}</a-select-option>
                 </a-select>
               </div>
               <div class="fx-setting-row">
-                <span>页面动画</span>
+                <span>{{ t('layout.animateEnabled') }}</span>
                 <a-switch v-model:checked="layoutConfig.animateEnabled" />
               </div>
               <div class="fx-setting-row">
-                <span>页面切换</span>
+                <span>{{ t('layout.pageTransition') }}</span>
                 <a-select v-model:value="layoutConfig.pageTransition" style="width: 200px">
-                  <a-select-option value="horizontal">水平</a-select-option>
-                  <a-select-option value="fade">渐隐</a-select-option>
+                  <a-select-option value="horizontal">{{ t('layout.pageTransitionHorizontal') }}</a-select-option>
+                  <a-select-option value="fade">{{ t('layout.pageTransitionFade') }}</a-select-option>
                 </a-select>
               </div>
             </div>
@@ -264,10 +264,11 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { dynamicModules, dynamicRoutes } from '../router'
+import { dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
-import { setLocale } from '../locales'
+import { getRoutes } from '../api/system/route'
+
 import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
@@ -713,11 +714,49 @@ function onGlobalSearchSelect(menuKey: string, path: string) {
 }
 
 async function onLocaleChange(val: string) {
-  currentLocale.value = val
-  setLocale(val as any)
   try {
+    // 1. 先更新前端语言设置，确保用户能立即看到语言变化
+    currentLocale.value = val
+    appStore.setLocale(val as 'zh-CN' | 'en-US')
+    
+    // 2. 调用后端API更新语言设置
     await changeLanguage({ lang: val })
-  } catch (e) {}
+    
+    // 3. 重新获取菜单数据，确保国际化生效
+    const account = sessionStorage.getItem('account')
+    const tenantId = sessionStorage.getItem('tenantId')
+    
+    if (account && tenantId) {
+      try {
+        // 重新获取菜单数据
+        const routes = await getRoutes({ account, tenantId })
+        if (routes) {
+          // 重新注入动态路由
+          await injectDynamicRoutes(routes)
+          // 清除localStorage中的旧菜单缓存
+          localStorage.removeItem('fx-dynamic-routes')
+          localStorage.removeItem('fx-dynamic-modules')
+          // 刷新当前页面，确保所有组件都能获取到最新的国际化数据
+          // 使用router.replace配合redirect页面实现无刷新重载
+          router.replace({ 
+            path: '/redirect', 
+            query: { 
+              to: route.fullPath, 
+              t: Date.now() 
+            } 
+          })
+        }
+      } catch (menuError) {
+        console.error('重新获取菜单数据失败:', menuError)
+        // 菜单获取失败时，不刷新页面，保持当前状态
+        message.warning('菜单数据更新失败，请手动刷新页面')
+      }
+    }
+  } catch (e) {
+    console.error('语言切换失败:', e)
+    // 语言切换失败时，保持当前的语言设置
+    message.error('语言切换失败，请稍后重试')
+  }
 }
 
 function onUserMenuClick(key: string) {

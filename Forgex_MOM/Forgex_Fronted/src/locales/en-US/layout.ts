@@ -65,6 +65,47 @@ export default {
   contentWidthFluid: 'Fluid',
   contentWidthFixed: 'Fixed',
   
+  // Layout Mode
+  layoutMode: 'Layout Mode',
+  layoutVertical: 'Vertical',
+  layoutVerticalMix: 'Vertical Mix',
+  layoutTop: 'Horizontal',
+  layoutMix: 'Mix',
+  
+  // Header
+  header: 'Header',
+  headerVisible: 'Show Header',
+  headerMode: 'Mode',
+  headerModeFixed: 'Fixed',
+  headerModeAuto: 'Auto',
+  headerModeHideOnScroll: 'Hide on Scroll',
+  headerMenuAlign: 'Menu Position',
+  headerMenuAlignLeft: 'Left',
+  headerMenuAlignCenter: 'Center',
+  headerMenuAlignRight: 'Right',
+  
+  // Theme Color
+  themeColorDawnBlue: 'Dawn Blue (Default)',
+  themeColorTwilightPurple: 'Twilight Purple',
+  themeColorCyan: 'Cyan',
+  themeColorAuroraGreen: 'Aurora Green',
+  themeColorSunsetOrange: 'Sunset Orange',
+  themeColorVolcanoRed: 'Volcano Red',
+  themeColorNeutralGray: 'Neutral Gray',
+  
+  // Common Settings
+  common: 'Common',
+  watermark: 'Watermark',
+  watermarkEnabled: 'Watermark',
+  watermarkText: 'Watermark Text',
+  formMode: 'Form Mode',
+  formModeModal: 'Modal',
+  formModeDrawer: 'Drawer',
+  animateEnabled: 'Page Animation',
+  pageTransition: 'Page Transition',
+  pageTransitionHorizontal: 'Horizontal',
+  pageTransitionFade: 'Fade',
+  
   // Action Buttons
   reset: 'Reset',
   save: 'Save',

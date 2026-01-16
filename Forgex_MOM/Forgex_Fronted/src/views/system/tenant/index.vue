@@ -85,70 +85,71 @@
       </div>
 
       <!-- 租户列表 -->
-      <a-table
-        :columns="columns"
-        :data-source="tableData"
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'TenantTable'"
+        :request="handleRequest"
+        :fallback-config="fallbackConfig"
+        :dict-options="dictOptions"
         :loading="loading"
         :pagination="false"
         row-key="id"
         :scroll="{ y: tableHeight }"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tenantType'">
-            <a-tag :color="getTenantTypeColor(record.tenantType)">
-              {{ TenantTypeLabels[record.tenantType] }}
-            </a-tag>
-          </template>
+        <template #tenantType="{ record }">
+          <a-tag :color="getTenantTypeColor(record.tenantType)">
+            {{ TenantTypeLabels[record.tenantType] }}
+          </a-tag>
+        </template>
 
-          <template v-else-if="column.key === 'status'">
-            <a-tag :color="record.status ? 'green' : 'red'">
-              {{ record.status ? '启用' : '禁用' }}
-            </a-tag>
-          </template>
+        <template #status="{ record }">
+          <a-tag :color="record.status ? 'green' : 'red'">
+            {{ record.status ? '启用' : '禁用' }}
+          </a-tag>
+        </template>
 
-          <template v-else-if="column.key === 'logo'">
-            <a-image
-              v-if="record.logo"
-              :src="formatLogoUrl(record.logo)"
-              :width="40"
-              :height="40"
-              style="border-radius: 4px"
-            />
-            <span v-else>-</span>
-          </template>
+        <template #logo="{ record }">
+          <a-image
+            v-if="record.logo"
+            :src="formatLogoUrl(record.logo)"
+            :width="40"
+            :height="40"
+            style="border-radius: 4px"
+          />
+          <span v-else>-</span>
+        </template>
 
-          <template v-else-if="column.key === 'action'">
-            <a-space>
+        <template #action="{ record }">
+          <a-space>
+            <a-button
+              type="link"
+              size="small"
+              @click="openEdit(record)"
+              v-permission="'sys:tenant:edit'"
+            >
+              <template #icon><EditOutlined /></template>
+              编辑
+            </a-button>
+            <a-popconfirm
+              title="确定要删除这个租户吗？"
+              :ok-text="$t('common.confirm')"
+              :cancel-text="$t('common.cancel')"
+              @confirm="handleDelete(record)"
+            >
               <a-button
                 type="link"
                 size="small"
-                @click="openEdit(record)"
-                v-permission="'sys:tenant:edit'"
+                danger
+                v-permission="'sys:tenant:delete'"
+                :disabled="record.tenantType === TenantTypeEnum.MAIN_TENANT"
               >
-                <template #icon><EditOutlined /></template>
-                编辑
+                <template #icon><DeleteOutlined /></template>
+                删除
               </a-button>
-              <a-popconfirm
-                title="确定要删除这个租户吗？"
-                :ok-text="$t('common.confirm')"
-                :cancel-text="$t('common.cancel')"
-                @confirm="handleDelete(record)"
-              >
-                <a-button
-                  type="link"
-                  size="small"
-                  danger
-                  v-permission="'sys:tenant:delete'"
-                  :disabled="record.tenantType === TenantTypeEnum.MAIN_TENANT"
-                >
-                  <template #icon><DeleteOutlined /></template>
-                  删除
-                </a-button>
-              </a-popconfirm>
-            </a-space>
-          </template>
+            </a-popconfirm>
+          </a-space>
         </template>
-      </a-table>
+      </fx-dynamic-table>
 
       <!-- 新增/编辑表单：使用通用弹窗组件，支持弹窗/抽屉模式 -->
       <BaseFormDialog
@@ -247,6 +248,7 @@ import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 
 const formRef = ref()
+const tableRef = ref()
 
 const queryForm = reactive<TenantQueryDTO>({
   tenantName: undefined,
@@ -255,7 +257,6 @@ const queryForm = reactive<TenantQueryDTO>({
   status: undefined
 })
 
-const tableData = ref<TenantDTO[]>([])
 const loading = ref(false)
 const tableHeight = ref(500)
 
@@ -275,63 +276,101 @@ const rules = {
   tenantType: [{ required: true, message: '请选择租户类别', trigger: 'change' }]
 }
 
-const columns = [
-  {
-    title: '租户ID',
-    dataIndex: 'id',
-    key: 'id',
-    width: 100
+// fallback配置
+const fallbackConfig = ref({
+  columns: [
+    {
+      title: '租户ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 100
+    },
+    {
+      title: '租户名称',
+      dataIndex: 'tenantName',
+      key: 'tenantName',
+      width: 150
+    },
+    {
+      title: '租户编码',
+      dataIndex: 'tenantCode',
+      key: 'tenantCode',
+      width: 150
+    },
+    {
+      title: '租户类别',
+      dataIndex: 'tenantType',
+      key: 'tenantType',
+      width: 120
+    },
+    {
+      title: 'Logo',
+      dataIndex: 'logo',
+      key: 'logo',
+      width: 80
+    },
+    {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+      width: 200,
+      ellipsis: true
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 80
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createTime',
+      key: 'createTime',
+      width: 160
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 150,
+      fixed: 'right'
+    }
+  ]
+})
+
+// 字典配置
+const dictOptions = ref({
+  status: {
+    true: { text: '启用', color: 'green' },
+    false: { text: '禁用', color: 'red' }
   },
-  {
-    title: '租户名称',
-    dataIndex: 'tenantName',
-    key: 'tenantName',
-    width: 150
-  },
-  {
-    title: '租户编码',
-    dataIndex: 'tenantCode',
-    key: 'tenantCode',
-    width: 150
-  },
-  {
-    title: '租户类别',
-    dataIndex: 'tenantType',
-    key: 'tenantType',
-    width: 120
-  },
-  {
-    title: 'Logo',
-    dataIndex: 'logo',
-    key: 'logo',
-    width: 80
-  },
-  {
-    title: '描述',
-    dataIndex: 'description',
-    key: 'description',
-    width: 200,
-    ellipsis: true
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    key: 'status',
-    width: 80
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    key: 'createTime',
-    width: 160
-  },
-  {
-    title: '操作',
-    key: 'action',
-    width: 150,
-    fixed: 'right'
+  tenantType: {
+    [TenantTypeEnum.MAIN_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.MAIN_TENANT], color: 'blue' },
+    [TenantTypeEnum.CUSTOMER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.CUSTOMER_TENANT], color: 'green' },
+    [TenantTypeEnum.SUPPLIER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.SUPPLIER_TENANT], color: 'orange' }
   }
-]
+})
+
+// 处理表格数据请求
+const handleRequest = async (params: any) => {
+  try {
+    loading.value = true
+    const data = await listTenant({ ...queryForm, ...params })
+    return {
+      success: true,
+      data: data || [],
+      total: data?.length || 0
+    }
+  } catch (e: any) {
+    message.error(e.message || '加载租户列表失败')
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
+  } finally {
+    loading.value = false
+  }
+}
 
 function getTenantTypeColor(type: TenantTypeEnum): string {
   const colorMap: Record<TenantTypeEnum, string> = {
@@ -353,20 +392,8 @@ function formatLogoUrl(url: string): string {
   return '/api/' + url
 }
 
-async function loadData() {
-  try {
-    loading.value = true
-    const data = await listTenant(queryForm)
-    tableData.value = data || []
-  } catch (e: any) {
-    message.error(e.message || '加载租户列表失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-function handleQuery() {
-  loadData()
+async function handleQuery() {
+  await tableRef.value?.refresh()
 }
 
 function handleReset() {
@@ -374,7 +401,7 @@ function handleReset() {
   queryForm.tenantCode = undefined
   queryForm.tenantType = undefined
   queryForm.status = undefined
-  loadData()
+  tableRef.value?.refresh()
 }
 
 function openAdd() {
@@ -419,7 +446,7 @@ async function handleSave() {
     }
 
     dialogVisible.value = false
-    await loadData()
+    await tableRef.value?.refresh()
   } catch (e: any) {
     if (e.errorFields) {
       return
@@ -439,14 +466,14 @@ async function handleDelete(record: TenantDTO) {
   try {
     await deleteTenant({ id: record.id })
     message.success('删除成功')
-    await loadData()
+    await tableRef.value?.refresh()
   } catch (e: any) {
     message.error(e.message || '删除失败')
   }
 }
 
 onMounted(() => {
-  loadData()
+  tableRef.value?.refresh()
   tableHeight.value = window.innerHeight - 300
 })
 </script>

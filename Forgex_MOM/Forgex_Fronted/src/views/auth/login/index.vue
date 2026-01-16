@@ -297,6 +297,10 @@ async function confirmTenant() {
         tenantName: current.name
       })
       
+      // 将 account 和 tenantId 存储到 sessionStorage，用于路由守卫检查
+      sessionStorage.setItem('account', result.account)
+      sessionStorage.setItem('tenantId', String(result.tenantId || chosenTenant.value))
+      
       // 获取路由时需要传递 account 和 tenantId
       const routesRes = await getRoutes({
         account: account.value,
@@ -323,7 +327,7 @@ async function confirmTenant() {
         permissionStore.setModules(routesRes.modules)
       }
       
-      await injectDynamicRoutes(router, routesRes)
+      await injectDynamicRoutes(routesRes)
       
       console.log('[Login] Dynamic routes injected successfully')
       

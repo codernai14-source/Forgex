@@ -103,7 +103,7 @@ router.beforeEach(async (to, from, next) => {
         
         console.log('[Guard] Before injectDynamicRoutes')
         // 重新注入动态路由
-        await injectDynamicRoutes(router, {
+        await injectDynamicRoutes({
           routes: cached.routes,
           modules: cached.modules
         })
@@ -233,11 +233,11 @@ export const dynamicRoutes = ref<any[]>([])
  * 动态路由注入函数
  * 根据后端返回的路由数据，动态注册路由到路由实例
  * 
- * @param r 路由实例
  * @param payload 包含模块和路由数据的负载
  * @returns Promise<void>
  */
-export async function injectDynamicRoutes(r: ReturnType<typeof createRouter>, payload: any) {
+export async function injectDynamicRoutes(payload: any) {
+  const r = router;
   // 解析模块和路由数据
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
   const routesPayload = Array.isArray(payload?.routes) ? payload.routes : []
