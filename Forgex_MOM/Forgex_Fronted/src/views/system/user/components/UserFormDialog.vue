@@ -51,9 +51,9 @@
             <a-col :span="12">
               <a-form-item label="性别" name="gender">
                 <a-radio-group v-model:value="formData.gender">
-                  <a-radio :value="1">男</a-radio>
-                  <a-radio :value="2">女</a-radio>
-                  <a-radio :value="0">未知</a-radio>
+                  <a-radio v-for="option in genderOptions" :key="option.value" :value="Number(option.value)">
+                    {{ option.label }}
+                  </a-radio>
                 </a-radio-group>
               </a-form-item>
             </a-col>
@@ -134,11 +134,9 @@
                   placeholder="请选择政治面貌"
                   allow-clear
                 >
-                  <a-select-option value="群众">群众</a-select-option>
-                  <a-select-option value="共青团员">共青团员</a-select-option>
-                  <a-select-option value="中共党员">中共党员</a-select-option>
-                  <a-select-option value="民主党派">民主党派</a-select-option>
-                  <a-select-option value="无党派人士">无党派人士</a-select-option>
+                  <a-select-option v-for="option in politicalStatusOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -150,14 +148,9 @@
                   placeholder="请选择学历"
                   allow-clear
                 >
-                  <a-select-option value="小学">小学</a-select-option>
-                  <a-select-option value="初中">初中</a-select-option>
-                  <a-select-option value="高中">高中</a-select-option>
-                  <a-select-option value="中专">中专</a-select-option>
-                  <a-select-option value="大专">大专</a-select-option>
-                  <a-select-option value="本科">本科</a-select-option>
-                  <a-select-option value="硕士">硕士</a-select-option>
-                  <a-select-option value="博士">博士</a-select-option>
+                  <a-select-option v-for="option in educationOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -323,6 +316,7 @@ import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { userApi } from '@/api/system/user'
+import { useDict } from '@/hooks/useDict'
 import type { User, UserProfile, WorkHistory, Department, Position } from '../types'
 
 // Props
@@ -364,7 +358,7 @@ const formData = reactive<Partial<User>>({
 })
 
 // 附属信息表单数据
-const profileData = reactive<Partial<UserProfile>>({
+const profileData = reactive<Partial<UserProfile>>({  
   politicalStatus: '',
   homeAddress: '',
   emergencyContact: '',
@@ -381,6 +375,11 @@ const departmentList = ref<Department[]>([])
 
 // 职位列表
 const positionList = ref<Position[]>([])
+
+// 字典数据
+const { dictItems: genderOptions } = useDict('gender')
+const { dictItems: politicalStatusOptions } = useDict('political_status')
+const { dictItems: educationOptions } = useDict('education')
 
 // 基础信息校验规则
 const basicRules = {

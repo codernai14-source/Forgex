@@ -207,7 +207,7 @@
                 @change="handleTypeChange"
               >
                 <a-select-option
-                  v-for="item in MENU_TYPE_OPTIONS"
+                  v-for="item in menuTypeOptions"
                   :key="item.value"
                   :value="item.value"
                 >
@@ -252,7 +252,7 @@
                 @change="handleModeChange"
               >
                 <a-select-option
-                  v-for="item in MENU_MODE_OPTIONS"
+                  v-for="item in menuModeOptions"
                   :key="item.value"
                   :value="item.value"
                 >
@@ -333,13 +333,17 @@ import {
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useMenu } from './hooks/useMenu'
 import { useMenuForm } from './hooks/useMenuForm'
-import { MENU_TYPE_OPTIONS, MENU_MODE_OPTIONS } from './types'
 import { listModules } from '@/api/system/module'
 import { getIcon } from '@/utils/icon'
+import { useDict } from '@/hooks/useDict'
 
 // 模块列表
 const modules = ref<any[]>([])
 const activeModuleId = ref<string>('')
+
+// 字典数据
+const { dictItems: menuTypeOptions } = useDict('menu_type')
+const { dictItems: menuModeOptions } = useDict('menu_mode')
 
 // 表格列定义
 const columns = [

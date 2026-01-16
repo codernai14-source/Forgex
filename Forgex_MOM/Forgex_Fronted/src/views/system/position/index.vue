@@ -163,12 +163,19 @@
         </a-form-item>
 
         <a-form-item label="职位级别" name="positionLevel">
-          <a-input-number
+          <a-select
             v-model:value="formData.positionLevel"
-            :min="1"
-            placeholder="请输入职位级别"
+            placeholder="请选择职位级别"
             style="width: 100%"
-          />
+          >
+            <a-select-option
+              v-for="option in positionLevelOptions"
+              :key="option.value"
+              :value="Number(option.value)"
+            >
+              {{ option.label }}
+            </a-select-option>
+          </a-select>
         </a-form-item>
 
         <a-form-item label="排序号" name="orderNum">
@@ -216,12 +223,16 @@ import {
   updatePosition,
   deletePosition
 } from '@/api/system/position'
+import { useDict } from '@/hooks/useDict'
 import type { Position, PositionSaveParam } from './types'
 
 // 租户ID
 const currentTenantId = ref<string | null>(null)
 const deptTreeRef = ref()
 const treeData = ref<any[]>([])
+
+// 字典数据
+const { dictItems: positionLevelOptions } = useDict('position_level')
 
 // 表格列定义
 const columns = [

@@ -131,11 +131,9 @@
                       v-model:value="formData.orgType"
                       placeholder="请选择组织类型"
                     >
-                      <a-select-option value="group">集团</a-select-option>
-                      <a-select-option value="company">公司</a-select-option>
-                      <a-select-option value="subsidiary">子公司</a-select-option>
-                      <a-select-option value="department">部门</a-select-option>
-                      <a-select-option value="team">班组</a-select-option>
+                      <a-select-option v-for="option in orgTypeOptions" :key="option.value" :value="option.value">
+                        {{ option.label }}
+                      </a-select-option>
                     </a-select>
                   </a-form-item>
 
@@ -233,6 +231,7 @@ import {
   updateDepartment,
   deleteDepartment
 } from '@/api/system/department'
+import { useDict } from '@/hooks/useDict'
 import type { Department, DepartmentSaveParam } from './types'
 
 // 租户ID
@@ -264,6 +263,10 @@ const rules = {
   orgType: [{ required: true, message: '请选择组织类型', trigger: 'change' }],
   orgLevel: [{ required: true, message: '请输入组织层级', trigger: 'blur' }]
 }
+
+// 字典数据
+const { dictItems: orgTypeOptions } = useDict('org_type')
+const { dictItems: orgLevelOptions } = useDict('org_level')
 
 /**
  * 加载部门树
@@ -419,14 +422,8 @@ async function handleDelete() {
  * 获取组织类型标签
  */
 function getOrgTypeLabel(orgType: string): string {
-  const map: Record<string, string> = {
-    group: '集团',
-    company: '公司',
-    subsidiary: '子公司',
-    department: '部门',
-    team: '班组'
-  }
-  return map[orgType] || orgType
+  const option = orgTypeOptions.value.find(opt => opt.value === orgType)
+  return option ? option.label : orgType
 }
 
 onMounted(async () => {
