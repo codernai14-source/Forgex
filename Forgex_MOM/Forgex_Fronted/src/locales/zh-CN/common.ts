@@ -9,6 +9,7 @@ export default {
   cancel: '取消',
   save: '保存',
   delete: '删除',
+  batchDelete: '批量删除',
   edit: '编辑',
   add: '新增',
   create: '创建',

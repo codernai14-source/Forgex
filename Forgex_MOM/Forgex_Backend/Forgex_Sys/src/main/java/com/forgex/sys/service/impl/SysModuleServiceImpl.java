@@ -232,7 +232,6 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     public boolean existsByName(String name, Long tenantId) {
         LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysModule::getName, name);
-        wrapper.eq(SysModule::getTenantId, tenantId);
         return moduleMapper.selectCount(wrapper) > 0;
     }
     
@@ -248,7 +247,6 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
     public boolean existsByNameExcludeId(String name, Long tenantId, Long excludeId) {
         LambdaQueryWrapper<SysModule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysModule::getName, name);
-        wrapper.eq(SysModule::getTenantId, tenantId);
         wrapper.ne(SysModule::getId, excludeId);
         return moduleMapper.selectCount(wrapper) > 0;
     }
@@ -300,8 +298,6 @@ public class SysModuleServiceImpl extends ServiceImpl<SysModuleMapper, SysModule
                 SysModule::getName, query.getName());
             wrapper.eq(query.getStatus() != null, 
                 SysModule::getStatus, query.getStatus());
-            wrapper.eq(query.getTenantId() != null, 
-                SysModule::getTenantId, query.getTenantId());
         }
         
         wrapper.orderByAsc(SysModule::getOrderNum);

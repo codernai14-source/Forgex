@@ -38,5 +38,5 @@ export interface FxTableConfig {
 }
 
 export function getTableConfig(data: { tableCode: string }) {
-  return http.post<FxTableConfig>('/sys/common/table/config/get', data)
+  return http.post<FxTableConfig>('/sys/common/table/config/get', data, { silentError: true } as any)
 }

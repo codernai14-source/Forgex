@@ -16,7 +16,6 @@ import com.forgex.common.mapper.excel.FxExcelExportConfigMapper;
 import com.forgex.common.mapper.excel.FxExcelImportConfigItemMapper;
 import com.forgex.common.mapper.excel.FxExcelImportConfigMapper;
 import com.forgex.common.service.excel.ExcelConfigService;
-import com.forgex.common.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +42,8 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
 
     @Override
     public IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode) {
-        Long tenantId = TenantContext.get();
         Page<FxExcelExportConfig> p = new Page<>(page.getCurrent(), page.getSize());
         IPage<FxExcelExportConfig> entityPage = exportConfigMapper.selectPage(p, new LambdaQueryWrapper<FxExcelExportConfig>()
-                .eq(tenantId != null, FxExcelExportConfig::getTenantId, tenantId)
                 .like(StringUtils.hasText(tableName), FxExcelExportConfig::getTableName, tableName)
                 .like(StringUtils.hasText(tableCode), FxExcelExportConfig::getTableCode, tableCode)
                 .orderByDesc(FxExcelExportConfig::getId));
@@ -72,9 +69,7 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         if (!StringUtils.hasText(tableCode)) {
             return null;
         }
-        Long tenantId = TenantContext.get();
         FxExcelExportConfig cfg = exportConfigMapper.selectOne(new LambdaQueryWrapper<FxExcelExportConfig>()
-                .eq(tenantId != null, FxExcelExportConfig::getTenantId, tenantId)
                 .eq(FxExcelExportConfig::getTableCode, tableCode)
                 .last("limit 1"));
         if (cfg == null) {
@@ -145,10 +140,8 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
 
     @Override
     public IPage<FxExcelImportConfigDTO> pageImportConfig(Page<FxExcelImportConfigDTO> page, String tableName, String tableCode) {
-        Long tenantId = TenantContext.get();
         Page<FxExcelImportConfig> p = new Page<>(page.getCurrent(), page.getSize());
         IPage<FxExcelImportConfig> entityPage = importConfigMapper.selectPage(p, new LambdaQueryWrapper<FxExcelImportConfig>()
-                .eq(tenantId != null, FxExcelImportConfig::getTenantId, tenantId)
                 .like(StringUtils.hasText(tableName), FxExcelImportConfig::getTableName, tableName)
                 .like(StringUtils.hasText(tableCode), FxExcelImportConfig::getTableCode, tableCode)
                 .orderByDesc(FxExcelImportConfig::getId));
@@ -174,9 +167,7 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         if (!StringUtils.hasText(tableCode)) {
             return null;
         }
-        Long tenantId = TenantContext.get();
         FxExcelImportConfig cfg = importConfigMapper.selectOne(new LambdaQueryWrapper<FxExcelImportConfig>()
-                .eq(tenantId != null, FxExcelImportConfig::getTenantId, tenantId)
                 .eq(FxExcelImportConfig::getTableCode, tableCode)
                 .last("limit 1"));
         if (cfg == null) {

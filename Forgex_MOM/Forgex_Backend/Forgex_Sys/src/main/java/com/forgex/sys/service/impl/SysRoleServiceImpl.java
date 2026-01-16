@@ -230,7 +230,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public boolean existsByRoleCode(String roleCode, Long tenantId) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRole::getRoleKey, roleCode);
-        wrapper.eq(SysRole::getTenantId, tenantId);
         return roleMapper.selectCount(wrapper) > 0;
     }
     
@@ -249,7 +248,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public boolean existsByRoleCodeExcludeId(String roleCode, Long tenantId, Long excludeId) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRole::getRoleKey, roleCode);
-        wrapper.eq(SysRole::getTenantId, tenantId);
         wrapper.ne(SysRole::getId, excludeId);
         return roleMapper.selectCount(wrapper) > 0;
     }
@@ -268,7 +266,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public boolean existsByRoleName(String roleName, Long tenantId) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRole::getRoleName, roleName);
-        wrapper.eq(SysRole::getTenantId, tenantId);
         return roleMapper.selectCount(wrapper) > 0;
     }
     
@@ -287,7 +284,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public boolean existsByRoleNameExcludeId(String roleName, Long tenantId, Long excludeId) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRole::getRoleName, roleName);
-        wrapper.eq(SysRole::getTenantId, tenantId);
         wrapper.ne(SysRole::getId, excludeId);
         return roleMapper.selectCount(wrapper) > 0;
     }
@@ -343,8 +339,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                 SysRole::getRoleKey, query.getRoleCode());
             wrapper.eq(query.getStatus() != null, 
                 SysRole::getStatus, query.getStatus());
-            wrapper.eq(query.getTenantId() != null, 
-                SysRole::getTenantId, query.getTenantId());
         }
         
         wrapper.orderByDesc(SysRole::getCreateTime);

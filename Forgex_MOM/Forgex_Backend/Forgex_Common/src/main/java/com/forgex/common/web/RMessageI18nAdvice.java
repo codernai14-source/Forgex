@@ -38,8 +38,9 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
                     r.setMessage(resolved);
                 }
             }
+            r.setMsg(null);
+            r.setMsgArgs(null);
         }
         return body;
     }
 }
-

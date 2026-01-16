@@ -198,6 +198,7 @@
  * @version 1.0.0
  */
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { UserOutlined } from '@ant-design/icons-vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
@@ -206,6 +207,9 @@ import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import type { Department, Position, User } from './types'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+
+// 国际化
+const { t } = useI18n()
 
 // 部门树数据
 const departmentTreeData = ref<Department[]>([])
@@ -244,35 +248,35 @@ const dictOptions = ref({
 // 降级配置
 const fallbackConfig = {
   tableCode: 'UserTable',
-  tableName: '用户管理',
+  tableName: t('system.user.userManagement'),
   tableType: 'NORMAL',
   rowKey: 'id',
   defaultPageSize: 20,
   columns: [
-    { field: 'avatar', title: '头像', width: 80, align: 'center' },
-    { field: 'username', title: '用户名', width: 120 },
-    { field: 'email', title: '邮箱', width: 180 },
-    { field: 'phone', title: '手机号', width: 130 },
-    { field: 'gender', title: '性别', width: 80 },
-    { field: 'departmentName', title: '部门', width: 120 },
-    { field: 'positionName', title: '职位', width: 120 },
-    { field: 'entryDate', title: '入职时间', width: 120 },
-    { field: 'status', title: '状态', width: 80 },
-    { field: 'lastLoginTime', title: '最后登录时间', width: 180 },
-    { field: 'lastLoginIp', title: '最后登录IP', width: 150 },
-    { field: 'lastLoginRegion', title: '最后登录地区', width: 150 },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'createBy', title: '创建人', width: 100 },
-    { field: 'updateTime', title: '修改时间', width: 180 },
-    { field: 'updateBy', title: '修改人', width: 100 },
-    { field: 'action', title: '操作', width: 260, fixed: 'right' },
+    { field: 'avatar', title: t('system.user.avatar'), width: 80, align: 'center' },
+    { field: 'username', title: t('system.user.username'), width: 120 },
+    { field: 'email', title: t('system.user.email'), width: 180 },
+    { field: 'phone', title: t('system.user.phone'), width: 130 },
+    { field: 'gender', title: t('system.user.gender'), width: 80 },
+    { field: 'departmentName', title: t('system.user.department'), width: 120 },
+    { field: 'positionName', title: t('system.user.position'), width: 120 },
+    { field: 'entryDate', title: t('system.user.entryDate'), width: 120 },
+    { field: 'status', title: t('system.user.status'), width: 80 },
+    { field: 'lastLoginTime', title: t('system.user.lastLoginTime'), width: 180 },
+    { field: 'lastLoginIp', title: t('system.user.lastLoginIp'), width: 150 },
+    { field: 'lastLoginRegion', title: t('system.user.lastLoginRegion'), width: 150 },
+    { field: 'createTime', title: t('system.user.createTime'), width: 180 },
+    { field: 'createBy', title: t('system.user.createBy'), width: 100 },
+    { field: 'updateTime', title: t('system.user.updateTime'), width: 180 },
+    { field: 'updateBy', title: t('system.user.updateBy'), width: 100 },
+    { field: 'action', title: t('system.user.action'), width: 260, fixed: 'right' },
   ],
   queryFields: [
-    { field: 'username', label: '用户名', queryType: 'input', queryOperator: 'like' },
-    { field: 'phone', label: '手机号', queryType: 'input', queryOperator: 'like' },
-    { field: 'departmentId', label: '部门', queryType: 'treeSelect', queryOperator: 'eq' },
-    { field: 'positionId', label: '职位', queryType: 'select', queryOperator: 'eq' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' },
+    { field: 'username', label: t('system.user.username'), queryType: 'input', queryOperator: 'like' },
+    { field: 'phone', label: t('system.user.phone'), queryType: 'input', queryOperator: 'like' },
+    { field: 'departmentId', label: t('system.user.department'), queryType: 'treeSelect', queryOperator: 'eq' },
+    { field: 'positionId', label: t('system.user.position'), queryType: 'select', queryOperator: 'eq' },
+    { field: 'status', label: t('system.user.status'), queryType: 'select', queryOperator: 'eq' },
   ],
   version: 1,
 }

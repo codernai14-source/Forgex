@@ -268,6 +268,7 @@ import { dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
+import { setLocale } from '../locales'
 
 import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
@@ -715,14 +716,20 @@ function onGlobalSearchSelect(menuKey: string, path: string) {
 
 async function onLocaleChange(val: string) {
   try {
-    // 1. 先更新前端语言设置，确保用户能立即看到语言变化
+    // 1. 调用setLocale函数更新语言设置，该函数会：
+    //    - 更新vue-i18n的locale值
+    //    - 将语言设置保存到localStorage
+    //    - 更新HTML的lang属性
+    setLocale(val as 'zh-CN' | 'en-US')
+    
+    // 2. 更新本地状态
     currentLocale.value = val
     appStore.setLocale(val as 'zh-CN' | 'en-US')
     
-    // 2. 调用后端API更新语言设置
+    // 3. 调用后端API更新语言设置
     await changeLanguage({ lang: val })
     
-    // 3. 重新获取菜单数据，确保国际化生效
+    // 4. 重新获取菜单数据，确保国际化生效
     const account = sessionStorage.getItem('account')
     const tenantId = sessionStorage.getItem('tenantId')
     

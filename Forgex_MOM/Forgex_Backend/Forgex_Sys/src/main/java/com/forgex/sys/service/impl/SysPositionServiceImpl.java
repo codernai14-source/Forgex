@@ -45,8 +45,7 @@ public class SysPositionServiceImpl implements SysPositionService {
     @Override
     public List<SysPositionDTO> list(SysPositionQueryDTO queryDTO) {
         LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysPosition::getTenantId, queryDTO.getTenantId())
-               .eq(SysPosition::getDeleted, false);
+        wrapper.eq(SysPosition::getDeleted, false);
         
         // 职位名称模糊查询
         if (StringUtils.hasText(queryDTO.getPositionName())) {
@@ -81,7 +80,6 @@ public class SysPositionServiceImpl implements SysPositionService {
     public SysPositionDTO getById(Long id, Long tenantId) {
         LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysPosition::getId, id)
-               .eq(SysPosition::getTenantId, tenantId)
                .eq(SysPosition::getDeleted, false);
         
         SysPosition position = positionMapper.selectOne(wrapper);
@@ -99,7 +97,6 @@ public class SysPositionServiceImpl implements SysPositionService {
         // 检查职位编码是否重复
         LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysPosition::getPositionCode, param.getPositionCode())
-               .eq(SysPosition::getTenantId, param.getTenantId())
                .eq(SysPosition::getDeleted, false);
         
         Long count = positionMapper.selectCount(wrapper);
@@ -142,7 +139,6 @@ public class SysPositionServiceImpl implements SysPositionService {
         // 检查职位编码是否重复（排除自己）
         LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysPosition::getPositionCode, param.getPositionCode())
-               .eq(SysPosition::getTenantId, param.getTenantId())
                .eq(SysPosition::getDeleted, false)
                .ne(SysPosition::getId, param.getId());
         

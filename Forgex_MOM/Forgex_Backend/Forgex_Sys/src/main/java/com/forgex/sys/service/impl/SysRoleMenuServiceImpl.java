@@ -58,7 +58,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     public List<Long> getRoleMenuIds(Long roleId, Long tenantId) {
         LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRoleMenu::getRoleId, roleId);
-        wrapper.eq(SysRoleMenu::getTenantId, tenantId);
         
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(wrapper);
         return roleMenus.stream()

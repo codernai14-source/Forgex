@@ -78,6 +78,7 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
         if (!StringUtils.hasText(json)) {
             return chain.filter(exchange);
         }
+        String requestLang = request.getHeaders().getFirst(HEADER_LANG);
         Long userId = null;
         Long tenantId = null;
         String account = null;
@@ -117,8 +118,9 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
                 lang = redis.opsForValue().get("fx:lang:" + tenantId + ":" + userId);
             } catch (Exception ignored) {}
         }
-        if (StringUtils.hasText(lang)) {
-            builder.header(HEADER_LANG, lang);
+        String resolvedLang = StringUtils.hasText(requestLang) ? requestLang : lang;
+        if (StringUtils.hasText(resolvedLang)) {
+            builder.headers(h -> h.set(HEADER_LANG, resolvedLang));
         }
         ServerHttpRequest newRequest = builder.build();
         return chain.filter(exchange.mutate().request(newRequest).build());

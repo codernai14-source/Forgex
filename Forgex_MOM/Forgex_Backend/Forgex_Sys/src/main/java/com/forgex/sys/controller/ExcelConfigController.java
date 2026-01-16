@@ -16,6 +16,10 @@ import com.forgex.sys.domain.dto.LoginLogQueryDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.LoginLog;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.param.ExcelExportConfigPageParam;
+import com.forgex.sys.domain.param.ExcelImportConfigPageParam;
+import com.forgex.sys.domain.param.IdParam;
+import com.forgex.sys.domain.param.TableCodeParam;
 import com.forgex.sys.mapper.LoginLogMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import lombok.RequiredArgsConstructor;
@@ -56,31 +60,26 @@ public class ExcelConfigController {
     /**
      * 分页查询导出配置。
      *
-     * @param body 入参：current/size/tableName/tableCode
+     * @param param 入参：current/size/tableName/tableCode
      * @return 分页结果
      */
     @RequirePerm("sys:excel:exportConfig:list")
     @PostMapping("/exportConfig/page")
-    public R<IPage<FxExcelExportConfigDTO>> pageExportConfig(@RequestBody Map<String, Object> body) {
-        long current = body != null && body.get("current") instanceof Number ? ((Number) body.get("current")).longValue() : 1L;
-        long size = body != null && body.get("size") instanceof Number ? ((Number) body.get("size")).longValue() : 20L;
-        String tableName = body == null ? null : (String) body.get("tableName");
-        String tableCode = body == null ? null : (String) body.get("tableCode");
-        Page<FxExcelExportConfigDTO> page = new Page<>(current, size);
-        return R.ok(excelConfigService.pageExportConfig(page, tableName, tableCode));
+    public R<IPage<FxExcelExportConfigDTO>> pageExportConfig(@RequestBody ExcelExportConfigPageParam param) {
+        Page<FxExcelExportConfigDTO> page = new Page<>(param.getPageNum(), param.getPageSize());
+        return R.ok(excelConfigService.pageExportConfig(page, param.getTableName(), param.getTableCode()));
     }
 
     /**
      * 获取导出配置详情（含子项）。
      *
-     * @param body 入参：id
+     * @param param 入参：id
      * @return 配置
      */
     @RequirePerm("sys:excel:exportConfig:list")
     @PostMapping("/exportConfig/detail")
-    public R<FxExcelExportConfigDTO> exportConfigDetail(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body == null ? null : body.get("id"));
-        return R.ok(excelConfigService.getExportConfig(id));
+    public R<FxExcelExportConfigDTO> exportConfigDetail(@RequestBody IdParam param) {
+        return R.ok(excelConfigService.getExportConfig(param.getId()));
     }
 
     /**
@@ -98,44 +97,38 @@ public class ExcelConfigController {
     /**
      * 删除导出配置（主+子）。
      *
-     * @param body 入参：id
-     * @return 是否成功
+     * @param param 入参：id
+     * @return 结果
      */
     @RequirePerm("sys:excel:exportConfig:delete")
     @PostMapping("/exportConfig/delete")
-    public R<Boolean> deleteExportConfig(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body == null ? null : body.get("id"));
-        return R.ok(excelConfigService.deleteExportConfig(id));
+    public R<Boolean> deleteExportConfig(@RequestBody IdParam param) {
+        return R.ok(excelConfigService.deleteExportConfig(param.getId()));
     }
 
     /**
      * 分页查询导入配置。
      *
-     * @param body 入参：current/size/tableName/tableCode
+     * @param param 入参：current/size/tableName/tableCode
      * @return 分页结果
      */
     @RequirePerm("sys:excel:importConfig:list")
     @PostMapping("/importConfig/page")
-    public R<IPage<FxExcelImportConfigDTO>> pageImportConfig(@RequestBody Map<String, Object> body) {
-        long current = body != null && body.get("current") instanceof Number ? ((Number) body.get("current")).longValue() : 1L;
-        long size = body != null && body.get("size") instanceof Number ? ((Number) body.get("size")).longValue() : 20L;
-        String tableName = body == null ? null : (String) body.get("tableName");
-        String tableCode = body == null ? null : (String) body.get("tableCode");
-        Page<FxExcelImportConfigDTO> page = new Page<>(current, size);
-        return R.ok(excelConfigService.pageImportConfig(page, tableName, tableCode));
+    public R<IPage<FxExcelImportConfigDTO>> pageImportConfig(@RequestBody ExcelImportConfigPageParam param) {
+        Page<FxExcelImportConfigDTO> page = new Page<>(param.getPageNum(), param.getPageSize());
+        return R.ok(excelConfigService.pageImportConfig(page, param.getTableName(), param.getTableCode()));
     }
 
     /**
      * 获取导入配置详情（含子项）。
      *
-     * @param body 入参：id
+     * @param param 入参：id
      * @return 配置
      */
     @RequirePerm("sys:excel:importConfig:list")
     @PostMapping("/importConfig/detail")
-    public R<FxExcelImportConfigDTO> importConfigDetail(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body == null ? null : body.get("id"));
-        return R.ok(excelConfigService.getImportConfig(id));
+    public R<FxExcelImportConfigDTO> importConfigDetail(@RequestBody IdParam param) {
+        return R.ok(excelConfigService.getImportConfig(param.getId()));
     }
 
     /**
@@ -158,21 +151,20 @@ public class ExcelConfigController {
      */
     @RequirePerm("sys:excel:importConfig:delete")
     @PostMapping("/importConfig/delete")
-    public R<Boolean> deleteImportConfig(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body == null ? null : body.get("id"));
-        return R.ok(excelConfigService.deleteImportConfig(id));
+    public R<Boolean> deleteImportConfig(@RequestBody IdParam param) {
+        return R.ok(excelConfigService.deleteImportConfig(param.getId()));
     }
 
     /**
      * 下载导入模板（按 tableCode 配置生成）。
      *
-     * @param body     入参：tableCode
+     * @param param     入参：tableCode
      * @param response 响应
      */
     @RequirePerm("sys:excel:template:download")
     @PostMapping("/template/download")
-    public void downloadTemplate(@RequestBody Map<String, Object> body, HttpServletResponse response) {
-        String tableCode = body == null ? null : (String) body.get("tableCode");
+    public void downloadTemplate(@RequestBody TableCodeParam param, HttpServletResponse response) {
+        String tableCode = param.getTableCode();
         FxExcelImportConfigDTO cfg = excelConfigService.getImportConfigByCode(tableCode);
         byte[] bytes = excelFileService.buildImportTemplateXlsx(cfg);
         

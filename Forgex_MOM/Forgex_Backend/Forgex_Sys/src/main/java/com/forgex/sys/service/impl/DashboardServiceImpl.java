@@ -50,21 +50,18 @@ public class DashboardServiceImpl implements IDashboardService {
         // 统计用户数量
         Long userCount = userMapper.selectCount(
             new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getTenantId, tenantId)
                 .eq(SysUser::getDeleted, 0)
         );
         
         // 统计角色数量
         Long roleCount = roleMapper.selectCount(
             new LambdaQueryWrapper<SysRole>()
-                .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, 0)
         );
         
         // 统计菜单数量
         Long menuCount = menuMapper.selectCount(
             new LambdaQueryWrapper<SysMenu>()
-                .eq(SysMenu::getTenantId, tenantId)
                 .eq(SysMenu::getDeleted, 0)
         );
         

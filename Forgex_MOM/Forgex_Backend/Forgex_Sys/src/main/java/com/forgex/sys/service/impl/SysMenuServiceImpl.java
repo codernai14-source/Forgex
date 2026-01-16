@@ -87,7 +87,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         List<SysUserRole> userRoles = userRoleMapper.selectList(
             new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getUserId, user.getId())
-                .eq(SysUserRole::getTenantId, tenantId)
         );
         
         Set<Long> roleIds = userRoles.stream()
@@ -102,7 +101,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(
             new LambdaQueryWrapper<SysRoleMenu>()
                 .in(SysRoleMenu::getRoleId, roleIds)
-                .eq(SysRoleMenu::getTenantId, tenantId)
         );
         
         Set<Long> menuIds = roleMenus.stream()
@@ -117,7 +115,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         List<SysMenu> menus = menuMapper.selectList(
             new LambdaQueryWrapper<SysMenu>()
                 .in(SysMenu::getId, menuIds)
-                .eq(SysMenu::getTenantId, tenantId)
                 .eq(SysMenu::getVisible, true)
                 .eq(SysMenu::getStatus, true)
         );
@@ -131,7 +128,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             moduleMapper.selectList(
                 new LambdaQueryWrapper<SysModule>()
                     .in(SysModule::getId, moduleIds)
-                    .eq(SysModule::getTenantId, tenantId)
                     .eq(SysModule::getVisible, true)
                     .eq(SysModule::getStatus, true)
             );
@@ -153,7 +149,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         // 1. 查询所有启用的模块
         List<SysModule> modules = moduleMapper.selectList(
             new LambdaQueryWrapper<SysModule>()
-                .eq(SysModule::getTenantId, tenantId)
                 .eq(SysModule::getVisible, true)
                 .eq(SysModule::getStatus, true)
         );
@@ -161,7 +156,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         // 2. 查询所有启用的菜单（包含按钮）
         List<SysMenu> menus = menuMapper.selectList(
             new LambdaQueryWrapper<SysMenu>()
-                .eq(SysMenu::getTenantId, tenantId)
                 .eq(SysMenu::getVisible, true)
                 .eq(SysMenu::getStatus, true)
         );
@@ -183,7 +177,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     @Override
     public List<MenuTreeVO> getMenuTree(Long tenantId, Long moduleId) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(tenantId != null, SysMenu::getTenantId, tenantId);
         wrapper.eq(moduleId != null, SysMenu::getModuleId, moduleId);
         wrapper.orderByAsc(SysMenu::getOrderNum);
         
@@ -380,7 +373,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     public boolean existsByPermKey(String permKey, Long tenantId) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getPermKey, permKey);
-        wrapper.eq(SysMenu::getTenantId, tenantId);
         return menuMapper.selectCount(wrapper) > 0;
     }
     
@@ -399,7 +391,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     public boolean existsByPermKeyExcludeId(String permKey, Long tenantId, Long excludeId) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getPermKey, permKey);
-        wrapper.eq(SysMenu::getTenantId, tenantId);
         wrapper.ne(SysMenu::getId, excludeId);
         return menuMapper.selectCount(wrapper) > 0;
     }
@@ -711,8 +702,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 SysMenu::getType, query.getType());
             wrapper.eq(query.getStatus() != null, 
                 SysMenu::getStatus, query.getStatus());
-            wrapper.eq(query.getTenantId() != null, 
-                SysMenu::getTenantId, query.getTenantId());
         }
         
         wrapper.orderByAsc(SysMenu::getOrderNum);

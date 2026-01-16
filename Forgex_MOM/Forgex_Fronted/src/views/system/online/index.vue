@@ -13,37 +13,29 @@
         </a-form-item>
       </a-form>
 
-      <a-table
-        :columns="columns"
-        :data-source="tableData"
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'OnlineUserTable'"
+        :request="handleRequest"
+        :fallback-config="fallbackConfig"
+        :dict-options="dictOptions"
         :loading="loading"
-        :pagination="{
-          current: pagination.current,
-          pageSize: pagination.size,
-          total: pagination.total,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total: number) => `共 ${total} 条`,
-        }"
         row-key="token"
-        @change="handleTableChange"
         style="margin-top: 16px"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'ttlSeconds'">
-            {{ formatTtl(record.ttlSeconds) }}
-          </template>
-          <template v-else-if="column.key === 'action'">
-            <a
-              v-permission="'sys:online:kickout'"
-              style="color: #ff4d4f;"
-              @click="handleKickout(record.token)"
-            >
-              强制下线
-            </a>
-          </template>
+        <template #ttlSeconds="{ record }">
+          {{ formatTtl(record.ttlSeconds) }}
         </template>
-      </a-table>
+        <template #action="{ record }">
+          <a
+            v-permission="'sys:online:kickout'"
+            style="color: #ff4d4f;"
+            @click="handleKickout(record.token)"
+          >
+            强制下线
+          </a>
+        </template>
+      </fx-dynamic-table>
     </a-card>
   </div>
 </template>
@@ -72,28 +64,54 @@ const queryForm = reactive({
   account: '',
 })
 
-// 分页参数
-const pagination = reactive({
-  current: 1,
-  size: 20,
-  total: 0,
-})
-
-// 表格数据与状态
-const tableData = ref<any[]>([])
+// 表格相关
+const tableRef = ref()
 const loading = ref(false)
 
-// 表格列定义
-const columns = [
-  { title: '账号', dataIndex: 'account', key: 'account', width: 140 },
-  { title: '用户ID', dataIndex: 'userId', key: 'userId', width: 110 },
-  { title: '租户ID', dataIndex: 'tenantId', key: 'tenantId', width: 110 },
-  { title: '最后登录时间', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 180 },
-  { title: '最后登录IP', dataIndex: 'lastLoginIp', key: 'lastLoginIp', width: 150 },
-  { title: '最后登录地区', dataIndex: 'lastLoginRegion', key: 'lastLoginRegion', width: 150 },
-  { title: '会话剩余', key: 'ttlSeconds', width: 120 },
-  { title: '操作', key: 'action', width: 110, fixed: 'right' },
-]
+// fallback配置
+const fallbackConfig = ref({
+  columns: [
+    { title: '账号', dataIndex: 'account', key: 'account', width: 140 },
+    { title: '用户ID', dataIndex: 'userId', key: 'userId', width: 110 },
+    { title: '租户ID', dataIndex: 'tenantId', key: 'tenantId', width: 110 },
+    { title: '最后登录时间', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 180 },
+    { title: '最后登录IP', dataIndex: 'lastLoginIp', key: 'lastLoginIp', width: 150 },
+    { title: '最后登录地区', dataIndex: 'lastLoginRegion', key: 'lastLoginRegion', width: 150 },
+    { title: '会话剩余', key: 'ttlSeconds', width: 120 },
+    { title: '操作', key: 'action', width: 110, fixed: 'right' },
+  ]
+})
+
+// 字典配置
+const dictOptions = ref({})
+
+// 处理表格数据请求
+const handleRequest = async (params: any) => {
+  loading.value = true
+  try {
+    // tenantId 由用户 store 提供（未选择时兜底 1）
+    const res: any = await listOnlineUsers({
+      current: params.current,
+      size: params.pageSize,
+      account: queryForm.account || undefined,
+      tenantId: userStore.tenantId || 1,
+    })
+    return {
+      success: true,
+      data: res.records || [],
+      total: res.total || 0
+    }
+  } catch (e) {
+    console.error('查询在线用户失败', e)
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
+  } finally {
+    loading.value = false
+  }
+}
 
 /**
  * 格式化 TTL 显示。
@@ -116,22 +134,7 @@ function formatTtl(ttl: any) {
  * 查询在线用户列表。
  */
 async function handleQuery() {
-  loading.value = true
-  try {
-    // tenantId 由用户 store 提供（未选择时兜底 1）
-    const res: any = await listOnlineUsers({
-      current: pagination.current,
-      size: pagination.size,
-      account: queryForm.account || undefined,
-      tenantId: userStore.tenantId || 1,
-    })
-    tableData.value = res.records || []
-    pagination.total = res.total || 0
-  } catch (e) {
-    console.error('查询在线用户失败', e)
-  } finally {
-    loading.value = false
-  }
+  await tableRef.value?.refresh()
 }
 
 /**
@@ -139,19 +142,7 @@ async function handleQuery() {
  */
 function handleReset() {
   queryForm.account = ''
-  pagination.current = 1
-  handleQuery()
-}
-
-/**
- * 分页变更处理。
- *
- * @param pag 分页对象
- */
-function handleTableChange(pag: any) {
-  pagination.current = pag.current
-  pagination.size = pag.pageSize
-  handleQuery()
+  tableRef.value?.refresh()
 }
 
 /**
@@ -170,7 +161,7 @@ function handleKickout(token: string) {
       try {
         await kickoutOnlineUser({ token })
         message.success('已强制下线')
-        handleQuery()
+        await tableRef.value?.refresh()
       } catch (e) {
         console.error('强制下线失败', e)
       }
@@ -180,7 +171,7 @@ function handleKickout(token: string) {
 
 // 初始化加载
 onMounted(() => {
-  handleQuery()
+  tableRef.value?.refresh()
 })
 </script>
 

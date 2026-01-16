@@ -39,7 +39,6 @@ public class DictI18nResolver {
         } catch (Exception ignored) {}
 
         SysDictNode node = dictNodeMapper.selectOne(new LambdaQueryWrapper<SysDictNode>()
-                .eq(SysDictNode::getTenantId, tenantId)
                 .eq(SysDictNode::getDeleted, false)
                 .eq(SysDictNode::getNodePath, nodePath)
                 .last("limit 1"));
@@ -47,7 +46,6 @@ public class DictI18nResolver {
             return Collections.emptyMap();
         }
         List<SysDictNode> children = dictNodeMapper.selectList(new LambdaQueryWrapper<SysDictNode>()
-                .eq(SysDictNode::getTenantId, tenantId)
                 .eq(SysDictNode::getDeleted, false)
                 .eq(SysDictNode::getParentId, node.getId())
                 .eq(SysDictNode::getStatus, 1)

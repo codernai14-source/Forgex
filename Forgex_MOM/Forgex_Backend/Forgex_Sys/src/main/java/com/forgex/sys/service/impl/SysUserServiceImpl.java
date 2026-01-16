@@ -196,7 +196,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
         LambdaQueryWrapper<SysUserProfile> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUserProfile::getUserId, userId)
-                .eq(SysUserProfile::getTenantId, tenantId)
                 .last("limit 1");
         return userProfileMapper.selectOne(wrapper);
     }
@@ -417,8 +416,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 SysUser::getPositionId, query.getPositionId());
             wrapper.eq(query.getStatus() != null, 
                 SysUser::getStatus, query.getStatus());
-            wrapper.eq(query.getTenantId() != null, 
-                SysUser::getTenantId, query.getTenantId());
         }
         
         wrapper.orderByDesc(SysUser::getCreateTime);

@@ -48,8 +48,7 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
     public List<SysDepartmentDTO> getDepartmentTree(Long tenantId) {
         // 查询所有部门
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysDepartment::getTenantId, tenantId)
-               .eq(SysDepartment::getDeleted, false)
+        wrapper.eq(SysDepartment::getDeleted, false)
                .orderByAsc(SysDepartment::getOrderNum);
         
         List<SysDepartment> departments = departmentMapper.selectList(wrapper);
@@ -66,8 +65,7 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
     @Override
     public List<SysDepartmentDTO> list(SysDepartmentQueryDTO queryDTO) {
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysDepartment::getTenantId, queryDTO.getTenantId())
-               .eq(SysDepartment::getDeleted, false);
+        wrapper.eq(SysDepartment::getDeleted, false);
         
         // 父部门ID
         if (queryDTO.getParentId() != null) {
@@ -107,7 +105,6 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
     public SysDepartmentDTO getById(Long id, Long tenantId) {
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getId, id)
-               .eq(SysDepartment::getTenantId, tenantId)
                .eq(SysDepartment::getDeleted, false);
         
         SysDepartment department = departmentMapper.selectOne(wrapper);
@@ -125,7 +122,6 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // 检查部门编码是否重复
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getDeptCode, param.getDeptCode())
-               .eq(SysDepartment::getTenantId, param.getTenantId())
                .eq(SysDepartment::getDeleted, false);
         
         Long count = departmentMapper.selectCount(wrapper);
@@ -171,7 +167,6 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // 检查部门编码是否重复（排除自己）
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getDeptCode, param.getDeptCode())
-               .eq(SysDepartment::getTenantId, param.getTenantId())
                .eq(SysDepartment::getDeleted, false)
                .ne(SysDepartment::getId, param.getId());
         
@@ -202,7 +197,6 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // 检查是否有子部门
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getParentId, id)
-               .eq(SysDepartment::getTenantId, tenantId)
                .eq(SysDepartment::getDeleted, false);
         
         Long count = departmentMapper.selectCount(wrapper);

@@ -17,6 +17,8 @@ import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.param.DictItemsByPathParam;
+import com.forgex.sys.domain.param.DictItemsParam;
+import com.forgex.sys.domain.param.IdParam;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
 import com.forgex.sys.service.IDictService;
@@ -43,7 +45,7 @@ public class SysDictController {
      * 获取字典树
      */
     @PostMapping("/tree")
-    public R<List<DictTreeVO>> tree(@RequestBody Map<String, Object> params) {
+    public R<List<DictTreeVO>> tree() {
         Long tenantId = getCurrentTenantId();
         List<DictTreeVO> tree = dictService.getDictTree(tenantId);
         return R.ok(tree);
@@ -53,8 +55,8 @@ public class SysDictController {
      * 根据字典编码获取字典项
      */
     @PostMapping("/items")
-    public R<List<DictItemVO>> items(@RequestBody Map<String, Object> params) {
-        String dictCode = (String) params.get("dictCode");
+    public R<List<DictItemVO>> items(@RequestBody DictItemsParam param) {
+        String dictCode = param.getDictCode();
         if (dictCode == null || dictCode.isEmpty()) {
             return R.fail(500, "字典编码不能为空");
         }
@@ -97,19 +99,10 @@ public class SysDictController {
      * 删除字典
      */
     @PostMapping("/delete")
-    public R<Boolean> delete(@RequestBody Map<String, Object> params) {
-        Object idObj = params.get("id");
-        if (idObj == null) {
+    public R<Boolean> delete(@RequestBody IdParam param) {
+        Long id = param.getId();
+        if (id == null) {
             return R.fail(500, "字典ID不能为空");
-        }
-        
-        Long id = null;
-        if (idObj instanceof Integer) {
-            id = ((Integer) idObj).longValue();
-        } else if (idObj instanceof Long) {
-            id = (Long) idObj;
-        } else if (idObj instanceof String) {
-            id = Long.parseLong((String) idObj);
         }
         
         dictService.deleteDict(id);

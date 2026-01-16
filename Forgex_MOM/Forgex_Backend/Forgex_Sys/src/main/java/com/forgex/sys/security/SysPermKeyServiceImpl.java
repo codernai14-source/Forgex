@@ -50,8 +50,7 @@ public class SysPermKeyServiceImpl implements PermKeyService {
         }
 
         List<SysUserRole> binds = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
-                .eq(SysUserRole::getUserId, userId)
-                .eq(SysUserRole::getTenantId, tenantId));
+                .eq(SysUserRole::getUserId, userId));
 
         List<Long> roleIds = binds.stream()
                 .map(SysUserRole::getRoleId)
@@ -63,8 +62,7 @@ public class SysPermKeyServiceImpl implements PermKeyService {
         }
 
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(new LambdaQueryWrapper<SysRoleMenu>()
-                .in(SysRoleMenu::getRoleId, roleIds)
-                .eq(SysRoleMenu::getTenantId, tenantId));
+                .in(SysRoleMenu::getRoleId, roleIds));
 
         List<Long> menuIds = roleMenus.stream()
                 .map(SysRoleMenu::getMenuId)
@@ -77,7 +75,6 @@ public class SysPermKeyServiceImpl implements PermKeyService {
 
         List<SysMenu> menus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .in(SysMenu::getId, menuIds)
-                .eq(SysMenu::getTenantId, tenantId)
                 .eq(SysMenu::getDeleted, false));
 
         return menus.stream()

@@ -24,6 +24,9 @@ import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.dto.SysUserRoleQueryDTO;
 import com.forgex.sys.domain.dto.SysUserRoleSaveDTO;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.param.BatchIdsParam;
+import com.forgex.sys.domain.param.IdParam;
+import com.forgex.sys.domain.param.UserStatusUpdateParam;
 import com.forgex.sys.domain.vo.SysUserVO;
 import com.forgex.sys.service.ISysUserService;
 import com.forgex.sys.service.ISysUserRoleService;
@@ -84,10 +87,9 @@ public class UserController {
      * 根据ID获取用户详情
      */
     @PostMapping("/detail")
-    public R<SysUserVO> detail(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body.get("id"));
-        userValidator.validateId(id);
-        return R.ok(userService.getUserVOById(id));
+    public R<SysUserVO> detail(@RequestBody IdParam param) {
+        userValidator.validateId(param.getId());
+        return R.ok(userService.getUserVOById(param.getId()));
     }
     
     /**
@@ -174,17 +176,15 @@ public class UserController {
      */
     @RequirePerm("sys:user:delete")
     @PostMapping("/delete")
-    public R<Void> delete(@RequestBody Map<String, Object> body) {
-        // 1. 解析参数
-        Long id = parseLong(body.get("id"));
+    public R<Void> delete(@RequestBody IdParam param) {
+        // 1. 数据校验
+        userValidator.validateId(param.getId());
+        userValidator.validateForDelete(param.getId());
         
-        // 2. 数据校验
-        userValidator.validateForDelete(id);
+        // 2. 调用Service
+        userService.deleteUser(param.getId());
         
-        // 3. 调用Service
-        userService.deleteUser(id);
-        
-        // 4. 返回结果
+        // 3. 返回结果
         return R.ok();
     }
     
@@ -193,10 +193,9 @@ public class UserController {
      */
     @RequirePerm("sys:user:delete")
     @PostMapping("/batchDelete")
-    public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
+    public R<Void> batchDelete(@RequestBody BatchIdsParam param) {
         // 1. 解析参数
-        @SuppressWarnings("unchecked")
-        List<Long> ids = (List<Long>) body.get("ids");
+        List<Long> ids = param.getIds();
         
         // 2. 校验每个ID
         for (Long id : ids) {
@@ -215,10 +214,9 @@ public class UserController {
      */
     @RequirePerm("sys:user:resetPwd")
     @PostMapping("/resetPassword")
-    public R<Void> resetPassword(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body.get("id"));
-        userValidator.validateId(id);
-        userService.resetPassword(id);
+    public R<Void> resetPassword(@RequestBody IdParam param) {
+        userValidator.validateId(param.getId());
+        userService.resetPassword(param.getId());
         return R.ok();
     }
     
@@ -227,16 +225,13 @@ public class UserController {
      */
     @RequirePerm("sys:user:edit")
     @PostMapping("/updateStatus")
-    public R<Void> updateStatus(@RequestBody Map<String, Object> body) {
-        Long id = parseLong(body.get("id"));
-        Boolean status = (Boolean) body.get("status");
-        
-        userValidator.validateId(id);
-        if (status == null) {
+    public R<Void> updateStatus(@RequestBody UserStatusUpdateParam param) {
+        userValidator.validateId(param.getId());
+        if (param.getStatus() == null) {
             return R.fail("状态不能为空");
         }
         
-        userService.updateStatus(id, status);
+        userService.updateStatus(param.getId(), param.getStatus());
         return R.ok();
     }
     

@@ -9,6 +9,7 @@ export default {
   cancel: 'Cancel',
   save: 'Save',
   delete: 'Delete',
+  batchDelete: 'Batch Delete',
   edit: 'Edit',
   add: 'Add',
   create: 'Create',

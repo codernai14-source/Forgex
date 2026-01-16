@@ -120,11 +120,6 @@ public class LoginLogServiceImpl implements ILoginLogService {
             wrapper.le(LoginLog::getLoginTime, query.getEndTime());
         }
         
-        // 租户隔离
-        if (query.getTenantId() != null) {
-            wrapper.eq(LoginLog::getTenantId, query.getTenantId());
-        }
-        
         // 按登录时间倒序
         wrapper.orderByDesc(LoginLog::getLoginTime);
         

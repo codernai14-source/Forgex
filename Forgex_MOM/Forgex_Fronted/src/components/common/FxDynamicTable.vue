@@ -1,6 +1,6 @@
 <template>
   <a-card :bordered="false">
-    <a-form v-if="config" layout="inline" :model="queryModel">
+    <a-form v-if="config && (config.queryFields?.length || $slots.toolbar)" layout="inline" :model="queryModel">
       <template v-for="q in config.queryFields" :key="q.field">
         <a-form-item :label="q.label">
           <!-- 文本输入框 -->
@@ -70,7 +70,8 @@
     >
       <!-- 自定义单元格内容插槽 -->
       <template #bodyCell="scope">
-        <slot name="bodyCell" v-bind="scope" />
+        <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
+        <slot v-else name="bodyCell" v-bind="scope" />
       </template>
     </a-table>
   </a-card>
@@ -205,11 +206,23 @@ async function loadConfig() {
     // 从后端获取表格配置
     config.value = await getTableConfig({ tableCode: props.tableCode })
   } catch (e) {
+    console.error('获取表格配置失败:', e)
     // 如果获取失败，使用降级配置
     if (props.fallbackConfig) {
       config.value = props.fallbackConfig as any
     } else {
-      throw e
+      // 如果没有降级配置，使用默认空配置，避免组件崩溃
+      config.value = {
+        tableCode: props.tableCode,
+        tableName: '默认表格',
+        tableType: 'NORMAL',
+        rowKey: 'id',
+        defaultPageSize: 20,
+        columns: [],
+        queryFields: [],
+        version: 1
+      }
+      console.warn('使用默认空配置，表格可能无法正常显示')
     }
   }
   // 设置默认页码大小

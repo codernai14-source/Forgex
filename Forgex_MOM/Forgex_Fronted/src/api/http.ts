@@ -90,6 +90,7 @@ http.interceptors.request.use(cfg => {
   
   // 添加语言头
   cfg.headers['Accept-Language'] = getLocale()
+  cfg.headers['X-Lang'] = getLocale()
   
   return cfg
 })
@@ -164,8 +165,12 @@ http.interceptors.response.use(
     
     // 处理其他业务错误
     if (code !== 200) {
-      const customErrorMessage = (resp.config as any).customErrorMessage
-      message.error(customErrorMessage || data.message || '请求失败')
+      const cfgAny = resp.config as any
+      const customErrorMessage = cfgAny.customErrorMessage
+      const silentError = cfgAny.silentError === true
+      if (!silentError) {
+        message.error(customErrorMessage || data.message || '请求失败')
+      }
       return Promise.reject(data)
     }
     

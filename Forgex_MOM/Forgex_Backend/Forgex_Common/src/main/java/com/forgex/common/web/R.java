@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.common.web;
 
 import com.forgex.common.i18n.I18nPrompt;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 /**
@@ -49,7 +50,9 @@ public class R<T> {
     private int code;
     /** 返回消息：成功时为"OK"，失败时为错误信息 */
     private String message;
+    @JsonIgnore
     private I18nPrompt msg;
+    @JsonIgnore
     private Object[] msgArgs;
     /** 返回数据：泛型类型，可为null */
     private T data;

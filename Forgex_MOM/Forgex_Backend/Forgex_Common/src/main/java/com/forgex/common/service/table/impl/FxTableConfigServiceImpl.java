@@ -32,7 +32,6 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
             return null;
         }
         FxTableConfig cfg = tableConfigMapper.selectOne(new LambdaQueryWrapper<FxTableConfig>()
-                .eq(FxTableConfig::getTenantId, tenantId)
                 .eq(FxTableConfig::getTableCode, tableCode)
                 .eq(FxTableConfig::getDeleted, 0)
                 .last("limit 1"));
@@ -40,7 +39,6 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
             return null;
         }
         List<FxTableColumnConfig> cols = tableColumnConfigMapper.selectList(new LambdaQueryWrapper<FxTableColumnConfig>()
-                .eq(FxTableColumnConfig::getTenantId, tenantId)
                 .eq(FxTableColumnConfig::getTableCode, tableCode)
                 .eq(FxTableColumnConfig::getDeleted, 0));
 
@@ -134,4 +132,3 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         return fallback;
     }
 }
-

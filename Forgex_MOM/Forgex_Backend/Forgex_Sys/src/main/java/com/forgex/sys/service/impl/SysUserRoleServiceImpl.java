@@ -74,8 +74,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
         validateUserAndTenant(userId, tenantId);
 
         LambdaQueryWrapper<SysUserRole> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserRole::getUserId, userId)
-                .eq(SysUserRole::getTenantId, tenantId);
+        wrapper.eq(SysUserRole::getUserId, userId);
         List<SysUserRole> list = userRoleMapper.selectList(wrapper);
         if (list == null || list.isEmpty()) {
             return new ArrayList<>();

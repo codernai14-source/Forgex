@@ -74,7 +74,6 @@ public class DictServiceImpl implements IDictService {
     public List<DictTreeVO> getDictTree(Long tenantId) {
         // 查询所有字典（未删除）
         List<SysDict> allDicts = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .orderByAsc(SysDict::getOrderNum));
         
@@ -121,7 +120,6 @@ public class DictServiceImpl implements IDictService {
         SysDict dictType = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getDictCode, dictCode)
                 .eq(SysDict::getParentId, 0L)
-                .eq(SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .last("limit 1"));
         
@@ -133,7 +131,6 @@ public class DictServiceImpl implements IDictService {
         // 2. 查询字典项
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getParentId, dictType.getId())
-                .eq(SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getStatus, 1) // 只查询启用的
                 .orderByAsc(SysDict::getOrderNum));
@@ -173,7 +170,6 @@ public class DictServiceImpl implements IDictService {
         }
 
         SysDict node = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getNodePath, nodePath)
                 .last("limit 1"));
@@ -182,7 +178,6 @@ public class DictServiceImpl implements IDictService {
         }
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getParentId, node.getId())
-                .eq(SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getStatus, 1)
                 .orderByAsc(SysDict::getOrderNum));

@@ -16,7 +16,6 @@ package com.forgex.sys.service.impl;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
-import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
 import com.forgex.sys.domain.dto.LoginLogQueryDTO;
@@ -97,7 +96,6 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         String tableCode = body == null ? null : body.getTableCode();
         LoginLogQueryDTO query = body == null ? null : body.getQuery();
         FxExcelExportConfigDTO cfg = excelConfigService.getExportConfigByCode(tableCode);
-        Long tenantId = TenantContext.get();
         
         // 查询登录日志数据
         List<LoginLog> list = loginLogMapper.selectList(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<LoginLog>()
@@ -105,8 +103,6 @@ public class ExcelExportServiceImpl implements ExcelExportService {
                 .eq(query != null && query.getStatus() != null, LoginLog::getStatus, query.getStatus())
                 .ge(query != null && query.getStartTime() != null, LoginLog::getLoginTime, query.getStartTime())
                 .le(query != null && query.getEndTime() != null, LoginLog::getLoginTime, query.getEndTime())
-                .eq(tenantId != null, LoginLog::getTenantId, tenantId)
-                .eq(tenantId == null && query != null && query.getTenantId() != null, LoginLog::getTenantId, query.getTenantId())
                 .orderByDesc(LoginLog::getLoginTime));
         
         // 转换数据格式
@@ -133,15 +129,12 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         String tableCode = body == null ? null : body.getTableCode();
         SysUserQueryDTO query = body == null ? null : body.getQuery();
         FxExcelExportConfigDTO cfg = excelConfigService.getExportConfigByCode(tableCode);
-        Long tenantId = TenantContext.get();
         
         // 查询用户数据
         List<SysUser> list = userMapper.selectList(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
                 .like(query != null && StringUtils.hasText(query.getAccount()), SysUser::getAccount, query.getAccount())
                 .like(query != null && StringUtils.hasText(query.getUsername()), SysUser::getUsername, query.getUsername())
                 .eq(query != null && query.getStatus() != null, SysUser::getStatus, query.getStatus())
-                .eq(tenantId != null, SysUser::getTenantId, tenantId)
-                .eq(tenantId == null && query != null && query.getTenantId() != null, SysUser::getTenantId, query.getTenantId())
                 .orderByDesc(SysUser::getId));
         
         // 转换数据格式

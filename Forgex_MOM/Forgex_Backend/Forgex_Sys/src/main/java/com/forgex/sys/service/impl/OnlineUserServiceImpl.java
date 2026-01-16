@@ -113,8 +113,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         List<SysUser> users = userIds.isEmpty()
                 ? Collections.emptyList()
                 : userMapper.selectList(new LambdaQueryWrapper<SysUser>()
-                .in(SysUser::getId, userIds)
-                .eq(SysUser::getTenantId, tenantId));
+                .in(SysUser::getId, userIds));
 
         java.util.Map<Long, SysUser> userMap = users.stream().collect(Collectors.toMap(SysUser::getId, u -> u, (a, b) -> a));
 
