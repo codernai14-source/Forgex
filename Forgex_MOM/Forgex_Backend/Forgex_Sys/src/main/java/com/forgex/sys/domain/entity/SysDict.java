@@ -60,7 +60,20 @@ public class SysDict extends BaseEntity {
      */
     private String dictValue;
 
+    /**
+     * 字典值国际化JSON
+     * 存储多语言字典值，格式：{"zh":"男","en":"Male"}
+     */
     private String dictValueI18nJson;
+
+    /**
+     * 标签样式配置JSON
+     * 用于字典值标签的样式配置，支持颜色和图标
+     * 格式：{"color":"success","icon":"CheckCircleOutlined"}
+     * 
+     * @see com.forgex.sys.domain.vo.TagStyleVO
+     */
+    private String tagStyleJson;
 
     private String nodePath;
 

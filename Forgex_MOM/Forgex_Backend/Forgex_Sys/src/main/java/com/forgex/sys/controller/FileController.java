@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 /**
  * 文件管理Controller
  * <p>处理文件上传等操作，Controller层仅负责参数接收与结果返回，业务逻辑委托给{@link FileService}处理。</p>

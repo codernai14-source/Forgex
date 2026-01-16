@@ -8,7 +8,6 @@ import com.forgex.common.i18n.I18nPrompt;
 import com.forgex.common.i18n.LangContext;
 import com.forgex.common.mapper.i18n.FxI18nMessageMapper;
 import com.forgex.common.service.i18n.I18nMessageService;
-import com.forgex.common.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -41,12 +40,7 @@ public class I18nMessageServiceImpl implements I18nMessageService {
     }
 
     private String resolveTemplate(I18nPrompt prompt) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            return null;
-        }
         FxI18nMessage row = i18nMessageMapper.selectOne(new LambdaQueryWrapper<FxI18nMessage>()
-                .eq(FxI18nMessage::getTenantId, tenantId)
                 .eq(FxI18nMessage::getModule, prompt.getModule())
                 .eq(FxI18nMessage::getPromptCode, prompt.getPromptCode())
                 .eq(FxI18nMessage::getDeleted, 0)

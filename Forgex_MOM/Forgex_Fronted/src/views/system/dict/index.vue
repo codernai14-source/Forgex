@@ -50,6 +50,9 @@
         <a-form-item label="字典值" v-if="form.parentId && form.parentId > 0" required>
           <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
         </a-form-item>
+        <a-form-item label="标签样式" v-if="form.parentId && form.parentId > 0">
+          <TagStyleConfig ref="tagStyleConfigRef" />
+        </a-form-item>
         <a-form-item label="排序号">
           <a-input-number v-model:value="form.orderNum" :min="0" style="width: 100%" />
         </a-form-item>
@@ -72,6 +75,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
+import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
 
 const userStore = useUserStore()
 
@@ -93,6 +97,7 @@ const columns = [
 // 对话框
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
+const tagStyleConfigRef = ref()
 
 // 表单
 const form = reactive({
@@ -131,6 +136,8 @@ const handleAdd = (row: any) => {
   form.status = 1
   form.remark = ''
   dialogVisible.value = true
+  // 重置标签样式配置
+  tagStyleConfigRef.value?.setTagStyleJson('')
 }
 
 // 编辑
@@ -145,6 +152,8 @@ const handleEdit = (row: any) => {
   form.status = row.status
   form.remark = row.remark || ''
   dialogVisible.value = true
+  // 加载标签样式配置
+  tagStyleConfigRef.value?.setTagStyleJson(row.tagStyleJson || '')
 }
 
 // 删除
@@ -169,8 +178,14 @@ const handleDelete = async (row: any) => {
 // 提交
 const handleSubmit = async () => {
   try {
+    // 获取标签样式配置JSON
+    const tagStyleJson = tagStyleConfigRef.value?.getTagStyleJson() || ''
+    const submitData = {
+      ...form,
+      tagStyleJson
+    }
     const url = form.id ? '/sys/dict/update' : '/sys/dict/create'
-    await http.post(url, form)
+    await http.post(url, submitData)
     message.success(form.id ? '更新成功' : '新增成功')
     dialogVisible.value = false
     loadDictTree()

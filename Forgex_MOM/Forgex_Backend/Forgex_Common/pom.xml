@@ -96,5 +96,10 @@
             <groupId>com.baomidou</groupId>
             <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
         </dependency>
+        <!-- Swagger 3 -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
     </dependencies>
 </project>

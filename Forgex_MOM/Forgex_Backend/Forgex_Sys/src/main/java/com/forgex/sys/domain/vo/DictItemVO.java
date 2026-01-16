@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.domain.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -21,17 +22,30 @@ import lombok.Data;
  * 
  * @author coder_nai@163.com
  * @date 2025-01-13
+ * @version 1.1.0
  */
 @Data
+@Schema(description = "数据字典项")
 public class DictItemVO {
     
     /**
      * 字典项名称（显示值）
      */
+    @Schema(description = "字典项名称")
     private String label;
     
     /**
      * 字典项值（实际值）
      */
+    @Schema(description = "字典项值")
     private String value;
+
+    /**
+     * 标签样式配置
+     * 用于前端渲染标签时的样式配置，支持颜色和图标
+     * 
+     * @see TagStyleVO
+     */
+    @Schema(description = "标签样式配置")
+    private TagStyleVO tagStyle;
 }

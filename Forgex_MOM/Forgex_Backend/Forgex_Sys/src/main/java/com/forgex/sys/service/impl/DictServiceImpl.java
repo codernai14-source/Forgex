@@ -20,6 +20,7 @@ import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.entity.SysDict;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
+import com.forgex.sys.domain.vo.TagStyleVO;
 import com.forgex.sys.mapper.SysDictMapper;
 import com.forgex.sys.service.IDictService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  * 
  * @author coder_nai@163.com
  * @date 2025-01-13
+ * @version 1.1.0
  */
 @Slf4j
 @Service
@@ -141,6 +143,7 @@ public class DictServiceImpl implements IDictService {
             DictItemVO vo = new DictItemVO();
             vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
             vo.setValue(dict.getDictValue());
+            vo.setTagStyle(parseTagStyle(dict.getTagStyleJson()));
             return vo;
         }).collect(Collectors.toList());
         
@@ -187,6 +190,7 @@ public class DictServiceImpl implements IDictService {
             DictItemVO vo = new DictItemVO();
             vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
             vo.setValue(dict.getDictValue());
+            vo.setTagStyle(parseTagStyle(dict.getTagStyleJson()));
             return vo;
         }).collect(Collectors.toList());
 
@@ -471,5 +475,28 @@ public class DictServiceImpl implements IDictService {
             return v.asText();
         }
         return null;
+    }
+
+    /**
+     * 解析标签样式配置JSON
+     * <p>
+     * 将JSON格式的标签样式配置解析为TagStyleVO对象
+     * 如果JSON为空或解析失败，返回null
+     * </p>
+     * 
+     * @param tagStyleJson 标签样式配置JSON，格式：{"color":"success","icon":"CheckCircleOutlined"}
+     * @return TagStyleVO对象，解析失败返回null
+     * @see TagStyleVO
+     */
+    private TagStyleVO parseTagStyle(String tagStyleJson) {
+        if (!StringUtils.hasText(tagStyleJson)) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(tagStyleJson, TagStyleVO.class);
+        } catch (Exception e) {
+            log.warn("解析标签样式配置失败：{}", tagStyleJson, e);
+            return null;
+        }
     }
 }

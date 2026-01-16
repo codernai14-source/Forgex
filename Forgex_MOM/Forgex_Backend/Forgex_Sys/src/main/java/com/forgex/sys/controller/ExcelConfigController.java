@@ -175,8 +175,20 @@ public class ExcelConfigController {
         String tableCode = body == null ? null : (String) body.get("tableCode");
         FxExcelImportConfigDTO cfg = excelConfigService.getImportConfigByCode(tableCode);
         byte[] bytes = excelFileService.buildImportTemplateXlsx(cfg);
-        writeFile(response, bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                safeName("import-template-" + tableCode + ".xlsx"));
+        
+        // 使用ExcelExportService的方法处理文件下载
+        String filename = "import-template-" + tableCode + ".xlsx";
+        String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        String safeFilename = excelExportService.getSafeFilename(filename);
+        
+        try {
+            response.setContentType(contentType);
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + safeFilename);
+            response.getOutputStream().write(bytes == null ? new byte[0] : bytes);
+            response.flushBuffer();
+        } catch (Exception ignored) {
+        }
     }
 
     /**
