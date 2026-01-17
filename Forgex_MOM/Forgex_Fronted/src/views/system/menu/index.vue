@@ -579,7 +579,7 @@ const handleBatchDelete = () => {
  * 搜索菜单
  */
 const handleSearch = () => {
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 }
 
 /**
@@ -591,7 +591,7 @@ const handleReset = () => {
     status: undefined,
     moduleId: undefined
   }
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 }
 
 // 加载模块列表

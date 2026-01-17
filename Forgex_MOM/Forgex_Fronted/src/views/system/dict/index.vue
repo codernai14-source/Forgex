@@ -128,7 +128,7 @@ const handleRequest = async (params: any) => {
 
 // 加载字典树
 const loadDictTree = async () => {
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 // 对话框
@@ -191,7 +191,7 @@ const handleDelete = async (row: any) => {
       try {
         await http.post('/sys/dict/delete', { id: row.id })
         message.success('删除成功')
-        await tableRef.value?.refresh()
+        await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('删除失败', error)
       }
@@ -212,7 +212,7 @@ const handleSubmit = async () => {
     await http.post(url, submitData)
     message.success(form.id ? '更新成功' : '新增成功')
     dialogVisible.value = false
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   } catch (error) {
     console.error('提交失败', error)
   }
@@ -225,7 +225,7 @@ const handleDialogClose = () => {
 
 // 初始化
 onMounted(async () => {
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 })
 </script>
 

@@ -360,7 +360,7 @@ async function loadDeptTreeData() {
  * 搜索
  */
 async function handleSearch() {
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 /**
@@ -374,7 +374,7 @@ async function handleReset() {
     status: undefined,
     departmentId: currentDeptId // Keep selected department
   }
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 /**
@@ -442,7 +442,7 @@ async function handleSubmit() {
     }
 
     visible.value = false
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   } catch (e: any) {
     if (e.errorFields) {
       // 表单验证失败
@@ -464,7 +464,7 @@ async function handleDelete(id: string) {
       tenantId: currentTenantId.value!
     })
     message.success('删除成功')
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   } catch (e: any) {
     message.error(e.message || '删除失败')
   }
@@ -474,7 +474,7 @@ onMounted(async () => {
   const tid = sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
     await loadDeptTreeData()
   }
 })

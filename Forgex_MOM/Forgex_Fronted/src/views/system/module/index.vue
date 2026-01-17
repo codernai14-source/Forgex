@@ -281,7 +281,7 @@ const handleRequest = async (params: any) => {
 const handleFormSubmit = async () => {
   const success = await handleSubmit()
   if (success) {
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   }
 }
 
@@ -296,7 +296,7 @@ const handleDeleteConfirm = (id: string) => {
     cancelText: '取消',
     onOk: async () => {
       await handleDelete(id)
-      await tableRef.value?.refresh()
+      await tableRef.value?.refresh?.()
     }
   })
 }
@@ -312,14 +312,14 @@ const handleBatchDeleteConfirm = () => {
     cancelText: '取消',
     onOk: async () => {
       await handleBatchDelete()
-      await tableRef.value?.refresh()
+      await tableRef.value?.refresh?.()
     }
   })
 }
 
 // 初始化加载数据
 onMounted(() => {
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 })
 </script>
 

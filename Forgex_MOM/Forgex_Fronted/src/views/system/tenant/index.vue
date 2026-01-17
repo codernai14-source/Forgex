@@ -393,7 +393,7 @@ function formatLogoUrl(url: string): string {
 }
 
 async function handleQuery() {
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 function handleReset() {
@@ -401,7 +401,7 @@ function handleReset() {
   queryForm.tenantCode = undefined
   queryForm.tenantType = undefined
   queryForm.status = undefined
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 }
 
 function openAdd() {
@@ -446,7 +446,7 @@ async function handleSave() {
     }
 
     dialogVisible.value = false
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   } catch (e: any) {
     if (e.errorFields) {
       return
@@ -466,14 +466,14 @@ async function handleDelete(record: TenantDTO) {
   try {
     await deleteTenant({ id: record.id })
     message.success('删除成功')
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   } catch (e: any) {
     message.error(e.message || '删除失败')
   }
 }
 
 onMounted(() => {
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
   tableHeight.value = window.innerHeight - 300
 })
 </script>

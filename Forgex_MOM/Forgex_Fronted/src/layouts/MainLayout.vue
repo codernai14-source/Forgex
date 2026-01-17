@@ -634,12 +634,12 @@ function onMenuClick(menuKey: string) {
   if (!menuKey) return
   if (menuKey !== route.fullPath) {
     console.log('[MainLayout] Navigating to:', menuKey)
-    router.push(menuKey)
+    router.push(menuKey).catch(() => {})
   }
 }
 
 function refreshPage() {
-  router.replace({ path: '/redirect', query: { to: route.fullPath, t: Date.now() } })
+  router.replace({ path: '/redirect', query: { to: route.fullPath, t: Date.now() } }).catch(() => {})
 }
 
 function onModuleClick(moduleCode: string) {
@@ -650,7 +650,7 @@ function onModuleClick(moduleCode: string) {
   if (mod && mod.items.length > 0) {
     const firstItem = mod.items[0]
     if (firstItem.fullPath !== route.fullPath) {
-      router.push(firstItem.fullPath)
+      router.push(firstItem.fullPath).catch(() => {})
     }
   }
 }

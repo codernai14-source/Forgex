@@ -337,7 +337,7 @@ const handleRequest = async (params: any) => {
  * 搜索
  */
 const handleSearch = async () => {
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 /**
@@ -349,7 +349,7 @@ const handleReset = async () => {
     roleName: '',
     status: undefined
   }
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 /**
@@ -366,7 +366,7 @@ const handleDelete = async (id: string) => {
   try {
     await deleteRole(id)
     message.success('删除成功')
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
   } catch (error) {
     message.error('删除失败')
   }
@@ -383,7 +383,7 @@ const handleBatchDelete = async () => {
   try {
     await batchDeleteRoles(selectedRowKeys.value)
     message.success('批量删除成功')
-    await tableRef.value?.refresh()
+    await tableRef.value?.refresh?.()
     selectedRowKeys.value = []
   } catch (error) {
     message.error('批量删除失败')
@@ -441,7 +441,7 @@ const openEdit = (record: Role) => {
  */
 const handleSubmit = async () => {
   // 这里需要根据实际情况实现表单提交逻辑
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
   visible.value = false
 }
 

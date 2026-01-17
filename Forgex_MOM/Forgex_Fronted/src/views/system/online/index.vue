@@ -134,7 +134,7 @@ function formatTtl(ttl: any) {
  * 查询在线用户列表。
  */
 async function handleQuery() {
-  await tableRef.value?.refresh()
+  await tableRef.value?.refresh?.()
 }
 
 /**
@@ -142,7 +142,7 @@ async function handleQuery() {
  */
 function handleReset() {
   queryForm.account = ''
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 }
 
 /**
@@ -161,7 +161,7 @@ function handleKickout(token: string) {
       try {
         await kickoutOnlineUser({ token })
         message.success('已强制下线')
-        await tableRef.value?.refresh()
+        await tableRef.value?.refresh?.()
       } catch (e) {
         console.error('强制下线失败', e)
       }
@@ -171,7 +171,7 @@ function handleKickout(token: string) {
 
 // 初始化加载
 onMounted(() => {
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 })
 </script>
 

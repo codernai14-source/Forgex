@@ -389,7 +389,7 @@ function openAssignRoleDialog(record: any) {
  */
 function handleAssignRoleSuccess() {
   // 刷新表格数据
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 }
 
 /**
@@ -397,7 +397,7 @@ function handleAssignRoleSuccess() {
  */
 function handleFormSuccess() {
   // 刷新表格数据
-  tableRef.value?.refresh()
+  tableRef.value?.refresh?.()
 }
 
 /**
