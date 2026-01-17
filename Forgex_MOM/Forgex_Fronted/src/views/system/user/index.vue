@@ -107,11 +107,14 @@
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'UserTable'"
+        :show-query-form="false"
         :request="handleRequest"
         :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
-        @row-selection-change="handleSelectionChange"
-        @row-action="handleRowAction"
+        :row-selection="{
+          selectedRowKeys: selectedRowKeys,
+          onChange: handleSelectionChange
+        }"
       >
         <template #avatar="{ record }">
           <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
@@ -200,6 +203,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { UserOutlined } from '@ant-design/icons-vue'
+import { message, Modal } from 'ant-design-vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
 import { userApi } from '@/api/system/user'
@@ -207,6 +211,7 @@ import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import type { Department, Position, User } from './types'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { exportUsers } from '@/api/system/user'
 
 // 国际化
 const { t } = useI18n()
@@ -292,7 +297,7 @@ const handleRequest = async (payload: {
   const params: any = {
     pageNum: payload.page.current,
     pageSize: payload.page.pageSize,
-    ...payload.query,
+    ...queryForm.value,
   }
   
   // 处理排序
@@ -304,6 +309,39 @@ const handleRequest = async (payload: {
   // http拦截器已经返回了data字段
   const data = await userApi.getUserList(params)
   return { records: data.records || [], total: data.total || 0 }
+}
+
+function handleSearch() {
+  tableRef.value?.refresh?.()
+}
+
+function handleReset() {
+  queryForm.value = {
+    username: '',
+    phone: '',
+    departmentId: '',
+    positionId: '',
+    status: undefined,
+  }
+  tableRef.value?.refresh?.()
+}
+
+async function handleExport() {
+  try {
+    const resp: any = await exportUsers(queryForm.value)
+    const blob = new Blob([resp.data], { type: resp.headers?.['content-type'] || 'application/octet-stream' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `sys-user-${Date.now()}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    message.success(t('common.success'))
+  } catch (e) {
+    message.error(t('common.failed'))
+  }
 }
 
 /**
@@ -366,16 +404,32 @@ function handleFormSuccess() {
  * 删除用户
  */
 async function handleDelete(id: string) {
-  // 实现删除逻辑
-  // 可参考原有useUser hook的实现
+  Modal.confirm({
+    title: t('common.confirm'),
+    content: t('system.user.message.deleteConfirm'),
+    onOk: async () => {
+      await userApi.deleteUser(id)
+      message.success(t('system.user.message.deleteSuccess'))
+      tableRef.value?.refresh?.()
+    },
+  })
 }
 
 /**
  * 批量删除用户
  */
 async function handleBatchDelete() {
-  // 实现批量删除逻辑
-  // 可参考原有useUser hook的实现
+  if (selectedRowKeys.value.length === 0) return
+  Modal.confirm({
+    title: t('common.confirm'),
+    content: t('system.user.message.batchDeleteConfirm'),
+    onOk: async () => {
+      await userApi.batchDeleteUsers(selectedRowKeys.value)
+      selectedRowKeys.value = []
+      message.success(t('system.user.message.deleteSuccess'))
+      tableRef.value?.refresh?.()
+    },
+  })
 }
 
 /**

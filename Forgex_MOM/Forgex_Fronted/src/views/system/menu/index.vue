@@ -345,10 +345,6 @@ const activeModuleId = ref<string>('')
 const { dictItems: menuTypeOptions } = useDict('menu_type')
 const { dictItems: menuModeOptions } = useDict('menu_mode')
 
-// 模块列表
-const modules = ref<any[]>([])
-const activeModuleId = ref<string>('')
-
 // 表格引用
 const tableRef = ref()
 

@@ -6,7 +6,7 @@
  */
 import axios from 'axios'
 import { message, Modal } from 'ant-design-vue'
-import { getLocale } from '../locales'
+import i18n, { getLocale } from '../locales'
 
 /**
  * 需要重新登录的错误码列表
@@ -54,6 +54,16 @@ const loginBack = { open: false }
  */
 function needReload(code: number): boolean {
   return reloadCodes.includes(code)
+}
+
+/**
+ * 获取多语言文案
+ *
+ * @param key i18n key
+ * @returns 翻译后的文本
+ */
+function t(key: string): string {
+  return String(i18n.global.t(key))
 }
 
 /**
@@ -110,7 +120,7 @@ http.interceptors.response.use(
       if (resp.status === 200) {
         return resp // 文件下载成功，直接返回响应
       }
-      message.warning('文件下载失败或此文件不存在')
+      message.warning(t('message.downloadFailedOrNotFound'))
       return Promise.reject(resp)
     }
     
@@ -150,9 +160,9 @@ http.interceptors.response.use(
       if (!loginBack.open) {
         loginBack.open = true
         Modal.error({
-          title: '提示：',
-          okText: '重新登录',
-          content: '登录已失效，请重新登录',
+          title: `${t('message.tipTitle')}:`,
+          okText: t('message.relogin'),
+          content: t('message.sessionExpired'),
           onOk: () => {
             loginBack.open = false
             location.reload() // 刷新页面，跳转到登录页
@@ -169,7 +179,7 @@ http.interceptors.response.use(
       const customErrorMessage = cfgAny.customErrorMessage
       const silentError = cfgAny.silentError === true
       if (!silentError) {
-        message.error(customErrorMessage || data.message || '请求失败')
+        message.error(customErrorMessage || data.message || t('message.operationFailed'))
       }
       return Promise.reject(data)
     }
@@ -179,7 +189,7 @@ http.interceptors.response.use(
   },
   // 处理网络错误
   err => {
-    message.error('网关错误')
+    message.error(t('message.gatewayError'))
     return Promise.reject(err)
   }
 )

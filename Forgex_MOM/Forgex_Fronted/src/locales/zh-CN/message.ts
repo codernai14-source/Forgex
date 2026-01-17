@@ -38,8 +38,12 @@ export default {
   unsavedChangesConfirm: '有未保存的更改，确定要离开吗？',
   networkError: '网络错误，请检查网络连接',
   serverError: '服务器错误，请稍后重试',
+  gatewayError: '网关错误，请稍后重试',
   permissionDenied: '权限不足',
   sessionExpired: '会话已过期，请重新登录',
+  tipTitle: '提示',
+  relogin: '重新登录',
+  downloadFailedOrNotFound: '文件下载失败或此文件不存在',
   
   // 其他提示
   processing: '处理中...',

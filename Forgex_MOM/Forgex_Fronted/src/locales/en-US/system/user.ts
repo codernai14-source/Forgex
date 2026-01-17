@@ -4,20 +4,36 @@
 export default {
   // Page Titles
   title: 'User Management',
+  userManagement: 'User Management',
   list: 'User List',
   detail: 'User Detail',
   
+  // Actions
+  add: 'Add User',
+  edit: 'Edit',
+  delete: 'Delete',
+  export: 'Export',
+
   // Table Columns
+  avatar: 'Avatar',
   username: 'Username',
   realName: 'Real Name',
   email: 'Email',
   phone: 'Phone',
+  gender: 'Gender',
   department: 'Department',
+  position: 'Position',
   role: 'Role',
+  entryDate: 'Entry Date',
   status: 'Status',
   createTime: 'Create Time',
+  createBy: 'Created By',
   updateTime: 'Update Time',
+  updateBy: 'Updated By',
   lastLoginTime: 'Last Login Time',
+  lastLoginIp: 'Last Login IP',
+  lastLoginRegion: 'Last Login Region',
+  action: 'Actions',
   
   // Form
   form: {
@@ -40,7 +56,6 @@ export default {
   statusInactive: 'Inactive',
   statusLocked: 'Locked',
   
-  // Actions
   resetPassword: 'Reset Password',
   lockUser: 'Lock User',
   unlockUser: 'Unlock User',
@@ -49,6 +64,7 @@ export default {
   // Messages
   message: {
     deleteConfirm: 'Are you sure you want to delete this user?',
+    batchDeleteConfirm: 'Are you sure you want to delete selected users?',
     deleteSuccess: 'User deleted successfully',
     saveSuccess: 'User saved successfully',
     resetPasswordSuccess: 'Password reset successfully',

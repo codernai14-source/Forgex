@@ -28,13 +28,13 @@ public class GatewayGlobalExceptionHandler {
         String msg = e.getMessage();
         String name = extractServiceName(msg);
         String m = name == null ? "目标服务未启动" : (name + "服务未启动");
-        return Mono.just(R.fail(404, m));
+        return Mono.just(R.fail(500, m));
     }
 
     @ExceptionHandler(ResponseStatusException.class)
     public Mono<R<Object>> handleStatus(ResponseStatusException e) {
         if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-            return Mono.just(R.fail(404, "接口不存在"));
+            return Mono.just(R.fail(500, "接口不存在"));
         }
         if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
             return Mono.just(R.fail(401, "用户没有权限"));

@@ -26,7 +26,7 @@ public class CommonTableController {
         Long userId = UserContext.get();
         FxTableConfigDTO cfg = tableConfigService.getTableConfig(tableCode, tenantId, userId);
         if (cfg == null) {
-            return R.fail(404, SysPromptEnum.TABLE_CONFIG_NOT_FOUND, tableCode);
+            return R.fail(500, SysPromptEnum.TABLE_CONFIG_NOT_FOUND, tableCode);
         }
         return R.ok(cfg);
     }

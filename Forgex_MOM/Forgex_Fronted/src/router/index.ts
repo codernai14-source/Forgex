@@ -7,6 +7,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { ref } from 'vue'
 import { usePermissionStore } from '../stores/permission'
+import { getRoutes } from '../api/system/route'
 
 /**
  * 静态路由配置
@@ -96,6 +97,20 @@ router.beforeEach(async (to, from, next) => {
     isRestoringRoutes = true
     
     try {
+      try {
+        console.log('[Guard] Fetching routes from backend...')
+        const payload = await getRoutes({ account, tenantId })
+        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules) && payload.routes.length > 0) {
+          console.log('[Guard] Fetched routes, injecting...')
+          await injectDynamicRoutes(payload)
+          isRestoringRoutes = false
+          next({ ...to, replace: true })
+          return
+        }
+      } catch (e) {
+        console.warn('[Guard] Fetch routes failed, fallback to Pinia restore', e)
+      }
+
       const cached = permissionStore.restoreRoutesAndModules()
       
       if (cached.routes.length > 0 && cached.modules.length > 0) {

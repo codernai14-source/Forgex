@@ -11,6 +11,18 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+/**
+ * R.message 国际化填充拦截器
+ * <p>
+ * 统一处理 {@link R} 返回体，将 {@link R#getMsg()}（枚举提示）或 {@link R#getI18n()}（元信息）
+ * 解析为当前语言下的最终文案并写回 {@link R#setMessage(String)}。
+ * </p>
+ *
+ * @author Forgex
+ * @version 1.0.0
+ * @see com.forgex.common.i18n.LangContext
+ * @see I18nMessageService
+ */
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
@@ -34,6 +46,15 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
             I18nPrompt prompt = r.getMsg();
             if (prompt != null) {
                 String resolved = i18nMessageService.resolve(prompt, r.getMsgArgs());
+                if (resolved != null) {
+                    r.setMessage(resolved);
+                }
+            } else if (r.getI18n() != null && !org.springframework.util.StringUtils.hasText(r.getMessage())) {
+                String resolved = i18nMessageService.resolve(
+                        r.getI18n().getModule(),
+                        r.getI18n().getCode(),
+                        r.getI18n().getArgs()
+                );
                 if (resolved != null) {
                     r.setMessage(resolved);
                 }

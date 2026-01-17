@@ -1,6 +1,6 @@
 <template>
   <a-card :bordered="false">
-    <a-form v-if="config && (config.queryFields?.length || $slots.toolbar)" layout="inline" :model="queryModel">
+    <a-form v-if="resolvedShowQueryForm && config && (config.queryFields?.length || $slots.toolbar)" layout="inline" :model="queryModel">
       <template v-for="q in config.queryFields" :key="q.field">
         <a-form-item :label="q.label">
           <!-- 文本输入框 -->
@@ -44,8 +44,8 @@
       </template>
       <a-form-item>
         <a-space>
-          <a-button type="primary" @click="handleQuery">查询</a-button>
-          <a-button @click="handleReset">重置</a-button>
+          <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
+          <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
           <slot name="toolbar" />
         </a-space>
       </a-form-item>
@@ -55,15 +55,11 @@
     <a-table
       :columns="tableColumns"
       :data-source="tableData"
-      :loading="loading"
-      :pagination="{
-        current: pagination.current,
-        pageSize: pagination.pageSize,
-        total: pagination.total,
-        showSizeChanger: true,
-        showQuickJumper: true,
-        showTotal: (total: number) => `共 ${total} 条`,
-      }"
+      :loading="resolvedLoading"
+      :row-selection="rowSelection"
+      :pagination="resolvedPagination"
+      :default-expand-all-rows="defaultExpandAllRows"
+      :expandable="expandable"
       :row-key="resolvedRowKey"
       @change="handleTableChange"
       style="margin-top: 16px"
@@ -88,6 +84,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { getTableConfig, type FxTableConfig, type FxTableColumn } from '@/api/system/tableConfig'
+import { useI18n } from 'vue-i18n'
 
 /**
  * 字典选项类型
@@ -131,7 +128,16 @@ const props = defineProps<{
     query: Record<string, any>
     sorter?: { field?: string; order?: string }
   }) => Promise<{ records: any[]; total: number }>
+
+  loading?: boolean
+  pagination?: TableProps['pagination'] | false
+  rowSelection?: TableProps['rowSelection']
+  defaultExpandAllRows?: boolean
+  expandable?: TableProps['expandable']
+  showQueryForm?: boolean
 }>()
+
+const { t, locale } = useI18n()
 
 /**
  * 表格配置
@@ -142,6 +148,9 @@ const config = ref<FxTableConfig>()
  * 加载状态
  */
 const loading = ref(false)
+
+const resolvedLoading = computed(() => (props.loading === undefined ? loading.value : props.loading))
+const resolvedShowQueryForm = computed(() => props.showQueryForm !== false)
 
 /**
  * 表格数据
@@ -156,6 +165,24 @@ const pagination = reactive({
   pageSize: 20,   // 每页条数
   total: 0,       // 总条数
 })
+
+const resolvedPagination = computed(() => {
+  if (props.pagination === false) return false
+  const base = {
+    current: pagination.current,
+    pageSize: pagination.pageSize,
+    total: pagination.total,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total: number) => `${t('common.total')} ${total} ${t('common.items')}`,
+  } as const
+  if (!props.pagination) return base
+  return { ...base, ...(props.pagination as any) }
+})
+
+const rowSelection = computed(() => props.rowSelection)
+const defaultExpandAllRows = computed(() => props.defaultExpandAllRows)
+const expandable = computed(() => props.expandable)
 
 /**
  * 查询模型
@@ -269,8 +296,11 @@ async function handleQuery(sorter?: any) {
       query: normalizeQuery(),
       sorter: normalizeSorter(sorter),
     })
-    tableData.value = res.records || []
-    pagination.total = res.total || 0
+    const anyRes: any = res as any
+    const records = anyRes?.records ?? anyRes?.data ?? []
+    const total = anyRes?.total ?? 0
+    tableData.value = Array.isArray(records) ? records : []
+    pagination.total = typeof total === 'number' ? total : 0
   } finally {
     loading.value = false
   }
@@ -319,7 +349,11 @@ function reload() {
 }
 
 // 暴露方法给父组件
-defineExpose({ getQuery, getPage, reload })
+function refresh() {
+  return handleQuery()
+}
+
+defineExpose({ getQuery, getPage, reload, refresh })
 
 /**
  * 处理表格变化
@@ -340,6 +374,13 @@ watch(
     pagination.current = 1
     await loadConfig()
     await handleQuery()
+  },
+)
+
+watch(
+  () => locale.value,
+  async () => {
+    await loadConfig()
   },
 )
 

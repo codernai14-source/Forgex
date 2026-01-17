@@ -38,8 +38,12 @@ export default {
   unsavedChangesConfirm: 'You have unsaved changes. Are you sure you want to leave?',
   networkError: 'Network error. Please check your connection',
   serverError: 'Server error. Please try again later',
+  gatewayError: 'Gateway error. Please try again later',
   permissionDenied: 'Permission denied',
   sessionExpired: 'Session expired. Please login again',
+  tipTitle: 'Notice',
+  relogin: 'Login again',
+  downloadFailedOrNotFound: 'Download failed or file not found',
   
   // Other Messages
   processing: 'Processing...',

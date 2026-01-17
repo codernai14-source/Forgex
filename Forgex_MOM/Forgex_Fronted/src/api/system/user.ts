@@ -120,7 +120,6 @@ export async function exportUsers(query: Partial<UserQuery>) {
   })
 }
 
-// 导出API对象以保持兼容性
 export const userApi = {
   getUserList,
   getUserDetail,
@@ -135,5 +134,5 @@ export const userApi = {
   getDepartmentTree,
   getDepartmentList,
   getPositionList,
-  exportUsers
+  exportUsers,
 }

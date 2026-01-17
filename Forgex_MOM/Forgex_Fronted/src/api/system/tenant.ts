@@ -117,5 +117,5 @@ export function deleteTenant(params: { id: number }) {
  * @returns 是否成功
  */
 export function reloadTenantIgnore() {
-  return http.post<boolean>('/tenant/ignore/reload')
+  return http.post<boolean>('/sys/tenant/ignore/reload')
 }

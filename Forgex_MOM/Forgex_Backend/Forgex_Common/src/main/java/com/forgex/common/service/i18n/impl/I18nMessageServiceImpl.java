@@ -14,6 +14,22 @@ import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
 
+/**
+ * 国际化消息解析服务实现
+ * <p>
+ * 解析规则：
+ * <ul>
+ *     <li>优先根据 (module + promptCode) 从 {@code fx_i18n_message} 查询 JSON 文案</li>
+ *     <li>按 {@link LangContext#get()} 选择对应语言（支持 en/zh 兜底）</li>
+ *     <li>查不到时回退到默认模板（如提供），并在英文环境下做简单英译兜底</li>
+ * </ul>
+ * </p>
+ *
+ * @author Forgex
+ * @version 1.0.0
+ * @see com.forgex.common.i18n.I18nPrompt
+ * @see com.forgex.common.i18n.LangContext
+ */
 @Service
 @RequiredArgsConstructor
 public class I18nMessageServiceImpl implements I18nMessageService {
@@ -25,7 +41,7 @@ public class I18nMessageServiceImpl implements I18nMessageService {
         if (prompt == null) {
             return null;
         }
-        String template = resolveTemplate(prompt);
+        String template = resolveTemplate(prompt.getModule(), prompt.getPromptCode(), prompt.getDefaultTemplate());
         if (!StringUtils.hasText(template)) {
             template = prompt.getDefaultTemplate();
         }
@@ -39,20 +55,36 @@ public class I18nMessageServiceImpl implements I18nMessageService {
         }
     }
 
-    private String resolveTemplate(I18nPrompt prompt) {
+    @Override
+    public String resolve(String module, String promptCode, Object[] args) {
+        if (!StringUtils.hasText(module) || !StringUtils.hasText(promptCode)) {
+            return null;
+        }
+        String template = resolveTemplate(module, promptCode, null);
+        if (!StringUtils.hasText(template)) {
+            return null;
+        }
+        try {
+            return MessageFormat.format(template, args == null ? new Object[0] : args);
+        } catch (Exception e) {
+            return template;
+        }
+    }
+
+    private String resolveTemplate(String module, String promptCode, String defaultTemplate) {
         FxI18nMessage row = i18nMessageMapper.selectOne(new LambdaQueryWrapper<FxI18nMessage>()
-                .eq(FxI18nMessage::getModule, prompt.getModule())
-                .eq(FxI18nMessage::getPromptCode, prompt.getPromptCode())
+                .eq(FxI18nMessage::getModule, module)
+                .eq(FxI18nMessage::getPromptCode, promptCode)
                 .eq(FxI18nMessage::getDeleted, 0)
                 .last("limit 1"));
         if (row == null || Boolean.FALSE.equals(row.getEnabled())) {
             // 如果没有找到翻译记录，直接返回对应语言的默认模板
-            return getDefaultTemplateByLang(prompt.getDefaultTemplate());
+            return getDefaultTemplateByLang(defaultTemplate);
         }
         String json = row.getTextI18nJson();
         if (!StringUtils.hasText(json)) {
             // 如果翻译JSON为空，直接返回对应语言的默认模板
-            return getDefaultTemplateByLang(prompt.getDefaultTemplate());
+            return getDefaultTemplateByLang(defaultTemplate);
         }
         try {
             JsonNode node = objectMapper.readTree(json);
@@ -72,8 +104,8 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             }
             
             // 如果当前语言是英文，尝试直接翻译默认模板
-            if (lang.startsWith("en")) {
-                return translateToEnglish(prompt.getDefaultTemplate());
+            if (lang.startsWith("en") && StringUtils.hasText(defaultTemplate)) {
+                return translateToEnglish(defaultTemplate);
             }
             
             val = getText(node, "zh-CN");
@@ -95,10 +127,10 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             }
             
             // 如果所有尝试都失败，返回对应语言的默认模板
-            return getDefaultTemplateByLang(prompt.getDefaultTemplate());
+            return getDefaultTemplateByLang(defaultTemplate);
         } catch (Exception e) {
             // 解析JSON失败时，返回对应语言的默认模板
-            return getDefaultTemplateByLang(prompt.getDefaultTemplate());
+            return getDefaultTemplateByLang(defaultTemplate);
         }
     }
 

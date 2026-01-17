@@ -37,6 +37,8 @@ INSERT INTO fx_i18n_message (module, prompt_code, text_i18n_json, enabled, versi
 -- 系统模块消息 (sys模块)
 -- ================================================
 INSERT INTO fx_i18n_message (module, prompt_code, text_i18n_json, enabled, version, create_by, create_time, update_time, deleted) VALUES
+('sys', 'TABLE_CONFIG_NOT_FOUND', '{"zh-CN":"表格配置{0}不存在","en-US":"Table configuration {0} does not exist"}', 1, 1, 'system', NOW(), NOW(), 0),
+('sys', 'TABLE_QUERY_NOT_ALLOWED', '{"zh-CN":"表格{0}不允许通用查询","en-US":"Table {0} does not allow general query"}', 1, 1, 'system', NOW(), NOW(), 0),
 ('sys', 'TENANT_ID_EMPTY', '{"zh-CN":"租户ID不能为空","en-US":"Tenant ID cannot be empty"}', 1, 1, 'system', NOW(), NOW(), 0),
 ('sys', 'ADMIN_USER_NOT_FOUND', '{"zh-CN":"admin用户不存在","en-US":"Admin user not found"}', 1, 1, 'system', NOW(), NOW(), 0),
 ('sys', 'STATUS_EMPTY', '{"zh-CN":"状态不能为空","en-US":"Status cannot be empty"}', 1, 1, 'system', NOW(), NOW(), 0),

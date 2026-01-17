@@ -54,8 +54,32 @@ public class R<T> {
     private I18nPrompt msg;
     @JsonIgnore
     private Object[] msgArgs;
+    /**
+     * 国际化元信息（可选）
+     * <p>
+     * 用于跨服务、网关或前端需要“二次翻译”的场景：当 {@link #msg} 无法直接序列化/反序列化时，
+     * 仍可通过 module + code + args 反查语言库。
+     * </p>
+     */
+    private I18nMeta i18n;
     /** 返回数据：泛型类型，可为null */
     private T data;
+
+    /**
+     * 国际化元信息结构
+     *
+     * @author Forgex Team
+     * @version 1.0.0
+     */
+    @Data
+    public static class I18nMeta {
+        /** 模块标识 */
+        private String module;
+        /** 提示码 */
+        private String code;
+        /** 参数 */
+        private Object[] args;
+    }
 
     /**
      * 成功返回（无数据）
@@ -69,8 +93,6 @@ public class R<T> {
         R<T> r = new R<>();
         // 设置成功状态码
         r.code = 200;
-        // 设置成功消息
-        r.message = "OK";
         return r;
     }
 
@@ -79,6 +101,7 @@ public class R<T> {
         r.code = 200;
         r.msg = msg;
         r.msgArgs = msgArgs;
+        r.i18n = buildI18nMeta(msg, msgArgs);
         return r;
     }
 
@@ -134,8 +157,6 @@ public class R<T> {
         R<T> r = new R<>();
         // 设置成功状态码
         r.code = 200;
-        // 设置成功消息
-        r.message = "OK";
         // 设置返回数据
         r.data = data;
         return r;
@@ -164,6 +185,7 @@ public class R<T> {
         r.code = 500;
         r.msg = msg;
         r.msgArgs = msgArgs;
+        r.i18n = buildI18nMeta(msg, msgArgs);
         return r;
     }
 
@@ -191,6 +213,26 @@ public class R<T> {
         r.code = code;
         r.msg = msg;
         r.msgArgs = msgArgs;
+        r.i18n = buildI18nMeta(msg, msgArgs);
         return r;
+    }
+
+    /**
+     * 构建国际化元信息
+     *
+     * @param msg 国际化提示
+     * @param msgArgs 参数
+     * @return 国际化元信息；msg 为空时返回 null
+     */
+    private static I18nMeta buildI18nMeta(I18nPrompt msg, Object[] msgArgs) {
+        if (msg == null) {
+            return null;
+        }
+
+        I18nMeta meta = new I18nMeta();
+        meta.setModule(msg.getModule());
+        meta.setCode(msg.getPromptCode());
+        meta.setArgs(msgArgs);
+        return meta;
     }
 }

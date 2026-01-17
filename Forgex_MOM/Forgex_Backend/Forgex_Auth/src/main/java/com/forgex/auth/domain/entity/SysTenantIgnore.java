@@ -13,9 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.auth.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.forgex.common.base.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * 租户隔离跳过配置（持久化对象）
@@ -23,7 +30,9 @@ import lombok.Data;
  */
 @Data
 @TableName("sys_tenant_ignore")
-public class SysTenantIgnore extends BaseEntity {
+public class SysTenantIgnore {
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
     /** 配置作用域：TABLE / SERVICE / MAPPER */
     private String scope;
     /** 匹配内容：表名 / 全限定类名 / 全限定类名#方法名 */
@@ -32,5 +41,17 @@ public class SysTenantIgnore extends BaseEntity {
     private Boolean enabled;
     /** 备注说明 */
     private String remark;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    @TableLogic
+    @TableField(value = "deleted")
+    private Boolean deleted;
 }
 

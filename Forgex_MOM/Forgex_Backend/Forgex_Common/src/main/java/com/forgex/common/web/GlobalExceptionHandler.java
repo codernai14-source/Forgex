@@ -115,7 +115,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(I18nBusinessException.class)
     public R<Object> handleI18nBusiness(I18nBusinessException e) {
-        return R.fail(e.getCode(), e.getMsg(), e.getMsgArgs());
+        int code = e.getCode();
+        if (code == 401 || code == 403) {
+            return R.fail(code, e.getMsg(), e.getMsgArgs());
+        }
+        return R.fail(500, e.getMsg(), e.getMsgArgs());
     }
 
     /** 参数解析/校验错误 */

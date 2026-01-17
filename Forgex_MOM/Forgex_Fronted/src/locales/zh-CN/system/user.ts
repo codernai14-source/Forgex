@@ -4,10 +4,12 @@
 export default {
   // 页面标题
   title: '用户管理',
+  userManagement: '用户管理',
   list: '用户列表',
   detail: '用户详情',
   
   // 表格列
+  avatar: '头像',
   username: '用户名',
   realName: '真实姓名',
   email: '邮箱',
@@ -19,8 +21,13 @@ export default {
   role: '角色',
   status: '状态',
   createTime: '创建时间',
+  createBy: '创建人',
   updateTime: '更新时间',
+  updateBy: '修改人',
   lastLoginTime: '最后登录时间',
+  lastLoginIp: '最后登录IP',
+  lastLoginRegion: '最后登录地区',
+  action: '操作',
   
   // 性别
   genderOptions: {

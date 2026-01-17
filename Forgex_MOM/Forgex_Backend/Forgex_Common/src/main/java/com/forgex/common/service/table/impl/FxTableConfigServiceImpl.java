@@ -34,6 +34,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         FxTableConfig cfg = tableConfigMapper.selectOne(new LambdaQueryWrapper<FxTableConfig>()
                 .eq(FxTableConfig::getTableCode, tableCode)
                 .eq(FxTableConfig::getDeleted, 0)
+                .orderByAsc(FxTableConfig::getId)
                 .last("limit 1"));
         if (cfg == null || Boolean.FALSE.equals(cfg.getEnabled())) {
             return null;

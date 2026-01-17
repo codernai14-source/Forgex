@@ -56,7 +56,7 @@ public class UserStyleController {
         }
         Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
-            return R.fail(404, "用户不存在");
+            return R.fail(500, "用户不存在");
         }
         Long tenantId = TenantContext.get();
         LayoutStyleConfig config = userStyleConfigService.getLayoutConfig(userId, tenantId);
@@ -76,7 +76,7 @@ public class UserStyleController {
         }
         Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
-            return R.fail(404, "用户不存在");
+            return R.fail(500, "用户不存在");
         }
         Long tenantId = TenantContext.get();
         userStyleConfigService.saveLayoutConfig(userId, tenantId, param.getConfig());

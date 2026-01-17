@@ -264,14 +264,12 @@ const handleRequest = async (params: any) => {
   try {
     const res = await listModules({ ...queryParams, ...params })
     return {
-      success: true,
-      data: res.records || [],
+      records: res.records || [],
       total: res.total || 0
     }
   } catch (error) {
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   }
