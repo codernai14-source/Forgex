@@ -61,9 +61,6 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
-        if (path != null && path.startsWith("/api/auth/")) {
-            return chain.filter(exchange);
-        }
         String token = resolveToken(request);
         if (!StringUtils.hasText(token)) {
             return chain.filter(exchange);

@@ -1,7 +1,7 @@
 <template>
   <router-view />
   <div v-if="loaderOpen" style="position:fixed;inset:0;z-index:2000;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)">
-    <video src="/@fs/D:/product/test/Forgex/Forgex_MOM/doc/50833-462033983.mp4" autoplay muted loop style="max-width:70%;max-height:70%;opacity:0.85;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.45)"></video>
+    <video src="/loading.mp4" autoplay muted loop style="max-width:70%;max-height:70%;opacity:0.85;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.45)"></video>
   </div>
 </template>
 

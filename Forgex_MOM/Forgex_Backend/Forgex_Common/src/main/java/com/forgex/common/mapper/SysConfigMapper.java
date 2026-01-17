@@ -28,8 +28,21 @@ import org.apache.ibatis.annotations.Param;
 public interface SysConfigMapper extends BaseMapper<SysConfig> {
     /**
      * 按键读取配置（限定列，避免无效列导致SQL错误）
+     * 
+     * @param key 配置键
+     * @return 配置对象
      */
     @DS("common")
     @Select("SELECT id, config_key, config_value FROM sys_config WHERE deleted = 0 AND config_key = #{key}")
     SysConfig getByKey(@Param("key") String key);
+    
+    /**
+     * 按键读取全局配置（tenant_id = 0）
+     * 
+     * @param key 配置键
+     * @return 全局配置对象
+     */
+    @DS("common")
+    @Select("SELECT id, config_key, config_value FROM sys_config WHERE deleted = 0 AND tenant_id = 0 AND config_key = #{key}")
+    SysConfig getGlobalByKey(@Param("key") String key);
 }

@@ -76,7 +76,7 @@
         </a-layout-content>
         
         <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
-          © 2025 FORGEX_MOM
+          {{ systemConfig.copyright }}
         </div>
       </a-layout>
     </a-layout>
@@ -268,6 +268,7 @@ import { dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
+import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale } from '../locales'
 
 import AppHeader from './components/AppHeader.vue'
@@ -282,6 +283,7 @@ import { generateCSSVariablesWithCache } from '../theme/cssVariables'
 import type { LayoutConfig } from '../theme/types'
 import { useAppStore } from '../stores/app'
 import { useUserStore } from '../stores/user'
+import type { SystemBasicConfig } from '../api/system/config'
 
 const router = useRouter()
 const route = useRoute()
@@ -365,6 +367,24 @@ const activeTabKey = ref<string>('')
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
+
+const systemConfig = ref<SystemBasicConfig>({
+  systemName: 'FORGEX_MOM',
+  systemLogo: '',
+  systemVersion: '1.0.0',
+  copyright: '© 2025 FORGEX_MOM',
+  copyrightLink: '#',
+  loginPageTitle: '欢迎来到FORGEX_MOM！',
+  loginPageSubtitle: '',
+  loginBackgroundType: 'video',
+  loginBackgroundVideo: '/jws.mp4',
+  loginBackgroundImage: '',
+  loginBackgroundColor: '#0d0221',
+  loginStyle: 'cyber',
+  showOAuthLogin: true,
+  primaryColor: '#05d9e8',
+  secondaryColor: '#ff2a6d'
+})
 
 locale.value = currentLocale.value as any
 
@@ -715,6 +735,9 @@ function onGlobalSearchSelect(menuKey: string, path: string) {
 }
 
 async function onLocaleChange(val: string) {
+  // 保存原始语言设置，以便失败时恢复
+  const originalLocale = currentLocale.value
+  
   try {
     // 1. 调用setLocale函数更新语言设置，该函数会：
     //    - 更新vue-i18n的locale值
@@ -761,8 +784,10 @@ async function onLocaleChange(val: string) {
     }
   } catch (e) {
     console.error('语言切换失败:', e)
-    // 语言切换失败时，保持当前的语言设置
-    message.error('语言切换失败，请稍后重试')
+    // 语言切换失败时，恢复到原来的语言设置
+    setLocale(originalLocale as 'zh-CN' | 'en-US')
+    currentLocale.value = originalLocale
+    appStore.setLocale(originalLocale as 'zh-CN' | 'en-US')
   }
 }
 
@@ -964,12 +989,19 @@ function onTabsClose(action: 'others' | 'left' | 'right' | 'all', tab?: { key: s
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('scroll', handleScroll)
   }
   loadLayout()
   updateTabsByRoute(route.fullPath)
+  
+  try {
+    const config = await getSystemBasicConfig()
+    if (config) {
+      systemConfig.value = { ...config }
+    }
+  } catch (_) {}
 })
 
 onUnmounted(() => {

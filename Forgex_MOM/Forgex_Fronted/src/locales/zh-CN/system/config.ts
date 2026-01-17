@@ -1,0 +1,41 @@
+/**
+ * 系统配置页面翻译 - 中文
+ */
+export default {
+  title: '系统配置',
+  basicInfo: '系统基本信息',
+  loginPage: '登录页配置',
+  themeColor: '主题配色',
+  copyrightInfo: '版权信息',
+  
+  systemName: '系统名称',
+  systemNamePlaceholder: '请输入系统名称',
+  systemLogo: '系统Logo',
+  logoUrlPlaceholder: 'Logo URL 或 Base64',
+  systemVersion: '系统版本',
+  versionPlaceholder: '请输入版本号',
+  
+  loginTitle: '登录页标题',
+  loginTitlePlaceholder: '请输入登录页标题',
+  loginSubtitle: '登录页副标题',
+  loginSubtitlePlaceholder: '请输入登录页副标题',
+  
+  backgroundType: '背景类型',
+  bgVideo: '视频',
+  bgImage: '图片',
+  bgColor: '纯色',
+  bgVideoPlaceholder: '视频 URL',
+  bgImagePlaceholder: '图片 URL 或 Base64',
+  bgColorPlaceholder: '背景颜色',
+  
+  loginStyle: '登录页风格',
+  styleCyber: '赛博朋克',
+  styleSimple: '简约风格',
+  styleClassic: '经典风格',
+  showOAuth: '显示第三方登录',
+  
+  primaryColor: '主色调',
+  secondaryColor: '辅助色',
+  
+  previewTitle: '登录页预览',
+}

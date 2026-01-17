@@ -16,6 +16,7 @@ package com.forgex.sys.controller;
 import com.forgex.common.config.ConfigService;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.config.CaptchaConfig;
+import com.forgex.sys.domain.config.SystemBasicConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +25,10 @@ import java.util.Map;
 /**
  * 系统配置控制器。
  * <p>
- * 提供登录相关配置的读取与更新接口（验证码配置）。
+ * 提供登录验证码配置、系统基础配置的读取与更新接口。
  * Controller 仅负责参数接收与结果返回，配置持久化由配置服务完成。
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/sys/config")
@@ -51,6 +54,27 @@ public class SysConfigController {
     @PutMapping("/login-captcha")
     public R<Boolean> setLoginCaptcha(@RequestBody Map<String, Object> body) {
         configService.setJson("login.captcha", body);
+        return R.ok(true);
+    }
+
+    /**
+     * 获取全局系统基础配置。
+     * @return 系统基础配置对象
+     */
+    @GetMapping("/system-basic")
+    public R<SystemBasicConfig> getSystemBasicConfig() {
+        SystemBasicConfig c = configService.getGlobalJson("system.basic", SystemBasicConfig.class, SystemBasicConfig.defaults());
+        return R.ok(c);
+    }
+
+    /**
+     * 更新全局系统基础配置。
+     * @param config 系统基础配置对象
+     * @return 是否成功
+     */
+    @PutMapping("/system-basic")
+    public R<Boolean> setSystemBasicConfig(@RequestBody SystemBasicConfig config) {
+        configService.setJson("system.basic", config);
         return R.ok(true);
     }
 }
