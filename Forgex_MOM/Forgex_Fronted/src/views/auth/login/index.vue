@@ -1,21 +1,30 @@
 <template>
   <div class="login-wrap">
     <video
+      v-if="systemConfig.loginBackgroundType === 'video'"
       class="bg-video"
       autoplay
       muted
       loop
       playsinline
-      src="/@fs/D:/product/test/Forgex/Forgex_MOM/public/jws.mp4"
+      :src="formatMediaUrl(systemConfig.loginBackgroundVideo)"
     ></video>
-    <div class="mask"></div>
+    <img
+      v-if="systemConfig.loginBackgroundType === 'image'"
+      class="bg-video"
+      :src="formatMediaUrl(systemConfig.loginBackgroundImage)"
+    />
+    <div class="mask" :style="{ backgroundColor: systemConfig.loginBackgroundType === 'color' ? systemConfig.loginBackgroundColor : '' }"></div>
     <div class="grid"></div>
     <div class="content">
       <div class="brand" v-show="!tenantOpen">
-        <span class="brand-blue">FORGEX</span><span class="brand-red">_MOM</span>
+        <img v-if="formatMediaUrl(systemConfig.systemLogo)" :src="formatMediaUrl(systemConfig.systemLogo)" class="brand-logo" />
+        <span v-else class="brand-blue">{{ systemConfig.systemName.split('_')[0] }}</span
+        ><span v-if="!formatMediaUrl(systemConfig.systemLogo)" class="brand-red">_{{ systemConfig.systemName.split('_')[1] || 'MOM' }}</span>
         <div class="brand-line"></div>
       </div>
-      <div class="brand-sub" v-show="!tenantOpen">欢迎来到FORGEX_MOM！</div>
+      <div class="brand-sub" v-show="!tenantOpen">{{ systemConfig.loginPageTitle }}</div>
+      <div class="brand-sub-desc" v-show="!tenantOpen">{{ systemConfig.loginPageSubtitle }}</div>
       <div class="glass-card" v-show="!tenantOpen">
         <form class="cyber-form" @submit.prevent="onPreLogin">
           <div class="field">
@@ -69,12 +78,13 @@
             class="btn-gradient block-btn"
             :disabled="logging"
             :class="{ 'btn-disabled': logging }"
+            :style="{ '--primary-color': systemConfig.primaryColor, '--secondary-color': systemConfig.secondaryColor }"
           >
             <span>身份校验</span>
             <span v-if="logging" class="spinner"></span>
           </button>
-          <div class="divider"><span>更多登录方式</span></div>
-          <div class="oauth-row">
+          <div class="divider" v-if="systemConfig.showOAuthLogin"><span>更多登录方式</span></div>
+          <div class="oauth-row" v-if="systemConfig.showOAuthLogin">
             <button type="button" class="oauth-btn gitee" title="Gitee">
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
@@ -87,7 +97,7 @@
           </div>
         </form>
       </div>
-      <div class="copyright">© 2025 FORGEX_MOM</div>
+      <div class="copyright">{{ systemConfig.copyright }}</div>
     </div>
     <div v-if="tenantOpen" class="identity-overlay">
       <div class="identity-global-tools">
@@ -172,13 +182,14 @@ import {
 import { captchaImage, captchaSlider, captchaSliderValidate } from '../../../api/auth/captcha'
 import { getRoutes } from '../../../api/system/route'
 import router, { injectDynamicRoutes } from '../../../router'
-import { getLoginCaptcha } from '../../../api/system/config'
+import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { getInitStatus } from '../../../api/system/init'
 import { sm2 } from 'sm-crypto'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import { getCurrentUserInfo } from '@/api/profile'
+import type { SystemBasicConfig } from '../../../api/system/config'
 
 // 初始化 stores
 const userStore = useUserStore()
@@ -199,6 +210,30 @@ const sliderBox = ref<HTMLDivElement | null>(null)
 const logging = ref(false)
 const publicKeyCache = ref<string>('')
 const showSort = ref(false)
+
+const systemConfig = ref<SystemBasicConfig>({
+  systemName: 'FORGEX_MOM',
+  systemLogo: '',
+  systemVersion: '1.0.0',
+  copyright: '© 2025 FORGEX_MOM',
+  copyrightLink: '#',
+  loginPageTitle: '欢迎来到FORGEX_MOM！',
+  loginPageSubtitle: '',
+  loginBackgroundType: 'video',
+  loginBackgroundVideo: '/jws.mp4',
+  loginBackgroundImage: '',
+  loginBackgroundColor: '#0d0221',
+  loginStyle: 'cyber',
+  showOAuthLogin: true,
+  primaryColor: '#05d9e8',
+  secondaryColor: '#ff2a6d'
+})
+
+function formatMediaUrl(value: string): string {
+  if (!value) return ''
+  if (value.startsWith('data:')) return value
+  return value.startsWith('/') ? value : ''
+}
 
 function formatTenantLogo(url?: string) {
   if (!url) return ''
@@ -440,6 +475,14 @@ onMounted(async () => {
       remember.value = true
     }
   } catch (_) {}
+  
+  try {
+    const config = await getSystemBasicConfig()
+    if (config) {
+      systemConfig.value = { ...config }
+    }
+  } catch (_) {}
+  
   await loadMode()
 })
 
@@ -493,6 +536,15 @@ watch(sliderOpen, async open => {
   position: relative;
   animation: glitch 2s infinite;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.brand-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
 }
 .brand-blue {
   color: #05d9e8;
@@ -517,8 +569,14 @@ watch(sliderOpen, async open => {
 .brand-sub {
   color: #9ca3af;
   margin-top: 6px;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
   font-size: 14px;
+}
+.brand-sub-desc {
+  color: #9ca3af;
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 13px;
 }
 .glass-card {
   width: 380px;
@@ -613,7 +671,7 @@ watch(sliderOpen, async open => {
   padding: 10px 0;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(90deg, #05d9e8, #d300c5);
+  background: linear-gradient(90deg, var(--primary-color, #05d9e8), var(--secondary-color, #ff2a6d));
   color: #fff;
   cursor: pointer;
   display: inline-flex;

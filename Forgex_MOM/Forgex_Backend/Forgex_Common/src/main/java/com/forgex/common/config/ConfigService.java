@@ -57,5 +57,16 @@ public interface ConfigService {
      */
     <T> T getJson(String key, Class<T> type, T def);
 
+    /**
+     * 获取全局 JSON 配置并反序列化为实体对象
+     * 逻辑：按键查询配置表（tenant_id = 0）-> 若为空返回默认对象 -> 使用 JSON 反序列化为指定类型；解析失败返回默认对象
+     * @param key 配置键（value 为 JSON）
+     * @param type 目标实体类型
+     * @param def 默认对象
+     * @return 解析后的全局配置实体对象
+     * @see cn.hutool.json.JSONUtil#toBean(String, Class)
+     */
+    <T> T getGlobalJson(String key, Class<T> type, T def);
+
     void setJson(String key, Object value);
 }

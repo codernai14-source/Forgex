@@ -467,6 +467,13 @@ INSERT IGNORE INTO sys_config (config_key, config_value, tenant_id) VALUES (
   @TENANT_ID
 );
 
+-- 9.1 插入全局系统基础配置（如果不存在）
+INSERT IGNORE INTO sys_config (config_key, config_value, tenant_id) VALUES (
+  'system.basic',
+  '{"systemName":"FORGEX_MOM","systemLogo":"","systemVersion":"1.0.0","copyright":"© 2025 FORGEX_MOM","copyrightLink":"#","loginPageTitle":"欢迎来到FORGEX_MOM！","loginPageSubtitle":"","loginBackgroundType":"video","loginBackgroundVideo":"/jws.mp4","loginBackgroundImage":"","loginBackgroundColor":"#0d0221","loginStyle":"cyber","showOAuthLogin":true,"primaryColor":"#05d9e8","secondaryColor":"#ff2a6d"}',
+  0
+);
+
 -- 10. 租户隔离跳过配置（如果不存在）
 INSERT IGNORE INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_user', 1, '用户表不带租户字段');
 INSERT IGNORE INTO sys_tenant_ignore(scope, matcher, enabled, remark) VALUES ('TABLE', 'sys_tenant', 1, '租户表不带租户字段');

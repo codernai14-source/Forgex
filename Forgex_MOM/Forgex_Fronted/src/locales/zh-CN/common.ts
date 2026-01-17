@@ -58,4 +58,18 @@ export default {
   noData: '暂无数据',
   pleaseSelect: '请选择',
   pleaseInput: '请输入',
+  
+  // 系统配置相关
+  loadFailed: '加载失败',
+  saveSuccess: '保存成功',
+  saveFailed: '保存失败',
+  resetSuccess: '重置成功',
+  uploadSuccess: '上传成功',
+  uploadFailed: '上传失败',
+  uploading: '上传中',
+  upload: '上传',
+  imageOnly: '只能上传图片文件',
+  videoOnly: '只能上传视频文件',
+  sizeLimit: '文件大小超出限制',
+  preview: '预览',
 }

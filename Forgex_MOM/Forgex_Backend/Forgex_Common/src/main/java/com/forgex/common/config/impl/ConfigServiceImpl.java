@@ -132,4 +132,27 @@ public class ConfigServiceImpl implements ConfigService {
             }
         } finally { DynamicDataSourceContextHolder.poll(); }
     }
+
+    /**
+     * 获取全局 JSON 配置并反序列化为实体对象
+     * 逻辑：读取全局配置（tenant_id = 0）文本 -> 解析为目标类型；异常时返回默认对象
+     * @param key 配置键
+     * @param type 目标类型
+     * @param def 默认对象
+     * @return 解析后的实体
+     * @see cn.hutool.json.JSONUtil#toBean(String, Class)
+     * @see com.forgex.common.mapper.SysConfigMapper#getGlobalByKey
+     */
+    @Override
+    public <T> T getGlobalJson(String key, Class<T> type, T def) {
+        try { DynamicDataSourceContextHolder.push("common");
+            SysConfig cfg = mapper.getGlobalByKey(key);
+            if (cfg == null || cfg.getConfigValue() == null) return def;
+            try {
+                return JSONUtil.toBean(cfg.getConfigValue(), type);
+            } catch (Exception e) {
+                return def;
+            }
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
 }

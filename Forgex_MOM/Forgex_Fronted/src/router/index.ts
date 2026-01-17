@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
         name: 'UserProfile',
         component: () => import('../views/profile/index.vue'),
         meta: { title: '个人信息', module: 'sys' } // 个人信息页
+      },
+      {
+        path: 'sys/config',
+        name: 'SystemConfig',
+        component: () => import('../views/system/config/index.vue'),
+        meta: { title: '系统配置', module: 'sys' } // 系统配置页
       }
     ]
   },
