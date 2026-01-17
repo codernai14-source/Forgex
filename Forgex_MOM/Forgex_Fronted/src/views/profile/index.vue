@@ -201,11 +201,9 @@ async function handleSaveBasic() {
       avatar: formData.avatar,
     })
     
-    message.success('保存成功')
     loadUserInfo()
   } catch (error) {
     console.error('保存失败:', error)
-    message.error('保存失败')
   } finally {
     loading.value = false
   }

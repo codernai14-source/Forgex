@@ -1,6 +1,7 @@
 package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.param.CommonTableQueryParam;
 import com.forgex.sys.service.CommonTableDataService;
@@ -29,12 +30,10 @@ public class CommonTableDataController {
     @PostMapping("/query")
     public R<IPage<?>> query(@RequestBody CommonTableQueryParam param) {
         try {
-            // 调用服务层查询数据
             IPage<?> result = commonTableDataService.queryTableData(param);
             return R.ok(result);
         } catch (RuntimeException e) {
-            // 处理服务层抛出的异常
-            return R.fail(500, e.getMessage());
+            return R.fail(CommonPrompt.DATA_QUERY_FAILED, e.getMessage());
         }
     }
 }

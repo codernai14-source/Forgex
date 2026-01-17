@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
@@ -105,7 +106,7 @@ public class UserController {
         userService.addUser(userDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.CREATE_SUCCESS);
     }
 
     /**
@@ -123,7 +124,7 @@ public class UserController {
             tenantId = CurrentUserUtils.getTenantId();
         }
         if (tenantId == null) {
-            return R.fail("租户ID不能为空");
+            return R.fail(CommonPrompt.TENANT_ID_EMPTY);
         }
         userValidator.validateId(param.getUserId());
         List<Long> assignedRoleIds = userRoleService.listAssignedRoleIds(param.getUserId(), tenantId);
@@ -148,11 +149,11 @@ public class UserController {
             tenantId = CurrentUserUtils.getTenantId();
         }
         if (tenantId == null) {
-            return R.fail("租户ID不能为空");
+            return R.fail(CommonPrompt.TENANT_ID_EMPTY);
         }
         userValidator.validateId(param.getUserId());
         userRoleService.saveUserRoles(param.getUserId(), tenantId, param.getRoleIds());
-        return R.ok();
+        return R.ok(CommonPrompt.ASSIGN_SUCCESS);
     }
     
     /**
@@ -168,7 +169,7 @@ public class UserController {
         userService.updateUser(userDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
     
     /**
@@ -185,7 +186,7 @@ public class UserController {
         userService.deleteUser(param.getId());
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**
@@ -206,7 +207,7 @@ public class UserController {
         userService.batchDeleteUsers(ids);
         
         // 4. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**
@@ -217,7 +218,7 @@ public class UserController {
     public R<Void> resetPassword(@RequestBody IdParam param) {
         userValidator.validateId(param.getId());
         userService.resetPassword(param.getId());
-        return R.ok();
+        return R.ok(CommonPrompt.RESET_SUCCESS);
     }
     
     /**
@@ -228,11 +229,11 @@ public class UserController {
     public R<Void> updateStatus(@RequestBody UserStatusUpdateParam param) {
         userValidator.validateId(param.getId());
         if (param.getStatus() == null) {
-            return R.fail("状态不能为空");
+            return R.fail(CommonPrompt.PARAM_EMPTY);
         }
         
         userService.updateStatus(param.getId(), param.getStatus());
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
     
     /**
@@ -243,10 +244,10 @@ public class UserController {
     public R<Void> resetAdminPassword() {
         Long adminId = userService.getUserIdByAccount("admin");
         if (adminId == null) {
-            return R.fail("admin用户不存在");
+            return R.fail(CommonPrompt.ADMIN_NOT_FOUND);
         }
         userService.resetPassword(adminId);
-        return R.ok();
+        return R.ok(CommonPrompt.RESET_SUCCESS);
     }
     
     /**

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.DictDTO;
@@ -58,9 +59,9 @@ public class SysDictController {
     public R<List<DictItemVO>> items(@RequestBody DictItemsParam param) {
         String dictCode = param.getDictCode();
         if (dictCode == null || dictCode.isEmpty()) {
-            return R.fail(500, "字典编码不能为空");
+            return R.fail(CommonPrompt.DICT_CODE_CANNOT_BE_EMPTY);
         }
-        
+
         Long tenantId = getCurrentTenantId();
         List<DictItemVO> items = dictService.getDictItemsByCode(dictCode, tenantId);
         return R.ok(items);
@@ -70,7 +71,7 @@ public class SysDictController {
     public R<List<DictItemVO>> itemsByPath(@RequestBody DictItemsByPathParam param) {
         String nodePath = param == null ? null : param.getNodePath();
         if (nodePath == null || nodePath.isEmpty()) {
-            return R.fail(500, "nodePath不能为空");
+            return R.fail(CommonPrompt.NODE_PATH_CANNOT_BE_EMPTY);
         }
         Long tenantId = getCurrentTenantId();
         return R.ok(dictService.getDictItemsByPath(nodePath, tenantId));
@@ -102,9 +103,9 @@ public class SysDictController {
     public R<Boolean> delete(@RequestBody IdParam param) {
         Long id = param.getId();
         if (id == null) {
-            return R.fail(500, "字典ID不能为空");
+            return R.fail(CommonPrompt.DICT_ID_CANNOT_BE_EMPTY);
         }
-        
+
         dictService.deleteDict(id);
         return R.ok(true);
     }

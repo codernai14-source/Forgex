@@ -18,6 +18,7 @@ import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.forgex.common.config.ConfigService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.entity.*;
 import com.forgex.sys.domain.param.InitApplyParam;
@@ -103,15 +104,15 @@ public class InitServiceImpl implements InitService {
     @DSTransactional(rollbackFor = Exception.class)
     public R<Boolean> apply(InitApplyParam param) {
         String lockKey = "sys:init:lock"; // 分布式锁键（避免并发初始化）
-        Boolean ok = redis.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMinutes(2)); // 获取锁，设置2分钟过期
-        if (Boolean.FALSE.equals(ok)) { // 获取失败（正在初始化）
-            return R.fail(500, "正在初始化中，请稍后再试"); // 返回失败提示
+        Boolean ok = redis.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMinutes(2));
+        if (Boolean.FALSE.equals(ok)) {
+            return R.fail(CommonPrompt.INITIALIZING);
         }
         try {
-            writeSecurityConfigsToCommon(param); // 写入安全配置到 common 配置库
+            writeSecurityConfigsToCommon(param);
             PasswordPolicyConfig policyCheck = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
             String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456@" : param.getInitialPassword();
-            if (!validatePassword(initPwd, policyCheck)) { return R.fail(500, "初始化密码不符合安全策略要求"); }
+            if (!validatePassword(initPwd, policyCheck)) { return R.fail(CommonPrompt.INIT_PASSWORD_INVALID); }
             clearAdminTables(); // 清空 admin 相关业务表（忽略租户过滤，保证幂等）
             seedAdminData(param); // 重建租户、用户、角色以及绑定关系
             InitStatusConfig status = new InitStatusConfig(); // 创建初始化状态实体

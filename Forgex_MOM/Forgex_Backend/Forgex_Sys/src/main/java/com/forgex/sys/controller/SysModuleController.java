@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysModuleDTO;
@@ -84,7 +85,7 @@ public class SysModuleController {
     public R<Void> create(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForAdd(moduleDTO);
         moduleService.addModule(moduleDTO);
-        return R.ok();
+        return R.ok(CommonPrompt.CREATE_SUCCESS);
     }
     
     /**
@@ -95,7 +96,7 @@ public class SysModuleController {
     public R<Void> update(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForUpdate(moduleDTO);
         moduleService.updateModule(moduleDTO);
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
     
     /**
@@ -107,7 +108,7 @@ public class SysModuleController {
         Long id = parseLong(body.get("id"));
         moduleValidator.validateForDelete(id);
         moduleService.deleteModule(id);
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**
@@ -121,7 +122,7 @@ public class SysModuleController {
         // 逐个校验
         ids.forEach(moduleValidator::validateForDelete);
         moduleService.batchDeleteModules(ids);
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**

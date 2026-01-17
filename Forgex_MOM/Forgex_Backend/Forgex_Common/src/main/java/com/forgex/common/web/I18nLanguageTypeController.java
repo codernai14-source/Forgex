@@ -1,6 +1,7 @@
 package com.forgex.common.web;
 
 import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.service.i18n.I18nLanguageTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -56,11 +57,11 @@ public class I18nLanguageTypeController {
     public R<FxI18nLanguageType> getByLangCode(@RequestBody Map<String, Object> body) {
         String langCode = (String) body.get("langCode");
         if (langCode == null || langCode.isEmpty()) {
-            return R.fail("语言代码不能为空");
+            return R.fail(CommonPrompt.LANG_CODE_EMPTY);
         }
         FxI18nLanguageType languageType = languageTypeService.getByLangCode(langCode);
         if (languageType == null) {
-            return R.fail("语言类型不存在");
+            return R.fail(CommonPrompt.LANG_TYPE_NOT_FOUND);
         }
         return R.ok(languageType);
     }
@@ -74,7 +75,7 @@ public class I18nLanguageTypeController {
     public R<FxI18nLanguageType> getDefault() {
         FxI18nLanguageType languageType = languageTypeService.getDefault();
         if (languageType == null) {
-            return R.fail("默认语言类型不存在");
+            return R.fail(CommonPrompt.DEFAULT_LANG_NOT_FOUND);
         }
         return R.ok(languageType);
     }
@@ -88,10 +89,10 @@ public class I18nLanguageTypeController {
     @PostMapping("/create")
     public R<Boolean> create(@RequestBody FxI18nLanguageType languageType) {
         if (languageType.getLangCode() == null || languageType.getLangCode().isEmpty()) {
-            return R.fail("语言代码不能为空");
+            return R.fail(CommonPrompt.LANG_CODE_EMPTY);
         }
         if (languageType.getLangName() == null || languageType.getLangName().isEmpty()) {
-            return R.fail("语言名称不能为空");
+            return R.fail(CommonPrompt.LANG_NAME_EMPTY);
         }
         return R.ok(languageTypeService.create(languageType));
     }
@@ -105,7 +106,7 @@ public class I18nLanguageTypeController {
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody FxI18nLanguageType languageType) {
         if (languageType.getId() == null) {
-            return R.fail("ID不能为空");
+            return R.fail(CommonPrompt.ID_EMPTY);
         }
         return R.ok(languageTypeService.update(languageType));
     }
@@ -120,7 +121,7 @@ public class I18nLanguageTypeController {
     public R<Boolean> delete(@RequestBody Map<String, Object> body) {
         Object idObj = body.get("id");
         if (idObj == null) {
-            return R.fail("ID不能为空");
+            return R.fail(CommonPrompt.ID_EMPTY);
         }
         Long id = null;
         if (idObj instanceof Integer) {
@@ -143,7 +144,7 @@ public class I18nLanguageTypeController {
     public R<Boolean> setDefault(@RequestBody Map<String, Object> body) {
         Object idObj = body.get("id");
         if (idObj == null) {
-            return R.fail("ID不能为空");
+            return R.fail(CommonPrompt.ID_EMPTY);
         }
         Long id = null;
         if (idObj instanceof Integer) {

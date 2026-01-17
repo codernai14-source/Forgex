@@ -99,12 +99,10 @@ export function useUserForm(onSuccess: () => void) {
         ? userApi.updateUser(formData as User)
         : userApi.addUser(formData as User))
       
-      message.success(isEdit.value ? '编辑成功' : '新增成功')
       dialogVisible.value = false
       onSuccess()
     } catch (error) {
       console.error('提交失败:', error)
-      message.error('操作失败')
     } finally {
       loading.value = false
     }

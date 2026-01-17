@@ -30,8 +30,10 @@ import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.LoginLogService;
 import com.forgex.common.config.ConfigService;
 import com.forgex.auth.service.CaptchaService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -144,12 +146,10 @@ public class AuthServiceImpl implements AuthService {
         // 根据IP获取地理位置信息
         String region = ipLocationService.getLocationByIp(clientIp);
         
-        // 校验账号和密码是否为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
             log.warn("登录失败: 账号或密码为空");
-            // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号或密码为空");
-            return R.fail(500, "账号或密码不能为空");
+            return R.fail(CommonPrompt.ACCOUNT_OR_PASSWORD_EMPTY);
         }
         // 如果启用了传输加密（SM2），优先尝试解密入参密码
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
@@ -175,12 +175,10 @@ public class AuthServiceImpl implements AuthService {
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .select(SysUser::getId, SysUser::getAccount, SysUser::getUsername, SysUser::getPassword, SysUser::getEmail, SysUser::getPhone, SysUser::getStatus)
                 .eq(SysUser::getAccount, idKey));
-            // 校验用户是否存在
             if (user == null) {
                 log.warn("登录失败: 用户不存在, account={}", idKey);
-                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
-                return R.fail(500, "用户不存在");
+                return R.fail(CommonPrompt.USER_NOT_FOUND);
             }
         // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
@@ -190,12 +188,10 @@ public class AuthServiceImpl implements AuthService {
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
         // 验证密码是否正确
         boolean passOk = provider.verify(password, user.getPassword());
-        // 密码验证失败
         if (!passOk) {
             log.warn("登录失败: 密码不正确, account={}", account);
-            // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "密码不正确");
-            return R.fail(500, "密码不正确");
+            return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
         // 验证码校验（由配置决定方式）
         CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
@@ -207,19 +203,15 @@ public class AuthServiceImpl implements AuthService {
             String captchaId = param.getCaptchaId();
             // 获取验证码
             String captcha = param.getCaptcha();
-            // 校验验证码是否为空
             if (!StringUtils.hasText(captchaId) || !StringUtils.hasText(captcha)) {
                 log.warn("登录失败: 图片验证码缺失, account={}", account);
-                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
-                return R.fail(500, "验证码不能为空");
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
             }
-            // 验证图片验证码
             if (!captchaService.verifyImage(captchaId, captcha)) {
                 log.warn("登录失败: 图片验证码错误, account={}", account);
-                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
-                return R.fail(500, "验证码不正确");
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
             }
         } else if ("slider".equalsIgnoreCase(mode)) {
             // 滑块验证码模式
@@ -228,16 +220,13 @@ public class AuthServiceImpl implements AuthService {
             // 校验令牌是否为空
             if (!StringUtils.hasText(token)) {
                 log.warn("登录失败: 滑块令牌缺失, account={}", account);
-                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
-                return R.fail(500, "验证码不能为空");
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
             }
-            // 验证滑块令牌
             if (!captchaService.verifySlider(token)) {
                 log.warn("登录失败: 滑块令牌校验失败, account={}", account);
-                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
-                return R.fail(500, "验证码不正确");
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
             }
         }
         // 查询用户绑定的租户ID列表
@@ -296,28 +285,20 @@ public class AuthServiceImpl implements AuthService {
     public R<SysUserDTO> chooseTenant(TenantChoiceParam param) {
         // 从参数中提取租户ID
         Long tenantId = param == null ? null : param.getTenantId();
-        // 从参数中提取账号
         String account = param == null ? null : param.getAccount();
-        // 校验租户ID是否为空
         if (tenantId == null) {
-            return R.fail(500, "租户ID不能为空");
+            return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
         }
-        // 检查租户绑定关系
-        if (!StringUtils.hasText(account)) return R.fail(500, "账号不能为空");
-        // 设置查询用的账号键
+        if (!StringUtils.hasText(account)) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.ACCOUNT_CANNOT_BE_EMPTY);
         String idKey = account;
-        // 查询用户信息
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getAccount, idKey));
-        // 校验用户是否存在
-        if (user == null) return R.fail(500, "用户不存在");
-        // 查询用户与租户的绑定关系
+        if (user == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_FOUND);
         SysUserTenant bind = userTenantMapper.selectOne(new LambdaQueryWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .last("limit 1"));
-        // 校验是否绑定该租户
-        if (bind == null) return R.fail(500, "未绑定该租户");
+        if (bind == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_BOUND_TO_TENANT);
         // 调用SaToken进行登录
         StpUtil.login(idKey);
         // 获取SaSession对象
@@ -419,12 +400,9 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId) {
-        // 校验参数是否为空
-        if (!StringUtils.hasText(account) || ordered == null) return R.fail(500, "参数错误");
-        // 查询用户信息
+        if (!StringUtils.hasText(account) || ordered == null) return R.fail(CommonPrompt.BAD_REQUEST);
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getAccount, account));
-        // 校验用户是否存在
-        if (user == null) return R.fail(500, "用户不存在");
+        if (user == null) return R.fail(CommonPrompt.USER_NOT_FOUND);
         // 计算权重（排序列表长度）
         int n = ordered.size(); int weight = n;
         // 遍历排序列表，更新每个租户的偏好顺序
@@ -513,27 +491,21 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public R<Boolean> resetPasswordById(Long userId) {
-        // 校验用户ID是否为空
         if (userId == null) {
-            return R.fail(500, "用户ID不能为空");
+            return R.fail(CommonPrompt.USER_ID_CANNOT_BE_EMPTY);
         }
-        // 查询用户信息
         SysUser user = userMapper.selectById(userId);
-        // 校验用户是否存在
         if (user == null) {
-            return R.fail(500, "用户不存在");
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
-        // 使用BCrypt算法对默认密码进行哈希
         String hashed = BCrypt.hashpw("123456");
-        // 更新用户密码
         int n = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
                 .set(SysUser::getPassword, hashed)
                 .eq(SysUser::getId, userId));
-        // 判断更新是否成功
         if (n > 0) {
             return R.ok(true);
         }
-        return R.fail(500, "重置失败");
+        return R.fail(CommonPrompt.RESET_FAILED);
     }
 
     /**

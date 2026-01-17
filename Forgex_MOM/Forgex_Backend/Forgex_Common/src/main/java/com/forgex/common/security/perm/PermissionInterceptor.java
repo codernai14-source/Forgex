@@ -1,9 +1,11 @@
 package com.forgex.common.security.perm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -83,13 +85,13 @@ public class PermissionInterceptor implements HandlerInterceptor {
             }
         }
         if (userId == null || tenantId == null) {
-            writeFail(response, 401, "未登录或租户未选择");
+            writeFail(response, StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
             return false;
         }
 
         boolean ok = permKeyService.hasAllPerms(userId, tenantId, required);
         if (!ok) {
-            writeFail(response, 403, "无权限");
+            writeFail(response, StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
             return false;
         }
 
@@ -123,18 +125,21 @@ public class PermissionInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * 输出统一失败响应。
+     * 输出统一失败响应
      *
      * @param response 响应
-     * @param code     业务码
+     * @param code     HTTP状态码
      * @param msg      提示信息
      * @throws Exception 写出失败
      */
     private void writeFail(HttpServletResponse response, int code, String msg) throws Exception {
+        R<Object> r = new R<>();
+        r.setCode(code);
+        r.setMessage(msg);
         response.setStatus(HttpServletResponse.SC_OK);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write(objectMapper.writeValueAsString(R.fail(code, msg)));
+        response.getWriter().write(objectMapper.writeValueAsString(r));
     }
 
     private Long parseLong(String raw) {

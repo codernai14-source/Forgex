@@ -1,19 +1,8 @@
-/*Copyright 2026 coder_nai@163.com
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.*/
 package com.forgex.gateway.web;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,38 +10,71 @@ import org.springframework.cloud.gateway.support.NotFoundException;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+/**
+ * 网关全局异常处理器
+ * <p>
+ * 统一捕获网关层的异常并返回项目约定的业务错误结构
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @RestControllerAdvice
 public class GatewayGlobalExceptionHandler {
+    /**
+     * 处理服务未找到异常
+     *
+     * @param e 服务未找到异常
+     * @return Mono包装的R对象
+     */
     @ExceptionHandler(NotFoundException.class)
     public Mono<R<Object>> handleNotFound(NotFoundException e) {
         String msg = e.getMessage();
         String name = extractServiceName(msg);
-        String m = name == null ? "目标服务未启动" : (name + "服务未启动");
-        return Mono.just(R.fail(500, m));
+        String moduleName = name == null ? "目标" : name;
+        return Mono.just(R.fail(StatusCode.MODULE_OFFLINE, CommonPrompt.MODULE_OFFLINE, moduleName));
     }
 
+    /**
+     * 处理响应状态异常
+     *
+     * @param e 响应状态异常
+     * @return Mono包装的R对象
+     */
     @ExceptionHandler(ResponseStatusException.class)
     public Mono<R<Object>> handleStatus(ResponseStatusException e) {
         if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-            return Mono.just(R.fail(500, "接口不存在"));
+            return Mono.just(R.fail(StatusCode.NOT_FOUND, CommonPrompt.INTERFACE_NOT_FOUND));
         }
         if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-            return Mono.just(R.fail(401, "用户没有权限"));
+            return Mono.just(R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION));
         }
         if (e.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
-            String msg = e.getReason() == null ? (e.getMessage() == null ? "服务器内部错误" : e.getMessage()) : e.getReason();
-            return Mono.just(R.fail(500, msg));
+            String msg = e.getReason() == null ? (e.getMessage() == null ? "" : e.getMessage()) : e.getReason();
+            return Mono.just(R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.INTERNAL_SERVER_ERROR_MSG, msg));
         }
-        String msg = e.getReason() == null ? (e.getMessage() == null ? "网关错误" : e.getMessage()) : e.getReason();
-        return Mono.just(R.fail(502, msg));
+        String msg = e.getReason() == null ? (e.getMessage() == null ? "" : e.getMessage()) : e.getReason();
+        return Mono.just(R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.GATEWAY_ERROR, msg));
     }
 
+    /**
+     * 处理任意异常
+     *
+     * @param e 异常对象
+     * @return Mono包装的R对象
+     */
     @ExceptionHandler(Throwable.class)
     public Mono<R<Object>> handleAny(Throwable e) {
-        String msg = e.getMessage() == null ? "网关错误" : e.getMessage();
-        return Mono.just(R.fail(502, msg));
+        String msg = e.getMessage() == null ? "" : e.getMessage();
+        return Mono.just(R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.GATEWAY_ERROR, msg));
     }
 
+    /**
+     * 从异常消息中提取服务名称
+     *
+     * @param msg 异常消息
+     * @return 服务名称
+     */
     private String extractServiceName(String msg) {
         if (msg == null) return null;
         String k = "for ";

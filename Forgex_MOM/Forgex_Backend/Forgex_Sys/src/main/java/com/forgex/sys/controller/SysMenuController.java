@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
@@ -133,7 +134,7 @@ public class SysMenuController {
         menuService.addMenu(menuDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.CREATE_SUCCESS);
     }
     
     /**
@@ -149,7 +150,7 @@ public class SysMenuController {
         menuService.updateMenu(menuDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
     
     /**
@@ -168,7 +169,7 @@ public class SysMenuController {
         menuService.deleteMenu(id);
         
         // 4. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**
@@ -189,7 +190,7 @@ public class SysMenuController {
         menuService.batchDeleteMenus(ids);
         
         // 4. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**

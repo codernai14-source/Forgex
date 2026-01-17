@@ -21,6 +21,7 @@ import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.config.ConfigService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -267,18 +268,14 @@ public class AuthController {
      */
     @PostMapping("/captcha/slider/validate")
     public R<String> captchaSliderValidate(@RequestBody SliderValidateParam param) {
-        // 校验参数是否为空
         if (param == null || param.getId() == null || param.getTrack() == null) {
-            return R.fail(500, "验证码不能为空");
+            return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
         }
-        // 委派给验证码服务校验滑块轨迹
         String token = captchaService.validateSlider(param.getId(), param.getTrack());
-        // 校验成功，返回令牌
         if (token != null) {
             return R.ok(token);
         }
-        // 校验失败，返回错误信息
-        return R.fail(500, "验证码不正确");
+        return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
     }
 
     /**
@@ -326,11 +323,8 @@ public class AuthController {
      */
     @GetMapping("/crypto/public-key")
     public R<String> publicKey() {
-        // 从配置服务中获取传输加密配置
         CryptoTransportConfig cfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
-        // 提取公钥
         String pub = cfg == null ? null : cfg.getPublicKey();
-        // 返回公钥或错误信息
-        return pub != null ? R.ok(pub) : R.fail(500, "未配置公钥");
+        return pub != null ? R.ok(pub) : R.fail(CommonPrompt.PUBLIC_KEY_NOT_CONFIGURED);
     }
 }

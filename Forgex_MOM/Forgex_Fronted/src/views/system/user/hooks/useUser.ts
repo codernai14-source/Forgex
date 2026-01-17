@@ -98,11 +98,9 @@ export function useUser() {
       onOk: async () => {
         try {
           await userApi.deleteUser(id)
-          message.success('删除成功')
           fetchUserList()
         } catch (error) {
           console.error('删除用户失败:', error)
-          message.error('删除失败')
         }
       },
     })
@@ -123,12 +121,10 @@ export function useUser() {
       onOk: async () => {
         try {
           await userApi.batchDeleteUsers(selectedRowKeys.value)
-          message.success('批量删除成功')
           selectedRowKeys.value = []
           fetchUserList()
         } catch (error) {
           console.error('批量删除失败:', error)
-          message.error('批量删除失败')
         }
       },
     })
@@ -144,10 +140,8 @@ export function useUser() {
       onOk: async () => {
         try {
           await userApi.resetPassword(id)
-          message.success('密码重置成功')
         } catch (error) {
           console.error('密码重置失败:', error)
-          message.error('密码重置失败')
         }
       },
     })
@@ -164,11 +158,9 @@ export function useUser() {
       onOk: async () => {
         try {
           await userApi.updateUserStatus(id, status)
-          message.success(`${statusText}成功`)
           fetchUserList()
         } catch (error) {
           console.error(`${statusText}失败:`, error)
-          message.error(`${statusText}失败`)
         }
       },
     })
@@ -197,10 +189,8 @@ export function useUser() {
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-      message.success('导出成功')
     } catch (error) {
       console.error('导出失败:', error)
-      message.error('导出失败')
     } finally {
       loading.value = false
     }

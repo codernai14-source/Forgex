@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysUserDTO;
@@ -59,7 +60,7 @@ public class ProfileController {
         userDTO.setAccount(null);
         
         userService.updateUser(userDTO);
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
     
     /**
@@ -71,22 +72,22 @@ public class ProfileController {
         String newPassword = body.get("newPassword");
         
         if (oldPassword == null || oldPassword.isEmpty()) {
-            return R.fail("旧密码不能为空");
+            return R.fail(CommonPrompt.PARAM_EMPTY, "旧密码不能为空");
         }
         if (newPassword == null || newPassword.isEmpty()) {
-            return R.fail("新密码不能为空");
+            return R.fail(CommonPrompt.PARAM_EMPTY, "新密码不能为空");
         }
         if (newPassword.length() < 6) {
-            return R.fail("新密码长度不能少于6位");
+            return R.fail(CommonPrompt.BAD_REQUEST, "新密码长度不能少于6位");
         }
         
         Long userId = UserContext.get();
         
         boolean success = userService.changePassword(userId, oldPassword, newPassword);
         if (!success) {
-            return R.fail("旧密码不正确");
+            return R.fail(CommonPrompt.BAD_REQUEST, "旧密码不正确");
         }
         
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
 }

@@ -13,6 +13,7 @@ import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import * as Icons from '@ant-design/icons-vue'
 import { permission } from './directives/permission'
+import FxDynamicTable from './components/common/FxDynamicTable.vue'
 
 /**
  * 创建 Vue 应用实例
@@ -66,6 +67,11 @@ const iconComponents = [
   'UpOutlined',           // 向上箭头图标
   'ReloadOutlined'        // 刷新图标
 ]
+
+/**
+ * 注册全局组件
+ */
+app.component('FxDynamicTable', FxDynamicTable)
 
 /**
  * 遍历图标列表，将图标注册为全局组件

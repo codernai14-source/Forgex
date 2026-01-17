@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -70,9 +71,9 @@ public class SysPositionController {
         Long tenantId = TenantContext.get();
         
         SysPositionDTO position = positionService.getById(id, tenantId);
-        
+
         if (position == null) {
-            return R.fail("职位不存在");
+            return R.fail(CommonPrompt.POSITION_NOT_FOUND);
         }
         
         return R.ok(position);

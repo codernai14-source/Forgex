@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -82,9 +83,9 @@ public class SysDepartmentController {
         Long tenantId = TenantContext.get();
         
         SysDepartmentDTO department = departmentService.getById(id, tenantId);
-        
+
         if (department == null) {
-            return R.fail("部门不存在");
+            return R.fail(CommonPrompt.DEPARTMENT_NOT_FOUND);
         }
         
         return R.ok(department);

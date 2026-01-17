@@ -184,6 +184,11 @@ http.interceptors.response.use(
       return Promise.reject(data)
     }
     
+    // 响应成功，显示成功消息（如果有）
+    if (code === 200 && data.message) {
+      message.success(data.message)
+    }
+    
     // 响应成功，返回业务数据
     return data.data
   },

@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysRoleDTO;
@@ -95,7 +96,7 @@ public class SysRoleController {
         roleService.addRole(roleDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.CREATE_SUCCESS);
     }
     
     /**
@@ -111,7 +112,7 @@ public class SysRoleController {
         roleService.updateRole(roleDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
     
     /**
@@ -130,7 +131,7 @@ public class SysRoleController {
         roleService.deleteRole(id);
         
         // 4. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**
@@ -152,7 +153,7 @@ public class SysRoleController {
         roleService.batchDeleteRoles(ids);
         
         // 4. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
     
     /**

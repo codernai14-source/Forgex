@@ -338,7 +338,6 @@ async function handleExport() {
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
-    message.success(t('common.success'))
   } catch (e) {
     message.error(t('common.failed'))
   }
@@ -409,7 +408,6 @@ async function handleDelete(id: string) {
     content: t('system.user.message.deleteConfirm'),
     onOk: async () => {
       await userApi.deleteUser(id)
-      message.success(t('system.user.message.deleteSuccess'))
       tableRef.value?.refresh?.()
     },
   })
@@ -426,7 +424,6 @@ async function handleBatchDelete() {
     onOk: async () => {
       await userApi.batchDeleteUsers(selectedRowKeys.value)
       selectedRowKeys.value = []
-      message.success(t('system.user.message.deleteSuccess'))
       tableRef.value?.refresh?.()
     },
   })
