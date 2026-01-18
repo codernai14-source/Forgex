@@ -72,4 +72,11 @@ export default {
   videoOnly: '動画ファイルのみ',
   sizeLimit: 'ファイルサイズ超過',
   preview: 'プレビュー',
+  
+  // メッセージ
+  confirmDelete: '削除確認？',
+  saved: '保存済み',
+  deleted: '削除済み',
+  remove: '削除',
+  confirm: '確定',
 }

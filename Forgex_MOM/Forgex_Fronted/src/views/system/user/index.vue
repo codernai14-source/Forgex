@@ -80,7 +80,7 @@
       <div style="margin-bottom: 16px;">
         <a-space>
           <a-button
-            v-permission="'sys:user:create'"
+            v-permission="'sys:user:add'"
             type="primary"
             @click="openAddDialog"
           >

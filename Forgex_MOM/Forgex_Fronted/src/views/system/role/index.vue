@@ -49,7 +49,7 @@
     <a-card class="table-card" :bordered="false">
       <template #title>
         <a-space>
-          <a-button type="primary" @click="openAdd" v-permission="'sys:role:create'">
+          <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
             <template #icon><PlusOutlined /></template>
             新增角色
           </a-button>
@@ -244,7 +244,7 @@ import {
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
-import { grantRoleMenus, getRoleAuthData, listRoles, deleteRole, batchDeleteRoles } from '@/api/system/role'
+import { grantRoleMenus, getRoleAuthData, getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import type { Role } from './types'
 
 interface MenuEntity {
@@ -312,13 +312,13 @@ const dictOptions = ref({
 const handleRequest = async (params: any) => {
   loading.value = true
   try {
-    const res = await listRoles({
+    const res = await getRolePage({
       ...searchForm.value,
       ...params
     })
     return {
       success: true,
-      data: res.data,
+      data: res.records,
       total: res.total
     }
   } catch (error) {
@@ -596,7 +596,6 @@ onMounted(async () => {
   if (tid) {
     currentTenantId.value = tid
   }
-  await loadRoles()
 })
 </script>
 

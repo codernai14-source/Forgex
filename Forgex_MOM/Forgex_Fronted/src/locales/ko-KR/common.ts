@@ -72,4 +72,11 @@ export default {
   videoOnly: '동영상 파일만 가능',
   sizeLimit: '파일 크기 초과',
   preview: '미리보기',
+  
+  // 메시지
+  confirmDelete: '삭제 확인?',
+  saved: '저장됨',
+  deleted: '삭제됨',
+  remove: '제거',
+  confirm: '확인',
 }

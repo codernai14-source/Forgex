@@ -58,4 +58,11 @@ export default {
   noData: 'No Data',
   pleaseSelect: 'Please Select',
   pleaseInput: 'Please Input',
+  
+  // Messages
+  confirmDelete: 'Confirm Delete?',
+  saved: 'Saved',
+  deleted: 'Deleted',
+  remove: 'Remove',
+  confirm: 'Confirm',
 }

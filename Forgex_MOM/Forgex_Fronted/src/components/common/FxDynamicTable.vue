@@ -52,24 +52,26 @@
     </a-form>
 
     <!-- 数据表格 -->
-    <a-table
-      :columns="tableColumns"
-      :data-source="tableData"
-      :loading="resolvedLoading"
-      :row-selection="rowSelection"
-      :pagination="resolvedPagination"
-      :default-expand-all-rows="defaultExpandAllRows"
-      :expandable="expandable"
-      :row-key="resolvedRowKey"
-      @change="handleTableChange"
-      style="margin-top: 16px"
-    >
+    <div style="margin-top: 8px;">
+      <a-table
+        :columns="tableColumns"
+        :data-source="tableData"
+        :loading="resolvedLoading"
+        :row-selection="rowSelection"
+        :pagination="resolvedPagination"
+        :default-expand-all-rows="defaultExpandAllRows"
+        :expandable="expandable"
+        :row-key="resolvedRowKey"
+        @change="handleTableChange"
+        :scroll="{ x: 'max-content' }"
+      >
       <!-- 自定义单元格内容插槽 -->
       <template #bodyCell="scope">
         <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
         <slot v-else name="bodyCell" v-bind="scope" />
       </template>
     </a-table>
+    </div>
   </a-card>
 </template>
 
@@ -199,7 +201,15 @@ const resolvedRowKey = computed(() => props.rowKey || config.value?.rowKey || 'i
  */
 const tableColumns = computed(() => {
   const cols: FxTableColumn[] = config.value?.columns || []
-  return cols.map(c => ({
+  
+  // 将操作列移到最后
+  const actionCol = cols.find(c => c.field === 'action')
+  const otherCols = cols.filter(c => c.field !== 'action')
+  
+  // 重新组合列，将操作列放在最后
+  const finalCols = actionCol ? [...otherCols, actionCol] : otherCols
+  
+  return finalCols.map(c => ({
     title: c.title,      // 列标题
     dataIndex: c.field,  // 数据字段名
     key: c.field,        // 列主键

@@ -329,10 +329,15 @@ const onRefresh = () => {
 .module-menu {
   border-bottom: none;
   background: transparent;
+  width: 100%;
+  min-width: 0;
   
   :deep(.ant-menu-item) {
     border-bottom: none;
     font-size: var(--fx-font-size, 14px);
+    min-width: auto;
+    max-width: none;
+    overflow: visible;
     
     &:hover {
       color: var(--fx-theme-color, #1677ff);
@@ -341,6 +346,12 @@ const onRefresh = () => {
     &.ant-menu-item-selected {
       color: var(--fx-theme-color, #1677ff);
       border-bottom: none;
+    }
+    
+    .ant-menu-title-content {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: nowrap;
     }
   }
 }

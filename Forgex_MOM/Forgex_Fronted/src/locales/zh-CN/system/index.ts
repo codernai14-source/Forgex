@@ -6,10 +6,12 @@ import user from './user'
 import role from './role'
 import menu from './menu'
 import config from './config'
+import excel from './excel'
 
 export default {
   user,
   role,
   menu,
   config,
+  excel,
 }

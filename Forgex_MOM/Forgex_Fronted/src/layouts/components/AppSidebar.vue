@@ -53,7 +53,9 @@
               <component v-if="item.icon" :is="getIcon(item.icon)" />
               <FolderOutlined v-else />
             </template>
-            <template #title>{{ item.title }}</template>
+            <template #title>
+              <span class="menu-text" :title="item.title">{{ truncateText(item.title, 8) }}</span>
+            </template>
             <a-menu-item
               v-for="child in item.children"
               :key="child.key"
@@ -62,7 +64,7 @@
                 <component v-if="child.icon" :is="getIcon(child.icon)" />
                 <FileOutlined v-else />
               </template>
-              <span>{{ child.title }}</span>
+              <span class="menu-text" :title="child.title">{{ truncateText(child.title, 6) }}</span>
             </a-menu-item>
           </a-sub-menu>
 
@@ -72,7 +74,7 @@
               <component v-if="item.icon" :is="getIcon(item.icon)" />
               <FileOutlined v-else />
             </template>
-            <span>{{ item.title }}</span>
+            <span class="menu-text" :title="item.title">{{ truncateText(item.title, item.menuLevel === 1 ? 8 : 6) }}</span>
           </a-menu-item>
         </template>
       </a-menu>
@@ -146,7 +148,12 @@ const firstLevelMenus = computed(() => {
   }
   
   // 返回所有一级菜单（menuLevel === 1），包含children
-  const menus = props.menus.filter(menu => menu.menuLevel === 1)
+  // 如果没有menuLevel属性，也视为一级菜单
+  const menus = props.menus.filter(menu => 
+    menu.menuLevel === 1 || 
+    (menu.parentKey === undefined && !menu.children) || 
+    (menu.parentKey === undefined && menu.children && menu.type === 'menu')
+  )
   console.log('[AppSidebar] First level menus:', JSON.stringify(menus, null, 2))
   return menus
 })
@@ -252,6 +259,18 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
     }
   }
   return null
+}
+
+/**
+ * 截断文本并添加省略号
+ * @param text 原始文本
+ * @param maxLength 最大长度
+ * @returns 截断后的文本
+ */
+function truncateText(text: string, maxLength: number): string {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
 }
 
 // 查找一级菜单项
@@ -417,6 +436,27 @@ const onCollapse = (collapsed: boolean) => {
   height: 100%;
   background: transparent;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100vh;
+  
+  // 滚动条样式
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
   
   :deep(.ant-menu-item),
   :deep(.ant-menu-submenu-title) {
@@ -426,8 +466,9 @@ const onCollapse = (collapsed: boolean) => {
     color: var(--fx-text-color, rgba(255, 255, 255, 0.65)) !important;
     font-size: var(--fx-font-size, 14px);
     background: transparent !important;
-    // 确保菜单项有足够宽度显示完整文字
     min-width: 0;
+    display: flex;
+    align-items: center;
     
     &::after {
       display: none !important;
@@ -443,15 +484,18 @@ const onCollapse = (collapsed: boolean) => {
       font-size: calc(var(--fx-font-size, 14px) * 1.15);
       color: inherit !important;
       flex-shrink: 0;
+      margin-right: 8px;
     }
     
     .ant-menu-title-content {
       color: inherit !important;
-      // 允许文字正常显示，不截断
-      overflow: visible;
-      text-overflow: clip;
-      white-space: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       word-break: keep-all;
+      flex: 1;
+      display: flex;
+      align-items: center;
     }
   }
   
@@ -479,12 +523,56 @@ const onCollapse = (collapsed: boolean) => {
     
     .ant-menu-item {
       background: transparent !important;
+      display: flex;
+      align-items: center;
       
       &:hover {
         background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
       }
+      
+      .ant-menu-item-icon {
+        margin-right: 8px;
+      }
+      
+      .ant-menu-title-content {
+        display: flex;
+        align-items: center;
+      }
     }
   }
+  
+  // 确保子菜单也能滚动
+  :deep(.ant-menu-submenu-popover) {
+    max-height: 80vh;
+    overflow-y: auto;
+    
+    // 子菜单滚动条样式
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 3px;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.4);
+      }
+    }
+  }
+}
+
+// 菜单文字样式
+.menu-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  vertical-align: middle;
 }
 
 // 响应式适配

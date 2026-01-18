@@ -51,7 +51,7 @@
       <div style="margin-bottom: 16px">
         <a-space>
           <a-button
-            v-permission="'sys:module:create'"
+            v-permission="'sys:module:add'"
             type="primary"
             @click="openAddDialog"
           >

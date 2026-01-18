@@ -28,14 +28,14 @@
                     <a-button
                       type="primary"
                       @click="openAdd(selectedDept.id)"
-                      v-permission="'sys:department:create'"
+                      v-permission="'sys:dept:add'"
                     >
                       <template #icon><PlusOutlined /></template>
                       新增子部门
                     </a-button>
                     <a-button
                       @click="startEdit"
-                      v-permission="'sys:department:edit'"
+                      v-permission="'sys:dept:edit'"
                     >
                       <template #icon><EditOutlined /></template>
                       编辑
@@ -48,7 +48,7 @@
                     >
                       <a-button
                         danger
-                        v-permission="'sys:department:delete'"
+                        v-permission="'sys:dept:delete'"
                       >
                         <template #icon><DeleteOutlined /></template>
                         删除

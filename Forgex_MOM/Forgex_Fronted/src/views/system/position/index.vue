@@ -61,7 +61,7 @@
           <div class="table-area">
             <div class="toolbar">
               <a-space>
-                <a-button type="primary" @click="openAdd" v-permission="'sys:position:create'">
+                <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
                   <template #icon><PlusOutlined /></template>
                   新增职位
                 </a-button>

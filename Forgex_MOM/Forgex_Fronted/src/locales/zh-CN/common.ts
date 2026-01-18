@@ -72,4 +72,11 @@ export default {
   videoOnly: '只能上传视频文件',
   sizeLimit: '文件大小超出限制',
   preview: '预览',
+  
+  // 消息提示
+  confirmDelete: '确认删除？',
+  saved: '已保存',
+  deleted: '已删除',
+  remove: '移除',
+  confirm: '确定',
 }
