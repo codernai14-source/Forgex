@@ -377,6 +377,40 @@ public class AuthServiceImpl implements AuthService {
                 .set(SysUser::getLastLoginRegion, region)
                 .set(SysUser::getLastLoginTime, LocalDateTime.now()));
         
+        // 添加在线用户缓存（使用userId+tenantId作为key）
+        String onlineKey = "fx:online:user:" + tenantId + ":" + user.getId();
+        try {
+            // 创建在线用户信息Map
+            Map<String, Object> onlineInfo = new HashMap<>();
+            // 设置用户ID
+            onlineInfo.put("userId", user.getId());
+            // 设置租户ID
+            onlineInfo.put("tenantId", tenantId);
+            // 设置账号
+            onlineInfo.put("account", idKey);
+            // 设置token
+            onlineInfo.put("token", token);
+            // 设置登录时间
+            onlineInfo.put("loginTime", LocalDateTime.now().toString());
+            // 设置客户端IP
+            onlineInfo.put("clientIp", clientIp);
+            // 设置User-Agent
+            onlineInfo.put("userAgent", userAgent);
+            // 转换为JSON字符串
+            String onlineJson = JSONUtil.toJsonStr(onlineInfo);
+            // 获取Token超时时间
+            long timeout = StpUtil.getTokenTimeout();
+            // 设置Redis键值对，与token过期时间一致
+            if (timeout > 0) {
+                redis.opsForValue().set(onlineKey, onlineJson, Duration.ofSeconds(timeout));
+            } else {
+                redis.opsForValue().set(onlineKey, onlineJson);
+            }
+            log.info("添加在线用户缓存: userId={}, tenantId={}, token={}", user.getId(), tenantId, token);
+        } catch (Exception e) {
+            log.warn("添加在线用户缓存失败: userId={}, tenantId={}", user.getId(), tenantId, e);
+        }
+        
         log.info("选择租户成功: account={}, tenantId={}", account, tenantId);
         // 创建用户DTO对象
         SysUserDTO result = new SysUserDTO();
@@ -601,6 +635,17 @@ public class AuthServiceImpl implements AuthService {
                 try {
                     // 删除键
                     redis.delete(key);
+                } catch (Exception ignored) {
+                    // 删除失败，不影响主流程
+                }
+            }
+            // 删除在线用户缓存
+            if (userId != null && tenantId != null) {
+                String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
+                try {
+                    // 删除在线用户缓存
+                    redis.delete(onlineKey);
+                    log.info("删除在线用户缓存: userId={}, tenantId={}", userId, tenantId);
                 } catch (Exception ignored) {
                     // 删除失败，不影响主流程
                 }

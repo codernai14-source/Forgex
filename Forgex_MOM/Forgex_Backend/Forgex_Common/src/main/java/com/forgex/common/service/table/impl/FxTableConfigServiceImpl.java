@@ -1,6 +1,8 @@
 package com.forgex.common.service.table.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.domain.dto.table.FxTableColumnDTO;
 import com.forgex.common.domain.dto.table.FxTableConfigDTO;
 import com.forgex.common.domain.dto.table.FxTableQueryFieldDTO;
@@ -42,12 +44,9 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         List<FxTableColumnConfig> cols = tableColumnConfigMapper.selectList(new LambdaQueryWrapper<FxTableColumnConfig>()
                 .eq(FxTableColumnConfig::getTableCode, tableCode)
                 .eq(FxTableColumnConfig::getDeleted, 0));
-
         cols.sort(Comparator.comparing(c -> c.getOrderNum() == null ? 0 : c.getOrderNum()));
-
         List<FxTableColumnDTO> columnDtos = new ArrayList<>();
         List<FxTableQueryFieldDTO> queryFields = new ArrayList<>();
-
         for (FxTableColumnConfig c : cols) {
             if (Boolean.FALSE.equals(c.getEnabled())) {
                 continue;
@@ -79,7 +78,6 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 queryFields.add(q);
             }
         }
-
         FxTableConfigDTO dto = new FxTableConfigDTO();
         dto.setTableCode(cfg.getTableCode());
         dto.setTableName(resolveI18nText(cfg.getTableNameI18nJson(), cfg.getTableCode()));
@@ -91,6 +89,34 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         dto.setQueryFields(queryFields);
         dto.setVersion(cfg.getVersion());
         return dto;
+    }
+
+    @Override
+    public IPage<FxTableConfigDTO> page(Page<FxTableConfig> page, LambdaQueryWrapper<FxTableConfig> wrapper, Long tenantId, Long userId) {
+        Page<FxTableConfig> result = tableConfigMapper.selectPage(page, wrapper);
+        List<FxTableConfigDTO> dtoList = new ArrayList<>();
+        
+        for (FxTableConfig config : result.getRecords()) {
+            FxTableConfigDTO dto = new FxTableConfigDTO();
+            dto.setTableCode(config.getTableCode());
+            dto.setTableName(resolveI18nText(config.getTableNameI18nJson(), config.getTableCode()));
+            dto.setTableType(config.getTableType());
+            dto.setRowKey(StringUtils.hasText(config.getRowKey()) ? config.getRowKey() : "id");
+            dto.setDefaultPageSize(config.getDefaultPageSize() == null ? 20 : config.getDefaultPageSize());
+            dto.setDefaultSortJson(config.getDefaultSortJson());
+            dto.setVersion(config.getVersion());
+            dto.setEnabled(config.getEnabled());
+            dto.setCreateBy(config.getCreateBy());
+            dto.setCreateTime(config.getCreateTime());
+            dto.setUpdateBy(config.getUpdateBy());
+            dto.setUpdateTime(config.getUpdateTime());
+            dtoList.add(dto);
+        }
+        
+        Page<FxTableConfigDTO> dtoPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        dtoPage.setRecords(dtoList);
+        
+        return dtoPage;
     }
 
     private String resolveI18nText(String i18nJson, String fallback) {

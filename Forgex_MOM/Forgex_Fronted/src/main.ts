@@ -14,6 +14,7 @@ import 'ant-design-vue/dist/reset.css'
 import * as Icons from '@ant-design/icons-vue'
 import { permission } from './directives/permission'
 import FxDynamicTable from './components/common/FxDynamicTable.vue'
+import { useUserStore } from './stores/user'
 
 /**
  * 创建 Vue 应用实例
@@ -96,3 +97,15 @@ iconComponents.forEach(name => {
  * 最后将应用挂载到 id 为 'app' 的 DOM 元素上
  */
 app.use(pinia).use(router).use(Antd).use(i18n).mount('#app')
+
+/**
+ * 页面关闭或刷新时调用登出接口
+ * 使用 sendBeacon 确保请求能够发送
+ */
+window.addEventListener('beforeunload', (event) => {
+  const userStore = useUserStore()
+  if (userStore.isLoggedIn) {
+    // 使用 sendBeacon 发送登出请求，确保在页面关闭时也能发送
+    navigator.sendBeacon('/auth/logout', JSON.stringify({}))
+  }
+})

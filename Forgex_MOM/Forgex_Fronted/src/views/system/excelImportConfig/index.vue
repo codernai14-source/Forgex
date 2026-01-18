@@ -144,10 +144,18 @@ const handleRequest = async (payload: {
       tableName: payload.query.table_name,
       tableCode: payload.query.table_code,
     })
-    return { records: res.records || [], total: res.total || 0 }
+    return {
+      success: true,
+      data: res.records || [],
+      total: res.total || 0
+    }
   } catch (error) {
     console.error('加载导入配置列表失败:', error)
-    return { records: [], total: 0 }
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
   }
 }
 

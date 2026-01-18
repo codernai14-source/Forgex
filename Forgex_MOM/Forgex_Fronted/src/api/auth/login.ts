@@ -31,3 +31,7 @@ export function changeLanguage(data: { lang: string }) {
   return http.post('/auth/changeLanguage', data)
 }
 
+export function logout() {
+  return http.post('/auth/logout')
+}
+

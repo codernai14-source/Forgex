@@ -7,6 +7,7 @@ import role from './role'
 import menu from './menu'
 import config from './config'
 import excel from './excel'
+import tableConfig from './tableConfig'
 
 export default {
   user,
@@ -14,4 +15,5 @@ export default {
   menu,
   config,
   excel,
+  tableConfig,
 }

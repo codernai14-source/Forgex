@@ -27,6 +27,7 @@ export default {
   confirm: '确认',
   view: '查看',
   detail: '详情',
+  action: '操作',
   
   // 状态
   status: '状态',
@@ -52,7 +53,7 @@ export default {
   remark: '备注',
   sort: '排序',
   order: '顺序',
-  total: '共',
+  total: '共 {total} 条',
   items: '条',
   loading: '加载中...',
   noData: '暂无数据',
@@ -72,9 +73,15 @@ export default {
   videoOnly: '只能上传视频文件',
   sizeLimit: '文件大小超出限制',
   preview: '预览',
+  addSuccess: '新增成功',
+  updateSuccess: '更新成功',
+  deleteSuccess: '删除成功',
   
   // 消息提示
   confirmDelete: '确认删除？',
+  confirmDeleteMessage: '确定要删除该数据吗？',
+  confirmBatchDelete: '确认批量删除',
+  confirmBatchDeleteMessage: '确定要删除选中的 {count} 条数据吗？',
   saved: '已保存',
   deleted: '已删除',
   remove: '移除',

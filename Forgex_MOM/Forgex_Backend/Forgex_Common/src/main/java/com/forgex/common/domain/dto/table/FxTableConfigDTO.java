@@ -2,6 +2,7 @@ package com.forgex.common.domain.dto.table;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -15,5 +16,10 @@ public class FxTableConfigDTO {
     private List<FxTableColumnDTO> columns;
     private List<FxTableQueryFieldDTO> queryFields;
     private Integer version;
+    private Boolean enabled;
+    private String createBy;
+    private LocalDateTime createTime;
+    private String updateBy;
+    private LocalDateTime updateTime;
 }
 

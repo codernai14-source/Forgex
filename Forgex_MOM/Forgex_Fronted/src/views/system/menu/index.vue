@@ -479,10 +479,18 @@ const handleRequest = async (payload: {
     const response = await getMenuTree(params)
     const flatList = response || []
     
-    return { records: flatList, total: flatList.length }
+    return {
+      success: true,
+      data: flatList,
+      total: flatList.length
+    }
   } catch (error) {
     console.error('加载菜单列表失败:', error)
-    return { records: [], total: 0 }
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
   } finally {
     loading.value = false
   }

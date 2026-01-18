@@ -259,17 +259,21 @@ const dictOptions = ref({
   }
 })
 
-// 处理表格数据请求
+/**
+ * 处理表格数据请求
+ */
 const handleRequest = async (params: any) => {
   try {
     const res = await listModules({ ...queryParams, ...params })
     return {
-      records: res.records || [],
-      total: res.total || 0
+      success: true,
+      data: res.records,
+      total: res.total
     }
   } catch (error) {
     return {
-      records: [],
+      success: false,
+      data: [],
       total: 0
     }
   }

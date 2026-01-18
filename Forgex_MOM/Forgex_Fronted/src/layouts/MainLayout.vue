@@ -858,9 +858,8 @@ function onUserMenuClick(key: string) {
   if (!key) return
   
   if (key === 'logout') {
-    sessionStorage.removeItem('account')
-    sessionStorage.removeItem('tenantId')
-    localStorage.removeItem('fx-layout-config')
+    // 调用userStore的logout方法，会自动调用后端登出接口
+    userStore.logout()
     message.success('已退出登录')
     router.replace('/login')
     return

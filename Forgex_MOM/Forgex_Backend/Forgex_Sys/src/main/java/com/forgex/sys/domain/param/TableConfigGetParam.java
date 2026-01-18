@@ -5,5 +5,9 @@ import lombok.Data;
 @Data
 public class TableConfigGetParam {
     private String tableCode;
+    
+    private Long current;
+    
+    private Long size;
 }
 
