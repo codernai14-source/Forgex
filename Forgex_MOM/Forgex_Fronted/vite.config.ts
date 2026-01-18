@@ -13,7 +13,10 @@ export default defineConfig({
     port: 5173,
     fs: {
       strict: false,
-      allow: ['D:/product/test/Forgex/Forgex_MOM/public', 'D:/product/test/Forgex/Forgex_MOM/doc']
+      allow: [
+        path.resolve(__dirname, '../public'),
+        path.resolve(__dirname, '../../doc')
+      ]
     },
     proxy: {
       '/api': {

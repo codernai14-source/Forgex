@@ -28,12 +28,13 @@
     </a-layout-sider>
 
     <!-- 主侧边栏（第二列：二三级菜单） -->
+    <!-- 第二列宽度减少10%，从200px改为180px -->
     <a-layout-sider
       v-if="!doubleColumn || hasSecondLevelMenus"
       class="app-sidebar"
       :collapsed="collapsed"
       :collapsible="true"
-      :width="200"
+      :width="180"
       :collapsed-width="64"
       @collapse="onCollapse"
     >
@@ -97,7 +98,7 @@ interface MenuItem {
   parentKey?: string
   menuLevel?: number  // 菜单层级：1=一级菜单, 2=二级菜单, 3=三级菜单
   children?: MenuItem[]
-  type: 'dir' | 'menu' | 'button'
+  type: 'catalog' | 'menu' | 'button'
 }
 
 interface Module {
@@ -144,8 +145,10 @@ const firstLevelMenus = computed(() => {
     return []
   }
   
-  // 返回所有一级菜单（menuLevel === 1）
-  return props.menus.filter(menu => menu.menuLevel === 1)
+  // 返回所有一级菜单（menuLevel === 1），包含children
+  const menus = props.menus.filter(menu => menu.menuLevel === 1)
+  console.log('[AppSidebar] First level menus:', JSON.stringify(menus, null, 2))
+  return menus
 })
 
 // 是否有二三级菜单（用于判断是否显示第二列）
@@ -154,8 +157,23 @@ const hasSecondLevelMenus = computed(() => {
     return false
   }
   
-  // 检查是否有 menuLevel >= 2 的菜单
-  return props.menus.some(menu => menu.menuLevel && menu.menuLevel >= 2)
+  // 只有点击了目录类型菜单且该菜单有children时，才显示第二列
+  // 获取当前选中的一级菜单
+  const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
+    menu.key === selectedFirstLevelKeys.value[0]
+  )
+  
+  if (!selectedFirstLevelMenu) {
+    return false
+  }
+  
+  // 如果选中的是目录类型菜单且有children，显示第二列
+  const showSecondLevel = selectedFirstLevelMenu.type === 'catalog' && 
+                         selectedFirstLevelMenu.children && 
+                         selectedFirstLevelMenu.children.length > 0
+  
+  console.log('[AppSidebar] hasSecondLevelMenus check:', showSecondLevel, selectedFirstLevelMenu.key, selectedFirstLevelMenu.type, selectedFirstLevelMenu.children?.length)
+  return showSecondLevel
 })
 
 // 当前显示的菜单列表（第二列）
@@ -170,12 +188,35 @@ const currentMenus = computed(() => {
     return []
   }
   
-  // 只显示 menuLevel >= 2 的菜单
-  return props.menus.filter(menu => 
-    menu.moduleCode === props.activeModuleCode && 
-    menu.menuLevel && 
-    menu.menuLevel >= 2
+  // 获取当前选中的一级菜单
+  // 使用firstLevelMenus.value.find，因为firstLevelMenus包含完整的children结构
+  const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
+    menu.key === selectedFirstLevelKeys.value[0]
   )
+  
+  if (!selectedFirstLevelMenu) {
+    // 如果没有选中的一级菜单，显示所有menuLevel >= 2的菜单
+    return props.menus.filter(menu => 
+      menu.moduleCode === props.activeModuleCode && 
+      menu.menuLevel && 
+      menu.menuLevel >= 2
+    )
+  }
+  
+  // 显示选中的一级菜单对应的二级菜单
+  // 如果选中的是目录类型菜单，显示其所有子菜单
+  // 如果选中的是非目录类型菜单，显示所有menuLevel >= 2的菜单
+  if (selectedFirstLevelMenu.type === 'catalog') {
+    console.log('[AppSidebar] Show children of catalog menu:', selectedFirstLevelMenu.key)
+    return selectedFirstLevelMenu.children || []
+  } else {
+    console.log('[AppSidebar] Show all sub menus:', selectedFirstLevelMenu.key)
+    return props.menus.filter(menu => 
+      menu.moduleCode === props.activeModuleCode && 
+      menu.menuLevel && 
+      menu.menuLevel >= 2
+    )
+  }
 })
 
 // 监听 activeKey 变化
@@ -213,15 +254,33 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
   return null
 }
 
+// 查找一级菜单项
+function findFirstLevelMenu(key: string): MenuItem | null {
+  // 直接从props.menus中查找一级菜单
+  return props.menus.find(menu => 
+    menu.key === key && 
+    menu.menuLevel === 1
+  ) || null
+}
+
 // 一级菜单点击（双列布局）
 const onFirstLevelMenuClick = (info: any) => {
   const key = info.key as string
   console.log('[AppSidebar] First level menu clicked:', key, info)
   if (key) {
     selectedFirstLevelKeys.value = [key]
-    // 点击一级菜单时，直接跳转
-    console.log('[AppSidebar] Emitting menu-click event:', key)
-    emit('menu-click', key)
+    
+    // 查找当前点击的一级菜单
+    const clickedMenu = findFirstLevelMenu(key)
+    
+    // 只有非目录类型的菜单才触发路由跳转
+    // 目录类型菜单只需要更新selectedFirstLevelKeys，让currentMenus自动更新显示对应的二级菜单
+    if (clickedMenu && clickedMenu.type !== 'catalog') {
+      console.log('[AppSidebar] Emitting menu-click event:', key)
+      emit('menu-click', key)
+    } else {
+      console.log('[AppSidebar] Menu is catalog type, skip routing:', key)
+    }
   }
 }
 
