@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.service.IDashboardService;
@@ -42,17 +43,14 @@ public class DashboardController {
      */
     @PostMapping("/statistics")
     public R<Map<String, Object>> getStatistics(@RequestBody Map<String, Object> body) {
-        // 1. 参数解析
         Long tenantId = TenantContext.get();
-        
+
         if (tenantId == null) {
-            return R.fail("租户ID不能为空");
+            return R.fail(CommonPrompt.TENANT_ID_EMPTY);
         }
-        
-        // 2. 调用Service
+
         Map<String, Object> statistics = dashboardService.getStatistics(tenantId);
-        
-        // 3. 返回结果
+
         return R.ok(statistics);
     }
 

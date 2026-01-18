@@ -72,20 +72,20 @@ public class ProfileController {
         String newPassword = body.get("newPassword");
         
         if (oldPassword == null || oldPassword.isEmpty()) {
-            return R.fail(CommonPrompt.PARAM_EMPTY, "旧密码不能为空");
+            return R.fail(CommonPrompt.OLD_PASSWORD_CANNOT_BE_EMPTY);
         }
         if (newPassword == null || newPassword.isEmpty()) {
-            return R.fail(CommonPrompt.PARAM_EMPTY, "新密码不能为空");
+            return R.fail(CommonPrompt.NEW_PASSWORD_CANNOT_BE_EMPTY);
         }
         if (newPassword.length() < 6) {
-            return R.fail(CommonPrompt.BAD_REQUEST, "新密码长度不能少于6位");
+            return R.fail(CommonPrompt.PASSWORD_TOO_SHORT);
         }
-        
+
         Long userId = UserContext.get();
-        
+
         boolean success = userService.changePassword(userId, oldPassword, newPassword);
         if (!success) {
-            return R.fail(CommonPrompt.BAD_REQUEST, "旧密码不正确");
+            return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
         
         return R.ok(CommonPrompt.UPDATE_SUCCESS);

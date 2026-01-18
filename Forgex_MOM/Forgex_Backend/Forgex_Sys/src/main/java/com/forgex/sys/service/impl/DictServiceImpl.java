@@ -158,39 +158,53 @@ public class DictServiceImpl implements IDictService {
 
     @Override
     public List<DictItemVO> getDictItemsByPath(String nodePath, Long tenantId) {
+        // 获取当前语言
         String lang = LangContext.get();
+        // 构建缓存键
         String cacheKey = String.format("dict:%d:%s:path:%s", tenantId, lang, nodePath);
         try {
+            // 从Redis读取缓存
             String cacheValue = redisTemplate.opsForValue().get(cacheKey);
             if (StringUtils.hasText(cacheValue)) {
+                // 反序列化缓存数据
                 return objectMapper.readValue(cacheValue, new TypeReference<List<DictItemVO>>() {});
             }
         } catch (Exception e) {
             log.warn("读取字典缓存失败：{}", cacheKey, e);
         }
 
+        // 查询字典节点
         SysDict node = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getNodePath, nodePath)
                 .last("limit 1"));
+        // 节点不存在时返回空列表
         if (node == null) {
             return new ArrayList<>();
         }
+        // 查询子节点
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getParentId, node.getId())
                 .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getStatus, 1)
                 .orderByAsc(SysDict::getOrderNum));
+        // 转换为VO
         List<DictItemVO> items = dictItems.stream().map(dict -> {
+            // 创建字典项VO
             DictItemVO vo = new DictItemVO();
+            // 解析国际化文本
             vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
+            // 设置字典值
             vo.setValue(dict.getDictValue());
+            // 解析标签样式
             vo.setTagStyle(parseTagStyle(dict.getTagStyleJson()));
             return vo;
         }).collect(Collectors.toList());
 
         try {
+            // 序列化为JSON字符串
             String jsonValue = objectMapper.writeValueAsString(items);
+            // 写入Redis缓存，过期时间24小时
             redisTemplate.opsForValue().set(cacheKey, jsonValue, 24, TimeUnit.HOURS);
         } catch (Exception e) {
             log.warn("写入字典缓存失败：{}", cacheKey, e);

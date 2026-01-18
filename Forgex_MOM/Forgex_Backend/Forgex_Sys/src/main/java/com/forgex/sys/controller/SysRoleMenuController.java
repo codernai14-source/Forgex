@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -203,7 +204,7 @@ public class SysRoleMenuController {
         roleMenuService.grantPermission(permissionDTO);
         
         // 5. 返回结果
-        return R.ok(true);
+        return R.ok(CommonPrompt.AUTHORIZE_SUCCESS, true);
     }
 
     /**
@@ -223,7 +224,7 @@ public class SysRoleMenuController {
         roleMenuService.grantPermission(permissionDTO);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.AUTHORIZE_SUCCESS);
     }
     
     /**
@@ -242,7 +243,7 @@ public class SysRoleMenuController {
         roleMenuService.deleteRolePermissions(roleId, tenantId);
         
         // 3. 返回结果
-        return R.ok();
+        return R.ok(CommonPrompt.UNAUTHORIZE_SUCCESS);
     }
 
     /**

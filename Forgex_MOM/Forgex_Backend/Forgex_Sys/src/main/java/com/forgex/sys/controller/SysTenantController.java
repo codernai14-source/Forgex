@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
@@ -61,89 +62,74 @@ public class SysTenantController {
     
     /**
      * 获取租户详情
-     * 
+     *
      * @param params 参数（id）
      * @return 租户详情
      */
     @PostMapping("/get")
     public R<SysTenantDTO> get(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
-        
+
         SysTenantDTO tenant = tenantService.getById(id);
-        
+
         if (tenant == null) {
-            return R.fail("租户不存在");
+            return R.fail(CommonPrompt.NOT_FOUND);
         }
-        
+
         return R.ok(tenant);
     }
     
     /**
      * 获取主租户
-     * 
+     *
      * @return 主租户信息
      */
     @PostMapping("/getMainTenant")
     public R<SysTenantDTO> getMainTenant() {
         SysTenantDTO tenant = tenantService.getMainTenant();
-        
+
         if (tenant == null) {
-            return R.fail("主租户不存在");
+            return R.fail(CommonPrompt.NOT_FOUND);
         }
-        
+
         return R.ok(tenant);
     }
     
     /**
      * 新增租户
-     * 
+     *
      * @param param 租户参数
      * @return 租户ID
      */
     @PostMapping("/create")
     public R<Long> create(@Validated @RequestBody SysTenantSaveParam param) {
-        try {
-            Long id = tenantService.create(param);
-            return R.ok(id);
-        } catch (Exception e) {
-            log.error("新增租户失败", e);
-            return R.fail(e.getMessage());
-        }
+        Long id = tenantService.create(param);
+        return R.ok(CommonPrompt.CREATE_SUCCESS, id);
     }
-    
+
     /**
      * 更新租户
-     * 
+     *
      * @param param 租户参数
      * @return 是否成功
      */
     @PostMapping("/update")
     public R<Boolean> update(@Validated @RequestBody SysTenantSaveParam param) {
-        try {
-            Boolean success = tenantService.update(param);
-            return R.ok(success);
-        } catch (Exception e) {
-            log.error("更新租户失败", e);
-            return R.fail(e.getMessage());
-        }
+        Boolean success = tenantService.update(param);
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
     }
-    
+
     /**
      * 删除租户
-     * 
+     *
      * @param params 参数（id）
      * @return 是否成功
      */
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
-        try {
-            Long id = Long.valueOf(params.get("id").toString());
-            
-            Boolean success = tenantService.delete(id);
-            return R.ok(success);
-        } catch (Exception e) {
-            log.error("删除租户失败", e);
-            return R.fail(e.getMessage());
-        }
+        Long id = Long.valueOf(params.get("id").toString());
+
+        Boolean success = tenantService.delete(id);
+        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
     }
 }

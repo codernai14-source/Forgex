@@ -77,39 +77,37 @@ public class R<T> {
     }
 
     /**
-     * 成功返回（无数据，默认消息）
+     * 成功返回（无数据，无消息）
      * <p>
-     * 返回状态码200，消息代码为默认操作成功代码 {@link CommonPrompt#OPERATION_SUCCESS}，数据为null
+     * 返回状态码200，消息为空，数据为null
      * </p>
      *
      * @param <T> 返回数据的类型
      * @return R包装的成功结果
-     * @see CommonPrompt#OPERATION_SUCCESS
      */
     public static <T> R<T> ok() {
         R<T> r = new R<>();
         r.code = StatusCode.SUCCESS;
-        r.messageCode = CommonPrompt.OPERATION_SUCCESS;
-        r.i18n = buildI18nMeta(CommonPrompt.OPERATION_SUCCESS, null);
+        r.messageCode = null;
+        r.i18n = null;
         return r;
     }
 
     /**
-     * 成功返回（带数据，默认消息）
+     * 成功返回（带数据，无消息）
      * <p>
-     * 返回状态码200，消息代码为默认操作成功代码 {@link CommonPrompt#OPERATION_SUCCESS}，携带指定数据
+     * 返回状态码200，消息为空，携带指定数据
      * </p>
      *
      * @param <T>  返回数据的类型
      * @param data 返回数据
      * @return R包装的成功结果
-     * @see CommonPrompt#OPERATION_SUCCESS
      */
     public static <T> R<T> ok(T data) {
         R<T> r = new R<>();
         r.code = StatusCode.SUCCESS;
-        r.messageCode = CommonPrompt.OPERATION_SUCCESS;
-        r.i18n = buildI18nMeta(CommonPrompt.OPERATION_SUCCESS, null);
+        r.messageCode = null;
+        r.i18n = null;
         r.data = data;
         return r;
     }

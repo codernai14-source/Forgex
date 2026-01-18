@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.forgex.common.config.ConfigService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.config.CaptchaConfig;
 import com.forgex.sys.domain.config.SystemBasicConfig;
@@ -54,7 +55,7 @@ public class SysConfigController {
     @PutMapping("/login-captcha")
     public R<Boolean> setLoginCaptcha(@RequestBody Map<String, Object> body) {
         configService.setJson("login.captcha", body);
-        return R.ok(true);
+        return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
 
     /**
@@ -75,6 +76,6 @@ public class SysConfigController {
     @PutMapping("/system-basic")
     public R<Boolean> setSystemBasicConfig(@RequestBody SystemBasicConfig config) {
         configService.setJson("system.basic", config);
-        return R.ok(true);
+        return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
 }

@@ -93,60 +93,45 @@ public class SysDepartmentController {
     
     /**
      * 新增部门
-     * 
+     *
      * @param param 部门参数
      * @return 部门ID
      */
     @PostMapping("/create")
     @RequirePerm("sys:department:create")
     public R<Long> create(@Validated @RequestBody SysDepartmentSaveParam param) {
-        try {
-            param.setTenantId(TenantContext.get());
-            Long id = departmentService.create(param);
-            return R.ok(id);
-        } catch (Exception e) {
-            log.error("新增部门失败", e);
-            return R.fail(e.getMessage());
-        }
+        param.setTenantId(TenantContext.get());
+        Long id = departmentService.create(param);
+        return R.ok(CommonPrompt.CREATE_SUCCESS, id);
     }
-    
+
     /**
      * 更新部门
-     * 
+     *
      * @param param 部门参数
      * @return 是否成功
      */
     @PostMapping("/update")
     @RequirePerm("sys:department:edit")
     public R<Boolean> update(@Validated @RequestBody SysDepartmentSaveParam param) {
-        try {
-            param.setTenantId(TenantContext.get());
-            Boolean success = departmentService.update(param);
-            return R.ok(success);
-        } catch (Exception e) {
-            log.error("更新部门失败", e);
-            return R.fail(e.getMessage());
-        }
+        param.setTenantId(TenantContext.get());
+        Boolean success = departmentService.update(param);
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
     }
-    
+
     /**
      * 删除部门
-     * 
+     *
      * @param params 参数（id）
      * @return 是否成功
      */
     @PostMapping("/delete")
     @RequirePerm("sys:department:delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
-        try {
-            Long id = Long.valueOf(params.get("id").toString());
-            Long tenantId = TenantContext.get();
-            
-            Boolean success = departmentService.delete(id, tenantId);
-            return R.ok(success);
-        } catch (Exception e) {
-            log.error("删除部门失败", e);
-            return R.fail(e.getMessage());
-        }
+        Long id = Long.valueOf(params.get("id").toString());
+        Long tenantId = TenantContext.get();
+
+        Boolean success = departmentService.delete(id, tenantId);
+        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
     }
 }

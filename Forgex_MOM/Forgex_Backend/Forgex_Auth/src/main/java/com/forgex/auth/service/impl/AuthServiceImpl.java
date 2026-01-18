@@ -146,11 +146,14 @@ public class AuthServiceImpl implements AuthService {
         // 根据IP获取地理位置信息
         String region = ipLocationService.getLocationByIp(clientIp);
         
+        // 参数校验：账号和密码不能为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
             log.warn("登录失败: 账号或密码为空");
+            // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号或密码为空");
             return R.fail(CommonPrompt.ACCOUNT_OR_PASSWORD_EMPTY);
         }
+        
         // 如果启用了传输加密（SM2），优先尝试解密入参密码
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
         if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
@@ -168,18 +171,24 @@ public class AuthServiceImpl implements AuthService {
                     // 默认格式解密
                     password = sm2.decryptStr(password, KeyType.PrivateKey);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // 解密失败，使用原始密码
+            }
         }
+        
         // 查询用户信息
         String idKey = account;
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .select(SysUser::getId, SysUser::getAccount, SysUser::getUsername, SysUser::getPassword, SysUser::getEmail, SysUser::getPhone, SysUser::getStatus)
                 .eq(SysUser::getAccount, idKey));
-            if (user == null) {
-                log.warn("登录失败: 用户不存在, account={}", idKey);
-                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
-                return R.fail(CommonPrompt.USER_NOT_FOUND);
-            }
+        // 校验用户是否存在
+        if (user == null) {
+            log.warn("登录失败: 用户不存在, account={}", idKey);
+            // 记录登录失败日志
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        
         // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
         // 获取密码存储策略，默认为bcrypt
@@ -190,9 +199,11 @@ public class AuthServiceImpl implements AuthService {
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
             log.warn("登录失败: 密码不正确, account={}", account);
+            // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "密码不正确");
             return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
+        
         // 验证码校验（由配置决定方式）
         CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
         // 获取验证码模式
@@ -205,11 +216,13 @@ public class AuthServiceImpl implements AuthService {
             String captcha = param.getCaptcha();
             if (!StringUtils.hasText(captchaId) || !StringUtils.hasText(captcha)) {
                 log.warn("登录失败: 图片验证码缺失, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
                 return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
             }
             if (!captchaService.verifyImage(captchaId, captcha)) {
                 log.warn("登录失败: 图片验证码错误, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
                 return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
             }
@@ -220,15 +233,18 @@ public class AuthServiceImpl implements AuthService {
             // 校验令牌是否为空
             if (!StringUtils.hasText(token)) {
                 log.warn("登录失败: 滑块令牌缺失, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
                 return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
             }
             if (!captchaService.verifySlider(token)) {
                 log.warn("登录失败: 滑块令牌校验失败, account={}", account);
+                // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
                 return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
             }
         }
+        
         // 查询用户绑定的租户ID列表
         List<SysUserTenant> binds = userTenantMapper.selectList(new LambdaQueryWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
@@ -421,48 +437,72 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public R<Boolean> changeLanguage(String lang) {
+        // 参数校验：语言不能为空
         if (!StringUtils.hasText(lang)) {
             return R.fail(500, AuthPromptEnum.LANG_EMPTY);
         }
+        // 获取当前用户ID
         Long userId = CurrentUserUtils.getUserId();
+        // 获取当前租户ID
         Long tenantId = CurrentUserUtils.getTenantId();
+        // 校验用户是否登录
         if (userId == null || tenantId == null) {
             return R.fail(401, AuthPromptEnum.NOT_LOGIN);
         }
 
+        // 构造语言偏好键
         String prefKey = "fx:lang:" + tenantId + ":" + userId;
         try {
+            // 设置语言偏好到Redis
             redis.opsForValue().set(prefKey, lang);
         } catch (Exception e) {
+            // 设置失败
             return R.fail(500, AuthPromptEnum.LANG_SET_FAILED);
         }
 
+        // 更新登录上下文中的语言设置
         String token = StpUtil.getTokenValue();
         if (StringUtils.hasText(token)) {
             String ctxKey = "fx:login:ctx:" + token;
             try {
+                // 创建上下文Map
                 Map<String, Object> ctx = new HashMap<>();
+                // 获取原有上下文
                 String raw = redis.opsForValue().get(ctxKey);
                 if (StringUtils.hasText(raw)) {
                     try {
+                        // 合并原有上下文
                         ctx.putAll(JSONUtil.parseObj(raw));
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                        // 合并失败，继续使用新上下文
+                    }
                 }
+                // 设置用户ID
                 ctx.put("userId", userId);
+                // 设置租户ID
                 ctx.put("tenantId", tenantId);
+                // 获取账号
                 String account = CurrentUserUtils.getAccount();
                 if (StringUtils.hasText(account)) {
+                    // 设置账号
                     ctx.put("account", account);
                 }
+                // 设置语言
                 ctx.put("lang", lang);
+                // 转换为JSON字符串
                 String json = JSONUtil.toJsonStr(ctx);
+                // 获取Token超时时间
                 long timeout = StpUtil.getTokenTimeout();
                 if (timeout > 0) {
+                    // 设置带过期时间的键值对
                     redis.opsForValue().set(ctxKey, json, Duration.ofSeconds(timeout));
                 } else {
+                    // 设置永不过期的键值对
                     redis.opsForValue().set(ctxKey, json);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // 更新失败，不影响主流程
+            }
         }
         return R.ok(true);
     }
@@ -562,6 +602,7 @@ public class AuthServiceImpl implements AuthService {
                     // 删除键
                     redis.delete(key);
                 } catch (Exception ignored) {
+                    // 删除失败，不影响主流程
                 }
             }
             // 调用SaToken登出
@@ -569,7 +610,8 @@ public class AuthServiceImpl implements AuthService {
             log.info("退出成功: account={}", uid);
             return R.ok(true);
         } catch (Exception e) {
-            return R.fail(500, "退出失败");
+            // 登出失败
+            return R.fail(CommonPrompt.LOGOUT_FAILED);
         }
     }
     

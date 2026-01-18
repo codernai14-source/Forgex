@@ -84,7 +84,7 @@ public class SysDictController {
     public R<Boolean> create(@RequestBody DictDTO dictDTO) {
         dictDTO.setTenantId(getCurrentTenantId());
         dictService.addDict(dictDTO);
-        return R.ok(true);
+        return R.ok(CommonPrompt.CREATE_SUCCESS, true);
     }
     
     /**
@@ -93,7 +93,7 @@ public class SysDictController {
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody DictDTO dictDTO) {
         dictService.updateDict(dictDTO);
-        return R.ok(true);
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, true);
     }
     
     /**
@@ -107,7 +107,7 @@ public class SysDictController {
         }
 
         dictService.deleteDict(id);
-        return R.ok(true);
+        return R.ok(CommonPrompt.DELETE_SUCCESS, true);
     }
     
     /**

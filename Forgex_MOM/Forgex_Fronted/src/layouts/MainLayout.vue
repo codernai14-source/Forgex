@@ -505,7 +505,8 @@ const sidebarMenus = computed(() => {
         const type = (child.meta && child.meta.type) || 'menu'
         const menuLevel = (child.meta && child.meta.menuLevel) || 1
         
-        result.push({
+        // 构建菜单项，保留children结构以支持多级菜单
+        const menuItem: any = {
           key: fullPath,
           title,
           icon,
@@ -513,8 +514,34 @@ const sidebarMenus = computed(() => {
           moduleCode: activeModuleCode.value,
           type,
           menuLevel,
-          children: [] // 暂时不支持多级菜单
-        })
+          children: []
+        }
+        
+        // 如果有子菜单，递归构建children
+        if (child.children && Array.isArray(child.children)) {
+          menuItem.children = child.children.map((grandchild: any) => {
+            const grandchildPath = String(grandchild.path || '')
+            const grandchildFullPath = `/workspace/${activeModuleCode.value}/${grandchildPath}`.replace(/\/+/g, '/')
+            const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
+            const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
+            const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
+            const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
+            
+            return {
+              key: grandchildFullPath,
+              title: grandchildTitle,
+              icon: grandchildIcon,
+              path: grandchildFullPath,
+              moduleCode: activeModuleCode.value,
+              type: grandchildType,
+              menuLevel: grandchildMenuLevel,
+              parentKey: fullPath,
+              children: []
+            }
+          })
+        }
+        
+        result.push(menuItem)
       }
     }
   } else {
@@ -531,7 +558,8 @@ const sidebarMenus = computed(() => {
           const type = (child.meta && child.meta.type) || 'menu'
           const menuLevel = (child.meta && child.meta.menuLevel) || 1
           
-          result.push({
+          // 构建菜单项，保留children结构以支持多级菜单
+          const menuItem: any = {
             key: fullPath,
             title,
             icon,
@@ -540,7 +568,33 @@ const sidebarMenus = computed(() => {
             type,
             menuLevel,
             children: []
-          })
+          }
+          
+          // 如果有子菜单，递归构建children
+          if (child.children && Array.isArray(child.children)) {
+            menuItem.children = child.children.map((grandchild: any) => {
+              const grandchildPath = String(grandchild.path || '')
+              const grandchildFullPath = `/workspace/${moduleCode}/${grandchildPath}`.replace(/\/+/g, '/')
+              const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
+              const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
+              const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
+              const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
+              
+              return {
+                key: grandchildFullPath,
+                title: grandchildTitle,
+                icon: grandchildIcon,
+                path: grandchildFullPath,
+                moduleCode,
+                type: grandchildType,
+                menuLevel: grandchildMenuLevel,
+                parentKey: fullPath,
+                children: []
+              }
+            })
+          }
+          
+          result.push(menuItem)
         }
       }
     }

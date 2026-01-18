@@ -6,6 +6,7 @@ import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.sys.service.ExcelExportService;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
 import com.forgex.common.tenant.TenantContext;
@@ -91,7 +92,7 @@ public class ExcelConfigController {
     @RequirePerm("sys:excel:exportConfig:edit")
     @PostMapping("/exportConfig/save")
     public R<Long> saveExportConfig(@RequestBody FxExcelExportConfigDTO dto) {
-        return R.ok(excelConfigService.saveExportConfig(dto));
+        return R.ok(CommonPrompt.SAVE_SUCCESS, excelConfigService.saveExportConfig(dto));
     }
 
     /**
@@ -103,7 +104,7 @@ public class ExcelConfigController {
     @RequirePerm("sys:excel:exportConfig:delete")
     @PostMapping("/exportConfig/delete")
     public R<Boolean> deleteExportConfig(@RequestBody IdParam param) {
-        return R.ok(excelConfigService.deleteExportConfig(param.getId()));
+        return R.ok(CommonPrompt.DELETE_SUCCESS, excelConfigService.deleteExportConfig(param.getId()));
     }
 
     /**
@@ -140,7 +141,7 @@ public class ExcelConfigController {
     @RequirePerm("sys:excel:importConfig:edit")
     @PostMapping("/importConfig/save")
     public R<Long> saveImportConfig(@RequestBody FxExcelImportConfigDTO dto) {
-        return R.ok(excelConfigService.saveImportConfig(dto));
+        return R.ok(CommonPrompt.SAVE_SUCCESS, excelConfigService.saveImportConfig(dto));
     }
 
     /**
@@ -152,7 +153,7 @@ public class ExcelConfigController {
     @RequirePerm("sys:excel:importConfig:delete")
     @PostMapping("/importConfig/delete")
     public R<Boolean> deleteImportConfig(@RequestBody IdParam param) {
-        return R.ok(excelConfigService.deleteImportConfig(param.getId()));
+        return R.ok(CommonPrompt.DELETE_SUCCESS, excelConfigService.deleteImportConfig(param.getId()));
     }
 
     /**

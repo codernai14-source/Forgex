@@ -137,9 +137,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     }
     
     /**
-     * 获取超级管理员的路由信息
+     * 获取超级管理员的路由信息。
      * <p>
-     * 超级管理员拥有所有菜单和按钮权限
+     * 超级管理员拥有所有菜单和按钮权限。
      * </p>
      * 
      * @param tenantId 租户ID
@@ -485,7 +485,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         route.put("name", capitalize(module.getCode()));
         route.put("meta", buildMeta(resolveI18nText(module.getNameI18nJson(), module.getName()), module.getIcon(), module.getCode()));
         
-        // 获取该模块下的根菜单
+        // 获取该模块下的根菜单（包括catalog类型）
         List<SysMenu> rootMenus = allMenus.stream()
             .filter(m -> Objects.equals(m.getModuleId(), module.getId()))
             .filter(m -> m.getParentId() == null || m.getParentId() == 0)

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.sys.domain.dto.OnlineUserQueryDTO;
 import com.forgex.sys.domain.vo.OnlineUserVO;
 import com.forgex.sys.service.IOnlineUserService;
@@ -70,6 +71,6 @@ public class OnlineUserController {
     @PostMapping("/kickout")
     public R<Boolean> kickout(@RequestBody Map<String, Object> body) {
         String token = body == null ? null : (String) body.get("token");
-        return R.ok(onlineUserService.kickout(token));
+        return R.ok(CommonPrompt.STOP_SUCCESS, onlineUserService.kickout(token));
     }
 }

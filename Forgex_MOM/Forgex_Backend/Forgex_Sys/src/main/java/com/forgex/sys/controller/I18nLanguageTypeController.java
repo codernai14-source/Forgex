@@ -1,8 +1,9 @@
-package com.forgex.common.web;
+package com.forgex.sys.controller;
 
 import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
 import com.forgex.common.i18n.CommonPrompt;
-import com.forgex.common.service.i18n.I18nLanguageTypeService;
+import com.forgex.common.web.R;
+import com.forgex.sys.service.SysI18nLanguageTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,22 +11,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 多语言类型配置Controller
+ * 多语言类型配置 Controller
  * <p>
- * 提供多语言类型配置的API接口，用于管理系统支持的语言类型。
+ * 提供多语言类型配置的 API 接口，用于管理系统支持的语言类型。
  * </p>
  *
  * @author Forgex Team
  * @version 1.0.0
- * @see com.forgex.common.service.i18n.I18nLanguageTypeService
+ * @see com.forgex.sys.service.SysI18nLanguageTypeService
  * @see com.forgex.common.domain.entity.i18n.FxI18nLanguageType
  */
 @RestController
-@RequestMapping("/common/i18n/languageType")
+@RequestMapping("/sys/i18n/languageType")
 @RequiredArgsConstructor
 public class I18nLanguageTypeController {
 
-    private final I18nLanguageTypeService languageTypeService;
+    private final SysI18nLanguageTypeService languageTypeService;
 
     /**
      * 获取所有启用的语言类型列表
@@ -50,7 +51,7 @@ public class I18nLanguageTypeController {
     /**
      * 根据语言代码获取语言类型
      *
-     * @param body 请求参数，包含langCode
+     * @param body 请求参数，包含 langCode
      * @return 语言类型实体
      */
     @PostMapping("/getByLangCode")
@@ -114,7 +115,7 @@ public class I18nLanguageTypeController {
     /**
      * 删除语言类型
      *
-     * @param body 请求参数，包含id
+     * @param body 请求参数，包含 id
      * @return 是否删除成功
      */
     @PostMapping("/delete")
@@ -137,7 +138,7 @@ public class I18nLanguageTypeController {
     /**
      * 设置默认语言
      *
-     * @param body 请求参数，包含id
+     * @param body 请求参数，包含 id
      * @return 是否设置成功
      */
     @PostMapping("/setDefault")

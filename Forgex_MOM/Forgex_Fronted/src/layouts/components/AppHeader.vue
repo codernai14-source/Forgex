@@ -58,9 +58,15 @@
           size="small"
           class="lang-select"
           @change="onLocaleChange"
+          :loading="languageList.length === 0"
         >
-          <a-select-option value="zh-CN">简体中文</a-select-option>
-          <a-select-option value="en-US">English</a-select-option>
+          <a-select-option
+            v-for="lang in languageList"
+            :key="lang.langCode"
+            :value="lang.langCode"
+          >
+            <span v-if="lang.icon">{{ lang.icon }} </span>{{ lang.langName }}
+          </a-select-option>
         </a-select>
 
         <!-- 刷新按钮 -->
@@ -129,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { getIcon } from '../../utils/icon'
 import {
   SearchOutlined,
@@ -141,6 +147,8 @@ import {
   AppstoreOutlined,
   SyncOutlined
 } from '@ant-design/icons-vue'
+import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
+import type { LocaleCode } from '../../locales'
 
 interface Module {
   code: string
@@ -184,12 +192,30 @@ const emit = defineEmits<{
   'search-click': []
   'settings-click': []
   'user-menu-click': [key: string]
-  'locale-change': [locale: string]
+  'locale-change': [locale: LocaleCode]
   'refresh': []
 }>()
 
 // 当前语言
-const currentLocale = ref<string>(localStorage.getItem('fx-locale') || 'zh-CN')
+const currentLocale = ref<LocaleCode>((localStorage.getItem('fx-locale') as LocaleCode) || 'zh-CN')
+
+// 语言列表
+const languageList = ref<LanguageType[]>([])
+
+// 加载语言列表
+const loadLanguageList = async () => {
+  try {
+    const languages = await listEnabledLanguages()
+    languageList.value = languages || []
+  } catch (error) {
+    console.error('Failed to load language list:', error)
+  }
+}
+
+// 组件挂载时加载语言列表
+onMounted(() => {
+  loadLanguageList()
+})
 
 // 是否显示模块导航
 const showModuleNav = computed(() => {

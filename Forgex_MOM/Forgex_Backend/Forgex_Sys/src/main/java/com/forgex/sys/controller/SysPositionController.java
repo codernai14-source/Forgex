@@ -81,60 +81,45 @@ public class SysPositionController {
     
     /**
      * 新增职位
-     * 
+     *
      * @param param 职位参数
      * @return 职位ID
      */
     @PostMapping("/create")
     @RequirePerm("sys:position:create")
     public R<Long> create(@Validated @RequestBody SysPositionSaveParam param) {
-        try {
-            param.setTenantId(TenantContext.get());
-            Long id = positionService.create(param);
-            return R.ok(id);
-        } catch (Exception e) {
-            log.error("新增职位失败", e);
-            return R.fail(e.getMessage());
-        }
+        param.setTenantId(TenantContext.get());
+        Long id = positionService.create(param);
+        return R.ok(CommonPrompt.CREATE_SUCCESS, id);
     }
-    
+
     /**
      * 更新职位
-     * 
+     *
      * @param param 职位参数
      * @return 是否成功
      */
     @PostMapping("/update")
     @RequirePerm("sys:position:edit")
     public R<Boolean> update(@Validated @RequestBody SysPositionSaveParam param) {
-        try {
-            param.setTenantId(TenantContext.get());
-            Boolean success = positionService.update(param);
-            return R.ok(success);
-        } catch (Exception e) {
-            log.error("更新职位失败", e);
-            return R.fail(e.getMessage());
-        }
+        param.setTenantId(TenantContext.get());
+        Boolean success = positionService.update(param);
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
     }
-    
+
     /**
      * 删除职位
-     * 
+     *
      * @param params 参数（id）
      * @return 是否成功
      */
     @PostMapping("/delete")
     @RequirePerm("sys:position:delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
-        try {
-            Long id = Long.valueOf(params.get("id").toString());
-            Long tenantId = TenantContext.get();
-            
-            Boolean success = positionService.delete(id, tenantId);
-            return R.ok(success);
-        } catch (Exception e) {
-            log.error("删除职位失败", e);
-            return R.fail(e.getMessage());
-        }
+        Long id = Long.valueOf(params.get("id").toString());
+        Long tenantId = TenantContext.get();
+
+        Boolean success = positionService.delete(id, tenantId);
+        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
     }
 }

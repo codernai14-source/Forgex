@@ -2,6 +2,7 @@ package com.forgex.common.security.perm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.i18n.I18nPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
@@ -136,6 +137,22 @@ public class PermissionInterceptor implements HandlerInterceptor {
         R<Object> r = new R<>();
         r.setCode(code);
         r.setMessage(msg);
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write(objectMapper.writeValueAsString(r));
+    }
+
+    /**
+     * 输出统一失败响应（支持国际化提示）
+     *
+     * @param response 响应
+     * @param code     HTTP状态码
+     * @param messageCode 国际化消息代码
+     * @throws Exception 写出失败
+     */
+    private void writeFail(HttpServletResponse response, int code, I18nPrompt messageCode) throws Exception {
+        R<Object> r = R.fail(code, messageCode);
         response.setStatus(HttpServletResponse.SC_OK);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
