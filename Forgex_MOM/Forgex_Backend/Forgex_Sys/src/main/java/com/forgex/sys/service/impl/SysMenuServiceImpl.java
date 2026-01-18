@@ -480,10 +480,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
      * @return 模块路由对象
      */
     private Map<String, Object> buildModuleRoute(SysModule module, List<SysMenu> allMenus) {
+        log.info("=== buildModuleRoute 开始 ===");
+        log.info("模块信息 - id: {}, code: {}, name: {}", module.getId(), module.getCode(), module.getName());
+        log.info("所有菜单总数: {}", allMenus.size());
+        
         Map<String, Object> route = new HashMap<>();
         route.put("path", module.getCode());
         route.put("name", capitalize(module.getCode()));
-        route.put("meta", buildMeta(resolveI18nText(module.getNameI18nJson(), module.getName()), module.getIcon(), module.getCode()));
+        route.put("meta", buildMeta(resolveI18nText(module.getNameI18nJson(), module.getName()), module.getIcon(), module.getCode(), null, null, Collections.emptyList()));
         
         // 获取该模块下的根菜单（包括catalog类型）
         List<SysMenu> rootMenus = allMenus.stream()
@@ -493,12 +497,19 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             .sorted(Comparator.comparing(m -> m.getOrderNum() == null ? 0 : m.getOrderNum()))
             .collect(Collectors.toList());
         
+        log.info("模块{}下的根菜单数量: {}", module.getCode(), rootMenus.size());
+        for (SysMenu rootMenu : rootMenus) {
+            log.info("根菜单 - id: {}, name: {}, type: {}, path: {}, parent_id: {}", 
+                rootMenu.getId(), rootMenu.getName(), rootMenu.getType(), rootMenu.getPath(), rootMenu.getParentId());
+        }
+        
         List<Map<String, Object>> children = new ArrayList<>();
         for (SysMenu menu : rootMenus) {
             children.add(buildMenuRoute(menu, allMenus, module.getCode()));
         }
         
         route.put("children", children);
+        log.info("=== buildModuleRoute 结束，children数量: {} ===", children.size());
         return route;
     }
     
@@ -514,10 +525,19 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
      * @return 菜单路由对象
      */
     private Map<String, Object> buildMenuRoute(SysMenu menu, List<SysMenu> allMenus, String moduleCode) {
+        log.info("  buildMenuRoute - id: {}, name: {}, type: {}, path: {}, parent_id: {}", 
+            menu.getId(), menu.getName(), menu.getType(), menu.getPath(), menu.getParentId());
+        
         Map<String, Object> route = new HashMap<>();
         route.put("path", menu.getPath());
         route.put("name", menu.getName());
-        route.put("component", menu.getComponentKey());
+        
+        // catalog类型的菜单不需要component，只作为目录节点
+        if (!"catalog".equalsIgnoreCase(menu.getType())) {
+            route.put("component", menu.getComponentKey());
+        } else {
+            log.info("    菜单{}是catalog类型，跳过component设置", menu.getName());
+        }
         
         // 获取该菜单下的按钮权限
         List<String> perms = allMenus.stream()
@@ -528,7 +548,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             .distinct()
             .collect(Collectors.toList());
         
-        route.put("meta", buildMeta(resolveI18nText(menu.getNameI18nJson(), menu.getName()), menu.getIcon(), moduleCode, menu.getMenuLevel(), perms));
+        route.put("meta", buildMeta(resolveI18nText(menu.getNameI18nJson(), menu.getName()), menu.getIcon(), moduleCode, menu.getMenuLevel(), menu.getType(), perms));
         
         // 获取子菜单
         List<SysMenu> childMenus = allMenus.stream()
@@ -536,6 +556,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             .filter(m -> !"button".equalsIgnoreCase(m.getType()))
             .sorted(Comparator.comparing(m -> m.getOrderNum() == null ? 0 : m.getOrderNum()))
             .collect(Collectors.toList());
+        
+        log.info("    菜单{}的子菜单数量: {}", menu.getName(), childMenus.size());
+        for (SysMenu child : childMenus) {
+            log.info("      子菜单 - id: {}, name: {}, type: {}, path: {}", 
+                child.getId(), child.getName(), child.getType(), child.getPath());
+        }
         
         if (!childMenus.isEmpty()) {
             List<Map<String, Object>> children = new ArrayList<>();
@@ -551,38 +577,25 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /**
      * 构建路由Meta信息
      * <p>
-     * 构建包含标题、图标和模块信息的路由Meta对象
-     * </p>
-     * 
-     * @param title  标题
-     * @param icon   图标
-     * @param module 模块
-     * @return 路由Meta对象
-     */
-    private Map<String, Object> buildMeta(String title, String icon, String module) {
-        return buildMeta(title, icon, module, null, null);
-    }
-    
-    /**
-     * 构建路由Meta信息
-     * <p>
-     * 构建包含标题、图标、模块、菜单级别和权限信息的路由Meta对象
+     * 构建包含标题、图标、模块、菜单级别、类型和权限信息的路由Meta对象
      * </p>
      * 
      * @param title      标题
      * @param icon       图标
      * @param module     模块
      * @param menuLevel  菜单级别
+     * @param type       菜单类型
      * @param perms      权限列表
      * @return 路由Meta对象
      */
     private Map<String, Object> buildMeta(String title, String icon, String module, 
-                                         Integer menuLevel, List<String> perms) {
+                                         Integer menuLevel, String type, List<String> perms) {
         Map<String, Object> meta = new HashMap<>();
         if (title != null) meta.put("title", title);
         if (icon != null) meta.put("icon", icon);
         if (module != null) meta.put("module", module);
         if (menuLevel != null) meta.put("menuLevel", menuLevel);
+        if (type != null) meta.put("type", type);
         if (perms != null && !perms.isEmpty()) meta.put("perms", perms);
         return meta;
     }

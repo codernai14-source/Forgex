@@ -275,6 +275,7 @@ export async function injectDynamicRoutes(payload: any) {
   console.log('[Route] Starting to inject dynamic routes...')
   console.log('[Route] Modules:', mods)
   console.log('[Route] Routes payload:', routesPayload)
+  console.log('[Route] Routes payload JSON:', JSON.stringify(routesPayload, null, 2))
   
   // 遍历路由数据，注册动态路由
   for (const routeItem of routesPayload) {
@@ -299,26 +300,58 @@ export async function injectDynamicRoutes(payload: any) {
     })
     
     // 注册模块下的子路由
-    for (const c of children) {
-      const key = c.component
-      const comp = loadComponent(key)
-      const childPath = c.path
-      
-      // 构建完整路径：/workspace/{moduleCode}/{childPath}
-      const fullPath = `${moduleCode}/${childPath}`
-      console.log(`[Route] Registering route: /workspace/${fullPath}`)
-      
-      // 添加子路由到 Workspace 路由下
-      r.addRoute('Workspace', {
-        path: fullPath,
-        name: c.name,
-        component: comp,
-        meta: {
-          ...c.meta,
-          module: moduleCode
-        }
-      })
+  for (const c of children) {
+    const key = c.component
+    const childPath = c.path
+    
+    // 构建完整路径：/workspace/{moduleCode}/{childPath}
+    const fullPath = `${moduleCode}/${childPath}`
+    
+    // catalog类型的菜单不注册路由，但需要处理其下的子菜单
+    if (c.meta && c.meta.type === 'catalog') {
+      console.log(`[Route] Catalog menu (no route registered): ${c.name} (${childPath})`)
+      // 处理catalog菜单下的子菜单
+      const catalogChildren = Array.isArray(c.children) ? c.children : []
+      for (const subChild of catalogChildren) {
+        const subKey = subChild.component
+        const subChildPath = subChild.path
+        
+        const subComp = loadComponent(subKey)
+        
+        // 构建完整路径：/workspace/{moduleCode}/{childPath}/{subChildPath}
+        const subFullPath = `${fullPath}/${subChildPath}`
+        console.log(`[Route] Registering sub route of catalog: /workspace/${subFullPath}`)
+        
+        // 添加子路由到 Workspace 路由下
+        r.addRoute('Workspace', {
+          path: subFullPath,
+          name: subChild.name,
+          component: subComp,
+          meta: {
+            ...subChild.meta,
+            module: moduleCode
+          }
+        })
+      }
+      // catalog类型菜单本身不需要注册路由，继续处理下一个菜单
+      continue
     }
+    
+    // 非catalog类型菜单直接注册路由
+    const comp = loadComponent(key)
+    console.log(`[Route] Registering route: /workspace/${fullPath}`)
+    
+    // 添加子路由到 Workspace 路由下
+    r.addRoute('Workspace', {
+      path: fullPath,
+      name: c.name,
+      component: comp,
+      meta: {
+        ...c.meta,
+        module: moduleCode
+      }
+    })
+  }
   }
   
   // 打印所有注册的路由（调试用）

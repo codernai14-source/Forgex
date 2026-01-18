@@ -44,7 +44,7 @@ export interface LanguageType {
  * @returns 启用的语言类型列表
  */
 export function listEnabledLanguages() {
-  return http.post<LanguageType[]>('/common/i18n/languageType/listEnabled')
+  return http.post<LanguageType[]>('/sys/i18n/languageType/listEnabled')
 }
 
 /**
@@ -52,7 +52,7 @@ export function listEnabledLanguages() {
  * @returns 所有语言类型列表
  */
 export function listAllLanguages() {
-  return http.post<LanguageType[]>('/common/i18n/languageType/listAll')
+  return http.post<LanguageType[]>('/sys/i18n/languageType/listAll')
 }
 
 /**
@@ -61,7 +61,7 @@ export function listAllLanguages() {
  * @returns 语言类型实体
  */
 export function getLanguageByCode(langCode: string) {
-  return http.post<LanguageType>('/common/i18n/languageType/getByLangCode', { langCode })
+  return http.post<LanguageType>('/sys/i18n/languageType/getByLangCode', { langCode })
 }
 
 /**
@@ -69,5 +69,5 @@ export function getLanguageByCode(langCode: string) {
  * @returns 默认语言类型实体
  */
 export function getDefaultLanguage() {
-  return http.post<LanguageType>('/common/i18n/languageType/getDefault')
+  return http.post<LanguageType>('/sys/i18n/languageType/getDefault')
 }

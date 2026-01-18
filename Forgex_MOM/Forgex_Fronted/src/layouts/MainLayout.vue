@@ -521,7 +521,11 @@ const sidebarMenus = computed(() => {
         if (child.children && Array.isArray(child.children)) {
           menuItem.children = child.children.map((grandchild: any) => {
             const grandchildPath = String(grandchild.path || '')
-            const grandchildFullPath = `/workspace/${activeModuleCode.value}/${grandchildPath}`.replace(/\/+/g, '/')
+            // 构建完整路径：/workspace/{moduleCode}/{childPath}/{grandchildPath}
+            // 注意：如果grandchild.path已经是完整路径，需要特殊处理
+            const grandchildFullPath = grandchildPath.startsWith('/') 
+              ? grandchildPath 
+              : `/workspace/${activeModuleCode.value}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
             const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
             const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
             const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
@@ -574,7 +578,11 @@ const sidebarMenus = computed(() => {
           if (child.children && Array.isArray(child.children)) {
             menuItem.children = child.children.map((grandchild: any) => {
               const grandchildPath = String(grandchild.path || '')
-              const grandchildFullPath = `/workspace/${moduleCode}/${grandchildPath}`.replace(/\/+/g, '/')
+              // 构建完整路径：/workspace/{moduleCode}/{childPath}/{grandchildPath}
+              // 注意：如果grandchild.path已经是完整路径，需要特殊处理
+              const grandchildFullPath = grandchildPath.startsWith('/') 
+                ? grandchildPath 
+                : `/workspace/${moduleCode}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
               const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
               const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
               const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
@@ -600,6 +608,7 @@ const sidebarMenus = computed(() => {
     }
   }
   
+  console.log('[MainLayout] sidebarMenus computed:', JSON.stringify(result, null, 2))
   return result
 })
 
