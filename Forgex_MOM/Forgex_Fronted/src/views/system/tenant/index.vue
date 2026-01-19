@@ -1,38 +1,119 @@
 <template>
   <div class="page-wrap">
-    <a-card class="content-card" :bordered="false">
-      <!-- 查询表单 -->
+    <!-- 租户列表 -->
+    <fx-dynamic-table
+      ref="tableRef"
+      :table-code="'TenantTable'"
+      :request="handleRequest"
+      :fallback-config="fallbackConfig"
+      :dict-options="dictOptions"
+      row-key="id"
+      :show-query-form="true"
+      :scroll="{ y: tableHeight }"
+    >
+      <template #toolbar>
+        <a-space>
+          <a-button
+            type="primary"
+            @click="openAdd"
+            v-permission="'sys:tenant:add'"
+          >
+            <template #icon><PlusOutlined /></template>
+            新增租户
+          </a-button>
+        </a-space>
+      </template>
+      
+      <template #tenantType="{ record }">
+        <a-tag :color="getTenantTypeColor(record.tenantType)">
+          {{ TenantTypeLabels[record.tenantType] }}
+        </a-tag>
+      </template>
+
+      <template #status="{ record }">
+        <a-tag :color="record.status ? 'green' : 'red'">
+          {{ record.status ? '启用' : '禁用' }}
+        </a-tag>
+      </template>
+
+      <template #logo="{ record }">
+        <a-image
+          v-if="record.logo"
+          :src="formatLogoUrl(record.logo)"
+          :width="40"
+          :height="40"
+          style="border-radius: 4px"
+        />
+        <span v-else>-</span>
+      </template>
+
+      <template #action="{ record }">
+        <a-space>
+          <a-button
+            type="link"
+            size="small"
+            @click="openEdit(record)"
+            v-permission="'sys:tenant:edit'"
+          >
+            <template #icon><EditOutlined /></template>
+            编辑
+          </a-button>
+          <a-popconfirm
+            title="确定要删除这个租户吗？"
+            :ok-text="$t('common.confirm')"
+            :cancel-text="$t('common.cancel')"
+            @confirm="handleDelete(record)"
+          >
+            <a-button
+              type="link"
+              size="small"
+              danger
+              v-permission="'sys:tenant:delete'"
+              :disabled="record.tenantType === TenantTypeEnum.MAIN_TENANT"
+            >
+              <template #icon><DeleteOutlined /></template>
+              删除
+            </a-button>
+          </a-popconfirm>
+        </a-space>
+      </template>
+    </fx-dynamic-table>
+
+    <!-- 新增/编辑表单：使用通用弹窗组件，支持弹窗/抽屉模式 -->
+    <BaseFormDialog
+      v-model:open="dialogVisible"
+      :title="formData.id ? '编辑租户' : '新增租户'"
+      :loading="saving"
+      :width="600"
+      @submit="handleSave"
+      @cancel="handleCancel"
+    >
       <a-form
-        :model="queryForm"
-        layout="inline"
-        style="margin-bottom: 16px"
+        ref="formRef"
+        :model="formData"
+        :rules="rules"
+        :label-col="{ span: 6 }"
+        :wrapper-col="{ span: 16 }"
       >
-        <a-form-item label="租户名称">
+        <a-form-item label="租户名称" name="tenantName">
           <a-input
-            v-model:value="queryForm.tenantName"
+            v-model:value="formData.tenantName"
             placeholder="请输入租户名称"
-            allow-clear
-            style="width: 200px"
-            @pressEnter="handleQuery"
           />
         </a-form-item>
 
-        <a-form-item label="租户编码">
+        <a-form-item label="租户编码" name="tenantCode">
           <a-input
-            v-model:value="queryForm.tenantCode"
+            v-model:value="formData.tenantCode"
             placeholder="请输入租户编码"
-            allow-clear
-            style="width: 200px"
-            @pressEnter="handleQuery"
           />
         </a-form-item>
 
-        <a-form-item label="租户类别">
+        <a-form-item label="租户类别" name="tenantType">
           <a-select
-            v-model:value="queryForm.tenantType"
+            v-model:value="formData.tenantType"
             placeholder="请选择租户类别"
-            allow-clear
-            style="width: 150px"
+            :disabled="formData.id && formData.tenantType === TenantTypeEnum.MAIN_TENANT"
           >
             <a-select-option
               v-for="(label, value) in TenantTypeLabels"
@@ -44,182 +125,28 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="queryForm.status"
-            placeholder="请选择状态"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
+        <a-form-item label="描述" name="description">
+          <a-textarea
+            v-model:value="formData.description"
+            placeholder="请输入描述"
+            :rows="3"
+          />
         </a-form-item>
 
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleQuery">
-              <template #icon><SearchOutlined /></template>
-              查询
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
+        <a-form-item label="Logo" name="logo">
+          <div class="tenant-logo-upload">
+            <AvatarUpload v-model="formData.logo" />
+          </div>
+        </a-form-item>
+
+        <a-form-item label="状态" name="status">
+          <a-radio-group v-model:value="formData.status">
+            <a-radio :value="true">启用</a-radio>
+            <a-radio :value="false">禁用</a-radio>
+          </a-radio-group>
         </a-form-item>
       </a-form>
-
-      <!-- 操作按钮 -->
-      <div style="margin-bottom: 16px">
-        <a-space>
-          <a-button
-            type="primary"
-            @click="openAdd"
-            v-permission="'sys:tenant:add'"
-          >
-            <template #icon><PlusOutlined /></template>
-            新增租户
-          </a-button>
-        </a-space>
-      </div>
-
-      <!-- 租户列表 -->
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'TenantTable'"
-        :request="handleRequest"
-        :fallback-config="fallbackConfig"
-        :dict-options="dictOptions"
-        :loading="loading"
-        :pagination="false"
-        row-key="id"
-        :scroll="{ y: tableHeight }"
-      >
-        <template #tenantType="{ record }">
-          <a-tag :color="getTenantTypeColor(record.tenantType)">
-            {{ TenantTypeLabels[record.tenantType] }}
-          </a-tag>
-        </template>
-
-        <template #status="{ record }">
-          <a-tag :color="record.status ? 'green' : 'red'">
-            {{ record.status ? '启用' : '禁用' }}
-          </a-tag>
-        </template>
-
-        <template #logo="{ record }">
-          <a-image
-            v-if="record.logo"
-            :src="formatLogoUrl(record.logo)"
-            :width="40"
-            :height="40"
-            style="border-radius: 4px"
-          />
-          <span v-else>-</span>
-        </template>
-
-        <template #action="{ record }">
-          <a-space>
-            <a-button
-              type="link"
-              size="small"
-              @click="openEdit(record)"
-              v-permission="'sys:tenant:edit'"
-            >
-              <template #icon><EditOutlined /></template>
-              编辑
-            </a-button>
-            <a-popconfirm
-              title="确定要删除这个租户吗？"
-              :ok-text="$t('common.confirm')"
-              :cancel-text="$t('common.cancel')"
-              @confirm="handleDelete(record)"
-            >
-              <a-button
-                type="link"
-                size="small"
-                danger
-                v-permission="'sys:tenant:delete'"
-                :disabled="record.tenantType === TenantTypeEnum.MAIN_TENANT"
-              >
-                <template #icon><DeleteOutlined /></template>
-                删除
-              </a-button>
-            </a-popconfirm>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
-
-      <!-- 新增/编辑表单：使用通用弹窗组件，支持弹窗/抽屉模式 -->
-      <BaseFormDialog
-        v-model:open="dialogVisible"
-        :title="formData.id ? '编辑租户' : '新增租户'"
-        :loading="saving"
-        :width="600"
-        @submit="handleSave"
-        @cancel="handleCancel"
-      >
-        <a-form
-          ref="formRef"
-          :model="formData"
-          :rules="rules"
-          :label-col="{ span: 6 }"
-          :wrapper-col="{ span: 16 }"
-        >
-          <a-form-item label="租户名称" name="tenantName">
-            <a-input
-              v-model:value="formData.tenantName"
-              placeholder="请输入租户名称"
-            />
-          </a-form-item>
-
-          <a-form-item label="租户编码" name="tenantCode">
-            <a-input
-              v-model:value="formData.tenantCode"
-              placeholder="请输入租户编码"
-            />
-          </a-form-item>
-
-          <a-form-item label="租户类别" name="tenantType">
-            <a-select
-              v-model:value="formData.tenantType"
-              placeholder="请选择租户类别"
-              :disabled="formData.id && formData.tenantType === TenantTypeEnum.MAIN_TENANT"
-            >
-              <a-select-option
-                v-for="(label, value) in TenantTypeLabels"
-                :key="value"
-                :value="value"
-              >
-                {{ label }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-
-          <a-form-item label="描述" name="description">
-            <a-textarea
-              v-model:value="formData.description"
-              placeholder="请输入描述"
-              :rows="3"
-            />
-          </a-form-item>
-
-          <a-form-item label="Logo" name="logo">
-            <div class="tenant-logo-upload">
-              <AvatarUpload v-model="formData.logo" />
-            </div>
-          </a-form-item>
-
-          <a-form-item label="状态" name="status">
-            <a-radio-group v-model:value="formData.status">
-              <a-radio :value="true">启用</a-radio>
-              <a-radio :value="false">禁用</a-radio>
-            </a-radio-group>
-          </a-form-item>
-        </a-form>
-      </BaseFormDialog>
-    </a-card>
+    </BaseFormDialog>
   </div>
 </template>
 
@@ -246,16 +173,10 @@ import {
 } from '@/api/system/tenant'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
 const formRef = ref()
 const tableRef = ref()
-
-const queryForm = reactive<TenantQueryDTO>({
-  tenantName: undefined,
-  tenantCode: undefined,
-  tenantType: undefined,
-  status: undefined
-})
 
 const loading = ref(false)
 const tableHeight = ref(500)
@@ -278,6 +199,11 @@ const rules = {
 
 // fallback配置
 const fallbackConfig = ref({
+  tableCode: 'TenantTable',
+  tableName: '租户管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
   columns: [
     {
       title: '租户ID',
@@ -334,7 +260,14 @@ const fallbackConfig = ref({
       width: 150,
       fixed: 'right'
     }
-  ]
+  ],
+  queryFields: [
+    { field: 'tenantName', label: '租户名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'tenantCode', label: '租户编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'tenantType', label: '租户类别', queryType: 'select', queryOperator: 'eq' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' }
+  ],
+  version: 1
 })
 
 // 字典配置
@@ -354,19 +287,11 @@ const dictOptions = ref({
 const handleRequest = async (params: any) => {
   try {
     loading.value = true
-    const data = await listTenant({ ...queryForm, ...params })
-    return {
-      success: true,
-      data: data || [],
-      total: data?.length || 0
-    }
+    const data = await listTenant(params)
+    return { records: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 }
   } catch (e: any) {
     message.error(e.message || '加载租户列表失败')
-    return {
-      success: false,
-      data: [],
-      total: 0
-    }
+    return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
@@ -390,18 +315,6 @@ function formatLogoUrl(url: string): string {
     return '/api' + url
   }
   return '/api/' + url
-}
-
-async function handleQuery() {
-  await tableRef.value?.refresh?.()
-}
-
-function handleReset() {
-  queryForm.tenantName = undefined
-  queryForm.tenantCode = undefined
-  queryForm.tenantType = undefined
-  queryForm.status = undefined
-  tableRef.value?.refresh?.()
 }
 
 function openAdd() {
@@ -446,7 +359,7 @@ async function handleSave() {
     }
 
     dialogVisible.value = false
-    await tableRef.value?.refresh?.()
+    tableRef.value?.refresh?.()
   } catch (e: any) {
     if (e.errorFields) {
       return
@@ -483,28 +396,6 @@ onMounted(() => {
   padding: 16px;
   height: calc(100vh - 84px);
   overflow: hidden;
-}
-
-.content-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-:deep(.ant-card-body) {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-:deep(.ant-table-wrapper) {
-  flex: 1;
-  overflow: hidden;
-}
-
-:deep(.ant-table) {
-  height: 100%;
 }
 
 .tenant-logo-upload {

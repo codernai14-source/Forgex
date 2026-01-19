@@ -4,6 +4,7 @@
       <a-row :gutter="16">
         <!-- 左侧：部门树 -->
         <a-col :span="6">
+          <div class="card-title">组织架构</div>
           <DeptTree
             ref="deptTreeRef"
             @select="onSelectNode"
@@ -12,51 +13,6 @@
 
         <!-- 右侧：职位列表 -->
         <a-col :span="18">
-          <!-- 搜索区域 -->
-          <div class="search-area">
-            <a-form layout="inline" :model="searchForm">
-              <a-form-item label="职位名称">
-                <a-input
-                  v-model:value="searchForm.positionName"
-                  placeholder="请输入职位名称"
-                  allow-clear
-                  style="width: 150px"
-                />
-              </a-form-item>
-              <a-form-item label="职位编码">
-                <a-input
-                  v-model:value="searchForm.positionCode"
-                  placeholder="请输入职位编码"
-                  allow-clear
-                  style="width: 150px"
-                />
-              </a-form-item>
-              <a-form-item label="状态">
-                <a-select
-                  v-model:value="searchForm.status"
-                  placeholder="请选择状态"
-                  allow-clear
-                  style="width: 100px"
-                >
-                  <a-select-option :value="true">启用</a-select-option>
-                  <a-select-option :value="false">禁用</a-select-option>
-                </a-select>
-              </a-form-item>
-              <a-form-item>
-                <a-space>
-                  <a-button type="primary" @click="handleSearch">
-                    <template #icon><SearchOutlined /></template>
-                    搜索
-                  </a-button>
-                  <a-button @click="handleReset">
-                    <template #icon><ReloadOutlined /></template>
-                    重置
-                  </a-button>
-                </a-space>
-              </a-form-item>
-            </a-form>
-          </div>
-
           <!-- 操作按钮和表格 -->
           <div class="table-area">
             <div class="toolbar">
@@ -75,7 +31,6 @@
               :fallback-config="fallbackConfig"
               :dict-options="dictOptions"
               row-key="id"
-              :pagination="false"
             >
               <template #status="{ record }">
                 <a-tag :color="record.status === true ? 'green' : 'red'">
@@ -128,7 +83,7 @@
         :model="formData"
         :rules="rules"
         :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 16 }"
+        :wrapper-col="{ span: 19 }"
       >
         <a-form-item label="所属部门" name="departmentId">
            <a-tree-select
@@ -315,8 +270,7 @@ const formData = ref<PositionSaveParam & { departmentId?: string }>({
   positionName: '',
   positionCode: '',
   orderNum: 0,
-  status: true,
-  departmentId: undefined
+  status: true
 })
 
 // 表单验证规则
@@ -486,14 +440,60 @@ onMounted(async () => {
 }
 
 .content-card {
+  margin-bottom: 16px;
   min-height: calc(100vh - 120px);
 }
 
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: var(--fx-text-primary, #1d2129);
+}
+
 .search-area {
+  width: 100%;
   margin-bottom: 16px;
 }
 
 .toolbar {
   margin-bottom: 16px;
+}
+
+.detail-container {
+  padding-left: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+:deep(.fx-query-form) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+:deep(.fx-query-fields-container) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+:deep(.fx-query-fields) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+:deep(.fx-query-fields :deep(.ant-form-item)) {
+  margin: 0;
+}
+
+:deep(.fx-query-actions) {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 12px;
 }
 </style>

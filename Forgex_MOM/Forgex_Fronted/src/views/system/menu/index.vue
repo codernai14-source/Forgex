@@ -1,44 +1,5 @@
 <template>
   <div class="menu-container">
-    <!-- 搜索区域 -->
-    <a-card :bordered="false" class="search-card">
-      <a-form layout="inline">
-        <a-form-item label="菜单名称">
-          <a-input
-            v-model:value="queryParams.name"
-            placeholder="请输入菜单名称"
-            style="width: 200px"
-            allow-clear
-          />
-        </a-form-item>
-        
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="queryParams.status"
-            placeholder="请选择状态"
-            style="width: 120px"
-            allow-clear
-          >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>
-              搜索
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-    
     <!-- 主内容区 -->
     <a-card :bordered="false" class="main-card">
       <div class="menu-layout">
@@ -59,96 +20,93 @@
         
         <!-- 右侧内容区 -->
         <div class="content-area">
-          <!-- 操作按钮 -->
-          <div class="table-toolbar">
-            <a-space>
-              <a-button
-                v-permission="'sys:menu:add'"
-                type="primary"
-                @click="handleAdd"
-              >
-                <template #icon><PlusOutlined /></template>
-                新增菜单
-              </a-button>
-              
-              <a-button
-                v-permission="'sys:menu:delete'"
-                danger
-                :disabled="selectedRowKeys.length === 0"
-                @click="handleBatchDelete"
-              >
-                <template #icon><DeleteOutlined /></template>
-                批量删除
-              </a-button>
-            </a-space>
-          </div>
-          
-          <!-- 树形表格 -->
-          <div class="table-wrapper">
-            <fx-dynamic-table
-              ref="tableRef"
-              :table-code="'MenuTable'"
-              :request="handleRequest"
-              :fallback-config="fallbackConfig"
-              :dict-options="dictOptions"
-              :row-selection="{
-                selectedRowKeys,
-                onChange: handleSelectionChange
-              }"
-              :pagination="false"
-              :scroll="{ y: 'calc(100vh - 380px)' }"
-              row-key="id"
-              :default-expand-all-rows="true"
-            >
-              <template #type="{ record }">
-                <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
-                <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
-                <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
-              </template>
-              
-              <template #menuMode="{ record }">
-                <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
-                <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
-                <span v-else>-</span>
-              </template>
-              
-              <template #icon="{ record }">
-                <component v-if="record.icon" :is="getIcon(record.icon)" />
-                <span v-else>-</span>
-              </template>
-              
-              <template #visible="{ record }">
-                <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
-                <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
-                <span v-else>-</span>
-              </template>
-              
-              <template #status="{ record }">
-                <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
-                <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
-                <span v-else>-</span>
-              </template>
-              
-              <template #action="{ record }">
-                <a-space>
-                  <a
-                    v-permission="'sys:menu:edit'"
-                    @click="handleEdit(record)"
-                  >
-                    编辑
-                  </a>
-                  <a-divider type="vertical" />
-                  <a
-                    v-permission="'sys:menu:delete'"
-                    class="danger-link"
-                    @click="handleDelete(record.id)"
-                  >
-                    删除
-                  </a>
-                </a-space>
-              </template>
-            </fx-dynamic-table>
-          </div>
+          <!-- 表格区域 -->
+          <fx-dynamic-table
+            ref="tableRef"
+            :table-code="'MenuTable'"
+            :request="handleRequest"
+            :fallback-config="fallbackConfig"
+            :dict-options="dictOptions"
+            :row-selection="{
+              selectedRowKeys,
+              onChange: handleSelectionChange
+            }"
+            :pagination="false"
+            :scroll="{ y: 'calc(100vh - 380px)' }"
+            row-key="id"
+            :default-expand-all-rows="true"
+          >
+            <template #toolbar>
+              <a-space>
+                <a-button
+                  v-permission="'sys:menu:add'"
+                  type="primary"
+                  @click="handleAdd"
+                >
+                  <template #icon><PlusOutlined /></template>
+                  新增菜单
+                </a-button>
+                
+                <a-button
+                  v-permission="'sys:menu:delete'"
+                  danger
+                  :disabled="selectedRowKeys.length === 0"
+                  @click="handleBatchDelete"
+                >
+                  <template #icon><DeleteOutlined /></template>
+                  批量删除
+                </a-button>
+              </a-space>
+            </template>
+            
+            <template #type="{ record }">
+              <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
+              <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
+              <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
+            </template>
+            
+            <template #menuMode="{ record }">
+              <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
+              <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
+              <span v-else>-</span>
+            </template>
+            
+            <template #icon="{ record }">
+              <component v-if="record.icon" :is="getIcon(record.icon)" />
+              <span v-else>-</span>
+            </template>
+            
+            <template #visible="{ record }">
+              <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
+              <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
+              <span v-else>-</span>
+            </template>
+            
+            <template #status="{ record }">
+              <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
+              <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
+              <span v-else>-</span>
+            </template>
+            
+            <template #action="{ record }">
+              <a-space>
+                <a
+                  v-permission="'sys:menu:edit'"
+                  @click="handleEdit(record)"
+                >
+                  编辑
+                </a>
+                <a-divider type="vertical" />
+                <a
+                  v-permission="'sys:menu:delete'"
+                  class="danger-link"
+                  @click="handleDelete(record.id)"
+                >
+                  删除
+                </a>
+              </a-space>
+            </template>
+          </fx-dynamic-table>
         </div>
       </div>
     </a-card>
@@ -612,11 +570,11 @@ const loadModules = async () => {
     modules.value = res || []
     
     // 默认选中第一个模块
-    if (modules.value.length > 0) {
-      activeModuleId.value = String(modules.value[0].id)
-      queryParams.moduleId = activeModuleId.value
-      await loadMenuList()
-    }
+      if (modules.value.length > 0) {
+        activeModuleId.value = String(modules.value[0].id)
+        queryParams.moduleId = activeModuleId.value
+        tableRef.value?.refresh?.()
+      }
   } catch (error) {
     console.error('加载模块列表失败:', error)
   }
@@ -626,7 +584,7 @@ const loadModules = async () => {
 const handleModuleChange = async (moduleId: string) => {
   activeModuleId.value = moduleId
   queryParams.moduleId = moduleId
-  await loadMenuList()
+  tableRef.value?.refresh?.()
 }
 
 // 组件挂载时加载数据

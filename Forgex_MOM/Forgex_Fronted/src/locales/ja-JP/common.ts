@@ -58,7 +58,8 @@ export default {
   noData: 'データなし',
   pleaseSelect: '選択してください',
   pleaseInput: '入力してください',
-
+  home: 'ホーム',
+  
   // システム設定関連
   loadFailed: '読み込み失敗',
   saveSuccess: '保存成功',

@@ -717,6 +717,26 @@ const currentUser = computed(() => {
   }
 })
 
+// 监听语言变化，更新标签标题
+watch(
+  () => currentLocale.value,
+  (newLocale) => {
+    if (newLocale) {
+      updateAllTabTitles()
+    }
+  }
+)
+
+/**
+ * 更新所有标签的标题
+ */
+function updateAllTabTitles() {
+  tabs.value = tabs.value.map(tab => ({
+    ...tab,
+    title: buildTitleFromRoute(tab.key)
+  }))
+}
+
 watch(
   () => route.fullPath,
   (path) => {
@@ -1038,7 +1058,12 @@ function buildTitleFromRoute(path: string): string {
   const allRoutes = router.getRoutes()
   const match = allRoutes.find(r => r.path === pathWithoutQuery)
   if (match && match.meta && match.meta.title) {
-    return match.meta.title as string
+    const title = match.meta.title as string
+    // 如果title是国际化key，使用t函数翻译
+    if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+      return t(title)
+    }
+    return title
   }
 
   // 2. 如果没找到，尝试通过模块结构查找（降级策略）
@@ -1046,7 +1071,7 @@ function buildTitleFromRoute(path: string): string {
   const clean = pathWithoutQuery.replace(/^\/workspace\//, '')
   const parts = clean.split('/').filter(Boolean)
   if (parts.length < 1) {
-    return '首页'
+    return t('common.home')
   }
   const moduleCode = parts[0]
   const childPath = parts[1]
@@ -1054,7 +1079,12 @@ function buildTitleFromRoute(path: string): string {
   if (topRoute && Array.isArray(topRoute.children) && childPath) {
     const child = topRoute.children.find((c: any) => String(c.path || '') === childPath)
     if (child && child.meta && child.meta.title) {
-      return child.meta.title
+      const title = child.meta.title
+      // 如果title是国际化key，使用t函数翻译
+      if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+        return t(title)
+      }
+      return title
     }
     if (child && child.name) {
       return child.name

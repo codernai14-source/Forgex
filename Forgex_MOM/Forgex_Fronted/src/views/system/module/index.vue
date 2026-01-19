@@ -1,102 +1,37 @@
 <template>
   <div class="module-container">
-    <!-- 搜索栏 -->
-    <a-card :bordered="false" style="margin-bottom: 16px">
-      <a-form layout="inline">
-        <a-form-item label="模块编码">
-          <a-input
-            v-model:value="queryParams.code"
-            placeholder="请输入模块编码"
-            allow-clear
-            style="width: 200px"
-            @press-enter="handleSearch"
-          />
-        </a-form-item>
-        <a-form-item label="模块名称">
-          <a-input
-            v-model:value="queryParams.name"
-            placeholder="请输入模块名称"
-            allow-clear
-            style="width: 200px"
-            @press-enter="handleSearch"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="queryParams.status"
-            placeholder="请选择状态"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option :value="1">启用</a-select-option>
-            <a-select-option :value="0">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <SearchOutlined /> 搜索
+    <!-- 表格 -->
+    <fx-dynamic-table
+      ref="tableRef"
+      :table-code="'ModuleTable'"
+      :show-query-form="true"
+      :request="handleRequest"
+      :fallback-config="fallbackConfig"
+      :dict-options="dictOptions"
+      :row-selection="{
+        selectedRowKeys: selectedRowKeys,
+        onChange: handleSelectionChange
+      }"
+    >
+        <!-- 工具栏插槽 -->
+        <template #toolbar>
+          <a-space :size="8">
+            <a-button
+              v-permission="'sys:module:add'"
+              type="primary"
+              @click="openAddDialog"
+            >
+              新增
             </a-button>
-            <a-button @click="handleReset">
-              <ReloadOutlined /> 重置
+            <a-button
+              v-permission="'sys:module:delete'"
+              danger
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDeleteConfirm"
+            >
+              批量删除
             </a-button>
           </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
-    <!-- 表格 -->
-    <a-card :bordered="false">
-      <!-- 操作按钮 -->
-      <div style="margin-bottom: 16px">
-        <a-space>
-          <a-button
-            v-permission="'sys:module:add'"
-            type="primary"
-            @click="openAddDialog"
-          >
-            <PlusOutlined /> 新增
-          </a-button>
-          <a-button
-            v-permission="'sys:module:delete'"
-            danger
-            :disabled="selectedRowKeys.length === 0"
-            @click="handleBatchDeleteConfirm"
-          >
-            <DeleteOutlined /> 批量删除
-          </a-button>
-        </a-space>
-      </div>
-
-      <!-- 数据表格 -->
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'ModuleTable'"
-        :request="handleRequest"
-        :fallback-config="fallbackConfig"
-        :dict-options="dictOptions"
-        :loading="loading"
-        :row-selection="{
-          selectedRowKeys: selectedRowKeys,
-          onChange: handleSelectionChange
-        }"
-        row-key="id"
-      >
-        <template #icon="{ record }">
-          <component :is="record.icon" v-if="record.icon" />
-          <span v-else>-</span>
-        </template>
-
-        <template #visible="{ record }">
-          <a-tag :color="record.visible === 1 ? 'success' : 'default'">
-            {{ record.visible === 1 ? '显示' : '隐藏' }}
-          </a-tag>
-        </template>
-
-        <template #status="{ record }">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.status === 1 ? '启用' : '禁用' }}
-          </a-tag>
         </template>
 
         <template #action="{ record }">
@@ -107,10 +42,9 @@
             >
               编辑
             </a>
-            <a-divider type="vertical" />
             <a
               v-permission="'sys:module:delete'"
-              style="color: #ff4d4f"
+              style="color: #ff4d4f;"
               @click="handleDeleteConfirm(record.id)"
             >
               删除
@@ -118,7 +52,6 @@
           </a-space>
         </template>
       </fx-dynamic-table>
-    </a-card>
 
     <!-- 新增/编辑对话框 -->
     <BaseFormDialog
@@ -190,27 +123,17 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  PlusOutlined,
-  DeleteOutlined
-} from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'
-import { listModules, deleteModule, batchDeleteModules } from '@/api/system/module'
+import { listModules, getModulePage, deleteModule, batchDeleteModules } from '@/api/system/module'
 
 // 表格相关
 const tableRef = ref()
 
 // 使用Hooks
 const {
-  loading,
   selectedRowKeys,
-  queryParams,
-  handleSearch,
-  handleReset,
   handleDelete,
   handleBatchDelete,
   handleSelectionChange
@@ -220,7 +143,6 @@ const {
   formRef,
   dialogVisible,
   dialogTitle,
-  loading: formLoading,
   isEdit,
   formData,
   rules,
@@ -232,19 +154,29 @@ const {
 
 // fallback配置
 const fallbackConfig = ref({
+  tableCode: 'ModuleTable',
+  tableName: '模块管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
   columns: [
-    { title: '模块编码', dataIndex: 'code', key: 'code', width: 150 },
-    { title: '模块名称', dataIndex: 'name', key: 'name', width: 150 },
-    { title: '图标', dataIndex: 'icon', key: 'icon', width: 80 },
-    { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-    { title: '可见性', dataIndex: 'visible', key: 'visible', width: 100 },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-    { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-    { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
-    { title: '操作', key: 'action', width: 150, fixed: 'right' }
-  ]
+    { field: 'id', title: 'ID', width: 80, align: 'center' },
+    { field: 'code', title: '模块编码', width: 150 },
+    { field: 'name', title: '模块名称', width: 150 },
+    { field: 'icon', title: '图标', width: 80 },
+    { field: 'orderNum', title: '排序号', width: 100 },
+    { field: 'visible', title: '可见性', width: 100 },
+    { field: 'status', title: '状态', width: 100 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'updateTime', title: '修改时间', width: 180 },
+    { field: 'action', title: '操作', width: 150, fixed: 'right' }
+  ],
+  queryFields: [
+    { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' }
+  ],
+  version: 1
 })
 
 // 字典配置
@@ -262,20 +194,30 @@ const dictOptions = ref({
 /**
  * 处理表格数据请求
  */
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   try {
-    const res = await listModules({ ...queryParams, ...params })
-    return {
-      success: true,
-      data: res.records,
-      total: res.total
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
+      ...payload.query
     }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getModulePage(params)
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total: total }
   } catch (error) {
-    return {
-      success: false,
-      data: [],
-      total: 0
-    }
+    console.error('加载模块列表失败:', error)
+    return { records: [], total: 0 }
   }
 }
 

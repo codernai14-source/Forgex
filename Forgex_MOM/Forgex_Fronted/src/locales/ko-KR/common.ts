@@ -58,7 +58,8 @@ export default {
   noData: '데이터 없음',
   pleaseSelect: '선택해 주세요',
   pleaseInput: '입력해 주세요',
-
+  home: '홈',
+  
   // 시스템 설정 관련
   loadFailed: '로드 실패',
   saveSuccess: '저장 성공',

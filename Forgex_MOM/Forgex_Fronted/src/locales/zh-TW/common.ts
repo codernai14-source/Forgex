@@ -58,7 +58,8 @@ export default {
   noData: '暫無數據',
   pleaseSelect: '請選擇',
   pleaseInput: '請輸入',
-
+  home: '首頁',
+  
   // 系統配置相關
   loadFailed: '加載失敗',
   saveSuccess: '保存成功',

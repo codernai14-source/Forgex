@@ -101,6 +101,14 @@
             >
               菜单授权
             </a-button>
+            <a-button
+              type="link"
+              size="small"
+              @click="openUserGrant(record)"
+              v-permission="'sys:role:authUser'"
+            >
+              授权人员
+            </a-button>
             <a-popconfirm
               title="确定要删除这个角色吗？"
               :ok-text="$t('common.confirm')"
@@ -220,6 +228,96 @@
         </a-spin>
       </div>
     </a-modal>
+
+    <!-- 授权人员弹窗 -->
+    <a-modal
+      v-model:open="userGrantVisible"
+      :title="`角色授权人员 - ${grantRole?.roleName || ''}`"
+      width="900px"
+      :confirm-loading="userGrantSaving"
+      @ok="saveUserGrant"
+      @cancel="userGrantVisible = false"
+    >
+      <div v-if="!currentTenantId" style="color:#ef4444;">
+        当前租户信息缺失，请从登录页重新进入系统。
+      </div>
+      <div v-else>
+        <a-spin :spinning="loadingUsers">
+          <a-row :gutter="16">
+            <!-- 左侧：可授权的用户 -->
+            <a-col :span="12">
+              <a-card title="可授权用户" :bordered="false" class="auth-card">
+                <template #extra>
+                  <a-space>
+                    <a-button size="small" @click="selectAllUsers">全选</a-button>
+                    <a-button size="small" @click="clearSelectedUsers">清空</a-button>
+                  </a-space>
+                </template>
+                <div class="user-list-container">
+                  <a-tabs v-model:activeKey="userGrantTab">
+                    <a-tab-pane key="user" tab="选择用户">
+                      <a-input-search
+                        v-model:value="userSearchKeyword"
+                        placeholder="搜索用户"
+                        allow-clear
+                        style="margin-bottom: 8px"
+                        @search="searchUsers"
+                      />
+                      <div class="user-list">
+                        <a-checkbox-group v-model:value="selectedUserIds">
+                          <div v-for="user in filteredUsers" :key="user.id" class="user-item">
+                            <a-checkbox :value="user.id">
+                              <div class="user-info">
+                                <span class="user-name">{{ user.username }}</span>
+                                <span class="user-dept">{{ user.departmentName || '-' }}</span>
+                              </div>
+                            </a-checkbox>
+                          </div>
+                        </a-checkbox-group>
+                      </div>
+                    </a-tab-pane>
+                    <a-tab-pane key="department" tab="选择部门">
+                      <a-tree
+                        checkable
+                        v-model:checkedKeys="selectedDepartmentIds"
+                        :tree-data="departmentTreeData"
+                        :field-names="departmentTreeFieldNames"
+                        :defaultExpandAll="true"
+                        :height="400"
+                      />
+                    </a-tab-pane>
+                  </a-tabs>
+                </div>
+              </a-card>
+            </a-col>
+            
+            <!-- 右侧：已授权的用户 -->
+            <a-col :span="12">
+              <a-card title="已授权用户" :bordered="false" class="auth-card">
+                <div class="user-list-container">
+                  <div class="user-list">
+                    <div v-for="user in authorizedUsers" :key="user.id" class="user-item authorized">
+                      <div class="user-info">
+                        <span class="user-name">{{ user.username }}</span>
+                        <span class="user-dept">{{ user.departmentName || '-' }}</span>
+                      </div>
+                      <a-button
+                        type="link"
+                        size="small"
+                        danger
+                        @click="removeUserGrant(user.id)"
+                      >
+                        移除
+                      </a-button>
+                    </div>
+                  </div>
+                </div>
+              </a-card>
+            </a-col>
+          </a-row>
+        </a-spin>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -236,7 +334,7 @@
  * @version 1.0.0
  */
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   SearchOutlined,
@@ -244,7 +342,9 @@ import {
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
-import { grantRoleMenus, getRoleAuthData, getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
+import { grantRoleMenus, getRoleAuthData, getRolePage, deleteRole, batchDeleteRoles, getRoleAuthorizedUsers, grantRoleUsers, revokeRoleUsers } from '@/api/system/role'
+import { getUserList } from '@/api/system/user'
+import { getDepartmentTree } from '@/api/system/department'
 import type { Role } from './types'
 
 interface MenuEntity {
@@ -596,7 +696,208 @@ onMounted(async () => {
   if (tid) {
     currentTenantId.value = tid
   }
+  await loadDepartmentTree()
 })
+
+// 授权人员相关
+const userGrantVisible = ref(false)
+const userGrantSaving = ref(false)
+const loadingUsers = ref(false)
+const userGrantTab = ref('user')
+const userSearchKeyword = ref('')
+const allUsers = ref<any[]>([])
+const selectedUserIds = ref<number[]>([])
+const selectedDepartmentIds = ref<string[]>([])
+const authorizedUsers = ref<any[]>([])
+const departmentTreeData = ref<any[]>([])
+
+const departmentTreeFieldNames = {
+  key: 'id',
+  title: 'deptName',
+  children: 'children'
+}
+
+const filteredUsers = computed(() => {
+  if (!userSearchKeyword.value) {
+    return allUsers.value.filter(user => !authorizedUsers.value.find(auth => auth.id === user.id))
+  }
+  const keyword = userSearchKeyword.value.toLowerCase()
+  return allUsers.value.filter(user => 
+    !authorizedUsers.value.find(auth => auth.id === user.id) &&
+    (user.username?.toLowerCase().includes(keyword) || user.email?.toLowerCase().includes(keyword))
+  )
+})
+
+/**
+ * 加载部门树
+ */
+async function loadDepartmentTree() {
+  try {
+    const result = await getDepartmentTree({ tenantId: currentTenantId.value || '' })
+    departmentTreeData.value = result || []
+  } catch (error) {
+    console.error('加载部门树失败:', error)
+  }
+}
+
+/**
+ * 加载所有用户
+ */
+async function loadAllUsers() {
+  try {
+    const result = await getUserList({ 
+      tenantId: currentTenantId.value || '',
+      pageNum: 1,
+      pageSize: 1000
+    })
+    allUsers.value = result.records || []
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
+    message.error('加载用户列表失败')
+  }
+}
+
+/**
+ * 加载已授权的用户
+ */
+async function loadAuthorizedUsers() {
+  if (!currentTenantId.value || !grantRole.value) {
+    return
+  }
+  try {
+    loadingUsers.value = true
+    const result = await getRoleAuthorizedUsers({
+      roleId: grantRole.value.id,
+      tenantId: currentTenantId.value,
+      pageNum: 1,
+      pageSize: 1000
+    })
+    authorizedUsers.value = result.records || []
+  } catch (error) {
+    console.error('加载已授权用户失败:', error)
+    message.error('加载已授权用户失败')
+  } finally {
+    loadingUsers.value = false
+  }
+}
+
+/**
+ * 打开授权人员弹窗
+ */
+async function openUserGrant(role: Role) {
+  grantRole.value = role
+  userGrantVisible.value = true
+  selectedUserIds.value = []
+  selectedDepartmentIds.value = []
+  userSearchKeyword.value = ''
+  await Promise.all([
+    loadAllUsers(),
+    loadAuthorizedUsers()
+  ])
+}
+
+/**
+ * 搜索用户
+ */
+function searchUsers() {
+  // filteredUsers 会自动根据 userSearchKeyword 更新
+}
+
+/**
+ * 全选用户
+ */
+function selectAllUsers() {
+  selectedUserIds.value = filteredUsers.value.map(user => user.id)
+}
+
+/**
+ * 清空选中的用户
+ */
+function clearSelectedUsers() {
+  selectedUserIds.value = []
+}
+
+/**
+ * 移除用户授权
+ */
+async function removeUserGrant(userId: number) {
+  if (!currentTenantId.value || !grantRole.value) {
+    return
+  }
+  try {
+    await revokeRoleUsers({
+      roleId: grantRole.value.id,
+      tenantId: currentTenantId.value,
+      userIds: [userId]
+    })
+    message.success('移除授权成功')
+    await loadAuthorizedUsers()
+  } catch (error) {
+    console.error('移除授权失败:', error)
+    message.error('移除授权失败')
+  }
+}
+
+/**
+ * 保存用户授权
+ */
+async function saveUserGrant() {
+  if (!currentTenantId.value || !grantRole.value) {
+    message.warning('租户或角色信息缺失')
+    return
+  }
+  
+  let userIdsToAdd: number[] = []
+  
+  // 处理选择的用户
+  if (userGrantTab.value === 'user') {
+    userIdsToAdd = selectedUserIds.value
+  } else {
+    // 处理选择的部门 - 获取部门下的所有用户
+    const deptUsers = await getUsersByDepartments(selectedDepartmentIds.value)
+    userIdsToAdd = deptUsers.map(user => user.id)
+  }
+  
+  if (userIdsToAdd.length === 0) {
+    message.warning('请选择要授权的用户')
+    return
+  }
+  
+  try {
+    userGrantSaving.value = true
+    await grantRoleUsers({
+      roleId: grantRole.value.id,
+      tenantId: currentTenantId.value,
+      userIds: userIdsToAdd
+    })
+    message.success('授权成功')
+    await loadAuthorizedUsers()
+    selectedUserIds.value = []
+    selectedDepartmentIds.value = []
+  } catch (error) {
+    console.error('授权失败:', error)
+    message.error('授权失败')
+  } finally {
+    userGrantSaving.value = false
+  }
+}
+
+/**
+ * 根据部门ID获取用户
+ */
+async function getUsersByDepartments(deptIds: string[]): Promise<any[]> {
+  if (deptIds.length === 0) {
+    return []
+  }
+  
+  const users: any[] = []
+  for (const deptId of deptIds) {
+    const deptUsers = allUsers.value.filter(user => user.departmentId === Number(deptId))
+    users.push(...deptUsers)
+  }
+  
+  return users
+}
 </script>
 
 <style scoped>
@@ -626,5 +927,51 @@ onMounted(async () => {
   padding: 8px;
   border: 1px solid var(--border-color-split);
   border-radius: 4px;
+}
+
+.user-list-container {
+  height: 400px;
+  overflow-y: auto;
+  background: var(--component-background);
+  padding: 8px;
+  border: 1px solid var(--border-color-split);
+  border-radius: 4px;
+}
+
+.user-list {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.user-item {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color-split);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-item:hover {
+  background: var(--hover-bg-color);
+}
+
+.user-item.authorized {
+  background: var(--selected-bg-color);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.user-dept {
+  font-size: 12px;
+  color: var(--text-color-secondary);
 }
 </style>

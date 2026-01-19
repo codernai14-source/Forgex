@@ -1,18 +1,6 @@
 <template>
   <div class="online-user-container">
     <a-card :bordered="false">
-      <a-form layout="inline" :model="queryForm">
-        <a-form-item label="账号">
-          <a-input v-model:value="queryForm.account" placeholder="请输入账号" allow-clear style="width: 220px" />
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button v-permission="'sys:online:list'" type="primary" @click="handleQuery">查询</a-button>
-            <a-button @click="handleReset">重置</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'OnlineUserTable'"
@@ -21,7 +9,6 @@
         :dict-options="dictOptions"
         :loading="loading"
         row-key="token"
-        style="margin-top: 16px"
       >
         <template #ttlSeconds="{ record }">
           {{ formatTtl(record.ttlSeconds) }}

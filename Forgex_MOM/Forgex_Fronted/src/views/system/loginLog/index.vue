@@ -10,14 +10,6 @@
       <template #toolbar>
         <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">导出</a-button>
       </template>
-
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.statusText || (record.status === 1 ? '成功' : '失败') }}
-          </a-tag>
-        </template>
-      </template>
     </FxDynamicTable>
   </div>
 </template>

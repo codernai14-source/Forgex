@@ -2,56 +2,56 @@
   <div class="table-config-management">
     <a-card :bordered="false" style="margin-bottom: 16px;">
       <a-form layout="inline">
-        <a-form-item :label="t('system.tableConfig.tableCode')">
+        <a-form-item label="表格代码">
           <a-input
             v-model:value="queryForm.tableCode"
-            :placeholder="t('system.tableConfig.form.tableCode')"
+            placeholder="请输入表格代码"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item :label="t('system.tableConfig.tableName')">
+        <a-form-item label="表格名称">
           <a-input
             v-model:value="queryForm.tableName"
-            :placeholder="t('system.tableConfig.form.tableName')"
+            placeholder="请输入表格名称"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item :label="t('system.tableConfig.tableType')">
+        <a-form-item label="表格类型">
           <a-select
             v-model:value="queryForm.tableType"
-            :placeholder="t('system.tableConfig.form.tableType')"
+            placeholder="请选择表格类型"
             allow-clear
             style="width: 150px;"
           >
-            <a-select-option value="NORMAL">{{ t('system.tableConfig.tableTypeNormal') }}</a-select-option>
-            <a-select-option value="LAZY">{{ t('system.tableConfig.tableTypeLazy') }}</a-select-option>
-            <a-select-option value="TREE">{{ t('system.tableConfig.tableTypeTree') }}</a-select-option>
+            <a-select-option value="NORMAL">普通表格</a-select-option>
+            <a-select-option value="LAZY">懒加载表格</a-select-option>
+            <a-select-option value="TREE">树形表格</a-select-option>
           </a-select>
         </a-form-item>
         
-        <a-form-item :label="t('system.tableConfig.enabled')">
+        <a-form-item label="启用状态">
           <a-select
             v-model:value="queryForm.enabled"
-            :placeholder="t('system.tableConfig.form.enabled')"
+            placeholder="请选择启用状态"
             allow-clear
             style="width: 120px;"
           >
-            <a-select-option :value="true">{{ t('common.enabled') }}</a-select-option>
-            <a-select-option :value="false">{{ t('common.disabled') }}</a-select-option>
+            <a-select-option :value="true">启用</a-select-option>
+            <a-select-option :value="false">禁用</a-select-option>
           </a-select>
         </a-form-item>
         
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
-              {{ t('common.search') }}
+              搜索
             </a-button>
             <a-button @click="handleReset">
-              {{ t('common.reset') }}
+              重置
             </a-button>
           </a-space>
         </a-form-item>
@@ -66,7 +66,7 @@
             type="primary"
             @click="openAddDialog"
           >
-            {{ t('system.tableConfig.add') }}
+            新增配置
           </a-button>
           <a-button
             v-permission="'sys:tableConfig:delete'"
@@ -74,7 +74,7 @@
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
           >
-            {{ t('common.batchDelete') }}
+            批量删除
           </a-button>
         </a-space>
       </div>
@@ -152,7 +152,7 @@
  * @author Forgex
  * @version 1.0.0
  */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
@@ -164,7 +164,8 @@ import {
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
 
-const { t } = useI18n()
+// 使用 global 作用域获取全局 i18n 实例，确保国际化生效
+const { t } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
 const dataSource = ref<TableConfigItem[]>([])
@@ -186,59 +187,60 @@ const pagination = reactive({
   showTotal: (total: number) => t('common.total', { total })
 })
 
+// 表格列配置，使用硬编码的中文文本，确保显示正常
 const columns = [
   {
-    title: t('system.tableConfig.tableCode'),
+    title: '表格代码',
     dataIndex: 'tableCode',
     key: 'tableCode',
     width: 180
   },
   {
-    title: t('system.tableConfig.tableName'),
+    title: '表格名称',
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 200,
     ellipsis: true
   },
   {
-    title: t('system.tableConfig.tableType'),
+    title: '表格类型',
     dataIndex: 'tableType',
     key: 'tableType',
     width: 120
   },
   {
-    title: t('system.tableConfig.rowKey'),
+    title: '行Key',
     dataIndex: 'rowKey',
     key: 'rowKey',
     width: 120
   },
   {
-    title: t('system.tableConfig.defaultPageSize'),
+    title: '默认分页大小',
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 120
   },
   {
-    title: t('system.tableConfig.enabled'),
+    title: '启用状态',
     dataIndex: 'enabled',
     key: 'enabled',
     width: 100,
     align: 'center' as const
   },
   {
-    title: t('system.tableConfig.createBy'),
+    title: '创建人',
     dataIndex: 'createBy',
     key: 'createBy',
     width: 100
   },
   {
-    title: t('system.tableConfig.createTime'),
+    title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
     width: 180
   },
   {
-    title: t('common.action'),
+    title: '操作',
     key: 'action',
     width: 150,
     fixed: 'right' as const

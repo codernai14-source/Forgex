@@ -1,19 +1,17 @@
 <template>
   <div class="user-management">
-    <!-- 表格 -->
-    <a-card :bordered="false">
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'UserTable'"
-        :show-query-form="true"
-        :request="handleRequest"
-        :fallback-config="fallbackConfig"
-        :dict-options="dictOptions"
-        :row-selection="{
-          selectedRowKeys: selectedRowKeys,
-          onChange: handleSelectionChange
-        }"
-      >
+    <fx-dynamic-table
+      ref="tableRef"
+      :table-code="'UserTable'"
+      :show-query-form="true"
+      :request="handleRequest"
+      :fallback-config="fallbackConfig"
+      :dict-options="dictOptions"
+      :row-selection="{
+        selectedRowKeys: selectedRowKeys,
+        onChange: handleSelectionChange
+      }"
+    >
         <!-- 工具栏插槽 -->
         <template #toolbar>
           <a-space :size="8">
@@ -40,21 +38,11 @@
             </a-button>
           </a-space>
         </template>
+        
         <template #avatar="{ record }">
           <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
             <template #icon><UserOutlined /></template>
           </a-avatar>
-        </template>
-        
-        <template #gender="{ record }">
-          <a-tag v-if="record.gender === 1" color="blue">{{ t('system.user.genderOptions.male') }}</a-tag>
-          <a-tag v-else-if="record.gender === 2" color="pink">{{ t('system.user.genderOptions.female') }}</a-tag>
-          <a-tag v-else color="default">{{ t('system.user.genderOptions.unknown') }}</a-tag>
-        </template>
-        
-        <template #status="{ record }">
-          <a-tag v-if="record.status === true" color="success">{{ t('system.user.statusActive') }}</a-tag>
-          <a-tag v-else color="error">{{ t('system.user.statusInactive') }}</a-tag>
         </template>
         
         <template #action="{ record }">
@@ -93,7 +81,6 @@
           </a-space>
         </template>
       </fx-dynamic-table>
-    </a-card>
     
     <!-- 新增/编辑弹窗 -->
     <UserFormDialog
@@ -119,7 +106,8 @@
  * 功能：
  * 1. 用户列表查询（分页、搜索）
  * 2. 新增、编辑、删除用户
- * 3. 用户状态管理、密码重置
+ * 3. 重置密码、分配角色
+ * 4. 批量删除、导出用户
  * 
  * @author Forgex
  * @version 1.0.0
@@ -225,7 +213,9 @@ const handleRequest = async (payload: {
   
   // http拦截器已经返回了data字段
   const data = await userApi.getUserList(params)
-  return { records: data.records || [], total: data.total || 0 }
+  // 确保total是数字类型
+  const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+  return { records: data.records || [], total: total }
 }
 
 /**

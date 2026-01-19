@@ -59,6 +59,7 @@ export default {
   noData: 'No Data',
   pleaseSelect: 'Please Select',
   pleaseInput: 'Please Input',
+  home: 'Home',
   
   // System Config
   loadFailed: 'Load Failed',

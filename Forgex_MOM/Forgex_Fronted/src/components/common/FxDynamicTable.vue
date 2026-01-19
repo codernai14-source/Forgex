@@ -7,8 +7,80 @@
       class="fx-card fx-query-card"
     >
       <a-form layout="inline" :model="queryModel" class="fx-query-form">
-        <div class="fx-query-fields">
-          <template v-for="q in config.queryFields" :key="q.field">
+        <div class="fx-query-row">
+          <!-- 搜索条件第一行（最多3个） -->
+          <div class="fx-query-row-content">
+            <template v-for="(q, index) in config.queryFields.slice(0, 3)" :key="q.field">
+              <a-form-item :label="q.label">
+                <a-input
+                  v-if="q.queryType === 'input'"
+                  v-model:value="(queryModel as any)[q.field]"
+                  allow-clear
+                  style="width: 200px"
+                />
+                <a-select
+                  v-else-if="q.queryType === 'select'"
+                  v-model:value="(queryModel as any)[q.field]"
+                  allow-clear
+                  style="width: 200px"
+                >
+                  <a-select-option
+                    v-for="opt in (dictOptions?.[q.field] || [])"
+                    :key="String(opt.value)"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </a-select-option>
+                </a-select>
+                <a-range-picker
+                  v-else-if="q.queryType === 'dateRange'"
+                  v-model:value="(queryModel as any)[q.field]"
+                  show-time
+                  format="YYYY-MM-DD HH:mm:ss"
+                  style="width: 380px"
+                />
+                <a-range-picker
+                  v-else-if="q.queryType === 'date' || q.queryType === 'datetime' || q.queryType === 'time'"
+                  v-model:value="(queryModel as any)[q.field]"
+                  show-time
+                  format="YYYY-MM-DD HH:mm:ss"
+                  style="width: 380px"
+                />
+                <a-input
+                  v-else
+                  v-model:value="(queryModel as any)[q.field]"
+                  allow-clear
+                  style="width: 200px"
+                />
+              </a-form-item>
+            </template>
+          </div>
+          
+          <!-- 搜索和重置按钮 -->
+          <div class="fx-query-actions-row">
+            <!-- 展开/收起按钮 -->
+            <div v-if="config.queryFields.length > 3" class="fx-query-toggle">
+              <a-button
+                type="text"
+                @click="isQueryExpanded = !isQueryExpanded"
+                size="small"
+              >
+                {{ isQueryExpanded ? '收起' : '展开' }}
+                <DownOutlined :rotate="isQueryExpanded ? 180 : 0" />
+              </a-button>
+            </div>
+            
+            <!-- 搜索和重置按钮 -->
+            <a-space>
+              <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
+              <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
+            </a-space>
+          </div>
+        </div>
+        
+        <!-- 额外搜索条件（展开时显示） -->
+        <div v-if="isQueryExpanded" class="fx-query-row fx-query-row-extra">
+          <template v-for="(q, index) in config.queryFields.slice(3)" :key="q.field">
             <a-form-item :label="q.label">
               <a-input
                 v-if="q.queryType === 'input'"
@@ -53,13 +125,6 @@
             </a-form-item>
           </template>
         </div>
-
-        <div class="fx-query-actions">
-          <a-space>
-            <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
-            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
-          </a-space>
-        </div>
       </a-form>
     </a-card>
     
@@ -76,7 +141,15 @@
           :data-source="tableData"
           :loading="resolvedLoading"
           :row-selection="rowSelection"
-          :pagination="resolvedPagination"
+          :pagination="{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total: number) => String(t('common.total', { total })),
+            hideOnSinglePage: false
+          }"
           :default-expand-all-rows="defaultExpandAllRows"
           :expandable="expandable"
           :row-key="resolvedRowKey"
@@ -104,6 +177,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
+import { DownOutlined } from '@ant-design/icons-vue'
 import { getTableConfig, type FxTableConfig, type FxTableColumn } from '@/api/system/tableConfig'
 import { useI18n } from 'vue-i18n'
 
@@ -196,9 +270,10 @@ const resolvedPagination = computed(() => {
     showSizeChanger: true,
     showQuickJumper: true,
     showTotal: (total: number) => String(t('common.total', { total })),
+    hideOnSinglePage: false,
   } as const
   if (!props.pagination) return base
-  return { ...base, ...(props.pagination as any) }
+  return { ...base, ...(props.pagination as any), hideOnSinglePage: false }
 })
 
 const rowSelection = computed(() => props.rowSelection)
@@ -209,6 +284,11 @@ const expandable = computed(() => props.expandable)
  * 查询模型
  */
 const queryModel = reactive<Record<string, any>>({})
+
+/**
+ * 搜索区域展开状态
+ */
+const isQueryExpanded = ref(false)
 
 /**
  * 解析后的行主键
@@ -329,7 +409,7 @@ async function handleQuery(sorter?: any) {
     const records = anyRes?.records ?? anyRes?.data ?? []
     const total = anyRes?.total ?? 0
     tableData.value = Array.isArray(records) ? records : []
-    pagination.total = typeof total === 'number' ? total : 0
+    pagination.total = typeof total === 'number' ? total : parseInt(String(total) || '0', 10)
   } finally {
     loading.value = false
   }
@@ -438,22 +518,54 @@ onMounted(async () => {
   width: 100%;
 }
 
-.fx-query-fields {
+.fx-query-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+}
+
+.fx-query-row-content {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  width: 100%;
+  flex: 1;
+  max-width: calc(100% - 200px);
 }
 
-.fx-query-fields :deep(.ant-form-item) {
+.fx-query-row-content :deep(.ant-form-item) {
   margin: 0;
+  margin-bottom: 0;
 }
 
-.fx-query-actions {
+.fx-query-actions-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.fx-query-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.fx-query-row-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fx-border-color, #e8e8e8);
   width: 100%;
-  margin-top: 12px;
+  justify-content: flex-start;
+}
+
+.fx-query-row-extra :deep(.ant-form-item) {
+  margin: 0;
+  margin-bottom: 16px;
 }
 
 .fx-table-toolbar {

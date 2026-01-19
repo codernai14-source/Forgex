@@ -59,6 +59,7 @@ export default {
   noData: '暂无数据',
   pleaseSelect: '请选择',
   pleaseInput: '请输入',
+  home: '首页',
   
   // 系统配置相关
   loadFailed: '加载失败',
