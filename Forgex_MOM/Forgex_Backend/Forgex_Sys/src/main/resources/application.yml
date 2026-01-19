@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: forgex-sys
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:datasource-forgex-dev.yml
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+        file-extension: yml
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+file:
+  upload:
+    path: D:/forgex/uploads
+  access:
+    prefix: /files
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+server:
+  port: 9002

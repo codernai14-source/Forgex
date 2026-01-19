@@ -21,3 +21,14 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+/Forgex_MOM/.trae/
+/Forgex_MOM/doc/
+/Forgex_MOM/Forgex_Fronted/node_modules/
+/Forgex_MOM/Forgex_Fronted/dist/
+/Forgex_MOM/Forgex_Fronted/.idea/
+/.idea/
+/Forgex_MOM/Forgex_Backend/.idea/
+/Forgex_MOM/Forgex_Backend/logs/
+/Forgex_MOM/Forgex_Backend/Forgex_Sys/logs/
+/Forgex_MOM/Forgex_Backend/Forgex_Gateway/logs/
+/.trae/
