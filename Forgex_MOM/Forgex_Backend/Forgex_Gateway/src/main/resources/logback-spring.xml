@@ -23,14 +23,14 @@
         </encoder>
     </appender>
 
-    <!-- 日常 info+ 日志文件：每天一个 + 单文件最大 100MB 自动切分 -->
+    <!-- 日常 info+ 日志文件：每天一个 + 单文件最大 2000MB 自动切分 -->
     <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/forgex-info.log</file>
+        <file>d:/forgex/log/gateway/forgex-info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/forgex-info.%d{yyyy-MM-dd-dd}.%i.log</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
+            <fileNamePattern>d:/forgex/log/gateway/forgex-info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>2000MB</maxFileSize>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>3GB</totalSizeCap>
+            <totalSizeCap>10GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%level] [%thread] %logger{36} - %msg%n</pattern>
@@ -40,12 +40,12 @@
 
     <!-- 单独的 error.log（只记录 ERROR 及以上级别） -->
     <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/forgex-error.log</file>
+        <file>d:/forgex/log/gateway/forgex-error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/forgex-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>90</maxHistory>
-            <totalSizeCap>5GB</totalSizeCap>
+            <fileNamePattern>d:/forgex/log/gateway/forgex-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>2000MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%level] [%thread] %logger{36} - %msg%n</pattern>

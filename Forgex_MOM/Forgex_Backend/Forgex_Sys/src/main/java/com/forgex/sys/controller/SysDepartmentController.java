@@ -95,43 +95,53 @@ public class SysDepartmentController {
      * 新增部门
      *
      * @param param 部门参数
-     * @return 部门ID
+     * @return 操作结果
      */
     @PostMapping("/create")
     @RequirePerm("sys:department:create")
-    public R<Long> create(@Validated @RequestBody SysDepartmentSaveParam param) {
+    public R<Void> create(@Validated @RequestBody SysDepartmentSaveParam param) {
         param.setTenantId(TenantContext.get());
         Long id = departmentService.create(param);
-        return R.ok(CommonPrompt.CREATE_SUCCESS, id);
+        // 返回部门名称作为业务字段
+        return R.ok(CommonPrompt.CREATE_SUCCESS, param.getDeptName());
     }
 
     /**
      * 更新部门
      *
      * @param param 部门参数
-     * @return 是否成功
+     * @return 操作结果
      */
     @PostMapping("/update")
     @RequirePerm("sys:department:edit")
-    public R<Boolean> update(@Validated @RequestBody SysDepartmentSaveParam param) {
+    public R<Void> update(@Validated @RequestBody SysDepartmentSaveParam param) {
         param.setTenantId(TenantContext.get());
         Boolean success = departmentService.update(param);
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
+        // 返回部门名称作为业务字段
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, param.getDeptName());
     }
 
     /**
      * 删除部门
      *
      * @param params 参数（id）
-     * @return 是否成功
+     * @return 操作结果
      */
     @PostMapping("/delete")
     @RequirePerm("sys:department:delete")
-    public R<Boolean> delete(@RequestBody Map<String, Object> params) {
+    public R<Void> delete(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         Long tenantId = TenantContext.get();
-
+        
+        // 删除前获取部门名称
+        SysDepartmentDTO department = departmentService.getById(id, tenantId);
+        if (department == null) {
+            return R.fail(CommonPrompt.DEPARTMENT_NOT_FOUND);
+        }
+        String deptName = department.getDeptName();
+        
         Boolean success = departmentService.delete(id, tenantId);
-        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
+        // 返回部门名称作为业务字段
+        return R.ok(CommonPrompt.DELETE_SUCCESS, deptName);
     }
 }

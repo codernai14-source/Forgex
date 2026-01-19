@@ -11,11 +11,11 @@ package com.forgex.common.i18n;
  */
 public enum CommonPrompt implements I18nPrompt {
 
-    SAVE_SUCCESS("common", "SAVE_SUCCESS", "保存成功"),
-    UPDATE_SUCCESS("common", "UPDATE_SUCCESS", "修改成功"),
-    DELETE_SUCCESS("common", "DELETE_SUCCESS", "删除成功"),
-    CREATE_SUCCESS("common", "CREATE_SUCCESS", "新增成功"),
-    ADD_SUCCESS("common", "ADD_SUCCESS", "添加成功"),
+    SAVE_SUCCESS("common", "SAVE_SUCCESS", "保存成功：{0}"),
+    CREATE_SUCCESS("common", "CREATE_SUCCESS", "新增成功：{0}"),
+    ADD_SUCCESS("common", "ADD_SUCCESS", "添加成功：{0}"),
+    UPDATE_SUCCESS("common", "UPDATE_SUCCESS", "修改成功：{0}"),
+    DELETE_SUCCESS("common", "DELETE_SUCCESS", "删除成功：{0}"),
     UPLOAD_SUCCESS("common", "UPLOAD_SUCCESS", "上传成功"),
     IMPORT_SUCCESS("common", "IMPORT_SUCCESS", "导入成功"),
     EXPORT_SUCCESS("common", "EXPORT_SUCCESS", "导出成功"),

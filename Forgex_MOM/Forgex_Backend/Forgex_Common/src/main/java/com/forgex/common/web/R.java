@@ -151,6 +151,52 @@ public class R<T> {
         r.data = data;
         return r;
     }
+    
+    /**
+     * 成功返回（自定义消息和占位符参数，无数据）
+     * <p>
+     * 返回状态码200，自定义返回消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔）
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回消息模板代码
+     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @return R包装的成功结果
+     * @see StatusCode#SUCCESS
+     * @see I18nPrompt
+     */
+    public static <T> R<T> ok(I18nPrompt messageCode, String args) {
+        R<T> r = new R<>();
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = messageCode;
+        r.message = args;
+        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        return r;
+    }
+    
+    /**
+     * 成功返回（自定义消息、占位符参数和数据）
+     * <p>
+     * 返回状态码200，自定义返回消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔），携带指定数据
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回消息模板代码
+     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @param data        返回数据
+     * @return R包装的成功结果
+     * @see StatusCode#SUCCESS
+     * @see I18nPrompt
+     */
+    public static <T> R<T> ok(I18nPrompt messageCode, String args, T data) {
+        R<T> r = new R<>();
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = messageCode;
+        r.message = args;
+        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        r.data = data;
+        return r;
+    }
 
     /**
      * 失败返回（默认状态码和消息，无数据）

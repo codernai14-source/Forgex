@@ -83,43 +83,53 @@ public class SysPositionController {
      * 新增职位
      *
      * @param param 职位参数
-     * @return 职位ID
+     * @return 操作结果
      */
     @PostMapping("/create")
     @RequirePerm("sys:position:create")
-    public R<Long> create(@Validated @RequestBody SysPositionSaveParam param) {
+    public R<Void> create(@Validated @RequestBody SysPositionSaveParam param) {
         param.setTenantId(TenantContext.get());
         Long id = positionService.create(param);
-        return R.ok(CommonPrompt.CREATE_SUCCESS, id);
+        // 返回职位名称作为业务字段
+        return R.ok(CommonPrompt.CREATE_SUCCESS, param.getPositionName());
     }
 
     /**
      * 更新职位
      *
      * @param param 职位参数
-     * @return 是否成功
+     * @return 操作结果
      */
     @PostMapping("/update")
     @RequirePerm("sys:position:edit")
-    public R<Boolean> update(@Validated @RequestBody SysPositionSaveParam param) {
+    public R<Void> update(@Validated @RequestBody SysPositionSaveParam param) {
         param.setTenantId(TenantContext.get());
         Boolean success = positionService.update(param);
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
+        // 返回职位名称作为业务字段
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, param.getPositionName());
     }
 
     /**
      * 删除职位
      *
      * @param params 参数（id）
-     * @return 是否成功
+     * @return 操作结果
      */
     @PostMapping("/delete")
     @RequirePerm("sys:position:delete")
-    public R<Boolean> delete(@RequestBody Map<String, Object> params) {
+    public R<Void> delete(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         Long tenantId = TenantContext.get();
-
+        
+        // 删除前获取职位名称
+        SysPositionDTO position = positionService.getById(id, tenantId);
+        if (position == null) {
+            return R.fail(CommonPrompt.POSITION_NOT_FOUND);
+        }
+        String positionName = position.getPositionName();
+        
         Boolean success = positionService.delete(id, tenantId);
-        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
+        // 返回职位名称作为业务字段
+        return R.ok(CommonPrompt.DELETE_SUCCESS, positionName);
     }
 }
