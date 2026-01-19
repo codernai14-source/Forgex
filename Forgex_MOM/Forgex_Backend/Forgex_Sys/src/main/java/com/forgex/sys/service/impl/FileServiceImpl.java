@@ -14,18 +14,18 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.forgex.sys.service.FileService;
+import com.forgex.sys.service.storage.FileStorageFactory;
+import com.forgex.sys.service.storage.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 /**
  * 文件服务实现类
@@ -58,8 +58,11 @@ public class FileServiceImpl implements FileService {
     /**
      * 文件访问前缀
      */
-    @Value("${file.access.prefix:/uploads}")
+    @Value("${file.access.prefix:/files}")
     private String accessPrefix;
+
+    @jakarta.annotation.Resource
+    private FileStorageFactory fileStorageFactory;
 
     /**
      * 获取基础存储目录
@@ -80,20 +83,9 @@ public class FileServiceImpl implements FileService {
      */
     @Override
     public String upload(MultipartFile file) throws IOException {
-        Path dir = getBaseDir();
-        Files.createDirectories(dir);
-        
-        String original = file.getOriginalFilename();
-        String ext = "";
-        if (StringUtils.hasText(original) && original.contains(".")) {
-            ext = original.substring(original.lastIndexOf('.'));
-        }
-        
-        String name = UUID.randomUUID().toString().replace("-", "") + ext;
-        Path target = dir.resolve(name);
-        Files.copy(file.getInputStream(), target);
-        
-        return accessPrefix + "/" + name;
+        FileStorageService storage = fileStorageFactory.getDefault();
+        String relativePath = storage.upload(file);
+        return storage.getUrl(relativePath);
     }
 
     /**

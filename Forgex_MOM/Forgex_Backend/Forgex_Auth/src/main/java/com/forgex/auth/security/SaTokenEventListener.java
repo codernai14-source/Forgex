@@ -40,6 +40,7 @@ public class SaTokenEventListener implements SaTokenListener {
 
     @Override
     public void doLogout(String loginType, Object loginId, String tokenValue) {
+        logoutAuditService.recordLogoutByToken(tokenValue, LogoutReason.MANUAL);
     }
 
     @Override

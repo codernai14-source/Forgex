@@ -1,113 +1,11 @@
 <template>
   <div class="user-management">
-    <!-- 搜索栏 -->
-    <a-card :bordered="false" style="margin-bottom: 16px;">
-      <a-form layout="inline">
-        <a-form-item :label="t('system.user.username')">
-          <a-input
-            v-model:value="queryForm.username"
-            :placeholder="t('system.user.form.username')"
-            allow-clear
-            style="width: 200px;"
-          />
-        </a-form-item>
-        
-        <a-form-item :label="t('system.user.phone')">
-          <a-input
-            v-model:value="queryForm.phone"
-            :placeholder="t('system.user.form.phone')"
-            allow-clear
-            style="width: 200px;"
-          />
-        </a-form-item>
-        
-        <a-form-item :label="t('system.user.department')">
-          <a-tree-select
-            v-model:value="queryForm.departmentId"
-            :placeholder="t('system.user.form.department')"
-            allow-clear
-            tree-default-expand-all
-            :tree-data="departmentTreeData"
-            :field-names="{ label: 'deptName', value: 'id', children: 'children' }"
-            style="width: 200px;"
-          />
-        </a-form-item>
-        
-        <a-form-item :label="t('system.user.position')">
-          <a-select
-            v-model:value="queryForm.positionId"
-            :placeholder="t('system.user.form.position')"
-            allow-clear
-            style="width: 200px;"
-          >
-            <a-select-option
-              v-for="pos in positionList"
-              :key="pos.id"
-              :value="pos.id"
-            >
-              {{ pos.positionName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item :label="t('system.user.status')">
-          <a-select
-            v-model:value="queryForm.status"
-            :placeholder="t('system.user.form.status')"
-            allow-clear
-            style="width: 120px;"
-          >
-            <a-select-option :value="true">{{ t('system.user.statusActive') }}</a-select-option>
-            <a-select-option :value="false">{{ t('system.user.statusInactive') }}</a-select-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              {{ t('common.search') }}
-            </a-button>
-            <a-button @click="handleReset">
-              {{ t('common.reset') }}
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-    
-    <!-- 操作栏 -->
+    <!-- 表格 -->
     <a-card :bordered="false">
-      <div style="margin-bottom: 16px;">
-        <a-space>
-          <a-button
-            v-permission="'sys:user:add'"
-            type="primary"
-            @click="openAddDialog"
-          >
-            {{ t('system.user.add') }}
-          </a-button>
-          <a-button
-            v-permission="'sys:user:delete'"
-            danger
-            :disabled="selectedRowKeys.length === 0"
-            @click="handleBatchDelete"
-          >
-            {{ t('common.batchDelete') }}
-          </a-button>
-          <a-button
-            v-permission="'sys:user:export'"
-            @click="handleExport"
-          >
-            {{ t('system.user.export') }}
-          </a-button>
-        </a-space>
-      </div>
-      
-      <!-- 表格 -->
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'UserTable'"
-        :show-query-form="false"
+        :show-query-form="true"
         :request="handleRequest"
         :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
@@ -116,6 +14,32 @@
           onChange: handleSelectionChange
         }"
       >
+        <!-- 工具栏插槽 -->
+        <template #toolbar>
+          <a-space :size="8">
+            <a-button
+              v-permission="'sys:user:add'"
+              type="primary"
+              @click="openAddDialog"
+            >
+              {{ t('system.user.add') }}
+            </a-button>
+            <a-button
+              v-permission="'sys:user:delete'"
+              danger
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDelete"
+            >
+              {{ t('common.batchDelete') }}
+            </a-button>
+            <a-button
+              v-permission="'sys:user:export'"
+              @click="handleExport"
+            >
+              {{ t('system.user.export') }}
+            </a-button>
+          </a-space>
+        </template>
         <template #avatar="{ record }">
           <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
             <template #icon><UserOutlined /></template>
@@ -233,14 +157,7 @@ const assignRoleUserId = ref<string>()
 // 选中的用户ID列表
 const selectedRowKeys = ref<string[]>([])
 
-// 搜索表单
-const queryForm = ref({
-  username: '',
-  phone: '',
-  departmentId: '',
-  positionId: '',
-  status: undefined
-})
+
 
 // 表格引用
 const tableRef = ref()
@@ -297,7 +214,7 @@ const handleRequest = async (payload: {
   const params: any = {
     pageNum: payload.page.current,
     pageSize: payload.page.pageSize,
-    ...queryForm.value,
+    ...payload.query,
   }
   
   // 处理排序
@@ -311,24 +228,14 @@ const handleRequest = async (payload: {
   return { records: data.records || [], total: data.total || 0 }
 }
 
-function handleSearch() {
-  tableRef.value?.refresh?.()
-}
-
-function handleReset() {
-  queryForm.value = {
-    username: '',
-    phone: '',
-    departmentId: '',
-    positionId: '',
-    status: undefined,
-  }
-  tableRef.value?.refresh?.()
-}
-
+/**
+ * 导出用户数据
+ */
 async function handleExport() {
   try {
-    const resp: any = await exportUsers(queryForm.value)
+    // 获取当前查询条件
+    const currentQuery = tableRef.value?.getQuery?.() || {}
+    const resp: any = await exportUsers(currentQuery)
     const blob = new Blob([resp.data], { type: resp.headers?.['content-type'] || 'application/octet-stream' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')

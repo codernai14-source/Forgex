@@ -1,5 +1,5 @@
 <template>
-  <a-config-provider :theme="antdTheme">
+  <a-config-provider :theme="antdTheme" :locale="antdLocale">
     <a-layout 
       class="fx-main-layout" 
       :style="rootStyle"
@@ -255,6 +255,46 @@
         </div>
       </div>
     </a-drawer>
+
+    <a-modal
+      v-model:open="messageSendOpen"
+      title="发送站内消息"
+      :confirm-loading="false"
+      @ok="handleMessageSend"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="接收方租户ID">
+          <a-input-number v-model:value="messageSendForm.receiverTenantId" style="width: 100%;" />
+        </a-form-item>
+
+        <a-form-item label="接收方用户ID">
+          <a-input-number v-model:value="messageSendForm.receiverUserId" style="width: 100%;" />
+        </a-form-item>
+
+        <a-form-item label="范围">
+          <a-select v-model:value="messageSendForm.scope">
+            <a-select-option value="INTERNAL">对内</a-select-option>
+            <a-select-option value="EXTERNAL">对外</a-select-option>
+          </a-select>
+        </a-form-item>
+
+        <a-form-item label="标题">
+          <a-input v-model:value="messageSendForm.title" />
+        </a-form-item>
+
+        <a-form-item label="内容">
+          <a-textarea v-model:value="messageSendForm.content" :rows="4" />
+        </a-form-item>
+
+        <a-form-item label="跳转链接">
+          <a-input v-model:value="messageSendForm.linkUrl" />
+        </a-form-item>
+
+        <a-form-item label="业务类型">
+          <a-input v-model:value="messageSendForm.bizType" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </a-layout>
   </a-config-provider>
 </template>
@@ -263,13 +303,20 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { message } from 'ant-design-vue'
+import { message, notification } from 'ant-design-vue'
+import enUS from 'ant-design-vue/es/locale/en_US'
+import jaJP from 'ant-design-vue/es/locale/ja_JP'
+import koKR from 'ant-design-vue/es/locale/ko_KR'
+import zhCN from 'ant-design-vue/es/locale/zh_CN'
+import zhTW from 'ant-design-vue/es/locale/zh_TW'
 import { dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale } from '../locales'
+import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
+import { useSse } from '../hooks/useSse'
 
 import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
@@ -367,6 +414,25 @@ const activeTabKey = ref<string>('')
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
+const messageSendOpen = ref(false)
+const messageSendForm = ref({
+  receiverTenantId: Number(sessionStorage.getItem('tenantId') || '') || undefined,
+  receiverUserId: undefined as unknown as number,
+  scope: 'INTERNAL',
+  title: '',
+  content: '',
+  linkUrl: '',
+  bizType: '',
+})
+
+const antdLocale = computed(() => {
+  const key = String(currentLocale.value || locale.value || '')
+  if (key === 'en-US') return enUS
+  if (key === 'zh-TW') return zhTW
+  if (key === 'ja-JP') return jaJP
+  if (key === 'ko-KR') return koKR
+  return zhCN
+})
 
 const systemConfig = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
@@ -391,6 +457,14 @@ locale.value = currentLocale.value as any
 // 解析实际的主题模式（处理 system 模式）
 const resolvedMode = computed(() => 
   resolveThemeMode(layoutConfig.value.themeMode, systemTheme.value)
+)
+
+watch(
+  resolvedMode,
+  mode => {
+    document.documentElement.setAttribute('data-theme', mode)
+  },
+  { immediate: true },
 )
 
 // 使用新的主题系统生成 Ant Design 主题配置
@@ -874,6 +948,11 @@ function onUserMenuClick(key: string) {
     router.push('/workspace/profile?tab=security')
     return
   }
+
+  if (key === 'messageSend') {
+    messageSendOpen.value = true
+    return
+  }
   
   if (key === 'resetPassword') {
     message.info('重置密码功能暂未实现')
@@ -1051,6 +1130,54 @@ function onTabsClose(action: 'others' | 'left' | 'right' | 'all', tab?: { key: s
   }
 }
 
+function openMessageNotification(m: SysMessageVO) {
+  const key = `sys-msg-${m.id}`
+  notification.open({
+    key,
+    message: m.title,
+    description: m.content || '',
+    duration: 6,
+    onClick: async () => {
+      try {
+        await markMessageRead(m.id)
+      } catch (_) {}
+      notification.close(key)
+      if (m.linkUrl) {
+        router.push(m.linkUrl).catch(() => {})
+      }
+    },
+  })
+}
+
+async function handleMessageSend() {
+  try {
+    await sendMessage({
+      receiverTenantId: messageSendForm.value.receiverTenantId,
+      receiverUserId: Number(messageSendForm.value.receiverUserId),
+      scope: messageSendForm.value.scope,
+      title: messageSendForm.value.title,
+      content: messageSendForm.value.content,
+      linkUrl: messageSendForm.value.linkUrl,
+      bizType: messageSendForm.value.bizType,
+    } as any)
+    message.success('发送成功')
+    messageSendOpen.value = false
+    messageSendForm.value.title = ''
+    messageSendForm.value.content = ''
+    messageSendForm.value.linkUrl = ''
+    messageSendForm.value.bizType = ''
+  } catch (_) {}
+}
+
+const { connect: connectMessageSse } = useSse<SysMessageVO>({
+  url: '/api/sys/message/stream',
+  onEvent: (name, data) => {
+    if (name !== 'message') return
+    if (!data || !(data as any).id) return
+    openMessageNotification(data as any)
+  },
+})
+
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('scroll', handleScroll)
@@ -1064,6 +1191,17 @@ onMounted(async () => {
       systemConfig.value = { ...config }
     }
   } catch (_) {}
+
+  try {
+    const unread = await listUnreadMessages(10)
+    if (Array.isArray(unread)) {
+      for (const m of unread) {
+        openMessageNotification(m as any)
+      }
+    }
+  } catch (_) {}
+
+  connectMessageSse()
 })
 
 onUnmounted(() => {

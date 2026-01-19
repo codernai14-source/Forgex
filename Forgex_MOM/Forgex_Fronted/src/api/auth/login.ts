@@ -35,3 +35,7 @@ export function logout() {
   return http.post('/auth/logout')
 }
 
+export function getSocialAuthorizeUrl(platform: 'WECHAT' | 'DINGTALK') {
+  return http.get<string>('/auth/social/authorizeUrl', { params: { platform } })
+}
+

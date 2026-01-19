@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
     private static final String ONLINE_USER_PREFIX = "fx:online:user:";
+    private static final String LOGIN_CTX_PREFIX = "fx:login:ctx:";
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -180,12 +181,22 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         } catch (Exception ignored) {
         }
         try {
-            // 删除登录上下文
-            redisTemplate.delete(ONLINE_USER_PREFIX + token);
+            String ctxJson = redisTemplate.opsForValue().get(LOGIN_CTX_PREFIX + token);
+            if (StringUtils.hasText(ctxJson)) {
+                JsonNode node = objectMapper.readTree(ctxJson);
+                Long tenantId = node.hasNonNull("tenantId") ? node.get("tenantId").asLong() : null;
+                Long userId = node.hasNonNull("userId") ? node.get("userId").asLong() : null;
+                if (tenantId != null && userId != null) {
+                    redisTemplate.delete(ONLINE_USER_PREFIX + tenantId + ":" + userId);
+                }
+            }
         } catch (Exception ignored) {
         }
         try {
-            // 删除在线用户缓存
+            redisTemplate.delete(LOGIN_CTX_PREFIX + token);
+        } catch (Exception ignored) {
+        }
+        try {
             Set<String> keys = redisTemplate.keys(ONLINE_USER_PREFIX + "*");
             if (keys != null && !keys.isEmpty()) {
                 for (String key : keys) {

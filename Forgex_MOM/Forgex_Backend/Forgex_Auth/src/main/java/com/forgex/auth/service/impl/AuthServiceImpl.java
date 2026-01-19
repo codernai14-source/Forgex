@@ -628,26 +628,36 @@ public class AuthServiceImpl implements AuthService {
             loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
 
             // 删除Redis中的登录上下文
-            String token = tokenValue;
             if (StringUtils.hasText(tokenValue)) {
-                // 构造Redis键
                 String key = "fx:login:ctx:" + tokenValue;
                 try {
-                    // 删除键
+                    String raw = redis.opsForValue().get(key);
+                    if (StringUtils.hasText(raw)) {
+                        cn.hutool.json.JSONObject obj = JSONUtil.parseObj(raw);
+                        Long ctxUserId = obj.getLong("userId");
+                        Long ctxTenantId = obj.getLong("tenantId");
+                        if (userId == null && ctxUserId != null) {
+                            userId = ctxUserId;
+                        }
+                        if (tenantId == null && ctxTenantId != null) {
+                            tenantId = ctxTenantId;
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+                try {
                     redis.delete(key);
                 } catch (Exception ignored) {
-                    // 删除失败，不影响主流程
                 }
             }
+
             // 删除在线用户缓存
             if (userId != null && tenantId != null) {
                 String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
                 try {
-                    // 删除在线用户缓存
                     redis.delete(onlineKey);
                     log.info("删除在线用户缓存: userId={}, tenantId={}", userId, tenantId);
                 } catch (Exception ignored) {
-                    // 删除失败，不影响主流程
                 }
             }
             // 调用SaToken登出

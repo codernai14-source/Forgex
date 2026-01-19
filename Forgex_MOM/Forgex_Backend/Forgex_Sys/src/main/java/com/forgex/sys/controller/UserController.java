@@ -20,6 +20,8 @@ import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
+import com.forgex.common.audit.OperationLog;
+import com.forgex.common.audit.OperationType;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.dto.SysUserRoleQueryDTO;
@@ -96,6 +98,7 @@ public class UserController {
     /**
      * 新增用户
      */
+    @OperationLog(module = "sys", menuPath = "/system/user", operationType = OperationType.ADD, detailTemplateCode = "USER_CREATE", detailFields = {"account", "username"})
     @RequirePerm("sys:user:create")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysUserDTO userDTO) {
@@ -159,6 +162,7 @@ public class UserController {
     /**
      * 更新用户
      */
+    @OperationLog(module = "sys", menuPath = "/system/user", operationType = OperationType.UPDATE, detailTemplateCode = "USER_UPDATE", detailFields = {"id", "account", "username"})
     @RequirePerm("sys:user:edit")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysUserDTO userDTO) {
@@ -175,6 +179,7 @@ public class UserController {
     /**
      * 删除用户
      */
+    @OperationLog(module = "sys", menuPath = "/system/user", operationType = OperationType.DELETE, detailTemplateCode = "USER_DELETE", detailFields = {"id"})
     @RequirePerm("sys:user:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody IdParam param) {
@@ -192,6 +197,7 @@ public class UserController {
     /**
      * 批量删除用户
      */
+    @OperationLog(module = "sys", menuPath = "/system/user", operationType = OperationType.DELETE, detailTemplateCode = "USER_BATCH_DELETE", detailFields = {"ids"})
     @RequirePerm("sys:user:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody BatchIdsParam param) {

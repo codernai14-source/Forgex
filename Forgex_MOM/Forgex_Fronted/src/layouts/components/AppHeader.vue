@@ -121,6 +121,10 @@
                 <KeyOutlined />
                 <span>修改密码</span>
               </a-menu-item>
+              <a-menu-item key="messageSend">
+                <MailOutlined />
+                <span>发送消息</span>
+              </a-menu-item>
               <a-menu-divider />
               <a-menu-item key="logout">
                 <LogoutOutlined />
@@ -143,6 +147,7 @@ import {
   DownOutlined,
   UserOutlined,
   KeyOutlined,
+  MailOutlined,
   LogoutOutlined,
   AppstoreOutlined,
   SyncOutlined

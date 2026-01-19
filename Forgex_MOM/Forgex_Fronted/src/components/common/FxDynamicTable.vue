@@ -1,78 +1,97 @@
 <template>
-  <a-card :bordered="false">
-    <a-form v-if="resolvedShowQueryForm && config && (config.queryFields?.length || $slots.toolbar)" layout="inline" :model="queryModel">
-      <template v-for="q in config.queryFields" :key="q.field">
-        <a-form-item :label="q.label">
-          <!-- 文本输入框 -->
-          <a-input
-            v-if="q.queryType === 'input'"
-            v-model:value="(queryModel as any)[q.field]"
-            allow-clear
-            style="width: 200px"
-          />
-          <!-- 下拉选择框 -->
-          <a-select
-            v-else-if="q.queryType === 'select'"
-            v-model:value="(queryModel as any)[q.field]"
-            allow-clear
-            style="width: 200px"
-          >
-            <a-select-option
-              v-for="opt in (dictOptions?.[q.field] || [])"
-              :key="String(opt.value)"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </a-select-option>
-          </a-select>
-          <!-- 日期范围选择器 -->
-          <a-range-picker
-            v-else-if="q.queryType === 'dateRange'"
-            v-model:value="(queryModel as any)[q.field]"
-            show-time
-            format="YYYY-MM-DD HH:mm:ss"
-            style="width: 380px"
-          />
-          <!-- 默认输入框 -->
-          <a-input
-            v-else
-            v-model:value="(queryModel as any)[q.field]"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-      </template>
-      <a-form-item>
-        <a-space>
-          <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
-          <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
-          <slot name="toolbar" />
-        </a-space>
-      </a-form-item>
-    </a-form>
+  <div class="fx-dynamic-table">
+    <!-- 搜索区域卡片 -->
+    <a-card
+      v-if="resolvedShowQueryForm && config && config.queryFields?.length"
+      :bordered="false"
+      class="fx-card fx-query-card"
+    >
+      <a-form layout="inline" :model="queryModel" class="fx-query-form">
+        <div class="fx-query-fields">
+          <template v-for="q in config.queryFields" :key="q.field">
+            <a-form-item :label="q.label">
+              <a-input
+                v-if="q.queryType === 'input'"
+                v-model:value="(queryModel as any)[q.field]"
+                allow-clear
+                style="width: 200px"
+              />
+              <a-select
+                v-else-if="q.queryType === 'select'"
+                v-model:value="(queryModel as any)[q.field]"
+                allow-clear
+                style="width: 200px"
+              >
+                <a-select-option
+                  v-for="opt in (dictOptions?.[q.field] || [])"
+                  :key="String(opt.value)"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </a-select-option>
+              </a-select>
+              <a-range-picker
+                v-else-if="q.queryType === 'dateRange'"
+                v-model:value="(queryModel as any)[q.field]"
+                show-time
+                format="YYYY-MM-DD HH:mm:ss"
+                style="width: 380px"
+              />
+              <a-range-picker
+                v-else-if="q.queryType === 'date' || q.queryType === 'datetime' || q.queryType === 'time'"
+                v-model:value="(queryModel as any)[q.field]"
+                show-time
+                format="YYYY-MM-DD HH:mm:ss"
+                style="width: 380px"
+              />
+              <a-input
+                v-else
+                v-model:value="(queryModel as any)[q.field]"
+                allow-clear
+                style="width: 200px"
+              />
+            </a-form-item>
+          </template>
+        </div>
 
-    <!-- 数据表格 -->
-    <div style="margin-top: 8px;">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="resolvedLoading"
-        :row-selection="rowSelection"
-        :pagination="resolvedPagination"
-        :default-expand-all-rows="defaultExpandAllRows"
-        :expandable="expandable"
-        :row-key="resolvedRowKey"
-        @change="handleTableChange"
-        :scroll="{ x: 'max-content' }"
-      >
-      <!-- 自定义单元格内容插槽 -->
-      <template #bodyCell="scope">
-        <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
-        <slot v-else name="bodyCell" v-bind="scope" />
-      </template>
-    </a-table>
-    </div>
-  </a-card>
+        <div class="fx-query-actions">
+          <a-space>
+            <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
+            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
+          </a-space>
+        </div>
+      </a-form>
+    </a-card>
+    
+    <!-- 表格区域卡片 -->
+    <a-card :bordered="false" class="fx-card fx-table-card">
+      <div v-if="$slots.toolbar" class="fx-table-toolbar">
+        <slot name="toolbar" />
+      </div>
+      
+      <!-- 数据表格 -->
+      <div class="fx-dynamic-table-wrap">
+        <a-table
+          :columns="tableColumns"
+          :data-source="tableData"
+          :loading="resolvedLoading"
+          :row-selection="rowSelection"
+          :pagination="resolvedPagination"
+          :default-expand-all-rows="defaultExpandAllRows"
+          :expandable="expandable"
+          :row-key="resolvedRowKey"
+          @change="handleTableChange"
+          :scroll="{ x: 'max-content' }"
+        >
+        <!-- 自定义单元格内容插槽 -->
+        <template #bodyCell="scope">
+          <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
+          <slot v-else name="bodyCell" v-bind="scope" />
+        </template>
+      </a-table>
+      </div>
+    </a-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -176,7 +195,7 @@ const resolvedPagination = computed(() => {
     total: pagination.total,
     showSizeChanger: true,
     showQuickJumper: true,
-    showTotal: (total: number) => `${t('common.total')} ${total} ${t('common.items')}`,
+    showTotal: (total: number) => String(t('common.total', { total })),
   } as const
   if (!props.pagination) return base
   return { ...base, ...(props.pagination as any) }
@@ -400,3 +419,53 @@ onMounted(async () => {
   await handleQuery()
 })
 </script>
+
+<style scoped>
+.fx-dynamic-table {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fx-card {
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+}
+
+.fx-query-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.fx-query-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+.fx-query-fields :deep(.ant-form-item) {
+  margin: 0;
+}
+
+.fx-query-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.fx-table-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.fx-dynamic-table-wrap {
+  margin-top: 8px;
+  width: 100%;
+  overflow-x: auto;
+  min-width: 0;
+}
+</style>

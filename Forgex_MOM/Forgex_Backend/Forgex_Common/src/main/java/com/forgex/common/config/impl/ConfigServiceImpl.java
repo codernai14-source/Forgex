@@ -23,11 +23,7 @@ import org.springframework.stereotype.Service;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.dynamic.datasource.annotation.DS;
 
-/**
- * 系统配置读取服务实现（通用实现）
- * 作用：提供对 `sys_config` 的统一读取能力，支持基础类型与 JSON 映射；
- * 逻辑：按键查询配置表，空值时返回默认值，JSON 解析失败时返回默认对象。
- */
+
 /**
  * 系统配置服务实现
  * 作用：统一从配置库读取系统配置（值为JSON或文本），并提供便捷方法。

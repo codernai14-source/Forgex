@@ -59,67 +59,116 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // 获取请求对象
         ServerHttpRequest request = exchange.getRequest();
+        
+        // 获取请求路径
         String path = request.getURI().getPath();
+        
+        // 解析Token
         String token = resolveToken(request);
+        
+        // Token为空，直接放行
         if (!StringUtils.hasText(token)) {
             return chain.filter(exchange);
         }
+        
+        // 构建Redis键
         String key = "fx:login:ctx:" + token;
+        
+        // 从Redis查询用户登录上下文
         String json;
         try {
             json = redis.opsForValue().get(key);
         } catch (Exception e) {
+            // Redis查询异常，直接放行
             return chain.filter(exchange);
         }
+        
+        // 登录上下文为空，直接放行
         if (!StringUtils.hasText(json)) {
             return chain.filter(exchange);
         }
+        
+        // 获取请求中的语言
         String requestLang = request.getHeaders().getFirst(HEADER_LANG);
+        
+        // 初始化变量
         Long userId = null;
         Long tenantId = null;
         String account = null;
         String lang = null;
+        
+        // 解析JSON，提取用户信息
         try {
             JSONObject obj = JSONUtil.parseObj(json);
+            
+            // 提取用户ID
             if (obj.containsKey("userId")) {
                 userId = obj.getLong("userId");
             }
+            
+            // 提取租户ID
             if (obj.containsKey("tenantId")) {
                 tenantId = obj.getLong("tenantId");
             }
+            
+            // 提取账号
             if (obj.containsKey("account")) {
                 account = obj.getStr("account");
             }
+            
+            // 提取语言
             if (obj.containsKey("lang")) {
                 lang = obj.getStr("lang");
             }
         } catch (Exception e) {
+            // JSON解析异常，直接放行
             return chain.filter(exchange);
         }
+        
+        // 所有信息都为空，直接放行
         if (userId == null && tenantId == null && !StringUtils.hasText(account) && !StringUtils.hasText(lang)) {
             return chain.filter(exchange);
         }
+        
+        // 构建请求构建器
         ServerHttpRequest.Builder builder = request.mutate();
+        
+        // 注入用户ID Header
         if (userId != null) {
             builder.header(HEADER_USER_ID, String.valueOf(userId));
         }
+        
+        // 注入租户ID Header
         if (tenantId != null) {
             builder.header(HEADER_TENANT_ID, String.valueOf(tenantId));
         }
+        
+        // 注入账号 Header
         if (StringUtils.hasText(account)) {
             builder.header(HEADER_ACCOUNT, account);
         }
+        
+        // 如果请求中没有语言，尝试从Redis获取用户语言偏好
         if (!StringUtils.hasText(lang) && userId != null && tenantId != null) {
             try {
                 lang = redis.opsForValue().get("fx:lang:" + tenantId + ":" + userId);
             } catch (Exception ignored) {}
         }
+        
+        // 解析最终语言（优先使用请求中的语言）
         String resolvedLang = StringUtils.hasText(requestLang) ? requestLang : lang;
+        
+        // 注入语言 Header
         if (StringUtils.hasText(resolvedLang)) {
             builder.headers(h -> h.set(HEADER_LANG, resolvedLang));
         }
+        
+        // 构建新请求
         ServerHttpRequest newRequest = builder.build();
+        
+        // 继续执行过滤器链
         return chain.filter(exchange.mutate().request(newRequest).build());
     }
 

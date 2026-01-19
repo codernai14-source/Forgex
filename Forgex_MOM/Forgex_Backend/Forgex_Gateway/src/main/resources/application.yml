@@ -57,18 +57,41 @@ spring:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
         - id: api-sys
           uri: lb://forgex-sys
           predicates:
             - Path=/api/sys/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+            - name: CircuitBreaker
+              args:
+                name: api-sys
+                fallbackUri: forward:/fallback/sys
         - id: api-files
           uri: lb://forgex-sys
           predicates:
             - Path=/api/files/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+            - name: CircuitBreaker
+              args:
+                name: api-files
+                fallbackUri: forward:/fallback/files
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:

@@ -88,10 +88,10 @@
             <button type="button" class="oauth-btn gitee" title="Gitee">
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
-            <button type="button" class="oauth-btn wechat" title="微信">
+            <button type="button" class="oauth-btn wechat" title="微信" @click="onOAuth('WECHAT')">
               <img src="/tubiao/weixin2.svg" alt="微信" />
             </button>
-            <button type="button" class="oauth-btn dingtalk" title="钉钉">
+            <button type="button" class="oauth-btn dingtalk" title="钉钉" @click="onOAuth('DINGTALK')">
               <img src="/tubiao/dingding.svg" alt="钉钉" />
             </button>
           </div>
@@ -177,6 +177,7 @@ import {
   login,
   chooseTenant,
   getPublicKey,
+  getSocialAuthorizeUrl,
   updateTenantPreferences
 } from '../../../api/auth/login'
 import { captchaImage, captchaSlider, captchaSliderValidate } from '../../../api/auth/captcha'
@@ -298,6 +299,20 @@ async function onPreLogin() {
   } catch (e) {
   } finally {
     logging.value = false
+  }
+}
+
+async function onOAuth(platform: 'WECHAT' | 'DINGTALK') {
+  try {
+    const res = await getSocialAuthorizeUrl(platform)
+    const url = (res as any)?.data ?? res
+    if (!url) {
+      message.error('OAuth 配置未启用')
+      return
+    }
+    window.location.href = url
+  } catch (e) {
+    message.error('获取授权地址失败')
   }
 }
 
