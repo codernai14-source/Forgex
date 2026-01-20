@@ -21,7 +21,7 @@
               type="primary"
               @click="openAddDialog"
             >
-              新增
+              {{ $t('system.module.addModule') }}
             </a-button>
             <a-button
               v-permission="'sys:module:delete'"
@@ -29,7 +29,7 @@
               :disabled="selectedRowKeys.length === 0"
               @click="handleBatchDeleteConfirm"
             >
-              批量删除
+              {{ $t('common.batchDelete') }}
             </a-button>
           </a-space>
         </template>
@@ -40,14 +40,14 @@
               v-permission="'sys:module:edit'"
               @click="openEditDialog(record.id)"
             >
-              编辑
+              {{ $t('common.edit') }}
             </a>
             <a
               v-permission="'sys:module:delete'"
               style="color: #ff4d4f;"
               @click="handleDeleteConfirm(record.id)"
             >
-              删除
+              {{ $t('common.delete') }}
             </a>
           </a-space>
         </template>
@@ -109,10 +109,10 @@
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -127,6 +127,10 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'
 import { listModules, getModulePage, deleteModule, batchDeleteModules } from '@/api/system/module'
+import { useDict } from '@/hooks/useDict'
+
+const { dictItems: statusOptions } = useDict('status')
+const { dictItems: visibleOptions } = useDict('visible')
 
 // 表格相关
 const tableRef = ref()
@@ -165,8 +169,8 @@ const fallbackConfig = ref({
     { field: 'name', title: '模块名称', width: 150 },
     { field: 'icon', title: '图标', width: 80 },
     { field: 'orderNum', title: '排序号', width: 100 },
-    { field: 'visible', title: '可见性', width: 100 },
-    { field: 'status', title: '状态', width: 100 },
+    { field: 'visible', title: '可见性', width: 100, dictCode: 'visible' },
+    { field: 'status', title: '状态', width: 100, dictCode: 'status' },
     { field: 'createTime', title: '创建时间', width: 180 },
     { field: 'updateTime', title: '修改时间', width: 180 },
     { field: 'action', title: '操作', width: 150, fixed: 'right' }
@@ -174,21 +178,15 @@ const fallbackConfig = ref({
   queryFields: [
     { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
     { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' }
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
   ],
   version: 1
 })
 
 // 字典配置
 const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'success' },
-    0: { text: '禁用', color: 'error' }
-  },
-  visible: {
-    1: { text: '显示', color: 'success' },
-    0: { text: '隐藏', color: 'default' }
-  }
+  status: statusOptions,
+  visible: visibleOptions
 })
 
 /**

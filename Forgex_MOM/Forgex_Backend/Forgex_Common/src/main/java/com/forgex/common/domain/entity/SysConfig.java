@@ -13,9 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.forgex.common.base.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * 系统配置实体
@@ -24,11 +31,36 @@ import lombok.Data;
  */
 @Data
 @TableName("sys_config")
-public class SysConfig extends BaseEntity {
+public class SysConfig {
+    /** 主键ID */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+    
+    /** 租户ID */
+    @TableField(value = "tenant_id")
+    private Long tenantId;
+    
     /** 配置键（唯一标识一个配置项） */
     private String configKey;
+    
     /** 配置值（文本或JSON，推荐JSON以承载复杂结构） */
     private String configValue;
+    
+    /** 创建时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+    
+    /** 更新时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+    
+    /** 逻辑删除：false=未删除 true=已删除 */
+    @TableLogic
+    @TableField(value = "deleted")
+    private Boolean deleted;
+    
     /** 备注 */
     private String remark;
 }

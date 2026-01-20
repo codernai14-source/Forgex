@@ -109,8 +109,9 @@
             <a-col :span="12">
               <a-form-item label="状态" name="status">
                 <a-radio-group v-model:value="formData.status">
-                  <a-radio :value="true">启用</a-radio>
-                  <a-radio :value="false">禁用</a-radio>
+                  <a-radio v-for="option in statusOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </a-radio>
                 </a-radio-group>
               </a-form-item>
             </a-col>
@@ -380,6 +381,7 @@ const positionList = ref<Position[]>([])
 const { dictItems: genderOptions } = useDict('gender')
 const { dictItems: politicalStatusOptions } = useDict('political_status')
 const { dictItems: educationOptions } = useDict('education')
+const { dictItems: statusOptions } = useDict('status')
 
 // 基础信息校验规则
 const basicRules = {

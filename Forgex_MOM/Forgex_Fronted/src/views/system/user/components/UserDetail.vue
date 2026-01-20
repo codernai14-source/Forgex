@@ -34,8 +34,9 @@
           {{ userDetail?.tenantId || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag v-if="userDetail?.status === true || userDetail?.status === 1" color="success">启用</a-tag>
-          <a-tag v-else color="error">禁用</a-tag>
+          <a-tag v-if="userDetail?.status !== undefined && userDetail?.status !== null" :color="statusTag.color">
+            {{ statusTag.text }}
+          </a-tag>
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">
           {{ userDetail?.createTime }}
@@ -114,10 +115,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
+import { useDict } from '@/hooks/useDict'
 import type { User, UserProfile, UserTenant } from '../types'
+
+const { dictItems: statusOptions } = useDict('status')
+
+// 状态标签
+const statusTag = computed(() => {
+  if (!userDetail.value) return { color: '', text: '' }
+  const status = userDetail.value.status
+  const dictItem = statusOptions.value.find((item: any) => String(item.value) === String(status))
+  if (dictItem) {
+    return { color: dictItem.tagStyle?.color || '', text: dictItem.label }
+  }
+  return { color: status === true || status === 1 ? 'success' : 'error', text: status === true || status === 1 ? '启用' : '禁用' }
+})
 
 // Props
 interface Props {

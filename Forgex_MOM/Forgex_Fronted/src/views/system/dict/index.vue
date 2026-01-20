@@ -17,11 +17,6 @@
         :pagination="false"
         :default-expand-all-rows="true"
       >
-        <template #status="{ record }">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.status === 1 ? '启用' : '禁用' }}
-          </a-tag>
-        </template>
         <template #action="{ record }">
           <a-space>
             <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
@@ -58,8 +53,9 @@
         </a-form-item>
         <a-form-item label="状态">
           <a-radio-group v-model:value="form.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio v-for="option in statusOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </a-radio>
           </a-radio-group>
         </a-form-item>
         <a-form-item label="备注">
@@ -75,9 +71,11 @@ import { ref, reactive, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
+import { useDict } from '@/hooks/useDict'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
 
 const userStore = useUserStore()
+const { dictItems: statusOptions } = useDict('status')
 
 // 表格相关
 const tableRef = ref()
@@ -90,7 +88,7 @@ const fallbackConfig = ref({
     { title: '字典编码', dataIndex: 'dictCode', key: 'dictCode', width: 150 },
     { title: '字典值', dataIndex: 'dictValue', key: 'dictValue', width: 120 },
     { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80, align: 'center' },
-    { title: '状态', key: 'status', width: 80, align: 'center' },
+    { title: '状态', key: 'status', width: 80, align: 'center', dictCode: 'status' },
     { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
     { title: '操作', key: 'action', width: 200, fixed: 'right' }
   ]
@@ -98,10 +96,7 @@ const fallbackConfig = ref({
 
 // 字典配置
 const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'success' },
-    0: { text: '禁用', color: 'error' }
-  }
+  status: statusOptions
 })
 
 // 处理表格数据请求

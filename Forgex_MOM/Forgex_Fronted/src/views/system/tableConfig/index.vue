@@ -40,8 +40,9 @@
             allow-clear
             style="width: 120px;"
           >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
+            <a-select-option v-for="option in yesNoOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </a-select-option>
           </a-select>
         </a-form-item>
         
@@ -163,9 +164,11 @@ import {
   toggleTableConfigStatus
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
+import { useDict } from '@/hooks/useDict'
 
 // 使用 global 作用域获取全局 i18n 实例，确保国际化生效
 const { t } = useI18n({ useScope: 'global' })
+const { dictItems: yesNoOptions } = useDict('yes_no')
 
 const loading = ref(false)
 const dataSource = ref<TableConfigItem[]>([])

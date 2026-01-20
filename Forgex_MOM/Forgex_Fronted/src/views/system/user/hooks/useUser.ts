@@ -3,8 +3,11 @@
  */
 import { ref, reactive } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { userApi } from '@/api/system/user'
 import type { User, UserQuery } from '../types'
+
+const { t } = useI18n()
 
 export function useUser() {
   // 加载状态
@@ -151,16 +154,16 @@ export function useUser() {
    * 更新用户状态
    */
   async function handleUpdateStatus(id: string, status: boolean) {
-    const statusText = status ? '启用' : '禁用'
+    const statusText = status ? t('common.enabled') : t('common.disabled')
     Modal.confirm({
-      title: `确认${statusText}`,
-      content: `确定要${statusText}该用户吗？`,
+      title: `${t('common.confirm')}${statusText}`,
+      content: `${t('common.confirm')}${statusText}${t('common.confirmDeleteMessage')}`,
       onOk: async () => {
         try {
           await userApi.updateUserStatus(id, status)
           fetchUserList()
         } catch (error) {
-          console.error(`${statusText}失败:`, error)
+          console.error(`${statusText}${t('common.failed')}:`, error)
         }
       },
     })

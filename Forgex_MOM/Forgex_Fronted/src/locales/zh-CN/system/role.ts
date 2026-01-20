@@ -46,6 +46,8 @@ export default {
   // 操作
   assignPermission: '分配权限',
   copyRole: '复制角色',
+  menuAuth: '菜单授权',
+  userAuth: '授权人员',
   
   // 消息
   message: {

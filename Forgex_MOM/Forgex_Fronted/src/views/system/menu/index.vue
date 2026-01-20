@@ -44,7 +44,7 @@
                   @click="handleAdd"
                 >
                   <template #icon><PlusOutlined /></template>
-                  新增菜单
+                  {{ $t('common.add') }}{{ $t('system.menu.menuName') }}
                 </a-button>
                 
                 <a-button
@@ -54,7 +54,7 @@
                   @click="handleBatchDelete"
                 >
                   <template #icon><DeleteOutlined /></template>
-                  批量删除
+                  {{ $t('common.batchDelete') }}
                 </a-button>
               </a-space>
             </template>
@@ -73,18 +73,6 @@
             
             <template #icon="{ record }">
               <component v-if="record.icon" :is="getIcon(record.icon)" />
-              <span v-else>-</span>
-            </template>
-            
-            <template #visible="{ record }">
-              <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
-              <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
-              <span v-else>-</span>
-            </template>
-            
-            <template #status="{ record }">
-              <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
-              <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
               <span v-else>-</span>
             </template>
             
@@ -302,6 +290,8 @@ const activeModuleId = ref<string>('')
 // 字典数据
 const { dictItems: menuTypeOptions } = useDict('menu_type')
 const { dictItems: menuModeOptions } = useDict('menu_mode')
+const { dictItems: statusOptions } = useDict('status')
+const { dictItems: visibleOptions } = useDict('visible')
 
 // 表格引用
 const tableRef = ref()
@@ -309,7 +299,9 @@ const tableRef = ref()
 // 字典选项配置
 const dictOptions = ref({
   menu_type: menuTypeOptions,
-  menu_mode: menuModeOptions
+  menu_mode: menuModeOptions,
+  status: statusOptions,
+  visible: visibleOptions
 })
 
 // 降级配置
@@ -321,14 +313,14 @@ const fallbackConfig = {
   defaultPageSize: 20,
   columns: [
     { field: 'name', title: '菜单名称', width: 200 },
-    { field: 'type', title: '菜单类型', width: 100 },
+    { field: 'type', title: '菜单类型', width: 100, dictCode: 'menu_type' },
     { field: 'path', title: '路径', ellipsis: true },
     { field: 'icon', title: '图标', width: 80 },
-    { field: 'menuMode', title: '菜单模式', width: 100 },
+    { field: 'menuMode', title: '菜单模式', width: 100, dictCode: 'menu_mode' },
     { field: 'permKey', title: '权限标识', ellipsis: true },
     { field: 'orderNum', title: '排序', width: 80 },
-    { field: 'visible', title: '可见', width: 80 },
-    { field: 'status', title: '状态', width: 80 },
+    { field: 'visible', title: '可见', width: 80, dictCode: 'visible' },
+    { field: 'status', title: '状态', width: 80, dictCode: 'status' },
     { field: 'createTime', title: '创建时间', width: 180 },
     { field: 'createBy', title: '创建人' },
     { field: 'updateTime', title: '修改时间', width: 180 },
@@ -337,7 +329,7 @@ const fallbackConfig = {
   ],
   queryFields: [
     { field: 'name', label: '菜单名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
     { field: 'moduleId', label: '所属模块', queryType: 'select', queryOperator: 'eq' }
   ],
   version: 1,

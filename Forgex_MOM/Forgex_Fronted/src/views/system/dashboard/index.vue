@@ -1,19 +1,19 @@
 <template>
   <div class="system-dashboard">
-    <a-card title="系统管理" :bordered="false">
+    <a-card :title="$t('system.dashboard.title')" :bordered="false">
       <a-spin :spinning="loading">
         <a-row :gutter="16">
           <a-col :span="6">
-            <a-statistic title="用户总数" :value="statistics.userCount || 0" />
+            <a-statistic :title="$t('system.dashboard.userCount')" :value="statistics.userCount || 0" />
           </a-col>
           <a-col :span="6">
-            <a-statistic title="角色总数" :value="statistics.roleCount || 0" />
+            <a-statistic :title="$t('system.dashboard.roleCount')" :value="statistics.roleCount || 0" />
           </a-col>
           <a-col :span="6">
-            <a-statistic title="菜单总数" :value="statistics.menuCount || 0" />
+            <a-statistic :title="$t('system.dashboard.menuCount')" :value="statistics.menuCount || 0" />
           </a-col>
           <a-col :span="6">
-            <a-statistic title="在线用户" :value="statistics.onlineUsers || 0" />
+            <a-statistic :title="$t('system.dashboard.onlineUsers')" :value="statistics.onlineUsers || 0" />
           </a-col>
         </a-row>
       </a-spin>
@@ -21,37 +21,37 @@
 
     <a-row :gutter="16" style="margin-top: 16px;">
       <a-col :span="12">
-        <a-card title="快速入口" :bordered="false">
+        <a-card :title="$t('system.dashboard.quickEntry')" :bordered="false">
           <a-space direction="vertical" style="width: 100%;">
             <a-button type="primary" block @click="navigateTo('/workspace/sys/user')">
-              用户管理
+              {{ $t('system.dashboard.userManagement') }}
             </a-button>
             <a-button block @click="navigateTo('/workspace/sys/role')">
-              角色管理
+              {{ $t('system.dashboard.roleManagement') }}
             </a-button>
             <a-button block @click="navigateTo('/workspace/sys/menu')">
-              菜单管理
+              {{ $t('system.dashboard.menuManagement') }}
             </a-button>
             <a-button block @click="navigateTo('/workspace/sys/module')">
-              模块管理
+              {{ $t('system.dashboard.moduleManagement') }}
             </a-button>
           </a-space>
         </a-card>
       </a-col>
       
       <a-col :span="12">
-        <a-card title="系统信息" :bordered="false">
+        <a-card :title="$t('system.dashboard.systemInfo')" :bordered="false">
           <a-descriptions :column="1">
-            <a-descriptions-item label="系统名称">
+            <a-descriptions-item :label="$t('system.dashboard.systemName')">
               Forgex MOM
             </a-descriptions-item>
-            <a-descriptions-item label="系统版本">
+            <a-descriptions-item :label="$t('system.dashboard.systemVersion')">
               v1.0.0
             </a-descriptions-item>
-            <a-descriptions-item label="当前租户">
-              {{ userStore.userInfo?.tenantName || '默认租户' }}
+            <a-descriptions-item :label="$t('system.dashboard.currentTenant')">
+              {{ userStore.userInfo?.tenantName || $t('system.dashboard.defaultTenant') }}
             </a-descriptions-item>
-            <a-descriptions-item label="当前用户">
+            <a-descriptions-item :label="$t('system.dashboard.currentUser')">
               {{ userStore.account }}
             </a-descriptions-item>
           </a-descriptions>

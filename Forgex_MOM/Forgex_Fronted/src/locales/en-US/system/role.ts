@@ -44,6 +44,8 @@ export default {
   // Actions
   assignPermission: 'Assign Permission',
   copyRole: 'Copy Role',
+  menuAuth: 'Menu Authorization',
+  userAuth: 'User Authorization',
   
   // Messages
   message: {

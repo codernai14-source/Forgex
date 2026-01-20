@@ -174,7 +174,7 @@
  * @author Forgex Team
  * @version 1.0.0
  */
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch, h } from 'vue'
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { DownOutlined } from '@ant-design/icons-vue'
@@ -308,16 +308,38 @@ const tableColumns = computed(() => {
   // 重新组合列，将操作列放在最后
   const finalCols = actionCol ? [...otherCols, actionCol] : otherCols
   
-  return finalCols.map(c => ({
-    title: c.title,      // 列标题
-    dataIndex: c.field,  // 数据字段名
-    key: c.field,        // 列主键
-    align: c.align,      // 对齐方式
-    width: c.width,      // 列宽
-    fixed: c.fixed,      // 是否固定
-    ellipsis: c.ellipsis,// 是否显示省略号
-    sorter: !!c.sortable,// 是否可排序
-  }))
+  return finalCols.map(c => {
+    const column: any = {
+      title: c.title,
+      dataIndex: c.field,
+      key: c.field,
+      align: c.align,
+      width: c.width,
+      fixed: c.fixed,
+      ellipsis: c.ellipsis,
+      sorter: !!c.sortable,
+    }
+    
+    // 如果列有字典配置，添加自定义渲染
+    if (c.dictCode) {
+      column.customRender = ({ record }: any) => {
+        const value = record[c.field]
+        const dictItems = props.dictOptions?.[c.dictCode] || []
+        const dictItem = dictItems.find((item: any) => String(item.value) === String(value))
+        
+        if (dictItem) {
+          // 使用字典的tagStyle配置
+          if (dictItem.tagStyle?.color) {
+            return h('a-tag', { color: dictItem.tagStyle.color }, dictItem.label)
+          }
+          return dictItem.label
+        }
+        return value
+      }
+    }
+    
+    return column
+  })
 })
 
 /**

@@ -19,7 +19,7 @@
               <a-space>
                 <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
                   <template #icon><PlusOutlined /></template>
-                  新增职位
+                  {{ $t('system.position.addPosition') }}
                 </a-button>
               </a-space>
             </div>
@@ -34,7 +34,7 @@
             >
               <template #status="{ record }">
                 <a-tag :color="record.status === true ? 'green' : 'red'">
-                  {{ record.status === true ? '启用' : '禁用' }}
+                  {{ record.status === true ? $t('common.enabled') : $t('common.disabled') }}
                 </a-tag>
               </template>
               <template #action="{ record }">
@@ -45,10 +45,10 @@
                     @click="openEdit(record)"
                     v-permission="'sys:position:edit'"
                   >
-                    编辑
+                    {{ $t('common.edit') }}
                   </a-button>
                   <a-popconfirm
-                    title="确定要删除这个职位吗？"
+                    :title="$t('common.confirmDeleteMessage')"
                     :ok-text="$t('common.confirm')"
                     :cancel-text="$t('common.cancel')"
                     @confirm="handleDelete(record.id)"
@@ -59,7 +59,7 @@
                       danger
                       v-permission="'sys:position:delete'"
                     >
-                      删除
+                      {{ $t('common.delete') }}
                     </a-button>
                   </a-popconfirm>
                 </a-space>
@@ -142,10 +142,10 @@
           />
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">启用</a-radio>
-            <a-radio :value="false">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
 
@@ -188,6 +188,7 @@ const treeData = ref<any[]>([])
 
 // 字典数据
 const { dictItems: positionLevelOptions } = useDict('position_level')
+const { dictItems: statusOptions } = useDict('status')
 
 // 搜索表单
 const searchForm = ref({
@@ -208,19 +209,21 @@ const fallbackConfig = ref({
     { title: '职位编码', dataIndex: 'positionCode', key: 'positionCode', width: 150 },
     { title: '职位级别', dataIndex: 'positionLevel', key: 'positionLevel', width: 100 },
     { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+    { title: '状态', dataIndex: 'status', key: 'status', width: 80, dictCode: 'status' },
     { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
     { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
     { title: '操作', key: 'action', fixed: 'right', width: 150 }
+  ],
+  queryFields: [
+    { field: 'positionName', label: '职位名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'positionCode', label: '职位编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
   ]
 })
 
 // 字典配置
 const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'green' },
-    0: { text: '禁用', color: 'red' }
-  },
+  status: statusOptions,
   positionLevel: positionLevelOptions
 })
 

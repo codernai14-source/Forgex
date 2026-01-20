@@ -1,7 +1,7 @@
 <template>
   <div class="tree-container">
     <div class="tree-header">
-      <span class="tree-title">组织架构</span>
+      <span class="tree-title">{{ $t('system.department.title') }}</span>
       <a-button
         type="primary"
         size="small"
@@ -9,7 +9,7 @@
         v-if="showAdd"
       >
         <template #icon><PlusOutlined /></template>
-        新增
+        {{ $t('common.add') }}
       </a-button>
     </div>
     <a-spin :spinning="loading">

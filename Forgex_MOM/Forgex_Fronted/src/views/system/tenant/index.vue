@@ -19,7 +19,7 @@
             v-permission="'sys:tenant:add'"
           >
             <template #icon><PlusOutlined /></template>
-            新增租户
+            {{ $t('system.tenant.form.addTenant') }}
           </a-button>
         </a-space>
       </template>
@@ -29,10 +29,10 @@
           {{ TenantTypeLabels[record.tenantType] }}
         </a-tag>
       </template>
-
+      
       <template #status="{ record }">
         <a-tag :color="record.status ? 'green' : 'red'">
-          {{ record.status ? '启用' : '禁用' }}
+          {{ record.status ? $t('common.enabled') : $t('common.disabled') }}
         </a-tag>
       </template>
 
@@ -82,7 +82,7 @@
     <!-- 新增/编辑表单：使用通用弹窗组件，支持弹窗/抽屉模式 -->
     <BaseFormDialog
       v-model:open="dialogVisible"
-      :title="formData.id ? '编辑租户' : '新增租户'"
+      :title="formData.id ? $t('system.tenant.form.editTenant') : $t('system.tenant.form.addTenant')"
       :loading="saving"
       :width="600"
       @submit="handleSave"
@@ -95,24 +95,24 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
       >
-        <a-form-item label="租户名称" name="tenantName">
+        <a-form-item :label="$t('system.tenant.tenantName')" name="tenantName">
           <a-input
             v-model:value="formData.tenantName"
-            placeholder="请输入租户名称"
+            :placeholder="$t('system.tenant.form.tenantName')"
           />
         </a-form-item>
 
-        <a-form-item label="租户编码" name="tenantCode">
+        <a-form-item :label="$t('system.tenant.tenantCode')" name="tenantCode">
           <a-input
             v-model:value="formData.tenantCode"
-            placeholder="请输入租户编码"
+            :placeholder="$t('system.tenant.form.tenantCode')"
           />
         </a-form-item>
 
-        <a-form-item label="租户类别" name="tenantType">
+        <a-form-item :label="$t('system.tenant.tenantType')" name="tenantType">
           <a-select
             v-model:value="formData.tenantType"
-            placeholder="请选择租户类别"
+            :placeholder="$t('system.tenant.form.tenantType')"
             :disabled="formData.id && formData.tenantType === TenantTypeEnum.MAIN_TENANT"
           >
             <a-select-option
@@ -125,10 +125,10 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="描述" name="description">
+        <a-form-item :label="$t('system.tenant.description')" name="description">
           <a-textarea
             v-model:value="formData.description"
-            placeholder="请输入描述"
+            :placeholder="$t('system.tenant.form.description')"
             :rows="3"
           />
         </a-form-item>
@@ -139,10 +139,10 @@
           </div>
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">启用</a-radio>
-            <a-radio :value="false">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -174,6 +174,9 @@ import {
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useDict } from '@/hooks/useDict'
+
+const { dictItems: statusOptions } = useDict('status')
 
 const formRef = ref()
 const tableRef = ref()
@@ -246,7 +249,8 @@ const fallbackConfig = ref({
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 80
+      width: 80,
+      dictCode: 'status'
     },
     {
       title: '创建时间',
@@ -272,10 +276,7 @@ const fallbackConfig = ref({
 
 // 字典配置
 const dictOptions = ref({
-  status: {
-    true: { text: '启用', color: 'green' },
-    false: { text: '禁用', color: 'red' }
-  },
+  status: statusOptions,
   tenantType: {
     [TenantTypeEnum.MAIN_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.MAIN_TENANT], color: 'blue' },
     [TenantTypeEnum.CUSTOMER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.CUSTOMER_TENANT], color: 'green' },
