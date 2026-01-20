@@ -1,9 +1,11 @@
 package com.forgex.gateway.config;
 
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 /**
@@ -21,6 +23,12 @@ import reactor.core.publisher.Mono;
  */
 @Configuration
 public class RateLimitConfig {
+
+    @Bean
+    @LoadBalanced
+    public WebClient.Builder loadBalancedWebClientBuilder() {
+        return WebClient.builder();
+    }
 
     /**
      * 创建基于IP的限流Key解析器
@@ -45,4 +53,3 @@ public class RateLimitConfig {
         };
     }
 }
-

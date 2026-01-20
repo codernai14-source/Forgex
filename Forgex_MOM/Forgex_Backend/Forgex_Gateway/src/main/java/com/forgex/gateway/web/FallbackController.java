@@ -3,13 +3,20 @@ package com.forgex.gateway.web;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.text.MessageFormat;
+import java.time.Duration;
 
 /**
  * 网关降级控制器
@@ -26,6 +33,16 @@ import reactor.core.publisher.Mono;
 @RestController
 public class FallbackController {
 
+    private static final String SYS_I18N_RESOLVE_URL = "http://forgex-sys/sys/i18n/message/resolve";
+    private static final String I18N_CACHE_PREFIX = "i18nmsg:";
+    private static final Duration I18N_CACHE_TTL = Duration.ofHours(24);
+
+    @Autowired
+    private StringRedisTemplate redis;
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
     /**
      * 服务降级处理
      * <p>当指定服务不可用时，返回降级响应。</p>
@@ -36,28 +53,58 @@ public class FallbackController {
     @RequestMapping("/fallback/{service}")
     public Mono<R<Object>> fallback(@PathVariable("service") String service, ServerHttpRequest request) {
         String moduleName = service == null ? "目标" : service;
-        R<Object> r = R.fail(StatusCode.MODULE_OFFLINE, CommonPrompt.MODULE_OFFLINE, moduleName);
-        r.setMessage(translate(CommonPrompt.MODULE_OFFLINE, r.getI18n() == null ? null : r.getI18n().getArgs(),
-                request == null ? null : request.getHeaders()));
-        return Mono.just(r);
+        R<Object> r = R.failWithArgs(StatusCode.MODULE_OFFLINE, CommonPrompt.MODULE_OFFLINE, new Object[]{moduleName});
+        return translate(CommonPrompt.MODULE_OFFLINE, r.getI18n() == null ? null : r.getI18n().getArgs(),
+                request == null ? null : request.getHeaders())
+                .defaultIfEmpty(CommonPrompt.MODULE_OFFLINE.getDefaultTemplate())
+                .map(msgText -> {
+                    r.setMessage(msgText);
+                    return r;
+                });
     }
 
-    private String translate(CommonPrompt prompt, Object[] args, HttpHeaders headers) {
+    private Mono<String> translate(CommonPrompt prompt, Object[] args, HttpHeaders headers) {
         if (prompt == null) {
-            return null;
+            return Mono.empty();
         }
-        String lang = resolveLang(headers);
-        boolean english = lang != null && lang.toLowerCase().startsWith("en");
-        if (english) {
-            String tpl = switch (prompt) {
-                case MODULE_OFFLINE -> "{0} service is not running";
-                default -> null;
-            };
-            if (StringUtils.hasText(tpl)) {
-                return renderTemplate(tpl, args);
-            }
+
+        String lang = normalizeLang(resolveLang(headers));
+        String cacheKey = buildI18nCacheKey(lang, prompt);
+        String cachedTemplate = null;
+        try {
+            cachedTemplate = redis.opsForValue().get(cacheKey);
+        } catch (Exception ignored) {
         }
-        return renderTemplate(prompt.getDefaultTemplate(), args);
+        if (StringUtils.hasText(cachedTemplate)) {
+            return Mono.just(formatTemplate(cachedTemplate, args));
+        }
+
+        ResolveRequest req = new ResolveRequest();
+        req.module = prompt.getModule();
+        req.code = prompt.getPromptCode();
+        req.defaultTemplate = prompt.getDefaultTemplate();
+
+        return webClientBuilder.build()
+                .post()
+                .uri(SYS_I18N_RESOLVE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Lang", StringUtils.hasText(lang) ? lang : "")
+                .bodyValue(req)
+                .retrieve()
+                .bodyToMono(RString.class)
+                .map(r -> r == null ? null : r.data)
+                .timeout(Duration.ofSeconds(2))
+                .onErrorReturn(null)
+                .map(tpl -> {
+                    if (!StringUtils.hasText(tpl)) {
+                        return fallbackTranslate(prompt, args, lang);
+                    }
+                    try {
+                        redis.opsForValue().set(cacheKey, tpl, I18N_CACHE_TTL);
+                    } catch (Exception ignored) {
+                    }
+                    return formatTemplate(tpl, args);
+                });
     }
 
     private String resolveLang(HttpHeaders headers) {
@@ -83,17 +130,66 @@ public class FallbackController {
         return v;
     }
 
-    private String renderTemplate(String template, Object[] args) {
+    private String formatTemplate(String template, Object[] args) {
         if (!StringUtils.hasText(template)) {
             return null;
         }
         if (args == null || args.length == 0) {
             return template;
         }
-        String out = template;
-        for (int i = 0; i < args.length; i++) {
-            out = out.replace("{" + i + "}", String.valueOf(args[i]));
+        try {
+            return MessageFormat.format(template, args);
+        } catch (Exception e) {
+            String out = template;
+            for (int i = 0; i < args.length; i++) {
+                out = out.replace("{" + i + "}", String.valueOf(args[i]));
+            }
+            return out;
         }
-        return out;
+    }
+
+    private String fallbackTranslate(CommonPrompt prompt, Object[] args, String lang) {
+        boolean english = StringUtils.hasText(lang) && lang.toLowerCase().startsWith("en");
+        if (english) {
+            String tpl = switch (prompt) {
+                case MODULE_OFFLINE -> "{0} service is not running";
+                default -> null;
+            };
+            if (StringUtils.hasText(tpl)) {
+                return formatTemplate(tpl, args);
+            }
+        }
+        return formatTemplate(prompt.getDefaultTemplate(), args);
+    }
+
+    private String normalizeLang(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String v = raw.trim();
+        if (v.equalsIgnoreCase("zh") || v.equalsIgnoreCase("zh-cn")) {
+            return "zh-CN";
+        }
+        if (v.equalsIgnoreCase("en") || v.equalsIgnoreCase("en-us")) {
+            return "en-US";
+        }
+        return v;
+    }
+
+    private String buildI18nCacheKey(String lang, CommonPrompt prompt) {
+        String langKey = StringUtils.hasText(lang) ? lang : "zh-CN";
+        return I18N_CACHE_PREFIX + langKey + ":" + prompt.getModule() + ":" + prompt.getPromptCode();
+    }
+
+    private static class ResolveRequest {
+        public String module;
+        public String code;
+        public String defaultTemplate;
+    }
+
+    private static class RString {
+        public Integer code;
+        public String message;
+        public String data;
     }
 }
