@@ -76,7 +76,6 @@ const dictOptions = ref({})
 const handleRequest = async (params: any) => {
   loading.value = true
   try {
-    // tenantId 由用户 store 提供（未选择时兜底 1）
     const res: any = await listOnlineUsers({
       current: params.current,
       size: params.pageSize,
@@ -89,7 +88,6 @@ const handleRequest = async (params: any) => {
       total: res.total || 0
     }
   } catch (e) {
-    console.error('查询在线用户失败', e)
     return {
       success: false,
       data: [],
@@ -156,10 +154,6 @@ function handleKickout(token: string) {
   })
 }
 
-// 初始化加载
-onMounted(() => {
-  tableRef.value?.refresh?.()
-})
 </script>
 
 <style scoped lang="less">

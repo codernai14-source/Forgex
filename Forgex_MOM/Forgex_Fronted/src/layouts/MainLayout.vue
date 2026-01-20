@@ -719,7 +719,7 @@ const currentUser = computed(() => {
 
 // 监听语言变化，更新标签标题
 watch(
-  () => currentLocale.value,
+  () => locale.value,
   (newLocale) => {
     if (newLocale) {
       updateAllTabTitles()
@@ -920,6 +920,8 @@ async function onLocaleChange(val: string) {
         if (routes) {
           // 重新注入动态路由
           await injectDynamicRoutes(routes)
+          // 动态路由更新后，重新计算所有标签标题，确保使用最新语言
+          updateAllTabTitles()
           // 清除localStorage中的旧菜单缓存
           localStorage.removeItem('fx-dynamic-routes')
           localStorage.removeItem('fx-dynamic-modules')

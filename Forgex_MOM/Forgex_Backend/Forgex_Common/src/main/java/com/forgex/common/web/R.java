@@ -419,6 +419,27 @@ public class R<T> {
     }
 
     /**
+     * 失败返回（自定义状态码、消息和参数数组）
+     * <p>
+     * 使用参数数组构建国际化元信息，并将参数序列化为message字段。
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数数组
+     * @return R包装的失败结果
+     */
+    public static <T> R<T> failWithArgs(Integer code, I18nPrompt messageCode, Object[] args) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.messageCode = messageCode;
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
+        return r;
+    }
+
+    /**
      * 解析占位符参数
      * <p>
      * 将逗号分隔的字符串解析为参数数组
@@ -432,6 +453,30 @@ public class R<T> {
             return null;
         }
         return args.split(",");
+    }
+
+    /**
+     * 序列化占位符参数
+     * <p>
+     * 将参数数组按逗号分隔拼接为字符串，便于日志与调试。
+     * </p>
+     *
+     * @param args 占位符参数数组
+     * @return 逗号分隔的参数字符串
+     */
+    private static String joinArgs(Object[] args) {
+        if (args == null || args.length == 0) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            Object v = args[i];
+            sb.append(v == null ? "" : v.toString());
+        }
+        return sb.toString();
     }
 
     /**
