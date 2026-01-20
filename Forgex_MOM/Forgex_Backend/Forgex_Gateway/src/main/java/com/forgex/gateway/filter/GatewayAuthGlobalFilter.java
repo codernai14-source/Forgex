@@ -85,7 +85,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         String path = request.getURI().getPath();
         
         // 不需要认证的路径，直接放行
-        if (!needAuth(path)) {
+        if (!needAuth(path, method)) {
             return chain.filter(exchange);
         }
         
@@ -136,7 +136,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
      * @param path 请求路径
      * @return true=需要认证，false=不需要认证
      */
-    private boolean needAuth(String path) {
+    private boolean needAuth(String path, HttpMethod method) {
         // 路径为空，不需要认证
         if (!StringUtils.hasText(path)) {
             return false;
@@ -144,6 +144,20 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         
         // /api/auth/路径下的请求直接放行
         if (path.startsWith("/api/auth/")) {
+            return false;
+        }
+
+        // 登录页需要的公开接口直接放行
+        if (path.equals("/api/sys/config/system-basic") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/config/login-captcha") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/init/status") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/init/apply") && HttpMethod.POST.equals(method)) {
             return false;
         }
         
@@ -185,21 +199,22 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
     /**
      * 写入未登录响应
      * <p>
-     * 设置响应状态码为401，响应体为JSON格式的错误信息。
+     * 设置响应体为JSON格式的错误信息。
      * </p>
      * 
      * @param exchange 服务器Web交换对象
      * @return 响应写入完成后的Mono
      */
     private Mono<Void> writeNotLogin(ServerWebExchange exchange) {
-        // 设置响应状态码为401未授权
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
         
         // 设置响应内容类型为JSON
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         
         // 构建响应体
         R<Object> body = R.fail(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
+        body.setMessage(translate(CommonPrompt.NOT_LOGIN, body.getI18n() == null ? null : body.getI18n().getArgs(),
+                exchange == null || exchange.getRequest() == null ? null : exchange.getRequest().getHeaders()));
         
         // 序列化响应体
         byte[] bytes;
@@ -212,6 +227,70 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         
         // 写入响应
         return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+    }
+
+    private String translate(CommonPrompt prompt, Object[] args, HttpHeaders headers) {
+        if (prompt == null) {
+            return null;
+        }
+
+        String lang = resolveLang(headers);
+        boolean english = lang != null && lang.toLowerCase().startsWith("en");
+
+        if (english) {
+            String tpl = switch (prompt) {
+                case NOT_LOGIN -> "Not logged in or session expired";
+                case NO_PERMISSION -> "No permission";
+                case INTERFACE_NOT_FOUND -> "Interface not found";
+                case GATEWAY_ERROR -> "Gateway error: {0}";
+                case MODULE_OFFLINE -> "{0} service is not running";
+                case INTERNAL_SERVER_ERROR_MSG, INTERNAL_SERVER_ERROR -> "Internal server error: {0}";
+                case BAD_REQUEST -> "Bad request: {0}";
+                default -> null;
+            };
+            if (StringUtils.hasText(tpl)) {
+                return renderTemplate(tpl, args);
+            }
+        }
+
+        return renderTemplate(prompt.getDefaultTemplate(), args);
+    }
+
+    private String resolveLang(HttpHeaders headers) {
+        if (headers == null) {
+            return null;
+        }
+        String lang = headers.getFirst("X-Lang");
+        if (!StringUtils.hasText(lang)) {
+            lang = headers.getFirst("Accept-Language");
+        }
+        if (!StringUtils.hasText(lang)) {
+            return null;
+        }
+        String v = lang.trim();
+        int comma = v.indexOf(',');
+        if (comma >= 0) {
+            v = v.substring(0, comma).trim();
+        }
+        int semi = v.indexOf(';');
+        if (semi >= 0) {
+            v = v.substring(0, semi).trim();
+        }
+        return v;
+    }
+
+    private String renderTemplate(String template, Object[] args) {
+        if (!StringUtils.hasText(template)) {
+            return null;
+        }
+        if (args == null || args.length == 0) {
+            return template;
+        }
+        String out = template;
+        for (int i = 0; i < args.length; i++) {
+            out = out.replace("{" + i + "}", String.valueOf(args[i]));
+        }
+        return out;
     }
 
     /**
