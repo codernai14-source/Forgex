@@ -17,9 +17,7 @@
           {{ userDetail?.phone }}
         </a-descriptions-item>
         <a-descriptions-item label="性别">
-          <a-tag v-if="userDetail?.gender === 1" color="blue">男</a-tag>
-          <a-tag v-else-if="userDetail?.gender === 2" color="pink">女</a-tag>
-          <a-tag v-else color="default">未知</a-tag>
+          <DictTag :record="userDetail" dict-field="genderText" />
         </a-descriptions-item>
         <a-descriptions-item label="入职时间">
           {{ userDetail?.entryDate }}
@@ -34,9 +32,7 @@
           {{ userDetail?.tenantId || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag v-if="userDetail?.status !== undefined && userDetail?.status !== null" :color="statusTag.color">
-            {{ statusTag.text }}
-          </a-tag>
+          <DictTag :record="userDetail" dict-field="statusText" />
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">
           {{ userDetail?.createTime }}
@@ -115,24 +111,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
-import { useDict } from '@/hooks/useDict'
 import type { User, UserProfile, UserTenant } from '../types'
-
-const { dictItems: statusOptions } = useDict('status')
-
-// 状态标签
-const statusTag = computed(() => {
-  if (!userDetail.value) return { color: '', text: '' }
-  const status = userDetail.value.status
-  const dictItem = statusOptions.value.find((item: any) => String(item.value) === String(status))
-  if (dictItem) {
-    return { color: dictItem.tagStyle?.color || '', text: dictItem.label }
-  }
-  return { color: status === true || status === 1 ? 'success' : 'error', text: status === true || status === 1 ? '启用' : '禁用' }
-})
 
 // Props
 interface Props {
@@ -154,6 +136,8 @@ const emit = defineEmits<{
 const visible = ref(props.open)
 const loading = ref(false)
 const userDetail = ref<(User & { profile?: UserProfile, tenantList?: UserTenant[] }) | null>(null)
+
+
 
 // 租户列表表格列定义
 const tenantColumns = [

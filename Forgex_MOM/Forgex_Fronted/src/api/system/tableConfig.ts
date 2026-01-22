@@ -13,6 +13,7 @@ export interface FxTableColumn {
   queryType?: string
   queryOperator?: string
   dictCode?: string
+  dictField?: string
   renderType?: string
   permKey?: string
 }

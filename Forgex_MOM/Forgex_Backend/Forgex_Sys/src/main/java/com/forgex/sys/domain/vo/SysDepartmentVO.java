@@ -66,7 +66,7 @@ public class SysDepartmentVO extends BaseEntity {
     private Integer orderNum;
     
     /** 状态：false=禁用，true=启用 */
-    @DictI18n(nodePathConst = "user_status", targetField = "statusText")
+    @DictI18n(nodePathConst = "status", targetField = "statusText")
     private Boolean status;
     
     /** 状态文本（字典翻译结果） */

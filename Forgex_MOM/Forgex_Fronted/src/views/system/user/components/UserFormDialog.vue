@@ -358,6 +358,9 @@ const formData = reactive<Partial<User>>({
   status: true,
 })
 
+// 用户详情数据（用于显示字典翻译后的文本）
+const userDetail = ref<User | null>(null)
+
 // 附属信息表单数据
 const profileData = reactive<Partial<UserProfile>>({  
   politicalStatus: '',
@@ -433,6 +436,9 @@ async function loadUserData() {
   try {
     const data = await userApi.getUserDetail(props.userId)
     if (data) {
+      // 保存完整的用户详情数据，包含字典翻译字段
+      userDetail.value = data
+      
       Object.assign(formData, {
         id: data.id,
         username: data.username,

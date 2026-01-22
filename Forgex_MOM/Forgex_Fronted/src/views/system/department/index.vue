@@ -68,8 +68,8 @@
                     {{ selectedDept.orgLevel }}
                   </a-descriptions-item>
                   <a-descriptions-item :label="$t('common.status')">
-                    <a-tag :color="selectedDept.status === true ? 'green' : 'red'">
-                      {{ selectedDept.status === true ? $t('common.enabled') : $t('common.disabled') }}
+                    <a-tag v-if="selectedDept?.statusText" :color="selectedDept.status === true ? 'green' : 'red'">
+                      {{ selectedDept.statusText }}
                     </a-tag>
                   </a-descriptions-item>
                   <a-descriptions-item label="负责人">

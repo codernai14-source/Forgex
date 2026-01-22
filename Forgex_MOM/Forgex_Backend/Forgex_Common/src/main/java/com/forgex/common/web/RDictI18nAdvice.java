@@ -3,6 +3,7 @@ package com.forgex.common.web;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.dict.DictI18n;
 import com.forgex.common.dict.DictI18nResolver;
+import com.forgex.common.dict.DictItem;
 import com.forgex.common.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -270,6 +271,7 @@ public class RDictI18nAdvice implements ResponseBodyAdvice<Object> {
      * <ol>
      *   <li>获取目标字段名称</li>
      *   <li>目标字段名为空，直接返回</li>
+     *   <li>获取标签样式字段名称</li>
      *   <li>获取字典节点路径</li>
      *   <li>如果注解指定了节点路径常量，直接使用</li>
      *   <li>如果注解指定了节点路径字段，从对象中读取</li>
@@ -280,11 +282,13 @@ public class RDictI18nAdvice implements ResponseBodyAdvice<Object> {
      *   <li>字典值字段为空，直接返回</li>
      *   <li>将字典值转换为字符串</li>
      *   <li>字典值为空，直接返回</li>
-     *   <li>查询字典标签映射</li>
+     *   <li>如果有标签样式字段，查询字典项映射</li>
+     *   <li>否则查询字典标签映射</li>
      *   <li>映射为空或为空，直接返回</li>
      *   <li>获取对应的国际化文本</li>
      *   <li>国际化文本为空，直接返回</li>
      *   <li>通过反射设置目标字段的值</li>
+     *   <li>如果有标签样式字段，设置标签样式</li>
      * </ol>
      * 
      * @param obj 包含字典字段的对象
@@ -335,22 +339,22 @@ public class RDictI18nAdvice implements ResponseBodyAdvice<Object> {
             return;
         }
         
-        // 查询字典标签映射
-        Map<String, String> map = dictI18nResolver.getChildLabelMap(tenantId, nodePath);
+        // 查询字典项映射
+        Map<String, DictItem> itemMap = dictI18nResolver.getChildItemMap(tenantId, nodePath);
         
         // 映射为空或为空，直接返回
-        if (map == null || map.isEmpty()) {
+        if (itemMap == null || itemMap.isEmpty()) {
             return;
         }
         
-        // 获取对应的国际化文本
-        String label = map.get(key);
-        if (!StringUtils.hasText(label)) {
+        // 获取对应的字典项
+        DictItem item = itemMap.get(key);
+        if (item == null) {
             return;
         }
         
-        // 通过反射设置目标字段的值
-        writeField(obj, targetFieldName, label);
+        // 通过反射设置目标字段的值（JSON字符串，包含label和tagStyle）
+        writeField(obj, targetFieldName, item.toJson());
     }
 
     /**

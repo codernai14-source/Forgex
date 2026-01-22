@@ -74,7 +74,6 @@ public class DictServiceImpl implements IDictService {
     public List<DictTreeVO> getDictTree(Long tenantId) {
         // 查询所有字典（未删除）
         List<SysDict> allDicts = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getDeleted, false)
                 .orderByAsc(SysDict::getOrderNum));
         
         // 转换为 VO
@@ -120,7 +119,6 @@ public class DictServiceImpl implements IDictService {
         SysDict dictType = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getDictCode, dictCode)
                 .eq(SysDict::getParentId, 0L)
-                .eq(SysDict::getDeleted, false)
                 .last("limit 1"));
         
         if (dictType == null) {
@@ -131,7 +129,6 @@ public class DictServiceImpl implements IDictService {
         // 2. 查询字典项
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getParentId, dictType.getId())
-                .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getStatus, 1) // 只查询启用的
                 .orderByAsc(SysDict::getOrderNum));
         
@@ -175,7 +172,6 @@ public class DictServiceImpl implements IDictService {
 
         // 查询字典节点
         SysDict node = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getNodePath, nodePath)
                 .last("limit 1"));
         // 节点不存在时返回空列表
@@ -185,7 +181,6 @@ public class DictServiceImpl implements IDictService {
         // 查询子节点
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getParentId, node.getId())
-                .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getStatus, 1)
                 .orderByAsc(SysDict::getOrderNum));
         // 转换为VO
@@ -317,7 +312,6 @@ public class DictServiceImpl implements IDictService {
         if (pathChanged) {
             List<SysDict> descendants = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                     .eq(SysDict::getTenantId, old.getTenantId())
-                    .eq(SysDict::getDeleted, false)
                     .likeRight(SysDict::getNodePath, old.getNodePath() + "/"));
             for (SysDict d : descendants) {
                 String suffix = d.getNodePath().substring(old.getNodePath().length());
@@ -373,20 +367,11 @@ public class DictServiceImpl implements IDictService {
         }
 
         Long childCount = dictMapper.selectCount(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getParentId, id)
-                .eq(SysDict::getDeleted, false));
+                .eq(SysDict::getParentId, id));
         
         if (childCount > 0) {
             throw new RuntimeException("该字典下存在子节点，无法删除");
         }
-        
-        // 逻辑删除
-        SysDict dict = new SysDict();
-        dict.setId(id);
-        dict.setDeleted(true);
-        dict.setUpdateTime(LocalDateTime.now());
-        
-        dictMapper.updateById(dict);
 
         if (old.getParentId() != null && old.getParentId() > 0) {
             dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()

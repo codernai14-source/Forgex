@@ -108,6 +108,14 @@ public class FxTableColumnDTO {
     private String dictCode;
 
     /**
+     * 字典字段
+     * <p>指定字典翻译后的字段名，用于显示字典标签。
+     * 例如：如果field为"status"，dictField为"statusText"，
+     * 则会自动解析statusText字段的JSON字符串并显示标签。</p>
+     */
+    private String dictField;
+
+    /**
      * 渲染类型
      * <p>指定列内容的渲染方式，如"text"（普通文本）、
      * "image"（图片）、"link"（链接）、"tag"（标签）等。</p>

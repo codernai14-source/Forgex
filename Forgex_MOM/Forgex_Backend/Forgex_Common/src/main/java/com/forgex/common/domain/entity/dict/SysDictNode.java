@@ -95,5 +95,11 @@ public class SysDictNode extends BaseEntity {
      * <p>字典节点的补充说明信息。</p>
      */
     private String remark;
+
+    /**
+     * 标签样式JSON
+     * <p>包含标签的颜色、边框颜色、背景色等样式配置。</p>
+     */
+    private String tagStyleJson;
 }
 

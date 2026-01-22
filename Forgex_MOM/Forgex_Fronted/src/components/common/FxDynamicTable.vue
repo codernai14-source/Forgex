@@ -338,6 +338,26 @@ const tableColumns = computed(() => {
       }
     }
     
+    // 如果列有字典字段配置，添加自定义渲染
+    if (c.dictField) {
+      column.customRender = ({ record }: any) => {
+        const value = record[c.dictField]
+        if (!value) {
+          return record[c.field]
+        }
+        
+        try {
+          const parsed = JSON.parse(value)
+          if (parsed.color && parsed.color !== 'default') {
+            return h('a-tag', { color: parsed.color }, parsed.label)
+          }
+          return parsed.label
+        } catch {
+          return value
+        }
+      }
+    }
+    
     return column
   })
 })

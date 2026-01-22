@@ -111,8 +111,8 @@ public class DictI18nResolver {
 
         // 缓存未命中，从数据库查询字典节点
         SysDictNode node = dictNodeMapper.selectOne(new LambdaQueryWrapper<SysDictNode>()
-                .eq(SysDictNode::getDeleted, false)
                 .eq(SysDictNode::getNodePath, nodePath)
+                .eq(SysDictNode::getTenantId, tenantId)
                 .last("limit 1"));
         
         // 节点不存在，返回空Map
@@ -122,7 +122,6 @@ public class DictI18nResolver {
 
         // 查询字典节点的所有启用状态的子节点
         List<SysDictNode> children = dictNodeMapper.selectList(new LambdaQueryWrapper<SysDictNode>()
-                .eq(SysDictNode::getDeleted, false)
                 .eq(SysDictNode::getParentId, node.getId())
                 .eq(SysDictNode::getStatus, 1)
                 .orderByAsc(SysDictNode::getOrderNum));
@@ -145,6 +144,121 @@ public class DictI18nResolver {
         } catch (Exception ignored) {}
         
         return map;
+    }
+
+    /**
+     * 获取字典子节点的标签映射（包含标签样式）
+     * <p>
+     * 根据租户ID、字典节点路径和当前语言环境，
+     * 获取字典子节点的字典值到字典项（包含标签和样式）的映射。
+     * </p>
+     * <p><strong>执行流程：</strong></p>
+     * <ol>
+     *   <li>检查参数有效性（租户ID和节点路径不能为空）</li>
+     *   <li>尝试从Redis缓存获取数据</li>
+     *   <li>缓存未命中时，从数据库查询字典节点</li>
+     *   <li>查询字典节点的所有启用状态的子节点</li>
+     *   <li>解析每个子节点的国际化文本和标签样式</li>
+     *   <li>构建字典值到字典项的映射</li>
+     *   <li>将结果写入Redis缓存（24小时）</li>
+     * </ol>
+     * 
+     * @param tenantId 租户ID
+     * @param nodePath 字典节点路径
+     * @return 字典值到字典项的映射，参数无效或节点不存在时返回空Map
+     */
+    public Map<String, DictItem> getChildItemMap(Long tenantId, String nodePath) {
+        // 参数校验：租户ID和节点路径不能为空
+        if (tenantId == null || !StringUtils.hasText(nodePath)) {
+            return Collections.emptyMap();
+        }
+
+        // 获取当前语言环境
+        String lang = LangContext.get();
+        
+        // 构建缓存键
+        String cacheKey = "dictitem:" + tenantId + ":" + lang + ":" + nodePath;
+        
+        try {
+            // 尝试从Redis缓存获取
+            String raw = redis.opsForValue().get(cacheKey);
+            if (StringUtils.hasText(raw)) {
+                return objectMapper.readValue(raw, new TypeReference<Map<String, DictItem>>() {});
+            }
+        } catch (Exception ignored) {}
+
+        // 缓存未命中，从数据库查询字典节点
+        SysDictNode node = dictNodeMapper.selectOne(new LambdaQueryWrapper<SysDictNode>()
+                .eq(SysDictNode::getNodePath, nodePath)
+                .eq(SysDictNode::getTenantId, tenantId)
+                .last("limit 1"));
+        
+        // 节点不存在，返回空Map
+        if (node == null) {
+            return Collections.emptyMap();
+        }
+
+        // 查询字典节点的所有启用状态的子节点
+        List<SysDictNode> children = dictNodeMapper.selectList(new LambdaQueryWrapper<SysDictNode>()
+                .eq(SysDictNode::getParentId, node.getId())
+                .eq(SysDictNode::getStatus, 1)
+                .orderByAsc(SysDictNode::getOrderNum));
+        
+        // 构建字典值到字典项的映射
+        Map<String, DictItem> map = new LinkedHashMap<>();
+        for (SysDictNode c : children) {
+            // 跳过字典值为空的节点
+            if (!StringUtils.hasText(c.getDictValue())) {
+                continue;
+            }
+            // 解析国际化文本和标签样式
+            String label = resolveI18nText(c.getDictValueI18nJson(), c.getDictName());
+            DictItem.TagStyle tagStyle = parseTagStyle(c.getTagStyleJson());
+            // 添加到映射
+            map.put(c.getDictValue(), new DictItem(c.getDictValue(), label, tagStyle));
+        }
+        
+        try {
+            // 将结果写入Redis缓存（24小时）
+            String json = objectMapper.writeValueAsString(map);
+            redis.opsForValue().set(cacheKey, json, 24, TimeUnit.HOURS);
+        } catch (Exception ignored) {}
+        
+        return map;
+    }
+
+    /**
+     * 解析标签样式JSON
+     * <p>
+     * 从JSON字符串中解析标签样式信息。
+     * </p>
+     * 
+     * @param tagStyleJson 标签样式JSON字符串
+     * @return 标签样式对象，解析失败时返回null
+     */
+    private DictItem.TagStyle parseTagStyle(String tagStyleJson) {
+        if (!StringUtils.hasText(tagStyleJson)) {
+            return null;
+        }
+        
+        try {
+            JsonNode node = objectMapper.readTree(tagStyleJson);
+            DictItem.TagStyle tagStyle = new DictItem.TagStyle();
+            
+            if (node.has("color")) {
+                tagStyle.setColor(node.get("color").asText());
+            }
+            if (node.has("borderColor")) {
+                tagStyle.setBorderColor(node.get("borderColor").asText());
+            }
+            if (node.has("backgroundColor")) {
+                tagStyle.setBackgroundColor(node.get("backgroundColor").asText());
+            }
+            
+            return tagStyle;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
