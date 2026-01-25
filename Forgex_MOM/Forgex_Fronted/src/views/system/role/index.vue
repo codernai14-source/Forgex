@@ -1,8 +1,20 @@
 <template>
   <div class="page-wrap">
     <!-- 操作按钮和表格 -->
-    <a-card class="table-card" :bordered="false">
-      <template #title>
+    <fx-dynamic-table
+      ref="tableRef"
+      class="role-table"
+      :table-code="'RoleTable'"
+      :request="handleRequest"
+      :fallback-config="fallbackConfig"
+      :dict-options="dictOptions"
+      :row-selection="{
+        selectedRowKeys,
+        onChange: onSelectChange
+      }"
+      row-key="id"
+    >
+      <template #toolbar>
         <a-space>
           <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
             <template #icon><PlusOutlined /></template>
@@ -20,63 +32,50 @@
         </a-space>
       </template>
 
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'RoleTable'"
-        :request="handleRequest"
-        :fallback-config="fallbackConfig"
-        :row-selection="{
-          selectedRowKeys,
-          onChange: onSelectChange
-        }"
-        row-key="id"
-        :pagination="false"
-      >
-        <template #action="{ record }">
-          <a-space>
+      <template #action="{ record }">
+        <a-space>
+          <a-button
+            type="link"
+            size="small"
+            @click="openEdit(record)"
+            v-permission="'sys:role:edit'"
+          >
+            {{ $t('common.edit') }}
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            @click="openGrant(record)"
+            v-permission="'sys:role:authMenu'"
+          >
+            {{ $t('system.role.menuAuth') }}
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            @click="openUserGrant(record)"
+            v-permission="'sys:role:authUser'"
+          >
+            {{ $t('system.role.userAuth') }}
+          </a-button>
+          <a-popconfirm
+            :title="$t('system.role.message.deleteConfirm')"
+            :ok-text="$t('common.confirm')"
+            :cancel-text="$t('common.cancel')"
+            @confirm="handleDelete(record.id)"
+          >
             <a-button
               type="link"
               size="small"
-              @click="openEdit(record)"
-              v-permission="'sys:role:edit'"
+              danger
+              v-permission="'sys:role:delete'"
             >
-              {{ $t('common.edit') }}
+              {{ $t('common.delete') }}
             </a-button>
-            <a-button
-              type="link"
-              size="small"
-              @click="openGrant(record)"
-              v-permission="'sys:role:authMenu'"
-            >
-              {{ $t('system.role.menuAuth') }}
-            </a-button>
-            <a-button
-              type="link"
-              size="small"
-              @click="openUserGrant(record)"
-              v-permission="'sys:role:authUser'"
-            >
-              {{ $t('system.role.userAuth') }}
-            </a-button>
-            <a-popconfirm
-              :title="$t('system.role.message.deleteConfirm')"
-              :ok-text="$t('common.confirm')"
-              :cancel-text="$t('common.cancel')"
-              @confirm="handleDelete(record.id)"
-            >
-              <a-button
-                type="link"
-                size="small"
-                danger
-                v-permission="'sys:role:delete'"
-              >
-                {{ $t('common.delete') }}
-              </a-button>
-            </a-popconfirm>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
-    </a-card>
+          </a-popconfirm>
+        </a-space>
+      </template>
+    </fx-dynamic-table>
 
     <!-- 新增/编辑弹窗 -->
     <BaseFormDialog
@@ -296,6 +295,7 @@ import { useDict } from '@/hooks/useDict'
 import type { Role } from './types'
 
 const { dictItems: statusOptions } = useDict('status')
+const dictOptions = computed(() => ({ status: statusOptions.value }))
 
 interface MenuEntity {
   id: string
@@ -328,25 +328,28 @@ const loading = ref(false)
 
 // fallback配置
 const fallbackConfig = ref({
+  tableCode: 'RoleTable',
+  tableName: '角色管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
   columns: [
-    { title: '角色编码', dataIndex: 'roleCode', key: 'roleCode', width: 150 },
-    { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 150 },
-    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80, dictCode: 'status' },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-    { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-    { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
-    { title: '操作', key: 'action', fixed: 'right', width: 240 }
+    { field: 'roleCode', title: '角色编码', width: 150 },
+    { field: 'roleName', title: '角色名称', width: 150 },
+    { field: 'description', title: '描述', ellipsis: true },
+    { field: 'status', title: '状态', width: 80, dictCode: 'status' },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'createBy', title: '创建人', width: 120 },
+    { field: 'updateTime', title: '修改时间', width: 180 },
+    { field: 'updateBy', title: '修改人', width: 120 },
+    { field: 'action', title: '操作', width: 240 }
   ],
   queryFields: [
     { field: 'roleCode', label: '角色编码', queryType: 'input', queryOperator: 'like' },
     { field: 'roleName', label: '角色名称', queryType: 'input', queryOperator: 'like' },
     { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
   ],
-  dictOptions: {
-    status: statusOptions
-  }
+  version: 1
 })
 
 /**
@@ -815,14 +818,15 @@ async function getUsersByDepartments(deptIds: string[]): Promise<any[]> {
 <style scoped>
 .page-wrap {
   padding: 16px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.search-card {
-  margin-bottom: 16px;
-}
-
-.table-card {
-  margin-bottom: 16px;
+.role-table {
+  flex: 1;
+  min-height: 0;
 }
 
 .auth-card {

@@ -209,60 +209,51 @@ const fallbackConfig = ref({
   defaultPageSize: 20,
   columns: [
     {
+      field: 'id',
       title: '租户ID',
-      dataIndex: 'id',
-      key: 'id',
       width: 100
     },
     {
+      field: 'tenantName',
       title: '租户名称',
-      dataIndex: 'tenantName',
-      key: 'tenantName',
       width: 150
     },
     {
+      field: 'tenantCode',
       title: '租户编码',
-      dataIndex: 'tenantCode',
-      key: 'tenantCode',
       width: 150
     },
     {
+      field: 'tenantType',
       title: '租户类别',
-      dataIndex: 'tenantType',
-      key: 'tenantType',
       width: 120
     },
     {
+      field: 'logo',
       title: 'Logo',
-      dataIndex: 'logo',
-      key: 'logo',
       width: 80
     },
     {
+      field: 'description',
       title: '描述',
-      dataIndex: 'description',
-      key: 'description',
       width: 200,
       ellipsis: true
     },
     {
+      field: 'status',
       title: '状态',
-      dataIndex: 'status',
-      key: 'status',
       width: 80,
       dictCode: 'status'
     },
     {
+      field: 'createTime',
       title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
       width: 160
     },
     {
+      field: 'action',
       title: '操作',
-      key: 'action',
-      width: 150,
-      fixed: 'right'
+      width: 150
     }
   ],
   queryFields: [
@@ -275,14 +266,10 @@ const fallbackConfig = ref({
 })
 
 // 字典配置
-const dictOptions = ref({
-  status: statusOptions,
-  tenantType: {
-    [TenantTypeEnum.MAIN_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.MAIN_TENANT], color: 'blue' },
-    [TenantTypeEnum.CUSTOMER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.CUSTOMER_TENANT], color: 'green' },
-    [TenantTypeEnum.SUPPLIER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.SUPPLIER_TENANT], color: 'orange' }
-  }
-})
+const dictOptions = computed(() => ({
+  status: statusOptions.value,
+  tenantType: Object.entries(TenantTypeLabels).map(([value, label]) => ({ label, value })),
+}))
 
 // 处理表格数据请求
 const handleRequest = async (params: any) => {

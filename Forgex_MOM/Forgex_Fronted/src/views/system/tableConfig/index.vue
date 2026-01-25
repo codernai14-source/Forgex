@@ -1,6 +1,6 @@
 <template>
   <div class="table-config-management">
-    <a-card :bordered="false" style="margin-bottom: 16px;">
+    <a-card :bordered="false" class="query-card">
       <a-form layout="inline">
         <a-form-item label="表格代码">
           <a-input
@@ -59,7 +59,7 @@
       </a-form>
     </a-card>
     
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="table-card">
       <div style="margin-bottom: 16px;">
         <a-space>
           <a-button
@@ -80,56 +80,59 @@
         </a-space>
       </div>
       
-      <a-table
-        :columns="columns"
-        :data-source="dataSource"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="rowKey"
-        :row-selection="{
-          selectedRowKeys: selectedRowKeys,
-          onChange: handleSelectionChange
-        }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tableNameI18nJson'">
-            <span>{{ getTableName(record.tableNameI18nJson) }}</span>
+      <div ref="tableWrapRef" class="table-wrap">
+        <a-table
+          :columns="columns"
+          :data-source="dataSource"
+          :loading="loading"
+          :pagination="pagination"
+          :scroll="tableScroll"
+          :row-key="rowKey"
+          :row-selection="{
+            selectedRowKeys: selectedRowKeys,
+            onChange: handleSelectionChange
+          }"
+          @change="handleTableChange"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'tableNameI18nJson'">
+              <span>{{ getTableName(record.tableNameI18nJson) }}</span>
+            </template>
+            
+            <template v-else-if="column.key === 'tableType'">
+              <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
+              <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
+              <a-tag v-else-if="record.tableType === 'TREE'" color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
+            </template>
+            
+            <template v-else-if="column.key === 'enabled'">
+              <a-switch
+                :checked="record.enabled"
+                :loading="record.statusLoading"
+                @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
+              />
+            </template>
+            
+            <template v-else-if="column.key === 'action'">
+              <a-space>
+                <a
+                  v-permission="'sys:tableConfig:edit'"
+                  @click="openEditDialog(record)"
+                >
+                  {{ t('common.edit') }}
+                </a>
+                <a
+                  v-permission="'sys:tableConfig:delete'"
+                  style="color: #ff4d4f;"
+                  @click="handleDelete(record.id!)"
+                >
+                  {{ t('common.delete') }}
+                </a>
+              </a-space>
+            </template>
           </template>
-          
-          <template v-else-if="column.key === 'tableType'">
-            <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
-            <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
-            <a-tag v-else-if="record.tableType === 'TREE'" color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
-          </template>
-          
-          <template v-else-if="column.key === 'enabled'">
-            <a-switch
-              :checked="record.enabled"
-              :loading="record.statusLoading"
-              @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
-            />
-          </template>
-          
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a
-                v-permission="'sys:tableConfig:edit'"
-                @click="openEditDialog(record)"
-              >
-                {{ t('common.edit') }}
-              </a>
-              <a
-                v-permission="'sys:tableConfig:delete'"
-                style="color: #ff4d4f;"
-                @click="handleDelete(record.id!)"
-              >
-                {{ t('common.delete') }}
-              </a>
-            </a-space>
-          </template>
-        </template>
-      </a-table>
+        </a-table>
+      </div>
     </a-card>
     
     <TableConfigFormDialog
@@ -153,7 +156,7 @@
  * @author Forgex
  * @version 1.0.0
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onBeforeUnmount, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
@@ -173,6 +176,9 @@ const { dictItems: yesNoOptions } = useDict('yes_no')
 const loading = ref(false)
 const dataSource = ref<TableConfigItem[]>([])
 const selectedRowKeys = ref<number[]>([])
+const tableWrapRef = ref<HTMLElement | null>(null)
+const autoScrollY = ref<number | undefined>(undefined)
+let computeScrollYRafPending = false
 
 const queryForm = reactive({
   tableCode: '',
@@ -187,7 +193,8 @@ const pagination = reactive({
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => t('common.total', { total })
+  showTotal: (total: number) => t('common.total', { total }),
+  hideOnSinglePage: false
 })
 
 // 表格列配置，使用硬编码的中文文本，确保显示正常
@@ -250,6 +257,21 @@ const columns = [
   }
 ]
 
+const tableScrollX = columns.reduce((sum: number, col: any) => {
+  if (typeof col?.width === 'number' && Number.isFinite(col.width)) {
+    return sum + col.width
+  }
+  return sum + 160
+}, 0)
+
+const tableScroll = computed(() => {
+  const out: any = { x: tableScrollX }
+  if (autoScrollY.value !== undefined && autoScrollY.value !== null) {
+    out.y = autoScrollY.value
+  }
+  return out
+})
+
 const rowKey = (record: TableConfigItem) => record.id!
 
 const dialogVisible = ref(false)
@@ -275,7 +297,54 @@ const fetchData = async () => {
     console.error('获取表格配置列表失败:', error)
   } finally {
     loading.value = false
+    await nextTick()
+    scheduleComputeAutoScrollY()
   }
+}
+
+const onResizeOrScroll = () => {
+  void nextTick().then(() => scheduleComputeAutoScrollY())
+}
+
+const scheduleComputeAutoScrollY = () => {
+  if (computeScrollYRafPending) return
+  computeScrollYRafPending = true
+  requestAnimationFrame(() => {
+    computeScrollYRafPending = false
+    computeAutoScrollY()
+  })
+}
+
+function computeAutoScrollY() {
+  const wrapEl = tableWrapRef.value
+  if (!wrapEl) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const rect = wrapEl.getBoundingClientRect()
+  if (!Number.isFinite(rect.height)) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const available = rect.height
+  if (!Number.isFinite(available) || available <= 0) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
+  const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
+
+  const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
+  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
+
+  const buffer = 16
+  const y = Math.floor(available - paginationHeight - headerHeight - buffer)
+  const nextY = y > 0 ? y : undefined
+  if (autoScrollY.value === nextY) return
+  autoScrollY.value = nextY
 }
 
 const handleSearch = () => {
@@ -384,11 +453,46 @@ const getTableName = (i18nJson: string | undefined) => {
 
 onMounted(() => {
   fetchData()
+  window.addEventListener('resize', onResizeOrScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResizeOrScroll as any)
 })
 </script>
 
 <style scoped>
 .table-config-management {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
+}
+
+.query-card {
+  margin-bottom: 16px;
+}
+
+.table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 </style>

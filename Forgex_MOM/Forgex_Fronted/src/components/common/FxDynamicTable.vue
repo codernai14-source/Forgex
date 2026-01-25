@@ -135,26 +135,18 @@
       </div>
       
       <!-- 数据表格 -->
-      <div class="fx-dynamic-table-wrap">
+      <div ref="tableWrapRef" class="fx-dynamic-table-wrap">
         <a-table
           :columns="tableColumns"
           :data-source="tableData"
           :loading="resolvedLoading"
           :row-selection="rowSelection"
-          :pagination="{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total: number) => String(t('common.total', { total })),
-            hideOnSinglePage: false
-          }"
+          :pagination="resolvedPagination"
           :default-expand-all-rows="defaultExpandAllRows"
           :expandable="expandable"
           :row-key="resolvedRowKey"
           @change="handleTableChange"
-          :scroll="{ x: 'max-content' }"
+          :scroll="resolvedScroll"
         >
         <!-- 自定义单元格内容插槽 -->
         <template #bodyCell="scope">
@@ -174,7 +166,7 @@
  * @author Forgex Team
  * @version 1.0.0
  */
-import { computed, onMounted, reactive, ref, watch, h } from 'vue'
+import { computed, onBeforeUnmount, onMounted, nextTick, reactive, ref, watch, h, resolveComponent } from 'vue'
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { DownOutlined } from '@ant-design/icons-vue'
@@ -227,6 +219,7 @@ const props = defineProps<{
   loading?: boolean
   pagination?: TableProps['pagination'] | false
   rowSelection?: TableProps['rowSelection']
+  scroll?: TableProps['scroll']
   defaultExpandAllRows?: boolean
   expandable?: TableProps['expandable']
   showQueryForm?: boolean
@@ -238,6 +231,128 @@ const { t, locale } = useI18n()
  * 表格配置
  */
 const config = ref<FxTableConfig>()
+
+const ATag = resolveComponent('a-tag') as any
+
+/**
+ * 尝试将字典翻译的 JSON 文本渲染为 Tag。
+ * <p>
+ * 该方法只在能够明确识别为“字典翻译 JSON”时才返回 Tag 节点；
+ * 否则返回 undefined，交由上层逻辑按普通文本处理。
+ * </p>
+ *
+ * @param dictText 字典翻译文本，可能为 JSON 字符串或对象
+ * @return 能渲染为 Tag 时返回 VNode，否则返回 undefined
+ * @throws 无显式抛出异常，解析失败时返回 undefined
+ * @see renderTagByDictText
+ */
+function tryRenderTagFromDictJson(dictText: any) {
+  if (dictText === undefined || dictText === null || dictText === '') {
+    return undefined
+  }
+
+  let parsed: any = undefined
+  if (typeof dictText === 'string') {
+    const trimmed = dictText.trim()
+    if (!(trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+      return undefined
+    }
+    try {
+      parsed = JSON.parse(trimmed)
+    } catch (e) {
+      return undefined
+    }
+  } else if (typeof dictText === 'object') {
+    parsed = dictText
+  } else {
+    return undefined
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return undefined
+  }
+
+  const label = parsed?.label ?? parsed?.name
+  if (label === undefined || label === null || label === '') {
+    return undefined
+  }
+
+  const style =
+    parsed?.borderColor || parsed?.backgroundColor
+      ? {
+          borderColor: parsed?.borderColor,
+          backgroundColor: parsed?.backgroundColor,
+        }
+      : undefined
+  return h(ATag, { color: parsed?.color || 'blue', style }, label)
+}
+
+/**
+ * 将字典翻译字段渲染为 Tag。
+ * <p>
+ * 支持以下输入：
+ * <ul>
+ *   <li>JSON字符串：包含 label/color 等信息</li>
+ *   <li>对象：包含 label/color 等信息</li>
+ *   <li>普通字符串：按默认蓝色 Tag 渲染</li>
+ * </ul>
+ * 当 dictText 为空时，会尝试从 fallbackText 中识别并渲染字典 JSON。
+ * </p>
+ *
+ * @param dictText 字典翻译字段值
+ * @param fallbackText 兜底显示内容（通常为原始字段值）
+ * @return 渲染后的 VNode 或字符串
+ * @throws 无显式抛出异常，解析失败时按文本回退
+ * @see tryRenderTagFromDictJson
+ */
+function renderTagByDictText(dictText: any, fallbackText: any) {
+  if (dictText === undefined || dictText === null || dictText === '') {
+    const fromFallback = tryRenderTagFromDictJson(fallbackText)
+    if (fromFallback !== undefined) {
+      return fromFallback
+    }
+    return fallbackText
+  }
+
+  if (typeof dictText === 'string') {
+    const trimmed = dictText.trim()
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const label = parsed?.label ?? parsed?.name ?? fallbackText ?? dictText
+          const style =
+            parsed?.borderColor || parsed?.backgroundColor
+              ? {
+                  borderColor: parsed?.borderColor,
+                  backgroundColor: parsed?.backgroundColor,
+                }
+              : undefined
+          return h(ATag, { color: parsed?.color || 'blue', style }, label)
+        }
+      } catch (e) {
+        return h(ATag, { color: 'blue' }, dictText)
+      }
+    }
+
+    return h(ATag, { color: 'blue' }, dictText)
+  }
+
+  if (typeof dictText === 'object') {
+    const parsed = dictText as any
+    const label = parsed?.label ?? parsed?.name ?? fallbackText
+    const style =
+      parsed?.borderColor || parsed?.backgroundColor
+        ? {
+            borderColor: parsed?.borderColor,
+            backgroundColor: parsed?.backgroundColor,
+          }
+        : undefined
+    return h(ATag, { color: parsed?.color || 'blue', style }, label)
+  }
+
+  return fallbackText
+}
 
 /**
  * 加载状态
@@ -280,6 +395,24 @@ const rowSelection = computed(() => props.rowSelection)
 const defaultExpandAllRows = computed(() => props.defaultExpandAllRows)
 const expandable = computed(() => props.expandable)
 
+const tableWrapRef = ref<HTMLElement | null>(null)
+const autoScrollY = ref<number | undefined>(undefined)
+
+let computeScrollYRafPending = false
+
+const scheduleComputeAutoScrollY = () => {
+  if (computeScrollYRafPending) return
+  computeScrollYRafPending = true
+  requestAnimationFrame(() => {
+    computeScrollYRafPending = false
+    computeAutoScrollY()
+  })
+}
+
+const onResizeOrScroll = () => {
+  void nextTick().then(() => scheduleComputeAutoScrollY())
+}
+
 /**
  * 查询模型
  */
@@ -315,52 +448,131 @@ const tableColumns = computed(() => {
       key: c.field,
       align: c.align,
       width: c.width,
-      fixed: c.fixed,
+      fixed: c.field === 'action' ? (c.fixed || 'right') : c.fixed,
       ellipsis: c.ellipsis,
       sorter: !!c.sortable,
     }
     
-    // 如果列有字典配置，添加自定义渲染
-    if (c.dictCode) {
-      column.customRender = ({ record }: any) => {
-        const value = record[c.field]
-        const dictItems = props.dictOptions?.[c.dictCode] || []
-        const dictItem = dictItems.find((item: any) => String(item.value) === String(value))
-        
-        if (dictItem) {
-          // 使用字典的tagStyle配置
-          if (dictItem.tagStyle?.color) {
-            return h('a-tag', { color: dictItem.tagStyle.color }, dictItem.label)
-          }
-          return dictItem.label
-        }
-        return value
-      }
-    }
-    
-    // 如果列有字典字段配置，添加自定义渲染
+    // 如果列有字典字段配置，添加自定义渲染（优先级更高）
     if (c.dictField) {
       column.customRender = ({ record }: any) => {
-        const value = record[c.dictField]
-        if (!value) {
-          return record[c.field]
+        const dictText = record?.[c.dictField]
+        return renderTagByDictText(dictText, record?.[c.field])
+      }
+    }
+    // 如果列有字典配置，添加自定义渲染
+    else if (c.dictCode) {
+      column.customRender = ({ record }: any) => {
+        const autoDictField = `${c.field}Text`
+        // 优先使用后端自动翻译生成的 xxxText 字段（可能为 JSON 字符串或对象）
+        const fromTextField = renderTagByDictText(record?.[autoDictField], undefined)
+        if (fromTextField !== undefined) {
+          return fromTextField
         }
-        
-        try {
-          const parsed = JSON.parse(value)
-          if (parsed.color && parsed.color !== 'default') {
-            return h('a-tag', { color: parsed.color }, parsed.label)
-          }
-          return parsed.label
-        } catch {
-          return value
+
+        const value = record?.[c.field]
+        // 兼容后端直接把字典 JSON 放在原字段上的情况（例如 gender/status 直接返回 JSON 字符串）
+        const fromValueJson = tryRenderTagFromDictJson(value)
+        if (fromValueJson !== undefined) {
+          return fromValueJson
         }
+
+        const dictItems = props.dictOptions?.[c.dictCode] || []
+        const dictItem = dictItems.find((item: any) => String(item.value) === String(value))
+
+        if (dictItem) {
+          const style =
+            dictItem.tagStyle?.borderColor || dictItem.tagStyle?.backgroundColor
+              ? {
+                  borderColor: dictItem.tagStyle?.borderColor,
+                  backgroundColor: dictItem.tagStyle?.backgroundColor,
+                }
+              : undefined
+          return h(
+            ATag,
+            { color: dictItem.tagStyle?.color || dictItem.color || 'blue', style },
+            dictItem.label,
+          )
+        }
+        return value
       }
     }
     
     return column
   })
 })
+
+const resolvedScroll = computed(() => {
+  const baseScroll = props.scroll || {}
+  const columns = tableColumns.value || []
+
+  let totalWidth = 0
+  for (const col of columns as any[]) {
+    const w = col?.width
+    if (typeof w === 'number' && Number.isFinite(w)) {
+      totalWidth += w
+      continue
+    }
+    if (typeof w === 'string') {
+      const parsed = Number.parseFloat(w)
+      if (Number.isFinite(parsed)) {
+        totalWidth += parsed
+        continue
+      }
+    }
+    totalWidth += 160
+  }
+
+  const x = (baseScroll as any)?.x ?? totalWidth
+  const baseY = (baseScroll as any)?.y
+  const y = baseY === undefined ? autoScrollY.value : baseY
+
+  const out: any = { ...(baseScroll as any), x }
+  if (y !== undefined && y !== null && y !== '') {
+    out.y = y
+  }
+  return out as any
+})
+
+function computeAutoScrollY() {
+  const baseScroll = props.scroll as any
+  if (baseScroll && baseScroll.y !== undefined) {
+    if (autoScrollY.value !== undefined) {
+      autoScrollY.value = undefined
+    }
+    return
+  }
+
+  const wrapEl = tableWrapRef.value
+  if (!wrapEl) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const rect = wrapEl.getBoundingClientRect()
+  if (!Number.isFinite(rect.height)) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const available = rect.height
+  if (!Number.isFinite(available) || available <= 0) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
+  const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
+
+  const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
+  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
+
+  const buffer = 16
+  const y = Math.floor(available - paginationHeight - headerHeight - buffer)
+  const nextY = y > 0 ? y : undefined
+  if (autoScrollY.value === nextY) return
+  autoScrollY.value = nextY
+}
 
 /**
  * 格式化排序信息
@@ -382,7 +594,10 @@ function normalizeSorter(sorter: any) {
 async function loadConfig() {
   try {
     // 从后端获取表格配置
-    config.value = await getTableConfig({ tableCode: props.tableCode })
+    const backendConfig = await getTableConfig({ tableCode: props.tableCode })
+    
+    // 合并后端配置和fallback配置，fallback配置优先
+    config.value = mergeConfigs(backendConfig, props.fallbackConfig)
   } catch (e) {
     console.error('获取表格配置失败:', e)
     // 如果获取失败，使用降级配置
@@ -403,6 +618,11 @@ async function loadConfig() {
       console.warn('使用默认空配置，表格可能无法正常显示')
     }
   }
+
+  if (config.value?.columns?.length) {
+    config.value.columns = normalizeColumns(config.value.columns as any)
+  }
+
   // 设置默认页码大小
   pagination.pageSize = config.value?.defaultPageSize || pagination.pageSize
   // 初始化查询模型
@@ -411,6 +631,96 @@ async function loadConfig() {
       queryModel[q.field] = undefined
     }
   }
+}
+
+/**
+ * 合并表格配置，fallback配置优先
+ * @param backendConfig 后端配置
+ * @param fallbackConfig 降级配置
+ * @returns 合并后的配置
+ */
+function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: Partial<FxTableConfig> | undefined): FxTableConfig {
+  // 如果没有后端配置，直接使用fallback配置
+  if (!backendConfig) {
+    return fallbackConfig as any
+  }
+  
+  // 如果没有fallback配置，直接使用后端配置
+  if (!fallbackConfig) {
+    return backendConfig
+  }
+  
+  const merged: FxTableConfig = { ...(backendConfig as any), ...(fallbackConfig as any) }
+
+  const backendColumns = normalizeColumns(backendConfig.columns || [])
+  const fallbackColumns = normalizeColumns((fallbackConfig.columns || []) as any[])
+
+  if (fallbackColumns.length) {
+    const backendMap = new Map<string, FxTableColumn>()
+    for (const bc of backendColumns) {
+      backendMap.set(bc.field, bc)
+    }
+
+    // 以 fallbackColumns 为主顺序；同 field 的列按 “后端 + fallback 覆盖” 合并
+    const mergedColumns: FxTableColumn[] = fallbackColumns.map(fc => {
+      const bc = backendMap.get(fc.field)
+      const mergedCol: any = { ...(bc as any), ...(fc as any) }
+
+      if ('fixed' in (fc as any)) {
+        mergedCol.fixed = (fc as any).fixed
+      } else {
+        mergedCol.fixed = undefined
+      }
+
+      return mergedCol
+    })
+
+    // 将后端中 fallback 未声明的列补齐（避免丢列）
+    const fallbackFieldSet = new Set(fallbackColumns.map(c => c.field))
+    for (const bc of backendColumns) {
+      if (!fallbackFieldSet.has(bc.field)) {
+        mergedColumns.push(bc)
+      }
+    }
+
+    merged.columns = mergedColumns
+  } else {
+    merged.columns = backendColumns
+  }
+
+  const backendQueryFields = backendConfig.queryFields || []
+  const fallbackQueryFields = (fallbackConfig.queryFields || []) as any[]
+
+  if (fallbackQueryFields.length) {
+    const backendMap = new Map<string, any>()
+    for (const bq of backendQueryFields) {
+      backendMap.set(bq.field, bq)
+    }
+    // 以 fallbackQueryFields 为主顺序；同 field 的查询项按 “后端 + fallback 覆盖” 合并
+    const mergedQueryFields = fallbackQueryFields.map(fq => {
+      const bq = backendMap.get(fq.field)
+      return { ...(bq as any), ...(fq as any) }
+    })
+    // 将后端中 fallback 未声明的查询项补齐
+    const fallbackFieldSet = new Set(fallbackQueryFields.map(q => q.field))
+    for (const bq of backendQueryFields) {
+      if (!fallbackFieldSet.has(bq.field)) {
+        mergedQueryFields.push(bq)
+      }
+    }
+    merged.queryFields = mergedQueryFields as any
+  } else {
+    merged.queryFields = backendQueryFields
+  }
+
+  return merged
+}
+
+function normalizeColumns(cols: any[]) {
+  return (Array.isArray(cols) ? cols : []).map((c: any) => {
+    const field = c?.field ?? c?.dataIndex ?? c?.key
+    return { ...(c as any), field } as FxTableColumn
+  }).filter((c: any) => !!c?.field)
 }
 
 /**
@@ -454,6 +764,8 @@ async function handleQuery(sorter?: any) {
     pagination.total = typeof total === 'number' ? total : parseInt(String(total) || '0', 10)
   } finally {
     loading.value = false
+    await nextTick()
+    scheduleComputeAutoScrollY()
   }
 }
 
@@ -537,9 +849,23 @@ watch(
 
 // 组件挂载时初始化
 onMounted(async () => {
+  window.addEventListener('resize', onResizeOrScroll, { passive: true })
+
   await loadConfig()
   await handleQuery()
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResizeOrScroll as any)
+})
+
+watch(
+  () => isQueryExpanded.value,
+  async () => {
+    await nextTick()
+    scheduleComputeAutoScrollY()
+  },
+)
 </script>
 
 <style scoped>
@@ -547,6 +873,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 100%;
+  min-height: 0;
 }
 
 .fx-card {
@@ -610,6 +938,18 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 
+.fx-table-card {
+  flex: 1;
+  min-height: 0;
+}
+
+.fx-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
 .fx-table-toolbar {
   display: flex;
   align-items: center;
@@ -619,7 +959,15 @@ onMounted(async () => {
 .fx-dynamic-table-wrap {
   margin-top: 8px;
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   min-width: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table) {
+  max-width: 100%;
 }
 </style>

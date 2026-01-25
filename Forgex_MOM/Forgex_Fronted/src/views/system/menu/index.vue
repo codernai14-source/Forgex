@@ -598,9 +598,11 @@ onMounted(async () => {
   .menu-layout {
     display: flex;
     width: 100%;
+    min-width: 0;
     
     .module-tabs {
       width: 140px;
+      flex-shrink: 0;
       border-right: 1px solid var(--fx-border-color);
       background: var(--fx-bg-container);
       
@@ -640,6 +642,8 @@ onMounted(async () => {
     
     .content-area {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
       padding: 12px 16px 8px;
       background: var(--fx-bg-container);
       

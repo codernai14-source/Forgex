@@ -557,6 +557,9 @@ onMounted(() => {
 .system-config {
   padding: 0;
   margin-top: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
 }
 
 /* Logo上传预览样式 */
