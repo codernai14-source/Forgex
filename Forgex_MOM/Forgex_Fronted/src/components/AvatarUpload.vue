@@ -150,7 +150,6 @@ function handleCrop() {
       imageUrl.value = url
       emit('update:modelValue', url)
       emit('success', url)
-      message.success('头像上传成功')
       cropperVisible.value = false
     } catch (error) {
       console.error('头像上传失败:', error)

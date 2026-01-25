@@ -18,7 +18,7 @@
           <div class="logo-upload-wrapper">
             <!-- 长方形logo预览区域，类似头像上传的预览效果 -->
             <div class="logo-preview-avatar">
-              <img v-if="formData.systemLogo" :src="formData.systemLogo" alt="system logo" />
+              <img v-if="systemLogoUrl" :src="systemLogoUrl" alt="system logo" />
               <div v-else class="logo-upload-placeholder">
                 <SettingOutlined class="logo-upload-icon" />
                 <div class="logo-upload-text">{{ t('common.uploadLogo') }}</div>
@@ -93,7 +93,7 @@
             </a-space>
           </a-upload>
           <div v-if="formData.loginBackgroundVideo" style="margin-top: 8px;">
-            <video :src="formData.loginBackgroundVideo" controls style="max-width: 300px; max-height: 200px;"></video>
+            <video :src="formatMediaUrl(formData.loginBackgroundVideo)" controls style="max-width: 300px; max-height: 200px;"></video>
           </div>
         </a-form-item>
 
@@ -114,7 +114,7 @@
               <a-avatar
                 :size="120"
                 v-if="formData.loginBackgroundImage"
-                :src="formData.loginBackgroundImage"
+                :src="formatMediaUrl(formData.loginBackgroundImage)"
               >
                 <template #icon>
                   <PictureOutlined />
@@ -206,16 +206,16 @@
             muted
             loop
             playsinline
-            :src="previewConfig.loginBackgroundVideo"
+            :src="formatMediaUrl(previewConfig.loginBackgroundVideo)"
           ></video>
           <img
             v-if="previewConfig.loginBackgroundType === 'image' && previewConfig.loginBackgroundImage"
             class="preview-bg-image"
-            :src="previewConfig.loginBackgroundImage"
+            :src="formatMediaUrl(previewConfig.loginBackgroundImage)"
           />
           <div class="preview-content">
             <div class="preview-brand">
-              <img v-if="previewConfig.systemLogo" :src="previewConfig.systemLogo" class="preview-logo" />
+              <img v-if="formatMediaUrl(previewConfig.systemLogo)" :src="formatMediaUrl(previewConfig.systemLogo)" class="preview-logo" />
               <span v-else class="preview-system-name">{{ previewConfig.systemName }}</span>
             </div>
             <div class="preview-title">{{ previewConfig.loginPageTitle }}</div>
@@ -259,7 +259,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { SettingOutlined, UploadOutlined, DeleteOutlined, PictureOutlined, CameraOutlined } from '@ant-design/icons-vue'
@@ -310,6 +310,20 @@ const formData = ref<SystemBasicConfig>({
 })
 
 const previewConfig = ref<SystemBasicConfig>({ ...formData.value })
+
+function formatMediaUrl(value: string): string {
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
+}
+
+const systemLogoUrl = computed(() => formatMediaUrl(formData.value.systemLogo))
 
 async function loadData() {
   try {
@@ -445,7 +459,7 @@ async function handleCropConfirm() {
         
         // 更新文件列表
         logoFileList.value = [{ 
-          uid: currentLogoFile.value.uid, 
+          uid: String((currentLogoFile.value as any).uid || Date.now()), 
           name: currentLogoFile.value.name, 
           status: 'done', 
           url: fileUrl 
@@ -455,9 +469,6 @@ async function handleCropConfirm() {
         cropVisible.value = false
         cropperImg.value = ''
         currentLogoFile.value = null
-        
-        // 只显示一次成功消息
-        message.success(t('common.uploadSuccess'))
       }
     })
   } catch (e: any) {
@@ -502,7 +513,6 @@ async function handleVideoUpload(options: any) {
     // 使用文件上传接口
     const fileUrl = await uploadFile(options.file)
     formData.value.loginBackgroundVideo = fileUrl
-    message.success(t('common.uploadSuccess'))
     // 更新文件列表
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
   } catch (e: any) {
@@ -535,7 +545,6 @@ async function handleBgImageUpload(options: any) {
     // 使用文件上传接口
     const fileUrl = await uploadFile(options.file)
     formData.value.loginBackgroundImage = fileUrl
-    message.success(t('common.uploadSuccess'))
     // 更新文件列表
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
   } catch (e: any) {

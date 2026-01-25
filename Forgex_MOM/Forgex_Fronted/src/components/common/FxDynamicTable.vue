@@ -1,10 +1,11 @@
 <template>
   <div class="fx-dynamic-table">
-    <!-- 搜索区域卡片 -->
+<!-- 搜索区域卡片（保留少量内边距，看起来更舒适） -->
     <a-card
       v-if="resolvedShowQueryForm && config && config.queryFields?.length"
       :bordered="false"
       class="fx-card fx-query-card"
+      :body-style="{ padding: '12px' }"
     >
       <a-form layout="inline" :model="queryModel" class="fx-query-form">
         <div class="fx-query-row">
@@ -128,32 +129,46 @@
       </a-form>
     </a-card>
     
-    <!-- 表格区域卡片 -->
-    <a-card :bordered="false" class="fx-card fx-table-card">
+<!-- 表格区域卡片（关键：去除 card body 的默认 24px padding，让表格区域最大化） -->
+    <a-card 
+      :bordered="false" 
+      class="fx-card fx-table-card"
+      :body-style="{ padding: '0px' }"
+    >
       <div v-if="$slots.toolbar" class="fx-table-toolbar">
         <slot name="toolbar" />
       </div>
       
       <!-- 数据表格 -->
-      <div ref="tableWrapRef" class="fx-dynamic-table-wrap">
-        <a-table
-          :columns="tableColumns"
-          :data-source="tableData"
-          :loading="resolvedLoading"
-          :row-selection="rowSelection"
-          :pagination="resolvedPagination"
-          :default-expand-all-rows="defaultExpandAllRows"
-          :expandable="expandable"
-          :row-key="resolvedRowKey"
-          @change="handleTableChange"
-          :scroll="resolvedScroll"
-        >
-        <!-- 自定义单元格内容插槽 -->
-        <template #bodyCell="scope">
-          <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
-          <slot v-else name="bodyCell" v-bind="scope" />
-        </template>
-      </a-table>
+      <div class="fx-table-content">
+        <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
+          <a-table
+            :columns="tableColumns"
+            :data-source="tableData"
+            :loading="resolvedLoading"
+            :row-selection="rowSelection"
+            :pagination="false"
+            :default-expand-all-rows="defaultExpandAllRows"
+            :expandable="expandable"
+            :row-key="resolvedRowKey"
+            @change="handleTableChange"
+            :scroll="resolvedScroll"
+          >
+          <!-- 自定义单元格内容插槽 -->
+          <template #bodyCell="scope">
+            <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
+            <slot v-else name="bodyCell" v-bind="scope" />
+          </template>
+        </a-table>
+        </div>
+
+        <div v-if="resolvedPaginationConfig" class="fx-table-pagination" :style="paginationAreaStyle">
+          <a-pagination
+            v-bind="resolvedPaginationConfig"
+            @change="handlePaginationChange"
+            @showSizeChange="handlePaginationShowSizeChange"
+          />
+        </div>
       </div>
     </a-card>
   </div>
@@ -223,6 +238,9 @@ const props = defineProps<{
   defaultExpandAllRows?: boolean
   expandable?: TableProps['expandable']
   showQueryForm?: boolean
+
+  // 已不再使用（旧版比例分配），保留仅为兼容性
+  tableHeightRatio?: number
 }>()
 
 const { t, locale } = useI18n()
@@ -236,15 +254,6 @@ const ATag = resolveComponent('a-tag') as any
 
 /**
  * 尝试将字典翻译的 JSON 文本渲染为 Tag。
- * <p>
- * 该方法只在能够明确识别为“字典翻译 JSON”时才返回 Tag 节点；
- * 否则返回 undefined，交由上层逻辑按普通文本处理。
- * </p>
- *
- * @param dictText 字典翻译文本，可能为 JSON 字符串或对象
- * @return 能渲染为 Tag 时返回 VNode，否则返回 undefined
- * @throws 无显式抛出异常，解析失败时返回 undefined
- * @see renderTagByDictText
  */
 function tryRenderTagFromDictJson(dictText: any) {
   if (dictText === undefined || dictText === null || dictText === '') {
@@ -289,21 +298,6 @@ function tryRenderTagFromDictJson(dictText: any) {
 
 /**
  * 将字典翻译字段渲染为 Tag。
- * <p>
- * 支持以下输入：
- * <ul>
- *   <li>JSON字符串：包含 label/color 等信息</li>
- *   <li>对象：包含 label/color 等信息</li>
- *   <li>普通字符串：按默认蓝色 Tag 渲染</li>
- * </ul>
- * 当 dictText 为空时，会尝试从 fallbackText 中识别并渲染字典 JSON。
- * </p>
- *
- * @param dictText 字典翻译字段值
- * @param fallbackText 兜底显示内容（通常为原始字段值）
- * @return 渲染后的 VNode 或字符串
- * @throws 无显式抛出异常，解析失败时按文本回退
- * @see tryRenderTagFromDictJson
  */
 function renderTagByDictText(dictText: any, fallbackText: any) {
   if (dictText === undefined || dictText === null || dictText === '') {
@@ -376,8 +370,8 @@ const pagination = reactive({
   total: 0,       // 总条数
 })
 
-const resolvedPagination = computed(() => {
-  if (props.pagination === false) return false
+const resolvedPaginationConfig = computed(() => {
+  if (props.pagination === false) return undefined
   const base = {
     current: pagination.current,
     pageSize: pagination.pageSize,
@@ -387,8 +381,11 @@ const resolvedPagination = computed(() => {
     showTotal: (total: number) => String(t('common.total', { total })),
     hideOnSinglePage: false,
   } as const
-  if (!props.pagination) return base
-  return { ...base, ...(props.pagination as any), hideOnSinglePage: false }
+  if (!props.pagination) return base as any
+  if (typeof props.pagination === 'object') {
+    return { ...base, ...(props.pagination as any), hideOnSinglePage: false } as any
+  }
+  return base as any
 })
 
 const rowSelection = computed(() => props.rowSelection)
@@ -397,6 +394,7 @@ const expandable = computed(() => props.expandable)
 
 const tableWrapRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
+const lastSorter = ref<any>(undefined)
 
 let computeScrollYRafPending = false
 
@@ -502,6 +500,21 @@ const tableColumns = computed(() => {
   })
 })
 
+/**
+ * 关键修改：表格区域始终占满剩余空间（无论是否有分页）
+ */
+const tableWrapStyle = computed(() => {
+  return { flex: '1 1 auto', minHeight: 0 } as any
+})
+
+/**
+ * 分页区域布局样式（保持不变）
+ */
+const paginationAreaStyle = computed(() => {
+  if (!resolvedPaginationConfig.value) return undefined
+  return { flex: '0 0 auto', marginTop: 'auto' } as any
+})
+
 const resolvedScroll = computed(() => {
   const baseScroll = props.scroll || {}
   const columns = tableColumns.value || []
@@ -561,14 +574,19 @@ function computeAutoScrollY() {
     return
   }
 
-  const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
-  const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
-
   const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
 
-  const buffer = 16
-  const y = Math.floor(available - paginationHeight - headerHeight - buffer)
+  const buffer = 0
+  let extraCompensation = 0  /* ← 关键：手动补偿 40px（根据你的情况调整 30-50px） */
+
+  // 如果有 toolbar，额外补偿一些（因为 toolbar 占高度）
+  const hasToolbar = !!document.querySelector('.fx-table-toolbar')
+  if (hasToolbar) {
+    extraCompensation += 20  // toolbar 通常占 ~40-50px，预留
+  }
+
+  const y = Math.floor(available - headerHeight - buffer + extraCompensation)
   const nextY = y > 0 ? y : undefined
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
@@ -576,8 +594,6 @@ function computeAutoScrollY() {
 
 /**
  * 格式化排序信息
- * @param sorter 排序信息
- * @returns 格式化后的排序信息
  */
 function normalizeSorter(sorter: any) {
   if (!sorter) return undefined
@@ -593,18 +609,13 @@ function normalizeSorter(sorter: any) {
  */
 async function loadConfig() {
   try {
-    // 从后端获取表格配置
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
-    
-    // 合并后端配置和fallback配置，fallback配置优先
     config.value = mergeConfigs(backendConfig, props.fallbackConfig)
   } catch (e) {
     console.error('获取表格配置失败:', e)
-    // 如果获取失败，使用降级配置
     if (props.fallbackConfig) {
       config.value = props.fallbackConfig as any
     } else {
-      // 如果没有降级配置，使用默认空配置，避免组件崩溃
       config.value = {
         tableCode: props.tableCode,
         tableName: '默认表格',
@@ -623,9 +634,7 @@ async function loadConfig() {
     config.value.columns = normalizeColumns(config.value.columns as any)
   }
 
-  // 设置默认页码大小
   pagination.pageSize = config.value?.defaultPageSize || pagination.pageSize
-  // 初始化查询模型
   for (const q of config.value?.queryFields || []) {
     if (!(q.field in queryModel)) {
       queryModel[q.field] = undefined
@@ -634,18 +643,13 @@ async function loadConfig() {
 }
 
 /**
- * 合并表格配置，fallback配置优先
- * @param backendConfig 后端配置
- * @param fallbackConfig 降级配置
- * @returns 合并后的配置
+ * 合并表格配置
  */
 function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: Partial<FxTableConfig> | undefined): FxTableConfig {
-  // 如果没有后端配置，直接使用fallback配置
   if (!backendConfig) {
     return fallbackConfig as any
   }
   
-  // 如果没有fallback配置，直接使用后端配置
   if (!fallbackConfig) {
     return backendConfig
   }
@@ -661,7 +665,6 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
       backendMap.set(bc.field, bc)
     }
 
-    // 以 fallbackColumns 为主顺序；同 field 的列按 “后端 + fallback 覆盖” 合并
     const mergedColumns: FxTableColumn[] = fallbackColumns.map(fc => {
       const bc = backendMap.get(fc.field)
       const mergedCol: any = { ...(bc as any), ...(fc as any) }
@@ -675,7 +678,6 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
       return mergedCol
     })
 
-    // 将后端中 fallback 未声明的列补齐（避免丢列）
     const fallbackFieldSet = new Set(fallbackColumns.map(c => c.field))
     for (const bc of backendColumns) {
       if (!fallbackFieldSet.has(bc.field)) {
@@ -696,12 +698,10 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
     for (const bq of backendQueryFields) {
       backendMap.set(bq.field, bq)
     }
-    // 以 fallbackQueryFields 为主顺序；同 field 的查询项按 “后端 + fallback 覆盖” 合并
     const mergedQueryFields = fallbackQueryFields.map(fq => {
       const bq = backendMap.get(fq.field)
       return { ...(bq as any), ...(fq as any) }
     })
-    // 将后端中 fallback 未声明的查询项补齐
     const fallbackFieldSet = new Set(fallbackQueryFields.map(q => q.field))
     for (const bq of backendQueryFields) {
       if (!fallbackFieldSet.has(bq.field)) {
@@ -725,16 +725,13 @@ function normalizeColumns(cols: any[]) {
 
 /**
  * 格式化查询条件
- * @returns 格式化后的查询条件
  */
 function normalizeQuery() {
   const out: Record<string, any> = {}
   if (!config.value) return out
   for (const q of config.value.queryFields || []) {
     const v = queryModel[q.field]
-    // 跳过空值
     if (v === undefined || v === null || v === '') continue
-    // 格式化日期范围
     if (q.queryType === 'dateRange' && Array.isArray(v) && v.length === 2) {
       out[q.field] = [dayjs(v[0]).format('YYYY-MM-DD HH:mm:ss'), dayjs(v[1]).format('YYYY-MM-DD HH:mm:ss')]
       continue
@@ -746,12 +743,10 @@ function normalizeQuery() {
 
 /**
  * 处理查询
- * @param sorter 排序信息
  */
 async function handleQuery(sorter?: any) {
   loading.value = true
   try {
-    // 发送请求获取数据
     const res = await props.request({
       page: { current: pagination.current, pageSize: pagination.pageSize },
       query: normalizeQuery(),
@@ -773,19 +768,15 @@ async function handleQuery(sorter?: any) {
  * 处理重置
  */
 function handleReset() {
-  // 清空查询条件
   for (const k of Object.keys(queryModel)) {
     queryModel[k] = undefined
   }
-  // 重置页码
   pagination.current = 1
-  // 重新查询
-  handleQuery()
+  handleQuery(lastSorter.value)
 }
 
 /**
  * 获取当前查询条件
- * @returns 当前查询条件
  */
 function getQuery() {
   return normalizeQuery()
@@ -793,7 +784,6 @@ function getQuery() {
 
 /**
  * 获取当前分页信息
- * @returns 当前分页信息
  */
 function getPage() {
   return { 
@@ -805,38 +795,42 @@ function getPage() {
 
 /**
  * 重新加载数据
- * @returns Promise<void>
  */
 function reload() {
   return handleQuery()
 }
 
-// 暴露方法给父组件
 function refresh() {
   return handleQuery()
 }
 
 defineExpose({ getQuery, getPage, reload, refresh })
 
-/**
- * 处理表格变化
- * @param pag 分页信息
- * @param _filters 过滤条件
- * @param sorter 排序信息
- */
 const handleTableChange: TableProps['onChange'] = (pag, _filters, sorter) => {
-  pagination.current = pag?.current || 1
-  pagination.pageSize = pag?.pageSize || pagination.pageSize
+  lastSorter.value = sorter
   handleQuery(sorter)
 }
 
-// 监听表格编码变化
+function handlePaginationChange(page: number, pageSize: number) {
+  pagination.current = page
+  if (pageSize && pageSize !== pagination.pageSize) {
+    pagination.pageSize = pageSize
+  }
+  handleQuery(lastSorter.value)
+}
+
+function handlePaginationShowSizeChange(current: number, size: number) {
+  pagination.current = 1
+  pagination.pageSize = size
+  handleQuery(lastSorter.value)
+}
+
 watch(
   () => props.tableCode,
   async () => {
     pagination.current = 1
     await loadConfig()
-    await handleQuery()
+    await handleQuery(lastSorter.value)
   },
 )
 
@@ -847,7 +841,6 @@ watch(
   },
 )
 
-// 组件挂载时初始化
 onMounted(async () => {
   window.addEventListener('resize', onResizeOrScroll, { passive: true })
 
@@ -939,7 +932,7 @@ watch(
 }
 
 .fx-table-card {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
 }
 
@@ -947,27 +940,86 @@ watch(
   display: flex;
   flex-direction: column;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  height: 100%;
 }
 
+/* toolbar 间距减少（从 12px → 8px） */
 .fx-table-toolbar {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+  /* 新增/调整：为表格内容区添加适量内边距（补偿 card body padding:0） */
+.fx-table-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 8px 0 8px;    /* 上下左右 8px，底部 0（留给分页器） */
+  box-sizing: border-box;
 }
 
 .fx-dynamic-table-wrap {
-  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   min-width: 0;
-  flex: 1;
+  min-height: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-spin-nested-loading),
+.fx-dynamic-table-wrap :deep(.ant-spin-container),
+.fx-dynamic-table-wrap :deep(.ant-table),
+.fx-dynamic-table-wrap :deep(.ant-table-container) {
+  flex: 1 1 auto;
   min-height: 0;
 }
 
 .fx-dynamic-table-wrap :deep(.ant-table) {
   max-width: 100%;
+}
+
+/* 分页器间距微调（让它紧贴底部但有呼吸感） */
+/* 分页器间距减少 */
+.fx-table-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 8px 8px 8px 8px;  /* 整体 8px，紧凑一些 */
+}
+
+.fx-table-pagination :deep(.ant-pagination) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.fx-table-pagination :deep(.ant-pagination-total-text) {
+  margin-right: auto;
+}
+
+/* 关键 hack：强制表格 body 最小高度 = 计算的 scroll.y（填满剩余空间） */
+:deep(.ant-table-body) {
+  min-height: v-bind(autoScrollY ? autoScrollY-100 + 'px' : '1px') !important;  /* 动态绑定计算值，fallback 400px */
+}
+
+/* 可选：让空数据时也有一点高度（避免完全塌陷） */
+:deep(.ant-table-placeholder) {
+  min-height: v-bind(autoScrollY ? autoScrollY-100 + 'px' : '1px') !important;  /* 动态绑定计算值，fallback 400px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 可选：如果空余部分想显示网格线或淡背景（更像完整表格） */
+:deep(.ant-table-body table) {
+  height: 100% !important;
 }
 </style>

@@ -23,12 +23,12 @@
       </fx-dynamic-table>
     </a-card>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="editOpen"
       :title="t('system.excel.importConfigTitle')"
       :width="980"
-      :confirm-loading="saving"
-      @ok="handleSave"
+      :loading="saving"
+      @submit="handleSave"
     >
       <a-form :model="editForm" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
         <a-form-item :label="t('system.excel.tableName')">
@@ -78,7 +78,7 @@
           </template>
         </template>
       </a-table>
-    </a-modal>
+    </BaseFormDialog>
   </div>
 </template>
 
@@ -87,6 +87,7 @@ import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { deleteImportConfig, downloadTemplate, importConfigDetail, pageImportConfig, saveImportConfig } from '@/api/system/excel'
 
 const { t } = useI18n()

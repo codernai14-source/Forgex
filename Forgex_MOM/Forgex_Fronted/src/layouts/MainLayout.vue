@@ -6,8 +6,10 @@
       :data-font-size="layoutConfig.fontSize"
     >
     <!-- 使用新的 AppHeader 组件 -->
-    <AppHeader
+  <AppHeader
       v-if="showHeader"
+      :logo="headerLogo"
+      :title="headerTitle"
       :layout-mode="layoutConfig.layoutMode"
       :modules="moduleList"
       :active-module-code="activeModuleCode"
@@ -53,7 +55,7 @@
         />
 
         <a-layout-content class="fx-content">
-          <div class="fx-content-inner">
+         <div class="fx-content-inner">
             <div v-if="layoutConfig.watermarkEnabled" class="fx-watermark-container">
               <div class="fx-watermark" v-for="i in 12" :key="i">
                 {{ layoutConfig.watermarkText }}
@@ -451,6 +453,21 @@ const systemConfig = ref<SystemBasicConfig>({
   primaryColor: '#05d9e8',
   secondaryColor: '#ff2a6d'
 })
+
+function formatMediaUrl(value: string): string {
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
+}
+
+const headerLogo = computed(() => formatMediaUrl(systemConfig.value.systemLogo))
+const headerTitle = computed(() => String(systemConfig.value.systemName || 'Forgex MOM'))
 
 locale.value = currentLocale.value as any
 
@@ -1265,9 +1282,18 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
 }
-
+/* 关键修改开始 */
 .fx-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden; /* 改为 hidden，防止整个内容区滚动 */
+  padding: 0;       /* 移除默认 padding（如果有的话） */
+}
+.fx-content-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;            /* 统一页面内边距（可根据需要调整） */
+  box-sizing: border-box;   /* 让 padding 包含在 height 100% 内 */
+  position: relative;       /* 为 watermark 绝对定位提供参考 */
 }
 </style>

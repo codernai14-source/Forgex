@@ -375,6 +375,16 @@ onMounted(() => {
 
 <style scoped lang="less">
 .user-management {
-  padding: 16px;
+  /* 移除 padding: 16px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  /* 如果你仍想在页面内部加点间距，可以在这里加 margin 或在 FxDynamicTable 外包一层 div 加 padding */
+}
+element.style {
+    overflow: auto scroll;
+    height: 50vh;
 }
 </style>

@@ -256,9 +256,15 @@ const systemConfig = ref<SystemBasicConfig>({
 })
 
 function formatMediaUrl(value: string): string {
-  if (!value) return ''
-  if (value.startsWith('data:')) return value
-  return value.startsWith('/') ? value : ''
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
 }
 
 function formatTenantLogo(url?: string) {

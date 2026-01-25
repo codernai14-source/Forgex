@@ -127,6 +127,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
             cd.setQueryType(c.getQueryType());
             cd.setQueryOperator(c.getQueryOperator());
             cd.setDictCode(c.getDictCode());
+            cd.setDictField(StringUtils.hasText(c.getField()) ? c.getField() + "Text" : null);
             cd.setRenderType(c.getRenderType());
             cd.setPermKey(c.getPermKey());
             columnDtos.add(cd);
