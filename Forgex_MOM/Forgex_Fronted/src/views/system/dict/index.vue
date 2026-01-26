@@ -1,6 +1,6 @@
 <template>
   <div class="dict-container">
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="dict-table-card">
       <!-- 工具栏 -->
       <div class="toolbar">
         <a-button type="primary" @click="handleAdd(null)">新增字典类型</a-button>
@@ -226,10 +226,35 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .dict-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .toolbar {
   margin-bottom: 20px;
+}
+
+.dict-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dict-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.dict-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

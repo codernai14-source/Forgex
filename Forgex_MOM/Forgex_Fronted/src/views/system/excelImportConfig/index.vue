@@ -1,6 +1,6 @@
 <template>
   <div class="excel-config-container">
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="excel-table-card">
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'ExcelImportConfigTable'"
@@ -238,6 +238,31 @@ async function handleDownload(tableCode: string) {
 
 <style scoped lang="less">
 .excel-config-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.excel-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.excel-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.excel-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

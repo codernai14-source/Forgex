@@ -269,6 +269,16 @@ onMounted(() => {
 
 <style scoped lang="less">
 .module-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
+}
+
+.module-container :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

@@ -9,5 +9,10 @@ import http from '../http'
 export function uploadFile(file: File, config: any = {}) {
   const fd = new FormData()
   fd.append('file', file)
-  return http.post('/sys/file/upload', fd, config)
+  return http.post('/sys/file/upload', fd, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    ...config
+  })
 }

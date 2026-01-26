@@ -133,7 +133,7 @@
     <a-card 
       :bordered="false" 
       class="fx-card fx-table-card"
-      :body-style="{ padding: '0px' }"
+      :body-style="{ padding: '10px' }"
     >
       <div v-if="$slots.toolbar" class="fx-table-toolbar">
         <slot name="toolbar" />
@@ -181,7 +181,7 @@
  * @author Forgex Team
  * @version 1.0.0
  */
-import { computed, onBeforeUnmount, onMounted, nextTick, reactive, ref, watch, h, resolveComponent } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, onMounted, nextTick, reactive, ref, watch, h, resolveComponent } from 'vue'
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { DownOutlined } from '@ant-design/icons-vue'
@@ -370,8 +370,25 @@ const pagination = reactive({
   total: 0,       // 总条数
 })
 
+/**
+ * 当前组件是否显式传入了 pagination 属性。
+ * <p>
+ * 由于 pagination 的 TS 类型包含字面量 false，Vue 可能会将其推导为 Boolean prop，
+ * 从而在未传入时 props.pagination 也会变成 false，导致默认分页被错误关闭。
+ * </p>
+ *
+ * @return 是否显式传入 pagination
+ */
+const isPaginationPropPassed = computed(() => {
+  const instance = getCurrentInstance()
+  const vnodeProps: any = instance?.vnode?.props
+  if (!vnodeProps) return false
+  return Object.prototype.hasOwnProperty.call(vnodeProps, 'pagination')
+})
+
 const resolvedPaginationConfig = computed(() => {
-  if (props.pagination === false) return undefined
+  if (isPaginationPropPassed.value && props.pagination === false) return undefined
+
   const base = {
     current: pagination.current,
     pageSize: pagination.pageSize,
@@ -381,7 +398,8 @@ const resolvedPaginationConfig = computed(() => {
     showTotal: (total: number) => String(t('common.total', { total })),
     hideOnSinglePage: false,
   } as const
-  if (!props.pagination) return base as any
+
+  if (!isPaginationPropPassed.value || props.pagination === undefined) return base as any
   if (typeof props.pagination === 'object') {
     return { ...base, ...(props.pagination as any), hideOnSinglePage: false } as any
   }
@@ -574,19 +592,14 @@ function computeAutoScrollY() {
     return
   }
 
+  // 获取表格头部高度
   const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
 
-  const buffer = 0
-  let extraCompensation = 0  /* ← 关键：手动补偿 40px（根据你的情况调整 30-50px） */
-
-  // 如果有 toolbar，额外补偿一些（因为 toolbar 占高度）
-  const hasToolbar = !!document.querySelector('.fx-table-toolbar')
-  if (hasToolbar) {
-    extraCompensation += 20  // toolbar 通常占 ~40-50px，预留
-  }
-
-  const y = Math.floor(available - headerHeight - buffer + extraCompensation)
+  // tableWrapRef 仅包含表格区域（不包含 toolbar / pagination），因此这里只需扣除表头与少量缓冲
+  const buffer = 8
+  const y = Math.floor(available - headerHeight - buffer)
+  
   const nextY = y > 0 ? y : undefined
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
@@ -841,6 +854,16 @@ watch(
   },
 )
 
+watch(
+  pagination,
+  async () => {
+    // 分页信息变化时重新计算表格高度，确保表格正确显示
+    await nextTick()
+    scheduleComputeAutoScrollY()
+  },
+  { deep: true }
+)
+
 onMounted(async () => {
   window.addEventListener('resize', onResizeOrScroll, { passive: true })
 
@@ -958,6 +981,7 @@ watch(
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   padding: 8px 8px 0 8px;    /* 上下左右 8px，底部 0（留给分页器） */
   box-sizing: border-box;
 }
@@ -1003,23 +1027,5 @@ watch(
 
 .fx-table-pagination :deep(.ant-pagination-total-text) {
   margin-right: auto;
-}
-
-/* 关键 hack：强制表格 body 最小高度 = 计算的 scroll.y（填满剩余空间） */
-:deep(.ant-table-body) {
-  min-height: v-bind(autoScrollY ? autoScrollY-100 + 'px' : '1px') !important;  /* 动态绑定计算值，fallback 400px */
-}
-
-/* 可选：让空数据时也有一点高度（避免完全塌陷） */
-:deep(.ant-table-placeholder) {
-  min-height: v-bind(autoScrollY ? autoScrollY-100 + 'px' : '1px') !important;  /* 动态绑定计算值，fallback 400px */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 可选：如果空余部分想显示网格线或淡背景（更像完整表格） */
-:deep(.ant-table-body table) {
-  height: 100% !important;
 }
 </style>

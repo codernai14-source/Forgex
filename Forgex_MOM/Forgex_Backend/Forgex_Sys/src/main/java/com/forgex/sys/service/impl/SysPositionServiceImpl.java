@@ -14,6 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.sys.domain.dto.position.SysPositionDTO;
 import com.forgex.sys.domain.dto.position.SysPositionQueryDTO;
 import com.forgex.sys.domain.dto.position.SysPositionSaveParam;
@@ -44,30 +46,7 @@ public class SysPositionServiceImpl implements SysPositionService {
     
     @Override
     public List<SysPositionDTO> list(SysPositionQueryDTO queryDTO) {
-        LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysPosition::getDeleted, false);
-        
-        // 职位名称模糊查询
-        if (StringUtils.hasText(queryDTO.getPositionName())) {
-            wrapper.like(SysPosition::getPositionName, queryDTO.getPositionName());
-        }
-        
-        // 职位编码模糊查询
-        if (StringUtils.hasText(queryDTO.getPositionCode())) {
-            wrapper.like(SysPosition::getPositionCode, queryDTO.getPositionCode());
-        }
-        
-        // 状态
-        if (queryDTO.getStatus() != null) {
-            wrapper.eq(SysPosition::getStatus, queryDTO.getStatus());
-        }
-        
-        // 部门ID过滤
-        if (queryDTO.getDepartmentId() != null) {
-            wrapper.eq(SysPosition::getDepartmentId, queryDTO.getDepartmentId());
-        }
-        
-        wrapper.orderByAsc(SysPosition::getOrderNum);
+        LambdaQueryWrapper<SysPosition> wrapper = buildQueryWrapper(queryDTO);
         
         List<SysPosition> positions = positionMapper.selectList(wrapper);
         
@@ -76,11 +55,29 @@ public class SysPositionServiceImpl implements SysPositionService {
                 .collect(Collectors.toList());
     }
     
+    /**
+     * 分页查询职位列表
+     *
+     * @param page     分页参数
+     * @param queryDTO 查询参数
+     * @return 分页结果
+     */
+    @Override
+    public IPage<SysPositionDTO> pagePositions(Page<SysPosition> page, SysPositionQueryDTO queryDTO) {
+        LambdaQueryWrapper<SysPosition> wrapper = buildQueryWrapper(queryDTO);
+        IPage<SysPosition> positionPage = positionMapper.selectPage(page, wrapper);
+        return positionPage.convert(this::convertToDTO);
+    }
+    
     @Override
     public SysPositionDTO getById(Long id, Long tenantId) {
         LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysPosition::getId, id)
                .eq(SysPosition::getDeleted, false);
+        
+        if (tenantId != null) {
+            wrapper.eq(SysPosition::getTenantId, tenantId);
+        }
         
         SysPosition position = positionMapper.selectOne(wrapper);
         
@@ -182,5 +179,44 @@ public class SysPositionServiceImpl implements SysPositionService {
         SysPositionDTO dto = new SysPositionDTO();
         BeanUtils.copyProperties(position, dto);
         return dto;
+    }
+    
+    /**
+     * 构建职位查询条件
+     *
+     * @param queryDTO 查询参数
+     * @return 查询条件
+     */
+    private LambdaQueryWrapper<SysPosition> buildQueryWrapper(SysPositionQueryDTO queryDTO) {
+        LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysPosition::getDeleted, false);
+        
+        if (queryDTO.getTenantId() != null) {
+            wrapper.eq(SysPosition::getTenantId, queryDTO.getTenantId());
+        }
+        
+        // 职位名称模糊查询
+        if (StringUtils.hasText(queryDTO.getPositionName())) {
+            wrapper.like(SysPosition::getPositionName, queryDTO.getPositionName());
+        }
+        
+        // 职位编码模糊查询
+        if (StringUtils.hasText(queryDTO.getPositionCode())) {
+            wrapper.like(SysPosition::getPositionCode, queryDTO.getPositionCode());
+        }
+        
+        // 状态
+        if (queryDTO.getStatus() != null) {
+            wrapper.eq(SysPosition::getStatus, queryDTO.getStatus());
+        }
+        
+        // 部门ID过滤
+        if (queryDTO.getDepartmentId() != null) {
+            wrapper.eq(SysPosition::getDepartmentId, queryDTO.getDepartmentId());
+        }
+        
+        wrapper.orderByAsc(SysPosition::getOrderNum);
+        
+        return wrapper;
     }
 }

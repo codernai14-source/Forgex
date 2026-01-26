@@ -383,8 +383,4 @@ onMounted(() => {
   overflow: hidden;
   /* 如果你仍想在页面内部加点间距，可以在这里加 margin 或在 FxDynamicTable 外包一层 div 加 padding */
 }
-element.style {
-    overflow: auto scroll;
-    height: 50vh;
-}
 </style>

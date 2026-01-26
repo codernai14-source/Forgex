@@ -69,6 +69,15 @@ export function listTenant(params: TenantQueryDTO) {
 }
 
 /**
+ * 分页查询租户列表
+ * @param params 分页查询参数
+ * @returns 分页结果
+ */
+export function getTenantPage(params: TenantQueryDTO & { pageNum: number; pageSize: number }) {
+  return http.post<{ records: TenantDTO[]; total: number }>('/sys/tenant/page', params)
+}
+
+/**
  * 获取租户详情
  * @param params 参数（id）
  * @returns 租户详情

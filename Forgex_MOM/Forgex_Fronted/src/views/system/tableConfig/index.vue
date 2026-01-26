@@ -2,41 +2,41 @@
   <div class="table-config-management">
     <a-card :bordered="false" class="query-card">
       <a-form layout="inline">
-        <a-form-item label="表格代码">
+        <a-form-item :label="t('system.tableConfig.tableCode')">
           <a-input
             v-model:value="queryForm.tableCode"
-            placeholder="请输入表格代码"
+            :placeholder="t('system.tableConfig.form.tableCode')"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item label="表格名称">
+        <a-form-item :label="t('system.tableConfig.tableName')">
           <a-input
             v-model:value="queryForm.tableName"
-            placeholder="请输入表格名称"
+            :placeholder="t('system.tableConfig.form.tableName')"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item label="表格类型">
+        <a-form-item :label="t('system.tableConfig.tableType')">
           <a-select
             v-model:value="queryForm.tableType"
-            placeholder="请选择表格类型"
+            :placeholder="t('system.tableConfig.form.tableType')"
             allow-clear
             style="width: 150px;"
           >
-            <a-select-option value="NORMAL">普通表格</a-select-option>
-            <a-select-option value="LAZY">懒加载表格</a-select-option>
-            <a-select-option value="TREE">树形表格</a-select-option>
+            <a-select-option value="NORMAL">{{ t('system.tableConfig.tableTypeNormal') }}</a-select-option>
+            <a-select-option value="LAZY">{{ t('system.tableConfig.tableTypeLazy') }}</a-select-option>
+            <a-select-option value="TREE">{{ t('system.tableConfig.tableTypeTree') }}</a-select-option>
           </a-select>
         </a-form-item>
         
-        <a-form-item label="启用状态">
+        <a-form-item :label="t('system.tableConfig.enabled')">
           <a-select
             v-model:value="queryForm.enabled"
-            placeholder="请选择启用状态"
+            :placeholder="t('system.tableConfig.form.enabled')"
             allow-clear
             style="width: 120px;"
           >
@@ -49,10 +49,10 @@
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
-              搜索
+              {{ t('common.search') }}
             </a-button>
             <a-button @click="handleReset">
-              重置
+              {{ t('common.reset') }}
             </a-button>
           </a-space>
         </a-form-item>
@@ -67,7 +67,7 @@
             type="primary"
             @click="openAddDialog"
           >
-            新增配置
+            {{ t('system.tableConfig.add') }}
           </a-button>
           <a-button
             v-permission="'sys:tableConfig:delete'"
@@ -75,7 +75,7 @@
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
           >
-            批量删除
+            {{ t('common.batchDelete') }}
           </a-button>
         </a-space>
       </div>
@@ -168,6 +168,7 @@ import {
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
+import { getLocale } from '@/locales'
 
 // 使用 global 作用域获取全局 i18n 实例，确保国际化生效
 const { t } = useI18n({ useScope: 'global' })
@@ -197,75 +198,76 @@ const pagination = reactive({
   hideOnSinglePage: false
 })
 
-// 表格列配置，使用硬编码的中文文本，确保显示正常
-const columns = [
+const columns = computed(() => [
   {
-    title: '表格代码',
+    title: t('system.tableConfig.tableCode'),
     dataIndex: 'tableCode',
     key: 'tableCode',
     width: 180
   },
   {
-    title: '表格名称',
+    title: t('system.tableConfig.tableName'),
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 200,
     ellipsis: true
   },
   {
-    title: '表格类型',
+    title: t('system.tableConfig.tableType'),
     dataIndex: 'tableType',
     key: 'tableType',
     width: 120
   },
   {
-    title: '行Key',
+    title: t('system.tableConfig.rowKey'),
     dataIndex: 'rowKey',
     key: 'rowKey',
     width: 120
   },
   {
-    title: '默认分页大小',
+    title: t('system.tableConfig.defaultPageSize'),
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 120
   },
   {
-    title: '启用状态',
+    title: t('system.tableConfig.enabled'),
     dataIndex: 'enabled',
     key: 'enabled',
     width: 100,
     align: 'center' as const
   },
   {
-    title: '创建人',
+    title: t('system.user.createBy'),
     dataIndex: 'createBy',
     key: 'createBy',
-    width: 100
+    width: 120
   },
   {
-    title: '创建时间',
+    title: t('common.createTime'),
     dataIndex: 'createTime',
     key: 'createTime',
     width: 180
   },
   {
-    title: '操作',
+    title: t('common.action'),
     key: 'action',
     width: 150,
     fixed: 'right' as const
   }
-]
+])
 
-const tableScrollX = columns.reduce((sum: number, col: any) => {
-  if (typeof col?.width === 'number' && Number.isFinite(col.width)) {
-    return sum + col.width
-  }
-  return sum + 160
-}, 0)
+const tableScrollX = computed(() => {
+  return columns.value.reduce((sum: number, col: any) => {
+    if (typeof col?.width === 'number' && Number.isFinite(col.width)) {
+      return sum + col.width
+    }
+    return sum + 160
+  }, 0)
+})
 
 const tableScroll = computed(() => {
-  const out: any = { x: tableScrollX }
+  const out: any = { x: tableScrollX.value }
   if (autoScrollY.value !== undefined && autoScrollY.value !== null) {
     out.y = autoScrollY.value
   }
@@ -445,7 +447,8 @@ const getTableName = (i18nJson: string | undefined) => {
   if (!i18nJson) return ''
   try {
     const i18nData = JSON.parse(i18nJson)
-    return i18nData['zh-CN'] || i18nData['en-US'] || Object.values(i18nData)[0] || ''
+    const currentLocale = getLocale()
+    return i18nData[currentLocale] || i18nData['zh-CN'] || i18nData['en-US'] || Object.values(i18nData)[0] || ''
   } catch {
     return i18nJson
   }
@@ -487,12 +490,20 @@ onBeforeUnmount(() => {
   flex-direction: column;
   min-height: 0;
   flex: 1;
+  height: 100%;
 }
 
 .table-wrap {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
+}
+
+.table-wrap :deep(.ant-table-wrapper) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

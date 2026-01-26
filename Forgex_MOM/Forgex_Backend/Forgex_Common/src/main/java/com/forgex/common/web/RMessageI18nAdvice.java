@@ -69,6 +69,7 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
                 }
             }
             r.setMessageCode(null);
+            r.setI18n(null);
         }
         return body;
     }

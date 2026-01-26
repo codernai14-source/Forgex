@@ -9,7 +9,6 @@
       :dict-options="dictOptions"
       row-key="id"
       :show-query-form="true"
-      :scroll="{ y: tableHeight }"
     >
       <template #toolbar>
         <a-space>
@@ -161,7 +160,7 @@ import {
   ReloadOutlined
 } from '@ant-design/icons-vue'
 import {
-  listTenant,
+  getTenantPage,
   createTenant,
   updateTenant,
   deleteTenant,
@@ -182,7 +181,6 @@ const formRef = ref()
 const tableRef = ref()
 
 const loading = ref(false)
-const tableHeight = ref(500)
 
 const dialogVisible = ref(false)
 const saving = ref(false)
@@ -272,11 +270,29 @@ const dictOptions = computed(() => ({
 }))
 
 // 处理表格数据请求
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   try {
     loading.value = true
-    const data = await listTenant(params)
-    return { records: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 }
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
+      ...payload.query
+    }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getTenantPage(params)
+    // 确保total是数字类型
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total: total }
   } catch (e: any) {
     message.error(e.message || '加载租户列表失败')
     return { records: [], total: 0 }
@@ -375,15 +391,18 @@ async function handleDelete(record: TenantDTO) {
 
 onMounted(() => {
   tableRef.value?.refresh?.()
-  tableHeight.value = window.innerHeight - 300
 })
 </script>
 
 <style scoped>
 .page-wrap {
   padding: 16px;
-  height: calc(100vh - 84px);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .tenant-logo-upload {

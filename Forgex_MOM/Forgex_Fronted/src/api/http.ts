@@ -99,8 +99,16 @@ http.interceptors.request.use(cfg => {
   }
   
   // 添加语言头
-  cfg.headers['Accept-Language'] = getLocale()
-  cfg.headers['X-Lang'] = getLocale()
+  const locale = getLocale()
+  const headersAny: any = cfg.headers || {}
+  if (typeof headersAny.set === 'function') {
+    headersAny.set('Accept-Language', locale)
+    headersAny.set('X-Lang', locale)
+  } else {
+    headersAny['Accept-Language'] = locale
+    headersAny['X-Lang'] = locale
+  }
+  cfg.headers = headersAny
   
   return cfg
 })

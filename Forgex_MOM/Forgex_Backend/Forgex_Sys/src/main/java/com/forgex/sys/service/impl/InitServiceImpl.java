@@ -341,7 +341,8 @@ public class InitServiceImpl implements InitService {
         SysModule sysModule = new SysModule();
         sysModule.setTenantId(defaultTenantId);
         sysModule.setCode("sys");
-        sysModule.setName("系统");
+        sysModule.setName("系统管理");
+        sysModule.setNameI18nJson("{\"zh-CN\":\"系统管理\",\"en-US\":\"System Management\"}");
         sysModule.setIcon("setting");
         sysModule.setOrderNum(10);
         sysModule.setVisible(true);
@@ -356,6 +357,7 @@ public class InitServiceImpl implements InitService {
         userMenu.setType("menu");
         userMenu.setPath("user");
         userMenu.setName("用户管理");
+        userMenu.setNameI18nJson("{\"zh-CN\":\"用户管理\",\"en-US\":\"User Management\"}");
         userMenu.setIcon("user");
         userMenu.setComponentKey("SysUser");
         userMenu.setOrderNum(10);
@@ -370,6 +372,7 @@ public class InitServiceImpl implements InitService {
         roleMenu.setType("menu");
         roleMenu.setPath("role");
         roleMenu.setName("角色管理");
+        roleMenu.setNameI18nJson("{\"zh-CN\":\"角色管理\",\"en-US\":\"Role Management\"}");
         roleMenu.setIcon("team");
         roleMenu.setComponentKey("SysRole");
         roleMenu.setOrderNum(20);
@@ -383,6 +386,7 @@ public class InitServiceImpl implements InitService {
         userView.setParentId(userMenu.getId());
         userView.setType("button");
         userView.setName("用户查看");
+        userView.setNameI18nJson("{\"zh-CN\":\"用户查看\",\"en-US\":\"View User\"}");
         userView.setPermKey("user.view");
         userView.setOrderNum(1);
         userView.setVisible(true);
@@ -395,6 +399,7 @@ public class InitServiceImpl implements InitService {
         userEdit.setParentId(userMenu.getId());
         userEdit.setType("button");
         userEdit.setName("用户编辑");
+        userEdit.setNameI18nJson("{\"zh-CN\":\"用户编辑\",\"en-US\":\"Edit User\"}");
         userEdit.setPermKey("user.edit");
         userEdit.setOrderNum(2);
         userEdit.setVisible(true);
@@ -407,6 +412,7 @@ public class InitServiceImpl implements InitService {
         roleView.setParentId(roleMenu.getId());
         roleView.setType("button");
         roleView.setName("角色查看");
+        roleView.setNameI18nJson("{\"zh-CN\":\"角色查看\",\"en-US\":\"View Role\"}");
         roleView.setPermKey("role.view");
         roleView.setOrderNum(1);
         roleView.setVisible(true);
@@ -419,6 +425,7 @@ public class InitServiceImpl implements InitService {
         roleEdit.setParentId(roleMenu.getId());
         roleEdit.setType("button");
         roleEdit.setName("角色编辑");
+        roleEdit.setNameI18nJson("{\"zh-CN\":\"角色编辑\",\"en-US\":\"Edit Role\"}");
         roleEdit.setPermKey("role.edit");
         roleEdit.setOrderNum(2);
         roleEdit.setVisible(true);

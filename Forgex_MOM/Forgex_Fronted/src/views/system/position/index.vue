@@ -173,7 +173,7 @@ import DeptTree from '@/components/system/DeptTree.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getDepartmentTree } from '@/api/system/department'
 import {
-  listPositions,
+  getPositionPage,
   createPosition,
   updatePosition,
   deletePosition
@@ -230,32 +230,42 @@ const dictOptions = ref({
 /**
  * 处理表格数据请求
  */
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   if (!currentTenantId.value) {
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   }
   
   loading.value = true
   try {
-    const data = await listPositions({
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
       tenantId: currentTenantId.value,
       ...searchForm.value,
-      ...params
-    })
-    return {
-      success: true,
-      data: data || [],
-      total: data?.length || 0
+      ...payload.query
     }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getPositionPage(params)
+    // 确保total是数字类型
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total: total }
   } catch (e) {
     message.error('加载职位列表失败')
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   } finally {
@@ -439,12 +449,48 @@ onMounted(async () => {
 
 <style scoped>
 .page-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .content-card {
-  margin-bottom: 16px;
-  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.content-card :deep(.ant-row) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content-card :deep(.ant-col) {
+  min-height: 0;
+}
+
+.table-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.table-area :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .card-title {

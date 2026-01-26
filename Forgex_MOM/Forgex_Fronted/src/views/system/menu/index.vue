@@ -32,7 +32,6 @@
               onChange: handleSelectionChange
             }"
             :pagination="false"
-            :scroll="{ y: 'calc(100vh - 380px)' }"
             row-key="id"
             :default-expand-all-rows="true"
           >
@@ -587,24 +586,42 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .menu-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
   
   .main-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
     :deep(.ant-card-body) {
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
     }
   }
   
   .menu-layout {
     display: flex;
+    flex: 1 1 auto;
     width: 100%;
     min-width: 0;
+    min-height: 0;
     
     .module-tabs {
       width: 140px;
       flex-shrink: 0;
       border-right: 1px solid var(--fx-border-color);
       background: var(--fx-bg-container);
+      min-height: 0;
       
       :deep(.ant-tabs) {
         height: 100%;
@@ -646,6 +663,9 @@ onMounted(async () => {
       overflow: hidden;
       padding: 12px 16px 8px;
       background: var(--fx-bg-container);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
       
       .search-bar {
         margin-bottom: 16px;
@@ -656,6 +676,11 @@ onMounted(async () => {
       
       .table-toolbar {
         margin-bottom: 16px;
+      }
+
+      :deep(.fx-dynamic-table) {
+        flex: 1 1 auto;
+        min-height: 0;
       }
     }
   }

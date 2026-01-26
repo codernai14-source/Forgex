@@ -110,6 +110,16 @@ const handleExport = async () => {
 
 <style scoped lang="less">
 .login-log-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-log-container :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

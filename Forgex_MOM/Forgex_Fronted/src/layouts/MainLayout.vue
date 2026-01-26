@@ -503,6 +503,30 @@ const lastScrollY = ref(typeof window !== 'undefined' ? window.scrollY || 0 : 0)
 
 const showHeader = computed(() => layoutConfig.value.headerVisible && !headerHiddenByScroll.value)
 
+/**
+ * 将后端/路由返回的标题转换为当前语言的显示文案。
+ * <p>
+ * 兼容两种数据来源：
+ * <ul>
+ *   <li>后端已按语言解析后的“直出文本”（直接返回原值）</li>
+ *   <li>后端返回的是 i18n key（如 system.xxx / common.xxx），则使用 t() 翻译</li>
+ * </ul>
+ * </p>
+ *
+ * @param rawTitle 原始标题（可能为 i18n key 或直出文本）
+ * @return 当前语言下的标题文本
+ */
+function resolveMenuTitle(rawTitle: unknown): string {
+  const title = String(rawTitle ?? '')
+  if (!title) {
+    return ''
+  }
+  if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+    return t(title)
+  }
+  return title
+}
+
 function handleScroll() {
   if (layoutConfig.value.headerMode !== 'hide-on-scroll') {
     headerHiddenByScroll.value = false
@@ -535,7 +559,7 @@ const moduleMenus = computed(() => {
     if (topRoute && Array.isArray(topRoute.children)) {
       for (const c of topRoute.children) {
         const childPath = String(c.path || '')
-        const title = (c.meta && c.meta.title) || c.name || childPath
+        const title = resolveMenuTitle((c.meta && c.meta.title) || c.name || childPath)
         const fullPath = `/workspace/${code}/${childPath}`.replace(/\/+/g, '/')
         items.push({ title, fullPath })
       }
@@ -591,7 +615,7 @@ const sidebarMenus = computed(() => {
       for (const child of topRoute.children) {
         const childPath = String(child.path || '')
         const fullPath = `/workspace/${activeModuleCode.value}/${childPath}`.replace(/\/+/g, '/')
-        const title = (child.meta && child.meta.title) || child.name || childPath
+        const title = resolveMenuTitle((child.meta && child.meta.title) || child.name || childPath)
         const icon = (child.meta && child.meta.icon) || ''
         const type = (child.meta && child.meta.type) || 'menu'
         const menuLevel = (child.meta && child.meta.menuLevel) || 1
@@ -617,7 +641,7 @@ const sidebarMenus = computed(() => {
             const grandchildFullPath = grandchildPath.startsWith('/') 
               ? grandchildPath 
               : `/workspace/${activeModuleCode.value}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
-            const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
+            const grandchildTitle = resolveMenuTitle((grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath)
             const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
             const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
             const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
@@ -648,7 +672,7 @@ const sidebarMenus = computed(() => {
         for (const child of topRoute.children) {
           const childPath = String(child.path || '')
           const fullPath = `/workspace/${moduleCode}/${childPath}`.replace(/\/+/g, '/')
-          const title = (child.meta && child.meta.title) || child.name || childPath
+          const title = resolveMenuTitle((child.meta && child.meta.title) || child.name || childPath)
           const icon = (child.meta && child.meta.icon) || ''
           const type = (child.meta && child.meta.type) || 'menu'
           const menuLevel = (child.meta && child.meta.menuLevel) || 1
@@ -674,7 +698,7 @@ const sidebarMenus = computed(() => {
               const grandchildFullPath = grandchildPath.startsWith('/') 
                 ? grandchildPath 
                 : `/workspace/${moduleCode}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
-              const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
+              const grandchildTitle = resolveMenuTitle((grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath)
               const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
               const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
               const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2

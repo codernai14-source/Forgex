@@ -1,6 +1,6 @@
 <template>
   <div class="online-user-container">
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="online-table-card">
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'OnlineUserTable'"
@@ -73,26 +73,27 @@ const fallbackConfig = ref({
 const dictOptions = ref({})
 
 // 处理表格数据请求
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   loading.value = true
   try {
-    const res: any = await listOnlineUsers({
-      current: params.current,
-      size: params.pageSize,
+    const params: any = {
+      current: payload.page.current,
+      size: payload.page.pageSize,
       account: queryForm.account || undefined,
       tenantId: userStore.tenantId || 1,
-    })
-    return {
-      success: true,
-      data: res.records || [],
-      total: res.total || 0
+      ...payload.query
     }
+    
+    const res: any = await listOnlineUsers(params)
+    // 确保total是数字类型
+    const total = typeof res.total === 'number' ? res.total : parseInt(String(res.total) || '0', 10)
+    return { records: res.records || [], total: total }
   } catch (e) {
-    return {
-      success: false,
-      data: [],
-      total: 0
-    }
+    return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
@@ -158,6 +159,31 @@ function handleKickout(token: string) {
 
 <style scoped lang="less">
 .online-user-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.online-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.online-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.online-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>
