@@ -5,6 +5,7 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.i18n.I18nPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
+import com.forgex.common.util.CurrentUserUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -82,6 +83,12 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         if (userId == null || tenantId == null) {
             throw new I18nBusinessException(602, CommonPrompt.NOT_LOGIN);
+        }
+
+        // 检查是否为超级管理员（admin账号拥有所有权限）
+        String account = CurrentUserUtils.getAccount();
+        if (account != null && "admin".equalsIgnoreCase(account)) {
+            return true;
         }
 
         boolean ok = permKeyService.hasAllPerms(userId, tenantId, required);

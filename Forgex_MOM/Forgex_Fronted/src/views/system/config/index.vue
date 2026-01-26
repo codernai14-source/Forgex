@@ -465,6 +465,15 @@ async function handleCropConfirm() {
           url: fileUrl 
         }]
         
+        // 自动保存配置
+        try {
+          await setSystemBasicConfig(formData.value)
+          message.success(t('common.uploadSuccess'))
+        } catch (e: any) {
+          console.error('自动保存配置失败:', e)
+          message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+        }
+        
         // 关闭弹窗并重置状态
         cropVisible.value = false
         cropperImg.value = ''
@@ -515,6 +524,15 @@ async function handleVideoUpload(options: any) {
     formData.value.loginBackgroundVideo = fileUrl
     // 更新文件列表
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
+    
+    // 自动保存配置
+    try {
+      await setSystemBasicConfig(formData.value)
+      message.success(t('common.uploadSuccess'))
+    } catch (e: any) {
+      console.error('自动保存配置失败:', e)
+      message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+    }
   } catch (e: any) {
     console.error('视频上传失败:', e)
     message.error(t('common.uploadFailed'))
@@ -547,6 +565,15 @@ async function handleBgImageUpload(options: any) {
     formData.value.loginBackgroundImage = fileUrl
     // 更新文件列表
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
+    
+    // 自动保存配置
+    try {
+      await setSystemBasicConfig(formData.value)
+      message.success(t('common.uploadSuccess'))
+    } catch (e: any) {
+      console.error('自动保存配置失败:', e)
+      message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+    }
   } catch (e: any) {
     console.error('背景图片上传失败:', e)
     message.error(t('common.uploadFailed'))

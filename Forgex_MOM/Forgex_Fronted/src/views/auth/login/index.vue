@@ -261,6 +261,10 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
     return url.startsWith('/api') ? url : `/api${url}`
   }
@@ -272,6 +276,10 @@ function formatTenantLogo(url?: string) {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
     return url.startsWith('/api') ? url : `/api${url}`
   }
@@ -282,6 +290,10 @@ function formatLangIcon(icon?: string) {
   if (!icon) return ''
   if (icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')) {
     return icon
+  }
+  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  if (icon.startsWith('/files/')) {
+    return `/api${icon}`
   }
   if (icon.startsWith('/')) {
     return icon.startsWith('/api') ? icon : `/api${icon}`
@@ -688,6 +700,52 @@ watch(sliderOpen, async open => {
   width: 100%;
 }
 
+.lang-select :deep(.ant-select-selector) {
+  background: transparent !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+.lang-select :deep(.ant-select-selector:hover) {
+  border-color: #05d9e8 !important;
+}
+
+.lang-select :deep(.ant-select-focused .ant-select-selector) {
+  border-color: #05d9e8 !important;
+  box-shadow: 0 0 8px rgba(5, 217, 232, 0.45) !important;
+}
+
+.lang-select :deep(.ant-select-selection-item) {
+  color: #e5e7eb !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-select :deep(.ant-select-arrow) {
+  color: #9ca3af !important;
+}
+
+.lang-select :deep(.ant-select-dropdown) {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(5, 217, 232, 0.45) !important;
+  box-shadow: 0 0 16px rgba(5, 217, 232, 0.25) !important;
+}
+
+.lang-select :deep(.ant-select-item) {
+  color: #e5e7eb !important;
+  background: transparent !important;
+}
+
+.lang-select :deep(.ant-select-item:hover) {
+  background: rgba(5, 217, 232, 0.15) !important;
+}
+
+.lang-select :deep(.ant-select-item-option-selected) {
+  background: rgba(5, 217, 232, 0.25) !important;
+  color: #05d9e8 !important;
+}
+
 .lang-option {
   display: inline-flex;
   align-items: center;
@@ -695,22 +753,26 @@ watch(sliderOpen, async open => {
 }
 
 .lang-emoji {
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
   text-align: center;
-  font-size: 16px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .lang-flag {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
   object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
 .lang-label {
-  line-height: 18px;
+  line-height: 20px;
+  flex: 1;
 }
 .cyber-form {
   display: flex;
