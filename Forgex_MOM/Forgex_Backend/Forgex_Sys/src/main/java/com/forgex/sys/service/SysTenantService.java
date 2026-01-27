@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantSaveParam;
@@ -39,6 +40,14 @@ public interface SysTenantService {
      * @return 租户列表
      */
     List<SysTenantDTO> list(SysTenantQueryDTO queryDTO);
+    
+    /**
+     * 分页查询租户列表
+     * 
+     * @param queryDTO 查询参数（包含分页参数）
+     * @return 分页结果
+     */
+    Page<SysTenantDTO> page(SysTenantQueryDTO queryDTO);
     
     /**
      * 根据ID获取租户详情

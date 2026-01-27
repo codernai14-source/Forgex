@@ -12,11 +12,11 @@ import com.forgex.common.web.StatusCode;
 import com.forgex.common.domain.dto.table.FxTableConfigDTO;
 import com.forgex.common.domain.entity.table.FxTableConfig;
 import com.forgex.common.domain.entity.table.FxTableColumnConfig;
+import com.forgex.common.mapper.table.FxTableColumnConfigMapper;
+import com.forgex.common.mapper.table.FxTableConfigMapper;
 import com.forgex.sys.domain.param.TableConfigGetParam;
 import com.forgex.sys.domain.vo.TableConfigDetailVO;
 import com.forgex.sys.enums.SysPromptEnum;
-import com.forgex.sys.mapper.FxTableConfigMapper;
-import com.forgex.sys.mapper.FxTableColumnConfigMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
