@@ -316,7 +316,7 @@ import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { getSystemBasicConfig } from '../api/system/config'
-import { setLocale } from '../locales'
+import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
 import { useSse } from '../hooks/useSse'
 
@@ -723,7 +723,6 @@ const sidebarMenus = computed(() => {
     }
   }
   
-  console.log('[MainLayout] sidebarMenus computed:', JSON.stringify(result, null, 2))
   return result
 })
 
@@ -788,7 +787,6 @@ watch(
       const code = route.meta.module as string
       openKeys.value = [code]
       activeModuleCode.value = code
-      console.log('[MainLayout] Active module from meta:', code)
     } else {
       // 降级策略：从 URL 路径中解析
       const parts = path.split('/').filter(Boolean)
@@ -796,7 +794,6 @@ watch(
         const code = parts[1]
         openKeys.value = [code]
         activeModuleCode.value = code
-        console.log('[MainLayout] Active module from path:', code)
       }
     }
     
@@ -848,10 +845,8 @@ function onOpenChange(keys: string[]) {
 }
 
 function onMenuClick(menuKey: string) {
-  console.log('[MainLayout] Menu clicked:', menuKey)
   if (!menuKey) return
   if (menuKey !== route.fullPath) {
-    console.log('[MainLayout] Navigating to:', menuKey)
     router.push(menuKey).catch(() => {})
   }
 }
@@ -937,57 +932,51 @@ async function onLocaleChange(val: string) {
   const originalLocale = currentLocale.value
   
   try {
-    // 1. 调用setLocale函数更新语言设置，该函数会：
-    //    - 更新vue-i18n的locale值
-    //    - 将语言设置保存到localStorage
-    //    - 更新HTML的lang属性
-    setLocale(val as 'zh-CN' | 'en-US')
+    console.log('[MainLayout] 语言切换开始:', val)
+    
+    // 1. 调用setLocale函数更新语言设置
+    setLocale(val as LocaleCode)
     
     // 2. 更新本地状态
     currentLocale.value = val
-    appStore.setLocale(val as 'zh-CN' | 'en-US')
+    appStore.setLocale(val as LocaleCode)
     
     // 3. 调用后端API更新语言设置
     await changeLanguage({ lang: val })
     
-    // 4. 重新获取菜单数据，确保国际化生效
+    // 4. 重新获取菜单数据（关键！后端返回的是翻译后的文本，需要重新获取）
     const account = sessionStorage.getItem('account')
     const tenantId = sessionStorage.getItem('tenantId')
     
     if (account && tenantId) {
       try {
-        // 重新获取菜单数据
+        console.log('[MainLayout] 重新获取菜单数据...')
         const routes = await getRoutes({ account, tenantId })
         if (routes) {
           // 重新注入动态路由
           await injectDynamicRoutes(routes)
-          // 动态路由更新后，重新计算所有标签标题，确保使用最新语言
+          // 更新所有标签标题
           updateAllTabTitles()
-          // 清除localStorage中的旧菜单缓存
-          localStorage.removeItem('fx-dynamic-routes')
-          localStorage.removeItem('fx-dynamic-modules')
-          // 刷新当前页面，确保所有组件都能获取到最新的国际化数据
-          // 使用router.replace配合redirect页面实现无刷新重载
-          router.replace({ 
-            path: '/redirect', 
-            query: { 
-              to: route.fullPath, 
-              t: Date.now() 
-            } 
-          })
+          console.log('[MainLayout] 菜单数据更新成功')
         }
       } catch (menuError) {
-        console.error('重新获取菜单数据失败:', menuError)
-        // 菜单获取失败时，不刷新页面，保持当前状态
-        message.warning('菜单数据更新失败，请手动刷新页面')
+        console.error('[MainLayout] 重新获取菜单数据失败:', menuError)
       }
     }
+    
+    console.log('[MainLayout] 语言切换成功:', val)
+    
+    // 5. 语言切换成功提示
+    message.success(t('common.success'))
+    
+    // 注意：FxDynamicTable 组件会通过 watch(locale) 自动重新加载配置
   } catch (e) {
-    console.error('语言切换失败:', e)
+    console.error('[MainLayout] 语言切换失败:', e)
     // 语言切换失败时，恢复到原来的语言设置
-    setLocale(originalLocale as 'zh-CN' | 'en-US')
+    setLocale(originalLocale as LocaleCode)
     currentLocale.value = originalLocale
-    appStore.setLocale(originalLocale as 'zh-CN' | 'en-US')
+    appStore.setLocale(originalLocale as LocaleCode)
+    message.error(t('common.failed'))
   }
 }
 

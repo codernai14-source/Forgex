@@ -285,7 +285,8 @@ const loadData = async () => {
     const res = await pageOperationLog(params)
     if (res.code === 200) {
       dataSource.value = res.data.records || []
-      pagination.total = res.data.total || 0
+      // 确保 total 是数字类型
+      pagination.total = typeof res.data.total === 'number' ? res.data.total : parseInt(String(res.data.total) || '0', 10)
     } else {
       message.error(res.message || '查询失败')
     }

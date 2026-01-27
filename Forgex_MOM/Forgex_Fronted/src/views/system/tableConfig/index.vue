@@ -294,7 +294,8 @@ const fetchData = async () => {
     
     const result = await getTableConfigList(params)
     dataSource.value = result.records
-    pagination.total = result.total
+    // 确保 total 是数字类型
+    pagination.total = typeof result.total === 'number' ? result.total : parseInt(String(result.total) || '0', 10)
   } catch (error) {
     console.error('获取表格配置列表失败:', error)
   } finally {
@@ -342,9 +343,10 @@ function computeAutoScrollY() {
   const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
 
-  const buffer = 16
+  // 增加缓冲区，为分页器预留更多空间（margin-top 16px + 额外缓冲 20px）
+  const buffer = 36
   const y = Math.floor(available - paginationHeight - headerHeight - buffer)
-  const nextY = y > 0 ? y : undefined
+  const nextY = y > 100 ? y : undefined  // 确保最小高度为100px
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
 }
@@ -448,6 +450,39 @@ const handleToggleStatus = async (id: number, enabled: boolean) => {
 onMounted(() => {
   fetchData()
   window.addEventListener('resize', onResizeOrScroll, { passive: true })
+  
+  // 添加 MutationObserver 监听 DOM 变化
+  const wrapEl = tableWrapRef.value
+  if (wrapEl) {
+    const observer = new MutationObserver(() => {
+      scheduleComputeAutoScrollY()
+    })
+    
+    observer.observe(wrapEl, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    })
+    
+    // 在组件卸载时断开观察
+    onBeforeUnmount(() => {
+      observer.disconnect()
+    })
+  }
+  
+  // 延迟计算，确保 DOM 完全渲染
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 100)
+  
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 300)
+  
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 500)
 })
 
 onBeforeUnmount(() => {
@@ -467,6 +502,12 @@ onBeforeUnmount(() => {
 
 .query-card {
   margin-bottom: 16px;
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+}
+
+.query-card :deep(.ant-card-body) {
+  padding: 12px;
 }
 
 .table-card {
@@ -474,6 +515,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  margin-bottom: 16px;  /* 添加底部间距，避免被 footer 遮挡 */
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
 }
 
 .table-card :deep(.ant-card-body) {
@@ -482,6 +526,11 @@ onBeforeUnmount(() => {
   min-height: 0;
   flex: 1;
   height: 100%;
+  padding: 0;  /* 移除默认 padding */
+}
+
+.table-card > div:first-child {
+  padding: 12px 16px 0 16px;  /* toolbar 区域的 padding */
 }
 
 .table-wrap {
@@ -491,10 +540,23 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  padding: 0 16px 24px 16px;  /* 增加底部 padding 到 24px，确保分页器完全显示 */
 }
 
 .table-wrap :deep(.ant-table-wrapper) {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.table-wrap :deep(.ant-pagination) {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;  /* 整体右对齐 */
+  align-items: center;
+  gap: 16px;  /* 元素之间的间距 */
+}
+
+.table-wrap :deep(.ant-pagination-total-text) {
+  /* 不设置 order，保持默认顺序，显示在页码左边 */
 }
 </style>

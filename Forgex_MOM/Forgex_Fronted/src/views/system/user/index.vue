@@ -5,7 +5,6 @@
       :table-code="'UserTable'"
       :show-query-form="true"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       :row-selection="{
         selectedRowKeys: selectedRowKeys,
@@ -159,42 +158,6 @@ const dictOptions = ref<Record<string, any[]>>({
     { label: t('system.user.statusInactive'), value: false }
   ]
 })
-
-// 降级配置
-const fallbackConfig = {
-  tableCode: 'UserTable',
-  tableName: t('system.user.userManagement'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'avatar', title: t('system.user.avatar'), width: 80, align: 'center' },
-    { field: 'username', title: t('system.user.username'), width: 120 },
-    { field: 'email', title: t('system.user.email'), width: 180 },
-    { field: 'phone', title: t('system.user.phone'), width: 130 },
-    { field: 'gender', title: t('system.user.gender'), width: 80, dictField: 'genderText' },
-    { field: 'departmentName', title: t('system.user.department'), width: 120 },
-    { field: 'positionName', title: t('system.user.position'), width: 120 },
-    { field: 'entryDate', title: t('system.user.entryDate'), width: 120 },
-    { field: 'status', title: t('system.user.status'), width: 80, dictField: 'statusText' },
-    { field: 'lastLoginTime', title: t('system.user.lastLoginTime'), width: 180 },
-    { field: 'lastLoginIp', title: t('system.user.lastLoginIp'), width: 150 },
-    { field: 'lastLoginRegion', title: t('system.user.lastLoginRegion'), width: 150 },
-    { field: 'createTime', title: t('system.user.createTime'), width: 180 },
-    { field: 'createBy', title: t('system.user.createBy'), width: 100 },
-    { field: 'updateTime', title: t('system.user.updateTime'), width: 180 },
-    { field: 'updateBy', title: t('system.user.updateBy'), width: 100 },
-    { field: 'action', title: t('system.user.action'), width: 260, fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'username', label: t('system.user.username'), queryType: 'input', queryOperator: 'like' },
-    { field: 'phone', label: t('system.user.phone'), queryType: 'input', queryOperator: 'like' },
-    { field: 'departmentId', label: t('system.user.department'), queryType: 'treeSelect', queryOperator: 'eq' },
-    { field: 'positionId', label: t('system.user.position'), queryType: 'select', queryOperator: 'eq' },
-    { field: 'status', label: t('system.user.status'), queryType: 'select', queryOperator: 'eq' },
-  ],
-  version: 1,
-}
 
 /**
  * 数据请求函数

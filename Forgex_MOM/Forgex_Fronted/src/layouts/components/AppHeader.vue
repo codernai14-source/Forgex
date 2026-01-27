@@ -152,10 +152,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getIcon } from '../../utils/icon'
 import {
   SearchOutlined,
+  BellOutlined,
   SettingOutlined,
   DownOutlined,
   UserOutlined,
@@ -165,6 +166,7 @@ import {
   AppstoreOutlined,
   SyncOutlined
 } from '@ant-design/icons-vue'
+import { getUnreadMessageCount } from '../../api/message'
 import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
 import type { LocaleCode } from '../../locales'
 

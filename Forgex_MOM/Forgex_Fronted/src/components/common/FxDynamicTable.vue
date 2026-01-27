@@ -3,6 +3,7 @@
 <!-- 搜索区域卡片（保留少量内边距，看起来更舒适） -->
     <a-card
       v-if="resolvedShowQueryForm && config && config.queryFields?.length"
+      :key="`query-${configVersion}`"
       :bordered="false"
       class="fx-card fx-query-card"
       :body-style="{ padding: '12px' }"
@@ -133,7 +134,7 @@
     <a-card 
       :bordered="false" 
       class="fx-card fx-table-card"
-      :body-style="{ padding: '10px' }"
+      :body-style="{ padding: '0' }"
     >
       <div v-if="$slots.toolbar" class="fx-table-toolbar">
         <slot name="toolbar" />
@@ -143,6 +144,7 @@
       <div class="fx-table-content">
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
+            :key="`table-${configVersion}`"
             :columns="tableColumns"
             :data-source="tableData"
             :loading="resolvedLoading"
@@ -249,6 +251,11 @@ const { t, locale } = useI18n()
  * 表格配置
  */
 const config = ref<FxTableConfig>()
+
+/**
+ * 配置版本号，用于强制刷新 computed
+ */
+const configVersion = ref(0)
 
 const ATag = resolveComponent('a-tag') as any
 
@@ -448,7 +455,11 @@ const resolvedRowKey = computed(() => props.rowKey || config.value?.rowKey || 'i
  * 表格列配置
  */
 const tableColumns = computed(() => {
+  // 依赖 configVersion 强制刷新
+  const _ = configVersion.value
   const cols: FxTableColumn[] = config.value?.columns || []
+  
+  console.log('[FxDynamicTable] tableColumns computed 被调用，version:', configVersion.value, 'columns:', cols.length, '第一列:', cols[0]?.title)
   
   // 将操作列移到最后
   const actionCol = cols.find(c => c.field === 'action')
@@ -597,10 +608,10 @@ function computeAutoScrollY() {
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
 
   // tableWrapRef 仅包含表格区域（不包含 toolbar / pagination），因此这里只需扣除表头与少量缓冲
-  const buffer = 8
+  const buffer = 2
   const y = Math.floor(available - headerHeight - buffer)
   
-  const nextY = y > 0 ? y : undefined
+  const nextY = y > 100 ? y : undefined  // 确保最小高度为100px，避免表格过小
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
 }
@@ -621,13 +632,27 @@ function normalizeSorter(sorter: any) {
  * 加载表格配置
  */
 async function loadConfig() {
+  console.log('[FxDynamicTable] loadConfig 开始，tableCode:', props.tableCode, 'locale:', locale.value)
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
-    config.value = mergeConfigs(backendConfig, props.fallbackConfig)
+    console.log('[FxDynamicTable] 后端返回配置:', backendConfig)
+    const mergedConfig = mergeConfigs(backendConfig, props.fallbackConfig)
+    
+    // 强制创建新对象，确保 Vue 响应式系统能检测到变化
+    config.value = {
+      ...mergedConfig,
+      columns: mergedConfig.columns ? [...mergedConfig.columns] : [],
+      queryFields: mergedConfig.queryFields ? [...mergedConfig.queryFields] : []
+    }
+    
+    // 增加版本号，强制刷新 computed
+    configVersion.value++
+    
+    console.log('[FxDynamicTable] 配置更新完成，columns:', config.value.columns?.length, 'queryFields:', config.value.queryFields?.length, 'version:', configVersion.value)
   } catch (e) {
-    console.error('获取表格配置失败:', e)
+    console.error('[FxDynamicTable] 获取表格配置失败:', e)
     if (props.fallbackConfig) {
-      config.value = props.fallbackConfig as any
+      config.value = { ...props.fallbackConfig } as any
     } else {
       config.value = {
         tableCode: props.tableCode,
@@ -639,8 +664,9 @@ async function loadConfig() {
         queryFields: [],
         version: 1
       }
-      console.warn('使用默认空配置，表格可能无法正常显示')
+      console.warn('[FxDynamicTable] 使用默认空配置，表格可能无法正常显示')
     }
+    configVersion.value++
   }
 
   if (config.value?.columns?.length) {
@@ -844,14 +870,20 @@ watch(
     pagination.current = 1
     await loadConfig()
     await handleQuery(lastSorter.value)
+    // 配置加载后重新计算表格高度
+    await nextTick()
+    scheduleComputeAutoScrollY()
   },
 )
 
+// 监听语言变化 - 使用函数形式确保能正确监听
 watch(
   () => locale.value,
-  async () => {
+  async (newLocale, oldLocale) => {
+    console.log('[FxDynamicTable] 语言切换，重新加载配置:', newLocale, '(旧:', oldLocale, ')')
+    // 重新加载配置
     await loadConfig()
-    // 切换语言后重新加载数据，以获取新语言的字典翻译
+    // 重新加载数据
     await handleQuery(lastSorter.value)
   },
 )
@@ -866,17 +898,6 @@ watch(
   { deep: true }
 )
 
-onMounted(async () => {
-  window.addEventListener('resize', onResizeOrScroll, { passive: true })
-
-  await loadConfig()
-  await handleQuery()
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', onResizeOrScroll as any)
-})
-
 watch(
   () => isQueryExpanded.value,
   async () => {
@@ -884,6 +905,55 @@ watch(
     scheduleComputeAutoScrollY()
   },
 )
+
+watch(
+  () => tableData.value.length,
+  async () => {
+    // 数据变化时重新计算表格高度
+    await nextTick()
+    scheduleComputeAutoScrollY()
+  },
+)
+
+onMounted(async () => {
+  window.addEventListener('resize', onResizeOrScroll, { passive: true })
+
+  await loadConfig()
+  await handleQuery()
+  
+  // 添加 MutationObserver 监听 DOM 变化，确保表格高度正确计算
+  const wrapEl = tableWrapRef.value
+  if (wrapEl) {
+    const observer = new MutationObserver(() => {
+      scheduleComputeAutoScrollY()
+    })
+    
+    observer.observe(wrapEl, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    })
+    
+    // 在组件卸载时断开观察
+    onBeforeUnmount(() => {
+      observer.disconnect()
+    })
+  }
+  
+  // 延迟计算，确保 DOM 完全渲染
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 100)
+  
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 300)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResizeOrScroll as any)
+})
 </script>
 
 <style scoped>
@@ -969,22 +1039,22 @@ watch(
   height: 100%;
 }
 
-/* toolbar 间距减少（从 12px → 8px） */
+/* toolbar 间距调整 */
 .fx-table-toolbar {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
-  padding: 0;
+  margin-bottom: 12px;
+  padding: 12px 16px 0 16px;
 }
 
-  /* 新增/调整：为表格内容区添加适量内边距（补偿 card body padding:0） */
+  /* 表格内容区添加适量内边距 */
 .fx-table-content {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  padding: 8px 8px 0 8px;    /* 上下左右 8px，底部 0（留给分页器） */
+  padding: 0 16px 16px 16px;    /* 左右16px，底部16px，顶部0（toolbar已有padding） */
   box-sizing: border-box;
 }
 
@@ -1011,23 +1081,24 @@ watch(
   max-width: 100%;
 }
 
-/* 分页器间距微调（让它紧贴底部但有呼吸感） */
-/* 分页器间距减少 */
+/* 分页器间距调整 */
 .fx-table-pagination {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-end;
-  padding: 8px 8px 8px 8px;  /* 整体 8px，紧凑一些 */
+  padding: 12px 0 0 0;  /* 顶部12px间距，其他方向0（外层已有padding） */
 }
 
 .fx-table-pagination :deep(.ant-pagination) {
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-end;  /* 整体右对齐 */
+  gap: 16px;  /* 元素之间的间距 */
 }
 
 .fx-table-pagination :deep(.ant-pagination-total-text) {
-  margin-right: auto;
+  /* 不设置特殊样式，保持默认顺序，显示在页码左边 */
 }
 </style>

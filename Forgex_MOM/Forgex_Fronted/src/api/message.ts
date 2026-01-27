@@ -1,4 +1,4 @@
-import http from '../http'
+import http from './http'
 
 /**
  * 消息模板API
