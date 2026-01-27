@@ -1,0 +1,112 @@
+-- ================================================
+-- ${tableComment!entityName} 多语言配置初始化脚本
+-- 生成时间：${date()}
+-- 表名：${tableName}
+-- ================================================
+
+USE forgex_admin;
+
+-- 设置租户ID
+SET @TENANT_ID = 1;
+
+-- ================================
+-- 菜单名称多语言
+-- ================================
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, 
+    create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, '${moduleName}', '${i18nPrefix}_MENU_NAME',
+    '{"zh-CN":"${menuNameCn}","en-US":"${menuNameEn}"}',
+    1, 1, NOW(), NOW(), 0
+)
+ON DUPLICATE KEY UPDATE
+    text_i18n_json = VALUES(text_i18n_json),
+    update_time = NOW();
+
+-- ================================
+-- 操作提示多语言
+-- ================================
+
+-- 新增成功
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, 
+    create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, '${moduleName}', '${i18nPrefix}_CREATE_SUCCESS',
+    '{"zh-CN":"新增${menuNameCn}成功","en-US":"${menuNameEn} created successfully"}',
+    1, 1, NOW(), NOW(), 0
+)
+ON DUPLICATE KEY UPDATE
+    text_i18n_json = VALUES(text_i18n_json),
+    update_time = NOW();
+
+-- 修改成功
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, 
+    create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, '${moduleName}', '${i18nPrefix}_UPDATE_SUCCESS',
+    '{"zh-CN":"修改${menuNameCn}成功","en-US":"${menuNameEn} updated successfully"}',
+    1, 1, NOW(), NOW(), 0
+)
+ON DUPLICATE KEY UPDATE
+    text_i18n_json = VALUES(text_i18n_json),
+    update_time = NOW();
+
+-- 删除成功
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, 
+    create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, '${moduleName}', '${i18nPrefix}_DELETE_SUCCESS',
+    '{"zh-CN":"删除${menuNameCn}成功","en-US":"${menuNameEn} deleted successfully"}',
+    1, 1, NOW(), NOW(), 0
+)
+ON DUPLICATE KEY UPDATE
+    text_i18n_json = VALUES(text_i18n_json),
+    update_time = NOW();
+
+-- 删除确认
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, 
+    create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, '${moduleName}', '${i18nPrefix}_DELETE_CONFIRM',
+    '{"zh-CN":"确定要删除该${menuNameCn}吗？","en-US":"Are you sure to delete this ${menuNameEn}?"}',
+    1, 1, NOW(), NOW(), 0
+)
+ON DUPLICATE KEY UPDATE
+    text_i18n_json = VALUES(text_i18n_json),
+    update_time = NOW();
+
+-- ================================
+-- 字段名称多语言
+-- ================================
+
+<% for(column in columns) { %>
+<% if(!column.isBaseField) { %>
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, 
+    create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, '${moduleName}', '${i18nPrefix}_FIELD_${column.columnName?upper_case}',
+    '{"zh-CN":"${column.columnComment!column.javaFieldName}","en-US":"${column.columnNameEn!column.javaFieldName}"}',
+    1, 1, NOW(), NOW(), 0
+)
+ON DUPLICATE KEY UPDATE
+    text_i18n_json = VALUES(text_i18n_json),
+    update_time = NOW();
+
+<% } %>
+<% } %>
+
+SELECT '多语言配置初始化完成！' AS message;
+

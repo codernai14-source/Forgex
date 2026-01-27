@@ -1,0 +1,38 @@
+package ${basePackage}.domain.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import com.forgex.common.base.BaseEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+<% for(column in columns) { %>
+<% if(column.needImport) { %>
+import ${column.javaTypeFullName};
+<% } %>
+<% } %>
+
+/**
+ * ${tableComment!entityName}实体类
+ * <p>
+ * 对应数据库表：${tableName}
+ * </p>
+ * 
+ * @author Forgex CodeGen
+ * @date ${date()}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("${tableName}")
+public class ${entityName} extends BaseEntity {
+
+<% for(column in columns) { %>
+<% if(!column.isBaseField) { %>
+    /**
+     * ${column.columnComment!column.javaFieldName}
+     */
+    @TableField("${column.columnName}")
+    private ${column.javaType} ${column.javaFieldName};
+
+<% } %>
+<% } %>
+}
+

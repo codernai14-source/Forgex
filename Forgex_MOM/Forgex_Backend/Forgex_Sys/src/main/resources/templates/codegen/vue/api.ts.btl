@@ -1,0 +1,53 @@
+import http from '../http'
+
+/**
+ * ${tableComment!entityName} API
+ * 
+ * @author Forgex CodeGen
+ * @date ${date()}
+ */
+
+/**
+ * 分页查询${tableComment!entityName}
+ */
+export const page${entityName} = (data: any) => {
+  return http.post('/${moduleName}/${entityNameLower}/page', data)
+}
+
+/**
+ * 根据ID查询${tableComment!entityName}
+ */
+export const get${entityName}ById = (id: number) => {
+  return http.post('/${moduleName}/${entityNameLower}/getById', id)
+}
+
+/**
+ * 新增${tableComment!entityName}
+ */
+export const save${entityName} = (data: any) => {
+  return http.post('/${moduleName}/${entityNameLower}/save', data)
+}
+
+/**
+ * 修改${tableComment!entityName}
+ */
+export const update${entityName} = (data: any) => {
+  return http.post('/${moduleName}/${entityNameLower}/update', data)
+}
+
+/**
+ * 删除${tableComment!entityName}
+ */
+export const delete${entityName} = (id: number) => {
+  return http.post('/${moduleName}/${entityNameLower}/delete', id)
+}
+
+/**
+ * 导出${tableComment!entityName}
+ */
+export const export${entityName} = (data: any) => {
+  return http.post('/${moduleName}/${entityNameLower}/export', data, {
+    responseType: 'blob'
+  })
+}
+

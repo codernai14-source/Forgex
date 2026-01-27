@@ -1,0 +1,30 @@
+package ${basePackage}.domain.param;
+
+import com.forgex.common.base.BaseGetParam;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+<% for(column in queryColumns) { %>
+<% if(column.needImport) { %>
+import ${column.javaTypeFullName};
+<% } %>
+<% } %>
+
+/**
+ * ${tableComment!entityName}分页查询参数
+ * 
+ * @author Forgex CodeGen
+ * @date ${date()}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ${entityName}PageParam extends BaseGetParam {
+
+<% for(column in queryColumns) { %>
+    /**
+     * ${column.columnComment!column.javaFieldName}
+     */
+    private ${column.javaType} ${column.javaFieldName};
+
+<% } %>
+}
+

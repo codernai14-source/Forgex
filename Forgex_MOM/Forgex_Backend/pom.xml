@@ -210,6 +210,12 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.6.0</version>
         </dependency>
+            <!-- Beetl 模板引擎（用于代码生成） -->
+            <dependency>
+                <groupId>com.ibeetl</groupId>
+                <artifactId>beetl</artifactId>
+                <version>3.15.10.RELEASE</version>
+            </dependency>
         <!-- 其他依赖如RocketMQ、Redis等 -->
         </dependencies>
     </dependencyManagement>
