@@ -77,8 +77,7 @@
             >
               <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
                 <span class="lang-option">
-                  <img v-if="formatLangIcon(l.icon)" class="lang-flag" :src="formatLangIcon(l.icon)" />
-                  <span v-else class="lang-emoji">{{ resolveLangEmoji(l.langCode) }}</span>
+                  <span class="lang-emoji">{{ resolveLangEmoji(l.langCode) }}</span>
                   <span class="lang-label">{{ l.langName }}</span>
                 </span>
               </a-select-option>
@@ -308,7 +307,7 @@ function resolveLangEmoji(langCode: string) {
   if (code.startsWith('EN-US')) return '🇺🇸'
   if (code.startsWith('JA-JP')) return '🇯🇵'
   if (code.startsWith('KO-KR')) return '🇰🇷'
-  return ''
+  return '🌐'
 }
 
 async function loadLanguages() {
@@ -701,18 +700,21 @@ watch(sliderOpen, async open => {
 }
 
 .lang-select :deep(.ant-select-selector) {
-  background: transparent !important;
-  border-color: #4b5563 !important;
+  background: rgba(15, 23, 42, 0.3) !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
   color: #e5e7eb !important;
+  backdrop-filter: blur(8px);
 }
 
 .lang-select :deep(.ant-select-selector:hover) {
-  border-color: #05d9e8 !important;
+  border-color: rgba(5, 217, 232, 0.6) !important;
+  background: rgba(15, 23, 42, 0.4) !important;
 }
 
 .lang-select :deep(.ant-select-focused .ant-select-selector) {
   border-color: #05d9e8 !important;
   box-shadow: 0 0 8px rgba(5, 217, 232, 0.45) !important;
+  background: rgba(15, 23, 42, 0.5) !important;
 }
 
 .lang-select :deep(.ant-select-selection-item) {
@@ -730,6 +732,7 @@ watch(sliderOpen, async open => {
   background: rgba(15, 23, 42, 0.95) !important;
   border: 1px solid rgba(5, 217, 232, 0.45) !important;
   box-shadow: 0 0 16px rgba(5, 217, 232, 0.25) !important;
+  backdrop-filter: blur(12px);
 }
 
 .lang-select :deep(.ant-select-item) {
@@ -757,17 +760,8 @@ watch(sliderOpen, async open => {
   height: 20px;
   line-height: 20px;
   text-align: center;
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
-}
-
-.lang-flag {
-  width: 20px;
-  height: 20px;
-  border-radius: 2px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
 .lang-label {

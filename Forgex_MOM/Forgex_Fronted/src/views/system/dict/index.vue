@@ -43,7 +43,13 @@
           <a-input v-model:value="form.dictCode" placeholder="请输入字典编码" />
         </a-form-item>
         <a-form-item label="字典值" v-if="form.parentId && form.parentId > 0" required>
-          <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
+          <a-input v-model:value="form.dictValue" placeholder="请输入字典值（默认显示）" />
+        </a-form-item>
+        <a-form-item label="多语言配置" v-if="form.parentId && form.parentId > 0">
+          <I18nInput
+            v-model="form.dictValueI18nJson"
+            mode="table"
+          />
         </a-form-item>
         <a-form-item label="标签样式" v-if="form.parentId && form.parentId > 0">
           <TagStyleConfig ref="tagStyleConfigRef" />
@@ -72,7 +78,9 @@ import { message, Modal } from 'ant-design-vue'
 import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
 import { useDict } from '@/hooks/useDict'
+import { getI18nValue } from '@/utils/i18n'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 
 const userStore = useUserStore()
 const { dictItems: statusOptions } = useDict('status')
@@ -86,7 +94,7 @@ const fallbackConfig = ref({
   columns: [
     { title: '字典名称', dataIndex: 'dictName', key: 'dictName', width: 200 },
     { title: '字典编码', dataIndex: 'dictCode', key: 'dictCode', width: 150 },
-    { title: '字典值', dataIndex: 'dictValue', key: 'dictValue', width: 120 },
+    { title: '字典值', dataIndex: 'displayValue', key: 'displayValue', width: 120 },
     { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80, align: 'center' },
     { title: '状态', key: 'status', width: 80, align: 'center', dictCode: 'status' },
     { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
@@ -104,10 +112,15 @@ const handleRequest = async (params: any) => {
   loading.value = true
   try {
     const res = await http.post('/sys/dict/tree', { tenantId: userStore.tenantId || 1, ...params })
+    // 处理多语言显示
+    const processedData = (res || []).map((item: any) => ({
+      ...item,
+      displayValue: getI18nValue(item.dictValueI18nJson, item.dictValue)
+    }))
     return {
       success: true,
-      data: res || [],
-      total: res?.length || 0
+      data: processedData,
+      total: processedData.length
     }
   } catch (error) {
     console.error('加载字典树失败', error)
@@ -138,6 +151,7 @@ const form = reactive({
   dictName: '',
   dictCode: '',
   dictValue: '',
+  dictValueI18nJson: '',
   orderNum: 0,
   status: 1,
   remark: ''
@@ -151,6 +165,7 @@ const handleAdd = (row: any) => {
   form.dictName = ''
   form.dictCode = ''
   form.dictValue = ''
+  form.dictValueI18nJson = ''
   form.orderNum = 0
   form.status = 1
   form.remark = ''
@@ -167,6 +182,7 @@ const handleEdit = (row: any) => {
   form.dictName = row.dictName
   form.dictCode = row.dictCode || ''
   form.dictValue = row.dictValue || ''
+  form.dictValueI18nJson = row.dictValueI18nJson || ''
   form.orderNum = row.orderNum
   form.status = row.status
   form.remark = row.remark || ''

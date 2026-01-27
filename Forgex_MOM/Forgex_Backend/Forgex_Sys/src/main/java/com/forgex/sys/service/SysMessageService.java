@@ -1,6 +1,8 @@
 package com.forgex.sys.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.sys.domain.dto.SysMessageSendDTO;
+import com.forgex.sys.domain.param.SysMessageParam;
 import com.forgex.sys.domain.vo.SysMessageVO;
 
 import java.util.List;
@@ -30,11 +32,33 @@ public interface SysMessageService {
     List<SysMessageVO> listUnread(Integer limit);
 
     /**
+     * 获取未读消息数量
+     * 
+     * @return 未读消息数量
+     */
+    Long getUnreadCount();
+
+    /**
      * 标记消息已读
      * 
      * @param id 消息ID
      * @return true表示标记成功，false表示标记失败
      */
     boolean markRead(Long id);
+    
+    /**
+     * 标记所有消息已读
+     * 
+     * @return true表示标记成功，false表示标记失败
+     */
+    boolean markAllRead();
+    
+    /**
+     * 分页查询消息列表
+     * 
+     * @param param 查询参数
+     * @return 分页结果
+     */
+    Page<SysMessageVO> page(SysMessageParam param);
 }
 

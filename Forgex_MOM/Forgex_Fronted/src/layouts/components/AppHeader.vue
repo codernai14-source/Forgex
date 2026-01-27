@@ -51,6 +51,19 @@
           <span class="search-shortcut">Ctrl+K</span>
         </a-button>
 
+        <!-- 消息通知 -->
+        <a-badge :count="unreadCount" :overflow-count="99">
+          <a-button
+            type="text"
+            class="header-btn"
+            @click="onMessageClick"
+          >
+            <template #icon>
+              <BellOutlined />
+            </template>
+          </a-button>
+        </a-badge>
+
         <!-- 语言切换 -->
         <a-select
           v-if="showLangSwitch"
@@ -199,6 +212,7 @@ const emit = defineEmits<{
   'user-menu-click': [key: string]
   'locale-change': [locale: LocaleCode]
   'refresh': []
+  'message-click': []
 }>()
 
 // 当前语言
@@ -206,6 +220,12 @@ const currentLocale = ref<LocaleCode>((localStorage.getItem('fx-locale') as Loca
 
 // 语言列表
 const languageList = ref<LanguageType[]>([])
+
+// 未读消息数量
+const unreadCount = ref(0)
+
+// 定时器
+let unreadCountTimer: any = null
 
 // 加载语言列表
 const loadLanguageList = async () => {
@@ -217,9 +237,32 @@ const loadLanguageList = async () => {
   }
 }
 
-// 组件挂载时加载语言列表
+// 加载未读消息数量
+const loadUnreadCount = async () => {
+  try {
+    const count = await getUnreadMessageCount()
+    unreadCount.value = count || 0
+  } catch (error) {
+    console.error('Failed to load unread message count:', error)
+  }
+}
+
+// 组件挂载时加载语言列表和未读消息数量
 onMounted(() => {
   loadLanguageList()
+  loadUnreadCount()
+  
+  // 每30秒刷新一次未读消息数量
+  unreadCountTimer = setInterval(() => {
+    loadUnreadCount()
+  }, 30000)
+})
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (unreadCountTimer) {
+    clearInterval(unreadCountTimer)
+  }
 })
 
 // 是否显示模块导航
@@ -274,6 +317,11 @@ const onLocaleChange = (locale: string) => {
 // 刷新
 const onRefresh = () => {
   emit('refresh')
+}
+
+// 消息点击
+const onMessageClick = () => {
+  emit('message-click')
 }
 </script>
 

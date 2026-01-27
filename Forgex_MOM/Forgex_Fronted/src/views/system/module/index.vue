@@ -77,12 +77,17 @@
           />
         </a-form-item>
 
-        <a-form-item label="模块名称" name="name">
-          <a-input
-            v-model:value="formData.name"
+        <a-form-item label="模块名称" name="nameI18nJson">
+          <I18nInput
+            v-model="formData.nameI18nJson"
+            mode="simple"
             placeholder="请输入模块名称"
-            :maxlength="50"
           />
+          <template #extra>
+            <span style="color: #999; font-size: 12px;">
+              点击输入框右侧的地球图标可配置多语言
+            </span>
+          </template>
         </a-form-item>
 
         <a-form-item label="图标" name="icon">
@@ -124,10 +129,12 @@
 import { onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'
 import { listModules, getModulePage, deleteModule, batchDeleteModules } from '@/api/system/module'
 import { useDict } from '@/hooks/useDict'
+import { getI18nValue } from '@/utils/i18n'
 
 const { dictItems: statusOptions } = useDict('status')
 const { dictItems: visibleOptions } = useDict('visible')
@@ -166,7 +173,7 @@ const fallbackConfig = ref({
   columns: [
     { field: 'id', title: 'ID', width: 80, align: 'center' },
     { field: 'code', title: '模块编码', width: 150 },
-    { field: 'name', title: '模块名称', width: 150 },
+    { field: 'displayName', title: '模块名称', width: 150 },
     { field: 'icon', title: '图标', width: 80 },
     { field: 'orderNum', title: '排序号', width: 100 },
     { field: 'visible', title: '可见性', width: 100, dictCode: 'visible' },
@@ -212,7 +219,14 @@ const handleRequest = async (payload: {
     
     const data = await getModulePage(params)
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
-    return { records: data.records || [], total: total }
+    
+    // 处理多语言显示
+    const processedRecords = (data.records || []).map((item: any) => ({
+      ...item,
+      displayName: getI18nValue(item.nameI18nJson, item.name)
+    }))
+    
+    return { records: processedRecords, total: total }
   } catch (error) {
     console.error('加载模块列表失败:', error)
     return { records: [], total: 0 }

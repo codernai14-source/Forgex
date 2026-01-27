@@ -9,5 +9,11 @@ public class TableConfigGetParam {
     private Long current;
     
     private Long size;
+    
+    private String tableName;
+    
+    private String tableType;
+    
+    private Boolean enabled;
 }
 

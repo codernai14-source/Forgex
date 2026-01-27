@@ -1,11 +1,13 @@
 package com.forgex.sys.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysMessageReadDTO;
 import com.forgex.sys.domain.dto.SysMessageSendDTO;
+import com.forgex.sys.domain.param.SysMessageParam;
 import com.forgex.sys.domain.vo.SysMessageVO;
 import com.forgex.sys.service.SysMessageService;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +74,22 @@ public class SysMessageController {
     }
 
     /**
+     * 获取未读消息数量
+     * <p>获取当前用户的未读消息数量。</p>
+     * 
+     * @return 未读消息数量
+     */
+    @PostMapping("/unread-count")
+    public R<Long> unreadCount() {
+        // 检查登录状态
+        if (TenantContext.get() == null || UserContext.get() == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        
+        return R.ok(messageService.getUnreadCount());
+    }
+
+    /**
      * 标记消息已读
      * <p>将指定消息标记为已读状态。</p>
      * 
@@ -88,5 +106,38 @@ public class SysMessageController {
         // 获取消息ID
         Long id = dto == null ? null : dto.getId();
         return R.ok(messageService.markRead(id));
+    }
+
+    /**
+     * 标记所有消息已读
+     * <p>将当前用户的所有未读消息标记为已读状态。</p>
+     * 
+     * @return 标记结果
+     */
+    @PostMapping("/read-all")
+    public R<Boolean> readAll() {
+        // 检查登录状态
+        if (TenantContext.get() == null || UserContext.get() == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        
+        return R.ok(messageService.markAllRead());
+    }
+
+    /**
+     * 分页查询消息列表
+     * <p>分页查询当前用户的消息列表。</p>
+     * 
+     * @param param 查询参数
+     * @return 分页结果
+     */
+    @PostMapping("/page")
+    public R<Page<SysMessageVO>> page(@RequestBody SysMessageParam param) {
+        // 检查登录状态
+        if (TenantContext.get() == null || UserContext.get() == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        
+        return R.ok(messageService.page(param));
     }
 }

@@ -162,12 +162,18 @@
             </a-form-item>
           </a-col>
           
-          <a-col :span="12">
-            <a-form-item label="菜单名称" name="name">
-              <a-input
-                v-model:value="formData.name"
+          <a-col :span="24">
+            <a-form-item label="菜单名称" name="nameI18nJson">
+              <I18nInput
+                v-model="formData.nameI18nJson"
+                mode="simple"
                 placeholder="请输入菜单名称"
               />
+              <template #extra>
+                <span style="color: #999; font-size: 12px;">
+                  点击输入框右侧的地球图标可配置多语言
+                </span>
+              </template>
             </a-form-item>
           </a-col>
           
@@ -277,9 +283,11 @@ import {
 } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 import { listModules } from '@/api/system/module'
 import { getMenuTree } from '@/api/system/menu'
 import { getIcon } from '@/utils/icon'
+import { getI18nValue } from '@/utils/i18n'
 import { useDict } from '@/hooks/useDict'
 
 // 模块列表
@@ -311,7 +319,7 @@ const fallbackConfig = {
   rowKey: 'id',
   defaultPageSize: 20,
   columns: [
-    { field: 'name', title: '菜单名称', width: 200 },
+    { field: 'displayName', title: '菜单名称', width: 200 },
     { field: 'type', title: '菜单类型', width: 100, dictCode: 'menu_type' },
     { field: 'path', title: '路径', ellipsis: true },
     { field: 'icon', title: '图标', width: 80 },
@@ -352,6 +360,7 @@ const formData = ref<any>({
   menuLevel: 1,
   path: '',
   name: '',
+  nameI18nJson: '',
   icon: undefined,
   componentKey: undefined,
   permKey: undefined,
@@ -386,7 +395,19 @@ const showExternalUrl = computed(() => {
 
 // 表单规则
 const rules = {
-  name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+  nameI18nJson: [
+    { 
+      required: true, 
+      message: '请输入菜单名称', 
+      trigger: 'change',
+      validator: (_rule: any, value: string) => {
+        if (!value || value === '{}' || value === '') {
+          return Promise.reject('请至少配置一种语言的菜单名称')
+        }
+        return Promise.resolve()
+      }
+    }
+  ],
   type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
   moduleId: [{ required: true, message: '请选择所属模块', trigger: 'change' }]
 }
@@ -428,10 +449,16 @@ const handleRequest = async (payload: {
     const response = await getMenuTree(params)
     const flatList = response || []
     
+    // 处理多语言显示
+    const processedList = flatList.map((item: any) => ({
+      ...item,
+      displayName: getI18nValue(item.nameI18nJson, item.name)
+    }))
+    
     return {
       success: true,
-      data: flatList,
-      total: flatList.length
+      data: processedList,
+      total: processedList.length
     }
   } catch (error) {
     console.error('加载菜单列表失败:', error)
@@ -464,6 +491,7 @@ const handleAdd = () => {
     menuLevel: 1,
     path: '',
     name: '',
+    nameI18nJson: '',
     icon: undefined,
     componentKey: undefined,
     permKey: undefined,
@@ -483,7 +511,8 @@ const handleAdd = () => {
 const handleEdit = (record: any) => {
   formData.value = {
     ...record,
-    moduleId: String(record.moduleId || activeModuleId.value)
+    moduleId: String(record.moduleId || activeModuleId.value),
+    nameI18nJson: record.nameI18nJson || ''
   }
   formTitle.value = '编辑菜单'
   visible.value = true

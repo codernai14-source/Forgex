@@ -851,6 +851,8 @@ watch(
   () => locale.value,
   async () => {
     await loadConfig()
+    // 切换语言后重新加载数据，以获取新语言的字典翻译
+    await handleQuery(lastSorter.value)
   },
 )
 

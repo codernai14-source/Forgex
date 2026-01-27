@@ -96,7 +96,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'tableNameI18nJson'">
-              <span>{{ getTableName(record.tableNameI18nJson) }}</span>
+              <span>{{ getI18nValue(record.tableNameI18nJson, record.tableName) }}</span>
             </template>
             
             <template v-else-if="column.key === 'tableType'">
@@ -168,7 +168,7 @@ import {
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
-import { getLocale } from '@/locales'
+import { getI18nValue } from '@/utils/i18n'
 
 // 使用 global 作用域获取全局 i18n 实例，确保国际化生效
 const { t } = useI18n({ useScope: 'global' })
@@ -443,16 +443,7 @@ const handleToggleStatus = async (id: number, enabled: boolean) => {
   }
 }
 
-const getTableName = (i18nJson: string | undefined) => {
-  if (!i18nJson) return ''
-  try {
-    const i18nData = JSON.parse(i18nJson)
-    const currentLocale = getLocale()
-    return i18nData[currentLocale] || i18nData['zh-CN'] || i18nData['en-US'] || Object.values(i18nData)[0] || ''
-  } catch {
-    return i18nJson
-  }
-}
+// getTableName 函数已被 getI18nValue 替代，已删除
 
 onMounted(() => {
   fetchData()

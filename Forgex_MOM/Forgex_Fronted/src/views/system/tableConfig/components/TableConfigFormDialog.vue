@@ -29,8 +29,9 @@
             
             <a-col :span="12">
               <a-form-item :label="t('system.tableConfig.tableName')" name="tableNameI18nJson">
-                <a-input
-                  v-model:value="formData.tableNameI18nJson"
+                <I18nInput
+                  v-model="formData.tableNameI18nJson"
+                  mode="simple"
                   :placeholder="t('system.tableConfig.form.tableName')"
                 />
               </a-form-item>
@@ -102,7 +103,11 @@
             </template>
             
             <template v-else-if="column.key === 'title'">
-              <a-input v-model:value="record.titleI18nJson" :placeholder="t('system.tableConfig.form.title')" />
+              <I18nInput
+                v-model="record.titleI18nJson"
+                mode="simple"
+                :placeholder="t('system.tableConfig.form.title')"
+              />
             </template>
             
             <template v-else-if="column.key === 'align'">
@@ -171,6 +176,7 @@ import { ref, reactive, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 import {
   getTableConfigDetail,
   createTableConfig,

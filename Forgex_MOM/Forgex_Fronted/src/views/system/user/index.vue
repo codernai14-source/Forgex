@@ -151,8 +151,13 @@ const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
 
 // 字典选项配置
-const dictOptions = ref({
-  // 可根据需要添加字典选项
+const dictOptions = ref<Record<string, any[]>>({
+  departmentId: [],
+  positionId: [],
+  status: [
+    { label: t('system.user.statusActive'), value: true },
+    { label: t('system.user.statusInactive'), value: false }
+  ]
 })
 
 // 降级配置
@@ -343,12 +348,29 @@ async function handleUpdateStatus(id: string, status: boolean) {
 }
 
 /**
+ * 将部门树转换为下拉选项（扁平化）
+ */
+function flattenDepartmentTree(tree: Department[], prefix = ''): any[] {
+  const result: any[] = []
+  for (const node of tree) {
+    const label = prefix ? `${prefix} / ${node.name}` : node.name
+    result.push({ label, value: node.id })
+    if (node.children && node.children.length > 0) {
+      result.push(...flattenDepartmentTree(node.children, label))
+    }
+  }
+  return result
+}
+
+/**
  * 加载部门树数据
  */
 async function loadDepartmentTree() {
   try {
     const result = await getDepartmentTree({ tenantId: '1' })
     departmentTreeData.value = result || []
+    // 转换为下拉选项
+    dictOptions.value.departmentId = flattenDepartmentTree(result || [])
   } catch (error) {
     console.error('加载部门树失败:', error)
   }
@@ -361,6 +383,11 @@ async function loadPositionList() {
   try {
     const result = await listPositions({})
     positionList.value = result || []
+    // 转换为下拉选项
+    dictOptions.value.positionId = (result || []).map((item: any) => ({
+      label: item.name,
+      value: item.id
+    }))
   } catch (error) {
     console.error('加载职位列表失败:', error)
   }

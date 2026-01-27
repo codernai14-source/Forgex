@@ -1,4 +1,4 @@
-import http from '../http'
+import http from '@/utils/http'
 
 /**
  * ${tableComment!entityName} API
@@ -18,7 +18,7 @@ export const page${entityName} = (data: any) => {
  * 根据ID查询${tableComment!entityName}
  */
 export const get${entityName}ById = (id: number) => {
-  return http.post('/${moduleName}/${entityNameLower}/getById', id)
+  return http.get(`/${moduleName}/${entityNameLower}/\${id}`)
 }
 
 /**
@@ -32,22 +32,41 @@ export const save${entityName} = (data: any) => {
  * 修改${tableComment!entityName}
  */
 export const update${entityName} = (data: any) => {
-  return http.post('/${moduleName}/${entityNameLower}/update', data)
+  return http.put('/${moduleName}/${entityNameLower}/update', data)
 }
 
 /**
  * 删除${tableComment!entityName}
  */
 export const delete${entityName} = (id: number) => {
-  return http.post('/${moduleName}/${entityNameLower}/delete', id)
+  return http.delete(`/${moduleName}/${entityNameLower}/\${id}`)
+}
+
+/**
+ * 批量删除${tableComment!entityName}
+ */
+export const batchDelete${entityName} = (ids: number[]) => {
+  return http.post('/${moduleName}/${entityNameLower}/batchDelete', { ids })
 }
 
 /**
  * 导出${tableComment!entityName}
  */
 export const export${entityName} = (data: any) => {
-  return http.post('/${moduleName}/${entityNameLower}/export', data, {
-    responseType: 'blob'
-  })
+  return http.download('/${moduleName}/${entityNameLower}/export', data)
+}
+
+/**
+ * 导入${tableComment!entityName}
+ */
+export const import${entityName} = (formData: FormData) => {
+  return http.upload('/${moduleName}/${entityNameLower}/import', formData)
+}
+
+/**
+ * 下载${tableComment!entityName}导入模板
+ */
+export const downloadTemplate${entityName} = () => {
+  return http.download('/${moduleName}/${entityNameLower}/template')
 }
 
