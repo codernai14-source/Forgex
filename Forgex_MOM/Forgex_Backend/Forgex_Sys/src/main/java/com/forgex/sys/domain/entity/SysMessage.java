@@ -20,6 +20,18 @@ import java.time.LocalDateTime;
 public class SysMessage extends BaseEntity {
 
     /**
+     * 发送方租户ID
+     */
+    @TableField("sender_tenant_id")
+    private Long senderTenantId;
+
+    /**
+     * 发送方用户ID
+     */
+    @TableField("sender_user_id")
+    private Long senderUserId;
+
+    /**
      * 发送人名称(格式:姓名+账号,如张三(admin),系统消息则为系统(admin))
      */
     @TableField("sender_name")
@@ -30,6 +42,12 @@ public class SysMessage extends BaseEntity {
      */
     @TableField("receiver_user_id")
     private Long receiverUserId;
+
+    /**
+     * 消息范围（INTERNAL-内部消息，EXTERNAL-外部消息）
+     */
+    @TableField("scope")
+    private String scope;
 
     /**
      * 模板编号
@@ -86,4 +104,3 @@ public class SysMessage extends BaseEntity {
     @TableField("read_time")
     private LocalDateTime readTime;
 }
-

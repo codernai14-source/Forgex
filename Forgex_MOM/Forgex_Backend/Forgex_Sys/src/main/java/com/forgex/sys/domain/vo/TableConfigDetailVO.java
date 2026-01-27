@@ -58,3 +58,5 @@ public class TableConfigDetailVO {
     private List<FxTableColumnConfig> columns;
 }
 
+
+

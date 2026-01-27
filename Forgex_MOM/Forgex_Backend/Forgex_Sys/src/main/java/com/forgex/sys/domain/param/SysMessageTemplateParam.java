@@ -40,3 +40,5 @@ public class SysMessageTemplateParam extends BaseGetParam {
     private Boolean status;
 }
 
+
+

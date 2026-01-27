@@ -3,10 +3,12 @@ package com.forgex.sys.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.service.table.FxTableConfigService;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.domain.dto.table.FxTableConfigDTO;
 import com.forgex.common.domain.entity.table.FxTableConfig;
 import com.forgex.common.domain.entity.table.FxTableColumnConfig;
@@ -49,7 +51,7 @@ public class CommonTableController {
         Long userId = UserContext.get();
 
         LambdaQueryWrapper<FxTableConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(FxTableConfig::getDeleted, 0);
+        wrapper.eq(FxTableConfig::getDeleted, false);
 
         if (tableCode != null && !tableCode.isEmpty()) {
             wrapper.like(FxTableConfig::getTableCode, tableCode);
@@ -72,14 +74,14 @@ public class CommonTableController {
         
         // 查询表格配置
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null || config.getDeleted() == 1) {
-            return R.fail(404, "表格配置不存在");
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
         // 查询列配置
         LambdaQueryWrapper<FxTableColumnConfig> columnWrapper = new LambdaQueryWrapper<>();
         columnWrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode())
-                    .eq(FxTableColumnConfig::getDeleted, 0)
+                    .eq(FxTableColumnConfig::getDeleted, false)
                     .orderByAsc(FxTableColumnConfig::getOrderNum);
         List<FxTableColumnConfig> columns = tableColumnConfigMapper.selectList(columnWrapper);
         
@@ -109,7 +111,7 @@ public class CommonTableController {
     @PostMapping
     public R<Long> create(@RequestBody TableConfigDetailVO vo) {
         Long tenantId = TenantContext.get();
-        String currentUser = UserContext.getAccount();
+        String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
         
         // 保存表格配置
@@ -125,7 +127,7 @@ public class CommonTableController {
         config.setTenantId(tenantId);
         config.setCreateBy(currentUser);
         config.setCreateTime(now);
-        config.setDeleted(0);
+        config.setDeleted(false);
         
         tableConfigMapper.insert(config);
         
@@ -137,7 +139,7 @@ public class CommonTableController {
                 column.setTenantId(tenantId);
                 column.setCreateBy(currentUser);
                 column.setCreateTime(now);
-                column.setDeleted(0);
+                column.setDeleted(false);
                 tableColumnConfigMapper.insert(column);
             }
         }
@@ -151,13 +153,13 @@ public class CommonTableController {
     @PutMapping("/{id}")
     public R<Void> update(@PathVariable Long id, @RequestBody TableConfigDetailVO vo) {
         Long tenantId = TenantContext.get();
-        String currentUser = UserContext.getAccount();
+        String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
         
         // 更新表格配置
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null || config.getDeleted() == 1) {
-            return R.fail(404, "表格配置不存在");
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
         config.setTableNameI18nJson(vo.getTableNameI18nJson());
@@ -184,7 +186,7 @@ public class CommonTableController {
                 column.setTenantId(tenantId);
                 column.setCreateBy(currentUser);
                 column.setCreateTime(now);
-                column.setDeleted(0);
+                column.setDeleted(false);
                 tableColumnConfigMapper.insert(column);
             }
         }
@@ -199,11 +201,11 @@ public class CommonTableController {
     public R<Void> delete(@PathVariable Long id) {
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null) {
-            return R.fail(404, "表格配置不存在");
+            return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
         // 软删除表格配置
-        config.setDeleted(1);
+        config.setDeleted(true);
         tableConfigMapper.updateById(config);
         
         // 软删除列配置
@@ -211,7 +213,7 @@ public class CommonTableController {
         wrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode());
         List<FxTableColumnConfig> columns = tableColumnConfigMapper.selectList(wrapper);
         for (FxTableColumnConfig column : columns) {
-            column.setDeleted(1);
+            column.setDeleted(true);
             tableColumnConfigMapper.updateById(column);
         }
         
@@ -224,7 +226,7 @@ public class CommonTableController {
     @DeleteMapping("/batch")
     public R<Void> batchDelete(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            return R.fail(400, "ID列表不能为空");
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID列表不能为空");
         }
         
         for (Long id : ids) {
@@ -240,15 +242,20 @@ public class CommonTableController {
     @PutMapping("/{id}/status")
     public R<Void> updateStatus(@PathVariable Long id, @RequestBody TableConfigGetParam param) {
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null || config.getDeleted() == 1) {
-            return R.fail(404, "表格配置不存在");
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
         config.setEnabled(param.getEnabled());
-        config.setUpdateBy(UserContext.getAccount());
+        config.setUpdateBy(currentUser());
         config.setUpdateTime(LocalDateTime.now());
         tableConfigMapper.updateById(config);
         
         return R.ok();
+    }
+
+    private String currentUser() {
+        Long userId = UserContext.get();
+        return userId == null ? "system" : userId.toString();
     }
 }

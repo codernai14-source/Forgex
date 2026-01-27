@@ -27,3 +27,5 @@ import org.apache.ibatis.annotations.Mapper;
 public interface SysMessageTemplateContentMapper extends BaseMapper<SysMessageTemplateContent> {
 }
 
+
+

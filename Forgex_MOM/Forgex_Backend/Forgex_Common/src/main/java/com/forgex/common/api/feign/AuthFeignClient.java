@@ -47,3 +47,5 @@ public interface AuthFeignClient {
     R<Long> getUserIdByToken(@PathVariable("token") String token);
 }
 
+
+

@@ -67,3 +67,5 @@ public interface SysMessageTemplateService {
     boolean deleteBatch(java.util.List<Long> ids);
 }
 
+
+

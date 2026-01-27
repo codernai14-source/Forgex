@@ -14,3 +14,5 @@ import org.apache.ibatis.annotations.Mapper;
 public interface SysTenantMessageWhitelistMapper extends BaseMapper<SysTenantMessageWhitelist> {
 }
 
+
+

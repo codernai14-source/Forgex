@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.message;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.exception.BusinessException;
@@ -170,7 +170,7 @@ public class MessageSenderService {
         
         try {
             // 1. 根据模板编码查询模板主表
-            LambdaQueryWrapper<?> templateWrapper = new LambdaQueryWrapper<>();
+            QueryWrapper<?> templateWrapper = new QueryWrapper<>();
             templateWrapper.eq(true, "template_code", templateCode);
             templateWrapper.eq(true, "status", true);
             
@@ -183,7 +183,7 @@ public class MessageSenderService {
             String messageType = (String) getField(template, "messageType");
             
             // 2. 查询接收人配置
-            LambdaQueryWrapper<?> receiverWrapper = new LambdaQueryWrapper<>();
+            QueryWrapper<?> receiverWrapper = new QueryWrapper<>();
             receiverWrapper.eq(true, "template_id", templateId);
             List<?> receivers = (List<?>) invokeMethod(receiverMapper, "selectList", receiverWrapper);
             
@@ -195,7 +195,7 @@ public class MessageSenderService {
             }
             
             // 4. 查询模板内容配置
-            LambdaQueryWrapper<?> contentWrapper = new LambdaQueryWrapper<>();
+            QueryWrapper<?> contentWrapper = new QueryWrapper<>();
             contentWrapper.eq(true, "template_id", templateId);
             List<?> contents = (List<?>) invokeMethod(contentMapper, "selectList", contentWrapper);
             
@@ -362,7 +362,7 @@ public class MessageSenderService {
                         break;
                     case "ROLE": // 角色
                         // 查询角色下的用户
-                        LambdaQueryWrapper<?> roleWrapper = new LambdaQueryWrapper<>();
+                        QueryWrapper<?> roleWrapper = new QueryWrapper<>();
                         roleWrapper.in(true, "role_id", receiverIds);
                         List<?> userRoles = (List<?>) invokeMethod(userRoleMapper, "selectList", roleWrapper);
                         for (Object userRole : userRoles) {
@@ -374,7 +374,7 @@ public class MessageSenderService {
                         break;
                     case "DEPT": // 部门
                         // 查询部门下的用户
-                        LambdaQueryWrapper<?> deptWrapper = new LambdaQueryWrapper<>();
+                        QueryWrapper<?> deptWrapper = new QueryWrapper<>();
                         deptWrapper.in(true, "department_id", receiverIds);
                         List<?> deptUsers = (List<?>) invokeMethod(userMapper, "selectList", deptWrapper);
                         for (Object user : deptUsers) {
@@ -386,7 +386,7 @@ public class MessageSenderService {
                         break;
                     case "POSITION": // 职位
                         // 查询职位下的用户
-                        LambdaQueryWrapper<?> posWrapper = new LambdaQueryWrapper<>();
+                        QueryWrapper<?> posWrapper = new QueryWrapper<>();
                         posWrapper.in(true, "position_id", receiverIds);
                         List<?> posUsers = (List<?>) invokeMethod(userMapper, "selectList", posWrapper);
                         for (Object user : posUsers) {

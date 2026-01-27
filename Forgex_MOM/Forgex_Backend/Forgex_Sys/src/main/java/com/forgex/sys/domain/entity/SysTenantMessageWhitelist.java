@@ -46,3 +46,5 @@ public class SysTenantMessageWhitelist extends BaseEntity {
     private String remark;
 }
 
+
+

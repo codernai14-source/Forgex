@@ -2,6 +2,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.entity.SysTenantMessageWhitelist;
 import com.forgex.sys.mapper.SysTenantMessageWhitelistMapper;
@@ -81,11 +82,11 @@ public class SysTenantMessageWhitelistController {
                 .eq(SysTenantMessageWhitelist::getDeleted, false));
         
         if (count != null && count > 0) {
-            return R.fail("该租户对已存在白名单配置");
+            return R.fail(CommonPrompt.ALREADY_EXISTS);
         }
         
         int rows = whitelistMapper.insert(whitelist);
-        return rows > 0 ? R.ok(true) : R.fail("新增失败");
+        return rows > 0 ? R.ok(true) : R.fail(CommonPrompt.OPERATION_FAILED);
     }
 
     /**
@@ -97,7 +98,7 @@ public class SysTenantMessageWhitelistController {
     @PutMapping
     public R<Boolean> update(@RequestBody SysTenantMessageWhitelist whitelist) {
         int rows = whitelistMapper.updateById(whitelist);
-        return rows > 0 ? R.ok(true) : R.fail("更新失败");
+        return rows > 0 ? R.ok(true) : R.fail(CommonPrompt.OPERATION_FAILED);
     }
 
     /**
@@ -109,7 +110,7 @@ public class SysTenantMessageWhitelistController {
     @DeleteMapping("/{id}")
     public R<Boolean> delete(@PathVariable Long id) {
         int rows = whitelistMapper.deleteById(id);
-        return rows > 0 ? R.ok(true) : R.fail("删除失败");
+        return rows > 0 ? R.ok(true) : R.fail(CommonPrompt.OPERATION_FAILED);
     }
 
     /**
@@ -126,7 +127,7 @@ public class SysTenantMessageWhitelistController {
         whitelist.setEnabled(enabled);
         
         int rows = whitelistMapper.updateById(whitelist);
-        return rows > 0 ? R.ok(true) : R.fail("操作失败");
+        return rows > 0 ? R.ok(true) : R.fail(CommonPrompt.OPERATION_FAILED);
     }
 
     /**
@@ -161,4 +162,6 @@ public class SysTenantMessageWhitelistController {
         return R.ok(count != null && count > 0);
     }
 }
+
+
 

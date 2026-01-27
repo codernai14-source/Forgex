@@ -292,7 +292,7 @@ public class UserController {
     public R<UserInfoDTO> getUserById(@PathVariable Long userId) {
         SysUser user = userService.getById(userId);
         if (user == null) {
-            return R.fail("用户不存在");
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
         
         UserInfoDTO dto = new UserInfoDTO();
@@ -314,7 +314,7 @@ public class UserController {
         );
         
         if (user == null) {
-            return R.fail("用户不存在");
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
         
         UserInfoDTO dto = new UserInfoDTO();

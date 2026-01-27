@@ -68,3 +68,5 @@ ON DUPLICATE KEY UPDATE
 
 SELECT '表格配置初始化完成！' AS message;
 
+
+

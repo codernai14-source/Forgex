@@ -40,3 +40,5 @@ public class SysMessageParam extends BaseGetParam {
     private String title;
 }
 
+
+

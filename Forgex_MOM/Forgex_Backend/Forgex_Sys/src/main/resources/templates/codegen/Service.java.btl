@@ -58,3 +58,5 @@ public interface ${entityName}Service {
     Boolean deleteById(Long id);
 }
 
+
+

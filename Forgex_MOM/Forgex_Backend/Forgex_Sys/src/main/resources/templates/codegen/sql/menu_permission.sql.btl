@@ -106,3 +106,5 @@ WHERE tenant_id = @TENANT_ID
 
 SELECT '菜单和权限初始化完成！' AS message;
 
+
+

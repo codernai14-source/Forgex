@@ -110,3 +110,5 @@ ON DUPLICATE KEY UPDATE
 
 SELECT '多语言配置初始化完成！' AS message;
 
+
+

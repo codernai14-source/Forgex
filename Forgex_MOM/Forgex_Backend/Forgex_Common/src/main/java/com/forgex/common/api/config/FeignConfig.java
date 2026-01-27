@@ -29,3 +29,5 @@ public class FeignConfig {
     // Feign 配置可以在这里添加
 }
 
+
+

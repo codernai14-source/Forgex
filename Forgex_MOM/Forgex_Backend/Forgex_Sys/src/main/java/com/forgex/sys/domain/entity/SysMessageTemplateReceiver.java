@@ -41,3 +41,5 @@ public class SysMessageTemplateReceiver extends BaseEntity {
     private String receiverIds;
 }
 
+
+
