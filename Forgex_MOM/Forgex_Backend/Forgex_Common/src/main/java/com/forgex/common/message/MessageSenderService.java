@@ -290,6 +290,13 @@ public class MessageSenderService {
                 return;
             }
             
+            // 检查邮件服务是否可用
+            Boolean available = (Boolean) invokeMethod(emailService, "isAvailable");
+            if (available == null || !available) {
+                log.warn("邮件服务不可用，跳过邮件发送");
+                return;
+            }
+            
             // 查询用户邮箱
             Object user = invokeMethod(userMapper, "selectById", receiverUserId);
             if (user == null) {
@@ -304,11 +311,30 @@ public class MessageSenderService {
             }
             
             // 发送HTML邮件
-            invokeMethod(emailService, "sendHtmlEmail", email, subject, content);
-            log.info("邮件发送成功: userId={}, email={}, subject={}", receiverUserId, email, subject);
+            Boolean success = (Boolean) invokeMethod(emailService, "sendHtmlEmail", email, subject, content);
+            
+            if (success != null && success) {
+                log.info("邮件发送成功: userId={}, email={}, subject={}", receiverUserId, maskEmail(email), subject);
+            } else {
+                log.warn("邮件发送失败: userId={}, email={}, subject={}", receiverUserId, maskEmail(email), subject);
+            }
         } catch (Exception e) {
-            log.error("邮件发送失败: userId={}, error={}", receiverUserId, e.getMessage(), e);
+            log.error("邮件发送异常: userId={}, error={}", receiverUserId, e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 邮箱脱敏
+     */
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "****";
+        }
+        String[] parts = email.split("@");
+        if (parts[0].length() <= 2) {
+            return "**@" + parts[1];
+        }
+        return parts[0].substring(0, 2) + "****@" + parts[1];
     }
     
     /**
@@ -320,6 +346,13 @@ public class MessageSenderService {
             Object smsService = getBean("smsService");
             if (smsService == null) {
                 log.warn("SmsService未配置，跳过短信发送");
+                return;
+            }
+            
+            // 检查短信服务是否可用
+            Boolean available = (Boolean) invokeMethod(smsService, "isAvailable");
+            if (available == null || !available) {
+                log.warn("短信服务不可用，跳过短信发送");
                 return;
             }
             
@@ -336,12 +369,52 @@ public class MessageSenderService {
                 return;
             }
             
-            // 注意：短信需要使用模板CODE，这里简化处理
-            // 实际使用时应该在消息模板中配置短信模板CODE
-            log.info("短信发送（需配置模板）: userId={}, phone={}, content={}", receiverUserId, phone, content);
+            // 从内容中提取短信模板CODE和参数
+            // 格式：[SMS_TEMPLATE_CODE]实际内容
+            String templateCode = null;
+            String actualContent = content;
+            
+            if (content != null && content.startsWith("[") && content.contains("]")) {
+                int endIndex = content.indexOf("]");
+                templateCode = content.substring(1, endIndex);
+                actualContent = content.substring(endIndex + 1);
+            }
+            
+            // 如果没有指定模板CODE，使用默认的通知模板
+            if (!StringUtils.hasText(templateCode)) {
+                // 使用系统配置的默认短信模板
+                templateCode = System.getProperty("aliyun.sms.notification-template-code", "");
+                if (!StringUtils.hasText(templateCode)) {
+                    log.warn("未配置短信模板CODE，无法发送短信: userId={}", receiverUserId);
+                    return;
+                }
+            }
+            
+            // 构建短信参数（将内容作为content参数）
+            Map<String, Object> param = new HashMap<>();
+            param.put("content", actualContent);
+            
+            // 发送短信
+            Boolean success = (Boolean) invokeMethod(smsService, "sendSms", phone, templateCode, param);
+            
+            if (success != null && success) {
+                log.info("短信发送成功: userId={}, phone={}, templateCode={}", receiverUserId, maskPhone(phone), templateCode);
+            } else {
+                log.warn("短信发送失败: userId={}, phone={}, templateCode={}", receiverUserId, maskPhone(phone), templateCode);
+            }
         } catch (Exception e) {
-            log.error("短信发送失败: userId={}, error={}", receiverUserId, e.getMessage(), e);
+            log.error("短信发送异常: userId={}, error={}", receiverUserId, e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 手机号脱敏
+     */
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 11) {
+            return "****";
+        }
+        return phone.substring(0, 3) + "****" + phone.substring(7);
     }
     
     /**

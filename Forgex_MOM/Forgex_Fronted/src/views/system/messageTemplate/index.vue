@@ -127,88 +127,104 @@
 
         <!-- Tab2: 接收人配置 -->
         <a-tab-pane key="receiver" tab="接收人配置">
+          <a-alert
+            message="接收人配置说明"
+            description="可以配置多个接收人规则，系统会根据规则自动确定消息接收人。支持指定用户、角色、部门、职位等多种方式。"
+            type="info"
+            show-icon
+            style="margin-bottom: 16px"
+          />
           <a-button type="dashed" block @click="handleAddReceiver" style="margin-bottom: 16px">
             <template #icon><PlusOutlined /></template>
             添加接收人配置
           </a-button>
           <div v-for="(receiver, index) in formData.receivers" :key="index" class="receiver-item">
             <a-card size="small">
+              <template #title>
+                <span>接收人配置 {{ index + 1 }}</span>
+              </template>
               <template #extra>
                 <a-button type="link" danger size="small" @click="handleRemoveReceiver(index)">删除</a-button>
               </template>
-              <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="接收类型">
-                  <a-select v-model:value="receiver.receiverType" placeholder="请选择接收类型">
-                    <a-select-option value="USER">指定人</a-select-option>
-                    <a-select-option value="ROLE">角色</a-select-option>
-                    <a-select-option value="DEPT">部门</a-select-option>
-                    <a-select-option value="POSITION">职位</a-select-option>
-                  </a-select>
-                </a-form-item>
-                <a-form-item label="接收人">
-                  <a-select
-                    v-model:value="receiver.receiverIds"
-                    mode="multiple"
-                    placeholder="请选择接收人"
-                    :options="getReceiverOptions(receiver.receiverType)"
-                  />
-                </a-form-item>
-              </a-form>
+              <ReceiverSelector
+                v-model="formData.receivers[index]"
+                @update:modelValue="(val) => handleReceiverUpdate(index, val)"
+              />
             </a-card>
           </div>
+          <a-empty v-if="formData.receivers.length === 0" description="暂无接收人配置，请点击上方按钮添加" />
         </a-tab-pane>
 
         <!-- Tab3: 模板内容配置 -->
         <a-tab-pane key="content" tab="模板内容配置">
-          <a-button type="dashed" block @click="handleAddContent" style="margin-bottom: 16px">
-            <template #icon><PlusOutlined /></template>
-            添加内容配置
-          </a-button>
+          <a-space style="margin-bottom: 16px; width: 100%; justify-content: space-between;">
+            <a-button type="dashed" @click="handleAddContent">
+              <template #icon><PlusOutlined /></template>
+              添加内容配置
+            </a-button>
+            <a-button type="primary" @click="handlePreview" :disabled="formData.contents.length === 0">
+              <template #icon><EyeOutlined /></template>
+              预览效果
+            </a-button>
+          </a-space>
           <div v-for="(content, index) in formData.contents" :key="index" class="content-item">
             <a-card size="small">
+              <template #title>
+                <span>{{ getPlatformName(content.platform) || `内容配置 ${index + 1}` }}</span>
+              </template>
               <template #extra>
                 <a-button type="link" danger size="small" @click="handleRemoveContent(index)">删除</a-button>
               </template>
               <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="消息平台">
+                <a-form-item label="消息平台" required>
                   <a-select v-model:value="content.platform" placeholder="请选择消息平台">
-                    <a-select-option value="INTERNAL">站内</a-select-option>
+                    <a-select-option value="INTERNAL">站内消息</a-select-option>
                     <a-select-option value="WECHAT">企业微信</a-select-option>
                     <a-select-option value="SMS">短信</a-select-option>
-                    <a-select-option value="EMAIL">邮箱</a-select-option>
+                    <a-select-option value="EMAIL">邮件</a-select-option>
                   </a-select>
                 </a-form-item>
                 <a-form-item label="消息标题">
                   <I18nInput
                     v-model="content.contentTitleI18nJson"
-                    mode="table"
+                    mode="simple"
+                    placeholder="请输入消息标题（可选）"
                   />
                   <template #extra>
                     <span style="color: #999; font-size: 12px;">
-                      支持占位符，如${userName}。配置多语言后，系统会根据用户语言发送对应的消息
+                      支持占位符，如 ${userName}、${tenantName} 等
                     </span>
                   </template>
                 </a-form-item>
-                <a-form-item label="消息内容">
-                  <I18nInput
+                <a-form-item label="消息内容" required>
+                  <PlaceholderInput
                     v-model="content.contentBodyI18nJson"
-                    mode="table"
+                    placeholder="请输入消息内容"
+                    :rows="6"
                   />
-                  <template #extra>
-                    <span style="color: #999; font-size: 12px;">
-                      支持占位符，如${userName}。配置多语言后，系统会根据用户语言发送对应的消息
-                    </span>
-                  </template>
                 </a-form-item>
                 <a-form-item label="跳转链接">
-                  <a-input v-model:value="content.linkUrl" placeholder="请输入跳转链接" />
+                  <a-input v-model:value="content.linkUrl" placeholder="请输入跳转链接（可选）" />
+                  <template #extra>
+                    <span style="color: #999; font-size: 12px;">
+                      用户点击消息后跳转的链接地址
+                    </span>
+                  </template>
                 </a-form-item>
               </a-form>
             </a-card>
           </div>
+          <a-empty v-if="formData.contents.length === 0" description="暂无内容配置，请点击上方按钮添加" />
         </a-tab-pane>
       </a-tabs>
     </a-modal>
+
+    <!-- 模板预览弹窗 -->
+    <TemplatePreview
+      v-model:visible="previewVisible"
+      :contents="formData.contents"
+      :message-type="formData.messageType || 'NOTICE'"
+    />
   </div>
 </template>
 
@@ -219,9 +235,13 @@ import {
   SearchOutlined,
   ReloadOutlined,
   PlusOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  EyeOutlined
 } from '@ant-design/icons-vue'
 import I18nInput from '@/components/common/I18nInput.vue'
+import PlaceholderInput from '@/components/common/PlaceholderInput.vue'
+import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
+import TemplatePreview from '@/components/common/TemplatePreview.vue'
 import { getI18nValue } from '@/utils/i18n'
 import {
   pageMessageTemplate,
@@ -273,6 +293,9 @@ const modalTitle = ref('新增消息模板')
 const modalLoading = ref(false)
 const activeTab = ref('basic')
 
+// 预览相关
+const previewVisible = ref(false)
+
 // 表单数据
 const formData = reactive({
   id: undefined,
@@ -286,6 +309,71 @@ const formData = reactive({
   receivers: [] as any[],
   contents: [] as any[]
 })
+
+// 表单验证规则
+const validateForm = () => {
+  if (!formData.templateCode || !formData.templateCode.trim()) {
+    message.error('请输入模板编号')
+    activeTab.value = 'basic'
+    return false
+  }
+  
+  if (!formData.templateNameI18nJson || !formData.templateNameI18nJson.trim()) {
+    message.error('请输入模板名称')
+    activeTab.value = 'basic'
+    return false
+  }
+  
+  if (!formData.messageType) {
+    message.error('请选择消息类型')
+    activeTab.value = 'basic'
+    return false
+  }
+  
+  if (formData.receivers.length === 0) {
+    message.error('请至少添加一个接收人配置')
+    activeTab.value = 'receiver'
+    return false
+  }
+  
+  // 验证接收人配置
+  for (let i = 0; i < formData.receivers.length; i++) {
+    const receiver = formData.receivers[i]
+    if (!receiver.receiverType) {
+      message.error(`接收人配置 ${i + 1}：请选择接收类型`)
+      activeTab.value = 'receiver'
+      return false
+    }
+    if (!receiver.receiverIds || receiver.receiverIds.length === 0) {
+      message.error(`接收人配置 ${i + 1}：请选择接收人`)
+      activeTab.value = 'receiver'
+      return false
+    }
+  }
+  
+  if (formData.contents.length === 0) {
+    message.error('请至少添加一个内容配置')
+    activeTab.value = 'content'
+    return false
+  }
+  
+  // 验证内容配置
+  for (let i = 0; i < formData.contents.length; i++) {
+    const content = formData.contents[i]
+    if (!content.platform) {
+      message.error(`内容配置 ${i + 1}：请选择消息平台`)
+      activeTab.value = 'content'
+      return false
+    }
+    if (!content.contentBodyI18nJson || !content.contentBodyI18nJson.trim()) {
+      message.error(`内容配置 ${i + 1}：请输入消息内容`)
+      activeTab.value = 'content'
+      return false
+    }
+  }
+  
+  return true
+}
 
 // 获取消息类型颜色
 const getMessageTypeColor = (type: string) => {
@@ -307,11 +395,13 @@ const getMessageTypeText = (type: string) => {
   return textMap[type] || type
 }
 
-// 获取接收人选项（这里需要根据实际情况调用相应的API）
-const getReceiverOptions = (type: string) => {
-  // TODO: 根据type调用不同的API获取选项
-  // 这里返回空数组，实际使用时需要实现
-  return []
+// 打开预览
+const handlePreview = () => {
+  if (formData.contents.length === 0) {
+    message.warning('请先添加内容配置')
+    return
+  }
+  previewVisible.value = true
 }
 
 // 查询数据
@@ -447,6 +537,11 @@ const handleRemoveReceiver = (index: number) => {
   formData.receivers.splice(index, 1)
 }
 
+// 更新接收人配置
+const handleReceiverUpdate = (index: number, value: any) => {
+  formData.receivers[index] = value
+}
+
 // 添加内容配置
 const handleAddContent = () => {
   formData.contents.push({
@@ -464,8 +559,24 @@ const handleRemoveContent = (index: number) => {
   formData.contents.splice(index, 1)
 }
 
+// 获取平台名称
+const getPlatformName = (platform: string) => {
+  const nameMap: Record<string, string> = {
+    INTERNAL: '站内消息',
+    WECHAT: '企业微信',
+    SMS: '短信',
+    EMAIL: '邮件'
+  }
+  return nameMap[platform] || ''
+}
+
 // 弹窗确定
 const handleModalOk = async () => {
+  // 表单验证
+  if (!validateForm()) {
+    return
+  }
+  
   modalLoading.value = true
   try {
     await saveMessageTemplate(formData)
@@ -511,6 +622,43 @@ onMounted(() => {
 
   &:last-child {
     margin-bottom: 0;
+  }
+  
+  :deep(.ant-card) {
+    border: 1px solid #e8e8e8;
+    transition: all 0.3s;
+    
+    &:hover {
+      border-color: #1890ff;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+    }
+    
+    .ant-card-head {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-bottom: 1px solid #e8e8e8;
+      
+      .ant-card-head-title {
+        font-weight: 600;
+        color: #333;
+      }
+    }
+  }
+}
+
+:deep(.ant-modal) {
+  .ant-tabs {
+    .ant-tabs-nav {
+      margin-bottom: 24px;
+      
+      .ant-tabs-tab {
+        font-size: 15px;
+        padding: 12px 20px;
+        
+        &.ant-tabs-tab-active {
+          font-weight: 600;
+        }
+      }
+    }
   }
 }
 </style>
