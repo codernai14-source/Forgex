@@ -5,7 +5,6 @@
         ref="tableRef"
         :table-code="'OnlineUserTable'"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
         :loading="loading"
         row-key="token"
@@ -54,20 +53,6 @@ const queryForm = reactive({
 // 表格相关
 const tableRef = ref()
 const loading = ref(false)
-
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '账号', dataIndex: 'account', key: 'account', width: 140 },
-    { title: '用户ID', dataIndex: 'userId', key: 'userId', width: 110 },
-    { title: '租户ID', dataIndex: 'tenantId', key: 'tenantId', width: 110 },
-    { title: '最后登录时间', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 180 },
-    { title: '最后登录IP', dataIndex: 'lastLoginIp', key: 'lastLoginIp', width: 150 },
-    { title: '最后登录地区', dataIndex: 'lastLoginRegion', key: 'lastLoginRegion', width: 150 },
-    { title: '会话剩余', key: 'ttlSeconds', width: 120 },
-    { title: '操作', key: 'action', width: 110, fixed: 'right' },
-  ]
-})
 
 // 字典配置
 const dictOptions = ref({})

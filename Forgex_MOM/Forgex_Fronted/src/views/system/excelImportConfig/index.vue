@@ -5,7 +5,6 @@
         ref="tableRef"
         :table-code="'ExcelImportConfigTable'"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         row-key="id"
         :pagination="{
           showSizeChanger: true,
@@ -92,25 +91,6 @@ import { deleteImportConfig, downloadTemplate, importConfigDetail, pageImportCon
 
 const { t } = useI18n()
 const tableRef = ref()
-
-const fallbackConfig = {
-  tableCode: 'ExcelImportConfigTable',
-  tableName: 'Excel导入配置',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'table_name', title: '表名', width: 200 },
-    { field: 'table_code', title: '表格编码', width: 200 },
-    { field: 'version', title: '版本', width: 80 },
-    { field: 'action', title: '操作', width: 240, fixed: 'right' }
-  ],
-  queryFields: [
-    { field: 'table_name', label: '表名', queryType: 'input', queryOperator: 'like' },
-    { field: 'table_code', label: '表格编码', queryType: 'input', queryOperator: 'like' }
-  ],
-  version: 1,
-}
 
 const itemColumns = [
   { title: '导入字段', key: 'importField', width: 240 },

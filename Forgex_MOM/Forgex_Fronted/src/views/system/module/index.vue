@@ -6,7 +6,6 @@
       :table-code="'ModuleTable'"
       :show-query-form="true"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       :row-selection="{
         selectedRowKeys: selectedRowKeys,
@@ -162,33 +161,6 @@ const {
   handleSubmit,
   handleCancel
 } = useModuleForm()
-
-// fallback配置
-const fallbackConfig = ref({
-  tableCode: 'ModuleTable',
-  tableName: '模块管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'id', title: 'ID', width: 80, align: 'center' },
-    { field: 'code', title: '模块编码', width: 150 },
-    { field: 'displayName', title: '模块名称', width: 150 },
-    { field: 'icon', title: '图标', width: 80 },
-    { field: 'orderNum', title: '排序号', width: 100 },
-    { field: 'visible', title: '可见性', width: 100, dictCode: 'visible' },
-    { field: 'status', title: '状态', width: 100, dictCode: 'status' },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'updateTime', title: '修改时间', width: 180 },
-    { field: 'action', title: '操作', width: 150, fixed: 'right' }
-  ],
-  queryFields: [
-    { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
-  ],
-  version: 1
-})
 
 // 字典配置
 const dictOptions = ref({

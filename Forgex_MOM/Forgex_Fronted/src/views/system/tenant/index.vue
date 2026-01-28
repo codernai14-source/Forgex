@@ -5,7 +5,6 @@
       ref="tableRef"
       :table-code="'TenantTable'"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       row-key="id"
       :show-query-form="true"
@@ -197,71 +196,6 @@ const rules = {
   tenantCode: [{ required: true, message: '请输入租户编码', trigger: 'blur' }],
   tenantType: [{ required: true, message: '请选择租户类别', trigger: 'change' }]
 }
-
-// fallback配置
-const fallbackConfig = ref({
-  tableCode: 'TenantTable',
-  tableName: '租户管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    {
-      field: 'id',
-      title: '租户ID',
-      width: 100
-    },
-    {
-      field: 'tenantName',
-      title: '租户名称',
-      width: 150
-    },
-    {
-      field: 'tenantCode',
-      title: '租户编码',
-      width: 150
-    },
-    {
-      field: 'tenantType',
-      title: '租户类别',
-      width: 120
-    },
-    {
-      field: 'logo',
-      title: 'Logo',
-      width: 80
-    },
-    {
-      field: 'description',
-      title: '描述',
-      width: 200,
-      ellipsis: true
-    },
-    {
-      field: 'status',
-      title: '状态',
-      width: 80,
-      dictCode: 'status'
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      width: 160
-    },
-    {
-      field: 'action',
-      title: '操作',
-      width: 150
-    }
-  ],
-  queryFields: [
-    { field: 'tenantName', label: '租户名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'tenantCode', label: '租户编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'tenantType', label: '租户类别', queryType: 'select', queryOperator: 'eq' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' }
-  ],
-  version: 1
-})
 
 // 字典配置
 const dictOptions = computed(() => ({

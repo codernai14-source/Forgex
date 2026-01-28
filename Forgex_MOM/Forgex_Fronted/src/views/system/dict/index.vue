@@ -11,7 +11,6 @@
         ref="tableRef"
         :table-code="'DictTable'"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
         row-key="id"
         :pagination="false"
@@ -88,19 +87,6 @@ const { dictItems: statusOptions } = useDict('status')
 // 表格相关
 const tableRef = ref()
 const loading = ref(false)
-
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '字典名称', dataIndex: 'dictName', key: 'dictName', width: 200 },
-    { title: '字典编码', dataIndex: 'dictCode', key: 'dictCode', width: 150 },
-    { title: '字典值', dataIndex: 'displayValue', key: 'displayValue', width: 120 },
-    { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80, align: 'center' },
-    { title: '状态', key: 'status', width: 80, align: 'center', dictCode: 'status' },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '操作', key: 'action', width: 200, fixed: 'right' }
-  ]
-})
 
 // 字典配置
 const dictOptions = ref({

@@ -6,7 +6,6 @@
       class="role-table"
       :table-code="'RoleTable'"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       :row-selection="{
         selectedRowKeys,

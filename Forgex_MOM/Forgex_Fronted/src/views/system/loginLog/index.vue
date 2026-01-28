@@ -3,7 +3,6 @@
     <FxDynamicTable
       ref="tableRef"
       table-code="sys.loginLog.list"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       :request="request"
     >
@@ -31,31 +30,6 @@ const dictOptions = {
     { label: '成功', value: 1 },
     { label: '失败', value: 0 },
   ],
-}
-
-const fallbackConfig = {
-  tableCode: 'sys.loginLog.list',
-  tableName: '登录日志',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'account', title: '登录账号', width: 120 },
-    { field: 'loginIp', title: '登录IP', width: 150 },
-    { field: 'loginRegion', title: '归属地', width: 180 },
-    { field: 'userAgent', title: '浏览器UA', ellipsis: true },
-    { field: 'loginTime', title: '登录时间', width: 180 },
-    { field: 'logoutTime', title: '登出时间', width: 180 },
-    { field: 'logoutReason', title: '登出原因', width: 120 },
-    { field: 'status', title: '状态', width: 80, align: 'center' as const },
-    { field: 'reason', title: '失败原因', width: 150, ellipsis: true },
-  ],
-  queryFields: [
-    { field: 'account', label: '登录账号', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '登录状态', queryType: 'select', queryOperator: 'eq' },
-    { field: 'loginTime', label: '登录时间', queryType: 'dateRange', queryOperator: 'between' },
-  ],
-  version: 1,
 }
 
 const request = async (payload: { page: { current: number; pageSize: number }; query: Record<string, any> }) => {

@@ -28,7 +28,6 @@
               ref="tableRef"
               :table-code="'PositionTable'"
               :request="handleRequest"
-              :fallback-config="fallbackConfig"
               :dict-options="dictOptions"
               row-key="id"
             >
@@ -201,25 +200,6 @@ const searchForm = ref({
 // 表格相关
 const tableRef = ref()
 const loading = ref(false)
-
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '职位名称', dataIndex: 'positionName', key: 'positionName', width: 150 },
-    { title: '职位编码', dataIndex: 'positionCode', key: 'positionCode', width: 150 },
-    { title: '职位级别', dataIndex: 'positionLevel', key: 'positionLevel', width: 100 },
-    { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80, dictCode: 'status' },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '操作', key: 'action', fixed: 'right', width: 150 }
-  ],
-  queryFields: [
-    { field: 'positionName', label: '职位名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'positionCode', label: '职位编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
-  ]
-})
 
 // 字典配置
 const dictOptions = ref({

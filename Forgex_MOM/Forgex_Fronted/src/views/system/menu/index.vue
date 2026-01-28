@@ -311,37 +311,6 @@ const dictOptions = ref({
   visible: visibleOptions
 })
 
-// 降级配置
-const fallbackConfig = {
-  tableCode: 'MenuTable',
-  tableName: '菜单管理',
-  tableType: 'TREE',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'displayName', title: '菜单名称', width: 200 },
-    { field: 'type', title: '菜单类型', width: 100, dictCode: 'menu_type' },
-    { field: 'path', title: '路径', ellipsis: true },
-    { field: 'icon', title: '图标', width: 80 },
-    { field: 'menuMode', title: '菜单模式', width: 100, dictCode: 'menu_mode' },
-    { field: 'permKey', title: '权限标识', ellipsis: true },
-    { field: 'orderNum', title: '排序', width: 80 },
-    { field: 'visible', title: '可见', width: 80, dictCode: 'visible' },
-    { field: 'status', title: '状态', width: 80, dictCode: 'status' },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'createBy', title: '创建人' },
-    { field: 'updateTime', title: '修改时间', width: 180 },
-    { field: 'updateBy', title: '修改人' },
-    { field: 'action', title: '操作', width: 200 }
-  ],
-  queryFields: [
-    { field: 'name', label: '菜单名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
-    { field: 'moduleId', label: '所属模块', queryType: 'select', queryOperator: 'eq' }
-  ],
-  version: 1,
-}
-
 // 选中的菜单ID列表
 const selectedRowKeys = ref<string[]>([])
 
