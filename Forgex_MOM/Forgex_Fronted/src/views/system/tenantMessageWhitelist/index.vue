@@ -1,61 +1,17 @@
 <template>
   <div class="tenant-message-whitelist-container">
-    <!-- 查询表单 -->
-    <a-card :bordered="false" style="margin-bottom: 16px">
-      <a-form layout="inline" :model="queryForm">
-        <a-form-item label="发送方租户">
-          <a-select
-            v-model:value="queryForm.senderTenantId"
-            placeholder="请选择发送方租户"
-            style="width: 200px"
-            allowClear
-          >
-            <a-select-option v-for="tenant in tenantList" :key="tenant.id" :value="tenant.id">
-              {{ tenant.tenantName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="接收方租户">
-          <a-select
-            v-model:value="queryForm.receiverTenantId"
-            placeholder="请选择接收方租户"
-            style="width: 200px"
-            allowClear
-          >
-            <a-select-option v-for="tenant in tenantList" :key="tenant.id" :value="tenant.id">
-              {{ tenant.tenantName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="queryForm.enabled"
-            placeholder="请选择状态"
-            style="width: 120px"
-            allowClear
-          >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleQuery">
-              <template #icon><SearchOutlined /></template>
-              查询
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
-    <!-- 操作按钮和表格 -->
-    <a-card :bordered="false">
-      <div style="margin-bottom: 16px">
+    <FxDynamicTable
+      ref="tableRef"
+      table-code="TenantMessageWhitelistTable"
+      :request="handleRequest"
+      :dict-options="dictOptions"
+      :row-selection="{
+        selectedRowKeys,
+        onChange: onSelectChange
+      }"
+      row-key="id"
+    >
+      <template #toolbar>
         <a-space>
           <a-button type="primary" @click="handleAdd" v-permission="'sys:tenant-message-whitelist:create'">
             <template #icon><PlusOutlined /></template>
@@ -71,61 +27,56 @@
             批量删除
           </a-button>
         </a-space>
-      </div>
+      </template>
 
-      <a-table
-        :columns="columns"
-        :data-source="dataSource"
-        :loading="loading"
-        :pagination="pagination"
-        :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
-        @change="handleTableChange"
-        row-key="id"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'senderTenantName'">
-            <a-tag color="blue">{{ record.senderTenantName }}</a-tag>
-          </template>
-          <template v-if="column.key === 'receiverTenantName'">
-            <a-tag color="green">{{ record.receiverTenantName }}</a-tag>
-          </template>
-          <template v-if="column.key === 'enabled'">
-            <a-switch
-              :checked="record.enabled"
-              @change="(checked) => handleToggleEnabled(record, checked)"
-              v-permission="'sys:tenant-message-whitelist:update'"
-            />
-          </template>
-          <template v-if="column.key === 'action'">
-            <a-space>
-              <a-button
-                type="link"
-                size="small"
-                @click="handleEdit(record)"
-                v-permission="'sys:tenant-message-whitelist:update'"
-              >
-                编辑
-              </a-button>
-              <a-popconfirm
-                title="确定要删除这条白名单配置吗？"
-                @confirm="handleDelete(record)"
-                ok-text="确定"
-                cancel-text="取消"
-              >
-                <a-button
-                  type="link"
-                  size="small"
-                  danger
-                  v-permission="'sys:tenant-message-whitelist:delete'"
-                >
-                  删除
-                </a-button>
-              </a-popconfirm>
-            </a-space>
-          </template>
-        </template>
-      </a-table>
-    </a-card>
+      <template #senderTenantId="{ record }">
+        <a-tag color="blue">
+          {{ getTenantName(record.senderTenantId) || record.senderTenantName || record.senderTenantId }}
+        </a-tag>
+      </template>
+
+      <template #receiverTenantId="{ record }">
+        <a-tag color="green">
+          {{ getTenantName(record.receiverTenantId) || record.receiverTenantName || record.receiverTenantId }}
+        </a-tag>
+      </template>
+
+      <template #enabled="{ record }">
+        <a-switch
+          :checked="record.enabled"
+          @change="(checked) => handleToggleEnabled(record, checked)"
+          v-permission="'sys:tenant-message-whitelist:update'"
+        />
+      </template>
+
+      <template #action="{ record }">
+        <a-space>
+          <a-button
+            type="link"
+            size="small"
+            @click="handleEdit(record)"
+            v-permission="'sys:tenant-message-whitelist:update'"
+          >
+            编辑
+          </a-button>
+          <a-popconfirm
+            title="确定要删除这条白名单配置吗？"
+            @confirm="handleDelete(record)"
+            ok-text="确定"
+            cancel-text="取消"
+          >
+            <a-button
+              type="link"
+              size="small"
+              danger
+              v-permission="'sys:tenant-message-whitelist:delete'"
+            >
+              删除
+            </a-button>
+          </a-popconfirm>
+        </a-space>
+      </template>
+    </FxDynamicTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -176,11 +127,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import {
-  SearchOutlined,
-  ReloadOutlined,
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
@@ -191,70 +140,10 @@ import {
   toggleEnabled
 } from '@/api/tenantMessageWhitelist'
 import { listTenant } from '@/api/system/tenant'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
-// 查询表单
-const queryForm = reactive({
-  senderTenantId: undefined,
-  receiverTenantId: undefined,
-  enabled: undefined
-})
-
-// 表格数据
-const dataSource = ref([])
-const loading = ref(false)
+const tableRef = ref<any>()
 const selectedRowKeys = ref<number[]>([])
-
-// 分页配置
-const pagination = reactive({
-  current: 1,
-  pageSize: 10,
-  total: 0,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`
-})
-
-// 表格列配置
-const columns = [
-  {
-    title: '发送方租户',
-    dataIndex: 'senderTenantName',
-    key: 'senderTenantName',
-    width: 200
-  },
-  {
-    title: '接收方租户',
-    dataIndex: 'receiverTenantName',
-    key: 'receiverTenantName',
-    width: 200
-  },
-  {
-    title: '状态',
-    dataIndex: 'enabled',
-    key: 'enabled',
-    width: 100,
-    align: 'center'
-  },
-  {
-    title: '备注',
-    dataIndex: 'remark',
-    key: 'remark',
-    ellipsis: true
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    key: 'createTime',
-    width: 180
-  },
-  {
-    title: '操作',
-    key: 'action',
-    width: 150,
-    align: 'center',
-    fixed: 'right'
-  }
-]
 
 // 弹窗相关
 const modalVisible = ref(false)
@@ -271,6 +160,24 @@ const formData = reactive({
 // 租户列表
 const tenantList = ref([])
 
+const dictOptions = computed(() => {
+  const tenants = (tenantList.value || []).map((t: any) => ({ label: t.tenantName, value: t.id }))
+  return {
+    senderTenantId: tenants,
+    receiverTenantId: tenants,
+    enabled: [
+      { label: '启用', value: true },
+      { label: '禁用', value: false },
+    ],
+  }
+})
+
+const getTenantName = (tenantId: any) => {
+  const list: any[] = tenantList.value as any
+  const found = list.find(t => String(t.id) === String(tenantId))
+  return found?.tenantName
+}
+
 // 加载租户列表
 const loadTenantList = async () => {
   try {
@@ -281,45 +188,25 @@ const loadTenantList = async () => {
   }
 }
 
-// 查询数据
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      current: pagination.current,
-      size: pagination.pageSize,
-      ...queryForm
-    }
-    const res = await pageTenantMessageWhitelist(params)
-    dataSource.value = res.records || []
-    pagination.total = res.total || 0
-  } catch (error) {
-    message.error('查询失败')
-    console.error(error)
-  } finally {
-    loading.value = false
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
+}) => {
+  const params: any = {
+    current: payload.page.current,
+    size: payload.page.pageSize,
+    ...payload.query,
   }
-}
 
-// 查询
-const handleQuery = () => {
-  pagination.current = 1
-  loadData()
-}
+  if (payload.sorter?.field) {
+    params.sortField = payload.sorter.field
+    params.sortOrder = payload.sorter.order
+  }
 
-// 重置
-const handleReset = () => {
-  queryForm.senderTenantId = undefined
-  queryForm.receiverTenantId = undefined
-  queryForm.enabled = undefined
-  handleQuery()
-}
-
-// 表格变化
-const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  loadData()
+  const res: any = await pageTenantMessageWhitelist(params)
+  const total = typeof res.total === 'number' ? res.total : parseInt(String(res.total) || '0', 10)
+  return { records: res.records || [], total }
 }
 
 // 行选择
@@ -371,7 +258,7 @@ const handleSubmit = async () => {
     await saveTenantMessageWhitelist(formData)
     message.success(isEdit.value ? '修改成功' : '新增成功')
     modalVisible.value = false
-    loadData()
+    await tableRef.value?.reload?.()
   } catch (error) {
     message.error('操作失败')
     console.error(error)
@@ -388,7 +275,7 @@ const handleDelete = async (record: any) => {
   try {
     await deleteTenantMessageWhitelist(record.id)
     message.success('删除成功')
-    loadData()
+    await tableRef.value?.reload?.()
   } catch (error) {
     message.error('删除失败')
     console.error(error)
@@ -408,7 +295,7 @@ const handleBatchDelete = () => {
 
         message.success('删除成功')
         selectedRowKeys.value = []
-        loadData()
+        await tableRef.value?.reload?.()
       } catch (error) {
         message.error('删除失败')
         console.error(error)
@@ -432,7 +319,6 @@ const handleToggleEnabled = async (record: any, checked: boolean) => {
 // 初始化
 onMounted(() => {
   loadTenantList()
-  loadData()
 })
 </script>
 
