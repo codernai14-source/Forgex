@@ -1,0 +1,693 @@
+.fx-main-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fx-layout-bg, #f5f5f5);
+  color: var(--fx-layout-color, #111827);
+  font-size: var(--fx-font-size, 14px);
+  overflow: hidden;
+  
+  // 主题切换过渡动画
+  transition: background-color 0.3s ease, color 0.3s ease;
+  
+  * {
+    font-size: inherit;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+  
+  :deep(.ant-menu-item),
+  :deep(.ant-menu-submenu-title),
+  :deep(.ant-btn),
+  :deep(.ant-input),
+  :deep(.ant-select),
+  :deep(.ant-table) {
+    font-size: var(--fx-font-size, 14px);
+  }
+  
+  // 大字号响应式调整 - 增加间距避免拥挤
+  &[data-font-size="16px"] {
+    .fx-header {
+      padding: 0 20px;
+      height: 60px;
+    }
+    
+    .fx-content {
+      padding: 20px;
+    }
+    
+    .fx-tabbar {
+      padding: 6px 12px 0;
+    }
+    
+    .fx-tab {
+      padding: 6px 12px;
+    }
+    
+    :deep(.ant-card) {
+      .ant-card-head {
+        padding: 18px 24px;
+      }
+      
+      .ant-card-body {
+        padding: 20px 24px;
+      }
+    }
+    
+    :deep(.ant-table) {
+      .ant-table-thead > tr > th {
+        padding: 14px 16px;
+      }
+      
+      .ant-table-tbody > tr > td {
+        padding: 14px 16px;
+      }
+    }
+    
+    :deep(.ant-form-item) {
+      margin-bottom: 28px;
+    }
+  }
+  
+  // 表格样式（使用新的 Token 系统）
+  :deep(.ant-table) {
+    background: var(--fx-bg-container, #ffffff);
+    color: var(--fx-text-primary, #111827);
+    
+    .ant-table-thead > tr > th {
+      background: var(--fx-fill-alter, #f9fafb);
+      color: var(--fx-text-secondary, #4b5563);
+      border-bottom: 1px solid var(--fx-border-secondary, #f3f4f6);
+      font-weight: 500;
+    }
+    
+    .ant-table-tbody > tr > td {
+      border-bottom: 1px solid var(--fx-border-secondary, #f3f4f6);
+    }
+    
+    .ant-table-tbody > tr:hover > td {
+      background: var(--fx-fill, #f3f4f6);
+    }
+  }
+  
+  // 卡片样式
+  :deep(.ant-card) {
+    background: var(--fx-bg-container, #ffffff);
+    border-color: var(--fx-border-color, #e5e7eb);
+    color: var(--fx-text-primary, #111827);
+    border-radius: var(--fx-radius-lg, 8px);
+  }
+  
+  // 弹窗样式
+  :deep(.ant-modal-content) {
+    background: var(--fx-bg-elevated, #ffffff);
+    color: var(--fx-text-primary, #111827);
+    border-radius: var(--fx-radius-lg, 8px);
+  }
+  
+  :deep(.ant-modal-header) {
+    background: var(--fx-bg-elevated, #ffffff);
+    border-bottom-color: var(--fx-border-color, #e5e7eb);
+    color: var(--fx-text-primary, #111827);
+  }
+  
+  :deep(.ant-modal-footer) {
+    border-top-color: var(--fx-border-color, #e5e7eb);
+  }
+  
+  // 抽屉样式
+  :deep(.ant-drawer-content) {
+    background: var(--fx-bg-elevated, #ffffff);
+    color: var(--fx-text-primary, #111827);
+  }
+  
+  :deep(.ant-drawer-header) {
+    background: var(--fx-bg-elevated, #ffffff);
+    border-bottom-color: var(--fx-border-color, #e5e7eb);
+    color: var(--fx-text-primary, #111827);
+  }
+  
+  // 表单控件样式
+  :deep(.ant-input),
+  :deep(.ant-input-number),
+  :deep(.ant-select-selector) {
+    background: var(--fx-bg-container, #ffffff);
+    border-color: var(--fx-border-color, #e5e7eb);
+    color: var(--fx-text-primary, #111827);
+    border-radius: var(--fx-radius, 6px);
+  }
+  
+  :deep(.ant-form-item-label > label) {
+    color: var(--fx-text-primary, #111827);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--fx-bg-layout, #f9fafb);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(17, 24, 39, 0.22);
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(17, 24, 39, 0.32);
+  }
+}
+
+:root[data-theme='dark'] {
+  .fx-main-layout {
+    ::-webkit-scrollbar-track {
+      background: var(--fx-bg-layout, #0b1220);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.26);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.38);
+    }
+  }
+}
+
+.fx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--fx-header-bg, #020617);
+  color: var(--fx-header-color, #e5e7eb);
+  // 移除重复的边框线，只保留一条
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.fx-header-left,
+.fx-header-right,
+.fx-header-middle {
+  display: flex;
+  align-items: center;
+}
+
+.fx-header-middle {
+  flex: 1;
+  justify-content: center;
+}
+
+.fx-header-middle--left {
+  justify-content: flex-start;
+}
+
+.fx-header-middle--right {
+  justify-content: flex-end;
+}
+
+.fx-logo {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fx-sider {
+  height: 100%;
+  background: var(--fx-sider-bg, #020617);
+}
+
+.fx-sider-mini {
+  height: 100%;
+  background: var(--fx-sider-mini-bg, #020617);
+  border-right: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.fx-main-content-wrapper {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fx-content-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fx-content {
+  padding: 16px;
+  background: var(--fx-bg-layout, #f9fafb);
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  
+  // 页面容器样式
+  .page-wrap {
+    padding: 0;
+  }
+  
+  // 确保所有卡片使用正确的背景色
+  :deep(.ant-card) {
+    background: var(--fx-bg-container, #ffffff);
+    border-color: var(--fx-border-color, #e5e7eb);
+    border-radius: var(--fx-radius-lg, 8px);
+    
+    .ant-card-head {
+      background: var(--fx-bg-container, #ffffff);
+      border-bottom-color: var(--fx-border-color, #e5e7eb);
+      color: var(--fx-text-primary, #111827);
+      font-weight: 600;
+    }
+    
+    .ant-card-body {
+      background: var(--fx-bg-container, #ffffff);
+      color: var(--fx-text-primary, #111827);
+    }
+  }
+}
+
+.fx-content-inner {
+  position: relative;
+  margin: 0 auto;
+  width: 100%;
+  max-width: var(--fx-content-width, 100%);
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fx-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fx-page-wrapper > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.fx-watermark-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 999;
+  overflow: hidden;
+}
+
+.fx-watermark {
+  position: absolute;
+  font-size: 32px;
+  color: rgba(148, 163, 184, 0.08);
+  white-space: nowrap;
+  font-weight: 500;
+  transform: rotate(-30deg);
+  
+  // 使用 nth-child 定位每个水印实例
+  &:nth-child(1) { top: 10%; left: 10%; }
+  &:nth-child(2) { top: 10%; left: 50%; }
+  &:nth-child(3) { top: 10%; right: 10%; }
+  &:nth-child(4) { top: 35%; left: 10%; }
+  &:nth-child(5) { top: 35%; left: 50%; }
+  &:nth-child(6) { top: 35%; right: 10%; }
+  &:nth-child(7) { top: 60%; left: 10%; }
+  &:nth-child(8) { top: 60%; left: 50%; }
+  &:nth-child(9) { top: 60%; right: 10%; }
+  &:nth-child(10) { top: 85%; left: 10%; }
+  &:nth-child(11) { top: 85%; left: 50%; }
+  &:nth-child(12) { top: 85%; right: 10%; }
+}
+
+.fx-footer {
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.88);
+  background: var(--fx-footer-bg, #020617);
+}
+
+.fx-setting-block {
+  margin-bottom: 20px;
+}
+
+.fx-setting-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.fx-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.fx-setting-row > span {
+  flex: 0 0 100px;
+  text-align: left;
+}
+
+.fx-setting-row > *:not(span) {
+  flex: 1;
+  text-align: right;
+}
+
+.fx-tabbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px 0;
+  background: var(--fx-header-bg, #020617);
+  // 使用更柔和的边框颜色，与顶栏保持一致
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  overflow-x: auto;
+}
+
+.fx-tabbar-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fx-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 220px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.9);
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px 4px 0 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.fx-tab--active {
+  color: var(--fx-layout-color, #111827);
+  background: var(--fx-content-bg, #020617);
+}
+
+.fx-tab--card {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.fx-tab-title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.fx-tab-close {
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.fx-tab-close:hover {
+  opacity: 1;
+}
+
+.fx-setting-drawer :deep(.ant-drawer-body) {
+  padding: 16px 24px;
+}
+
+.fx-setting-header-main {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.fx-setting-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.fx-setting-drawer-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fx-setting-tabs {
+  flex: 1;
+  overflow: auto;
+  padding-bottom: 8px;
+}
+
+.fx-setting-footer {
+  margin-top: 8px;
+}
+
+.fx-setting-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fx-header-right :deep(.ant-btn-text) {
+  color: var(--fx-header-color, #4b5563);
+  transition: all 0.2s ease;
+}
+
+.fx-header-right :deep(.ant-btn-text:hover) {
+  background: var(--fx-fill-secondary, rgba(22, 119, 255, 0.08));
+  color: var(--fx-primary-hover, #4096ff);
+}
+
+.fx-tab--active {
+  color: var(--fx-primary, #1677ff);
+  background: var(--fx-bg-container, #ffffff);
+  border-bottom: 2px solid var(--fx-primary, #1677ff);
+}
+
+.fx-sider :deep(.ant-menu) {
+  background: transparent;
+  color: var(--fx-text-secondary, rgba(148, 163, 184, 0.9));
+}
+
+.fx-sider :deep(.ant-menu-item-selected),
+.fx-sider :deep(.ant-menu-submenu-selected) {
+  color: var(--fx-primary, #1677ff);
+  background: var(--fx-fill-secondary, rgba(22, 119, 255, 0.08));
+}
+
+.fx-sider :deep(.ant-menu-item-selected::after) {
+  border-right: 3px solid var(--fx-primary, #1677ff);
+}
+
+.fx-header-middle :deep(.ant-menu-item-selected),
+.fx-header-middle :deep(.ant-menu-submenu-selected) {
+  color: var(--fx-primary, #1677ff);
+  border-bottom: 2px solid var(--fx-primary, #1677ff);
+}
+
+.fx-user-entry {
+  cursor: pointer;
+}
+
+.fx-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--fx-theme-color, #1677ff), #4b5563);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f9fafb;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6);
+}
+
+.fx-user-name {
+  font-size: 13px;
+  color: var(--fx-header-color, #e5e7eb);
+}
+
+.fx-horizontal-enter-active,
+.fx-horizontal-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fx-horizontal-enter-from {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+.fx-horizontal-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.fx-fade-enter-active,
+.fx-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fx-fade-enter-from,
+.fx-fade-leave-to {
+  opacity: 0;
+}
+
+// ==================== 英文文本样式优化 ====================
+// 修复英文长单词和长句子的显示问题，避免溢出和错行
+
+// 全局英文文本处理
+[lang="en"],
+[lang="en-US"],
+.english-text {
+  // 允许在单词内换行，避免溢出
+  word-break: break-word;
+  // 使用连字符换行（浏览器支持时）
+  hyphens: auto;
+  // 保持合理的行高
+  line-height: 1.6;
+  
+  // 菜单项特殊处理 - 允许换行，增加行高
+  :deep(.ant-menu-item),
+  :deep(.ant-menu-submenu-title) {
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.5;
+    height: auto;
+    min-height: 40px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    
+    .ant-menu-title-content {
+      white-space: normal;
+      word-break: break-word;
+    }
+  }
+  
+  // 表格单元格 - 允许换行
+  :deep(.ant-table-cell) {
+    word-break: break-word;
+    white-space: normal;
+  }
+  
+  // 按钮文本 - 保持不换行，但允许适当缩小
+  :deep(.ant-btn) {
+    word-break: keep-all;
+    white-space: nowrap;
+    
+    // 如果按钮文本过长，允许缩小字号
+    &.ant-btn-lg {
+      font-size: 14px;
+    }
+  }
+  
+  // 表单标签 - 允许换行
+  :deep(.ant-form-item-label) {
+    label {
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+  }
+  
+  // 选择框选项 - 允许换行
+  :deep(.ant-select-item) {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.5;
+    height: auto;
+    min-height: 32px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  
+  // 标签页标题 - 允许换行
+  :deep(.ant-tabs-tab) {
+    .ant-tabs-tab-btn {
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+  }
+  
+  // 面包屑 - 允许换行
+  :deep(.ant-breadcrumb-link) {
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  // 卡片标题 - 允许换行
+  :deep(.ant-card-head-title) {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+  
+  // 弹窗标题 - 允许换行
+  :deep(.ant-modal-title),
+  :deep(.ant-drawer-title) {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+  
+  // 提示信息 - 允许换行
+  :deep(.ant-alert-message),
+  :deep(.ant-alert-description) {
+    word-break: break-word;
+    line-height: 1.6;
+  }
+  
+  // 描述列表 - 允许换行
+  :deep(.ant-descriptions-item-label),
+  :deep(.ant-descriptions-item-content) {
+    word-break: break-word;
+  }
+  
+  // 树节点 - 允许换行
+  :deep(.ant-tree-title) {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+  
+  // 步骤条标题 - 允许换行
+  :deep(.ant-steps-item-title) {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+}
+
+// 特殊场景：需要保持单行的组件
+[lang="en"],
+[lang="en-US"],
+.english-text {
+  // 标签 - 保持单行，使用省略号
+  :deep(.ant-tag) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  
+  // 徽章文本 - 保持单行
+  :deep(.ant-badge-count) {
+    white-space: nowrap;
+  }
+  
+  // 分页器 - 保持单行
+  :deep(.ant-pagination-item),
+  :deep(.ant-pagination-prev),
+  :deep(.ant-pagination-next) {
+    white-space: nowrap;
+  }
+}

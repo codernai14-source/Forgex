@@ -1,0 +1,649 @@
+<template>
+  <div class="${entityNameLower}-page">
+    <!-- 查询表单 -->
+    <a-card :bordered="false" class="search-card">
+      <a-form layout="inline" :model="queryForm">
+        <% for(column in queryColumns) { %>
+        <% if(column.queryType == 'input') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')">
+          <a-input 
+            v-model:value="queryForm.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseInput') + t('${i18nPrefix}.${column.javaFieldName}')"
+            allow-clear
+            style="width: 200px"
+          />
+        </a-form-item>
+        <% } else if(column.queryType == 'select') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')">
+          <a-select 
+            v-model:value="queryForm.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseSelect') + t('${i18nPrefix}.${column.javaFieldName}')"
+            allow-clear
+            style="width: 200px"
+          >
+            <% if(column.dictCode) { %>
+            <a-select-option 
+              v-for="item in dict${column.dictCode?cap_first}" 
+              :key="item.value" 
+              :value="item.value"
+            >
+              {{ item.label }}
+            </a-select-option>
+            <% } else { %>
+            <!-- TODO: 添加选项数据源 -->
+            <% } %>
+          </a-select>
+        </a-form-item>
+        <% } else if(column.queryType == 'date') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')">
+          <a-date-picker 
+            v-model:value="queryForm.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseSelect') + t('${i18nPrefix}.${column.javaFieldName}')"
+            style="width: 200px"
+          />
+        </a-form-item>
+        <% } else if(column.queryType == 'daterange') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')">
+          <a-range-picker 
+            v-model:value="queryForm.${column.javaFieldName}Range" 
+            style="width: 240px"
+          />
+        </a-form-item>
+        <% } %>
+        <% } %>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="handleQuery">
+              <template #icon><SearchOutlined /></template>
+              {{ t('common.query') }}
+            </a-button>
+            <a-button @click="handleReset">
+              <template #icon><ReloadOutlined /></template>
+              {{ t('common.reset') }}
+            </a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+    </a-card>
+
+    <!-- 数据表格 -->
+    <a-card :bordered="false" class="table-card">
+      <template #title>
+        <a-space>
+          <a-button 
+            type="primary" 
+            @click="handleAdd"
+            v-permission="'${permKeyPrefix}:create'"
+          >
+            <template #icon><PlusOutlined /></template>
+            {{ t('common.add') }}
+          </a-button>
+          <a-button 
+            danger
+            :disabled="selectedRowKeys.length === 0"
+            @click="handleBatchDelete"
+            v-permission="'${permKeyPrefix}:delete'"
+          >
+            <template #icon><DeleteOutlined /></template>
+            {{ t('common.batchDelete') }}
+          </a-button>
+          <a-button 
+            @click="handleExport"
+            v-permission="'${permKeyPrefix}:export'"
+          >
+            <template #icon><ExportOutlined /></template>
+            {{ t('common.export') }}
+          </a-button>
+          <a-button 
+            @click="handleImport"
+            v-permission="'${permKeyPrefix}:import'"
+          >
+            <template #icon><ImportOutlined /></template>
+            {{ t('common.import') }}
+          </a-button>
+        </a-space>
+      </template>
+
+      <a-table
+        :columns="columns"
+        :data-source="dataSource"
+        :loading="loading"
+        :pagination="pagination"
+        :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
+        row-key="id"
+        @change="handleTableChange"
+      >
+        <% for(column in tableColumns) { %>
+        <% if(column.dictCode) { %>
+        <template #${column.javaFieldName}="{ text }">
+          <dict-tag :dict-code="'${column.dictCode}'" :value="text" />
+        </template>
+        <% } else if(column.javaType == 'Boolean') { %>
+        <template #${column.javaFieldName}="{ text }">
+          <a-tag :color="text ? 'success' : 'default'">
+            {{ text ? t('common.yes') : t('common.no') }}
+          </a-tag>
+        </template>
+        <% } else if(column.javaType == 'LocalDateTime' || column.javaType == 'LocalDate') { %>
+        <template #${column.javaFieldName}="{ text }">
+          {{ text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+        </template>
+        <% } %>
+        <% } %>
+        
+        <!-- 操作列 -->
+        <template #action="{ record }">
+          <a-space>
+            <a 
+              @click="handleView(record)"
+              v-permission="'${permKeyPrefix}:view'"
+            >
+              {{ t('common.view') }}
+            </a>
+            <a-divider type="vertical" />
+            <a 
+              @click="handleEdit(record)"
+              v-permission="'${permKeyPrefix}:edit'"
+            >
+              {{ t('common.edit') }}
+            </a>
+            <a-divider type="vertical" />
+            <a-popconfirm
+              :title="t('common.deleteConfirm')"
+              @confirm="handleDelete(record.id)"
+            >
+              <a 
+                class="danger-link"
+                v-permission="'${permKeyPrefix}:delete'"
+              >
+                {{ t('common.delete') }}
+              </a>
+            </a-popconfirm>
+          </a-space>
+        </template>
+      </a-table>
+    </a-card>
+
+    <!-- 新增/编辑弹窗 -->
+    <a-modal
+      v-model:open="modalVisible"
+      :title="modalTitle"
+      :width="800"
+      :confirm-loading="modalLoading"
+      @ok="handleSubmit"
+      @cancel="handleCancel"
+    >
+      <a-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        :label-col="{ span: 6 }"
+        :wrapper-col="{ span: 16 }"
+      >
+        <% for(column in saveColumns) { %>
+        <% if(column.formType == 'input') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-input 
+            v-model:value="formData.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseInput') + t('${i18nPrefix}.${column.javaFieldName}')"
+            :disabled="isView"
+          />
+        </a-form-item>
+        <% } else if(column.formType == 'textarea') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-textarea 
+            v-model:value="formData.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseInput') + t('${i18nPrefix}.${column.javaFieldName}')"
+            :rows="4"
+            :disabled="isView"
+          />
+        </a-form-item>
+        <% } else if(column.formType == 'number') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-input-number 
+            v-model:value="formData.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseInput') + t('${i18nPrefix}.${column.javaFieldName}')"
+            style="width: 100%"
+            :disabled="isView"
+          />
+        </a-form-item>
+        <% } else if(column.formType == 'select') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-select 
+            v-model:value="formData.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseSelect') + t('${i18nPrefix}.${column.javaFieldName}')"
+            :disabled="isView"
+          >
+            <% if(column.dictCode) { %>
+            <a-select-option 
+              v-for="item in dict${column.dictCode?cap_first}" 
+              :key="item.value" 
+              :value="item.value"
+            >
+              {{ item.label }}
+            </a-select-option>
+            <% } else { %>
+            <!-- TODO: 添加选项数据源 -->
+            <% } %>
+          </a-select>
+        </a-form-item>
+        <% } else if(column.formType == 'date') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-date-picker 
+            v-model:value="formData.${column.javaFieldName}" 
+            :placeholder="t('common.pleaseSelect') + t('${i18nPrefix}.${column.javaFieldName}')"
+            style="width: 100%"
+            :disabled="isView"
+          />
+        </a-form-item>
+        <% } else if(column.formType == 'datetime') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-date-picker 
+            v-model:value="formData.${column.javaFieldName}" 
+            show-time
+            :placeholder="t('common.pleaseSelect') + t('${i18nPrefix}.${column.javaFieldName}')"
+            style="width: 100%"
+            :disabled="isView"
+          />
+        </a-form-item>
+        <% } else if(column.formType == 'switch') { %>
+        <a-form-item :label="t('${i18nPrefix}.${column.javaFieldName}')" name="${column.javaFieldName}">
+          <a-switch 
+            v-model:checked="formData.${column.javaFieldName}"
+            :disabled="isView"
+          />
+        </a-form-item>
+        <% } %>
+        <% } %>
+      </a-form>
+    </a-modal>
+
+    <!-- 导入弹窗 -->
+    <a-modal
+      v-model:open="importVisible"
+      :title="t('common.import')"
+      :width="600"
+      @ok="handleImportSubmit"
+      @cancel="importVisible = false"
+    >
+      <a-upload-dragger
+        v-model:file-list="fileList"
+        :before-upload="beforeUpload"
+        :max-count="1"
+        accept=".xlsx,.xls"
+      >
+        <p class="ant-upload-drag-icon">
+          <InboxOutlined />
+        </p>
+        <p class="ant-upload-text">{{ t('common.clickOrDragToUpload') }}</p>
+        <p class="ant-upload-hint">{{ t('common.supportXlsxXls') }}</p>
+      </a-upload-dragger>
+      <a-space style="margin-top: 16px">
+        <a-button @click="handleDownloadTemplate">
+          <template #icon><DownloadOutlined /></template>
+          {{ t('common.downloadTemplate') }}
+        </a-button>
+      </a-space>
+    </a-modal>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
+import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
+import dayjs from 'dayjs'
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  ExportOutlined,
+  ImportOutlined,
+  InboxOutlined,
+  DownloadOutlined
+} from '@ant-design/icons-vue'
+import { 
+  page${entityName}, 
+  save${entityName}, 
+  update${entityName}, 
+  delete${entityName},
+  batchDelete${entityName},
+  export${entityName},
+  import${entityName},
+  downloadTemplate${entityName}
+} from '@/api/${moduleName}/${entityNameLower}'
+<% var dictCodes = []; %>
+<% for(column in columns) { %>
+<% if(column.dictCode && !dictCodes.contains(column.dictCode)) { %>
+<% dictCodes.add(column.dictCode); %>
+<% } %>
+<% } %>
+<% if(dictCodes.size() > 0) { %>
+import { useDict } from '@/hooks/useDict'
+import DictTag from '@/components/DictTag/index.vue'
+<% } %>
+
+// 国际化
+const { t } = useI18n()
+
+// 字典数据
+<% for(dictCode in dictCodes) { %>
+const { dictData: dict${dictCode?cap_first} } = useDict('${dictCode}')
+<% } %>
+
+// 查询表单
+const queryForm = reactive({
+  <% for(column in queryColumns) { %>
+  <% if(column.queryType == 'daterange') { %>
+  ${column.javaFieldName}Range: undefined,
+  <% } else { %>
+  ${column.javaFieldName}: undefined,
+  <% } %>
+  <% } %>
+})
+
+// 表格列定义
+const columns = computed(() => [
+  <% for(column in tableColumns) { %>
+  {
+    title: t('${i18nPrefix}.${column.javaFieldName}'),
+    dataIndex: '${column.javaFieldName}',
+    key: '${column.javaFieldName}',
+    <% if(column.width) { %>
+    width: ${column.width},
+    <% } %>
+    <% if(column.align) { %>
+    align: '${column.align}',
+    <% } %>
+    <% if(column.dictCode || column.javaType == 'Boolean' || column.javaType == 'LocalDateTime' || column.javaType == 'LocalDate') { %>
+    customRender: ({ text }: any) => text,
+    slots: { customRender: '${column.javaFieldName}' },
+    <% } %>
+  },
+  <% } %>
+  {
+    title: t('common.action'),
+    key: 'action',
+    width: 200,
+    fixed: 'right',
+    slots: { customRender: 'action' }
+  }
+])
+
+// 表格数据
+const dataSource = ref([])
+const loading = ref(false)
+const selectedRowKeys = ref<number[]>([])
+const pagination = reactive({
+  current: 1,
+  pageSize: 20,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  showTotal: (total: number) => t('common.totalItems', { total })
+})
+
+// 弹窗相关
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalLoading = ref(false)
+const isView = ref(false)
+const formRef = ref()
+const formData = reactive({
+  id: undefined,
+  <% for(column in saveColumns) { %>
+  ${column.javaFieldName}: undefined,
+  <% } %>
+})
+
+// 表单验证规则
+const formRules = computed(() => ({
+  <% for(column in saveColumns) { %>
+  <% if(column.required) { %>
+  ${column.javaFieldName}: [{ 
+    required: true, 
+    message: t('common.pleaseInput') + t('${i18nPrefix}.${column.javaFieldName}'), 
+    trigger: 'blur' 
+  }],
+  <% } %>
+  <% } %>
+}))
+
+// 导入相关
+const importVisible = ref(false)
+const fileList = ref([])
+
+// 加载数据
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params: any = {
+      current: pagination.current,
+      size: pagination.pageSize,
+      ...queryForm
+    }
+    
+    // 处理日期范围查询
+    <% for(column in queryColumns) { %>
+    <% if(column.queryType == 'daterange') { %>
+    if (queryForm.${column.javaFieldName}Range && queryForm.${column.javaFieldName}Range.length === 2) {
+      params.${column.javaFieldName}Start = dayjs(queryForm.${column.javaFieldName}Range[0]).format('YYYY-MM-DD HH:mm:ss')
+      params.${column.javaFieldName}End = dayjs(queryForm.${column.javaFieldName}Range[1]).format('YYYY-MM-DD HH:mm:ss')
+    }
+    <% } %>
+    <% } %>
+    
+    const res = await page${entityName}(params)
+    if (res.code === 200) {
+      dataSource.value = res.data.records
+      pagination.total = res.data.total
+    }
+  } catch (error) {
+    message.error(t('common.loadFailed'))
+  } finally {
+    loading.value = false
+  }
+}
+
+// 查询
+const handleQuery = () => {
+  pagination.current = 1
+  loadData()
+}
+
+// 重置
+const handleReset = () => {
+  Object.keys(queryForm).forEach(key => {
+    queryForm[key] = undefined
+  })
+  handleQuery()
+}
+
+// 表格变化
+const handleTableChange = (pag: any) => {
+  pagination.current = pag.current
+  pagination.pageSize = pag.pageSize
+  loadData()
+}
+
+// 行选择
+const onSelectChange = (keys: number[]) => {
+  selectedRowKeys.value = keys
+}
+
+// 新增
+const handleAdd = () => {
+  modalTitle.value = t('common.add') + t('${i18nPrefix}.title')
+  modalVisible.value = true
+  isView.value = false
+  Object.keys(formData).forEach(key => {
+    formData[key] = undefined
+  })
+}
+
+// 查看
+const handleView = (record: any) => {
+  modalTitle.value = t('common.view') + t('${i18nPrefix}.title')
+  modalVisible.value = true
+  isView.value = true
+  Object.keys(formData).forEach(key => {
+    formData[key] = record[key]
+  })
+}
+
+// 编辑
+const handleEdit = (record: any) => {
+  modalTitle.value = t('common.edit') + t('${i18nPrefix}.title')
+  modalVisible.value = true
+  isView.value = false
+  Object.keys(formData).forEach(key => {
+    formData[key] = record[key]
+  })
+}
+
+// 提交
+const handleSubmit = async () => {
+  if (isView.value) {
+    modalVisible.value = false
+    return
+  }
+  
+  try {
+    await formRef.value.validate()
+    modalLoading.value = true
+    
+    if (formData.id) {
+      await update${entityName}(formData)
+      message.success(t('common.updateSuccess'))
+    } else {
+      await save${entityName}(formData)
+      message.success(t('common.addSuccess'))
+    }
+    
+    modalVisible.value = false
+    loadData()
+  } catch (error) {
+    console.error('提交失败', error)
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+// 取消
+const handleCancel = () => {
+  modalVisible.value = false
+}
+
+// 删除
+const handleDelete = async (id: number) => {
+  try {
+    await delete${entityName}(id)
+    message.success(t('common.deleteSuccess'))
+    loadData()
+  } catch (error) {
+    message.error(t('common.deleteFailed'))
+  }
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  try {
+    await batchDelete${entityName}(selectedRowKeys.value)
+    message.success(t('common.deleteSuccess'))
+    selectedRowKeys.value = []
+    loadData()
+  } catch (error) {
+    message.error(t('common.deleteFailed'))
+  }
+}
+
+// 导出
+const handleExport = async () => {
+  try {
+    const params = { ...queryForm }
+    await export${entityName}(params)
+    message.success(t('common.exportSuccess'))
+  } catch (error) {
+    message.error(t('common.exportFailed'))
+  }
+}
+
+// 导入
+const handleImport = () => {
+  importVisible.value = true
+  fileList.value = []
+}
+
+// 上传前校验
+const beforeUpload = (file: File) => {
+  const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                  file.type === 'application/vnd.ms-excel'
+  if (!isExcel) {
+    message.error(t('common.onlyExcelAllowed'))
+  }
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    message.error(t('common.fileSizeLimit'))
+  }
+  return isExcel && isLt10M
+}
+
+// 提交导入
+const handleImportSubmit = async () => {
+  if (fileList.value.length === 0) {
+    message.warning(t('common.pleaseSelectFile'))
+    return
+  }
+  
+  try {
+    const formData = new FormData()
+    formData.append('file', fileList.value[0] as any)
+    await import${entityName}(formData)
+    message.success(t('common.importSuccess'))
+    importVisible.value = false
+    loadData()
+  } catch (error) {
+    message.error(t('common.importFailed'))
+  }
+}
+
+// 下载模板
+const handleDownloadTemplate = async () => {
+  try {
+    await downloadTemplate${entityName}()
+    message.success(t('common.downloadSuccess'))
+  } catch (error) {
+    message.error(t('common.downloadFailed'))
+  }
+}
+
+// 初始化
+onMounted(() => {
+  loadData()
+})
+</script>
+
+<style scoped lang="less">
+.${entityNameLower}-page {
+  padding: 16px;
+
+  .search-card {
+    margin-bottom: 16px;
+  }
+
+  .table-card {
+    :deep(.ant-card-head) {
+      border-bottom: 1px solid #f0f0f0;
+    }
+  }
+
+  .danger-link {
+    color: #ff4d4f;
+
+    &:hover {
+      color: #ff7875;
+    }
+  }
+}
+</style>
