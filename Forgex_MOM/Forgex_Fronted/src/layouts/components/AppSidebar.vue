@@ -154,7 +154,6 @@ const firstLevelMenus = computed(() => {
     (menu.parentKey === undefined && !menu.children) || 
     (menu.parentKey === undefined && menu.children && menu.type === 'menu')
   )
-  console.log('[AppSidebar] First level menus:', JSON.stringify(menus, null, 2))
   return menus
 })
 
@@ -179,7 +178,6 @@ const hasSecondLevelMenus = computed(() => {
                          selectedFirstLevelMenu.children && 
                          selectedFirstLevelMenu.children.length > 0
   
-  console.log('[AppSidebar] hasSecondLevelMenus check:', showSecondLevel, selectedFirstLevelMenu.key, selectedFirstLevelMenu.type, selectedFirstLevelMenu.children?.length)
   return showSecondLevel
 })
 
@@ -214,10 +212,8 @@ const currentMenus = computed(() => {
   // 如果选中的是目录类型菜单，显示其所有子菜单
   // 如果选中的是非目录类型菜单，显示所有menuLevel >= 2的菜单
   if (selectedFirstLevelMenu.type === 'catalog') {
-    console.log('[AppSidebar] Show children of catalog menu:', selectedFirstLevelMenu.key)
     return selectedFirstLevelMenu.children || []
   } else {
-    console.log('[AppSidebar] Show all sub menus:', selectedFirstLevelMenu.key)
     return props.menus.filter(menu => 
       menu.moduleCode === props.activeModuleCode && 
       menu.menuLevel && 
@@ -285,7 +281,6 @@ function findFirstLevelMenu(key: string): MenuItem | null {
 // 一级菜单点击（双列布局）
 const onFirstLevelMenuClick = (info: any) => {
   const key = info.key as string
-  console.log('[AppSidebar] First level menu clicked:', key, info)
   if (key) {
     selectedFirstLevelKeys.value = [key]
     
@@ -295,10 +290,7 @@ const onFirstLevelMenuClick = (info: any) => {
     // 只有非目录类型的菜单才触发路由跳转
     // 目录类型菜单只需要更新selectedFirstLevelKeys，让currentMenus自动更新显示对应的二级菜单
     if (clickedMenu && clickedMenu.type !== 'catalog') {
-      console.log('[AppSidebar] Emitting menu-click event:', key)
       emit('menu-click', key)
-    } else {
-      console.log('[AppSidebar] Menu is catalog type, skip routing:', key)
     }
   }
 }
@@ -306,7 +298,6 @@ const onFirstLevelMenuClick = (info: any) => {
 // 模块点击
 const onModuleClick = (info: any) => {
   const key = info.key as string
-  console.log('[AppSidebar] Module clicked:', key)
   if (key) {
     emit('module-click', key)
   }
@@ -315,9 +306,7 @@ const onModuleClick = (info: any) => {
 // 菜单点击
 const onMenuClick = (info: any) => {
   const key = info.key as string
-  console.log('[AppSidebar] Menu clicked:', key, info)
   if (key) {
-    console.log('[AppSidebar] Emitting menu-click event:', key)
     emit('menu-click', key)
   }
 }

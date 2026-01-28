@@ -14,6 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.security.perm.RequirePerm;
@@ -21,6 +23,7 @@ import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.position.SysPositionDTO;
 import com.forgex.sys.domain.dto.position.SysPositionQueryDTO;
 import com.forgex.sys.domain.dto.position.SysPositionSaveParam;
+import com.forgex.sys.domain.entity.SysPosition;
 import com.forgex.sys.service.SysPositionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +63,19 @@ public class SysPositionController {
     }
     
     /**
+     * 分页查询职位列表
+     *
+     * @param queryDTO 查询参数（分页参数来自 BaseGetParam：pageNum/pageSize）
+     * @return 分页结果
+     */
+    @PostMapping("/page")
+    public R<IPage<SysPositionDTO>> page(@RequestBody SysPositionQueryDTO queryDTO) {
+        queryDTO.setTenantId(TenantContext.get());
+        Page<SysPosition> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+        return R.ok(positionService.pagePositions(page, queryDTO));
+    }
+    
+    /**
      * 获取职位详情
      * 
      * @param params 参数（id）
@@ -90,8 +106,8 @@ public class SysPositionController {
     public R<Void> create(@Validated @RequestBody SysPositionSaveParam param) {
         param.setTenantId(TenantContext.get());
         Long id = positionService.create(param);
-        // 返回职位名称作为业务字段
-        return R.ok(CommonPrompt.CREATE_SUCCESS, param.getPositionName());
+        // 使用职位名称填充“新增成功”提示的占位符参数
+        return R.okWithArgs(CommonPrompt.CREATE_SUCCESS, param.getPositionName());
     }
 
     /**
@@ -105,8 +121,8 @@ public class SysPositionController {
     public R<Void> update(@Validated @RequestBody SysPositionSaveParam param) {
         param.setTenantId(TenantContext.get());
         Boolean success = positionService.update(param);
-        // 返回职位名称作为业务字段
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, param.getPositionName());
+        // 使用职位名称填充“修改成功”提示的占位符参数
+        return R.okWithArgs(CommonPrompt.UPDATE_SUCCESS, param.getPositionName());
     }
 
     /**
@@ -129,7 +145,7 @@ public class SysPositionController {
         String positionName = position.getPositionName();
         
         Boolean success = positionService.delete(id, tenantId);
-        // 返回职位名称作为业务字段
-        return R.ok(CommonPrompt.DELETE_SUCCESS, positionName);
+        // 使用职位名称填充“删除成功”提示的占位符参数
+        return R.okWithArgs(CommonPrompt.DELETE_SUCCESS, positionName);
     }
 }

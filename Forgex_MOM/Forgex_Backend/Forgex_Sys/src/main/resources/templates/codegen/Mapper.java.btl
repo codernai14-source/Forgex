@@ -1,0 +1,22 @@
+package ${basePackage}.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import ${basePackage}.domain.entity.${entityName};
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * ${tableComment!entityName} Mapper 接口
+ * <p>
+ * 提供 ${tableComment!entityName} 的数据库操作方法。
+ * </p>
+ * 
+ * @author Forgex CodeGen
+ * @date ${date()}
+ */
+@Mapper
+public interface ${entityName}Mapper extends BaseMapper<${entityName}> {
+    
+}
+
+
+

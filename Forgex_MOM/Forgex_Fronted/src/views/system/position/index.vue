@@ -19,7 +19,7 @@
               <a-space>
                 <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
                   <template #icon><PlusOutlined /></template>
-                  新增职位
+                  {{ $t('system.position.addPosition') }}
                 </a-button>
               </a-space>
             </div>
@@ -28,13 +28,12 @@
               ref="tableRef"
               :table-code="'PositionTable'"
               :request="handleRequest"
-              :fallback-config="fallbackConfig"
               :dict-options="dictOptions"
               row-key="id"
             >
               <template #status="{ record }">
                 <a-tag :color="record.status === true ? 'green' : 'red'">
-                  {{ record.status === true ? '启用' : '禁用' }}
+                  {{ record.status === true ? $t('common.enabled') : $t('common.disabled') }}
                 </a-tag>
               </template>
               <template #action="{ record }">
@@ -45,10 +44,10 @@
                     @click="openEdit(record)"
                     v-permission="'sys:position:edit'"
                   >
-                    编辑
+                    {{ $t('common.edit') }}
                   </a-button>
                   <a-popconfirm
-                    title="确定要删除这个职位吗？"
+                    :title="$t('common.confirmDeleteMessage')"
                     :ok-text="$t('common.confirm')"
                     :cancel-text="$t('common.cancel')"
                     @confirm="handleDelete(record.id)"
@@ -59,7 +58,7 @@
                       danger
                       v-permission="'sys:position:delete'"
                     >
-                      删除
+                      {{ $t('common.delete') }}
                     </a-button>
                   </a-popconfirm>
                 </a-space>
@@ -142,10 +141,10 @@
           />
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">启用</a-radio>
-            <a-radio :value="false">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
 
@@ -173,7 +172,7 @@ import DeptTree from '@/components/system/DeptTree.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getDepartmentTree } from '@/api/system/department'
 import {
-  listPositions,
+  getPositionPage,
   createPosition,
   updatePosition,
   deletePosition
@@ -188,6 +187,7 @@ const treeData = ref<any[]>([])
 
 // 字典数据
 const { dictItems: positionLevelOptions } = useDict('position_level')
+const { dictItems: statusOptions } = useDict('status')
 
 // 搜索表单
 const searchForm = ref({
@@ -201,58 +201,51 @@ const searchForm = ref({
 const tableRef = ref()
 const loading = ref(false)
 
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '职位名称', dataIndex: 'positionName', key: 'positionName', width: 150 },
-    { title: '职位编码', dataIndex: 'positionCode', key: 'positionCode', width: 150 },
-    { title: '职位级别', dataIndex: 'positionLevel', key: 'positionLevel', width: 100 },
-    { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '操作', key: 'action', fixed: 'right', width: 150 }
-  ]
-})
-
 // 字典配置
 const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'green' },
-    0: { text: '禁用', color: 'red' }
-  },
+  status: statusOptions,
   positionLevel: positionLevelOptions
 })
 
 /**
  * 处理表格数据请求
  */
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   if (!currentTenantId.value) {
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   }
   
   loading.value = true
   try {
-    const data = await listPositions({
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
       tenantId: currentTenantId.value,
       ...searchForm.value,
-      ...params
-    })
-    return {
-      success: true,
-      data: data || [],
-      total: data?.length || 0
+      ...payload.query
     }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getPositionPage(params)
+    // 确保total是数字类型
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total: total }
   } catch (e) {
     message.error('加载职位列表失败')
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   } finally {
@@ -436,12 +429,48 @@ onMounted(async () => {
 
 <style scoped>
 .page-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .content-card {
-  margin-bottom: 16px;
-  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.content-card :deep(.ant-row) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content-card :deep(.ant-col) {
+  min-height: 0;
+}
+
+.table-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.table-area :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .card-title {

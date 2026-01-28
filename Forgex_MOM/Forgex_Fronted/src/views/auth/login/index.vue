@@ -28,50 +28,65 @@
       <div class="glass-card" v-show="!tenantOpen">
         <form class="cyber-form" @submit.prevent="onPreLogin">
           <div class="field">
-            <label class="cyber-label">账号</label>
+            <label class="cyber-label">{{ i18nT('common.login.accountLabel') }}</label>
             <input
               class="cyber-input"
               type="text"
               v-model="account"
-              placeholder="请输入账号"
+              :placeholder="i18nT('common.login.accountPlaceholder')"
             />
           </div>
           <div class="field">
-            <label class="cyber-label">密码</label>
+            <label class="cyber-label">{{ i18nT('common.login.passwordLabel') }}</label>
             <input
               class="cyber-input"
               type="password"
               v-model="password"
-              placeholder="请输入密码"
+              :placeholder="i18nT('common.login.passwordPlaceholder')"
             />
           </div>
           <div class="field" v-if="mode === 'image'">
-            <label class="cyber-label">验证码</label>
+            <label class="cyber-label">{{ i18nT('common.login.captchaLabel') }}</label>
             <div class="captcha-row">
               <input
                 class="cyber-input captcha-input"
                 type="text"
                 v-model="captcha"
-                placeholder="请输入验证码"
+                :placeholder="i18nT('common.login.captchaPlaceholder')"
               />
               <img class="captcha-img" :src="imageBase64" @click="loadImage" />
             </div>
           </div>
           <div class="field" v-if="mode === 'slider'">
-            <label class="cyber-label">行为验证码</label>
+            <label class="cyber-label">{{ i18nT('common.login.behaviorCaptchaLabel') }}</label>
             <div>
-              <a-button size="small" @click="openSlider">启动滑块验证</a-button>
+              <a-button size="small" @click="openSlider">{{ i18nT('common.login.startSlider') }}</a-button>
               <span style="margin-left: 8px; color: #9ca3af;"
-                >完成后自动填充验证码</span
+                >{{ i18nT('common.login.sliderAutoFillTip') }}</span
               >
             </div>
           </div>
           <div class="form-tools">
             <label class="remember">
               <input type="checkbox" v-model="remember" />
-              <span>记住我</span>
+              <span>{{ i18nT('common.login.rememberMe') }}</span>
             </label>
-            <a class="forgot" href="#">忘记密码?</a>
+            <a-select
+              v-if="languages.length > 0"
+              v-model:value="selectedLang"
+              size="small"
+              class="lang-select-compact"
+              :dropdownMatchSelectWidth="false"
+              @change="onLangChange"
+            >
+              <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
+                <span class="lang-option">
+                  <span class="lang-emoji">{{ resolveLangEmoji(l.langCode) }}</span>
+                  <span class="lang-label">{{ l.langName }}</span>
+                </span>
+              </a-select-option>
+            </a-select>
+            <a class="forgot" href="#">{{ i18nT('common.login.forgotPassword') }}</a>
           </div>
           <button
             type="submit"
@@ -80,18 +95,18 @@
             :class="{ 'btn-disabled': logging }"
             :style="{ '--primary-color': systemConfig.primaryColor, '--secondary-color': systemConfig.secondaryColor }"
           >
-            <span>身份校验</span>
+            <span>{{ i18nT('common.login.submit') }}</span>
             <span v-if="logging" class="spinner"></span>
           </button>
-          <div class="divider" v-if="systemConfig.showOAuthLogin"><span>更多登录方式</span></div>
+          <div class="divider" v-if="systemConfig.showOAuthLogin"><span>{{ i18nT('common.login.moreLoginMethods') }}</span></div>
           <div class="oauth-row" v-if="systemConfig.showOAuthLogin">
             <button type="button" class="oauth-btn gitee" title="Gitee">
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
-            <button type="button" class="oauth-btn wechat" title="微信" @click="onOAuth('WECHAT')">
+            <button type="button" class="oauth-btn wechat" :title="i18nT('common.login.platform.wechat')" @click="onOAuth('WECHAT')">
               <img src="/tubiao/weixin2.svg" alt="微信" />
             </button>
-            <button type="button" class="oauth-btn dingtalk" title="钉钉" @click="onOAuth('DINGTALK')">
+            <button type="button" class="oauth-btn dingtalk" :title="i18nT('common.login.platform.dingtalk')" @click="onOAuth('DINGTALK')">
               <img src="/tubiao/dingding.svg" alt="钉钉" />
             </button>
           </div>
@@ -101,7 +116,7 @@
     </div>
     <div v-if="tenantOpen" class="identity-overlay">
       <div class="identity-global-tools">
-        <a-button size="small" type="default" @click="toggleSort">设置排序</a-button>
+        <a-button size="small" type="default" @click="toggleSort">{{ i18nT('common.login.setSort') }}</a-button>
       </div>
       <div class="identity-container">
         <div
@@ -123,21 +138,21 @@
             </div>
             <div class="tenant-info">
               <div class="tenant-name">{{ t.name }}</div>
-              <div class="tenant-intro">{{ t.intro || '暂无简介' }}</div>
+              <div class="tenant-intro">{{ t.intro || i18nT('common.login.noIntro') }}</div>
             </div>
             <div class="tenant-tools" v-if="showSort" @click.stop>
               <a-button size="small" @click="moveUp(idx)" style="margin-right: 6px;"
-                >上移</a-button
+                >{{ i18nT('common.login.moveUp') }}</a-button
               >
               <a-button size="small" @click="moveDown(idx)" style="margin-right: 6px;"
-                >下移</a-button
+                >{{ i18nT('common.login.moveDown') }}</a-button
               >
               <a-button
                 size="small"
                 type="default"
                 :class="{ star: t.isDefault === true }"
                 @click="toggleDefault(t)"
-                >默认</a-button>
+                >{{ i18nT('common.login.defaultTenant') }}</a-button>
             </div>
           </div>
         </div>
@@ -147,20 +162,20 @@
             type="default"
             @click="savePreferences"
             class="action-btn"
-            >保存排序</a-button
+            >{{ i18nT('common.login.saveSort') }}</a-button
           >
           <a-button
             type="primary"
             @click="confirmTenant"
             class="action-btn primary"
-            >选择你的身份</a-button
+            >{{ i18nT('common.login.chooseIdentity') }}</a-button
           >
         </div>
       </div>
     </div>
     <a-modal
       v-model:open="sliderOpen"
-      title="滑块验证"
+      :title="i18nT('common.login.sliderTitle')"
       :footer="null"
       width="600"
       @afterOpen="initSlider"
@@ -173,6 +188,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   login,
   chooseTenant,
@@ -186,15 +202,19 @@ import router, { injectDynamicRoutes } from '../../../router'
 import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { getInitStatus } from '../../../api/system/init'
+import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { sm2 } from 'sm-crypto'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import { getCurrentUserInfo } from '@/api/profile'
 import type { SystemBasicConfig } from '../../../api/system/config'
+import { getLocale, setLocale } from '@/locales'
 
 // 初始化 stores
 const userStore = useUserStore()
 const permissionStore = usePermissionStore()
+
+const { t: i18nT } = useI18n({ useScope: 'global' })
 
 const account = ref('admin')
 const password = ref('password')
@@ -211,6 +231,8 @@ const sliderBox = ref<HTMLDivElement | null>(null)
 const logging = ref(false)
 const publicKeyCache = ref<string>('')
 const showSort = ref(false)
+const languages = ref<LanguageType[]>([])
+const selectedLang = ref<string>(getLocale())
 
 const systemConfig = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
@@ -231,9 +253,19 @@ const systemConfig = ref<SystemBasicConfig>({
 })
 
 function formatMediaUrl(value: string): string {
-  if (!value) return ''
-  if (value.startsWith('data:')) return value
-  return value.startsWith('/') ? value : ''
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
 }
 
 function formatTenantLogo(url?: string) {
@@ -241,10 +273,66 @@ function formatTenantLogo(url?: string) {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
     return url.startsWith('/api') ? url : `/api${url}`
   }
   return `/api/${url}`
+}
+
+function formatLangIcon(icon?: string) {
+  if (!icon) return ''
+  if (icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')) {
+    return icon
+  }
+  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  if (icon.startsWith('/files/')) {
+    return `/api${icon}`
+  }
+  if (icon.startsWith('/')) {
+    return icon.startsWith('/api') ? icon : `/api${icon}`
+  }
+  return `/api/${icon}`
+}
+
+function resolveLangEmoji(langCode: string) {
+  const code = String(langCode || '').toUpperCase()
+  if (code.startsWith('ZH-CN')) return '🇨🇳'
+  if (code.startsWith('ZH-TW')) return '🇹🇼'
+  if (code.startsWith('EN-US')) return '🇺🇸'
+  if (code.startsWith('JA-JP')) return '🇯🇵'
+  if (code.startsWith('KO-KR')) return '🇰🇷'
+  return '🌐'
+}
+
+async function loadLanguages() {
+  try {
+    const list = await listEnabledLanguages()
+    languages.value = Array.isArray(list) ? list : []
+    if (languages.value.length === 0) {
+      return
+    }
+
+    const current = selectedLang.value
+    const matchCurrent = languages.value.some(l => l.langCode === current)
+    if (matchCurrent) {
+      return
+    }
+
+    const def = languages.value.find(l => l.isDefault === true)
+    const next = def?.langCode || languages.value[0].langCode
+    selectedLang.value = next
+    setLocale(next as any)
+  } catch (_) {}
+}
+
+function onLangChange(val: string) {
+  if (!val) return
+  selectedLang.value = val
+  setLocale(val as any)
 }
 
 async function loadMode() {
@@ -294,7 +382,7 @@ async function onPreLogin() {
     if (tenants.value.length > 0) {
       tenantOpen.value = true
     } else {
-      message.error('当前账号未绑定任何租户，请联系管理员')
+      message.error(i18nT('common.login.msg.noTenantBound'))
     }
   } catch (e) {
   } finally {
@@ -307,12 +395,12 @@ async function onOAuth(platform: 'WECHAT' | 'DINGTALK') {
     const res = await getSocialAuthorizeUrl(platform)
     const url = (res as any)?.data ?? res
     if (!url) {
-      message.error('OAuth 配置未启用')
+      message.error(i18nT('common.login.msg.oauthDisabled'))
       return
     }
     window.location.href = url
   } catch (e) {
-    message.error('获取授权地址失败')
+    message.error(i18nT('common.login.msg.oauthUrlFailed'))
   }
 }
 
@@ -320,12 +408,12 @@ async function confirmTenant() {
   console.log('[Login] confirmTenant called, chosenTenant:', chosenTenant.value)
   
   if (!chosenTenant.value) {
-    message.warning('请先选择一个租户')
+    message.warning(i18nT('common.login.msg.selectTenantFirst'))
     return
   }
   const current = tenants.value.find(t => t.id === chosenTenant.value)
   if (!current) {
-    message.error('当前选择的租户无效，请重新登录后重试')
+    message.error(i18nT('common.login.msg.invalidTenant'))
     tenantOpen.value = false
     return
   }
@@ -407,7 +495,7 @@ async function confirmTenant() {
         console.error('[Login] Navigation error:', err)
       })
     } else {
-      message.error('选择租户失败，请稍后重试')
+      message.error(i18nT('common.login.msg.chooseTenantFailed'))
     }
   } catch (e: any) {
     // http拦截器已经显示了错误，这里不再重复显示
@@ -463,9 +551,9 @@ async function toggleDefault(t: any) {
     })
     await reloadTenantIgnore()
     t.isDefault = newVal
-    message.success('默认租户设置已更新')
+    message.success(i18nT('common.login.msg.defaultTenantUpdated'))
   } catch (e) {
-    message.error('更新默认租户失败')
+    message.error(i18nT('common.login.msg.updateDefaultTenantFailed'))
   }
 }
 
@@ -476,9 +564,9 @@ async function savePreferences() {
       ordered: tenants.value.map(t => t.id)
     })
     await reloadTenantIgnore()
-    message.success('排序已保存')
+    message.success(i18nT('common.login.msg.sortSaved'))
   } catch (e) {
-    message.error('保存排序失败')
+    message.error(i18nT('common.login.msg.sortSaveFailed'))
   }
 }
 
@@ -498,6 +586,7 @@ onMounted(async () => {
     }
   } catch (_) {}
   
+  await loadLanguages()
   await loadMode()
 })
 
@@ -603,6 +692,26 @@ watch(sliderOpen, async open => {
     0 0 16px rgba(5, 217, 232, 0.25),
     0 0 24px rgba(211, 0, 197, 0.12);
 }
+
+.lang-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lang-emoji {
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.lang-label {
+  line-height: 18px;
+  flex: 1;
+}
 .cyber-form {
   display: flex;
   flex-direction: column;
@@ -662,6 +771,7 @@ watch(sliderOpen, async open => {
   align-items: center;
   font-size: 13px;
   color: #cfd8dc;
+  gap: 12px;
 }
 .remember {
   display: flex;
@@ -673,9 +783,71 @@ watch(sliderOpen, async open => {
   height: 16px;
   accent-color: #05d9e8;
 }
+
+.lang-select-compact {
+  width: 120px !important;
+  flex-shrink: 0;
+}
+
+.lang-select-compact :deep(.ant-select-selector) {
+  background: rgba(15, 23, 42, 0.3) !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
+  color: #e5e7eb !important;
+  backdrop-filter: blur(8px);
+  height: 28px !important;
+  padding: 0 8px !important;
+}
+
+.lang-select-compact :deep(.ant-select-selector:hover) {
+  border-color: rgba(5, 217, 232, 0.6) !important;
+  background: rgba(15, 23, 42, 0.4) !important;
+}
+
+.lang-select-compact :deep(.ant-select-focused .ant-select-selector) {
+  border-color: #05d9e8 !important;
+  box-shadow: 0 0 8px rgba(5, 217, 232, 0.45) !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+
+.lang-select-compact :deep(.ant-select-selection-item) {
+  color: #e5e7eb !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 26px !important;
+  font-size: 13px;
+}
+
+.lang-select-compact :deep(.ant-select-arrow) {
+  color: #9ca3af !important;
+}
+
+.lang-select-compact :deep(.ant-select-dropdown) {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(5, 217, 232, 0.45) !important;
+  box-shadow: 0 0 16px rgba(5, 217, 232, 0.25) !important;
+  backdrop-filter: blur(12px);
+}
+
+.lang-select-compact :deep(.ant-select-item) {
+  color: #e5e7eb !important;
+  background: transparent !important;
+  font-size: 13px;
+}
+
+.lang-select-compact :deep(.ant-select-item:hover) {
+  background: rgba(5, 217, 232, 0.15) !important;
+}
+
+.lang-select-compact :deep(.ant-select-item-option-selected) {
+  background: rgba(5, 217, 232, 0.25) !important;
+  color: #05d9e8 !important;
+}
+
 .forgot {
   color: #05d9e8;
   text-decoration: none;
+  white-space: nowrap;
 }
 .forgot:hover {
   color: #d300c5;

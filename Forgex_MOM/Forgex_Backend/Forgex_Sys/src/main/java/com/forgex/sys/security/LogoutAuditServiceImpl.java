@@ -6,7 +6,6 @@ import com.forgex.common.security.LogoutReason;
 import com.forgex.sys.domain.entity.LoginLog;
 import com.forgex.sys.mapper.LoginLogMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -21,7 +20,6 @@ import java.time.LocalDateTime;
  * @author coder_nai@163.com
  * @version 1.0.0
  */
-@Service
 @RequiredArgsConstructor
 public class LogoutAuditServiceImpl implements LogoutAuditService {
 

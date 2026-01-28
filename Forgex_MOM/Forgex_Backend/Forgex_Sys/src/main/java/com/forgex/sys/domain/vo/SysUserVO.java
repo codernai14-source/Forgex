@@ -15,6 +15,7 @@ package com.forgex.sys.domain.vo;
 
 import com.forgex.common.base.BaseEntity;
 import com.forgex.common.dict.DictI18n;
+import com.forgex.common.dict.DictItem;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -43,8 +44,8 @@ public class SysUserVO extends BaseEntity {
     /** 手机号 */
     private String phone;
 
-    /** 性别（0=未知，1=男，2=女） */
-    @DictI18n(nodePathConst = "gender", targetField = "genderText")
+    /** 性别：0=未知，1=男，2=女 */
+    @DictI18n(nodePathConst = "/gender", targetField = "genderText")
     private Integer gender;
     
     /** 性别文本（字典翻译结果） */
@@ -70,7 +71,7 @@ public class SysUserVO extends BaseEntity {
     private String positionName;
 
     /** 状态：false=禁用，true=启用 */
-    @DictI18n(nodePathConst = "user_status", targetField = "statusText")
+    @DictI18n(nodePathConst = "status", targetField = "statusText")
     private Boolean status;
     
     /** 状态文本（字典翻译结果） */

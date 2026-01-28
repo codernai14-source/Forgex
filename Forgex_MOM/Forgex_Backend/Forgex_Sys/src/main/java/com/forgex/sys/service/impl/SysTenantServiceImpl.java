@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.enums.TenantTypeEnum;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
@@ -54,6 +55,49 @@ public class SysTenantServiceImpl implements SysTenantService {
     
     @Override
     public List<SysTenantDTO> list(SysTenantQueryDTO queryDTO) {
+        LambdaQueryWrapper<SysTenant> wrapper = buildQueryWrapper(queryDTO);
+        wrapper.orderByDesc(SysTenant::getCreateTime);
+        
+        List<SysTenant> tenants = tenantMapper.selectList(wrapper);
+        
+        return tenants.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public Page<SysTenantDTO> page(SysTenantQueryDTO queryDTO) {
+        // 构建分页对象
+        Page<SysTenant> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<SysTenant> wrapper = buildQueryWrapper(queryDTO);
+        wrapper.orderByDesc(SysTenant::getCreateTime);
+        
+        // 执行分页查询
+        Page<SysTenant> tenantPage = tenantMapper.selectPage(page, wrapper);
+        
+        // 转换为DTO
+        Page<SysTenantDTO> dtoPage = new Page<>();
+        dtoPage.setCurrent(tenantPage.getCurrent());
+        dtoPage.setSize(tenantPage.getSize());
+        dtoPage.setTotal(tenantPage.getTotal());
+        dtoPage.setRecords(
+            tenantPage.getRecords().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList())
+        );
+        
+        return dtoPage;
+    }
+    
+    /**
+     * 构建查询条件
+     * 
+     * @param queryDTO 查询参数
+     * @return 查询条件包装器
+     */
+    private LambdaQueryWrapper<SysTenant> buildQueryWrapper(SysTenantQueryDTO queryDTO) {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getDeleted, false);
         
@@ -77,13 +121,7 @@ public class SysTenantServiceImpl implements SysTenantService {
             wrapper.eq(SysTenant::getStatus, queryDTO.getStatus());
         }
         
-        wrapper.orderByDesc(SysTenant::getCreateTime);
-        
-        List<SysTenant> tenants = tenantMapper.selectList(wrapper);
-        
-        return tenants.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return wrapper;
     }
     
     @Override

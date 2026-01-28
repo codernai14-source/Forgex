@@ -26,6 +26,10 @@ spring:
       enabled: always
   main:
     allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
 file:
   upload:
     path: D:/forgex/uploads

@@ -36,9 +36,10 @@ public interface ILoginLogService {
      * @param ip 登录IP
      * @param region IP归属地
      * @param userAgent 浏览器UA
+     * @param tokenValue Token值（用于后续记录登出信息）
      */
     void recordLoginSuccess(Long userId, String account, Long tenantId, 
-                           String ip, String region, String userAgent);
+                           String ip, String region, String userAgent, String tokenValue);
     
     /**
      * 记录登录失败日志

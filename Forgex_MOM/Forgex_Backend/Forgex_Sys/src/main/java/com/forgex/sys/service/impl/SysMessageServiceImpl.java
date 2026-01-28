@@ -2,21 +2,28 @@ package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.exception.BusinessException;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.sys.domain.dto.SysMessageSendDTO;
 import com.forgex.sys.domain.entity.SysMessage;
+import com.forgex.sys.domain.entity.SysTenantMessageWhitelist;
+import com.forgex.sys.domain.param.SysMessageParam;
 import com.forgex.sys.domain.vo.SysMessageVO;
 import com.forgex.sys.mapper.SysMessageMapper;
+import com.forgex.sys.mapper.SysTenantMessageWhitelistMapper;
 import com.forgex.sys.service.SseEmitterService;
 import com.forgex.sys.service.SysMessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 系统消息服务实现类
@@ -30,11 +37,12 @@ import java.util.List;
  *   <li>通过SSE实时推送消息给接收用户</li>
  *   <li>查询未读消息列表</li>
  *   <li>标记消息为已读状态</li>
+ *   <li>跨租户消息权限校验</li>
  * </ul>
  * <p><strong>消息类型：</strong></p>
  * <ul>
  *   <li>{@code INTERNAL} - 内部消息，发送者和接收者在同一租户</li>
- *   <li>{@code EXTERNAL} - 外部消息，发送者和接收者在不同租户</li>
+ *   <li>{@code EXTERNAL} - 外部消息，发送者和接收者在不同租户（需要白名单授权）</li>
  * </ul>
  *
  * @author Forgex Team
@@ -43,6 +51,7 @@ import java.util.List;
  * @see SysMessage
  * @see SysMessageVO
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SysMessageServiceImpl implements SysMessageService {
@@ -55,6 +64,11 @@ public class SysMessageServiceImpl implements SysMessageService {
      * SSE推送服务
      */
     private final SseEmitterService sseEmitterService;
+    
+    /**
+     * 租户消息白名单Mapper
+     */
+    private final SysTenantMessageWhitelistMapper whitelistMapper;
 
     /**
      * 发送系统消息
@@ -125,6 +139,16 @@ public class SysMessageServiceImpl implements SysMessageService {
         // 如果是内部消息，强制使用发送租户ID作为接收租户ID
         if ("INTERNAL".equals(scope)) {
             receiverTenantId = senderTenantId;
+        } else if ("EXTERNAL".equals(scope)) {
+            // 外部消息需要校验跨租户权限
+            if (!receiverTenantId.equals(senderTenantId)) {
+                // 检查是否有跨租户消息发送权限
+                if (!checkCrossTenantPermission(senderTenantId, receiverTenantId)) {
+                    log.warn("跨租户消息发送被拒绝: senderTenantId={}, receiverTenantId={}", 
+                            senderTenantId, receiverTenantId);
+                    throw new BusinessException("无权向该租户发送消息，请联系管理员配置租户消息白名单");
+                }
+            }
         }
 
         // 构建消息实体
@@ -222,6 +246,30 @@ public class SysMessageServiceImpl implements SysMessageService {
     }
 
     /**
+     * 获取未读消息数量
+     * 
+     * @return 未读消息数量
+     */
+    @Override
+    public Long getUnreadCount() {
+        // 获取当前租户ID
+        Long tenantId = TenantContext.get();
+        
+        // 获取当前用户ID
+        Long userId = UserContext.get();
+        
+        // 参数无效，返回0
+        if (tenantId == null || userId == null) {
+            return 0L;
+        }
+        
+        // 查询未读消息数量
+        return messageMapper.selectCount(new LambdaQueryWrapper<SysMessage>()
+                .eq(SysMessage::getReceiverUserId, userId)
+                .eq(SysMessage::getStatus, 0));
+    }
+
+    /**
      * 标记消息已读
      * <p>
      * 将指定消息标记为已读状态，并记录阅读时间。
@@ -271,6 +319,83 @@ public class SysMessageServiceImpl implements SysMessageService {
         // 返回更新结果（影响行数>0表示成功）
         return rows > 0;
     }
+    
+    /**
+     * 标记所有消息已读
+     * 
+     * @return true表示标记成功，false表示标记失败
+     */
+    @Override
+    public boolean markAllRead() {
+        // 获取当前租户ID
+        Long tenantId = TenantContext.get();
+        
+        // 获取当前用户ID
+        Long userId = UserContext.get();
+        
+        // 参数无效，返回false
+        if (tenantId == null || userId == null) {
+            return false;
+        }
+        
+        // 更新所有未读消息为已读
+        messageMapper.update(
+                null,
+                new LambdaUpdateWrapper<SysMessage>()
+                        .eq(SysMessage::getReceiverUserId, userId)
+                        .eq(SysMessage::getStatus, 0)
+                        .set(SysMessage::getStatus, 1)
+                        .set(SysMessage::getReadTime, LocalDateTime.now())
+        );
+        
+        return true;
+    }
+    
+    /**
+     * 分页查询消息列表
+     * 
+     * @param param 查询参数
+     * @return 分页结果
+     */
+    @Override
+    public Page<SysMessageVO> page(SysMessageParam param) {
+        // 获取当前租户ID
+        Long tenantId = TenantContext.get();
+        
+        // 获取当前用户ID
+        Long userId = UserContext.get();
+        
+        // 参数无效，返回空分页
+        if (tenantId == null || userId == null) {
+            return new Page<>(param.getPageNum(), param.getPageSize(), 0);
+        }
+        
+        // 构建查询条件
+        LambdaQueryWrapper<SysMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMessage::getReceiverUserId, userId)
+               .eq(StringUtils.hasText(param.getMessageType()), 
+                   SysMessage::getMessageType, param.getMessageType())
+               .eq(StringUtils.hasText(param.getPlatform()), 
+                   SysMessage::getPlatform, param.getPlatform())
+               .eq(param.getStatus() != null, 
+                   SysMessage::getStatus, param.getStatus())
+               .like(StringUtils.hasText(param.getTitle()), 
+                     SysMessage::getTitle, param.getTitle())
+               .orderByDesc(SysMessage::getCreateTime);
+        
+        // 分页查询
+        Page<SysMessage> page = new Page<>(param.getPageNum(), param.getPageSize());
+        Page<SysMessage> result = messageMapper.selectPage(page, wrapper);
+        
+        // 转换为VO
+        Page<SysMessageVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        List<SysMessageVO> voList = result.getRecords().stream()
+                .map(m -> toVO(m, tenantId))
+                .collect(Collectors.toList());
+        voPage.setRecords(voList);
+        
+        return voPage;
+    }
 
     /**
      * 将消息实体转换为VO
@@ -303,6 +428,56 @@ public class SysMessageServiceImpl implements SysMessageService {
         
         // 返回VO对象
         return vo;
+    }
+    
+    /**
+     * 检查跨租户消息发送权限
+     * <p>
+     * 通过查询租户消息白名单表，判断发送方租户是否有权限向接收方租户发送消息。
+     * </p>
+     * <p><strong>权限规则：</strong></p>
+     * <ul>
+     *   <li>同一租户内部消息：无需校验，直接允许</li>
+     *   <li>跨租户消息：必须在白名单中且状态为启用</li>
+     *   <li>超级管理员租户（ID=1）：默认拥有向所有租户发送消息的权限</li>
+     * </ul>
+     * 
+     * @param senderTenantId 发送方租户ID
+     * @param receiverTenantId 接收方租户ID
+     * @return true表示有权限，false表示无权限
+     */
+    private boolean checkCrossTenantPermission(Long senderTenantId, Long receiverTenantId) {
+        // 参数校验
+        if (senderTenantId == null || receiverTenantId == null) {
+            return false;
+        }
+        
+        // 同一租户，直接允许
+        if (senderTenantId.equals(receiverTenantId)) {
+            return true;
+        }
+        
+        // 超级管理员租户（ID=1）默认拥有所有权限
+        if (senderTenantId == 1L) {
+            return true;
+        }
+        
+        try {
+            // 查询白名单配置
+            Long count = whitelistMapper.selectCount(new LambdaQueryWrapper<SysTenantMessageWhitelist>()
+                    .eq(SysTenantMessageWhitelist::getSenderTenantId, senderTenantId)
+                    .eq(SysTenantMessageWhitelist::getReceiverTenantId, receiverTenantId)
+                    .eq(SysTenantMessageWhitelist::getEnabled, true)
+                    .eq(SysTenantMessageWhitelist::getDeleted, false));
+            
+            // 存在启用的白名单记录，则允许发送
+            return count != null && count > 0;
+        } catch (Exception e) {
+            log.error("检查跨租户消息权限失败: senderTenantId={}, receiverTenantId={}", 
+                    senderTenantId, receiverTenantId, e);
+            // 异常情况下，为了安全起见，拒绝发送
+            return false;
+        }
     }
 }
 

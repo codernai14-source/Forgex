@@ -1,22 +1,19 @@
 package com.forgex.common.security.perm;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.i18n.I18nPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
-import com.forgex.common.web.R;
-import com.forgex.common.web.StatusCode;
+import com.forgex.common.util.CurrentUserUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,16 +21,16 @@ import java.util.Set;
 /**
  * 接口权限拦截器（按钮级）。
  * <p>
- * 对标注了 {@link RequirePerm} 的接口进行强制鉴权：\n
- * - 依赖 {@link UserContext}/{@link TenantContext} 获取当前用户与租户；\n
- * - 依赖 {@link PermKeyService} 计算 permKey；\n
- * - 校验不通过返回统一响应 {@link R}。\n
+ * 对标注了 {@link RequirePerm} 的接口进行强制鉴权：
+ * - 依赖 {@link UserContext}/{@link TenantContext} 获取当前用户与租户；
+ * - 依赖 {@link PermKeyService} 计算 permKey；
+ * - 校验不通过抛出 {@link I18nBusinessException}，由全局异常处理器统一处理。
  * </p>
  *
  * <p>
- * 说明：Common 模块提供该拦截器，业务模块只需：\n
- * 1) 提供 {@link PermKeyService} Bean；\n
- * 2) 在本模块 WebMvc 配置中注册拦截路径（如 /sys/**）。\n
+ * 说明：Common 模块提供该拦截器，业务模块只需：
+ * 1) 提供 {@link PermKeyService} Bean；
+ * 2) 在本模块 WebMvc 配置中注册拦截路径（如 /sys/**）。
  * </p>
  *
  * @author coder_nai@163.com
@@ -49,7 +46,6 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private static final String HEADER_TENANT_ID = "X-Tenant-Id";
 
     private final PermKeyService permKeyService;
-    private final ObjectMapper objectMapper;
 
     /**
      * 在 Controller 方法执行前进行权限校验。
@@ -58,10 +54,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
      * @param response HTTP 响应
      * @param handler  处理器
      * @return 允许继续处理返回 true；拒绝返回 false
-     * @throws Exception 响应写出等异常
+     * @throws I18nBusinessException 权限校验失败时抛出
      */
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws I18nBusinessException {
         if (!(handler instanceof HandlerMethod hm)) {
             return true;
         }
@@ -86,14 +82,18 @@ public class PermissionInterceptor implements HandlerInterceptor {
             }
         }
         if (userId == null || tenantId == null) {
-            writeFail(response, StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
-            return false;
+            throw new I18nBusinessException(602, CommonPrompt.NOT_LOGIN);
+        }
+
+        // 检查是否为超级管理员（admin账号拥有所有权限）
+        String account = CurrentUserUtils.getAccount();
+        if (account != null && "admin".equalsIgnoreCase(account)) {
+            return true;
         }
 
         boolean ok = permKeyService.hasAllPerms(userId, tenantId, required);
         if (!ok) {
-            writeFail(response, StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
-            return false;
+            throw new I18nBusinessException(601, CommonPrompt.NO_PERMISSION);
         }
 
         return true;
@@ -126,39 +126,11 @@ public class PermissionInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * 输出统一失败响应
+     * 解析长整型字符串。
      *
-     * @param response 响应
-     * @param code     HTTP状态码
-     * @param msg      提示信息
-     * @throws Exception 写出失败
+     * @param raw 字符串值
+     * @return 长整型值，解析失败返回null
      */
-    private void writeFail(HttpServletResponse response, int code, String msg) throws Exception {
-        R<Object> r = new R<>();
-        r.setCode(code);
-        r.setMessage(msg);
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write(objectMapper.writeValueAsString(r));
-    }
-
-    /**
-     * 输出统一失败响应（支持国际化提示）
-     *
-     * @param response 响应
-     * @param code     HTTP状态码
-     * @param messageCode 国际化消息代码
-     * @throws Exception 写出失败
-     */
-    private void writeFail(HttpServletResponse response, int code, I18nPrompt messageCode) throws Exception {
-        R<Object> r = R.fail(code, messageCode);
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write(objectMapper.writeValueAsString(r));
-    }
-
     private Long parseLong(String raw) {
         if (!StringUtils.hasText(raw)) {
             return null;

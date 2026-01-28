@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.forgex.common.dataperm.DataPermissionInterceptor;
 import com.forgex.common.tenant.TenantMetaObjectHandler;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.TenantIgnoreRegistry;
@@ -26,6 +27,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.sf.jsqlparser.expression.Expression;
@@ -36,19 +38,26 @@ import javax.sql.DataSource;
 
 /**
  * MyBatis-Plus 配置
- * 注册分页拦截器与通用元对象处理器
+ * 注册分页拦截器、租户隔离拦截器、数据权限拦截器与通用元对象处理器
  */
 @Configuration
 public class MybatisPlusConfig {
+    
+    @Autowired
+    private ApplicationContext applicationContext;
+    
     /**
-     * 注册分页拦截器
+     * 注册MyBatis-Plus拦截器
      * @return MybatisPlusInterceptor
      * @see com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor
+     * @see com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor
+     * @see com.forgex.common.dataperm.DataPermissionInterceptor
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 租户隔离拦截器（查询与更新自动带上租户条件）
+        
+        // 1. 租户隔离拦截器（查询与更新自动带上租户条件）
         interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(new TenantLineHandler() {
             @Override
             public Expression getTenantId() {
@@ -69,8 +78,13 @@ public class MybatisPlusConfig {
                 return TenantIgnoreRegistry.ignoreTable(tableName);
             }
         }));
-        // 分页拦截器
+        
+        // 2. 数据权限拦截器（根据用户角色自动过滤数据）
+        interceptor.addInnerInterceptor(new DataPermissionInterceptor(applicationContext));
+        
+        // 3. 分页拦截器
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+        
         return interceptor;
     }
 

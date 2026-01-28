@@ -1,64 +1,65 @@
 <template>
   <div class="table-config-management">
-    <a-card :bordered="false" style="margin-bottom: 16px;">
+    <a-card :bordered="false" class="query-card">
       <a-form layout="inline">
-        <a-form-item label="表格代码">
+        <a-form-item :label="t('system.tableConfig.tableCode')">
           <a-input
             v-model:value="queryForm.tableCode"
-            placeholder="请输入表格代码"
+            :placeholder="t('system.tableConfig.form.tableCode')"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item label="表格名称">
+        <a-form-item :label="t('system.tableConfig.tableName')">
           <a-input
             v-model:value="queryForm.tableName"
-            placeholder="请输入表格名称"
+            :placeholder="t('system.tableConfig.form.tableName')"
             allow-clear
             style="width: 200px;"
           />
         </a-form-item>
         
-        <a-form-item label="表格类型">
+        <a-form-item :label="t('system.tableConfig.tableType')">
           <a-select
             v-model:value="queryForm.tableType"
-            placeholder="请选择表格类型"
+            :placeholder="t('system.tableConfig.form.tableType')"
             allow-clear
             style="width: 150px;"
           >
-            <a-select-option value="NORMAL">普通表格</a-select-option>
-            <a-select-option value="LAZY">懒加载表格</a-select-option>
-            <a-select-option value="TREE">树形表格</a-select-option>
+            <a-select-option value="NORMAL">{{ t('system.tableConfig.tableTypeNormal') }}</a-select-option>
+            <a-select-option value="LAZY">{{ t('system.tableConfig.tableTypeLazy') }}</a-select-option>
+            <a-select-option value="TREE">{{ t('system.tableConfig.tableTypeTree') }}</a-select-option>
           </a-select>
         </a-form-item>
         
-        <a-form-item label="启用状态">
+        <a-form-item :label="t('system.tableConfig.enabled')">
           <a-select
             v-model:value="queryForm.enabled"
-            placeholder="请选择启用状态"
+            :placeholder="t('system.tableConfig.form.enabled')"
             allow-clear
             style="width: 120px;"
           >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
+            <a-select-option v-for="option in yesNoOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </a-select-option>
           </a-select>
         </a-form-item>
         
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
-              搜索
+              {{ t('common.search') }}
             </a-button>
             <a-button @click="handleReset">
-              重置
+              {{ t('common.reset') }}
             </a-button>
           </a-space>
         </a-form-item>
       </a-form>
     </a-card>
     
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="table-card">
       <div style="margin-bottom: 16px;">
         <a-space>
           <a-button
@@ -66,7 +67,7 @@
             type="primary"
             @click="openAddDialog"
           >
-            新增配置
+            {{ t('system.tableConfig.add') }}
           </a-button>
           <a-button
             v-permission="'sys:tableConfig:delete'"
@@ -74,61 +75,64 @@
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
           >
-            批量删除
+            {{ t('common.batchDelete') }}
           </a-button>
         </a-space>
       </div>
       
-      <a-table
-        :columns="columns"
-        :data-source="dataSource"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="rowKey"
-        :row-selection="{
-          selectedRowKeys: selectedRowKeys,
-          onChange: handleSelectionChange
-        }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tableNameI18nJson'">
-            <span>{{ getTableName(record.tableNameI18nJson) }}</span>
+      <div ref="tableWrapRef" class="table-wrap">
+        <a-table
+          :columns="columns"
+          :data-source="dataSource"
+          :loading="loading"
+          :pagination="pagination"
+          :scroll="tableScroll"
+          :row-key="rowKey"
+          :row-selection="{
+            selectedRowKeys: selectedRowKeys,
+            onChange: handleSelectionChange
+          }"
+          @change="handleTableChange"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'tableNameI18nJson'">
+              <span>{{ getI18nValue(record.tableNameI18nJson, record.tableName) }}</span>
+            </template>
+            
+            <template v-else-if="column.key === 'tableType'">
+              <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
+              <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
+              <a-tag v-else-if="record.tableType === 'TREE'" color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
+            </template>
+            
+            <template v-else-if="column.key === 'enabled'">
+              <a-switch
+                :checked="record.enabled"
+                :loading="record.statusLoading"
+                @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
+              />
+            </template>
+            
+            <template v-else-if="column.key === 'action'">
+              <a-space>
+                <a
+                  v-permission="'sys:tableConfig:edit'"
+                  @click="openEditDialog(record)"
+                >
+                  {{ t('common.edit') }}
+                </a>
+                <a
+                  v-permission="'sys:tableConfig:delete'"
+                  style="color: #ff4d4f;"
+                  @click="handleDelete(record.id!)"
+                >
+                  {{ t('common.delete') }}
+                </a>
+              </a-space>
+            </template>
           </template>
-          
-          <template v-else-if="column.key === 'tableType'">
-            <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
-            <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
-            <a-tag v-else-if="record.tableType === 'TREE'" color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
-          </template>
-          
-          <template v-else-if="column.key === 'enabled'">
-            <a-switch
-              :checked="record.enabled"
-              :loading="record.statusLoading"
-              @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
-            />
-          </template>
-          
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a
-                v-permission="'sys:tableConfig:edit'"
-                @click="openEditDialog(record)"
-              >
-                {{ t('common.edit') }}
-              </a>
-              <a
-                v-permission="'sys:tableConfig:delete'"
-                style="color: #ff4d4f;"
-                @click="handleDelete(record.id!)"
-              >
-                {{ t('common.delete') }}
-              </a>
-            </a-space>
-          </template>
-        </template>
-      </a-table>
+        </a-table>
+      </div>
     </a-card>
     
     <TableConfigFormDialog
@@ -152,7 +156,7 @@
  * @author Forgex
  * @version 1.0.0
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onBeforeUnmount, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
@@ -163,13 +167,19 @@ import {
   toggleTableConfigStatus
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
+import { useDict } from '@/hooks/useDict'
+import { getI18nValue } from '@/utils/i18n'
 
 // 使用 global 作用域获取全局 i18n 实例，确保国际化生效
 const { t } = useI18n({ useScope: 'global' })
+const { dictItems: yesNoOptions } = useDict('yes_no')
 
 const loading = ref(false)
 const dataSource = ref<TableConfigItem[]>([])
 const selectedRowKeys = ref<number[]>([])
+const tableWrapRef = ref<HTMLElement | null>(null)
+const autoScrollY = ref<number | undefined>(undefined)
+let computeScrollYRafPending = false
 
 const queryForm = reactive({
   tableCode: '',
@@ -184,68 +194,85 @@ const pagination = reactive({
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => t('common.total', { total })
+  showTotal: (total: number) => t('common.total', { total }),
+  hideOnSinglePage: false
 })
 
-// 表格列配置，使用硬编码的中文文本，确保显示正常
-const columns = [
+const columns = computed(() => [
   {
-    title: '表格代码',
+    title: t('system.tableConfig.tableCode'),
     dataIndex: 'tableCode',
     key: 'tableCode',
     width: 180
   },
   {
-    title: '表格名称',
+    title: t('system.tableConfig.tableName'),
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 200,
     ellipsis: true
   },
   {
-    title: '表格类型',
+    title: t('system.tableConfig.tableType'),
     dataIndex: 'tableType',
     key: 'tableType',
     width: 120
   },
   {
-    title: '行Key',
+    title: t('system.tableConfig.rowKey'),
     dataIndex: 'rowKey',
     key: 'rowKey',
     width: 120
   },
   {
-    title: '默认分页大小',
+    title: t('system.tableConfig.defaultPageSize'),
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 120
   },
   {
-    title: '启用状态',
+    title: t('system.tableConfig.enabled'),
     dataIndex: 'enabled',
     key: 'enabled',
     width: 100,
     align: 'center' as const
   },
   {
-    title: '创建人',
+    title: t('system.user.createBy'),
     dataIndex: 'createBy',
     key: 'createBy',
-    width: 100
+    width: 120
   },
   {
-    title: '创建时间',
+    title: t('common.createTime'),
     dataIndex: 'createTime',
     key: 'createTime',
     width: 180
   },
   {
-    title: '操作',
+    title: t('common.action'),
     key: 'action',
     width: 150,
     fixed: 'right' as const
   }
-]
+])
+
+const tableScrollX = computed(() => {
+  return columns.value.reduce((sum: number, col: any) => {
+    if (typeof col?.width === 'number' && Number.isFinite(col.width)) {
+      return sum + col.width
+    }
+    return sum + 160
+  }, 0)
+})
+
+const tableScroll = computed(() => {
+  const out: any = { x: tableScrollX.value }
+  if (autoScrollY.value !== undefined && autoScrollY.value !== null) {
+    out.y = autoScrollY.value
+  }
+  return out
+})
 
 const rowKey = (record: TableConfigItem) => record.id!
 
@@ -267,12 +294,61 @@ const fetchData = async () => {
     
     const result = await getTableConfigList(params)
     dataSource.value = result.records
-    pagination.total = result.total
+    // 确保 total 是数字类型
+    pagination.total = typeof result.total === 'number' ? result.total : parseInt(String(result.total) || '0', 10)
   } catch (error) {
     console.error('获取表格配置列表失败:', error)
   } finally {
     loading.value = false
+    await nextTick()
+    scheduleComputeAutoScrollY()
   }
+}
+
+const onResizeOrScroll = () => {
+  void nextTick().then(() => scheduleComputeAutoScrollY())
+}
+
+const scheduleComputeAutoScrollY = () => {
+  if (computeScrollYRafPending) return
+  computeScrollYRafPending = true
+  requestAnimationFrame(() => {
+    computeScrollYRafPending = false
+    computeAutoScrollY()
+  })
+}
+
+function computeAutoScrollY() {
+  const wrapEl = tableWrapRef.value
+  if (!wrapEl) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const rect = wrapEl.getBoundingClientRect()
+  if (!Number.isFinite(rect.height)) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const available = rect.height
+  if (!Number.isFinite(available) || available <= 0) {
+    autoScrollY.value = undefined
+    return
+  }
+
+  const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
+  const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
+
+  const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
+  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
+
+  // 增加缓冲区，为分页器预留更多空间（margin-top 16px + 额外缓冲 20px）
+  const buffer = 36
+  const y = Math.floor(available - paginationHeight - headerHeight - buffer)
+  const nextY = y > 100 ? y : undefined  // 确保最小高度为100px
+  if (autoScrollY.value === nextY) return
+  autoScrollY.value = nextY
 }
 
 const handleSearch = () => {
@@ -305,10 +381,21 @@ const openAddDialog = () => {
   dialogVisible.value = true
 }
 
-const openEditDialog = (record: TableConfigItem) => {
+const openEditDialog = async (record: TableConfigItem) => {
+  console.log('打开编辑对话框，记录:', record)
+  console.log('记录ID:', record.id)
+  
+  // 先设置编辑状态和ID
   isEdit.value = true
   currentConfigId.value = record.id
+  console.log('设置 currentConfigId:', currentConfigId.value)
+  
+  // 等待下一个 tick，确保 props 已经更新
+  await nextTick()
+  
+  // 再打开对话框
   dialogVisible.value = true
+  console.log('对话框已打开')
 }
 
 const handleFormSuccess = () => {
@@ -369,23 +456,118 @@ const handleToggleStatus = async (id: number, enabled: boolean) => {
   }
 }
 
-const getTableName = (i18nJson: string | undefined) => {
-  if (!i18nJson) return ''
-  try {
-    const i18nData = JSON.parse(i18nJson)
-    return i18nData['zh-CN'] || i18nData['en-US'] || Object.values(i18nData)[0] || ''
-  } catch {
-    return i18nJson
-  }
-}
+// getTableName 函数已被 getI18nValue 替代，已删除
 
 onMounted(() => {
   fetchData()
+  window.addEventListener('resize', onResizeOrScroll, { passive: true })
+  
+  // 添加 MutationObserver 监听 DOM 变化
+  const wrapEl = tableWrapRef.value
+  if (wrapEl) {
+    const observer = new MutationObserver(() => {
+      scheduleComputeAutoScrollY()
+    })
+    
+    observer.observe(wrapEl, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    })
+    
+    // 在组件卸载时断开观察
+    onBeforeUnmount(() => {
+      observer.disconnect()
+    })
+  }
+  
+  // 延迟计算，确保 DOM 完全渲染
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 100)
+  
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 300)
+  
+  setTimeout(() => {
+    scheduleComputeAutoScrollY()
+  }, 500)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResizeOrScroll as any)
 })
 </script>
 
 <style scoped>
 .table-config-management {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
+}
+
+.query-card {
+  margin-bottom: 16px;
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+}
+
+.query-card :deep(.ant-card-body) {
+  padding: 12px;
+}
+
+.table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 16px;  /* 添加底部间距，避免被 footer 遮挡 */
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+}
+
+.table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  padding: 0;  /* 移除默认 padding */
+}
+
+.table-card > div:first-child {
+  padding: 12px 16px 0 16px;  /* toolbar 区域的 padding */
+}
+
+.table-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 16px 24px 16px;  /* 增加底部 padding 到 24px，确保分页器完全显示 */
+}
+
+.table-wrap :deep(.ant-table-wrapper) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.table-wrap :deep(.ant-pagination) {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;  /* 整体右对齐 */
+  align-items: center;
+  gap: 16px;  /* 元素之间的间距 */
+}
+
+.table-wrap :deep(.ant-pagination-total-text) {
+  /* 不设置 order，保持默认顺序，显示在页码左边 */
 }
 </style>

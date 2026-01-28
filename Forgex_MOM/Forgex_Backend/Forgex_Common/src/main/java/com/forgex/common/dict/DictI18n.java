@@ -95,6 +95,10 @@ public @interface DictI18n {
      * <p>
      * 该字段必须在实体类中存在，且类型为String。
      * </p>
+     * <p>
+     * 解析后的文本格式为JSON字符串，包含label和tagStyle信息。
+     * 例如：{"label":"启用","color":"green"}
+     * </p>
      * 
      * @return 目标字段名，默认为空字符串
      */

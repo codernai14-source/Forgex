@@ -32,7 +32,6 @@
               onChange: handleSelectionChange
             }"
             :pagination="false"
-            :scroll="{ y: 'calc(100vh - 380px)' }"
             row-key="id"
             :default-expand-all-rows="true"
           >
@@ -44,7 +43,7 @@
                   @click="handleAdd"
                 >
                   <template #icon><PlusOutlined /></template>
-                  新增菜单
+                  {{ $t('common.add') }}{{ $t('system.menu.menuName') }}
                 </a-button>
                 
                 <a-button
@@ -54,7 +53,7 @@
                   @click="handleBatchDelete"
                 >
                   <template #icon><DeleteOutlined /></template>
-                  批量删除
+                  {{ $t('common.batchDelete') }}
                 </a-button>
               </a-space>
             </template>
@@ -73,18 +72,6 @@
             
             <template #icon="{ record }">
               <component v-if="record.icon" :is="getIcon(record.icon)" />
-              <span v-else>-</span>
-            </template>
-            
-            <template #visible="{ record }">
-              <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
-              <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
-              <span v-else>-</span>
-            </template>
-            
-            <template #status="{ record }">
-              <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
-              <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
               <span v-else>-</span>
             </template>
             
@@ -175,12 +162,18 @@
             </a-form-item>
           </a-col>
           
-          <a-col :span="12">
-            <a-form-item label="菜单名称" name="name">
-              <a-input
-                v-model:value="formData.name"
+          <a-col :span="24">
+            <a-form-item label="菜单名称" name="nameI18nJson">
+              <I18nInput
+                v-model="formData.nameI18nJson"
+                mode="simple"
                 placeholder="请输入菜单名称"
               />
+              <template #extra>
+                <span style="color: #999; font-size: 12px;">
+                  点击输入框右侧的地球图标可配置多语言
+                </span>
+              </template>
             </a-form-item>
           </a-col>
           
@@ -290,9 +283,11 @@ import {
 } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 import { listModules } from '@/api/system/module'
 import { getMenuTree } from '@/api/system/menu'
 import { getIcon } from '@/utils/icon'
+import { getI18nValue } from '@/utils/i18n'
 import { useDict } from '@/hooks/useDict'
 
 // 模块列表
@@ -302,6 +297,8 @@ const activeModuleId = ref<string>('')
 // 字典数据
 const { dictItems: menuTypeOptions } = useDict('menu_type')
 const { dictItems: menuModeOptions } = useDict('menu_mode')
+const { dictItems: statusOptions } = useDict('status')
+const { dictItems: visibleOptions } = useDict('visible')
 
 // 表格引用
 const tableRef = ref()
@@ -309,39 +306,10 @@ const tableRef = ref()
 // 字典选项配置
 const dictOptions = ref({
   menu_type: menuTypeOptions,
-  menu_mode: menuModeOptions
+  menu_mode: menuModeOptions,
+  status: statusOptions,
+  visible: visibleOptions
 })
-
-// 降级配置
-const fallbackConfig = {
-  tableCode: 'MenuTable',
-  tableName: '菜单管理',
-  tableType: 'TREE',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'name', title: '菜单名称', width: 200 },
-    { field: 'type', title: '菜单类型', width: 100 },
-    { field: 'path', title: '路径', ellipsis: true },
-    { field: 'icon', title: '图标', width: 80 },
-    { field: 'menuMode', title: '菜单模式', width: 100 },
-    { field: 'permKey', title: '权限标识', ellipsis: true },
-    { field: 'orderNum', title: '排序', width: 80 },
-    { field: 'visible', title: '可见', width: 80 },
-    { field: 'status', title: '状态', width: 80 },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'createBy', title: '创建人' },
-    { field: 'updateTime', title: '修改时间', width: 180 },
-    { field: 'updateBy', title: '修改人' },
-    { field: 'action', title: '操作', width: 200 }
-  ],
-  queryFields: [
-    { field: 'name', label: '菜单名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' },
-    { field: 'moduleId', label: '所属模块', queryType: 'select', queryOperator: 'eq' }
-  ],
-  version: 1,
-}
 
 // 选中的菜单ID列表
 const selectedRowKeys = ref<string[]>([])
@@ -361,6 +329,7 @@ const formData = ref<any>({
   menuLevel: 1,
   path: '',
   name: '',
+  nameI18nJson: '',
   icon: undefined,
   componentKey: undefined,
   permKey: undefined,
@@ -395,7 +364,19 @@ const showExternalUrl = computed(() => {
 
 // 表单规则
 const rules = {
-  name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+  nameI18nJson: [
+    { 
+      required: true, 
+      message: '请输入菜单名称', 
+      trigger: 'change',
+      validator: (_rule: any, value: string) => {
+        if (!value || value === '{}' || value === '') {
+          return Promise.reject('请至少配置一种语言的菜单名称')
+        }
+        return Promise.resolve()
+      }
+    }
+  ],
   type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
   moduleId: [{ required: true, message: '请选择所属模块', trigger: 'change' }]
 }
@@ -437,10 +418,16 @@ const handleRequest = async (payload: {
     const response = await getMenuTree(params)
     const flatList = response || []
     
+    // 处理多语言显示
+    const processedList = flatList.map((item: any) => ({
+      ...item,
+      displayName: getI18nValue(item.nameI18nJson, item.name)
+    }))
+    
     return {
       success: true,
-      data: flatList,
-      total: flatList.length
+      data: processedList,
+      total: processedList.length
     }
   } catch (error) {
     console.error('加载菜单列表失败:', error)
@@ -473,6 +460,7 @@ const handleAdd = () => {
     menuLevel: 1,
     path: '',
     name: '',
+    nameI18nJson: '',
     icon: undefined,
     componentKey: undefined,
     permKey: undefined,
@@ -492,7 +480,8 @@ const handleAdd = () => {
 const handleEdit = (record: any) => {
   formData.value = {
     ...record,
-    moduleId: String(record.moduleId || activeModuleId.value)
+    moduleId: String(record.moduleId || activeModuleId.value),
+    nameI18nJson: record.nameI18nJson || ''
   }
   formTitle.value = '编辑菜单'
   visible.value = true
@@ -595,22 +584,42 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .menu-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
   
   .main-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
     :deep(.ant-card-body) {
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
     }
   }
   
   .menu-layout {
     display: flex;
+    flex: 1 1 auto;
     width: 100%;
+    min-width: 0;
+    min-height: 0;
     
     .module-tabs {
       width: 140px;
+      flex-shrink: 0;
       border-right: 1px solid var(--fx-border-color);
       background: var(--fx-bg-container);
+      min-height: 0;
       
       :deep(.ant-tabs) {
         height: 100%;
@@ -648,8 +657,13 @@ onMounted(async () => {
     
     .content-area {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
       padding: 12px 16px 8px;
       background: var(--fx-bg-container);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
       
       .search-bar {
         margin-bottom: 16px;
@@ -660,6 +674,11 @@ onMounted(async () => {
       
       .table-toolbar {
         margin-bottom: 16px;
+      }
+
+      :deep(.fx-dynamic-table) {
+        flex: 1 1 auto;
+        min-height: 0;
       }
     }
   }

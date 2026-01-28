@@ -29,8 +29,9 @@
             
             <a-col :span="12">
               <a-form-item :label="t('system.tableConfig.tableName')" name="tableNameI18nJson">
-                <a-input
-                  v-model:value="formData.tableNameI18nJson"
+                <I18nInput
+                  v-model="formData.tableNameI18nJson"
+                  mode="simple"
                   :placeholder="t('system.tableConfig.form.tableName')"
                 />
               </a-form-item>
@@ -102,7 +103,11 @@
             </template>
             
             <template v-else-if="column.key === 'title'">
-              <a-input v-model:value="record.titleI18nJson" :placeholder="t('system.tableConfig.form.title')" />
+              <I18nInput
+                v-model="record.titleI18nJson"
+                mode="simple"
+                :placeholder="t('system.tableConfig.form.title')"
+              />
             </template>
             
             <template v-else-if="column.key === 'align'">
@@ -167,10 +172,11 @@
  * @author Forgex
  * @version 1.0.0
  */
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 import {
   getTableConfigDetail,
   createTableConfig,
@@ -344,10 +350,13 @@ const handleCancel = () => {
 }
 
 const loadConfigDetail = async () => {
+  console.log('loadConfigDetail 被调用', { isEdit: props.isEdit, configId: props.configId })
   if (props.isEdit && props.configId) {
     loading.value = true
     try {
+      console.log('开始调用 getTableConfigDetail 接口，ID:', props.configId)
       const detail = await getTableConfigDetail(props.configId)
+      console.log('获取到的详情数据:', detail)
       Object.assign(formData, {
         ...detail,
         columns: detail.columns.map(col => ({
@@ -355,11 +364,15 @@ const loadConfigDetail = async () => {
           tempId: col.id || Date.now() + Math.random()
         }))
       })
+      console.log('表单数据已更新:', formData)
     } catch (error) {
       console.error('加载表格配置详情失败:', error)
+      message.error(t('system.tableConfig.loadDetailFailed'))
     } finally {
       loading.value = false
     }
+  } else {
+    console.log('未调用接口，条件不满足', { isEdit: props.isEdit, configId: props.configId })
   }
 }
 
@@ -376,14 +389,30 @@ const resetForm = () => {
   activeTab.value = 'basic'
 }
 
-watch(() => props.open, (newVal) => {
-  if (newVal) {
-    if (props.isEdit) {
-      loadConfigDetail()
-    } else {
-      resetForm()
-    }
+// 监听对话框打开状态
+watch(() => props.open, (newOpen) => {
+  console.log('=== watch 触发 ===')
+  console.log('对话框打开状态变化:', newOpen)
+  console.log('当前 props:', { open: props.open, isEdit: props.isEdit, configId: props.configId })
+  
+  if (newOpen) {
+    // 使用 nextTick 确保 props 已经全部更新
+    nextTick(() => {
+      console.log('nextTick 后的 props:', { open: props.open, isEdit: props.isEdit, configId: props.configId })
+      if (props.isEdit) {
+        console.log('准备加载配置详情...')
+        loadConfigDetail()
+      } else {
+        console.log('准备重置表单...')
+        resetForm()
+      }
+    })
   }
+})
+
+// 额外监听 isEdit 和 configId 的变化（用于调试）
+watch(() => [props.isEdit, props.configId] as const, ([newIsEdit, newConfigId]) => {
+  console.log('isEdit 或 configId 变化:', { isEdit: newIsEdit, configId: newConfigId })
 })
 </script>
 

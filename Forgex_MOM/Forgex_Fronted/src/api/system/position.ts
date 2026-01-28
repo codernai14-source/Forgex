@@ -10,6 +10,15 @@ export const listPositions = (params: any) => {
 }
 
 /**
+ * 分页查询职位
+ * @param params 分页查询参数
+ * @returns 分页结果
+ */
+export const getPositionPage = (params: any) => {
+  return request.post('/sys/position/page', params)
+}
+
+/**
  * 获取职位详情
  * @param params 参数 { id, tenantId }
  * @returns 职位详情

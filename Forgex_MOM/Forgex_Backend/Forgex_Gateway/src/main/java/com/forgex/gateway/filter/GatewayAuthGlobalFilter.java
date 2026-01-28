@@ -18,10 +18,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.time.Duration;
 
 /**
  * 网关认证全局过滤器
@@ -51,6 +54,10 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
      */
     private static final String COOKIE_TOKEN = "satoken";
 
+    private static final String SYS_I18N_RESOLVE_URL = "http://forgex-sys/sys/i18n/message/resolve";
+    private static final String I18N_CACHE_PREFIX = "i18nmsg:";
+    private static final Duration I18N_CACHE_TTL = Duration.ofHours(24);
+
     /**
      * Redis模板，用于查询用户登录状态
      */
@@ -62,6 +69,9 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
      */
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -85,7 +95,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         String path = request.getURI().getPath();
         
         // 不需要认证的路径，直接放行
-        if (!needAuth(path)) {
+        if (!needAuth(path, method)) {
             return chain.filter(exchange);
         }
         
@@ -136,7 +146,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
      * @param path 请求路径
      * @return true=需要认证，false=不需要认证
      */
-    private boolean needAuth(String path) {
+    private boolean needAuth(String path, HttpMethod method) {
         // 路径为空，不需要认证
         if (!StringUtils.hasText(path)) {
             return false;
@@ -144,6 +154,23 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         
         // /api/auth/路径下的请求直接放行
         if (path.startsWith("/api/auth/")) {
+            return false;
+        }
+
+        // 登录页需要的公开接口直接放行
+        if (path.equals("/api/sys/config/system-basic") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/config/login-captcha") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/i18n/languageType/listEnabled") && HttpMethod.POST.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/init/status") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/init/apply") && HttpMethod.POST.equals(method)) {
             return false;
         }
         
@@ -185,33 +212,172 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
     /**
      * 写入未登录响应
      * <p>
-     * 设置响应状态码为401，响应体为JSON格式的错误信息。
+     * 设置响应体为JSON格式的错误信息。
      * </p>
      * 
      * @param exchange 服务器Web交换对象
      * @return 响应写入完成后的Mono
      */
     private Mono<Void> writeNotLogin(ServerWebExchange exchange) {
-        // 设置响应状态码为401未授权
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
         
         // 设置响应内容类型为JSON
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         
         // 构建响应体
         R<Object> body = R.fail(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
-        
-        // 序列化响应体
-        byte[] bytes;
-        try {
-            bytes = objectMapper.writeValueAsBytes(body);
-        } catch (Exception e) {
-            // 序列化失败，使用默认错误消息
-            bytes = "{\"code\":602,\"message\":\"NOT_LOGIN\"}".getBytes(StandardCharsets.UTF_8);
+        HttpHeaders headers = exchange == null || exchange.getRequest() == null ? null : exchange.getRequest().getHeaders();
+
+        return translate(CommonPrompt.NOT_LOGIN, body.getI18n() == null ? null : body.getI18n().getArgs(), headers)
+                .defaultIfEmpty(CommonPrompt.NOT_LOGIN.getDefaultTemplate())
+                .flatMap(msg -> {
+                    body.setMessage(msg);
+
+                    byte[] bytes;
+                    try {
+                        bytes = objectMapper.writeValueAsBytes(body);
+                    } catch (Exception e) {
+                        bytes = "{\"code\":602,\"message\":\"NOT_LOGIN\"}".getBytes(StandardCharsets.UTF_8);
+                    }
+
+                    return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+                });
+    }
+
+    private Mono<String> translate(CommonPrompt prompt, Object[] args, HttpHeaders headers) {
+        if (prompt == null) {
+            return Mono.empty();
         }
-        
-        // 写入响应
-        return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+
+        String lang = normalizeLang(resolveLang(headers));
+        String cacheKey = buildI18nCacheKey(lang, prompt);
+        String cachedTemplate = null;
+        try {
+            cachedTemplate = redis.opsForValue().get(cacheKey);
+        } catch (Exception ignored) {
+        }
+        if (StringUtils.hasText(cachedTemplate)) {
+            return Mono.just(formatTemplate(cachedTemplate, args));
+        }
+
+        ResolveRequest req = new ResolveRequest();
+        req.module = prompt.getModule();
+        req.code = prompt.getPromptCode();
+        req.defaultTemplate = prompt.getDefaultTemplate();
+
+        return webClientBuilder.build()
+                .post()
+                .uri(SYS_I18N_RESOLVE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Lang", StringUtils.hasText(lang) ? lang : "")
+                .bodyValue(req)
+                .retrieve()
+                .bodyToMono(RString.class)
+                .map(r -> r == null ? null : r.data)
+                .timeout(Duration.ofSeconds(2))
+                .onErrorReturn(null)
+                .map(tpl -> {
+                    if (!StringUtils.hasText(tpl)) {
+                        return fallbackTranslate(prompt, args, lang);
+                    }
+                    try {
+                        redis.opsForValue().set(cacheKey, tpl, I18N_CACHE_TTL);
+                    } catch (Exception ignored) {
+                    }
+                    return formatTemplate(tpl, args);
+                });
+    }
+
+    private String resolveLang(HttpHeaders headers) {
+        if (headers == null) {
+            return null;
+        }
+        String lang = headers.getFirst("X-Lang");
+        if (!StringUtils.hasText(lang)) {
+            lang = headers.getFirst("Accept-Language");
+        }
+        if (!StringUtils.hasText(lang)) {
+            return null;
+        }
+        String v = lang.trim();
+        int comma = v.indexOf(',');
+        if (comma >= 0) {
+            v = v.substring(0, comma).trim();
+        }
+        int semi = v.indexOf(';');
+        if (semi >= 0) {
+            v = v.substring(0, semi).trim();
+        }
+        return v;
+    }
+
+    private String formatTemplate(String template, Object[] args) {
+        if (!StringUtils.hasText(template)) {
+            return null;
+        }
+        if (args == null || args.length == 0) {
+            return template;
+        }
+        try {
+            return MessageFormat.format(template, args);
+        } catch (Exception e) {
+            String out = template;
+            for (int i = 0; i < args.length; i++) {
+                out = out.replace("{" + i + "}", String.valueOf(args[i]));
+            }
+            return out;
+        }
+    }
+
+    private String fallbackTranslate(CommonPrompt prompt, Object[] args, String lang) {
+        boolean english = StringUtils.hasText(lang) && lang.toLowerCase().startsWith("en");
+        if (english) {
+            String tpl = switch (prompt) {
+                case NOT_LOGIN -> "Not logged in or session expired";
+                case NO_PERMISSION -> "No permission";
+                case INTERFACE_NOT_FOUND -> "Interface not found";
+                case GATEWAY_ERROR -> "Gateway error: {0}";
+                case MODULE_OFFLINE -> "{0} service is not running";
+                case INTERNAL_SERVER_ERROR_MSG, INTERNAL_SERVER_ERROR -> "Internal server error: {0}";
+                case BAD_REQUEST -> "Bad request: {0}";
+                default -> null;
+            };
+            if (StringUtils.hasText(tpl)) {
+                return formatTemplate(tpl, args);
+            }
+        }
+        return formatTemplate(prompt.getDefaultTemplate(), args);
+    }
+
+    private String normalizeLang(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String v = raw.trim();
+        if (v.equalsIgnoreCase("zh") || v.equalsIgnoreCase("zh-cn")) {
+            return "zh-CN";
+        }
+        if (v.equalsIgnoreCase("en") || v.equalsIgnoreCase("en-us")) {
+            return "en-US";
+        }
+        return v;
+    }
+
+    private String buildI18nCacheKey(String lang, CommonPrompt prompt) {
+        String langKey = StringUtils.hasText(lang) ? lang : "zh-CN";
+        return I18N_CACHE_PREFIX + langKey + ":" + prompt.getModule() + ":" + prompt.getPromptCode();
+    }
+
+    private static class ResolveRequest {
+        public String module;
+        public String code;
+        public String defaultTemplate;
+    }
+
+    private static class RString {
+        public Integer code;
+        public String message;
+        public String data;
     }
 
     /**

@@ -13,8 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.api.dto.UserInfoDTO;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
@@ -35,12 +37,14 @@ import com.forgex.sys.service.ISysUserService;
 import com.forgex.sys.service.ISysUserRoleService;
 import com.forgex.sys.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 /**
  * 用户管理Controller
@@ -246,7 +250,7 @@ public class UserController {
      * 重置admin用户密码（临时接口）
      */
     @RequirePerm("sys:user:resetPwd")
-    @GetMapping("/resetAdminPassword")
+    @PostMapping("/resetAdminPassword")
     public R<Void> resetAdminPassword() {
         Long adminId = userService.getUserIdByAccount("admin");
         if (adminId == null) {
@@ -274,5 +278,90 @@ public class UserController {
             }
         }
         return null;
+    }
+    
+    // ==================== Feign 调用接口 ====================
+    
+    /**
+     * 根据用户ID获取用户信息（Feign 调用）
+     * 
+     * @param userId 用户ID
+     * @return 用户信息
+     */
+    @GetMapping("/info/{userId}")
+    public R<UserInfoDTO> getUserById(@PathVariable Long userId) {
+        SysUser user = userService.getById(userId);
+        if (user == null) {
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        
+        UserInfoDTO dto = new UserInfoDTO();
+        BeanUtils.copyProperties(user, dto);
+        return R.ok(dto);
+    }
+    
+    /**
+     * 根据账号获取用户信息（Feign 调用）
+     * 
+     * @param account 账号
+     * @return 用户信息
+     */
+    @GetMapping("/info/account/{account}")
+    public R<UserInfoDTO> getUserByAccount(@PathVariable String account) {
+        SysUser user = userService.getOne(
+            new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getAccount, account)
+        );
+        
+        if (user == null) {
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        
+        UserInfoDTO dto = new UserInfoDTO();
+        BeanUtils.copyProperties(user, dto);
+        return R.ok(dto);
+    }
+    
+    /**
+     * 批量获取用户信息（Feign 调用）
+     * 
+     * @param userIds 用户ID列表
+     * @return 用户信息列表
+     */
+    @PostMapping("/info/batch")
+    public R<List<UserInfoDTO>> getUsersByIds(@RequestBody List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return R.ok(List.of());
+        }
+        
+        List<SysUser> users = userService.listByIds(userIds);
+        List<UserInfoDTO> dtos = users.stream()
+            .map(user -> {
+                UserInfoDTO dto = new UserInfoDTO();
+                BeanUtils.copyProperties(user, dto);
+                return dto;
+            })
+            .collect(Collectors.toList());
+        
+        return R.ok(dtos);
+    }
+    
+    /**
+     * 批量获取用户名映射（Feign 调用）
+     * 
+     * @param userIds 用户ID列表
+     * @return 用户ID到用户名的映射
+     */
+    @PostMapping("/info/username-map")
+    public R<Map<Long, String>> getUsernameMap(@RequestBody List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return R.ok(Map.of());
+        }
+        
+        List<SysUser> users = userService.listByIds(userIds);
+        Map<Long, String> map = users.stream()
+            .collect(Collectors.toMap(SysUser::getId, SysUser::getUsername));
+        
+        return R.ok(map);
     }
 }

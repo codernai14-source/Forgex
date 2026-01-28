@@ -31,17 +31,17 @@
                       v-permission="'sys:dept:add'"
                     >
                       <template #icon><PlusOutlined /></template>
-                      新增子部门
+                      {{ $t('common.add') }}{{ $t('system.department.childDept') }}
                     </a-button>
                     <a-button
                       @click="startEdit"
                       v-permission="'sys:dept:edit'"
                     >
                       <template #icon><EditOutlined /></template>
-                      编辑
+                      {{ $t('common.edit') }}
                     </a-button>
                     <a-popconfirm
-                      title="确定要删除这个部门吗？"
+                      :title="$t('common.confirmDeleteMessage')"
                       :ok-text="$t('common.confirm')"
                       :cancel-text="$t('common.cancel')"
                       @confirm="handleDelete"
@@ -51,7 +51,7 @@
                         v-permission="'sys:dept:delete'"
                       >
                         <template #icon><DeleteOutlined /></template>
-                        删除
+                        {{ $t('common.delete') }}
                       </a-button>
                     </a-popconfirm>
                   </a-space>
@@ -67,9 +67,9 @@
                   <a-descriptions-item label="组织层级">
                     {{ selectedDept.orgLevel }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="状态">
-                    <a-tag :color="selectedDept.status === true ? 'green' : 'red'">
-                      {{ selectedDept.status === true ? '启用' : '禁用' }}
+                  <a-descriptions-item :label="$t('common.status')">
+                    <a-tag v-if="selectedDept?.statusText" :color="selectedDept.status === true ? 'green' : 'red'">
+                      {{ selectedDept.statusText }}
                     </a-tag>
                   </a-descriptions-item>
                   <a-descriptions-item label="负责人">
@@ -177,10 +177,10 @@
                     />
                   </a-form-item>
 
-                  <a-form-item label="状态" name="status">
+                  <a-form-item :label="$t('common.status')" name="status">
                     <a-radio-group v-model:value="formData.status">
-                      <a-radio :value="true">启用</a-radio>
-                      <a-radio :value="false">禁用</a-radio>
+                      <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+                      <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
                     </a-radio-group>
                   </a-form-item>
 
@@ -267,6 +267,7 @@ const rules = {
 // 字典数据
 const { dictItems: orgTypeOptions } = useDict('org_type')
 const { dictItems: orgLevelOptions } = useDict('org_level')
+const { dictItems: statusOptions } = useDict('status')
 
 /**
  * 加载部门树

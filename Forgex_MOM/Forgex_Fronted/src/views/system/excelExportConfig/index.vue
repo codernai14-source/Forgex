@@ -1,11 +1,10 @@
 <template>
   <div class="excel-config-container">
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="excel-table-card">
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'ExcelExportConfigTable'"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         row-key="id"
         :pagination="{
           showSizeChanger: true,
@@ -22,12 +21,12 @@
       </fx-dynamic-table>
     </a-card>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="editOpen"
       :title="t('system.excel.exportConfigTitle')"
       :width="980"
-      :confirm-loading="saving"
-      @ok="handleSave"
+      :loading="saving"
+      @submit="handleSave"
     >
       <a-form :model="editForm" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
         <a-form-item :label="t('system.excel.tableName')">
@@ -70,7 +69,7 @@
           </template>
         </template>
       </a-table>
-    </a-modal>
+    </BaseFormDialog>
   </div>
 </template>
 
@@ -79,30 +78,11 @@ import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'
 
 const { t } = useI18n()
 const tableRef = ref()
-
-const fallbackConfig = {
-  tableCode: 'ExcelExportConfigTable',
-  tableName: 'Excel导出配置',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'table_name', title: '表名', width: 200 },
-    { field: 'table_code', title: '表格编码', width: 200 },
-    { field: 'export_format', title: '导出格式', width: 120 },
-    { field: 'version', title: '版本', width: 80 },
-    { field: 'action', title: '操作', width: 160, fixed: 'right' }
-  ],
-  queryFields: [
-    { field: 'table_name', label: '表名', queryType: 'input', queryOperator: 'like' },
-    { field: 'table_code', label: '表格编码', queryType: 'input', queryOperator: 'like' }
-  ],
-  version: 1,
-}
 
 const itemColumns = [
   { title: '导出字段', key: 'exportField', width: 260 },
@@ -219,6 +199,31 @@ async function handleSave() {
 
 <style scoped lang="less">
 .excel-config-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.excel-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.excel-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.excel-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

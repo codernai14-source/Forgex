@@ -102,8 +102,8 @@ public class SysDepartmentController {
     public R<Void> create(@Validated @RequestBody SysDepartmentSaveParam param) {
         param.setTenantId(TenantContext.get());
         Long id = departmentService.create(param);
-        // 返回部门名称作为业务字段
-        return R.ok(CommonPrompt.CREATE_SUCCESS, param.getDeptName());
+        // 使用部门名称填充“新增成功”提示的占位符参数
+        return R.okWithArgs(CommonPrompt.CREATE_SUCCESS, param.getDeptName());
     }
 
     /**
@@ -117,8 +117,8 @@ public class SysDepartmentController {
     public R<Void> update(@Validated @RequestBody SysDepartmentSaveParam param) {
         param.setTenantId(TenantContext.get());
         Boolean success = departmentService.update(param);
-        // 返回部门名称作为业务字段
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, param.getDeptName());
+        // 使用部门名称填充“修改成功”提示的占位符参数
+        return R.okWithArgs(CommonPrompt.UPDATE_SUCCESS, param.getDeptName());
     }
 
     /**
@@ -141,7 +141,7 @@ public class SysDepartmentController {
         String deptName = department.getDeptName();
         
         Boolean success = departmentService.delete(id, tenantId);
-        // 返回部门名称作为业务字段
-        return R.ok(CommonPrompt.DELETE_SUCCESS, deptName);
+        // 使用部门名称填充“删除成功”提示的占位符参数
+        return R.okWithArgs(CommonPrompt.DELETE_SUCCESS, deptName);
     }
 }

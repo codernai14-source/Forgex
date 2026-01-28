@@ -107,9 +107,9 @@ public class GlobalExceptionHandler {
     public R<Object> handleI18nBusiness(I18nBusinessException e) {
         int code = e.getCode();
         if (code == StatusCode.NOT_LOGIN || code == StatusCode.UNAUTHORIZED) {
-            return R.fail(code, e.getMsg(), e.getMsgArgs());
+            return R.failWithArgs(code, e.getMsg(), e.getMsgArgs());
         }
-        return R.fail(StatusCode.BUSINESS_ERROR, e.getMsg(), e.getMsgArgs());
+        return R.failWithArgs(StatusCode.BUSINESS_ERROR, e.getMsg(), e.getMsgArgs());
     }
 
     /** 参数解析/校验错误 */

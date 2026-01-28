@@ -13,9 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.sys.domain.dto.position.SysPositionDTO;
 import com.forgex.sys.domain.dto.position.SysPositionQueryDTO;
 import com.forgex.sys.domain.dto.position.SysPositionSaveParam;
+import com.forgex.sys.domain.entity.SysPosition;
 
 import java.util.List;
 
@@ -33,6 +36,15 @@ public interface SysPositionService {
      * @return 职位列表
      */
     List<SysPositionDTO> list(SysPositionQueryDTO queryDTO);
+    
+    /**
+     * 分页查询职位列表
+     *
+     * @param page     分页参数
+     * @param queryDTO 查询参数
+     * @return 分页结果
+     */
+    IPage<SysPositionDTO> pagePositions(Page<SysPosition> page, SysPositionQueryDTO queryDTO);
     
     /**
      * 根据ID获取职位详情

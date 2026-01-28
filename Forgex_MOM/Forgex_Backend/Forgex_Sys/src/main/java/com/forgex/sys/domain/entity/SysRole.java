@@ -41,4 +41,7 @@ public class SysRole extends BaseEntity {
     
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+    
+    /** 数据权限范围：ALL-全部数据,DEPT_AND_CHILD-本部门及下级,DEPT-本部门,SELF-仅本人,CUSTOM-自定义 */
+    private String dataScope;
 }

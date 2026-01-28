@@ -1,57 +1,23 @@
 <template>
   <div class="page-wrap">
-    <!-- 搜索区域 -->
-    <a-card class="search-card" :bordered="false">
-      <a-form layout="inline" :model="searchForm">
-        <a-form-item label="角色编码">
-          <a-input
-            v-model:value="searchForm.roleCode"
-            placeholder="请输入角色编码"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-        <a-form-item label="角色名称">
-          <a-input
-            v-model:value="searchForm.roleName"
-            placeholder="请输入角色名称"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="searchForm.status"
-            placeholder="请选择状态"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>
-              搜索
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
     <!-- 操作按钮和表格 -->
-    <a-card class="table-card" :bordered="false">
-      <template #title>
+    <fx-dynamic-table
+      ref="tableRef"
+      class="role-table"
+      :table-code="'RoleTable'"
+      :request="handleRequest"
+      :dict-options="dictOptions"
+      :row-selection="{
+        selectedRowKeys,
+        onChange: onSelectChange
+      }"
+      row-key="id"
+    >
+      <template #toolbar>
         <a-space>
           <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
             <template #icon><PlusOutlined /></template>
-            新增角色
+            {{ $t('common.add') }}{{ $t('system.role.roleName') }}
           </a-button>
           <a-button
             danger
@@ -60,74 +26,55 @@
             v-permission="'sys:role:delete'"
           >
             <template #icon><DeleteOutlined /></template>
-            批量删除
+            {{ $t('common.batchDelete') }}
           </a-button>
         </a-space>
       </template>
 
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'RoleTable'"
-        :request="handleRequest"
-        :fallback-config="fallbackConfig"
-        :dict-options="dictOptions"
-        :row-selection="{
-          selectedRowKeys,
-          onChange: onSelectChange
-        }"
-        row-key="id"
-        :pagination="false"
-      >
-        <template #status="{ record }">
-          <a-tag :color="record.status === true ? 'green' : 'red'">
-            {{ record.status === true ? '启用' : '禁用' }}
-          </a-tag>
-        </template>
-        <template #action="{ record }">
-          <a-space>
+      <template #action="{ record }">
+        <a-space>
+          <a-button
+            type="link"
+            size="small"
+            @click="openEdit(record)"
+            v-permission="'sys:role:edit'"
+          >
+            {{ $t('common.edit') }}
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            @click="openGrant(record)"
+            v-permission="'sys:role:authMenu'"
+          >
+            {{ $t('system.role.menuAuth') }}
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            @click="openUserGrant(record)"
+            v-permission="'sys:role:authUser'"
+          >
+            {{ $t('system.role.userAuth') }}
+          </a-button>
+          <a-popconfirm
+            :title="$t('system.role.message.deleteConfirm')"
+            :ok-text="$t('common.confirm')"
+            :cancel-text="$t('common.cancel')"
+            @confirm="handleDelete(record.id)"
+          >
             <a-button
               type="link"
               size="small"
-              @click="openEdit(record)"
-              v-permission="'sys:role:edit'"
+              danger
+              v-permission="'sys:role:delete'"
             >
-              编辑
+              {{ $t('common.delete') }}
             </a-button>
-            <a-button
-              type="link"
-              size="small"
-              @click="openGrant(record)"
-              v-permission="'sys:role:authMenu'"
-            >
-              菜单授权
-            </a-button>
-            <a-button
-              type="link"
-              size="small"
-              @click="openUserGrant(record)"
-              v-permission="'sys:role:authUser'"
-            >
-              授权人员
-            </a-button>
-            <a-popconfirm
-              title="确定要删除这个角色吗？"
-              :ok-text="$t('common.confirm')"
-              :cancel-text="$t('common.cancel')"
-              @confirm="handleDelete(record.id)"
-            >
-              <a-button
-                type="link"
-                size="small"
-                danger
-                v-permission="'sys:role:delete'"
-              >
-                删除
-              </a-button>
-            </a-popconfirm>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
-    </a-card>
+          </a-popconfirm>
+        </a-space>
+      </template>
+    </fx-dynamic-table>
 
     <!-- 新增/编辑弹窗 -->
     <BaseFormDialog
@@ -164,10 +111,10 @@
             :rows="4"
           />
         </a-form-item>
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">启用</a-radio>
-            <a-radio :value="false">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -334,18 +281,20 @@
  * @version 1.0.0
  */
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
-import { onMounted, ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
-  SearchOutlined,
-  ReloadOutlined,
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
 import { grantRoleMenus, getRoleAuthData, getRolePage, deleteRole, batchDeleteRoles, getRoleAuthorizedUsers, grantRoleUsers, revokeRoleUsers } from '@/api/system/role'
 import { getUserList } from '@/api/system/user'
 import { getDepartmentTree } from '@/api/system/department'
+import { useDict } from '@/hooks/useDict'
 import type { Role } from './types'
+
+const { dictItems: statusOptions } = useDict('status')
+const dictOptions = computed(() => ({ status: statusOptions.value }))
 
 interface MenuEntity {
   id: string
@@ -369,13 +318,6 @@ interface TreeNode {
   children?: TreeNode[]
 }
 
-// 搜索表单
-const searchForm = ref({
-  roleCode: '',
-  roleName: '',
-  status: undefined
-})
-
 // 选中的行
 const selectedRowKeys = ref<string[]>([])
 
@@ -385,25 +327,28 @@ const loading = ref(false)
 
 // fallback配置
 const fallbackConfig = ref({
+  tableCode: 'RoleTable',
+  tableName: '角色管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
   columns: [
-    { title: '角色编码', dataIndex: 'roleCode', key: 'roleCode', width: 150 },
-    { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 150 },
-    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-    { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-    { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
-    { title: '操作', key: 'action', fixed: 'right', width: 240 }
-  ]
-})
-
-// 字典配置
-const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'green' },
-    0: { text: '禁用', color: 'red' }
-  }
+    { field: 'roleCode', title: '角色编码', width: 150 },
+    { field: 'roleName', title: '角色名称', width: 150 },
+    { field: 'description', title: '描述', ellipsis: true },
+    { field: 'status', title: '状态', width: 80, dictCode: 'status' },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'createBy', title: '创建人', width: 120 },
+    { field: 'updateTime', title: '修改时间', width: 180 },
+    { field: 'updateBy', title: '修改人', width: 120 },
+    { field: 'action', title: '操作', width: 240 }
+  ],
+  queryFields: [
+    { field: 'roleCode', label: '角色编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'roleName', label: '角色名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ],
+  version: 1
 })
 
 /**
@@ -413,8 +358,8 @@ const handleRequest = async (params: any) => {
   loading.value = true
   try {
     const res = await getRolePage({
-      ...searchForm.value,
-      ...params
+      ...params.query,
+      ...params.page
     })
     return {
       success: true,
@@ -431,25 +376,6 @@ const handleRequest = async (params: any) => {
   } finally {
     loading.value = false
   }
-}
-
-/**
- * 搜索
- */
-const handleSearch = async () => {
-  await tableRef.value?.refresh?.()
-}
-
-/**
- * 重置搜索
- */
-const handleReset = async () => {
-  searchForm.value = {
-    roleCode: '',
-    roleName: '',
-    status: undefined
-  }
-  await tableRef.value?.refresh?.()
 }
 
 /**
@@ -557,8 +483,7 @@ const grantVisible = ref(false)
 const grantRole = ref<Role | null>(null)
 const loadingMenus = ref(false)
 const saving = ref(false)
-// const menus = ref<MenuEntity[]>([]) // Not needed as raw list anymore if using authData directly mapping to tree
-const allMenus = ref<MenuEntity[]>([]) // Store flattened menus for leaf calculation
+const allMenus = ref<MenuEntity[]>([])
 const treeData = ref<MenuEntity[]>([])
 const ownedTreeData = ref<MenuEntity[]>([])
 const checkedKeys = ref<string[]>([])
@@ -589,7 +514,6 @@ async function loadMenusAndGrants() {
   try {
     loadingMenus.value = true
     
-    // 调用新接口获取授权数据
     const res = await getRoleAuthData({ 
       roleId: grantRole.value.id,
       tenantId: currentTenantId.value
@@ -597,14 +521,11 @@ async function loadMenusAndGrants() {
     
     const { allPermissions, ownedPermissions, grantedMenuIds } = res
     
-    // 设置树形数据
     treeData.value = allPermissions || []
     ownedTreeData.value = ownedPermissions || []
     
-    // 扁平化所有菜单以计算叶子节点 (for checkable tree)
     allMenus.value = flattenTree(treeData.value)
     
-    // 设置选中的节点（只选中叶子节点，避免父节点自动选中子节点）
     const leafIds = getLeafNodeIds(allMenus.value, grantedMenuIds || [])
     checkedKeys.value = leafIds.map((id: any) => String(id))
     
@@ -636,7 +557,6 @@ function flattenTree(tree: MenuEntity[]): MenuEntity[] {
 function getLeafNodeIds(allMenus: MenuEntity[], grantedIds: any[]): any[] {
   const grantedSet = new Set(grantedIds.map((id: any) => String(id)))
   
-  // 过滤出被授权且是叶子节点（没有children或children为空）的节点
   return allMenus
     .filter(menu => {
       const isGranted = grantedSet.has(String(menu.id))
@@ -650,7 +570,6 @@ function getLeafNodeIds(allMenus: MenuEntity[], grantedIds: any[]): any[] {
  * 全选
  */
 function checkAll() {
-  // 选中所有节点ID
   checkedKeys.value = allMenus.value.map(m => String(m.id))
 }
 
@@ -671,10 +590,8 @@ async function saveGrant() {
   }
   try {
     saving.value = true
-    // 获取所有选中的节点（包括半选中的父节点）
     const allCheckedKeys = [...checkedKeys.value]
     
-    // 将字符串ID转换为数字
     const menuIds = allCheckedKeys.map(id => Number(id))
     
     await grantRoleMenus({
@@ -800,7 +717,6 @@ async function openUserGrant(role: Role) {
  * 搜索用户
  */
 function searchUsers() {
-  // filteredUsers 会自动根据 userSearchKeyword 更新
 }
 
 /**
@@ -849,11 +765,9 @@ async function saveUserGrant() {
   
   let userIdsToAdd: number[] = []
   
-  // 处理选择的用户
   if (userGrantTab.value === 'user') {
     userIdsToAdd = selectedUserIds.value
   } else {
-    // 处理选择的部门 - 获取部门下的所有用户
     const deptUsers = await getUsersByDepartments(selectedDepartmentIds.value)
     userIdsToAdd = deptUsers.map(user => user.id)
   }
@@ -903,14 +817,15 @@ async function getUsersByDepartments(deptIds: string[]): Promise<any[]> {
 <style scoped>
 .page-wrap {
   padding: 16px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.search-card {
-  margin-bottom: 16px;
-}
-
-.table-card {
-  margin-bottom: 16px;
+.role-table {
+  flex: 1;
+  min-height: 0;
 }
 
 .auth-card {

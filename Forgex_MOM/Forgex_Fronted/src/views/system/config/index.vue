@@ -1,9 +1,6 @@
 <template>
   <div class="system-config">
-    <!-- 页面标题 -->
-    <a-page-header :title="t('system.config.title')" />
-
-    <a-card :bordered="false" :loading="loading">
+    <a-card :bordered="false" :loading="loading" style="margin-top: 0;">
       <a-form
         :model="formData"
         :label-col="{ span: 6 }"
@@ -18,25 +15,9 @@
         </a-form-item>
 
         <a-form-item :label="t('system.config.systemLogo')" name="systemLogo">
-          <a-space>
-            <a-input
-              v-model:value="formData.systemLogo"
-              :placeholder="t('system.config.logoUrlPlaceholder')"
-              style="flex: 1"
-            />
-            <a-upload
-              :show-upload-list="false"
-              :before-upload="handleLogoBeforeUpload"
-              :customRequest="handleLogoUpload"
-              accept="image/*"
-            >
-              <template #trigger>
-                <a-button type="primary" :loading="logoUploading">
-                  {{ logoUploading ? t('common.uploading') : t('common.upload') }}
-                </a-button>
-              </template>
-            </a-upload>
-          </a-space>
+          <div class="system-logo-upload">
+            <AvatarUpload v-model="formData.systemLogo" @success="handleLogoUploadSuccess" />
+          </div>
         </a-form-item>
 
         <a-form-item :label="t('system.config.systemVersion')" name="systemVersion">
@@ -68,25 +49,25 @@
           :label="t('system.config.bgVideo')"
           name="loginBackgroundVideo"
         >
-          <a-space>
-            <a-input
-              v-model:value="formData.loginBackgroundVideo"
-              :placeholder="t('system.config.bgVideoPlaceholder')"
-              style="flex: 1"
-            />
-            <a-upload
-              :show-upload-list="false"
-              :before-upload="handleVideoBeforeUpload"
-              :custom-request="handleVideoUpload"
-              accept="video/*"
-            >
-              <template #trigger>
-                <a-button type="primary" :loading="videoUploading">
-                  {{ videoUploading ? t('common.uploading') : t('common.upload') }}
-                </a-button>
-              </template>
-            </a-upload>
-          </a-space>
+          <a-upload
+            v-model:file-list="videoFileList"
+            :before-upload="handleVideoBeforeUpload"
+            :custom-request="handleVideoUpload"
+            :show-upload-list="false"
+            accept="video/*"
+          >
+            <a-space>
+              <a-button type="primary" :loading="videoUploading" block>
+                <UploadOutlined /> {{ videoUploading ? t('common.uploading') : t('common.uploadVideo') }}
+              </a-button>
+              <a-button v-if="formData.loginBackgroundVideo" @click="handleVideoRemove">
+                <DeleteOutlined /> {{ t('common.remove') }}
+              </a-button>
+            </a-space>
+          </a-upload>
+          <div v-if="formData.loginBackgroundVideo" style="margin-top: 8px;">
+            <video :src="formatMediaUrl(formData.loginBackgroundVideo)" controls style="max-width: 300px; max-height: 200px;"></video>
+          </div>
         </a-form-item>
 
         <!-- 背景图片配置 -->
@@ -95,25 +76,31 @@
           :label="t('system.config.bgImage')"
           name="loginBackgroundImage"
         >
-          <a-space>
-            <a-input
-              v-model:value="formData.loginBackgroundImage"
-              :placeholder="t('system.config.bgImagePlaceholder')"
-              style="flex: 1"
-            />
-            <a-upload
-              :show-upload-list="false"
-              :before-upload="handleBgImageBeforeUpload"
-              :custom-request="handleBgImageUpload"
-              accept="image/*"
-            >
-              <template #trigger>
-                <a-button type="primary" :loading="bgImageUploading">
-                  {{ bgImageUploading ? t('common.uploading') : t('common.upload') }}
-                </a-button>
-              </template>
-            </a-upload>
-          </a-space>
+          <a-upload
+            v-model:file-list="bgImageFileList"
+            :before-upload="handleBgImageBeforeUpload"
+            :custom-request="handleBgImageUpload"
+            :show-upload-list="false"
+            accept="image/*"
+          >
+            <a-space>
+              <a-avatar
+                :size="120"
+                v-if="formData.loginBackgroundImage"
+                :src="formatMediaUrl(formData.loginBackgroundImage)"
+              >
+                <template #icon>
+                  <PictureOutlined />
+                </template>
+              </a-avatar>
+              <a-button type="primary" :loading="bgImageUploading" block>
+                <UploadOutlined /> {{ bgImageUploading ? t('common.uploading') : t('common.uploadImage') }}
+              </a-button>
+              <a-button v-if="formData.loginBackgroundImage" @click="handleBgImageRemove">
+                <DeleteOutlined /> {{ t('common.remove') }}
+              </a-button>
+            </a-space>
+          </a-upload>
         </a-form-item>
 
         <!-- 背景颜色配置 -->
@@ -146,39 +133,6 @@
 
         <a-form-item :label="t('system.config.showOAuth')" name="showOAuthLogin">
           <a-switch v-model:checked="formData.showOAuthLogin" />
-        </a-form-item>
-
-        <!-- ==================== 主题配色 =================== -->
-        <a-divider orientation="left">{{ t('system.config.themeColor') }}</a-divider>
-
-        <a-form-item :label="t('system.config.primaryColor')" name="primaryColor">
-          <a-space>
-            <a-input
-              v-model:value="formData.primaryColor"
-              placeholder="#05d9e8"
-              style="flex: 1"
-            >
-              <template #prefix>
-                <div :style="{ backgroundColor: formData.primaryColor, width: '20px', height: '20px', borderRadius: '2px', border: '1px solid #d9d9d9' }"></div>
-              </template>
-            </a-input>
-            <a-input type="color" v-model:value="formData.primaryColor" style="width: 50px" />
-          </a-space>
-        </a-form-item>
-
-        <a-form-item :label="t('system.config.secondaryColor')" name="secondaryColor">
-          <a-space>
-            <a-input
-              v-model:value="formData.secondaryColor"
-              placeholder="#ff2a6d"
-              style="flex: 1"
-            >
-              <template #prefix>
-                <div :style="{ backgroundColor: formData.secondaryColor, width: '20px', height: '20px', borderRadius: '2px', border: '1px solid #d9d9d9' }"></div>
-              </template>
-            </a-input>
-            <a-input type="color" v-model:value="formData.secondaryColor" style="width: 50px" />
-          </a-space>
         </a-form-item>
 
         <!-- ==================== 版权信息 =================== -->
@@ -225,16 +179,16 @@
             muted
             loop
             playsinline
-            :src="previewConfig.loginBackgroundVideo"
+            :src="formatMediaUrl(previewConfig.loginBackgroundVideo)"
           ></video>
           <img
             v-if="previewConfig.loginBackgroundType === 'image' && previewConfig.loginBackgroundImage"
             class="preview-bg-image"
-            :src="formatPreviewImage(previewConfig.loginBackgroundImage)"
+            :src="formatMediaUrl(previewConfig.loginBackgroundImage)"
           />
           <div class="preview-content">
             <div class="preview-brand">
-              <img v-if="formatPreviewImage(previewConfig.systemLogo)" :src="formatPreviewImage(previewConfig.systemLogo)" class="preview-logo" />
+              <img v-if="formatMediaUrl(previewConfig.systemLogo)" :src="formatMediaUrl(previewConfig.systemLogo)" class="preview-logo" />
               <span v-else class="preview-system-name">{{ previewConfig.systemName }}</span>
             </div>
             <div class="preview-title">{{ previewConfig.loginPageTitle }}</div>
@@ -248,20 +202,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { message } from 'ant-design-vue'
+import { computed, ref, onMounted, watch } from 'vue'
+import { message, Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import { SettingOutlined, UploadOutlined, DeleteOutlined, PictureOutlined, CameraOutlined } from '@ant-design/icons-vue'
 import { getSystemBasicConfig, setSystemBasicConfig } from '../../../api/system/config'
+import { uploadFile } from '../../../api/system/file'
 import type { SystemBasicConfig } from '../../../api/system/config'
+import type { UploadFile } from 'ant-design-vue'
+import AvatarUpload from '@/components/AvatarUpload.vue'
 
 const { t } = useI18n()
 
 const loading = ref(false)
 const saving = ref(false)
-const logoUploading = ref(false)
 const videoUploading = ref(false)
 const bgImageUploading = ref(false)
 const previewVisible = ref(false)
+
+// 文件列表
+const videoFileList = ref<UploadFile[]>([])
+const bgImageFileList = ref<UploadFile[]>([])
 
 const formData = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
@@ -282,6 +243,36 @@ const formData = ref<SystemBasicConfig>({
 })
 
 const previewConfig = ref<SystemBasicConfig>({ ...formData.value })
+
+function formatMediaUrl(value: string): string {
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
+}
+
+/**
+ * Logo上传成功回调
+ * @param url 上传成功后的文件URL
+ */
+async function handleLogoUploadSuccess(url: string) {
+  try {
+    // 自动保存配置
+    await setSystemBasicConfig(formData.value)
+    message.success(t('common.uploadSuccess'))
+    previewConfig.value = { ...formData.value }
+  } catch (e: any) {
+    console.error('自动保存配置失败:', e)
+    message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+  }
+}
+
+const systemLogoUrl = computed(() => formatMediaUrl(formData.value.systemLogo))
 
 async function loadData() {
   try {
@@ -329,6 +320,9 @@ function handleReset() {
     primaryColor: '#05d9e8',
     secondaryColor: '#ff2a6d'
   }
+  // 清空文件列表
+  videoFileList.value = []
+  bgImageFileList.value = []
   message.info(t('common.resetSuccess'))
 }
 
@@ -337,63 +331,54 @@ function handlePreview() {
   previewVisible.value = true
 }
 
-function formatPreviewImage(value: string) {
-  if (!value) return ''
-  if (value.startsWith('data:')) {
-    return value
-  }
-  return value.startsWith('/') ? value : ''
+// 处理视频删除
+function handleVideoRemove() {
+  formData.value.loginBackgroundVideo = ''
+  videoFileList.value = []
 }
 
-function handleLogoBeforeUpload(file: File) {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isImage) {
-    message.error(t('common.imageOnly'))
-    return false
-  }
-  if (!isLt2M) {
-    message.error(t('common.sizeLimit'))
-    return false
-  }
-  return true
-}
-
-async function handleLogoUpload(file: File) {
-  logoUploading.value = true
-  try {
-    const base64 = await fileToBase64(file)
-    formData.value.systemLogo = base64
-    message.success(t('common.uploadSuccess'))
-  } catch (e) {
-    message.error(t('common.uploadFailed'))
-  } finally {
-    logoUploading.value = false
-  }
+// 处理背景图片删除
+function handleBgImageRemove() {
+  formData.value.loginBackgroundImage = ''
+  bgImageFileList.value = []
 }
 
 function handleVideoBeforeUpload(file: File) {
   const isVideo = file.type.startsWith('video/')
-  const isLt20M = file.size / 1024 / 1024 < 20
+  const isLt200M = file.size / 1024 / 1024 < 200
   if (!isVideo) {
     message.error(t('common.videoOnly'))
     return false
   }
-  if (!isLt20M) {
-    message.error(t('common.sizeLimit'))
+  if (!isLt200M) {
+    message.error('视频大小不能超过200MB')
     return false
   }
   return true
 }
 
-async function handleVideoUpload(file: File) {
+async function handleVideoUpload(options: any) {
   videoUploading.value = true
   try {
-    const base64 = await fileToBase64(file)
-    formData.value.loginBackgroundVideo = base64
-    message.success(t('common.uploadSuccess'))
-  } catch (e) {
+    // 使用文件上传接口
+    const fileUrl = await uploadFile(options.file)
+    formData.value.loginBackgroundVideo = fileUrl
+    // 更新文件列表
+    videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
+    
+    // 自动保存配置
+    try {
+      await setSystemBasicConfig(formData.value)
+      message.success(t('common.uploadSuccess'))
+    } catch (e: any) {
+      console.error('自动保存配置失败:', e)
+      message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+    }
+  } catch (e: any) {
+    console.error('视频上传失败:', e)
     message.error(t('common.uploadFailed'))
+    // 更新文件列表为错误状态
+    videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'error' }]
   } finally {
     videoUploading.value = false
   }
@@ -413,26 +398,31 @@ function handleBgImageBeforeUpload(file: File) {
   return true
 }
 
-async function handleBgImageUpload(file: File) {
+async function handleBgImageUpload(options: any) {
   bgImageUploading.value = true
   try {
-    const base64 = await fileToBase64(file)
-    formData.value.loginBackgroundImage = base64
-    message.success(t('common.uploadSuccess'))
-  } catch (e) {
+    // 使用文件上传接口
+    const fileUrl = await uploadFile(options.file)
+    formData.value.loginBackgroundImage = fileUrl
+    // 更新文件列表
+    bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
+    
+    // 自动保存配置
+    try {
+      await setSystemBasicConfig(formData.value)
+      message.success(t('common.uploadSuccess'))
+    } catch (e: any) {
+      console.error('自动保存配置失败:', e)
+      message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+    }
+  } catch (e: any) {
+    console.error('背景图片上传失败:', e)
     message.error(t('common.uploadFailed'))
+    // 更新文件列表为错误状态
+    bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'error' }]
   } finally {
     bgImageUploading.value = false
   }
-}
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-  })
 }
 
 onMounted(() => {
@@ -442,7 +432,39 @@ onMounted(() => {
 
 <style scoped>
 .system-config {
-  padding: 24px;
+  padding: 0;
+  margin-top: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* 系统Logo上传样式 - 复用租户管理的样式 */
+.system-logo-upload {
+  display: inline-block;
+}
+
+.system-logo-upload :deep(.avatar-upload) {
+  align-items: flex-start;
+}
+
+.system-logo-upload :deep(.avatar-upload .avatar-uploader .ant-upload) {
+  width: 160px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.system-logo-upload :deep(.avatar-upload .avatar-image) {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #fafafa;
+}
+
+.system-logo-upload :deep(.avatar-upload .upload-tips) {
+  margin-top: 8px;
+  text-align: left;
 }
 
 .preview-container {

@@ -1,5 +1,6 @@
 package com.forgex.sys.config;
 
+import com.forgex.common.i18n.LangWebInterceptor;
 import com.forgex.common.security.perm.PermissionInterceptor;
 import com.forgex.common.tenant.UserTenantWebInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class SysWebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new LangWebInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new UserTenantWebInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(permissionInterceptor).addPathPatterns("/sys/**");
     }

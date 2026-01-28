@@ -5,11 +5,9 @@
       ref="tableRef"
       :table-code="'TenantTable'"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       row-key="id"
       :show-query-form="true"
-      :scroll="{ y: tableHeight }"
     >
       <template #toolbar>
         <a-space>
@@ -19,7 +17,7 @@
             v-permission="'sys:tenant:add'"
           >
             <template #icon><PlusOutlined /></template>
-            新增租户
+            {{ $t('system.tenant.form.addTenant') }}
           </a-button>
         </a-space>
       </template>
@@ -29,10 +27,10 @@
           {{ TenantTypeLabels[record.tenantType] }}
         </a-tag>
       </template>
-
+      
       <template #status="{ record }">
         <a-tag :color="record.status ? 'green' : 'red'">
-          {{ record.status ? '启用' : '禁用' }}
+          {{ record.status ? $t('common.enabled') : $t('common.disabled') }}
         </a-tag>
       </template>
 
@@ -82,7 +80,7 @@
     <!-- 新增/编辑表单：使用通用弹窗组件，支持弹窗/抽屉模式 -->
     <BaseFormDialog
       v-model:open="dialogVisible"
-      :title="formData.id ? '编辑租户' : '新增租户'"
+      :title="formData.id ? $t('system.tenant.form.editTenant') : $t('system.tenant.form.addTenant')"
       :loading="saving"
       :width="600"
       @submit="handleSave"
@@ -95,24 +93,24 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
       >
-        <a-form-item label="租户名称" name="tenantName">
+        <a-form-item :label="$t('system.tenant.tenantName')" name="tenantName">
           <a-input
             v-model:value="formData.tenantName"
-            placeholder="请输入租户名称"
+            :placeholder="$t('system.tenant.form.tenantName')"
           />
         </a-form-item>
 
-        <a-form-item label="租户编码" name="tenantCode">
+        <a-form-item :label="$t('system.tenant.tenantCode')" name="tenantCode">
           <a-input
             v-model:value="formData.tenantCode"
-            placeholder="请输入租户编码"
+            :placeholder="$t('system.tenant.form.tenantCode')"
           />
         </a-form-item>
 
-        <a-form-item label="租户类别" name="tenantType">
+        <a-form-item :label="$t('system.tenant.tenantType')" name="tenantType">
           <a-select
             v-model:value="formData.tenantType"
-            placeholder="请选择租户类别"
+            :placeholder="$t('system.tenant.form.tenantType')"
             :disabled="formData.id && formData.tenantType === TenantTypeEnum.MAIN_TENANT"
           >
             <a-select-option
@@ -125,10 +123,10 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="描述" name="description">
+        <a-form-item :label="$t('system.tenant.description')" name="description">
           <a-textarea
             v-model:value="formData.description"
-            placeholder="请输入描述"
+            :placeholder="$t('system.tenant.form.description')"
             :rows="3"
           />
         </a-form-item>
@@ -139,10 +137,10 @@
           </div>
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">启用</a-radio>
-            <a-radio :value="false">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -161,7 +159,7 @@ import {
   ReloadOutlined
 } from '@ant-design/icons-vue'
 import {
-  listTenant,
+  getTenantPage,
   createTenant,
   updateTenant,
   deleteTenant,
@@ -174,12 +172,14 @@ import {
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useDict } from '@/hooks/useDict'
+
+const { dictItems: statusOptions } = useDict('status')
 
 const formRef = ref()
 const tableRef = ref()
 
 const loading = ref(false)
-const tableHeight = ref(500)
 
 const dialogVisible = ref(false)
 const saving = ref(false)
@@ -197,98 +197,36 @@ const rules = {
   tenantType: [{ required: true, message: '请选择租户类别', trigger: 'change' }]
 }
 
-// fallback配置
-const fallbackConfig = ref({
-  tableCode: 'TenantTable',
-  tableName: '租户管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    {
-      title: '租户ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 100
-    },
-    {
-      title: '租户名称',
-      dataIndex: 'tenantName',
-      key: 'tenantName',
-      width: 150
-    },
-    {
-      title: '租户编码',
-      dataIndex: 'tenantCode',
-      key: 'tenantCode',
-      width: 150
-    },
-    {
-      title: '租户类别',
-      dataIndex: 'tenantType',
-      key: 'tenantType',
-      width: 120
-    },
-    {
-      title: 'Logo',
-      dataIndex: 'logo',
-      key: 'logo',
-      width: 80
-    },
-    {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-      width: 200,
-      ellipsis: true
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 80
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 160
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 150,
-      fixed: 'right'
-    }
-  ],
-  queryFields: [
-    { field: 'tenantName', label: '租户名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'tenantCode', label: '租户编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'tenantType', label: '租户类别', queryType: 'select', queryOperator: 'eq' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' }
-  ],
-  version: 1
-})
-
 // 字典配置
-const dictOptions = ref({
-  status: {
-    true: { text: '启用', color: 'green' },
-    false: { text: '禁用', color: 'red' }
-  },
-  tenantType: {
-    [TenantTypeEnum.MAIN_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.MAIN_TENANT], color: 'blue' },
-    [TenantTypeEnum.CUSTOMER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.CUSTOMER_TENANT], color: 'green' },
-    [TenantTypeEnum.SUPPLIER_TENANT]: { text: TenantTypeLabels[TenantTypeEnum.SUPPLIER_TENANT], color: 'orange' }
-  }
-})
+const dictOptions = computed(() => ({
+  status: statusOptions.value,
+  tenantType: Object.entries(TenantTypeLabels).map(([value, label]) => ({ label, value })),
+}))
 
 // 处理表格数据请求
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   try {
     loading.value = true
-    const data = await listTenant(params)
-    return { records: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 }
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
+      ...payload.query
+    }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getTenantPage(params)
+    // 确保total是数字类型
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total: total }
   } catch (e: any) {
     message.error(e.message || '加载租户列表失败')
     return { records: [], total: 0 }
@@ -387,15 +325,18 @@ async function handleDelete(record: TenantDTO) {
 
 onMounted(() => {
   tableRef.value?.refresh?.()
-  tableHeight.value = window.innerHeight - 300
 })
 </script>
 
 <style scoped>
 .page-wrap {
   padding: 16px;
-  height: calc(100vh - 84px);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .tenant-logo-upload {

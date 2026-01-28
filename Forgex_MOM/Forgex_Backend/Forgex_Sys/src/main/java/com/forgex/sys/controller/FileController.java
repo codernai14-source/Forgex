@@ -44,7 +44,7 @@ public class FileController {
 
         try {
             String fileUrl = fileService.upload(file);
-            return R.ok(CommonPrompt.UPLOAD_SUCCESS, fileUrl);
+            return R.<String>ok(CommonPrompt.UPLOAD_SUCCESS, fileUrl);
         } catch (IOException e) {
             e.printStackTrace();
             return R.fail(CommonPrompt.FILE_UPLOAD_FAILED);

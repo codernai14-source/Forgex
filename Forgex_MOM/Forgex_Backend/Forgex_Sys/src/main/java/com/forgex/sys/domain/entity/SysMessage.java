@@ -32,16 +32,40 @@ public class SysMessage extends BaseEntity {
     private Long senderUserId;
 
     /**
+     * 发送人名称(格式:姓名+账号,如张三(admin),系统消息则为系统(admin))
+     */
+    @TableField("sender_name")
+    private String senderName;
+
+    /**
      * 接收方用户ID
      */
     @TableField("receiver_user_id")
     private Long receiverUserId;
 
     /**
-     * 消息范围
+     * 消息范围（INTERNAL-内部消息，EXTERNAL-外部消息）
      */
     @TableField("scope")
     private String scope;
+
+    /**
+     * 模板编号
+     */
+    @TableField("template_code")
+    private String templateCode;
+
+    /**
+     * 消息类型(NOTICE=通知,WARNING=警告,ALARM=报警)
+     */
+    @TableField("message_type")
+    private String messageType;
+
+    /**
+     * 消息平台(INTERNAL=站内,WECHAT=企业微信,SMS=短信,EMAIL=邮箱)
+     */
+    @TableField("platform")
+    private String platform;
 
     /**
      * 消息标题
@@ -80,4 +104,3 @@ public class SysMessage extends BaseEntity {
     @TableField("read_time")
     private LocalDateTime readTime;
 }
-

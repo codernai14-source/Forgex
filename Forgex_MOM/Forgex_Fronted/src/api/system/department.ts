@@ -1,4 +1,4 @@
-import request from '@/api/http'
+import http from '@/api/http'
 
 /**
  * 获取部门树
@@ -6,7 +6,7 @@ import request from '@/api/http'
  * @returns 部门树
  */
 export const getDepartmentTree = (params: { tenantId: string }) => {
-  return request.post('/sys/department/tree', params)
+  return http.post('/sys/department/tree', params)
 }
 
 /**
@@ -15,7 +15,7 @@ export const getDepartmentTree = (params: { tenantId: string }) => {
  * @returns 部门列表
  */
 export const listDepartments = (params: any) => {
-  return request.post('/sys/department/list', params)
+  return http.post('/sys/department/list', params)
 }
 
 /**
@@ -24,7 +24,7 @@ export const listDepartments = (params: any) => {
  * @returns 部门详情
  */
 export const getDepartment = (params: { id: string; tenantId: string }) => {
-  return request.post('/sys/department/get', params)
+  return http.post('/sys/department/get', params)
 }
 
 /**
@@ -33,7 +33,7 @@ export const getDepartment = (params: { id: string; tenantId: string }) => {
  * @returns 结果
  */
 export const createDepartment = (params: any) => {
-  return request.post('/sys/department/create', params)
+  return http.post('/sys/department/create', params)
 }
 
 /**
@@ -42,7 +42,7 @@ export const createDepartment = (params: any) => {
  * @returns 结果
  */
 export const updateDepartment = (params: any) => {
-  return request.post('/sys/department/update', params)
+  return http.post('/sys/department/update', params)
 }
 
 /**
@@ -51,5 +51,5 @@ export const updateDepartment = (params: any) => {
  * @returns 结果
  */
 export const deleteDepartment = (params: { id: string; tenantId: string }) => {
-  return request.post('/sys/department/delete', params)
+  return http.post('/sys/department/delete', params)
 }

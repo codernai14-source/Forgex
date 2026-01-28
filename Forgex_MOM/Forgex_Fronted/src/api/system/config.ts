@@ -14,7 +14,7 @@ export interface SystemBasicConfig {
   // ==================== 系统基本信息 ===================
   /** 系统名称 */
   systemName: string
-  /** 系统Logo（Base64或URL） */
+  /** 系统Logo（URL路径） */
   systemLogo: string
   /** 系统版本 */
   systemVersion: string
@@ -32,9 +32,9 @@ export interface SystemBasicConfig {
   loginPageSubtitle: string
   /** 背景类型：video、image、color */
   loginBackgroundType: 'video' | 'image' | 'color'
-  /** 登录页背景视频路径 */
+  /** 登录页背景视频路径（URL） */
   loginBackgroundVideo: string
-  /** 登录页背景图片（Base64或URL） */
+  /** 登录页背景图片（URL路径） */
   loginBackgroundImage: string
   /** 登录页背景颜色 */
   loginBackgroundColor: string

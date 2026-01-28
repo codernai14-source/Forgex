@@ -4,6 +4,7 @@
  * 统一管理系统的多语言配置
  */
 import { createI18n } from 'vue-i18n'
+import { clearDictCache } from '@/hooks/useDict'
 import zhCN from './zh-CN'
 import enUS from './en-US'
 import zhTW from './zh-TW'
@@ -49,6 +50,8 @@ export function setLocale(locale: LocaleCode) {
   localStorage.setItem('fx-locale', locale)
   // 更新 HTML lang 属性
   document.documentElement.lang = locale
+  // 清除字典缓存，以便重新加载对应语言的字典数据
+  clearDictCache()
 }
 
 /**

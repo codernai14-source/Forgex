@@ -90,8 +90,11 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
         
-        // 获取请求中的语言
+        // 获取请求中的语言（优先自定义头，其次标准头）
         String requestLang = request.getHeaders().getFirst(HEADER_LANG);
+        if (!StringUtils.hasText(requestLang)) {
+            requestLang = request.getHeaders().getFirst("Accept-Language");
+        }
         
         // 初始化变量
         Long userId = null;

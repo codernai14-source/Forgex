@@ -51,6 +51,7 @@ public class R<T> {
     private String message;
 
     /** 国际化元信息（可选） */
+    @JsonIgnore
     private I18nMeta i18n;
 
     /** 返回数据：泛型类型，可为null */
@@ -151,49 +152,47 @@ public class R<T> {
         r.data = data;
         return r;
     }
-    
+
     /**
-     * 成功返回（自定义消息和占位符参数，无数据）
+     * 成功返回（自定义消息，带占位符参数，无数据）
      * <p>
-     * 返回状态码200，自定义返回消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔）
+     * 返回状态码200，自定义返回消息模板代码；占位符参数会被序列化到 message 字段，并同步写入 i18n 元信息。
      * </p>
      *
      * @param <T>         返回数据的类型
      * @param messageCode 自定义返回消息模板代码
-     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @param args        占位符参数（按 {@link java.text.MessageFormat} 顺序）
      * @return R包装的成功结果
-     * @see StatusCode#SUCCESS
      * @see I18nPrompt
      */
-    public static <T> R<T> ok(I18nPrompt messageCode, String args) {
+    public static <T> R<T> okWithArgs(I18nPrompt messageCode, Object... args) {
         R<T> r = new R<>();
         r.code = StatusCode.SUCCESS;
         r.messageCode = messageCode;
-        r.message = args;
-        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
         return r;
     }
-    
+
     /**
-     * 成功返回（自定义消息、占位符参数和数据）
+     * 成功返回（自定义消息，带数据与占位符参数）
      * <p>
-     * 返回状态码200，自定义返回消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔），携带指定数据
+     * 返回状态码200，自定义返回消息模板代码；携带数据；占位符参数会被序列化到 message 字段，并同步写入 i18n 元信息。
      * </p>
      *
      * @param <T>         返回数据的类型
      * @param messageCode 自定义返回消息模板代码
-     * @param args        占位符参数，按占位符顺序用逗号分隔
      * @param data        返回数据
+     * @param args        占位符参数（按 {@link java.text.MessageFormat} 顺序）
      * @return R包装的成功结果
-     * @see StatusCode#SUCCESS
      * @see I18nPrompt
      */
-    public static <T> R<T> ok(I18nPrompt messageCode, String args, T data) {
+    public static <T> R<T> okWithArgsAndData(I18nPrompt messageCode, T data, Object... args) {
         R<T> r = new R<>();
         r.code = StatusCode.SUCCESS;
         r.messageCode = messageCode;
-        r.message = args;
-        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
         r.data = data;
         return r;
     }
@@ -419,6 +418,27 @@ public class R<T> {
     }
 
     /**
+     * 失败返回（自定义状态码、消息和参数数组）
+     * <p>
+     * 使用参数数组构建国际化元信息，并将参数序列化为message字段。
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数数组
+     * @return R包装的失败结果
+     */
+    public static <T> R<T> failWithArgs(Integer code, I18nPrompt messageCode, Object[] args) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.messageCode = messageCode;
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
+        return r;
+    }
+
+    /**
      * 解析占位符参数
      * <p>
      * 将逗号分隔的字符串解析为参数数组
@@ -432,6 +452,30 @@ public class R<T> {
             return null;
         }
         return args.split(",");
+    }
+
+    /**
+     * 序列化占位符参数
+     * <p>
+     * 将参数数组按逗号分隔拼接为字符串，便于日志与调试。
+     * </p>
+     *
+     * @param args 占位符参数数组
+     * @return 逗号分隔的参数字符串
+     */
+    private static String joinArgs(Object[] args) {
+        if (args == null || args.length == 0) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            Object v = args[i];
+            sb.append(v == null ? "" : v.toString());
+        }
+        return sb.toString();
     }
 
     /**

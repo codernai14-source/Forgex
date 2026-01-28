@@ -6,8 +6,10 @@
       :data-font-size="layoutConfig.fontSize"
     >
     <!-- 使用新的 AppHeader 组件 -->
-    <AppHeader
+  <AppHeader
       v-if="showHeader"
+      :logo="headerLogo"
+      :title="headerTitle"
       :layout-mode="layoutConfig.layoutMode"
       :modules="moduleList"
       :active-module-code="activeModuleCode"
@@ -53,7 +55,7 @@
         />
 
         <a-layout-content class="fx-content">
-          <div class="fx-content-inner">
+         <div class="fx-content-inner">
             <div v-if="layoutConfig.watermarkEnabled" class="fx-watermark-container">
               <div class="fx-watermark" v-for="i in 12" :key="i">
                 {{ layoutConfig.watermarkText }}
@@ -314,7 +316,7 @@ import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { getSystemBasicConfig } from '../api/system/config'
-import { setLocale } from '../locales'
+import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
 import { useSse } from '../hooks/useSse'
 
@@ -452,6 +454,21 @@ const systemConfig = ref<SystemBasicConfig>({
   secondaryColor: '#ff2a6d'
 })
 
+function formatMediaUrl(value: string): string {
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api') ? url : `/api${url}`
+  }
+  return `/api/${url}`
+}
+
+const headerLogo = computed(() => formatMediaUrl(systemConfig.value.systemLogo))
+const headerTitle = computed(() => String(systemConfig.value.systemName || 'Forgex MOM'))
+
 locale.value = currentLocale.value as any
 
 // 解析实际的主题模式（处理 system 模式）
@@ -486,6 +503,30 @@ const lastScrollY = ref(typeof window !== 'undefined' ? window.scrollY || 0 : 0)
 
 const showHeader = computed(() => layoutConfig.value.headerVisible && !headerHiddenByScroll.value)
 
+/**
+ * 将后端/路由返回的标题转换为当前语言的显示文案。
+ * <p>
+ * 兼容两种数据来源：
+ * <ul>
+ *   <li>后端已按语言解析后的“直出文本”（直接返回原值）</li>
+ *   <li>后端返回的是 i18n key（如 system.xxx / common.xxx），则使用 t() 翻译</li>
+ * </ul>
+ * </p>
+ *
+ * @param rawTitle 原始标题（可能为 i18n key 或直出文本）
+ * @return 当前语言下的标题文本
+ */
+function resolveMenuTitle(rawTitle: unknown): string {
+  const title = String(rawTitle ?? '')
+  if (!title) {
+    return ''
+  }
+  if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+    return t(title)
+  }
+  return title
+}
+
 function handleScroll() {
   if (layoutConfig.value.headerMode !== 'hide-on-scroll') {
     headerHiddenByScroll.value = false
@@ -518,7 +559,7 @@ const moduleMenus = computed(() => {
     if (topRoute && Array.isArray(topRoute.children)) {
       for (const c of topRoute.children) {
         const childPath = String(c.path || '')
-        const title = (c.meta && c.meta.title) || c.name || childPath
+        const title = resolveMenuTitle((c.meta && c.meta.title) || c.name || childPath)
         const fullPath = `/workspace/${code}/${childPath}`.replace(/\/+/g, '/')
         items.push({ title, fullPath })
       }
@@ -574,7 +615,7 @@ const sidebarMenus = computed(() => {
       for (const child of topRoute.children) {
         const childPath = String(child.path || '')
         const fullPath = `/workspace/${activeModuleCode.value}/${childPath}`.replace(/\/+/g, '/')
-        const title = (child.meta && child.meta.title) || child.name || childPath
+        const title = resolveMenuTitle((child.meta && child.meta.title) || child.name || childPath)
         const icon = (child.meta && child.meta.icon) || ''
         const type = (child.meta && child.meta.type) || 'menu'
         const menuLevel = (child.meta && child.meta.menuLevel) || 1
@@ -600,7 +641,7 @@ const sidebarMenus = computed(() => {
             const grandchildFullPath = grandchildPath.startsWith('/') 
               ? grandchildPath 
               : `/workspace/${activeModuleCode.value}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
-            const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
+            const grandchildTitle = resolveMenuTitle((grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath)
             const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
             const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
             const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
@@ -631,7 +672,7 @@ const sidebarMenus = computed(() => {
         for (const child of topRoute.children) {
           const childPath = String(child.path || '')
           const fullPath = `/workspace/${moduleCode}/${childPath}`.replace(/\/+/g, '/')
-          const title = (child.meta && child.meta.title) || child.name || childPath
+          const title = resolveMenuTitle((child.meta && child.meta.title) || child.name || childPath)
           const icon = (child.meta && child.meta.icon) || ''
           const type = (child.meta && child.meta.type) || 'menu'
           const menuLevel = (child.meta && child.meta.menuLevel) || 1
@@ -657,7 +698,7 @@ const sidebarMenus = computed(() => {
               const grandchildFullPath = grandchildPath.startsWith('/') 
                 ? grandchildPath 
                 : `/workspace/${moduleCode}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
-              const grandchildTitle = (grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath
+              const grandchildTitle = resolveMenuTitle((grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath)
               const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
               const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
               const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
@@ -682,7 +723,6 @@ const sidebarMenus = computed(() => {
     }
   }
   
-  console.log('[MainLayout] sidebarMenus computed:', JSON.stringify(result, null, 2))
   return result
 })
 
@@ -719,7 +759,7 @@ const currentUser = computed(() => {
 
 // 监听语言变化，更新标签标题
 watch(
-  () => currentLocale.value,
+  () => locale.value,
   (newLocale) => {
     if (newLocale) {
       updateAllTabTitles()
@@ -747,7 +787,6 @@ watch(
       const code = route.meta.module as string
       openKeys.value = [code]
       activeModuleCode.value = code
-      console.log('[MainLayout] Active module from meta:', code)
     } else {
       // 降级策略：从 URL 路径中解析
       const parts = path.split('/').filter(Boolean)
@@ -755,7 +794,6 @@ watch(
         const code = parts[1]
         openKeys.value = [code]
         activeModuleCode.value = code
-        console.log('[MainLayout] Active module from path:', code)
       }
     }
     
@@ -807,10 +845,8 @@ function onOpenChange(keys: string[]) {
 }
 
 function onMenuClick(menuKey: string) {
-  console.log('[MainLayout] Menu clicked:', menuKey)
   if (!menuKey) return
   if (menuKey !== route.fullPath) {
-    console.log('[MainLayout] Navigating to:', menuKey)
     router.push(menuKey).catch(() => {})
   }
 }
@@ -896,55 +932,51 @@ async function onLocaleChange(val: string) {
   const originalLocale = currentLocale.value
   
   try {
-    // 1. 调用setLocale函数更新语言设置，该函数会：
-    //    - 更新vue-i18n的locale值
-    //    - 将语言设置保存到localStorage
-    //    - 更新HTML的lang属性
-    setLocale(val as 'zh-CN' | 'en-US')
+    console.log('[MainLayout] 语言切换开始:', val)
+    
+    // 1. 调用setLocale函数更新语言设置
+    setLocale(val as LocaleCode)
     
     // 2. 更新本地状态
     currentLocale.value = val
-    appStore.setLocale(val as 'zh-CN' | 'en-US')
+    appStore.setLocale(val as LocaleCode)
     
     // 3. 调用后端API更新语言设置
     await changeLanguage({ lang: val })
     
-    // 4. 重新获取菜单数据，确保国际化生效
+    // 4. 重新获取菜单数据（关键！后端返回的是翻译后的文本，需要重新获取）
     const account = sessionStorage.getItem('account')
     const tenantId = sessionStorage.getItem('tenantId')
     
     if (account && tenantId) {
       try {
-        // 重新获取菜单数据
+        console.log('[MainLayout] 重新获取菜单数据...')
         const routes = await getRoutes({ account, tenantId })
         if (routes) {
           // 重新注入动态路由
           await injectDynamicRoutes(routes)
-          // 清除localStorage中的旧菜单缓存
-          localStorage.removeItem('fx-dynamic-routes')
-          localStorage.removeItem('fx-dynamic-modules')
-          // 刷新当前页面，确保所有组件都能获取到最新的国际化数据
-          // 使用router.replace配合redirect页面实现无刷新重载
-          router.replace({ 
-            path: '/redirect', 
-            query: { 
-              to: route.fullPath, 
-              t: Date.now() 
-            } 
-          })
+          // 更新所有标签标题
+          updateAllTabTitles()
+          console.log('[MainLayout] 菜单数据更新成功')
         }
       } catch (menuError) {
-        console.error('重新获取菜单数据失败:', menuError)
-        // 菜单获取失败时，不刷新页面，保持当前状态
-        message.warning('菜单数据更新失败，请手动刷新页面')
+        console.error('[MainLayout] 重新获取菜单数据失败:', menuError)
       }
     }
+    
+    console.log('[MainLayout] 语言切换成功:', val)
+    
+    // 5. 语言切换成功提示
+    message.success(t('common.success'))
+    
+    // 注意：FxDynamicTable 组件会通过 watch(locale) 自动重新加载配置
   } catch (e) {
-    console.error('语言切换失败:', e)
+    console.error('[MainLayout] 语言切换失败:', e)
     // 语言切换失败时，恢复到原来的语言设置
-    setLocale(originalLocale as 'zh-CN' | 'en-US')
+    setLocale(originalLocale as LocaleCode)
     currentLocale.value = originalLocale
-    appStore.setLocale(originalLocale as 'zh-CN' | 'en-US')
+    appStore.setLocale(originalLocale as LocaleCode)
+    message.error(t('common.failed'))
   }
 }
 
@@ -1263,9 +1295,18 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
 }
-
+/* 关键修改开始 */
 .fx-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden; /* 改为 hidden，防止整个内容区滚动 */
+  padding: 0;       /* 移除默认 padding（如果有的话） */
+}
+.fx-content-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;            /* 统一页面内边距（可根据需要调整） */
+  box-sizing: border-box;   /* 让 padding 包含在 height 100% 内 */
+  position: relative;       /* 为 watermark 绝对定位提供参考 */
 }
 </style>

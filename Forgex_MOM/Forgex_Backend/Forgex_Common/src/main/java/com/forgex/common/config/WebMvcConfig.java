@@ -14,10 +14,20 @@ limitations under the License.*/
 package com.forgex.common.config;
 
 import com.forgex.common.i18n.LangWebInterceptor;
+import com.forgex.common.i18n.LangContext;
 import com.forgex.common.tenant.UserTenantWebInterceptor;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.util.StringUtils;
 
 /**
  * Web MVC 配置
@@ -41,5 +51,39 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new LangWebInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new UserTenantWebInterceptor()).addPathPatterns("/**");
+    }
+
+    /**
+     * 注册语言上下文过滤器。
+     * <p>
+     * 兜底保证：即使在某些场景下 MVC 拦截器未生效，也能从请求头解析语言并写入 {@link LangContext}，
+     * 避免菜单、字典、动态表格等依赖语言上下文的功能恒为默认语言。
+     * </p>
+     *
+     * @return FilterRegistrationBean
+     * @see LangContext
+     * @see LangWebInterceptor
+     */
+    @Bean
+    public FilterRegistrationBean<Filter> langContextFilter() {
+        FilterRegistrationBean<Filter> bean = new FilterRegistrationBean<>();
+        bean.setFilter((ServletRequest request, ServletResponse response, FilterChain chain) -> {
+            try {
+                if (request instanceof HttpServletRequest httpReq) {
+                    String lang = httpReq.getHeader(LangContext.HEADER_LANG);
+                    if (!StringUtils.hasText(lang)) {
+                        lang = httpReq.getHeader("Accept-Language");
+                    }
+                    LangContext.set(lang);
+                } else {
+                    LangContext.set(LangContext.DEFAULT_LANG);
+                }
+                chain.doFilter(request, response);
+            } finally {
+                LangContext.clear();
+            }
+        });
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return bean;
     }
 }

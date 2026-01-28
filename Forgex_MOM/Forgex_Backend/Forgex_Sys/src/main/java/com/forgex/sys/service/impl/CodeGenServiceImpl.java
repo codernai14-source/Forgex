@@ -1,367 +1,473 @@
 package com.forgex.sys.service.impl;
 
+import com.forgex.sys.domain.dto.CodeGenContextDTO;
 import com.forgex.sys.domain.dto.CodeGenRequestDTO;
+import com.forgex.sys.domain.dto.ColumnMetaDTO;
+import com.forgex.sys.domain.dto.TableMetaDTO;
 import com.forgex.sys.service.CodeGenService;
+import com.forgex.sys.service.DbMetaService;
+import lombok.RequiredArgsConstructor;
+import org.beetl.core.GroupTemplate;
+import org.beetl.core.Template;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * 代码生成服务实现类
+ * 代码生成服务实现类（增强版）
  * <p>
- * 提供基于数据库表结构的代码生成功能，支持生成实体、Mapper、Service和Controller等基础代码。
+ * 使用 Beetl 模板引擎生成完整的代码，包括：
+ * - 后端代码（Entity、Mapper、Service、Controller、Param）
+ * - 前端代码（Vue 页面、API）
+ * - SQL 脚本（菜单权限、表格配置、多语言）
  * </p>
- * <p><strong>主要功能：</strong></p>
- * <ul>
- *   <li>根据表名生成实体类代码</li>
- *   <li>生成MyBatis-Plus的Mapper接口代码</li>
- *   <li>生成Service接口代码</li>
- *   <li>生成Spring Boot的Controller代码</li>
- *   <li>支持树形结构的DTO生成</li>
- *   <li>支持主从结构的Item实体生成</li>
- *   <li>生成README文档</li>
- *   <li>支持ZIP打包下载</li>
- * </ul>
- * <p><strong>生成模式：</strong></p>
- * <ul>
- *   <li>{@code SINGLE} - 单表模式，只生成基础实体和相关代码</li>
- *   <li>{@code TREE} - 树形模式，生成树形结构的DTO</li>
- *   <li>{@code MASTER_DETAIL} - 主从模式，生成主表和从表Item实体</li>
- *   <li>{@code DETAIL} - 从表模式，只生成Item实体</li>
- * </ul>
- *
+ * 
  * @author Forgex Team
- * @version 1.0.0
- * @see CodeGenService
- * @see CodeGenRequestDTO
+ * @version 2.0.0
  */
 @Service
+@RequiredArgsConstructor
 public class CodeGenServiceImpl implements CodeGenService {
 
+    private final GroupTemplate groupTemplate;
+    private final DbMetaService dbMetaService;
+    
     /**
-     * 预览生成的代码
-     * <p>
-     * 根据请求参数生成代码文件，但不打包成ZIP。
-     * 返回文件名到代码内容的映射，用于前端预览。
-     * </p>
-     * <p><strong>执行流程：</strong></p>
-     * <ol>
-     *   <li>参数校验：表名不能为空</li>
-     *   <li>确定实体类名：如果未指定，将表名转换为驼峰命名</li>
-     *   <li>确定基础包名：如果未指定，使用默认包名</li>
-     *   <li>确定生成模式：如果未指定，使用SINGLE模式</li>
-     *   <li>生成README文档</li>
-     *   <li>生成实体类代码</li>
-     *   <li>生成Mapper接口代码</li>
-     *   <li>生成Service接口代码</li>
-     *   <li>生成Controller代码</li>
-     *   <li>如果是TREE模式，生成树形DTO</li>
-     *   <li>如果是MASTER_DETAIL或DETAIL模式，生成Item实体</li>
-     *   <li>返回文件映射</li>
-     * </ol>
-     * 
-     * @param req 代码生成请求参数
-     * @return 文件名到代码内容的映射，参数无效时返回空Map
+     * BaseEntity 中的字段，生成时需要排除
      */
+    private static final Set<String> BASE_ENTITY_FIELDS = new HashSet<>(Arrays.asList(
+        "id", "tenant_id", "create_time", "create_by", "update_time", "update_by", "deleted"
+    ));
+
     @Override
     public Map<String, String> preview(CodeGenRequestDTO req) {
-        // 初始化文件映射
         Map<String, String> files = new LinkedHashMap<>();
         
-        // 参数校验：表名不能为空
+        // 参数校验
         if (req == null || !StringUtils.hasText(req.getTableName())) {
             return files;
         }
         
-        // 确定实体类名：如果未指定，将表名转换为驼峰命名（首字母大写）
-        String entity = StringUtils.hasText(req.getEntityName()) ? req.getEntityName() : toCamel(req.getTableName(), true);
+        // 构建代码生成上下文
+        CodeGenContextDTO context = buildContext(req);
         
-        // 确定基础包名：如果未指定，使用默认包名
-        String basePackage = StringUtils.hasText(req.getBasePackage()) ? req.getBasePackage() : "com.forgex.codegen";
+        // 生成后端代码
+        files.putAll(generateBackendCode(context));
         
-        // 确定生成模式：如果未指定，使用SINGLE模式
-        String mode = StringUtils.hasText(req.getMode()) ? req.getMode().trim().toUpperCase(Locale.ROOT) : "SINGLE";
-
-        // 生成README文档
-        files.put("README.md", buildReadme(req, entity));
+        // 生成前端代码
+        files.putAll(generateFrontendCode(context));
         
-        // 生成实体类代码
-        files.put("backend/" + basePackage.replace('.', '/') + "/domain/entity/" + entity + ".java",
-                buildEntity(basePackage, entity));
+        // 生成 SQL 脚本
+        files.putAll(generateSqlScripts(context));
         
-        // 生成Mapper接口代码
-        files.put("backend/" + basePackage.replace('.', '/') + "/mapper/" + entity + "Mapper.java",
-                buildMapper(basePackage, entity));
+        // 生成 README
+        files.put("README.md", generateReadme(context));
         
-        // 生成Service接口代码
-        files.put("backend/" + basePackage.replace('.', '/') + "/service/" + entity + "Service.java",
-                buildService(basePackage, entity));
-        
-        // 生成Controller代码
-        files.put("backend/" + basePackage.replace('.', '/') + "/controller/" + entity + "Controller.java",
-                buildController(basePackage, entity));
-
-        // 如果是TREE模式，生成树形DTO
-        if ("TREE".equals(mode)) {
-            files.put("backend/" + basePackage.replace('.', '/') + "/domain/dto/" + entity + "TreeDTO.java",
-                    buildTreeDto(basePackage, entity, req.getParentIdField(), req.getTreeNameField()));
-        }
-        
-        // 如果是MASTER_DETAIL或DETAIL模式，生成Item实体
-        if ("MASTER_DETAIL".equals(mode) || "MASTER-DETAIL".equals(mode) || "DETAIL".equals(mode)) {
-            files.put("backend/" + basePackage.replace('.', '/') + "/domain/entity/" + entity + "Item.java",
-                    buildEntity(basePackage, entity + "Item"));
-        }
-
-        // 返回文件映射
         return files;
     }
 
-    /**
-     * 生成代码ZIP包
-     * <p>
-     * 根据请求参数生成代码文件，并打包成ZIP格式。
-     * 返回ZIP字节数组，用于前端下载。
-     * </p>
-     * <p><strong>执行流程：</strong></p>
-     * <ol>
-     *   <li>调用preview方法生成所有代码文件</li>
-     *   <li>创建ByteArrayOutputStream作为ZIP输出流</li>
-     *   <li>创建ZipOutputStream包装输出流</li>
-     *   <li>遍历所有文件，创建ZipEntry</li>
-     *   <li>将文件内容转换为UTF-8字节数组</li>
-     *   <li>写入字节数组到ZIP</li>
-     *   <li>关闭当前ZipEntry</li>
-     *   <li>完成ZIP写入</li>
-     *   <li>返回ZIP字节数组</li>
-     * </ol>
-     * 
-     * @param req 代码生成请求参数
-     * @return ZIP字节数组，生成失败时返回空数组
-     */
     @Override
     public byte[] generateZip(CodeGenRequestDTO req) {
-        // 调用preview方法生成所有代码文件
         Map<String, String> files = preview(req);
         
-        try (
-            // 创建ByteArrayOutputStream作为ZIP输出流
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
-            // 创建ZipOutputStream包装输出流
-            ZipOutputStream zos = new ZipOutputStream(baos)
-        ) {
-            // 遍历所有文件
-            for (Map.Entry<String, String> e : files.entrySet()) {
-                // 创建ZipEntry
-                ZipEntry entry = new ZipEntry(e.getKey());
-                zos.putNextEntry(entry);
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+            
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+                ZipEntry zipEntry = new ZipEntry(entry.getKey());
+                zos.putNextEntry(zipEntry);
                 
-                // 将文件内容转换为UTF-8字节数组
-                byte[] bytes = (e.getValue() == null ? "" : e.getValue()).getBytes(StandardCharsets.UTF_8);
-                
-                // 写入字节数组到ZIP
+                byte[] bytes = (entry.getValue() == null ? "" : entry.getValue())
+                    .getBytes(StandardCharsets.UTF_8);
                 zos.write(bytes);
                 
-                // 关闭当前ZipEntry
                 zos.closeEntry();
             }
             
-            // 完成ZIP写入
             zos.finish();
-            
-            // 返回ZIP字节数组
             return baos.toByteArray();
         } catch (Exception ex) {
-            // 生成失败时返回空数组
             return new byte[0];
         }
     }
 
     /**
-     * 构建README文件内容
-     * <p>
-     * 生成包含基本信息的README文档，用于说明生成的代码。
-     * </p>
-     * 
-     * @param req 代码生成请求参数
-     * @param entity 实体类名称
-     * @return README文件内容
+     * 构建代码生成上下文
      */
-    private String buildReadme(CodeGenRequestDTO req, String entity) {
-        // 获取生成模式
-        String mode = req == null ? null : req.getMode();
+    private CodeGenContextDTO buildContext(CodeGenRequestDTO req) {
+        CodeGenContextDTO context = new CodeGenContextDTO();
         
-        // 构建README内容
-        return "# Forgex CodeGen\n\n"
-                + "- tableName: " + (req == null ? "" : req.getTableName()) + "\n"
-                + "- mode: " + (mode == null ? "SINGLE" : mode) + "\n"
-                + "- entity: " + entity + "\n";
-    }
-
-    /**
-     * 构建实体类代码
-     * <p>
-     * 生成包含Lombok @Data注解的实体类代码。
-     * </p>
-     * 
-     * @param basePackage 基础包名
-     * @param entity 实体类名称
-     * @return 实体类代码字符串
-     */
-    private String buildEntity(String basePackage, String entity) {
-        return "package " + basePackage + ".domain.entity;\n\n"
-                + "import lombok.Data;\n\n"
-                + "@Data\n"
-                + "public class " + entity + " {\n"
-                + "}\n";
-    }
-
-    /**
-     * 构建Mapper接口代码
-     * <p>
-     * 生成继承MyBatis-Plus BaseMapper的Mapper接口代码。
-     * </p>
-     * 
-     * @param basePackage 基础包名
-     * @param entity 实体类名称
-     * @return Mapper接口代码字符串
-     */
-    private String buildMapper(String basePackage, String entity) {
-        return "package " + basePackage + ".mapper;\n\n"
-                + "import com.baomidou.mybatisplus.core.mapper.BaseMapper;\n"
-                + "import " + basePackage + ".domain.entity." + entity + ";\n"
-                + "import org.apache.ibatis.annotations.Mapper;\n\n"
-                + "@Mapper\n"
-                + "public interface " + entity + "Mapper extends BaseMapper<" + entity + "> {\n"
-                + "}\n";
-    }
-
-    /**
-     * 构建Service接口代码
-     * <p>
-     * 生成基础的Service接口代码，不包含方法定义。
-     * </p>
-     * 
-     * @param basePackage 基础包名
-     * @param entity 实体类名称
-     * @return Service接口代码字符串
-     */
-    private String buildService(String basePackage, String entity) {
-        return "package " + basePackage + ".service;\n\n"
-                + "public interface " + entity + "Service {\n"
-                + "}\n";
-    }
-
-    /**
-     * 构建Controller代码
-     * <p>
-     * 生成Spring Boot的Controller代码，包含基本的ping方法。
-     * </p>
-     * 
-     * @param basePackage 基础包名
-     * @param entity 实体类名称
-     * @return Controller代码字符串
-     */
-    private String buildController(String basePackage, String entity) {
-        // 构建请求路径（将实体名转换为小写驼峰）
-        String path = "/" + toCamel(entity, false).toLowerCase(Locale.ROOT);
+        // 查询表元数据
+        TableMetaDTO tableMeta = dbMetaService.getTableMeta(req.getTableName());
+        List<ColumnMetaDTO> columns = dbMetaService.listColumns(req.getTableName());
         
-        return "package " + basePackage + ".controller;\n\n"
-                + "import com.forgex.common.web.R;\n"
-                + "import org.springframework.web.bind.annotation.RequestMapping;\n"
-                + "import org.springframework.web.bind.annotation.RestController;\n\n"
-                + "@RestController\n"
-                + "@RequestMapping(\"" + path + "\")\n"
-                + "public class " + entity + "Controller {\n"
-                + "    @RequestMapping(\"/ping\")\n"
-                + "    public R<String> ping() {\n"
-                + "        return R.ok(\"ok\");\n"
-                + "    }\n"
-                + "}\n";
+        // 基础信息
+        context.setTableName(req.getTableName());
+        context.setTableComment(tableMeta.getTableComment());
+        context.setEntityName(StringUtils.hasText(req.getEntityName()) ? 
+            req.getEntityName() : toCamelCase(req.getTableName(), true));
+        context.setEntityNameLower(toLowerCamelCase(context.getEntityName()));
+        context.setModuleName(StringUtils.hasText(req.getModuleName()) ? 
+            req.getModuleName() : "sys");
+        context.setBasePackage(StringUtils.hasText(req.getBasePackage()) ? 
+            req.getBasePackage() : "com.forgex." + context.getModuleName());
+        context.setMode(StringUtils.hasText(req.getMode()) ? 
+            req.getMode().toUpperCase() : "SINGLE");
+        context.setDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        
+        // 处理列信息
+        columns.forEach(col -> {
+            col.setIsBaseField(BASE_ENTITY_FIELDS.contains(col.getColumnName()));
+        });
+        
+        context.setColumns(columns);
+        context.setQueryColumns(filterQueryColumns(columns));
+        context.setSaveColumns(filterSaveColumns(columns));
+        context.setTableColumns(filterTableColumns(columns));
+        
+        // 菜单权限信息
+        context.setMenuPath(context.getEntityNameLower());
+        context.setMenuNameCn(tableMeta.getTableComment());
+        context.setMenuNameEn(context.getEntityName());
+        context.setMenuIcon("TableOutlined");
+        context.setMenuOrderNum(100);
+        context.setComponentKey(context.getEntityName());
+        context.setPermKeyPrefix(context.getModuleName() + ":" + context.getEntityNameLower());
+        
+        // 模块信息
+        context.setModuleNameCn(context.getModuleName() + "模块");
+        context.setModuleNameEn(context.getModuleName().toUpperCase());
+        context.setModuleIcon("AppstoreOutlined");
+        context.setModuleOrderNum(10);
+        
+        // 表格配置信息
+        context.setTableCode(context.getModuleName() + "_" + context.getEntityNameLower());
+        context.setTableNameCn(tableMeta.getTableComment());
+        context.setTableNameEn(context.getEntityName());
+        
+        // 多语言信息
+        context.setI18nPrefix(context.getModuleName().toUpperCase() + "_" + 
+            toUnderscoreCase(context.getEntityName()).toUpperCase());
+        
+        return context;
     }
 
     /**
-     * 构建树形DTO代码
-     * <p>
-     * 生成用于树形结构显示的DTO代码，包含id、parentId和name字段。
-     * </p>
-     * 
-     * @param basePackage 基础包名
-     * @param entity 实体类名称
-     * @param parentIdField 父ID字段名
-     * @param nameField 名称字段名
-     * @return 树形DTO代码字符串
+     * 生成后端代码
      */
-    private String buildTreeDto(String basePackage, String entity, String parentIdField, String nameField) {
-        // 确定父ID字段名：如果未指定，使用parentId
-        String pid = StringUtils.hasText(parentIdField) ? parentIdField : "parentId";
+    private Map<String, String> generateBackendCode(CodeGenContextDTO context) {
+        Map<String, String> files = new LinkedHashMap<>();
+        String basePath = "backend/" + context.getBasePackage().replace('.', '/');
         
-        // 确定名称字段名：如果未指定，使用name
-        String name = StringUtils.hasText(nameField) ? nameField : "name";
+        // Entity
+        files.put(basePath + "/domain/entity/" + context.getEntityName() + ".java",
+            renderTemplate("Entity.java.btl", context));
         
-        return "package " + basePackage + ".domain.dto;\n\n"
-                + "import lombok.Data;\n\n"
-                + "@Data\n"
-                + "public class " + entity + "TreeDTO {\n"
-                + "    private Long id;\n"
-                + "    private Long " + pid + ";\n"
-                + "    private String " + name + ";\n"
-                + "}\n";
+        // Mapper
+        files.put(basePath + "/mapper/" + context.getEntityName() + "Mapper.java",
+            renderTemplate("Mapper.java.btl", context));
+        
+        // Service
+        files.put(basePath + "/service/" + context.getEntityName() + "Service.java",
+            renderTemplate("Service.java.btl", context));
+        
+        // ServiceImpl
+        files.put(basePath + "/service/impl/" + context.getEntityName() + "ServiceImpl.java",
+            renderTemplate("ServiceImpl.java.btl", context));
+        
+        // Controller
+        files.put(basePath + "/controller/" + context.getEntityName() + "Controller.java",
+            renderTemplate("Controller.java.btl", context));
+        
+        // PageParam
+        files.put(basePath + "/domain/param/" + context.getEntityName() + "PageParam.java",
+            renderTemplate("PageParam.java.btl", context));
+        
+        // SaveParam
+        files.put(basePath + "/domain/param/" + context.getEntityName() + "SaveParam.java",
+            renderTemplate("SaveParam.java.btl", context));
+        
+        return files;
     }
 
     /**
-     * 将字符串转换为驼峰命名
-     * <p>
-     * 将下划线、连字符或空格分隔的字符串转换为驼峰命名格式。
-     * </p>
-     * <p><strong>转换规则：</strong></p>
-     * <ul>
-     *   <li>按下划线、连字符或空格分割字符串</li>
-     *   <li>每个单词首字母大写，其余小写</li>
-     *   <li>如果upperFirst为false，第一个单词首字母小写</li>
-     * </ul>
-     * 
-     * @param s 原始字符串
-     * @param upperFirst 是否首字母大写
-     * @return 驼峰命名字符串
+     * 生成前端代码
      */
-    private String toCamel(String s, boolean upperFirst) {
-        // 字符串为空，直接返回
-        if (!StringUtils.hasText(s)) {
-            return s;
+    private Map<String, String> generateFrontendCode(CodeGenContextDTO context) {
+        Map<String, String> files = new LinkedHashMap<>();
+        String basePath = "frontend/src";
+        
+        // Vue 页面
+        files.put(basePath + "/views/" + context.getModuleName() + "/" + 
+            context.getEntityNameLower() + "/index.vue",
+            renderTemplate("vue/index.vue.btl", context));
+        
+        // API
+        files.put(basePath + "/api/" + context.getModuleName() + "/" + 
+            context.getEntityNameLower() + ".ts",
+            renderTemplate("vue/api.ts.btl", context));
+        
+        return files;
+    }
+
+    /**
+     * 生成 SQL 脚本
+     */
+    private Map<String, String> generateSqlScripts(CodeGenContextDTO context) {
+        Map<String, String> files = new LinkedHashMap<>();
+        String basePath = "sql";
+        
+        // 菜单权限 SQL
+        files.put(basePath + "/01_menu_permission.sql",
+            renderTemplate("sql/menu_permission.sql.btl", context));
+        
+        // 表格配置 SQL
+        files.put(basePath + "/02_table_config.sql",
+            renderTemplate("sql/table_config.sql.btl", context));
+        
+        // 多语言 SQL
+        files.put(basePath + "/03_i18n_message.sql",
+            renderTemplate("sql/i18n_message.sql.btl", context));
+        
+        return files;
+    }
+
+    /**
+     * 生成 README
+     */
+    private String generateReadme(CodeGenContextDTO context) {
+        return "# " + context.getTableComment() + " 代码生成\n\n" +
+               "## 基本信息\n\n" +
+               "- 表名：" + context.getTableName() + "\n" +
+               "- 实体类：" + context.getEntityName() + "\n" +
+               "- 模块：" + context.getModuleName() + "\n" +
+               "- 包名：" + context.getBasePackage() + "\n" +
+               "- 生成时间：" + context.getDate() + "\n\n" +
+               "## 文件说明\n\n" +
+               "### 后端代码\n\n" +
+               "- Entity：实体类\n" +
+               "- Mapper：数据访问层\n" +
+               "- Service：业务逻辑层\n" +
+               "- Controller：控制器层\n" +
+               "- Param：参数类\n\n" +
+               "### 前端代码\n\n" +
+               "- index.vue：页面组件\n" +
+               "- api.ts：API 接口\n\n" +
+               "### SQL 脚本\n\n" +
+               "- 01_menu_permission.sql：菜单和权限初始化\n" +
+               "- 02_table_config.sql：表格配置初始化\n" +
+               "- 03_i18n_message.sql：多语言配置初始化\n\n" +
+               "## 使用说明\n\n" +
+               "1. 将后端代码复制到对应模块\n" +
+               "2. 将前端代码复制到前端项目\n" +
+               "3. 执行 SQL 脚本初始化数据\n" +
+               "4. 重启后端服务\n" +
+               "5. 刷新前端页面\n";
+    }
+
+    /**
+     * 渲染模板
+     */
+    private String renderTemplate(String templateName, CodeGenContextDTO context) {
+        try {
+            Template template = groupTemplate.getTemplate(templateName);
+            template.binding("tableName", context.getTableName());
+            template.binding("tableComment", context.getTableComment());
+            template.binding("entityName", context.getEntityName());
+            template.binding("entityNameLower", context.getEntityNameLower());
+            template.binding("moduleName", context.getModuleName());
+            template.binding("basePackage", context.getBasePackage());
+            template.binding("mode", context.getMode());
+            template.binding("date", context.getDate());
+            template.binding("columns", context.getColumns());
+            template.binding("queryColumns", context.getQueryColumns());
+            template.binding("saveColumns", context.getSaveColumns());
+            template.binding("tableColumns", context.getTableColumns());
+            template.binding("menuPath", context.getMenuPath());
+            template.binding("menuNameCn", context.getMenuNameCn());
+            template.binding("menuNameEn", context.getMenuNameEn());
+            template.binding("menuIcon", context.getMenuIcon());
+            template.binding("menuOrderNum", context.getMenuOrderNum());
+            template.binding("componentKey", context.getComponentKey());
+            template.binding("permKeyPrefix", context.getPermKeyPrefix());
+            template.binding("moduleNameCn", context.getModuleNameCn());
+            template.binding("moduleNameEn", context.getModuleNameEn());
+            template.binding("moduleIcon", context.getModuleIcon());
+            template.binding("moduleOrderNum", context.getModuleOrderNum());
+            template.binding("tableCode", context.getTableCode());
+            template.binding("tableNameCn", context.getTableNameCn());
+            template.binding("tableNameEn", context.getTableNameEn());
+            template.binding("i18nPrefix", context.getI18nPrefix());
+            
+            return template.render();
+        } catch (Exception e) {
+            return "// 模板渲染失败：" + e.getMessage();
+        }
+    }
+
+    /**
+     * 过滤查询列
+     */
+    private List<ColumnMetaDTO> filterQueryColumns(List<ColumnMetaDTO> columns) {
+        return columns.stream()
+            .filter(col -> !col.getIsBaseField())
+            .filter(col -> !col.getIsPrimaryKey())
+            .limit(5) // 最多5个查询条件
+            .peek(col -> {
+                // 设置查询类型
+                if ("String".equals(col.getJavaType())) {
+                    col.setQueryType("input");
+                    col.setQueryOperator("like");
+                } else if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType())) {
+                    col.setQueryType("input");
+                    col.setQueryOperator("eq");
+                } else if ("LocalDate".equals(col.getJavaType()) || "LocalDateTime".equals(col.getJavaType())) {
+                    col.setQueryType("date");
+                    col.setQueryOperator("eq");
+                }
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 过滤保存列
+     */
+    private List<ColumnMetaDTO> filterSaveColumns(List<ColumnMetaDTO> columns) {
+        return columns.stream()
+            .filter(col -> !col.getIsBaseField())
+            .filter(col -> !col.getIsPrimaryKey())
+            .filter(col -> !col.getIsAutoIncrement())
+            .peek(col -> {
+                // 设置表单类型
+                if ("String".equals(col.getJavaType())) {
+                    if (col.getCharacterMaximumLength() != null && col.getCharacterMaximumLength() > 200) {
+                        col.setFormType("textarea");
+                    } else {
+                        col.setFormType("input");
+                    }
+                } else if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType()) || 
+                           "BigDecimal".equals(col.getJavaType())) {
+                    col.setFormType("number");
+                } else if ("LocalDate".equals(col.getJavaType())) {
+                    col.setFormType("date");
+                } else if ("LocalDateTime".equals(col.getJavaType())) {
+                    col.setFormType("datetime");
+                } else if ("Boolean".equals(col.getJavaType())) {
+                    col.setFormType("select");
+                } else {
+                    col.setFormType("input");
+                }
+                
+                // 设置是否必填
+                col.setRequired(!col.getIsNullable());
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 过滤表格列
+     */
+    private List<ColumnMetaDTO> filterTableColumns(List<ColumnMetaDTO> columns) {
+        return columns.stream()
+            .filter(col -> !col.getIsBaseField() || "id".equals(col.getColumnName()))
+            .peek(col -> {
+                // 设置列宽
+                if ("String".equals(col.getJavaType())) {
+                    col.setWidth(150);
+                } else if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType())) {
+                    col.setWidth(100);
+                } else if ("LocalDate".equals(col.getJavaType())) {
+                    col.setWidth(120);
+                } else if ("LocalDateTime".equals(col.getJavaType())) {
+                    col.setWidth(180);
+                } else {
+                    col.setWidth(120);
+                }
+                
+                // 设置对齐方式
+                if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType()) || 
+                    "BigDecimal".equals(col.getJavaType())) {
+                    col.setAlign("right");
+                } else if ("LocalDate".equals(col.getJavaType()) || "LocalDateTime".equals(col.getJavaType())) {
+                    col.setAlign("center");
+                } else {
+                    col.setAlign("left");
+                }
+                
+                // 设置是否可排序
+                col.setSortable(!"String".equals(col.getJavaType()));
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 转换为驼峰命名
+     */
+    private String toCamelCase(String str, boolean upperFirst) {
+        if (!StringUtils.hasText(str)) {
+            return str;
         }
         
-        // 按下划线、连字符或空格分割字符串
-        String[] parts = s.split("[_\\-\\s]+");
-        
-        // 构建结果字符串
+        String[] parts = str.split("[_\\-\\s]+");
         StringBuilder sb = new StringBuilder();
+        
         for (int i = 0; i < parts.length; i++) {
-            String p = parts[i];
+            String part = parts[i];
+            if (part.isEmpty()) continue;
             
-            // 跳过空字符串
-            if (p.isEmpty()) continue;
-            
-            // 转换为小写
-            String lower = p.toLowerCase(Locale.ROOT);
-            
-            // 处理首字母大小写
+            String lower = part.toLowerCase();
             if (i == 0 && !upperFirst) {
-                // 第一个单词且不需要首字母大写，保持小写
                 sb.append(lower);
             } else {
-                // 其他情况，首字母大写，其余小写
-                sb.append(Character.toUpperCase(lower.charAt(0))).append(lower.substring(1));
+                sb.append(Character.toUpperCase(lower.charAt(0)));
+                if (lower.length() > 1) {
+                    sb.append(lower.substring(1));
+                }
             }
         }
+        
+        return sb.toString();
+    }
+
+    /**
+     * 转换为小写驼峰命名
+     */
+    private String toLowerCamelCase(String str) {
+        if (!StringUtils.hasText(str)) {
+            return str;
+        }
+        return Character.toLowerCase(str.charAt(0)) + str.substring(1);
+    }
+
+    /**
+     * 转换为下划线命名
+     */
+    private String toUnderscoreCase(String str) {
+        if (!StringUtils.hasText(str)) {
+            return str;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (Character.isUpperCase(c)) {
+                if (i > 0) {
+                    sb.append('_');
+                }
+                sb.append(Character.toLowerCase(c));
+            } else {
+                sb.append(c);
+            }
+        }
+        
         return sb.toString();
     }
 }
-

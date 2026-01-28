@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
@@ -58,6 +59,18 @@ public class SysTenantController {
     public R<List<SysTenantDTO>> list(@RequestBody SysTenantQueryDTO queryDTO) {
         List<SysTenantDTO> list = tenantService.list(queryDTO);
         return R.ok(list);
+    }
+    
+    /**
+     * 分页查询租户列表
+     * 
+     * @param queryDTO 查询参数（包含分页参数）
+     * @return 分页结果
+     */
+    @PostMapping("/page")
+    public R<Page<SysTenantDTO>> page(@RequestBody SysTenantQueryDTO queryDTO) {
+        Page<SysTenantDTO> page = tenantService.page(queryDTO);
+        return R.ok(page);
     }
     
     /**

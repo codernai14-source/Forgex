@@ -37,8 +37,12 @@ public class LangWebInterceptor implements HandlerInterceptor {
         if (semi > 0) {
             v = v.substring(0, semi);
         }
+        v = v.replace('_', '-');
         if (v.equalsIgnoreCase("zh") || v.equalsIgnoreCase("zh-cn")) {
             return "zh-CN";
+        }
+        if (v.equalsIgnoreCase("zh-tw") || v.equalsIgnoreCase("zh-hk")) {
+            return "zh-TW";
         }
         if (v.equalsIgnoreCase("en") || v.equalsIgnoreCase("en-us")) {
             return "en-US";
