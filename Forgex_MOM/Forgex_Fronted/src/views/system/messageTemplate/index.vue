@@ -1,45 +1,14 @@
 <template>
   <div class="message-template-page">
-    <!-- 查询表单 -->
-    <a-card :bordered="false" class="search-card">
-      <a-form layout="inline" :model="searchForm">
-        <a-form-item label="模板编号">
-          <a-input v-model:value="searchForm.templateCode" placeholder="请输入模板编号" allow-clear />
-        </a-form-item>
-        <a-form-item label="模板名称">
-          <a-input v-model:value="searchForm.templateName" placeholder="请输入模板名称" allow-clear />
-        </a-form-item>
-        <a-form-item label="消息类型">
-          <a-select v-model:value="searchForm.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
-            <a-select-option value="NOTICE">通知</a-select-option>
-            <a-select-option value="WARNING">警告</a-select-option>
-            <a-select-option value="ALARM">报警</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select v-model:value="searchForm.status" placeholder="请选择状态" allow-clear style="width: 120px">
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>
-              查询
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
-    <!-- 操作按钮 -->
-    <a-card :bordered="false" class="table-card">
-      <div class="table-toolbar">
+    <FxDynamicTable
+      ref="tableRef"
+      table-code="MessageTemplateTable"
+      :request="handleRequest"
+      :dict-options="dictOptions"
+      :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
+      row-key="id"
+    >
+      <template #toolbar>
         <a-space>
           <a-button type="primary" @click="handleAdd">
             <template #icon><PlusOutlined /></template>
@@ -50,38 +19,27 @@
             批量删除
           </a-button>
         </a-space>
-      </div>
+      </template>
 
-      <!-- 数据表格 -->
-      <a-table
-        :columns="columns"
-        :data-source="dataSource"
-        :loading="loading"
-        :pagination="pagination"
-        :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
-        row-key="id"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'messageType'">
-            <a-tag :color="getMessageTypeColor(record.messageType)">
-              {{ getMessageTypeText(record.messageType) }}
-            </a-tag>
-          </template>
-          <template v-else-if="column.key === 'status'">
-            <a-tag :color="record.status ? 'success' : 'default'">
-              {{ record.status ? '启用' : '禁用' }}
-            </a-tag>
-          </template>
-          <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
-              <a-button type="link" size="small" danger @click="handleDelete(record)">删除</a-button>
-            </a-space>
-          </template>
-        </template>
-      </a-table>
-    </a-card>
+      <template #messageType="{ record }">
+        <a-tag :color="getMessageTypeColor(record.messageType)">
+          {{ getMessageTypeText(record.messageType) }}
+        </a-tag>
+      </template>
+
+      <template #status="{ record }">
+        <a-tag :color="record.status ? 'success' : 'default'">
+          {{ record.status ? '启用' : '禁用' }}
+        </a-tag>
+      </template>
+
+      <template #action="{ record }">
+        <a-space>
+          <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
+          <a-button type="link" size="small" danger @click="handleDelete(record)">删除</a-button>
+        </a-space>
+      </template>
+    </FxDynamicTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -229,11 +187,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import {
-  SearchOutlined,
-  ReloadOutlined,
   PlusOutlined,
   DeleteOutlined,
   EyeOutlined
@@ -250,39 +206,21 @@ import {
   deleteMessageTemplate,
   deleteBatchMessageTemplate
 } from '@/api/message'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
-// 查询表单
-const searchForm = reactive({
-  templateCode: '',
-  templateName: '',
-  messageType: undefined,
-  status: undefined,
-  pageNum: 1,
-  pageSize: 10
-})
+const tableRef = ref<any>()
 
-// 表格列定义
-const columns = [
-  { title: '模板编号', dataIndex: 'templateCode', key: 'templateCode' },
-  { title: '模板名称', dataIndex: 'displayName', key: 'displayName' },
-  { title: '模板版本', dataIndex: 'templateVersion', key: 'templateVersion' },
-  { title: '消息类型', dataIndex: 'messageType', key: 'messageType' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', key: 'action', width: 180 }
-]
-
-// 表格数据
-const dataSource = ref([])
-const loading = ref(false)
-const pagination = reactive({
-  current: 1,
-  pageSize: 10,
-  total: 0,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`
-})
+const dictOptions = {
+  messageType: [
+    { label: '通知', value: 'NOTICE' },
+    { label: '警告', value: 'WARNING' },
+    { label: '报警', value: 'ALARM' },
+  ],
+  status: [
+    { label: '启用', value: true },
+    { label: '禁用', value: false },
+  ],
+}
 
 // 选中的行
 const selectedRowKeys = ref<number[]>([])
@@ -404,52 +342,29 @@ const handlePreview = () => {
   previewVisible.value = true
 }
 
-// 查询数据
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      ...searchForm,
-      pageNum: pagination.current,
-      pageSize: pagination.pageSize
-    }
-    const res = await pageMessageTemplate(params)
-    // 处理多语言显示
-    const processedRecords = (res.records || []).map((item: any) => ({
-      ...item,
-      displayName: getI18nValue(item.templateNameI18nJson, item.templateName)
-    }))
-    dataSource.value = processedRecords
-    pagination.total = res.total || 0
-  } catch (error) {
-    console.error('查询失败:', error)
-  } finally {
-    loading.value = false
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
+}) => {
+  const params: any = {
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    ...payload.query,
   }
-}
 
-// 查询
-const handleSearch = () => {
-  pagination.current = 1
-  loadData()
-}
+  if (payload.sorter?.field) {
+    params.sortField = payload.sorter.field
+    params.sortOrder = payload.sorter.order
+  }
 
-// 重置
-const handleReset = () => {
-  Object.assign(searchForm, {
-    templateCode: '',
-    templateName: '',
-    messageType: undefined,
-    status: undefined
-  })
-  handleSearch()
-}
-
-// 表格变化
-const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  loadData()
+  const res: any = await pageMessageTemplate(params)
+  const total = typeof res.total === 'number' ? res.total : parseInt(String(res.total) || '0', 10)
+  const records = (res.records || []).map((item: any) => ({
+    ...item,
+    templateName: getI18nValue(item.templateNameI18nJson, item.templateName),
+  }))
+  return { records, total }
 }
 
 // 选择变化
@@ -498,7 +413,7 @@ const handleDelete = (record: any) => {
       try {
         await deleteMessageTemplate(record.id)
         message.success('删除成功')
-        loadData()
+        await tableRef.value?.reload?.()
       } catch (error) {
         message.error('删除失败')
       }
@@ -516,7 +431,7 @@ const handleBatchDelete = () => {
         await deleteBatchMessageTemplate(selectedRowKeys.value)
         message.success('删除成功')
         selectedRowKeys.value = []
-        loadData()
+        await tableRef.value?.reload?.()
       } catch (error) {
         message.error('删除失败')
       }
@@ -582,7 +497,7 @@ const handleModalOk = async () => {
     await saveMessageTemplate(formData)
     message.success('保存成功')
     modalVisible.value = false
-    loadData()
+    await tableRef.value?.reload?.()
   } catch (error) {
     message.error('保存失败')
   } finally {
@@ -594,11 +509,6 @@ const handleModalOk = async () => {
 const handleModalCancel = () => {
   modalVisible.value = false
 }
-
-// 初始化
-onMounted(() => {
-  loadData()
-})
 </script>
 
 <style scoped lang="less">

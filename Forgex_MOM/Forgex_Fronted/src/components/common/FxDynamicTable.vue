@@ -771,7 +771,7 @@ function normalizeQuery() {
   for (const q of config.value.queryFields || []) {
     const v = queryModel[q.field]
     if (v === undefined || v === null || v === '') continue
-    if (q.queryType === 'dateRange' && Array.isArray(v) && v.length === 2) {
+    if ((q.queryType === 'dateRange' || q.queryType === 'date' || q.queryType === 'datetime' || q.queryType === 'time') && Array.isArray(v) && v.length === 2) {
       out[q.field] = [dayjs(v[0]).format('YYYY-MM-DD HH:mm:ss'), dayjs(v[1]).format('YYYY-MM-DD HH:mm:ss')]
       continue
     }
