@@ -592,40 +592,61 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public R<Boolean> logout() {
         try {
-            // 获取当前登录用户ID
+            // 获取当前登录用户ID（使用安全方法，不会抛异常）
             Object uid = StpUtil.getLoginIdDefaultNull();
-            // 获取SaSession对象
-            SaSession session = StpUtil.getSession(false);
+            
             // 初始化用户ID和租户ID
             Long userId = null;
             Long tenantId = null;
-            // 从会话中提取用户ID和租户ID
-            if (session != null) {
-                // 提取用户ID
-                Object uidObj = session.get("LOGIN_USER_ID");
-                if (uidObj instanceof Long) {
-                    userId = (Long) uidObj;
-                } else if (uidObj instanceof Integer) {
-                    userId = ((Integer) uidObj).longValue();
-                } else if (uidObj instanceof String) {
-                    try { userId = Long.valueOf((String) uidObj); } catch (Exception ignored) { }
-                }
-                // 提取租户ID
-                Object tidObj = session.get("LOGIN_TENANT_ID");
-                if (tidObj instanceof Long) {
-                    tenantId = (Long) tidObj;
-                } else if (tidObj instanceof Integer) {
-                    tenantId = ((Integer) tidObj).longValue();
-                } else if (tidObj instanceof String) {
-                    try { tenantId = Long.valueOf((String) tidObj); } catch (Exception ignored) { }
-                }
+            String account = null;
+            String tokenValue = null;
+            
+            // 尝试获取Token值（可能为null）
+            try {
+                tokenValue = StpUtil.getTokenValue();
+            } catch (Exception e) {
+                log.debug("获取Token失败，可能用户未登录: {}", e.getMessage());
             }
+            
+            // 尝试获取SaSession对象
+            try {
+                SaSession session = StpUtil.getSession(false);
+                // 从会话中提取用户ID和租户ID
+                if (session != null) {
+                    // 提取用户ID
+                    Object uidObj = session.get("LOGIN_USER_ID");
+                    if (uidObj instanceof Long) {
+                        userId = (Long) uidObj;
+                    } else if (uidObj instanceof Integer) {
+                        userId = ((Integer) uidObj).longValue();
+                    } else if (uidObj instanceof String) {
+                        try { userId = Long.valueOf((String) uidObj); } catch (Exception ignored) { }
+                    }
+                    // 提取租户ID
+                    Object tidObj = session.get("LOGIN_TENANT_ID");
+                    if (tidObj instanceof Long) {
+                        tenantId = (Long) tidObj;
+                    } else if (tidObj instanceof Integer) {
+                        tenantId = ((Integer) tidObj).longValue();
+                    } else if (tidObj instanceof String) {
+                        try { tenantId = Long.valueOf((String) tidObj); } catch (Exception ignored) { }
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("获取Session失败，可能会话已过期: {}", e.getMessage());
+            }
+            
             // 获取账号
-            String account = uid == null ? null : String.valueOf(uid);
+            account = uid == null ? null : String.valueOf(uid);
 
             // 记录登出时间/原因（异步，不影响主流程）
-            String tokenValue = StpUtil.getTokenValue();
-            loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
+            if (StringUtils.hasText(tokenValue)) {
+                try {
+                    loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
+                } catch (Exception e) {
+                    log.warn("记录登出日志失败: {}", e.getMessage());
+                }
+            }
 
             // 删除Redis中的登录上下文
             if (StringUtils.hasText(tokenValue)) {
@@ -643,11 +664,13 @@ public class AuthServiceImpl implements AuthService {
                             tenantId = ctxTenantId;
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.debug("读取登录上下文失败: {}", e.getMessage());
                 }
                 try {
                     redis.delete(key);
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.warn("删除登录上下文失败: {}", e.getMessage());
                 }
             }
 
@@ -657,15 +680,23 @@ public class AuthServiceImpl implements AuthService {
                 try {
                     redis.delete(onlineKey);
                     log.info("删除在线用户缓存: userId={}, tenantId={}", userId, tenantId);
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.warn("删除在线用户缓存失败: {}", e.getMessage());
                 }
             }
-            // 调用SaToken登出
-            StpUtil.logout();
-            log.info("退出成功: account={}", uid);
+            
+            // 调用SaToken登出（即使未登录也不会报错）
+            try {
+                StpUtil.logout();
+            } catch (Exception e) {
+                log.debug("SaToken登出失败（可能未登录）: {}", e.getMessage());
+            }
+            
+            log.info("退出成功: account={}", account);
             return R.ok(true);
         } catch (Exception e) {
-            // 登出失败
+            // 记录详细的异常信息
+            log.error("登出过程发生异常", e);
             return R.fail(CommonPrompt.LOGOUT_FAILED);
         }
     }

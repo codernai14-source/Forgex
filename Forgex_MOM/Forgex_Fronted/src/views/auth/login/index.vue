@@ -66,12 +66,16 @@
               >
             </div>
           </div>
-          <div class="field lang-field" v-if="languages.length > 0">
-            <label class="cyber-label">{{ i18nT('common.login.languageLabel') }}</label>
+          <div class="form-tools">
+            <label class="remember">
+              <input type="checkbox" v-model="remember" />
+              <span>{{ i18nT('common.login.rememberMe') }}</span>
+            </label>
             <a-select
+              v-if="languages.length > 0"
               v-model:value="selectedLang"
               size="small"
-              class="lang-select"
+              class="lang-select-compact"
               :dropdownMatchSelectWidth="false"
               @change="onLangChange"
             >
@@ -82,12 +86,6 @@
                 </span>
               </a-select-option>
             </a-select>
-          </div>
-          <div class="form-tools">
-            <label class="remember">
-              <input type="checkbox" v-model="remember" />
-              <span>{{ i18nT('common.login.rememberMe') }}</span>
-            </label>
             <a class="forgot" href="#">{{ i18nT('common.login.forgotPassword') }}</a>
           </div>
           <button
@@ -695,77 +693,23 @@ watch(sliderOpen, async open => {
     0 0 24px rgba(211, 0, 197, 0.12);
 }
 
-.lang-select {
-  width: 100%;
-}
-
-.lang-select :deep(.ant-select-selector) {
-  background: rgba(15, 23, 42, 0.3) !important;
-  border-color: rgba(75, 85, 99, 0.5) !important;
-  color: #e5e7eb !important;
-  backdrop-filter: blur(8px);
-}
-
-.lang-select :deep(.ant-select-selector:hover) {
-  border-color: rgba(5, 217, 232, 0.6) !important;
-  background: rgba(15, 23, 42, 0.4) !important;
-}
-
-.lang-select :deep(.ant-select-focused .ant-select-selector) {
-  border-color: #05d9e8 !important;
-  box-shadow: 0 0 8px rgba(5, 217, 232, 0.45) !important;
-  background: rgba(15, 23, 42, 0.5) !important;
-}
-
-.lang-select :deep(.ant-select-selection-item) {
-  color: #e5e7eb !important;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.lang-select :deep(.ant-select-arrow) {
-  color: #9ca3af !important;
-}
-
-.lang-select :deep(.ant-select-dropdown) {
-  background: rgba(15, 23, 42, 0.95) !important;
-  border: 1px solid rgba(5, 217, 232, 0.45) !important;
-  box-shadow: 0 0 16px rgba(5, 217, 232, 0.25) !important;
-  backdrop-filter: blur(12px);
-}
-
-.lang-select :deep(.ant-select-item) {
-  color: #e5e7eb !important;
-  background: transparent !important;
-}
-
-.lang-select :deep(.ant-select-item:hover) {
-  background: rgba(5, 217, 232, 0.15) !important;
-}
-
-.lang-select :deep(.ant-select-item-option-selected) {
-  background: rgba(5, 217, 232, 0.25) !important;
-  color: #05d9e8 !important;
-}
-
 .lang-option {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .lang-emoji {
-  width: 20px;
-  height: 20px;
-  line-height: 20px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
   text-align: center;
-  font-size: 16px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .lang-label {
-  line-height: 20px;
+  line-height: 18px;
   flex: 1;
 }
 .cyber-form {
@@ -827,6 +771,7 @@ watch(sliderOpen, async open => {
   align-items: center;
   font-size: 13px;
   color: #cfd8dc;
+  gap: 12px;
 }
 .remember {
   display: flex;
@@ -838,9 +783,71 @@ watch(sliderOpen, async open => {
   height: 16px;
   accent-color: #05d9e8;
 }
+
+.lang-select-compact {
+  width: 120px !important;
+  flex-shrink: 0;
+}
+
+.lang-select-compact :deep(.ant-select-selector) {
+  background: rgba(15, 23, 42, 0.3) !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
+  color: #e5e7eb !important;
+  backdrop-filter: blur(8px);
+  height: 28px !important;
+  padding: 0 8px !important;
+}
+
+.lang-select-compact :deep(.ant-select-selector:hover) {
+  border-color: rgba(5, 217, 232, 0.6) !important;
+  background: rgba(15, 23, 42, 0.4) !important;
+}
+
+.lang-select-compact :deep(.ant-select-focused .ant-select-selector) {
+  border-color: #05d9e8 !important;
+  box-shadow: 0 0 8px rgba(5, 217, 232, 0.45) !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+
+.lang-select-compact :deep(.ant-select-selection-item) {
+  color: #e5e7eb !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 26px !important;
+  font-size: 13px;
+}
+
+.lang-select-compact :deep(.ant-select-arrow) {
+  color: #9ca3af !important;
+}
+
+.lang-select-compact :deep(.ant-select-dropdown) {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(5, 217, 232, 0.45) !important;
+  box-shadow: 0 0 16px rgba(5, 217, 232, 0.25) !important;
+  backdrop-filter: blur(12px);
+}
+
+.lang-select-compact :deep(.ant-select-item) {
+  color: #e5e7eb !important;
+  background: transparent !important;
+  font-size: 13px;
+}
+
+.lang-select-compact :deep(.ant-select-item:hover) {
+  background: rgba(5, 217, 232, 0.15) !important;
+}
+
+.lang-select-compact :deep(.ant-select-item-option-selected) {
+  background: rgba(5, 217, 232, 0.25) !important;
+  color: #05d9e8 !important;
+}
+
 .forgot {
   color: #05d9e8;
   text-decoration: none;
+  white-space: nowrap;
 }
 .forgot:hover {
   color: #d300c5;

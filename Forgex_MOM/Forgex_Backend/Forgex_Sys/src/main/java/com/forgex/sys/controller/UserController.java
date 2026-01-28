@@ -250,7 +250,7 @@ public class UserController {
      * 重置admin用户密码（临时接口）
      */
     @RequirePerm("sys:user:resetPwd")
-    @GetMapping("/resetAdminPassword")
+    @PostMapping("/resetAdminPassword")
     public R<Void> resetAdminPassword() {
         Long adminId = userService.getUserIdByAccount("admin");
         if (adminId == null) {

@@ -170,14 +170,14 @@
           <div v-for="(content, index) in formData.contents" :key="index" class="content-item">
             <a-card size="small">
               <template #title>
-                <span>{{ getPlatformName(content.platform) || `内容配置 ${index + 1}` }}</span>
+                <span>{{ getPlatformName(formData.contents[index].platform) || `内容配置 ${index + 1}` }}</span>
               </template>
               <template #extra>
                 <a-button type="link" danger size="small" @click="handleRemoveContent(index)">删除</a-button>
               </template>
               <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
                 <a-form-item label="消息平台" required>
-                  <a-select v-model:value="content.platform" placeholder="请选择消息平台">
+                  <a-select v-model:value="formData.contents[index].platform" placeholder="请选择消息平台">
                     <a-select-option value="INTERNAL">站内消息</a-select-option>
                     <a-select-option value="WECHAT">企业微信</a-select-option>
                     <a-select-option value="SMS">短信</a-select-option>
@@ -186,7 +186,7 @@
                 </a-form-item>
                 <a-form-item label="消息标题">
                   <I18nInput
-                    v-model="content.contentTitleI18nJson"
+                    v-model="formData.contents[index].contentTitleI18nJson"
                     mode="simple"
                     placeholder="请输入消息标题（可选）"
                   />
@@ -198,13 +198,13 @@
                 </a-form-item>
                 <a-form-item label="消息内容" required>
                   <PlaceholderInput
-                    v-model="content.contentBodyI18nJson"
+                    v-model="formData.contents[index].contentBodyI18nJson"
                     placeholder="请输入消息内容"
                     :rows="6"
                   />
                 </a-form-item>
                 <a-form-item label="跳转链接">
-                  <a-input v-model:value="content.linkUrl" placeholder="请输入跳转链接（可选）" />
+                  <a-input v-model:value="formData.contents[index].linkUrl" placeholder="请输入跳转链接（可选）" />
                   <template #extra>
                     <span style="color: #999; font-size: 12px;">
                       用户点击消息后跳转的链接地址
@@ -249,7 +249,7 @@ import {
   saveMessageTemplate,
   deleteMessageTemplate,
   deleteBatchMessageTemplate
-} from '../../api/message'
+} from '@/api/message'
 
 // 查询表单
 const searchForm = reactive({
@@ -662,4 +662,3 @@ onMounted(() => {
   }
 }
 </style>
-

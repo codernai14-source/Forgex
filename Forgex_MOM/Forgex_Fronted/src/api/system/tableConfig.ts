@@ -110,7 +110,10 @@ export function getTableConfigList(params: TableConfigListParams) {
 }
 
 export function getTableConfigDetail(id: number) {
-  return http.get<TableConfigDetail>(`/sys/common/table/config/${id}`)
+  console.log('API: getTableConfigDetail 被调用，ID:', id, '类型:', typeof id)
+  const url = `/sys/common/table/config/info`
+  console.log('请求URL:', url)
+  return http.post<TableConfigDetail>(url, { id })
 }
 
 export function createTableConfig(data: TableConfigDetail) {
@@ -118,17 +121,17 @@ export function createTableConfig(data: TableConfigDetail) {
 }
 
 export function updateTableConfig(data: TableConfigDetail) {
-  return http.put<void>(`/sys/common/table/config/${data.id}`, data)
+  return http.post<void>('/sys/common/table/config/update', data)
 }
 
 export function deleteTableConfig(id: number) {
-  return http.delete<void>(`/sys/common/table/config/${id}`)
+  return http.post<void>('/sys/common/table/config/delete', { id })
 }
 
 export function batchDeleteTableConfig(ids: number[]) {
-  return http.delete<void>('/sys/common/table/config/batch', { data: ids })
+  return http.post<void>('/sys/common/table/config/batchDelete', { ids })
 }
 
 export function toggleTableConfigStatus(id: number, enabled: boolean) {
-  return http.put<void>(`/sys/common/table/config/${id}/status`, { enabled })
+  return http.post<void>('/sys/common/table/config/updateStatus', { id, enabled })
 }

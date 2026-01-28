@@ -1,4 +1,4 @@
-import http from '@/utils/http'
+import http from '@/api/http'
 
 /**
  * 操作日志 API
@@ -24,4 +24,3 @@ export const getOperationLog = (id: number) => {
 export const exportOperationLog = (params: any) => {
   return http.download('/sys/operationLog/export', params)
 }
-

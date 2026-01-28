@@ -15,35 +15,8 @@
         </a-form-item>
 
         <a-form-item :label="t('system.config.systemLogo')" name="systemLogo">
-          <div class="logo-upload-wrapper">
-            <!-- 长方形logo预览区域，类似头像上传的预览效果 -->
-            <div class="logo-preview-avatar">
-              <img v-if="systemLogoUrl" :src="systemLogoUrl" alt="system logo" />
-              <div v-else class="logo-upload-placeholder">
-                <SettingOutlined class="logo-upload-icon" />
-                <div class="logo-upload-text">{{ t('common.uploadLogo') }}</div>
-              </div>
-            </div>
-            
-            <div class="logo-upload-actions">
-              <a-upload
-                v-model:file-list="logoFileList"
-                :before-upload="handleLogoBeforeUpload"
-                :custom-request="handleLogoUpload"
-                :show-upload-list="false"
-                accept="image/*"
-              >
-                <a-button type="primary" :loading="logoUploading">
-                  <UploadOutlined /> {{ logoUploading ? t('common.uploading') : t('common.uploadLogo') }}
-                </a-button>
-              </a-upload>
-              <a-button v-if="formData.systemLogo" @click="handleLogoRemove" style="margin-left: 8px;">
-                <DeleteOutlined /> {{ t('common.remove') }}
-              </a-button>
-            </div>
-          </div>
-          <div style="margin-top: 8px; font-size: 12px; color: #9ca3af;">
-            {{ t('system.config.logoTips') }}
+          <div class="system-logo-upload">
+            <AvatarUpload v-model="formData.systemLogo" @success="handleLogoUploadSuccess" />
           </div>
         </a-form-item>
 
@@ -225,36 +198,6 @@
         </div>
       </div>
     </a-modal>
-
-    <!-- 图片剪裁弹窗 - 复用头像上传的vue-cropper方案 -->
-    <a-modal
-      v-model:open="cropVisible"
-      :title="t('common.cropImage')"
-      width="600px"
-      @ok="handleCropConfirm"
-      @cancel="handleCropCancel"
-      :confirmLoading="logoUploading"
-      destroyOnClose
-    >
-      <div class="crop-content">
-        <vue-cropper
-          ref="cropperRef"
-          :img="cropperImg"
-          :outputSize="1"
-          outputType="png"
-          :info="true"
-          :full="false"
-          :fixed="true"
-          :fixedNumber="[1, 1]"
-          :canMove="true"
-          :canMoveBox="true"
-          :centerBox="true"
-          :autoCrop="true"
-          :autoCropWidth="200"
-          :autoCropHeight="200"
-        ></vue-cropper>
-      </div>
-    </a-modal>
   </div>
 </template>
 
@@ -267,27 +210,17 @@ import { getSystemBasicConfig, setSystemBasicConfig } from '../../../api/system/
 import { uploadFile } from '../../../api/system/file'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import type { UploadFile } from 'ant-design-vue'
-// 复用头像上传的剪裁组件
-import 'vue-cropper/dist/index.css'
-import { VueCropper } from 'vue-cropper'
+import AvatarUpload from '@/components/AvatarUpload.vue'
 
 const { t } = useI18n()
 
 const loading = ref(false)
 const saving = ref(false)
-const logoUploading = ref(false)
 const videoUploading = ref(false)
 const bgImageUploading = ref(false)
 const previewVisible = ref(false)
 
-// 图片剪裁相关 - 复用头像上传的vue-cropper方案
-const cropVisible = ref(false)
-const cropperImg = ref('')
-const cropperRef = ref()
-const currentLogoFile = ref<File | null>(null)
-
 // 文件列表
-const logoFileList = ref<UploadFile[]>([])
 const videoFileList = ref<UploadFile[]>([])
 const bgImageFileList = ref<UploadFile[]>([])
 
@@ -321,6 +254,22 @@ function formatMediaUrl(value: string): string {
     return url.startsWith('/api') ? url : `/api${url}`
   }
   return `/api/${url}`
+}
+
+/**
+ * Logo上传成功回调
+ * @param url 上传成功后的文件URL
+ */
+async function handleLogoUploadSuccess(url: string) {
+  try {
+    // 自动保存配置
+    await setSystemBasicConfig(formData.value)
+    message.success(t('common.uploadSuccess'))
+    previewConfig.value = { ...formData.value }
+  } catch (e: any) {
+    console.error('自动保存配置失败:', e)
+    message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
+  }
 }
 
 const systemLogoUrl = computed(() => formatMediaUrl(formData.value.systemLogo))
@@ -372,7 +321,6 @@ function handleReset() {
     secondaryColor: '#ff2a6d'
   }
   // 清空文件列表
-  logoFileList.value = []
   videoFileList.value = []
   bgImageFileList.value = []
   message.info(t('common.resetSuccess'))
@@ -381,12 +329,6 @@ function handleReset() {
 function handlePreview() {
   previewConfig.value = { ...formData.value }
   previewVisible.value = true
-}
-
-// 处理Logo删除
-function handleLogoRemove() {
-  formData.value.systemLogo = ''
-  logoFileList.value = []
 }
 
 // 处理视频删除
@@ -399,107 +341,6 @@ function handleVideoRemove() {
 function handleBgImageRemove() {
   formData.value.loginBackgroundImage = ''
   bgImageFileList.value = []
-}
-
-function handleLogoBeforeUpload(file: File) {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isImage) {
-    message.error(t('common.imageOnly'))
-    return false
-  }
-  if (!isLt2M) {
-    message.error(t('common.sizeLimit'))
-    return false
-  }
-  
-  // 读取文件显示在裁剪框，复用头像上传的逻辑
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    cropperImg.value = e.target?.result as string
-    currentLogoFile.value = file
-    cropVisible.value = true
-  }
-  reader.readAsDataURL(file)
-  
-  return false // 阻止自动上传，使用剪裁后的图片上传
-}
-
-async function handleLogoUpload(options: any) {
-  // 这个函数现在不会被直接调用，因为我们在beforeUpload中返回了false
-  // 所有上传都通过剪裁确认后处理
-}
-
-// 处理剪裁取消
-function handleCropCancel() {
-  cropVisible.value = false
-  cropperImg.value = ''
-  currentLogoFile.value = null
-}
-
-// 处理剪裁确认 - 复用头像上传的vue-cropper逻辑
-async function handleCropConfirm() {
-  if (!cropperRef.value) return
-  
-  logoUploading.value = true
-  
-  try {
-    // 使用vue-cropper的API获取剪裁后的blob
-    cropperRef.value.getCropBlob(async (blob: Blob) => {
-      if (blob && currentLogoFile.value) {
-        // 创建新的File对象
-        const fileName = currentLogoFile.value?.name || 'logo.png'
-        const file = new File([blob], fileName, { type: 'image/png' })
-        
-        // 上传剪裁后的文件，使用silentError避免http拦截器自动显示消息
-        const fileUrl = await uploadFile(file, { silentError: true })
-        
-        // 更新logo路径，触发预览和系统logo更新
-        formData.value.systemLogo = fileUrl
-        
-        // 更新文件列表
-        logoFileList.value = [{ 
-          uid: String((currentLogoFile.value as any).uid || Date.now()), 
-          name: currentLogoFile.value.name, 
-          status: 'done', 
-          url: fileUrl 
-        }]
-        
-        // 自动保存配置
-        try {
-          await setSystemBasicConfig(formData.value)
-          message.success(t('common.uploadSuccess'))
-        } catch (e: any) {
-          console.error('自动保存配置失败:', e)
-          message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
-        }
-        
-        // 关闭弹窗并重置状态
-        cropVisible.value = false
-        cropperImg.value = ''
-        currentLogoFile.value = null
-      }
-    })
-  } catch (e: any) {
-    console.error('Logo剪裁上传失败:', e)
-    message.error(t('common.uploadFailed'))
-    
-    // 更新文件列表为错误状态
-    if (currentLogoFile.value) {
-      logoFileList.value = [{ 
-        uid: currentLogoFile.value.uid, 
-        name: currentLogoFile.value.name, 
-        status: 'error' 
-      }]
-    }
-    
-    // 关闭弹窗并重置状态
-    cropVisible.value = false
-    cropperImg.value = ''
-    currentLogoFile.value = null
-  } finally {
-    logoUploading.value = false
-  }
 }
 
 function handleVideoBeforeUpload(file: File) {
@@ -598,70 +439,32 @@ onMounted(() => {
   overflow: auto;
 }
 
-/* Logo上传预览样式 */
-.logo-upload-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+/* 系统Logo上传样式 - 复用租户管理的样式 */
+.system-logo-upload {
+  display: inline-block;
 }
 
-/* 长方形logo预览区域样式 */
-.logo-preview-avatar {
-  width: 128px;
-  height: 64px;
-  border: 1px solid #d9d9d9;
+.system-logo-upload :deep(.avatar-upload) {
+  align-items: flex-start;
+}
+
+.system-logo-upload :deep(.avatar-upload .avatar-uploader .ant-upload) {
+  width: 160px;
+  height: 80px;
   border-radius: 8px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f5f5f5;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.logo-preview-avatar:hover {
-  border-color: #1890ff;
-  box-shadow: 0 0 8px rgba(24, 144, 255, 0.2);
-}
-
-.logo-preview-avatar img {
+.system-logo-upload :deep(.avatar-upload .avatar-image) {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  background-color: #fafafa;
 }
 
-/* 上传占位符样式 */
-.logo-upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: #9ca3af;
-}
-
-.logo-upload-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.logo-upload-text {
-  font-size: 14px;
-}
-
-/* 上传操作按钮区域 */
-.logo-upload-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 剪裁弹窗样式 - 复用头像上传的vue-cropper样式 */
-.crop-content {
-  height: 400px;
-  width: 100%;
+.system-logo-upload :deep(.avatar-upload .upload-tips) {
+  margin-top: 8px;
+  text-align: left;
 }
 
 .preview-container {

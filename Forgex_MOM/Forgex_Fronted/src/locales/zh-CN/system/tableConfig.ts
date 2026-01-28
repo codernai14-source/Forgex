@@ -26,6 +26,7 @@ export default {
   edit: '编辑配置',
   addColumn: '添加列',
   columnRequired: '请至少添加一列配置',
+  loadDetailFailed: '加载配置详情失败',
   form: {
     tableCode: '请输入表格代码',
     tableName: '请输入表格名称',

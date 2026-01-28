@@ -80,47 +80,29 @@ router.beforeEach(async (to, from, next) => {
   const tenantId = sessionStorage.getItem('tenantId')
   const permissionStore = usePermissionStore()
 
-
   // 如果访问登录页或初始化页，直接放行
   if (to.path === '/login' || to.path === '/init') {
-
     next()
     return
   }
 
   // 如果未登录，跳转到登录页
   if (!account || !tenantId) {
-
     next('/login')
     return
   }
 
-  // 如果动态路由为空且不在恢复过程中，尝试从 Pinia store 恢复
+  // 如果动态路由为空且不在恢复过程中，尝试恢复路由
   if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
-
     isRestoringRoutes = true
 
     try {
-      try {
-
-        const payload = await getRoutes({ account, tenantId })
-        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules) && payload.routes.length > 0) {
-
-          await injectDynamicRoutes(payload)
-          isRestoringRoutes = false
-          next({ ...to, replace: true })
-          return
-        }
-      } catch (e) {
-
-      }
-
+      // 优先从缓存恢复（避免不必要的API调用）
       const cached = permissionStore.restoreRoutesAndModules()
 
       if (cached.routes.length > 0 && cached.modules.length > 0) {
-
-
-
+        console.log('[Guard] Restoring routes from cache')
+        
         // 重新注入动态路由
         await injectDynamicRoutes({
           routes: cached.routes,
@@ -131,15 +113,35 @@ router.beforeEach(async (to, from, next) => {
         // 路由已恢复，重新导航到目标路径
         next({ ...to, replace: true })
         return
-      } else {
-
-        isRestoringRoutes = false
-        // 没有缓存的路由，需要重新登录
-        next('/login')
-        return
       }
-    } catch (error) {
 
+      // 如果缓存为空，尝试从后端获取
+      console.log('[Guard] No cached routes, fetching from backend')
+      try {
+        const payload = await getRoutes({ account, tenantId })
+        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules) && payload.routes.length > 0) {
+          console.log('[Guard] Routes fetched from backend successfully')
+          
+          // 存储权限信息
+          if (payload.buttons) {
+            permissionStore.setPermissions(payload.buttons)
+          }
+          
+          await injectDynamicRoutes(payload)
+          isRestoringRoutes = false
+          next({ ...to, replace: true })
+          return
+        }
+      } catch (e) {
+        console.error('[Guard] Failed to fetch routes from backend:', e)
+      }
+
+      // 如果都失败了，跳转到登录页
+      isRestoringRoutes = false
+      next('/login')
+      return
+    } catch (error) {
+      console.error('[Guard] Route restoration failed:', error)
       isRestoringRoutes = false
       next('/login')
       return
@@ -148,12 +150,11 @@ router.beforeEach(async (to, from, next) => {
 
   // 如果访问 /workspace 根路径，重定向到系统管理主页
   if (to.path === '/workspace' || to.path === '/workspace/') {
-
     next('/workspace/sys/dashboard')
     return
   }
 
-  // 如果已登录，直接放行（动态路由已经在登录时注入）
+  // 如果已登录且路由已注入，直接放行
   next()
 })
 

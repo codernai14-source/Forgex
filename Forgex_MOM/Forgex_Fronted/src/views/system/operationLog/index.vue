@@ -266,7 +266,10 @@ const columns = [
 const detailVisible = ref(false)
 const currentRecord = ref<any>(null)
 
-// 查询数据
+/**
+ * 查询数据
+ * <p>根据查询条件分页查询操作日志数据。</p>
+ */
 const loadData = async () => {
   loading.value = true
   try {
@@ -282,14 +285,11 @@ const loadData = async () => {
       params.endTime = dayjs(timeRange.value[1]).format('YYYY-MM-DD HH:mm:ss')
     }
     
+    // http拦截器已经处理了响应，成功时直接返回data字段（即Page对象）
     const res = await pageOperationLog(params)
-    if (res.code === 200) {
-      dataSource.value = res.data.records || []
-      // 确保 total 是数字类型
-      pagination.total = typeof res.data.total === 'number' ? res.data.total : parseInt(String(res.data.total) || '0', 10)
-    } else {
-      message.error(res.message || '查询失败')
-    }
+    dataSource.value = res.records || []
+    // 确保 total 是数字类型
+    pagination.total = typeof res.total === 'number' ? res.total : parseInt(String(res.total) || '0', 10)
   } catch (error) {
     message.error('查询失败')
     console.error(error)

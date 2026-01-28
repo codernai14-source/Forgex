@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    v-model:open="visible"
+    v-model:open="modalOpen"
     title="模板预览"
     width="800px"
     :footer="null"
@@ -101,6 +101,11 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:visible': [value: boolean]
 }>()
+
+const modalOpen = computed({
+  get: () => props.visible,
+  set: (value: boolean) => emit('update:visible', value)
+})
 
 const activeTab = ref('INTERNAL')
 const currentTime = ref(new Date().toLocaleString('zh-CN'))

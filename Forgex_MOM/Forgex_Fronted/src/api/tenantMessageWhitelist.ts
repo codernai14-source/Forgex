@@ -1,53 +1,70 @@
-import http from '@/utils/http'
+import http from '@/api/http'
 
 /**
  * 租户消息白名单 API
  */
 
 /**
- * 分页查询租户消息白名单
+ * 分页查询租户消息白名单。
+ *
+ * @param params 查询参数（current/size/senderTenantId/receiverTenantId/enabled）
+ * @returns 白名单分页结果
  */
 export const pageTenantMessageWhitelist = (params: any) => {
-  return http.post('/sys/tenant-message-whitelist/page', params)
+  return http.get('/sys/tenant-message-whitelist/page', { params })
 }
 
 /**
- * 根据ID查询租户消息白名单
+ * 根据ID查询租户消息白名单。
+ *
+ * @param id 白名单ID
+ * @returns 白名单配置
  */
 export const getTenantMessageWhitelist = (id: number) => {
-  return http.post('/sys/tenant-message-whitelist/get', { id })
+  return http.get(`/sys/tenant-message-whitelist/${id}`)
 }
 
 /**
- * 保存租户消息白名单（新增或修改）
+ * 保存租户消息白名单（新增或修改）。
+ *
+ * @param data 白名单数据
+ * @returns 是否成功
  */
 export const saveTenantMessageWhitelist = (data: any) => {
-  return http.post('/sys/tenant-message-whitelist/save', data)
+  if (data && data.id) {
+    return http.put('/sys/tenant-message-whitelist', data)
+  }
+
+  return http.post('/sys/tenant-message-whitelist', data)
 }
 
 /**
- * 删除租户消息白名单
+ * 删除租户消息白名单。
+ *
+ * @param id 白名单ID
+ * @returns 是否成功
  */
 export const deleteTenantMessageWhitelist = (id: number) => {
-  return http.post('/sys/tenant-message-whitelist/delete', { id })
+  return http.delete(`/sys/tenant-message-whitelist/${id}`)
 }
 
 /**
- * 批量删除租户消息白名单
- */
-export const batchDeleteTenantMessageWhitelist = (ids: number[]) => {
-  return http.post('/sys/tenant-message-whitelist/batchDelete', { ids })
-}
-
-/**
- * 启用/禁用租户消息白名单
+ * 启用/禁用租户消息白名单。
+ *
+ * @param id 白名单ID
+ * @param enabled 是否启用
+ * @returns 是否成功
  */
 export const toggleEnabled = (id: number, enabled: boolean) => {
-  return http.post(`/sys/tenant-message-whitelist/${id}/enabled`, { enabled })
+  return http.put(`/sys/tenant-message-whitelist/${id}/enabled`, {}, { params: { enabled } })
 }
 
 /**
- * 检查跨租户消息权限
+ * 检查跨租户消息权限。
+ *
+ * @param senderTenantId 发送方租户ID
+ * @param receiverTenantId 接收方租户ID
+ * @returns 是否有权限
  */
 export const checkCrossTenantPermission = (senderTenantId: number, receiverTenantId: number) => {
   return http.get('/sys/tenant-message-whitelist/check-permission', {

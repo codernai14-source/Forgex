@@ -381,10 +381,21 @@ const openAddDialog = () => {
   dialogVisible.value = true
 }
 
-const openEditDialog = (record: TableConfigItem) => {
+const openEditDialog = async (record: TableConfigItem) => {
+  console.log('打开编辑对话框，记录:', record)
+  console.log('记录ID:', record.id)
+  
+  // 先设置编辑状态和ID
   isEdit.value = true
   currentConfigId.value = record.id
+  console.log('设置 currentConfigId:', currentConfigId.value)
+  
+  // 等待下一个 tick，确保 props 已经更新
+  await nextTick()
+  
+  // 再打开对话框
   dialogVisible.value = true
+  console.log('对话框已打开')
 }
 
 const handleFormSuccess = () => {

@@ -1,4 +1,4 @@
-import http from './http'
+import http, { silentHttp } from './http'
 
 /**
  * 消息模板API
@@ -29,9 +29,9 @@ export function deleteBatchMessageTemplate(ids: number[]) {
   return http.post('/sys/message-template/delete-batch', ids)
 }
 
-// 获取未读消息数量
+// 获取未读消息数量（使用静默模式，不显示全局遮罩）
 export function getUnreadMessageCount() {
-  return http.post('/sys/message/unread-count')
+  return silentHttp.post('/sys/message/unread-count')
 }
 
 // 分页查询消息列表

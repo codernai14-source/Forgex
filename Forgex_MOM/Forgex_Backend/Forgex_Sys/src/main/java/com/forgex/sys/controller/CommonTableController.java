@@ -15,6 +15,7 @@ import com.forgex.common.domain.entity.table.FxTableColumnConfig;
 import com.forgex.common.mapper.table.FxTableColumnConfigMapper;
 import com.forgex.common.mapper.table.FxTableConfigMapper;
 import com.forgex.sys.domain.param.TableConfigGetParam;
+import com.forgex.sys.domain.param.TableConfigBatchDeleteParam;
 import com.forgex.sys.domain.vo.TableConfigDetailVO;
 import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
@@ -67,9 +68,17 @@ public class CommonTableController {
 
     /**
      * 获取表格配置详情（包含列配置）
+     * 
+     * @param param 查询参数，包含id
+     * @return 表格配置详情VO
      */
-    @GetMapping("/{id}")
-    public R<TableConfigDetailVO> getDetail(@PathVariable Long id) {
+    @PostMapping("/info")
+    public R<TableConfigDetailVO> info(@RequestBody TableConfigGetParam param) {
+        if (param == null || param.getId() == null) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
+        }
+        
+        Long id = param.getId();
         Long tenantId = TenantContext.get();
         
         // 查询表格配置
@@ -103,6 +112,21 @@ public class CommonTableController {
         vo.setColumns(columns);
         
         return R.ok(vo);
+    }
+
+    /**
+     * 获取表格配置详情（包含列配置）- RESTful风格接口（保留兼容）
+     * 
+     * @param id 配置ID
+     * @return 表格配置详情VO
+     * @deprecated 建议使用 POST /info 接口
+     */
+    @GetMapping("/{id}")
+    @Deprecated
+    public R<TableConfigDetailVO> getDetail(@PathVariable Long id) {
+        TableConfigGetParam param = new TableConfigGetParam();
+        param.setId(id);
+        return info(param);
     }
 
     /**
@@ -149,9 +173,17 @@ public class CommonTableController {
 
     /**
      * 更新表格配置
+     * 
+     * @param vo 表格配置详情VO
+     * @return 操作结果
      */
-    @PutMapping("/{id}")
-    public R<Void> update(@PathVariable Long id, @RequestBody TableConfigDetailVO vo) {
+    @PostMapping("/update")
+    public R<Void> update(@RequestBody TableConfigDetailVO vo) {
+        if (vo == null || vo.getId() == null) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
+        }
+        
+        Long id = vo.getId();
         Long tenantId = TenantContext.get();
         String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
@@ -195,10 +227,33 @@ public class CommonTableController {
     }
 
     /**
-     * 删除表格配置
+     * 更新表格配置 - RESTful风格接口（保留兼容）
+     * 
+     * @param id 配置ID
+     * @param vo 表格配置详情VO
+     * @return 操作结果
+     * @deprecated 建议使用 POST /update 接口
      */
-    @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
+    @PutMapping("/{id}")
+    @Deprecated
+    public R<Void> updateById(@PathVariable Long id, @RequestBody TableConfigDetailVO vo) {
+        vo.setId(id);
+        return update(vo);
+    }
+
+    /**
+     * 删除表格配置
+     * 
+     * @param param 查询参数，包含id
+     * @return 操作结果
+     */
+    @PostMapping("/delete")
+    public R<Void> delete(@RequestBody TableConfigGetParam param) {
+        if (param == null || param.getId() == null) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
+        }
+        
+        Long id = param.getId();
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
@@ -221,26 +276,69 @@ public class CommonTableController {
     }
 
     /**
-     * 批量删除表格配置
+     * 删除表格配置 - RESTful风格接口（保留兼容）
+     * 
+     * @param id 配置ID
+     * @return 操作结果
+     * @deprecated 建议使用 POST /delete 接口
      */
-    @DeleteMapping("/batch")
-    public R<Void> batchDelete(@RequestBody List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
+    @DeleteMapping("/{id}")
+    @Deprecated
+    public R<Void> deleteById(@PathVariable Long id) {
+        TableConfigGetParam param = new TableConfigGetParam();
+        param.setId(id);
+        return delete(param);
+    }
+
+    /**
+     * 批量删除表格配置
+     * 
+     * @param param 查询参数，包含ids列表
+     * @return 操作结果
+     */
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody TableConfigBatchDeleteParam param) {
+        if (param == null || param.getIds() == null || param.getIds().isEmpty()) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID列表不能为空");
         }
         
-        for (Long id : ids) {
-            delete(id);
+        for (Long id : param.getIds()) {
+            TableConfigGetParam deleteParam = new TableConfigGetParam();
+            deleteParam.setId(id);
+            delete(deleteParam);
         }
         
         return R.ok();
     }
 
     /**
-     * 更新表格配置状态
+     * 批量删除表格配置 - RESTful风格接口（保留兼容）
+     * 
+     * @param ids ID列表
+     * @return 操作结果
+     * @deprecated 建议使用 POST /batchDelete 接口
      */
-    @PutMapping("/{id}/status")
-    public R<Void> updateStatus(@PathVariable Long id, @RequestBody TableConfigGetParam param) {
+    @DeleteMapping("/batch")
+    @Deprecated
+    public R<Void> batchDeleteByIds(@RequestBody List<Long> ids) {
+        TableConfigBatchDeleteParam param = new TableConfigBatchDeleteParam();
+        param.setIds(ids);
+        return batchDelete(param);
+    }
+
+    /**
+     * 更新表格配置状态
+     * 
+     * @param param 查询参数，包含id和enabled
+     * @return 操作结果
+     */
+    @PostMapping("/updateStatus")
+    public R<Void> updateStatus(@RequestBody TableConfigGetParam param) {
+        if (param == null || param.getId() == null) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
+        }
+        
+        Long id = param.getId();
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
@@ -252,6 +350,21 @@ public class CommonTableController {
         tableConfigMapper.updateById(config);
         
         return R.ok();
+    }
+
+    /**
+     * 更新表格配置状态 - RESTful风格接口（保留兼容）
+     * 
+     * @param id 配置ID
+     * @param param 查询参数，包含enabled
+     * @return 操作结果
+     * @deprecated 建议使用 POST /updateStatus 接口
+     */
+    @PutMapping("/{id}/status")
+    @Deprecated
+    public R<Void> updateStatusById(@PathVariable Long id, @RequestBody TableConfigGetParam param) {
+        param.setId(id);
+        return updateStatus(param);
     }
 
     private String currentUser() {

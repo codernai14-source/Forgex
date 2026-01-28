@@ -188,10 +188,9 @@ import {
   pageTenantMessageWhitelist,
   saveTenantMessageWhitelist,
   deleteTenantMessageWhitelist,
-  batchDeleteTenantMessageWhitelist,
   toggleEnabled
 } from '@/api/tenantMessageWhitelist'
-import { pageTenant } from '@/api/tenant'
+import { listTenant } from '@/api/system/tenant'
 
 // 查询表单
 const queryForm = reactive({
@@ -275,10 +274,8 @@ const tenantList = ref([])
 // 加载租户列表
 const loadTenantList = async () => {
   try {
-    const res = await pageTenant({ current: 1, size: 1000 })
-    if (res.code === 200) {
-      tenantList.value = res.data.records || []
-    }
+    const res = await listTenant({})
+    tenantList.value = res || []
   } catch (error) {
     console.error('加载租户列表失败:', error)
   }
@@ -294,12 +291,8 @@ const loadData = async () => {
       ...queryForm
     }
     const res = await pageTenantMessageWhitelist(params)
-    if (res.code === 200) {
-      dataSource.value = res.data.records || []
-      pagination.total = res.data.total || 0
-    } else {
-      message.error(res.message || '查询失败')
-    }
+    dataSource.value = res.records || []
+    pagination.total = res.total || 0
   } catch (error) {
     message.error('查询失败')
     console.error(error)
@@ -375,14 +368,10 @@ const handleSubmit = async () => {
   }
 
   try {
-    const res = await saveTenantMessageWhitelist(formData)
-    if (res.code === 200) {
-      message.success(isEdit.value ? '修改成功' : '新增成功')
-      modalVisible.value = false
-      loadData()
-    } else {
-      message.error(res.message || '操作失败')
-    }
+    await saveTenantMessageWhitelist(formData)
+    message.success(isEdit.value ? '修改成功' : '新增成功')
+    modalVisible.value = false
+    loadData()
   } catch (error) {
     message.error('操作失败')
     console.error(error)
@@ -397,13 +386,9 @@ const handleCancel = () => {
 // 删除
 const handleDelete = async (record: any) => {
   try {
-    const res = await deleteTenantMessageWhitelist(record.id)
-    if (res.code === 200) {
-      message.success('删除成功')
-      loadData()
-    } else {
-      message.error(res.message || '删除失败')
-    }
+    await deleteTenantMessageWhitelist(record.id)
+    message.success('删除成功')
+    loadData()
   } catch (error) {
     message.error('删除失败')
     console.error(error)
@@ -417,14 +402,13 @@ const handleBatchDelete = () => {
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 条白名单配置吗？`,
     onOk: async () => {
       try {
-        const res = await batchDeleteTenantMessageWhitelist(selectedRowKeys.value)
-        if (res.code === 200) {
-          message.success('删除成功')
-          selectedRowKeys.value = []
-          loadData()
-        } else {
-          message.error(res.message || '删除失败')
+        for (const id of selectedRowKeys.value) {
+          await deleteTenantMessageWhitelist(id)
         }
+
+        message.success('删除成功')
+        selectedRowKeys.value = []
+        loadData()
       } catch (error) {
         message.error('删除失败')
         console.error(error)
@@ -436,13 +420,9 @@ const handleBatchDelete = () => {
 // 启用/禁用
 const handleToggleEnabled = async (record: any, checked: boolean) => {
   try {
-    const res = await toggleEnabled(record.id, checked)
-    if (res.code === 200) {
-      message.success(checked ? '启用成功' : '禁用成功')
-      record.enabled = checked
-    } else {
-      message.error(res.message || '操作失败')
-    }
+    await toggleEnabled(record.id, checked)
+    message.success(checked ? '启用成功' : '禁用成功')
+    record.enabled = checked
   } catch (error) {
     message.error('操作失败')
     console.error(error)
@@ -461,4 +441,3 @@ onMounted(() => {
   padding: 16px;
 }
 </style>
-
