@@ -98,7 +98,7 @@ public class SysDepartmentController {
      * @return 操作结果
      */
     @PostMapping("/create")
-    @RequirePerm("sys:department:create")
+    @RequirePerm("sys:dept:add")
     public R<Void> create(@Validated @RequestBody SysDepartmentSaveParam param) {
         param.setTenantId(TenantContext.get());
         Long id = departmentService.create(param);
@@ -113,7 +113,7 @@ public class SysDepartmentController {
      * @return 操作结果
      */
     @PostMapping("/update")
-    @RequirePerm("sys:department:edit")
+    @RequirePerm("sys:dept:edit")
     public R<Void> update(@Validated @RequestBody SysDepartmentSaveParam param) {
         param.setTenantId(TenantContext.get());
         Boolean success = departmentService.update(param);
@@ -128,7 +128,7 @@ public class SysDepartmentController {
      * @return 操作结果
      */
     @PostMapping("/delete")
-    @RequirePerm("sys:department:delete")
+    @RequirePerm("sys:dept:delete")
     public R<Void> delete(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         Long tenantId = TenantContext.get();

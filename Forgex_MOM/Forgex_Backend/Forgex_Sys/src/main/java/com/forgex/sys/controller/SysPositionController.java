@@ -102,7 +102,7 @@ public class SysPositionController {
      * @return 操作结果
      */
     @PostMapping("/create")
-    @RequirePerm("sys:position:create")
+    @RequirePerm("sys:position:add")
     public R<Void> create(@Validated @RequestBody SysPositionSaveParam param) {
         param.setTenantId(TenantContext.get());
         Long id = positionService.create(param);

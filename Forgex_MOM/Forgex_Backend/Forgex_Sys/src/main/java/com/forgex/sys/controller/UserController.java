@@ -103,7 +103,7 @@ public class UserController {
      * 新增用户
      */
     @OperationLog(module = "sys", menuPath = "/system/user", operationType = OperationType.ADD, detailTemplateCode = "USER_CREATE", detailFields = {"account", "username"})
-    @RequirePerm("sys:user:create")
+    @RequirePerm("sys:user:add")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysUserDTO userDTO) {
         // 1. 数据校验

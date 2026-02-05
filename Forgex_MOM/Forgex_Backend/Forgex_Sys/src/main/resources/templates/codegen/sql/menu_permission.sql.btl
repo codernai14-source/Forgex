@@ -52,7 +52,7 @@ INSERT IGNORE INTO sys_menu (
 VALUES (
     @TENANT_ID, @MODULE_ID, @MENU_ID, 'button', 3, '新增${menuNameCn}', 
     '{"zh-CN":"新增${menuNameCn}","en-US":"Create ${menuNameEn}"}',
-    '${permKeyPrefix}:create', 1, 1, 1, NOW(), NOW(), 0
+    '${permKeyPrefix}:add', 1, 1, 1, NOW(), NOW(), 0
 );
 
 -- 编辑按钮

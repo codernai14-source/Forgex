@@ -80,7 +80,7 @@ public class SysModuleController {
     /**
      * 新增模块
      */
-    @RequirePerm("sys:module:create")
+    @RequirePerm("sys:module:add")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysModuleDTO moduleDTO) {
         moduleValidator.validateForAdd(moduleDTO);
