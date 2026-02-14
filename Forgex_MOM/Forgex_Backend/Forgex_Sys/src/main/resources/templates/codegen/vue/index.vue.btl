@@ -73,7 +73,7 @@
           <a-button 
             type="primary" 
             @click="handleAdd"
-            v-permission="'${permKeyPrefix}:create'"
+            v-permission="'${permKeyPrefix}:add'"
           >
             <template #icon><PlusOutlined /></template>
             {{ t('common.add') }}

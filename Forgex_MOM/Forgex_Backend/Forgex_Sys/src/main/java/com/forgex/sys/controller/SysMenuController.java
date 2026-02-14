@@ -124,7 +124,7 @@ public class SysMenuController {
     /**
      * 新增菜单
      */
-    @RequirePerm("sys:menu:create")
+    @RequirePerm("sys:menu:add")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验

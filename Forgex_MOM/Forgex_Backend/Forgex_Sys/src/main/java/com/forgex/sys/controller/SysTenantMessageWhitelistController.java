@@ -3,6 +3,7 @@ package com.forgex.sys.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.entity.SysTenantMessageWhitelist;
 import com.forgex.sys.mapper.SysTenantMessageWhitelistMapper;
@@ -73,6 +74,7 @@ public class SysTenantMessageWhitelistController {
      * @param whitelist 白名单配置
      * @return 操作结果
      */
+    @RequirePerm("sys:tenant-message-whitelist:create")
     @PostMapping
     public R<Boolean> save(@RequestBody SysTenantMessageWhitelist whitelist) {
         // 检查是否已存在相同配置
@@ -95,6 +97,7 @@ public class SysTenantMessageWhitelistController {
      * @param whitelist 白名单配置
      * @return 操作结果
      */
+    @RequirePerm("sys:tenant-message-whitelist:update")
     @PutMapping
     public R<Boolean> update(@RequestBody SysTenantMessageWhitelist whitelist) {
         int rows = whitelistMapper.updateById(whitelist);
@@ -107,6 +110,7 @@ public class SysTenantMessageWhitelistController {
      * @param id 白名单ID
      * @return 操作结果
      */
+    @RequirePerm("sys:tenant-message-whitelist:delete")
     @DeleteMapping("/{id}")
     public R<Boolean> delete(@PathVariable Long id) {
         int rows = whitelistMapper.deleteById(id);
@@ -120,6 +124,7 @@ public class SysTenantMessageWhitelistController {
      * @param enabled 是否启用
      * @return 操作结果
      */
+    @RequirePerm("sys:tenant-message-whitelist:update")
     @PutMapping("/{id}/enabled")
     public R<Boolean> updateEnabled(@PathVariable Long id, @RequestParam Boolean enabled) {
         SysTenantMessageWhitelist whitelist = new SysTenantMessageWhitelist();

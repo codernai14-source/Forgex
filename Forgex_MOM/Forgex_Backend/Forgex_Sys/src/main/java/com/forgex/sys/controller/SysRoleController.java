@@ -86,7 +86,7 @@ public class SysRoleController {
     /**
      * 新增角色
      */
-    @RequirePerm("sys:role:create")
+    @RequirePerm("sys:role:add")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysRoleDTO roleDTO) {
         // 1. 数据校验

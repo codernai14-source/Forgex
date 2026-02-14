@@ -75,7 +75,7 @@ public class SysConfigController {
      */
     @PutMapping("/system-basic")
     public R<Boolean> setSystemBasicConfig(@RequestBody SystemBasicConfig config) {
-        configService.setJson("system.basic", config);
+        configService.setGlobalJson("system.basic", config);
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
 }

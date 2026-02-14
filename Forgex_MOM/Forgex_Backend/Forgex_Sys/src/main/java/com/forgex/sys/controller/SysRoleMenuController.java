@@ -62,6 +62,7 @@ public class SysRoleMenuController {
      * @param body 请求体参数，需包含 roleId
      * @return 已绑定的菜单ID集合
      */
+    @RequirePerm("sys:role:authMenu")
     @PostMapping("/list")
     public R<List<Long>> list(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
@@ -84,6 +85,7 @@ public class SysRoleMenuController {
      * @param roleId 角色ID
      * @return 已绑定的菜单ID集合
      */
+    @RequirePerm("sys:role:authMenu")
     @GetMapping
     public R<List<Long>> getRoleMenus(@RequestParam Long roleId) {
         Long tenantId = TenantContext.get();
@@ -233,6 +235,7 @@ public class SysRoleMenuController {
      * @param roleId 角色ID
      * @return 操作结果
      */
+    @RequirePerm("sys:role:authMenu")
     @DeleteMapping
     public R<Void> deletePermissions(@RequestParam Long roleId) {
         Long tenantId = TenantContext.get();

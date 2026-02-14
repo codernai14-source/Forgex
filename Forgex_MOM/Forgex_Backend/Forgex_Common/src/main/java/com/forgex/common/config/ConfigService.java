@@ -68,5 +68,19 @@ public interface ConfigService {
      */
     <T> T getGlobalJson(String key, Class<T> type, T def);
 
+    /**
+     * 设置 JSON 配置（当前租户）
+     * 逻辑：将对象序列化为 JSON 字符串，保存到当前租户的配置表中
+     * @param key 配置键
+     * @param value 配置对象
+     */
     void setJson(String key, Object value);
+
+    /**
+     * 设置全局 JSON 配置（tenant_id = 0）
+     * 逻辑：将对象序列化为 JSON 字符串，保存到全局配置表中（tenant_id = 0）
+     * @param key 配置键
+     * @param value 配置对象
+     */
+    void setGlobalJson(String key, Object value);
 }

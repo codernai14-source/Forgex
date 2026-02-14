@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.table.FxTableConfigService;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
@@ -132,6 +133,7 @@ public class CommonTableController {
     /**
      * 创建表格配置
      */
+    @RequirePerm("sys:tableConfig:add")
     @PostMapping
     public R<Long> create(@RequestBody TableConfigDetailVO vo) {
         Long tenantId = TenantContext.get();
@@ -177,6 +179,7 @@ public class CommonTableController {
      * @param vo 表格配置详情VO
      * @return 操作结果
      */
+    @RequirePerm("sys:tableConfig:edit")
     @PostMapping("/update")
     public R<Void> update(@RequestBody TableConfigDetailVO vo) {
         if (vo == null || vo.getId() == null) {
@@ -247,6 +250,7 @@ public class CommonTableController {
      * @param param 查询参数，包含id
      * @return 操作结果
      */
+    @RequirePerm("sys:tableConfig:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody TableConfigGetParam param) {
         if (param == null || param.getId() == null) {
@@ -296,6 +300,7 @@ public class CommonTableController {
      * @param param 查询参数，包含ids列表
      * @return 操作结果
      */
+    @RequirePerm("sys:tableConfig:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody TableConfigBatchDeleteParam param) {
         if (param == null || param.getIds() == null || param.getIds().isEmpty()) {
