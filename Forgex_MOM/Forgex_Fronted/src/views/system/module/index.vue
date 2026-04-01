@@ -90,11 +90,7 @@
         </a-form-item>
 
         <a-form-item label="图标" name="icon">
-          <a-input
-            v-model:value="formData.icon"
-            placeholder="请输入图标名称"
-            :maxlength="100"
-          />
+          <IconPicker v-model:value="formData.icon" placeholder="请选择或输入图标名称" :maxlength="100" />
         </a-form-item>
 
         <a-form-item label="排序号" name="orderNum">
@@ -128,6 +124,7 @@
 import { onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import IconPicker from '@/components/common/IconPicker.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'

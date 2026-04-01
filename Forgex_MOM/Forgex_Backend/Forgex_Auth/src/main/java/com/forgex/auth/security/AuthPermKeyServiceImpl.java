@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * Auth 模块 permKey 计算服务实现。
  * <p>
  * 计算口径与 Sys/其它业务模块保持一致：\n
- * {@code sys_user_role -> sys_role_menu -> sys_menu(type=button).perm_key}。\n
+ * {@code sys_user_role_perm -> sys_role_menu_perm -> sys_menu.perm_key}（含 catalog/menu/button，与接口 {@code @RequirePerm} 一致）。\n
  * </p>
  *
  * @author coder_nai@163.com
@@ -81,7 +81,17 @@ public class AuthPermKeyServiceImpl implements PermKeyService {
                 .eq(SysMenuPerm::getDeleted, false));
 
         return menus.stream()
-                .filter(m -> "button".equalsIgnoreCase(m.getType()))
+                .filter(m -> StringUtils.hasText(m.getPermKey()))
+                .filter(m -> {
+                    String t = m.getType();
+                    if (!StringUtils.hasText(t)) {
+                        return false;
+                    }
+                    // 与菜单数据中实际用法一致：目录/页面菜单/按钮均可挂 perm_key，用于 @RequirePerm 与路由可见性
+                    return "button".equalsIgnoreCase(t)
+                            || "menu".equalsIgnoreCase(t)
+                            || "catalog".equalsIgnoreCase(t);
+                })
                 .map(SysMenuPerm::getPermKey)
                 .filter(StringUtils::hasText)
                 .collect(Collectors.toSet());

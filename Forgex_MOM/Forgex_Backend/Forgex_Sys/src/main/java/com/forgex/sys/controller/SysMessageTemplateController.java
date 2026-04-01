@@ -16,13 +16,16 @@ package com.forgex.sys.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysMessageTemplateSaveDTO;
+import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.web.StatusCode;
+import com.forgex.sys.domain.param.SysMessageTemplateBatchDeleteParam;
+import com.forgex.sys.domain.param.SysMessageTemplateIdParam;
 import com.forgex.sys.domain.param.SysMessageTemplateParam;
 import com.forgex.sys.domain.vo.SysMessageTemplateVO;
 import com.forgex.sys.service.SysMessageTemplateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 消息模板控制器
@@ -47,10 +50,16 @@ public class SysMessageTemplateController {
     
     /**
      * 根据ID查询消息模板详情
+     *
+     * @param param 请求体，必须包含 {@code id}
+     * @return 消息模板详情；参数非法时返回失败
      */
     @PostMapping("/get")
-    public R<SysMessageTemplateVO> getById(@RequestBody Long id) {
-        return R.ok(messageTemplateService.getById(id));
+    public R<SysMessageTemplateVO> getById(@RequestBody SysMessageTemplateIdParam param) {
+        if (param == null || param.getId() == null) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "id不能为空");
+        }
+        return R.ok(messageTemplateService.getById(param.getId()));
     }
     
     /**
@@ -63,18 +72,30 @@ public class SysMessageTemplateController {
     
     /**
      * 删除消息模板
+     *
+     * @param param 请求体，必须包含 {@code id}
+     * @return 是否删除成功
      */
     @PostMapping("/delete")
-    public R<Boolean> delete(@RequestBody Long id) {
-        return R.ok(messageTemplateService.delete(id));
+    public R<Boolean> delete(@RequestBody SysMessageTemplateIdParam param) {
+        if (param == null || param.getId() == null) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "id不能为空");
+        }
+        return R.ok(messageTemplateService.delete(param.getId()));
     }
     
     /**
      * 批量删除消息模板
+     *
+     * @param param 请求体，必须包含非空 {@code ids}
+     * @return 是否删除成功
      */
     @PostMapping("/delete-batch")
-    public R<Boolean> deleteBatch(@RequestBody List<Long> ids) {
-        return R.ok(messageTemplateService.deleteBatch(ids));
+    public R<Boolean> deleteBatch(@RequestBody SysMessageTemplateBatchDeleteParam param) {
+        if (param == null || CollectionUtils.isEmpty(param.getIds())) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ids不能为空");
+        }
+        return R.ok(messageTemplateService.deleteBatch(param.getIds()));
     }
 }
 

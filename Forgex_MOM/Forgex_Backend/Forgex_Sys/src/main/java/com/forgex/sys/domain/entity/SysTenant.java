@@ -51,7 +51,7 @@ public class SysTenant extends BaseEntity {
     /** Logo URL */
     private String logo;
     
-    /** 租户类别：MAIN_TENANT-主租户，CUSTOMER_TENANT-客户租户，SUPPLIER_TENANT-供应商租户 */
+    /** 租户类别：MAIN_TENANT / CUSTOMER_TENANT / SUPPLIER_TENANT / PARTNER_TENANT 等，见 {@link TenantTypeEnum} */
     private TenantTypeEnum tenantType;
     
     /** 状态：false=禁用，true=启用 */

@@ -354,6 +354,22 @@ const fallbackConfig = ref({
 /**
  * 处理表格数据请求
  */
+/**
+ * 将接口返回的 status（布尔或数字）规范为与字典 {@code status} 一致的 0/1，便于 FxDynamicTable 字典列渲染。
+ */
+function normalizeRoleStatusRecord(row: any) {
+  const s = row?.status
+  let num: number
+  if (typeof s === 'boolean') {
+    num = s ? 1 : 0
+  } else if (s === 1 || s === '1' || s === true) {
+    num = 1
+  } else {
+    num = 0
+  }
+  return { ...row, status: num }
+}
+
 const handleRequest = async (params: any) => {
   loading.value = true
   try {
@@ -361,9 +377,10 @@ const handleRequest = async (params: any) => {
       ...params.query,
       ...params.page
     })
+    const records = (res.records || []).map((r: any) => normalizeRoleStatusRecord(r))
     return {
       success: true,
-      data: res.records,
+      data: records,
       total: res.total
     }
   } catch (error) {

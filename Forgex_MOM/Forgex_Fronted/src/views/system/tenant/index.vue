@@ -145,6 +145,14 @@
         </a-form-item>
       </a-form>
     </BaseFormDialog>
+
+    <!-- 租户初始化进度弹窗 -->
+    <TenantInitProgress
+      v-if="progressDialogVisible && currentTaskId"
+      v-model:open="progressDialogVisible"
+      :task-id="currentTaskId"
+      @finish="handleInitProgressFinish"
+    />
   </div>
 </template>
 
@@ -169,9 +177,11 @@ import {
   type TenantQueryDTO,
   type TenantSaveParam
 } from '@/api/system/tenant'
+import { getTaskDetail, getTaskByTenantId } from '@/api/system/tenantInitTask'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import TenantInitProgress from '@/components/tenant/TenantInitProgress.vue'
 import { useDict } from '@/hooks/useDict'
 
 const { dictItems: statusOptions } = useDict('status')
@@ -183,6 +193,16 @@ const loading = ref(false)
 
 const dialogVisible = ref(false)
 const saving = ref(false)
+
+/**
+ * 租户初始化进度弹窗显示状态
+ */
+const progressDialogVisible = ref(false)
+
+/**
+ * 当前租户初始化任务 ID
+ */
+const currentTaskId = ref<number>()
 
 const formData = reactive<TenantSaveParam>({
   tenantName: '',
@@ -239,7 +259,8 @@ function getTenantTypeColor(type: TenantTypeEnum): string {
   const colorMap: Record<TenantTypeEnum, string> = {
     [TenantTypeEnum.MAIN_TENANT]: 'blue',
     [TenantTypeEnum.CUSTOMER_TENANT]: 'green',
-    [TenantTypeEnum.SUPPLIER_TENANT]: 'orange'
+    [TenantTypeEnum.SUPPLIER_TENANT]: 'orange',
+    [TenantTypeEnum.PARTNER_TENANT]: 'cyan'
   }
   return colorMap[type] || 'default'
 }
@@ -292,8 +313,27 @@ async function handleSave() {
       await updateTenant(formData)
       message.success('更新成功')
     } else {
-      await createTenant(formData)
-      message.success('新增成功')
+      // 新增租户
+      const tenantId = await createTenant(formData)
+      message.success('新增成功，开始初始化租户数据...')
+      
+      // 查询任务详情，获取任务 ID
+      try {
+        // 延迟一点，等待异步任务创建
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // 通过租户 ID 查询任务详情（任务表中租户 ID 是唯一的）
+        // 这里需要后端提供一个通过租户 ID 查询任务的接口
+        // 暂时假设后端会返回任务 ID，或者前端轮询查询
+        const taskId = await queryTaskByTenantId(tenantId)
+        
+        if (taskId) {
+          currentTaskId.value = taskId
+          progressDialogVisible.value = true
+        }
+      } catch (e) {
+        console.error('查询初始化任务失败:', e)
+      }
     }
 
     dialogVisible.value = false
@@ -308,9 +348,49 @@ async function handleSave() {
   }
 }
 
+/**
+ * 通过租户 ID 查询任务 ID
+ * 轮询查询任务表，最多尝试 10 次
+ */
+const queryTaskByTenantId = async (tenantId: number): Promise<number | null> => {
+  const maxRetries = 10
+  const retryDelay = 500 // 毫秒
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const task = await getTaskByTenantId(tenantId)
+      
+      if (task && task.id) {
+        console.log('查询到任务:', task)
+        return task.id
+      }
+      
+      // 任务还未创建，等待后重试
+      await new Promise(resolve => setTimeout(resolve, retryDelay))
+      console.log('等待任务创建...', i + 1)
+    } catch (e) {
+      console.error('查询任务失败:', e)
+      // 失败也等待后重试
+      await new Promise(resolve => setTimeout(resolve, retryDelay))
+    }
+  }
+  
+  return null
+}
+
 function handleCancel() {
   dialogVisible.value = false
   formRef.value?.resetFields()
+}
+
+/**
+ * 初始化进度完成回调
+ */
+const handleInitProgressFinish = () => {
+  progressDialogVisible.value = false
+  currentTaskId.value = undefined
+  message.success('租户初始化完成')
+  tableRef.value?.refresh?.()
 }
 
 async function handleDelete(record: TenantDTO) {

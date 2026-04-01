@@ -80,6 +80,7 @@ export default {
   addSuccess: '新增成功',
   updateSuccess: '更新成功',
   deleteSuccess: '删除成功',
+  operationFailed: '操作失败',
   
   // 消息提示
   confirmDelete: '确认删除？',

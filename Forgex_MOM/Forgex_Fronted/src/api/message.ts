@@ -9,9 +9,9 @@ export function pageMessageTemplate(params: any) {
   return http.post('/sys/message-template/page', params)
 }
 
-// 根据ID查询消息模板详情
+// 根据ID查询消息模板详情（JSON 请求体，避免 Content-Type 与 Long 绑定问题）
 export function getMessageTemplate(id: number) {
-  return http.post('/sys/message-template/get', id)
+  return http.post('/sys/message-template/get', { id }, { silentError: true } as any)
 }
 
 // 保存消息模板(新增或修改)
@@ -21,12 +21,12 @@ export function saveMessageTemplate(data: any) {
 
 // 删除消息模板
 export function deleteMessageTemplate(id: number) {
-  return http.post('/sys/message-template/delete', id)
+  return http.post('/sys/message-template/delete', { id })
 }
 
 // 批量删除消息模板
 export function deleteBatchMessageTemplate(ids: number[]) {
-  return http.post('/sys/message-template/delete-batch', ids)
+  return http.post('/sys/message-template/delete-batch', { ids })
 }
 
 // 获取未读消息数量（使用静默模式，不显示全局遮罩）

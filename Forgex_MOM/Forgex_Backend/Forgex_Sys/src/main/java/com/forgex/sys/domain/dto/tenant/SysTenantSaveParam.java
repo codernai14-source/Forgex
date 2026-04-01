@@ -49,7 +49,7 @@ public class SysTenantSaveParam {
     /** Logo */
     private String logo;
     
-    /** 租户类别：MAIN_TENANT-主租户，CUSTOMER_TENANT-客户租户，SUPPLIER_TENANT-供应商租户 */
+    /** 租户类别，取值见 {@link com.forgex.common.enums.TenantTypeEnum} */
     @NotNull(message = "租户类别不能为空")
     private TenantTypeEnum tenantType;
     

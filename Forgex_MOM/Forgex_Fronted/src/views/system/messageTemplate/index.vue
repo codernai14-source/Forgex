@@ -399,7 +399,8 @@ const handleEdit = async (record: any) => {
     const res = await getMessageTemplate(record.id)
     Object.assign(formData, res)
     modalVisible.value = true
-  } catch (error) {
+  } catch {
+    // getMessageTemplate 已使用 silentError，此处仅补一条业务提示，避免与拦截器重复弹窗
     message.error('获取详情失败')
   }
 }

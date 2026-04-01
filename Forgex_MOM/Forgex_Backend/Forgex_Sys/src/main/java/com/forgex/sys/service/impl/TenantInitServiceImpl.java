@@ -23,6 +23,7 @@ import com.forgex.sys.domain.entity.SysRoleMenu;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserRole;
 import com.forgex.sys.domain.entity.SysTenant;
+import com.forgex.sys.domain.entity.SysTenantInitTask;
 import com.forgex.sys.domain.entity.SysTenantMenuCopyRule;
 import com.forgex.sys.mapper.SysMenuMapper;
 import com.forgex.sys.mapper.SysModuleMapper;
@@ -32,35 +33,42 @@ import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.mapper.SysTenantMenuCopyRuleMapper;
+import com.forgex.sys.mapper.SysTenantInitTaskMapper;
 import com.forgex.sys.service.ITenantInitService;
+import com.forgex.sys.service.SsePushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Collections;
+import java.util.concurrent.Executor;
 
 /**
- * 租户初始化服务实现类
+ * 租户初始化服务实现类（异步版本）
  * <p>
- * 提供租户初始化的业务逻辑实现，用于在新增租户时自动初始化模块、菜单、角色、用户等基础数据
+ * 提供租户异步初始化的业务逻辑实现，用于在新增租户时自动初始化模块、菜单、角色、用户等基础数据。
+ * 支持 SSE 实时进度推送，前端可查看初始化进度。
  * </p>
  * <p>
  * <strong>业务规则：</strong>
  * <ul>
- *   <li>主租户：创建admin账号，不设置租户ID，可关联多个租户</li>
- *   <li>其它租户（客户租户、供应商租户）：创建administrator账号，设置租户ID为该租户，只能在该租户下使用</li>
+ *   <li>主租户：创建 admin 账号，默认密码 Aa123456</li>
+ *   <li>其它租户：根据租户 ID 和编码动态生成唯一账号（admin_{tenantCode}_{后 4 位}），默认密码 Aa123456</li>
  * </ul>
  * </p>
  * 
- * @author coder_nai
- * @version 1.0
+ * @author Forgex Team
+ * @version 2.0.0
  * @see com.forgex.sys.service.ITenantInitService
+ * @see SysTenantInitTask
  */
 @Slf4j
 @Service
@@ -75,54 +83,116 @@ public class TenantInitServiceImpl implements ITenantInitService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysTenantMapper tenantMapper;
     private final SysTenantMenuCopyRuleMapper tenantMenuCopyRuleMapper;
+    private final SysTenantInitTaskMapper tenantInitTaskMapper;
+    private final SsePushService ssePushService;
+    private final Executor tenantInitExecutor;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Async("tenantInitExecutor")
     public void initTenant(Long tenantId, String tenantName, TenantTypeEnum tenantType) {
-        log.info("开始初始化租户，租户ID：{}，租户名称：{}，租户类型：{}", tenantId, tenantName, tenantType);
+        log.info("开始异步初始化租户，租户 ID：{}，租户名称：{}，租户类型：{}", tenantId, tenantName, tenantType);
         
-        // 1. 复制系统模块到新租户
-        Long moduleId = copyModuleToTenant(tenantId);
+        // 创建初始化任务
+        SysTenantInitTask task = new SysTenantInitTask();
+        task.setTenantId(tenantId);
+        task.setTenantName(tenantName);
+        task.setTenantType(tenantType.getCode());
+        task.setStatus("PENDING");
+        task.setProgress(0);
+        task.setCurrentStep("等待初始化开始");
+        tenantInitTaskMapper.insert(task);
         
-        // 2. 复制系统模块下的菜单到新租户（按租户类型与配置过滤）
-        List<Long> menuIds = copyMenusToTenant(tenantId, moduleId, tenantType);
+        String taskId = task.getId().toString();
         
-        // 3. 创建系统管理员角色
-        Long roleId = createAdminRole(tenantId);
-        
-        // 4. 根据租户类型创建管理员账号
-        Long userId;
-        if (TenantTypeEnum.MAIN_TENANT.equals(tenantType)) {
-            // 主租户：创建admin账号，不设置租户ID（可关联多个租户）
-            userId = createAdminUser(null, tenantName, "admin");
-        } else {
-            // 其它租户（客户租户、供应商租户）：创建administrator账号，设置租户ID
-            userId = createAdministratorUser(tenantId, tenantName);
+        try {
+            // 更新状态为运行中
+            task.setStatus("RUNNING");
+            task.setStartTime(LocalDateTime.now());
+            tenantInitTaskMapper.updateById(task);
+            
+            // 1. 复制系统模块（进度 10%）
+            updateTaskProgress(task, 10, "正在复制系统模块...");
+            Long moduleId = copyModuleToTenant(tenantId);
+            
+            // 2. 复制菜单（进度 30%）
+            updateTaskProgress(task, 30, "正在复制菜单权限...");
+            List<Long> menuIds = copyMenusToTenant(tenantId, moduleId, tenantType);
+            
+            // 3. 创建管理员角色（进度 40%）
+            updateTaskProgress(task, 40, "正在创建管理员角色...");
+            Long roleId = createAdminRole(tenantId);
+            
+            // 4. 创建管理员账号（进度 50%）
+            updateTaskProgress(task, 50, "正在创建管理员账号...");
+            Long userId;
+            if (TenantTypeEnum.MAIN_TENANT.equals(tenantType)) {
+                userId = createAdminUser(null, tenantName, "admin");
+            } else {
+                // 根据租户 ID 和编码生成唯一账号
+                String dynamicAccount = generateDynamicAccount(tenantId, tenantName);
+                userId = createAdministratorUser(tenantId, tenantName, dynamicAccount);
+            }
+            
+            // 5. 绑定用户角色（进度 60%）
+            updateTaskProgress(task, 60, "正在绑定用户角色...");
+            bindUserToRole(userId, roleId, tenantId);
+            
+            // 6. 绑定角色菜单（进度 70%）
+            updateTaskProgress(task, 70, "正在绑定角色菜单...");
+            bindRoleToMenus(roleId, menuIds, tenantId);
+            
+            // 7. 完成（进度 100%）
+            updateTaskProgress(task, 100, "初始化完成");
+            task.setStatus("SUCCESS");
+            task.setEndTime(LocalDateTime.now());
+            tenantInitTaskMapper.updateById(task);
+            
+            // 推送成功消息
+            ssePushService.pushComplete(taskId, true, "租户初始化成功");
+            
+            log.info("租户初始化成功，租户 ID：{}，任务 ID：{}", tenantId, taskId);
+            
+        } catch (Exception e) {
+            log.error("租户初始化失败，租户 ID：{}，任务 ID：{}", tenantId, taskId, e);
+            task.setStatus("FAILED");
+            task.setErrorMessage(e.getMessage());
+            task.setEndTime(LocalDateTime.now());
+            tenantInitTaskMapper.updateById(task);
+            
+            // 推送失败消息
+            ssePushService.pushComplete(taskId, false, "初始化失败：" + e.getMessage());
         }
+    }
+    
+    /**
+     * 更新任务进度
+     */
+    private void updateTaskProgress(SysTenantInitTask task, int progress, String currentStep) {
+        task.setProgress(progress);
+        task.setCurrentStep(currentStep);
+        tenantInitTaskMapper.updateById(task);
         
-        // 5. 将管理员账号关联到系统管理员角色
-        bindUserToRole(userId, roleId, tenantId);
-        
-        // 6. 将系统管理员角色关联到所有菜单
-        bindRoleToMenus(roleId, menuIds, tenantId);
-        
-        log.info("租户初始化完成，租户ID：{}", tenantId);
+        // 推送进度到前端
+        ssePushService.pushProgress(task.getId().toString(), progress, currentStep);
+    }
+    
+    /**
+     * 生成动态管理员账号
+     * 规则：admin_{tenantCode}_{tenantId 后 4 位}
+     */
+    private String generateDynamicAccount(Long tenantId, String tenantName) {
+        String tenantCode = tenantName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        String suffix = String.valueOf(tenantId).substring(Math.max(0, String.valueOf(tenantId).length() - 4));
+        return "admin_" + tenantCode + "_" + suffix;
     }
     
     /**
      * 从模板租户复制系统模块到新租户
-     * <p>
-     * 业务模型：每个租户拥有完全隔离的模块与菜单数据，但可以基于“模板租户”（通常为主租户）
-     * 复制一份作为初始数据。这里通过主租户作为模板来源。
-     * </p>
-     *
-     * @param tenantId 新租户ID
-     * @return 为新租户创建的系统模块ID；若未找到模板则返回null
      */
     private Long copyModuleToTenant(Long tenantId) {
         Long templateTenantId = findTemplateTenantId(tenantId);
         if (templateTenantId == null) {
-            log.warn("复制系统模块失败：未找到可作为模板的主租户，租户ID：{}", tenantId);
+            log.warn("复制系统模块失败：未找到可作为模板的主租户，租户 ID：{}", tenantId);
             return null;
         }
 
@@ -134,7 +204,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         
         SysModule sysModule = moduleMapper.selectOne(wrapper);
         if (sysModule == null) {
-            log.warn("复制系统模块失败：模板租户下未找到sys模块，模板租户ID：{}", templateTenantId);
+            log.warn("复制系统模块失败：模板租户下未找到 sys 模块，模板租户 ID：{}", templateTenantId);
             return null;
         }
         
@@ -144,7 +214,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         newModule.setTenantId(tenantId);
         moduleMapper.insert(newModule);
         
-        log.info("复制系统模块到租户，模板租户ID：{}，新模块ID：{}，新租户ID：{}", 
+        log.info("复制系统模块到租户，模板租户 ID：{}，新模块 ID：{}，新租户 ID：{}", 
                 templateTenantId, newModule.getId(), tenantId);
         
         return newModule.getId();
@@ -152,25 +222,16 @@ public class TenantInitServiceImpl implements ITenantInitService {
     
     /**
      * 复制系统模块下的菜单到新租户
-     * <p>
-     * 从模板租户（主租户）对应的系统模块下读取菜单，完整复制为新租户自己的菜单数据，
-     * 并返回“新菜单记录”的ID列表，用于后续角色权限绑定。
-     * </p>
-     *
-     * @param tenantId 新租户ID
-     * @param moduleId 新租户的系统模块ID
-     * @param tenantType 租户类型
-     * @return 新创建的菜单ID列表（属于新租户）
      */
     private List<Long> copyMenusToTenant(Long tenantId, Long moduleId, TenantTypeEnum tenantType) {
         if (moduleId == null) {
-            log.warn("复制系统菜单失败：模块ID为空，租户ID：{}", tenantId);
+            log.warn("复制系统菜单失败：模块 ID 为空，租户 ID：{}", tenantId);
             return List.of();
         }
 
         Long templateTenantId = findTemplateTenantId(tenantId);
         if (templateTenantId == null) {
-            log.warn("复制系统菜单失败：未找到可作为模板的主租户，租户ID：{}", tenantId);
+            log.warn("复制系统菜单失败：未找到可作为模板的主租户，租户 ID：{}", tenantId);
             return List.of();
         }
 
@@ -182,7 +243,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
                      .last("LIMIT 1");
         SysModule templateModule = moduleMapper.selectOne(moduleWrapper);
         if (templateModule == null) {
-            log.warn("复制系统菜单失败：模板租户下未找到sys模块，模板租户ID：{}", templateTenantId);
+            log.warn("复制系统菜单失败：模板租户下未找到 sys 模块，模板租户 ID：{}", templateTenantId);
             return List.of();
         }
 
@@ -195,14 +256,14 @@ public class TenantInitServiceImpl implements ITenantInitService {
         List<SysMenu> templateMenus = menuMapper.selectList(wrapper);
         
         if (templateMenus.isEmpty()) {
-            log.warn("复制系统菜单失败：模板租户下未找到系统菜单，模板租户ID：{}，模块ID：{}", 
+            log.warn("复制系统菜单失败：模板租户下未找到系统菜单，模板租户 ID：{}，模块 ID：{}", 
                     templateTenantId, templateModule.getId());
             return List.of();
         }
 
         List<String> excludedPrefixes = getExcludedPermPrefixes(tenantType);
 
-        // 第一遍：复制菜单，暂时保留父ID为模板菜单的父ID，记录ID映射关系
+        // 第一遍：复制菜单，记录 ID 映射关系
         Map<Long, Long> idMap = new HashMap<>();
         for (SysMenu templateMenu : templateMenus) {
             if (isMenuExcluded(templateMenu, excludedPrefixes)) {
@@ -218,7 +279,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
             idMap.put(templateId, newMenu.getId());
         }
 
-        // 第二遍：修正新菜单的父ID，使其指向同一批新菜单中的父节点
+        // 第二遍：修正新菜单的父 ID
         for (SysMenu templateMenu : templateMenus) {
             if (isMenuExcluded(templateMenu, excludedPrefixes)) {
                 continue;
@@ -239,7 +300,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         }
 
         List<Long> newMenuIds = new ArrayList<>(idMap.values());
-        log.info("复制系统菜单到租户成功，模板租户ID：{}，新租户ID：{}，菜单数量：{}", 
+        log.info("复制系统菜单到租户成功，模板租户 ID：{}，新租户 ID：{}，菜单数量：{}", 
                 templateTenantId, tenantId, newMenuIds.size());
         
         return newMenuIds;
@@ -287,14 +348,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
     }
 
     /**
-     * 查找用于复制模块与菜单数据的“模板租户ID”
-     * <p>
-     * 当前策略：选择系统中的主租户（TenantTypeEnum.MAIN_TENANT）作为模板来源，
-     * 且要求模板租户与当前新建租户不是同一条记录。
-     * </p>
-     *
-     * @param currentTenantId 当前正在初始化的租户ID
-     * @return 模板租户ID；若不存在合适模板则返回null
+     * 查找模板租户 ID
      */
     private Long findTemplateTenantId(Long currentTenantId) {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
@@ -307,7 +361,6 @@ public class TenantInitServiceImpl implements ITenantInitService {
             return null;
         }
         if (currentTenantId != null && currentTenantId.equals(mainTenant.getId())) {
-            // 当前租户本身就是主租户（通常是通过初始化SQL创建），不作为模板来源
             log.info("当前租户即为主租户，不使用自身作为模板，tenantId={}", currentTenantId);
             return null;
         }
@@ -316,12 +369,6 @@ public class TenantInitServiceImpl implements ITenantInitService {
     
     /**
      * 创建系统管理员角色
-     * <p>
-     * 在新租户下创建系统管理员角色
-     * </p>
-     * 
-     * @param tenantId 租户ID
-     * @return 新创建的角色ID
      */
     private Long createAdminRole(Long tenantId) {
         SysRole role = new SysRole();
@@ -332,71 +379,49 @@ public class TenantInitServiceImpl implements ITenantInitService {
         role.setTenantId(tenantId);
         roleMapper.insert(role);
         
-        log.info("创建系统管理员角色，角色ID：{}，租户ID：{}", role.getId(), tenantId);
+        log.info("创建系统管理员角色，角色 ID：{}，租户 ID：{}", role.getId(), tenantId);
         
         return role.getId();
     }
     
     /**
-     * 创建admin用户（主租户专用）
-     * <p>
-     * 在主租户下创建admin用户，设置租户ID为主租户ID，可关联多个租户
-     * </p>
-     * 
-     * @param tenantId 租户ID
-     * @param tenantName 租户名称
-     * @param account 账号
-     * @return 新创建的用户ID
+     * 创建 admin 用户（主租户专用）
      */
     private Long createAdminUser(Long tenantId, String tenantName, String account) {
         SysUser user = new SysUser();
         user.setAccount(account);
         user.setUsername("系统管理员");
-        user.setPassword(BCrypt.hashpw("admin123"));
+        user.setPassword(BCrypt.hashpw("Aa123456"));  // 默认密码
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
         userMapper.insert(user);
         
-        log.info("创建{}用户，用户ID：{}，租户ID：{}", account, user.getId(), tenantId);
+        log.info("创建{}用户，用户 ID：{}，租户 ID：{}", account, user.getId(), tenantId);
         
         return user.getId();
     }
     
     /**
-     * 创建administrator用户（其它租户专用）
-     * <p>
-     * 在客户租户或供应商租户下创建administrator用户，设置租户ID，只能在该租户下使用
-     * </p>
-     * 
-     * @param tenantId 租户ID
-     * @param tenantName 租户名称
-     * @return 新创建的用户ID
+     * 创建 administrator 用户（其它租户专用）
      */
-    private Long createAdministratorUser(Long tenantId, String tenantName) {
+    private Long createAdministratorUser(Long tenantId, String tenantName, String account) {
         SysUser user = new SysUser();
-        user.setAccount("administrator");
+        user.setAccount(account);
         user.setUsername("系统管理员");
-        user.setPassword(BCrypt.hashpw("admin123"));
-        user.setEmail("administrator@" + tenantName + ".com");
+        user.setPassword(BCrypt.hashpw("Aa123456"));  // 默认密码
+        user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
         userMapper.insert(user);
         
-        log.info("创建administrator用户，用户ID：{}，租户ID：{}", user.getId(), tenantId);
+        log.info("创建 administrator 用户，用户 ID：{}，租户 ID：{}，账号：{}", user.getId(), tenantId, account);
         
         return user.getId();
     }
     
     /**
      * 将用户关联到角色
-     * <p>
-     * 创建用户-角色关联记录
-     * </p>
-     * 
-     * @param userId  用户ID
-     * @param roleId  角色ID
-     * @param tenantId 租户ID
      */
     private void bindUserToRole(Long userId, Long roleId, Long tenantId) {
         SysUserRole userRole = new SysUserRole();
@@ -405,18 +430,11 @@ public class TenantInitServiceImpl implements ITenantInitService {
         userRole.setTenantId(tenantId);
         userRoleMapper.insert(userRole);
         
-        log.info("绑定用户到角色，用户ID：{}，角色ID：{}，租户ID：{}", userId, roleId, tenantId);
+        log.info("绑定用户到角色，用户 ID：{}，角色 ID：{}，租户 ID：{}", userId, roleId, tenantId);
     }
     
     /**
      * 将角色关联到菜单
-     * <p>
-     * 批量创建角色-菜单关联记录
-     * </p>
-     * 
-     * @param roleId   角色ID
-     * @param menuIds  菜单ID列表
-     * @param tenantId 租户ID
      */
     private void bindRoleToMenus(Long roleId, List<Long> menuIds, Long tenantId) {
         for (Long menuId : menuIds) {
@@ -427,6 +445,6 @@ public class TenantInitServiceImpl implements ITenantInitService {
             roleMenuMapper.insert(roleMenu);
         }
         
-        log.info("绑定角色到菜单，角色ID：{}，菜单数量：{}，租户ID：{}", roleId, menuIds.size(), tenantId);
+        log.info("绑定角色到菜单，角色 ID：{}，菜单数量：{}，租户 ID：{}", roleId, menuIds.size(), tenantId);
     }
 }

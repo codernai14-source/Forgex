@@ -26,6 +26,18 @@ export default {
   edit: 'Edit Config',
   addColumn: 'Add Column',
   columnRequired: 'Please add at least one column',
+  loadDetailFailed: 'Failed to load config detail',
+  
+  /**
+   * Column Setting
+   */
+  columnSetting: {
+    title: 'Column Setting',
+    reset: 'Reset',
+    resetSuccess: 'Reset to default config',
+    hint: 'Check to show columns, drag to reorder'
+  },
+  
   form: {
     tableCode: 'Please enter table code',
     tableName: 'Please enter table name',
