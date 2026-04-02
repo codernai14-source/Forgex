@@ -125,7 +125,9 @@ interface SearchResult {
 }
 
 interface GlobalSearchProps {
+  /** 弹窗是否可见，用于控制组件的显示/隐藏状态 */
   visible: boolean
+  /** 菜单项数组，包含所有菜单的层级结构数据，用于搜索 */
   menus: MenuItem[]
 }
 
@@ -135,8 +137,23 @@ const props = withDefaults(defineProps<GlobalSearchProps>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 更新弹窗可见性
+   * 触发时机：用户关闭弹窗时触发
+   * @param visible 新的可见性状态
+   */
   'update:visible': [visible: boolean]
+  /**
+   * 关闭事件
+   * 触发时机：用户点击关闭按钮或按 ESC 键时触发
+   */
   'close': []
+  /**
+   * 选择菜单事件
+   * 触发时机：用户点击搜索结果或按 Enter 键时触发
+   * @param menuKey 选中的菜单 key
+   * @param path 菜单对应的路由路径
+   */
   'select': [menuKey: string, path: string]
 }>()
 

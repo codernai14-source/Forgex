@@ -28,7 +28,7 @@
             v-permission="'wf:execution:approve'"
           >
             <template #icon><CheckOutlined /></template>
-            同意
+            {{ $t('workflow.myTask.approve') }}
           </a-button>
           <a-button
             type="link"
@@ -37,7 +37,7 @@
             v-permission="'wf:execution:reject'"
           >
             <template #icon><CloseOutlined /></template>
-            驳回
+            {{ $t('workflow.myTask.reject') }}
           </a-button>
           <a-button
             type="link"
@@ -45,7 +45,7 @@
             @click="handleViewDetail(record)"
           >
             <template #icon><EyeOutlined /></template>
-            详情
+            {{ $t('workflow.myTask.detail') }}
           </a-button>
         </a-space>
       </template>
@@ -54,7 +54,7 @@
     <!-- 审批处理弹窗 -->
     <BaseFormDialog
       v-model:open="approveDialogVisible"
-      :title="approveAction === 'approve' ? '审批同意' : '审批驳回'"
+      :title="approveAction === 'approve' ? $t('workflow.myTask.approveAgree') : $t('workflow.myTask.approveReject')"
       :loading="approving"
       :width="600"
       @submit="handleApproveSubmit"
@@ -69,21 +69,21 @@
       >
         <a-form-item label="审批任务">
           <a-input
-            v-model:value="currentRecord?.taskName"
+            :value="currentRecord?.taskName"
             disabled
           />
         </a-form-item>
 
         <a-form-item label="发起人">
           <a-input
-            v-model:value="currentRecord?.initiatorName"
+            :value="currentRecord?.initiatorName"
             disabled
           />
         </a-form-item>
 
         <a-form-item label="发起时间">
           <a-input
-            v-model:value="formatDateTime(currentRecord?.startTime)"
+            :value="formatDateTime(currentRecord?.startTime)"
             disabled
           />
         </a-form-item>

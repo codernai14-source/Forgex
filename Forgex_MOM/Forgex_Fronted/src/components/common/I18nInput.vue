@@ -132,6 +132,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 多语言值更新事件
+   * 触发时机：用户修改任意语言的翻译内容时触发
+   * @param value 新的多语言 JSON 字符串
+   */
   'update:modelValue': [value: string]
 }>()
 

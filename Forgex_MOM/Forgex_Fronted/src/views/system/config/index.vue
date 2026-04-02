@@ -1,199 +1,423 @@
 <template>
   <div class="system-config">
-    <a-card :bordered="false" :loading="loading" style="margin-top: 0;">
-      <a-form
-        :model="formData"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 16 }"
-        layout="horizontal"
-      >
-        <!-- ==================== 系统基本信息 =================== -->
-        <a-divider orientation="left">{{ t('system.config.basicInfo') }}</a-divider>
-
-        <a-form-item :label="t('system.config.systemName')" name="systemName">
-          <a-input v-model:value="formData.systemName" :placeholder="t('system.config.systemNamePlaceholder')" />
-        </a-form-item>
-
-        <a-form-item :label="t('system.config.systemLogo')" name="systemLogo">
-          <div class="system-logo-upload">
-            <AvatarUpload v-model="formData.systemLogo" @success="handleLogoUploadSuccess" />
-          </div>
-        </a-form-item>
-
-        <a-form-item :label="t('system.config.systemVersion')" name="systemVersion">
-          <a-input v-model:value="formData.systemVersion" :placeholder="t('system.config.versionPlaceholder')" />
-        </a-form-item>
-
-        <!-- ==================== 登录页配置 =================== -->
-        <a-divider orientation="left">{{ t('system.config.loginPage') }}</a-divider>
-
-        <a-form-item :label="t('system.config.loginTitle')" name="loginPageTitle">
-          <a-input v-model:value="formData.loginPageTitle" :placeholder="t('system.config.loginTitlePlaceholder')" />
-        </a-form-item>
-
-        <a-form-item :label="t('system.config.loginSubtitle')" name="loginPageSubtitle">
-          <a-input v-model:value="formData.loginPageSubtitle" :placeholder="t('system.config.loginSubtitlePlaceholder')" />
-        </a-form-item>
-
-        <a-form-item :label="t('system.config.backgroundType')" name="loginBackgroundType">
-          <a-radio-group v-model:value="formData.loginBackgroundType">
-            <a-radio value="video">{{ t('system.config.bgVideo') }}</a-radio>
-            <a-radio value="image">{{ t('system.config.bgImage') }}</a-radio>
-            <a-radio value="color">{{ t('system.config.bgColor') }}</a-radio>
-          </a-radio-group>
-        </a-form-item>
-
-        <!-- 背景视频配置 -->
-        <a-form-item
-          v-if="formData.loginBackgroundType === 'video'"
-          :label="t('system.config.bgVideo')"
-          name="loginBackgroundVideo"
-        >
-          <a-upload
-            v-model:file-list="videoFileList"
-            :before-upload="handleVideoBeforeUpload"
-            :custom-request="handleVideoUpload"
-            :show-upload-list="false"
-            accept="video/*"
+    <a-card :bordered="false" :loading="loading">
+      <a-tabs v-model:activeKey="activeTab">
+        <a-tab-pane key="system" :tab="t('system.config.tabSystem')">
+          <a-form
+            :model="basicConfig"
+            :label-col="{ span: 6 }"
+            :wrapper-col="{ span: 16 }"
+            layout="horizontal"
           >
-            <a-space>
-              <a-button type="primary" :loading="videoUploading" block>
-                <UploadOutlined /> {{ videoUploading ? t('common.uploading') : t('common.uploadVideo') }}
-              </a-button>
-              <a-button v-if="formData.loginBackgroundVideo" @click="handleVideoRemove">
-                <DeleteOutlined /> {{ t('common.remove') }}
-              </a-button>
-            </a-space>
-          </a-upload>
-          <div v-if="formData.loginBackgroundVideo" style="margin-top: 8px;">
-            <video :src="formatMediaUrl(formData.loginBackgroundVideo)" controls style="max-width: 300px; max-height: 200px;"></video>
-          </div>
-        </a-form-item>
+            <a-form-item :label="t('system.config.systemName')" name="systemName">
+              <a-input
+                v-model:value="basicConfig.systemName"
+                :placeholder="t('system.config.systemNamePlaceholder')"
+              />
+            </a-form-item>
 
-        <!-- 背景图片配置 -->
-        <a-form-item
-          v-if="formData.loginBackgroundType === 'image'"
-          :label="t('system.config.bgImage')"
-          name="loginBackgroundImage"
-        >
-          <a-upload
-            v-model:file-list="bgImageFileList"
-            :before-upload="handleBgImageBeforeUpload"
-            :custom-request="handleBgImageUpload"
-            :show-upload-list="false"
-            accept="image/*"
+            <a-form-item :label="t('system.config.systemLogo')" name="systemLogo">
+              <div class="system-logo-upload">
+                <AvatarUpload v-model="basicConfig.systemLogo" @success="handleLogoUploadSuccess" />
+              </div>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.systemVersion')" name="systemVersion">
+              <a-input
+                v-model:value="basicConfig.systemVersion"
+                :placeholder="t('system.config.systemVersionPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.copyright')" name="copyright">
+              <a-input
+                v-model:value="basicConfig.copyright"
+                :placeholder="t('system.config.copyrightPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.copyrightLink')" name="copyrightLink">
+              <a-input
+                v-model:value="basicConfig.copyrightLink"
+                :placeholder="t('system.config.copyrightLinkPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :wrapper-col="{ span: 24 }">
+              <a-space>
+                <a-button type="primary" :loading="savingSystem" @click="saveSystemConfig">
+                  {{ t('common.save') }}
+                </a-button>
+                <a-button @click="resetSystemConfig">{{ t('common.reset') }}</a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+
+        <a-tab-pane key="portal" :tab="t('system.config.tabPortal')">
+          <a-form
+            :model="basicConfig"
+            :label-col="{ span: 6 }"
+            :wrapper-col="{ span: 16 }"
+            layout="horizontal"
           >
-            <a-space>
-              <a-avatar
-                :size="120"
-                v-if="formData.loginBackgroundImage"
-                :src="formatMediaUrl(formData.loginBackgroundImage)"
-              >
-                <template #icon>
-                  <PictureOutlined />
-                </template>
-              </a-avatar>
-              <a-button type="primary" :loading="bgImageUploading" block>
-                <UploadOutlined /> {{ bgImageUploading ? t('common.uploading') : t('common.uploadImage') }}
-              </a-button>
-              <a-button v-if="formData.loginBackgroundImage" @click="handleBgImageRemove">
-                <DeleteOutlined /> {{ t('common.remove') }}
-              </a-button>
-            </a-space>
-          </a-upload>
-        </a-form-item>
+            <a-form-item :label="t('system.config.loginTitle')" name="loginPageTitle">
+              <a-input
+                v-model:value="basicConfig.loginPageTitle"
+                :placeholder="t('system.config.loginTitlePlaceholder')"
+              />
+            </a-form-item>
 
-        <!-- 背景颜色配置 -->
-        <a-form-item
-          v-if="formData.loginBackgroundType === 'color'"
-          :label="t('system.config.bgColor')"
-          name="loginBackgroundColor"
-        >
-          <a-space>
-            <a-input
-              v-model:value="formData.loginBackgroundColor"
-              style="flex: 1"
-              placeholder="#000000"
+            <a-form-item :label="t('system.config.loginSubtitle')" name="loginPageSubtitle">
+              <a-input
+                v-model:value="basicConfig.loginPageSubtitle"
+                :placeholder="t('system.config.loginSubtitlePlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.loginLayout')" name="loginLayout">
+              <a-radio-group v-model:value="basicConfig.loginLayout">
+                <a-radio value="center">{{ t('system.config.layoutCenter') }}</a-radio>
+                <a-radio value="split">{{ t('system.config.layoutSplit') }}</a-radio>
+                <a-radio value="compact">{{ t('system.config.layoutCompact') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.loginStyle')" name="loginStyle">
+              <a-radio-group v-model:value="basicConfig.loginStyle">
+                <a-radio value="cyber">{{ t('system.config.styleCyber') }}</a-radio>
+                <a-radio value="simple">{{ t('system.config.styleSimple') }}</a-radio>
+                <a-radio value="classic">{{ t('system.config.styleClassic') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.backgroundType')" name="loginBackgroundType">
+              <a-radio-group v-model:value="basicConfig.loginBackgroundType">
+                <a-radio value="video">{{ t('system.config.bgVideo') }}</a-radio>
+                <a-radio value="image">{{ t('system.config.bgImage') }}</a-radio>
+                <a-radio value="color">{{ t('system.config.bgColor') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <a-form-item
+              v-if="basicConfig.loginBackgroundType === 'video'"
+              :label="t('system.config.bgVideo')"
+              name="loginBackgroundVideo"
             >
-              <template #prefix>
-                <div :style="{ backgroundColor: formData.loginBackgroundColor, width: '20px', height: '20px', borderRadius: '2px', border: '1px solid #d9d9d9' }"></div>
-              </template>
-            </a-input>
-            <a-input type="color" v-model:value="formData.loginBackgroundColor" style="width: 50px" />
-          </a-space>
-        </a-form-item>
+              <a-upload
+                v-model:file-list="videoFileList"
+                :before-upload="handleVideoBeforeUpload"
+                :custom-request="handleVideoUpload"
+                :show-upload-list="false"
+                accept="video/*"
+              >
+                <a-space>
+                  <a-button type="primary" :loading="videoUploading">
+                    <UploadOutlined />
+                    {{ videoUploading ? t('common.uploading') : t('common.uploadVideo') }}
+                  </a-button>
+                  <a-button v-if="basicConfig.loginBackgroundVideo" @click="handleVideoRemove">
+                    <DeleteOutlined />
+                    {{ t('common.remove') }}
+                  </a-button>
+                </a-space>
+              </a-upload>
+              <div v-if="basicConfig.loginBackgroundVideo" class="media-preview">
+                <video
+                  :src="formatMediaUrl(basicConfig.loginBackgroundVideo)"
+                  controls
+                  class="video-preview"
+                ></video>
+              </div>
+            </a-form-item>
 
-        <a-form-item :label="t('system.config.loginStyle')" name="loginStyle">
-          <a-radio-group v-model:value="formData.loginStyle">
-            <a-radio value="cyber">{{ t('system.config.styleCyber') }}</a-radio>
-            <a-radio value="simple">{{ t('system.config.styleSimple') }}</a-radio>
-            <a-radio value="classic">{{ t('system.config.styleClassic') }}</a-radio>
-          </a-radio-group>
-        </a-form-item>
+            <a-form-item
+              v-if="basicConfig.loginBackgroundType === 'image'"
+              :label="t('system.config.bgImage')"
+              name="loginBackgroundImage"
+            >
+              <a-upload
+                v-model:file-list="bgImageFileList"
+                :before-upload="handleBgImageBeforeUpload"
+                :custom-request="handleBgImageUpload"
+                :show-upload-list="false"
+                accept="image/*"
+              >
+                <a-space>
+                  <a-avatar
+                    v-if="basicConfig.loginBackgroundImage"
+                    :size="120"
+                    :src="formatMediaUrl(basicConfig.loginBackgroundImage)"
+                  >
+                    <template #icon>
+                      <PictureOutlined />
+                    </template>
+                  </a-avatar>
+                  <a-button type="primary" :loading="bgImageUploading">
+                    <UploadOutlined />
+                    {{ bgImageUploading ? t('common.uploading') : t('common.uploadImage') }}
+                  </a-button>
+                  <a-button v-if="basicConfig.loginBackgroundImage" @click="handleBgImageRemove">
+                    <DeleteOutlined />
+                    {{ t('common.remove') }}
+                  </a-button>
+                </a-space>
+              </a-upload>
+            </a-form-item>
 
-        <a-form-item :label="t('system.config.showOAuth')" name="showOAuthLogin">
-          <a-switch v-model:checked="formData.showOAuthLogin" />
-        </a-form-item>
+            <a-form-item
+              v-if="basicConfig.loginBackgroundType === 'color'"
+              :label="t('system.config.bgColor')"
+              name="loginBackgroundColor"
+            >
+              <a-space>
+                <a-input
+                  v-model:value="basicConfig.loginBackgroundColor"
+                  :placeholder="t('system.config.bgColorPlaceholder')"
+                />
+                <a-input type="color" v-model:value="basicConfig.loginBackgroundColor" class="color-input" />
+              </a-space>
+            </a-form-item>
 
-        <!-- ==================== 版权信息 =================== -->
-        <a-divider orientation="left">{{ t('system.config.copyrightInfo') }}</a-divider>
+            <a-form-item :label="t('system.config.showOAuth')" name="showOAuthLogin">
+              <a-switch v-model:checked="basicConfig.showOAuthLogin" />
+            </a-form-item>
 
-        <a-form-item :label="t('system.config.copyright')" name="copyright">
-          <a-input v-model:value="formData.copyright" :placeholder="t('system.config.copyrightPlaceholder')" />
-        </a-form-item>
+            <a-form-item :label="t('system.config.primaryColor')" name="primaryColor">
+              <a-input
+                v-model:value="basicConfig.primaryColor"
+                :placeholder="t('system.config.primaryColorPlaceholder')"
+              />
+            </a-form-item>
 
-        <a-form-item :label="t('system.config.copyrightLink')" name="copyrightLink">
-          <a-input v-model:value="formData.copyrightLink" placeholder="https://example.com" />
-        </a-form-item>
+            <a-form-item :label="t('system.config.secondaryColor')" name="secondaryColor">
+              <a-input
+                v-model:value="basicConfig.secondaryColor"
+                :placeholder="t('system.config.secondaryColorPlaceholder')"
+              />
+            </a-form-item>
 
-        <!-- 操作按钮 -->
-        <a-form-item :wrapper-col="{ span: 24 }">
-          <a-space>
-            <a-button type="primary" @click="handleSave" :loading="saving">
-              {{ t('common.save') }}
-            </a-button>
-            <a-button @click="handleReset">
-              {{ t('common.reset') }}
-            </a-button>
-            <a-button @click="handlePreview">
-              {{ t('common.preview') }}
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
+            <a-form-item :wrapper-col="{ span: 24 }">
+              <a-space>
+                <a-button type="primary" :loading="savingPortal" @click="savePortalConfig">
+                  {{ t('common.save') }}
+                </a-button>
+                <a-button @click="resetPortalConfig">{{ t('common.reset') }}</a-button>
+                <a-button @click="openPreview">{{ t('common.preview') }}</a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+
+        <a-tab-pane key="security" :tab="t('system.config.tabSecurity')">
+          <a-form
+            :model="securityConfig"
+            :label-col="{ span: 6 }"
+            :wrapper-col="{ span: 16 }"
+            layout="horizontal"
+          >
+            <a-divider orientation="left">{{ t('system.config.captchaConfig') }}</a-divider>
+
+            <a-form-item :label="t('system.config.captchaMode')" name="captcha.mode">
+              <a-radio-group v-model:value="securityConfig.captcha.mode">
+                <a-radio value="none">{{ t('system.config.captchaNone') }}</a-radio>
+                <a-radio value="image">{{ t('system.config.captchaImage') }}</a-radio>
+                <a-radio value="slider">{{ t('system.config.captchaSlider') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <template v-if="securityConfig.captcha.mode === 'image'">
+              <a-form-item :label="t('system.config.imageKeyPrefix')" name="captcha.image.keyPrefix">
+                <a-input v-model:value="securityConfig.captcha.image.keyPrefix" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.imageExpireSeconds')" name="captcha.image.expireSeconds">
+                <a-input-number v-model:value="securityConfig.captcha.image.expireSeconds" :min="30" :max="600" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.imageWidth')" name="captcha.image.width">
+                <a-input-number v-model:value="securityConfig.captcha.image.width" :min="80" :max="300" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.imageHeight')" name="captcha.image.height">
+                <a-input-number v-model:value="securityConfig.captcha.image.height" :min="30" :max="120" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.imageLength')" name="captcha.image.length">
+                <a-input-number v-model:value="securityConfig.captcha.image.length" :min="3" :max="8" />
+              </a-form-item>
+            </template>
+
+            <template v-if="securityConfig.captcha.mode === 'slider'">
+              <a-form-item :label="t('system.config.sliderKeyPrefix')" name="captcha.slider.keyPrefix">
+                <a-input v-model:value="securityConfig.captcha.slider.keyPrefix" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.sliderSecondaryKeyPrefix')" name="captcha.slider.secondaryKeyPrefix">
+                <a-input v-model:value="securityConfig.captcha.slider.secondaryKeyPrefix" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.sliderTokenExpireSeconds')" name="captcha.slider.tokenExpireSeconds">
+                <a-input-number v-model:value="securityConfig.captcha.slider.tokenExpireSeconds" :min="30" :max="600" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.sliderProvider')" name="captcha.slider.provider">
+                <a-input v-model:value="securityConfig.captcha.slider.provider" />
+              </a-form-item>
+              <a-form-item :label="t('system.config.sliderSecondaryEnabled')" name="captcha.slider.secondaryEnabled">
+                <a-switch v-model:checked="securityConfig.captcha.slider.secondaryEnabled" />
+              </a-form-item>
+            </template>
+
+            <a-divider orientation="left">{{ t('system.config.passwordPolicy') }}</a-divider>
+
+            <a-form-item :label="t('system.config.passwordStore')" name="passwordPolicy.store">
+              <a-select v-model:value="securityConfig.passwordPolicy.store">
+                <a-select-option value="bcrypt">bcrypt</a-select-option>
+                <a-select-option value="sm2">sm2</a-select-option>
+                <a-select-option value="sm4">sm4</a-select-option>
+                <a-select-option value="argon2">argon2</a-select-option>
+                <a-select-option value="scrypt">scrypt</a-select-option>
+                <a-select-option value="pbkdf2">pbkdf2</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.passwordMinLength')" name="passwordPolicy.minLength">
+              <a-input-number v-model:value="securityConfig.passwordPolicy.minLength" :min="6" :max="32" />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.passwordRequireNumbers')" name="passwordPolicy.requireNumbers">
+              <a-switch v-model:checked="securityConfig.passwordPolicy.requireNumbers" />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.passwordRequireUppercase')" name="passwordPolicy.requireUppercase">
+              <a-switch v-model:checked="securityConfig.passwordPolicy.requireUppercase" />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.passwordRequireLowercase')" name="passwordPolicy.requireLowercase">
+              <a-switch v-model:checked="securityConfig.passwordPolicy.requireLowercase" />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.passwordRequireSymbols')" name="passwordPolicy.requireSymbols">
+              <a-switch v-model:checked="securityConfig.passwordPolicy.requireSymbols" />
+            </a-form-item>
+
+            <a-divider orientation="left">{{ t('system.config.transportCrypto') }}</a-divider>
+
+            <a-form-item :label="t('system.config.transportAlgorithm')" name="cryptoTransport.algorithm">
+              <a-select v-model:value="securityConfig.cryptoTransport.algorithm">
+                <a-select-option value="SM2">SM2</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.transportCipher')" name="cryptoTransport.cipher">
+              <a-select v-model:value="securityConfig.cryptoTransport.cipher">
+                <a-select-option value="BCD">BCD</a-select-option>
+                <a-select-option value="Hex">Hex</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.transportPublicKey')" name="cryptoTransport.publicKey">
+              <a-textarea
+                v-model:value="securityConfig.cryptoTransport.publicKey"
+                :rows="3"
+                :placeholder="t('system.config.transportPublicKeyPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.transportPrivateKey')" name="cryptoTransport.privateKey">
+              <a-textarea
+                v-model:value="securityConfig.cryptoTransport.privateKey"
+                :rows="3"
+                :placeholder="t('system.config.transportPrivateKeyPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :wrapper-col="{ span: 24 }">
+              <a-space>
+                <a-button type="primary" :loading="savingSecurity" @click="saveSecurityConfig">
+                  {{ t('common.save') }}
+                </a-button>
+                <a-button @click="resetSecurityConfig">{{ t('common.reset') }}</a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+
+        <a-tab-pane key="upload" :tab="t('system.config.tabUpload')">
+          <a-form
+            :model="fileUploadConfig"
+            :label-col="{ span: 6 }"
+            :wrapper-col="{ span: 16 }"
+            layout="horizontal"
+          >
+            <a-form-item :label="t('system.config.storageType')" name="storageType">
+              <a-select v-model:value="fileUploadConfig.storageType">
+                <a-select-option value="LOCAL">{{ t('system.config.storageLocal') }}</a-select-option>
+                <a-select-option value="OSS">{{ t('system.config.storageOss') }}</a-select-option>
+                <a-select-option value="MINIO">{{ t('system.config.storageMinio') }}</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.localUploadPath')" name="localUploadPath">
+              <a-input
+                v-model:value="fileUploadConfig.localUploadPath"
+                :placeholder="t('system.config.localUploadPathPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.accessPrefix')" name="accessPrefix">
+              <a-input
+                v-model:value="fileUploadConfig.accessPrefix"
+                :placeholder="t('system.config.accessPrefixPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.providerConfigJson')" name="providerConfigJson">
+              <a-textarea
+                v-model:value="fileUploadConfig.providerConfigJson"
+                :rows="5"
+                :placeholder="t('system.config.providerConfigJsonPlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :wrapper-col="{ span: 24 }">
+              <a-space>
+                <a-button type="primary" :loading="savingUpload" @click="saveFileUploadConfig">
+                  {{ t('common.save') }}
+                </a-button>
+                <a-button @click="resetFileUploadConfig">{{ t('common.reset') }}</a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+      </a-tabs>
     </a-card>
 
-    <!-- 预览弹窗 -->
-    <a-modal
-      v-model:open="previewVisible"
-      :title="t('system.config.previewTitle')"
-      width="800px"
-      :footer="null"
-    >
+    <a-modal v-model:open="previewVisible" :title="t('system.config.previewTitle')" width="800px" :footer="null">
       <div class="preview-container">
-        <div class="preview-login-page" :style="{ backgroundColor: previewConfig.loginBackgroundColor }">
+        <div class="preview-login-page" :style="{ backgroundColor: basicConfig.loginBackgroundColor }">
           <video
-            v-if="previewConfig.loginBackgroundType === 'video' && previewConfig.loginBackgroundVideo"
+            v-if="basicConfig.loginBackgroundType === 'video' && basicConfig.loginBackgroundVideo"
             class="preview-bg-video"
             autoplay
             muted
             loop
             playsinline
-            :src="formatMediaUrl(previewConfig.loginBackgroundVideo)"
+            :src="formatMediaUrl(basicConfig.loginBackgroundVideo)"
           ></video>
           <img
-            v-if="previewConfig.loginBackgroundType === 'image' && previewConfig.loginBackgroundImage"
+            v-if="basicConfig.loginBackgroundType === 'image' && basicConfig.loginBackgroundImage"
             class="preview-bg-image"
-            :src="formatMediaUrl(previewConfig.loginBackgroundImage)"
+            :src="formatMediaUrl(basicConfig.loginBackgroundImage)"
+            alt="background"
           />
           <div class="preview-content">
             <div class="preview-brand">
-              <img v-if="formatMediaUrl(previewConfig.systemLogo)" :src="formatMediaUrl(previewConfig.systemLogo)" class="preview-logo" />
-              <span v-else class="preview-system-name">{{ previewConfig.systemName }}</span>
+              <img
+                v-if="formatMediaUrl(basicConfig.systemLogo)"
+                :src="formatMediaUrl(basicConfig.systemLogo)"
+                class="preview-logo"
+                alt="logo"
+              />
+              <span v-else class="preview-system-name">{{ basicConfig.systemName }}</span>
             </div>
-            <div class="preview-title">{{ previewConfig.loginPageTitle }}</div>
-            <div class="preview-subtitle">{{ previewConfig.loginPageSubtitle }}</div>
-            <div class="preview-copyright">{{ previewConfig.copyright }}</div>
+            <div class="preview-title">{{ basicConfig.loginPageTitle }}</div>
+            <div class="preview-subtitle">{{ basicConfig.loginPageSubtitle }}</div>
+            <div class="preview-copyright">{{ basicConfig.copyright }}</div>
           </div>
         </div>
       </div>
@@ -202,47 +426,91 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue'
-import { message, Modal } from 'ant-design-vue'
-import { useI18n } from 'vue-i18n'
-import { SettingOutlined, UploadOutlined, DeleteOutlined, PictureOutlined, CameraOutlined } from '@ant-design/icons-vue'
-import { getSystemBasicConfig, setSystemBasicConfig } from '../../../api/system/config'
-import { uploadFile } from '../../../api/system/file'
-import type { SystemBasicConfig } from '../../../api/system/config'
+import { onMounted, ref } from 'vue'
 import type { UploadFile } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
+import { DeleteOutlined, PictureOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import { uploadFile } from '@/api/system/file'
+import {
+  createDefaultFileUploadConfig,
+  createDefaultSecurityConfig,
+  createDefaultSystemBasicConfig,
+  getFileUploadConfig,
+  getSecurityConfig,
+  getSystemBasicConfig,
+  setFileUploadConfig,
+  setSecurityConfig,
+  setSystemBasicConfig,
+  type FileUploadConfig,
+  type SecurityConfig,
+  type SystemBasicConfig,
+} from '@/api/system/config'
 
 const { t } = useI18n()
 
+const activeTab = ref('system')
 const loading = ref(false)
-const saving = ref(false)
-const videoUploading = ref(false)
-const bgImageUploading = ref(false)
 const previewVisible = ref(false)
 
-// 文件列表
+const savingSystem = ref(false)
+const savingPortal = ref(false)
+const savingSecurity = ref(false)
+const savingUpload = ref(false)
+const videoUploading = ref(false)
+const bgImageUploading = ref(false)
+
 const videoFileList = ref<UploadFile[]>([])
 const bgImageFileList = ref<UploadFile[]>([])
 
-const formData = ref<SystemBasicConfig>({
-  systemName: 'FORGEX_MOM',
-  systemLogo: '',
-  systemVersion: '1.0.0',
-  copyright: '© 2025 FORGEX_MOM',
-  copyrightLink: '#',
-  loginPageTitle: '欢迎来到FORGEX_MOM！',
-  loginPageSubtitle: '',
-  loginBackgroundType: 'video',
-  loginBackgroundVideo: '/jws.mp4',
-  loginBackgroundImage: '',
-  loginBackgroundColor: '#0d0221',
-  loginStyle: 'cyber',
-  showOAuthLogin: true,
-  primaryColor: '#05d9e8',
-  secondaryColor: '#ff2a6d'
-})
+const basicConfig = ref<SystemBasicConfig>(createDefaultSystemBasicConfig())
+const securityConfig = ref<SecurityConfig>(createDefaultSecurityConfig())
+const fileUploadConfig = ref<FileUploadConfig>(createDefaultFileUploadConfig())
 
-const previewConfig = ref<SystemBasicConfig>({ ...formData.value })
+function normalizeSystemBasicConfig(config: Partial<SystemBasicConfig> | null | undefined): SystemBasicConfig {
+  const defaults = createDefaultSystemBasicConfig()
+  return {
+    ...defaults,
+    ...(config || {}),
+    loginLayout: (config?.loginLayout || defaults.loginLayout) as SystemBasicConfig['loginLayout'],
+  }
+}
+
+function normalizeSecurityConfig(config: Partial<SecurityConfig> | null | undefined): SecurityConfig {
+  const defaults = createDefaultSecurityConfig()
+  return {
+    captcha: {
+      ...defaults.captcha,
+      ...(config?.captcha || {}),
+      image: {
+        ...defaults.captcha.image,
+        ...(config?.captcha?.image || {}),
+      },
+      slider: {
+        ...defaults.captcha.slider,
+        ...(config?.captcha?.slider || {}),
+      },
+    },
+    passwordPolicy: {
+      ...defaults.passwordPolicy,
+      ...(config?.passwordPolicy || {}),
+    },
+    cryptoTransport: {
+      ...defaults.cryptoTransport,
+      ...(config?.cryptoTransport || {}),
+    },
+  }
+}
+
+function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | undefined): FileUploadConfig {
+  const defaults = createDefaultFileUploadConfig()
+  return {
+    ...defaults,
+    ...(config || {}),
+    storageType: ((config?.storageType || defaults.storageType) as FileUploadConfig['storageType']),
+  }
+}
 
 function formatMediaUrl(value: string): string {
   const url = String(value || '')
@@ -256,32 +524,17 @@ function formatMediaUrl(value: string): string {
   return `/api/${url}`
 }
 
-/**
- * Logo上传成功回调
- * @param url 上传成功后的文件URL
- */
-async function handleLogoUploadSuccess(url: string) {
+async function loadAllConfig() {
+  loading.value = true
   try {
-    // 自动保存配置
-    await setSystemBasicConfig(formData.value)
-    message.success(t('common.uploadSuccess'))
-    previewConfig.value = { ...formData.value }
-  } catch (e: any) {
-    console.error('自动保存配置失败:', e)
-    message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
-  }
-}
-
-const systemLogoUrl = computed(() => formatMediaUrl(formData.value.systemLogo))
-
-async function loadData() {
-  try {
-    loading.value = true
-    const data = await getSystemBasicConfig()
-    if (data) {
-      formData.value = { ...data }
-      previewConfig.value = { ...data }
-    }
+    const [basic, security, upload] = await Promise.all([
+      getSystemBasicConfig(),
+      getSecurityConfig(),
+      getFileUploadConfig(),
+    ])
+    basicConfig.value = normalizeSystemBasicConfig(basic)
+    securityConfig.value = normalizeSecurityConfig(security)
+    fileUploadConfig.value = normalizeFileUploadConfig(upload)
   } catch (e) {
     message.error(t('common.loadFailed'))
   } finally {
@@ -289,57 +542,109 @@ async function loadData() {
   }
 }
 
-async function handleSave() {
+async function saveSystemConfig() {
+  savingSystem.value = true
   try {
-    saving.value = true
-    await setSystemBasicConfig(formData.value)
+    await setSystemBasicConfig(basicConfig.value)
     message.success(t('common.saveSuccess'))
-    previewConfig.value = { ...formData.value }
   } catch (e) {
     message.error(t('common.saveFailed'))
   } finally {
-    saving.value = false
+    savingSystem.value = false
   }
 }
 
-function handleReset() {
-  formData.value = {
-    systemName: 'FORGEX_MOM',
-    systemLogo: '',
-    systemVersion: '1.0.0',
-    copyright: '© 2025 FORGEX_MOM',
-    copyrightLink: '#',
-    loginPageTitle: '欢迎来到FORGEX_MOM！',
-    loginPageSubtitle: '',
-    loginBackgroundType: 'video',
-    loginBackgroundVideo: '/jws.mp4',
-    loginBackgroundImage: '',
-    loginBackgroundColor: '#0d0221',
-    loginStyle: 'cyber',
-    showOAuthLogin: true,
-    primaryColor: '#05d9e8',
-    secondaryColor: '#ff2a6d'
+async function savePortalConfig() {
+  savingPortal.value = true
+  try {
+    await setSystemBasicConfig(basicConfig.value)
+    message.success(t('common.saveSuccess'))
+  } catch (e) {
+    message.error(t('common.saveFailed'))
+  } finally {
+    savingPortal.value = false
   }
-  // 清空文件列表
+}
+
+async function saveSecurityConfig() {
+  savingSecurity.value = true
+  try {
+    await setSecurityConfig(securityConfig.value)
+    message.success(t('common.saveSuccess'))
+  } catch (e) {
+    message.error(t('common.saveFailed'))
+  } finally {
+    savingSecurity.value = false
+  }
+}
+
+async function saveFileUploadConfig() {
+  savingUpload.value = true
+  try {
+    await setFileUploadConfig(fileUploadConfig.value)
+    message.success(t('common.saveSuccess'))
+  } catch (e) {
+    message.error(t('common.saveFailed'))
+  } finally {
+    savingUpload.value = false
+  }
+}
+
+function resetSystemConfig() {
+  const defaults = createDefaultSystemBasicConfig()
+  basicConfig.value = {
+    ...basicConfig.value,
+    systemName: defaults.systemName,
+    systemLogo: defaults.systemLogo,
+    systemVersion: defaults.systemVersion,
+    copyright: defaults.copyright,
+    copyrightLink: defaults.copyrightLink,
+  }
+  message.info(t('common.resetSuccess'))
+}
+
+function resetPortalConfig() {
+  const defaults = createDefaultSystemBasicConfig()
+  basicConfig.value = {
+    ...basicConfig.value,
+    loginPageTitle: defaults.loginPageTitle,
+    loginPageSubtitle: defaults.loginPageSubtitle,
+    loginBackgroundType: defaults.loginBackgroundType,
+    loginBackgroundVideo: defaults.loginBackgroundVideo,
+    loginBackgroundImage: defaults.loginBackgroundImage,
+    loginBackgroundColor: defaults.loginBackgroundColor,
+    loginStyle: defaults.loginStyle,
+    loginLayout: defaults.loginLayout,
+    showOAuthLogin: defaults.showOAuthLogin,
+    primaryColor: defaults.primaryColor,
+    secondaryColor: defaults.secondaryColor,
+  }
   videoFileList.value = []
   bgImageFileList.value = []
   message.info(t('common.resetSuccess'))
 }
 
-function handlePreview() {
-  previewConfig.value = { ...formData.value }
+function resetSecurityConfig() {
+  securityConfig.value = createDefaultSecurityConfig()
+  message.info(t('common.resetSuccess'))
+}
+
+function resetFileUploadConfig() {
+  fileUploadConfig.value = createDefaultFileUploadConfig()
+  message.info(t('common.resetSuccess'))
+}
+
+function openPreview() {
   previewVisible.value = true
 }
 
-// 处理视频删除
 function handleVideoRemove() {
-  formData.value.loginBackgroundVideo = ''
+  basicConfig.value.loginBackgroundVideo = ''
   videoFileList.value = []
 }
 
-// 处理背景图片删除
 function handleBgImageRemove() {
-  formData.value.loginBackgroundImage = ''
+  basicConfig.value.loginBackgroundImage = ''
   bgImageFileList.value = []
 }
 
@@ -351,7 +656,7 @@ function handleVideoBeforeUpload(file: File) {
     return false
   }
   if (!isLt200M) {
-    message.error('视频大小不能超过200MB')
+    message.error(t('system.config.videoSizeLimit'))
     return false
   }
   return true
@@ -360,25 +665,14 @@ function handleVideoBeforeUpload(file: File) {
 async function handleVideoUpload(options: any) {
   videoUploading.value = true
   try {
-    // 使用文件上传接口
     const fileUrl = await uploadFile(options.file)
-    formData.value.loginBackgroundVideo = fileUrl
-    // 更新文件列表
+    basicConfig.value.loginBackgroundVideo = fileUrl
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
-    
-    // 自动保存配置
-    try {
-      await setSystemBasicConfig(formData.value)
-      message.success(t('common.uploadSuccess'))
-    } catch (e: any) {
-      console.error('自动保存配置失败:', e)
-      message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
-    }
-  } catch (e: any) {
-    console.error('视频上传失败:', e)
-    message.error(t('common.uploadFailed'))
-    // 更新文件列表为错误状态
+    options.onSuccess?.(fileUrl)
+  } catch (e) {
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'error' }]
+    options.onError?.(e)
+    message.error(t('common.uploadFailed'))
   } finally {
     videoUploading.value = false
   }
@@ -401,45 +695,36 @@ function handleBgImageBeforeUpload(file: File) {
 async function handleBgImageUpload(options: any) {
   bgImageUploading.value = true
   try {
-    // 使用文件上传接口
     const fileUrl = await uploadFile(options.file)
-    formData.value.loginBackgroundImage = fileUrl
-    // 更新文件列表
+    basicConfig.value.loginBackgroundImage = fileUrl
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
-    
-    // 自动保存配置
-    try {
-      await setSystemBasicConfig(formData.value)
-      message.success(t('common.uploadSuccess'))
-    } catch (e: any) {
-      console.error('自动保存配置失败:', e)
-      message.warning(t('common.uploadSuccess') + '，但保存配置失败，请手动保存')
-    }
-  } catch (e: any) {
-    console.error('背景图片上传失败:', e)
-    message.error(t('common.uploadFailed'))
-    // 更新文件列表为错误状态
+    options.onSuccess?.(fileUrl)
+  } catch (e) {
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'error' }]
+    options.onError?.(e)
+    message.error(t('common.uploadFailed'))
   } finally {
     bgImageUploading.value = false
   }
 }
 
+function handleLogoUploadSuccess() {
+  message.success(t('common.uploadSuccess'))
+}
+
 onMounted(() => {
-  loadData()
+  loadAllConfig()
 })
 </script>
 
 <style scoped>
 .system-config {
   padding: 0;
-  margin-top: 0;
   height: 100%;
   min-height: 0;
   overflow: auto;
 }
 
-/* 系统Logo上传样式 - 复用租户管理的样式 */
 .system-logo-upload {
   display: inline-block;
 }
@@ -465,6 +750,19 @@ onMounted(() => {
 .system-logo-upload :deep(.avatar-upload .upload-tips) {
   margin-top: 8px;
   text-align: left;
+}
+
+.media-preview {
+  margin-top: 8px;
+}
+
+.video-preview {
+  max-width: 300px;
+  max-height: 200px;
+}
+
+.color-input {
+  width: 50px;
 }
 
 .preview-container {

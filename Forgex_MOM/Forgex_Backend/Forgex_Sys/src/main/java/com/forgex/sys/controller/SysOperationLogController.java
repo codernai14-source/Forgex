@@ -49,6 +49,7 @@ public class SysOperationLogController {
      * @return 操作日志分页结果
      */
     @PostMapping("/page")
+    @RequirePerm("sys:operation-log:view")
     public R<Page<SysOperationLog>> page(@RequestBody SysOperationLogQueryDTO query) {
         // 获取分页参数
         long current = query != null && query.getCurrent() != null ? query.getCurrent() : 1L;

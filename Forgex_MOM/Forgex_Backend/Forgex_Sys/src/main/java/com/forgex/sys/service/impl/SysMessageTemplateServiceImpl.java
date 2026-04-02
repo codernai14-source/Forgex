@@ -198,6 +198,23 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         return true;
     }
     
+    @Override
+    public boolean existsByCode(String code) {
+        LambdaQueryWrapper<SysMessageTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMessageTemplate::getTemplateCode, code);
+        Long count = templateMapper.selectCount(wrapper);
+        return count > 0;
+    }
+    
+    @Override
+    public boolean existsByCodeExcludeId(String code, Long id) {
+        LambdaQueryWrapper<SysMessageTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMessageTemplate::getTemplateCode, code);
+        wrapper.ne(SysMessageTemplate::getId, id);
+        Long count = templateMapper.selectCount(wrapper);
+        return count > 0;
+    }
+    
     /**
      * 实体转VO
      */

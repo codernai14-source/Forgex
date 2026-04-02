@@ -16,7 +16,7 @@
     />
     <div class="mask" :style="{ backgroundColor: systemConfig.loginBackgroundType === 'color' ? systemConfig.loginBackgroundColor : '' }"></div>
     <div class="grid"></div>
-    <div class="content">
+    <div class="content" :class="`layout-${systemConfig.loginLayout || 'center'}`">
       <div class="brand" v-show="!tenantOpen">
         <img v-if="formatMediaUrl(systemConfig.systemLogo)" :src="formatMediaUrl(systemConfig.systemLogo)" class="brand-logo" />
         <span v-else class="brand-blue">{{ systemConfig.systemName.split('_')[0] }}</span
@@ -62,7 +62,7 @@
             <div>
               <a-button size="small" @click="openSlider">{{ i18nT('common.login.startSlider') }}</a-button>
               <span style="margin-left: 8px; color: #9ca3af;"
-                >{{ i18nT('common.login.sliderAutoFillTip') }}</span
+                >{{ sliderVerified ? i18nT('common.success') : i18nT('common.login.sliderAutoFillTip') }}</span
               >
             </div>
           </div>
@@ -177,16 +177,58 @@
       v-model:open="sliderOpen"
       :title="i18nT('common.login.sliderTitle')"
       :footer="null"
-      width="600"
+      width="720"
       @afterOpen="initSlider"
     >
-      <div ref="sliderBox" style="height: 420px;"></div>
+      <div class="slider-panel">
+        <div
+          class="slider-canvas"
+          :style="{
+            width: `${sliderPreviewWidth}px`,
+            height: `${sliderPreviewHeight}px`
+          }"
+        >
+          <img
+            v-if="sliderChallenge?.backgroundImage"
+            class="slider-bg"
+            :src="sliderChallenge.backgroundImage"
+            alt="slider-background"
+          />
+          <img
+            v-if="sliderChallenge?.templateImage"
+            class="slider-piece"
+            :src="sliderChallenge.templateImage"
+            alt="slider-piece"
+            :style="{
+              width: `${sliderTemplateWidth * sliderPreviewScale}px`,
+              height: `${sliderTemplateHeight * sliderPreviewScale}px`,
+              left: `${sliderValue * sliderPreviewScale}px`,
+              top: `${sliderPieceTop * sliderPreviewScale}px`
+            }"
+          />
+        </div>
+        <a-slider
+          v-model:value="sliderValue"
+          :min="0"
+          :max="sliderMax"
+          :tooltip="{ open: false }"
+          @change="onSliderDrag"
+        />
+        <div class="slider-actions">
+          <a-space>
+            <a-button @click="initSlider">{{ i18nT('common.refresh') }}</a-button>
+            <a-button type="primary" :loading="sliderVerifying" @click="verifySliderCaptcha">
+              {{ i18nT('common.confirm') }}
+            </a-button>
+          </a-space>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -210,6 +252,35 @@ import { getCurrentUserInfo } from '@/api/profile'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 
+interface SliderCaptchaChallenge {
+  id: string
+  backgroundImage: string
+  templateImage: string
+  backgroundImageWidth: number
+  backgroundImageHeight: number
+  templateImageWidth: number
+  templateImageHeight: number
+}
+
+interface SliderTrackPoint {
+  x: number
+  y: number
+  t: number
+  type: string
+}
+
+interface SliderTrackPayload {
+  bgImageWidth: number
+  bgImageHeight: number
+  templateImageWidth: number
+  templateImageHeight: number
+  startTime: number
+  stopTime: number
+  left: number
+  top: number
+  trackList: SliderTrackPoint[]
+}
+
 // 初始化 stores
 const userStore = useUserStore()
 const permissionStore = usePermissionStore()
@@ -227,7 +298,11 @@ const tenants = ref<{ id: string; name: string; logo?: string; intro?: string; i
 const tenantOpen = ref(false)
 const chosenTenant = ref<string | null>(null)
 const sliderOpen = ref(false)
-const sliderBox = ref<HTMLDivElement | null>(null)
+const sliderVerifying = ref(false)
+const sliderVerified = ref(false)
+const sliderChallenge = ref<SliderCaptchaChallenge | null>(null)
+const sliderValue = ref(0)
+const sliderTrackStartAt = ref(0)
 const logging = ref(false)
 const publicKeyCache = ref<string>('')
 const showSort = ref(false)
@@ -247,9 +322,51 @@ const systemConfig = ref<SystemBasicConfig>({
   loginBackgroundImage: '',
   loginBackgroundColor: '#0d0221',
   loginStyle: 'cyber',
+  loginLayout: 'center',
   showOAuthLogin: true,
   primaryColor: '#05d9e8',
   secondaryColor: '#ff2a6d'
+})
+
+const sliderTemplateWidth = computed(() => {
+  return sliderChallenge.value?.templateImageWidth && sliderChallenge.value.templateImageWidth > 0
+    ? sliderChallenge.value.templateImageWidth
+    : 52
+})
+
+const sliderTemplateHeight = computed(() => {
+  return sliderChallenge.value?.templateImageHeight && sliderChallenge.value.templateImageHeight > 0
+    ? sliderChallenge.value.templateImageHeight
+    : 52
+})
+
+const sliderMax = computed(() => {
+  if (!sliderChallenge.value) return 0
+  const max = sliderChallenge.value.backgroundImageWidth - sliderTemplateWidth.value
+  return max > 0 ? max : 0
+})
+
+const sliderPieceTop = computed(() => {
+  if (!sliderChallenge.value) return 0
+  const top = (sliderChallenge.value.backgroundImageHeight - sliderTemplateHeight.value) / 2
+  return top > 0 ? top : 0
+})
+
+const sliderPreviewScale = computed(() => {
+  if (!sliderChallenge.value || !sliderChallenge.value.backgroundImageWidth) return 1
+  const maxWidth = 520
+  const w = sliderChallenge.value.backgroundImageWidth
+  return w > maxWidth ? maxWidth / w : 1
+})
+
+const sliderPreviewWidth = computed(() => {
+  if (!sliderChallenge.value) return 520
+  return sliderChallenge.value.backgroundImageWidth * sliderPreviewScale.value
+})
+
+const sliderPreviewHeight = computed(() => {
+  if (!sliderChallenge.value) return 280
+  return sliderChallenge.value.backgroundImageHeight * sliderPreviewScale.value
 })
 
 function formatMediaUrl(value: string): string {
@@ -339,6 +456,11 @@ async function loadMode() {
   try {
     const cfg = await getLoginCaptcha()
     mode.value = cfg && cfg.mode ? cfg.mode : 'none'
+    captcha.value = ''
+    captchaId.value = ''
+    sliderVerified.value = false
+    sliderChallenge.value = null
+    sliderValue.value = 0
     if (mode.value === 'image') {
       await loadImage()
     }
@@ -356,6 +478,14 @@ async function loadImage() {
 async function onPreLogin() {
   try {
     if (logging.value) {
+      return
+    }
+    if (mode.value === 'slider' && !sliderVerified.value) {
+      message.warning(i18nT('common.login.startSlider'))
+      return
+    }
+    if (mode.value === 'image' && (!captchaId.value || !captcha.value)) {
+      message.warning(i18nT('common.login.captchaPlaceholder'))
       return
     }
     logging.value = true
@@ -376,7 +506,7 @@ async function onPreLogin() {
       account: account.value,
       password: pwdToSend,
       captcha: captcha.value,
-      captchaId: captchaId.value
+      captchaId: mode.value === 'image' ? captchaId.value : undefined
     })
     tenants.value = Array.isArray(res) ? res : []
     if (tenants.value.length > 0) {
@@ -508,11 +638,103 @@ async function openSlider() {
 }
 
 async function initSlider() {
-  if (!sliderBox.value) return
   try {
-    const data = await captchaSlider()
-    console.log('init slider', data)
-  } catch (e) {}
+    const raw = await captchaSlider()
+    const challenge = raw as any
+    const bgWidth = Number(challenge?.backgroundImageWidth || 280)
+    const bgHeight = Number(challenge?.backgroundImageHeight || 158)
+    const tplWidth = Number(challenge?.templateImageWidth || 52)
+    const tplHeight = Number(challenge?.templateImageHeight || 52)
+    sliderChallenge.value = {
+      id: String(challenge?.id || ''),
+      backgroundImage: formatMediaUrl(String(challenge?.backgroundImage || '')),
+      templateImage: formatMediaUrl(String(challenge?.templateImage || '')),
+      backgroundImageWidth: bgWidth > 0 ? bgWidth : 280,
+      backgroundImageHeight: bgHeight > 0 ? bgHeight : 158,
+      templateImageWidth: tplWidth > 0 ? tplWidth : 52,
+      templateImageHeight: tplHeight > 0 ? tplHeight : 52
+    }
+    sliderValue.value = 0
+    sliderTrackStartAt.value = Date.now()
+    sliderVerified.value = false
+    captcha.value = ''
+  } catch (e) {
+    sliderChallenge.value = null
+    sliderVerified.value = false
+    captcha.value = ''
+    message.error(i18nT('common.loadFailed'))
+  }
+}
+
+function buildSliderTrackList(targetX: number, duration: number): SliderTrackPoint[] {
+  const pointCount = 18
+  const list: SliderTrackPoint[] = []
+  for (let i = 0; i < pointCount; i++) {
+    const progress = i / (pointCount - 1)
+    const eased = 1 - Math.pow(1 - progress, 2)
+    const x = Number((targetX * eased).toFixed(2))
+    const y = Number((2 + Math.sin(progress * Math.PI * 1.8) * 2 + (Math.random() - 0.5) * 0.8).toFixed(2))
+    const t = Number((duration * progress).toFixed(2))
+    list.push({
+      x,
+      y,
+      t,
+      type: 'move'
+    })
+  }
+  return list
+}
+
+function onSliderDrag(value: number) {
+  sliderValue.value = Number.isFinite(value) ? value : 0
+}
+
+async function verifySliderCaptcha() {
+  if (!sliderChallenge.value?.id) {
+    message.warning(i18nT('common.loadFailed'))
+    return
+  }
+  if (sliderValue.value <= 0) {
+    message.warning(i18nT('common.login.startSlider'))
+    return
+  }
+  sliderVerifying.value = true
+  try {
+    const startTime = sliderTrackStartAt.value || Date.now()
+    const duration = Math.max(Date.now() - startTime, 420)
+    const stopTime = startTime + duration
+    const payload: SliderTrackPayload = {
+      bgImageWidth: sliderChallenge.value.backgroundImageWidth,
+      bgImageHeight: sliderChallenge.value.backgroundImageHeight,
+      templateImageWidth: sliderChallenge.value.templateImageWidth,
+      templateImageHeight: sliderChallenge.value.templateImageHeight,
+      startTime,
+      stopTime,
+      left: sliderValue.value,
+      top: sliderPieceTop.value,
+      trackList: buildSliderTrackList(sliderValue.value, duration)
+    }
+    const token = await captchaSliderValidate({
+      id: sliderChallenge.value.id,
+      track: payload
+    })
+    captcha.value = String(token || '')
+    sliderVerified.value = !!captcha.value
+    if (sliderVerified.value) {
+      sliderOpen.value = false
+      message.success(i18nT('common.success'))
+    } else {
+      message.error(i18nT('common.operationFailed'))
+      await initSlider()
+    }
+  } catch (e) {
+    sliderVerified.value = false
+    captcha.value = ''
+    message.error(i18nT('common.operationFailed'))
+    await initSlider()
+  } finally {
+    sliderVerifying.value = false
+  }
 }
 
 function choose(t: { id: string }) {
@@ -590,12 +812,6 @@ onMounted(async () => {
   await loadMode()
 })
 
-watch(sliderOpen, async open => {
-  if (open) {
-    await nextTick()
-    await initSlider()
-  }
-})
 </script>
 
 <style scoped>
@@ -631,6 +847,17 @@ watch(sliderOpen, async open => {
   justify-content: center;
   min-height: 100%;
   padding: 24px;
+}
+
+.content.layout-split {
+  align-items: flex-start;
+  justify-content: center;
+  padding-left: clamp(24px, 9vw, 140px);
+}
+
+.content.layout-compact .glass-card {
+  width: 320px;
+  padding: 18px;
 }
 .brand {
   font-family: 'Orbitron', sans-serif;
@@ -1039,6 +1266,41 @@ watch(sliderOpen, async open => {
   right: 24px;
   z-index: 20;
 }
+
+.slider-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.slider-canvas {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.5);
+  margin: 0 auto;
+}
+
+.slider-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.slider-piece {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+.slider-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .spinner {
   width: 14px;
   height: 14px;
@@ -1050,6 +1312,14 @@ watch(sliderOpen, async open => {
 .star {
   color: #fbbf24;
 }
+
+@media (max-width: 992px) {
+  .content.layout-split {
+    align-items: center;
+    padding-left: 24px;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

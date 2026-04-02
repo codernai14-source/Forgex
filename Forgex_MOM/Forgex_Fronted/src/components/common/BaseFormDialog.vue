@@ -65,25 +65,41 @@ import { Modal as AModal, Drawer as ADrawer, Space as ASpace, Button as AButton 
 const appStore = useAppStore()
 
 interface Props {
-  /** 是否显示 */
+  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
   open?: boolean
-  /** 标题 */
+  /** 对话框标题 */
   title?: string
-  /** 模式：modal=模态框，drawer=抽屉 */
+  /** 显示模式：modal=模态框，drawer=抽屉 */
   mode?: 'modal' | 'drawer'
-  /** 宽度 */
+  /** 对话框宽度，支持数字（单位 px）和字符串（如 "800px"） */
   width?: number | string
-  /** 加载状态 */
+  /** 加载状态，true 表示提交中，会显示加载动画 */
   loading?: boolean
-  /** 关闭时销毁子元素 */
+  /** 关闭时销毁子元素，默认 true，用于优化性能 */
   destroyOnClose?: boolean
 }
 
 interface Emits {
+  /**
+   * 更新对话框打开状态
+   * @param value 新的打开状态
+   */
   (e: 'update:open', value: boolean): void
+  /**
+   * 提交事件
+   * 触发时机：点击确定按钮时触发
+   */
   (e: 'submit'): void
+  /**
+   * 取消事件
+   * 触发时机：点击取消按钮或关闭对话框时触发
+   */
   (e: 'cancel'): void
-  (e: 'ok'): void // 兼容 Modal 的 ok 事件
+  /**
+   * 确认事件（兼容 Modal 的 ok 事件）
+   * 触发时机：点击确定按钮时触发
+   */
+  (e: 'ok'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {

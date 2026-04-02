@@ -322,8 +322,11 @@ import type { User, UserProfile, WorkHistory, Department, Position } from '../ty
 
 // Props
 interface Props {
+  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
   open: boolean
+  /** 是否为编辑模式，true 表示编辑用户，false 表示新增用户 */
   isEdit: boolean
+  /** 用户 ID，编辑模式下必填，用于加载用户详情数据 */
   userId?: string
 }
 
@@ -335,7 +338,15 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
+  /**
+   * 更新对话框打开状态
+   * @param value 新的打开状态
+   */
   'update:open': [value: boolean]
+  /**
+   * 操作成功事件
+   * 触发时机：新增或编辑用户成功保存后触发
+   */
   'success': []
 }>()
 

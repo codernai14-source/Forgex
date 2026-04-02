@@ -44,7 +44,9 @@ import { getRoleList } from '@/api/system/role'
 import { useUserStore } from '@/stores/user'
 
 interface Props {
+  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
   open: boolean
+  /** 用户 ID，必填，用于指定要分配角色的用户 */
   userId?: string
 }
 
@@ -54,7 +56,15 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 更新对话框打开状态
+   * @param value 新的打开状态
+   */
   'update:open': [value: boolean]
+  /**
+   * 操作成功事件
+   * 触发时机：角色分配成功保存后触发
+   */
   'success': []
 }>()
 

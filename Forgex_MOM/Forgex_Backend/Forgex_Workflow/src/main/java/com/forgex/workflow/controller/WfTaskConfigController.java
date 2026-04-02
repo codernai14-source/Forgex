@@ -15,6 +15,7 @@ package com.forgex.workflow.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.workflow.domain.dto.WfTaskConfigDTO;
 import com.forgex.workflow.domain.param.WfTaskConfigQueryParam;
@@ -57,6 +58,7 @@ public class WfTaskConfigController {
      * @return 分页结果
      */
     @PostMapping("/page")
+    @RequirePerm("wf:taskConfig:view")
     public R<Page<WfTaskConfigDTO>> page(@RequestBody WfTaskConfigQueryParam param) {
         Page<WfTaskConfigDTO> page = taskConfigService.page(param);
         return R.ok(page);
@@ -69,6 +71,7 @@ public class WfTaskConfigController {
      * @return 配置列表
      */
     @PostMapping("/list")
+    @RequirePerm("wf:execution:start")
     public R<List<WfTaskConfigDTO>> list(@RequestBody WfTaskConfigQueryParam param) {
         List<WfTaskConfigDTO> list = taskConfigService.list(param);
         return R.ok(list);
@@ -81,6 +84,7 @@ public class WfTaskConfigController {
      * @return 配置详情
      */
     @PostMapping("/get")
+    @RequirePerm("wf:taskConfig:view")
     public R<WfTaskConfigDTO> get(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         WfTaskConfigDTO config = taskConfigService.getById(id);
@@ -99,6 +103,7 @@ public class WfTaskConfigController {
      * @return 配置详情
      */
     @PostMapping("/getByCode")
+    @RequirePerm("wf:execution:start")
     public R<WfTaskConfigDTO> getByCode(@RequestBody Map<String, Object> params) {
         String taskCode = params.get("taskCode").toString();
         WfTaskConfigDTO config = taskConfigService.getByCode(taskCode);
@@ -117,6 +122,7 @@ public class WfTaskConfigController {
      * @return 配置 ID
      */
     @PostMapping("/create")
+    @RequirePerm("wf:taskConfig:add")
     public R<Long> create(@Validated @RequestBody WfTaskConfigSaveParam param) {
         Long id = taskConfigService.create(param);
         return R.ok(CommonPrompt.CREATE_SUCCESS, id);
@@ -129,6 +135,7 @@ public class WfTaskConfigController {
      * @return 是否成功
      */
     @PostMapping("/update")
+    @RequirePerm("wf:taskConfig:edit")
     public R<Boolean> update(@Validated @RequestBody WfTaskConfigSaveParam param) {
         Boolean success = taskConfigService.update(param);
         return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
@@ -141,6 +148,7 @@ public class WfTaskConfigController {
      * @return 是否成功
      */
     @PostMapping("/delete")
+    @RequirePerm("wf:taskConfig:delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         Boolean success = taskConfigService.delete(id);
@@ -154,6 +162,7 @@ public class WfTaskConfigController {
      * @return 是否成功
      */
     @PostMapping("/updateStatus")
+    @RequirePerm("wf:taskConfig:config")
     public R<Boolean> updateStatus(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         Integer status = Integer.valueOf(params.get("status").toString());

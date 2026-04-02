@@ -202,6 +202,7 @@ export interface UserColumnItem {
  */
 export interface UserColumnConfigParam {
   tableCode: string
+  pageSize?: number
   columns: UserColumnItem[]
 }
 
@@ -212,6 +213,10 @@ export interface UserColumnConfigResult {
   tableCode: string
   userId: number
   tenantId: number
+  pageSize?: number
+  version?: number
+  createTime?: string
+  updateTime?: string
   columns: FxTableColumn[] | null
 }
 

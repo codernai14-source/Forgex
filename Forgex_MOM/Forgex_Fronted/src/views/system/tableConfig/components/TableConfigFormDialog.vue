@@ -185,13 +185,24 @@ import {
 import type { TableConfigDetail, TableColumnConfigItem } from '@/api/system/tableConfig'
 
 interface Props {
+  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
   open: boolean
+  /** 是否为编辑模式，true 表示编辑表格配置，false 表示新增表格配置 */
   isEdit: boolean
+  /** 表格配置 ID，编辑模式下必填，用于加载表格配置详情 */
   configId?: number
 }
 
 interface Emits {
+  /**
+   * 更新对话框打开状态
+   * @param value 新的打开状态
+   */
   (e: 'update:open', value: boolean): void
+  /**
+   * 操作成功事件
+   * 触发时机：新增或编辑表格配置成功保存后触发
+   */
   (e: 'success'): void
 }
 

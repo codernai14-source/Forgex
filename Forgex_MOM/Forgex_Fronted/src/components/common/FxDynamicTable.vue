@@ -817,6 +817,15 @@ function normalizeColumns(cols: any[]) {
 
 /**
  * 格式化查询条件
+ * 
+ * 执行步骤：
+ * 1. 遍历配置中的所有查询字段
+ * 2. 获取每个字段的值
+ * 3. 跳过空值（undefined、null、空字符串）
+ * 4. 处理日期范围字段，转换为标准格式
+ * 5. 返回格式化后的查询对象
+ * 
+ * @returns 格式化后的查询条件对象
  */
 function normalizeQuery() {
   const out: Record<string, any> = {}
@@ -835,6 +844,17 @@ function normalizeQuery() {
 
 /**
  * 处理查询
+ * 
+ * 执行步骤：
+ * 1. 设置加载状态为 true
+ * 2. 调用 props.request 方法，传入分页、查询条件、排序信息
+ * 3. 从响应中提取 records 和 total
+ * 4. 更新表格数据和分页总数
+ * 5. 重置加载状态
+ * 6. 重新计算表格滚动高度
+ * 
+ * @param sorter 排序信息（可选）
+ * @throws 请求失败时抛出异常
  */
 async function handleQuery(sorter?: any) {
   loading.value = true
@@ -858,6 +878,11 @@ async function handleQuery(sorter?: any) {
 
 /**
  * 处理重置
+ * 
+ * 执行步骤：
+ * 1. 清空所有查询条件
+ * 2. 重置分页到第一页
+ * 3. 使用上次的排序信息重新查询
  */
 function handleReset() {
   for (const k of Object.keys(queryModel)) {
@@ -869,6 +894,8 @@ function handleReset() {
 
 /**
  * 获取当前查询条件
+ * 
+ * @returns 当前查询条件对象
  */
 function getQuery() {
   return normalizeQuery()
@@ -876,6 +903,8 @@ function getQuery() {
 
 /**
  * 获取当前分页信息
+ * 
+ * @returns 分页信息对象，包含 current（当前页）、pageSize（每页条数）、total（总数）
  */
 function getPage() {
   return { 
@@ -887,15 +916,29 @@ function getPage() {
 
 /**
  * 重新加载数据
+ * 
+ * 执行步骤：
+ * 1. 调用 handleQuery 方法，使用当前分页和查询条件
+ * 
+ * @returns Promise
  */
 function reload() {
   return handleQuery()
 }
 
+/**
+ * 刷新数据
+ * 
+ * 执行步骤：
+ * 1. 调用 handleQuery 方法，使用当前分页和查询条件
+ * 
+ * @returns Promise
+ */
 function refresh() {
   return handleQuery()
 }
 
+// 暴露给父组件使用的方法
 defineExpose({ getQuery, getPage, reload, refresh })
 
 /**
@@ -1115,12 +1158,13 @@ onBeforeUnmount(() => {
 /* 工具栏 + 列设置：同一行，左对齐操作 / 右对齐列设置 */
 .fx-table-toolbar-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 12px;
   padding: 12px 16px 0 16px;
   margin-bottom: 16px;
   flex-shrink: 0;
+  overflow-x: auto;
 }
 
 .fx-table-toolbar-left {

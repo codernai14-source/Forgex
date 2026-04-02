@@ -7,62 +7,68 @@
             v-model:value="queryForm.tableCode"
             placeholder="请输入表格编码"
             allow-clear
-            style="width: 200px;"
+            style="width: 220px"
           />
         </a-form-item>
-        
+
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
-              查询
+              {{ t('common.search') }}
             </a-button>
-            <a-button @click="handleReset">
-              重置
+            <a-button @click="handleResetQuery">
+              {{ t('common.reset') }}
             </a-button>
           </a-space>
         </a-form-item>
       </a-form>
     </a-card>
-    
+
     <a-card :bordered="false" class="table-card">
-      <div style="margin-bottom: 16px;">
+      <div class="card-tip">
         <a-alert
-          message="提示"
-          description="用户级别表格配置优先级高于租户配置和公共配置。删除用户配置后，将使用租户或公共配置。"
+          message="说明"
+          description="当前页面维护当前登录用户的列偏好设置。页面和按钮是否可见仍然严格取决于角色菜单授权；这里只负责保存已授权页面的个性化列显示。"
           type="info"
           show-icon
         />
       </div>
-      
+
       <div ref="tableWrapRef" class="table-wrap">
         <a-table
           :columns="columns"
           :data-source="dataSource"
           :loading="loading"
           :pagination="pagination"
-          :scroll="tableScroll"
           :row-key="rowKey"
+          :scroll="tableScroll"
           @change="handleTableChange"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'pageSize'">
-              <a-tag color="blue">{{ record.pageSize || 20 }}</a-tag>
+            <template v-if="column.key === 'tableNameI18nJson'">
+              <span>{{ getI18nValue(record.tableNameI18nJson, record.tableCode) }}</span>
             </template>
-            
-            <template v-else-if="column.key === 'version'">
-              <a-tag>{{ record.version || 1 }}</a-tag>
+
+            <template v-else-if="column.key === 'userConfigured'">
+              <a-tag :color="record.userConfigured ? 'green' : 'default'">
+                {{ record.userConfigured ? '已配置' : '未配置' }}
+              </a-tag>
             </template>
-            
+
+            <template v-else-if="column.key === 'userPageSize'">
+              <a-tag color="blue">{{ record.userPageSize || record.defaultPageSize || 20 }}</a-tag>
+            </template>
+
             <template v-else-if="column.key === 'action'">
               <a-space>
                 <a @click="openEditDialog(record)">
-                  编辑
+                  {{ t('common.edit') }}
                 </a>
                 <a
-                  style="color: #ff4d4f;"
-                  @click="handleDelete(record)"
+                  :style="{ color: record.userConfigured ? '#ff4d4f' : '#999999' }"
+                  @click="handleResetUserConfig(record)"
                 >
-                  删除配置
+                  重置
                 </a>
               </a-space>
             </template>
@@ -70,130 +76,120 @@
         </a-table>
       </div>
     </a-card>
-    
-    <!-- 编辑对话框 -->
+
     <a-modal
       v-model:open="dialogVisible"
-      title="编辑用户表格配置"
-      width="1000px"
+      title="编辑用户列设置"
+      width="960px"
       :confirm-loading="saving"
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
       <a-form
-        ref="formRef"
         :model="formData"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 16 }"
+        :label-col="{ span: 5 }"
+        :wrapper-col="{ span: 17 }"
       >
         <a-form-item label="表格编码">
           <a-input v-model:value="formData.tableCode" disabled />
         </a-form-item>
-        
-        <a-form-item label="分页大小">
+
+        <a-form-item label="每页条数">
           <a-input-number
             v-model:value="formData.pageSize"
             :min="1"
-            :max="100"
-            style="width: 100%;"
+            :max="200"
+            style="width: 180px"
           />
         </a-form-item>
-        
-        <a-divider orientation="left">列配置</a-divider>
-        
-        <a-table
-          :columns="columnTableColumns"
-          :data-source="formData.columns || []"
-          :pagination="false"
-          :scroll="{ x: 1200 }"
-          size="small"
-          row-key="field"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'enabled'">
-              <a-checkbox v-model:checked="record.enabled" />
-            </template>
-            
-            <template v-else-if="column.key === 'orderNum'">
-              <a-input-number v-model:value="record.orderNum" :min="0" style="width: 80px;" />
-            </template>
-            
-            <template v-else-if="column.key === 'width'">
-              <a-input-number v-model:value="record.width" :min="1" style="width: 80px;" />
-            </template>
-            
-            <template v-else-if="column.key === 'align'">
-              <a-select v-model:value="record.align" style="width: 100px;">
-                <a-select-option value="left">left</a-select-option>
-                <a-select-option value="center">center</a-select-option>
-                <a-select-option value="right">right</a-select-option>
-              </a-select>
-            </template>
-            
-            <template v-else-if="column.key === 'fixed'">
-              <a-select v-model:value="record.fixed" allow-clear style="width: 100px;">
-                <a-select-option value="left">left</a-select-option>
-                <a-select-option value="right">right</a-select-option>
-              </a-select>
-            </template>
-          </template>
-        </a-table>
       </a-form>
+
+      <a-table
+        :columns="columnTableColumns"
+        :data-source="formData.columns"
+        :pagination="false"
+        :scroll="{ x: 720, y: 420 }"
+        size="small"
+        row-key="field"
+      >
+        <template #bodyCell="{ column, record, index }">
+          <template v-if="column.key === 'visible'">
+            <a-switch v-model:checked="record.visible" />
+          </template>
+
+          <template v-else-if="column.key === 'order'">
+            <a-input-number
+              v-model:value="record.order"
+              :min="1"
+              :max="formData.columns.length"
+              style="width: 100px"
+            />
+          </template>
+
+          <template v-else-if="column.key === 'move'">
+            <a-space>
+              <a-button size="small" :disabled="index === 0" @click="moveColumn(index, -1)">
+                上移
+              </a-button>
+              <a-button
+                size="small"
+                :disabled="index === formData.columns.length - 1"
+                @click="moveColumn(index, 1)"
+              >
+                下移
+              </a-button>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * 用户级别表格配置管理页面
- * 
- * 功能：
- * 1. 查询用户级别表格配置列表
- * 2. 编辑用户个性化配置
- * 3. 删除用户配置（恢复为租户配置）
- * 
- * @author Forgex Team
- * @version 1.0.0
- */
-import { ref, reactive, onBeforeUnmount, onMounted, computed, nextTick } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import {
-  getUserTableConfig,
-  saveUserTableConfig,
-  deleteUserTableConfig,
-  type FxTableConfig,
-  type FxTableColumn
+  getTableConfig,
+  getTableConfigList,
+  getUserColumns,
+  resetUserColumns,
+  saveUserColumns,
+  type FxTableColumn,
+  type TableConfigItem,
+  type UserColumnConfigResult,
+  type UserColumnItem,
 } from '@/api/system/tableConfig'
+import { getI18nValue } from '@/utils/i18n'
 
-/**
- * 用户表格配置数据接口
- */
-interface UserTableConfigItem {
-  /** 表格编码 */
-  tableCode: string
-  /** 表格名称 */
-  tableName?: string
-  /** 分页大小 */
-  pageSize: number
-  /** 版本号 */
-  version: number
-  /** 列配置 */
-  columns?: FxTableColumn[]
-  /** 创建时间 */
-  createTime?: string
-  /** 更新时间 */
-  updateTime?: string
+interface UserTableConfigRow extends TableConfigItem {
+  userConfigured: boolean
+  userPageSize: number
+  userVersion?: number
+  userUpdateTime?: string
 }
+
+interface EditableColumnItem {
+  field: string
+  title: string
+  visible: boolean
+  order: number
+}
+
+const { t } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
 const saving = ref(false)
-const dataSource = ref<UserTableConfigItem[]>([])
+const dialogVisible = ref(false)
+const dataSource = ref<UserTableConfigRow[]>([])
+
 const tableWrapRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
 let computeScrollYRafPending = false
 
 const queryForm = reactive({
-  tableCode: ''
+  tableCode: '',
 })
 
 const pagination = reactive({
@@ -202,8 +198,14 @@ const pagination = reactive({
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`,
-  hideOnSinglePage: false
+  showTotal: (total: number) => t('common.total', { total }),
+  hideOnSinglePage: false,
+})
+
+const formData = reactive({
+  tableCode: '',
+  pageSize: 20,
+  columns: [] as EditableColumnItem[],
 })
 
 const columns = computed(() => [
@@ -211,46 +213,87 @@ const columns = computed(() => [
     title: '表格编码',
     dataIndex: 'tableCode',
     key: 'tableCode',
-    width: 200
+    width: 220,
   },
   {
     title: '表格名称',
-    dataIndex: 'tableName',
-    key: 'tableName',
-    width: 200,
-    ellipsis: true
+    dataIndex: 'tableNameI18nJson',
+    key: 'tableNameI18nJson',
+    width: 220,
+    ellipsis: true,
   },
   {
-    title: '分页大小',
-    key: 'pageSize',
+    title: '默认每页条数',
+    dataIndex: 'defaultPageSize',
+    key: 'defaultPageSize',
+    width: 130,
+    align: 'center' as const,
+  },
+  {
+    title: '用户每页条数',
+    key: 'userPageSize',
+    width: 130,
+    align: 'center' as const,
+  },
+  {
+    title: '配置状态',
+    key: 'userConfigured',
+    width: 120,
+    align: 'center' as const,
+  },
+  {
+    title: '配置版本',
+    dataIndex: 'userVersion',
+    key: 'userVersion',
     width: 100,
-    align: 'center' as const
+    align: 'center' as const,
   },
   {
-    title: '版本号',
-    key: 'version',
-    width: 80,
-    align: 'center' as const
+    title: '最后更新时间',
+    dataIndex: 'userUpdateTime',
+    key: 'userUpdateTime',
+    width: 180,
   },
   {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    key: 'createTime',
-    width: 180
-  },
-  {
-    title: '更新时间',
-    dataIndex: 'updateTime',
-    key: 'updateTime',
-    width: 180
-  },
-  {
-    title: '操作',
+    title: t('common.action'),
     key: 'action',
     width: 150,
-    fixed: 'right' as const
-  }
+    fixed: 'right' as const,
+  },
 ])
+
+const columnTableColumns = [
+  {
+    title: '字段',
+    dataIndex: 'field',
+    key: 'field',
+    width: 180,
+  },
+  {
+    title: '标题',
+    dataIndex: 'title',
+    key: 'title',
+    width: 220,
+    ellipsis: true,
+  },
+  {
+    title: '显示',
+    key: 'visible',
+    width: 90,
+    align: 'center' as const,
+  },
+  {
+    title: '排序',
+    key: 'order',
+    width: 120,
+    align: 'center' as const,
+  },
+  {
+    title: '调整顺序',
+    key: 'move',
+    width: 180,
+  },
+]
 
 const tableScrollX = computed(() => {
   return columns.value.reduce((sum: number, col: any) => {
@@ -269,121 +312,76 @@ const tableScroll = computed(() => {
   return out
 })
 
-const rowKey = (record: UserTableConfigItem) => record.tableCode
+const rowKey = (record: UserTableConfigRow) => record.id!
 
-const dialogVisible = ref(false)
-const formRef = ref()
+function normalizeColumns(columnsToSort: EditableColumnItem[]) {
+  columnsToSort.sort((a, b) => a.order - b.order)
+  columnsToSort.forEach((item, index) => {
+    item.order = index + 1
+  })
+}
 
-const formData = reactive({
-  tableCode: '',
-  pageSize: 20,
-  columns: [] as FxTableColumn[]
-})
+function buildEditableColumns(baseColumns: FxTableColumn[], userConfig?: UserColumnConfigResult | null) {
+  const userColumnMap = new Map<string, FxTableColumn>()
+  userConfig?.columns?.forEach((column) => {
+    userColumnMap.set(column.field, column)
+  })
 
-const columnTableColumns = [
-  {
-    title: '字段',
-    dataIndex: 'field',
-    key: 'field',
-    width: 150
-  },
-  {
-    title: '标题',
-    dataIndex: 'title',
-    key: 'title',
-    width: 150
-  },
-  {
-    title: '对齐',
-    key: 'align',
-    width: 100
-  },
-  {
-    title: '宽度',
-    key: 'width',
-    width: 80
-  },
-  {
-    title: '固定',
-    key: 'fixed',
-    width: 80
-  },
-  {
-    title: '显示',
-    key: 'enabled',
-    width: 60,
-    align: 'center' as const
-  },
-  {
-    title: '排序',
-    key: 'orderNum',
-    width: 80
-  }
-]
+  const editableColumns = baseColumns.map((column, index) => {
+    const userColumn = userColumnMap.get(column.field)
+    return {
+      field: column.field,
+      title: column.title,
+      visible: userColumn?.visible ?? column.visible ?? true,
+      order: userColumn?.order ?? column.order ?? index + 1,
+    }
+  })
 
-/**
- * 获取当前用户 ID 和租户 ID
- */
-const getCurrentUserId = () => {
-  const userInfo = sessionStorage.getItem('userInfo')
-  if (userInfo) {
-    try {
-      const user = JSON.parse(userInfo)
-      return user.id
-    } catch (e) {
-      console.error('解析用户信息失败:', e)
+  normalizeColumns(editableColumns)
+  return editableColumns
+}
+
+async function loadUserConfigSummary(record: TableConfigItem): Promise<UserTableConfigRow> {
+  try {
+    const userConfig = await getUserColumns(record.tableCode)
+    const userConfigured = Array.isArray(userConfig?.columns) && userConfig.columns.length > 0
+
+    return {
+      ...record,
+      userConfigured,
+      userPageSize: userConfig?.pageSize || record.defaultPageSize || 20,
+      userVersion: userConfig?.version,
+      userUpdateTime: userConfig?.updateTime,
+    }
+  } catch (error) {
+    console.error('load user table config summary failed', record.tableCode, error)
+    return {
+      ...record,
+      userConfigured: false,
+      userPageSize: record.defaultPageSize || 20,
+      userVersion: undefined,
+      userUpdateTime: undefined,
     }
   }
-  return null
 }
 
-const getCurrentTenantId = () => {
-  return parseInt(sessionStorage.getItem('tenantId') || '0')
-}
-
-/**
- * 获取用户表格配置列表
- * 
- * 注意：这是一个示例实现，实际需要从后端获取列表
- * 目前通过单个查询模拟列表数据
- */
 const fetchData = async () => {
   loading.value = true
   try {
-    const userId = getCurrentUserId()
-    const tenantId = getCurrentTenantId()
-    
-    if (!userId || !tenantId) {
-      message.error('未登录或租户信息缺失')
-      return
-    }
-    
-    // 这里应该调用列表接口，暂时模拟数据
-    // 实际应该调用：getUserTableConfigList(params)
-    const result = await getUserTableConfig({
-      tableCode: queryForm.tableCode || 'ALL',
-      tenantId,
-      userId
+    const result = await getTableConfigList({
+      tableCode: queryForm.tableCode || undefined,
+      current: pagination.current,
+      pageSize: pagination.pageSize,
     })
-    
-    if (result) {
-      // 模拟列表数据
-      dataSource.value = [{
-        tableCode: result.tableCode,
-        tableName: '示例表格',
-        pageSize: result.defaultPageSize || 20,
-        version: result.version || 1,
-        columns: result.columns,
-        createTime: '2026-04-01 12:00:00',
-        updateTime: '2026-04-01 12:00:00'
-      }]
-      pagination.total = 1
-    } else {
-      dataSource.value = []
-      pagination.total = 0
-    }
+
+    const records = Array.isArray(result.records) ? result.records : []
+    const rows = await Promise.all(records.map(loadUserConfigSummary))
+
+    dataSource.value = rows
+    pagination.total =
+      typeof result.total === 'number' ? result.total : parseInt(String(result.total || 0), 10)
   } catch (error) {
-    console.error('获取用户表格配置列表失败:', error)
+    console.error('fetch user table config page failed', error)
     dataSource.value = []
     pagination.total = 0
   } finally {
@@ -393,12 +391,127 @@ const fetchData = async () => {
   }
 }
 
+const handleSearch = () => {
+  pagination.current = 1
+  void fetchData()
+}
+
+const handleResetQuery = () => {
+  queryForm.tableCode = ''
+  pagination.current = 1
+  void fetchData()
+}
+
+const handleTableChange = (pag: any) => {
+  pagination.current = pag.current
+  pagination.pageSize = pag.pageSize
+  void fetchData()
+}
+
+const openEditDialog = async (record: UserTableConfigRow) => {
+  loading.value = true
+  try {
+    const [baseConfig, userConfig] = await Promise.all([
+      getTableConfig({ tableCode: record.tableCode }),
+      getUserColumns(record.tableCode).catch(() => null),
+    ])
+
+    if (!baseConfig?.columns?.length) {
+      message.error('未找到对应的基础表格配置')
+      return
+    }
+
+    formData.tableCode = record.tableCode
+    formData.pageSize = userConfig?.pageSize || baseConfig.defaultPageSize || 20
+    formData.columns = buildEditableColumns(baseConfig.columns, userConfig)
+    dialogVisible.value = true
+  } catch (error) {
+    console.error('open user table config dialog failed', error)
+    message.error('加载用户列设置失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSubmit = async () => {
+  if (!formData.tableCode) {
+    message.error('表格编码不能为空')
+    return
+  }
+
+  if (!formData.columns.length) {
+    message.error('列配置不能为空')
+    return
+  }
+
+  normalizeColumns(formData.columns)
+
+  const payloadColumns: UserColumnItem[] = formData.columns.map((item) => ({
+    field: item.field,
+    visible: item.visible,
+    order: item.order,
+  }))
+
+  saving.value = true
+  try {
+    await saveUserColumns({
+      tableCode: formData.tableCode,
+      pageSize: formData.pageSize,
+      columns: payloadColumns,
+    })
+    message.success('保存成功')
+    dialogVisible.value = false
+    await fetchData()
+  } catch (error) {
+    console.error('save user table config failed', error)
+    message.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+const handleCancel = () => {
+  dialogVisible.value = false
+}
+
+const handleResetUserConfig = (record: UserTableConfigRow) => {
+  Modal.confirm({
+    title: '确认重置',
+    content: `确认重置表格 [${record.tableCode}] 的当前用户列设置吗？重置后将恢复为租户或默认表格配置。`,
+    okText: '确认',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await resetUserColumns(record.tableCode)
+        message.success('重置成功')
+        await fetchData()
+      } catch (error) {
+        console.error('reset user table config failed', error)
+        message.error('重置失败')
+      }
+    },
+  })
+}
+
+const moveColumn = (index: number, direction: -1 | 1) => {
+  const targetIndex = index + direction
+  if (targetIndex < 0 || targetIndex >= formData.columns.length) {
+    return
+  }
+
+  const [current] = formData.columns.splice(index, 1)
+  formData.columns.splice(targetIndex, 0, current)
+  normalizeColumns(formData.columns)
+}
+
 const onResizeOrScroll = () => {
   void nextTick().then(() => scheduleComputeAutoScrollY())
 }
 
 const scheduleComputeAutoScrollY = () => {
-  if (computeScrollYRafPending) return
+  if (computeScrollYRafPending) {
+    return
+  }
   computeScrollYRafPending = true
   requestAnimationFrame(() => {
     computeScrollYRafPending = false
@@ -433,163 +546,16 @@ function computeAutoScrollY() {
 
   const buffer = 36
   const y = Math.floor(available - paginationHeight - headerHeight - buffer)
-  const nextY = y > 100 ? y : undefined
-  if (autoScrollY.value === nextY) return
-  autoScrollY.value = nextY
-}
-
-const handleSearch = () => {
-  pagination.current = 1
-  fetchData()
-}
-
-const handleReset = () => {
-  queryForm.tableCode = ''
-  pagination.current = 1
-  fetchData()
-}
-
-const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchData()
-}
-
-const openEditDialog = async (record: UserTableConfigItem) => {
-  const userId = getCurrentUserId()
-  const tenantId = getCurrentTenantId()
-  
-  if (!userId || !tenantId) {
-    message.error('未登录或租户信息缺失')
-    return
-  }
-  
-  try {
-    loading.value = true
-    const config = await getUserTableConfig({
-      tableCode: record.tableCode,
-      tenantId,
-      userId
-    })
-    
-    if (config) {
-      Object.assign(formData, {
-        tableCode: config.tableCode,
-        pageSize: config.defaultPageSize || 20,
-        columns: config.columns || []
-      })
-      dialogVisible.value = true
-    } else {
-      message.warning('未找到该配置')
-    }
-  } catch (error) {
-    console.error('加载配置详情失败:', error)
-    message.error('加载配置失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSubmit = async () => {
-  try {
-    const userId = getCurrentUserId()
-    const tenantId = getCurrentTenantId()
-    
-    if (!userId || !tenantId) {
-      message.error('未登录或租户信息缺失')
-      return
-    }
-    
-    saving.value = true
-    
-    await saveUserTableConfig({
-      tableCode: formData.tableCode,
-      tenantId,
-      userId: userId,
-      pageSize: formData.pageSize,
-      columnConfig: JSON.stringify(formData.columns)
-    })
-    
-    message.success('保存成功')
-    dialogVisible.value = false
-    fetchData()
-  } catch (error) {
-    console.error('保存用户表格配置失败:', error)
-    message.error('保存失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-const handleCancel = () => {
-  dialogVisible.value = false
-}
-
-const handleDelete = (record: UserTableConfigItem) => {
-  Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除表格 [${record.tableCode}] 的用户配置吗？删除后将恢复使用租户或公共配置。`,
-    okText: '确认',
-    cancelText: '取消',
-    onOk: async () => {
-      try {
-        const userId = getCurrentUserId()
-        const tenantId = getCurrentTenantId()
-        
-        if (!userId || !tenantId) {
-          message.error('未登录或租户信息缺失')
-          return
-        }
-        
-        await deleteUserTableConfig({
-          tableCode: record.tableCode,
-          tenantId,
-          userId
-        })
-        
-        message.success('删除成功')
-        fetchData()
-      } catch (error) {
-        console.error('删除用户表格配置失败:', error)
-        message.error('删除失败')
-      }
-    }
-  })
+  autoScrollY.value = y > 100 ? y : undefined
 }
 
 onMounted(() => {
-  fetchData()
+  void fetchData()
   window.addEventListener('resize', onResizeOrScroll, { passive: true })
-  
-  const wrapEl = tableWrapRef.value
-  if (wrapEl) {
-    const observer = new MutationObserver(() => {
-      scheduleComputeAutoScrollY()
-    })
-    
-    observer.observe(wrapEl, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    })
-    
-    onBeforeUnmount(() => {
-      observer.disconnect()
-    })
-  }
-  
+
   setTimeout(() => {
     scheduleComputeAutoScrollY()
   }, 100)
-  
-  setTimeout(() => {
-    scheduleComputeAutoScrollY()
-  }, 300)
-  
-  setTimeout(() => {
-    scheduleComputeAutoScrollY()
-  }, 500)
 })
 
 onBeforeUnmount(() => {
@@ -622,7 +588,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  margin-bottom: 16px;
   background: var(--fx-bg-container, #ffffff);
   border-radius: var(--fx-radius-lg, 8px);
 }
@@ -636,30 +601,13 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 
-.table-card > div:first-child {
-  padding: 12px 16px 0 16px;
+.card-tip {
+  padding: 16px 16px 0;
 }
 
 .table-wrap {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0 16px 24px 16px;
-}
-
-.table-wrap :deep(.ant-table-wrapper) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.table-wrap :deep(.ant-pagination) {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 16px;
+  padding: 16px;
 }
 </style>

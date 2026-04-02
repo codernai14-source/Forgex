@@ -1,5 +1,10 @@
 /**
  * 用户管理 API
+ * 
+ * 提供用户相关的 CRUD 操作、角色分配、状态管理等功能
+ * 
+ * @author Forgex
+ * @version 1.0.0
  */
 import http from '../http'
 import type { User, UserProfile, UserQuery, Department, Position } from '@/views/system/user/types'
@@ -7,6 +12,22 @@ import { exportUser } from '@/api/system/excel'
 
 /**
  * 获取用户分页列表
+ * 
+ * 执行步骤：
+ * 1. 接收查询参数（包含分页、搜索条件）
+ * 2. 调用后端分页接口
+ * 3. 返回分页结果
+ * 
+ * @param query 查询参数
+ * @param query.username 用户名（可选，模糊查询）
+ * @param query.account 账号（可选，模糊查询）
+ * @param query.status 状态（可选，true=启用，false=禁用）
+ * @param query.departmentId 部门 ID（可选）
+ * @param query.positionId 职位 ID（可选）
+ * @param query.pageNum 页码，默认 1
+ * @param query.pageSize 每页条数，默认 10
+ * @returns 分页结果，包含 records（用户列表）和 total（总数）
+ * @throws 查询失败时抛出异常
  */
 export async function getUserList(query: UserQuery) {
   return http.post('/sys/user/page', query)

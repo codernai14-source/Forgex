@@ -107,6 +107,7 @@
             
             <template v-else-if="column.key === 'enabled'">
               <a-switch
+                v-permission="'sys:tableConfig:edit'"
                 :checked="record.enabled"
                 :loading="record.statusLoading"
                 @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"

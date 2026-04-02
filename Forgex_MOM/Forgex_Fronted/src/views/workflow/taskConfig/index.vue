@@ -17,14 +17,14 @@
             v-permission="'wf:taskConfig:add'"
           >
             <template #icon><PlusOutlined /></template>
-            {{ $t('workflow.taskConfig.form.addTask') }}
+            {{ $t('workflow.taskConfig.addTask') }}
           </a-button>
         </a-space>
       </template>
       
       <template #formType="{ record }">
         <a-tag :color="record.formType === 1 ? 'blue' : 'green'">
-          {{ record.formType === 1 ? '自定义表单' : '低代码表单' }}
+          {{ record.formType === 1 ? $t('workflow.taskConfig.customForm') : $t('workflow.taskConfig.lowCodeForm') }}
         </a-tag>
       </template>
       
@@ -43,7 +43,7 @@
             v-permission="'wf:taskConfig:edit'"
           >
             <template #icon><EditOutlined /></template>
-            编辑
+            {{ $t('common.edit') }}
           </a-button>
           <a-button
             type="link"
@@ -52,10 +52,10 @@
             v-permission="'wf:taskConfig:config'"
           >
             <template #icon><SettingOutlined /></template>
-            节点配置
+            {{ $t('workflow.taskConfig.nodeConfig') }}
           </a-button>
           <a-popconfirm
-            title="确定要删除这个审批任务吗？"
+            :title="$t('workflow.taskConfig.confirmDelete')"
             :ok-text="$t('common.confirm')"
             :cancel-text="$t('common.cancel')"
             @confirm="handleDelete(record)"
@@ -67,7 +67,7 @@
               v-permission="'wf:taskConfig:delete'"
             >
               <template #icon><DeleteOutlined /></template>
-              删除
+              {{ $t('common.delete') }}
             </a-button>
           </a-popconfirm>
         </a-space>
@@ -77,7 +77,7 @@
     <!-- 新增/编辑表单：使用通用弹窗组件 -->
     <BaseFormDialog
       v-model:open="dialogVisible"
-      :title="formData.id ? $t('workflow.taskConfig.form.editTask') : $t('workflow.taskConfig.form.addTask')"
+      :title="formData.id ? $t('workflow.taskConfig.editTask') : $t('workflow.taskConfig.addTask')"
       :loading="saving"
       :width="700"
       @submit="handleSave"
@@ -117,8 +117,8 @@
             v-model:value="formData.formType"
             :placeholder="$t('workflow.taskConfig.form.formType')"
           >
-            <a-select-option :value="1">自定义表单</a-select-option>
-            <a-select-option :value="2">低代码表单</a-select-option>
+            <a-select-option :value="1">{{ $t('workflow.taskConfig.customForm') }}</a-select-option>
+            <a-select-option :value="2">{{ $t('workflow.taskConfig.lowCodeForm') }}</a-select-option>
           </a-select>
         </a-form-item>
 

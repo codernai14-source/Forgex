@@ -61,15 +61,15 @@ import { AppstoreOutlined } from '@ant-design/icons-vue'
 
 const props = withDefaults(
   defineProps<{
-    /** 当前图标名（与 @ant-design/icons-vue 导出名称一致） */
+    /** 当前选中的图标名，与 @ant-design/icons-vue 导出的图标名称一致 */
     value?: string
-    /** 输入框占位 */
+    /** 输入框占位提示文本 */
     placeholder?: string
-    /** 弹窗标题 */
+    /** 弹窗标题，默认为"选择图标" */
     title?: string
-    /** 搜索框占位 */
+    /** 搜索框占位提示文本 */
     searchPlaceholder?: string
-    /** 最大长度 */
+    /** 输入框最大长度，默认为 100 */
     maxlength?: number
   }>(),
   {
@@ -82,6 +82,11 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
+  /**
+   * 图标值更新事件
+   * 触发时机：用户选择图标或手动输入图标名时触发
+   * @param v 新的图标名，如果为空则返回 undefined
+   */
   (e: 'update:value', v: string | undefined): void
 }>()
 

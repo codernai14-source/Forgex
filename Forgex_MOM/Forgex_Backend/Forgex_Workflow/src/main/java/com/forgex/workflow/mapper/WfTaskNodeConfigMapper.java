@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.workflow.mapper;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
 import org.apache.ibatis.annotations.Mapper;
@@ -28,6 +29,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2026-04-01
  */
 @Mapper
+@DS("workflow")
 public interface WfTaskNodeConfigMapper extends BaseMapper<WfTaskNodeConfig> {
 
 }

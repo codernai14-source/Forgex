@@ -27,14 +27,14 @@
 
         <a-form-item :label="$t('workflow.execution.taskName')" name="taskName">
           <a-input
-            v-model:value="currentTask?.taskName"
+            :value="currentTask?.taskName"
             disabled
           />
         </a-form-item>
 
         <a-form-item :label="$t('workflow.execution.formType')" name="formType">
           <a-tag :color="currentTask?.formType === 1 ? 'blue' : 'green'">
-            {{ currentTask?.formType === 1 ? '自定义表单' : '低代码表单' }}
+            {{ currentTask?.formType === 1 ? $t('workflow.execution.customForm') : $t('workflow.execution.lowCodeForm') }}
           </a-tag>
         </a-form-item>
 
@@ -58,8 +58,8 @@
           <div class="lowcode-form">
             <!-- TODO: 实现低代码表单渲染器 -->
             <a-alert
-              message="低代码表单渲染器开发中"
-              description="将表单内容以 JSON 格式提交"
+              :message="$t('workflow.execution.lowCodeRenderer')"
+              :description="$t('workflow.execution.lowCodeDesc')"
               type="info"
               show-icon
             />
@@ -74,10 +74,15 @@
 
         <a-form-item :wrapper-col="{ offset: 4, span: 18 }">
           <a-space>
-            <a-button type="primary" @click="handleSubmit" :loading="submitting">
-              提交审批
+            <a-button
+              type="primary"
+              @click="handleSubmit"
+              :loading="submitting"
+              v-permission="'wf:execution:start'"
+            >
+              {{ $t('workflow.execution.submitApproval') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>

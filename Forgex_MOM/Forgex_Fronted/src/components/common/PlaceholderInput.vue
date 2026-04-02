@@ -39,9 +39,13 @@ interface Placeholder {
 }
 
 interface Props {
+  /** v-model 绑定的值，包含占位符的文本内容 */
   modelValue?: string
+  /** 输入框占位提示文本 */
   placeholder?: string
+  /** 输入框行数，默认 4 行 */
   rows?: number
+  /** 是否显示预览区域，默认 true */
   showPreview?: boolean
 }
 
@@ -53,6 +57,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 值更新事件
+   * 触发时机：用户输入内容或点击占位符标签时触发
+   * @param value 新的文本内容
+   */
   'update:modelValue': [value: string]
 }>()
 

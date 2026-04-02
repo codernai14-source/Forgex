@@ -150,12 +150,12 @@ function getColumnSettingPopupContainer(triggerNode: HTMLElement): HTMLElement {
  */
 const props = defineProps<{
   /**
-   * 表格编码
+   * 表格编码，用于获取和保存用户的列配置
    */
   tableCode: string
 
   /**
-   * 原始列配置（来自表格配置）
+   * 原始列配置数组，来自表格配置的 columns 字段
    */
   columns: FxTableColumn[]
 }>()
@@ -166,7 +166,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /**
    * 列配置变更事件
-   * @param columns 更新后的列配置
+   * 触发时机：用户点击保存按钮成功保存列配置后触发
+   * @param columns 更新后的列配置数组，包含可见性和排序信息
    */
   (e: 'change', columns: FxTableColumn[]): void
 }>()

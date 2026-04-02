@@ -31,7 +31,7 @@
             @click="handleViewDetail(record)"
           >
             <template #icon><EyeOutlined /></template>
-            详情
+            {{ $t('workflow.myTask.detail') }}
           </a-button>
           <a-button
             type="link"
@@ -39,7 +39,7 @@
             @click="handleViewHistory(record)"
           >
             <template #icon><HistoryOutlined /></template>
-            审批历史
+            {{ $t('workflow.myTask.history') }}
           </a-button>
         </a-space>
       </template>

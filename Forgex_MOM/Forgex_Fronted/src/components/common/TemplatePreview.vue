@@ -91,14 +91,22 @@ interface TemplateContent {
 }
 
 interface Props {
+  /** 弹窗是否可见，用于控制组件的显示/隐藏状态 */
   visible: boolean
+  /** 模板内容数组，包含各平台的标题、内容和链接 */
   contents: TemplateContent[]
+  /** 消息类型，用于显示对应的标签颜色，如 NOTICE、WARNING、ALARM */
   messageType: string
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
+  /**
+   * 更新弹窗可见性
+   * 触发时机：点击关闭按钮或取消操作时触发
+   * @param value 新的可见性状态
+   */
   'update:visible': [value: boolean]
 }>()
 

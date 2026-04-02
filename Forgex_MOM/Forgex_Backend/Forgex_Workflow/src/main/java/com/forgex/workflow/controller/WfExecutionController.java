@@ -15,6 +15,7 @@ package com.forgex.workflow.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
@@ -56,6 +57,7 @@ public class WfExecutionController {
      * @return 执行 ID
      */
     @PostMapping("/start")
+    @RequirePerm("wf:execution:start")
     public R<Long> startExecution(@Validated @RequestBody WfExecutionStartParam param) {
         Long executionId = executionService.startExecution(param);
         return R.ok(CommonPrompt.CREATE_SUCCESS, executionId);
@@ -68,6 +70,7 @@ public class WfExecutionController {
      * @return 是否成功
      */
     @PostMapping("/approve")
+    @RequirePerm("wf:execution:approve")
     public R<Boolean> approve(@Validated @RequestBody WfExecutionApproveParam param) {
         Boolean success = executionService.approve(param);
         return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
@@ -80,6 +83,7 @@ public class WfExecutionController {
      * @return 是否成功
      */
     @PostMapping("/reject")
+    @RequirePerm("wf:execution:reject")
     public R<Boolean> reject(@Validated @RequestBody WfExecutionApproveParam param) {
         Boolean success = executionService.reject(param);
         return R.ok(CommonPrompt.UPDATE_SUCCESS, success);
@@ -92,6 +96,7 @@ public class WfExecutionController {
      * @return 是否成功
      */
     @PostMapping("/cancel")
+    @RequirePerm("wf:execution:cancel")
     public R<Boolean> cancelExecution(@RequestBody Map<String, Object> params) {
         Long executionId = Long.valueOf(params.get("executionId").toString());
         Boolean success = executionService.cancelExecution(executionId);
@@ -123,6 +128,7 @@ public class WfExecutionController {
      * @return 分页结果
      */
     @PostMapping("/my/initiated")
+    @RequirePerm("wf:myTask:initiated")
     public R<Page<WfExecutionDTO>> pageMyInitiated(@RequestBody WfExecutionQueryParam param) {
         Page<WfExecutionDTO> page = executionService.pageMyInitiated(param);
         return R.ok(page);
@@ -135,6 +141,7 @@ public class WfExecutionController {
      * @return 分页结果
      */
     @PostMapping("/my/pending")
+    @RequirePerm("wf:myTask:pending")
     public R<Page<WfExecutionDTO>> pageMyPending(@RequestBody WfExecutionQueryParam param) {
         Page<WfExecutionDTO> page = executionService.pageMyPending(param);
         return R.ok(page);
@@ -147,6 +154,7 @@ public class WfExecutionController {
      * @return 分页结果
      */
     @PostMapping("/my/processed")
+    @RequirePerm("wf:myTask:processed")
     public R<Page<WfExecutionDTO>> pageMyProcessed(@RequestBody WfExecutionQueryParam param) {
         Page<WfExecutionDTO> page = executionService.pageMyProcessed(param);
         return R.ok(page);

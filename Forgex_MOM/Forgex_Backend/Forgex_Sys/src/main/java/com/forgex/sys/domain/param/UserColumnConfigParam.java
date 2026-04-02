@@ -41,6 +41,8 @@ public class UserColumnConfigParam {
      */
     private String tableCode;
     
+    private Integer pageSize;
+    
     /**
      * 列配置列表
      * <p>包含每列的字段名、显示状态和排序顺序。</p>

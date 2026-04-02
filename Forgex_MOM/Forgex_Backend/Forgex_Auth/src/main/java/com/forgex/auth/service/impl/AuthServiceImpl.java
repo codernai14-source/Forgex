@@ -122,15 +122,36 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 登录并返回租户列表。
      * <p>
-     * 流程：
-     * 1) 参数校验；2) 传输解密（若启用 SM2）；3) 用户存在性校验；
-     * 4) 依据存储策略对密码校验；5) 验证码校验（按配置）；6) 登录并返回租户列表。
+     * 完整登录流程：
      * </p>
+     * <ol>
+     *   <li>参数校验：检查账号和密码是否为空</li>
+     *   <li>获取客户端信息：IP 地址、User-Agent、地理位置</li>
+     *   <li>密码解密：如果启用了 SM2 传输加密，解密密码</li>
+     *   <li>用户查询：根据账号查询用户信息</li>
+     *   <li>密码验证：根据密码策略（bcrypt/SM2）验证密码</li>
+     *   <li>验证码校验：根据配置校验图片验证码或滑块验证码</li>
+     *   <li>租户查询：查询用户绑定的所有租户</li>
+     *   <li>返回租户列表：将租户实体转换为 VO 返回</li>
+     * </ol>
+     * <p>
+     * 安全特性：
+     * </p>
+     * <ul>
+     *   <li>支持 SM2 国密算法加密传输密码</li>
+     *   <li>支持 bcrypt 或 SM2 加密存储密码</li>
+     *   <li>支持图片验证码和滑块验证码两种模式</li>
+     *   <li>记录登录成功/失败日志</li>
+     * </ul>
      *
-     * @param param 登录参数（可能为 SM2 加密密码）
-     * @return 租户 VO 列表
+     * @param param 登录参数，包含账号、密码、验证码等信息
+     * @return {@link R} 包含租户 VO 列表的统一返回结构
+     * @throws BusinessException 当参数校验失败、用户不存在、密码错误、验证码错误时抛出
      * @see com.forgex.auth.domain.param.LoginParam
      * @see com.forgex.auth.domain.vo.TenantVO
+     * @see com.forgex.common.domain.config.CryptoTransportConfig
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig
+     * @see com.forgex.common.domain.config.CaptchaConfig
      */
     @Override
     public R<List<TenantVO>> login(LoginParam param) {
@@ -288,14 +309,42 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 选择租户，设置上下文
+     * 选择租户，设置上下文。
      * <p>
-     * 逻辑：校验参数 -> 设置租户上下文
+     * 完整流程：
      * </p>
+     * <ol>
+     *   <li>参数提取：从参数中提取租户 ID 和账号</li>
+     *   <li>参数校验：检查租户 ID 和账号是否为空</li>
+     *   <li>用户查询：根据账号查询用户信息</li>
+     *   <li>绑定关系校验：检查用户与租户的绑定关系</li>
+     *   <li>SaToken 登录：调用 StpUtil.login() 进行登录</li>
+     *   <li>会话设置：设置用户 ID、租户 ID、账号到 SaSession</li>
+     *   <li>Token 获取：获取 StpUtil 生成的 Token</li>
+     *   <li>Redis 存储：将登录上下文存入 Redis，与 Token 过期时间一致</li>
+     *   <li>租户上下文设置：调用 TenantContext.set() 设置当前租户</li>
+     *   <li>更新绑定关系：更新用户租户绑定的最后使用时间和偏好顺序</li>
+     *   <li>记录登录日志：记录登录成功日志</li>
+     *   <li>更新用户信息：更新用户最后登录 IP、时间和区域</li>
+     *   <li>在线用户缓存：添加在线用户缓存到 Redis</li>
+     *   <li>返回用户信息：构建并返回用户 DTO</li>
+     * </ol>
+     * <p>
+     * 数据存储：
+     * </p>
+     * <ul>
+     *   <li>SaSession：存储 LOGIN_USER_ID、LOGIN_TENANT_ID、LOGIN_ACCOUNT</li>
+     *   <li>Redis fx:login:ctx:{token}：存储 userId、tenantId、account</li>
+     *   <li>Redis fx:online:user:{tenantId}:{userId}：存储在线用户信息</li>
+     * </ul>
      *
-     * @param param 选择租户参数
-     * @return 选择结果
-     * @see com.forgex.common.tenant.TenantContext#set(Long)
+     * @param param 选择租户参数，包含账号和租户 ID
+     * @return {@link R} 包含当前登录用户信息的统一返回结构
+     * @throws BusinessException 当参数校验失败、用户不存在、租户未绑定时抛出
+     * @see com.forgex.auth.domain.param.TenantChoiceParam
+     * @see com.forgex.auth.domain.dto.SysUserDTO
+     * @see com.forgex.common.tenant.TenantContext
+     * @see cn.dev33.satoken.stp.StpUtil
      */
     @Override
     public R<SysUserDTO> chooseTenant(TenantChoiceParam param) {
@@ -550,10 +599,11 @@ public class AuthServiceImpl implements AuthService {
      * @see cn.dev33.satoken.stp.StpUtil#checkRole(String)
      */
     @Override
+    @Deprecated
     public R<Boolean> secureAdmin() {
         // 检查当前用户是否拥有admin角色
-        StpUtil.checkRole("admin");
-        return R.ok(true);
+        StpUtil.checkLogin();
+        return R.fail(CommonPrompt.BAD_REQUEST);
     }
 
     /**

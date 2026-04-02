@@ -15,15 +15,6 @@
         <a-col :span="18">
           <!-- 操作按钮和表格 -->
           <div class="table-area">
-            <div class="toolbar">
-              <a-space>
-                <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
-                  <template #icon><PlusOutlined /></template>
-                  {{ $t('system.position.addPosition') }}
-                </a-button>
-              </a-space>
-            </div>
-
             <fx-dynamic-table
               ref="tableRef"
               :table-code="'PositionTable'"
@@ -31,6 +22,14 @@
               :dict-options="dictOptions"
               row-key="id"
             >
+              <template #toolbar>
+                <a-space>
+                  <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
+                    <template #icon><PlusOutlined /></template>
+                    {{ $t('system.position.addPosition') }}
+                  </a-button>
+                </a-space>
+              </template>
               <template #status="{ record }">
                 <a-tag :color="record.status === true ? 'green' : 'red'">
                   {{ record.status === true ? $t('common.enabled') : $t('common.disabled') }}
@@ -482,10 +481,6 @@ onMounted(async () => {
 
 .search-area {
   width: 100%;
-  margin-bottom: 16px;
-}
-
-.toolbar {
   margin-bottom: 16px;
 }
 

@@ -184,14 +184,23 @@ interface User {
 }
 
 interface AppHeaderProps {
+  /** Logo 图片 URL，为空时显示默认图标 */
   logo?: string
+  /** 系统标题，默认为 'Forgex MOM' */
   title?: string
+  /** 模块列表，用于顶部模块导航显示 */
   modules?: Module[]
+  /** 当前激活的模块 code，用于高亮显示 */
   activeModuleCode?: string
+  /** 布局模式：vertical=垂直，vertical-mix=混合，top=顶部，mix=混合 */
   layoutMode?: 'vertical' | 'vertical-mix' | 'top' | 'mix'
+  /** 是否显示搜索按钮，默认 true */
   showSearch?: boolean
+  /** 是否显示语言切换下拉框，默认 true */
   showLangSwitch?: boolean
+  /** 是否显示刷新按钮，默认 true */
   showRefresh?: boolean
+  /** 当前登录用户信息，包含头像、姓名、账号等 */
   user: User
 }
 
@@ -208,12 +217,43 @@ const props = withDefaults(defineProps<AppHeaderProps>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 模块点击事件
+   * 触发时机：用户点击模块导航时触发
+   * @param moduleCode 被点击的模块 code
+   */
   'module-click': [moduleCode: string]
+  /**
+   * 搜索按钮点击事件
+   * 触发时机：用户点击搜索按钮时触发
+   */
   'search-click': []
+  /**
+   * 设置按钮点击事件
+   * 触发时机：用户点击设置按钮时触发
+   */
   'settings-click': []
+  /**
+   * 用户菜单点击事件
+   * 触发时机：用户点击用户下拉菜单项时触发
+   * @param key 菜单项 key，如 profile、password、logout
+   */
   'user-menu-click': [key: string]
+  /**
+   * 语言切换事件
+   * 触发时机：用户切换语言时触发
+   * @param locale 新的语言代码
+   */
   'locale-change': [locale: LocaleCode]
+  /**
+   * 刷新事件
+   * 触发时机：用户点击刷新按钮时触发
+   */
   'refresh': []
+  /**
+   * 消息按钮点击事件
+   * 触发时机：用户点击消息通知按钮时触发
+   */
   'message-click': []
 }>()
 

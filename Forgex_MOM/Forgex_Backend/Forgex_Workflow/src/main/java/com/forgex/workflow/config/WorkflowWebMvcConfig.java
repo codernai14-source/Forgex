@@ -53,6 +53,6 @@ public class WorkflowWebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new LangWebInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new UserTenantWebInterceptor()).addPathPatterns("/**");
-        registry.addInterceptor(permissionInterceptor).addPathPatterns("/workflow/**");
+        registry.addInterceptor(permissionInterceptor).addPathPatterns("/wf/**");
     }
 }
