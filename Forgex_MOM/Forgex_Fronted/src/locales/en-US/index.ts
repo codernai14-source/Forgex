@@ -6,6 +6,7 @@ import layout from './layout'
 import validation from './validation'
 import message from './message'
 import system from './system'
+import workflow from './workflow'
 
 export default {
   common,
@@ -13,4 +14,5 @@ export default {
   validation,
   message,
   system,
+  workflow,
 }

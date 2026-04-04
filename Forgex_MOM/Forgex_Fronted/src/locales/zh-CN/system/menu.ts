@@ -1,71 +1,62 @@
-/**
- * 菜单管理翻译 - 中文
- */
 export default {
-  // 页面标题
   title: '菜单管理',
   list: '菜单列表',
   detail: '菜单详情',
-  
-  // 表格列
   menuName: '菜单名称',
-  menuCode: '菜单编码',
   menuType: '菜单类型',
   menuMode: '菜单模式',
-  externalUrl: '外联URL',
+  externalUrl: '外链 URL',
   icon: '图标',
-  path: '路径',
+  path: '路由路径',
   component: '组件',
+  componentKey: '组件 Key',
   permission: '权限标识',
   sort: '排序',
-  visible: '可见',
+  visible: '是否可见',
   status: '状态',
-  createTime: '创建时间',
-  
-  // 菜单类型
+  module: '所属模块',
+  parentMenu: '父菜单',
+  rootMenu: '根目录',
   typeDirectory: '目录',
   typeMenu: '菜单',
   typeButton: '按钮',
-  
-  // 菜单模式
   modeEmbedded: '内嵌',
-  modeExternal: '外联',
-  
-  // 表单
+  modeExternal: '外链',
+  visibleYes: '显示',
+  visibleNo: '隐藏',
   form: {
     addMenu: '新增菜单',
     editMenu: '编辑菜单',
-    menuDetail: '菜单详情',
-    parentMenu: '上级菜单',
-    menuName: '请输入菜单名称',
-    menuCode: '请输入菜单编码',
-    menuType: '请选择菜单类型',
-    menuMode: '请选择菜单模式',
-    externalUrl: '请输入外联URL',
-    icon: '请选择图标',
-    path: '请输入路径',
-    component: '请输入组件路径',
-    permission: '请输入权限标识',
-    sort: '请输入排序号',
-    visible: '是否可见',
-    status: '请选择状态',
+    modulePlaceholder: '请选择所属模块',
+    parentMenuPlaceholder: '请选择父菜单',
+    menuNamePlaceholder: '请输入菜单名称',
+    menuNameTip: '点击输入框右侧的地球图标可配置多语言名称',
+    menuTypePlaceholder: '请选择菜单类型',
+    pathPlaceholder: '请输入菜单路径',
+    iconPlaceholder: '请输入图标组件名',
+    menuModePlaceholder: '请选择菜单模式',
+    componentKeyPlaceholder: '请输入组件 Key',
+    externalUrlPlaceholder: '请输入外链 URL',
+    permissionPlaceholder: '请输入权限标识',
+    nameRequired: '请至少配置一种语言的菜单名称',
   },
-  
-  // 状态
-  statusActive: '启用',
-  statusInactive: '禁用',
-  visibleYes: '显示',
-  visibleNo: '隐藏',
-  
-  // 操作
-  addSubMenu: '添加子菜单',
-  
-  // 消息
   message: {
-    deleteConfirm: '确定要删除该菜单吗？',
-    deleteWithChildrenConfirm: '该菜单包含子菜单，确定要删除吗？',
-    deleteSuccess: '删除菜单成功',
-    saveSuccess: '保存菜单成功',
-    menuCodeExists: '菜单编码已存在',
+    missingTenant: '缺少租户信息',
+    loadListFailed: '加载菜单列表失败',
+    loadModulesFailed: '加载模块列表失败',
+    loadDetailFailed: '加载菜单详情失败',
+    loadParentFailed: '加载父级菜单失败',
+    submitFailed: '提交菜单失败',
+    deleteFailed: '删除菜单失败',
+    batchDeleteFailed: '批量删除菜单失败',
+    selectToDelete: '请先选择要删除的菜单',
+    deleteConfirm: '确定要删除这条菜单吗？如存在子菜单或角色关联，后端会阻止删除。',
+    batchDeleteConfirm: '确定要删除选中的 {count} 条菜单吗？',
   },
+  tenantType: '适用租户类型',
+  tenantTypeAll: '所有租户类型',
+  tenantTypePublic: '公共',
+  publicConfigMode: '公共配置模式',
+  publicConfig: '公共配置',
+  tenantConfig: '租户配置',
 }

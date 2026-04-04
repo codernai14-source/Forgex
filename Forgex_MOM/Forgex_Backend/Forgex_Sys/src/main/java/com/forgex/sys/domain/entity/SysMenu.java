@@ -35,7 +35,8 @@ import lombok.Data;
  * - {@code externalUrl} 外联URL；
  * - {@code orderNum} 排序号；
  * - {@code visible} 是否可见；
- * - {@code status} 状态。
+ * - {@code status} 状态；
+ * - {@code tenantType} 适用租户类型。
  * <p>
  * 仅包含数据库表中实际存在的持久化字段。
  */
@@ -85,4 +86,7 @@ public class SysMenu extends BaseEntity {
     
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+    
+    /** 适用租户类型：MAIN_TENANT/CUSTOMER_TENANT/SUPPLIER_TENANT/PARTNER_TENANT/PUBLIC，PUBLIC 表示适用于所有租户类型 */
+    private String tenantType;
 }

@@ -108,6 +108,12 @@ public class SystemBasicConfig {
      * 可选值：cyber、simple、classic
      */
     private String loginStyle = "cyber";
+
+    /**
+     * Login page layout mode.
+     * Optional values: center / split / compact
+     */
+    private String loginLayout = "center";
     
     /**
      * 是否显示第三方登录

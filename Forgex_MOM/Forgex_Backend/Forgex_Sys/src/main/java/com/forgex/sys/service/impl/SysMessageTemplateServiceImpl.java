@@ -124,7 +124,8 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         SysMessageTemplate template = new SysMessageTemplate();
         template.setId(dto.getId());
         template.setTemplateCode(dto.getTemplateCode());
-        template.setTemplateName(dto.getTemplateName());
+        template.setTemplateName(resolveDisplayText(dto.getTemplateName(), dto.getTemplateNameI18nJson()));
+        template.setTemplateNameI18nJson(dto.getTemplateNameI18nJson());
         template.setTemplateVersion(dto.getTemplateVersion());
         template.setMessageType(dto.getMessageType());
         template.setStatus(dto.getStatus());
@@ -162,8 +163,10 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
                 SysMessageTemplateContent content = new SysMessageTemplateContent();
                 content.setTemplateId(template.getId());
                 content.setPlatform(config.getPlatform());
-                content.setContentTitle(config.getContentTitle());
-                content.setContentBody(config.getContentBody());
+                content.setContentTitle(resolveDisplayText(config.getContentTitle(), config.getContentTitleI18nJson()));
+                content.setContentTitleI18nJson(config.getContentTitleI18nJson());
+                content.setContentBody(resolveDisplayText(config.getContentBody(), config.getContentBodyI18nJson()));
+                content.setContentBodyI18nJson(config.getContentBodyI18nJson());
                 content.setLinkUrl(config.getLinkUrl());
                 contentMapper.insert(content);
             }
@@ -198,6 +201,23 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         return true;
     }
     
+    @Override
+    public boolean existsByCode(String code) {
+        LambdaQueryWrapper<SysMessageTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMessageTemplate::getTemplateCode, code);
+        Long count = templateMapper.selectCount(wrapper);
+        return count > 0;
+    }
+    
+    @Override
+    public boolean existsByCodeExcludeId(String code, Long id) {
+        LambdaQueryWrapper<SysMessageTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysMessageTemplate::getTemplateCode, code);
+        wrapper.ne(SysMessageTemplate::getId, id);
+        Long count = templateMapper.selectCount(wrapper);
+        return count > 0;
+    }
+    
     /**
      * 实体转VO
      */
@@ -206,6 +226,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         vo.setId(entity.getId());
         vo.setTemplateCode(entity.getTemplateCode());
         vo.setTemplateName(entity.getTemplateName());
+        vo.setTemplateNameI18nJson(entity.getTemplateNameI18nJson());
         vo.setTemplateVersion(entity.getTemplateVersion());
         vo.setMessageType(entity.getMessageType());
         vo.setStatus(entity.getStatus());
@@ -241,9 +262,40 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         vo.setId(entity.getId());
         vo.setPlatform(entity.getPlatform());
         vo.setContentTitle(entity.getContentTitle());
+        vo.setContentTitleI18nJson(entity.getContentTitleI18nJson());
         vo.setContentBody(entity.getContentBody());
+        vo.setContentBodyI18nJson(entity.getContentBodyI18nJson());
         vo.setLinkUrl(entity.getLinkUrl());
         return vo;
+    }
+
+    private String resolveDisplayText(String plainText, String i18nJson) {
+        if (StringUtils.hasText(plainText)) {
+            return plainText.trim();
+        }
+        if (!StringUtils.hasText(i18nJson)) {
+            return plainText;
+        }
+        try {
+            var node = objectMapper.readTree(i18nJson);
+            if (node.hasNonNull("zh-CN") && StringUtils.hasText(node.get("zh-CN").asText())) {
+                return node.get("zh-CN").asText().trim();
+            }
+            var fields = node.fields();
+            while (fields.hasNext()) {
+                var entry = fields.next();
+                if (entry.getValue() == null) {
+                    continue;
+                }
+                String value = entry.getValue().asText();
+                if (StringUtils.hasText(value)) {
+                    return value.trim();
+                }
+            }
+        } catch (Exception ignored) {
+            // Ignore invalid JSON and let the caller keep the plain-text fallback.
+        }
+        return plainText;
     }
 }
 

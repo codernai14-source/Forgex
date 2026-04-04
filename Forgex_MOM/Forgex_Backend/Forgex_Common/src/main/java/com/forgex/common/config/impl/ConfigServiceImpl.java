@@ -112,6 +112,12 @@ public class ConfigServiceImpl implements ConfigService {
         } finally { DynamicDataSourceContextHolder.poll(); }
     }
 
+    /**
+     * 设置 JSON 配置（当前租户）
+     * 逻辑：将对象序列化为 JSON 字符串，保存到当前租户的配置表中
+     * @param key 配置键
+     * @param value 配置对象
+     */
     @Override
     public void setJson(String key, Object value) {
         try { DynamicDataSourceContextHolder.push("common");
@@ -148,6 +154,39 @@ public class ConfigServiceImpl implements ConfigService {
                 return JSONUtil.toBean(cfg.getConfigValue(), type);
             } catch (Exception e) {
                 return def;
+            }
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+
+    /**
+     * 设置全局 JSON 配置（tenant_id = 0）
+     * 逻辑：将对象序列化为 JSON 字符串，保存到全局配置表中（tenant_id = 0）
+     * @param key 配置键
+     * @param value 配置对象
+     */
+    @Override
+    public void setGlobalJson(String key, Object value) {
+        try { DynamicDataSourceContextHolder.push("common");
+            // 序列化配置值为JSON
+            String json = JSONUtil.toJsonStr(value);
+            // 优先查询全局配置
+            SysConfig cfg = mapper.getGlobalByKey(key);
+            if (cfg == null) {
+                // 若全局配置不存在，则查询任意租户下是否已存在该键
+                cfg = mapper.getAnyByKey(key);
+            }
+            if (cfg == null) {
+                // 不存在则新增全局配置
+                cfg = new SysConfig();
+                cfg.setConfigKey(key);
+                cfg.setConfigValue(json);
+                cfg.setTenantId(0L);
+                mapper.insert(cfg);
+            } else {
+                // 存在则更新为全局配置内容
+                cfg.setConfigValue(json);
+                cfg.setTenantId(0L);
+                mapper.updateById(cfg);
             }
         } finally { DynamicDataSourceContextHolder.poll(); }
     }

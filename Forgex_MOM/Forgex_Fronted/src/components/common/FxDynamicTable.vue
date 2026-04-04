@@ -27,7 +27,7 @@
                   style="width: 200px"
                 >
                   <a-select-option
-                    v-for="opt in (dictOptions?.[q.field] || [])"
+                    v-for="opt in (dictOptions?.[q.dictCode || q.field] || [])"
                     :key="String(opt.value)"
                     :value="opt.value"
                   >
@@ -97,7 +97,7 @@
                 style="width: 200px"
               >
                 <a-select-option
-                  v-for="opt in (dictOptions?.[q.field] || [])"
+                  v-for="opt in (dictOptions?.[q.dictCode || q.field] || [])"
                   :key="String(opt.value)"
                   :value="opt.value"
                 >
@@ -136,8 +136,24 @@
       class="fx-card fx-table-card"
       :body-style="{ padding: '0' }"
     >
-      <div v-if="$slots.toolbar" class="fx-table-toolbar">
-        <slot name="toolbar" />
+      <!-- 工具栏与列设置同一行：左操作按钮、右列设置，与下方表格保留间距 -->
+      <div
+        v-if="hasToolbarSlot || showColumnSettingBar"
+        class="fx-table-toolbar-row"
+      >
+        <div v-if="hasToolbarSlot" class="fx-table-toolbar-left">
+          <slot name="toolbar" />
+        </div>
+        <div
+          v-if="showColumnSettingBar"
+          class="fx-table-toolbar-right"
+        >
+          <ColumnSettingButton
+            :table-code="tableCode"
+            :columns="columnSettingColumns"
+            @change="handleColumnChange"
+          />
+        </div>
       </div>
       
       <!-- 数据表格 -->
@@ -183,12 +199,13 @@
  * @author Forgex Team
  * @version 1.0.0
  */
-import { computed, getCurrentInstance, onBeforeUnmount, onMounted, nextTick, reactive, ref, watch, h, resolveComponent } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, onMounted, nextTick, reactive, ref, watch, h, resolveComponent, withDefaults, useSlots } from 'vue'
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { DownOutlined } from '@ant-design/icons-vue'
 import { getTableConfig, type FxTableConfig, type FxTableColumn } from '@/api/system/tableConfig'
 import { useI18n } from 'vue-i18n'
+import ColumnSettingButton from './ColumnSettingButton.vue'
 
 /**
  * 字典选项类型
@@ -200,8 +217,10 @@ type DictOption = {
 
 /**
  * 组件属性
+ * <p>列设置默认开启：{@code showColumnSetting} 未传时必须为 true，避免表达式 {@code length && undefined} 恒为假。</p>
  */
-const props = defineProps<{
+const props = withDefaults(
+  defineProps<{
   /**
    * 表格编码，用于获取表格配置
    */
@@ -240,17 +259,51 @@ const props = defineProps<{
   defaultExpandAllRows?: boolean
   expandable?: TableProps['expandable']
   showQueryForm?: boolean
+  
+  /**
+   * 是否显示列设置按钮
+   * <p>默认为 true，显示列设置按钮。</p>
+   */
+  showColumnSetting?: boolean
 
   // 已不再使用（旧版比例分配），保留仅为兼容性
   tableHeightRatio?: number
-}>()
+  }>(),
+  {
+    /** 列设置属于表格公共能力，默认显示，不依赖菜单按钮权限 */
+    showColumnSetting: true,
+  }
+)
 
 const { t, locale } = useI18n()
+
+const slots = useSlots()
+
+/**
+ * 是否传入工具栏插槽（与列设置并排展示）
+ */
+const hasToolbarSlot = computed(() => !!slots.toolbar)
 
 /**
  * 表格配置
  */
 const config = ref<FxTableConfig>()
+
+/**
+ * 列设置面板使用的列数据源。
+ * <p>
+ * 必须使用 computed 固定引用：模板里若写 {@code config?.columns ?? []}，在 {@code columns} 缺失时每次渲染都会生成新的空数组，
+ * 会导致 {@link ColumnSettingButton} 的 props 引用变化、下拉层被反复卸载或无法保持展开。
+ * </p>
+ */
+const columnSettingColumns = computed(() => config.value?.columns ?? [])
+
+/**
+ * 是否展示列设置区域（按钮条右侧）
+ */
+const showColumnSettingBar = computed(
+  () => !!config.value?.columns?.length && props.showColumnSetting !== false
+)
 
 /**
  * 配置版本号，用于强制刷新 computed
@@ -764,6 +817,15 @@ function normalizeColumns(cols: any[]) {
 
 /**
  * 格式化查询条件
+ * 
+ * 执行步骤：
+ * 1. 遍历配置中的所有查询字段
+ * 2. 获取每个字段的值
+ * 3. 跳过空值（undefined、null、空字符串）
+ * 4. 处理日期范围字段，转换为标准格式
+ * 5. 返回格式化后的查询对象
+ * 
+ * @returns 格式化后的查询条件对象
  */
 function normalizeQuery() {
   const out: Record<string, any> = {}
@@ -782,6 +844,17 @@ function normalizeQuery() {
 
 /**
  * 处理查询
+ * 
+ * 执行步骤：
+ * 1. 设置加载状态为 true
+ * 2. 调用 props.request 方法，传入分页、查询条件、排序信息
+ * 3. 从响应中提取 records 和 total
+ * 4. 更新表格数据和分页总数
+ * 5. 重置加载状态
+ * 6. 重新计算表格滚动高度
+ * 
+ * @param sorter 排序信息（可选）
+ * @throws 请求失败时抛出异常
  */
 async function handleQuery(sorter?: any) {
   loading.value = true
@@ -805,6 +878,11 @@ async function handleQuery(sorter?: any) {
 
 /**
  * 处理重置
+ * 
+ * 执行步骤：
+ * 1. 清空所有查询条件
+ * 2. 重置分页到第一页
+ * 3. 使用上次的排序信息重新查询
  */
 function handleReset() {
   for (const k of Object.keys(queryModel)) {
@@ -816,6 +894,8 @@ function handleReset() {
 
 /**
  * 获取当前查询条件
+ * 
+ * @returns 当前查询条件对象
  */
 function getQuery() {
   return normalizeQuery()
@@ -823,6 +903,8 @@ function getQuery() {
 
 /**
  * 获取当前分页信息
+ * 
+ * @returns 分页信息对象，包含 current（当前页）、pageSize（每页条数）、total（总数）
  */
 function getPage() {
   return { 
@@ -834,16 +916,50 @@ function getPage() {
 
 /**
  * 重新加载数据
+ * 
+ * 执行步骤：
+ * 1. 调用 handleQuery 方法，使用当前分页和查询条件
+ * 
+ * @returns Promise
  */
 function reload() {
   return handleQuery()
 }
 
+/**
+ * 刷新数据
+ * 
+ * 执行步骤：
+ * 1. 调用 handleQuery 方法，使用当前分页和查询条件
+ * 
+ * @returns Promise
+ */
 function refresh() {
   return handleQuery()
 }
 
+// 暴露给父组件使用的方法
 defineExpose({ getQuery, getPage, reload, refresh })
+
+/**
+ * 处理列配置变更
+ * <p>
+ * 当用户通过列设置按钮修改列配置后，更新表格列显示。
+ * </p>
+ *
+ * @param columns 更新后的列配置
+ */
+function handleColumnChange(columns: FxTableColumn[]) {
+  if (config.value) {
+    // 更新配置中的列
+    config.value = {
+      ...config.value,
+      columns: [...columns]
+    }
+    // 强制刷新 computed
+    configVersion.value++
+  }
+}
 
 const handleTableChange: TableProps['onChange'] = (pag, _filters, sorter) => {
   lastSorter.value = sorter
@@ -1039,22 +1155,42 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
-/* toolbar 间距调整 */
-.fx-table-toolbar {
+/* 工具栏 + 列设置：同一行，左对齐操作 / 右对齐列设置 */
+.fx-table-toolbar-row {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 12px;
   padding: 12px 16px 0 16px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  overflow-x: auto;
 }
 
-  /* 表格内容区添加适量内边距 */
+.fx-table-toolbar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.fx-table-toolbar-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* 表格内容区：与上方按钮行留出间距（margin-bottom 已在 toolbar-row） */
 .fx-table-content {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  padding: 0 16px 16px 16px;    /* 左右16px，底部16px，顶部0（toolbar已有padding） */
+  padding: 0 16px 16px 16px;
   box-sizing: border-box;
 }
 

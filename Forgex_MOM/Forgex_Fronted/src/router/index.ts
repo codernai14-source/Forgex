@@ -37,6 +37,31 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/workflow',
+    component: () => import('../layouts/MainLayout.vue'),
+    redirect: '/workflow/taskConfig',
+    children: [
+      {
+        path: 'taskConfig',
+        name: 'WorkflowTaskConfig',
+        component: () => import('../views/workflow/taskConfig/index.vue'),
+        meta: { title: '瀹℃壒浠诲姟閰嶇疆', module: 'approval' }
+      },
+      {
+        path: 'taskConfig/:taskCode/nodes',
+        name: 'WorkflowTaskConfigNodes',
+        component: () => import('../views/workflow/taskConfig/nodes.vue'),
+        meta: { title: '审批节点配置', module: 'approval', hidden: true }
+      },
+      {
+        path: 'execution/start/:taskCode',
+        name: 'WorkflowExecutionStartForm',
+        component: () => import('../views/workflow/execution/startForm.vue'),
+        meta: { title: '填写审批表单', module: 'approval', hidden: true }
+      }
+    ]
+  },
+  {
     path: '/redirect',
     name: 'Redirect',
     component: { template: '<div />' },
@@ -173,9 +198,23 @@ const EmptyView = { template: '<div style="padding:16px;color:#9ca3af;">暂无�
 const modulePathMap: Record<string, string> = {
   'sys': 'system',      // sys 模块对应 system 目录
   'system': 'system',   // 兼容完整名称
+  /** 审批管理模块编码为 approval，页面组件仍位于 views/workflow */
+  'approval': 'workflow',
   // 未来可以添加更多映射，例如：
   // 'prod': 'production',
   // 'qc': 'quality',
+}
+
+/**
+ * 审批模块菜单使用的 component 键与目录结构（workflow 下多级路径）的静态映射。
+ * <p>与数据库脚本 {@code V2.0.1_审批管理模块与菜单.sql} 中 component_key 保持一致。</p>
+ */
+const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
+  ApprovalTaskConfig: () => import('../views/workflow/taskConfig/index.vue'),
+  ApprovalExecutionStart: () => import('../views/workflow/execution/start.vue'),
+  ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
+  ApprovalMyProcessed: () => import('../views/workflow/myTask/processed.vue'),
+  ApprovalMyInitiated: () => import('../views/workflow/myTask/initiated.vue'),
 }
 
 /**
@@ -189,6 +228,11 @@ const modulePathMap: Record<string, string> = {
  */
 function loadComponent(componentName: string) {
   try {
+    const approvalLoader = approvalWorkflowComponents[componentName]
+    if (approvalLoader) {
+      return approvalLoader
+    }
+
     // 解析组件名（优先支持 System*/Sys* 的多单词页面）
     // - SystemUser -> module: system, page: User
     // - SystemExcelExportConfig -> module: system, page: ExcelExportConfig
@@ -245,6 +289,148 @@ export const dynamicModules = ref<any[]>([])
  */
 export const dynamicRoutes = ref<any[]>([])
 
+function normalizeAuthorizationRoutes(routes: any[]) {
+  const cloned = Array.isArray(routes)
+    ? JSON.parse(JSON.stringify(routes))
+    : []
+
+  const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
+  if (!sysRoute || !Array.isArray(sysRoute.children)) {
+    return cloned
+  }
+
+  const authorizationCatalog = sysRoute.children.find((item: any) =>
+    item?.meta?.type === 'catalog' && String(item?.path || '') === 'authorization',
+  )
+  if (!authorizationCatalog) {
+    return cloned
+  }
+
+  authorizationCatalog.children = Array.isArray(authorizationCatalog.children)
+    ? authorizationCatalog.children
+    : []
+
+  const moduleIndex = sysRoute.children.findIndex((item: any) => String(item?.path || '') === 'module')
+  if (moduleIndex === -1) {
+    return cloned
+  }
+
+  const [moduleMenu] = sysRoute.children.splice(moduleIndex, 1)
+  const existedModuleIndex = authorizationCatalog.children.findIndex((item: any) => String(item?.path || '') === 'module')
+  if (existedModuleIndex !== -1) {
+    authorizationCatalog.children[existedModuleIndex] = moduleMenu
+  } else {
+    authorizationCatalog.children.push(moduleMenu)
+    authorizationCatalog.children.sort((a: any, b: any) => {
+      const orderA = Number(a?.meta?.order ?? a?.order ?? 0)
+      const orderB = Number(b?.meta?.order ?? b?.order ?? 0)
+      return orderA - orderB
+    })
+  }
+
+  return cloned
+}
+
+function normalizeSystemConfigRoutes(routes: any[]) {
+  const cloned = Array.isArray(routes)
+    ? JSON.parse(JSON.stringify(routes))
+    : []
+
+  const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
+  if (!sysRoute || !Array.isArray(sysRoute.children)) {
+    return cloned
+  }
+
+  groupSystemMenus(sysRoute.children, {
+    catalogPath: 'pageTableConfig',
+    title: '页表配置',
+    icon: 'TableOutlined',
+    childPaths: ['tableConfig', 'userTableConfig'],
+  })
+
+  groupSystemMenus(sysRoute.children, {
+    catalogPath: 'excelConfig',
+    title: 'Excel配置',
+    icon: 'FileExcelOutlined',
+    childPaths: ['excelImportConfig', 'excelExportConfig'],
+  })
+
+  return cloned
+}
+
+function groupSystemMenus(
+  menuList: any[],
+  options: {
+    catalogPath: string
+    title: string
+    icon: string
+    childPaths: string[]
+  },
+) {
+  const catalogIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
+  const existingCatalog = catalogIndex >= 0 ? menuList[catalogIndex] : null
+  const catalogChildren = Array.isArray(existingCatalog?.children) ? existingCatalog.children : []
+
+  const detachedChildren: any[] = []
+  let insertIndex = catalogIndex >= 0 ? catalogIndex : menuList.length
+
+  options.childPaths.forEach(childPath => {
+    const rootIndex = menuList.findIndex((item: any) => String(item?.path || '') === childPath)
+    if (rootIndex !== -1) {
+      if (detachedChildren.length === 0) {
+        insertIndex = Math.min(insertIndex, rootIndex)
+      }
+      detachedChildren.push(menuList[rootIndex])
+      menuList.splice(rootIndex, 1)
+    }
+  })
+
+  const mergedChildren = [...catalogChildren]
+  detachedChildren.forEach(child => {
+    const exists = mergedChildren.some((item: any) => String(item?.path || '') === String(child?.path || ''))
+    if (!exists) {
+      mergedChildren.push(child)
+    }
+  })
+
+  if (mergedChildren.length === 0) {
+    return
+  }
+
+  const catalog = existingCatalog || {
+    path: options.catalogPath,
+    name: options.catalogPath,
+    meta: {
+      title: options.title,
+      icon: options.icon,
+      module: 'sys',
+      menuLevel: 1,
+      type: 'catalog',
+    },
+    children: [],
+  }
+
+  catalog.meta = {
+    ...(catalog.meta || {}),
+    title: options.title,
+    icon: options.icon,
+    module: 'sys',
+    menuLevel: 1,
+    type: 'catalog',
+  }
+  catalog.children = mergedChildren
+
+  if (catalogIndex >= 0) {
+    const refreshedIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
+    if (refreshedIndex !== -1) {
+      menuList[refreshedIndex] = catalog
+    }
+    return
+  }
+
+  menuList.splice(Math.min(insertIndex, menuList.length), 0, catalog)
+}
+
 /**
  * 已注入的动态路由名称集合
  * <p>
@@ -282,7 +468,9 @@ export async function injectDynamicRoutes(payload: any) {
 
   // 解析模块和路由数据
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
-  const routesPayload = Array.isArray(payload?.routes) ? payload.routes : []
+  const routesPayload = normalizeSystemConfigRoutes(
+    normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : []),
+  )
 
   // 更新动态模块和路由列表
   dynamicModules.value = mods

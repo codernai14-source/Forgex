@@ -127,5 +127,19 @@ public class FxTableColumnDTO {
      * <p>用于控制该列的显示权限，只有拥有对应权限的用户才能看到该列。</p>
      */
     private String permKey;
+
+    /**
+     * 是否显示
+     * <p>用于用户个性化配置，控制该列是否显示在表格中。</p>
+     * <p>true时显示该列，false时隐藏该列。</p>
+     */
+    private Boolean visible;
+
+    /**
+     * 排序顺序
+     * <p>用于用户个性化配置，控制该列在表格中的显示顺序。</p>
+     * <p>数值越小排在越前面。</p>
+     */
+    private Integer order;
 }
 

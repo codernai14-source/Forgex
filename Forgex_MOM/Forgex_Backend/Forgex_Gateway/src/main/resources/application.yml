@@ -97,6 +97,21 @@ spring:
               args:
                 name: api-files
                 fallbackUri: forward:/fallback/files
+        - id: api-wf
+          uri: lb://forgex-workflow
+          predicates:
+            - Path=/api/wf/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+            - name: CircuitBreaker
+              args:
+                name: api-wf
+                fallbackUri: forward:/fallback/sys
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:

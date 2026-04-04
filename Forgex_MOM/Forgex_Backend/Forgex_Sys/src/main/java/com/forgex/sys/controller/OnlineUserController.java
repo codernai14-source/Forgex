@@ -39,7 +39,7 @@ public class OnlineUserController {
      * @param query 查询参数
      * @return 在线用户分页结果
      */
-    @RequirePerm("sys:online:list")
+    @RequirePerm("sys:online:view")
     @PostMapping("/list")
     public R<IPage<OnlineUserVO>> list(@RequestBody OnlineUserQueryDTO query) {
         long current = query != null && query.getCurrent() != null ? query.getCurrent() : 1L;
@@ -54,7 +54,7 @@ public class OnlineUserController {
      * @param body 请求体（兼容扩展，当前未使用）
      * @return 在线用户数
      */
-    @RequirePerm("sys:online:list")
+    @RequirePerm("sys:online:view")
     @PostMapping("/count")
     public R<Long> count(@RequestBody Map<String, Object> body) {
         Long tenantId = TenantContext.get();

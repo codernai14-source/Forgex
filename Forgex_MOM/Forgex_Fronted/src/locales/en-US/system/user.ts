@@ -68,6 +68,7 @@ export default {
     deleteSuccess: 'User deleted successfully',
     saveSuccess: 'User saved successfully',
     resetPasswordSuccess: 'Password reset successfully',
+    resetPasswordConfirm: 'Are you sure you want to reset this password? It will be reset to the system default password.',
     lockSuccess: 'User locked successfully',
     unlockSuccess: 'User unlocked successfully',
     usernameExists: 'Username already exists',

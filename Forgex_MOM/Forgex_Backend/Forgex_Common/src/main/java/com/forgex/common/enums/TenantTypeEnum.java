@@ -20,11 +20,12 @@ import lombok.Getter;
 /**
  * 租户类别枚举
  * <p>
- * 定义系统中租户的三种类型：主租户、客户租户、供应商租户
+ * 定义系统中租户类型：主租户、客户租户、供应商租户、合作伙伴租户等。
  * <ul>
  *   <li>主租户(MAIN_TENANT)：系统默认租户，具有最高权限，可以管理其他租户</li>
  *   <li>客户租户(CUSTOMER_TENANT)：客户类型的租户</li>
  *   <li>供应商租户(SUPPLIER_TENANT)：供应商类型的租户</li>
+ *   <li>合作伙伴租户(PARTNER_TENANT)：合作伙伴类型的租户</li>
  * </ul>
  * </p>
  * 
@@ -52,7 +53,13 @@ public enum TenantTypeEnum {
      * 供应商租户
      * <p>供应商类型的租户</p>
      */
-    SUPPLIER_TENANT("SUPPLIER_TENANT", "供应商租户");
+    SUPPLIER_TENANT("SUPPLIER_TENANT", "供应商租户"),
+
+    /**
+     * 合作伙伴租户
+     * <p>合作伙伴类型的租户，与需求文档中 tenant_type=合作伙伴 对应</p>
+     */
+    PARTNER_TENANT("PARTNER_TENANT", "合作伙伴租户");
     
     /**
      * 枚举值，存储到数据库的值
@@ -120,5 +127,14 @@ public enum TenantTypeEnum {
      */
     public boolean isSupplierTenant() {
         return this == SUPPLIER_TENANT;
+    }
+
+    /**
+     * 判断是否为合作伙伴租户
+     *
+     * @return true 表示是合作伙伴租户，否则为 false
+     */
+    public boolean isPartnerTenant() {
+        return this == PARTNER_TENANT;
     }
 }

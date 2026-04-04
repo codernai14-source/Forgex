@@ -78,7 +78,7 @@ export const useRoleForm = (onSuccess: () => void) => {
       const apiFunc = isEdit.value ? updateRole : addRole
       await apiFunc(formData)
 
-      message.success(isEdit.value ? '更新成功' : '新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
       visible.value = false
       onSuccess()
     } catch (error) {

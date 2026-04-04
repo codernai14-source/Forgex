@@ -111,11 +111,17 @@ interface Module {
 }
 
 interface AppSidebarProps {
+  /** 菜单项数组，包含所有菜单的层级结构数据 */
   menus: MenuItem[]
+  /** 模块列表，用于双列布局模式显示模块导航 */
   modules?: Module[]
+  /** 当前激活的菜单 key，用于高亮显示选中的菜单项 */
   activeKey?: string
+  /** 当前激活的模块 code，用于双列布局模式 */
   activeModuleCode?: string
+  /** 侧边栏是否折叠，true 表示折叠状态 */
   collapsed?: boolean
+  /** 是否启用双列布局，true 表示显示两列侧边栏 */
   doubleColumn?: boolean
 }
 
@@ -129,8 +135,23 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 菜单点击事件
+   * 触发时机：用户点击菜单项时触发
+   * @param menuKey 被点击的菜单 key
+   */
   'menu-click': [menuKey: string]
+  /**
+   * 模块点击事件
+   * 触发时机：用户点击模块导航时触发
+   * @param moduleCode 被点击的模块 code
+   */
   'module-click': [moduleCode: string]
+  /**
+   * 侧边栏折叠状态变化事件
+   * 触发时机：用户点击折叠按钮时触发
+   * @param collapsed 新的折叠状态
+   */
   'collapse-change': [collapsed: boolean]
 }>()
 
@@ -326,22 +347,49 @@ const onCollapse = (collapsed: boolean) => {
 .app-sidebar-wrapper {
   display: flex;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-sidebar-mini {
   background: var(--fx-sider-mini-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  min-height: 0;
+  overflow: hidden;
   
   :deep(.ant-layout-sider-children) {
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 }
 
 .mini-menu {
   flex: 1;
+  height: 100%;
+  min-height: 0;
   background: transparent;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
   
   :deep(.ant-menu-item) {
     display: flex;
@@ -410,6 +458,8 @@ const onCollapse = (collapsed: boolean) => {
 .app-sidebar {
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  min-height: 0;
+  overflow: hidden;
   
   :deep(.ant-layout-sider-trigger) {
     background: rgba(0, 0, 0, 0.2);
@@ -423,6 +473,7 @@ const onCollapse = (collapsed: boolean) => {
 
 .sidebar-menu {
   height: 100%;
+  min-height: 0;
   background: transparent;
   border-right: none;
   overflow-y: auto;

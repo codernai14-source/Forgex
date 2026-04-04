@@ -14,6 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.domain.vo;
 
 import lombok.Data;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -49,6 +51,10 @@ public class DictTreeVO {
      * 字典值
      */
     private String dictValue;
+
+    private String dictValueI18nJson;
+
+    private String tagStyleJson;
     
     /**
      * 排序号
@@ -64,6 +70,14 @@ public class DictTreeVO {
      * 备注
      */
     private String remark;
+
+    private LocalDateTime createTime;
+
+    private String createBy;
+
+    private LocalDateTime updateTime;
+
+    private String updateBy;
     
     /**
      * 子节点列表

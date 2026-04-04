@@ -92,10 +92,10 @@ export function useModuleForm() {
 
       if (isEdit.value) {
         await updateModule(formData)
-        message.success('更新成功')
+        // 成功提示由后端返回，在 http 拦截器中统一处理
       } else {
         await addModule(formData)
-        message.success('新增成功')
+        // 成功提示由后端返回，在 http 拦截器中统一处理
       }
 
       dialogVisible.value = false

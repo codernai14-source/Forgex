@@ -120,6 +120,10 @@
               <template #icon><PlusOutlined /></template>
               添加内容配置
             </a-button>
+            <a-button @click="handleTestSend" :loading="testSendLoading" :disabled="formData.contents.length === 0">
+              <template #icon><SendOutlined /></template>
+              璇曞彂閫佺粰鑷繁
+            </a-button>
             <a-button type="primary" @click="handlePreview" :disabled="formData.contents.length === 0">
               <template #icon><EyeOutlined /></template>
               预览效果
@@ -149,7 +153,7 @@
                     placeholder="请输入消息标题（可选）"
                   />
                   <template #extra>
-                    <span style="color: #999; font-size: 12px;">
+                    <span class="field-hint">
                       支持占位符，如 ${userName}、${tenantName} 等
                     </span>
                   </template>
@@ -164,7 +168,7 @@
                 <a-form-item label="跳转链接">
                   <a-input v-model:value="formData.contents[index].linkUrl" placeholder="请输入跳转链接（可选）" />
                   <template #extra>
-                    <span style="color: #999; font-size: 12px;">
+                    <span class="field-hint">
                       用户点击消息后跳转的链接地址
                     </span>
                   </template>
@@ -192,13 +196,14 @@ import { message, Modal } from 'ant-design-vue'
 import {
   PlusOutlined,
   DeleteOutlined,
-  EyeOutlined
+  EyeOutlined,
+  SendOutlined
 } from '@ant-design/icons-vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import PlaceholderInput from '@/components/common/PlaceholderInput.vue'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import TemplatePreview from '@/components/common/TemplatePreview.vue'
-import { getI18nValue } from '@/utils/i18n'
+import { getI18nValue, toI18nJson } from '@/utils/i18n'
 import {
   pageMessageTemplate,
   getMessageTemplate,
@@ -206,9 +211,12 @@ import {
   deleteMessageTemplate,
   deleteBatchMessageTemplate
 } from '@/api/message'
+import { sendMessage as sendSystemMessage } from '@/api/system/message'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useUserStore } from '@/stores/user'
 
 const tableRef = ref<any>()
+const userStore = useUserStore()
 
 const dictOptions = {
   messageType: [
@@ -233,6 +241,7 @@ const activeTab = ref('basic')
 
 // 预览相关
 const previewVisible = ref(false)
+const testSendLoading = ref(false)
 
 // 表单数据
 const formData = reactive({
@@ -247,6 +256,75 @@ const formData = reactive({
   receivers: [] as any[],
   contents: [] as any[]
 })
+
+const resolveI18nText = (i18nJson?: string, fallback: string = '') => {
+  return getI18nValue(i18nJson, fallback, 'zh-CN').trim()
+}
+
+const ensureI18nJsonValue = (i18nJson?: string, fallback: string = '') => {
+  if (typeof i18nJson === 'string' && i18nJson.trim()) {
+    return i18nJson
+  }
+  const text = fallback.trim()
+  return text ? toI18nJson({ 'zh-CN': text }) : ''
+}
+
+const normalizeFormData = (data: any) => {
+  const next = data || {}
+  return {
+    ...next,
+    templateNameI18nJson: ensureI18nJsonValue(next.templateNameI18nJson, next.templateName || ''),
+    receivers: Array.isArray(next.receivers) ? next.receivers : [],
+    contents: Array.isArray(next.contents)
+      ? next.contents.map((content: any) => ({
+          ...content,
+          contentTitleI18nJson: ensureI18nJsonValue(content?.contentTitleI18nJson, content?.contentTitle || ''),
+          contentBodyI18nJson: ensureI18nJsonValue(content?.contentBodyI18nJson, content?.contentBody || '')
+        }))
+      : []
+  }
+}
+
+const buildSavePayload = () => {
+  return {
+    ...formData,
+    templateName: resolveI18nText(formData.templateNameI18nJson, formData.templateName),
+    templateNameI18nJson: ensureI18nJsonValue(formData.templateNameI18nJson, formData.templateName),
+    receivers: formData.receivers.map((receiver: any) => ({
+      ...receiver,
+      receiverIds: Array.isArray(receiver.receiverIds) ? receiver.receiverIds : []
+    })),
+    contents: formData.contents.map((content: any) => ({
+      ...content,
+      contentTitle: resolveI18nText(content.contentTitleI18nJson, content.contentTitle),
+      contentTitleI18nJson: ensureI18nJsonValue(content.contentTitleI18nJson, content.contentTitle),
+      contentBody: resolveI18nText(content.contentBodyI18nJson, content.contentBody),
+      contentBodyI18nJson: ensureI18nJsonValue(content.contentBodyI18nJson, content.contentBody),
+      linkUrl: content.linkUrl || ''
+    }))
+  }
+}
+
+const formatCurrentTime = () => {
+  const now = new Date()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+}
+
+const renderPlaceholderText = (template: string, values: Record<string, string>) => {
+  if (!template) {
+    return ''
+  }
+  return template.replace(/\$\{([^}]+)\}/g, (_, key: string) => values[key] ?? '')
+}
+
+const ensureCurrentUserId = async () => {
+  if (typeof userStore.userInfo?.id === 'number') {
+    return userStore.userInfo.id
+  }
+  await userStore.restoreFromSession()
+  return typeof userStore.userInfo?.id === 'number' ? userStore.userInfo.id : undefined
+}
 
 // 表单验证规则
 const validateForm = () => {
@@ -342,6 +420,56 @@ const handlePreview = () => {
   previewVisible.value = true
 }
 
+const handleTestSend = async () => {
+  const internalContent = formData.contents.find((item: any) => item.platform === 'INTERNAL')
+  if (!internalContent) {
+    activeTab.value = 'content'
+    message.warning('璇峰厛閰嶇疆绔欏唴娑堟伅鍐呭鍚庡啀璇曞彂閫?')
+    return
+  }
+
+  const receiverUserId = await ensureCurrentUserId()
+  if (!receiverUserId) {
+    message.error('鑾峰彇褰撳墠鐢ㄦ埛淇℃伅澶辫触锛岃鍒锋柊椤甸潰鍚庨噸璇?')
+    return
+  }
+
+  const rawTitle = resolveI18nText(internalContent.contentTitleI18nJson, internalContent.contentTitle)
+  const rawBody = resolveI18nText(internalContent.contentBodyI18nJson, internalContent.contentBody)
+  const fallbackTitle = resolveI18nText(formData.templateNameI18nJson, formData.templateName) || '娑堟伅妯℃澘璇曞彂閫?'
+
+  const placeholderValues: Record<string, string> = {
+    userName: userStore.userInfo?.username || userStore.userInfo?.account || '褰撳墠鐢ㄦ埛',
+    userAccount: userStore.userInfo?.account || 'current.user',
+    tenantName: userStore.userInfo?.tenantName || '褰撳墠绉熸埛',
+    currentTime: formatCurrentTime(),
+    title: fallbackTitle,
+    content: '杩欐槸涓€鏉℃秷鎭ā鏉跨殑璇曞彂閫佹秷鎭?',
+    linkUrl: internalContent.linkUrl || '/workspace'
+  }
+
+  const title = renderPlaceholderText(rawTitle, placeholderValues) || fallbackTitle
+  const content = renderPlaceholderText(rawBody, { ...placeholderValues, title }) || placeholderValues.content
+  const linkUrl = renderPlaceholderText(internalContent.linkUrl || '', { ...placeholderValues, title, content })
+
+  testSendLoading.value = true
+  try {
+    await sendSystemMessage({
+      receiverUserId,
+      scope: 'INTERNAL',
+      title,
+      content,
+      linkUrl: linkUrl || undefined,
+      bizType: 'MESSAGE_TEMPLATE_TEST'
+    })
+    message.success('璇曞彂閫佹垚鍔燂紝璇峰湪绔欏唴娑堟伅鎴栧彸涓婅閫氱煡涓煡鐪?')
+  } catch (error) {
+    message.error('璇曞彂閫佸け璐?')
+  } finally {
+    testSendLoading.value = false
+  }
+}
+
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
   query: Record<string, any>
@@ -397,9 +525,10 @@ const handleEdit = async (record: any) => {
   activeTab.value = 'basic'
   try {
     const res = await getMessageTemplate(record.id)
-    Object.assign(formData, res)
+    Object.assign(formData, normalizeFormData(res))
     modalVisible.value = true
-  } catch (error) {
+  } catch {
+    // getMessageTemplate 已使用 silentError，此处仅补一条业务提示，避免与拦截器重复弹窗
     message.error('获取详情失败')
   }
 }
@@ -494,7 +623,7 @@ const handleModalOk = async () => {
   
   modalLoading.value = true
   try {
-    await saveMessageTemplate(formData)
+    await saveMessageTemplate(buildSavePayload())
     message.success('保存成功')
     modalVisible.value = false
     await tableRef.value?.reload?.()
@@ -526,6 +655,11 @@ const handleModalCancel = () => {
   }
 }
 
+.field-hint {
+  color: var(--fx-text-secondary, #999);
+  font-size: 12px;
+}
+
 .receiver-item,
 .content-item {
   margin-bottom: 16px;
@@ -535,22 +669,30 @@ const handleModalCancel = () => {
   }
   
   :deep(.ant-card) {
-    border: 1px solid #e8e8e8;
-    transition: all 0.3s;
+    background: var(--fx-bg-elevated, #ffffff);
+    border: 1px solid var(--fx-border-color, #e8e8e8);
+    box-shadow: var(--fx-shadow-secondary, 0 6px 18px rgba(15, 23, 42, 0.08));
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
     
     &:hover {
-      border-color: #1890ff;
-      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+      border-color: var(--fx-primary, #1890ff);
+      box-shadow: var(--fx-shadow, 0 10px 28px rgba(15, 23, 42, 0.14));
+      transform: translateY(-1px);
     }
     
     .ant-card-head {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      border-bottom: 1px solid #e8e8e8;
+      background: linear-gradient(135deg, var(--fx-fill-alter, #f5f7fa) 0%, var(--fx-fill-secondary, #eef2ff) 100%);
+      border-bottom: 1px solid var(--fx-border-color, #e8e8e8);
       
       .ant-card-head-title {
         font-weight: 600;
-        color: #333;
+        color: var(--fx-text-primary, #333);
       }
+    }
+
+    .ant-card-body {
+      background: var(--fx-bg-elevated, #ffffff);
+      color: var(--fx-text-primary, #111827);
     }
   }
 }

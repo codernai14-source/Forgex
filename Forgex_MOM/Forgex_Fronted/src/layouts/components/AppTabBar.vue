@@ -116,9 +116,13 @@ interface Tab {
 }
 
 interface AppTabBarProps {
+  /** 标签页数组，包含所有打开的标签页信息 */
   tabs: Tab[]
+  /** 当前激活的标签页 key，用于高亮显示 */
   activeKey?: string
+  /** 是否允许拖拽排序，默认 true */
   draggable?: boolean
+  /** 最大标签页数量，默认 10 */
   maxTabs?: number
 }
 
@@ -130,10 +134,37 @@ const props = withDefaults(defineProps<AppTabBarProps>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 标签页点击事件
+   * 触发时机：用户点击标签页时触发
+   * @param tab 被点击的标签页对象
+   */
   'tab-click': [tab: Tab]
+  /**
+   * 标签页关闭事件
+   * 触发时机：用户点击标签页关闭按钮时触发
+   * @param tab 被关闭的标签页对象
+   */
   'tab-close': [tab: Tab]
+  /**
+   * 标签页拖拽排序事件
+   * 触发时机：用户拖拽标签页到其他位置时触发
+   * @param fromIndex 原始索引位置
+   * @param toIndex 目标索引位置
+   */
   'tab-drag': [fromIndex: number, toIndex: number]
+  /**
+   * 标签页刷新事件
+   * 触发时机：用户右键菜单选择刷新时触发
+   * @param tab 要刷新的标签页对象
+   */
   'tab-refresh': [tab: Tab]
+  /**
+   * 批量关闭标签页事件
+   * 触发时机：用户右键菜单或快速操作选择关闭时触发
+   * @param action 关闭动作：others=关闭其他，left=关闭左侧，right=关闭右侧，all=关闭所有
+   * @param tab 参考标签页对象（关闭其他/左侧/右侧时使用）
+   */
   'tabs-close': [action: 'others' | 'left' | 'right' | 'all', tab?: Tab]
 }>()
 

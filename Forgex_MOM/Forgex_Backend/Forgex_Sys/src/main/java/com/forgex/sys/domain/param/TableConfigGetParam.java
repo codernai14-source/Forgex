@@ -30,5 +30,8 @@ public class TableConfigGetParam {
     
     /** 是否启用 */
     private Boolean enabled;
+    
+    /** 是否查询公共配置，true=强制查询公共配置（tenantId=0），false=查询租户配置 */
+    private Boolean isPublicConfig;
 }
 

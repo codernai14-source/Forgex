@@ -34,6 +34,15 @@
         </a-tag>
       </template>
 
+      <template #parentTenantName="{ record }">
+        <span v-if="record.parentTenantId" class="text-gray-600">
+          {{ record.parentTenantName || '-' }}
+        </span>
+        <span v-else class="text-gray-400">
+          {{ $t('system.tenant.noParentTenant') }}
+        </span>
+      </template>
+
       <template #logo="{ record }">
         <a-image
           v-if="record.logo"
@@ -123,6 +132,28 @@
           </a-select>
         </a-form-item>
 
+        <a-form-item 
+          v-if="!formData.id" 
+          :label="$t('system.tenant.parentTenant')" 
+          name="parentTenantId"
+        >
+          <a-select
+            v-model:value="formData.parentTenantId"
+            :placeholder="$t('system.tenant.form.parentTenant')"
+            allow-clear
+            show-search
+            :filter-option="filterTenantOption"
+          >
+            <a-select-option
+              v-for="tenant in tenantOptions"
+              :key="tenant.id"
+              :value="tenant.id"
+            >
+              {{ tenant.tenantName }} ({{ TenantTypeLabels[tenant.tenantType] }})
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+
         <a-form-item :label="$t('system.tenant.description')" name="description">
           <a-textarea
             v-model:value="formData.description"
@@ -145,6 +176,14 @@
         </a-form-item>
       </a-form>
     </BaseFormDialog>
+
+    <!-- 租户初始化进度弹窗 -->
+    <TenantInitProgress
+      v-if="progressDialogVisible && currentTaskId"
+      v-model:open="progressDialogVisible"
+      :task-id="currentTaskId"
+      @finish="handleInitProgressFinish"
+    />
   </div>
 </template>
 
@@ -163,15 +202,18 @@ import {
   createTenant,
   updateTenant,
   deleteTenant,
+  listTenantForSelect,
   TenantTypeEnum,
   TenantTypeLabels,
   type TenantDTO,
   type TenantQueryDTO,
   type TenantSaveParam
 } from '@/api/system/tenant'
+import { getTaskDetail, getTaskByTenantId } from '@/api/system/tenantInitTask'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import TenantInitProgress from '@/components/tenant/TenantInitProgress.vue'
 import { useDict } from '@/hooks/useDict'
 
 const { dictItems: statusOptions } = useDict('status')
@@ -184,6 +226,21 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const saving = ref(false)
 
+/**
+ * 租户初始化进度弹窗显示状态
+ */
+const progressDialogVisible = ref(false)
+
+/**
+ * 当前租户初始化任务 ID
+ */
+const currentTaskId = ref<number>()
+
+/**
+ * 租户选项列表（用于父租户选择）
+ */
+const tenantOptions = ref<TenantDTO[]>([])
+
 const formData = reactive<TenantSaveParam>({
   tenantName: '',
   tenantCode: '',
@@ -195,6 +252,26 @@ const rules = {
   tenantName: [{ required: true, message: '请输入租户名称', trigger: 'blur' }],
   tenantCode: [{ required: true, message: '请输入租户编码', trigger: 'blur' }],
   tenantType: [{ required: true, message: '请选择租户类别', trigger: 'change' }]
+}
+
+/**
+ * 过滤租户选项
+ */
+const filterTenantOption = (input: string, option: any) => {
+  return option.children.toLowerCase().includes(input.toLowerCase())
+}
+
+/**
+ * 加载租户选项列表
+ */
+const loadTenantOptions = async () => {
+  try {
+    const data = await listTenantForSelect()
+    // 排除已删除的租户
+    tenantOptions.value = data.filter(t => t.status !== false)
+  } catch (e: any) {
+    console.error('加载租户选项失败:', e)
+  }
 }
 
 // 字典配置
@@ -239,7 +316,8 @@ function getTenantTypeColor(type: TenantTypeEnum): string {
   const colorMap: Record<TenantTypeEnum, string> = {
     [TenantTypeEnum.MAIN_TENANT]: 'blue',
     [TenantTypeEnum.CUSTOMER_TENANT]: 'green',
-    [TenantTypeEnum.SUPPLIER_TENANT]: 'orange'
+    [TenantTypeEnum.SUPPLIER_TENANT]: 'orange',
+    [TenantTypeEnum.PARTNER_TENANT]: 'cyan'
   }
   return colorMap[type] || 'default'
 }
@@ -263,7 +341,8 @@ function openAdd() {
     tenantType: TenantTypeEnum.CUSTOMER_TENANT,
     description: undefined,
     logo: undefined,
-    status: true
+    status: true,
+    parentTenantId: undefined
   })
   formRef.value?.resetFields()
 }
@@ -277,7 +356,8 @@ function openEdit(record: TenantDTO) {
     tenantType: record.tenantType,
     description: record.description,
     logo: record.logo,
-    status: record.status
+    status: record.status,
+    parentTenantId: undefined // 编辑时不支持修改父租户
   })
   
   formRef.value?.resetFields()
@@ -290,10 +370,29 @@ async function handleSave() {
 
     if (formData.id) {
       await updateTenant(formData)
-      message.success('更新成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
-      await createTenant(formData)
-      message.success('新增成功')
+      // 新增租户
+      const tenantId = await createTenant(formData)
+      // 成功提示由后端返回，在 http 拦截器中统一处理
+      
+      // 查询任务详情，获取任务 ID
+      try {
+        // 延迟一点，等待异步任务创建
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // 查询租户 ID 查询任务详情（任务表中租户 ID 是唯一的）
+        // 这里需要后端提供一个通过租户 ID 查询任务的接口
+        // 暂时假设后端会返回任务 ID，或者前端轮询查询
+        const taskId = await queryTaskByTenantId(tenantId)
+        
+        if (taskId) {
+          currentTaskId.value = taskId
+          progressDialogVisible.value = true
+        }
+      } catch (e) {
+        console.error('查询初始化任务失败:', e)
+      }
     }
 
     dialogVisible.value = false
@@ -308,15 +407,55 @@ async function handleSave() {
   }
 }
 
+/**
+ * 通过租户 ID 查询任务 ID
+ * 轮询查询任务表，最多尝试 10 次
+ */
+const queryTaskByTenantId = async (tenantId: number): Promise<number | null> => {
+  const maxRetries = 10
+  const retryDelay = 500 // 毫秒
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const task = await getTaskByTenantId(tenantId)
+      
+      if (task && task.id) {
+        console.log('查询到任务:', task)
+        return task.id
+      }
+      
+      // 任务还未创建，等待后重试
+      await new Promise(resolve => setTimeout(resolve, retryDelay))
+      console.log('等待任务创建...', i + 1)
+    } catch (e) {
+      console.error('查询任务失败:', e)
+      // 失败也等待后重试
+      await new Promise(resolve => setTimeout(resolve, retryDelay))
+    }
+  }
+  
+  return null
+}
+
 function handleCancel() {
   dialogVisible.value = false
   formRef.value?.resetFields()
 }
 
+/**
+ * 初始化进度完成回调
+ */
+const handleInitProgressFinish = () => {
+  progressDialogVisible.value = false
+  currentTaskId.value = undefined
+  message.success('租户初始化完成')
+  tableRef.value?.refresh?.()
+}
+
 async function handleDelete(record: TenantDTO) {
   try {
     await deleteTenant({ id: record.id })
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (e: any) {
     message.error(e.message || '删除失败')
@@ -325,6 +464,7 @@ async function handleDelete(record: TenantDTO) {
 
 onMounted(() => {
   tableRef.value?.refresh?.()
+  loadTenantOptions()
 })
 </script>
 

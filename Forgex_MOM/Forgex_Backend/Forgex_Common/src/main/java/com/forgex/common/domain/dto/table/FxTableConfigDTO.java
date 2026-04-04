@@ -46,6 +46,12 @@ public class FxTableConfigDTO {
     private String tableName;
 
     /**
+     * 表名称国际化 JSON
+     * <p>原始国际化文本，用于前端按当前语言自行解析显示。</p>
+     */
+    private String tableNameI18nJson;
+
+    /**
      * 表格类型
      * <p>指定表格的类型，如"tree"（树形表格）、"table"（普通表格）等。</p>
      */

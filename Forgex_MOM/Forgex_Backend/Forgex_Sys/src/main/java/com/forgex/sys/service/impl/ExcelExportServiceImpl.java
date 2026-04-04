@@ -16,13 +16,19 @@ package com.forgex.sys.service.impl;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
+import com.forgex.sys.domain.dto.ExcelOperationLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
 import com.forgex.sys.domain.dto.LoginLogQueryDTO;
+import com.forgex.sys.domain.dto.SysOperationLogQueryDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.LoginLog;
+import com.forgex.sys.domain.entity.SysOperationLog;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.mapper.LoginLogMapper;
+import com.forgex.sys.mapper.SysOperationLogMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.service.ExcelExportService;
 import org.springframework.stereotype.Service;
@@ -31,7 +37,9 @@ import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +74,8 @@ public class ExcelExportServiceImpl implements ExcelExportService {
      * 用户Mapper
      */
     private final SysUserMapper userMapper;
+
+    private final SysOperationLogMapper operationLogMapper;
     
     /**
      * 构造函数
@@ -75,14 +85,16 @@ public class ExcelExportServiceImpl implements ExcelExportService {
      * @param loginLogMapper     登录日志Mapper
      * @param userMapper         用户Mapper
      */
-    public ExcelExportServiceImpl(ExcelConfigService excelConfigService, 
-                                 ExcelFileService excelFileService, 
-                                 LoginLogMapper loginLogMapper, 
-                                 SysUserMapper userMapper) {
+    public ExcelExportServiceImpl(ExcelConfigService excelConfigService,
+                                  ExcelFileService excelFileService,
+                                  LoginLogMapper loginLogMapper,
+                                  SysUserMapper userMapper,
+                                  SysOperationLogMapper operationLogMapper) {
         this.excelConfigService = excelConfigService;
         this.excelFileService = excelFileService;
         this.loginLogMapper = loginLogMapper;
         this.userMapper = userMapper;
+        this.operationLogMapper = operationLogMapper;
     }
     
     /**
@@ -149,6 +161,19 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         // 写入响应
         writeFileToResponse(response, bytes, getContentType(cfg), filename);
     }
+
+    @Override
+    public void exportOperationLog(ExcelOperationLogExportDTO body, HttpServletResponse response) {
+        String tableCode = body == null ? null : body.getTableCode();
+        SysOperationLogQueryDTO query = body == null ? null : body.getQuery();
+        FxExcelExportConfigDTO cfg = excelConfigService.getExportConfigByCode(tableCode);
+
+        List<SysOperationLog> list = operationLogMapper.selectList(buildOperationLogWrapper(query));
+        List<Map<String, Object>> rows = list.stream().map(this::toOperationLogMap).collect(Collectors.toList());
+        byte[] bytes = excelFileService.buildExportFile(cfg, rows);
+        String filename = "operation-log-" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + getFileExtension(cfg);
+        writeFileToResponse(response, bytes, getContentType(cfg), filename);
+    }
     
     /**
      * 将登录日志对象转换为Map格式
@@ -192,6 +217,75 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         m.put("lastLoginIp", u.getLastLoginIp());
         m.put("lastLoginRegion", u.getLastLoginRegion());
         return m;
+    }
+
+    private Map<String, Object> toOperationLogMap(SysOperationLog log) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", log.getId());
+        m.put("tenantId", log.getTenantId());
+        m.put("module", log.getModule());
+        m.put("operationType", log.getOperationType());
+        m.put("username", log.getUsername());
+        m.put("requestMethod", log.getRequestMethod());
+        m.put("requestUrl", log.getRequestUrl());
+        m.put("requestParams", log.getRequestParams());
+        m.put("responseStatus", log.getResponseStatus());
+        m.put("costTime", log.getCostTime());
+        m.put("ip", log.getIp());
+        m.put("operationTime", log.getOperationTime());
+        m.put("menuPath", log.getMenuPath());
+        m.put("detailText", log.getDetailText());
+        return m;
+    }
+
+    private LambdaQueryWrapper<SysOperationLog> buildOperationLogWrapper(SysOperationLogQueryDTO query) {
+        LambdaQueryWrapper<SysOperationLog> qw = new LambdaQueryWrapper<SysOperationLog>()
+                .orderByDesc(SysOperationLog::getOperationTime);
+
+        Long tenantId = TenantContext.get();
+        if (tenantId != null) {
+            qw.eq(SysOperationLog::getTenantId, tenantId);
+        }
+
+        if (query != null && StringUtils.hasText(query.getModule())) {
+            qw.eq(SysOperationLog::getModule, query.getModule());
+        }
+
+        if (query != null && StringUtils.hasText(query.getOperationType())) {
+            qw.eq(SysOperationLog::getOperationType, query.getOperationType());
+        }
+
+        if (query != null && StringUtils.hasText(query.getStartTime())) {
+            LocalDateTime start = parseToLocalDateTime(query.getStartTime());
+            if (start != null) {
+                qw.ge(SysOperationLog::getOperationTime, start);
+            }
+        }
+        if (query != null && StringUtils.hasText(query.getEndTime())) {
+            LocalDateTime end = parseToLocalDateTime(query.getEndTime());
+            if (end != null) {
+                qw.le(SysOperationLog::getOperationTime, end);
+            }
+        }
+
+        return qw;
+    }
+
+    private LocalDateTime parseToLocalDateTime(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(raw, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (DateTimeParseException ignored) {
+        }
+
+        try {
+            return LocalDateTime.parse(raw, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException ignored) {
+        }
+
+        return null;
     }
     
     /**
