@@ -546,9 +546,12 @@ async function loadMenusAndGrants() {
     const leafIds = getLeafNodeIds(allMenus.value, grantedMenuIds || [])
     checkedKeys.value = leafIds.map((id: any) => String(id))
     
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
-    message.error('加载菜单授权数据失败')
+    // http.ts already shows business error toast (e.g. code 601), avoid duplicate popups.
+    if (e?.code == null) {
+      message.error('加载菜单授权数据失败')
+    }
   } finally {
     loadingMenus.value = false
   }

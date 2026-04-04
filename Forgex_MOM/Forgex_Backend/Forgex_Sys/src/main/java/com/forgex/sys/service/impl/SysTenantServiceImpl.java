@@ -19,6 +19,7 @@ import com.forgex.common.enums.TenantTypeEnum;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantSaveParam;
+import com.forgex.sys.domain.dto.TenantHierarchyDTO;
 import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.service.SysTenantService;
@@ -276,6 +277,60 @@ public class SysTenantServiceImpl implements SysTenantService {
         }
         
         return convertToDTO(tenant);
+    }
+    
+    @Override
+    public TenantHierarchyDTO getTenantHierarchy(Long tenantId) {
+        if (tenantId == null) {
+            throw new RuntimeException("租户 ID 不能为空");
+        }
+        
+        // 查询当前租户
+        SysTenant currentTenant = tenantMapper.selectById(tenantId);
+        if (currentTenant == null || currentTenant.getDeleted()) {
+            throw new RuntimeException("租户不存在");
+        }
+        
+        TenantHierarchyDTO dto = new TenantHierarchyDTO();
+        dto.setCurrentTenant(currentTenant);
+        
+        // 查询父租户
+        if (currentTenant.getParentTenantId() != null) {
+            SysTenant parentTenant = tenantMapper.selectById(currentTenant.getParentTenantId());
+            if (parentTenant != null && !parentTenant.getDeleted()) {
+                dto.setParentTenant(parentTenant);
+            }
+        }
+        
+        // 查询子租户列表
+        LambdaQueryWrapper<SysTenant> childWrapper = new LambdaQueryWrapper<>();
+        childWrapper.eq(SysTenant::getParentTenantId, tenantId)
+                   .eq(SysTenant::getDeleted, false)
+                   .orderByDesc(SysTenant::getCreateTime);
+        
+        List<SysTenant> childTenants = tenantMapper.selectList(childWrapper);
+        dto.setChildTenants(childTenants);
+        
+        return dto;
+    }
+    
+    @Override
+    public List<SysTenantDTO> getChildTenants(Long parentTenantId) {
+        if (parentTenantId == null) {
+            throw new RuntimeException("父租户 ID 不能为空");
+        }
+        
+        // 查询子租户列表
+        LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysTenant::getParentTenantId, parentTenantId)
+               .eq(SysTenant::getDeleted, false)
+               .orderByDesc(SysTenant::getCreateTime);
+        
+        List<SysTenant> tenants = tenantMapper.selectList(wrapper);
+        
+        return tenants.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
     
     /**

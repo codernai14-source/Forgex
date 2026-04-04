@@ -13,84 +13,122 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.security;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.forgex.common.security.perm.PermKeyService;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
 import com.forgex.sys.client.AuthPermClient;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Sys 模块 PermKeyService 实现类。
- * <p>
- * 通过 Feign 调用 Auth 模块的权限服务，获取用户的按钮权限键集合。
- * Auth 模块作为权限中心，统一提供所有业务模块的权限查询服务。
- * </p>
- *
- * <p>
- * 计算口径（由 Auth 模块实现）：
- * {@code sys_user_role_perm -> sys_role_menu_perm -> sys_menu（catalog/menu/button 等 perm_key）}。
- * </p>
- *
- * <p>
- * 注意：使用 {@link Lazy} 延迟加载 {@link AuthPermClient}，避免循环依赖。
- * 循环依赖链：WebMvcConfig → PermissionInterceptor → PermKeyService → AuthPermClient → WebMvcAutoConfiguration
- * </p>
- *
- * @author coder_nai@163.com
- * @version 1.0.0
- * @since 2026-04-01
- * @see PermKeyService
- * @see AuthPermClient
+ * Sys module permission key service.
+ * Local DB lookup is preferred to avoid remote dependency failures.
  */
 @Slf4j
 @Service
 public class SysPermKeyServiceImpl implements PermKeyService {
 
+    private static final String QUERY_PERM_KEYS_SQL = """
+            SELECT DISTINCT m.perm_key
+            FROM sys_user_role ur
+            INNER JOIN sys_role_menu rm
+                ON rm.role_id = ur.role_id
+               AND rm.tenant_id = ur.tenant_id
+            INNER JOIN sys_menu m
+                ON m.id = rm.menu_id
+               AND m.tenant_id = rm.tenant_id
+            WHERE ur.user_id = ?
+              AND ur.tenant_id = ?
+              AND IFNULL(m.deleted, 0) = 0
+              AND m.perm_key IS NOT NULL
+              AND m.perm_key <> ''
+              AND LOWER(m.type) IN ('button', 'menu', 'catalog')
+            ORDER BY m.perm_key
+            """;
+
+    private final JdbcTemplate jdbcTemplate;
     private final AuthPermClient authPermClient;
 
-    /**
-     * 构造函数，使用 {@link Lazy} 延迟加载避免循环依赖。
-     *
-     * @param authPermClient 认证服务权限 Feign 客户端（延迟加载）
-     */
-    public SysPermKeyServiceImpl(@Lazy AuthPermClient authPermClient) {
+    public SysPermKeyServiceImpl(JdbcTemplate jdbcTemplate, @Lazy AuthPermClient authPermClient) {
+        this.jdbcTemplate = jdbcTemplate;
         this.authPermClient = authPermClient;
     }
 
-    /**
-     * 获取用户在指定租户下拥有的按钮权限键集合。
-     * <p>
-     * 通过 Feign 调用 Auth 模块内部接口，获取权限键列表。
-     * 若调用失败或返回空值，返回空集合。
-     * </p>
-     *
-     * @param userId   用户 ID
-     * @param tenantId 租户 ID
-     * @return 权限键集合（去重），调用失败返回空集合
-     */
     @Override
+    @DS("admin")
     public Set<String> getPermKeys(Long userId, Long tenantId) {
         if (userId == null || tenantId == null) {
             return Collections.emptySet();
         }
 
         try {
-            R<Set<String>> result = authPermClient.getPermKeys(userId, tenantId);
-            if (result != null && result.getCode() != null && result.getCode() == StatusCode.SUCCESS && result.getData() != null) {
-                return result.getData();
+            List<String> localPermKeys = jdbcTemplate.queryForList(
+                    QUERY_PERM_KEYS_SQL,
+                    String.class,
+                    userId,
+                    tenantId
+            );
+            Set<String> normalized = normalize(localPermKeys);
+            if (!normalized.isEmpty()) {
+                return normalized;
             }
-            log.warn("获取权限键失败：userId={}, tenantId={}, msg={}", userId, tenantId,
-                    result != null ? result.getMessage() : "null response");
-            return Collections.emptySet();
+            log.warn("Local permission keys are empty, fallback to Auth service. userId={}, tenantId={}", userId, tenantId);
         } catch (Exception e) {
-            log.error("调用 Auth 权限服务异常：userId={}, tenantId={}", userId, tenantId, e);
+            log.error("Local permission key query failed, fallback to Auth service. userId={}, tenantId={}", userId, tenantId, e);
+        }
+
+        return queryPermKeysFromAuth(userId, tenantId);
+    }
+
+    private Set<String> queryPermKeysFromAuth(Long userId, Long tenantId) {
+        try {
+            R<Set<String>> result = authPermClient.getPermKeys(userId, tenantId);
+            if (result != null
+                    && result.getCode() != null
+                    && result.getCode() == StatusCode.SUCCESS
+                    && result.getData() != null) {
+                Set<String> normalized = normalize(result.getData());
+                if (!normalized.isEmpty()) {
+                    return normalized;
+                }
+            }
+
+            log.warn("Auth permission key query returned empty. userId={}, tenantId={}, msg={}",
+                    userId,
+                    tenantId,
+                    result != null ? result.getMessage() : "null response");
+        } catch (Exception e) {
+            log.error("Auth permission key query failed. userId={}, tenantId={}", userId, tenantId, e);
+        }
+
+        return Collections.emptySet();
+    }
+
+    private Set<String> normalize(List<String> permKeys) {
+        if (permKeys == null || permKeys.isEmpty()) {
             return Collections.emptySet();
         }
+        return permKeys.stream()
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private Set<String> normalize(Set<String> permKeys) {
+        if (permKeys == null || permKeys.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return permKeys.stream()
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 }

@@ -91,4 +91,7 @@ public class SysMenuVO extends BaseEntity {
     
     /** 状态文本（字典翻译结果） */
     private String statusText;
+    
+    /** 适用租户类型：MAIN_TENANT/CUSTOMER_TENANT/SUPPLIER_TENANT/PARTNER_TENANT/PUBLIC，PUBLIC 表示适用于所有租户类型 */
+    private String tenantType;
 }

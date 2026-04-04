@@ -12,6 +12,11 @@
           showTotal: (total: number) => `共 ${total} 条`,
         }"
       >
+        <template #toolbar>
+          <a-button type="primary" v-permission="'sys:excel:exportConfig:edit'" @click="openEdit()">
+            {{ t('common.add') }}
+          </a-button>
+        </template>
         <template #action="{ record }">
           <a-space>
             <a v-permission="'sys:excel:exportConfig:edit'" @click="openEdit(record.id)">编辑</a>
@@ -105,17 +110,31 @@ const editForm = reactive<any>({
   items: [],
 })
 
+function pickQueryValue(query: Record<string, any>, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = query?.[key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value).trim()
+    }
+  }
+  return undefined
+}
+
 const handleRequest = async (payload: { 
   page: { current: number; pageSize: number }; 
   query: Record<string, any>; 
   sorter?: { field?: string; order?: string } 
 }) => {
   try {
+    const tableName = pickQueryValue(payload.query, ['tableName', 'table_name'])
+    const tableCode = pickQueryValue(payload.query, ['tableCode', 'table_code'])
     const res: any = await pageExportConfig({
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
       current: payload.page.current,
       size: payload.page.pageSize,
-      tableName: payload.query.table_name,
-      tableCode: payload.query.table_code,
+      tableName,
+      tableCode,
     })
     return {
       success: true,

@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.common.service.table.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.domain.dto.table.FxTableColumnDTO;
 import com.forgex.common.domain.dto.table.FxTableConfigDTO;
@@ -122,6 +123,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
     
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DS("common")
     public Long saveUserTableConfig(FxUserTableConfigDTO dto, Long userId) {
         // 参数校验
         if (!StringUtils.hasText(dto.getTableCode()) || dto.getTenantId() == null || userId == null) {
@@ -231,6 +233,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         List<FxTableColumnConfig> cols = tableColumnConfigMapper.selectList(
             new LambdaQueryWrapper<FxTableColumnConfig>()
                 .eq(FxTableColumnConfig::getTableCode, tableCode)
+                .eq(FxTableColumnConfig::getTenantId, config.getTenantId())
                 .eq(FxTableColumnConfig::getDeleted, 0)
         );
         

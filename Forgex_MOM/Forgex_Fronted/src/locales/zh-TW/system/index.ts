@@ -3,7 +3,9 @@
  * 統一導出
  */
 import excel from './excel'
+import menu from './menu'
 
 export default {
   excel,
+  menu,
 }

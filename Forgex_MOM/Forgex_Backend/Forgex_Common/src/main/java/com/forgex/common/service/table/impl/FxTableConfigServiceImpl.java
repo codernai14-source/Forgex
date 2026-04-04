@@ -227,6 +227,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         // 查询表格的所有列配置
         List<FxTableColumnConfig> cols = tableColumnConfigMapper.selectList(new LambdaQueryWrapper<FxTableColumnConfig>()
                 .eq(FxTableColumnConfig::getTableCode, tableCode)
+                .eq(FxTableColumnConfig::getTenantId, tenantId)
                 .eq(FxTableColumnConfig::getDeleted, 0));
         
         // 过滤启用的列并按排序字段排序

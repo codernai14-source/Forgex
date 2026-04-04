@@ -73,5 +73,32 @@ public interface FxTableConfigService {
      * @return 表格配置DTO分页结果
      */
     IPage<FxTableConfigDTO> page(Page<FxTableConfig> page, com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<FxTableConfig> wrapper, Long tenantId, Long userId);
+    
+    /**
+     * 获取表格配置（支持公共配置模式）
+     * <p>
+     * 根据表编码、租户 ID 和公共配置模式获取表格配置。
+     * 当 isPublicConfig 为 true 时，强制查询公共配置（tenantId=0）。
+     * </p>
+     * <p><strong>查询优先级：</strong></p>
+     * <ol>
+     *   <li>isPublicConfig=true：查询公共配置（tenant_id=0）</li>
+     *   <li>isPublicConfig=false：查询租户级别配置，不存在则查询公共配置</li>
+     * </ol>
+     * 
+     * @param tableCode 表编码，不能为空
+     * @param tenantId 租户 ID，不能为空
+     * @param isPublicConfig 是否查询公共配置，true=强制查询公共配置，false=查询租户配置
+     * @return 表格配置 DTO，参数无效或表格不存在或未启用时返回 null
+     */
+    default FxTableConfigDTO getTableConfig(String tableCode, Long tenantId, boolean isPublicConfig) {
+        if (isPublicConfig) {
+            // 强制查询公共配置（tenantId=0）
+            return getTableConfig(tableCode, 0L, null);
+        } else {
+            // 查询租户配置（支持回退到公共配置）
+            return getTableConfig(tableCode, tenantId, null);
+        }
+    }
 }
 

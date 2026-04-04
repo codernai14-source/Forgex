@@ -19,6 +19,7 @@ import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantSaveParam;
+import com.forgex.sys.domain.dto.TenantHierarchyDTO;
 import com.forgex.sys.service.SysTenantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -180,6 +181,66 @@ public class SysTenantController {
         }
 
         return R.ok(tenant);
+    }
+    
+    /**
+     * 获取租户层级关系
+     * <p>
+     * 获取指定租户的层级关系，包含当前租户、父租户和子租户列表。
+     * </p>
+     * <p>接口路径：POST /sys/tenant/hierarchy</p>
+     * <p>认证要求：是</p>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>接收租户 ID 参数</li>
+     *   <li>调用 Service 的 getTenantHierarchy 方法查询层级关系</li>
+     *   <li>返回租户层级关系 DTO</li>
+     * </ol>
+     *
+     * @param param 参数，包含 tenantId
+     * @return {@link R} 包含租户层级关系 DTO 的统一返回结构
+     * @see TenantHierarchyDTO
+     */
+    @PostMapping("/hierarchy")
+    public R<TenantHierarchyDTO> getHierarchy(@RequestBody Map<String, Object> param) {
+        Long tenantId = param == null ? null : (Long) param.get("tenantId");
+        
+        if (tenantId == null) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "租户 ID 不能为空");
+        }
+        
+        TenantHierarchyDTO dto = tenantService.getTenantHierarchy(tenantId);
+        return R.ok(dto);
+    }
+    
+    /**
+     * 获取子租户列表
+     * <p>
+     * 获取指定父租户下的所有子租户列表。
+     * </p>
+     * <p>接口路径：POST /sys/tenant/children</p>
+     * <p>认证要求：是</p>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>接收父租户 ID 参数</li>
+     *   <li>调用 Service 的 getChildTenants 方法查询子租户列表</li>
+     *   <li>返回子租户 DTO 列表</li>
+     * </ol>
+     *
+     * @param param 参数，包含 parentTenantId
+     * @return {@link R} 包含子租户 DTO 列表的统一返回结构
+     * @see SysTenantDTO
+     */
+    @PostMapping("/children")
+    public R<List<SysTenantDTO>> getChildren(@RequestBody Map<String, Object> param) {
+        Long parentTenantId = param == null ? null : (Long) param.get("parentTenantId");
+        
+        if (parentTenantId == null) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "父租户 ID 不能为空");
+        }
+        
+        List<SysTenantDTO> children = tenantService.getChildTenants(parentTenantId);
+        return R.ok(children);
     }
     
     /**

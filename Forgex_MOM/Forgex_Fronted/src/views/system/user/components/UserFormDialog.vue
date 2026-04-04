@@ -19,6 +19,16 @@
         >
           <a-row :gutter="16">
             <a-col :span="12">
+              <a-form-item label="账号" name="account">
+                <a-input
+                  v-model:value="formData.account"
+                  placeholder="请输入账号"
+                  :disabled="isEdit"
+                />
+              </a-form-item>
+            </a-col>
+
+            <a-col :span="12">
               <a-form-item label="用户名" name="username">
                 <a-input
                   v-model:value="formData.username"
@@ -359,6 +369,7 @@ const profileFormRef = ref()
 
 // 基础信息表单数据
 const formData = reactive<Partial<User>>({
+  account: '',
   username: '',
   email: '',
   phone: '',
@@ -399,6 +410,10 @@ const { dictItems: statusOptions } = useDict('status')
 
 // 基础信息校验规则
 const basicRules = {
+  account: [
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 3, max: 20, message: '账号长度在3-20个字符', trigger: 'blur' },
+  ],
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度在3-20个字符', trigger: 'blur' },
@@ -452,6 +467,7 @@ async function loadUserData() {
       
       Object.assign(formData, {
         id: data.id,
+        account: data.account,
         username: data.username,
         email: data.email,
         phone: data.phone,
@@ -489,6 +505,7 @@ async function loadUserData() {
  */
 function resetForm() {
   Object.assign(formData, {
+    account: '',
     username: '',
     email: '',
     phone: '',

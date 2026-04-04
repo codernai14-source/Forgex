@@ -59,6 +59,33 @@ public class CommonTableController {
         }
         return R.ok(cfg);
     }
+    
+    /**
+     * 获取表格配置（支持公共配置模式）
+     * <p>
+     * 根据公共配置模式参数获取表格配置。
+     * isPublicConfig=true 时查询公共配置（tenantId=0），false 时查询租户配置。
+     * </p>
+     *
+     * @param param 查询参数，包含 tableCode 和 isPublicConfig
+     * @return 表格配置 DTO
+     */
+    @PostMapping("/getWithMode")
+    public R<FxTableConfigDTO> getWithMode(@RequestBody TableConfigGetParam param) {
+        String tableCode = param == null ? null : param.getTableCode();
+        Boolean isPublicConfig = param == null ? false : param.getIsPublicConfig();
+        Long tenantId = TenantContext.get();
+        
+        if (isPublicConfig == null) {
+            isPublicConfig = false;
+        }
+        
+        FxTableConfigDTO cfg = tableConfigService.getTableConfig(tableCode, tenantId, isPublicConfig);
+        if (cfg == null) {
+            return R.fail(500, SysPromptEnum.TABLE_CONFIG_NOT_FOUND, tableCode);
+        }
+        return R.ok(cfg);
+    }
 
     @PostMapping("/list")
     public R<IPage<FxTableConfigDTO>> list(@RequestBody TableConfigGetParam param) {

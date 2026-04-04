@@ -27,7 +27,8 @@ import lombok.Data;
  * - {@code description} 描述；
  * - {@code tenantCode} 唯一编码；
  * - {@code logo} 展示 Logo（URL）；
- * - {@code tenantType} 租户类别（主租户、客户租户、供应商租户）。
+ * - {@code tenantType} 租户类别（主租户、客户租户、供应商租户）；
+ * - {@code parentTenantId} 父租户 ID。
  * <p>
  * 可扩展性：可按需增加联系人、到期时间、配额等业务字段。
  * 
@@ -53,6 +54,9 @@ public class SysTenant extends BaseEntity {
     
     /** 租户类别：MAIN_TENANT / CUSTOMER_TENANT / SUPPLIER_TENANT / PARTNER_TENANT 等，见 {@link TenantTypeEnum} */
     private TenantTypeEnum tenantType;
+    
+    /** 父租户 ID，为空表示主租户或顶级租户 */
+    private Long parentTenantId;
     
     /** 状态：false=禁用，true=启用 */
     private Boolean status;

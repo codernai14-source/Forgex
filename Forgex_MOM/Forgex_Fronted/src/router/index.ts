@@ -264,6 +264,48 @@ export const dynamicModules = ref<any[]>([])
  */
 export const dynamicRoutes = ref<any[]>([])
 
+function normalizeAuthorizationRoutes(routes: any[]) {
+  const cloned = Array.isArray(routes)
+    ? JSON.parse(JSON.stringify(routes))
+    : []
+
+  const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
+  if (!sysRoute || !Array.isArray(sysRoute.children)) {
+    return cloned
+  }
+
+  const authorizationCatalog = sysRoute.children.find((item: any) =>
+    item?.meta?.type === 'catalog' && String(item?.path || '') === 'authorization',
+  )
+  if (!authorizationCatalog) {
+    return cloned
+  }
+
+  authorizationCatalog.children = Array.isArray(authorizationCatalog.children)
+    ? authorizationCatalog.children
+    : []
+
+  const moduleIndex = sysRoute.children.findIndex((item: any) => String(item?.path || '') === 'module')
+  if (moduleIndex === -1) {
+    return cloned
+  }
+
+  const [moduleMenu] = sysRoute.children.splice(moduleIndex, 1)
+  const existedModuleIndex = authorizationCatalog.children.findIndex((item: any) => String(item?.path || '') === 'module')
+  if (existedModuleIndex !== -1) {
+    authorizationCatalog.children[existedModuleIndex] = moduleMenu
+  } else {
+    authorizationCatalog.children.push(moduleMenu)
+    authorizationCatalog.children.sort((a: any, b: any) => {
+      const orderA = Number(a?.meta?.order ?? a?.order ?? 0)
+      const orderB = Number(b?.meta?.order ?? b?.order ?? 0)
+      return orderA - orderB
+    })
+  }
+
+  return cloned
+}
+
 /**
  * 已注入的动态路由名称集合
  * <p>
@@ -301,7 +343,7 @@ export async function injectDynamicRoutes(payload: any) {
 
   // 解析模块和路由数据
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
-  const routesPayload = Array.isArray(payload?.routes) ? payload.routes : []
+  const routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
 
   // 更新动态模块和路由列表
   dynamicModules.value = mods

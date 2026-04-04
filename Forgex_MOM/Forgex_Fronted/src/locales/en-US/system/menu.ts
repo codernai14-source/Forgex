@@ -1,63 +1,62 @@
-/**
- * Menu Management Translations - English
- */
 export default {
-  // Page Titles
   title: 'Menu Management',
   list: 'Menu List',
   detail: 'Menu Detail',
-  
-  // Table Columns
   menuName: 'Menu Name',
-  menuCode: 'Menu Code',
   menuType: 'Menu Type',
+  menuMode: 'Menu Mode',
+  externalUrl: 'External URL',
   icon: 'Icon',
-  path: 'Path',
+  path: 'Route Path',
   component: 'Component',
-  permission: 'Permission',
+  componentKey: 'Component Key',
+  permission: 'Permission Key',
   sort: 'Sort',
   visible: 'Visible',
   status: 'Status',
-  createTime: 'Create Time',
-  
-  // Menu Types
+  module: 'Module',
+  parentMenu: 'Parent Menu',
+  rootMenu: 'Root Directory',
   typeDirectory: 'Directory',
   typeMenu: 'Menu',
   typeButton: 'Button',
-  
-  // Form
+  modeEmbedded: 'Embedded',
+  modeExternal: 'External',
+  visibleYes: 'Show',
+  visibleNo: 'Hide',
   form: {
     addMenu: 'Add Menu',
     editMenu: 'Edit Menu',
-    menuDetail: 'Menu Detail',
-    parentMenu: 'Parent Menu',
-    menuName: 'Please enter menu name',
-    menuCode: 'Please enter menu code',
-    menuType: 'Please select menu type',
-    icon: 'Please select icon',
-    path: 'Please enter path',
-    component: 'Please enter component path',
-    permission: 'Please enter permission',
-    sort: 'Please enter sort order',
-    visible: 'Visible',
-    status: 'Please select status',
+    modulePlaceholder: 'Please select a module',
+    parentMenuPlaceholder: 'Please select a parent menu',
+    menuNamePlaceholder: 'Please enter menu name',
+    menuNameTip: 'Click the globe icon on the right side of the input to configure multilingual names',
+    menuTypePlaceholder: 'Please select a menu type',
+    pathPlaceholder: 'Please enter route path',
+    iconPlaceholder: 'Please enter icon component name',
+    menuModePlaceholder: 'Please select a menu mode',
+    componentKeyPlaceholder: 'Please enter component key',
+    externalUrlPlaceholder: 'Please enter external URL',
+    permissionPlaceholder: 'Please enter permission key',
+    nameRequired: 'Please configure at least one language for the menu name',
   },
-  
-  // Status
-  statusActive: 'Active',
-  statusInactive: 'Inactive',
-  visibleYes: 'Show',
-  visibleNo: 'Hide',
-  
-  // Actions
-  addSubMenu: 'Add Sub Menu',
-  
-  // Messages
   message: {
-    deleteConfirm: 'Are you sure you want to delete this menu?',
-    deleteWithChildrenConfirm: 'This menu has sub-menus. Are you sure you want to delete?',
-    deleteSuccess: 'Menu deleted successfully',
-    saveSuccess: 'Menu saved successfully',
-    menuCodeExists: 'Menu code already exists',
+    missingTenant: 'Tenant information is missing',
+    loadListFailed: 'Failed to load menu list',
+    loadModulesFailed: 'Failed to load modules',
+    loadDetailFailed: 'Failed to load menu details',
+    loadParentFailed: 'Failed to load parent menus',
+    submitFailed: 'Failed to submit menu',
+    deleteFailed: 'Failed to delete menu',
+    batchDeleteFailed: 'Failed to batch delete menus',
+    selectToDelete: 'Please select menus to delete first',
+    deleteConfirm: 'Are you sure you want to delete this menu? If it has children or role bindings, the backend will block it.',
+    batchDeleteConfirm: 'Are you sure you want to delete the selected {count} menus?',
   },
+  tenantType: 'Tenant Type',
+  tenantTypeAll: 'All Tenant Types',
+  tenantTypePublic: 'Public',
+  publicConfigMode: 'Public Config Mode',
+  publicConfig: 'Public Config',
+  tenantConfig: 'Tenant Config',
 }

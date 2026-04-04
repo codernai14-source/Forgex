@@ -27,7 +27,7 @@
                   style="width: 200px"
                 >
                   <a-select-option
-                    v-for="opt in (dictOptions?.[q.field] || [])"
+                    v-for="opt in (dictOptions?.[q.dictCode || q.field] || [])"
                     :key="String(opt.value)"
                     :value="opt.value"
                   >
@@ -97,7 +97,7 @@
                 style="width: 200px"
               >
                 <a-select-option
-                  v-for="opt in (dictOptions?.[q.field] || [])"
+                  v-for="opt in (dictOptions?.[q.dictCode || q.field] || [])"
                   :key="String(opt.value)"
                   :value="opt.value"
                 >

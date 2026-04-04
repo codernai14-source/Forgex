@@ -1,0 +1,925 @@
+# Forgex 项目结构与开发规范
+
+## 一、项目架构概览
+
+### 1.1 微服务架构
+
+Forgex 采用微服务架构，整体结构如下：
+
+```
+forgex/
+├── Forgex_MOM/                      # 主工程
+│   ├── Forgex_Backend/              # 后端工程
+│   │   ├── Forgex_Common/           # 公共模块
+│   │   ├── Forgex_Gateway/          # 网关服务 (8080)
+│   │   ├── Forgex_Auth/             # 认证服务 (8081)
+│   │   ├── Forgex_Sys/              # 系统服务 (8082)
+│   │   ├── Forgex_Job/              # 任务调度服务 (8083)
+│   │   └── pom.xml                  # 父 POM
+│   ├── Forgex_Fronted/              # 前端工程
+│   └── doc/                         # 文档目录
+└── README.md
+```
+
+### 1.2 服务划分
+
+| 服务名 | 端口 | 职责 |
+|--------|------|------|
+| Forgex_Gateway | 8080 | API 网关、路由转发、鉴权 |
+| Forgex_Auth | 8081 | 用户认证、Token 管理、登录注册 |
+| Forgex_Sys | 8082 | 系统管理、用户管理、角色权限、数据字典 |
+| Forgex_Job | 8083 | 定时任务、任务调度 |
+
+## 二、标准服务目录结构
+
+### 2.1 服务层目录结构
+
+每个微服务遵循统一的目录结构：
+
+```
+Forgex_Sys/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/forgex/sys/
+│   │   │       ├── SysApplication.java          # 启动类
+│   │   │       ├── config/                      # 配置类
+│   │   │       │   ├── MybatisPlusConfig.java
+│   │   │       │   ├── RedisConfig.java
+│   │   │       │   └── WebMvcConfig.java
+│   │   │       ├── controller/                  # 控制器层
+│   │   │       │   ├── SysUserController.java
+│   │   │       │   ├── SysRoleController.java
+│   │   │       │   └── SysMenuController.java
+│   │   │       ├── service/                     # 服务层
+│   │   │       │   ├── ISysUserService.java
+│   │   │       │   ├── ISysRoleService.java
+│   │   │       │   ├── ISysMenuService.java
+│   │   │       │   └── impl/
+│   │   │       │       ├── SysUserServiceImpl.java
+│   │   │       │       ├── SysRoleServiceImpl.java
+│   │   │       │       └── SysMenuServiceImpl.java
+│   │   │       ├── mapper/                      # 数据访问层
+│   │   │       │   ├── SysUserMapper.java
+│   │   │       │   ├── SysRoleMapper.java
+│   │   │       │   └── SysMenuMapper.java
+│   │   │       └── domain/                      # 领域对象
+│   │   │           ├── entity/                  # 实体类
+│   │   │           │   ├── SysUser.java
+│   │   │           │   ├── SysRole.java
+│   │   │           │   └── SysMenu.java
+│   │   │           ├── param/                   # 参数类
+│   │   │           │   ├── UserParam.java
+│   │   │           │   ├── RoleParam.java
+│   │   │           │   └── MenuParam.java
+│   │   │           ├── response/                # 响应 VO
+│   │   │           │   ├── UserResponse.java
+│   │   │           │   ├── RoleResponse.java
+│   │   │           │   └── MenuResponse.java
+│   │   │           └── dto/                     # 数据传输对象
+│   │   │               ├── UserDTO.java
+│   │   │               ├── RoleDTO.java
+│   │   │               └── MenuDTO.java
+│   │   └── resources/
+│   │       ├── application.yml                  # 配置文件
+│   │       ├── application-dev.yml              # 开发环境配置
+│   │       ├── application-prod.yml             # 生产环境配置
+│   │       └── mapper/                          # MyBatis XML
+│   │           ├── SysUserMapper.xml
+│   │           ├── SysRoleMapper.xml
+│   │           └── SysMenuMapper.xml
+│   └── test/
+│       └── java/
+│           └── com/forgex/sys/
+│               └── service/
+│                   └── SysUserServiceTest.java
+├── pom.xml
+└── README.md
+```
+
+### 2.2 公共模块目录结构
+
+```
+Forgex_Common/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/forgex/common/
+│   │   │       ├── CommonConstants.java         # 公共常量
+│   │   │       ├── R.java                       # 统一响应
+│   │   │       ├── PageResult.java              # 分页结果
+│   │   │       ├── exception/                   # 异常类
+│   │   │       │   ├── BusinessException.java
+│   │   │       │   ├── ValidateException.java
+│   │   │       │   └── GlobalExceptionHandler.java
+│   │   │       ├── utils/                       # 工具类
+│   │   │       │   ├── BeanUtils.java
+│   │   │       │   ├── DateUtils.java
+│   │   │       │   └── StringUtils.java
+│   │   │       ├── domain/                      # 公共领域对象
+│   │   │       │   ├── entity/
+│   │   │       │   │   ├── BaseEntity.java      # 基础实体
+│   │   │       │   │   └── SysI18nMessage.java
+│   │   │       │   ├── param/
+│   │   │       │   │   ├── BasePageParam.java   # 分页参数
+│   │   │       │   │   └── BaseGetParam.java    # 查询参数
+│   │   │       │   ├── dto/
+│   │   │       │   │   └── SysUserDTO.java
+│   │   │       │   └── response/
+│   │   │       │       └── ...
+│   │   │       ├── mapper/                      # 公共 Mapper
+│   │   │       │   └── SysI18nMessageMapper.java
+│   │   │       └── i18n/                        # 国际化
+│   │   │           ├── LangContext.java
+│   │   │           ├── LangUtils.java
+│   │   │           └── I18nAutoConfiguration.java
+│   │   └── resources/
+│   │       └── META-INF/
+│   │           └── spring/
+│   │               └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
+│   └── test/
+└── pom.xml
+```
+
+## 三、包结构与命名规范
+
+### 3.1 基础包路径
+
+**基础包名**：`com.forgex.{模块名}`
+
+| 模块 | 包名 | 示例 |
+|------|------|------|
+| 系统模块 | `com.forgex.sys` | `SysApplication` |
+| 认证模块 | `com.forgex.auth` | `AuthApplication` |
+| 任务调度 | `com.forgex.job` | `JobApplication` |
+| 公共模块 | `com.forgex.common` | `CommonConstants` |
+
+### 3.2 子包划分
+
+**按层分包**（推荐）：
+
+```
+com.forgex.sys/
+├── controller/          # 控制器层
+├── service/             # 服务层
+│   └── impl/            # 服务实现
+├── mapper/              # 数据访问层
+└── domain/              # 领域对象
+    ├── entity/          # 实体类
+    ├── param/           # 参数类
+    ├── response/        # 响应 VO
+    └── dto/             # 数据传输对象
+```
+
+**按功能分包**（复杂模块）：
+
+```
+com.forgex.sys/
+├── controller/
+├── service/
+│   ├── user/            # 用户功能
+│   │   ├── IUserService.java
+│   │   └── impl/
+│   │       └── UserServiceImpl.java
+│   ├── role/            # 角色功能
+│   │   ├── IRoleService.java
+│   │   └── impl/
+│   │       └── RoleServiceImpl.java
+│   └── menu/            # 菜单功能
+│       ├── IMenuService.java
+│       └── impl/
+│           └── MenuServiceImpl.java
+├── mapper/
+└── domain/
+```
+
+### 3.3 包命名规范
+
+| 包名 | 用途 | 内容 |
+|------|------|------|
+| `controller` | 控制器层 | RESTful API 接口 |
+| `service` | 服务层 | 业务逻辑接口 |
+| `service.impl` | 服务实现层 | 业务逻辑实现 |
+| `mapper` | 数据访问层 | MyBatis Mapper 接口 |
+| `domain.entity` | 实体层 | 数据库实体类 |
+| `domain.param` | 参数层 | 请求参数封装 |
+| `domain.response` | 响应层 | 响应 VO 对象 |
+| `domain.dto` | DTO 层 | 数据传输对象 |
+| `config` | 配置层 | Spring 配置类 |
+| `constant` | 常量层 | 常量定义 |
+| `enums` | 枚举层 | 枚举定义 |
+| `utils` | 工具层 | 工具类 |
+| `exception` | 异常层 | 异常类和处理器 |
+
+### 3.4 类命名规范
+
+| 类型 | 命名规则 | 示例 |
+|------|----------|------|
+| Entity | `Sys` + 业务名 | `SysUser`、`SysRole` |
+| Param | 业务名 + `Param` | `UserParam`、`RoleParam` |
+| Response | 业务名 + `Response` | `UserResponse`、`RoleResponse` |
+| DTO | 业务名 + `DTO` | `UserDTO`、`RoleDTO` |
+| Controller | 业务名 + `Controller` | `UserController`、`RoleController` |
+| Service 接口 | `I` + 业务名 + `Service` | `IUserService`、`IRoleService` |
+| Service 实现 | 业务名 + `ServiceImpl` | `UserServiceImpl`、`RoleServiceImpl` |
+| Mapper | 业务名 + `Mapper` | `UserMapper`、`RoleMapper` |
+| 配置类 | 功能名 + `Config` | `RedisConfig`、`WebMvcConfig` |
+| 常量类 | 模块名 + `Constants` | `SysConstants`、`UserConstants` |
+| 工具类 | 功能名 + `Utils` | `BeanUtils`、`DateUtils` |
+
+## 四、代码注释规范
+
+### 4.1 类注释
+
+每个类必须添加类注释，包含类的功能、作者、版本等信息：
+
+```java
+/**
+ * 用户管理控制器
+ * <p>
+ * 处理用户相关的 HTTP 请求，包括用户创建、查询、更新、删除等操作
+ * </p>
+ *
+ * @author LiDaoMoM
+ * @version 1.0
+ * @since 2026-03-28
+ */
+@RestController
+@RequestMapping("/api/sys/user")
+public class SysUserController {
+    // ...
+}
+```
+
+### 4.2 方法注释
+
+每个方法必须添加方法注释，包含功能描述、参数、返回值、异常等信息：
+
+```java
+/**
+ * 根据用户名查询用户信息
+ * <p>
+ * 通过用户名精确匹配查询用户，返回用户详细信息（包含角色、部门等关联数据）
+ * </p>
+ *
+ * @param username 用户名，不能为空
+ * @return 用户信息对象，如果不存在返回 null
+ * @throws BusinessException 当查询失败时抛出业务异常
+ * @see SysUser
+ * @see ISysUserService#getByUsername(String)
+ */
+@GetMapping("/by-username")
+public R<SysUser> getByUsername(@RequestParam String username) {
+    return R.ok(userService.getByUsername(username));
+}
+```
+
+### 4.3 字段注释
+
+每个字段必须添加字段注释，说明字段用途：
+
+```java
+/**
+ * 用户实体类
+ * <p>
+ * 对应数据库表：sys_user
+ * </p>
+ */
+@TableName("sys_user")
+public class SysUser extends BaseEntity {
+
+    /**
+     * 用户 ID（主键，雪花算法生成）
+     */
+    @TableId(type = IdType.ASSIGN_ID)
+    private Long id;
+
+    /**
+     * 用户名（唯一，不能为空）
+     */
+    @TableField("username")
+    private String username;
+
+    /**
+     * 密码（加密存储，使用 BCrypt 加密）
+     */
+    @TableField("password")
+    private String password;
+
+    /**
+     * 用户昵称
+     */
+    @TableField("nickname")
+    private String nickname;
+
+    /**
+     * 邮箱地址
+     */
+    @TableField("email")
+    private String email;
+
+    /**
+     * 手机号码
+     */
+    @TableField("phone")
+    private String phone;
+
+    /**
+     * 用户状态：0-禁用，1-正常
+     * @see com.forgex.common.constant.SystemConstants#USER_STATUS_DISABLED
+     * @see com.forgex.common.constant.SystemConstants#USER_STATUS_NORMAL
+     */
+    @TableField("status")
+    private Integer status;
+
+    /**
+     * 逻辑删除标记：0-未删除，1-已删除
+     */
+    @TableField("deleted")
+    @TableLogic
+    private Integer deleted;
+}
+```
+
+### 4.4 行内注释
+
+复杂逻辑需要添加行内注释，说明实现思路：
+
+```java
+/**
+ * 批量创建用户
+ * <p>
+ * 支持事务批量插入，如果其中一条失败则全部回滚
+ * </p>
+ */
+@Override
+@Transactional(rollbackFor = Exception.class)
+public void batchCreate(List<SysUser> users) {
+    // 校验用户名唯一性：批量查询已存在的用户名
+    List<String> usernames = users.stream()
+            .map(SysUser::getUsername)
+            .collect(Collectors.toList());
+    List<String> existingUsernames = userMapper.selectExistUsernames(usernames);
+    
+    // 如果存在重复用户名，抛出异常
+    if (CollectionUtils.isNotEmpty(existingUsernames)) {
+        throw new BusinessException("用户名已存在：" + String.join(", ", existingUsernames));
+    }
+    
+    // 批量插入用户（使用 MyBatis-Plus 的 saveBatch 方法）
+    boolean success = saveBatch(users);
+    if (!success) {
+        throw new BusinessException("批量创建用户失败");
+    }
+}
+```
+
+## 五、配置规范
+
+### 5.1 application.yml 结构
+
+```yaml
+spring:
+  application:
+    name: forgex-sys                    # 服务名
+  profiles:
+    active: dev                         # 激活环境
+  cloud:
+    nacos:
+      server-addr: localhost:8848       # Nacos 地址
+      config:
+        import:
+          - common.yml                  # 公共配置
+          - datasource.yml              # 数据源配置
+          - redis.yml                   # Redis 配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/forgex_sys?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.forgex.sys.domain.entity
+  global-config:
+    db-config:
+      id-type: assign_id                # 雪花算法 ID
+      logic-delete-field: deleted       # 逻辑删除字段
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true  # 下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+sa-token:
+  token-name: Authorization
+  timeout: 7200                         # Token 有效期（秒）
+  active-timeout: -1                    # 临时超时
+  is-concurrent: true                   # 允许并发登录
+  is-share: true                        # 共享同一 Token
+  token-style: uuid                     # Token 风格
+
+server:
+  port: 8082                            # 服务端口
+
+logging:
+  level:
+    root: info
+    com.forgex.sys: debug
+```
+
+### 5.2 配置文件命名
+
+**application 配置文件**：
+
+| 环境 | 文件名 |
+|------|--------|
+| 开发环境 | `application-dev.yml` |
+| 测试环境 | `application-test.yml` |
+| 生产环境 | `application-prod.yml` |
+| 本地环境 | `application-local.yml`（不提交到 Git） |
+
+**MyBatis XML 文件**：
+
+| 文件 | 命名规则 | 示例 |
+|------|----------|------|
+| Mapper XML | `Mapper 类名.xml` | `SysUserMapper.xml` |
+
+## 六、依赖管理规范
+
+### 6.1 父 POM 版本管理
+
+在父 POM 的 `dependencyManagement` 中统一版本号：
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <!-- Spring Boot -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>${spring-boot.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+        
+        <!-- MyBatis-Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+        
+        <!-- MPJ -->
+        <dependency>
+            <groupId>com.github.yulichang</groupId>
+            <artifactId>mybatis-plus-join-boot-starter</artifactId>
+            <version>${mybatis-plus-join.version}</version>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+### 6.2 子 POM 依赖声明
+
+子模块只需声明依赖，无需版本号：
+
+```xml
+<dependencies>
+    <!-- Web -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    
+    <!-- MyBatis-Plus -->
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+    </dependency>
+    
+    <!-- MPJ -->
+    <dependency>
+        <groupId>com.github.yulichang</groupId>
+        <artifactId>mybatis-plus-join-boot-starter</artifactId>
+    </dependency>
+    
+    <!-- Common 模块 -->
+    <dependency>
+        <groupId>com.forgex</groupId>
+        <artifactId>Forgex_Common</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+</dependencies>
+```
+
+## 七、权限体系规范
+
+### 7.1 权限控制方式
+
+| 权限类型 | 控制方式 | 说明 |
+|----------|----------|------|
+| **菜单权限** | 动态路由 | 根据角色配置的菜单生成前端路由 |
+| **按钮权限** | `@RequirePerm` 注解 | 后端接口权限校验 |
+| **数据权限** | `@DataScope` 注解 | 根据角色数据范围过滤数据 |
+
+### 7.2 权限体系架构
+
+**架构设计原则**：
+
+- **Auth 模块作为权限中心**：统一提供所有业务模块的权限查询服务
+- **Common 模块提供通用拦截器**：`PermissionInterceptor` 放置在 Common 模块，供各业务模块复用
+- **业务模块按需注册拦截器并实现 PermKeyService**：各业务模块通过 Feign 调用 Auth 获取权限
+- **Feign 跨服务调用**：业务模块通过 Feign Client 调用 Auth 模块的权限服务
+
+### 7.3 后端权限校验
+
+使用 `@RequirePerm` 注解：
+
+```java
+/**
+ * 用户管理控制器
+ */
+@RestController
+@RequestMapping("/api/sys/user")
+public class SysUserController {
+    
+    /**
+     * 创建用户
+     * <p>
+     * 需要 sys:user:add 权限
+     * </p>
+     */
+    @RequirePerm("sys:user:add")
+    @PostMapping("/create")
+    public R<SysUser> create(@RequestBody SysUser user) {
+        return R.ok(userService.create(user));
+    }
+    
+    /**
+     * 保存用户（新增或更新）
+     * <p>
+     * 需要 sys:user:add 或 sys:user:edit 权限
+     * </p>
+     */
+    @RequirePerm({"sys:user:add", "sys:user:edit"})
+    @PostMapping("/save")
+    public R<Void> save(@RequestBody SysUser user) {
+        if (user.getId() == null) {
+            userService.create(user);
+        } else {
+            userService.update(user);
+        }
+        return R.ok();
+    }
+}
+```
+
+### 7.4 前端权限校验
+
+使用 `v-permission` 指令：
+
+```vue
+<template>
+  <div>
+    <a-button v-permission="'sys:user:add'">新增用户</a-button>
+    <a-button v-permission="'sys:user:edit'">编辑用户</a-button>
+    <a-button v-permission="'sys:user:delete'">删除用户</a-button>
+  </div>
+</template>
+
+<script setup>
+import { hasPermission } from '@/utils/permission';
+</script>
+```
+
+### 7.5 数据权限
+
+使用 `@DataScope` 注解：
+
+```java
+/**
+ * 用户管理 Mapper 接口
+ */
+@Mapper
+public interface SysUserMapper {
+    
+    /**
+     * 查询用户列表（带数据权限过滤）
+     * <p>
+     * 根据角色数据范围自动过滤数据
+     * </p>
+     *
+     * @param param 查询参数
+     * @return 用户列表
+     */
+    @DataScope(deptAlias = "d", userAlias = "u")
+    List<SysUser> selectUserList(SysUserParam param);
+}
+```
+
+**数据范围配置**：
+
+| data_scope | 说明 | 适用场景 |
+|------------|------|----------|
+| 1 | 全部数据 | 系统管理员 |
+| 2 | 自定义部门 | 特定部门管理员 |
+| 3 | 本部门及下级 | 部门经理 |
+| 4 | 本部门 | 部门普通员工 |
+| 5 | 仅本人 | 销售人员、客服 |
+
+## 八、多租户规范
+
+### 8.1 租户隔离配置
+
+**忽略表级别租户隔离**：
+
+```sql
+INSERT INTO fx_tenant_ignore(ignore_type, ignore_value, remark, tenant_id)
+VALUES ('TABLE', 'sys_dict', '字典表公共共享', 0);
+```
+
+**忽略方法级别租户隔离**：
+
+```sql
+INSERT INTO fx_tenant_ignore(ignore_type, ignore_value, remark, tenant_id)
+VALUES ('METHOD', 'ISysUserService.getUserById', '跨租户查询用户', 0);
+```
+
+**忽略接口级别租户隔离**：
+
+```sql
+INSERT INTO fx_tenant_ignore(ignore_type, ignore_value, remark, tenant_id)
+VALUES ('API', '/api/sys/public/**', '公共接口忽略租户', 0);
+```
+
+### 8.2 使用@IgnoreTenant 注解
+
+```java
+/**
+ * 用户管理服务实现类
+ */
+@Service
+public class SysUserServiceImpl implements ISysUserService {
+    
+    /**
+     * 根据用户名查询用户（忽略租户隔离）
+     * <p>
+     * 用于登录等跨租户场景
+     * </p>
+     */
+    @Override
+    @IgnoreTenant
+    public SysUser getByUsername(String username) {
+        // 此方法忽略租户隔离
+        return userMapper.selectByUsername(username);
+    }
+}
+```
+
+## 九、日志规范
+
+### 9.1 操作日志
+
+操作日志通过 AOP 切面自动记录，**无需手动调用**：
+
+```java
+/**
+ * 用户管理控制器
+ */
+@RestController
+@RequestMapping("/api/sys/user")
+public class SysUserController {
+    
+    /**
+     * 创建用户
+     * <p>
+     * 此方法执行后会自动记录操作日志
+     * </p>
+     */
+    @PostMapping("/create")
+    public R<SysUser> create(@RequestBody SysUser user) {
+        return R.ok(userService.create(user));
+    }
+}
+```
+
+### 9.2 日志管理建议
+
+1. **异步保存**：日志保存改为异步方式
+2. **定期清理**：保留 3 个月日志数据
+3. **敏感信息脱敏**：请求参数和响应结果脱敏处理
+
+## 十、测试规范
+
+### 10.1 测试目录结构
+
+```
+src/test/
+└── java/
+    └── com/forgex/sys/
+        ├── SysApplicationTests.java     # 启动测试
+        ├── controller/                  # Controller 测试
+        │   ├── UserControllerTest.java
+        │   └── RoleControllerTest.java
+        ├── service/                     # Service 测试
+        │   ├── UserServiceTest.java
+        │   └── RoleServiceTest.java
+        └── mapper/                      # Mapper 测试
+            ├── UserMapperTest.java
+            └── RoleMapperTest.java
+```
+
+### 10.2 测试类命名
+
+| 测试类型 | 命名规则 | 示例 |
+|----------|----------|------|
+| 单元测试 | `类名 + Test` | `UserServiceTest` |
+| 集成测试 | `类名 + IntegrationTest` | `UserIntegrationTest` |
+| 性能测试 | `类名 + PerformanceTest` | `UserPerformanceTest` |
+
+### 10.3 测试示例
+
+```java
+/**
+ * 用户服务测试类
+ */
+@SpringBootTest
+class UserServiceTest {
+    
+    @Autowired
+    private UserService userService;
+    
+    @MockBean
+    private UserMapper userMapper;
+    
+    /**
+     * 测试根据用户名查询用户
+     */
+    @Test
+    void testGetByUsername() {
+        // 准备数据
+        SysUser mockUser = new SysUser();
+        mockUser.setUsername("admin");
+        when(userMapper.selectByUsername("admin")).thenReturn(mockUser);
+        
+        // 执行测试
+        SysUser user = userService.getByUsername("admin");
+        
+        // 断言
+        assertNotNull(user);
+        assertEquals("admin", user.getUsername());
+    }
+}
+```
+
+## 十一、Git 规范
+
+### 11.1 目录忽略
+
+```gitignore
+# IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+
+# 编译产物
+.class
+*.class
+*.jar
+*.war
+
+# 日志
+*.log
+
+# 本地配置
+application-local.yml
+*.local
+
+# 系统文件
+.DS_Store
+Thumbs.db
+```
+
+### 11.2 分支管理
+
+```
+master          # 主分支（生产环境）
+├── develop     # 开发分支
+│   ├── feature/user-management  # 功能分支
+│   ├── feature/role-management
+│   └── bugfix/login-issue     # Bug 修复分支
+└── release/v1.0.0              # 发布分支
+```
+
+### 11.3 提交规范
+
+**commit message 格式**：
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**type 类型**：
+
+- `feat`: 新功能
+- `fix`: Bug 修复
+- `docs`: 文档更新
+- `style`: 代码格式调整
+- `refactor`: 重构
+- `test`: 测试相关
+- `chore`: 构建/工具/配置
+
+**示例**：
+
+```
+feat(user): 添加用户批量导入功能
+
+- 支持 Excel 格式导入
+- 添加数据校验逻辑
+- 添加导入结果反馈
+
+Closes #123
+```
+
+## 十二、SQL 脚本规范
+
+### 12.1 版本化命名
+
+```
+V{版本号}__{描述}.sql
+```
+
+**示例**：
+
+- `V1.0.0__init.sql` - 初始化脚本
+- `V1.1.0__add_user_table.sql` - 新增用户表
+- `V1.2.0__add_role_menu.sql` - 新增角色菜单表
+
+### 12.2 回滚脚本
+
+```
+R{版本号}__rollback.sql
+```
+
+**示例**：
+
+- `R1.0.0__rollback.sql` - 回滚脚本
+
+## 十三、开发检查清单
+
+### 13.1 目录结构检查
+
+- [ ] 服务启动类在根包下
+- [ ] controller、service、mapper 分层清晰
+- [ ] domain 下 entity、param、response、dto 分离
+- [ ] 配置文件在 resources 目录下
+- [ ] Mapper XML 在 mapper 子目录下
+- [ ] 测试类在 test 对应包下
+
+### 13.2 命名规范检查
+
+- [ ] 类名符合命名规范
+- [ ] 方法名使用驼峰命名
+- [ ] 常量名使用大写 + 下划线
+- [ ] 包名使用小写
+- [ ] 配置文件命名规范
+- [ ] XML 文件与 Mapper 接口对应
+
+### 13.3 注释规范检查
+
+- [ ] 类注释包含功能、作者、版本
+- [ ] 方法注释包含功能、参数、返回值、异常
+- [ ] 字段注释说明字段用途
+- [ ] 复杂逻辑有行内注释
+- [ ] 注释使用中文
+- [ ] 使用 Javadoc 标签（@param、@return、@throws、@see 等）
+
+### 13.4 代码质量检查
+
+- [ ] 添加必要的空行，保持代码可读性
+- [ ] 关联相关的类、方法、字段
+- [ ] 遵循单一职责原则
+- [ ] 异常处理合理
+- [ ] 事务注解使用正确
+- [ ] 权限注解配置正确
+
+---
+
+**文档版本**: 1.0  
+**创建日期**: 2026-04-03  
+**作者**: LiDaoMoM  
+**参考文档**:
+- 项目结构规范.md
+- 开发使用指南.md
+- 系统架构设计文档.md

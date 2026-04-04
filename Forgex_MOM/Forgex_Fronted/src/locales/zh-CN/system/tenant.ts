@@ -25,6 +25,7 @@ export default {
     tenantType: '请选择租户类别',
     description: '请输入描述',
     status: '请选择状态',
+    parentTenant: '请选择父租户',
   },
   
   // 租户类型
@@ -32,6 +33,11 @@ export default {
     main: '主租户',
     customer: '客户租户',
   },
+  
+  // 父租户
+  parentTenant: '父租户',
+  parentTenantPlaceholder: '请选择父租户（可选）',
+  noParentTenant: '无父租户',
   
   // 消息
   message: {

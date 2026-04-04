@@ -6,6 +6,7 @@
       :table-code="'ModuleTable'"
       :show-query-form="true"
       :request="handleRequest"
+      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       :row-selection="{
         selectedRowKeys: selectedRowKeys,
@@ -31,6 +32,17 @@
               {{ $t('common.batchDelete') }}
             </a-button>
           </a-space>
+        </template>
+
+        <template #status="{ record }">
+          <a-tag
+            v-if="resolveStatusTag(record.status)"
+            :color="resolveStatusTag(record.status)?.color"
+            :style="resolveStatusTag(record.status)?.style"
+          >
+            {{ resolveStatusTag(record.status)?.label }}
+          </a-tag>
+          <span v-else>{{ record.status ?? '-' }}</span>
         </template>
 
         <template #action="{ record }">
@@ -121,14 +133,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import IconPicker from '@/components/common/IconPicker.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'
-import { listModules, getModulePage, deleteModule, batchDeleteModules } from '@/api/system/module'
+import { getModulePage } from '@/api/system/module'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 
@@ -160,10 +172,81 @@ const {
 } = useModuleForm()
 
 // 字典配置
-const dictOptions = ref({
-  status: statusOptions,
-  visible: visibleOptions
-})
+const dictOptions = computed(() => ({
+  status: statusOptions.value,
+  visible: visibleOptions.value
+}))
+
+const fallbackConfig = computed(() => ({
+  tableCode: 'ModuleTable',
+  tableName: '模块管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'name', title: '模块名称', minWidth: 160, ellipsis: true },
+    { field: 'code', title: '模块编码', width: 140 },
+    { field: 'description', title: '描述', minWidth: 160, ellipsis: true },
+    { field: 'status', title: '状态', width: 90, dictCode: 'status' },
+    { field: 'createBy', title: '创建人', width: 120 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'updateTime', title: '更新时间', width: 180 },
+    { field: 'action', title: '操作', width: 140 }
+  ],
+  queryFields: [
+    { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'description', label: '描述', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ],
+  version: 1
+}))
+
+function normalizeModuleStatusRecord(row: any) {
+  const status = row?.status
+  let normalizedStatus = 0
+  if (typeof status === 'boolean') {
+    normalizedStatus = status ? 1 : 0
+  } else if (status === 1 || status === '1') {
+    normalizedStatus = 1
+  }
+
+  const visible = row?.visible
+  let normalizedVisible = 0
+  if (typeof visible === 'boolean') {
+    normalizedVisible = visible ? 1 : 0
+  } else if (visible === 1 || visible === '1') {
+    normalizedVisible = 1
+  }
+
+  return {
+    ...row,
+    status: normalizedStatus,
+    visible: normalizedVisible
+  }
+}
+
+function resolveStatusTag(value: unknown) {
+  const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
+  const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
+  if (!dictItem) {
+    return null
+  }
+
+  const style =
+    dictItem.tagStyle?.borderColor || dictItem.tagStyle?.backgroundColor
+      ? {
+          borderColor: dictItem.tagStyle?.borderColor,
+          backgroundColor: dictItem.tagStyle?.backgroundColor,
+        }
+      : undefined
+
+  return {
+    label: dictItem.label,
+    color: dictItem.tagStyle?.color || dictItem.color || 'blue',
+    style
+  }
+}
 
 /**
  * 处理表格数据请求
@@ -191,7 +274,7 @@ const handleRequest = async (payload: {
     
     // 处理多语言显示
     const processedRecords = (data.records || []).map((item: any) => ({
-      ...item,
+      ...normalizeModuleStatusRecord(item),
       displayName: getI18nValue(item.nameI18nJson, item.name)
     }))
     

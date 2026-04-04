@@ -3,7 +3,9 @@
  * 統一エクスポート
  */
 import excel from './excel'
+import menu from './menu'
 
 export default {
   excel,
+  menu,
 }

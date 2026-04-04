@@ -261,14 +261,23 @@ public class TenantInitServiceImpl implements ITenantInitService {
             return List.of();
         }
 
-        List<String> excludedPrefixes = getExcludedPermPrefixes(tenantType);
+        List<String> excludedPermPrefixes = getExcludedPermPrefixes(tenantType);
 
         // 第一遍：复制菜单，记录 ID 映射关系
         Map<Long, Long> idMap = new HashMap<>();
         for (SysMenu templateMenu : templateMenus) {
-            if (isMenuExcluded(templateMenu, excludedPrefixes)) {
+            // 排除规则 1：根据 perm_prefix 排除（现有逻辑）
+            if (isMenuExcluded(templateMenu, excludedPermPrefixes)) {
                 continue;
             }
+            
+            // 排除规则 2：根据租户类型过滤（新增逻辑）
+            if (!matchesTenantType(templateMenu, tenantType)) {
+                log.debug("菜单租户类型不匹配，跳过复制，菜单 ID：{}，菜单 permKey：{}，菜单 tenantType：{}", 
+                        templateMenu.getId(), templateMenu.getPermKey(), templateMenu.getTenantType());
+                continue;
+            }
+            
             Long templateId = templateMenu.getId();
             SysMenu newMenu = new SysMenu();
             BeanUtils.copyProperties(templateMenu, newMenu);
@@ -281,9 +290,15 @@ public class TenantInitServiceImpl implements ITenantInitService {
 
         // 第二遍：修正新菜单的父 ID
         for (SysMenu templateMenu : templateMenus) {
-            if (isMenuExcluded(templateMenu, excludedPrefixes)) {
+            if (isMenuExcluded(templateMenu, excludedPermPrefixes)) {
                 continue;
             }
+            
+            // 跳过租户类型不匹配的菜单
+            if (!matchesTenantType(templateMenu, tenantType)) {
+                continue;
+            }
+            
             Long templateId = templateMenu.getId();
             Long templateParentId = templateMenu.getParentId();
             if (templateParentId == null || templateParentId == 0L) {
@@ -345,6 +360,36 @@ public class TenantInitServiceImpl implements ITenantInitService {
             }
         }
         return false;
+    }
+    
+    /**
+     * 判断菜单是否匹配租户类型
+     * <p>
+     * 菜单的 tenantType 为 "PUBLIC" 或 null 表示适用于所有租户类型，直接返回 true。
+     * 否则需要精确匹配租户类型。
+     * </p>
+     *
+     * @param menu 菜单实体
+     * @param tenantType 目标租户类型
+     * @return true=匹配，false=不匹配
+     */
+    private boolean matchesTenantType(SysMenu menu, TenantTypeEnum tenantType) {
+        if (menu == null) {
+            return false;
+        }
+        
+        // 菜单的 tenantType 为 "PUBLIC" 或 null，表示适用于所有租户类型
+        String menuTenantType = menu.getTenantType();
+        if (menuTenantType == null || menuTenantType.trim().isEmpty() || "PUBLIC".equals(menuTenantType)) {
+            return true;
+        }
+        
+        // 精确匹配租户类型
+        if (tenantType == null) {
+            return false;
+        }
+        
+        return menuTenantType.equals(tenantType.name());
     }
 
     /**
