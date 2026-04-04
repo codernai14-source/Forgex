@@ -105,6 +105,7 @@ public interface AuthService {
      * @return {@link R} 校验结果，true表示拥有管理员权限
      * @see cn.dev33.satoken.stp.StpUtil#checkRole(String)
      */
+    @Deprecated
     R<Boolean> secureAdmin();
 
     /**

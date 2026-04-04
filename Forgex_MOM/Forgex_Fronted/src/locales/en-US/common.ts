@@ -77,6 +77,7 @@ export default {
   addSuccess: 'Add Success',
   updateSuccess: 'Update Success',
   deleteSuccess: 'Delete Success',
+  operationFailed: 'Operation Failed',
   
   // Messages
   confirmDelete: 'Confirm Delete?',

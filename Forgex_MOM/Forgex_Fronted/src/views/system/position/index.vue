@@ -15,22 +15,22 @@
         <a-col :span="18">
           <!-- 操作按钮和表格 -->
           <div class="table-area">
-            <div class="toolbar">
-              <a-space>
-                <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
-                  <template #icon><PlusOutlined /></template>
-                  {{ $t('system.position.addPosition') }}
-                </a-button>
-              </a-space>
-            </div>
-
             <fx-dynamic-table
               ref="tableRef"
               :table-code="'PositionTable'"
               :request="handleRequest"
               :dict-options="dictOptions"
+              :fallback-config="fallbackConfig"
               row-key="id"
             >
+              <template #toolbar>
+                <a-space>
+                  <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
+                    <template #icon><PlusOutlined /></template>
+                    {{ $t('system.position.addPosition') }}
+                  </a-button>
+                </a-space>
+              </template>
               <template #status="{ record }">
                 <a-tag :color="record.status === true ? 'green' : 'red'">
                   {{ record.status === true ? $t('common.enabled') : $t('common.disabled') }}
@@ -164,8 +164,6 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
-  SearchOutlined,
-  ReloadOutlined,
   PlusOutlined
 } from '@ant-design/icons-vue'
 import DeptTree from '@/components/system/DeptTree.vue'
@@ -177,6 +175,7 @@ import {
   updatePosition,
   deletePosition
 } from '@/api/system/position'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
 import type { Position, PositionSaveParam } from './types'
 
@@ -206,6 +205,24 @@ const dictOptions = ref({
   status: statusOptions,
   positionLevel: positionLevelOptions
 })
+
+const fallbackConfig: Partial<FxTableConfig> = {
+  columns: [
+    { field: 'positionName', title: '职位名称', width: 180, align: 'left' },
+    { field: 'positionCode', title: '职位编码', width: 140, align: 'left' },
+    { field: 'positionLevel', title: '职位级别', width: 120, align: 'center', dictCode: 'positionLevel' },
+    { field: 'orderNum', title: '排序', width: 90, align: 'center' },
+    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+    { field: 'remark', title: '备注', width: 220, align: 'left' },
+    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+    { field: 'action', title: '操作', width: 160, align: 'center', fixed: 'right' }
+  ],
+  queryFields: [
+    { field: 'positionName', label: '职位名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'positionCode', label: '职位编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ]
+}
 
 /**
  * 处理表格数据请求
@@ -381,11 +398,11 @@ async function handleSubmit() {
     if (isEdit.value) {
       // 更新
       await updatePosition(formData.value)
-      message.success('更新成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       // 新增
       await createPosition(formData.value)
-      message.success('新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
 
     visible.value = false
@@ -410,7 +427,7 @@ async function handleDelete(id: string) {
       id,
       tenantId: currentTenantId.value!
     })
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (e: any) {
     message.error(e.message || '删除失败')
@@ -482,10 +499,6 @@ onMounted(async () => {
 
 .search-area {
   width: 100%;
-  margin-bottom: 16px;
-}
-
-.toolbar {
   margin-bottom: 16px;
 }
 

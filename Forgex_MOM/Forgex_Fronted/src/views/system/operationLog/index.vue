@@ -178,7 +178,19 @@ const handleExport = async () => {
       delete params.operationTime
     }
 
-    await exportOperationLog(params)
+    const resp: any = await exportOperationLog({
+      tableCode: 'OperationLogTable',
+      query: params
+    })
+    const blob = new Blob([resp.data], { type: resp.headers?.['content-type'] || 'text/csv;charset=UTF-8' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `operation-log-${Date.now()}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
     message.success('导出成功')
   } catch (error) {
     message.error('导出失败')

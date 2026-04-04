@@ -171,7 +171,7 @@ const cssVariablesCache = new Map<string, CSSProperties>()
  * 
  * @remarks
  * 缓存策略：
- * - 缓存键：由 colorPrimary、themeMode、fontSize、borderRadius、themeColor 组合
+ * - 缓存键：由关键背景 Token、themeMode、fontSize、borderRadius、themeColor 组合
  * - 缓存上限：50 个条目
  * - 淘汰策略：FIFO（先进先出），超过上限时删除最早的条目
  * 
@@ -198,7 +198,7 @@ export function generateCSSVariablesWithCache(
   tokens: ThemeTokens,
   layoutConfig: LayoutConfig
 ): CSSProperties {
-  const cacheKey = `${tokens.colorPrimary}-${layoutConfig.themeMode}-${layoutConfig.fontSize}-${layoutConfig.borderRadius}-${layoutConfig.themeColor}`
+  const cacheKey = `${tokens.colorBgBase}-${tokens.colorBgContainer}-${tokens.colorBgElevated}-${layoutConfig.themeMode}-${layoutConfig.fontSize}-${layoutConfig.borderRadius}-${layoutConfig.themeColor}`
   
   if (cssVariablesCache.has(cacheKey)) {
     return cssVariablesCache.get(cacheKey)!

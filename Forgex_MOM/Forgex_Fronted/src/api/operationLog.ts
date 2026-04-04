@@ -22,5 +22,5 @@ export const getOperationLog = (id: number) => {
  * 导出操作日志
  */
 export const exportOperationLog = (params: any) => {
-  return http.download('/sys/operationLog/export', params)
+  return http.post('/sys/operationLog/export', params, { responseType: 'blob' })
 }

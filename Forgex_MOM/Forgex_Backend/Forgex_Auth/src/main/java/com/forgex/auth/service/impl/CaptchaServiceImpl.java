@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.auth.service.impl;
 
-import cloud.tianai.captcha.validator.common.model.dto.MatchParam;
+import cloud.tianai.captcha.validator.common.model.dto.ImageCaptchaTrack;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.util.IdUtil;
@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import com.forgex.auth.domain.config.CaptchaConfig;
 import cloud.tianai.captcha.application.ImageCaptchaApplication;
 import cloud.tianai.captcha.common.constant.CaptchaTypeConstant;
+import cn.hutool.json.JSONUtil;
 
 /**
  * 验证码服务实现
@@ -132,8 +133,22 @@ public class CaptchaServiceImpl implements CaptchaService {
      */
     @Override
     public String validateSlider(String id, Object track) {
+        if (!StringUtils.hasText(id) || track == null) {
+            return null;
+        }
+        ImageCaptchaTrack imageCaptchaTrack;
+        if (track instanceof ImageCaptchaTrack) {
+            imageCaptchaTrack = (ImageCaptchaTrack) track;
+        } else if (track instanceof Map<?, ?> map) {
+            imageCaptchaTrack = JSONUtil.toBean(JSONUtil.parseObj(map), ImageCaptchaTrack.class);
+        } else {
+            imageCaptchaTrack = JSONUtil.toBean(JSONUtil.parseObj(track), ImageCaptchaTrack.class);
+        }
+        if (imageCaptchaTrack == null) {
+            return null;
+        }
         // 调用tianai-captcha校验滑块轨迹
-        var matching = captchaApplication.matching(id, (MatchParam) track);
+        var matching = captchaApplication.matching(id, imageCaptchaTrack);
         // 校验成功
         if (matching != null && matching.isSuccess()) {
             // 生成唯一令牌

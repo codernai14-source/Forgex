@@ -52,7 +52,7 @@ public class TenantPropagationGlobalFilter implements GlobalFilter, Ordered {
     private static final String HEADER_ACCOUNT = "X-Account";
     private static final String HEADER_LANG = "X-Lang";
 
-    private static final String COOKIE_TOKEN = "satoken";
+    private static final String COOKIE_TOKEN = "Authorization";
 
     @Autowired
     private StringRedisTemplate redis;

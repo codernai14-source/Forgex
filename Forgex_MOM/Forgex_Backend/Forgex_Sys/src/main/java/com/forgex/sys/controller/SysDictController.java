@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
@@ -31,40 +32,36 @@ import java.util.Map;
 
 /**
  * 数据字典 Controller
- * 
+ *
  * @author coder_nai@163.com
  * @date 2025-01-13
  */
 @RestController
 @RequestMapping("/sys/dict")
 public class SysDictController {
-    
+
     @Autowired
     private IDictService dictService;
-    
-    /**
-     * 获取字典树
-     */
+
     @PostMapping("/tree")
     public R<List<DictTreeVO>> tree() {
-        Long tenantId = getCurrentTenantId();
-        List<DictTreeVO> tree = dictService.getDictTree(tenantId);
-        return R.ok(tree);
+        return R.ok(dictService.getDictTree(getCurrentTenantId()));
     }
-    
-    /**
-     * 根据字典编码获取字典项
-     */
+
+    @PostMapping("/page")
+    public R<IPage<DictTreeVO>> page(@RequestBody(required = false) Map<String, Object> params) {
+        long pageNum = parseLong(params == null ? null : params.get("pageNum"), 1L);
+        long pageSize = parseLong(params == null ? null : params.get("pageSize"), 20L);
+        return R.ok(dictService.pageDictTree(getCurrentTenantId(), pageNum, pageSize));
+    }
+
     @PostMapping("/items")
     public R<List<DictItemVO>> items(@RequestBody DictItemsParam param) {
         String dictCode = param.getDictCode();
         if (dictCode == null || dictCode.isEmpty()) {
             return R.fail(CommonPrompt.DICT_CODE_CANNOT_BE_EMPTY);
         }
-
-        Long tenantId = getCurrentTenantId();
-        List<DictItemVO> items = dictService.getDictItemsByCode(dictCode, tenantId);
-        return R.ok(items);
+        return R.ok(dictService.getDictItemsByCode(dictCode, getCurrentTenantId()));
     }
 
     @PostMapping("/itemsByPath")
@@ -73,50 +70,46 @@ public class SysDictController {
         if (nodePath == null || nodePath.isEmpty()) {
             return R.fail(CommonPrompt.NODE_PATH_CANNOT_BE_EMPTY);
         }
-        Long tenantId = getCurrentTenantId();
-        return R.ok(dictService.getDictItemsByPath(nodePath, tenantId));
+        return R.ok(dictService.getDictItemsByPath(nodePath, getCurrentTenantId()));
     }
-    
-    /**
-     * 新增字典
-     */
+
     @PostMapping("/create")
     public R<Boolean> create(@RequestBody DictDTO dictDTO) {
         dictDTO.setTenantId(getCurrentTenantId());
         dictService.addDict(dictDTO);
         return R.ok(CommonPrompt.CREATE_SUCCESS, true);
     }
-    
-    /**
-     * 更新字典
-     */
+
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody DictDTO dictDTO) {
+        dictDTO.setTenantId(getCurrentTenantId());
         dictService.updateDict(dictDTO);
         return R.ok(CommonPrompt.UPDATE_SUCCESS, true);
     }
-    
-    /**
-     * 删除字典
-     */
+
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody IdParam param) {
         Long id = param.getId();
         if (id == null) {
             return R.fail(CommonPrompt.DICT_ID_CANNOT_BE_EMPTY);
         }
-
-        dictService.deleteDict(id);
+        dictService.deleteDict(id, getCurrentTenantId());
         return R.ok(CommonPrompt.DELETE_SUCCESS, true);
     }
-    
-    /**
-     * 获取当前租户ID
-     * 
-     * @return 当前租户ID，若获取失败则返回默认租户ID 1L
-     */
+
     private Long getCurrentTenantId() {
         Long tenantId = CurrentUserUtils.getTenantId();
-        return tenantId != null ? tenantId : 1L; // 默认租户
+        return tenantId != null ? tenantId : 1L;
+    }
+
+    private long parseLong(Object value, long defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }

@@ -32,7 +32,7 @@
             <a-button block @click="navigateTo('/workspace/sys/menu')">
               {{ $t('system.dashboard.menuManagement') }}
             </a-button>
-            <a-button block @click="navigateTo('/workspace/sys/module')">
+            <a-button block @click="navigateTo('/workspace/sys/authorization/module')">
               {{ $t('system.dashboard.moduleManagement') }}
             </a-button>
           </a-space>

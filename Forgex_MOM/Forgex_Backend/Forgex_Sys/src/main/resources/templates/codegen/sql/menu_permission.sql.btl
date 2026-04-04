@@ -52,7 +52,7 @@ INSERT IGNORE INTO sys_menu (
 VALUES (
     @TENANT_ID, @MODULE_ID, @MENU_ID, 'button', 3, '新增${menuNameCn}', 
     '{"zh-CN":"新增${menuNameCn}","en-US":"Create ${menuNameEn}"}',
-    '${permKeyPrefix}:create', 1, 1, 1, NOW(), NOW(), 0
+    '${permKeyPrefix}:add', 1, 1, 1, NOW(), NOW(), 0
 );
 
 -- 编辑按钮
@@ -93,7 +93,7 @@ VALUES (
 -- ================================
 
 -- 获取超级管理员角色ID
-SET @ADMIN_ROLE_ID = (SELECT id FROM sys_role WHERE tenant_id = @TENANT_ID AND role_code = 'admin' LIMIT 1);
+SET @ADMIN_ROLE_ID = (SELECT id FROM sys_role WHERE tenant_id = @TENANT_ID AND role_key = 'admin' LIMIT 1);
 
 -- 授权菜单和按钮
 INSERT IGNORE INTO sys_role_menu (tenant_id, role_id, menu_id)

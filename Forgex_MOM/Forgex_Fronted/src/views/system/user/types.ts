@@ -7,6 +7,7 @@
  */
 export interface User {
   id?: string
+  account: string
   username: string
   email: string
   phone: string
@@ -66,10 +67,15 @@ export interface WorkHistory {
  * 用户查询参数
  */
 export interface UserQuery {
+  account?: string
   username?: string
   phone?: string
   departmentId?: string
   positionId?: string
+  roleId?: string
+  entryDate?: string[]
+  entryDateStart?: string
+  entryDateEnd?: string
   status?: boolean
   pageNum: number
   pageSize: number

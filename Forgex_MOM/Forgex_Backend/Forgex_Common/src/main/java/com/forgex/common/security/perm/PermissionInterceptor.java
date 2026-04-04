@@ -5,10 +5,10 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.i18n.I18nPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
-import com.forgex.common.util.CurrentUserUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
@@ -33,12 +33,18 @@ import java.util.Set;
  * 2) 在本模块 WebMvc 配置中注册拦截路径（如 /sys/**）。
  * </p>
  *
+ * <p>
+ * 注意：该 Bean 仅在存在 {@link PermKeyService} 实现时才会创建，
+ * 未提供实现的业务模块（如 Workflow）不会自动注册此拦截器。
+ * </p>
+ *
  * @author coder_nai@163.com
  * @version 1.0.0
  * @see RequirePerm
  * @see PermKeyService
  */
 @Component
+@ConditionalOnBean(PermKeyService.class)
 @RequiredArgsConstructor
 public class PermissionInterceptor implements HandlerInterceptor {
 
@@ -83,12 +89,6 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         if (userId == null || tenantId == null) {
             throw new I18nBusinessException(602, CommonPrompt.NOT_LOGIN);
-        }
-
-        // 检查是否为超级管理员（admin账号拥有所有权限）
-        String account = CurrentUserUtils.getAccount();
-        if (account != null && "admin".equalsIgnoreCase(account)) {
-            return true;
         }
 
         boolean ok = permKeyService.hasAllPerms(userId, tenantId, required);

@@ -1,5 +1,10 @@
 /**
- * 菜单列表逻辑Hook
+ * 菜单列表逻辑 Hook
+ * 
+ * 封装菜单管理页面的核心业务逻辑，包括树形列表查询、搜索、删除等功能。
+ * 
+ * @author Forgex
+ * @version 1.0.0
  */
 
 import { ref, reactive } from 'vue'
@@ -8,7 +13,17 @@ import { getMenuTree, deleteMenu, batchDeleteMenus } from '@/api/system/menu'
 import type { Menu, MenuQuery } from '../types'
 
 /**
- * 构建树形结构
+ * 构建菜单树形结构
+ * 
+ * 执行步骤：
+ * 1. 遍历菜单列表
+ * 2. 找出所有父级 ID 等于指定值的菜单项
+ * 3. 递归构建子菜单
+ * 4. 按排序号排序
+ * 
+ * @param list 菜单列表（扁平结构）
+ * @param parentId 父级菜单 ID，默认 '0'（顶级菜单）
+ * @returns 树形结构的菜单列表
  */
 function buildTree(list: any[], parentId: string | number = '0'): any[] {
   const result: any[] = []
@@ -26,6 +41,11 @@ function buildTree(list: any[], parentId: string | number = '0'): any[] {
   return result.sort((a, b) => (a.orderNum || 0) - (b.orderNum || 0))
 }
 
+/**
+ * 菜单管理 Hook
+ * 
+ * @returns 包含菜单列表状态和操作方法的对象
+ */
 export function useMenu() {
   // 加载状态
   const loading = ref(false)
@@ -40,11 +60,21 @@ export function useMenu() {
     status: undefined
   })
   
-  // 选中的菜单ID列表
+  // 选中的菜单 ID 列表
   const selectedRowKeys = ref<string[]>([])
   
   /**
    * 加载菜单列表
+   * 
+   * 执行步骤：
+   * 1. 设置加载状态为 true
+   * 2. 从 sessionStorage 获取租户 ID
+   * 3. 构建查询参数（模块 ID、名称、状态等）
+   * 4. 调用 getMenuTree 接口获取菜单树
+   * 5. 使用 buildTree 构建完整的树形结构
+   * 6. 重置加载状态
+   * 
+   * @throws 加载失败时显示错误提示
    */
   const loadMenuList = async () => {
     try {
@@ -83,6 +113,9 @@ export function useMenu() {
   
   /**
    * 搜索
+   * 
+   * 执行步骤：
+   * 1. 调用 loadMenuList 重新加载菜单树
    */
   const handleSearch = () => {
     loadMenuList()
@@ -90,6 +123,10 @@ export function useMenu() {
   
   /**
    * 重置搜索
+   * 
+   * 执行步骤：
+   * 1. 清空所有查询条件
+   * 2. 调用 loadMenuList 重新加载菜单树
    */
   const handleReset = () => {
     queryParams.moduleId = undefined
@@ -100,6 +137,14 @@ export function useMenu() {
   
   /**
    * 删除菜单
+   * 
+   * 执行步骤：
+   * 1. 显示确认对话框（提示删除子菜单和权限）
+   * 2. 用户确认后调用 deleteMenu 接口
+   * 3. 删除成功后刷新列表
+   * 
+   * @param id 菜单 ID
+   * @throws 删除失败时显示错误提示
    */
   const handleDelete = async (id: string) => {
     Modal.confirm({
@@ -122,6 +167,14 @@ export function useMenu() {
   
   /**
    * 批量删除
+   * 
+   * 执行步骤：
+   * 1. 检查是否有选中的菜单
+   * 2. 显示确认对话框
+   * 3. 用户确认后调用 batchDeleteMenus 接口
+   * 4. 删除成功后清空选中状态并刷新列表
+   * 
+   * @throws 删除失败时显示错误提示
    */
   const handleBatchDelete = () => {
     if (selectedRowKeys.value.length === 0) {
@@ -150,6 +203,11 @@ export function useMenu() {
   
   /**
    * 选择变化
+   * 
+   * 执行步骤：
+   * 1. 更新选中的菜单 ID 列表
+   * 
+   * @param keys 选中的菜单 ID 列表
    */
   const handleSelectionChange = (keys: string[]) => {
     selectedRowKeys.value = keys

@@ -54,13 +54,13 @@
             </a>
             <a
               v-permission="'sys:user:edit'"
-              @click="handleUpdateStatus(record.id, !record.status)"
+              @click="toggleUserStatus(record.id, !record.status)"
             >
               {{ record.status ? t('system.user.statusInactive') : t('system.user.statusActive') }}
             </a>
             <a
               v-permission="'sys:user:resetPwd'"
-              @click="handleResetPassword(record.id)"
+              @click="confirmResetPassword(record.id)"
             >
               {{ t('system.user.resetPassword') }}
             </a>
@@ -120,6 +120,7 @@ import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
 import { userApi } from '@/api/system/user'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
+import { getRoleList } from '@/api/system/role'
 import type { Department, Position, User } from './types'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { exportUsers } from '@/api/system/user'
@@ -153,6 +154,7 @@ const tableRef = ref()
 const dictOptions = ref<Record<string, any[]>>({
   departmentId: [],
   positionId: [],
+  roleId: [],
   status: [
     { label: t('system.user.statusActive'), value: true },
     { label: t('system.user.statusInactive'), value: false }
@@ -167,10 +169,24 @@ const handleRequest = async (payload: {
   query: Record<string, any>; 
   sorter?: { field?: string; order?: string } 
 }) => {
+  const query = { ...payload.query }
+  const entryDateRange = Array.isArray(query.entryDate) ? query.entryDate : []
+  if (entryDateRange.length === 2) {
+    query.entryDateStart = String(entryDateRange[0]).slice(0, 10)
+    query.entryDateEnd = String(entryDateRange[1]).slice(0, 10)
+  }
+  delete query.entryDate
+
+  const legacyRoleId = query.roleId ?? query.role_ids
+  if (legacyRoleId !== undefined && legacyRoleId !== null && legacyRoleId !== '') {
+    query.roleId = Array.isArray(legacyRoleId) ? legacyRoleId[0] : legacyRoleId
+  }
+  delete query.role_ids
+
   const params: any = {
     pageNum: payload.page.current,
     pageSize: payload.page.pageSize,
-    ...payload.query,
+    ...query,
   }
   
   // 处理排序
@@ -181,7 +197,6 @@ const handleRequest = async (payload: {
   
   // http拦截器已经返回了data字段
   const data = await userApi.getUserList(params)
-  // 确保total是数字类型
   const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
   return { records: data.records || [], total: total }
 }
@@ -316,7 +331,7 @@ async function handleUpdateStatus(id: string, status: boolean) {
 function flattenDepartmentTree(tree: Department[], prefix = ''): any[] {
   const result: any[] = []
   for (const node of tree) {
-    const label = prefix ? `${prefix} / ${node.name}` : node.name
+    const label = prefix ? `${prefix} / ${node.deptName}` : node.deptName
     result.push({ label, value: node.id })
     if (node.children && node.children.length > 0) {
       result.push(...flattenDepartmentTree(node.children, label))
@@ -329,8 +344,14 @@ function flattenDepartmentTree(tree: Department[], prefix = ''): any[] {
  * 加载部门树数据
  */
 async function loadDepartmentTree() {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId) {
+    departmentTreeData.value = []
+    dictOptions.value.departmentId = []
+    return
+  }
   try {
-    const result = await getDepartmentTree({ tenantId: '1' })
+    const result = await getDepartmentTree({ tenantId })
     departmentTreeData.value = result || []
     // 转换为下拉选项
     dictOptions.value.departmentId = flattenDepartmentTree(result || [])
@@ -348,7 +369,7 @@ async function loadPositionList() {
     positionList.value = result || []
     // 转换为下拉选项
     dictOptions.value.positionId = (result || []).map((item: any) => ({
-      label: item.name,
+      label: item.positionName,
       value: item.id
     }))
   } catch (error) {
@@ -356,10 +377,43 @@ async function loadPositionList() {
   }
 }
 
+async function confirmResetPassword(id: string) {
+  Modal.confirm({
+    title: t('common.confirm'),
+    content: t('system.user.message.resetPasswordConfirm'),
+    onOk: async () => {
+      await userApi.resetPassword(id)
+    },
+  })
+}
+
+async function toggleUserStatus(id: string, status: boolean) {
+  await userApi.updateUserStatus(id, status)
+  tableRef.value?.refresh?.()
+}
+
+async function loadRoleList() {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId) {
+    dictOptions.value.roleId = []
+    return
+  }
+  try {
+    const result = await getRoleList({ tenantId })
+    dictOptions.value.roleId = (result || []).map((item: any) => ({
+      label: [item.roleName, item.roleCode || item.roleKey].filter(Boolean).join(' / '),
+      value: item.id
+    }))
+  } catch (error) {
+    console.error('加载角色列表失败:', error)
+  }
+}
+
 // 初始化
 onMounted(() => {
   loadDepartmentTree()
   loadPositionList()
+  loadRoleList()
 })
 </script>
 

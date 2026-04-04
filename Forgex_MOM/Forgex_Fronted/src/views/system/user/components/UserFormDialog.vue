@@ -19,11 +19,20 @@
         >
           <a-row :gutter="16">
             <a-col :span="12">
+              <a-form-item label="账号" name="account">
+                <a-input
+                  v-model:value="formData.account"
+                  placeholder="请输入账号"
+                  :disabled="isEdit"
+                />
+              </a-form-item>
+            </a-col>
+
+            <a-col :span="12">
               <a-form-item label="用户名" name="username">
                 <a-input
                   v-model:value="formData.username"
                   placeholder="请输入用户名"
-                  :disabled="isEdit"
                 />
               </a-form-item>
             </a-col>
@@ -322,8 +331,11 @@ import type { User, UserProfile, WorkHistory, Department, Position } from '../ty
 
 // Props
 interface Props {
+  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
   open: boolean
+  /** 是否为编辑模式，true 表示编辑用户，false 表示新增用户 */
   isEdit: boolean
+  /** 用户 ID，编辑模式下必填，用于加载用户详情数据 */
   userId?: string
 }
 
@@ -335,7 +347,15 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
+  /**
+   * 更新对话框打开状态
+   * @param value 新的打开状态
+   */
   'update:open': [value: boolean]
+  /**
+   * 操作成功事件
+   * 触发时机：新增或编辑用户成功保存后触发
+   */
   'success': []
 }>()
 
@@ -348,6 +368,7 @@ const profileFormRef = ref()
 
 // 基础信息表单数据
 const formData = reactive<Partial<User>>({
+  account: '',
   username: '',
   email: '',
   phone: '',
@@ -388,6 +409,10 @@ const { dictItems: statusOptions } = useDict('status')
 
 // 基础信息校验规则
 const basicRules = {
+  account: [
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 3, max: 20, message: '账号长度在3-20个字符', trigger: 'blur' },
+  ],
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度在3-20个字符', trigger: 'blur' },
@@ -441,6 +466,7 @@ async function loadUserData() {
       
       Object.assign(formData, {
         id: data.id,
+        account: data.account,
         username: data.username,
         email: data.email,
         phone: data.phone,
@@ -478,6 +504,7 @@ async function loadUserData() {
  */
 function resetForm() {
   Object.assign(formData, {
+    account: '',
     username: '',
     email: '',
     phone: '',
@@ -508,8 +535,13 @@ function resetForm() {
  * 获取部门列表
  */
 async function fetchDepartmentList() {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId) {
+    departmentList.value = []
+    return
+  }
   try {
-    const list = await userApi.getDepartmentTree({ tenantId: '1' })
+    const list = await userApi.getDepartmentTree({ tenantId })
     departmentList.value = Array.isArray(list) ? list : []
   } catch (error) {
     console.error('获取部门列表失败:', error)
@@ -587,10 +619,10 @@ async function handleSubmit() {
     
     if (props.isEdit) {
       await userApi.updateUser(submitData as User)
-      message.success('编辑成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       await userApi.addUser(submitData as User)
-      message.success('新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
     
     visible.value = false

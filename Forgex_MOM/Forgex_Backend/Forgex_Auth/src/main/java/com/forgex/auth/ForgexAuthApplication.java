@@ -26,7 +26,7 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
  * 认证服务启动类
  * 负责启动鉴权相关的微服务
  */
-@SpringBootApplication(scanBasePackages = "com.forgex", exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication(scanBasePackages = "com.forgex.auth,com.forgex.common", exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
 @EnableAsync
 @Import(DynamicDataSourceAutoConfiguration.class)

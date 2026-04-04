@@ -48,7 +48,7 @@ public class ${entityName}Controller {
      * 新增${tableComment!entityName}
      */
     @Operation(summary = "新增${tableComment!entityName}")
-    @RequirePerm("${permKeyPrefix}:create")
+    @RequirePerm("${permKeyPrefix}:add")
     @PostMapping("/save")
     public R<Void> save(@RequestBody ${entityName}SaveParam param) {
         ${entityNameLower}Service.save(param);

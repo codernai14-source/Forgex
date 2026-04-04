@@ -65,6 +65,23 @@ public interface SysMessageTemplateService {
      * @return 是否成功
      */
     boolean deleteBatch(java.util.List<Long> ids);
+    
+    /**
+     * 检查模板编码是否存在
+     * 
+     * @param code 模板编码
+     * @return true=存在，false=不存在
+     */
+    boolean existsByCode(String code);
+    
+    /**
+     * 检查模板编码是否存在（排除指定 ID）
+     * 
+     * @param code 模板编码
+     * @param id 要排除的模板 ID
+     * @return true=存在，false=不存在
+     */
+    boolean existsByCodeExcludeId(String code, Long id);
 }
 
 

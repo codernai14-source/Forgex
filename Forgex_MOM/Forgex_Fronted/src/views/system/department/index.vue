@@ -225,7 +225,6 @@ import {
   DeleteOutlined
 } from '@ant-design/icons-vue'
 import {
-  getDepartmentTree,
   getDepartment,
   createDepartment,
   updateDepartment,
@@ -272,19 +271,8 @@ const { dictItems: statusOptions } = useDict('status')
 /**
  * 加载部门树
  */
-async function loadTree() {
-  if (!currentTenantId.value) {
-    return
-  }
-  try {
-    treeLoading.value = true
-    const data = await getDepartmentTree({ tenantId: currentTenantId.value })
-    treeData.value = data || []
-  } catch (e) {
-    message.error('加载部门树失败')
-  } finally {
-    treeLoading.value = false
-  }
+async function refreshDeptTree() {
+  await deptTreeRef.value?.loadTree?.()
 }
 
 /**
@@ -369,23 +357,27 @@ async function handleSave() {
   try {
     await formRef.value?.validate()
     saving.value = true
+    const currentDeptId = formData.value.id
+    const currentParentId = formData.value.parentId
 
     if (formData.value.id) {
       // 更新
       await updateDepartment(formData.value)
-      message.success('更新成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       // 新增
       await createDepartment(formData.value)
-      message.success('新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
 
     isEditing.value = false
-    await loadTree()
+    await refreshDeptTree()
 
     // 重新选中当前节点
-    if (formData.value.id) {
-      await onSelectNode([formData.value.id])
+    if (currentDeptId) {
+      await onSelectNode([currentDeptId])
+    } else if (currentParentId) {
+      await onSelectNode([currentParentId])
     }
   } catch (e: any) {
     if (e.errorFields) {
@@ -410,10 +402,11 @@ async function handleDelete() {
       id: selectedDept.value.id,
       tenantId: currentTenantId.value!
     })
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     selectedKeys.value = []
     selectedDept.value = null
-    await refreshTree()
+    isEditing.value = false
+    await refreshDeptTree()
   } catch (e: any) {
     message.error(e.message || '删除失败')
   }

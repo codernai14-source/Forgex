@@ -55,7 +55,7 @@ export const useRole = () => {
   const handleDelete = async (id: number) => {
     try {
       await deleteRole(id)
-      message.success('删除成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
       loadRoles()
     } catch (error) {
       console.error('删除角色失败:', error)
@@ -74,7 +74,7 @@ export const useRole = () => {
 
     try {
       await batchDeleteRoles(selectedRowKeys.value)
-      message.success('批量删除成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
       selectedRowKeys.value = []
       loadRoles()
     } catch (error) {

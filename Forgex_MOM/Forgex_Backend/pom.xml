@@ -247,6 +247,7 @@
         <module>Forgex_Common</module>
         <module>Forgex_Gateway</module>
         <module>Forgex_Job</module>
+        <module>Forgex_Workflow</module>
     </modules>
 
     <build>

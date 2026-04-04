@@ -1,5 +1,7 @@
 package com.forgex.sys.service.storage;
 
+import com.forgex.common.config.ConfigService;
+import com.forgex.sys.domain.config.FileUploadConfig;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,35 +15,41 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 /**
- * 本地文件存储服务实现类
- * <p>提供基于本地文件系统的文件存储功能。</p>
- * 
- * @author Forgex Team
- * @version 1.0.0
+ * Local file storage service.
  */
 @Service
 public class LocalStorageService implements FileStorageService {
+    private static final String KEY_FILE_UPLOAD = "file.upload.settings";
 
-    /**
-     * 文件上传路径
-     */
     @Value("${file.upload.path:./uploads}")
     private String uploadPath;
 
-    /**
-     * 文件访问前缀
-     */
     @Value("${file.access.prefix:/files}")
     private String accessPrefix;
 
-    /**
-     * 上传文件
-     * <p>将文件保存到本地存储目录，并返回相对路径。</p>
-     * 
-     * @param file 上传的文件
-     * @return 文件相对路径，上传失败返回null
-     * @throws IOException 文件处理异常
-     */
+    @jakarta.annotation.Resource
+    private ConfigService configService;
+
+    private FileUploadConfig loadConfig() {
+        return configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, null);
+    }
+
+    private String resolveUploadPath() {
+        FileUploadConfig cfg = loadConfig();
+        if (cfg != null && StringUtils.hasText(cfg.getLocalUploadPath())) {
+            return cfg.getLocalUploadPath();
+        }
+        return uploadPath;
+    }
+
+    private String resolveAccessPrefix() {
+        FileUploadConfig cfg = loadConfig();
+        if (cfg != null && StringUtils.hasText(cfg.getAccessPrefix())) {
+            return cfg.getAccessPrefix();
+        }
+        return accessPrefix;
+    }
+
     @Override
     public String upload(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -55,25 +63,24 @@ public class LocalStorageService implements FileStorageService {
         String fileName = UUID.randomUUID().toString().replace("-", "") + fileExtension;
         String relativePath = fileName;
 
-        File targetDir = new File(uploadPath);
-        if (!targetDir.exists()) {
-            targetDir.mkdirs();
+        File targetDir = new File(resolveUploadPath());
+        if (!targetDir.exists() && !targetDir.mkdirs()) {
+            throw new IOException("Failed to create upload directory: " + targetDir.getAbsolutePath());
         }
 
         File targetFile = new File(targetDir, fileName);
         file.transferTo(targetFile);
-
         return relativePath;
     }
 
     @Override
     public void download(String filePath, HttpServletResponse response) throws IOException {
         if (!StringUtils.hasText(filePath)) {
-            throw new IOException("文件路径为空");
+            throw new IOException("filePath must not be empty");
         }
-        File file = new File(uploadPath, filePath);
+        File file = new File(resolveUploadPath(), filePath);
         if (!file.exists() || !file.isFile()) {
-            throw new IOException("文件不存在");
+            throw new IOException("file does not exist");
         }
 
         response.setContentType("application/octet-stream");
@@ -95,22 +102,19 @@ public class LocalStorageService implements FileStorageService {
         if (!StringUtils.hasText(filePath)) {
             return false;
         }
-        File file = new File(uploadPath, filePath);
+        File file = new File(resolveUploadPath(), filePath);
         return file.exists() && file.delete();
     }
 
-    /**
-     * 获取文件访问URL
-     * 
-     * @param filePath 文件相对路径
-     * @return 文件访问URL，路径为空时返回null
-     */
     @Override
     public String getUrl(String filePath) {
         if (!StringUtils.hasText(filePath)) {
             return null;
         }
-        String prefix = StringUtils.hasText(accessPrefix) ? accessPrefix : "/files";
+        String prefix = resolveAccessPrefix();
+        if (!StringUtils.hasText(prefix)) {
+            prefix = "/files";
+        }
         if (!prefix.startsWith("/")) {
             prefix = "/" + prefix;
         }

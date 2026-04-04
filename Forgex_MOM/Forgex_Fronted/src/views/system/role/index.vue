@@ -354,6 +354,22 @@ const fallbackConfig = ref({
 /**
  * 处理表格数据请求
  */
+/**
+ * 将接口返回的 status（布尔或数字）规范为与字典 {@code status} 一致的 0/1，便于 FxDynamicTable 字典列渲染。
+ */
+function normalizeRoleStatusRecord(row: any) {
+  const s = row?.status
+  let num: number
+  if (typeof s === 'boolean') {
+    num = s ? 1 : 0
+  } else if (s === 1 || s === '1' || s === true) {
+    num = 1
+  } else {
+    num = 0
+  }
+  return { ...row, status: num }
+}
+
 const handleRequest = async (params: any) => {
   loading.value = true
   try {
@@ -361,9 +377,10 @@ const handleRequest = async (params: any) => {
       ...params.query,
       ...params.page
     })
+    const records = (res.records || []).map((r: any) => normalizeRoleStatusRecord(r))
     return {
       success: true,
-      data: res.records,
+      data: records,
       total: res.total
     }
   } catch (error) {
@@ -391,7 +408,7 @@ const onSelectChange = (keys: string[]) => {
 const handleDelete = async (id: string) => {
   try {
     await deleteRole(id)
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (error) {
     message.error('删除失败')
@@ -408,7 +425,7 @@ const handleBatchDelete = async () => {
   }
   try {
     await batchDeleteRoles(selectedRowKeys.value)
-    message.success('批量删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
     selectedRowKeys.value = []
   } catch (error) {
@@ -529,9 +546,12 @@ async function loadMenusAndGrants() {
     const leafIds = getLeafNodeIds(allMenus.value, grantedMenuIds || [])
     checkedKeys.value = leafIds.map((id: any) => String(id))
     
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
-    message.error('加载菜单授权数据失败')
+    // http.ts already shows business error toast (e.g. code 601), avoid duplicate popups.
+    if (e?.code == null) {
+      message.error('加载菜单授权数据失败')
+    }
   } finally {
     loadingMenus.value = false
   }
@@ -599,7 +619,7 @@ async function saveGrant() {
       roleId: grantRole.value.id,
       menuIds: menuIds
     })
-    message.success('授权成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     grantVisible.value = false
   } catch (e) {
     message.error('授权失败')
@@ -746,7 +766,7 @@ async function removeUserGrant(userId: number) {
       tenantId: currentTenantId.value,
       userIds: [userId]
     })
-    message.success('移除授权成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await loadAuthorizedUsers()
   } catch (error) {
     console.error('移除授权失败:', error)
@@ -784,7 +804,7 @@ async function saveUserGrant() {
       tenantId: currentTenantId.value,
       userIds: userIdsToAdd
     })
-    message.success('授权成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await loadAuthorizedUsers()
     selectedUserIds.value = []
     selectedDepartmentIds.value = []

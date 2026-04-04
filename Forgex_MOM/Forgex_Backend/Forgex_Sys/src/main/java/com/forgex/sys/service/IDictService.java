@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
@@ -34,6 +35,16 @@ public interface IDictService {
      * @return 字典树列表
      */
     List<DictTreeVO> getDictTree(Long tenantId);
+
+    /**
+     * 鍒嗛〉鑾峰彇瀛楀吀鏍戞牴鑺傜偣锛堟惡甯﹀叾瀹屾暣瀛愭爲锛?
+     *
+     * @param tenantId 绉熸埛ID
+     * @param pageNum  椤电爜
+     * @param pageSize 姣忛〉鏉℃暟
+     * @return 鍒嗛〉瀛楀吀鏍?
+     */
+    IPage<DictTreeVO> pageDictTree(Long tenantId, long pageNum, long pageSize);
     
     /**
      * 根据字典编码获取字典项列表
@@ -65,7 +76,7 @@ public interface IDictService {
      * 
      * @param id 字典ID
      */
-    void deleteDict(Long id);
+    void deleteDict(Long id, Long tenantId);
     
     /**
      * 清除字典缓存

@@ -47,12 +47,18 @@ interface Receiver {
 }
 
 interface Props {
+  /** v-model 绑定的接收人对象，包含接收类型和接收人 ID 列表 */
   modelValue: Receiver
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
+  /**
+   * 接收人更新事件
+   * 触发时机：用户修改接收类型或接收人列表时触发
+   * @param value 新的接收人对象
+   */
   'update:modelValue': [value: Receiver]
 }>()
 

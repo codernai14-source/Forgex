@@ -10,6 +10,7 @@ import { getCurrentUserInfo } from '@/api/profile'
 import { logout as logoutApi } from '@/api/auth/login'
 
 export interface UserInfo {
+  id?: number
   account: string
   username: string
   email?: string

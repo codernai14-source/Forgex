@@ -16,3 +16,7 @@ public class TableConfigBatchDeleteParam {
     private List<Long> ids;
 }
 
+
+
+
+

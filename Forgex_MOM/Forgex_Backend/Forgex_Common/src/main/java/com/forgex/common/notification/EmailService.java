@@ -13,49 +13,38 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.notification;
 
+import com.forgex.common.config.ConfigService;
+import com.forgex.common.domain.config.EmailConfig;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
+import java.util.Properties;
 
 /**
- * 邮件发送服务
- * <p>提供邮件发送功能，支持简单文本邮件和HTML模板邮件。</p>
- * 
- * <p>配置示例（application.yml）：</p>
- * <pre>
- * spring:
- *   mail:
- *     host: smtp.qq.com
- *     port: 587
- *     username: your-email@qq.com
- *     password: your-auth-code
- *     properties:
- *       mail:
- *         smtp:
- *           auth: true
- *           starttls:
- *             enable: true
- *             required: true
- * </pre>
- * 
- * @author Forgex Team
- * @version 1.0.0
+ * 邮件发送服务。
+ * <p>优先读取系统配置中的邮件配置；若未配置，再回退到 spring.mail 配置。</p>
  */
 @Slf4j
 @Service
 public class EmailService {
 
+    private static final String KEY_MAIL_SETTINGS = "mail.settings";
+
     @Autowired(required = false)
     private JavaMailSender mailSender;
+
+    @Autowired(required = false)
+    private ConfigService configService;
 
     @Value("${spring.mail.username:}")
     private String fromEmail;
@@ -64,37 +53,27 @@ public class EmailService {
     private boolean enabled;
 
     /**
-     * 发送简单文本邮件
-     * 
-     * @param to 收件人邮箱
-     * @param subject 邮件主题
-     * @param content 邮件内容（纯文本）
-     * @return true表示发送成功，false表示发送失败
+     * 发送简单文本邮件。
      */
     public boolean sendSimpleEmail(String to, String subject, String content) {
-        if (!enabled) {
-            log.warn("邮件服务未启用，跳过发送");
-            return false;
-        }
-
-        if (mailSender == null) {
-            log.error("JavaMailSender未配置，无法发送邮件");
-            return false;
-        }
-
         if (!StringUtils.hasText(to) || !StringUtils.hasText(subject) || !StringUtils.hasText(content)) {
             log.error("邮件参数不完整：to={}, subject={}, content={}", to, subject, content);
             return false;
         }
 
+        MailClient client = resolveMailClient();
+        if (!client.isAvailable()) {
+            log.warn("邮件服务未配置，跳过发送");
+            return false;
+        }
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
+            message.setFrom(client.getFromAddress());
             message.setTo(to);
             message.setSubject(subject);
             message.setText(content);
-            
-            mailSender.send(message);
+            client.getSender().send(message);
             log.info("简单邮件发送成功：to={}, subject={}", to, subject);
             return true;
         } catch (Exception e) {
@@ -104,55 +83,38 @@ public class EmailService {
     }
 
     /**
-     * 发送HTML邮件
-     * 
-     * @param to 收件人邮箱
-     * @param subject 邮件主题
-     * @param htmlContent HTML格式的邮件内容
-     * @return true表示发送成功，false表示发送失败
+     * 发送 HTML 邮件。
      */
     public boolean sendHtmlEmail(String to, String subject, String htmlContent) {
-        if (!enabled) {
-            log.warn("邮件服务未启用，跳过发送");
-            return false;
-        }
-
-        if (mailSender == null) {
-            log.error("JavaMailSender未配置，无法发送邮件");
-            return false;
-        }
-
         if (!StringUtils.hasText(to) || !StringUtils.hasText(subject) || !StringUtils.hasText(htmlContent)) {
             log.error("邮件参数不完整：to={}, subject={}, htmlContent={}", to, subject, htmlContent);
             return false;
         }
 
+        MailClient client = resolveMailClient();
+        if (!client.isAvailable()) {
+            log.warn("邮件服务未配置，跳过发送");
+            return false;
+        }
+
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessage mimeMessage = client.getSender().createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            
-            helper.setFrom(fromEmail);
+            helper.setFrom(client.getFromAddress());
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(htmlContent, true); // true表示HTML格式
-            
-            mailSender.send(mimeMessage);
-            log.info("HTML邮件发送成功：to={}, subject={}", to, subject);
+            helper.setText(htmlContent, true);
+            client.getSender().send(mimeMessage);
+            log.info("HTML 邮件发送成功：to={}, subject={}", to, subject);
             return true;
         } catch (MessagingException e) {
-            log.error("HTML邮件发送失败：to={}, subject={}, error={}", to, subject, e.getMessage(), e);
+            log.error("HTML 邮件发送失败：to={}, subject={}, error={}", to, subject, e.getMessage(), e);
             return false;
         }
     }
 
     /**
-     * 发送模板邮件（支持占位符替换）
-     * 
-     * @param to 收件人邮箱
-     * @param subject 邮件主题
-     * @param template HTML模板内容（支持${变量名}占位符）
-     * @param variables 变量Map（key为变量名，value为替换值）
-     * @return true表示发送成功，false表示发送失败
+     * 发送模板邮件。
      */
     public boolean sendTemplateEmail(String to, String subject, String template, Map<String, Object> variables) {
         if (!StringUtils.hasText(template)) {
@@ -160,7 +122,6 @@ public class EmailService {
             return false;
         }
 
-        // 替换模板中的占位符
         String htmlContent = template;
         if (variables != null && !variables.isEmpty()) {
             for (Map.Entry<String, Object> entry : variables.entrySet()) {
@@ -174,12 +135,7 @@ public class EmailService {
     }
 
     /**
-     * 批量发送邮件
-     * 
-     * @param toList 收件人邮箱列表
-     * @param subject 邮件主题
-     * @param content 邮件内容
-     * @return 成功发送的数量
+     * 批量发送邮件。
      */
     public int sendBatchEmail(String[] toList, String subject, String content) {
         if (toList == null || toList.length == 0) {
@@ -193,18 +149,85 @@ public class EmailService {
                 successCount++;
             }
         }
-
         log.info("批量邮件发送完成：总数={}, 成功={}", toList.length, successCount);
         return successCount;
     }
 
     /**
-     * 检查邮件服务是否可用
-     * 
-     * @return true表示可用，false表示不可用
+     * 检查邮件服务是否可用。
      */
     public boolean isAvailable() {
-        return enabled && mailSender != null && StringUtils.hasText(fromEmail);
+        return resolveMailClient().isAvailable();
+    }
+
+    private MailClient resolveMailClient() {
+        EmailConfig config = resolveConfig();
+        if (config != null && isDynamicConfigAvailable(config)) {
+            return new MailClient(buildSender(config), config.getSenderAccount());
+        }
+        return new MailClient(mailSender, fromEmail, enabled);
+    }
+
+    private EmailConfig resolveConfig() {
+        if (configService == null) {
+            return null;
+        }
+        return configService.getGlobalJson(KEY_MAIL_SETTINGS, EmailConfig.class, EmailConfig.defaults());
+    }
+
+    private boolean isDynamicConfigAvailable(EmailConfig config) {
+        if (config == null) {
+            return false;
+        }
+        if (!StringUtils.hasText(config.getSenderAccount())
+                || !StringUtils.hasText(config.getSmtpHost())
+                || config.getSmtpPort() == null) {
+            return false;
+        }
+        return !Boolean.TRUE.equals(config.getAuthEnabled()) || StringUtils.hasText(config.getSenderPassword());
+    }
+
+    private JavaMailSender buildSender(EmailConfig config) {
+        JavaMailSenderImpl sender = new JavaMailSenderImpl();
+        sender.setHost(config.getSmtpHost());
+        sender.setPort(config.getSmtpPort());
+        sender.setUsername(config.getSenderAccount());
+        sender.setPassword(config.getSenderPassword());
+        sender.setDefaultEncoding("UTF-8");
+
+        Properties properties = sender.getJavaMailProperties();
+        properties.put("mail.transport.protocol", "smtp");
+        properties.put("mail.smtp.auth", Boolean.TRUE.equals(config.getAuthEnabled()));
+        properties.put("mail.smtp.ssl.enable", Boolean.TRUE.equals(config.getSslEnabled()));
+        properties.put("mail.smtp.starttls.enable", Boolean.TRUE.equals(config.getStarttlsEnabled()));
+        return sender;
+    }
+
+    private static final class MailClient {
+        private final JavaMailSender sender;
+        private final String fromAddress;
+        private final boolean available;
+
+        private MailClient(JavaMailSender sender, String fromAddress) {
+            this(sender, fromAddress, sender != null && StringUtils.hasText(fromAddress));
+        }
+
+        private MailClient(JavaMailSender sender, String fromAddress, boolean enabled) {
+            this.sender = sender;
+            this.fromAddress = fromAddress;
+            this.available = enabled && sender != null && StringUtils.hasText(fromAddress);
+        }
+
+        private JavaMailSender getSender() {
+            return sender;
+        }
+
+        private String getFromAddress() {
+            return fromAddress;
+        }
+
+        private boolean isAvailable() {
+            return available;
+        }
     }
 }
-

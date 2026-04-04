@@ -27,6 +27,17 @@ export default {
   addColumn: '添加列',
   columnRequired: '请至少添加一列配置',
   loadDetailFailed: '加载配置详情失败',
+  
+  /**
+   * 列设置相关
+   */
+  columnSetting: {
+    title: '列设置',
+    reset: '重置',
+    resetSuccess: '已重置为默认配置',
+    hint: '勾选显示列，上下拖动调整顺序'
+  },
+  
   form: {
     tableCode: '请输入表格代码',
     tableName: '请输入表格名称',

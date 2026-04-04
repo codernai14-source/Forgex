@@ -44,39 +44,74 @@ export interface ThemePreset {
  */
 export const THEME_PRESETS: ThemePreset[] = [
   {
-    name: '拂晓蓝',
+    name: '默认',
     value: '#1677ff',
-    description: 'Ant Design 默认蓝'
+    description: '经典品牌蓝'
   },
   {
-    name: '薄暮紫',
-    value: '#722ED1',
-    description: '优雅紫色'
+    name: '紫罗兰',
+    value: '#7c5cff',
+    description: '偏冷感的紫色主题'
   },
   {
-    name: '青色',
-    value: '#13C2C2',
-    description: '清新青色'
+    name: '樱花粉',
+    value: '#ec4899',
+    description: '柔和而醒目的粉色主题'
   },
   {
-    name: '极光绿',
-    value: '#52C41A',
-    description: '生机绿色'
+    name: '柠檬黄',
+    value: '#f6c445',
+    description: '明亮温暖的黄色主题'
   },
   {
-    name: '日暮橙',
-    value: '#FA8C16',
-    description: '温暖橙色'
+    name: '天蓝色',
+    value: '#5b8ff9',
+    description: '通透清爽的天蓝主题'
   },
   {
-    name: '火山红',
-    value: '#F5222D',
-    description: '热情红色'
+    name: '浅绿色',
+    value: '#34d399',
+    description: '轻盈自然的浅绿主题'
   },
   {
-    name: '中性灰',
-    value: '#8C8C8C',
-    description: '专业灰色'
+    name: '锌色灰',
+    value: '#71717a',
+    description: '克制中性的锌灰主题'
+  },
+  {
+    name: '深绿色',
+    value: '#14b8a6',
+    description: '沉稳饱满的深绿主题'
+  },
+  {
+    name: '深蓝色',
+    value: '#1d4ed8',
+    description: '更深邃的蓝色主题'
+  },
+  {
+    name: '橙黄色',
+    value: '#f97316',
+    description: '活力鲜明的橙黄主题'
+  },
+  {
+    name: '玫瑰红',
+    value: '#e11d48',
+    description: '高辨识度的玫瑰红主题'
+  },
+  {
+    name: '中性色',
+    value: '#525252',
+    description: '均衡耐看的中性色主题'
+  },
+  {
+    name: '石板灰',
+    value: '#475569',
+    description: '带蓝调的石板灰主题'
+  },
+  {
+    name: '中灰色',
+    value: '#6b7280',
+    description: '更柔和的中灰主题'
   },
 ]
 

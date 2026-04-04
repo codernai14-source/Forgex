@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantSaveParam;
+import com.forgex.sys.domain.dto.TenantHierarchyDTO;
 
 import java.util.List;
 
@@ -111,4 +112,28 @@ public interface SysTenantService {
      * @return 主租户信息，如果不存在则返回null
      */
     SysTenantDTO getMainTenant();
+    
+    /**
+     * 获取租户层级关系
+     * <p>
+     * 获取指定租户的层级关系，包含当前租户、父租户和子租户列表。
+     * </p>
+     * 
+     * @param tenantId 租户 ID
+     * @return 租户层级关系 DTO
+     * @throws RuntimeException 当租户 ID 为空或租户不存在时抛出异常
+     */
+    TenantHierarchyDTO getTenantHierarchy(Long tenantId);
+    
+    /**
+     * 获取子租户列表
+     * <p>
+     * 获取指定父租户下的所有子租户列表。
+     * </p>
+     * 
+     * @param parentTenantId 父租户 ID
+     * @return 子租户列表
+     * @throws RuntimeException 当父租户 ID 为空时抛出异常
+     */
+    List<SysTenantDTO> getChildTenants(Long parentTenantId);
 }

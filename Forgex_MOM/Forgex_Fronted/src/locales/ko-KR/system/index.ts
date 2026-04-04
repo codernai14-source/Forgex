@@ -3,7 +3,9 @@
  * 통합 내보내기
  */
 import excel from './excel'
+import menu from './menu'
 
 export default {
   excel,
+  menu,
 }
