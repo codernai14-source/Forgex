@@ -36,6 +36,8 @@ public class SysMessageTemplateVO {
     
     /** 模板名称 */
     private String templateName;
+
+    private String templateNameI18nJson;
     
     /** 模板版本 */
     private String templateVersion;
@@ -97,9 +99,13 @@ public class SysMessageTemplateVO {
         
         /** 消息标题(支持占位符) */
         private String contentTitle;
+
+        private String contentTitleI18nJson;
         
         /** 消息内容(支持占位符) */
         private String contentBody;
+
+        private String contentBodyI18nJson;
         
         /** 跳转链接 */
         private String linkUrl;

@@ -13,8 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service.impl;
 
-import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.forgex.common.config.ConfigService;
+import com.forgex.common.crypto.CryptoPasswordProvider;
+import com.forgex.common.crypto.CryptoProviders;
+import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.enums.TenantTypeEnum;
 import com.forgex.sys.domain.entity.SysMenu;
 import com.forgex.sys.domain.entity.SysModule;
@@ -74,7 +77,8 @@ import java.util.concurrent.Executor;
 @Service
 @RequiredArgsConstructor
 public class TenantInitServiceImpl implements ITenantInitService {
-    
+    private static final String KEY_SECURITY_PASSWORD_POLICY = "security.password.policy";
+
     private final SysModuleMapper moduleMapper;
     private final SysMenuMapper menuMapper;
     private final SysRoleMapper roleMapper;
@@ -86,6 +90,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
     private final SysTenantInitTaskMapper tenantInitTaskMapper;
     private final SsePushService ssePushService;
     private final Executor tenantInitExecutor;
+    private final ConfigService configService;
 
     @Override
     @Async("tenantInitExecutor")
@@ -436,7 +441,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         SysUser user = new SysUser();
         user.setAccount(account);
         user.setUsername("系统管理员");
-        user.setPassword(BCrypt.hashpw("Aa123456"));  // 默认密码
+        user.setPassword(encryptDefaultPassword());
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
@@ -454,7 +459,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         SysUser user = new SysUser();
         user.setAccount(account);
         user.setUsername("系统管理员");
-        user.setPassword(BCrypt.hashpw("Aa123456"));  // 默认密码
+        user.setPassword(encryptDefaultPassword());
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
@@ -491,5 +496,15 @@ public class TenantInitServiceImpl implements ITenantInitService {
         }
         
         log.info("绑定角色到菜单，角色 ID：{}，菜单数量：{}，租户 ID：{}", roleId, menuIds.size(), tenantId);
+    }
+
+    private String encryptDefaultPassword() {
+        PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, null);
+        String store = policy == null || !org.springframework.util.StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
+        String defaultPassword = policy == null || !org.springframework.util.StringUtils.hasText(policy.getDefaultPassword())
+            ? "Aa123456"
+            : policy.getDefaultPassword();
+        CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
+        return provider.encrypt(defaultPassword);
     }
 }

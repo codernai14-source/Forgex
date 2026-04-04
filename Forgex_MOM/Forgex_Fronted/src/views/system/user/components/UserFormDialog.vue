@@ -33,7 +33,6 @@
                 <a-input
                   v-model:value="formData.username"
                   placeholder="请输入用户名"
-                  :disabled="isEdit"
                 />
               </a-form-item>
             </a-col>
@@ -536,8 +535,13 @@ function resetForm() {
  * 获取部门列表
  */
 async function fetchDepartmentList() {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId) {
+    departmentList.value = []
+    return
+  }
   try {
-    const list = await userApi.getDepartmentTree({ tenantId: '1' })
+    const list = await userApi.getDepartmentTree({ tenantId })
     departmentList.value = Array.isArray(list) ? list : []
   } catch (error) {
     console.error('获取部门列表失败:', error)
@@ -615,10 +619,10 @@ async function handleSubmit() {
     
     if (props.isEdit) {
       await userApi.updateUser(submitData as User)
-      message.success('编辑成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       await userApi.addUser(submitData as User)
-      message.success('新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
     
     visible.value = false

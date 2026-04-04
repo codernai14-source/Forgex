@@ -401,6 +401,7 @@ const openEditDialog = async (record: TableConfigItem) => {
 
 const handleFormSuccess = () => {
   dialogVisible.value = false
+  message.success(t('common.saveSuccess'))
   fetchData()
 }
 

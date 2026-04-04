@@ -16,6 +16,7 @@ package com.forgex.common.service.table.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.beans.BeanUtils;
 import com.forgex.common.domain.dto.table.FxTableColumnDTO;
 import com.forgex.common.domain.dto.table.FxTableConfigDTO;
 import com.forgex.common.domain.dto.table.FxTableQueryFieldDTO;
@@ -36,7 +37,10 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 表格配置服务实现类
@@ -67,6 +71,26 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FxTableConfigServiceImpl implements FxTableConfigService {
+    private static final String USER_TABLE_CODE = "UserTable";
+    private static final String POSITION_TABLE_CODE = "PositionTable";
+    private static final String DICT_TABLE_CODE = "DictTable";
+    private static final String USERNAME_FIELD = "username";
+    private static final String ACCOUNT_FIELD = "account";
+    private static final String POSITION_ID_FIELD = "positionId";
+    private static final String ROLE_ID_FIELD = "roleId";
+    private static final String ENTRY_DATE_FIELD = "entryDate";
+    private static final String ACTION_FIELD = "action";
+    private static final String USERNAME_TITLE_I18N_JSON =
+            "{\"zh-CN\":\"\\u7528\\u6237\\u540d\",\"en-US\":\"Username\",\"zh-TW\":\"\\u4f7f\\u7528\\u8005\\u540d\\u7a31\",\"ja-JP\":\"\\u30e6\\u30fc\\u30b6\\u30fc\\u540d\",\"ko-KR\":\"\\uc0ac\\uc6a9\\uc790\\uba85\"}";
+    private static final String ACCOUNT_TITLE_I18N_JSON =
+            "{\"zh-CN\":\"\\u8d26\\u53f7\",\"en-US\":\"Account\",\"zh-TW\":\"\\u5e33\\u865f\",\"ja-JP\":\"\\u30a2\\u30ab\\u30a6\\u30f3\\u30c8\",\"ko-KR\":\"\\uacc4\\uc815\"}";
+    private static final String POSITION_TITLE_I18N_JSON =
+            "{\"zh-CN\":\"\\u804c\\u4f4d\",\"en-US\":\"Position\",\"zh-TW\":\"\\u8077\\u4f4d\",\"ja-JP\":\"\\u8077\\u4f4d\",\"ko-KR\":\"\\uc9c1\\ucc45\"}";
+    private static final String ROLE_TITLE_I18N_JSON =
+            "{\"zh-CN\":\"\\u89d2\\u8272\",\"en-US\":\"Role\",\"zh-TW\":\"\\u89d2\\u8272\",\"ja-JP\":\"\\u30ed\\u30fc\\u30eb\",\"ko-KR\":\"\\uc5ed\\ud560\"}";
+    private static final String ENTRY_DATE_TITLE_I18N_JSON =
+            "{\"zh-CN\":\"\\u5165\\u804c\\u65f6\\u95f4\",\"en-US\":\"Entry Date\",\"zh-TW\":\"\\u5165\\u8077\\u6642\\u9593\",\"ja-JP\":\"\\u5165\\u793e\\u65e5\",\"ko-KR\":\"\\uc785\\uc0ac\\uc77c\"}";
+
     /**
      * 表格配置 Mapper
      */
@@ -191,8 +215,8 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         dto.setTableName(baseConfig.getTableName());
         dto.setTableType(baseConfig.getTableType());
         dto.setRowKey(baseConfig.getRowKey());
-        dto.setColumns(baseConfig.getColumns());
-        dto.setQueryFields(baseConfig.getQueryFields());
+        dto.setColumns(filterVisibleColumns(mergeUserColumns(baseConfig.getColumns(), userConfig.getColumnConfig())));
+        dto.setQueryFields(mergeUserQueryFields(tableCode, baseConfig.getQueryFields(), userConfig.getQueryConfig()));
         dto.setDefaultPageSize(userConfig.getPageSize() != null ? userConfig.getPageSize() : baseConfig.getDefaultPageSize());
         dto.setDefaultSortJson(userConfig.getSortConfig() != null ? userConfig.getSortConfig() : baseConfig.getDefaultSortJson());
         dto.setVersion(userConfig.getVersion());
@@ -283,8 +307,9 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         dto.setRowKey(StringUtils.hasText(cfg.getRowKey()) ? cfg.getRowKey() : "id");
         dto.setDefaultPageSize(cfg.getDefaultPageSize() == null ? 20 : cfg.getDefaultPageSize());
         dto.setDefaultSortJson(cfg.getDefaultSortJson());
+        normalizeBuiltinColumns(tableCode, columnDtos);
         dto.setColumns(columnDtos);
-        dto.setQueryFields(queryFields);
+        dto.setQueryFields(normalizeBuiltinQueryFields(tableCode, queryFields));
         dto.setVersion(cfg.getVersion());
         dto.setEnabled(cfg.getEnabled());
         dto.setCreateBy(cfg.getCreateBy());
@@ -412,5 +437,409 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         
         // 所有尝试都失败，返回回退文本
         return fallback;
+    }
+
+    private List<FxTableColumnDTO> mergeUserColumns(List<FxTableColumnDTO> baseColumns, String columnConfigJson) {
+        List<FxTableColumnDTO> safeBaseColumns = baseColumns == null ? new ArrayList<>() : new ArrayList<>(baseColumns);
+        Map<String, FxTableColumnDTO> userColumnsMap = parseUserColumns(columnConfigJson);
+        List<FxTableColumnDTO> mergedColumns = new ArrayList<>();
+
+        for (int i = 0; i < safeBaseColumns.size(); i++) {
+            FxTableColumnDTO baseCol = safeBaseColumns.get(i);
+            FxTableColumnDTO mergedCol = new FxTableColumnDTO();
+            BeanUtils.copyProperties(baseCol, mergedCol);
+
+            FxTableColumnDTO userCol = userColumnsMap.get(baseCol.getField());
+            mergedCol.setVisible(userCol != null ? userCol.getVisible() : Boolean.TRUE);
+            mergedCol.setOrder(userCol != null && userCol.getOrder() != null ? userCol.getOrder() : i);
+            mergedColumns.add(mergedCol);
+        }
+
+        mergedColumns.sort(Comparator.comparing(col -> col.getOrder() == null ? Integer.MAX_VALUE : col.getOrder()));
+        return mergedColumns;
+    }
+
+    private List<FxTableColumnDTO> filterVisibleColumns(List<FxTableColumnDTO> columns) {
+        List<FxTableColumnDTO> visibleColumns = new ArrayList<>();
+        for (FxTableColumnDTO column : columns) {
+            if (!Boolean.FALSE.equals(column.getVisible())) {
+                visibleColumns.add(column);
+            }
+        }
+        return visibleColumns;
+    }
+
+    private Map<String, FxTableColumnDTO> parseUserColumns(String columnConfigJson) {
+        Map<String, FxTableColumnDTO> userColumnsMap = new HashMap<>();
+        if (!StringUtils.hasText(columnConfigJson)) {
+            return userColumnsMap;
+        }
+
+        try {
+            List<FxTableColumnDTO> userColumns = JSONUtil.toList(JSONUtil.parseArray(columnConfigJson), FxTableColumnDTO.class);
+            for (FxTableColumnDTO userColumn : userColumns) {
+                if (userColumn != null && StringUtils.hasText(userColumn.getField())) {
+                    userColumnsMap.put(userColumn.getField(), userColumn);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("解析用户列配置失败，columnConfig: {}", columnConfigJson, e);
+        }
+        return userColumnsMap;
+    }
+
+    private List<FxTableQueryFieldDTO> mergeUserQueryFields(String tableCode, List<FxTableQueryFieldDTO> baseQueryFields, String queryConfigJson) {
+        if (!StringUtils.hasText(queryConfigJson)) {
+            return normalizeBuiltinQueryFields(tableCode, baseQueryFields);
+        }
+
+        try {
+            List<FxTableQueryFieldDTO> queryFields = JSONUtil.toList(JSONUtil.parseArray(queryConfigJson), FxTableQueryFieldDTO.class);
+            return normalizeBuiltinQueryFields(
+                tableCode,
+                queryFields == null || queryFields.isEmpty() ? baseQueryFields : queryFields
+            );
+        } catch (Exception e) {
+            log.warn("解析用户查询配置失败，queryConfig: {}", queryConfigJson, e);
+            return normalizeBuiltinQueryFields(tableCode, baseQueryFields);
+        }
+    }
+
+    private List<FxTableQueryFieldDTO> ensureBuiltinUserTableQueryFields(String tableCode, List<FxTableQueryFieldDTO> queryFields) {
+        List<FxTableQueryFieldDTO> safeQueryFields =
+                queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        if (!USER_TABLE_CODE.equals(tableCode)) {
+            return safeQueryFields;
+        }
+
+        Map<String, FxTableQueryFieldDTO> normalizedFields = new LinkedHashMap<>();
+        for (FxTableQueryFieldDTO queryField : safeQueryFields) {
+            if (queryField == null || !StringUtils.hasText(queryField.getField())) {
+                continue;
+            }
+            String field = queryField.getField();
+            if (!isBuiltinUserTableQueryField(field) || normalizedFields.containsKey(field)) {
+                continue;
+            }
+            normalizedFields.put(field, buildBuiltinUserTableQueryField(field, queryField));
+        }
+
+        addBuiltinUserTableQueryField(normalizedFields, ACCOUNT_FIELD);
+        addBuiltinUserTableQueryField(normalizedFields, USERNAME_FIELD);
+        addBuiltinUserTableQueryField(normalizedFields, POSITION_ID_FIELD);
+        addBuiltinUserTableQueryField(normalizedFields, ROLE_ID_FIELD);
+        addBuiltinUserTableQueryField(normalizedFields, ENTRY_DATE_FIELD);
+        return new ArrayList<>(normalizedFields.values());
+    }
+
+    private boolean isBuiltinUserTableQueryField(String field) {
+        return ACCOUNT_FIELD.equals(field)
+                || USERNAME_FIELD.equals(field)
+                || POSITION_ID_FIELD.equals(field)
+                || ROLE_ID_FIELD.equals(field)
+                || ENTRY_DATE_FIELD.equals(field);
+    }
+
+    private void addBuiltinUserTableQueryField(Map<String, FxTableQueryFieldDTO> normalizedFields, String field) {
+        if (!normalizedFields.containsKey(field)) {
+            normalizedFields.put(field, buildBuiltinUserTableQueryField(field, null));
+        }
+    }
+
+    private FxTableQueryFieldDTO buildBuiltinUserTableQueryField(String field, FxTableQueryFieldDTO source) {
+        FxTableQueryFieldDTO queryField = new FxTableQueryFieldDTO();
+        if (source != null) {
+            BeanUtils.copyProperties(source, queryField);
+        }
+        queryField.setField(field);
+
+        if (ACCOUNT_FIELD.equals(field)) {
+            queryField.setLabel(resolveI18nText(ACCOUNT_TITLE_I18N_JSON, ACCOUNT_FIELD));
+            queryField.setQueryType("input");
+            queryField.setQueryOperator("like");
+            queryField.setDictCode(null);
+        } else if (USERNAME_FIELD.equals(field)) {
+            queryField.setLabel(resolveI18nText(USERNAME_TITLE_I18N_JSON, USERNAME_FIELD));
+            queryField.setQueryType("input");
+            queryField.setQueryOperator("like");
+            queryField.setDictCode(null);
+        } else if (POSITION_ID_FIELD.equals(field)) {
+            queryField.setLabel(resolveI18nText(POSITION_TITLE_I18N_JSON, POSITION_ID_FIELD));
+            queryField.setQueryType("select");
+            queryField.setQueryOperator("eq");
+            queryField.setDictCode(POSITION_ID_FIELD);
+        } else if (ROLE_ID_FIELD.equals(field)) {
+            queryField.setLabel(resolveI18nText(ROLE_TITLE_I18N_JSON, ROLE_ID_FIELD));
+            queryField.setQueryType("select");
+            queryField.setQueryOperator("eq");
+            queryField.setDictCode(ROLE_ID_FIELD);
+        } else if (ENTRY_DATE_FIELD.equals(field)) {
+            queryField.setLabel(resolveI18nText(ENTRY_DATE_TITLE_I18N_JSON, ENTRY_DATE_FIELD));
+            queryField.setQueryType("dateRange");
+            queryField.setQueryOperator("between");
+            queryField.setDictCode(null);
+        }
+        return queryField;
+    }
+
+    private void ensureBuiltinUserTableColumns(String tableCode, List<FxTableColumnDTO> columns) {
+        if (!USER_TABLE_CODE.equals(tableCode) || columns == null) {
+            return;
+        }
+
+        boolean hasUsernameColumn = columns.stream()
+                .anyMatch(column -> USERNAME_FIELD.equals(column.getField()));
+        if (hasUsernameColumn) {
+            return;
+        }
+
+        FxTableColumnDTO usernameColumn = new FxTableColumnDTO();
+        usernameColumn.setField(USERNAME_FIELD);
+        usernameColumn.setTitle(resolveI18nText(USERNAME_TITLE_I18N_JSON, USERNAME_FIELD));
+        usernameColumn.setWidth(140);
+        usernameColumn.setEllipsis(false);
+        usernameColumn.setSortable(false);
+        usernameColumn.setQueryable(false);
+        usernameColumn.setVisible(true);
+
+        int insertIndex = 0;
+        for (int i = 0; i < columns.size(); i++) {
+            if (ACCOUNT_FIELD.equals(columns.get(i).getField())) {
+                insertIndex = i + 1;
+                break;
+            }
+        }
+        columns.add(insertIndex, usernameColumn);
+    }
+
+    private void normalizeBuiltinColumns(String tableCode, List<FxTableColumnDTO> columns) {
+        if (columns == null) {
+            return;
+        }
+        if (USER_TABLE_CODE.equals(tableCode)) {
+            ensureBuiltinUserTableColumns(tableCode, columns);
+            return;
+        }
+        if (POSITION_TABLE_CODE.equals(tableCode)) {
+            normalizePositionTableColumns(columns);
+            return;
+        }
+        if (DICT_TABLE_CODE.equals(tableCode)) {
+            ensureDictActionColumn(columns);
+        }
+    }
+
+    private List<FxTableQueryFieldDTO> normalizeBuiltinQueryFields(String tableCode, List<FxTableQueryFieldDTO> queryFields) {
+        if (USER_TABLE_CODE.equals(tableCode)) {
+            return ensureBuiltinUserTableQueryFields(tableCode, queryFields);
+        }
+        if (POSITION_TABLE_CODE.equals(tableCode)) {
+            return ensurePositionTableQueryFields(queryFields);
+        }
+        return queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+    }
+
+    private void normalizePositionTableColumns(List<FxTableColumnDTO> columns) {
+        Map<String, FxTableColumnDTO> normalizedMap = new LinkedHashMap<>();
+        for (FxTableColumnDTO column : columns) {
+            if (column == null || !StringUtils.hasText(column.getField())) {
+                continue;
+            }
+            String normalizedField = normalizePositionField(column.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableColumnDTO normalized = new FxTableColumnDTO();
+            BeanUtils.copyProperties(column, normalized);
+            normalized.setField(normalizedField);
+            applyPositionColumnDefaults(normalized);
+            normalizedMap.put(normalizedField, normalized);
+        }
+
+        List<FxTableColumnDTO> orderedColumns = new ArrayList<>();
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "positionName"));
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "positionCode"));
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "positionLevel"));
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "orderNum"));
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "status"));
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "remark"));
+        orderedColumns.add(getOrCreatePositionColumn(normalizedMap, "createTime"));
+
+        for (Map.Entry<String, FxTableColumnDTO> entry : normalizedMap.entrySet()) {
+            if (containsField(orderedColumns, entry.getKey()) || ACTION_FIELD.equals(entry.getKey())) {
+                continue;
+            }
+            orderedColumns.add(entry.getValue());
+        }
+
+        orderedColumns.add(getOrCreatePositionActionColumn(normalizedMap));
+        columns.clear();
+        columns.addAll(orderedColumns);
+    }
+
+    private List<FxTableQueryFieldDTO> ensurePositionTableQueryFields(List<FxTableQueryFieldDTO> queryFields) {
+        Map<String, FxTableQueryFieldDTO> normalizedMap = new LinkedHashMap<>();
+        List<FxTableQueryFieldDTO> safeQueryFields =
+                queryFields == null ? new ArrayList<FxTableQueryFieldDTO>() : queryFields;
+        for (FxTableQueryFieldDTO queryField : safeQueryFields) {
+            if (queryField == null || !StringUtils.hasText(queryField.getField())) {
+                continue;
+            }
+            String normalizedField = normalizePositionField(queryField.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableQueryFieldDTO normalized = new FxTableQueryFieldDTO();
+            BeanUtils.copyProperties(queryField, normalized);
+            normalized.setField(normalizedField);
+            applyPositionQueryDefaults(normalized);
+            normalizedMap.put(normalizedField, normalized);
+        }
+
+        addPositionQueryField(normalizedMap, "positionName");
+        addPositionQueryField(normalizedMap, "positionCode");
+        addPositionQueryField(normalizedMap, "status");
+        return new ArrayList<>(normalizedMap.values());
+    }
+
+    private void ensureDictActionColumn(List<FxTableColumnDTO> columns) {
+        boolean hasAction = columns.stream().anyMatch(column -> ACTION_FIELD.equals(column.getField()));
+        if (hasAction) {
+            return;
+        }
+        FxTableColumnDTO actionColumn = new FxTableColumnDTO();
+        actionColumn.setField(ACTION_FIELD);
+        actionColumn.setTitle("操作");
+        actionColumn.setAlign("center");
+        actionColumn.setWidth(180);
+        actionColumn.setFixed("right");
+        actionColumn.setQueryable(false);
+        actionColumn.setVisible(true);
+        columns.add(actionColumn);
+    }
+
+    private String normalizePositionField(String field) {
+        if ("position_name".equals(field)) {
+            return "positionName";
+        }
+        if ("description".equals(field)) {
+            return "positionCode";
+        }
+        if ("create_by".equals(field)) {
+            return "createBy";
+        }
+        if ("create_time".equals(field)) {
+            return "createTime";
+        }
+        if ("update_by".equals(field)) {
+            return "updateBy";
+        }
+        if ("update_time".equals(field)) {
+            return "updateTime";
+        }
+        return field;
+    }
+
+    private FxTableColumnDTO getOrCreatePositionColumn(Map<String, FxTableColumnDTO> normalizedMap, String field) {
+        FxTableColumnDTO column = normalizedMap.get(field);
+        if (column == null) {
+            column = new FxTableColumnDTO();
+            column.setField(field);
+            applyPositionColumnDefaults(column);
+        }
+        return column;
+    }
+
+    private FxTableColumnDTO getOrCreatePositionActionColumn(Map<String, FxTableColumnDTO> normalizedMap) {
+        FxTableColumnDTO column = normalizedMap.get(ACTION_FIELD);
+        if (column == null) {
+            column = new FxTableColumnDTO();
+            column.setField(ACTION_FIELD);
+        }
+        column.setTitle("操作");
+        column.setAlign("center");
+        column.setWidth(160);
+        column.setFixed("right");
+        column.setQueryable(false);
+        column.setVisible(true);
+        return column;
+    }
+
+    private void applyPositionColumnDefaults(FxTableColumnDTO column) {
+        String field = column.getField();
+        if ("positionName".equals(field)) {
+            applyColumnDefaults(column, "职位名称", "left", 180, null);
+        } else if ("positionCode".equals(field)) {
+            applyColumnDefaults(column, "职位编码", "left", 140, null);
+        } else if ("positionLevel".equals(field)) {
+            applyColumnDefaults(column, "职位级别", "center", 120, "positionLevel");
+        } else if ("orderNum".equals(field)) {
+            applyColumnDefaults(column, "排序", "center", 90, null);
+        } else if ("status".equals(field)) {
+            applyColumnDefaults(column, "状态", "center", 100, "status");
+        } else if ("remark".equals(field)) {
+            applyColumnDefaults(column, "备注", "left", 220, null);
+        } else if ("createTime".equals(field)) {
+            applyColumnDefaults(column, "创建时间", "center", 180, null);
+        } else if ("createBy".equals(field)) {
+            applyColumnDefaults(column, "创建人", "left", 140, null);
+        } else if ("updateTime".equals(field)) {
+            applyColumnDefaults(column, "更新时间", "center", 180, null);
+        } else if ("updateBy".equals(field)) {
+            applyColumnDefaults(column, "更新人", "left", 140, null);
+        }
+    }
+
+    private void applyColumnDefaults(FxTableColumnDTO column, String title, String align, int width, String dictCode) {
+        column.setTitle(title);
+        if (!StringUtils.hasText(column.getAlign())) {
+            column.setAlign(align);
+        }
+        if (column.getWidth() == null) {
+            column.setWidth(width);
+        }
+        if (dictCode != null) {
+            column.setDictCode(dictCode);
+        }
+        if (column.getQueryable() == null) {
+            column.setQueryable(false);
+        }
+        if (column.getVisible() == null) {
+            column.setVisible(true);
+        }
+    }
+
+    private void applyPositionQueryDefaults(FxTableQueryFieldDTO queryField) {
+        String field = queryField.getField();
+        if ("positionName".equals(field)) {
+            queryField.setLabel("职位名称");
+            queryField.setQueryType("input");
+            queryField.setQueryOperator("like");
+            queryField.setDictCode(null);
+        } else if ("positionCode".equals(field)) {
+            queryField.setLabel("职位编码");
+            queryField.setQueryType("input");
+            queryField.setQueryOperator("like");
+            queryField.setDictCode(null);
+        } else if ("status".equals(field)) {
+            queryField.setLabel("状态");
+            queryField.setQueryType("select");
+            queryField.setQueryOperator("eq");
+            queryField.setDictCode("status");
+        }
+    }
+
+    private void addPositionQueryField(Map<String, FxTableQueryFieldDTO> normalizedMap, String field) {
+        if (normalizedMap.containsKey(field)) {
+            return;
+        }
+        FxTableQueryFieldDTO queryField = new FxTableQueryFieldDTO();
+        queryField.setField(field);
+        applyPositionQueryDefaults(queryField);
+        normalizedMap.put(field, queryField);
+    }
+
+    private boolean containsField(List<FxTableColumnDTO> columns, String field) {
+        return columns.stream().anyMatch(column -> field.equals(column.getField()));
     }
 }

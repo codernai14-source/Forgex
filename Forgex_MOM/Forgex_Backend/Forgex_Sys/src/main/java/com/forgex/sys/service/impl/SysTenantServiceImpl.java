@@ -348,6 +348,13 @@ public class SysTenantServiceImpl implements SysTenantService {
             dto.setTenantTypeDesc(tenant.getTenantType().getDesc());
         }
         
+        if (tenant.getParentTenantId() != null) {
+            SysTenant parentTenant = tenantMapper.selectById(tenant.getParentTenantId());
+            if (parentTenant != null && !Boolean.TRUE.equals(parentTenant.getDeleted())) {
+                dto.setParentTenantName(parentTenant.getTenantName());
+            }
+        }
+
         return dto;
     }
 }

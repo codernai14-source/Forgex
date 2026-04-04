@@ -47,11 +47,18 @@ export interface CaptchaConfig {
 
 export interface PasswordPolicyConfig {
   store: string
+  defaultPassword: string
   minLength: number
   requireNumbers: boolean
   requireUppercase: boolean
   requireLowercase: boolean
   requireSymbols: boolean
+}
+
+export interface LoginSecurityConfig {
+  failWindowMinutes: number
+  maxFailCount: number
+  lockMinutes: number
 }
 
 export interface CryptoTransportConfig {
@@ -64,7 +71,19 @@ export interface CryptoTransportConfig {
 export interface SecurityConfig {
   captcha: CaptchaConfig
   passwordPolicy: PasswordPolicyConfig
+  loginSecurity: LoginSecurityConfig
   cryptoTransport: CryptoTransportConfig
+}
+
+export interface EmailConfig {
+  providerType: 'local' | 'aliyun' | 'qq' | string
+  senderAccount: string
+  senderPassword: string
+  smtpHost: string
+  smtpPort: number
+  authEnabled: boolean
+  sslEnabled: boolean
+  starttlsEnabled: boolean
 }
 
 export interface FileUploadConfig {
@@ -116,11 +135,17 @@ export function createDefaultSecurityConfig(): SecurityConfig {
     },
     passwordPolicy: {
       store: 'bcrypt',
+      defaultPassword: 'Aa123456',
       minLength: 8,
       requireNumbers: true,
       requireUppercase: false,
       requireLowercase: false,
       requireSymbols: false,
+    },
+    loginSecurity: {
+      failWindowMinutes: 15,
+      maxFailCount: 5,
+      lockMinutes: 30,
     },
     cryptoTransport: {
       algorithm: 'SM2',
@@ -128,6 +153,19 @@ export function createDefaultSecurityConfig(): SecurityConfig {
       privateKey: '',
       cipher: 'BCD',
     },
+  }
+}
+
+export function createDefaultEmailConfig(): EmailConfig {
+  return {
+    providerType: 'local',
+    senderAccount: '',
+    senderPassword: '',
+    smtpHost: '',
+    smtpPort: 465,
+    authEnabled: true,
+    sslEnabled: true,
+    starttlsEnabled: true,
   }
 }
 
@@ -162,6 +200,14 @@ export function getSecurityConfig() {
 
 export function setSecurityConfig(data: SecurityConfig) {
   return http.put('/sys/config/security', data)
+}
+
+export function getEmailConfig() {
+  return http.get<EmailConfig>('/sys/config/email')
+}
+
+export function setEmailConfig(data: EmailConfig) {
+  return http.put('/sys/config/email', data)
 }
 
 export function getFileUploadConfig() {

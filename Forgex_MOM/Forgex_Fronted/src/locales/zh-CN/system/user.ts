@@ -103,7 +103,7 @@ export default {
     editSuccess: '编辑用户成功',
     saveSuccess: '保存用户成功',
     resetPasswordSuccess: '重置密码成功',
-    resetPasswordConfirm: '确定要重置该用户的密码吗？',
+    resetPasswordConfirm: '确定要重置该用户的密码吗？密码将重置为系统配置中的默认密码。',
     lockSuccess: '锁定用户成功',
     unlockSuccess: '解锁用户成功',
     exportSuccess: '导出成功',

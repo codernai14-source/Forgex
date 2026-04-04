@@ -91,12 +91,13 @@ async function initData() {
   if (!innerUserId.value) return
   loading.value = true
   try {
+    const tenantId = userStore.tenantId || sessionStorage.getItem('tenantId') || undefined
     const [roleList, assigned] = await Promise.all([
-      getRoleList({ tenantId: userStore.tenantId }),
+      getRoleList(tenantId ? { tenantId } : {}),
       userApi.getUserAssignedRoles(innerUserId.value),
     ])
     roleOptions.value = (roleList || []).map((r: any) => ({
-      label: r.roleCode ? `${r.roleName}（${r.roleCode}）` : r.roleName,
+      label: [r.roleName, r.roleCode || r.roleKey].filter(Boolean).join(' / '),
       value: Number(r.id),
     }))
     selectedRoleIds.value = (assigned?.assignedRoleIds || []).map((id: any) => Number(id))
@@ -125,7 +126,7 @@ async function handleOk() {
   loading.value = true
   try {
     await userApi.saveUserRoles(innerUserId.value, selectedRoleIds.value)
-    message.success('保存成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     visible.value = false
     emit('success')
   } catch (e) {

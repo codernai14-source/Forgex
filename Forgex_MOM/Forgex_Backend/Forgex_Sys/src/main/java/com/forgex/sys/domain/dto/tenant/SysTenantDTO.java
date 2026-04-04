@@ -19,11 +19,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 租户返回对象
+ * 绉熸埛杩斿洖瀵硅薄
  * <p>
- * 用于前端展示的租户信息
+ * 鐢ㄤ簬鍓嶇灞曠ず鐨勭鎴蜂俊鎭?
  * </p>
- * 
+ *
  * @author coder_nai
  * @version 1.0
  * @see com.forgex.sys.domain.entity.SysTenant
@@ -31,40 +31,46 @@ import java.time.LocalDateTime;
  */
 @Data
 public class SysTenantDTO {
-    
-    /** 租户ID */
+
+    /** 绉熸埛ID */
     private Long id;
-    
-    /** 租户名称 */
+
+    /** 绉熸埛鍚嶇О */
     private String tenantName;
-    
-    /** 租户编码 */
+
+    /** 绉熸埛缂栫爜 */
     private String tenantCode;
-    
-    /** 描述 */
+
+    /** 鎻忚堪 */
     private String description;
-    
+
     /** Logo */
     private String logo;
-    
-    /** 租户类别 */
+
+    /** 绉熸埛绫诲埆 */
     private TenantTypeEnum tenantType;
-    
-    /** 租户类别描述 */
+
+    /** 绉熸埛绫诲埆鎻忚堪 */
     private String tenantTypeDesc;
-    
-    /** 状态：false=禁用，true=启用 */
+
+    /** 父租户 ID */
+    private Long parentTenantId;
+
+    /** 父租户名称 */
+    private String parentTenantName;
+
+    /** 鐘舵€侊細false=绂佺敤锛宼rue=鍚敤 */
     private Boolean status;
-    
-    /** 创建时间 */
+
+    /** 鍒涘缓鏃堕棿 */
     private LocalDateTime createTime;
-    
-    /** 更新时间 */
+
+    /** 鏇存柊鏃堕棿 */
     private LocalDateTime updateTime;
-    
-    /** 创建人 */
+
+    /** 鍒涘缓浜?*/
     private String createBy;
-    
-    /** 更新人 */
+
+    /** 鏇存柊浜?*/
     private String updateBy;
 }

@@ -34,7 +34,7 @@
         </a-tag>
       </template>
 
-      <template #parentTenant="{ record }">
+      <template #parentTenantName="{ record }">
         <span v-if="record.parentTenantId" class="text-gray-600">
           {{ record.parentTenantName || '-' }}
         </span>
@@ -370,18 +370,18 @@ async function handleSave() {
 
     if (formData.id) {
       await updateTenant(formData)
-      message.success('更新成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       // 新增租户
       const tenantId = await createTenant(formData)
-      message.success('新增成功，开始初始化租户数据...')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
       
       // 查询任务详情，获取任务 ID
       try {
         // 延迟一点，等待异步任务创建
         await new Promise(resolve => setTimeout(resolve, 500))
         
-        // 通过租户 ID 查询任务详情（任务表中租户 ID 是唯一的）
+        // 查询租户 ID 查询任务详情（任务表中租户 ID 是唯一的）
         // 这里需要后端提供一个通过租户 ID 查询任务的接口
         // 暂时假设后端会返回任务 ID，或者前端轮询查询
         const taskId = await queryTaskByTenantId(tenantId)
@@ -455,7 +455,7 @@ const handleInitProgressFinish = () => {
 async function handleDelete(record: TenantDTO) {
   try {
     await deleteTenant({ id: record.id })
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (e: any) {
     message.error(e.message || '删除失败')

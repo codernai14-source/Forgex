@@ -195,7 +195,7 @@
 
           <a-col :span="12">
             <a-form-item :label="t('system.menu.icon')" name="icon">
-              <a-input
+              <IconPicker
                 v-model:value="formData.icon"
                 :placeholder="t('system.menu.form.iconPlaceholder')"
               />
@@ -288,6 +288,7 @@ import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
+import IconPicker from '@/components/common/IconPicker.vue'
 import { listModules } from '@/api/system/module'
 import {
   addMenu,
@@ -749,10 +750,10 @@ async function handleSubmit() {
 
     if (payload.id) {
       await updateMenu(payload as any)
-      message.success(t('common.updateSuccess'))
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       await addMenu(payload as any)
-      message.success(t('common.addSuccess'))
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
 
     visible.value = false
@@ -780,7 +781,7 @@ function handleDelete(id: string | number) {
       try {
         await deleteMenu(String(id))
         selectedRowKeys.value = selectedRowKeys.value.filter((item) => item !== String(id))
-        message.success(t('common.deleteSuccess'))
+        // 成功提示由后端返回，在 http 拦截器中统一处理
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('delete menu failed:', error)
@@ -805,7 +806,7 @@ function handleBatchDelete() {
       try {
         await batchDeleteMenus(selectedRowKeys.value)
         selectedRowKeys.value = []
-        message.success(t('common.deleteSuccess'))
+        // 成功提示由后端返回，在 http 拦截器中统一处理
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('batch delete menu failed:', error)

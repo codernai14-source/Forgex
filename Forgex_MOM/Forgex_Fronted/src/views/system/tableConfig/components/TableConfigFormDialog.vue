@@ -342,10 +342,10 @@ const handleSubmit = async () => {
     
     if (props.isEdit && props.configId) {
       await updateTableConfig(submitData)
-      message.success(t('common.updateSuccess'))
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       await createTableConfig(submitData)
-      message.success(t('common.addSuccess'))
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
     
     emit('success')

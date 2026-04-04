@@ -19,6 +19,8 @@ import com.forgex.common.base.BaseGetParam;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDate;
+
 /**
  * 用户查询DTO
  * 
@@ -53,6 +55,21 @@ public class SysUserQueryDTO extends BaseGetParam {
      * 职位ID
      */
     private Long positionId;
+
+    /**
+     * 角色ID
+     */
+    private Long roleId;
+
+    /**
+     * 入职开始日期
+     */
+    private LocalDate entryDateStart;
+
+    /**
+     * 入职结束日期
+     */
+    private LocalDate entryDateEnd;
     
     /**
      * 状态：false=禁用，true=启用

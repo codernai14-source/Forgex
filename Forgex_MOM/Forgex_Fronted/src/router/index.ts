@@ -306,6 +306,106 @@ function normalizeAuthorizationRoutes(routes: any[]) {
   return cloned
 }
 
+function normalizeSystemConfigRoutes(routes: any[]) {
+  const cloned = Array.isArray(routes)
+    ? JSON.parse(JSON.stringify(routes))
+    : []
+
+  const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
+  if (!sysRoute || !Array.isArray(sysRoute.children)) {
+    return cloned
+  }
+
+  groupSystemMenus(sysRoute.children, {
+    catalogPath: 'pageTableConfig',
+    title: '页表配置',
+    icon: 'TableOutlined',
+    childPaths: ['tableConfig', 'userTableConfig'],
+  })
+
+  groupSystemMenus(sysRoute.children, {
+    catalogPath: 'excelConfig',
+    title: 'Excel配置',
+    icon: 'FileExcelOutlined',
+    childPaths: ['excelImportConfig', 'excelExportConfig'],
+  })
+
+  return cloned
+}
+
+function groupSystemMenus(
+  menuList: any[],
+  options: {
+    catalogPath: string
+    title: string
+    icon: string
+    childPaths: string[]
+  },
+) {
+  const catalogIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
+  const existingCatalog = catalogIndex >= 0 ? menuList[catalogIndex] : null
+  const catalogChildren = Array.isArray(existingCatalog?.children) ? existingCatalog.children : []
+
+  const detachedChildren: any[] = []
+  let insertIndex = catalogIndex >= 0 ? catalogIndex : menuList.length
+
+  options.childPaths.forEach(childPath => {
+    const rootIndex = menuList.findIndex((item: any) => String(item?.path || '') === childPath)
+    if (rootIndex !== -1) {
+      if (detachedChildren.length === 0) {
+        insertIndex = Math.min(insertIndex, rootIndex)
+      }
+      detachedChildren.push(menuList[rootIndex])
+      menuList.splice(rootIndex, 1)
+    }
+  })
+
+  const mergedChildren = [...catalogChildren]
+  detachedChildren.forEach(child => {
+    const exists = mergedChildren.some((item: any) => String(item?.path || '') === String(child?.path || ''))
+    if (!exists) {
+      mergedChildren.push(child)
+    }
+  })
+
+  if (mergedChildren.length === 0) {
+    return
+  }
+
+  const catalog = existingCatalog || {
+    path: options.catalogPath,
+    name: options.catalogPath,
+    meta: {
+      title: options.title,
+      icon: options.icon,
+      module: 'sys',
+      menuLevel: 1,
+      type: 'catalog',
+    },
+    children: [],
+  }
+
+  catalog.meta = {
+    ...(catalog.meta || {}),
+    title: options.title,
+    icon: options.icon,
+    module: 'sys',
+    menuLevel: 1,
+    type: 'catalog',
+  }
+  catalog.children = mergedChildren
+
+  if (catalogIndex >= 0) {
+    const refreshedIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
+    if (refreshedIndex !== -1) {
+      menuList[refreshedIndex] = catalog
+    }
+    return
+  }
+
+  menuList.splice(Math.min(insertIndex, menuList.length), 0, catalog)
+}
+
 /**
  * 已注入的动态路由名称集合
  * <p>
@@ -343,7 +443,9 @@ export async function injectDynamicRoutes(payload: any) {
 
   // 解析模块和路由数据
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
-  const routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
+  const routesPayload = normalizeSystemConfigRoutes(
+    normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : []),
+  )
 
   // 更新动态模块和路由列表
   dynamicModules.value = mods

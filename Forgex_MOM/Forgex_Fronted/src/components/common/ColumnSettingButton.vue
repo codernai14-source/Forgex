@@ -216,21 +216,13 @@ async function loadUserConfig() {
   try {
     const result = await getUserColumns(props.tableCode)
     if (result && result.columns && result.columns.length > 0) {
-      // 应用用户配置
-      const userColumnsMap = new Map<string, FxTableColumn>()
-      result.columns.forEach(col => {
-        userColumnsMap.set(col.field, col)
-      })
-
-      localColumns.value = props.columns.map((col, index) => {
-        const userCol = userColumnsMap.get(col.field)
-        return {
-          field: col.field,
-          title: col.title,
-          visible: userCol?.visible !== false,
-          order: userCol?.order ?? index
-        }
-      })
+      // 列设置面板要保留完整列，隐藏列也必须继续展示为“已隐藏”状态
+      localColumns.value = result.columns.map((col, index) => ({
+        field: col.field,
+        title: col.title,
+        visible: col.visible !== false,
+        order: col.order ?? index
+      }))
       // 按 order 排序
       localColumns.value.sort((a, b) => a.order - b.order)
     } else {

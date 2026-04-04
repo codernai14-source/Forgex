@@ -72,6 +72,10 @@ export interface UserQuery {
   phone?: string
   departmentId?: string
   positionId?: string
+  roleId?: string
+  entryDate?: string[]
+  entryDateStart?: string
+  entryDateEnd?: string
   status?: boolean
   pageNum: number
   pageSize: number

@@ -40,6 +40,7 @@ import com.forgex.common.domain.config.CaptchaConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.domain.config.InitStatusConfig;
+import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 
@@ -111,7 +112,7 @@ public class InitServiceImpl implements InitService {
         try {
             writeSecurityConfigsToCommon(param);
             PasswordPolicyConfig policyCheck = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
-            String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456@" : param.getInitialPassword();
+            String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456" : param.getInitialPassword();
             if (!validatePassword(initPwd, policyCheck)) { return R.fail(CommonPrompt.INIT_PASSWORD_INVALID); }
             clearAdminTables(); // 清空 admin 相关业务表（忽略租户过滤，保证幂等）
             seedAdminData(param); // 重建租户、用户、角色以及绑定关系
@@ -156,10 +157,13 @@ public class InitServiceImpl implements InitService {
             pwdPolicy.setRequireLowercase(false);
             pwdPolicy.setRequireSymbols(false);
         }
+        String initPwd = (p == null || !StringUtils.hasText(p.getInitialPassword())) ? "Aa123456" : p.getInitialPassword();
+        pwdPolicy.setDefaultPassword(initPwd);
         String store = p == null ? null : p.getPasswordStore();
         String storeLower = store == null ? "sm2" : store.toLowerCase();
         pwdPolicy.setStore(storeLower);
         configService.setJson("security.password.policy", pwdPolicy);
+        configService.setJson("security.login.failure", LoginSecurityConfig.defaults());
 
         if ("sm4".equalsIgnoreCase(storeLower)) {
             byte[] k = new byte[16]; new SecureRandom().nextBytes(k);
@@ -267,7 +271,7 @@ public class InitServiceImpl implements InitService {
 
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
         String store = policy == null ? "bcrypt" : policy.getStore();
-        String rawInitPwd = (p == null || p.getInitialPassword() == null || p.getInitialPassword().isEmpty()) ? "Aa123456@" : p.getInitialPassword();
+        String rawInitPwd = (p == null || p.getInitialPassword() == null || p.getInitialPassword().isEmpty()) ? "Aa123456" : p.getInitialPassword();
 
         List<SysUser> users = new ArrayList<>();
         users.add(newUser("admin", rawInitPwd, store));
@@ -429,7 +433,12 @@ public class InitServiceImpl implements InitService {
                 Collections.singletonList(new String[]{"sys:online:kickout", "强制下线", "Kick Out"})
         );
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 90, "excelImportConfig", "Excel导入配置", "Excel Import Config",
+        SysMenu excelConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "excelConfig",
+                "Excel配置", "Excel Config", "FileExcelOutlined", null, null, 90, 1);
+        grantedMenuIds.add(excelConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, excelConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "excelImportConfig", "Excel导入配置", "Excel Import Config",
                 "ImportOutlined", "SystemExcelImportConfig", "sys:excel:importConfig:list",
                 Arrays.asList(
                         new String[]{"sys:excel:importConfig:edit", "编辑导入配置", "Edit Import Config"},
@@ -437,14 +446,20 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:excel:template:download", "下载导入模板", "Download Template"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 100, "excelExportConfig", "Excel导出配置", "Excel Export Config",
+        addMenuWithButtons(tenantId, moduleId, excelConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "excelExportConfig", "Excel导出配置", "Excel Export Config",
                 "ExportOutlined", "SystemExcelExportConfig", "sys:excel:exportConfig:list",
                 Arrays.asList(
                         new String[]{"sys:excel:exportConfig:edit", "编辑导出配置", "Edit Export Config"},
                         new String[]{"sys:excel:exportConfig:delete", "删除导出配置", "Delete Export Config"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 110, "tableConfig", "动态表格配置", "Dynamic Table Config",
+        SysMenu pageTableConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "pageTableConfig",
+                "页表配置", "Page Table Config", "TableOutlined", null, null, 100, 1);
+        grantedMenuIds.add(pageTableConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, pageTableConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "tableConfig", "动态表格配置", "Dynamic Table Config",
                 "TableOutlined", "SystemTableConfig", "sys:tableConfig:view",
                 Arrays.asList(
                         new String[]{"sys:tableConfig:add", "新增表格配置", "Add Table Config"},
@@ -452,11 +467,12 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:tableConfig:delete", "删除表格配置", "Delete Table Config"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 120, "userTableConfig", "用户列设置", "User Table Config",
+        addMenuWithButtons(tenantId, moduleId, pageTableConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "userTableConfig", "用户列设置", "User Table Config",
                 "ColumnWidthOutlined", "SystemUserTableConfig", "sys:userTableConfig:view",
                 Arrays.asList());
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 130, "tenantMessageWhitelist", "租户消息白名单", "Tenant Message Whitelist",
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 110, "tenantMessageWhitelist", "租户消息白名单", "Tenant Message Whitelist",
                 "SafetyCertificateOutlined", "SystemTenantMessageWhitelist", "sys:tenant-message-whitelist:view",
                 Arrays.asList(
                         new String[]{"sys:tenant-message-whitelist:create", "新增白名单", "Add Whitelist"},
@@ -464,12 +480,12 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:tenant-message-whitelist:delete", "删除白名单", "Delete Whitelist"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 140, "loginLog", "登录日志", "Login Log",
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 120, "loginLog", "登录日志", "Login Log",
                 "LoginOutlined", "SystemLoginLog", "sys:loginLog:view",
                 Collections.singletonList(new String[]{"sys:excel:export:loginLog", "导出登录日志", "Export Login Log"})
         );
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 150, "operationLog", "操作日志", "Operation Log",
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 130, "operationLog", "操作日志", "Operation Log",
                 "FileTextOutlined", "SystemOperationLog", "sys:operation-log:view",
                 Collections.singletonList(new String[]{"sys:operation-log:export", "导出操作日志", "Export Operation Log"})
         );
@@ -510,7 +526,15 @@ public class InitServiceImpl implements InitService {
                                     int orderNum, String path, String zhName, String enName,
                                     String icon, String componentKey, String menuPermKey,
                                     List<String[]> buttonDefs) {
-        SysMenu menu = insertMenu(tenantId, moduleId, 0L, "menu", path, zhName, enName, icon, componentKey, menuPermKey, orderNum, 1);
+        addMenuWithButtons(tenantId, moduleId, 0L, 1, grantedMenuIds, orderNum, path, zhName, enName,
+                icon, componentKey, menuPermKey, buttonDefs);
+    }
+
+    private void addMenuWithButtons(Long tenantId, Long moduleId, Long parentId, int menuLevel,
+                                    List<Long> grantedMenuIds, int orderNum, String path,
+                                    String zhName, String enName, String icon, String componentKey,
+                                    String menuPermKey, List<String[]> buttonDefs) {
+        SysMenu menu = insertMenu(tenantId, moduleId, parentId, "menu", path, zhName, enName, icon, componentKey, menuPermKey, orderNum, menuLevel);
         grantedMenuIds.add(menu.getId());
 
         int buttonOrder = 1;

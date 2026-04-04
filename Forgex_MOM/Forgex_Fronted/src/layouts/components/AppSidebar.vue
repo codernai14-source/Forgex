@@ -347,22 +347,49 @@ const onCollapse = (collapsed: boolean) => {
 .app-sidebar-wrapper {
   display: flex;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-sidebar-mini {
   background: var(--fx-sider-mini-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  min-height: 0;
+  overflow: hidden;
   
   :deep(.ant-layout-sider-children) {
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 }
 
 .mini-menu {
   flex: 1;
+  height: 100%;
+  min-height: 0;
   background: transparent;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
   
   :deep(.ant-menu-item) {
     display: flex;
@@ -431,6 +458,8 @@ const onCollapse = (collapsed: boolean) => {
 .app-sidebar {
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  min-height: 0;
+  overflow: hidden;
   
   :deep(.ant-layout-sider-trigger) {
     background: rgba(0, 0, 0, 0.2);
@@ -444,6 +473,7 @@ const onCollapse = (collapsed: boolean) => {
 
 .sidebar-menu {
   height: 100%;
+  min-height: 0;
   background: transparent;
   border-right: none;
   overflow-y: auto;

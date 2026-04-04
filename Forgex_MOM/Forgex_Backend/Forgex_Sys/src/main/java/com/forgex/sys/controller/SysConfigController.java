@@ -15,6 +15,8 @@ package com.forgex.sys.controller;
 
 import com.forgex.common.config.ConfigService;
 import com.forgex.common.domain.config.CryptoTransportConfig;
+import com.forgex.common.domain.config.EmailConfig;
+import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
@@ -49,7 +51,9 @@ public class SysConfigController {
     private static final String KEY_LOGIN_CAPTCHA = "login.captcha";
     private static final String KEY_SYSTEM_BASIC = "system.basic";
     private static final String KEY_SECURITY_PASSWORD_POLICY = "security.password.policy";
+    private static final String KEY_SECURITY_LOGIN_FAILURE = "security.login.failure";
     private static final String KEY_SECURITY_CRYPTO_TRANSPORT = "security.crypto.transport";
+    private static final String KEY_MAIL_SETTINGS = "mail.settings";
     private static final String KEY_FILE_UPLOAD = "file.upload.settings";
 
     @Autowired
@@ -207,12 +211,14 @@ public class SysConfigController {
         // 2. 从 ConfigService 获取各项配置
         CaptchaConfig captcha = configService.getJson(KEY_LOGIN_CAPTCHA, CaptchaConfig.class, defaults.getCaptcha());
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults.getPasswordPolicy());
+        LoginSecurityConfig loginSecurity = configService.getJson(KEY_SECURITY_LOGIN_FAILURE, LoginSecurityConfig.class, defaults.getLoginSecurity());
         CryptoTransportConfig transport = configService.getJson(KEY_SECURITY_CRYPTO_TRANSPORT, CryptoTransportConfig.class, defaults.getCryptoTransport());
 
         // 3. 组装安全配置对象
         SecurityConfig result = new SecurityConfig();
         result.setCaptcha(captcha == null ? CaptchaConfig.defaults() : captcha);
         result.setPasswordPolicy(policy == null ? SecurityConfig.defaults().getPasswordPolicy() : policy);
+        result.setLoginSecurity(loginSecurity == null ? SecurityConfig.defaults().getLoginSecurity() : loginSecurity);
         result.setCryptoTransport(transport == null ? SecurityConfig.defaults().getCryptoTransport() : transport);
         
         // 4. 返回安全配置对象
@@ -251,11 +257,17 @@ public class SysConfigController {
         // 2. 分别获取各项配置，使用默认值兜底
         CaptchaConfig captcha = config.getCaptcha() == null ? CaptchaConfig.defaults() : config.getCaptcha();
         PasswordPolicyConfig policy = config.getPasswordPolicy() == null ? SecurityConfig.defaults().getPasswordPolicy() : config.getPasswordPolicy();
+        LoginSecurityConfig loginSecurity = config.getLoginSecurity() == null ? SecurityConfig.defaults().getLoginSecurity() : config.getLoginSecurity();
         CryptoTransportConfig transport = config.getCryptoTransport() == null ? SecurityConfig.defaults().getCryptoTransport() : config.getCryptoTransport();
+
+        if (!isPasswordValid(policy.getDefaultPassword(), policy)) {
+            return R.fail(CommonPrompt.DEFAULT_PASSWORD_INVALID);
+        }
 
         // 3. 分别保存各项配置
         configService.setJson(KEY_LOGIN_CAPTCHA, captcha);
         configService.setJson(KEY_SECURITY_PASSWORD_POLICY, policy);
+        configService.setJson(KEY_SECURITY_LOGIN_FAILURE, loginSecurity);
         configService.setJson(KEY_SECURITY_CRYPTO_TRANSPORT, transport);
         
         // 4. 返回保存成功提示
@@ -281,6 +293,18 @@ public class SysConfigController {
      *         - message: 提示信息
      * @see FileUploadConfig
      */
+    @GetMapping("/email")
+    public R<EmailConfig> getEmailConfig() {
+        EmailConfig config = configService.getGlobalJson(KEY_MAIL_SETTINGS, EmailConfig.class, EmailConfig.defaults());
+        return R.ok(config == null ? EmailConfig.defaults() : config);
+    }
+
+    @PutMapping("/email")
+    public R<Boolean> setEmailConfig(@RequestBody EmailConfig config) {
+        configService.setGlobalJson(KEY_MAIL_SETTINGS, config == null ? EmailConfig.defaults() : config);
+        return R.ok(CommonPrompt.SAVE_SUCCESS, true);
+    }
+
     @GetMapping("/file-upload")
     public R<FileUploadConfig> getFileUploadConfig() {
         // 1. 调用 ConfigService 获取全局文件上传配置，使用默认配置作为兜底
@@ -320,5 +344,28 @@ public class SysConfigController {
         configService.setGlobalJson(KEY_FILE_UPLOAD, config == null ? FileUploadConfig.defaults() : config);
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
+    }
+
+    private boolean isPasswordValid(String password, PasswordPolicyConfig policy) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
+        int minLength = policy == null || policy.getMinLength() == null ? 0 : policy.getMinLength();
+        if (password.length() < minLength) {
+            return false;
+        }
+        if (policy != null && Boolean.TRUE.equals(policy.getRequireNumbers()) && !password.matches(".*\\d.*")) {
+            return false;
+        }
+        if (policy != null && Boolean.TRUE.equals(policy.getRequireUppercase()) && !password.matches(".*[A-Z].*")) {
+            return false;
+        }
+        if (policy != null && Boolean.TRUE.equals(policy.getRequireLowercase()) && !password.matches(".*[a-z].*")) {
+            return false;
+        }
+        if (policy != null && Boolean.TRUE.equals(policy.getRequireSymbols()) && !password.matches(".*[^A-Za-z0-9].*")) {
+            return false;
+        }
+        return true;
     }
 }

@@ -33,6 +33,8 @@ import lombok.Setter;
 public class PasswordPolicyConfig {
     /** 存储算法 */
     private String store;
+    /** 榛樿瀵嗙爜 */
+    private String defaultPassword;
     /** 最小长度 */
     private Integer minLength;
     /** 是否要求包含数字 */

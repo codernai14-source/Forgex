@@ -20,69 +20,45 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-/**
- * 消息模板数据校验器
- * 
- * 职责：
- * - 校验消息模板参数的合法性
- * - 校验模板编码的唯一性
- * - 校验必填字段
- * 
- * @author Forgex Team
- * @version 1.0.0
- * @see SysMessageTemplateService
- */
 @Component
 @RequiredArgsConstructor
 public class MessageTemplateValidator {
-    
-    private final SysMessageTemplateService messageTemplateService;
-    
-    /**
-     * 校验模板 ID 合法性
-     * 
-     * @param id 模板 ID
-     * @throws BusinessException ID 为空时抛出
-     */
-    public void validateId(Long id) {
-        Assert.notNull(id, "模板 ID 不能为空");
-    }
-    
-    /**
-     * 校验批量删除的 ID 列表
-     * 
-     * @param ids 模板 ID 列表
-     * @throws BusinessException ID 列表为空时抛出
-     */
-    public void validateBatchIds(List<Long> ids) {
-        Assert.isTrue(!CollectionUtils.isEmpty(ids), "模板 ID 列表不能为空");
-    }
-    
-    /**
-     * 保存模板校验（新增或修改）
-     * 
-     * @param dto 模板保存参数
-     * @throws BusinessException 参数校验失败时抛出
-     */
-    public void validateForSave(SysMessageTemplateSaveDTO dto) {
-        // 1. 必填项校验
-        Assert.hasText(dto.getTemplateName(), "模板名称不能为空");
-        Assert.hasText(dto.getTemplateCode(), "模板编码不能为空");
 
-        
-        // 2. 模板编码唯一性校验
+    private static final String MSG_TEMPLATE_ID_REQUIRED = "\u6a21\u677f ID \u4e0d\u80fd\u4e3a\u7a7a";
+    private static final String MSG_TEMPLATE_IDS_REQUIRED = "\u6a21\u677f ID \u5217\u8868\u4e0d\u80fd\u4e3a\u7a7a";
+    private static final String MSG_TEMPLATE_NAME_REQUIRED = "\u6a21\u677f\u540d\u79f0\u4e0d\u80fd\u4e3a\u7a7a";
+    private static final String MSG_TEMPLATE_CODE_REQUIRED = "\u6a21\u677f\u7f16\u7801\u4e0d\u80fd\u4e3a\u7a7a";
+    private static final String MSG_TEMPLATE_CODE_EXISTS = "\u6a21\u677f\u7f16\u7801\u5df2\u5b58\u5728";
+    private static final String MSG_TEMPLATE_CODE_IN_USE = "\u6a21\u677f\u7f16\u7801\u5df2\u88ab\u5176\u4ed6\u6a21\u677f\u4f7f\u7528";
+
+    private final SysMessageTemplateService messageTemplateService;
+
+    public void validateId(Long id) {
+        Assert.notNull(id, MSG_TEMPLATE_ID_REQUIRED);
+    }
+
+    public void validateBatchIds(List<Long> ids) {
+        Assert.isTrue(!CollectionUtils.isEmpty(ids), MSG_TEMPLATE_IDS_REQUIRED);
+    }
+
+    public void validateForSave(SysMessageTemplateSaveDTO dto) {
+        Assert.isTrue(
+                StringUtils.hasText(dto.getTemplateName()) || StringUtils.hasText(dto.getTemplateNameI18nJson()),
+                MSG_TEMPLATE_NAME_REQUIRED
+        );
+        Assert.hasText(dto.getTemplateCode(), MSG_TEMPLATE_CODE_REQUIRED);
+
         if (dto.getId() == null) {
-            // 新增时检查编码是否存在
             if (messageTemplateService.existsByCode(dto.getTemplateCode())) {
-                throw new BusinessException("模板编码已存在");
+                throw new BusinessException(MSG_TEMPLATE_CODE_EXISTS);
             }
         } else {
-            // 修改时检查编码是否被其他模板使用
             if (messageTemplateService.existsByCodeExcludeId(dto.getTemplateCode(), dto.getId())) {
-                throw new BusinessException("模板编码已被其他模板使用");
+                throw new BusinessException(MSG_TEMPLATE_CODE_IN_USE);
             }
         }
     }

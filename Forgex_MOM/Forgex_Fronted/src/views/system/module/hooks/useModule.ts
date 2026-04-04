@@ -77,7 +77,7 @@ export function useModule() {
   const handleDelete = async (id: string) => {
     try {
       await deleteModule(id)
-      message.success('删除成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
       loadData()
     } catch (error) {
       console.error('删除模块失败:', error)
@@ -96,7 +96,7 @@ export function useModule() {
 
     try {
       await batchDeleteModules(selectedRowKeys.value)
-      message.success('批量删除成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
       selectedRowKeys.value = []
       loadData()
     } catch (error) {

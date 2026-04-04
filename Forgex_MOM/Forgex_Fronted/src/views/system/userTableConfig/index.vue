@@ -421,9 +421,14 @@ const openEditDialog = async (record: UserTableConfigRow) => {
       return
     }
 
+    const editableBaseColumns =
+      Array.isArray(userConfig?.columns) && userConfig.columns.length > 0
+        ? userConfig.columns
+        : baseConfig.columns
+
     formData.tableCode = record.tableCode
     formData.pageSize = userConfig?.pageSize || baseConfig.defaultPageSize || 20
-    formData.columns = buildEditableColumns(baseConfig.columns, userConfig)
+    formData.columns = buildEditableColumns(editableBaseColumns, userConfig)
     dialogVisible.value = true
   } catch (error) {
     console.error('open user table config dialog failed', error)

@@ -339,6 +339,9 @@ public class SysDepartmentController {
         String deptName = department.getDeptName();
         
         Boolean success = departmentService.delete(id, tenantId);
+        if (!Boolean.TRUE.equals(success)) {
+            return R.fail(CommonPrompt.OPERATION_FAILED);
+        }
         // 使用部门名称填充"删除成功"提示的占位符参数
         return R.okWithArgs(CommonPrompt.DELETE_SUCCESS, deptName);
     }

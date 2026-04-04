@@ -4,7 +4,7 @@
       v-model:value="localValue"
       :placeholder="placeholder"
       :rows="rows"
-      @change="handleChange"
+      @update:value="handleChange"
     />
     <div class="placeholder-toolbar">
       <a-space wrap>
@@ -107,7 +107,10 @@ const insertPlaceholder = (placeholder: string) => {
 }
 
 // 处理变化
-const handleChange = () => {
+const handleChange = (value?: string) => {
+  if (typeof value === 'string') {
+    localValue.value = value
+  }
   emit('update:modelValue', localValue.value)
 }
 
@@ -122,11 +125,12 @@ watch(() => props.modelValue, (newVal) => {
   .placeholder-toolbar {
     margin-top: 8px;
     padding: 8px;
-    background: #f5f5f5;
-    border-radius: 4px;
+    background: var(--fx-fill-alter, #f5f5f5);
+    border: 1px solid var(--fx-border-color, #e8e8e8);
+    border-radius: var(--fx-radius, 6px);
     
     .toolbar-label {
-      color: #666;
+      color: var(--fx-text-secondary, #666);
       font-size: 12px;
     }
     
@@ -137,7 +141,7 @@ watch(() => props.modelValue, (newVal) => {
       
       &:hover {
         transform: scale(1.05);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--fx-shadow-secondary, 0 2px 8px rgba(15, 23, 42, 0.12));
       }
     }
   }
@@ -145,19 +149,19 @@ watch(() => props.modelValue, (newVal) => {
   .placeholder-preview {
     margin-top: 12px;
     padding: 12px;
-    background: #fafafa;
-    border: 1px solid #e8e8e8;
-    border-radius: 4px;
+    background: var(--fx-bg-elevated, #fafafa);
+    border: 1px solid var(--fx-border-color, #e8e8e8);
+    border-radius: var(--fx-radius, 6px);
     
     .preview-label {
       font-size: 12px;
-      color: #666;
+      color: var(--fx-text-secondary, #666);
       margin-bottom: 8px;
       font-weight: 500;
     }
     
     .preview-content {
-      color: #333;
+      color: var(--fx-text-primary, #333);
       line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-word;

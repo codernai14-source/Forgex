@@ -275,6 +275,13 @@
               </a-select>
             </a-form-item>
 
+            <a-form-item :label="t('system.config.defaultPassword')" name="passwordPolicy.defaultPassword">
+              <a-input-password
+                v-model:value="securityConfig.passwordPolicy.defaultPassword"
+                :placeholder="t('system.config.defaultPasswordPlaceholder')"
+              />
+            </a-form-item>
+
             <a-form-item :label="t('system.config.passwordMinLength')" name="passwordPolicy.minLength">
               <a-input-number v-model:value="securityConfig.passwordPolicy.minLength" :min="6" :max="32" />
             </a-form-item>
@@ -293,6 +300,35 @@
 
             <a-form-item :label="t('system.config.passwordRequireSymbols')" name="passwordPolicy.requireSymbols">
               <a-switch v-model:checked="securityConfig.passwordPolicy.requireSymbols" />
+            </a-form-item>
+
+            <a-divider orientation="left">{{ t('system.config.loginSecurity') }}</a-divider>
+
+            <a-form-item :label="t('system.config.failWindowMinutes')" name="loginSecurity.failWindowMinutes">
+              <a-input-number
+                v-model:value="securityConfig.loginSecurity.failWindowMinutes"
+                :min="1"
+                :max="1440"
+                :style="{ width: '100%' }"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.maxFailCount')" name="loginSecurity.maxFailCount">
+              <a-input-number
+                v-model:value="securityConfig.loginSecurity.maxFailCount"
+                :min="1"
+                :max="20"
+                :style="{ width: '100%' }"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.lockMinutes')" name="loginSecurity.lockMinutes">
+              <a-input-number
+                v-model:value="securityConfig.loginSecurity.lockMinutes"
+                :min="1"
+                :max="1440"
+                :style="{ width: '100%' }"
+              />
             </a-form-item>
 
             <a-divider orientation="left">{{ t('system.config.transportCrypto') }}</a-divider>
@@ -335,6 +371,89 @@
               </a-space>
             </a-form-item>
           </a-form>
+        </a-tab-pane>
+
+        <a-tab-pane key="email" :tab="t('system.config.tabEmail')">
+          <div class="email-config-layout">
+            <div class="email-provider-list">
+              <button
+                v-for="provider in emailProviderOptions"
+                :key="provider.value"
+                type="button"
+                class="email-provider-card"
+                :class="{ 'email-provider-card--active': emailConfig.providerType === provider.value }"
+                @click="handleEmailProviderChange(provider.value)"
+              >
+                <span class="email-provider-card__title">{{ t(provider.titleKey) }}</span>
+                <span class="email-provider-card__desc">{{ t(provider.descKey) }}</span>
+              </button>
+            </div>
+
+            <div class="email-config-main">
+              <div class="email-config-banner">
+                <div class="email-config-banner__label">{{ t('system.config.emailProvider') }}</div>
+                <div class="email-config-banner__text">{{ t('system.config.emailProviderHint') }}</div>
+              </div>
+
+              <a-form
+                :model="emailConfig"
+                :label-col="{ span: 6 }"
+                :wrapper-col="{ span: 16 }"
+                layout="horizontal"
+              >
+                <a-form-item :label="t('system.config.senderAccount')" name="senderAccount">
+                  <a-input
+                    v-model:value="emailConfig.senderAccount"
+                    :placeholder="t('system.config.senderAccountPlaceholder')"
+                  />
+                </a-form-item>
+
+                <a-form-item :label="t('system.config.senderPassword')" name="senderPassword">
+                  <a-input-password
+                    v-model:value="emailConfig.senderPassword"
+                    :placeholder="t('system.config.senderPasswordPlaceholder')"
+                  />
+                </a-form-item>
+
+                <a-form-item :label="t('system.config.smtpHost')" name="smtpHost">
+                  <a-input
+                    v-model:value="emailConfig.smtpHost"
+                    :placeholder="t('system.config.smtpHostPlaceholder')"
+                  />
+                </a-form-item>
+
+                <a-form-item :label="t('system.config.smtpPort')" name="smtpPort">
+                  <a-input-number
+                    v-model:value="emailConfig.smtpPort"
+                    :min="1"
+                    :max="65535"
+                    :style="{ width: '100%' }"
+                  />
+                </a-form-item>
+
+                <a-form-item :label="t('system.config.authEnabled')" name="authEnabled">
+                  <a-switch v-model:checked="emailConfig.authEnabled" />
+                </a-form-item>
+
+                <a-form-item :label="t('system.config.sslEnabled')" name="sslEnabled">
+                  <a-switch v-model:checked="emailConfig.sslEnabled" />
+                </a-form-item>
+
+                <a-form-item :label="t('system.config.starttlsEnabled')" name="starttlsEnabled">
+                  <a-switch v-model:checked="emailConfig.starttlsEnabled" />
+                </a-form-item>
+
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingEmail" @click="saveEmail">
+                      {{ t('common.save') }}
+                    </a-button>
+                    <a-button @click="resetEmailConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+            </div>
+          </div>
         </a-tab-pane>
 
         <a-tab-pane key="upload" :tab="t('system.config.tabUpload')">
@@ -434,15 +553,19 @@ import { DeleteOutlined, PictureOutlined, UploadOutlined } from '@ant-design/ico
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import { uploadFile } from '@/api/system/file'
 import {
+  createDefaultEmailConfig,
   createDefaultFileUploadConfig,
   createDefaultSecurityConfig,
   createDefaultSystemBasicConfig,
+  getEmailConfig,
   getFileUploadConfig,
   getSecurityConfig,
   getSystemBasicConfig,
+  setEmailConfig,
   setFileUploadConfig,
   setSecurityConfig,
   setSystemBasicConfig,
+  type EmailConfig,
   type FileUploadConfig,
   type SecurityConfig,
   type SystemBasicConfig,
@@ -457,6 +580,7 @@ const previewVisible = ref(false)
 const savingSystem = ref(false)
 const savingPortal = ref(false)
 const savingSecurity = ref(false)
+const savingEmail = ref(false)
 const savingUpload = ref(false)
 const videoUploading = ref(false)
 const bgImageUploading = ref(false)
@@ -466,7 +590,59 @@ const bgImageFileList = ref<UploadFile[]>([])
 
 const basicConfig = ref<SystemBasicConfig>(createDefaultSystemBasicConfig())
 const securityConfig = ref<SecurityConfig>(createDefaultSecurityConfig())
+const emailConfig = ref<EmailConfig>(createDefaultEmailConfig())
 const fileUploadConfig = ref<FileUploadConfig>(createDefaultFileUploadConfig())
+
+type EmailProviderPreset = 'local' | 'aliyun' | 'qq'
+
+const emailProviderOptions: Array<{
+  value: EmailProviderPreset
+  titleKey: string
+  descKey: string
+}> = [
+  {
+    value: 'local',
+    titleKey: 'system.config.providerLocalTitle',
+    descKey: 'system.config.providerLocalDesc',
+  },
+  {
+    value: 'aliyun',
+    titleKey: 'system.config.providerAliyunTitle',
+    descKey: 'system.config.providerAliyunDesc',
+  },
+  {
+    value: 'qq',
+    titleKey: 'system.config.providerQqTitle',
+    descKey: 'system.config.providerQqDesc',
+  },
+]
+
+const emailProviderPresets: Record<EmailProviderPreset, Partial<EmailConfig>> = {
+  local: {
+    providerType: 'local',
+    smtpHost: '',
+    smtpPort: 465,
+    authEnabled: true,
+    sslEnabled: true,
+    starttlsEnabled: true,
+  },
+  aliyun: {
+    providerType: 'aliyun',
+    smtpHost: 'smtp.qiye.aliyun.com',
+    smtpPort: 465,
+    authEnabled: true,
+    sslEnabled: true,
+    starttlsEnabled: true,
+  },
+  qq: {
+    providerType: 'qq',
+    smtpHost: 'smtp.qq.com',
+    smtpPort: 465,
+    authEnabled: true,
+    sslEnabled: true,
+    starttlsEnabled: false,
+  },
+}
 
 function normalizeSystemBasicConfig(config: Partial<SystemBasicConfig> | null | undefined): SystemBasicConfig {
   const defaults = createDefaultSystemBasicConfig()
@@ -496,10 +672,24 @@ function normalizeSecurityConfig(config: Partial<SecurityConfig> | null | undefi
       ...defaults.passwordPolicy,
       ...(config?.passwordPolicy || {}),
     },
+    loginSecurity: {
+      ...defaults.loginSecurity,
+      ...(config?.loginSecurity || {}),
+    },
     cryptoTransport: {
       ...defaults.cryptoTransport,
       ...(config?.cryptoTransport || {}),
     },
+  }
+}
+
+function normalizeEmailConfig(config: Partial<EmailConfig> | null | undefined): EmailConfig {
+  const defaults = createDefaultEmailConfig()
+  return {
+    ...defaults,
+    ...(config || {}),
+    providerType: (config?.providerType || defaults.providerType) as EmailConfig['providerType'],
+    smtpPort: typeof config?.smtpPort === 'number' ? config.smtpPort : defaults.smtpPort,
   }
 }
 
@@ -527,13 +717,15 @@ function formatMediaUrl(value: string): string {
 async function loadAllConfig() {
   loading.value = true
   try {
-    const [basic, security, upload] = await Promise.all([
+    const [basic, security, email, upload] = await Promise.all([
       getSystemBasicConfig(),
       getSecurityConfig(),
+      getEmailConfig(),
       getFileUploadConfig(),
     ])
     basicConfig.value = normalizeSystemBasicConfig(basic)
     securityConfig.value = normalizeSecurityConfig(security)
+    emailConfig.value = normalizeEmailConfig(email)
     fileUploadConfig.value = normalizeFileUploadConfig(upload)
   } catch (e) {
     message.error(t('common.loadFailed'))
@@ -590,6 +782,18 @@ async function saveFileUploadConfig() {
   }
 }
 
+async function saveEmail() {
+  savingEmail.value = true
+  try {
+    await setEmailConfig(normalizeEmailConfig(emailConfig.value))
+    message.success(t('common.saveSuccess'))
+  } catch (e) {
+    message.error(t('common.saveFailed'))
+  } finally {
+    savingEmail.value = false
+  }
+}
+
 function resetSystemConfig() {
   const defaults = createDefaultSystemBasicConfig()
   basicConfig.value = {
@@ -629,9 +833,26 @@ function resetSecurityConfig() {
   message.info(t('common.resetSuccess'))
 }
 
+function resetEmailConfig() {
+  emailConfig.value = createDefaultEmailConfig()
+  message.info(t('common.resetSuccess'))
+}
+
 function resetFileUploadConfig() {
   fileUploadConfig.value = createDefaultFileUploadConfig()
   message.info(t('common.resetSuccess'))
+}
+
+function handleEmailProviderChange(provider: EmailProviderPreset) {
+  const current = emailConfig.value
+  const preset = emailProviderPresets[provider]
+  emailConfig.value = normalizeEmailConfig({
+    ...current,
+    ...preset,
+    providerType: provider,
+    senderAccount: current.senderAccount,
+    senderPassword: current.senderPassword,
+  })
 }
 
 function openPreview() {
@@ -765,6 +986,81 @@ onMounted(() => {
   width: 50px;
 }
 
+.email-config-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.email-provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.email-provider-card {
+  border: 1px solid #d9e4f5;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #ffffff 0%, #f6f9ff 100%);
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.email-provider-card:hover,
+.email-provider-card--active {
+  border-color: #1677ff;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(22, 119, 255, 0.12);
+}
+
+.email-provider-card__title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #132238;
+}
+
+.email-provider-card__desc {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5f6f85;
+}
+
+.email-config-main {
+  border: 1px solid #eef3fb;
+  border-radius: 20px;
+  padding: 24px 16px 8px;
+  background:
+    radial-gradient(circle at top right, rgba(22, 119, 255, 0.12), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.email-config-banner {
+  margin: 0 16px 24px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #12314f 0%, #1f4f7b 55%, #2f7cc0 100%);
+  color: #fff;
+}
+
+.email-config-banner__label {
+  font-size: 13px;
+  opacity: 0.78;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.email-config-banner__text {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 .preview-container {
   border: 1px solid #e8e8e8;
   border-radius: 8px;
@@ -848,5 +1144,16 @@ onMounted(() => {
   text-align: center;
   color: #9ca3af;
   font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .email-config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .email-provider-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
 }
 </style>

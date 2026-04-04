@@ -408,7 +408,7 @@ const onSelectChange = (keys: string[]) => {
 const handleDelete = async (id: string) => {
   try {
     await deleteRole(id)
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (error) {
     message.error('删除失败')
@@ -425,7 +425,7 @@ const handleBatchDelete = async () => {
   }
   try {
     await batchDeleteRoles(selectedRowKeys.value)
-    message.success('批量删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
     selectedRowKeys.value = []
   } catch (error) {
@@ -619,7 +619,7 @@ async function saveGrant() {
       roleId: grantRole.value.id,
       menuIds: menuIds
     })
-    message.success('授权成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     grantVisible.value = false
   } catch (e) {
     message.error('授权失败')
@@ -766,7 +766,7 @@ async function removeUserGrant(userId: number) {
       tenantId: currentTenantId.value,
       userIds: [userId]
     })
-    message.success('移除授权成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await loadAuthorizedUsers()
   } catch (error) {
     console.error('移除授权失败:', error)
@@ -804,7 +804,7 @@ async function saveUserGrant() {
       tenantId: currentTenantId.value,
       userIds: userIdsToAdd
     })
-    message.success('授权成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await loadAuthorizedUsers()
     selectedUserIds.value = []
     selectedDepartmentIds.value = []

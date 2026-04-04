@@ -478,7 +478,8 @@ public class CommonTableController {
         }
         
         // 获取原始表格配置
-        FxTableConfigDTO baseConfig = tableConfigService.getTableConfig(param.getTableCode(), tenantId, userId);
+        // 保存列设置时必须基于完整基础列配置合并，不能使用当前用户已过滤掉隐藏列的结果
+        FxTableConfigDTO baseConfig = tableConfigService.getTableConfig(param.getTableCode(), tenantId, null);
         if (baseConfig == null || baseConfig.getColumns() == null) {
             return R.fail(StatusCode.NOT_FOUND, SysPromptEnum.TABLE_CONFIG_NOT_FOUND, param.getTableCode());
         }

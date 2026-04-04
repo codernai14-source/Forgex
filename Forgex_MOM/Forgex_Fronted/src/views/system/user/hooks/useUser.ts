@@ -197,7 +197,7 @@ export function useUser() {
   async function handleResetPassword(id: string) {
     Modal.confirm({
       title: '确认重置密码',
-      content: '确定要重置该用户的密码吗？密码将重置为：123456',
+      content: t('system.user.message.resetPasswordConfirm'),
       onOk: async () => {
         try {
           await userApi.resetPassword(id)

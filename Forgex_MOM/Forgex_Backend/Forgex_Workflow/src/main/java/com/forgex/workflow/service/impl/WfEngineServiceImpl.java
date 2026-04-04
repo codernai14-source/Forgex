@@ -18,10 +18,23 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.exception.BusinessException;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.workflow.client.SysUserClient;
-import com.forgex.workflow.domain.entity.*;
-import com.forgex.workflow.mapper.*;
+import com.forgex.workflow.domain.entity.WfMyTask;
+import com.forgex.workflow.domain.entity.WfTaskConfig;
+import com.forgex.workflow.domain.entity.WfTaskExecution;
+import com.forgex.workflow.domain.entity.WfTaskExecutionApprover;
+import com.forgex.workflow.domain.entity.WfTaskExecutionDetail;
+import com.forgex.workflow.domain.entity.WfTaskNodeApprover;
+import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
+import com.forgex.workflow.mapper.WfMyTaskMapper;
+import com.forgex.workflow.mapper.WfTaskConfigMapper;
+import com.forgex.workflow.mapper.WfTaskExecutionApproverMapper;
+import com.forgex.workflow.mapper.WfTaskExecutionDetailMapper;
+import com.forgex.workflow.mapper.WfTaskExecutionMapper;
+import com.forgex.workflow.mapper.WfTaskNodeApproverMapper;
+import com.forgex.workflow.mapper.WfTaskNodeConfigMapper;
 import com.forgex.workflow.service.IWfCallbackService;
 import com.forgex.workflow.service.IWfEngineService;
 import com.forgex.workflow.service.interpreter.ApprovalContext;
@@ -34,24 +47,22 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * 审批流程引擎服务实现。
- * <p>
- * 提供审批流程的核心引擎功能实现。
- * </p>
- *
- * @author coder_nai@163.com
- * @version 1.0.0
- * @since 2026-04-01
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class WfEngineServiceImpl implements IWfEngineService {
-    
+
     private final WfTaskConfigMapper taskConfigMapper;
     private final WfTaskNodeConfigMapper nodeConfigMapper;
     private final WfTaskNodeApproverMapper nodeApproverMapper;
@@ -62,341 +73,181 @@ public class WfEngineServiceImpl implements IWfEngineService {
     private final ApprovalInterpreterRegistry interpreterRegistry;
     private final SysUserClient sysUserClient;
     private final IWfCallbackService callbackService;
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void initExecution(Long executionId, Long taskConfigId) {
-        // 获取任务配置
         WfTaskConfig taskConfig = taskConfigMapper.selectById(taskConfigId);
         if (taskConfig == null) {
             throw new BusinessException("审批任务配置不存在");
         }
-        
-        // 获取第一个节点（开始节点）
-        LambdaQueryWrapper<WfTaskNodeConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WfTaskNodeConfig::getTaskConfigId, taskConfigId)
-               .eq(WfTaskNodeConfig::getNodeType, 1) // 开始节点
-               .eq(WfTaskNodeConfig::getDeleted, false)
-               .orderByAsc(WfTaskNodeConfig::getOrderNum)
-               .last("LIMIT 1");
-        
-        WfTaskNodeConfig startNode = nodeConfigMapper.selectOne(wrapper);
-        if (startNode == null) {
-            throw new BusinessException("审批任务未配置开始节点");
-        }
-        
-        // 创建执行详情
-        WfTaskExecutionDetail detail = new WfTaskExecutionDetail();
-        detail.setExecutionId(executionId);
-        detail.setNodeId(startNode.getId());
-        detail.setNodeName(startNode.getNodeName());
-        detail.setCurrentStatus(0); // 未审批
-        detail.setTenantId(taskConfig.getTenantId());
-        
-        executionDetailMapper.insert(detail);
-        
-        // 更新执行记录的当前节点
-        WfTaskExecution execution = executionMapper.selectById(executionId);
-        if (execution != null) {
-            execution.setCurrentNodeId(startNode.getId());
-            execution.setCurrentNodeName(startNode.getNodeName());
-            executionMapper.updateById(execution);
-        }
-        
-        // 调用解释器
-        callInterpreter(taskConfig.getInterpreterBean(), (interpreter, context) -> {
-            context.setExecutionId(executionId);
-            context.setTaskConfigId(taskConfigId);
-            context.setTaskCode(taskConfig.getTaskCode());
-            context.setTaskName(taskConfig.getTaskName());
-            interpreter.onStart(context);
-        });
-        
-        log.info("初始化审批流程成功，executionId={}, taskName={}, startNode={}", 
-                executionId, taskConfig.getTaskName(), startNode.getNodeName());
-    }
-    
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean moveToNextNode(Long executionId, Long currentNodeId, Integer approveStatus, Integer rejectType) {
-        // 获取执行记录
+
         WfTaskExecution execution = executionMapper.selectById(executionId);
         if (execution == null) {
             throw new BusinessException("审批执行记录不存在");
         }
-        
-        // 获取任务配置
+
+        WfTaskNodeConfig startNode = findFirstNode(taskConfigId, 1);
+        if (startNode == null) {
+            throw new BusinessException("审批任务未配置开始节点");
+        }
+
+        updateExecutionCurrentNode(execution, startNode);
+        createExecutionDetail(executionId, startNode, 1, taskConfig.getTenantId());
+
+        callInterpreter(taskConfig.getInterpreterBean(), (interpreter, context) -> {
+            populateContext(context, execution, taskConfig);
+            context.setCurrentNodeId(startNode.getId());
+            context.setCurrentNodeName(startNode.getNodeName());
+            interpreter.onStart(context);
+        });
+
+        activateFromNode(execution, startNode, taskConfig);
+
+        log.info("初始化审批流程成功，executionId={}, taskCode={}, startNode={}",
+                executionId, taskConfig.getTaskCode(), startNode.getNodeName());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean moveToNextNode(Long executionId, Long currentNodeId, Integer approveStatus, Integer rejectType) {
+        WfTaskExecution execution = executionMapper.selectById(executionId);
+        if (execution == null) {
+            throw new BusinessException("审批执行记录不存在");
+        }
+
         WfTaskConfig taskConfig = taskConfigMapper.selectById(execution.getTaskConfigId());
-        
-        // 获取当前节点
         WfTaskNodeConfig currentNode = nodeConfigMapper.selectById(currentNodeId);
         if (currentNode == null) {
             throw new BusinessException("当前节点不存在");
         }
-        
-        // 如果是驳回
-        if (approveStatus == 2) {
-            if (rejectType == 1) {
-                // 驳回任务，直接结束
-                finishExecution(executionId, 3);
-                return false;
-            } else if (rejectType == 2) {
-                // 返回上一节点
-                // TODO: 实现返回上一节点逻辑
-                return true;
+
+        if (Objects.equals(approveStatus, 2)) {
+            if (Objects.equals(rejectType, 2)) {
+                WfTaskNodeConfig previousApprovalNode = findPreviousApprovalNode(currentNode);
+                if (previousApprovalNode != null) {
+                    return activateNode(execution, previousApprovalNode, taskConfig);
+                }
             }
-        }
-        
-        // 检查是否是结束节点
-        if (currentNode.getNodeType() == 2) { // 结束节点
-            finishExecution(executionId, 2);
+            finishExecution(executionId, 3);
             return false;
         }
-        
-        // 获取下一节点
-        Long nextNodeId = findNextNode(executionId, currentNode, taskConfig);
-        
-        if (nextNodeId == null) {
-            // 没有下一节点，结束流程
-            finishExecution(executionId, 2);
-            return false;
-        }
-        
-        // 更新执行记录的当前节点
-        WfTaskNodeConfig nextNode = nodeConfigMapper.selectById(nextNodeId);
-        execution.setCurrentNodeId(nextNodeId);
-        execution.setCurrentNodeName(nextNode.getNodeName());
-        executionMapper.updateById(execution);
-        
-        // 创建下一节点的执行详情
-        WfTaskExecutionDetail detail = new WfTaskExecutionDetail();
-        detail.setExecutionId(executionId);
-        detail.setNodeId(nextNodeId);
-        detail.setNodeName(nextNode.getNodeName());
-        detail.setCurrentStatus(0);
-        detail.setTenantId(taskConfig.getTenantId());
-        
-        executionDetailMapper.insert(detail);
-        
-        log.info("流转到下一节点，executionId={}, fromNode={}, toNode={}", 
-                executionId, currentNode.getNodeName(), nextNode.getNodeName());
-        
-        return true;
+
+        return activateFromNode(execution, currentNode, taskConfig);
     }
-    
+
     @Override
     public Long[] determineApprovers(Long nodeId, Long tenantId) {
-        // 获取节点审批人配置
-        LambdaQueryWrapper<WfTaskNodeApprover> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WfTaskNodeApprover::getNodeConfigId, nodeId)
-               .eq(WfTaskNodeApprover::getTenantId, tenantId)
-               .eq(WfTaskNodeApprover::getDeleted, false);
-        
-        List<WfTaskNodeApprover> approvers = nodeApproverMapper.selectList(wrapper);
-        
-        if (approvers.isEmpty()) {
+        List<WfTaskNodeApprover> approvers = nodeApproverMapper.selectList(new LambdaQueryWrapper<WfTaskNodeApprover>()
+                .eq(WfTaskNodeApprover::getNodeConfigId, nodeId)
+                .eq(WfTaskNodeApprover::getTenantId, tenantId)
+                .eq(WfTaskNodeApprover::getDeleted, 0));
+
+        if (approvers == null || approvers.isEmpty()) {
             return new Long[0];
         }
-        
-        // 合并所有审批人（去重）
+
         Set<Long> approverIds = new HashSet<>();
-        
         for (WfTaskNodeApprover approver : approvers) {
-            List<Long> ids = parseApproverIds(approver.getApproverType(), 
-                                              approver.getApproverIds(), 
-                                              tenantId);
-            approverIds.addAll(ids);
+            approverIds.addAll(parseApproverIds(approver.getApproverType(), approver.getApproverIds(), tenantId));
         }
-        
         return approverIds.toArray(new Long[0]);
     }
-    
-    /**
-     * 解析审批人 ID 列表
-     * 
-     * @param approverType 审批人类型
-     * @param approverIds 审批人 ID 集合（JSON 数组）
-     * @param tenantId 租户 ID
-     * @return 用户 ID 列表
-     */
-    private List<Long> parseApproverIds(Integer approverType, String approverIds, Long tenantId) {
-        if (!StringUtils.hasText(approverIds)) {
-            return Collections.emptyList();
-        }
-        
-        JSONArray array = JSON.parseArray(approverIds);
-        List<Long> idList = array.stream()
-                .map(id -> Long.valueOf(id.toString()))
-                .collect(Collectors.toList());
-        
-        switch (approverType) {
-            case 1: // 单人
-                return idList;
-            case 2: // 部门
-                return getUserIdsByDeptIds(idList);
-            case 3: // 角色
-                return getUserIdsByRoleIds(idList);
-            case 4: // 职位
-                return getUserIdsByPositionIds(idList);
-            default:
-                return Collections.emptyList();
-        }
-    }
-    
-    /**
-     * 根据部门 ID 列表获取用户 ID 列表
-     */
-    private List<Long> getUserIdsByDeptIds(List<Long> deptIds) {
-        try {
-            R<List<Long>> result = sysUserClient.listUserIdsByDeptIds(deptIds);
-            if (result.getCode() == 200 && result.getData() != null) {
-                return result.getData();
-            }
-        } catch (Exception e) {
-            log.error("调用系统服务获取部门用户失败：deptIds={}", deptIds, e);
-        }
-        return Collections.emptyList();
-    }
-    
-    /**
-     * 根据角色 ID 列表获取用户 ID 列表
-     */
-    private List<Long> getUserIdsByRoleIds(List<Long> roleIds) {
-        try {
-            R<List<Long>> result = sysUserClient.listUserIdsByRoleIds(roleIds);
-            if (result.getCode() == 200 && result.getData() != null) {
-                return result.getData();
-            }
-        } catch (Exception e) {
-            log.error("调用系统服务获取角色用户失败：roleIds={}", roleIds, e);
-        }
-        return Collections.emptyList();
-    }
-    
-    /**
-     * 根据职位 ID 列表获取用户 ID 列表
-     */
-    private List<Long> getUserIdsByPositionIds(List<Long> positionIds) {
-        try {
-            R<List<Long>> result = sysUserClient.listUserIdsByPositionIds(positionIds);
-            if (result.getCode() == 200 && result.getData() != null) {
-                return result.getData();
-            }
-        } catch (Exception e) {
-            log.error("调用系统服务获取职位用户失败：positionIds={}", positionIds, e);
-        }
-        return Collections.emptyList();
-    }
-    
+
     @Override
     public Long evaluateBranchConditions(Long nodeId, String formContent) {
-        // 获取节点配置
         WfTaskNodeConfig node = nodeConfigMapper.selectById(nodeId);
-        if (node == null || node.getNodeType() != 5) { // 不是分支节点
+        if (node == null || !Objects.equals(node.getNodeType(), 5)) {
             return null;
         }
-        
-        // 解析分支条件
-        String conditionsJson = node.getBranchConditions();
-        if (!StringUtils.hasText(conditionsJson)) {
+
+        if (!StringUtils.hasText(node.getBranchConditions())) {
             return null;
         }
-        
-        JSONObject conditionsObj = JSON.parseObject(conditionsJson);
+
+        JSONObject conditionsObj = JSON.parseObject(node.getBranchConditions());
         JSONArray conditions = conditionsObj.getJSONArray("conditions");
-        
         if (conditions == null || conditions.isEmpty()) {
-            // 返回默认节点
             return conditionsObj.getLong("defaultNodeId");
         }
-        
-        // 解析表单内容
-        JSONObject formData = JSON.parseObject(formContent);
-        
-        // 评估条件
+
+        JSONObject formData = StringUtils.hasText(formContent) ? JSON.parseObject(formContent) : new JSONObject();
         for (int i = 0; i < conditions.size(); i++) {
             JSONObject condition = conditions.getJSONObject(i);
-            String field = condition.getString("field");
-            String operator = condition.getString("operator");
-            String value = condition.getString("value");
-            Long nextNodeId = condition.getLong("nextNodeId");
-            
-            if (evaluateCondition(formData, field, operator, value)) {
-                return nextNodeId;
+            if (condition == null) {
+                continue;
+            }
+
+            if (evaluateCondition(
+                    formData,
+                    condition.getString("field"),
+                    condition.getString("operator"),
+                    condition.getString("value"))) {
+                return condition.getLong("nextNodeId");
             }
         }
-        
-        // 返回默认节点
+
         return conditionsObj.getLong("defaultNodeId");
     }
-    
+
     @Override
     public Boolean isNodeCompleted(Long executionId, Long nodeId) {
-        // 获取该节点的所有审批人
-        Long tenantId = getCurrentTenantId();
+        WfTaskExecution execution = executionMapper.selectById(executionId);
+        if (execution == null) {
+            return false;
+        }
+
+        Long tenantId = execution.getTenantId() != null ? execution.getTenantId() : getCurrentTenantId();
         Long[] approvers = determineApprovers(nodeId, tenantId);
-        
         if (approvers.length == 0) {
-            // 没有审批人，直接完成
             return true;
         }
-        
-        // 获取该节点的已审批人数（同意的）
-        LambdaQueryWrapper<WfTaskExecutionApprover> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WfTaskExecutionApprover::getExecutionId, executionId)
-               .eq(WfTaskExecutionApprover::getNodeId, nodeId);
-        
-        List<WfTaskExecutionApprover> approverList = executionApproverMapper.selectList(wrapper);
-        
-        // 获取节点审批类型
+
+        WfTaskExecutionDetail currentDetail = getLatestExecutionDetail(executionId, nodeId);
+        LambdaQueryWrapper<WfTaskExecutionApprover> wrapper = new LambdaQueryWrapper<WfTaskExecutionApprover>()
+                .eq(WfTaskExecutionApprover::getExecutionId, executionId)
+                .eq(WfTaskExecutionApprover::getNodeId, nodeId);
+        if (currentDetail != null) {
+            wrapper.eq(WfTaskExecutionApprover::getExecutionDetailId, currentDetail.getId());
+        }
+
+        List<WfTaskExecutionApprover> approverRecords = executionApproverMapper.selectList(wrapper);
         WfTaskNodeConfig node = nodeConfigMapper.selectById(nodeId);
         if (node == null || node.getApproveType() == null) {
             return false;
         }
-        
-        // 统计同意的人数
-        long approvedCount = approverList.stream()
-                .filter(a -> a.getApproverDetail() != null)
-                .filter(a -> {
-                    JSONArray details = JSON.parseArray(a.getApproverDetail());
-                    if (details == null || details.isEmpty()) {
-                        return false;
-                    }
-                    // 检查是否有同意的记录
-                    for (int i = 0; i < details.size(); i++) {
-                        JSONObject detail = details.getJSONObject(i);
-                        if (detail.getInteger("approveStatus") == 1) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })
-                .count();
-        
+
+        Set<Long> approvedUsers = new HashSet<>();
+        for (WfTaskExecutionApprover approverRecord : approverRecords) {
+            JSONArray approverDetails = StringUtils.hasText(approverRecord.getApproverDetail())
+                    ? JSON.parseArray(approverRecord.getApproverDetail())
+                    : new JSONArray();
+            for (int i = 0; i < approverDetails.size(); i++) {
+                JSONObject approverDetail = approverDetails.getJSONObject(i);
+                if (approverDetail != null
+                        && Objects.equals(approverDetail.getInteger("approveStatus"), 1)
+                        && approverDetail.getLong("approverId") != null) {
+                    approvedUsers.add(approverDetail.getLong("approverId"));
+                }
+            }
+        }
+
+        long approvedCount = approvedUsers.size();
         switch (node.getApproveType()) {
-            case 1: // 会签：所有人都要审批且同意
+            case 1:
+            case 5:
                 return approvedCount >= approvers.length;
-            case 2: // 或签：一人审批同意即可
+            case 2:
                 return approvedCount > 0;
-            case 3: // 抄送：不需要审批
+            case 3:
                 return true;
-            case 4: // 会签投票：超过半数同意
+            case 4:
                 return approvedCount > approvers.length / 2;
-            case 5: // 逐个审批：按顺序，所有人都要审批
-                return approvedCount >= approvers.length;
             default:
                 return false;
         }
     }
-    
-    /**
-     * 获取当前租户 ID
-     */
-    private Long getCurrentTenantId() {
-        // TODO: 从租户上下文获取
-        return 1L;
-    }
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void finishExecution(Long executionId, Integer status) {
@@ -404,103 +255,313 @@ public class WfEngineServiceImpl implements IWfEngineService {
         if (execution == null) {
             return;
         }
-        
+
         execution.setStatus(status);
         execution.setEndTime(LocalDateTime.now());
         executionMapper.updateById(execution);
-        
-        // 获取任务配置
+
+        closePendingMyTasks(executionId, null);
+
         WfTaskConfig taskConfig = taskConfigMapper.selectById(execution.getTaskConfigId());
-        
-        // 调用解释器
-        callInterpreter(taskConfig.getInterpreterBean(), (interpreter, context) -> {
-            context.setExecutionId(executionId);
+        callInterpreter(taskConfig == null ? null : taskConfig.getInterpreterBean(), (interpreter, context) -> {
+            populateContext(context, execution, taskConfig);
             context.setStatus(status);
             interpreter.onEnd(context);
         });
-        
-        // 触发回调
+
         callbackService.triggerCallback(executionId, status);
-        
         log.info("审批流程结束，executionId={}, status={}", executionId, status);
     }
-    
-    /**
-     * 查找下一节点
-     */
-    private Long findNextNode(Long executionId, WfTaskNodeConfig currentNode, WfTaskConfig taskConfig) {
-        // 如果是分支节点，需要评估条件
-        if (currentNode.getNodeType() == 5) { // 分支节点
-            WfTaskExecution execution = executionMapper.selectById(executionId);
-            return evaluateBranchConditions(currentNode.getId(), execution.getFormContent());
+
+    private Boolean activateFromNode(WfTaskExecution execution, WfTaskNodeConfig currentNode, WfTaskConfig taskConfig) {
+        Long nextNodeId = findNextNode(execution.getId(), currentNode, taskConfig);
+        if (nextNodeId == null) {
+            finishExecution(execution.getId(), 2);
+            return false;
         }
-        
-        // 获取后置节点
-        String nextNodeIds = currentNode.getNextNodeIds();
-        if (!StringUtils.hasText(nextNodeIds)) {
-            return null;
+
+        WfTaskNodeConfig nextNode = nodeConfigMapper.selectById(nextNodeId);
+        if (nextNode == null) {
+            throw new BusinessException("下一节点不存在");
         }
-        
-        JSONArray array = JSON.parseArray(nextNodeIds);
-        if (array.isEmpty()) {
-            return null;
-        }
-        
-        // 返回第一个后置节点
-        return array.getLong(0);
+        return activateNode(execution, nextNode, taskConfig);
     }
-    
-    /**
-     * 评估单个条件
-     */
+
+    private Boolean activateNode(WfTaskExecution execution, WfTaskNodeConfig node, WfTaskConfig taskConfig) {
+        updateExecutionCurrentNode(execution, node);
+
+        if (Objects.equals(node.getNodeType(), 2)) {
+            createExecutionDetail(execution.getId(), node, 1, execution.getTenantId());
+            finishExecution(execution.getId(), 2);
+            return false;
+        }
+
+        if (Objects.equals(node.getNodeType(), 3)) {
+            return activateApprovalNode(execution, node, taskConfig);
+        }
+
+        createExecutionDetail(execution.getId(), node, 1, execution.getTenantId());
+        return activateFromNode(execution, node, taskConfig);
+    }
+
+    private Boolean activateApprovalNode(WfTaskExecution execution, WfTaskNodeConfig node, WfTaskConfig taskConfig) {
+        WfTaskExecutionDetail detail = createExecutionDetail(execution.getId(), node, 0, execution.getTenantId());
+        Long[] approvers = determineApprovers(node.getId(), execution.getTenantId());
+        if (approvers.length == 0) {
+            detail.setCurrentStatus(1);
+            executionDetailMapper.updateById(detail);
+            log.warn("审批节点未配置审批人，自动流转，executionId={}, nodeId={}", execution.getId(), node.getId());
+            return activateFromNode(execution, node, taskConfig);
+        }
+
+        createMyTask(execution, node, approvers);
+        return true;
+    }
+
+    private WfTaskExecutionDetail createExecutionDetail(Long executionId,
+                                                        WfTaskNodeConfig node,
+                                                        Integer currentStatus,
+                                                        Long tenantId) {
+        WfTaskExecutionDetail detail = new WfTaskExecutionDetail();
+        detail.setExecutionId(executionId);
+        detail.setNodeId(node.getId());
+        detail.setNodeName(node.getNodeName());
+        detail.setCurrentStatus(currentStatus);
+        detail.setTenantId(tenantId);
+        executionDetailMapper.insert(detail);
+        return detail;
+    }
+
+    private void createMyTask(WfTaskExecution execution, WfTaskNodeConfig node, Long[] approverIds) {
+        closePendingMyTasks(execution.getId(), node.getId());
+
+        WfMyTask myTask = new WfMyTask();
+        myTask.setExecutionId(execution.getId());
+        myTask.setTaskName(execution.getTaskName());
+        myTask.setNodeId(node.getId());
+        myTask.setNodeName(node.getNodeName());
+        myTask.setApproverIds(JSON.toJSONString(Arrays.asList(approverIds)));
+        myTask.setStatus(0);
+        myTask.setTenantId(execution.getTenantId());
+        myTaskMapper.insert(myTask);
+    }
+
+    private void closePendingMyTasks(Long executionId, Long nodeId) {
+        LambdaQueryWrapper<WfMyTask> wrapper = new LambdaQueryWrapper<WfMyTask>()
+                .eq(WfMyTask::getExecutionId, executionId)
+                .eq(WfMyTask::getStatus, 0);
+        if (nodeId != null) {
+            wrapper.eq(WfMyTask::getNodeId, nodeId);
+        }
+
+        List<WfMyTask> pendingTasks = myTaskMapper.selectList(wrapper);
+        for (WfMyTask pendingTask : pendingTasks) {
+            pendingTask.setStatus(1);
+            myTaskMapper.updateById(pendingTask);
+        }
+    }
+
+    private WfTaskNodeConfig findFirstNode(Long taskConfigId, Integer nodeType) {
+        return nodeConfigMapper.selectOne(new LambdaQueryWrapper<WfTaskNodeConfig>()
+                .eq(WfTaskNodeConfig::getTaskConfigId, taskConfigId)
+                .eq(WfTaskNodeConfig::getNodeType, nodeType)
+                .eq(WfTaskNodeConfig::getDeleted, 0)
+                .orderByAsc(WfTaskNodeConfig::getOrderNum)
+                .last("LIMIT 1"));
+    }
+
+    private WfTaskNodeConfig findPreviousApprovalNode(WfTaskNodeConfig node) {
+        List<Long> previousNodeIds = parseNodeIds(node.getPreNodeIds());
+        for (Long previousNodeId : previousNodeIds) {
+            WfTaskNodeConfig previousNode = nodeConfigMapper.selectById(previousNodeId);
+            if (previousNode == null) {
+                continue;
+            }
+            if (Objects.equals(previousNode.getNodeType(), 3)) {
+                return previousNode;
+            }
+
+            WfTaskNodeConfig nestedPreviousNode = findPreviousApprovalNode(previousNode);
+            if (nestedPreviousNode != null) {
+                return nestedPreviousNode;
+            }
+        }
+        return null;
+    }
+
+    private WfTaskExecutionDetail getLatestExecutionDetail(Long executionId, Long nodeId) {
+        return executionDetailMapper.selectOne(new LambdaQueryWrapper<WfTaskExecutionDetail>()
+                .eq(WfTaskExecutionDetail::getExecutionId, executionId)
+                .eq(WfTaskExecutionDetail::getNodeId, nodeId)
+                .orderByDesc(WfTaskExecutionDetail::getId)
+                .last("LIMIT 1"));
+    }
+
+    private void updateExecutionCurrentNode(WfTaskExecution execution, WfTaskNodeConfig node) {
+        execution.setCurrentNodeId(node.getId());
+        execution.setCurrentNodeName(node.getNodeName());
+        executionMapper.updateById(execution);
+    }
+
+    private List<Long> parseApproverIds(Integer approverType, String approverIds, Long tenantId) {
+        if (!StringUtils.hasText(approverIds)) {
+            return Collections.emptyList();
+        }
+
+        JSONArray array = JSON.parseArray(approverIds);
+        List<Long> idList = array.stream()
+                .map(item -> Long.valueOf(item.toString()))
+                .collect(Collectors.toList());
+
+        switch (approverType) {
+            case 1:
+                return idList;
+            case 2:
+                return getUserIdsByDeptIds(idList);
+            case 3:
+                return getUserIdsByRoleIds(idList);
+            case 4:
+                return getUserIdsByPositionIds(idList);
+            default:
+                return Collections.emptyList();
+        }
+    }
+
+    private List<Long> getUserIdsByDeptIds(List<Long> deptIds) {
+        try {
+            R<List<Long>> result = sysUserClient.listUserIdsByDeptIds(deptIds);
+            if (result.getCode() == 200 && result.getData() != null) {
+                return result.getData();
+            }
+        } catch (Exception ex) {
+            log.error("根据部门查询审批人失败，deptIds={}", deptIds, ex);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<Long> getUserIdsByRoleIds(List<Long> roleIds) {
+        try {
+            R<List<Long>> result = sysUserClient.listUserIdsByRoleIds(roleIds);
+            if (result.getCode() == 200 && result.getData() != null) {
+                return result.getData();
+            }
+        } catch (Exception ex) {
+            log.error("根据角色查询审批人失败，roleIds={}", roleIds, ex);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<Long> getUserIdsByPositionIds(List<Long> positionIds) {
+        try {
+            R<List<Long>> result = sysUserClient.listUserIdsByPositionIds(positionIds);
+            if (result.getCode() == 200 && result.getData() != null) {
+                return result.getData();
+            }
+        } catch (Exception ex) {
+            log.error("根据职位查询审批人失败，positionIds={}", positionIds, ex);
+        }
+        return Collections.emptyList();
+    }
+
+    private Long findNextNode(Long executionId, WfTaskNodeConfig currentNode, WfTaskConfig taskConfig) {
+        if (Objects.equals(currentNode.getNodeType(), 5)) {
+            WfTaskExecution execution = executionMapper.selectById(executionId);
+            return evaluateBranchConditions(currentNode.getId(), execution == null ? null : execution.getFormContent());
+        }
+
+        if (!StringUtils.hasText(currentNode.getNextNodeIds())) {
+            return null;
+        }
+
+        JSONArray nextNodeIds = JSON.parseArray(currentNode.getNextNodeIds());
+        if (nextNodeIds == null || nextNodeIds.isEmpty()) {
+            return null;
+        }
+        return nextNodeIds.getLong(0);
+    }
+
+    private List<Long> parseNodeIds(String nodeIdsJson) {
+        if (!StringUtils.hasText(nodeIdsJson)) {
+            return List.of();
+        }
+        JSONArray nodeIds = JSON.parseArray(nodeIdsJson);
+        if (nodeIds == null || nodeIds.isEmpty()) {
+            return List.of();
+        }
+        return nodeIds.stream()
+                .map(item -> Long.valueOf(item.toString()))
+                .collect(Collectors.toList());
+    }
+
     private Boolean evaluateCondition(JSONObject formData, String field, String operator, String value) {
+        if (formData == null || !StringUtils.hasText(field) || !StringUtils.hasText(operator)) {
+            return false;
+        }
+
         Object fieldValue = formData.get(field);
         if (fieldValue == null) {
             return false;
         }
-        
-        switch (operator) {
-            case "=":
-                return String.valueOf(fieldValue).equals(value);
-            case "!=":
-                return !String.valueOf(fieldValue).equals(value);
-            case ">":
-                return Double.valueOf(String.valueOf(fieldValue)) > Double.valueOf(value);
-            case ">=":
-                return Double.valueOf(String.valueOf(fieldValue)) >= Double.valueOf(value);
-            case "<":
-                return Double.valueOf(String.valueOf(fieldValue)) < Double.valueOf(value);
-            case "<=":
-                return Double.valueOf(String.valueOf(fieldValue)) <= Double.valueOf(value);
-            case "like":
-                return String.valueOf(fieldValue).contains(value);
-            case "in":
-                JSONArray inArray = JSON.parseArray(value);
-                return inArray.contains(fieldValue);
-            default:
-                return false;
+
+        try {
+            switch (operator) {
+                case "=":
+                    return String.valueOf(fieldValue).equals(value);
+                case "!=":
+                    return !String.valueOf(fieldValue).equals(value);
+                case ">":
+                    return Double.parseDouble(String.valueOf(fieldValue)) > Double.parseDouble(value);
+                case ">=":
+                    return Double.parseDouble(String.valueOf(fieldValue)) >= Double.parseDouble(value);
+                case "<":
+                    return Double.parseDouble(String.valueOf(fieldValue)) < Double.parseDouble(value);
+                case "<=":
+                    return Double.parseDouble(String.valueOf(fieldValue)) <= Double.parseDouble(value);
+                case "like":
+                    return String.valueOf(fieldValue).contains(value);
+                case "in":
+                    return JSON.parseArray(value).contains(fieldValue);
+                default:
+                    return false;
+            }
+        } catch (Exception ex) {
+            log.warn("分支条件计算失败，field={}, operator={}, value={}", field, operator, value, ex);
+            return false;
         }
     }
-    
-    /**
-     * 调用审批解释器
-     */
+
+    private Long getCurrentTenantId() {
+        Long tenantId = CurrentUserUtils.getTenantId();
+        return tenantId == null ? 1L : tenantId;
+    }
+
+    private void populateContext(ApprovalContext context, WfTaskExecution execution, WfTaskConfig taskConfig) {
+        context.setExecutionId(execution.getId());
+        context.setTaskConfigId(execution.getTaskConfigId());
+        context.setTaskCode(execution.getTaskCode());
+        context.setTaskName(execution.getTaskName());
+        context.setCurrentNodeId(execution.getCurrentNodeId());
+        context.setCurrentNodeName(execution.getCurrentNodeName());
+        context.setInitiatorId(execution.getInitiatorId());
+        context.setInitiatorName(execution.getInitiatorName());
+        context.setFormContent(execution.getFormContent());
+        context.setStatus(execution.getStatus());
+        context.setTenantId(execution.getTenantId());
+        if (taskConfig != null) {
+            context.setTaskConfigId(taskConfig.getId());
+        }
+    }
+
     private void callInterpreter(String beanName, InterpreterAction action) {
         IApprovalInterpreter interpreter = interpreterRegistry.getInterpreter(beanName);
         if (interpreter == null) {
-            // 使用空实现
             interpreter = interpreterRegistry.getInterpreter("emptyApprovalInterpreter");
         }
-        
         if (interpreter != null) {
-            ApprovalContext context = new ApprovalContext();
-            action.execute(interpreter, context);
+            action.execute(interpreter, new ApprovalContext());
         }
     }
-    
-    /**
-     * 解释器执行函数式接口
-     */
+
     @FunctionalInterface
     private interface InterpreterAction {
         void execute(IApprovalInterpreter interpreter, ApprovalContext context);

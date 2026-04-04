@@ -41,13 +41,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.baomidou.dynamic.datasource.annotation.DS;
 
-import cn.hutool.crypto.digest.BCrypt;
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.core.util.HexUtil;
 import java.nio.charset.StandardCharsets;
 import com.forgex.common.domain.config.CaptchaConfig;
 import com.forgex.common.domain.config.CryptoTransportConfig;
+import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +59,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.auth.enums.AuthPromptEnum;
@@ -101,6 +102,10 @@ import com.forgex.common.crypto.CryptoProviders;
 @DS("admin")
 public class AuthServiceImpl implements AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
+    private static final String KEY_SECURITY_PASSWORD_POLICY = "security.password.policy";
+    private static final String KEY_SECURITY_LOGIN_FAILURE = "security.login.failure";
+    private static final String LOGIN_FAIL_COUNT_KEY_PREFIX = "fx:auth:login:fail:";
+    private static final String LOGIN_LOCK_KEY_PREFIX = "fx:auth:login:lock:";
     @Autowired
     private SysTenantMapper tenantMapper;
     @Autowired
@@ -174,6 +179,13 @@ public class AuthServiceImpl implements AuthService {
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号或密码为空");
             return R.fail(CommonPrompt.ACCOUNT_OR_PASSWORD_EMPTY);
         }
+
+        LoginSecurityConfig loginSecurityConfig = getLoginSecurityConfig();
+        R<List<TenantVO>> lockResult = checkLoginLocked(account, loginSecurityConfig);
+        if (lockResult != null) {
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号已锁定");
+            return lockResult;
+        }
         
         // 如果启用了传输加密（SM2），优先尝试解密入参密码
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
@@ -207,13 +219,14 @@ public class AuthServiceImpl implements AuthService {
             log.warn("登录失败: 用户不存在, account={}", idKey);
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
+            recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
         
         // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
-        PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
+        PasswordPolicyConfig policy = getPasswordPolicyConfig();
         // 获取密码存储策略，默认为bcrypt
-        String store = policy == null ? "bcrypt" : policy.getStore();
+        String store = resolvePasswordStore(policy);
         // 根据策略获取密码提供者
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
         // 验证密码是否正确
@@ -222,6 +235,7 @@ public class AuthServiceImpl implements AuthService {
             log.warn("登录失败: 密码不正确, account={}", account);
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "密码不正确");
+            recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
         
@@ -239,12 +253,14 @@ public class AuthServiceImpl implements AuthService {
                 log.warn("登录失败: 图片验证码缺失, account={}", account);
                 // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
+                recordLoginFailureState(account, loginSecurityConfig);
                 return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
             }
             if (!captchaService.verifyImage(captchaId, captcha)) {
                 log.warn("登录失败: 图片验证码错误, account={}", account);
                 // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
+                recordLoginFailureState(account, loginSecurityConfig);
                 return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
             }
         } else if ("slider".equalsIgnoreCase(mode)) {
@@ -256,17 +272,21 @@ public class AuthServiceImpl implements AuthService {
                 log.warn("登录失败: 滑块令牌缺失, account={}", account);
                 // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
+                recordLoginFailureState(account, loginSecurityConfig);
                 return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
             }
             if (!captchaService.verifySlider(token)) {
                 log.warn("登录失败: 滑块令牌校验失败, account={}", account);
                 // 记录登录失败日志
                 loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
+                recordLoginFailureState(account, loginSecurityConfig);
                 return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
             }
         }
         
         // 查询用户绑定的租户ID列表
+        clearLoginFailureState(account);
+
         List<SysUserTenant> binds = userTenantMapper.selectList(new LambdaQueryWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .orderByDesc(SysUserTenant::getPrefOrder)
@@ -622,7 +642,7 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
-        String hashed = BCrypt.hashpw("123456");
+        String hashed = encryptPassword(resolveDefaultPassword());
         int n = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
                 .set(SysUser::getPassword, hashed)
                 .eq(SysUser::getId, userId));
@@ -630,6 +650,80 @@ public class AuthServiceImpl implements AuthService {
             return R.ok(true);
         }
         return R.fail(CommonPrompt.RESET_FAILED);
+    }
+
+    private PasswordPolicyConfig getPasswordPolicyConfig() {
+        PasswordPolicyConfig defaults = new PasswordPolicyConfig();
+        defaults.setStore("bcrypt");
+        defaults.setDefaultPassword("Aa123456");
+        PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults);
+        return policy == null ? defaults : policy;
+    }
+
+    private String resolvePasswordStore(PasswordPolicyConfig policy) {
+        return policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
+    }
+
+    private String resolveDefaultPassword() {
+        PasswordPolicyConfig policy = getPasswordPolicyConfig();
+        return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
+    }
+
+    private String encryptPassword(String rawPassword) {
+        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(getPasswordPolicyConfig()), configService);
+        return provider.encrypt(rawPassword);
+    }
+
+    private LoginSecurityConfig getLoginSecurityConfig() {
+        LoginSecurityConfig defaults = LoginSecurityConfig.defaults();
+        LoginSecurityConfig config = configService.getJson(KEY_SECURITY_LOGIN_FAILURE, LoginSecurityConfig.class, defaults);
+        return config == null ? defaults : config;
+    }
+
+    private R<List<TenantVO>> checkLoginLocked(String account, LoginSecurityConfig config) {
+        if (!StringUtils.hasText(account) || config == null || config.getLockMinutes() == null || config.getLockMinutes() <= 0) {
+            return null;
+        }
+        String lockKey = LOGIN_LOCK_KEY_PREFIX + normalizeAccountKey(account);
+        Long ttl = redis.getExpire(lockKey, TimeUnit.SECONDS);
+        if (ttl == null || ttl <= 0) {
+            return null;
+        }
+        long minutes = Math.max(1L, (ttl + 59) / 60);
+        return R.fail(CommonPrompt.ACCOUNT_LOCKED, String.valueOf(minutes));
+    }
+
+    private void recordLoginFailureState(String account, LoginSecurityConfig config) {
+        if (!StringUtils.hasText(account) || config == null) {
+            return;
+        }
+        Integer failWindowMinutes = config.getFailWindowMinutes();
+        Integer maxFailCount = config.getMaxFailCount();
+        Integer lockMinutes = config.getLockMinutes();
+        if (failWindowMinutes == null || failWindowMinutes <= 0 || maxFailCount == null || maxFailCount <= 0) {
+            return;
+        }
+        String accountKey = normalizeAccountKey(account);
+        String failKey = LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey;
+        Long currentCount = redis.opsForValue().increment(failKey);
+        redis.expire(failKey, Duration.ofMinutes(failWindowMinutes));
+        if (currentCount != null && currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
+            redis.opsForValue().set(LOGIN_LOCK_KEY_PREFIX + accountKey, "1", Duration.ofMinutes(lockMinutes));
+            redis.delete(failKey);
+        }
+    }
+
+    private void clearLoginFailureState(String account) {
+        if (!StringUtils.hasText(account)) {
+            return;
+        }
+        String accountKey = normalizeAccountKey(account);
+        redis.delete(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey);
+        redis.delete(LOGIN_LOCK_KEY_PREFIX + accountKey);
+    }
+
+    private String normalizeAccountKey(String account) {
+        return account == null ? "" : account.trim().toLowerCase();
     }
 
     /**

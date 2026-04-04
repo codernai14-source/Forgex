@@ -5,7 +5,7 @@
       <a-input
         v-model:value="defaultValue"
         :placeholder="placeholder"
-        @change="handleSimpleChange"
+        @update:value="handleSimpleChange"
       >
         <template #suffix>
           <GlobalOutlined 
@@ -39,7 +39,7 @@
             <a-input
               v-model:value="record.value"
               :placeholder="`请输入${record.langName}翻译`"
-              @change="handleTableChange"
+              @update:value="handleTableChange"
             />
           </template>
         </template>
@@ -243,7 +243,10 @@ const generateI18nJson = (data: TableRow[]): string => {
 /**
  * 简单模式输入变化
  */
-const handleSimpleChange = () => {
+const handleSimpleChange = (value?: string) => {
+  if (typeof value === 'string') {
+    defaultValue.value = value
+  }
   // 更新默认语言的值
   const defaultLang = languages.value.find(l => l.isDefault)
   if (defaultLang) {
@@ -259,7 +262,9 @@ const handleSimpleChange = () => {
  * 表格模式输入变化
  */
 const handleTableChange = () => {
-  emitChange()
+  queueMicrotask(() => {
+    emitChange()
+  })
 }
 
 /**
@@ -322,13 +327,13 @@ onMounted(() => {
   
   .simple-mode {
     .i18n-icon {
-      color: #1890ff;
+      color: var(--fx-primary, #1890ff);
       cursor: pointer;
       font-size: 16px;
       transition: all 0.3s;
       
       &:hover {
-        color: #40a9ff;
+        color: var(--fx-primary-hover, #40a9ff);
         transform: scale(1.1);
       }
     }

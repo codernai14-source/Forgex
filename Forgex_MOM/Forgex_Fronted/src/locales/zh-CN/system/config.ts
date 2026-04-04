@@ -1,11 +1,12 @@
 /**
- * 系统配置页翻译 - 简体中文
+ * 系统配置页面翻译 - 简体中文
  */
 export default {
   title: '系统配置',
   tabSystem: '系统配置',
   tabPortal: '登录门户',
   tabSecurity: '安全验证',
+  tabEmail: '邮件配置',
   tabUpload: '文件上传',
 
   systemName: '系统名称',
@@ -61,19 +62,46 @@ export default {
 
   passwordPolicy: '密码策略',
   passwordStore: '密码存储加密策略',
+  defaultPassword: '用户默认密码',
+  defaultPasswordPlaceholder: '请输入重置用户时使用的默认密码',
   passwordMinLength: '最小长度',
   passwordRequireNumbers: '必须包含数字',
   passwordRequireUppercase: '必须包含大写字母',
   passwordRequireLowercase: '必须包含小写字母',
   passwordRequireSymbols: '必须包含特殊字符',
 
+  loginSecurity: '登录失败策略',
+  failWindowMinutes: '连续登录失败持续时间(分钟)',
+  maxFailCount: '连续登录失败次数',
+  lockMinutes: '锁定时间(分钟)',
+
   transportCrypto: '传输加密',
   transportAlgorithm: '传输算法',
   transportCipher: '密文格式',
   transportPublicKey: '公钥',
-  transportPublicKeyPlaceholder: '请输入公钥（Base64）',
+  transportPublicKeyPlaceholder: '请输入公钥(Base64)',
   transportPrivateKey: '私钥',
-  transportPrivateKeyPlaceholder: '请输入私钥（Base64）',
+  transportPrivateKeyPlaceholder: '请输入私钥(Base64)',
+
+  emailConfig: '邮件配置',
+  emailProvider: '邮件服务商',
+  emailProviderHint: '支持为不同服务商快速切换推荐配置，也可继续手工调整 SMTP 参数。',
+  providerLocalTitle: '本地 SMTP',
+  providerLocalDesc: '使用自建邮箱服务器或企业 SMTP 网关。',
+  providerAliyunTitle: '阿里云邮箱',
+  providerAliyunDesc: '适合企业邮箱场景，默认启用 SSL 与账号认证。',
+  providerQqTitle: 'QQ 邮箱',
+  providerQqDesc: '默认使用 QQ 邮箱授权码与 SSL 端口。',
+  senderAccount: '发件邮箱账号',
+  senderAccountPlaceholder: '请输入发件邮箱账号',
+  senderPassword: '邮箱密码/授权码',
+  senderPasswordPlaceholder: '请输入邮箱密码或授权码',
+  smtpHost: 'SMTP Host',
+  smtpHostPlaceholder: '请输入 SMTP Host',
+  smtpPort: 'SMTP Port',
+  authEnabled: '开启账号认证',
+  sslEnabled: '开启 SSL',
+  starttlsEnabled: '开启 STARTTLS',
 
   storageType: '上传方式',
   storageLocal: '本地存储',
