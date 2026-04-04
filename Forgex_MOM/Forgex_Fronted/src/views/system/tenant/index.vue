@@ -34,6 +34,15 @@
         </a-tag>
       </template>
 
+      <template #parentTenant="{ record }">
+        <span v-if="record.parentTenantId" class="text-gray-600">
+          {{ record.parentTenantName || '-' }}
+        </span>
+        <span v-else class="text-gray-400">
+          {{ $t('system.tenant.noParentTenant') }}
+        </span>
+      </template>
+
       <template #logo="{ record }">
         <a-image
           v-if="record.logo"
@@ -123,6 +132,28 @@
           </a-select>
         </a-form-item>
 
+        <a-form-item 
+          v-if="!formData.id" 
+          :label="$t('system.tenant.parentTenant')" 
+          name="parentTenantId"
+        >
+          <a-select
+            v-model:value="formData.parentTenantId"
+            :placeholder="$t('system.tenant.form.parentTenant')"
+            allow-clear
+            show-search
+            :filter-option="filterTenantOption"
+          >
+            <a-select-option
+              v-for="tenant in tenantOptions"
+              :key="tenant.id"
+              :value="tenant.id"
+            >
+              {{ tenant.tenantName }} ({{ TenantTypeLabels[tenant.tenantType] }})
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+
         <a-form-item :label="$t('system.tenant.description')" name="description">
           <a-textarea
             v-model:value="formData.description"
@@ -171,6 +202,7 @@ import {
   createTenant,
   updateTenant,
   deleteTenant,
+  listTenantForSelect,
   TenantTypeEnum,
   TenantTypeLabels,
   type TenantDTO,
@@ -204,6 +236,11 @@ const progressDialogVisible = ref(false)
  */
 const currentTaskId = ref<number>()
 
+/**
+ * 租户选项列表（用于父租户选择）
+ */
+const tenantOptions = ref<TenantDTO[]>([])
+
 const formData = reactive<TenantSaveParam>({
   tenantName: '',
   tenantCode: '',
@@ -215,6 +252,26 @@ const rules = {
   tenantName: [{ required: true, message: '请输入租户名称', trigger: 'blur' }],
   tenantCode: [{ required: true, message: '请输入租户编码', trigger: 'blur' }],
   tenantType: [{ required: true, message: '请选择租户类别', trigger: 'change' }]
+}
+
+/**
+ * 过滤租户选项
+ */
+const filterTenantOption = (input: string, option: any) => {
+  return option.children.toLowerCase().includes(input.toLowerCase())
+}
+
+/**
+ * 加载租户选项列表
+ */
+const loadTenantOptions = async () => {
+  try {
+    const data = await listTenantForSelect()
+    // 排除已删除的租户
+    tenantOptions.value = data.filter(t => t.status !== false)
+  } catch (e: any) {
+    console.error('加载租户选项失败:', e)
+  }
 }
 
 // 字典配置
@@ -284,7 +341,8 @@ function openAdd() {
     tenantType: TenantTypeEnum.CUSTOMER_TENANT,
     description: undefined,
     logo: undefined,
-    status: true
+    status: true,
+    parentTenantId: undefined
   })
   formRef.value?.resetFields()
 }
@@ -298,7 +356,8 @@ function openEdit(record: TenantDTO) {
     tenantType: record.tenantType,
     description: record.description,
     logo: record.logo,
-    status: record.status
+    status: record.status,
+    parentTenantId: undefined // 编辑时不支持修改父租户
   })
   
   formRef.value?.resetFields()
@@ -405,6 +464,7 @@ async function handleDelete(record: TenantDTO) {
 
 onMounted(() => {
   tableRef.value?.refresh?.()
+  loadTenantOptions()
 })
 </script>
 
