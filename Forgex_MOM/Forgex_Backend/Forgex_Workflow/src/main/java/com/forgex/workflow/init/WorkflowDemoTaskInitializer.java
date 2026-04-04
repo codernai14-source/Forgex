@@ -2,8 +2,10 @@ package com.forgex.workflow.init;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.tenant.TenantContextIgnore;
+import com.forgex.workflow.common.WorkflowConstants;
 import com.forgex.workflow.domain.dto.WorkflowAdminSeedUserDTO;
 import com.forgex.workflow.domain.entity.WfTaskConfig;
 import com.forgex.workflow.domain.entity.WfTaskNodeApprover;
@@ -17,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
@@ -47,9 +48,14 @@ public class WorkflowDemoTaskInitializer {
 
     /**
      * 应用启动后补齐演示审批任务。
+     * <p>
+     * 使用 @DSTransactional 支持多数据源事务切换：
+     * - admin 数据源：查询管理员用户信息
+     * - workflow 数据源：操作工作流配置表
+     * </p>
      */
     @EventListener(ApplicationReadyEvent.class)
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void initializeDemoTask() {
         TenantContextIgnore.setIgnore(true);
         try {
@@ -118,6 +124,8 @@ public class WorkflowDemoTaskInitializer {
                 .eq(WfTaskConfig::getTenantId, tenantId)
                 .eq(WfTaskConfig::getTaskCode, TASK_CODE)
                 .eq(WfTaskConfig::getDeleted, false)
+                .eq(WfTaskConfig::getConfigStage, WorkflowConstants.ConfigStage.PUBLISHED)
+                .orderByDesc(WfTaskConfig::getVersion)
                 .last("LIMIT 1"));
 
         boolean isNew = taskConfig == null;
@@ -138,6 +146,7 @@ public class WorkflowDemoTaskInitializer {
         taskConfig.setFormType(1);
         taskConfig.setFormPath(FORM_PATH);
         taskConfig.setStatus(1);
+        taskConfig.setConfigStage(WorkflowConstants.ConfigStage.PUBLISHED);
         taskConfig.setRemark("演示流程：用户发起 -> admin 审核 -> 结束");
 
         if (isNew) {
@@ -150,10 +159,11 @@ public class WorkflowDemoTaskInitializer {
     }
 
     private WfTaskNodeConfig ensureNode(Long taskConfigId, Long tenantId, Integer nodeType, Integer orderNum, String nodeName) {
+        String nodeKey = resolveNodeKey(nodeType, orderNum);
         WfTaskNodeConfig node = nodeConfigMapper.selectOne(new LambdaQueryWrapper<WfTaskNodeConfig>()
                 .eq(WfTaskNodeConfig::getTaskConfigId, taskConfigId)
                 .eq(WfTaskNodeConfig::getTenantId, tenantId)
-                .eq(WfTaskNodeConfig::getNodeType, nodeType)
+                .eq(WfTaskNodeConfig::getNodeKey, nodeKey)
                 .eq(WfTaskNodeConfig::getDeleted, 0)
                 .orderByAsc(WfTaskNodeConfig::getOrderNum)
                 .last("LIMIT 1"));
@@ -164,16 +174,23 @@ public class WorkflowDemoTaskInitializer {
             node.setTaskConfigId(taskConfigId);
             node.setTenantId(tenantId);
             node.setNodeType(nodeType);
+            node.setNodeKey(nodeKey);
             node.setOrderNum(orderNum);
             node.setNodeName(nodeName);
             node.setNodeNameI18nJson(buildNodeI18n(nodeName));
+            node.setCanvasX(resolveCanvasX(orderNum));
+            node.setCanvasY(240D);
             nodeConfigMapper.insert(node);
             return node;
         }
 
+        node.setNodeType(nodeType);
+        node.setNodeKey(nodeKey);
         node.setOrderNum(orderNum);
         node.setNodeName(nodeName);
         node.setNodeNameI18nJson(buildNodeI18n(nodeName));
+        node.setCanvasX(resolveCanvasX(orderNum));
+        node.setCanvasY(240D);
         nodeConfigMapper.updateById(node);
         return node;
     }
@@ -218,6 +235,20 @@ public class WorkflowDemoTaskInitializer {
 
     private boolean isAdminAccount(WorkflowAdminSeedUserDTO user) {
         return user != null && StringUtils.hasText(user.getAccount()) && "admin".equalsIgnoreCase(user.getAccount());
+    }
+
+    private String resolveNodeKey(Integer nodeType, Integer orderNum) {
+        if (Objects.equals(nodeType, 1)) {
+            return "start";
+        }
+        if (Objects.equals(nodeType, 2)) {
+            return "end";
+        }
+        return "approve_" + orderNum;
+    }
+
+    private Double resolveCanvasX(Integer orderNum) {
+        return 120D + (Math.max(orderNum, 1) - 1) * 300D;
     }
 
     private String buildNodeI18n(String zhCnName) {

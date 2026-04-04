@@ -56,6 +56,11 @@ public class WfTaskNodeConfig {
     private Long taskConfigId;
 
     /**
+     * 璁捐鍣ㄧǔ瀹氳妭鐐归敭
+     */
+    private String nodeKey;
+
+    /**
      * 节点类型
      * <p>
      * 1=开始节点<br>
@@ -140,6 +145,16 @@ public class WfTaskNodeConfig {
      * </p>
      */
     private String branchConditions;
+
+    /**
+     * 鐢诲竷 X 鍧愭爣
+     */
+    private Double canvasX;
+
+    /**
+     * 鐢诲竷 Y 鍧愭爣
+     */
+    private Double canvasY;
 
     /**
      * 排序号

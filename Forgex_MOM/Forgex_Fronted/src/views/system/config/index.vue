@@ -738,9 +738,9 @@ async function saveSystemConfig() {
   savingSystem.value = true
   try {
     await setSystemBasicConfig(basicConfig.value)
-    message.success(t('common.saveSuccess'))
+    // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
-    message.error(t('common.saveFailed'))
+    // 错误由 http 拦截器统一处理并显示后端返回的错误消息
   } finally {
     savingSystem.value = false
   }
@@ -750,9 +750,9 @@ async function savePortalConfig() {
   savingPortal.value = true
   try {
     await setSystemBasicConfig(basicConfig.value)
-    message.success(t('common.saveSuccess'))
+    // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
-    message.error(t('common.saveFailed'))
+    // 错误由 http 拦截器统一处理并显示后端返回的错误消息
   } finally {
     savingPortal.value = false
   }
@@ -762,9 +762,9 @@ async function saveSecurityConfig() {
   savingSecurity.value = true
   try {
     await setSecurityConfig(securityConfig.value)
-    message.success(t('common.saveSuccess'))
+    // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
-    message.error(t('common.saveFailed'))
+    // 错误由 http 拦截器统一处理并显示后端返回的错误消息
   } finally {
     savingSecurity.value = false
   }
@@ -774,9 +774,9 @@ async function saveFileUploadConfig() {
   savingUpload.value = true
   try {
     await setFileUploadConfig(fileUploadConfig.value)
-    message.success(t('common.saveSuccess'))
+    // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
-    message.error(t('common.saveFailed'))
+    // 错误由 http 拦截器统一处理并显示后端返回的错误消息
   } finally {
     savingUpload.value = false
   }
@@ -786,9 +786,9 @@ async function saveEmail() {
   savingEmail.value = true
   try {
     await setEmailConfig(normalizeEmailConfig(emailConfig.value))
-    message.success(t('common.saveSuccess'))
+    // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
-    message.error(t('common.saveFailed'))
+    // 错误由 http 拦截器统一处理并显示后端返回的错误消息
   } finally {
     savingEmail.value = false
   }
@@ -999,28 +999,28 @@ onMounted(() => {
 }
 
 .email-provider-card {
-  border: 1px solid #d9e4f5;
+  border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
   border-radius: 16px;
-  background: linear-gradient(160deg, #ffffff 0%, #f6f9ff 100%);
+  background: var(--fx-bg-container);
   padding: 16px;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.04));
 }
 
 .email-provider-card:hover,
 .email-provider-card--active {
-  border-color: #1677ff;
+  border-color: var(--fx-primary);
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(22, 119, 255, 0.12);
+  box-shadow: var(--fx-shadow-secondary, 0 4px 12px rgba(22, 119, 255, 0.15));
 }
 
 .email-provider-card__title {
   display: block;
   font-size: 15px;
   font-weight: 600;
-  color: #132238;
+  color: var(--fx-text-primary);
 }
 
 .email-provider-card__desc {
@@ -1028,23 +1028,80 @@ onMounted(() => {
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.6;
-  color: #5f6f85;
+  color: var(--fx-text-secondary);
 }
 
 .email-config-main {
-  border: 1px solid #eef3fb;
+  border: 1px solid var(--fx-border-color);
   border-radius: 20px;
   padding: 24px 16px 8px;
-  background:
-    radial-gradient(circle at top right, rgba(22, 119, 255, 0.12), transparent 34%),
-    linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  background: var(--fx-bg-container);
+}
+
+.email-config-main :deep(.ant-input),
+.email-config-main :deep(.ant-input-password) {
+  background: var(--fx-bg-container) !important;
+  border-color: var(--fx-border-color);
+  color: var(--fx-text-primary);
+  -webkit-text-fill-color: var(--fx-text-primary);
+}
+
+.email-config-main :deep(.ant-input:hover),
+.email-config-main :deep(.ant-input-password:hover) {
+  border-color: var(--fx-primary);
+}
+
+.email-config-main :deep(.ant-input:focus),
+.email-config-main :deep(.ant-input-password:focus) {
+  border-color: var(--fx-primary);
+  box-shadow: 0 0 0 2px var(--fx-primary-bg, rgba(22, 119, 255, 0.1));
+}
+
+.email-config-main :deep(.ant-input:-webkit-autofill),
+.email-config-main :deep(.ant-input-password:-webkit-autofill) {
+  -webkit-box-shadow: 0 0 0 1000px var(--fx-bg-container) inset !important;
+  box-shadow: 0 0 0 1000px var(--fx-bg-container) inset !important;
+  -webkit-text-fill-color: var(--fx-text-primary) !important;
+  color: var(--fx-text-primary) !important;
+  background-color: transparent !important;
+  caret-color: var(--fx-text-primary) !important;
+}
+
+.email-config-main :deep(.ant-input-number) {
+  background: var(--fx-bg-container) !important;
+  border-color: var(--fx-border-color);
+  color: var(--fx-text-primary);
+  width: 100%;
+  -webkit-text-fill-color: var(--fx-text-primary);
+}
+
+.email-config-main :deep(.ant-input-number:hover) {
+  border-color: var(--fx-primary);
+}
+
+.email-config-main :deep(.ant-input-number:focus) {
+  border-color: var(--fx-primary);
+  box-shadow: 0 0 0 2px var(--fx-primary-bg, rgba(22, 119, 255, 0.1));
+}
+
+.email-config-main :deep(.ant-input-number:-webkit-autofill) {
+  -webkit-box-shadow: 0 0 0 1000px var(--fx-bg-container) inset !important;
+  box-shadow: 0 0 0 1000px var(--fx-bg-container) inset !important;
+  -webkit-text-fill-color: var(--fx-text-primary) !important;
+  color: var(--fx-text-primary) !important;
+  background-color: transparent !important;
+  caret-color: var(--fx-text-primary) !important;
+}
+
+.email-config-main :deep(.ant-form-item-label > label) {
+  color: var(--fx-text-primary);
 }
 
 .email-config-banner {
   margin: 0 16px 24px;
   padding: 16px 18px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #12314f 0%, #1f4f7b 55%, #2f7cc0 100%);
+  background: linear-gradient(135deg, var(--fx-primary) 0%, var(--fx-primary-hover) 100%);
   color: #fff;
 }
 

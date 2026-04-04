@@ -113,4 +113,6 @@ export default {
   accessPrefixPlaceholder: 'e.g. /files',
   providerConfigJson: 'Provider Config (JSON)',
   providerConfigJsonPlaceholder: 'Input OSS/MinIO JSON config; leave empty for LOCAL',
+
+  portalSaveHint: ' (Login page will apply new config after refresh)',
 }

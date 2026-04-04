@@ -52,7 +52,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
     /**
      * Cookie中的Token名称
      */
-    private static final String COOKIE_TOKEN = "satoken";
+    private static final String COOKIE_TOKEN = "Authorization";
 
     private static final String SYS_I18N_RESOLVE_URL = "http://forgex-sys/sys/i18n/message/resolve";
     private static final String I18N_CACHE_PREFIX = "i18nmsg:";

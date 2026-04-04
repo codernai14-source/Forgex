@@ -37,6 +37,31 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/workflow',
+    component: () => import('../layouts/MainLayout.vue'),
+    redirect: '/workflow/taskConfig',
+    children: [
+      {
+        path: 'taskConfig',
+        name: 'WorkflowTaskConfig',
+        component: () => import('../views/workflow/taskConfig/index.vue'),
+        meta: { title: '瀹℃壒浠诲姟閰嶇疆', module: 'approval' }
+      },
+      {
+        path: 'taskConfig/:taskCode/nodes',
+        name: 'WorkflowTaskConfigNodes',
+        component: () => import('../views/workflow/taskConfig/nodes.vue'),
+        meta: { title: '审批节点配置', module: 'approval', hidden: true }
+      },
+      {
+        path: 'execution/start/:taskCode',
+        name: 'WorkflowExecutionStartForm',
+        component: () => import('../views/workflow/execution/startForm.vue'),
+        meta: { title: '填写审批表单', module: 'approval', hidden: true }
+      }
+    ]
+  },
+  {
     path: '/redirect',
     name: 'Redirect',
     component: { template: '<div />' },

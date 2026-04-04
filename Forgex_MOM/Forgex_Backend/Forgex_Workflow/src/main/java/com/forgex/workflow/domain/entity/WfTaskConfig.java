@@ -121,6 +121,11 @@ public class WfTaskConfig extends BaseEntity {
     private Integer version;
 
     /**
+     * 閰嶇疆闃舵
+     */
+    private String configStage;
+
+    /**
      * 备注
      */
     private String remark;

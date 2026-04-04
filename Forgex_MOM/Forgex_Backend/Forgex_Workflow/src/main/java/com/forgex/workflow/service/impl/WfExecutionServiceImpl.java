@@ -16,11 +16,13 @@ package com.forgex.workflow.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.service.UserInfoService;
 import com.forgex.common.exception.BusinessException;
 import com.forgex.common.util.CurrentUserUtils;
+import com.forgex.workflow.common.WorkflowConstants;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.entity.WfMyTask;
 import com.forgex.workflow.domain.entity.WfTaskConfig;
@@ -62,6 +64,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@DS("workflow")
 @RequiredArgsConstructor
 public class WfExecutionServiceImpl implements IWfExecutionService {
 
@@ -86,6 +89,8 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .eq(WfTaskConfig::getTaskCode, param.getTaskCode())
                 .eq(WfTaskConfig::getTenantId, currentTenantId)
                 .eq(WfTaskConfig::getDeleted, false)
+                .eq(WfTaskConfig::getConfigStage, WorkflowConstants.ConfigStage.PUBLISHED)
+                .orderByDesc(WfTaskConfig::getVersion)
                 .last("LIMIT 1"));
         if (taskConfig == null) {
             throw new BusinessException("审批任务配置不存在");

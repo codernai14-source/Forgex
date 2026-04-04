@@ -50,13 +50,13 @@ export default {
   captchaImage: '图片验证码',
   captchaSlider: '滑块验证码',
   imageKeyPrefix: '图片验证码键前缀',
-  imageExpireSeconds: '图片验证码有效期(秒)',
+  imageExpireSeconds: '图片验证码有效期 (秒)',
   imageWidth: '图片宽度',
   imageHeight: '图片高度',
   imageLength: '验证码位数',
   sliderKeyPrefix: '滑块令牌键前缀',
   sliderSecondaryKeyPrefix: '二次校验键前缀',
-  sliderTokenExpireSeconds: '滑块令牌有效期(秒)',
+  sliderTokenExpireSeconds: '滑块令牌有效期 (秒)',
   sliderProvider: '滑块提供方',
   sliderSecondaryEnabled: '启用二次校验',
 
@@ -71,17 +71,17 @@ export default {
   passwordRequireSymbols: '必须包含特殊字符',
 
   loginSecurity: '登录失败策略',
-  failWindowMinutes: '连续登录失败持续时间(分钟)',
+  failWindowMinutes: '连续登录失败持续时间 (分钟)',
   maxFailCount: '连续登录失败次数',
-  lockMinutes: '锁定时间(分钟)',
+  lockMinutes: '锁定时间 (分钟)',
 
   transportCrypto: '传输加密',
   transportAlgorithm: '传输算法',
   transportCipher: '密文格式',
   transportPublicKey: '公钥',
-  transportPublicKeyPlaceholder: '请输入公钥(Base64)',
+  transportPublicKeyPlaceholder: '请输入公钥 (Base64)',
   transportPrivateKey: '私钥',
-  transportPrivateKeyPlaceholder: '请输入私钥(Base64)',
+  transportPrivateKeyPlaceholder: '请输入私钥 (Base64)',
 
   emailConfig: '邮件配置',
   emailProvider: '邮件服务商',
@@ -111,6 +111,8 @@ export default {
   localUploadPathPlaceholder: '请输入本地上传目录，例如 ./uploads',
   accessPrefix: '访问前缀',
   accessPrefixPlaceholder: '请输入访问前缀，例如 /files',
-  providerConfigJson: '上传方式配置(JSON)',
+  providerConfigJson: '上传方式配置 (JSON)',
   providerConfigJsonPlaceholder: '请输入 OSS/MinIO 的 JSON 配置，LOCAL 可留空',
+
+  portalSaveHint: '（刷新页面后登录页将应用新配置）',
 }

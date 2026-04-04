@@ -1,6 +1,7 @@
 <template>
   <a-config-provider :theme="antdTheme" :locale="antdLocale">
     <a-layout 
+      ref="layoutRootRef"
       class="fx-main-layout" 
       :style="rootStyle"
       :data-font-size="layoutConfig.fontSize"
@@ -97,6 +98,8 @@
       placement="right"
       width="480"
       class="fx-setting-drawer"
+      :get-container="getSettingDrawerContainer"
+      :root-style="settingDrawerRootStyle"
     >
       <template #title>
         <div class="fx-setting-header">
@@ -113,34 +116,52 @@
           <a-tab-pane :tab="t('layout.tabAppearance')" key="appearance">
             <div class="fx-setting-block">
               <div class="fx-setting-title">{{ t('layout.theme') }}</div>
-              <div class="fx-setting-row">
-                <span>{{ t('layout.themeMode') }}</span>
-                <a-select v-model:value="layoutConfig.themeMode" style="width: 160px">
-                  <a-select-option value="light">{{ t('layout.themeLight') }}</a-select-option>
-                  <a-select-option value="dark">{{ t('layout.themeDark') }}</a-select-option>
-                  <a-select-option value="system">{{ t('layout.themeSystem') }}</a-select-option>
-                </a-select>
+              
+              <!-- 主题模式卡片选择器 -->
+              <div class="fx-setting-section">
+                <div class="fx-card-grid fx-card-grid--mode">
+                  <button
+                    v-for="mode in themeModeOptions"
+                    :key="mode.value"
+                    type="button"
+                    class="fx-mode-card"
+                    :class="{ 'fx-mode-card--active': layoutConfig.themeMode === mode.value }"
+                    @click="layoutConfig.themeMode = mode.value"
+                  >
+                    <component :is="mode.icon" class="fx-mode-card__icon" />
+                    <span class="fx-mode-card__label">{{ mode.label }}</span>
+                  </button>
+                </div>
               </div>
-              <div class="fx-setting-row">
-                <span>{{ t('layout.themeColor') }}</span>
-                <a-select v-model:value="layoutConfig.themeColor" style="width: 200px">
-                  <a-select-option value="#1677ff">{{ t('layout.themeColorDawnBlue') }}</a-select-option>
-                  <a-select-option value="#722ED1">{{ t('layout.themeColorTwilightPurple') }}</a-select-option>
-                  <a-select-option value="#13C2C2">{{ t('layout.themeColorCyan') }}</a-select-option>
-                  <a-select-option value="#52C41A">{{ t('layout.themeColorAuroraGreen') }}</a-select-option>
-                  <a-select-option value="#FA8C16">{{ t('layout.themeColorSunsetOrange') }}</a-select-option>
-                  <a-select-option value="#F5222D">{{ t('layout.themeColorVolcanoRed') }}</a-select-option>
-                  <a-select-option value="#8C8C8C">{{ t('layout.themeColorNeutralGray') }}</a-select-option>
-                </a-select>
+
+              <!-- 主题颜色卡片选择器 -->
+              <div class="fx-setting-section">
+                <div class="fx-setting-title fx-setting-title--sub">内置主题</div>
+                <div class="fx-card-grid fx-card-grid--color">
+                  <button
+                    v-for="color in themeColorOptions"
+                    :key="color.value"
+                    type="button"
+                    class="fx-color-card"
+                    :class="{ 'fx-color-card--active': layoutConfig.themeColor === color.value }"
+                    @click="layoutConfig.themeColor = color.value"
+                  >
+                    <span class="fx-color-card__swatch" :style="{ background: color.value }"></span>
+                    <span class="fx-color-card__label">{{ color.label }}</span>
+                  </button>
+                </div>
               </div>
-              <div class="fx-setting-row">
+
+              <!-- 字体大小滑块 -->
+              <div class="fx-setting-row fx-setting-row--slider">
                 <span>{{ t('layout.fontSize') }}</span>
-                <a-select v-model:value="layoutConfig.fontSize" style="width: 120px">
-                  <a-select-option value="13px">{{ t('layout.fontSizeSmall') }}</a-select-option>
-                  <a-select-option value="14px">{{ t('layout.fontSizeDefault') }}</a-select-option>
-                  <a-select-option value="16px">{{ t('layout.fontSizeLarge') }}</a-select-option>
-                </a-select>
+                <div class="fx-setting-slider">
+                  <a-slider v-model:value="fontSizeSliderValue" :min="FONT_SIZE_MIN" :max="FONT_SIZE_MAX" />
+                  <span class="fx-setting-slider__value">{{ fontSizeSliderValue }}px</span>
+                </div>
               </div>
+
+              <!-- 圆角大小滑块 -->
               <div class="fx-setting-row">
                 <span>{{ t('layout.borderRadius') }}</span>
                 <a-slider v-model:value="layoutConfig.borderRadius" :min="0" :max="16" style="width: 180px" />
@@ -150,15 +171,25 @@
           <a-tab-pane :tab="t('layout.tabLayout')" key="layout">
             <div class="fx-setting-block">
               <div class="fx-setting-title">{{ t('layout.menuLayout') }}</div>
-              <div class="fx-setting-row">
-                <span>{{ t('layout.layoutMode') }}</span>
-                <a-select v-model:value="layoutConfig.layoutMode" style="width: 200px">
-                  <a-select-option value="vertical">{{ t('layout.layoutVertical') }}</a-select-option>
-                  <a-select-option value="vertical-mix">{{ t('layout.layoutVerticalMix') }}</a-select-option>
-                  <a-select-option value="top">{{ t('layout.layoutTop') }}</a-select-option>
-                  <a-select-option value="mix">{{ t('layout.layoutMix') }}</a-select-option>
-                </a-select>
+              
+              <!-- 布局模式卡片选择器 -->
+              <div class="fx-setting-section">
+                <span class="fx-setting-label">{{ t('layout.layoutMode') }}</span>
+                <div class="fx-card-grid fx-card-grid--layout">
+                  <button
+                    v-for="mode in layoutModeOptions"
+                    :key="mode.value"
+                    type="button"
+                    class="fx-layout-card"
+                    :class="{ 'fx-layout-card--active': layoutConfig.layoutMode === mode.value }"
+                    @click="layoutConfig.layoutMode = mode.value"
+                  >
+                    <div class="fx-layout-card__preview" v-html="mode.preview"></div>
+                    <span class="fx-layout-card__label">{{ mode.label }}</span>
+                  </button>
+                </div>
               </div>
+
               <div class="fx-setting-row">
                 <span>{{ t('layout.leftDoubleMenu') }}</span>
                 <a-switch v-model:checked="layoutConfig.leftDoubleMenu" />
@@ -320,6 +351,22 @@ import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
 import { useSse } from '../hooks/useSse'
 
+import {
+  SearchOutlined,
+  BellOutlined,
+  SettingOutlined,
+  DownOutlined,
+  UserOutlined,
+  KeyOutlined,
+  MailOutlined,
+  LogoutOutlined,
+  AppstoreOutlined,
+  SyncOutlined,
+  HighlightOutlined,
+  EyeInvisibleOutlined,
+  DesktopOutlined
+} from '@ant-design/icons-vue'
+
 import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
@@ -405,8 +452,169 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   footerCopyrightEnabled: true
 }
 
+const layoutRootRef = ref<HTMLElement | { $el?: unknown } | null>(null)
 const layoutConfig = ref<LayoutConfig>({ ...DEFAULT_LAYOUT_CONFIG })
 const settingOpen = ref(false)
+const FONT_SIZE_MIN = 14
+const FONT_SIZE_MAX = 28
+const FONT_SIZE_DEFAULT = 14
+const settingDrawerRootStyle = {
+  position: 'absolute',
+} as const
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+function parseFontSizeValue(fontSize: unknown): number {
+  if (typeof fontSize === 'number' && Number.isFinite(fontSize)) {
+    return clamp(Math.round(fontSize), FONT_SIZE_MIN, FONT_SIZE_MAX)
+  }
+  if (typeof fontSize === 'string') {
+    const parsed = Number.parseInt(fontSize, 10)
+    if (Number.isFinite(parsed)) {
+      return clamp(parsed, FONT_SIZE_MIN, FONT_SIZE_MAX)
+    }
+  }
+  return FONT_SIZE_DEFAULT
+}
+
+function normalizeFontSize(fontSize: unknown): string {
+  return `${parseFontSizeValue(fontSize)}px`
+}
+
+function resolveLayoutRootElement(): HTMLElement | null {
+  const current = layoutRootRef.value
+  if (!current) {
+    return null
+  }
+  if (current instanceof HTMLElement) {
+    return current
+  }
+  if ('$el' in current && current.$el instanceof HTMLElement) {
+    return current.$el
+  }
+  return null
+}
+
+/**
+ * 将设置抽屉挂到主布局容器内，确保 drawer 内仍能继承 `--fx-*` 主题变量。
+ */
+function getSettingDrawerContainer(): HTMLElement {
+  const layoutRoot =
+    resolveLayoutRootElement()
+    ?? (typeof document !== 'undefined' ? document.querySelector('.fx-main-layout') : null)
+  if (layoutRoot instanceof HTMLElement) {
+    return layoutRoot
+  }
+  return document.body
+}
+
+/**
+ * 主题模式选项配置
+ * <p>
+ * 提供三种主题模式：浅色、暗色、跟随系统
+ * 每个选项包含值、标签和对应图标
+ * </p>
+ */
+const themeModeOptions = [
+  { value: 'light', label: '浅色', icon: HighlightOutlined },
+  { value: 'dark', label: '暗色', icon: EyeInvisibleOutlined },
+  { value: 'system', label: '跟随系统', icon: DesktopOutlined },
+]
+
+/**
+ * 主题颜色选项配置
+ * <p>
+ * 提供 7 种预设主题色，每种颜色包含 HEX 值和中文标签
+ * 颜色经过精心挑选，确保视觉舒适度和可访问性
+ * </p>
+ */
+const themeColorOptions = [
+  { value: '#1677ff', label: '默认' },
+  { value: '#7c5cff', label: '紫罗兰' },
+  { value: '#ec4899', label: '樱花粉' },
+  { value: '#f6c445', label: '柠檬黄' },
+  { value: '#5b8ff9', label: '天蓝色' },
+  { value: '#34d399', label: '浅绿色' },
+  { value: '#71717a', label: '锌色灰' },
+  { value: '#14b8a6', label: '深绿色' },
+  { value: '#1d4ed8', label: '深蓝色' },
+  { value: '#f97316', label: '橙黄色' },
+  { value: '#e11d48', label: '玫瑰红' },
+  { value: '#525252', label: '中性色' },
+  { value: '#475569', label: '石板灰' },
+  { value: '#6b7280', label: '中灰色' },
+]
+
+const fontSizeSliderValue = computed({
+  get: () => parseFontSizeValue(layoutConfig.value.fontSize),
+  set: (value: number) => {
+    layoutConfig.value.fontSize = `${clamp(Math.round(value), FONT_SIZE_MIN, FONT_SIZE_MAX)}px`
+  },
+})
+
+/**
+ * 布局模式选项配置
+ * <p>
+ * 提供四种布局模式，每种模式包含预览 SVG 图标和中文标签
+ * 预览图使用简化的布局结构示意
+ * </p>
+ */
+const layoutModeOptions = [
+  {
+    value: 'vertical',
+    label: '垂直',
+    preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
+      <rect x="2" y="2" width="20" height="52" rx="2" fill="currentColor" fill-opacity="0.12"/>
+      <rect x="24" y="2" width="54" height="8" rx="1" fill="currentColor" fill-opacity="0.08"/>
+      <rect x="24" y="12" width="54" height="42" rx="1" fill="currentColor" fill-opacity="0.04"/>
+      <rect x="6" y="10" width="12" height="3" rx="1" fill="currentColor" fill-opacity="0.35"/>
+      <rect x="6" y="16" width="10" height="2" rx="1" fill="currentColor" fill-opacity="0.2"/>
+      <rect x="6" y="21" width="10" height="2" rx="1" fill="currentColor" fill-opacity="0.2"/>
+    </svg>`,
+  },
+  {
+    value: 'vertical-mix',
+    label: '垂直双列',
+    preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
+      <rect x="2" y="2" width="12" height="52" rx="2" fill="currentColor" fill-opacity="0.12"/>
+      <rect x="16" y="2" width="18" height="52" rx="2" fill="currentColor" fill-opacity="0.08"/>
+      <rect x="36" y="2" width="42" height="52" rx="2" fill="currentColor" fill-opacity="0.04"/>
+      <rect x="4" y="8" width="8" height="3" rx="1" fill="currentColor" fill-opacity="0.35"/>
+      <rect x="19" y="8" width="12" height="2" rx="1" fill="currentColor" fill-opacity="0.25"/>
+      <rect x="19" y="13" width="10" height="2" rx="1" fill="currentColor" fill-opacity="0.18"/>
+    </svg>`,
+  },
+  {
+    value: 'top',
+    label: '水平',
+    preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
+      <rect x="2" y="2" width="76" height="8" rx="2" fill="currentColor" fill-opacity="0.12"/>
+      <rect x="2" y="12" width="76" height="42" rx="2" fill="currentColor" fill-opacity="0.04"/>
+      <rect x="6" y="4" width="16" height="4" rx="1" fill="currentColor" fill-opacity="0.35"/>
+      <rect x="28" y="4" width="12" height="4" rx="1" fill="currentColor" fill-opacity="0.2"/>
+      <rect x="44" y="4" width="12" height="4" rx="1" fill="currentColor" fill-opacity="0.2"/>
+    </svg>`,
+  },
+  {
+    value: 'mix',
+    label: '混合',
+    preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
+      <rect x="2" y="2" width="76" height="8" rx="2" fill="currentColor" fill-opacity="0.12"/>
+      <rect x="2" y="12" width="18" height="42" rx="2" fill="currentColor" fill-opacity="0.08"/>
+      <rect x="22" y="12" width="56" height="42" rx="2" fill="currentColor" fill-opacity="0.04"/>
+      <rect x="6" y="4" width="14" height="4" rx="1" fill="currentColor" fill-opacity="0.35"/>
+      <rect x="26" y="4" width="10" height="4" rx="1" fill="currentColor" fill-opacity="0.2"/>
+      <rect x="5" y="16" width="12" height="2" rx="1" fill="currentColor" fill-opacity="0.25"/>
+      <rect x="5" y="21" width="10" height="2" rx="1" fill="currentColor" fill-opacity="0.18"/>
+    </svg>`,
+  },
+]
 const siderCollapsed = ref(false)
 const openKeys = ref<string[]>([])
 const selectedKeys = ref<string[]>([])
@@ -808,7 +1016,7 @@ function normalizeLayoutConfig(raw: any): LayoutConfig {
     leftDoubleMenu: !!cfg.leftDoubleMenu,
     layoutMode: cfg.layoutMode === 'vertical' || cfg.layoutMode === 'vertical-mix' || cfg.layoutMode === 'top' || cfg.layoutMode === 'mix' ? cfg.layoutMode : DEFAULT_LAYOUT_CONFIG.layoutMode,
     contentWidth: cfg.contentWidth === 'fixed' ? 'fixed' : 'fluid',
-    fontSize: typeof cfg.fontSize === 'string' ? cfg.fontSize : DEFAULT_LAYOUT_CONFIG.fontSize,
+    fontSize: normalizeFontSize(cfg.fontSize),
     borderRadius: typeof cfg.borderRadius === 'number' ? cfg.borderRadius : DEFAULT_LAYOUT_CONFIG.borderRadius,
     themeMode: cfg.themeMode === 'dark' || cfg.themeMode === 'system' ? cfg.themeMode : 'light',
     themeColor: typeof cfg.themeColor === 'string' && cfg.themeColor ? cfg.themeColor : DEFAULT_LAYOUT_CONFIG.themeColor,
@@ -1308,5 +1516,221 @@ onUnmounted(() => {
   padding: 16px;            /* 统一页面内边距（可根据需要调整） */
   box-sizing: border-box;   /* 让 padding 包含在 height 100% 内 */
   position: relative;       /* 为 watermark 绝对定位提供参考 */
+}
+
+/* ==================== 卡片选择器样式（Vben5 风格）==================== */
+
+.fx-setting-section {
+  margin-bottom: 20px;
+}
+
+.fx-setting-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: var(--fx-text-primary, #1f2937);
+}
+
+.fx-setting-title--sub {
+  margin-top: 8px;
+  margin-bottom: 14px;
+}
+
+.fx-card-grid {
+  display: grid;
+  gap: 10px;
+  
+  &--mode {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  &--color {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  &--layout {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 主题模式卡片 */
+.fx-setting-row--slider {
+  align-items: center;
+}
+
+.fx-setting-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+
+  :deep(.ant-slider) {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+.fx-setting-slider__value {
+  min-width: 48px;
+  color: var(--fx-text-secondary, #6b7280);
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
+  border-radius: 12px;
+  background: var(--fx-bg-container, #ffffff);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  outline: none;
+
+  &:hover {
+    border-color: var(--fx-primary, #1677ff);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
+  }
+
+  &--active {
+    border-color: var(--fx-primary, #1677ff);
+    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.06));
+
+    .fx-mode-card__icon {
+      color: var(--fx-primary, #1677ff);
+    }
+
+    .fx-mode-card__label {
+      color: var(--fx-primary, #1677ff);
+      font-weight: 600;
+    }
+  }
+
+  &__icon {
+    font-size: 22px;
+    color: var(--fx-text-secondary, #6b7280);
+    transition: color 0.25s ease;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--fx-text-secondary, #6b7280);
+    transition: all 0.25s ease;
+  }
+}
+
+/* 主题颜色卡片 */
+.fx-color-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
+  border-radius: 12px;
+  background: var(--fx-bg-container, #ffffff);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  outline: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &--active {
+    border-color: var(--fx-text-primary, #1f2937);
+
+    .fx-color-card__label {
+      font-weight: 600;
+      color: var(--fx-text-primary, #1f2937);
+    }
+  }
+
+  &__swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &:hover &__swatch {
+    transform: scale(1.1);
+  }
+
+  &--active &__swatch {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  &__label {
+    font-size: 11px;
+    color: var(--fx-text-tertiary, #6b7280);
+    transition: all 0.25s ease;
+  }
+}
+
+/* 布局模式卡片 */
+.fx-layout-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
+  border-radius: 12px;
+  background: var(--fx-bg-container, #ffffff);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  outline: none;
+
+  &:hover {
+    border-color: var(--fx-primary, #1677ff);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
+  }
+
+  &--active {
+    border-color: var(--fx-primary, #1677ff);
+    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.06));
+
+    .fx-layout-card__label {
+      color: var(--fx-primary, #1677ff);
+      font-weight: 600;
+    }
+
+    .fx-layout-card__preview {
+      color: var(--fx-primary, #1677ff);
+    }
+  }
+
+  &__preview {
+    width: 72px;
+    height: 48px;
+    color: var(--fx-text-tertiary, #9ca3af);
+    transition: color 0.25s ease;
+    
+    :deep(svg) {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--fx-text-secondary, #6b7280);
+    transition: all 0.25s ease;
+  }
 }
 </style>

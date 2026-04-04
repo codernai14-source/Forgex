@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.workflow.service.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.workflow.domain.entity.WfTaskConfig;
 import com.forgex.workflow.domain.entity.WfTaskExecution;
@@ -44,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Service
+@DS("workflow")
 @RequiredArgsConstructor
 public class WfCallbackServiceImpl implements IWfCallbackService {
     

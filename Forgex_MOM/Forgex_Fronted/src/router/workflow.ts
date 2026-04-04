@@ -19,12 +19,30 @@ const workflowRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'taskConfig/:taskCode/nodes',
+        name: 'WorkflowTaskConfigNodes',
+        component: () => import('@/views/workflow/taskConfig/nodes.vue'),
+        meta: {
+          title: '审批节点配置',
+          hidden: true
+        }
+      },
+      {
         path: 'execution/start',
         name: 'WorkflowExecutionStart',
         component: () => import('@/views/workflow/execution/start.vue'),
         meta: {
           title: '发起审批',
           icon: 'PlusOutlined'
+        }
+      },
+      {
+        path: 'execution/start/:taskCode',
+        name: 'WorkflowExecutionStartForm',
+        component: () => import('@/views/workflow/execution/startForm.vue'),
+        meta: {
+          title: '填写审批表单',
+          hidden: true
         }
       },
       {

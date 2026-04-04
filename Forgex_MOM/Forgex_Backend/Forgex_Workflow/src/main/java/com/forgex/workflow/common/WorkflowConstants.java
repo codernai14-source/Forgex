@@ -107,4 +107,12 @@ public class WorkflowConstants {
         /** 低代码表单 */
         public static final Integer LOW_CODE = 2;
     }
+    /**
+     * 浠诲姟閰嶇疆闃舵
+     */
+    public static class ConfigStage {
+        public static final String DRAFT = "DRAFT";
+        public static final String PUBLISHED = "PUBLISHED";
+        public static final String ARCHIVED = "ARCHIVED";
+    }
 }
