@@ -9,6 +9,8 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
       - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
+      - com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.jdbc.DataSourceHealthContributorAutoConfiguration
   config:
     import:
       - nacos:common.yml
@@ -50,8 +52,6 @@ spring:
                   - OPTIONS
                 allowed-headers: "*"
                 exposed-headers:
-                  - Authorization
-                  - satoken
                   - Content-Disposition
                 allow-credentials: true
                 max-age: 3600

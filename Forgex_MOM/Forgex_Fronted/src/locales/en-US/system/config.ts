@@ -74,6 +74,8 @@ export default {
   failWindowMinutes: 'Failure Window (minutes)',
   maxFailCount: 'Max Failure Count',
   lockMinutes: 'Lock Duration (minutes)',
+  sessionTimeoutNoticeTitle: 'Session timeout is not configured here',
+  sessionTimeoutNoticeDesc: 'Browser session timeout is managed only by Nacos sa-token.yml. This page does not provide hour/minute writeback to avoid creating a second source of truth. Update the Sa-Token timeout config in Nacos and refresh related services instead.',
 
   transportCrypto: 'Transport Encryption',
   transportAlgorithm: 'Algorithm',

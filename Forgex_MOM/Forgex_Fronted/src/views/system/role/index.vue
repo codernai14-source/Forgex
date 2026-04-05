@@ -74,6 +74,17 @@
           </a-popconfirm>
         </a-space>
       </template>
+
+      <template #status="{ record }">
+        <a-tag
+          v-if="resolveStatusTag(record.status)"
+          :color="resolveStatusTag(record.status)?.color"
+          :style="resolveStatusTag(record.status)?.style"
+        >
+          {{ resolveStatusTag(record.status)?.label }}
+        </a-tag>
+        <span v-else>{{ record.status ?? '-' }}</span>
+      </template>
     </fx-dynamic-table>
 
     <!-- 新增/编辑弹窗 -->
@@ -368,6 +379,48 @@ function normalizeRoleStatusRecord(row: any) {
     num = 0
   }
   return { ...row, status: num }
+}
+
+/**
+ * 将布尔值或数字转换为 0/1
+ * @param value 布尔值或数字
+ * @returns 0 或 1
+ */
+function normalizeBoolean(value: unknown): number {
+  if (value === true || value === 1 || value === '1') {
+    return 1
+  }
+  if (value === false || value === 0 || value === '0') {
+    return 0
+  }
+  return value ? 1 : 0
+}
+
+/**
+ * 根据状态值从字典中获取对应的标签配置
+ * @param value 状态值（布尔或数字）
+ * @returns 标签配置对象，包含 label、color、style，未找到返回 null
+ */
+function resolveStatusTag(value: unknown) {
+  const normalizedValue = normalizeBoolean(value)
+  const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
+  if (!dictItem) {
+    return null
+  }
+
+  const style =
+    dictItem.tagStyle?.borderColor || dictItem.tagStyle?.backgroundColor
+      ? {
+          borderColor: dictItem.tagStyle?.borderColor,
+          backgroundColor: dictItem.tagStyle?.backgroundColor,
+        }
+      : undefined
+
+  return {
+    label: dictItem.label,
+    color: dictItem.tagStyle?.color || dictItem.color || 'blue',
+    style,
+  }
 }
 
 const handleRequest = async (params: any) => {

@@ -8,6 +8,28 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { ref } from 'vue'
 import { usePermissionStore } from '../stores/permission'
 import { getRoutes } from '../api/system/route'
+import { APPROVAL_ROUTE_BASE, LEGACY_APPROVAL_ROUTE_BASE, approvalRoutePaths } from './approvalRoutePaths'
+
+interface LocalModuleRouteDefinition {
+  path: string
+  component: () => Promise<any>
+  meta: Record<string, any>
+}
+
+const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
+  approval: [
+    {
+      path: 'taskConfig/:taskCode/nodes',
+      component: () => import('../views/workflow/taskConfig/nodes.vue'),
+      meta: { title: '审批节点配置', hidden: true }
+    },
+    {
+      path: 'execution/start/:taskCode',
+      component: () => import('../views/workflow/execution/startForm.vue'),
+      meta: { title: '填写审批表单', hidden: true }
+    }
+  ]
+}
 
 /**
  * 静态路由配置
@@ -37,9 +59,9 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: '/workflow',
+    path: '/__legacy-workflow__',
     component: () => import('../layouts/MainLayout.vue'),
-    redirect: '/workflow/taskConfig',
+    redirect: '/__legacy-workflow__/taskConfig',
     children: [
       {
         path: 'taskConfig',
@@ -108,6 +130,26 @@ router.beforeEach(async (to, from, next) => {
   // 如果访问登录页或初始化页，直接放行
   if (to.path === '/login' || to.path === '/init') {
     next()
+    return
+  }
+
+  if (to.path === LEGACY_APPROVAL_ROUTE_BASE) {
+    next({
+      path: approvalRoutePaths.taskConfigList,
+      query: to.query,
+      hash: to.hash,
+      replace: true
+    })
+    return
+  }
+
+  if (to.path.startsWith(`${LEGACY_APPROVAL_ROUTE_BASE}/`)) {
+    next({
+      path: `${APPROVAL_ROUTE_BASE}${to.path.slice(LEGACY_APPROVAL_ROUTE_BASE.length)}`,
+      query: to.query,
+      hash: to.hash,
+      replace: true
+    })
     return
   }
 
@@ -207,9 +249,10 @@ const modulePathMap: Record<string, string> = {
 
 /**
  * 审批模块菜单使用的 component 键与目录结构（workflow 下多级路径）的静态映射。
- * <p>与数据库脚本 {@code V2.0.1_审批管理模块与菜单.sql} 中 component_key 保持一致。</p>
+ * <p>与数据库脚本 {@code V2.0.1_审批管理模块与菜单.sql}、{@code V2.0.2_审批工作台菜单.sql} 中 component_key 保持一致。</p>
  */
 const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
+  ApprovalDashboard: () => import('../views/workflow/dashboard/index.vue'),
   ApprovalTaskConfig: () => import('../views/workflow/taskConfig/index.vue'),
   ApprovalExecutionStart: () => import('../views/workflow/execution/start.vue'),
   ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
@@ -492,6 +535,7 @@ export async function injectDynamicRoutes(payload: any) {
   for (const routeItem of routesPayload) {
     const moduleCode = routeItem.path
     const children = Array.isArray(routeItem.children) ? routeItem.children : []
+    const registeredModulePaths = new Set<string>()
 
     // 如果后端未提供 dashboard，才自动补充一个默认 dashboard 路由
     const hasDashboard = children.some((c: any) => String(c?.path || '') === 'dashboard')
@@ -511,6 +555,7 @@ export async function injectDynamicRoutes(payload: any) {
         }
       })
       injectedRouteNames.add(dashboardName)
+      registeredModulePaths.add(dashboardPath)
     }
 
     // 注册模块下的子路由
@@ -549,6 +594,7 @@ export async function injectDynamicRoutes(payload: any) {
             }
           })
           injectedRouteNames.add(subRouteName)
+          registeredModulePaths.add(subFullPath)
         }
         // catalog类型菜单本身不需要注册路由，继续处理下一个菜单
         continue
@@ -571,6 +617,28 @@ export async function injectDynamicRoutes(payload: any) {
         }
       })
       injectedRouteNames.add(routeName)
+      registeredModulePaths.add(fullPath)
+    }
+
+    const moduleExtraRoutes = Array.isArray(localModuleRoutes[moduleCode]) ? localModuleRoutes[moduleCode] : []
+    for (const extraRoute of moduleExtraRoutes) {
+      const fullPath = `${moduleCode}/${extraRoute.path}`
+      if (registeredModulePaths.has(fullPath)) {
+        continue
+      }
+
+      const routeName = buildDynamicRouteName(fullPath)
+      r.addRoute('Workspace', {
+        path: fullPath,
+        name: routeName,
+        component: extraRoute.component,
+        meta: {
+          ...extraRoute.meta,
+          module: moduleCode
+        }
+      })
+      injectedRouteNames.add(routeName)
+      registeredModulePaths.add(fullPath)
     }
 
   }

@@ -8,11 +8,14 @@ import axios from 'axios'
 import { message, Modal } from 'ant-design-vue'
 import i18n, { getLocale } from '../locales'
 
+const sessionLoginStateKeys = ['account', 'tenantId', 'permissions']
+const localLoginCacheKeys = ['fx-dynamic-routes', 'fx-dynamic-modules']
+
 /**
  * 需要重新登录的错误码列表
  * 当后端返回这些错误码时，前端需要重新登录
  */
-const reloadCodes = [401] // 401: 未授权
+const reloadCodes = [602] // 602: 未登录或登录过期
 
 /**
  * 创建带拦截器的axios实例（带全局遮罩）
@@ -55,6 +58,23 @@ let activeReq = 0
  * 用于防止重复显示登录失效弹窗
  */
 const loginBack = { open: false }
+
+function clearClientLoginState() {
+  sessionLoginStateKeys.forEach(key => sessionStorage.removeItem(key))
+  localLoginCacheKeys.forEach(key => localStorage.removeItem(key))
+}
+
+function redirectToLogin() {
+  clearClientLoginState()
+  loginBack.open = false
+
+  if (window.location.pathname === '/login') {
+    window.location.reload()
+    return
+  }
+
+  window.location.replace(new URL('/login', window.location.origin).toString())
+}
 
 /**
  * 检查错误码是否需要重新登录
@@ -201,8 +221,10 @@ async function handleResponse(resp: any, httpInstance: any) {
         okText: t('message.relogin'),
         content: t('message.sessionExpired'),
         onOk: () => {
+          redirectToLogin()
+        },
+        afterClose: () => {
           loginBack.open = false
-          location.reload() // 刷新页面，跳转到登录页
         }
       })
     }

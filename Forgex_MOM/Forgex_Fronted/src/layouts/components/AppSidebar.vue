@@ -22,7 +22,7 @@
             <component v-if="menu.icon" :is="getIcon(menu.icon)" />
             <FileOutlined v-else />
           </template>
-          <span class="mini-menu-title">{{ menu.title }}</span>
+          <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
@@ -54,7 +54,7 @@
               <FolderOutlined v-else />
             </template>
             <template #title>
-              <span class="menu-text" :title="item.title">{{ truncateText(item.title, 8) }}</span>
+              <span class="menu-text" :title="item.title">{{ item.title }}</span>
             </template>
             <a-menu-item
               v-for="child in item.children"
@@ -64,7 +64,7 @@
                 <component v-if="child.icon" :is="getIcon(child.icon)" />
                 <FileOutlined v-else />
               </template>
-              <span class="menu-text" :title="child.title">{{ truncateText(child.title, 6) }}</span>
+              <span class="menu-text" :title="child.title">{{ child.title }}</span>
             </a-menu-item>
           </a-sub-menu>
 
@@ -74,7 +74,7 @@
               <component v-if="item.icon" :is="getIcon(item.icon)" />
               <FileOutlined v-else />
             </template>
-            <span class="menu-text" :title="item.title">{{ truncateText(item.title, item.menuLevel === 1 ? 8 : 6) }}</span>
+            <span class="menu-text" :title="item.title">{{ item.title }}</span>
           </a-menu-item>
         </template>
       </a-menu>
@@ -442,19 +442,6 @@ const onCollapse = (collapsed: boolean) => {
   }
 }
 
-.mini-menu-title {
-  font-size: 13px;
-  margin-top: 4px;
-  text-align: center;
-  line-height: 1.2;
-  width: 100%;
-  // 允许文字换行，避免四字菜单名显示不全
-  word-break: break-all;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-
 .app-sidebar {
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
@@ -613,6 +600,22 @@ const onCollapse = (collapsed: boolean) => {
   white-space: nowrap;
   max-width: 100%;
   vertical-align: middle;
+  display: inline-block;
+}
+
+// 一级菜单标题样式（支持多行显示）
+.mini-menu-title {
+  font-size: 13px;
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.3;
+  width: 100%;
+  // 显示最多2行，超出显示省略号
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
 }
 
 // 响应式适配

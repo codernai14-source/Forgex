@@ -179,6 +179,36 @@ export interface WfExecutionQueryParam {
    * 当前审批人 ID
    */
   currentApproverId?: number
+
+  /**
+   * 我已处理：审批操作时间下限（含），格式 yyyy-MM-dd HH:mm:ss
+   */
+  approveTimeBegin?: string
+
+  /**
+   * 我已处理：审批操作时间上限（含）
+   */
+  approveTimeEnd?: string
+}
+
+/**
+ * 审批工作台首页汇总
+ */
+export interface WfDashboardSummaryVO {
+  /**
+   * 待我处理
+   */
+  pending: WfExecutionDTO[]
+
+  /**
+   * 昨日我已处理
+   */
+  yesterdayProcessed: WfExecutionDTO[]
+
+  /**
+   * 抄送待阅
+   */
+  cc: WfExecutionDTO[]
 }
 
 /**
@@ -251,4 +281,21 @@ export function pageMyPending(params: WfExecutionQueryParam & { pageNum: number;
  */
 export function pageMyProcessed(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {
   return http.post<{ records: WfExecutionDTO[]; total: number }>('/wf/execution/my/processed', params)
+}
+
+/**
+ * 分页查询抄送给我的待阅任务
+ * @param params 查询参数
+ * @returns 分页结果
+ */
+export function pageMyCc(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {
+  return http.post<{ records: WfExecutionDTO[]; total: number }>('/wf/execution/my/cc', params)
+}
+
+/**
+ * 审批工作台首页汇总（待办、昨日已处理、抄送待阅）
+ * @returns 汇总数据
+ */
+export function loadDashboardSummary() {
+  return http.post<WfDashboardSummaryVO>('/wf/execution/dashboard/summary', {}, { silentError: true } as any)
 }

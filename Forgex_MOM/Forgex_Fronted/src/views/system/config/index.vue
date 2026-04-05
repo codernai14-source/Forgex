@@ -210,6 +210,13 @@
         </a-tab-pane>
 
         <a-tab-pane key="security" :tab="t('system.config.tabSecurity')">
+          <a-alert
+            class="session-timeout-alert"
+            type="info"
+            show-icon
+            :message="t('system.config.sessionTimeoutNoticeTitle')"
+            :description="t('system.config.sessionTimeoutNoticeDesc')"
+          />
           <a-form
             :model="securityConfig"
             :label-col="{ span: 6 }"
@@ -708,8 +715,11 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
+    return url.startsWith('/api/') ? url : url
   }
   return `/api/${url}`
 }
@@ -975,6 +985,10 @@ onMounted(() => {
 
 .media-preview {
   margin-top: 8px;
+}
+
+.session-timeout-alert {
+  margin-bottom: 16px;
 }
 
 .video-preview {

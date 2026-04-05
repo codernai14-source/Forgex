@@ -7,20 +7,20 @@
       muted
       loop
       playsinline
-      :src="formatMediaUrl(systemConfig.loginBackgroundVideo)"
+      :src="resolveMediaUrl(systemConfig.loginBackgroundVideo)"
     ></video>
     <img
       v-if="systemConfig.loginBackgroundType === 'image'"
       class="bg-video"
-      :src="formatMediaUrl(systemConfig.loginBackgroundImage)"
+      :src="resolveMediaUrl(systemConfig.loginBackgroundImage)"
     />
     <div class="mask" :style="{ backgroundColor: systemConfig.loginBackgroundType === 'color' ? systemConfig.loginBackgroundColor : '' }"></div>
     <div class="grid"></div>
     <div class="content" :class="`layout-${systemConfig.loginLayout || 'center'}`">
       <div class="brand" v-show="!tenantOpen">
-        <img v-if="formatMediaUrl(systemConfig.systemLogo)" :src="formatMediaUrl(systemConfig.systemLogo)" class="brand-logo" />
+        <img v-if="resolveMediaUrl(systemConfig.systemLogo)" :src="resolveMediaUrl(systemConfig.systemLogo)" class="brand-logo" />
         <span v-else class="brand-blue">{{ systemConfig.systemName.split('_')[0] }}</span
-        ><span v-if="!formatMediaUrl(systemConfig.systemLogo)" class="brand-red">_{{ systemConfig.systemName.split('_')[1] || 'MOM' }}</span>
+        ><span v-if="!resolveMediaUrl(systemConfig.systemLogo)" class="brand-red">_{{ systemConfig.systemName.split('_')[1] || 'MOM' }}</span>
         <div class="brand-line"></div>
       </div>
       <div class="brand-sub" v-show="!tenantOpen">{{ systemConfig.loginPageTitle }}</div>
@@ -131,7 +131,7 @@
             @click="choose(t)"
           >
             <div class="tenant-logo">
-              <img v-if="t.logo" :src="formatTenantLogo(t.logo)" alt="logo" />
+              <img v-if="t.logo" :src="resolveTenantLogo(t.logo)" alt="logo" />
               <div v-else class="logo-fallback">
                 {{ t.name?.[0] || 'T' }}
               </div>
@@ -317,9 +317,9 @@ const systemConfig = ref<SystemBasicConfig>({
   copyrightLink: '#',
   loginPageTitle: '欢迎来到FORGEX_MOM！',
   loginPageSubtitle: '',
-  loginBackgroundType: 'video',
-  loginBackgroundVideo: '/jws.mp4',
-  loginBackgroundImage: '',
+  loginBackgroundType: 'image',
+  loginBackgroundVideo: '/loading.mp4',
+  loginBackgroundImage: '/back.jpg',
   loginBackgroundColor: '#0d0221',
   loginStyle: 'cyber',
   loginLayout: 'center',
@@ -368,6 +368,29 @@ const sliderPreviewHeight = computed(() => {
   if (!sliderChallenge.value) return 280
   return sliderChallenge.value.backgroundImageHeight * sliderPreviewScale.value
 })
+
+function resolveMediaUrl(value: string): string {
+  const url = String(value || '')
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
+  if (url.startsWith('/')) {
+    return url.startsWith('/api/') ? url : url
+  }
+  return `/api/${url}`
+}
+
+function resolveTenantLogo(url?: string): string {
+  return resolveMediaUrl(String(url || ''))
+}
+
+function resolveLangIcon(icon?: string): string {
+  return resolveMediaUrl(String(icon || ''))
+}
 
 function formatMediaUrl(value: string): string {
   const url = String(value || '')
@@ -647,8 +670,8 @@ async function initSlider() {
     const tplHeight = Number(challenge?.templateImageHeight || 52)
     sliderChallenge.value = {
       id: String(challenge?.id || ''),
-      backgroundImage: formatMediaUrl(String(challenge?.backgroundImage || '')),
-      templateImage: formatMediaUrl(String(challenge?.templateImage || '')),
+      backgroundImage: resolveMediaUrl(String(challenge?.backgroundImage || '')),
+      templateImage: resolveMediaUrl(String(challenge?.templateImage || '')),
       backgroundImageWidth: bgWidth > 0 ? bgWidth : 280,
       backgroundImageHeight: bgHeight > 0 ? bgHeight : 158,
       templateImageWidth: tplWidth > 0 ? tplWidth : 52,

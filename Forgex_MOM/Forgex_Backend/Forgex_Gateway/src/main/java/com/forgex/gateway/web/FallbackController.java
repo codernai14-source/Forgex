@@ -92,19 +92,20 @@ public class FallbackController {
                 .bodyValue(req)
                 .retrieve()
                 .bodyToMono(RString.class)
-                .map(r -> r == null ? null : r.data)
+                .flatMap(r -> Mono.justOrEmpty(r == null ? null : r.data))
                 .timeout(Duration.ofSeconds(2))
-                .onErrorReturn(null)
-                .map(tpl -> {
+                .doOnNext(tpl -> {
                     if (!StringUtils.hasText(tpl)) {
-                        return fallbackTranslate(prompt, args, lang);
+                        return;
                     }
                     try {
                         redis.opsForValue().set(cacheKey, tpl, I18N_CACHE_TTL);
                     } catch (Exception ignored) {
                     }
-                    return formatTemplate(tpl, args);
-                });
+                })
+                .map(tpl -> formatTemplate(tpl, args))
+                .onErrorResume(ignored -> Mono.empty())
+                .switchIfEmpty(Mono.fromSupplier(() -> fallbackTranslate(prompt, args, lang)));
     }
 
     private String resolveLang(HttpHeaders headers) {

@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
+import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
@@ -158,5 +159,30 @@ public class WfExecutionController {
     public R<Page<WfExecutionDTO>> pageMyProcessed(@RequestBody WfExecutionQueryParam param) {
         Page<WfExecutionDTO> page = executionService.pageMyProcessed(param);
         return R.ok(page);
+    }
+
+    /**
+     * 分页查询抄送给我的待阅任务（节点审核类型为抄送且仍处于待处理）。
+     *
+     * @param param 查询参数
+     * @return 分页结果
+     */
+    @PostMapping("/my/cc")
+    @RequirePerm("wf:dashboard:view")
+    public R<Page<WfExecutionDTO>> pageMyCc(@RequestBody WfExecutionQueryParam param) {
+        Page<WfExecutionDTO> page = executionService.pageMyCc(param);
+        return R.ok(page);
+    }
+
+    /**
+     * 审批工作台首页汇总：待办、昨日已处理、抄送待阅。
+     *
+     * @return 汇总数据
+     */
+    @PostMapping("/dashboard/summary")
+    @RequirePerm("wf:dashboard:view")
+    public R<WfDashboardSummaryVO> loadDashboardSummary() {
+        WfDashboardSummaryVO summary = executionService.loadDashboardSummary();
+        return R.ok(summary);
     }
 }

@@ -88,6 +88,9 @@ export function useSse<T = any>(options: UseSseOptions<T>) {
       options.onEvent?.('connected', (e as MessageEvent).data as any)
     })
 
+    // 后端心跳事件，避免浏览器对未监听命名事件的告警；无需业务处理
+    es.addEventListener('heartbeat', () => {})
+
     es.addEventListener('message', e => {
       try {
         const raw = (e as MessageEvent).data

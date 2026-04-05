@@ -62,5 +62,23 @@ export default {
     cancelApproval: '撤销',
     approveAgree: '审批同意',
     approveReject: '审批驳回'
+  },
+  dashboard: {
+    title: '审批工作台',
+    subtitle: '集中查看待办、昨日已处理与抄送待阅，点击条目可查看详情。',
+    pendingTitle: '待我处理',
+    yesterdayTitle: '昨天处理的任务',
+    ccTitle: '抄送给我的',
+    more: '查看更多',
+    ccHint: '去待办处理',
+    ccTag: '抄送',
+    empty: '暂无数据',
+    loadFailed: '加载工作台数据失败',
+    status: {
+      pending: '未审批',
+      processing: '审批中',
+      done: '审批完成',
+      rejected: '驳回'
+    }
   }
 }

@@ -45,6 +45,16 @@ public class SysMessageVO {
     private String scope;
 
     /**
+     * 消息类型（NOTICE/WARNING/ALARM）
+     */
+    private String messageType;
+
+    /**
+     * 消息渠道（INTERNAL/WECHAT/SMS/EMAIL）
+     */
+    private String platform;
+
+    /**
      * 消息标题
      */
     private String title;

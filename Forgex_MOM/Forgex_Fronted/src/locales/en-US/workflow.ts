@@ -64,4 +64,22 @@ export default {
     approveAgree: 'Approval Accepted',
     approveReject: 'Approval Rejected',
   },
+  dashboard: {
+    title: 'Approval Workspace',
+    subtitle: 'Pending tasks, tasks you processed yesterday, and CC items in one place. Click an item for details.',
+    pendingTitle: 'My pending',
+    yesterdayTitle: 'Processed yesterday',
+    ccTitle: 'CC to me',
+    more: 'View more',
+    ccHint: 'Open pending',
+    ccTag: 'CC',
+    empty: 'No data',
+    loadFailed: 'Failed to load workspace data',
+    status: {
+      pending: 'Pending',
+      processing: 'In progress',
+      done: 'Completed',
+      rejected: 'Rejected',
+    },
+  },
 }

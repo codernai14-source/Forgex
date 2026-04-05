@@ -492,6 +492,10 @@ public class InitServiceImpl implements InitService {
     }
 
     private void seedWorkflowModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
+        SysMenu dashboardMenu = insertMenu(tenantId, moduleId, 0L, "menu", "dashboard",
+                "审批工作台", "Approval Dashboard", "DashboardOutlined", "ApprovalDashboard", "wf:dashboard:view", 5, 1);
+        grantedMenuIds.add(dashboardMenu.getId());
+
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "taskConfig", "审批任务配置", "Task Config",
                 "SettingOutlined", "ApprovalTaskConfig", "wf:taskConfig:view",
                 Arrays.asList(

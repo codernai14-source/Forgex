@@ -23,8 +23,10 @@ import com.forgex.common.api.service.UserInfoService;
 import com.forgex.common.exception.BusinessException;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.workflow.common.WorkflowConstants;
+import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.entity.WfMyTask;
+import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
 import com.forgex.workflow.domain.entity.WfTaskConfig;
 import com.forgex.workflow.domain.entity.WfTaskExecution;
 import com.forgex.workflow.domain.entity.WfTaskExecutionApprover;
@@ -33,6 +35,7 @@ import com.forgex.workflow.domain.param.WfExecutionApproveParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
 import com.forgex.workflow.mapper.WfMyTaskMapper;
+import com.forgex.workflow.mapper.WfTaskNodeConfigMapper;
 import com.forgex.workflow.mapper.WfTaskConfigMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionApproverMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionDetailMapper;
@@ -49,7 +52,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -68,6 +74,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WfExecutionServiceImpl implements IWfExecutionService {
 
+    /**
+     * 业务日「昨日」等计算使用的时区（与前端展示习惯一致）。
+     */
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
+
+    /**
+     * 审批工作台首页每类展示条数上限。
+     */
+    private static final int DASHBOARD_LIST_LIMIT = 6;
+
     private static final DateTimeFormatter APPROVE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final WfTaskExecutionMapper executionMapper;
@@ -75,6 +91,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     private final WfTaskExecutionApproverMapper executionApproverMapper;
     private final WfMyTaskMapper myTaskMapper;
     private final WfTaskConfigMapper taskConfigMapper;
+    private final WfTaskNodeConfigMapper nodeConfigMapper;
     private final IWfEngineService engineService;
     private final UserInfoService userInfoService;
     private final ApprovalInterpreterRegistry interpreterRegistry;
@@ -253,6 +270,9 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     @Override
     public Page<WfExecutionDTO> pageMyProcessed(WfExecutionQueryParam param) {
         Long currentUserId = requireCurrentUserId();
+        LocalDateTime approveBegin = parseOptionalDateTime(param.getApproveTimeBegin());
+        LocalDateTime approveEnd = parseOptionalDateTime(param.getApproveTimeEnd());
+
         List<WfTaskExecutionApprover> approverRecords = executionApproverMapper.selectList(
                 new LambdaQueryWrapper<WfTaskExecutionApprover>()
                         .orderByDesc(WfTaskExecutionApprover::getUpdateTime)
@@ -260,11 +280,59 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
 
         Set<Long> orderedExecutionIds = new LinkedHashSet<>();
         for (WfTaskExecutionApprover approverRecord : approverRecords) {
-            if (containsApprovalDetail(approverRecord.getApproverDetail(), currentUserId)) {
+            if (matchesMyProcessed(approverRecord.getApproverDetail(), currentUserId, approveBegin, approveEnd)) {
                 orderedExecutionIds.add(approverRecord.getExecutionId());
             }
         }
         return pageByExecutionIds(new ArrayList<>(orderedExecutionIds), param);
+    }
+
+    @Override
+    public Page<WfExecutionDTO> pageMyCc(WfExecutionQueryParam param) {
+        Long currentUserId = requireCurrentUserId();
+        List<WfMyTask> myTasks = myTaskMapper.selectList(new LambdaQueryWrapper<WfMyTask>()
+                .eq(WfMyTask::getStatus, 0)
+                .orderByDesc(WfMyTask::getCreateTime));
+
+        List<Long> executionIds = new ArrayList<>();
+        for (WfMyTask task : myTasks) {
+            if (!containsApprover(task.getApproverIds(), currentUserId)) {
+                continue;
+            }
+            WfTaskNodeConfig node = nodeConfigMapper.selectById(task.getNodeId());
+            if (node == null || Objects.equals(node.getDeleted(), 1)) {
+                continue;
+            }
+            if (Objects.equals(node.getApproveType(), WorkflowConstants.ApproveType.COPY)) {
+                executionIds.add(task.getExecutionId());
+            }
+        }
+        return pageByExecutionIds(executionIds, param);
+    }
+
+    @Override
+    public WfDashboardSummaryVO loadDashboardSummary() {
+        WfDashboardSummaryVO vo = new WfDashboardSummaryVO();
+
+        WfExecutionQueryParam limitParam = new WfExecutionQueryParam();
+        limitParam.setPageNum(1);
+        limitParam.setPageSize(DASHBOARD_LIST_LIMIT);
+
+        vo.setPending(pageMyPending(limitParam).getRecords());
+
+        LocalDate yesterday = LocalDate.now(BUSINESS_ZONE).minusDays(1);
+        LocalDateTime dayStart = yesterday.atStartOfDay();
+        LocalDateTime dayEnd = yesterday.atTime(23, 59, 59);
+
+        WfExecutionQueryParam processedParam = new WfExecutionQueryParam();
+        processedParam.setPageNum(1);
+        processedParam.setPageSize(DASHBOARD_LIST_LIMIT);
+        processedParam.setApproveTimeBegin(dayStart.format(APPROVE_TIME_FORMATTER));
+        processedParam.setApproveTimeEnd(dayEnd.format(APPROVE_TIME_FORMATTER));
+        vo.setYesterdayProcessed(pageMyProcessed(processedParam).getRecords());
+
+        vo.setCc(pageMyCc(limitParam).getRecords());
+        return vo;
     }
 
     private Page<WfExecutionDTO> pageByExecutionIds(List<Long> executionIds, WfExecutionQueryParam param) {
@@ -429,8 +497,24 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return false;
     }
 
-    private boolean containsApprovalDetail(String approverDetailJson, Long approverId) {
-        if (!StringUtils.hasText(approverDetailJson) || approverId == null) {
+    /**
+     * 判断当前用户在审批明细 JSON 中是否存在符合条件的处理记录。
+     * <p>
+     * 当 {@code approveBegin}、{@code approveEnd} 均为空时，只要存在该用户的任意一条审批记录即匹配；
+     * 否则按 {@code approveTime}（格式 {@link #APPROVE_TIME_FORMATTER}）与区间做交集判断（闭区间）。
+     * </p>
+     *
+     * @param approverDetailJson 审批人明细 JSON 数组字符串
+     * @param userId               当前用户 ID
+     * @param approveBegin         审批操作时间下限，可为空
+     * @param approveEnd           审批操作时间上限，可为空
+     * @return 是否匹配
+     */
+    private boolean matchesMyProcessed(String approverDetailJson,
+                                       Long userId,
+                                       LocalDateTime approveBegin,
+                                       LocalDateTime approveEnd) {
+        if (!StringUtils.hasText(approverDetailJson) || userId == null) {
             return false;
         }
 
@@ -439,13 +523,47 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
             return false;
         }
 
+        boolean filterByTime = approveBegin != null || approveEnd != null;
+
         for (int i = 0; i < approverDetails.size(); i++) {
             JSONObject detail = approverDetails.getJSONObject(i);
-            if (detail != null && Objects.equals(detail.getLong("approverId"), approverId)) {
+            if (detail == null || !Objects.equals(detail.getLong("approverId"), userId)) {
+                continue;
+            }
+            if (!filterByTime) {
                 return true;
             }
+            LocalDateTime approveTime = parseOptionalDateTime(detail.getString("approveTime"));
+            if (approveTime == null) {
+                continue;
+            }
+            if (approveBegin != null && approveTime.isBefore(approveBegin)) {
+                continue;
+            }
+            if (approveEnd != null && approveTime.isAfter(approveEnd)) {
+                continue;
+            }
+            return true;
         }
         return false;
+    }
+
+    /**
+     * 解析可选的日期时间字符串。
+     *
+     * @param value 字符串，格式 {@code yyyy-MM-dd HH:mm:ss}
+     * @return 解析成功返回时间，否则返回 {@code null}
+     */
+    private LocalDateTime parseOptionalDateTime(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value.trim(), APPROVE_TIME_FORMATTER);
+        } catch (DateTimeParseException e) {
+            log.warn("解析审批时间失败: {}", value, e);
+            return null;
+        }
     }
 
     private LambdaQueryWrapper<WfTaskExecution> buildQueryWrapper(WfExecutionQueryParam param) {

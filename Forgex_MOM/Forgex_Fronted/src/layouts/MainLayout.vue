@@ -21,7 +21,8 @@
       @module-click="onModuleClick"
       @search-click="globalSearchVisible = true"
       @locale-change="onLocaleChange"
-      @refresh-click="refreshPage"
+      @refresh="refreshPage"
+      @message-click="openMessageDrawer"
       @user-menu-click="onUserMenuClick"
       @settings-click="settingOpen = true"
     />
@@ -91,6 +92,32 @@
       @update:visible="globalSearchVisible = $event"
       @select="onGlobalSearchSelect"
     />
+
+    <!-- 消息通知抽屉 -->
+    <a-drawer
+      v-model:open="messageDrawerOpen"
+      title="消息通知"
+      placement="right"
+      width="400"
+      class="fx-message-drawer"
+    >
+      <a-spin :spinning="messageLoading">
+        <div v-if="messageList.length === 0" class="fx-message-empty">
+          <a-empty description="暂无消息" />
+        </div>
+        <div v-else class="fx-message-list">
+          <div
+            v-for="msg in messageList"
+            :key="msg.id"
+            class="fx-message-item"
+          >
+            <div class="fx-message-title">{{ msg.title }}</div>
+            <div class="fx-message-content">{{ msg.content }}</div>
+            <div class="fx-message-time">{{ msg.createTime }}</div>
+          </div>
+        </div>
+      </a-spin>
+    </a-drawer>
 
     <!-- 设置抽屉 -->
     <a-drawer
@@ -296,37 +323,59 @@
       @ok="handleMessageSend"
     >
       <a-form layout="vertical">
-        <a-form-item label="接收方租户ID">
-          <a-input-number v-model:value="messageSendForm.receiverTenantId" style="width: 100%;" />
+        <a-form-item label="接收用户" required>
+          <a-input
+            v-model:value="selectedUserName"
+            readonly
+            placeholder="点击选择用户"
+            @click="openUserSelectModal"
+          >
+            <template #suffix>
+              <SearchOutlined style="color: var(--fx-text-tertiary)" />
+            </template>
+          </a-input>
         </a-form-item>
 
-        <a-form-item label="接收方用户ID">
-          <a-input-number v-model:value="messageSendForm.receiverUserId" style="width: 100%;" />
+        <a-form-item label="标题" required>
+          <a-input v-model:value="messageSendForm.title" placeholder="请输入消息标题" />
         </a-form-item>
 
-        <a-form-item label="范围">
-          <a-select v-model:value="messageSendForm.scope">
-            <a-select-option value="INTERNAL">对内</a-select-option>
-            <a-select-option value="EXTERNAL">对外</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item label="标题">
-          <a-input v-model:value="messageSendForm.title" />
-        </a-form-item>
-
-        <a-form-item label="内容">
-          <a-textarea v-model:value="messageSendForm.content" :rows="4" />
+        <a-form-item label="内容" required>
+          <a-textarea v-model:value="messageSendForm.content" :rows="4" placeholder="请输入消息内容" />
         </a-form-item>
 
         <a-form-item label="跳转链接">
-          <a-input v-model:value="messageSendForm.linkUrl" />
-        </a-form-item>
-
-        <a-form-item label="业务类型">
-          <a-input v-model:value="messageSendForm.bizType" />
+          <a-input v-model:value="messageSendForm.linkUrl" placeholder="可选，点击消息后跳转的链接" />
         </a-form-item>
       </a-form>
+    </a-modal>
+
+    <!-- 用户选择弹窗 -->
+    <a-modal
+      v-model:open="userSelectOpen"
+      title="选择用户"
+      width="600px"
+      @ok="confirmUserSelect"
+    >
+      <a-input-search
+        v-model:value="userSearchKeyword"
+        placeholder="搜索用户名或账号"
+        style="margin-bottom: 16px"
+        @search="searchUsers"
+      />
+      <a-table
+        :data-source="userSelectList"
+        :columns="userSelectColumns"
+        :row-selection="{
+          selectedRowKeys: selectedUserIds,
+          onChange: onUserSelectChange,
+          type: 'radio'
+        }"
+        row-key="id"
+        :loading="userSelectLoading"
+        :pagination="{ pageSize: 10 }"
+        size="small"
+      />
     </a-modal>
   </a-layout>
   </a-config-provider>
@@ -349,6 +398,7 @@ import { getRoutes } from '../api/system/route'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
+import { getUserList } from '../api/system/user'
 import { useSse } from '../hooks/useSse'
 
 import {
@@ -455,6 +505,9 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
 const layoutRootRef = ref<HTMLElement | { $el?: unknown } | null>(null)
 const layoutConfig = ref<LayoutConfig>({ ...DEFAULT_LAYOUT_CONFIG })
 const settingOpen = ref(false)
+const messageDrawerOpen = ref(false)
+const messageList = ref<any[]>([])
+const messageLoading = ref(false)
 const FONT_SIZE_MIN = 14
 const FONT_SIZE_MAX = 28
 const FONT_SIZE_DEFAULT = 14
@@ -635,6 +688,20 @@ const messageSendForm = ref({
   bizType: '',
 })
 
+// 用户选择相关
+const userSelectOpen = ref(false)
+const userSelectList = ref<any[]>([])
+const userSelectLoading = ref(false)
+const selectedUserIds = ref<string[]>([])
+const selectedUserName = ref('')
+const userSearchKeyword = ref('')
+
+const userSelectColumns = [
+  { title: '用户名', dataIndex: 'username', width: 120 },
+  { title: '账号', dataIndex: 'account', width: 120 },
+  { title: '部门', dataIndex: 'departmentName', ellipsis: true }
+]
+
 const antdLocale = computed(() => {
   const key = String(currentLocale.value || locale.value || '')
   if (key === 'en-US') return enUS
@@ -652,9 +719,9 @@ const systemConfig = ref<SystemBasicConfig>({
   copyrightLink: '#',
   loginPageTitle: '欢迎来到FORGEX_MOM！',
   loginPageSubtitle: '',
-  loginBackgroundType: 'video',
-  loginBackgroundVideo: '/jws.mp4',
-  loginBackgroundImage: '',
+  loginBackgroundType: 'image',
+  loginBackgroundVideo: '/loading.mp4',
+  loginBackgroundImage: '/back.jpg',
   loginBackgroundColor: '#0d0221',
   loginStyle: 'cyber',
   showOAuthLogin: true,
@@ -668,8 +735,11 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
+    return url.startsWith('/api/') ? url : url
   }
   return `/api/${url}`
 }
@@ -976,12 +1046,44 @@ watch(
 )
 
 /**
+ * 解析标签标题（各模块工作台 dashboard 带模块名前缀，避免多个「首页」无法区分）
+ *
+ * @param tabKey 标签路由 key，无 query
+ * @returns 展示标题
+ */
+function resolveTabTitle(tabKey: string): string {
+  const clean = tabKey.split('?')[0]
+  const m = clean.match(/^\/workspace\/([^/]+)\/dashboard$/)
+  if (m) {
+    return buildModuleDashboardTitle(m[1])
+  }
+  return buildTitleFromRoute(clean)
+}
+
+/**
+ * 各模块「工作台」页签标题：模块名 · 路由标题，避免与系统模块工作台重复显示为两个「首页」。
+ *
+ * @param moduleCode 模块编码，如 sys、approval
+ * @returns 展示用标题
+ */
+function buildModuleDashboardTitle(moduleCode: string): string {
+  const base = buildTitleFromRoute(`/workspace/${moduleCode}/dashboard`)
+  const mod = (Array.isArray(dynamicModules.value) ? dynamicModules.value : []).find(
+    (x: any) => String(x.code || '') === moduleCode
+  )
+  if (mod && mod.name) {
+    return `${mod.name} · ${base}`
+  }
+  return base
+}
+
+/**
  * 更新所有标签的标题
  */
 function updateAllTabTitles() {
   tabs.value = tabs.value.map(tab => ({
     ...tab,
-    title: buildTitleFromRoute(tab.key)
+    title: resolveTabTitle(tab.key)
   }))
 }
 
@@ -1061,6 +1163,32 @@ function onMenuClick(menuKey: string) {
 
 function refreshPage() {
   router.replace({ path: '/redirect', query: { to: route.fullPath, t: Date.now() } }).catch(() => {})
+}
+
+/**
+ * 打开消息通知抽屉
+ * <p>
+ * 加载当前用户收到的消息列表，并打开抽屉显示
+ * </p>
+ */
+async function openMessageDrawer() {
+  messageDrawerOpen.value = true
+  await loadMessages()
+}
+
+/**
+ * 加载消息列表
+ */
+async function loadMessages() {
+  messageLoading.value = true
+  try {
+    const list = await listUnreadMessages(20)
+    messageList.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('加载消息列表失败:', error)
+  } finally {
+    messageLoading.value = false
+  }
 }
 
 function onModuleClick(moduleCode: string) {
@@ -1247,7 +1375,7 @@ function updateTabsByRoute(path: string) {
       const dashboardPath = `/workspace/${moduleCode}/dashboard`
       const idx = tabs.value.findIndex(t => t.key === dashboardPath)
       if (idx === -1) {
-        const dashboardTitle = buildTitleFromRoute(dashboardPath)
+        const dashboardTitle = buildModuleDashboardTitle(moduleCode)
         const max = layoutConfig.value.tabBarMax || 10
         if (tabs.value.length >= max) {
           const removeIdx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
@@ -1273,7 +1401,7 @@ function updateTabsByRoute(path: string) {
   if (exists) {
     return
   }
-  const title = buildTitleFromRoute(pathWithoutQuery)
+  const title = resolveTabTitle(pathWithoutQuery)
   const max = layoutConfig.value.tabBarMax || 10
   if (tabs.value.length >= max) {
     const idx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
@@ -1295,6 +1423,16 @@ function buildTitleFromRoute(path: string): string {
   const pathWithoutQuery = path.split('?')[0]
   
   // 1. 尝试直接从路由表中查找（支持静态路由和动态路由）
+  const resolved = router.resolve(pathWithoutQuery)
+  const matchedRouteWithTitle = [...resolved.matched].reverse().find(item => item.meta && item.meta.title)
+  if (matchedRouteWithTitle?.meta?.title) {
+    const title = matchedRouteWithTitle.meta.title as string
+    if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+      return t(title)
+    }
+    return title
+  }
+
   const allRoutes = router.getRoutes()
   const match = allRoutes.find(r => r.path === pathWithoutQuery)
   if (match && match.meta && match.meta.title) {
@@ -1420,23 +1558,100 @@ function openMessageNotification(m: SysMessageVO) {
 }
 
 async function handleMessageSend() {
+  if (!messageSendForm.value.receiverUserId) {
+    message.warning('请选择接收用户')
+    return
+  }
+  if (!messageSendForm.value.title) {
+    message.warning('请输入消息标题')
+    return
+  }
+  if (!messageSendForm.value.content) {
+    message.warning('请输入消息内容')
+    return
+  }
+
   try {
-    await sendMessage({
-      receiverTenantId: messageSendForm.value.receiverTenantId,
+    const newId = await sendMessage({
+      receiverTenantId: Number(sessionStorage.getItem('tenantId')),
       receiverUserId: Number(messageSendForm.value.receiverUserId),
-      scope: messageSendForm.value.scope,
+      scope: 'INTERNAL',
       title: messageSendForm.value.title,
       content: messageSendForm.value.content,
       linkUrl: messageSendForm.value.linkUrl,
-      bizType: messageSendForm.value.bizType,
     } as any)
     message.success('发送成功')
+    // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
+    const selfId = userStore.userInfo?.id
+    if (newId != null && selfId != null && Number(messageSendForm.value.receiverUserId) === selfId) {
+      openMessageNotification({
+        id: newId as number,
+        title: messageSendForm.value.title,
+        content: messageSendForm.value.content || '',
+        linkUrl: messageSendForm.value.linkUrl,
+      } as SysMessageVO)
+    }
     messageSendOpen.value = false
+    // 重置表单
     messageSendForm.value.title = ''
     messageSendForm.value.content = ''
     messageSendForm.value.linkUrl = ''
-    messageSendForm.value.bizType = ''
+    messageSendForm.value.receiverUserId = undefined
+    selectedUserName.value = ''
+    selectedUserIds.value = []
   } catch (_) {}
+}
+
+/**
+ * 打开用户选择弹窗
+ */
+async function openUserSelectModal() {
+  userSelectOpen.value = true
+  await searchUsers()
+}
+
+/**
+ * 搜索用户
+ */
+async function searchUsers() {
+  userSelectLoading.value = true
+  try {
+    const tenantId = sessionStorage.getItem('tenantId')
+    const res = await getUserList({
+      tenantId,
+      pageNum: 1,
+      pageSize: 100,
+      username: userSearchKeyword.value || undefined
+    })
+    userSelectList.value = res.records || []
+  } catch (error) {
+    console.error('搜索用户失败:', error)
+  } finally {
+    userSelectLoading.value = false
+  }
+}
+
+/**
+ * 用户选择变化
+ */
+function onUserSelectChange(keys: string[]) {
+  selectedUserIds.value = keys
+}
+
+/**
+ * 确认用户选择
+ */
+function confirmUserSelect() {
+  if (selectedUserIds.value.length === 0) {
+    message.warning('请选择用户')
+    return
+  }
+  const selectedUser = userSelectList.value.find(u => String(u.id) === selectedUserIds.value[0])
+  if (selectedUser) {
+    messageSendForm.value.receiverUserId = selectedUser.id
+    selectedUserName.value = `${selectedUser.username} (${selectedUser.account})`
+  }
+  userSelectOpen.value = false
 }
 
 const { connect: connectMessageSse } = useSse<SysMessageVO>({
@@ -1732,5 +1947,58 @@ onUnmounted(() => {
     color: var(--fx-text-secondary, #6b7280);
     transition: all 0.25s ease;
   }
+}
+
+/* 消息通知抽屉 */
+.fx-message-drawer {
+  :deep(.ant-drawer-body) {
+    padding: 16px;
+  }
+}
+
+.fx-message-empty {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.fx-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fx-message-item {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--fx-bg-elevated, #f5f5f5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.08));
+  }
+}
+
+.fx-message-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fx-text-primary, #1f2937);
+  margin-bottom: 4px;
+}
+
+.fx-message-content {
+  font-size: 13px;
+  color: var(--fx-text-secondary, #6b7280);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fx-message-time {
+  font-size: 12px;
+  color: var(--fx-text-tertiary, #9ca3af);
+  margin-top: 6px;
 }
 </style>
