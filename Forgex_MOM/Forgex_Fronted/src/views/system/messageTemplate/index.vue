@@ -65,7 +65,7 @@
               />
             </a-form-item>
             <a-form-item label="模板版本">
-              <a-input v-model:value="formData.templateVersion" placeholder="请输入模板版本，默认1.0" />
+              <a-input v-model:value="formData.templateVersion" placeholder="请输入模板版本，默认 1.0" />
             </a-form-item>
             <a-form-item label="消息类型" required>
               <a-select v-model:value="formData.messageType" placeholder="请选择消息类型">
@@ -96,7 +96,7 @@
             <template #icon><PlusOutlined /></template>
             添加接收人配置
           </a-button>
-          <div v-for="(receiver, index) in formData.receivers" :key="index" class="receiver-item">
+          <div v-for="(receiver, index) in formData.receivers" :key="index" class="receiver-items">
             <a-card size="small">
               <template #title>
                 <span>接收人配置 {{ index + 1 }}</span>
@@ -122,7 +122,7 @@
             </a-button>
             <a-button @click="handleTestSend" :loading="testSendLoading" :disabled="formData.contents.length === 0">
               <template #icon><SendOutlined /></template>
-              璇曞彂閫佺粰鑷繁
+              试发送给自己
             </a-button>
             <a-button type="primary" @click="handlePreview" :disabled="formData.contents.length === 0">
               <template #icon><EyeOutlined /></template>
@@ -319,11 +319,31 @@ const renderPlaceholderText = (template: string, values: Record<string, string>)
 }
 
 const ensureCurrentUserId = async () => {
+  // 如果已经有用户 ID，直接返回
   if (typeof userStore.userInfo?.id === 'number') {
     return userStore.userInfo.id
   }
+  
+  // 尝试从 sessionStorage 恢复
   await userStore.restoreFromSession()
-  return typeof userStore.userInfo?.id === 'number' ? userStore.userInfo.id : undefined
+  
+  // 再次检查是否有用户 ID
+  if (typeof userStore.userInfo?.id === 'number') {
+    return userStore.userInfo.id
+  }
+  
+  // 如果还是没有，尝试从 sessionStorage 获取基本的 account 信息
+  const account = sessionStorage.getItem('account')
+  if (account) {
+    // 使用 account 作为临时 ID（转换为数字）
+    const tempId = parseInt(account.replace(/\D/g, '') || '0', 10)
+    if (tempId > 0) {
+      return tempId
+    }
+  }
+  
+  // 如果所有方法都失败，返回 undefined
+  return undefined
 }
 
 // 表单验证规则
@@ -424,27 +444,34 @@ const handleTestSend = async () => {
   const internalContent = formData.contents.find((item: any) => item.platform === 'INTERNAL')
   if (!internalContent) {
     activeTab.value = 'content'
-    message.warning('璇峰厛閰嶇疆绔欏唴娑堟伅鍐呭鍚庡啀璇曞彂閫?')
+    message.warning('请先配置站内消息内容后再试发送')
     return
   }
 
+  // 确保用户信息已加载
   const receiverUserId = await ensureCurrentUserId()
   if (!receiverUserId) {
-    message.error('鑾峰彇褰撳墠鐢ㄦ埛淇℃伅澶辫触锛岃鍒锋柊椤甸潰鍚庨噸璇?')
-    return
+    // 尝试从 sessionStorage 直接获取 account 作为备用方案
+    const account = sessionStorage.getItem('account')
+    if (!account) {
+      message.error('未找到用户信息，请重新登录')
+      return
+    }
+    // 如果 account 存在但没有 id，使用 account 本身
+    message.info(`使用账号 ${account} 发送测试消息`)
   }
 
   const rawTitle = resolveI18nText(internalContent.contentTitleI18nJson, internalContent.contentTitle)
   const rawBody = resolveI18nText(internalContent.contentBodyI18nJson, internalContent.contentBody)
-  const fallbackTitle = resolveI18nText(formData.templateNameI18nJson, formData.templateName) || '娑堟伅妯℃澘璇曞彂閫?'
+  const fallbackTitle = resolveI18nText(formData.templateNameI18nJson, formData.templateName) || '消息模板试发送'
 
   const placeholderValues: Record<string, string> = {
-    userName: userStore.userInfo?.username || userStore.userInfo?.account || '褰撳墠鐢ㄦ埛',
-    userAccount: userStore.userInfo?.account || 'current.user',
-    tenantName: userStore.userInfo?.tenantName || '褰撳墠绉熸埛',
+    userName: userStore.userInfo?.username || userStore.userInfo?.account || sessionStorage.getItem('account') || '当前用户',
+    userAccount: userStore.userInfo?.account || sessionStorage.getItem('account') || 'current.user',
+    tenantName: userStore.userInfo?.tenantName || '当前租户',
     currentTime: formatCurrentTime(),
     title: fallbackTitle,
-    content: '杩欐槸涓€鏉℃秷鎭ā鏉跨殑璇曞彂閫佹秷鎭?',
+    content: '这是一条消息模板的试发送消息',
     linkUrl: internalContent.linkUrl || '/workspace'
   }
 
@@ -455,16 +482,18 @@ const handleTestSend = async () => {
   testSendLoading.value = true
   try {
     await sendSystemMessage({
-      receiverUserId,
+      receiverUserId: receiverUserId || receiverUserId,
       scope: 'INTERNAL',
+      messageType: formData.messageType || 'NOTICE',
       title,
       content,
       linkUrl: linkUrl || undefined,
-      bizType: 'MESSAGE_TEMPLATE_TEST'
+      bizType: 'MESSAGE_TEMPLATE_TEST',
     })
-    message.success('璇曞彂閫佹垚鍔燂紝璇峰湪绔欏唴娑堟伅鎴栧彸涓婅閫氱煡涓煡鐪?')
-  } catch (error) {
-    message.error('璇曞彂閫佸け璐?')
+    message.success('试发送成功，请在站内消息或右上角通知中查看')
+  } catch (error: any) {
+    console.error('试发送失败:', error)
+    message.error(error?.message || '试发送失败，请稍后重试')
   } finally {
     testSendLoading.value = false
   }
@@ -643,6 +672,8 @@ const handleModalCancel = () => {
 <style scoped lang="less">
 .message-template-page {
   padding: 16px;
+  background: var(--fx-bg-layout);
+  color: var(--fx-text-primary);
 }
 
 .search-card {
@@ -656,11 +687,11 @@ const handleModalCancel = () => {
 }
 
 .field-hint {
-  color: var(--fx-text-secondary, #999);
+  color: var(--fx-text-secondary);
   font-size: 12px;
 }
 
-.receiver-item,
+.receiver-items,
 .content-item {
   margin-bottom: 16px;
 
@@ -669,35 +700,56 @@ const handleModalCancel = () => {
   }
   
   :deep(.ant-card) {
-    background: var(--fx-bg-elevated, #ffffff);
-    border: 1px solid var(--fx-border-color, #e8e8e8);
-    box-shadow: var(--fx-shadow-secondary, 0 6px 18px rgba(15, 23, 42, 0.08));
+    // 使用更深的背景色来区分层次
+    background: var(--fx-bg-container);
+    border: 1px solid var(--fx-border-color);
+    box-shadow: var(--fx-shadow-secondary);
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
     
     &:hover {
-      border-color: var(--fx-primary, #1890ff);
-      box-shadow: var(--fx-shadow, 0 10px 28px rgba(15, 23, 42, 0.14));
+      border-color: var(--fx-primary);
+      box-shadow: var(--fx-shadow);
       transform: translateY(-1px);
     }
     
     .ant-card-head {
-      background: linear-gradient(135deg, var(--fx-fill-alter, #f5f7fa) 0%, var(--fx-fill-secondary, #eef2ff) 100%);
-      border-bottom: 1px solid var(--fx-border-color, #e8e8e8);
+      // 表头使用更深的填充色
+      background: var(--fx-fill-secondary);
+      border-bottom: 1px solid var(--fx-border-color);
       
       .ant-card-head-title {
         font-weight: 600;
-        color: var(--fx-text-primary, #333);
+        color: var(--fx-text-primary);
       }
     }
 
     .ant-card-body {
-      background: var(--fx-bg-elevated, #ffffff);
-      color: var(--fx-text-primary, #111827);
+      // 内容区域使用与卡片一致的容器背景色
+      background: var(--fx-bg-container);
+      color: var(--fx-text-primary);
     }
   }
 }
 
 :deep(.ant-modal) {
+  background: var(--fx-bg-elevated);
+  color: var(--fx-text-primary);
+  
+  .ant-modal-content {
+    background: var(--fx-bg-elevated);
+    color: var(--fx-text-primary);
+  }
+  
+  .ant-modal-header {
+    background: var(--fx-bg-elevated);
+    color: var(--fx-text-primary);
+    border-bottom: 1px solid var(--fx-border-color);
+  }
+  
+  .ant-modal-footer {
+    border-top: 1px solid var(--fx-border-color);
+  }
+  
   .ant-tabs {
     .ant-tabs-nav {
       margin-bottom: 24px;
@@ -705,10 +757,43 @@ const handleModalCancel = () => {
       .ant-tabs-tab {
         font-size: 15px;
         padding: 12px 20px;
+        color: var(--fx-text-secondary);
         
         &.ant-tabs-tab-active {
           font-weight: 600;
+          color: var(--fx-text-primary);
         }
+      }
+    }
+  }
+  
+  // 优化表单字段提示文本
+  .field-hint {
+    color: var(--fx-text-secondary);
+    font-size: 12px;
+  }
+  
+  // 优化内容配置区域的占位符工具栏
+  :deep(.placeholder-input) {
+    .placeholder-toolbar {
+      background: var(--fx-fill-secondary);
+      border-color: var(--fx-border-color);
+      
+      .toolbar-label {
+        color: var(--fx-text-secondary);
+      }
+    }
+    
+    .placeholder-preview {
+      background: var(--fx-bg-container);
+      border-color: var(--fx-border-color);
+      
+      .preview-label {
+        color: var(--fx-text-secondary);
+      }
+      
+      .preview-content {
+        color: var(--fx-text-primary);
       }
     }
   }
