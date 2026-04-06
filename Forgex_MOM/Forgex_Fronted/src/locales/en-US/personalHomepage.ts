@@ -95,10 +95,32 @@ export default {
   // Summary Card
   summary: {
     greeting: {
-      morning: 'Good morning, have a nice day!',
-      afternoon: 'Good afternoon, keep going!',
-      evening: 'Good evening, take care!',
+      honorificMale: 'Mr.',
+      honorificFemale: 'Ms.',
+      lead: {
+        morning: 'Good morning',
+        afternoon: 'Good afternoon',
+        evening: 'Good evening',
+      },
+      closing: {
+        morning: "Here's to a fresh start and a focused, productive day ahead.",
+        afternoon: 'Keep the momentum — remember to pause and breathe now and then.',
+        evening: "You've put in a solid day — unwind and recharge tonight.",
+      },
+      lineEnMale: 'Dear Mr. {name}, {lead} — {closing}',
+      lineEnFemale: 'Dear Ms. {name}, {lead} — {closing}',
+      lineEnNeutral: 'Dear {name}, {lead} — {closing}',
     },
+    weekday: {
+      0: 'Sunday',
+      1: 'Monday',
+      2: 'Tuesday',
+      3: 'Wednesday',
+      4: 'Thursday',
+      5: 'Friday',
+      6: 'Saturday',
+    },
+    todayLineEn: 'Today is {weekday}, {month}/{day}',
     onlineDuration: 'Online Duration',
   },
 }

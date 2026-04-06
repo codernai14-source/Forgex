@@ -95,10 +95,30 @@ export default {
   // 摘要卡片
   summary: {
     greeting: {
-      morning: '早上好，祝您工作愉快！',
-      afternoon: '下午好，继续加油！',
-      evening: '晚上好，注意休息！',
+      honorificMale: '先生',
+      honorificFemale: '女士',
+      lead: {
+        morning: '早上好',
+        afternoon: '下午好',
+        evening: '晚上好',
+      },
+      closing: {
+        morning: '愿您精神饱满，开启元气满满的一天',
+        afternoon: '适当休息片刻，下午继续高效前行',
+        evening: '工作很辛苦吧，注意休息哦',
+      },
+      lineZh: '尊敬的{name}{honorific}，{lead}，{closing}',
     },
+    weekday: {
+      0: '星期日',
+      1: '星期一',
+      2: '星期二',
+      3: '星期三',
+      4: '星期四',
+      5: '星期五',
+      6: '星期六',
+    },
+    todayLineZh: '今天是{month}月{day}日 {weekday}',
     onlineDuration: '在线时长',
   },
 }

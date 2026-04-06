@@ -5,7 +5,7 @@
       <!-- 普通模式：显示用户摘要信息 -->
       <div v-if="mode === 'current'" class="designer-hero__user">
         <div class="designer-hero__avatar">
-          <a-avatar :size="64" :src="summary?.avatar">
+          <a-avatar :size="64" :src="heroAvatarSrc || undefined">
             <template #icon>
               <UserOutlined />
             </template>
@@ -13,13 +13,10 @@
         </div>
         <div class="designer-hero__info">
           <h2 class="designer-hero__greeting">
-            {{ summary?.greeting || $t('personalHomepage.summary.greeting.morning') }}
+            {{ heroGreetingLine }}
           </h2>
           <p class="designer-hero__subtitle">
-            <span>{{ summary?.greetingSubtitle || '' }}</span>
-            <span v-if="summary?.nickname" class="username-badge">
-              {{ summary?.nickname }}
-            </span>
+            <span>{{ heroDateSubtitle }}</span>
           </p>
           <div class="designer-hero__stats">
             <span class="designer-hero__stat">
@@ -334,8 +331,9 @@ import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
 import { PERSONAL_HOME_PATH } from '@/router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { usePermissionStore } from '@/stores/permission'
+import { useUserStore } from '@/stores/user'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 interface PersonalHomepageDesignerProps {
   mode: 'current' | 'manage'
@@ -380,6 +378,7 @@ const props = withDefaults(defineProps<PersonalHomepageDesignerProps>(), {
 
 const router = useRouter()
 const permissionStore = usePermissionStore()
+const userStore = useUserStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -394,6 +393,124 @@ const now = ref(dayjs())
 const syncingGrid = ref(false)
 const summary = ref<PersonalHomepageSummaryVO | null>(null)
 let clockTimer: number | undefined
+
+/**
+ * 解析用户头像地址，与 {@link MainLayout} 中顶部头像规则保持一致。
+ * <p>相对路径会补全为网关 `/api` 前缀，便于 a-avatar 直接加载。</p>
+ *
+ * @param raw 后端或 Store 中的原始路径
+ * @returns 可请求的完整 URL；无效时为空字符串
+ */
+function resolveUserAvatarSrc(raw?: string | null): string {
+  let avatar = raw?.trim() || ''
+  if (!avatar) {
+    return ''
+  }
+  if (avatar.startsWith('http') || avatar.startsWith('data:')) {
+    return avatar
+  }
+  if (avatar.startsWith('/api')) {
+    return avatar
+  }
+  if (avatar.startsWith('/')) {
+    return `/api${avatar}`
+  }
+  return `/api/${avatar}`
+}
+
+/**
+ * 个人首页 Hero 区展示用头像（摘要接口优先，缺失时回退到当前登录用户信息）。
+ */
+const heroAvatarSrc = computed(() => {
+  const raw = summary.value?.avatar || userStore.userInfo?.avatar
+  return resolveUserAvatarSrc(raw)
+})
+
+/**
+ * 问候语展示名：摘要昵称优先，其次为 Store 中的用户名、账号。
+ */
+const displayNameForHero = computed(() => {
+  return (
+    summary.value?.nickname ||
+    userStore.userInfo?.username ||
+    userStore.userInfo?.account ||
+    ''
+  )
+})
+
+/** 问候时段：早晨 / 下午 / 夜间（与后端摘要服务时段划分一致） */
+type GreetingPhase = 'morning' | 'afternoon' | 'evening'
+
+/**
+ * 根据当前本地时间计算问候时段。
+ *
+ * @see now 由时钟定时刷新，跨时段会自动更新文案
+ */
+const greetingPhase = computed<GreetingPhase>(() => {
+  const hour = now.value.hour()
+  if (hour >= 6 && hour < 12) {
+    return 'morning'
+  }
+  if (hour >= 12 && hour < 18) {
+    return 'afternoon'
+  }
+  return 'evening'
+})
+
+/**
+ * 中文场景下的称谓后缀（先生 / 女士）；未知性别时为空。
+ */
+const honorificZh = computed(() => {
+  const g = summary.value?.gender
+  if (g === 1) {
+    return t('personalHomepage.summary.greeting.honorificMale')
+  }
+  if (g === 2) {
+    return t('personalHomepage.summary.greeting.honorificFemale')
+  }
+  return ''
+})
+
+/**
+ * 国际化主问候语：尊敬的姓名称谓 + 分时段问候与结束语；英文分 Mr./Ms./无称谓三种句式。
+ */
+const heroGreetingLine = computed(() => {
+  const name = displayNameForHero.value
+  const phase = greetingPhase.value
+  const lead = t(`personalHomepage.summary.greeting.lead.${phase}`)
+  const closing = t(`personalHomepage.summary.greeting.closing.${phase}`)
+  if (locale.value === 'en-US') {
+    const g = summary.value?.gender
+    if (g === 1) {
+      return t('personalHomepage.summary.greeting.lineEnMale', { name, lead, closing })
+    }
+    if (g === 2) {
+      return t('personalHomepage.summary.greeting.lineEnFemale', { name, lead, closing })
+    }
+    return t('personalHomepage.summary.greeting.lineEnNeutral', { name, lead, closing })
+  }
+  return t('personalHomepage.summary.greeting.lineZh', {
+    name,
+    honorific: honorificZh.value,
+    lead,
+    closing,
+  })
+})
+
+/**
+ * 今日日期与星期副标题（与界面语言一致）。
+ */
+const heroDateSubtitle = computed(() => {
+  const d = now.value
+  const idx = d.day()
+  const weekday = t(`personalHomepage.summary.weekday.${idx}`)
+  const month = d.month() + 1
+  const day = d.date()
+  if (locale.value === 'en-US') {
+    return t('personalHomepage.summary.todayLineEn', { weekday, month, day })
+  }
+  return t('personalHomepage.summary.todayLineZh', { weekday, month, day })
+})
 
 const mode = computed(() => props.mode)
 const showScopeSelector = computed(() => props.showScopeSelector)
@@ -1008,15 +1125,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.username-badge {
-  padding: 2px 8px;
-  background: var(--fx-primary-bg, rgba(22, 119, 255, 0.1));
-  color: var(--fx-primary, #1677ff);
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 .designer-hero__stats {

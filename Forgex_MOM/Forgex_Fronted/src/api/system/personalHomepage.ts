@@ -185,6 +185,10 @@ export interface PersonalHomepageSummaryVO {
   avatar: string
   nickname: string
   account: string
+  /**
+   * 性别：0=未知，1=男，2=女（与后端 SysUser 一致）
+   */
+  gender?: number | null
   onlineDurationMinutes: number
   onlineDurationText: string
   greeting: string
