@@ -1147,20 +1147,16 @@ function resolveTabTitle(tabKey: string): string {
 }
 
 /**
- * 各模块「工作台」页签标题：模块名 · 路由标题，避免与系统模块工作台重复显示为两个「首页」。
+ * 各模块「工作台」页签标题
+ * <p>
+ * 直接返回路由标题，不添加模块名前缀
+ * </p>
  *
  * @param moduleCode 模块编码，如 sys、approval
  * @returns 展示用标题
  */
 function buildModuleDashboardTitle(moduleCode: string): string {
-  const base = buildTitleFromRoute(`/workspace/${moduleCode}/dashboard`)
-  const mod = (Array.isArray(dynamicModules.value) ? dynamicModules.value : []).find(
-    (x: any) => String(x.code || '') === moduleCode
-  )
-  if (mod && mod.name) {
-    return `${mod.name} · ${base}`
-  }
-  return base
+  return buildTitleFromRoute(`/workspace/${moduleCode}/dashboard`)
 }
 
 /**

@@ -271,7 +271,7 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
 /**
  * 动态导入组件
  * 约定：组件名格式为 ModulePage，例如 SystemUser, SysDashboard
- * 自动映射到路径：../views/{module}/{page}/index.vue
+ * 自动映射到路径：../views/{module}/{page}.vue（单文件结构）
  *
  * @param componentName 组件名称，例如 "SystemUser", "SysDashboard"
  * @returns 动态导入的组件
@@ -284,10 +284,21 @@ function loadComponent(componentName: string) {
       return approvalLoader
     }
 
+    // 特殊映射：处理一些不符合常规命名的组件
+    // 注意：不要随意添加特殊映射，优先使用标准的目录结构映射
+    const specialComponentMap: Record<string, string> = {
+      // 未来可以添加更多特殊映射
+    }
+
+    if (specialComponentMap[componentName]) {
+      return () => import(specialComponentMap[componentName])
+    }
+
     // 解析组件名（优先支持 System*/Sys* 的多单词页面）
     // - SystemUser -> module: system, page: User
     // - SystemExcelExportConfig -> module: system, page: ExcelExportConfig
     // - SysDashboard -> module: sys, page: Dashboard
+    // - SystemRoleMenuGrant -> module: system, page: RoleMenuGrant
     let modulePart = ''
     let pagePartRaw = ''
 
@@ -310,18 +321,28 @@ function loadComponent(componentName: string) {
       pagePartRaw = match[2]
     }
 
-    // 将页面名称转换为小写开头的驼峰命名
-    const pagePart = pagePartRaw.charAt(0).toLowerCase() + pagePartRaw.slice(1)
-
     // 使用映射表获取实际的目录名
     const moduleDir = modulePathMap[modulePart] || modulePart
 
-    // 构建组件路径
-    const componentPath = `../views/${moduleDir}/${pagePart}/index.vue`
+    // 特殊处理：如果页面名包含 Role 前缀，添加到子目录
+    // 例如：RoleMenuGrant -> role/MenuGrant
+    let subDir = ''
+    if (pagePartRaw.startsWith('Role') && pagePartRaw.length > 4) {
+      subDir = 'role/'
+      pagePartRaw = pagePartRaw.slice(4)
+    }
 
+    // 构建两种组件路径：
+    // 1. 目录结构：../views/{module}/{subDir}{PageName}/index.vue
+    // 2. 单文件结构：../views/{module}/{subDir}{PageName}.vue
+    const componentPathDir = `../views/${moduleDir}/${subDir}${pagePartRaw}/index.vue`
+    const componentPathFile = `../views/${moduleDir}/${subDir}${pagePartRaw}.vue`
 
-    // 动态导入组件
-    return () => import(/* @vite-ignore */ componentPath)
+    // 优先尝试目录结构（大多数组件），失败后尝试单文件结构（Role 相关组件）
+    // 使用动态 import 的错误处理
+    return () => import(/* @vite-ignore */ componentPathDir).catch(() => {
+      return import(/* @vite-ignore */ componentPathFile)
+    })
   } catch (error) {
 
     return EmptyView

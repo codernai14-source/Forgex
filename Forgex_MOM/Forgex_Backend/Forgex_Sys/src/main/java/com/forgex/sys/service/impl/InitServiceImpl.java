@@ -385,14 +385,14 @@ public class InitServiceImpl implements InitService {
 
         // 菜单授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
         SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "menu-grant/:roleId",
-                "菜单授权", "Menu Grant", "SafetyCertificateOutlined", null, "sys:role:authMenu", 1, 2);
+                "菜单授权", "Menu Grant", "SafetyCertificateOutlined", "SystemRoleMenuGrant", "sys:role:authMenu", 1, 2);
         menuGrantMenu.setVisible(false); // 设置为隐藏菜单
         menuMapper.updateById(menuGrantMenu);
         grantedMenuIds.add(menuGrantMenu.getId());
 
         // 人员授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
         SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "user-grant/:roleId",
-                "人员授权", "User Grant", "UsergroupAddOutlined", null, "sys:role:authUser", 2, 2);
+                "人员授权", "User Grant", "UsergroupAddOutlined", "SystemRoleUserGrant", "sys:role:authUser", 2, 2);
         userGrantMenu.setVisible(false); // 设置为隐藏菜单
         menuMapper.updateById(userGrantMenu);
         grantedMenuIds.add(userGrantMenu.getId());
