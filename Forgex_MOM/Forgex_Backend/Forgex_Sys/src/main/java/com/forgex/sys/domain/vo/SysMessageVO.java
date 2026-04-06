@@ -50,9 +50,19 @@ public class SysMessageVO {
     private String messageType;
 
     /**
+     * 前端统一使用的消息类型字段。
+     */
+    private String type;
+
+    /**
      * 消息渠道（INTERNAL/WECHAT/SMS/EMAIL）
      */
     private String platform;
+
+    /**
+     * 发送人名称
+     */
+    private String senderName;
 
     /**
      * 消息标题

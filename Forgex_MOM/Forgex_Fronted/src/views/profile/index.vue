@@ -123,6 +123,14 @@
             </a-form-item>
           </a-form>
         </a-tab-pane>
+        <a-tab-pane key="personalHomepage" tab="个人首页">
+          <PersonalHomepageDesigner
+            mode="current"
+            title="我的个人首页"
+            description="这里保存你自己的首页布局，恢复默认后会重新继承租户级或公共级配置。"
+            :initial-edit-mode="true"
+          />
+        </a-tab-pane>
       </a-tabs>
     </a-card>
   </div>
@@ -133,6 +141,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { getCurrentUserInfo, updateBasicInfo, changePassword } from '@/api/profile'
 import { useUserStore } from '@/stores/user'
 

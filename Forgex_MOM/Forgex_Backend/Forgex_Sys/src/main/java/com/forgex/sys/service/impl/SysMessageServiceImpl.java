@@ -488,7 +488,9 @@ public class SysMessageServiceImpl implements SysMessageService {
         vo.setReceiverUserId(msg.getReceiverUserId());
         vo.setScope(msg.getScope());
         vo.setMessageType(msg.getMessageType());
+        vo.setType(msg.getMessageType());
         vo.setPlatform(msg.getPlatform());
+        vo.setSenderName(msg.getSenderName());
         vo.setTitle(msg.getTitle());
         vo.setContent(msg.getContent());
         vo.setLinkUrl(msg.getLinkUrl());

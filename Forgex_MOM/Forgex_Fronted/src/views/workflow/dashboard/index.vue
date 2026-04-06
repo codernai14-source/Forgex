@@ -261,7 +261,9 @@ onMounted(() => {
   padding: 16px;
   min-height: 100%;
   box-sizing: border-box;
-  background: linear-gradient(180deg, #f6f8fc 0%, #f0f2f5 100%);
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--fx-primary, #1677ff) 10%, transparent), transparent 34%),
+    linear-gradient(180deg, var(--fx-bg-layout, #f8fafc) 0%, color-mix(in srgb, var(--fx-bg-layout, #f8fafc) 90%, var(--fx-bg-container, #ffffff)) 100%);
 }
 
 .dashboard-header {
@@ -272,31 +274,33 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--fx-text-primary, #1f2937);
 }
 
 .subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--fx-text-secondary, #6b7280);
   font-size: 14px;
 }
 
 .dash-card {
   border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  background: var(--fx-bg-container, #ffffff);
+  box-shadow: var(--fx-shadow-secondary, 0 12px 28px rgba(15, 23, 42, 0.08));
   min-height: 320px;
 }
 
 .dash-card-pending {
-  border-top: 3px solid #2563eb;
+  border-top: 3px solid var(--fx-primary, #2563eb);
 }
 
 .dash-card-done {
-  border-top: 3px solid #059669;
+  border-top: 3px solid color-mix(in srgb, var(--fx-primary, #1677ff) 55%, #10b981);
 }
 
 .dash-card-cc {
-  border-top: 3px solid #7c3aed;
+  border-top: 3px solid color-mix(in srgb, var(--fx-primary, #1677ff) 60%, #8b5cf6);
 }
 
 .card-title {
@@ -321,7 +325,7 @@ onMounted(() => {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 88%, transparent);
 }
 
 .task-item:last-child {
@@ -329,7 +333,7 @@ onMounted(() => {
 }
 
 .task-item:hover {
-  background: #f8fafc;
+  background: var(--fx-bg-elevated, #f8fafc);
 }
 
 .task-main {
@@ -342,7 +346,7 @@ onMounted(() => {
 
 .task-name {
   font-weight: 500;
-  color: #111827;
+  color: var(--fx-text-primary, #111827);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -353,11 +357,11 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--fx-text-secondary, #6b7280);
 }
 
 .empty-hint {
-  color: #9ca3af;
+  color: var(--fx-text-tertiary, #9ca3af);
   text-align: center;
   padding: 32px 8px;
   font-size: 14px;
@@ -375,7 +379,9 @@ onMounted(() => {
 .form-block pre {
   margin: 0;
   padding: 12px;
-  background: #f5f5f5;
+  background: var(--fx-bg-elevated, #f5f5f5);
+  color: var(--fx-text-primary, #111827);
+  border: 1px solid var(--fx-border-color, #e5e7eb);
   border-radius: 6px;
   white-space: pre-wrap;
   word-break: break-all;

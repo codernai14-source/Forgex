@@ -10,6 +10,8 @@ import { usePermissionStore } from '../stores/permission'
 import { getRoutes } from '../api/system/route'
 import { APPROVAL_ROUTE_BASE, LEGACY_APPROVAL_ROUTE_BASE, approvalRoutePaths } from './approvalRoutePaths'
 
+export const PERSONAL_HOME_PATH = '/workspace/home'
+
 interface LocalModuleRouteDefinition {
   path: string
   component: () => Promise<any>
@@ -44,6 +46,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Workspace',
     component: () => import('../layouts/MainLayout.vue'), // 主布局组件
     children: [
+      {
+        path: 'home',
+        name: 'PersonalHome',
+        component: () => import('../views/home/index.vue'),
+        meta: { title: '个人首页' }
+      },
       {
         path: 'profile',
         name: 'UserProfile',
@@ -167,7 +175,7 @@ router.beforeEach(async (to, from, next) => {
       // 优先从缓存恢复（避免不必要的API调用）
       const cached = permissionStore.restoreRoutesAndModules()
 
-      if (cached.routes.length > 0 && cached.modules.length > 0) {
+      if (cached.routes.length > 0 || cached.modules.length > 0) {
         console.log('[Guard] Restoring routes from cache')
         
         // 重新注入动态路由
@@ -186,7 +194,7 @@ router.beforeEach(async (to, from, next) => {
       console.log('[Guard] No cached routes, fetching from backend')
       try {
         const payload = await getRoutes({ account, tenantId })
-        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules) && payload.routes.length > 0) {
+        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules)) {
           console.log('[Guard] Routes fetched from backend successfully')
           
           // 存储权限信息
@@ -217,7 +225,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 如果访问 /workspace 根路径，重定向到系统管理主页
   if (to.path === '/workspace' || to.path === '/workspace/') {
-    next('/workspace/sys/dashboard')
+    next(PERSONAL_HOME_PATH)
     return
   }
 
@@ -536,27 +544,6 @@ export async function injectDynamicRoutes(payload: any) {
     const moduleCode = routeItem.path
     const children = Array.isArray(routeItem.children) ? routeItem.children : []
     const registeredModulePaths = new Set<string>()
-
-    // 如果后端未提供 dashboard，才自动补充一个默认 dashboard 路由
-    const hasDashboard = children.some((c: any) => String(c?.path || '') === 'dashboard')
-    if (!hasDashboard) {
-      const dashboardComponentKey = `${moduleCode.charAt(0).toUpperCase() + moduleCode.slice(1)}Dashboard`
-      const dashboardComponent = loadComponent(dashboardComponentKey)
-      const dashboardPath = `${moduleCode}/dashboard`
-      const dashboardName = buildDynamicRouteName(dashboardPath)
-
-      r.addRoute('Workspace', {
-        path: dashboardPath,
-        name: dashboardName,
-        component: dashboardComponent,
-        meta: {
-          title: 'common.home',
-          module: moduleCode
-        }
-      })
-      injectedRouteNames.add(dashboardName)
-      registeredModulePaths.add(dashboardPath)
-    }
 
     // 注册模块下的子路由
     for (const c of children) {

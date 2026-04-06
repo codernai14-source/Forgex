@@ -245,19 +245,32 @@ const currentMenus = computed(() => {
 
 // 监听 activeKey 变化
 watch(
-  () => props.activeKey,
-  (newKey) => {
-    if (newKey) {
-      selectedKeys.value = [newKey]
+  () => [props.activeKey, props.menus],
+  ([newKey]) => {
+    const normalizedKey = String(newKey || '').split('?')[0]
+    if (!normalizedKey) {
+      selectedKeys.value = []
+      openKeys.value = []
+      return
+    }
+    selectedKeys.value = [normalizedKey]
       
       // 自动展开父菜单
-      const menu = findMenuByKey(props.menus, newKey)
-      if (menu && menu.parentKey) {
-        if (!openKeys.value.includes(menu.parentKey)) {
-          openKeys.value.push(menu.parentKey)
-        }
+      const menuPath = findMenuPath(props.menus, normalizedKey)
+      if (!menuPath || menuPath.length === 0) {
+        openKeys.value = []
+        return
       }
-    }
+
+      const firstLevelMenu = menuPath.find(menu => menu.menuLevel === 1) || menuPath[0]
+      if (firstLevelMenu) {
+        selectedFirstLevelKeys.value = [firstLevelMenu.key]
+      }
+
+      openKeys.value = menuPath
+        .slice(0, -1)
+        .filter(menu => menu.key !== firstLevelMenu?.key)
+        .map(menu => menu.key)
   },
   { immediate: true }
 )
@@ -270,6 +283,22 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
     }
     if (menu.children) {
       const found = findMenuByKey(menu.children, key)
+      if (found) {
+        return found
+      }
+    }
+  }
+  return null
+}
+
+function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = []): MenuItem[] | null {
+  for (const menu of menus) {
+    const currentPath = [...parentPath, menu]
+    if (menu.key === key) {
+      return currentPath
+    }
+    if (menu.children && menu.children.length > 0) {
+      const found = findMenuPath(menu.children, key, currentPath)
       if (found) {
         return found
       }

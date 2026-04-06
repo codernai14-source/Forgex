@@ -30,10 +30,10 @@
     <a-layout class="fx-main-content-wrapper">
       <!-- 使用新的 AppSidebar 组件 -->
       <AppSidebar
-        v-if="layoutConfig.layoutMode !== 'top'"
+        v-if="shouldShowSidebar"
         :menus="sidebarMenus"
         :modules="moduleList"
-        :active-key="route.fullPath"
+        :active-key="normalizeWorkspacePath(route.fullPath)"
         :active-module-code="activeModuleCode"
         :collapsed="siderCollapsed"
         :double-column="layoutConfig.leftDoubleMenu || layoutConfig.layoutMode === 'vertical-mix' || layoutConfig.layoutMode === 'mix'"
@@ -391,7 +391,7 @@ import jaJP from 'ant-design-vue/es/locale/ja_JP'
 import koKR from 'ant-design-vue/es/locale/ko_KR'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
-import { dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
+import { PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
@@ -674,6 +674,8 @@ const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
 const tabs = ref<{ key: string; title: string; closable: boolean }[]>([])
 const activeTabKey = ref<string>('')
+const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
+const MAX_RECENT_ROUTE_COUNT = 20
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
@@ -753,6 +755,76 @@ locale.value = currentLocale.value as any
 const resolvedMode = computed(() => 
   resolveThemeMode(layoutConfig.value.themeMode, systemTheme.value)
 )
+
+function normalizeWorkspacePath(path: string) {
+  return String(path || '').split('?')[0]
+}
+
+function buildFixedTabs() {
+  return [{
+    key: PERSONAL_HOME_PATH,
+    title: resolveTabTitle(PERSONAL_HOME_PATH),
+    closable: false,
+  }]
+}
+
+function ensureFixedTabs(tabList: { key: string; title: string; closable: boolean }[]) {
+  const fixedTabs = buildFixedTabs()
+  const otherTabs = tabList.filter(tab => tab.key !== PERSONAL_HOME_PATH)
+  return [...fixedTabs, ...otherTabs]
+}
+
+function getRecentRoutes(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_ROUTE_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed
+      .map(item => normalizeWorkspacePath(String(item || '')))
+      .filter(item => item && item !== PERSONAL_HOME_PATH)
+  } catch (error) {
+    console.error('[MainLayout] Failed to parse recent routes:', error)
+    return []
+  }
+}
+
+function saveRecentRoutes(routes: string[]) {
+  try {
+    localStorage.setItem(RECENT_ROUTE_STORAGE_KEY, JSON.stringify(routes.slice(0, MAX_RECENT_ROUTE_COUNT)))
+  } catch (error) {
+    console.error('[MainLayout] Failed to save recent routes:', error)
+  }
+}
+
+function updateRecentRoutes(path: string) {
+  const normalizedPath = normalizeWorkspacePath(path)
+  if (!normalizedPath.startsWith('/workspace') || normalizedPath === PERSONAL_HOME_PATH) {
+    return
+  }
+  const nextRoutes = [normalizedPath, ...getRecentRoutes().filter(item => item !== normalizedPath)]
+  saveRecentRoutes(nextRoutes)
+}
+
+function removeRecentRoute(path: string) {
+  const normalizedPath = normalizeWorkspacePath(path)
+  saveRecentRoutes(getRecentRoutes().filter(item => item !== normalizedPath))
+}
+
+function resolveNextTabKey(closedKey?: string) {
+  const availableTabs = new Set(ensureFixedTabs(tabs.value).map(tab => tab.key))
+  const recentKey = getRecentRoutes().find(item => item !== closedKey && availableTabs.has(item))
+  return recentKey || PERSONAL_HOME_PATH
+}
+
+function removeTabsByKeys(keys: string[]) {
+  if (keys.length === 0) {
+    return
+  }
+  keys.forEach(removeRecentRoute)
+  tabs.value = ensureFixedTabs(tabs.value.filter(tab => !keys.includes(tab.key)))
+}
 
 watch(
   resolvedMode,
@@ -845,6 +917,20 @@ const moduleMenus = computed(() => {
     result.push({ code, name, items })
   }
   return result
+})
+
+const shouldShowSidebar = computed(() => {
+  const currentPath = normalizeWorkspacePath(route.fullPath)
+  if (layoutConfig.value.layoutMode === 'top') {
+    return false
+  }
+  if (currentPath === PERSONAL_HOME_PATH) {
+    return false
+  }
+  if (layoutConfig.value.layoutMode === 'mix' || layoutConfig.value.layoutMode === 'vertical-mix') {
+    return sidebarMenus.value.length > 0
+  }
+  return true
 })
 
 // 为 GlobalSearch 组件转换菜单数据
@@ -1022,7 +1108,6 @@ const currentUser = computed(() => {
     } else if (avatar.startsWith('/')) {
       // 相对路径，补充 /api
       avatar = `/api${avatar}`
-    } else {
       // 相对路径，补充 /api/
       avatar = `/api/${avatar}`
     }
@@ -1081,32 +1166,38 @@ function buildModuleDashboardTitle(moduleCode: string): string {
  * 更新所有标签的标题
  */
 function updateAllTabTitles() {
-  tabs.value = tabs.value.map(tab => ({
+  tabs.value = ensureFixedTabs(tabs.value.map(tab => ({
     ...tab,
-    title: resolveTabTitle(tab.key)
-  }))
+    title: resolveTabTitle(tab.key),
+    closable: tab.key !== PERSONAL_HOME_PATH,
+  })))
 }
 
 watch(
   () => route.fullPath,
   (path) => {
-    selectedKeys.value = [path]
+    const cleanPath = normalizeWorkspacePath(path)
+    selectedKeys.value = [cleanPath]
     
     // 优先从路由 meta 中获取模块代码
+    let moduleCode = ''
     if (route.meta && route.meta.module) {
-      const code = route.meta.module as string
-      openKeys.value = [code]
-      activeModuleCode.value = code
+      moduleCode = String(route.meta.module)
     } else {
       // 降级策略：从 URL 路径中解析
-      const parts = path.split('/').filter(Boolean)
+      const parts = cleanPath.split('/').filter(Boolean)
       if (parts.length >= 2 && parts[0] === 'workspace') {
-        const code = parts[1]
-        openKeys.value = [code]
-        activeModuleCode.value = code
+        const candidate = parts[1]
+        const modules = Array.isArray(dynamicModules.value) ? dynamicModules.value : []
+        if (modules.some((item: any) => String(item.code || '') === candidate)) {
+          moduleCode = candidate
+        }
       }
     }
-    
+
+    activeModuleCode.value = cleanPath === PERSONAL_HOME_PATH ? '' : moduleCode
+    openKeys.value = activeModuleCode.value ? [activeModuleCode.value] : []
+
     updateTabsByRoute(path)
   },
   { immediate: true }
@@ -1174,6 +1265,14 @@ function refreshPage() {
 async function openMessageDrawer() {
   messageDrawerOpen.value = true
   await loadMessages()
+}
+
+function handleOpenMessageDrawerEvent() {
+  openMessageDrawer()
+}
+
+function handleOpenGlobalSearchEvent() {
+  globalSearchVisible.value = true
 }
 
 /**
@@ -1354,7 +1453,7 @@ function updateTabsByRoute(path: string) {
   
   // 移除查询参数，确保 tab key 唯一且不包含参数
   // 例如：/workspace/profile?tab=security -> /workspace/profile
-  const pathWithoutQuery = path.split('?')[0]
+  const pathWithoutQuery = normalizeWorkspacePath(path)
   
   // 仍然使用 activeTabKey 来高亮当前 tab，但 key 本身存储的是无参数路径
   // 这样无论 query 怎么变，tab 都是同一个
@@ -1363,59 +1462,35 @@ function updateTabsByRoute(path: string) {
   // 如果我们希望 tab 保持激活状态，我们需要让 activeTabKey 也指向无参数路径
   activeTabKey.value = pathWithoutQuery
 
-  const clean = pathWithoutQuery.replace(/^\/workspace\//, '')
-  const parts = clean.split('/').filter(Boolean)
-  if (parts.length >= 1) {
-    const moduleCode = parts[0]
-    
-    // 排除 profile 模块，不自动添加仪表盘
-    if (moduleCode === 'profile') {
-      // 不添加仪表盘，直接处理 profile tab
-    } else {
-      const dashboardPath = `/workspace/${moduleCode}/dashboard`
-      const idx = tabs.value.findIndex(t => t.key === dashboardPath)
-      if (idx === -1) {
-        const dashboardTitle = buildModuleDashboardTitle(moduleCode)
-        const max = layoutConfig.value.tabBarMax || 10
-        if (tabs.value.length >= max) {
-          const removeIdx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
-          if (removeIdx >= 0) {
-            tabs.value.splice(removeIdx, 1)
-          } else {
-            tabs.value.shift()
-          }
-        }
-        tabs.value.unshift({
-          key: dashboardPath,
-          title: dashboardTitle,
-          closable: false
-        })
-      } else if (idx > 0) {
-        const [homeTab] = tabs.value.splice(idx, 1)
-        tabs.value.unshift({ ...homeTab, closable: false })
+  let nextTabs = ensureFixedTabs(
+    tabs.value.map(tab => ({
+      ...tab,
+      title: resolveTabTitle(tab.key),
+      closable: tab.key !== PERSONAL_HOME_PATH,
+    })),
+  )
+  if (pathWithoutQuery !== PERSONAL_HOME_PATH) {
+    if (!nextTabs.some(tab => tab.key === pathWithoutQuery)) {
+      nextTabs.push({
+        key: pathWithoutQuery,
+        title: resolveTabTitle(pathWithoutQuery),
+        closable: true,
+      })
+    }
+
+    const maxTabs = Math.max(layoutConfig.value.tabBarMax || 10, 1)
+    while (nextTabs.length > maxTabs) {
+      const removeIndex = nextTabs.findIndex(tab => tab.closable && tab.key !== pathWithoutQuery)
+      if (removeIndex === -1) {
+        break
       }
+      removeRecentRoute(nextTabs[removeIndex].key)
+      nextTabs.splice(removeIndex, 1)
     }
   }
 
-  const exists = tabs.value.find(t => t.key === pathWithoutQuery)
-  if (exists) {
-    return
-  }
-  const title = resolveTabTitle(pathWithoutQuery)
-  const max = layoutConfig.value.tabBarMax || 10
-  if (tabs.value.length >= max) {
-    const idx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
-    if (idx >= 0) {
-      tabs.value.splice(idx, 1)
-    } else {
-      tabs.value.shift()
-    }
-  }
-  tabs.value.push({
-    key: pathWithoutQuery,
-    title,
-    closable: tabs.value.length > 0
-  })
+  tabs.value = ensureFixedTabs(nextTabs)
+  updateRecentRoutes(pathWithoutQuery)
 }
 
 function buildTitleFromRoute(path: string): string {
@@ -1483,17 +1558,13 @@ function onTabClick(tab: { key: string }) {
 
 function onTabClose(tab: { key: string }) {
   const key = tab.key
+  if (!key || key === PERSONAL_HOME_PATH) return
   const idx = tabs.value.findIndex(t => t.key === key)
   if (idx === -1) return
   const isActive = activeTabKey.value === key
-  tabs.value.splice(idx, 1)
+  removeTabsByKeys([key])
   if (!isActive) return
-  const next = tabs.value[idx] || tabs.value[idx - 1]
-  if (next) {
-    router.push(next.key)
-  } else {
-    router.push('/workspace')
-  }
+  router.push(resolveNextTabKey(key)).catch(() => {})
 }
 
 function onTabDrag(fromIndex: number, toIndex: number) {
@@ -1518,23 +1589,32 @@ function onTabsClose(action: 'others' | 'left' | 'right' | 'all', tab?: { key: s
   const key = tab?.key
   
   if (action === 'others' && key) {
-    tabs.value = tabs.value.filter(t => t.key === key)
+    const removedKeys = tabs.value
+      .filter(t => t.key !== key && t.key !== PERSONAL_HOME_PATH)
+      .map(t => t.key)
+    removeTabsByKeys(removedKeys)
     if (key !== route.fullPath) {
-      router.push(key)
+      router.push(key).catch(() => {})
     }
   } else if (action === 'left' && key) {
     const idx = tabs.value.findIndex(t => t.key === key)
     if (idx > 0) {
-      tabs.value = tabs.value.slice(idx)
+      const removedKeys = tabs.value.slice(0, idx).filter(t => t.closable).map(t => t.key)
+      removeTabsByKeys(removedKeys)
     }
   } else if (action === 'right' && key) {
     const idx = tabs.value.findIndex(t => t.key === key)
     if (idx !== -1 && idx < tabs.value.length - 1) {
-      tabs.value = tabs.value.slice(0, idx + 1)
+      const removedKeys = tabs.value.slice(idx + 1).filter(t => t.closable).map(t => t.key)
+      removeTabsByKeys(removedKeys)
     }
   } else if (action === 'all') {
-    tabs.value = []
-    router.push('/workspace')
+    removeTabsByKeys(tabs.value.filter(t => t.closable).map(t => t.key))
+    router.push(PERSONAL_HOME_PATH).catch(() => {})
+  }
+
+  if (!tabs.value.some(t => t.key === activeTabKey.value)) {
+    router.push(resolveNextTabKey()).catch(() => {})
   }
 }
 
@@ -1584,12 +1664,14 @@ async function handleMessageSend() {
     // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
     const selfId = userStore.userInfo?.id
     if (newId != null && selfId != null && Number(messageSendForm.value.receiverUserId) === selfId) {
-      openMessageNotification({
+      const selfMessage = {
         id: newId as number,
         title: messageSendForm.value.title,
         content: messageSendForm.value.content || '',
         linkUrl: messageSendForm.value.linkUrl,
-      } as SysMessageVO)
+      } as SysMessageVO
+      openMessageNotification(selfMessage)
+      window.dispatchEvent(new CustomEvent('fx:message-received', { detail: selfMessage }))
     }
     messageSendOpen.value = false
     // 重置表单
@@ -1654,18 +1736,21 @@ function confirmUserSelect() {
   userSelectOpen.value = false
 }
 
-const { connect: connectMessageSse } = useSse<SysMessageVO>({
+const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessageVO>({
   url: '/api/sys/message/stream',
   onEvent: (name, data) => {
     if (name !== 'message') return
     if (!data || !(data as any).id) return
     openMessageNotification(data as any)
+    window.dispatchEvent(new CustomEvent('fx:message-received', { detail: data }))
   },
 })
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('scroll', handleScroll)
+    window.addEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
+    window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
   }
   loadLayout()
   updateTabsByRoute(route.fullPath)
@@ -1692,7 +1777,10 @@ onMounted(async () => {
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('scroll', handleScroll)
+    window.removeEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
+    window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
   }
+  closeMessageSse()
 })
 </script>
 

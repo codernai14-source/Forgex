@@ -380,6 +380,15 @@
           </a-form>
         </a-tab-pane>
 
+        <a-tab-pane key="personalHomepage" tab="个人首页">
+          <PersonalHomepageDesigner
+            mode="manage"
+            title="个人首页默认配置"
+            description="维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。"
+            :show-scope-selector="true"
+          />
+        </a-tab-pane>
+
         <a-tab-pane key="email" :tab="t('system.config.tabEmail')">
           <div class="email-config-layout">
             <div class="email-provider-list">
@@ -558,6 +567,7 @@ import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { DeleteOutlined, PictureOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { uploadFile } from '@/api/system/file'
 import {
   createDefaultEmailConfig,

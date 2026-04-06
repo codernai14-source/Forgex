@@ -49,6 +49,7 @@ public class UserStyleConfigServiceImpl implements UserStyleConfigService {
         }
         LambdaQueryWrapper<SysUserStyleConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUserStyleConfig::getUserId, userId)
+                .eq(SysUserStyleConfig::getTenantId, tenantId)
                 .eq(SysUserStyleConfig::getConfigKey, "layout.style")
                 .eq(SysUserStyleConfig::getDeleted, 0)
                 .last("limit 1");
@@ -74,6 +75,7 @@ public class UserStyleConfigServiceImpl implements UserStyleConfigService {
         String json = JSONUtil.toJsonStr(config);
         LambdaQueryWrapper<SysUserStyleConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUserStyleConfig::getUserId, userId)
+                .eq(SysUserStyleConfig::getTenantId, tenantId)
                 .eq(SysUserStyleConfig::getConfigKey, "layout.style")
                 .eq(SysUserStyleConfig::getDeleted, 0)
                 .last("limit 1");

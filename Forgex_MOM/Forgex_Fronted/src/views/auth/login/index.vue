@@ -240,7 +240,7 @@ import {
 } from '../../../api/auth/login'
 import { captchaImage, captchaSlider, captchaSliderValidate } from '../../../api/auth/captcha'
 import { getRoutes } from '../../../api/system/route'
-import router, { injectDynamicRoutes } from '../../../router'
+import router, { PERSONAL_HOME_PATH, injectDynamicRoutes } from '../../../router'
 import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { getInitStatus } from '../../../api/system/init'
@@ -637,7 +637,7 @@ async function confirmTenant() {
       console.log('[Login] Router is ready')
       
       // 跳转到系统管理主页
-      const targetPath = '/workspace/sys/dashboard'
+      const targetPath = PERSONAL_HOME_PATH
       
       console.log('[Login] Navigating to:', targetPath)
       

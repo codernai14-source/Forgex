@@ -42,6 +42,7 @@ import com.forgex.workflow.mapper.WfTaskExecutionDetailMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionMapper;
 import com.forgex.workflow.service.IWfEngineService;
 import com.forgex.workflow.service.IWfExecutionService;
+import com.forgex.workflow.service.WorkflowNotificationService;
 import com.forgex.workflow.service.interpreter.ApprovalContext;
 import com.forgex.workflow.service.interpreter.ApprovalInterpreterRegistry;
 import com.forgex.workflow.service.interpreter.IApprovalInterpreter;
@@ -95,6 +96,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     private final IWfEngineService engineService;
     private final UserInfoService userInfoService;
     private final ApprovalInterpreterRegistry interpreterRegistry;
+    private final WorkflowNotificationService workflowNotificationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -170,8 +172,21 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
             interpreter.onApprove(context);
         });
 
-        if (Boolean.TRUE.equals(engineService.isNodeCompleted(execution.getId(), currentNodeId))) {
+        boolean nodeCompleted = Boolean.TRUE.equals(engineService.isNodeCompleted(execution.getId(), currentNodeId));
+        if (nodeCompleted) {
             engineService.moveToNextNode(execution.getId(), currentNodeId, 1, null);
+        }
+
+        if (nodeCompleted) {
+            WfTaskExecution latestExecution = executionMapper.selectById(execution.getId());
+            if (latestExecution != null && !Objects.equals(latestExecution.getStatus(), 2)) {
+                workflowNotificationService.notifyApproved(
+                        latestExecution,
+                        currentNodeName,
+                        approverName,
+                        param.getComment()
+                );
+            }
         }
 
         log.info("审批同意成功，executionId={}, nodeId={}, approverId={}",
@@ -216,6 +231,14 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         });
 
         engineService.moveToNextNode(execution.getId(), currentNodeId, 2, rejectType);
+        WfTaskExecution latestExecution = executionMapper.selectById(execution.getId());
+        workflowNotificationService.notifyRejected(
+                latestExecution == null ? execution : latestExecution,
+                currentNodeName,
+                approverName,
+                param.getComment(),
+                rejectType
+        );
 
         log.info("审批驳回成功，executionId={}, nodeId={}, approverId={}, rejectType={}",
                 execution.getId(), currentNodeId, currentUserId, rejectType);
