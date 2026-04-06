@@ -176,3 +176,24 @@ export function saveManagePersonalHomepageConfig(
 ) {
   return http.post<boolean>('/sys/homepage/manage/save', { scopeLevel, config })
 }
+
+/**
+ * 个人首页摘要信息
+ */
+export interface PersonalHomepageSummaryVO {
+  userId: number
+  avatar: string
+  nickname: string
+  account: string
+  onlineDurationMinutes: number
+  onlineDurationText: string
+  greeting: string
+  greetingSubtitle: string
+}
+
+/**
+ * 获取个人首页摘要信息（头像、昵称、在线时长、问候语）
+ */
+export function getPersonalHomepageSummary() {
+  return http.get<PersonalHomepageSummaryVO>('/sys/homepage/summary')
+}

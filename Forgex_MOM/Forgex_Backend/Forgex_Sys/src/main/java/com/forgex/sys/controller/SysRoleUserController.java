@@ -17,20 +17,25 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
-import com.forgex.common.tenant.TenantContext;
-import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
+import com.forgex.sys.domain.dto.RoleGrantDTO;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysPosition;
 import com.forgex.sys.domain.entity.SysRole;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserRole;
+import com.forgex.sys.domain.param.RoleGrantQueryDTO;
+import com.forgex.sys.domain.param.RoleUserIdsParam;
+import com.forgex.sys.domain.param.RoleUserListParam;
+import com.forgex.sys.domain.vo.RoleGrantVO;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
 import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
+import com.forgex.sys.service.ISysRoleUserService;
+import com.forgex.sys.util.RoleGrantWebHelper;
 import com.forgex.sys.validator.RoleValidator;
 import com.forgex.sys.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +43,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,7 +56,7 @@ import java.util.stream.Collectors;
  * 角色授权用户 Controller。
  * <p>
  * 提供角色与用户绑定关系的查询、授权与取消授权接口，
- * 对应前端“角色管理-授权人员”功能。
+ * 对应前端「角色管理 - 授权人员」功能。
  * </p>
  *
  * @author coder_nai@163.com
@@ -101,22 +105,28 @@ public class SysRoleUserController {
     private final UserValidator userValidator;
 
     /**
+     * 角色-用户关联 Service。
+     */
+    private final ISysRoleUserService roleUserService;
+
+    /**
      * 查询角色已授权用户列表（分页）。
      *
-     * @param body 请求体（roleId/tenantId/pageNum/pageSize）
-     * @return 已授权用户分页结果
+     * @param param 查询参数（角色 ID、租户 ID、分页）
+     * @return 已授权用户分页结果，{@code data} 为 {@link Page}{@code <}{@link SysUserDTO}{@code >}
      * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
      */
     @RequirePerm("sys:role:authUser")
     @PostMapping("/list")
-    public R<Page<SysUserDTO>> list(@RequestBody Map<String, Object> body) {
-        // 1. 解析参数
-        Long roleId = parseLong(body == null ? null : body.get("roleId"));
-        Long tenantId = getTenantId(body);
-        long pageNum = parseLong(body == null ? null : body.get("pageNum")) == null ? 1L : parseLong(body.get("pageNum"));
-        long pageSize = parseLong(body == null ? null : body.get("pageSize")) == null ? 20L : parseLong(body.get("pageSize"));
+    public R<Page<SysUserDTO>> list(@RequestBody RoleUserListParam param) {
+        RoleGrantWebHelper.fillTenantId(param);
 
-        // 2. 参数校验
+        Long roleId = param.getRoleId();
+        Long tenantId = param.getTenantId();
+        long pageNum = param.getPageNum() == null ? 1L : param.getPageNum();
+        long pageSize = param.getPageSize() == null ? 20L : param.getPageSize();
+
+        // 参数校验
         roleValidator.validateId(roleId);
         if (tenantId == null) {
             return R.fail(CommonPrompt.TENANT_ID_EMPTY);
@@ -125,7 +135,7 @@ public class SysRoleUserController {
             return R.fail(CommonPrompt.BAD_REQUEST, "分页参数不正确");
         }
 
-        // 3. 校验角色存在且属于当前租户
+        // 校验角色存在且属于当前租户
         SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getId, roleId)
                 .eq(SysRole::getTenantId, tenantId)
@@ -134,7 +144,7 @@ public class SysRoleUserController {
             return R.fail(CommonPrompt.BAD_REQUEST, "角色不存在或不属于当前租户");
         }
 
-        // 4. 先分页查询绑定关系，再批量查询用户
+        // 先分页查询绑定关系，再批量查询用户
         Page<SysUserRole> relPage = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SysUserRole> relQw = new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getTenantId, tenantId)
@@ -168,7 +178,6 @@ public class SysRoleUserController {
                 .filter(u -> u != null && u.getId() != null)
                 .collect(Collectors.toMap(SysUser::getId, u -> u, (a, b) -> a));
 
-        // 5. 批量查询部门/职位名称并组装DTO
         Map<Long, String> deptNameMap = buildDepartmentNameMap(userMap.values());
         Map<Long, String> positionNameMap = buildPositionNameMap(userMap.values());
 
@@ -210,19 +219,19 @@ public class SysRoleUserController {
     /**
      * 授予角色用户授权。
      *
-     * @param body 请求体（roleId/tenantId/userIds）
+     * @param param 请求参数（角色 ID、租户 ID、用户 ID 列表）
      * @return 操作结果
      * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
      */
     @RequirePerm("sys:role:authUser")
     @PostMapping("/grant")
-    public R<Void> grant(@RequestBody Map<String, Object> body) {
-        // 1. 解析参数
-        Long roleId = parseLong(body == null ? null : body.get("roleId"));
-        Long tenantId = getTenantId(body);
-        List<Long> userIds = parseLongList(body == null ? null : body.get("userIds"));
+    public R<Void> grant(@RequestBody RoleUserIdsParam param) {
+        RoleGrantWebHelper.fillTenantId(param);
 
-        // 2. 参数校验
+        Long roleId = param.getRoleId();
+        Long tenantId = param.getTenantId();
+        List<Long> userIds = param.getUserIds();
+
         roleValidator.validateId(roleId);
         if (tenantId == null) {
             return R.fail(CommonPrompt.TENANT_ID_EMPTY);
@@ -234,7 +243,6 @@ public class SysRoleUserController {
             userValidator.validateId(uid);
         }
 
-        // 3. 校验角色存在且属于当前租户
         SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getId, roleId)
                 .eq(SysRole::getTenantId, tenantId)
@@ -243,7 +251,6 @@ public class SysRoleUserController {
             return R.fail(CommonPrompt.BAD_REQUEST, "角色不存在或不属于当前租户");
         }
 
-        // 4. 查询已存在的绑定关系，避免重复插入
         List<SysUserRole> exists = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getTenantId, tenantId)
                 .eq(SysUserRole::getRoleId, roleId)
@@ -253,7 +260,6 @@ public class SysRoleUserController {
                 .filter(id -> id != null)
                 .collect(Collectors.toSet());
 
-        // 5. 批量插入缺失的绑定关系
         for (Long uid : userIds) {
             if (existsUserIds.contains(uid)) {
                 continue;
@@ -271,19 +277,19 @@ public class SysRoleUserController {
     /**
      * 取消角色用户授权。
      *
-     * @param body 请求体（roleId/tenantId/userIds）
+     * @param param 请求参数（角色 ID、租户 ID、用户 ID 列表）
      * @return 操作结果
      * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
      */
     @RequirePerm("sys:role:authUser")
     @PostMapping("/revoke")
-    public R<Void> revoke(@RequestBody Map<String, Object> body) {
-        // 1. 解析参数
-        Long roleId = parseLong(body == null ? null : body.get("roleId"));
-        Long tenantId = getTenantId(body);
-        List<Long> userIds = parseLongList(body == null ? null : body.get("userIds"));
+    public R<Void> revoke(@RequestBody RoleUserIdsParam param) {
+        RoleGrantWebHelper.fillTenantId(param);
 
-        // 2. 参数校验
+        Long roleId = param.getRoleId();
+        Long tenantId = param.getTenantId();
+        List<Long> userIds = param.getUserIds();
+
         roleValidator.validateId(roleId);
         if (tenantId == null) {
             return R.fail(CommonPrompt.TENANT_ID_EMPTY);
@@ -295,7 +301,6 @@ public class SysRoleUserController {
             userValidator.validateId(uid);
         }
 
-        // 3. 删除绑定关系
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getTenantId, tenantId)
                 .eq(SysUserRole::getRoleId, roleId)
@@ -305,74 +310,7 @@ public class SysRoleUserController {
     }
 
     /**
-     * 解析 Long 类型参数。
-     *
-     * @param obj 入参对象
-     * @return Long 值，解析失败返回 null
-     */
-    private Long parseLong(Object obj) {
-        if (obj == null) {
-            return null;
-        }
-        if (obj instanceof Number) {
-            return ((Number) obj).longValue();
-        }
-        if (obj instanceof String) {
-            try {
-                String s = (String) obj;
-                if (!StringUtils.hasText(s)) {
-                    return null;
-                }
-                return Long.parseLong(s);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 解析 Long 列表参数。
-     *
-     * @param obj 入参对象（List/数组等）
-     * @return Long 列表，无法解析返回空列表
-     */
-    @SuppressWarnings("unchecked")
-    private List<Long> parseLongList(Object obj) {
-        if (obj == null) {
-            return List.of();
-        }
-        if (obj instanceof List) {
-            List<Object> raw = (List<Object>) obj;
-            return raw.stream()
-                    .map(this::parseLong)
-                    .filter(v -> v != null && v > 0)
-                    .distinct()
-                    .toList();
-        }
-        return List.of();
-    }
-
-    /**
-     * 获取租户ID（优先线程上下文，其次请求参数，其次会话）。
-     *
-     * @param body 请求体
-     * @return 租户ID，获取失败返回 null
-     */
-    private Long getTenantId(Map<String, Object> body) {
-        Long tenantId = TenantContext.get();
-        if (tenantId != null) {
-            return tenantId;
-        }
-        tenantId = parseLong(body == null ? null : body.get("tenantId"));
-        if (tenantId != null) {
-            return tenantId;
-        }
-        return CurrentUserUtils.getTenantId();
-    }
-
-    /**
-     * 批量构建部门ID到部门名称的映射。
+     * 批量构建部门 ID 到部门名称的映射。
      *
      * @param users 用户集合
      * @return 部门名称映射
@@ -403,7 +341,7 @@ public class SysRoleUserController {
     }
 
     /**
-     * 批量构建职位ID到职位名称的映射。
+     * 批量构建职位 ID 到职位名称的映射。
      *
      * @param users 用户集合
      * @return 职位名称映射
@@ -431,5 +369,75 @@ public class SysRoleUserController {
             }
         }
         return map;
+    }
+
+    /**
+     * 获取角色已授权列表（支持用户、部门、职位）。
+     * <p>
+     * 分页查询角色已授权的用户、部门或职位信息。
+     * </p>
+     *
+     * @param query 查询参数（角色、租户、授权类型、关键字、分页）
+     * @return 已授权列表分页结果，{@code data} 为 {@link Page}{@code <}{@link RoleGrantVO}{@code >}
+     * @throws com.forgex.common.exception.BusinessException 参数校验失败或角色不存在时抛出
+     * @see RoleGrantQueryDTO
+     */
+    @RequirePerm("sys:role:authUser")
+    @PostMapping("/granted/list")
+    public R<Page<RoleGrantVO>> getGrantedList(@RequestBody RoleGrantQueryDTO query) {
+        RoleGrantWebHelper.fillTenantId(query);
+        RoleGrantWebHelper.normalizePage(query);
+
+        Page<RoleGrantVO> result = roleUserService.getGrantedList(query);
+
+        return R.ok(result);
+    }
+
+    /**
+     * 批量授权（支持用户、部门、职位）。
+     * <p>
+     * 根据授权类型批量为角色授予用户、部门或职位权限（幂等）。
+     * </p>
+     *
+     * @param grantDTO 授权参数
+     * @return 操作结果
+     * @throws com.forgex.common.exception.BusinessException 参数校验失败、角色不存在或授权对象不存在时抛出
+     * @see RoleGrantDTO
+     */
+    @RequirePerm("sys:role:authUser")
+    @PostMapping("/grant/batch")
+    public R<Void> grantBatch(@RequestBody RoleGrantDTO grantDTO) {
+        RoleGrantWebHelper.fillTenantId(grantDTO);
+        if (grantDTO.getTenantId() == null) {
+            return R.fail(CommonPrompt.TENANT_ID_EMPTY);
+        }
+
+        roleUserService.grantBatch(grantDTO);
+
+        return R.ok(CommonPrompt.AUTHORIZE_SUCCESS);
+    }
+
+    /**
+     * 批量取消授权（支持用户、部门、职位）。
+     * <p>
+     * 根据授权类型批量取消角色的用户、部门或职位权限。
+     * </p>
+     *
+     * @param revokeDTO 取消授权参数
+     * @return 操作结果
+     * @throws com.forgex.common.exception.BusinessException 参数校验失败或角色不存在时抛出
+     * @see RoleGrantDTO
+     */
+    @RequirePerm("sys:role:authUser")
+    @PostMapping("/revoke/batch")
+    public R<Void> revokeBatch(@RequestBody RoleGrantDTO revokeDTO) {
+        RoleGrantWebHelper.fillTenantId(revokeDTO);
+        if (revokeDTO.getTenantId() == null) {
+            return R.fail(CommonPrompt.TENANT_ID_EMPTY);
+        }
+
+        roleUserService.revokeBatch(revokeDTO);
+
+        return R.ok(CommonPrompt.UNAUTHORIZE_SUCCESS);
     }
 }

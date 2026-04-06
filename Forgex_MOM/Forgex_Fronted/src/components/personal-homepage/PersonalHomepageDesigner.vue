@@ -1,17 +1,47 @@
 <template>
   <div class="personal-homepage-designer">
+    <!-- Hero 区：根据模式显示不同内容 -->
     <div class="designer-hero">
-      <div>
-        <p class="designer-hero__eyebrow">Personal Workspace</p>
+      <!-- 普通模式：显示用户摘要信息 -->
+      <div v-if="mode === 'current'" class="designer-hero__user">
+        <div class="designer-hero__avatar">
+          <a-avatar :size="64" :src="summary?.avatar">
+            <template #icon>
+              <UserOutlined />
+            </template>
+          </a-avatar>
+        </div>
+        <div class="designer-hero__info">
+          <h2 class="designer-hero__greeting">
+            {{ summary?.greeting || $t('personalHomepage.summary.greeting.morning') }}
+          </h2>
+          <p class="designer-hero__subtitle">
+            <span>{{ summary?.greetingSubtitle || '' }}</span>
+            <span v-if="summary?.nickname" class="username-badge">
+              {{ summary?.nickname }}
+            </span>
+          </p>
+          <div class="designer-hero__stats">
+            <span class="designer-hero__stat">
+              <ClockCircleOutlined />
+              {{ $t('personalHomepage.summary.onlineDuration') }}：{{ summary?.onlineDurationText || '0分钟' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <!-- 管理模式：显示标题和描述 -->
+      <div v-else>
+        <p class="designer-hero__eyebrow">{{ $t('personalHomepage.hero.eyebrow') }}</p>
         <h2 class="designer-hero__title">{{ resolvedTitle }}</h2>
         <p class="designer-hero__desc">{{ resolvedDescription }}</p>
       </div>
       <div class="designer-hero__meta">
-        <span class="designer-badge">统一默认入口</span>
+        <span class="designer-badge">{{ $t('personalHomepage.hero.badge.default') }}</span>
         <span class="designer-badge designer-badge--soft">{{ scopeLabel }}</span>
       </div>
     </div>
 
+    <!-- 工具栏 -->
     <div class="designer-toolbar">
       <a-space wrap>
         <a-select
@@ -19,36 +49,37 @@
           v-model:value="scopeLevel"
           style="width: 160px"
         >
-          <a-select-option value="TENANT">租户默认</a-select-option>
-          <a-select-option value="PUBLIC">公共默认</a-select-option>
+          <a-select-option value="TENANT">{{ $t('personalHomepage.hero.badge.tenant') }}</a-select-option>
+          <a-select-option value="PUBLIC">{{ $t('personalHomepage.hero.badge.public') }}</a-select-option>
         </a-select>
         <a-button @click="toggleEditMode">
           <template #icon>
             <SettingOutlined />
           </template>
-          {{ editMode ? '退出编辑' : '编辑布局' }}
+          {{ editMode ? $t('personalHomepage.toolbar.exitMode') : $t('personalHomepage.toolbar.editMode') }}
         </a-button>
         <a-button @click="reloadConfig">
           <template #icon>
             <ReloadOutlined />
           </template>
-          刷新
+          {{ $t('personalHomepage.toolbar.refresh') }}
         </a-button>
-        <a-button v-if="mode === 'current'" @click="resetToDefault">
+        <!-- 仅在编辑态显示以下按钮 -->
+        <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
           <template #icon>
             <UndoOutlined />
           </template>
-          恢复默认
+          {{ $t('personalHomepage.toolbar.resetDefault') }}
         </a-button>
-        <a-button type="primary" :loading="saving" @click="saveConfig">
+        <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
           <template #icon>
             <SaveOutlined />
           </template>
-          保存布局
+          {{ $t('personalHomepage.toolbar.saveLayout') }}
         </a-button>
       </a-space>
       <div class="designer-toolbar__hint">
-        <span>{{ editMode ? '拖拽和缩放组件后可直接保存' : '切换到编辑模式后可调整组件布局' }}</span>
+        <span>{{ editMode ? $t('personalHomepage.toolbar.hint.edit') : $t('personalHomepage.toolbar.hint.view') }}</span>
       </div>
     </div>
 
@@ -56,7 +87,7 @@
       <section class="designer-stage">
         <a-spin :spinning="loading">
           <div v-if="visibleWidgets.length === 0" class="designer-empty">
-            <a-empty description="当前没有启用的首页组件" />
+            <a-empty :description="$t('personalHomepage.empty')" />
           </div>
           <GridLayout
             v-else
@@ -88,7 +119,7 @@
                     <component :is="getWidgetMeta(item.i).icon" class="widget-card__icon" />
                     <div>
                       <h3 class="widget-card__title">{{ getWidgetTitle(item.i) }}</h3>
-                      <p class="widget-card__subtitle">{{ getWidgetMeta(item.i).subtitle }}</p>
+                      <p class="widget-card__subtitle">{{ getWidgetSubtitle(item.i) }}</p>
                     </div>
                   </div>
                   <div class="widget-card__actions">
@@ -98,7 +129,7 @@
                       size="small"
                       @click="openWidgetMore(item.i)"
                     >
-                      更多
+                      {{ $t('personalHomepage.widget.more') }}
                     </a-button>
                     <span v-if="editMode" class="widget-card__drag">
                       <DragOutlined />
@@ -120,7 +151,7 @@
                         <span class="menu-grid__module">{{ menuItem.moduleName }}</span>
                       </button>
                     </div>
-                    <a-empty v-else description="暂无常用菜单" />
+                    <a-empty v-else :description="getWidgetEmptyText('commonMenus')" />
                   </template>
 
                   <template v-else-if="item.i === 'pendingApprovals'">
@@ -137,7 +168,7 @@
                         <span class="list-block__time">{{ formatDateTime(record.startTime) }}</span>
                       </button>
                     </div>
-                    <a-empty v-else description="暂无待处理审批" />
+                    <a-empty v-else :description="getWidgetEmptyText('pendingApprovals')" />
                   </template>
 
                   <template v-else-if="item.i === 'calendar'">
@@ -173,11 +204,11 @@
                         @click="openMessage(record)"
                       >
                         <span class="list-block__title">{{ record.title }}</span>
-                        <span class="list-block__meta">{{ record.senderName || '站内消息' }}</span>
+                        <span class="list-block__meta">{{ record.senderName || $t('personalHomepage.components.messages.systemSender') }}</span>
                         <span class="list-block__time">{{ record.createTime || '-' }}</span>
                       </button>
                     </div>
-                    <a-empty v-else description="暂无未读消息" />
+                    <a-empty v-else :description="getWidgetEmptyText('messages')" />
                   </template>
 
                   <template v-else-if="item.i === 'notices'">
@@ -190,11 +221,11 @@
                         @click="openMessage(record)"
                       >
                         <span class="list-block__title">{{ record.title }}</span>
-                        <span class="list-block__meta">{{ record.bizType || record.type || '系统通知' }}</span>
+                        <span class="list-block__meta">{{ record.bizType || record.type || $t('personalHomepage.components.notices.systemType') }}</span>
                         <span class="list-block__time">{{ record.createTime || '-' }}</span>
                       </button>
                     </div>
-                    <a-empty v-else description="暂无系统通知" />
+                    <a-empty v-else :description="getWidgetEmptyText('notices')" />
                   </template>
 
                   <template v-else-if="item.i === 'currentTime'">
@@ -210,11 +241,12 @@
         </a-spin>
       </section>
 
-      <aside class="designer-panel">
+      <!-- 配置面板：仅在编辑态显示 -->
+      <aside v-if="editMode" class="designer-panel">
         <div class="designer-panel__card">
           <div class="designer-panel__header">
-            <h3>组件配置</h3>
-            <span>显隐、条数与更多入口</span>
+            <h3>{{ $t('personalHomepage.panel.title') }}</h3>
+            <span>{{ $t('personalHomepage.panel.subtitle') }}</span>
           </div>
           <div class="designer-panel__body">
             <div
@@ -226,7 +258,7 @@
               <div class="widget-setting__top">
                 <div class="widget-setting__title">
                   <component :is="getWidgetMeta(widget.key).icon" />
-                  <span>{{ widget.title }}</span>
+                  <span>{{ getWidgetTitle(widget.key) }}</span>
                 </div>
                 <a-switch
                   :checked="widget.visible"
@@ -236,7 +268,7 @@
               </div>
               <div class="widget-setting__fields">
                 <label class="widget-setting__field">
-                  <span>显示条数</span>
+                  <span>{{ $t('personalHomepage.widget.limit') }}</span>
                   <a-input-number
                     :value="toNumber(widget.params.limit, defaultLimit(widget.key))"
                     :min="0"
@@ -246,7 +278,7 @@
                   />
                 </label>
                 <label class="widget-setting__field widget-setting__field--switch">
-                  <span>显示更多入口</span>
+                  <span>{{ $t('personalHomepage.widget.showMore') }}</span>
                   <a-switch
                     :checked="toBoolean(widget.params.showMore, defaultShowMore(widget.key))"
                     :disabled="!widget.visible || !hasMoreAction(widget.key)"
@@ -265,6 +297,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
   AppstoreOutlined,
@@ -278,6 +311,7 @@ import {
   SaveOutlined,
   SettingOutlined,
   UndoOutlined,
+  UserOutlined,
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
@@ -285,6 +319,7 @@ import {
   createDefaultPersonalHomepageConfig,
   getCurrentPersonalHomepageConfig,
   getManagePersonalHomepageConfig,
+  getPersonalHomepageSummary,
   mergePersonalHomepageConfig,
   resetCurrentPersonalHomepageConfig,
   saveCurrentPersonalHomepageConfig,
@@ -292,12 +327,15 @@ import {
   type PersonalHomepageConfig,
   type PersonalHomepageScopeLevel,
   type PersonalHomepageWidgetConfig,
+  type PersonalHomepageSummaryVO,
 } from '@/api/system/personalHomepage'
 import { listUnreadMessages, markMessageRead, type SysMessageVO } from '@/api/system/message'
 import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
 import { PERSONAL_HOME_PATH } from '@/router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { usePermissionStore } from '@/stores/permission'
+
+const { t } = useI18n()
 
 interface PersonalHomepageDesignerProps {
   mode: 'current' | 'manage'
@@ -354,41 +392,68 @@ const unreadMessages = ref<SysMessageVO[]>([])
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const now = ref(dayjs())
 const syncingGrid = ref(false)
+const summary = ref<PersonalHomepageSummaryVO | null>(null)
 let clockTimer: number | undefined
 
 const mode = computed(() => props.mode)
 const showScopeSelector = computed(() => props.showScopeSelector)
 
-const widgetMetaMap: Record<string, { icon: any; subtitle: string }> = {
-  commonMenus: { icon: AppstoreOutlined, subtitle: '常看入口和最近访问菜单' },
-  pendingApprovals: { icon: CheckCircleOutlined, subtitle: '我收到的审批待办' },
-  calendar: { icon: CalendarOutlined, subtitle: '本地日历视图' },
-  messages: { icon: MessageOutlined, subtitle: '用户发给我的站内消息' },
-  notices: { icon: BellOutlined, subtitle: '审批与系统类通知' },
-  currentTime: { icon: ClockCircleOutlined, subtitle: '当前日期与时间' },
+const widgetMetaMap: Record<string, { icon: any }> = {
+  commonMenus: { icon: AppstoreOutlined },
+  pendingApprovals: { icon: CheckCircleOutlined },
+  calendar: { icon: CalendarOutlined },
+  messages: { icon: MessageOutlined },
+  notices: { icon: BellOutlined },
+  currentTime: { icon: ClockCircleOutlined },
+}
+
+// 国际化：组件标题
+const widgetTitleMap: Record<string, string> = {
+  commonMenus: 'personalHomepage.components.commonMenus.title',
+  pendingApprovals: 'personalHomepage.components.pendingApprovals.title',
+  calendar: 'personalHomepage.components.calendar.title',
+  messages: 'personalHomepage.components.messages.title',
+  notices: 'personalHomepage.components.notices.title',
+  currentTime: 'personalHomepage.components.currentTime.title',
+}
+
+// 国际化：组件副标题
+const widgetSubtitleMap: Record<string, string> = {
+  commonMenus: 'personalHomepage.components.commonMenus.subtitle',
+  pendingApprovals: 'personalHomepage.components.pendingApprovals.subtitle',
+  calendar: 'personalHomepage.components.calendar.subtitle',
+  messages: 'personalHomepage.components.messages.subtitle',
+  notices: 'personalHomepage.components.notices.subtitle',
+  currentTime: 'personalHomepage.components.currentTime.subtitle',
+}
+
+// 国际化：空状态文案
+const widgetEmptyMap: Record<string, string> = {
+  commonMenus: 'personalHomepage.components.commonMenus.empty',
+  pendingApprovals: 'personalHomepage.components.pendingApprovals.empty',
+  messages: 'personalHomepage.components.messages.empty',
+  notices: 'personalHomepage.components.notices.empty',
 }
 
 const resolvedTitle = computed(() => {
   if (props.title) {
     return props.title
   }
-  return props.mode === 'manage' ? '个人首页默认配置' : '个人首页'
+  return props.mode === 'manage' ? t('personalHomepage.hero.titleManage') : t('personalHomepage.hero.title')
 })
 
 const resolvedDescription = computed(() => {
   if (props.description) {
     return props.description
   }
-  return props.mode === 'manage'
-    ? '统一维护公共级和租户级默认门户布局，所有用户进入系统后都会以这里为基础。'
-    : '进入系统后的唯一默认落地页，支持按个人习惯保存组件布局。'
+  return props.mode === 'manage' ? t('personalHomepage.hero.descManage') : t('personalHomepage.hero.desc')
 })
 
 const scopeLabel = computed(() => {
   if (props.mode === 'current') {
-    return '用户级'
+    return t('personalHomepage.hero.badge.user')
   }
-  return scopeLevel.value === 'PUBLIC' ? '公共级' : '租户级'
+  return scopeLevel.value === 'PUBLIC' ? t('personalHomepage.hero.badge.public') : t('personalHomepage.hero.badge.tenant')
 })
 
 const orderedWidgets = computed(() => {
@@ -476,7 +541,18 @@ function getWidgetMeta(widgetKey: string) {
 }
 
 function getWidgetTitle(widgetKey: string) {
-  return findWidget(widgetKey)?.title || widgetKey
+  const i18nKey = widgetTitleMap[widgetKey]
+  return i18nKey ? t(i18nKey) : findWidget(widgetKey)?.title || widgetKey
+}
+
+function getWidgetSubtitle(widgetKey: string) {
+  const i18nKey = widgetSubtitleMap[widgetKey]
+  return i18nKey ? t(i18nKey) : ''
+}
+
+function getWidgetEmptyText(widgetKey: string) {
+  const i18nKey = widgetEmptyMap[widgetKey]
+  return i18nKey ? t(i18nKey) : ''
 }
 
 function findWidget(widgetKey: string) {
@@ -522,13 +598,26 @@ async function reloadConfig() {
     config.value = mergePersonalHomepageConfig(remoteConfig)
     syncGridFromConfig()
     await loadWidgetData()
+    // 加载摘要信息
+    if (props.mode === 'current') {
+      await loadSummary()
+    }
   } catch (error) {
     console.error('加载个人首页配置失败:', error)
-    message.error('加载个人首页配置失败')
+    message.error(t('personalHomepage.message.loadFailed'))
     config.value = createDefaultPersonalHomepageConfig()
     syncGridFromConfig()
   } finally {
     loading.value = false
+  }
+}
+
+async function loadSummary() {
+  try {
+    const data = await getPersonalHomepageSummary()
+    summary.value = data
+  } catch (error) {
+    console.error('加载摘要信息失败:', error)
   }
 }
 
@@ -541,12 +630,12 @@ async function saveConfig() {
     } else {
       await saveManagePersonalHomepageConfig(scopeLevel.value, payload)
     }
-    message.success('个人首页配置已保存')
+    message.success(t('personalHomepage.message.saveSuccess'))
     config.value = payload
     syncGridFromConfig()
   } catch (error) {
     console.error('保存个人首页配置失败:', error)
-    message.error('保存个人首页配置失败')
+    message.error(t('personalHomepage.message.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -559,11 +648,11 @@ async function resetToDefault() {
   saving.value = true
   try {
     await resetCurrentPersonalHomepageConfig()
-    message.success('已恢复为默认布局')
+    message.success(t('personalHomepage.message.resetSuccess'))
     await reloadConfig()
   } catch (error) {
     console.error('恢复默认布局失败:', error)
-    message.error('恢复默认布局失败')
+    message.error(t('personalHomepage.message.resetFailed'))
   } finally {
     saving.value = false
   }
@@ -889,6 +978,61 @@ onUnmounted(() => {
   box-shadow: var(--fx-shadow-secondary, 0 12px 32px rgba(15, 23, 42, 0.08));
 }
 
+.designer-hero__user {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.designer-hero__avatar {
+  flex-shrink: 0;
+}
+
+.designer-hero__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.designer-hero__greeting {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.designer-hero__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--fx-text-secondary, #6b7280);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username-badge {
+  padding: 2px 8px;
+  background: var(--fx-primary-bg, rgba(22, 119, 255, 0.1));
+  color: var(--fx-primary, #1677ff);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.designer-hero__stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.designer-hero__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fx-text-secondary, #6b7280);
+}
+
 .designer-hero__eyebrow {
   margin: 0 0 8px;
   font-size: 12px;
@@ -953,9 +1097,13 @@ onUnmounted(() => {
 
 .designer-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   min-height: 0;
+}
+
+.designer-content:has(.designer-panel) {
+  grid-template-columns: minmax(0, 1fr) 320px;
 }
 
 .designer-stage {
@@ -1031,6 +1179,19 @@ onUnmounted(() => {
   gap: 8px;
 }
 
+.widget-card__actions .ant-btn-link {
+  color: var(--fx-primary, #1677ff);
+  transition: color 0.3s ease;
+}
+
+.widget-card__actions .ant-btn-link:hover {
+  color: var(--fx-primary-hover, #4096ff);
+}
+
+.widget-card__actions .ant-btn-link:active {
+  color: var(--fx-primary-active, #0958d9);
+}
+
 .widget-card__drag {
   display: inline-flex;
   align-items: center;
@@ -1069,13 +1230,20 @@ onUnmounted(() => {
   min-height: 88px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: linear-gradient(180deg, var(--fx-bg-elevated, #f8fafc), color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 45%, var(--fx-bg-container, #ffffff)));
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: linear-gradient(
+    180deg,
+    var(--fx-bg-elevated, #f8fafc),
+    color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 50%, var(--fx-bg-container, #ffffff))
+  );
+  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 20%, var(--fx-border-color, #e5e7eb));
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease, background 0.3s ease;
 }
 
 .menu-grid__item:hover,
 .list-block__item:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--fx-primary, #1677ff) 15%, rgba(0, 0, 0, 0.08));
+  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 40%, var(--fx-border-color, #e5e7eb));
 }
 
 .menu-grid__title,
@@ -1103,6 +1271,8 @@ onUnmounted(() => {
   padding: 12px 14px;
   border-radius: 14px;
   background: var(--fx-bg-elevated, #f8fafc);
+  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 15%, var(--fx-border-color, #e5e7eb));
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease, background 0.3s ease;
 }
 
 .calendar-widget {

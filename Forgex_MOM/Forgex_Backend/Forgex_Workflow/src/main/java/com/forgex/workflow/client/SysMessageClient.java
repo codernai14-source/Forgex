@@ -2,6 +2,7 @@ package com.forgex.workflow.client;
 
 import com.forgex.common.web.R;
 import com.forgex.workflow.client.dto.SysMessageSendRequest;
+import com.forgex.workflow.client.dto.TemplateMessageSendRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,4 +29,25 @@ public interface SysMessageClient {
      */
     @PostMapping("/sys/message/send")
     R<Long> send(@RequestBody SysMessageSendRequest request);
+
+    /**
+     * 使用模板发送消息。
+     * <p>
+     * 根据模板编码和占位符数据发送消息，支持批量接收人。
+     * </p>
+     *
+     * @param request 模板消息发送请求
+     * @return 发送成功的消息数量
+     */
+    @PostMapping("/sys/message/send-by-template")
+    R<Integer> sendByTemplate(@RequestBody TemplateMessageSendRequest request);
+
+    /**
+     * 使用模板发送消息给单个用户。
+     *
+     * @param request 模板消息发送请求
+     * @return 消息 ID
+     */
+    @PostMapping("/sys/message/send-to-user")
+    R<Long> sendToUser(@RequestBody TemplateMessageSendRequest request);
 }

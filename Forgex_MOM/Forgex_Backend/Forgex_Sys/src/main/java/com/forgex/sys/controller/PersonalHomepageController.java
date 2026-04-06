@@ -8,8 +8,11 @@ import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.param.PersonalHomepageManageParam;
 import com.forgex.sys.domain.param.PersonalHomepageSaveParam;
+import com.forgex.sys.domain.vo.PersonalHomepageSummaryVO;
+import com.forgex.sys.service.PersonalHomepageSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +20,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 个人首页配置控制器。
+ * <p>
+ * 提供个人首页配置的查询、保存、重置功能，
+ * 以及首页摘要信息（头像、昵称、在线时长、问候语）的查询。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.1.0
  */
 @RestController
 @RequestMapping("/sys/homepage")
@@ -24,6 +34,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class PersonalHomepageController {
 
     private final PersonalHomepageConfigService personalHomepageConfigService;
+
+    private final PersonalHomepageSummaryService personalHomepageSummaryService;
 
     @PostMapping("/current/get")
     public R<PersonalHomepageConfig> getCurrentConfig() {
@@ -90,5 +102,25 @@ public class PersonalHomepageController {
         }
         String value = scopeLevel.trim().toUpperCase();
         return "PUBLIC".equals(value) ? "PUBLIC" : "TENANT";
+    }
+
+    /**
+     * 获取个人首页摘要信息。
+     * <p>
+     * 返回当前用户的头像、昵称、在线时长和问候语，
+     * 用于首页顶部用户卡片展示。
+     * </p>
+     *
+     * @return 摘要信息VO
+     */
+    @GetMapping("/summary")
+    public R<PersonalHomepageSummaryVO> getSummary() {
+        Long userId = UserContext.get();
+        Long tenantId = TenantContext.get();
+        if (userId == null || tenantId == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        PersonalHomepageSummaryVO summary = personalHomepageSummaryService.getSummary(userId, tenantId);
+        return R.ok(summary);
     }
 }

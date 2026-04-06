@@ -378,15 +378,27 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:excel:export:user", "执行用户导出", "Run User Export"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 20, "role", "角色管理", "Role Management",
-                "TeamOutlined", "SystemRole", "sys:role:view",
-                Arrays.asList(
-                        new String[]{"sys:role:add", "新增角色", "Add Role"},
-                        new String[]{"sys:role:edit", "编辑角色", "Edit Role"},
-                        new String[]{"sys:role:delete", "删除角色", "Delete Role"},
-                        new String[]{"sys:role:authMenu", "菜单授权", "Authorize Menu"},
-                        new String[]{"sys:role:authUser", "用户授权", "Authorize User"}
-                ));
+        // 角色管理主菜单
+        SysMenu roleMenu = insertMenu(tenantId, moduleId, 0L, "menu", "role",
+                "角色管理", "Role Management", "TeamOutlined", "SystemRole", "sys:role:view", 20, 1);
+        grantedMenuIds.add(roleMenu.getId());
+
+        // 菜单授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
+        SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "menu-grant/:roleId",
+                "菜单授权", "Menu Grant", "SafetyCertificateOutlined", null, "sys:role:authMenu", 1, 2);
+        menuGrantMenu.setVisible(false); // 设置为隐藏菜单
+        menuMapper.updateById(menuGrantMenu);
+        grantedMenuIds.add(menuGrantMenu.getId());
+
+        // 人员授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
+        SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "user-grant/:roleId",
+                "人员授权", "User Grant", "UsergroupAddOutlined", null, "sys:role:authUser", 2, 2);
+        userGrantMenu.setVisible(false); // 设置为隐藏菜单
+        menuMapper.updateById(userGrantMenu);
+        grantedMenuIds.add(userGrantMenu.getId());
+
+        // 角色管理按钮权限
+        addRoleMenuButtons(tenantId, moduleId, roleMenu.getId(), grantedMenuIds);
 
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 30, "module", "模块管理", "Module Management",
                 "AppstoreOutlined", "SystemModule", "sys:module:view",
@@ -524,6 +536,22 @@ public class InitServiceImpl implements InitService {
                 "SendOutlined", "ApprovalMyInitiated", "wf:myTask:initiated",
                 Collections.singletonList(new String[]{"wf:execution:cancel", "撤销审批", "Cancel Execution"})
         );
+    }
+
+    private void addRoleMenuButtons(Long tenantId, Long moduleId, Long parentId, List<Long> grantedMenuIds) {
+        String[][] buttonDefs = {
+                {"sys:role:add", "新增角色", "Add Role"},
+                {"sys:role:edit", "编辑角色", "Edit Role"},
+                {"sys:role:delete", "删除角色", "Delete Role"},
+                {"sys:role:authMenu", "菜单授权", "Authorize Menu"},
+                {"sys:role:authUser", "用户授权", "Authorize User"}
+        };
+        int buttonOrder = 1;
+        for (String[] buttonDef : buttonDefs) {
+            SysMenu button = insertButton(tenantId, moduleId, parentId,
+                    buttonDef[0], buttonDef[1], buttonDef[2], buttonOrder++);
+            grantedMenuIds.add(button.getId());
+        }
     }
 
     private void addMenuWithButtons(Long tenantId, Long moduleId, List<Long> grantedMenuIds,

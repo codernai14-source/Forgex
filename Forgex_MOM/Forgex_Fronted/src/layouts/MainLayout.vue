@@ -1108,7 +1108,8 @@ const currentUser = computed(() => {
     } else if (avatar.startsWith('/')) {
       // 相对路径，补充 /api
       avatar = `/api${avatar}`
-      // 相对路径，补充 /api/
+    } else {
+      // 非 / 开头的相对路径，同样补充 /api/
       avatar = `/api/${avatar}`
     }
   }
