@@ -104,7 +104,7 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             }
             
             // 如果当前语言是英文，尝试直接翻译默认模板
-            if (lang.startsWith("en") && StringUtils.hasText(defaultTemplate)) {
+            if (StringUtils.hasText(lang) && lang.startsWith("en") && StringUtils.hasText(defaultTemplate)) {
                 return translateToEnglish(defaultTemplate);
             }
             
@@ -145,7 +145,7 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             return null;
         }
         String lang = LangContext.get();
-        if (lang.startsWith("en")) {
+        if (StringUtils.hasText(lang) && lang.startsWith("en")) {
             return translateToEnglish(defaultTemplate);
         }
         return defaultTemplate;

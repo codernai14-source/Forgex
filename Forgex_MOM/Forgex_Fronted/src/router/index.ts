@@ -8,6 +8,30 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { ref } from 'vue'
 import { usePermissionStore } from '../stores/permission'
 import { getRoutes } from '../api/system/route'
+import { APPROVAL_ROUTE_BASE, LEGACY_APPROVAL_ROUTE_BASE, approvalRoutePaths } from './approvalRoutePaths'
+
+export const PERSONAL_HOME_PATH = '/workspace/home'
+
+interface LocalModuleRouteDefinition {
+  path: string
+  component: () => Promise<any>
+  meta: Record<string, any>
+}
+
+const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
+  approval: [
+    {
+      path: 'taskConfig/:taskCode/nodes',
+      component: () => import('../views/workflow/taskConfig/nodes.vue'),
+      meta: { title: 'workflow.taskConfig.nodeConfig', hidden: true }
+    },
+    {
+      path: 'execution/start/:taskCode',
+      component: () => import('../views/workflow/execution/startForm.vue'),
+      meta: { title: 'workflow.execution.startApproval', hidden: true }
+    }
+  ]
+}
 
 /**
  * 静态路由配置
@@ -23,23 +47,29 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../layouts/MainLayout.vue'), // 主布局组件
     children: [
       {
+        path: 'home',
+        name: 'PersonalHome',
+        component: () => import('../views/home/index.vue'),
+        meta: { title: 'layout.personalHomepage' }
+      },
+      {
         path: 'profile',
         name: 'UserProfile',
         component: () => import('../views/profile/index.vue'),
-        meta: { title: '个人信息', module: 'sys' } // 个人信息页
+        meta: { title: 'profile.title', module: 'sys' } // 个人信息页
       },
       {
         path: 'sys/config',
         name: 'SystemConfig',
         component: () => import('../views/system/config/index.vue'),
-        meta: { title: '系统配置', module: 'sys' } // 系统配置页
+        meta: { title: 'system.config.title', module: 'sys' } // 系统配置页
       }
     ]
   },
   {
-    path: '/workflow',
+    path: '/__legacy-workflow__',
     component: () => import('../layouts/MainLayout.vue'),
-    redirect: '/workflow/taskConfig',
+    redirect: '/__legacy-workflow__/taskConfig',
     children: [
       {
         path: 'taskConfig',
@@ -51,13 +81,13 @@ const routes: RouteRecordRaw[] = [
         path: 'taskConfig/:taskCode/nodes',
         name: 'WorkflowTaskConfigNodes',
         component: () => import('../views/workflow/taskConfig/nodes.vue'),
-        meta: { title: '审批节点配置', module: 'approval', hidden: true }
+        meta: { title: 'workflow.taskConfig.nodeConfig', module: 'approval', hidden: true }
       },
       {
         path: 'execution/start/:taskCode',
         name: 'WorkflowExecutionStartForm',
         component: () => import('../views/workflow/execution/startForm.vue'),
-        meta: { title: '填写审批表单', module: 'approval', hidden: true }
+        meta: { title: 'workflow.execution.startApproval', module: 'approval', hidden: true }
       }
     ]
   },
@@ -111,6 +141,26 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  if (to.path === LEGACY_APPROVAL_ROUTE_BASE) {
+    next({
+      path: approvalRoutePaths.taskConfigList,
+      query: to.query,
+      hash: to.hash,
+      replace: true
+    })
+    return
+  }
+
+  if (to.path.startsWith(`${LEGACY_APPROVAL_ROUTE_BASE}/`)) {
+    next({
+      path: `${APPROVAL_ROUTE_BASE}${to.path.slice(LEGACY_APPROVAL_ROUTE_BASE.length)}`,
+      query: to.query,
+      hash: to.hash,
+      replace: true
+    })
+    return
+  }
+
   // 如果未登录，跳转到登录页
   if (!account || !tenantId) {
     next('/login')
@@ -125,7 +175,7 @@ router.beforeEach(async (to, from, next) => {
       // 优先从缓存恢复（避免不必要的API调用）
       const cached = permissionStore.restoreRoutesAndModules()
 
-      if (cached.routes.length > 0 && cached.modules.length > 0) {
+      if (cached.routes.length > 0 || cached.modules.length > 0) {
         console.log('[Guard] Restoring routes from cache')
         
         // 重新注入动态路由
@@ -144,7 +194,7 @@ router.beforeEach(async (to, from, next) => {
       console.log('[Guard] No cached routes, fetching from backend')
       try {
         const payload = await getRoutes({ account, tenantId })
-        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules) && payload.routes.length > 0) {
+        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules)) {
           console.log('[Guard] Routes fetched from backend successfully')
           
           // 存储权限信息
@@ -175,7 +225,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 如果访问 /workspace 根路径，重定向到系统管理主页
   if (to.path === '/workspace' || to.path === '/workspace/') {
-    next('/workspace/sys/dashboard')
+    next(PERSONAL_HOME_PATH)
     return
   }
 
@@ -207,9 +257,10 @@ const modulePathMap: Record<string, string> = {
 
 /**
  * 审批模块菜单使用的 component 键与目录结构（workflow 下多级路径）的静态映射。
- * <p>与数据库脚本 {@code V2.0.1_审批管理模块与菜单.sql} 中 component_key 保持一致。</p>
+ * <p>与数据库脚本 {@code V2.0.1_审批管理模块与菜单.sql}、{@code V2.0.2_审批工作台菜单.sql} 中 component_key 保持一致。</p>
  */
 const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
+  ApprovalDashboard: () => import('../views/workflow/dashboard/index.vue'),
   ApprovalTaskConfig: () => import('../views/workflow/taskConfig/index.vue'),
   ApprovalExecutionStart: () => import('../views/workflow/execution/start.vue'),
   ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
@@ -220,7 +271,7 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
 /**
  * 动态导入组件
  * 约定：组件名格式为 ModulePage，例如 SystemUser, SysDashboard
- * 自动映射到路径：../views/{module}/{page}/index.vue
+ * 自动映射到路径：../views/{module}/{page}.vue（单文件结构）
  *
  * @param componentName 组件名称，例如 "SystemUser", "SysDashboard"
  * @returns 动态导入的组件
@@ -233,10 +284,21 @@ function loadComponent(componentName: string) {
       return approvalLoader
     }
 
+    // 特殊映射：处理一些不符合常规命名的组件
+    // 注意：不要随意添加特殊映射，优先使用标准的目录结构映射
+    const specialComponentMap: Record<string, string> = {
+      // 未来可以添加更多特殊映射
+    }
+
+    if (specialComponentMap[componentName]) {
+      return () => import(specialComponentMap[componentName])
+    }
+
     // 解析组件名（优先支持 System*/Sys* 的多单词页面）
     // - SystemUser -> module: system, page: User
     // - SystemExcelExportConfig -> module: system, page: ExcelExportConfig
     // - SysDashboard -> module: sys, page: Dashboard
+    // - SystemRoleMenuGrant -> module: system, page: RoleMenuGrant
     let modulePart = ''
     let pagePartRaw = ''
 
@@ -259,18 +321,28 @@ function loadComponent(componentName: string) {
       pagePartRaw = match[2]
     }
 
-    // 将页面名称转换为小写开头的驼峰命名
-    const pagePart = pagePartRaw.charAt(0).toLowerCase() + pagePartRaw.slice(1)
-
     // 使用映射表获取实际的目录名
     const moduleDir = modulePathMap[modulePart] || modulePart
 
-    // 构建组件路径
-    const componentPath = `../views/${moduleDir}/${pagePart}/index.vue`
+    // 特殊处理：如果页面名包含 Role 前缀，添加到子目录
+    // 例如：RoleMenuGrant -> role/MenuGrant
+    let subDir = ''
+    if (pagePartRaw.startsWith('Role') && pagePartRaw.length > 4) {
+      subDir = 'role/'
+      pagePartRaw = pagePartRaw.slice(4)
+    }
 
+    // 构建两种组件路径：
+    // 1. 目录结构：../views/{module}/{subDir}{PageName}/index.vue
+    // 2. 单文件结构：../views/{module}/{subDir}{PageName}.vue
+    const componentPathDir = `../views/${moduleDir}/${subDir}${pagePartRaw}/index.vue`
+    const componentPathFile = `../views/${moduleDir}/${subDir}${pagePartRaw}.vue`
 
-    // 动态导入组件
-    return () => import(/* @vite-ignore */ componentPath)
+    // 优先尝试目录结构（大多数组件），失败后尝试单文件结构（Role 相关组件）
+    // 使用动态 import 的错误处理
+    return () => import(/* @vite-ignore */ componentPathDir).catch(() => {
+      return import(/* @vite-ignore */ componentPathFile)
+    })
   } catch (error) {
 
     return EmptyView
@@ -492,26 +564,7 @@ export async function injectDynamicRoutes(payload: any) {
   for (const routeItem of routesPayload) {
     const moduleCode = routeItem.path
     const children = Array.isArray(routeItem.children) ? routeItem.children : []
-
-    // 如果后端未提供 dashboard，才自动补充一个默认 dashboard 路由
-    const hasDashboard = children.some((c: any) => String(c?.path || '') === 'dashboard')
-    if (!hasDashboard) {
-      const dashboardComponentKey = `${moduleCode.charAt(0).toUpperCase() + moduleCode.slice(1)}Dashboard`
-      const dashboardComponent = loadComponent(dashboardComponentKey)
-      const dashboardPath = `${moduleCode}/dashboard`
-      const dashboardName = buildDynamicRouteName(dashboardPath)
-
-      r.addRoute('Workspace', {
-        path: dashboardPath,
-        name: dashboardName,
-        component: dashboardComponent,
-        meta: {
-          title: 'common.home',
-          module: moduleCode
-        }
-      })
-      injectedRouteNames.add(dashboardName)
-    }
+    const registeredModulePaths = new Set<string>()
 
     // 注册模块下的子路由
     for (const c of children) {
@@ -549,6 +602,7 @@ export async function injectDynamicRoutes(payload: any) {
             }
           })
           injectedRouteNames.add(subRouteName)
+          registeredModulePaths.add(subFullPath)
         }
         // catalog类型菜单本身不需要注册路由，继续处理下一个菜单
         continue
@@ -571,6 +625,28 @@ export async function injectDynamicRoutes(payload: any) {
         }
       })
       injectedRouteNames.add(routeName)
+      registeredModulePaths.add(fullPath)
+    }
+
+    const moduleExtraRoutes = Array.isArray(localModuleRoutes[moduleCode]) ? localModuleRoutes[moduleCode] : []
+    for (const extraRoute of moduleExtraRoutes) {
+      const fullPath = `${moduleCode}/${extraRoute.path}`
+      if (registeredModulePaths.has(fullPath)) {
+        continue
+      }
+
+      const routeName = buildDynamicRouteName(fullPath)
+      r.addRoute('Workspace', {
+        path: fullPath,
+        name: routeName,
+        component: extraRoute.component,
+        meta: {
+          ...extraRoute.meta,
+          module: moduleCode
+        }
+      })
+      injectedRouteNames.add(routeName)
+      registeredModulePaths.add(fullPath)
     }
 
   }

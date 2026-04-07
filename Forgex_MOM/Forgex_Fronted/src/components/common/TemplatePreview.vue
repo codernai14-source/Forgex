@@ -227,15 +227,16 @@ const handleClose = () => {
     gap: 8px;
     margin-bottom: 16px;
     padding: 14px 16px;
-    background: linear-gradient(135deg, var(--fx-fill-alter, #f5f7fa) 0%, var(--fx-fill-secondary, #eef2ff) 100%);
-    border: 1px solid var(--fx-border-color, #e8e8e8);
+    // 平台头部使用更深的填充色
+    background: var(--fx-fill-secondary);
+    border: 1px solid var(--fx-border-color);
     border-radius: var(--fx-radius, 8px);
-    box-shadow: var(--fx-shadow-secondary, 0 6px 18px rgba(15, 23, 42, 0.08));
-    color: var(--fx-text-primary, #111827);
+    box-shadow: var(--fx-shadow-secondary);
+    color: var(--fx-text-primary);
     
     .platform-icon {
       font-size: 24px;
-      color: var(--fx-theme-color, #1677ff);
+      color: var(--fx-theme-color);
     }
     
     .platform-name {
@@ -246,13 +247,14 @@ const handleClose = () => {
   
   .message-card {
     padding: 20px;
-    background: var(--fx-bg-elevated, #ffffff);
-    border: 1px solid var(--fx-border-color, #e8e8e8);
+    // 消息卡片使用容器背景色
+    background: var(--fx-bg-container);
+    border: 1px solid var(--fx-border-color);
     border-radius: var(--fx-radius, 8px);
-    box-shadow: var(--fx-shadow-secondary, 0 6px 18px rgba(15, 23, 42, 0.08));
+    box-shadow: var(--fx-shadow-secondary);
     
     &.platform-internal {
-      border-left: 4px solid var(--fx-primary, #1890ff);
+      border-left: 4px solid var(--fx-primary);
     }
     
     &.platform-wechat {
@@ -274,7 +276,7 @@ const handleClose = () => {
       margin-bottom: 12px;
       
       .message-time {
-        color: var(--fx-text-tertiary, #999);
+        color: var(--fx-text-tertiary);
         font-size: 12px;
       }
     }
@@ -282,13 +284,13 @@ const handleClose = () => {
     .message-title {
       font-size: 16px;
       font-weight: 600;
-      color: var(--fx-text-primary, #111827);
+      color: var(--fx-text-primary);
       margin-bottom: 12px;
       line-height: 1.5;
     }
     
     .message-body {
-      color: var(--fx-text-secondary, #666);
+      color: var(--fx-text-secondary);
       line-height: 1.8;
       white-space: pre-wrap;
       word-break: break-word;
@@ -297,24 +299,24 @@ const handleClose = () => {
     
     .message-link {
       padding-top: 12px;
-      border-top: 1px solid var(--fx-border-secondary, #f0f0f0);
+      border-top: 1px solid var(--fx-border-color);
       
       a {
-        color: var(--fx-primary, #1890ff);
+        color: var(--fx-primary);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 4px;
         
         &:hover {
-          color: var(--fx-primary-hover, #40a9ff);
+          color: var(--fx-primary-hover);
         }
       }
     }
   }
   
   .placeholder-desc {
-    color: var(--fx-text-secondary, #666);
+    color: var(--fx-text-secondary);
 
     p {
       margin-bottom: 8px;
@@ -328,12 +330,13 @@ const handleClose = () => {
         margin-bottom: 4px;
         
         code {
-          background: var(--fx-fill-alter, #f5f5f5);
+          // 占位符代码块使用更深的背景色
+          background: var(--fx-fill-alter);
           padding: 2px 6px;
-          border: 1px solid var(--fx-border-secondary, #e8e8e8);
+          border: 1px solid var(--fx-border-color);
           border-radius: var(--fx-radius-sm, 4px);
           font-family: 'Courier New', monospace;
-          color: var(--fx-theme-color, #d63384);
+          color: var(--fx-primary);
         }
       }
     }

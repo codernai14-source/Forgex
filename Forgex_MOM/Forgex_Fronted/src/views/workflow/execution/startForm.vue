@@ -2,7 +2,7 @@
   <div class="start-form-page">
     <div class="page-head">
       <div>
-        <a-button type="link" class="page-head__back" @click="router.push('/workflow/execution/start')">
+        <a-button type="link" class="page-head__back" @click="router.push(approvalRoutePaths.executionStartList)">
           返回流程选择
         </a-button>
         <h2>{{ taskConfig?.taskName || '填写审批表单' }}</h2>
@@ -25,7 +25,7 @@
       class="error-alert"
     >
       <template #description>
-        <a-button type="link" @click="router.push('/workflow/execution/start')">返回选择页</a-button>
+        <a-button type="link" @click="router.push(approvalRoutePaths.executionStartList)">返回选择页</a-button>
       </template>
     </a-alert>
 
@@ -94,6 +94,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
+import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { startExecution, type WfExecutionStartParam } from '@/api/workflow/execution'
 import { getTaskConfigByCode, type WfTaskConfigDTO } from '@/api/workflow/taskConfig'
 import { workflowFormRegistry } from './formRegistry'
@@ -185,7 +186,7 @@ async function handleSubmit() {
     const executionId = await startExecution(params)
     message.success('审批已成功发起')
     router.push({
-      path: '/workflow/my/initiated',
+      path: approvalRoutePaths.myInitiated,
       query: { executionId }
     })
   } catch (error: any) {
@@ -218,8 +219,8 @@ onMounted(() => {
 .page-head,
 .form-shell {
   border-radius: 22px;
-  border: 1px solid #eceef5;
-  background: #fff;
+  border: 1px solid var(--fx-border-color);
+  background: var(--fx-bg-container);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
@@ -233,18 +234,18 @@ onMounted(() => {
 .page-head h2 {
   margin: 8px 0 6px;
   font-size: 26px;
-  color: #172033;
+  color: var(--fx-text-primary);
 }
 
 .page-head p,
 .page-head__back {
   margin: 0;
   padding: 0;
-  color: #5f6b7a;
+  color: var(--fx-text-secondary);
 }
 
 .error-alert {
-  background: #fff7f7;
+  background: var(--fx-bg-container);
 }
 
 .form-shell__inner {
@@ -261,18 +262,18 @@ onMounted(() => {
 .summary-item {
   padding: 14px 16px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #f7f9fc, #eef3f8);
+  background: var(--fx-fill-alter);
 }
 
 .summary-item span {
   display: block;
   margin-bottom: 8px;
   font-size: 12px;
-  color: #7a8698;
+  color: var(--fx-text-tertiary);
 }
 
 .summary-item strong {
-  color: #172033;
+  color: var(--fx-text-primary);
   line-height: 1.5;
 }
 

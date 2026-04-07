@@ -210,6 +210,13 @@
         </a-tab-pane>
 
         <a-tab-pane key="security" :tab="t('system.config.tabSecurity')">
+          <a-alert
+            class="session-timeout-alert"
+            type="info"
+            show-icon
+            :message="t('system.config.sessionTimeoutNoticeTitle')"
+            :description="t('system.config.sessionTimeoutNoticeDesc')"
+          />
           <a-form
             :model="securityConfig"
             :label-col="{ span: 6 }"
@@ -371,6 +378,15 @@
               </a-space>
             </a-form-item>
           </a-form>
+        </a-tab-pane>
+
+        <a-tab-pane key="personalHomepage" tab="个人首页">
+          <PersonalHomepageDesigner
+            mode="manage"
+            title="个人首页默认配置"
+            description="维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。"
+            :show-scope-selector="true"
+          />
         </a-tab-pane>
 
         <a-tab-pane key="email" :tab="t('system.config.tabEmail')">
@@ -551,6 +567,7 @@ import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { DeleteOutlined, PictureOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { uploadFile } from '@/api/system/file'
 import {
   createDefaultEmailConfig,
@@ -708,8 +725,11 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
+    return url.startsWith('/api/') ? url : url
   }
   return `/api/${url}`
 }
@@ -975,6 +995,10 @@ onMounted(() => {
 
 .media-preview {
   margin-top: 8px;
+}
+
+.session-timeout-alert {
+  margin-bottom: 16px;
 }
 
 .video-preview {

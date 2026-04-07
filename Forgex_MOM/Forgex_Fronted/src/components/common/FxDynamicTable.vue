@@ -67,7 +67,7 @@
                 @click="isQueryExpanded = !isQueryExpanded"
                 size="small"
               >
-                {{ isQueryExpanded ? '收起' : '展开' }}
+                {{ isQueryExpanded ? t('common.collapse') : t('common.expand') }}
                 <DownOutlined :rotate="isQueryExpanded ? 180 : 0" />
               </a-button>
             </div>

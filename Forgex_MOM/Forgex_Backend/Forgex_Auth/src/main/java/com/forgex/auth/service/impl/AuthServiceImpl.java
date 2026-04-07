@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.auth.service.impl;
 
+import cn.dev33.satoken.dao.SaTokenDao;
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -44,6 +45,7 @@ import com.baomidou.dynamic.datasource.annotation.DS;
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.core.util.HexUtil;
+import cn.hutool.json.JSONUtil;
 import java.nio.charset.StandardCharsets;
 import com.forgex.common.domain.config.CaptchaConfig;
 import com.forgex.common.domain.config.CryptoTransportConfig;
@@ -54,8 +56,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -318,7 +320,7 @@ public class AuthServiceImpl implements AuthService {
             // 设置租户Logo
             vo.setLogo(t.getLogo());
             // 设置租户类型
-            vo.setTenantType(t.getTenantType());
+            vo.setTenantType(t.getTenantType() == null ? null : t.getTenantType().getCode());
             // 设置默认标记
             for (SysUserTenant b : binds) { if (b.getTenantId().equals(t.getId())) { vo.setIsDefault(b.getIsDefault()); break; } }
             // 添加到列表
@@ -354,8 +356,8 @@ public class AuthServiceImpl implements AuthService {
      * </p>
      * <ul>
      *   <li>SaSession：存储 LOGIN_USER_ID、LOGIN_TENANT_ID、LOGIN_ACCOUNT</li>
-     *   <li>Redis fx:login:ctx:{token}：存储 userId、tenantId、account</li>
-     *   <li>Redis fx:online:user:{tenantId}:{userId}：存储在线用户信息</li>
+     *   <li>浏览器登录态统一通过 Sa-Token Cookie 传递</li>
+     *   <li>Redis fx:online:user:{tenantId}:{userId}：仅存储在线展示信息</li>
      * </ul>
      *
      * @param param 选择租户参数，包含账号和租户 ID
@@ -399,31 +401,7 @@ public class AuthServiceImpl implements AuthService {
         }
         // 获取Token值
         String token = StpUtil.getTokenValue();
-        // 将登录上下文存入Redis
-        if (StringUtils.hasText(token)) {
-            // 创建上下文Map
-            Map<String, Object> ctx = new HashMap<>();
-            // 设置用户ID
-            ctx.put("userId", user.getId());
-            // 设置租户ID
-            ctx.put("tenantId", tenantId);
-            // 设置账号
-            ctx.put("account", idKey);
-            // 转换为JSON字符串
-            String json = JSONUtil.toJsonStr(ctx);
-            // 获取Token超时时间
-            long timeout = StpUtil.getTokenTimeout();
-            // 构造Redis键
-            String key = "fx:login:ctx:" + token;
-            // 设置Redis键值对
-            if (timeout > 0) {
-                // 设置带过期时间的键值对
-                redis.opsForValue().set(key, json, Duration.ofSeconds(timeout));
-            } else {
-                // 设置永不过期的键值对
-                redis.opsForValue().set(key, json);
-            }
-        }
+        // Sa-Token 会话已承载登录上下文，这里不再维护并行 Redis 登录上下文。
         // 设置租户上下文
         TenantContext.set(tenantId);
         // 更新用户租户绑定关系
@@ -466,14 +444,16 @@ public class AuthServiceImpl implements AuthService {
             // 设置User-Agent
             onlineInfo.put("userAgent", userAgent);
             // 转换为JSON字符串
-            String onlineJson = JSONUtil.toJsonStr(onlineInfo);
+            String onlineJson = toJson(onlineInfo);
             // 获取Token超时时间
-            long timeout = StpUtil.getTokenTimeout();
+            Duration onlineTtl = resolveCurrentTokenTtl(token);
             // 设置Redis键值对，与token过期时间一致
-            if (timeout > 0) {
-                redis.opsForValue().set(onlineKey, onlineJson, Duration.ofSeconds(timeout));
-            } else {
+            if (onlineTtl == null) {
                 redis.opsForValue().set(onlineKey, onlineJson);
+            } else if (!onlineTtl.isZero() && !onlineTtl.isNegative()) {
+                redis.opsForValue().set(onlineKey, onlineJson, onlineTtl);
+            } else {
+                redis.delete(onlineKey);
             }
             log.info("添加在线用户缓存: userId={}, tenantId={}, token={}", user.getId(), tenantId, token);
         } catch (Exception e) {
@@ -550,7 +530,7 @@ public class AuthServiceImpl implements AuthService {
         Long tenantId = CurrentUserUtils.getTenantId();
         // 校验用户是否登录
         if (userId == null || tenantId == null) {
-            return R.fail(401, AuthPromptEnum.NOT_LOGIN);
+            return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
         }
 
         // 构造语言偏好键
@@ -563,50 +543,6 @@ public class AuthServiceImpl implements AuthService {
             return R.fail(500, AuthPromptEnum.LANG_SET_FAILED);
         }
 
-        // 更新登录上下文中的语言设置
-        String token = StpUtil.getTokenValue();
-        if (StringUtils.hasText(token)) {
-            String ctxKey = "fx:login:ctx:" + token;
-            try {
-                // 创建上下文Map
-                Map<String, Object> ctx = new HashMap<>();
-                // 获取原有上下文
-                String raw = redis.opsForValue().get(ctxKey);
-                if (StringUtils.hasText(raw)) {
-                    try {
-                        // 合并原有上下文
-                        ctx.putAll(JSONUtil.parseObj(raw));
-                    } catch (Exception ignored) {
-                        // 合并失败，继续使用新上下文
-                    }
-                }
-                // 设置用户ID
-                ctx.put("userId", userId);
-                // 设置租户ID
-                ctx.put("tenantId", tenantId);
-                // 获取账号
-                String account = CurrentUserUtils.getAccount();
-                if (StringUtils.hasText(account)) {
-                    // 设置账号
-                    ctx.put("account", account);
-                }
-                // 设置语言
-                ctx.put("lang", lang);
-                // 转换为JSON字符串
-                String json = JSONUtil.toJsonStr(ctx);
-                // 获取Token超时时间
-                long timeout = StpUtil.getTokenTimeout();
-                if (timeout > 0) {
-                    // 设置带过期时间的键值对
-                    redis.opsForValue().set(ctxKey, json, Duration.ofSeconds(timeout));
-                } else {
-                    // 设置永不过期的键值对
-                    redis.opsForValue().set(ctxKey, json);
-                }
-            } catch (Exception ignored) {
-                // 更新失败，不影响主流程
-            }
-        }
         return R.ok(true);
     }
 
@@ -726,9 +662,98 @@ public class AuthServiceImpl implements AuthService {
         return account == null ? "" : account.trim().toLowerCase();
     }
 
+    private String toJson(Map<String, Object> value) {
+        return JSONUtil.toJsonStr(value);
+    }
+
+    private Duration resolveCurrentTokenTtl(String token) {
+        Long ttlSeconds = resolveEffectiveTtlSeconds(token);
+        return ttlSeconds == null ? null : Duration.ofSeconds(ttlSeconds);
+    }
+
+    private Long resolveEffectiveTtlSeconds(String token) {
+        if (!StringUtils.hasText(token)) {
+            return 0L;
+        }
+        Long tokenTimeout = normalizeTimeout(readTokenTimeout(token));
+        Long activeTimeout = normalizeTimeout(readActiveTimeout(token));
+        if (tokenTimeout == null) {
+            return activeTimeout;
+        }
+        if (activeTimeout == null) {
+            return tokenTimeout;
+        }
+        return Math.min(tokenTimeout, activeTimeout);
+    }
+
+    private long readTokenTimeout(String token) {
+        try {
+            return StpUtil.getTokenTimeout(token);
+        } catch (Exception ignored) {
+            return 0L;
+        }
+    }
+
+    private long readActiveTimeout(String token) {
+        try {
+            return StpUtil.getStpLogic().getTokenActiveTimeoutByToken(token);
+        } catch (Exception ignored) {
+            return SaTokenDao.NOT_VALUE_EXPIRE;
+        }
+    }
+
+    private Long normalizeTimeout(long seconds) {
+        if (seconds == SaTokenDao.NEVER_EXPIRE || seconds == SaTokenDao.NOT_VALUE_EXPIRE) {
+            return null;
+        }
+        if (seconds <= 0) {
+            return 0L;
+        }
+        return seconds;
+    }
+
+    private void clearOnlineUserCache(String tokenValue, Long tenantId, Long userId) {
+        if (tenantId != null && userId != null) {
+            String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
+            try {
+                redis.delete(onlineKey);
+                log.info("删除在线用户缓存: userId={}, tenantId={}", userId, tenantId);
+            } catch (Exception e) {
+                log.warn("删除在线用户缓存失败: {}", e.getMessage());
+            }
+            return;
+        }
+        if (!StringUtils.hasText(tokenValue)) {
+            return;
+        }
+        try {
+            Set<String> keys = redis.keys("fx:online:user:*");
+            if (keys == null || keys.isEmpty()) {
+                return;
+            }
+            for (String key : keys) {
+                String onlineJson = redis.opsForValue().get(key);
+                if (!StringUtils.hasText(onlineJson)) {
+                    continue;
+                }
+                try {
+                    cn.hutool.json.JSONObject onlineObj = JSONUtil.parseObj(onlineJson);
+                    if (tokenValue.equals(onlineObj.getStr("token"))) {
+                        redis.delete(key);
+                        log.info("按Token删除在线用户缓存: token={}", tokenValue);
+                        break;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception e) {
+            log.warn("扫描删除在线用户缓存失败: {}", e.getMessage());
+        }
+    }
+
     /**
      * 用户登出
-     * <p>清除用户登录状态，删除Redis中的登录上下文信息，并移除租户上下文。</p>
+     * <p>清除用户登录状态，并同步清理在线用户展示缓存。</p>
      *
      * @return 登出结果
      * @see StpUtil#logout()
@@ -792,42 +817,8 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
 
-            // 删除Redis中的登录上下文
-            if (StringUtils.hasText(tokenValue)) {
-                String key = "fx:login:ctx:" + tokenValue;
-                try {
-                    String raw = redis.opsForValue().get(key);
-                    if (StringUtils.hasText(raw)) {
-                        cn.hutool.json.JSONObject obj = JSONUtil.parseObj(raw);
-                        Long ctxUserId = obj.getLong("userId");
-                        Long ctxTenantId = obj.getLong("tenantId");
-                        if (userId == null && ctxUserId != null) {
-                            userId = ctxUserId;
-                        }
-                        if (tenantId == null && ctxTenantId != null) {
-                            tenantId = ctxTenantId;
-                        }
-                    }
-                } catch (Exception e) {
-                    log.debug("读取登录上下文失败: {}", e.getMessage());
-                }
-                try {
-                    redis.delete(key);
-                } catch (Exception e) {
-                    log.warn("删除登录上下文失败: {}", e.getMessage());
-                }
-            }
-
             // 删除在线用户缓存
-            if (userId != null && tenantId != null) {
-                String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
-                try {
-                    redis.delete(onlineKey);
-                    log.info("删除在线用户缓存: userId={}, tenantId={}", userId, tenantId);
-                } catch (Exception e) {
-                    log.warn("删除在线用户缓存失败: {}", e.getMessage());
-                }
-            }
+            clearOnlineUserCache(tokenValue, tenantId, userId);
             
             // 调用SaToken登出（即使未登录也不会报错）
             try {

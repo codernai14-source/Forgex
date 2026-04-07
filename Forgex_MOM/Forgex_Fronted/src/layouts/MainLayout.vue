@@ -21,7 +21,8 @@
       @module-click="onModuleClick"
       @search-click="globalSearchVisible = true"
       @locale-change="onLocaleChange"
-      @refresh-click="refreshPage"
+      @refresh="refreshPage"
+      @message-click="openMessageDrawer"
       @user-menu-click="onUserMenuClick"
       @settings-click="settingOpen = true"
     />
@@ -29,10 +30,10 @@
     <a-layout class="fx-main-content-wrapper">
       <!-- 使用新的 AppSidebar 组件 -->
       <AppSidebar
-        v-if="layoutConfig.layoutMode !== 'top'"
+        v-if="shouldShowSidebar"
         :menus="sidebarMenus"
         :modules="moduleList"
-        :active-key="route.fullPath"
+        :active-key="normalizeWorkspacePath(route.fullPath)"
         :active-module-code="activeModuleCode"
         :collapsed="siderCollapsed"
         :double-column="layoutConfig.leftDoubleMenu || layoutConfig.layoutMode === 'vertical-mix' || layoutConfig.layoutMode === 'mix'"
@@ -91,6 +92,32 @@
       @update:visible="globalSearchVisible = $event"
       @select="onGlobalSearchSelect"
     />
+
+    <!-- 消息通知抽屉 -->
+    <a-drawer
+      v-model:open="messageDrawerOpen"
+      title="消息通知"
+      placement="right"
+      width="400"
+      class="fx-message-drawer"
+    >
+      <a-spin :spinning="messageLoading">
+        <div v-if="messageList.length === 0" class="fx-message-empty">
+          <a-empty description="暂无消息" />
+        </div>
+        <div v-else class="fx-message-list">
+          <div
+            v-for="msg in messageList"
+            :key="msg.id"
+            class="fx-message-item"
+          >
+            <div class="fx-message-title">{{ msg.title }}</div>
+            <div class="fx-message-content">{{ msg.content }}</div>
+            <div class="fx-message-time">{{ msg.createTime }}</div>
+          </div>
+        </div>
+      </a-spin>
+    </a-drawer>
 
     <!-- 设置抽屉 -->
     <a-drawer
@@ -296,37 +323,59 @@
       @ok="handleMessageSend"
     >
       <a-form layout="vertical">
-        <a-form-item label="接收方租户ID">
-          <a-input-number v-model:value="messageSendForm.receiverTenantId" style="width: 100%;" />
+        <a-form-item label="接收用户" required>
+          <a-input
+            v-model:value="selectedUserName"
+            readonly
+            placeholder="点击选择用户"
+            @click="openUserSelectModal"
+          >
+            <template #suffix>
+              <SearchOutlined style="color: var(--fx-text-tertiary)" />
+            </template>
+          </a-input>
         </a-form-item>
 
-        <a-form-item label="接收方用户ID">
-          <a-input-number v-model:value="messageSendForm.receiverUserId" style="width: 100%;" />
+        <a-form-item label="标题" required>
+          <a-input v-model:value="messageSendForm.title" placeholder="请输入消息标题" />
         </a-form-item>
 
-        <a-form-item label="范围">
-          <a-select v-model:value="messageSendForm.scope">
-            <a-select-option value="INTERNAL">对内</a-select-option>
-            <a-select-option value="EXTERNAL">对外</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item label="标题">
-          <a-input v-model:value="messageSendForm.title" />
-        </a-form-item>
-
-        <a-form-item label="内容">
-          <a-textarea v-model:value="messageSendForm.content" :rows="4" />
+        <a-form-item label="内容" required>
+          <a-textarea v-model:value="messageSendForm.content" :rows="4" placeholder="请输入消息内容" />
         </a-form-item>
 
         <a-form-item label="跳转链接">
-          <a-input v-model:value="messageSendForm.linkUrl" />
-        </a-form-item>
-
-        <a-form-item label="业务类型">
-          <a-input v-model:value="messageSendForm.bizType" />
+          <a-input v-model:value="messageSendForm.linkUrl" placeholder="可选，点击消息后跳转的链接" />
         </a-form-item>
       </a-form>
+    </a-modal>
+
+    <!-- 用户选择弹窗 -->
+    <a-modal
+      v-model:open="userSelectOpen"
+      title="选择用户"
+      width="600px"
+      @ok="confirmUserSelect"
+    >
+      <a-input-search
+        v-model:value="userSearchKeyword"
+        placeholder="搜索用户名或账号"
+        style="margin-bottom: 16px"
+        @search="searchUsers"
+      />
+      <a-table
+        :data-source="userSelectList"
+        :columns="userSelectColumns"
+        :row-selection="{
+          selectedRowKeys: selectedUserIds,
+          onChange: onUserSelectChange,
+          type: 'radio'
+        }"
+        row-key="id"
+        :loading="userSelectLoading"
+        :pagination="{ pageSize: 10 }"
+        size="small"
+      />
     </a-modal>
   </a-layout>
   </a-config-provider>
@@ -342,13 +391,14 @@ import jaJP from 'ant-design-vue/es/locale/ja_JP'
 import koKR from 'ant-design-vue/es/locale/ko_KR'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
-import { dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
+import { PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
+import { getUserList } from '../api/system/user'
 import { useSse } from '../hooks/useSse'
 
 import {
@@ -455,6 +505,9 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
 const layoutRootRef = ref<HTMLElement | { $el?: unknown } | null>(null)
 const layoutConfig = ref<LayoutConfig>({ ...DEFAULT_LAYOUT_CONFIG })
 const settingOpen = ref(false)
+const messageDrawerOpen = ref(false)
+const messageList = ref<any[]>([])
+const messageLoading = ref(false)
 const FONT_SIZE_MIN = 14
 const FONT_SIZE_MAX = 28
 const FONT_SIZE_DEFAULT = 14
@@ -621,6 +674,8 @@ const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
 const tabs = ref<{ key: string; title: string; closable: boolean }[]>([])
 const activeTabKey = ref<string>('')
+const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
+const MAX_RECENT_ROUTE_COUNT = 20
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
@@ -634,6 +689,20 @@ const messageSendForm = ref({
   linkUrl: '',
   bizType: '',
 })
+
+// 用户选择相关
+const userSelectOpen = ref(false)
+const userSelectList = ref<any[]>([])
+const userSelectLoading = ref(false)
+const selectedUserIds = ref<string[]>([])
+const selectedUserName = ref('')
+const userSearchKeyword = ref('')
+
+const userSelectColumns = [
+  { title: '用户名', dataIndex: 'username', width: 120 },
+  { title: '账号', dataIndex: 'account', width: 120 },
+  { title: '部门', dataIndex: 'departmentName', ellipsis: true }
+]
 
 const antdLocale = computed(() => {
   const key = String(currentLocale.value || locale.value || '')
@@ -652,9 +721,9 @@ const systemConfig = ref<SystemBasicConfig>({
   copyrightLink: '#',
   loginPageTitle: '欢迎来到FORGEX_MOM！',
   loginPageSubtitle: '',
-  loginBackgroundType: 'video',
-  loginBackgroundVideo: '/jws.mp4',
-  loginBackgroundImage: '',
+  loginBackgroundType: 'image',
+  loginBackgroundVideo: '/loading.mp4',
+  loginBackgroundImage: '/back.jpg',
   loginBackgroundColor: '#0d0221',
   loginStyle: 'cyber',
   showOAuthLogin: true,
@@ -668,8 +737,11 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
+  if (url.startsWith('/files/')) {
+    return `/api${url}`
+  }
   if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
+    return url.startsWith('/api/') ? url : url
   }
   return `/api/${url}`
 }
@@ -683,6 +755,76 @@ locale.value = currentLocale.value as any
 const resolvedMode = computed(() => 
   resolveThemeMode(layoutConfig.value.themeMode, systemTheme.value)
 )
+
+function normalizeWorkspacePath(path: string) {
+  return String(path || '').split('?')[0]
+}
+
+function buildFixedTabs() {
+  return [{
+    key: PERSONAL_HOME_PATH,
+    title: resolveTabTitle(PERSONAL_HOME_PATH),
+    closable: false,
+  }]
+}
+
+function ensureFixedTabs(tabList: { key: string; title: string; closable: boolean }[]) {
+  const fixedTabs = buildFixedTabs()
+  const otherTabs = tabList.filter(tab => tab.key !== PERSONAL_HOME_PATH)
+  return [...fixedTabs, ...otherTabs]
+}
+
+function getRecentRoutes(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_ROUTE_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed
+      .map(item => normalizeWorkspacePath(String(item || '')))
+      .filter(item => item && item !== PERSONAL_HOME_PATH)
+  } catch (error) {
+    console.error('[MainLayout] Failed to parse recent routes:', error)
+    return []
+  }
+}
+
+function saveRecentRoutes(routes: string[]) {
+  try {
+    localStorage.setItem(RECENT_ROUTE_STORAGE_KEY, JSON.stringify(routes.slice(0, MAX_RECENT_ROUTE_COUNT)))
+  } catch (error) {
+    console.error('[MainLayout] Failed to save recent routes:', error)
+  }
+}
+
+function updateRecentRoutes(path: string) {
+  const normalizedPath = normalizeWorkspacePath(path)
+  if (!normalizedPath.startsWith('/workspace') || normalizedPath === PERSONAL_HOME_PATH) {
+    return
+  }
+  const nextRoutes = [normalizedPath, ...getRecentRoutes().filter(item => item !== normalizedPath)]
+  saveRecentRoutes(nextRoutes)
+}
+
+function removeRecentRoute(path: string) {
+  const normalizedPath = normalizeWorkspacePath(path)
+  saveRecentRoutes(getRecentRoutes().filter(item => item !== normalizedPath))
+}
+
+function resolveNextTabKey(closedKey?: string) {
+  const availableTabs = new Set(ensureFixedTabs(tabs.value).map(tab => tab.key))
+  const recentKey = getRecentRoutes().find(item => item !== closedKey && availableTabs.has(item))
+  return recentKey || PERSONAL_HOME_PATH
+}
+
+function removeTabsByKeys(keys: string[]) {
+  if (keys.length === 0) {
+    return
+  }
+  keys.forEach(removeRecentRoute)
+  tabs.value = ensureFixedTabs(tabs.value.filter(tab => !keys.includes(tab.key)))
+}
 
 watch(
   resolvedMode,
@@ -729,7 +871,14 @@ function resolveMenuTitle(rawTitle: unknown): string {
   if (!title) {
     return ''
   }
-  if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+  // 支持 system. / common. / layout. / profile. / workflow. / message. 等前缀
+  if (title.startsWith('system.') || 
+      title.startsWith('common.') || 
+      title.startsWith('layout.') || 
+      title.startsWith('profile.') || 
+      title.startsWith('workflow.') || 
+      title.startsWith('message.') || 
+      title.includes('.')) {
     return t(title)
   }
   return title
@@ -775,6 +924,20 @@ const moduleMenus = computed(() => {
     result.push({ code, name, items })
   }
   return result
+})
+
+const shouldShowSidebar = computed(() => {
+  const currentPath = normalizeWorkspacePath(route.fullPath)
+  if (layoutConfig.value.layoutMode === 'top') {
+    return false
+  }
+  if (currentPath === PERSONAL_HOME_PATH) {
+    return false
+  }
+  if (layoutConfig.value.layoutMode === 'mix' || layoutConfig.value.layoutMode === 'vertical-mix') {
+    return sidebarMenus.value.length > 0
+  }
+  return true
 })
 
 // 为 GlobalSearch 组件转换菜单数据
@@ -953,7 +1116,7 @@ const currentUser = computed(() => {
       // 相对路径，补充 /api
       avatar = `/api${avatar}`
     } else {
-      // 相对路径，补充 /api/
+      // 非 / 开头的相对路径，同样补充 /api/
       avatar = `/api/${avatar}`
     }
   }
@@ -976,35 +1139,69 @@ watch(
 )
 
 /**
+ * 解析标签标题（各模块工作台 dashboard 带模块名前缀，避免多个「首页」无法区分）
+ *
+ * @param tabKey 标签路由 key，无 query
+ * @returns 展示标题
+ */
+function resolveTabTitle(tabKey: string): string {
+  const clean = tabKey.split('?')[0]
+  const m = clean.match(/^\/workspace\/([^/]+)\/dashboard$/)
+  if (m) {
+    return buildModuleDashboardTitle(m[1])
+  }
+  return buildTitleFromRoute(clean)
+}
+
+/**
+ * 各模块「工作台」页签标题
+ * <p>
+ * 直接返回路由标题，不添加模块名前缀
+ * </p>
+ *
+ * @param moduleCode 模块编码，如 sys、approval
+ * @returns 展示用标题
+ */
+function buildModuleDashboardTitle(moduleCode: string): string {
+  return buildTitleFromRoute(`/workspace/${moduleCode}/dashboard`)
+}
+
+/**
  * 更新所有标签的标题
  */
 function updateAllTabTitles() {
-  tabs.value = tabs.value.map(tab => ({
+  tabs.value = ensureFixedTabs(tabs.value.map(tab => ({
     ...tab,
-    title: buildTitleFromRoute(tab.key)
-  }))
+    title: resolveTabTitle(tab.key),
+    closable: tab.key !== PERSONAL_HOME_PATH,
+  })))
 }
 
 watch(
   () => route.fullPath,
   (path) => {
-    selectedKeys.value = [path]
+    const cleanPath = normalizeWorkspacePath(path)
+    selectedKeys.value = [cleanPath]
     
     // 优先从路由 meta 中获取模块代码
+    let moduleCode = ''
     if (route.meta && route.meta.module) {
-      const code = route.meta.module as string
-      openKeys.value = [code]
-      activeModuleCode.value = code
+      moduleCode = String(route.meta.module)
     } else {
       // 降级策略：从 URL 路径中解析
-      const parts = path.split('/').filter(Boolean)
+      const parts = cleanPath.split('/').filter(Boolean)
       if (parts.length >= 2 && parts[0] === 'workspace') {
-        const code = parts[1]
-        openKeys.value = [code]
-        activeModuleCode.value = code
+        const candidate = parts[1]
+        const modules = Array.isArray(dynamicModules.value) ? dynamicModules.value : []
+        if (modules.some((item: any) => String(item.code || '') === candidate)) {
+          moduleCode = candidate
+        }
       }
     }
-    
+
+    activeModuleCode.value = cleanPath === PERSONAL_HOME_PATH ? '' : moduleCode
+    openKeys.value = activeModuleCode.value ? [activeModuleCode.value] : []
+
     updateTabsByRoute(path)
   },
   { immediate: true }
@@ -1061,6 +1258,40 @@ function onMenuClick(menuKey: string) {
 
 function refreshPage() {
   router.replace({ path: '/redirect', query: { to: route.fullPath, t: Date.now() } }).catch(() => {})
+}
+
+/**
+ * 打开消息通知抽屉
+ * <p>
+ * 加载当前用户收到的消息列表，并打开抽屉显示
+ * </p>
+ */
+async function openMessageDrawer() {
+  messageDrawerOpen.value = true
+  await loadMessages()
+}
+
+function handleOpenMessageDrawerEvent() {
+  openMessageDrawer()
+}
+
+function handleOpenGlobalSearchEvent() {
+  globalSearchVisible.value = true
+}
+
+/**
+ * 加载消息列表
+ */
+async function loadMessages() {
+  messageLoading.value = true
+  try {
+    const list = await listUnreadMessages(20)
+    messageList.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('加载消息列表失败:', error)
+  } finally {
+    messageLoading.value = false
+  }
 }
 
 function onModuleClick(moduleCode: string) {
@@ -1174,9 +1405,6 @@ async function onLocaleChange(val: string) {
     
     console.log('[MainLayout] 语言切换成功:', val)
     
-    // 5. 语言切换成功提示
-    message.success(t('common.success'))
-    
     // 注意：FxDynamicTable 组件会通过 watch(locale) 自动重新加载配置
   } catch (e) {
     console.error('[MainLayout] 语言切换失败:', e)
@@ -1184,7 +1412,6 @@ async function onLocaleChange(val: string) {
     setLocale(originalLocale as LocaleCode)
     currentLocale.value = originalLocale
     appStore.setLocale(originalLocale as LocaleCode)
-    message.error(t('common.failed'))
   }
 }
 
@@ -1226,7 +1453,7 @@ function updateTabsByRoute(path: string) {
   
   // 移除查询参数，确保 tab key 唯一且不包含参数
   // 例如：/workspace/profile?tab=security -> /workspace/profile
-  const pathWithoutQuery = path.split('?')[0]
+  const pathWithoutQuery = normalizeWorkspacePath(path)
   
   // 仍然使用 activeTabKey 来高亮当前 tab，但 key 本身存储的是无参数路径
   // 这样无论 query 怎么变，tab 都是同一个
@@ -1235,59 +1462,35 @@ function updateTabsByRoute(path: string) {
   // 如果我们希望 tab 保持激活状态，我们需要让 activeTabKey 也指向无参数路径
   activeTabKey.value = pathWithoutQuery
 
-  const clean = pathWithoutQuery.replace(/^\/workspace\//, '')
-  const parts = clean.split('/').filter(Boolean)
-  if (parts.length >= 1) {
-    const moduleCode = parts[0]
-    
-    // 排除 profile 模块，不自动添加仪表盘
-    if (moduleCode === 'profile') {
-      // 不添加仪表盘，直接处理 profile tab
-    } else {
-      const dashboardPath = `/workspace/${moduleCode}/dashboard`
-      const idx = tabs.value.findIndex(t => t.key === dashboardPath)
-      if (idx === -1) {
-        const dashboardTitle = buildTitleFromRoute(dashboardPath)
-        const max = layoutConfig.value.tabBarMax || 10
-        if (tabs.value.length >= max) {
-          const removeIdx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
-          if (removeIdx >= 0) {
-            tabs.value.splice(removeIdx, 1)
-          } else {
-            tabs.value.shift()
-          }
-        }
-        tabs.value.unshift({
-          key: dashboardPath,
-          title: dashboardTitle,
-          closable: false
-        })
-      } else if (idx > 0) {
-        const [homeTab] = tabs.value.splice(idx, 1)
-        tabs.value.unshift({ ...homeTab, closable: false })
+  let nextTabs = ensureFixedTabs(
+    tabs.value.map(tab => ({
+      ...tab,
+      title: resolveTabTitle(tab.key),
+      closable: tab.key !== PERSONAL_HOME_PATH,
+    })),
+  )
+  if (pathWithoutQuery !== PERSONAL_HOME_PATH) {
+    if (!nextTabs.some(tab => tab.key === pathWithoutQuery)) {
+      nextTabs.push({
+        key: pathWithoutQuery,
+        title: resolveTabTitle(pathWithoutQuery),
+        closable: true,
+      })
+    }
+
+    const maxTabs = Math.max(layoutConfig.value.tabBarMax || 10, 1)
+    while (nextTabs.length > maxTabs) {
+      const removeIndex = nextTabs.findIndex(tab => tab.closable && tab.key !== pathWithoutQuery)
+      if (removeIndex === -1) {
+        break
       }
+      removeRecentRoute(nextTabs[removeIndex].key)
+      nextTabs.splice(removeIndex, 1)
     }
   }
 
-  const exists = tabs.value.find(t => t.key === pathWithoutQuery)
-  if (exists) {
-    return
-  }
-  const title = buildTitleFromRoute(pathWithoutQuery)
-  const max = layoutConfig.value.tabBarMax || 10
-  if (tabs.value.length >= max) {
-    const idx = tabs.value.findIndex(t => t.key !== activeTabKey.value)
-    if (idx >= 0) {
-      tabs.value.splice(idx, 1)
-    } else {
-      tabs.value.shift()
-    }
-  }
-  tabs.value.push({
-    key: pathWithoutQuery,
-    title,
-    closable: tabs.value.length > 0
-  })
+  tabs.value = ensureFixedTabs(nextTabs)
+  updateRecentRoutes(pathWithoutQuery)
 }
 
 function buildTitleFromRoute(path: string): string {
@@ -1295,6 +1498,16 @@ function buildTitleFromRoute(path: string): string {
   const pathWithoutQuery = path.split('?')[0]
   
   // 1. 尝试直接从路由表中查找（支持静态路由和动态路由）
+  const resolved = router.resolve(pathWithoutQuery)
+  const matchedRouteWithTitle = [...resolved.matched].reverse().find(item => item.meta && item.meta.title)
+  if (matchedRouteWithTitle?.meta?.title) {
+    const title = matchedRouteWithTitle.meta.title as string
+    if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+      return t(title)
+    }
+    return title
+  }
+
   const allRoutes = router.getRoutes()
   const match = allRoutes.find(r => r.path === pathWithoutQuery)
   if (match && match.meta && match.meta.title) {
@@ -1345,17 +1558,13 @@ function onTabClick(tab: { key: string }) {
 
 function onTabClose(tab: { key: string }) {
   const key = tab.key
+  if (!key || key === PERSONAL_HOME_PATH) return
   const idx = tabs.value.findIndex(t => t.key === key)
   if (idx === -1) return
   const isActive = activeTabKey.value === key
-  tabs.value.splice(idx, 1)
+  removeTabsByKeys([key])
   if (!isActive) return
-  const next = tabs.value[idx] || tabs.value[idx - 1]
-  if (next) {
-    router.push(next.key)
-  } else {
-    router.push('/workspace')
-  }
+  router.push(resolveNextTabKey(key)).catch(() => {})
 }
 
 function onTabDrag(fromIndex: number, toIndex: number) {
@@ -1380,23 +1589,32 @@ function onTabsClose(action: 'others' | 'left' | 'right' | 'all', tab?: { key: s
   const key = tab?.key
   
   if (action === 'others' && key) {
-    tabs.value = tabs.value.filter(t => t.key === key)
+    const removedKeys = tabs.value
+      .filter(t => t.key !== key && t.key !== PERSONAL_HOME_PATH)
+      .map(t => t.key)
+    removeTabsByKeys(removedKeys)
     if (key !== route.fullPath) {
-      router.push(key)
+      router.push(key).catch(() => {})
     }
   } else if (action === 'left' && key) {
     const idx = tabs.value.findIndex(t => t.key === key)
     if (idx > 0) {
-      tabs.value = tabs.value.slice(idx)
+      const removedKeys = tabs.value.slice(0, idx).filter(t => t.closable).map(t => t.key)
+      removeTabsByKeys(removedKeys)
     }
   } else if (action === 'right' && key) {
     const idx = tabs.value.findIndex(t => t.key === key)
     if (idx !== -1 && idx < tabs.value.length - 1) {
-      tabs.value = tabs.value.slice(0, idx + 1)
+      const removedKeys = tabs.value.slice(idx + 1).filter(t => t.closable).map(t => t.key)
+      removeTabsByKeys(removedKeys)
     }
   } else if (action === 'all') {
-    tabs.value = []
-    router.push('/workspace')
+    removeTabsByKeys(tabs.value.filter(t => t.closable).map(t => t.key))
+    router.push(PERSONAL_HOME_PATH).catch(() => {})
+  }
+
+  if (!tabs.value.some(t => t.key === activeTabKey.value)) {
+    router.push(resolveNextTabKey()).catch(() => {})
   }
 }
 
@@ -1420,37 +1638,119 @@ function openMessageNotification(m: SysMessageVO) {
 }
 
 async function handleMessageSend() {
+  if (!messageSendForm.value.receiverUserId) {
+    message.warning('请选择接收用户')
+    return
+  }
+  if (!messageSendForm.value.title) {
+    message.warning('请输入消息标题')
+    return
+  }
+  if (!messageSendForm.value.content) {
+    message.warning('请输入消息内容')
+    return
+  }
+
   try {
-    await sendMessage({
-      receiverTenantId: messageSendForm.value.receiverTenantId,
+    const newId = await sendMessage({
+      receiverTenantId: Number(sessionStorage.getItem('tenantId')),
       receiverUserId: Number(messageSendForm.value.receiverUserId),
-      scope: messageSendForm.value.scope,
+      scope: 'INTERNAL',
       title: messageSendForm.value.title,
       content: messageSendForm.value.content,
       linkUrl: messageSendForm.value.linkUrl,
-      bizType: messageSendForm.value.bizType,
     } as any)
     message.success('发送成功')
+    // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
+    const selfId = userStore.userInfo?.id
+    if (newId != null && selfId != null && Number(messageSendForm.value.receiverUserId) === selfId) {
+      const selfMessage = {
+        id: newId as number,
+        title: messageSendForm.value.title,
+        content: messageSendForm.value.content || '',
+        linkUrl: messageSendForm.value.linkUrl,
+      } as SysMessageVO
+      openMessageNotification(selfMessage)
+      window.dispatchEvent(new CustomEvent('fx:message-received', { detail: selfMessage }))
+    }
     messageSendOpen.value = false
+    // 重置表单
     messageSendForm.value.title = ''
     messageSendForm.value.content = ''
     messageSendForm.value.linkUrl = ''
-    messageSendForm.value.bizType = ''
+    messageSendForm.value.receiverUserId = undefined
+    selectedUserName.value = ''
+    selectedUserIds.value = []
   } catch (_) {}
 }
 
-const { connect: connectMessageSse } = useSse<SysMessageVO>({
+/**
+ * 打开用户选择弹窗
+ */
+async function openUserSelectModal() {
+  userSelectOpen.value = true
+  await searchUsers()
+}
+
+/**
+ * 搜索用户
+ */
+async function searchUsers() {
+  userSelectLoading.value = true
+  try {
+    const tenantId = sessionStorage.getItem('tenantId')
+    const res = await getUserList({
+      tenantId,
+      pageNum: 1,
+      pageSize: 100,
+      username: userSearchKeyword.value || undefined
+    })
+    userSelectList.value = res.records || []
+  } catch (error) {
+    console.error('搜索用户失败:', error)
+  } finally {
+    userSelectLoading.value = false
+  }
+}
+
+/**
+ * 用户选择变化
+ */
+function onUserSelectChange(keys: string[]) {
+  selectedUserIds.value = keys
+}
+
+/**
+ * 确认用户选择
+ */
+function confirmUserSelect() {
+  if (selectedUserIds.value.length === 0) {
+    message.warning('请选择用户')
+    return
+  }
+  const selectedUser = userSelectList.value.find(u => String(u.id) === selectedUserIds.value[0])
+  if (selectedUser) {
+    messageSendForm.value.receiverUserId = selectedUser.id
+    selectedUserName.value = `${selectedUser.username} (${selectedUser.account})`
+  }
+  userSelectOpen.value = false
+}
+
+const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessageVO>({
   url: '/api/sys/message/stream',
   onEvent: (name, data) => {
     if (name !== 'message') return
     if (!data || !(data as any).id) return
     openMessageNotification(data as any)
+    window.dispatchEvent(new CustomEvent('fx:message-received', { detail: data }))
   },
 })
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('scroll', handleScroll)
+    window.addEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
+    window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
   }
   loadLayout()
   updateTabsByRoute(route.fullPath)
@@ -1477,7 +1777,10 @@ onMounted(async () => {
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('scroll', handleScroll)
+    window.removeEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
+    window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
   }
+  closeMessageSse()
 })
 </script>
 
@@ -1732,5 +2035,58 @@ onUnmounted(() => {
     color: var(--fx-text-secondary, #6b7280);
     transition: all 0.25s ease;
   }
+}
+
+/* 消息通知抽屉 */
+.fx-message-drawer {
+  :deep(.ant-drawer-body) {
+    padding: 16px;
+  }
+}
+
+.fx-message-empty {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.fx-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fx-message-item {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--fx-bg-elevated, #f5f5f5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.08));
+  }
+}
+
+.fx-message-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fx-text-primary, #1f2937);
+  margin-bottom: 4px;
+}
+
+.fx-message-content {
+  font-size: 13px;
+  color: var(--fx-text-secondary, #6b7280);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fx-message-time {
+  font-size: 12px;
+  color: var(--fx-text-tertiary, #9ca3af);
+  margin-top: 6px;
 }
 </style>

@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
@@ -124,6 +124,11 @@ const formState = reactive<LeaveFormModel>({
   ...(props.modelValue || {})
 })
 
+/**
+ * 为 true 时表示正从父组件同步 props，避免 v-model 与 props 互相触发造成递归更新（Ant Design Vue Spin 会报 Maximum recursive updates）。
+ */
+const syncingFromParent = ref(false)
+
 const rules = {
   leaveType: [{ required: true, message: '请选择请假类型', trigger: 'change' }],
   startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
@@ -135,7 +140,11 @@ const rules = {
 watch(
   () => props.modelValue,
   value => {
+    syncingFromParent.value = true
     Object.assign(formState, createDefaultState(), value || {})
+    nextTick(() => {
+      syncingFromParent.value = false
+    })
   },
   { deep: true }
 )
@@ -164,6 +173,9 @@ watch(
 watch(
   formState,
   () => {
+    if (syncingFromParent.value) {
+      return
+    }
     emit('update:modelValue', { ...formState })
   },
   { deep: true }
@@ -194,11 +206,9 @@ defineExpose({
 <style scoped>
 .leave-form {
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fx-border-color);
   border-radius: 20px;
-  background:
-    radial-gradient(circle at top right, rgba(245, 166, 35, 0.14), transparent 30%),
-    linear-gradient(180deg, rgba(31, 38, 52, 0.94), rgba(20, 24, 33, 0.96));
+  background: var(--fx-bg-container);
 }
 
 .leave-form__intro {
@@ -214,20 +224,20 @@ defineExpose({
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.52);
+  color: var(--fx-text-tertiary);
 }
 
 .leave-form__intro h3 {
   margin: 0;
   font-size: 22px;
-  color: #ffffff;
+  color: var(--fx-text-primary);
 }
 
 .leave-form__summary {
   min-width: 120px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--fx-fill-alter);
   text-align: right;
 }
 
@@ -235,12 +245,12 @@ defineExpose({
   display: block;
   margin-bottom: 6px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.52);
+  color: var(--fx-text-tertiary);
 }
 
 .leave-form__summary strong {
   font-size: 24px;
-  color: #ffcb7a;
+  color: var(--fx-primary);
 }
 
 .leave-form__grid {
@@ -250,7 +260,7 @@ defineExpose({
 }
 
 .leave-form__body :deep(.ant-form-item-label > label) {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--fx-text-secondary);
 }
 
 .leave-form__body :deep(.ant-input),
@@ -258,9 +268,9 @@ defineExpose({
 .leave-form__body :deep(.ant-picker),
 .leave-form__body :deep(.ant-select-selector),
 .leave-form__body :deep(.ant-input-affix-wrapper) {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--fx-border-color);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--fx-bg-elevated);
 }
 
 .leave-form__body :deep(.ant-input),
@@ -268,11 +278,11 @@ defineExpose({
 .leave-form__body :deep(.ant-select-selection-item),
 .leave-form__body :deep(.ant-select-selection-placeholder),
 .leave-form__body :deep(.ant-input:disabled) {
-  color: #eef3ff;
+  color: var(--fx-text-primary);
 }
 
 .leave-form__body :deep(.ant-input-disabled) {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--fx-fill-alter);
 }
 
 @media (max-width: 768px) {

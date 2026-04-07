@@ -73,8 +73,6 @@ export function useMenu() {
    * 4. 调用 getMenuTree 接口获取菜单树
    * 5. 使用 buildTree 构建完整的树形结构
    * 6. 重置加载状态
-   * 
-   * @throws 加载失败时显示错误提示
    */
   const loadMenuList = async () => {
     try {
@@ -105,7 +103,6 @@ export function useMenu() {
       menuList.value = buildTree(flatList)
     } catch (error) {
       console.error('加载菜单列表失败:', error)
-      message.error('加载菜单列表失败')
     } finally {
       loading.value = false
     }
@@ -144,7 +141,6 @@ export function useMenu() {
    * 3. 删除成功后刷新列表
    * 
    * @param id 菜单 ID
-   * @throws 删除失败时显示错误提示
    */
   const handleDelete = async (id: string) => {
     Modal.confirm({
@@ -153,14 +149,8 @@ export function useMenu() {
       okText: '确定',
       cancelText: '取消',
       onOk: async () => {
-        try {
-          await deleteMenu(id)
-          message.success('删除成功')
-          loadMenuList()
-        } catch (error) {
-          console.error('删除菜单失败:', error)
-          message.error('删除菜单失败')
-        }
+        await deleteMenu(id)
+        loadMenuList()
       }
     })
   }
@@ -173,8 +163,6 @@ export function useMenu() {
    * 2. 显示确认对话框
    * 3. 用户确认后调用 batchDeleteMenus 接口
    * 4. 删除成功后清空选中状态并刷新列表
-   * 
-   * @throws 删除失败时显示错误提示
    */
   const handleBatchDelete = () => {
     if (selectedRowKeys.value.length === 0) {
@@ -188,15 +176,9 @@ export function useMenu() {
       okText: '确定',
       cancelText: '取消',
       onOk: async () => {
-        try {
-          await batchDeleteMenus(selectedRowKeys.value)
-          message.success('批量删除成功')
-          selectedRowKeys.value = []
-          loadMenuList()
-        } catch (error) {
-          console.error('批量删除失败:', error)
-          message.error('批量删除失败')
-        }
+        await batchDeleteMenus(selectedRowKeys.value)
+        selectedRowKeys.value = []
+        loadMenuList()
       }
     })
   }
@@ -226,3 +208,4 @@ export function useMenu() {
     handleSelectionChange
   }
 }
+

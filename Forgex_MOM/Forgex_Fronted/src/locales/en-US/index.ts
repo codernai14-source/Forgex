@@ -7,6 +7,9 @@ import validation from './validation'
 import message from './message'
 import system from './system'
 import workflow from './workflow'
+import personalHomepage from './personalHomepage'
+import profile from './profile'
+import operationLog from './operationLog'
 
 export default {
   common,
@@ -15,4 +18,7 @@ export default {
   message,
   system,
   workflow,
+  personalHomepage,
+  profile,
+  operationLog,
 }

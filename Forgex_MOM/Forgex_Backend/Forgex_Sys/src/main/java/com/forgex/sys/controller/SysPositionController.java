@@ -288,7 +288,11 @@ public class SysPositionController {
         
         // 3. 委派给 Service 层删除职位
         Boolean success = positionService.delete(id, tenantId);
-        // 4. 使用职位名称填充"删除成功"提示的占位符参数
+        // 4. 检查删除是否成功
+        if (!success) {
+            return R.fail(CommonPrompt.OPERATION_FAILED);
+        }
+        // 5. 使用职位名称填充"删除成功"提示的占位符参数
         return R.okWithArgs(CommonPrompt.DELETE_SUCCESS, positionName);
     }
 }

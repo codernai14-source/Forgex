@@ -82,10 +82,7 @@ public class GlobalExceptionHandler {
                 boolean maybeTimeout = msg.contains("过期") || msg.contains("超时") || msg.toLowerCase().contains("timeout");
                 if (maybeTimeout) {
                     String tokenName = StpUtil.getTokenName();
-                    String tokenValue = cn.dev33.satoken.context.SaHolder.getRequest().getHeader(tokenName);
-                    if (!StringUtils.hasText(tokenValue)) {
-                        tokenValue = cn.dev33.satoken.context.SaHolder.getRequest().getParam(tokenName);
-                    }
+                    String tokenValue = cn.dev33.satoken.context.SaHolder.getRequest().getCookieValue(tokenName);
                     if (StringUtils.hasText(tokenValue)) {
                         logoutAuditService.recordLogoutByToken(tokenValue, LogoutReason.TIMEOUT);
                     }

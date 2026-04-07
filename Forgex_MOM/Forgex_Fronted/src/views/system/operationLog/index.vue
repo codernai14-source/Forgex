@@ -10,7 +10,7 @@
       <template #toolbar>
         <a-button @click="handleExport" v-permission="'sys:operation-log:export'">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ t('common.export') }}
         </a-button>
       </template>
 
@@ -46,7 +46,7 @@
     <!-- 详情弹窗 -->
     <a-modal
       v-model:open="detailVisible"
-      title="操作日志详情"
+      :title="t('operationLog.detailTitle', '操作日志详情')"
       :width="900"
       :footer="null"
     >
@@ -105,7 +105,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
   ExportOutlined
@@ -114,20 +115,21 @@ import { pageOperationLog, exportOperationLog } from '@/api/operationLog'
 import dayjs from 'dayjs'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
+const { t } = useI18n()
 const tableRef = ref<any>()
 
-const dictOptions = {
+const dictOptions = computed(() => ({
   operationType: [
-    { label: '新增', value: 'CREATE' },
-    { label: '修改', value: 'UPDATE' },
-    { label: '删除', value: 'DELETE' },
-    { label: '查询', value: 'QUERY' },
-    { label: '导出', value: 'EXPORT' },
-    { label: '导入', value: 'IMPORT' },
-    { label: '登录', value: 'LOGIN' },
-    { label: '登出', value: 'LOGOUT' },
+    { label: t('common.create'), value: 'CREATE' },
+    { label: t('common.update'), value: 'UPDATE' },
+    { label: t('common.delete'), value: 'DELETE' },
+    { label: t('common.search'), value: 'QUERY' },
+    { label: t('common.export'), value: 'EXPORT' },
+    { label: t('common.import'), value: 'IMPORT' },
+    { label: t('common.login.login'), value: 'LOGIN' },
+    { label: t('common.logout', '登出'), value: 'LOGOUT' },
   ],
-}
+}))
 
 // 详情弹窗
 const detailVisible = ref(false)
@@ -191,9 +193,9 @@ const handleExport = async () => {
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
-    message.success('导出成功')
+    message.success(t('common.exportSuccess'))
   } catch (error) {
-    message.error('导出失败')
+    message.error(t('common.exportFailed'))
     console.error(error)
   }
 }
@@ -213,19 +215,10 @@ const getOperationTypeColor = (type: string) => {
   return colorMap[type] || 'default'
 }
 
-// 获取操作类型文本
+// 获取操作类型文本（使用 dictOptions 的翻译）
 const getOperationTypeText = (type: string) => {
-  const textMap: Record<string, string> = {
-    CREATE: '新增',
-    UPDATE: '修改',
-    DELETE: '删除',
-    QUERY: '查询',
-    EXPORT: '导出',
-    IMPORT: '导入',
-    LOGIN: '登录',
-    LOGOUT: '登出'
-  }
-  return textMap[type] || type
+  const option = dictOptions.value.operationType.find((item: any) => item.value === type)
+  return option ? option.label : type
 }
 
 // 获取耗时颜色

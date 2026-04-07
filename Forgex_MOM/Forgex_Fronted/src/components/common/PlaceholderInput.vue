@@ -125,12 +125,13 @@ watch(() => props.modelValue, (newVal) => {
   .placeholder-toolbar {
     margin-top: 8px;
     padding: 8px;
-    background: var(--fx-fill-alter, #f5f5f5);
-    border: 1px solid var(--fx-border-color, #e8e8e8);
+    // 使用更深的填充色来区分层次
+    background: var(--fx-fill-secondary);
+    border: 1px solid var(--fx-border-color);
     border-radius: var(--fx-radius, 6px);
     
     .toolbar-label {
-      color: var(--fx-text-secondary, #666);
+      color: var(--fx-text-secondary);
       font-size: 12px;
     }
     
@@ -141,7 +142,7 @@ watch(() => props.modelValue, (newVal) => {
       
       &:hover {
         transform: scale(1.05);
-        box-shadow: var(--fx-shadow-secondary, 0 2px 8px rgba(15, 23, 42, 0.12));
+        box-shadow: var(--fx-shadow-secondary);
       }
     }
   }
@@ -149,19 +150,20 @@ watch(() => props.modelValue, (newVal) => {
   .placeholder-preview {
     margin-top: 12px;
     padding: 12px;
-    background: var(--fx-bg-elevated, #fafafa);
-    border: 1px solid var(--fx-border-color, #e8e8e8);
+    // 预览区域使用容器背景色
+    background: var(--fx-bg-container);
+    border: 1px solid var(--fx-border-color);
     border-radius: var(--fx-radius, 6px);
     
     .preview-label {
       font-size: 12px;
-      color: var(--fx-text-secondary, #666);
+      color: var(--fx-text-secondary);
       margin-bottom: 8px;
       font-weight: 500;
     }
     
     .preview-content {
-      color: var(--fx-text-primary, #333);
+      color: var(--fx-text-primary);
       line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-word;

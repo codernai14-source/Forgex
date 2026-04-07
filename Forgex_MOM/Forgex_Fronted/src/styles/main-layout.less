@@ -279,17 +279,21 @@
   overflow: hidden;
 }
 
+// 工作台页面容器：长内容由本区域纵向滚动，避免底部操作区（如「发起审批」）被裁切
 .fx-page-wrapper {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .fx-page-wrapper > * {
-  flex: 1;
+  flex: 1 0 auto;
+  min-width: 0;
   min-height: 0;
+  box-sizing: border-box;
 }
 
 .fx-watermark-container {

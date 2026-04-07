@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.workflow.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
@@ -94,4 +95,19 @@ public interface IWfExecutionService {
      * @return 分页结果
      */
     Page<WfExecutionDTO> pageMyProcessed(WfExecutionQueryParam param);
+
+    /**
+     * 分页查询抄送给我的待阅任务（节点审核类型为抄送）。
+     *
+     * @param param 查询参数
+     * @return 分页结果
+     */
+    Page<WfExecutionDTO> pageMyCc(WfExecutionQueryParam param);
+
+    /**
+     * 审批工作台首页汇总：待办、昨日已处理、抄送待阅。
+     *
+     * @return 汇总数据，各列表最多 6 条
+     */
+    WfDashboardSummaryVO loadDashboardSummary();
 }

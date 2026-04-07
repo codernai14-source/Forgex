@@ -135,6 +135,7 @@ import {
   TeamOutlined
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
+import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { listTaskConfig, type WfTaskConfigDTO } from '@/api/workflow/taskConfig'
 
 interface TaskCategoryOption {
@@ -259,7 +260,7 @@ async function loadTaskList() {
 
 function handleOpenTask(task: WfTaskConfigDTO) {
   persistRecentTask(task.taskCode)
-  router.push(`/workflow/execution/start/${task.taskCode}`)
+  router.push(approvalRoutePaths.executionStartForm(task.taskCode))
 }
 
 onMounted(() => {
@@ -274,7 +275,7 @@ onMounted(() => {
   gap: 18px;
   min-height: 100%;
   padding: 16px;
-  color: #eef3ff;
+  color: var(--fx-text-primary);
 }
 
 .hero-panel {
@@ -282,12 +283,10 @@ onMounted(() => {
   justify-content: space-between;
   gap: 24px;
   padding: 24px 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--fx-border-color);
   border-radius: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(245, 166, 35, 0.28), transparent 42%),
-    linear-gradient(135deg, rgba(19, 25, 37, 0.98), rgba(14, 18, 27, 0.92));
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  background: var(--fx-bg-container);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
 }
 
 .hero-panel__eyebrow {
@@ -295,21 +294,21 @@ onMounted(() => {
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--fx-text-tertiary);
 }
 
 .hero-panel__title {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: #fff;
+  color: var(--fx-text-primary);
 }
 
 .hero-panel__desc {
   max-width: 640px;
   margin: 12px 0 0;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--fx-text-secondary);
 }
 
 .hero-panel__stats {
@@ -321,21 +320,21 @@ onMounted(() => {
 
 .hero-panel__stat {
   padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--fx-border-color);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--fx-fill-alter);
 }
 
 .hero-panel__stat span {
   display: block;
   margin-bottom: 10px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--fx-text-tertiary);
 }
 
 .hero-panel__stat strong {
   font-size: 28px;
-  color: #fff;
+  color: var(--fx-text-primary);
 }
 
 .board {
@@ -359,9 +358,9 @@ onMounted(() => {
 .panel,
 .content-panel {
   padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fx-border-color);
   border-radius: 22px;
-  background: rgba(20, 26, 37, 0.92);
+  background: var(--fx-bg-container);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -369,7 +368,7 @@ onMounted(() => {
 .toolbar__title {
   font-size: 16px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--fx-text-primary);
 }
 
 .filter-item,
@@ -387,13 +386,13 @@ onMounted(() => {
   margin-top: 10px;
   padding: 12px 14px;
   border-radius: 14px;
-  color: rgba(255, 255, 255, 0.78);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--fx-text-secondary);
+  background: var(--fx-fill-alter);
 }
 
 .filter-item--active {
-  color: #fff;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.32), rgba(59, 130, 246, 0.24));
+  color: var(--fx-text-primary);
+  background: var(--fx-primary-bg);
 }
 
 .recent-item {
@@ -403,8 +402,8 @@ onMounted(() => {
   margin-top: 10px;
   padding: 12px 14px;
   border-radius: 14px;
-  color: rgba(255, 255, 255, 0.82);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--fx-text-secondary);
+  background: var(--fx-fill-alter);
 }
 
 .recent-item__name {
@@ -414,7 +413,7 @@ onMounted(() => {
 .recent-item__meta,
 .toolbar__meta {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--fx-text-tertiary);
 }
 
 .toolbar {
@@ -441,13 +440,13 @@ onMounted(() => {
   padding: 18px;
   text-align: left;
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  background: var(--fx-bg-elevated);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .task-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.12);
 }
 
 .task-card__icon {
@@ -482,25 +481,25 @@ onMounted(() => {
 .task-card__name {
   font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: var(--fx-text-primary);
 }
 
 .task-card__category {
   margin-top: 4px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.58);
+  color: var(--fx-text-tertiary);
 }
 
 .task-card__remark {
   min-height: 48px;
   margin: 14px 0;
   line-height: 1.65;
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--fx-text-secondary);
 }
 
 .task-card__footer {
   align-items: center;
-  color: rgba(255, 255, 255, 0.56);
+  color: var(--fx-text-tertiary);
   font-size: 12px;
 }
 
@@ -508,7 +507,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #f8b84e;
+  color: var(--fx-primary);
   font-weight: 600;
 }
 

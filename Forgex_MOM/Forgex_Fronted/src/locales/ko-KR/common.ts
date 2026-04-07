@@ -27,6 +27,22 @@ export default {
   confirm: '확인',
   view: '보기',
   detail: '상세',
+  action: '작업',
+  expand: '펼치기',
+  collapse: '접기',
+
+  /** {@link I18nInput} */
+  i18nInput: {
+    configureTooltip: '다국어 구성',
+    modalTitle: '다국어 설정',
+    defaultTag: '기본',
+    placeholder: '{lang} 번역 입력',
+    tipTitle: '안내',
+    tipDesc: '각 언어별 번역을 입력하세요. 비어 있으면 기본값을 사용합니다.',
+    columnLang: '언어',
+    columnValue: '번역',
+    loadLanguagesFailed: '언어 목록을 불러오지 못했습니다',
+  },
 
   // 상태
   status: '상태',

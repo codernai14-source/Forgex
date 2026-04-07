@@ -11,7 +11,7 @@
           <GlobalOutlined 
             class="i18n-icon" 
             @click="showModal = true"
-            title="配置多语言"
+            :title="t('common.i18nInput.configureTooltip')"
           />
         </template>
       </a-input>
@@ -32,13 +32,13 @@
             <div class="lang-name">
               <span v-if="record.icon" class="lang-icon">{{ record.icon }}</span>
               <span>{{ record.langName }}</span>
-              <a-tag v-if="record.isDefault" color="blue" size="small">默认</a-tag>
+              <a-tag v-if="record.isDefault" color="blue" size="small">{{ t('common.i18nInput.defaultTag') }}</a-tag>
             </div>
           </template>
           <template v-else-if="column.key === 'value'">
             <a-input
               v-model:value="record.value"
-              :placeholder="`请输入${record.langName}翻译`"
+              :placeholder="t('common.i18nInput.placeholder', { lang: record.langName })"
               @update:value="handleTableChange"
             />
           </template>
@@ -49,17 +49,17 @@
     <!-- 弹窗模式 -->
     <a-modal
       v-model:open="showModal"
-      title="多语言配置"
+      :title="t('common.i18nInput.modalTitle')"
       width="700px"
-      :ok-text="'确定'"
-      :cancel-text="'取消'"
+      :ok-text="t('common.ok')"
+      :cancel-text="t('common.cancel')"
       @ok="handleModalOk"
       @cancel="handleModalCancel"
     >
       <a-spin :spinning="loading">
         <a-alert
-          message="提示"
-          description="请为每种语言配置对应的翻译文本。未填写的语言将使用默认值。"
+          :message="t('common.i18nInput.tipTitle')"
+          :description="t('common.i18nInput.tipDesc')"
           type="info"
           show-icon
           style="margin-bottom: 16px"
@@ -77,13 +77,13 @@
               <div class="lang-name">
                 <span v-if="record.icon" class="lang-icon">{{ record.icon }}</span>
                 <span>{{ record.langName }}</span>
-                <a-tag v-if="record.isDefault" color="blue" size="small">默认</a-tag>
+                <a-tag v-if="record.isDefault" color="blue" size="small">{{ t('common.i18nInput.defaultTag') }}</a-tag>
               </div>
             </template>
             <template v-else-if="column.key === 'value'">
               <a-input
                 v-model:value="record.value"
-                :placeholder="`请输入${record.langName}翻译`"
+                :placeholder="t('common.i18nInput.placeholder', { lang: record.langName })"
               />
             </template>
           </template>
@@ -95,9 +95,12 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { GlobalOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { listEnabledLanguages, type LanguageType } from '@/api/system/i18n'
+
+const { t } = useI18n()
 
 /**
  * 多语言输入组件
@@ -158,20 +161,22 @@ interface TableRow {
 const tableData = ref<TableRow[]>([])
 const modalTableData = ref<TableRow[]>([])
 
-// 表格列配置
-const columns = [
+/**
+ * 表格列配置（标题随语言切换）
+ */
+const columns = computed(() => [
   {
-    title: '语言',
+    title: t('common.i18nInput.columnLang'),
     key: 'langName',
     dataIndex: 'langName',
-    width: 200
+    width: 200,
   },
   {
-    title: '翻译内容',
+    title: t('common.i18nInput.columnValue'),
     key: 'value',
-    dataIndex: 'value'
-  }
-]
+    dataIndex: 'value',
+  },
+])
 
 /**
  * 加载语言列表
@@ -184,7 +189,7 @@ const loadLanguages = async () => {
     initTableData()
   } catch (error) {
     console.error('加载语言列表失败:', error)
-    message.error('加载语言列表失败')
+    message.error(t('common.i18nInput.loadLanguagesFailed'))
   } finally {
     loading.value = false
   }
