@@ -490,10 +490,6 @@ const handleTestSend = async () => {
       linkUrl: linkUrl || undefined,
       bizType: 'MESSAGE_TEMPLATE_TEST',
     })
-    message.success('试发送成功，请在站内消息或右上角通知中查看')
-  } catch (error: any) {
-    console.error('试发送失败:', error)
-    message.error(error?.message || '试发送失败，请稍后重试')
   } finally {
     testSendLoading.value = false
   }
@@ -552,14 +548,9 @@ const handleAdd = () => {
 const handleEdit = async (record: any) => {
   modalTitle.value = '编辑消息模板'
   activeTab.value = 'basic'
-  try {
-    const res = await getMessageTemplate(record.id)
-    Object.assign(formData, normalizeFormData(res))
-    modalVisible.value = true
-  } catch {
-    // getMessageTemplate 已使用 silentError，此处仅补一条业务提示，避免与拦截器重复弹窗
-    message.error('获取详情失败')
-  }
+  const res = await getMessageTemplate(record.id)
+  Object.assign(formData, normalizeFormData(res))
+  modalVisible.value = true
 }
 
 // 删除
@@ -568,13 +559,8 @@ const handleDelete = (record: any) => {
     title: '确认删除',
     content: `确定要删除模板"${record.templateName}"吗？`,
     onOk: async () => {
-      try {
-        await deleteMessageTemplate(record.id)
-        message.success('删除成功')
-        await tableRef.value?.reload?.()
-      } catch (error) {
-        message.error('删除失败')
-      }
+      await deleteMessageTemplate(record.id)
+      await tableRef.value?.reload?.()
     }
   })
 }
@@ -585,14 +571,9 @@ const handleBatchDelete = () => {
     title: '确认删除',
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 条记录吗？`,
     onOk: async () => {
-      try {
-        await deleteBatchMessageTemplate(selectedRowKeys.value)
-        message.success('删除成功')
-        selectedRowKeys.value = []
-        await tableRef.value?.reload?.()
-      } catch (error) {
-        message.error('删除失败')
-      }
+      await deleteBatchMessageTemplate(selectedRowKeys.value)
+      selectedRowKeys.value = []
+      await tableRef.value?.reload?.()
     }
   })
 }
@@ -653,11 +634,8 @@ const handleModalOk = async () => {
   modalLoading.value = true
   try {
     await saveMessageTemplate(buildSavePayload())
-    message.success('保存成功')
     modalVisible.value = false
     await tableRef.value?.reload?.()
-  } catch (error) {
-    message.error('保存失败')
   } finally {
     modalLoading.value = false
   }

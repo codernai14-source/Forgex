@@ -22,6 +22,7 @@ export default {
     roleDetail: '角色详情',
     roleName: '请输入角色名称',
     roleCode: '请输入角色编码',
+    fieldLengthRange: '长度在 1 到 50 个字符',
     description: '请输入描述',
     status: '请选择状态',
   },
@@ -81,6 +82,10 @@ export default {
   
   // 消息
   message: {
+    loadListFailed: '获取角色列表失败',
+    deleteFailed: '删除失败',
+    batchDeleteFailed: '批量删除失败',
+    selectToDelete: '请选择要删除的角色',
     deleteConfirm: '确定要删除该角色吗？',
     deleteSuccess: '删除角色成功',
     saveSuccess: '保存角色成功',

@@ -871,7 +871,14 @@ function resolveMenuTitle(rawTitle: unknown): string {
   if (!title) {
     return ''
   }
-  if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
+  // 支持 system. / common. / layout. / profile. / workflow. / message. 等前缀
+  if (title.startsWith('system.') || 
+      title.startsWith('common.') || 
+      title.startsWith('layout.') || 
+      title.startsWith('profile.') || 
+      title.startsWith('workflow.') || 
+      title.startsWith('message.') || 
+      title.includes('.')) {
     return t(title)
   }
   return title
@@ -1398,9 +1405,6 @@ async function onLocaleChange(val: string) {
     
     console.log('[MainLayout] 语言切换成功:', val)
     
-    // 5. 语言切换成功提示
-    message.success(t('common.success'))
-    
     // 注意：FxDynamicTable 组件会通过 watch(locale) 自动重新加载配置
   } catch (e) {
     console.error('[MainLayout] 语言切换失败:', e)
@@ -1408,7 +1412,6 @@ async function onLocaleChange(val: string) {
     setLocale(originalLocale as LocaleCode)
     currentLocale.value = originalLocale
     appStore.setLocale(originalLocale as LocaleCode)
-    message.error(t('common.failed'))
   }
 }
 

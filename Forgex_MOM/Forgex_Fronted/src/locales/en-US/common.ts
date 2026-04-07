@@ -28,7 +28,22 @@ export default {
   view: 'View',
   detail: 'Detail',
   action: 'Action',
-  
+  expand: 'Expand',
+  collapse: 'Collapse',
+
+  /** {@link I18nInput} */
+  i18nInput: {
+    configureTooltip: 'Configure translations',
+    modalTitle: 'Translation settings',
+    defaultTag: 'Default',
+    placeholder: 'Enter text for {lang}',
+    tipTitle: 'Tip',
+    tipDesc: 'Provide text for each language. Empty values fall back to defaults.',
+    columnLang: 'Language',
+    columnValue: 'Translation',
+    loadLanguagesFailed: 'Failed to load language list',
+  },
+
   // Status
   status: 'Status',
   enabled: 'Enabled',

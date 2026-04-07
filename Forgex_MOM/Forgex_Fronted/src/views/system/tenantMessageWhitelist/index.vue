@@ -254,15 +254,9 @@ const handleSubmit = async () => {
     return
   }
 
-  try {
-    await saveTenantMessageWhitelist(formData)
-    message.success(isEdit.value ? '修改成功' : '新增成功')
-    modalVisible.value = false
-    await tableRef.value?.reload?.()
-  } catch (error) {
-    message.error('操作失败')
-    console.error(error)
-  }
+  await saveTenantMessageWhitelist(formData)
+  modalVisible.value = false
+  await tableRef.value?.reload?.()
 }
 
 // 取消
@@ -272,14 +266,8 @@ const handleCancel = () => {
 
 // 删除
 const handleDelete = async (record: any) => {
-  try {
-    await deleteTenantMessageWhitelist(record.id)
-    message.success('删除成功')
-    await tableRef.value?.reload?.()
-  } catch (error) {
-    message.error('删除失败')
-    console.error(error)
-  }
+  await deleteTenantMessageWhitelist(record.id)
+  await tableRef.value?.reload?.()
 }
 
 // 批量删除
@@ -288,32 +276,19 @@ const handleBatchDelete = () => {
     title: '确认删除',
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 条白名单配置吗？`,
     onOk: async () => {
-      try {
-        for (const id of selectedRowKeys.value) {
-          await deleteTenantMessageWhitelist(id)
-        }
-
-        message.success('删除成功')
-        selectedRowKeys.value = []
-        await tableRef.value?.reload?.()
-      } catch (error) {
-        message.error('删除失败')
-        console.error(error)
+      for (const id of selectedRowKeys.value) {
+        await deleteTenantMessageWhitelist(id)
       }
+      selectedRowKeys.value = []
+      await tableRef.value?.reload?.()
     }
   })
 }
 
 // 启用/禁用
 const handleToggleEnabled = async (record: any, checked: boolean) => {
-  try {
-    await toggleEnabled(record.id, checked)
-    message.success(checked ? '启用成功' : '禁用成功')
-    record.enabled = checked
-  } catch (error) {
-    message.error('操作失败')
-    console.error(error)
-  }
+  await toggleEnabled(record.id, checked)
+  record.enabled = checked
 }
 
 // 初始化

@@ -13,6 +13,11 @@ export default {
   edit: 'Edit',
   delete: 'Delete',
   export: 'Export',
+  resetPassword: 'Reset Password',
+  lockUser: 'Lock User',
+  unlockUser: 'Unlock User',
+  assignRole: 'Assign Role',
+  viewDetail: 'View Detail',
 
   // Table Columns
   avatar: 'Avatar',
@@ -56,22 +61,23 @@ export default {
   statusInactive: 'Inactive',
   statusLocked: 'Locked',
   
-  resetPassword: 'Reset Password',
-  lockUser: 'Lock User',
-  unlockUser: 'Unlock User',
-  assignRole: 'Assign Role',
-  
   // Messages
   message: {
+    loadListFailed: 'Failed to load user list',
+    deleteFailed: 'Delete failed',
+    batchDeleteFailed: 'Batch delete failed',
+    selectToDelete: 'Please select users to delete',
     deleteConfirm: 'Are you sure you want to delete this user?',
-    batchDeleteConfirm: 'Are you sure you want to delete selected users?',
+    batchDeleteConfirm: 'Are you sure you want to delete {count} selected users?',
     deleteSuccess: 'User deleted successfully',
     saveSuccess: 'User saved successfully',
     resetPasswordSuccess: 'Password reset successfully',
+    resetPasswordFailed: 'Password reset failed',
     resetPasswordConfirm: 'Are you sure you want to reset this password? It will be reset to the system default password.',
     lockSuccess: 'User locked successfully',
     unlockSuccess: 'User unlocked successfully',
     usernameExists: 'Username already exists',
     emailExists: 'Email already exists',
+    updateStatusFailed: 'Update status failed',
   },
 }

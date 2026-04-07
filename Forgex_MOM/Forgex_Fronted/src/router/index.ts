@@ -23,12 +23,12 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
     {
       path: 'taskConfig/:taskCode/nodes',
       component: () => import('../views/workflow/taskConfig/nodes.vue'),
-      meta: { title: '审批节点配置', hidden: true }
+      meta: { title: 'workflow.taskConfig.nodeConfig', hidden: true }
     },
     {
       path: 'execution/start/:taskCode',
       component: () => import('../views/workflow/execution/startForm.vue'),
-      meta: { title: '填写审批表单', hidden: true }
+      meta: { title: 'workflow.execution.startApproval', hidden: true }
     }
   ]
 }
@@ -50,19 +50,19 @@ const routes: RouteRecordRaw[] = [
         path: 'home',
         name: 'PersonalHome',
         component: () => import('../views/home/index.vue'),
-        meta: { title: '个人首页' }
+        meta: { title: 'layout.personalHomepage' }
       },
       {
         path: 'profile',
         name: 'UserProfile',
         component: () => import('../views/profile/index.vue'),
-        meta: { title: '个人信息', module: 'sys' } // 个人信息页
+        meta: { title: 'profile.title', module: 'sys' } // 个人信息页
       },
       {
         path: 'sys/config',
         name: 'SystemConfig',
         component: () => import('../views/system/config/index.vue'),
-        meta: { title: '系统配置', module: 'sys' } // 系统配置页
+        meta: { title: 'system.config.title', module: 'sys' } // 系统配置页
       }
     ]
   },
@@ -81,13 +81,13 @@ const routes: RouteRecordRaw[] = [
         path: 'taskConfig/:taskCode/nodes',
         name: 'WorkflowTaskConfigNodes',
         component: () => import('../views/workflow/taskConfig/nodes.vue'),
-        meta: { title: '审批节点配置', module: 'approval', hidden: true }
+        meta: { title: 'workflow.taskConfig.nodeConfig', module: 'approval', hidden: true }
       },
       {
         path: 'execution/start/:taskCode',
         name: 'WorkflowExecutionStartForm',
         component: () => import('../views/workflow/execution/startForm.vue'),
-        meta: { title: '填写审批表单', module: 'approval', hidden: true }
+        meta: { title: 'workflow.execution.startApproval', module: 'approval', hidden: true }
       }
     ]
   },

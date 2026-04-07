@@ -7,30 +7,32 @@
       :request="request"
     >
       <template #toolbar>
-        <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">导出</a-button>
+        <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">{{ t('common.export') }}</a-button>
       </template>
     </FxDynamicTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
 import { exportLoginLog } from '@/api/system/excel'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 
 const tableRef = ref<any>()
 
-const dictOptions = {
+const dictOptions = computed(() => ({
   status: [
-    { label: '成功', value: 1 },
-    { label: '失败', value: 0 },
+    { label: t('common.success'), value: 1 },
+    { label: t('common.failed'), value: 0 },
   ],
-}
+}))
 
 const request = async (payload: { page: { current: number; pageSize: number }; query: Record<string, any> }) => {
   const params: any = {
@@ -74,10 +76,10 @@ const handleExport = async () => {
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
-    message.success('导出成功')
+    message.success(t('common.exportSuccess'))
   } catch (error) {
-    console.error('导出登录日志失败', error)
-    message.error('导出失败')
+    console.error(t('common.exportFailed'), error)
+    message.error(t('common.exportFailed'))
   }
 }
 </script>

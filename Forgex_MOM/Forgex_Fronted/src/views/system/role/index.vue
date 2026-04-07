@@ -90,7 +90,7 @@
     <!-- 新增/编辑弹窗 -->
     <BaseFormDialog
       v-model:open="visible"
-      :title="isEdit ? '编辑角色' : '新增角色'"
+      :title="isEdit ? $t('system.role.form.editRole') : $t('system.role.form.addRole')"
       :confirm-loading="formLoading"
       @ok="handleSubmit"
       @cancel="handleCancel"
@@ -102,23 +102,23 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
       >
-        <a-form-item label="角色编码" name="roleCode">
+        <a-form-item :label="$t('system.role.roleCode')" name="roleCode">
           <a-input
             v-model:value="formData.roleCode"
-            placeholder="请输入角色编码"
+            :placeholder="$t('system.role.form.roleCode')"
             :disabled="isEdit"
           />
         </a-form-item>
-        <a-form-item label="角色名称" name="roleName">
+        <a-form-item :label="$t('system.role.roleName')" name="roleName">
           <a-input
             v-model:value="formData.roleName"
-            placeholder="请输入角色名称"
+            :placeholder="$t('system.role.form.roleName')"
           />
         </a-form-item>
-        <a-form-item label="描述" name="description">
+        <a-form-item :label="$t('system.role.description')" name="description">
           <a-textarea
             v-model:value="formData.description"
-            placeholder="请输入描述"
+            :placeholder="$t('system.role.form.description')"
             :rows="4"
           />
         </a-form-item>
@@ -147,6 +147,7 @@
  */
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import {
@@ -157,6 +158,7 @@ import { getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
 import type { Role } from './types'
 
+const { t } = useI18n()
 const { dictItems: statusOptions } = useDict('status')
 const dictOptions = computed(() => ({ status: statusOptions.value }))
 
@@ -247,7 +249,7 @@ const handleRequest = async (params: any) => {
       total: res.total
     }
   } catch (error) {
-    message.error('获取角色列表失败')
+    message.error(t('system.role.message.loadListFailed'))
     return {
       success: false,
       data: [],
@@ -274,7 +276,7 @@ const handleDelete = async (id: string) => {
     // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (error) {
-    message.error('删除失败')
+    message.error(t('system.role.message.deleteFailed'))
   }
 }
 
@@ -283,7 +285,7 @@ const handleDelete = async (id: string) => {
  */
 const handleBatchDelete = async () => {
   if (selectedRowKeys.value.length === 0) {
-    message.warning('请选择要删除的角色')
+    message.warning(t('system.role.message.selectToDelete'))
     return
   }
   try {
@@ -292,7 +294,7 @@ const handleBatchDelete = async () => {
     await tableRef.value?.refresh?.()
     selectedRowKeys.value = []
   } catch (error) {
-    message.error('批量删除失败')
+    message.error(t('system.role.message.batchDeleteFailed'))
   }
 }
 
@@ -308,16 +310,16 @@ const formData = ref({
   status: true
 })
 
-const rules = ref({
+const rules = computed(() => ({
   roleCode: [
-    { required: true, message: '请输入角色编码', trigger: 'blur' },
-    { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('system.role.form.roleCode'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('system.role.form.fieldLengthRange'), trigger: 'blur' },
   ],
   roleName: [
-    { required: true, message: '请输入角色名称', trigger: 'blur' },
-    { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
-  ]
-})
+    { required: true, message: t('system.role.form.roleName'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('system.role.form.fieldLengthRange'), trigger: 'blur' },
+  ],
+}))
 
 /**
  * 打开新增弹窗

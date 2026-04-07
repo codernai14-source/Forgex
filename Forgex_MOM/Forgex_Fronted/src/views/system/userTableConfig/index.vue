@@ -464,12 +464,8 @@ const handleSubmit = async () => {
       pageSize: formData.pageSize,
       columns: payloadColumns,
     })
-    message.success('保存成功')
     dialogVisible.value = false
     await fetchData()
-  } catch (error) {
-    console.error('save user table config failed', error)
-    message.error('保存失败')
   } finally {
     saving.value = false
   }
@@ -486,14 +482,8 @@ const handleResetUserConfig = (record: UserTableConfigRow) => {
     okText: '确认',
     cancelText: '取消',
     onOk: async () => {
-      try {
-        await resetUserColumns(record.tableCode)
-        message.success('重置成功')
-        await fetchData()
-      } catch (error) {
-        console.error('reset user table config failed', error)
-        message.error('重置失败')
-      }
+      await resetUserColumns(record.tableCode)
+      await fetchData()
     },
   })
 }

@@ -18,6 +18,9 @@ export default {
   reset: 'リセット',
   export: 'エクスポート',
   import: 'インポート',
+  create: '作成',
+  update: '更新',
+  logout: 'ログアウト',
   refresh: '更新',
   close: '閉じる',
   back: '戻る',
@@ -27,6 +30,22 @@ export default {
   confirm: '確認',
   view: '表示',
   detail: '詳細',
+  action: '操作',
+  expand: '展開',
+  collapse: '折りたたむ',
+
+  /** {@link I18nInput} */
+  i18nInput: {
+    configureTooltip: '多言語を設定',
+    modalTitle: '多言語設定',
+    defaultTag: '既定',
+    placeholder: '{lang}の翻訳を入力',
+    tipTitle: 'ヒント',
+    tipDesc: '各言語の翻訳を入力してください。未入力の言語は既定値を使用します。',
+    columnLang: '言語',
+    columnValue: '翻訳',
+    loadLanguagesFailed: '言語一覧の読み込みに失敗しました',
+  },
 
   // ステータス
   status: 'ステータス',

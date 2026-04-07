@@ -18,4 +18,6 @@ export default {
   dictCode: '辞書コード',
   required: '必須',
   downloadTemplate: 'テンプレートダウンロード',
+  exportConfig: 'エクスポート設定',
+  importConfig: 'インポート設定',
 }

@@ -28,7 +28,22 @@ export default {
   view: '查看',
   detail: '详情',
   action: '操作',
-  
+  expand: '展开',
+  collapse: '收起',
+
+  /** 多语言输入组件 {@link I18nInput} */
+  i18nInput: {
+    configureTooltip: '配置多语言',
+    modalTitle: '多语言配置',
+    defaultTag: '默认',
+    placeholder: '请输入{lang}翻译',
+    tipTitle: '提示',
+    tipDesc: '请为每种语言配置对应的翻译文本。未填写的语言将使用默认值。',
+    columnLang: '语言',
+    columnValue: '翻译内容',
+    loadLanguagesFailed: '加载语言列表失败',
+  },
+
   // 状态
   status: '状态',
   enabled: '启用',
