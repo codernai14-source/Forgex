@@ -6,13 +6,17 @@ import com.forgex.workflow.client.dto.SysMessageSendRequest;
 import com.forgex.workflow.client.dto.TemplateMessageSendRequest;
 import com.forgex.workflow.domain.entity.WfTaskExecution;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -87,10 +91,22 @@ public class WorkflowNotificationService {
 
     private static final String APPROVAL_PENDING_LINK = "/workspace/approval/my/pending";
     private static final String APPROVAL_INITIATED_LINK = "/workspace/approval/my/initiated";
+    private static final String HEADER_USER_ID = "X-User-Id";
+    private static final String HEADER_TENANT_ID = "X-Tenant-Id";
+    private static final String HEADER_LEGACY_TENANT_ID = "Tenant-Id";
+    private static final String LOGIN_MESSAGE_NOT_LOGIN = "\u672A\u767B\u5F55";
+    private static final String LOGIN_MESSAGE_EXPIRED = "\u767B\u5F55\u8FC7\u671F";
 
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final SysMessageClient sysMessageClient;
+
+    private enum TemplateSendResult {
+        SUCCESS,
+        FAILED,
+        AUTH_MISSING,
+        AUTH_FAILED
+    }
 
     /**
      * 通知待审批人。
@@ -113,15 +129,22 @@ public class WorkflowNotificationService {
         Map<String, Object> dataMap = buildPendingDataMap(execution, node);
 
         // 尝试使用模板发送
-        boolean templateSent = trySendByTemplate(TEMPLATE_PENDING, receiverIds, dataMap, BIZ_TYPE_PENDING);
+        TemplateSendResult templateResult = trySendByTemplate(
+                TEMPLATE_PENDING, receiverIds, dataMap, BIZ_TYPE_PENDING, execution.getId());
+        if (templateResult == TemplateSendResult.SUCCESS) {
+            return;
+        }
+        if (templateResult == TemplateSendResult.AUTH_MISSING || templateResult == TemplateSendResult.AUTH_FAILED) {
+            return;
+        }
 
         // 模板发送失败，降级为直发模式
-        if (!templateSent) {
+        if (templateResult == TemplateSendResult.FAILED) {
             log.info("模板消息发送失败，降级为直发模式: templateCode={}", TEMPLATE_PENDING);
             String title = "【审批待办】" + defaultTaskName(execution);
             String content = buildPendingContent(execution, node);
             sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
-                    APPROVAL_PENDING_LINK, BIZ_TYPE_PENDING, MESSAGE_TYPE_NOTICE);
+                    APPROVAL_PENDING_LINK, BIZ_TYPE_PENDING, MESSAGE_TYPE_NOTICE, execution.getId(), TEMPLATE_PENDING);
         }
     }
 
@@ -144,15 +167,22 @@ public class WorkflowNotificationService {
         Map<String, Object> dataMap = buildApprovedDataMap(execution, currentNode, approverName, comment);
 
         // 尝试使用模板发送
-        boolean templateSent = trySendByTemplate(TEMPLATE_APPROVED, receiverIds, dataMap, BIZ_TYPE_APPROVED);
+        TemplateSendResult templateResult = trySendByTemplate(
+                TEMPLATE_APPROVED, receiverIds, dataMap, BIZ_TYPE_APPROVED, execution.getId());
+        if (templateResult == TemplateSendResult.SUCCESS) {
+            return;
+        }
+        if (templateResult == TemplateSendResult.AUTH_MISSING || templateResult == TemplateSendResult.AUTH_FAILED) {
+            return;
+        }
 
         // 模板发送失败，降级为直发模式
-        if (!templateSent) {
+        if (templateResult == TemplateSendResult.FAILED) {
             log.info("模板消息发送失败，降级为直发模式: templateCode={}", TEMPLATE_APPROVED);
             String title = "【审批通过】" + defaultTaskName(execution);
             String content = buildApprovedContent(execution, currentNode, approverName, comment);
             sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
-                    APPROVAL_INITIATED_LINK, BIZ_TYPE_APPROVED, MESSAGE_TYPE_NOTICE);
+                    APPROVAL_INITIATED_LINK, BIZ_TYPE_APPROVED, MESSAGE_TYPE_NOTICE, execution.getId(), TEMPLATE_APPROVED);
         }
     }
 
@@ -180,15 +210,22 @@ public class WorkflowNotificationService {
         Map<String, Object> dataMap = buildRejectedDataMap(execution, currentNode, approverName, comment, rejectType);
 
         // 尝试使用模板发送
-        boolean templateSent = trySendByTemplate(TEMPLATE_REJECTED, receiverIds, dataMap, BIZ_TYPE_REJECTED);
+        TemplateSendResult templateResult = trySendByTemplate(
+                TEMPLATE_REJECTED, receiverIds, dataMap, BIZ_TYPE_REJECTED, execution.getId());
+        if (templateResult == TemplateSendResult.SUCCESS) {
+            return;
+        }
+        if (templateResult == TemplateSendResult.AUTH_MISSING || templateResult == TemplateSendResult.AUTH_FAILED) {
+            return;
+        }
 
         // 模板发送失败，降级为直发模式
-        if (!templateSent) {
+        if (templateResult == TemplateSendResult.FAILED) {
             log.info("模板消息发送失败，降级为直发模式: templateCode={}", TEMPLATE_REJECTED);
             String title = "【审批驳回】" + defaultTaskName(execution);
             String content = buildRejectedContent(execution, currentNode, approverName, comment, rejectType);
             sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
-                    APPROVAL_INITIATED_LINK, BIZ_TYPE_REJECTED, MESSAGE_TYPE_WARNING);
+                    APPROVAL_INITIATED_LINK, BIZ_TYPE_REJECTED, MESSAGE_TYPE_WARNING, execution.getId(), TEMPLATE_REJECTED);
         }
     }
 
@@ -209,15 +246,22 @@ public class WorkflowNotificationService {
         Map<String, Object> dataMap = buildFinishedDataMap(execution);
 
         // 尝试使用模板发送
-        boolean templateSent = trySendByTemplate(TEMPLATE_FINISHED, receiverIds, dataMap, BIZ_TYPE_FINISHED);
+        TemplateSendResult templateResult = trySendByTemplate(
+                TEMPLATE_FINISHED, receiverIds, dataMap, BIZ_TYPE_FINISHED, execution.getId());
+        if (templateResult == TemplateSendResult.SUCCESS) {
+            return;
+        }
+        if (templateResult == TemplateSendResult.AUTH_MISSING || templateResult == TemplateSendResult.AUTH_FAILED) {
+            return;
+        }
 
         // 模板发送失败，降级为直发模式
-        if (!templateSent) {
+        if (templateResult == TemplateSendResult.FAILED) {
             log.info("模板消息发送失败，降级为直发模式: templateCode={}", TEMPLATE_FINISHED);
             String title = "【审批完成】" + defaultTaskName(execution);
             String content = buildFinishedContent(execution);
             sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
-                    APPROVAL_INITIATED_LINK, BIZ_TYPE_FINISHED, MESSAGE_TYPE_NOTICE);
+                    APPROVAL_INITIATED_LINK, BIZ_TYPE_FINISHED, MESSAGE_TYPE_NOTICE, execution.getId(), TEMPLATE_FINISHED);
         }
     }
 
@@ -228,10 +272,17 @@ public class WorkflowNotificationService {
      * @param receiverIds  接收人ID列表
      * @param dataMap      占位符数据
      * @param bizType      业务类型
-     * @return true表示发送成功，false表示发送失败或模板不存在
+     * @return 模板发送结果
      */
-    private boolean trySendByTemplate(String templateCode, List<Long> receiverIds,
-                                       Map<String, Object> dataMap, String bizType) {
+    private TemplateSendResult trySendByTemplate(String templateCode,
+                                                 List<Long> receiverIds,
+                                                 Map<String, Object> dataMap,
+                                                 String bizType,
+                                                 Long executionId) {
+        if (!hasAuthContext(executionId, templateCode, null)) {
+            return TemplateSendResult.AUTH_MISSING;
+        }
+
         try {
             TemplateMessageSendRequest request = new TemplateMessageSendRequest();
             request.setTemplateCode(templateCode);
@@ -241,18 +292,35 @@ public class WorkflowNotificationService {
 
             R<Integer> result = sysMessageClient.sendByTemplate(request);
             if (result != null && result.getCode() == 200 && result.getData() != null && result.getData() > 0) {
-                log.info("模板消息发送成功: templateCode={}, receiverCount={}", templateCode, result.getData());
-                return true;
+                log.info("模板消息发送成功: templateCode={}, receiverCount={}, executionId={}",
+                        templateCode, result.getData(), executionId);
+                return TemplateSendResult.SUCCESS;
             }
 
-            log.warn("模板消息发送失败: templateCode={}, code={}, message={}",
+            if (isAuthFailure(result == null ? null : result.getMessage())) {
+                log.warn("模板消息发送鉴权失败，停止降级发送: templateCode={}, executionId={}, receiverUserId={}, code={}, message={}",
+                        templateCode,
+                        executionId,
+                        null,
+                        result == null ? null : result.getCode(),
+                        result == null ? null : result.getMessage());
+                return TemplateSendResult.AUTH_FAILED;
+            }
+
+            log.warn("模板消息发送失败: templateCode={}, executionId={}, code={}, message={}",
                     templateCode,
+                    executionId,
                     result == null ? null : result.getCode(),
                     result == null ? null : result.getMessage());
-            return false;
+            return TemplateSendResult.FAILED;
         } catch (Exception ex) {
-            log.warn("模板消息发送异常: templateCode={}", templateCode, ex);
-            return false;
+            if (isAuthFailure(ex.getMessage())) {
+                log.warn("模板消息发送异常且鉴权失败，停止降级发送: templateCode={}, executionId={}, receiverUserId={}",
+                        templateCode, executionId, null, ex);
+                return TemplateSendResult.AUTH_FAILED;
+            }
+            log.warn("模板消息发送异常: templateCode={}, executionId={}", templateCode, executionId, ex);
+            return TemplateSendResult.FAILED;
         }
     }
 
@@ -266,15 +334,22 @@ public class WorkflowNotificationService {
      * @param linkUrl     跳转链接
      * @param bizType     业务类型
      * @param messageType 消息类型
+     * @param executionId 审批执行ID
+     * @param templateCode 模板编码
      */
     private void sendToUsersDirectly(Long tenantId,
-                                      Collection<Long> userIds,
-                                      String title,
-                                      String content,
-                                      String linkUrl,
-                                      String bizType,
-                                      String messageType) {
+                                     Collection<Long> userIds,
+                                     String title,
+                                     String content,
+                                     String linkUrl,
+                                     String bizType,
+                                     String messageType,
+                                     Long executionId,
+                                     String templateCode) {
         if (tenantId == null || userIds == null || userIds.isEmpty()) {
+            return;
+        }
+        if (!hasAuthContext(executionId, templateCode, null)) {
             return;
         }
 
@@ -299,7 +374,7 @@ public class WorkflowNotificationService {
             request.setContent(content);
             request.setLinkUrl(linkUrl);
             request.setBizType(bizType);
-            sendSafely(request);
+            sendSafely(request, executionId, templateCode);
         }
     }
 
@@ -308,19 +383,72 @@ public class WorkflowNotificationService {
      *
      * @param request 消息请求参数
      */
-    private void sendSafely(SysMessageSendRequest request) {
+    private void sendSafely(SysMessageSendRequest request, Long executionId, String templateCode) {
         try {
             R<Long> result = sysMessageClient.send(request);
             if (result == null || result.getCode() != 200) {
-                log.warn("工作流通知发送失败，receiverUserId={}, code={}, message={}",
+                if (isAuthFailure(result == null ? null : result.getMessage())) {
+                    log.warn("工作流通知发送鉴权失败，已跳过: executionId={}, templateCode={}, receiverUserId={}, code={}, message={}",
+                            executionId,
+                            templateCode,
+                            request.getReceiverUserId(),
+                            result == null ? null : result.getCode(),
+                            result == null ? null : result.getMessage());
+                    return;
+                }
+                log.warn("工作流通知发送失败，executionId={}, templateCode={}, receiverUserId={}, code={}, message={}",
+                        executionId,
+                        templateCode,
                         request.getReceiverUserId(),
                         result == null ? null : result.getCode(),
                         result == null ? null : result.getMessage());
             }
         } catch (Exception ex) {
-            log.warn("工作流通知发送异常，receiverUserId={}, title={}",
-                    request.getReceiverUserId(), request.getTitle(), ex);
+            if (isAuthFailure(ex.getMessage())) {
+                log.warn("工作流通知发送异常且鉴权失败，已跳过: executionId={}, templateCode={}, receiverUserId={}, title={}",
+                        executionId, templateCode, request.getReceiverUserId(), request.getTitle(), ex);
+                return;
+            }
+            log.warn("工作流通知发送异常，executionId={}, templateCode={}, receiverUserId={}, title={}",
+                    executionId, templateCode, request.getReceiverUserId(), request.getTitle(), ex);
         }
+    }
+
+    private boolean hasAuthContext(Long executionId, String templateCode, Long receiverUserId) {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+            List<String> missingHeaders = List.of("RequestContext", HEADER_USER_ID, HEADER_TENANT_ID);
+            log.warn("工作流通知鉴权上下文缺失，跳过发送: executionId={}, templateCode={}, receiverUserId={}, missingHeaders={}",
+                    executionId, templateCode, receiverUserId, missingHeaders);
+            return false;
+        }
+
+        HttpServletRequest request = attributes.getRequest();
+        List<String> missingHeaders = new ArrayList<>();
+        if (!StringUtils.hasText(request.getHeader(HEADER_USER_ID))) {
+            missingHeaders.add(HEADER_USER_ID);
+        }
+
+        String tenantId = request.getHeader(HEADER_TENANT_ID);
+        String legacyTenantId = request.getHeader(HEADER_LEGACY_TENANT_ID);
+        if (!StringUtils.hasText(tenantId) && !StringUtils.hasText(legacyTenantId)) {
+            missingHeaders.add(HEADER_TENANT_ID);
+        }
+
+        if (!missingHeaders.isEmpty()) {
+            log.warn("工作流通知鉴权上下文缺失，跳过发送: executionId={}, templateCode={}, receiverUserId={}, missingHeaders={}",
+                    executionId, templateCode, receiverUserId, missingHeaders);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isAuthFailure(String message) {
+        if (!StringUtils.hasText(message)) {
+            return false;
+        }
+        String normalizedMessage = message.trim();
+        return normalizedMessage.contains(LOGIN_MESSAGE_NOT_LOGIN)
+                || normalizedMessage.contains(LOGIN_MESSAGE_EXPIRED);
     }
 
     // ==================== 模板数据构建方法 ====================
@@ -488,3 +616,4 @@ public class WorkflowNotificationService {
         return StringUtils.hasText(value) ? value.trim() : defaultValue;
     }
 }
+
