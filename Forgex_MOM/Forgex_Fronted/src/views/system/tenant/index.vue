@@ -401,7 +401,7 @@ async function handleSave() {
     if (e.errorFields) {
       return
     }
-    message.error(e.message || '保存失败')
+    // 错误信息由后端返回，在 http 拦截器中统一处理
   } finally {
     saving.value = false
   }
@@ -448,18 +448,13 @@ function handleCancel() {
 const handleInitProgressFinish = () => {
   progressDialogVisible.value = false
   currentTaskId.value = undefined
-  message.success('租户初始化完成')
+  // 成功信息由后端返回，在 http 拦截器中统一处理
   tableRef.value?.refresh?.()
 }
 
 async function handleDelete(record: TenantDTO) {
-  try {
-    await deleteTenant({ id: record.id })
-    // 成功提示由后端返回，在 http 拦截器中统一处理
-    await tableRef.value?.refresh?.()
-  } catch (e: any) {
-    message.error(e.message || '删除失败')
-  }
+  await deleteTenant({ id: record.id })
+  await tableRef.value?.refresh?.()
 }
 
 onMounted(() => {

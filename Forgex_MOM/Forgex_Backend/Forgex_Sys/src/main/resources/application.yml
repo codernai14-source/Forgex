@@ -44,3 +44,12 @@ logging:
     root: INFO
 server:
   port: 9002
+
+# 仪表盘与产品信息（可被 Nacos 覆盖）
+forgex:
+  application:
+    version: 1.0.0
+  dashboard:
+    map-longitude: 116.407526
+    map-latitude: 39.90403
+    map-location-name: 北京市

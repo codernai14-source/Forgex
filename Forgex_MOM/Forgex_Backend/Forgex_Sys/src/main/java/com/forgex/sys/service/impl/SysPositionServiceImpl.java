@@ -155,20 +155,35 @@ public class SysPositionServiceImpl implements SysPositionService {
         return rows > 0;
     }
     
+    /**
+     * 逻辑删除职位。
+     * <p>
+     * 必须使用 {@link com.baomidou.mybatisplus.core.mapper.BaseMapper#delete(com.baomidou.mybatisplus.core.conditions.Wrapper)}
+     * （或 {@code deleteById}）走 MyBatis-Plus 内置的逻辑删除流程。
+     * 父类 {@link com.forgex.common.base.BaseEntity#deleted} 标注了 {@link com.baomidou.mybatisplus.annotation.TableLogic}，
+     * 若使用 {@code updateById} 且仅 {@code setDeleted(true)}，该字段不会进入 UPDATE 的 SET 子句，
+     * 实际只会更新自动填充字段（如 {@code update_time}），导致接口提示成功但列表仍可见。
+     * </p>
+     *
+     * @param id       职位主键，不可为空
+     * @param tenantId 租户 ID，与列表/详情查询范围一致；为 {@code null} 时仅按主键删除（依赖租户插件兜底）
+     * @return 是否删除成功（影响行数大于 0）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id, Long tenantId) {
         // TODO: 检查是否有用户关联
-        
-        // 逻辑删除
-        SysPosition position = new SysPosition();
-        position.setId(id);
-        position.setDeleted(true);
-        
-        int rows = positionMapper.updateById(position);
-        
+
+        LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysPosition::getId, id);
+        if (tenantId != null) {
+            wrapper.eq(SysPosition::getTenantId, tenantId);
+        }
+
+        int rows = positionMapper.delete(wrapper);
+
         log.info("删除职位成功，职位ID：{}", id);
-        
+
         return rows > 0;
     }
     

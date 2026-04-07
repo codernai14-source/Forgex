@@ -122,4 +122,5 @@ export default {
   
   // 面包屑
   home: '首页',
+  personalHomepage: '个人首页',
 }

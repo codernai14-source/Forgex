@@ -22,7 +22,7 @@
             <component v-if="menu.icon" :is="getIcon(menu.icon)" />
             <FileOutlined v-else />
           </template>
-          <span class="mini-menu-title">{{ menu.title }}</span>
+          <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
@@ -54,7 +54,7 @@
               <FolderOutlined v-else />
             </template>
             <template #title>
-              <span class="menu-text" :title="item.title">{{ truncateText(item.title, 8) }}</span>
+              <span class="menu-text" :title="item.title">{{ item.title }}</span>
             </template>
             <a-menu-item
               v-for="child in item.children"
@@ -64,7 +64,7 @@
                 <component v-if="child.icon" :is="getIcon(child.icon)" />
                 <FileOutlined v-else />
               </template>
-              <span class="menu-text" :title="child.title">{{ truncateText(child.title, 6) }}</span>
+              <span class="menu-text" :title="child.title">{{ child.title }}</span>
             </a-menu-item>
           </a-sub-menu>
 
@@ -74,7 +74,7 @@
               <component v-if="item.icon" :is="getIcon(item.icon)" />
               <FileOutlined v-else />
             </template>
-            <span class="menu-text" :title="item.title">{{ truncateText(item.title, item.menuLevel === 1 ? 8 : 6) }}</span>
+            <span class="menu-text" :title="item.title">{{ item.title }}</span>
           </a-menu-item>
         </template>
       </a-menu>
@@ -245,19 +245,32 @@ const currentMenus = computed(() => {
 
 // 监听 activeKey 变化
 watch(
-  () => props.activeKey,
-  (newKey) => {
-    if (newKey) {
-      selectedKeys.value = [newKey]
+  () => [props.activeKey, props.menus],
+  ([newKey]) => {
+    const normalizedKey = String(newKey || '').split('?')[0]
+    if (!normalizedKey) {
+      selectedKeys.value = []
+      openKeys.value = []
+      return
+    }
+    selectedKeys.value = [normalizedKey]
       
       // 自动展开父菜单
-      const menu = findMenuByKey(props.menus, newKey)
-      if (menu && menu.parentKey) {
-        if (!openKeys.value.includes(menu.parentKey)) {
-          openKeys.value.push(menu.parentKey)
-        }
+      const menuPath = findMenuPath(props.menus, normalizedKey)
+      if (!menuPath || menuPath.length === 0) {
+        openKeys.value = []
+        return
       }
-    }
+
+      const firstLevelMenu = menuPath.find(menu => menu.menuLevel === 1) || menuPath[0]
+      if (firstLevelMenu) {
+        selectedFirstLevelKeys.value = [firstLevelMenu.key]
+      }
+
+      openKeys.value = menuPath
+        .slice(0, -1)
+        .filter(menu => menu.key !== firstLevelMenu?.key)
+        .map(menu => menu.key)
   },
   { immediate: true }
 )
@@ -270,6 +283,22 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
     }
     if (menu.children) {
       const found = findMenuByKey(menu.children, key)
+      if (found) {
+        return found
+      }
+    }
+  }
+  return null
+}
+
+function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = []): MenuItem[] | null {
+  for (const menu of menus) {
+    const currentPath = [...parentPath, menu]
+    if (menu.key === key) {
+      return currentPath
+    }
+    if (menu.children && menu.children.length > 0) {
+      const found = findMenuPath(menu.children, key, currentPath)
       if (found) {
         return found
       }
@@ -442,19 +471,6 @@ const onCollapse = (collapsed: boolean) => {
   }
 }
 
-.mini-menu-title {
-  font-size: 13px;
-  margin-top: 4px;
-  text-align: center;
-  line-height: 1.2;
-  width: 100%;
-  // 允许文字换行，避免四字菜单名显示不全
-  word-break: break-all;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-
 .app-sidebar {
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
@@ -613,6 +629,22 @@ const onCollapse = (collapsed: boolean) => {
   white-space: nowrap;
   max-width: 100%;
   vertical-align: middle;
+  display: inline-block;
+}
+
+// 一级菜单标题样式（支持多行显示）
+.mini-menu-title {
+  font-size: 13px;
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.3;
+  width: 100%;
+  // 显示最多2行，超出显示省略号
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
 }
 
 // 响应式适配

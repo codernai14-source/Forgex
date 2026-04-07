@@ -27,6 +27,24 @@ export default {
   confirm: '確認',
   view: '查看',
   detail: '詳情',
+  action: '操作',
+  
+  // 展開/收起
+  expand: '展開',
+  collapse: '收起',
+
+  /** 多語言輸入組件 {@link I18nInput} */
+  i18nInput: {
+    configureTooltip: '配置多語言',
+    modalTitle: '多語言配置',
+    defaultTag: '預設',
+    placeholder: '請輸入{lang}翻譯',
+    tipTitle: '提示',
+    tipDesc: '請為每種語言配置對應的翻譯文字。未填寫的語言將使用預設值。',
+    columnLang: '語言',
+    columnValue: '翻譯內容',
+    loadLanguagesFailed: '加載語言列表失敗',
+  },
 
   // 狀態
   status: '狀態',

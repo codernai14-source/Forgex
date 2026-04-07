@@ -38,6 +38,7 @@ import com.forgex.workflow.mapper.WfTaskNodeApproverMapper;
 import com.forgex.workflow.mapper.WfTaskNodeConfigMapper;
 import com.forgex.workflow.service.IWfCallbackService;
 import com.forgex.workflow.service.IWfEngineService;
+import com.forgex.workflow.service.WorkflowNotificationService;
 import com.forgex.workflow.service.interpreter.ApprovalContext;
 import com.forgex.workflow.service.interpreter.ApprovalInterpreterRegistry;
 import com.forgex.workflow.service.interpreter.IApprovalInterpreter;
@@ -75,6 +76,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
     private final ApprovalInterpreterRegistry interpreterRegistry;
     private final SysUserClient sysUserClient;
     private final IWfCallbackService callbackService;
+    private final WorkflowNotificationService workflowNotificationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -272,6 +274,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
         });
 
         callbackService.triggerCallback(executionId, status);
+        workflowNotificationService.notifyFinished(execution, status);
         log.info("审批流程结束，executionId={}, status={}", executionId, status);
     }
 
@@ -317,6 +320,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
         }
 
         createMyTask(execution, node, approvers);
+        workflowNotificationService.notifyPendingApprovers(execution, node, approvers);
         return true;
     }
 

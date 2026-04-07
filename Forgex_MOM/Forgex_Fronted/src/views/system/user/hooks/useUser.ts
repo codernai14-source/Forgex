@@ -59,23 +59,10 @@ export function useUser() {
    */
   async function fetchUserList() {
     loading.value = true
-    try {
-      const query: UserQuery = {
-        ...queryForm,
-        pageNum: pagination.current,
-        pageSize: pagination.pageSize,
-      }
-      
-      // http 拦截器已经返回了 data 字段
-      const data = await userApi.getUserList(query)
-      userList.value = data.records || []
-      pagination.total = data.total || 0
-    } catch (error) {
-      console.error('获取用户列表失败:', error)
-      message.error('获取用户列表失败')
-    } finally {
-      loading.value = false
-    }
+    const data = await userApi.getUserList(query)
+    userList.value = data.records || []
+    pagination.total = data.total || 0
+    loading.value = false
   }
   
   /**
@@ -139,14 +126,14 @@ export function useUser() {
    */
   async function handleDelete(id: string) {
     Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除该用户吗？',
+      title: t('common.confirm'),
+      content: t('system.user.message.deleteConfirm'),
       onOk: async () => {
         try {
           await userApi.deleteUser(id)
           fetchUserList()
         } catch (error) {
-          console.error('删除用户失败:', error)
+          console.error(t('system.user.message.deleteFailed'), error)
         }
       },
     })
@@ -165,20 +152,20 @@ export function useUser() {
    */
   async function handleBatchDelete() {
     if (selectedRowKeys.value.length === 0) {
-      message.warning('请选择要删除的用户')
+      message.warning(t('system.user.message.selectToDelete'))
       return
     }
     
     Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除选中的 ${selectedRowKeys.value.length} 个用户吗？`,
+      title: t('common.confirm'),
+      content: t('system.user.message.batchDeleteConfirm', { count: selectedRowKeys.value.length }),
       onOk: async () => {
         try {
           await userApi.batchDeleteUsers(selectedRowKeys.value)
           selectedRowKeys.value = []
           fetchUserList()
         } catch (error) {
-          console.error('批量删除失败:', error)
+          console.error(t('system.user.message.batchDeleteFailed'), error)
         }
       },
     })
@@ -196,14 +183,10 @@ export function useUser() {
    */
   async function handleResetPassword(id: string) {
     Modal.confirm({
-      title: '确认重置密码',
+      title: t('system.user.resetPassword'),
       content: t('system.user.message.resetPasswordConfirm'),
       onOk: async () => {
-        try {
-          await userApi.resetPassword(id)
-        } catch (error) {
-          console.error('密码重置失败:', error)
-        }
+        await userApi.resetPassword(id)
       },
     })
   }
@@ -221,16 +204,16 @@ export function useUser() {
    * @throws 更新失败时在控制台输出错误
    */
   async function handleUpdateStatus(id: string, status: boolean) {
-    const statusText = status ? t('common.enabled') : t('common.disabled')
+    const actionText = status ? t('system.user.statusActive') : t('system.user.statusInactive')
     Modal.confirm({
-      title: `${t('common.confirm')}${statusText}`,
-      content: `${t('common.confirm')}${statusText}${t('common.confirmDeleteMessage')}`,
+      title: t('common.confirm'),
+      content: `${t('common.confirm')}${actionText}${t('common.confirmDeleteMessage')}`,
       onOk: async () => {
         try {
           await userApi.updateUserStatus(id, status)
           fetchUserList()
         } catch (error) {
-          console.error(`${statusText}${t('common.failed')}:`, error)
+          console.error(t('system.user.message.updateStatusFailed'), error)
         }
       },
     })
@@ -276,7 +259,7 @@ export function useUser() {
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('导出失败:', error)
+      console.error(t('common.exportFailed'), error)
     } finally {
       loading.value = false
     }

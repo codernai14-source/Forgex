@@ -74,6 +74,8 @@ export default {
   failWindowMinutes: '连续登录失败持续时间 (分钟)',
   maxFailCount: '连续登录失败次数',
   lockMinutes: '锁定时间 (分钟)',
+  sessionTimeoutNoticeTitle: '登录会话过期时间不在此页面维护',
+  sessionTimeoutNoticeDesc: '会话过期时间只认 Nacos 的 sa-token.yml。这里不提供按小时或分钟写入入口，避免形成第二套配置源；如需调整，请修改 Nacos 中的 Sa-Token 超时配置并刷新相关服务。',
 
   transportCrypto: '传输加密',
   transportAlgorithm: '传输算法',

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.exception.BusinessException;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.sys.domain.dto.SysMessageSendDTO;
 import com.forgex.sys.domain.entity.SysMessage;
 import com.forgex.sys.domain.entity.SysTenantMessageWhitelist;
@@ -55,6 +56,21 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SysMessageServiceImpl implements SysMessageService {
+
+    /**
+     * 站内人工发送消息时，表字段 {@code message_type} 非空且无库默认值时的默认类型：通知。
+     *
+     * @see com.forgex.sys.domain.entity.SysMessage#getMessageType()
+     */
+    private static final String DEFAULT_MESSAGE_TYPE = "NOTICE";
+
+    /**
+     * 站内消息默认渠道：站内（与 {@code scope=INTERNAL} 语义一致，均为站内场景）。
+     *
+     * @see com.forgex.sys.domain.entity.SysMessage#getPlatform()
+     */
+    private static final String DEFAULT_PLATFORM = "INTERNAL";
+
     /**
      * 消息Mapper
      */
@@ -156,8 +172,13 @@ public class SysMessageServiceImpl implements SysMessageService {
         msg.setTenantId(receiverTenantId);
         msg.setSenderTenantId(senderTenantId);
         msg.setSenderUserId(senderUserId);
+        // sender_name 表字段非空且无默认值，插入时必须赋值（见实体 SysMessage#senderName 说明）
+        msg.setSenderName(resolveSenderName(senderUserId));
         msg.setReceiverUserId(dto.getReceiverUserId());
         msg.setScope(scope);
+        // message_type、platform 表字段非空且无默认值，须显式写入；未传时使用站内通知默认值
+        msg.setMessageType(resolveMessageType(dto.getMessageType()));
+        msg.setPlatform(resolvePlatform(dto.getPlatform()));
         msg.setTitle(dto.getTitle());
         msg.setContent(dto.getContent());
         msg.setLinkUrl(dto.getLinkUrl());
@@ -407,6 +428,54 @@ public class SysMessageServiceImpl implements SysMessageService {
      * @param receiverTenantId 接收租户ID
      * @return 消息VO
      */
+    /**
+     * 解析发送人展示名称，供写入 {@link SysMessage#setSenderName(String)}。
+     * <p>
+     * 与 {@link com.forgex.sys.domain.entity.SysMessage#getSenderName()} 约定一致：
+     * 优先使用当前登录账号（Session {@code LOGIN_ACCOUNT}，见 {@link CurrentUserUtils#getAccount()}）；
+     * 若不可用则使用 {@code 用户({userId})} 兜底；极端情况下回退为 {@code 系统}。
+     * </p>
+     *
+     * @param senderUserId 发送方用户 ID，用于账号缺失时的展示文本
+     * @return 非空字符串，可直接写入数据库 {@code sender_name} 列
+     */
+    private String resolveSenderName(Long senderUserId) {
+        String account = CurrentUserUtils.getAccount();
+        if (StringUtils.hasText(account)) {
+            return account.trim();
+        }
+        if (senderUserId != null) {
+            return "用户(" + senderUserId + ")";
+        }
+        return "系统";
+    }
+
+    /**
+     * 解析消息类型，写入 {@link SysMessage#setMessageType(String)}。
+     *
+     * @param raw 调用方传入值，允许为空
+     * @return 大写非空串，默认 {@link #DEFAULT_MESSAGE_TYPE}
+     */
+    private String resolveMessageType(String raw) {
+        if (StringUtils.hasText(raw)) {
+            return raw.trim().toUpperCase();
+        }
+        return DEFAULT_MESSAGE_TYPE;
+    }
+
+    /**
+     * 解析消息渠道，写入 {@link SysMessage#setPlatform(String)}。
+     *
+     * @param raw 调用方传入值，允许为空
+     * @return 大写非空串，默认 {@link #DEFAULT_PLATFORM}
+     */
+    private String resolvePlatform(String raw) {
+        if (StringUtils.hasText(raw)) {
+            return raw.trim().toUpperCase();
+        }
+        return DEFAULT_PLATFORM;
+    }
+
     private SysMessageVO toVO(SysMessage msg, Long receiverTenantId) {
         // 创建VO对象
         SysMessageVO vo = new SysMessageVO();
@@ -418,6 +487,10 @@ public class SysMessageServiceImpl implements SysMessageService {
         vo.setReceiverTenantId(receiverTenantId);
         vo.setReceiverUserId(msg.getReceiverUserId());
         vo.setScope(msg.getScope());
+        vo.setMessageType(msg.getMessageType());
+        vo.setType(msg.getMessageType());
+        vo.setPlatform(msg.getPlatform());
+        vo.setSenderName(msg.getSenderName());
         vo.setTitle(msg.getTitle());
         vo.setContent(msg.getContent());
         vo.setLinkUrl(msg.getLinkUrl());

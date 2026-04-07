@@ -36,3 +36,6 @@ hs_err_pid*
 /.vscode/
 /Forgex_MOM/Forgex_Backend/Forgex_Job/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Sys/target/
+/Forgex_MOM/Forgex_Backend/Forgex_Auth/target/
+/Forgex_MOM/Forgex_Backend/Forgex_Workflow/target/
+/.tmp/

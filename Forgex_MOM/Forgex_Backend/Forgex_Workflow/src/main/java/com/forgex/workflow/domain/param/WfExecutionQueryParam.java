@@ -68,4 +68,15 @@ public class WfExecutionQueryParam {
      * 结束时间
      */
     private String endTime;
+
+    /**
+     * 我已处理列表：审批操作时间下限（含），格式 {@code yyyy-MM-dd HH:mm:ss}。
+     * <p>与 {@link #approveTimeEnd} 同时用于筛选「昨日处理」等场景。</p>
+     */
+    private String approveTimeBegin;
+
+    /**
+     * 我已处理列表：审批操作时间上限（含），格式 {@code yyyy-MM-dd HH:mm:ss}。
+     */
+    private String approveTimeEnd;
 }

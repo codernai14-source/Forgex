@@ -176,6 +176,7 @@ import { computed, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
+import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { useDict } from '@/hooks/useDict'
 import {
@@ -310,7 +311,7 @@ async function handleNodeConfig(record: WfTaskConfigSummaryDTO) {
   try {
     const editor = await getOrCreateDraftEditor({ taskCode: record.taskCode }, silentErrorConfig)
     router.push({
-      path: `/workflow/taskConfig/${editor.taskCode}/nodes`,
+      path: approvalRoutePaths.taskConfigNodes(editor.taskCode),
       query: {
         from: route.fullPath
       }
