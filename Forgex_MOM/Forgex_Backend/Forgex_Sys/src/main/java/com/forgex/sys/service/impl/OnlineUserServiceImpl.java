@@ -10,8 +10,10 @@ import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.dto.OnlineUserQueryDTO;
+import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.vo.OnlineUserVO;
+import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.service.IOnlineUserService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final SysUserMapper userMapper;
+    private final SysTenantMapper tenantMapper;
     private final LogoutAuditService logoutAuditService;
 
     /**
@@ -103,7 +106,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             return page;
         }
 
-        // 4) 关联查询用户最后登录信息（用于页面展示）
+        // 4) 关联查询用户信息（用于页面展示）
         List<Long> userIds = userInfoList.stream().map(u -> u.userId).filter(id -> id != null).distinct().collect(Collectors.toList());
         List<SysUser> users = userIds.isEmpty()
                 ? Collections.emptyList()
@@ -112,6 +115,15 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         java.util.Map<Long, SysUser> userMap = users.stream().collect(Collectors.toMap(SysUser::getId, u -> u, (a, b) -> a));
 
+        // 5) 关联查询租户信息（用于页面展示）
+        List<Long> tenantIds = userInfoList.stream().map(u -> u.tenantId).filter(id -> id != null).distinct().collect(Collectors.toList());
+        List<SysTenant> tenants = tenantIds.isEmpty()
+                ? Collections.emptyList()
+                : tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
+                .in(SysTenant::getId, tenantIds));
+
+        java.util.Map<Long, SysTenant> tenantMap = tenants.stream().collect(Collectors.toMap(SysTenant::getId, t -> t, (a, b) -> a));
+
         List<OnlineUserVO> all = userInfoList.stream().map(userInfo -> {
             OnlineUserVO vo = new OnlineUserVO();
             vo.setToken(userInfo.token);
@@ -119,12 +131,22 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             vo.setTenantId(userInfo.tenantId);
             vo.setAccount(userInfo.account);
             vo.setTtlSeconds(userInfo.ttlSeconds);
+            
+            // 设置用户名称
             SysUser u = userInfo.userId == null ? null : userMap.get(userInfo.userId);
             if (u != null) {
+                vo.setUsername(u.getUsername());
                 vo.setLastLoginTime(u.getLastLoginTime());
                 vo.setLastLoginIp(u.getLastLoginIp());
                 vo.setLastLoginRegion(u.getLastLoginRegion());
             }
+            
+            // 设置租户名称
+            SysTenant t = userInfo.tenantId == null ? null : tenantMap.get(userInfo.tenantId);
+            if (t != null) {
+                vo.setTenantName(t.getTenantName());
+            }
+            
             return vo;
         }).collect(Collectors.toList());
 
