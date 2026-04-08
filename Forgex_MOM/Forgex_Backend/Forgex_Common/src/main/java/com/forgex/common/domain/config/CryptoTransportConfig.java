@@ -17,25 +17,40 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 传输加密配置。
+ * 传输加密配置
  * <p>
- * 描述前端到后端的入参加密方案及密钥材料（当前支持 SM2）。
- * 字段：
- * - {@code algorithm} 算法名称（如 SM2）；
- * - {@code publicKey} 公钥（Base64）；
- * - {@code privateKey} 私钥（Base64）；
- * - {@code cipher} 密文格式（BCD/Hex 等）。
+ * 描述前端到后端的入参加密方案及密钥材料，用于保护敏感数据在传输过程中的安全。
+ * 当前支持 SM2 国密算法。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-03-28
  */
 @Setter
 @Getter
 public class CryptoTransportConfig {
-    /** 算法名称 */
+    /**
+     * 算法名称
+     * <p>加密算法名称，如 SM2（国密椭圆曲线公钥密码算法）。</p>
+     */
     private String algorithm;
-    /** 公钥 Base64 */
+    
+    /**
+     * 公钥 Base64
+     * <p>加密使用的公钥，采用 Base64 编码。</p>
+     */
     private String publicKey;
-    /** 私钥 Base64 */
+    
+    /**
+     * 私钥 Base64
+     * <p>解密使用的私钥，采用 Base64 编码，需妥善保管。</p>
+     */
     private String privateKey;
-    /** 密文格式（BCD/Hex） */
+    
+    /**
+     * 密文格式
+     * <p>加密后密文的编码格式，如 BCD 码或 Hex（十六进制）。</p>
+     */
     private String cipher;
-
 }

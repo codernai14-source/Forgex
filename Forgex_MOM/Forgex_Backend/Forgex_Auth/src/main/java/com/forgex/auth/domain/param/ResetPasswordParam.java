@@ -17,12 +17,21 @@ import lombok.Data;
 
 /**
  * 重置密码请求参数
- * 
+ * <p>
+ * 用于封装重置密码时提交的参数信息。
+ * </p>
+ *
  * @author Forgex Team
- * @date 2026-01-08
+ * @version 1.0.0
+ * @since 2026-01-08
+ * @see com.forgex.auth.controller.AuthController
+ * @see com.forgex.auth.service.AuthService
  */
 @Data
 public class ResetPasswordParam {
-    /** 用户ID */
+    /**
+     * 用户 ID
+     * <p>需要重置密码的用户 ID</p>
+     */
     private Long userId;
 }

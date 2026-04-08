@@ -588,6 +588,16 @@ public class AuthServiceImpl implements AuthService {
         return R.fail(CommonPrompt.RESET_FAILED);
     }
 
+    /**
+     * 获取密码策略配置
+     * <p>
+     * 从配置服务中读取密码策略配置，如果不存在则返回默认配置。
+     * </p>
+     *
+     * @return 密码策略配置对象
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig
+     * @see com.forgex.common.config.ConfigService#getJson(String, Class, Object)
+     */
     private PasswordPolicyConfig getPasswordPolicyConfig() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
@@ -596,26 +606,77 @@ public class AuthServiceImpl implements AuthService {
         return policy == null ? defaults : policy;
     }
 
+    /**
+     * 解析密码存储策略
+     * <p>
+     * 从密码策略配置中解析密码存储方式，默认为 bcrypt。
+     * </p>
+     *
+     * @param policy 密码策略配置对象
+     * @return 密码存储策略（bcrypt 或 sm2）
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig#getStore()
+     */
     private String resolvePasswordStore(PasswordPolicyConfig policy) {
         return policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
     }
 
+    /**
+     * 解析默认密码
+     * <p>
+     * 从密码策略配置中获取默认密码，用于重置用户密码。
+     * </p>
+     *
+     * @return 默认密码字符串
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig#getDefaultPassword()
+     */
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = getPasswordPolicyConfig();
         return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
     }
 
+    /**
+     * 加密密码
+     * <p>
+     * 根据密码策略配置的加密方式对原始密码进行加密。
+     * </p>
+     *
+     * @param rawPassword 原始密码
+     * @return 加密后的密码字符串
+     * @see com.forgex.common.crypto.CryptoPasswordProvider#encrypt(String)
+     * @see com.forgex.common.crypto.CryptoProviders#resolve(String, com.forgex.common.config.ConfigService)
+     */
     private String encryptPassword(String rawPassword) {
         CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(getPasswordPolicyConfig()), configService);
         return provider.encrypt(rawPassword);
     }
 
+    /**
+     * 获取登录安全配置
+     * <p>
+     * 从配置服务中读取登录安全配置（登录失败限制），如果不存在则返回默认配置。
+     * </p>
+     *
+     * @return 登录安全配置对象
+     * @see com.forgex.common.domain.config.LoginSecurityConfig
+     * @see com.forgex.common.config.ConfigService#getJson(String, Class, Object)
+     */
     private LoginSecurityConfig getLoginSecurityConfig() {
         LoginSecurityConfig defaults = LoginSecurityConfig.defaults();
         LoginSecurityConfig config = configService.getJson(KEY_SECURITY_LOGIN_FAILURE, LoginSecurityConfig.class, defaults);
         return config == null ? defaults : config;
     }
 
+    /**
+     * 检查账号是否被锁定
+     * <p>
+     * 根据登录安全配置检查账号是否因连续登录失败而被锁定。
+     * </p>
+     *
+     * @param account 登录账号
+     * @param config 登录安全配置
+     * @return 如果已锁定返回失败响应（包含剩余锁定时间），否则返回 null
+     * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
+     */
     private R<List<TenantVO>> checkLoginLocked(String account, LoginSecurityConfig config) {
         if (!StringUtils.hasText(account) || config == null || config.getLockMinutes() == null || config.getLockMinutes() <= 0) {
             return null;
@@ -629,6 +690,23 @@ public class AuthServiceImpl implements AuthService {
         return R.fail(CommonPrompt.ACCOUNT_LOCKED, String.valueOf(minutes));
     }
 
+    /**
+     * 记录登录失败状态
+     * <p>
+     * 记录账号的登录失败次数，当超过阈值时锁定账号。
+     * </p>
+     * <p>处理逻辑：</p>
+     * <ol>
+     *   <li>失败次数加 1</li>
+     *   <li>设置失败次数记录的过期时间</li>
+     *   <li>如果超过最大失败次数，锁定账号</li>
+     * </ol>
+     *
+     * @param account 登录账号
+     * @param config 登录安全配置
+     * @see com.forgex.common.domain.config.LoginSecurityConfig#getMaxFailCount()
+     * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
+     */
     private void recordLoginFailureState(String account, LoginSecurityConfig config) {
         if (!StringUtils.hasText(account) || config == null) {
             return;
@@ -649,6 +727,14 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /**
+     * 清除登录失败状态
+     * <p>
+     * 登录成功后清除账号的失败次数记录和锁定状态。
+     * </p>
+     *
+     * @param account 登录账号
+     */
     private void clearLoginFailureState(String account) {
         if (!StringUtils.hasText(account)) {
             return;
@@ -658,19 +744,60 @@ public class AuthServiceImpl implements AuthService {
         redis.delete(LOGIN_LOCK_KEY_PREFIX + accountKey);
     }
 
+    /**
+     * 标准化账号键
+     * <p>
+     * 将账号转换为小写并去除首尾空格，用于 Redis 键的统一处理。
+     * </p>
+     *
+     * @param account 原始账号
+     * @return 标准化后的账号键
+     */
     private String normalizeAccountKey(String account) {
         return account == null ? "" : account.trim().toLowerCase();
     }
 
+    /**
+     * 将 Map 转换为 JSON 字符串
+     * <p>
+     * 使用 Hutool 工具类将 Map 对象序列化为 JSON 字符串。
+     * </p>
+     *
+     * @param value Map 对象
+     * @return JSON 字符串
+     * @see cn.hutool.json.JSONUtil#toJsonStr(Object)
+     */
     private String toJson(Map<String, Object> value) {
         return JSONUtil.toJsonStr(value);
     }
 
+    /**
+     * 解析当前 Token 的 TTL
+     * <p>
+     * 根据 Token 计算有效的过期时间，返回 Duration 对象。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return Token 的有效期时长
+     * @see #resolveEffectiveTtlSeconds(String)
+     */
     private Duration resolveCurrentTokenTtl(String token) {
         Long ttlSeconds = resolveEffectiveTtlSeconds(token);
         return ttlSeconds == null ? null : Duration.ofSeconds(ttlSeconds);
     }
 
+    /**
+     * 解析有效的 TTL 秒数
+     * <p>
+     * 计算 Token 的有效过期时间（秒），取 tokenTimeout 和 activeTimeout 的最小值。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return 有效的 TTL 秒数，永不过期返回 null
+     * @see #readTokenTimeout(String)
+     * @see #readActiveTimeout(String)
+     * @see #normalizeTimeout(long)
+     */
     private Long resolveEffectiveTtlSeconds(String token) {
         if (!StringUtils.hasText(token)) {
             return 0L;
@@ -686,6 +813,16 @@ public class AuthServiceImpl implements AuthService {
         return Math.min(tokenTimeout, activeTimeout);
     }
 
+    /**
+     * 读取 Token 的超时时间
+     * <p>
+     * 从 Sa-Token 获取 Token 的剩余有效时间（秒）。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return Token 超时时间（秒），获取失败返回 0
+     * @see cn.dev33.satoken.stp.StpUtil#getTokenTimeout(String)
+     */
     private long readTokenTimeout(String token) {
         try {
             return StpUtil.getTokenTimeout(token);
@@ -694,6 +831,16 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /**
+     * 读取 Token 的活跃超时时间
+     * <p>
+     * 从 Sa-Token 获取 Token 的活跃超时时间（秒），即用户活跃状态下的过期时间。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return 活跃超时时间（秒），获取失败返回 NOT_VALUE_EXPIRE
+     * @see cn.dev33.satoken.dao.SaTokenDao#NOT_VALUE_EXPIRE
+     */
     private long readActiveTimeout(String token) {
         try {
             return StpUtil.getStpLogic().getTokenActiveTimeoutByToken(token);
@@ -702,6 +849,17 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /**
+     * 标准化超时时间
+     * <p>
+     * 将 Sa-Token 的超时时间标准化为 Long 类型，处理永不过期和无效值。
+     * </p>
+     *
+     * @param seconds 原始超时时间（秒）
+     * @return 标准化后的超时时间，永不过期返回 null，无效值返回 0
+     * @see cn.dev33.satoken.dao.SaTokenDao#NEVER_EXPIRE
+     * @see cn.dev33.satoken.dao.SaTokenDao#NOT_VALUE_EXPIRE
+     */
     private Long normalizeTimeout(long seconds) {
         if (seconds == SaTokenDao.NEVER_EXPIRE || seconds == SaTokenDao.NOT_VALUE_EXPIRE) {
             return null;
@@ -712,6 +870,21 @@ public class AuthServiceImpl implements AuthService {
         return seconds;
     }
 
+    /**
+     * 清除在线用户缓存
+     * <p>
+     * 根据租户 ID 和用户 ID 删除在线用户缓存，或者根据 Token 扫描删除对应的缓存。
+     * </p>
+     * <p>处理逻辑：</p>
+     * <ol>
+     *   <li>如果提供了 tenantId 和 userId，直接删除对应缓存</li>
+     *   <li>否则扫描所有在线用户缓存，匹配 Token 后删除</li>
+     * </ol>
+     *
+     * @param tokenValue Token 值
+     * @param tenantId 租户 ID
+     * @param userId 用户 ID
+     */
     private void clearOnlineUserCache(String tokenValue, Long tenantId, Long userId) {
         if (tenantId != null && userId != null) {
             String onlineKey = "fx:online:user:" + tenantId + ":" + userId;

@@ -165,5 +165,22 @@ public interface AuthService {
      */
     R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId);
 
+    /**
+     * 更改用户语言偏好
+     * <p>
+     * 将用户的语言偏好设置保存到 Redis 缓存中。
+     * </p>
+     * <p>处理流程：</p>
+     * <ul>
+     *   <li>校验语言参数是否为空</li>
+     *   <li>获取当前登录用户 ID 和租户 ID</li>
+     *   <li>构造语言偏好键（fx:lang:{tenantId}:{userId}）</li>
+     *   <li>将语言偏好存入 Redis</li>
+     * </ul>
+     *
+     * @param lang 语言代码（如：zh_CN、en_US 等），不能为空
+     * @return {@link R} 设置是否成功
+     * @see com.forgex.auth.domain.param.ChangeLanguageParam
+     */
     R<Boolean> changeLanguage(String lang);
 }
