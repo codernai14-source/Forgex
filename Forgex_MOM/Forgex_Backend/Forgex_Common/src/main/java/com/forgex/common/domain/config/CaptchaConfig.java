@@ -17,26 +17,35 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 验证码配置。
+ * 验证码配置
  * <p>
  * 由系统配置库读取，控制登录流程的验证码模式与滑块参数。
- * 字段：
- * - {@code mode} 验证码模式：image/slider/none；
- * - {@code slider} 滑块参数配置。
- * <p>
- * 使用：通过配置服务读取 {@code login.captcha} 或其它键，若为空可用 {@link #defaults()} 获取默认配置。
+ * 该配置用于定义登录页面的验证码类型和相关参数。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-03-28
  */
 @Setter
 @Getter
 public class CaptchaConfig {
-    /** 验证码模式：image/slider/none */
-    private String mode;
-    /** 滑块参数配置 */
-    private SliderConfig slider;
-
     /**
-     * 默认配置生成。
-     * @return 默认验证码配置（模式为 image，滑块禁用，令牌 120s）
+     * 验证码模式
+     * <p>支持 image（图片验证码）、slider（滑块验证码）、none（无验证码）。</p>
+     */
+    private String mode;
+    
+    /**
+     * 滑块参数配置
+     * <p>滑块验证码的相关参数配置。</p>
+     */
+    private SliderConfig slider;
+    
+    /**
+     * 创建默认验证码配置
+     *
+     * @return 默认验证码配置对象，模式为 image，滑块禁用，令牌 120 秒过期
      */
     public static CaptchaConfig defaults() {
         CaptchaConfig cfg = new CaptchaConfig();
@@ -51,25 +60,35 @@ public class CaptchaConfig {
     }
 
     /**
-     * 滑块验证码参数配置。
-     * 字段：
-     * - {@code keyPrefix} 主令牌 Redis 键前缀；
-     * - {@code secondaryKeyPrefix} 次令牌键前缀；
-     * - {@code secondaryEnabled} 是否开启二次校验；
-     * - {@code tokenExpireSeconds} 令牌过期秒数。
+     * 滑块验证码参数配置
+     * <p>用于配置滑块验证码的 Redis 键前缀、校验方式、令牌过期时间等参数。</p>
      */
     @Setter
     @Getter
     public static class SliderConfig {
-        /** 主令牌键前缀 */
+        /**
+         * 主令牌键前缀
+         * <p>Redis 中存储主令牌的键前缀。</p>
+         */
         private String keyPrefix;
-        /** 次令牌键前缀 */
+        
+        /**
+         * 次令牌键前缀
+         * <p>Redis 中存储次令牌的键前缀，用于二次校验。</p>
+         */
         private String secondaryKeyPrefix;
-        /** 是否开启二次校验 */
+        
+        /**
+         * 是否开启二次校验
+         * <p>标识是否需要二次验证，提高安全性。</p>
+         */
         private boolean secondaryEnabled;
-        /** 令牌过期秒数 */
+        
+        /**
+         * 令牌过期秒数
+         * <p>验证码令牌的有效期，单位为秒。</p>
+         */
         private int tokenExpireSeconds;
-
     }
 }
 

@@ -384,14 +384,16 @@ public class InitServiceImpl implements InitService {
         grantedMenuIds.add(roleMenu.getId());
 
         // 菜单授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
-        SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "menu-grant/:roleId",
+        // 路径格式：role/MenuGrant/:roleId，与组件目录结构 role/MenuGrant.vue 对应
+        SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "role/MenuGrant/:roleId",
                 "菜单授权", "Menu Grant", "SafetyCertificateOutlined", "SystemRoleMenuGrant", "sys:role:authMenu", 1, 2);
         menuGrantMenu.setVisible(false); // 设置为隐藏菜单
         menuMapper.updateById(menuGrantMenu);
         grantedMenuIds.add(menuGrantMenu.getId());
 
         // 人员授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
-        SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "user-grant/:roleId",
+        // 路径格式：role/UserGrant/:roleId，与组件目录结构 role/UserGrant.vue 对应
+        SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "role/UserGrant/:roleId",
                 "人员授权", "User Grant", "UsergroupAddOutlined", "SystemRoleUserGrant", "sys:role:authUser", 2, 2);
         userGrantMenu.setVisible(false); // 设置为隐藏菜单
         menuMapper.updateById(userGrantMenu);

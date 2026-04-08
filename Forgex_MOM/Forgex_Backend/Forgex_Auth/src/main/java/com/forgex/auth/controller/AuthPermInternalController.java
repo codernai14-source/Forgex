@@ -40,6 +40,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AuthPermInternalController {
 
+    /**
+     * 权限键服务
+     */
     private final PermKeyService permKeyService;
 
     /**
@@ -51,7 +54,12 @@ public class AuthPermInternalController {
      *
      * @param userId   用户 ID
      * @param tenantId 租户 ID
-     * @return 权限键集合（去重）
+     * @return {@link R} 包含权限键集合的统一返回结构
+     *         - code: 状态码（200=成功）
+     *         - data: 权限键集合（Set&lt;String&gt;）
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 用户或租户不存在时抛出
+     * @see PermKeyService#getPermKeys(Long, Long)
      */
     @GetMapping("/keys/{userId}/{tenantId}")
     public R<Set<String>> getPermKeys(@PathVariable Long userId, @PathVariable Long tenantId) {

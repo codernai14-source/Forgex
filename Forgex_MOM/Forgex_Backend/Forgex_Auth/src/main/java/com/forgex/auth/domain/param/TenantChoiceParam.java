@@ -17,16 +17,33 @@ import lombok.Data;
 
 /**
  * 选择租户请求参数
- * 
+ * <p>
+ * 用于封装用户选择租户时提交的参数信息，包括租户 ID、账号、用户名等。
+ * </p>
+ *
  * @author Forgex Team
- * @date 2026-01-08
+ * @version 1.0.0
+ * @since 2026-01-08
+ * @see com.forgex.auth.controller.AuthController
+ * @see com.forgex.auth.service.impl.AuthServiceImpl
  */
 @Data
 public class TenantChoiceParam {
-    /** 选择的租户ID */
+    /**
+     * 选择的租户 ID
+     * <p>用户要切换到的租户 ID</p>
+     */
     private Long tenantId;
-    /** 当前登录账号 */
+
+    /**
+     * 当前登录账号
+     * <p>用于标识当前登录的用户账号</p>
+     */
     private String account;
-    /** 当前登录用户名（完成最终登录） */
+
+    /**
+     * 当前登录用户名
+     * <p>用于完成最终登录的用户显示名称</p>
+     */
     private String username;
 }

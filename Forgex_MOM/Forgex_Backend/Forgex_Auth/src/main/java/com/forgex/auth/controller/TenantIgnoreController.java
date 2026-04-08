@@ -41,12 +41,14 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author Forgex Team
  * @version 1.0.0
+ * @since 2026-03-28
  * @see TenantIgnoreService
  * @see com.forgex.auth.config.TenantIgnoreLoader
  */
 @RestController
 @RequestMapping("/tenant/ignore")
 public class TenantIgnoreController {
+
     /**
      * 租户隔离跳过服务
      */
@@ -56,18 +58,20 @@ public class TenantIgnoreController {
     /**
      * 热更新跳过配置
      * <p>
-     * 重新从数据库加载租户隔离跳过配置，并更新到TenantIgnoreRegistry中。
+     * 重新从数据库加载租户隔离跳过配置，并更新到 TenantIgnoreRegistry 中。
      * 无需重启应用即可使配置生效。
      * </p>
      * <p><strong>执行流程：</strong></p>
      * <ol>
-     *   <li>调用TenantIgnoreService.reload方法</li>
+     *   <li>调用 TenantIgnoreService.reload 方法</li>
      *   <li>从数据库重新加载配置</li>
-     *   <li>更新TenantIgnoreRegistry</li>
+     *   <li>更新 TenantIgnoreRegistry</li>
      *   <li>返回操作结果</li>
      * </ol>
      * 
-     * @return 操作结果，true表示成功，false表示失败
+     * @return 包含操作结果的统一返回结构，true 表示成功，false 表示失败
+     * @throws com.forgex.common.exception.BusinessException 重新加载配置失败时抛出
+     * @see TenantIgnoreService#reload()
      */
     @PostMapping("/reload")
     public R<Boolean> reload() {
