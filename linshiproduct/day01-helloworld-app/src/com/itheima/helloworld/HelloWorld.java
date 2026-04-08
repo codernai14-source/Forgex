@@ -7,7 +7,7 @@ public class HelloWorld {
         printHelloWorld();
         System.out.println("--------------------");
         System.out.println(sum(1, 2));
-
+        System.out.println(12);
     }
 
     //打印三行HelloWorld
