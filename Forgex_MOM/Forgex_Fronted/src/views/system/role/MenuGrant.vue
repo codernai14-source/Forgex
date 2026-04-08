@@ -1,11 +1,11 @@
-/**
- * 角色菜单授权页面
+﻿/**
+ * 瑙掕壊鑿滃崟鎺堟潈椤甸潰
  * 
- * 功能：
- * 1. 按模块展示菜单树形表格
- * 2. 支持勾选菜单权限
- * 3. 支持搜索、全选、反选、清空操作
- * 4. 保存角色菜单授权
+ * 鍔熻兘锛?
+ * 1. 鎸夋ā鍧楀睍绀鸿彍鍗曟爲褰㈣〃鏍?
+ * 2. 鏀寔鍕鹃€夎彍鍗曟潈闄?
+ * 3. 鏀寔鎼滅储銆佸叏閫夈€佸弽閫夈€佹竻绌烘搷浣?
+ * 4. 淇濆瓨瑙掕壊鑿滃崟鎺堟潈
  * 
  * @author Forgex
  * @version 1.0.0
@@ -23,7 +23,7 @@
 
     <!-- Board -->
     <section class="board">
-      <!-- Sidebar: 模块筛选 -->
+      <!-- Sidebar: 妯″潡绛涢€?-->
       <aside class="sidebar">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.moduleFilter') }}</div>
@@ -39,7 +39,7 @@
         </div>
       </aside>
 
-      <!-- Content Panel: 树形表格 -->
+      <!-- Content Panel: 鏍戝舰琛ㄦ牸 -->
       <section class="content-panel">
         <div class="toolbar">
           <a-space>
@@ -62,6 +62,7 @@
           ref="tableRef"
           table-code="RoleMenuGrantTable"
           :request="handleRequest"
+          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -100,15 +101,16 @@ import { SaveOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { listModules } from '@/api/system/module'
-import { getMenuTree, grantRoleMenus } from '@/api/system/menu'
-import { getRoleById } from '@/api/system/role'
+import { getRoleById, getRoleModuleAuthData, grantRoleMenus } from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
+import { useUserStore } from '@/stores/user'
 import type { MenuTreeRecord } from './types'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const roleId = ref<string>('')
 const roleName = ref<string>('')
@@ -120,6 +122,8 @@ const searchKeyword = ref('')
 const selectedRowKeys = ref<string[]>([])
 const currentTenantId = ref<string>('')
 const allMenus = ref<MenuTreeRecord[]>([])
+const moduleSelectedKeys = ref<Record<string, string[]>>({})
+const moduleSelectionInitialized = ref<Record<string, boolean>>({})
 
 const { dictItems: statusOptions } = useDict('status')
 
@@ -172,28 +176,29 @@ function resolveStatusTag(value: unknown) {
 }
 
 /**
- * 处理表格数据请求
+ * 澶勭悊琛ㄦ牸鏁版嵁璇锋眰
  */
 async function handleRequest(params: any) {
-  if (!currentTenantId.value || !activeModuleId.value) {
+  if (!currentTenantId.value || !activeModuleId.value || !roleId.value) {
     return { records: [], total: 0 }
   }
 
   loading.value = true
   try {
-    const tree = await getMenuTree({
-      tenantId: Number(currentTenantId.value),
-      moduleId: Number(activeModuleId.value),
+    const tree = await getRoleModuleAuthData(Number(activeModuleId.value), {
+      roleId: roleId.value,
     })
 
     const filteredTree = filterTreeByKeyword(tree || [], searchKeyword.value)
     const normalizedTree = normalizeTreeRows(filteredTree)
     
     allMenus.value = flattenTree(normalizedTree)
-    
-    const selectedIds = selectedRowKeys.value.map(id => Number(id))
-    const checkedNodes = filterCheckedNodes(normalizedTree, selectedIds)
-    selectedRowKeys.value = getLeafNodeIds(checkedNodes).map(id => String(id))
+
+    // 每次加载都从后端返回的 checked 字段重新初始化选中状态
+    const checkedIds = collectCheckedNodeIds(normalizedTree).map((id) => String(id))
+    selectedRowKeys.value = checkedIds
+    moduleSelectedKeys.value[activeModuleId.value] = [...checkedIds]
+    moduleSelectionInitialized.value[activeModuleId.value] = true
 
     return {
       records: normalizedTree,
@@ -209,7 +214,7 @@ async function handleRequest(params: any) {
 }
 
 /**
- * 根据关键词过滤树形结构
+ * 鏍规嵁鍏抽敭璇嶈繃婊ゆ爲褰㈢粨鏋?
  */
 function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTreeRecord[] {
   if (!keyword) {
@@ -234,37 +239,23 @@ function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTree
 }
 
 /**
- * 过滤已勾选的节点
+ * 杩囨护宸插嬀閫夌殑鑺傜偣
  */
-function filterCheckedNodes(nodes: MenuTreeRecord[], selectedIds: number[]): MenuTreeRecord[] {
-  return nodes.reduce<MenuTreeRecord[]>((result, node) => {
-    const isSelected = selectedIds.includes(Number(node.id))
-    const children = node.children ? filterCheckedNodes(node.children, selectedIds) : []
-    
-    if (isSelected || children.length > 0) {
-      result.push({ ...node, children })
-    }
-    return result
-  }, [])
-}
-
-/**
- * 获取叶子节点 ID
- */
-function getLeafNodeIds(nodes: MenuTreeRecord[]): number[] {
+function collectCheckedNodeIds(nodes: MenuTreeRecord[]): number[] {
   const ids: number[] = []
-  nodes.forEach(node => {
-    if (!node.children || node.children.length === 0) {
+  nodes.forEach((node) => {
+    if (node.checked === true && node.id != null) {
       ids.push(Number(node.id))
-    } else {
-      ids.push(...getLeafNodeIds(node.children))
+    }
+    if (node.children && node.children.length > 0) {
+      ids.push(...collectCheckedNodeIds(node.children))
     }
   })
   return ids
 }
 
 /**
- * 扁平化树结构
+ * 鎵佸钩鍖栨爲缁撴瀯
  */
 function flattenTree(tree: MenuTreeRecord[]): MenuTreeRecord[] {
   let res: MenuTreeRecord[] = []
@@ -278,14 +269,14 @@ function flattenTree(tree: MenuTreeRecord[]): MenuTreeRecord[] {
 }
 
 /**
- * 统计树节点数量
+ * 缁熻鏍戣妭鐐规暟閲?
  */
 function countTreeNodes(nodes: MenuTreeRecord[] = []): number {
   return nodes.reduce((count, node) => count + 1 + countTreeNodes(node.children || []), 0)
 }
 
 /**
- * 规范化树结构数据
+ * 瑙勮寖鍖栨爲缁撴瀯鏁版嵁
  */
 function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
   return nodes.map((node) => ({
@@ -300,54 +291,69 @@ function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
 }
 
 /**
- * 处理行选择变化
+ * 澶勭悊琛岄€夋嫨鍙樺寲
  */
 function handleSelectionChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys.map(String)
+  if (activeModuleId.value) {
+    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+  }
 }
 
 /**
- * 处理模块切换
+ * 澶勭悊妯″潡鍒囨崲
  */
 async function handleModuleChange(moduleId: string) {
+  if (activeModuleId.value) {
+    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+  }
   activeModuleId.value = moduleId
-  selectedRowKeys.value = []
+  selectedRowKeys.value = moduleSelectedKeys.value[moduleId] ? [...moduleSelectedKeys.value[moduleId]] : []
   searchKeyword.value = ''
   await tableRef.value?.refresh?.()
 }
 
 /**
- * 全选
+ * 鍏ㄩ€?
  */
 function handleSelectAll() {
   selectedRowKeys.value = allMenus.value.map(m => String(m.id))
+  if (activeModuleId.value) {
+    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+  }
 }
 
 /**
- * 反选
+ * 鍙嶉€?
  */
 function handleSelectInvert() {
   const allIds = allMenus.value.map(m => String(m.id))
   const selectedSet = new Set(selectedRowKeys.value)
   selectedRowKeys.value = allIds.filter(id => !selectedSet.has(id))
+  if (activeModuleId.value) {
+    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+  }
 }
 
 /**
- * 清空
+ * 娓呯┖
  */
 function handleClearAll() {
   selectedRowKeys.value = []
+  if (activeModuleId.value) {
+    moduleSelectedKeys.value[activeModuleId.value] = []
+  }
 }
 
 /**
- * 搜索
+ * 鎼滅储
  */
 function handleSearch() {
   tableRef.value?.refresh?.()
 }
 
 /**
- * 保存授权
+ * 淇濆瓨鎺堟潈
  */
 async function handleSave() {
   if (!currentTenantId.value || !roleId.value) {
@@ -375,7 +381,7 @@ async function handleSave() {
 }
 
 /**
- * 加载模块列表
+ * 鍔犺浇妯″潡鍒楄〃
  */
 async function loadModules() {
   if (!currentTenantId.value) {
@@ -395,7 +401,7 @@ async function loadModules() {
 }
 
 /**
- * 加载角色信息
+ * 鍔犺浇瑙掕壊淇℃伅
  */
 async function loadRoleInfo() {
   if (!roleId.value) {
@@ -410,7 +416,8 @@ async function loadRoleInfo() {
 }
 
 onMounted(async () => {
-  const tid = sessionStorage.getItem('tenantId')
+  // 优先从 userStore 获取租户 ID，其次从 sessionStorage 获取
+  const tid = userStore.tenantId || sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
   }
@@ -430,12 +437,16 @@ onMounted(async () => {
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  background: var(--bg-color);
+  background: var(--fx-bg-layout, #f9fafb);
 
   .hero-panel {
     margin-bottom: 24px;
     padding: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--fx-primary, #1677ff) 72%, #ffffff 28%) 0%,
+      color-mix(in srgb, var(--fx-primary-active, #0958d9) 82%, #020617 18%) 100%
+    );
     border-radius: 8px;
     color: #fff;
 
@@ -462,13 +473,14 @@ onMounted(async () => {
     display: flex;
     flex: 1;
     min-height: 0;
-    background: #fff;
+    background: var(--fx-bg-container, #ffffff);
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--fx-border-color, #e5e7eb);
+    box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
 
     .sidebar {
       width: 280px;
-      border-right: 1px solid var(--border-color);
+      border-right: 1px solid var(--fx-border-color, #e5e7eb);
       padding: 16px;
       display: flex;
       flex-direction: column;
@@ -481,7 +493,7 @@ onMounted(async () => {
           font-size: 16px;
           font-weight: 600;
           margin-bottom: 16px;
-          color: var(--text-color);
+          color: var(--fx-text-primary, #111827);
         }
       }
 
@@ -491,18 +503,19 @@ onMounted(async () => {
         padding: 12px 16px;
         margin-bottom: 8px;
         border: none;
-        background: var(--bg-color);
+        background: var(--fx-bg-elevated, #ffffff);
+        color: var(--fx-text-primary, #111827);
         border-radius: 4px;
         text-align: left;
         cursor: pointer;
         transition: all 0.3s;
 
         &:hover {
-          background: var(--hover-bg-color);
+          background: var(--fx-fill, #f3f4f6);
         }
 
         &--active {
-          background: var(--primary-color);
+          background: var(--fx-primary, #1677ff);
           color: #fff;
         }
       }
@@ -520,13 +533,40 @@ onMounted(async () => {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 16px;
+        gap: 12px;
+
+        :deep(.ant-input-search) {
+          width: 320px;
+          max-width: 50%;
+        }
       }
 
       :deep(.fx-dynamic-table) {
         flex: 1;
         min-height: 0;
       }
+
+      :deep(.ant-table) {
+        background: var(--fx-bg-container, #ffffff);
+        color: var(--fx-text-primary, #111827);
+      }
+
+      :deep(.ant-table-thead > tr > th) {
+        background: var(--fx-fill-alter, #f9fafb);
+        color: var(--fx-text-secondary, #4b5563);
+      }
+
+      :deep(.ant-table-tbody > tr > td) {
+        color: var(--fx-text-primary, #111827);
+        border-bottom: 1px solid var(--fx-border-secondary, #f3f4f6);
+      }
+
+      :deep(.ant-table-tbody > tr:hover > td) {
+        background: var(--fx-fill, #f3f4f6);
+      }
     }
   }
 }
 </style>
+
+

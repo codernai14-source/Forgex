@@ -93,6 +93,7 @@
           ref="tableRef"
           table-code="RoleUserGrantTable"
           :request="handleRequest"
+          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -131,11 +132,13 @@ import { getUserList } from '@/api/system/user'
 import { getDepartmentTree } from '@/api/system/department'
 import { getPositionTree } from '@/api/system/position'
 import { getRoleById, getGrantedUserList, grantBatch, revokeRoleUsers } from '@/api/system/role'
+import { useUserStore } from '@/stores/user'
 import type { RoleGrantVO } from './types'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const roleId = ref<string>('')
 const roleName = ref<string>('')
@@ -204,7 +207,7 @@ async function handleRequest(params: any) {
 
   try {
     const result = await getGrantedUserList({
-      roleId: Number(roleId.value),
+      roleId: roleId.value,
       tenantId: currentTenantId.value,
       pageNum: params.page.current,
       pageSize: params.page.pageSize,
@@ -294,7 +297,7 @@ async function loadRoleInfo() {
     return
   }
   try {
-    const role = await getRoleById(Number(roleId.value))
+    const role = await getRoleById(roleId.value)
     roleName.value = role?.roleName || ''
   } catch (error) {
     console.error('load role info failed:', error)
@@ -351,7 +354,7 @@ async function handleAddToGranted() {
 
   try {
     await grantBatch({
-      roleId: Number(roleId.value),
+      roleId: roleId.value,
       tenantId: currentTenantId.value,
       grantType: activeTab.value.toUpperCase(),
       userIds: userIds.length > 0 ? userIds : undefined,
@@ -382,7 +385,7 @@ async function handleRevoke(id: number) {
 
   try {
     await revokeRoleUsers({
-      roleId: Number(roleId.value),
+      roleId: roleId.value,
       tenantId: currentTenantId.value,
       userIds: [id],
     })
@@ -408,7 +411,7 @@ async function handleBatchRevoke() {
 
   try {
     await revokeRoleUsers({
-      roleId: Number(roleId.value),
+      roleId: roleId.value,
       tenantId: currentTenantId.value,
       userIds: selectedRowKeys.value.map(id => Number(id)),
     })
@@ -425,7 +428,8 @@ async function handleBatchRevoke() {
 }
 
 onMounted(async () => {
-  const tid = sessionStorage.getItem('tenantId')
+  // 优先从 userStore 获取租户 ID，其次从 sessionStorage 获取
+  const tid = userStore.tenantId || sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
   }
@@ -447,12 +451,16 @@ onMounted(async () => {
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  background: var(--bg-color);
+  background: var(--fx-bg-layout, #f9fafb);
 
   .hero-panel {
     margin-bottom: 24px;
     padding: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--fx-primary, #1677ff) 72%, #ffffff 28%) 0%,
+      color-mix(in srgb, var(--fx-primary-active, #0958d9) 82%, #020617 18%) 100%
+    );
     border-radius: 8px;
     color: #fff;
 
@@ -479,13 +487,14 @@ onMounted(async () => {
     display: flex;
     flex: 1;
     min-height: 0;
-    background: #fff;
+    background: var(--fx-bg-container, #ffffff);
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--fx-border-color, #e5e7eb);
+    box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
 
     .sidebar {
       width: 320px;
-      border-right: 1px solid var(--border-color);
+      border-right: 1px solid var(--fx-border-color, #e5e7eb);
       padding: 16px;
       display: flex;
       flex-direction: column;
@@ -498,7 +507,7 @@ onMounted(async () => {
           font-size: 16px;
           font-weight: 600;
           margin-bottom: 16px;
-          color: var(--text-color);
+          color: var(--fx-text-primary, #111827);
         }
       }
 
@@ -517,13 +526,13 @@ onMounted(async () => {
 
       .user-item {
         padding: 8px;
-        border-bottom: 1px solid var(--border-color-split);
+        border-bottom: 1px solid var(--fx-border-secondary, #f3f4f6);
         display: flex;
         align-items: center;
         justify-content: space-between;
 
         &:hover {
-          background: var(--hover-bg-color);
+          background: var(--fx-fill, #f3f4f6);
         }
 
         .user-info {
@@ -533,12 +542,12 @@ onMounted(async () => {
 
           .user-name {
             font-weight: 500;
-            color: var(--text-color);
+            color: var(--fx-text-primary, #111827);
           }
 
           .user-dept {
             font-size: 12px;
-            color: var(--text-color-secondary);
+            color: var(--fx-text-secondary, #4b5563);
           }
         }
       }
@@ -571,17 +580,37 @@ onMounted(async () => {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 16px;
+        gap: 12px;
 
         &__title {
           font-size: 16px;
           font-weight: 600;
-          color: var(--text-color);
+          color: var(--fx-text-primary, #111827);
         }
       }
 
       :deep(.fx-dynamic-table) {
         flex: 1;
         min-height: 0;
+      }
+
+      :deep(.ant-table) {
+        background: var(--fx-bg-container, #ffffff);
+        color: var(--fx-text-primary, #111827);
+      }
+
+      :deep(.ant-table-thead > tr > th) {
+        background: var(--fx-fill-alter, #f9fafb);
+        color: var(--fx-text-secondary, #4b5563);
+      }
+
+      :deep(.ant-table-tbody > tr > td) {
+        color: var(--fx-text-primary, #111827);
+        border-bottom: 1px solid var(--fx-border-secondary, #f3f4f6);
+      }
+
+      :deep(.ant-table-tbody > tr:hover > td) {
+        background: var(--fx-fill, #f3f4f6);
       }
     }
   }
