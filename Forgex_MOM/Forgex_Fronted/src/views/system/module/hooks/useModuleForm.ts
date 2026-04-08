@@ -19,6 +19,7 @@ export function useModuleForm() {
     id: undefined,
     code: '',
     name: '',
+    nameI18nJson: '',
     icon: undefined,
     orderNum: 0,
     visible: 1,
@@ -31,9 +32,18 @@ export function useModuleForm() {
       { required: true, message: '请输入模块编码', trigger: 'blur' },
       { pattern: /^[a-zA-Z0-9_]{2,50}$/, message: '只能包含字母、数字、下划线，长度2-50', trigger: 'blur' }
     ],
-    name: [
-      { required: true, message: '请输入模块名称', trigger: 'blur' },
-      { max: 50, message: '模块名称不能超过50个字符', trigger: 'blur' }
+    nameI18nJson: [
+      { 
+        required: true, 
+        message: '请输入模块名称', 
+        trigger: 'change',
+        validator: (_rule: any, value: string) => {
+          if (!value || value === '{}' || value === '') {
+            return Promise.reject('请至少配置一种语言的模块名称')
+          }
+          return Promise.resolve()
+        }
+      }
     ],
     orderNum: [
       { required: true, message: '请输入排序号', trigger: 'blur' },
@@ -82,10 +92,10 @@ export function useModuleForm() {
 
       if (isEdit.value) {
         await updateModule(formData)
-        message.success('更新成功')
+        // 成功提示由后端返回，在 http 拦截器中统一处理
       } else {
         await addModule(formData)
-        message.success('新增成功')
+        // 成功提示由后端返回，在 http 拦截器中统一处理
       }
 
       dialogVisible.value = false
@@ -118,6 +128,7 @@ export function useModuleForm() {
       id: undefined,
       code: '',
       name: '',
+      nameI18nJson: '',
       icon: undefined,
       orderNum: 0,
       visible: 1,

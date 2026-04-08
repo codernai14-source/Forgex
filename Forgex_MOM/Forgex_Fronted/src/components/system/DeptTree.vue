@@ -1,7 +1,7 @@
 <template>
   <div class="tree-container">
     <div class="tree-header">
-      <span class="tree-title">组织架构</span>
+      <span class="tree-title">{{ $t('system.department.title') }}</span>
       <a-button
         type="primary"
         size="small"
@@ -9,7 +9,7 @@
         v-if="showAdd"
       >
         <template #icon><PlusOutlined /></template>
-        新增
+        {{ $t('common.add') }}
       </a-button>
     </div>
     <a-spin :spinning="loading">
@@ -56,10 +56,24 @@ import { getDepartmentTree } from '@/api/system/department'
 import type { Department } from '@/views/system/department/types'
 
 const props = defineProps<{
+  /** 是否显示新增按钮，默认 true */
   showAdd?: boolean
 }>()
 
-const emit = defineEmits(['select', 'add'])
+const emit = defineEmits<{
+  /**
+   * 节点选择事件
+   * 触发时机：用户点击树节点时触发
+   * @param keys 选中的节点 ID 数组
+   * @param node 选中的节点数据对象
+   */
+  (e: 'select', keys: string[], node: any): void
+  /**
+   * 新增按钮点击事件
+   * 触发时机：点击新增按钮时触发
+   */
+  (e: 'add'): void
+}>()
 
 const loading = ref(false)
 const treeData = ref<any[]>([])

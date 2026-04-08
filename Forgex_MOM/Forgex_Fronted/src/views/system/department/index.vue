@@ -28,30 +28,30 @@
                     <a-button
                       type="primary"
                       @click="openAdd(selectedDept.id)"
-                      v-permission="'sys:department:create'"
+                      v-permission="'sys:dept:add'"
                     >
                       <template #icon><PlusOutlined /></template>
-                      新增子部门
+                      {{ $t('common.add') }}{{ $t('system.department.childDept') }}
                     </a-button>
                     <a-button
                       @click="startEdit"
-                      v-permission="'sys:department:edit'"
+                      v-permission="'sys:dept:edit'"
                     >
                       <template #icon><EditOutlined /></template>
-                      编辑
+                      {{ $t('common.edit') }}
                     </a-button>
                     <a-popconfirm
-                      title="确定要删除这个部门吗？"
+                      :title="$t('common.confirmDeleteMessage')"
                       :ok-text="$t('common.confirm')"
                       :cancel-text="$t('common.cancel')"
                       @confirm="handleDelete"
                     >
                       <a-button
                         danger
-                        v-permission="'sys:department:delete'"
+                        v-permission="'sys:dept:delete'"
                       >
                         <template #icon><DeleteOutlined /></template>
-                        删除
+                        {{ $t('common.delete') }}
                       </a-button>
                     </a-popconfirm>
                   </a-space>
@@ -67,9 +67,9 @@
                   <a-descriptions-item label="组织层级">
                     {{ selectedDept.orgLevel }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="状态">
-                    <a-tag :color="selectedDept.status === true ? 'green' : 'red'">
-                      {{ selectedDept.status === true ? '启用' : '禁用' }}
+                  <a-descriptions-item :label="$t('common.status')">
+                    <a-tag v-if="selectedDept?.statusText" :color="selectedDept.status === true ? 'green' : 'red'">
+                      {{ selectedDept.statusText }}
                     </a-tag>
                   </a-descriptions-item>
                   <a-descriptions-item label="负责人">
@@ -177,10 +177,10 @@
                     />
                   </a-form-item>
 
-                  <a-form-item label="状态" name="status">
+                  <a-form-item :label="$t('common.status')" name="status">
                     <a-radio-group v-model:value="formData.status">
-                      <a-radio :value="true">启用</a-radio>
-                      <a-radio :value="false">禁用</a-radio>
+                      <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+                      <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
                     </a-radio-group>
                   </a-form-item>
 
@@ -225,7 +225,6 @@ import {
   DeleteOutlined
 } from '@ant-design/icons-vue'
 import {
-  getDepartmentTree,
   getDepartment,
   createDepartment,
   updateDepartment,
@@ -267,23 +266,13 @@ const rules = {
 // 字典数据
 const { dictItems: orgTypeOptions } = useDict('org_type')
 const { dictItems: orgLevelOptions } = useDict('org_level')
+const { dictItems: statusOptions } = useDict('status')
 
 /**
  * 加载部门树
  */
-async function loadTree() {
-  if (!currentTenantId.value) {
-    return
-  }
-  try {
-    treeLoading.value = true
-    const data = await getDepartmentTree({ tenantId: currentTenantId.value })
-    treeData.value = data || []
-  } catch (e) {
-    message.error('加载部门树失败')
-  } finally {
-    treeLoading.value = false
-  }
+async function refreshDeptTree() {
+  await deptTreeRef.value?.loadTree?.()
 }
 
 /**
@@ -368,23 +357,27 @@ async function handleSave() {
   try {
     await formRef.value?.validate()
     saving.value = true
+    const currentDeptId = formData.value.id
+    const currentParentId = formData.value.parentId
 
     if (formData.value.id) {
       // 更新
       await updateDepartment(formData.value)
-      message.success('更新成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       // 新增
       await createDepartment(formData.value)
-      message.success('新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
 
     isEditing.value = false
-    await loadTree()
+    await refreshDeptTree()
 
     // 重新选中当前节点
-    if (formData.value.id) {
-      await onSelectNode([formData.value.id])
+    if (currentDeptId) {
+      await onSelectNode([currentDeptId])
+    } else if (currentParentId) {
+      await onSelectNode([currentParentId])
     }
   } catch (e: any) {
     if (e.errorFields) {
@@ -409,10 +402,11 @@ async function handleDelete() {
       id: selectedDept.value.id,
       tenantId: currentTenantId.value!
     })
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     selectedKeys.value = []
     selectedDept.value = null
-    await refreshTree()
+    isEditing.value = false
+    await refreshDeptTree()
   } catch (e: any) {
     message.error(e.message || '删除失败')
   }

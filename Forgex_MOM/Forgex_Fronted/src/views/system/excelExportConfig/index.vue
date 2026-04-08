@@ -1,75 +1,52 @@
 <template>
   <div class="excel-config-container">
-    <a-card :bordered="false">
-      <a-form layout="inline" :model="queryForm">
-        <a-form-item label="表名">
-          <a-input v-model:value="queryForm.tableName" placeholder="请输入表名" allow-clear style="width: 220px" />
-        </a-form-item>
-        <a-form-item label="表编号">
-          <a-input v-model:value="queryForm.tableCode" placeholder="请输入表编号" allow-clear style="width: 220px" />
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button v-permission="'sys:excel:exportConfig:list'" type="primary" @click="handleQuery">查询</a-button>
-            <a-button @click="handleReset">重置</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-
-      <div style="margin-top: 16px;">
-        <a-space>
-          <a-button v-permission="'sys:excel:exportConfig:edit'" type="primary" @click="openEdit()">新增</a-button>
-        </a-space>
-      </div>
-
-      <a-table
-        :columns="columns"
-        :data-source="tableData"
-        :loading="loading"
+    <a-card :bordered="false" class="excel-table-card">
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'ExcelExportConfigTable'"
+        :request="handleRequest"
+        row-key="id"
         :pagination="{
-          current: pagination.current,
-          pageSize: pagination.size,
-          total: pagination.total,
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total: number) => `共 ${total} 条`,
         }"
-        row-key="id"
-        @change="handleTableChange"
-        style="margin-top: 16px"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'action'">
-            <a-space>
-              <a v-permission="'sys:excel:exportConfig:edit'" @click="openEdit(record.id)">编辑</a>
-              <a v-permission="'sys:excel:exportConfig:delete'" style="color:#ff4d4f" @click="handleDelete(record.id)">删除</a>
-            </a-space>
-          </template>
+        <template #toolbar>
+          <a-button type="primary" v-permission="'sys:excel:exportConfig:edit'" @click="openEdit()">
+            {{ t('common.add') }}
+          </a-button>
         </template>
-      </a-table>
+        <template #action="{ record }">
+          <a-space>
+            <a v-permission="'sys:excel:exportConfig:edit'" @click="openEdit(record.id)">编辑</a>
+            <a v-permission="'sys:excel:exportConfig:delete'" style="color:#ff4d4f" @click="handleDelete(record.id)">删除</a>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
     </a-card>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="editOpen"
-      title="导出配置"
+      :title="t('system.excel.exportConfigTitle')"
       :width="980"
-      :confirm-loading="saving"
-      @ok="handleSave"
+      :loading="saving"
+      @submit="handleSave"
     >
       <a-form :model="editForm" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
-        <a-form-item label="表名">
+        <a-form-item :label="t('system.excel.tableName')">
           <a-input v-model:value="editForm.tableName" allow-clear />
         </a-form-item>
-        <a-form-item label="表编号">
+        <a-form-item :label="t('system.excel.tableCode')">
           <a-input v-model:value="editForm.tableCode" allow-clear />
         </a-form-item>
-        <a-form-item label="标题">
+        <a-form-item :label="t('system.excel.title')">
           <a-input v-model:value="editForm.title" allow-clear />
         </a-form-item>
-        <a-form-item label="小字说明">
+        <a-form-item :label="t('system.excel.subtitle')">
           <a-input v-model:value="editForm.subtitle" allow-clear />
         </a-form-item>
-        <a-form-item label="格式">
+        <a-form-item :label="t('system.excel.exportFormat')">
           <a-select v-model:value="editForm.exportFormat" style="width: 160px">
             <a-select-option value="xlsx">xlsx</a-select-option>
             <a-select-option value="csv">csv</a-select-option>
@@ -77,9 +54,9 @@
         </a-form-item>
       </a-form>
 
-      <a-divider>导出字段</a-divider>
+      <a-divider>{{ t('system.excel.exportFields') }}</a-divider>
       <div style="margin-bottom: 8px;">
-        <a-button @click="addItem">新增字段</a-button>
+        <a-button @click="addItem">{{ t('common.add') }}</a-button>
       </div>
       <a-table :columns="itemColumns" :data-source="editForm.items" row-key="_k" size="small" :pagination="false">
         <template #bodyCell="{ column, record }">
@@ -93,37 +70,24 @@
             <a-input-number v-model:value="record.orderNum" :min="0" style="width: 120px" />
           </template>
           <template v-else-if="column.key === 'action'">
-            <a style="color:#ff4d4f" @click="removeItem(record._k)">移除</a>
+            <a style="color:#ff4d4f" @click="removeItem(record._k)">{{ t('common.remove') }}</a>
           </template>
         </template>
       </a-table>
-    </a-modal>
+    </BaseFormDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * 导出配置管理页。
- *
- * @author coder_nai@163.com
- * @version 1.0.0
- */
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'
 
-const queryForm = reactive({ tableName: '', tableCode: '' })
-const pagination = reactive({ current: 1, size: 20, total: 0 })
-const loading = ref(false)
-const tableData = ref<any[]>([])
-
-const columns = [
-  { title: '表名', dataIndex: 'tableName', key: 'tableName' },
-  { title: '表编号', dataIndex: 'tableCode', key: 'tableCode' },
-  { title: '格式', dataIndex: 'exportFormat', key: 'exportFormat', width: 90 },
-  { title: '版本', dataIndex: 'version', key: 'version', width: 80 },
-  { title: '操作', key: 'action', width: 160 },
-]
+const { t } = useI18n()
+const tableRef = ref()
 
 const itemColumns = [
   { title: '导出字段', key: 'exportField', width: 260 },
@@ -146,33 +110,45 @@ const editForm = reactive<any>({
   items: [],
 })
 
-async function handleQuery() {
-  loading.value = true
-  try {
-    const res: any = await pageExportConfig({
-      current: pagination.current,
-      size: pagination.size,
-      tableName: queryForm.tableName || undefined,
-      tableCode: queryForm.tableCode || undefined,
-    })
-    tableData.value = res.records || []
-    pagination.total = res.total || 0
-  } finally {
-    loading.value = false
+function pickQueryValue(query: Record<string, any>, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = query?.[key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value).trim()
+    }
   }
+  return undefined
 }
 
-function handleReset() {
-  queryForm.tableName = ''
-  queryForm.tableCode = ''
-  pagination.current = 1
-  handleQuery()
-}
-
-function handleTableChange(pag: any) {
-  pagination.current = pag.current
-  pagination.size = pag.pageSize
-  handleQuery()
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
+  try {
+    const tableName = pickQueryValue(payload.query, ['tableName', 'table_name'])
+    const tableCode = pickQueryValue(payload.query, ['tableCode', 'table_code'])
+    const res: any = await pageExportConfig({
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
+      current: payload.page.current,
+      size: payload.page.pageSize,
+      tableName,
+      tableCode,
+    })
+    return {
+      success: true,
+      data: res.records || [],
+      total: res.total || 0
+    }
+  } catch (error) {
+    console.error('加载导出配置列表失败:', error)
+    return {
+      success: false,
+      data: [],
+      total: 0
+    }
+  }
 }
 
 async function openEdit(id?: number) {
@@ -204,13 +180,13 @@ function removeItem(k: string) {
 
 async function handleDelete(id: number) {
   Modal.confirm({
-    title: '确认删除？',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('common.confirmDelete'),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: async () => {
       await deleteExportConfig({ id })
-      message.success('已删除')
-      handleQuery()
+      message.success(t('common.deleted'))
+      tableRef.value?.refresh?.()
     },
   })
 }
@@ -231,20 +207,42 @@ async function handleSave() {
       })),
     }
     await saveExportConfig(payload)
-    message.success('已保存')
+    message.success(t('common.saved'))
     editOpen.value = false
-    handleQuery()
+    tableRef.value?.refresh?.()
   } finally {
     saving.value = false
   }
 }
-
-handleQuery()
 </script>
 
 <style scoped lang="less">
 .excel-config-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.excel-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.excel-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.excel-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>
-

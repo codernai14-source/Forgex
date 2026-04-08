@@ -15,6 +15,11 @@ package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.i18n.LangContext;
 import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.entity.SysDict;
@@ -29,20 +34,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 数据字典服务实现
- * 
+ *
  * @author coder_nai@163.com
  * @date 2025-01-13
  * @version 1.1.0
@@ -50,60 +52,44 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DictServiceImpl implements IDictService {
-    
+
     @Autowired
     private SysDictMapper dictMapper;
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     @Autowired
     private ObjectMapper objectMapper;
-    
-    /**
-     * 获取字典树
-     * <p>
-     * 查询指定租户下的所有字典数据，并构建成树形结构。
-     * 只返回未删除的字典数据，按排序号升序排列。
-     * </p>
-     * 
-     * @param tenantId 租户ID
-     * @return 字典树列表
-     */
+
     @Override
     public List<DictTreeVO> getDictTree(Long tenantId) {
-        // 查询所有字典（未删除）
-        List<SysDict> allDicts = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getDeleted, false)
-                .orderByAsc(SysDict::getOrderNum));
-        
-        // 转换为 VO
-        List<DictTreeVO> allVos = allDicts.stream().map(dict -> {
-            DictTreeVO vo = new DictTreeVO();
-            BeanUtils.copyProperties(dict, vo);
-            return vo;
-        }).collect(Collectors.toList());
-        
-        // 构建树形结构
-        return buildTree(allVos, 0L);
+        return buildTree(listTenantDictVos(tenantId), 0L);
     }
 
-    /**
-     * 根据字典编码获取字典项列表（带缓存）
-     * <p>
-     * 先从 Redis 缓存读取，如果缓存不存在则从数据库查询并写入缓存。
-     * 缓存过期时间为 24 小时。
-     * 只返回启用状态的字典项，按排序号升序排列。
-     * </p>
-     * 
-     * @param dictCode 字典编码
-     * @param tenantId 租户ID
-     * @return 字典项列表
-     */
+    @Override
+    public IPage<DictTreeVO> pageDictTree(Long tenantId, long pageNum, long pageSize) {
+        List<DictTreeVO> roots = getDictTree(tenantId);
+        long safePageNum = pageNum <= 0 ? 1 : pageNum;
+        long safePageSize = pageSize <= 0 ? 20 : pageSize;
+
+        Page<DictTreeVO> page = new Page<>(safePageNum, safePageSize);
+        page.setTotal(roots.size());
+
+        long fromIndex = Math.max((safePageNum - 1) * safePageSize, 0);
+        if (fromIndex >= roots.size()) {
+            page.setRecords(new ArrayList<>());
+            return page;
+        }
+
+        long toIndex = Math.min(fromIndex + safePageSize, roots.size());
+        page.setRecords(new ArrayList<>(roots.subList((int) fromIndex, (int) toIndex)));
+        return page;
+    }
+
     @Override
     public List<DictItemVO> getDictItemsByCode(String dictCode, Long tenantId) {
         String lang = LangContext.get();
-        // 先从缓存读取
         String cacheKey = String.format("dict:%d:%s:code:%s", tenantId, lang, dictCode);
         try {
             String cacheValue = redisTemplate.opsForValue().get(cacheKey);
@@ -114,45 +100,39 @@ public class DictServiceImpl implements IDictService {
         } catch (Exception e) {
             log.warn("读取字典缓存失败：{}", cacheKey, e);
         }
-        
-        // 缓存不存在，从数据库查询
-        // 1. 查询字典类型
+
         SysDict dictType = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
+                .eq(tenantId != null, SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getDictCode, dictCode)
                 .eq(SysDict::getParentId, 0L)
-                .eq(SysDict::getDeleted, false)
                 .last("limit 1"));
-        
         if (dictType == null) {
-            log.warn("字典类型不存在：{}", dictCode);
             return new ArrayList<>();
         }
-        
-        // 2. 查询字典项
+
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getParentId, dictType.getId())
+                .eq(tenantId != null, SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
-                .eq(SysDict::getStatus, 1) // 只查询启用的
-                .orderByAsc(SysDict::getOrderNum));
-        
-        // 3. 转换为 VO
-        List<DictItemVO> items = dictItems.stream().map(dict -> {
+                .eq(SysDict::getParentId, dictType.getId())
+                .eq(SysDict::getStatus, 1)
+                .orderByAsc(SysDict::getOrderNum)
+                .orderByAsc(SysDict::getId));
+
+        List<DictItemVO> items = new ArrayList<>();
+        for (SysDict dict : dictItems) {
             DictItemVO vo = new DictItemVO();
             vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
             vo.setValue(dict.getDictValue());
             vo.setTagStyle(parseTagStyle(dict.getTagStyleJson()));
-            return vo;
-        }).collect(Collectors.toList());
-        
-        // 4. 写入缓存
+            items.add(vo);
+        }
+
         try {
-            String jsonValue = objectMapper.writeValueAsString(items);
-            redisTemplate.opsForValue().set(cacheKey, jsonValue, 24, TimeUnit.HOURS);
-            log.debug("写入字典缓存：{}", cacheKey);
+            redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(items), 24, TimeUnit.HOURS);
         } catch (Exception e) {
             log.warn("写入字典缓存失败：{}", cacheKey, e);
         }
-        
         return items;
     }
 
@@ -170,51 +150,49 @@ public class DictServiceImpl implements IDictService {
         }
 
         SysDict node = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
+                .eq(tenantId != null, SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
                 .eq(SysDict::getNodePath, nodePath)
                 .last("limit 1"));
         if (node == null) {
             return new ArrayList<>();
         }
+
         List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getParentId, node.getId())
+                .eq(tenantId != null, SysDict::getTenantId, tenantId)
                 .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getParentId, node.getId())
                 .eq(SysDict::getStatus, 1)
-                .orderByAsc(SysDict::getOrderNum));
-        List<DictItemVO> items = dictItems.stream().map(dict -> {
+                .orderByAsc(SysDict::getOrderNum)
+                .orderByAsc(SysDict::getId));
+
+        List<DictItemVO> items = new ArrayList<>();
+        for (SysDict dict : dictItems) {
             DictItemVO vo = new DictItemVO();
             vo.setLabel(resolveI18nText(dict.getDictValueI18nJson(), dict.getDictName()));
             vo.setValue(dict.getDictValue());
             vo.setTagStyle(parseTagStyle(dict.getTagStyleJson()));
-            return vo;
-        }).collect(Collectors.toList());
+            items.add(vo);
+        }
 
         try {
-            String jsonValue = objectMapper.writeValueAsString(items);
-            redisTemplate.opsForValue().set(cacheKey, jsonValue, 24, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(items), 24, TimeUnit.HOURS);
         } catch (Exception e) {
             log.warn("写入字典缓存失败：{}", cacheKey, e);
         }
         return items;
     }
-    
-    /**
-     * 新增字典
-     * <p>
-     * 创建新的字典类型或字典项。
-     * 新增后会自动清除相关缓存。
-     * </p>
-     * 
-     * @param dictDTO 字典数据传输对象
-     */
+
     @Override
     public void addDict(DictDTO dictDTO) {
         Long tenantId = dictDTO.getTenantId();
         SysDict dict = new SysDict();
         BeanUtils.copyProperties(dictDTO, dict);
-        dict.setCreateTime(LocalDateTime.now());
-        dict.setUpdateTime(LocalDateTime.now());
+        dict.setTenantId(tenantId);
         dict.setDeleted(false);
+
+        Long parentId = normalizeParentId(dict.getParentId());
+        dict.setParentId(parentId);
 
         if (!StringUtils.hasText(dict.getDictCode())) {
             if (StringUtils.hasText(dict.getDictValue())) {
@@ -225,109 +203,103 @@ public class DictServiceImpl implements IDictService {
         }
 
         SysDict parent = null;
-        if (dict.getParentId() != null && dict.getParentId() > 0) {
-            parent = dictMapper.selectById(dict.getParentId());
-            if (parent == null || Boolean.TRUE.equals(parent.getDeleted())) {
-                throw new RuntimeException("父节点不存在");
-            }
+        if (parentId > 0) {
+            parent = requireTenantDict(parentId, tenantId);
         }
-        String nodePath = parent == null ? dict.getDictCode() : parent.getNodePath() + "/" + dict.getDictCode();
-        dict.setNodePath(nodePath);
-        dict.setLevel(parent == null ? 1 : (parent.getLevel() == null ? 2 : parent.getLevel() + 1));
+
+        dict.setNodePath(parent == null ? dict.getDictCode() : parent.getNodePath() + "/" + dict.getDictCode());
+        dict.setLevel(parent == null ? 1 : ((parent.getLevel() == null ? 1 : parent.getLevel()) + 1));
         dict.setChildrenCount(0);
-        
+        dict.setCreateTime(LocalDateTime.now());
+        dict.setUpdateTime(LocalDateTime.now());
+
         dictMapper.insert(dict);
 
         if (parent != null) {
             dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
                     .eq(SysDict::getId, parent.getId())
+                    .eq(SysDict::getTenantId, tenantId)
+                    .eq(SysDict::getDeleted, false)
                     .setSql("children_count = children_count + 1")
                     .set(SysDict::getUpdateTime, LocalDateTime.now()));
         }
 
         clearDictCache(null, tenantId);
-        
     }
-    
-    /**
-     * 更新字典
-     * <p>
-     * 更新字典类型或字典项的信息。
-     * 更新后会自动清除相关缓存。
-     * </p>
-     * 
-     * @param dictDTO 字典数据传输对象
-     * @throws RuntimeException 如果字典ID为空
-     */
+
     @Override
     public void updateDict(DictDTO dictDTO) {
         if (dictDTO.getId() == null) {
             throw new RuntimeException("字典ID不能为空");
         }
 
-        SysDict old = dictMapper.selectById(dictDTO.getId());
-        if (old == null || Boolean.TRUE.equals(old.getDeleted())) {
-            throw new RuntimeException("字典不存在");
+        Long tenantId = dictDTO.getTenantId();
+        SysDict old = requireTenantDict(dictDTO.getId(), tenantId);
+
+        Long newParentId = dictDTO.getParentId() == null ? normalizeParentId(old.getParentId()) : normalizeParentId(dictDTO.getParentId());
+        if (Objects.equals(dictDTO.getId(), newParentId)) {
+            throw new RuntimeException("不能将父节点设置为自己");
+        }
+
+        SysDict newParent = null;
+        if (newParentId > 0) {
+            newParent = requireTenantDict(newParentId, old.getTenantId());
         }
 
         SysDict dict = new SysDict();
         BeanUtils.copyProperties(dictDTO, dict);
+        dict.setId(old.getId());
+        dict.setTenantId(old.getTenantId());
+        dict.setParentId(newParentId);
         dict.setUpdateTime(LocalDateTime.now());
 
         if (!StringUtils.hasText(dict.getDictCode())) {
             dict.setDictCode(old.getDictCode());
         }
-        if (dict.getParentId() == null) {
-            dict.setParentId(old.getParentId());
-        }
-
-        SysDict newParent = null;
-        if (dict.getParentId() != null && dict.getParentId() > 0) {
-            newParent = dictMapper.selectById(dict.getParentId());
-            if (newParent == null || Boolean.TRUE.equals(newParent.getDeleted())) {
-                throw new RuntimeException("父节点不存在");
-            }
-        }
 
         String newPath = newParent == null ? dict.getDictCode() : newParent.getNodePath() + "/" + dict.getDictCode();
-        Integer newLevel = newParent == null ? 1 : (newParent.getLevel() == null ? 2 : newParent.getLevel() + 1);
+        Integer newLevel = newParent == null ? 1 : ((newParent.getLevel() == null ? 1 : newParent.getLevel()) + 1);
 
-        boolean pathChanged = old.getNodePath() != null && !old.getNodePath().equals(newPath);
-        boolean parentChanged = old.getParentId() != null && !old.getParentId().equals(dict.getParentId());
+        boolean pathChanged = !Objects.equals(old.getNodePath(), newPath);
+        boolean parentChanged = !Objects.equals(normalizeParentId(old.getParentId()), newParentId);
 
         dict.setNodePath(newPath);
         dict.setLevel(newLevel);
-
         dictMapper.updateById(dict);
 
-        if (pathChanged) {
+        if (pathChanged && StringUtils.hasText(old.getNodePath())) {
             List<SysDict> descendants = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                     .eq(SysDict::getTenantId, old.getTenantId())
                     .eq(SysDict::getDeleted, false)
-                    .likeRight(SysDict::getNodePath, old.getNodePath() + "/"));
-            for (SysDict d : descendants) {
-                String suffix = d.getNodePath().substring(old.getNodePath().length());
-                SysDict u = new SysDict();
-                u.setId(d.getId());
-                u.setNodePath(newPath + suffix);
-                if (d.getLevel() != null && old.getLevel() != null) {
-                    u.setLevel(d.getLevel() - old.getLevel() + newLevel);
+                    .likeRight(SysDict::getNodePath, old.getNodePath() + "/")
+                    .orderByAsc(SysDict::getLevel));
+            for (SysDict descendant : descendants) {
+                SysDict update = new SysDict();
+                update.setId(descendant.getId());
+                update.setNodePath(newPath + descendant.getNodePath().substring(old.getNodePath().length()));
+                if (descendant.getLevel() != null && old.getLevel() != null) {
+                    update.setLevel(descendant.getLevel() - old.getLevel() + newLevel);
                 }
-                u.setUpdateTime(LocalDateTime.now());
-                dictMapper.updateById(u);
+                update.setUpdateTime(LocalDateTime.now());
+                dictMapper.updateById(update);
             }
         }
 
         if (parentChanged) {
-            if (old.getParentId() != null && old.getParentId() > 0) {
+            Long oldParentId = normalizeParentId(old.getParentId());
+            if (oldParentId > 0) {
                 dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
-                        .eq(SysDict::getId, old.getParentId())
+                        .eq(SysDict::getId, oldParentId)
+                        .eq(SysDict::getTenantId, old.getTenantId())
+                        .eq(SysDict::getDeleted, false)
                         .setSql("children_count = GREATEST(children_count - 1, 0)")
                         .set(SysDict::getUpdateTime, LocalDateTime.now()));
             }
-            if (dict.getParentId() != null && dict.getParentId() > 0) {
+            if (newParentId > 0) {
                 dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
-                        .eq(SysDict::getId, dict.getParentId())
+                        .eq(SysDict::getId, newParentId)
+                        .eq(SysDict::getTenantId, old.getTenantId())
+                        .eq(SysDict::getDeleted, false)
                         .setSql("children_count = children_count + 1")
                         .set(SysDict::getUpdateTime, LocalDateTime.now()));
             }
@@ -335,58 +307,46 @@ public class DictServiceImpl implements IDictService {
 
         clearDictCache(null, old.getTenantId());
     }
-    
-    /**
-     * 删除字典（逻辑删除）
-     * <p>
-     * 执行逻辑删除操作，不会物理删除数据。
-     * 删除前会检查是否存在子节点，如果存在则不允许删除。
-     * 删除后会自动清除相关缓存。
-     * </p>
-     * 
-     * @param id 字典ID
-     * @throws RuntimeException 如果字典ID为空或存在子节点
-     */
+
     @Override
-    public void deleteDict(Long id) {
+    public void deleteDict(Long id, Long tenantId) {
         if (id == null) {
             throw new RuntimeException("字典ID不能为空");
         }
-        
-        SysDict old = dictMapper.selectById(id);
-        if (old == null || Boolean.TRUE.equals(old.getDeleted())) {
-            throw new RuntimeException("字典不存在");
-        }
+
+        SysDict old = requireTenantDict(id, tenantId);
 
         Long childCount = dictMapper.selectCount(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getParentId, id)
-                .eq(SysDict::getDeleted, false));
-        
+                .eq(SysDict::getTenantId, old.getTenantId())
+                .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getParentId, id));
         if (childCount > 0) {
             throw new RuntimeException("该字典下存在子节点，无法删除");
         }
-        
-        // 逻辑删除
-        SysDict dict = new SysDict();
-        dict.setId(id);
-        dict.setDeleted(true);
-        dict.setUpdateTime(LocalDateTime.now());
-        
-        dictMapper.updateById(dict);
 
-        if (old.getParentId() != null && old.getParentId() > 0) {
+        int rows = dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
+                .eq(SysDict::getId, id)
+                .eq(SysDict::getTenantId, old.getTenantId())
+                .eq(SysDict::getDeleted, false)
+                .set(SysDict::getDeleted, true)
+                .set(SysDict::getUpdateTime, LocalDateTime.now()));
+        if (rows <= 0) {
+            throw new RuntimeException("字典不存在");
+        }
+
+        Long parentId = normalizeParentId(old.getParentId());
+        if (parentId > 0) {
             dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
-                    .eq(SysDict::getId, old.getParentId())
+                    .eq(SysDict::getId, parentId)
+                    .eq(SysDict::getTenantId, old.getTenantId())
+                    .eq(SysDict::getDeleted, false)
                     .setSql("children_count = GREATEST(children_count - 1, 0)")
                     .set(SysDict::getUpdateTime, LocalDateTime.now()));
         }
 
         clearDictCache(null, old.getTenantId());
     }
-    
-    /**
-     * 清除字典缓存
-     */
+
     @Override
     public void clearDictCache(String dictCode, Long tenantId) {
         try {
@@ -396,26 +356,53 @@ public class DictServiceImpl implements IDictService {
                 redisTemplate.delete(keys);
             }
         } catch (Exception e) {
-            log.warn("清除字典缓存失败：tenantId={}", tenantId, e);
+            log.warn("清除字典缓存失败，tenantId={}", tenantId, e);
         }
     }
-    
-    /**
-     * 构建树形结构
-     */
+
+    private List<DictTreeVO> listTenantDictVos(Long tenantId) {
+        List<SysDict> dicts = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
+                .eq(tenantId != null, SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .orderByAsc(SysDict::getParentId)
+                .orderByAsc(SysDict::getOrderNum)
+                .orderByAsc(SysDict::getId));
+
+        List<DictTreeVO> result = new ArrayList<>();
+        for (SysDict dict : dicts) {
+            DictTreeVO vo = new DictTreeVO();
+            BeanUtils.copyProperties(dict, vo);
+            vo.setChildren(new ArrayList<>());
+            result.add(vo);
+        }
+        return result;
+    }
+
+    private SysDict requireTenantDict(Long id, Long tenantId) {
+        SysDict dict = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getId, id)
+                .eq(tenantId != null, SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .last("limit 1"));
+        if (dict == null) {
+            throw new RuntimeException("字典不存在");
+        }
+        return dict;
+    }
+
     private List<DictTreeVO> buildTree(List<DictTreeVO> allNodes, Long parentId) {
         List<DictTreeVO> result = new ArrayList<>();
-        
         for (DictTreeVO node : allNodes) {
-            if (parentId.equals(node.getParentId())) {
-                // 递归查找子节点
-                List<DictTreeVO> children = buildTree(allNodes, node.getId());
-                node.setChildren(children);
+            if (Objects.equals(normalizeParentId(node.getParentId()), normalizeParentId(parentId))) {
+                node.setChildren(buildTree(allNodes, node.getId()));
                 result.add(node);
             }
         }
-        
         return result;
+    }
+
+    private Long normalizeParentId(Long parentId) {
+        return parentId == null ? 0L : parentId;
     }
 
     private String resolveI18nText(String i18nJson, String fallback) {
@@ -425,64 +412,53 @@ public class DictServiceImpl implements IDictService {
         try {
             JsonNode node = objectMapper.readTree(i18nJson);
             String lang = LangContext.get();
-            String v = getText(node, lang);
-            if (StringUtils.hasText(v)) {
-                return v;
+            String value = getText(node, lang);
+            if (StringUtils.hasText(value)) {
+                return value;
             }
             if (StringUtils.hasText(lang)) {
-                int idx = lang.indexOf('-');
-                if (idx > 0) {
-                    v = getText(node, lang.substring(0, idx));
-                    if (StringUtils.hasText(v)) {
-                        return v;
+                int index = lang.indexOf('-');
+                if (index > 0) {
+                    value = getText(node, lang.substring(0, index));
+                    if (StringUtils.hasText(value)) {
+                        return value;
                     }
                 }
             }
-            v = getText(node, "zh-CN");
-            if (StringUtils.hasText(v)) {
-                return v;
+            value = getText(node, "zh-CN");
+            if (StringUtils.hasText(value)) {
+                return value;
             }
-            v = getText(node, "zh");
-            if (StringUtils.hasText(v)) {
-                return v;
+            value = getText(node, "zh");
+            if (StringUtils.hasText(value)) {
+                return value;
             }
             if (node.isObject()) {
-                java.util.Iterator<java.util.Map.Entry<String, JsonNode>> it = node.fields();
-                if (it.hasNext()) {
-                    JsonNode first = it.next().getValue();
+                java.util.Iterator<java.util.Map.Entry<String, JsonNode>> iterator = node.fields();
+                if (iterator.hasNext()) {
+                    JsonNode first = iterator.next().getValue();
                     if (first != null && first.isTextual() && StringUtils.hasText(first.asText())) {
                         return first.asText();
                     }
                 }
             }
-            return fallback;
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             return fallback;
         }
+        return fallback;
     }
 
     private String getText(JsonNode node, String key) {
         if (node == null || !node.isObject() || !StringUtils.hasText(key)) {
             return null;
         }
-        JsonNode v = node.get(key);
-        if (v != null && v.isTextual() && StringUtils.hasText(v.asText())) {
-            return v.asText();
+        JsonNode value = node.get(key);
+        if (value != null && value.isTextual() && StringUtils.hasText(value.asText())) {
+            return value.asText();
         }
         return null;
     }
 
-    /**
-     * 解析标签样式配置JSON
-     * <p>
-     * 将JSON格式的标签样式配置解析为TagStyleVO对象
-     * 如果JSON为空或解析失败，返回null
-     * </p>
-     * 
-     * @param tagStyleJson 标签样式配置JSON，格式：{"color":"success","icon":"CheckCircleOutlined"}
-     * @return TagStyleVO对象，解析失败返回null
-     * @see TagStyleVO
-     */
     private TagStyleVO parseTagStyle(String tagStyleJson) {
         if (!StringUtils.hasText(tagStyleJson)) {
             return null;

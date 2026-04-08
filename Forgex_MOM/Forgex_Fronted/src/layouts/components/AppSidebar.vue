@@ -22,18 +22,19 @@
             <component v-if="menu.icon" :is="getIcon(menu.icon)" />
             <FileOutlined v-else />
           </template>
-          <span class="mini-menu-title">{{ menu.title }}</span>
+          <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
 
     <!-- 主侧边栏（第二列：二三级菜单） -->
+    <!-- 第二列宽度减少10%，从200px改为180px -->
     <a-layout-sider
       v-if="!doubleColumn || hasSecondLevelMenus"
       class="app-sidebar"
       :collapsed="collapsed"
       :collapsible="true"
-      :width="200"
+      :width="180"
       :collapsed-width="64"
       @collapse="onCollapse"
     >
@@ -52,7 +53,9 @@
               <component v-if="item.icon" :is="getIcon(item.icon)" />
               <FolderOutlined v-else />
             </template>
-            <template #title>{{ item.title }}</template>
+            <template #title>
+              <span class="menu-text" :title="item.title">{{ item.title }}</span>
+            </template>
             <a-menu-item
               v-for="child in item.children"
               :key="child.key"
@@ -61,7 +64,7 @@
                 <component v-if="child.icon" :is="getIcon(child.icon)" />
                 <FileOutlined v-else />
               </template>
-              <span>{{ child.title }}</span>
+              <span class="menu-text" :title="child.title">{{ child.title }}</span>
             </a-menu-item>
           </a-sub-menu>
 
@@ -71,7 +74,7 @@
               <component v-if="item.icon" :is="getIcon(item.icon)" />
               <FileOutlined v-else />
             </template>
-            <span>{{ item.title }}</span>
+            <span class="menu-text" :title="item.title">{{ item.title }}</span>
           </a-menu-item>
         </template>
       </a-menu>
@@ -97,7 +100,7 @@ interface MenuItem {
   parentKey?: string
   menuLevel?: number  // 菜单层级：1=一级菜单, 2=二级菜单, 3=三级菜单
   children?: MenuItem[]
-  type: 'dir' | 'menu' | 'button'
+  type: 'catalog' | 'menu' | 'button'
 }
 
 interface Module {
@@ -108,11 +111,17 @@ interface Module {
 }
 
 interface AppSidebarProps {
+  /** 菜单项数组，包含所有菜单的层级结构数据 */
   menus: MenuItem[]
+  /** 模块列表，用于双列布局模式显示模块导航 */
   modules?: Module[]
+  /** 当前激活的菜单 key，用于高亮显示选中的菜单项 */
   activeKey?: string
+  /** 当前激活的模块 code，用于双列布局模式 */
   activeModuleCode?: string
+  /** 侧边栏是否折叠，true 表示折叠状态 */
   collapsed?: boolean
+  /** 是否启用双列布局，true 表示显示两列侧边栏 */
   doubleColumn?: boolean
 }
 
@@ -126,8 +135,23 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 菜单点击事件
+   * 触发时机：用户点击菜单项时触发
+   * @param menuKey 被点击的菜单 key
+   */
   'menu-click': [menuKey: string]
+  /**
+   * 模块点击事件
+   * 触发时机：用户点击模块导航时触发
+   * @param moduleCode 被点击的模块 code
+   */
   'module-click': [moduleCode: string]
+  /**
+   * 侧边栏折叠状态变化事件
+   * 触发时机：用户点击折叠按钮时触发
+   * @param collapsed 新的折叠状态
+   */
   'collapse-change': [collapsed: boolean]
 }>()
 
@@ -144,8 +168,14 @@ const firstLevelMenus = computed(() => {
     return []
   }
   
-  // 返回所有一级菜单（menuLevel === 1）
-  return props.menus.filter(menu => menu.menuLevel === 1)
+  // 返回所有一级菜单（menuLevel === 1），包含children
+  // 如果没有menuLevel属性，也视为一级菜单
+  const menus = props.menus.filter(menu => 
+    menu.menuLevel === 1 || 
+    (menu.parentKey === undefined && !menu.children) || 
+    (menu.parentKey === undefined && menu.children && menu.type === 'menu')
+  )
+  return menus
 })
 
 // 是否有二三级菜单（用于判断是否显示第二列）
@@ -154,8 +184,22 @@ const hasSecondLevelMenus = computed(() => {
     return false
   }
   
-  // 检查是否有 menuLevel >= 2 的菜单
-  return props.menus.some(menu => menu.menuLevel && menu.menuLevel >= 2)
+  // 只有点击了目录类型菜单且该菜单有children时，才显示第二列
+  // 获取当前选中的一级菜单
+  const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
+    menu.key === selectedFirstLevelKeys.value[0]
+  )
+  
+  if (!selectedFirstLevelMenu) {
+    return false
+  }
+  
+  // 如果选中的是目录类型菜单且有children，显示第二列
+  const showSecondLevel = selectedFirstLevelMenu.type === 'catalog' && 
+                         selectedFirstLevelMenu.children && 
+                         selectedFirstLevelMenu.children.length > 0
+  
+  return showSecondLevel
 })
 
 // 当前显示的菜单列表（第二列）
@@ -170,29 +214,63 @@ const currentMenus = computed(() => {
     return []
   }
   
-  // 只显示 menuLevel >= 2 的菜单
-  return props.menus.filter(menu => 
-    menu.moduleCode === props.activeModuleCode && 
-    menu.menuLevel && 
-    menu.menuLevel >= 2
+  // 获取当前选中的一级菜单
+  // 使用firstLevelMenus.value.find，因为firstLevelMenus包含完整的children结构
+  const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
+    menu.key === selectedFirstLevelKeys.value[0]
   )
+  
+  if (!selectedFirstLevelMenu) {
+    // 如果没有选中的一级菜单，显示所有menuLevel >= 2的菜单
+    return props.menus.filter(menu => 
+      menu.moduleCode === props.activeModuleCode && 
+      menu.menuLevel && 
+      menu.menuLevel >= 2
+    )
+  }
+  
+  // 显示选中的一级菜单对应的二级菜单
+  // 如果选中的是目录类型菜单，显示其所有子菜单
+  // 如果选中的是非目录类型菜单，显示所有menuLevel >= 2的菜单
+  if (selectedFirstLevelMenu.type === 'catalog') {
+    return selectedFirstLevelMenu.children || []
+  } else {
+    return props.menus.filter(menu => 
+      menu.moduleCode === props.activeModuleCode && 
+      menu.menuLevel && 
+      menu.menuLevel >= 2
+    )
+  }
 })
 
 // 监听 activeKey 变化
 watch(
-  () => props.activeKey,
-  (newKey) => {
-    if (newKey) {
-      selectedKeys.value = [newKey]
+  () => [props.activeKey, props.menus],
+  ([newKey]) => {
+    const normalizedKey = String(newKey || '').split('?')[0]
+    if (!normalizedKey) {
+      selectedKeys.value = []
+      openKeys.value = []
+      return
+    }
+    selectedKeys.value = [normalizedKey]
       
       // 自动展开父菜单
-      const menu = findMenuByKey(props.menus, newKey)
-      if (menu && menu.parentKey) {
-        if (!openKeys.value.includes(menu.parentKey)) {
-          openKeys.value.push(menu.parentKey)
-        }
+      const menuPath = findMenuPath(props.menus, normalizedKey)
+      if (!menuPath || menuPath.length === 0) {
+        openKeys.value = []
+        return
       }
-    }
+
+      const firstLevelMenu = menuPath.find(menu => menu.menuLevel === 1) || menuPath[0]
+      if (firstLevelMenu) {
+        selectedFirstLevelKeys.value = [firstLevelMenu.key]
+      }
+
+      openKeys.value = menuPath
+        .slice(0, -1)
+        .filter(menu => menu.key !== firstLevelMenu?.key)
+        .map(menu => menu.key)
   },
   { immediate: true }
 )
@@ -213,22 +291,63 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
   return null
 }
 
+function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = []): MenuItem[] | null {
+  for (const menu of menus) {
+    const currentPath = [...parentPath, menu]
+    if (menu.key === key) {
+      return currentPath
+    }
+    if (menu.children && menu.children.length > 0) {
+      const found = findMenuPath(menu.children, key, currentPath)
+      if (found) {
+        return found
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * 截断文本并添加省略号
+ * @param text 原始文本
+ * @param maxLength 最大长度
+ * @returns 截断后的文本
+ */
+function truncateText(text: string, maxLength: number): string {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// 查找一级菜单项
+function findFirstLevelMenu(key: string): MenuItem | null {
+  // 直接从props.menus中查找一级菜单
+  return props.menus.find(menu => 
+    menu.key === key && 
+    menu.menuLevel === 1
+  ) || null
+}
+
 // 一级菜单点击（双列布局）
 const onFirstLevelMenuClick = (info: any) => {
   const key = info.key as string
-  console.log('[AppSidebar] First level menu clicked:', key, info)
   if (key) {
     selectedFirstLevelKeys.value = [key]
-    // 点击一级菜单时，直接跳转
-    console.log('[AppSidebar] Emitting menu-click event:', key)
-    emit('menu-click', key)
+    
+    // 查找当前点击的一级菜单
+    const clickedMenu = findFirstLevelMenu(key)
+    
+    // 只有非目录类型的菜单才触发路由跳转
+    // 目录类型菜单只需要更新selectedFirstLevelKeys，让currentMenus自动更新显示对应的二级菜单
+    if (clickedMenu && clickedMenu.type !== 'catalog') {
+      emit('menu-click', key)
+    }
   }
 }
 
 // 模块点击
 const onModuleClick = (info: any) => {
   const key = info.key as string
-  console.log('[AppSidebar] Module clicked:', key)
   if (key) {
     emit('module-click', key)
   }
@@ -237,9 +356,7 @@ const onModuleClick = (info: any) => {
 // 菜单点击
 const onMenuClick = (info: any) => {
   const key = info.key as string
-  console.log('[AppSidebar] Menu clicked:', key, info)
   if (key) {
-    console.log('[AppSidebar] Emitting menu-click event:', key)
     emit('menu-click', key)
   }
 }
@@ -259,22 +376,49 @@ const onCollapse = (collapsed: boolean) => {
 .app-sidebar-wrapper {
   display: flex;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-sidebar-mini {
   background: var(--fx-sider-mini-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  min-height: 0;
+  overflow: hidden;
   
   :deep(.ant-layout-sider-children) {
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 }
 
 .mini-menu {
   flex: 1;
+  height: 100%;
+  min-height: 0;
   background: transparent;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
   
   :deep(.ant-menu-item) {
     display: flex;
@@ -327,22 +471,11 @@ const onCollapse = (collapsed: boolean) => {
   }
 }
 
-.mini-menu-title {
-  font-size: 13px;
-  margin-top: 4px;
-  text-align: center;
-  line-height: 1.2;
-  width: 100%;
-  // 允许文字换行，避免四字菜单名显示不全
-  word-break: break-all;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-
 .app-sidebar {
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  min-height: 0;
+  overflow: hidden;
   
   :deep(.ant-layout-sider-trigger) {
     background: rgba(0, 0, 0, 0.2);
@@ -356,8 +489,30 @@ const onCollapse = (collapsed: boolean) => {
 
 .sidebar-menu {
   height: 100%;
+  min-height: 0;
   background: transparent;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100vh;
+  
+  // 滚动条样式
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
   
   :deep(.ant-menu-item),
   :deep(.ant-menu-submenu-title) {
@@ -367,8 +522,9 @@ const onCollapse = (collapsed: boolean) => {
     color: var(--fx-text-color, rgba(255, 255, 255, 0.65)) !important;
     font-size: var(--fx-font-size, 14px);
     background: transparent !important;
-    // 确保菜单项有足够宽度显示完整文字
     min-width: 0;
+    display: flex;
+    align-items: center;
     
     &::after {
       display: none !important;
@@ -384,15 +540,18 @@ const onCollapse = (collapsed: boolean) => {
       font-size: calc(var(--fx-font-size, 14px) * 1.15);
       color: inherit !important;
       flex-shrink: 0;
+      margin-right: 8px;
     }
     
     .ant-menu-title-content {
       color: inherit !important;
-      // 允许文字正常显示，不截断
-      overflow: visible;
-      text-overflow: clip;
-      white-space: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       word-break: keep-all;
+      flex: 1;
+      display: flex;
+      align-items: center;
     }
   }
   
@@ -420,12 +579,72 @@ const onCollapse = (collapsed: boolean) => {
     
     .ant-menu-item {
       background: transparent !important;
+      display: flex;
+      align-items: center;
       
       &:hover {
         background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
       }
+      
+      .ant-menu-item-icon {
+        margin-right: 8px;
+      }
+      
+      .ant-menu-title-content {
+        display: flex;
+        align-items: center;
+      }
     }
   }
+  
+  // 确保子菜单也能滚动
+  :deep(.ant-menu-submenu-popover) {
+    max-height: 80vh;
+    overflow-y: auto;
+    
+    // 子菜单滚动条样式
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 3px;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.4);
+      }
+    }
+  }
+}
+
+// 菜单文字样式
+.menu-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+// 一级菜单标题样式（支持多行显示）
+.mini-menu-title {
+  font-size: 13px;
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.3;
+  width: 100%;
+  // 显示最多2行，超出显示省略号
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
 }
 
 // 响应式适配

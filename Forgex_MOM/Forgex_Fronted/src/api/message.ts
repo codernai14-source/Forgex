@@ -1,0 +1,53 @@
+import http, { silentHttp } from './http'
+
+/**
+ * 消息模板API
+ */
+
+// 分页查询消息模板
+export function pageMessageTemplate(params: any) {
+  return http.post('/sys/message-template/page', params)
+}
+
+// 根据ID查询消息模板详情（JSON 请求体，避免 Content-Type 与 Long 绑定问题）
+export function getMessageTemplate(id: number) {
+  return http.post('/sys/message-template/get', { id }, { silentError: true } as any)
+}
+
+// 保存消息模板(新增或修改)
+export function saveMessageTemplate(data: any) {
+  return http.post('/sys/message-template/save', data)
+}
+
+// 删除消息模板
+export function deleteMessageTemplate(id: number) {
+  return http.post('/sys/message-template/delete', { id })
+}
+
+// 批量删除消息模板
+export function deleteBatchMessageTemplate(ids: number[]) {
+  return http.post('/sys/message-template/delete-batch', { ids })
+}
+
+// 获取未读消息数量（使用静默模式，不显示全局遮罩）
+export function getUnreadMessageCount() {
+  return silentHttp.post('/sys/message/unread-count')
+}
+
+// 分页查询消息列表
+export function pageMessage(params: any) {
+  return http.post('/sys/message/page', params)
+}
+
+// 标记消息已读
+export function markMessageRead(id: number) {
+  return http.post('/sys/message/read', { id })
+}
+
+// 标记所有消息已读
+export function markAllMessageRead() {
+  return http.post('/sys/message/read-all')
+}
+
+
+

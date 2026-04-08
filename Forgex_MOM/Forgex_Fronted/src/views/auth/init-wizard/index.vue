@@ -18,7 +18,7 @@
             <div class="block">
               <div class="block-title">初始密码</div>
               <div class="item-hint">此值用于所有用户初始密码，重置密码将恢复为此值</div>
-              <input class="input" type="text" v-model="security.initialPassword" placeholder="默认 Aa123456@" />
+              <input class="input" type="text" v-model="security.initialPassword" placeholder="默认 Aa123456" />
             </div>
             <div class="block">
               <div class="block-title">验证码</div>
@@ -165,7 +165,7 @@ const refreshKey = ref(0)
 
 const security = reactive({
   pwdStrength: 'high',
-  initialPassword: 'Aa123456@',
+  initialPassword: 'Aa123456',
   captchaEnabled: true,
   captchaMode: 'image',
   passwordStore: 'BCrypt'

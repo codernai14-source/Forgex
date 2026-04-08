@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.forgex.sys.domain.dto.department.SysDepartmentDTO;
 import com.forgex.sys.domain.dto.department.SysDepartmentQueryDTO;
 import com.forgex.sys.domain.dto.department.SysDepartmentSaveParam;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +51,7 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // 查询所有部门
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getDeleted, false)
+               .eq(tenantId != null, SysDepartment::getTenantId, tenantId)
                .orderByAsc(SysDepartment::getOrderNum);
         
         List<SysDepartment> departments = departmentMapper.selectList(wrapper);
@@ -65,7 +68,8 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
     @Override
     public List<SysDepartmentDTO> list(SysDepartmentQueryDTO queryDTO) {
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysDepartment::getDeleted, false);
+        wrapper.eq(SysDepartment::getDeleted, false)
+               .eq(queryDTO.getTenantId() != null, SysDepartment::getTenantId, queryDTO.getTenantId());
         
         // 父部门ID
         if (queryDTO.getParentId() != null) {
@@ -105,7 +109,8 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
     public SysDepartmentDTO getById(Long id, Long tenantId) {
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getId, id)
-               .eq(SysDepartment::getDeleted, false);
+               .eq(SysDepartment::getDeleted, false)
+               .eq(tenantId != null, SysDepartment::getTenantId, tenantId);
         
         SysDepartment department = departmentMapper.selectOne(wrapper);
         
@@ -122,6 +127,7 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // 检查部门编码是否重复
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getDeptCode, param.getDeptCode())
+               .eq(param.getTenantId() != null, SysDepartment::getTenantId, param.getTenantId())
                .eq(SysDepartment::getDeleted, false);
         
         Long count = departmentMapper.selectCount(wrapper);
@@ -159,14 +165,19 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         }
         
         // 检查部门是否存在
-        SysDepartment existDept = departmentMapper.selectById(param.getId());
-        if (existDept == null || existDept.getDeleted()) {
+        SysDepartment existDept = departmentMapper.selectOne(new LambdaQueryWrapper<SysDepartment>()
+                .eq(SysDepartment::getId, param.getId())
+                .eq(param.getTenantId() != null, SysDepartment::getTenantId, param.getTenantId())
+                .eq(SysDepartment::getDeleted, false)
+                .last("limit 1"));
+        if (existDept == null) {
             throw new RuntimeException("部门不存在");
         }
         
         // 检查部门编码是否重复（排除自己）
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getDeptCode, param.getDeptCode())
+               .eq(param.getTenantId() != null, SysDepartment::getTenantId, param.getTenantId())
                .eq(SysDepartment::getDeleted, false)
                .ne(SysDepartment::getId, param.getId());
         
@@ -197,6 +208,7 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // 检查是否有子部门
         LambdaQueryWrapper<SysDepartment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDepartment::getParentId, id)
+               .eq(tenantId != null, SysDepartment::getTenantId, tenantId)
                .eq(SysDepartment::getDeleted, false);
         
         Long count = departmentMapper.selectCount(wrapper);
@@ -207,11 +219,15 @@ public class SysDepartmentServiceImpl implements SysDepartmentService {
         // TODO: 检查是否有用户关联
         
         // 逻辑删除
-        SysDepartment department = new SysDepartment();
-        department.setId(id);
-        department.setDeleted(true);
-        
-        int rows = departmentMapper.updateById(department);
+        int rows = departmentMapper.update(
+                null,
+                new LambdaUpdateWrapper<SysDepartment>()
+                        .eq(SysDepartment::getId, id)
+                        .eq(tenantId != null, SysDepartment::getTenantId, tenantId)
+                        .eq(SysDepartment::getDeleted, false)
+                        .set(SysDepartment::getDeleted, true)
+                        .set(SysDepartment::getUpdateTime, LocalDateTime.now())
+        );
         
         log.info("删除部门成功，部门ID：{}", id);
         

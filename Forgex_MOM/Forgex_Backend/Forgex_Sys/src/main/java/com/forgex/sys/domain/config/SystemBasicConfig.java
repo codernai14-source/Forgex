@@ -81,20 +81,20 @@ public class SystemBasicConfig {
      * 用途：决定登录页使用视频、图片还是纯色背景
      * 可选值：video、image、color
      */
-    private String loginBackgroundType = "video";
+    private String loginBackgroundType = "image";
     
     /**
      * 登录页背景视频
      * 用途：当 backgroundType 为 video 时使用
      */
-    private String loginBackgroundVideo = "/jws.mp4";
+    private String loginBackgroundVideo = "/loading.mp4";
     
     /**
      * 登录页背景图片
      * 用途：当 backgroundType 为 image 时使用
      * 格式：Base64编码字符串或URL路径
      */
-    private String loginBackgroundImage = "";
+    private String loginBackgroundImage = "/back.jpg";
     
     /**
      * 登录页背景颜色
@@ -108,6 +108,12 @@ public class SystemBasicConfig {
      * 可选值：cyber、simple、classic
      */
     private String loginStyle = "cyber";
+
+    /**
+     * Login page layout mode.
+     * Optional values: center / split / compact
+     */
+    private String loginLayout = "center";
     
     /**
      * 是否显示第三方登录

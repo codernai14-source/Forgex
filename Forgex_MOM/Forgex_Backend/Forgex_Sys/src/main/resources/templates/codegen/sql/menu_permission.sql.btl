@@ -1,0 +1,110 @@
+-- ================================================
+-- ${tableComment!entityName} 菜单和权限初始化脚本
+-- 生成时间：${date()}
+-- 表名：${tableName}
+-- ================================================
+
+USE forgex_admin;
+
+-- 设置租户ID
+SET @TENANT_ID = 1;
+
+-- 获取模块ID
+SET @MODULE_ID = (SELECT id FROM sys_module WHERE tenant_id = @TENANT_ID AND code = '${moduleName}' LIMIT 1);
+
+-- 如果模块不存在，则创建
+INSERT IGNORE INTO sys_module (tenant_id, code, name, name_i18n_json, icon, order_num, visible, status, create_time, update_time, deleted)
+VALUES (@TENANT_ID, '${moduleName}', '${moduleNameCn}', '{"zh-CN":"${moduleNameCn}","en-US":"${moduleNameEn}"}', '${moduleIcon}', ${moduleOrderNum}, 1, 1, NOW(), NOW(), 0);
+
+-- 重新获取模块ID
+SET @MODULE_ID = (SELECT id FROM sys_module WHERE tenant_id = @TENANT_ID AND code = '${moduleName}' LIMIT 1);
+
+-- ================================
+-- 创建菜单
+-- ================================
+
+-- 获取菜单ID
+SET @MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND module_id = @MODULE_ID AND path = '${menuPath}' AND type = 'menu' LIMIT 1);
+
+-- 如果菜单不存在，则创建
+INSERT IGNORE INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json, 
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, @MODULE_ID, 0, 'menu', 2, '${menuPath}', '${menuNameCn}', 
+    '{"zh-CN":"${menuNameCn}","en-US":"${menuNameEn}"}',
+    '${menuIcon}', '${componentKey}', NULL, ${menuOrderNum}, 1, 1, NOW(), NOW(), 0
+);
+
+-- 重新获取菜单ID
+SET @MENU_ID = (SELECT id FROM sys_menu WHERE tenant_id = @TENANT_ID AND module_id = @MODULE_ID AND path = '${menuPath}' AND type = 'menu' LIMIT 1);
+
+-- ================================
+-- 创建按钮权限
+-- ================================
+
+-- 新增按钮
+INSERT IGNORE INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, name, name_i18n_json, 
+    perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, @MODULE_ID, @MENU_ID, 'button', 3, '新增${menuNameCn}', 
+    '{"zh-CN":"新增${menuNameCn}","en-US":"Create ${menuNameEn}"}',
+    '${permKeyPrefix}:add', 1, 1, 1, NOW(), NOW(), 0
+);
+
+-- 编辑按钮
+INSERT IGNORE INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, name, name_i18n_json, 
+    perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, @MODULE_ID, @MENU_ID, 'button', 3, '编辑${menuNameCn}', 
+    '{"zh-CN":"编辑${menuNameCn}","en-US":"Edit ${menuNameEn}"}',
+    '${permKeyPrefix}:edit', 2, 1, 1, NOW(), NOW(), 0
+);
+
+-- 删除按钮
+INSERT IGNORE INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, name, name_i18n_json, 
+    perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, @MODULE_ID, @MENU_ID, 'button', 3, '删除${menuNameCn}', 
+    '{"zh-CN":"删除${menuNameCn}","en-US":"Delete ${menuNameEn}"}',
+    '${permKeyPrefix}:delete', 3, 1, 1, NOW(), NOW(), 0
+);
+
+-- 导出按钮
+INSERT IGNORE INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, name, name_i18n_json, 
+    perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+VALUES (
+    @TENANT_ID, @MODULE_ID, @MENU_ID, 'button', 3, '导出${menuNameCn}', 
+    '{"zh-CN":"导出${menuNameCn}","en-US":"Export ${menuNameEn}"}',
+    '${permKeyPrefix}:export', 4, 1, 1, NOW(), NOW(), 0
+);
+
+-- ================================
+-- 为超级管理员角色授权
+-- ================================
+
+-- 获取超级管理员角色ID
+SET @ADMIN_ROLE_ID = (SELECT id FROM sys_role WHERE tenant_id = @TENANT_ID AND role_key = 'admin' LIMIT 1);
+
+-- 授权菜单和按钮
+INSERT IGNORE INTO sys_role_menu (tenant_id, role_id, menu_id)
+SELECT @TENANT_ID, @ADMIN_ROLE_ID, id 
+FROM sys_menu 
+WHERE tenant_id = @TENANT_ID 
+  AND module_id = @MODULE_ID
+  AND (path = '${menuPath}' OR parent_id = @MENU_ID)
+  AND @ADMIN_ROLE_ID IS NOT NULL;
+
+SELECT '菜单和权限初始化完成！' AS message;
+
+
+

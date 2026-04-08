@@ -13,21 +13,67 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
- * 仪表盘Service接口
+ * 仪表盘 Service 接口
  * 
  * @author coder_nai@163.com
  * @date 2025-01-08
+ * @version 1.1
  */
 public interface IDashboardService {
     
     /**
      * 获取仪表盘统计数据
      * 
-     * @param tenantId 租户ID
+     * @param tenantId 租户 ID
      * @return 统计数据
      */
     Map<String, Object> getStatistics(Long tenantId);
+
+    /**
+     * 获取服务器信息
+     * 
+     * @return 服务器信息
+     */
+    Map<String, Object> getServerInfo();
+
+    /**
+     * 获取模块使用情况
+     * 
+     * @return 模块使用数据列表
+     */
+    List<Map<String, Object>> getModuleUsage();
+
+    /**
+     * 获取 JVM 各内存池（分区）已用内存，用于柱状图
+     *
+     * @return 每项含 moduleName、memoryUsageMb
+     */
+    List<Map<String, Object>> getModuleMemoryUsage();
+
+    /**
+     * 获取服务内存使用情况
+     * 
+     * @return 服务内存使用数据列表
+     */
+    List<Map<String, Object>> getServiceMemoryUsage();
+
+    /**
+     * 获取最近操作日志
+     * 
+     * @param size 数量
+     * @return 操作日志列表
+     */
+    List<Map<String, Object>> getRecentOperationLogs(Integer size);
+
+    /**
+     * 获取最近登录日志
+     * 
+     * @param size 数量
+     * @return 登录日志列表
+     */
+    List<Map<String, Object>> getRecentLoginLogs(Integer size);
 }

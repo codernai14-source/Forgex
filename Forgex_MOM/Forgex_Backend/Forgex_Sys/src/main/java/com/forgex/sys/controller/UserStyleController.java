@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.forgex.common.config.UserStyleConfigService;
 import com.forgex.common.domain.config.LayoutStyleConfig;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.param.UserLayoutStyleParam;
@@ -52,11 +53,11 @@ public class UserStyleController {
     @PostMapping("/get-layout")
     public R<LayoutStyleConfig> getLayout(@RequestBody UserLayoutStyleParam param) {
         if (param == null || param.getAccount() == null) {
-            return R.fail(500, "account 不能为空");
+            return R.fail(CommonPrompt.ACCOUNT_EMPTY);
         }
         Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
-            return R.fail(500, "用户不存在");
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
         Long tenantId = TenantContext.get();
         LayoutStyleConfig config = userStyleConfigService.getLayoutConfig(userId, tenantId);
@@ -72,11 +73,11 @@ public class UserStyleController {
     @PostMapping("/save-layout")
     public R<Boolean> saveLayout(@RequestBody UserLayoutStyleParam param) {
         if (param == null || param.getAccount() == null || param.getConfig() == null) {
-            return R.fail(500, "account/config 不能为空");
+            return R.fail(CommonPrompt.ACCOUNT_CONFIG_CANNOT_BE_EMPTY);
         }
         Long userId = userService.getUserIdByAccount(param.getAccount());
         if (userId == null) {
-            return R.fail(500, "用户不存在");
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
         Long tenantId = TenantContext.get();
         userStyleConfigService.saveLayoutConfig(userId, tenantId, param.getConfig());

@@ -41,25 +41,31 @@ export const permission: Directive = {
    */
   mounted(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
-    
-    // 如果没有权限，移除元素
+
+    const originalDisplay = el.style.display
+    ;(el as any).__vPermissionOriginalDisplay = originalDisplay
+
     if (value && !hasPermission(value)) {
-      el.parentNode?.removeChild(el)
+      el.style.display = 'none'
+      return
     }
+
+    el.style.display = originalDisplay
   },
   
   /**
    * 元素更新时检查权限
    */
   updated(el: HTMLElement, binding: DirectiveBinding<string>) {
-    const { value, oldValue } = binding
-    
-    // 如果权限标识改变，重新检查
-    if (value !== oldValue) {
-      if (value && !hasPermission(value)) {
-        el.parentNode?.removeChild(el)
-      }
+    const { value } = binding
+
+    const originalDisplay = (el as any).__vPermissionOriginalDisplay ?? ''
+    if (value && !hasPermission(value)) {
+      el.style.display = 'none'
+      return
     }
+
+    el.style.display = originalDisplay
   }
 }
 

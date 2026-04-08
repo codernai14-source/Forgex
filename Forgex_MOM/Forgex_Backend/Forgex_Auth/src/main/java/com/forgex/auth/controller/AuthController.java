@@ -21,6 +21,7 @@ import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.config.ConfigService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,36 +54,58 @@ import com.forgex.common.domain.config.CryptoTransportConfig;
  *
  * @author Forgex Team
  * @version 1.0.0
+ * @since 2026-03-28
  * @see com.forgex.auth.service.AuthService
  * @see com.forgex.auth.service.CaptchaService
  */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    /**
+     * 认证服务
+     */
     @Autowired
     private AuthService authService;
+
+    /**
+     * 验证码服务
+     */
     @Autowired
     private CaptchaService captchaService;
+
+    /**
+     * 配置服务
+     */
     @Autowired
     private ConfigService configService;
 
     /**
-     * 登录接口：输入账号密码，返回绑定的租户列表
+     * 用户登录接口
      * <p>
-     * 逻辑：委派给服务层处理登录并查询租户
+     * 接口路径：POST /auth/login
+     * 需要认证：否（登录接口）
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
+     * <p>执行步骤：</p>
+     * <ol>
      *   <li>接收前端传入的登录参数（账号、密码、验证码等）</li>
-     *   <li>调用 {@link com.forgex.auth.service.AuthService#login(LoginParam)} 处理登录逻辑</li>
-     *   <li>返回该用户绑定的所有租户列表</li>
-     * </ul>
+     *   <li>调用 {@link AuthService#login(LoginParam)} 处理登录逻辑</li>
+     *   <li>查询该用户绑定的所有租户列表</li>
+     *   <li>返回租户 VO 列表</li>
+     * </ol>
      *
      * @param param 登录参数，包含账号、密码、验证码等信息
-     * @return {@link R} 包含租户VO列表的统一返回结构
-     * @see com.forgex.auth.service.AuthService#login(LoginParam)
-     * @see com.forgex.auth.domain.param.LoginParam
-     * @see com.forgex.auth.domain.vo.TenantVO
+     *              - account: 用户账号（必填）
+     *              - password: 密码（必填，SM2 加密）
+     *              - captchaId: 验证码 ID（必填）
+     *              - captchaCode: 验证码（必填）
+     * @return {@link R} 包含租户 VO 列表的统一返回结构
+     *         - code: 状态码（200=成功）
+     *         - data: 租户列表（List&lt;TenantVO&gt;）
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 验证码错误或账号密码错误时抛出
+     * @see AuthService#login(LoginParam)
+     * @see TenantVO
      */
     @PostMapping("/login")
     public R<List<TenantVO>> login(@RequestBody LoginParam param) {
@@ -93,18 +116,25 @@ public class AuthController {
     /**
      * 选择租户接口：设置当前租户上下文
      * <p>
-     * 逻辑：委派服务层写入租户上下文
+     * 接口路径：POST /auth/chooseTenant
+     * 需要认证：是（需要先登录）
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
-     *   <li>接收用户选择的租户ID</li>
-     *   <li>调用 {@link com.forgex.auth.service.AuthService#chooseTenant(TenantChoiceParam)} 设置租户上下文</li>
-     *   <li>返回当前登录用户的详细信息（含头像、当前租户ID等）</li>
-     * </ul>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>接收用户选择的租户 ID</li>
+     *   <li>调用 {@link AuthService#chooseTenant(TenantChoiceParam)} 设置租户上下文</li>
+     *   <li>返回当前登录用户的详细信息（含头像、当前租户 ID 等）</li>
+     * </ol>
      *
-     * @param param 选择租户参数，包含账号和租户ID
-     * @return {@link R} 包含用户DTO的操作结果
-     * @see com.forgex.auth.service.AuthService#chooseTenant(TenantChoiceParam)
+     * @param param 选择租户参数，包含账号和租户 ID
+     *              - account: 用户账号（必填）
+     *              - tenantId: 租户 ID（必填）
+     * @return {@link R} 包含用户 DTO 的操作结果
+     *         - code: 状态码（200=成功）
+     *         - data: 用户详细信息（SysUserDTO）
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 租户不存在或无权访问时抛出
+     * @see AuthService#chooseTenant(TenantChoiceParam)
      * @see com.forgex.auth.domain.dto.SysUserDTO
      */
     @PostMapping("/chooseTenant")
@@ -120,7 +150,8 @@ public class AuthController {
      * </p>
      *
      * @param param 选择租户参数
-     * @return 用户DTO
+     * @return {@link R} 包含用户 DTO 的操作结果
+     * @throws com.forgex.common.exception.BusinessException 租户不存在或无权访问时抛出
      * @see #chooseTenant(TenantChoiceParam)
      */
     @PostMapping("/choose-tenant")
@@ -132,40 +163,58 @@ public class AuthController {
     /**
      * 更新租户偏好排序与默认租户
      * <p>
-     * 用于保存用户对租户的排序偏好和默认租户设置
+     * 接口路径：POST /auth/tenant/preferences
+     * 需要认证：是
      * </p>
-     * <p>参数说明：</p>
-     * <ul>
-     *   <li>account：用户账号</li>
-     *   <li>ordered：租户ID按喜好顺序排列（前端保存的顺序）</li>
-     *   <li>defaultTenantId：默认租户ID（可选）</li>
-     * </ul>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>从请求体提取账号参数</li>
+     *   <li>提取租户排序列表（ordered 字段）</li>
+     *   <li>提取默认租户 ID（可选）</li>
+     *   <li>将 ordered 对象转换为 Long 列表</li>
+     *   <li>委派给服务层更新租户偏好设置</li>
+     * </ol>
      *
-     * @param body 请求体，包含账号、租户排序列表和默认租户ID
+     * @param body 请求体，包含账号、租户排序列表和默认租户 ID
+     *             - account: 用户账号（必填）
+     *             - ordered: 租户 ID 列表（按喜好顺序排列）
+     *             - defaultTenantId: 默认租户 ID（可选）
      * @return {@link R} 更新是否成功
+     *         - code: 状态码（200=成功）
+     *         - data: true=成功，false=失败
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
      */
     @PostMapping("/tenant/preferences")
     public R<Boolean> updateTenantPreferences(@RequestBody Map<String, Object> body) {
-        // 从请求体中提取账号
+        // 1. 从请求体中提取账号
         String account = (String) body.get("account");
-        // 提取租户排序列表
+        
+        // 2. 提取租户排序列表（前端保存的顺序）
         Object orderedObj = body.get("ordered");
-        // 提取默认租户ID（可能为null）
-        Long defaultTenantId = body.get("defaultTenantId") == null ? null : Long.valueOf(String.valueOf(body.get("defaultTenantId")));
-        // 初始化租户ID列表
+        
+        // 3. 提取默认租户 ID（可选，可能为 null）
+        Long defaultTenantId = body.get("defaultTenantId") == null 
+            ? null 
+            : Long.valueOf(String.valueOf(body.get("defaultTenantId")));
+        
+        // 4. 将 ordered 对象转换为 Long 列表
         java.util.List<Long> ordered = new java.util.ArrayList<>();
-        // 将ordered对象转换为Long列表
         if (orderedObj instanceof java.util.List<?>) {
-            for (Object o : (java.util.List<?>) orderedObj) ordered.add(Long.valueOf(String.valueOf(o)));
+            for (Object o : (java.util.List<?>) orderedObj) {
+                ordered.add(Long.valueOf(String.valueOf(o)));
+            }
         }
-        // 委派给服务层更新租户偏好设置
+        
+        // 5. 委派给服务层更新租户偏好设置
         return authService.updateTenantPreferences(account, ordered, defaultTenantId);
     }
 
     /**
      * 管理员权限校验示例接口
      * <p>
-     * 逻辑：委派服务层检查角色
+     * 接口路径：POST /auth/secure/admin
+     * 需要认证：是
      * </p>
      * <p>用途：</p>
      * <ul>
@@ -173,9 +222,14 @@ public class AuthController {
      *   <li>用于权限控制示例</li>
      * </ul>
      *
-     * @return {@link R} 校验结果，true表示拥有管理员权限
-     * @see com.forgex.auth.service.AuthService#secureAdmin()
+     * @return {@link R} 校验结果，true 表示拥有管理员权限
+     *         - code: 状态码（200=成功）
+     *         - data: true=拥有管理员权限，false=无管理员权限
+     *         - message: 提示信息
+     * @see AuthService#secureAdmin()
+     * @deprecated 仅用于示例，生产环境请使用标准权限控制
      */
+    @Deprecated
     @PostMapping("/secure/admin")
     public R<Boolean> secureAdmin() {
         // 委派给服务层检查管理员权限
@@ -185,22 +239,28 @@ public class AuthController {
     /**
      * 重置用户密码
      * <p>
-     * 将指定用户的密码重置为默认密码（123456）
+     * 接口路径：POST /auth/reset-password
+     * 需要权限：sys:user:resetPwd
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
-     *   <li>接收用户ID</li>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>接收用户 ID</li>
      *   <li>调用服务层重置密码</li>
      *   <li>返回重置结果</li>
-     * </ul>
+     * </ol>
      *
-     * @param param 重置密码参数，包含用户ID
+     * @param param 重置密码参数，包含用户 ID
+     *              - userId: 用户 ID（必填）
      * @return {@link R} 重置是否成功
-     * @see com.forgex.auth.service.AuthService#resetPasswordById(Long)
+     *         - code: 状态码（200=成功）
+     *         - data: true=成功，false=失败
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 用户不存在时抛出
+     * @see AuthService#resetPasswordById(Long)
      */
     @PostMapping("/reset-password")
     public R<Boolean> resetPassword(@RequestBody com.forgex.auth.domain.param.ResetPasswordParam param) {
-        // 从参数中提取用户ID
+        // 从参数中提取用户 ID
         Long userId = param == null ? null : param.getUserId();
         // 委派给服务层重置密码
         return authService.resetPasswordById(userId);
@@ -209,17 +269,23 @@ public class AuthController {
     /**
      * 生成图片验证码
      * <p>
-     * 逻辑：委派验证码服务生成图片并写入Redis，返回 {@code captchaId} 与 {@code imageBase64}
+     * 接口路径：POST /auth/captcha/image
+     * 需要认证：否
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
+     * <p>执行步骤：</p>
+     * <ol>
      *   <li>调用验证码服务生成图片验证码</li>
-     *   <li>将验证码存入Redis，设置过期时间</li>
-     *   <li>返回验证码ID和Base64编码的图片</li>
-     * </ul>
+     *   <li>将验证码存入 Redis，设置过期时间</li>
+     *   <li>返回验证码 ID 和 Base64 编码的图片</li>
+     * </ol>
      *
-     * @return {@link R} 统一返回结构，包含图片验证码信息（captchaId和imageBase64）
-     * @see com.forgex.auth.service.CaptchaService#generateImageCaptcha()
+     * @return {@link R} 统一返回结构，包含图片验证码信息
+     *         - code: 状态码（200=成功）
+     *         - data: 验证码信息（Map）
+     *           - captchaId: 验证码 ID
+     *           - imageBase64: Base64 编码的图片
+     *         - message: 提示信息
+     * @see CaptchaService#generateImageCaptcha()
      */
     @PostMapping("/captcha/image")
     public R<Map<String, String>> captchaImage() {
@@ -230,16 +296,23 @@ public class AuthController {
     /**
      * 生成滑块验证码
      * <p>
-     * 逻辑：委派验证码服务生成滑块数据，返回渲染所需结构（含 id）
+     * 接口路径：POST /auth/captcha/slider
+     * 需要认证：否
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
+     * <p>执行步骤：</p>
+     * <ol>
      *   <li>调用验证码服务生成滑块验证码数据</li>
-     *   <li>返回滑块图片、缺口图片、验证码ID等渲染所需数据</li>
-     * </ul>
+     *   <li>返回滑块图片、缺口图片、验证码 ID 等渲染所需数据</li>
+     * </ol>
      *
-     * @return {@link R} 验证码渲染数据，包含滑块图片、缺口图片、验证码ID等
-     * @see com.forgex.auth.service.CaptchaService#generateSliderCaptcha()
+     * @return {@link R} 验证码渲染数据
+     *         - code: 状态码（200=成功）
+     *         - data: 滑块验证码数据（Object）
+     *           - captchaId: 验证码 ID
+     *           - backgroundImage: 滑块图片（Base64）
+     *           - sliderImage: 缺口图片（Base64）
+     *         - message: 提示信息
+     * @see CaptchaService#generateSliderCaptcha()
      */
     @PostMapping("/captcha/slider")
     public R<Object> captchaSlider() {
@@ -251,51 +324,63 @@ public class AuthController {
     /**
      * 校验滑块轨迹并发放令牌
      * <p>
-     * 逻辑：委派验证码服务校验前端轨迹，成功后生成一次性令牌
+     * 接口路径：POST /auth/captcha/slider/validate
+     * 需要认证：否
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
+     * <p>执行步骤：</p>
+     * <ol>
      *   <li>接收前端传来的滑块轨迹数据</li>
      *   <li>校验轨迹是否正确</li>
      *   <li>校验通过后生成一次性令牌</li>
      *   <li>返回令牌供登录时使用</li>
-     * </ul>
+     * </ol>
      *
      * @param param 滑块校验参数，包含 {@code id} 与 {@code track}
+     *              - id: 验证码 ID（必填）
+     *              - track: 滑块轨迹数据（必填）
      * @return {@link R} 令牌字符串（登录时作为验证码使用），校验失败返回错误信息
-     * @see com.forgex.auth.service.CaptchaService#validateSlider(String, Object)
+     *         - code: 状态码（200=成功）
+     *         - data: 一次性令牌字符串
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 轨迹校验失败时抛出
+     * @see CaptchaService#validateSlider(String, Object)
      */
     @PostMapping("/captcha/slider/validate")
     public R<String> captchaSliderValidate(@RequestBody SliderValidateParam param) {
-        // 校验参数是否为空
+        // 1. 参数校验：检查 id 和 track 是否为空
         if (param == null || param.getId() == null || param.getTrack() == null) {
-            return R.fail(500, "验证码不能为空");
+            return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
         }
-        // 委派给验证码服务校验滑块轨迹
+        
+        // 2. 调用服务层校验滑块轨迹
         String token = captchaService.validateSlider(param.getId(), param.getTrack());
-        // 校验成功，返回令牌
+        
+        // 3. 返回校验结果
         if (token != null) {
             return R.ok(token);
         }
-        // 校验失败，返回错误信息
-        return R.fail(500, "验证码不正确");
+        return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
     }
 
     /**
      * 用户登出
      * <p>
-     * 清除用户登录状态，删除Redis中的登录上下文信息
+     * 接口路径：POST /auth/logout
+     * 需要认证：是
      * </p>
-     * <p>流程说明：</p>
-     * <ul>
+     * <p>执行步骤：</p>
+     * <ol>
      *   <li>调用服务层执行登出逻辑</li>
-     *   <li>清除SaToken会话信息</li>
-     *   <li>删除Redis中的登录上下文</li>
+     *   <li>清除 SaToken 会话信息</li>
+     *   <li>删除 Redis 中的登录上下文</li>
      *   <li>清除租户上下文</li>
-     * </ul>
+     * </ol>
      *
      * @return {@link R} 登出是否成功
-     * @see com.forgex.auth.service.AuthService#logout()
+     *         - code: 状态码（200=成功）
+     *         - data: true=成功，false=失败
+     *         - message: 提示信息
+     * @see AuthService#logout()
      */
     @PostMapping("/logout")
     public R<Boolean> logout() {
@@ -303,34 +388,60 @@ public class AuthController {
         return authService.logout();
     }
 
+    /**
+     * 切换用户语言偏好
+     * <p>
+     * 接口路径：POST /auth/changeLanguage
+     * 需要认证：是
+     * </p>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>接收前端传入的语言编码</li>
+     *   <li>调用服务层更新用户语言偏好</li>
+     *   <li>返回操作结果</li>
+     * </ol>
+     *
+     * @param param 切换语言参数，包含语言编码
+     *              - lang: 语言编码（必填，如 zh_CN/en_US）
+     * @return {@link R} 切换是否成功
+     *         - code: 状态码（200=成功）
+     *         - data: true=成功，false=失败
+     *         - message: 提示信息
+     * @throws com.forgex.common.exception.BusinessException 语言编码不支持时抛出
+     */
     @PostMapping("/changeLanguage")
     public R<Boolean> changeLanguage(@RequestBody ChangeLanguageParam param) {
+        // 从参数中提取语言编码
         String lang = param == null ? null : param.getLang();
+        // 委派给服务层切换语言
         return authService.changeLanguage(lang);
     }
 
     /**
      * 获取前端传输加密所需公钥
      * <p>
-     * 逻辑：读取 common 配置中的 {@code security.crypto.transport.publicKey}
+     * 接口路径：GET /auth/crypto/public-key
+     * 需要认证：否
      * </p>
      * <p>用途：</p>
      * <ul>
-     *   <li>前端使用该公钥对登录密码进行SM2加密</li>
+     *   <li>前端使用该公钥对登录密码进行 SM2 加密</li>
      *   <li>后端使用对应的私钥解密</li>
      *   <li>确保密码在传输过程中的安全性</li>
      * </ul>
      *
-     * @return {@link R} SM2 公钥 Base64编码字符串，如果未配置则返回错误信息
-     * @see com.forgex.common.domain.config.CryptoTransportConfig
+     * @return {@link R} SM2 公钥 Base64 编码字符串，如果未配置则返回错误信息
+     *         - code: 状态码（200=成功）
+     *         - data: SM2 公钥 Base64 字符串
+     *         - message: 提示信息
+     * @see CryptoTransportConfig
      */
     @GetMapping("/crypto/public-key")
     public R<String> publicKey() {
-        // 从配置服务中获取传输加密配置
+        // 从配置中读取 SM2 公钥
         CryptoTransportConfig cfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
-        // 提取公钥
         String pub = cfg == null ? null : cfg.getPublicKey();
         // 返回公钥或错误信息
-        return pub != null ? R.ok(pub) : R.fail(500, "未配置公钥");
+        return pub != null ? R.ok(pub) : R.fail(CommonPrompt.PUBLIC_KEY_NOT_CONFIGURED);
     }
 }

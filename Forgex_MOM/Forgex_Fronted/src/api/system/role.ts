@@ -1,5 +1,5 @@
 import http from '../http'
-import type { Role } from '@/views/system/role/types'
+import type { Role, GrantBatchParams } from '@/views/system/role/types'
 
 /**
  * 获取角色列表
@@ -89,4 +89,55 @@ export const listRoleMenus = (params: { roleId: number; tenantId: string }) => {
  */
 export const grantRoleMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
   return http.post('/sys/role/menu/grant', data)
+}
+
+/**
+ * 获取角色已授权的用户列表
+ * @param params 参数 { roleId, tenantId, pageNum, pageSize }
+ * @returns 用户列表
+ */
+export const getRoleAuthorizedUsers = (params: { roleId: number; tenantId: string; pageNum?: number; pageSize?: number }) => {
+  return http.post('/sys/role/user/list', params)
+}
+
+/**
+ * 角色授权用户
+ * @param data 授权数据 { roleId, tenantId, userIds }
+ * @returns 结果
+ */
+export const grantRoleUsers = (data: { roleId: number; tenantId: string; userIds: number[] }) => {
+  return http.post('/sys/role/user/grant', data)
+}
+
+/**
+ * 角色取消授权用户
+ * @param data 取消授权数据 { roleId, tenantId, userIds }
+ * @returns 结果
+ */
+export const revokeRoleUsers = (data: { roleId: number; tenantId: string; userIds: number[] }) => {
+  return http.post('/sys/role/user/revoke', data)
+}
+
+/**
+ * 获取已授权人员列表（支持用户、部门、职位）
+ * @param params 参数 { roleId, tenantId, grantType, pageNum, pageSize }
+ * @returns 已授权人员列表
+ */
+export const getGrantedUserList = (params: {
+  roleId: number
+  tenantId: string
+  grantType?: string
+  pageNum?: number
+  pageSize?: number
+}) => {
+  return http.post('/sys/role/user/granted/list', params)
+}
+
+/**
+ * 批量授权（支持用户、部门、职位）
+ * @param data 授权数据 { roleId, tenantId, grantType, userIds, departmentIds, positionIds }
+ * @returns 结果
+ */
+export const grantBatch = (data: GrantBatchParams) => {
+  return http.post('/sys/role/user/grant/batch', data)
 }

@@ -18,6 +18,7 @@ import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.forgex.common.config.ConfigService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.entity.*;
 import com.forgex.sys.domain.param.InitApplyParam;
@@ -39,6 +40,7 @@ import com.forgex.common.domain.config.CaptchaConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.domain.config.InitStatusConfig;
+import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 
@@ -103,15 +105,15 @@ public class InitServiceImpl implements InitService {
     @DSTransactional(rollbackFor = Exception.class)
     public R<Boolean> apply(InitApplyParam param) {
         String lockKey = "sys:init:lock"; // 分布式锁键（避免并发初始化）
-        Boolean ok = redis.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMinutes(2)); // 获取锁，设置2分钟过期
-        if (Boolean.FALSE.equals(ok)) { // 获取失败（正在初始化）
-            return R.fail(500, "正在初始化中，请稍后再试"); // 返回失败提示
+        Boolean ok = redis.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMinutes(2));
+        if (Boolean.FALSE.equals(ok)) {
+            return R.fail(CommonPrompt.INITIALIZING);
         }
         try {
-            writeSecurityConfigsToCommon(param); // 写入安全配置到 common 配置库
+            writeSecurityConfigsToCommon(param);
             PasswordPolicyConfig policyCheck = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
-            String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456@" : param.getInitialPassword();
-            if (!validatePassword(initPwd, policyCheck)) { return R.fail(500, "初始化密码不符合安全策略要求"); }
+            String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456" : param.getInitialPassword();
+            if (!validatePassword(initPwd, policyCheck)) { return R.fail(CommonPrompt.INIT_PASSWORD_INVALID); }
             clearAdminTables(); // 清空 admin 相关业务表（忽略租户过滤，保证幂等）
             seedAdminData(param); // 重建租户、用户、角色以及绑定关系
             InitStatusConfig status = new InitStatusConfig(); // 创建初始化状态实体
@@ -155,10 +157,13 @@ public class InitServiceImpl implements InitService {
             pwdPolicy.setRequireLowercase(false);
             pwdPolicy.setRequireSymbols(false);
         }
+        String initPwd = (p == null || !StringUtils.hasText(p.getInitialPassword())) ? "Aa123456" : p.getInitialPassword();
+        pwdPolicy.setDefaultPassword(initPwd);
         String store = p == null ? null : p.getPasswordStore();
         String storeLower = store == null ? "sm2" : store.toLowerCase();
         pwdPolicy.setStore(storeLower);
         configService.setJson("security.password.policy", pwdPolicy);
+        configService.setJson("security.login.failure", LoginSecurityConfig.defaults());
 
         if ("sm4".equalsIgnoreCase(storeLower)) {
             byte[] k = new byte[16]; new SecureRandom().nextBytes(k);
@@ -186,8 +191,11 @@ public class InitServiceImpl implements InitService {
     private void clearAdminTables() {
         TenantContextIgnore.setIgnore(true); // 临时忽略租户过滤
         try {
+            roleMenuMapper.delete(new LambdaQueryWrapper<>()); // 清空角色-菜单绑定
             userRoleMapper.delete(new LambdaQueryWrapper<>()); // 清空用户-角色绑定
             userTenantMapper.delete(new LambdaQueryWrapper<>()); // 清空用户-租户绑定
+            menuMapper.delete(new LambdaQueryWrapper<>()); // 清空菜单
+            moduleMapper.delete(new LambdaQueryWrapper<>()); // 清空模块
             roleMapper.delete(new LambdaQueryWrapper<>()); // 清空角色表
             tenantMapper.delete(new LambdaQueryWrapper<>()); // 清空租户表
             userMapper.delete(new LambdaQueryWrapper<>()); // 清空用户表
@@ -263,7 +271,7 @@ public class InitServiceImpl implements InitService {
 
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
         String store = policy == null ? "bcrypt" : policy.getStore();
-        String rawInitPwd = (p == null || p.getInitialPassword() == null || p.getInitialPassword().isEmpty()) ? "Aa123456@" : p.getInitialPassword();
+        String rawInitPwd = (p == null || p.getInitialPassword() == null || p.getInitialPassword().isEmpty()) ? "Aa123456" : p.getInitialPassword();
 
         List<SysUser> users = new ArrayList<>();
         users.add(newUser("admin", rawInitPwd, store));
@@ -299,7 +307,7 @@ public class InitServiceImpl implements InitService {
         }
 
         List<SysRole> roles = new ArrayList<>();
-        roles.add(newRole("系统管理员", "admin", defaultTenantId));
+        roles.add(newRole("平台管理员", "admin", defaultTenantId));
         if (p != null && p.isRoleTester()) roles.add(newRole("测试员", "tester", defaultTenantId));
         if (p != null && p.isRoleDeveloper()) roles.add(newRole("开发人员", "developer", defaultTenantId));
         if (p != null && p.isRoleCustomer()) roles.add(newRole("客户", "customer", defaultTenantId));
@@ -337,103 +345,309 @@ public class InitServiceImpl implements InitService {
             }
         }
 
-        SysModule sysModule = new SysModule();
-        sysModule.setTenantId(defaultTenantId);
-        sysModule.setCode("sys");
-        sysModule.setName("系统");
-        sysModule.setIcon("setting");
-        sysModule.setOrderNum(10);
-        sysModule.setVisible(true);
-        sysModule.setStatus(true);
-        moduleMapper.insert(sysModule);
-        Long mid = sysModule.getId();
-
-        SysMenu userMenu = new SysMenu();
-        userMenu.setTenantId(defaultTenantId);
-        userMenu.setModuleId(mid);
-        userMenu.setParentId(0L);
-        userMenu.setType("menu");
-        userMenu.setPath("user");
-        userMenu.setName("用户管理");
-        userMenu.setIcon("user");
-        userMenu.setComponentKey("SysUser");
-        userMenu.setOrderNum(10);
-        userMenu.setVisible(true);
-        userMenu.setStatus(true);
-        menuMapper.insert(userMenu);
-
-        SysMenu roleMenu = new SysMenu();
-        roleMenu.setTenantId(defaultTenantId);
-        roleMenu.setModuleId(mid);
-        roleMenu.setParentId(0L);
-        roleMenu.setType("menu");
-        roleMenu.setPath("role");
-        roleMenu.setName("角色管理");
-        roleMenu.setIcon("team");
-        roleMenu.setComponentKey("SysRole");
-        roleMenu.setOrderNum(20);
-        roleMenu.setVisible(true);
-        roleMenu.setStatus(true);
-        menuMapper.insert(roleMenu);
-
-        SysMenu userView = new SysMenu();
-        userView.setTenantId(defaultTenantId);
-        userView.setModuleId(mid);
-        userView.setParentId(userMenu.getId());
-        userView.setType("button");
-        userView.setName("用户查看");
-        userView.setPermKey("user.view");
-        userView.setOrderNum(1);
-        userView.setVisible(true);
-        userView.setStatus(true);
-        menuMapper.insert(userView);
-
-        SysMenu userEdit = new SysMenu();
-        userEdit.setTenantId(defaultTenantId);
-        userEdit.setModuleId(mid);
-        userEdit.setParentId(userMenu.getId());
-        userEdit.setType("button");
-        userEdit.setName("用户编辑");
-        userEdit.setPermKey("user.edit");
-        userEdit.setOrderNum(2);
-        userEdit.setVisible(true);
-        userEdit.setStatus(true);
-        menuMapper.insert(userEdit);
-
-        SysMenu roleView = new SysMenu();
-        roleView.setTenantId(defaultTenantId);
-        roleView.setModuleId(mid);
-        roleView.setParentId(roleMenu.getId());
-        roleView.setType("button");
-        roleView.setName("角色查看");
-        roleView.setPermKey("role.view");
-        roleView.setOrderNum(1);
-        roleView.setVisible(true);
-        roleView.setStatus(true);
-        menuMapper.insert(roleView);
-
-        SysMenu roleEdit = new SysMenu();
-        roleEdit.setTenantId(defaultTenantId);
-        roleEdit.setModuleId(mid);
-        roleEdit.setParentId(roleMenu.getId());
-        roleEdit.setType("button");
-        roleEdit.setName("角色编辑");
-        roleEdit.setPermKey("role.edit");
-        roleEdit.setOrderNum(2);
-        roleEdit.setVisible(true);
-        roleEdit.setStatus(true);
-        menuMapper.insert(roleEdit);
-
         Long adminRoleId = roleIdByKey.get("admin");
-        if (adminRoleId != null) {
-            for (SysMenu m : Arrays.asList(userMenu, roleMenu, userView, userEdit, roleView, roleEdit)) {
-                SysRoleMenu rm = new SysRoleMenu();
-                rm.setTenantId(defaultTenantId);
-                rm.setRoleId(adminRoleId);
-                rm.setMenuId(m.getId());
-                roleMenuMapper.insert(rm);
-            }
+        seedDefaultPermissionData(defaultTenantId, adminRoleId);
+    }
+
+    private void seedDefaultPermissionData(Long tenantId, Long adminRoleId) {
+        List<Long> grantedMenuIds = new ArrayList<>();
+
+        SysModule sysModule = insertModule(tenantId, "sys", "系统管理", "System Management", "SettingOutlined", 10);
+        seedSystemModuleMenus(tenantId, sysModule.getId(), grantedMenuIds);
+
+        SysModule workflowModule = insertModule(tenantId, "approval", "审批管理", "Approval", "AuditOutlined", 50);
+        seedWorkflowModuleMenus(tenantId, workflowModule.getId(), grantedMenuIds);
+
+        grantRoleMenus(tenantId, adminRoleId, grantedMenuIds);
+    }
+
+    private void seedSystemModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
+        SysMenu dashboard = insertMenu(tenantId, moduleId, 0L, "menu", "dashboard",
+                "仪表盘", "Dashboard", "DashboardOutlined", "SystemDashboard", "sys:dashboard:view", 1, 1);
+        grantedMenuIds.add(dashboard.getId());
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "user", "用户管理", "User Management",
+                "UserOutlined", "SystemUser", "sys:user:view",
+                Arrays.asList(
+                        new String[]{"sys:user:add", "新增用户", "Add User"},
+                        new String[]{"sys:user:edit", "编辑用户", "Edit User"},
+                        new String[]{"sys:user:delete", "删除用户", "Delete User"},
+                        new String[]{"sys:user:resetPwd", "重置密码", "Reset Password"},
+                        new String[]{"sys:user:assignRole", "分配角色", "Assign Role"},
+                        new String[]{"sys:user:export", "导出用户", "Export User"},
+                        new String[]{"sys:excel:export:user", "执行用户导出", "Run User Export"}
+                ));
+
+        // 角色管理主菜单
+        SysMenu roleMenu = insertMenu(tenantId, moduleId, 0L, "menu", "role",
+                "角色管理", "Role Management", "TeamOutlined", "SystemRole", "sys:role:view", 20, 1);
+        grantedMenuIds.add(roleMenu.getId());
+
+        // 菜单授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
+        // 路径格式：role/MenuGrant/:roleId，与组件目录结构 role/MenuGrant.vue 对应
+        SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "role/MenuGrant/:roleId",
+                "菜单授权", "Menu Grant", "SafetyCertificateOutlined", "SystemRoleMenuGrant", "sys:role:authMenu", 1, 2);
+        menuGrantMenu.setVisible(false); // 设置为隐藏菜单
+        menuMapper.updateById(menuGrantMenu);
+        grantedMenuIds.add(menuGrantMenu.getId());
+
+        // 人员授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
+        // 路径格式：role/UserGrant/:roleId，与组件目录结构 role/UserGrant.vue 对应
+        SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "role/UserGrant/:roleId",
+                "人员授权", "User Grant", "UsergroupAddOutlined", "SystemRoleUserGrant", "sys:role:authUser", 2, 2);
+        userGrantMenu.setVisible(false); // 设置为隐藏菜单
+        menuMapper.updateById(userGrantMenu);
+        grantedMenuIds.add(userGrantMenu.getId());
+
+        // 角色管理按钮权限
+        addRoleMenuButtons(tenantId, moduleId, roleMenu.getId(), grantedMenuIds);
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 30, "module", "模块管理", "Module Management",
+                "AppstoreOutlined", "SystemModule", "sys:module:view",
+                Arrays.asList(
+                        new String[]{"sys:module:add", "新增模块", "Add Module"},
+                        new String[]{"sys:module:edit", "编辑模块", "Edit Module"},
+                        new String[]{"sys:module:delete", "删除模块", "Delete Module"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 40, "menu", "菜单管理", "Menu Management",
+                "MenuOutlined", "SystemMenu", "sys:menu:view",
+                Arrays.asList(
+                        new String[]{"sys:menu:add", "新增菜单", "Add Menu"},
+                        new String[]{"sys:menu:edit", "编辑菜单", "Edit Menu"},
+                        new String[]{"sys:menu:delete", "删除菜单", "Delete Menu"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
+                "ApartmentOutlined", "SystemDepartment", "sys:dept:view",
+                Arrays.asList(
+                        new String[]{"sys:dept:add", "新增部门", "Add Department"},
+                        new String[]{"sys:dept:edit", "编辑部门", "Edit Department"},
+                        new String[]{"sys:dept:delete", "删除部门", "Delete Department"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 60, "position", "岗位管理", "Position Management",
+                "IdcardOutlined", "SystemPosition", "sys:position:view",
+                Arrays.asList(
+                        new String[]{"sys:position:add", "新增岗位", "Add Position"},
+                        new String[]{"sys:position:edit", "编辑岗位", "Edit Position"},
+                        new String[]{"sys:position:delete", "删除岗位", "Delete Position"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 70, "tenant", "租户管理", "Tenant Management",
+                "BankOutlined", "SystemTenant", "sys:tenant:view",
+                Arrays.asList(
+                        new String[]{"sys:tenant:add", "新增租户", "Add Tenant"},
+                        new String[]{"sys:tenant:edit", "编辑租户", "Edit Tenant"},
+                        new String[]{"sys:tenant:delete", "删除租户", "Delete Tenant"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 80, "online", "在线用户", "Online Users",
+                "ClusterOutlined", "SystemOnline", "sys:online:view",
+                Collections.singletonList(new String[]{"sys:online:kickout", "强制下线", "Kick Out"})
+        );
+
+        SysMenu excelConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "excelConfig",
+                "Excel配置", "Excel Config", "FileExcelOutlined", null, null, 90, 1);
+        grantedMenuIds.add(excelConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, excelConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "excelImportConfig", "Excel导入配置", "Excel Import Config",
+                "ImportOutlined", "SystemExcelImportConfig", "sys:excel:importConfig:list",
+                Arrays.asList(
+                        new String[]{"sys:excel:importConfig:edit", "编辑导入配置", "Edit Import Config"},
+                        new String[]{"sys:excel:importConfig:delete", "删除导入配置", "Delete Import Config"},
+                        new String[]{"sys:excel:template:download", "下载导入模板", "Download Template"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, excelConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "excelExportConfig", "Excel导出配置", "Excel Export Config",
+                "ExportOutlined", "SystemExcelExportConfig", "sys:excel:exportConfig:list",
+                Arrays.asList(
+                        new String[]{"sys:excel:exportConfig:edit", "编辑导出配置", "Edit Export Config"},
+                        new String[]{"sys:excel:exportConfig:delete", "删除导出配置", "Delete Export Config"}
+                ));
+
+        SysMenu pageTableConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "pageTableConfig",
+                "页表配置", "Page Table Config", "TableOutlined", null, null, 100, 1);
+        grantedMenuIds.add(pageTableConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, pageTableConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "tableConfig", "动态表格配置", "Dynamic Table Config",
+                "TableOutlined", "SystemTableConfig", "sys:tableConfig:view",
+                Arrays.asList(
+                        new String[]{"sys:tableConfig:add", "新增表格配置", "Add Table Config"},
+                        new String[]{"sys:tableConfig:edit", "编辑表格配置", "Edit Table Config"},
+                        new String[]{"sys:tableConfig:delete", "删除表格配置", "Delete Table Config"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, pageTableConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "userTableConfig", "用户列设置", "User Table Config",
+                "ColumnWidthOutlined", "SystemUserTableConfig", "sys:userTableConfig:view",
+                Arrays.asList());
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 110, "tenantMessageWhitelist", "租户消息白名单", "Tenant Message Whitelist",
+                "SafetyCertificateOutlined", "SystemTenantMessageWhitelist", "sys:tenant-message-whitelist:view",
+                Arrays.asList(
+                        new String[]{"sys:tenant-message-whitelist:create", "新增白名单", "Add Whitelist"},
+                        new String[]{"sys:tenant-message-whitelist:update", "编辑白名单", "Edit Whitelist"},
+                        new String[]{"sys:tenant-message-whitelist:delete", "删除白名单", "Delete Whitelist"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 120, "loginLog", "登录日志", "Login Log",
+                "LoginOutlined", "SystemLoginLog", "sys:loginLog:view",
+                Collections.singletonList(new String[]{"sys:excel:export:loginLog", "导出登录日志", "Export Login Log"})
+        );
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 130, "operationLog", "操作日志", "Operation Log",
+                "FileTextOutlined", "SystemOperationLog", "sys:operation-log:view",
+                Collections.singletonList(new String[]{"sys:operation-log:export", "导出操作日志", "Export Operation Log"})
+        );
+    }
+
+    private void seedWorkflowModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
+        SysMenu dashboardMenu = insertMenu(tenantId, moduleId, 0L, "menu", "dashboard",
+                "审批工作台", "Approval Dashboard", "DashboardOutlined", "ApprovalDashboard", "wf:dashboard:view", 5, 1);
+        grantedMenuIds.add(dashboardMenu.getId());
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "taskConfig", "审批任务配置", "Task Config",
+                "SettingOutlined", "ApprovalTaskConfig", "wf:taskConfig:view",
+                Arrays.asList(
+                        new String[]{"wf:taskConfig:add", "新增审批任务", "Add Task Config"},
+                        new String[]{"wf:taskConfig:edit", "编辑审批任务", "Edit Task Config"},
+                        new String[]{"wf:taskConfig:delete", "删除审批任务", "Delete Task Config"},
+                        new String[]{"wf:taskConfig:config", "配置审批流程", "Configure Workflow"}
+                ));
+
+        SysMenu startMenu = insertMenu(tenantId, moduleId, 0L, "menu", "execution/start",
+                "发起审批", "Start Approval", "PlayCircleOutlined", "ApprovalExecutionStart", "wf:execution:start", 20, 1);
+        grantedMenuIds.add(startMenu.getId());
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 30, "my/pending", "我的待办", "My Pending",
+                "ClockCircleOutlined", "ApprovalMyPending", "wf:myTask:pending",
+                Arrays.asList(
+                        new String[]{"wf:execution:approve", "同意审批", "Approve"},
+                        new String[]{"wf:execution:reject", "驳回审批", "Reject"}
+                ));
+
+        SysMenu processedMenu = insertMenu(tenantId, moduleId, 0L, "menu", "my/processed",
+                "我已处理", "My Processed", "CheckCircleOutlined", "ApprovalMyProcessed", "wf:myTask:processed", 40, 1);
+        grantedMenuIds.add(processedMenu.getId());
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "my/initiated", "我发起的", "My Initiated",
+                "SendOutlined", "ApprovalMyInitiated", "wf:myTask:initiated",
+                Collections.singletonList(new String[]{"wf:execution:cancel", "撤销审批", "Cancel Execution"})
+        );
+    }
+
+    private void addRoleMenuButtons(Long tenantId, Long moduleId, Long parentId, List<Long> grantedMenuIds) {
+        String[][] buttonDefs = {
+                {"sys:role:add", "新增角色", "Add Role"},
+                {"sys:role:edit", "编辑角色", "Edit Role"},
+                {"sys:role:delete", "删除角色", "Delete Role"},
+                {"sys:role:authMenu", "菜单授权", "Authorize Menu"},
+                {"sys:role:authUser", "用户授权", "Authorize User"}
+        };
+        int buttonOrder = 1;
+        for (String[] buttonDef : buttonDefs) {
+            SysMenu button = insertButton(tenantId, moduleId, parentId,
+                    buttonDef[0], buttonDef[1], buttonDef[2], buttonOrder++);
+            grantedMenuIds.add(button.getId());
         }
+    }
+
+    private void addMenuWithButtons(Long tenantId, Long moduleId, List<Long> grantedMenuIds,
+                                    int orderNum, String path, String zhName, String enName,
+                                    String icon, String componentKey, String menuPermKey,
+                                    List<String[]> buttonDefs) {
+        addMenuWithButtons(tenantId, moduleId, 0L, 1, grantedMenuIds, orderNum, path, zhName, enName,
+                icon, componentKey, menuPermKey, buttonDefs);
+    }
+
+    private void addMenuWithButtons(Long tenantId, Long moduleId, Long parentId, int menuLevel,
+                                    List<Long> grantedMenuIds, int orderNum, String path,
+                                    String zhName, String enName, String icon, String componentKey,
+                                    String menuPermKey, List<String[]> buttonDefs) {
+        SysMenu menu = insertMenu(tenantId, moduleId, parentId, "menu", path, zhName, enName, icon, componentKey, menuPermKey, orderNum, menuLevel);
+        grantedMenuIds.add(menu.getId());
+
+        int buttonOrder = 1;
+        for (String[] buttonDef : buttonDefs) {
+            SysMenu button = insertButton(tenantId, moduleId, menu.getId(),
+                    buttonDef[0], buttonDef[1], buttonDef[2], buttonOrder++);
+            grantedMenuIds.add(button.getId());
+        }
+    }
+
+    private SysModule insertModule(Long tenantId, String code, String zhName, String enName, String icon, int orderNum) {
+        SysModule module = new SysModule();
+        module.setTenantId(tenantId);
+        module.setCode(code);
+        module.setName(zhName);
+        module.setNameI18nJson(i18n(zhName, enName));
+        module.setIcon(icon);
+        module.setOrderNum(orderNum);
+        module.setVisible(true);
+        module.setStatus(true);
+        moduleMapper.insert(module);
+        return module;
+    }
+
+    private SysMenu insertMenu(Long tenantId, Long moduleId, Long parentId, String type, String path,
+                               String zhName, String enName, String icon, String componentKey,
+                               String permKey, int orderNum, int menuLevel) {
+        SysMenu menu = new SysMenu();
+        menu.setTenantId(tenantId);
+        menu.setModuleId(moduleId);
+        menu.setParentId(parentId);
+        menu.setType(type);
+        menu.setPath(path);
+        menu.setName(zhName);
+        menu.setNameI18nJson(i18n(zhName, enName));
+        menu.setIcon(icon);
+        menu.setComponentKey(componentKey);
+        menu.setPermKey(permKey);
+        menu.setOrderNum(orderNum);
+        menu.setVisible(true);
+        menu.setStatus(true);
+        menu.setMenuLevel(menuLevel);
+        menuMapper.insert(menu);
+        return menu;
+    }
+
+    private SysMenu insertButton(Long tenantId, Long moduleId, Long parentId, String permKey,
+                                 String zhName, String enName, int orderNum) {
+        SysMenu button = new SysMenu();
+        button.setTenantId(tenantId);
+        button.setModuleId(moduleId);
+        button.setParentId(parentId);
+        button.setType("button");
+        button.setName(zhName);
+        button.setNameI18nJson(i18n(zhName, enName));
+        button.setPermKey(permKey);
+        button.setOrderNum(orderNum);
+        button.setVisible(true);
+        button.setStatus(true);
+        button.setMenuLevel(3);
+        menuMapper.insert(button);
+        return button;
+    }
+
+    private void grantRoleMenus(Long tenantId, Long roleId, List<Long> menuIds) {
+        if (roleId == null || menuIds == null || menuIds.isEmpty()) {
+            return;
+        }
+        for (Long menuId : menuIds) {
+            SysRoleMenu rm = new SysRoleMenu();
+            rm.setTenantId(tenantId);
+            rm.setRoleId(roleId);
+            rm.setMenuId(menuId);
+            roleMenuMapper.insert(rm);
+        }
+    }
+
+    private String i18n(String zhName, String enName) {
+        return "{\"zh-CN\":\"" + zhName + "\",\"en-US\":\"" + enName + "\"}";
     }
 
     /**

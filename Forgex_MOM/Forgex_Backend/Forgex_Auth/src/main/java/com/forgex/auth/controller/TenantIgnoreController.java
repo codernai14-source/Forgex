@@ -22,17 +22,56 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 租户隔离跳过配置控制器
- * 提供运行时热更新接口
+ * <p>
+ * 提供租户隔离跳过配置的运行时热更新接口。
+ * 允许管理员在不重启应用的情况下，重新加载租户隔离跳过配置。
+ * </p>
+ * <p><strong>主要功能：</strong></p>
+ * <ul>
+ *   <li>提供租户隔离跳过配置的热更新接口</li>
+ *   <li>支持运行时重新加载配置</li>
+ *   <li>无需重启应用即可生效</li>
+ * </ul>
+ * <p><strong>使用场景：</strong></p>
+ * <ul>
+ *   <li>新增租户隔离跳过配置后，立即生效</li>
+ *   <li>修改租户隔离跳过配置后，立即生效</li>
+ *   <li>删除租户隔离跳过配置后，立即生效</li>
+ * </ul>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-03-28
+ * @see TenantIgnoreService
+ * @see com.forgex.auth.config.TenantIgnoreLoader
  */
 @RestController
 @RequestMapping("/tenant/ignore")
 public class TenantIgnoreController {
+
+    /**
+     * 租户隔离跳过服务
+     */
     @Autowired
     private TenantIgnoreService service;
 
     /**
      * 热更新跳过配置
-     * @return 是否成功
+     * <p>
+     * 重新从数据库加载租户隔离跳过配置，并更新到 TenantIgnoreRegistry 中。
+     * 无需重启应用即可使配置生效。
+     * </p>
+     * <p><strong>执行流程：</strong></p>
+     * <ol>
+     *   <li>调用 TenantIgnoreService.reload 方法</li>
+     *   <li>从数据库重新加载配置</li>
+     *   <li>更新 TenantIgnoreRegistry</li>
+     *   <li>返回操作结果</li>
+     * </ol>
+     * 
+     * @return 包含操作结果的统一返回结构，true 表示成功，false 表示失败
+     * @throws com.forgex.common.exception.BusinessException 重新加载配置失败时抛出
+     * @see TenantIgnoreService#reload()
      */
     @PostMapping("/reload")
     public R<Boolean> reload() {

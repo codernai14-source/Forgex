@@ -122,4 +122,5 @@ export default {
   
   // Breadcrumb
   home: 'Home',
+  personalHomepage: 'Personal Homepage',
 }

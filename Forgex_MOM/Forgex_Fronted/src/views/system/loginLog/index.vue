@@ -3,68 +3,36 @@
     <FxDynamicTable
       ref="tableRef"
       table-code="sys.loginLog.list"
-      :fallback-config="fallbackConfig"
       :dict-options="dictOptions"
       :request="request"
     >
       <template #toolbar>
-        <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">导出</a-button>
-      </template>
-
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.statusText || (record.status === 1 ? '成功' : '失败') }}
-          </a-tag>
-        </template>
+        <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">{{ t('common.export') }}</a-button>
       </template>
     </FxDynamicTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
 import { exportLoginLog } from '@/api/system/excel'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 
 const tableRef = ref<any>()
 
-const dictOptions = {
+const dictOptions = computed(() => ({
   status: [
-    { label: '成功', value: 1 },
-    { label: '失败', value: 0 },
+    { label: t('common.success'), value: 1 },
+    { label: t('common.failed'), value: 0 },
   ],
-}
-
-const fallbackConfig = {
-  tableCode: 'sys.loginLog.list',
-  tableName: '登录日志',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'account', title: '登录账号', width: 120 },
-    { field: 'loginIp', title: '登录IP', width: 150 },
-    { field: 'loginRegion', title: '归属地', width: 180 },
-    { field: 'userAgent', title: '浏览器UA', ellipsis: true },
-    { field: 'loginTime', title: '登录时间', width: 180 },
-    { field: 'logoutTime', title: '登出时间', width: 180 },
-    { field: 'logoutReason', title: '登出原因', width: 120 },
-    { field: 'status', title: '状态', width: 80, align: 'center' as const },
-    { field: 'reason', title: '失败原因', width: 150, ellipsis: true },
-  ],
-  queryFields: [
-    { field: 'account', label: '登录账号', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '登录状态', queryType: 'select', queryOperator: 'eq' },
-    { field: 'loginTime', label: '登录时间', queryType: 'dateRange', queryOperator: 'between' },
-  ],
-  version: 1,
-}
+}))
 
 const request = async (payload: { page: { current: number; pageSize: number }; query: Record<string, any> }) => {
   const params: any = {
@@ -108,16 +76,26 @@ const handleExport = async () => {
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
-    message.success('导出成功')
+    message.success(t('common.exportSuccess'))
   } catch (error) {
-    console.error('导出登录日志失败', error)
-    message.error('导出失败')
+    console.error(t('common.exportFailed'), error)
+    message.error(t('common.exportFailed'))
   }
 }
 </script>
 
 <style scoped lang="less">
 .login-log-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-log-container :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

@@ -86,9 +86,12 @@ public class SysMenuVO extends BaseEntity {
     private String visibleText;
     
     /** 状态：false=禁用，true=启用 */
-    @DictI18n(nodePathConst = "user_status", targetField = "statusText")
+    @DictI18n(nodePathConst = "status", targetField = "statusText")
     private Boolean status;
     
     /** 状态文本（字典翻译结果） */
     private String statusText;
+    
+    /** 适用租户类型：MAIN_TENANT/CUSTOMER_TENANT/SUPPLIER_TENANT/PARTNER_TENANT/PUBLIC，PUBLIC 表示适用于所有租户类型 */
+    private String tenantType;
 }

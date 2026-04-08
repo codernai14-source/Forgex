@@ -3,10 +3,16 @@ import http from '../http'
 /**
  * 上传文件
  * @param file 文件对象
+ * @param config 请求配置选项
  * @returns 上传结果
  */
-export function uploadFile(file: File) {
+export function uploadFile(file: File, config: any = {}) {
   const fd = new FormData()
   fd.append('file', file)
-  return http.post('/sys/file/upload', fd)
+  return http.post('/sys/file/upload', fd, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    ...config
+  })
 }

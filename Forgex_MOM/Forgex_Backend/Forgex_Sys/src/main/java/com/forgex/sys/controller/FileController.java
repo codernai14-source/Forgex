@@ -1,5 +1,6 @@
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,16 +39,15 @@ public class FileController {
     @PostMapping("/upload")
     public R<String> upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return R.fail("上传文件不能为空");
+            return R.fail(CommonPrompt.FILE_EMPTY);
         }
 
         try {
-            // 调用文件服务上传文件
             String fileUrl = fileService.upload(file);
-            return R.ok("上传成功", fileUrl);
+            return R.<String>ok(CommonPrompt.UPLOAD_SUCCESS, fileUrl);
         } catch (IOException e) {
             e.printStackTrace();
-            return R.fail("文件上传失败: " + e.getMessage());
+            return R.fail(CommonPrompt.FILE_UPLOAD_FAILED);
         }
     }
 }

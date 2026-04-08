@@ -2,6 +2,87 @@ import type { ThemeTokens, LayoutConfig } from './types'
 import type { CSSProperties } from 'vue'
 
 /**
+ * 调整颜色亮度
+ * 
+ * 将十六进制颜色转换为 HSL，调整亮度后转回十六进制。
+ * 
+ * @param hexColor - 十六进制颜色（如 "#1677ff"）
+ * @param amount - 亮度调整量（-1 到 1 之间，负值变暗，正值变亮）
+ * @returns 调整后的十六进制颜色
+ */
+function adjustColor(hexColor: string, amount: number): string {
+  if (!hexColor || !hexColor.startsWith('#')) {
+    return hexColor
+  }
+  
+  // 移除 # 并解析 RGB
+  const hex = hexColor.slice(1)
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  
+  // 转换为 HSL
+  const rNorm = r / 255
+  const gNorm = g / 255
+  const bNorm = b / 255
+  
+  const max = Math.max(rNorm, gNorm, bNorm)
+  const min = Math.min(rNorm, gNorm, bNorm)
+  let h = 0
+  let s = 0
+  let l = (max + min) / 2
+  
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    
+    switch (max) {
+      case rNorm:
+        h = ((gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0)) / 6
+        break
+      case gNorm:
+        h = ((bNorm - rNorm) / d + 2) / 6
+        break
+      case bNorm:
+        h = ((rNorm - gNorm) / d + 4) / 6
+        break
+    }
+  }
+  
+  // 调整亮度
+  l = Math.max(0, Math.min(1, l + amount))
+  
+  // 转回 RGB
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1
+    if (t > 1) t -= 1
+    if (t < 1/6) return p + (q - p) * 6 * t
+    if (t < 1/2) return q
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6
+    return p
+  }
+  
+  let rNew, gNew, bNew
+  if (s === 0) {
+    rNew = gNew = bNew = l
+  } else {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+    const p = 2 * l - q
+    rNew = hue2rgb(p, q, h + 1/3)
+    gNew = hue2rgb(p, q, h)
+    bNew = hue2rgb(p, q, h - 1/3)
+  }
+  
+  // 转回十六进制
+  const toHex = (x: number) => {
+    const hex = Math.round(x * 255).toString(16)
+    return hex.length === 1 ? '0' + hex : hex
+  }
+  
+  return '#' + toHex(rNew) + toHex(gNew) + toHex(bNew)
+}
+
+/**
  * 将 Theme Token 转换为 CSS 变量
  * 
  * 将主题 Token 对象转换为 CSS 自定义属性（CSS Variables），
@@ -90,11 +171,12 @@ export function generateCSSVariables(
     '--fx-fill-alter': tokens.colorFillAlter,
     
     // ==================== 主题色 ====================
+    // 使用用户选择的主题色，而不是固定的 Token 颜色
     '--fx-theme-color': layoutConfig.themeColor || tokens.colorPrimary,
-    '--fx-primary': tokens.colorPrimary,
-    '--fx-primary-hover': tokens.colorPrimaryHover,
-    '--fx-primary-active': tokens.colorPrimaryActive,
-    '--fx-primary-bg': tokens.colorPrimaryBg,
+    '--fx-primary': layoutConfig.themeColor || tokens.colorPrimary,
+    '--fx-primary-hover': adjustColor(layoutConfig.themeColor || tokens.colorPrimary, 0.15),
+    '--fx-primary-active': adjustColor(layoutConfig.themeColor || tokens.colorPrimary, -0.1),
+    '--fx-primary-bg': adjustColor(layoutConfig.themeColor || tokens.colorPrimary, -0.85),
     
     // ==================== 功能色 ====================
     '--fx-success': tokens.colorSuccess,
@@ -171,7 +253,7 @@ const cssVariablesCache = new Map<string, CSSProperties>()
  * 
  * @remarks
  * 缓存策略：
- * - 缓存键：由 colorPrimary、themeMode、fontSize、borderRadius、themeColor 组合
+ * - 缓存键：由关键背景 Token、themeMode、fontSize、borderRadius、themeColor 组合
  * - 缓存上限：50 个条目
  * - 淘汰策略：FIFO（先进先出），超过上限时删除最早的条目
  * 
@@ -198,7 +280,7 @@ export function generateCSSVariablesWithCache(
   tokens: ThemeTokens,
   layoutConfig: LayoutConfig
 ): CSSProperties {
-  const cacheKey = `${tokens.colorPrimary}-${layoutConfig.themeMode}-${layoutConfig.fontSize}-${layoutConfig.borderRadius}-${layoutConfig.themeColor}`
+  const cacheKey = `${tokens.colorBgBase}-${tokens.colorBgContainer}-${tokens.colorBgElevated}-${layoutConfig.themeMode}-${layoutConfig.fontSize}-${layoutConfig.borderRadius}-${layoutConfig.themeColor}`
   
   if (cssVariablesCache.has(cacheKey)) {
     return cssVariablesCache.get(cacheKey)!

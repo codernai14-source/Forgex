@@ -7,8 +7,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getCurrentUserInfo } from '@/api/profile'
+import { logout as logoutApi } from '@/api/auth/login'
 
 export interface UserInfo {
+  id?: number
   account: string
   username: string
   email?: string
@@ -117,6 +119,21 @@ export const useUserStore = defineStore('user', () => {
     }
   }
   
+  /**
+   * 用户登出
+   */
+  async function logout() {
+    try {
+      // 调用后端登出接口
+      await logoutApi()
+    } catch (error) {
+      console.error('登出接口调用失败:', error)
+    } finally {
+      // 清除用户信息
+      clearUserInfo()
+    }
+  }
+  
   // ============ 初始化 ============
   
   // 页面加载时尝试从 sessionStorage 恢复
@@ -133,7 +150,8 @@ export const useUserStore = defineStore('user', () => {
     setUserInfo,
     updateUserInfo,
     clearUserInfo,
-    restoreFromSession
+    restoreFromSession,
+    logout
   }
 }, {
   // 持久化配置（可选）

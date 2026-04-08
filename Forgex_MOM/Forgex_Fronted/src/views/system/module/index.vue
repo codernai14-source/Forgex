@@ -1,102 +1,48 @@
 <template>
   <div class="module-container">
-    <!-- 搜索栏 -->
-    <a-card :bordered="false" style="margin-bottom: 16px">
-      <a-form layout="inline">
-        <a-form-item label="模块编码">
-          <a-input
-            v-model:value="queryParams.code"
-            placeholder="请输入模块编码"
-            allow-clear
-            style="width: 200px"
-            @press-enter="handleSearch"
-          />
-        </a-form-item>
-        <a-form-item label="模块名称">
-          <a-input
-            v-model:value="queryParams.name"
-            placeholder="请输入模块名称"
-            allow-clear
-            style="width: 200px"
-            @press-enter="handleSearch"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="queryParams.status"
-            placeholder="请选择状态"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option :value="1">启用</a-select-option>
-            <a-select-option :value="0">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <SearchOutlined /> 搜索
+    <!-- 表格 -->
+    <fx-dynamic-table
+      ref="tableRef"
+      :table-code="'ModuleTable'"
+      :show-query-form="true"
+      :request="handleRequest"
+      :fallback-config="fallbackConfig"
+      :dict-options="dictOptions"
+      :row-selection="{
+        selectedRowKeys: selectedRowKeys,
+        onChange: handleSelectionChange
+      }"
+    >
+        <!-- 工具栏插槽 -->
+        <template #toolbar>
+          <a-space :size="8">
+            <a-button
+              v-permission="'sys:module:add'"
+              type="primary"
+              @click="openAddDialog"
+            >
+              {{ $t('system.module.addModule') }}
             </a-button>
-            <a-button @click="handleReset">
-              <ReloadOutlined /> 重置
+            <a-button
+              v-permission="'sys:module:delete'"
+              danger
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDeleteConfirm"
+            >
+              {{ $t('common.batchDelete') }}
             </a-button>
           </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
-    <!-- 表格 -->
-    <a-card :bordered="false">
-      <!-- 操作按钮 -->
-      <div style="margin-bottom: 16px">
-        <a-space>
-          <a-button
-            v-permission="'sys:module:create'"
-            type="primary"
-            @click="openAddDialog"
-          >
-            <PlusOutlined /> 新增
-          </a-button>
-          <a-button
-            v-permission="'sys:module:delete'"
-            danger
-            :disabled="selectedRowKeys.length === 0"
-            @click="handleBatchDeleteConfirm"
-          >
-            <DeleteOutlined /> 批量删除
-          </a-button>
-        </a-space>
-      </div>
-
-      <!-- 数据表格 -->
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'ModuleTable'"
-        :request="handleRequest"
-        :fallback-config="fallbackConfig"
-        :dict-options="dictOptions"
-        :loading="loading"
-        :row-selection="{
-          selectedRowKeys: selectedRowKeys,
-          onChange: handleSelectionChange
-        }"
-        row-key="id"
-      >
-        <template #icon="{ record }">
-          <component :is="record.icon" v-if="record.icon" />
-          <span v-else>-</span>
-        </template>
-
-        <template #visible="{ record }">
-          <a-tag :color="record.visible === 1 ? 'success' : 'default'">
-            {{ record.visible === 1 ? '显示' : '隐藏' }}
-          </a-tag>
         </template>
 
         <template #status="{ record }">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.status === 1 ? '启用' : '禁用' }}
+          <a-tag
+            v-if="resolveStatusTag(record.status)"
+            :color="resolveStatusTag(record.status)?.color"
+            :style="resolveStatusTag(record.status)?.style"
+          >
+            {{ resolveStatusTag(record.status)?.label }}
           </a-tag>
+          <span v-else>{{ record.status ?? '-' }}</span>
         </template>
 
         <template #action="{ record }">
@@ -105,20 +51,18 @@
               v-permission="'sys:module:edit'"
               @click="openEditDialog(record.id)"
             >
-              编辑
+              {{ $t('common.edit') }}
             </a>
-            <a-divider type="vertical" />
             <a
               v-permission="'sys:module:delete'"
-              style="color: #ff4d4f"
+              style="color: #ff4d4f;"
               @click="handleDeleteConfirm(record.id)"
             >
-              删除
+              {{ $t('common.delete') }}
             </a>
           </a-space>
         </template>
       </fx-dynamic-table>
-    </a-card>
 
     <!-- 新增/编辑对话框 -->
     <BaseFormDialog
@@ -144,20 +88,21 @@
           />
         </a-form-item>
 
-        <a-form-item label="模块名称" name="name">
-          <a-input
-            v-model:value="formData.name"
+        <a-form-item label="模块名称" name="nameI18nJson">
+          <I18nInput
+            v-model="formData.nameI18nJson"
+            mode="simple"
             placeholder="请输入模块名称"
-            :maxlength="50"
           />
+          <template #extra>
+            <span style="color: #999; font-size: 12px;">
+              点击输入框右侧的地球图标可配置多语言
+            </span>
+          </template>
         </a-form-item>
 
         <a-form-item label="图标" name="icon">
-          <a-input
-            v-model:value="formData.icon"
-            placeholder="请输入图标名称"
-            :maxlength="100"
-          />
+          <IconPicker v-model:value="formData.icon" placeholder="请选择或输入图标名称" :maxlength="100" />
         </a-form-item>
 
         <a-form-item label="排序号" name="orderNum">
@@ -176,10 +121,10 @@
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -188,29 +133,26 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  PlusOutlined,
-  DeleteOutlined
-} from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import IconPicker from '@/components/common/IconPicker.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
 import { useModule } from './hooks/useModule'
 import { useModuleForm } from './hooks/useModuleForm'
-import { listModules, deleteModule, batchDeleteModules } from '@/api/system/module'
+import { getModulePage } from '@/api/system/module'
+import { useDict } from '@/hooks/useDict'
+import { getI18nValue } from '@/utils/i18n'
+
+const { dictItems: statusOptions } = useDict('status')
+const { dictItems: visibleOptions } = useDict('visible')
 
 // 表格相关
 const tableRef = ref()
 
 // 使用Hooks
 const {
-  loading,
   selectedRowKeys,
-  queryParams,
-  handleSearch,
-  handleReset,
   handleDelete,
   handleBatchDelete,
   handleSelectionChange
@@ -220,7 +162,6 @@ const {
   formRef,
   dialogVisible,
   dialogTitle,
-  loading: formLoading,
   isEdit,
   formData,
   rules,
@@ -230,48 +171,117 @@ const {
   handleCancel
 } = useModuleForm()
 
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '模块编码', dataIndex: 'code', key: 'code', width: 150 },
-    { title: '模块名称', dataIndex: 'name', key: 'name', width: 150 },
-    { title: '图标', dataIndex: 'icon', key: 'icon', width: 80 },
-    { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-    { title: '可见性', dataIndex: 'visible', key: 'visible', width: 100 },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '创建人', dataIndex: 'createBy', key: 'createBy', width: 120 },
-    { title: '修改时间', dataIndex: 'updateTime', key: 'updateTime', width: 180 },
-    { title: '修改人', dataIndex: 'updateBy', key: 'updateBy', width: 120 },
-    { title: '操作', key: 'action', width: 150, fixed: 'right' }
-  ]
-})
-
 // 字典配置
-const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'success' },
-    0: { text: '禁用', color: 'error' }
-  },
-  visible: {
-    1: { text: '显示', color: 'success' },
-    0: { text: '隐藏', color: 'default' }
-  }
-})
+const dictOptions = computed(() => ({
+  status: statusOptions.value,
+  visible: visibleOptions.value
+}))
 
-// 处理表格数据请求
-const handleRequest = async (params: any) => {
+const fallbackConfig = computed(() => ({
+  tableCode: 'ModuleTable',
+  tableName: '模块管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'name', title: '模块名称', minWidth: 160, ellipsis: true },
+    { field: 'code', title: '模块编码', width: 140 },
+    { field: 'description', title: '描述', minWidth: 160, ellipsis: true },
+    { field: 'status', title: '状态', width: 90, dictCode: 'status' },
+    { field: 'createBy', title: '创建人', width: 120 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'updateTime', title: '更新时间', width: 180 },
+    { field: 'action', title: '操作', width: 140 }
+  ],
+  queryFields: [
+    { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'description', label: '描述', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ],
+  version: 1
+}))
+
+function normalizeModuleStatusRecord(row: any) {
+  const status = row?.status
+  let normalizedStatus = 0
+  if (typeof status === 'boolean') {
+    normalizedStatus = status ? 1 : 0
+  } else if (status === 1 || status === '1') {
+    normalizedStatus = 1
+  }
+
+  const visible = row?.visible
+  let normalizedVisible = 0
+  if (typeof visible === 'boolean') {
+    normalizedVisible = visible ? 1 : 0
+  } else if (visible === 1 || visible === '1') {
+    normalizedVisible = 1
+  }
+
+  return {
+    ...row,
+    status: normalizedStatus,
+    visible: normalizedVisible
+  }
+}
+
+function resolveStatusTag(value: unknown) {
+  const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
+  const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
+  if (!dictItem) {
+    return null
+  }
+
+  const style =
+    dictItem.tagStyle?.borderColor || dictItem.tagStyle?.backgroundColor
+      ? {
+          borderColor: dictItem.tagStyle?.borderColor,
+          backgroundColor: dictItem.tagStyle?.backgroundColor,
+        }
+      : undefined
+
+  return {
+    label: dictItem.label,
+    color: dictItem.tagStyle?.color || dictItem.color || 'blue',
+    style
+  }
+}
+
+/**
+ * 处理表格数据请求
+ */
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   try {
-    const res = await listModules({ ...queryParams, ...params })
-    return {
-      records: res.records || [],
-      total: res.total || 0
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
+      ...payload.query
     }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getModulePage(params)
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    
+    // 处理多语言显示
+    const processedRecords = (data.records || []).map((item: any) => ({
+      ...normalizeModuleStatusRecord(item),
+      displayName: getI18nValue(item.nameI18nJson, item.name)
+    }))
+    
+    return { records: processedRecords, total: total }
   } catch (error) {
-    return {
-      records: [],
-      total: 0
-    }
+    console.error('加载模块列表失败:', error)
+    return { records: [], total: 0 }
   }
 }
 
@@ -325,6 +335,16 @@ onMounted(() => {
 
 <style scoped lang="less">
 .module-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
+}
+
+.module-container :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

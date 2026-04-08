@@ -51,6 +51,19 @@
           <span class="search-shortcut">Ctrl+K</span>
         </a-button>
 
+        <!-- 消息通知 -->
+        <a-badge :count="unreadCount" :overflow-count="99">
+          <a-button
+            type="text"
+            class="header-btn"
+            @click="onMessageClick"
+          >
+            <template #icon>
+              <BellOutlined />
+            </template>
+          </a-button>
+        </a-badge>
+
         <!-- 语言切换 -->
         <a-select
           v-if="showLangSwitch"
@@ -58,9 +71,15 @@
           size="small"
           class="lang-select"
           @change="onLocaleChange"
+          :loading="languageList.length === 0"
         >
-          <a-select-option value="zh-CN">简体中文</a-select-option>
-          <a-select-option value="en-US">English</a-select-option>
+          <a-select-option
+            v-for="lang in languageList"
+            :key="lang.langCode"
+            :value="lang.langCode"
+          >
+            <span v-if="lang.icon">{{ lang.icon }} </span>{{ lang.langName }}
+          </a-select-option>
         </a-select>
 
         <!-- 刷新按钮 -->
@@ -115,6 +134,10 @@
                 <KeyOutlined />
                 <span>修改密码</span>
               </a-menu-item>
+              <a-menu-item key="messageSend">
+                <MailOutlined />
+                <span>发送消息</span>
+              </a-menu-item>
               <a-menu-divider />
               <a-menu-item key="logout">
                 <LogoutOutlined />
@@ -129,18 +152,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getIcon } from '../../utils/icon'
 import {
   SearchOutlined,
+  BellOutlined,
   SettingOutlined,
   DownOutlined,
   UserOutlined,
   KeyOutlined,
+  MailOutlined,
   LogoutOutlined,
   AppstoreOutlined,
   SyncOutlined
 } from '@ant-design/icons-vue'
+import { getUnreadMessageCount } from '../../api/message'
+import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
+import type { LocaleCode } from '../../locales'
 
 interface Module {
   code: string
@@ -156,14 +184,23 @@ interface User {
 }
 
 interface AppHeaderProps {
+  /** Logo 图片 URL，为空时显示默认图标 */
   logo?: string
+  /** 系统标题，默认为 'Forgex MOM' */
   title?: string
+  /** 模块列表，用于顶部模块导航显示 */
   modules?: Module[]
+  /** 当前激活的模块 code，用于高亮显示 */
   activeModuleCode?: string
+  /** 布局模式：vertical=垂直，vertical-mix=混合，top=顶部，mix=混合 */
   layoutMode?: 'vertical' | 'vertical-mix' | 'top' | 'mix'
+  /** 是否显示搜索按钮，默认 true */
   showSearch?: boolean
+  /** 是否显示语言切换下拉框，默认 true */
   showLangSwitch?: boolean
+  /** 是否显示刷新按钮，默认 true */
   showRefresh?: boolean
+  /** 当前登录用户信息，包含头像、姓名、账号等 */
   user: User
 }
 
@@ -180,16 +217,95 @@ const props = withDefaults(defineProps<AppHeaderProps>(), {
 })
 
 const emit = defineEmits<{
+  /**
+   * 模块点击事件
+   * 触发时机：用户点击模块导航时触发
+   * @param moduleCode 被点击的模块 code
+   */
   'module-click': [moduleCode: string]
+  /**
+   * 搜索按钮点击事件
+   * 触发时机：用户点击搜索按钮时触发
+   */
   'search-click': []
+  /**
+   * 设置按钮点击事件
+   * 触发时机：用户点击设置按钮时触发
+   */
   'settings-click': []
+  /**
+   * 用户菜单点击事件
+   * 触发时机：用户点击用户下拉菜单项时触发
+   * @param key 菜单项 key，如 profile、password、logout
+   */
   'user-menu-click': [key: string]
-  'locale-change': [locale: string]
+  /**
+   * 语言切换事件
+   * 触发时机：用户切换语言时触发
+   * @param locale 新的语言代码
+   */
+  'locale-change': [locale: LocaleCode]
+  /**
+   * 刷新事件
+   * 触发时机：用户点击刷新按钮时触发
+   */
   'refresh': []
+  /**
+   * 消息按钮点击事件
+   * 触发时机：用户点击消息通知按钮时触发
+   */
+  'message-click': []
 }>()
 
 // 当前语言
-const currentLocale = ref<string>(localStorage.getItem('fx-locale') || 'zh-CN')
+const currentLocale = ref<LocaleCode>((localStorage.getItem('fx-locale') as LocaleCode) || 'zh-CN')
+
+// 语言列表
+const languageList = ref<LanguageType[]>([])
+
+// 未读消息数量
+const unreadCount = ref(0)
+
+// 定时器
+let unreadCountTimer: any = null
+
+// 加载语言列表
+const loadLanguageList = async () => {
+  try {
+    const languages = await listEnabledLanguages()
+    languageList.value = languages || []
+  } catch (error) {
+    console.error('Failed to load language list:', error)
+  }
+}
+
+// 加载未读消息数量
+const loadUnreadCount = async () => {
+  try {
+    const count = await getUnreadMessageCount()
+    unreadCount.value = count || 0
+  } catch (error) {
+    console.error('Failed to load unread message count:', error)
+  }
+}
+
+// 组件挂载时加载语言列表和未读消息数量
+onMounted(() => {
+  loadLanguageList()
+  loadUnreadCount()
+  
+  // 每30秒刷新一次未读消息数量
+  unreadCountTimer = setInterval(() => {
+    loadUnreadCount()
+  }, 30000)
+})
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (unreadCountTimer) {
+    clearInterval(unreadCountTimer)
+  }
+})
 
 // 是否显示模块导航
 const showModuleNav = computed(() => {
@@ -243,6 +359,11 @@ const onLocaleChange = (locale: string) => {
 // 刷新
 const onRefresh = () => {
   emit('refresh')
+}
+
+// 消息点击
+const onMessageClick = () => {
+  emit('message-click')
 }
 </script>
 
@@ -303,10 +424,15 @@ const onRefresh = () => {
 .module-menu {
   border-bottom: none;
   background: transparent;
+  width: 100%;
+  min-width: 0;
   
   :deep(.ant-menu-item) {
     border-bottom: none;
     font-size: var(--fx-font-size, 14px);
+    min-width: auto;
+    max-width: none;
+    overflow: visible;
     
     &:hover {
       color: var(--fx-theme-color, #1677ff);
@@ -315,6 +441,12 @@ const onRefresh = () => {
     &.ant-menu-item-selected {
       color: var(--fx-theme-color, #1677ff);
       border-bottom: none;
+    }
+    
+    .ant-menu-title-content {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: nowrap;
     }
   }
 }

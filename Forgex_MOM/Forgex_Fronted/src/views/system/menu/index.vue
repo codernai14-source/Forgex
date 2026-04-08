@@ -1,48 +1,7 @@
 <template>
   <div class="menu-container">
-    <!-- 搜索区域 -->
-    <a-card :bordered="false" class="search-card">
-      <a-form layout="inline">
-        <a-form-item label="菜单名称">
-          <a-input
-            v-model:value="queryParams.name"
-            placeholder="请输入菜单名称"
-            style="width: 200px"
-            allow-clear
-          />
-        </a-form-item>
-        
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="queryParams.status"
-            placeholder="请选择状态"
-            style="width: 120px"
-            allow-clear
-          >
-            <a-select-option :value="true">启用</a-select-option>
-            <a-select-option :value="false">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>
-              搜索
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-    
-    <!-- 主内容区 -->
     <a-card :bordered="false" class="main-card">
       <div class="menu-layout">
-        <!-- 左侧模块标签 -->
         <div class="module-tabs">
           <a-tabs
             v-model:activeKey="activeModuleId"
@@ -56,104 +15,97 @@
             />
           </a-tabs>
         </div>
-        
-        <!-- 右侧内容区 -->
+
         <div class="content-area">
-          <!-- 操作按钮 -->
-          <div class="table-toolbar">
-            <a-space>
-              <a-button
-                v-permission="'sys:menu:create'"
-                type="primary"
-                @click="handleAdd"
+          <fx-dynamic-table
+            ref="tableRef"
+            table-code="MenuTable"
+            :request="handleRequest"
+            :fallback-config="fallbackConfig"
+            :dict-options="dictOptions"
+            :row-selection="{
+              selectedRowKeys,
+              onChange: handleSelectionChange
+            }"
+            :pagination="false"
+            row-key="id"
+            :default-expand-all-rows="true"
+          >
+            <template #toolbar>
+              <a-space>
+                <a-button
+                  v-permission="'sys:menu:add'"
+                  type="primary"
+                  @click="handleAdd"
+                >
+                  <template #icon><PlusOutlined /></template>
+                  {{ t('system.menu.form.addMenu') }}
+                </a-button>
+
+                <a-button
+                  v-permission="'sys:menu:delete'"
+                  danger
+                  :disabled="selectedRowKeys.length === 0"
+                  @click="handleBatchDelete"
+                >
+                  <template #icon><DeleteOutlined /></template>
+                  {{ t('common.batchDelete') }}
+                </a-button>
+              </a-space>
+            </template>
+
+            <template #type="{ record }">
+              <a-tag v-if="record.type === 'catalog'" color="blue">{{ t('system.menu.typeDirectory') }}</a-tag>
+              <a-tag v-else-if="record.type === 'menu'" color="green">{{ t('system.menu.typeMenu') }}</a-tag>
+              <a-tag v-else-if="record.type === 'button'" color="orange">{{ t('system.menu.typeButton') }}</a-tag>
+              <span v-else>-</span>
+            </template>
+
+            <template #menuMode="{ record }">
+              <a-tag v-if="record.menuMode === 'embedded'" color="blue">{{ t('system.menu.modeEmbedded') }}</a-tag>
+              <a-tag v-else-if="record.menuMode === 'external'" color="purple">{{ t('system.menu.modeExternal') }}</a-tag>
+              <span v-else>-</span>
+            </template>
+
+            <template #status="{ record }">
+              <a-tag
+                v-if="resolveStatusTag(record.status)"
+                :color="resolveStatusTag(record.status)?.color"
+                :style="resolveStatusTag(record.status)?.style"
               >
-                <template #icon><PlusOutlined /></template>
-                新增菜单
-              </a-button>
-              
-              <a-button
-                v-permission="'sys:menu:delete'"
-                danger
-                :disabled="selectedRowKeys.length === 0"
-                @click="handleBatchDelete"
-              >
-                <template #icon><DeleteOutlined /></template>
-                批量删除
-              </a-button>
-            </a-space>
-          </div>
-          
-          <!-- 树形表格 -->
-          <div class="table-wrapper">
-            <fx-dynamic-table
-              ref="tableRef"
-              :table-code="'MenuTable'"
-              :request="handleRequest"
-              :fallback-config="fallbackConfig"
-              :dict-options="dictOptions"
-              :row-selection="{
-                selectedRowKeys,
-                onChange: handleSelectionChange
-              }"
-              :pagination="false"
-              :scroll="{ y: 'calc(100vh - 380px)' }"
-              row-key="id"
-              :default-expand-all-rows="true"
-            >
-              <template #type="{ record }">
-                <a-tag v-if="record.type === 'catalog'" color="blue">目录</a-tag>
-                <a-tag v-else-if="record.type === 'menu'" color="green">菜单</a-tag>
-                <a-tag v-else-if="record.type === 'button'" color="orange">按钮</a-tag>
-              </template>
-              
-              <template #menuMode="{ record }">
-                <a-tag v-if="record.menuMode === 'embedded'" color="blue">内嵌</a-tag>
-                <a-tag v-else-if="record.menuMode === 'external'" color="purple">外联</a-tag>
-                <span v-else>-</span>
-              </template>
-              
-              <template #icon="{ record }">
-                <component v-if="record.icon" :is="getIcon(record.icon)" />
-                <span v-else>-</span>
-              </template>
-              
-              <template #visible="{ record }">
-                <a-tag v-if="record.visible === true || record.visible === 1" color="success">显示</a-tag>
-                <a-tag v-else-if="record.visible === false || record.visible === 0" color="default">隐藏</a-tag>
-                <span v-else>-</span>
-              </template>
-              
-              <template #status="{ record }">
-                <a-tag v-if="record.status === true || record.status === 1" color="success">启用</a-tag>
-                <a-tag v-else-if="record.status === false || record.status === 0" color="error">禁用</a-tag>
-                <span v-else>-</span>
-              </template>
-              
-              <template #action="{ record }">
-                <a-space>
-                  <a
-                    v-permission="'sys:menu:edit'"
-                    @click="handleEdit(record)"
-                  >
-                    编辑
-                  </a>
-                  <a-divider type="vertical" />
-                  <a
-                    v-permission="'sys:menu:delete'"
-                    class="danger-link"
-                    @click="handleDelete(record.id)"
-                  >
-                    删除
-                  </a>
-                </a-space>
-              </template>
-            </fx-dynamic-table>
-          </div>
+                {{ resolveStatusTag(record.status)?.label }}
+              </a-tag>
+              <span v-else>{{ record.status ?? '-' }}</span>
+            </template>
+
+            <template #icon="{ record }">
+              <component v-if="record.icon" :is="getIcon(record.icon)" />
+              <span v-else>-</span>
+            </template>
+
+            <template #action="{ record }">
+              <a-space>
+                <a
+                  v-permission="'sys:menu:edit'"
+                  @click="handleEdit(record)"
+                >
+                  {{ t('common.edit') }}
+                </a>
+                <a-divider type="vertical" />
+                <a
+                  v-permission="'sys:menu:delete'"
+                  class="danger-link"
+                  @click="handleDelete(record.id)"
+                >
+                  {{ t('common.delete') }}
+                </a>
+              </a-space>
+            </template>
+          </fx-dynamic-table>
         </div>
       </div>
     </a-card>
-    
-    <!-- 新增/编辑弹窗 -->
+
     <BaseFormDialog
       v-model:open="visible"
       :title="formTitle"
@@ -171,10 +123,10 @@
       >
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="所属模块" name="moduleId">
+            <a-form-item :label="t('system.menu.module')" name="moduleId">
               <a-select
                 v-model:value="formData.moduleId"
-                placeholder="请选择所属模块"
+                :placeholder="t('system.menu.form.modulePlaceholder')"
               >
                 <a-select-option
                   v-for="module in modules"
@@ -186,24 +138,24 @@
               </a-select>
             </a-form-item>
           </a-col>
-          
+
           <a-col :span="12">
-            <a-form-item label="父菜单" name="parentId">
+            <a-form-item :label="t('system.menu.parentMenu')" name="parentId">
               <a-tree-select
                 v-model:value="formData.parentId"
                 :tree-data="menuTreeData"
-                placeholder="请选择父菜单"
+                :placeholder="t('system.menu.form.parentMenuPlaceholder')"
                 tree-default-expand-all
                 allow-clear
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col :span="12">
-            <a-form-item label="菜单类型" name="type">
+            <a-form-item :label="t('system.menu.menuType')" name="type">
               <a-select
                 v-model:value="formData.type"
-                placeholder="请选择菜单类型"
+                :placeholder="t('system.menu.form.menuTypePlaceholder')"
                 @change="handleTypeChange"
               >
                 <a-select-option
@@ -216,39 +168,45 @@
               </a-select>
             </a-form-item>
           </a-col>
-          
-          <a-col :span="12">
-            <a-form-item label="菜单名称" name="name">
-              <a-input
-                v-model:value="formData.name"
-                placeholder="请输入菜单名称"
+
+          <a-col :span="24">
+            <a-form-item :label="t('system.menu.menuName')" name="nameI18nJson">
+              <I18nInput
+                v-model="formData.nameI18nJson"
+                mode="simple"
+                :placeholder="t('system.menu.form.menuNamePlaceholder')"
               />
+              <template #extra>
+                <span style="color: #999; font-size: 12px;">
+                  {{ t('system.menu.form.menuNameTip') }}
+                </span>
+              </template>
             </a-form-item>
           </a-col>
-          
+
           <a-col v-if="showPath" :span="12">
-            <a-form-item label="菜单路径" name="path">
+            <a-form-item :label="t('system.menu.path')" name="path">
               <a-input
                 v-model:value="formData.path"
-                placeholder="请输入菜单路径"
+                :placeholder="t('system.menu.form.pathPlaceholder')"
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col :span="12">
-            <a-form-item label="菜单图标" name="icon">
-              <a-input
+            <a-form-item :label="t('system.menu.icon')" name="icon">
+              <IconPicker
                 v-model:value="formData.icon"
-                placeholder="请输入图标名称"
+                :placeholder="t('system.menu.form.iconPlaceholder')"
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col v-if="formData.type !== 'button'" :span="12">
-            <a-form-item label="菜单模式" name="menuMode">
+            <a-form-item :label="t('system.menu.menuMode')" name="menuMode">
               <a-select
                 v-model:value="formData.menuMode"
-                placeholder="请选择菜单模式"
+                :placeholder="t('system.menu.form.menuModePlaceholder')"
                 @change="handleModeChange"
               >
                 <a-select-option
@@ -261,36 +219,36 @@
               </a-select>
             </a-form-item>
           </a-col>
-          
+
           <a-col v-if="showComponentKey" :span="12">
-            <a-form-item label="组件Key" name="componentKey">
+            <a-form-item :label="t('system.menu.componentKey')" name="componentKey">
               <a-input
                 v-model:value="formData.componentKey"
-                placeholder="请输入组件Key"
+                :placeholder="t('system.menu.form.componentKeyPlaceholder')"
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col v-if="showExternalUrl" :span="12">
-            <a-form-item label="外联URL" name="externalUrl">
+            <a-form-item :label="t('system.menu.externalUrl')" name="externalUrl">
               <a-input
                 v-model:value="formData.externalUrl"
-                placeholder="请输入外联URL"
+                :placeholder="t('system.menu.form.externalUrlPlaceholder')"
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col v-if="showPermKey" :span="12">
-            <a-form-item label="权限标识" name="permKey">
+            <a-form-item :label="t('system.menu.permission')" name="permKey">
               <a-input
                 v-model:value="formData.permKey"
-                placeholder="请输入权限标识"
+                :placeholder="t('system.menu.form.permissionPlaceholder')"
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col :span="12">
-            <a-form-item label="排序号" name="orderNum">
+            <a-form-item :label="t('system.menu.sort')" name="orderNum">
               <a-input-number
                 v-model:value="formData.orderNum"
                 :min="0"
@@ -298,21 +256,21 @@
               />
             </a-form-item>
           </a-col>
-          
+
           <a-col :span="12">
-            <a-form-item label="是否可见" name="visible">
+            <a-form-item :label="t('system.menu.visible')" name="visible">
               <a-radio-group v-model:value="formData.visible">
-                <a-radio :value="true">显示</a-radio>
-                <a-radio :value="false">隐藏</a-radio>
+                <a-radio :value="true">{{ t('system.menu.visibleYes') }}</a-radio>
+                <a-radio :value="false">{{ t('system.menu.visibleNo') }}</a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
-          
+
           <a-col :span="12">
-            <a-form-item label="状态" name="status">
+            <a-form-item :label="t('system.menu.status')" name="status">
               <a-radio-group v-model:value="formData.status">
-                <a-radio :value="true">启用</a-radio>
-                <a-radio :value="false">禁用</a-radio>
+                <a-radio :value="true">{{ t('common.enabled') }}</a-radio>
+                <a-radio :value="false">{{ t('common.disabled') }}</a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
@@ -323,190 +281,135 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  PlusOutlined,
-  DeleteOutlined
-} from '@ant-design/icons-vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
+import IconPicker from '@/components/common/IconPicker.vue'
 import { listModules } from '@/api/system/module'
-import { getMenuTree } from '@/api/system/menu'
-import { getIcon } from '@/utils/icon'
+import {
+  addMenu,
+  batchDeleteMenus,
+  deleteMenu,
+  getMenuById,
+  getMenuTree,
+  updateMenu,
+} from '@/api/system/menu'
 import { useDict } from '@/hooks/useDict'
+import { getIcon } from '@/utils/icon'
+import { getI18nValue } from '@/utils/i18n'
 
-// 模块列表
+type MenuTreeRecord = {
+  id?: string | number
+  moduleId?: string | number
+  parentId?: string | number
+  type?: string
+  menuMode?: string
+  menuLevel?: number
+  name?: string
+  nameI18nJson?: string
+  path?: string
+  icon?: string
+  componentKey?: string
+  permKey?: string
+  externalUrl?: string
+  orderNum?: number
+  visible?: boolean | number | string
+  status?: boolean | number | string
+  children?: MenuTreeRecord[]
+}
+
+type MenuFormData = {
+  id?: string | number
+  moduleId: string
+  parentId: string
+  type: string
+  menuLevel: number
+  path: string
+  name: string
+  nameI18nJson: string
+  icon?: string
+  componentKey?: string
+  permKey?: string
+  menuMode: 'embedded' | 'external'
+  externalUrl?: string
+  orderNum: number
+  visible: boolean
+  status: boolean
+}
+
+const { t } = useI18n()
+
 const modules = ref<any[]>([])
-const activeModuleId = ref<string>('')
+const activeModuleId = ref('')
+const tableRef = ref()
+const formRef = ref()
+const loading = ref(false)
+const visible = ref(false)
+const submitLoading = ref(false)
+const selectedRowKeys = ref<string[]>([])
+const isEdit = ref(false)
+const menuTreeData = ref<any[]>([])
 
-// 字典数据
 const { dictItems: menuTypeOptions } = useDict('menu_type')
 const { dictItems: menuModeOptions } = useDict('menu_mode')
+const { dictItems: statusOptions } = useDict('status')
 
-// 表格引用
-const tableRef = ref()
+const dictOptions = computed(() => ({
+  menu_type: menuTypeOptions.value,
+  menu_mode: menuModeOptions.value,
+  status: statusOptions.value,
+}))
 
-// 字典选项配置
-const dictOptions = ref({
-  menu_type: menuTypeOptions,
-  menu_mode: menuModeOptions
-})
-
-// 降级配置
-const fallbackConfig = {
+const fallbackConfig = computed(() => ({
   tableCode: 'MenuTable',
-  tableName: '菜单管理',
-  tableType: 'TREE',
+  tableName: t('system.menu.title'),
+  tableType: 'NORMAL',
   rowKey: 'id',
   defaultPageSize: 20,
   columns: [
-    { field: 'name', title: '菜单名称', width: 200 },
-    { field: 'type', title: '菜单类型', width: 100 },
-    { field: 'path', title: '路径', ellipsis: true },
-    { field: 'icon', title: '图标', width: 80 },
-    { field: 'menuMode', title: '菜单模式', width: 100 },
-    { field: 'permKey', title: '权限标识', ellipsis: true },
-    { field: 'orderNum', title: '排序', width: 80 },
-    { field: 'visible', title: '可见', width: 80 },
-    { field: 'status', title: '状态', width: 80 },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'createBy', title: '创建人' },
-    { field: 'updateTime', title: '修改时间', width: 180 },
-    { field: 'updateBy', title: '修改人' },
-    { field: 'action', title: '操作', width: 200 }
+    { field: 'name', title: t('system.menu.menuName'), minWidth: 180, ellipsis: true },
+    { field: 'type', title: t('system.menu.menuType'), width: 90 },
+    { field: 'path', title: t('system.menu.path'), minWidth: 180, ellipsis: true },
+    { field: 'permKey', title: t('system.menu.permission'), minWidth: 180, ellipsis: true },
+    { field: 'menuMode', title: t('system.menu.menuMode'), width: 110 },
+    { field: 'status', title: t('system.menu.status'), width: 90, dictCode: 'status' },
+    { field: 'orderNum', title: t('system.menu.sort'), width: 80 },
+    { field: 'action', title: t('common.action'), width: 140 },
   ],
   queryFields: [
-    { field: 'name', label: '菜单名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq' },
-    { field: 'moduleId', label: '所属模块', queryType: 'select', queryOperator: 'eq' }
+    { field: 'name', label: t('system.menu.menuName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: t('system.menu.status'), queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
   ],
   version: 1,
+}))
+
+const formTitle = computed(() => (
+  isEdit.value ? t('system.menu.form.editMenu') : t('system.menu.form.addMenu')
+))
+
+function getRootTreeNode(children: any[] = []) {
+  return [{
+    key: '0',
+    title: t('system.menu.rootMenu'),
+    value: '0',
+    children,
+  }]
 }
 
-// 选中的菜单ID列表
-const selectedRowKeys = ref<string[]>([])
-
-// 加载状态
-const loading = ref(false)
-
-// 表单相关状态
-const visible = ref(false)
-const submitLoading = ref(false)
-const formRef = ref()
-const formData = ref<any>({
-  id: undefined,
-  moduleId: '',
-  parentId: '0',
-  type: 'menu',
-  menuLevel: 1,
-  path: '',
-  name: '',
-  icon: undefined,
-  componentKey: undefined,
-  permKey: undefined,
-  menuMode: 'embedded',
-  externalUrl: undefined,
-  orderNum: 0,
-  visible: true,
-  status: true
-})
-
-const formTitle = ref('新增菜单')
-const menuTreeData = ref<any[]>([
-  { key: '0', title: '根目录', value: '0', children: [] }
-])
-
-// 计算属性
-const showPath = computed(() => {
-  return formData.value.type !== 'button'
-})
-
-const showComponentKey = computed(() => {
-  return formData.value.type === 'menu' && formData.value.menuMode === 'embedded'
-})
-
-const showPermKey = computed(() => {
-  return formData.value.type === 'menu' || formData.value.type === 'button'
-})
-
-const showExternalUrl = computed(() => {
-  return formData.value.type === 'menu' && formData.value.menuMode === 'external'
-})
-
-// 表单规则
-const rules = {
-  name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
-  moduleId: [{ required: true, message: '请选择所属模块', trigger: 'change' }]
-}
-
-// 查询参数
-const queryParams = ref({
-  name: undefined,
-  status: undefined,
-  moduleId: undefined
-})
-
-/**
- * 数据请求函数
- */
-const handleRequest = async (payload: { 
-  page: { current: number; pageSize: number }; 
-  query: Record<string, any>; 
-  sorter?: { field?: string; order?: string } 
-}) => {
-  loading.value = true
-  try {
-    const tenantId = sessionStorage.getItem('tenantId')
-    if (!tenantId) {
-      return { records: [], total: 0 }
-    }
-    
-    const params: any = {
-      tenantId,
-      moduleId: activeModuleId.value || queryParams.value.moduleId,
-      ...payload.query
-    }
-    
-    // 处理排序
-    if (payload.sorter) {
-      params.sortField = payload.sorter.field
-      params.sortOrder = payload.sorter.order
-    }
-    
-    const response = await getMenuTree(params)
-    const flatList = response || []
-    
-    return { records: flatList, total: flatList.length }
-  } catch (error) {
-    console.error('加载菜单列表失败:', error)
-    return { records: [], total: 0 }
-  } finally {
-    loading.value = false
-  }
-}
-
-/**
- * 行选择变化
- */
-function handleSelectionChange(keys: string[]) {
-  selectedRowKeys.value = keys
-}
-
-/**
- * 新增菜单
- */
-const handleAdd = () => {
-  formData.value = {
+function createDefaultForm(moduleId = activeModuleId.value): MenuFormData {
+  return {
     id: undefined,
-    moduleId: activeModuleId.value,
+    moduleId: moduleId || '',
     parentId: '0',
     type: 'menu',
     menuLevel: 1,
     path: '',
     name: '',
+    nameI18nJson: '',
     icon: undefined,
     componentKey: undefined,
     permKey: undefined,
@@ -514,164 +417,521 @@ const handleAdd = () => {
     externalUrl: undefined,
     orderNum: 0,
     visible: true,
-    status: true
+    status: true,
   }
-  formTitle.value = '新增菜单'
-  visible.value = true
 }
 
-/**
- * 编辑菜单
- */
-const handleEdit = (record: any) => {
-  formData.value = {
-    ...record,
-    moduleId: String(record.moduleId || activeModuleId.value)
+const formData = ref<MenuFormData>(createDefaultForm())
+
+const showPath = computed(() => formData.value.type !== 'button')
+const showComponentKey = computed(() => formData.value.type === 'menu' && formData.value.menuMode === 'embedded')
+const showPermKey = computed(() => formData.value.type === 'menu' || formData.value.type === 'button')
+const showExternalUrl = computed(() => formData.value.type === 'menu' && formData.value.menuMode === 'external')
+
+const rules = computed(() => ({
+  moduleId: [{ required: true, message: t('system.menu.form.modulePlaceholder'), trigger: 'change' }],
+  type: [{ required: true, message: t('system.menu.form.menuTypePlaceholder'), trigger: 'change' }],
+  nameI18nJson: [
+    {
+      validator: async (_rule: unknown, value: string) => {
+        if (!value || value === '{}' || !String(value).trim()) {
+          throw new Error(t('system.menu.form.nameRequired'))
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+}))
+
+function normalizeBoolean(value: unknown): boolean | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined
   }
-  formTitle.value = '编辑菜单'
-  visible.value = true
-}
-
-/**
- * 菜单类型变化
- */
-const handleTypeChange = () => {
-  // 处理菜单类型变化逻辑
-}
-
-/**
- * 菜单模式变化
- */
-const handleModeChange = () => {
-  // 处理菜单模式变化逻辑
-}
-
-/**
- * 取消表单
- */
-const handleCancel = () => {
-  visible.value = false
-}
-
-/**
- * 提交表单
- */
-const handleSubmit = () => {
-  // 处理表单提交逻辑
-  visible.value = false
-}
-
-/**
- * 删除菜单
- */
-const handleDelete = (id: string) => {
-  // 处理删除逻辑
-}
-
-/**
- * 批量删除菜单
- */
-const handleBatchDelete = () => {
-  // 处理批量删除逻辑
-}
-
-/**
- * 搜索菜单
- */
-const handleSearch = () => {
-  tableRef.value?.refresh?.()
-}
-
-/**
- * 重置搜索
- */
-const handleReset = () => {
-  queryParams.value = {
-    name: undefined,
-    status: undefined,
-    moduleId: undefined
+  if (value === true || value === 1 || value === '1') {
+    return true
   }
-  tableRef.value?.refresh?.()
+  if (value === false || value === 0 || value === '0') {
+    return false
+  }
+  return Boolean(value)
 }
 
-// 加载模块列表
-const loadModules = async () => {
+function normalizeStatusForTag(value: unknown): number {
+  return normalizeBoolean(value) ? 1 : 0
+}
+
+function resolveStatusTag(value: unknown) {
+  const normalizedValue = normalizeStatusForTag(value)
+  const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
+  if (!dictItem) {
+    return null
+  }
+
+  const style =
+    dictItem.tagStyle?.borderColor || dictItem.tagStyle?.backgroundColor
+      ? {
+          borderColor: dictItem.tagStyle?.borderColor,
+          backgroundColor: dictItem.tagStyle?.backgroundColor,
+        }
+      : undefined
+
+  return {
+    label: dictItem.label,
+    color: dictItem.tagStyle?.color || dictItem.color || 'blue',
+    style,
+  }
+}
+
+function cloneTree(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
+  return nodes.map((node) => ({
+    ...node,
+    children: cloneTree(node.children || []),
+  }))
+}
+
+function countTreeNodes(nodes: MenuTreeRecord[] = []): number {
+  return nodes.reduce((count, node) => count + 1 + countTreeNodes(node.children || []), 0)
+}
+
+function matchMenuName(node: MenuTreeRecord, keyword?: string) {
+  if (!keyword) {
+    return true
+  }
+  const text = keyword.trim().toLowerCase()
+  if (!text) {
+    return true
+  }
+  const displayName = getI18nValue(node.nameI18nJson, node.name)
+  return [node.name, node.nameI18nJson, displayName]
+    .filter(Boolean)
+    .some((item) => String(item).toLowerCase().includes(text))
+}
+
+function filterMenuTree(nodes: MenuTreeRecord[] = [], filters: Record<string, any> = {}): MenuTreeRecord[] {
+  const expectedStatus = normalizeBoolean(filters.status)
+
+  return nodes.reduce<MenuTreeRecord[]>((result, node) => {
+    const selfMatched = matchMenuName(node, filters.name)
+      && (expectedStatus === undefined || normalizeBoolean(node.status) === expectedStatus)
+
+    if (selfMatched) {
+      result.push({
+        ...node,
+        children: cloneTree(node.children || []),
+      })
+      return result
+    }
+
+    const children = filterMenuTree(node.children || [], filters)
+    if (children.length > 0) {
+      result.push({
+        ...node,
+        children,
+      })
+    }
+    return result
+  }, [])
+}
+
+function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
+  return nodes.map((node) => ({
+    ...node,
+    id: node.id != null ? String(node.id) : node.id,
+    moduleId: node.moduleId != null ? String(node.moduleId) : node.moduleId,
+    parentId: node.parentId != null ? String(node.parentId) : '0',
+    name: getI18nValue(node.nameI18nJson, node.name),
+    status: normalizeStatusForTag(node.status),
+    children: normalizeTreeRows(node.children || []),
+  }))
+}
+
+async function handleRequest(payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
+}) {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId || !activeModuleId.value) {
+    return { records: [], total: 0 }
+  }
+
+  loading.value = true
   try {
-    const tenantId = sessionStorage.getItem('tenantId')
-    if (!tenantId) return
-    
-    const res = await listModules({ tenantId })
-    modules.value = res || []
-    
-    // 默认选中第一个模块
-    if (modules.value.length > 0) {
-      activeModuleId.value = String(modules.value[0].id)
-      queryParams.moduleId = activeModuleId.value
-      await loadMenuList()
+    const tree = await getMenuTree({
+      tenantId: Number(tenantId),
+      moduleId: Number(activeModuleId.value),
+    })
+
+    const filteredTree = filterMenuTree(tree || [], payload.query || {})
+    return {
+      records: normalizeTreeRows(filteredTree),
+      total: countTreeNodes(filteredTree),
     }
   } catch (error) {
-    console.error('加载模块列表失败:', error)
+    console.error('load menu list failed:', error)
+    message.error(t('system.menu.message.loadListFailed'))
+    return { records: [], total: 0 }
+  } finally {
+    loading.value = false
   }
 }
 
-// 切换模块
-const handleModuleChange = async (moduleId: string) => {
-  activeModuleId.value = moduleId
-  queryParams.moduleId = moduleId
-  await loadMenuList()
+function handleSelectionChange(keys: Array<string | number>) {
+  selectedRowKeys.value = keys.map((item) => String(item))
 }
 
-// 组件挂载时加载数据
+function removeExcludedNodes(nodes: MenuTreeRecord[] = [], excludeId?: string): MenuTreeRecord[] {
+  return nodes
+    .filter((node) => !excludeId || String(node.id) !== String(excludeId))
+    .map((node) => ({
+      ...node,
+      children: removeExcludedNodes(node.children || [], excludeId),
+    }))
+}
+
+function buildTreeSelectOptions(nodes: MenuTreeRecord[] = []): any[] {
+  return nodes
+    .filter((node) => node.type !== 'button')
+    .map((node) => ({
+      key: String(node.id),
+      title: getI18nValue(node.nameI18nJson, node.name),
+      value: String(node.id),
+      children: buildTreeSelectOptions(node.children || []),
+    }))
+}
+
+async function loadParentMenuTree(moduleId: string, excludeId?: string) {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId || !moduleId) {
+    menuTreeData.value = getRootTreeNode()
+    return
+  }
+
+  try {
+    const tree = await getMenuTree({
+      tenantId: Number(tenantId),
+      moduleId: Number(moduleId),
+    })
+    const filteredTree = removeExcludedNodes(tree || [], excludeId)
+    menuTreeData.value = getRootTreeNode(buildTreeSelectOptions(filteredTree))
+  } catch (error) {
+    console.error('load parent menu failed:', error)
+    message.error(t('system.menu.message.loadParentFailed'))
+    menuTreeData.value = getRootTreeNode()
+  }
+}
+
+function resolveMenuNameForSave(nameI18nJson: string, fallbackName = '') {
+  const resolved = getI18nValue(nameI18nJson, fallbackName)
+  if (resolved && String(resolved).trim()) {
+    return String(resolved).trim()
+  }
+  try {
+    const parsed = JSON.parse(nameI18nJson || '{}')
+    const firstText = Object.values(parsed).find((item) => String(item || '').trim())
+    return firstText ? String(firstText).trim() : ''
+  } catch {
+    return fallbackName?.trim?.() || ''
+  }
+}
+
+function findNodeLevel(nodes: any[] = [], targetId: string, level = 1): number | undefined {
+  for (const node of nodes) {
+    if (String(node.value) === String(targetId)) {
+      return level
+    }
+    const childLevel = findNodeLevel(node.children || [], targetId, level + 1)
+    if (childLevel !== undefined) {
+      return childLevel
+    }
+  }
+  return undefined
+}
+
+function calculateMenuLevel(parentId: string) {
+  if (!parentId || parentId === '0') {
+    return 1
+  }
+  const level = findNodeLevel(menuTreeData.value?.[0]?.children || [], parentId, 1)
+  return (level || 0) + 1
+}
+
+async function handleAdd() {
+  isEdit.value = false
+  formData.value = createDefaultForm()
+  visible.value = true
+  await loadParentMenuTree(formData.value.moduleId)
+}
+
+async function handleEdit(record: MenuTreeRecord) {
+  try {
+    const detail = await getMenuById(String(record.id))
+    isEdit.value = true
+    formData.value = {
+      ...createDefaultForm(String(detail?.moduleId || activeModuleId.value)),
+      ...detail,
+      id: detail?.id != null ? String(detail.id) : record.id,
+      moduleId: String(detail?.moduleId || activeModuleId.value),
+      parentId: String(detail?.parentId ?? '0'),
+      visible: normalizeBoolean(detail?.visible) !== false,
+      status: normalizeBoolean(detail?.status) !== false,
+      nameI18nJson: detail?.nameI18nJson || '',
+    }
+    visible.value = true
+    await loadParentMenuTree(formData.value.moduleId, String(record.id))
+  } catch (error) {
+    console.error('load menu detail failed:', error)
+    message.error(t('system.menu.message.loadDetailFailed'))
+  }
+}
+
+function handleTypeChange() {
+  if (formData.value.type === 'button') {
+    formData.value.path = ''
+    formData.value.componentKey = undefined
+    formData.value.menuMode = 'embedded'
+    formData.value.externalUrl = undefined
+  }
+
+  if (formData.value.type === 'catalog') {
+    formData.value.componentKey = undefined
+    formData.value.externalUrl = undefined
+  }
+}
+
+function handleModeChange() {
+  if (formData.value.menuMode === 'external') {
+    formData.value.componentKey = undefined
+  } else {
+    formData.value.externalUrl = undefined
+  }
+}
+
+function handleCancel() {
+  visible.value = false
+  isEdit.value = false
+  formData.value = createDefaultForm()
+}
+
+async function handleSubmit() {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId) {
+    message.error(t('system.menu.message.missingTenant'))
+    return
+  }
+
+  try {
+    await formRef.value?.validate()
+    submitLoading.value = true
+
+    const name = resolveMenuNameForSave(formData.value.nameI18nJson, formData.value.name)
+    if (!name) {
+      message.warning(t('system.menu.form.nameRequired'))
+      return
+    }
+
+    const payload = {
+      ...formData.value,
+      id: formData.value.id ? Number(formData.value.id) : undefined,
+      tenantId: Number(tenantId),
+      moduleId: Number(formData.value.moduleId),
+      parentId: !formData.value.parentId || formData.value.parentId === '0'
+        ? 0
+        : Number(formData.value.parentId),
+      menuLevel: calculateMenuLevel(formData.value.parentId),
+      name,
+      path: showPath.value ? formData.value.path : '',
+      componentKey: showComponentKey.value ? formData.value.componentKey : undefined,
+      externalUrl: showExternalUrl.value ? formData.value.externalUrl : undefined,
+      permKey: showPermKey.value ? formData.value.permKey : undefined,
+      visible: !!formData.value.visible,
+      status: !!formData.value.status,
+    }
+
+    if (payload.id) {
+      await updateMenu(payload as any)
+      // 成功提示由后端返回，在 http 拦截器中统一处理
+    } else {
+      await addMenu(payload as any)
+      // 成功提示由后端返回，在 http 拦截器中统一处理
+    }
+
+    visible.value = false
+    isEdit.value = false
+    formData.value = createDefaultForm()
+    await tableRef.value?.refresh?.()
+  } catch (error: any) {
+    if (error?.errorFields) {
+      return
+    }
+    console.error('submit menu failed:', error)
+    message.error(t('system.menu.message.submitFailed'))
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+function handleDelete(id: string | number) {
+  Modal.confirm({
+    title: t('common.confirmDelete'),
+    content: t('system.menu.message.deleteConfirm'),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
+    onOk: async () => {
+      try {
+        await deleteMenu(String(id))
+        selectedRowKeys.value = selectedRowKeys.value.filter((item) => item !== String(id))
+        // 成功提示由后端返回，在 http 拦截器中统一处理
+        await tableRef.value?.refresh?.()
+      } catch (error) {
+        console.error('delete menu failed:', error)
+        message.error(t('system.menu.message.deleteFailed'))
+      }
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (selectedRowKeys.value.length === 0) {
+    message.warning(t('system.menu.message.selectToDelete'))
+    return
+  }
+
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('system.menu.message.batchDeleteConfirm', { count: selectedRowKeys.value.length }),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
+    onOk: async () => {
+      try {
+        await batchDeleteMenus(selectedRowKeys.value)
+        selectedRowKeys.value = []
+        // 成功提示由后端返回，在 http 拦截器中统一处理
+        await tableRef.value?.refresh?.()
+      } catch (error) {
+        console.error('batch delete menu failed:', error)
+        message.error(t('system.menu.message.batchDeleteFailed'))
+      }
+    },
+  })
+}
+
+async function loadModules() {
+  try {
+    const tenantId = sessionStorage.getItem('tenantId')
+    if (!tenantId) {
+      return
+    }
+    const res = await listModules({ tenantId: Number(tenantId) })
+    modules.value = res || []
+    if (modules.value.length > 0) {
+      activeModuleId.value = String(modules.value[0].id)
+      await tableRef.value?.refresh?.()
+    }
+  } catch (error) {
+    console.error('load modules failed:', error)
+    message.error(t('system.menu.message.loadModulesFailed'))
+  }
+}
+
+async function handleModuleChange(moduleId: string) {
+  activeModuleId.value = moduleId
+  selectedRowKeys.value = []
+  await tableRef.value?.refresh?.()
+}
+
+watch(
+  () => formData.value.moduleId,
+  async (moduleId) => {
+    if (!visible.value || !moduleId) {
+      return
+    }
+    await loadParentMenuTree(moduleId, formData.value.id ? String(formData.value.id) : undefined)
+  },
+)
+
+watch(
+  () => t('system.menu.rootMenu'),
+  () => {
+    if (visible.value) {
+      loadParentMenuTree(formData.value.moduleId, formData.value.id ? String(formData.value.id) : undefined)
+    } else {
+      menuTreeData.value = getRootTreeNode()
+    }
+  },
+)
+
 onMounted(async () => {
+  menuTreeData.value = getRootTreeNode()
   await loadModules()
 })
 </script>
 
 <style scoped lang="less">
 .menu-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
-  
+  box-sizing: border-box;
+
   .main-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
     :deep(.ant-card-body) {
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
     }
   }
-  
+
   .menu-layout {
     display: flex;
+    flex: 1 1 auto;
     width: 100%;
-    
+    min-width: 0;
+    min-height: 0;
+
     .module-tabs {
       width: 140px;
+      flex-shrink: 0;
       border-right: 1px solid var(--fx-border-color);
       background: var(--fx-bg-container);
-      
+      min-height: 0;
+
       :deep(.ant-tabs) {
         height: 100%;
-        
+
         .ant-tabs-nav {
           margin: 0;
           width: 100%;
         }
-        
+
         .ant-tabs-nav-list {
           width: 100%;
         }
-        
+
         .ant-tabs-tab {
           padding: 12px 24px;
           margin: 0;
           width: 100%;
           justify-content: flex-start;
           transition: all 0.3s;
-          
+
           &:hover {
             background: var(--fx-tab-hover-bg);
           }
-          
+
           &.ant-tabs-tab-active {
             background: var(--fx-tab-bg);
-            
+
             .ant-tabs-tab-btn {
               color: var(--fx-theme-color, #1677ff);
             }
@@ -679,28 +939,27 @@ onMounted(async () => {
         }
       }
     }
-    
+
     .content-area {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
       padding: 12px 16px 8px;
       background: var(--fx-bg-container);
-      
-      .search-bar {
-        margin-bottom: 16px;
-        padding: 16px;
-        background: #fafafa;
-        border-radius: 4px;
-      }
-      
-      .table-toolbar {
-        margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+
+      :deep(.fx-dynamic-table) {
+        flex: 1 1 auto;
+        min-height: 0;
       }
     }
   }
-  
+
   .danger-link {
     color: #ff4d4f;
-    
+
     &:hover {
       color: #ff7875;
     }

@@ -4,6 +4,7 @@
       <a-row :gutter="16">
         <!-- 左侧：部门树 -->
         <a-col :span="6">
+          <div class="card-title">组织架构</div>
           <DeptTree
             ref="deptTreeRef"
             @select="onSelectNode"
@@ -12,74 +13,27 @@
 
         <!-- 右侧：职位列表 -->
         <a-col :span="18">
-          <!-- 搜索区域 -->
-          <div class="search-area">
-            <a-form layout="inline" :model="searchForm">
-              <a-form-item label="职位名称">
-                <a-input
-                  v-model:value="searchForm.positionName"
-                  placeholder="请输入职位名称"
-                  allow-clear
-                  style="width: 150px"
-                />
-              </a-form-item>
-              <a-form-item label="职位编码">
-                <a-input
-                  v-model:value="searchForm.positionCode"
-                  placeholder="请输入职位编码"
-                  allow-clear
-                  style="width: 150px"
-                />
-              </a-form-item>
-              <a-form-item label="状态">
-                <a-select
-                  v-model:value="searchForm.status"
-                  placeholder="请选择状态"
-                  allow-clear
-                  style="width: 100px"
-                >
-                  <a-select-option :value="true">启用</a-select-option>
-                  <a-select-option :value="false">禁用</a-select-option>
-                </a-select>
-              </a-form-item>
-              <a-form-item>
-                <a-space>
-                  <a-button type="primary" @click="handleSearch">
-                    <template #icon><SearchOutlined /></template>
-                    搜索
-                  </a-button>
-                  <a-button @click="handleReset">
-                    <template #icon><ReloadOutlined /></template>
-                    重置
-                  </a-button>
-                </a-space>
-              </a-form-item>
-            </a-form>
-          </div>
-
           <!-- 操作按钮和表格 -->
           <div class="table-area">
-            <div class="toolbar">
-              <a-space>
-                <a-button type="primary" @click="openAdd" v-permission="'sys:position:create'">
-                  <template #icon><PlusOutlined /></template>
-                  新增职位
-                </a-button>
-              </a-space>
-            </div>
-
             <fx-dynamic-table
               ref="tableRef"
               :table-code="'PositionTable'"
               :request="handleRequest"
-              :fallback-config="fallbackConfig"
               :dict-options="dictOptions"
+              :fallback-config="fallbackConfig"
               row-key="id"
-              :pagination="false"
             >
+              <template #toolbar>
+                <a-space>
+                  <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
+                    <template #icon><PlusOutlined /></template>
+                    {{ $t('system.position.addPosition') }}
+                  </a-button>
+                </a-space>
+              </template>
               <template #status="{ record }">
                 <a-tag :color="record.status === true ? 'green' : 'red'">
-                  {{ record.status === true ? '启用' : '禁用' }}
+                  {{ record.status === true ? $t('common.enabled') : $t('common.disabled') }}
                 </a-tag>
               </template>
               <template #action="{ record }">
@@ -90,10 +44,10 @@
                     @click="openEdit(record)"
                     v-permission="'sys:position:edit'"
                   >
-                    编辑
+                    {{ $t('common.edit') }}
                   </a-button>
                   <a-popconfirm
-                    title="确定要删除这个职位吗？"
+                    :title="$t('common.confirmDeleteMessage')"
                     :ok-text="$t('common.confirm')"
                     :cancel-text="$t('common.cancel')"
                     @confirm="handleDelete(record.id)"
@@ -104,7 +58,7 @@
                       danger
                       v-permission="'sys:position:delete'"
                     >
-                      删除
+                      {{ $t('common.delete') }}
                     </a-button>
                   </a-popconfirm>
                 </a-space>
@@ -128,7 +82,7 @@
         :model="formData"
         :rules="rules"
         :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 16 }"
+        :wrapper-col="{ span: 19 }"
       >
         <a-form-item label="所属部门" name="departmentId">
            <a-tree-select
@@ -187,10 +141,10 @@
           />
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">启用</a-radio>
-            <a-radio :value="false">禁用</a-radio>
+            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
 
@@ -210,19 +164,18 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
-  SearchOutlined,
-  ReloadOutlined,
   PlusOutlined
 } from '@ant-design/icons-vue'
 import DeptTree from '@/components/system/DeptTree.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getDepartmentTree } from '@/api/system/department'
 import {
-  listPositions,
+  getPositionPage,
   createPosition,
   updatePosition,
   deletePosition
 } from '@/api/system/position'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
 import type { Position, PositionSaveParam } from './types'
 
@@ -233,6 +186,7 @@ const treeData = ref<any[]>([])
 
 // 字典数据
 const { dictItems: positionLevelOptions } = useDict('position_level')
+const { dictItems: statusOptions } = useDict('status')
 
 // 搜索表单
 const searchForm = ref({
@@ -246,58 +200,69 @@ const searchForm = ref({
 const tableRef = ref()
 const loading = ref(false)
 
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '职位名称', dataIndex: 'positionName', key: 'positionName', width: 150 },
-    { title: '职位编码', dataIndex: 'positionCode', key: 'positionCode', width: 150 },
-    { title: '职位级别', dataIndex: 'positionLevel', key: 'positionLevel', width: 100 },
-    { title: '排序号', dataIndex: 'orderNum', key: 'orderNum', width: 100 },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-    { title: '操作', key: 'action', fixed: 'right', width: 150 }
-  ]
-})
-
 // 字典配置
 const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'green' },
-    0: { text: '禁用', color: 'red' }
-  },
+  status: statusOptions,
   positionLevel: positionLevelOptions
 })
+
+const fallbackConfig: Partial<FxTableConfig> = {
+  columns: [
+    { field: 'positionName', title: '职位名称', width: 180, align: 'left' },
+    { field: 'positionCode', title: '职位编码', width: 140, align: 'left' },
+    { field: 'positionLevel', title: '职位级别', width: 120, align: 'center', dictCode: 'positionLevel' },
+    { field: 'orderNum', title: '排序', width: 90, align: 'center' },
+    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+    { field: 'remark', title: '备注', width: 220, align: 'left' },
+    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+    { field: 'action', title: '操作', width: 160, align: 'center', fixed: 'right' }
+  ],
+  queryFields: [
+    { field: 'positionName', label: '职位名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'positionCode', label: '职位编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ]
+}
 
 /**
  * 处理表格数据请求
  */
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   if (!currentTenantId.value) {
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   }
   
   loading.value = true
   try {
-    const data = await listPositions({
+    const params: any = {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
       tenantId: currentTenantId.value,
       ...searchForm.value,
-      ...params
-    })
-    return {
-      success: true,
-      data: data || [],
-      total: data?.length || 0
+      ...payload.query
     }
+    
+    // 处理排序
+    if (payload.sorter) {
+      params.sortField = payload.sorter.field
+      params.sortOrder = payload.sorter.order
+    }
+    
+    const data = await getPositionPage(params)
+    // 确保total是数字类型
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total: total }
   } catch (e) {
     message.error('加载职位列表失败')
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   } finally {
@@ -315,8 +280,7 @@ const formData = ref<PositionSaveParam & { departmentId?: string }>({
   positionName: '',
   positionCode: '',
   orderNum: 0,
-  status: true,
-  departmentId: undefined
+  status: true
 })
 
 // 表单验证规则
@@ -434,11 +398,11 @@ async function handleSubmit() {
     if (isEdit.value) {
       // 更新
       await updatePosition(formData.value)
-      message.success('更新成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       // 新增
       await createPosition(formData.value)
-      message.success('新增成功')
+      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
 
     visible.value = false
@@ -463,7 +427,7 @@ async function handleDelete(id: string) {
       id,
       tenantId: currentTenantId.value!
     })
-    message.success('删除成功')
+    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (e: any) {
     message.error(e.message || '删除失败')
@@ -482,18 +446,96 @@ onMounted(async () => {
 
 <style scoped>
 .page-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .content-card {
-  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.content-card :deep(.ant-row) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content-card :deep(.ant-col) {
+  min-height: 0;
+}
+
+.table-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.table-area :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: var(--fx-text-primary, #1d2129);
 }
 
 .search-area {
+  width: 100%;
   margin-bottom: 16px;
 }
 
-.toolbar {
-  margin-bottom: 16px;
+.detail-container {
+  padding-left: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+:deep(.fx-query-form) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+:deep(.fx-query-fields-container) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+:deep(.fx-query-fields) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+:deep(.fx-query-fields :deep(.ant-form-item)) {
+  margin: 0;
+}
+
+:deep(.fx-query-actions) {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 12px;
 }
 </style>

@@ -66,6 +66,22 @@
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-reactor-spring-boot3-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-redisson-spring-boot-starter</artifactId>
+        </dependency>
+        <!-- 显式升级 Redisson 版本，解决 Spring Boot 3.5.x + Spring Data Redis 3.5.x 兼容性问题 -->
+        <!-- Spring Data Redis 3.5.x 需要 redisson-spring-data-35 模块，该模块在 Redisson 3.46.0+ 提供 -->
+        <!-- 参考: https://github.com/redisson/redisson/issues/5755 -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.46.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+        </dependency>
   </dependencies>
 
   <build>

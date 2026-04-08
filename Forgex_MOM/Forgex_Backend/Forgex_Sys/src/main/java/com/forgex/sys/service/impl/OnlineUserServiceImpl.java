@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 /**
  * 在线用户服务实现。
  * <p>
- * 当前实现基于 Redis 中的登录上下文 Key：{@code fx:login:ctx:{token}}，
- * 按租户过滤并分页返回在线会话列表，同时关联 {@code sys_user} 的最后登录信息用于展示。
+ * 当前实现基于 Redis 中的在线用户 Key：{@code fx:online:user:{tenantId}:{userId}}，
+ * 按租户过滤并分页返回在线用户列表，同时关联 {@code sys_user} 的最后登录信息用于展示。
  * </p>
  *
  * @author coder_nai@163.com
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
-    private static final String LOGIN_CTX_PREFIX = "fx:login:ctx:";
+    private static final String ONLINE_USER_PREFIX = "fx:online:user:";
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -68,8 +68,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             return page;
         }
 
-        // 2) 扫描登录上下文 Key（fx:login:ctx:*）
-        Set<String> keys = redisTemplate.keys(LOGIN_CTX_PREFIX + "*");
+        // 2) 扫描在线用户 Key（fx:online:user:{tenantId}:*）
+        Set<String> keys = redisTemplate.keys(ONLINE_USER_PREFIX + tenantId + ":*");
         if (keys == null || keys.isEmpty()) {
             page.setTotal(0);
             page.setRecords(Collections.emptyList());
@@ -78,38 +78,33 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         String accountLike = query == null ? null : query.getAccount();
 
-        List<LoginCtx> ctxList = new ArrayList<>();
+        List<OnlineUserInfo> userInfoList = new ArrayList<>();
         for (String key : keys) {
             String json = redisTemplate.opsForValue().get(key);
             if (!StringUtils.hasText(json)) {
                 continue;
             }
-            LoginCtx ctx = parseLoginCtx(json);
-            if (ctx == null) {
+            OnlineUserInfo userInfo = parseOnlineUserInfo(json);
+            if (userInfo == null) {
                 continue;
             }
-            // 3) 按租户过滤，避免跨租户泄露
-            if (ctx.tenantId == null || !tenantId.equals(ctx.tenantId)) {
+            // 3) 按账号模糊过滤（可选）
+            if (StringUtils.hasText(accountLike) && (userInfo.account == null || !userInfo.account.contains(accountLike))) {
                 continue;
             }
-            // 4) 按账号模糊过滤（可选）
-            if (StringUtils.hasText(accountLike) && (ctx.account == null || !ctx.account.contains(accountLike))) {
-                continue;
-            }
-            ctx.token = key.substring(LOGIN_CTX_PREFIX.length());
             Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-            ctx.ttlSeconds = ttl == null ? -1L : ttl;
-            ctxList.add(ctx);
+            userInfo.ttlSeconds = ttl == null ? -1L : ttl;
+            userInfoList.add(userInfo);
         }
 
-        if (ctxList.isEmpty()) {
+        if (userInfoList.isEmpty()) {
             page.setTotal(0);
             page.setRecords(Collections.emptyList());
             return page;
         }
 
-        // 5) 关联查询用户最后登录信息（用于页面展示）
-        List<Long> userIds = ctxList.stream().map(c -> c.userId).filter(id -> id != null).distinct().collect(Collectors.toList());
+        // 4) 关联查询用户最后登录信息（用于页面展示）
+        List<Long> userIds = userInfoList.stream().map(u -> u.userId).filter(id -> id != null).distinct().collect(Collectors.toList());
         List<SysUser> users = userIds.isEmpty()
                 ? Collections.emptyList()
                 : userMapper.selectList(new LambdaQueryWrapper<SysUser>()
@@ -117,14 +112,14 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         java.util.Map<Long, SysUser> userMap = users.stream().collect(Collectors.toMap(SysUser::getId, u -> u, (a, b) -> a));
 
-        List<OnlineUserVO> all = ctxList.stream().map(ctx -> {
+        List<OnlineUserVO> all = userInfoList.stream().map(userInfo -> {
             OnlineUserVO vo = new OnlineUserVO();
-            vo.setToken(ctx.token);
-            vo.setUserId(ctx.userId);
-            vo.setTenantId(ctx.tenantId);
-            vo.setAccount(ctx.account);
-            vo.setTtlSeconds(ctx.ttlSeconds);
-            SysUser u = ctx.userId == null ? null : userMap.get(ctx.userId);
+            vo.setToken(userInfo.token);
+            vo.setUserId(userInfo.userId);
+            vo.setTenantId(userInfo.tenantId);
+            vo.setAccount(userInfo.account);
+            vo.setTtlSeconds(userInfo.ttlSeconds);
+            SysUser u = userInfo.userId == null ? null : userMap.get(userInfo.userId);
             if (u != null) {
                 vo.setLastLoginTime(u.getLastLoginTime());
                 vo.setLastLoginIp(u.getLastLoginIp());
@@ -156,22 +151,11 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (tenantId == null) {
             return 0L;
         }
-        Set<String> keys = redisTemplate.keys(LOGIN_CTX_PREFIX + "*");
+        Set<String> keys = redisTemplate.keys(ONLINE_USER_PREFIX + tenantId + ":*");
         if (keys == null || keys.isEmpty()) {
             return 0L;
         }
-        long count = 0;
-        for (String key : keys) {
-            String json = redisTemplate.opsForValue().get(key);
-            if (!StringUtils.hasText(json)) {
-                continue;
-            }
-            LoginCtx ctx = parseLoginCtx(json);
-            if (ctx != null && tenantId.equals(ctx.tenantId)) {
-                count++;
-            }
-        }
-        return count;
+        return (long) keys.size();
     }
 
     /**
@@ -196,57 +180,73 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         } catch (Exception ignored) {
         }
         try {
-            redisTemplate.delete(LOGIN_CTX_PREFIX + token);
+            Set<String> keys = redisTemplate.keys(ONLINE_USER_PREFIX + "*");
+            if (keys != null && !keys.isEmpty()) {
+                for (String key : keys) {
+                    String json = redisTemplate.opsForValue().get(key);
+                    if (StringUtils.hasText(json)) {
+                        OnlineUserInfo userInfo = parseOnlineUserInfo(json);
+                        if (userInfo != null && token.equals(userInfo.token)) {
+                            redisTemplate.delete(key);
+                            break;
+                        }
+                    }
+                }
+            }
         } catch (Exception ignored) {
         }
         return true;
     }
 
     /**
-     * 解析登录上下文 JSON。
+     * 解析在线用户信息 JSON。
      *
-     * @param json 登录上下文 JSON 字符串
-     * @return 解析后的上下文；解析失败返回 null
+     * @param json 在线用户信息 JSON 字符串
+     * @return 解析后的用户信息；解析失败返回 null
      */
-    private LoginCtx parseLoginCtx(String json) {
+    private OnlineUserInfo parseOnlineUserInfo(String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
-            LoginCtx ctx = new LoginCtx();
+            OnlineUserInfo userInfo = new OnlineUserInfo();
             JsonNode userIdNode = node.get("userId");
             JsonNode tenantIdNode = node.get("tenantId");
             JsonNode accountNode = node.get("account");
+            JsonNode tokenNode = node.get("token");
             if (userIdNode != null && userIdNode.isNumber()) {
-                ctx.userId = userIdNode.longValue();
+                userInfo.userId = userIdNode.longValue();
             } else if (userIdNode != null && userIdNode.isTextual()) {
                 try {
-                    ctx.userId = Long.valueOf(userIdNode.asText());
+                    userInfo.userId = Long.valueOf(userIdNode.asText());
                 } catch (Exception ignored) {
                 }
             }
             if (tenantIdNode != null && tenantIdNode.isNumber()) {
-                ctx.tenantId = tenantIdNode.longValue();
+                userInfo.tenantId = tenantIdNode.longValue();
             } else if (tenantIdNode != null && tenantIdNode.isTextual()) {
                 try {
-                    ctx.tenantId = Long.valueOf(tenantIdNode.asText());
+                    userInfo.tenantId = Long.valueOf(tenantIdNode.asText());
                 } catch (Exception ignored) {
                 }
             }
             if (accountNode != null && accountNode.isTextual()) {
-                ctx.account = accountNode.asText();
+                userInfo.account = accountNode.asText();
             }
-            return ctx;
+            if (tokenNode != null && tokenNode.isTextual()) {
+                userInfo.token = tokenNode.asText();
+            }
+            return userInfo;
         } catch (Exception e) {
             return null;
         }
     }
 
     /**
-     * 登录上下文内部对象。
+     * 在线用户信息内部对象。
      * <p>
-     * 与 Redis 中 {@code fx:login:ctx:{token}} 的 JSON 字段保持一致。
+     * 与 Redis 中 {@code fx:online:user:{tenantId}:{userId}} 的 JSON 字段保持一致。
      * </p>
      */
-    private static class LoginCtx {
+    private static class OnlineUserInfo {
         private String token;
         private Long userId;
         private Long tenantId;

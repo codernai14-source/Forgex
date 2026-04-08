@@ -23,11 +23,7 @@ import org.springframework.stereotype.Service;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.dynamic.datasource.annotation.DS;
 
-/**
- * 系统配置读取服务实现（通用实现）
- * 作用：提供对 `sys_config` 的统一读取能力，支持基础类型与 JSON 映射；
- * 逻辑：按键查询配置表，空值时返回默认值，JSON 解析失败时返回默认对象。
- */
+
 /**
  * 系统配置服务实现
  * 作用：统一从配置库读取系统配置（值为JSON或文本），并提供便捷方法。
@@ -116,6 +112,12 @@ public class ConfigServiceImpl implements ConfigService {
         } finally { DynamicDataSourceContextHolder.poll(); }
     }
 
+    /**
+     * 设置 JSON 配置（当前租户）
+     * 逻辑：将对象序列化为 JSON 字符串，保存到当前租户的配置表中
+     * @param key 配置键
+     * @param value 配置对象
+     */
     @Override
     public void setJson(String key, Object value) {
         try { DynamicDataSourceContextHolder.push("common");
@@ -152,6 +154,39 @@ public class ConfigServiceImpl implements ConfigService {
                 return JSONUtil.toBean(cfg.getConfigValue(), type);
             } catch (Exception e) {
                 return def;
+            }
+        } finally { DynamicDataSourceContextHolder.poll(); }
+    }
+
+    /**
+     * 设置全局 JSON 配置（tenant_id = 0）
+     * 逻辑：将对象序列化为 JSON 字符串，保存到全局配置表中（tenant_id = 0）
+     * @param key 配置键
+     * @param value 配置对象
+     */
+    @Override
+    public void setGlobalJson(String key, Object value) {
+        try { DynamicDataSourceContextHolder.push("common");
+            // 序列化配置值为JSON
+            String json = JSONUtil.toJsonStr(value);
+            // 优先查询全局配置
+            SysConfig cfg = mapper.getGlobalByKey(key);
+            if (cfg == null) {
+                // 若全局配置不存在，则查询任意租户下是否已存在该键
+                cfg = mapper.getAnyByKey(key);
+            }
+            if (cfg == null) {
+                // 不存在则新增全局配置
+                cfg = new SysConfig();
+                cfg.setConfigKey(key);
+                cfg.setConfigValue(json);
+                cfg.setTenantId(0L);
+                mapper.insert(cfg);
+            } else {
+                // 存在则更新为全局配置内容
+                cfg.setConfigValue(json);
+                cfg.setTenantId(0L);
+                mapper.updateById(cfg);
             }
         } finally { DynamicDataSourceContextHolder.poll(); }
     }

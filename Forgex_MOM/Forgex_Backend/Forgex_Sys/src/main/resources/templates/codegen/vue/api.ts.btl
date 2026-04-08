@@ -1,0 +1,72 @@
+import http from '@/utils/http'
+
+/**
+ * ${tableComment!entityName} API
+ * 
+ * @author Forgex CodeGen
+ * @date ${date()}
+ */
+
+/**
+ * 分页查询${tableComment!entityName}
+ */
+export const page${entityName} = (data: any) => {
+  return http.post('/${moduleName}/${entityNameLower}/page', data)
+}
+
+/**
+ * 根据ID查询${tableComment!entityName}
+ */
+export const get${entityName}ById = (id: number) => {
+  return http.get(`/${moduleName}/${entityNameLower}/\${id}`)
+}
+
+/**
+ * 新增${tableComment!entityName}
+ */
+export const save${entityName} = (data: any) => {
+  return http.post('/${moduleName}/${entityNameLower}/save', data)
+}
+
+/**
+ * 修改${tableComment!entityName}
+ */
+export const update${entityName} = (data: any) => {
+  return http.put('/${moduleName}/${entityNameLower}/update', data)
+}
+
+/**
+ * 删除${tableComment!entityName}
+ */
+export const delete${entityName} = (id: number) => {
+  return http.delete(`/${moduleName}/${entityNameLower}/\${id}`)
+}
+
+/**
+ * 批量删除${tableComment!entityName}
+ */
+export const batchDelete${entityName} = (ids: number[]) => {
+  return http.post('/${moduleName}/${entityNameLower}/batchDelete', { ids })
+}
+
+/**
+ * 导出${tableComment!entityName}
+ */
+export const export${entityName} = (data: any) => {
+  return http.download('/${moduleName}/${entityNameLower}/export', data)
+}
+
+/**
+ * 导入${tableComment!entityName}
+ */
+export const import${entityName} = (formData: FormData) => {
+  return http.upload('/${moduleName}/${entityNameLower}/import', formData)
+}
+
+/**
+ * 下载${tableComment!entityName}导入模板
+ */
+export const downloadTemplate${entityName} = () => {
+  return http.download('/${moduleName}/${entityNameLower}/template')
+}
+

@@ -1,0 +1,76 @@
+package ${basePackage}.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import ${basePackage}.domain.entity.${entityName};
+import ${basePackage}.domain.param.${entityName}PageParam;
+import ${basePackage}.domain.param.${entityName}SaveParam;
+import ${basePackage}.mapper.${entityName}Mapper;
+import ${basePackage}.service.${entityName}Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+/**
+ * ${tableComment!entityName}服务实现类
+ * 
+ * @author Forgex CodeGen
+ * @date ${date()}
+ */
+@Service
+@RequiredArgsConstructor
+public class ${entityName}ServiceImpl implements ${entityName}Service {
+
+    private final ${entityName}Mapper ${entityNameLower}Mapper;
+
+    @Override
+    public Page<${entityName}> page(${entityName}PageParam param) {
+        Page<${entityName}> page = new Page<>(param.getCurrent(), param.getSize());
+        
+        LambdaQueryWrapper<${entityName}> wrapper = new LambdaQueryWrapper<>();
+        
+        // TODO: 根据实际需求添加查询条件
+        <% for(column in queryColumns) { %>
+        <% if(column.queryType == 'like') { %>
+        if (StringUtils.hasText(param.get${column.javaFieldNameCapital}())) {
+            wrapper.like(${entityName}::get${column.javaFieldNameCapital}, param.get${column.javaFieldNameCapital}());
+        }
+        <% } else if(column.queryType == 'eq') { %>
+        if (param.get${column.javaFieldNameCapital}() != null) {
+            wrapper.eq(${entityName}::get${column.javaFieldNameCapital}, param.get${column.javaFieldNameCapital}());
+        }
+        <% } %>
+        <% } %>
+        
+        return ${entityNameLower}Mapper.selectPage(page, wrapper);
+    }
+
+    @Override
+    public ${entityName} getById(Long id) {
+        return ${entityNameLower}Mapper.selectById(id);
+    }
+
+    @Override
+    public Boolean save(${entityName}SaveParam param) {
+        ${entityName} entity = new ${entityName}();
+        BeanUtils.copyProperties(param, entity);
+        return ${entityNameLower}Mapper.insert(entity) > 0;
+    }
+
+    @Override
+    public Boolean updateById(Long id, ${entityName}SaveParam param) {
+        ${entityName} entity = new ${entityName}();
+        entity.setId(id);
+        BeanUtils.copyProperties(param, entity);
+        return ${entityNameLower}Mapper.updateById(entity) > 0;
+    }
+
+    @Override
+    public Boolean deleteById(Long id) {
+        return ${entityNameLower}Mapper.deleteById(id) > 0;
+    }
+}
+
+
+

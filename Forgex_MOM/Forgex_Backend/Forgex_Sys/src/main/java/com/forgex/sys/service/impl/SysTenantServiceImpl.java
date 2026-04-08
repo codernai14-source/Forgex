@@ -14,10 +14,12 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.enums.TenantTypeEnum;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantSaveParam;
+import com.forgex.sys.domain.dto.TenantHierarchyDTO;
 import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.service.SysTenantService;
@@ -54,6 +56,49 @@ public class SysTenantServiceImpl implements SysTenantService {
     
     @Override
     public List<SysTenantDTO> list(SysTenantQueryDTO queryDTO) {
+        LambdaQueryWrapper<SysTenant> wrapper = buildQueryWrapper(queryDTO);
+        wrapper.orderByDesc(SysTenant::getCreateTime);
+        
+        List<SysTenant> tenants = tenantMapper.selectList(wrapper);
+        
+        return tenants.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public Page<SysTenantDTO> page(SysTenantQueryDTO queryDTO) {
+        // 构建分页对象
+        Page<SysTenant> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<SysTenant> wrapper = buildQueryWrapper(queryDTO);
+        wrapper.orderByDesc(SysTenant::getCreateTime);
+        
+        // 执行分页查询
+        Page<SysTenant> tenantPage = tenantMapper.selectPage(page, wrapper);
+        
+        // 转换为DTO
+        Page<SysTenantDTO> dtoPage = new Page<>();
+        dtoPage.setCurrent(tenantPage.getCurrent());
+        dtoPage.setSize(tenantPage.getSize());
+        dtoPage.setTotal(tenantPage.getTotal());
+        dtoPage.setRecords(
+            tenantPage.getRecords().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList())
+        );
+        
+        return dtoPage;
+    }
+    
+    /**
+     * 构建查询条件
+     * 
+     * @param queryDTO 查询参数
+     * @return 查询条件包装器
+     */
+    private LambdaQueryWrapper<SysTenant> buildQueryWrapper(SysTenantQueryDTO queryDTO) {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getDeleted, false);
         
@@ -77,13 +122,7 @@ public class SysTenantServiceImpl implements SysTenantService {
             wrapper.eq(SysTenant::getStatus, queryDTO.getStatus());
         }
         
-        wrapper.orderByDesc(SysTenant::getCreateTime);
-        
-        List<SysTenant> tenants = tenantMapper.selectList(wrapper);
-        
-        return tenants.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return wrapper;
     }
     
     @Override
@@ -240,6 +279,60 @@ public class SysTenantServiceImpl implements SysTenantService {
         return convertToDTO(tenant);
     }
     
+    @Override
+    public TenantHierarchyDTO getTenantHierarchy(Long tenantId) {
+        if (tenantId == null) {
+            throw new RuntimeException("租户 ID 不能为空");
+        }
+        
+        // 查询当前租户
+        SysTenant currentTenant = tenantMapper.selectById(tenantId);
+        if (currentTenant == null || currentTenant.getDeleted()) {
+            throw new RuntimeException("租户不存在");
+        }
+        
+        TenantHierarchyDTO dto = new TenantHierarchyDTO();
+        dto.setCurrentTenant(currentTenant);
+        
+        // 查询父租户
+        if (currentTenant.getParentTenantId() != null) {
+            SysTenant parentTenant = tenantMapper.selectById(currentTenant.getParentTenantId());
+            if (parentTenant != null && !parentTenant.getDeleted()) {
+                dto.setParentTenant(parentTenant);
+            }
+        }
+        
+        // 查询子租户列表
+        LambdaQueryWrapper<SysTenant> childWrapper = new LambdaQueryWrapper<>();
+        childWrapper.eq(SysTenant::getParentTenantId, tenantId)
+                   .eq(SysTenant::getDeleted, false)
+                   .orderByDesc(SysTenant::getCreateTime);
+        
+        List<SysTenant> childTenants = tenantMapper.selectList(childWrapper);
+        dto.setChildTenants(childTenants);
+        
+        return dto;
+    }
+    
+    @Override
+    public List<SysTenantDTO> getChildTenants(Long parentTenantId) {
+        if (parentTenantId == null) {
+            throw new RuntimeException("父租户 ID 不能为空");
+        }
+        
+        // 查询子租户列表
+        LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysTenant::getParentTenantId, parentTenantId)
+               .eq(SysTenant::getDeleted, false)
+               .orderByDesc(SysTenant::getCreateTime);
+        
+        List<SysTenant> tenants = tenantMapper.selectList(wrapper);
+        
+        return tenants.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
     /**
      * 实体转DTO
      * 
@@ -255,6 +348,13 @@ public class SysTenantServiceImpl implements SysTenantService {
             dto.setTenantTypeDesc(tenant.getTenantType().getDesc());
         }
         
+        if (tenant.getParentTenantId() != null) {
+            SysTenant parentTenant = tenantMapper.selectById(tenant.getParentTenantId());
+            if (parentTenant != null && !Boolean.TRUE.equals(parentTenant.getDeleted())) {
+                dto.setParentTenantName(parentTenant.getTenantName());
+            }
+        }
+
         return dto;
     }
 }

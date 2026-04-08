@@ -49,7 +49,7 @@ public class LoginLogServiceImpl implements ILoginLogService {
     @Async
     @Override
     public void recordLoginSuccess(Long userId, String account, Long tenantId, 
-                                   String ip, String region, String userAgent) {
+                                   String ip, String region, String userAgent, String tokenValue) {
         try {
             LoginLog loginLog = new LoginLog();
             loginLog.setUserId(userId);
@@ -58,6 +58,7 @@ public class LoginLogServiceImpl implements ILoginLogService {
             loginLog.setLoginIp(ip);
             loginLog.setLoginRegion(region);
             loginLog.setUserAgent(userAgent);
+            loginLog.setTokenValue(tokenValue); // 保存token，用于后续记录登出信息
             loginLog.setLoginTime(LocalDateTime.now());
             loginLog.setStatus(1); // 成功
             loginLog.setCreateTime(LocalDateTime.now());

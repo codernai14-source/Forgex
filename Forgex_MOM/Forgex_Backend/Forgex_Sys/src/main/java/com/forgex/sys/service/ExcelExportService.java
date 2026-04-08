@@ -15,6 +15,7 @@ package com.forgex.sys.service;
 
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
+import com.forgex.sys.domain.dto.ExcelOperationLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -42,6 +43,8 @@ public interface ExcelExportService {
      * @param response HTTP响应对象
      */
     void exportUser(ExcelUserExportDTO body, HttpServletResponse response);
+
+    void exportOperationLog(ExcelOperationLogExportDTO body, HttpServletResponse response);
     
     /**
      * 获取配置对应的内容类型

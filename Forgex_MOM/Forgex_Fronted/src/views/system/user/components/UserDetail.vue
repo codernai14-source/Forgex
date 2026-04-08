@@ -17,9 +17,7 @@
           {{ userDetail?.phone }}
         </a-descriptions-item>
         <a-descriptions-item label="性别">
-          <a-tag v-if="userDetail?.gender === 1" color="blue">男</a-tag>
-          <a-tag v-else-if="userDetail?.gender === 2" color="pink">女</a-tag>
-          <a-tag v-else color="default">未知</a-tag>
+          <DictTag :record="userDetail" dict-field="genderText" />
         </a-descriptions-item>
         <a-descriptions-item label="入职时间">
           {{ userDetail?.entryDate }}
@@ -34,8 +32,7 @@
           {{ userDetail?.tenantId || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag v-if="userDetail?.status === true || userDetail?.status === 1" color="success">启用</a-tag>
-          <a-tag v-else color="error">禁用</a-tag>
+          <DictTag :record="userDetail" dict-field="statusText" />
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">
           {{ userDetail?.createTime }}
@@ -139,6 +136,8 @@ const emit = defineEmits<{
 const visible = ref(props.open)
 const loading = ref(false)
 const userDetail = ref<(User & { profile?: UserProfile, tenantList?: UserTenant[] }) | null>(null)
+
+
 
 // 租户列表表格列定义
 const tenantColumns = [

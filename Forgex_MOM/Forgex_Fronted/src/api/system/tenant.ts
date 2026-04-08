@@ -6,7 +6,8 @@ import http from '../http'
 export enum TenantTypeEnum {
   MAIN_TENANT = 'MAIN_TENANT',
   CUSTOMER_TENANT = 'CUSTOMER_TENANT',
-  SUPPLIER_TENANT = 'SUPPLIER_TENANT'
+  SUPPLIER_TENANT = 'SUPPLIER_TENANT',
+  PARTNER_TENANT = 'PARTNER_TENANT'
 }
 
 /**
@@ -15,7 +16,8 @@ export enum TenantTypeEnum {
 export const TenantTypeLabels: Record<TenantTypeEnum, string> = {
   [TenantTypeEnum.MAIN_TENANT]: '主租户',
   [TenantTypeEnum.CUSTOMER_TENANT]: '客户租户',
-  [TenantTypeEnum.SUPPLIER_TENANT]: '供应商租户'
+  [TenantTypeEnum.SUPPLIER_TENANT]: '供应商租户',
+  [TenantTypeEnum.PARTNER_TENANT]: '合作伙伴租户'
 }
 
 /**
@@ -44,6 +46,8 @@ export interface TenantDTO {
   updateTime: string
   createBy?: string
   updateBy?: string
+  parentTenantId?: number
+  parentTenantName?: string
 }
 
 /**
@@ -57,6 +61,7 @@ export interface TenantSaveParam {
   logo?: string
   tenantType: TenantTypeEnum
   status?: boolean
+  parentTenantId?: number
 }
 
 /**
@@ -66,6 +71,15 @@ export interface TenantSaveParam {
  */
 export function listTenant(params: TenantQueryDTO) {
   return http.post<TenantDTO[]>('/sys/tenant/list', params)
+}
+
+/**
+ * 分页查询租户列表
+ * @param params 分页查询参数
+ * @returns 分页结果
+ */
+export function getTenantPage(params: TenantQueryDTO & { pageNum: number; pageSize: number }) {
+  return http.post<{ records: TenantDTO[]; total: number }>('/sys/tenant/page', params)
 }
 
 /**
@@ -83,6 +97,14 @@ export function getTenant(params: { id: number }) {
  */
 export function getMainTenant() {
   return http.post<TenantDTO>('/sys/tenant/getMainTenant', {})
+}
+
+/**
+ * 获取租户列表（用于父租户选择）
+ * @returns 租户列表
+ */
+export function listTenantForSelect(params?: { tenantType?: TenantTypeEnum }) {
+  return http.post<TenantDTO[]>('/sys/tenant/list', params || {})
 }
 
 /**

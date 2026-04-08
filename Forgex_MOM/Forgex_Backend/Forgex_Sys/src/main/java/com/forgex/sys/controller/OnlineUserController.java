@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.sys.domain.dto.OnlineUserQueryDTO;
 import com.forgex.sys.domain.vo.OnlineUserVO;
 import com.forgex.sys.service.IOnlineUserService;
@@ -38,7 +39,7 @@ public class OnlineUserController {
      * @param query 查询参数
      * @return 在线用户分页结果
      */
-    @RequirePerm("sys:online:list")
+    @RequirePerm("sys:online:view")
     @PostMapping("/list")
     public R<IPage<OnlineUserVO>> list(@RequestBody OnlineUserQueryDTO query) {
         long current = query != null && query.getCurrent() != null ? query.getCurrent() : 1L;
@@ -53,7 +54,7 @@ public class OnlineUserController {
      * @param body 请求体（兼容扩展，当前未使用）
      * @return 在线用户数
      */
-    @RequirePerm("sys:online:list")
+    @RequirePerm("sys:online:view")
     @PostMapping("/count")
     public R<Long> count(@RequestBody Map<String, Object> body) {
         Long tenantId = TenantContext.get();
@@ -70,6 +71,6 @@ public class OnlineUserController {
     @PostMapping("/kickout")
     public R<Boolean> kickout(@RequestBody Map<String, Object> body) {
         String token = body == null ? null : (String) body.get("token");
-        return R.ok(onlineUserService.kickout(token));
+        return R.ok(CommonPrompt.STOP_SUCCESS, onlineUserService.kickout(token));
     }
 }

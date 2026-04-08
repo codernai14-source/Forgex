@@ -1,18 +1,6 @@
-/*Copyright 2026 coder_nai@163.com
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.*/
 package com.forgex.common.web;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.i18n.I18nPrompt;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -24,8 +12,9 @@ import lombok.Data;
  * </p>
  * <p>返回规范：</p>
  * <ul>
- *   <li>code：状态码，200表示成功，非200表示失败</li>
- *   <li>message：返回消息，成功时为"OK"，失败时为错误信息</li>
+ *   <li>code：接口运行状态码，200表示成功，非200表示失败</li>
+ *   <li>messageCode：国际化消息模板代码，通过I18nPrompt接口指定</li>
+ *   <li>message：消息模板占位符参数，按占位符顺序用逗号分隔（如："订单A,开工"）</li>
  *   <li>data：返回数据，泛型类型，可为null</li>
  * </ul>
  * <p>使用示例：</p>
@@ -37,7 +26,11 @@ import lombok.Data;
  * R.ok(data);
  * 
  * // 失败返回
- * R.fail("错误信息");
+ * R.fail(CommonPrompt.OPERATION_FAILED);
+ * 
+ * // 失败返回（带占位符参数）
+ * // 模板：订单{0}处于{1}状态
+ * R.fail(CommonPrompt.ORDER_STATUS, "订单A,开工");
  * }</pre>
  *
  * @param <T> 返回数据的类型
@@ -46,27 +39,30 @@ import lombok.Data;
  */
 @Data
 public class R<T> {
-    /** 状态码：200表示成功，非200表示失败 */
-    private int code;
-    /** 返回消息：成功时为"OK"，失败时为错误信息 */
+
+    /** 接口运行状态码 */
+    private Integer code;
+
+    /** 国际化消息模板代码，通过I18nPrompt接口指定 */
+    @JsonIgnore
+    private I18nPrompt messageCode;
+
+    /** 消息模板占位符参数，按占位符顺序用逗号分隔 */
     private String message;
+
+    /** 国际化元信息（可选） */
     @JsonIgnore
-    private I18nPrompt msg;
-    @JsonIgnore
-    private Object[] msgArgs;
-    /**
-     * 国际化元信息（可选）
-     * <p>
-     * 用于跨服务、网关或前端需要“二次翻译”的场景：当 {@link #msg} 无法直接序列化/反序列化时，
-     * 仍可通过 module + code + args 反查语言库。
-     * </p>
-     */
     private I18nMeta i18n;
+
     /** 返回数据：泛型类型，可为null */
     private T data;
 
     /**
      * 国际化元信息结构
+     * <p>
+     * 用于跨服务、网关或前端需要"二次翻译"的场景：当 {@link #messageCode} 无法直接序列化/反序列化时，
+     * 仍可通过 module + code + args 反查语言库。
+     * </p>
      *
      * @author Forgex Team
      * @version 1.0.0
@@ -82,157 +78,425 @@ public class R<T> {
     }
 
     /**
-     * 成功返回（无数据）
-     * <p>返回状态码200，消息为"OK"，数据为null</p>
+     * 成功返回（无数据，无消息）
+     * <p>
+     * 返回状态码200，消息为空，数据为null
+     * </p>
      *
      * @param <T> 返回数据的类型
      * @return R包装的成功结果
      */
     public static <T> R<T> ok() {
-        // 创建R对象
         R<T> r = new R<>();
-        // 设置成功状态码
-        r.code = 200;
-        return r;
-    }
-
-    public static <T> R<T> ok(I18nPrompt msg, Object... msgArgs) {
-        R<T> r = new R<>();
-        r.code = 200;
-        r.msg = msg;
-        r.msgArgs = msgArgs;
-        r.i18n = buildI18nMeta(msg, msgArgs);
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = null;
+        r.i18n = null;
         return r;
     }
 
     /**
-     * 成功返回（带自定义消息）
-     * <p>返回状态码200，消息为自定义消息，数据为null</p>
+     * 成功返回（带数据，无消息）
+     * <p>
+     * 返回状态码200，消息为空，携带指定数据
+     * </p>
      *
-     * @param <T> 返回数据的类型
-     * @param message 成功消息
-     * @return R包装的成功结果
-     */
-    public static <T> R<T> ok(String message) {
-        // 创建R对象
-        R<T> r = new R<>();
-        // 设置成功状态码
-        r.code = 200;
-        // 设置自定义成功消息
-        r.message = message;
-        return r;
-    }
-
-    /**
-     * 成功返回（带消息和数据）
-     * <p>返回状态码200，消息为自定义消息，数据为指定数据</p>
-     *
-     * @param <T> 返回数据的类型
-     * @param message 成功消息
-     * @param data 数据
-     * @return R包装的成功结果
-     */
-    public static <T> R<T> ok(String message, T data) {
-        // 创建R对象
-        R<T> r = new R<>();
-        // 设置成功状态码
-        r.code = 200;
-        // 设置自定义成功消息
-        r.message = message;
-        // 设置返回数据
-        r.data = data;
-        return r;
-    }
-
-    /**
-     * 成功返回（带数据）
-     * <p>返回状态码200，消息为"OK"，数据为指定数据</p>
-     *
-     * @param <T> 返回数据的类型
-     * @param data 数据
+     * @param <T>  返回数据的类型
+     * @param data 返回数据
      * @return R包装的成功结果
      */
     public static <T> R<T> ok(T data) {
-        // 创建R对象
         R<T> r = new R<>();
-        // 设置成功状态码
-        r.code = 200;
-        // 设置返回数据
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = null;
+        r.i18n = null;
         r.data = data;
         return r;
     }
 
     /**
-     * 失败返回（默认状态码500）
-     * <p>返回状态码500，消息为错误信息，数据为null</p>
+     * 成功返回（自定义消息，无数据）
+     * <p>
+     * 返回状态码200，自定义返回消息模板代码，数据为null
+     * </p>
      *
-     * @param <T> 返回数据的类型
-     * @param message 错误信息
-     * @return R包装的失败结果
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回消息模板代码
+     * @return R包装的成功结果
+     * @see I18nPrompt
      */
-    public static <T> R<T> fail(String message) {
-        // 创建R对象
+    public static <T> R<T> ok(I18nPrompt messageCode) {
         R<T> r = new R<>();
-        // 设置失败状态码
-        r.code = 500;
-        // 设置错误信息
-        r.message = message;
-        return r;
-    }
-
-    public static <T> R<T> fail(I18nPrompt msg, Object... msgArgs) {
-        R<T> r = new R<>();
-        r.code = 500;
-        r.msg = msg;
-        r.msgArgs = msgArgs;
-        r.i18n = buildI18nMeta(msg, msgArgs);
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = messageCode;
+        r.i18n = buildI18nMeta(messageCode, null);
         return r;
     }
 
     /**
-     * 失败返回（自定义状态码）
-     * <p>返回自定义状态码，消息为错误信息，数据为null</p>
+     * 成功返回（自定义消息，带数据）
+     * <p>
+     * 返回状态码200，自定义返回消息模板代码，携带指定数据
+     * </p>
      *
-     * @param <T> 返回数据的类型
-     * @param code 状态码
-     * @param message 错误信息
-     * @return R包装的失败结果
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回消息模板代码
+     * @param data        返回数据
+     * @return R包装的成功结果
+     * @see I18nPrompt
      */
-    public static <T> R<T> fail(int code, String message) {
-        // 创建R对象
+    public static <T> R<T> ok(I18nPrompt messageCode, T data) {
         R<T> r = new R<>();
-        // 设置自定义状态码
-        r.code = code;
-        // 设置错误信息
-        r.message = message;
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = messageCode;
+        r.i18n = buildI18nMeta(messageCode, null);
+        r.data = data;
         return r;
     }
 
-    public static <T> R<T> fail(int code, I18nPrompt msg, Object... msgArgs) {
+    /**
+     * 成功返回（自定义消息，带占位符参数，无数据）
+     * <p>
+     * 返回状态码200，自定义返回消息模板代码；占位符参数会被序列化到 message 字段，并同步写入 i18n 元信息。
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回消息模板代码
+     * @param args        占位符参数（按 {@link java.text.MessageFormat} 顺序）
+     * @return R包装的成功结果
+     * @see I18nPrompt
+     */
+    public static <T> R<T> okWithArgs(I18nPrompt messageCode, Object... args) {
+        R<T> r = new R<>();
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = messageCode;
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
+        return r;
+    }
+
+    /**
+     * 成功返回（自定义消息，带数据与占位符参数）
+     * <p>
+     * 返回状态码200，自定义返回消息模板代码；携带数据；占位符参数会被序列化到 message 字段，并同步写入 i18n 元信息。
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回消息模板代码
+     * @param data        返回数据
+     * @param args        占位符参数（按 {@link java.text.MessageFormat} 顺序）
+     * @return R包装的成功结果
+     * @see I18nPrompt
+     */
+    public static <T> R<T> okWithArgsAndData(I18nPrompt messageCode, T data, Object... args) {
+        R<T> r = new R<>();
+        r.code = StatusCode.SUCCESS;
+        r.messageCode = messageCode;
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
+        r.data = data;
+        return r;
+    }
+
+    /**
+     * 失败返回（默认状态码和消息，无数据）
+     * <p>
+     * 返回状态码500，消息代码为默认操作失败代码 {@link CommonPrompt#OPERATION_FAILED}，数据为null
+     * </p>
+     *
+     * @param <T> 返回数据的类型
+     * @return R包装的失败结果
+     * @see StatusCode#BUSINESS_ERROR
+     * @see CommonPrompt#OPERATION_FAILED
+     */
+    public static <T> R<T> fail() {
+        R<T> r = new R<>();
+        r.code = StatusCode.BUSINESS_ERROR;
+        r.messageCode = CommonPrompt.OPERATION_FAILED;
+        r.i18n = buildI18nMeta(CommonPrompt.OPERATION_FAILED, null);
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义消息，默认状态码）
+     * <p>
+     * 返回状态码500，自定义返回错误消息模板代码，数据为null
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回错误消息模板代码
+     * @return R包装的失败结果
+     * @see StatusCode#BUSINESS_ERROR
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(I18nPrompt messageCode) {
+        R<T> r = new R<>();
+        r.code = StatusCode.BUSINESS_ERROR;
+        r.messageCode = messageCode;
+        r.i18n = buildI18nMeta(messageCode, null);
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义状态码和消息）
+     * <p>
+     * 返回自定义状态码，自定义返回错误消息模板代码，数据为null
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @return R包装的失败结果
+     * @see StatusCode
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(Integer code, I18nPrompt messageCode) {
         R<T> r = new R<>();
         r.code = code;
-        r.msg = msg;
-        r.msgArgs = msgArgs;
-        r.i18n = buildI18nMeta(msg, msgArgs);
+        r.messageCode = messageCode;
+        r.i18n = buildI18nMeta(messageCode, null);
         return r;
+    }
+
+    /**
+     * 失败返回（自定义消息和数据，默认状态码）
+     * <p>
+     * 返回状态码500，自定义返回错误消息模板代码，携带指定数据
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param data        返回数据
+     * @return R包装的失败结果
+     * @see StatusCode#BUSINESS_ERROR
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(I18nPrompt messageCode, T data) {
+        R<T> r = new R<>();
+        r.code = StatusCode.BUSINESS_ERROR;
+        r.messageCode = messageCode;
+        r.i18n = buildI18nMeta(messageCode, null);
+        r.data = data;
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义数据，默认状态码和消息）
+     * <p>
+     * 返回状态码500，消息代码为默认操作失败代码 {@link CommonPrompt#OPERATION_FAILED}，携带指定数据
+     * </p>
+     *
+     * @param <T>  返回数据的类型
+     * @param data 返回数据
+     * @return R包装的失败结果
+     * @see StatusCode#BUSINESS_ERROR
+     * @see CommonPrompt#OPERATION_FAILED
+     */
+    public static <T> R<T> fail(T data) {
+        R<T> r = new R<>();
+        r.code = StatusCode.BUSINESS_ERROR;
+        r.messageCode = CommonPrompt.OPERATION_FAILED;
+        r.i18n = buildI18nMeta(CommonPrompt.OPERATION_FAILED, null);
+        r.data = data;
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义状态码、消息和数据）
+     * <p>
+     * 返回自定义状态码，自定义返回错误消息模板代码，携带指定数据
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param data        返回数据
+     * @return R包装的失败结果
+     * @see StatusCode
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(Integer code, I18nPrompt messageCode, T data) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.messageCode = messageCode;
+        r.i18n = buildI18nMeta(messageCode, null);
+        r.data = data;
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义消息和占位符参数）
+     * <p>
+     * 返回状态码500，自定义返回错误消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔）
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @return R包装的失败结果
+     * @see StatusCode#BUSINESS_ERROR
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(I18nPrompt messageCode, String args) {
+        R<T> r = new R<>();
+        r.code = StatusCode.BUSINESS_ERROR;
+        r.messageCode = messageCode;
+        r.message = args;
+        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义状态码、消息和占位符参数）
+     * <p>
+     * 返回自定义状态码，自定义返回错误消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔）
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @return R包装的失败结果
+     * @see StatusCode
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(Integer code, I18nPrompt messageCode, String args) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.messageCode = messageCode;
+        r.message = args;
+        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义消息、占位符参数和数据）
+     * <p>
+     * 返回状态码500，自定义返回错误消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔），携带指定数据
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @param data        返回数据
+     * @return R包装的失败结果
+     * @see StatusCode#BUSINESS_ERROR
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(I18nPrompt messageCode, String args, T data) {
+        R<T> r = new R<>();
+        r.code = StatusCode.BUSINESS_ERROR;
+        r.messageCode = messageCode;
+        r.message = args;
+        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        r.data = data;
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义状态码、消息、占位符参数和数据）
+     * <p>
+     * 返回自定义状态码，自定义返回错误消息模板代码，message字段存储占位符参数（按占位符顺序用逗号分隔），携带指定数据
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数，按占位符顺序用逗号分隔
+     * @param data        返回数据
+     * @return R包装的失败结果
+     * @see StatusCode
+     * @see I18nPrompt
+     */
+    public static <T> R<T> fail(Integer code, I18nPrompt messageCode, String args, T data) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.messageCode = messageCode;
+        r.message = args;
+        r.i18n = buildI18nMeta(messageCode, parseArgs(args));
+        r.data = data;
+        return r;
+    }
+
+    /**
+     * 失败返回（自定义状态码、消息和参数数组）
+     * <p>
+     * 使用参数数组构建国际化元信息，并将参数序列化为message字段。
+     * </p>
+     *
+     * @param <T>         返回数据的类型
+     * @param code        自定义状态码
+     * @param messageCode 自定义返回错误消息模板代码
+     * @param args        占位符参数数组
+     * @return R包装的失败结果
+     */
+    public static <T> R<T> failWithArgs(Integer code, I18nPrompt messageCode, Object[] args) {
+        R<T> r = new R<>();
+        r.code = code;
+        r.messageCode = messageCode;
+        r.message = joinArgs(args);
+        r.i18n = buildI18nMeta(messageCode, args);
+        return r;
+    }
+
+    /**
+     * 解析占位符参数
+     * <p>
+     * 将逗号分隔的字符串解析为参数数组
+     * </p>
+     *
+     * @param args 逗号分隔的参数字符串
+     * @return 参数数组
+     */
+    private static Object[] parseArgs(String args) {
+        if (args == null || args.isEmpty()) {
+            return null;
+        }
+        return args.split(",");
+    }
+
+    /**
+     * 序列化占位符参数
+     * <p>
+     * 将参数数组按逗号分隔拼接为字符串，便于日志与调试。
+     * </p>
+     *
+     * @param args 占位符参数数组
+     * @return 逗号分隔的参数字符串
+     */
+    private static String joinArgs(Object[] args) {
+        if (args == null || args.length == 0) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            Object v = args[i];
+            sb.append(v == null ? "" : v.toString());
+        }
+        return sb.toString();
     }
 
     /**
      * 构建国际化元信息
+     * <p>
+     * 根据消息代码和参数构建国际化元信息，用于跨服务或网关的二次翻译
+     * </p>
      *
-     * @param msg 国际化提示
-     * @param msgArgs 参数
-     * @return 国际化元信息；msg 为空时返回 null
+     * @param messageCode 国际化消息代码
+     * @param args        消息参数
+     * @return 国际化元信息，messageCode为空时返回null
      */
-    private static I18nMeta buildI18nMeta(I18nPrompt msg, Object[] msgArgs) {
-        if (msg == null) {
+    private static I18nMeta buildI18nMeta(I18nPrompt messageCode, Object[] args) {
+        if (messageCode == null) {
             return null;
         }
 
         I18nMeta meta = new I18nMeta();
-        meta.setModule(msg.getModule());
-        meta.setCode(msg.getPromptCode());
-        meta.setArgs(msgArgs);
+        meta.setModule(messageCode.getModule());
+        meta.setCode(messageCode.getPromptCode());
+        meta.setArgs(args);
         return meta;
     }
 }

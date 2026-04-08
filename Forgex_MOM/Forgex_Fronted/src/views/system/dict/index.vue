@@ -1,27 +1,20 @@
 <template>
   <div class="dict-container">
-    <a-card :bordered="false">
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <a-button type="primary" @click="handleAdd(null)">新增字典类型</a-button>
-      </div>
-
-      <!-- 树形表格 -->
+    <a-card :bordered="false" class="dict-table-card">
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'DictTable'"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
-        row-key="id"
-        :pagination="false"
+        :fallback-config="fallbackConfig"
         :default-expand-all-rows="true"
+        :show-query-form="false"
+        row-key="id"
       >
-        <template #status="{ record }">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.status === 1 ? '启用' : '禁用' }}
-          </a-tag>
+        <template #toolbar>
+          <a-button type="primary" @click="handleAdd(null)">新增字典类型</a-button>
         </template>
+
         <template #action="{ record }">
           <a-space>
             <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
@@ -32,7 +25,6 @@
       </fx-dynamic-table>
     </a-card>
 
-    <!-- 新增/编辑对话框 -->
     <a-modal
       v-model:open="dialogVisible"
       :title="dialogTitle"
@@ -50,6 +42,9 @@
         <a-form-item label="字典值" v-if="form.parentId && form.parentId > 0" required>
           <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
         </a-form-item>
+        <a-form-item label="多语言配置" v-if="form.parentId && form.parentId > 0">
+          <I18nInput v-model="form.dictValueI18nJson" mode="table" />
+        </a-form-item>
         <a-form-item label="标签样式" v-if="form.parentId && form.parentId > 0">
           <TagStyleConfig ref="tagStyleConfigRef" />
         </a-form-item>
@@ -58,8 +53,9 @@
         </a-form-item>
         <a-form-item label="状态">
           <a-radio-group v-model:value="form.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio v-for="option in statusOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </a-radio>
           </a-radio-group>
         </a-form-item>
         <a-form-item label="备注">
@@ -71,54 +67,76 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { message, Modal } from 'ant-design-vue'
+import { onMounted, reactive, ref } from 'vue'
+import { Modal } from 'ant-design-vue'
 import http from '@/api/http'
-import { useUserStore } from '@/stores/user'
+import { useDict } from '@/hooks/useDict'
+import type { FxTableConfig } from '@/api/system/tableConfig'
+import I18nInput from '@/components/common/I18nInput.vue'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
 
-const userStore = useUserStore()
+const { dictItems: statusOptions } = useDict('status')
 
-// 表格相关
 const tableRef = ref()
 const loading = ref(false)
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const tagStyleConfigRef = ref()
 
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '字典名称', dataIndex: 'dictName', key: 'dictName', width: 200 },
-    { title: '字典编码', dataIndex: 'dictCode', key: 'dictCode', width: 150 },
-    { title: '字典值', dataIndex: 'dictValue', key: 'dictValue', width: 120 },
-    { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80, align: 'center' },
-    { title: '状态', key: 'status', width: 80, align: 'center' },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '操作', key: 'action', width: 200, fixed: 'right' }
-  ]
-})
-
-// 字典配置
 const dictOptions = ref({
-  status: {
-    1: { text: '启用', color: 'success' },
-    0: { text: '禁用', color: 'error' }
-  }
+  status: statusOptions
 })
 
-// 处理表格数据请求
-const handleRequest = async (params: any) => {
+const fallbackConfig: Partial<FxTableConfig> = {
+  columns: [
+    { field: 'dictCode', title: '字典编码', width: 180, align: 'left' },
+    { field: 'dictName', title: '字典名称', width: 180, align: 'left' },
+    { field: 'dictValue', title: '字典值', width: 180, align: 'left' },
+    { field: 'orderNum', title: '排序', width: 90, align: 'center' },
+    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+    { field: 'remark', title: '备注', width: 220, align: 'left' },
+    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+    { field: 'action', title: '操作', width: 180, align: 'center', fixed: 'right' }
+  ],
+  queryFields: []
+}
+
+const form = reactive({
+  id: null as number | null,
+  parentId: 0,
+  dictName: '',
+  dictCode: '',
+  dictValue: '',
+  dictValueI18nJson: '',
+  orderNum: 0,
+  status: 1,
+  remark: ''
+})
+
+function mapDictTreeNodes(nodes: any[]): any[] {
+  return (nodes || []).map((item: any) => ({
+    ...item,
+    children: Array.isArray(item.children) ? mapDictTreeNodes(item.children) : []
+  }))
+}
+
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+}) => {
   loading.value = true
   try {
-    const res = await http.post('/sys/dict/tree', { tenantId: userStore.tenantId || 1, ...params })
+    const res = await http.post('/sys/dict/page', {
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize
+    })
     return {
-      success: true,
-      data: res || [],
-      total: res?.length || 0
+      records: mapDictTreeNodes(res?.records || []),
+      total: Number(res?.total || 0)
     }
   } catch (error) {
-    console.error('加载字典树失败', error)
+    console.error('加载字典分页数据失败', error)
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0
     }
   } finally {
@@ -126,29 +144,6 @@ const handleRequest = async (params: any) => {
   }
 }
 
-// 加载字典树
-const loadDictTree = async () => {
-  await tableRef.value?.refresh?.()
-}
-
-// 对话框
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const tagStyleConfigRef = ref()
-
-// 表单
-const form = reactive({
-  id: null as number | null,
-  parentId: 0,
-  dictName: '',
-  dictCode: '',
-  dictValue: '',
-  orderNum: 0,
-  status: 1,
-  remark: ''
-})
-
-// 新增
 const handleAdd = (row: any) => {
   dialogTitle.value = row ? '新增字典项' : '新增字典类型'
   form.id = null
@@ -156,15 +151,14 @@ const handleAdd = (row: any) => {
   form.dictName = ''
   form.dictCode = ''
   form.dictValue = ''
+  form.dictValueI18nJson = ''
   form.orderNum = 0
   form.status = 1
   form.remark = ''
   dialogVisible.value = true
-  // 重置标签样式配置
   tagStyleConfigRef.value?.setTagStyleJson('')
 }
 
-// 编辑
 const handleEdit = (row: any) => {
   dialogTitle.value = '编辑字典'
   form.id = row.id
@@ -172,15 +166,14 @@ const handleEdit = (row: any) => {
   form.dictName = row.dictName
   form.dictCode = row.dictCode || ''
   form.dictValue = row.dictValue || ''
+  form.dictValueI18nJson = row.dictValueI18nJson || ''
   form.orderNum = row.orderNum
   form.status = row.status
   form.remark = row.remark || ''
   dialogVisible.value = true
-  // 加载标签样式配置
   tagStyleConfigRef.value?.setTagStyleJson(row.tagStyleJson || '')
 }
 
-// 删除
 const handleDelete = async (row: any) => {
   Modal.confirm({
     title: '提示',
@@ -190,40 +183,33 @@ const handleDelete = async (row: any) => {
     onOk: async () => {
       try {
         await http.post('/sys/dict/delete', { id: row.id })
-        message.success('删除成功')
         await tableRef.value?.refresh?.()
       } catch (error) {
-        console.error('删除失败', error)
+        console.error('删除字典失败', error)
       }
     }
   })
 }
 
-// 提交
 const handleSubmit = async () => {
   try {
-    // 获取标签样式配置JSON
     const tagStyleJson = tagStyleConfigRef.value?.getTagStyleJson() || ''
-    const submitData = {
+    const url = form.id ? '/sys/dict/update' : '/sys/dict/create'
+    await http.post(url, {
       ...form,
       tagStyleJson
-    }
-    const url = form.id ? '/sys/dict/update' : '/sys/dict/create'
-    await http.post(url, submitData)
-    message.success(form.id ? '更新成功' : '新增成功')
+    })
     dialogVisible.value = false
     await tableRef.value?.refresh?.()
   } catch (error) {
-    console.error('提交失败', error)
+    console.error('提交字典失败', error)
   }
 }
 
-// 对话框关闭
 const handleDialogClose = () => {
-  // 重置表单
+  tagStyleConfigRef.value?.setTagStyleJson('')
 }
 
-// 初始化
 onMounted(async () => {
   await tableRef.value?.refresh?.()
 })
@@ -231,10 +217,31 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .dict-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
 }
 
-.toolbar {
-  margin-bottom: 20px;
+.dict-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dict-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.dict-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

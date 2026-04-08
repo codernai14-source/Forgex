@@ -20,16 +20,9 @@ export const useRole = () => {
    */
   const loadRoles = async () => {
     loading.value = true
-    try {
-      // http拦截器已经返回了data字段，不需要再访问res.data
-      const data = await getRoleList(searchForm)
-      roles.value = data || []
-    } catch (error) {
-      console.error('加载角色列表失败:', error)
-      message.error('加载角色列表失败')
-    } finally {
-      loading.value = false
-    }
+    const data = await getRoleList(searchForm)
+    roles.value = data || []
+    loading.value = false
   }
 
   /**
@@ -53,14 +46,8 @@ export const useRole = () => {
    * 删除角色
    */
   const handleDelete = async (id: number) => {
-    try {
-      await deleteRole(id)
-      message.success('删除成功')
-      loadRoles()
-    } catch (error) {
-      console.error('删除角色失败:', error)
-      message.error('删除失败')
-    }
+    await deleteRole(id)
+    loadRoles()
   }
 
   /**
@@ -72,15 +59,9 @@ export const useRole = () => {
       return
     }
 
-    try {
-      await batchDeleteRoles(selectedRowKeys.value)
-      message.success('批量删除成功')
-      selectedRowKeys.value = []
-      loadRoles()
-    } catch (error) {
-      console.error('批量删除失败:', error)
-      message.error('批量删除失败')
-    }
+    await batchDeleteRoles(selectedRowKeys.value)
+    selectedRowKeys.value = []
+    loadRoles()
   }
 
   /**
@@ -103,3 +84,4 @@ export const useRole = () => {
     onSelectChange
   }
 }
+

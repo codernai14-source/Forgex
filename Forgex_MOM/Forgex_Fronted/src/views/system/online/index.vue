@@ -1,27 +1,13 @@
 <template>
   <div class="online-user-container">
-    <a-card :bordered="false">
-      <a-form layout="inline" :model="queryForm">
-        <a-form-item label="账号">
-          <a-input v-model:value="queryForm.account" placeholder="请输入账号" allow-clear style="width: 220px" />
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button v-permission="'sys:online:list'" type="primary" @click="handleQuery">查询</a-button>
-            <a-button @click="handleReset">重置</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-
+    <a-card :bordered="false" class="online-table-card">
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'OnlineUserTable'"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
         :loading="loading"
         row-key="token"
-        style="margin-top: 16px"
       >
         <template #ttlSeconds="{ record }">
           {{ formatTtl(record.ttlSeconds) }}
@@ -68,46 +54,31 @@ const queryForm = reactive({
 const tableRef = ref()
 const loading = ref(false)
 
-// fallback配置
-const fallbackConfig = ref({
-  columns: [
-    { title: '账号', dataIndex: 'account', key: 'account', width: 140 },
-    { title: '用户ID', dataIndex: 'userId', key: 'userId', width: 110 },
-    { title: '租户ID', dataIndex: 'tenantId', key: 'tenantId', width: 110 },
-    { title: '最后登录时间', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 180 },
-    { title: '最后登录IP', dataIndex: 'lastLoginIp', key: 'lastLoginIp', width: 150 },
-    { title: '最后登录地区', dataIndex: 'lastLoginRegion', key: 'lastLoginRegion', width: 150 },
-    { title: '会话剩余', key: 'ttlSeconds', width: 120 },
-    { title: '操作', key: 'action', width: 110, fixed: 'right' },
-  ]
-})
-
 // 字典配置
 const dictOptions = ref({})
 
 // 处理表格数据请求
-const handleRequest = async (params: any) => {
+const handleRequest = async (payload: { 
+  page: { current: number; pageSize: number }; 
+  query: Record<string, any>; 
+  sorter?: { field?: string; order?: string } 
+}) => {
   loading.value = true
   try {
-    // tenantId 由用户 store 提供（未选择时兜底 1）
-    const res: any = await listOnlineUsers({
-      current: params.current,
-      size: params.pageSize,
+    const params: any = {
+      current: payload.page.current,
+      size: payload.page.pageSize,
       account: queryForm.account || undefined,
       tenantId: userStore.tenantId || 1,
-    })
-    return {
-      success: true,
-      data: res.records || [],
-      total: res.total || 0
+      ...payload.query
     }
+    
+    const res: any = await listOnlineUsers(params)
+    // 确保total是数字类型
+    const total = typeof res.total === 'number' ? res.total : parseInt(String(res.total) || '0', 10)
+    return { records: res.records || [], total: total }
   } catch (e) {
-    console.error('查询在线用户失败', e)
-    return {
-      success: false,
-      data: [],
-      total: 0
-    }
+    return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
@@ -169,14 +140,35 @@ function handleKickout(token: string) {
   })
 }
 
-// 初始化加载
-onMounted(() => {
-  tableRef.value?.refresh?.()
-})
 </script>
 
 <style scoped lang="less">
 .online-user-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.online-table-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.online-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.online-table-card :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

@@ -96,18 +96,24 @@ export default {
   
   // 消息
   message: {
+    loadListFailed: '获取用户列表失败',
+    deleteFailed: '删除失败',
+    batchDeleteFailed: '批量删除失败',
+    selectToDelete: '请选择要删除的用户',
     deleteConfirm: '确定要删除该用户吗？',
-    batchDeleteConfirm: '确定要删除选中的用户吗？',
+    batchDeleteConfirm: '确定要删除选中的 {count} 个用户吗？',
     deleteSuccess: '删除用户成功',
     addSuccess: '新增用户成功',
     editSuccess: '编辑用户成功',
     saveSuccess: '保存用户成功',
     resetPasswordSuccess: '重置密码成功',
-    resetPasswordConfirm: '确定要重置该用户的密码吗？',
+    resetPasswordFailed: '重置密码失败',
+    resetPasswordConfirm: '确定要重置该用户的密码吗？密码将重置为系统配置中的默认密码。',
     lockSuccess: '锁定用户成功',
     unlockSuccess: '解锁用户成功',
     exportSuccess: '导出成功',
     usernameExists: '用户名已存在',
     emailExists: '邮箱已存在',
+    updateStatusFailed: '更新状态失败',
   },
 }

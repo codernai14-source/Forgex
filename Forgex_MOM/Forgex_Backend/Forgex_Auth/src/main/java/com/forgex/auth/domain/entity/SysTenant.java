@@ -21,35 +21,70 @@ import lombok.Data;
 
 /**
  * 租户实体（持久化对象）
- * 对应数据库表：sys_tenant
- * 
+ * <p>
+ * 对应数据库表：sys_tenant，用于存储系统租户的基本信息。
+ * </p>
+ *
+ * <p>
+ * 租户是多租户架构的核心概念，每个租户拥有独立的数据空间。
+ * </p>
+ *
  * @author coder_nai
- * @version 1.0
+ * @version 1.0.0
+ * @since 2026-01-08
  * @see com.forgex.common.enums.TenantTypeEnum
+ * @see com.forgex.auth.service.impl.AuthServiceImpl
+ * @see com.forgex.auth.mapper.SysTenantMapper
  */
 @Data
 @TableName("sys_tenant")
 public class SysTenant extends BaseEntity {
-    
-    /** 租户名称 */
+
+    /**
+     * 租户名称
+     * <p>租户的显示名称，用于前端展示</p>
+     */
     private String tenantName;
-    
-    /** 描述 */
+
+    /**
+     * 描述
+     * <p>租户的详细介绍信息</p>
+     */
     private String description;
-    
-    /** 状态：false=禁用，true=启用 */
+
+    /**
+     * 租户状态
+     * <p>
+     * false：禁用（该租户下用户无法登录）<br>
+     * true：启用（正常状态）
+     * </p>
+     */
     private Boolean status;
-    
-    /** 编码 */
+
+    /**
+     * 租户编码
+     * <p>租户的唯一标识符，用于代码中识别租户</p>
+     */
     private String tenantCode;
-    
-    /** Logo */
+
+    /**
+     * 租户 Logo
+     * <p>租户的 Logo 图片 URL 地址</p>
+     */
     private String logo;
-    
-    /** 租户类别：MAIN_TENANT-主租户，CUSTOMER_TENANT-客户租户，SUPPLIER_TENANT-供应商租户 */
+
+    /**
+     * 租户类别
+     * <p>取值见 {@link com.forgex.common.enums.TenantTypeEnum}</p>
+     */
     private TenantTypeEnum tenantType;
-    
-    /** 租户ID */
+
+    /**
+     * 租户 ID（非持久化字段）
+     * <p>
+     * 该字段不映射到数据库，用于在内存中存储当前登录租户的 ID
+     * </p>
+     */
     @TableField(exist = false)
     private Long tenantId;
 }

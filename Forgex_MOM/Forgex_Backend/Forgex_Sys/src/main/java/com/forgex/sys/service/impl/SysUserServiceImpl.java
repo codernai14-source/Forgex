@@ -17,18 +17,25 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.forgex.common.config.ConfigService;
+import com.forgex.common.crypto.CryptoPasswordProvider;
+import com.forgex.common.crypto.CryptoProviders;
+import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysPosition;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserProfile;
+import com.forgex.sys.domain.entity.SysUserRole;
 import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.vo.SysUserVO;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserProfileMapper;
+import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
@@ -38,39 +45,76 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import com.forgex.common.tenant.TenantContext;
 
-import cn.hutool.crypto.digest.BCrypt;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 用户Service实现类
+ * 用户服务实现类。
  * <p>负责用户的增删改查、分页查询、批量删除等操作。</p>
- * <p><strong>主要功能：</strong></p>
+ * <p>核心功能：</p>
  * <ul>
- *   <li>用户分页查询</li>
- *   <li>用户列表查询</li>
- *   <li>根据ID查询用户</li>
- *   <li>新增用户</li>
- *   <li>更新用户</li>
- *   <li>删除用户</li>
- *   <li>批量删除用户</li>
- *   <li>验证用户是否存在</li>
- *   <li>根据账号查询用户ID</li>
+ *   <li>{@link #pageUsers(Page, SysUserQueryDTO)} - 用户分页查询</li>
+ *   <li>{@link #listUsers(SysUserQueryDTO)} - 用户列表查询</li>
+ *   <li>{@link #getUserById(Long)} - 根据ID查询用户</li>
+ *   <li>{@link #addUser(SysUserDTO)} - 新增用户</li>
+ *   <li>{@link #updateUser(SysUserDTO)} - 更新用户</li>
+ *   <li>{@link #deleteUser(Long)} - 删除用户</li>
+ *   <li>{@link #batchDeleteUsers(List)} - 批量删除用户</li>
+ *   <li>{@link #existsById(Long)} - 验证用户是否存在</li>
+ *   <li>{@link #existsByAccount(String)} - 根据账号验证用户是否存在</li>
+ *   <li>{@link #getUserIdByAccount(String)} - 根据账号查询用户ID</li>
+ *   <li>{@link #resetPassword(Long)} - 重置用户密码</li>
+ *   <li>{@link #updateStatus(Long, Boolean)} - 更新用户状态</li>
+ *   <li>{@link #changePassword(Long, String, String)} - 修改密码</li>
+ *   <li>{@link #listUserTenants(Long)} - 查询用户关联的租户列表</li>
  * </ul>
- * 
+ * <p>技术特点：</p>
+ * <ul>
+ *   <li>支持多租户数据隔离</li>
+ *   <li>使用BCrypt加密用户密码</li>
+ *   <li>支持用户扩展信息管理</li>
+ *   <li>关联查询部门和职位信息</li>
+ * </ul>
+ *
  * @author coder_nai@163.com
+ * @version 1.0.0
  * @date 2025-01-07
  * @see ISysUserService
  */
 @Service
 @RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
-
+    private static final String KEY_SECURITY_PASSWORD_POLICY = "security.password.policy";
+    /**
+     * 用户Mapper
+     */
     private final SysUserMapper userMapper;
+
+    private final ConfigService configService;
+
+    /**
+     * 用户租户关联Mapper
+     */
     private final SysUserTenantMapper userTenantMapper;
+
+    /**
+     * 用户角色绑定Mapper
+     */
+    private final SysUserRoleMapper userRoleMapper;
+    
+    /**
+     * 部门Mapper
+     */
     private final SysDepartmentMapper departmentMapper;
+    
+    /**
+     * 职位Mapper
+     */
     private final SysPositionMapper positionMapper;
+    
+    /**
+     * 用户档案Mapper
+     */
     private final SysUserProfileMapper userProfileMapper;
     
     /**
@@ -148,19 +192,22 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     public void addUser(SysUserDTO userDTO) {
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
+        Long effectiveTenantId = resolveEffectiveTenantId(userDTO.getTenantId());
+        user.setTenantId(effectiveTenantId);
         
         // 设置默认密码并加密
         if (!StringUtils.hasText(user.getPassword())) {
-            user.setPassword(BCrypt.hashpw("123456"));
+            user.setPassword(encryptPassword(resolveDefaultPassword()));
         } else {
-            user.setPassword(BCrypt.hashpw(user.getPassword()));
+            user.setPassword(encryptPassword(user.getPassword()));
         }
         
         userMapper.insert(user);
+        createUserTenantBinding(user.getId(), effectiveTenantId);
 
         // 保存附属信息（可选）
         if (userDTO.getProfile() != null) {
-            saveOrUpdateProfile(user.getId(), resolveTenantId(user), userDTO.getProfile());
+            saveOrUpdateProfile(user.getId(), effectiveTenantId, userDTO.getProfile());
         }
     }
     
@@ -182,39 +229,109 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
     }
 
+    /**
+     * 解析租户ID。
+     * <p>
+     * 优先从TenantContext获取租户ID，若为空则从用户实体获取。
+     * </p>
+     *
+     * @param user 用户实体
+     * @return 租户ID
+     */
     private Long resolveTenantId(SysUser user) {
+        // 优先从上下文获取租户ID
         Long tenantId = TenantContext.get();
         if (tenantId != null) {
             return tenantId;
         }
+        // 从用户实体获取租户ID
         return user == null ? null : user.getTenantId();
     }
 
+    private Long resolveEffectiveTenantId(Long requestTenantId) {
+        if (requestTenantId != null) {
+            return requestTenantId;
+        }
+        return TenantContext.get();
+    }
+
+    private void createUserTenantBinding(Long userId, Long tenantId) {
+        if (userId == null || tenantId == null) {
+            return;
+        }
+
+        SysUserTenant existing = userTenantMapper.selectOne(
+            new LambdaQueryWrapper<SysUserTenant>()
+                .eq(SysUserTenant::getUserId, userId)
+                .eq(SysUserTenant::getTenantId, tenantId)
+                .last("limit 1")
+        );
+        if (existing != null) {
+            return;
+        }
+
+        SysUserTenant userTenant = new SysUserTenant();
+        userTenant.setUserId(userId);
+        userTenant.setTenantId(tenantId);
+        userTenant.setPrefOrder(0);
+        userTenant.setIsDefault(Boolean.TRUE);
+        userTenant.setLastUsed(null);
+        userTenantMapper.insert(userTenant);
+    }
+
+    /**
+     * 根据用户ID查询用户档案。
+     *
+     * @param userId   用户ID
+     * @param tenantId 租户ID
+     * @return 用户档案，不存在时返回null
+     */
     private SysUserProfile getProfileByUserId(Long userId, Long tenantId) {
+        // 参数校验
         if (userId == null || tenantId == null) {
             return null;
         }
+        // 构建查询条件
         LambdaQueryWrapper<SysUserProfile> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUserProfile::getUserId, userId)
                 .last("limit 1");
+        // 查询用户档案
         return userProfileMapper.selectOne(wrapper);
     }
 
+    /**
+     * 保存或更新用户档案。
+     * <p>
+     * 如果档案不存在则新增，否则更新。
+     * </p>
+     *
+     * @param userId   用户ID
+     * @param tenantId 租户ID
+     * @param profile  用户档案
+     */
     private void saveOrUpdateProfile(Long userId, Long tenantId, SysUserProfile profile) {
+        // 参数校验
         if (userId == null || tenantId == null || profile == null) {
             return;
         }
 
+        // 查询现有档案
         SysUserProfile exist = getProfileByUserId(userId, tenantId);
         if (exist == null) {
+            // 档案不存在，新增
             SysUserProfile insert = new SysUserProfile();
+            // 复制属性
             BeanUtils.copyProperties(profile, insert);
+            // 清空ID，让数据库自增
             insert.setId(null);
+            // 设置用户ID
             insert.setUserId(userId);
+            // 插入档案
             userProfileMapper.insert(insert);
             return;
         }
 
+        // 档案存在，更新
         exist.setPoliticalStatus(profile.getPoliticalStatus());
         exist.setHomeAddress(profile.getHomeAddress());
         exist.setEmergencyContact(profile.getEmergencyContact());
@@ -224,6 +341,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         exist.setBirthPlace(profile.getBirthPlace());
         exist.setIntro(profile.getIntro());
         exist.setWorkHistory(profile.getWorkHistory());
+        // 更新档案
         userProfileMapper.updateById(exist);
     }
     
@@ -270,6 +388,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public boolean existsById(Long id) {
+        // 根据ID查询用户，判断是否存在
         return userMapper.selectById(id) != null;
     }
     
@@ -281,8 +400,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public boolean existsByAccount(String account) {
+        // 构建查询条件
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUser::getAccount, account);
+        // 查询用户数量，大于0表示存在
         return userMapper.selectCount(wrapper) > 0;
     }
     
@@ -295,9 +416,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public boolean existsByAccountExcludeId(String account, Long excludeId) {
+        // 构建查询条件
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUser::getAccount, account);
+        // 排除指定ID
         wrapper.ne(SysUser::getId, excludeId);
+        // 查询用户数量，大于0表示存在
         return userMapper.selectCount(wrapper) > 0;
     }
 
@@ -309,12 +433,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public Long getUserIdByAccount(String account) {
+        // 参数校验
         if (account == null || account.isEmpty()) {
             return null;
         }
+        // 构建查询条件，只查询ID字段
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(SysUser::getId).eq(SysUser::getAccount, account).last("limit 1");
+        // 查询用户
         SysUser user = userMapper.selectOne(wrapper);
+        // 返回用户ID
         return user != null ? user.getId() : null;
     }
     
@@ -325,10 +453,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public void resetPassword(Long id) {
-        String hashed = BCrypt.hashpw("123456");
+        // 生成默认密码的哈希值
+        String hashed = encryptPassword(resolveDefaultPassword());
+        // 创建更新实体
         SysUser user = new SysUser();
         user.setId(id);
         user.setPassword(hashed);
+        // 更新密码
         userMapper.updateById(user);
     }
     
@@ -341,9 +472,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long id, Boolean status) {
+        // 创建更新实体
         SysUser user = new SysUser();
         user.setId(id);
         user.setStatus(status);
+        // 更新用户状态
         userMapper.updateById(user);
     }
     
@@ -360,17 +493,19 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     public boolean changePassword(Long id, String oldPassword, String newPassword) {
         // 查询用户
         SysUser user = userMapper.selectById(id);
+        // 用户不存在时返回false
         if (user == null) {
             return false;
         }
         
         // 验证旧密码
-        if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
+        if (!verifyPassword(oldPassword, user.getPassword())) {
+            // 旧密码不正确
             return false;
         }
         
         // 更新新密码
-        String hashedPassword = BCrypt.hashpw(newPassword);
+        String hashedPassword = encryptPassword(newPassword);
         SysUser updateUser = new SysUser();
         updateUser.setId(id);
         updateUser.setPassword(hashedPassword);
@@ -402,24 +537,114 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @param query 查询条件DTO
      * @return Lambda查询条件
      */
+    private PasswordPolicyConfig getPasswordPolicy() {
+        PasswordPolicyConfig defaults = new PasswordPolicyConfig();
+        defaults.setStore("bcrypt");
+        defaults.setDefaultPassword("Aa123456");
+        PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults);
+        return policy == null ? defaults : policy;
+    }
+
+    private String resolveDefaultPassword() {
+        PasswordPolicyConfig policy = getPasswordPolicy();
+        return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
+    }
+
+    private String resolvePasswordStore() {
+        PasswordPolicyConfig policy = getPasswordPolicy();
+        return StringUtils.hasText(policy.getStore()) ? policy.getStore() : "bcrypt";
+    }
+
+    private String encryptPassword(String rawPassword) {
+        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
+        return provider.encrypt(rawPassword);
+    }
+
+    private boolean verifyPassword(String rawPassword, String encodedPassword) {
+        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
+        return provider.verify(rawPassword, encodedPassword);
+    }
+
     private LambdaQueryWrapper<SysUser> buildQueryWrapper(SysUserQueryDTO query) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        Long tenantId = resolveQueryTenantId(query);
+        if (tenantId != null) {
+            List<Long> userIds = listUserIdsByTenant(tenantId);
+            if (userIds.isEmpty()) {
+                wrapper.eq(SysUser::getId, -1L);
+            } else {
+                wrapper.in(SysUser::getId, userIds);
+            }
+        }
         
         if (query != null) {
             wrapper.like(StringUtils.hasText(query.getAccount()), 
                 SysUser::getAccount, query.getAccount());
             wrapper.like(StringUtils.hasText(query.getUsername()), 
                 SysUser::getUsername, query.getUsername());
+            wrapper.like(StringUtils.hasText(query.getPhone()),
+                SysUser::getPhone, query.getPhone());
             wrapper.eq(query.getDepartmentId() != null, 
                 SysUser::getDepartmentId, query.getDepartmentId());
             wrapper.eq(query.getPositionId() != null, 
                 SysUser::getPositionId, query.getPositionId());
+            wrapper.ge(query.getEntryDateStart() != null,
+                SysUser::getEntryDate, query.getEntryDateStart());
+            wrapper.le(query.getEntryDateEnd() != null,
+                SysUser::getEntryDate, query.getEntryDateEnd());
+            if (query.getRoleId() != null) {
+                List<Long> userIds = listUserIdsByRole(query.getRoleId(), resolveRoleQueryTenantId(query));
+                if (userIds.isEmpty()) {
+                    wrapper.eq(SysUser::getId, -1L);
+                } else {
+                    wrapper.in(SysUser::getId, userIds);
+                }
+            }
             wrapper.eq(query.getStatus() != null, 
                 SysUser::getStatus, query.getStatus());
         }
         
         wrapper.orderByDesc(SysUser::getCreateTime);
         return wrapper;
+    }
+
+    private Long resolveRoleQueryTenantId(SysUserQueryDTO query) {
+        return resolveQueryTenantId(query);
+    }
+
+    private List<Long> listUserIdsByRole(Long roleId, Long tenantId) {
+        LambdaQueryWrapper<SysUserRole> wrapper = new LambdaQueryWrapper<SysUserRole>()
+            .select(SysUserRole::getUserId)
+            .eq(SysUserRole::getRoleId, roleId);
+        if (tenantId != null) {
+            wrapper.eq(SysUserRole::getTenantId, tenantId);
+        }
+        return userRoleMapper.selectList(wrapper).stream()
+            .map(SysUserRole::getUserId)
+            .distinct()
+            .collect(Collectors.toList());
+    }
+
+    private Long resolveQueryTenantId(SysUserQueryDTO query) {
+        Long tenantId = TenantContext.get();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        tenantId = CurrentUserUtils.getTenantId();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        return query == null ? null : query.getTenantId();
+    }
+
+    private List<Long> listUserIdsByTenant(Long tenantId) {
+        return userTenantMapper.selectList(new LambdaQueryWrapper<SysUserTenant>()
+                .select(SysUserTenant::getUserId)
+                .eq(SysUserTenant::getTenantId, tenantId))
+            .stream()
+            .map(SysUserTenant::getUserId)
+            .distinct()
+            .collect(Collectors.toList());
     }
     
     /**

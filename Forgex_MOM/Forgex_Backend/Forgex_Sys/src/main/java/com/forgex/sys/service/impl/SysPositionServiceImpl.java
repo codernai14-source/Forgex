@@ -14,6 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.sys.domain.dto.position.SysPositionDTO;
 import com.forgex.sys.domain.dto.position.SysPositionQueryDTO;
 import com.forgex.sys.domain.dto.position.SysPositionSaveParam;
@@ -44,30 +46,7 @@ public class SysPositionServiceImpl implements SysPositionService {
     
     @Override
     public List<SysPositionDTO> list(SysPositionQueryDTO queryDTO) {
-        LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysPosition::getDeleted, false);
-        
-        // 职位名称模糊查询
-        if (StringUtils.hasText(queryDTO.getPositionName())) {
-            wrapper.like(SysPosition::getPositionName, queryDTO.getPositionName());
-        }
-        
-        // 职位编码模糊查询
-        if (StringUtils.hasText(queryDTO.getPositionCode())) {
-            wrapper.like(SysPosition::getPositionCode, queryDTO.getPositionCode());
-        }
-        
-        // 状态
-        if (queryDTO.getStatus() != null) {
-            wrapper.eq(SysPosition::getStatus, queryDTO.getStatus());
-        }
-        
-        // 部门ID过滤
-        if (queryDTO.getDepartmentId() != null) {
-            wrapper.eq(SysPosition::getDepartmentId, queryDTO.getDepartmentId());
-        }
-        
-        wrapper.orderByAsc(SysPosition::getOrderNum);
+        LambdaQueryWrapper<SysPosition> wrapper = buildQueryWrapper(queryDTO);
         
         List<SysPosition> positions = positionMapper.selectList(wrapper);
         
@@ -76,11 +55,29 @@ public class SysPositionServiceImpl implements SysPositionService {
                 .collect(Collectors.toList());
     }
     
+    /**
+     * 分页查询职位列表
+     *
+     * @param page     分页参数
+     * @param queryDTO 查询参数
+     * @return 分页结果
+     */
+    @Override
+    public IPage<SysPositionDTO> pagePositions(Page<SysPosition> page, SysPositionQueryDTO queryDTO) {
+        LambdaQueryWrapper<SysPosition> wrapper = buildQueryWrapper(queryDTO);
+        IPage<SysPosition> positionPage = positionMapper.selectPage(page, wrapper);
+        return positionPage.convert(this::convertToDTO);
+    }
+    
     @Override
     public SysPositionDTO getById(Long id, Long tenantId) {
         LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysPosition::getId, id)
                .eq(SysPosition::getDeleted, false);
+        
+        if (tenantId != null) {
+            wrapper.eq(SysPosition::getTenantId, tenantId);
+        }
         
         SysPosition position = positionMapper.selectOne(wrapper);
         
@@ -158,20 +155,35 @@ public class SysPositionServiceImpl implements SysPositionService {
         return rows > 0;
     }
     
+    /**
+     * 逻辑删除职位。
+     * <p>
+     * 必须使用 {@link com.baomidou.mybatisplus.core.mapper.BaseMapper#delete(com.baomidou.mybatisplus.core.conditions.Wrapper)}
+     * （或 {@code deleteById}）走 MyBatis-Plus 内置的逻辑删除流程。
+     * 父类 {@link com.forgex.common.base.BaseEntity#deleted} 标注了 {@link com.baomidou.mybatisplus.annotation.TableLogic}，
+     * 若使用 {@code updateById} 且仅 {@code setDeleted(true)}，该字段不会进入 UPDATE 的 SET 子句，
+     * 实际只会更新自动填充字段（如 {@code update_time}），导致接口提示成功但列表仍可见。
+     * </p>
+     *
+     * @param id       职位主键，不可为空
+     * @param tenantId 租户 ID，与列表/详情查询范围一致；为 {@code null} 时仅按主键删除（依赖租户插件兜底）
+     * @return 是否删除成功（影响行数大于 0）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id, Long tenantId) {
         // TODO: 检查是否有用户关联
-        
-        // 逻辑删除
-        SysPosition position = new SysPosition();
-        position.setId(id);
-        position.setDeleted(true);
-        
-        int rows = positionMapper.updateById(position);
-        
+
+        LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysPosition::getId, id);
+        if (tenantId != null) {
+            wrapper.eq(SysPosition::getTenantId, tenantId);
+        }
+
+        int rows = positionMapper.delete(wrapper);
+
         log.info("删除职位成功，职位ID：{}", id);
-        
+
         return rows > 0;
     }
     
@@ -182,5 +194,44 @@ public class SysPositionServiceImpl implements SysPositionService {
         SysPositionDTO dto = new SysPositionDTO();
         BeanUtils.copyProperties(position, dto);
         return dto;
+    }
+    
+    /**
+     * 构建职位查询条件
+     *
+     * @param queryDTO 查询参数
+     * @return 查询条件
+     */
+    private LambdaQueryWrapper<SysPosition> buildQueryWrapper(SysPositionQueryDTO queryDTO) {
+        LambdaQueryWrapper<SysPosition> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysPosition::getDeleted, false);
+        
+        if (queryDTO.getTenantId() != null) {
+            wrapper.eq(SysPosition::getTenantId, queryDTO.getTenantId());
+        }
+        
+        // 职位名称模糊查询
+        if (StringUtils.hasText(queryDTO.getPositionName())) {
+            wrapper.like(SysPosition::getPositionName, queryDTO.getPositionName());
+        }
+        
+        // 职位编码模糊查询
+        if (StringUtils.hasText(queryDTO.getPositionCode())) {
+            wrapper.like(SysPosition::getPositionCode, queryDTO.getPositionCode());
+        }
+        
+        // 状态
+        if (queryDTO.getStatus() != null) {
+            wrapper.eq(SysPosition::getStatus, queryDTO.getStatus());
+        }
+        
+        // 部门ID过滤
+        if (queryDTO.getDepartmentId() != null) {
+            wrapper.eq(SysPosition::getDepartmentId, queryDTO.getDepartmentId());
+        }
+        
+        wrapper.orderByAsc(SysPosition::getOrderNum);
+        
+        return wrapper;
     }
 }

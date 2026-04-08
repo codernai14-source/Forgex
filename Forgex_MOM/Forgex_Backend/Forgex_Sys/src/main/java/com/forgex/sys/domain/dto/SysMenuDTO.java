@@ -137,4 +137,9 @@ public class SysMenuDTO {
      * 租户ID
      */
     private Long tenantId;
+    
+    /**
+     * 适用租户类型：MAIN_TENANT/CUSTOMER_TENANT/SUPPLIER_TENANT/PARTNER_TENANT/PUBLIC，PUBLIC 表示适用于所有租户类型
+     */
+    private String tenantType;
 }

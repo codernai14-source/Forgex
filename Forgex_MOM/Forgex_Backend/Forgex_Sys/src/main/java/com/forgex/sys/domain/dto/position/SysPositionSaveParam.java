@@ -36,6 +36,7 @@ public class SysPositionSaveParam {
     private Long tenantId;
     
     /** 部门ID */
+    @NotNull(message = "部门ID不能为空")
     private Long departmentId;
     
     /** 职位名称 */
