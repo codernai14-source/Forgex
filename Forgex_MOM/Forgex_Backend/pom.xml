@@ -244,6 +244,7 @@
     <modules>
         <module>Forgex_Auth</module>
         <module>Forgex_Sys</module>
+        <module>Forgex_Basic</module>
         <module>Forgex_Common</module>
         <module>Forgex_Gateway</module>
         <module>Forgex_Job</module>

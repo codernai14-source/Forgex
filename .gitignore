@@ -38,4 +38,5 @@ hs_err_pid*
 /Forgex_MOM/Forgex_Backend/Forgex_Sys/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Auth/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Workflow/target/
+/Forgex_MOM/Forgex_Backend/Forgex_Basic/target/
 /.tmp/

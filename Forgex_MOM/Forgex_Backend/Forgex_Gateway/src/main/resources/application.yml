@@ -85,6 +85,21 @@ spring:
                   args:
                     name: api-sys
                     fallbackUri: forward:/fallback/sys
+            - id: api-basic
+              uri: lb://forgex-basic
+              predicates:
+                - Path=/api/basic/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                - name: CircuitBreaker
+                  args:
+                    name: api-basic
+                    fallbackUri: forward:/fallback/basic
             - id: api-files
               uri: lb://forgex-sys
               predicates:
