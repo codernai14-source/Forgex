@@ -18,10 +18,10 @@ import com.forgex.common.base.BaseEntity;
 import lombok.Data;
 
 /**
- * 消息模板主表实体
+ * 娑堟伅妯℃澘涓昏〃瀹炰綋
  * <p>
- * 映射表：sys_message_template
- * 用于配置消息模板的基本信息
+ * 鏄犲皠琛細sys_message_template
+ * 鐢ㄤ簬閰嶇疆娑堟伅妯℃澘鐨勫熀鏈俊鎭?
  * </p>
  * 
  * @author Forgex Team
@@ -31,25 +31,28 @@ import lombok.Data;
 @TableName("sys_message_template")
 public class SysMessageTemplate extends BaseEntity {
     
-    /** 模板编号 */
+    /** 妯℃澘缂栧彿 */
     private String templateCode;
     
-    /** 模板名称 */
+    /** 妯℃澘鍚嶇О */
     private String templateName;
     
-    /** 模板名称多语言JSON */
+    /** 妯℃澘鍚嶇О澶氳瑷€JSON */
     private String templateNameI18nJson;
     
-    /** 模板版本 */
+    /** 妯℃澘鐗堟湰 */
     private String templateVersion;
     
-    /** 消息类型(NOTICE=通知,WARNING=警告,ALARM=报警) */
+    /** 娑堟伅绫诲瀷(NOTICE=閫氱煡,WARNING=璀﹀憡,ALARM=鎶ヨ) */
     private String messageType;
+
+    /** 娑撴艾濮熺猾璇茬€烽敍宀€鏁ゆ禍搴″隘閸掑棔绗夐崥宀勩€夐棃顫瑢閸旂喕鍏橀惃鍕Х閹垱膩閺?*/
+    private String bizType;
     
-    /** 状态(false=禁用,true=启用) */
+    /** 鐘舵€?false=绂佺敤,true=鍚敤) */
     private Boolean status;
     
-    /** 备注 */
+    /** 澶囨敞 */
     private String remark;
 }
 

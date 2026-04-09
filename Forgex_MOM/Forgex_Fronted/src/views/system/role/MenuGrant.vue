@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 瑙掕壊鑿滃崟鎺堟潈椤甸潰
  * 
  * 鍔熻兘锛?
@@ -107,10 +107,24 @@ import { getI18nValue } from '@/utils/i18n'
 import { useUserStore } from '@/stores/user'
 import type { MenuTreeRecord } from './types'
 
+interface RoleMenuGrantProps {
+  roleId?: string | number
+  roleName?: string
+  tenantId?: string
+  embedded?: boolean
+}
+
+const props = defineProps<RoleMenuGrantProps>()
+const emit = defineEmits<{
+  (e: 'saved'): void
+  (e: 'back'): void
+}>()
+
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const isEmbedded = computed(() => props.embedded === true)
 
 const roleId = ref<string>('')
 const roleName = ref<string>('')
@@ -371,6 +385,10 @@ async function handleSave() {
     })
     
     message.success(t('system.role.message.saveGrantSuccess'))
+    emit('saved')
+    if (isEmbedded.value) {
+      return
+    }
     router.back()
   } catch (error: any) {
     console.error('save grant failed:', error)
@@ -404,6 +422,10 @@ async function loadModules() {
  * 鍔犺浇瑙掕壊淇℃伅
  */
 async function loadRoleInfo() {
+  if (props.roleName) {
+    roleName.value = props.roleName
+    return
+  }
   if (!roleId.value) {
     return
   }
@@ -416,13 +438,15 @@ async function loadRoleInfo() {
 }
 
 onMounted(async () => {
-  // 优先从 userStore 获取租户 ID，其次从 sessionStorage 获取
-  const tid = userStore.tenantId || sessionStorage.getItem('tenantId')
+  const tid = props.tenantId || userStore.tenantId || sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
   }
 
-  roleId.value = String(route.params.roleId || '')
+  roleId.value = String(props.roleId ?? route.params.roleId ?? '')
+  if (props.roleName) {
+    roleName.value = props.roleName
+  }
   
   await Promise.all([
     loadModules(),

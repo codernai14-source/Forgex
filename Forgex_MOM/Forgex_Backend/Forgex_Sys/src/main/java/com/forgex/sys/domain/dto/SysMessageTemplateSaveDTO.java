@@ -17,8 +17,8 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 消息模板保存DTO
- * <p>包含主表信息、接收人配置、模板内容配置</p>
+ * 娑堟伅妯℃澘淇濆瓨DTO
+ * <p>鍖呭惈涓昏〃淇℃伅銆佹帴鏀朵汉閰嶇疆銆佹ā鏉垮唴瀹归厤缃?/p>
  * 
  * @author Forgex Team
  * @version 1.0.0
@@ -26,66 +26,72 @@ import java.util.List;
 @Data
 public class SysMessageTemplateSaveDTO {
     
-    /** 模板ID(修改时传入) */
+    /** 妯℃澘ID(淇敼鏃朵紶鍏? */
     private Long id;
     
-    /** 模板编号 */
+    /** 妯℃澘缂栧彿 */
     private String templateCode;
     
-    /** 模板名称 */
+    /** 妯℃澘鍚嶇О */
     private String templateName;
 
     private String templateNameI18nJson;
     
-    /** 模板版本 */
+    /** 妯℃澘鐗堟湰 */
     private String templateVersion;
     
-    /** 消息类型(NOTICE=通知,WARNING=警告,ALARM=报警) */
+    /** 娑堟伅绫诲瀷(NOTICE=閫氱煡,WARNING=璀﹀憡,ALARM=鎶ヨ) */
     private String messageType;
     
-    /** 状态(false=禁用,true=启用) */
+    /** 娑撴艾濮熺猾璇茬€?*/
+    private String bizType;
+    
+    /** 鐘舵€?false=绂佺敤,true=鍚敤) */
     private Boolean status;
     
-    /** 备注 */
+    /** 澶囨敞 */
     private String remark;
     
-    /** 接收人配置列表 */
+    /** 閺勵垰鎯佹穱婵嗙摠娑撳搫鍙曢崗閬嶅帳缂冾噯绱皌rue=tenantId=0 */
+    private Boolean publicConfig;
+    
+    /** 鎺ユ敹浜洪厤缃垪琛?*/
     private List<ReceiverConfig> receivers;
     
-    /** 模板内容配置列表 */
+    /** 妯℃澘鍐呭閰嶇疆鍒楄〃 */
     private List<ContentConfig> contents;
     
     /**
-     * 接收人配置
+     * 鎺ユ敹浜洪厤缃?
      */
     @Data
     public static class ReceiverConfig {
-        /** 接收类型(ROLE=角色,DEPT=部门,POSITION=职位,USER=指定人) */
+        /** 鎺ユ敹绫诲瀷(ROLE=瑙掕壊,DEPT=閮ㄩ棬,POSITION=鑱屼綅,USER=鎸囧畾浜? */
         private String receiverType;
         
-        /** 接收人ID列表 */
+        /** 鎺ユ敹浜篒D鍒楄〃 */
         private List<Long> receiverIds;
     }
     
     /**
-     * 模板内容配置
+     * 妯℃澘鍐呭閰嶇疆
      */
     @Data
     public static class ContentConfig {
-        /** 消息平台(INTERNAL=站内,WECHAT=企业微信,SMS=短信,EMAIL=邮箱) */
+        /** 娑堟伅骞冲彴(INTERNAL=绔欏唴,WECHAT=浼佷笟寰俊,SMS=鐭俊,EMAIL=閭) */
         private String platform;
         
-        /** 消息标题(支持占位符) */
+        /** 娑堟伅鏍囬(鏀寔鍗犱綅绗? */
         private String contentTitle;
 
         private String contentTitleI18nJson;
         
-        /** 消息内容(支持占位符) */
+        /** 娑堟伅鍐呭(鏀寔鍗犱綅绗? */
         private String contentBody;
 
         private String contentBodyI18nJson;
         
-        /** 跳转链接 */
+        /** 璺宠浆閾炬帴 */
         private String linkUrl;
     }
 }

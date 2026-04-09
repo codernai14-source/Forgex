@@ -1,31 +1,35 @@
 <template>
   <div class="excel-config-container">
-    <a-card :bordered="false" class="excel-table-card">
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'ExcelImportConfigTable'"
-        :request="handleRequest"
-        row-key="id"
-        :pagination="{
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total: number) => `共 ${total} 条`,
-        }"
-      >
-        <template #toolbar>
-          <a-button type="primary" v-permission="'sys:excel:importConfig:edit'" @click="openEdit()">
-            {{ t('common.add') }}
-          </a-button>
-        </template>
-        <template #action="{ record }">
-          <a-space>
-            <a v-permission="'sys:excel:importConfig:edit'" @click="openEdit(record.id)">编辑</a>
-            <a v-permission="'sys:excel:template:download'" @click="handleDownload(record.tableCode)">下载模板</a>
-            <a v-permission="'sys:excel:importConfig:delete'" style="color:#ff4d4f" @click="handleDelete(record.id)">删除</a>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
-    </a-card>
+    <FxDynamicTable
+      ref="tableRef"
+      table-code="ExcelImportConfigTable"
+      :request="handleRequest"
+      :fallback-config="fallbackConfig"
+      row-key="id"
+      :show-query-form="true"
+      :pagination="{
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total: number) => t('common.total', { total }),
+      }"
+    >
+      <template #toolbar>
+        <a-button type="primary" v-permission="'sys:excel:importConfig:edit'" @click="openEdit()">
+          {{ t('common.add') }}
+        </a-button>
+      </template>
+      <template #action="{ record }">
+        <a-space>
+          <a v-permission="'sys:excel:importConfig:edit'" @click="openEdit(record.id)">{{ t('common.edit') }}</a>
+          <a v-permission="'sys:excel:template:download'" @click="handleDownload(record.tableCode)">
+            {{ t('system.excel.downloadTemplate') }}
+          </a>
+          <a v-permission="'sys:excel:importConfig:delete'" style="color:#ff4d4f" @click="handleDelete(record.id)">
+            {{ t('common.delete') }}
+          </a>
+        </a-space>
+      </template>
+    </FxDynamicTable>
 
     <BaseFormDialog
       v-model:open="editOpen"
@@ -87,9 +91,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { deleteImportConfig, downloadTemplate, importConfigDetail, pageImportConfig, saveImportConfig } from '@/api/system/excel'
@@ -97,14 +102,35 @@ import { deleteImportConfig, downloadTemplate, importConfigDetail, pageImportCon
 const { t } = useI18n()
 const tableRef = ref()
 
-const itemColumns = [
-  { title: '导入字段', key: 'importField', width: 240 },
-  { title: '字段类型', key: 'fieldType', width: 160 },
-  { title: '字典编号', key: 'dictCode', width: 160 },
-  { title: '必填', key: 'required', width: 80 },
-  { title: '顺序', key: 'orderNum', width: 120 },
-  { title: '操作', key: 'action', width: 80 },
-]
+const itemColumns = computed(() => [
+  { title: t('system.excel.importField'), key: 'importField', width: 240 },
+  { title: t('system.excel.fieldType'), key: 'fieldType', width: 160 },
+  { title: t('system.excel.dictCode'), key: 'dictCode', width: 160 },
+  { title: t('system.excel.required'), key: 'required', width: 80 },
+  { title: t('common.order'), key: 'orderNum', width: 120 },
+  { title: t('common.action'), key: 'action', width: 80 },
+])
+
+const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'ExcelImportConfigTable',
+  tableName: t('system.excel.importConfigTitle'),
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'tableName', title: t('system.excel.tableName'), minWidth: 180, align: 'left' },
+    { field: 'tableCode', title: t('system.excel.tableCode'), width: 180, align: 'left' },
+    { field: 'title', title: t('system.excel.title'), minWidth: 180, align: 'left' },
+    { field: 'subtitle', title: t('system.excel.subtitle'), minWidth: 180, align: 'left' },
+    { field: 'version', title: 'Version', width: 100, align: 'center' },
+    { field: 'action', title: t('common.action'), width: 180, align: 'center', fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'tableName', label: t('system.excel.tableName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'tableCode', label: t('system.excel.tableCode'), queryType: 'input', queryOperator: 'like' },
+  ],
+  version: 1,
+}))
 
 const editOpen = ref(false)
 const saving = ref(false)
@@ -128,10 +154,10 @@ function pickQueryValue(query: Record<string, any>, keys: string[]): string | un
   return undefined
 }
 
-const handleRequest = async (payload: { 
-  page: { current: number; pageSize: number }; 
-  query: Record<string, any>; 
-  sorter?: { field?: string; order?: string } 
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
 }) => {
   try {
     const tableName = pickQueryValue(payload.query, ['tableName', 'table_name'])
@@ -147,14 +173,14 @@ const handleRequest = async (payload: {
     return {
       success: true,
       data: res.records || [],
-      total: res.total || 0
+      total: res.total || 0,
     }
   } catch (error) {
     console.error('加载导入配置列表失败:', error)
     return {
       success: false,
       data: [],
-      total: 0
+      total: 0,
     }
   }
 }
@@ -177,7 +203,14 @@ async function openEdit(id?: number) {
 }
 
 function addItem() {
-  editForm.items.push({ _k: `${Date.now()}-${Math.random()}`, importField: '', fieldType: 'string', dictCode: '', required: false, orderNum: 0 })
+  editForm.items.push({
+    _k: `${Date.now()}-${Math.random()}`,
+    importField: '',
+    fieldType: 'string',
+    dictCode: '',
+    required: false,
+    orderNum: 0,
+  })
 }
 
 function removeItem(k: string) {
@@ -241,27 +274,6 @@ async function handleDownload(tableCode: string) {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.excel-table-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.excel-table-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-}
-
-.excel-table-card :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
+  overflow: hidden;
 }
 </style>

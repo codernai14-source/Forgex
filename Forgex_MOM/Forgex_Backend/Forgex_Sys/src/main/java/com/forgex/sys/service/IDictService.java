@@ -15,6 +15,7 @@ package com.forgex.sys.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.sys.domain.dto.DictDTO;
+import com.forgex.sys.domain.param.DictPageParam;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
 
@@ -44,7 +45,7 @@ public interface IDictService {
      * @param pageSize 姣忛〉鏉℃暟
      * @return 鍒嗛〉瀛楀吀鏍?
      */
-    IPage<DictTreeVO> pageDictTree(Long tenantId, long pageNum, long pageSize);
+    IPage<DictTreeVO> pageDictTree(Long tenantId, DictPageParam pageParam);
     
     /**
      * 根据字典编码获取字典项列表

@@ -37,6 +37,8 @@ public class OnlineUserVO {
      */
     private String account;
 
+    private String loginTerminal;
+
     /**
      * 用户名称（来自 {@code sys_user.username}）。
      */

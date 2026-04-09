@@ -35,6 +35,9 @@ spring:
     gateway:
       server:
         webflux:
+          filter:
+            json-to-grpc:
+              enabled: false
           discovery:
             locator:
               enabled: true

@@ -437,6 +437,7 @@ public class AuthServiceImpl implements AuthService {
             onlineInfo.put("account", idKey);
             // 设置token
             onlineInfo.put("token", token);
+            onlineInfo.put("loginTerminal", "B");
             // 设置登录时间
             onlineInfo.put("loginTime", LocalDateTime.now().toString());
             // 设置客户端IP

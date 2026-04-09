@@ -11,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 租户消息白名单管理控制器
+ * 绉熸埛娑堟伅鐧藉悕鍗曠鐞嗘帶鍒跺櫒
  * <p>
- * 提供租户消息白名单的增删改查功能，用于管理跨租户消息发送权限。
+ * 鎻愪緵绉熸埛娑堟伅鐧藉悕鍗曠殑澧炲垹鏀规煡鍔熻兘锛岀敤浜庣鐞嗚法绉熸埛娑堟伅鍙戦€佹潈闄愩€?
  * </p>
  * 
  * @author Forgex Team
@@ -27,14 +27,14 @@ public class SysTenantMessageWhitelistController {
     private final SysTenantMessageWhitelistMapper whitelistMapper;
 
     /**
-     * 分页查询租户消息白名单
+     * 鍒嗛〉鏌ヨ绉熸埛娑堟伅鐧藉悕鍗?
      * 
-     * @param current 当前页
-     * @param size 每页大小
-     * @param senderTenantId 发送方租户ID（可选）
-     * @param receiverTenantId 接收方租户ID（可选）
-     * @param enabled 是否启用（可选）
-     * @return 分页结果
+     * @param current 褰撳墠椤?
+     * @param size 姣忛〉澶у皬
+     * @param senderTenantId 鍙戦€佹柟绉熸埛ID锛堝彲閫夛級
+     * @param receiverTenantId 鎺ユ敹鏂圭鎴稩D锛堝彲閫夛級
+     * @param enabled 鏄惁鍚敤锛堝彲閫夛級
+     * @return 鍒嗛〉缁撴灉
      */
     @GetMapping("/page")
     public R<Page<SysTenantMessageWhitelist>> page(
@@ -57,10 +57,10 @@ public class SysTenantMessageWhitelistController {
     }
 
     /**
-     * 根据ID查询白名单配置
+     * 鏍规嵁ID鏌ヨ鐧藉悕鍗曢厤缃?
      * 
-     * @param id 白名单ID
-     * @return 白名单配置
+     * @param id 鐧藉悕鍗旾D
+     * @return 鐧藉悕鍗曢厤缃?
      */
     @GetMapping("/{id}")
     public R<SysTenantMessageWhitelist> getById(@PathVariable Long id) {
@@ -69,15 +69,15 @@ public class SysTenantMessageWhitelistController {
     }
 
     /**
-     * 新增白名单配置
+     * 鏂板鐧藉悕鍗曢厤缃?
      * 
-     * @param whitelist 白名单配置
-     * @return 操作结果
+     * @param whitelist 鐧藉悕鍗曢厤缃?
+     * @return 鎿嶄綔缁撴灉
      */
     @RequirePerm("sys:tenant-message-whitelist:create")
     @PostMapping
     public R<Boolean> save(@RequestBody SysTenantMessageWhitelist whitelist) {
-        // 检查是否已存在相同配置
+        // 妫€鏌ユ槸鍚﹀凡瀛樺湪鐩稿悓閰嶇疆
         Long count = whitelistMapper.selectCount(new LambdaQueryWrapper<SysTenantMessageWhitelist>()
                 .eq(SysTenantMessageWhitelist::getSenderTenantId, whitelist.getSenderTenantId())
                 .eq(SysTenantMessageWhitelist::getReceiverTenantId, whitelist.getReceiverTenantId())
@@ -92,10 +92,10 @@ public class SysTenantMessageWhitelistController {
     }
 
     /**
-     * 更新白名单配置
+     * 鏇存柊鐧藉悕鍗曢厤缃?
      * 
-     * @param whitelist 白名单配置
-     * @return 操作结果
+     * @param whitelist 鐧藉悕鍗曢厤缃?
+     * @return 鎿嶄綔缁撴灉
      */
     @RequirePerm("sys:tenant-message-whitelist:update")
     @PutMapping
@@ -105,10 +105,10 @@ public class SysTenantMessageWhitelistController {
     }
 
     /**
-     * 删除白名单配置
+     * 鍒犻櫎鐧藉悕鍗曢厤缃?
      * 
-     * @param id 白名单ID
-     * @return 操作结果
+     * @param id 鐧藉悕鍗旾D
+     * @return 鎿嶄綔缁撴灉
      */
     @RequirePerm("sys:tenant-message-whitelist:delete")
     @DeleteMapping("/{id}")
@@ -118,11 +118,11 @@ public class SysTenantMessageWhitelistController {
     }
 
     /**
-     * 启用/禁用白名单配置
+     * 鍚敤/绂佺敤鐧藉悕鍗曢厤缃?
      * 
-     * @param id 白名单ID
-     * @param enabled 是否启用
-     * @return 操作结果
+     * @param id 鐧藉悕鍗旾D
+     * @param enabled 鏄惁鍚敤
+     * @return 鎿嶄綔缁撴灉
      */
     @RequirePerm("sys:tenant-message-whitelist:update")
     @PutMapping("/{id}/enabled")
@@ -136,28 +136,28 @@ public class SysTenantMessageWhitelistController {
     }
 
     /**
-     * 检查跨租户消息权限
+     * 妫€鏌ヨ法绉熸埛娑堟伅鏉冮檺
      * 
-     * @param senderTenantId 发送方租户ID
-     * @param receiverTenantId 接收方租户ID
-     * @return 是否有权限
+     * @param senderTenantId 鍙戦€佹柟绉熸埛ID
+     * @param receiverTenantId 鎺ユ敹鏂圭鎴稩D
+     * @return 鏄惁鏈夋潈闄?
      */
     @GetMapping("/check-permission")
     public R<Boolean> checkPermission(
             @RequestParam Long senderTenantId,
             @RequestParam Long receiverTenantId) {
         
-        // 同一租户，直接允许
+        // 鍚屼竴绉熸埛锛岀洿鎺ュ厑璁?
         if (senderTenantId.equals(receiverTenantId)) {
             return R.ok(true);
         }
         
-        // 超级管理员租户（ID=1）默认拥有所有权限
-        if (senderTenantId == 1L) {
+        // 瓒呯骇绠＄悊鍛樼鎴凤紙ID=1锛夐粯璁ゆ嫢鏈夋墍鏈夋潈闄?
+        if (senderTenantId == 0L) {
             return R.ok(true);
         }
         
-        // 查询白名单
+        // 鏌ヨ鐧藉悕鍗?
         Long count = whitelistMapper.selectCount(new LambdaQueryWrapper<SysTenantMessageWhitelist>()
                 .eq(SysTenantMessageWhitelist::getSenderTenantId, senderTenantId)
                 .eq(SysTenantMessageWhitelist::getReceiverTenantId, receiverTenantId)
@@ -167,6 +167,7 @@ public class SysTenantMessageWhitelistController {
         return R.ok(count != null && count > 0);
     }
 }
+
 
 
 

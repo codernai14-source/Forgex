@@ -18,7 +18,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 消息模板批量删除参数。
+ * 娑堟伅妯℃澘鎵归噺鍒犻櫎鍙傛暟銆?
  *
  * @author Forgex Team
  * @version 1.0.0
@@ -28,7 +28,10 @@ import java.util.List;
 public class SysMessageTemplateBatchDeleteParam {
 
     /**
-     * 待删除的消息模板主键 ID 列表
+     * 寰呭垹闄ょ殑娑堟伅妯℃澘涓婚敭 ID 鍒楄〃
      */
     private List<Long> ids;
+
+    /** 閺勵垰鎯侀崗顒€鍙￠柊宥囩枂閿涘rue=tenantId=0 */
+    private Boolean publicConfig;
 }

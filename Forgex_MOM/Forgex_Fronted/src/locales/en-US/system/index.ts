@@ -13,6 +13,7 @@ import position from './position'
 import module from './module'
 import dashboard from './dashboard'
 import tenant from './tenant'
+import messageTemplate from './messageTemplate'
 
 export default {
   user,
@@ -26,4 +27,5 @@ export default {
   module,
   dashboard,
   tenant,
+  messageTemplate,
 }

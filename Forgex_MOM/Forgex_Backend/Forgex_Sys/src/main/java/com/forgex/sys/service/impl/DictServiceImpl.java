@@ -23,10 +23,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.i18n.LangContext;
 import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.entity.SysDict;
+import com.forgex.sys.domain.entity.SysModule;
+import com.forgex.sys.domain.param.DictPageParam;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
 import com.forgex.sys.domain.vo.TagStyleVO;
 import com.forgex.sys.mapper.SysDictMapper;
+import com.forgex.sys.mapper.SysModuleMapper;
 import com.forgex.sys.service.IDictService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -37,10 +40,14 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 数据字典服务实现
@@ -62,16 +69,22 @@ public class DictServiceImpl implements IDictService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private SysModuleMapper moduleMapper;
+
     @Override
     public List<DictTreeVO> getDictTree(Long tenantId) {
         return buildTree(listTenantDictVos(tenantId), 0L);
     }
 
     @Override
-    public IPage<DictTreeVO> pageDictTree(Long tenantId, long pageNum, long pageSize) {
-        List<DictTreeVO> roots = getDictTree(tenantId);
-        long safePageNum = pageNum <= 0 ? 1 : pageNum;
-        long safePageSize = pageSize <= 0 ? 20 : pageSize;
+    public IPage<DictTreeVO> pageDictTree(Long tenantId, DictPageParam pageParam) {
+        DictPageParam query = pageParam == null ? new DictPageParam() : pageParam;
+        List<DictTreeVO> roots = getDictTree(tenantId).stream()
+                .filter(root -> matchRootNode(root, query))
+                .collect(Collectors.toList());
+        long safePageNum = query.getPageNum() == null || query.getPageNum() <= 0 ? 1 : query.getPageNum();
+        long safePageSize = query.getPageSize() == null || query.getPageSize() <= 0 ? 20 : query.getPageSize();
 
         Page<DictTreeVO> page = new Page<>(safePageNum, safePageSize);
         page.setTotal(roots.size());
@@ -206,6 +219,7 @@ public class DictServiceImpl implements IDictService {
         if (parentId > 0) {
             parent = requireTenantDict(parentId, tenantId);
         }
+        dict.setModuleId(parent == null ? dictDTO.getModuleId() : parent.getModuleId());
 
         dict.setNodePath(parent == null ? dict.getDictCode() : parent.getNodePath() + "/" + dict.getDictCode());
         dict.setLevel(parent == null ? 1 : ((parent.getLevel() == null ? 1 : parent.getLevel()) + 1));
@@ -251,6 +265,7 @@ public class DictServiceImpl implements IDictService {
         dict.setId(old.getId());
         dict.setTenantId(old.getTenantId());
         dict.setParentId(newParentId);
+        dict.setModuleId(newParent == null ? dictDTO.getModuleId() : newParent.getModuleId());
         dict.setUpdateTime(LocalDateTime.now());
 
         if (!StringUtils.hasText(dict.getDictCode())) {
@@ -262,12 +277,13 @@ public class DictServiceImpl implements IDictService {
 
         boolean pathChanged = !Objects.equals(old.getNodePath(), newPath);
         boolean parentChanged = !Objects.equals(normalizeParentId(old.getParentId()), newParentId);
+        boolean moduleChanged = !Objects.equals(old.getModuleId(), dict.getModuleId());
 
         dict.setNodePath(newPath);
         dict.setLevel(newLevel);
         dictMapper.updateById(dict);
 
-        if (pathChanged && StringUtils.hasText(old.getNodePath())) {
+        if ((pathChanged || moduleChanged) && StringUtils.hasText(old.getNodePath())) {
             List<SysDict> descendants = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
                     .eq(SysDict::getTenantId, old.getTenantId())
                     .eq(SysDict::getDeleted, false)
@@ -280,6 +296,7 @@ public class DictServiceImpl implements IDictService {
                 if (descendant.getLevel() != null && old.getLevel() != null) {
                     update.setLevel(descendant.getLevel() - old.getLevel() + newLevel);
                 }
+                update.setModuleId(dict.getModuleId());
                 update.setUpdateTime(LocalDateTime.now());
                 dictMapper.updateById(update);
             }
@@ -367,13 +384,36 @@ public class DictServiceImpl implements IDictService {
                 .orderByAsc(SysDict::getParentId)
                 .orderByAsc(SysDict::getOrderNum)
                 .orderByAsc(SysDict::getId));
+        Map<Long, String> moduleNameMap = loadModuleNameMap(dicts);
 
         List<DictTreeVO> result = new ArrayList<>();
         for (SysDict dict : dicts) {
             DictTreeVO vo = new DictTreeVO();
             BeanUtils.copyProperties(dict, vo);
+            vo.setModuleName(moduleNameMap.get(dict.getModuleId()));
             vo.setChildren(new ArrayList<>());
             result.add(vo);
+        }
+        return result;
+    }
+
+    private Map<Long, String> loadModuleNameMap(List<SysDict> dicts) {
+        if (dicts == null || dicts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Set<Long> moduleIds = dicts.stream()
+                .map(SysDict::getModuleId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (moduleIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<SysModule> modules = moduleMapper.selectList(new LambdaQueryWrapper<SysModule>()
+                .in(SysModule::getId, moduleIds)
+                .eq(SysModule::getDeleted, false));
+        Map<Long, String> result = new HashMap<>();
+        for (SysModule module : modules) {
+            result.put(module.getId(), module.getName());
         }
         return result;
     }
@@ -403,6 +443,29 @@ public class DictServiceImpl implements IDictService {
 
     private Long normalizeParentId(Long parentId) {
         return parentId == null ? 0L : parentId;
+    }
+
+    private boolean matchRootNode(DictTreeVO root, DictPageParam query) {
+        if (root == null) {
+            return false;
+        }
+        if (StringUtils.hasText(query.getDictCode())
+                && !containsIgnoreCase(root.getDictCode(), query.getDictCode())) {
+            return false;
+        }
+        if (StringUtils.hasText(query.getDictName())
+                && !containsIgnoreCase(root.getDictName(), query.getDictName())) {
+            return false;
+        }
+        return query.getModuleId() == null || Objects.equals(root.getModuleId(), query.getModuleId());
+    }
+
+    private boolean containsIgnoreCase(String source, String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return true;
+        }
+        return StringUtils.hasText(source)
+                && source.toLowerCase().contains(keyword.trim().toLowerCase());
     }
 
     private String resolveI18nText(String i18nJson, String fallback) {
