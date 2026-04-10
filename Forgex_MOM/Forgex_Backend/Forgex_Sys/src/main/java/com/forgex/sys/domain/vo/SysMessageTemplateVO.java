@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 娑堟伅妯℃澘璇︽儏VO
- * <p>鍖呭惈涓昏〃淇℃伅銆佹帴鏀朵汉閰嶇疆銆佹ā鏉垮唴瀹归厤缃?/p>
+ * 消息模板详情 VO
+ * <p>包含主表信息、接收人配置、模板内容配置</p>
  * 
  * @author Forgex Team
  * @version 1.0.0
@@ -28,95 +28,92 @@ import java.util.List;
 @Data
 public class SysMessageTemplateVO {
     
-    /** 妯℃澘ID */
+    /** 模板 ID */
     private Long id;
     
-    /** 妯℃澘缂栧彿 */
+    /** 模板编号 */
     private String templateCode;
     
-    /** 妯℃澘鍚嶇О */
+    /** 模板名称 */
     private String templateName;
 
     private String templateNameI18nJson;
     
-    /** 妯℃澘鐗堟湰 */
+    /** 模板版本 */
     private String templateVersion;
     
-    /** 娑堟伅绫诲瀷(NOTICE=閫氱煡,WARNING=璀﹀憡,ALARM=鎶ヨ) */
+    /** 消息类型 (NOTICE=通知，WARNING=警告，ALARM=报警) */
     private String messageType;
     
-    /** 娑撴艾濮熺猾璇茬€?*/
+    /** 业务类型 */
     private String bizType;
     
-    /** 鐘舵€?false=绂佺敤,true=鍚敤) */
+    /** 状态 (false=禁用，true=启用) */
     private Boolean status;
     
-    /** 澶囨敞 */
+    /** 备注 */
     private String remark;
     
-    /** 閺勵垰鎯侀崗顒€鍙￠柊宥囩枂閿涘rue=tenantId=0 */
+    /** 是否公共配置 (true=tenantId=0) */
     private Boolean publicConfig;
     
-    /** 鍒涘缓鏃堕棿 */
+    /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
     
-    /** 鍒涘缓浜?*/
+    /** 创建人 */
     private String createBy;
     
-    /** 鏇存柊鏃堕棿 */
+    /** 更新时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updateTime;
     
-    /** 鏇存柊浜?*/
+    /** 更新人 */
     private String updateBy;
     
-    /** 鎺ユ敹浜洪厤缃垪琛?*/
+    /** 接收人配置列表 */
     private List<ReceiverVO> receivers;
     
-    /** 妯℃澘鍐呭閰嶇疆鍒楄〃 */
+    /** 模板内容配置列表 */
     private List<ContentVO> contents;
     
     /**
-     * 鎺ユ敹浜洪厤缃甐O
+     * 接收人配置 VO
      */
     @Data
     public static class ReceiverVO {
         /** ID */
         private Long id;
         
-        /** 鎺ユ敹绫诲瀷(ROLE=瑙掕壊,DEPT=閮ㄩ棬,POSITION=鑱屼綅,USER=鎸囧畾浜? */
+        /** 接收类型 (ROLE=角色，DEPT=部门，POSITION=职位，USER=指定人，CUSTOM=自定义) */
         private String receiverType;
         
-        /** 鎺ユ敹浜篒D鍒楄〃 */
+        /** 接收人 ID 列表 */
         private List<Long> receiverIds;
     }
     
     /**
-     * 妯℃澘鍐呭閰嶇疆VO
+     * 模板内容配置 VO
      */
     @Data
     public static class ContentVO {
         /** ID */
         private Long id;
         
-        /** 娑堟伅骞冲彴(INTERNAL=绔欏唴,WECHAT=浼佷笟寰俊,SMS=鐭俊,EMAIL=閭) */
+        /** 消息平台 (INTERNAL=站内，WECHAT=企业微信，SMS=短信，EMAIL=邮箱) */
         private String platform;
         
-        /** 娑堟伅鏍囬(鏀寔鍗犱綅绗? */
+        /** 消息标题 (支持占位符) */
         private String contentTitle;
 
         private String contentTitleI18nJson;
         
-        /** 娑堟伅鍐呭(鏀寔鍗犱綅绗? */
+        /** 消息内容 (支持占位符) */
         private String contentBody;
 
         private String contentBodyI18nJson;
         
-        /** 璺宠浆閾炬帴 */
+        /** 跳转链接 */
         private String linkUrl;
     }
 }
-
-
-

@@ -427,7 +427,8 @@ const validateForm = () => {
       activeTab.value = 'receiver'
       return false
     }
-    if (!receiver.receiverIds || receiver.receiverIds.length === 0) {
+    // 自定义类型不需要指定接收人 ID
+    if (receiver.receiverType !== 'CUSTOM' && (!receiver.receiverIds || receiver.receiverIds.length === 0)) {
       message.error(t('system.messageTemplate.receiver.targetRequired', { index: i + 1 }))
       activeTab.value = 'receiver'
       return false

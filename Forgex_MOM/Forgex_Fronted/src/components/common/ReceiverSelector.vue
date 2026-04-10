@@ -10,10 +10,11 @@
         <a-select-option value="ROLE">角色</a-select-option>
         <a-select-option value="DEPT">部门</a-select-option>
         <a-select-option value="POSITION">职位</a-select-option>
+        <a-select-option value="CUSTOM">自定义</a-select-option>
       </a-select>
     </a-form-item>
     
-    <a-form-item :label="getReceiverLabel()" required>
+    <a-form-item v-if="localReceiver.receiverType !== 'CUSTOM'" :label="getReceiverLabel()" required>
       <a-select
         v-model:value="localReceiver.receiverIds"
         mode="multiple"
@@ -29,6 +30,15 @@
           <a-empty :description="loading ? '加载中...' : '暂无数据'" />
         </template>
       </a-select>
+    </a-form-item>
+    
+    <a-form-item v-else label="说明">
+      <a-alert
+        message="自定义类型"
+        description="选择自定义类型后，接收人将由后端程序在运行时动态指定，无需在此处配置具体接收人。"
+        type="info"
+        show-icon
+      />
     </a-form-item>
   </div>
 </template>
@@ -59,7 +69,7 @@ const emit = defineEmits<{
    * 触发时机：用户修改接收类型或接收人列表时触发
    * @param value 新的接收人对象
    */
-  'update:modelValue': [value: Receiver]
+  'update:modelValue': [value: Receiver
 }>()
 
 const localReceiver = ref<Receiver>({ ...props.modelValue })
@@ -139,7 +149,9 @@ const loadReceiverOptions = async () => {
 // 接收类型变化
 const handleTypeChange = () => {
   localReceiver.value.receiverIds = []
-  loadReceiverOptions()
+  if (localReceiver.value.receiverType !== 'CUSTOM') {
+    loadReceiverOptions()
+  }
   emitChange()
 }
 
@@ -156,14 +168,14 @@ const emitChange = () => {
 // 监听外部值变化
 watch(() => props.modelValue, (newVal) => {
   localReceiver.value = { ...newVal }
-  if (newVal.receiverType) {
+  if (newVal.receiverType && newVal.receiverType !== 'CUSTOM') {
     loadReceiverOptions()
   }
 }, { deep: true })
 
 // 初始化
 onMounted(() => {
-  if (localReceiver.value.receiverType) {
+  if (localReceiver.value.receiverType && localReceiver.value.receiverType !== 'CUSTOM') {
     loadReceiverOptions()
   }
 })
@@ -174,4 +186,3 @@ onMounted(() => {
   // 样式可以根据需要添加
 }
 </style>
-

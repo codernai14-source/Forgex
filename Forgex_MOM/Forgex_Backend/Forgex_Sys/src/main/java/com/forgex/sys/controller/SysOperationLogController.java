@@ -109,6 +109,16 @@ public class SysOperationLogController {
             }
         }
 
+        // 6. 用户名过滤（模糊查询）
+        if (query != null && StringUtils.hasText(query.getUsername())) {
+            qw.like(SysOperationLog::getUsername, query.getUsername());
+        }
+
+        // 7. 账号 ID 过滤（精确查询）
+        if (query != null && query.getUserId() != null) {
+            qw.eq(SysOperationLog::getUserId, query.getUserId());
+        }
+
         return qw;
     }
 

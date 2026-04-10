@@ -17,7 +17,10 @@
               </span>
             </template>
             <template #extra>
-              <a @click="goMore('pending')">{{ $t('workflow.dashboard.more') }}</a>
+              <a-button type="link" size="small" @click="goMore('pending')">
+                <template #icon><ArrowRightOutlined /></template>
+                {{ $t('workflow.dashboard.more') }}
+              </a-button>
             </template>
             <div v-if="!summary.pending?.length" class="empty-hint">
               {{ $t('workflow.dashboard.empty') }}
@@ -54,7 +57,10 @@
               </span>
             </template>
             <template #extra>
-              <a @click="goMore('processed')">{{ $t('workflow.dashboard.more') }}</a>
+              <a-button type="link" size="small" @click="goMore('processed')">
+                <template #icon><ArrowRightOutlined /></template>
+                {{ $t('workflow.dashboard.more') }}
+              </a-button>
             </template>
             <div v-if="!summary.yesterdayProcessed?.length" class="empty-hint">
               {{ $t('workflow.dashboard.empty') }}
@@ -91,7 +97,10 @@
               </span>
             </template>
             <template #extra>
-              <a @click="goMore('pending')">{{ $t('workflow.dashboard.ccHint') }}</a>
+              <a-button type="link" size="small" @click="goMore('pending')">
+                <template #icon><ArrowRightOutlined /></template>
+                {{ $t('workflow.dashboard.ccHint') }}
+              </a-button>
             </template>
             <div v-if="!summary.cc?.length" class="empty-hint">
               {{ $t('workflow.dashboard.empty') }}
@@ -163,6 +172,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
+  ArrowRightOutlined,
   BellOutlined,
   CheckCircleOutlined,
   SendOutlined
@@ -312,6 +322,7 @@ onMounted(() => {
 
 .card-icon {
   font-size: 18px;
+  color: var(--fx-primary, #1677ff);
 }
 
 .task-list {
@@ -386,5 +397,19 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-all;
   font-size: 12px;
+}
+
+/* 卡片标题栏的"查看更多"按钮样式 - 跟随主题色 */
+.dash-card .ant-btn-link {
+  color: var(--fx-primary, #1677ff);
+  transition: color 0.3s ease;
+}
+
+.dash-card .ant-btn-link:hover {
+  color: var(--fx-primary-hover, #4096ff);
+}
+
+.dash-card .ant-btn-link:active {
+  color: var(--fx-primary-active, #0958d9);
 }
 </style>

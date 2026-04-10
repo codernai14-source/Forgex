@@ -307,11 +307,17 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
             receiver.setTemplateId(templateId);
             receiver.setTenantId(tenantId);
             receiver.setReceiverType(config.getReceiverType());
-            try {
-                List<Long> receiverIds = config.getReceiverIds() == null ? new ArrayList<>() : config.getReceiverIds();
-                receiver.setReceiverIds(objectMapper.writeValueAsString(receiverIds));
-            } catch (Exception e) {
-                throw new BusinessException("接收人ID列表格式错误");
+            
+            // 自定义类型不需要指定接收人 ID，由后端程序处理时指定
+            if ("CUSTOM".equals(config.getReceiverType())) {
+                receiver.setReceiverIds("[]");
+            } else {
+                try {
+                    List<Long> receiverIds = config.getReceiverIds() == null ? new ArrayList<>() : config.getReceiverIds();
+                    receiver.setReceiverIds(objectMapper.writeValueAsString(receiverIds));
+                } catch (Exception e) {
+                    throw new BusinessException("接收人 ID 列表格式错误");
+                }
             }
             receiverMapper.insert(receiver);
         }

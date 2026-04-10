@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: forgex-report # 服务名
+
+server:
+  port: 8084 # 服务端口
+
+# 报表模块配置
+forgex:
+  report:
+    template-path: templates/report # 模板文件存储路径
+    enable-ureport: true # 启用 UReport2
+    enable-jimu: true # 启用 JimuReport
+    max-file-size: 10 # 模板文件最大大小（MB）
+
+# UReport2 配置
+ureport:
+  enabled: true # 启用 UReport2
+  debug: true # 调试模式
+  cache-enabled: true # 启用缓存
+  cache-time: 600 # 缓存时间（秒）
+  prefix: classpath:templates/report/ # 模板文件前缀路径
+
+# JimuReport 配置
+jmreport:
+  enabled: true # 启用 JimuReport
+  mode: 0 # 模式：0-开发模式，1-生产模式
+  database: mysql # 数据库类型
+  table-name: jimu_report # 报表存储表名
+  upload-path: upload/jimu # 上传文件路径
+  preview-cross: true # 允许跨域预览

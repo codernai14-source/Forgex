@@ -15,8 +15,12 @@ package com.forgex.common.service.template;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.forgex.common.domain.entity.template.*;
-import com.forgex.common.mapper.template.*;
+import com.forgex.common.domain.entity.template.FxExcelExportConfigTemplate;
+import com.forgex.common.domain.entity.template.SysMqMessageTemplate;
+import com.forgex.common.domain.entity.template.SysResponseMessageTemplate;
+import com.forgex.common.mapper.template.FxExcelExportConfigTemplateMapper;
+import com.forgex.common.mapper.template.SysMqMessageTemplateMapper;
+import com.forgex.common.mapper.template.SysResponseMessageTemplateMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -45,7 +49,6 @@ public class TemplateConfigServiceImpl implements TemplateConfigService {
     
     private final SysResponseMessageTemplateMapper responseMessageTemplateMapper;
     private final SysMqMessageTemplateMapper mqMessageTemplateMapper;
-    private final FxExcelImportConfigTemplateMapper importConfigTemplateMapper;
     private final FxExcelExportConfigTemplateMapper exportConfigTemplateMapper;
     
     @Override
@@ -97,10 +100,7 @@ public class TemplateConfigServiceImpl implements TemplateConfigService {
         // 2. 同步 MQ 消息模板
         syncMqMessageTemplates(sourceTenantId, targetTenantId, templateCodes);
         
-        // 3. 同步导入配置模板
-        syncImportConfigTemplates(sourceTenantId, targetTenantId, templateCodes);
-        
-        // 4. 同步导出配置模板
+        // 3. 同步导出配置模板
         syncExportConfigTemplates(sourceTenantId, targetTenantId, templateCodes);
         
         log.info("模板配置同步完成，目标租户 ID：{}", targetTenantId);
@@ -190,45 +190,6 @@ public class TemplateConfigServiceImpl implements TemplateConfigService {
         }
         
         log.info("同步 MQ 消息模板完成，数量：{}", sourceTemplates.size());
-    }
-    
-    /**
-     * 同步导入配置模板
-     */
-    private void syncImportConfigTemplates(Long sourceTenantId, Long targetTenantId, String... templateCodes) {
-        LambdaQueryWrapper<FxExcelImportConfigTemplate> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(FxExcelImportConfigTemplate::getTenantId, sourceTenantId)
-               .eq(FxExcelImportConfigTemplate::getDeleted, false)
-               .eq(FxExcelImportConfigTemplate::getEnabled, true);
-        
-        if (templateCodes != null && templateCodes.length > 0) {
-            wrapper.in(FxExcelImportConfigTemplate::getTemplateCode, templateCodes);
-        }
-        
-        List<FxExcelImportConfigTemplate> sourceTemplates = importConfigTemplateMapper.selectList(wrapper);
-        
-        for (FxExcelImportConfigTemplate source : sourceTemplates) {
-            LambdaQueryWrapper<FxExcelImportConfigTemplate> targetWrapper = new LambdaQueryWrapper<>();
-            targetWrapper.eq(FxExcelImportConfigTemplate::getTenantId, targetTenantId)
-                        .eq(FxExcelImportConfigTemplate::getTemplateCode, source.getTemplateCode())
-                        .eq(FxExcelImportConfigTemplate::getDeleted, false);
-            
-            FxExcelImportConfigTemplate existing = importConfigTemplateMapper.selectOne(targetWrapper);
-            
-            if (existing != null) {
-                existing.setBizType(source.getBizType());
-                existing.setConfigData(source.getConfigData());
-                importConfigTemplateMapper.updateById(existing);
-            } else {
-                FxExcelImportConfigTemplate newTemplate = new FxExcelImportConfigTemplate();
-                BeanUtils.copyProperties(source, newTemplate);
-                newTemplate.setId(null);
-                newTemplate.setTenantId(targetTenantId);
-                importConfigTemplateMapper.insert(newTemplate);
-            }
-        }
-        
-        log.info("同步导入配置模板完成，数量：{}", sourceTemplates.size());
     }
     
     /**
