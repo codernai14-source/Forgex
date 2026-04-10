@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: forgex-report
+
+logging:
+  level:
+    com.forgex.report: info
+    com.pig4wei.ureport2: warn
+    org.jeecgframework.jimureport: warn
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: logs/forgex-report/forgex-report.log
+    max-size: 100MB
+    max-history: 30
+
+ureport:
+  debug: false
+  cache-enabled: true
+  cache-time: 600
+
+jmreport:
+  mode: 1
+  preview-cross: false
+
+server:
+  port: 8084

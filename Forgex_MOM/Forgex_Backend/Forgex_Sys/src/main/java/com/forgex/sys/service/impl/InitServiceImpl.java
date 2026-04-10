@@ -355,6 +355,9 @@ public class InitServiceImpl implements InitService {
         SysModule sysModule = insertModule(tenantId, "sys", "系统管理", "System Management", "SettingOutlined", 10);
         seedSystemModuleMenus(tenantId, sysModule.getId(), grantedMenuIds);
 
+        SysModule basicModule = insertModule(tenantId, "basic", "基础信息", "Basic Information", "DatabaseOutlined", 20);
+        seedBasicModuleMenus(tenantId, basicModule.getId(), grantedMenuIds);
+
         SysModule workflowModule = insertModule(tenantId, "approval", "审批管理", "Approval", "AuditOutlined", 50);
         seedWorkflowModuleMenus(tenantId, workflowModule.getId(), grantedMenuIds);
 
@@ -384,14 +387,16 @@ public class InitServiceImpl implements InitService {
         grantedMenuIds.add(roleMenu.getId());
 
         // 菜单授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
-        SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "menu-grant/:roleId",
+        // 路径格式：role/MenuGrant/:roleId，与组件目录结构 role/MenuGrant.vue 对应
+        SysMenu menuGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "role/MenuGrant/:roleId",
                 "菜单授权", "Menu Grant", "SafetyCertificateOutlined", "SystemRoleMenuGrant", "sys:role:authMenu", 1, 2);
         menuGrantMenu.setVisible(false); // 设置为隐藏菜单
         menuMapper.updateById(menuGrantMenu);
         grantedMenuIds.add(menuGrantMenu.getId());
 
         // 人员授权子菜单（隐藏菜单，不显示在侧边栏，仅用于路由和权限控制）
-        SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "user-grant/:roleId",
+        // 路径格式：role/UserGrant/:roleId，与组件目录结构 role/UserGrant.vue 对应
+        SysMenu userGrantMenu = insertMenu(tenantId, moduleId, roleMenu.getId(), "menu", "role/UserGrant/:roleId",
                 "人员授权", "User Grant", "UsergroupAddOutlined", "SystemRoleUserGrant", "sys:role:authUser", 2, 2);
         userGrantMenu.setVisible(false); // 设置为隐藏菜单
         menuMapper.updateById(userGrantMenu);
@@ -416,12 +421,21 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:menu:delete", "删除菜单", "Delete Menu"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
+        SysMenu departmentMenu = addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
                 "ApartmentOutlined", "SystemDepartment", "sys:dept:view",
                 Arrays.asList(
                         new String[]{"sys:dept:add", "新增部门", "Add Department"},
                         new String[]{"sys:dept:edit", "编辑部门", "Edit Department"},
                         new String[]{"sys:dept:delete", "删除部门", "Delete Department"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, departmentMenu.getId(), 2, grantedMenuIds, 10,
+                "inviteCode", "邀请码管理", "Invite Code Management",
+                "KeyOutlined", "SystemInviteCode", "sys:invite-code:view",
+                Arrays.asList(
+                        new String[]{"sys:invite-code:add", "新增邀请码", "Add Invite Code"},
+                        new String[]{"sys:invite-code:edit", "编辑邀请码", "Edit Invite Code"},
+                        new String[]{"sys:invite-code:delete", "删除邀请码", "Delete Invite Code"}
                 ));
 
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 60, "position", "岗位管理", "Position Management",
@@ -538,6 +552,18 @@ public class InitServiceImpl implements InitService {
         );
     }
 
+    private void seedBasicModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "encodeRule", "编码规则管理", "Encoding Rule Management",
+                "CodeOutlined", "BasicEncodeRule", "sys:encodeRule:view",
+                Arrays.asList(
+                        new String[]{"sys:encodeRule:add", "新增编码规则", "Add Encode Rule"},
+                        new String[]{"sys:encodeRule:edit", "编辑编码规则", "Edit Encode Rule"},
+                        new String[]{"sys:encodeRule:delete", "删除编码规则", "Delete Encode Rule"},
+                        new String[]{"sys:encodeRule:test", "测试编码规则", "Test Encode Rule"},
+                        new String[]{"sys:encodeRule:generate", "生成编码", "Generate Code"}
+                ));
+    }
+
     private void addRoleMenuButtons(Long tenantId, Long moduleId, Long parentId, List<Long> grantedMenuIds) {
         String[][] buttonDefs = {
                 {"sys:role:add", "新增角色", "Add Role"},
@@ -554,15 +580,15 @@ public class InitServiceImpl implements InitService {
         }
     }
 
-    private void addMenuWithButtons(Long tenantId, Long moduleId, List<Long> grantedMenuIds,
+    private SysMenu addMenuWithButtons(Long tenantId, Long moduleId, List<Long> grantedMenuIds,
                                     int orderNum, String path, String zhName, String enName,
                                     String icon, String componentKey, String menuPermKey,
                                     List<String[]> buttonDefs) {
-        addMenuWithButtons(tenantId, moduleId, 0L, 1, grantedMenuIds, orderNum, path, zhName, enName,
+        return addMenuWithButtons(tenantId, moduleId, 0L, 1, grantedMenuIds, orderNum, path, zhName, enName,
                 icon, componentKey, menuPermKey, buttonDefs);
     }
 
-    private void addMenuWithButtons(Long tenantId, Long moduleId, Long parentId, int menuLevel,
+    private SysMenu addMenuWithButtons(Long tenantId, Long moduleId, Long parentId, int menuLevel,
                                     List<Long> grantedMenuIds, int orderNum, String path,
                                     String zhName, String enName, String icon, String componentKey,
                                     String menuPermKey, List<String[]> buttonDefs) {
@@ -575,6 +601,8 @@ public class InitServiceImpl implements InitService {
                     buttonDef[0], buttonDef[1], buttonDef[2], buttonOrder++);
             grantedMenuIds.add(button.getId());
         }
+
+        return menu;
     }
 
     private SysModule insertModule(Long tenantId, String code, String zhName, String enName, String icon, int orderNum) {

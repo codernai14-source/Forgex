@@ -212,6 +212,61 @@ export interface WfDashboardSummaryVO {
 }
 
 /**
+ * 审批工作台近 7 日审批结果趋势项
+ */
+export interface WfDashboardWeeklyResultDTO {
+  /**
+   * 日期，格式 yyyy-MM-dd
+   */
+  date: string
+
+  /**
+   * 审批通过数量
+   */
+  approvedCount: number
+
+  /**
+   * 驳回数量
+   */
+  rejectedCount: number
+}
+
+/**
+ * 审批工作台用户审批占比项
+ */
+export interface WfDashboardUserShareDTO {
+  /**
+   * 发起人 ID
+   */
+  initiatorId: number
+
+  /**
+   * 发起人名称
+   */
+  initiatorName: string
+
+  /**
+   * 审批单数量
+   */
+  count: number
+}
+
+/**
+ * 审批工作台图表统计数据
+ */
+export interface WfDashboardAnalyticsVO {
+  /**
+   * 近 7 日审批结果趋势
+   */
+  weeklyResults: WfDashboardWeeklyResultDTO[]
+
+  /**
+   * 用户审批数量占比
+   */
+  userShares: WfDashboardUserShareDTO[]
+}
+
+/**
  * 发起审批
  * @param params 发起审批参数
  * @returns 执行 ID
@@ -298,4 +353,12 @@ export function pageMyCc(params: WfExecutionQueryParam & { pageNum: number; page
  */
 export function loadDashboardSummary() {
   return http.post<WfDashboardSummaryVO>('/wf/execution/dashboard/summary', {}, { silentError: true } as any)
+}
+
+/**
+ * 审批工作台图表统计数据
+ * @returns 近 7 日审批趋势与用户审批占比
+ */
+export function loadDashboardAnalytics() {
+  return http.post<WfDashboardAnalyticsVO>('/wf/execution/dashboard/analytics', {}, { silentError: true } as any)
 }

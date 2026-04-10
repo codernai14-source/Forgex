@@ -16,17 +16,27 @@ package com.forgex.common.domain.config;
 import lombok.Data;
 
 /**
- * 初始化状态配置。
+ * 初始化状态配置
  * <p>
  * 记录系统初始化使用次数与完成标志，供登录页判断是否跳转初始化向导。
- * 字段：
- * - {@code usageCount} 使用次数；
- * - {@code initCompleted} 是否已完成初始化。
+ * 该配置用于控制系统初始化流程的状态跟踪。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-03-28
  */
 @Data
 public class InitStatusConfig {
-    /** 使用次数 */
+    /**
+     * 使用次数
+     * <p>记录系统初始化功能的使用次数。</p>
+     */
     private Integer usageCount;
-    /** 是否已完成初始化 */
+    
+    /**
+     * 是否已完成初始化
+     * <p>标识系统初始化流程是否已完成，true 表示已完成，false 表示未完成。</p>
+     */
     private Boolean initCompleted;
 }

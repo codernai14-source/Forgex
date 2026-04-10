@@ -20,22 +20,19 @@ import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.DictDTO;
 import com.forgex.sys.domain.param.DictItemsByPathParam;
 import com.forgex.sys.domain.param.DictItemsParam;
+import com.forgex.sys.domain.param.DictPageParam;
 import com.forgex.sys.domain.param.IdParam;
 import com.forgex.sys.domain.vo.DictItemVO;
 import com.forgex.sys.domain.vo.DictTreeVO;
 import com.forgex.sys.service.IDictService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
-/**
- * 数据字典 Controller
- *
- * @author coder_nai@163.com
- * @date 2025-01-13
- */
 @RestController
 @RequestMapping("/sys/dict")
 public class SysDictController {
@@ -49,10 +46,9 @@ public class SysDictController {
     }
 
     @PostMapping("/page")
-    public R<IPage<DictTreeVO>> page(@RequestBody(required = false) Map<String, Object> params) {
-        long pageNum = parseLong(params == null ? null : params.get("pageNum"), 1L);
-        long pageSize = parseLong(params == null ? null : params.get("pageSize"), 20L);
-        return R.ok(dictService.pageDictTree(getCurrentTenantId(), pageNum, pageSize));
+    public R<IPage<DictTreeVO>> page(@RequestBody(required = false) DictPageParam param) {
+        DictPageParam query = param == null ? new DictPageParam() : param;
+        return R.ok(dictService.pageDictTree(getCurrentTenantId(), query));
     }
 
     @PostMapping("/items")
@@ -100,16 +96,5 @@ public class SysDictController {
     private Long getCurrentTenantId() {
         Long tenantId = CurrentUserUtils.getTenantId();
         return tenantId != null ? tenantId : 1L;
-    }
-
-    private long parseLong(Object value, long defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-        try {
-            return Long.parseLong(String.valueOf(value));
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
     }
 }

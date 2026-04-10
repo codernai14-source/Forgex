@@ -144,7 +144,7 @@ import {
   pageMessage,
   markMessageRead,
   markAllMessageRead
-} from '../../api/message'
+} from '@/api/message'
 
 // 查询表单
 const searchForm = reactive({

@@ -10,8 +10,10 @@ import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.dto.OnlineUserQueryDTO;
+import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.vo.OnlineUserVO;
+import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.service.IOnlineUserService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -42,10 +45,12 @@ import java.util.stream.Collectors;
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
     private static final String ONLINE_USER_PREFIX = "fx:online:user:";
+    private static final String LOGIN_TERMINAL_B = "B";
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final SysUserMapper userMapper;
+    private final SysTenantMapper tenantMapper;
     private final LogoutAuditService logoutAuditService;
 
     /**
@@ -77,6 +82,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
 
         String accountLike = query == null ? null : query.getAccount();
+        String loginTerminal = query != null && StringUtils.hasText(query.getLoginTerminal())
+                ? normalizeLoginTerminal(query.getLoginTerminal())
+                : null;
 
         List<OnlineUserInfo> userInfoList = new ArrayList<>();
         for (String key : keys) {
@@ -92,6 +100,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (StringUtils.hasText(accountLike) && (userInfo.account == null || !userInfo.account.contains(accountLike))) {
                 continue;
             }
+            if (StringUtils.hasText(loginTerminal)
+                    && !Objects.equals(loginTerminal, normalizeLoginTerminal(userInfo.loginTerminal))) {
+                continue;
+            }
             Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
             userInfo.ttlSeconds = ttl == null ? -1L : ttl;
             userInfoList.add(userInfo);
@@ -103,7 +115,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             return page;
         }
 
-        // 4) 关联查询用户最后登录信息（用于页面展示）
+        // 4) 关联查询用户信息（用于页面展示）
         List<Long> userIds = userInfoList.stream().map(u -> u.userId).filter(id -> id != null).distinct().collect(Collectors.toList());
         List<SysUser> users = userIds.isEmpty()
                 ? Collections.emptyList()
@@ -112,19 +124,39 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         java.util.Map<Long, SysUser> userMap = users.stream().collect(Collectors.toMap(SysUser::getId, u -> u, (a, b) -> a));
 
+        // 5) 关联查询租户信息（用于页面展示）
+        List<Long> tenantIds = userInfoList.stream().map(u -> u.tenantId).filter(id -> id != null).distinct().collect(Collectors.toList());
+        List<SysTenant> tenants = tenantIds.isEmpty()
+                ? Collections.emptyList()
+                : tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
+                .in(SysTenant::getId, tenantIds));
+
+        java.util.Map<Long, SysTenant> tenantMap = tenants.stream().collect(Collectors.toMap(SysTenant::getId, t -> t, (a, b) -> a));
+
         List<OnlineUserVO> all = userInfoList.stream().map(userInfo -> {
             OnlineUserVO vo = new OnlineUserVO();
             vo.setToken(userInfo.token);
             vo.setUserId(userInfo.userId);
             vo.setTenantId(userInfo.tenantId);
             vo.setAccount(userInfo.account);
+            vo.setLoginTerminal(normalizeLoginTerminal(userInfo.loginTerminal));
             vo.setTtlSeconds(userInfo.ttlSeconds);
+            
+            // 设置用户名称
             SysUser u = userInfo.userId == null ? null : userMap.get(userInfo.userId);
             if (u != null) {
+                vo.setUsername(u.getUsername());
                 vo.setLastLoginTime(u.getLastLoginTime());
                 vo.setLastLoginIp(u.getLastLoginIp());
                 vo.setLastLoginRegion(u.getLastLoginRegion());
             }
+            
+            // 设置租户名称
+            SysTenant t = userInfo.tenantId == null ? null : tenantMap.get(userInfo.tenantId);
+            if (t != null) {
+                vo.setTenantName(t.getTenantName());
+            }
+            
             return vo;
         }).collect(Collectors.toList());
 
@@ -212,6 +244,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             JsonNode tenantIdNode = node.get("tenantId");
             JsonNode accountNode = node.get("account");
             JsonNode tokenNode = node.get("token");
+            JsonNode loginTerminalNode = node.get("loginTerminal");
             if (userIdNode != null && userIdNode.isNumber()) {
                 userInfo.userId = userIdNode.longValue();
             } else if (userIdNode != null && userIdNode.isTextual()) {
@@ -234,10 +267,26 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (tokenNode != null && tokenNode.isTextual()) {
                 userInfo.token = tokenNode.asText();
             }
+            if (loginTerminalNode != null && loginTerminalNode.isTextual()) {
+                userInfo.loginTerminal = loginTerminalNode.asText();
+            } else {
+                userInfo.loginTerminal = LOGIN_TERMINAL_B;
+            }
             return userInfo;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String normalizeLoginTerminal(String loginTerminal) {
+        if (!StringUtils.hasText(loginTerminal)) {
+            return LOGIN_TERMINAL_B;
+        }
+        String value = loginTerminal.trim().toUpperCase();
+        if ("B".equals(value) || "C".equals(value) || "THIRD_PARTY".equals(value)) {
+            return value;
+        }
+        return LOGIN_TERMINAL_B;
     }
 
     /**
@@ -251,6 +300,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         private Long userId;
         private Long tenantId;
         private String account;
+        private String loginTerminal;
         private Long ttlSeconds;
     }
 }

@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.workflow.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.workflow.domain.dto.WfDashboardAnalyticsVO;
 import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
@@ -110,4 +111,11 @@ public interface IWfExecutionService {
      * @return 汇总数据，各列表最多 6 条
      */
     WfDashboardSummaryVO loadDashboardSummary();
+
+    /**
+     * 审批工作台图表统计数据。
+     *
+     * @return 图表统计结果
+     */
+    WfDashboardAnalyticsVO loadDashboardAnalytics();
 }

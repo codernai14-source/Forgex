@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.forgex.sys.mapper.SysEncodeRuleMapper">
+
+    <!--
+        编码规则结果映射
+        包含主表字段和一对多关联的明细列表
+    -->
+    <resultMap id="EncodeRuleResultMap" type="com.forgex.sys.domain.entity.SysEncodeRule">
+        <id property="id" column="id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="ruleCode" column="rule_code"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="module" column="module"/>
+        <result property="prefix" column="prefix"/>
+        <result property="dateFormat" column="date_format"/>
+        <result property="serialLength" column="serial_length"/>
+        <result property="resetCycle" column="reset_cycle"/>
+        <result property="currentSerial" column="current_serial"/>
+        <result property="isEnabled" column="is_enabled"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="deleted" column="deleted"/>
+        
+        <!-- 一对多关联明细规则 -->
+        <collection property="detailList" ofType="com.forgex.sys.domain.entity.SysEncodeRuleDetail"
+                    select="com.forgex.sys.mapper.SysEncodeRuleDetailMapper.selectByRuleId"
+                    column="id">
+        </collection>
+    </resultMap>
+
+    <!--
+        基础结果映射（不包含关联查询）
+        用于简单的单表查询
+    -->
+    <resultMap id="BaseResultMap" type="com.forgex.sys.domain.entity.SysEncodeRule">
+        <id property="id" column="id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="ruleCode" column="rule_code"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="module" column="module"/>
+        <result property="prefix" column="prefix"/>
+        <result property="dateFormat" column="date_format"/>
+        <result property="serialLength" column="serial_length"/>
+        <result property="resetCycle" column="reset_cycle"/>
+        <result property="currentSerial" column="current_serial"/>
+        <result property="isEnabled" column="is_enabled"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="deleted" column="deleted"/>
+    </resultMap>
+
+    <!--
+        基础列列表
+        用于 SELECT * 的列定义
+    -->
+    <sql id="Base_Column_List">
+        id, tenant_id, rule_code, rule_name, module, prefix, date_format, 
+        serial_length, reset_cycle, current_serial, is_enabled, sort_order, 
+        remark, create_time, create_by, update_time, update_by, deleted
+    </sql>
+
+</mapper>

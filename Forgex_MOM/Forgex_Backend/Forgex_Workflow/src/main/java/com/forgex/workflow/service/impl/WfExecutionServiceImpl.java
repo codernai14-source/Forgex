@@ -23,7 +23,10 @@ import com.forgex.common.api.service.UserInfoService;
 import com.forgex.common.exception.BusinessException;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.workflow.common.WorkflowConstants;
+import com.forgex.workflow.domain.dto.WfDashboardAnalyticsVO;
 import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
+import com.forgex.workflow.domain.dto.WfDashboardUserShareDTO;
+import com.forgex.workflow.domain.dto.WfDashboardWeeklyResultDTO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.entity.WfMyTask;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
@@ -56,9 +59,11 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +91,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     private static final int DASHBOARD_LIST_LIMIT = 6;
 
     private static final DateTimeFormatter APPROVE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DASHBOARD_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final WfTaskExecutionMapper executionMapper;
     private final WfTaskExecutionDetailMapper executionDetailMapper;
@@ -356,6 +362,43 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
 
         vo.setCc(pageMyCc(limitParam).getRecords());
         return vo;
+    }
+
+    @Override
+    public WfDashboardAnalyticsVO loadDashboardAnalytics() {
+        Long tenantId = requireCurrentTenantId();
+        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        LocalDate startDate = today.minusDays(6);
+        LocalDateTime startTime = startDate.atStartOfDay();
+        LocalDateTime endTime = today.plusDays(1).atStartOfDay();
+
+        List<WfDashboardWeeklyResultDTO> rawWeeklyResults = executionMapper
+                .selectDashboardWeeklyResults(tenantId, startTime, endTime);
+        Map<String, WfDashboardWeeklyResultDTO> weeklyResultMap = new HashMap<>();
+        for (WfDashboardWeeklyResultDTO item : rawWeeklyResults) {
+            if (item != null && StringUtils.hasText(item.getDate())) {
+                weeklyResultMap.put(item.getDate(), item);
+            }
+        }
+
+        List<WfDashboardWeeklyResultDTO> weeklyResults = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            String date = startDate.plusDays(i).format(DASHBOARD_DATE_FORMATTER);
+            WfDashboardWeeklyResultDTO source = weeklyResultMap.get(date);
+
+            WfDashboardWeeklyResultDTO result = new WfDashboardWeeklyResultDTO();
+            result.setDate(date);
+            result.setApprovedCount(source == null || source.getApprovedCount() == null ? 0L : source.getApprovedCount());
+            result.setRejectedCount(source == null || source.getRejectedCount() == null ? 0L : source.getRejectedCount());
+            weeklyResults.add(result);
+        }
+
+        List<WfDashboardUserShareDTO> userShares = executionMapper.selectDashboardUserShares(tenantId);
+
+        WfDashboardAnalyticsVO analytics = new WfDashboardAnalyticsVO();
+        analytics.setWeeklyResults(weeklyResults);
+        analytics.setUserShares(userShares == null ? Collections.emptyList() : userShares);
+        return analytics;
     }
 
     private Page<WfExecutionDTO> pageByExecutionIds(List<Long> executionIds, WfExecutionQueryParam param) {

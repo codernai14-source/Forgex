@@ -36,9 +36,39 @@ public class FxExcelImportConfig extends BaseEntity {
     private String title;
 
     /**
+     * 模板标题国际化 JSON
+     * <p>
+     * 存储多语言标题，格式：{"zh-CN": "用户导入模板", "en-US": "User Import Template"}
+     * </p>
+     *
+     * @since 1.1.0
+     */
+    private String titleI18nJson;
+
+    /**
      * 标题列小字说明。
      */
     private String subtitle;
+
+    /**
+     * 模板说明国际化 JSON
+     * <p>
+     * 存储多语言说明，格式：{"zh-CN": "请填写用户信息", "en-US": "Please fill in user information"}
+     * </p>
+     *
+     * @since 1.1.0
+     */
+    private String subtitleI18nJson;
+
+    /**
+     * 模板说明样式 JSON
+     * <p>
+     * 存储样式配置，格式：{"backgroundColor": "#8EC67F", "wrapText": true, "fontSize": 12}
+     * </p>
+     *
+     * @since 1.1.0
+     */
+    private String subtitleStyleJson;
 
     /**
      * 版本号（用于配置演进）。

@@ -100,3 +100,30 @@ export function getSocialAuthorizeUrl(platform: 'WECHAT' | 'DINGTALK') {
   return http.get<string>('/auth/social/authorizeUrl', { params: { platform } })
 }
 
+/**
+ * 邀请码注册 API
+ * @param data 注册参数
+ * @returns 注册结果
+ */
+export function register(data: {
+  account: string
+  username: string
+  password: string
+  phone?: string
+  email?: string
+  inviteCode: string
+  captcha?: string
+  captchaId?: string
+}) {
+  return http.post('/auth/register', data)
+}
+
+/**
+ * 校验邀请码 API
+ * @param inviteCode 邀请码
+ * @returns 校验结果
+ */
+export function checkInviteCode(inviteCode: string) {
+  return http.post('/auth/register/check-invite', { inviteCode })
+}
+

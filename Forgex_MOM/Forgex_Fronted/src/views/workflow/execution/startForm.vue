@@ -2,7 +2,7 @@
   <div class="start-form-page">
     <div class="page-head">
       <div>
-        <a-button type="link" class="page-head__back" @click="router.push(approvalRoutePaths.executionStartList)">
+        <a-button type="link" class="page-head__back" @click="navigateAndCloseCurrent(approvalRoutePaths.executionStartList)">
           返回流程选择
         </a-button>
         <h2>{{ taskConfig?.taskName || '填写审批表单' }}</h2>
@@ -25,7 +25,7 @@
       class="error-alert"
     >
       <template #description>
-        <a-button type="link" @click="router.push(approvalRoutePaths.executionStartList)">返回选择页</a-button>
+        <a-button type="link" @click="navigateAndCloseCurrent(approvalRoutePaths.executionStartList)">返回选择页</a-button>
       </template>
     </a-alert>
 
@@ -93,8 +93,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import { useRoute, useRouter } from 'vue-router'
-import { approvalRoutePaths } from '@/router/approvalRoutePaths'
+import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
+import { approvalRoutePaths, TAB_CLOSE_QUERY_KEY } from '@/router/approvalRoutePaths'
 import { startExecution, type WfExecutionStartParam } from '@/api/workflow/execution'
 import { getTaskConfigByCode, type WfTaskConfigDTO } from '@/api/workflow/taskConfig'
 import { workflowFormRegistry } from './formRegistry'
@@ -122,6 +122,16 @@ const dynamicFormComponent = computed(() => {
   }
   return workflowFormRegistry[taskConfig.value.formPath] || null
 })
+
+function navigateAndCloseCurrent(path: string, query: LocationQueryRaw = {}) {
+  router.push({
+    path,
+    query: {
+      ...query,
+      [TAB_CLOSE_QUERY_KEY]: route.path,
+    }
+  })
+}
 
 async function loadTaskConfig() {
   if (!taskCode.value) {
@@ -185,10 +195,7 @@ async function handleSubmit() {
     }
     const executionId = await startExecution(params)
     message.success('审批已成功发起')
-    router.push({
-      path: approvalRoutePaths.myInitiated,
-      query: { executionId }
-    })
+    navigateAndCloseCurrent(approvalRoutePaths.myInitiated, { executionId })
   } catch (error: any) {
     if (error?.message?.includes('JSON')) {
       message.error('低代码表单内容必须是合法 JSON')

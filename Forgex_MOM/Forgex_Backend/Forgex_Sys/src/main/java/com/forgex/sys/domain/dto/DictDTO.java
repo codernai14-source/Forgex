@@ -49,6 +49,8 @@ public class DictDTO {
      */
     private String dictValue;
 
+    private Long moduleId;
+
     /**
      * 字典值国际化JSON
      * 存储多语言字典值，格式：{"zh":"男","en":"Male"}

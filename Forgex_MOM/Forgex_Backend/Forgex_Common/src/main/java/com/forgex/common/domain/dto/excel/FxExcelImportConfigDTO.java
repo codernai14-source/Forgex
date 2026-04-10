@@ -51,10 +51,43 @@ public class FxExcelImportConfigDTO {
     private String title;
 
     /**
+     * 模板标题国际化 JSON
+     * <p>
+     * 存储多语言标题，格式：{"zh-CN": "用户导入模板", "en-US": "User Import Template"}
+     * </p>
+     *
+     * @since 1.1.0
+     * @see FxExcelImportConfig#getTitleI18nJson()
+     */
+    private String titleI18nJson;
+
+    /**
      * 副标题
      * <p>支持国际化的导入配置副标题。</p>
      */
     private String subtitle;
+
+    /**
+     * 模板说明国际化 JSON
+     * <p>
+     * 存储多语言说明，格式：{"zh-CN": "请填写用户信息", "en-US": "Please fill in user information"}
+     * </p>
+     *
+     * @since 1.1.0
+     * @see FxExcelImportConfig#getSubtitleI18nJson()
+     */
+    private String subtitleI18nJson;
+
+    /**
+     * 模板说明样式 JSON
+     * <p>
+     * 存储样式配置，格式：{"backgroundColor": "#8EC67F", "wrapText": true, "fontSize": 12}
+     * </p>
+     *
+     * @since 1.1.0
+     * @see FxExcelImportConfig#getSubtitleStyleJson()
+     */
+    private String subtitleStyleJson;
 
     /**
      * 版本号

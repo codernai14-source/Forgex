@@ -98,7 +98,17 @@ public enum CommonPrompt implements I18nPrompt {
     GATEWAY_ERROR("common", "GATEWAY_ERROR", "网关错误"),
     INTERNAL_SERVER_ERROR_MSG("common", "INTERNAL_SERVER_ERROR_MSG", "服务器内部错误：{0}"),
     OPERATION_FAILED("common", "OPERATION_FAILED", "操作失败"),
-    OPERATION_SUCCESS("common", "OPERATION_SUCCESS", "操作成功");
+    OPERATION_SUCCESS("common", "OPERATION_SUCCESS", "操作成功"),
+
+    // 邀请码注册相关
+    INVITE_CODE_NOT_FOUND("common", "INVITE_CODE_NOT_FOUND", "邀请码不存在"),
+    INVITE_CODE_EXPIRED("common", "INVITE_CODE_EXPIRED", "邀请码已过期"),
+    INVITE_CODE_DISABLED("common", "INVITE_CODE_DISABLED", "邀请码已停用"),
+    INVITE_CODE_USED_UP("common", "INVITE_CODE_USED_UP", "邀请码已用尽"),
+    INVITE_CODE_INVALID("common", "INVITE_CODE_INVALID", "邀请码无效"),
+    REGISTER_SUCCESS("common", "REGISTER_SUCCESS", "注册成功"),
+    ACCOUNT_ALREADY_EXISTS("common", "ACCOUNT_ALREADY_EXISTS", "账号已存在"),
+    INVITE_CODE_CANNOT_BE_EMPTY("common", "INVITE_CODE_CANNOT_BE_EMPTY", "邀请码不能为空");
 
     private final String module;
     private final String promptCode;

@@ -63,6 +63,7 @@ export interface MenuTreeRecord {
   orderNum?: number
   visible?: boolean | number | string
   status?: boolean | number | string
+  checked?: boolean
   children?: MenuTreeRecord[]
 }
 
@@ -71,11 +72,11 @@ export interface MenuTreeRecord {
  * 用于人员授权列表
  */
 export interface RoleGrantVO {
-  id: number
-  roleId: number
+  id: string
+  roleId: string
   grantType: 'USER' | 'DEPARTMENT' | 'POSITION'
   grantObject: string
-  grantObjectId: number
+  grantObjectId: string
   createTime?: string
   createBy?: string
   updateTime?: string

@@ -35,24 +35,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * 模板消息发送服务实现类。
  * <p>
- * 提供基于消息模板的通用消息发送功能，核心流程：
- * <ol>
- *   <li>根据 templateCode 查询模板主表</li>
- *   <li>查询模板内容配置（支持多平台）</li>
- *   <li>查询或解析接收人列表</li>
- *   <li>填充占位符</li>
- *   <li>保存消息并触发 SSE 推送</li>
- * </ol>
+ * 负责根据模板编码查询模板、解析接收人、填充占位符、落库站内消息并触发 SSE 推送。
+ * 当前仅处理站内消息平台，同时支持同步调用和 MQ 消费两种发送入口。
  * </p>
- * <p><strong>占位符格式：</strong> ${变量名}，例如 ${userName}、${taskName}</p>
- * <p><strong>多语言支持：</strong> 根据 Accept-Language 请求头或 LangContext 选择对应语言的内容</p>
  *
  * @author Forgex Team
  * @version 1.0.0
@@ -67,75 +64,69 @@ import java.util.regex.Pattern;
 public class TemplateMessageServiceImpl implements TemplateMessageService {
 
     /**
-     * 占位符正则表达式：${变量名}
+     * 占位符匹配规则，格式为 ${变量名}。
      */
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
 
     /**
-     * 站内消息平台标识
+     * 站内消息平台标识。
      */
     private static final String PLATFORM_INTERNAL = "INTERNAL";
 
     /**
-     * 默认消息类型
+     * 默认消息类型。
      */
     private static final String DEFAULT_MESSAGE_TYPE = "NOTICE";
 
     /**
-     * 模板主表 Mapper
+     * 模板主表 Mapper。
      */
     private final SysMessageTemplateMapper templateMapper;
 
     /**
-     * 模板内容 Mapper
+     * 模板内容 Mapper。
      */
     private final SysMessageTemplateContentMapper contentMapper;
 
     /**
-     * 模板接收人 Mapper
+     * 模板接收人 Mapper。
      */
     private final SysMessageTemplateReceiverMapper receiverMapper;
 
     /**
-     * 消息 Mapper
+     * 消息 Mapper。
      */
     private final SysMessageMapper messageMapper;
 
     /**
-     * SSE 推送服务
+     * SSE 推送服务。
      */
     private final SseEmitterService sseEmitterService;
 
     /**
-     * JSON 序列化工具
+     * JSON 序列化工具。
      */
     private final ObjectMapper objectMapper;
 
     /**
-     * 使用模板发送消息（显式指定接收人）。
-     * <p>
-     * 适用于审批通知等需要动态指定接收人的场景。
-     * </p>
+     * 使用模板发送消息，并显式指定接收人列表。
      *
-     * @param templateCode    模板编码，不能为空
-     * @param receiverUserIds 接收人用户ID列表，不能为空
-     * @param dataMap         占位符数据Map，可为空
-     * @param bizType         业务类型，可为空
-     * @return 发送成功的消息数量，失败返回0
-     * @throws IllegalArgumentException 当 templateCode 或 receiverUserIds 为空时抛出
+     * @param templateCode 模板编码
+     * @param receiverUserIds 接收人用户 ID 列表
+     * @param dataMap 占位符数据
+     * @param bizType 业务类型
+     * @return 成功发送的消息数量
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int sendByTemplate(String templateCode, List<Long> receiverUserIds, Map<String, Object> dataMap, String bizType) {
-        // 参数校验
         if (!StringUtils.hasText(templateCode)) {
-            throw new IllegalArgumentException("模板编码不能为空");
+            throw new IllegalArgumentException("Invalid request parameter");
         }
         if (receiverUserIds == null || receiverUserIds.isEmpty()) {
-            throw new IllegalArgumentException("接收人列表不能为空");
+            throw new IllegalArgumentException("Receiver list cannot be empty");
         }
 
-        // 查询模板
         SysMessageTemplate template = findTemplateByCode(templateCode);
         if (template == null) {
             log.warn("模板不存在: templateCode={}", templateCode);
@@ -146,24 +137,19 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
             return 0;
         }
 
-        // 查询模板内容配置
         List<SysMessageTemplateContent> contents = findTemplateContents(template.getId());
         if (contents.isEmpty()) {
             log.warn("模板内容配置为空: templateCode={}", templateCode);
             return 0;
         }
 
-        // 获取当前租户ID
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
-            log.warn("当前租户ID为空，无法发送消息");
+            log.warn("Current tenantId is null, cannot send message");
             return 0;
         }
 
-        // 去重接收人
         Set<Long> distinctUserIds = new LinkedHashSet<>(receiverUserIds);
-
-        // 发送消息
         int sentCount = 0;
         for (Long receiverUserId : distinctUserIds) {
             if (receiverUserId == null) {
@@ -171,24 +157,16 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
             }
 
             for (SysMessageTemplateContent content : contents) {
-                // 仅处理站内消息
                 if (!PLATFORM_INTERNAL.equals(content.getPlatform())) {
                     continue;
                 }
 
-                // 填充占位符
                 String title = fillPlaceholders(content.getContentTitle(), content.getContentTitleI18nJson(), dataMap);
                 String body = fillPlaceholders(content.getContentBody(), content.getContentBodyI18nJson(), dataMap);
-
-                // 创建消息
                 SysMessage message = createMessage(tenantId, receiverUserId, template, content, title, body, bizType);
 
-                // 保存消息
                 messageMapper.insert(message);
-
-                // SSE 推送
                 pushMessage(tenantId, receiverUserId, message);
-
                 sentCount++;
             }
         }
@@ -199,122 +177,101 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     }
 
     /**
-     * 使用模板发送消息（根据模板配置自动解析接收人）。
-     * <p>
-     * 适用于定时通知等接收人固定的场景。
-     * </p>
+     * 使用模板发送消息，并根据模板配置自动解析接收人。
      *
-     * @param templateCode 模板编码，不能为空
-     * @param dataMap      占位符数据Map，可为空
-     * @return 发送成功的消息数量，失败返回0
+     * @param templateCode 模板编码
+     * @param dataMap 占位符数据
+     * @return 成功发送的消息数量
      */
     @Override
     public int sendByTemplate(String templateCode, Map<String, Object> dataMap) {
-        // 参数校验
         if (!StringUtils.hasText(templateCode)) {
-            throw new IllegalArgumentException("模板编码不能为空");
+            throw new IllegalArgumentException("Invalid request parameter");
         }
 
-        // 查询模板
         SysMessageTemplate template = findTemplateByCode(templateCode);
         if (template == null) {
             log.warn("模板不存在: templateCode={}", templateCode);
             return 0;
         }
 
-        // 查询接收人配置
         List<SysMessageTemplateReceiver> receivers = findTemplateReceivers(template.getId());
         if (receivers.isEmpty()) {
             log.warn("模板接收人配置为空: templateCode={}", templateCode);
             return 0;
         }
 
-        // 解析接收人ID列表
         List<Long> receiverUserIds = resolveReceiverUserIds(receivers);
         if (receiverUserIds.isEmpty()) {
             log.warn("解析后的接收人列表为空: templateCode={}", templateCode);
             return 0;
         }
 
-        // 调用显式指定接收人的方法
         return sendByTemplate(templateCode, receiverUserIds, dataMap, null);
     }
 
     /**
      * 使用模板发送消息给单个用户。
      *
-     * @param templateCode   模板编码，不能为空
-     * @param receiverUserId 接收人用户ID，不能为空
-     * @param dataMap        占位符数据Map，可为空
-     * @param bizType        业务类型，可为空
-     * @return 发送成功返回消息ID，失败返回null
+     * @param templateCode 模板编码
+     * @param receiverUserId 接收人用户 ID
+     * @param dataMap 占位符数据
+     * @param bizType 业务类型
+     * @return 成功发送后的消息 ID
      */
     @Override
     public Long sendToUser(String templateCode, Long receiverUserId, Map<String, Object> dataMap, String bizType) {
-        // 参数校验
         if (!StringUtils.hasText(templateCode)) {
-            throw new IllegalArgumentException("模板编码不能为空");
+            throw new IllegalArgumentException("Invalid request parameter");
         }
         if (receiverUserId == null) {
-            throw new IllegalArgumentException("接收人ID不能为空");
+            throw new IllegalArgumentException("Invalid request parameter");
         }
 
-        // 查询模板
         SysMessageTemplate template = findTemplateByCode(templateCode);
         if (template == null || !Boolean.TRUE.equals(template.getStatus())) {
             log.warn("模板不存在或已禁用: templateCode={}", templateCode);
             return null;
         }
 
-        // 查询模板内容配置
         List<SysMessageTemplateContent> contents = findTemplateContents(template.getId());
         if (contents.isEmpty()) {
             log.warn("模板内容配置为空: templateCode={}", templateCode);
             return null;
         }
 
-        // 获取当前租户ID
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
-            log.warn("当前租户ID为空，无法发送消息");
+            log.warn("Current tenantId is null, cannot send message");
             return null;
         }
 
-        // 查找站内消息内容
         SysMessageTemplateContent internalContent = contents.stream()
-                .filter(c -> PLATFORM_INTERNAL.equals(c.getPlatform()))
+                .filter(content -> PLATFORM_INTERNAL.equals(content.getPlatform()))
                 .findFirst()
                 .orElse(null);
-
         if (internalContent == null) {
             log.warn("模板未配置站内消息内容: templateCode={}", templateCode);
             return null;
         }
 
-        // 填充占位符
         String title = fillPlaceholders(internalContent.getContentTitle(), internalContent.getContentTitleI18nJson(), dataMap);
         String body = fillPlaceholders(internalContent.getContentBody(), internalContent.getContentBodyI18nJson(), dataMap);
-
-        // 创建消息
         SysMessage message = createMessage(tenantId, receiverUserId, template, internalContent, title, body, bizType);
 
-        // 保存消息
         messageMapper.insert(message);
-
-        // SSE 推送
         pushMessage(tenantId, receiverUserId, message);
 
         log.info("模板消息发送成功: templateCode={}, receiverUserId={}, messageId={}",
                 templateCode, receiverUserId, message.getId());
-
         return message.getId();
     }
 
     /**
-     * 检查模板是否存在且启用。
+     * 检查模板是否存在且已启用。
      *
      * @param templateCode 模板编码
-     * @return true表示模板存在且启用，false表示不存在或已禁用
+     * @return 是否可用
      */
     @Override
     public boolean isTemplateAvailable(String templateCode) {
@@ -329,7 +286,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
      * 根据模板编码查询模板主表。
      *
      * @param templateCode 模板编码
-     * @return 模板实体，不存在返回null
+     * @return 模板实体，不存在时返回 null
      */
     private SysMessageTemplate findTemplateByCode(String templateCode) {
         return templateMapper.selectOne(new LambdaQueryWrapper<SysMessageTemplate>()
@@ -339,9 +296,9 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     }
 
     /**
-     * 查询模板内容配置列表。
+     * 查询模板内容配置。
      *
-     * @param templateId 模板主表ID
+     * @param templateId 模板主键
      * @return 内容配置列表
      */
     private List<SysMessageTemplateContent> findTemplateContents(Long templateId) {
@@ -351,9 +308,9 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     }
 
     /**
-     * 查询模板接收人配置列表。
+     * 查询模板接收人配置。
      *
-     * @param templateId 模板主表ID
+     * @param templateId 模板主键
      * @return 接收人配置列表
      */
     private List<SysMessageTemplateReceiver> findTemplateReceivers(Long templateId) {
@@ -363,22 +320,15 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     }
 
     /**
-     * 解析接收人用户ID列表。
+     * 解析模板接收人配置，转换为用户 ID 列表。
      * <p>
-     * 根据 receiverType 解析：
-     * <ul>
-     *   <li>USER: 直接使用 receiverIds</li>
-     *   <li>ROLE: 查询角色下的用户</li>
-     *   <li>DEPT: 查询部门下的用户</li>
-     *   <li>POSITION: 查询职位下的用户</li>
-     * </ul>
-     * </p>
-     * <p>
-     * TODO: 当前仅支持 USER 类型，其他类型需要注入相关 Mapper
+     * 当前仅真正支持 {@code USER} 类型。
+     * {@code ROLE}、{@code DEPT}、{@code POSITION} 仍保留待实现提示。
+     * {@code CUSTOM} 表示由调用方在运行时动态传入，这里不读取模板中的 receiverIds。
      * </p>
      *
      * @param receivers 接收人配置列表
-     * @return 用户ID列表
+     * @return 解析出的用户 ID 列表
      */
     private List<Long> resolveReceiverUserIds(List<SysMessageTemplateReceiver> receivers) {
         Set<Long> userIds = new LinkedHashSet<>();
@@ -388,20 +338,15 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
             List<Long> ids = parseReceiverIds(receiver.getReceiverIds());
 
             if ("USER".equals(receiverType)) {
-                // 指定人类型，直接添加
                 userIds.addAll(ids);
             } else if ("ROLE".equals(receiverType)) {
-                // TODO: 根据角色ID查询用户ID列表
-                // 需要注入 SysUserRoleMapper
                 log.warn("ROLE 类型接收人解析暂未实现: receiverIds={}", ids);
             } else if ("DEPT".equals(receiverType)) {
-                // TODO: 根据部门ID查询用户ID列表
-                // 需要注入 SysUserMapper
                 log.warn("DEPT 类型接收人解析暂未实现: receiverIds={}", ids);
             } else if ("POSITION".equals(receiverType)) {
-                // TODO: 根据职位ID查询用户ID列表
-                // 需要注入 SysUserMapper
                 log.warn("POSITION 类型接收人解析暂未实现: receiverIds={}", ids);
+            } else if ("CUSTOM".equals(receiverType)) {
+                log.debug("CUSTOM 类型接收人由调用方动态传入，跳过模板 receiverIds: templateReceiverId={}", receiver.getId());
             }
         }
 
@@ -409,10 +354,10 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     }
 
     /**
-     * 解析接收人ID JSON字符串。
+     * 解析接收人 ID 的 JSON 字符串。
      *
-     * @param receiverIdsJson JSON字符串，例如 "[1, 2, 3]"
-     * @return ID列表
+     * @param receiverIdsJson JSON 字符串，例如 {@code [1,2,3]}
+     * @return 用户 ID 列表
      */
     private List<Long> parseReceiverIds(String receiverIdsJson) {
         if (!StringUtils.hasText(receiverIdsJson)) {
@@ -421,24 +366,24 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         try {
             return objectMapper.readValue(receiverIdsJson, new TypeReference<List<Long>>() {});
         } catch (Exception e) {
-            log.error("解析接收人ID列表失败: {}", receiverIdsJson, e);
+            log.error("解析接收人 ID 列表失败: {}", receiverIdsJson, e);
             return Collections.emptyList();
         }
     }
 
     /**
-     * 填充占位符。
+     * 填充模板中的占位符。
      * <p>
-     * 支持 ${变量名} 格式的占位符，从 dataMap 中获取值进行替换。
+     * 优先使用模板字段本身的内容；当模板字段为空且存在多语言 JSON 时，
+     * 再从多语言配置中选取回退内容。
      * </p>
      *
-     * @param template     模板字符串
-     * @param i18nJson     多语言 JSON
-     * @param dataMap      占位符数据
-     * @return 填充后的字符串
+     * @param template 模板字符串
+     * @param i18nJson 多语言 JSON
+     * @param dataMap 占位符数据
+     * @return 替换后的内容
      */
     private String fillPlaceholders(String template, String i18nJson, Map<String, Object> dataMap) {
-        // 优先使用模板字符串，如果为空则从多语言 JSON 解析
         String content = template;
         if (!StringUtils.hasText(content) && StringUtils.hasText(i18nJson)) {
             content = resolveI18nContent(i18nJson);
@@ -447,14 +392,12 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         if (!StringUtils.hasText(content)) {
             return "";
         }
-
         if (dataMap == null || dataMap.isEmpty()) {
             return content;
         }
 
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(content);
         StringBuffer result = new StringBuffer();
-
         while (matcher.find()) {
             String key = matcher.group(1);
             Object value = dataMap.get(key);
@@ -462,18 +405,18 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
             matcher.appendReplacement(result, replacement);
         }
         matcher.appendTail(result);
-
         return result.toString();
     }
 
     /**
-     * 从多语言 JSON 中解析内容。
+     * 从多语言 JSON 中选择一个可用内容。
      * <p>
-     * 优先使用 zh-CN，其次使用第一个非空值。
+     * 优先返回 {@code zh-CN}，其次返回 {@code en-US}，
+     * 最后返回第一个非空值。
      * </p>
      *
      * @param i18nJson 多语言 JSON
-     * @return 解析后的内容
+     * @return 解析出的文本
      */
     private String resolveI18nContent(String i18nJson) {
         if (!StringUtils.hasText(i18nJson)) {
@@ -481,15 +424,12 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         }
         try {
             Map<String, String> i18nMap = objectMapper.readValue(i18nJson, new TypeReference<Map<String, String>>() {});
-            // 优先使用中文
             if (i18nMap.containsKey("zh-CN") && StringUtils.hasText(i18nMap.get("zh-CN"))) {
                 return i18nMap.get("zh-CN");
             }
-            // 其次使用英文
             if (i18nMap.containsKey("en-US") && StringUtils.hasText(i18nMap.get("en-US"))) {
                 return i18nMap.get("en-US");
             }
-            // 最后使用第一个非空值
             for (String value : i18nMap.values()) {
                 if (StringUtils.hasText(value)) {
                     return value;
@@ -504,19 +444,17 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     /**
      * 创建消息实体。
      *
-     * @param tenantId      租户ID
-     * @param receiverUserId 接收人ID
-     * @param template      模板
-     * @param content       内容配置
-     * @param title         消息标题
-     * @param body          消息内容
-     * @param bizType       业务类型
-     * @return 消息实体
+     * @param tenantId 租户 ID
+     * @param receiverUserId 接收人用户 ID
+     * @param template 模板实体
+     * @param content 模板内容实体
+     * @param title 消息标题
+     * @param body 消息正文
+     * @param bizType 业务类型
+     * @return 待保存的消息实体
      */
-    private SysMessage createMessage(Long tenantId, Long receiverUserId,
-                                      SysMessageTemplate template,
-                                      SysMessageTemplateContent content,
-                                      String title, String body, String bizType) {
+    private SysMessage createMessage(Long tenantId, Long receiverUserId, SysMessageTemplate template,
+                                     SysMessageTemplateContent content, String title, String body, String bizType) {
         Long senderUserId = UserContext.get();
 
         SysMessage message = new SysMessage();
@@ -535,46 +473,52 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         message.setBizType(StringUtils.hasText(bizType) ? bizType : resolveBizType(template));
         message.setStatus(0);
         message.setDeleted(false);
-
         return message;
     }
 
     /**
      * 解析发送人名称。
+     * <p>
+     * 保留当前逻辑：有发送人用户 ID 时返回英文占位名称，
+     * 否则回退为系统发送。
+     * </p>
      *
-     * @param senderUserId 发送人用户ID
+     * @param senderUserId 发送人用户 ID
      * @return 发送人名称
      */
     private String resolveSenderName(Long senderUserId) {
         if (senderUserId != null) {
-            return "用户(" + senderUserId + ")";
+            return "User(" + senderUserId + ")";
         }
-        return "系统";
+        return "System";
     }
 
     /**
-     * 解析业务类型。
+     * 解析默认业务类型。
      * <p>
-     * 优先使用方法参数传入的 bizType，否则使用模板名称作为默认业务类型。
+     * 当调用方未显式传入 {@code bizType} 时，优先取模板配置的业务类型；
+     * 若模板未配置，则回退为模板编码。
      * </p>
      *
-     * @param template 模板
-     * @return 业务类型
+     * @param template 模板实体
+     * @return 默认业务类型
      */
     private String resolveBizType(SysMessageTemplate template) {
         if (template == null) {
             return null;
         }
-        // 使用模板编码作为业务类型
+        if (StringUtils.hasText(template.getBizType())) {
+            return template.getBizType().trim();
+        }
         return template.getTemplateCode();
     }
 
     /**
-     * SSE 推送消息。
+     * 通过 SSE 推送消息。
      *
-     * @param tenantId      租户ID
-     * @param receiverUserId 接收人ID
-     * @param message       消息实体
+     * @param tenantId 租户 ID
+     * @param receiverUserId 接收人用户 ID
+     * @param message 消息实体
      */
     private void pushMessage(Long tenantId, Long receiverUserId, SysMessage message) {
         try {
@@ -586,10 +530,10 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     }
 
     /**
-     * 将消息实体转换为 VO。
+     * 将消息实体转换为前端推送使用的 VO。
      *
-     * @param msg               消息实体
-     * @param receiverTenantId  接收租户ID
+     * @param msg 消息实体
+     * @param receiverTenantId 接收租户 ID
      * @return 消息 VO
      */
     private SysMessageVO toVO(SysMessage msg, Long receiverTenantId) {
@@ -612,5 +556,151 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         vo.setCreateTime(msg.getCreateTime());
         vo.setReadTime(msg.getReadTime());
         return vo;
+    }
+
+    /**
+     * 处理来自 MQ 的模板消息发送请求。
+     * <p>
+     * 该方法会在消费时恢复租户与用户上下文，然后按照模板消息的标准流程完成
+     * 模板校验、接收人解析、消息入库与 SSE 推送。
+     * </p>
+     *
+     * @param request MQ 模板消息请求
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void processTemplateMessageFromMq(com.forgex.common.mq.message.TemplateMessageRequest request) {
+        if (request == null || !StringUtils.hasText(request.getTemplateCode())) {
+            log.warn("MQ 模板消息请求为空或模板编码为空: request={}", request);
+            return;
+        }
+        if (request.getTenantId() == null) {
+            log.warn("MQ 模板消息缺少租户ID: templateCode={}", request.getTemplateCode());
+            return;
+        }
+
+        Long oldTenantId = TenantContext.get();
+        Long oldUserId = UserContext.get();
+        try {
+            TenantContext.set(request.getTenantId());
+            UserContext.set(request.getSenderUserId());
+
+            SysMessageTemplate template = findTemplateByCode(request.getTemplateCode());
+            if (template == null) {
+                log.warn("模板不存在: templateCode={}", request.getTemplateCode());
+                return;
+            }
+            if (!Boolean.TRUE.equals(template.getStatus())) {
+                log.warn("模板已禁用: templateCode={}", request.getTemplateCode());
+                return;
+            }
+
+            List<SysMessageTemplateContent> contents = findTemplateContents(template.getId());
+            if (contents.isEmpty()) {
+                log.warn("模板内容配置为空: templateCode={}", request.getTemplateCode());
+                return;
+            }
+
+            List<Long> receiverUserIds = resolveReceivers(template, request.getReceiverUserIds());
+            if (receiverUserIds.isEmpty()) {
+                log.warn("MQ 模板消息解析出的接收人为空: templateCode={}", request.getTemplateCode());
+                return;
+            }
+
+            int sentCount = 0;
+            for (SysMessageTemplateContent content : contents) {
+                if (!PLATFORM_INTERNAL.equals(content.getPlatform())) {
+                    continue;
+                }
+
+                String title = fillPlaceholders(content.getContentTitle(), content.getContentTitleI18nJson(), request.getDataMap());
+                String body = fillPlaceholders(content.getContentBody(), content.getContentBodyI18nJson(), request.getDataMap());
+
+                for (Long receiverUserId : receiverUserIds) {
+                    if (receiverUserId == null) {
+                        continue;
+                    }
+
+                    SysMessage message = createMessage(request.getTenantId(), receiverUserId, template, content,
+                            title, body, request.getBizType());
+                    if (StringUtils.hasText(request.getSenderName())) {
+                        message.setSenderName(request.getSenderName());
+                    }
+
+                    messageMapper.insert(message);
+                    pushMessage(request.getTenantId(), receiverUserId, message);
+                    sentCount++;
+                }
+            }
+
+            log.info("MQ 模板消息处理完成: templateCode={}, tenantId={}, receiverCount={}, sentCount={}",
+                    request.getTemplateCode(), request.getTenantId(), receiverUserIds.size(), sentCount);
+        } catch (Exception e) {
+            log.error("MQ 模板消息处理失败: templateCode={}, tenantId={}",
+                    request.getTemplateCode(), request.getTenantId(), e);
+            throw e;
+        } finally {
+            if (oldTenantId != null) {
+                TenantContext.set(oldTenantId);
+            } else {
+                TenantContext.clear();
+            }
+            if (oldUserId != null) {
+                UserContext.set(oldUserId);
+            } else {
+                UserContext.clear();
+            }
+        }
+    }
+
+    /**
+     * 解析 MQ 场景下的接收人列表。
+     * <p>
+     * 解析顺序如下：
+     * </p>
+     * <p>
+     * 1. 如果模板中存在 {@code CUSTOM} 类型接收人，且请求里传入了接收人列表，则优先使用请求值。
+     * </p>
+     * <p>
+     * 2. 否则尝试使用模板中已配置好的接收人。
+     * </p>
+     * <p>
+     * 3. 如果模板配置未解析出结果，但请求中仍传入了接收人列表，则将请求值作为兜底。
+     * </p>
+     *
+     * @param template 模板实体
+     * @param requestReceivers 请求中携带的接收人列表
+     * @return 最终可用的接收人用户 ID 列表
+     */
+    private List<Long> resolveReceivers(SysMessageTemplate template, List<Long> requestReceivers) {
+        List<SysMessageTemplateReceiver> receivers = findTemplateReceivers(template.getId());
+        boolean hasCustomReceiver = receivers.stream()
+                .anyMatch(receiver -> "CUSTOM".equalsIgnoreCase(receiver.getReceiverType()));
+
+        if (hasCustomReceiver && requestReceivers != null && !requestReceivers.isEmpty()) {
+            Set<Long> distinctUserIds = new LinkedHashSet<>();
+            for (Long requestReceiver : requestReceivers) {
+                if (requestReceiver != null) {
+                    distinctUserIds.add(requestReceiver);
+                }
+            }
+            return new ArrayList<>(distinctUserIds);
+        }
+
+        List<Long> configuredReceivers = resolveReceiverUserIds(receivers);
+        if (!configuredReceivers.isEmpty()) {
+            return configuredReceivers;
+        }
+
+        if (requestReceivers != null && !requestReceivers.isEmpty()) {
+            Set<Long> distinctUserIds = new LinkedHashSet<>();
+            for (Long requestReceiver : requestReceivers) {
+                if (requestReceiver != null) {
+                    distinctUserIds.add(requestReceiver);
+                }
+            }
+            return new ArrayList<>(distinctUserIds);
+        }
+
+        return Collections.emptyList();
     }
 }
