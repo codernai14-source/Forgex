@@ -75,7 +75,7 @@ public class EncodeRuleFeignService {
      * 使用 TenantContextIgnore 忽略租户隔离，支持公共编码规则调用。
      * </p>
      *
-     * @param ruleCode 规则代码，必须在 sys_encode_rule 表中存在且已启用
+     * @param ruleCode 规则代码，必须在 fx_encode_rule 表中存在且已启用
      * @return 生成的业务编码，失败时返回错误信息
      * @throws IllegalArgumentException 当规则代码为空、不存在或已禁用时抛出
      */

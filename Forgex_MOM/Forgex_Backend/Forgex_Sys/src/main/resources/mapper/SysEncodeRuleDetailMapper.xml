@@ -41,7 +41,7 @@
     <select id="selectByRuleId" resultMap="BaseResultMap">
         SELECT 
         <include refid="Base_Column_List"/>
-        FROM sys_encode_rule_detail
+        FROM fx_encode_rule_detail
         WHERE rule_id = #{ruleId}
         AND deleted = 0
         ORDER BY segment_order ASC

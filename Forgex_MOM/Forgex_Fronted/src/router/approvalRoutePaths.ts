@@ -1,5 +1,6 @@
 export const APPROVAL_ROUTE_BASE = '/workspace/approval'
 export const LEGACY_APPROVAL_ROUTE_BASE = '/workflow'
+export const TAB_CLOSE_QUERY_KEY = '__closeTab'
 
 function encodeTaskCode(taskCode: string) {
   return encodeURIComponent(String(taskCode || '').trim())

@@ -1,8 +1,11 @@
 ﻿package com.forgex.mobile.core.network.di
 
 import com.forgex.mobile.core.network.api.AuthApi
+import com.forgex.mobile.core.network.api.MessageApi
 import com.forgex.mobile.core.network.api.MenuApi
+import com.forgex.mobile.core.network.api.WorkflowApi
 import com.forgex.mobile.core.network.interceptor.AuthInterceptor
+import com.forgex.mobile.core.network.interceptor.DynamicBaseUrlInterceptor
 import com.forgex.mobile.core.network.interceptor.SessionCookieJar
 import com.forgex.mobile.core.network.interceptor.TenantInterceptor
 import dagger.Module
@@ -30,6 +33,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
+        dynamicBaseUrlInterceptor: DynamicBaseUrlInterceptor,
         authInterceptor: AuthInterceptor,
         tenantInterceptor: TenantInterceptor,
         sessionCookieJar: SessionCookieJar,
@@ -37,6 +41,8 @@ object NetworkModule {
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .cookieJar(sessionCookieJar)
+            // 地址重写要在认证头注入前执行，确保所有后续拦截器都基于目标环境运行
+            .addInterceptor(dynamicBaseUrlInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(tenantInterceptor)
             .addInterceptor(loggingInterceptor)
@@ -66,5 +72,17 @@ object NetworkModule {
     @Singleton
     fun provideMenuApi(retrofit: Retrofit): MenuApi {
         return retrofit.create(MenuApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkflowApi(retrofit: Retrofit): WorkflowApi {
+        return retrofit.create(WorkflowApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMessageApi(retrofit: Retrofit): MessageApi {
+        return retrofit.create(MessageApi::class.java)
     }
 }

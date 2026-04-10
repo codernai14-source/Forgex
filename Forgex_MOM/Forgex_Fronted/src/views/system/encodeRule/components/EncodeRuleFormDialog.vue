@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <a-modal
     v-model:open="dialogVisible"
     :title="dialogTitle"
@@ -224,7 +224,7 @@ import { useI18n } from 'vue-i18n'
 import { message, type FormInstance, type FormRule } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
-import type { EncodeRule, EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
+import type { EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
 
 // 国际化
 const { t } = useI18n()
@@ -256,8 +256,26 @@ const dialogVisible = computed({
 // 表单引用
 const formRef = ref<FormInstance>()
 
+interface EncodeRuleFormDetail extends Omit<EncodeRuleDetail, 'segmentType'> {
+  segmentType?: 'FIXED' | 'DATE' | 'SEQ' | 'CUSTOM'
+  dateFormat?: string
+  seqStart?: number
+  seqLength?: number
+  seqResetType?: number
+}
+
+interface EncodeRuleFormModel {
+  id?: string
+  ruleName: string
+  ruleCode: string
+  businessType: string
+  description: string
+  status: number
+  ruleDetails: EncodeRuleFormDetail[]
+  remark: string
+}
 // 表单数据
-const form = reactive<SaveEncodeRuleParam>({
+const form = reactive<EncodeRuleFormModel>({
   ruleName: '',
   ruleCode: '',
   businessType: '',
@@ -313,6 +331,55 @@ const dialogTitle = computed(() => {
   return props.isEdit ? t('system.encodeRule.edit') : t('system.encodeRule.add')
 })
 
+function mapBackendDetailToForm(detail: EncodeRuleDetail): EncodeRuleFormDetail {
+  const backendType = String(detail?.segmentType || '').toUpperCase()
+  const formType =
+    backendType === 'SERIAL'
+      ? 'SEQ'
+      : backendType === 'EXPRESSION'
+        ? 'CUSTOM'
+        : backendType || 'FIXED'
+
+  return {
+    id: detail?.id != null ? String(detail.id) : undefined,
+    ruleId: detail?.ruleId != null ? String(detail.ruleId) : undefined,
+    segmentOrder: detail?.segmentOrder,
+    segmentType: formType,
+    segmentValue: detail?.segmentValue || detail?.conditionExpression || '',
+    dateFormat: formType === 'DATE' ? (detail?.segmentValue || '') : undefined,
+    remark: detail?.remark || '',
+    connector: detail?.connector,
+    isRequired: detail?.isRequired,
+    conditionExpression: detail?.conditionExpression,
+  }
+}
+
+function mapFormDetailToBackend(detail: EncodeRuleFormDetail, index: number): EncodeRuleDetail {
+  const formType = String(detail?.segmentType || 'FIXED').toUpperCase()
+  const backendType =
+    formType === 'SEQ'
+      ? 'SERIAL'
+      : formType === 'CUSTOM'
+        ? 'EXPRESSION'
+        : formType
+
+  const segmentValue = formType === 'DATE'
+    ? (detail.dateFormat || detail.segmentValue || '')
+    : (detail.segmentValue || '')
+
+  return {
+    id: detail.id,
+    ruleId: detail.ruleId,
+    segmentOrder: detail.segmentOrder || index + 1,
+    segmentType: backendType,
+    segmentValue,
+    connector: detail.connector,
+    isRequired: detail.isRequired ?? true,
+    conditionExpression: backendType === 'EXPRESSION' ? (detail.conditionExpression || segmentValue) : undefined,
+    remark: detail.remark || '',
+  }
+}
+
 // 重置表单
 function resetForm() {
   form.id = undefined
@@ -329,14 +396,14 @@ function resetForm() {
 async function loadRuleDetail() {
   if (!props.ruleId) return
   try {
-    const data: EncodeRule = await encodeRuleApi.getEncodeRule(props.ruleId)
+    const data = await encodeRuleApi.getEncodeRule(props.ruleId)
     form.id = data.id
     form.ruleName = data.ruleName || ''
     form.ruleCode = data.ruleCode || ''
-    form.businessType = data.businessType || ''
-    form.description = data.description || ''
-    form.status = data.status ?? 1
-    form.ruleDetails = data.ruleDetails || []
+    form.businessType = data.module || ''
+    form.description = ''
+    form.status = data.isEnabled === false ? 0 : 1
+    form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailToForm(detail))
     form.remark = data.remark || ''
   } catch (error) {
     console.error('加载规则详情失败:', error)
@@ -346,7 +413,7 @@ async function loadRuleDetail() {
 
 // 添加明细
 function handleAddDetail() {
-  const newDetail: EncodeRuleDetail = {
+  const newDetail: EncodeRuleFormDetail = {
     segmentOrder: (form.ruleDetails?.length || 0) + 1,
     segmentType: 'FIXED',
     segmentValue: '',
@@ -370,7 +437,7 @@ function handleRemoveDetail(index: number) {
 }
 
 // 段类型变化处理
-function handleSegmentTypeChange(detail: EncodeRuleDetail) {
+function handleSegmentTypeChange(detail: EncodeRuleFormDetail) {
   // 根据段类型清空或设置默认值
   if (detail.segmentType === 'FIXED') {
     detail.segmentValue = ''
@@ -419,7 +486,17 @@ async function handleSubmit() {
       }
     }
     
-    await encodeRuleApi.saveEncodeRule(form)
+    const requestPayload: SaveEncodeRuleParam = {
+      id: form.id,
+      ruleCode: form.ruleCode,
+      ruleName: form.ruleName,
+      module: form.businessType,
+      isEnabled: form.status === 1,
+      remark: form.remark,
+      detailList: (form.ruleDetails || []).map((detail, index) => mapFormDetailToBackend(detail, index)),
+    }
+
+    await encodeRuleApi.saveEncodeRule(requestPayload)
     message.success(props.isEdit ? t('system.encodeRule.updateSuccess') : t('system.encodeRule.addSuccess'))
     dialogVisible.value = false
     emit('success')
@@ -437,9 +514,18 @@ function handleDialogClose() {
 
 // 监听 open 变化
 watch(() => props.open, async (newVal) => {
-  if (newVal && props.isEdit) {
-    await loadRuleDetail()
+  if (!newVal) {
+    return
   }
+
+  resetForm()
+
+  if (props.isEdit) {
+    await loadRuleDetail()
+    return
+  }
+
+  handleAddDetail()
 })
 
 // 初始化

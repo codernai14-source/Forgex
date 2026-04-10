@@ -2,9 +2,13 @@
 
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.core.network.model.auth.SysUserDTO
+import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
 import com.forgex.mobile.core.network.model.auth.TenantVO
 import com.forgex.mobile.core.network.model.menu.UserRoutesVO
 
+/**
+ * 登录模块数据仓库接口。
+ */
 interface AuthRepository {
 
     suspend fun login(
@@ -16,6 +20,8 @@ interface AuthRepository {
     ): AppResult<List<TenantVO>>
 
     suspend fun loadCaptchaMode(): AppResult<CaptchaMode>
+
+    suspend fun loadSystemBasicConfig(): AppResult<SystemBasicConfig>
 
     suspend fun loadImageCaptcha(): AppResult<ImageCaptcha>
 

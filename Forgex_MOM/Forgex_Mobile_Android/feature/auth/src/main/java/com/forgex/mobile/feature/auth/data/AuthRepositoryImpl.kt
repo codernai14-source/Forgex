@@ -9,6 +9,7 @@ import com.forgex.mobile.core.network.model.auth.SliderTrackPayload
 import com.forgex.mobile.core.network.model.auth.SliderTrackPointPayload
 import com.forgex.mobile.core.network.model.auth.SliderValidateRequest
 import com.forgex.mobile.core.network.model.auth.SysUserDTO
+import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
 import com.forgex.mobile.core.network.model.auth.TenantChoiceRequest
 import com.forgex.mobile.core.network.model.auth.TenantVO
 import com.forgex.mobile.core.network.model.menu.RoutesRequest
@@ -76,12 +77,33 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun loadSystemBasicConfig(): AppResult<SystemBasicConfig> {
+        return try {
+            val response = authApi.getSystemBasicConfig()
+            val config = response.data
+            if (response.isSuccess() && config != null) {
+                AppResult.Success(config)
+            } else {
+                AppResult.Error(response.errorMessage(), response.code)
+            }
+        } catch (e: Exception) {
+            AppResult.Error(e.message ?: "Load system config failed")
+        }
+    }
+
     override suspend fun loadImageCaptcha(): AppResult<ImageCaptcha> {
         return try {
             val response = authApi.getImageCaptcha()
             val data = response.data
-            val captchaId = data?.get("captchaId").orEmpty()
-            val imageBase64 = data?.get("imageBase64").orEmpty()
+            // 兼容后端可能的字段差异，减少“验证码不显示”问题
+            val captchaId = extractString(data, "captchaId", "id")
+            val imageBase64 = extractString(
+                data,
+                "imageBase64",
+                "captchaImage",
+                "image",
+                "base64"
+            )
 
             if (response.isSuccess() && captchaId.isNotBlank() && imageBase64.isNotBlank()) {
                 AppResult.Success(
@@ -260,5 +282,17 @@ class AuthRepositoryImpl @Inject constructor(
             sessionStore.clearSession()
             AppResult.Error(e.message ?: "Logout request failed")
         }
+    }
+
+    private fun extractString(
+        data: Map<String, Any?>?,
+        vararg keys: String
+    ): String {
+        if (data == null) return ""
+        // 兜底清理空白符，避免 Base64 中换行导致图片解码失败
+        val value = keys
+            .firstNotNullOfOrNull { key -> data[key]?.toString()?.trim() }
+            .orEmpty()
+        return value.replace("\\s".toRegex(), "")
     }
 }

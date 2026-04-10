@@ -27,6 +27,8 @@ import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
 import com.forgex.auth.mapper.SysUserTenantMapper;
+import com.forgex.auth.mapper.SysInviteCodeMapper;
+import com.forgex.auth.mapper.SysInviteRegisterRecordMapper;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.LoginLogService;
 import com.forgex.common.config.ConfigService;
@@ -44,7 +46,6 @@ import com.baomidou.dynamic.datasource.annotation.DS;
 
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.crypto.asymmetric.KeyType;
-import cn.hutool.core.util.HexUtil;
 import cn.hutool.json.JSONUtil;
 import java.nio.charset.StandardCharsets;
 import com.forgex.common.domain.config.CaptchaConfig;
@@ -53,15 +54,18 @@ import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.auth.enums.AuthPromptEnum;
@@ -120,6 +124,8 @@ public class AuthServiceImpl implements AuthService {
     private CaptchaService captchaService;
     @Autowired
     private StringRedisTemplate redis;
+    @Autowired
+    private RedissonClient redissonClient;
     @Autowired
     private LoginLogService loginLogService;
     @Autowired
@@ -648,7 +654,13 @@ public class AuthServiceImpl implements AuthService {
      */
     private String encryptPassword(String rawPassword) {
         CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(getPasswordPolicyConfig()), configService);
-        return provider.encrypt(rawPassword);
+        if (provider.supportsEncrypt()) {
+            return provider.encrypt(rawPassword);
+        }
+        if (provider.supportsHash()) {
+            return provider.hash(rawPassword);
+        }
+        throw new IllegalStateException("Unsupported password store: " + provider.name());
     }
 
     /**
@@ -683,7 +695,7 @@ public class AuthServiceImpl implements AuthService {
             return null;
         }
         String lockKey = LOGIN_LOCK_KEY_PREFIX + normalizeAccountKey(account);
-        Long ttl = redis.getExpire(lockKey, TimeUnit.SECONDS);
+        Long ttl = readKeyTtlSeconds(lockKey);
         if (ttl == null || ttl <= 0) {
             return null;
         }
@@ -720,11 +732,16 @@ public class AuthServiceImpl implements AuthService {
         }
         String accountKey = normalizeAccountKey(account);
         String failKey = LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey;
-        Long currentCount = redis.opsForValue().increment(failKey);
-        redis.expire(failKey, Duration.ofMinutes(failWindowMinutes));
-        if (currentCount != null && currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
-            redis.opsForValue().set(LOGIN_LOCK_KEY_PREFIX + accountKey, "1", Duration.ofMinutes(lockMinutes));
-            redis.delete(failKey);
+        try {
+            RAtomicLong failCounter = redissonClient.getAtomicLong(failKey);
+            long currentCount = failCounter.incrementAndGet();
+            failCounter.expire(Duration.ofMinutes(failWindowMinutes));
+            if (currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
+                redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).set("1", Duration.ofMinutes(lockMinutes));
+                failCounter.delete();
+            }
+        } catch (Exception e) {
+            log.warn("记录登录失败状态失败: account={}", account, e);
         }
     }
 
@@ -741,8 +758,12 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
         String accountKey = normalizeAccountKey(account);
-        redis.delete(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey);
-        redis.delete(LOGIN_LOCK_KEY_PREFIX + accountKey);
+        try {
+            redissonClient.getAtomicLong(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey).delete();
+            redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).delete();
+        } catch (Exception e) {
+            log.warn("清除登录失败状态失败: account={}", account, e);
+        }
     }
 
     /**
@@ -755,7 +776,33 @@ public class AuthServiceImpl implements AuthService {
      * @return 标准化后的账号键
      */
     private String normalizeAccountKey(String account) {
-        return account == null ? "" : account.trim().toLowerCase();
+        return account == null ? "" : account.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * 读取指定 Redis 键的剩余 TTL（秒）。
+     * <p>
+     * 使用 Redisson 原生 API，避免部分 Redisson + Spring Data Redis 组合下 TTL 读取走到错误委托链。
+     * </p>
+     *
+     * @param key Redis 键
+     * @return 剩余秒数；不存在或不可用时返回 null
+     */
+    private Long readKeyTtlSeconds(String key) {
+        if (!StringUtils.hasText(key)) {
+            return null;
+        }
+        try {
+            RBucket<Object> bucket = redissonClient.getBucket(key);
+            long ttlMillis = bucket.remainTimeToLive();
+            if (ttlMillis <= 0L) {
+                return null;
+            }
+            return Math.max(1L, (ttlMillis + 999L) / 1000L);
+        } catch (Exception e) {
+            log.warn("读取登录锁TTL失败: key={}", key, e);
+            return null;
+        }
     }
 
     /**
@@ -1063,5 +1110,201 @@ public class AuthServiceImpl implements AuthService {
             log.warn("获取User-Agent失败", e);
         }
         return "unknown";
+    }
+
+    // ==================== 邀请码注册 ====================
+
+    @Autowired
+    private SysInviteCodeMapper inviteCodeMapper;
+
+    @Autowired
+    private SysInviteRegisterRecordMapper inviteRegisterRecordMapper;
+
+    /**
+     * 邀请码注册
+     */
+    @Override
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    public R<Boolean> register(com.forgex.auth.domain.param.RegisterParam param) {
+        // 1. 基本参数校验
+        if (param == null) {
+            return R.fail(CommonPrompt.BAD_REQUEST);
+        }
+        String account = param.getAccount();
+        String username = param.getUsername();
+        String password = param.getPassword();
+        String inviteCode = param.getInviteCode();
+
+        if (!StringUtils.hasText(account)) {
+            return R.fail(CommonPrompt.ACCOUNT_CANNOT_BE_EMPTY);
+        }
+        if (!StringUtils.hasText(password)) {
+            return R.fail(CommonPrompt.PASSWORD_CANNOT_BE_EMPTY);
+        }
+        if (!StringUtils.hasText(inviteCode)) {
+            return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
+        }
+
+        // 2. 验证码校验
+        CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
+        String mode = cfg.getMode();
+        if ("image".equalsIgnoreCase(mode)) {
+            if (!StringUtils.hasText(param.getCaptchaId()) || !StringUtils.hasText(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
+            }
+            if (!captchaService.verifyImage(param.getCaptchaId(), param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
+            }
+        } else if ("slider".equalsIgnoreCase(mode)) {
+            if (!StringUtils.hasText(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
+            }
+            if (!captchaService.verifySlider(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
+            }
+        }
+
+        // 3. 校验邀请码
+        com.forgex.auth.domain.entity.SysInviteCode inviteCodeEntity = inviteCodeMapper.selectOne(
+                new LambdaQueryWrapper<com.forgex.auth.domain.entity.SysInviteCode>()
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getInviteCode, inviteCode)
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getDeleted, false));
+        if (inviteCodeEntity == null) {
+            return R.fail(CommonPrompt.INVITE_CODE_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(inviteCodeEntity.getStatus())) {
+            return R.fail(CommonPrompt.INVITE_CODE_DISABLED);
+        }
+        if (inviteCodeEntity.getExpireTime() != null && LocalDateTime.now().isAfter(inviteCodeEntity.getExpireTime())) {
+            return R.fail(CommonPrompt.INVITE_CODE_EXPIRED);
+        }
+        if (inviteCodeEntity.getUsedCount() >= inviteCodeEntity.getMaxRegisterCount()) {
+            return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+
+        // 4. 校验账号是否已存在
+        Long existCount = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getAccount, account));
+        if (existCount > 0) {
+            return R.fail(CommonPrompt.ACCOUNT_ALREADY_EXISTS);
+        }
+
+        // 5. 解密密码（SM2 传输加密）
+        String rawPassword = password;
+        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
+        if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
+            try {
+                SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
+                String cipherFmt = cryptoCfg.getCipher();
+                if ("BCD".equalsIgnoreCase(cipherFmt)) {
+                    byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
+                    rawPassword = new String(plain, StandardCharsets.UTF_8);
+                } else {
+                    rawPassword = sm2.decryptStr(password, KeyType.PrivateKey);
+                }
+            } catch (Exception ignored) {
+                // 解密失败，使用原始密码
+            }
+        }
+
+        // 6. 加密密码存储
+        String hashedPassword = encryptPassword(rawPassword);
+
+        // 7. 创建用户
+        SysUser newUser = new SysUser();
+        newUser.setAccount(account);
+        newUser.setUsername(StringUtils.hasText(username) ? username : account);
+        newUser.setPassword(hashedPassword);
+        newUser.setPhone(param.getPhone());
+        newUser.setEmail(param.getEmail());
+        newUser.setStatus(true);
+        // 注意：Auth 模块的 SysUser 没有 departmentId/positionId 字段
+        // 部门和职位通过 SQL 直接更新
+        userMapper.insert(newUser);
+
+        Long userId = newUser.getId();
+
+        // 8. 更新用户的部门和职位（通过原生SQL，因为Auth模块SysUser不含这些字段）
+        if (inviteCodeEntity.getDepartmentId() != null) {
+            LambdaUpdateWrapper<SysUser> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(SysUser::getId, userId);
+            // 使用 setSql 直接设置字段
+            StringBuilder sqlParts = new StringBuilder();
+            sqlParts.append("department_id = ").append(inviteCodeEntity.getDepartmentId());
+            if (inviteCodeEntity.getPositionId() != null) {
+                sqlParts.append(", position_id = ").append(inviteCodeEntity.getPositionId());
+            }
+            updateWrapper.setSql(sqlParts.toString());
+            userMapper.update(null, updateWrapper);
+        }
+
+        // 9. 绑定用户-租户关系
+        Long tenantId = inviteCodeEntity.getTenantId();
+        if (tenantId != null) {
+            SysUserTenant userTenant = new SysUserTenant();
+            userTenant.setUserId(userId);
+            userTenant.setTenantId(tenantId);
+            userTenant.setIsDefault(true);
+            userTenant.setPrefOrder(1);
+            userTenant.setLastUsed(LocalDateTime.now());
+            userTenantMapper.insert(userTenant);
+        }
+
+        // 10. 增加邀请码使用次数
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<com.forgex.auth.domain.entity.SysInviteCode> inviteUpdate =
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
+        inviteUpdate.eq(com.forgex.auth.domain.entity.SysInviteCode::getId, inviteCodeEntity.getId())
+                .setSql("used_count = used_count + 1");
+        inviteCodeMapper.update(null, inviteUpdate);
+
+        // 11. 写入邀请注册记录
+        String clientIp = getClientIp();
+        String region = ipLocationService.getLocationByIp(clientIp);
+
+        com.forgex.auth.domain.entity.SysInviteRegisterRecord record = new com.forgex.auth.domain.entity.SysInviteRegisterRecord();
+        record.setTenantId(tenantId);
+        record.setInviteId(inviteCodeEntity.getId());
+        record.setInviteCode(inviteCode);
+        record.setUserId(userId);
+        record.setAccount(account);
+        record.setUsername(StringUtils.hasText(username) ? username : account);
+        record.setDepartmentId(inviteCodeEntity.getDepartmentId());
+        record.setPositionId(inviteCodeEntity.getPositionId());
+        record.setRegisterIp(clientIp);
+        record.setRegisterRegion(region);
+        record.setRegisterTime(LocalDateTime.now());
+        record.setStatus(1);
+        inviteRegisterRecordMapper.insert(record);
+
+        log.info("邀请码注册成功: account={}, inviteCode={}, tenantId={}", account, inviteCode, tenantId);
+
+        return R.ok(CommonPrompt.REGISTER_SUCCESS, true);
+    }
+
+    /**
+     * 校验邀请码是否有效
+     */
+    @Override
+    public R<Boolean> validateInviteCode(String inviteCode) {
+        if (!StringUtils.hasText(inviteCode)) {
+            return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
+        }
+        com.forgex.auth.domain.entity.SysInviteCode entity = inviteCodeMapper.selectOne(
+                new LambdaQueryWrapper<com.forgex.auth.domain.entity.SysInviteCode>()
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getInviteCode, inviteCode)
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getDeleted, false));
+        if (entity == null) {
+            return R.fail(CommonPrompt.INVITE_CODE_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(entity.getStatus())) {
+            return R.fail(CommonPrompt.INVITE_CODE_DISABLED);
+        }
+        if (entity.getExpireTime() != null && LocalDateTime.now().isAfter(entity.getExpireTime())) {
+            return R.fail(CommonPrompt.INVITE_CODE_EXPIRED);
+        }
+        if (entity.getUsedCount() >= entity.getMaxRegisterCount()) {
+            return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+        return R.ok(true);
     }
 }

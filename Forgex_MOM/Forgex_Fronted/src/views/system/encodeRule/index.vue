@@ -3,6 +3,7 @@
     <fx-dynamic-table
       ref="tableRef"
       :table-code="'EncodeRuleTable'"
+      :fallback-config="fallbackConfig"
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
@@ -39,9 +40,9 @@
       </template>
       
       <!-- 状态列自定义渲染 -->
-      <template #status="{ record }">
+      <template #isEnabled="{ record }">
         <a-tag
-          v-if="record.status === 1"
+          v-if="record.isEnabled"
           color="success"
         >
           {{ t('system.encodeRule.statusActive') }}
@@ -103,13 +104,14 @@
  * @author Forgex
  * @version 1.0.0
  */
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import EncodeRuleFormDialog from './components/EncodeRuleFormDialog.vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
-import type { EncodeRule, EncodeRuleQuery } from '@/api/system/encodeRule'
+import type { EncodeRule } from '@/api/system/encodeRule'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 
 // 国际化
 const { t } = useI18n()
@@ -125,11 +127,44 @@ const selectedRowKeys = ref<string[]>([])
 // 表格引用
 const tableRef = ref()
 
+const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'EncodeRuleTable',
+  tableName: t('system.encodeRule.pageTitle'),
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 10,
+  columns: [
+    { field: 'ruleCode', title: t('system.encodeRule.ruleCode'), width: 160, align: 'left' },
+    { field: 'ruleName', title: t('system.encodeRule.ruleName'), width: 180, align: 'left' },
+    { field: 'module', title: t('system.encodeRule.businessType'), width: 140, align: 'left' },
+    { field: 'isEnabled', title: t('system.encodeRule.status'), width: 120, align: 'center' },
+    { field: 'remark', title: t('system.encodeRule.remark'), width: 220, align: 'left' },
+    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
+    { field: 'action', title: t('common.action'), width: 220, align: 'center', fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'ruleCode', label: t('system.encodeRule.ruleCode'), queryType: 'input', queryOperator: 'like' },
+    { field: 'ruleName', label: t('system.encodeRule.ruleName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'module', label: t('system.encodeRule.businessType'), queryType: 'input', queryOperator: 'like' },
+    {
+      field: 'isEnabled',
+      label: t('system.encodeRule.status'),
+      queryType: 'select',
+      queryOperator: 'eq',
+      options: [
+        { label: t('system.encodeRule.statusActive'), value: true },
+        { label: t('system.encodeRule.statusInactive'), value: false },
+      ],
+    },
+  ],
+  version: 1,
+}))
+
 // 字典选项配置
 const dictOptions = ref<Record<string, any[]>>({
-  status: [
-    { label: t('system.encodeRule.statusActive'), value: 1 },
-    { label: t('system.encodeRule.statusInactive'), value: 0 }
+  isEnabled: [
+    { label: t('system.encodeRule.statusActive'), value: true },
+    { label: t('system.encodeRule.statusInactive'), value: false }
   ],
   segmentType: [
     { label: t('system.encodeRule.segmentTypeFixed'), value: 'FIXED' },
@@ -151,6 +186,24 @@ const handleRequest = async (payload: {
     pageNum: payload.page.current,
     pageSize: payload.page.pageSize,
     ...payload.query,
+  }
+
+  if (Object.prototype.hasOwnProperty.call(params, 'businessType') && !Object.prototype.hasOwnProperty.call(params, 'module')) {
+    params.module = params.businessType
+    delete params.businessType
+  }
+
+  if (Object.prototype.hasOwnProperty.call(params, 'status') && !Object.prototype.hasOwnProperty.call(params, 'isEnabled')) {
+    params.isEnabled = params.status === 1 || params.status === true || params.status === '1' || params.status === 'true'
+    delete params.status
+  }
+
+  if (Object.prototype.hasOwnProperty.call(params, 'isEnabled')) {
+    if (params.isEnabled === 1 || params.isEnabled === '1' || params.isEnabled === 'true') {
+      params.isEnabled = true
+    } else if (params.isEnabled === 0 || params.isEnabled === '0' || params.isEnabled === 'false') {
+      params.isEnabled = false
+    }
   }
   
   // 处理排序
@@ -244,7 +297,7 @@ async function handleGenerateEncode(record: EncodeRule) {
     const result = await encodeRuleApi.generateEncode({
       ruleCode: record.ruleCode!,
     })
-    message.success(t('system.encodeRule.generateSuccess') + ': ' + result.encodeCode)
+    message.success(t('system.encodeRule.generateSuccess') + ': ' + result)
   } catch (error) {
     console.error('生成编码失败:', error)
     message.error(t('system.encodeRule.generateFailed'))

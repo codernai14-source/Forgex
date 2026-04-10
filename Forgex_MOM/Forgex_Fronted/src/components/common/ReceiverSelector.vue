@@ -69,7 +69,7 @@ const emit = defineEmits<{
    * 触发时机：用户修改接收类型或接收人列表时触发
    * @param value 新的接收人对象
    */
-  'update:modelValue': [value: Receiver
+  'update:modelValue': [value: Receiver]
 }>()
 
 const localReceiver = ref<Receiver>({ ...props.modelValue })

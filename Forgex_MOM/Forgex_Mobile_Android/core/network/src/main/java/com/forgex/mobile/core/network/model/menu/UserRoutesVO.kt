@@ -10,6 +10,9 @@ data class RouteNodeVO(
     val path: String? = null,
     val name: String? = null,
     val component: String? = null,
+    val menuMode: String? = null,
+    val externalUrl: String? = null,
+    val pageRenderType: String? = null,
     val meta: RouteMetaVO? = null,
     val children: List<RouteNodeVO>? = null
 )
@@ -20,5 +23,8 @@ data class RouteMetaVO(
     val module: String? = null,
     val menuLevel: Int? = null,
     val type: String? = null,
-    val perms: List<String>? = null
+    val perms: List<String>? = null,
+    val menuMode: String? = null,
+    val externalUrl: String? = null,
+    val pageRenderType: String? = null
 )

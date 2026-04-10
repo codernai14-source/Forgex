@@ -3,9 +3,14 @@ package com.forgex.mobile.feature.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forgex.mobile.core.common.result.AppResult
+import com.forgex.mobile.core.datastore.ServerEndpointConfig
+import com.forgex.mobile.core.datastore.SessionStore
+import com.forgex.mobile.core.network.di.BaseUrl
+import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
 import com.forgex.mobile.feature.auth.data.AuthRepository
 import com.forgex.mobile.feature.auth.data.CaptchaMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.net.URI
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,21 +18,35 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * 登录页状态管理：
+ * 1. 拉取系统配置（标题/Logo/背景）并同步到 UI。
+ * 2. 管理验证码模式（无/图片/滑块）与登录提交校验。
+ * 3. 监听动态服务器地址，实时展示当前登录目标环境。
+ */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val sessionStore: SessionStore,
+    @BaseUrl private val baseUrl: String
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AuthUiState())
+    private val defaultServerOrigin: String = resolveDefaultOrigin(baseUrl)
+
+    private val _uiState = MutableStateFlow(AuthUiState(serverOrigin = defaultServerOrigin))
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<AuthEvent>()
     val events: SharedFlow<AuthEvent> = _events.asSharedFlow()
 
     init {
+        // 启动时并行完成：环境地址监听、系统配置预热、验证码模式预热、公钥预热
+        observeServerEndpoint()
+        preloadSystemBasicConfig()
         refreshCaptchaModeAndData(silent = true)
         preloadPublicKey()
     }
@@ -55,11 +74,91 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun switchLoginMethod(method: LoginMethod) {
+        // 当前仅账号密码链路可用，其它入口保留占位提示
+        if (method == LoginMethod.ACCOUNT_PASSWORD) {
+            _uiState.update {
+                it.copy(
+                    selectedLoginMethod = method,
+                    errorMessage = null
+                )
+            }
+            return
+        }
+        _uiState.update {
+            it.copy(
+                selectedLoginMethod = method,
+                errorMessage = "第三方登录正在开发中"
+            )
+        }
+    }
+
     fun refreshCaptcha(silent: Boolean = false) {
         when (_uiState.value.captchaMode) {
             CaptchaMode.IMAGE -> refreshImageCaptcha(silent)
             CaptchaMode.SLIDER -> refreshSliderCaptcha(silent)
             CaptchaMode.NONE -> refreshCaptchaModeAndData(silent)
+        }
+    }
+
+    private fun observeServerEndpoint() {
+        viewModelScope.launch {
+            // 当用户在“服务器配置页”修改地址后，这里会立即刷新登录页展示
+            sessionStore.serverEndpoint.collectLatest { endpoint ->
+                _uiState.update {
+                    it.copy(serverOrigin = resolveServerOrigin(endpoint))
+                }
+            }
+        }
+    }
+
+    private fun preloadSystemBasicConfig() {
+        viewModelScope.launch {
+            when (val result = authRepository.loadSystemBasicConfig()) {
+                is AppResult.Success -> {
+                    applySystemConfig(result.data)
+                }
+
+                is AppResult.Error -> {
+                    // 拉取失败时至少把默认系统名写入会话，确保全局标题有值
+                    sessionStore.saveSystemName(_uiState.value.systemName)
+                }
+
+                AppResult.Loading -> Unit
+            }
+        }
+    }
+
+    private suspend fun applySystemConfig(config: SystemBasicConfig) {
+        // 统一兜底，避免后端空值导致 UI 抖动或显示异常
+        val systemName = config.systemName.safeOrDefault("FORGEX_MOM")
+        val loginTitle = config.loginPageTitle.safeOrDefault(systemName)
+        val loginSubtitle = config.loginPageSubtitle.safeOrDefault("")
+        val loginBackgroundType = config.loginBackgroundType.safeOrDefault("image")
+        val loginBackgroundImage = config.loginBackgroundImage.safeOrDefault("")
+        val loginBackgroundColor = config.loginBackgroundColor.safeOrDefault("#0B1E48")
+        val showOAuthLogin = config.showOAuthLogin ?: true
+        val showRegisterEntry = config.showRegisterEntry ?: true
+        val registerUrl = config.registerUrl.safeOrDefault("/register")
+        val primaryColor = config.primaryColor.safeOrDefault("#05d9e8")
+        val secondaryColor = config.secondaryColor.safeOrDefault("#ff2a6d")
+
+        sessionStore.saveSystemName(systemName)
+        _uiState.update {
+            it.copy(
+                systemName = systemName,
+                loginTitle = loginTitle,
+                loginSubtitle = loginSubtitle,
+                systemLogo = config.systemLogo.safeOrDefault(""),
+                loginBackgroundType = loginBackgroundType,
+                loginBackgroundImage = loginBackgroundImage,
+                loginBackgroundColor = loginBackgroundColor,
+                showOAuthLogin = showOAuthLogin,
+                showRegisterEntry = showRegisterEntry,
+                registerUrl = registerUrl,
+                primaryColor = primaryColor,
+                secondaryColor = secondaryColor
+            )
         }
     }
 
@@ -69,6 +168,7 @@ class AuthViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             }
 
+            // 先确定模式，再拉取对应验证码数据，避免 UI 状态与后端配置错位
             when (val result = authRepository.loadCaptchaMode()) {
                 is AppResult.Success -> {
                     when (result.data) {
@@ -168,7 +268,7 @@ class AuthViewModel @Inject constructor(
                 is AppResult.Error -> {
                     _uiState.update {
                         it.copy(
-                            captchaMode = CaptchaMode.NONE,
+                            captchaMode = CaptchaMode.IMAGE,
                             captchaId = "",
                             captchaImageBase64 = "",
                             captcha = "",
@@ -247,6 +347,7 @@ class AuthViewModel @Inject constructor(
         val left = snapshot.sliderProgress * maxLeft.toFloat()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            // 按后端需要传入滑轨参数，获得可用于登录提交的 sliderToken
             when (
                 val result = authRepository.validateSliderCaptcha(
                     captchaId = slider.id,
@@ -326,6 +427,10 @@ class AuthViewModel @Inject constructor(
 
     fun submitLogin() {
         val snapshot = _uiState.value
+        if (snapshot.selectedLoginMethod != LoginMethod.ACCOUNT_PASSWORD) {
+            _uiState.update { it.copy(errorMessage = "第三方登录正在开发中") }
+            return
+        }
         if (snapshot.account.isBlank() || snapshot.password.isBlank()) {
             _uiState.update { it.copy(errorMessage = "请输入账号和密码") }
             return
@@ -352,6 +457,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
+            // 不同验证码模式对应不同提交字段
             val captcha = when (snapshot.captchaMode) {
                 CaptchaMode.IMAGE -> snapshot.captcha
                 CaptchaMode.SLIDER -> snapshot.sliderToken
@@ -429,7 +535,7 @@ class AuthViewModel @Inject constructor(
 
             when (val chooseResult = authRepository.chooseTenant(tenantId, snapshot.account)) {
                 is AppResult.Success -> {
-                    // 预加载菜单/按钮权限；失败不阻断进入首页
+                    // 选租户成功后预加载菜单，不阻塞登录完成事件
                     authRepository.loadUserRoutes(snapshot.account)
                     _uiState.update { it.copy(isLoading = false) }
                     _events.emit(AuthEvent.LoginCompleted)
@@ -449,5 +555,37 @@ class AuthViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun resolveServerOrigin(endpoint: ServerEndpointConfig?): String {
+        if (endpoint == null || endpoint.host.isBlank()) {
+            return defaultServerOrigin
+        }
+        val scheme = endpoint.scheme.ifBlank { "http" }
+        return "$scheme://${endpoint.host}:${endpoint.port}"
+    }
+
+    /**
+     * 从 BASE_URL 解析默认网关展示地址。
+     * 例：`http://10.0.2.2:9000/api/` -> `http://10.0.2.2:9000`
+     */
+    private fun resolveDefaultOrigin(defaultBaseUrl: String): String {
+        return runCatching {
+            val uri = URI(defaultBaseUrl)
+            val scheme = uri.scheme?.ifBlank { "http" } ?: "http"
+            val host = uri.host?.ifBlank { "10.0.2.2" } ?: "10.0.2.2"
+            val port = if (uri.port > 0) {
+                uri.port
+            } else if (scheme.equals("https", ignoreCase = true)) {
+                443
+            } else {
+                80
+            }
+            "$scheme://$host:$port"
+        }.getOrElse { "http://10.0.2.2:9000" }
+    }
+
+    private fun String?.safeOrDefault(default: String): String {
+        return this?.trim().takeUnless { it.isNullOrBlank() } ?: default
     }
 }

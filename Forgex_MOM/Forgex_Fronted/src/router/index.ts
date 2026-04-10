@@ -40,6 +40,7 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' }, // 默认重定向到登录�?
   { path: '/login', component: () => import('../views/auth/login/index.vue') }, // 登录�?
+  { path: '/register', component: () => import('../views/auth/register/index.vue') },
   { path: '/init', component: () => import('../views/auth/init-wizard/index.vue') }, // 初始化向导页
   {
     path: '/workspace',
@@ -136,7 +137,7 @@ router.beforeEach(async (to, from, next) => {
   const permissionStore = usePermissionStore()
 
   // 如果访问登录页或初始化页，直接放�?
-  if (to.path === '/login' || to.path === '/init') {
+  if (to.path === '/login' || to.path === '/register' || to.path === '/init') {
     next()
     return
   }

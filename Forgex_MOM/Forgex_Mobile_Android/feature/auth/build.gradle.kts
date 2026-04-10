@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.bouncycastle.bcprov)
 
     implementation(libs.hilt.android)

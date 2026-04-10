@@ -54,7 +54,7 @@ public interface EncodeRuleFeignClient {
      * 远程调用 Sys 模块的编码生成服务，生成唯一的业务编码。
      * </p>
      *
-     * @param ruleCode 规则代码，必须在 sys_encode_rule 表中存在且已启用
+     * @param ruleCode 规则代码，必须在 fx_encode_rule 表中存在且已启用
      * @return 生成的业务编码，失败时返回错误信息
      * @see com.forgex.sys.feign.EncodeRuleFeignService
      */

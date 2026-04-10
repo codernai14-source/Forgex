@@ -72,7 +72,7 @@ public class EncodeUtils {
      * String code = EncodeUtils.nextEncode("SALE_ORDER");
      * }</pre>
      *
-     * @param ruleCode 规则代码，必须在 sys_encode_rule 表中存在且已启用
+     * @param ruleCode 规则代码，必须在 fx_encode_rule 表中存在且已启用
      * @return 生成的业务编码
      * @throws IllegalArgumentException 当规则代码为空时抛出
      * @throws RuntimeException 当远程调用失败时抛出
