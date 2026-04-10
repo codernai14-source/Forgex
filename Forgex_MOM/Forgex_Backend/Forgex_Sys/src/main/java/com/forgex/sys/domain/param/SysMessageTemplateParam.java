@@ -19,26 +19,29 @@ import lombok.EqualsAndHashCode;
 
 /**
  * 消息模板查询参数
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysMessageTemplateParam extends BaseGetParam {
-    
-    /** 模板编号(模糊查询) */
+
+    /** 模板编号（模糊查询） */
     private String templateCode;
-    
-    /** 模板名称(模糊查询) */
+
+    /** 模板名称（模糊查询） */
     private String templateName;
-    
+
     /** 消息类型 */
     private String messageType;
-    
+
+    /** 业务类型 */
+    private String bizType;
+
     /** 状态 */
     private Boolean status;
+
+    /** 是否查询公共配置，`true` 表示查询 `tenantId=0` */
+    private Boolean publicConfig;
 }
-
-
-

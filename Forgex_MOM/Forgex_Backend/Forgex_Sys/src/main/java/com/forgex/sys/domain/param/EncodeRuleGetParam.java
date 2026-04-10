@@ -11,21 +11,26 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.common.mapper.template;
+package com.forgex.sys.domain.param;
 
-import com.baomidou.dynamic.datasource.annotation.DS;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.forgex.common.domain.entity.template.FxExcelImportConfigTemplate;
-import org.apache.ibatis.annotations.Mapper;
+import lombok.Data;
 
 /**
- * Excel 导入配置模板 Mapper
+ * 编码规则详情查询参数
+ * <p>
+ * 用于根据 ID 查询编码规则详情，包含主表和明细表的完整信息。
+ * 通常用于编辑页面或详情页面的数据加载。
+ * </p>
  *
- * @author Forgex Team
- * @version 1.0.0
- * @see com.baomidou.dynamic.datasource.annotation.DS
+ * @author LiDaoMoM
+ * @version 1.0
+ * @since 2026-04-10
  */
-@Mapper
-@DS("common")
-public interface FxExcelImportConfigTemplateMapper extends BaseMapper<FxExcelImportConfigTemplate> {
+@Data
+public class EncodeRuleGetParam {
+
+    /**
+     * 主键 ID（必填）
+     */
+    private Long id;
 }

@@ -16,6 +16,7 @@ import com.forgex.common.mapper.excel.FxExcelExportConfigMapper;
 import com.forgex.common.mapper.excel.FxExcelImportConfigItemMapper;
 import com.forgex.common.mapper.excel.FxExcelImportConfigMapper;
 import com.forgex.common.service.excel.ExcelConfigService;
+import com.forgex.common.service.excel.provider.TemplateOptionProviderRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
     private final FxExcelExportConfigItemMapper exportItemMapper;
     private final FxExcelImportConfigMapper importConfigMapper;
     private final FxExcelImportConfigItemMapper importItemMapper;
+    private final TemplateOptionProviderRegistry providerRegistry;
 
     @Override
     public IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode) {
@@ -197,7 +199,10 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         entity.setTableName(dto.getTableName());
         entity.setTableCode(dto.getTableCode());
         entity.setTitle(dto.getTitle());
+        entity.setTitleI18nJson(dto.getTitleI18nJson());
         entity.setSubtitle(dto.getSubtitle());
+        entity.setSubtitleI18nJson(dto.getSubtitleI18nJson());
+        entity.setSubtitleStyleJson(dto.getSubtitleStyleJson());
         entity.setVersion(dto.getVersion());
 
         if (entity.getId() == null) {
@@ -215,6 +220,11 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
                 it.setImportField(item.getImportField());
                 it.setFieldType(item.getFieldType());
                 it.setDictCode(item.getDictCode());
+                it.setDataSourceType(item.getDataSourceType());
+                it.setDataSourceValue(item.getDataSourceValue());
+                it.setDependsOnFieldKey(item.getDependsOnFieldKey());
+                it.setSeparator(item.getSeparator());
+                it.setFieldRemark(item.getFieldRemark());
                 it.setRequired(item.getRequired());
                 it.setOrderNum(item.getOrderNum());
                 importItemMapper.insert(it);
@@ -275,7 +285,10 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         dto.setTableName(cfg.getTableName());
         dto.setTableCode(cfg.getTableCode());
         dto.setTitle(cfg.getTitle());
+        dto.setTitleI18nJson(cfg.getTitleI18nJson());
         dto.setSubtitle(cfg.getSubtitle());
+        dto.setSubtitleI18nJson(cfg.getSubtitleI18nJson());
+        dto.setSubtitleStyleJson(cfg.getSubtitleStyleJson());
         dto.setVersion(cfg.getVersion());
         return dto;
     }
@@ -296,9 +309,19 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
             dto.setImportField(it.getImportField());
             dto.setFieldType(it.getFieldType());
             dto.setDictCode(it.getDictCode());
+            dto.setDataSourceType(it.getDataSourceType());
+            dto.setDataSourceValue(it.getDataSourceValue());
+            dto.setDependsOnFieldKey(it.getDependsOnFieldKey());
+            dto.setSeparator(it.getSeparator());
+            dto.setFieldRemark(it.getFieldRemark());
             dto.setRequired(it.getRequired());
             dto.setOrderNum(it.getOrderNum());
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public java.util.List<String> listProviderCodes() {
+        return providerRegistry.getAllProviderCodes();
     }
 }

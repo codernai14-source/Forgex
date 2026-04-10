@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -188,7 +189,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @param userDTO 用户DTO
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void addUser(SysUserDTO userDTO) {
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
@@ -489,7 +490,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @return 是否成功
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public boolean changePassword(Long id, String oldPassword, String newPassword) {
         // 查询用户
         SysUser user = userMapper.selectById(id);
@@ -557,7 +558,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     private String encryptPassword(String rawPassword) {
         CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
-        return provider.encrypt(rawPassword);
+        if (provider.supportsEncrypt()) {
+            return provider.encrypt(rawPassword);
+        }
+        if (provider.supportsHash()) {
+            return provider.hash(rawPassword);
+        }
+        throw new IllegalStateException("Unsupported password store: " + provider.name());
     }
 
     private boolean verifyPassword(String rawPassword, String encodedPassword) {

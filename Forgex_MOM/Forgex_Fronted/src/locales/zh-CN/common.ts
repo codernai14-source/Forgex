@@ -43,6 +43,57 @@ export default {
     columnValue: '翻译内容',
     loadLanguagesFailed: '加载语言列表失败',
   },
+  
+  /** 国际化 JSON 编辑器组件 {@link I18nJsonEditor} */
+  i18nJsonEditor: {
+    zhCn: '中文',
+    enUs: '英文',
+    zhCnPlaceholder: '请输入中文翻译',
+    enUsPlaceholder: '请输入英文翻译',
+    jsonPreview: 'JSON 预览',
+  },
+  
+  /** JSON 数组编辑器组件 {@link JsonArrayEditor} */
+  jsonArrayEditor: {
+    optionsList: '选项列表',
+    addOption: '添加选项',
+    valuePlaceholder: '请输入选项值',
+    labelPlaceholder: '请输入选项标签',
+    columnValue: '选项值',
+    columnLabel: '选项标签',
+    jsonPreview: 'JSON 预览',
+  },
+  
+  /** 样式配置编辑器组件 {@link StyleJsonEditor} */
+  styleJsonEditor: {
+    backgroundColor: '背景颜色',
+    fontSize: '字体大小',
+    wordWrap: '自动换行',
+    align: '对齐方式',
+    alignLeft: '左对齐',
+    alignCenter: '居中',
+    alignRight: '右对齐',
+    fontWeight: '字体加粗',
+    jsonPreview: 'JSON 预览',
+    stylePreview: '样式预览',
+    previewText: '预览文本',
+  },
+  
+  /** 数据源配置组件 {@link DataSourceConfig} */
+  dataSourceConfig: {
+    dataSourceType: '数据源类型',
+    selectType: '请选择数据源类型',
+    typeDict: '字典',
+    typeJson: 'JSON 数组',
+    typeProvider: '数据提供方',
+    dictCode: '字典编码',
+    selectDict: '请选择字典',
+    selectProvider: '请选择数据提供方',
+    selectProviderField: '请选择字段',
+    providerCode: '提供方编码',
+    providerField: '提供方字段',
+    dataSourceJson: '数据源 JSON',
+  },
 
   // 状态
   status: '状态',
@@ -105,7 +156,6 @@ export default {
   saved: '已保存',
   deleted: '已删除',
   remove: '移除',
-  confirm: '确定',
   login: {
     accountLabel: '账号',
     accountPlaceholder: '请输入账号',
@@ -119,6 +169,11 @@ export default {
     languageLabel: '语言',
     rememberMe: '记住我',
     forgotPassword: '忘记密码?',
+    noAccount: '还没有账号？',
+    register: '立即注册',
+    registerGuideTitle: '账号注册说明',
+    registerGuideDesc: '当前系统暂未提供内置自助注册流程，请联系管理员为您开通账号，或使用企业提供的外部注册链接。',
+    backToLogin: '返回登录',
     submit: '身份校验',
     moreLoginMethods: '更多登录方式',
     sliderTitle: '滑块验证',

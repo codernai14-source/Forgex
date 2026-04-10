@@ -165,5 +165,41 @@ public interface AuthService {
      */
     R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId);
 
+    /**
+     * 更改用户语言偏好
+     * <p>
+     * 将用户的语言偏好设置保存到 Redis 缓存中。
+     * </p>
+     * <p>处理流程：</p>
+     * <ul>
+     *   <li>校验语言参数是否为空</li>
+     *   <li>获取当前登录用户 ID 和租户 ID</li>
+     *   <li>构造语言偏好键（fx:lang:{tenantId}:{userId}）</li>
+     *   <li>将语言偏好存入 Redis</li>
+     * </ul>
+     *
+     * @param lang 语言代码（如：zh_CN、en_US 等），不能为空
+     * @return {@link R} 设置是否成功
+     * @see com.forgex.auth.domain.param.ChangeLanguageParam
+     */
     R<Boolean> changeLanguage(String lang);
+
+    /**
+     * 邀请码注册
+     * <p>
+     * 通过邀请码完成用户注册，创建用户并绑定部门/职位
+     * </p>
+     *
+     * @param param 注册参数
+     * @return 注册结果
+     */
+    R<Boolean> register(com.forgex.auth.domain.param.RegisterParam param);
+
+    /**
+     * 校验邀请码是否有效
+     *
+     * @param inviteCode 邀请码
+     * @return 校验结果，data 为 true 表示有效
+     */
+    R<Boolean> validateInviteCode(String inviteCode);
 }

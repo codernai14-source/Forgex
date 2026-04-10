@@ -17,25 +17,26 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 用户页面布局与样式配置模型。
- *
- * <p>用于描述单个用户在某个租户下的前端布局偏好，包括：</p>
+ * 用户页面布局与样式配置
+ * <p>
+ * 用于描述单个用户在某个租户下的前端布局偏好，包括菜单形态、视觉主题、标签栏行为等。
+ * 该配置支持用户自定义界面风格，实现个性化的用户体验。
+ * </p>
+ * <p><strong>配置范围：</strong></p>
  * <ul>
- *     <li>菜单形态（是否左侧双菜单、布局模式等）</li>
- *     <li>基础视觉（字体大小、圆角大小、主题模式与主题色、内容宽度）</li>
- *     <li>标签栏行为（启用开关、最大数量、拖拽、是否显示图标、标签页风格）</li>
- *     <li>全局小部件（搜索、主题切换、语言切换、全屏、通知、侧边栏折叠、刷新）</li>
- *     <li>顶栏行为（是否显示、固定/自动隐藏/滚动隐藏、菜单位置）</li>
- *     <li>通用体验（水印、页面切换动画、加载指示等）</li>
- *     <li>底栏展示（版权信息是否启用）</li>
+ *   <li>菜单形态：是否左侧双菜单、布局模式等</li>
+ *   <li>基础视觉：字体大小、圆角大小、主题模式与主题色、内容宽度</li>
+ *   <li>标签栏行为：启用开关、最大数量、拖拽、是否显示图标、标签页风格</li>
+ *   <li>全局小部件：搜索、主题切换、语言切换、全屏、通知、侧边栏折叠、刷新</li>
+ *   <li>顶栏行为：是否显示、固定/自动隐藏/滚动隐藏、菜单位置</li>
+ *   <li>通用体验：水印、页面切换动画、加载指示等</li>
+ *   <li>底栏展示：版权信息是否启用</li>
  * </ul>
  *
- * <p>推荐通过 {@code UserStyleConfigService} 读写，配合 JSON 序列化保存在
- * {@code sys_user_style_config} 表中。</p>
- *
- * @author Forgex
+ * @author Forgex Team
  * @version 1.0.0
- * @see com.forgex.common.config.UserStyleConfigService
+ * @since 2026-03-28
+ * @see com.forgex.common.domain.entity.SysUserStyleConfig
  */
 @Getter
 @Setter

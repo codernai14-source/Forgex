@@ -13,6 +13,9 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -21,6 +24,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -89,6 +93,21 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             int columnSize = items.isEmpty() ? 1 : items.size();
 
             int rowIndex = 0;
+            
+            // 第 1 行：模板说明（带样式）
+            if (StringUtils.hasText(config.getSubtitle())) {
+                Row row = sheet.createRow(rowIndex);
+                Cell cell = row.createCell(0);
+                cell.setCellValue(config.getSubtitle());
+                if (columnSize > 1) {
+                    sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, columnSize - 1));
+                }
+                // 应用说明样式（背景色#8EC67F，自动换行）
+                applySubtitleStyle(wb, cell, config.getSubtitleStyleJson());
+                rowIndex++;
+            }
+            
+            // 第 2 行：模板标题
             if (StringUtils.hasText(config.getTitle())) {
                 Row row = sheet.createRow(rowIndex);
                 Cell cell = row.createCell(0);
@@ -98,16 +117,8 @@ public class ExcelFileServiceImpl implements ExcelFileService {
                 }
                 rowIndex++;
             }
-            if (StringUtils.hasText(config.getSubtitle())) {
-                Row row = sheet.createRow(rowIndex);
-                Cell cell = row.createCell(0);
-                cell.setCellValue(config.getSubtitle());
-                if (columnSize > 1) {
-                    sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, columnSize - 1));
-                }
-                rowIndex++;
-            }
 
+            // 第 3 行：列头
             Row headerRow = sheet.createRow(rowIndex);
             int colIndex = 0;
             for (FxExcelImportConfigItemDTO item : items) {
@@ -115,8 +126,15 @@ public class ExcelFileServiceImpl implements ExcelFileService {
                 if (Boolean.TRUE.equals(item.getRequired())) {
                     header = header + " *";
                 }
+                // 添加字段备注（如果有）
+                if (StringUtils.hasText(item.getFieldRemark())) {
+                    header = header + " (" + item.getFieldRemark() + ")";
+                }
                 Cell cell = headerRow.createCell(colIndex++);
                 cell.setCellValue(header);
+                
+                // 添加数据验证（下拉框）
+                addDataValidation(wb, sheet, item, rowIndex, colIndex - 1);
             }
 
             sheet.createFreezePane(0, rowIndex + 1);
@@ -764,5 +782,211 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             }
         }
         return null;
+    }
+
+    /**
+     * 应用模板说明样式
+     * <p>
+     * 为说明单元格设置背景色（默认#8EC67F）、自动换行、字体等样式。
+     * </p>
+     *
+     * @param wb 工作簿对象
+     * @param cell 说明单元格
+     * @param styleJson 样式 JSON 字符串，支持 backgroundColor、wrapText、fontSize 等字段
+     * @see CellStyle
+     */
+    private void applySubtitleStyle(Workbook wb, Cell cell, String styleJson) {
+        if (!StringUtils.hasText(styleJson)) {
+            // 使用默认样式
+            styleJson = "{\"backgroundColor\": \"#8EC67F\", \"wrapText\": true, \"fontSize\": 12}";
+        }
+        
+        try {
+            JsonNode node = objectMapper.readTree(styleJson);
+            CellStyle base = cell.getCellStyle();
+            CellStyle style = wb.createCellStyle();
+            if (base != null) {
+                style.cloneStyleFrom(base);
+            }
+            Font font = wb.createFont();
+            
+            // 设置字体大小
+            JsonNode fontSize = node.get("fontSize");
+            if (fontSize != null && fontSize.canConvertToInt()) {
+                font.setFontHeightInPoints((short) fontSize.intValue());
+            } else {
+                font.setFontHeightInPoints((short) 12);
+            }
+            style.setFont(font);
+            
+            // 设置自动换行
+            JsonNode wrapText = node.get("wrapText");
+            if (wrapText != null && wrapText.isBoolean()) {
+                style.setWrapText(wrapText.booleanValue());
+            } else {
+                style.setWrapText(true);
+            }
+            
+            // 设置背景色
+            JsonNode bgColor = node.get("backgroundColor");
+            if (bgColor != null && bgColor.isTextual() && StringUtils.hasText(bgColor.asText())) {
+                Short colorIndex = resolveColorFromHex(bgColor.asText());
+                if (colorIndex != null) {
+                    style.setFillForegroundColor(colorIndex);
+                    style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                }
+            }
+            
+            cell.setCellStyle(style);
+        } catch (Exception e) {
+            // 使用默认样式
+            CellStyle style = wb.createCellStyle();
+            Font font = wb.createFont();
+            font.setFontHeightInPoints((short) 12);
+            style.setFont(font);
+            style.setWrapText(true);
+            style.setFillForegroundColor(IndexedColors.LIME.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            cell.setCellStyle(style);
+        }
+    }
+
+    /**
+     * 添加数据验证（Excel 下拉框）
+     * <p>
+     * 根据字段的数据源类型和值，为列头下方的数据行添加数据验证。
+     * 支持 DICT（字典）、JSON（静态下拉）、PROVIDER（接口下拉）三种类型。
+     * </p>
+     *
+     * @param wb 工作簿对象
+     * @param sheet 工作表对象
+     * @param item 导入配置项
+     * @param headerRowIndex 列头所在行号
+     * @param columnIndex 列索引
+     */
+    private void addDataValidation(Workbook wb, Sheet sheet, FxExcelImportConfigItemDTO item, 
+                                   int headerRowIndex, int columnIndex) {
+        // 检查是否需要添加数据验证
+        String dataSourceType = item.getDataSourceType();
+        String dataSourceValue = item.getDataSourceValue();
+        
+        if (!StringUtils.hasText(dataSourceType) || "NONE".equals(dataSourceType)) {
+            return;
+        }
+        
+        // 获取下拉选项
+        String[] options = getDropdownOptions(dataSourceType, dataSourceValue);
+        if (options == null || options.length == 0) {
+            return;
+        }
+        
+        try {
+            // 创建数据验证辅助对象
+            DataValidationHelper helper = sheet.getDataValidationHelper();
+            
+            // 创建数据验证约束
+            DataValidationConstraint constraint = helper.createExplicitListConstraint(options);
+            
+            // 设置数据验证区域（从列头下一行到第 1000 行）
+            CellRangeAddressList regionList = new CellRangeAddressList(
+                headerRowIndex + 1, 1000, columnIndex, columnIndex
+            );
+            
+            // 创建数据验证规则
+            DataValidation dataValidation = helper.createValidation(constraint, regionList);
+            
+            // 设置错误提示
+            dataValidation.createErrorBox("输入值无效", "请从下拉列表中选择一个有效的值！");
+            dataValidation.setShowErrorBox(true);
+            
+            // 添加数据验证到工作表
+            sheet.addValidationData(dataValidation);
+        } catch (Exception e) {
+            // 忽略异常，不影响模板生成
+        }
+    }
+
+    /**
+     * 获取下拉选项数组
+     * <p>
+     * 根据数据源类型和值生成下拉选项数组。
+     * </p>
+     *
+     * @param dataSourceType 数据源类型（DICT/JSON/PROVIDER）
+     * @param dataSourceValue 数据源值
+     * @return 选项数组，格式如 ["0|停用", "1|启用"]
+     */
+    private String[] getDropdownOptions(String dataSourceType, String dataSourceValue) {
+        if (!StringUtils.hasText(dataSourceValue)) {
+            return new String[0];
+        }
+        
+        try {
+            if ("JSON".equals(dataSourceType)) {
+                // JSON 类型：直接解析 JSON 数组
+                JsonNode node = objectMapper.readTree(dataSourceValue);
+                if (node.isArray()) {
+                    List<String> options = new ArrayList<>();
+                    for (JsonNode item : node) {
+                        if (item.isTextual()) {
+                            // 字符串数组：["0|停用", "1|启用"]
+                            options.add(item.asText());
+                        } else if (item.isObject()) {
+                            // 对象数组：[{"value": "0", "label": "停用"}]
+                            String value = item.has("value") ? item.get("value").asText() : "";
+                            String label = item.has("label") ? item.get("label").asText() : value;
+                            options.add(value + "|" + label);
+                        }
+                    }
+                    return options.toArray(new String[0]);
+                }
+            } else if ("DICT".equals(dataSourceType)) {
+                // TODO: 字典类型需要从数据库查询字典项
+                // 暂时返回空数组
+            } else if ("PROVIDER".equals(dataSourceType)) {
+                // TODO: Provider 类型需要调用 Provider 获取选项
+                // 暂时返回空数组
+            }
+        } catch (Exception e) {
+            // 忽略异常
+        }
+        
+        return new String[0];
+    }
+
+    /**
+     * 从十六进制颜色代码解析 POI 颜色索引
+     *
+     * @param hexColor 十六进制颜色代码，如 "#8EC67F"
+     * @return POI 颜色索引；解析失败返回 null
+     */
+    private Short resolveColorFromHex(String hexColor) {
+        if (hexColor == null || !hexColor.startsWith("#") || hexColor.length() != 7) {
+            return null;
+        }
+        
+        try {
+            int r = Integer.parseInt(hexColor.substring(1, 3), 16);
+            int g = Integer.parseInt(hexColor.substring(3, 5), 16);
+            int b = Integer.parseInt(hexColor.substring(5, 7), 16);
+            
+            // POI 的 IndexedColors 不支持自定义 RGB，这里返回最接近的索引颜色
+            // 简化处理：根据颜色特征返回近似的索引颜色
+            if (r > 200 && g > 200 && b > 200) {
+                return IndexedColors.WHITE.getIndex();
+            } else if (r < 50 && g < 50 && b < 50) {
+                return IndexedColors.BLACK.getIndex();
+            } else if (g > r && g > b) {
+                return IndexedColors.LIME.getIndex();
+            } else if (r > g && r > b) {
+                return IndexedColors.RED.getIndex();
+            } else if (b > r && b > g) {
+                return IndexedColors.BLUE.getIndex();
+            }
+            
+            return IndexedColors.GREY_25_PERCENT.getIndex();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

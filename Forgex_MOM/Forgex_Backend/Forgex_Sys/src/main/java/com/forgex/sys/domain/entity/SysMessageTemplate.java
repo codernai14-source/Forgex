@@ -20,36 +20,38 @@ import lombok.Data;
 /**
  * 消息模板主表实体
  * <p>
- * 映射表：sys_message_template
- * 用于配置消息模板的基本信息
+ * 映射表：`sys_message_template`
+ * 用于保存消息模板的基础信息。
  * </p>
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
 @Data
 @TableName("sys_message_template")
 public class SysMessageTemplate extends BaseEntity {
-    
+
     /** 模板编号 */
     private String templateCode;
-    
+
     /** 模板名称 */
     private String templateName;
-    
+
     /** 模板名称多语言JSON */
     private String templateNameI18nJson;
-    
+
     /** 模板版本 */
     private String templateVersion;
-    
-    /** 消息类型(NOTICE=通知,WARNING=警告,ALARM=报警) */
+
+    /** 消息类型（NOTICE=通知，WARNING=预警，ALARM=报警） */
     private String messageType;
-    
-    /** 状态(false=禁用,true=启用) */
+
+    /** 业务类型，用于区分不同页面和业务能力下的消息模板 */
+    private String bizType;
+
+    /** 状态（false=禁用，true=启用） */
     private Boolean status;
-    
+
     /** 备注 */
     private String remark;
 }
-

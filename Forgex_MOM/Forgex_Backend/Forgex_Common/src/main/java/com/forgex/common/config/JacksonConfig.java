@@ -14,7 +14,6 @@ limitations under the License.*/
 package com.forgex.common.config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
@@ -36,72 +35,62 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Jackson 配置类
- * 
- * 功能：
- * - 配置全局时间格式化
- * - LocalDateTime 格式：yyyy-MM-dd HH:mm:ss
- * - LocalDate 格式：yyyy-MM-dd
- * - LocalTime 格式：HH:mm:ss
- * - 解决前端 Long 类型精度丢失问题
- * 
+ * <p>
+ * 统一处理系统中的 JSON 序列化与反序列化规则，包括：
+ * 1. Java 8 时间类型格式化
+ * 2. Long 类型转字符串，避免前端精度丢失
+ * 3. Boolean 字段兼容 true/false 与 1/0 两种传值形式
+ * </p>
+ *
  * @author coder_nai@163.com
  * @date 2025-01-08
  */
 @Configuration
 public class JacksonConfig {
-    
+
     /** 日期时间格式 */
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    
+
     /** 日期格式 */
     private static final String DATE_FORMAT = "yyyy-MM-dd";
-    
+
     /** 时间格式 */
     private static final String TIME_FORMAT = "HH:mm:ss";
-    
+
     /**
-     * 配置 ObjectMapper Customizer
-     * 使用 Jackson2ObjectMapperBuilderCustomizer 可以在保留 Spring Boot 默认配置的基础上进行定制
+     * 配置 ObjectMapper Customizer。
+     *
+     * @return Jackson 自定义配置
      */
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
         return builder -> {
-            // 配置 JavaTimeModule
             JavaTimeModule javaTimeModule = new JavaTimeModule();
-            
-            // LocalDateTime 序列化和反序列化
-            javaTimeModule.addSerializer(LocalDateTime.class, 
+            SimpleModule flexibleTypeModule = new SimpleModule();
+
+            javaTimeModule.addSerializer(LocalDateTime.class,
                 new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
-            javaTimeModule.addDeserializer(LocalDateTime.class, 
+            javaTimeModule.addDeserializer(LocalDateTime.class,
                 new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
-            
-            // LocalDate 序列化和反序列化
-            javaTimeModule.addSerializer(LocalDate.class, 
+
+            javaTimeModule.addSerializer(LocalDate.class,
                 new LocalDateSerializer(DateTimeFormatter.ofPattern(DATE_FORMAT)));
-            javaTimeModule.addDeserializer(LocalDate.class, 
+            javaTimeModule.addDeserializer(LocalDate.class,
                 new LocalDateDeserializer(DateTimeFormatter.ofPattern(DATE_FORMAT)));
-            
-            // LocalTime 序列化和反序列化
-            javaTimeModule.addSerializer(LocalTime.class, 
+
+            javaTimeModule.addSerializer(LocalTime.class,
                 new LocalTimeSerializer(DateTimeFormatter.ofPattern(TIME_FORMAT)));
-            javaTimeModule.addDeserializer(LocalTime.class, 
+            javaTimeModule.addDeserializer(LocalTime.class,
                 new LocalTimeDeserializer(DateTimeFormatter.ofPattern(TIME_FORMAT)));
-            
-            // 注册时间模块
-            builder.modules(javaTimeModule);
-            
-            // 全局配置：Long 类型序列化为 String，解决前端精度丢失问题
-            // 针对 Long.class 和 long.class
+
+            flexibleTypeModule.addDeserializer(Boolean.class, new FlexibleBooleanDeserializer());
+            flexibleTypeModule.addDeserializer(Boolean.TYPE, new FlexibleBooleanDeserializer());
+
+            builder.modules(javaTimeModule, flexibleTypeModule);
             builder.serializerByType(Long.class, ToStringSerializer.instance);
             builder.serializerByType(Long.TYPE, ToStringSerializer.instance);
-            
-            // 禁用将日期序列化为时间戳
             builder.featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            
-            // 忽略未知属性
             builder.featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-            
-            // 不使用 XML Mapper
             builder.createXmlMapper(false);
         };
     }

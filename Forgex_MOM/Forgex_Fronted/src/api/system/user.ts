@@ -10,6 +10,33 @@ import http from '../http'
 import type { User, UserProfile, UserQuery, Department, Position } from '@/views/system/user/types'
 import { exportUser } from '@/api/system/excel'
 
+type UserSubmitPayload = User & { profile?: UserProfile }
+
+function normalizeBooleanValue(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    if (value === 1) return true
+    if (value === 0) return false
+    return undefined
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true' || normalized === '1') return true
+    if (normalized === 'false' || normalized === '0') return false
+  }
+  return undefined
+}
+
+function normalizeUserPayload(user: UserSubmitPayload): UserSubmitPayload {
+  const status = normalizeBooleanValue(user.status)
+  return {
+    ...user,
+    ...(status !== undefined ? { status } : {}),
+  }
+}
+
 /**
  * 获取用户分页列表
  * 
@@ -43,15 +70,15 @@ export async function getUserDetail(id: string) {
 /**
  * 新增用户
  */
-export async function addUser(user: User & { profile?: UserProfile }) {
-  return http.post('/sys/user/create', user)
+export async function addUser(user: UserSubmitPayload) {
+  return http.post('/sys/user/create', normalizeUserPayload(user))
 }
 
 /**
  * 更新用户
  */
-export async function updateUser(user: User & { profile?: UserProfile }) {
-  return http.post('/sys/user/update', user)
+export async function updateUser(user: UserSubmitPayload) {
+  return http.post('/sys/user/update', normalizeUserPayload(user))
 }
 
 /**

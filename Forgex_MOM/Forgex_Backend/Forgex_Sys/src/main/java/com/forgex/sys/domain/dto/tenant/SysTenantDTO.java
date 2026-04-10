@@ -19,9 +19,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 绉熸埛杩斿洖瀵硅薄
+ * 租户返回对象
  * <p>
- * 鐢ㄤ簬鍓嶇灞曠ず鐨勭鎴蜂俊鎭?
+ * 用于前端展示租户的基础信息。
  * </p>
  *
  * @author coder_nai
@@ -32,45 +32,45 @@ import java.time.LocalDateTime;
 @Data
 public class SysTenantDTO {
 
-    /** 绉熸埛ID */
+    /** 租户ID */
     private Long id;
 
-    /** 绉熸埛鍚嶇О */
+    /** 租户名称 */
     private String tenantName;
 
-    /** 绉熸埛缂栫爜 */
+    /** 租户编码 */
     private String tenantCode;
 
-    /** 鎻忚堪 */
+    /** 描述 */
     private String description;
 
     /** Logo */
     private String logo;
 
-    /** 绉熸埛绫诲埆 */
+    /** 租户类型 */
     private TenantTypeEnum tenantType;
 
-    /** 绉熸埛绫诲埆鎻忚堪 */
+    /** 租户类型描述 */
     private String tenantTypeDesc;
 
-    /** 父租户 ID */
+    /** 父租户ID */
     private Long parentTenantId;
 
     /** 父租户名称 */
     private String parentTenantName;
 
-    /** 鐘舵€侊細false=绂佺敤锛宼rue=鍚敤 */
+    /** 状态（false=禁用，true=启用） */
     private Boolean status;
 
-    /** 鍒涘缓鏃堕棿 */
+    /** 创建时间 */
     private LocalDateTime createTime;
 
-    /** 鏇存柊鏃堕棿 */
+    /** 更新时间 */
     private LocalDateTime updateTime;
 
-    /** 鍒涘缓浜?*/
+    /** 创建人 */
     private String createBy;
 
-    /** 鏇存柊浜?*/
+    /** 更新人 */
     private String updateBy;
 }

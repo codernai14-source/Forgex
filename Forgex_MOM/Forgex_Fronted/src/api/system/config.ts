@@ -19,6 +19,8 @@ export interface SystemBasicConfig {
   loginStyle: LoginStyle
   loginLayout?: LoginLayout
   showOAuthLogin: boolean
+  showRegisterEntry: boolean
+  registerUrl: string
   primaryColor: string
   secondaryColor: string
 }
@@ -109,6 +111,8 @@ export function createDefaultSystemBasicConfig(): SystemBasicConfig {
     loginStyle: 'cyber',
     loginLayout: 'center',
     showOAuthLogin: true,
+    showRegisterEntry: true,
+    registerUrl: '/register',
     primaryColor: '#05d9e8',
     secondaryColor: '#ff2a6d',
   }

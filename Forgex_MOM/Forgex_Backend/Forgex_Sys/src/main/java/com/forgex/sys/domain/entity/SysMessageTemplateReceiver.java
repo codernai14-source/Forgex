@@ -31,15 +31,12 @@ import lombok.Data;
 @TableName("sys_message_template_receiver")
 public class SysMessageTemplateReceiver extends BaseEntity {
     
-    /** 模板主表ID */
+    /** 模板主表 ID */
     private Long templateId;
     
-    /** 接收类型(ROLE=角色,DEPT=部门,POSITION=职位,USER=指定人) */
+    /** 接收类型 (ROLE=角色，DEPT=部门，POSITION=职位，USER=指定人，CUSTOM=自定义) */
     private String receiverType;
     
-    /** 接收人ID列表(JSON数组格式,如[1,2,3]) */
+    /** 接收人 ID 列表 (JSON 数组格式，如 [1,2,3]) */
     private String receiverIds;
 }
-
-
-

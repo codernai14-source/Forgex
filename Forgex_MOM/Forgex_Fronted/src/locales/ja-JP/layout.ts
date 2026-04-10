@@ -1,78 +1,52 @@
-/**
+﻿/**
  * レイアウト翻訳 - 日本語
- * 
- * メインレイアウト、メニュー、タブバー、設定などの翻訳を含む
  */
 export default {
-  // グローバル検索
   globalSearchPlaceholder: 'メニューまたはページを検索',
-  
-  // 言語切り替え
   langZhCn: '簡体字中国語',
   langEnUs: '英語',
-  
-  // ヘッダーアクション
   refresh: '更新',
   openSettings: 'レイアウト設定',
-  
-  // 設定ドロワー
   settingTitle: 'レイアウトとテーマ設定',
-  settingSubtitle: 'ナビゲーションレイアウト、テーマカラー、外観設定をカスタマイズ',
-  
-  // メニューレイアウト
+  settingSubtitle: 'ナビゲーションレイアウト、テーマカラー、外観設定を調整します',
   menuLayout: 'メニューレイアウト',
   leftDoubleMenu: '左側ダブルメニュー',
   topMenu: 'トップメニュー',
   leftMenu: '左側メニュー',
   mixMenu: 'ミックスメニュー',
-  
-  // 基本スタイル
   basicStyle: '基本スタイル',
-  fontSize: 'フォントサイズ',
+  fontSize: '文字サイズ',
   fontSizeSmall: '小',
-  fontSizeDefault: 'デフォルト',
+  fontSizeDefault: '標準',
   fontSizeLarge: '大',
   borderRadius: '角丸サイズ',
-  
-  // テーマ
   theme: 'テーマ',
   themeColor: 'テーマカラー',
   themeMode: 'モード',
   themeLight: 'ライト',
   themeDark: 'ダーク',
   themeSystem: 'システムに従う',
-  
-  // タブバー
+  themePreset: 'プリセットテーマ',
   tabBar: 'タブバー',
   tabBarEnabled: 'タブバーを有効化',
   tabBarStyle: 'タブバースタイル',
   tabBarCard: 'カード',
   tabBarLine: 'ライン',
-  
-  // ウィジェット
   widgets: 'ウィジェット',
-  widgetRefresh: '更新ボタンを有効化',
-  widgetSearch: 'グローバル検索を有効化',
-  widgetFullscreen: '全画面ボタンを有効化',
-  
-  // フッター
+  widgetRefresh: '更新ボタンを表示',
+  widgetSearch: 'グローバル検索を表示',
+  widgetFullscreen: '全画面ボタンを表示',
   footer: 'フッター',
   footerEnabled: 'フッターを表示',
   footerCopyright: '著作権情報を表示',
-  
-  // コンテンツエリア
   contentWidth: 'コンテンツ幅',
-  contentWidthFluid: 'フルイド',
+  contentWidthFluid: '可変',
   contentWidthFixed: '固定',
-  
-  // レイアウトモード
   layoutMode: 'レイアウトモード',
-  layoutVertical: '垂直',
-  layoutVerticalMix: '垂直ミック',
-  layoutTop: '水平',
-  layoutMix: 'ミック',
-  
-  // ヘッダー
+  layoutVertical: '縦型',
+  layoutVerticalMix: '縦型二列',
+  layoutTop: '横型',
+  layoutMix: 'ミックス',
   header: 'ヘッダー',
   headerVisible: 'ヘッダーを表示',
   headerMode: 'モード',
@@ -80,47 +54,46 @@ export default {
   headerModeAuto: '自動',
   headerModeHideOnScroll: 'スクロール時に非表示',
   headerMenuAlign: 'メニュー位置',
-  headerMenuAlignLeft: '左',
+  headerMenuAlignLeft: '左寄せ',
   headerMenuAlignCenter: '中央',
-  headerMenuAlignRight: '右',
-  
-  // テーマカラー
-  themeColorDawnBlue: 'ドーンブルー（デフォルト）',
+  headerMenuAlignRight: '右寄せ',
+  themeColorDawnBlue: 'ドーンブルー（標準）',
   themeColorTwilightPurple: 'トワイライトパープル',
-  themeColorCyan: 'シアン',
+  themeColorRosePink: 'さくらピンク',
+  themeColorLemonYellow: 'レモンイエロー',
+  themeColorSkyBlue: 'スカイブルー',
+  themeColorMintGreen: 'ミントグリーン',
+  themeColorZincGray: 'ジンクグレー',
+  themeColorTealGreen: 'ティールグリーン',
+  themeColorRoyalBlue: 'ロイヤルブルー',
+  themeColorAmberOrange: 'アンバーオレンジ',
+  themeColorRoseRed: 'ローズレッド',
   themeColorAuroraGreen: 'オーロラグリーン',
   themeColorSunsetOrange: 'サンセットオレンジ',
   themeColorVolcanoRed: 'ボルケーノレッド',
   themeColorNeutralGray: 'ニュートラルグレー',
-  
-  // 共通設定
+  themeColorSlateGray: 'スレートグレー',
+  themeColorCoolGray: 'クールグレー',
+  themeColorCyan: 'シアン',
   common: '共通',
   watermark: 'ウォーターマーク',
   watermarkEnabled: 'ウォーターマーク',
-  watermarkText: 'ウォーターマークテキスト',
-  formMode: 'フォームモード',
+  watermarkText: 'ウォーターマーク文字',
+  formMode: 'フォーム表示',
   formModeModal: 'モーダル',
   formModeDrawer: 'ドロワー',
   animateEnabled: 'ページアニメーション',
   pageTransition: 'ページ遷移',
-  pageTransitionHorizontal: '水平',
+  pageTransitionHorizontal: 'スライド',
   pageTransitionFade: 'フェード',
-  
-  // アクションボタン
-  reset: 'リセット',
+  reset: '初期化',
   save: '保存',
-  
-  // タブ
   tabAppearance: '外観',
   tabLayout: 'レイアウト',
   tabCommon: '共通',
-  
-  // ユーザーメニュー
   userProfile: 'プロフィール',
-  userSettings: '設定',
+  userSettings: '個人設定',
   logout: 'ログアウト',
-  
-  // パンくず
   home: 'ホーム',
   personalHomepage: '個人ホーム',
 }

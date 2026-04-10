@@ -5,13 +5,45 @@
       table-code="OperationLogTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :scroll="{ x: 1500 }"
+      :scroll="{ x: 1800 }"
+      :show-query-form="true"
+      :fallback-config="fallbackConfig"
     >
       <template #toolbar>
         <a-button @click="handleExport" v-permission="'sys:operation-log:export'">
           <template #icon><ExportOutlined /></template>
           {{ t('common.export') }}
         </a-button>
+      </template>
+
+      <template #username="{ record }">
+        <a-tag color="blue">
+          {{ record.username || '-' }}
+        </a-tag>
+      </template>
+
+      <template #userId="{ record }">
+        <span>{{ record.userId || '-' }}</span>
+      </template>
+
+      <template #requestParams="{ record }">
+        <a-typography-paragraph
+          :copyable="{ text: record.requestParams }"
+          :ellipsis="{ rows: 2, expandable: true, symbol: '展开' }"
+          style="max-width: 300px; margin-bottom: 0;"
+        >
+          {{ formatJsonPreview(record.requestParams) }}
+        </a-typography-paragraph>
+      </template>
+
+      <template #responseResult="{ record }">
+        <a-typography-paragraph
+          :copyable="{ text: record.responseResult }"
+          :ellipsis="{ rows: 2, expandable: true, symbol: '展开' }"
+          style="max-width: 300px; margin-bottom: 0;"
+        >
+          {{ formatJsonPreview(record.responseResult) }}
+        </a-typography-paragraph>
       </template>
 
       <template #operationType="{ record }">
@@ -73,10 +105,10 @@
             {{ currentRecord.responseStatus }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="请求URL" :span="2">
+        <a-descriptions-item label="请求 URL" :span="2">
           <a-typography-text copyable>{{ currentRecord.requestUrl }}</a-typography-text>
         </a-descriptions-item>
-        <a-descriptions-item label="IP地址">
+        <a-descriptions-item label="IP 地址">
           {{ currentRecord.ip }}
         </a-descriptions-item>
         <a-descriptions-item label="耗时">
@@ -105,6 +137,18 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 操作日志管理页面
+ * 
+ * 功能：
+ * 1. 操作日志列表查询（分页、搜索）
+ * 2. 支持按用户名、账号、模块、操作时间搜索
+ * 3. 显示接口传参、接口返回、账号信息
+ * 4. 导出操作日志
+ * 
+ * @author Forgex
+ * @version 1.0.0
+ */
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
@@ -114,6 +158,7 @@ import {
 import { pageOperationLog, exportOperationLog } from '@/api/operationLog'
 import dayjs from 'dayjs'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 
 const { t } = useI18n()
 const tableRef = ref<any>()
@@ -129,6 +174,39 @@ const dictOptions = computed(() => ({
     { label: t('common.login.login'), value: 'LOGIN' },
     { label: t('common.logout', '登出'), value: 'LOGOUT' },
   ],
+}))
+
+/**
+ * 回退配置（当数据库中没有配置时使用）
+ */
+const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'OperationLogTable',
+  tableName: '操作日志',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'username', title: '用户名', width: 120, align: 'left', ellipsis: true },
+    { field: 'userId', title: '账号', width: 100, align: 'center' },
+    { field: 'module', title: '模块', width: 150, align: 'left', ellipsis: true },
+    { field: 'operationType', title: '操作类型', width: 100, align: 'center' },
+    { field: 'requestMethod', title: '请求方法', width: 100, align: 'center' },
+    { field: 'requestUrl', title: '请求 URL', width: 200, align: 'left', ellipsis: true },
+    { field: 'requestParams', title: '请求参数', width: 200, align: 'left', ellipsis: true },
+    { field: 'responseStatus', title: '响应状态', width: 100, align: 'center' },
+    { field: 'responseResult', title: '响应结果', width: 200, align: 'left', ellipsis: true },
+    { field: 'costTime', title: '耗时', width: 90, align: 'center' },
+    { field: 'ip', title: 'IP 地址', width: 140, align: 'left' },
+    { field: 'operationTime', title: '操作时间', width: 180, align: 'center' },
+    { field: 'action', title: '操作', width: 100, align: 'center', fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'username', label: '用户名', queryType: 'input', queryOperator: 'like' },
+    { field: 'userId', label: '账号', queryType: 'input', queryOperator: 'eq' },
+    { field: 'module', label: '模块', queryType: 'input', queryOperator: 'like' },
+    { field: 'operationTime', label: '操作时间', queryType: 'dateRange', queryOperator: 'between' },
+  ],
+  version: 1,
 }))
 
 // 详情弹窗
@@ -233,7 +311,7 @@ const formatDateTime = (dateTime: string) => {
   return dateTime ? dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss') : '-'
 }
 
-// 格式化JSON
+// 格式化 JSON
 const formatJson = (jsonStr: string) => {
   if (!jsonStr) return '-'
   try {
@@ -243,11 +321,31 @@ const formatJson = (jsonStr: string) => {
     return jsonStr
   }
 }
+
+// 格式化 JSON 预览（截取前 100 个字符）
+const formatJsonPreview = (jsonStr: string) => {
+  if (!jsonStr) return '-'
+  try {
+    const obj = JSON.parse(jsonStr)
+    const formatted = JSON.stringify(obj, null, 2)
+    return formatted.length > 100 ? formatted.substring(0, 100) + '...' : formatted
+  } catch (e) {
+    return jsonStr.length > 100 ? jsonStr.substring(0, 100) + '...' : jsonStr
+  }
+}
 </script>
 
 <style scoped lang="less">
+/**
+ * 操作日志页面样式
+ */
 .operation-log-container {
-  padding: 16px;
+  /* 移除 padding: 16px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 </style>
 

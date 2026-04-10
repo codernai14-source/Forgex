@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
     private static final String ONLINE_USER_PREFIX = "fx:online:user:";
+    private static final String LOGIN_TERMINAL_B = "B";
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -80,6 +82,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
 
         String accountLike = query == null ? null : query.getAccount();
+        String loginTerminal = query != null && StringUtils.hasText(query.getLoginTerminal())
+                ? normalizeLoginTerminal(query.getLoginTerminal())
+                : null;
 
         List<OnlineUserInfo> userInfoList = new ArrayList<>();
         for (String key : keys) {
@@ -93,6 +98,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             }
             // 3) 按账号模糊过滤（可选）
             if (StringUtils.hasText(accountLike) && (userInfo.account == null || !userInfo.account.contains(accountLike))) {
+                continue;
+            }
+            if (StringUtils.hasText(loginTerminal)
+                    && !Objects.equals(loginTerminal, normalizeLoginTerminal(userInfo.loginTerminal))) {
                 continue;
             }
             Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
@@ -130,6 +139,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             vo.setUserId(userInfo.userId);
             vo.setTenantId(userInfo.tenantId);
             vo.setAccount(userInfo.account);
+            vo.setLoginTerminal(normalizeLoginTerminal(userInfo.loginTerminal));
             vo.setTtlSeconds(userInfo.ttlSeconds);
             
             // 设置用户名称
@@ -234,6 +244,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             JsonNode tenantIdNode = node.get("tenantId");
             JsonNode accountNode = node.get("account");
             JsonNode tokenNode = node.get("token");
+            JsonNode loginTerminalNode = node.get("loginTerminal");
             if (userIdNode != null && userIdNode.isNumber()) {
                 userInfo.userId = userIdNode.longValue();
             } else if (userIdNode != null && userIdNode.isTextual()) {
@@ -256,10 +267,26 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (tokenNode != null && tokenNode.isTextual()) {
                 userInfo.token = tokenNode.asText();
             }
+            if (loginTerminalNode != null && loginTerminalNode.isTextual()) {
+                userInfo.loginTerminal = loginTerminalNode.asText();
+            } else {
+                userInfo.loginTerminal = LOGIN_TERMINAL_B;
+            }
             return userInfo;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String normalizeLoginTerminal(String loginTerminal) {
+        if (!StringUtils.hasText(loginTerminal)) {
+            return LOGIN_TERMINAL_B;
+        }
+        String value = loginTerminal.trim().toUpperCase();
+        if ("B".equals(value) || "C".equals(value) || "THIRD_PARTY".equals(value)) {
+            return value;
+        }
+        return LOGIN_TERMINAL_B;
     }
 
     /**
@@ -273,6 +300,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         private Long userId;
         private Long tenantId;
         private String account;
+        private String loginTerminal;
         private Long ttlSeconds;
     }
 }

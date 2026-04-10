@@ -27,6 +27,8 @@ import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
 import com.forgex.auth.mapper.SysUserTenantMapper;
+import com.forgex.auth.mapper.SysInviteCodeMapper;
+import com.forgex.auth.mapper.SysInviteRegisterRecordMapper;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.LoginLogService;
 import com.forgex.common.config.ConfigService;
@@ -44,7 +46,6 @@ import com.baomidou.dynamic.datasource.annotation.DS;
 
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.crypto.asymmetric.KeyType;
-import cn.hutool.core.util.HexUtil;
 import cn.hutool.json.JSONUtil;
 import java.nio.charset.StandardCharsets;
 import com.forgex.common.domain.config.CaptchaConfig;
@@ -53,15 +54,18 @@ import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.auth.enums.AuthPromptEnum;
@@ -120,6 +124,8 @@ public class AuthServiceImpl implements AuthService {
     private CaptchaService captchaService;
     @Autowired
     private StringRedisTemplate redis;
+    @Autowired
+    private RedissonClient redissonClient;
     @Autowired
     private LoginLogService loginLogService;
     @Autowired
@@ -437,6 +443,7 @@ public class AuthServiceImpl implements AuthService {
             onlineInfo.put("account", idKey);
             // 设置token
             onlineInfo.put("token", token);
+            onlineInfo.put("loginTerminal", "B");
             // 设置登录时间
             onlineInfo.put("loginTime", LocalDateTime.now().toString());
             // 设置客户端IP
@@ -588,6 +595,16 @@ public class AuthServiceImpl implements AuthService {
         return R.fail(CommonPrompt.RESET_FAILED);
     }
 
+    /**
+     * 获取密码策略配置
+     * <p>
+     * 从配置服务中读取密码策略配置，如果不存在则返回默认配置。
+     * </p>
+     *
+     * @return 密码策略配置对象
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig
+     * @see com.forgex.common.config.ConfigService#getJson(String, Class, Object)
+     */
     private PasswordPolicyConfig getPasswordPolicyConfig() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
@@ -596,32 +613,89 @@ public class AuthServiceImpl implements AuthService {
         return policy == null ? defaults : policy;
     }
 
+    /**
+     * 解析密码存储策略
+     * <p>
+     * 从密码策略配置中解析密码存储方式，默认为 bcrypt。
+     * </p>
+     *
+     * @param policy 密码策略配置对象
+     * @return 密码存储策略（bcrypt 或 sm2）
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig#getStore()
+     */
     private String resolvePasswordStore(PasswordPolicyConfig policy) {
         return policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
     }
 
+    /**
+     * 解析默认密码
+     * <p>
+     * 从密码策略配置中获取默认密码，用于重置用户密码。
+     * </p>
+     *
+     * @return 默认密码字符串
+     * @see com.forgex.common.domain.config.PasswordPolicyConfig#getDefaultPassword()
+     */
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = getPasswordPolicyConfig();
         return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
     }
 
+    /**
+     * 加密密码
+     * <p>
+     * 根据密码策略配置的加密方式对原始密码进行加密。
+     * </p>
+     *
+     * @param rawPassword 原始密码
+     * @return 加密后的密码字符串
+     * @see com.forgex.common.crypto.CryptoPasswordProvider#encrypt(String)
+     * @see com.forgex.common.crypto.CryptoProviders#resolve(String, com.forgex.common.config.ConfigService)
+     */
     private String encryptPassword(String rawPassword) {
         CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(getPasswordPolicyConfig()), configService);
-        return provider.encrypt(rawPassword);
+        if (provider.supportsEncrypt()) {
+            return provider.encrypt(rawPassword);
+        }
+        if (provider.supportsHash()) {
+            return provider.hash(rawPassword);
+        }
+        throw new IllegalStateException("Unsupported password store: " + provider.name());
     }
 
+    /**
+     * 获取登录安全配置
+     * <p>
+     * 从配置服务中读取登录安全配置（登录失败限制），如果不存在则返回默认配置。
+     * </p>
+     *
+     * @return 登录安全配置对象
+     * @see com.forgex.common.domain.config.LoginSecurityConfig
+     * @see com.forgex.common.config.ConfigService#getJson(String, Class, Object)
+     */
     private LoginSecurityConfig getLoginSecurityConfig() {
         LoginSecurityConfig defaults = LoginSecurityConfig.defaults();
         LoginSecurityConfig config = configService.getJson(KEY_SECURITY_LOGIN_FAILURE, LoginSecurityConfig.class, defaults);
         return config == null ? defaults : config;
     }
 
+    /**
+     * 检查账号是否被锁定
+     * <p>
+     * 根据登录安全配置检查账号是否因连续登录失败而被锁定。
+     * </p>
+     *
+     * @param account 登录账号
+     * @param config 登录安全配置
+     * @return 如果已锁定返回失败响应（包含剩余锁定时间），否则返回 null
+     * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
+     */
     private R<List<TenantVO>> checkLoginLocked(String account, LoginSecurityConfig config) {
         if (!StringUtils.hasText(account) || config == null || config.getLockMinutes() == null || config.getLockMinutes() <= 0) {
             return null;
         }
         String lockKey = LOGIN_LOCK_KEY_PREFIX + normalizeAccountKey(account);
-        Long ttl = redis.getExpire(lockKey, TimeUnit.SECONDS);
+        Long ttl = readKeyTtlSeconds(lockKey);
         if (ttl == null || ttl <= 0) {
             return null;
         }
@@ -629,6 +703,23 @@ public class AuthServiceImpl implements AuthService {
         return R.fail(CommonPrompt.ACCOUNT_LOCKED, String.valueOf(minutes));
     }
 
+    /**
+     * 记录登录失败状态
+     * <p>
+     * 记录账号的登录失败次数，当超过阈值时锁定账号。
+     * </p>
+     * <p>处理逻辑：</p>
+     * <ol>
+     *   <li>失败次数加 1</li>
+     *   <li>设置失败次数记录的过期时间</li>
+     *   <li>如果超过最大失败次数，锁定账号</li>
+     * </ol>
+     *
+     * @param account 登录账号
+     * @param config 登录安全配置
+     * @see com.forgex.common.domain.config.LoginSecurityConfig#getMaxFailCount()
+     * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
+     */
     private void recordLoginFailureState(String account, LoginSecurityConfig config) {
         if (!StringUtils.hasText(account) || config == null) {
             return;
@@ -641,36 +732,120 @@ public class AuthServiceImpl implements AuthService {
         }
         String accountKey = normalizeAccountKey(account);
         String failKey = LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey;
-        Long currentCount = redis.opsForValue().increment(failKey);
-        redis.expire(failKey, Duration.ofMinutes(failWindowMinutes));
-        if (currentCount != null && currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
-            redis.opsForValue().set(LOGIN_LOCK_KEY_PREFIX + accountKey, "1", Duration.ofMinutes(lockMinutes));
-            redis.delete(failKey);
+        try {
+            RAtomicLong failCounter = redissonClient.getAtomicLong(failKey);
+            long currentCount = failCounter.incrementAndGet();
+            failCounter.expire(Duration.ofMinutes(failWindowMinutes));
+            if (currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
+                redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).set("1", Duration.ofMinutes(lockMinutes));
+                failCounter.delete();
+            }
+        } catch (Exception e) {
+            log.warn("记录登录失败状态失败: account={}", account, e);
         }
     }
 
+    /**
+     * 清除登录失败状态
+     * <p>
+     * 登录成功后清除账号的失败次数记录和锁定状态。
+     * </p>
+     *
+     * @param account 登录账号
+     */
     private void clearLoginFailureState(String account) {
         if (!StringUtils.hasText(account)) {
             return;
         }
         String accountKey = normalizeAccountKey(account);
-        redis.delete(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey);
-        redis.delete(LOGIN_LOCK_KEY_PREFIX + accountKey);
+        try {
+            redissonClient.getAtomicLong(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey).delete();
+            redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).delete();
+        } catch (Exception e) {
+            log.warn("清除登录失败状态失败: account={}", account, e);
+        }
     }
 
+    /**
+     * 标准化账号键
+     * <p>
+     * 将账号转换为小写并去除首尾空格，用于 Redis 键的统一处理。
+     * </p>
+     *
+     * @param account 原始账号
+     * @return 标准化后的账号键
+     */
     private String normalizeAccountKey(String account) {
-        return account == null ? "" : account.trim().toLowerCase();
+        return account == null ? "" : account.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * 读取指定 Redis 键的剩余 TTL（秒）。
+     * <p>
+     * 使用 Redisson 原生 API，避免部分 Redisson + Spring Data Redis 组合下 TTL 读取走到错误委托链。
+     * </p>
+     *
+     * @param key Redis 键
+     * @return 剩余秒数；不存在或不可用时返回 null
+     */
+    private Long readKeyTtlSeconds(String key) {
+        if (!StringUtils.hasText(key)) {
+            return null;
+        }
+        try {
+            RBucket<Object> bucket = redissonClient.getBucket(key);
+            long ttlMillis = bucket.remainTimeToLive();
+            if (ttlMillis <= 0L) {
+                return null;
+            }
+            return Math.max(1L, (ttlMillis + 999L) / 1000L);
+        } catch (Exception e) {
+            log.warn("读取登录锁TTL失败: key={}", key, e);
+            return null;
+        }
+    }
+
+    /**
+     * 将 Map 转换为 JSON 字符串
+     * <p>
+     * 使用 Hutool 工具类将 Map 对象序列化为 JSON 字符串。
+     * </p>
+     *
+     * @param value Map 对象
+     * @return JSON 字符串
+     * @see cn.hutool.json.JSONUtil#toJsonStr(Object)
+     */
     private String toJson(Map<String, Object> value) {
         return JSONUtil.toJsonStr(value);
     }
 
+    /**
+     * 解析当前 Token 的 TTL
+     * <p>
+     * 根据 Token 计算有效的过期时间，返回 Duration 对象。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return Token 的有效期时长
+     * @see #resolveEffectiveTtlSeconds(String)
+     */
     private Duration resolveCurrentTokenTtl(String token) {
         Long ttlSeconds = resolveEffectiveTtlSeconds(token);
         return ttlSeconds == null ? null : Duration.ofSeconds(ttlSeconds);
     }
 
+    /**
+     * 解析有效的 TTL 秒数
+     * <p>
+     * 计算 Token 的有效过期时间（秒），取 tokenTimeout 和 activeTimeout 的最小值。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return 有效的 TTL 秒数，永不过期返回 null
+     * @see #readTokenTimeout(String)
+     * @see #readActiveTimeout(String)
+     * @see #normalizeTimeout(long)
+     */
     private Long resolveEffectiveTtlSeconds(String token) {
         if (!StringUtils.hasText(token)) {
             return 0L;
@@ -686,6 +861,16 @@ public class AuthServiceImpl implements AuthService {
         return Math.min(tokenTimeout, activeTimeout);
     }
 
+    /**
+     * 读取 Token 的超时时间
+     * <p>
+     * 从 Sa-Token 获取 Token 的剩余有效时间（秒）。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return Token 超时时间（秒），获取失败返回 0
+     * @see cn.dev33.satoken.stp.StpUtil#getTokenTimeout(String)
+     */
     private long readTokenTimeout(String token) {
         try {
             return StpUtil.getTokenTimeout(token);
@@ -694,6 +879,16 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /**
+     * 读取 Token 的活跃超时时间
+     * <p>
+     * 从 Sa-Token 获取 Token 的活跃超时时间（秒），即用户活跃状态下的过期时间。
+     * </p>
+     *
+     * @param token Token 字符串
+     * @return 活跃超时时间（秒），获取失败返回 NOT_VALUE_EXPIRE
+     * @see cn.dev33.satoken.dao.SaTokenDao#NOT_VALUE_EXPIRE
+     */
     private long readActiveTimeout(String token) {
         try {
             return StpUtil.getStpLogic().getTokenActiveTimeoutByToken(token);
@@ -702,6 +897,17 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /**
+     * 标准化超时时间
+     * <p>
+     * 将 Sa-Token 的超时时间标准化为 Long 类型，处理永不过期和无效值。
+     * </p>
+     *
+     * @param seconds 原始超时时间（秒）
+     * @return 标准化后的超时时间，永不过期返回 null，无效值返回 0
+     * @see cn.dev33.satoken.dao.SaTokenDao#NEVER_EXPIRE
+     * @see cn.dev33.satoken.dao.SaTokenDao#NOT_VALUE_EXPIRE
+     */
     private Long normalizeTimeout(long seconds) {
         if (seconds == SaTokenDao.NEVER_EXPIRE || seconds == SaTokenDao.NOT_VALUE_EXPIRE) {
             return null;
@@ -712,6 +918,21 @@ public class AuthServiceImpl implements AuthService {
         return seconds;
     }
 
+    /**
+     * 清除在线用户缓存
+     * <p>
+     * 根据租户 ID 和用户 ID 删除在线用户缓存，或者根据 Token 扫描删除对应的缓存。
+     * </p>
+     * <p>处理逻辑：</p>
+     * <ol>
+     *   <li>如果提供了 tenantId 和 userId，直接删除对应缓存</li>
+     *   <li>否则扫描所有在线用户缓存，匹配 Token 后删除</li>
+     * </ol>
+     *
+     * @param tokenValue Token 值
+     * @param tenantId 租户 ID
+     * @param userId 用户 ID
+     */
     private void clearOnlineUserCache(String tokenValue, Long tenantId, Long userId) {
         if (tenantId != null && userId != null) {
             String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
@@ -889,5 +1110,201 @@ public class AuthServiceImpl implements AuthService {
             log.warn("获取User-Agent失败", e);
         }
         return "unknown";
+    }
+
+    // ==================== 邀请码注册 ====================
+
+    @Autowired
+    private SysInviteCodeMapper inviteCodeMapper;
+
+    @Autowired
+    private SysInviteRegisterRecordMapper inviteRegisterRecordMapper;
+
+    /**
+     * 邀请码注册
+     */
+    @Override
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    public R<Boolean> register(com.forgex.auth.domain.param.RegisterParam param) {
+        // 1. 基本参数校验
+        if (param == null) {
+            return R.fail(CommonPrompt.BAD_REQUEST);
+        }
+        String account = param.getAccount();
+        String username = param.getUsername();
+        String password = param.getPassword();
+        String inviteCode = param.getInviteCode();
+
+        if (!StringUtils.hasText(account)) {
+            return R.fail(CommonPrompt.ACCOUNT_CANNOT_BE_EMPTY);
+        }
+        if (!StringUtils.hasText(password)) {
+            return R.fail(CommonPrompt.PASSWORD_CANNOT_BE_EMPTY);
+        }
+        if (!StringUtils.hasText(inviteCode)) {
+            return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
+        }
+
+        // 2. 验证码校验
+        CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
+        String mode = cfg.getMode();
+        if ("image".equalsIgnoreCase(mode)) {
+            if (!StringUtils.hasText(param.getCaptchaId()) || !StringUtils.hasText(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
+            }
+            if (!captchaService.verifyImage(param.getCaptchaId(), param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
+            }
+        } else if ("slider".equalsIgnoreCase(mode)) {
+            if (!StringUtils.hasText(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
+            }
+            if (!captchaService.verifySlider(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
+            }
+        }
+
+        // 3. 校验邀请码
+        com.forgex.auth.domain.entity.SysInviteCode inviteCodeEntity = inviteCodeMapper.selectOne(
+                new LambdaQueryWrapper<com.forgex.auth.domain.entity.SysInviteCode>()
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getInviteCode, inviteCode)
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getDeleted, false));
+        if (inviteCodeEntity == null) {
+            return R.fail(CommonPrompt.INVITE_CODE_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(inviteCodeEntity.getStatus())) {
+            return R.fail(CommonPrompt.INVITE_CODE_DISABLED);
+        }
+        if (inviteCodeEntity.getExpireTime() != null && LocalDateTime.now().isAfter(inviteCodeEntity.getExpireTime())) {
+            return R.fail(CommonPrompt.INVITE_CODE_EXPIRED);
+        }
+        if (inviteCodeEntity.getUsedCount() >= inviteCodeEntity.getMaxRegisterCount()) {
+            return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+
+        // 4. 校验账号是否已存在
+        Long existCount = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getAccount, account));
+        if (existCount > 0) {
+            return R.fail(CommonPrompt.ACCOUNT_ALREADY_EXISTS);
+        }
+
+        // 5. 解密密码（SM2 传输加密）
+        String rawPassword = password;
+        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
+        if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
+            try {
+                SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
+                String cipherFmt = cryptoCfg.getCipher();
+                if ("BCD".equalsIgnoreCase(cipherFmt)) {
+                    byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
+                    rawPassword = new String(plain, StandardCharsets.UTF_8);
+                } else {
+                    rawPassword = sm2.decryptStr(password, KeyType.PrivateKey);
+                }
+            } catch (Exception ignored) {
+                // 解密失败，使用原始密码
+            }
+        }
+
+        // 6. 加密密码存储
+        String hashedPassword = encryptPassword(rawPassword);
+
+        // 7. 创建用户
+        SysUser newUser = new SysUser();
+        newUser.setAccount(account);
+        newUser.setUsername(StringUtils.hasText(username) ? username : account);
+        newUser.setPassword(hashedPassword);
+        newUser.setPhone(param.getPhone());
+        newUser.setEmail(param.getEmail());
+        newUser.setStatus(true);
+        // 注意：Auth 模块的 SysUser 没有 departmentId/positionId 字段
+        // 部门和职位通过 SQL 直接更新
+        userMapper.insert(newUser);
+
+        Long userId = newUser.getId();
+
+        // 8. 更新用户的部门和职位（通过原生SQL，因为Auth模块SysUser不含这些字段）
+        if (inviteCodeEntity.getDepartmentId() != null) {
+            LambdaUpdateWrapper<SysUser> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(SysUser::getId, userId);
+            // 使用 setSql 直接设置字段
+            StringBuilder sqlParts = new StringBuilder();
+            sqlParts.append("department_id = ").append(inviteCodeEntity.getDepartmentId());
+            if (inviteCodeEntity.getPositionId() != null) {
+                sqlParts.append(", position_id = ").append(inviteCodeEntity.getPositionId());
+            }
+            updateWrapper.setSql(sqlParts.toString());
+            userMapper.update(null, updateWrapper);
+        }
+
+        // 9. 绑定用户-租户关系
+        Long tenantId = inviteCodeEntity.getTenantId();
+        if (tenantId != null) {
+            SysUserTenant userTenant = new SysUserTenant();
+            userTenant.setUserId(userId);
+            userTenant.setTenantId(tenantId);
+            userTenant.setIsDefault(true);
+            userTenant.setPrefOrder(1);
+            userTenant.setLastUsed(LocalDateTime.now());
+            userTenantMapper.insert(userTenant);
+        }
+
+        // 10. 增加邀请码使用次数
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<com.forgex.auth.domain.entity.SysInviteCode> inviteUpdate =
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
+        inviteUpdate.eq(com.forgex.auth.domain.entity.SysInviteCode::getId, inviteCodeEntity.getId())
+                .setSql("used_count = used_count + 1");
+        inviteCodeMapper.update(null, inviteUpdate);
+
+        // 11. 写入邀请注册记录
+        String clientIp = getClientIp();
+        String region = ipLocationService.getLocationByIp(clientIp);
+
+        com.forgex.auth.domain.entity.SysInviteRegisterRecord record = new com.forgex.auth.domain.entity.SysInviteRegisterRecord();
+        record.setTenantId(tenantId);
+        record.setInviteId(inviteCodeEntity.getId());
+        record.setInviteCode(inviteCode);
+        record.setUserId(userId);
+        record.setAccount(account);
+        record.setUsername(StringUtils.hasText(username) ? username : account);
+        record.setDepartmentId(inviteCodeEntity.getDepartmentId());
+        record.setPositionId(inviteCodeEntity.getPositionId());
+        record.setRegisterIp(clientIp);
+        record.setRegisterRegion(region);
+        record.setRegisterTime(LocalDateTime.now());
+        record.setStatus(1);
+        inviteRegisterRecordMapper.insert(record);
+
+        log.info("邀请码注册成功: account={}, inviteCode={}, tenantId={}", account, inviteCode, tenantId);
+
+        return R.ok(CommonPrompt.REGISTER_SUCCESS, true);
+    }
+
+    /**
+     * 校验邀请码是否有效
+     */
+    @Override
+    public R<Boolean> validateInviteCode(String inviteCode) {
+        if (!StringUtils.hasText(inviteCode)) {
+            return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
+        }
+        com.forgex.auth.domain.entity.SysInviteCode entity = inviteCodeMapper.selectOne(
+                new LambdaQueryWrapper<com.forgex.auth.domain.entity.SysInviteCode>()
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getInviteCode, inviteCode)
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getDeleted, false));
+        if (entity == null) {
+            return R.fail(CommonPrompt.INVITE_CODE_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(entity.getStatus())) {
+            return R.fail(CommonPrompt.INVITE_CODE_DISABLED);
+        }
+        if (entity.getExpireTime() != null && LocalDateTime.now().isAfter(entity.getExpireTime())) {
+            return R.fail(CommonPrompt.INVITE_CODE_EXPIRED);
+        }
+        if (entity.getUsedCount() >= entity.getMaxRegisterCount()) {
+            return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+        return R.ok(true);
     }
 }

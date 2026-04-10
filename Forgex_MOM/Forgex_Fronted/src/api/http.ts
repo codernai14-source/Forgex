@@ -96,6 +96,21 @@ function t(key: string): string {
   return String(i18n.global.t(key))
 }
 
+function extractErrorMessage(err: any): string {
+  const respData = err?.response?.data
+  const backendMessage = typeof respData?.message === 'string' ? respData.message.trim() : ''
+  if (backendMessage) {
+    return backendMessage
+  }
+
+  const errorMessage = typeof err?.message === 'string' ? err.message.trim() : ''
+  if (errorMessage) {
+    return errorMessage
+  }
+
+  return t('message.gatewayError')
+}
+
 /**
  * 请求拦截器（带全局遮罩）
  * 在发送请求前执行，主要用于：
@@ -251,8 +266,8 @@ async function handleResponse(resp: any, httpInstance: any) {
  * 通用错误处理函数
  */
 function handleError(err: any) {
-  message.error(t('message.gatewayError'))
-  return Promise.reject(err)
+  message.error(extractErrorMessage(err))
+  return Promise.reject(err?.response?.data ?? err)
 }
 
 /**
