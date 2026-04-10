@@ -231,6 +231,7 @@ function handleBatchKickout() {
 
 <style scoped lang="less">
 .online-user-container {
+  /* 移除 padding: 20px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
   display: flex;
   flex-direction: column;
   height: 100%;
