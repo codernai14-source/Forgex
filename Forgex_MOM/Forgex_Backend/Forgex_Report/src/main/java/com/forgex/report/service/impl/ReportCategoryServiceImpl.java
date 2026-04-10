@@ -106,7 +106,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
             throw new IllegalArgumentException("分类 ID 不能为空");
         }
 
-        ReportCategory category = this.getById(id);
+        ReportCategory category = super.getById(id);
         if (category == null) {
             throw new BusinessException("报表分类不存在");
         }

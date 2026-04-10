@@ -1,9 +1,10 @@
 package com.forgex.report.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.forgex.common.R;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.audit.OperationLog;
 import com.forgex.common.audit.OperationType;
+import com.forgex.common.web.R;
 import com.forgex.report.domain.dto.ReportDatasourceDTO;
 import com.forgex.report.domain.param.ReportDatasourceParam;
 import com.forgex.report.service.IReportDatasourceService;
@@ -114,7 +115,7 @@ public class ReportDatasourceController {
     @Operation(summary = "保存数据源")
     @SaCheckPermission({"report:datasource:add", "report:datasource:edit"})
     @PostMapping("/save")
-    @OperationLog(type = OperationType.WRITE, module = "报表数据源", description = "保存报表数据源")
+    @OperationLog(module = "report", menuPath = "/report/datasource", operationType = OperationType.UPDATE)
     public R<Void> save(@RequestBody ReportDatasourceDTO dto) {
         datasourceService.save(dto);
         return R.ok();
@@ -148,7 +149,7 @@ public class ReportDatasourceController {
     @Operation(summary = "批量删除数据源")
     @SaCheckPermission("report:datasource:delete")
     @DeleteMapping("/batch")
-    @OperationLog(type = OperationType.DELETE, module = "报表数据源", description = "批量删除报表数据源")
+    @OperationLog(module = "report", menuPath = "/report/datasource", operationType = OperationType.DELETE)
     public R<Void> deleteByIds(@RequestBody List<Long> ids) {
         datasourceService.deleteByIds(ids);
         return R.ok();

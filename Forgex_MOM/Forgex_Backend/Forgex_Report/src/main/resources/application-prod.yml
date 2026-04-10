@@ -1,29 +1,9 @@
 spring:
   application:
     name: forgex-report
-  config:
-    import:
-      - optional:classpath:common.yml # 公共配置
-      - optional:classpath:datasource.yml # 数据源配置
-      - optional:classpath:redis.yml # Redis 配置
 
-# 生产环境配置通过 Nacos 配置中心加载
-# 以下配置仅供参考
-
-# 生产环境数据库配置（示例）
-spring.datasource.dynamic:
-  primary: master
-  datasource:
-    master:
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://prod-db-host:3306/forgex_report?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=true
-      username: ${db.username}
-      password: ${db.password}
-
-# 日志配置
 logging:
   level:
-    root: warn
     com.forgex.report: info
     com.pig4wei.ureport2: warn
     org.jeecgframework.jimureport: warn
@@ -35,17 +15,14 @@ logging:
     max-size: 100MB
     max-history: 30
 
-# UReport2 生产环境配置
 ureport:
-  debug: false # 关闭调试模式
-  cache-enabled: true # 启用缓存
-  cache-time: 600 # 缓存 10 分钟
+  debug: false
+  cache-enabled: true
+  cache-time: 600
 
-# JimuReport 生产环境配置
 jmreport:
-  mode: 1 # 生产模式
-  preview-cross: false # 禁止跨域
+  mode: 1
+  preview-cross: false
 
-# 服务端口
 server:
   port: 8084

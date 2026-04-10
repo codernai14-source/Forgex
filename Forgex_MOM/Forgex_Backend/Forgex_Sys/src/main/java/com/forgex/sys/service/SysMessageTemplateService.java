@@ -19,75 +19,79 @@ import com.forgex.sys.domain.param.SysMessageTemplateParam;
 import com.forgex.sys.domain.vo.SysMessageTemplateVO;
 
 /**
- * 娑堟伅妯℃澘鏈嶅姟鎺ュ彛
- * 
+ * 消息模板服务接口
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
 public interface SysMessageTemplateService {
-    
+
     /**
-     * 鍒嗛〉鏌ヨ娑堟伅妯℃澘
-     * 
-     * @param param 鏌ヨ鍙傛暟
-     * @return 鍒嗛〉缁撴灉
+     * 分页查询消息模板
+     *
+     * @param param 查询参数
+     * @return 分页结果
      */
     Page<SysMessageTemplateVO> page(SysMessageTemplateParam param);
-    
+
     /**
-     * 鏍规嵁ID鏌ヨ娑堟伅妯℃澘璇︽儏
-     * 
-     * @param id 妯℃澘ID
-     * @return 妯℃澘璇︽儏
+     * 根据ID查询消息模板详情
+     *
+     * @param id 模板ID
+     * @param publicConfig 是否查询公共配置，`true` 表示查询 `tenantId=0`
+     * @return 模板详情
      */
     SysMessageTemplateVO getById(Long id, Boolean publicConfig);
-    
+
     /**
-     * 淇濆瓨娑堟伅妯℃澘(鏂板鎴栦慨鏀?
-     * 
-     * @param dto 淇濆瓨鍙傛暟
-     * @return 妯℃澘ID
+     * 保存消息模板
+     *
+     * @param dto 保存参数
+     * @return 模板ID
      */
     Long save(SysMessageTemplateSaveDTO dto);
-    
+
     /**
-     * 鍒犻櫎娑堟伅妯℃澘
-     * 
-     * @param id 妯℃澘ID
-     * @return 鏄惁鎴愬姛
+     * 删除消息模板
+     *
+     * @param id 模板ID
+     * @param publicConfig 是否删除公共配置，`true` 表示操作 `tenantId=0`
+     * @return 是否成功
      */
     boolean delete(Long id, Boolean publicConfig);
-    
+
     /**
-     * 鎵归噺鍒犻櫎娑堟伅妯℃澘
-     * 
-     * @param ids 妯℃澘ID鍒楄〃
-     * @return 鏄惁鎴愬姛
+     * 批量删除消息模板
+     *
+     * @param ids 模板ID列表
+     * @param publicConfig 是否删除公共配置，`true` 表示操作 `tenantId=0`
+     * @return 是否成功
      */
     boolean deleteBatch(java.util.List<Long> ids, Boolean publicConfig);
-    
+
     /**
-     * 妫€鏌ユā鏉跨紪鐮佹槸鍚﹀瓨鍦?
-     * 
-     * @param code 妯℃澘缂栫爜
-     * @return true=瀛樺湪锛宖alse=涓嶅瓨鍦?
+     * 检查模板编码是否存在
+     *
+     * @param code 模板编码
+     * @param publicConfig 是否查询公共配置，`true` 表示查询 `tenantId=0`
+     * @return `true` 表示存在，`false` 表示不存在
      */
     boolean existsByCode(String code, Boolean publicConfig);
-    
+
     /**
-     * 妫€鏌ユā鏉跨紪鐮佹槸鍚﹀瓨鍦紙鎺掗櫎鎸囧畾 ID锛?
-     * 
-     * @param code 妯℃澘缂栫爜
-     * @param id 瑕佹帓闄ょ殑妯℃澘 ID
-     * @return true=瀛樺湪锛宖alse=涓嶅瓨鍦?
+     * 检查模板编码是否存在，并排除指定模板ID
+     *
+     * @param code 模板编码
+     * @param id 需要排除的模板ID
+     * @param publicConfig 是否查询公共配置，`true` 表示查询 `tenantId=0`
+     * @return `true` 表示存在，`false` 表示不存在
      */
     boolean existsByCodeExcludeId(String code, Long id, Boolean publicConfig);
 
     /**
-     * 娴犲骸鍙曢崗閬嶅帳缂冾喗濯洪崣鏍ㄧХ閹垱膩閺夊灝鍩岃ぐ鎾冲缁夌喐鍩?     *
-     * @return 閺囧瓨鏌婇幋鏍ㄦ煀婢х偟娈戝Ο鈩冩緲閺佷即鍣?     */
+     * 从公共配置中拉取消息模板到当前租户
+     *
+     * @return 新增或更新的模板数量
+     */
     int pullPublicConfig();
 }
-
-
-

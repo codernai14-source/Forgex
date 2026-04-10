@@ -1,48 +1,18 @@
 spring:
   application:
     name: forgex-report
-  config:
-    import:
-      - optional:classpath:common.yml # 公共配置
-      - optional:classpath:datasource.yml # 数据源配置
-      - optional:classpath:redis.yml # Redis 配置
 
-  # 开发环境配置
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: 
-      database: 0
-
-# 开发环境数据库配置
-spring.datasource.dynamic:
-  primary: master
-  datasource:
-    master:
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://localhost:3306/forgex_report?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
-      username: root
-      password: root
-
-# 日志配置
 logging:
   level:
-    root: info
     com.forgex.report: debug
-    com.pig4wei.ureport2: debug
-    org.jeecgframework.jimureport: debug
 
-# UReport2 开发环境配置
 ureport:
-  debug: true # 开启调试模式
-  cache-enabled: false # 开发环境关闭缓存
+  debug: true
+  cache-enabled: false
 
-# JimuReport 开发环境配置
 jmreport:
-  mode: 0 # 开发模式
-  preview-cross: true # 允许跨域
+  mode: 0
+  preview-cross: true
 
-# 服务端口
 server:
   port: 8084

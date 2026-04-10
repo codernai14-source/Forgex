@@ -11,8 +11,26 @@ interface AuthRepository {
         account: String,
         password: String,
         captcha: String? = null,
-        captchaId: String? = null
+        captchaId: String? = null,
+        publicKey: String? = null
     ): AppResult<List<TenantVO>>
+
+    suspend fun loadCaptchaMode(): AppResult<CaptchaMode>
+
+    suspend fun loadImageCaptcha(): AppResult<ImageCaptcha>
+
+    suspend fun loadSliderCaptcha(): AppResult<SliderCaptcha>
+
+    suspend fun validateSliderCaptcha(
+        captchaId: String,
+        left: Float,
+        bgImageWidth: Int,
+        bgImageHeight: Int,
+        templateImageWidth: Int,
+        templateImageHeight: Int
+    ): AppResult<String>
+
+    suspend fun loadPublicKey(): AppResult<String>
 
     suspend fun chooseTenant(
         tenantId: String,

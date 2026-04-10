@@ -1,9 +1,14 @@
 package com.forgex.report;
 
+import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * 报表服务启动类
@@ -17,9 +22,12 @@ import org.springframework.context.annotation.ComponentScan;
  * @since 2026-04-09
  * @see SpringApplication
  */
-@SpringBootApplication
-@ComponentScan(basePackages = {"com.forgex.report", "com.forgex.common"})
-@MapperScan("com.forgex.report.mapper")
+@SpringBootApplication(scanBasePackages = "com.forgex", exclude = {DataSourceAutoConfiguration.class})
+@EnableDiscoveryClient
+@EnableFeignClients(basePackages = "com.forgex.common.feign.client")
+@EnableAsync
+@Import(DynamicDataSourceAutoConfiguration.class)
+@MapperScan({"com.forgex.report.mapper", "com.forgex.common.mapper"})
 public class ReportApplication {
 
     /**

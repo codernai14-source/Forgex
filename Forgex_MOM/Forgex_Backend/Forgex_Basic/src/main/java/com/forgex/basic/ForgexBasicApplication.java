@@ -14,19 +14,18 @@ limitations under the License.*/
 package com.forgex.basic;
 
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
+import com.forgex.common.feign.client.EncodeRuleFeignClient;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
- * 基础信息模块启动类。
- * <p>
- * 当前仅提供模块基础骨架与健康检查接口，暂不包含业务功能。
- * </p>
+ * 基础信息模块启动类
  *
  * @author coder_nai@163.com
  * @version 1.0.0
@@ -35,13 +34,14 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication(scanBasePackages = {"com.forgex.basic", "com.forgex.common"},
         exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
+@EnableFeignClients(clients = EncodeRuleFeignClient.class)
 @EnableAsync
 @Import(DynamicDataSourceAutoConfiguration.class)
 @MapperScan({"com.forgex.basic.mapper", "com.forgex.common.mapper"})
 public class ForgexBasicApplication {
 
     /**
-     * 模块启动入口。
+     * 模块启动入口
      *
      * @param args 启动参数
      */

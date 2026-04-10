@@ -18,33 +18,30 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 娑堟伅妯℃澘鏌ヨ鍙傛暟
- * 
+ * 消息模板查询参数
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysMessageTemplateParam extends BaseGetParam {
-    
-    /** 妯℃澘缂栧彿(妯＄硦鏌ヨ) */
+
+    /** 模板编号（模糊查询） */
     private String templateCode;
-    
-    /** 妯℃澘鍚嶇О(妯＄硦鏌ヨ) */
+
+    /** 模板名称（模糊查询） */
     private String templateName;
-    
-    /** 娑堟伅绫诲瀷 */
+
+    /** 消息类型 */
     private String messageType;
-    
-    /** 娑撴艾濮熺猾璇茬€?*/
+
+    /** 业务类型 */
     private String bizType;
-    
-    /** 鐘舵€?*/
+
+    /** 状态 */
     private Boolean status;
-    
-    /** 閺勵垰鎯侀弻銉嚄閸忣剙鍙￠柊宥囩枂閿涘rue=tenantId=0 */
+
+    /** 是否查询公共配置，`true` 表示查询 `tenantId=0` */
     private Boolean publicConfig;
 }
-
-
-

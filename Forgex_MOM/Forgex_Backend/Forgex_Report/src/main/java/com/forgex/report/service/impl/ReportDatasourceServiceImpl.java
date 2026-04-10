@@ -109,7 +109,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
             throw new IllegalArgumentException("数据源 ID 不能为空");
         }
 
-        ReportDatasource datasource = this.getById(id);
+        ReportDatasource datasource = super.getById(id);
         if (datasource == null) {
             throw new BusinessException("报表数据源不存在");
         }

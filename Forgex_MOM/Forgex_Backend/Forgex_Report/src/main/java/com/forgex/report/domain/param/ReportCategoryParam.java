@@ -1,6 +1,6 @@
 package com.forgex.report.domain.param;
 
-import com.forgex.common.domain.param.BasePageParam;
+import com.forgex.common.base.BaseGetParam;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,12 +14,12 @@ import lombok.EqualsAndHashCode;
  * @author LiDaoMoM
  * @version 1.0
  * @since 2026-04-09
- * @see BasePageParam
+ * @see BaseGetParam
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "报表分类查询参数")
-public class ReportCategoryParam extends BasePageParam {
+public class ReportCategoryParam extends BaseGetParam {
 
     /**
      * 分类名称（模糊查询）

@@ -47,9 +47,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 鐢ㄦ埛瑙掕壊鍏宠仈鏈嶅姟瀹炵幇绫?
+ * 用户角色关联服务实现
  * <p>
- * 瀹炵幇鐢ㄦ埛涓庤鑹茬粦瀹氬叧绯荤殑绠＄悊鍔熻兘锛屽寘鎷煡璇㈠凡鎺堟潈鍒楄〃銆佹壒閲忔巿鏉冦€佹壒閲忓彇娑堟巿鏉冪瓑
+ * 负责查询角色已授权用户，以及按用户、部门、岗位维度批量授权和批量取消授权。
  * </p>
  *
  * @author coder_nai@163.com
@@ -60,8 +60,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUserRole> 
-    implements ISysRoleUserService {
+public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUserRole>
+        implements ISysRoleUserService {
 
     private final SysUserRoleMapper userRoleMapper;
     private final SysRoleMapper roleMapper;
@@ -71,24 +71,17 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     private final com.forgex.sys.service.ISysRoleDeptService roleDeptService;
     private final com.forgex.sys.service.ISysRolePositionService rolePositionService;
 
-    /**
-     * 鎺堟潈绫诲瀷甯搁噺锛歎SER=鐢ㄦ埛
-     */
+    /** 授权类型：用户 */
     private static final String GRANT_TYPE_USER = "USER";
-    
-    /**
-     * 鎺堟潈绫诲瀷甯搁噺锛欴EPARTMENT=閮ㄩ棬
-     */
+
+    /** 授权类型：部门 */
     private static final String GRANT_TYPE_DEPARTMENT = "DEPARTMENT";
-    
-    /**
-     * 鎺堟潈绫诲瀷甯搁噺锛歅OSITION=鑱屼綅
-     */
+
+    /** 授权类型：岗位 */
     private static final String GRANT_TYPE_POSITION = "POSITION";
 
     @Override
     public Page<RoleGrantVO> getGrantedList(RoleGrantQueryDTO query) {
-        // 1. 鍙傛暟鏍￠獙
         if (query == null || query.getRoleId() == null || query.getTenantId() == null) {
             throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
         }
@@ -100,7 +93,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         Integer pageNum = query.getPageNum() == null ? 1 : query.getPageNum();
         Integer pageSize = query.getPageSize() == null ? 20 : query.getPageSize();
 
-        // 2. 鏍￠獙瑙掕壊瀛樺湪涓斿睘浜庡綋鍓嶇鎴?
         SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getId, roleId)
                 .eq(SysRole::getTenantId, tenantId)
@@ -109,13 +101,12 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
             throw new BusinessException(400, "角色不存在或不属于当前租户");
         }
 
-        // 3. 鍒嗛〉鏌ヨ缁戝畾鍏崇郴
         Page<SysUserRole> relPage = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SysUserRole> relQw = new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getTenantId, tenantId)
                 .eq(SysUserRole::getRoleId, roleId)
                 .orderByDesc(SysUserRole::getId);
-        
+
         Page<SysUserRole> relResult = userRoleMapper.selectPage(relPage, relQw);
         List<SysUserRole> relRecords = relResult.getRecords() == null ? List.of() : relResult.getRecords();
 
@@ -126,7 +117,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
             return empty;
         }
 
-        // 4. 鏌ヨ鐢ㄦ埛淇℃伅骞剁粍瑁?VO
         List<Long> userIds = relRecords.stream()
                 .map(SysUserRole::getUserId)
                 .filter(id -> id != null && id > 0)
@@ -138,11 +128,9 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 .filter(u -> u != null && u.getId() != null)
                 .collect(Collectors.toMap(SysUser::getId, u -> u, (a, b) -> a));
 
-        // 5. 鎵归噺鏌ヨ閮ㄩ棬/鑱屼綅鍚嶇О
         Map<Long, String> deptNameMap = buildDepartmentNameMap(userMap.values());
         Map<Long, String> positionNameMap = buildPositionNameMap(userMap.values());
 
-        // 6. 缁勮 VO 鍒楄〃
         List<RoleGrantVO> voList = new ArrayList<>();
         for (SysUserRole rel : relRecords) {
             SysUser user = userMap.get(rel.getUserId());
@@ -158,10 +146,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
             vo.setGrantObjectId(user.getId());
             vo.setGrantObject(user.getUsername());
             vo.setGrantObjectCode(user.getAccount());
-            // SysUserRole 表没有 create_time 字段\n            // vo.setCreateTime(rel.getCreateTime());
-            // SysUserRole 表没有 create_by 字段\n            // vo.setCreateBy(rel.getCreateBy());
 
-            // 琛ュ厖閮ㄩ棬/鑱屼綅淇℃伅
             if (user.getDepartmentId() != null) {
                 vo.setGrantObject(deptNameMap.getOrDefault(user.getDepartmentId(), user.getUsername()));
             }
@@ -172,7 +157,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
             voList.add(vo);
         }
 
-        // 7. 鍓嶇杩囨护锛堟寜鎺堟潈绫诲瀷鍜屽叧閿瓧锛?
         if (StringUtils.isNotBlank(grantType) || StringUtils.isNotBlank(keyword)) {
             voList = voList.stream()
                     .filter(vo -> {
@@ -181,10 +165,10 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                         }
                         if (StringUtils.isNotBlank(keyword)) {
                             String lowerKeyword = keyword.toLowerCase();
-                            boolean matchName = vo.getGrantObject() != null && 
-                                    vo.getGrantObject().toLowerCase().contains(lowerKeyword);
-                            boolean matchCode = vo.getGrantObjectCode() != null && 
-                                    vo.getGrantObjectCode().toLowerCase().contains(lowerKeyword);
+                            boolean matchName = vo.getGrantObject() != null
+                                    && vo.getGrantObject().toLowerCase().contains(lowerKeyword);
+                            boolean matchCode = vo.getGrantObjectCode() != null
+                                    && vo.getGrantObjectCode().toLowerCase().contains(lowerKeyword);
                             return matchName || matchCode;
                         }
                         return true;
@@ -192,7 +176,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                     .toList();
         }
 
-        // 8. 鎵嬪姩鍒嗛〉锛堝洜涓哄墠绔繃婊ゅ悗鏁版嵁閲忓彉鍖栵級
         long total = voList.size();
         int fromIndex = (pageNum - 1) * pageSize;
         int toIndex = Math.min(fromIndex + pageSize, voList.size());
@@ -213,7 +196,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantBatch(RoleGrantDTO grantDTO) {
-        // 1. 鍙傛暟鏍￠獙
         if (grantDTO == null || grantDTO.getRoleId() == null || grantDTO.getTenantId() == null) {
             throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
         }
@@ -225,7 +207,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         Long tenantId = grantDTO.getTenantId();
         String grantType = grantDTO.getGrantType();
 
-        // 2. 鏍￠獙瑙掕壊瀛樺湪涓斿睘浜庡綋鍓嶇鎴?
         SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getId, roleId)
                 .eq(SysRole::getTenantId, tenantId)
@@ -234,7 +215,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
             throw new BusinessException(400, "角色不存在或不属于当前租户");
         }
 
-        // 3. 鏍规嵁鎺堟潈绫诲瀷澶勭悊
         if (GRANT_TYPE_USER.equals(grantType)) {
             grantUsers(grantDTO);
         } else if (GRANT_TYPE_DEPARTMENT.equals(grantType)) {
@@ -249,7 +229,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void revokeBatch(RoleGrantDTO revokeDTO) {
-        // 1. 鍙傛暟鏍￠獙
         if (revokeDTO == null || revokeDTO.getRoleId() == null || revokeDTO.getTenantId() == null) {
             throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
         }
@@ -261,7 +240,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         Long tenantId = revokeDTO.getTenantId();
         String grantType = revokeDTO.getGrantType();
 
-        // 2. 鏍￠獙瑙掕壊瀛樺湪涓斿睘浜庡綋鍓嶇鎴?
         SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getId, roleId)
                 .eq(SysRole::getTenantId, tenantId)
@@ -270,7 +248,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
             throw new BusinessException(400, "角色不存在或不属于当前租户");
         }
 
-        // 3. 鏍规嵁鎺堟潈绫诲瀷澶勭悊
         if (GRANT_TYPE_USER.equals(grantType)) {
             revokeUsers(revokeDTO);
         } else if (GRANT_TYPE_DEPARTMENT.equals(grantType)) {
@@ -283,22 +260,20 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 鎺堜簣鐢ㄦ埛鏉冮檺
+     * 授予用户权限
      *
-     * @param grantDTO 鎺堟潈鍙傛暟
+     * @param grantDTO 授权参数
      */
     private void grantUsers(RoleGrantDTO grantDTO) {
         if (CollectionUtils.isEmpty(grantDTO.getUserIds())) {
             throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
         }
 
-        // 鏍￠獙鐢ㄦ埛瀛樺湪
         List<SysUser> users = userMapper.selectByIds(grantDTO.getUserIds());
         if (users == null || users.size() != grantDTO.getUserIds().size()) {
             throw new BusinessException(400, "部分用户不存在");
         }
 
-        // 鏌ヨ宸插瓨鍦ㄧ殑缁戝畾鍏崇郴锛岄伩鍏嶉噸澶嶆彃鍏?
         List<SysUserRole> exists = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getTenantId, grantDTO.getTenantId())
                 .eq(SysUserRole::getRoleId, grantDTO.getRoleId())
@@ -308,7 +283,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 .filter(id -> id != null)
                 .collect(Collectors.toSet());
 
-        // 鎵归噺鎻掑叆缂哄け鐨勭粦瀹氬叧绯?
         for (Long userId : grantDTO.getUserIds()) {
             if (existsUserIds.contains(userId)) {
                 continue;
@@ -322,36 +296,33 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 鎺堜簣閮ㄩ棬鏉冮檺
+     * 授予部门权限。
      *
-     * @param grantDTO 鎺堟潈鍙傛暟
+     * @param grantDTO 授权参数
      */
     private void grantDepartments(RoleGrantDTO grantDTO) {
-        // 濮旀墭缁?SysRoleDeptService 澶勭悊
         roleDeptService.grantDepartments(grantDTO);
     }
 
     /**
-     * 鎺堜簣鑱屼綅鏉冮檺
+     * 授予岗位权限。
      *
-     * @param grantDTO 鎺堟潈鍙傛暟
+     * @param grantDTO 授权参数
      */
     private void grantPositions(RoleGrantDTO grantDTO) {
-        // 濮旀墭缁?SysRolePositionService 澶勭悊
         rolePositionService.grantPositions(grantDTO);
     }
 
     /**
-     * 鍙栨秷鐢ㄦ埛鎺堟潈
+     * 取消用户授权
      *
-     * @param revokeDTO 鍙栨秷鎺堟潈鍙傛暟
+     * @param revokeDTO 取消授权参数
      */
     private void revokeUsers(RoleGrantDTO revokeDTO) {
         if (CollectionUtils.isEmpty(revokeDTO.getUserIds())) {
             throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
         }
 
-        // 鍒犻櫎缁戝畾鍏崇郴
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getTenantId, revokeDTO.getTenantId())
                 .eq(SysUserRole::getRoleId, revokeDTO.getRoleId())
@@ -359,30 +330,28 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 鍙栨秷閮ㄩ棬鎺堟潈
+     * 取消部门授权。
      *
-     * @param revokeDTO 鍙栨秷鎺堟潈鍙傛暟
+     * @param revokeDTO 取消授权参数
      */
     private void revokeDepartments(RoleGrantDTO revokeDTO) {
-        // 濮旀墭缁?SysRoleDeptService 澶勭悊
         roleDeptService.revokeDepartments(revokeDTO);
     }
 
     /**
-     * 鍙栨秷鑱屼綅鎺堟潈
+     * 取消岗位授权。
      *
-     * @param revokeDTO 鍙栨秷鎺堟潈鍙傛暟
+     * @param revokeDTO 取消授权参数
      */
     private void revokePositions(RoleGrantDTO revokeDTO) {
-        // 濮旀墭缁?SysRolePositionService 澶勭悊
         rolePositionService.revokePositions(revokeDTO);
     }
 
     /**
-     * 鎵归噺鏋勫缓閮ㄩ棬 ID 鍒伴儴闂ㄥ悕绉扮殑鏄犲皠
+     * 批量构建部门ID到名称的映射。
      *
-     * @param users 鐢ㄦ埛闆嗗悎
-     * @return 閮ㄩ棬鍚嶇О鏄犲皠
+     * @param users 用户集合
+     * @return 部门名称映射
      */
     private Map<Long, String> buildDepartmentNameMap(Iterable<SysUser> users) {
         Set<Long> deptIds = new HashSet<>();
@@ -410,10 +379,10 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 鎵归噺鏋勫缓鑱屼綅 ID 鍒拌亴浣嶅悕绉扮殑鏄犲皠
+     * 批量构建岗位ID到名称的映射。
      *
-     * @param users 鐢ㄦ埛闆嗗悎
-     * @return 鑱屼綅鍚嶇О鏄犲皠
+     * @param users 用户集合
+     * @return 岗位名称映射
      */
     private Map<Long, String> buildPositionNameMap(Iterable<SysUser> users) {
         Set<Long> positionIds = new HashSet<>();
@@ -440,5 +409,3 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         return map;
     }
 }
-
-

@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.forgex.common.exception.BusinessException;
+import com.forgex.report.domain.dto.ReportCategoryDTO;
+import com.forgex.report.domain.dto.ReportDatasourceDTO;
 import com.forgex.report.domain.dto.ReportTemplateDTO;
 import com.forgex.report.domain.entity.ReportCategory;
 import com.forgex.report.domain.entity.ReportDatasource;
@@ -23,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,7 +104,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             throw new IllegalArgumentException("模板 ID 不能为空");
         }
 
-        ReportTemplate template = this.getById(id);
+        ReportTemplate template = super.getById(id);
         if (template == null) {
             throw new BusinessException("报表模板不存在");
         }
@@ -196,7 +197,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             throw new IllegalArgumentException("模板 ID 不能为空");
         }
 
-        ReportTemplate template = this.getById(id);
+        ReportTemplate template = super.getById(id);
         if (template == null) {
             throw new BusinessException("报表模板不存在");
         }
@@ -235,7 +236,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
      */
     @Override
     public String exportTemplate(Long id) {
-        ReportTemplate template = this.getById(id);
+        ReportTemplate template = super.getById(id);
         if (template == null) {
             throw new BusinessException("报表模板不存在");
         }
@@ -250,7 +251,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             String filePath = "temp/templates/" + fileName;
             
             // 写入文件
-            FileUtil.write(template.getContent(), filePath, StandardCharsets.UTF_8.name());
+            FileUtil.writeUtf8String(template.getContent(), filePath);
             
             log.info("导出报表模板成功：{}", filePath);
             return filePath;
@@ -338,7 +339,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
         // 填充分类名称
         if (entity.getCategoryId() != null) {
             try {
-                ReportCategory category = categoryService.getById(entity.getCategoryId());
+                ReportCategoryDTO category = categoryService.getById(entity.getCategoryId());
                 if (category != null) {
                     dto.setCategoryName(category.getName());
                 }
@@ -350,7 +351,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
         // 填充数据源名称
         if (entity.getDatasourceId() != null) {
             try {
-                ReportDatasource datasource = datasourceService.getById(entity.getDatasourceId());
+                ReportDatasourceDTO datasource = datasourceService.getById(entity.getDatasourceId());
                 if (datasource != null) {
                     dto.setDatasourceName(datasource.getName());
                 }

@@ -16,9 +16,9 @@ package com.forgex.sys.domain.param;
 import lombok.Data;
 
 /**
- * 娑堟伅妯℃澘涓婚敭鍙傛暟锛堣鎯呫€佸崟鏉″垹闄ょ瓑鎺ュ彛浣跨敤锛夈€?
+ * 消息模板主键参数
  * <p>
- * 鍓嶇缁熶竴浠?JSON 浼犻€?{@code { "id": ... }}锛岄伩鍏嶅師濮?Long 涓?Content-Type 涓嶄竴鑷村鑷寸殑缁戝畾澶辫触銆?
+ * 用于详情、单条删除等接口，前端统一按 JSON 结构传参。
  * </p>
  *
  * @author Forgex Team
@@ -28,11 +28,9 @@ import lombok.Data;
 @Data
 public class SysMessageTemplateIdParam {
 
-    /**
-     * 娑堟伅妯℃澘涓婚敭 ID
-     */
+    /** 消息模板主键ID */
     private Long id;
 
-    /** 閺勵垰鎯侀崗顒€鍙￠柊宥囩枂閿涘rue=tenantId=0 */
+    /** 是否操作公共配置，`true` 表示操作 `tenantId=0` */
     private Boolean publicConfig;
 }

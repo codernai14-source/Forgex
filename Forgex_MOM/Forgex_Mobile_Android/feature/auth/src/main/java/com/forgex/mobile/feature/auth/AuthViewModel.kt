@@ -1,9 +1,10 @@
-﻿package com.forgex.mobile.feature.auth
+package com.forgex.mobile.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.feature.auth.data.AuthRepository
+import com.forgex.mobile.feature.auth.data.CaptchaMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +27,11 @@ class AuthViewModel @Inject constructor(
     private val _events = MutableSharedFlow<AuthEvent>()
     val events: SharedFlow<AuthEvent> = _events.asSharedFlow()
 
+    init {
+        refreshCaptchaModeAndData(silent = true)
+        preloadPublicKey()
+    }
+
     fun updateAccount(value: String) {
         _uiState.update { it.copy(account = value.trim(), errorMessage = null) }
     }
@@ -38,8 +44,269 @@ class AuthViewModel @Inject constructor(
         _uiState.update { it.copy(captcha = value.trim(), errorMessage = null) }
     }
 
-    fun updateCaptchaId(value: String) {
-        _uiState.update { it.copy(captchaId = value.trim(), errorMessage = null) }
+    fun updateSliderProgress(value: Float) {
+        val normalized = value.coerceIn(0f, 1f)
+        _uiState.update {
+            it.copy(
+                sliderProgress = normalized,
+                sliderToken = "",
+                errorMessage = null
+            )
+        }
+    }
+
+    fun refreshCaptcha(silent: Boolean = false) {
+        when (_uiState.value.captchaMode) {
+            CaptchaMode.IMAGE -> refreshImageCaptcha(silent)
+            CaptchaMode.SLIDER -> refreshSliderCaptcha(silent)
+            CaptchaMode.NONE -> refreshCaptchaModeAndData(silent)
+        }
+    }
+
+    private fun refreshCaptchaModeAndData(silent: Boolean) {
+        viewModelScope.launch {
+            if (!silent) {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            }
+
+            when (val result = authRepository.loadCaptchaMode()) {
+                is AppResult.Success -> {
+                    when (result.data) {
+                        CaptchaMode.IMAGE -> {
+                            _uiState.update {
+                                it.copy(
+                                    captchaMode = CaptchaMode.IMAGE,
+                                    sliderCaptcha = null,
+                                    sliderProgress = 0f,
+                                    sliderToken = "",
+                                    captcha = "",
+                                    captchaId = "",
+                                    captchaImageBase64 = "",
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+                            }
+                            refreshImageCaptcha(silent = true)
+                        }
+
+                        CaptchaMode.SLIDER -> {
+                            _uiState.update {
+                                it.copy(
+                                    captchaMode = CaptchaMode.SLIDER,
+                                    captcha = "",
+                                    captchaId = "",
+                                    captchaImageBase64 = "",
+                                    sliderProgress = 0f,
+                                    sliderToken = "",
+                                    sliderCaptcha = null,
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+                            }
+                            refreshSliderCaptcha(silent = true)
+                        }
+
+                        CaptchaMode.NONE -> {
+                            _uiState.update {
+                                it.copy(
+                                    captchaMode = CaptchaMode.NONE,
+                                    captcha = "",
+                                    captchaId = "",
+                                    captchaImageBase64 = "",
+                                    sliderProgress = 0f,
+                                    sliderToken = "",
+                                    sliderCaptcha = null,
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+                            }
+                        }
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            captchaMode = CaptchaMode.IMAGE,
+                            isLoading = false,
+                            errorMessage = if (silent) null else result.message
+                        )
+                    }
+                    refreshImageCaptcha(silent = true)
+                }
+
+                AppResult.Loading -> {
+                    _uiState.update { it.copy(isLoading = true) }
+                }
+            }
+        }
+    }
+
+    private fun refreshImageCaptcha(silent: Boolean = false) {
+        viewModelScope.launch {
+            if (!silent) {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            }
+
+            when (val result = authRepository.loadImageCaptcha()) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            captchaMode = CaptchaMode.IMAGE,
+                            captchaId = result.data.captchaId,
+                            captchaImageBase64 = result.data.imageBase64,
+                            captcha = "",
+                            sliderCaptcha = null,
+                            sliderProgress = 0f,
+                            sliderToken = "",
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            captchaMode = CaptchaMode.NONE,
+                            captchaId = "",
+                            captchaImageBase64 = "",
+                            captcha = "",
+                            isLoading = false,
+                            errorMessage = if (silent) null else result.message
+                        )
+                    }
+                }
+
+                AppResult.Loading -> {
+                    _uiState.update { it.copy(isLoading = true) }
+                }
+            }
+        }
+    }
+
+    private fun refreshSliderCaptcha(silent: Boolean = false) {
+        viewModelScope.launch {
+            if (!silent) {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            }
+
+            when (val result = authRepository.loadSliderCaptcha()) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            captchaMode = CaptchaMode.SLIDER,
+                            sliderCaptcha = result.data,
+                            sliderProgress = 0f,
+                            sliderToken = "",
+                            captcha = "",
+                            captchaId = result.data.id,
+                            captchaImageBase64 = "",
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            captchaMode = CaptchaMode.NONE,
+                            sliderCaptcha = null,
+                            sliderProgress = 0f,
+                            sliderToken = "",
+                            captcha = "",
+                            captchaId = "",
+                            isLoading = false,
+                            errorMessage = if (silent) null else result.message
+                        )
+                    }
+                }
+
+                AppResult.Loading -> {
+                    _uiState.update { it.copy(isLoading = true) }
+                }
+            }
+        }
+    }
+
+    fun verifySliderCaptcha() {
+        val snapshot = _uiState.value
+        val slider = snapshot.sliderCaptcha
+        if (snapshot.captchaMode != CaptchaMode.SLIDER || slider == null) {
+            _uiState.update { it.copy(errorMessage = "当前不是滑块验证码模式") }
+            return
+        }
+
+        val maxLeft = (slider.backgroundImageWidth - slider.templateImageWidth).coerceAtLeast(0)
+        if (maxLeft <= 0) {
+            _uiState.update { it.copy(errorMessage = "滑块参数异常，请刷新验证码") }
+            return
+        }
+
+        val left = snapshot.sliderProgress * maxLeft.toFloat()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (
+                val result = authRepository.validateSliderCaptcha(
+                    captchaId = slider.id,
+                    left = left,
+                    bgImageWidth = slider.backgroundImageWidth,
+                    bgImageHeight = slider.backgroundImageHeight,
+                    templateImageWidth = slider.templateImageWidth,
+                    templateImageHeight = slider.templateImageHeight
+                )
+            ) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            sliderToken = result.data,
+                            captchaId = slider.id,
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            sliderToken = "",
+                            isLoading = false,
+                            errorMessage = result.message
+                        )
+                    }
+                }
+
+                AppResult.Loading -> {
+                    _uiState.update { it.copy(isLoading = true) }
+                }
+            }
+        }
+    }
+
+    private fun preloadPublicKey() {
+        viewModelScope.launch {
+            when (val result = authRepository.loadPublicKey()) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            publicKeyLoaded = true,
+                            publicKey = result.data
+                        )
+                    }
+                }
+
+                else -> {
+                    _uiState.update {
+                        it.copy(
+                            publicKeyLoaded = false,
+                            publicKey = ""
+                        )
+                    }
+                }
+            }
+        }
     }
 
     fun selectTenant(tenantId: String) {
@@ -64,15 +331,44 @@ class AuthViewModel @Inject constructor(
             return
         }
 
+        when (snapshot.captchaMode) {
+            CaptchaMode.IMAGE -> {
+                if (snapshot.captchaId.isBlank() || snapshot.captcha.isBlank()) {
+                    _uiState.update { it.copy(errorMessage = "请输入验证码") }
+                    return
+                }
+            }
+
+            CaptchaMode.SLIDER -> {
+                if (snapshot.sliderToken.isBlank()) {
+                    _uiState.update { it.copy(errorMessage = "请先完成滑块验证") }
+                    return
+                }
+            }
+
+            CaptchaMode.NONE -> Unit
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val captcha = when (snapshot.captchaMode) {
+                CaptchaMode.IMAGE -> snapshot.captcha
+                CaptchaMode.SLIDER -> snapshot.sliderToken
+                CaptchaMode.NONE -> null
+            }
+            val captchaId = when (snapshot.captchaMode) {
+                CaptchaMode.IMAGE -> snapshot.captchaId
+                else -> null
+            }
 
             when (
                 val result = authRepository.login(
                     account = snapshot.account,
                     password = snapshot.password,
-                    captcha = snapshot.captcha,
-                    captchaId = snapshot.captchaId
+                    captcha = captcha,
+                    captchaId = captchaId,
+                    publicKey = snapshot.publicKey.takeIf { it.isNotBlank() }
                 )
             ) {
                 is AppResult.Success -> {
@@ -105,6 +401,7 @@ class AuthViewModel @Inject constructor(
                             errorMessage = result.message
                         )
                     }
+                    refreshCaptcha(silent = true)
                 }
 
                 AppResult.Loading -> {

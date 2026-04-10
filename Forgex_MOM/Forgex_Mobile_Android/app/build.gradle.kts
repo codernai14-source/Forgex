@@ -30,10 +30,10 @@ android {
             versionNameSuffix = "-dev"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:9000/api/\"")
         }
-        create("test") {
+        create("uat") {
             dimension = "env"
-            applicationIdSuffix = ".test"
-            versionNameSuffix = "-test"
+            applicationIdSuffix = ".uat"
+            versionNameSuffix = "-uat"
             buildConfigField("String", "BASE_URL", "\"https://test-api.forgex.local/api/\"")
         }
         create("prod") {

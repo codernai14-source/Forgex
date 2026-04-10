@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -12,7 +13,7 @@
 
     <artifactId>Forgex_Report</artifactId>
     <name>Forgex_Report</name>
-    <description>锻冶项目报表服务模块（集成 UReport2 和 JimuReport）</description>
+    <description>Forgex 报表服务模块</description>
 
     <properties>
         <ureport.version>2.2.10</ureport.version>
@@ -20,93 +21,90 @@
     </properties>
 
     <dependencies>
-        <!-- Common 模块 -->
         <dependency>
             <groupId>com.forgex</groupId>
             <artifactId>Forgex_Common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- MyBatis-Plus -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
 
-        <!-- MPJ -->
         <dependency>
             <groupId>com.github.yulichang</groupId>
             <artifactId>mybatis-plus-join-boot-starter</artifactId>
         </dependency>
 
-        <!-- 动态多数据源 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
         </dependency>
 
-        <!-- Sa-Token -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+            <version>1.2.23</version>
+        </dependency>
+
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-spring-boot3-starter</artifactId>
         </dependency>
 
-        <!-- Sa-Token Redisson 会话存储 -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-redisson-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- UReport2 报表引擎 -->
-        <dependency>
-            <groupId>com.pig4wei</groupId>
-            <artifactId>ureport2-spring-boot3-starter</artifactId>
-            <version>${ureport.version}</version>
-        </dependency>
-
-        <!-- JimuReport 积木报表 -->
-        <dependency>
-            <groupId>org.jeecgframework.jimureport</groupId>
-            <artifactId>jimureport-spring-boot3-starter</artifactId>
-            <version>${jimureport.version}</version>
-        </dependency>
-
-        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
 
-        <!-- MapStruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
         </dependency>
 
-        <!-- Hutool -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
         </dependency>
 
-        <!-- Swagger 3 -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
 
-        <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -130,4 +128,33 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>report-engines</id>
+            <activation>
+                <property>
+                    <name>report.engines</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <dependencies>
+                <!--
+                    这两个外部报表引擎 Starter 当前不在项目已配置仓库中，
+                    默认编译先不强依赖，等私服或可用仓库准备好后再显式启用。
+                -->
+                <dependency>
+                    <groupId>com.pig4wei</groupId>
+                    <artifactId>ureport2-spring-boot3-starter</artifactId>
+                    <version>${ureport.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jeecgframework.jimureport</groupId>
+                    <artifactId>jimureport-spring-boot3-starter</artifactId>
+                    <version>${jimureport.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

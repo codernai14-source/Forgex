@@ -1,31 +1,65 @@
 spring:
   application:
-    name: forgex-report # 服务名
+    name: forgex-report
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:datasource-forgex-dev.yml
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+        file-extension: yml
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
 
 server:
-  port: 8084 # 服务端口
+  port: 8084
 
-# 报表模块配置
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+
 forgex:
   report:
-    template-path: templates/report # 模板文件存储路径
-    enable-ureport: true # 启用 UReport2
-    enable-jimu: true # 启用 JimuReport
-    max-file-size: 10 # 模板文件最大大小（MB）
+    template-path: templates/report
+    enable-ureport: true
+    enable-jimu: true
+    max-file-size: 10
 
-# UReport2 配置
 ureport:
-  enabled: true # 启用 UReport2
-  debug: true # 调试模式
-  cache-enabled: true # 启用缓存
-  cache-time: 600 # 缓存时间（秒）
-  prefix: classpath:templates/report/ # 模板文件前缀路径
+  enabled: true
+  debug: true
+  cache-enabled: true
+  cache-time: 600
+  prefix: classpath:templates/report/
 
-# JimuReport 配置
 jmreport:
-  enabled: true # 启用 JimuReport
-  mode: 0 # 模式：0-开发模式，1-生产模式
-  database: mysql # 数据库类型
-  table-name: jimu_report # 报表存储表名
-  upload-path: upload/jimu # 上传文件路径
-  preview-cross: true # 允许跨域预览
+  enabled: true
+  mode: 0
+  database: mysql
+  table-name: jimu_report
+  upload-path: upload/jimu
+  preview-cross: true

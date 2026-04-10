@@ -307,8 +307,8 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
             receiver.setTemplateId(templateId);
             receiver.setTenantId(tenantId);
             receiver.setReceiverType(config.getReceiverType());
-            
-            // 自定义类型不需要指定接收人 ID，由后端程序处理时指定
+
+            // 自定义类型不需要预先指定接收人ID，由后端在发送时动态解析。
             if ("CUSTOM".equals(config.getReceiverType())) {
                 receiver.setReceiverIds("[]");
             } else {

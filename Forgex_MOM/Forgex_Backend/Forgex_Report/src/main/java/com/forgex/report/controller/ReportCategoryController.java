@@ -1,9 +1,10 @@
 package com.forgex.report.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.forgex.common.R;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.audit.OperationLog;
 import com.forgex.common.audit.OperationType;
+import com.forgex.common.web.R;
 import com.forgex.report.domain.dto.ReportCategoryDTO;
 import com.forgex.report.domain.param.ReportCategoryParam;
 import com.forgex.report.service.IReportCategoryService;
@@ -97,7 +98,7 @@ public class ReportCategoryController {
     @Operation(summary = "保存分类")
     @SaCheckPermission({"report:category:add", "report:category:edit"})
     @PostMapping("/save")
-    @OperationLog(type = OperationType.WRITE, module = "报表分类", description = "保存报表分类")
+    @OperationLog(module = "report", menuPath = "/report/category", operationType = OperationType.UPDATE)
     public R<Void> save(@RequestBody ReportCategoryDTO dto) {
         categoryService.save(dto);
         return R.ok();
@@ -115,7 +116,7 @@ public class ReportCategoryController {
     @Operation(summary = "批量删除分类")
     @SaCheckPermission("report:category:delete")
     @DeleteMapping("/batch")
-    @OperationLog(type = OperationType.DELETE, module = "报表分类", description = "批量删除报表分类")
+    @OperationLog(module = "report", menuPath = "/report/category", operationType = OperationType.DELETE)
     public R<Void> deleteByIds(@RequestBody List<Long> ids) {
         categoryService.deleteByIds(ids);
         return R.ok();

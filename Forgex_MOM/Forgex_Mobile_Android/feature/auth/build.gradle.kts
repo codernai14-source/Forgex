@@ -43,6 +43,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.coil.compose)
+    implementation(libs.bouncycastle.bcprov)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)

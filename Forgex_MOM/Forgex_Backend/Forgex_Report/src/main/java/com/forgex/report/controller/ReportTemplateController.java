@@ -1,9 +1,10 @@
 package com.forgex.report.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.forgex.common.R;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.audit.OperationLog;
 import com.forgex.common.audit.OperationType;
+import com.forgex.common.web.R;
 import com.forgex.report.domain.dto.ReportTemplateDTO;
 import com.forgex.report.domain.param.ReportTemplateParam;
 import com.forgex.report.service.IReportTemplateService;
@@ -101,7 +102,7 @@ public class ReportTemplateController {
     @Operation(summary = "保存模板")
     @SaCheckPermission({"report:template:add", "report:template:edit"})
     @PostMapping("/save")
-    @OperationLog(type = OperationType.WRITE, module = "报表模板", description = "保存报表模板")
+    @OperationLog(module = "report", menuPath = "/report/template", operationType = OperationType.UPDATE)
     public R<Void> save(@RequestBody ReportTemplateDTO dto) {
         templateService.save(dto);
         return R.ok();
@@ -121,7 +122,7 @@ public class ReportTemplateController {
     @Operation(summary = "更新模板内容")
     @SaCheckPermission("report:template:design")
     @PostMapping("/update-content")
-    @OperationLog(type = OperationType.WRITE, module = "报表模板", description = "更新报表模板内容")
+    @OperationLog(module = "report", menuPath = "/report/template", operationType = OperationType.UPDATE)
     public R<Void> updateContent(@RequestParam Long id, @RequestBody String content) {
         templateService.updateContent(id, content);
         return R.ok();
@@ -156,7 +157,7 @@ public class ReportTemplateController {
     @Operation(summary = "导入模板文件")
     @SaCheckPermission("report:template:import")
     @PostMapping("/import")
-    @OperationLog(type = OperationType.WRITE, module = "报表模板", description = "导入报表模板文件")
+    @OperationLog(module = "report", menuPath = "/report/template", operationType = OperationType.UPLOAD)
     public R<ReportTemplateDTO> importTemplate(@RequestParam String filePath, 
                                                @RequestParam String engineType) {
         return R.ok(templateService.importTemplate(filePath, engineType));
@@ -174,7 +175,7 @@ public class ReportTemplateController {
     @Operation(summary = "批量删除模板")
     @SaCheckPermission("report:template:delete")
     @DeleteMapping("/batch")
-    @OperationLog(type = OperationType.DELETE, module = "报表模板", description = "批量删除报表模板")
+    @OperationLog(module = "report", menuPath = "/report/template", operationType = OperationType.DELETE)
     public R<Void> deleteByIds(@RequestBody List<Long> ids) {
         templateService.deleteByIds(ids);
         return R.ok();

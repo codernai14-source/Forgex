@@ -50,6 +50,11 @@ public class ReportCategory extends BaseEntity {
      * 排序号（数字越小越靠前）
      */
     private Integer sortOrder;
+
+    /**
+     * 分类状态：0-禁用，1-启用
+     */
+    private Integer status;
     
     /**
      * 备注说明
