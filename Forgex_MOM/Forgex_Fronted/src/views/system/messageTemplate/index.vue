@@ -3,6 +3,7 @@
     <FxDynamicTable
       ref="tableRef"
       table-code="MessageTemplateTable"
+      :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
       :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
@@ -124,7 +125,7 @@
             <template #icon><PlusOutlined /></template>
             {{ t('system.messageTemplate.receiver.add') }}
           </a-button>
-          <div v-for="(receiver, index) in formData.receivers" :key="index" class="receiver-item">
+          <div v-for="(_, index) in formData.receivers" :key="index" class="receiver-item">
             <a-card size="small">
               <template #title>
                 <span>{{ t('system.messageTemplate.receiver.itemTitle', { index: index + 1 }) }}</span>
@@ -280,6 +281,7 @@ const dictOptions = computed(() => ({
   ],
 }))
 
+
 const selectedRowKeys = ref<Array<number | string>>([])
 const publicConfig = ref(false)
 
@@ -372,7 +374,7 @@ const renderPlaceholderText = (template: string, values: Record<string, string>)
   if (!template) {
     return ''
   }
-  return template.replace(/\$\{([^}]+)\}/g, (_, key: string) => values[key] ?? '')
+  return template.replace(/\$\{([^}]+)}/g, (_, key: string) => values[key] ?? '')
 }
 
 const ensureCurrentUserId = async () => {

@@ -14,6 +14,7 @@ import module from './module'
 import dashboard from './dashboard'
 import tenant from './tenant'
 import messageTemplate from './messageTemplate'
+import tenantMessageWhitelist from './tenantMessageWhitelist'
 import encodeRule from './encodeRule'
 
 export default {
@@ -29,5 +30,6 @@ export default {
   dashboard,
   tenant,
   messageTemplate,
+  tenantMessageWhitelist,
   encodeRule,
 }

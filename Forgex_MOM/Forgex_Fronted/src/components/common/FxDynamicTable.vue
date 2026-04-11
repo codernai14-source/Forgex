@@ -748,22 +748,24 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
     return backendConfig
   }
   
-  const merged: FxTableConfig = { ...(backendConfig as any), ...(fallbackConfig as any) }
+  const merged: FxTableConfig = { ...(fallbackConfig as any), ...(backendConfig as any) }
 
   const backendColumns = normalizeColumns(backendConfig.columns || [])
   const fallbackColumns = normalizeColumns((fallbackConfig.columns || []) as any[])
 
   if (fallbackColumns.length) {
-    const backendMap = new Map<string, FxTableColumn>()
-    for (const bc of backendColumns) {
-      backendMap.set(bc.field, bc)
+    const fallbackMap = new Map<string, FxTableColumn>()
+    for (const fc of fallbackColumns) {
+      fallbackMap.set(fc.field, fc)
     }
 
-    const mergedColumns: FxTableColumn[] = fallbackColumns.map(fc => {
-      const bc = backendMap.get(fc.field)
-      const mergedCol: any = { ...(bc as any), ...(fc as any) }
+    const mergedColumns: FxTableColumn[] = backendColumns.map(bc => {
+      const fc = fallbackMap.get(bc.field)
+      const mergedCol: any = { ...(fc as any), ...(bc as any) }
 
-      if ('fixed' in (fc as any)) {
+      if ('fixed' in (bc as any)) {
+        mergedCol.fixed = (bc as any).fixed
+      } else if ('fixed' in (fc as any)) {
         mergedCol.fixed = (fc as any).fixed
       } else {
         mergedCol.fixed = undefined
@@ -772,10 +774,10 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
       return mergedCol
     })
 
-    const fallbackFieldSet = new Set(fallbackColumns.map(c => c.field))
-    for (const bc of backendColumns) {
-      if (!fallbackFieldSet.has(bc.field)) {
-        mergedColumns.push(bc)
+    const backendFieldSet = new Set(backendColumns.map(c => c.field))
+    for (const fc of fallbackColumns) {
+      if (!backendFieldSet.has(fc.field)) {
+        mergedColumns.push(fc)
       }
     }
 
@@ -788,18 +790,18 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
   const fallbackQueryFields = (fallbackConfig.queryFields || []) as any[]
 
   if (fallbackQueryFields.length) {
-    const backendMap = new Map<string, any>()
-    for (const bq of backendQueryFields) {
-      backendMap.set(bq.field, bq)
+    const fallbackMap = new Map<string, any>()
+    for (const fq of fallbackQueryFields) {
+      fallbackMap.set(fq.field, fq)
     }
-    const mergedQueryFields = fallbackQueryFields.map(fq => {
-      const bq = backendMap.get(fq.field)
-      return { ...(bq as any), ...(fq as any) }
+    const mergedQueryFields = backendQueryFields.map((bq: any) => {
+      const fq = fallbackMap.get(bq.field)
+      return { ...(fq as any), ...(bq as any) }
     })
-    const fallbackFieldSet = new Set(fallbackQueryFields.map(q => q.field))
-    for (const bq of backendQueryFields) {
-      if (!fallbackFieldSet.has(bq.field)) {
-        mergedQueryFields.push(bq)
+    const backendFieldSet = new Set(backendQueryFields.map((q: any) => q.field))
+    for (const fq of fallbackQueryFields) {
+      if (!backendFieldSet.has(fq.field)) {
+        mergedQueryFields.push(fq)
       }
     }
     merged.queryFields = mergedQueryFields as any

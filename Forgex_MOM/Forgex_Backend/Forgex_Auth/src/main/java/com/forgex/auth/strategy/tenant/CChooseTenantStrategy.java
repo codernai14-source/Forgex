@@ -5,14 +5,17 @@ import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.service.impl.AuthServiceImpl;
 import com.forgex.auth.strategy.AuthTerminalConstants;
 import com.forgex.common.web.R;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class CChooseTenantStrategy implements ChooseTenantStrategy {
 
-    private final AuthServiceImpl authService;
+    private final ObjectProvider<AuthServiceImpl> authServiceProvider;
+
+    public CChooseTenantStrategy(ObjectProvider<AuthServiceImpl> authServiceProvider) {
+        this.authServiceProvider = authServiceProvider;
+    }
 
     @Override
     public boolean supports(String loginTerminal) {
@@ -21,6 +24,6 @@ public class CChooseTenantStrategy implements ChooseTenantStrategy {
 
     @Override
     public R<SysUserDTO> chooseTenant(TenantChoiceParam param) {
-        return authService.doChooseTenant(param);
+        return authServiceProvider.getObject().doChooseTenant(param);
     }
 }

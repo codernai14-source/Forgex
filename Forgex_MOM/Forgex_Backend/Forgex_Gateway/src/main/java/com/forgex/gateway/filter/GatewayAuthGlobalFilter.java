@@ -111,7 +111,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/api/files/") && (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method))) {
             return false;
         }
-        return path.startsWith("/api/sys/") || path.startsWith("/api/basic/") || path.startsWith("/api/files/");
+        return path.startsWith("/api/sys/") || path.startsWith("/api/basic/") || path.startsWith("/api/files/") || path.startsWith("/api/app/");
     }
 
     private Mono<Void> writeNotLogin(ServerWebExchange exchange) {
