@@ -43,6 +43,16 @@ export default {
     columnLang: '言語',
     columnValue: '翻訳',
     loadLanguagesFailed: '言語一覧の読み込みに失敗しました',
+    // プレースホルダー
+    placeholderLabel: 'プレースホルダー：',
+    placeholderHint: 'プレースホルダーをクリックすると、フォーカスされている言語入力欄に挿入されます',
+    phUserName: 'ユーザー名',
+    phUserAccount: 'ユーザーアカウント',
+    phTenantName: 'テナント名',
+    phCurrentTime: '現在時刻',
+    phTitle: 'タイトル',
+    phContent: 'コンテンツ',
+    phLinkUrl: 'リンクURL',
   },
 
   // ステータス

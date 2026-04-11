@@ -42,6 +42,16 @@ export default {
     columnLang: '언어',
     columnValue: '번역',
     loadLanguagesFailed: '언어 목록을 불러오지 못했습니다',
+    // 플레이스홀더
+    placeholderLabel: '플레이스홀더:',
+    placeholderHint: '플레이스홀더를 클릭하면 현재 포커스된 언어 입력란에 삽입됩니다',
+    phUserName: '사용자 이름',
+    phUserAccount: '사용자 계정',
+    phTenantName: '테넌트 이름',
+    phCurrentTime: '현재 시간',
+    phTitle: '제목',
+    phContent: '내용',
+    phLinkUrl: '링크 URL',
   },
 
   // 상태

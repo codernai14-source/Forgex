@@ -19,6 +19,12 @@
         <h2 class="hero-panel__title">{{ roleName }}</h2>
         <p class="hero-panel__desc">{{ $t('system.role.menuGrantDesc') }}</p>
       </div>
+      <div class="hero-panel__tabs">
+        <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
+          <a-tab-pane key="B" tab="B端菜单" />
+          <a-tab-pane key="C" tab="C端菜单" />
+        </a-tabs>
+      </div>
     </section>
 
     <!-- Board -->
@@ -101,7 +107,13 @@ import { SaveOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { listModules } from '@/api/system/module'
-import { getRoleById, getRoleModuleAuthData, grantRoleMenus } from '@/api/system/role'
+import {
+  getRoleById,
+  getRoleCModuleAuthData,
+  getRoleModuleAuthData,
+  grantRoleCMenus,
+  grantRoleMenus,
+} from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 import { useUserStore } from '@/stores/user'
@@ -128,6 +140,7 @@ const isEmbedded = computed(() => props.embedded === true)
 
 const roleId = ref<string>('')
 const roleName = ref<string>('')
+const activeTerminal = ref<'B' | 'C'>('B')
 const modules = ref<any[]>([])
 const activeModuleId = ref<string>('')
 const tableRef = ref()
@@ -199,7 +212,9 @@ async function handleRequest(params: any) {
 
   loading.value = true
   try {
-    const tree = await getRoleModuleAuthData(Number(activeModuleId.value), {
+    const tree = await (
+      activeTerminal.value === 'C' ? getRoleCModuleAuthData : getRoleModuleAuthData
+    )(Number(activeModuleId.value), {
       roleId: roleId.value,
     })
 
@@ -327,6 +342,14 @@ async function handleModuleChange(moduleId: string) {
   await tableRef.value?.refresh?.()
 }
 
+async function handleTerminalChange(terminal: string) {
+  activeTerminal.value = terminal === 'C' ? 'C' : 'B'
+  selectedRowKeys.value = []
+  allMenus.value = []
+  searchKeyword.value = ''
+  await tableRef.value?.refresh?.()
+}
+
 /**
  * 鍏ㄩ€?
  */
@@ -378,7 +401,7 @@ async function handleSave() {
   try {
     const menuIds = selectedRowKeys.value.map(id => Number(id))
     
-    await grantRoleMenus({
+    await (activeTerminal.value === 'C' ? grantRoleCMenus : grantRoleMenus)({
       roleId: Number(roleId.value),
       tenantId: currentTenantId.value,
       menuIds: menuIds,
@@ -490,6 +513,22 @@ onMounted(async () => {
       font-size: 14px;
       opacity: 0.8;
       margin: 0;
+    }
+
+    &__tabs {
+      margin-top: 16px;
+
+      :deep(.ant-tabs-nav) {
+        margin-bottom: 0;
+      }
+
+      :deep(.ant-tabs-tab) {
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+        color: #fff;
+      }
     }
   }
 

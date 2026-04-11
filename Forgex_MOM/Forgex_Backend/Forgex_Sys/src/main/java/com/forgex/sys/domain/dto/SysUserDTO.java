@@ -121,6 +121,16 @@ public class SysUserDTO {
     private List<SysUserTenant> tenantList;
 
     /**
+     * 当前租户下已分配的角色ID列表。
+     */
+    private List<Long> roleIds;
+
+    /**
+     * 当前租户下已分配的角色名称列表。
+     */
+    private List<String> roleNames;
+
+    /**
      * 用户附属信息（可选）。
      *
      * @see SysUserProfile

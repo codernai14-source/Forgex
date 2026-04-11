@@ -192,10 +192,13 @@
                   </template>
                 </a-form-item>
                 <a-form-item :label="t('system.messageTemplate.content.body')" required>
-                  <PlaceholderInput
+                  <I18nInput
                     v-model="formData.contents[index].contentBodyI18nJson"
-                    :placeholder="t('system.messageTemplate.content.bodyPlaceholder')"
+                    mode="simple"
+                    type="textarea"
                     :rows="6"
+                    :show-placeholders="true"
+                    :placeholder="t('system.messageTemplate.content.bodyPlaceholder')"
                   />
                 </a-form-item>
                 <a-form-item :label="t('system.messageTemplate.content.linkUrl')">
@@ -237,7 +240,6 @@ import {
   SyncOutlined,
 } from '@ant-design/icons-vue'
 import I18nInput from '@/components/common/I18nInput.vue'
-import PlaceholderInput from '@/components/common/PlaceholderInput.vue'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import TemplatePreview from '@/components/common/TemplatePreview.vue'
 import { getI18nValue, toI18nJson } from '@/utils/i18n'

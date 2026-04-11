@@ -117,13 +117,13 @@
           </span>
         </a-descriptions-item>
         <a-descriptions-item label="请求参数" :span="2">
-          <pre style="max-height: 200px; overflow: auto; background: #f5f5f5; padding: 8px; border-radius: 4px;">{{ formatJson(currentRecord.requestParams) }}</pre>
+          <pre class="detail-json-block">{{ formatJson(currentRecord.requestParams) }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="响应结果" :span="2" v-if="currentRecord.responseResult">
-          <pre style="max-height: 200px; overflow: auto; background: #f5f5f5; padding: 8px; border-radius: 4px;">{{ formatJson(currentRecord.responseResult) }}</pre>
+          <pre class="detail-json-block">{{ formatJson(currentRecord.responseResult) }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="错误堆栈" :span="2" v-if="currentRecord.errorStack">
-          <pre style="max-height: 300px; overflow: auto; background: #fff2f0; padding: 8px; border-radius: 4px; color: #cf1322;">{{ currentRecord.errorStack }}</pre>
+          <pre class="detail-json-block detail-json-block--error">{{ currentRecord.errorStack }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="操作详情" :span="2" v-if="currentRecord.detailText">
           {{ currentRecord.detailText }}
@@ -346,6 +346,27 @@ const formatJsonPreview = (jsonStr: string) => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+.detail-json-block {
+  max-height: 200px;
+  margin: 0;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: var(--fx-radius, 6px);
+  border: 1px solid var(--fx-border-color, #d9d9d9);
+  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #f5f5f5));
+  color: var(--fx-text-primary, #1f1f1f);
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.detail-json-block--error {
+  max-height: 300px;
+  border-color: var(--fx-error, #cf1322);
+  background: linear-gradient(180deg, var(--fx-error-bg, #fff2f0), var(--fx-fill-secondary, #f5f5f5));
+  color: var(--fx-error, #cf1322);
 }
 </style>
 

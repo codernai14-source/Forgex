@@ -27,6 +27,7 @@ export interface RoleQuery {
   roleName?: string
   roleCode?: string
   status?: number
+  tenantId?: string
   pageNum: number
   pageSize: number
 }

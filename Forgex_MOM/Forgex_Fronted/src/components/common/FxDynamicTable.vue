@@ -21,9 +21,10 @@
                   style="width: 200px"
                 />
                 <a-select
-                  v-else-if="q.queryType === 'select'"
+                  v-else-if="q.queryType === 'select' || q.queryType === 'multiSelect'"
                   v-model:value="(queryModel as any)[q.field]"
                   allow-clear
+                  :mode="q.queryType === 'multiSelect' ? 'multiple' : undefined"
                   style="width: 200px"
                 >
                   <a-select-option
@@ -91,9 +92,10 @@
                 style="width: 200px"
               />
               <a-select
-                v-else-if="q.queryType === 'select'"
+                v-else-if="q.queryType === 'select' || q.queryType === 'multiSelect'"
                 v-model:value="(queryModel as any)[q.field]"
                 allow-clear
+                :mode="q.queryType === 'multiSelect' ? 'multiple' : undefined"
                 style="width: 200px"
               >
                 <a-select-option
@@ -833,6 +835,7 @@ function normalizeQuery() {
   for (const q of config.value.queryFields || []) {
     const v = queryModel[q.field]
     if (v === undefined || v === null || v === '') continue
+    if (Array.isArray(v) && v.length === 0) continue
     if ((q.queryType === 'dateRange' || q.queryType === 'date' || q.queryType === 'datetime' || q.queryType === 'time') && Array.isArray(v) && v.length === 2) {
       out[q.field] = [dayjs(v[0]).format('YYYY-MM-DD HH:mm:ss'), dayjs(v[1]).format('YYYY-MM-DD HH:mm:ss')]
       continue

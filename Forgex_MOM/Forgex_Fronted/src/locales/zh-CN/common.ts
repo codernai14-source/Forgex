@@ -42,6 +42,16 @@ export default {
     columnLang: '语言',
     columnValue: '翻译内容',
     loadLanguagesFailed: '加载语言列表失败',
+    // 占位符相关
+    placeholderLabel: '常用占位符：',
+    placeholderHint: '点击占位符可插入到当前聚焦的语言输入框中',
+    phUserName: '用户名',
+    phUserAccount: '用户账号',
+    phTenantName: '租户名称',
+    phCurrentTime: '当前时间',
+    phTitle: '标题',
+    phContent: '内容',
+    phLinkUrl: '链接地址',
   },
   
   /** 国际化 JSON 编辑器组件 {@link I18nJsonEditor} */

@@ -42,6 +42,16 @@ export default {
     columnLang: 'Language',
     columnValue: 'Translation',
     loadLanguagesFailed: 'Failed to load language list',
+    // Placeholders
+    placeholderLabel: 'Placeholders:',
+    placeholderHint: 'Click a placeholder to insert it into the currently focused language input',
+    phUserName: 'User Name',
+    phUserAccount: 'User Account',
+    phTenantName: 'Tenant Name',
+    phCurrentTime: 'Current Time',
+    phTitle: 'Title',
+    phContent: 'Content',
+    phLinkUrl: 'Link URL',
   },
   
   /** {@link I18nJsonEditor} */

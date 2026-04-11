@@ -693,6 +693,20 @@ const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
     'workflow.execution.startApproval': '승인 시작',
   },
 }
+
+function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const root = document.documentElement
+  Object.entries(styleMap).forEach(([key, value]) => {
+    if (!key.startsWith('--fx-') || value == null) {
+      return
+    }
+    root.style.setProperty(key, String(value))
+  })
+}
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
 const messageSendOpen = ref(false)
 const messageSendForm = ref({
@@ -903,6 +917,14 @@ const rootStyle = computed(() => {
   const tokens = mode === 'dark' ? darkTokens : lightTokens
   return generateCSSVariablesWithCache(tokens, layoutConfig.value)
 })
+
+watch(
+  rootStyle,
+  styleMap => {
+    syncThemeVariablesToDocument(styleMap as Record<string, unknown>)
+  },
+  { immediate: true },
+)
 
 const pageTransitionName = computed(() =>
   layoutConfig.value.pageTransition === 'fade' ? 'fx-fade' : 'fx-horizontal'

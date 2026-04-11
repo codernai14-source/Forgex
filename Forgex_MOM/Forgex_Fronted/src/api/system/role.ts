@@ -104,6 +104,21 @@ export const grantRoleMenus = (data: { roleId: number; tenantId: string; menuIds
   return http.post('/sys/role/menu/grant', data)
 }
 
+export const getRoleCModuleAuthData = (
+  moduleId: number,
+  params: { roleId: number | string }
+) => {
+  return http.post(`/sys/role/c-menu/authData/module/${moduleId}`, params)
+}
+
+export const listRoleCMenus = (params: { roleId: number; tenantId: string }) => {
+  return http.post('/sys/role/c-menu/list', params)
+}
+
+export const grantRoleCMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
+  return http.post('/sys/role/c-menu/grant', data)
+}
+
 /**
  * 获取角色已授权的用户列表
  * @param params 参数 { roleId, tenantId, pageNum, pageSize }

@@ -18,6 +18,21 @@ export default {
   unlockUser: 'ユーザーロック解除',
   assignRole: 'ロール割り当て',
   viewDetail: '詳細表示',
+
+  // ロール割り当てダイアログ
+  roleAssign: {
+    searchPlaceholder: 'ロール名またはコードで検索',
+    selectAll: '全選択',
+    clearAll: 'クリア',
+    roleName: 'ロール名',
+    roleCode: 'ロールコード',
+    assignedStatus: '割り当て状態',
+    assigned: '割り当て済み',
+    summary: '合計 {total} ロール、{selected} 件選択中',
+    loadFailed: 'ロールデータの読み込みに失敗しました',
+    saveFailed: '保存に失敗しました',
+    missingUserId: 'ユーザーIDが不足しています',
+  },
   statusActive: '有効',
   statusInactive: '無効',
   statusLocked: 'ロック',

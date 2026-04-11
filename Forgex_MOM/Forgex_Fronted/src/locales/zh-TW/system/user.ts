@@ -94,6 +94,21 @@ export default {
   assignRole: '分配角色',
   viewDetail: '查看詳情',
   
+  // 分配角色彈窗
+  roleAssign: {
+    searchPlaceholder: '搜尋角色名稱或編碼',
+    selectAll: '全選',
+    clearAll: '清空',
+    roleName: '角色名稱',
+    roleCode: '角色編碼',
+    assignedStatus: '分配狀態',
+    assigned: '已分配',
+    summary: '共 {total} 個角色，已選 {selected} 個',
+    loadFailed: '載入角色資料失敗',
+    saveFailed: '保存失敗',
+    missingUserId: '缺少用戶ID',
+  },
+
   // 消息
   message: {
     loadListFailed: '獲取用戶列表失敗',

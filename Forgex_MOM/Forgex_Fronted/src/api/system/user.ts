@@ -126,7 +126,7 @@ export async function getUserAssignedRoles(userId: string) {
  * @param roleIds 角色ID列表（为空表示清空）
  * @returns 执行结果
  */
-export async function saveUserRoles(userId: string, roleIds: number[]) {
+export async function saveUserRoles(userId: string, roleIds: string[]) {
   return http.post('/sys/user/role/saveByUser', { userId, roleIds })
 }
 

@@ -44,6 +44,16 @@ export default {
     columnLang: '語言',
     columnValue: '翻譯內容',
     loadLanguagesFailed: '加載語言列表失敗',
+    // 佔位符相關
+    placeholderLabel: '常用佔位符：',
+    placeholderHint: '點擊佔位符可插入到目前聚焦的語言輸入框中',
+    phUserName: '用戶名',
+    phUserAccount: '用戶帳號',
+    phTenantName: '租戶名稱',
+    phCurrentTime: '當前時間',
+    phTitle: '標題',
+    phContent: '內容',
+    phLinkUrl: '連結位址',
   },
 
   // 狀態

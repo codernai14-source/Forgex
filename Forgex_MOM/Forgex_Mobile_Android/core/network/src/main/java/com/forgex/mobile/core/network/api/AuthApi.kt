@@ -44,7 +44,7 @@ interface AuthApi {
     suspend fun login(@Body request: LoginRequest): ApiResponse<List<TenantVO>>
 
     /** 登录后选租户 */
-    @POST("auth/choose-tenant")
+    @POST("auth/chooseTenant")
     suspend fun chooseTenant(@Body request: TenantChoiceRequest): ApiResponse<SysUserDTO>
 
     /** 退出登录 */

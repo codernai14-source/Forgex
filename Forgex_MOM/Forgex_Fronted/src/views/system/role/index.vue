@@ -197,6 +197,10 @@ const activeView = ref<'list' | 'menuGrant' | 'userGrant'>('list')
 const currentRoleId = ref<string>('')
 const currentRoleName = ref<string>('')
 
+function resolveTenantId(): string {
+  return currentTenantId.value || sessionStorage.getItem('tenantId') || ''
+}
+
 function normalizeRoleStatusRecord(row: any) {
   const s = row?.status
   let num: number
@@ -245,9 +249,13 @@ function resolveStatusTag(value: unknown) {
 const handleRequest = async (params: any) => {
   loading.value = true
   try {
+    const tenantId = resolveTenantId()
+    const query = { ...(params.query || {}) }
     const res = await getRolePage({
-      ...params.query,
-      ...params.page
+      ...query,
+      ...(tenantId ? { tenantId } : {}),
+      pageNum: params.page?.current,
+      pageSize: params.page?.pageSize,
     })
     const records = (res.records || []).map((r: any) => normalizeRoleStatusRecord(r))
     return {
