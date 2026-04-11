@@ -42,6 +42,67 @@ export default {
     columnLang: 'Language',
     columnValue: 'Translation',
     loadLanguagesFailed: 'Failed to load language list',
+    // Placeholders
+    placeholderLabel: 'Placeholders:',
+    placeholderHint: 'Click a placeholder to insert it into the currently focused language input',
+    phUserName: 'User Name',
+    phUserAccount: 'User Account',
+    phTenantName: 'Tenant Name',
+    phCurrentTime: 'Current Time',
+    phTitle: 'Title',
+    phContent: 'Content',
+    phLinkUrl: 'Link URL',
+  },
+  
+  /** {@link I18nJsonEditor} */
+  i18nJsonEditor: {
+    zhCn: 'Chinese',
+    enUs: 'English',
+    zhCnPlaceholder: 'Please enter Chinese translation',
+    enUsPlaceholder: 'Please enter English translation',
+    jsonPreview: 'JSON Preview',
+  },
+  
+  /** {@link JsonArrayEditor} */
+  jsonArrayEditor: {
+    optionsList: 'Options List',
+    addOption: 'Add Option',
+    valuePlaceholder: 'Please enter option value',
+    labelPlaceholder: 'Please enter option label',
+    columnValue: 'Option Value',
+    columnLabel: 'Option Label',
+    jsonPreview: 'JSON Preview',
+  },
+  
+  /** {@link StyleJsonEditor} */
+  styleJsonEditor: {
+    backgroundColor: 'Background Color',
+    fontSize: 'Font Size',
+    wordWrap: 'Word Wrap',
+    align: 'Alignment',
+    alignLeft: 'Left',
+    alignCenter: 'Center',
+    alignRight: 'Right',
+    fontWeight: 'Font Weight',
+    jsonPreview: 'JSON Preview',
+    stylePreview: 'Style Preview',
+    previewText: 'Preview Text',
+  },
+  
+  /** {@link DataSourceConfig} */
+  dataSourceConfig: {
+    dataSourceType: 'Data Source Type',
+    selectType: 'Please select data source type',
+    typeDict: 'Dictionary',
+    typeJson: 'JSON Array',
+    typeProvider: 'Data Provider',
+    dictCode: 'Dictionary Code',
+    selectDict: 'Please select dictionary',
+    selectProvider: 'Please select data provider',
+    selectProviderField: 'Please select field',
+    providerCode: 'Provider Code',
+    providerField: 'Provider Field',
+    dataSourceJson: 'Data Source JSON',
   },
 
   // Status
@@ -102,7 +163,6 @@ export default {
   saved: 'Saved',
   deleted: 'Deleted',
   remove: 'Remove',
-  confirm: 'Confirm',
   login: {
     accountLabel: 'Account',
     accountPlaceholder: 'Please enter account',
@@ -116,6 +176,11 @@ export default {
     languageLabel: 'Language',
     rememberMe: 'Remember me',
     forgotPassword: 'Forgot password?',
+    noAccount: "Don't have an account?",
+    register: 'Register now',
+    registerGuideTitle: 'Registration Guide',
+    registerGuideDesc: 'Self-service registration is not built in for this system yet. Please contact your administrator to create an account, or use the external registration link provided by your organization.',
+    backToLogin: 'Back to login',
     submit: 'Sign in',
     moreLoginMethods: 'More login methods',
     sliderTitle: 'Slider verification',

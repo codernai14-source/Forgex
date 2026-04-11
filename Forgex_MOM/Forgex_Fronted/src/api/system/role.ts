@@ -74,6 +74,19 @@ export const getRoleAuthData = (params: { roleId: number; tenantId: string }) =>
 }
 
 /**
+ * 获取指定模块下的角色菜单授权树
+ * @param moduleId 模块ID
+ * @param params 参数 { roleId }
+ * @returns 带 checked 状态的菜单树
+ */
+export const getRoleModuleAuthData = (
+  moduleId: number,
+  params: { roleId: number | string }
+) => {
+  return http.post(`/sys/role/menu/authData/module/${moduleId}`, params)
+}
+
+/**
  * 获取角色菜单列表
  * @param params 参数 { roleId, tenantId }
  * @returns 菜单列表
@@ -89,6 +102,21 @@ export const listRoleMenus = (params: { roleId: number; tenantId: string }) => {
  */
 export const grantRoleMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
   return http.post('/sys/role/menu/grant', data)
+}
+
+export const getRoleCModuleAuthData = (
+  moduleId: number,
+  params: { roleId: number | string }
+) => {
+  return http.post(`/sys/role/c-menu/authData/module/${moduleId}`, params)
+}
+
+export const listRoleCMenus = (params: { roleId: number; tenantId: string }) => {
+  return http.post('/sys/role/c-menu/list', params)
+}
+
+export const grantRoleCMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
+  return http.post('/sys/role/c-menu/grant', data)
 }
 
 /**

@@ -35,6 +35,9 @@ spring:
     gateway:
       server:
         webflux:
+          filter:
+            json-to-grpc:
+              enabled: false
           discovery:
             locator:
               enabled: true
@@ -82,6 +85,21 @@ spring:
                   args:
                     name: api-sys
                     fallbackUri: forward:/fallback/sys
+            - id: api-basic
+              uri: lb://forgex-basic
+              predicates:
+                - Path=/api/basic/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                - name: CircuitBreaker
+                  args:
+                    name: api-basic
+                    fallbackUri: forward:/fallback/basic
             - id: api-files
               uri: lb://forgex-sys
               predicates:
@@ -111,6 +129,21 @@ spring:
                 - name: CircuitBreaker
                   args:
                     name: api-wf
+                    fallbackUri: forward:/fallback/sys
+            - id: api-app
+              uri: lb://forgex-sys
+              predicates:
+                - Path=/api/app/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                - name: CircuitBreaker
+                  args:
+                    name: api-app
                     fallbackUri: forward:/fallback/sys
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST

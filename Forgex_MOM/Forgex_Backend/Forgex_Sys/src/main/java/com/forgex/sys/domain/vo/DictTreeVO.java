@@ -52,6 +52,10 @@ public class DictTreeVO {
      */
     private String dictValue;
 
+    private Long moduleId;
+
+    private String moduleName;
+
     private String dictValueI18nJson;
 
     private String tagStyleJson;

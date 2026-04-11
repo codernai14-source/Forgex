@@ -12,7 +12,8 @@ export const useRole = () => {
   const searchForm = reactive({
     roleCode: '',
     roleName: '',
-    status: undefined as number | undefined
+    status: undefined as number | undefined,
+    tenantId: sessionStorage.getItem('tenantId') || undefined as string | undefined,
   })
 
   /**

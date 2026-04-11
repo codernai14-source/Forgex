@@ -25,6 +25,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2025-01-13
  */
 @Mapper
-@DS("admin")
+@DS("history")
 public interface LoginLogMapper extends BaseMapper<LoginLog> {
 }

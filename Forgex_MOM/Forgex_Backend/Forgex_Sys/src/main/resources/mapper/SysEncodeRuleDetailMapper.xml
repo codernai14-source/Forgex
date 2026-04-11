@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.forgex.sys.mapper.SysEncodeRuleDetailMapper">
+
+    <!--
+        编码规则明细结果映射
+        包含明细表的所有字段
+    -->
+    <resultMap id="BaseResultMap" type="com.forgex.sys.domain.entity.SysEncodeRuleDetail">
+        <id property="id" column="id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="segmentOrder" column="segment_order"/>
+        <result property="segmentType" column="segment_type"/>
+        <result property="segmentValue" column="segment_value"/>
+        <result property="connector" column="connector"/>
+        <result property="isRequired" column="is_required"/>
+        <result property="conditionExpression" column="condition_expression"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="deleted" column="deleted"/>
+    </resultMap>
+
+    <!--
+        基础列列表
+        用于 SELECT * 的列定义
+    -->
+    <sql id="Base_Column_List">
+        id, tenant_id, rule_id, segment_order, segment_type, segment_value, 
+        connector, is_required, condition_expression, remark, create_time, 
+        create_by, update_time, update_by, deleted
+    </sql>
+
+    <!--
+        根据规则 ID 查询明细列表
+        用于一对多关联查询
+    -->
+    <select id="selectByRuleId" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM fx_encode_rule_detail
+        WHERE rule_id = #{ruleId}
+        AND deleted = 0
+        ORDER BY segment_order ASC
+    </select>
+
+</mapper>

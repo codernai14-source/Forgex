@@ -163,7 +163,7 @@
 
               <!-- 主题颜色卡片选择器 -->
               <div class="fx-setting-section">
-                <div class="fx-setting-title fx-setting-title--sub">内置主题</div>
+                <div class="fx-setting-title fx-setting-title--sub">{{ t('layout.themePreset') }}</div>
                 <div class="fx-card-grid fx-card-grid--color">
                   <button
                     v-for="color in themeColorOptions"
@@ -395,6 +395,7 @@ import { PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes 
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
+import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
@@ -570,11 +571,11 @@ function getSettingDrawerContainer(): HTMLElement {
  * 每个选项包含值、标签和对应图标
  * </p>
  */
-const themeModeOptions = [
-  { value: 'light', label: '浅色', icon: HighlightOutlined },
-  { value: 'dark', label: '暗色', icon: EyeInvisibleOutlined },
-  { value: 'system', label: '跟随系统', icon: DesktopOutlined },
-]
+const themeModeOptions = computed(() => [
+  { value: 'light', label: t('layout.themeLight'), icon: HighlightOutlined },
+  { value: 'dark', label: t('layout.themeDark'), icon: EyeInvisibleOutlined },
+  { value: 'system', label: t('layout.themeSystem'), icon: DesktopOutlined },
+])
 
 /**
  * 主题颜色选项配置
@@ -583,22 +584,22 @@ const themeModeOptions = [
  * 颜色经过精心挑选，确保视觉舒适度和可访问性
  * </p>
  */
-const themeColorOptions = [
-  { value: '#1677ff', label: '默认' },
-  { value: '#7c5cff', label: '紫罗兰' },
-  { value: '#ec4899', label: '樱花粉' },
-  { value: '#f6c445', label: '柠檬黄' },
-  { value: '#5b8ff9', label: '天蓝色' },
-  { value: '#34d399', label: '浅绿色' },
-  { value: '#71717a', label: '锌色灰' },
-  { value: '#14b8a6', label: '深绿色' },
-  { value: '#1d4ed8', label: '深蓝色' },
-  { value: '#f97316', label: '橙黄色' },
-  { value: '#e11d48', label: '玫瑰红' },
-  { value: '#525252', label: '中性色' },
-  { value: '#475569', label: '石板灰' },
-  { value: '#6b7280', label: '中灰色' },
-]
+const themeColorOptions = computed(() => [
+  { value: '#1677ff', label: t('layout.themeColorDawnBlue') },
+  { value: '#7c5cff', label: t('layout.themeColorTwilightPurple') },
+  { value: '#ec4899', label: t('layout.themeColorRosePink') },
+  { value: '#f6c445', label: t('layout.themeColorLemonYellow') },
+  { value: '#5b8ff9', label: t('layout.themeColorSkyBlue') },
+  { value: '#34d399', label: t('layout.themeColorMintGreen') },
+  { value: '#71717a', label: t('layout.themeColorZincGray') },
+  { value: '#14b8a6', label: t('layout.themeColorTealGreen') },
+  { value: '#1d4ed8', label: t('layout.themeColorRoyalBlue') },
+  { value: '#f97316', label: t('layout.themeColorAmberOrange') },
+  { value: '#e11d48', label: t('layout.themeColorRoseRed') },
+  { value: '#525252', label: t('layout.themeColorNeutralGray') },
+  { value: '#475569', label: t('layout.themeColorSlateGray') },
+  { value: '#6b7280', label: t('layout.themeColorCoolGray') },
+])
 
 const fontSizeSliderValue = computed({
   get: () => parseFontSizeValue(layoutConfig.value.fontSize),
@@ -614,10 +615,10 @@ const fontSizeSliderValue = computed({
  * 预览图使用简化的布局结构示意
  * </p>
  */
-const layoutModeOptions = [
+const layoutModeOptions = computed(() => [
   {
     value: 'vertical',
-    label: '垂直',
+    label: t('layout.layoutVertical'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="20" height="52" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -630,7 +631,7 @@ const layoutModeOptions = [
   },
   {
     value: 'vertical-mix',
-    label: '垂直双列',
+    label: t('layout.layoutVerticalMix'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="12" height="52" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -643,7 +644,7 @@ const layoutModeOptions = [
   },
   {
     value: 'top',
-    label: '水平',
+    label: t('layout.layoutTop'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="76" height="8" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -655,7 +656,7 @@ const layoutModeOptions = [
   },
   {
     value: 'mix',
-    label: '混合',
+    label: t('layout.layoutMix'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="76" height="8" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -667,7 +668,7 @@ const layoutModeOptions = [
       <rect x="5" y="21" width="10" height="2" rx="1" fill="currentColor" fill-opacity="0.18"/>
     </svg>`,
   },
-]
+])
 const siderCollapsed = ref(false)
 const openKeys = ref<string[]>([])
 const selectedKeys = ref<string[]>([])
@@ -678,6 +679,34 @@ const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
 const MAX_RECENT_ROUTE_COUNT = 20
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
+const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
+  'zh-CN': {
+    'workflow.execution.startApproval': '发起审批',
+  },
+  'en-US': {
+    'workflow.execution.startApproval': 'Start Approval',
+  },
+  'ja-JP': {
+    'workflow.execution.startApproval': '承認を開始',
+  },
+  'ko-KR': {
+    'workflow.execution.startApproval': '승인 시작',
+  },
+}
+
+function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const root = document.documentElement
+  Object.entries(styleMap).forEach(([key, value]) => {
+    if (!key.startsWith('--fx-') || value == null) {
+      return
+    }
+    root.style.setProperty(key, String(value))
+  })
+}
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
 const messageSendOpen = ref(false)
 const messageSendForm = ref({
@@ -758,6 +787,51 @@ const resolvedMode = computed(() =>
 
 function normalizeWorkspacePath(path: string) {
   return String(path || '').split('?')[0]
+}
+
+function getPendingClosedTabKeys(query: Record<string, unknown>) {
+  const rawValue = query[TAB_CLOSE_QUERY_KEY]
+  const rawKeys = Array.isArray(rawValue) ? rawValue : [rawValue]
+  return [...new Set(
+    rawKeys
+      .map(item => normalizeWorkspacePath(String(item || '')))
+      .filter(item => item.startsWith('/workspace'))
+  )]
+}
+
+function stripTabCloseQuery(query: Record<string, unknown>) {
+  const nextQuery = { ...query }
+  delete nextQuery[TAB_CLOSE_QUERY_KEY]
+  return nextQuery
+}
+
+function consumePendingTabCloseSignal() {
+  const currentPathKey = normalizeWorkspacePath(route.path || route.fullPath)
+  const closeKeys = getPendingClosedTabKeys(route.query as Record<string, unknown>)
+    .filter(key => key !== currentPathKey)
+  if (closeKeys.length === 0) {
+    return
+  }
+
+  removeTabsByKeys(closeKeys)
+
+  const nextQuery = stripTabCloseQuery(route.query as Record<string, unknown>)
+  const nextRoute = { path: route.path, query: nextQuery, hash: route.hash }
+  if (router.resolve(nextRoute).fullPath !== route.fullPath) {
+    router.replace(nextRoute).catch(() => {})
+  }
+}
+
+function isApprovalStartFormPath(path: string) {
+  return /^\/workspace\/approval\/execution\/start\/[^/]+$/.test(normalizeWorkspacePath(path))
+}
+
+function shouldAutoClosePreviousTab(previousPath: string, currentPath: string) {
+  const normalizedCurrentPath = normalizeWorkspacePath(currentPath)
+  return isApprovalStartFormPath(previousPath) && (
+    normalizedCurrentPath === '/workspace/approval/execution/start' ||
+    normalizedCurrentPath === '/workspace/approval/taskConfig'
+  )
 }
 
 function buildFixedTabs() {
@@ -844,6 +918,14 @@ const rootStyle = computed(() => {
   return generateCSSVariablesWithCache(tokens, layoutConfig.value)
 })
 
+watch(
+  rootStyle,
+  styleMap => {
+    syncThemeVariablesToDocument(styleMap as Record<string, unknown>)
+  },
+  { immediate: true },
+)
+
 const pageTransitionName = computed(() =>
   layoutConfig.value.pageTransition === 'fade' ? 'fx-fade' : 'fx-horizontal'
 )
@@ -879,7 +961,12 @@ function resolveMenuTitle(rawTitle: unknown): string {
       title.startsWith('workflow.') || 
       title.startsWith('message.') || 
       title.includes('.')) {
-    return t(title)
+    const translated = t(title)
+    if (translated !== title) {
+      return translated
+    }
+    const localeKey = String(currentLocale.value || locale.value || 'zh-CN')
+    return ROUTE_TITLE_FALLBACKS[localeKey]?.[title] || ROUTE_TITLE_FALLBACKS['zh-CN']?.[title] || title
   }
   return title
 }
@@ -901,6 +988,82 @@ function handleScroll() {
     headerHiddenByScroll.value = false
   }
   lastScrollY.value = current
+}
+
+type ModuleRouteNode = {
+  path?: string
+  meta?: Record<string, any>
+  children?: ModuleRouteNode[]
+}
+
+function getModuleRouteTree(moduleCode: string): ModuleRouteNode | undefined {
+  const routes = Array.isArray(dynamicRoutes.value) ? dynamicRoutes.value : []
+  return routes.find((item: any) => item?.path === moduleCode || item?.meta?.module === moduleCode)
+}
+
+function buildModuleMenuPath(moduleCode: string, parentSegments: string[], menuPath: string) {
+  const normalizedPath = String(menuPath || '').trim()
+  if (!normalizedPath) {
+    return {
+      fullPath: '',
+      segments: parentSegments
+    }
+  }
+  if (normalizedPath.startsWith('/')) {
+    return {
+      fullPath: normalizedPath,
+      segments: normalizedPath.split('/').filter(Boolean)
+    }
+  }
+  const currentSegments = normalizedPath.split('/').filter(Boolean)
+  const segments = [...parentSegments, ...currentSegments]
+  return {
+    fullPath: `/workspace/${moduleCode}/${segments.join('/')}`.replace(/\/+/g, '/'),
+    segments
+  }
+}
+
+function findFirstNavigableMenuPath(
+  moduleCode: string,
+  menus: ModuleRouteNode[],
+  options: { preferDashboard?: boolean } = {},
+  parentSegments: string[] = []
+): string {
+  for (const menu of menus) {
+    const menuPath = String(menu?.path || '')
+    const { fullPath, segments } = buildModuleMenuPath(moduleCode, parentSegments, menuPath)
+    const children = Array.isArray(menu?.children) ? menu.children : []
+    const isCatalog = String(menu?.meta?.type || '').toLowerCase() === 'catalog'
+    const isDashboard = segments[segments.length - 1] === 'dashboard'
+
+    if (options.preferDashboard && !isCatalog && fullPath && isDashboard) {
+      return fullPath
+    }
+
+    if (children.length > 0) {
+      const childTarget = findFirstNavigableMenuPath(moduleCode, children, options, segments)
+      if (childTarget) {
+        return childTarget
+      }
+    }
+
+    if (!isCatalog && fullPath) {
+      return fullPath
+    }
+  }
+  return ''
+}
+
+function resolveModuleEntryPath(moduleCode: string): string {
+  const moduleRoute = getModuleRouteTree(moduleCode)
+  const children = Array.isArray(moduleRoute?.children) ? moduleRoute.children : []
+  if (children.length === 0) {
+    return ''
+  }
+  return (
+    findFirstNavigableMenuPath(moduleCode, children, { preferDashboard: true }) ||
+    findFirstNavigableMenuPath(moduleCode, children)
+  )
 }
 
 const moduleMenus = computed(() => {
@@ -1179,7 +1342,11 @@ function updateAllTabTitles() {
 
 watch(
   () => route.fullPath,
-  (path) => {
+  (path, previousPath) => {
+    consumePendingTabCloseSignal()
+    if (shouldAutoClosePreviousTab(String(previousPath || ''), path)) {
+      removeTabsByKeys([normalizeWorkspacePath(String(previousPath || ''))])
+    }
     const cleanPath = normalizeWorkspacePath(path)
     selectedKeys.value = [cleanPath]
     
@@ -1298,12 +1465,9 @@ function onModuleClick(moduleCode: string) {
   if (!moduleCode) return
   activeModuleCode.value = moduleCode
   // 切换模块时，跳转到该模块的第一个菜单项
-  const mod = moduleMenus.value.find(m => m.code === moduleCode)
-  if (mod && mod.items.length > 0) {
-    const firstItem = mod.items[0]
-    if (firstItem.fullPath !== route.fullPath) {
-      router.push(firstItem.fullPath).catch(() => {})
-    }
+  const targetPath = resolveModuleEntryPath(moduleCode)
+  if (targetPath && targetPath !== route.fullPath) {
+    router.push(targetPath).catch(() => {})
   }
 }
 
@@ -1503,7 +1667,7 @@ function buildTitleFromRoute(path: string): string {
   if (matchedRouteWithTitle?.meta?.title) {
     const title = matchedRouteWithTitle.meta.title as string
     if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
-      return t(title)
+      return resolveMenuTitle(title)
     }
     return title
   }
@@ -1514,7 +1678,7 @@ function buildTitleFromRoute(path: string): string {
     const title = match.meta.title as string
     // 如果title是国际化key，使用t函数翻译
     if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
-      return t(title)
+      return resolveMenuTitle(title)
     }
     return title
   }
@@ -1535,7 +1699,7 @@ function buildTitleFromRoute(path: string): string {
       const title = child.meta.title
       // 如果title是国际化key，使用t函数翻译
       if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
-        return t(title)
+        return resolveMenuTitle(title)
       }
       return title
     }

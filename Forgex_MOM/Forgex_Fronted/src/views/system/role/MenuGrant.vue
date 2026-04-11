@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 瑙掕壊鑿滃崟鎺堟潈椤甸潰
  * 
  * 鍔熻兘锛?
@@ -18,6 +18,12 @@
         <p class="hero-panel__eyebrow">{{ $t('system.role.menuGrant') }}</p>
         <h2 class="hero-panel__title">{{ roleName }}</h2>
         <p class="hero-panel__desc">{{ $t('system.role.menuGrantDesc') }}</p>
+      </div>
+      <div class="hero-panel__tabs">
+        <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
+          <a-tab-pane key="B" tab="B端菜单" />
+          <a-tab-pane key="C" tab="C端菜单" />
+        </a-tabs>
       </div>
     </section>
 
@@ -101,19 +107,40 @@ import { SaveOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { listModules } from '@/api/system/module'
-import { getRoleById, getRoleModuleAuthData, grantRoleMenus } from '@/api/system/role'
+import {
+  getRoleById,
+  getRoleCModuleAuthData,
+  getRoleModuleAuthData,
+  grantRoleCMenus,
+  grantRoleMenus,
+} from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 import { useUserStore } from '@/stores/user'
 import type { MenuTreeRecord } from './types'
 
+interface RoleMenuGrantProps {
+  roleId?: string | number
+  roleName?: string
+  tenantId?: string
+  embedded?: boolean
+}
+
+const props = defineProps<RoleMenuGrantProps>()
+const emit = defineEmits<{
+  (e: 'saved'): void
+  (e: 'back'): void
+}>()
+
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const isEmbedded = computed(() => props.embedded === true)
 
 const roleId = ref<string>('')
 const roleName = ref<string>('')
+const activeTerminal = ref<'B' | 'C'>('B')
 const modules = ref<any[]>([])
 const activeModuleId = ref<string>('')
 const tableRef = ref()
@@ -185,7 +212,9 @@ async function handleRequest(params: any) {
 
   loading.value = true
   try {
-    const tree = await getRoleModuleAuthData(Number(activeModuleId.value), {
+    const tree = await (
+      activeTerminal.value === 'C' ? getRoleCModuleAuthData : getRoleModuleAuthData
+    )(Number(activeModuleId.value), {
       roleId: roleId.value,
     })
 
@@ -313,6 +342,14 @@ async function handleModuleChange(moduleId: string) {
   await tableRef.value?.refresh?.()
 }
 
+async function handleTerminalChange(terminal: string) {
+  activeTerminal.value = terminal === 'C' ? 'C' : 'B'
+  selectedRowKeys.value = []
+  allMenus.value = []
+  searchKeyword.value = ''
+  await tableRef.value?.refresh?.()
+}
+
 /**
  * 鍏ㄩ€?
  */
@@ -364,13 +401,17 @@ async function handleSave() {
   try {
     const menuIds = selectedRowKeys.value.map(id => Number(id))
     
-    await grantRoleMenus({
+    await (activeTerminal.value === 'C' ? grantRoleCMenus : grantRoleMenus)({
       roleId: Number(roleId.value),
       tenantId: currentTenantId.value,
       menuIds: menuIds,
     })
     
     message.success(t('system.role.message.saveGrantSuccess'))
+    emit('saved')
+    if (isEmbedded.value) {
+      return
+    }
     router.back()
   } catch (error: any) {
     console.error('save grant failed:', error)
@@ -404,6 +445,10 @@ async function loadModules() {
  * 鍔犺浇瑙掕壊淇℃伅
  */
 async function loadRoleInfo() {
+  if (props.roleName) {
+    roleName.value = props.roleName
+    return
+  }
   if (!roleId.value) {
     return
   }
@@ -416,13 +461,15 @@ async function loadRoleInfo() {
 }
 
 onMounted(async () => {
-  // 优先从 userStore 获取租户 ID，其次从 sessionStorage 获取
-  const tid = userStore.tenantId || sessionStorage.getItem('tenantId')
+  const tid = props.tenantId || userStore.tenantId || sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
   }
 
-  roleId.value = String(route.params.roleId || '')
+  roleId.value = String(props.roleId ?? route.params.roleId ?? '')
+  if (props.roleName) {
+    roleName.value = props.roleName
+  }
   
   await Promise.all([
     loadModules(),
@@ -466,6 +513,22 @@ onMounted(async () => {
       font-size: 14px;
       opacity: 0.8;
       margin: 0;
+    }
+
+    &__tabs {
+      margin-top: 16px;
+
+      :deep(.ant-tabs-nav) {
+        margin-bottom: 0;
+      }
+
+      :deep(.ant-tabs-tab) {
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+        color: #fff;
+      }
     }
   }
 

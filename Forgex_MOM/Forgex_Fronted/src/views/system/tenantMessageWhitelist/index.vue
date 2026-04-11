@@ -1,8 +1,16 @@
 <template>
   <div class="tenant-message-whitelist-container">
+    <a-alert
+      :message="t('system.tenantMessageWhitelist.guide.title')"
+      :description="t('system.tenantMessageWhitelist.guide.description')"
+      type="info"
+      show-icon
+    />
+
     <FxDynamicTable
       ref="tableRef"
       table-code="TenantMessageWhitelistTable"
+      :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
       :row-selection="{
@@ -15,7 +23,7 @@
         <a-space>
           <a-button type="primary" @click="handleAdd" v-permission="'sys:tenant-message-whitelist:create'">
             <template #icon><PlusOutlined /></template>
-            新增
+            {{ t('common.add') }}
           </a-button>
           <a-button
             danger
@@ -24,7 +32,7 @@
             v-permission="'sys:tenant-message-whitelist:delete'"
           >
             <template #icon><DeleteOutlined /></template>
-            批量删除
+            {{ t('common.batchDelete') }}
           </a-button>
         </a-space>
       </template>
@@ -44,7 +52,7 @@
       <template #enabled="{ record }">
         <a-switch
           :checked="record.enabled"
-          @change="(checked) => handleToggleEnabled(record, checked)"
+          @change="handleToggleEnabled(record, $event)"
           v-permission="'sys:tenant-message-whitelist:update'"
         />
       </template>
@@ -57,13 +65,13 @@
             @click="handleEdit(record)"
             v-permission="'sys:tenant-message-whitelist:update'"
           >
-            编辑
+            {{ t('common.edit') }}
           </a-button>
           <a-popconfirm
-            title="确定要删除这条白名单配置吗？"
+            :title="t('system.tenantMessageWhitelist.confirm.deleteContent')"
             @confirm="handleDelete(record)"
-            ok-text="确定"
-            cancel-text="取消"
+            :ok-text="t('common.confirm')"
+            :cancel-text="t('common.cancel')"
           >
             <a-button
               type="link"
@@ -71,7 +79,7 @@
               danger
               v-permission="'sys:tenant-message-whitelist:delete'"
             >
-              删除
+              {{ t('common.delete') }}
             </a-button>
           </a-popconfirm>
         </a-space>
@@ -87,10 +95,10 @@
       @cancel="handleCancel"
     >
       <a-form :model="formData" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-        <a-form-item label="发送方租户" required>
+        <a-form-item :label="t('system.tenantMessageWhitelist.form.senderTenant')" required>
           <a-select
             v-model:value="formData.senderTenantId"
-            placeholder="请选择发送方租户"
+            :placeholder="t('system.tenantMessageWhitelist.form.senderTenantPlaceholder')"
             :disabled="isEdit"
           >
             <a-select-option v-for="tenant in tenantList" :key="tenant.id" :value="tenant.id">
@@ -98,10 +106,10 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="接收方租户" required>
+        <a-form-item :label="t('system.tenantMessageWhitelist.form.receiverTenant')" required>
           <a-select
             v-model:value="formData.receiverTenantId"
-            placeholder="请选择接收方租户"
+            :placeholder="t('system.tenantMessageWhitelist.form.receiverTenantPlaceholder')"
             :disabled="isEdit"
           >
             <a-select-option v-for="tenant in tenantList" :key="tenant.id" :value="tenant.id">
@@ -109,13 +117,17 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="状态">
-          <a-switch v-model:checked="formData.enabled" checked-children="启用" un-checked-children="禁用" />
+        <a-form-item :label="t('common.status')">
+          <a-switch
+            v-model:checked="formData.enabled"
+            :checked-children="t('common.enabled')"
+            :un-checked-children="t('common.disabled')"
+          />
         </a-form-item>
-        <a-form-item label="备注">
+        <a-form-item :label="t('common.remark')">
           <a-textarea
             v-model:value="formData.remark"
-            placeholder="请输入备注说明"
+            :placeholder="t('system.tenantMessageWhitelist.form.remarkPlaceholder')"
             :rows="4"
             :maxlength="500"
             show-count
@@ -129,6 +141,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   PlusOutlined,
   DeleteOutlined
@@ -142,13 +155,24 @@ import {
 import { listTenant } from '@/api/system/tenant'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
+interface TenantOption {
+  id: number | string
+  tenantName: string
+}
+
+const { t } = useI18n()
+
 const tableRef = ref<any>()
 const selectedRowKeys = ref<number[]>([])
 
 // 弹窗相关
 const modalVisible = ref(false)
-const modalTitle = ref('新增白名单')
 const isEdit = ref(false)
+const modalTitle = computed(() => (
+  isEdit.value
+    ? t('system.tenantMessageWhitelist.modal.editTitle')
+    : t('system.tenantMessageWhitelist.modal.addTitle')
+))
 const formData = reactive({
   id: undefined,
   senderTenantId: undefined,
@@ -158,7 +182,7 @@ const formData = reactive({
 })
 
 // 租户列表
-const tenantList = ref([])
+const tenantList = ref<TenantOption[]>([])
 
 const dictOptions = computed(() => {
   const tenants = (tenantList.value || []).map((t: any) => ({ label: t.tenantName, value: t.id }))
@@ -166,11 +190,12 @@ const dictOptions = computed(() => {
     senderTenantId: tenants,
     receiverTenantId: tenants,
     enabled: [
-      { label: '启用', value: true },
-      { label: '禁用', value: false },
+      { label: t('common.enabled'), value: true },
+      { label: t('common.disabled'), value: false },
     ],
   }
 })
+
 
 const getTenantName = (tenantId: any) => {
   const list: any[] = tenantList.value as any
@@ -216,7 +241,6 @@ const onSelectChange = (keys: number[]) => {
 
 // 新增
 const handleAdd = () => {
-  modalTitle.value = '新增白名单'
   isEdit.value = false
   formData.id = undefined
   formData.senderTenantId = undefined
@@ -228,7 +252,6 @@ const handleAdd = () => {
 
 // 编辑
 const handleEdit = (record: any) => {
-  modalTitle.value = '编辑白名单'
   isEdit.value = true
   formData.id = record.id
   formData.senderTenantId = record.senderTenantId
@@ -242,20 +265,21 @@ const handleEdit = (record: any) => {
 const handleSubmit = async () => {
   // 表单验证
   if (!formData.senderTenantId) {
-    message.warning('请选择发送方租户')
+    message.warning(t('system.tenantMessageWhitelist.message.selectSenderTenant'))
     return
   }
   if (!formData.receiverTenantId) {
-    message.warning('请选择接收方租户')
+    message.warning(t('system.tenantMessageWhitelist.message.selectReceiverTenant'))
     return
   }
   if (formData.senderTenantId === formData.receiverTenantId) {
-    message.warning('发送方租户和接收方租户不能相同')
+    message.warning(t('system.tenantMessageWhitelist.message.sameTenantNotAllowed'))
     return
   }
 
   await saveTenantMessageWhitelist(formData)
   modalVisible.value = false
+  message.success(t('system.tenantMessageWhitelist.message.saveSuccess'))
   await tableRef.value?.reload?.()
 }
 
@@ -267,19 +291,21 @@ const handleCancel = () => {
 // 删除
 const handleDelete = async (record: any) => {
   await deleteTenantMessageWhitelist(record.id)
+  message.success(t('system.tenantMessageWhitelist.message.deleteSuccess'))
   await tableRef.value?.reload?.()
 }
 
 // 批量删除
 const handleBatchDelete = () => {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除选中的 ${selectedRowKeys.value.length} 条白名单配置吗？`,
+    title: t('system.tenantMessageWhitelist.confirm.batchDeleteTitle'),
+    content: t('system.tenantMessageWhitelist.confirm.batchDeleteContent', { count: selectedRowKeys.value.length }),
     onOk: async () => {
       for (const id of selectedRowKeys.value) {
         await deleteTenantMessageWhitelist(id)
       }
       selectedRowKeys.value = []
+      message.success(t('system.tenantMessageWhitelist.message.deleteSuccess'))
       await tableRef.value?.reload?.()
     }
   })
@@ -300,5 +326,8 @@ onMounted(() => {
 <style scoped lang="less">
 .tenant-message-whitelist-container {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 </style>

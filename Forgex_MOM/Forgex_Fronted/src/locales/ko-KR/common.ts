@@ -42,6 +42,16 @@ export default {
     columnLang: '언어',
     columnValue: '번역',
     loadLanguagesFailed: '언어 목록을 불러오지 못했습니다',
+    // 플레이스홀더
+    placeholderLabel: '플레이스홀더:',
+    placeholderHint: '플레이스홀더를 클릭하면 현재 포커스된 언어 입력란에 삽입됩니다',
+    phUserName: '사용자 이름',
+    phUserAccount: '사용자 계정',
+    phTenantName: '테넌트 이름',
+    phCurrentTime: '현재 시간',
+    phTitle: '제목',
+    phContent: '내용',
+    phLinkUrl: '링크 URL',
   },
 
   // 상태
@@ -95,7 +105,6 @@ export default {
   saved: '저장됨',
   deleted: '삭제됨',
   remove: '제거',
-  confirm: '확인',
   login: {
     accountLabel: '계정',
     accountPlaceholder: '계정을 입력해 주세요',
@@ -109,6 +118,11 @@ export default {
     languageLabel: '언어',
     rememberMe: '로그인 상태 유지',
     forgotPassword: '비밀번호를 잊으셨나요?',
+    noAccount: '아직 계정이 없으신가요?',
+    register: '지금 등록',
+    registerGuideTitle: '계정 등록 안내',
+    registerGuideDesc: '현재 이 시스템에는 내장된 셀프 등록 기능이 없습니다. 계정 개설은 관리자에게 문의하시거나, 회사에서 제공한 외부 등록 링크를 이용해 주세요.',
+    backToLogin: '로그인으로 돌아가기',
     submit: '로그인',
     moreLoginMethods: '다른 로그인 방식',
     sliderTitle: '슬라이더 인증',

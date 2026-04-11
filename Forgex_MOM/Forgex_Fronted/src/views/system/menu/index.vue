@@ -1,6 +1,12 @@
 <template>
   <div class="menu-container">
     <a-card :bordered="false" class="main-card">
+      <div class="terminal-tabs">
+        <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
+          <a-tab-pane key="B" tab="B端" />
+          <a-tab-pane key="C" tab="C端" />
+        </a-tabs>
+      </div>
       <div class="menu-layout">
         <div class="module-tabs">
           <a-tabs
@@ -292,10 +298,16 @@ import IconPicker from '@/components/common/IconPicker.vue'
 import { listModules } from '@/api/system/module'
 import {
   addMenu,
+  addCMenu,
+  batchDeleteCMenus,
   batchDeleteMenus,
+  deleteCMenu,
   deleteMenu,
+  getCMenuById,
+  getCMenuTree,
   getMenuById,
   getMenuTree,
+  updateCMenu,
   updateMenu,
 } from '@/api/system/menu'
 import { useDict } from '@/hooks/useDict'
@@ -343,6 +355,7 @@ type MenuFormData = {
 
 const { t } = useI18n()
 
+const activeTerminal = ref<'B' | 'C'>('B')
 const modules = ref<any[]>([])
 const activeModuleId = ref('')
 const tableRef = ref()
@@ -389,6 +402,26 @@ const fallbackConfig = computed(() => ({
 
 const formTitle = computed(() => (
   isEdit.value ? t('system.menu.form.editMenu') : t('system.menu.form.addMenu')
+))
+
+const currentMenuApi = computed(() => (
+  activeTerminal.value === 'C'
+    ? {
+        getTree: getCMenuTree,
+        getDetail: getCMenuById,
+        add: addCMenu,
+        update: updateCMenu,
+        remove: deleteCMenu,
+        batchRemove: batchDeleteCMenus,
+      }
+    : {
+        getTree: getMenuTree,
+        getDetail: getMenuById,
+        add: addMenu,
+        update: updateMenu,
+        remove: deleteMenu,
+        batchRemove: batchDeleteMenus,
+      }
 ))
 
 function getRootTreeNode(children: any[] = []) {
@@ -557,7 +590,7 @@ async function handleRequest(payload: {
 
   loading.value = true
   try {
-    const tree = await getMenuTree({
+    const tree = await currentMenuApi.value.getTree({
       tenantId: Number(tenantId),
       moduleId: Number(activeModuleId.value),
     })
@@ -608,7 +641,7 @@ async function loadParentMenuTree(moduleId: string, excludeId?: string) {
   }
 
   try {
-    const tree = await getMenuTree({
+    const tree = await currentMenuApi.value.getTree({
       tenantId: Number(tenantId),
       moduleId: Number(moduleId),
     })
@@ -665,7 +698,7 @@ async function handleAdd() {
 
 async function handleEdit(record: MenuTreeRecord) {
   try {
-    const detail = await getMenuById(String(record.id))
+    const detail = await currentMenuApi.value.getDetail(String(record.id))
     isEdit.value = true
     formData.value = {
       ...createDefaultForm(String(detail?.moduleId || activeModuleId.value)),
@@ -749,10 +782,10 @@ async function handleSubmit() {
     }
 
     if (payload.id) {
-      await updateMenu(payload as any)
+      await currentMenuApi.value.update(payload as any)
       // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
-      await addMenu(payload as any)
+      await currentMenuApi.value.add(payload as any)
       // 成功提示由后端返回，在 http 拦截器中统一处理
     }
 
@@ -779,7 +812,7 @@ function handleDelete(id: string | number) {
     cancelText: t('common.cancel'),
     onOk: async () => {
       try {
-        await deleteMenu(String(id))
+        await currentMenuApi.value.remove(String(id))
         selectedRowKeys.value = selectedRowKeys.value.filter((item) => item !== String(id))
         // 成功提示由后端返回，在 http 拦截器中统一处理
         await tableRef.value?.refresh?.()
@@ -804,7 +837,7 @@ function handleBatchDelete() {
     cancelText: t('common.cancel'),
     onOk: async () => {
       try {
-        await batchDeleteMenus(selectedRowKeys.value)
+        await currentMenuApi.value.batchRemove(selectedRowKeys.value)
         selectedRowKeys.value = []
         // 成功提示由后端返回，在 http 拦截器中统一处理
         await tableRef.value?.refresh?.()
@@ -837,6 +870,14 @@ async function loadModules() {
 async function handleModuleChange(moduleId: string) {
   activeModuleId.value = moduleId
   selectedRowKeys.value = []
+  await tableRef.value?.refresh?.()
+}
+
+async function handleTerminalChange(terminal: string) {
+  activeTerminal.value = terminal === 'C' ? 'C' : 'B'
+  selectedRowKeys.value = []
+  visible.value = false
+  formData.value = createDefaultForm(activeModuleId.value)
   await tableRef.value?.refresh?.()
 }
 
@@ -890,6 +931,12 @@ onMounted(async () => {
       min-height: 0;
       height: 100%;
     }
+  }
+
+  .terminal-tabs {
+    padding: 12px 16px 0;
+    border-bottom: 1px solid var(--fx-border-color);
+    background: var(--fx-bg-container);
   }
 
   .menu-layout {

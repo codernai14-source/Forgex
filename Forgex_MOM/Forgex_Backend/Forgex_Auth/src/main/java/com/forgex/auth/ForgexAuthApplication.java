@@ -15,6 +15,7 @@ package com.forgex.auth;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -29,6 +30,7 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
 @SpringBootApplication(scanBasePackages = "com.forgex.auth,com.forgex.common", exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
 @EnableAsync
+@EnableFeignClients(basePackages = "com.forgex.common.feign.client")
 @Import(DynamicDataSourceAutoConfiguration.class)
 @MapperScan({"com.forgex.auth.mapper","com.forgex.common.mapper"})
 public class ForgexAuthApplication {

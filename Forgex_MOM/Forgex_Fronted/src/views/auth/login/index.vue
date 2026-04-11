@@ -98,6 +98,10 @@
             <span>{{ i18nT('common.login.submit') }}</span>
             <span v-if="logging" class="spinner"></span>
           </button>
+          <div v-if="showRegisterEntry" class="register-hint">
+            <span>{{ i18nT('common.login.noAccount') }}</span>
+            <a class="register-link" href="#" @click.prevent="goToRegister">{{ i18nT('common.login.register') }}</a>
+          </div>
           <div class="divider" v-if="systemConfig.showOAuthLogin"><span>{{ i18nT('common.login.moreLoginMethods') }}</span></div>
           <div class="oauth-row" v-if="systemConfig.showOAuthLogin">
             <button type="button" class="oauth-btn gitee" title="Gitee">
@@ -324,9 +328,13 @@ const systemConfig = ref<SystemBasicConfig>({
   loginStyle: 'cyber',
   loginLayout: 'center',
   showOAuthLogin: true,
+  showRegisterEntry: true,
+  registerUrl: '/register',
   primaryColor: '#05d9e8',
   secondaryColor: '#ff2a6d'
 })
+
+const showRegisterEntry = computed(() => systemConfig.value.showRegisterEntry !== false)
 
 const sliderTemplateWidth = computed(() => {
   return sliderChallenge.value?.templateImageWidth && sliderChallenge.value.templateImageWidth > 0
@@ -448,6 +456,43 @@ function resolveLangEmoji(langCode: string) {
   return '🌐'
 }
 
+function isExternalUrl(url: string) {
+  return /^https?:\/\//i.test(String(url || '').trim())
+}
+
+function resolveRegisterUrl() {
+  const configured = String(systemConfig.value.registerUrl || '').trim()
+  return configured || '/register'
+}
+
+async function goToRegister() {
+  const target = resolveRegisterUrl()
+  if (!target) {
+    return
+  }
+  if (isExternalUrl(target)) {
+    window.open(target, '_blank', 'noopener')
+    return
+  }
+  await router.push(target)
+}
+
+async function refreshLoginCaptchaAfterFailure() {
+  captcha.value = ''
+  if (mode.value === 'image') {
+    await loadImage()
+    return
+  }
+  if (mode.value === 'slider') {
+    sliderVerified.value = false
+    sliderValue.value = 0
+    sliderChallenge.value = null
+    if (sliderOpen.value) {
+      await initSlider()
+    }
+  }
+}
+
 async function loadLanguages() {
   try {
     const list = await listEnabledLanguages()
@@ -538,6 +583,7 @@ async function onPreLogin() {
       message.error(i18nT('common.login.msg.noTenantBound'))
     }
   } catch (e) {
+    await refreshLoginCaptchaAfterFailure()
   } finally {
     logging.value = false
   }
@@ -753,7 +799,6 @@ async function verifySliderCaptcha() {
   } catch (e) {
     sliderVerified.value = false
     captcha.value = ''
-    message.error(i18nT('common.operationFailed'))
     await initSlider()
   } finally {
     sliderVerifying.value = false
@@ -1115,6 +1160,23 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+.register-hint {
+  margin-top: 12px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.register-link {
+  margin-left: 6px;
+  color: #05d9e8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-link:hover {
+  color: #d300c5;
 }
 .btn-disabled {
   opacity: 0.6;

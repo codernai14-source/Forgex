@@ -19,6 +19,21 @@ export default {
   assignRole: 'Assign Role',
   viewDetail: 'View Detail',
 
+  // Role Assignment Dialog
+  roleAssign: {
+    searchPlaceholder: 'Search role name or code',
+    selectAll: 'Select All',
+    clearAll: 'Clear All',
+    roleName: 'Role Name',
+    roleCode: 'Role Code',
+    assignedStatus: 'Assignment',
+    assigned: 'Assigned',
+    summary: '{total} roles in total, {selected} selected',
+    loadFailed: 'Failed to load role data',
+    saveFailed: 'Save failed',
+    missingUserId: 'User ID is missing',
+  },
+
   // Table Columns
   avatar: 'Avatar',
   username: 'Username',

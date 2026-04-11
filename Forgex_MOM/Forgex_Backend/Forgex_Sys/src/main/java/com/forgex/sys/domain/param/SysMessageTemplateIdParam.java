@@ -16,9 +16,9 @@ package com.forgex.sys.domain.param;
 import lombok.Data;
 
 /**
- * 消息模板主键参数（详情、单条删除等接口使用）。
+ * 消息模板主键参数
  * <p>
- * 前端统一以 JSON 传递 {@code { "id": ... }}，避免原始 Long 与 Content-Type 不一致导致的绑定失败。
+ * 用于详情、单条删除等接口，前端统一按 JSON 结构传参。
  * </p>
  *
  * @author Forgex Team
@@ -28,8 +28,9 @@ import lombok.Data;
 @Data
 public class SysMessageTemplateIdParam {
 
-    /**
-     * 消息模板主键 ID
-     */
+    /** 消息模板主键ID */
     private Long id;
+
+    /** 是否操作公共配置，`true` 表示操作 `tenantId=0` */
+    private Boolean publicConfig;
 }

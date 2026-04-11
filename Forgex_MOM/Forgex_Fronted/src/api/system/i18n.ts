@@ -71,3 +71,88 @@ export function getLanguageByCode(langCode: string) {
 export function getDefaultLanguage() {
   return http.post<LanguageType>('/sys/i18n/languageType/getDefault')
 }
+
+/**
+ * 分页查询语言类型列表
+ * @param param 查询参数
+ * @returns 分页结果
+ */
+export function pageLanguages(param: {
+  pageNum?: number
+  pageSize?: number
+  langCode?: string
+  langName?: string
+  enabled?: boolean
+}) {
+  return http.post<any>('/sys/i18n/languageType/page', param)
+}
+
+/**
+ * 根据 ID 获取语言类型详情
+ * @param id 语言类型 ID
+ * @returns 语言类型实体
+ */
+export function getLanguageById(id: number) {
+  return http.post<LanguageType>('/sys/i18n/languageType/detail', { id })
+}
+
+/**
+ * 创建语言类型
+ * @param data 语言类型数据
+ * @returns 是否创建成功
+ */
+export function createLanguage(data: Partial<LanguageType>) {
+  return http.post<boolean>('/sys/i18n/languageType/create', data)
+}
+
+/**
+ * 更新语言类型
+ * @param data 语言类型数据
+ * @returns 是否更新成功
+ */
+export function updateLanguage(data: Partial<LanguageType>) {
+  return http.post<boolean>('/sys/i18n/languageType/update', data)
+}
+
+/**
+ * 删除语言类型
+ * @param id 语言类型 ID
+ * @returns 是否删除成功
+ */
+export function deleteLanguage(id: number) {
+  return http.post<boolean>('/sys/i18n/languageType/delete', { id })
+}
+
+/**
+ * 设置默认语言
+ * @param id 语言类型 ID
+ * @returns 是否设置成功
+ */
+export function setDefaultLanguage(id: number) {
+  return http.post<boolean>('/sys/i18n/languageType/setDefault', { id })
+}
+
+/**
+ * 导入语言类型 Excel 文件
+ * @param file Excel 文件
+ * @returns 导入结果
+ */
+export function importLanguages(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return http.post<any>('/sys/i18n/languageType/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+}
+
+/**
+ * 下载导入模板
+ * @returns 模板文件 blob
+ */
+export function downloadImportTemplate() {
+  return http.post('/sys/i18n/languageType/template/download', {}, {
+    responseType: 'blob',
+  })
+}

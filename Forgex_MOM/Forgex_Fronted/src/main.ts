@@ -14,6 +14,7 @@ import 'ant-design-vue/dist/reset.css'
 import * as Icons from '@ant-design/icons-vue'
 import { permission } from './directives/permission'
 import FxDynamicTable from './components/common/FxDynamicTable.vue'
+import MessageNotification from './components/Notification/MessageNotification.vue'
 import { useUserStore } from './stores/user'
 
 /**
@@ -73,6 +74,7 @@ const iconComponents = [
  * 注册全局组件
  */
 app.component('FxDynamicTable', FxDynamicTable)
+app.component('MessageNotification', MessageNotification)
 
 /**
  * 遍历图标列表，将图标注册为全局组件

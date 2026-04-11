@@ -18,6 +18,21 @@ export default {
   unlockUser: '사용자 잠금 해제',
   assignRole: '롤 할당',
   viewDetail: '상세 보기',
+
+  // 롤 할당 다이얼로그
+  roleAssign: {
+    searchPlaceholder: '롤 이름 또는 코드 검색',
+    selectAll: '모두 선택',
+    clearAll: '초기화',
+    roleName: '롤 이름',
+    roleCode: '롤 코드',
+    assignedStatus: '할당 상태',
+    assigned: '할당됨',
+    summary: '총 {total}개 롤, {selected}개 선택됨',
+    loadFailed: '롤 데이터 로드 실패',
+    saveFailed: '저장 실패',
+    missingUserId: '사용자 ID가 없습니다',
+  },
   statusActive: '활성화',
   statusInactive: '비활성화',
   statusLocked: '잠김',

@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: forgex-report
+
+logging:
+  level:
+    com.forgex.report: debug
+
+ureport:
+  debug: true
+  cache-enabled: false
+
+jmreport:
+  mode: 0
+  preview-cross: true
+
+server:
+  port: 8084

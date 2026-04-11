@@ -118,7 +118,7 @@
             <a-col :span="12">
               <a-form-item label="状态" name="status">
                 <a-radio-group v-model:value="formData.status">
-                  <a-radio v-for="option in statusOptions" :key="option.value" :value="option.value">
+                  <a-radio v-for="option in normalizedStatusOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-radio>
                 </a-radio-group>
@@ -321,7 +321,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
@@ -406,6 +406,30 @@ const { dictItems: genderOptions } = useDict('gender')
 const { dictItems: politicalStatusOptions } = useDict('political_status')
 const { dictItems: educationOptions } = useDict('education')
 const { dictItems: statusOptions } = useDict('status')
+
+function normalizeStatusValue(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    if (value === 1) return true
+    if (value === 0) return false
+    return undefined
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === '1' || normalized === 'true') return true
+    if (normalized === '0' || normalized === 'false') return false
+  }
+  return undefined
+}
+
+const normalizedStatusOptions = computed(() =>
+  statusOptions.value.map(option => ({
+    ...option,
+    value: normalizeStatusValue(option.value) ?? option.value,
+  })),
+)
 
 // 基础信息校验规则
 const basicRules = {
@@ -612,8 +636,10 @@ async function handleSubmit() {
   
   loading.value = true
   try {
+    const normalizedStatus = normalizeStatusValue(formData.status)
     const submitData = {
       ...formData,
+      ...(normalizedStatus !== undefined ? { status: normalizedStatus } : {}),
       profile: profileData,
     }
     
@@ -647,8 +673,9 @@ function handleCancel() {
 .work-history-item {
   padding: 16px;
   margin-bottom: 16px;
-  background-color: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #fafafa));
+  border-radius: var(--fx-radius, 6px);
+  border: 1px solid var(--fx-border-color, #f0f0f0);
+  box-shadow: var(--fx-shadow-secondary, 0 1px 2px rgba(0, 0, 0, 0.08));
 }
 </style>

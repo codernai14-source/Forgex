@@ -183,4 +183,23 @@ public interface AuthService {
      * @see com.forgex.auth.domain.param.ChangeLanguageParam
      */
     R<Boolean> changeLanguage(String lang);
+
+    /**
+     * 邀请码注册
+     * <p>
+     * 通过邀请码完成用户注册，创建用户并绑定部门/职位
+     * </p>
+     *
+     * @param param 注册参数
+     * @return 注册结果
+     */
+    R<Boolean> register(com.forgex.auth.domain.param.RegisterParam param);
+
+    /**
+     * 校验邀请码是否有效
+     *
+     * @param inviteCode 邀请码
+     * @return 校验结果，data 为 true 表示有效
+     */
+    R<Boolean> validateInviteCode(String inviteCode);
 }

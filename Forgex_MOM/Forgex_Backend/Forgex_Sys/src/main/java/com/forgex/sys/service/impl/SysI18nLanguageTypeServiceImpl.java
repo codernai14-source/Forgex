@@ -1,12 +1,15 @@
 package com.forgex.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
 import com.forgex.common.service.i18n.I18nLanguageTypeService;
 import com.forgex.sys.service.SysI18nLanguageTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 多语言类型配置服务实现类
@@ -63,5 +66,20 @@ public class SysI18nLanguageTypeServiceImpl implements SysI18nLanguageTypeServic
     @Override
     public Boolean setDefault(Long id) {
         return i18nLanguageTypeService.setDefault(id);
+    }
+
+    @Override
+    public IPage<FxI18nLanguageType> pageQuery(int pageNum, int pageSize, String langCode, String langName, Boolean enabled) {
+        return i18nLanguageTypeService.pageQuery(pageNum, pageSize, langCode, langName, enabled);
+    }
+
+    @Override
+    public FxI18nLanguageType getById(Long id) {
+        return i18nLanguageTypeService.getById(id);
+    }
+
+    @Override
+    public Map<String, Object> importExcel(MultipartFile file) throws Exception {
+        return i18nLanguageTypeService.importExcel(file);
     }
 }

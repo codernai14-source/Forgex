@@ -1,11 +1,11 @@
 /**
- * 角色人员授权页面
+ * 瑙掕壊浜哄憳鎺堟潈椤甸潰
  * 
- * 功能：
- * 1. 支持用户、部门、职位三种授权类型
- * 2. 左侧选择器（用户列表/部门树/职位树）
- * 3. 右侧已授权列表表格
- * 4. 支持批量添加、移除授权
+ * 鍔熻兘锛?
+ * 1. 鏀寔鐢ㄦ埛銆侀儴闂ㄣ€佽亴浣嶄笁绉嶆巿鏉冪被鍨?
+ * 2. 宸︿晶閫夋嫨鍣紙鐢ㄦ埛鍒楄〃/閮ㄩ棬鏍?鑱屼綅鏍戯級
+ * 3. 鍙充晶宸叉巿鏉冨垪琛ㄨ〃鏍?
+ * 4. 鏀寔鎵归噺娣诲姞銆佺Щ闄ゆ巿鏉?
  * 
  * @author Forgex
  * @version 1.0.0
@@ -23,7 +23,7 @@
 
     <!-- Board -->
     <section class="board">
-      <!-- Sidebar: 选择器 -->
+      <!-- Sidebar: 閫夋嫨鍣?-->
       <aside class="sidebar">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.selectGrantObject') }}</div>
@@ -77,7 +77,7 @@
         </div>
       </aside>
 
-      <!-- Content Panel: 已授权列表 -->
+      <!-- Content Panel: 宸叉巿鏉冨垪琛?-->
       <section class="content-panel">
         <div class="toolbar">
           <div class="toolbar__title">{{ $t('system.role.grantedList') }}</div>
@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -135,9 +135,20 @@ import { getRoleById, getGrantedUserList, grantBatch, revokeRoleUsers } from '@/
 import { useUserStore } from '@/stores/user'
 import type { RoleGrantVO } from './types'
 
+interface RoleUserGrantProps {
+  roleId?: string | number
+  roleName?: string
+  tenantId?: string
+  embedded?: boolean
+}
+
+const props = defineProps<RoleUserGrantProps>()
+defineEmits<{
+  (e: 'back'): void
+}>()
+
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const userStore = useUserStore()
 
 const roleId = ref<string>('')
@@ -183,7 +194,7 @@ const fallbackConfig = computed(() => ({
 }))
 
 /**
- * 计算属性：过滤后的用户列表
+ * 璁＄畻灞炴€э細杩囨护鍚庣殑鐢ㄦ埛鍒楄〃
  */
 const filteredUsers = computed(() => {
   if (!userSearchKeyword.value) {
@@ -198,7 +209,7 @@ const filteredUsers = computed(() => {
 })
 
 /**
- * 处理表格数据请求
+ * 澶勭悊琛ㄦ牸鏁版嵁璇锋眰
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !roleId.value) {
@@ -226,21 +237,21 @@ async function handleRequest(params: any) {
 }
 
 /**
- * 处理行选择变化
+ * 澶勭悊琛岄€夋嫨鍙樺寲
  */
 function handleSelectionChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys.map(String)
 }
 
 /**
- * 搜索用户
+ * 鎼滅储鐢ㄦ埛
  */
 function handleSearchUsers() {
-  // 前端过滤，无需请求后端
+  // 鍓嶇杩囨护锛屾棤闇€璇锋眰鍚庣
 }
 
 /**
- * 加载所有用户
+ * 鍔犺浇鎵€鏈夌敤鎴?
  */
 async function loadAllUsers() {
   if (!currentTenantId.value) {
@@ -260,7 +271,7 @@ async function loadAllUsers() {
 }
 
 /**
- * 加载部门树
+ * 鍔犺浇閮ㄩ棬鏍?
  */
 async function loadDepartmentTree() {
   if (!currentTenantId.value) {
@@ -275,7 +286,7 @@ async function loadDepartmentTree() {
 }
 
 /**
- * 加载职位树
+ * 鍔犺浇鑱屼綅鏍?
  */
 async function loadPositionTree() {
   if (!currentTenantId.value) {
@@ -290,9 +301,13 @@ async function loadPositionTree() {
 }
 
 /**
- * 加载角色信息
+ * 鍔犺浇瑙掕壊淇℃伅
  */
 async function loadRoleInfo() {
+  if (props.roleName) {
+    roleName.value = props.roleName
+    return
+  }
   if (!roleId.value) {
     return
   }
@@ -305,7 +320,7 @@ async function loadRoleInfo() {
 }
 
 /**
- * 全选
+ * 鍏ㄩ€?
  */
 function handleSelectAll() {
   if (activeTab.value === 'user') {
@@ -314,7 +329,7 @@ function handleSelectAll() {
 }
 
 /**
- * 清空
+ * 娓呯┖
  */
 function handleClearAll() {
   if (activeTab.value === 'user') {
@@ -327,7 +342,7 @@ function handleClearAll() {
 }
 
 /**
- * 添加到已授权
+ * 娣诲姞鍒板凡鎺堟潈
  */
 async function handleAddToGranted() {
   if (!currentTenantId.value || !roleId.value) {
@@ -376,7 +391,7 @@ async function handleAddToGranted() {
 }
 
 /**
- * 移除单个授权
+ * 绉婚櫎鍗曚釜鎺堟潈
  */
 async function handleRevoke(id: number) {
   if (!currentTenantId.value || !roleId.value) {
@@ -401,7 +416,7 @@ async function handleRevoke(id: number) {
 }
 
 /**
- * 批量移除授权
+ * 鎵归噺绉婚櫎鎺堟潈
  */
 async function handleBatchRevoke() {
   if (selectedRowKeys.value.length === 0) {
@@ -428,13 +443,15 @@ async function handleBatchRevoke() {
 }
 
 onMounted(async () => {
-  // 优先从 userStore 获取租户 ID，其次从 sessionStorage 获取
-  const tid = userStore.tenantId || sessionStorage.getItem('tenantId')
+  const tid = props.tenantId || userStore.tenantId || sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
   }
 
-  roleId.value = String(route.params.roleId || '')
+  roleId.value = String(props.roleId ?? route.params.roleId ?? '')
+  if (props.roleName) {
+    roleName.value = props.roleName
+  }
 
   await Promise.all([
     loadRoleInfo(),

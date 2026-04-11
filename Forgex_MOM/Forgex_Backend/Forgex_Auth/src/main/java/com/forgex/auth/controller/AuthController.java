@@ -17,6 +17,7 @@ import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.param.SliderValidateParam;
 import com.forgex.auth.domain.param.ChangeLanguageParam;
+import com.forgex.auth.domain.param.RegisterParam;
 import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.CaptchaService;
@@ -443,5 +444,36 @@ public class AuthController {
         String pub = cfg == null ? null : cfg.getPublicKey();
         // 返回公钥或错误信息
         return pub != null ? R.ok(pub) : R.fail(CommonPrompt.PUBLIC_KEY_NOT_CONFIGURED);
+    }
+
+    /**
+     * 邀请码注册接口
+     * <p>
+     * 接口路径：POST /auth/register
+     * 需要认证：否（匿名接口）
+     * </p>
+     *
+     * @param param 注册参数，包含账号、密码、邀请码、验证码等
+     * @return 注册结果
+     */
+    @PostMapping("/register")
+    public R<Boolean> register(@RequestBody RegisterParam param) {
+        return authService.register(param);
+    }
+
+    /**
+     * 校验邀请码接口
+     * <p>
+     * 接口路径：POST /auth/register/check-invite
+     * 需要认证：否（匿名接口）
+     * </p>
+     *
+     * @param body 请求体，包含 inviteCode
+     * @return 校验结果
+     */
+    @PostMapping("/register/check-invite")
+    public R<Boolean> checkInviteCode(@RequestBody Map<String, String> body) {
+        String inviteCode = body == null ? null : body.get("inviteCode");
+        return authService.validateInviteCode(inviteCode);
     }
 }
