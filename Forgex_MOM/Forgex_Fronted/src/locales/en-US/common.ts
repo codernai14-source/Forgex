@@ -1,5 +1,5 @@
 /**
- * Common Translations - English
+ * 通用翻译 - 中文注释
  * 
  * Contains common words and operations used throughout the system
  */
@@ -105,8 +105,8 @@ export default {
     dataSourceJson: 'Data Source JSON',
   },
 
-  // Status
-  status: 'Status',
+  // 状态
+  status: '状态',
   enabled: 'Enabled',
   disabled: 'Disabled',
   active: 'Active',
@@ -155,7 +155,7 @@ export default {
   deleteSuccess: 'Delete Success',
   operationFailed: 'Operation Failed',
   
-  // Messages
+  // 消息
   confirmDelete: 'Confirm Delete?',
   confirmDeleteMessage: 'Are you sure you want to delete this data?',
   confirmBatchDelete: 'Confirm Batch Delete',

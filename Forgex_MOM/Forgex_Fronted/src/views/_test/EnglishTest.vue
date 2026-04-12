@@ -1,6 +1,6 @@
 <!--
-  英文文本显示测试页面
-  用于测试英文长单词、长句子在不同容器宽度下的显示效果
+  鑻辨枃鏂囨湰鏄剧ず娴嬭瘯椤甸潰
+  鐢ㄤ簬娴嬭瘯鑻辨枃闀垮崟璇嶃€侀暱鍙ュ瓙鍦ㄤ笉鍚屽鍣ㄥ搴︿笅鐨勬樉绀烘晥鏋?
 -->
 <template>
   <div class="english-test-page">
@@ -147,7 +147,7 @@
         </div>
         
         <div class="test-section">
-          <h3>6. Form Test</h3>
+          <h3>6. 表单 Test</h3>
           <a-form
             :model="formData"
             :label-col="{ span: 8 }"
@@ -208,7 +208,7 @@ const tableColumns = [
     width: 200,
   },
   {
-    title: 'Manufacturing Status',
+    title: 'Manufacturing 状态',
     dataIndex: 'status',
     key: 'status',
     width: 180,

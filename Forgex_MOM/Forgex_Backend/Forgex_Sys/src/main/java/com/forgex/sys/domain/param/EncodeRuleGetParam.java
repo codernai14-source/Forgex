@@ -22,7 +22,7 @@ import lombok.Data;
  * 通常用于编辑页面或详情页面的数据加载。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  */

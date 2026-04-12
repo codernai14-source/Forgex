@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
  * 用于接收前端删除单个物料时的 ID
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

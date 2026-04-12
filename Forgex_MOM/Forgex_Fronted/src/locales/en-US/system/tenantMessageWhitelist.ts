@@ -18,7 +18,7 @@ export default {
   title: 'Tenant Message Whitelist',
   guide: {
     title: 'Usage',
-    description: 'The tenant message whitelist controls cross-tenant message delivery. Messages can be sent across tenants only when the sender tenant is authorized to send to the receiver tenant. Intra-tenant messages and platform tenant messages (tenantId=0) are not restricted.',
+    description: 'The tenant message whitelist controls cross-tenant message delivery. 消息 can be sent across tenants only when the sender tenant is authorized to send to the receiver tenant. Intra-tenant messages and platform tenant messages (tenantId=0) are not restricted.',
   },
   modal: {
     addTitle: 'Add Whitelist',

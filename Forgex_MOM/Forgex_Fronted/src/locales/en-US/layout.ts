@@ -1,8 +1,21 @@
-﻿/**
- * Layout Translations - English
+/**
+ * 布局翻译 - 中文注释
  */
 export default {
-  globalSearchPlaceholder: 'Search menu or page',
+  globalSearchPlaceholder: 'Search menus, modules, or pinyin initials...',
+  globalSearchResultsCount: '{count} results found',
+  globalSearchEmptyTitle: 'No matching menu found',
+  globalSearchEmptyHint: 'Try a menu name, module name, or pinyin initials',
+  globalSearchTipsTitle: 'Quick Search',
+  globalSearchTipNavigate: 'Navigate',
+  globalSearchTipSelect: 'Select',
+  globalSearchTipClose: 'Close',
+  globalSearchMatchTitle: 'Menu',
+  globalSearchMatchModule: 'Module',
+  globalSearchMatchTitlePinyin: 'Menu Pinyin',
+  globalSearchMatchModulePinyin: 'Module Pinyin',
+  globalSearchMatchBreadcrumb: 'Breadcrumb',
+  globalSearchMatchPath: 'Route',
   langZhCn: 'Chinese (Simplified)',
   langEnUs: 'English',
   refresh: 'Refresh',
@@ -79,7 +92,7 @@ export default {
   watermark: 'Watermark',
   watermarkEnabled: 'Watermark',
   watermarkText: 'Watermark Text',
-  formMode: 'Form Mode',
+  formMode: '表单 Mode',
   formModeModal: 'Modal',
   formModeDrawer: 'Drawer',
   animateEnabled: 'Page Animation',
@@ -96,4 +109,5 @@ export default {
   logout: 'Logout',
   home: 'Home',
   personalHomepage: 'Personal Homepage',
+  favoriteManagement: 'Favorite Management',
 }

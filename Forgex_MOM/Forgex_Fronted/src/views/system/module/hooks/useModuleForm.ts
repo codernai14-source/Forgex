@@ -1,11 +1,10 @@
 import { ref, reactive } from 'vue'
-import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import { addModule, updateModule, getModuleById } from '@/api/system/module'
 import type { Module } from '../types'
 
 /**
- * 模块表单Hook
+ * 模块表单逻辑封装
  */
 export function useModuleForm() {
   const formRef = ref<FormInstance>()
@@ -26,16 +25,16 @@ export function useModuleForm() {
     status: 1
   })
 
-  // 表单验证规则
+  // 表单校验规则
   const rules = {
     code: [
       { required: true, message: '请输入模块编码', trigger: 'blur' },
-      { pattern: /^[a-zA-Z0-9_]{2,50}$/, message: '只能包含字母、数字、下划线，长度2-50', trigger: 'blur' }
+      { pattern: /^[a-zA-Z0-9_]{2,50}$/, message: '只能包含字母、数字和下划线，长度 2-50', trigger: 'blur' }
     ],
     nameI18nJson: [
       { 
         required: true, 
-        message: '请输入模块名称', 
+        message: '请输入模块名称',
         trigger: 'change',
         validator: (_rule: any, value: string) => {
           if (!value || value === '{}' || value === '') {
@@ -77,7 +76,6 @@ export function useModuleForm() {
       Object.assign(formData, response.data)
     } catch (error) {
       console.error('加载模块详情失败:', error)
-      message.error('加载模块详情失败')
       dialogVisible.value = false
     }
   }
@@ -92,18 +90,18 @@ export function useModuleForm() {
 
       if (isEdit.value) {
         await updateModule(formData)
-        // 成功提示由后端返回，在 http 拦截器中统一处理
+        // 成功提示由后端返回，并在 http 拦截器中统一处理
       } else {
         await addModule(formData)
-        // 成功提示由后端返回，在 http 拦截器中统一处理
+        // 成功提示由后端返回，并在 http 拦截器中统一处理
       }
 
       dialogVisible.value = false
       return true
     } catch (error) {
       console.error('提交失败:', error)
-      if (error instanceof Error) {
-        message.error(error.message || '操作失败')
+      if ((error as any)?.errorFields) {
+        return false
       }
       return false
     } finally {

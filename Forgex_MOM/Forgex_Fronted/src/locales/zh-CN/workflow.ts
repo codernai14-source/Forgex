@@ -3,8 +3,8 @@ export default {
     addTask: '新增审批任务',
     editTask: '编辑审批任务',
     nodeConfig: '节点配置',
-    customForm: '自定义表单',
-    lowCodeForm: '低代码表单',
+    custom表单: '自定义表单',
+    lowCode表单: '低代码表单',
     confirmDelete: '确定要删除这个审批任务吗？',
     taskName: '任务名称',
     taskCode: '任务编码',
@@ -21,15 +21,16 @@ export default {
       formType: '请选择表单类型',
       formPath: '请输入表单组件路径',
       formContent: '请输入低代码表单 JSON',
-      remark: '请输入备注'
-    }
+      remark: '请输入备注',
+    },
   },
   execution: {
     startCenter: '发起中心',
     startTitle: '卡片化发起审批',
-    startDesc: '先选择流程卡片，再填写对应表单并直接发起。这里已经预置了一个“请假审批”示例，方便你查看用户发起到 admin 审核结束的完整实现。',
+    startDesc:
+      '先选择流程卡片，再填写对应表单并直接发起。这里已预置一个“请假审批”示例，便于查看从用户发起到 admin 审核结束的完整流程。',
     enabledTasks: '已启用流程',
-    filteredTasks: '当前筛选',
+    filteredTasks: '筛选结果',
     categoryTitle: '业务分类',
     recentTitle: '最近使用',
     allFlows: '全部流程',
@@ -42,8 +43,8 @@ export default {
     formNotRegistered: '当前流程尚未注册前端表单组件',
     lowCodePlaceholder: '请输入表单 JSON 内容',
     submitApproval: '提交审批',
-    customForm: '自定义表单',
-    lowCodeForm: '低代码表单',
+    custom表单: '自定义表单',
+    lowCode表单: '低代码表单',
     lowCodeRenderer: '低代码表单渲染器开发中',
     lowCodeDesc: '当前先以 JSON 方式提交表单内容',
     taskCode: '审批任务',
@@ -51,8 +52,8 @@ export default {
     formType: '表单类型',
     formContent: '表单内容',
     form: {
-      selectTask: '请选择审批任务'
-    }
+      selectTask: '请选择审批任务',
+    },
   },
   myTask: {
     approve: '同意',
@@ -61,7 +62,7 @@ export default {
     history: '审批历史',
     cancelApproval: '撤销',
     approveAgree: '审批同意',
-    approveReject: '审批驳回'
+    approveReject: '审批驳回',
   },
   dashboard: {
     title: '审批工作台',
@@ -73,7 +74,7 @@ export default {
     shortcutTitle: '快捷发起审批',
     shortcutSubtitle: '展示最近更新的常用审批流程，点击卡片可直接进入对应发起页面。',
     shortcutEmpty: '暂无可快捷发起的审批流程',
-    shortcutFallback: '点击卡片进入发起页，确认流程后即可继续填写审批表单。',
+    shortcutFallback: '点击卡片进入发起页面，确认流程后即可继续填写审批表单。',
     shortcutAction: '立即发起',
     userShareTitle: '用户审批数量占比',
     userShareSubtitle: '按发起人统计全部审批单数量占比，帮助快速识别当前审批提交分布。',
@@ -82,7 +83,7 @@ export default {
     taskConfigPreviewSubtitle: '展示最近更新的审批任务配置，便于快速了解当前流程配置状态。',
     taskConfigEmpty: '暂无审批任务配置',
     pendingTitle: '待我处理',
-    yesterdayTitle: '昨天处理的任务',
+    yesterdayTitle: '昨日处理任务',
     ccTitle: '抄送给我的',
     more: '查看更多',
     ccHint: '去待办处理',
@@ -101,12 +102,12 @@ export default {
     detailInitiator: '发起人',
     detailStartTime: '发起时间',
     detailCurrentNode: '当前节点',
-    detailStatus: '状态',
+    detail状态: '状态',
     status: {
-      pending: '未审批',
+      pending: '待处理',
       processing: '审批中',
       done: '审批完成',
-      rejected: '驳回'
-    }
-  }
+      rejected: '驳回',
+    },
+  },
 }

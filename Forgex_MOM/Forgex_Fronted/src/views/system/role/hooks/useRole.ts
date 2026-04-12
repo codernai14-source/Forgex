@@ -8,8 +8,8 @@ export const useRole = () => {
   const roles = ref<Role[]>([])
   const selectedRowKeys = ref<number[]>([])
 
-  // 搜索表单
-  const searchForm = reactive({
+  // 鎼滅储琛ㄥ崟
+  const search表单 = reactive({
     roleCode: '',
     roleName: '',
     status: undefined as number | undefined,
@@ -17,34 +17,34 @@ export const useRole = () => {
   })
 
   /**
-   * 加载角色列表
+   * 鍔犺浇瑙掕壊鍒楄〃
    */
   const loadRoles = async () => {
     loading.value = true
-    const data = await getRoleList(searchForm)
+    const data = await getRoleList(search表单)
     roles.value = data || []
     loading.value = false
   }
 
   /**
-   * 搜索
+   * 鎼滅储
    */
   const handleSearch = () => {
     loadRoles()
   }
 
   /**
-   * 重置搜索
+   * 閲嶇疆鎼滅储
    */
   const handleReset = () => {
-    searchForm.roleCode = ''
-    searchForm.roleName = ''
-    searchForm.status = undefined
+    search表单.roleCode = ''
+    search表单.roleName = ''
+    search表单.status = undefined
     loadRoles()
   }
 
   /**
-   * 删除角色
+   * 鍒犻櫎瑙掕壊
    */
   const handleDelete = async (id: number) => {
     await deleteRole(id)
@@ -52,11 +52,11 @@ export const useRole = () => {
   }
 
   /**
-   * 批量删除
+   * 鎵归噺鍒犻櫎
    */
   const handleBatchDelete = async () => {
     if (selectedRowKeys.value.length === 0) {
-      message.warning('请选择要删除的角色')
+      message.warning('璇烽€夋嫨瑕佸垹闄ょ殑瑙掕壊')
       return
     }
 
@@ -66,7 +66,7 @@ export const useRole = () => {
   }
 
   /**
-   * 行选择变化
+   * 琛岄€夋嫨鍙樺寲
    */
   const onSelectChange = (keys: number[]) => {
     selectedRowKeys.value = keys
@@ -75,7 +75,7 @@ export const useRole = () => {
   return {
     loading,
     roles,
-    searchForm,
+    search表单,
     selectedRowKeys,
     loadRoles,
     handleSearch,

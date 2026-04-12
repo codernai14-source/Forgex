@@ -1,6 +1,6 @@
 /**
- * 系統管理模組翻譯 - 繁體中文
- * 統一導出
+ * 系统管理模块翻译 - 繁体中文注释
+ * 统一导出
  */
 import user from './user'
 import role from './role'

@@ -15,7 +15,7 @@ import lombok.EqualsAndHashCode;
  * 支持 UReport2 和 JimuReport 双引擎
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see BaseEntity

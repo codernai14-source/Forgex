@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * 实现报表数据源的业务逻辑
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see ServiceImpl

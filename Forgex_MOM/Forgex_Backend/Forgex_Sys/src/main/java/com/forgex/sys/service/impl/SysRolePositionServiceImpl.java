@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
  * 职位授权通过查询职位下的所有用户，自动为这些用户建立角色 - 用户关联关系。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see ISysRolePositionService

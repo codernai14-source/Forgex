@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotBlank;
  * 用于查询指定模块下的扩展字段配置
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

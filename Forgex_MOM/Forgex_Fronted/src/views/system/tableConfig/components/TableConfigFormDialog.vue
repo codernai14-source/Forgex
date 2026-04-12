@@ -163,11 +163,11 @@
 
 <script setup lang="ts">
 /**
- * 表格配置表单对话框组件
+ * 琛ㄦ牸閰嶇疆琛ㄥ崟瀵硅瘽妗嗙粍浠?
  * 
- * 功能：
- * 1. 表格配置基本信息编辑
- * 2. 表格列配置管理
+ * 鍔熻兘锛?
+ * 1. 琛ㄦ牸閰嶇疆鍩烘湰淇℃伅缂栬緫
+ * 2. 琛ㄦ牸鍒楅厤缃鐞?
  * 
  * @author Forgex
  * @version 1.0.0
@@ -185,23 +185,23 @@ import {
 import type { TableConfigDetail, TableColumnConfigItem } from '@/api/system/tableConfig'
 
 interface Props {
-  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
+  /** 瀵硅瘽妗嗘槸鍚︽墦寮€锛岀敤浜庢帶鍒剁粍浠剁殑鏄剧ず/闅愯棌鐘舵€?*/
   open: boolean
-  /** 是否为编辑模式，true 表示编辑表格配置，false 表示新增表格配置 */
+  /** 鏄惁涓虹紪杈戞ā寮忥紝true 琛ㄧず缂栬緫琛ㄦ牸閰嶇疆锛宖alse 琛ㄧず鏂板琛ㄦ牸閰嶇疆 */
   isEdit: boolean
-  /** 表格配置 ID，编辑模式下必填，用于加载表格配置详情 */
+  /** 琛ㄦ牸閰嶇疆 ID锛岀紪杈戞ā寮忎笅蹇呭～锛岀敤浜庡姞杞借〃鏍奸厤缃鎯?*/
   configId?: number
 }
 
 interface Emits {
   /**
-   * 更新对话框打开状态
-   * @param value 新的打开状态
+   * 鏇存柊瀵硅瘽妗嗘墦寮€鐘舵€?
+   * @param value 鏂扮殑鎵撳紑鐘舵€?
    */
   (e: 'update:open', value: boolean): void
   /**
-   * 操作成功事件
-   * 触发时机：新增或编辑表格配置成功保存后触发
+   * 鎿嶄綔鎴愬姛浜嬩欢
+   * 瑙﹀彂鏃舵満锛氭柊澧炴垨缂栬緫琛ㄦ牸閰嶇疆鎴愬姛淇濆瓨鍚庤Е鍙?
    */
   (e: 'success'): void
 }
@@ -324,7 +324,7 @@ const handleDeleteColumn = (index: number) => {
 const handleSubmit = async () => {
   try {
     await basicFormRef.value?.validate()
-    
+
     if (formData.columns.length === 0) {
       message.warning(t('system.tableConfig.columnRequired'))
       return
@@ -342,15 +342,15 @@ const handleSubmit = async () => {
     
     if (props.isEdit && props.configId) {
       await updateTableConfig(submitData)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
     } else {
       await createTableConfig(submitData)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
     }
     
     emit('success')
   } catch (error) {
-    console.error('保存表格配置失败:', error)
+    console.error('淇濆瓨琛ㄦ牸閰嶇疆澶辫触:', error)
   } finally {
     loading.value = false
   }
@@ -361,13 +361,13 @@ const handleCancel = () => {
 }
 
 const loadConfigDetail = async () => {
-  console.log('loadConfigDetail 被调用', { isEdit: props.isEdit, configId: props.configId })
+  console.log('loadConfigDetail called', { isEdit: props.isEdit, configId: props.configId })
   if (props.isEdit && props.configId) {
     loading.value = true
     try {
-      console.log('开始调用 getTableConfigDetail 接口，ID:', props.configId)
+      console.log('寮€濮嬭皟鐢?getTableConfigDetail 鎺ュ彛锛孖D:', props.configId)
       const detail = await getTableConfigDetail(props.configId)
-      console.log('获取到的详情数据:', detail)
+      console.log('鑾峰彇鍒扮殑璇︽儏鏁版嵁:', detail)
       Object.assign(formData, {
         ...detail,
         columns: detail.columns.map(col => ({
@@ -375,15 +375,15 @@ const loadConfigDetail = async () => {
           tempId: col.id || Date.now() + Math.random()
         }))
       })
-      console.log('表单数据已更新:', formData)
+      console.log('琛ㄥ崟鏁版嵁宸叉洿鏂?', formData)
     } catch (error) {
-      console.error('加载表格配置详情失败:', error)
+      console.error('鍔犺浇琛ㄦ牸閰嶇疆璇︽儏澶辫触:', error)
       message.error(t('system.tableConfig.loadDetailFailed'))
     } finally {
       loading.value = false
     }
   } else {
-    console.log('未调用接口，条件不满足', { isEdit: props.isEdit, configId: props.configId })
+    console.log('skip loading config detail', { isEdit: props.isEdit, configId: props.configId })
   }
 }
 
@@ -400,30 +400,30 @@ const resetForm = () => {
   activeTab.value = 'basic'
 }
 
-// 监听对话框打开状态
+// 鐩戝惉瀵硅瘽妗嗘墦寮€鐘舵€?
 watch(() => props.open, (newOpen) => {
-  console.log('=== watch 触发 ===')
-  console.log('对话框打开状态变化:', newOpen)
-  console.log('当前 props:', { open: props.open, isEdit: props.isEdit, configId: props.configId })
+  console.log('=== watch 瑙﹀彂 ===')
+  console.log('瀵硅瘽妗嗘墦寮€鐘舵€佸彉鍖?', newOpen)
+  console.log('褰撳墠 props:', { open: props.open, isEdit: props.isEdit, configId: props.configId })
   
   if (newOpen) {
-    // 使用 nextTick 确保 props 已经全部更新
+    // 浣跨敤 nextTick 纭繚 props 宸茬粡鍏ㄩ儴鏇存柊
     nextTick(() => {
-      console.log('nextTick 后的 props:', { open: props.open, isEdit: props.isEdit, configId: props.configId })
+      console.log('nextTick 鍚庣殑 props:', { open: props.open, isEdit: props.isEdit, configId: props.configId })
       if (props.isEdit) {
-        console.log('准备加载配置详情...')
+        console.log('鍑嗗鍔犺浇閰嶇疆璇︽儏...')
         loadConfigDetail()
       } else {
-        console.log('准备重置表单...')
+        console.log('鍑嗗閲嶇疆琛ㄥ崟...')
         resetForm()
       }
     })
   }
 })
 
-// 额外监听 isEdit 和 configId 的变化（用于调试）
+// 棰濆鐩戝惉 isEdit 鍜?configId 鐨勫彉鍖栵紙鐢ㄤ簬璋冭瘯锛?
 watch(() => [props.isEdit, props.configId] as const, ([newIsEdit, newConfigId]) => {
-  console.log('isEdit 或 configId 变化:', { isEdit: newIsEdit, configId: newConfigId })
+  console.log('isEdit 鎴?configId 鍙樺寲:', { isEdit: newIsEdit, configId: newConfigId })
 })
 </script>
 

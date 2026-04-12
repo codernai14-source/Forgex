@@ -194,7 +194,6 @@ async function handleSubmit() {
       formContent
     }
     const executionId = await startExecution(params)
-    message.success('审批已成功发起')
     navigateAndCloseCurrent(approvalRoutePaths.myInitiated, { executionId })
   } catch (error: any) {
     if (error?.message?.includes('JSON')) {
@@ -204,7 +203,6 @@ async function handleSubmit() {
     if (error?.errorFields) {
       return
     }
-    message.error(error.message || '发起审批失败')
   } finally {
     submitting.value = false
   }

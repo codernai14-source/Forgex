@@ -4,7 +4,7 @@
       ref="tableRef"
       table-code="I18nLanguageTypeTable"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
+      :降级方案-config="降级方案Config"
       :show-query-form="true"
       row-key="id"
       :pagination="{
@@ -20,7 +20,7 @@
           :before-upload="handleImport"
           accept=".xlsx,.xls"
         >
-          <a-button>导入 Excel</a-button>
+          <a-button>瀵煎叆 Excel</a-button>
         </a-upload>
         <a-button @click="downloadTemplate">{{ t('system.excel.downloadTemplate') }}</a-button>
       </template>
@@ -138,7 +138,7 @@ const formRules: Record<string, Rule[]> = {
   langName: [{ required: true, message: t('system.i18n.langNameRequired'), trigger: 'blur' }],
 }
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'I18nLanguageTypeTable',
   tableName: t('system.i18n.languageType'),
   tableType: 'NORMAL',
@@ -189,7 +189,7 @@ const handleRequest = async (payload: {
       total: Number(res?.total || 0),
     }
   } catch (error) {
-    console.error('加载语言类型列表失败', error)
+    console.error('鍔犺浇璇█绫诲瀷鍒楄〃澶辫触', error)
     return {
       records: [],
       total: 0,
@@ -197,7 +197,7 @@ const handleRequest = async (payload: {
   }
 }
 
-function resetForm() {
+function reset表单() {
   form.id = null
   form.langCode = ''
   form.langName = ''
@@ -210,13 +210,13 @@ function resetForm() {
 }
 
 function handleAdd() {
-  resetForm()
+  reset表单()
   dialogTitle.value = t('common.add')
   dialogVisible.value = true
 }
 
 async function handleEdit(row: any) {
-  resetForm()
+  reset表单()
   dialogTitle.value = t('common.edit')
   try {
     const data = await getLanguageById(row.id)
@@ -230,7 +230,7 @@ async function handleEdit(row: any) {
     form.isDefault = data.isDefault
     dialogVisible.value = true
   } catch (error) {
-    console.error('获取语言类型详情失败', error)
+    console.error('鑾峰彇璇█绫诲瀷璇︽儏澶辫触', error)
     message.error(t('common.getDetailFailed'))
   }
 }
@@ -263,7 +263,7 @@ async function handleSubmit() {
     dialogVisible.value = false
     await tableRef.value?.refresh?.()
   } catch (error) {
-    console.error('保存失败', error)
+    console.error('淇濆瓨澶辫触', error)
   } finally {
     saving.value = false
   }
@@ -286,8 +286,8 @@ async function handleSetDefault(row: any) {
 async function handleImport(file: File) {
   try {
     const res = await importLanguages(file)
-    const { successCount, failCount, errorMessages } = res
-    if (failCount > 0 && errorMessages) {
+    const { successCount, failCount, error消息 } = res
+    if (failCount > 0 && error消息) {
       Modal.warning({
         title: t('system.excel.importResult'),
         content: `${t('system.excel.importSuccess')}: ${successCount}, ${t('system.excel.importFail')}: ${failCount}`,
@@ -298,7 +298,7 @@ async function handleImport(file: File) {
     }
     await tableRef.value?.refresh?.()
   } catch (error) {
-    console.error('导入失败', error)
+    console.error('瀵煎叆澶辫触', error)
     message.error(t('system.excel.importFailed'))
   }
   return false
@@ -315,7 +315,7 @@ async function downloadTemplate() {
     window.URL.revokeObjectURL(url)
     message.success(t('system.excel.downloadSuccess'))
   } catch (error) {
-    console.error('下载模板失败', error)
+    console.error('涓嬭浇妯℃澘澶辫触', error)
     message.error(t('system.excel.downloadFailed'))
   }
 }

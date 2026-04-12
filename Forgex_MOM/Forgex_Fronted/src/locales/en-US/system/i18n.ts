@@ -1,12 +1,12 @@
 /**
- * I18n Configuration Translation - English
+ * 国际化配置翻译 - 中文注释
  */
 export default {
   // Page Title
   languageType: 'Language Configuration',
   encodeRule: 'Encoding Rule Management',
   
-  // Table Columns
+  // 表格列
   langCode: 'Language Code',
   langName: 'Language Name',
   langNameEn: 'English Name',
@@ -19,7 +19,7 @@ export default {
   ruleCode: 'Rule Code',
   businessType: 'Business Type',
   description: 'Description',
-  status: 'Status',
+  status: '状态',
   exampleCode: 'Example Code',
   createTime: 'Create Time',
   updateTime: 'Update Time',
@@ -28,12 +28,12 @@ export default {
   detailSegment: 'Segment',
   segmentType: 'Segment Type',
   segmentValue: 'Segment Value',
-  dateFormat: 'Date Format',
+  date表单at: 'Date 表单at',
   seqStart: 'Start Value',
   seqLength: 'Length',
   seqResetType: 'Reset Type',
   
-  // Form Placeholders
+  // 表单占位提示
   langCodePlaceholder: 'Enter language code, e.g., zh-CN',
   langNamePlaceholder: 'Enter language name, e.g., Simplified Chinese',
   langNameEnPlaceholder: 'Enter English name, e.g., Simplified Chinese',
@@ -43,9 +43,9 @@ export default {
   businessTypePlaceholder: 'Enter business type (e.g., ORDER, INVOICE)',
   descriptionPlaceholder: 'Enter rule description',
   remarkPlaceholder: 'Enter remark',
-  dateFormatPlaceholder: 'Enter date format (e.g., YYYYMMDD)',
+  date表单atPlaceholder: 'Enter date format (e.g., YYYYMMDD)',
   
-  // Form Validation
+  // 表单校验
   langCodeRequired: 'Please enter language code',
   langNameRequired: 'Please enter language name',
   ruleNameRequired: 'Please enter rule name',
@@ -55,13 +55,13 @@ export default {
   ruleCodePattern: 'Rule code can only contain letters, numbers and underscores',
   segmentTypeRequired: 'Please select segment type',
   segmentValueRequired: 'Please enter segment value',
-  dateFormatRequired: 'Please enter date format',
+  date表单atRequired: 'Please enter date format',
   seqStartRequired: 'Please enter start value',
   seqLengthRequired: 'Please enter sequence length',
   detailRequired: 'Please add at least one rule detail',
   detailOrderError: 'Rule detail order must be consecutive',
   
-  // Status
+  // 状态
   statusActive: 'Active',
   statusInactive: 'Inactive',
   segmentTypeFixed: 'Fixed',
@@ -73,7 +73,7 @@ export default {
   seqResetMonthly: 'Monthly',
   seqResetDaily: 'Daily',
   
-  // Actions
+  // 操作
   add: 'Add',
   edit: 'Edit',
   delete: 'Delete',
@@ -89,7 +89,7 @@ export default {
   addSuccess: 'Add success',
   loadDetailFailed: 'Load detail failed',
   
-  // Messages
+  // 消息
   message: {
     deleteConfirm: 'Are you sure you want to delete this encoding rule?',
     batchDeleteConfirm: 'Are you sure you want to batch delete selected encoding rules?',

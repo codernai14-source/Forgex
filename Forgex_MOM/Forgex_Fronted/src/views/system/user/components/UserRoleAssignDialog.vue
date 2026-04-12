@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 /**
- * 用户分配角色弹窗（增强版）。
+ * 用户分配角色弹窗（增强版）
  *
  * 功能说明：
  * 1. 打开弹窗时加载当前租户下的角色列表
@@ -162,7 +162,7 @@ const columns = computed(() => [
     width: 100,
   },
   {
-    title: t('system.user.roleAssign.assignedStatus'),
+    title: t('system.user.roleAssign.assigned状态'),
     dataIndex: 'assigned',
     width: 100,
   },

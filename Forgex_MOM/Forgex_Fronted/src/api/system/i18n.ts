@@ -1,81 +1,80 @@
 /**
- * 多语言配置 API 接口文件
- * 负责与后端多语言配置接口进行交互
+ * 澶氳瑷€閰嶇疆 API 鎺ュ彛鏂囦欢
+ * 璐熻矗涓庡悗绔璇█閰嶇疆鎺ュ彛杩涜浜や簰
  * @author Forgex Team
  * @version 1.0.0
  */
 import http from '../http'
 
 /**
- * 多语言类型接口
- * 定义多语言类型的数据结构
- */
+ * 澶氳瑷€绫诲瀷鎺ュ彛
+ * 瀹氫箟澶氳瑷€绫诲瀷鐨勬暟鎹粨鏋? */
 export interface LanguageType {
-  /** 语言ID */
+  /** 璇█ID */
   id: number
-  /** 语言代码，例如：zh-CN, en-US */
+  /** 璇█浠ｇ爜锛屼緥濡傦細zh-CN, en-US */
   langCode: string
-  /** 语言名称，例如：简体中文, English */
+  /** 璇█鍚嶇О锛屼緥濡傦細绠€浣撲腑鏂? English */
   langName: string
-  /** 语言英文名称 */
+  /** 璇█鑻辨枃鍚嶇О */
   langNameEn: string
-  /** 语言图标 */
+  /** 璇█鍥炬爣 */
   icon: string
-  /** 排序号 */
+  /** 鎺掑簭鍙?*/
   orderNum: number
-  /** 是否启用：1启用 0禁用 */
+  /** 鏄惁鍚敤锛?鍚敤 0绂佺敤 */
   enabled: boolean
-  /** 是否默认语言：1默认 0非默认 */
+  /** 鏄惁榛樿璇█锛?榛樿 0闈為粯璁?*/
   isDefault: boolean
-  /** 创建人 */
+  /** 鍒涘缓浜?*/
   createBy: string
-  /** 创建时间 */
+  /** 鍒涘缓鏃堕棿 */
   createTime: string
-  /** 更新人 */
+  /** 鏇存柊浜?*/
   updateBy: string | null
-  /** 更新时间 */
+  /** 鏇存柊鏃堕棿 */
   updateTime: string
-  /** 是否删除：1删除 0未删除 */
+  /** 鏄惁鍒犻櫎锛?鍒犻櫎 0鏈垹闄?*/
   deleted: number
 }
 
 /**
- * 获取所有启用的语言类型列表
- * @returns 启用的语言类型列表
+ * 鑾峰彇鎵€鏈夊惎鐢ㄧ殑璇█绫诲瀷鍒楄〃
+ * @returns 鍚敤鐨勮瑷€绫诲瀷鍒楄〃
  */
 export function listEnabledLanguages() {
   return http.post<LanguageType[]>('/sys/i18n/languageType/listEnabled')
 }
 
 /**
- * 获取所有语言类型列表
- * @returns 所有语言类型列表
+ * 鑾峰彇鎵€鏈夎瑷€绫诲瀷鍒楄〃
+ * @returns 鎵€鏈夎瑷€绫诲瀷鍒楄〃
  */
 export function listAllLanguages() {
   return http.post<LanguageType[]>('/sys/i18n/languageType/listAll')
 }
 
 /**
- * 根据语言代码获取语言类型
- * @param langCode 语言代码
- * @returns 语言类型实体
+ * 鏍规嵁璇█浠ｇ爜鑾峰彇璇█绫诲瀷
+ * @param langCode 璇█浠ｇ爜
+ * @returns 璇█绫诲瀷瀹炰綋
  */
 export function getLanguageByCode(langCode: string) {
   return http.post<LanguageType>('/sys/i18n/languageType/getByLangCode', { langCode })
 }
 
 /**
- * 获取默认语言类型
- * @returns 默认语言类型实体
+ * 鑾峰彇榛樿璇█绫诲瀷
+ * @returns 榛樿璇█绫诲瀷瀹炰綋
  */
 export function getDefaultLanguage() {
   return http.post<LanguageType>('/sys/i18n/languageType/getDefault')
 }
 
 /**
- * 分页查询语言类型列表
- * @param param 查询参数
- * @returns 分页结果
+ * 鍒嗛〉鏌ヨ璇█绫诲瀷鍒楄〃
+ * @param param 鏌ヨ鍙傛暟
+ * @returns 鍒嗛〉缁撴灉
  */
 export function pageLanguages(param: {
   pageNum?: number
@@ -88,57 +87,57 @@ export function pageLanguages(param: {
 }
 
 /**
- * 根据 ID 获取语言类型详情
- * @param id 语言类型 ID
- * @returns 语言类型实体
+ * 鏍规嵁 ID 鑾峰彇璇█绫诲瀷璇︽儏
+ * @param id 璇█绫诲瀷 ID
+ * @returns 璇█绫诲瀷瀹炰綋
  */
 export function getLanguageById(id: number) {
   return http.post<LanguageType>('/sys/i18n/languageType/detail', { id })
 }
 
 /**
- * 创建语言类型
- * @param data 语言类型数据
- * @returns 是否创建成功
+ * 鍒涘缓璇█绫诲瀷
+ * @param data 璇█绫诲瀷鏁版嵁
+ * @returns 鏄惁鍒涘缓鎴愬姛
  */
 export function createLanguage(data: Partial<LanguageType>) {
   return http.post<boolean>('/sys/i18n/languageType/create', data)
 }
 
 /**
- * 更新语言类型
- * @param data 语言类型数据
- * @returns 是否更新成功
+ * 鏇存柊璇█绫诲瀷
+ * @param data 璇█绫诲瀷鏁版嵁
+ * @returns 鏄惁鏇存柊鎴愬姛
  */
 export function updateLanguage(data: Partial<LanguageType>) {
   return http.post<boolean>('/sys/i18n/languageType/update', data)
 }
 
 /**
- * 删除语言类型
- * @param id 语言类型 ID
- * @returns 是否删除成功
+ * 鍒犻櫎璇█绫诲瀷
+ * @param id 璇█绫诲瀷 ID
+ * @returns 鏄惁鍒犻櫎鎴愬姛
  */
 export function deleteLanguage(id: number) {
   return http.post<boolean>('/sys/i18n/languageType/delete', { id })
 }
 
 /**
- * 设置默认语言
- * @param id 语言类型 ID
- * @returns 是否设置成功
+ * 璁剧疆榛樿璇█
+ * @param id 璇█绫诲瀷 ID
+ * @returns 鏄惁璁剧疆鎴愬姛
  */
 export function setDefaultLanguage(id: number) {
   return http.post<boolean>('/sys/i18n/languageType/setDefault', { id })
 }
 
 /**
- * 导入语言类型 Excel 文件
- * @param file Excel 文件
- * @returns 导入结果
+ * 瀵煎叆璇█绫诲瀷 Excel 鏂囦欢
+ * @param file Excel 鏂囦欢
+ * @returns 瀵煎叆缁撴灉
  */
 export function importLanguages(file: File) {
-  const formData = new FormData()
+  const formData = new 表单Data()
   formData.append('file', file)
   return http.post<any>('/sys/i18n/languageType/import', formData, {
     headers: {
@@ -148,8 +147,8 @@ export function importLanguages(file: File) {
 }
 
 /**
- * 下载导入模板
- * @returns 模板文件 blob
+ * 涓嬭浇瀵煎叆妯℃澘
+ * @returns 妯℃澘鏂囦欢 blob
  */
 export function downloadImportTemplate() {
   return http.post('/sys/i18n/languageType/template/download', {}, {

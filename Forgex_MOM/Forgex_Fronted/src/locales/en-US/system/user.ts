@@ -1,14 +1,14 @@
 /**
- * User Management Translations - English
+ * 用户管理翻译 - 中文注释
  */
 export default {
-  // Page Titles
+  // 页面标题
   title: 'User Management',
   userManagement: 'User Management',
   list: 'User List',
   detail: 'User Detail',
   
-  // Actions
+  // 操作
   add: 'Add User',
   edit: 'Edit',
   delete: 'Delete',
@@ -26,7 +26,7 @@ export default {
     clearAll: 'Clear All',
     roleName: 'Role Name',
     roleCode: 'Role Code',
-    assignedStatus: 'Assignment',
+    assigned状态: 'Assignment',
     assigned: 'Assigned',
     summary: '{total} roles in total, {selected} selected',
     loadFailed: 'Failed to load role data',
@@ -34,7 +34,7 @@ export default {
     missingUserId: 'User ID is missing',
   },
 
-  // Table Columns
+  // 表格列
   avatar: 'Avatar',
   username: 'Username',
   realName: 'Real Name',
@@ -45,7 +45,7 @@ export default {
   position: 'Position',
   role: 'Role',
   entryDate: 'Entry Date',
-  status: 'Status',
+  status: '状态',
   createTime: 'Create Time',
   createBy: 'Created By',
   updateTime: 'Update Time',
@@ -53,9 +53,9 @@ export default {
   lastLoginTime: 'Last Login Time',
   lastLoginIp: 'Last Login IP',
   lastLoginRegion: 'Last Login Region',
-  action: 'Actions',
+  action: '操作',
   
-  // Form
+  // 表单
   form: {
     addUser: 'Add User',
     editUser: 'Edit User',
@@ -71,12 +71,12 @@ export default {
     status: 'Please select status',
   },
   
-  // Status
+  // 状态
   statusActive: 'Active',
   statusInactive: 'Inactive',
   statusLocked: 'Locked',
   
-  // Messages
+  // 消息
   message: {
     loadListFailed: 'Failed to load user list',
     deleteFailed: 'Delete failed',
@@ -93,6 +93,6 @@ export default {
     unlockSuccess: 'User unlocked successfully',
     usernameExists: 'Username already exists',
     emailExists: 'Email already exists',
-    updateStatusFailed: 'Update status failed',
+    update状态Failed: 'Update status failed',
   },
 }

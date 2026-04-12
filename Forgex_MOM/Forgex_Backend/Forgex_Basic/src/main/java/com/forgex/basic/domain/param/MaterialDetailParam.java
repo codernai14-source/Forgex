@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
  * 用于接收前端查询物料详情时的 ID 参数
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

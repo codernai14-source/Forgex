@@ -27,7 +27,7 @@
             ref="tableRef"
             table-code="MenuTable"
             :request="handleRequest"
-            :fallback-config="fallbackConfig"
+            :降级方案-config="降级方案Config"
             :dict-options="dictOptions"
             :row-selection="{
               selectedRowKeys,
@@ -75,11 +75,11 @@
 
             <template #status="{ record }">
               <a-tag
-                v-if="resolveStatusTag(record.status)"
-                :color="resolveStatusTag(record.status)?.color"
-                :style="resolveStatusTag(record.status)?.style"
+                v-if="resolve状态Tag(record.status)"
+                :color="resolve状态Tag(record.status)?.color"
+                :style="resolve状态Tag(record.status)?.style"
               >
-                {{ resolveStatusTag(record.status)?.label }}
+                {{ resolve状态Tag(record.status)?.label }}
               </a-tag>
               <span v-else>{{ record.status ?? '-' }}</span>
             </template>
@@ -334,7 +334,7 @@ type MenuTreeRecord = {
   children?: MenuTreeRecord[]
 }
 
-type MenuFormData = {
+type Menu表单Data = {
   id?: string | number
   moduleId: string
   parentId: string
@@ -377,7 +377,7 @@ const dictOptions = computed(() => ({
   status: statusOptions.value,
 }))
 
-const fallbackConfig = computed(() => ({
+const 降级方案Config = computed(() => ({
   tableCode: 'MenuTable',
   tableName: t('system.menu.title'),
   tableType: 'NORMAL',
@@ -433,7 +433,7 @@ function getRootTreeNode(children: any[] = []) {
   }]
 }
 
-function createDefaultForm(moduleId = activeModuleId.value): MenuFormData {
+function createDefault表单(moduleId = activeModuleId.value): Menu表单Data {
   return {
     id: undefined,
     moduleId: moduleId || '',
@@ -454,7 +454,7 @@ function createDefaultForm(moduleId = activeModuleId.value): MenuFormData {
   }
 }
 
-const formData = ref<MenuFormData>(createDefaultForm())
+const formData = ref<Menu表单Data>(createDefault表单())
 
 const showPath = computed(() => formData.value.type !== 'button')
 const showComponentKey = computed(() => formData.value.type === 'menu' && formData.value.menuMode === 'embedded')
@@ -489,12 +489,12 @@ function normalizeBoolean(value: unknown): boolean | undefined {
   return Boolean(value)
 }
 
-function normalizeStatusForTag(value: unknown): number {
+function normalize状态ForTag(value: unknown): number {
   return normalizeBoolean(value) ? 1 : 0
 }
 
-function resolveStatusTag(value: unknown) {
-  const normalizedValue = normalizeStatusForTag(value)
+function resolve状态Tag(value: unknown) {
+  const normalizedValue = normalize状态ForTag(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
     return null
@@ -541,11 +541,11 @@ function matchMenuName(node: MenuTreeRecord, keyword?: string) {
 }
 
 function filterMenuTree(nodes: MenuTreeRecord[] = [], filters: Record<string, any> = {}): MenuTreeRecord[] {
-  const expectedStatus = normalizeBoolean(filters.status)
+  const expected状态 = normalizeBoolean(filters.status)
 
   return nodes.reduce<MenuTreeRecord[]>((result, node) => {
     const selfMatched = matchMenuName(node, filters.name)
-      && (expectedStatus === undefined || normalizeBoolean(node.status) === expectedStatus)
+      && (expected状态 === undefined || normalizeBoolean(node.status) === expected状态)
 
     if (selfMatched) {
       result.push({
@@ -573,7 +573,7 @@ function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
     moduleId: node.moduleId != null ? String(node.moduleId) : node.moduleId,
     parentId: node.parentId != null ? String(node.parentId) : '0',
     name: getI18nValue(node.nameI18nJson, node.name),
-    status: normalizeStatusForTag(node.status),
+    status: normalize状态ForTag(node.status),
     children: normalizeTreeRows(node.children || []),
   }))
 }
@@ -654,8 +654,8 @@ async function loadParentMenuTree(moduleId: string, excludeId?: string) {
   }
 }
 
-function resolveMenuNameForSave(nameI18nJson: string, fallbackName = '') {
-  const resolved = getI18nValue(nameI18nJson, fallbackName)
+function resolveMenuNameForSave(nameI18nJson: string, 降级方案Name = '') {
+  const resolved = getI18nValue(nameI18nJson, 降级方案Name)
   if (resolved && String(resolved).trim()) {
     return String(resolved).trim()
   }
@@ -664,7 +664,7 @@ function resolveMenuNameForSave(nameI18nJson: string, fallbackName = '') {
     const firstText = Object.values(parsed).find((item) => String(item || '').trim())
     return firstText ? String(firstText).trim() : ''
   } catch {
-    return fallbackName?.trim?.() || ''
+    return 降级方案Name?.trim?.() || ''
   }
 }
 
@@ -691,7 +691,7 @@ function calculateMenuLevel(parentId: string) {
 
 async function handleAdd() {
   isEdit.value = false
-  formData.value = createDefaultForm()
+  formData.value = createDefault表单()
   visible.value = true
   await loadParentMenuTree(formData.value.moduleId)
 }
@@ -701,7 +701,7 @@ async function handleEdit(record: MenuTreeRecord) {
     const detail = await currentMenuApi.value.getDetail(String(record.id))
     isEdit.value = true
     formData.value = {
-      ...createDefaultForm(String(detail?.moduleId || activeModuleId.value)),
+      ...createDefault表单(String(detail?.moduleId || activeModuleId.value)),
       ...detail,
       id: detail?.id != null ? String(detail.id) : record.id,
       moduleId: String(detail?.moduleId || activeModuleId.value),
@@ -743,7 +743,7 @@ function handleModeChange() {
 function handleCancel() {
   visible.value = false
   isEdit.value = false
-  formData.value = createDefaultForm()
+  formData.value = createDefault表单()
 }
 
 async function handleSubmit() {
@@ -783,15 +783,15 @@ async function handleSubmit() {
 
     if (payload.id) {
       await currentMenuApi.value.update(payload as any)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
     } else {
       await currentMenuApi.value.add(payload as any)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
     }
 
     visible.value = false
     isEdit.value = false
-    formData.value = createDefaultForm()
+    formData.value = createDefault表单()
     await tableRef.value?.refresh?.()
   } catch (error: any) {
     if (error?.errorFields) {
@@ -814,7 +814,7 @@ function handleDelete(id: string | number) {
       try {
         await currentMenuApi.value.remove(String(id))
         selectedRowKeys.value = selectedRowKeys.value.filter((item) => item !== String(id))
-        // 成功提示由后端返回，在 http 拦截器中统一处理
+        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('delete menu failed:', error)
@@ -839,7 +839,7 @@ function handleBatchDelete() {
       try {
         await currentMenuApi.value.batchRemove(selectedRowKeys.value)
         selectedRowKeys.value = []
-        // 成功提示由后端返回，在 http 拦截器中统一处理
+        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('batch delete menu failed:', error)
@@ -877,7 +877,7 @@ async function handleTerminalChange(terminal: string) {
   activeTerminal.value = terminal === 'C' ? 'C' : 'B'
   selectedRowKeys.value = []
   visible.value = false
-  formData.value = createDefaultForm(activeModuleId.value)
+  formData.value = createDefault表单(activeModuleId.value)
   await tableRef.value?.refresh?.()
 }
 

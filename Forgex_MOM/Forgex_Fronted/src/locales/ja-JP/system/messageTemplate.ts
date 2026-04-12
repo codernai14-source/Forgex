@@ -12,8 +12,8 @@ export default {
     alarm: 'アラーム',
   },
   modal: {
-    addTitle: 'メッセージテンプレート追加',
-    editTitle: 'メッセージテンプレート編集',
+    addTitle: '消息テンプレート追加',
+    editTitle: '消息テンプレート編集',
   },
   tab: {
     basic: '基本情報',
@@ -27,8 +27,8 @@ export default {
     templateNamePlaceholder: 'テンプレート名を入力してください',
     templateVersion: 'テンプレートバージョン',
     templateVersionPlaceholder: 'バージョンを入力してください（既定 1.0）',
-    messageType: 'メッセージ種別',
-    messageTypePlaceholder: 'メッセージ種別を選択してください',
+    messageType: '消息種別',
+    messageTypePlaceholder: '消息種別を選択してください',
     bizType: '業務種別',
     bizTypePlaceholder: 'シナリオ分離用の業務種別を入力してください',
     remarkPlaceholder: '備考を入力してください',
@@ -52,12 +52,12 @@ export default {
     platformPlaceholder: 'プラットフォームを選択してください',
     title: 'タイトル',
     titlePlaceholder: 'タイトルを入力してください（任意）',
-    titleHint: '例: ${userName}、${tenantName} などのプレースホルダーが使えます',
+    titleHint: '例: ${userName}、${tenantName} などの占位提示が使えます',
     body: '本文',
     bodyPlaceholder: '本文を入力してください',
     linkUrl: 'リンク URL',
     linkUrlPlaceholder: 'リンク URL を入力してください（任意）',
-    linkUrlHint: 'このメッセージの遷移先として使用されます。',
+    linkUrlHint: 'この消息の遷移先として使用されます。',
     empty: '内容設定がありません。追加してください。',
     atLeastOne: '内容設定を 1 件以上追加してください',
     platformRequired: '内容 {index}: プラットフォームを選択してください',
@@ -65,7 +65,7 @@ export default {
     needInternalForTest: 'テスト送信には INTERNAL プラットフォーム内容を追加してください',
   },
   platform: {
-    internal: '内部メッセージ',
+    internal: '内部消息',
     wechat: 'WeCom',
     sms: 'SMS',
     email: 'メール',
@@ -73,7 +73,7 @@ export default {
   validate: {
     templateCodeRequired: 'テンプレートコードを入力してください',
     templateNameRequired: 'テンプレート名を入力してください',
-    messageTypeRequired: 'メッセージ種別を選択してください',
+    messageTypeRequired: '消息種別を選択してください',
   },
   confirm: {
     deleteTitle: '削除確認',
@@ -84,13 +84,13 @@ export default {
   message: {
     previewNeedContent: 'プレビュー前に内容を追加してください',
     resolveUserFailed: 'テスト送信のための現在ユーザー ID を取得できません',
-    testSendSuccess: 'テストメッセージを送信しました',
+    testSendSuccess: 'テスト消息を送信しました',
     pullSuccess: '共通設定の最新テンプレートを取得しました',
   },
   testData: {
-    defaultTemplateTitle: 'テンプレートテストメッセージ',
+    defaultTemplateTitle: 'テンプレートテスト消息',
     currentUser: '現在のユーザー',
     currentTenant: '現在のテナント',
-    defaultContent: 'テンプレートページから生成されたテストメッセージです。',
+    defaultContent: 'テンプレートページから生成されたテスト消息です。',
   },
 }

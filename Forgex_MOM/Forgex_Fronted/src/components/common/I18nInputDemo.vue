@@ -1,28 +1,28 @@
 <template>
   <div class="i18n-input-demo">
-    <a-card title="多语言输入组件使用示例" :bordered="false">
+    <a-card title="澶氳瑷€杈撳叆缁勪欢浣跨敤绀轰緥" :bordered="false">
       <a-space direction="vertical" :size="24" style="width: 100%">
         
-        <!-- 示例1：简单模式（适合表单） -->
+        <!-- 绀轰緥1锛氱畝鍗曟ā寮忥紙閫傚悎琛ㄥ崟锛?-->
         <div class="demo-section">
-          <h3>示例1：简单模式（Simple Mode）</h3>
-          <p class="description">适合在表单中使用，提供一个输入框和多语言配置按钮</p>
+          <h3>绀轰緥1锛氱畝鍗曟ā寮忥紙Simple Mode锛?/h3>
+          <p class="description">閫傚悎鍦ㄨ〃鍗曚腑浣跨敤锛屾彁渚涗竴涓緭鍏ユ鍜屽璇█閰嶇疆鎸夐挳</p>
           
           <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 16 }">
-            <a-form-item label="菜单名称">
+            <a-form-item label="鑿滃崟鍚嶇О">
               <I18nInput 
                 v-model="form1.nameI18nJson" 
                 mode="simple" 
-                placeholder="请输入菜单名称"
+                placeholder="璇疯緭鍏ヨ彍鍗曞悕绉?
               />
             </a-form-item>
             
-            <a-form-item label="当前JSON值">
+            <a-form-item label="褰撳墠JSON鍊?>
               <a-textarea 
                 :value="form1.nameI18nJson" 
                 :rows="3" 
                 disabled
-                placeholder="这里会显示生成的JSON"
+                placeholder="杩欓噷浼氭樉绀虹敓鎴愮殑JSON"
               />
             </a-form-item>
           </a-form>
@@ -30,10 +30,10 @@
 
         <a-divider />
 
-        <!-- 示例2：表格模式（适合独立配置页面） -->
+        <!-- 绀轰緥2锛氳〃鏍兼ā寮忥紙閫傚悎鐙珛閰嶇疆椤甸潰锛?-->
         <div class="demo-section">
-          <h3>示例2：表格模式（Table Mode）</h3>
-          <p class="description">直接显示表格，适合在独立的多语言配置页面使用</p>
+          <h3>绀轰緥2锛氳〃鏍兼ā寮忥紙Table Mode锛?/h3>
+          <p class="description">鐩存帴鏄剧ず琛ㄦ牸锛岄€傚悎鍦ㄧ嫭绔嬬殑澶氳瑷€閰嶇疆椤甸潰浣跨敤</p>
           
           <I18nInput 
             v-model="form2.dictValueI18nJson" 
@@ -41,12 +41,12 @@
           />
           
           <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 16 }" style="margin-top: 16px">
-            <a-form-item label="当前JSON值">
+            <a-form-item label="褰撳墠JSON鍊?>
               <a-textarea 
                 :value="form2.dictValueI18nJson" 
                 :rows="3" 
                 disabled
-                placeholder="这里会显示生成的JSON"
+                placeholder="杩欓噷浼氭樉绀虹敓鎴愮殑JSON"
               />
             </a-form-item>
           </a-form>
@@ -54,37 +54,37 @@
 
         <a-divider />
 
-        <!-- 示例3：实际应用场景 -->
+        <!-- 绀轰緥3锛氬疄闄呭簲鐢ㄥ満鏅?-->
         <div class="demo-section">
-          <h3>示例3：实际应用场景</h3>
-          <p class="description">模拟菜单管理表单</p>
+          <h3>绀轰緥3锛氬疄闄呭簲鐢ㄥ満鏅?/h3>
+          <p class="description">妯℃嫙鑿滃崟绠＄悊琛ㄥ崟</p>
           
           <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 16 }">
-            <a-form-item label="菜单名称" required>
+            <a-form-item label="鑿滃崟鍚嶇О" required>
               <I18nInput 
-                v-model="menuForm.nameI18nJson" 
+                v-model="menu表单.nameI18nJson" 
                 mode="simple" 
-                placeholder="请输入菜单名称"
+                placeholder="璇疯緭鍏ヨ彍鍗曞悕绉?
               />
             </a-form-item>
             
-            <a-form-item label="菜单路径">
-              <a-input v-model:value="menuForm.path" placeholder="请输入菜单路径" />
+            <a-form-item label="鑿滃崟璺緞">
+              <a-input v-model:value="menu表单.path" placeholder="璇疯緭鍏ヨ彍鍗曡矾寰? />
             </a-form-item>
             
-            <a-form-item label="菜单图标">
-              <a-input v-model:value="menuForm.icon" placeholder="请输入图标名称" />
+            <a-form-item label="鑿滃崟鍥炬爣">
+              <a-input v-model:value="menu表单.icon" placeholder="璇疯緭鍏ュ浘鏍囧悕绉? />
             </a-form-item>
             
-            <a-form-item label="排序号">
-              <a-input-number v-model:value="menuForm.orderNum" :min="0" style="width: 100%" />
+            <a-form-item label="鎺掑簭鍙?>
+              <a-input-number v-model:value="menu表单.orderNum" :min="0" style="width: 100%" />
             </a-form-item>
             
             <a-form-item :wrapper-col="{ offset: 4, span: 16 }">
               <a-space>
-                <a-button type="primary" @click="handleSubmit">提交</a-button>
-                <a-button @click="handleReset">重置</a-button>
-                <a-button @click="handleViewJson">查看JSON</a-button>
+                <a-button type="primary" @click="handleSubmit">鎻愪氦</a-button>
+                <a-button @click="handleReset">閲嶇疆</a-button>
+                <a-button @click="handleViewJson">鏌ョ湅JSON</a-button>
               </a-space>
             </a-form-item>
           </a-form>
@@ -93,19 +93,19 @@
       </a-space>
     </a-card>
 
-    <!-- JSON预览弹窗 -->
+    <!-- JSON棰勮寮圭獥 -->
     <a-modal
       v-model:open="jsonModalVisible"
-      title="JSON数据预览"
+      title="JSON鏁版嵁棰勮"
       width="600px"
       :footer="null"
     >
       <a-descriptions bordered :column="1">
-        <a-descriptions-item label="菜单名称多语言">
-          <pre>{{ menuForm.nameI18nJson || '未配置' }}</pre>
+        <a-descriptions-item label="鑿滃崟鍚嶇О澶氳瑷€">
+          <pre>{{ menu表单.nameI18nJson || '鏈厤缃? }}</pre>
         </a-descriptions-item>
-        <a-descriptions-item label="完整表单数据">
-          <pre>{{ JSON.stringify(menuForm, null, 2) }}</pre>
+        <a-descriptions-item label="瀹屾暣琛ㄥ崟鏁版嵁">
+          <pre>{{ JSON.stringify(menu表单, null, 2) }}</pre>
         </a-descriptions-item>
       </a-descriptions>
     </a-modal>
@@ -117,18 +117,18 @@ import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import I18nInput from './I18nInput.vue'
 
-// 示例1数据
+// 绀轰緥1鏁版嵁
 const form1 = reactive({
   nameI18nJson: ''
 })
 
-// 示例2数据
+// 绀轰緥2鏁版嵁
 const form2 = reactive({
   dictValueI18nJson: ''
 })
 
-// 示例3数据（菜单表单）
-const menuForm = reactive({
+// 绀轰緥3鏁版嵁锛堣彍鍗曡〃鍗曪級
+const menu表单 = reactive({
   nameI18nJson: '',
   path: '',
   icon: '',
@@ -138,31 +138,31 @@ const menuForm = reactive({
 const jsonModalVisible = ref(false)
 
 /**
- * 提交表单
+ * 鎻愪氦琛ㄥ崟
  */
 const handleSubmit = () => {
-  if (!menuForm.nameI18nJson) {
-    message.warning('请配置菜单名称的多语言')
+  if (!menu表单.nameI18nJson) {
+    message.warning('璇烽厤缃彍鍗曞悕绉扮殑澶氳瑷€')
     return
   }
   
-  message.success('提交成功！')
-  console.log('提交的数据：', menuForm)
+  message.success('鎻愪氦鎴愬姛锛?)
+  console.log('鎻愪氦鐨勬暟鎹細', menu表单)
 }
 
 /**
- * 重置表单
+ * 閲嶇疆琛ㄥ崟
  */
 const handleReset = () => {
-  menuForm.nameI18nJson = ''
-  menuForm.path = ''
-  menuForm.icon = ''
-  menuForm.orderNum = 0
-  message.info('表单已重置')
+  menu表单.nameI18nJson = ''
+  menu表单.path = ''
+  menu表单.icon = ''
+  menu表单.orderNum = 0
+  message.info('琛ㄥ崟宸查噸缃?)
 }
 
 /**
- * 查看JSON
+ * 鏌ョ湅JSON
  */
 const handleViewJson = () => {
   jsonModalVisible.value = true

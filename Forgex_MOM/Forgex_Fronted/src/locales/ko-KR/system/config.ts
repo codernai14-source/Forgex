@@ -1,5 +1,5 @@
 /**
- * System Config Translations - English
+ * 系统配置翻译 - 中文注释
  */
 export default {
   title: 'System Config',
@@ -82,7 +82,7 @@ export default {
 
   transportCrypto: 'Transport Encryption',
   transportAlgorithm: 'Algorithm',
-  transportCipher: 'Cipher Format',
+  transportCipher: 'Cipher 表单at',
   transportPublicKey: 'Public Key',
   transportPublicKeyPlaceholder: 'Enter Base64 public key',
   transportPrivateKey: 'Private Key',

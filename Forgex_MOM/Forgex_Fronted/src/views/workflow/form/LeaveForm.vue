@@ -6,7 +6,7 @@
         <h3>请假申请单</h3>
       </div>
       <div class="leave-form__summary">
-        <span>预计请假</span>
+        <span>棰勮璇峰亣</span>
         <strong>{{ formState.leaveDays || 0 }} 天</strong>
       </div>
     </div>
@@ -19,10 +19,10 @@
       class="leave-form__body"
     >
       <div class="leave-form__grid">
-        <a-form-item label="请假类型" name="leaveType">
+        <a-form-item label="璇峰亣绫诲瀷" name="leaveType">
           <a-select
             v-model:value="formState.leaveType"
-            placeholder="请选择请假类型"
+            placeholder="璇烽€夋嫨璇峰亣绫诲瀷"
             :options="leaveTypeOptions"
           />
         </a-form-item>
@@ -37,36 +37,36 @@
           />
         </a-form-item>
 
-        <a-form-item label="结束日期" name="endDate">
+        <a-form-item label="缁撴潫鏃ユ湡" name="endDate">
           <a-date-picker
             v-model:value="formState.endDate"
             style="width: 100%"
             value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
-            placeholder="请选择结束日期"
+            placeholder="璇烽€夋嫨缁撴潫鏃ユ湡"
           />
         </a-form-item>
 
         <a-form-item label="紧急联系电话" name="contactPhone">
           <a-input
             v-model:value="formState.contactPhone"
-            placeholder="请输入联系手机号"
+            placeholder="璇疯緭鍏ヨ仈绯绘墜鏈哄彿"
           />
         </a-form-item>
 
         <a-form-item label="工作交接人" name="handoverPerson">
           <a-input
             v-model:value="formState.handoverPerson"
-            placeholder="请输入交接人"
+            placeholder="璇疯緭鍏ヤ氦鎺ヤ汉"
           />
         </a-form-item>
 
-        <a-form-item label="请假天数">
+        <a-form-item label="璇峰亣澶╂暟">
           <a-input :value="`${formState.leaveDays || 0} 天`" disabled />
         </a-form-item>
       </div>
 
-      <a-form-item label="请假原因" name="reason">
+      <a-form-item label="璇峰亣鍘熷洜" name="reason">
         <a-textarea
           v-model:value="formState.reason"
           :rows="5"
@@ -82,7 +82,7 @@ import { reactive, ref, watch, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
-export interface LeaveFormModel {
+export interface Leave表单Model {
   leaveType: string
   startDate: string
   endDate: string
@@ -93,23 +93,23 @@ export interface LeaveFormModel {
 }
 
 const leaveTypeOptions = [
-  { label: '事假', value: 'personal' },
-  { label: '病假', value: 'sick' },
-  { label: '年假', value: 'annual' },
-  { label: '调休', value: 'adjust' }
+  { label: '浜嬪亣', value: 'personal' },
+  { label: '鐥呭亣', value: 'sick' },
+  { label: '骞村亣', value: 'annual' },
+  { label: '璋冧紤', value: 'adjust' }
 ]
 
 const props = defineProps<{
-  modelValue?: Partial<LeaveFormModel>
+  modelValue?: Partial<Leave表单Model>
 }>()
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', value: LeaveFormModel): void
+  (event: 'update:modelValue', value: Leave表单Model): void
 }>()
 
 const formRef = ref()
 
-const createDefaultState = (): LeaveFormModel => ({
+const createDefaultState = (): Leave表单Model => ({
   leaveType: '',
   startDate: '',
   endDate: '',
@@ -119,20 +119,20 @@ const createDefaultState = (): LeaveFormModel => ({
   contactPhone: ''
 })
 
-const formState = reactive<LeaveFormModel>({
+const formState = reactive<Leave表单Model>({
   ...createDefaultState(),
   ...(props.modelValue || {})
 })
 
 /**
- * 为 true 时表示正从父组件同步 props，避免 v-model 与 props 互相触发造成递归更新（Ant Design Vue Spin 会报 Maximum recursive updates）。
+ * 涓?true 鏃惰〃绀烘浠庣埗缁勪欢鍚屾 props锛岄伩鍏?v-model 涓?props 浜掔浉瑙﹀彂閫犳垚閫掑綊鏇存柊锛圓nt Design Vue Spin 浼氭姤 Maximum recursive updates锛夈€?
  */
 const syncingFromParent = ref(false)
 
 const rules = {
-  leaveType: [{ required: true, message: '请选择请假类型', trigger: 'change' }],
+  leaveType: [{ required: true, message: '璇烽€夋嫨璇峰亣绫诲瀷', trigger: 'change' }],
   startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
-  endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
+  endDate: [{ required: true, message: '璇烽€夋嫨缁撴潫鏃ユ湡', trigger: 'change' }],
   contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
   reason: [{ required: true, message: '请输入请假原因', trigger: 'blur' }]
 }

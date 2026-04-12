@@ -2,7 +2,20 @@
  * 布局翻译 - 中文
  */
 export default {
-  globalSearchPlaceholder: '搜索菜单或页面',
+  globalSearchPlaceholder: '搜索菜单、模块或拼音首字母...',
+  globalSearchResultsCount: '找到 {count} 个结果',
+  globalSearchEmptyTitle: '未找到相关菜单',
+  globalSearchEmptyHint: '试试菜单名、模块名或拼音首字母',
+  globalSearchTipsTitle: '快捷搜索',
+  globalSearchTipNavigate: '导航',
+  globalSearchTipSelect: '选择',
+  globalSearchTipClose: '关闭',
+  globalSearchMatchTitle: '菜单',
+  globalSearchMatchModule: '模块',
+  globalSearchMatchTitlePinyin: '菜单拼音',
+  globalSearchMatchModulePinyin: '模块拼音',
+  globalSearchMatchBreadcrumb: '路径',
+  globalSearchMatchPath: '路由',
   langZhCn: '简体中文',
   langEnUs: 'English',
   refresh: '刷新',
@@ -96,4 +109,5 @@ export default {
   logout: '退出登录',
   home: '首页',
   personalHomepage: '个人首页',
+  favoriteManagement: '收藏管理',
 }

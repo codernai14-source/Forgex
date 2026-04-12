@@ -1,477 +1,477 @@
 /**
- * 报表模块 TypeScript 类型定义
- * 定义报表管理、数据源管理相关的类型接口
+ * 鎶ヨ〃妯″潡 TypeScript 绫诲瀷瀹氫箟
+ * 瀹氫箟鎶ヨ〃绠＄悊銆佹暟鎹簮绠＄悊鐩稿叧鐨勭被鍨嬫帴鍙?
  * @author Forgex Team
  * @version 1.0
  * @since 2026-04-09
  */
 
 /**
- * 报表引擎类型枚举
+ * 鎶ヨ〃寮曟搸绫诲瀷鏋氫妇
  */
 export type ReportEngineType = 'UREPORT' | 'JIMU'
 
 /**
- * 报表模板状态枚举
+ * 鎶ヨ〃妯℃澘鐘舵€佹灇涓?
  */
-export type ReportStatus = 0 | 1
+export type Report状态 = 0 | 1
 
 /**
- * 报表模板类型定义
- * 对应数据库表：fx_report_template
- * @see ReportDatasource - 关联的数据源
- * @see ReportCategory - 关联的分类
+ * 鎶ヨ〃妯℃澘绫诲瀷瀹氫箟
+ * 瀵瑰簲鏁版嵁搴撹〃锛歠x_report_template
+ * @see ReportDatasource - 鍏宠仈鐨勬暟鎹簮
+ * @see ReportCategory - 鍏宠仈鐨勫垎绫?
  */
 export interface ReportTemplate {
   /**
-   * 主键 ID（雪花算法生成）
+   * 涓婚敭 ID锛堥洩鑺辩畻娉曠敓鎴愶級
    */
   id: number
 
   /**
-   * 报表名称
+   * 鎶ヨ〃鍚嶇О
    */
   name: string
 
   /**
-   * 报表编码（唯一标识）
+   * 鎶ヨ〃缂栫爜锛堝敮涓€鏍囪瘑锛?
    */
   code: string
 
   /**
-   * 报表引擎类型
-   * @see ReportEngineType#UREPORT - UReport2 引擎
-   * @see ReportEngineType#JIMU - JimuReport 引擎
+   * 鎶ヨ〃寮曟搸绫诲瀷
+   * @see ReportEngineType#UREPORT - UReport2 寮曟搸
+   * @see ReportEngineType#JIMU - JimuReport 寮曟搸
    */
   engineType: ReportEngineType
 
   /**
-   * 分类 ID
+   * 鍒嗙被 ID
    */
   categoryId?: number
 
   /**
-   * 分类名称（只读，用于展示）
+   * 鍒嗙被鍚嶇О锛堝彧璇伙紝鐢ㄤ簬灞曠ず锛?
    */
   categoryName?: string
 
   /**
-   * 数据源 ID
+   * 鏁版嵁婧?ID
    */
   datasourceId?: number
 
   /**
-   * 数据源名称（只读，用于展示）
+   * 鏁版嵁婧愬悕绉帮紙鍙锛岀敤浜庡睍绀猴級
    */
   datasourceName?: string
 
   /**
-   * 报表内容（JSON 格式，存储报表设计器配置）
+   * 鎶ヨ〃鍐呭锛圝SON 鏍煎紡锛屽瓨鍌ㄦ姤琛ㄨ璁″櫒閰嶇疆锛?
    */
   content?: string
 
   /**
-   * 报表状态：0-禁用，1-启用
-   * @see ReportStatus#DISABLED - 禁用
-   * @see ReportStatus#ENABLED - 启用
+   * 鎶ヨ〃鐘舵€侊細0-绂佺敤锛?-鍚敤
+   * @see Report状态#DISABLED - 绂佺敤
+   * @see Report状态#ENABLED - 鍚敤
    */
-  status: ReportStatus
+  status: Report状态
 
   /**
-   * 备注
+   * 澶囨敞
    */
   remark?: string
 
   /**
-   * 创建时间
+   * 鍒涘缓鏃堕棿
    */
   createTime?: string
 
   /**
-   * 更新时间
+   * 鏇存柊鏃堕棿
    */
   updateTime?: string
 }
 
 /**
- * 报表分类类型定义
- * 对应数据库表：fx_report_category
+ * 鎶ヨ〃鍒嗙被绫诲瀷瀹氫箟
+ * 瀵瑰簲鏁版嵁搴撹〃锛歠x_report_category
  */
 export interface ReportCategory {
   /**
-   * 主键 ID
+   * 涓婚敭 ID
    */
   id: number
 
   /**
-   * 分类名称
+   * 鍒嗙被鍚嶇О
    */
   name: string
 
   /**
-   * 分类编码
+   * 鍒嗙被缂栫爜
    */
   code?: string
 
   /**
-   * 父分类 ID（0 表示顶级分类）
+   * 鐖跺垎绫?ID锛? 琛ㄧず椤剁骇鍒嗙被锛?
    */
   parentId?: number
 
   /**
-   * 排序号
+   * 鎺掑簭鍙?
    */
   orderNum?: number
 
   /**
-   * 备注
+   * 澶囨敞
    */
   remark?: string
 
   /**
-   * 创建时间
+   * 鍒涘缓鏃堕棿
    */
   createTime?: string
 
   /**
-   * 更新时间
+   * 鏇存柊鏃堕棿
    */
   updateTime?: string
 
   /**
-   * 子分类（树形结构使用）
+   * 瀛愬垎绫伙紙鏍戝舰缁撴瀯浣跨敤锛?
    */
   children?: ReportCategory[]
 }
 
 /**
- * 报表数据源类型定义
- * 对应数据库表：fx_report_datasource
+ * 鎶ヨ〃鏁版嵁婧愮被鍨嬪畾涔?
+ * 瀵瑰簲鏁版嵁搴撹〃锛歠x_report_datasource
  */
 export interface ReportDatasource {
   /**
-   * 主键 ID
+   * 涓婚敭 ID
    */
   id: number
 
   /**
-   * 数据源名称
+   * 鏁版嵁婧愬悕绉?
    */
   name: string
 
   /**
-   * 数据源编码（唯一标识）
+   * 鏁版嵁婧愮紪鐮侊紙鍞竴鏍囪瘑锛?
    */
   code: string
 
   /**
-   * 数据源类型：mysql, oracle, postgresql, sqlserver 等
+   * 鏁版嵁婧愮被鍨嬶細mysql, oracle, postgresql, sqlserver 绛?
    */
   type: string
 
   /**
-   * 数据库 URL
+   * 鏁版嵁搴?URL
    */
   url: string
 
   /**
-   * 数据库用户名
+   * 鏁版嵁搴撶敤鎴峰悕
    */
   username: string
 
   /**
-   * 数据库密码（加密存储）
+   * 鏁版嵁搴撳瘑鐮侊紙鍔犲瘑瀛樺偍锛?
    */
   password?: string
 
   /**
-   * 数据库驱动类名
+   * 鏁版嵁搴撻┍鍔ㄧ被鍚?
    */
   driverClass?: string
 
   /**
-   * 连接池配置（JSON 格式）
+   * 杩炴帴姹犻厤缃紙JSON 鏍煎紡锛?
    */
   poolConfig?: string
 
   /**
-   * 状态：0-禁用，1-启用
+   * 鐘舵€侊細0-绂佺敤锛?-鍚敤
    */
-  status: ReportStatus
+  status: Report状态
 
   /**
-   * 备注
+   * 澶囨敞
    */
   remark?: string
 
   /**
-   * 创建时间
+   * 鍒涘缓鏃堕棿
    */
   createTime?: string
 
   /**
-   * 更新时间
+   * 鏇存柊鏃堕棿
    */
   updateTime?: string
 }
 
 /**
- * 报表模板查询参数
+ * 鎶ヨ〃妯℃澘鏌ヨ鍙傛暟
  */
 export interface ReportTemplateParam {
   /**
-   * 页码（从 1 开始）
+   * 椤电爜锛堜粠 1 寮€濮嬶級
    */
   pageNum: number
 
   /**
-   * 每页大小
+   * 姣忛〉澶у皬
    */
   pageSize: number
 
   /**
-   * 报表名称（模糊查询）
+   * 鎶ヨ〃鍚嶇О锛堟ā绯婃煡璇級
    */
   name?: string
 
   /**
-   * 报表编码（模糊查询）
+   * 鎶ヨ〃缂栫爜锛堟ā绯婃煡璇級
    */
   code?: string
 
   /**
-   * 引擎类型
+   * 寮曟搸绫诲瀷
    */
   engineType?: ReportEngineType
 
   /**
-   * 分类 ID
+   * 鍒嗙被 ID
    */
   categoryId?: number
 
   /**
-   * 状态
+   * 鐘舵€?
    */
-  status?: ReportStatus
+  status?: Report状态
 }
 
 /**
- * 报表分类查询参数
+ * 鎶ヨ〃鍒嗙被鏌ヨ鍙傛暟
  */
 export interface ReportCategoryParam {
   /**
-   * 页码（从 1 开始）
+   * 椤电爜锛堜粠 1 寮€濮嬶級
    */
   pageNum: number
 
   /**
-   * 每页大小
+   * 姣忛〉澶у皬
    */
   pageSize: number
 
   /**
-   * 分类名称（模糊查询）
+   * 鍒嗙被鍚嶇О锛堟ā绯婃煡璇級
    */
   name?: string
 
   /**
-   * 分类编码（模糊查询）
+   * 鍒嗙被缂栫爜锛堟ā绯婃煡璇級
    */
   code?: string
 
   /**
-   * 父分类 ID
+   * 鐖跺垎绫?ID
    */
   parentId?: number
 }
 
 /**
- * 报表数据源查询参数
+ * 鎶ヨ〃鏁版嵁婧愭煡璇㈠弬鏁?
  */
 export interface ReportDatasourceParam {
   /**
-   * 页码（从 1 开始）
+   * 椤电爜锛堜粠 1 寮€濮嬶級
    */
   pageNum: number
 
   /**
-   * 每页大小
+   * 姣忛〉澶у皬
    */
   pageSize: number
 
   /**
-   * 数据源名称（模糊查询）
+   * 鏁版嵁婧愬悕绉帮紙妯＄硦鏌ヨ锛?
    */
   name?: string
 
   /**
-   * 数据源编码（模糊查询）
+   * 鏁版嵁婧愮紪鐮侊紙妯＄硦鏌ヨ锛?
    */
   code?: string
 
   /**
-   * 数据源类型
+   * 鏁版嵁婧愮被鍨?
    */
   type?: string
 
   /**
-   * 状态
+   * 鐘舵€?
    */
-  status?: ReportStatus
+  status?: Report状态
 }
 
 /**
- * 分页结果类型
- * @template T - 数据类型
+ * 鍒嗛〉缁撴灉绫诲瀷
+ * @template T - 鏁版嵁绫诲瀷
  */
 export interface PageResult<T> {
   /**
-   * 数据列表
+   * 鏁版嵁鍒楄〃
    */
   records: T[]
 
   /**
-   * 总记录数
+   * 鎬昏褰曟暟
    */
   total: number
 
   /**
-   * 当前页码
+   * 褰撳墠椤电爜
    */
   pageNum: number
 
   /**
-   * 每页大小
+   * 姣忛〉澶у皬
    */
   pageSize: number
 }
 
 /**
- * 报表预览参数
+ * 鎶ヨ〃棰勮鍙傛暟
  */
 export interface ReportPreviewParam {
   /**
-   * 报表编码
+   * 鎶ヨ〃缂栫爜
    */
   code: string
 
   /**
-   * 引擎类型
+   * 寮曟搸绫诲瀷
    */
   engineType: ReportEngineType
 
   /**
-   * 报表参数（JSON 格式）
+   * 鎶ヨ〃鍙傛暟锛圝SON 鏍煎紡锛?
    */
   params?: Record<string, any>
 }
 
 /**
- * 报表保存 DTO
+ * 鎶ヨ〃淇濆瓨 DTO
  */
 export interface ReportSaveDTO {
   /**
-   * 主键 ID（新增时不传）
+   * 涓婚敭 ID锛堟柊澧炴椂涓嶄紶锛?
    */
   id?: number
 
   /**
-   * 报表名称
+   * 鎶ヨ〃鍚嶇О
    */
   name: string
 
   /**
-   * 报表编码
+   * 鎶ヨ〃缂栫爜
    */
   code: string
 
   /**
-   * 引擎类型
+   * 寮曟搸绫诲瀷
    */
   engineType: ReportEngineType
 
   /**
-   * 分类 ID
+   * 鍒嗙被 ID
    */
   categoryId?: number
 
   /**
-   * 数据源 ID
+   * 鏁版嵁婧?ID
    */
   datasourceId?: number
 
   /**
-   * 报表内容
+   * 鎶ヨ〃鍐呭
    */
   content?: string
 
   /**
-   * 状态
+   * 鐘舵€?
    */
-  status: ReportStatus
+  status: Report状态
 
   /**
-   * 备注
+   * 澶囨敞
    */
   remark?: string
 }
 
 /**
- * 数据源保存 DTO
+ * 鏁版嵁婧愪繚瀛?DTO
  */
 export interface DatasourceSaveDTO {
   /**
-   * 主键 ID（新增时不传）
+   * 涓婚敭 ID锛堟柊澧炴椂涓嶄紶锛?
    */
   id?: number
 
   /**
-   * 数据源名称
+   * 鏁版嵁婧愬悕绉?
    */
   name: string
 
   /**
-   * 数据源编码
+   * 鏁版嵁婧愮紪鐮?
    */
   code: string
 
   /**
-   * 数据源类型
+   * 鏁版嵁婧愮被鍨?
    */
   type: string
 
   /**
-   * 数据库 URL
+   * 鏁版嵁搴?URL
    */
   url: string
 
   /**
-   * 数据库用户名
+   * 鏁版嵁搴撶敤鎴峰悕
    */
   username: string
 
   /**
-   * 数据库密码
+   * 鏁版嵁搴撳瘑鐮?
    */
   password?: string
 
   /**
-   * 数据库驱动类名
+   * 鏁版嵁搴撻┍鍔ㄧ被鍚?
    */
   driverClass?: string
 
   /**
-   * 连接池配置
+   * 杩炴帴姹犻厤缃?
    */
   poolConfig?: string
 
   /**
-   * 状态
+   * 鐘舵€?
    */
-  status: ReportStatus
+  status: Report状态
 
   /**
-   * 备注
+   * 澶囨敞
    */
   remark?: string
 }

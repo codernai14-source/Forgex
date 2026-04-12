@@ -7,7 +7,7 @@ import type { UserProfile, WorkHistory } from '../types'
 export function useUserProfile() {
   // 附属信息数据
   const profileData = reactive<Partial<UserProfile>>({
-    politicalStatus: '',
+    political状态: '',
     homeAddress: '',
     emergencyContact: '',
     emergencyPhone: '',
@@ -44,7 +44,7 @@ export function useUserProfile() {
    */
   function resetProfile() {
     Object.assign(profileData, {
-      politicalStatus: '',
+      political状态: '',
       homeAddress: '',
       emergencyContact: '',
       emergencyPhone: '',

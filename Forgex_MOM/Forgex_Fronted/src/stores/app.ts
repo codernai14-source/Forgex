@@ -1,7 +1,7 @@
 /**
- * 应用全局 Store
+ * 搴旂敤鍏ㄥ眬 Store
  * 
- * @description 管理应用全局状态，如主题、语言、侧边栏等
+ * @description 绠＄悊搴旂敤鍏ㄥ眬鐘舵€侊紝濡備富棰樸€佽瑷€銆佷晶杈规爮绛?
  */
 
 import { defineStore } from 'pinia'
@@ -12,62 +12,62 @@ export const useAppStore = defineStore('app', () => {
   // ============ State ============
   
   /**
-   * 侧边栏是否折叠
+   * 渚ц竟鏍忔槸鍚︽姌鍙?
    */
   const sidebarCollapsed = ref(false)
   
   /**
-   * 当前主题
+   * 褰撳墠涓婚
    */
   const theme = ref<'light' | 'dark'>('light')
   
   /**
-   * 当前语言
+   * 褰撳墠璇█
    */
   const locale = ref<LocaleCode>('zh-CN')
   
   /**
-   * 加载状态
+   * 鍔犺浇鐘舵€?
    */
   const loading = ref(false)
 
   /**
-   * 表单模式：modal-弹窗，drawer-抽屉
+   * 琛ㄥ崟妯″紡锛歮odal-寮圭獥锛宒rawer-鎶藉眽
    */
   const formMode = ref<'modal' | 'drawer'>('drawer')
   
-  // ============ Actions ============
+  // ============ 操作 ============
   
   /**
-   * 切换侧边栏折叠状态
+   * 鍒囨崲渚ц竟鏍忔姌鍙犵姸鎬?
    */
   function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value
   }
   
   /**
-   * 设置侧边栏折叠状态
+   * 璁剧疆渚ц竟鏍忔姌鍙犵姸鎬?
    */
   function setSidebarCollapsed(collapsed: boolean) {
     sidebarCollapsed.value = collapsed
   }
   
   /**
-   * 切换主题
+   * 鍒囨崲涓婚
    */
   function toggleTheme() {
     theme.value = theme.value === 'light' ? 'dark' : 'light'
   }
   
   /**
-   * 设置主题
+   * 璁剧疆涓婚
    */
   function setTheme(newTheme: 'light' | 'dark') {
     theme.value = newTheme
   }
   
   /**
-   * 切换语言
+   * 鍒囨崲璇█
    */
   function toggleLocale() {
     const locales: LocaleCode[] = ['zh-CN', 'en-US', 'zh-TW', 'ja-JP', 'ko-KR']
@@ -79,8 +79,8 @@ export const useAppStore = defineStore('app', () => {
   }
   
   /**
-   * 设置语言
-   * @param newLocale 新的语言代码
+   * 璁剧疆璇█
+   * @param newLocale 鏂扮殑璇█浠ｇ爜
    */
   function setLocale(newLocale: LocaleCode) {
     locale.value = newLocale
@@ -88,7 +88,7 @@ export const useAppStore = defineStore('app', () => {
   }
   
   /**
-   * 设置加载状态
+   * 璁剧疆鍔犺浇鐘舵€?
    */
   function setLoading(isLoading: boolean) {
     loading.value = isLoading
@@ -101,7 +101,7 @@ export const useAppStore = defineStore('app', () => {
     locale,
     loading,
     
-    // Actions
+    // 操作
     toggleSidebar,
     setSidebarCollapsed,
     toggleTheme,
@@ -110,10 +110,10 @@ export const useAppStore = defineStore('app', () => {
     setLocale,
     setLoading,
     formMode,
-    setFormMode: (mode: 'modal' | 'drawer') => formMode.value = mode
+    set表单Mode: (mode: 'modal' | 'drawer') => formMode.value = mode
   }
 }, {
-  // 持久化配置（可选）
+  // 鎸佷箙鍖栭厤缃紙鍙€夛級
   // persist: {
   //   key: 'forgex-app',
   //   storage: localStorage,

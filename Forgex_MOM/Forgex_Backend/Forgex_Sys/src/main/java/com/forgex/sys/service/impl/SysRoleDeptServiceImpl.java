@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
  * 负责角色与部门的授权关系维护，并同步处理部门下用户的角色关联。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see ISysRoleDeptService

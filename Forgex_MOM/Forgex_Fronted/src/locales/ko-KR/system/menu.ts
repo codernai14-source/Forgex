@@ -13,7 +13,7 @@ export default {
   permission: '권한 식별자',
   sort: '정렬',
   visible: '표시 여부',
-  status: '상태',
+  status: '状态',
   module: '소속 모듈',
   parentMenu: '상위 메뉴',
   rootMenu: '루트 디렉터리',

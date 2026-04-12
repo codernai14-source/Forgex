@@ -51,7 +51,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 提供用户表的数据访问操作
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-03-28
  */
@@ -599,4 +599,4 @@ wrapper.select(SysUser::getId,
 
 **文档版本**: 1.0  
 **创建日期**: 2026-03-28  
-**作者**: LiDaoMoM
+**作者**: ForGexTeam

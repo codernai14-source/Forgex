@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 提供报表分类的基础 CRUD 操作
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see BaseMapper

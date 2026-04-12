@@ -1,62 +1,62 @@
-# I18nInput 多语言输入组件使用文档
+# I18nInput 澶氳瑷€杈撳叆缁勪欢浣跨敤鏂囨。
 
-## 📖 概述
+## 馃摉 姒傝堪
 
-`I18nInput` 是一个通用的多语言配置组件，用于简化前端多语言配置的用户体验。它可以自动从后端获取支持的语言列表，并提供友好的表格界面让用户填写各语言的翻译内容。
+`I18nInput` 鏄竴涓€氱敤鐨勫璇█閰嶇疆缁勪欢锛岀敤浜庣畝鍖栧墠绔璇█閰嶇疆鐨勭敤鎴蜂綋楠屻€傚畠鍙互鑷姩浠庡悗绔幏鍙栨敮鎸佺殑璇█鍒楄〃锛屽苟鎻愪緵鍙嬪ソ鐨勮〃鏍肩晫闈㈣鐢ㄦ埛濉啓鍚勮瑷€鐨勭炕璇戝唴瀹广€?
 
-## ✨ 特性
+## 鉁?鐗规€?
 
-- ✅ **自动获取语言列表**：从后端 API 自动加载系统支持的语言
-- ✅ **三种显示模式**：simple（简单输入框）、table（表格）、modal（仅弹窗）
-- ✅ **双向绑定**：支持 v-model 绑定 JSON 字符串
-- ✅ **用户友好**：无需手写 JSON，通过表格可视化配置
-- ✅ **数据驱动**：新增语言无需修改代码
-- ✅ **类型安全**：完整的 TypeScript 类型定义
+- 鉁?**鑷姩鑾峰彇璇█鍒楄〃**锛氫粠鍚庣 API 鑷姩鍔犺浇绯荤粺鏀寔鐨勮瑷€
+- 鉁?**涓夌鏄剧ず妯″紡**锛歴imple锛堢畝鍗曡緭鍏ユ锛夈€乼able锛堣〃鏍硷級銆乵odal锛堜粎寮圭獥锛?
+- 鉁?**鍙屽悜缁戝畾**锛氭敮鎸?v-model 缁戝畾 JSON 瀛楃涓?
+- 鉁?**鐢ㄦ埛鍙嬪ソ**锛氭棤闇€鎵嬪啓 JSON锛岄€氳繃琛ㄦ牸鍙鍖栭厤缃?
+- 鉁?**鏁版嵁椹卞姩**锛氭柊澧炶瑷€鏃犻渶淇敼浠ｇ爜
+- 鉁?**绫诲瀷瀹夊叏**锛氬畬鏁寸殑 TypeScript 绫诲瀷瀹氫箟
 
-## 🎯 解决的问题
+## 馃幆 瑙ｅ喅鐨勯棶棰?
 
-### 传统方式的痛点
+### 浼犵粺鏂瑰紡鐨勭棝鐐?
 
 ```json
-// 用户需要手写这样的 JSON，容易出错
+// 鐢ㄦ埛闇€瑕佹墜鍐欒繖鏍风殑 JSON锛屽鏄撳嚭閿?
 {
-  "zh-CN": "用户管理",
+  "zh-CN": "鐢ㄦ埛绠＄悊",
   "en-US": "User Management",
-  "ja-JP": "ユーザー管理",
-  "ko-KR": "사용자 관리"
+  "ja-JP": "銉︺兗銈躲兗绠＄悊",
+  "ko-KR": "靷毄鞛?甏€毽?
 }
 ```
 
-### 新方式的优势
+### 鏂版柟寮忕殑浼樺娍
 
-使用 `I18nInput` 组件，用户只需在表格中填写：
+浣跨敤 `I18nInput` 缁勪欢锛岀敤鎴峰彧闇€鍦ㄨ〃鏍间腑濉啓锛?
 
-| 语言 | 翻译内容 |
+| 璇█ | 缈昏瘧鍐呭 |
 |------|---------|
-| 🇨🇳 简体中文 | 用户管理 |
-| 🇺🇸 English | User Management |
-| 🇯🇵 日本語 | ユーザー管理 |
-| 🇰🇷 한국어 | 사용자 관리 |
+| 馃嚚馃嚦 绠€浣撲腑鏂?| 鐢ㄦ埛绠＄悊 |
+| 馃嚭馃嚫 English | User Management |
+| 馃嚡馃嚨 鏃ユ湰瑾?| 銉︺兗銈躲兗绠＄悊 |
+| 馃嚢馃嚪 頃滉淡鞏?| 靷毄鞛?甏€毽?|
 
-组件会自动生成 JSON 并提交给后端。
+缁勪欢浼氳嚜鍔ㄧ敓鎴?JSON 骞舵彁浜ょ粰鍚庣銆?
 
-## 📦 安装
+## 馃摝 瀹夎
 
-组件已创建在 `src/components/common/I18nInput.vue`，无需额外安装。
+缁勪欢宸插垱寤哄湪 `src/components/common/I18nInput.vue`锛屾棤闇€棰濆瀹夎銆?
 
-## 🚀 快速开始
+## 馃殌 蹇€熷紑濮?
 
-### 1. 基础用法（Simple 模式）
+### 1. 鍩虹鐢ㄦ硶锛圫imple 妯″紡锛?
 
-适合在表单中使用，提供一个输入框和多语言配置按钮：
+閫傚悎鍦ㄨ〃鍗曚腑浣跨敤锛屾彁渚涗竴涓緭鍏ユ鍜屽璇█閰嶇疆鎸夐挳锛?
 
 ```vue
 <template>
-  <a-form-item label="菜单名称">
+  <a-form-item label="鑿滃崟鍚嶇О">
     <I18nInput 
       v-model="form.nameI18nJson" 
       mode="simple" 
-      placeholder="请输入菜单名称"
+      placeholder="璇疯緭鍏ヨ彍鍗曞悕绉?
     />
   </a-form-item>
 </template>
@@ -71,9 +71,9 @@ const form = reactive({
 </script>
 ```
 
-### 2. 表格模式（Table 模式）
+### 2. 琛ㄦ牸妯″紡锛圱able 妯″紡锛?
 
-直接显示表格，适合在独立的多语言配置页面：
+鐩存帴鏄剧ず琛ㄦ牸锛岄€傚悎鍦ㄧ嫭绔嬬殑澶氳瑷€閰嶇疆椤甸潰锛?
 
 ```vue
 <template>
@@ -93,61 +93,61 @@ const form = reactive({
 </script>
 ```
 
-## 📋 API 文档
+## 馃搵 API 鏂囨。
 
 ### Props
 
-| 参数 | 说明 | 类型 | 默认值 | 必填 |
+| 鍙傛暟 | 璇存槑 | 绫诲瀷 | 榛樿鍊?| 蹇呭～ |
 |------|------|------|--------|------|
-| modelValue | v-model 绑定的值（JSON 字符串） | string | '' | 否 |
-| mode | 显示模式 | 'simple' \| 'table' \| 'modal' | 'simple' | 否 |
-| placeholder | 占位符（仅 simple 模式） | string | '请输入' | 否 |
-| defaultLang | 默认语言代码 | string | 'zh-CN' | 否 |
+| modelValue | v-model 缁戝畾鐨勫€硷紙JSON 瀛楃涓诧級 | string | '' | 鍚?|
+| mode | 鏄剧ず妯″紡 | 'simple' \| 'table' \| 'modal' | 'simple' | 鍚?|
+| placeholder | 鍗犱綅绗︼紙浠?simple 妯″紡锛?| string | '璇疯緭鍏? | 鍚?|
+| defaultLang | 榛樿璇█浠ｇ爜 | string | 'zh-CN' | 鍚?|
 
 ### Events
 
-| 事件名 | 说明 | 回调参数 |
+| 浜嬩欢鍚?| 璇存槑 | 鍥炶皟鍙傛暟 |
 |--------|------|----------|
-| update:modelValue | 值变化时触发 | (value: string) => void |
+| update:modelValue | 鍊煎彉鍖栨椂瑙﹀彂 | (value: string) => void |
 
-### 数据格式
+### 鏁版嵁鏍煎紡
 
-组件输出的 JSON 格式：
+缁勪欢杈撳嚭鐨?JSON 鏍煎紡锛?
 
 ```json
 {
-  "zh-CN": "简体中文翻译",
+  "zh-CN": "绠€浣撲腑鏂囩炕璇?,
   "en-US": "English Translation",
-  "ja-JP": "日本語翻訳",
-  "ko-KR": "한국어 번역"
+  "ja-JP": "鏃ユ湰瑾炵炕瑷?,
+  "ko-KR": "頃滉淡鞏?氩堨棴"
 }
 ```
 
-## 🎨 实际应用场景
+## 馃帹 瀹為檯搴旂敤鍦烘櫙
 
-### 场景1：菜单管理
+### 鍦烘櫙1锛氳彍鍗曠鐞?
 
-在菜单管理的新增/编辑表单中使用：
+鍦ㄨ彍鍗曠鐞嗙殑鏂板/缂栬緫琛ㄥ崟涓娇鐢細
 
 ```vue
 <template>
   <a-form :model="formData" :rules="rules">
-    <!-- 菜单名称 - 使用多语言输入 -->
-    <a-form-item label="菜单名称" name="nameI18nJson">
+    <!-- 鑿滃崟鍚嶇О - 浣跨敤澶氳瑷€杈撳叆 -->
+    <a-form-item label="鑿滃崟鍚嶇О" name="nameI18nJson">
       <I18nInput 
         v-model="formData.nameI18nJson" 
         mode="simple" 
-        placeholder="请输入菜单名称"
+        placeholder="璇疯緭鍏ヨ彍鍗曞悕绉?
       />
     </a-form-item>
     
-    <!-- 其他字段 -->
-    <a-form-item label="菜单路径" name="path">
+    <!-- 鍏朵粬瀛楁 -->
+    <a-form-item label="鑿滃崟璺緞" name="path">
       <a-input v-model:value="formData.path" />
     </a-form-item>
     
     <a-form-item>
-      <a-button type="primary" @click="handleSubmit">提交</a-button>
+      <a-button type="primary" @click="handleSubmit">鎻愪氦</a-button>
     </a-form-item>
   </a-form>
 </template>
@@ -167,30 +167,30 @@ const formData = reactive({
 
 const handleSubmit = async () => {
   try {
-    // 提交时，nameI18nJson 已经是 JSON 字符串，直接传给后端
+    // 鎻愪氦鏃讹紝nameI18nJson 宸茬粡鏄?JSON 瀛楃涓诧紝鐩存帴浼犵粰鍚庣
     await createMenu(formData)
-    message.success('创建成功')
+    message.success('鍒涘缓鎴愬姛')
   } catch (error) {
-    message.error('创建失败')
+    message.error('鍒涘缓澶辫触')
   }
 }
 </script>
 ```
 
-### 场景2：字典管理
+### 鍦烘櫙2锛氬瓧鍏哥鐞?
 
-在字典项的编辑中使用：
+鍦ㄥ瓧鍏搁」鐨勭紪杈戜腑浣跨敤锛?
 
 ```vue
 <template>
-  <a-modal v-model:open="visible" title="编辑字典项" @ok="handleSubmit">
+  <a-modal v-model:open="visible" title="缂栬緫瀛楀吀椤? @ok="handleSubmit">
     <a-form :model="form">
-      <a-form-item label="字典名称">
+      <a-form-item label="瀛楀吀鍚嶇О">
         <a-input v-model:value="form.dictName" />
       </a-form-item>
       
-      <!-- 字典值多语言配置 -->
-      <a-form-item label="字典值翻译">
+      <!-- 瀛楀吀鍊煎璇█閰嶇疆 -->
+      <a-form-item label="瀛楀吀鍊肩炕璇?>
         <I18nInput 
           v-model="form.dictValueI18nJson" 
           mode="table"
@@ -216,170 +216,170 @@ const form = reactive({
 const handleSubmit = async () => {
   try {
     await updateDict(form)
-    message.success('更新成功')
+    message.success('鏇存柊鎴愬姛')
     visible.value = false
   } catch (error) {
-    message.error('更新失败')
+    message.error('鏇存柊澶辫触')
   }
 }
 </script>
 ```
 
-### 场景3：角色管理
+### 鍦烘櫙3锛氳鑹茬鐞?
 
 ```vue
 <template>
-  <a-form-item label="角色名称">
+  <a-form-item label="瑙掕壊鍚嶇О">
     <I18nInput 
-      v-model="roleForm.nameI18nJson" 
+      v-model="role表单.nameI18nJson" 
       mode="simple" 
-      placeholder="请输入角色名称"
+      placeholder="璇疯緭鍏ヨ鑹插悕绉?
     />
   </a-form-item>
 </template>
 ```
 
-### 场景4：部门管理
+### 鍦烘櫙4锛氶儴闂ㄧ鐞?
 
 ```vue
 <template>
-  <a-form-item label="部门名称">
+  <a-form-item label="閮ㄩ棬鍚嶇О">
     <I18nInput 
-      v-model="deptForm.nameI18nJson" 
+      v-model="dept表单.nameI18nJson" 
       mode="simple" 
-      placeholder="请输入部门名称"
+      placeholder="璇疯緭鍏ラ儴闂ㄥ悕绉?
     />
   </a-form-item>
 </template>
 ```
 
-## 🔧 后端集成
+## 馃敡 鍚庣闆嗘垚
 
-### 1. 实体类字段
+### 1. 瀹炰綋绫诲瓧娈?
 
-确保实体类有对应的 JSON 字段：
+纭繚瀹炰綋绫绘湁瀵瑰簲鐨?JSON 瀛楁锛?
 
 ```java
 @Data
 @TableName("sys_menu")
 public class SysMenu extends BaseEntity {
-    /** 菜单名称 */
+    /** 鑿滃崟鍚嶇О */
     private String name;
     
-    /** 菜单名称多语言JSON */
+    /** 鑿滃崟鍚嶇О澶氳瑷€JSON */
     private String nameI18nJson;
     
-    // 其他字段...
+    // 鍏朵粬瀛楁...
 }
 ```
 
-### 2. 数据库字段
+### 2. 鏁版嵁搴撳瓧娈?
 
 ```sql
-ALTER TABLE sys_menu ADD COLUMN name_i18n_json VARCHAR(1000) COMMENT '菜单名称多语言JSON';
-ALTER TABLE sys_dict ADD COLUMN dict_value_i18n_json VARCHAR(1000) COMMENT '字典值多语言JSON';
+ALTER TABLE sys_menu ADD COLUMN name_i18n_json VARCHAR(1000) COMMENT '鑿滃崟鍚嶇О澶氳瑷€JSON';
+ALTER TABLE sys_dict ADD COLUMN dict_value_i18n_json VARCHAR(1000) COMMENT '瀛楀吀鍊煎璇█JSON';
 ```
 
-### 3. 前端显示逻辑
+### 3. 鍓嶇鏄剧ず閫昏緫
 
-在列表页面显示时，根据当前语言从 JSON 中取值：
+鍦ㄥ垪琛ㄩ〉闈㈡樉绀烘椂锛屾牴鎹綋鍓嶈瑷€浠?JSON 涓彇鍊硷細
 
 ```typescript
-// 工具函数：从 I18n JSON 中获取当前语言的值
-export function getI18nValue(i18nJson: string, fallback: string = ''): string {
-  if (!i18nJson) return fallback
+// 宸ュ叿鍑芥暟锛氫粠 I18n JSON 涓幏鍙栧綋鍓嶈瑷€鐨勫€?
+export function getI18nValue(i18nJson: string, 降级方案: string = ''): string {
+  if (!i18nJson) return 降级方案
   
   try {
     const obj = JSON.parse(i18nJson)
     const currentLang = localStorage.getItem('fx-locale') || 'zh-CN'
-    return obj[currentLang] || obj['zh-CN'] || fallback
+    return obj[currentLang] || obj['zh-CN'] || 降级方案
   } catch (error) {
-    return fallback
+    return 降级方案
   }
 }
 
-// 使用示例
+// 浣跨敤绀轰緥
 const menuName = getI18nValue(menu.nameI18nJson, menu.name)
 ```
 
-## 🎯 需要配置多语言的地方
+## 馃幆 闇€瑕侀厤缃璇█鐨勫湴鏂?
 
-根据你的项目分析，以下地方需要配置多语言：
+鏍规嵁浣犵殑椤圭洰鍒嗘瀽锛屼互涓嬪湴鏂归渶瑕侀厤缃璇█锛?
 
-### 1. ✅ 菜单管理（SysMenu）
-- **字段**：`name`（菜单名称）
-- **存储字段**：`nameI18nJson`
-- **使用位置**：`/views/system/menu/index.vue`
+### 1. 鉁?鑿滃崟绠＄悊锛圫ysMenu锛?
+- **瀛楁**锛歚name`锛堣彍鍗曞悕绉帮級
+- **瀛樺偍瀛楁**锛歚nameI18nJson`
+- **浣跨敤浣嶇疆**锛歚/views/system/menu/index.vue`
 
-### 2. ✅ 字典管理（SysDict）
-- **字段**：`dictValue`（字典值显示名称）
-- **存储字段**：`dictValueI18nJson`
-- **使用位置**：`/views/system/dict/index.vue`
+### 2. 鉁?瀛楀吀绠＄悊锛圫ysDict锛?
+- **瀛楁**锛歚dictValue`锛堝瓧鍏稿€兼樉绀哄悕绉帮級
+- **瀛樺偍瀛楁**锛歚dictValueI18nJson`
+- **浣跨敤浣嶇疆**锛歚/views/system/dict/index.vue`
 
-### 3. 🔄 角色管理（SysRole）
-- **字段**：`roleName`（角色名称）
-- **建议添加**：`roleNameI18nJson`
+### 3. 馃攧 瑙掕壊绠＄悊锛圫ysRole锛?
+- **瀛楁**锛歚roleName`锛堣鑹插悕绉帮級
+- **寤鸿娣诲姞**锛歚roleNameI18nJson`
 
-### 4. 🔄 部门管理（SysDepartment）
-- **字段**：`deptName`（部门名称）
-- **建议添加**：`deptNameI18nJson`
+### 4. 馃攧 閮ㄩ棬绠＄悊锛圫ysDepartment锛?
+- **瀛楁**锛歚deptName`锛堥儴闂ㄥ悕绉帮級
+- **寤鸿娣诲姞**锛歚deptNameI18nJson`
 
-### 5. 🔄 岗位管理（SysPosition）
-- **字段**：`positionName`（岗位名称）
-- **建议添加**：`positionNameI18nJson`
+### 5. 馃攧 宀椾綅绠＄悊锛圫ysPosition锛?
+- **瀛楁**锛歚positionName`锛堝矖浣嶅悕绉帮級
+- **寤鸿娣诲姞**锛歚positionNameI18nJson`
 
-### 6. 🔄 模块管理（SysModule）
-- **字段**：`moduleName`（模块名称）
-- **建议添加**：`moduleNameI18nJson`
+### 6. 馃攧 妯″潡绠＄悊锛圫ysModule锛?
+- **瀛楁**锛歚moduleName`锛堟ā鍧楀悕绉帮級
+- **寤鸿娣诲姞**锛歚moduleNameI18nJson`
 
-## 📝 迁移指南
+## 馃摑 杩佺Щ鎸囧崡
 
-### 步骤1：更新数据库
+### 姝ラ1锛氭洿鏂版暟鎹簱
 
 ```sql
--- 菜单表（已有）
+-- 鑿滃崟琛紙宸叉湁锛?
 -- ALTER TABLE sys_menu ADD COLUMN name_i18n_json VARCHAR(1000);
 
--- 字典表（已有）
+-- 瀛楀吀琛紙宸叉湁锛?
 -- ALTER TABLE sys_dict ADD COLUMN dict_value_i18n_json VARCHAR(1000);
 
--- 角色表
-ALTER TABLE sys_role ADD COLUMN role_name_i18n_json VARCHAR(1000) COMMENT '角色名称多语言JSON';
+-- 瑙掕壊琛?
+ALTER TABLE sys_role ADD COLUMN role_name_i18n_json VARCHAR(1000) COMMENT '瑙掕壊鍚嶇О澶氳瑷€JSON';
 
--- 部门表
-ALTER TABLE sys_department ADD COLUMN dept_name_i18n_json VARCHAR(1000) COMMENT '部门名称多语言JSON';
+-- 閮ㄩ棬琛?
+ALTER TABLE sys_department ADD COLUMN dept_name_i18n_json VARCHAR(1000) COMMENT '閮ㄩ棬鍚嶇О澶氳瑷€JSON';
 
--- 岗位表
-ALTER TABLE sys_position ADD COLUMN position_name_i18n_json VARCHAR(1000) COMMENT '岗位名称多语言JSON';
+-- 宀椾綅琛?
+ALTER TABLE sys_position ADD COLUMN position_name_i18n_json VARCHAR(1000) COMMENT '宀椾綅鍚嶇О澶氳瑷€JSON';
 
--- 模块表
-ALTER TABLE sys_module ADD COLUMN module_name_i18n_json VARCHAR(1000) COMMENT '模块名称多语言JSON';
+-- 妯″潡琛?
+ALTER TABLE sys_module ADD COLUMN module_name_i18n_json VARCHAR(1000) COMMENT '妯″潡鍚嶇О澶氳瑷€JSON';
 ```
 
-### 步骤2：更新实体类
+### 姝ラ2锛氭洿鏂板疄浣撶被
 
-在对应的实体类中添加字段：
+鍦ㄥ搴旂殑瀹炰綋绫讳腑娣诲姞瀛楁锛?
 
 ```java
-/** 角色名称多语言JSON */
+/** 瑙掕壊鍚嶇О澶氳瑷€JSON */
 private String roleNameI18nJson;
 ```
 
-### 步骤3：更新前端表单
+### 姝ラ3锛氭洿鏂板墠绔〃鍗?
 
-将原来的输入框替换为 `I18nInput` 组件：
+灏嗗師鏉ョ殑杈撳叆妗嗘浛鎹负 `I18nInput` 缁勪欢锛?
 
 ```vue
-<!-- 原来 -->
-<a-input v-model:value="form.roleName" placeholder="请输入角色名称" />
+<!-- 鍘熸潵 -->
+<a-input v-model:value="form.roleName" placeholder="璇疯緭鍏ヨ鑹插悕绉? />
 
-<!-- 现在 -->
-<I18nInput v-model="form.roleNameI18nJson" mode="simple" placeholder="请输入角色名称" />
+<!-- 鐜板湪 -->
+<I18nInput v-model="form.roleNameI18nJson" mode="simple" placeholder="璇疯緭鍏ヨ鑹插悕绉? />
 ```
 
-### 步骤4：更新显示逻辑
+### 姝ラ4锛氭洿鏂版樉绀洪€昏緫
 
-在列表页面使用工具函数显示：
+鍦ㄥ垪琛ㄩ〉闈娇鐢ㄥ伐鍏峰嚱鏁版樉绀猴細
 
 ```vue
 <template>
@@ -393,20 +393,20 @@ private String roleNameI18nJson;
 </template>
 ```
 
-## 🐛 常见问题
+## 馃悰 甯歌闂
 
-### Q1: 如何设置初始值？
+### Q1: 濡備綍璁剧疆鍒濆鍊硷紵
 
 ```vue
 <script setup>
 const form = reactive({
-  // 直接设置 JSON 字符串
-  nameI18nJson: '{"zh-CN":"用户管理","en-US":"User Management"}'
+  // 鐩存帴璁剧疆 JSON 瀛楃涓?
+  nameI18nJson: '{"zh-CN":"鐢ㄦ埛绠＄悊","en-US":"User Management"}'
 })
 </script>
 ```
 
-### Q2: 如何验证必填？
+### Q2: 濡備綍楠岃瘉蹇呭～锛?
 
 ```vue
 <script setup>
@@ -414,11 +414,11 @@ const rules = {
   nameI18nJson: [
     { 
       required: true, 
-      message: '请配置多语言', 
+      message: '璇烽厤缃璇█', 
       trigger: 'change',
       validator: (rule, value) => {
         if (!value || value === '{}' || value === '') {
-          return Promise.reject('请至少配置一种语言')
+          return Promise.reject('璇疯嚦灏戦厤缃竴绉嶈瑷€')
         }
         return Promise.resolve()
       }
@@ -428,7 +428,7 @@ const rules = {
 </script>
 ```
 
-### Q3: 如何获取当前语言的值？
+### Q3: 濡備綍鑾峰彇褰撳墠璇█鐨勫€硷紵
 
 ```typescript
 import { getI18nValue } from '@/utils/i18n'
@@ -436,18 +436,18 @@ import { getI18nValue } from '@/utils/i18n'
 const displayName = getI18nValue(menu.nameI18nJson, menu.name)
 ```
 
-## 🎉 总结
+## 馃帀 鎬荤粨
 
-使用 `I18nInput` 组件后：
+浣跨敤 `I18nInput` 缁勪欢鍚庯細
 
-1. ✅ **用户体验提升**：不需要手写 JSON，通过表格可视化配置
-2. ✅ **开发效率提升**：统一的组件，减少重复代码
-3. ✅ **维护成本降低**：新增语言只需在后端配置，前端自动适配
-4. ✅ **数据一致性**：统一的数据格式，减少错误
+1. 鉁?**鐢ㄦ埛浣撻獙鎻愬崌**锛氫笉闇€瑕佹墜鍐?JSON锛岄€氳繃琛ㄦ牸鍙鍖栭厤缃?
+2. 鉁?**寮€鍙戞晥鐜囨彁鍗?*锛氱粺涓€鐨勭粍浠讹紝鍑忓皯閲嶅浠ｇ爜
+3. 鉁?**缁存姢鎴愭湰闄嶄綆**锛氭柊澧炶瑷€鍙渶鍦ㄥ悗绔厤缃紝鍓嶇鑷姩閫傞厤
+4. 鉁?**鏁版嵁涓€鑷存€?*锛氱粺涓€鐨勬暟鎹牸寮忥紝鍑忓皯閿欒
 
-## 📚 相关文档
+## 馃摎 鐩稿叧鏂囨。
 
-- [Vue I18n 官方文档](https://vue-i18n.intlify.dev/)
-- [Ant Design Vue 表单组件](https://antdv.com/components/form-cn)
-- [项目多语言配置文档](../locales/README.md)
+- [Vue I18n 瀹樻柟鏂囨。](https://vue-i18n.intlify.dev/)
+- [Ant Design Vue 琛ㄥ崟缁勪欢](https://antdv.com/components/form-cn)
+- [椤圭洰澶氳瑷€閰嶇疆鏂囨。](../locales/README.md)
 

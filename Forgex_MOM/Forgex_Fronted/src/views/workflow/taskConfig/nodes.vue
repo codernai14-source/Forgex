@@ -43,10 +43,10 @@
           :class="{ 'system-node-item--active': selectedNodeKey === 'end' }"
           @click="focusSystemNode('end')"
         >
-          <span class="palette-item__badge palette-item__badge--end">结束</span>
+          <span class="palette-item__badge palette-item__badge--end">缁撴潫</span>
           <div>
-            <div class="palette-item__title">结束节点</div>
-            <div class="palette-item__desc">流程终点，不能删除，不允许再向外连线。</div>
+            <div class="palette-item__title">缁撴潫鑺傜偣</div>
+            <div class="palette-item__desc">流程终点，不能删除，也不允许再向外连线。</div>
           </div>
         </button>
 
@@ -145,11 +145,11 @@
             </a-form-item>
 
             <template v-if="selectedNodeData.nodeType === NODE_TYPES.START">
-              <div class="field-tip">开始节点由系统内置，是流程入口，不能有入线，且必须保留唯一一条出线。</div>
+              <div class="field-tip">开始节点由系统内置，是流程入口，不能有入线，并且必须保留唯一一条出线。</div>
             </template>
 
             <template v-else-if="selectedNodeData.nodeType === NODE_TYPES.END">
-              <div class="field-tip">结束节点由系统内置，是流程出口，不能删除，也不能再继续向外连线。</div>
+              <div class="field-tip">结束节点由系统内置，是流程出口，不能删除，也不能继续向外连线。</div>
             </template>
 
             <template v-else-if="selectedNodeData.nodeType === NODE_TYPES.APPROVE">
@@ -212,7 +212,7 @@
                   allow-clear
                   :value="selectedNodeData.defaultBranchNodeKey"
                   :disabled="!branchTargetOptions.length"
-                  placeholder="请先为当前分支节点连出目标节点"
+                  placeholder="请先为当前分支节点连接目标节点"
                   @update:value="updateSelectedNodeData({ defaultBranchNodeKey: normalizeSelectValue($event) })"
                 >
                   <a-select-option
@@ -273,7 +273,7 @@
                           allow-clear
                           :value="rule.nextNodeKey"
                           :disabled="!branchTargetOptions.length"
-                          placeholder="规则去向"
+                          placeholder="瑙勫垯鍘诲悜"
                           @update:value="updateBranchRule(index, { nextNodeKey: normalizeSelectValue($event) || '' })"
                         >
                           <a-select-option
@@ -299,16 +299,14 @@
           <div class="selected-edge-panel">
             <div class="field-tip">已选中一条连线。可以通过 Delete 键、右键菜单或下面的按钮删除它。</div>
             <a-descriptions :column="1" size="small" bordered>
-              <a-descriptions-item label="起点">
+              <a-descriptions-item label="璧风偣">
                 {{ edgeNodeName(String(selectedEdgeData.source)) }}
               </a-descriptions-item>
-              <a-descriptions-item label="终点">
+              <a-descriptions-item label="缁堢偣">
                 {{ edgeNodeName(String(selectedEdgeData.target)) }}
               </a-descriptions-item>
             </a-descriptions>
-            <a-button danger block class="selected-edge-panel__button" @click="handleDeleteSelectedEdge">
-              删除当前连线
-            </a-button>
+            <a-button danger block class="selected-edge-panel__button" @click="handleDeleteSelectedEdge">删除当前连线</a-button>
           </div>
         </template>
 
@@ -712,9 +710,9 @@ function resolveThemeHost() {
   ) as HTMLElement
 }
 
-function readThemeVar(name: string, fallback: string) {
+function readThemeVar(name: string, 降级方案: string) {
   const value = getComputedStyle(resolveThemeHost()).getPropertyValue(name).trim()
-  return value || fallback
+  return value || 降级方案
 }
 
 function refreshFlowThemeColors() {
@@ -984,7 +982,7 @@ function handleConnect(connection: Connection) {
   const sourceNodeData = flowNodes.value.find(node => String(node.id) === connection.source)?.data as WorkflowNodeData | undefined
   const sourceOutgoingCount = flowEdges.value.filter(edge => String(edge.source) === connection.source).length
   if (sourceNodeData && sourceNodeData.nodeType !== NODE_TYPES.BRANCH && sourceOutgoingCount >= 1) {
-    message.warning('当前节点只能保留一条出线。条件分支节点才允许多条出线。')
+    message.warning('当前节点只能保留一条出线。只有条件分支节点才允许多条出线。')
     return
   }
 
@@ -1316,7 +1314,7 @@ function buildSavePayload(): WfTaskNodeEditorDTO[] {
   })
 }
 
-async function handleSave() {
+async function handleSave(showSuccessMessage = true) {
   if (!editorContext.value) {
     return false
   }
@@ -1330,11 +1328,10 @@ async function handleSave() {
         sourceNodeKey: String(edge.source),
         targetNodeKey: String(edge.target)
       }))
-    }, silentErrorConfig)
-    message.success('草稿已保存。')
+    }, { showSuccessMessage })
     return true
   } catch (error: any) {
-    message.error(error.message || '保存草稿失败。')
+    console.error('保存草稿失败。', error)
     return false
   } finally {
     saving.value = false
@@ -1347,15 +1344,14 @@ async function handlePublish() {
   }
   try {
     publishing.value = true
-    const saved = await handleSave()
+    const saved = await handleSave(false)
     if (!saved) {
       return
     }
-    await publishDraft({ taskCode: editorContext.value.taskCode }, silentErrorConfig)
-    message.success('发布成功。')
+    await publishDraft({ taskCode: editorContext.value.taskCode })
     navigateBackToList()
   } catch (error: any) {
-    message.error(error.message || '发布失败。')
+    console.error('发布失败。', error)
   } finally {
     publishing.value = false
   }

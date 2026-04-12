@@ -1,5 +1,5 @@
 /**
- * System Module Translations - English
+ * 系统模块翻译 - 中文注释
  * Unified Export
  */
 import user from './user'

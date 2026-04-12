@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrap">
-    <!-- 已处理审批列表 -->
+    <!-- 宸插鐞嗗鎵瑰垪琛?-->
     <fx-dynamic-table
       ref="tableRef"
       :table-code="'WfProcessedTaskTable'"
@@ -10,8 +10,8 @@
       :show-query-form="true"
     >
       <template #status="{ record }">
-        <a-tag :color="getStatusColor(record.status)">
-          {{ getStatusText(record.status) }}
+        <a-tag :color="get状态Color(record.status)">
+          {{ get状态Text(record.status) }}
         </a-tag>
       </template>
 
@@ -45,35 +45,35 @@
       </template>
     </fx-dynamic-table>
 
-    <!-- 详情查看弹窗 -->
+    <!-- 璇︽儏鏌ョ湅寮圭獥 -->
     <a-drawer
       v-model:open="detailDrawerVisible"
-      :title="'审批详情'"
+      :title="'瀹℃壒璇︽儏'"
       :width="800"
       :body-style="{ paddingBottom: '80px' }"
     >
       <a-descriptions bordered :column="2">
-        <a-descriptions-item label="审批任务">
+        <a-descriptions-item label="瀹℃壒浠诲姟">
           {{ currentRecord?.taskName }}
         </a-descriptions-item>
-        <a-descriptions-item label="任务编码">
+        <a-descriptions-item label="浠诲姟缂栫爜">
           {{ currentRecord?.taskCode }}
         </a-descriptions-item>
         <a-descriptions-item label="发起人">
           {{ currentRecord?.initiatorName }}
         </a-descriptions-item>
-        <a-descriptions-item label="发起时间">
+        <a-descriptions-item label="鍙戣捣鏃堕棿">
           {{ formatDateTime(currentRecord?.startTime) }}
         </a-descriptions-item>
-        <a-descriptions-item label="当前节点">
+        <a-descriptions-item label="褰撳墠鑺傜偣">
           {{ currentRecord?.currentNodeName || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag :color="getStatusColor(currentRecord?.status)">
-            {{ getStatusText(currentRecord?.status) }}
+          <a-tag :color="get状态Color(currentRecord?.status)">
+            {{ get状态Text(currentRecord?.status) }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="结束时间" v-if="currentRecord?.endTime">
+        <a-descriptions-item label="缁撴潫鏃堕棿" v-if="currentRecord?.endTime">
           {{ formatDateTime(currentRecord.endTime) }}
         </a-descriptions-item>
       </a-descriptions>
@@ -81,15 +81,15 @@
       <a-divider />
 
       <div class="form-content-detail">
-        <h4>表单内容</h4>
-        <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
+        <h4>琛ㄥ崟鍐呭</h4>
+        <pre>{{ format表单Content(currentRecord?.formContent) }}</pre>
       </div>
     </a-drawer>
 
-    <!-- 审批历史弹窗 -->
+    <!-- 瀹℃壒鍘嗗彶寮圭獥 -->
     <a-modal
       v-model:open="historyModalVisible"
-      title="审批历史"
+      title="瀹℃壒鍘嗗彶"
       :width="900"
       :footer="null"
     >
@@ -97,24 +97,24 @@
         <a-timeline-item
           v-for="(item, index) in historyList"
           :key="index"
-          :color="getHistoryColor(item.approveStatus)"
+          :color="getHistoryColor(item.approve状态)"
         >
           <template #dot>
             <component
-              :is="getHistoryIcon(item.approveStatus)"
-              :style="{ color: getHistoryColor(item.approveStatus) }"
+              :is="getHistoryIcon(item.approve状态)"
+              :style="{ color: getHistoryColor(item.approve状态) }"
             />
           </template>
           <div class="history-item">
             <div class="history-header">
               <span class="history-node">{{ item.nodeName }}</span>
-              <span class="history-status" :style="{ color: getHistoryColor(item.approveStatus) }">
-                {{ getHistoryStatusText(item.approveStatus) }}
+              <span class="history-status" :style="{ color: getHistoryColor(item.approve状态) }">
+                {{ getHistory状态Text(item.approve状态) }}
               </span>
             </div>
             <div class="history-content">
               <div class="history-info">
-                <span>审批人：{{ item.approverName }}</span>
+                <span>瀹℃壒浜猴細{{ item.approverName }}</span>
                 <span>审批时间：{{ formatDateTime(item.approveTime) }}</span>
               </div>
               <div class="history-comment" v-if="item.comment">
@@ -156,15 +156,15 @@ const currentRecord = ref<WfExecutionDTO | null>(null)
 const detailDrawerVisible = ref(false)
 const historyModalVisible = ref(false)
 
-// 审批历史列表（TODO: 需要从后端 API 获取）
+// 瀹℃壒鍘嗗彶鍒楄〃锛圱ODO: 闇€瑕佷粠鍚庣 API 鑾峰彇锛?
 const historyList = ref<any[]>([])
 
-// 字典配置
+// 瀛楀吀閰嶇疆
 const dictOptions = computed(() => ({
   status: statusOptions.value
 }))
 
-// 处理表格数据请求
+// 澶勭悊琛ㄦ牸鏁版嵁璇锋眰
 const handleRequest = async (payload: { 
   page: { current: number; pageSize: number }; 
   query: Record<string, any>; 
@@ -178,7 +178,7 @@ const handleRequest = async (payload: {
       ...payload.query
     }
     
-    // 处理排序
+    // 澶勭悊鎺掑簭
     if (payload.sorter) {
       params.sortField = payload.sorter.field
       params.sortOrder = payload.sorter.order
@@ -195,8 +195,8 @@ const handleRequest = async (payload: {
   }
 }
 
-// 获取状态颜色
-const getStatusColor = (status?: number): string => {
+// 鑾峰彇鐘舵€侀鑹?
+const get状态Color = (status?: number): string => {
   const colorMap: Record<number, string> = {
     0: 'gray',
     1: 'processing',
@@ -206,8 +206,8 @@ const getStatusColor = (status?: number): string => {
   return colorMap[status || 0] || 'default'
 }
 
-// 获取状态文本
-const getStatusText = (status?: number): string => {
+// 鑾峰彇鐘舵€佹枃鏈?
+const get状态Text = (status?: number): string => {
   const textMap: Record<number, string> = {
     0: '未审批',
     1: '审批中',
@@ -217,14 +217,14 @@ const getStatusText = (status?: number): string => {
   return textMap[status || 0] || '未知'
 }
 
-// 格式化日期时间
+// 鏍煎紡鍖栨棩鏈熸椂闂?
 const formatDateTime = (dateTime?: string): string => {
   if (!dateTime) return '-'
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
 }
 
-// 格式化表单内容
-const formatFormContent = (formContent?: string): string => {
+// 鏍煎紡鍖栬〃鍗曞唴瀹?
+const format表单Content = (formContent?: string): string => {
   if (!formContent) return '{}'
   try {
     const obj = JSON.parse(formContent)
@@ -234,69 +234,69 @@ const formatFormContent = (formContent?: string): string => {
   }
 }
 
-// 获取历史状态颜色
-const getHistoryColor = (approveStatus?: number): string => {
+// 鑾峰彇鍘嗗彶鐘舵€侀鑹?
+const getHistoryColor = (approve状态?: number): string => {
   const colorMap: Record<number, string> = {
     1: 'green',
     2: 'red'
   }
-  return colorMap[approveStatus || 0] || 'gray'
+  return colorMap[approve状态 || 0] || 'gray'
 }
 
-// 获取历史状态文本
-const getHistoryStatusText = (approveStatus?: number): string => {
+// 鑾峰彇鍘嗗彶鐘舵€佹枃鏈?
+const getHistory状态Text = (approve状态?: number): string => {
   const textMap: Record<number, string> = {
     1: '同意',
     2: '驳回'
   }
-  return textMap[approveStatus || 0] || '未知'
+  return textMap[approve状态 || 0] || '未知'
 }
 
-// 获取历史图标
-const getHistoryIcon = (approveStatus?: number) => {
+// 鑾峰彇鍘嗗彶鍥炬爣
+const getHistoryIcon = (approve状态?: number) => {
   const iconMap: Record<number, any> = {
     1: CheckCircleOutlined,
     2: CloseCircleOutlined
   }
-  return iconMap[approveStatus || 0] || ClockCircleOutlined
+  return iconMap[approve状态 || 0] || ClockCircleOutlined
 }
 
-// 处理查看详情
+// 澶勭悊鏌ョ湅璇︽儏
 const handleViewDetail = (record: WfExecutionDTO) => {
   currentRecord.value = record
   detailDrawerVisible.value = true
 }
 
-// 处理查看审批历史
+// 澶勭悊鏌ョ湅瀹℃壒鍘嗗彶
 const handleViewHistory = async (record: WfExecutionDTO) => {
   currentRecord.value = record
   historyModalVisible.value = true
   
-  // TODO: 调用后端 API 获取审批历史
-  // 这里是模拟数据
+  // TODO: 璋冪敤鍚庣 API 鑾峰彇瀹℃壒鍘嗗彶
+  // 杩欓噷鏄ā鎷熸暟鎹?
   try {
     // const result = await getExecutionHistory({ executionId: record.id })
     // historyList.value = result || []
     
-    // 模拟数据
+    // 妯℃嫙鏁版嵁
     historyList.value = [
       {
         nodeName: '发起',
         approverName: record.initiatorName,
         approveTime: record.startTime,
-        approveStatus: 0,
+        approve状态: 0,
         comment: '发起审批'
       },
       {
         nodeName: '部门经理审批',
         approverName: '张经理',
         approveTime: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        approveStatus: 1,
+        approve状态: 1,
         comment: '同意'
       }
     ]
   } catch (e: any) {
-    message.error(e.message || '加载审批历史失败')
+    message.error(e.message || '鍔犺浇瀹℃壒鍘嗗彶澶辫触')
   }
 }
 

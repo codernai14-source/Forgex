@@ -43,7 +43,7 @@ export interface UserTenant {
 export interface UserProfile {
   id?: string
   userId: string
-  politicalStatus?: string  // 政治面貌
+  political状态?: string  // 政治面貌
   homeAddress?: string      // 家庭住址
   emergencyContact?: string // 紧急联系人
   emergencyPhone?: string   // 紧急联系人电话

@@ -52,7 +52,7 @@ export default {
     platformPlaceholder: '플랫폼을 선택하세요',
     title: '제목',
     titlePlaceholder: '제목을 입력하세요 (선택)',
-    titleHint: '${userName}, ${tenantName} 같은 플레이스홀더를 지원합니다',
+    titleHint: '${userName}, ${tenantName} 같은 占位提示를 지원합니다',
     body: '본문',
     bodyPlaceholder: '메시지 본문을 입력하세요',
     linkUrl: '링크 URL',

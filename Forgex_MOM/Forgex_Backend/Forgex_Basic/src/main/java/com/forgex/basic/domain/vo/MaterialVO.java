@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 用于前端列表展示，在 DTO 基础上增加了字典翻译字段
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

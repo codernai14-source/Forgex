@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
  * String purchaseCode = EncodeUtils.nextEncode("PURCHASE_ORDER");
  * }</pre>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleService 编码生成服务

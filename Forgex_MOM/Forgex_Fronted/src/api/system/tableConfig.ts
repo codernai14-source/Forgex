@@ -112,9 +112,9 @@ export function getTableConfigList(params: TableConfigListParams) {
 }
 
 export function getTableConfigDetail(id: number) {
-  console.log('API: getTableConfigDetail 被调用，ID:', id, '类型:', typeof id)
+  console.log('API: getTableConfigDetail 琚皟鐢紝ID:', id, '绫诲瀷:', typeof id)
   const url = `/sys/common/table/config/info`
-  console.log('请求URL:', url)
+  console.log('璇锋眰URL:', url)
   return http.post<TableConfigDetail>(url, { id })
 }
 
@@ -134,19 +134,19 @@ export function batchDeleteTableConfig(ids: number[]) {
   return http.post<void>('/sys/common/table/config/batchDelete', { ids })
 }
 
-export function toggleTableConfigStatus(id: number, enabled: boolean) {
-  return http.post<void>('/sys/common/table/config/updateStatus', { id, enabled })
+export function toggleTableConfig状态(id: number, enabled: boolean) {
+  return http.post<void>('/sys/common/table/config/update状态', { id, enabled })
 }
 
 /**
- * 用户级别表格配置相关接口
+ * 鐢ㄦ埛绾у埆琛ㄦ牸閰嶇疆鐩稿叧鎺ュ彛
  */
 
 /**
- * 获取用户级别表格配置
+ * 鑾峰彇鐢ㄦ埛绾у埆琛ㄦ牸閰嶇疆
  * 
- * @param params 参数（tableCode, tenantId, userId）
- * @returns 用户级别表格配置
+ * @param params 鍙傛暟锛坱ableCode, tenantId, userId锛?
+ * @returns 鐢ㄦ埛绾у埆琛ㄦ牸閰嶇疆
  */
 export function getUserTableConfig(params: { 
   tableCode: string
@@ -157,10 +157,10 @@ export function getUserTableConfig(params: {
 }
 
 /**
- * 保存用户级别表格配置
+ * 淇濆瓨鐢ㄦ埛绾у埆琛ㄦ牸閰嶇疆
  * 
- * @param data 用户级别表格配置数据
- * @returns 配置 ID
+ * @param data 鐢ㄦ埛绾у埆琛ㄦ牸閰嶇疆鏁版嵁
+ * @returns 閰嶇疆 ID
  */
 export function saveUserTableConfig(data: {
   tableCode: string
@@ -175,10 +175,10 @@ export function saveUserTableConfig(data: {
 }
 
 /**
- * 删除用户级别表格配置
+ * 鍒犻櫎鐢ㄦ埛绾у埆琛ㄦ牸閰嶇疆
  * 
- * @param params 参数（tableCode, tenantId, userId）
- * @returns 是否删除成功
+ * @param params 鍙傛暟锛坱ableCode, tenantId, userId锛?
+ * @returns 鏄惁鍒犻櫎鎴愬姛
  */
 export function deleteUserTableConfig(params: { 
   tableCode: string
@@ -189,7 +189,7 @@ export function deleteUserTableConfig(params: {
 }
 
 /**
- * 用户列配置项
+ * 鐢ㄦ埛鍒楅厤缃」
  */
 export interface UserColumnItem {
   field: string
@@ -198,7 +198,7 @@ export interface UserColumnItem {
 }
 
 /**
- * 用户列配置参数
+ * 鐢ㄦ埛鍒楅厤缃弬鏁?
  */
 export interface UserColumnConfigParam {
   tableCode: string
@@ -207,7 +207,7 @@ export interface UserColumnConfigParam {
 }
 
 /**
- * 用户列配置返回结果
+ * 鐢ㄦ埛鍒楅厤缃繑鍥炵粨鏋?
  */
 export interface UserColumnConfigResult {
   tableCode: string
@@ -221,39 +221,39 @@ export interface UserColumnConfigResult {
 }
 
 /**
- * 获取用户列配置
+ * 鑾峰彇鐢ㄦ埛鍒楅厤缃?
  * <p>
- * 获取当前用户对指定表格的个性化列配置，包括列的显示/隐藏和排序。
+ * 鑾峰彇褰撳墠鐢ㄦ埛瀵规寚瀹氳〃鏍肩殑涓€у寲鍒楅厤缃紝鍖呮嫭鍒楃殑鏄剧ず/闅愯棌鍜屾帓搴忋€?
  * </p>
  * 
- * @param tableCode 表格编码
- * @returns 用户列配置
+ * @param tableCode 琛ㄦ牸缂栫爜
+ * @returns 鐢ㄦ埛鍒楅厤缃?
  */
 export function getUserColumns(tableCode: string) {
   return http.post<UserColumnConfigResult>('/sys/common/table/config/user/columns', { tableCode }, { silentError: true } as any)
 }
 
 /**
- * 保存用户列配置
+ * 淇濆瓨鐢ㄦ埛鍒楅厤缃?
  * <p>
- * 保存当前用户对指定表格的个性化列配置，包括列的显示/隐藏和排序。
+ * 淇濆瓨褰撳墠鐢ㄦ埛瀵规寚瀹氳〃鏍肩殑涓€у寲鍒楅厤缃紝鍖呮嫭鍒楃殑鏄剧ず/闅愯棌鍜屾帓搴忋€?
  * </p>
  * 
- * @param data 用户列配置参数
- * @returns 配置 ID
+ * @param data 鐢ㄦ埛鍒楅厤缃弬鏁?
+ * @returns 閰嶇疆 ID
  */
 export function saveUserColumns(data: UserColumnConfigParam) {
   return http.post<number>('/sys/common/table/config/user/columns/save', data)
 }
 
 /**
- * 重置用户列配置
+ * 閲嶇疆鐢ㄦ埛鍒楅厤缃?
  * <p>
- * 删除当前用户对指定表格的个性化列配置，恢复为默认配置。
+ * 鍒犻櫎褰撳墠鐢ㄦ埛瀵规寚瀹氳〃鏍肩殑涓€у寲鍒楅厤缃紝鎭㈠涓洪粯璁ら厤缃€?
  * </p>
  * 
- * @param tableCode 表格编码
- * @returns 操作结果
+ * @param tableCode 琛ㄦ牸缂栫爜
+ * @returns 鎿嶄綔缁撴灉
  */
 export function resetUserColumns(tableCode: string) {
   return http.post<void>('/sys/common/table/config/user/columns/reset', { tableCode })

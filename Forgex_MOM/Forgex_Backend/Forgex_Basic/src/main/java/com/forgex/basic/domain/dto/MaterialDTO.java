@@ -14,7 +14,7 @@ import java.util.List;
  * 用于向前端返回物料详细信息
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

@@ -5,7 +5,7 @@
         <p class="hero-panel__eyebrow">Approval Center</p>
         <h2 class="hero-panel__title">选择要发起的审批流程</h2>
         <p class="hero-panel__desc">
-          当前页只负责选择流程，不再直接展开表单。点击卡片后进入下一步填写并提交审批内容。
+          当前页面仅负责选择流程，不再直接展开表单。点击卡片后进入下一步填写并提交审批内容。
         </p>
       </div>
 
@@ -109,7 +109,7 @@
               <div class="task-card__footer">
                 <span>{{ task.taskCode }}</span>
                 <span class="task-card__open">
-                  进入填写
+                  杩涘叆濉啓
                   <ArrowRightOutlined />
                 </span>
               </div>
@@ -117,7 +117,7 @@
           </button>
         </div>
 
-        <a-empty v-else class="state-wrap" description="暂无可发起的审批流程" />
+        <a-empty v-else class="state-wrap" description="鏆傛棤鍙彂璧风殑瀹℃壒娴佺▼" />
       </section>
     </section>
   </div>
@@ -160,7 +160,7 @@ const categoryOptions = computed<TaskCategoryOption[]>(() => {
     counters.set(category, (counters.get(category) || 0) + 1)
   })
   return [
-    { key: 'all', label: '全部流程', count: taskList.value.length },
+    { key: 'all', label: '鍏ㄩ儴娴佺▼', count: taskList.value.length },
     ...Array.from(counters.entries()).map(([label, count]) => ({ key: label, label, count }))
   ]
 })
@@ -260,7 +260,7 @@ async function loadTaskList() {
 
 function handleOpenTask(task: WfTaskConfigDTO) {
   persistRecentTask(task.taskCode)
-  router.push(approvalRoutePaths.executionStartForm(task.taskCode))
+  router.push(approvalRoutePaths.executionStart表单(task.taskCode))
 }
 
 onMounted(() => {

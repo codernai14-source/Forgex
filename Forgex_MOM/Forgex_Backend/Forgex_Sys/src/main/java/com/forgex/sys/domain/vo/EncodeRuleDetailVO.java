@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
  * 支持段类型等字段的文本展示。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleVO 主表 VO

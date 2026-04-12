@@ -1,23 +1,23 @@
 <template>
   <div class="message-list-page">
-    <!-- 查询表单 -->
+    <!-- 鏌ヨ琛ㄥ崟 -->
     <a-card :bordered="false" class="search-card">
-      <a-form layout="inline" :model="searchForm">
+      <a-form layout="inline" :model="search表单">
         <a-form-item label="消息类型">
-          <a-select v-model:value="searchForm.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
+          <a-select v-model:value="search表单.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
             <a-select-option value="NOTICE">通知</a-select-option>
             <a-select-option value="WARNING">警告</a-select-option>
             <a-select-option value="ALARM">报警</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="状态">
-          <a-select v-model:value="searchForm.status" placeholder="请选择状态" allow-clear style="width: 120px">
+          <a-select v-model:value="search表单.status" placeholder="请选择状态" allow-clear style="width: 120px">
             <a-select-option :value="0">未读</a-select-option>
             <a-select-option :value="1">已读</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="标题">
-          <a-input v-model:value="searchForm.title" placeholder="请输入标题" allow-clear />
+          <a-input v-model:value="search表单.title" placeholder="请输入标题" allow-clear />
         </a-form-item>
         <a-form-item>
           <a-space>
@@ -38,7 +38,7 @@
       </a-form>
     </a-card>
 
-    <!-- 数据列表 -->
+    <!-- 鏁版嵁鍒楄〃 -->
     <a-card :bordered="false" class="list-card">
       <a-list
         :loading="loading"
@@ -91,7 +91,7 @@
       </a-list>
     </a-card>
 
-    <!-- 消息详情弹窗 -->
+    <!-- 娑堟伅璇︽儏寮圭獥 -->
     <a-modal
       v-model:open="detailVisible"
       title="消息详情"
@@ -117,7 +117,7 @@
           <a-descriptions-item label="发送时间">
             {{ currentMessage.createTime }}
           </a-descriptions-item>
-          <a-descriptions-item v-if="currentMessage.readTime" label="阅读时间">
+          <a-descriptions-item v-if="currentMessage.readTime" label="闃呰鏃堕棿">
             {{ currentMessage.readTime }}
           </a-descriptions-item>
           <a-descriptions-item v-if="currentMessage.linkUrl" label="相关链接">
@@ -131,7 +131,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { message } from 'ant-design-vue'
 import {
   SearchOutlined,
   ReloadOutlined,
@@ -146,8 +145,8 @@ import {
   markAllMessageRead
 } from '@/api/message'
 
-// 查询表单
-const searchForm = reactive({
+// 鏌ヨ琛ㄥ崟
+const search表单 = reactive({
   messageType: undefined,
   platform: 'INTERNAL',
   status: undefined,
@@ -156,7 +155,7 @@ const searchForm = reactive({
   pageSize: 10
 })
 
-// 列表数据
+// 鍒楄〃鏁版嵁
 const dataSource = ref([])
 const loading = ref(false)
 const pagination = reactive({
@@ -173,11 +172,11 @@ const pagination = reactive({
   }
 })
 
-// 详情弹窗
+// 璇︽儏寮圭獥
 const detailVisible = ref(false)
 const currentMessage = ref<any>(null)
 
-// 获取消息类型颜色
+// 鑾峰彇娑堟伅绫诲瀷棰滆壊
 const getMessageTypeColor = (type: string) => {
   const colorMap: Record<string, string> = {
     NOTICE: '#1890ff',
@@ -187,17 +186,17 @@ const getMessageTypeColor = (type: string) => {
   return colorMap[type] || '#1890ff'
 }
 
-// 获取消息类型文本
+// 鑾峰彇娑堟伅绫诲瀷鏂囨湰
 const getMessageTypeText = (type: string) => {
   const textMap: Record<string, string> = {
-    NOTICE: '通知',
-    WARNING: '警告',
-    ALARM: '报警'
+    NOTICE: '閫氱煡',
+    WARNING: '璀﹀憡',
+    ALARM: '鎶ヨ'
   }
   return textMap[type] || type
 }
 
-// 获取消息类型图标
+// 鑾峰彇娑堟伅绫诲瀷鍥炬爣
 const getMessageTypeIcon = (type: string) => {
   const iconMap: Record<string, any> = {
     NOTICE: BellOutlined,
@@ -207,12 +206,12 @@ const getMessageTypeIcon = (type: string) => {
   return iconMap[type] || BellOutlined
 }
 
-// 查询数据
+// 鏌ヨ鏁版嵁
 const loadData = async () => {
   loading.value = true
   try {
     const params = {
-      ...searchForm,
+      ...search表单,
       pageNum: pagination.current,
       pageSize: pagination.pageSize
     }
@@ -220,21 +219,21 @@ const loadData = async () => {
     dataSource.value = res.records || []
     pagination.total = res.total || 0
   } catch (error) {
-    console.error('查询失败:', error)
+    console.error('鏌ヨ澶辫触:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 查询
+// 鏌ヨ
 const handleSearch = () => {
   pagination.current = 1
   loadData()
 }
 
-// 重置
+// 閲嶇疆
 const handleReset = () => {
-  Object.assign(searchForm, {
+  Object.assign(search表单, {
     messageType: undefined,
     status: undefined,
     title: ''
@@ -242,61 +241,59 @@ const handleReset = () => {
   handleSearch()
 }
 
-// 分页变化
+// 鍒嗛〉鍙樺寲
 const handlePageChange = (page: number, pageSize: number) => {
   pagination.current = page
   pagination.pageSize = pageSize
   loadData()
 }
 
-// 列表项点击
+// 鍒楄〃椤圭偣鍑?
 const handleItemClick = async (item: any) => {
   currentMessage.value = item
   detailVisible.value = true
   
-  // 如果是未读消息，标记为已读
+  // 濡傛灉鏄湭璇绘秷鎭紝鏍囪涓哄凡璇?
   if (item.status === 0) {
     try {
-      await markMessageRead(item.id)
+      await markMessageRead(item.id, { showSuccessMessage: false })
       item.status = 1
       item.readTime = new Date().toLocaleString()
     } catch (error) {
-      console.error('标记已读失败:', error)
+      console.error('鏍囪宸茶澶辫触:', error)
     }
   }
 }
 
-// 标记已读
+// 鏍囪宸茶
 const handleMarkRead = async (item: any) => {
   try {
     await markMessageRead(item.id)
-    message.success('标记成功')
     item.status = 1
     item.readTime = new Date().toLocaleString()
   } catch (error) {
-    message.error('标记失败')
+    console.error('鏍囪澶辫触:', error)
   }
 }
 
-// 全部已读
+// 鍏ㄩ儴宸茶
 const handleMarkAllRead = async () => {
   try {
     await markAllMessageRead()
-    message.success('全部标记成功')
     loadData()
   } catch (error) {
-    message.error('标记失败')
+    console.error('鍏ㄩ儴鏍囪澶辫触:', error)
   }
 }
 
-// 跳转链接
+// 璺宠浆閾炬帴
 const handleGoToLink = (item: any) => {
   if (item.linkUrl) {
     window.open(item.linkUrl, '_blank')
   }
 }
 
-// 初始化
+// 鍒濆鍖?
 onMounted(() => {
   loadData()
 })

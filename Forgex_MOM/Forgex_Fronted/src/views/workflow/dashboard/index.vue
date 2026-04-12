@@ -111,7 +111,7 @@
                   </div>
                   <div class="config-item__tags">
                     <a-tag :color="item.formType === 1 ? 'blue' : 'green'">
-                      {{ item.formType === 1 ? t('workflow.taskConfig.customForm') : t('workflow.taskConfig.lowCodeForm') }}
+                      {{ item.formType === 1 ? t('workflow.taskConfig.custom表单') : t('workflow.taskConfig.lowCode表单') }}
                     </a-tag>
                     <a-tag :color="item.status === 1 ? 'success' : 'default'">
                       {{ item.status === 1 ? t('workflow.dashboard.enabledText') : t('workflow.dashboard.disabledText') }}
@@ -151,7 +151,7 @@
               >
                 <div class="task-main">
                   <span class="task-name">{{ item.taskName }}</span>
-                  <a-tag :color="getStatusColor(item.status)" size="small">{{ getStatusText(item.status) }}</a-tag>
+                  <a-tag :color="get状态Color(item.status)" size="small">{{ get状态Text(item.status) }}</a-tag>
                 </div>
                 <div class="task-meta">
                   <span>{{ item.initiatorName }}</span>
@@ -186,7 +186,7 @@
               >
                 <div class="task-main">
                   <span class="task-name">{{ item.taskName }}</span>
-                  <a-tag :color="getStatusColor(item.status)" size="small">{{ getStatusText(item.status) }}</a-tag>
+                  <a-tag :color="get状态Color(item.status)" size="small">{{ get状态Text(item.status) }}</a-tag>
                 </div>
                 <div class="task-meta">
                   <span>{{ item.initiatorName }}</span>
@@ -249,14 +249,14 @@
           <a-descriptions-item :label="t('workflow.dashboard.detailInitiator')">{{ currentRecord.initiatorName }}</a-descriptions-item>
           <a-descriptions-item :label="t('workflow.dashboard.detailStartTime')">{{ formatDateTime(currentRecord.startTime) }}</a-descriptions-item>
           <a-descriptions-item :label="t('workflow.dashboard.detailCurrentNode')">{{ currentRecord.currentNodeName || '-' }}</a-descriptions-item>
-          <a-descriptions-item :label="t('workflow.dashboard.detailStatus')">
-            <a-tag :color="getStatusColor(currentRecord.status)">{{ getStatusText(currentRecord.status) }}</a-tag>
+          <a-descriptions-item :label="t('workflow.dashboard.detail状态')">
+            <a-tag :color="get状态Color(currentRecord.status)">{{ get状态Text(currentRecord.status) }}</a-tag>
           </a-descriptions-item>
         </a-descriptions>
         <a-divider />
         <div class="form-block">
           <h4>{{ t('workflow.taskConfig.formContent') }}</h4>
-          <pre>{{ formatFormContent(currentRecord.formContent) }}</pre>
+          <pre>{{ format表单Content(currentRecord.formContent) }}</pre>
         </div>
       </template>
     </a-drawer>
@@ -300,7 +300,7 @@ import {
   type WfTaskConfigSummaryDTO
 } from '@/api/workflow/taskConfig'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
-import { usePermissionStore } from '@/stores/permission'
+import { use权限Store } from '@/stores/permission'
 import './index.less'
 
 const SHORTCUT_LIMIT = 5
@@ -309,7 +309,7 @@ const RECENT_TASK_STORAGE_KEY = 'workflow-recent-task-codes'
 
 const { t } = useI18n()
 const router = useRouter()
-const permissionStore = usePermissionStore()
+const permissionStore = use权限Store()
 
 const summaryLoading = ref(false)
 const analyticsLoading = ref(false)
@@ -336,10 +336,10 @@ function hasAccessibleRoute(path: string) {
 }
 
 const canStartExecution = computed(() =>
-  permissionStore.hasPermission('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
+  permissionStore.has权限('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
 )
 const canViewTaskConfig = computed(() =>
-  permissionStore.hasPermission('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
+  permissionStore.has权限('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
 )
 const pageLoading = computed(() => summaryLoading.value || analyticsLoading.value || shortcutLoading.value || taskConfigLoading.value)
 
@@ -351,8 +351,8 @@ function createEmptyWeeklyResults(): WfDashboardWeeklyResultDTO[] {
   }))
 }
 
-function resolveCssVar(name: string, fallback: string) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+function resolveCssVar(name: string, 降级方案: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || 降级方案
 }
 
 function loadRecentTaskCodes(): string[] {
@@ -574,13 +574,13 @@ const openDetail = (record: WfExecutionDTO) => {
   currentRecord.value = record
   detailDrawerVisible.value = true
 }
-const handleOpenShortcut = (task: WfTaskConfigDTO) => router.push(approvalRoutePaths.executionStartForm(task.taskCode))
+const handleOpenShortcut = (task: WfTaskConfigDTO) => router.push(approvalRoutePaths.executionStart表单(task.taskCode))
 
-function getStatusColor(status?: number) {
+function get状态Color(status?: number) {
   return ({ 0: 'default', 1: 'processing', 2: 'success', 3: 'error' } as Record<number, string>)[status ?? 0] ?? 'default'
 }
 
-function getStatusText(status?: number) {
+function get状态Text(status?: number) {
   return ({
     0: t('workflow.dashboard.status.pending'),
     1: t('workflow.dashboard.status.processing'),
@@ -593,7 +593,7 @@ function formatDateTime(dateTime?: string) {
   return dateTime ? dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss') : '-'
 }
 
-function formatFormContent(formContent?: string) {
+function format表单Content(formContent?: string) {
   if (!formContent) return '{}'
   try {
     return JSON.stringify(JSON.parse(formContent), null, 2)
@@ -604,10 +604,10 @@ function formatFormContent(formContent?: string) {
 
 function getTaskCategory(task: Pick<WfTaskConfigDTO, 'taskCode' | 'taskName' | 'remark'>) {
   const content = `${task.taskName}${task.taskCode}${task.remark || ''}`.toLowerCase()
-  if (content.includes('请假') || content.includes('leave') || content.includes('hr')) return 'hr'
-  if (content.includes('合同') || content.includes('contract')) return 'contract'
-  if (content.includes('财务') || content.includes('expense') || content.includes('付款')) return 'finance'
-  if (content.includes('采购') || content.includes('项目')) return 'project'
+  if (content.includes('璇峰亣') || content.includes('leave') || content.includes('hr')) return 'hr'
+  if (content.includes('鍚堝悓') || content.includes('contract')) return 'contract'
+  if (content.includes('璐㈠姟') || content.includes('expense') || content.includes('浠樻')) return 'finance'
+  if (content.includes('閲囪喘') || content.includes('椤圭洰')) return 'project'
   return 'general'
 }
 

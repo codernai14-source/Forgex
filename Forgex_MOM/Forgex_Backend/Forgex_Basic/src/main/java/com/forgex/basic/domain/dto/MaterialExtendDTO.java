@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 用于向前端返回物料动态扩展字段的定义信息
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

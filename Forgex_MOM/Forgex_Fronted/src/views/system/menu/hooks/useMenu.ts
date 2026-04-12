@@ -1,5 +1,5 @@
 /**
- * 菜单列表逻辑 Hook
+ * 菜单列表逻辑封装
  * 
  * 封装菜单管理页面的核心业务逻辑，包括树形列表查询、搜索、删除等功能。
  * 
@@ -42,7 +42,7 @@ function buildTree(list: any[], parentId: string | number = '0'): any[] {
 }
 
 /**
- * 菜单管理 Hook
+ * 菜单管理逻辑封装
  * 
  * @returns 包含菜单列表状态和操作方法的对象
  */

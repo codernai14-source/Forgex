@@ -102,7 +102,7 @@ Forgex_Sys/src/main/java/com/forgex/sys/
  * 用于存储系统字典信息，支持树形结构和租户隔离
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-03-28
  */
@@ -167,7 +167,7 @@ public class SysDict extends BaseEntity {
  * 4. 字典缓存管理
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-03-28
  */
@@ -220,7 +220,7 @@ public interface ISysDictService extends IService<SysDict> {
  * 4. 字典树查询
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-03-28
  * @see ISysDictService
@@ -560,4 +560,4 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
 
 **文档版本**: 2.0  
 **创建日期**: 2026-04-03  
-**作者**: LiDaoMoM
+**作者**: ForGexTeam

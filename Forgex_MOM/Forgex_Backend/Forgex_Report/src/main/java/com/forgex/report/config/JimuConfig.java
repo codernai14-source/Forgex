@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * JimuReport 是一个功能丰富的低代码报表引擎，支持数据可视化大屏
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see org.jeecgframework.jimureport.spring.boot3.starter.config.JimuReportAutoConfiguration

@@ -26,7 +26,7 @@
       <a-form-item label="报表编码" name="code">
         <a-input
           v-model:value="form.code"
-          placeholder="请输入报表编码（英文字母开头）"
+          placeholder="璇疯緭鍏ユ姤琛ㄧ紪鐮侊紙鑻辨枃瀛楁瘝寮€澶达級"
           maxlength="50"
           show-count
           :disabled="!!form.id"
@@ -48,7 +48,7 @@
         <a-tree-select
           v-model:value="form.categoryId"
           :tree-data="categoryTreeData"
-          placeholder="请选择报表分类"
+          placeholder="璇烽€夋嫨鎶ヨ〃鍒嗙被"
           allow-clear
           tree-node-filter-prop="label"
           show-search
@@ -87,7 +87,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch, nextTick } from 'vue'
-import { message, type FormInstance } from 'ant-design-vue'
+import { type 表单Instance } from 'ant-design-vue'
 import type { ReportTemplate, ReportSaveDTO, ReportCategory } from '@/api/report/types'
 import { save, getCategoryTree } from '@/api/report'
 
@@ -116,7 +116,7 @@ const visible = computed({
   set: (value) => emit('update:open', value),
 })
 
-const formRef = ref<FormInstance>()
+const formRef = ref<表单Instance>()
 const formTitle = computed(() => (form.id ? '编辑报表' : '新增报表'))
 
 const form = reactive<ReportSaveDTO>({
@@ -140,7 +140,7 @@ const formRules = {
     { required: true, message: '请输入报表编码', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-      message: '报表编码必须以字母开头，只能包含字母、数字和下划线',
+      message: '报表编码必须以字母开头，且只能包含字母、数字和下划线',
       trigger: 'blur',
     },
     { max: 50, message: '报表编码不能超过 50 个字符', trigger: 'blur' },
@@ -166,7 +166,7 @@ function buildTreeData(options: Array<{ label: string; value: number }>) {
   }))
 }
 
-function resetForm() {
+function reset表单() {
   form.id = undefined
   form.name = ''
   form.code = ''
@@ -179,7 +179,7 @@ function resetForm() {
   formRef.value?.resetFields()
 }
 
-function loadFormData(data: Partial<ReportTemplate>) {
+function load表单Data(data: Partial<ReportTemplate>) {
   form.id = data.id
   form.name = data.name || ''
   form.code = data.code || ''
@@ -195,17 +195,17 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate()
     await save(form)
-    message.success(form.id ? '保存成功' : '创建成功')
     emit('ok')
   } catch (error: any) {
-    if (error?.response?.data?.message) {
-      message.error(error.response.data.message)
+    if (error?.errorFields) {
+      return
     }
+    console.error('保存报表失败', error)
   }
 }
 
 function handleCancel() {
-  resetForm()
+  reset表单()
   emit('update:open', false)
 }
 
@@ -214,10 +214,10 @@ watch(
   (newData) => {
     if (newData && Object.keys(newData).length > 0) {
       nextTick(() => {
-        loadFormData(newData)
+        load表单Data(newData)
       })
     } else {
-      resetForm()
+      reset表单()
     }
   },
   { deep: true }
@@ -225,11 +225,11 @@ watch(
 
 onMounted(() => {
   if (!props.formData || Object.keys(props.formData).length === 0) {
-    resetForm()
+    reset表单()
   }
 })
 </script>
 
 <style scoped lang="less">
-// 样式可以在这里添加
+// 鏍峰紡鍙互鍦ㄨ繖閲屾坊鍔?
 </style>

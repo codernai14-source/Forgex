@@ -1,5 +1,5 @@
 /**
- * 프로필 페이지
+ * 个人资料页面
  *
  * @author Forgex
  * @version 1.0.0
@@ -21,7 +21,7 @@ export default {
     department: '부서',
     position: '직위',
     entryDate: '입사일',
-    status: '상태',
+    status: '状态',
     oldPassword: '기존 비밀번호',
     newPassword: '새 비밀번호',
     confirmPassword: '비밀번호 확인',
@@ -49,7 +49,7 @@ export default {
   },
   message: {
     loadFailed: '사용자 정보를 불러오지 못했습니다',
-    passwordChanged: '비밀번호가 변경되었습니다. 다시 로그인하세요.',
+    passwordChanged: '비밀번호가 변경되었습니다. 다시 日志인하세요.',
     passwordChangeFailed: '비밀번호 변경에 실패했습니다',
   },
 }

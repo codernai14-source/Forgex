@@ -313,19 +313,19 @@ const formData = reactive({
   contents: [] as any[],
 })
 
-const resolveI18nText = (i18nJson?: string, fallback = '') => {
-  return getI18nValue(i18nJson, fallback).trim()
+const resolveI18nText = (i18nJson?: string, 降级方案 = '') => {
+  return getI18nValue(i18nJson, 降级方案).trim()
 }
 
-const ensureI18nJsonValue = (i18nJson?: string, fallback = '') => {
+const ensureI18nJsonValue = (i18nJson?: string, 降级方案 = '') => {
   if (typeof i18nJson === 'string' && i18nJson.trim()) {
     return i18nJson
   }
-  const text = fallback.trim()
+  const text = 降级方案.trim()
   return text ? toI18nJson({ 'zh-CN': text }) : ''
 }
 
-const normalizeFormData = (data: any) => {
+const normalize表单Data = (data: any) => {
   const next = data || {}
   return {
     ...next,
@@ -399,7 +399,7 @@ const ensureCurrentUserId = async () => {
   return undefined
 }
 
-const validateForm = () => {
+const validate表单 = () => {
   if (!formData.templateCode || !formData.templateCode.trim()) {
     message.error(t('system.messageTemplate.validate.templateCodeRequired'))
     activeTab.value = 'basic'
@@ -431,7 +431,7 @@ const validateForm = () => {
       activeTab.value = 'receiver'
       return false
     }
-    // 自定义类型不需要指定接收人 ID
+    // 鑷畾涔夌被鍨嬩笉闇€瑕佹寚瀹氭帴鏀朵汉 ID
     if (receiver.receiverType !== 'CUSTOM' && (!receiver.receiverIds || receiver.receiverIds.length === 0)) {
       message.error(t('system.messageTemplate.receiver.targetRequired', { index: i + 1 }))
       activeTab.value = 'receiver'
@@ -505,7 +505,7 @@ const handleTestSend = async () => {
 
   const rawTitle = resolveI18nText(internalContent.contentTitleI18nJson, internalContent.contentTitle)
   const rawBody = resolveI18nText(internalContent.contentBodyI18nJson, internalContent.contentBody)
-  const fallbackTitle = resolveI18nText(formData.templateNameI18nJson, formData.templateName)
+  const 降级方案Title = resolveI18nText(formData.templateNameI18nJson, formData.templateName)
     || t('system.messageTemplate.testData.defaultTemplateTitle')
 
   const placeholderValues: Record<string, string> = {
@@ -517,12 +517,12 @@ const handleTestSend = async () => {
     userAccount: userStore.userInfo?.account || sessionStorage.getItem('account') || 'current.user',
     tenantName: userStore.userInfo?.tenantName || t('system.messageTemplate.testData.currentTenant'),
     currentTime: formatCurrentTime(),
-    title: fallbackTitle,
+    title: 降级方案Title,
     content: t('system.messageTemplate.testData.defaultContent'),
     linkUrl: internalContent.linkUrl || '/workspace',
   }
 
-  const title = renderPlaceholderText(rawTitle, placeholderValues) || fallbackTitle
+  const title = renderPlaceholderText(rawTitle, placeholderValues) || 降级方案Title
   const content = renderPlaceholderText(rawBody, { ...placeholderValues, title }) || placeholderValues.content
   const linkUrl = renderPlaceholderText(internalContent.linkUrl || '', { ...placeholderValues, title, content })
 
@@ -588,7 +588,7 @@ const handlePullPublicConfig = async () => {
   await tableRef.value?.reload?.()
 }
 
-const resetFormData = () => {
+const reset表单Data = () => {
   Object.assign(formData, {
     id: undefined,
     templateCode: '',
@@ -607,7 +607,7 @@ const resetFormData = () => {
 const handleAdd = () => {
   isEditMode.value = false
   activeTab.value = 'basic'
-  resetFormData()
+  reset表单Data()
   modalVisible.value = true
 }
 
@@ -615,7 +615,7 @@ const handleEdit = async (record: any) => {
   isEditMode.value = true
   activeTab.value = 'basic'
   const res = await getMessageTemplate(record.id, publicConfig.value)
-  Object.assign(formData, normalizeFormData(res))
+  Object.assign(formData, normalize表单Data(res))
   modalVisible.value = true
 }
 
@@ -674,7 +674,7 @@ const handleRemoveContent = (index: number) => {
 }
 
 const handleModalOk = async () => {
-  if (!validateForm()) {
+  if (!validate表单()) {
     return
   }
 

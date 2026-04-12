@@ -14,7 +14,7 @@ import java.util.List;
  * 用于返回物料的完整详细信息，包含基础信息、扩展字段、审批记录等
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

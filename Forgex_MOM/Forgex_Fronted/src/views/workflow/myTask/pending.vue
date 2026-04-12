@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrap">
-    <!-- 待办审批列表 -->
+    <!-- 寰呭姙瀹℃壒鍒楄〃 -->
     <fx-dynamic-table
       ref="tableRef"
       :table-code="'WfPendingTaskTable'"
@@ -10,8 +10,8 @@
       :show-query-form="true"
     >
       <template #status="{ record }">
-        <a-tag :color="getStatusColor(record.status)">
-          {{ getStatusText(record.status) }}
+        <a-tag :color="get状态Color(record.status)">
+          {{ get状态Text(record.status) }}
         </a-tag>
       </template>
 
@@ -51,7 +51,7 @@
       </template>
     </fx-dynamic-table>
 
-    <!-- 审批处理弹窗 -->
+    <!-- 瀹℃壒澶勭悊寮圭獥 -->
     <BaseFormDialog
       v-model:open="approveDialogVisible"
       :title="approveAction === 'approve' ? $t('workflow.myTask.approveAgree') : $t('workflow.myTask.approveReject')"
@@ -61,13 +61,13 @@
       @cancel="handleApproveCancel"
     >
       <a-form
-        ref="approveFormRef"
-        :model="approveFormData"
+        ref="approve表单Ref"
+        :model="approve表单Data"
         :rules="approveRules"
         :label-col="{ span: 4 }"
         :wrapper-col="{ span: 18 }"
       >
-        <a-form-item label="审批任务">
+        <a-form-item label="瀹℃壒浠诲姟">
           <a-input
             :value="currentRecord?.taskName"
             disabled
@@ -81,7 +81,7 @@
           />
         </a-form-item>
 
-        <a-form-item label="发起时间">
+        <a-form-item label="鍙戣捣鏃堕棿">
           <a-input
             :value="formatDateTime(currentRecord?.startTime)"
             disabled
@@ -90,61 +90,61 @@
 
         <a-form-item
           v-if="approveAction === 'reject'"
-          label="驳回类型"
+          label="椹冲洖绫诲瀷"
           name="rejectType"
         >
           <a-select
-            v-model:value="approveFormData.rejectType"
-            placeholder="请选择驳回类型"
+            v-model:value="approve表单Data.rejectType"
+            placeholder="璇烽€夋嫨椹冲洖绫诲瀷"
           >
-            <a-select-option :value="1">驳回任务（直接结束）</a-select-option>
-            <a-select-option :value="2">返回上一节点（重新审批）</a-select-option>
+            <a-select-option :value="1">椹冲洖浠诲姟锛堢洿鎺ョ粨鏉燂級</a-select-option>
+            <a-select-option :value="2">杩斿洖涓婁竴鑺傜偣锛堥噸鏂板鎵癸級</a-select-option>
           </a-select>
         </a-form-item>
 
-        <a-form-item label="审批意见" name="comment">
+        <a-form-item label="瀹℃壒鎰忚" name="comment">
           <a-textarea
-            v-model:value="approveFormData.comment"
+            v-model:value="approve表单Data.comment"
             placeholder="请输入审批意见"
             :rows="4"
           />
         </a-form-item>
 
-        <!-- 表单内容展示 -->
-        <a-form-item label="表单内容">
+        <!-- 琛ㄥ崟鍐呭灞曠ず -->
+        <a-form-item label="琛ㄥ崟鍐呭">
           <div class="form-content">
-            <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
+            <pre>{{ format表单Content(currentRecord?.formContent) }}</pre>
           </div>
         </a-form-item>
       </a-form>
     </BaseFormDialog>
 
-    <!-- 详情查看弹窗 -->
+    <!-- 璇︽儏鏌ョ湅寮圭獥 -->
     <a-drawer
       v-model:open="detailDrawerVisible"
-      :title="'审批详情'"
+      :title="'瀹℃壒璇︽儏'"
       :width="800"
       :body-style="{ paddingBottom: '80px' }"
     >
       <a-descriptions bordered :column="2">
-        <a-descriptions-item label="审批任务">
+        <a-descriptions-item label="瀹℃壒浠诲姟">
           {{ currentRecord?.taskName }}
         </a-descriptions-item>
-        <a-descriptions-item label="任务编码">
+        <a-descriptions-item label="浠诲姟缂栫爜">
           {{ currentRecord?.taskCode }}
         </a-descriptions-item>
         <a-descriptions-item label="发起人">
           {{ currentRecord?.initiatorName }}
         </a-descriptions-item>
-        <a-descriptions-item label="发起时间">
+        <a-descriptions-item label="鍙戣捣鏃堕棿">
           {{ formatDateTime(currentRecord?.startTime) }}
         </a-descriptions-item>
-        <a-descriptions-item label="当前节点">
+        <a-descriptions-item label="褰撳墠鑺傜偣">
           {{ currentRecord?.currentNodeName || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag :color="getStatusColor(currentRecord?.status)">
-            {{ getStatusText(currentRecord?.status) }}
+          <a-tag :color="get状态Color(currentRecord?.status)">
+            {{ get状态Text(currentRecord?.status) }}
           </a-tag>
         </a-descriptions-item>
       </a-descriptions>
@@ -152,8 +152,8 @@
       <a-divider />
 
       <div class="form-content-detail">
-        <h4>表单内容</h4>
-        <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
+        <h4>琛ㄥ崟鍐呭</h4>
+        <pre>{{ format表单Content(currentRecord?.formContent) }}</pre>
       </div>
     </a-drawer>
   </div>
@@ -161,7 +161,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { message } from 'ant-design-vue'
 import {
   CheckOutlined,
   CloseOutlined,
@@ -182,7 +181,7 @@ import dayjs from 'dayjs'
 const { dictItems: statusOptions } = useDict('status')
 
 const tableRef = ref()
-const approveFormRef = ref()
+const approve表单Ref = ref()
 
 const loading = ref(false)
 const approving = ref(false)
@@ -190,9 +189,9 @@ const approving = ref(false)
 const currentRecord = ref<WfExecutionDTO | null>(null)
 const approveDialogVisible = ref(false)
 const approveAction = ref<'approve' | 'reject'>('approve')
-const approveFormData = reactive<WfExecutionApproveParam>({
+const approve表单Data = reactive<WfExecutionApproveParam>({
   executionId: 0,
-  approveStatus: 1,
+  approve状态: 1,
   comment: '',
   rejectType: undefined
 })
@@ -204,12 +203,12 @@ const approveRules = {
 
 const detailDrawerVisible = ref(false)
 
-// 字典配置
+// 瀛楀吀閰嶇疆
 const dictOptions = computed(() => ({
   status: statusOptions.value
 }))
 
-// 处理表格数据请求
+// 澶勭悊琛ㄦ牸鏁版嵁璇锋眰
 const handleRequest = async (payload: { 
   page: { current: number; pageSize: number }; 
   query: Record<string, any>; 
@@ -223,7 +222,7 @@ const handleRequest = async (payload: {
       ...payload.query
     }
     
-    // 处理排序
+    // 澶勭悊鎺掑簭
     if (payload.sorter) {
       params.sortField = payload.sorter.field
       params.sortOrder = payload.sorter.order
@@ -233,15 +232,15 @@ const handleRequest = async (payload: {
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total: total }
   } catch (e: any) {
-    message.error(e.message || '加载待办列表失败')
+    console.error('鍔犺浇寰呭姙鍒楄〃澶辫触', e)
     return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
 }
 
-// 获取状态颜色
-const getStatusColor = (status?: number): string => {
+// 鑾峰彇鐘舵€侀鑹?
+const get状态Color = (status?: number): string => {
   const colorMap: Record<number, string> = {
     0: 'gray',
     1: 'processing',
@@ -251,8 +250,8 @@ const getStatusColor = (status?: number): string => {
   return colorMap[status || 0] || 'default'
 }
 
-// 获取状态文本
-const getStatusText = (status?: number): string => {
+// 鑾峰彇鐘舵€佹枃鏈?
+const get状态Text = (status?: number): string => {
   const textMap: Record<number, string> = {
     0: '未审批',
     1: '审批中',
@@ -262,14 +261,14 @@ const getStatusText = (status?: number): string => {
   return textMap[status || 0] || '未知'
 }
 
-// 格式化日期时间
+// 鏍煎紡鍖栨棩鏈熸椂闂?
 const formatDateTime = (dateTime?: string): string => {
   if (!dateTime) return '-'
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
 }
 
-// 格式化表单内容
-const formatFormContent = (formContent?: string): string => {
+// 鏍煎紡鍖栬〃鍗曞唴瀹?
+const format表单Content = (formContent?: string): string => {
   if (!formContent) return '{}'
   try {
     const obj = JSON.parse(formContent)
@@ -279,56 +278,54 @@ const formatFormContent = (formContent?: string): string => {
   }
 }
 
-// 处理审批同意
+// 澶勭悊瀹℃壒鍚屾剰
 const handleApprove = (record: WfExecutionDTO) => {
   currentRecord.value = record
   approveAction.value = 'approve'
-  approveFormData.executionId = record.id
-  approveFormData.approveStatus = 1
-  approveFormData.comment = ''
-  approveFormData.rejectType = undefined
+  approve表单Data.executionId = record.id
+  approve表单Data.approve状态 = 1
+  approve表单Data.comment = ''
+  approve表单Data.rejectType = undefined
   approveDialogVisible.value = true
 }
 
-// 处理审批驳回
+// 澶勭悊瀹℃壒椹冲洖
 const handleReject = (record: WfExecutionDTO) => {
   currentRecord.value = record
   approveAction.value = 'reject'
-  approveFormData.executionId = record.id
-  approveFormData.approveStatus = 2
-  approveFormData.comment = ''
-  approveFormData.rejectType = undefined
+  approve表单Data.executionId = record.id
+  approve表单Data.approve状态 = 2
+  approve表单Data.comment = ''
+  approve表单Data.rejectType = undefined
   approveDialogVisible.value = true
 }
 
-// 处理查看详情
+// 澶勭悊鏌ョ湅璇︽儏
 const handleViewDetail = (record: WfExecutionDTO) => {
   currentRecord.value = record
   detailDrawerVisible.value = true
 }
 
-// 提交审批
+// 鎻愪氦瀹℃壒
 const handleApproveSubmit = async () => {
   try {
-    await approveFormRef.value?.validate()
+    await approve表单Ref.value?.validate()
     approving.value = true
 
     const param: WfExecutionApproveParam = {
-      executionId: approveFormData.executionId,
-      approveStatus: approveFormData.approveStatus,
-      comment: approveFormData.comment
+      executionId: approve表单Data.executionId,
+      approve状态: approve表单Data.approve状态,
+      comment: approve表单Data.comment
     }
 
     if (approveAction.value === 'reject') {
-      param.rejectType = approveFormData.rejectType
+      param.rejectType = approve表单Data.rejectType
     }
 
     if (approveAction.value === 'approve') {
       await approve(param)
-      message.success('审批同意成功')
     } else {
       await reject(param)
-      message.success('审批驳回成功')
     }
 
     approveDialogVisible.value = false
@@ -337,16 +334,16 @@ const handleApproveSubmit = async () => {
     if (e.errorFields) {
       return
     }
-    message.error(e.message || '审批操作失败')
+    console.error('瀹℃壒鎿嶄綔澶辫触', e)
   } finally {
     approving.value = false
   }
 }
 
-// 取消审批
+// 鍙栨秷瀹℃壒
 const handleApproveCancel = () => {
   approveDialogVisible.value = false
-  approveFormRef.value?.resetFields()
+  approve表单Ref.value?.resetFields()
 }
 
 onMounted(() => {

@@ -1,8 +1,21 @@
-﻿/**
- * 佈局翻譯 - 繁體中文
+/**
+ * 布局翻译 - 繁体中文注释
  */
 export default {
-  globalSearchPlaceholder: '搜尋菜單或頁面',
+  globalSearchPlaceholder: '搜尋菜單、模組或拼音首字母...',
+  globalSearchResultsCount: '找到 {count} 個結果',
+  globalSearchEmptyTitle: '未找到相關菜單',
+  globalSearchEmptyHint: '試試菜單名、模組名或拼音首字母',
+  globalSearchTipsTitle: '快捷搜尋',
+  globalSearchTipNavigate: '導覽',
+  globalSearchTipSelect: '選擇',
+  globalSearchTipClose: '關閉',
+  globalSearchMatchTitle: '菜單',
+  globalSearchMatchModule: '模組',
+  globalSearchMatchTitlePinyin: '菜單拼音',
+  globalSearchMatchModulePinyin: '模組拼音',
+  globalSearchMatchBreadcrumb: '路徑',
+  globalSearchMatchPath: '路由',
   langZhCn: '簡體中文',
   langEnUs: 'English',
   refresh: '重新整理',
@@ -79,7 +92,7 @@ export default {
   watermark: '浮水印',
   watermarkEnabled: '浮水印',
   watermarkText: '浮水印文字',
-  formMode: '表單模式',
+  formMode: '表单模式',
   formModeModal: '彈窗',
   formModeDrawer: '抽屜',
   animateEnabled: '頁面動畫',
@@ -96,4 +109,5 @@ export default {
   logout: '登出',
   home: '首頁',
   personalHomepage: '個人首頁',
+  favoriteManagement: '收藏管理',
 }
