@@ -9,9 +9,7 @@
       :show-query-form="true"
     >
       <template #status="{ record }">
-        <a-tag :color="getStatusColor(record.status)">
-          {{ getStatusText(record.status) }}
-        </a-tag>
+        <DictTag :value="record.status" :items="executionStatusOptions" :fallback-text="getStatusText(record.status)" />
       </template>
 
       <template #startTime="{ record }">
@@ -38,32 +36,30 @@
 
     <a-drawer
       v-model:open="detailDrawerVisible"
-      title="审批详情"
+      :title="t('workflow.myTask.detailTitle')"
       :width="800"
       :body-style="{ paddingBottom: '80px' }"
     >
       <a-descriptions bordered :column="2">
-        <a-descriptions-item label="审批任务">
+        <a-descriptions-item :label="t('workflow.myTask.taskName')">
           {{ currentRecord?.taskName }}
         </a-descriptions-item>
-        <a-descriptions-item label="任务编码">
+        <a-descriptions-item :label="t('workflow.myTask.taskCode')">
           {{ currentRecord?.taskCode }}
         </a-descriptions-item>
-        <a-descriptions-item label="发起人">
+        <a-descriptions-item :label="t('workflow.myTask.initiator')">
           {{ currentRecord?.initiatorName }}
         </a-descriptions-item>
-        <a-descriptions-item label="发起时间">
+        <a-descriptions-item :label="t('workflow.myTask.startTime')">
           {{ formatDateTime(currentRecord?.startTime) }}
         </a-descriptions-item>
-        <a-descriptions-item label="当前节点">
+        <a-descriptions-item :label="t('workflow.myTask.currentNode')">
           {{ currentRecord?.currentNodeName || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="状态">
-          <a-tag :color="getStatusColor(currentRecord?.status)">
-            {{ getStatusText(currentRecord?.status) }}
-          </a-tag>
+        <a-descriptions-item :label="t('workflow.myTask.status')">
+          <DictTag :value="currentRecord?.status" :items="executionStatusOptions" :fallback-text="getStatusText(currentRecord?.status)" />
         </a-descriptions-item>
-        <a-descriptions-item label="完成时间" v-if="currentRecord?.endTime">
+        <a-descriptions-item :label="t('workflow.myTask.endTime')" v-if="currentRecord?.endTime">
           {{ formatDateTime(currentRecord.endTime) }}
         </a-descriptions-item>
       </a-descriptions>
@@ -71,14 +67,14 @@
       <a-divider />
 
       <div class="form-content-detail">
-        <h4>表单内容</h4>
+        <h4>{{ t('workflow.myTask.formContent') }}</h4>
         <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
       </div>
     </a-drawer>
 
     <a-modal
       v-model:open="historyModalVisible"
-      title="审批历史"
+      :title="t('workflow.myTask.historyTitle')"
       :width="900"
       :footer="null"
     >
@@ -103,11 +99,11 @@
             </div>
             <div class="history-content">
               <div class="history-info">
-                <span>处理人：{{ item.approverName }}</span>
-                <span>审批时间：{{ formatDateTime(item.approveTime) }}</span>
+                <span>{{ t('workflow.myTask.handler') }}: {{ item.approverName }}</span>
+                <span>{{ t('workflow.myTask.approveTime') }}: {{ formatDateTime(item.approveTime) }}</span>
               </div>
               <div class="history-comment" v-if="item.comment">
-                <strong>审批意见：</strong>{{ item.comment }}
+                <strong>{{ t('workflow.myTask.comment') }}: </strong>{{ item.comment }}
               </div>
             </div>
           </div>
@@ -120,6 +116,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -131,10 +128,12 @@ import {
   pageMyProcessed,
   type WfExecutionDTO,
 } from '@/api/workflow/execution'
+import DictTag from '@/components/common/DictTag.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { useDict } from '@/hooks/useDict'
+import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import dayjs from 'dayjs'
 
+const { t } = useI18n({ useScope: 'global' })
 const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
 
 const tableRef = ref()
@@ -149,13 +148,6 @@ const dictOptions = computed(() => ({
   status: executionStatusOptions.value,
   wf_execution_status: executionStatusOptions.value,
 }))
-
-const statusSelectOptions = computed(() =>
-  (executionStatusOptions.value || []).map((item: { label: string; value: string | number }) => ({
-    label: item.label,
-    value: Number(item.value),
-  })),
-)
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -179,25 +171,15 @@ const handleRequest = async (payload: {
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total }
   } catch (error: any) {
-    message.error(error.message || '加载已处理审批列表失败')
+    message.error(error.message || t('workflow.myTask.loadProcessedFailed'))
     return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
 }
 
-function getStatusColor(status?: number): string {
-  const colorMap: Record<number, string> = {
-    0: 'default',
-    1: 'processing',
-    2: 'success',
-    3: 'error',
-  }
-  return colorMap[status || 0] || 'default'
-}
-
 function getStatusText(status?: number): string {
-  return statusSelectOptions.value.find((item: { label: string; value: number }) => item.value === Number(status))?.label || '未知'
+  return getDictItemLabel(executionStatusOptions.value, status, t('workflow.myTask.unknownStatus'))
 }
 
 function formatDateTime(dateTime?: string): string {
@@ -225,11 +207,11 @@ function getHistoryColor(approveStatus?: number): string {
 
 function getHistoryText(approveStatus?: number): string {
   const textMap: Record<number, string> = {
-    0: '发起',
-    1: '同意',
-    2: '驳回',
+    0: t('workflow.myTask.historyStatus.started'),
+    1: t('workflow.myTask.historyStatus.approved'),
+    2: t('workflow.myTask.historyStatus.rejected'),
   }
-  return textMap[approveStatus || 0] || '未知'
+  return textMap[approveStatus || 0] || t('workflow.myTask.unknownStatus')
 }
 
 function getHistoryIcon(approveStatus?: number) {
@@ -252,22 +234,22 @@ async function handleViewHistory(record: WfExecutionDTO) {
   try {
     historyList.value = [
       {
-        nodeName: '发起',
+        nodeName: t('workflow.myTask.historyStartNode'),
         approverName: record.initiatorName,
         approveTime: record.startTime,
         approveStatus: 0,
-        comment: '发起审批',
+        comment: t('workflow.myTask.historyComment.started'),
       },
       {
-        nodeName: record.currentNodeName || '审批节点',
-        approverName: '系统记录',
+        nodeName: record.currentNodeName || t('workflow.myTask.historyCurrentNodeFallback'),
+        approverName: t('workflow.myTask.systemRecord'),
         approveTime: record.endTime || record.updateTime || record.startTime,
         approveStatus: record.status === 3 ? 2 : 1,
-        comment: record.status === 3 ? '流程已驳回' : '流程已处理完成',
+        comment: record.status === 3 ? t('workflow.myTask.historyComment.rejected') : t('workflow.myTask.historyComment.finished'),
       },
     ]
   } catch (error: any) {
-    message.error(error.message || '加载审批历史失败')
+    message.error(error.message || t('workflow.myTask.loadHistoryFailed'))
   }
 }
 

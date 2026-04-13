@@ -13,7 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import cn.hutool.core.util.HexUtil;
 import com.forgex.common.config.ConfigService;
+import com.forgex.common.crypto.RSAPasswordProvider;
+import com.forgex.common.crypto.TdeConfigChecker;
 import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.domain.config.EmailConfig;
 import com.forgex.common.domain.config.LoginSecurityConfig;
@@ -21,12 +24,15 @@ import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.config.CaptchaConfig;
+import com.forgex.sys.domain.config.CryptoConfig;
 import com.forgex.sys.domain.config.FileUploadConfig;
 import com.forgex.sys.domain.config.SecurityConfig;
 import com.forgex.sys.domain.config.SystemBasicConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.sql.DataSource;
+import java.security.SecureRandom;
 import java.util.Map;
 
 /**
@@ -56,9 +62,20 @@ public class SysConfigController {
     private static final String KEY_MAIL_SETTINGS = "mail.settings";
     private static final String KEY_FILE_UPLOAD = "file.upload.settings";
 
+    // 加密配置键常量
+    private static final String KEY_CRYPTO_SM4 = "security.crypto.sm4";
+    private static final String KEY_CRYPTO_AES = "security.crypto.aes";
+    private static final String KEY_CRYPTO_RSA = "security.crypto.rsa";
+    private static final String KEY_KMS_MASTER = "security.kms.master";
+    private static final String KEY_FILE_ENCRYPT = "security.file.encrypt";
+    private static final String KEY_FIELD_ENCRYPT = "security.field.encrypt";
+
     @Autowired
     private ConfigService configService;
-    
+
+    @Autowired
+    private DataSource dataSource;
+
     /**
      * 获取登录验证码配置
      * <p>
@@ -344,6 +361,129 @@ public class SysConfigController {
         configService.setGlobalJson(KEY_FILE_UPLOAD, config == null ? FileUploadConfig.defaults() : config);
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
+    }
+
+    // ======================== 加密配置接口 ========================
+
+    /**
+     * 获取加密配置
+     * <p>
+     * 接口路径：GET /sys/config/crypto
+     * 需要权限：sys:config:query
+     * </p>
+     *
+     * @return {@link R} 包含加密配置的统一返回结构
+     */
+    @GetMapping("/crypto")
+    public R<CryptoConfig> getCryptoConfig() {
+        CryptoConfig config = new CryptoConfig();
+        CryptoConfig.Sm4Config sm4 = configService.getJson(KEY_CRYPTO_SM4, CryptoConfig.Sm4Config.class, new CryptoConfig.Sm4Config());
+        CryptoConfig.AesConfig aes = configService.getJson(KEY_CRYPTO_AES, CryptoConfig.AesConfig.class, new CryptoConfig.AesConfig());
+        CryptoConfig.RsaConfig rsa = configService.getJson(KEY_CRYPTO_RSA, CryptoConfig.RsaConfig.class, new CryptoConfig.RsaConfig());
+        CryptoConfig.KmsConfig kms = configService.getJson(KEY_KMS_MASTER, CryptoConfig.KmsConfig.class, new CryptoConfig.KmsConfig());
+        CryptoConfig.FileEncryptConfig fileEnc = configService.getJson(KEY_FILE_ENCRYPT, CryptoConfig.FileEncryptConfig.class, new CryptoConfig.FileEncryptConfig());
+        CryptoConfig.FieldEncryptConfig fieldEnc = configService.getJson(KEY_FIELD_ENCRYPT, CryptoConfig.FieldEncryptConfig.class, new CryptoConfig.FieldEncryptConfig());
+        config.setSm4(sm4 != null ? sm4 : new CryptoConfig.Sm4Config());
+        config.setAes(aes != null ? aes : new CryptoConfig.AesConfig());
+        config.setRsa(rsa != null ? rsa : new CryptoConfig.RsaConfig());
+        config.setKms(kms != null ? kms : new CryptoConfig.KmsConfig());
+        config.setFileEncrypt(fileEnc != null ? fileEnc : new CryptoConfig.FileEncryptConfig());
+        config.setFieldEncrypt(fieldEnc != null ? fieldEnc : new CryptoConfig.FieldEncryptConfig());
+        return R.ok(config);
+    }
+
+    /**
+     * 保存加密配置
+     * <p>
+     * 接口路径：PUT /sys/config/crypto
+     * 需要权限：sys:config:edit
+     * </p>
+     *
+     * @param config 加密配置聚合对象
+     * @return {@link R} 操作结果
+     */
+    @PutMapping("/crypto")
+    public R<Boolean> setCryptoConfig(@RequestBody CryptoConfig config) {
+        if (config.getSm4() != null) configService.setJson(KEY_CRYPTO_SM4, config.getSm4());
+        if (config.getAes() != null) configService.setJson(KEY_CRYPTO_AES, config.getAes());
+        if (config.getRsa() != null) configService.setJson(KEY_CRYPTO_RSA, config.getRsa());
+        if (config.getKms() != null) configService.setJson(KEY_KMS_MASTER, config.getKms());
+        if (config.getFileEncrypt() != null) configService.setJson(KEY_FILE_ENCRYPT, config.getFileEncrypt());
+        if (config.getFieldEncrypt() != null) configService.setJson(KEY_FIELD_ENCRYPT, config.getFieldEncrypt());
+        return R.ok(CommonPrompt.SAVE_SUCCESS, true);
+    }
+
+    /**
+     * 生成 SM4 密钥（128位，32字符Hex）
+     * <p>
+     * 接口路径：POST /sys/config/crypto/generate/sm4
+     * 需要权限：sys:config:edit
+     * </p>
+     */
+    @PostMapping("/crypto/generate/sm4")
+    public R<Map<String, String>> generateSm4Key() {
+        byte[] key = new byte[16];
+        new SecureRandom().nextBytes(key);
+        String keyHex = HexUtil.encodeHexStr(key);
+        return R.ok(Map.of("keyHex", keyHex));
+    }
+
+    /**
+     * 生成 AES-256 密钥（256位，64字符Hex）
+     * <p>
+     * 接口路径：POST /sys/config/crypto/generate/aes
+     * 需要权限：sys:config:edit
+     * </p>
+     */
+    @PostMapping("/crypto/generate/aes")
+    public R<Map<String, String>> generateAesKey() {
+        byte[] key = new byte[32];
+        new SecureRandom().nextBytes(key);
+        String keyHex = HexUtil.encodeHexStr(key);
+        return R.ok(Map.of("keyHex", keyHex));
+    }
+
+    /**
+     * 生成 RSA 密钥对
+     * <p>
+     * 接口路径：POST /sys/config/crypto/generate/rsa?keySize=2048
+     * 需要权限：sys:config:edit
+     * </p>
+     *
+     * @param keySize 密钥长度（2048 或 4096，默认 2048）
+     */
+    @PostMapping("/crypto/generate/rsa")
+    public R<Map<String, String>> generateRsaKeyPair(@RequestParam(defaultValue = "2048") int keySize) {
+        String[] keys = RSAPasswordProvider.generateKeyPair(keySize);
+        return R.ok(Map.of("publicKey", keys[0], "privateKey", keys[1]));
+    }
+
+    /**
+     * 生成 KMS 主密钥（256位，64字符Hex）
+     * <p>
+     * 接口路径：POST /sys/config/crypto/generate/kms-master
+     * 需要权限：sys:config:edit
+     * </p>
+     */
+    @PostMapping("/crypto/generate/kms-master")
+    public R<Map<String, String>> generateKmsMasterKey() {
+        byte[] key = new byte[32];
+        new SecureRandom().nextBytes(key);
+        String keyHex = HexUtil.encodeHexStr(key);
+        return R.ok(Map.of("masterKeyHex", keyHex));
+    }
+
+    /**
+     * 检测 TDE 数据库透明加密状态
+     * <p>
+     * 接口路径：GET /sys/config/crypto/tde-status
+     * 需要权限：sys:config:query
+     * </p>
+     */
+    @GetMapping("/crypto/tde-status")
+    public R<TdeConfigChecker.TdeStatus> getTdeStatus() {
+        TdeConfigChecker.TdeStatus status = TdeConfigChecker.check(dataSource);
+        return R.ok(status);
     }
 
     private boolean isPasswordValid(String password, PasswordPolicyConfig policy) {

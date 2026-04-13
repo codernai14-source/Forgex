@@ -173,6 +173,22 @@ public class InitServiceImpl implements InitService {
             configService.setJson("security.crypto.sm4", sm4Cfg);
         }
 
+        if ("aes".equalsIgnoreCase(storeLower)) {
+            byte[] k = new byte[32]; new SecureRandom().nextBytes(k);
+            String keyHex = HexUtil.encodeHexStr(k);
+            Map<String, String> aesCfg = new HashMap<>();
+            aesCfg.put("keyHex", keyHex);
+            configService.setJson("security.crypto.aes", aesCfg);
+        }
+
+        if ("rsa".equalsIgnoreCase(storeLower)) {
+            String[] rsaKeys = com.forgex.common.crypto.RSAPasswordProvider.generateKeyPair2048();
+            Map<String, String> rsaCfg = new HashMap<>();
+            rsaCfg.put("publicKey", rsaKeys[0]);
+            rsaCfg.put("privateKey", rsaKeys[1]);
+            configService.setJson("security.crypto.rsa", rsaCfg);
+        }
+
         SM2 sm2 = new SM2();
         String pub = sm2.getPublicKeyBase64();
         String pri = sm2.getPrivateKeyBase64();

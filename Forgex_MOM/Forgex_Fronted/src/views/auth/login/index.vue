@@ -13,12 +13,13 @@
       v-if="systemConfig.loginBackgroundType === 'image'"
       class="bg-video"
       :src="resolveMediaUrl(systemConfig.loginBackgroundImage)"
+      alt="login-background"
     />
     <div class="mask" :style="{ backgroundColor: systemConfig.loginBackgroundType === 'color' ? systemConfig.loginBackgroundColor : '' }"></div>
     <div class="grid"></div>
     <div class="content" :class="`layout-${systemConfig.loginLayout || 'center'}`">
       <div class="brand" v-show="!tenantOpen">
-        <img v-if="resolveMediaUrl(systemConfig.systemLogo)" :src="resolveMediaUrl(systemConfig.systemLogo)" class="brand-logo" />
+        <img v-if="resolveMediaUrl(systemConfig.systemLogo)" :src="resolveMediaUrl(systemConfig.systemLogo)" class="brand-logo" alt="system-logo" />
         <span v-else class="brand-blue">{{ systemConfig.systemName.split('_')[0] }}</span
         ><span v-if="!resolveMediaUrl(systemConfig.systemLogo)" class="brand-red">_{{ systemConfig.systemName.split('_')[1] || 'MOM' }}</span>
         <div class="brand-line"></div>
@@ -54,7 +55,7 @@
                 v-model="captcha"
                 :placeholder="i18nT('common.login.captchaPlaceholder')"
               />
-              <img class="captcha-img" :src="imageBase64" @click="loadImage" />
+              <img class="captcha-img" :src="imageBase64" alt="captcha" @click="loadImage" />
             </div>
           </div>
           <div class="field" v-if="mode === 'slider'">
@@ -71,21 +72,22 @@
               <input type="checkbox" v-model="remember" />
               <span>{{ i18nT('common.login.rememberMe') }}</span>
             </label>
-            <a-select
-              v-if="languages.length > 0"
-              v-model:value="selectedLang"
-              size="small"
-              class="lang-select-compact"
-              :dropdownMatchSelectWidth="false"
-              @change="onLangChange"
-            >
-              <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
-                <span class="lang-option">
-                  <span class="lang-emoji">{{ resolveLangEmoji(l.langCode) }}</span>
-                  <span class="lang-label">{{ l.langName }}</span>
-                </span>
-              </a-select-option>
-            </a-select>
+            <div v-if="languages.length > 0" class="lang-switch-compact">
+              <img :src="LANG_SWITCH_ICON_SRC" alt="language" class="lang-switch-compact__icon" />
+              <a-select
+                v-model:value="selectedLang"
+                size="small"
+                class="lang-select-compact"
+                :dropdownMatchSelectWidth="false"
+                @change="onLangChange"
+              >
+                <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
+                  <span class="lang-option">
+                    <span class="lang-label">{{ getLanguageLabel(l) }}</span>
+                  </span>
+                </a-select-option>
+              </a-select>
+            </div>
             <a class="forgot" href="#">{{ i18nT('common.login.forgotPassword') }}</a>
           </div>
           <button
@@ -247,14 +249,13 @@ import { getRoutes } from '../../../api/system/route'
 import router, { PERSONAL_HOME_PATH, injectDynamicRoutes } from '../../../router'
 import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
-import { getInit状态 } from '../../../api/system/init'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { sm2 } from 'sm-crypto'
 import { useUserStore } from '@/stores/user'
 import { use权限Store } from '@/stores/permission'
-import { getCurrentUserInfo } from '@/api/profile'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
+import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 
 /**
  * 后端返回的滑块验证码数据结构。
@@ -455,14 +456,8 @@ function formatLangIcon(icon?: string) {
   return `/api/${icon}`
 }
 
-function resolveLangEmoji(langCode: string) {
-  const code = String(langCode || '').toUpperCase()
-  if (code.startsWith('ZH-CN')) return '馃嚚馃嚦'
-  if (code.startsWith('ZH-TW')) return '馃嚬馃嚰'
-  if (code.startsWith('EN-US')) return '馃嚭馃嚫'
-  if (code.startsWith('JA-JP')) return '馃嚡馃嚨'
-  if (code.startsWith('KO-KR')) return '馃嚢馃嚪'
-  return '馃寪'
+function getLanguageLabel(language: LanguageType) {
+  return getLanguageDisplayName(language)
 }
 
 function isExternalUrl(url: string) {
@@ -997,19 +992,25 @@ onMounted(async () => {
     0 0 24px rgba(211, 0, 197, 0.12);
 }
 
+.lang-switch-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.lang-switch-compact__icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .lang-option {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.lang-emoji {
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  text-align: center;
-  font-size: 14px;
-  flex-shrink: 0;
 }
 
 .lang-label {
@@ -1089,8 +1090,7 @@ onMounted(async () => {
 }
 
 .lang-select-compact {
-  width: 120px !important;
-  flex-shrink: 0;
+  width: 124px !important;
 }
 
 .lang-select-compact :deep(.ant-select-selector) {

@@ -9,12 +9,17 @@
 
 | 主题 | 入口 | 原文 |
 |---|---|---|
-| FxDynamicTable 与列设置 | [FxDynamicTable 与列设置](./FxDynamicTable与列设置.md) | [FxDynamicTable 动态表格组件使用指南](../../../doc/开发规范/使用指南/FxDynamicTable%20动态表格组件使用指南.md) |
-| 公共表格体系实现逻辑 | 原文直达 | [公共表格组件使用说明与实现逻辑](../../../doc/开发规范/公共表格组件使用说明与实现逻辑.md) |
+| FxDynamicTable 与列设置 | [FxDynamicTable 与列设置](./FxDynamicTable与列设置.md) | [FxDynamicTable 与列设置](./FxDynamicTable与列设置.md) |
+| 公共表格体系实现逻辑 | 规范文档入口 | [公共表格组件使用说明与实现逻辑](../../开发规范/规范文档/公共表格组件使用说明与实现逻辑.md) |
 
 ## 二、关联入口
 
 - [请求与反馈](../请求与反馈/README.md)
 - [前端组件与页面](../组件与页面/README.md)
 - [后端配置与审计](../../后端/配置与审计/README.md)
+
+## 三、阅读建议
+
+- 做标准列表页：先看 [FxDynamicTable 与列设置](./FxDynamicTable与列设置.md)
+- 做复杂 CRUD 页面：再结合 [公共弹窗](../请求与反馈/公共弹窗.md) 与 HTTP 文档使用
 
