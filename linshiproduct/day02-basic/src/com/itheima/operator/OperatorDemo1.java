@@ -8,5 +8,7 @@ public class OperatorDemo1 {
     public static void print(int a,int b){
         System.out.println((double)a/b);
         System.out.println(a/b);
+
+
     }
 }
