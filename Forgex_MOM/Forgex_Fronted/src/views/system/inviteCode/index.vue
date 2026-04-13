@@ -22,36 +22,36 @@
           ref="tableRef"
           :table-code="'InviteCodeTable'"
           :request="handleRequest"
-          :降级方案-config="降级方案Config"
+          :dynamic-table-config="dynamicTableConfig"
           row-key="id"
         >
           <template #toolbar>
             <a-space>
               <a-button type="primary" @click="openAdd" v-permission="'sys:invite-code:add'">
                 <template #icon><PlusOutlined /></template>
-                鏂板閭€璇风爜
+                新增邀请码
               </a-button>
             </a-space>
           </template>
 
           <template #status="{ record }">
-            <a-tag :color="get状态Color(record)">
-              {{ get状态Text(record) }}
+            <a-tag :color="getStatusColor(record)">
+              {{ getStatusText(record) }}
             </a-tag>
           </template>
 
           <template #action="{ record }">
             <a-space>
               <a-button type="link" size="small" @click="copyCode(record.inviteCode)">
-                澶嶅埗
+                复制
               </a-button>
               <a-button type="link" size="small" @click="showRecords(record)">
-                浣跨敤璁板綍
+                使用记录
               </a-button>
               <a-popconfirm
                 title="确定停用该邀请码吗？"
-                ok-text="纭畾"
-                cancel-text="鍙栨秷"
+                ok-text="确定"
+                cancel-text="取消"
                 @confirm="handleDisable(record.id)"
                 v-if="record.status === true"
               >
@@ -61,13 +61,13 @@
                   danger
                   v-permission="'sys:invite-code:edit'"
                 >
-                  鍋滅敤
+                  停用
                 </a-button>
               </a-popconfirm>
               <a-popconfirm
                 title="确定删除该邀请码吗？"
-                ok-text="纭畾"
-                cancel-text="鍙栨秷"
+                ok-text="确定"
+                cancel-text="取消"
                 @confirm="handleDelete(record.id)"
               >
                 <a-button
@@ -76,7 +76,7 @@
                   danger
                   v-permission="'sys:invite-code:delete'"
                 >
-                  鍒犻櫎
+                  删除
                 </a-button>
               </a-popconfirm>
             </a-space>
@@ -85,10 +85,9 @@
       </div>
     </a-card>
 
-    <!-- 鏂板閭€璇风爜寮圭獥 -->
     <BaseFormDialog
       v-model:open="addVisible"
-      title="鏂板閭€璇风爜"
+      title="新增邀请码"
       :confirm-loading="formLoading"
       @ok="handleSubmit"
       @cancel="handleCancel"
@@ -100,13 +99,13 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
       >
-        <a-form-item label="褰掑睘閮ㄩ棬" name="departmentId">
+        <a-form-item label="归属部门" name="departmentId">
           <a-tree-select
             v-model:value="formData.departmentId"
             style="width: 100%"
             :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
             :tree-data="treeData"
-            placeholder="璇烽€夋嫨褰掑睘閮ㄩ棬"
+            placeholder="请选择归属部门"
             tree-default-expand-all
             :field-names="{
               children: 'children',
@@ -117,10 +116,10 @@
           />
         </a-form-item>
 
-        <a-form-item label="褰掑睘鑱屼綅" name="positionId">
+        <a-form-item label="归属岗位" name="positionId">
           <a-select
             v-model:value="formData.positionId"
-            placeholder="璇烽€夋嫨鑱屼綅锛堝彲閫夛級"
+            placeholder="请选择归属岗位，不选则表示部门下所有岗位"
             allow-clear
             style="width: 100%"
           >
@@ -134,13 +133,13 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="杩囨湡鏃堕棿" name="expireTime">
+        <a-form-item label="过期时间" name="expireTime">
           <a-date-picker
             v-model:value="formData.expireTime"
             show-time
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="璇烽€夋嫨杩囨湡鏃堕棿"
+            placeholder="请选择过期时间"
             style="width: 100%"
           />
         </a-form-item>
@@ -154,7 +153,7 @@
           />
         </a-form-item>
 
-        <a-form-item label="澶囨敞" name="remark">
+        <a-form-item label="备注" name="remark">
           <a-textarea
             v-model:value="formData.remark"
             placeholder="请输入备注"
@@ -164,7 +163,6 @@
       </a-form>
     </BaseFormDialog>
 
-    <!-- 鍒涘缓鎴愬姛灞曠ず閭€璇风爜寮圭獥 -->
     <a-modal
       v-model:open="codeVisible"
       title="邀请码已生成"
@@ -177,15 +175,14 @@
           {{ createdCode }}
         </p>
         <a-button type="primary" @click="copyCode(createdCode)">
-          澶嶅埗閭€璇风爜
+          复制邀请码
         </a-button>
       </div>
     </a-modal>
 
-    <!-- 浣跨敤璁板綍寮圭獥 -->
     <a-modal
       v-model:open="recordVisible"
-      title="閭€璇风爜浣跨敤璁板綍"
+      title="邀请码使用记录"
       width="800px"
       :footer="null"
       @cancel="recordVisible = false"
@@ -215,7 +212,7 @@ import {
   createInviteCode,
   disableInviteCode,
   deleteInviteCode,
-  getInviteRecordPage
+  getInviteRecordPage,
 } from '@/api/system/inviteCode'
 import type { FxTableConfig } from '@/api/system/tableConfig'
 import type { InviteCodeSaveParam, InviteRecord } from './types'
@@ -226,11 +223,11 @@ const positionList = ref<any[]>([])
 const tableRef = ref()
 const loading = ref(false)
 
-const 降级方案Config: Partial<FxTableConfig> = {
+const dynamicTableConfig: Partial<FxTableConfig> = {
   columns: [
     { field: 'inviteCode', title: '邀请码', width: 140, align: 'center' },
     { field: 'departmentName', title: '归属部门', width: 160, align: 'left' },
-    { field: 'positionName', title: '归属职位', width: 140, align: 'left' },
+    { field: 'positionName', title: '归属岗位', width: 140, align: 'left' },
     { field: 'expireTime', title: '过期时间', width: 180, align: 'center' },
     { field: 'maxRegisterCount', title: '最大人数', width: 100, align: 'center' },
     { field: 'usedCount', title: '已用人数', width: 100, align: 'center' },
@@ -238,15 +235,14 @@ const 降级方案Config: Partial<FxTableConfig> = {
     { field: 'status', title: '状态', width: 110, align: 'center' },
     { field: 'createBy', title: '创建人', width: 120, align: 'center' },
     { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' }
+    { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' },
   ],
   queryFields: [
     { field: 'inviteCode', label: '邀请码', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
-  ]
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+  ],
 }
 
-// ==================== 琛ㄦ牸鏁版嵁璇锋眰 ====================
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
   query: Record<string, any>
@@ -261,7 +257,7 @@ const handleRequest = async (payload: {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
       tenantId: currentTenantId.value,
-      ...payload.query
+      ...payload.query,
     }
     const data = await getInviteCodePage(params)
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
@@ -274,8 +270,7 @@ const handleRequest = async (payload: {
   }
 }
 
-// ==================== 鐘舵€佸睍绀?====================
-function get状态Color(record: any): string {
+function getStatusColor(record: any): string {
   const label = record.statusLabel
   if (label === 'DISABLED') return 'default'
   if (label === 'EXPIRED') return 'orange'
@@ -283,7 +278,7 @@ function get状态Color(record: any): string {
   return 'green'
 }
 
-function get状态Text(record: any): string {
+function getStatusText(record: any): string {
   const label = record.statusLabel
   if (label === 'DISABLED') return '已停用'
   if (label === 'EXPIRED') return '已过期'
@@ -291,7 +286,6 @@ function get状态Text(record: any): string {
   return '生效中'
 }
 
-// ==================== 鏂板閭€璇风爜 ====================
 const addVisible = ref(false)
 const formLoading = ref(false)
 const formRef = ref()
@@ -301,13 +295,13 @@ const createdCode = ref('')
 const formData = ref<InviteCodeSaveParam>({
   departmentId: '',
   expireTime: '',
-  maxRegisterCount: 10
+  maxRegisterCount: 10,
 })
 
 const rules = {
-  departmentId: [{ required: true, message: '璇烽€夋嫨褰掑睘閮ㄩ棬', trigger: 'change' }],
-  expireTime: [{ required: true, message: '璇烽€夋嫨杩囨湡鏃堕棿', trigger: 'change' }],
-  maxRegisterCount: [{ required: true, message: '请输入最大注册人数', trigger: 'blur' }]
+  departmentId: [{ required: true, message: '请选择归属部门', trigger: 'change' }],
+  expireTime: [{ required: true, message: '请选择过期时间', trigger: 'change' }],
+  maxRegisterCount: [{ required: true, message: '请输入最大注册人数', trigger: 'blur' }],
 }
 
 function openAdd() {
@@ -315,7 +309,7 @@ function openAdd() {
   formData.value = {
     departmentId: '',
     expireTime: '',
-    maxRegisterCount: 10
+    maxRegisterCount: 10,
   }
 }
 
@@ -330,7 +324,6 @@ async function handleSubmit() {
     formLoading.value = true
     const result = await createInviteCode(formData.value)
     addVisible.value = false
-    // 灞曠ず鐢熸垚鐨勯個璇风爜
     if (result && result.inviteCode) {
       createdCode.value = result.inviteCode
       codeVisible.value = true
@@ -338,19 +331,18 @@ async function handleSubmit() {
     await tableRef.value?.refresh?.()
   } catch (e: any) {
     if (e.errorFields) return
-    message.error(e.message || '鍒涘缓澶辫触')
+    message.error(e.message || '保存失败')
   } finally {
     formLoading.value = false
   }
 }
 
-// ==================== 鍋滅敤 / 鍒犻櫎 ====================
 async function handleDisable(id: string) {
   try {
     await disableInviteCode({ id })
     await tableRef.value?.refresh?.()
   } catch (e: any) {
-    message.error(e.message || '鍋滅敤澶辫触')
+    message.error(e.message || '停用失败')
   }
 }
 
@@ -359,18 +351,16 @@ async function handleDelete(id: string) {
     await deleteInviteCode({ id })
     await tableRef.value?.refresh?.()
   } catch (e: any) {
-    message.error(e.message || '鍒犻櫎澶辫触')
+    message.error(e.message || '删除失败')
   }
 }
 
-// ==================== 澶嶅埗閭€璇风爜 ====================
 function copyCode(code: string) {
   if (navigator.clipboard) {
-      navigator.clipboard.writeText(code).then(() => {
-        message.success('邀请码已复制到剪贴板')
+    navigator.clipboard.writeText(code).then(() => {
+      message.success('邀请码已复制到剪贴板')
     })
   } else {
-    // 降级方案
     const input = document.createElement('input')
     input.value = code
     document.body.appendChild(input)
@@ -381,7 +371,6 @@ function copyCode(code: string) {
   }
 }
 
-// ==================== 浣跨敤璁板綍 ====================
 const recordVisible = ref(false)
 const recordLoading = ref(false)
 const recordList = ref<InviteRecord[]>([])
@@ -391,7 +380,7 @@ const recordPagination = ref({
   pageSize: 10,
   total: 0,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`
+  showTotal: (total: number) => `共 ${total} 条`,
 })
 
 const recordColumns = [
@@ -415,12 +404,12 @@ async function loadRecords() {
     const data = await getInviteRecordPage({
       inviteId: currentInviteId.value,
       pageNum: recordPagination.value.current,
-      pageSize: recordPagination.value.pageSize
+      pageSize: recordPagination.value.pageSize,
     })
     recordList.value = data.records || []
     recordPagination.value.total = typeof data.total === 'number' ? data.total : 0
   } catch (e) {
-    message.error('鍔犺浇浣跨敤璁板綍澶辫触')
+    message.error('加载邀请码使用记录失败')
   } finally {
     recordLoading.value = false
   }
@@ -432,7 +421,6 @@ function handleRecordPageChange(pagination: any) {
   loadRecords()
 }
 
-// ==================== 鍔犺浇閮ㄩ棬/鑱屼綅鏁版嵁 ====================
 async function loadDeptTree() {
   if (!currentTenantId.value) return
   try {
@@ -453,9 +441,7 @@ async function loadPositions() {
   }
 }
 
-// 褰撻€夋嫨閮ㄩ棬鏃惰繃婊よ亴浣?
 watch(() => formData.value.departmentId, (newDeptId) => {
-  // 鍙互鍦ㄨ繖閲屾寜閮ㄩ棬杩囨护鑱屼綅锛屾殏鏃跺姞杞藉叏閮?
   if (newDeptId) {
     loadPositions()
   }
@@ -468,7 +454,7 @@ onMounted(async () => {
     await Promise.all([
       tableRef.value?.refresh?.(),
       loadDeptTree(),
-      loadPositions()
+      loadPositions(),
     ])
   }
 })
@@ -504,4 +490,3 @@ onMounted(async () => {
   min-height: 0;
 }
 </style>
-

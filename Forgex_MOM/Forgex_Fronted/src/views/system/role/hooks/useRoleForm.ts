@@ -1,64 +1,49 @@
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import type { 表单Instance, Rule } from 'ant-design-vue/es/form'
+import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 import { addRole, updateRole } from '@/api/system/role'
 import type { Role } from '../types'
 
-export const useRole表单 = (onSuccess: () => void) => {
-  const formRef = ref<表单Instance>()
+export const useRoleForm = (onSuccess: () => void) => {
+  const formRef = ref<FormInstance>()
   const visible = ref(false)
   const loading = ref(false)
   const isEdit = ref(false)
 
-  // 琛ㄥ崟鏁版嵁
   const formData = reactive<Partial<Role>>({
     id: undefined,
     roleCode: '',
     roleName: '',
     description: '',
-    status: 1
+    status: 1,
   })
 
-  // 琛ㄥ崟楠岃瘉瑙勫垯
   const rules: Record<string, Rule[]> = {
     roleCode: [
-      { required: true, message: '璇疯緭鍏ヨ鑹茬紪鐮?, trigger: 'blur' },
-      { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '瑙掕壊缂栫爜鍙兘鍖呭惈瀛楁瘝銆佹暟瀛楀拰涓嬪垝绾匡紝涓斾互瀛楁瘝寮€澶?, trigger: 'blur' }
+      { required: true, message: '请输入角色编码', trigger: 'blur' },
+      { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '角色编码必须以字母开头，且只能包含字母、数字和下划线', trigger: 'blur' },
     ],
     roleName: [
-      { required: true, message: '璇疯緭鍏ヨ鑹插悕绉?, trigger: 'blur' },
-      { max: 50, message: '瑙掕壊鍚嶇О涓嶈兘瓒呰繃50涓瓧绗?, trigger: 'blur' }
+      { required: true, message: '请输入角色名称', trigger: 'blur' },
+      { max: 50, message: '角色名称长度不能超过 50 个字符', trigger: 'blur' },
     ],
-    description: [
-      { max: 200, message: '鎻忚堪涓嶈兘瓒呰繃200涓瓧绗?, trigger: 'blur' }
-    ],
-    status: [
-      { required: true, message: '璇烽€夋嫨鐘舵€?, trigger: 'change' }
-    ]
+    description: [{ max: 200, message: '描述长度不能超过 200 个字符', trigger: 'blur' }],
+    status: [{ required: true, message: '请选择状态', trigger: 'change' }],
   }
 
-  /**
-   * 鎵撳紑鏂板寮圭獥
-   */
-  const openAdd = () => {
+  function openAdd() {
     isEdit.value = false
     visible.value = true
-    reset表单()
+    resetForm()
   }
 
-  /**
-   * 鎵撳紑缂栬緫寮圭獥
-   */
-  const openEdit = (record: Role) => {
+  function openEdit(record: Role) {
     isEdit.value = true
     visible.value = true
     Object.assign(formData, record)
   }
 
-  /**
-   * 閲嶇疆琛ㄥ崟
-   */
-  const reset表单 = () => {
+  function resetForm() {
     formData.id = undefined
     formData.roleCode = ''
     formData.roleName = ''
@@ -67,10 +52,7 @@ export const useRole表单 = (onSuccess: () => void) => {
     formRef.value?.clearValidate()
   }
 
-  /**
-   * 鎻愪氦琛ㄥ崟
-   */
-  const handleSubmit = async () => {
+  async function handleSubmit() {
     try {
       await formRef.value?.validate()
       loading.value = true
@@ -78,22 +60,21 @@ export const useRole表单 = (onSuccess: () => void) => {
       const apiFunc = isEdit.value ? updateRole : addRole
       await apiFunc(formData)
 
-      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
       visible.value = false
       onSuccess()
     } catch (error) {
-      console.error('琛ㄥ崟楠岃瘉澶辫触:', error)
+      console.error('角色表单提交失败:', error)
+      if (!(error as any)?.errorFields) {
+        message.error('提交角色信息失败')
+      }
     } finally {
       loading.value = false
     }
   }
 
-  /**
-   * 鍙栨秷
-   */
-  const handleCancel = () => {
+  function handleCancel() {
     visible.value = false
-    reset表单()
+    resetForm()
   }
 
   return {
@@ -106,6 +87,6 @@ export const useRole表单 = (onSuccess: () => void) => {
     openAdd,
     openEdit,
     handleSubmit,
-    handleCancel
+    handleCancel,
   }
 }

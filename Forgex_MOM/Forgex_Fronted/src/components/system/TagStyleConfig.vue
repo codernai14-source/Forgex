@@ -11,42 +11,42 @@
         >
           <a-select-opt-group label="状态颜色">
             <a-select-option value="success">
-              <a-tag color="success">鎴愬姛</a-tag>
+              <a-tag color="success">成功</a-tag>
             </a-select-option>
             <a-select-option value="processing">
               <a-tag color="processing">进行中</a-tag>
             </a-select-option>
             <a-select-option value="error">
-              <a-tag color="error">閿欒</a-tag>
+              <a-tag color="error">失败</a-tag>
             </a-select-option>
             <a-select-option value="warning">
-              <a-tag color="warning">璀﹀憡</a-tag>
+              <a-tag color="warning">警告</a-tag>
             </a-select-option>
             <a-select-option value="default">
-              <a-tag color="default">榛樿</a-tag>
+              <a-tag color="default">默认</a-tag>
             </a-select-option>
           </a-select-opt-group>
           <a-select-opt-group label="预设颜色">
             <a-select-option value="pink">
-              <a-tag color="pink">绮夎壊</a-tag>
+              <a-tag color="pink">粉色</a-tag>
             </a-select-option>
             <a-select-option value="red">
-              <a-tag color="red">绾㈣壊</a-tag>
+              <a-tag color="red">红色</a-tag>
             </a-select-option>
             <a-select-option value="orange">
-              <a-tag color="orange">姗欒壊</a-tag>
+              <a-tag color="orange">橙色</a-tag>
             </a-select-option>
             <a-select-option value="green">
-              <a-tag color="green">缁胯壊</a-tag>
+              <a-tag color="green">绿色</a-tag>
             </a-select-option>
             <a-select-option value="cyan">
-              <a-tag color="cyan">闈掕壊</a-tag>
+              <a-tag color="cyan">青色</a-tag>
             </a-select-option>
             <a-select-option value="blue">
-              <a-tag color="blue">钃濊壊</a-tag>
+              <a-tag color="blue">蓝色</a-tag>
             </a-select-option>
             <a-select-option value="purple">
-              <a-tag color="purple">绱壊</a-tag>
+              <a-tag color="purple">紫色</a-tag>
             </a-select-option>
           </a-select-opt-group>
           <a-select-opt-group label="自定义颜色">
@@ -75,28 +75,28 @@
           :filter-option="filterOption"
         >
           <a-select-option value="CheckCircleOutlined">
-            <CheckCircleOutlined /> 鎴愬姛鍥炬爣
+            <CheckCircleOutlined /> 成功图标
           </a-select-option>
           <a-select-option value="CloseCircleOutlined">
-            <CloseCircleOutlined /> 閿欒鍥炬爣
+            <CloseCircleOutlined /> 失败图标
           </a-select-option>
           <a-select-option value="ExclamationCircleOutlined">
-            <ExclamationCircleOutlined /> 璀﹀憡鍥炬爣
+            <ExclamationCircleOutlined /> 警告图标
           </a-select-option>
           <a-select-option value="SyncOutlined">
-            <SyncOutlined /> 鍔犺浇鍥炬爣
+            <SyncOutlined /> 加载图标
           </a-select-option>
           <a-select-option value="ClockCircleOutlined">
-            <ClockCircleOutlined /> 鏃堕挓鍥炬爣
+            <ClockCircleOutlined /> 等待图标
           </a-select-option>
           <a-select-option value="InfoCircleOutlined">
-            <InfoCircleOutlined /> 淇℃伅鍥炬爣
+            <InfoCircleOutlined /> 信息图标
           </a-select-option>
           <a-select-option value="CheckOutlined">
             <CheckOutlined /> 勾选图标
           </a-select-option>
           <a-select-option value="CloseOutlined">
-            <CloseOutlined /> 鍏抽棴鍥炬爣
+            <CloseOutlined /> 关闭图标
           </a-select-option>
         </a-select>
       </a-form-item>
@@ -108,7 +108,7 @@
           </template>
           示例标签
         </a-tag>
-        <span v-else style="color: #999">请配置标签样式</span>
+        <span v-else style="color: #999">请先配置标签样式</span>
       </a-form-item>
     </a-form>
   </div>
@@ -118,24 +118,24 @@
 import { reactive } from 'vue'
 import {
   CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-  SyncOutlined,
-  ClockCircleOutlined,
-  InfoCircleOutlined,
   CheckOutlined,
-  CloseOutlined
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  SyncOutlined,
 } from '@ant-design/icons-vue'
 
-interface TagStyle表单 {
+interface TagStyleForm {
   color?: string
   icon?: string
 }
 
-const formData = reactive<TagStyle表单>({})
+const formData = reactive<TagStyleForm>({})
 
 const getTagStyleJson = (): string => {
-  const data: TagStyle表单 = {}
+  const data: TagStyleForm = {}
   if (formData.color) {
     data.color = formData.color
   }
@@ -161,7 +161,7 @@ const filterOption = (input: string, option: any) => {
 
 defineExpose({
   getTagStyleJson,
-  setTagStyleJson
+  setTagStyleJson,
 })
 </script>
 

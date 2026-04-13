@@ -242,6 +242,7 @@ const props = withDefaults(
    * 闄嶇骇閰嶇疆锛屽綋鑾峰彇琛ㄦ牸閰嶇疆澶辫触鏃朵娇鐢?
    */
   降级方案Config?: Partial<FxTableConfig>
+  dynamicTableConfig?: Partial<FxTableConfig>
   
   /**
    * 鏁版嵁璇锋眰鍑芥暟
@@ -261,6 +262,7 @@ const props = withDefaults(
   defaultExpandAllRows?: boolean
   expandable?: TableProps['expandable']
   showQuery表单?: boolean
+  showQueryForm?: boolean
   
   /**
    * 鏄惁鏄剧ず鍒楄缃寜閽?
@@ -416,7 +418,12 @@ function renderTagByDictText(dictText: any, 降级方案Text: any) {
 const loading = ref(false)
 
 const resolvedLoading = computed(() => (props.loading === undefined ? loading.value : props.loading))
-const resolvedShowQuery表单 = computed(() => props.showQuery表单 !== false)
+const resolvedShowQuery表单 = computed(() => {
+  if (props.showQueryForm !== undefined) {
+    return props.showQueryForm !== false
+  }
+  return props.showQuery表单 !== false
+})
 
 /**
  * 琛ㄦ牸鏁版嵁
@@ -691,7 +698,7 @@ async function loadConfig() {
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
     console.log('[FxDynamicTable] 鍚庣杩斿洖閰嶇疆:', backendConfig)
-    const mergedConfig = mergeConfigs(backendConfig, props.降级方案Config)
+    const mergedConfig = mergeConfigs(backendConfig, props.dynamicTableConfig ?? props.降级方案Config)
     
     // 寮哄埗鍒涘缓鏂板璞★紝纭繚 Vue 鍝嶅簲寮忕郴缁熻兘妫€娴嬪埌鍙樺寲
     config.value = {
@@ -706,8 +713,8 @@ async function loadConfig() {
     console.log('[FxDynamicTable] 閰嶇疆鏇存柊瀹屾垚锛宑olumns:', config.value.columns?.length, 'queryFields:', config.value.queryFields?.length, 'version:', configVersion.value)
   } catch (e) {
     console.error('[FxDynamicTable] 鑾峰彇琛ㄦ牸閰嶇疆澶辫触:', e)
-    if (props.降级方案Config) {
-      config.value = { ...props.降级方案Config } as any
+    if (props.dynamicTableConfig || props.降级方案Config) {
+      config.value = { ...(props.dynamicTableConfig ?? props.降级方案Config) } as any
     } else {
       config.value = {
         tableCode: props.tableCode,

@@ -1,6 +1,5 @@
 <template>
   <div class="page-wrap">
-    <!-- 寰呭姙瀹℃壒鍒楄〃 -->
     <fx-dynamic-table
       ref="tableRef"
       :table-code="'WfPendingTaskTable'"
@@ -10,8 +9,8 @@
       :show-query-form="true"
     >
       <template #status="{ record }">
-        <a-tag :color="get状态Color(record.status)">
-          {{ get状态Text(record.status) }}
+        <a-tag :color="getStatusColor(record.status)">
+          {{ getStatusText(record.status) }}
         </a-tag>
       </template>
 
@@ -39,11 +38,7 @@
             <template #icon><CloseOutlined /></template>
             {{ $t('workflow.myTask.reject') }}
           </a-button>
-          <a-button
-            type="link"
-            size="small"
-            @click="handleViewDetail(record)"
-          >
+          <a-button type="link" size="small" @click="handleViewDetail(record)">
             <template #icon><EyeOutlined /></template>
             {{ $t('workflow.myTask.detail') }}
           </a-button>
@@ -51,7 +46,6 @@
       </template>
     </fx-dynamic-table>
 
-    <!-- 瀹℃壒澶勭悊寮圭獥 -->
     <BaseFormDialog
       v-model:open="approveDialogVisible"
       :title="approveAction === 'approve' ? $t('workflow.myTask.approveAgree') : $t('workflow.myTask.approveReject')"
@@ -61,90 +55,79 @@
       @cancel="handleApproveCancel"
     >
       <a-form
-        ref="approve表单Ref"
-        :model="approve表单Data"
+        ref="approveFormRef"
+        :model="approveFormData"
         :rules="approveRules"
         :label-col="{ span: 4 }"
         :wrapper-col="{ span: 18 }"
       >
-        <a-form-item label="瀹℃壒浠诲姟">
-          <a-input
-            :value="currentRecord?.taskName"
-            disabled
-          />
+        <a-form-item label="审批任务">
+          <a-input :value="currentRecord?.taskName" disabled />
         </a-form-item>
 
         <a-form-item label="发起人">
-          <a-input
-            :value="currentRecord?.initiatorName"
-            disabled
-          />
+          <a-input :value="currentRecord?.initiatorName" disabled />
         </a-form-item>
 
-        <a-form-item label="鍙戣捣鏃堕棿">
-          <a-input
-            :value="formatDateTime(currentRecord?.startTime)"
-            disabled
-          />
+        <a-form-item label="发起时间">
+          <a-input :value="formatDateTime(currentRecord?.startTime)" disabled />
         </a-form-item>
 
         <a-form-item
           v-if="approveAction === 'reject'"
-          label="椹冲洖绫诲瀷"
+          label="驳回类型"
           name="rejectType"
         >
           <a-select
-            v-model:value="approve表单Data.rejectType"
-            placeholder="璇烽€夋嫨椹冲洖绫诲瀷"
+            v-model:value="approveFormData.rejectType"
+            placeholder="请选择驳回类型"
           >
-            <a-select-option :value="1">椹冲洖浠诲姟锛堢洿鎺ョ粨鏉燂級</a-select-option>
-            <a-select-option :value="2">杩斿洖涓婁竴鑺傜偣锛堥噸鏂板鎵癸級</a-select-option>
+            <a-select-option :value="1">驳回结束当前审批流程</a-select-option>
+            <a-select-option :value="2">退回上一节点重新审批</a-select-option>
           </a-select>
         </a-form-item>
 
-        <a-form-item label="瀹℃壒鎰忚" name="comment">
+        <a-form-item label="审批意见" name="comment">
           <a-textarea
-            v-model:value="approve表单Data.comment"
+            v-model:value="approveFormData.comment"
             placeholder="请输入审批意见"
             :rows="4"
           />
         </a-form-item>
 
-        <!-- 琛ㄥ崟鍐呭灞曠ず -->
-        <a-form-item label="琛ㄥ崟鍐呭">
+        <a-form-item label="表单内容">
           <div class="form-content">
-            <pre>{{ format表单Content(currentRecord?.formContent) }}</pre>
+            <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
           </div>
         </a-form-item>
       </a-form>
     </BaseFormDialog>
 
-    <!-- 璇︽儏鏌ョ湅寮圭獥 -->
     <a-drawer
       v-model:open="detailDrawerVisible"
-      :title="'瀹℃壒璇︽儏'"
+      title="审批详情"
       :width="800"
       :body-style="{ paddingBottom: '80px' }"
     >
       <a-descriptions bordered :column="2">
-        <a-descriptions-item label="瀹℃壒浠诲姟">
+        <a-descriptions-item label="审批任务">
           {{ currentRecord?.taskName }}
         </a-descriptions-item>
-        <a-descriptions-item label="浠诲姟缂栫爜">
+        <a-descriptions-item label="任务编码">
           {{ currentRecord?.taskCode }}
         </a-descriptions-item>
         <a-descriptions-item label="发起人">
           {{ currentRecord?.initiatorName }}
         </a-descriptions-item>
-        <a-descriptions-item label="鍙戣捣鏃堕棿">
+        <a-descriptions-item label="发起时间">
           {{ formatDateTime(currentRecord?.startTime) }}
         </a-descriptions-item>
-        <a-descriptions-item label="褰撳墠鑺傜偣">
+        <a-descriptions-item label="当前节点">
           {{ currentRecord?.currentNodeName || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag :color="get状态Color(currentRecord?.status)">
-            {{ get状态Text(currentRecord?.status) }}
+          <a-tag :color="getStatusColor(currentRecord?.status)">
+            {{ getStatusText(currentRecord?.status) }}
           </a-tag>
         </a-descriptions-item>
       </a-descriptions>
@@ -152,26 +135,26 @@
       <a-divider />
 
       <div class="form-content-detail">
-        <h4>琛ㄥ崟鍐呭</h4>
-        <pre>{{ format表单Content(currentRecord?.formContent) }}</pre>
+        <h4>表单内容</h4>
+        <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
       </div>
     </a-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import {
   CheckOutlined,
   CloseOutlined,
-  EyeOutlined
+  EyeOutlined,
 } from '@ant-design/icons-vue'
 import {
-  pageMyPending,
   approve,
+  pageMyPending,
   reject,
+  type WfExecutionApproveParam,
   type WfExecutionDTO,
-  type WfExecutionApproveParam
 } from '@/api/workflow/execution'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
@@ -181,169 +164,155 @@ import dayjs from 'dayjs'
 const { dictItems: statusOptions } = useDict('status')
 
 const tableRef = ref()
-const approve表单Ref = ref()
-
+const approveFormRef = ref()
 const loading = ref(false)
 const approving = ref(false)
 
 const currentRecord = ref<WfExecutionDTO | null>(null)
 const approveDialogVisible = ref(false)
+const detailDrawerVisible = ref(false)
 const approveAction = ref<'approve' | 'reject'>('approve')
-const approve表单Data = reactive<WfExecutionApproveParam>({
+
+const approveFormData = reactive<WfExecutionApproveParam>({
   executionId: 0,
-  approve状态: 1,
+  approveStatus: 1,
   comment: '',
-  rejectType: undefined
+  rejectType: undefined,
 })
 
 const approveRules = {
   comment: [{ required: true, message: '请输入审批意见', trigger: 'blur' }],
-  rejectType: [{ required: true, message: '请选择驳回类型', trigger: 'change' }]
+  rejectType: [{ required: true, message: '请选择驳回类型', trigger: 'change' }],
 }
 
-const detailDrawerVisible = ref(false)
-
-// 瀛楀吀閰嶇疆
 const dictOptions = computed(() => ({
-  status: statusOptions.value
+  status: statusOptions.value,
 }))
 
-// 澶勭悊琛ㄦ牸鏁版嵁璇锋眰
-const handleRequest = async (payload: { 
-  page: { current: number; pageSize: number }; 
-  query: Record<string, any>; 
-  sorter?: { field?: string; order?: string } 
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
 }) => {
   try {
     loading.value = true
     const params: any = {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
-      ...payload.query
+      ...payload.query,
     }
-    
-    // 澶勭悊鎺掑簭
+
     if (payload.sorter) {
       params.sortField = payload.sorter.field
       params.sortOrder = payload.sorter.order
     }
-    
+
     const data = await pageMyPending(params)
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
-    return { records: data.records || [], total: total }
-  } catch (e: any) {
-    console.error('鍔犺浇寰呭姙鍒楄〃澶辫触', e)
+    return { records: data.records || [], total }
+  } catch (error: any) {
+    console.error('加载待办审批列表失败', error)
     return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
 }
 
-// 鑾峰彇鐘舵€侀鑹?
-const get状态Color = (status?: number): string => {
+function getStatusColor(status?: number): string {
   const colorMap: Record<number, string> = {
-    0: 'gray',
+    0: 'default',
     1: 'processing',
     2: 'success',
-    3: 'error'
+    3: 'error',
   }
   return colorMap[status || 0] || 'default'
 }
 
-// 鑾峰彇鐘舵€佹枃鏈?
-const get状态Text = (status?: number): string => {
+function getStatusText(status?: number): string {
   const textMap: Record<number, string> = {
-    0: '未审批',
+    0: '待处理',
     1: '审批中',
     2: '审批完成',
-    3: '驳回'
+    3: '驳回',
   }
   return textMap[status || 0] || '未知'
 }
 
-// 鏍煎紡鍖栨棩鏈熸椂闂?
-const formatDateTime = (dateTime?: string): string => {
+function formatDateTime(dateTime?: string): string {
   if (!dateTime) return '-'
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
 }
 
-// 鏍煎紡鍖栬〃鍗曞唴瀹?
-const format表单Content = (formContent?: string): string => {
+function formatFormContent(formContent?: string): string {
   if (!formContent) return '{}'
   try {
-    const obj = JSON.parse(formContent)
-    return JSON.stringify(obj, null, 2)
+    return JSON.stringify(JSON.parse(formContent), null, 2)
   } catch {
     return formContent
   }
 }
 
-// 澶勭悊瀹℃壒鍚屾剰
-const handleApprove = (record: WfExecutionDTO) => {
+function handleApprove(record: WfExecutionDTO) {
   currentRecord.value = record
   approveAction.value = 'approve'
-  approve表单Data.executionId = record.id
-  approve表单Data.approve状态 = 1
-  approve表单Data.comment = ''
-  approve表单Data.rejectType = undefined
+  approveFormData.executionId = record.id
+  approveFormData.approveStatus = 1
+  approveFormData.comment = ''
+  approveFormData.rejectType = undefined
   approveDialogVisible.value = true
 }
 
-// 澶勭悊瀹℃壒椹冲洖
-const handleReject = (record: WfExecutionDTO) => {
+function handleReject(record: WfExecutionDTO) {
   currentRecord.value = record
   approveAction.value = 'reject'
-  approve表单Data.executionId = record.id
-  approve表单Data.approve状态 = 2
-  approve表单Data.comment = ''
-  approve表单Data.rejectType = undefined
+  approveFormData.executionId = record.id
+  approveFormData.approveStatus = 2
+  approveFormData.comment = ''
+  approveFormData.rejectType = undefined
   approveDialogVisible.value = true
 }
 
-// 澶勭悊鏌ョ湅璇︽儏
-const handleViewDetail = (record: WfExecutionDTO) => {
+function handleViewDetail(record: WfExecutionDTO) {
   currentRecord.value = record
   detailDrawerVisible.value = true
 }
 
-// 鎻愪氦瀹℃壒
-const handleApproveSubmit = async () => {
+async function handleApproveSubmit() {
   try {
-    await approve表单Ref.value?.validate()
+    await approveFormRef.value?.validate()
     approving.value = true
 
-    const param: WfExecutionApproveParam = {
-      executionId: approve表单Data.executionId,
-      approve状态: approve表单Data.approve状态,
-      comment: approve表单Data.comment
+    const params: WfExecutionApproveParam = {
+      executionId: approveFormData.executionId,
+      approveStatus: approveFormData.approveStatus,
+      comment: approveFormData.comment,
     }
 
     if (approveAction.value === 'reject') {
-      param.rejectType = approve表单Data.rejectType
+      params.rejectType = approveFormData.rejectType
     }
 
     if (approveAction.value === 'approve') {
-      await approve(param)
+      await approve(params)
     } else {
-      await reject(param)
+      await reject(params)
     }
 
     approveDialogVisible.value = false
-    tableRef.value?.refresh?.()
-  } catch (e: any) {
-    if (e.errorFields) {
+    await tableRef.value?.refresh?.()
+  } catch (error: any) {
+    if (error?.errorFields) {
       return
     }
-    console.error('瀹℃壒鎿嶄綔澶辫触', e)
+    console.error('审批处理失败', error)
   } finally {
     approving.value = false
   }
 }
 
-// 鍙栨秷瀹℃壒
-const handleApproveCancel = () => {
+function handleApproveCancel() {
   approveDialogVisible.value = false
-  approve表单Ref.value?.resetFields()
+  approveFormRef.value?.resetFields()
 }
 
 onMounted(() => {
