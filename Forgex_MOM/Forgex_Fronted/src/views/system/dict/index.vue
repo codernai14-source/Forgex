@@ -67,8 +67,12 @@
         <a-form-item v-else label="字典值" required>
           <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
         </a-form-item>
-        <a-form-item v-if="isChildNode" label="国际化值">
-          <I18nInput v-model="form.dictValueI18nJson" mode="table" />
+        <a-form-item v-if="isChildNode" label="国际化配置">
+          <I18nInput 
+            v-model="form.dictValueI18nJson" 
+            mode="simple" 
+            placeholder="请输入字典值（点击右侧地球图标配置多语言）"
+          />
         </a-form-item>
         <a-form-item v-if="isChildNode" label="标签样式">
           <TagStyleConfig ref="tagStyleConfigRef" />
@@ -92,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import http from '@/api/http'
 import { listModules } from '@/api/system/module'
@@ -264,7 +268,10 @@ function handleEdit(row: any) {
   form.status = row.status === 0 || row.status === '0' ? 0 : 1
   form.remark = row.remark || ''
   dialogVisible.value = true
-  tagStyleConfigRef.value?.setTagStyleJson(row.tagStyleJson || '')
+  // 等待弹窗渲染完成后设置标签样式
+  nextTick(() => {
+    tagStyleConfigRef.value?.setTagStyleJson(row.tagStyleJson || '')
+  })
 }
 
 function handleDelete(row: any) {
