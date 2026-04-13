@@ -1,6 +1,6 @@
 /**
  * 租户初始化任务 API
- * 提供租户初始化任务的查询和进度订阅功能
+ * 提供租户初始化任务的查询和进度订阅能力
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -9,7 +9,7 @@ import http from '../http'
 /**
  * 租户初始化任务状态枚举
  */
-export enum TenantInitTaskStatusEnum {
+export enum TenantInitTask状态Enum {
   /** 等待中 */
   PENDING = 'PENDING',
   /** 进行中 */
@@ -21,30 +21,30 @@ export enum TenantInitTaskStatusEnum {
 }
 
 /**
- * 租户初始化任务状态标签映射
+ * 租户初始化任务状态文本映射
  */
-export const TenantInitTaskStatusLabels: Record<TenantInitTaskStatusEnum, string> = {
-  [TenantInitTaskStatusEnum.PENDING]: '等待中',
-  [TenantInitTaskStatusEnum.RUNNING]: '进行中',
-  [TenantInitTaskStatusEnum.SUCCESS]: '成功',
-  [TenantInitTaskStatusEnum.FAILED]: '失败'
+export const TenantInitTask状态Labels: Record<TenantInitTask状态Enum, string> = {
+  [TenantInitTask状态Enum.PENDING]: '等待中',
+  [TenantInitTask状态Enum.RUNNING]: '进行中',
+  [TenantInitTask状态Enum.SUCCESS]: '成功',
+  [TenantInitTask状态Enum.FAILED]: '失败',
 }
 
 /**
  * 租户初始化任务状态颜色映射
  */
-export const TenantInitTaskStatusColors: Record<TenantInitTaskStatusEnum, string> = {
-  [TenantInitTaskStatusEnum.PENDING]: 'gray',
-  [TenantInitTaskStatusEnum.RUNNING]: 'blue',
-  [TenantInitTaskStatusEnum.SUCCESS]: 'green',
-  [TenantInitTaskStatusEnum.FAILED]: 'red'
+export const TenantInitTask状态Colors: Record<TenantInitTask状态Enum, string> = {
+  [TenantInitTask状态Enum.PENDING]: 'gray',
+  [TenantInitTask状态Enum.RUNNING]: 'blue',
+  [TenantInitTask状态Enum.SUCCESS]: 'green',
+  [TenantInitTask状态Enum.FAILED]: 'red'
 }
 
 /**
  * 租户初始化任务 DTO
  */
 export interface TenantInitTaskDTO {
-  /** 任务 ID */
+  /** 浠诲姟 ID */
   id: number
   /** 租户 ID */
   tenantId: number
@@ -53,7 +53,7 @@ export interface TenantInitTaskDTO {
   /** 租户类型 */
   tenantType: string
   /** 状态 */
-  status: TenantInitTaskStatusEnum
+  status: TenantInitTask状态Enum
   /** 进度百分比（0-100） */
   progress: number
   /** 当前步骤描述 */
@@ -74,7 +74,7 @@ export interface TenantInitTaskDTO {
  * SSE 进度推送数据结构
  */
 export interface ProgressPushData {
-  /** 任务 ID */
+  /** 浠诲姟 ID */
   taskId: string
   /** 进度百分比 */
   progress: number
@@ -86,7 +86,7 @@ export interface ProgressPushData {
 
 /**
  * 获取租户初始化任务详情
- * 
+ *
  * @param taskId 任务 ID
  * @returns 任务详情
  */
@@ -96,7 +96,7 @@ export function getTaskDetail(taskId: number) {
 
 /**
  * 根据租户 ID 获取任务详情
- * 
+ *
  * @param tenantId 租户 ID
  * @returns 任务详情
  */
@@ -106,7 +106,7 @@ export function getTaskByTenantId(tenantId: number) {
 
 /**
  * 创建 SSE 连接订阅进度
- * 
+ *
  * @param taskId 任务 ID
  * @returns EventSource 实例
  */

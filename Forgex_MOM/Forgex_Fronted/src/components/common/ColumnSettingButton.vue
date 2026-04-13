@@ -93,7 +93,6 @@
 import { nextTick, ref, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message } from 'ant-design-vue'
 import { SettingOutlined, UpOutlined, DownOutlined } from '@ant-design/icons-vue'
 import {
   getUserColumns,
@@ -304,7 +303,6 @@ async function handleSave() {
       columns
     })
 
-    message.success(t('common.saveSuccess'))
     dropdownOpen.value = false
 
     // 触发变更事件，更新表格列
@@ -324,7 +322,6 @@ async function handleSave() {
     emit('change', sortedColumns)
   } catch (error) {
     console.error('保存用户列配置失败:', error)
-    message.error(t('common.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -336,7 +333,6 @@ async function handleSave() {
 async function handleReset() {
   try {
     await resetUserColumns(props.tableCode)
-    message.success(t('system.tableConfig.columnSetting.resetSuccess'))
     // 重置为默认配置
     initLocalColumns()
     dropdownOpen.value = false
@@ -345,7 +341,6 @@ async function handleReset() {
     emit('change', props.columns)
   } catch (error) {
     console.error('重置用户列配置失败:', error)
-    message.error(t('common.operationFailed'))
   }
 }
 

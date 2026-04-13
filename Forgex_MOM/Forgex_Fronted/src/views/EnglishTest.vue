@@ -1,13 +1,13 @@
 <!--
-  英文文本显示测试页面
-  用于测试英文长单词、长句子在不同容器宽度下的显示效果
+  鑻辨枃鏂囨湰鏄剧ず娴嬭瘯椤甸潰
+  鐢ㄤ簬娴嬭瘯鑻辨枃闀垮崟璇嶃€侀暱鍙ュ瓙鍦ㄤ笉鍚屽鍣ㄥ搴︿笅鐨勬樉绀烘晥鏋?
 -->
 <template>
   <div class="english-test-page">
     <a-card title="English Text Display Test" class="test-card">
       <a-space direction="vertical" :size="24" style="width: 100%">
         
-        <!-- 测试说明 -->
+        <!-- 娴嬭瘯璇存槑 -->
         <a-alert
           message="Test Purpose"
           description="This page tests how English text (long words, long sentences) displays in different container widths and components."
@@ -15,7 +15,7 @@
           show-icon
         />
         
-        <!-- 长单词测试 -->
+        <!-- 闀垮崟璇嶆祴璇?-->
         <div class="test-section">
           <h3>1. Long Words Test</h3>
           <a-row :gutter="16">
@@ -57,7 +57,7 @@
           </a-row>
         </div>
         
-        <!-- 长句子测试 -->
+        <!-- 闀垮彞瀛愭祴璇?-->
         <div class="test-section">
           <h3>2. Long Sentences Test</h3>
           <a-card size="small">
@@ -70,7 +70,7 @@
           </a-card>
         </div>
         
-        <!-- 菜单测试 -->
+        <!-- 鑿滃崟娴嬭瘯 -->
         <div class="test-section">
           <h3>3. Menu Items Test</h3>
           <a-row :gutter="16">
@@ -126,7 +126,7 @@
           </a-row>
         </div>
         
-        <!-- 表格测试 -->
+        <!-- 琛ㄦ牸娴嬭瘯 -->
         <div class="test-section">
           <h3>4. Table Test</h3>
           <a-table
@@ -137,7 +137,7 @@
           />
         </div>
         
-        <!-- 按钮测试 -->
+        <!-- 鎸夐挳娴嬭瘯 -->
         <div class="test-section">
           <h3>5. Button Test</h3>
           <a-space wrap>
@@ -152,9 +152,9 @@
           </a-space>
         </div>
         
-        <!-- 表单测试 -->
+        <!-- 琛ㄥ崟娴嬭瘯 -->
         <div class="test-section">
-          <h3>6. Form Test</h3>
+          <h3>6. 表单 Test</h3>
           <a-form
             :model="formData"
             :label-col="{ span: 8 }"
@@ -201,7 +201,7 @@ import {
   AppstoreOutlined,
 } from '@ant-design/icons-vue'
 
-// 表格列定义
+// 琛ㄦ牸鍒楀畾涔?
 const tableColumns = [
   {
     title: 'Order Number',
@@ -216,7 +216,7 @@ const tableColumns = [
     width: 200,
   },
   {
-    title: 'Manufacturing Status',
+    title: 'Manufacturing 状态',
     dataIndex: 'status',
     key: 'status',
     width: 180,
@@ -228,7 +228,7 @@ const tableColumns = [
   },
 ]
 
-// 表格数据
+// 琛ㄦ牸鏁版嵁
 const tableData = [
   {
     key: '1',
@@ -253,7 +253,7 @@ const tableData = [
   },
 ]
 
-// 表单数据
+// 琛ㄥ崟鏁版嵁
 const formData = reactive({
   username: '',
   email: '',

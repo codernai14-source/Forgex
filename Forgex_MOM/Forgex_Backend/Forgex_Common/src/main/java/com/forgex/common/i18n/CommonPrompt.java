@@ -44,6 +44,7 @@ public enum CommonPrompt implements I18nPrompt {
     START_SUCCESS("common", "START_SUCCESS", "启动成功"),
     STOP_SUCCESS("common", "STOP_SUCCESS", "停止成功"),
     RESTART_SUCCESS("common", "RESTART_SUCCESS", "重启成功"),
+    SEND_SUCCESS("common", "SEND_SUCCESS", "发送成功"),
 
     NOT_LOGIN("common", "NOT_LOGIN", "未登录或登录过期"),
     NO_PERMISSION("common", "NO_PERMISSION", "无权限"),

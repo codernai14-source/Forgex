@@ -1,8 +1,21 @@
-﻿/**
- * レイアウト翻訳 - 日本語
+/**
+ * 布局翻译 - 日文注释
  */
 export default {
-  globalSearchPlaceholder: 'メニューまたはページを検索',
+  globalSearchPlaceholder: 'メニュー、モジュール、またはピンインの頭文字を検索...',
+  globalSearchResultsCount: '{count} 件の結果',
+  globalSearchEmptyTitle: '一致するメニューが見つかりません',
+  globalSearchEmptyHint: 'メニュー名、モジュール名、またはピンインの頭文字でお試しください',
+  globalSearchTipsTitle: 'クイック検索',
+  globalSearchTipNavigate: '移動',
+  globalSearchTipSelect: '選択',
+  globalSearchTipClose: '閉じる',
+  globalSearchMatchTitle: 'メニュー',
+  globalSearchMatchModule: 'モジュール',
+  globalSearchMatchTitlePinyin: 'メニューピンイン',
+  globalSearchMatchModulePinyin: 'モジュールピンイン',
+  globalSearchMatchBreadcrumb: 'パンくず',
+  globalSearchMatchPath: 'ルート',
   langZhCn: '簡体字中国語',
   langEnUs: '英語',
   refresh: '更新',
@@ -79,7 +92,7 @@ export default {
   watermark: 'ウォーターマーク',
   watermarkEnabled: 'ウォーターマーク',
   watermarkText: 'ウォーターマーク文字',
-  formMode: 'フォーム表示',
+  formMode: '表单表示',
   formModeModal: 'モーダル',
   formModeDrawer: 'ドロワー',
   animateEnabled: 'ページアニメーション',
@@ -93,7 +106,8 @@ export default {
   tabCommon: '共通',
   userProfile: 'プロフィール',
   userSettings: '個人設定',
-  logout: 'ログアウト',
+  logout: '日志アウト',
   home: 'ホーム',
   personalHomepage: '個人ホーム',
+  favoriteManagement: 'お気に入り管理',
 }

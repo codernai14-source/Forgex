@@ -69,7 +69,9 @@ public class SysMessageController {
         
         // 发送消息
         Long id = messageService.send(dto);
-        return id == null ? R.fail(CommonPrompt.OPERATION_FAILED) : R.ok(id);
+        return id == null 
+            ? R.fail(CommonPrompt.OPERATION_FAILED) 
+            : R.ok(CommonPrompt.SEND_SUCCESS, id);
     }
 
     /**
@@ -198,7 +200,7 @@ public class SysMessageController {
                 dto.getBizType()
         );
 
-        return R.ok(count);
+        return R.ok(CommonPrompt.SEND_SUCCESS, count);
     }
 
     /**
@@ -235,7 +237,9 @@ public class SysMessageController {
                 dto.getBizType()
         );
 
-        return messageId != null ? R.ok(messageId) : R.fail(CommonPrompt.OPERATION_FAILED);
+        return messageId != null 
+            ? R.ok(CommonPrompt.SEND_SUCCESS, messageId) 
+            : R.fail(CommonPrompt.OPERATION_FAILED);
     }
     
     /**

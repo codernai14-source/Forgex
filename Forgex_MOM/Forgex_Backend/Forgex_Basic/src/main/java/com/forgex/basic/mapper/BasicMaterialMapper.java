@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Select;
  * 提供基本的 CRUD 操作，继承自 MyBatis-Plus 的 BaseMapper
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

@@ -50,8 +50,15 @@ export default {
   components: {
     commonMenus: {
       title: '常用菜单',
-      subtitle: '常看入口和最近访问菜单',
+      subtitle: '系统自动统计的固定 Top 6 菜单',
       empty: '暂无常用菜单',
+    },
+    myFavorites: {
+      title: '我的收藏',
+      subtitle: '我主动收藏的快捷入口',
+      empty: '暂无收藏菜单',
+      add: '加入收藏',
+      remove: '取消收藏',
     },
     pendingApprovals: {
       title: '我收到的审批',
@@ -90,6 +97,47 @@ export default {
     saveFailed: '保存个人首页配置失败',
     resetSuccess: '已恢复为默认布局',
     resetFailed: '恢复默认布局失败',
+  },
+
+  // 收藏管理页面
+  management: {
+    title: '收藏管理',
+    desc: '统一维护我的收藏菜单，支持调整首页展示顺序和批量取消收藏。',
+    alert: '“我的收藏”卡片会按照这里保存的顺序展示；“常用菜单”固定保留系统自动统计的 Top 6。',
+    empty: '暂无收藏菜单，请先在首页或菜单中添加收藏。',
+    stats: {
+      count: '已收藏 {count} 项',
+    },
+    table: {
+      order: '排序',
+      menu: '菜单',
+      path: '路由路径',
+      action: '操作',
+    },
+    action: {
+      refresh: '刷新列表',
+      batchCancel: '批量取消收藏',
+      saveSort: '保存排序',
+      moveUp: '上移',
+      moveDown: '下移',
+      open: '打开',
+      remove: '取消收藏',
+    },
+    confirm: {
+      batchCancelTitle: '确认批量取消收藏',
+      batchCancelContent: '确认取消选中的 {count} 个收藏菜单吗？',
+      singleCancelTitle: '确认取消收藏',
+      singleCancelContent: '确认取消收藏“{title}”吗？',
+    },
+    message: {
+      loadFailed: '加载收藏管理列表失败',
+      batchCancelSuccess: '批量取消收藏成功',
+      batchCancelFailed: '批量取消收藏失败',
+      singleCancelSuccess: '取消收藏成功',
+      singleCancelFailed: '取消收藏失败',
+      sortSaveSuccess: '收藏排序已保存',
+      sortSaveFailed: '保存收藏排序失败',
+    },
   },
 
   // 摘要卡片

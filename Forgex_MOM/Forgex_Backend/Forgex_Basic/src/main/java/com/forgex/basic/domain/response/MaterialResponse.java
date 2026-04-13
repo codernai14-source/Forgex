@@ -11,7 +11,7 @@ import java.util.List;
  * 专门用于接收物料导入、批量处理等操作的统计结果
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

@@ -1,4 +1,4 @@
-import http from '../http'
+import http, { httpSuccess } from '../http'
 import type { Role, GrantBatchParams } from '@/views/system/role/types'
 
 /**
@@ -34,7 +34,7 @@ export const getRoleById = (id: number) => {
  * @returns 结果
  */
 export const addRole = (data: Partial<Role>) => {
-  return http.post('/sys/role/create', data)
+  return httpSuccess.post('/sys/role/create', data)
 }
 
 /**
@@ -43,7 +43,7 @@ export const addRole = (data: Partial<Role>) => {
  * @returns 结果
  */
 export const updateRole = (data: Partial<Role>) => {
-  return http.post('/sys/role/update', data)
+  return httpSuccess.post('/sys/role/update', data)
 }
 
 /**
@@ -52,7 +52,7 @@ export const updateRole = (data: Partial<Role>) => {
  * @returns 结果
  */
 export const deleteRole = (id: number) => {
-  return http.post('/sys/role/delete', { id })
+  return httpSuccess.post('/sys/role/delete', { id })
 }
 
 /**
@@ -61,7 +61,7 @@ export const deleteRole = (id: number) => {
  * @returns 结果
  */
 export const batchDeleteRoles = (ids: number[]) => {
-  return http.post('/sys/role/batchDelete', { ids })
+  return httpSuccess.post('/sys/role/batchDelete', { ids })
 }
 
 /**
@@ -101,7 +101,22 @@ export const listRoleMenus = (params: { roleId: number; tenantId: string }) => {
  * @returns 结果
  */
 export const grantRoleMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
-  return http.post('/sys/role/menu/grant', data)
+  return httpSuccess.post('/sys/role/menu/grant', data)
+}
+
+export const getRoleCModuleAuthData = (
+  moduleId: number,
+  params: { roleId: number | string }
+) => {
+  return http.post(`/sys/role/c-menu/authData/module/${moduleId}`, params)
+}
+
+export const listRoleCMenus = (params: { roleId: number; tenantId: string }) => {
+  return http.post('/sys/role/c-menu/list', params)
+}
+
+export const grantRoleCMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
+  return httpSuccess.post('/sys/role/c-menu/grant', data)
 }
 
 /**
@@ -119,7 +134,7 @@ export const getRoleAuthorizedUsers = (params: { roleId: number; tenantId: strin
  * @returns 结果
  */
 export const grantRoleUsers = (data: { roleId: number; tenantId: string; userIds: number[] }) => {
-  return http.post('/sys/role/user/grant', data)
+  return httpSuccess.post('/sys/role/user/grant', data)
 }
 
 /**
@@ -128,7 +143,7 @@ export const grantRoleUsers = (data: { roleId: number; tenantId: string; userIds
  * @returns 结果
  */
 export const revokeRoleUsers = (data: { roleId: number; tenantId: string; userIds: number[] }) => {
-  return http.post('/sys/role/user/revoke', data)
+  return httpSuccess.post('/sys/role/user/revoke', data)
 }
 
 /**
@@ -152,5 +167,5 @@ export const getGrantedUserList = (params: {
  * @returns 结果
  */
 export const grantBatch = (data: GrantBatchParams) => {
-  return http.post('/sys/role/user/grant/batch', data)
+  return httpSuccess.post('/sys/role/user/grant/batch', data)
 }

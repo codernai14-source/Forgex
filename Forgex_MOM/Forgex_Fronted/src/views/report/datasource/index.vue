@@ -5,18 +5,18 @@
       table-code="ReportDatasourceTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :fallback-config="fallbackConfig"
+      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
     >
       <template #toolbar>
-        <a-button 
+        <a-button
           v-permission="'report:datasource:add'"
-          type="primary" 
+          type="primary"
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          新增
+          新增数据源
         </a-button>
       </template>
 
@@ -39,21 +39,21 @@
 
       <template #action="{ record }">
         <a-space>
-          <a 
+          <a
             v-permission="'report:datasource:edit'"
             @click="handleEdit(record)"
           >
             编辑
           </a>
-          <a 
+          <a
             v-permission="'report:datasource:test'"
             @click="handleTest(record)"
           >
-            测试连接
+            连接测试
           </a>
-          <a 
+          <a
             v-permission="'report:datasource:delete'"
-            style="color: #ff4d4f" 
+            style="color: #ff4d4f"
             @click="handleDelete(record)"
           >
             删除
@@ -62,7 +62,6 @@
       </template>
     </FxDynamicTable>
 
-    <!-- 数据源表单弹窗 -->
     <a-modal
       v-model:open="formVisible"
       :title="formTitle"
@@ -90,7 +89,7 @@
         <a-form-item label="数据源编码" name="code">
           <a-input
             v-model:value="form.code"
-            placeholder="请输入数据源编码（英文字母开头）"
+            placeholder="请输入数据源编码，首字母必须为字母，可包含字母、数字和下划线"
             maxlength="50"
             show-count
             :disabled="!!form.id"
@@ -111,10 +110,10 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="连接 URL" name="url">
+        <a-form-item label="连接地址 URL" name="url">
           <a-textarea
             v-model:value="form.url"
-            placeholder="请输入数据库连接 URL"
+            placeholder="请输入数据库连接地址 URL"
             :rows="2"
             maxlength="500"
             show-count
@@ -149,7 +148,7 @@
         <a-form-item label="连接池配置" name="poolConfig">
           <a-textarea
             v-model:value="form.poolConfig"
-            placeholder="请输入连接池配置（JSON 格式，可选）"
+            placeholder="请输入连接池配置 JSON 字符串，如无特殊需求可留空"
             :rows="3"
             maxlength="1000"
             show-count
@@ -179,7 +178,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from 'vue'
-import { Modal, message, type FormInstance } from 'ant-design-vue'
+import { Modal, type FormInstance } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { useDict } from '@/hooks/useDict'
@@ -225,16 +224,14 @@ const formRules = {
     { required: true, message: '请输入数据源编码', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-      message: '数据源编码必须以字母开头，只能包含字母、数字和下划线',
+      message: '数据源编码必须以字母开头，且只能包含字母、数字和下划线',
       trigger: 'blur',
     },
     { max: 50, message: '数据源编码不能超过 50 个字符', trigger: 'blur' },
   ],
-  type: [
-    { required: true, message: '请选择数据库类型', trigger: 'change' },
-  ],
+  type: [{ required: true, message: '请选择数据库类型', trigger: 'change' }],
   url: [
-    { required: true, message: '请输入数据库连接 URL', trigger: 'blur' },
+    { required: true, message: '请输入数据库连接地址 URL', trigger: 'blur' },
     { max: 500, message: 'URL 不能超过 500 个字符', trigger: 'blur' },
   ],
   username: [
@@ -254,7 +251,7 @@ const dictOptions = computed(() => ({
   ],
 }))
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ReportDatasourceTable',
   tableName: '数据源管理',
   tableType: 'NORMAL',
@@ -265,7 +262,7 @@ const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
     { field: 'name', title: '数据源名称', width: 180, align: 'left' },
     { field: 'code', title: '数据源编码', width: 150, align: 'left' },
     { field: 'type', title: '数据库类型', width: 120, align: 'center', dictCode: 'dbType' },
-    { field: 'url', title: '连接 URL', width: 300, align: 'left' },
+    { field: 'url', title: '连接地址 URL', width: 300, align: 'left' },
     { field: 'username', title: '用户名', width: 120, align: 'center' },
     { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
     { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
@@ -389,7 +386,7 @@ function loadFormData(data: ReportDatasource) {
   form.poolConfig = data.poolConfig
   form.status = data.status ?? 1
   form.remark = data.remark || ''
-  
+
   if (form.driverClass) {
     autoFillDriver.value = true
   }
@@ -410,13 +407,12 @@ function handleEdit(record: ReportDatasource) {
 function handleDelete(record: ReportDatasource) {
   Modal.confirm({
     title: '提示',
-    content: `确定要删除数据源"${record.name}"吗？`,
+    content: `确定要删除数据源“${record.name}”吗？`,
     okText: '确定',
     cancelText: '取消',
     onOk: async () => {
       try {
         await removeDatasource(record.id)
-        message.success('删除成功')
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('删除失败', error)
@@ -428,10 +424,8 @@ function handleDelete(record: ReportDatasource) {
 async function handleTest(record: ReportDatasource) {
   try {
     await testDatasource(record.id)
-    message.success('连接测试成功')
-  } catch (error: any) {
-    const errorMsg = error?.response?.data?.message || '连接测试失败'
-    message.error(errorMsg)
+  } catch (error) {
+    console.error('连接测试失败', error)
   }
 }
 
@@ -439,13 +433,13 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate()
     await testDatasourceConfig(form)
-    message.success(form.id ? '保存成功' : '创建成功')
     formVisible.value = false
     await tableRef.value?.refresh?.()
   } catch (error: any) {
-    if (error?.response?.data?.message) {
-      message.error(error.response.data.message)
+    if (error?.errorFields) {
+      return
     }
+    console.error('保存数据源失败', error)
   }
 }
 

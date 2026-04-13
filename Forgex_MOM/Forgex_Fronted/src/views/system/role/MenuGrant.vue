@@ -1,29 +1,35 @@
 /**
- * 瑙掕壊鑿滃崟鎺堟潈椤甸潰
+ * 鐟欐帟澹婇懣婊冨礋閹哄牊娼堟い鐢告桨
  * 
- * 鍔熻兘锛?
- * 1. 鎸夋ā鍧楀睍绀鸿彍鍗曟爲褰㈣〃鏍?
- * 2. 鏀寔鍕鹃€夎彍鍗曟潈闄?
- * 3. 鏀寔鎼滅储銆佸叏閫夈€佸弽閫夈€佹竻绌烘搷浣?
- * 4. 淇濆瓨瑙掕壊鑿滃崟鎺堟潈
+ * 閸旂喕鍏橀敍?
+ * 1. 閹稿膩閸ф鐫嶇粈楦垮綅閸楁洘鐖茶ぐ銏ｃ€冮弽?
+ * 2. 閺€顖涘瘮閸曢箖鈧褰嶉崡鏇熸綀闂?
+ * 3. 閺€顖涘瘮閹兼粎鍌ㄩ妴浣稿弿闁鈧礁寮介柅澶堚偓浣圭缁岀儤鎼锋担?
+ * 4. 娣囨繂鐡ㄧ憴鎺曞閼挎粌宕熼幒鍫熸綀
  * 
  * @author Forgex
  * @version 1.0.0
  */
 <template>
   <div class="role-grant-page">
-    <!-- Hero Panel -->
+    <!-- 头部面板 -->
     <section class="hero-panel">
       <div>
         <p class="hero-panel__eyebrow">{{ $t('system.role.menuGrant') }}</p>
         <h2 class="hero-panel__title">{{ roleName }}</h2>
         <p class="hero-panel__desc">{{ $t('system.role.menuGrantDesc') }}</p>
       </div>
+      <div class="hero-panel__tabs">
+        <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
+          <a-tab-pane key="B" tab="B端菜单" />
+          <a-tab-pane key="C" tab="C端菜单" />
+        </a-tabs>
+      </div>
     </section>
 
-    <!-- Board -->
+    <!-- 主体区域 -->
     <section class="board">
-      <!-- Sidebar: 妯″潡绛涢€?-->
+      <!-- 侧边栏： 濡€虫健缁涙盯鈧?-->
       <aside class="sidebar">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.moduleFilter') }}</div>
@@ -39,7 +45,7 @@
         </div>
       </aside>
 
-      <!-- Content Panel: 鏍戝舰琛ㄦ牸 -->
+      <!-- 内容区域： 閺嶆垵鑸扮悰銊︾壐 -->
       <section class="content-panel">
         <div class="toolbar">
           <a-space>
@@ -62,7 +68,7 @@
           ref="tableRef"
           table-code="RoleMenuGrantTable"
           :request="handleRequest"
-          :fallback-config="fallbackConfig"
+          :降级方案-config="降级方案Config"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -79,11 +85,11 @@
           </template>
           <template #status="{ record }">
             <a-tag
-              v-if="resolveStatusTag(record.status)"
-              :color="resolveStatusTag(record.status)?.color"
-              :style="resolveStatusTag(record.status)?.style"
+              v-if="resolve状态Tag(record.status)"
+              :color="resolve状态Tag(record.status)?.color"
+              :style="resolve状态Tag(record.status)?.style"
             >
-              {{ resolveStatusTag(record.status)?.label }}
+              {{ resolve状态Tag(record.status)?.label }}
             </a-tag>
             <span v-else>{{ record.status ?? '-' }}</span>
           </template>
@@ -101,7 +107,13 @@ import { SaveOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { listModules } from '@/api/system/module'
-import { getRoleById, getRoleModuleAuthData, grantRoleMenus } from '@/api/system/role'
+import {
+  getRoleById,
+  getRoleCModuleAuthData,
+  getRoleModuleAuthData,
+  grantRoleCMenus,
+  grantRoleMenus,
+} from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 import { useUserStore } from '@/stores/user'
@@ -128,6 +140,7 @@ const isEmbedded = computed(() => props.embedded === true)
 
 const roleId = ref<string>('')
 const roleName = ref<string>('')
+const activeTerminal = ref<'B' | 'C'>('B')
 const modules = ref<any[]>([])
 const activeModuleId = ref<string>('')
 const tableRef = ref()
@@ -141,7 +154,7 @@ const moduleSelectionInitialized = ref<Record<string, boolean>>({})
 
 const { dictItems: statusOptions } = useDict('status')
 
-const fallbackConfig = computed(() => ({
+const 降级方案Config = computed(() => ({
   tableCode: 'RoleMenuGrantTable',
   tableName: t('system.role.menuGrant'),
   tableType: 'TREE',
@@ -157,7 +170,7 @@ const fallbackConfig = computed(() => ({
   version: 1,
 }))
 
-function normalizeStatusForTag(value: unknown): number {
+function normalize状态ForTag(value: unknown): number {
   if (value === true || value === 1 || value === '1') {
     return 1
   }
@@ -167,8 +180,8 @@ function normalizeStatusForTag(value: unknown): number {
   return value ? 1 : 0
 }
 
-function resolveStatusTag(value: unknown) {
-  const normalizedValue = normalizeStatusForTag(value)
+function resolve状态Tag(value: unknown) {
+  const normalizedValue = normalize状态ForTag(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
     return null
@@ -190,7 +203,7 @@ function resolveStatusTag(value: unknown) {
 }
 
 /**
- * 澶勭悊琛ㄦ牸鏁版嵁璇锋眰
+ * 婢跺嫮鎮婄悰銊︾壐閺佺増宓佺拠閿嬬湴
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !activeModuleId.value || !roleId.value) {
@@ -199,7 +212,9 @@ async function handleRequest(params: any) {
 
   loading.value = true
   try {
-    const tree = await getRoleModuleAuthData(Number(activeModuleId.value), {
+    const tree = await (
+      activeTerminal.value === 'C' ? getRoleCModuleAuthData : getRoleModuleAuthData
+    )(Number(activeModuleId.value), {
       roleId: roleId.value,
     })
 
@@ -208,7 +223,7 @@ async function handleRequest(params: any) {
     
     allMenus.value = flattenTree(normalizedTree)
 
-    // 每次加载都从后端返回的 checked 字段重新初始化选中状态
+    // 姣忔鍔犺浇閮戒粠鍚庣杩斿洖鐨?checked 瀛楁閲嶆柊鍒濆鍖栭€変腑鐘舵€?
     const checkedIds = collectCheckedNodeIds(normalizedTree).map((id) => String(id))
     selectedRowKeys.value = checkedIds
     moduleSelectedKeys.value[activeModuleId.value] = [...checkedIds]
@@ -228,7 +243,7 @@ async function handleRequest(params: any) {
 }
 
 /**
- * 鏍规嵁鍏抽敭璇嶈繃婊ゆ爲褰㈢粨鏋?
+ * 閺嶈宓侀崗鎶芥暛鐠囧秷绻冨銈嗙埐瑜般垻绮ㄩ弸?
  */
 function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTreeRecord[] {
   if (!keyword) {
@@ -253,7 +268,7 @@ function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTree
 }
 
 /**
- * 杩囨护宸插嬀閫夌殑鑺傜偣
+ * 鏉╁洦鎶ゅ鎻掑瑎闁娈戦懞鍌滃仯
  */
 function collectCheckedNodeIds(nodes: MenuTreeRecord[]): number[] {
   const ids: number[] = []
@@ -269,7 +284,7 @@ function collectCheckedNodeIds(nodes: MenuTreeRecord[]): number[] {
 }
 
 /**
- * 鎵佸钩鍖栨爲缁撴瀯
+ * 閹典礁閽╅崠鏍ㄧ埐缂佹挻鐎?
  */
 function flattenTree(tree: MenuTreeRecord[]): MenuTreeRecord[] {
   let res: MenuTreeRecord[] = []
@@ -283,14 +298,14 @@ function flattenTree(tree: MenuTreeRecord[]): MenuTreeRecord[] {
 }
 
 /**
- * 缁熻鏍戣妭鐐规暟閲?
+ * 缂佺喕顓搁弽鎴ｅΝ閻愯鏆熼柌?
  */
 function countTreeNodes(nodes: MenuTreeRecord[] = []): number {
   return nodes.reduce((count, node) => count + 1 + countTreeNodes(node.children || []), 0)
 }
 
 /**
- * 瑙勮寖鍖栨爲缁撴瀯鏁版嵁
+ * 鐟欏嫯瀵栭崠鏍ㄧ埐缂佹挻鐎弫鐗堝祦
  */
 function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
   return nodes.map((node) => ({
@@ -299,13 +314,13 @@ function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
     moduleId: node.moduleId != null ? String(node.moduleId) : node.moduleId,
     parentId: node.parentId != null ? String(node.parentId) : '0',
     name: getI18nValue(node.nameI18nJson, node.name),
-    status: normalizeStatusForTag(node.status),
+    status: normalize状态ForTag(node.status),
     children: normalizeTreeRows(node.children || []),
   }))
 }
 
 /**
- * 澶勭悊琛岄€夋嫨鍙樺寲
+ * 婢跺嫮鎮婄悰宀勨偓澶嬪閸欐ê瀵?
  */
 function handleSelectionChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys.map(String)
@@ -315,7 +330,7 @@ function handleSelectionChange(keys: Array<string | number>) {
 }
 
 /**
- * 澶勭悊妯″潡鍒囨崲
+ * 婢跺嫮鎮婂Ο鈥虫健閸掑洦宕?
  */
 async function handleModuleChange(moduleId: string) {
   if (activeModuleId.value) {
@@ -327,8 +342,16 @@ async function handleModuleChange(moduleId: string) {
   await tableRef.value?.refresh?.()
 }
 
+async function handleTerminalChange(terminal: string) {
+  activeTerminal.value = terminal === 'C' ? 'C' : 'B'
+  selectedRowKeys.value = []
+  allMenus.value = []
+  searchKeyword.value = ''
+  await tableRef.value?.refresh?.()
+}
+
 /**
- * 鍏ㄩ€?
+ * 閸忋劑鈧?
  */
 function handleSelectAll() {
   selectedRowKeys.value = allMenus.value.map(m => String(m.id))
@@ -338,7 +361,7 @@ function handleSelectAll() {
 }
 
 /**
- * 鍙嶉€?
+ * 閸欏秹鈧?
  */
 function handleSelectInvert() {
   const allIds = allMenus.value.map(m => String(m.id))
@@ -350,7 +373,7 @@ function handleSelectInvert() {
 }
 
 /**
- * 娓呯┖
+ * 濞撳懐鈹?
  */
 function handleClearAll() {
   selectedRowKeys.value = []
@@ -360,14 +383,14 @@ function handleClearAll() {
 }
 
 /**
- * 鎼滅储
+ * 閹兼粎鍌?
  */
 function handleSearch() {
   tableRef.value?.refresh?.()
 }
 
 /**
- * 淇濆瓨鎺堟潈
+ * 娣囨繂鐡ㄩ幒鍫熸綀
  */
 async function handleSave() {
   if (!currentTenantId.value || !roleId.value) {
@@ -378,13 +401,12 @@ async function handleSave() {
   try {
     const menuIds = selectedRowKeys.value.map(id => Number(id))
     
-    await grantRoleMenus({
+    await (activeTerminal.value === 'C' ? grantRoleCMenus : grantRoleMenus)({
       roleId: Number(roleId.value),
       tenantId: currentTenantId.value,
       menuIds: menuIds,
     })
     
-    message.success(t('system.role.message.saveGrantSuccess'))
     emit('saved')
     if (isEmbedded.value) {
       return
@@ -392,14 +414,11 @@ async function handleSave() {
     router.back()
   } catch (error: any) {
     console.error('save grant failed:', error)
-    if (!error?.code) {
-      message.error(t('system.role.message.saveGrantFailed'))
-    }
   }
 }
 
 /**
- * 鍔犺浇妯″潡鍒楄〃
+ * 閸旂姾娴囧Ο鈥虫健閸掓銆?
  */
 async function loadModules() {
   if (!currentTenantId.value) {
@@ -419,7 +438,7 @@ async function loadModules() {
 }
 
 /**
- * 鍔犺浇瑙掕壊淇℃伅
+ * 閸旂姾娴囩憴鎺曞娣団剝浼?
  */
 async function loadRoleInfo() {
   if (props.roleName) {
@@ -490,6 +509,22 @@ onMounted(async () => {
       font-size: 14px;
       opacity: 0.8;
       margin: 0;
+    }
+
+    &__tabs {
+      margin-top: 16px;
+
+      :deep(.ant-tabs-nav) {
+        margin-bottom: 0;
+      }
+
+      :deep(.ant-tabs-tab) {
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+        color: #fff;
+      }
     }
   }
 

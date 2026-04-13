@@ -17,7 +17,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * 提供报表设计、管理、预览服务
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see SpringApplication

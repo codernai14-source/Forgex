@@ -1,13 +1,13 @@
 /**
- * Module Management Translations - English
+ * 模块管理翻译 - 中文注释
  */
 export default {
-  // Page Titles
+  // 页面标题
   title: 'Module Management',
   list: 'Module List',
   detail: 'Module Detail',
   
-  // Table Columns
+  // 表格列
   moduleName: 'Module Name',
   moduleCode: 'Module Code',
   icon: 'Icon',
@@ -15,7 +15,7 @@ export default {
   createTime: 'Create Time',
   updateTime: 'Update Time',
   
-  // Form
+  // 表单
   form: {
     addModule: 'Add Module',
     editModule: 'Edit Module',
@@ -25,10 +25,10 @@ export default {
     orderNum: 'Please enter order number',
   },
   
-  // Actions
+  // 操作
   addModule: 'Add',
   
-  // Messages
+  // 消息
   message: {
     deleteConfirm: 'Are you sure you want to delete this module?',
     deleteSuccess: 'Module deleted successfully',

@@ -22,7 +22,7 @@
           ref="tableRef"
           :table-code="'InviteCodeTable'"
           :request="handleRequest"
-          :fallback-config="fallbackConfig"
+          :dynamic-table-config="dynamicTableConfig"
           row-key="id"
         >
           <template #toolbar>
@@ -49,7 +49,7 @@
                 使用记录
               </a-button>
               <a-popconfirm
-                title="确定停用该邀请码？"
+                title="确定停用该邀请码吗？"
                 ok-text="确定"
                 cancel-text="取消"
                 @confirm="handleDisable(record.id)"
@@ -65,7 +65,7 @@
                 </a-button>
               </a-popconfirm>
               <a-popconfirm
-                title="确定删除该邀请码？"
+                title="确定删除该邀请码吗？"
                 ok-text="确定"
                 cancel-text="取消"
                 @confirm="handleDelete(record.id)"
@@ -85,7 +85,6 @@
       </div>
     </a-card>
 
-    <!-- 新增邀请码弹窗 -->
     <BaseFormDialog
       v-model:open="addVisible"
       title="新增邀请码"
@@ -117,10 +116,10 @@
           />
         </a-form-item>
 
-        <a-form-item label="归属职位" name="positionId">
+        <a-form-item label="归属岗位" name="positionId">
           <a-select
             v-model:value="formData.positionId"
-            placeholder="请选择职位（可选）"
+            placeholder="请选择归属岗位，不选则表示部门下所有岗位"
             allow-clear
             style="width: 100%"
           >
@@ -164,7 +163,6 @@
       </a-form>
     </BaseFormDialog>
 
-    <!-- 创建成功展示邀请码弹窗 -->
     <a-modal
       v-model:open="codeVisible"
       title="邀请码已生成"
@@ -182,7 +180,6 @@
       </div>
     </a-modal>
 
-    <!-- 使用记录弹窗 -->
     <a-modal
       v-model:open="recordVisible"
       title="邀请码使用记录"
@@ -215,7 +212,7 @@ import {
   createInviteCode,
   disableInviteCode,
   deleteInviteCode,
-  getInviteRecordPage
+  getInviteRecordPage,
 } from '@/api/system/inviteCode'
 import type { FxTableConfig } from '@/api/system/tableConfig'
 import type { InviteCodeSaveParam, InviteRecord } from './types'
@@ -226,11 +223,11 @@ const positionList = ref<any[]>([])
 const tableRef = ref()
 const loading = ref(false)
 
-const fallbackConfig: Partial<FxTableConfig> = {
+const dynamicTableConfig: Partial<FxTableConfig> = {
   columns: [
     { field: 'inviteCode', title: '邀请码', width: 140, align: 'center' },
     { field: 'departmentName', title: '归属部门', width: 160, align: 'left' },
-    { field: 'positionName', title: '归属职位', width: 140, align: 'left' },
+    { field: 'positionName', title: '归属岗位', width: 140, align: 'left' },
     { field: 'expireTime', title: '过期时间', width: 180, align: 'center' },
     { field: 'maxRegisterCount', title: '最大人数', width: 100, align: 'center' },
     { field: 'usedCount', title: '已用人数', width: 100, align: 'center' },
@@ -238,15 +235,14 @@ const fallbackConfig: Partial<FxTableConfig> = {
     { field: 'status', title: '状态', width: 110, align: 'center' },
     { field: 'createBy', title: '创建人', width: 120, align: 'center' },
     { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' }
+    { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' },
   ],
   queryFields: [
     { field: 'inviteCode', label: '邀请码', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
-  ]
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+  ],
 }
 
-// ==================== 表格数据请求 ====================
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
   query: Record<string, any>
@@ -261,7 +257,7 @@ const handleRequest = async (payload: {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
       tenantId: currentTenantId.value,
-      ...payload.query
+      ...payload.query,
     }
     const data = await getInviteCodePage(params)
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
@@ -274,7 +270,6 @@ const handleRequest = async (payload: {
   }
 }
 
-// ==================== 状态展示 ====================
 function getStatusColor(record: any): string {
   const label = record.statusLabel
   if (label === 'DISABLED') return 'default'
@@ -291,7 +286,6 @@ function getStatusText(record: any): string {
   return '生效中'
 }
 
-// ==================== 新增邀请码 ====================
 const addVisible = ref(false)
 const formLoading = ref(false)
 const formRef = ref()
@@ -301,13 +295,13 @@ const createdCode = ref('')
 const formData = ref<InviteCodeSaveParam>({
   departmentId: '',
   expireTime: '',
-  maxRegisterCount: 10
+  maxRegisterCount: 10,
 })
 
 const rules = {
   departmentId: [{ required: true, message: '请选择归属部门', trigger: 'change' }],
   expireTime: [{ required: true, message: '请选择过期时间', trigger: 'change' }],
-  maxRegisterCount: [{ required: true, message: '请输入最大注册人数', trigger: 'blur' }]
+  maxRegisterCount: [{ required: true, message: '请输入最大注册人数', trigger: 'blur' }],
 }
 
 function openAdd() {
@@ -315,7 +309,7 @@ function openAdd() {
   formData.value = {
     departmentId: '',
     expireTime: '',
-    maxRegisterCount: 10
+    maxRegisterCount: 10,
   }
 }
 
@@ -330,7 +324,6 @@ async function handleSubmit() {
     formLoading.value = true
     const result = await createInviteCode(formData.value)
     addVisible.value = false
-    // 展示生成的邀请码
     if (result && result.inviteCode) {
       createdCode.value = result.inviteCode
       codeVisible.value = true
@@ -338,13 +331,12 @@ async function handleSubmit() {
     await tableRef.value?.refresh?.()
   } catch (e: any) {
     if (e.errorFields) return
-    message.error(e.message || '创建失败')
+    message.error(e.message || '保存失败')
   } finally {
     formLoading.value = false
   }
 }
 
-// ==================== 停用 / 删除 ====================
 async function handleDisable(id: string) {
   try {
     await disableInviteCode({ id })
@@ -363,14 +355,12 @@ async function handleDelete(id: string) {
   }
 }
 
-// ==================== 复制邀请码 ====================
 function copyCode(code: string) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(code).then(() => {
       message.success('邀请码已复制到剪贴板')
     })
   } else {
-    // fallback
     const input = document.createElement('input')
     input.value = code
     document.body.appendChild(input)
@@ -381,7 +371,6 @@ function copyCode(code: string) {
   }
 }
 
-// ==================== 使用记录 ====================
 const recordVisible = ref(false)
 const recordLoading = ref(false)
 const recordList = ref<InviteRecord[]>([])
@@ -391,13 +380,13 @@ const recordPagination = ref({
   pageSize: 10,
   total: 0,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`
+  showTotal: (total: number) => `共 ${total} 条`,
 })
 
 const recordColumns = [
   { title: '注册账号', dataIndex: 'account', width: 120 },
   { title: '用户名', dataIndex: 'username', width: 120 },
-  { title: '注册IP', dataIndex: 'registerIp', width: 130 },
+  { title: '注册 IP', dataIndex: 'registerIp', width: 130 },
   { title: '注册地区', dataIndex: 'registerRegion', width: 130 },
   { title: '注册时间', dataIndex: 'registerTime', width: 180 },
 ]
@@ -415,12 +404,12 @@ async function loadRecords() {
     const data = await getInviteRecordPage({
       inviteId: currentInviteId.value,
       pageNum: recordPagination.value.current,
-      pageSize: recordPagination.value.pageSize
+      pageSize: recordPagination.value.pageSize,
     })
     recordList.value = data.records || []
     recordPagination.value.total = typeof data.total === 'number' ? data.total : 0
   } catch (e) {
-    message.error('加载使用记录失败')
+    message.error('加载邀请码使用记录失败')
   } finally {
     recordLoading.value = false
   }
@@ -432,7 +421,6 @@ function handleRecordPageChange(pagination: any) {
   loadRecords()
 }
 
-// ==================== 加载部门/职位数据 ====================
 async function loadDeptTree() {
   if (!currentTenantId.value) return
   try {
@@ -453,9 +441,7 @@ async function loadPositions() {
   }
 }
 
-// 当选择部门时过滤职位
 watch(() => formData.value.departmentId, (newDeptId) => {
-  // 可以在这里按部门过滤职位，暂时加载全部
   if (newDeptId) {
     loadPositions()
   }
@@ -468,7 +454,7 @@ onMounted(async () => {
     await Promise.all([
       tableRef.value?.refresh?.(),
       loadDeptTree(),
-      loadPositions()
+      loadPositions(),
     ])
   }
 })
@@ -504,4 +490,3 @@ onMounted(async () => {
   min-height: 0;
 }
 </style>
-

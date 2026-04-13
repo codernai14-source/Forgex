@@ -1,8 +1,8 @@
 <template>
   <div class="fx-dynamic-table">
-<!-- 搜索区域卡片（保留少量内边距，看起来更舒适） -->
+    <!-- 查询区域卡片，保留较紧凑的内边距 -->
     <a-card
-      v-if="resolvedShowQueryForm && config && config.queryFields?.length"
+      v-if="resolvedShowQuery表单 && config && config.queryFields?.length"
       :key="`query-${configVersion}`"
       :bordered="false"
       class="fx-card fx-query-card"
@@ -10,7 +10,7 @@
     >
       <a-form layout="inline" :model="queryModel" class="fx-query-form">
         <div class="fx-query-row">
-          <!-- 搜索条件第一行（最多3个） -->
+          <!-- 第一行查询条件，最多展示 3 项 -->
           <div class="fx-query-row-content">
             <template v-for="(q, index) in config.queryFields.slice(0, 3)" :key="q.field">
               <a-form-item :label="q.label">
@@ -21,9 +21,10 @@
                   style="width: 200px"
                 />
                 <a-select
-                  v-else-if="q.queryType === 'select'"
+                  v-else-if="q.queryType === 'select' || q.queryType === 'multiSelect'"
                   v-model:value="(queryModel as any)[q.field]"
                   allow-clear
+                  :mode="q.queryType === 'multiSelect' ? 'multiple' : undefined"
                   style="width: 200px"
                 >
                   <a-select-option
@@ -58,7 +59,7 @@
             </template>
           </div>
           
-          <!-- 搜索和重置按钮 -->
+          <!-- 查询操作区 -->
           <div class="fx-query-actions-row">
             <!-- 展开/收起按钮 -->
             <div v-if="config.queryFields.length > 3" class="fx-query-toggle">
@@ -72,7 +73,7 @@
               </a-button>
             </div>
             
-            <!-- 搜索和重置按钮 -->
+            <!-- 查询与重置按钮 -->
             <a-space>
               <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
               <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
@@ -80,7 +81,7 @@
           </div>
         </div>
         
-        <!-- 额外搜索条件（展开时显示） -->
+        <!-- 展开后显示的附加查询条件 -->
         <div v-if="isQueryExpanded" class="fx-query-row fx-query-row-extra">
           <template v-for="(q, index) in config.queryFields.slice(3)" :key="q.field">
             <a-form-item :label="q.label">
@@ -91,9 +92,10 @@
                 style="width: 200px"
               />
               <a-select
-                v-else-if="q.queryType === 'select'"
+                v-else-if="q.queryType === 'select' || q.queryType === 'multiSelect'"
                 v-model:value="(queryModel as any)[q.field]"
                 allow-clear
+                :mode="q.queryType === 'multiSelect' ? 'multiple' : undefined"
                 style="width: 200px"
               >
                 <a-select-option
@@ -130,13 +132,13 @@
       </a-form>
     </a-card>
     
-<!-- 表格区域卡片（关键：去除 card body 的默认 24px padding，让表格区域最大化） -->
-    <a-card 
+    <!-- 表格区域卡片，移除默认 body padding 以扩大可用空间 -->
+    <a-card
       :bordered="false" 
       class="fx-card fx-table-card"
       :body-style="{ padding: '0' }"
     >
-      <!-- 工具栏与列设置同一行：左操作按钮、右列设置，与下方表格保留间距 -->
+      <!-- 工具栏与列设置同一行展示 -->
       <div
         v-if="hasToolbarSlot || showColumnSettingBar"
         class="fx-table-toolbar-row"
@@ -172,7 +174,7 @@
             @change="handleTableChange"
             :scroll="resolvedScroll"
           >
-          <!-- 自定义单元格内容插槽 -->
+            <!-- 自定义单元格插槽 -->
           <template #bodyCell="scope">
             <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
             <slot v-else name="bodyCell" v-bind="scope" />
@@ -194,8 +196,9 @@
 
 <script setup lang="ts">
 /**
- * 动态表格组件
- * 基于配置自动生成查询表单和表格，支持字典选项和自定义列
+ * 动态表格组件。
+ * 基于后端表格配置自动生成查询表单与表格列，支持字典选项和自定义插槽。
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -208,7 +211,7 @@ import { useI18n } from 'vue-i18n'
 import ColumnSettingButton from './ColumnSettingButton.vue'
 
 /**
- * 字典选项类型
+ * 字典选项类型。
  */
 type DictOption = { 
   label: string; // 显示文本
@@ -216,35 +219,39 @@ type DictOption = {
 }
 
 /**
- * 组件属性
- * <p>列设置默认开启：{@code showColumnSetting} 未传时必须为 true，避免表达式 {@code length && undefined} 恒为假。</p>
+ * 组件属性。
+ * <p>
+ * 列设置默认开启：当 {@code showColumnSetting} 未传时视为 true，避免出现
+ * {@code length && undefined} 导致的误判。
+ * </p>
  */
 const props = withDefaults(
   defineProps<{
   /**
-   * 表格编码，用于获取表格配置
+   * 琛ㄦ牸缂栫爜锛岀敤浜庤幏鍙栬〃鏍奸厤缃?
    */
   tableCode: string
   
   /**
-   * 行主键字段名或函数
+   * 琛屼富閿瓧娈靛悕鎴栧嚱鏁?
    */
   rowKey?: string | ((record: any) => string)
   
   /**
-   * 字典选项配置，用于下拉选择框
+   * 瀛楀吀閫夐」閰嶇疆锛岀敤浜庝笅鎷夐€夋嫨妗?
    */
   dictOptions?: Record<string, DictOption[]>
   
   /**
-   * 降级配置，当获取表格配置失败时使用
+   * 闄嶇骇閰嶇疆锛屽綋鑾峰彇琛ㄦ牸閰嶇疆澶辫触鏃朵娇鐢?
    */
-  fallbackConfig?: Partial<FxTableConfig>
+  降级方案Config?: Partial<FxTableConfig>
+  dynamicTableConfig?: Partial<FxTableConfig>
   
   /**
-   * 数据请求函数
-   * @param payload 请求参数，包含分页、查询条件和排序信息
-   * @returns Promise<{ records: any[]; total: number }> 包含记录列表和总条数的Promise
+   * 鏁版嵁璇锋眰鍑芥暟
+   * @param payload 璇锋眰鍙傛暟锛屽寘鍚垎椤点€佹煡璇㈡潯浠跺拰鎺掑簭淇℃伅
+   * @returns Promise<{ records: any[]; total: number }> 鍖呭惈璁板綍鍒楄〃鍜屾€绘潯鏁扮殑Promise
    */
   request: (payload: {
     page: { current: number; pageSize: number }
@@ -258,19 +265,20 @@ const props = withDefaults(
   scroll?: TableProps['scroll']
   defaultExpandAllRows?: boolean
   expandable?: TableProps['expandable']
+  showQuery表单?: boolean
   showQueryForm?: boolean
   
   /**
-   * 是否显示列设置按钮
-   * <p>默认为 true，显示列设置按钮。</p>
+   * 鏄惁鏄剧ず鍒楄缃寜閽?
+   * <p>榛樿涓?true锛屾樉绀哄垪璁剧疆鎸夐挳銆?/p>
    */
   showColumnSetting?: boolean
 
-  // 已不再使用（旧版比例分配），保留仅为兼容性
+  // 宸蹭笉鍐嶄娇鐢紙鏃х増姣斾緥鍒嗛厤锛夛紝淇濈暀浠呬负鍏煎鎬?
   tableHeightRatio?: number
   }>(),
   {
-    /** 列设置属于表格公共能力，默认显示，不依赖菜单按钮权限 */
+      /** 列设置属于表格公共能力，默认展示，不依赖菜单按钮权限 */
     showColumnSetting: true,
   }
 )
@@ -280,40 +288,40 @@ const { t, locale } = useI18n()
 const slots = useSlots()
 
 /**
- * 是否传入工具栏插槽（与列设置并排展示）
+ * 是否传入了工具栏插槽。
  */
 const hasToolbarSlot = computed(() => !!slots.toolbar)
 
 /**
- * 表格配置
+ * 当前表格配置。
  */
 const config = ref<FxTableConfig>()
 
 /**
  * 列设置面板使用的列数据源。
  * <p>
- * 必须使用 computed 固定引用：模板里若写 {@code config?.columns ?? []}，在 {@code columns} 缺失时每次渲染都会生成新的空数组，
- * 会导致 {@link ColumnSettingButton} 的 props 引用变化、下拉层被反复卸载或无法保持展开。
+ * 必须通过 computed 固定引用，避免模板中使用 {@code config?.columns ?? []}
+ * 时反复创建新数组，导致列设置弹层频繁重渲染。
  * </p>
  */
 const columnSettingColumns = computed(() => config.value?.columns ?? [])
 
 /**
- * 是否展示列设置区域（按钮条右侧）
+ * 是否显示列设置区域。
  */
 const showColumnSettingBar = computed(
   () => !!config.value?.columns?.length && props.showColumnSetting !== false
 )
 
 /**
- * 配置版本号，用于强制刷新 computed
+ * 配置版本号，用于触发相关计算属性刷新。
  */
 const configVersion = ref(0)
 
 const ATag = resolveComponent('a-tag') as any
 
 /**
- * 尝试将字典翻译的 JSON 文本渲染为 Tag。
+ * 尝试把字典翻译 JSON 文本渲染为 Tag。
  */
 function tryRenderTagFromDictJson(dictText: any) {
   if (dictText === undefined || dictText === null || dictText === '') {
@@ -357,15 +365,15 @@ function tryRenderTagFromDictJson(dictText: any) {
 }
 
 /**
- * 将字典翻译字段渲染为 Tag。
+ * 将字典文本统一渲染为 Tag。
  */
-function renderTagByDictText(dictText: any, fallbackText: any) {
+function renderTagByDictText(dictText: any, 降级方案Text: any) {
   if (dictText === undefined || dictText === null || dictText === '') {
-    const fromFallback = tryRenderTagFromDictJson(fallbackText)
+    const fromFallback = tryRenderTagFromDictJson(降级方案Text)
     if (fromFallback !== undefined) {
       return fromFallback
     }
-    return fallbackText
+    return 降级方案Text
   }
 
   if (typeof dictText === 'string') {
@@ -374,7 +382,7 @@ function renderTagByDictText(dictText: any, fallbackText: any) {
       try {
         const parsed = JSON.parse(trimmed)
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          const label = parsed?.label ?? parsed?.name ?? fallbackText ?? dictText
+          const label = parsed?.label ?? parsed?.name ?? 降级方案Text ?? dictText
           const style =
             parsed?.borderColor || parsed?.backgroundColor
               ? {
@@ -394,7 +402,7 @@ function renderTagByDictText(dictText: any, fallbackText: any) {
 
   if (typeof dictText === 'object') {
     const parsed = dictText as any
-    const label = parsed?.label ?? parsed?.name ?? fallbackText
+    const label = parsed?.label ?? parsed?.name ?? 降级方案Text
     const style =
       parsed?.borderColor || parsed?.backgroundColor
         ? {
@@ -405,24 +413,29 @@ function renderTagByDictText(dictText: any, fallbackText: any) {
     return h(ATag, { color: parsed?.color || 'blue', style }, label)
   }
 
-  return fallbackText
+  return 降级方案Text
 }
 
 /**
- * 加载状态
+ * 内部加载状态。
  */
 const loading = ref(false)
 
 const resolvedLoading = computed(() => (props.loading === undefined ? loading.value : props.loading))
-const resolvedShowQueryForm = computed(() => props.showQueryForm !== false)
+const resolvedShowQuery表单 = computed(() => {
+  if (props.showQueryForm !== undefined) {
+    return props.showQueryForm !== false
+  }
+  return props.showQuery表单 !== false
+})
 
 /**
- * 表格数据
+ * 表格数据。
  */
 const tableData = ref<any[]>([])
 
 /**
- * 分页信息
+ * 分页信息。
  */
 const pagination = reactive({
   current: 1,     // 当前页码
@@ -431,10 +444,10 @@ const pagination = reactive({
 })
 
 /**
- * 当前组件是否显式传入了 pagination 属性。
+ * 判断当前组件是否显式传入了 pagination 属性。
  * <p>
- * 由于 pagination 的 TS 类型包含字面量 false，Vue 可能会将其推导为 Boolean prop，
- * 从而在未传入时 props.pagination 也会变成 false，导致默认分页被错误关闭。
+ * 因为 pagination 的 TS 类型包含字面量 {@code false}，Vue 在某些情况下会把它
+ * 推断成 Boolean prop，导致未传值时也被识别为 false，所以这里需要额外判断。
  * </p>
  *
  * @return 是否显式传入 pagination
@@ -490,35 +503,35 @@ const onResizeOrScroll = () => {
 }
 
 /**
- * 查询模型
+ * 鏌ヨ妯″瀷
  */
 const queryModel = reactive<Record<string, any>>({})
 
 /**
- * 搜索区域展开状态
+ * 鎼滅储鍖哄煙灞曞紑鐘舵€?
  */
 const isQueryExpanded = ref(false)
 
 /**
- * 解析后的行主键
+ * 瑙ｆ瀽鍚庣殑琛屼富閿?
  */
 const resolvedRowKey = computed(() => props.rowKey || config.value?.rowKey || 'id')
 
 /**
- * 表格列配置
+ * 琛ㄦ牸鍒楅厤缃?
  */
 const tableColumns = computed(() => {
-  // 依赖 configVersion 强制刷新
+  // 渚濊禆 configVersion 寮哄埗鍒锋柊
   const _ = configVersion.value
   const cols: FxTableColumn[] = config.value?.columns || []
   
-  console.log('[FxDynamicTable] tableColumns computed 被调用，version:', configVersion.value, 'columns:', cols.length, '第一列:', cols[0]?.title)
+  console.log('[FxDynamicTable] tableColumns computed 琚皟鐢紝version:', configVersion.value, 'columns:', cols.length, '绗竴鍒?', cols[0]?.title)
   
-  // 将操作列移到最后
+  // 灏嗘搷浣滃垪绉诲埌鏈€鍚?
   const actionCol = cols.find(c => c.field === 'action')
   const otherCols = cols.filter(c => c.field !== 'action')
   
-  // 重新组合列，将操作列放在最后
+  // 閲嶆柊缁勫悎鍒楋紝灏嗘搷浣滃垪鏀惧湪鏈€鍚?
   const finalCols = actionCol ? [...otherCols, actionCol] : otherCols
   
   return finalCols.map(c => {
@@ -533,25 +546,25 @@ const tableColumns = computed(() => {
       sorter: !!c.sortable,
     }
     
-    // 如果列有字典字段配置，添加自定义渲染（优先级更高）
+    // 濡傛灉鍒楁湁瀛楀吀瀛楁閰嶇疆锛屾坊鍔犺嚜瀹氫箟娓叉煋锛堜紭鍏堢骇鏇撮珮锛?
     if (c.dictField) {
       column.customRender = ({ record }: any) => {
         const dictText = record?.[c.dictField]
         return renderTagByDictText(dictText, record?.[c.field])
       }
     }
-    // 如果列有字典配置，添加自定义渲染
+    // 濡傛灉鍒楁湁瀛楀吀閰嶇疆锛屾坊鍔犺嚜瀹氫箟娓叉煋
     else if (c.dictCode) {
       column.customRender = ({ record }: any) => {
         const autoDictField = `${c.field}Text`
-        // 优先使用后端自动翻译生成的 xxxText 字段（可能为 JSON 字符串或对象）
+        // 浼樺厛浣跨敤鍚庣鑷姩缈昏瘧鐢熸垚鐨?xxxText 瀛楁锛堝彲鑳戒负 JSON 瀛楃涓叉垨瀵硅薄锛?
         const fromTextField = renderTagByDictText(record?.[autoDictField], undefined)
         if (fromTextField !== undefined) {
           return fromTextField
         }
 
         const value = record?.[c.field]
-        // 兼容后端直接把字典 JSON 放在原字段上的情况（例如 gender/status 直接返回 JSON 字符串）
+        // 鍏煎鍚庣鐩存帴鎶婂瓧鍏?JSON 鏀惧湪鍘熷瓧娈典笂鐨勬儏鍐碉紙渚嬪 gender/status 鐩存帴杩斿洖 JSON 瀛楃涓诧級
         const fromValueJson = tryRenderTagFromDictJson(value)
         if (fromValueJson !== undefined) {
           return fromValueJson
@@ -583,14 +596,14 @@ const tableColumns = computed(() => {
 })
 
 /**
- * 关键修改：表格区域始终占满剩余空间（无论是否有分页）
+ * 鍏抽敭淇敼锛氳〃鏍煎尯鍩熷缁堝崰婊″墿浣欑┖闂达紙鏃犺鏄惁鏈夊垎椤碉級
  */
 const tableWrapStyle = computed(() => {
   return { flex: '1 1 auto', minHeight: 0 } as any
 })
 
 /**
- * 分页区域布局样式（保持不变）
+ * 鍒嗛〉鍖哄煙甯冨眬鏍峰紡锛堜繚鎸佷笉鍙橈級
  */
 const paginationAreaStyle = computed(() => {
   if (!resolvedPaginationConfig.value) return undefined
@@ -656,21 +669,21 @@ function computeAutoScrollY() {
     return
   }
 
-  // 获取表格头部高度
+  // 鑾峰彇琛ㄦ牸澶撮儴楂樺害
   const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
 
-  // tableWrapRef 仅包含表格区域（不包含 toolbar / pagination），因此这里只需扣除表头与少量缓冲
+  // tableWrapRef 浠呭寘鍚〃鏍煎尯鍩燂紙涓嶅寘鍚?toolbar / pagination锛夛紝鍥犳杩欓噷鍙渶鎵ｉ櫎琛ㄥご涓庡皯閲忕紦鍐?
   const buffer = 2
   const y = Math.floor(available - headerHeight - buffer)
   
-  const nextY = y > 100 ? y : undefined  // 确保最小高度为100px，避免表格过小
+  const nextY = y > 100 ? y : undefined  // 纭繚鏈€灏忛珮搴︿负100px锛岄伩鍏嶈〃鏍艰繃灏?
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
 }
 
 /**
- * 格式化排序信息
+ * 鏍煎紡鍖栨帓搴忎俊鎭?
  */
 function normalizeSorter(sorter: any) {
   if (!sorter) return undefined
@@ -682,34 +695,34 @@ function normalizeSorter(sorter: any) {
 }
 
 /**
- * 加载表格配置
+ * 鍔犺浇琛ㄦ牸閰嶇疆
  */
 async function loadConfig() {
-  console.log('[FxDynamicTable] loadConfig 开始，tableCode:', props.tableCode, 'locale:', locale.value)
+  console.log('[FxDynamicTable] loadConfig 寮€濮嬶紝tableCode:', props.tableCode, 'locale:', locale.value)
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
-    console.log('[FxDynamicTable] 后端返回配置:', backendConfig)
-    const mergedConfig = mergeConfigs(backendConfig, props.fallbackConfig)
+    console.log('[FxDynamicTable] 鍚庣杩斿洖閰嶇疆:', backendConfig)
+    const mergedConfig = mergeConfigs(backendConfig, props.dynamicTableConfig ?? props.降级方案Config)
     
-    // 强制创建新对象，确保 Vue 响应式系统能检测到变化
+    // 寮哄埗鍒涘缓鏂板璞★紝纭繚 Vue 鍝嶅簲寮忕郴缁熻兘妫€娴嬪埌鍙樺寲
     config.value = {
       ...mergedConfig,
       columns: mergedConfig.columns ? [...mergedConfig.columns] : [],
       queryFields: mergedConfig.queryFields ? [...mergedConfig.queryFields] : []
     }
     
-    // 增加版本号，强制刷新 computed
+    // 澧炲姞鐗堟湰鍙凤紝寮哄埗鍒锋柊 computed
     configVersion.value++
     
-    console.log('[FxDynamicTable] 配置更新完成，columns:', config.value.columns?.length, 'queryFields:', config.value.queryFields?.length, 'version:', configVersion.value)
+    console.log('[FxDynamicTable] 閰嶇疆鏇存柊瀹屾垚锛宑olumns:', config.value.columns?.length, 'queryFields:', config.value.queryFields?.length, 'version:', configVersion.value)
   } catch (e) {
-    console.error('[FxDynamicTable] 获取表格配置失败:', e)
-    if (props.fallbackConfig) {
-      config.value = { ...props.fallbackConfig } as any
+    console.error('[FxDynamicTable] 鑾峰彇琛ㄦ牸閰嶇疆澶辫触:', e)
+    if (props.dynamicTableConfig || props.降级方案Config) {
+      config.value = { ...(props.dynamicTableConfig ?? props.降级方案Config) } as any
     } else {
       config.value = {
         tableCode: props.tableCode,
-        tableName: '默认表格',
+        tableName: '榛樿琛ㄦ牸',
         tableType: 'NORMAL',
         rowKey: 'id',
         defaultPageSize: 20,
@@ -717,7 +730,7 @@ async function loadConfig() {
         queryFields: [],
         version: 1
       }
-      console.warn('[FxDynamicTable] 使用默认空配置，表格可能无法正常显示')
+      console.warn('[FxDynamicTable] 浣跨敤榛樿绌洪厤缃紝琛ㄦ牸鍙兘鏃犳硶姝ｅ父鏄剧ず')
     }
     configVersion.value++
   }
@@ -735,33 +748,35 @@ async function loadConfig() {
 }
 
 /**
- * 合并表格配置
+ * 鍚堝苟琛ㄦ牸閰嶇疆
  */
-function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: Partial<FxTableConfig> | undefined): FxTableConfig {
+function mergeConfigs(backendConfig: FxTableConfig | undefined, 降级方案Config: Partial<FxTableConfig> | undefined): FxTableConfig {
   if (!backendConfig) {
-    return fallbackConfig as any
+    return 降级方案Config as any
   }
   
-  if (!fallbackConfig) {
+  if (!降级方案Config) {
     return backendConfig
   }
   
-  const merged: FxTableConfig = { ...(backendConfig as any), ...(fallbackConfig as any) }
+  const merged: FxTableConfig = { ...(降级方案Config as any), ...(backendConfig as any) }
 
   const backendColumns = normalizeColumns(backendConfig.columns || [])
-  const fallbackColumns = normalizeColumns((fallbackConfig.columns || []) as any[])
+  const 降级方案Columns = normalizeColumns((降级方案Config.columns || []) as any[])
 
-  if (fallbackColumns.length) {
-    const backendMap = new Map<string, FxTableColumn>()
-    for (const bc of backendColumns) {
-      backendMap.set(bc.field, bc)
+  if (降级方案Columns.length) {
+    const 降级方案Map = new Map<string, FxTableColumn>()
+    for (const fc of 降级方案Columns) {
+      降级方案Map.set(fc.field, fc)
     }
 
-    const mergedColumns: FxTableColumn[] = fallbackColumns.map(fc => {
-      const bc = backendMap.get(fc.field)
-      const mergedCol: any = { ...(bc as any), ...(fc as any) }
+    const mergedColumns: FxTableColumn[] = backendColumns.map(bc => {
+      const fc = 降级方案Map.get(bc.field)
+      const mergedCol: any = { ...(fc as any), ...(bc as any) }
 
-      if ('fixed' in (fc as any)) {
+      if ('fixed' in (bc as any)) {
+        mergedCol.fixed = (bc as any).fixed
+      } else if ('fixed' in (fc as any)) {
         mergedCol.fixed = (fc as any).fixed
       } else {
         mergedCol.fixed = undefined
@@ -770,10 +785,10 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
       return mergedCol
     })
 
-    const fallbackFieldSet = new Set(fallbackColumns.map(c => c.field))
-    for (const bc of backendColumns) {
-      if (!fallbackFieldSet.has(bc.field)) {
-        mergedColumns.push(bc)
+    const backendFieldSet = new Set(backendColumns.map(c => c.field))
+    for (const fc of 降级方案Columns) {
+      if (!backendFieldSet.has(fc.field)) {
+        mergedColumns.push(fc)
       }
     }
 
@@ -783,21 +798,21 @@ function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: 
   }
 
   const backendQueryFields = backendConfig.queryFields || []
-  const fallbackQueryFields = (fallbackConfig.queryFields || []) as any[]
+  const 降级方案QueryFields = (降级方案Config.queryFields || []) as any[]
 
-  if (fallbackQueryFields.length) {
-    const backendMap = new Map<string, any>()
-    for (const bq of backendQueryFields) {
-      backendMap.set(bq.field, bq)
+  if (降级方案QueryFields.length) {
+    const 降级方案Map = new Map<string, any>()
+    for (const fq of 降级方案QueryFields) {
+      降级方案Map.set(fq.field, fq)
     }
-    const mergedQueryFields = fallbackQueryFields.map(fq => {
-      const bq = backendMap.get(fq.field)
-      return { ...(bq as any), ...(fq as any) }
+    const mergedQueryFields = backendQueryFields.map((bq: any) => {
+      const fq = 降级方案Map.get(bq.field)
+      return { ...(fq as any), ...(bq as any) }
     })
-    const fallbackFieldSet = new Set(fallbackQueryFields.map(q => q.field))
-    for (const bq of backendQueryFields) {
-      if (!fallbackFieldSet.has(bq.field)) {
-        mergedQueryFields.push(bq)
+    const backendFieldSet = new Set(backendQueryFields.map((q: any) => q.field))
+    for (const fq of 降级方案QueryFields) {
+      if (!backendFieldSet.has(fq.field)) {
+        mergedQueryFields.push(fq)
       }
     }
     merged.queryFields = mergedQueryFields as any
@@ -816,16 +831,16 @@ function normalizeColumns(cols: any[]) {
 }
 
 /**
- * 格式化查询条件
+ * 鏍煎紡鍖栨煡璇㈡潯浠?
  * 
- * 执行步骤：
- * 1. 遍历配置中的所有查询字段
- * 2. 获取每个字段的值
- * 3. 跳过空值（undefined、null、空字符串）
- * 4. 处理日期范围字段，转换为标准格式
- * 5. 返回格式化后的查询对象
+ * 鎵ц姝ラ锛?
+ * 1. 閬嶅巻閰嶇疆涓殑鎵€鏈夋煡璇㈠瓧娈?
+ * 2. 鑾峰彇姣忎釜瀛楁鐨勫€?
+ * 3. 璺宠繃绌哄€硷紙undefined銆乶ull銆佺┖瀛楃涓诧級
+ * 4. 澶勭悊鏃ユ湡鑼冨洿瀛楁锛岃浆鎹负鏍囧噯鏍煎紡
+ * 5. 杩斿洖鏍煎紡鍖栧悗鐨勬煡璇㈠璞?
  * 
- * @returns 格式化后的查询条件对象
+ * @returns 鏍煎紡鍖栧悗鐨勬煡璇㈡潯浠跺璞?
  */
 function normalizeQuery() {
   const out: Record<string, any> = {}
@@ -833,6 +848,7 @@ function normalizeQuery() {
   for (const q of config.value.queryFields || []) {
     const v = queryModel[q.field]
     if (v === undefined || v === null || v === '') continue
+    if (Array.isArray(v) && v.length === 0) continue
     if ((q.queryType === 'dateRange' || q.queryType === 'date' || q.queryType === 'datetime' || q.queryType === 'time') && Array.isArray(v) && v.length === 2) {
       out[q.field] = [dayjs(v[0]).format('YYYY-MM-DD HH:mm:ss'), dayjs(v[1]).format('YYYY-MM-DD HH:mm:ss')]
       continue
@@ -843,18 +859,18 @@ function normalizeQuery() {
 }
 
 /**
- * 处理查询
+ * 澶勭悊鏌ヨ
  * 
- * 执行步骤：
- * 1. 设置加载状态为 true
- * 2. 调用 props.request 方法，传入分页、查询条件、排序信息
- * 3. 从响应中提取 records 和 total
- * 4. 更新表格数据和分页总数
- * 5. 重置加载状态
- * 6. 重新计算表格滚动高度
+ * 鎵ц姝ラ锛?
+ * 1. 璁剧疆鍔犺浇鐘舵€佷负 true
+ * 2. 璋冪敤 props.request 鏂规硶锛屼紶鍏ュ垎椤点€佹煡璇㈡潯浠躲€佹帓搴忎俊鎭?
+ * 3. 浠庡搷搴斾腑鎻愬彇 records 鍜?total
+ * 4. 鏇存柊琛ㄦ牸鏁版嵁鍜屽垎椤垫€绘暟
+ * 5. 閲嶇疆鍔犺浇鐘舵€?
+ * 6. 閲嶆柊璁＄畻琛ㄦ牸婊氬姩楂樺害
  * 
- * @param sorter 排序信息（可选）
- * @throws 请求失败时抛出异常
+ * @param sorter 鎺掑簭淇℃伅锛堝彲閫夛級
+ * @throws 璇锋眰澶辫触鏃舵姏鍑哄紓甯?
  */
 async function handleQuery(sorter?: any) {
   loading.value = true
@@ -877,12 +893,12 @@ async function handleQuery(sorter?: any) {
 }
 
 /**
- * 处理重置
+ * 澶勭悊閲嶇疆
  * 
- * 执行步骤：
- * 1. 清空所有查询条件
- * 2. 重置分页到第一页
- * 3. 使用上次的排序信息重新查询
+ * 鎵ц姝ラ锛?
+ * 1. 娓呯┖鎵€鏈夋煡璇㈡潯浠?
+ * 2. 閲嶇疆鍒嗛〉鍒扮涓€椤?
+ * 3. 浣跨敤涓婃鐨勬帓搴忎俊鎭噸鏂版煡璇?
  */
 function handleReset() {
   for (const k of Object.keys(queryModel)) {
@@ -893,18 +909,18 @@ function handleReset() {
 }
 
 /**
- * 获取当前查询条件
+ * 鑾峰彇褰撳墠鏌ヨ鏉′欢
  * 
- * @returns 当前查询条件对象
+ * @returns 褰撳墠鏌ヨ鏉′欢瀵硅薄
  */
 function getQuery() {
   return normalizeQuery()
 }
 
 /**
- * 获取当前分页信息
+ * 鑾峰彇褰撳墠鍒嗛〉淇℃伅
  * 
- * @returns 分页信息对象，包含 current（当前页）、pageSize（每页条数）、total（总数）
+ * @returns 鍒嗛〉淇℃伅瀵硅薄锛屽寘鍚?current锛堝綋鍓嶉〉锛夈€乸ageSize锛堟瘡椤垫潯鏁帮級銆乼otal锛堟€绘暟锛?
  */
 function getPage() {
   return { 
@@ -915,10 +931,10 @@ function getPage() {
 }
 
 /**
- * 重新加载数据
+ * 閲嶆柊鍔犺浇鏁版嵁
  * 
- * 执行步骤：
- * 1. 调用 handleQuery 方法，使用当前分页和查询条件
+ * 鎵ц姝ラ锛?
+ * 1. 璋冪敤 handleQuery 鏂规硶锛屼娇鐢ㄥ綋鍓嶅垎椤靛拰鏌ヨ鏉′欢
  * 
  * @returns Promise
  */
@@ -927,10 +943,10 @@ function reload() {
 }
 
 /**
- * 刷新数据
+ * 鍒锋柊鏁版嵁
  * 
- * 执行步骤：
- * 1. 调用 handleQuery 方法，使用当前分页和查询条件
+ * 鎵ц姝ラ锛?
+ * 1. 璋冪敤 handleQuery 鏂规硶锛屼娇鐢ㄥ綋鍓嶅垎椤靛拰鏌ヨ鏉′欢
  * 
  * @returns Promise
  */
@@ -938,25 +954,25 @@ function refresh() {
   return handleQuery()
 }
 
-// 暴露给父组件使用的方法
+// 鏆撮湶缁欑埗缁勪欢浣跨敤鐨勬柟娉?
 defineExpose({ getQuery, getPage, reload, refresh })
 
 /**
- * 处理列配置变更
+ * 澶勭悊鍒楅厤缃彉鏇?
  * <p>
- * 当用户通过列设置按钮修改列配置后，更新表格列显示。
+ * 褰撶敤鎴烽€氳繃鍒楄缃寜閽慨鏀瑰垪閰嶇疆鍚庯紝鏇存柊琛ㄦ牸鍒楁樉绀恒€?
  * </p>
  *
- * @param columns 更新后的列配置
+ * @param columns 鏇存柊鍚庣殑鍒楅厤缃?
  */
 function handleColumnChange(columns: FxTableColumn[]) {
   if (config.value) {
-    // 更新配置中的列
+    // 鏇存柊閰嶇疆涓殑鍒?
     config.value = {
       ...config.value,
       columns: [...columns]
     }
-    // 强制刷新 computed
+    // 寮哄埗鍒锋柊 computed
     configVersion.value++
   }
 }
@@ -986,20 +1002,20 @@ watch(
     pagination.current = 1
     await loadConfig()
     await handleQuery(lastSorter.value)
-    // 配置加载后重新计算表格高度
+    // 閰嶇疆鍔犺浇鍚庨噸鏂拌绠楄〃鏍奸珮搴?
     await nextTick()
     scheduleComputeAutoScrollY()
   },
 )
 
-// 监听语言变化 - 使用函数形式确保能正确监听
+// 鐩戝惉璇█鍙樺寲 - 浣跨敤鍑芥暟褰㈠紡纭繚鑳芥纭洃鍚?
 watch(
   () => locale.value,
   async (newLocale, oldLocale) => {
-    console.log('[FxDynamicTable] 语言切换，重新加载配置:', newLocale, '(旧:', oldLocale, ')')
-    // 重新加载配置
+    console.log('[FxDynamicTable] 璇█鍒囨崲锛岄噸鏂板姞杞介厤缃?', newLocale, '(鏃?', oldLocale, ')')
+    // 閲嶆柊鍔犺浇閰嶇疆
     await loadConfig()
-    // 重新加载数据
+    // 閲嶆柊鍔犺浇鏁版嵁
     await handleQuery(lastSorter.value)
   },
 )
@@ -1007,7 +1023,7 @@ watch(
 watch(
   pagination,
   async () => {
-    // 分页信息变化时重新计算表格高度，确保表格正确显示
+    // 鍒嗛〉淇℃伅鍙樺寲鏃堕噸鏂拌绠楄〃鏍奸珮搴︼紝纭繚琛ㄦ牸姝ｇ‘鏄剧ず
     await nextTick()
     scheduleComputeAutoScrollY()
   },
@@ -1025,7 +1041,7 @@ watch(
 watch(
   () => tableData.value.length,
   async () => {
-    // 数据变化时重新计算表格高度
+    // 鏁版嵁鍙樺寲鏃堕噸鏂拌绠楄〃鏍奸珮搴?
     await nextTick()
     scheduleComputeAutoScrollY()
   },
@@ -1037,7 +1053,7 @@ onMounted(async () => {
   await loadConfig()
   await handleQuery()
   
-  // 添加 MutationObserver 监听 DOM 变化，确保表格高度正确计算
+  // 娣诲姞 MutationObserver 鐩戝惉 DOM 鍙樺寲锛岀‘淇濊〃鏍奸珮搴︽纭绠?
   const wrapEl = tableWrapRef.value
   if (wrapEl) {
     const observer = new MutationObserver(() => {
@@ -1051,13 +1067,13 @@ onMounted(async () => {
       attributeFilter: ['style', 'class']
     })
     
-    // 在组件卸载时断开观察
+    // 鍦ㄧ粍浠跺嵏杞芥椂鏂紑瑙傚療
     onBeforeUnmount(() => {
       observer.disconnect()
     })
   }
   
-  // 延迟计算，确保 DOM 完全渲染
+  // 寤惰繜璁＄畻锛岀‘淇?DOM 瀹屽叏娓叉煋
   setTimeout(() => {
     scheduleComputeAutoScrollY()
   }, 100)
@@ -1155,7 +1171,7 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
-/* 工具栏 + 列设置：同一行，左对齐操作 / 右对齐列设置 */
+/* 宸ュ叿鏍?+ 鍒楄缃細鍚屼竴琛岋紝宸﹀榻愭搷浣?/ 鍙冲榻愬垪璁剧疆 */
 .fx-table-toolbar-row {
   display: flex;
   flex-wrap: nowrap;
@@ -1183,7 +1199,7 @@ onBeforeUnmount(() => {
   margin-left: auto;
 }
 
-/* 表格内容区：与上方按钮行留出间距（margin-bottom 已在 toolbar-row） */
+/* 琛ㄦ牸鍐呭鍖猴細涓庝笂鏂规寜閽鐣欏嚭闂磋窛锛坢argin-bottom 宸插湪 toolbar-row锛?*/
 .fx-table-content {
   display: flex;
   flex-direction: column;
@@ -1217,24 +1233,24 @@ onBeforeUnmount(() => {
   max-width: 100%;
 }
 
-/* 分页器间距调整 */
+/* 鍒嗛〉鍣ㄩ棿璺濊皟鏁?*/
 .fx-table-pagination {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-end;
-  padding: 12px 0 0 0;  /* 顶部12px间距，其他方向0（外层已有padding） */
+  padding: 12px 0 0 0;  /* 椤堕儴12px闂磋窛锛屽叾浠栨柟鍚?锛堝灞傚凡鏈塸adding锛?*/
 }
 
 .fx-table-pagination :deep(.ant-pagination) {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: flex-end;  /* 整体右对齐 */
-  gap: 16px;  /* 元素之间的间距 */
+  justify-content: flex-end;  /* 鏁翠綋鍙冲榻?*/
+  gap: 16px;  /* 鍏冪礌涔嬮棿鐨勯棿璺?*/
 }
 
 .fx-table-pagination :deep(.ant-pagination-total-text) {
-  /* 不设置特殊样式，保持默认顺序，显示在页码左边 */
+  /* 涓嶈缃壒娈婃牱寮忥紝淇濇寔榛樿椤哄簭锛屾樉绀哄湪椤电爜宸﹁竟 */
 }
 </style>

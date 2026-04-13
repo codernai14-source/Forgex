@@ -21,7 +21,7 @@ import lombok.Data;
  * 对应接口 {@code POST /sys/role/user/list}，用于按角色分页查询已绑定的用户。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see com.forgex.sys.controller.SysRoleUserController#list

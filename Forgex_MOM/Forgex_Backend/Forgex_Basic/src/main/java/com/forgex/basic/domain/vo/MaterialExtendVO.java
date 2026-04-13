@@ -14,7 +14,7 @@ import java.util.Map;
  * 用于前端表单渲染，在 DTO 基础上增加了类型翻译和解析后的选项列表
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

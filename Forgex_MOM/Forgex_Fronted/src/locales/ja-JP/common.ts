@@ -1,7 +1,7 @@
 /**
- * 共通翻訳 - 日本語
+ * 通用翻译 - 日文注释
  *
- * システムでよく使用される共通語と操作を含む
+ * 包含系统中常用的通用词汇与操作
  */
 export default {
   // 基本操作
@@ -18,7 +18,7 @@ export default {
   reset: 'リセット',
   export: 'エクスポート',
   import: 'インポート',
-  logout: 'ログアウト',
+  logout: '日志アウト',
   refresh: '更新',
   close: '閉じる',
   back: '戻る',
@@ -43,10 +43,20 @@ export default {
     columnLang: '言語',
     columnValue: '翻訳',
     loadLanguagesFailed: '言語一覧の読み込みに失敗しました',
+    // 占位提示
+    placeholderLabel: '占位提示：',
+    placeholderHint: '占位提示をクリックすると、フォーカスされている言語入力欄に挿入されます',
+    phUserName: 'ユーザー名',
+    phUserAccount: 'ユーザーアカウント',
+    phTenantName: 'テナント名',
+    phCurrentTime: '現在時刻',
+    phTitle: 'タイトル',
+    phContent: 'コンテンツ',
+    phLinkUrl: 'リンクURL',
   },
 
-  // ステータス
-  status: 'ステータス',
+  // 状态
+  status: '状态',
   enabled: '有効',
   disabled: '無効',
   active: 'アクティブ',
@@ -63,7 +73,7 @@ export default {
   startTime: '開始日時',
   endTime: '終了日時',
 
-  // その他
+  // 其他
   operation: '操作',
   description: '説明',
   remark: '備考',
@@ -77,7 +87,7 @@ export default {
   pleaseInput: '入力してください',
   home: 'ホーム',
   
-  // システム設定関連
+  // 系统配置相关
   loadFailed: '読み込み失敗',
   saveSuccess: '保存成功',
   saveFailed: '保存失敗',
@@ -91,7 +101,7 @@ export default {
   sizeLimit: 'ファイルサイズ超過',
   preview: 'プレビュー',
   
-  // メッセージ
+  // 消息
   confirmDelete: '削除確認？',
   saved: '保存済み',
   deleted: '削除済み',
@@ -107,15 +117,15 @@ export default {
     startSlider: 'スライダー認証を開始',
     sliderAutoFillTip: '完了後に認証コードを自動入力',
     languageLabel: '言語',
-    rememberMe: 'ログイン状態を保持',
+    rememberMe: '日志イン状態を保持',
     forgotPassword: 'パスワードを忘れた？',
     noAccount: 'アカウントをお持ちでないですか？',
     register: '登録する',
     registerGuideTitle: 'アカウント登録案内',
     registerGuideDesc: 'このシステムには現在、組み込みのセルフ登録機能がありません。アカウント作成は管理者へお問い合わせいただくか、企業が案内する外部登録リンクをご利用ください。',
-    backToLogin: 'ログインへ戻る',
-    submit: 'ログイン',
-    moreLoginMethods: '他のログイン方法',
+    backToLogin: '日志インへ戻る',
+    submit: '日志イン',
+    moreLoginMethods: '他の日志イン方法',
     sliderTitle: 'スライダー認証',
     setSort: '並び替え設定',
     noIntro: '説明なし',
@@ -133,7 +143,7 @@ export default {
       oauthDisabled: 'OAuth が有効になっていません。',
       oauthUrlFailed: '認可URLの取得に失敗しました。',
       selectTenantFirst: '先にテナントを選択してください。',
-      invalidTenant: '選択したテナントが無効です。再ログインしてから再試行してください。',
+      invalidTenant: '選択したテナントが無効です。再日志インしてから再試行してください。',
       chooseTenantFailed: 'テナントの選択に失敗しました。しばらくしてから再試行してください。',
       defaultTenantUpdated: '既定テナントを更新しました。',
       updateDefaultTenantFailed: '既定テナントの更新に失敗しました。',

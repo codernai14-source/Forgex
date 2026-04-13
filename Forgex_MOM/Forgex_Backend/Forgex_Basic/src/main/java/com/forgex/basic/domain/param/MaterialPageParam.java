@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 用于接收前端分页搜索物料时的条件参数
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

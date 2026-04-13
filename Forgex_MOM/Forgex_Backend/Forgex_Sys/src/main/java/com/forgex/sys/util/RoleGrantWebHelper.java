@@ -28,7 +28,7 @@ import com.forgex.sys.domain.param.RoleUserListParam;
  * 统一解析租户 ID、分页结果转换，避免各 Controller 重复实现相同逻辑。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see RoleGrantQueryDTO

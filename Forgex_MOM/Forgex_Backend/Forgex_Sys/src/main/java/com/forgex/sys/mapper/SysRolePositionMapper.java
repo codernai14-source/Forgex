@@ -25,7 +25,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 继承 MyBatis-Plus 的 BaseMapper，提供基础 CRUD 功能。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see SysRolePosition

@@ -1,6 +1,7 @@
 package com.forgex.mobile.ui.navigation
 
 import android.net.Uri
+import com.forgex.mobile.core.network.model.workbench.CMenuVO
 import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeMenuItem
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
@@ -83,6 +84,40 @@ object MenuTargetResolver {
                 "未匹配到菜单映射规则"
             }
         )
+    }
+
+    /**
+     * 从 C 端菜单 VO 解析导航目标（工作台/收藏点击使用）。
+     */
+    fun resolve(menu: CMenuVO): MenuTarget {
+        val componentKey = menu.componentKey?.trim()?.lowercase().orEmpty()
+        val path = menu.path?.trim().orEmpty()
+        val normalizedPath = path.lowercase()
+        val menuMode = menu.menuMode?.trim()?.lowercase().orEmpty()
+        val externalUrl = menu.externalUrl?.trim().orEmpty()
+
+        if (menuMode == "external") {
+            val url = externalUrl.ifBlank { path }.takeIf { it.isWebUrl() }.orEmpty()
+            return if (url.isNotBlank()) {
+                MenuTarget(type = MenuTargetType.WEBVIEW, webUrl = url)
+            } else {
+                MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = "菜单配置为外联，但缺少 URL")
+            }
+        }
+
+        componentKeyRouteMap[componentKey]?.let { route ->
+            return MenuTarget(type = MenuTargetType.NATIVE, nativeRoute = route)
+        }
+
+        resolvePathRoute(normalizedPath)?.let { route ->
+            return MenuTarget(type = MenuTargetType.NATIVE, nativeRoute = route)
+        }
+
+        if (path.isWebUrl()) {
+            return MenuTarget(type = MenuTargetType.WEBVIEW, webUrl = path)
+        }
+
+        return MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = "未匹配到菜单映射规则")
     }
 
     private fun resolvePathRoute(path: String): String? {

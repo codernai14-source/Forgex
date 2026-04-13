@@ -93,6 +93,25 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun openPasswordLogin() {
+        _uiState.update {
+            it.copy(
+                loginStage = AuthLoginStage.PASSWORD_FORM,
+                selectedLoginMethod = LoginMethod.ACCOUNT_PASSWORD,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun backToLoginEntry() {
+        _uiState.update {
+            it.copy(
+                loginStage = AuthLoginStage.ENTRY,
+                errorMessage = null
+            )
+        }
+    }
+
     fun refreshCaptcha(silent: Boolean = false) {
         when (_uiState.value.captchaMode) {
             CaptchaMode.IMAGE -> refreshImageCaptcha(silent)

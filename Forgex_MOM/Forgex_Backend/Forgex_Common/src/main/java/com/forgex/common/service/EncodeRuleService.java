@@ -28,7 +28,7 @@ import org.springframework.util.StringUtils;
  * 统一封装编码规则的远程调用能力，避免各业务模块直接依赖 Sys 模块实现。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleFeignClient

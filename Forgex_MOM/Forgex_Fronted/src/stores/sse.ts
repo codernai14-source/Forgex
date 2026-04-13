@@ -1,7 +1,7 @@
 /**
  * SSE (Server-Sent Events) Store
  * 
- * @description 管理 SSE 连接、消息订阅和推送通知
+ * @description 绠＄悊 SSE 杩炴帴銆佹秷鎭闃呭拰鎺ㄩ€侀€氱煡
  * 
  * @author Forgex Team
  * @version 1.0.0
@@ -13,27 +13,27 @@ import { ref, computed } from 'vue'
 import { useUserStore } from './user'
 
 /**
- * SSE 消息类型
+ * SSE 娑堟伅绫诲瀷
  */
 export interface SseMessage {
   /**
-   * 消息类型
+   * 娑堟伅绫诲瀷
    */
   type: string
   
   /**
-   * 消息数据
+   * 娑堟伅鏁版嵁
    */
   data: any
   
   /**
-   * 消息时间戳
+   * 娑堟伅鏃堕棿鎴?
    */
   timestamp?: number
 }
 
 /**
- * 订阅回调函数类型
+ * 璁㈤槄鍥炶皟鍑芥暟绫诲瀷
  */
 type SubscribeCallback = (message: any) => void
 
@@ -41,60 +41,60 @@ export const useSseStore = defineStore('sse', () => {
   // ============ State ============
   
   /**
-   * SSE 连接实例
+   * SSE 杩炴帴瀹炰緥
    */
   const eventSource = ref<EventSource | null>(null)
   
   /**
-   * 连接状态
+   * 杩炴帴鐘舵€?
    */
   const isConnected = ref(false)
   
   /**
-   * 连接 URL
+   * 杩炴帴 URL
    */
   const connectionUrl = ref<string>('')
   
   /**
-   * 订阅回调映射表
-   * @description 按消息类型存储订阅回调函数
+   * 璁㈤槄鍥炶皟鏄犲皠琛?
+   * @description 鎸夋秷鎭被鍨嬪瓨鍌ㄨ闃呭洖璋冨嚱鏁?
    */
   const subscribers = ref<Map<string, Set<SubscribeCallback>>>(new Map())
   
   /**
-   * 消息历史记录（最近 100 条）
+   * 娑堟伅鍘嗗彶璁板綍锛堟渶杩?100 鏉★級
    */
   const messageHistory = ref<SseMessage[]>([])
   
   /**
-   * 重连次数
+   * 閲嶈繛娆℃暟
    */
   const reconnectAttempts = ref(0)
   
   /**
-   * 最大重连次数
+   * 鏈€澶ч噸杩炴鏁?
    */
   const maxReconnectAttempts = 5
   
   /**
-   * 重连延迟（毫秒）
+   * 閲嶈繛寤惰繜锛堟绉掞級
    */
   const reconnectDelay = 3000
   
   // ============ Computed ============
   
   /**
-   * 是否可以重连
+   * 鏄惁鍙互閲嶈繛
    */
   const canReconnect = computed(() => reconnectAttempts.value < maxReconnectAttempts)
   
-  // ============ Actions ============
+  // ============ 操作 ============
   
   /**
-   * 建立 SSE 连接
+   * 寤虹珛 SSE 杩炴帴
    * 
-   * @param url SSE 服务端 URL
-   * @returns 是否成功建立连接
+   * @param url SSE 鏈嶅姟绔?URL
+   * @returns 鏄惁鎴愬姛寤虹珛杩炴帴
    * 
    * @example
    * ```ts
@@ -103,49 +103,49 @@ export const useSseStore = defineStore('sse', () => {
    * ```
    */
   function connect(url: string): boolean {
-    // 如果已连接，先断开
+    // 濡傛灉宸茶繛鎺ワ紝鍏堟柇寮€
     if (eventSource.value) {
       disconnect()
     }
     
-    // 检查用户是否已登录
+    // 妫€鏌ョ敤鎴锋槸鍚﹀凡鐧诲綍
     const userStore = useUserStore()
     if (!userStore.isLoggedIn) {
-      console.warn('[SSE] 用户未登录，无法建立 SSE 连接')
+      console.warn('[SSE] 鐢ㄦ埛鏈櫥褰曪紝鏃犳硶寤虹珛 SSE 杩炴帴')
       return false
     }
     
     try {
-      // 创建 EventSource 连接
+      // 鍒涘缓 EventSource 杩炴帴
       connectionUrl.value = url
       eventSource.value = new EventSource(url)
       
-      // 监听连接打开事件
+      // 鐩戝惉杩炴帴鎵撳紑浜嬩欢
       eventSource.value.onopen = () => {
         console.log('[SSE] 连接已建立')
         isConnected.value = true
         reconnectAttempts.value = 0
       }
       
-      // 监听消息事件
+      // 鐩戝惉娑堟伅浜嬩欢
       eventSource.value.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as SseMessage
           handleMessage(message)
         } catch (error) {
-          console.error('[SSE] 消息解析失败:', error)
+          console.error('[SSE] 娑堟伅瑙ｆ瀽澶辫触:', error)
         }
       }
       
-      // 监听错误事件
+      // 鐩戝惉閿欒浜嬩欢
       eventSource.value.onerror = (error) => {
-        console.error('[SSE] 连接错误:', error)
+        console.error('[SSE] 杩炴帴閿欒:', error)
         isConnected.value = false
         
-        // 尝试重连
+        // 灏濊瘯閲嶈繛
         if (canReconnect.value) {
           reconnectAttempts.value++
-          console.log(`[SSE] 尝试重连 (${reconnectAttempts.value}/${maxReconnectAttempts})`)
+          console.log(`[SSE] 灏濊瘯閲嶈繛 (${reconnectAttempts.value}/${maxReconnectAttempts})`)
           
           setTimeout(() => {
             if (connectionUrl.value) {
@@ -153,22 +153,22 @@ export const useSseStore = defineStore('sse', () => {
             }
           }, reconnectDelay)
         } else {
-          console.warn('[SSE] 达到最大重连次数，停止重连')
+          console.warn('[SSE] 杈惧埌鏈€澶ч噸杩炴鏁帮紝鍋滄閲嶈繛')
           disconnect()
         }
       }
       
       return true
     } catch (error) {
-      console.error('[SSE] 创建连接失败:', error)
+      console.error('[SSE] 鍒涘缓杩炴帴澶辫触:', error)
       return false
     }
   }
   
   /**
-   * 断开 SSE 连接
+   * 鏂紑 SSE 杩炴帴
    * 
-   * @description 关闭 EventSource 连接并清理相关状态
+   * @description 鍏抽棴 EventSource 杩炴帴骞舵竻鐞嗙浉鍏崇姸鎬?
    * 
    * @example
    * ```ts
@@ -186,73 +186,73 @@ export const useSseStore = defineStore('sse', () => {
     connectionUrl.value = ''
     reconnectAttempts.value = 0
     
-    console.log('[SSE] 连接已断开')
+    console.log('[SSE] 杩炴帴宸叉柇寮€')
   }
   
   /**
-   * 处理接收到的消息
+   * 澶勭悊鎺ユ敹鍒扮殑娑堟伅
    * 
-   * @param message SSE 消息对象
+   * @param message SSE 娑堟伅瀵硅薄
    */
   function handleMessage(message: SseMessage): void {
-    // 记录消息历史
+    // 璁板綍娑堟伅鍘嗗彶
     messageHistory.value.push({
       ...message,
       timestamp: Date.now()
     })
     
-    // 限制历史记录数量
+    // 闄愬埗鍘嗗彶璁板綍鏁伴噺
     if (messageHistory.value.length > 100) {
       messageHistory.value.shift()
     }
     
-    // 触发对应类型的订阅回调
+    // 瑙﹀彂瀵瑰簲绫诲瀷鐨勮闃呭洖璋?
     const callbacks = subscribers.value.get(message.type)
     if (callbacks && callbacks.size > 0) {
       callbacks.forEach(callback => {
         try {
           callback(message.data)
         } catch (error) {
-          console.error(`[SSE] 回调执行失败 (type: ${message.type}):`, error)
+          console.error(`[SSE] 鍥炶皟鎵ц澶辫触 (type: ${message.type}):`, error)
         }
       })
     }
     
-    // 触发通用订阅回调（type 为 '*'）
+    // 瑙﹀彂閫氱敤璁㈤槄鍥炶皟锛坱ype 涓?'*'锛?
     const globalCallbacks = subscribers.value.get('*')
     if (globalCallbacks && globalCallbacks.size > 0) {
       globalCallbacks.forEach(callback => {
         try {
           callback(message)
         } catch (error) {
-          console.error('[SSE] 通用回调执行失败:', error)
+          console.error('[SSE] 閫氱敤鍥炶皟鎵ц澶辫触:', error)
         }
       })
     }
   }
   
   /**
-   * 订阅指定类型的消息
+   * 璁㈤槄鎸囧畾绫诲瀷鐨勬秷鎭?
    * 
-   * @param type 消息类型（如 'message', 'notification', '*' 表示订阅所有消息）
-   * @param callback 回调函数
-   * @returns 取消订阅的函数
+   * @param type 娑堟伅绫诲瀷锛堝 'message', 'notification', '*' 琛ㄧず璁㈤槄鎵€鏈夋秷鎭級
+   * @param callback 鍥炶皟鍑芥暟
+   * @returns 鍙栨秷璁㈤槄鐨勫嚱鏁?
    * 
    * @example
    * ```ts
    * const sseStore = useSseStore()
    * 
-   * // 订阅 message 类型消息
+   * // 璁㈤槄 message 绫诲瀷娑堟伅
    * const unsubscribe = sseStore.subscribe('message', (data) => {
-   *   console.log('收到消息:', data)
+   *   console.log('鏀跺埌娑堟伅:', data)
    * })
    * 
-   * // 取消订阅
+   * // 鍙栨秷璁㈤槄
    * unsubscribe()
    * ```
    */
   function subscribe(type: string, callback: SubscribeCallback): () => void {
-    // 获取或创建该类型的订阅集合
+    // 鑾峰彇鎴栧垱寤鸿绫诲瀷鐨勮闃呴泦鍚?
     if (!subscribers.value.has(type)) {
       subscribers.value.set(type, new Set())
     }
@@ -260,11 +260,11 @@ export const useSseStore = defineStore('sse', () => {
     const callbacks = subscribers.value.get(type)!
     callbacks.add(callback)
     
-    // 返回取消订阅函数
+    // 杩斿洖鍙栨秷璁㈤槄鍑芥暟
     return () => {
       callbacks.delete(callback)
       
-      // 如果该类型没有订阅者了，移除整个集合
+      // 濡傛灉璇ョ被鍨嬫病鏈夎闃呰€呬簡锛岀Щ闄ゆ暣涓泦鍚?
       if (callbacks.size === 0) {
         subscribers.value.delete(type)
       }
@@ -272,27 +272,27 @@ export const useSseStore = defineStore('sse', () => {
   }
   
   /**
-   * 取消所有订阅
+   * 鍙栨秷鎵€鏈夎闃?
    */
   function unsubscribeAll(): void {
     subscribers.value.clear()
   }
   
   /**
-   * 清除消息历史记录
+   * 娓呴櫎娑堟伅鍘嗗彶璁板綍
    */
   function clearHistory(): void {
     messageHistory.value = []
   }
   
   /**
-   * 获取最近的消息
+   * 鑾峰彇鏈€杩戠殑娑堟伅
    * 
-   * @param count 获取数量，默认 10
-   * @param type 消息类型过滤，可选
-   * @returns 消息列表
+   * @param count 鑾峰彇鏁伴噺锛岄粯璁?10
+   * @param type 娑堟伅绫诲瀷杩囨护锛屽彲閫?
+   * @returns 娑堟伅鍒楄〃
    */
-  function getRecentMessages(count: number = 10, type?: string): SseMessage[] {
+  function getRecent消息(count: number = 10, type?: string): SseMessage[] {
     let messages = messageHistory.value
     
     if (type) {
@@ -302,12 +302,12 @@ export const useSseStore = defineStore('sse', () => {
     return messages.slice(-count)
   }
   
-  // ============ 生命周期 ============
+  // ============ 鐢熷懡鍛ㄦ湡 ============
   
   /**
-   * 组件卸载时自动断开连接
+   * 缁勪欢鍗歌浇鏃惰嚜鍔ㄦ柇寮€杩炴帴
    */
-  // 注意：在实际使用中，应在组件的 onUnmounted 中调用 disconnect
+  // 娉ㄦ剰锛氬湪瀹為檯浣跨敤涓紝搴斿湪缁勪欢鐨?onUnmounted 涓皟鐢?disconnect
   
   return {
     // State
@@ -320,12 +320,12 @@ export const useSseStore = defineStore('sse', () => {
     // Computed
     canReconnect,
     
-    // Actions
+    // 操作
     connect,
     disconnect,
     subscribe,
     unsubscribeAll,
     clearHistory,
-    getRecentMessages
+    getRecent消息
   }
 })

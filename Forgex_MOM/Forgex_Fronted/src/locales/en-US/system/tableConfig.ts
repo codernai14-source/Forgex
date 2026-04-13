@@ -1,5 +1,5 @@
 /**
- * Table Config Management - English
+ * 表格配置管理 - 中文注释
  */
 export default {
   tableCode: 'Table Code',

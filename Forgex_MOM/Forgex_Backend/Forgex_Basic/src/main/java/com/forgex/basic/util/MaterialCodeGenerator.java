@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * 支持自动生成物料编码，格式：MAT-YYYY-NNN
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

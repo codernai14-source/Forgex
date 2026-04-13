@@ -15,12 +15,12 @@ package com.forgex.sys.domain.vo;
 
 import com.forgex.common.base.BaseEntity;
 import com.forgex.common.dict.DictI18n;
-import com.forgex.common.dict.DictItem;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户视图对象
@@ -69,6 +69,12 @@ public class SysUserVO extends BaseEntity {
     
     /** 职位名称（关联查询结果） */
     private String positionName;
+
+    /** 当前租户下角色ID列表 */
+    private List<Long> roleIds;
+
+    /** 当前租户下角色名称列表 */
+    private List<String> roleNames;
 
     /** 状态：false=禁用，true=启用 */
     @DictI18n(nodePathConst = "status", targetField = "statusText")

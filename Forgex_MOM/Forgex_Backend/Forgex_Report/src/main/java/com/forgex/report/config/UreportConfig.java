@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * UReport2 是一个轻量级的 Java 报表引擎，适合复杂中国式报表
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see com.pig4wei.ureport2.spring.boot3.starter.config.Ureport2AutoConfiguration

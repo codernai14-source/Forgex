@@ -20,6 +20,7 @@ import com.forgex.sys.domain.dto.SysMenuDTO;
 import com.forgex.sys.domain.dto.SysMenuQueryDTO;
 import com.forgex.sys.domain.entity.SysMenu;
 import com.forgex.sys.domain.vo.MenuTreeVO;
+import com.forgex.sys.domain.vo.UserMenuPreferenceVO;
 import com.forgex.sys.domain.vo.UserRoutesVO;
 
 import java.util.List;
@@ -58,7 +59,7 @@ import java.util.List;
  * 
  * @author coder_nai@163.com
  * @version 1.0.0
- * @date 2025-01-07
+ * @since 2026-04-12
  * @see com.forgex.sys.service.impl.SysMenuServiceImpl
  * @see com.forgex.sys.domain.dto.SysMenuDTO
  * @see com.forgex.sys.domain.vo.MenuTreeVO
@@ -292,4 +293,96 @@ public interface ISysMenuService extends IService<SysMenu> {
      * @return true-权限标识已存在（非当前菜单），false-权限标识不存在或是当前菜单
      */
     boolean existsByPermKeyExcludeId(String permKey, Long tenantId, Long excludeId);
+
+    /**
+     * 获取用户最常用菜单。
+     * <p>
+     * 按“访问次数倒序 + 最近访问时间倒序”返回当前用户的常用菜单列表。
+     * 结果固定保留 Top 6，同时会自动过滤当前用户已经失去权限的菜单。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param limit 兼容保留参数，当前实现固定返回 Top 6
+     * @return 当前用户常用菜单 Top 6 列表
+     */
+    List<UserMenuPreferenceVO> getUserCommonMenus(Long userId, Long tenantId, Integer limit);
+
+    /**
+     * 获取用户收藏菜单。
+     * <p>
+     * 返回当前用户主动收藏的菜单列表，并自动过滤当前用户已无权限访问的菜单。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param limit 返回条数上限，为空时使用系统默认值
+     * @return 当前用户收藏菜单列表
+     */
+    List<UserMenuPreferenceVO> getUserFavoriteMenus(Long userId, Long tenantId, Integer limit);
+
+    /**
+     * 获取用户收藏管理列表。
+     * <p>
+     * 返回当前用户全部收藏菜单，并按照用户自定义排序顺序返回。
+     * 结果会自动过滤当前用户已无权限访问的菜单。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @return 用户收藏管理列表
+     */
+    List<UserMenuPreferenceVO> getUserFavoriteManageMenus(Long userId, Long tenantId);
+
+    /**
+     * 切换用户收藏菜单。
+     * <p>
+     * 当目标菜单已被收藏时执行取消收藏；未收藏时执行新增收藏。
+     * 服务层会先校验菜单路径是否有效且属于当前用户可访问的菜单。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param fullPath 前端上报的菜单完整路径
+     * @return true=已收藏，false=已取消收藏
+     */
+    boolean toggleUserFavoriteMenu(Long userId, Long tenantId, String fullPath);
+
+    /**
+     * 批量取消用户收藏菜单。
+     * <p>
+     * 根据前端传入的菜单路径列表，批量删除当前用户的收藏记录。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param fullPaths 待取消收藏的菜单完整路径列表
+     * @return 实际取消收藏的数量
+     */
+    int batchCancelUserFavoriteMenus(Long userId, Long tenantId, List<String> fullPaths);
+
+    /**
+     * 保存用户收藏菜单排序。
+     * <p>
+     * 前端按目标顺序提交菜单路径列表，服务端会将该顺序持久化到收藏表。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param orderedPaths 按目标顺序排列的菜单完整路径列表
+     */
+    void sortUserFavoriteMenus(Long userId, Long tenantId, List<String> orderedPaths);
+
+    /**
+     * 上报用户菜单访问记录。
+     * <p>
+     * 用于在用户进入菜单页面时写入访问统计，支撑个人首页常用菜单的动态排序。
+     * 当目标路径无效或当前用户无权限访问时，方法会直接忽略本次上报。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param fullPath 前端上报的菜单完整路径
+     */
+    void reportUserMenuVisit(Long userId, Long tenantId, String fullPath);
 }

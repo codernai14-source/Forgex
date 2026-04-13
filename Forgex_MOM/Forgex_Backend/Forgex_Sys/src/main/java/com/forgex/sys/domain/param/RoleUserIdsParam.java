@@ -24,7 +24,7 @@ import java.util.List;
  * 通过用户 ID 列表维护角色与用户的绑定关系。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see com.forgex.sys.controller.SysRoleUserController#grant

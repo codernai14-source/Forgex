@@ -7,7 +7,7 @@
       :dict-options="dictOptions"
       :scroll="{ x: 1800 }"
       :show-query-form="true"
-      :fallback-config="fallbackConfig"
+      :降级方案-config="降级方案Config"
     >
       <template #toolbar>
         <a-button @click="handleExport" v-permission="'sys:operation-log:export'">
@@ -52,9 +52,9 @@
         </a-tag>
       </template>
 
-      <template #responseStatus="{ record }">
-        <a-tag :color="record.responseStatus === 200 ? 'success' : 'error'">
-          {{ record.responseStatus }}
+      <template #response状态="{ record }">
+        <a-tag :color="record.response状态 === 200 ? 'success' : 'error'">
+          {{ record.response状态 }}
         </a-tag>
       </template>
 
@@ -101,8 +101,8 @@
           {{ currentRecord.requestMethod }}
         </a-descriptions-item>
         <a-descriptions-item label="响应状态">
-          <a-tag :color="currentRecord.responseStatus === 200 ? 'success' : 'error'">
-            {{ currentRecord.responseStatus }}
+          <a-tag :color="currentRecord.response状态 === 200 ? 'success' : 'error'">
+            {{ currentRecord.response状态 }}
           </a-tag>
         </a-descriptions-item>
         <a-descriptions-item label="请求 URL" :span="2">
@@ -117,13 +117,13 @@
           </span>
         </a-descriptions-item>
         <a-descriptions-item label="请求参数" :span="2">
-          <pre style="max-height: 200px; overflow: auto; background: #f5f5f5; padding: 8px; border-radius: 4px;">{{ formatJson(currentRecord.requestParams) }}</pre>
+          <pre class="detail-json-block">{{ formatJson(currentRecord.requestParams) }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="响应结果" :span="2" v-if="currentRecord.responseResult">
-          <pre style="max-height: 200px; overflow: auto; background: #f5f5f5; padding: 8px; border-radius: 4px;">{{ formatJson(currentRecord.responseResult) }}</pre>
+          <pre class="detail-json-block">{{ formatJson(currentRecord.responseResult) }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="错误堆栈" :span="2" v-if="currentRecord.errorStack">
-          <pre style="max-height: 300px; overflow: auto; background: #fff2f0; padding: 8px; border-radius: 4px; color: #cf1322;">{{ currentRecord.errorStack }}</pre>
+          <pre class="detail-json-block detail-json-block--error">{{ currentRecord.errorStack }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="操作详情" :span="2" v-if="currentRecord.detailText">
           {{ currentRecord.detailText }}
@@ -139,13 +139,13 @@
 <script setup lang="ts">
 /**
  * 操作日志管理页面
- * 
+ *
  * 功能：
  * 1. 操作日志列表查询（分页、搜索）
  * 2. 支持按用户名、账号、模块、操作时间搜索
- * 3. 显示接口传参、接口返回、账号信息
+ * 3. 显示接口参数、接口返回、账号信息
  * 4. 导出操作日志
- * 
+ *
  * @author Forgex
  * @version 1.0.0
  */
@@ -172,16 +172,16 @@ const dictOptions = computed(() => ({
     { label: t('common.export'), value: 'EXPORT' },
     { label: t('common.import'), value: 'IMPORT' },
     { label: t('common.login.login'), value: 'LOGIN' },
-    { label: t('common.logout', '登出'), value: 'LOGOUT' },
+    { label: t('common.logout', '退出'), value: 'LOGOUT' },
   ],
 }))
 
 /**
  * 回退配置（当数据库中没有配置时使用）
  */
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'OperationLogTable',
-  tableName: '操作日志',
+      tableName: '操作日志',
   tableType: 'NORMAL',
   rowKey: 'id',
   defaultPageSize: 20,
@@ -193,7 +193,7 @@ const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
     { field: 'requestMethod', title: '请求方法', width: 100, align: 'center' },
     { field: 'requestUrl', title: '请求 URL', width: 200, align: 'left', ellipsis: true },
     { field: 'requestParams', title: '请求参数', width: 200, align: 'left', ellipsis: true },
-    { field: 'responseStatus', title: '响应状态', width: 100, align: 'center' },
+    { field: 'response状态', title: '响应状态', width: 100, align: 'center' },
     { field: 'responseResult', title: '响应结果', width: 200, align: 'left', ellipsis: true },
     { field: 'costTime', title: '耗时', width: 90, align: 'center' },
     { field: 'ip', title: 'IP 地址', width: 140, align: 'left' },
@@ -340,12 +340,33 @@ const formatJsonPreview = (jsonStr: string) => {
  * 操作日志页面样式
  */
 .operation-log-container {
-  /* 移除 padding: 16px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
+  /* 去掉 padding: 16px，当前由 MainLayout 的 .fx-content-inner 统一处理 */
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+.detail-json-block {
+  max-height: 200px;
+  margin: 0;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: var(--fx-radius, 6px);
+  border: 1px solid var(--fx-border-color, #d9d9d9);
+  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #f5f5f5));
+  color: var(--fx-text-primary, #1f1f1f);
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.detail-json-block--error {
+  max-height: 300px;
+  border-color: var(--fx-error, #cf1322);
+  background: linear-gradient(180deg, var(--fx-error-bg, #fff2f0), var(--fx-fill-secondary, #f5f5f5));
+  color: var(--fx-error, #cf1322);
 }
 </style>
 

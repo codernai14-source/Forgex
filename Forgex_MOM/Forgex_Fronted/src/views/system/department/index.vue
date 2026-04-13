@@ -218,7 +218,6 @@
  */
 import DeptTree from '@/components/system/DeptTree.vue'
 import { onMounted, ref } from 'vue'
-import { message } from 'ant-design-vue'
 import {
   PlusOutlined,
   EditOutlined,
@@ -297,7 +296,7 @@ async function onSelectNode(keys: string[]) {
     selectedDept.value = data
     isEditing.value = false
   } catch (e) {
-    message.error('加载部门详情失败')
+    console.error('加载部门详情失败', e)
   }
 }
 
@@ -384,7 +383,7 @@ async function handleSave() {
       // 表单验证失败
       return
     }
-    message.error(e.message || '保存失败')
+    console.error('保存失败', e)
   } finally {
     saving.value = false
   }
@@ -408,7 +407,7 @@ async function handleDelete() {
     isEditing.value = false
     await refreshDeptTree()
   } catch (e: any) {
-    message.error(e.message || '删除失败')
+    console.error('删除失败', e)
   }
 }
 

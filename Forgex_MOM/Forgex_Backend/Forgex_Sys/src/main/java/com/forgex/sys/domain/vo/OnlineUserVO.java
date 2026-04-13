@@ -49,15 +49,6 @@ public class OnlineUserVO {
      */
     private String tenantName;
 
-    /**
-     * 用户名称（来自 {@code sys_user.username}）。
-     */
-    private String username;
-
-    /**
-     * 租户名称（来自 {@code sys_tenant.tenant_name}）。
-     */
-    private String tenantName;
 
     /**
      * 最后登录时间（来自 {@code sys_user.last_login_time}）。

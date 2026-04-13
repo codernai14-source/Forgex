@@ -1,8 +1,8 @@
 /**
- * 部門管理翻譯 - 繁體中文
+ * 部门管理翻译 - 繁体中文注释
  */
 export default {
-  // 頁面標題
+  // 页面标题
   title: '部門管理',
   list: '部門列表',
   detail: '部門詳情',
@@ -16,11 +16,11 @@ export default {
   phone: '聯繫電話',
   email: '郵箱',
   orderNum: '排序號',
-  status: '狀態',
+  status: '状态',
   createTime: '創建時間',
   updateTime: '更新時間',
   
-  // 表單
+  // 表单
   form: {
     addDept: '新增部門',
     editDept: '編輯部門',
@@ -32,7 +32,7 @@ export default {
     phone: '請輸入聯繫電話',
     email: '請輸入郵箱',
     orderNum: '請輸入排序號',
-    status: '請選擇狀態',
+    status: '請選擇状态',
   },
   
   // 操作

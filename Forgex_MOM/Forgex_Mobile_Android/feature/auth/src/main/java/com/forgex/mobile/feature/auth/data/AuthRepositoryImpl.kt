@@ -42,6 +42,8 @@ class AuthRepositoryImpl @Inject constructor(
 
             val response = authApi.login(
                 LoginRequest(
+                    loginTerminal = "C",
+                    loginType = "ACCOUNT_PASSWORD",
                     account = account,
                     password = payloadPassword,
                     captcha = captcha?.takeIf { it.isNotBlank() },
@@ -236,6 +238,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.chooseTenant(
                 TenantChoiceRequest(
+                    loginTerminal = "C",
                     tenantId = tenantId,
                     account = account
                 )

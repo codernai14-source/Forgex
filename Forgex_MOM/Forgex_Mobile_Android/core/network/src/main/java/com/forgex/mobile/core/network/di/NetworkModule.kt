@@ -3,6 +3,7 @@
 import com.forgex.mobile.core.network.api.AuthApi
 import com.forgex.mobile.core.network.api.MessageApi
 import com.forgex.mobile.core.network.api.MenuApi
+import com.forgex.mobile.core.network.api.WorkbenchApi
 import com.forgex.mobile.core.network.api.WorkflowApi
 import com.forgex.mobile.core.network.interceptor.AuthInterceptor
 import com.forgex.mobile.core.network.interceptor.DynamicBaseUrlInterceptor
@@ -84,5 +85,11 @@ object NetworkModule {
     @Singleton
     fun provideMessageApi(retrofit: Retrofit): MessageApi {
         return retrofit.create(MessageApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkbenchApi(retrofit: Retrofit): WorkbenchApi {
+        return retrofit.create(WorkbenchApi::class.java)
     }
 }

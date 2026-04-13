@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
  * 用于动态配置物料在不同业务模块下的扩展字段，支持多租户隔离
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see BaseEntity

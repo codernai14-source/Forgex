@@ -4,7 +4,7 @@
       ref="tableRef"
       table-code="I18nLanguageTypeTable"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
+      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
       :pagination="{
@@ -138,7 +138,7 @@ const formRules: Record<string, Rule[]> = {
   langName: [{ required: true, message: t('system.i18n.langNameRequired'), trigger: 'blur' }],
 }
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'I18nLanguageTypeTable',
   tableName: t('system.i18n.languageType'),
   tableType: 'NORMAL',
@@ -189,7 +189,7 @@ const handleRequest = async (payload: {
       total: Number(res?.total || 0),
     }
   } catch (error) {
-    console.error('加载语言类型列表失败', error)
+    console.error('加载语言配置列表失败', error)
     return {
       records: [],
       total: 0,
@@ -230,7 +230,7 @@ async function handleEdit(row: any) {
     form.isDefault = data.isDefault
     dialogVisible.value = true
   } catch (error) {
-    console.error('获取语言类型详情失败', error)
+    console.error('加载语言详情失败', error)
     message.error(t('common.getDetailFailed'))
   }
 }
@@ -263,7 +263,7 @@ async function handleSubmit() {
     dialogVisible.value = false
     await tableRef.value?.refresh?.()
   } catch (error) {
-    console.error('保存失败', error)
+    console.error('保存语言配置失败', error)
   } finally {
     saving.value = false
   }
@@ -286,8 +286,8 @@ async function handleSetDefault(row: any) {
 async function handleImport(file: File) {
   try {
     const res = await importLanguages(file)
-    const { successCount, failCount, errorMessages } = res
-    if (failCount > 0 && errorMessages) {
+    const { successCount, failCount, errorMessage } = res
+    if (failCount > 0 && errorMessage) {
       Modal.warning({
         title: t('system.excel.importResult'),
         content: `${t('system.excel.importSuccess')}: ${successCount}, ${t('system.excel.importFail')}: ${failCount}`,
@@ -298,7 +298,7 @@ async function handleImport(file: File) {
     }
     await tableRef.value?.refresh?.()
   } catch (error) {
-    console.error('导入失败', error)
+    console.error('导入语言失败', error)
     message.error(t('system.excel.importFailed'))
   }
   return false

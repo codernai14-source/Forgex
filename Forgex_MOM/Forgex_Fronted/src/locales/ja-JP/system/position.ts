@@ -1,21 +1,21 @@
 /**
- * Position Management Translations - English
+ * 岗位管理翻译 - 中文注释
  */
 export default {
-  // Page Titles
+  // 页面标题
   title: 'Position Management',
   list: 'Position List',
   detail: 'Position Detail',
   
-  // Table Columns
+  // 表格列
   positionName: 'Position Name',
   positionCode: 'Position Code',
   department: 'Department',
-  status: 'Status',
+  status: '状态',
   createTime: 'Create Time',
   updateTime: 'Update Time',
   
-  // Form
+  // 表单
   form: {
     addPosition: 'Add Position',
     editPosition: 'Edit Position',
@@ -25,10 +25,10 @@ export default {
     status: 'Please select status',
   },
   
-  // Actions
+  // 操作
   addPosition: 'Add Position',
   
-  // Messages
+  // 消息
   message: {
     deleteConfirm: 'Are you sure you want to delete this position?',
     deleteSuccess: 'Position deleted successfully',

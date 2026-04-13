@@ -11,7 +11,7 @@
         onChange: handleSelectionChange
       }"
     >
-        <!-- 工具栏插槽 -->
+        <!-- 操作按钮 -->
         <template #toolbar>
           <a-space :size="8">
             <a-button
@@ -43,7 +43,25 @@
             <template #icon><UserOutlined /></template>
           </a-avatar>
         </template>
-        
+
+        <template #role_ids="{ record }">
+          <a-space v-if="Array.isArray(record.roleNames) && record.roleNames.length > 0" wrap :size="[4, 4]">
+            <a-tag v-for="roleName in record.roleNames" :key="`${record.id}-${roleName}`">
+              {{ roleName }}
+            </a-tag>
+          </a-space>
+          <span v-else>-</span>
+        </template>
+
+        <template #roleId="{ record }">
+          <a-space v-if="Array.isArray(record.roleNames) && record.roleNames.length > 0" wrap :size="[4, 4]">
+            <a-tag v-for="roleName in record.roleNames" :key="`${record.id}-legacy-${roleName}`">
+              {{ roleName }}
+            </a-tag>
+          </a-space>
+          <span v-else>-</span>
+        </template>
+
         <template #action="{ record }">
           <a-space>
             <a
@@ -54,7 +72,7 @@
             </a>
             <a
               v-permission="'sys:user:edit'"
-              @click="toggleUserStatus(record.id, !record.status)"
+              @click="toggleUser状态(record.id, !record.status)"
             >
               {{ record.status ? t('system.user.statusInactive') : t('system.user.statusActive') }}
             </a>
@@ -81,7 +99,7 @@
         </template>
       </fx-dynamic-table>
     
-    <!-- 新增/编辑弹窗 -->
+    <!-- 用户表单/编辑对话框 -->
     <UserFormDialog
       v-model:open="dialogVisible"
       :is-edit="isEdit"
@@ -89,10 +107,12 @@
       @success="handleFormSuccess"
     />
 
-    <!-- 分配角色弹窗 -->
+    <!-- 角色分配对话框 -->
     <UserRoleAssignDialog
       v-model:open="assignRoleDialogVisible"
       :user-id="assignRoleUserId"
+      :user-name="assignRoleUserName"
+      :user-account="assignRoleUserAccount"
       @success="handleAssignRoleSuccess"
     />
   </div>
@@ -101,13 +121,13 @@
 <script setup lang="ts">
 /**
  * 用户管理页面
- * 
+ *
  * 功能：
  * 1. 用户列表查询（分页、搜索）
  * 2. 新增、编辑、删除用户
  * 3. 重置密码、分配角色
  * 4. 批量删除、导出用户
- * 
+ *
  * @author Forgex
  * @version 1.0.0
  */
@@ -141,6 +161,8 @@ const currentUserId = ref<string>()
 
 const assignRoleDialogVisible = ref(false)
 const assignRoleUserId = ref<string>()
+const assignRoleUserName = ref<string>()
+const assignRoleUserAccount = ref<string>()
 
 // 选中的用户ID列表
 const selectedRowKeys = ref<string[]>([])
@@ -155,11 +177,27 @@ const dictOptions = ref<Record<string, any[]>>({
   departmentId: [],
   positionId: [],
   roleId: [],
+  role_ids: [],
   status: [
     { label: t('system.user.statusActive'), value: true },
     { label: t('system.user.statusInactive'), value: false }
   ]
 })
+
+function normalizeRoleFilterValues(value: unknown): string[] {
+  if (value === undefined || value === null || value === '') {
+    return []
+  }
+  const values = Array.isArray(value) ? value : [value]
+  const uniqueValues = new Set<string>()
+  values.forEach((item) => {
+    const normalized = String(item).trim()
+    if (normalized) {
+      uniqueValues.add(normalized)
+    }
+  })
+  return Array.from(uniqueValues)
+}
 
 /**
  * 数据请求函数
@@ -177,10 +215,11 @@ const handleRequest = async (payload: {
   }
   delete query.entryDate
 
-  const legacyRoleId = query.roleId ?? query.role_ids
-  if (legacyRoleId !== undefined && legacyRoleId !== null && legacyRoleId !== '') {
-    query.roleId = Array.isArray(legacyRoleId) ? legacyRoleId[0] : legacyRoleId
+  const roleFilterValues = normalizeRoleFilterValues(query.roleIds ?? query.roleId ?? query.role_ids)
+  if (roleFilterValues.length > 0) {
+    query.roleIds = roleFilterValues
   }
+  delete query.roleId
   delete query.role_ids
 
   const params: any = {
@@ -260,6 +299,8 @@ function openEditDialog(record: any) {
  */
 function openAssignRoleDialog(record: any) {
   assignRoleUserId.value = record.id
+  assignRoleUserName.value = record.username
+  assignRoleUserAccount.value = record.account
   assignRoleDialogVisible.value = true
 }
 
@@ -314,15 +355,15 @@ async function handleBatchDelete() {
  */
 async function handleResetPassword(id: string) {
   // 实现重置密码逻辑
-  // 可参考原有useUser hook的实现
+  // 可参考原本 useUser hook 的实现
 }
 
 /**
  * 更新用户状态
  */
-async function handleUpdateStatus(id: string, status: boolean) {
+async function handleUpdate状态(id: string, status: boolean) {
   // 实现更新状态逻辑
-  // 可参考原有useUser hook的实现
+  // 可参考原本 useUser hook 的实现
 }
 
 /**
@@ -387,8 +428,8 @@ async function confirmResetPassword(id: string) {
   })
 }
 
-async function toggleUserStatus(id: string, status: boolean) {
-  await userApi.updateUserStatus(id, status)
+async function toggleUser状态(id: string, status: boolean) {
+  await userApi.updateUser状态(id, status)
   tableRef.value?.refresh?.()
 }
 
@@ -400,10 +441,12 @@ async function loadRoleList() {
   }
   try {
     const result = await getRoleList({ tenantId })
-    dictOptions.value.roleId = (result || []).map((item: any) => ({
+    const roleOptions = (result || []).map((item: any) => ({
       label: [item.roleName, item.roleCode || item.roleKey].filter(Boolean).join(' / '),
       value: item.id
     }))
+    dictOptions.value.roleId = roleOptions
+    dictOptions.value.role_ids = roleOptions
   } catch (error) {
     console.error('加载角色列表失败:', error)
   }

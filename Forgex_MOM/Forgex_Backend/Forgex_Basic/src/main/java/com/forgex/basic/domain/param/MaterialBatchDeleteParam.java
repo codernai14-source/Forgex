@@ -12,7 +12,7 @@ import java.util.List;
  * 用于接收前端勾选多条物料进行批量删除时的 ID 列表
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

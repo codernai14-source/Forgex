@@ -39,7 +39,7 @@ import com.forgex.sys.domain.vo.RoleGrantVO;
  *   <li>取消授权操作会删除部门下所有用户的对应角色关联</li>
  * </ul>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see com.forgex.sys.service.impl.SysRoleDeptServiceImpl

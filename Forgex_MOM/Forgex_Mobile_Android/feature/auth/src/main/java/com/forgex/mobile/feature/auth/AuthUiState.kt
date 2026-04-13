@@ -10,6 +10,11 @@ enum class AuthStep {
     TENANT_SELECTION
 }
 
+enum class AuthLoginStage {
+    ENTRY,
+    PASSWORD_FORM
+}
+
 /** 登录方式枚举：除账号登录外其余暂为占位。 */
 enum class LoginMethod {
     ACCOUNT_PASSWORD,
@@ -33,6 +38,7 @@ data class AuthUiState(
     val primaryColor: String = "#05d9e8",
     val secondaryColor: String = "#ff2a6d",
     val serverOrigin: String = "",
+    val loginStage: AuthLoginStage = AuthLoginStage.ENTRY,
     val selectedLoginMethod: LoginMethod = LoginMethod.ACCOUNT_PASSWORD,
     val account: String = "",
     val password: String = "",

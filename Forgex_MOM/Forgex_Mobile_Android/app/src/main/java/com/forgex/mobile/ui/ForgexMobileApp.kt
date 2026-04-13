@@ -43,16 +43,20 @@ import com.forgex.mobile.feature.workflow.WORKFLOW_PENDING_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_ROUTE
 import com.forgex.mobile.feature.workflow.WorkflowEntryMode
 import com.forgex.mobile.feature.workflow.WorkflowScreen
+import com.forgex.mobile.ui.navigation.AppDestinations
 import com.forgex.mobile.ui.navigation.MenuTargetResolver
 import com.forgex.mobile.ui.navigation.MenuTargetType
 import com.forgex.mobile.ui.navigation.WebViewDestination
 import com.forgex.mobile.ui.webview.MobileWebViewScreen
 import kotlinx.coroutines.launch
 
+private const val MAIN_SHELL_ROUTE = "main_shell"
+
 /**
  * 全局导航壳层：
- * 1. 管理登录/首页/业务页/WebView 路由。
- * 2. 在非登录场景显示全局 TopBar，并动态展示系统名称。
+ * 1. 管理登录 / 5-Tab 主壳 / 业务页 / WebView 路由。
+ * 2. 登录成功后进入 MainShellScreen（底部 5 Tab）。
+ * 3. 业务详情页（审批详情、消息子页等）仍由外层 NavHost 管理。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,11 +69,13 @@ fun ForgexMobileApp() {
     val systemName by shellViewModel.systemName.collectAsState()
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route.orEmpty()
-    // 登录相关页面与 WebView 使用页面内自定义头部，不展示全局 TopBar
+
+    // 登录页面、MainShell(自带底部导航) 及 WebView 不展示全局 TopBar
     val showGlobalTopBar = currentRoute !in setOf(
         AUTH_ROUTE,
         SERVER_SETTINGS_ROUTE,
-        REGISTER_ROUTE
+        REGISTER_ROUTE,
+        MAIN_SHELL_ROUTE
     ) && !currentRoute.startsWith(WebViewDestination.ROUTE)
 
     Scaffold(
@@ -91,31 +97,25 @@ fun ForgexMobileApp() {
             startDestination = AUTH_ROUTE,
             modifier = Modifier.padding(paddingValues)
         ) {
+            // ==================== 认证 ====================
             composable(AUTH_ROUTE) {
                 AuthScreen(
                     onLoginSuccess = {
-                        navController.navigate(HOME_ROUTE) {
+                        navController.navigate(MAIN_SHELL_ROUTE) {
                             popUpTo(AUTH_ROUTE) { inclusive = true }
                         }
                     },
                     onOpenServerSettings = {
-                        navController.navigate(SERVER_SETTINGS_ROUTE) {
-                            launchSingleTop = true
-                        }
+                        navController.navigate(SERVER_SETTINGS_ROUTE) { launchSingleTop = true }
                     },
                     onOpenRegister = { registerUrl ->
                         val resolvedUrl = registerUrl.trim()
-                        // 若系统配置给了外部注册地址，则直接走 WebView；否则走应用内占位页
                         if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
                             navController.navigate(
                                 WebViewDestination.buildRoute("注册", resolvedUrl)
-                            ) {
-                                launchSingleTop = true
-                            }
+                            ) { launchSingleTop = true }
                         } else {
-                            navController.navigate(REGISTER_ROUTE) {
-                                launchSingleTop = true
-                            }
+                            navController.navigate(REGISTER_ROUTE) { launchSingleTop = true }
                         }
                     }
                 )
@@ -126,12 +126,58 @@ fun ForgexMobileApp() {
             composable(REGISTER_ROUTE) {
                 RegisterPlaceholderScreen(onBack = { navController.popBackStack() })
             }
+
+            // ==================== 5-Tab 主壳 ====================
+            composable(MAIN_SHELL_ROUTE) {
+                MainShellScreen(
+                    onMenuClick = { cMenu ->
+                        val target = MenuTargetResolver.resolve(cMenu)
+                        when (target.type) {
+                            MenuTargetType.NATIVE -> {
+                                val destination = target.nativeRoute
+                                if (destination.isNullOrBlank()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("功能尚未接入: ${cMenu.name}")
+                                    }
+                                } else {
+                                    navController.navigate(destination) { launchSingleTop = true }
+                                }
+                            }
+                            MenuTargetType.WEBVIEW -> {
+                                val webUrl = target.webUrl
+                                if (webUrl.isNullOrBlank()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("菜单未提供 URL: ${cMenu.name}")
+                                    }
+                                } else {
+                                    navController.navigate(
+                                        WebViewDestination.buildRoute(cMenu.name ?: "", webUrl)
+                                    ) { launchSingleTop = true }
+                                }
+                            }
+                            MenuTargetType.UNSUPPORTED -> {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        target.reason ?: "功能尚未接入: ${cMenu.name}"
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onLogout = {
+                        navController.navigate(AUTH_ROUTE) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // ==================== 旧版首页（兼容保留） ====================
             composable(HOME_ROUTE) {
                 HomeScreen(
                     deviceType = deviceType,
                     onMenuClick = { item ->
                         val target = MenuTargetResolver.resolve(item)
-                        // 菜单目标统一走 Resolver，支持原生路由与 WebView 双分发
                         when (target.type) {
                             MenuTargetType.NATIVE -> {
                                 val destination = target.nativeRoute
@@ -140,17 +186,14 @@ fun ForgexMobileApp() {
                                         snackbarHostState.showSnackbar("功能尚未接入: ${item.title}")
                                     }
                                 } else {
-                                    navController.navigate(destination) {
-                                        launchSingleTop = true
-                                    }
+                                    navController.navigate(destination) { launchSingleTop = true }
                                 }
                             }
-
                             MenuTargetType.WEBVIEW -> {
                                 val webUrl = target.webUrl
                                 if (webUrl.isNullOrBlank()) {
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("菜单未提供可访问 URL: ${item.title}")
+                                        snackbarHostState.showSnackbar("菜单未提供 URL: ${item.title}")
                                     }
                                 } else {
                                     navController.navigate(WebViewDestination.buildRoute(item.title, webUrl)) {
@@ -158,18 +201,17 @@ fun ForgexMobileApp() {
                                     }
                                 }
                             }
-
                             MenuTargetType.UNSUPPORTED -> {
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        target.reason ?: "功能尚未接入: ${item.title}"
-                                    )
+                                    snackbarHostState.showSnackbar(target.reason ?: "功能尚未接入: ${item.title}")
                                 }
                             }
                         }
                     }
                 )
             }
+
+            // ==================== 业务详情页 ====================
             composable(WORKFLOW_ROUTE) {
                 WorkflowScreen(
                     entryMode = WorkflowEntryMode.HOME,
@@ -215,6 +257,8 @@ fun ForgexMobileApp() {
             composable(PROFILE_ROUTE) {
                 ProfileScreen(onBack = { navController.popBackStack() })
             }
+
+            // ==================== WebView ====================
             composable(
                 route = WebViewDestination.ROUTE_PATTERN,
                 arguments = listOf(
@@ -229,12 +273,9 @@ fun ForgexMobileApp() {
                 )
             ) { backStackEntry ->
                 val encodedTitle = backStackEntry.arguments
-                    ?.getString(WebViewDestination.ARG_TITLE)
-                    .orEmpty()
+                    ?.getString(WebViewDestination.ARG_TITLE).orEmpty()
                 val encodedUrl = backStackEntry.arguments
-                    ?.getString(WebViewDestination.ARG_URL)
-                    .orEmpty()
-
+                    ?.getString(WebViewDestination.ARG_URL).orEmpty()
                 MobileWebViewScreen(
                     title = Uri.decode(encodedTitle),
                     url = Uri.decode(encodedUrl),

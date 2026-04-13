@@ -1,5 +1,5 @@
 /**
- * Encode Rule Translations - English
+ * 编码规则翻译 - 中文注释
  */
 export default {
   pageTitle: 'Encoding Rule Management',
@@ -7,7 +7,7 @@ export default {
   ruleCode: 'Rule Code',
   businessType: 'Business Type',
   description: 'Description',
-  status: 'Status',
+  status: '状态',
   exampleCode: 'Example Code',
   createTime: 'Create Time',
   updateTime: 'Update Time',
@@ -16,7 +16,7 @@ export default {
   detailSegment: 'Segment',
   segmentType: 'Segment Type',
   segmentValue: 'Segment Value',
-  dateFormat: 'Date Format',
+  date表单at: 'Date 表单at',
   seqStart: 'Start Value',
   seqLength: 'Length',
   seqResetType: 'Reset Type',
@@ -25,7 +25,7 @@ export default {
   businessTypePlaceholder: 'Enter business type (for example: ORDER, INVOICE)',
   descriptionPlaceholder: 'Enter rule description',
   remarkPlaceholder: 'Enter remark',
-  dateFormatPlaceholder: 'Enter date format (for example: YYYYMMDD)',
+  date表单atPlaceholder: 'Enter date format (for example: YYYYMMDD)',
   ruleNameRequired: 'Please enter rule name',
   ruleNameMaxLength: 'Rule name can be up to 50 characters',
   ruleCodeRequired: 'Please enter rule code',
@@ -33,7 +33,7 @@ export default {
   ruleCodePattern: 'Rule code can only contain letters, numbers, and underscores',
   segmentTypeRequired: 'Please select a segment type',
   segmentValueRequired: 'Please enter the segment value',
-  dateFormatRequired: 'Please enter the date format',
+  date表单atRequired: 'Please enter the date format',
   seqStartRequired: 'Please enter the start value',
   seqLengthRequired: 'Please enter the sequence length',
   detailRequired: 'Please add at least one rule detail',

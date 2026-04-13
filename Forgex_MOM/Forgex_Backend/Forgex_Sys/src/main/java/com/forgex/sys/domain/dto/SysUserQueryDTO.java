@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 用户查询DTO
@@ -60,6 +61,11 @@ public class SysUserQueryDTO extends BaseGetParam {
      * 角色ID
      */
     private Long roleId;
+
+    /**
+     * 角色ID列表（支持多角色筛选）。
+     */
+    private List<Long> roleIds;
 
     /**
      * 入职开始日期

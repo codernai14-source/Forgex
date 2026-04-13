@@ -72,7 +72,7 @@ import java.util.stream.Collectors;
  *   <li>支持字典翻译，返回前端友好的展示数据</li>
  * </ul>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see ISysEncodeRuleService

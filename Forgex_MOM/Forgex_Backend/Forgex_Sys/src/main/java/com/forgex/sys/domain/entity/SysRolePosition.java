@@ -25,7 +25,7 @@ import lombok.EqualsAndHashCode;
  * 一个角色可以关联多个职位，一个职位也可以被多个角色关联。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see SysRole

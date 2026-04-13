@@ -26,7 +26,7 @@
       <a-form-item label="报表编码" name="code">
         <a-input
           v-model:value="form.code"
-          placeholder="请输入报表编码（英文字母开头）"
+          placeholder="请输入报表编码，首字母必须为字母，可包含字母、数字和下划线"
           maxlength="50"
           show-count
           :disabled="!!form.id"
@@ -86,10 +86,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch, nextTick } from 'vue'
-import { message, type FormInstance } from 'ant-design-vue'
-import type { ReportTemplate, ReportSaveDTO, ReportCategory } from '@/api/report/types'
-import { save, getCategoryTree } from '@/api/report'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { type FormInstance } from 'ant-design-vue'
+import type { ReportTemplate, ReportSaveDTO } from '@/api/report/types'
+import { save } from '@/api/report'
 
 interface Props {
   open: boolean
@@ -140,31 +140,24 @@ const formRules = {
     { required: true, message: '请输入报表编码', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-      message: '报表编码必须以字母开头，只能包含字母、数字和下划线',
+      message: '报表编码必须以字母开头，且只能包含字母、数字和下划线',
       trigger: 'blur',
     },
     { max: 50, message: '报表编码不能超过 50 个字符', trigger: 'blur' },
   ],
-  engineType: [
-    { required: true, message: '请选择引擎类型', trigger: 'change' },
-  ],
+  engineType: [{ required: true, message: '请选择引擎类型', trigger: 'change' }],
 }
 
 const categoryTreeData = computed(() => {
-  return buildTreeData(props.categoryOptions || [])
-})
-
-const datasourceSelectOptions = computed(() => {
-  return props.datasourceOptions || []
-})
-
-function buildTreeData(options: Array<{ label: string; value: number }>) {
-  return options.map((item) => ({
+  return (props.categoryOptions || []).map((item) => ({
     title: item.label,
+    label: item.label,
     value: item.value,
     key: item.value,
   }))
-}
+})
+
+const datasourceSelectOptions = computed(() => props.datasourceOptions || [])
 
 function resetForm() {
   form.id = undefined
@@ -195,12 +188,12 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate()
     await save(form)
-    message.success(form.id ? '保存成功' : '创建成功')
     emit('ok')
   } catch (error: any) {
-    if (error?.response?.data?.message) {
-      message.error(error.response.data.message)
+    if (error?.errorFields) {
+      return
     }
+    console.error('保存报表失败', error)
   }
 }
 
@@ -220,7 +213,7 @@ watch(
       resetForm()
     }
   },
-  { deep: true }
+  { deep: true },
 )
 
 onMounted(() => {
@@ -230,6 +223,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-// 样式可以在这里添加
-</style>
+<style scoped lang="less"></style>

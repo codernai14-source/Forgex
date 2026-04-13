@@ -10,7 +10,7 @@
       <!-- 进度条 -->
       <a-progress
         :percent="progress"
-        :status="taskStatus"
+        :status="task状态"
         :format="formatProgress"
       />
       
@@ -52,12 +52,12 @@
 <script setup lang="ts">
 /**
  * 租户初始化进度组件
- * 
+ *
  * 功能：
  * 1. 通过 SSE 实时订阅租户初始化任务进度
  * 2. 可视化展示初始化进度和步骤
  * 3. 支持成功/失败状态显示
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -120,7 +120,7 @@ const currentStep = ref('')
 /**
  * 任务状态：active-进行中，exception-异常，success-成功
  */
-const taskStatus = ref<'active' | 'exception' | 'success'>('active')
+const task状态 = ref<'active' | 'exception' | 'success'>('active')
 
 /**
  * 错误信息
@@ -148,14 +148,14 @@ const steps = reactive<Step[]>([
 
 /**
  * 格式化进度显示文本
- * 
+ *
  * @param percent 进度百分比
  * @returns 格式化后的文本
  */
 const formatProgress = (percent?: number) => {
-  if (taskStatus.value === 'success') {
+  if (task状态.value === 'success') {
     return '初始化完成'
-  } else if (taskStatus.value === 'exception') {
+  } else if (task状态.value === 'exception') {
     return '初始化失败'
   }
   return `${percent}%`
@@ -163,7 +163,7 @@ const formatProgress = (percent?: number) => {
 
 /**
  * 获取步骤颜色
- * 
+ *
  * @param step 步骤对象
  * @returns 颜色值
  */
@@ -175,10 +175,10 @@ const getStepColor = (step: Step) => {
 
 /**
  * 更新步骤状态
- * 
+ *
  * @param stepName 当前步骤名称
  */
-const updateStepStatus = (stepName: string) => {
+const updateStep状态 = (stepName: string) => {
   const stepIndex = steps.findIndex(s => stepName.includes(s.name))
   steps.forEach((step, index) => {
     if (index < stepIndex) {
@@ -204,7 +204,7 @@ const initSSE = async () => {
       
       // 如果任务已完成或失败，直接显示结果
       if (taskDetail.status === 'SUCCESS') {
-        taskStatus.value = 'success'
+        task状态.value = 'success'
         loading.value = false
         setTimeout(() => {
           visible.value = false
@@ -212,7 +212,7 @@ const initSSE = async () => {
         }, 1500)
         return
       } else if (taskDetail.status === 'FAILED') {
-        taskStatus.value = 'exception'
+        task状态.value = 'exception'
         errorMessage.value = taskDetail.errorMessage || '初始化失败'
         loading.value = false
         return
@@ -229,11 +229,11 @@ const initSSE = async () => {
       currentStep.value = data.currentStep
       
       // 更新步骤状态
-      updateStepStatus(data.currentStep)
+      updateStep状态(data.currentStep)
       
       // 检查是否完成
       if (data.progress === 100) {
-        taskStatus.value = 'success'
+        task状态.value = 'success'
         loading.value = false
         setTimeout(() => {
           visible.value = false
@@ -245,8 +245,8 @@ const initSSE = async () => {
     // 监听错误
     eventSource.onerror = () => {
       console.error('SSE 连接错误')
-      taskStatus.value = 'exception'
-      errorMessage.value = '连接服务器失败，请刷新页面重试'
+      task状态.value = 'exception'
+      errorMessage.value = '连接服务器失败，请刷新页面后重试'
       loading.value = false
       
       if (eventSource) {
@@ -256,7 +256,7 @@ const initSSE = async () => {
     }
   } catch (error) {
     console.error('初始化 SSE 失败:', error)
-    taskStatus.value = 'exception'
+    task状态.value = 'exception'
     errorMessage.value = '获取任务状态失败'
     loading.value = false
   }

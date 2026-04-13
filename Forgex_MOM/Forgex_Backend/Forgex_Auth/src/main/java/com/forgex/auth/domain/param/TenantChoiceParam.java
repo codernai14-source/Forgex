@@ -29,6 +29,7 @@ import lombok.Data;
  */
 @Data
 public class TenantChoiceParam {
+    private String loginTerminal;
     /**
      * 选择的租户 ID
      * <p>用户要切换到的租户 ID</p>

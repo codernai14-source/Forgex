@@ -13,12 +13,13 @@
       v-if="systemConfig.loginBackgroundType === 'image'"
       class="bg-video"
       :src="resolveMediaUrl(systemConfig.loginBackgroundImage)"
+      alt="login-background"
     />
     <div class="mask" :style="{ backgroundColor: systemConfig.loginBackgroundType === 'color' ? systemConfig.loginBackgroundColor : '' }"></div>
     <div class="grid"></div>
     <div class="content" :class="`layout-${systemConfig.loginLayout || 'center'}`">
       <div class="brand" v-show="!tenantOpen">
-        <img v-if="resolveMediaUrl(systemConfig.systemLogo)" :src="resolveMediaUrl(systemConfig.systemLogo)" class="brand-logo" />
+        <img v-if="resolveMediaUrl(systemConfig.systemLogo)" :src="resolveMediaUrl(systemConfig.systemLogo)" class="brand-logo" alt="system-logo" />
         <span v-else class="brand-blue">{{ systemConfig.systemName.split('_')[0] }}</span
         ><span v-if="!resolveMediaUrl(systemConfig.systemLogo)" class="brand-red">_{{ systemConfig.systemName.split('_')[1] || 'MOM' }}</span>
         <div class="brand-line"></div>
@@ -54,7 +55,7 @@
                 v-model="captcha"
                 :placeholder="i18nT('common.login.captchaPlaceholder')"
               />
-              <img class="captcha-img" :src="imageBase64" @click="loadImage" />
+              <img class="captcha-img" :src="imageBase64" alt="captcha" @click="loadImage" />
             </div>
           </div>
           <div class="field" v-if="mode === 'slider'">
@@ -71,21 +72,22 @@
               <input type="checkbox" v-model="remember" />
               <span>{{ i18nT('common.login.rememberMe') }}</span>
             </label>
-            <a-select
-              v-if="languages.length > 0"
-              v-model:value="selectedLang"
-              size="small"
-              class="lang-select-compact"
-              :dropdownMatchSelectWidth="false"
-              @change="onLangChange"
-            >
-              <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
-                <span class="lang-option">
-                  <span class="lang-emoji">{{ resolveLangEmoji(l.langCode) }}</span>
-                  <span class="lang-label">{{ l.langName }}</span>
-                </span>
-              </a-select-option>
-            </a-select>
+            <div v-if="languages.length > 0" class="lang-switch-compact">
+              <img :src="LANG_SWITCH_ICON_SRC" alt="language" class="lang-switch-compact__icon" />
+              <a-select
+                v-model:value="selectedLang"
+                size="small"
+                class="lang-select-compact"
+                :dropdownMatchSelectWidth="false"
+                @change="onLangChange"
+              >
+                <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
+                  <span class="lang-option">
+                    <span class="lang-label">{{ getLanguageLabel(l) }}</span>
+                  </span>
+                </a-select-option>
+              </a-select>
+            </div>
             <a class="forgot" href="#">{{ i18nT('common.login.forgotPassword') }}</a>
           </div>
           <button
@@ -108,10 +110,10 @@
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
             <button type="button" class="oauth-btn wechat" :title="i18nT('common.login.platform.wechat')" @click="onOAuth('WECHAT')">
-              <img src="/tubiao/weixin2.svg" alt="微信" />
+              <img src="/tubiao/weixin2.svg" alt="寰俊" />
             </button>
             <button type="button" class="oauth-btn dingtalk" :title="i18nT('common.login.platform.dingtalk')" @click="onOAuth('DINGTALK')">
-              <img src="/tubiao/dingding.svg" alt="钉钉" />
+              <img src="/tubiao/dingding.svg" alt="閽夐拤" />
             </button>
           </div>
         </form>
@@ -136,7 +138,7 @@
           >
             <div class="tenant-logo">
               <img v-if="t.logo" :src="resolveTenantLogo(t.logo)" alt="logo" />
-              <div v-else class="logo-fallback">
+              <div v-else class="logo-降级方案">
                 {{ t.name?.[0] || 'T' }}
               </div>
             </div>
@@ -247,15 +249,17 @@ import { getRoutes } from '../../../api/system/route'
 import router, { PERSONAL_HOME_PATH, injectDynamicRoutes } from '../../../router'
 import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
-import { getInitStatus } from '../../../api/system/init'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { sm2 } from 'sm-crypto'
 import { useUserStore } from '@/stores/user'
-import { usePermissionStore } from '@/stores/permission'
-import { getCurrentUserInfo } from '@/api/profile'
+import { use权限Store } from '@/stores/permission'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
+import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 
+/**
+ * 后端返回的滑块验证码数据结构。
+ */
 interface SliderCaptchaChallenge {
   id: string
   backgroundImage: string
@@ -266,6 +270,9 @@ interface SliderCaptchaChallenge {
   templateImageHeight: number
 }
 
+/**
+ * 用户拖动滑块时记录的单个轨迹点。
+ */
 interface SliderTrackPoint {
   x: number
   y: number
@@ -273,6 +280,9 @@ interface SliderTrackPoint {
   type: string
 }
 
+/**
+ * 提交给后端的滑块校验完整载荷。
+ */
 interface SliderTrackPayload {
   bgImageWidth: number
   bgImageHeight: number
@@ -285,9 +295,9 @@ interface SliderTrackPayload {
   trackList: SliderTrackPoint[]
 }
 
-// 初始化 stores
+// 初始化登录和租户选择流程共用的状态仓库。
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
+const permissionStore = use权限Store()
 
 const { t: i18nT } = useI18n({ useScope: 'global' })
 
@@ -319,7 +329,7 @@ const systemConfig = ref<SystemBasicConfig>({
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
-  loginPageTitle: '欢迎来到FORGEX_MOM！',
+  loginPageTitle: '欢迎来到 FORGEX_MOM',
   loginPageSubtitle: '',
   loginBackgroundType: 'image',
   loginBackgroundVideo: '/loading.mp4',
@@ -406,7 +416,7 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  // 统一处理上传后的文件路径，确保登录页媒体资源可以直接预览。
   if (url.startsWith('/files/')) {
     return `/api${url}`
   }
@@ -421,7 +431,7 @@ function formatTenantLogo(url?: string) {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  // 统一处理上传后的文件路径，确保租户 Logo 能正确显示。
   if (url.startsWith('/files/')) {
     return `/api${url}`
   }
@@ -436,7 +446,7 @@ function formatLangIcon(icon?: string) {
   if (icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')) {
     return icon
   }
-  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  // 统一处理上传后的文件路径，确保语言图标在不同环境下都能正确解析。
   if (icon.startsWith('/files/')) {
     return `/api${icon}`
   }
@@ -446,14 +456,8 @@ function formatLangIcon(icon?: string) {
   return `/api/${icon}`
 }
 
-function resolveLangEmoji(langCode: string) {
-  const code = String(langCode || '').toUpperCase()
-  if (code.startsWith('ZH-CN')) return '🇨🇳'
-  if (code.startsWith('ZH-TW')) return '🇹🇼'
-  if (code.startsWith('EN-US')) return '🇺🇸'
-  if (code.startsWith('JA-JP')) return '🇯🇵'
-  if (code.startsWith('KO-KR')) return '🇰🇷'
-  return '🌐'
+function getLanguageLabel(language: LanguageType) {
+  return getLanguageDisplayName(language)
 }
 
 function isExternalUrl(url: string) {
@@ -621,9 +625,9 @@ async function confirmTenant() {
       tenantId: chosenTenant.value,
       account: account.value
     })
-    // 后端返回当前用户完整信息，token 通过 cookie 传递
+    // 后端会返回当前租户上下文，认证信息仍通过 Cookie 维持。
     if (result && result.account) {
-      // 存储用户信息到 Pinia Store（包含头像等）
+      // 先缓存当前用户信息，便于外层框架立即渲染头像和名称。
       userStore.setUserInfo({
         account: result.account,
         username: result.username || result.account || account.value,
@@ -634,11 +638,11 @@ async function confirmTenant() {
         tenantName: current.name
       })
       
-      // 将 account 和 tenantId 存储到 sessionStorage，用于路由守卫检查
+      // 将账号和租户写入 sessionStorage，供路由守卫和刷新恢复使用。
       sessionStorage.setItem('account', result.account)
       sessionStorage.setItem('tenantId', String(result.tenantId || chosenTenant.value))
       
-      // 获取路由时需要传递 account 和 tenantId
+      // 确认租户后再拉取该租户下的路由配置。
       const routesRes = await getRoutes({
         account: account.value,
         tenantId: chosenTenant.value
@@ -646,17 +650,17 @@ async function confirmTenant() {
       
       console.log('[Login] Routes response:', routesRes)
       
-      // 存储按钮权限到 Pinia Store
+      // 进入系统前先保存按钮级权限，避免页面初次渲染缺权限数据。
       if (routesRes && routesRes.buttons) {
-        permissionStore.setPermissions(routesRes.buttons)
-        console.log('[Login] Permissions stored to Pinia:', routesRes.buttons)
+        permissionStore.set权限s(routesRes.buttons)
+        console.log('[Login] 权限s stored to Pinia:', routesRes.buttons)
       } else {
-        // 如果没有权限数据，存储空数组
-        permissionStore.setPermissions([])
+        // 后端未返回权限时主动清空，避免沿用旧租户的残留权限。
+        permissionStore.set权限s([])
         console.log('[Login] No permissions found, stored empty array')
       }
       
-      // 存储路由和模块信息
+      // 保存路由和模块信息，供菜单渲染与路由控制使用。
       if (routesRes && routesRes.routes) {
         permissionStore.setRoutes(routesRes.routes)
       }
@@ -677,17 +681,17 @@ async function confirmTenant() {
         localStorage.removeItem('fx-remember-account')
       }
       
-      // 等待 DOM 更新和路由准备完成
+      // 等待动态路由注册完成，再执行页面跳转。
       await nextTick()
       await router.isReady()
       console.log('[Login] Router is ready')
       
-      // 跳转到系统管理主页
+      // 租户上下文准备完成后，进入个人主页入口。
       const targetPath = PERSONAL_HOME_PATH
       
       console.log('[Login] Navigating to:', targetPath)
       
-      // 直接导航，不需要 setTimeout
+      // 路由准备完成后直接跳转，不再额外延迟。
       router.push(targetPath).then(() => {
         console.log('[Login] Navigation completed')
       }).catch((err) => {
@@ -697,8 +701,8 @@ async function confirmTenant() {
       message.error(i18nT('common.login.msg.chooseTenantFailed'))
     }
   } catch (e: any) {
-    // http拦截器已经显示了错误，这里不再重复显示
-    console.error('选择租户失败:', e)
+    // 请求拦截器已经提示过错误，这里只保留调试日志。
+    console.error('閫夋嫨绉熸埛澶辫触:', e)
   }
 }
 
@@ -988,19 +992,25 @@ onMounted(async () => {
     0 0 24px rgba(211, 0, 197, 0.12);
 }
 
+.lang-switch-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.lang-switch-compact__icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .lang-option {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.lang-emoji {
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  text-align: center;
-  font-size: 14px;
-  flex-shrink: 0;
 }
 
 .lang-label {
@@ -1080,8 +1090,7 @@ onMounted(async () => {
 }
 
 .lang-select-compact {
-  width: 120px !important;
-  flex-shrink: 0;
+  width: 124px !important;
 }
 
 .lang-select-compact :deep(.ant-select-selector) {
@@ -1290,7 +1299,7 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
 }
-.logo-fallback {
+.logo-降级方案 {
   color: #e5e7eb;
   font-size: 24px;
   font-weight: 700;

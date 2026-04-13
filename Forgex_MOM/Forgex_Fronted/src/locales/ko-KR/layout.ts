@@ -1,8 +1,21 @@
-﻿/**
- * 레이아웃 번역 - 한국어
+/**
+ * 布局翻译 - 韩文注释
  */
 export default {
-  globalSearchPlaceholder: '메뉴 또는 페이지 검색',
+  globalSearchPlaceholder: '메뉴, 모듈 또는 병음 첫 글자를 검색...',
+  globalSearchResultsCount: '{count}개의 결과',
+  globalSearchEmptyTitle: '일치하는 메뉴를 찾을 수 없습니다',
+  globalSearchEmptyHint: '메뉴명, 모듈명 또는 병음 첫 글자로 다시 시도해 보세요',
+  globalSearchTipsTitle: '빠른 검색',
+  globalSearchTipNavigate: '이동',
+  globalSearchTipSelect: '선택',
+  globalSearchTipClose: '닫기',
+  globalSearchMatchTitle: '메뉴',
+  globalSearchMatchModule: '모듈',
+  globalSearchMatchTitlePinyin: '메뉴 병음',
+  globalSearchMatchModulePinyin: '모듈 병음',
+  globalSearchMatchBreadcrumb: '경로',
+  globalSearchMatchPath: '라우트',
   langZhCn: '중국어(간체)',
   langEnUs: '영어',
   refresh: '새로고침',
@@ -79,7 +92,7 @@ export default {
   watermark: '워터마크',
   watermarkEnabled: '워터마크',
   watermarkText: '워터마크 문구',
-  formMode: '폼 표시 방식',
+  formMode: '表单 표시 방식',
   formModeModal: '모달',
   formModeDrawer: '드로어',
   animateEnabled: '페이지 애니메이션',
@@ -93,7 +106,8 @@ export default {
   tabCommon: '공통',
   userProfile: '개인센터',
   userSettings: '개인 설정',
-  logout: '로그아웃',
+  logout: '日志아웃',
   home: '홈',
   personalHomepage: '개인 홈',
+  favoriteManagement: '즐겨찾기 관리',
 }

@@ -1,10 +1,10 @@
 /**
- * Message Translations - English
+ * 消息翻译 - 中文注释
  * 
  * Contains success, failure, warning messages
  */
 export default {
-  // Success Messages
+  // 成功提示
   saveSuccess: 'Saved successfully',
   deleteSuccess: 'Deleted successfully',
   updateSuccess: 'Updated successfully',
@@ -14,7 +14,7 @@ export default {
   exportSuccess: 'Exported successfully',
   operationSuccess: 'Operation successful',
   
-  // Failure Messages
+  // 失败提示
   saveFailed: 'Save failed',
   deleteFailed: 'Delete failed',
   updateFailed: 'Update failed',
@@ -25,7 +25,7 @@ export default {
   operationFailed: 'Operation failed',
   loadFailed: 'Load failed',
   
-  // Confirmation Messages
+  // 确认提示
   deleteConfirm: 'Are you sure you want to delete?',
   deleteConfirmTitle: 'Delete Confirmation',
   deleteConfirmContent: 'This action cannot be undone. Are you sure you want to delete?',
@@ -33,21 +33,21 @@ export default {
   submitConfirm: 'Are you sure you want to submit?',
   resetConfirm: 'Are you sure you want to reset?',
   
-  // Warning Messages
+  // 警告提示
   unsavedChanges: 'Unsaved changes',
   unsavedChangesConfirm: 'You have unsaved changes. Are you sure you want to leave?',
   networkError: 'Network error. Please check your connection',
   serverError: 'Server error. Please try again later',
   gatewayError: 'Gateway error. Please try again later',
-  permissionDenied: 'Permission denied',
+  permissionDenied: '权限 denied',
   sessionExpired: 'Session expired. Please login again',
   tipTitle: 'Notice',
   relogin: 'Login again',
   downloadFailedOrNotFound: 'Download failed or file not found',
   
-  // Other Messages
+  // 其他提示
   processing: 'Processing...',
   pleaseWait: 'Please wait...',
-  noPermission: 'You do not have permission to perform this action',
+  no权限: 'You do not have permission to perform this action',
   dataNotFound: 'Data not found',
 }

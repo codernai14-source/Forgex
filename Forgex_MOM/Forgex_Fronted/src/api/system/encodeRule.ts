@@ -20,7 +20,7 @@ export interface EncodeRule {
   ruleCode?: string
   module?: string
   prefix?: string
-  dateFormat?: string
+  date表单at?: string
   serialLength?: number
   resetCycle?: string
   currentSerial?: number
@@ -57,7 +57,7 @@ export interface SaveEncodeRuleParam {
   isEnabled?: boolean
   remark?: string
   prefix?: string
-  dateFormat?: string
+  date表单at?: string
   serialLength?: number
   resetCycle?: string
   sortOrder?: number
