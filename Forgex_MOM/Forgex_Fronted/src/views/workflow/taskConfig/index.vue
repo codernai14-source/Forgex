@@ -15,13 +15,13 @@
 
       <template #formType="{ record }">
         <a-tag :color="record.formType === 1 ? 'blue' : 'green'">
-          {{ record.formType === 1 ? '自定义表单' : '低代码表单' }}
+          {{ getFormTypeLabel(record.formType) }}
         </a-tag>
       </template>
 
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'success' : 'default'">
-          {{ record.status === 1 ? '启用' : '禁用' }}
+          {{ getStatusLabel(record.status) }}
         </a-tag>
       </template>
 
@@ -120,8 +120,13 @@
           <a-col :span="12">
             <a-form-item label="表单类型" name="formType">
               <a-select v-model:value="formState.formType" placeholder="请选择表单类型">
-                <a-select-option :value="1">自定义表单</a-select-option>
-                <a-select-option :value="2">低代码表单</a-select-option>
+                <a-select-option
+                  v-for="item in formTypeSelectOptions"
+                  :key="String(item.value)"
+                  :value="item.value"
+                >
+                  {{ item.label }}
+                </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -143,8 +148,9 @@
           <a-col :span="12">
             <a-form-item label="状态" name="status">
               <a-radio-group v-model:value="formState.status">
-                <a-radio :value="1">启用</a-radio>
-                <a-radio :value="0">禁用</a-radio>
+                <a-radio v-for="item in statusSelectOptions" :key="String(item.value)" :value="item.value">
+                  {{ item.label }}
+                </a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
@@ -199,6 +205,7 @@ type TableRequestPayload = {
 const router = useRouter()
 const route = useRoute()
 const { dictItems: statusOptions } = useDict('status')
+const { dictItems: formTypeOptions } = useDict('wf_task_form_type')
 
 const tableRef = ref<any>()
 const formRef = ref<FormInstance>()
@@ -220,7 +227,23 @@ const formState = reactive<WfTaskConfigSaveParam>({
 
 const dictOptions = computed(() => ({
   status: statusOptions.value || [],
+  wf_task_form_type: formTypeOptions.value || [],
+  formType: formTypeOptions.value || [],
 }))
+
+const statusSelectOptions = computed(() =>
+  (statusOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+
+const formTypeSelectOptions = computed(() =>
+  (formTypeOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
 
 const rules = {
   taskName: [{ required: true, message: '请输入流程名称', trigger: 'blur' }],
@@ -230,6 +253,18 @@ const rules = {
 
 const dialogTitle = computed(() => (formState.id ? '编辑草稿基础信息' : '新建流程草稿'))
 const silentErrorConfig = { silentError: true }
+
+function resolveDictLabel(options: Array<{ label: string; value: number }>, value: number | undefined, fallback: string) {
+  return options.find(item => item.value === Number(value))?.label || fallback
+}
+
+function getFormTypeLabel(value?: number) {
+  return resolveDictLabel(formTypeSelectOptions.value, value, value === 2 ? '低代码表单' : '自定义表单')
+}
+
+function getStatusLabel(value?: number) {
+  return resolveDictLabel(statusSelectOptions.value, value, value === 1 ? '启用' : '禁用')
+}
 
 function resetFormState() {
   Object.assign(formState, {

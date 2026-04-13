@@ -1,6 +1,6 @@
 <template>
   <div class="fx-dynamic-table">
-<!-- 鎼滅储鍖哄煙鍗＄墖锛堜繚鐣欏皯閲忓唴杈硅窛锛岀湅璧锋潵鏇磋垝閫傦級 -->
+    <!-- 查询区域卡片，保留较紧凑的内边距 -->
     <a-card
       v-if="resolvedShowQuery表单 && config && config.queryFields?.length"
       :key="`query-${configVersion}`"
@@ -10,7 +10,7 @@
     >
       <a-form layout="inline" :model="queryModel" class="fx-query-form">
         <div class="fx-query-row">
-          <!-- 鎼滅储鏉′欢绗竴琛岋紙鏈€澶?涓級 -->
+          <!-- 第一行查询条件，最多展示 3 项 -->
           <div class="fx-query-row-content">
             <template v-for="(q, index) in config.queryFields.slice(0, 3)" :key="q.field">
               <a-form-item :label="q.label">
@@ -59,9 +59,9 @@
             </template>
           </div>
           
-          <!-- 鎼滅储鍜岄噸缃寜閽?-->
+          <!-- 查询操作区 -->
           <div class="fx-query-actions-row">
-            <!-- 灞曞紑/鏀惰捣鎸夐挳 -->
+            <!-- 展开/收起按钮 -->
             <div v-if="config.queryFields.length > 3" class="fx-query-toggle">
               <a-button
                 type="text"
@@ -73,7 +73,7 @@
               </a-button>
             </div>
             
-            <!-- 鎼滅储鍜岄噸缃寜閽?-->
+            <!-- 查询与重置按钮 -->
             <a-space>
               <a-button type="primary" @click="handleQuery">{{ t('common.search') }}</a-button>
               <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
@@ -81,7 +81,7 @@
           </div>
         </div>
         
-        <!-- 棰濆鎼滅储鏉′欢锛堝睍寮€鏃舵樉绀猴級 -->
+        <!-- 展开后显示的附加查询条件 -->
         <div v-if="isQueryExpanded" class="fx-query-row fx-query-row-extra">
           <template v-for="(q, index) in config.queryFields.slice(3)" :key="q.field">
             <a-form-item :label="q.label">
@@ -132,13 +132,13 @@
       </a-form>
     </a-card>
     
-<!-- 琛ㄦ牸鍖哄煙鍗＄墖锛堝叧閿細鍘婚櫎 card body 鐨勯粯璁?24px padding锛岃琛ㄦ牸鍖哄煙鏈€澶у寲锛?-->
-    <a-card 
+    <!-- 表格区域卡片，移除默认 body padding 以扩大可用空间 -->
+    <a-card
       :bordered="false" 
       class="fx-card fx-table-card"
       :body-style="{ padding: '0' }"
     >
-      <!-- 宸ュ叿鏍忎笌鍒楄缃悓涓€琛岋細宸︽搷浣滄寜閽€佸彸鍒楄缃紝涓庝笅鏂硅〃鏍间繚鐣欓棿璺?-->
+      <!-- 工具栏与列设置同一行展示 -->
       <div
         v-if="hasToolbarSlot || showColumnSettingBar"
         class="fx-table-toolbar-row"
@@ -158,7 +158,7 @@
         </div>
       </div>
       
-      <!-- 鏁版嵁琛ㄦ牸 -->
+      <!-- 数据表格 -->
       <div class="fx-table-content">
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
@@ -174,7 +174,7 @@
             @change="handleTableChange"
             :scroll="resolvedScroll"
           >
-          <!-- 鑷畾涔夊崟鍏冩牸鍐呭鎻掓Ы -->
+            <!-- 自定义单元格插槽 -->
           <template #bodyCell="scope">
             <slot v-if="$slots[scope.column?.key]" :name="scope.column.key" v-bind="scope" />
             <slot v-else name="bodyCell" v-bind="scope" />
@@ -196,8 +196,9 @@
 
 <script setup lang="ts">
 /**
- * 鍔ㄦ€佽〃鏍肩粍浠?
- * 鍩轰簬閰嶇疆鑷姩鐢熸垚鏌ヨ琛ㄥ崟鍜岃〃鏍硷紝鏀寔瀛楀吀閫夐」鍜岃嚜瀹氫箟鍒?
+ * 动态表格组件。
+ * 基于后端表格配置自动生成查询表单与表格列，支持字典选项和自定义插槽。
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -210,16 +211,19 @@ import { useI18n } from 'vue-i18n'
 import ColumnSettingButton from './ColumnSettingButton.vue'
 
 /**
- * 瀛楀吀閫夐」绫诲瀷
+ * 字典选项类型。
  */
 type DictOption = { 
-  label: string; // 鏄剧ず鏂囨湰
-  value: any;   // 瀹為檯鍊?
+  label: string; // 显示文本
+  value: any;   // 实际值
 }
 
 /**
- * 缁勪欢灞炴€?
- * <p>鍒楄缃粯璁ゅ紑鍚細{@code showColumnSetting} 鏈紶鏃跺繀椤讳负 true锛岄伩鍏嶈〃杈惧紡 {@code length && undefined} 鎭掍负鍋囥€?/p>
+ * 组件属性。
+ * <p>
+ * 列设置默认开启：当 {@code showColumnSetting} 未传时视为 true，避免出现
+ * {@code length && undefined} 导致的误判。
+ * </p>
  */
 const props = withDefaults(
   defineProps<{
@@ -274,7 +278,7 @@ const props = withDefaults(
   tableHeightRatio?: number
   }>(),
   {
-    /** 鍒楄缃睘浜庤〃鏍煎叕鍏辫兘鍔涳紝榛樿鏄剧ず锛屼笉渚濊禆鑿滃崟鎸夐挳鏉冮檺 */
+      /** 列设置属于表格公共能力，默认展示，不依赖菜单按钮权限 */
     showColumnSetting: true,
   }
 )
@@ -284,40 +288,40 @@ const { t, locale } = useI18n()
 const slots = useSlots()
 
 /**
- * 鏄惁浼犲叆宸ュ叿鏍忔彃妲斤紙涓庡垪璁剧疆骞舵帓灞曠ず锛?
+ * 是否传入了工具栏插槽。
  */
 const hasToolbarSlot = computed(() => !!slots.toolbar)
 
 /**
- * 琛ㄦ牸閰嶇疆
+ * 当前表格配置。
  */
 const config = ref<FxTableConfig>()
 
 /**
- * 鍒楄缃潰鏉夸娇鐢ㄧ殑鍒楁暟鎹簮銆?
+ * 列设置面板使用的列数据源。
  * <p>
- * 蹇呴』浣跨敤 computed 鍥哄畾寮曠敤锛氭ā鏉块噷鑻ュ啓 {@code config?.columns ?? []}锛屽湪 {@code columns} 缂哄け鏃舵瘡娆℃覆鏌撻兘浼氱敓鎴愭柊鐨勭┖鏁扮粍锛?
- * 浼氬鑷?{@link ColumnSettingButton} 鐨?props 寮曠敤鍙樺寲銆佷笅鎷夊眰琚弽澶嶅嵏杞芥垨鏃犳硶淇濇寔灞曞紑銆?
+ * 必须通过 computed 固定引用，避免模板中使用 {@code config?.columns ?? []}
+ * 时反复创建新数组，导致列设置弹层频繁重渲染。
  * </p>
  */
 const columnSettingColumns = computed(() => config.value?.columns ?? [])
 
 /**
- * 鏄惁灞曠ず鍒楄缃尯鍩燂紙鎸夐挳鏉″彸渚э級
+ * 是否显示列设置区域。
  */
 const showColumnSettingBar = computed(
   () => !!config.value?.columns?.length && props.showColumnSetting !== false
 )
 
 /**
- * 閰嶇疆鐗堟湰鍙凤紝鐢ㄤ簬寮哄埗鍒锋柊 computed
+ * 配置版本号，用于触发相关计算属性刷新。
  */
 const configVersion = ref(0)
 
 const ATag = resolveComponent('a-tag') as any
 
 /**
- * 灏濊瘯灏嗗瓧鍏哥炕璇戠殑 JSON 鏂囨湰娓叉煋涓?Tag銆?
+ * 尝试把字典翻译 JSON 文本渲染为 Tag。
  */
 function tryRenderTagFromDictJson(dictText: any) {
   if (dictText === undefined || dictText === null || dictText === '') {
@@ -361,7 +365,7 @@ function tryRenderTagFromDictJson(dictText: any) {
 }
 
 /**
- * 灏嗗瓧鍏哥炕璇戝瓧娈垫覆鏌撲负 Tag銆?
+ * 将字典文本统一渲染为 Tag。
  */
 function renderTagByDictText(dictText: any, 降级方案Text: any) {
   if (dictText === undefined || dictText === null || dictText === '') {
@@ -413,7 +417,7 @@ function renderTagByDictText(dictText: any, 降级方案Text: any) {
 }
 
 /**
- * 鍔犺浇鐘舵€?
+ * 内部加载状态。
  */
 const loading = ref(false)
 
@@ -426,27 +430,27 @@ const resolvedShowQuery表单 = computed(() => {
 })
 
 /**
- * 琛ㄦ牸鏁版嵁
+ * 表格数据。
  */
 const tableData = ref<any[]>([])
 
 /**
- * 鍒嗛〉淇℃伅
+ * 分页信息。
  */
 const pagination = reactive({
-  current: 1,     // 褰撳墠椤电爜
-  pageSize: 20,   // 姣忛〉鏉℃暟
-  total: 0,       // 鎬绘潯鏁?
+  current: 1,     // 当前页码
+  pageSize: 20,   // 每页条数
+  total: 0,       // 总条数
 })
 
 /**
- * 褰撳墠缁勪欢鏄惁鏄惧紡浼犲叆浜?pagination 灞炴€с€?
+ * 判断当前组件是否显式传入了 pagination 属性。
  * <p>
- * 鐢变簬 pagination 鐨?TS 绫诲瀷鍖呭惈瀛楅潰閲?false锛孷ue 鍙兘浼氬皢鍏舵帹瀵间负 Boolean prop锛?
- * 浠庤€屽湪鏈紶鍏ユ椂 props.pagination 涔熶細鍙樻垚 false锛屽鑷撮粯璁ゅ垎椤佃閿欒鍏抽棴銆?
+ * 因为 pagination 的 TS 类型包含字面量 {@code false}，Vue 在某些情况下会把它
+ * 推断成 Boolean prop，导致未传值时也被识别为 false，所以这里需要额外判断。
  * </p>
  *
- * @return 鏄惁鏄惧紡浼犲叆 pagination
+ * @return 是否显式传入 pagination
  */
 const isPaginationPropPassed = computed(() => {
   const instance = getCurrentInstance()

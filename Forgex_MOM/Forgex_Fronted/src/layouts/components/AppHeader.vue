@@ -73,7 +73,12 @@
             :loading="languageList.length === 0"
           >
             <template #icon>
-              <GlobalOutlined />
+              <img
+                :src="LANG_SWITCH_ICON_SRC"
+                alt=""
+                aria-hidden="true"
+                class="lang-switch-icon"
+              />
             </template>
           </a-button>
           <template #overlay>
@@ -168,7 +173,6 @@ import { getIcon } from '../../utils/icon'
 import {
   SearchOutlined,
   BellOutlined,
-  GlobalOutlined,
   CheckOutlined,
   SettingOutlined,
   DownOutlined,
@@ -182,6 +186,8 @@ import {
 import { getUnreadMessageCount } from '../../api/message'
 import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
 import type { LocaleCode } from '../../locales'
+
+const LANG_SWITCH_ICON_SRC = '/diqiu.gif'
 
 interface Module {
   code: string
@@ -521,6 +527,15 @@ const onMessageClick = () => {
   justify-content: center;
   min-width: 32px;
   padding-inline: 8px;
+}
+
+.lang-switch-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .lang-menu-item {

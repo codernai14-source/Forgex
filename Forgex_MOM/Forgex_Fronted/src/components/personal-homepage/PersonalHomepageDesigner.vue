@@ -236,9 +236,9 @@
                   </template>
 
                   <template v-else-if="item.i === 'messages'">
-                    <div v-if="inbox消息.length" class="list-block">
+                    <div v-if="inboxMessages.length" class="list-block">
                       <button
-                        v-for="record in inbox消息"
+                        v-for="record in inboxMessages"
                         :key="record.id"
                         type="button"
                         class="list-block__item"
@@ -253,9 +253,9 @@
                   </template>
 
                   <template v-else-if="item.i === 'notices'">
-                    <div v-if="notice消息.length" class="list-block">
+                    <div v-if="noticeMessages.length" class="list-block">
                       <button
-                        v-for="record in notice消息"
+                        v-for="record in noticeMessages"
                         :key="record.id"
                         type="button"
                         class="list-block__item"
@@ -430,7 +430,7 @@ const gridLayout = ref<GridLayoutItem[]>([])
 const commonMenuItems = ref<PersonalMenuEntry[]>([])
 const favoriteMenuItems = ref<PersonalMenuEntry[]>([])
 const pendingApprovals = ref<WfExecutionDTO[]>([])
-const unread消息 = ref<SysMessageVO[]>([])
+const unreadMessages = ref<SysMessageVO[]>([])
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const now = ref(dayjs())
 const syncingGrid = ref(false)
@@ -667,14 +667,14 @@ const favoriteMenuPathSet = computed(() => {
   return new Set(favoriteMenuItems.value.map(item => String(item.path || '')))
 })
 
-const inbox消息 = computed(() => {
+const inboxMessages = computed(() => {
   const limit = toNumber(findWidget('messages')?.params.limit, defaultLimit('messages'))
-  return unread消息.value.filter(item => !isNoticeMessage(item)).slice(0, Math.max(limit, 0))
+  return unreadMessages.value.filter(item => !isNoticeMessage(item)).slice(0, Math.max(limit, 0))
 })
 
-const notice消息 = computed(() => {
+const noticeMessages = computed(() => {
   const limit = toNumber(findWidget('notices')?.params.limit, defaultLimit('notices'))
-  return unread消息.value.filter(isNoticeMessage).slice(0, Math.max(limit, 0))
+  return unreadMessages.value.filter(isNoticeMessage).slice(0, Math.max(limit, 0))
 })
 
 function isNoticeMessage(messageItem: SysMessageVO) {
@@ -783,12 +783,12 @@ function defaultShowMore(widgetKey: string) {
   return toBoolean(createDefaultPersonalHomepageConfig().widgets.find(item => item.key === widgetKey)?.params.showMore, false)
 }
 
-function toNumber(value: unknown, 降级方案: number) {
+function toNumber(value: unknown, fallbackValue: number) {
   const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : 降级方案
+  return Number.isFinite(parsed) ? parsed : fallbackValue
 }
 
-function toBoolean(value: unknown, 降级方案: boolean) {
+function toBoolean(value: unknown, fallbackValue: boolean) {
   if (typeof value === 'boolean') {
     return value
   }
@@ -798,7 +798,7 @@ function toBoolean(value: unknown, 降级方案: boolean) {
   if (value === 'false') {
     return false
   }
-  return 降级方案
+  return fallbackValue
 }
 
 function toggleEditMode() {
@@ -819,7 +819,7 @@ async function reloadConfig() {
       await loadSummary()
     }
   } catch (error) {
-    console.error('鍔犺浇涓汉棣栭〉閰嶇疆澶辫触:', error)
+    console.error('加载个人首页配置失败:', error)
     config.value = createDefaultPersonalHomepageConfig()
     syncGridFromConfig()
   } finally {
@@ -832,7 +832,7 @@ async function loadSummary() {
     const data = await getPersonalHomepageSummary()
     summary.value = data
   } catch (error) {
-    console.error('鍔犺浇鎽樿淇℃伅澶辫触:', error)
+    console.error('加载首页摘要信息失败:', error)
   }
 }
 
@@ -848,7 +848,7 @@ async function saveConfig() {
     config.value = payload
     syncGridFromConfig()
   } catch (error) {
-    console.error('淇濆瓨涓汉棣栭〉閰嶇疆澶辫触:', error)
+    console.error('保存个人首页配置失败:', error)
   } finally {
     saving.value = false
   }
@@ -863,7 +863,7 @@ async function resetToDefault() {
     await resetCurrentPersonalHomepageConfig()
     await reloadConfig()
   } catch (error) {
-    console.error('鎭㈠榛樿甯冨眬澶辫触:', error)
+    console.error('恢复默认布局失败:', error)
   } finally {
     saving.value = false
   }
@@ -874,7 +874,7 @@ async function loadWidgetData() {
     loadCommonMenus(),
     loadFavoriteMenus(),
     loadPendingApprovals(),
-    loadUnread消息(),
+    loadUnreadMessages(),
   ])
 }
 
@@ -887,7 +887,7 @@ async function loadCommonMenus() {
     const list = await getUserCommonMenus(MAX_COMMON_MENU_COUNT)
     commonMenuItems.value = Array.isArray(list) ? list : []
   } catch (error) {
-    console.error('鍔犺浇甯哥敤鑿滃崟澶辫触:', error)
+    console.error('加载常用菜单失败:', error)
     commonMenuItems.value = []
   }
 }
@@ -901,7 +901,7 @@ async function loadFavoriteMenus() {
     const list = await getUserFavoriteMenus(MAX_COMMON_MENU_COUNT)
     favoriteMenuItems.value = Array.isArray(list) ? list : []
   } catch (error) {
-    console.error('鍔犺浇鏀惰棌鑿滃崟澶辫触:', error)
+    console.error('加载收藏菜单失败:', error)
     favoriteMenuItems.value = []
   }
 }
@@ -917,12 +917,12 @@ async function loadPendingApprovals() {
     const page = await pageMyPending({ pageNum: 1, pageSize: Math.max(limit, 1) })
     pendingApprovals.value = Array.isArray(page?.records) ? page.records : []
   } catch (error) {
-    console.error('鍔犺浇寰呭鎵瑰垪琛ㄥけ璐?', error)
+    console.error('加载待审批列表失败:', error)
     pendingApprovals.value = []
   }
 }
 
-async function loadUnread消息() {
+async function loadUnreadMessages() {
   const requestLimit = Math.max(
     10,
     toNumber(findWidget('messages')?.params.limit, defaultLimit('messages')),
@@ -930,10 +930,10 @@ async function loadUnread消息() {
   )
   try {
     const list = await listUnreadMessages(requestLimit)
-    unread消息.value = Array.isArray(list) ? list : []
+    unreadMessages.value = Array.isArray(list) ? list : []
   } catch (error) {
-    console.error('鍔犺浇鏈娑堟伅澶辫触:', error)
-    unread消息.value = []
+    console.error('加载未读消息失败:', error)
+    unreadMessages.value = []
   }
 }
 
@@ -1049,7 +1049,7 @@ async function handleToggleFavorite(menuItem: PersonalMenuEntry) {
     await toggleUserFavoriteMenu(path)
     await loadFavoriteMenus()
   } catch (error) {
-    console.error('鍒囨崲鏀惰棌鑿滃崟澶辫触:', error)
+    console.error('切换收藏菜单失败:', error)
   }
 }
 
@@ -1061,9 +1061,9 @@ async function openMessage(record: SysMessageVO) {
   try {
     await markMessageRead(record.id, { showSuccessMessage: false })
   } catch (error) {
-    console.error('鏍囪娑堟伅宸茶澶辫触:', error)
+    console.error('标记消息已读失败:', error)
   }
-  unread消息.value = unread消息.value.filter(item => item.id !== record.id)
+  unreadMessages.value = unreadMessages.value.filter(item => item.id !== record.id)
   if (record.linkUrl) {
     router.push(record.linkUrl).catch(() => {})
     return
@@ -1086,9 +1086,9 @@ function handleResize() {
 function handleMessageEvent(event: Event) {
   const detail = (event as CustomEvent<SysMessageVO | undefined>).detail
   if (detail && detail.id) {
-    unread消息.value = [detail, ...unread消息.value.filter(item => item.id !== detail.id)]
+    unreadMessages.value = [detail, ...unreadMessages.value.filter(item => item.id !== detail.id)]
   }
-  loadUnread消息()
+  loadUnreadMessages()
   if (detail && (String(detail.bizType || '').toUpperCase().startsWith('WF_') || String(detail.linkUrl || '').includes('/workspace/approval/'))) {
     loadPendingApprovals()
   }

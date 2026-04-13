@@ -18,9 +18,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 审批任务配置DTO。
+ * 审批任务配置 DTO。
  * <p>
- * 用于服务间传输审批任务配置数据。
+ * 用于服务层与接口层之间传递审批任务配置数据。
  * </p>
  *
  * @author coder_nai@163.com
@@ -31,87 +31,93 @@ import java.time.LocalDateTime;
 public class WfTaskConfigDTO {
 
     /**
-     * 主键
+     * 主键 ID。
      */
     private Long id;
 
     /**
-     * 审批任务名称
+     * 审批任务名称。
      */
     private String taskName;
 
     /**
-     * 任务名称多语言JSON
+     * 任务名称多语言 JSON。
      */
     private String taskNameI18nJson;
 
     /**
-     * 审批任务编码
+     * 审批任务编码。
      */
     private String taskCode;
 
     /**
-     * 审批任务解释器Bean名称
+     * 审批任务解释器 Bean 名称。
      */
     private String interpreterBean;
 
     /**
-     * 表单类型：1=自定义，2=低代码
+     * 表单类型。
+     * <p>
+     * 1 表示自定义表单，2 表示低代码表单。
+     * </p>
      */
     private Integer formType;
 
     /**
-     * 表单路径
+     * 表单路径。
      */
     private String formPath;
 
     /**
-     * 表单内容
+     * 表单内容。
      */
     private String formContent;
 
     /**
-     * 状态：0=禁用，1=启用
+     * 启用状态。
+     * <p>
+     * 0 表示禁用，1 表示启用。
+     * </p>
      */
     private Integer status;
 
     /**
-     * 版本号
+     * 版本号。
      */
     private Integer version;
 
     /**
-     * 閰嶇疆闃舵
+     * 配置阶段。
      */
     private String configStage;
 
     /**
-     * 备注
+     * 备注。
      */
     private String remark;
 
     /**
-     * 租户ID
+     * 租户 ID。
      */
     private Long tenantId;
 
     /**
-     * 创建时间
+     * 创建时间。
      */
     private LocalDateTime createTime;
 
     /**
-     * 创建人
+     * 创建人。
      */
     private String createBy;
 
     /**
-     * 更新时间
+     * 更新时间。
      */
     private LocalDateTime updateTime;
 
     /**
-     * 更新人
+     * 更新人。
      */
     private String updateBy;
 }
