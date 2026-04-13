@@ -82,8 +82,13 @@
             v-model:value="approveFormData.rejectType"
             placeholder="请选择驳回类型"
           >
-            <a-select-option :value="1">驳回结束当前审批流程</a-select-option>
-            <a-select-option :value="2">退回上一节点重新审批</a-select-option>
+            <a-select-option
+              v-for="item in rejectTypeSelectOptions"
+              :key="String(item.value)"
+              :value="item.value"
+            >
+              {{ item.label }}
+            </a-select-option>
           </a-select>
         </a-form-item>
 
@@ -161,7 +166,8 @@ import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { useDict } from '@/hooks/useDict'
 import dayjs from 'dayjs'
 
-const { dictItems: statusOptions } = useDict('status')
+const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
+const { dictItems: rejectTypeOptions } = useDict('wf_reject_type')
 
 const tableRef = ref()
 const approveFormRef = ref()
@@ -186,8 +192,25 @@ const approveRules = {
 }
 
 const dictOptions = computed(() => ({
-  status: statusOptions.value,
+  status: executionStatusOptions.value,
+  wf_execution_status: executionStatusOptions.value,
+  rejectType: rejectTypeOptions.value,
+  wf_reject_type: rejectTypeOptions.value,
 }))
+
+const statusSelectOptions = computed(() =>
+  (executionStatusOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+
+const rejectTypeSelectOptions = computed(() =>
+  (rejectTypeOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -229,13 +252,7 @@ function getStatusColor(status?: number): string {
 }
 
 function getStatusText(status?: number): string {
-  const textMap: Record<number, string> = {
-    0: '待处理',
-    1: '审批中',
-    2: '审批完成',
-    3: '驳回',
-  }
-  return textMap[status || 0] || '未知'
+  return statusSelectOptions.value.find((item: { label: string; value: number }) => item.value === Number(status))?.label || '未知'
 }
 
 function formatDateTime(dateTime?: string): string {

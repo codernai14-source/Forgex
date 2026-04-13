@@ -50,11 +50,8 @@
       
       <a-form-item :label="t('system.encodeRule.status')" name="status">
         <a-radio-group v-model:value="form.status">
-          <a-radio :value="1">
-            {{ t('system.encodeRule.statusActive') }}
-          </a-radio>
-          <a-radio :value="0">
-            {{ t('system.encodeRule.statusInactive') }}
+          <a-radio v-for="item in statusRadioOptions" :key="String(item.value)" :value="item.value">
+            {{ item.label }}
           </a-radio>
         </a-radio-group>
       </a-form-item>
@@ -86,17 +83,12 @@
                   :placeholder="t('system.encodeRule.segmentType')"
                   @change="handleSegmentTypeChange(detail)"
                 >
-                  <a-select-option value="FIXED">
-                    {{ t('system.encodeRule.segmentTypeFixed') }}
-                  </a-select-option>
-                  <a-select-option value="DATE">
-                    {{ t('system.encodeRule.segmentTypeDate') }}
-                  </a-select-option>
-                  <a-select-option value="SEQ">
-                    {{ t('system.encodeRule.segmentTypeSeq') }}
-                  </a-select-option>
-                  <a-select-option value="CUSTOM">
-                    {{ t('system.encodeRule.segmentTypeCustom') }}
+                  <a-select-option
+                    v-for="item in segmentTypeSelectOptions"
+                    :key="String(item.value)"
+                    :value="item.value"
+                  >
+                    {{ item.label }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -155,17 +147,12 @@
                   v-model:value="detail.seqResetType"
                   :placeholder="t('system.encodeRule.seqResetType')"
                 >
-                  <a-select-option :value="0">
-                    {{ t('system.encodeRule.seqResetNever') }}
-                  </a-select-option>
-                  <a-select-option :value="1">
-                    {{ t('system.encodeRule.seqResetYearly') }}
-                  </a-select-option>
-                  <a-select-option :value="2">
-                    {{ t('system.encodeRule.seqResetMonthly') }}
-                  </a-select-option>
-                  <a-select-option :value="3">
-                    {{ t('system.encodeRule.seqResetDaily') }}
+                  <a-select-option
+                    v-for="item in seqResetTypeSelectOptions"
+                    :key="String(item.value)"
+                    :value="item.value"
+                  >
+                    {{ item.label }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -224,10 +211,14 @@ import { useI18n } from 'vue-i18n'
 import { message, type 表单Instance, type 表单Rule } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
+import { useDict } from '@/hooks/useDict'
 import type { EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
 
 // 国际化
 const { t } = useI18n()
+const { dictItems: encodeRuleEnabledOptions } = useDict('encode_rule_enabled')
+const { dictItems: segmentTypeDictItems } = useDict('encode_rule_segment_type')
+const { dictItems: seqResetTypeDictItems } = useDict('encode_rule_seq_reset_type')
 
 // Props
 interface Props {
@@ -284,6 +275,30 @@ const form = reactive<EncodeRule表单Model>({
   ruleDetails: [],
   remark: '',
 })
+
+const statusRadioOptions = computed(() =>
+  (encodeRuleEnabledOptions.value || []).map((item: { label: string; value: string | number | boolean }) => ({
+    label: item.label,
+    value:
+      item.value === true || item.value === 'true' || item.value === 1 || item.value === '1'
+        ? 1
+        : 0,
+  })),
+)
+
+const segmentTypeSelectOptions = computed(() =>
+  (segmentTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: String(item.value),
+  })),
+)
+
+const seqResetTypeSelectOptions = computed(() =>
+  (seqResetTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
 
 // 表单验证规则
 const formRules: Record<string, 表单Rule[]> = {

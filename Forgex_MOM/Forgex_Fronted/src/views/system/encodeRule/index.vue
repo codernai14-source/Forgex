@@ -3,7 +3,6 @@
     <fx-dynamic-table
       ref="tableRef"
       table-code="EncodeRuleTable"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
@@ -40,10 +39,10 @@
 
       <template #isEnabled="{ record }">
         <a-tag v-if="record.isEnabled" color="success">
-          {{ t('system.encodeRule.statusActive') }}
+          {{ getEnabledLabel(true) || t('system.encodeRule.statusActive') }}
         </a-tag>
         <a-tag v-else color="default">
-          {{ t('system.encodeRule.statusInactive') }}
+          {{ getEnabledLabel(false) || t('system.encodeRule.statusInactive') }}
         </a-tag>
       </template>
 
@@ -93,9 +92,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
 import { encodeRuleApi } from '@/api/system/encodeRule'
 import type { EncodeRule } from '@/api/system/encodeRule'
+import { useDict } from '@/hooks/useDict'
 import EncodeRuleFormDialog from './components/EncodeRuleFormDialog.vue'
 
 const { t } = useI18n()
@@ -106,51 +105,12 @@ const currentRuleId = ref<string>()
 const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'EncodeRuleTable',
-  tableName: t('system.encodeRule.pageTitle'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  columns: [
-    { field: 'ruleCode', title: t('system.encodeRule.ruleCode'), width: 160, align: 'left' },
-    { field: 'ruleName', title: t('system.encodeRule.ruleName'), width: 180, align: 'left' },
-    { field: 'module', title: t('system.encodeRule.businessType'), width: 140, align: 'left' },
-    { field: 'isEnabled', title: t('system.encodeRule.status'), width: 120, align: 'center' },
-    { field: 'remark', title: t('system.encodeRule.remark'), width: 220, align: 'left' },
-    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 220, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'ruleCode', label: t('system.encodeRule.ruleCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'ruleName', label: t('system.encodeRule.ruleName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'module', label: t('system.encodeRule.businessType'), queryType: 'input', queryOperator: 'like' },
-    {
-      field: 'isEnabled',
-      label: t('system.encodeRule.status'),
-      queryType: 'select',
-      queryOperator: 'eq',
-      options: [
-        { label: t('system.encodeRule.statusActive'), value: true },
-        { label: t('system.encodeRule.statusInactive'), value: false },
-      ],
-    },
-  ],
-  version: 1,
-}))
+const { dictItems: encodeRuleEnabledOptions } = useDict('encode_rule_enabled')
 
-const dictOptions = ref<Record<string, any[]>>({
-  isEnabled: [
-    { label: t('system.encodeRule.statusActive'), value: true },
-    { label: t('system.encodeRule.statusInactive'), value: false },
-  ],
-  segmentType: [
-    { label: t('system.encodeRule.segmentTypeFixed'), value: 'FIXED' },
-    { label: t('system.encodeRule.segmentTypeDate'), value: 'DATE' },
-    { label: t('system.encodeRule.segmentTypeSeq'), value: 'SEQ' },
-    { label: t('system.encodeRule.segmentTypeCustom'), value: 'CUSTOM' },
-  ],
-})
+const dictOptions = computed<Record<string, any[]>>(() => ({
+  isEnabled: encodeRuleEnabledOptions.value || [],
+  encode_rule_enabled: encodeRuleEnabledOptions.value || [],
+}))
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -193,6 +153,18 @@ const handleRequest = async (payload: {
 
 function handleSelectionChange(keys: string[]) {
   selectedRowKeys.value = keys
+}
+
+function getEnabledLabel(value?: boolean) {
+  return encodeRuleEnabledOptions.value.find((item: { label: string; value: string | number | boolean }) => {
+    if (item.value === true || item.value === 'true' || item.value === 1 || item.value === '1') {
+      return value === true
+    }
+    if (item.value === false || item.value === 'false' || item.value === 0 || item.value === '0') {
+      return value === false
+    }
+    return false
+  })?.label
 }
 
 function openAddDialog() {

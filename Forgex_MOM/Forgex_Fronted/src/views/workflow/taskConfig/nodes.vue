@@ -256,8 +256,8 @@
                           placeholder="操作符"
                           @update:value="updateBranchRule(index, { operator: String($event || '') })"
                         >
-                          <a-select-option v-for="item in operatorOptions" :key="item" :value="item">
-                            {{ item }}
+                          <a-select-option v-for="item in operatorOptions" :key="item.value" :value="item.value">
+                            {{ item.label }}
                           </a-select-option>
                         </a-select>
                       </a-col>
@@ -389,6 +389,7 @@ import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 import { approvalRoutePaths, normalizeApprovalRoutePath } from '@/router/approvalRoutePaths'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
+import { useDict } from '@/hooks/useDict'
 import { getRoleList } from '@/api/system/role'
 import { listDepartments } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
@@ -439,22 +440,17 @@ const APPROVER_TYPES = {
   POSITION: 4
 } as const
 
-const approveTypeOptions = [
-  { label: '会签', value: 1, description: '所有审批人都同意后才通过。' },
-  { label: '或签', value: 2, description: '任一审批人同意即可通过。' },
-  { label: '抄送', value: 3, description: '仅抄送通知，不要求审批动作。' },
-  { label: '投票', value: 4, description: '超过半数同意后通过。' },
-  { label: '顺序审批', value: 5, description: '按配置顺序依次审批。' }
-] as const
+const { dictItems: approveTypeDictItems } = useDict('wf_approve_type')
+const { dictItems: approverTypeDictItems } = useDict('wf_approver_type')
+const { dictItems: branchOperatorDictItems } = useDict('wf_branch_operator')
 
-const approverTypeOptions = [
-  { label: '用户', value: APPROVER_TYPES.USER },
-  { label: '部门', value: APPROVER_TYPES.DEPT },
-  { label: '角色', value: APPROVER_TYPES.ROLE },
-  { label: '岗位', value: APPROVER_TYPES.POSITION }
-] as const
-
-const operatorOptions = ['=', '!=', '>', '>=', '<', '<=', 'contains']
+const approveTypeDescriptionMap: Record<number, string> = {
+  1: '所有审批人都同意后才通过。',
+  2: '任一审批人同意即可通过。',
+  3: '仅抄送通知，不要求审批动作。',
+  4: '超过半数同意后通过。',
+  5: '按配置顺序依次审批。',
+}
 
 const APPROVER_TYPE_TO_RECEIVER_TYPE: Record<number, string> = {
   [APPROVER_TYPES.USER]: 'USER',
@@ -522,6 +518,24 @@ const connectionLineStyle = computed(() => ({
 const selectedNode = computed(() => flowNodes.value.find(node => String(node.id) === selectedNodeKey.value) || null)
 const selectedNodeData = computed(() => (selectedNode.value?.data as WorkflowNodeData | undefined) || null)
 const selectedEdgeData = computed(() => flowEdges.value.find(edge => String(edge.id) === selectedEdgeId.value) || null)
+const approveTypeOptions = computed(() =>
+  (approveTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+const approverTypeOptions = computed(() =>
+  (approverTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+const operatorOptions = computed(() =>
+  (branchOperatorDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: String(item.value),
+  })),
+)
 const canDeleteNode = computed(() =>
   Boolean(selectedNodeData.value && [NODE_TYPES.APPROVE, NODE_TYPES.BRANCH].includes(selectedNodeData.value.nodeType))
 )
@@ -592,11 +606,11 @@ function nodeTypeLabel(nodeType: number) {
 }
 
 function approverTypeLabel(approverType?: number) {
-  return approverTypeOptions.find(item => item.value === approverType)?.label || '审批对象'
+  return approverTypeOptions.value.find(item => item.value === Number(approverType))?.label || '审批对象'
 }
 
 function approveTypeDescription(approveType?: number) {
-  return approveTypeOptions.find(item => item.value === approveType)?.description || '请选择审批类型。'
+  return approveTypeDescriptionMap[Number(approveType)] || '请选择审批类型。'
 }
 
 function nodeSummary(data: WorkflowNodeData) {
@@ -607,7 +621,7 @@ function nodeSummary(data: WorkflowNodeData) {
     return '流程结束节点，不能有出线。'
   }
   if (data.nodeType === NODE_TYPES.APPROVE) {
-    const approveType = approveTypeOptions.find(item => item.value === data.approveType)?.label || '未配置'
+    const approveType = approveTypeOptions.value.find(item => item.value === Number(data.approveType))?.label || '未配置'
     const approverCount = data.approvers.filter(item => item.approverType != null && item.approverIds?.length).length
     return `审批类型：${approveType}，审批人来源：${approverCount} 组`
   }
