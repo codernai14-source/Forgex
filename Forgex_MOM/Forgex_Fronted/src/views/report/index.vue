@@ -5,14 +5,14 @@
       table-code="ReportTemplateTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :降级方案-config="降级方案Config"
+      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
     >
       <template #toolbar>
-        <a-button 
+        <a-button
           v-permission="'report:template:add'"
-          type="primary" 
+          type="primary"
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
@@ -28,38 +28,38 @@
 
       <template #status="{ record }">
         <a-tag
-          v-if="resolve状态Tag(record.status)"
-          :color="resolve状态Tag(record.status)?.color"
-          :style="resolve状态Tag(record.status)?.style"
+          v-if="resolveStatusTag(record.status)"
+          :color="resolveStatusTag(record.status)?.color"
+          :style="resolveStatusTag(record.status)?.style"
         >
-          {{ resolve状态Tag(record.status)?.label }}
+          {{ resolveStatusTag(record.status)?.label }}
         </a-tag>
         <span v-else>{{ record.status ?? '-' }}</span>
       </template>
 
       <template #action="{ record }">
         <a-space>
-          <a 
+          <a
             v-permission="'report:template:edit'"
             @click="handleEdit(record)"
           >
             编辑
           </a>
-          <a 
+          <a
             v-permission="'report:template:design'"
             @click="handleDesigner(record)"
           >
             设计器
           </a>
-          <a 
+          <a
             v-permission="'report:template:preview'"
             @click="handlePreview(record)"
           >
             预览
           </a>
-          <a 
+          <a
             v-permission="'report:template:delete'"
-            style="color: #ff4d4f" 
+            style="color: #ff4d4f"
             @click="handleDelete(record)"
           >
             删除
@@ -68,16 +68,14 @@
       </template>
     </FxDynamicTable>
 
-    <!-- 鎶ヨ〃琛ㄥ崟寮圭獥 -->
     <ReportForm
       v-model:open="formVisible"
-      :form-data="current表单Data"
+      :form-data="currentFormData"
       :category-options="categoryOptions"
       :datasource-options="datasourceOptions"
-      @ok="handle表单Ok"
+      @ok="handleFormOk"
     />
 
-    <!-- 鎶ヨ〃璁捐鍣ㄥ脊绐?-->
     <ReportDesigner
       v-model:open="designerVisible"
       :report-code="currentDesignerCode"
@@ -85,7 +83,6 @@
       @ok="handleDesignerOk"
     />
 
-    <!-- 鎶ヨ〃棰勮寮圭獥 -->
     <ReportPreview
       v-model:open="previewVisible"
       :report-code="currentPreviewCode"
@@ -95,23 +92,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { useDict } from '@/hooks/useDict'
 import type { FxTableConfig } from '@/api/system/tableConfig'
-import type { ReportTemplate, ReportTemplateParam, ReportCategory, ReportDatasource } from '@/api/report/types'
+import type {
+  ReportCategory,
+  ReportDatasource,
+  ReportTemplate,
+  ReportTemplateParam,
+} from '@/api/report/types'
 import {
+  getAvailableDatasources,
+  getCategoryTree,
   page,
   remove,
-  getDesignerUrl,
-  getPreviewUrl,
-  getCategoryTree,
-  getAvailableDatasources,
 } from '@/api/report'
-import ReportForm from './components/ReportForm.vue'
+import { useDict } from '@/hooks/useDict'
 import ReportDesigner from './components/ReportDesigner.vue'
+import ReportForm from './components/ReportForm.vue'
 import ReportPreview from './components/ReportPreview.vue'
 
 const { dictItems: statusOptions } = useDict('status')
@@ -120,7 +120,7 @@ const tableRef = ref()
 const formVisible = ref(false)
 const designerVisible = ref(false)
 const previewVisible = ref(false)
-const current表单Data = ref<Partial<ReportTemplate>>({})
+const currentFormData = ref<Partial<ReportTemplate>>({})
 const currentDesignerCode = ref('')
 const currentEngineType = ref<'UREPORT' | 'JIMU'>('UREPORT')
 const currentPreviewCode = ref('')
@@ -136,7 +136,7 @@ const dictOptions = computed(() => ({
   ],
 }))
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ReportTemplateTable',
   tableName: '报表模板管理',
   tableType: 'NORMAL',
@@ -164,20 +164,18 @@ const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
 }))
 
 function resolveEngineTypeLabel(value: string) {
-  if (value === 'UREPORT') {
-    return 'UReport2'
-  } else if (value === 'JIMU') {
-    return 'JimuReport'
-  }
+  if (value === 'UREPORT') return 'UReport2'
+  if (value === 'JIMU') return 'JimuReport'
   return value
 }
 
-function resolve状态Tag(value: unknown) {
+function resolveStatusTag(value: unknown) {
   const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
     return null
   }
+
   const style =
     dictItem.tagStyle?.borderColor || dictItem.tagStyle?.backgroundColor
       ? {
@@ -206,12 +204,13 @@ const handleRequest = async (payload: {
       engineType: payload.query?.engineType,
       status: payload.query?.status,
     } as ReportTemplateParam)
+
     return {
       records: res.records || [],
       total: Number(res.total || 0),
     }
   } catch (error) {
-    console.error('加载报表分页数据失败', error)
+    console.error('加载报表分页数据失败:', error)
     return {
       records: [],
       total: 0,
@@ -224,7 +223,7 @@ async function loadCategories() {
     const categories: ReportCategory[] = await getCategoryTree({})
     categoryOptions.value = flattenTreeToOptions(categories)
   } catch (error) {
-    console.error('加载分类树失败', error)
+    console.error('加载分类树失败:', error)
     categoryOptions.value = []
   }
 }
@@ -237,13 +236,14 @@ async function loadDatasources() {
       value: item.id,
     }))
   } catch (error) {
-    console.error('加载数据源列表失败', error)
+    console.error('加载数据源列表失败:', error)
     datasourceOptions.value = []
   }
 }
 
 function flattenTreeToOptions(tree: ReportCategory[]): Array<{ label: string; value: number }> {
   const result: Array<{ label: string; value: number }> = []
+
   function traverse(nodes: ReportCategory[], prefix = '') {
     nodes.forEach((node) => {
       const label = prefix ? `${prefix} / ${node.name}` : node.name
@@ -256,17 +256,18 @@ function flattenTreeToOptions(tree: ReportCategory[]): Array<{ label: string; va
       }
     })
   }
+
   traverse(tree)
   return result
 }
 
 function handleAdd() {
-  current表单Data.value = {}
+  currentFormData.value = {}
   formVisible.value = true
 }
 
 function handleEdit(record: ReportTemplate) {
-  current表单Data.value = { ...record }
+  currentFormData.value = { ...record }
   formVisible.value = true
 }
 
@@ -281,7 +282,7 @@ function handleDelete(record: ReportTemplate) {
         await remove(record.id)
         await tableRef.value?.refresh?.()
       } catch (error) {
-        console.error('删除失败', error)
+        console.error('删除报表失败:', error)
       }
     },
   })
@@ -299,7 +300,7 @@ function handlePreview(record: ReportTemplate) {
   previewVisible.value = true
 }
 
-async function handle表单Ok() {
+async function handleFormOk() {
   formVisible.value = false
   await tableRef.value?.refresh?.()
 }

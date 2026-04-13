@@ -4,7 +4,7 @@
       ref="tableRef"
       table-code="ExcelExportConfigTable"
       :request="handleRequest"
-      :降级方案-config="降级方案Config"
+      :dynamic-table-config="dynamicTableConfig"
       row-key="id"
       :show-query-form="true"
       :pagination="{
@@ -35,21 +35,21 @@
       :loading="saving"
       @submit="handleSave"
     >
-      <a-form :model="edit表单" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+      <a-form :model="editForm" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
         <a-form-item :label="t('system.excel.tableName')">
-          <a-input v-model:value="edit表单.tableName" allow-clear />
+          <a-input v-model:value="editForm.tableName" allow-clear />
         </a-form-item>
         <a-form-item :label="t('system.excel.tableCode')">
-          <a-input v-model:value="edit表单.tableCode" allow-clear />
+          <a-input v-model:value="editForm.tableCode" allow-clear />
         </a-form-item>
         <a-form-item :label="t('system.excel.title')">
-          <a-input v-model:value="edit表单.title" allow-clear />
+          <a-input v-model:value="editForm.title" allow-clear />
         </a-form-item>
         <a-form-item :label="t('system.excel.subtitle')">
-          <a-input v-model:value="edit表单.subtitle" allow-clear />
+          <a-input v-model:value="editForm.subtitle" allow-clear />
         </a-form-item>
-        <a-form-item :label="t('system.excel.export表单at')">
-          <a-select v-model:value="edit表单.export表单at" style="width: 160px">
+        <a-form-item :label="t('system.excel.exportFormat')">
+          <a-select v-model:value="editForm.exportFormat" style="width: 160px">
             <a-select-option value="xlsx">xlsx</a-select-option>
             <a-select-option value="csv">csv</a-select-option>
           </a-select>
@@ -60,7 +60,7 @@
       <div style="margin-bottom: 8px;">
         <a-button @click="addItem">{{ t('common.add') }}</a-button>
       </div>
-      <a-table :columns="itemColumns" :data-source="edit表单.items" row-key="_k" size="small" :pagination="false">
+      <a-table :columns="itemColumns" :data-source="editForm.items" row-key="_k" size="small" :pagination="false">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'exportField'">
             <a-input v-model:value="record.exportField" />
@@ -99,7 +99,7 @@ const itemColumns = computed(() => [
   { title: t('common.action'), key: 'action', width: 80 },
 ])
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ExcelExportConfigTable',
   tableName: t('system.excel.exportConfigTitle'),
   tableType: 'NORMAL',
@@ -110,7 +110,7 @@ const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
     { field: 'tableCode', title: t('system.excel.tableCode'), width: 180, align: 'left' },
     { field: 'title', title: t('system.excel.title'), minWidth: 180, align: 'left' },
     { field: 'subtitle', title: t('system.excel.subtitle'), minWidth: 180, align: 'left' },
-    { field: 'export表单at', title: t('system.excel.export表单at'), width: 120, align: 'center' },
+    { field: 'exportFormat', title: t('system.excel.exportFormat'), width: 120, align: 'center' },
     { field: 'action', title: t('common.action'), width: 140, align: 'center', fixed: 'right' },
   ],
   queryFields: [
@@ -122,13 +122,13 @@ const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
 
 const editOpen = ref(false)
 const saving = ref(false)
-const edit表单 = reactive<any>({
+const editForm = reactive<any>({
   id: undefined,
   tableName: '',
   tableCode: '',
   title: '',
   subtitle: '',
-  export表单at: 'xlsx',
+  exportFormat: 'xlsx',
   enableTotal: false,
   version: 1,
   items: [],
@@ -161,48 +161,52 @@ const handleRequest = async (payload: {
       tableCode,
     })
     return {
-      success: true,
-      data: res.records || [],
+      records: res.records || [],
       total: res.total || 0,
     }
   } catch (error) {
-    console.error('鍔犺浇瀵煎嚭閰嶇疆鍒楄〃澶辫触:', error)
+    console.error('加载导出配置列表失败', error)
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0,
     }
   }
 }
 
 async function openEdit(id?: number) {
-  edit表单.id = undefined
-  edit表单.tableName = ''
-  edit表单.tableCode = ''
-  edit表单.title = ''
-  edit表单.subtitle = ''
-  edit表单.export表单at = 'xlsx'
-  edit表单.enableTotal = false
-  edit表单.version = 1
-  edit表单.items = []
+  editForm.id = undefined
+  editForm.tableName = ''
+  editForm.tableCode = ''
+  editForm.title = ''
+  editForm.subtitle = ''
+  editForm.exportFormat = 'xlsx'
+  editForm.enableTotal = false
+  editForm.version = 1
+  editForm.items = []
 
   if (id) {
     const detail: any = await exportConfigDetail({ id })
-    Object.assign(edit表单, detail || {})
-    edit表单.items = (detail?.items || []).map((x: any, idx: number) => ({ ...x, _k: `${x.id || idx}-${Date.now()}` }))
+    Object.assign(editForm, {
+      ...detail,
+      exportFormat: detail?.exportFormat || detail?.exportFormat === '' ? detail.exportFormat : (detail?.export表单at || 'xlsx'),
+    })
+    editForm.items = (detail?.items || []).map((item: any, idx: number) => ({
+      ...item,
+      _k: `${item.id || idx}-${Date.now()}`,
+    }))
   }
   editOpen.value = true
 }
 
 function addItem() {
-  edit表单.items.push({ _k: `${Date.now()}-${Math.random()}`, exportField: '', fieldName: '', orderNum: 0 })
+  editForm.items.push({ _k: `${Date.now()}-${Math.random()}`, exportField: '', fieldName: '', orderNum: 0 })
 }
 
 function removeItem(k: string) {
-  edit表单.items = edit表单.items.filter((x: any) => x._k !== k)
+  editForm.items = editForm.items.filter((item: any) => item._k !== k)
 }
 
-async function handleDelete(id: number) {
+function handleDelete(id: number) {
   Modal.confirm({
     title: t('common.confirmDelete'),
     okText: t('common.confirm'),
@@ -219,15 +223,16 @@ async function handleSave() {
   saving.value = true
   try {
     const payload = {
-      ...edit表单,
-      items: (edit表单.items || []).map((x: any) => ({
-        id: x.id,
-        exportField: x.exportField,
-        fieldName: x.fieldName,
-        i18nJson: x.i18nJson,
-        headerStyleJson: x.headerStyleJson,
-        cellStyleJson: x.cellStyleJson,
-        orderNum: x.orderNum,
+      ...editForm,
+      exportFormat: editForm.exportFormat,
+      items: (editForm.items || []).map((item: any) => ({
+        id: item.id,
+        exportField: item.exportField,
+        fieldName: item.fieldName,
+        i18nJson: item.i18nJson,
+        headerStyleJson: item.headerStyleJson,
+        cellStyleJson: item.cellStyleJson,
+        orderNum: item.orderNum,
       })),
     }
     await saveExportConfig(payload)

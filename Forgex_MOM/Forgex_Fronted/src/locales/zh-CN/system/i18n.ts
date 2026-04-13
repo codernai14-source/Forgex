@@ -2,18 +2,16 @@
  * 国际化配置翻译 - 中文
  */
 export default {
-  // 页面标题
   languageType: '语言配置',
   encodeRule: '编码规则管理',
 
-  // 表格列
   langCode: '语言代码',
   langName: '语言名称',
   langNameEn: '英文名称',
   icon: '图标',
   orderNum: '排序号',
   enabled: '是否启用',
-  isDefault: '默认语言',
+  isDefault: '是否默认',
   defaultLang: '默认语言',
   ruleName: '规则名称',
   ruleCode: '规则编码',
@@ -28,12 +26,11 @@ export default {
   detailSegment: '段',
   segmentType: '段类型',
   segmentValue: '段值',
-  date表单at: '日期格式',
+  dateFormat: '日期格式',
   seqStart: '起始值',
   seqLength: '长度',
   seqResetType: '重置方式',
 
-  // 表单占位提示
   langCodePlaceholder: '请输入语言代码，例如：zh-CN',
   langNamePlaceholder: '请输入语言名称，例如：简体中文',
   langNameEnPlaceholder: '请输入英文名称，例如：Simplified Chinese',
@@ -43,9 +40,8 @@ export default {
   businessTypePlaceholder: '请输入业务类型（例如：ORDER、INVOICE）',
   descriptionPlaceholder: '请输入规则描述',
   remarkPlaceholder: '请输入备注',
-  date表单atPlaceholder: '请输入日期格式（例如：YYYYMMDD）',
+  dateFormatPlaceholder: '请输入日期格式（例如：YYYYMMDD）',
 
-  // 表单校验
   langCodeRequired: '请输入语言代码',
   langNameRequired: '请输入语言名称',
   ruleNameRequired: '请输入规则名称',
@@ -55,13 +51,12 @@ export default {
   ruleCodePattern: '规则编码只能包含字母、数字和下划线',
   segmentTypeRequired: '请选择段类型',
   segmentValueRequired: '请输入段值',
-  date表单atRequired: '请输入日期格式',
+  dateFormatRequired: '请输入日期格式',
   seqStartRequired: '请输入起始值',
   seqLengthRequired: '请输入序列长度',
   detailRequired: '请至少添加一条规则明细',
   detailOrderError: '规则明细序号必须连续',
 
-  // 状态
   statusActive: '启用',
   statusInactive: '禁用',
   segmentTypeFixed: '固定值',
@@ -73,13 +68,12 @@ export default {
   seqResetMonthly: '按月重置',
   seqResetDaily: '按日重置',
 
-  // 操作
   add: '新增',
   edit: '编辑',
   delete: '删除',
   test: '测试',
   generate: '生成编码',
-  addDetail: '添加明细',
+  addDetail: '新增明细',
   setDefault: '设为默认',
   confirmSetDefault: '确定要将该语言设为默认语言吗？',
   testNotImplemented: '测试功能暂未实现',
@@ -89,9 +83,8 @@ export default {
   addSuccess: '新增成功',
   loadDetailFailed: '加载详情失败',
 
-  // 消息提示
   message: {
-    deleteConfirm: '确定要删除该编码规则吗？',
+    deleteConfirm: '确定要删除这条编码规则吗？',
     batchDeleteConfirm: '确定要批量删除选中的编码规则吗？',
   },
 }

@@ -157,8 +157,8 @@ export function deleteTaskConfig(params: { id: number }) {
   return http.post<boolean>('/wf/task/config/delete', params)
 }
 
-export function updateTaskConfig状态(params: { id: number; status: number }) {
-  return http.post<boolean>('/wf/task/config/update状态', params)
+export function updateTaskConfigStatus(params: { id: number; status: number }) {
+  return http.post<boolean>('/wf/task/config/updateStatus', params)
 }
 
 export function getOrCreateDraftEditor(params: WfTaskDraftEditorQueryParam, config?: RequestConfig) {

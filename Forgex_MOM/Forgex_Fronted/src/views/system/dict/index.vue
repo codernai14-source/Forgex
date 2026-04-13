@@ -5,13 +5,13 @@
       table-code="DictTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :降级方案-config="降级方案Config"
+      :dynamic-table-config="dynamicTableConfig"
       :default-expand-all-rows="true"
       :show-query-form="true"
       row-key="id"
     >
       <template #toolbar>
-        <a-button type="primary" @click="handleAdd(null)">鏂板瀛楀吀绫诲瀷</a-button>
+        <a-button type="primary" @click="handleAdd(null)">新增字典</a-button>
       </template>
 
       <template #moduleId="{ record }">
@@ -23,20 +23,20 @@
 
       <template #status="{ record }">
         <a-tag
-          v-if="resolve状态Tag(record.status)"
-          :color="resolve状态Tag(record.status)?.color"
-          :style="resolve状态Tag(record.status)?.style"
+          v-if="resolveStatusTag(record.status)"
+          :color="resolveStatusTag(record.status)?.color"
+          :style="resolveStatusTag(record.status)?.style"
         >
-          {{ resolve状态Tag(record.status)?.label }}
+          {{ resolveStatusTag(record.status)?.label }}
         </a-tag>
         <span v-else>{{ record.status ?? '-' }}</span>
       </template>
 
       <template #action="{ record }">
         <a-space>
-          <a v-if="!record.dictValue" @click="handleAdd(record)">鏂板瀛愰」</a>
-          <a @click="handleEdit(record)">缂栬緫</a>
-          <a style="color: #ff4d4f" @click="handleDelete(record)">鍒犻櫎</a>
+          <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
+          <a @click="handleEdit(record)">编辑</a>
+          <a style="color: #ff4d4f" @click="handleDelete(record)">删除</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -67,10 +67,10 @@
         <a-form-item v-else label="字典值" required>
           <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
         </a-form-item>
-        <a-form-item v-if="isChildNode" label="澶氳瑷€閰嶇疆">
+        <a-form-item v-if="isChildNode" label="国际化值">
           <I18nInput v-model="form.dictValueI18nJson" mode="table" />
         </a-form-item>
-        <a-form-item v-if="isChildNode" label="鏍囩鏍峰紡">
+        <a-form-item v-if="isChildNode" label="标签样式">
           <TagStyleConfig ref="tagStyleConfigRef" />
         </a-form-item>
         <a-form-item label="排序号">
@@ -115,7 +115,7 @@ const dictOptions = computed(() => ({
   moduleId: moduleOptions.value,
 }))
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'DictTable',
   tableName: '字典管理',
   tableType: 'NORMAL',
@@ -170,7 +170,7 @@ function resolveModuleLabel(record: any) {
   return option?.label || ''
 }
 
-function resolve状态Tag(value: unknown) {
+function resolveStatusTag(value: unknown) {
   const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
@@ -229,7 +229,7 @@ async function loadModules() {
   }
 }
 
-function reset表单() {
+function resetForm() {
   form.id = null
   form.parentId = 0
   form.moduleId = undefined
@@ -244,7 +244,7 @@ function reset表单() {
 }
 
 function handleAdd(row: any) {
-  reset表单()
+  resetForm()
   dialogTitle.value = row ? '新增字典子项' : '新增字典类型'
   form.parentId = row ? Number(row.id) : 0
   form.moduleId = row?.moduleId != null ? Number(row.moduleId) : undefined

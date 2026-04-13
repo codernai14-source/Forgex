@@ -12,12 +12,11 @@
       :label-col="{ span: 5 }"
       :wrapper-col="{ span: 19 }"
     >
-      <!-- 鍩虹閰嶇疆 -->
       <a-card size="small" :bordered="false" class="mb-16">
         <template #title>
           <span class="card-title">{{ t('system.excel.baseConfig') }}</span>
         </template>
-        
+
         <a-form-item
           :label="t('system.excel.tableName')"
           name="tableName"
@@ -28,7 +27,7 @@
             :placeholder="t('system.excel.pleaseInputTableName')"
           />
         </a-form-item>
-        
+
         <a-form-item
           :label="t('system.excel.tableCode')"
           name="tableCode"
@@ -39,31 +38,22 @@
             :placeholder="t('system.excel.pleaseInputTableCode')"
           />
         </a-form-item>
-        
-        <a-form-item
-          :label="t('system.excel.title')"
-          name="title"
-        >
+
+        <a-form-item :label="t('system.excel.title')" name="title">
           <a-input
             v-model:value="formData.title"
             :placeholder="t('system.excel.pleaseInputTitle')"
           />
         </a-form-item>
-        
-        <a-form-item
-          :label="t('system.excel.subtitle')"
-          name="subtitle"
-        >
+
+        <a-form-item :label="t('system.excel.subtitle')" name="subtitle">
           <a-input
             v-model:value="formData.subtitle"
             :placeholder="t('system.excel.pleaseInputSubtitle')"
           />
         </a-form-item>
-        
-        <a-form-item
-          :label="t('system.excel.version')"
-          name="version"
-        >
+
+        <a-form-item :label="t('system.excel.version')" name="version">
           <a-input-number
             v-model:value="formData.version"
             :min="1"
@@ -72,83 +62,61 @@
           />
         </a-form-item>
       </a-card>
-      
-      <!-- 瀛楁閰嶇疆 -->
+
       <a-card size="small" :bordered="false" class="mt-16">
         <template #title>
           <span class="card-title">{{ t('system.excel.importFields') }}</span>
         </template>
-        
-        <FieldConfigList
-          v-model="formData.fields"
-        />
+
+        <FieldConfigList v-model="formData.fields" />
       </a-card>
     </a-form>
   </BaseFormDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { FormInstance } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FieldConfigList from '@/components/excel/FieldConfigList.vue'
 
 /**
- * 瀵煎叆閰嶇疆缂栬緫寮圭獥缁勪欢
- * 
- * 鍔熻兘锛?
- * 1. 鍖呭惈涓婚厤缃〃鍗曞拰瀛楁閰嶇疆鍒楄〃
- * 2. 鏀寔鏂板鍜岀紪杈戞ā寮?
- * 3. 琛ㄥ崟楠岃瘉
- * 4. 鏁版嵁鎻愪氦澶勭悊
- * 
- * 浣跨敤绀轰緥锛?
- * <ExcelImportConfigModal v-model:open="visible" :is-edit="isEdit" :data="editData" @success="handleSuccess" />
- * 
- * @author Forgex
- * @version 1.0.0
- * @since 2026-04-09
+ * 导入配置编辑弹窗
+ *
+ * 功能：
+ * 1. 维护基础配置
+ * 2. 维护导入字段配置
+ * 3. 对外暴露表单数据供父组件提交
  */
-
 interface Props {
-  /** 瀵硅瘽妗嗘槸鍚︽墦寮€ */
+  /** 弹窗是否打开 */
   open?: boolean
-  /** 鏄惁涓虹紪杈戞ā寮?*/
+  /** 是否为编辑模式 */
   isEdit?: boolean
-  /** 缂栬緫鏃剁殑鍒濆鏁版嵁 */
+  /** 编辑详情数据 */
   data?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
   open: false,
   isEdit: false,
-  data: () => ({})
+  data: () => ({}),
 })
 
 const emit = defineEmits<{
-  /**
-   * 鏇存柊瀵硅瘽妗嗘墦寮€鐘舵€?
-   */
+  /** 更新弹窗显示状态 */
   (e: 'update:open', value: boolean): void
-  /**
-   * 鎻愪氦浜嬩欢
-   */
+  /** 提交表单 */
   (e: 'submit'): void
 }>()
 
 const { t } = useI18n()
 
-// 瀵硅瘽妗嗙姸鎬?
 const dialogVisible = ref(false)
-
-// 琛ㄥ崟寮曠敤
 const formRef = ref<FormInstance>()
-
-// 鍔犺浇鐘舵€?
 const loading = ref(false)
 
-// 琛ㄥ崟鏁版嵁
 const formData = reactive({
   id: undefined,
   tableName: '',
@@ -156,13 +124,10 @@ const formData = reactive({
   title: '',
   subtitle: '',
   version: 1,
-  fields: []
+  fields: [] as any[],
 })
 
-/**
- * 鍒濆鍖栬〃鍗曟暟鎹?
- */
-const initFormData = () => {
+function initFormData() {
   formData.id = undefined
   formData.tableName = ''
   formData.tableCode = ''
@@ -172,63 +137,55 @@ const initFormData = () => {
   formData.fields = []
 }
 
-/**
- * 鍔犺浇缂栬緫鏁版嵁
- */
-const loadEditData = (data: any) => {
-  if (data) {
-    formData.id = data.id
-    formData.tableName = data.tableName || ''
-    formData.tableCode = data.tableCode || ''
-    formData.title = data.title || ''
-    formData.subtitle = data.subtitle || ''
-    formData.version = data.version || 1
-    formData.fields = (data.fields || []).map((field: any, index: number) => ({
-      ...field,
-      _key: field.id ? `field-${field.id}` : `field-${index}-${Date.now()}`
-    }))
-  }
+function loadEditData(data: any) {
+  if (!data) return
+
+  formData.id = data.id
+  formData.tableName = data.tableName || ''
+  formData.tableCode = data.tableCode || ''
+  formData.title = data.title || ''
+  formData.subtitle = data.subtitle || ''
+  formData.version = data.version || 1
+  formData.fields = (data.fields || []).map((field: any, index: number) => ({
+    ...field,
+    _key: field.id ? `field-${field.id}` : `field-${index}-${Date.now()}`,
+  }))
 }
 
-// 鏆撮湶琛ㄥ崟鏁版嵁缁欑埗缁勪欢
 defineExpose({
-  formData
+  formData,
 })
 
-/**
- * 澶勭悊鎻愪氦
- */
-const handleSubmit = async () => {
+async function handleSubmit() {
   try {
     await formRef.value?.validate()
-    
-    // 瑙﹀彂鐖剁粍浠剁殑鎻愪氦浜嬩欢锛岀敱鐖剁粍浠跺鐞嗕繚瀛橀€昏緫
     emit('submit')
   } catch (error) {
-    console.error('琛ㄥ崟楠岃瘉澶辫触:', error)
+    console.error('导入配置表单校验失败:', error)
   }
 }
 
-/**
- * 鐩戝惉鎵撳紑鐘舵€佸彉鍖?
- */
-watch(() => props.open, (newVal) => {
-  dialogVisible.value = newVal
-  if (newVal) {
+watch(
+  () => props.open,
+  (newValue) => {
+    dialogVisible.value = newValue
+    if (!newValue) return
+
     if (props.isEdit && props.data) {
       loadEditData(props.data)
     } else {
       initFormData()
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true },
+)
 
-/**
- * 鐩戝惉瀵硅瘽妗嗗叧闂?
- */
-watch(() => dialogVisible.value, (newVal) => {
-  emit('update:open', newVal)
-})
+watch(
+  () => dialogVisible.value,
+  (newValue) => {
+    emit('update:open', newValue)
+  },
+)
 </script>
 
 <style scoped lang="less">

@@ -1,23 +1,22 @@
 <template>
   <div class="message-list-page">
-    <!-- 鏌ヨ琛ㄥ崟 -->
     <a-card :bordered="false" class="search-card">
-      <a-form layout="inline" :model="search表单">
+      <a-form layout="inline" :model="searchForm">
         <a-form-item label="消息类型">
-          <a-select v-model:value="search表单.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
+          <a-select v-model:value="searchForm.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
             <a-select-option value="NOTICE">通知</a-select-option>
-            <a-select-option value="WARNING">警告</a-select-option>
-            <a-select-option value="ALARM">报警</a-select-option>
+            <a-select-option value="WARNING">预警</a-select-option>
+            <a-select-option value="ALARM">告警</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="状态">
-          <a-select v-model:value="search表单.status" placeholder="请选择状态" allow-clear style="width: 120px">
+          <a-select v-model:value="searchForm.status" placeholder="请选择状态" allow-clear style="width: 120px">
             <a-select-option :value="0">未读</a-select-option>
             <a-select-option :value="1">已读</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="标题">
-          <a-input v-model:value="search表单.title" placeholder="请输入标题" allow-clear />
+          <a-input v-model:value="searchForm.title" placeholder="请输入标题" allow-clear />
         </a-form-item>
         <a-form-item>
           <a-space>
@@ -38,7 +37,6 @@
       </a-form>
     </a-card>
 
-    <!-- 鏁版嵁鍒楄〃 -->
     <a-card :bordered="false" class="list-card">
       <a-list
         :loading="loading"
@@ -91,7 +89,6 @@
       </a-list>
     </a-card>
 
-    <!-- 娑堟伅璇︽儏寮圭獥 -->
     <a-modal
       v-model:open="detailVisible"
       title="消息详情"
@@ -117,7 +114,7 @@
           <a-descriptions-item label="发送时间">
             {{ currentMessage.createTime }}
           </a-descriptions-item>
-          <a-descriptions-item v-if="currentMessage.readTime" label="闃呰鏃堕棿">
+          <a-descriptions-item v-if="currentMessage.readTime" label="阅读时间">
             {{ currentMessage.readTime }}
           </a-descriptions-item>
           <a-descriptions-item v-if="currentMessage.linkUrl" label="相关链接">
@@ -130,33 +127,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import {
   SearchOutlined,
   ReloadOutlined,
   CheckOutlined,
   BellOutlined,
   WarningOutlined,
-  AlertOutlined
+  AlertOutlined,
 } from '@ant-design/icons-vue'
 import {
-  pageMessage,
+  markAllMessageRead,
   markMessageRead,
-  markAllMessageRead
+  pageMessage,
 } from '@/api/message'
 
-// 鏌ヨ琛ㄥ崟
-const search表单 = reactive({
+const searchForm = reactive({
   messageType: undefined,
   platform: 'INTERNAL',
   status: undefined,
   title: '',
   pageNum: 1,
-  pageSize: 10
+  pageSize: 10,
 })
 
-// 鍒楄〃鏁版嵁
-const dataSource = ref([])
+const dataSource = ref<any[]>([])
 const loading = ref(false)
 const pagination = reactive({
   current: 1,
@@ -169,131 +164,117 @@ const pagination = reactive({
     pagination.current = page
     pagination.pageSize = pageSize
     loadData()
-  }
+  },
 })
 
-// 璇︽儏寮圭獥
 const detailVisible = ref(false)
 const currentMessage = ref<any>(null)
 
-// 鑾峰彇娑堟伅绫诲瀷棰滆壊
-const getMessageTypeColor = (type: string) => {
+function getMessageTypeColor(type: string) {
   const colorMap: Record<string, string> = {
     NOTICE: '#1890ff',
     WARNING: '#faad14',
-    ALARM: '#ff4d4f'
+    ALARM: '#ff4d4f',
   }
   return colorMap[type] || '#1890ff'
 }
 
-// 鑾峰彇娑堟伅绫诲瀷鏂囨湰
-const getMessageTypeText = (type: string) => {
+function getMessageTypeText(type: string) {
   const textMap: Record<string, string> = {
-    NOTICE: '閫氱煡',
-    WARNING: '璀﹀憡',
-    ALARM: '鎶ヨ'
+    NOTICE: '通知',
+    WARNING: '预警',
+    ALARM: '告警',
   }
   return textMap[type] || type
 }
 
-// 鑾峰彇娑堟伅绫诲瀷鍥炬爣
-const getMessageTypeIcon = (type: string) => {
+function getMessageTypeIcon(type: string) {
   const iconMap: Record<string, any> = {
     NOTICE: BellOutlined,
     WARNING: WarningOutlined,
-    ALARM: AlertOutlined
+    ALARM: AlertOutlined,
   }
   return iconMap[type] || BellOutlined
 }
 
-// 鏌ヨ鏁版嵁
-const loadData = async () => {
+async function loadData() {
   loading.value = true
   try {
     const params = {
-      ...search表单,
+      ...searchForm,
       pageNum: pagination.current,
-      pageSize: pagination.pageSize
+      pageSize: pagination.pageSize,
     }
-    const res = await pageMessage(params)
+    const res: any = await pageMessage(params)
     dataSource.value = res.records || []
     pagination.total = res.total || 0
   } catch (error) {
-    console.error('鏌ヨ澶辫触:', error)
+    console.error('加载消息列表失败', error)
   } finally {
     loading.value = false
   }
 }
 
-// 鏌ヨ
-const handleSearch = () => {
+function handleSearch() {
   pagination.current = 1
   loadData()
 }
 
-// 閲嶇疆
-const handleReset = () => {
-  Object.assign(search表单, {
+function handleReset() {
+  Object.assign(searchForm, {
     messageType: undefined,
     status: undefined,
-    title: ''
+    title: '',
   })
   handleSearch()
 }
 
-// 鍒嗛〉鍙樺寲
-const handlePageChange = (page: number, pageSize: number) => {
+function handlePageChange(page: number, pageSize: number) {
   pagination.current = page
   pagination.pageSize = pageSize
   loadData()
 }
 
-// 鍒楄〃椤圭偣鍑?
-const handleItemClick = async (item: any) => {
+async function handleItemClick(item: any) {
   currentMessage.value = item
   detailVisible.value = true
-  
-  // 濡傛灉鏄湭璇绘秷鎭紝鏍囪涓哄凡璇?
+
   if (item.status === 0) {
     try {
       await markMessageRead(item.id, { showSuccessMessage: false })
       item.status = 1
       item.readTime = new Date().toLocaleString()
     } catch (error) {
-      console.error('鏍囪宸茶澶辫触:', error)
+      console.error('标记消息已读失败', error)
     }
   }
 }
 
-// 鏍囪宸茶
-const handleMarkRead = async (item: any) => {
+async function handleMarkRead(item: any) {
   try {
     await markMessageRead(item.id)
     item.status = 1
     item.readTime = new Date().toLocaleString()
   } catch (error) {
-    console.error('鏍囪澶辫触:', error)
+    console.error('标记已读失败', error)
   }
 }
 
-// 鍏ㄩ儴宸茶
-const handleMarkAllRead = async () => {
+async function handleMarkAllRead() {
   try {
     await markAllMessageRead()
     loadData()
   } catch (error) {
-    console.error('鍏ㄩ儴鏍囪澶辫触:', error)
+    console.error('全部标记已读失败', error)
   }
 }
 
-// 璺宠浆閾炬帴
-const handleGoToLink = (item: any) => {
+function handleGoToLink(item: any) {
   if (item.linkUrl) {
     window.open(item.linkUrl, '_blank')
   }
 }
 
-// 鍒濆鍖?
 onMounted(() => {
   loadData()
 })
@@ -351,6 +332,3 @@ onMounted(() => {
   }
 }
 </style>
-
-
-

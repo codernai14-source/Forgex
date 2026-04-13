@@ -26,7 +26,7 @@
       <a-form-item label="报表编码" name="code">
         <a-input
           v-model:value="form.code"
-          placeholder="璇疯緭鍏ユ姤琛ㄧ紪鐮侊紙鑻辨枃瀛楁瘝寮€澶达級"
+          placeholder="请输入报表编码，首字母必须为字母，可包含字母、数字和下划线"
           maxlength="50"
           show-count
           :disabled="!!form.id"
@@ -48,7 +48,7 @@
         <a-tree-select
           v-model:value="form.categoryId"
           :tree-data="categoryTreeData"
-          placeholder="璇烽€夋嫨鎶ヨ〃鍒嗙被"
+          placeholder="请选择报表分类"
           allow-clear
           tree-node-filter-prop="label"
           show-search
@@ -86,10 +86,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch, nextTick } from 'vue'
-import { type 表单Instance } from 'ant-design-vue'
-import type { ReportTemplate, ReportSaveDTO, ReportCategory } from '@/api/report/types'
-import { save, getCategoryTree } from '@/api/report'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { type FormInstance } from 'ant-design-vue'
+import type { ReportTemplate, ReportSaveDTO } from '@/api/report/types'
+import { save } from '@/api/report'
 
 interface Props {
   open: boolean
@@ -116,7 +116,7 @@ const visible = computed({
   set: (value) => emit('update:open', value),
 })
 
-const formRef = ref<表单Instance>()
+const formRef = ref<FormInstance>()
 const formTitle = computed(() => (form.id ? '编辑报表' : '新增报表'))
 
 const form = reactive<ReportSaveDTO>({
@@ -145,28 +145,21 @@ const formRules = {
     },
     { max: 50, message: '报表编码不能超过 50 个字符', trigger: 'blur' },
   ],
-  engineType: [
-    { required: true, message: '请选择引擎类型', trigger: 'change' },
-  ],
+  engineType: [{ required: true, message: '请选择引擎类型', trigger: 'change' }],
 }
 
 const categoryTreeData = computed(() => {
-  return buildTreeData(props.categoryOptions || [])
-})
-
-const datasourceSelectOptions = computed(() => {
-  return props.datasourceOptions || []
-})
-
-function buildTreeData(options: Array<{ label: string; value: number }>) {
-  return options.map((item) => ({
+  return (props.categoryOptions || []).map((item) => ({
     title: item.label,
+    label: item.label,
     value: item.value,
     key: item.value,
   }))
-}
+})
 
-function reset表单() {
+const datasourceSelectOptions = computed(() => props.datasourceOptions || [])
+
+function resetForm() {
   form.id = undefined
   form.name = ''
   form.code = ''
@@ -179,7 +172,7 @@ function reset表单() {
   formRef.value?.resetFields()
 }
 
-function load表单Data(data: Partial<ReportTemplate>) {
+function loadFormData(data: Partial<ReportTemplate>) {
   form.id = data.id
   form.name = data.name || ''
   form.code = data.code || ''
@@ -205,7 +198,7 @@ async function handleSubmit() {
 }
 
 function handleCancel() {
-  reset表单()
+  resetForm()
   emit('update:open', false)
 }
 
@@ -214,22 +207,20 @@ watch(
   (newData) => {
     if (newData && Object.keys(newData).length > 0) {
       nextTick(() => {
-        load表单Data(newData)
+        loadFormData(newData)
       })
     } else {
-      reset表单()
+      resetForm()
     }
   },
-  { deep: true }
+  { deep: true },
 )
 
 onMounted(() => {
   if (!props.formData || Object.keys(props.formData).length === 0) {
-    reset表单()
+    resetForm()
   }
 })
 </script>
 
-<style scoped lang="less">
-// 鏍峰紡鍙互鍦ㄨ繖閲屾坊鍔?
-</style>
+<style scoped lang="less"></style>

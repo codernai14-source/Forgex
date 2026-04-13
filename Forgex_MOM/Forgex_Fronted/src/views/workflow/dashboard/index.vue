@@ -111,7 +111,7 @@
                   </div>
                   <div class="config-item__tags">
                     <a-tag :color="item.formType === 1 ? 'blue' : 'green'">
-                      {{ item.formType === 1 ? t('workflow.taskConfig.custom表单') : t('workflow.taskConfig.lowCode表单') }}
+                      {{ item.formType === 1 ? t('workflow.taskConfig.customForm') : t('workflow.taskConfig.lowCodeForm') }}
                     </a-tag>
                     <a-tag :color="item.status === 1 ? 'success' : 'default'">
                       {{ item.status === 1 ? t('workflow.dashboard.enabledText') : t('workflow.dashboard.disabledText') }}
@@ -151,7 +151,7 @@
               >
                 <div class="task-main">
                   <span class="task-name">{{ item.taskName }}</span>
-                  <a-tag :color="get状态Color(item.status)" size="small">{{ get状态Text(item.status) }}</a-tag>
+                  <a-tag :color="getStatusColor(item.status)" size="small">{{ getStatusText(item.status) }}</a-tag>
                 </div>
                 <div class="task-meta">
                   <span>{{ item.initiatorName }}</span>
@@ -186,7 +186,7 @@
               >
                 <div class="task-main">
                   <span class="task-name">{{ item.taskName }}</span>
-                  <a-tag :color="get状态Color(item.status)" size="small">{{ get状态Text(item.status) }}</a-tag>
+                  <a-tag :color="getStatusColor(item.status)" size="small">{{ getStatusText(item.status) }}</a-tag>
                 </div>
                 <div class="task-meta">
                   <span>{{ item.initiatorName }}</span>
@@ -249,14 +249,14 @@
           <a-descriptions-item :label="t('workflow.dashboard.detailInitiator')">{{ currentRecord.initiatorName }}</a-descriptions-item>
           <a-descriptions-item :label="t('workflow.dashboard.detailStartTime')">{{ formatDateTime(currentRecord.startTime) }}</a-descriptions-item>
           <a-descriptions-item :label="t('workflow.dashboard.detailCurrentNode')">{{ currentRecord.currentNodeName || '-' }}</a-descriptions-item>
-          <a-descriptions-item :label="t('workflow.dashboard.detail状态')">
-            <a-tag :color="get状态Color(currentRecord.status)">{{ get状态Text(currentRecord.status) }}</a-tag>
+          <a-descriptions-item :label="t('workflow.dashboard.detailStatus')">
+            <a-tag :color="getStatusColor(currentRecord.status)">{{ getStatusText(currentRecord.status) }}</a-tag>
           </a-descriptions-item>
         </a-descriptions>
         <a-divider />
         <div class="form-block">
           <h4>{{ t('workflow.taskConfig.formContent') }}</h4>
-          <pre>{{ format表单Content(currentRecord.formContent) }}</pre>
+          <pre>{{ formatFormContent(currentRecord.formContent) }}</pre>
         </div>
       </template>
     </a-drawer>
@@ -280,7 +280,7 @@ import {
   SendOutlined,
   SettingOutlined,
   TeamOutlined,
-  ThunderboltOutlined
+  ThunderboltOutlined,
 } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
@@ -291,13 +291,13 @@ import {
   type WfDashboardAnalyticsVO,
   type WfDashboardSummaryVO,
   type WfDashboardWeeklyResultDTO,
-  type WfExecutionDTO
+  type WfExecutionDTO,
 } from '@/api/workflow/execution'
 import {
   getTaskConfigPage,
   listTaskConfig,
   type WfTaskConfigDTO,
-  type WfTaskConfigSummaryDTO
+  type WfTaskConfigSummaryDTO,
 } from '@/api/workflow/taskConfig'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { use权限Store } from '@/stores/permission'
@@ -341,18 +341,20 @@ const canStartExecution = computed(() =>
 const canViewTaskConfig = computed(() =>
   permissionStore.has权限('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
 )
-const pageLoading = computed(() => summaryLoading.value || analyticsLoading.value || shortcutLoading.value || taskConfigLoading.value)
+const pageLoading = computed(() =>
+  summaryLoading.value || analyticsLoading.value || shortcutLoading.value || taskConfigLoading.value,
+)
 
 function createEmptyWeeklyResults(): WfDashboardWeeklyResultDTO[] {
   return Array.from({ length: 7 }, (_, index) => ({
     date: dayjs().subtract(6 - index, 'day').format('YYYY-MM-DD'),
     approvedCount: 0,
-    rejectedCount: 0
+    rejectedCount: 0,
   }))
 }
 
-function resolveCssVar(name: string, 降级方案: string) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || 降级方案
+function resolveCssVar(name: string, fallback: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
 }
 
 function loadRecentTaskCodes(): string[] {
@@ -375,7 +377,7 @@ function buildWeeklyChartOption(): EChartsOption {
       top: 0,
       right: 0,
       textStyle: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
-      data: [t('workflow.dashboard.approvedLegend'), t('workflow.dashboard.rejectedLegend')]
+      data: [t('workflow.dashboard.approvedLegend'), t('workflow.dashboard.rejectedLegend')],
     },
     grid: { top: 48, left: 16, right: 16, bottom: 12, containLabel: true },
     xAxis: {
@@ -383,14 +385,14 @@ function buildWeeklyChartOption(): EChartsOption {
       data: analytics.weeklyResults.map(item => dayjs(item.date).format('MM-DD')),
       axisLine: { lineStyle: { color: resolveCssVar('--fx-border-color', '#e5e7eb') } },
       axisLabel: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
-      axisTick: { show: false }
+      axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
       minInterval: 1,
       axisLine: { show: false },
       axisLabel: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
-      splitLine: { lineStyle: { color: resolveCssVar('--fx-border-color', '#e5e7eb'), type: 'dashed' } }
+      splitLine: { lineStyle: { color: resolveCssVar('--fx-border-color', '#e5e7eb'), type: 'dashed' } },
     },
     series: [
       {
@@ -401,10 +403,10 @@ function buildWeeklyChartOption(): EChartsOption {
           borderRadius: [8, 8, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#2563eb' },
-            { offset: 1, color: '#60a5fa' }
-          ])
+            { offset: 1, color: '#60a5fa' },
+          ]),
         },
-        data: analytics.weeklyResults.map(item => item.approvedCount)
+        data: analytics.weeklyResults.map(item => item.approvedCount),
       },
       {
         name: t('workflow.dashboard.rejectedLegend'),
@@ -414,12 +416,12 @@ function buildWeeklyChartOption(): EChartsOption {
           borderRadius: [8, 8, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#f97316' },
-            { offset: 1, color: '#fb7185' }
-          ])
+            { offset: 1, color: '#fb7185' },
+          ]),
         },
-        data: analytics.weeklyResults.map(item => item.rejectedCount)
-      }
-    ]
+        data: analytics.weeklyResults.map(item => item.rejectedCount),
+      },
+    ],
   }
 }
 
@@ -430,9 +432,9 @@ function buildUserShareOption(): EChartsOption {
         text: t('workflow.dashboard.userShareEmpty'),
         left: 'center',
         top: 'center',
-        textStyle: { fontSize: 14, fontWeight: 500, color: resolveCssVar('--fx-text-secondary', '#6b7280') }
+        textStyle: { fontSize: 14, fontWeight: 500, color: resolveCssVar('--fx-text-secondary', '#6b7280') },
       },
-      series: []
+      series: [],
     }
   }
 
@@ -444,7 +446,7 @@ function buildUserShareOption(): EChartsOption {
       right: 0,
       top: 'middle',
       height: 220,
-      textStyle: { color: resolveCssVar('--fx-text-secondary', '#6b7280') }
+      textStyle: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
     },
     series: [
       {
@@ -458,16 +460,16 @@ function buildUserShareOption(): EChartsOption {
           label: {
             show: true,
             color: resolveCssVar('--fx-text-primary', '#111827'),
-            formatter: '{b}\n{d}%'
-          }
+            formatter: '{b}\n{d}%',
+          },
         },
         itemStyle: {
           borderColor: resolveCssVar('--fx-bg-container', '#ffffff'),
-          borderWidth: 4
+          borderWidth: 4,
         },
-        data: analytics.userShares.map(item => ({ name: item.initiatorName, value: item.count }))
-      }
-    ]
+        data: analytics.userShares.map(item => ({ name: item.initiatorName, value: item.count })),
+      },
+    ],
   }
 }
 
@@ -574,18 +576,18 @@ const openDetail = (record: WfExecutionDTO) => {
   currentRecord.value = record
   detailDrawerVisible.value = true
 }
-const handleOpenShortcut = (task: WfTaskConfigDTO) => router.push(approvalRoutePaths.executionStart表单(task.taskCode))
+const handleOpenShortcut = (task: WfTaskConfigDTO) => router.push(approvalRoutePaths.executionStartForm(task.taskCode))
 
-function get状态Color(status?: number) {
+function getStatusColor(status?: number) {
   return ({ 0: 'default', 1: 'processing', 2: 'success', 3: 'error' } as Record<number, string>)[status ?? 0] ?? 'default'
 }
 
-function get状态Text(status?: number) {
+function getStatusText(status?: number) {
   return ({
     0: t('workflow.dashboard.status.pending'),
     1: t('workflow.dashboard.status.processing'),
     2: t('workflow.dashboard.status.done'),
-    3: t('workflow.dashboard.status.rejected')
+    3: t('workflow.dashboard.status.rejected'),
   } as Record<number, string>)[status ?? 0] ?? '-'
 }
 
@@ -593,7 +595,7 @@ function formatDateTime(dateTime?: string) {
   return dateTime ? dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss') : '-'
 }
 
-function format表单Content(formContent?: string) {
+function formatFormContent(formContent?: string) {
   if (!formContent) return '{}'
   try {
     return JSON.stringify(JSON.parse(formContent), null, 2)
@@ -604,10 +606,10 @@ function format表单Content(formContent?: string) {
 
 function getTaskCategory(task: Pick<WfTaskConfigDTO, 'taskCode' | 'taskName' | 'remark'>) {
   const content = `${task.taskName}${task.taskCode}${task.remark || ''}`.toLowerCase()
-  if (content.includes('璇峰亣') || content.includes('leave') || content.includes('hr')) return 'hr'
-  if (content.includes('鍚堝悓') || content.includes('contract')) return 'contract'
-  if (content.includes('璐㈠姟') || content.includes('expense') || content.includes('浠樻')) return 'finance'
-  if (content.includes('閲囪喘') || content.includes('椤圭洰')) return 'project'
+  if (content.includes('请假') || content.includes('leave') || content.includes('hr')) return 'hr'
+  if (content.includes('合同') || content.includes('contract')) return 'contract'
+  if (content.includes('费用') || content.includes('expense') || content.includes('报销')) return 'finance'
+  if (content.includes('项目') || content.includes('project')) return 'project'
   return 'general'
 }
 

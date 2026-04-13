@@ -1,8 +1,8 @@
 import http from '../http'
 
-/** 绔欏唴閫氱煡榛樿娑堟伅绫诲瀷锛屼笌琛ㄥ瓧娈?message_type 涓€鑷?*/
+/** 站内消息默认类型，未传 messageType 时使用。 */
 export const SYS_MESSAGE_DEFAULT_TYPE = 'NOTICE' as const
-/** 绔欏唴娓犻亾榛樿鍊硷紝涓庤〃瀛楁 platform 涓€鑷达紙绔欏唴锛?*/
+/** 站内消息默认平台，未传 platform 时使用。 */
 export const SYS_MESSAGE_DEFAULT_PLATFORM = 'INTERNAL' as const
 
 export interface SysMessageVO {
@@ -27,9 +27,9 @@ export interface SysMessageSendDTO {
   receiverTenantId?: number
   receiverUserId: number
   scope?: string
-  /** 娑堟伅绫诲瀷锛岄粯璁?NOTICE */
+  /** 消息类型，默认 NOTICE。 */
   messageType?: string
-  /** 娓犻亾锛岀珯鍐呴粯璁?INTERNAL */
+  /** 消息平台，默认 INTERNAL。 */
   platform?: string
   title: string
   content?: string
@@ -38,9 +38,8 @@ export interface SysMessageSendDTO {
 }
 
 /**
- * 鍙戦€佺珯鍐呮秷鎭紱鏈紶 {@link SysMessageSendDTO#messageType} / {@link SysMessageSendDTO#platform} 鏃惰ˉ榻愬簱琛ㄩ潪绌哄瓧娈甸粯璁ゅ€笺€?
- *
- * @param dto 鍙戦€佸弬鏁?
+ * 发送站内消息；未传 {@link SysMessageSendDTO#messageType} /
+ * {@link SysMessageSendDTO#platform} 时自动补齐默认值。
  */
 export function sendMessage(dto: SysMessageSendDTO) {
   return http.post('/sys/message/send', {
@@ -57,4 +56,3 @@ export function listUnreadMessages(limit = 20) {
 export function markMessageRead(id: number, config?: any) {
   return http.post('/sys/message/read', { id }, config)
 }
-

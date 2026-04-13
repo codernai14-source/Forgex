@@ -4,7 +4,7 @@
       <a-form layout="inline">
         <a-form-item label="表格编码">
           <a-input
-            v-model:value="query表单.tableCode"
+            v-model:value="queryForm.tableCode"
             placeholder="请输入表格编码"
             allow-clear
             style="width: 220px"
@@ -28,7 +28,7 @@
       <div class="card-tip">
         <a-alert
           message="说明"
-          description="当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里只负责保存已授权页面的个性化列显示。"
+          description="当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。"
           type="info"
           show-icon
         />
@@ -68,7 +68,7 @@
                   :style="{ color: record.userConfigured ? '#ff4d4f' : '#999999' }"
                   @click="handleResetUserConfig(record)"
                 >
-                  閲嶇疆
+                  重置
                 </a>
               </a-space>
             </template>
@@ -85,16 +85,12 @@
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
-      <a-form
-        :model="formData"
-        :label-col="{ span: 5 }"
-        :wrapper-col="{ span: 17 }"
-      >
+      <a-form :model="formData" :label-col="{ span: 5 }" :wrapper-col="{ span: 17 }">
         <a-form-item label="表格编码">
           <a-input v-model:value="formData.tableCode" disabled />
         </a-form-item>
 
-        <a-form-item label="姣忛〉鏉℃暟">
+        <a-form-item label="分页大小">
           <a-input-number
             v-model:value="formData.pageSize"
             :min="1"
@@ -129,14 +125,14 @@
           <template v-else-if="column.key === 'move'">
             <a-space>
               <a-button size="small" :disabled="index === 0" @click="moveColumn(index, -1)">
-                涓婄Щ
+                上移
               </a-button>
               <a-button
                 size="small"
                 :disabled="index === formData.columns.length - 1"
                 @click="moveColumn(index, 1)"
               >
-                涓嬬Щ
+                下移
               </a-button>
             </a-space>
           </template>
@@ -188,7 +184,7 @@ const tableWrapRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
 let computeScrollYRafPending = false
 
-const query表单 = reactive({
+const queryForm = reactive({
   tableCode: '',
 })
 
@@ -216,21 +212,21 @@ const columns = computed(() => [
     width: 220,
   },
   {
-    title: '琛ㄦ牸鍚嶇О',
+    title: '表格名称',
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 220,
     ellipsis: true,
   },
   {
-    title: '榛樿姣忛〉鏉℃暟',
+    title: '默认分页大小',
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 130,
     align: 'center' as const,
   },
   {
-    title: '用户每页条数',
+    title: '用户分页大小',
     key: 'userPageSize',
     width: 130,
     align: 'center' as const,
@@ -242,7 +238,7 @@ const columns = computed(() => [
     align: 'center' as const,
   },
   {
-    title: '閰嶇疆鐗堟湰',
+    title: '配置版本',
     dataIndex: 'userVersion',
     key: 'userVersion',
     width: 100,
@@ -264,7 +260,7 @@ const columns = computed(() => [
 
 const columnTableColumns = [
   {
-    title: '瀛楁',
+    title: '字段名',
     dataIndex: 'field',
     key: 'field',
     width: 180,
@@ -277,19 +273,19 @@ const columnTableColumns = [
     ellipsis: true,
   },
   {
-    title: '鏄剧ず',
+    title: '显示',
     key: 'visible',
     width: 90,
     align: 'center' as const,
   },
   {
-    title: '鎺掑簭',
+    title: '排序',
     key: 'order',
     width: 120,
     align: 'center' as const,
   },
   {
-    title: '璋冩暣椤哄簭',
+    title: '移动',
     key: 'move',
     width: 180,
   },
@@ -369,7 +365,7 @@ const fetchData = async () => {
   loading.value = true
   try {
     const result = await getTableConfigList({
-      tableCode: query表单.tableCode || undefined,
+      tableCode: queryForm.tableCode || undefined,
       current: pagination.current,
       pageSize: pagination.pageSize,
     })
@@ -397,7 +393,7 @@ const handleSearch = () => {
 }
 
 const handleResetQuery = () => {
-  query表单.tableCode = ''
+  queryForm.tableCode = ''
   pagination.current = 1
   void fetchData()
 }

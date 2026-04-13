@@ -5,18 +5,18 @@
       table-code="ReportDatasourceTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :降级方案-config="降级方案Config"
+      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
     >
       <template #toolbar>
-        <a-button 
+        <a-button
           v-permission="'report:datasource:add'"
-          type="primary" 
+          type="primary"
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          鏂板
+          新增数据源
         </a-button>
       </template>
 
@@ -28,41 +28,40 @@
 
       <template #status="{ record }">
         <a-tag
-          v-if="resolve状态Tag(record.status)"
-          :color="resolve状态Tag(record.status)?.color"
-          :style="resolve状态Tag(record.status)?.style"
+          v-if="resolveStatusTag(record.status)"
+          :color="resolveStatusTag(record.status)?.color"
+          :style="resolveStatusTag(record.status)?.style"
         >
-          {{ resolve状态Tag(record.status)?.label }}
+          {{ resolveStatusTag(record.status)?.label }}
         </a-tag>
         <span v-else>{{ record.status ?? '-' }}</span>
       </template>
 
       <template #action="{ record }">
         <a-space>
-          <a 
+          <a
             v-permission="'report:datasource:edit'"
             @click="handleEdit(record)"
           >
-            缂栬緫
+            编辑
           </a>
-          <a 
+          <a
             v-permission="'report:datasource:test'"
             @click="handleTest(record)"
           >
-            娴嬭瘯杩炴帴
+            连接测试
           </a>
-          <a 
+          <a
             v-permission="'report:datasource:delete'"
-            style="color: #ff4d4f" 
+            style="color: #ff4d4f"
             @click="handleDelete(record)"
           >
-            鍒犻櫎
+            删除
           </a>
         </a-space>
       </template>
     </FxDynamicTable>
 
-    <!-- 鏁版嵁婧愯〃鍗曞脊绐?-->
     <a-modal
       v-model:open="formVisible"
       :title="formTitle"
@@ -81,7 +80,7 @@
         <a-form-item label="数据源名称" name="name">
           <a-input
             v-model:value="form.name"
-            placeholder="璇疯緭鍏ユ暟鎹簮鍚嶇О"
+            placeholder="请输入数据源名称"
             maxlength="100"
             show-count
           />
@@ -90,7 +89,7 @@
         <a-form-item label="数据源编码" name="code">
           <a-input
             v-model:value="form.code"
-            placeholder="璇疯緭鍏ユ暟鎹簮缂栫爜锛堣嫳鏂囧瓧姣嶅紑澶达級"
+            placeholder="请输入数据源编码，首字母必须为字母，可包含字母、数字和下划线"
             maxlength="50"
             show-count
             :disabled="!!form.id"
@@ -111,10 +110,10 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="杩炴帴 URL" name="url">
+        <a-form-item label="连接地址 URL" name="url">
           <a-textarea
             v-model:value="form.url"
-            placeholder="璇疯緭鍏ユ暟鎹簱杩炴帴 URL"
+            placeholder="请输入数据库连接地址 URL"
             :rows="2"
             maxlength="500"
             show-count
@@ -129,18 +128,18 @@
           />
         </a-form-item>
 
-        <a-form-item label="瀵嗙爜" name="password">
+        <a-form-item label="密码" name="password">
           <a-input-password
             v-model:value="form.password"
-            placeholder="璇疯緭鍏ユ暟鎹簱瀵嗙爜"
+            placeholder="请输入数据库密码"
             maxlength="100"
           />
         </a-form-item>
 
-        <a-form-item label="椹卞姩绫诲悕" name="driverClass">
+        <a-form-item label="驱动类名" name="driverClass">
           <a-input
             v-model:value="form.driverClass"
-            placeholder="璇疯緭鍏ユ暟鎹簱椹卞姩绫诲悕"
+            placeholder="请输入数据库驱动类名"
             maxlength="200"
             :disabled="autoFillDriver"
           />
@@ -149,7 +148,7 @@
         <a-form-item label="连接池配置" name="poolConfig">
           <a-textarea
             v-model:value="form.poolConfig"
-            placeholder="璇疯緭鍏ヨ繛鎺ユ睜閰嶇疆锛圝SON 鏍煎紡锛屽彲閫夛級"
+            placeholder="请输入连接池配置 JSON 字符串，如无特殊需求可留空"
             :rows="3"
             maxlength="1000"
             show-count
@@ -163,7 +162,7 @@
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item label="澶囨敞" name="remark">
+        <a-form-item label="备注" name="remark">
           <a-textarea
             v-model:value="form.remark"
             placeholder="请输入备注"
@@ -179,7 +178,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from 'vue'
-import { Modal, type 表单Instance } from 'ant-design-vue'
+import { Modal, type FormInstance } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { useDict } from '@/hooks/useDict'
@@ -196,7 +195,7 @@ const { dictItems: statusOptions } = useDict('status')
 
 const tableRef = ref()
 const formVisible = ref(false)
-const formRef = ref<表单Instance>()
+const formRef = ref<FormInstance>()
 
 const form = reactive<DatasourceSaveDTO>({
   id: undefined,
@@ -218,11 +217,11 @@ const formTitle = computed(() => (form.id ? '编辑数据源' : '新增数据源
 
 const formRules = {
   name: [
-    { required: true, message: '璇疯緭鍏ユ暟鎹簮鍚嶇О', trigger: 'blur' },
+    { required: true, message: '请输入数据源名称', trigger: 'blur' },
     { max: 100, message: '数据源名称不能超过 100 个字符', trigger: 'blur' },
   ],
   code: [
-    { required: true, message: '璇疯緭鍏ユ暟鎹簮缂栫爜', trigger: 'blur' },
+    { required: true, message: '请输入数据源编码', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
       message: '数据源编码必须以字母开头，且只能包含字母、数字和下划线',
@@ -230,11 +229,9 @@ const formRules = {
     },
     { max: 50, message: '数据源编码不能超过 50 个字符', trigger: 'blur' },
   ],
-  type: [
-    { required: true, message: '请选择数据库类型', trigger: 'change' },
-  ],
+  type: [{ required: true, message: '请选择数据库类型', trigger: 'change' }],
   url: [
-    { required: true, message: '璇疯緭鍏ユ暟鎹簱杩炴帴 URL', trigger: 'blur' },
+    { required: true, message: '请输入数据库连接地址 URL', trigger: 'blur' },
     { max: 500, message: 'URL 不能超过 500 个字符', trigger: 'blur' },
   ],
   username: [
@@ -254,7 +251,7 @@ const dictOptions = computed(() => ({
   ],
 }))
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ReportDatasourceTable',
   tableName: '数据源管理',
   tableType: 'NORMAL',
@@ -265,10 +262,10 @@ const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
     { field: 'name', title: '数据源名称', width: 180, align: 'left' },
     { field: 'code', title: '数据源编码', width: 150, align: 'left' },
     { field: 'type', title: '数据库类型', width: 120, align: 'center', dictCode: 'dbType' },
-    { field: 'url', title: '杩炴帴 URL', width: 300, align: 'left' },
+    { field: 'url', title: '连接地址 URL', width: 300, align: 'left' },
     { field: 'username', title: '用户名', width: 120, align: 'center' },
     { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
-    { field: 'createTime', title: '鍒涘缓鏃堕棿', width: 180, align: 'center' },
+    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
     { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' },
   ],
   queryFields: [
@@ -302,7 +299,7 @@ function resolveDbTypeColor(value: string) {
   return colorMap[value] || 'default'
 }
 
-function resolve状态Tag(value: unknown) {
+function resolveStatusTag(value: unknown) {
   const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
@@ -361,7 +358,7 @@ const handleRequest = async (payload: {
   }
 }
 
-function reset表单() {
+function resetForm() {
   form.id = undefined
   form.name = ''
   form.code = ''
@@ -377,7 +374,7 @@ function reset表单() {
   formRef.value?.resetFields()
 }
 
-function load表单Data(data: ReportDatasource) {
+function loadFormData(data: ReportDatasource) {
   form.id = data.id
   form.name = data.name || ''
   form.code = data.code || ''
@@ -389,20 +386,20 @@ function load表单Data(data: ReportDatasource) {
   form.poolConfig = data.poolConfig
   form.status = data.status ?? 1
   form.remark = data.remark || ''
-  
+
   if (form.driverClass) {
     autoFillDriver.value = true
   }
 }
 
 function handleAdd() {
-  reset表单()
+  resetForm()
   formVisible.value = true
 }
 
 function handleEdit(record: ReportDatasource) {
   nextTick(() => {
-    load表单Data(record)
+    loadFormData(record)
     formVisible.value = true
   })
 }
@@ -447,7 +444,7 @@ async function handleSubmit() {
 }
 
 function handleCancel() {
-  reset表单()
+  resetForm()
   formVisible.value = false
 }
 
