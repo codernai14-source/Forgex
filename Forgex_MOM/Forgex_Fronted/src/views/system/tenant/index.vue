@@ -251,7 +251,7 @@ const formData = reactive<TenantSaveParam>({
 const rules = {
   tenantName: [{ required: true, message: '请输入租户名称', trigger: 'blur' }],
   tenantCode: [{ required: true, message: '请输入租户编码', trigger: 'blur' }],
-  tenantType: [{ required: true, message: '请选择租户类别', trigger: 'change' }]
+  tenantType: [{ required: true, message: '请选择租户类型', trigger: 'change' }]
 }
 
 /**
@@ -281,7 +281,7 @@ const dictOptions = computed(() => ({
 }))
 
 // 处理表格数据请求
-const handleRequest = async (payload: { 
+const handleRequest = async (payload: {
   page: { current: number; pageSize: number }; 
   query: Record<string, any>; 
   sorter?: { field?: string; order?: string } 
@@ -301,7 +301,7 @@ const handleRequest = async (payload: {
     }
     
     const data = await getTenantPage(params)
-    // 确保total是数字类型
+    // 确保 total 是数字类型
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total: total }
   } catch (e: any) {
@@ -357,7 +357,8 @@ function openEdit(record: TenantDTO) {
     description: record.description,
     logo: record.logo,
     status: record.status,
-    parentTenantId: undefined // 编辑时不支持修改父租户
+    // 编辑时不支持修改父租户
+    parentTenantId: undefined
   })
   
   formRef.value?.resetFields()
@@ -375,13 +376,13 @@ async function handleSave() {
       // 新增租户
       const tenantId = await createTenant(formData)
       // 成功提示由后端返回，在 http 拦截器中统一处理
-      
+
       // 查询任务详情，获取任务 ID
       try {
         // 延迟一点，等待异步任务创建
         await new Promise(resolve => setTimeout(resolve, 500))
         
-        // 查询租户 ID 查询任务详情（任务表中租户 ID 是唯一的）
+        // 通过租户 ID 查询任务详情（任务表中租户 ID 是唯一的）
         // 这里需要后端提供一个通过租户 ID 查询任务的接口
         // 暂时假设后端会返回任务 ID，或者前端轮询查询
         const taskId = await queryTaskByTenantId(tenantId)
@@ -414,7 +415,7 @@ async function handleSave() {
 const queryTaskByTenantId = async (tenantId: number): Promise<number | null> => {
   const maxRetries = 10
   const retryDelay = 500 // 毫秒
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       const task = await getTaskByTenantId(tenantId)
@@ -435,11 +436,6 @@ const queryTaskByTenantId = async (tenantId: number): Promise<number | null> => 
   }
   
   return null
-}
-
-function handleCancel() {
-  dialogVisible.value = false
-  formRef.value?.resetFields()
 }
 
 /**

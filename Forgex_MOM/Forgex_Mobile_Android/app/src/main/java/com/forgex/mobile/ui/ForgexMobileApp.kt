@@ -1,5 +1,6 @@
-﻿package com.forgex.mobile.ui
+package com.forgex.mobile.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -8,26 +9,55 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.forgex.mobile.core.ui.device.rememberDeviceType
 import com.forgex.mobile.feature.auth.AUTH_ROUTE
 import com.forgex.mobile.feature.auth.AuthScreen
+import com.forgex.mobile.feature.auth.REGISTER_ROUTE
+import com.forgex.mobile.feature.auth.RegisterPlaceholderScreen
+import com.forgex.mobile.feature.auth.SERVER_SETTINGS_ROUTE
+import com.forgex.mobile.feature.auth.ServerSettingsScreen
 import com.forgex.mobile.feature.home.HOME_ROUTE
-import com.forgex.mobile.feature.home.HomeMenuItem
 import com.forgex.mobile.feature.home.HomeScreen
+import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_ROUTE
+import com.forgex.mobile.feature.message.MESSAGE_UNREAD_ROUTE
+import com.forgex.mobile.feature.message.MessageEntryMode
 import com.forgex.mobile.feature.message.MessageScreen
 import com.forgex.mobile.feature.profile.PROFILE_ROUTE
 import com.forgex.mobile.feature.profile.ProfileScreen
+import com.forgex.mobile.feature.workflow.WORKFLOW_APPROVED_ROUTE
+import com.forgex.mobile.feature.workflow.WORKFLOW_MINE_ROUTE
+import com.forgex.mobile.feature.workflow.WORKFLOW_PENDING_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_ROUTE
+import com.forgex.mobile.feature.workflow.WorkflowEntryMode
 import com.forgex.mobile.feature.workflow.WorkflowScreen
+import com.forgex.mobile.ui.navigation.AppDestinations
+import com.forgex.mobile.ui.navigation.MenuTargetResolver
+import com.forgex.mobile.ui.navigation.MenuTargetType
+import com.forgex.mobile.ui.navigation.WebViewDestination
+import com.forgex.mobile.ui.webview.MobileWebViewScreen
 import kotlinx.coroutines.launch
 
+private const val MAIN_SHELL_ROUTE = "main_shell"
+
+/**
+ * 全局导航壳层：
+ * 1. 管理登录 / 5-Tab 主壳 / 业务页 / WebView 路由。
+ * 2. 登录成功后进入 MainShellScreen（底部 5 Tab）。
+ * 3. 业务详情页（审批详情、消息子页等）仍由外层 NavHost 管理。
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgexMobileApp() {
@@ -35,14 +65,30 @@ fun ForgexMobileApp() {
     val deviceType = rememberDeviceType()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val shellViewModel: AppShellViewModel = hiltViewModel()
+    val systemName by shellViewModel.systemName.collectAsState()
+    val navBackStackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry.value?.destination?.route.orEmpty()
+
+    // 登录页面、MainShell(自带底部导航) 及 WebView 不展示全局 TopBar
+    val showGlobalTopBar = currentRoute !in setOf(
+        AUTH_ROUTE,
+        SERVER_SETTINGS_ROUTE,
+        REGISTER_ROUTE,
+        MAIN_SHELL_ROUTE
+    ) && !currentRoute.startsWith(WebViewDestination.ROUTE)
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = "Forgex Mobile (${deviceType.name})")
-                }
-            )
+            if (showGlobalTopBar) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "${systemName?.ifBlank { "FORGEX_MOM" } ?: "FORGEX_MOM"} (${deviceType.name})"
+                        )
+                    }
+                )
+            }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
@@ -51,52 +97,191 @@ fun ForgexMobileApp() {
             startDestination = AUTH_ROUTE,
             modifier = Modifier.padding(paddingValues)
         ) {
+            // ==================== 认证 ====================
             composable(AUTH_ROUTE) {
                 AuthScreen(
                     onLoginSuccess = {
-                        navController.navigate(HOME_ROUTE) {
+                        navController.navigate(MAIN_SHELL_ROUTE) {
                             popUpTo(AUTH_ROUTE) { inclusive = true }
+                        }
+                    },
+                    onOpenServerSettings = {
+                        navController.navigate(SERVER_SETTINGS_ROUTE) { launchSingleTop = true }
+                    },
+                    onOpenRegister = { registerUrl ->
+                        val resolvedUrl = registerUrl.trim()
+                        if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
+                            navController.navigate(
+                                WebViewDestination.buildRoute("注册", resolvedUrl)
+                            ) { launchSingleTop = true }
+                        } else {
+                            navController.navigate(REGISTER_ROUTE) { launchSingleTop = true }
                         }
                     }
                 )
             }
+            composable(SERVER_SETTINGS_ROUTE) {
+                ServerSettingsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(REGISTER_ROUTE) {
+                RegisterPlaceholderScreen(onBack = { navController.popBackStack() })
+            }
+
+            // ==================== 5-Tab 主壳 ====================
+            composable(MAIN_SHELL_ROUTE) {
+                MainShellScreen(
+                    onMenuClick = { cMenu ->
+                        val target = MenuTargetResolver.resolve(cMenu)
+                        when (target.type) {
+                            MenuTargetType.NATIVE -> {
+                                val destination = target.nativeRoute
+                                if (destination.isNullOrBlank()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("功能尚未接入: ${cMenu.name}")
+                                    }
+                                } else {
+                                    navController.navigate(destination) { launchSingleTop = true }
+                                }
+                            }
+                            MenuTargetType.WEBVIEW -> {
+                                val webUrl = target.webUrl
+                                if (webUrl.isNullOrBlank()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("菜单未提供 URL: ${cMenu.name}")
+                                    }
+                                } else {
+                                    navController.navigate(
+                                        WebViewDestination.buildRoute(cMenu.name ?: "", webUrl)
+                                    ) { launchSingleTop = true }
+                                }
+                            }
+                            MenuTargetType.UNSUPPORTED -> {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        target.reason ?: "功能尚未接入: ${cMenu.name}"
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onLogout = {
+                        navController.navigate(AUTH_ROUTE) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // ==================== 旧版首页（兼容保留） ====================
             composable(HOME_ROUTE) {
                 HomeScreen(
                     deviceType = deviceType,
                     onMenuClick = { item ->
-                        val destination = resolveDestination(item)
-                        if (destination == null) {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("功能尚未接入: ${item.title}")
+                        val target = MenuTargetResolver.resolve(item)
+                        when (target.type) {
+                            MenuTargetType.NATIVE -> {
+                                val destination = target.nativeRoute
+                                if (destination.isNullOrBlank()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("功能尚未接入: ${item.title}")
+                                    }
+                                } else {
+                                    navController.navigate(destination) { launchSingleTop = true }
+                                }
                             }
-                        } else {
-                            navController.navigate(destination)
+                            MenuTargetType.WEBVIEW -> {
+                                val webUrl = target.webUrl
+                                if (webUrl.isNullOrBlank()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("菜单未提供 URL: ${item.title}")
+                                    }
+                                } else {
+                                    navController.navigate(WebViewDestination.buildRoute(item.title, webUrl)) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                            }
+                            MenuTargetType.UNSUPPORTED -> {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(target.reason ?: "功能尚未接入: ${item.title}")
+                                }
+                            }
                         }
                     }
                 )
             }
+
+            // ==================== 业务详情页 ====================
             composable(WORKFLOW_ROUTE) {
-                WorkflowScreen(onBack = { navController.popBackStack() })
+                WorkflowScreen(
+                    entryMode = WorkflowEntryMode.HOME,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(WORKFLOW_PENDING_ROUTE) {
+                WorkflowScreen(
+                    entryMode = WorkflowEntryMode.PENDING,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(WORKFLOW_APPROVED_ROUTE) {
+                WorkflowScreen(
+                    entryMode = WorkflowEntryMode.APPROVED,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(WORKFLOW_MINE_ROUTE) {
+                WorkflowScreen(
+                    entryMode = WorkflowEntryMode.MINE,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(MESSAGE_ROUTE) {
-                MessageScreen(onBack = { navController.popBackStack() })
+                MessageScreen(
+                    entryMode = MessageEntryMode.HOME,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(MESSAGE_UNREAD_ROUTE) {
+                MessageScreen(
+                    entryMode = MessageEntryMode.UNREAD,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(MESSAGE_READ_ROUTE) {
+                MessageScreen(
+                    entryMode = MessageEntryMode.READ,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(PROFILE_ROUTE) {
                 ProfileScreen(onBack = { navController.popBackStack() })
             }
+
+            // ==================== WebView ====================
+            composable(
+                route = WebViewDestination.ROUTE_PATTERN,
+                arguments = listOf(
+                    navArgument(WebViewDestination.ARG_TITLE) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument(WebViewDestination.ARG_URL) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val encodedTitle = backStackEntry.arguments
+                    ?.getString(WebViewDestination.ARG_TITLE).orEmpty()
+                val encodedUrl = backStackEntry.arguments
+                    ?.getString(WebViewDestination.ARG_URL).orEmpty()
+                MobileWebViewScreen(
+                    title = Uri.decode(encodedTitle),
+                    url = Uri.decode(encodedUrl),
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
-    }
-}
-
-private fun resolveDestination(item: HomeMenuItem): String? {
-    val key = item.componentKey.lowercase()
-    val path = item.path.lowercase()
-
-    return when {
-        key.contains("workflow") || path.contains("workflow") || path.contains("approve") -> WORKFLOW_ROUTE
-        key.contains("message") || path.contains("message") -> MESSAGE_ROUTE
-        key.contains("profile") || path.contains("personal") || path.contains("mine") -> PROFILE_ROUTE
-        key.contains("home") || path == "home" -> HOME_ROUTE
-        else -> null
     }
 }

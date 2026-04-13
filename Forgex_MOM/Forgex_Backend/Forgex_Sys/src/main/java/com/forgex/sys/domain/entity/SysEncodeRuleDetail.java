@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 /**
  * 编码规则明细表实体类
  * <p>
- * 映射表：{@code sys_encode_rule_detail}。用于定义编码规则中各组成部分的详细配置。
+ * 映射表：{@code fx_encode_rule_detail}。用于定义编码规则中各组成部分的详细配置。
  * 支持固定字符、日期段、序列号、自定义表达式等多种类型的编码段配置。
  * </p>
  * <p>
@@ -40,14 +40,14 @@ import java.time.LocalDateTime;
  * </ul>
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRule 编码规则主表实体
  * @see com.forgex.common.base.BaseEntity 继承的基类
  */
 @Data
-@TableName("sys_encode_rule_detail")
+@TableName("fx_encode_rule_detail")
 public class SysEncodeRuleDetail {
 
     /**
@@ -63,7 +63,7 @@ public class SysEncodeRuleDetail {
     private Long tenantId;
 
     /**
-     * 规则 ID（关联 sys_encode_rule.id）
+     * 规则 ID（关联 fx_encode_rule.id）
      */
     @TableField("rule_id")
     private Long ruleId;

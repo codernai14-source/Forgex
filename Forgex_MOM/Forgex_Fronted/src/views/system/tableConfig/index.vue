@@ -4,7 +4,7 @@
       <a-form layout="inline">
         <a-form-item :label="t('system.tableConfig.tableCode')">
           <a-input
-            v-model:value="queryForm.tableCode"
+            v-model:value="query表单.tableCode"
             :placeholder="t('system.tableConfig.form.tableCode')"
             allow-clear
             style="width: 200px;"
@@ -13,7 +13,7 @@
         
         <a-form-item :label="t('system.tableConfig.tableName')">
           <a-input
-            v-model:value="queryForm.tableName"
+            v-model:value="query表单.tableName"
             :placeholder="t('system.tableConfig.form.tableName')"
             allow-clear
             style="width: 200px;"
@@ -22,7 +22,7 @@
         
         <a-form-item :label="t('system.tableConfig.tableType')">
           <a-select
-            v-model:value="queryForm.tableType"
+            v-model:value="query表单.tableType"
             :placeholder="t('system.tableConfig.form.tableType')"
             allow-clear
             style="width: 150px;"
@@ -35,7 +35,7 @@
         
         <a-form-item :label="t('system.tableConfig.enabled')">
           <a-select
-            v-model:value="queryForm.enabled"
+            v-model:value="query表单.enabled"
             :placeholder="t('system.tableConfig.form.enabled')"
             allow-clear
             style="width: 120px;"
@@ -110,7 +110,7 @@
                 v-permission="'sys:tableConfig:edit'"
                 :checked="record.enabled"
                 :loading="record.statusLoading"
-                @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
+                @change="(checked: boolean) => handleToggle状态(record.id!, checked)"
               />
             </template>
             
@@ -147,31 +147,31 @@
 
 <script setup lang="ts">
 /**
- * 表格配置管理页面
+ * 琛ㄦ牸閰嶇疆绠＄悊椤甸潰
  * 
- * 功能：
- * 1. 表格配置列表查询（分页、搜索）
- * 2. 新增、编辑、删除表格配置
- * 3. 表格配置状态管理
+ * 鍔熻兘锛?
+ * 1. 琛ㄦ牸閰嶇疆鍒楄〃鏌ヨ锛堝垎椤点€佹悳绱級
+ * 2. 鏂板銆佺紪杈戙€佸垹闄よ〃鏍奸厤缃?
+ * 3. 琛ㄦ牸閰嶇疆鐘舵€佺鐞?
  * 
  * @author Forgex
  * @version 1.0.0
  */
 import { ref, reactive, onBeforeUnmount, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { Modal } from 'ant-design-vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
 import {
   getTableConfigList,
   deleteTableConfig,
   batchDeleteTableConfig,
-  toggleTableConfigStatus
+  toggleTableConfig状态
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 
-// 使用 global 作用域获取全局 i18n 实例，确保国际化生效
+// 浣跨敤 global 浣滅敤鍩熻幏鍙栧叏灞€ i18n 瀹炰緥锛岀‘淇濆浗闄呭寲鐢熸晥
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: yesNoOptions } = useDict('yes_no')
 
@@ -182,7 +182,7 @@ const tableWrapRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
 let computeScrollYRafPending = false
 
-const queryForm = reactive({
+const query表单 = reactive({
   tableCode: '',
   tableName: '',
   tableType: undefined as string | undefined,
@@ -285,20 +285,20 @@ const fetchData = async () => {
   loading.value = true
   try {
     const params: any = {
-      tableCode: queryForm.tableCode || undefined,
-      tableName: queryForm.tableName || undefined,
-      tableType: queryForm.tableType || undefined,
-      enabled: queryForm.enabled !== undefined ? queryForm.enabled : undefined,
+      tableCode: query表单.tableCode || undefined,
+      tableName: query表单.tableName || undefined,
+      tableType: query表单.tableType || undefined,
+      enabled: query表单.enabled !== undefined ? query表单.enabled : undefined,
       current: pagination.current,
       pageSize: pagination.pageSize
     }
     
     const result = await getTableConfigList(params)
     dataSource.value = result.records
-    // 确保 total 是数字类型
+    // 纭繚 total 鏄暟瀛楃被鍨?
     pagination.total = typeof result.total === 'number' ? result.total : parseInt(String(result.total) || '0', 10)
   } catch (error) {
-    console.error('获取表格配置列表失败:', error)
+    console.error('鑾峰彇琛ㄦ牸閰嶇疆鍒楄〃澶辫触:', error)
   } finally {
     loading.value = false
     await nextTick()
@@ -344,10 +344,10 @@ function computeAutoScrollY() {
   const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
 
-  // 增加缓冲区，为分页器预留更多空间（margin-top 16px + 额外缓冲 20px）
+  // 澧炲姞缂撳啿鍖猴紝涓哄垎椤靛櫒棰勭暀鏇村绌洪棿锛坢argin-top 16px + 棰濆缂撳啿 20px锛?
   const buffer = 36
   const y = Math.floor(available - paginationHeight - headerHeight - buffer)
-  const nextY = y > 100 ? y : undefined  // 确保最小高度为100px
+  const nextY = y > 100 ? y : undefined  // 纭繚鏈€灏忛珮搴︿负100px
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
 }
@@ -358,10 +358,10 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  queryForm.tableCode = ''
-  queryForm.tableName = ''
-  queryForm.tableType = undefined
-  queryForm.enabled = undefined
+  query表单.tableCode = ''
+  query表单.tableName = ''
+  query表单.tableType = undefined
+  query表单.enabled = undefined
   pagination.current = 1
   fetchData()
 }
@@ -383,25 +383,24 @@ const openAddDialog = () => {
 }
 
 const openEditDialog = async (record: TableConfigItem) => {
-  console.log('打开编辑对话框，记录:', record)
-  console.log('记录ID:', record.id)
+  console.log('鎵撳紑缂栬緫瀵硅瘽妗嗭紝璁板綍:', record)
+  console.log('璁板綍ID:', record.id)
   
-  // 先设置编辑状态和ID
+  // 鍏堣缃紪杈戠姸鎬佸拰ID
   isEdit.value = true
   currentConfigId.value = record.id
-  console.log('设置 currentConfigId:', currentConfigId.value)
+  console.log('璁剧疆 currentConfigId:', currentConfigId.value)
   
-  // 等待下一个 tick，确保 props 已经更新
+  // 绛夊緟涓嬩竴涓?tick锛岀‘淇?props 宸茬粡鏇存柊
   await nextTick()
   
-  // 再打开对话框
+  // 鍐嶆墦寮€瀵硅瘽妗?
   dialogVisible.value = true
-  console.log('对话框已打开')
+  console.log('瀵硅瘽妗嗗凡鎵撳紑')
 }
 
 const handleFormSuccess = () => {
   dialogVisible.value = false
-  message.success(t('common.saveSuccess'))
   fetchData()
 }
 
@@ -414,10 +413,9 @@ const handleDelete = (id: number) => {
     onOk: async () => {
       try {
         await deleteTableConfig(id)
-        message.success(t('common.deleteSuccess'))
         fetchData()
       } catch (error) {
-        console.error('删除表格配置失败:', error)
+        console.error('鍒犻櫎琛ㄦ牸閰嶇疆澶辫触:', error)
       }
     }
   })
@@ -432,39 +430,37 @@ const handleBatchDelete = () => {
     onOk: async () => {
       try {
         await batchDeleteTableConfig(selectedRowKeys.value)
-        message.success(t('common.deleteSuccess'))
         selectedRowKeys.value = []
         fetchData()
       } catch (error) {
-        console.error('批量删除表格配置失败:', error)
+        console.error('鎵归噺鍒犻櫎琛ㄦ牸閰嶇疆澶辫触:', error)
       }
     }
   })
 }
 
-const handleToggleStatus = async (id: number, enabled: boolean) => {
+const handleToggle状态 = async (id: number, enabled: boolean) => {
   const record = dataSource.value.find(item => item.id === id)
   if (record) {
     record.statusLoading = true
     try {
-      await toggleTableConfigStatus(id, enabled)
-      message.success(t('common.updateSuccess'))
+      await toggleTableConfig状态(id, enabled)
       record.enabled = enabled
     } catch (error) {
-      console.error('更新表格配置状态失败:', error)
+      console.error('鏇存柊琛ㄦ牸閰嶇疆鐘舵€佸け璐?', error)
     } finally {
       record.statusLoading = false
     }
   }
 }
 
-// getTableName 函数已被 getI18nValue 替代，已删除
+// getTableName 鍑芥暟宸茶 getI18nValue 鏇夸唬锛屽凡鍒犻櫎
 
 onMounted(() => {
   fetchData()
   window.addEventListener('resize', onResizeOrScroll, { passive: true })
   
-  // 添加 MutationObserver 监听 DOM 变化
+  // 娣诲姞 MutationObserver 鐩戝惉 DOM 鍙樺寲
   const wrapEl = tableWrapRef.value
   if (wrapEl) {
     const observer = new MutationObserver(() => {
@@ -478,13 +474,13 @@ onMounted(() => {
       attributeFilter: ['style', 'class']
     })
     
-    // 在组件卸载时断开观察
+    // 鍦ㄧ粍浠跺嵏杞芥椂鏂紑瑙傚療
     onBeforeUnmount(() => {
       observer.disconnect()
     })
   }
   
-  // 延迟计算，确保 DOM 完全渲染
+  // 寤惰繜璁＄畻锛岀‘淇?DOM 瀹屽叏娓叉煋
   setTimeout(() => {
     scheduleComputeAutoScrollY()
   }, 100)
@@ -528,7 +524,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  margin-bottom: 16px;  /* 添加底部间距，避免被 footer 遮挡 */
+  margin-bottom: 16px;  /* 娣诲姞搴曢儴闂磋窛锛岄伩鍏嶈 footer 閬尅 */
   background: var(--fx-bg-container, #ffffff);
   border-radius: var(--fx-radius-lg, 8px);
 }
@@ -539,11 +535,11 @@ onBeforeUnmount(() => {
   min-height: 0;
   flex: 1;
   height: 100%;
-  padding: 0;  /* 移除默认 padding */
+  padding: 0;  /* 绉婚櫎榛樿 padding */
 }
 
 .table-card > div:first-child {
-  padding: 12px 16px 0 16px;  /* toolbar 区域的 padding */
+  padding: 12px 16px 0 16px;  /* toolbar 鍖哄煙鐨?padding */
 }
 
 .table-wrap {
@@ -553,7 +549,7 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0 16px 24px 16px;  /* 增加底部 padding 到 24px，确保分页器完全显示 */
+  padding: 0 16px 24px 16px;  /* 澧炲姞搴曢儴 padding 鍒?24px锛岀‘淇濆垎椤靛櫒瀹屽叏鏄剧ず */
 }
 
 .table-wrap :deep(.ant-table-wrapper) {
@@ -564,12 +560,12 @@ onBeforeUnmount(() => {
 .table-wrap :deep(.ant-pagination) {
   margin-top: 16px;
   display: flex;
-  justify-content: flex-end;  /* 整体右对齐 */
+  justify-content: flex-end;  /* 鏁翠綋鍙冲榻?*/
   align-items: center;
-  gap: 16px;  /* 元素之间的间距 */
+  gap: 16px;  /* 鍏冪礌涔嬮棿鐨勯棿璺?*/
 }
 
 .table-wrap :deep(.ant-pagination-total-text) {
-  /* 不设置 order，保持默认顺序，显示在页码左边 */
+  /* 涓嶈缃?order锛屼繚鎸侀粯璁ら『搴忥紝鏄剧ず鍦ㄩ〉鐮佸乏杈?*/
 }
 </style>

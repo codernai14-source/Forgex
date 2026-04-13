@@ -62,7 +62,14 @@ fun HomeScreen(
         }
 
         uiState.menuItems.forEach { item ->
+            val renderTypeHint = item.pageRenderType
+                ?.takeIf { it.isNotBlank() }
+                ?: item.menuMode
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { "mode=$it" }
             val subtitle = when {
+                item.componentKey.isNotBlank() && !renderTypeHint.isNullOrBlank() ->
+                    "${item.path} · ${item.componentKey} · $renderTypeHint"
                 item.componentKey.isNotBlank() -> "${item.path} · ${item.componentKey}"
                 else -> item.path
             }

@@ -6,7 +6,7 @@ package com.forgex.report.enums;
  * 定义支持的报表引擎类型：UReport2 和 JimuReport
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see com.forgex.report.domain.entity.ReportTemplate

@@ -2,7 +2,7 @@
   <div class="profile-page">
     <a-card :title="$t('profile.title')" :loading="loading">
       <a-tabs v-model:activeKey="activeTab">
-        <!-- 基本信息 -->
+        <!-- 当前用户可直接编辑的基础资料区域。 -->
         <a-tab-pane key="basic" :tab="$t('profile.tabs.basic')">
           <a-row :gutter="24">
             <a-col :span="8">
@@ -59,7 +59,7 @@
           </a-row>
         </a-tab-pane>
         
-        <!-- 组织信息 -->
+        <!-- 接口返回的组织信息，只读展示，不允许在此页直接修改。 -->
         <a-tab-pane key="org" :tab="$t('profile.tabs.org')">
           <a-descriptions bordered :column="2">
             <a-descriptions-item :label="$t('profile.fields.department')">
@@ -78,10 +78,10 @@
           </a-descriptions>
         </a-tab-pane>
         
-        <!-- 安全设置 -->
+        <!-- 安全设置区域，当前主要用于修改登录密码。 -->
         <a-tab-pane key="security" :tab="$t('profile.tabs.security')">
           <a-form
-            :model="passwordForm"
+            :model="password表单"
             :label-col="{ span: 6 }"
             :wrapper-col="{ span: 12 }"
             @finish="handleChangePassword"
@@ -91,7 +91,7 @@
               name="oldPassword"
               :rules="[{ required: true, message: $t('profile.validation.oldPasswordRequired') }]"
             >
-              <a-input-password v-model:value="passwordForm.oldPassword" />
+              <a-input-password v-model:value="password表单.oldPassword" />
             </a-form-item>
             
             <a-form-item
@@ -102,7 +102,7 @@
                 { min: 6, message: $t('profile.validation.newPasswordMin') }
               ]"
             >
-              <a-input-password v-model:value="passwordForm.newPassword" />
+              <a-input-password v-model:value="password表单.newPassword" />
             </a-form-item>
             
             <a-form-item
@@ -113,7 +113,7 @@
                 { validator: validateConfirmPassword }
               ]"
             >
-              <a-input-password v-model:value="passwordForm.confirmPassword" />
+              <a-input-password v-model:value="password表单.confirmPassword" />
             </a-form-item>
             
             <a-form-item :wrapper-col="{ offset: 6, span: 12 }">
@@ -153,6 +153,9 @@ const userStore = useUserStore()
 const loading = ref(false)
 const activeTab = ref('basic')
 
+/**
+ * 当前用户的可编辑资料表单。
+ */
 const formData = reactive({
   id: '',
   account: '',
@@ -167,14 +170,17 @@ const formData = reactive({
   status: true,
 })
 
-const passwordForm = reactive({
+/**
+ * 与基础资料分离的密码表单状态。
+ */
+const password表单 = reactive({
   oldPassword: '',
   newPassword: '',
   confirmPassword: '',
 })
 
 /**
- * 加载用户信息
+ * 加载最新的用户资料，并回填到页面表单。
  */
 async function loadUserInfo() {
   loading.value = true
@@ -184,7 +190,7 @@ async function loadUserInfo() {
 }
 
 /**
- * 保存基本信息
+ * 保存可编辑的基础资料字段。
  */
 async function handleSaveBasic() {
   loading.value = true
@@ -198,7 +204,7 @@ async function handleSaveBasic() {
       avatar: formData.avatar,
     })
     
-    // 更新全局状态
+    // 同步更新全局用户信息，确保页头等区域立即显示最新资料。
     userStore.updateUserInfo({
       username: formData.username,
       email: formData.email,
@@ -208,43 +214,43 @@ async function handleSaveBasic() {
     
     loadUserInfo()
   } catch (error) {
-    console.error('保存失败:', error)
+    console.error('淇濆瓨澶辫触:', error)
   } finally {
     loading.value = false
   }
 }
 
 /**
- * 头像上传成功
+ * 头像上传成功后，将返回地址同步到本地表单。
  */
 function handleAvatarSuccess(url: string) {
   formData.avatar = url
 }
 
 /**
- * 修改密码
+ * 提交密码修改，并在成功后跳回登录页重新认证。
  */
 async function handleChangePassword() {
   await changePassword({
-    oldPassword: passwordForm.oldPassword,
-    newPassword: passwordForm.newPassword,
+    oldPassword: password表单.oldPassword,
+    newPassword: password表单.newPassword,
   })
   
-  // 清空表单
-  passwordForm.oldPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
+  // 修改成功后清空敏感字段，避免继续停留在页面中。
+  password表单.oldPassword = ''
+  password表单.newPassword = ''
+  password表单.confirmPassword = ''
   
-  // 退出登录
+  // 主动清理登录态，确保用户使用新密码重新登录。
   userStore.clearUserInfo()
   router.push('/login')
 }
 
 /**
- * 验证确认密码
+ * 校验确认密码是否与新密码保持一致。
  */
 function validateConfirmPassword(_rule: any, value: string) {
-  if (value !== passwordForm.newPassword) {
+  if (value !== password表单.newPassword) {
     return Promise.reject(t('profile.validation.passwordMismatch'))
   }
   return Promise.resolve()

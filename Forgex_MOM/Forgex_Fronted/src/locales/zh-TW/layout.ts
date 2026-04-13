@@ -1,126 +1,113 @@
 /**
- * 布局翻譯 - 繁體中文
- * 
- * 包含主佈局、菜單、標籤欄、設置等相關翻譯
+ * 布局翻译 - 繁体中文注释
  */
 export default {
-  // 全局搜索
-  globalSearchPlaceholder: '搜索菜單或頁面',
-  
-  // 语言切换
-  langZhCn: '简体中文',
+  globalSearchPlaceholder: '搜尋菜單、模組或拼音首字母...',
+  globalSearchResultsCount: '找到 {count} 個結果',
+  globalSearchEmptyTitle: '未找到相關菜單',
+  globalSearchEmptyHint: '試試菜單名、模組名或拼音首字母',
+  globalSearchTipsTitle: '快捷搜尋',
+  globalSearchTipNavigate: '導覽',
+  globalSearchTipSelect: '選擇',
+  globalSearchTipClose: '關閉',
+  globalSearchMatchTitle: '菜單',
+  globalSearchMatchModule: '模組',
+  globalSearchMatchTitlePinyin: '菜單拼音',
+  globalSearchMatchModulePinyin: '模組拼音',
+  globalSearchMatchBreadcrumb: '路徑',
+  globalSearchMatchPath: '路由',
+  langZhCn: '簡體中文',
   langEnUs: 'English',
-  
-  // 顶栏操作
-  refresh: '刷新',
-  openSettings: '佈局設置',
-  
-  // 设置抽屉
-  settingTitle: '佈局與主題設置',
-  settingSubtitle: '調整導航佈局、主題色等外觀偏好',
-  
-  // 菜单布局
+  refresh: '重新整理',
+  openSettings: '佈局設定',
+  settingTitle: '佈局與主題設定',
+  settingSubtitle: '調整導覽佈局、主題色與外觀偏好',
   menuLayout: '菜單佈局',
   leftDoubleMenu: '左側雙菜單',
   topMenu: '頂部菜單',
   leftMenu: '左側菜單',
   mixMenu: '混合菜單',
-  
-  // 基础样式
   basicStyle: '基礎樣式',
   fontSize: '字體大小',
   fontSizeSmall: '小',
-  fontSizeDefault: '默認',
+  fontSizeDefault: '預設',
   fontSizeLarge: '大',
   borderRadius: '圓角大小',
-  
-  // 主题
   theme: '主題',
   themeColor: '主題顏色',
   themeMode: '模式',
   themeLight: '淺色',
-  themeDark: '暗色',
-  themeSystem: '跟随系統',
-  
-  // 标签栏
+  themeDark: '深色',
+  themeSystem: '跟隨系統',
+  themePreset: '內建主題',
   tabBar: '標籤欄',
   tabBarEnabled: '啟用標籤欄',
   tabBarStyle: '標籤欄樣式',
   tabBarCard: '卡片',
   tabBarLine: '線條',
-  
-  // 小部件
-  widgets: '小部件',
-  widgetRefresh: '啟用刷新按鈕',
-  widgetSearch: '啟用全局搜索',
-  widgetFullscreen: '啟用全屏按鈕',
-  
-  // 底栏
+  widgets: '小工具',
+  widgetRefresh: '啟用重新整理按鈕',
+  widgetSearch: '啟用全域搜尋',
+  widgetFullscreen: '啟用全螢幕按鈕',
   footer: '底欄',
   footerEnabled: '顯示底欄',
-  footerCopyright: '顯示版權信息',
-  
-  // 内容区域
+  footerCopyright: '顯示版權資訊',
   contentWidth: '內容寬度',
   contentWidthFluid: '流式',
   contentWidthFixed: '固定',
-  
-  // 布局模式
   layoutMode: '佈局模式',
   layoutVertical: '垂直',
-  layoutVerticalMix: '垂直雙列',
+  layoutVerticalMix: '垂直雙欄',
   layoutTop: '水平',
   layoutMix: '混合',
-  
-  // 顶栏
   header: '頂欄',
   headerVisible: '顯示頂欄',
   headerMode: '模式',
   headerModeFixed: '固定',
   headerModeAuto: '自動',
-  headerModeHideOnScroll: '滾動隱藏',
+  headerModeHideOnScroll: '捲動時隱藏',
   headerMenuAlign: '菜單位置',
-  headerMenuAlignLeft: '居左',
-  headerMenuAlignCenter: '居中',
-  headerMenuAlignRight: '居右',
-  
-  // 主题颜色
-  themeColorDawnBlue: '拂曉藍（默認）',
-  themeColorTwilightPurple: '薄暮紫',
-  themeColorCyan: '青色',
+  headerMenuAlignLeft: '靠左',
+  headerMenuAlignCenter: '置中',
+  headerMenuAlignRight: '靠右',
+  themeColorDawnBlue: '拂曉藍（預設）',
+  themeColorTwilightPurple: '暮光紫',
+  themeColorRosePink: '櫻花粉',
+  themeColorLemonYellow: '檸檬黃',
+  themeColorSkyBlue: '天空藍',
+  themeColorMintGreen: '薄荷綠',
+  themeColorZincGray: '鋅灰色',
+  themeColorTealGreen: '青綠色',
+  themeColorRoyalBlue: '皇家藍',
+  themeColorAmberOrange: '琥珀橙',
+  themeColorRoseRed: '玫瑰紅',
   themeColorAuroraGreen: '極光綠',
   themeColorSunsetOrange: '日暮橙',
   themeColorVolcanoRed: '火山紅',
-  themeColorNeutralGray: '中性灰',
-  
-  // 通用设置
+  themeColorNeutralGray: '中性色',
+  themeColorSlateGray: '石板灰',
+  themeColorCoolGray: '中灰色',
+  themeColorCyan: '青色',
   common: '通用',
-  watermark: '水印',
-  watermarkEnabled: '水印',
-  watermarkText: '水印文本',
-  formMode: '表單模式',
+  watermark: '浮水印',
+  watermarkEnabled: '浮水印',
+  watermarkText: '浮水印文字',
+  formMode: '表单模式',
   formModeModal: '彈窗',
   formModeDrawer: '抽屜',
   animateEnabled: '頁面動畫',
   pageTransition: '頁面切換',
   pageTransitionHorizontal: '水平',
-  pageTransitionFade: '漸隱',
-  
-  // 操作按钮
-  reset: '恢復默認',
-  save: '保存',
-  
-  // 标签页
+  pageTransitionFade: '淡入淡出',
+  reset: '恢復預設',
+  save: '儲存',
   tabAppearance: '外觀',
   tabLayout: '佈局',
   tabCommon: '通用',
-  
-  // 用户菜单
   userProfile: '個人中心',
-  userSettings: '個人設置',
-  logout: '退出登入',
-  
-  // 面包屑
+  userSettings: '個人設定',
+  logout: '登出',
   home: '首頁',
   personalHomepage: '個人首頁',
+  favoriteManagement: '收藏管理',
 }

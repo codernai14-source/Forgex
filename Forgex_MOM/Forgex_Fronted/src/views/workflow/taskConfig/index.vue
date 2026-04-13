@@ -28,10 +28,10 @@
       <template #version="{ record }">
         <div class="version-cell">
           <a-tag v-if="record.publishedVersion" color="blue">
-            已发布 v{{ record.publishedVersion }}
+            宸插彂甯?v{{ record.publishedVersion }}
           </a-tag>
           <a-tag v-if="record.draftVersion" color="orange">
-            草稿 v{{ record.draftVersion }}
+            鑽夌 v{{ record.draftVersion }}
           </a-tag>
           <span v-if="!record.publishedVersion && record.draftVersion" class="version-hint">
             未发布
@@ -52,7 +52,7 @@
             v-permission="'wf:taskConfig:edit'"
             @click="openEdit(record)"
           >
-            编辑
+            缂栬緫
           </a-button>
           <a-button
             type="link"
@@ -231,7 +231,7 @@ const rules = {
 const dialogTitle = computed(() => (formState.id ? '编辑草稿基础信息' : '新建流程草稿'))
 const silentErrorConfig = { silentError: true }
 
-function resetFormState() {
+function reset表单State() {
   Object.assign(formState, {
     id: undefined,
     taskName: '',
@@ -246,7 +246,7 @@ function resetFormState() {
   currentEditor.value = null
 }
 
-function fillForm(editor: WfTaskDraftEditorDTO) {
+function fill表单(editor: WfTaskDraftEditorDTO) {
   currentEditor.value = editor
   Object.assign(formState, {
     id: editor.draftId,
@@ -285,7 +285,7 @@ const handleRequest = async (payload: TableRequestPayload) => {
       total: Number(result.total || 0)
     }
   } catch (error: any) {
-    message.error(error.message || '加载审批任务配置失败')
+    console.error('鍔犺浇瀹℃壒浠诲姟閰嶇疆澶辫触', error)
     return { records: [], total: 0 }
   } finally {
     loading.value = false
@@ -293,17 +293,17 @@ const handleRequest = async (payload: TableRequestPayload) => {
 }
 
 function openCreate() {
-  resetFormState()
+  reset表单State()
   dialogVisible.value = true
 }
 
 async function openEdit(record: WfTaskConfigSummaryDTO) {
   try {
     const editor = await getOrCreateDraftEditor({ taskCode: record.taskCode }, silentErrorConfig)
-    fillForm(editor)
+    fill表单(editor)
     dialogVisible.value = true
   } catch (error: any) {
-    message.error(error.message || '加载草稿失败')
+    message.error(error.message || '鍔犺浇鑽夌澶辫触')
   }
 }
 
@@ -317,31 +317,29 @@ async function handleNodeConfig(record: WfTaskConfigSummaryDTO) {
       }
     })
   } catch (error: any) {
-    message.error(error.message || '进入节点配置失败')
+    message.error(error.message || '杩涘叆鑺傜偣閰嶇疆澶辫触')
   }
 }
 
 async function handlePublish(record: WfTaskConfigSummaryDTO) {
   if (!record.hasDraft) {
-    message.info('当前没有可发布的草稿')
+    message.info('褰撳墠娌℃湁鍙彂甯冪殑鑽夌')
     return
   }
   try {
     await publishDraft({ taskCode: record.taskCode })
-    message.success('发布成功')
     await reloadTable()
   } catch (error: any) {
-    message.error(error.message || '发布失败')
+    console.error('鍙戝竷澶辫触', error)
   }
 }
 
 async function handleDelete(record: WfTaskConfigSummaryDTO) {
   try {
     await deleteTaskConfig({ id: record.draftId || record.publishedId || record.id })
-    message.success('删除成功')
     await reloadTable()
   } catch (error: any) {
-    message.error(error.message || '删除失败')
+    console.error('鍒犻櫎澶辫触', error)
   }
 }
 
@@ -350,15 +348,14 @@ async function handleSave() {
     await formRef.value?.validate()
     saving.value = true
     const editor = await saveDraftBaseInfo({ ...formState })
-    fillForm(editor)
+    fill表单(editor)
     dialogVisible.value = false
-    message.success('草稿保存成功')
     await reloadTable()
   } catch (error: any) {
     if (error?.errorFields) {
       return
     }
-    message.error(error.message || '保存草稿失败')
+    console.error('淇濆瓨鑽夌澶辫触', error)
   } finally {
     saving.value = false
   }

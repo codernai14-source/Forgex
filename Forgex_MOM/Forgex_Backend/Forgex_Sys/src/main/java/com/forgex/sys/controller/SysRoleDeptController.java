@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
  *   <li>批量取消角色部门权限</li>
  * </ul>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see ISysRoleDeptService

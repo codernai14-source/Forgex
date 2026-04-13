@@ -12,7 +12,7 @@
       :label-col="{ span: 5 }"
       :wrapper-col="{ span: 19 }"
     >
-      <!-- 基础配置 -->
+      <!-- 鍩虹閰嶇疆 -->
       <a-card size="small" :bordered="false" class="mb-16">
         <template #title>
           <span class="card-title">{{ t('system.excel.baseConfig') }}</span>
@@ -73,7 +73,7 @@
         </a-form-item>
       </a-card>
       
-      <!-- 字段配置 -->
+      <!-- 瀛楁閰嶇疆 -->
       <a-card size="small" :bordered="false" class="mt-16">
         <template #title>
           <span class="card-title">{{ t('system.excel.importFields') }}</span>
@@ -95,15 +95,15 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FieldConfigList from '@/components/excel/FieldConfigList.vue'
 
 /**
- * 导入配置编辑弹窗组件
+ * 瀵煎叆閰嶇疆缂栬緫寮圭獥缁勪欢
  * 
- * 功能：
- * 1. 包含主配置表单和字段配置列表
- * 2. 支持新增和编辑模式
- * 3. 表单验证
- * 4. 数据提交处理
+ * 鍔熻兘锛?
+ * 1. 鍖呭惈涓婚厤缃〃鍗曞拰瀛楁閰嶇疆鍒楄〃
+ * 2. 鏀寔鏂板鍜岀紪杈戞ā寮?
+ * 3. 琛ㄥ崟楠岃瘉
+ * 4. 鏁版嵁鎻愪氦澶勭悊
  * 
- * 使用示例：
+ * 浣跨敤绀轰緥锛?
  * <ExcelImportConfigModal v-model:open="visible" :is-edit="isEdit" :data="editData" @success="handleSuccess" />
  * 
  * @author Forgex
@@ -112,11 +112,11 @@ import FieldConfigList from '@/components/excel/FieldConfigList.vue'
  */
 
 interface Props {
-  /** 对话框是否打开 */
+  /** 瀵硅瘽妗嗘槸鍚︽墦寮€ */
   open?: boolean
-  /** 是否为编辑模式 */
+  /** 鏄惁涓虹紪杈戞ā寮?*/
   isEdit?: boolean
-  /** 编辑时的初始数据 */
+  /** 缂栬緫鏃剁殑鍒濆鏁版嵁 */
   data?: any
 }
 
@@ -128,27 +128,27 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   /**
-   * 更新对话框打开状态
+   * 鏇存柊瀵硅瘽妗嗘墦寮€鐘舵€?
    */
   (e: 'update:open', value: boolean): void
   /**
-   * 提交事件
+   * 鎻愪氦浜嬩欢
    */
   (e: 'submit'): void
 }>()
 
 const { t } = useI18n()
 
-// 对话框状态
+// 瀵硅瘽妗嗙姸鎬?
 const dialogVisible = ref(false)
 
-// 表单引用
+// 琛ㄥ崟寮曠敤
 const formRef = ref<FormInstance>()
 
-// 加载状态
+// 鍔犺浇鐘舵€?
 const loading = ref(false)
 
-// 表单数据
+// 琛ㄥ崟鏁版嵁
 const formData = reactive({
   id: undefined,
   tableName: '',
@@ -160,7 +160,7 @@ const formData = reactive({
 })
 
 /**
- * 初始化表单数据
+ * 鍒濆鍖栬〃鍗曟暟鎹?
  */
 const initFormData = () => {
   formData.id = undefined
@@ -173,7 +173,7 @@ const initFormData = () => {
 }
 
 /**
- * 加载编辑数据
+ * 鍔犺浇缂栬緫鏁版嵁
  */
 const loadEditData = (data: any) => {
   if (data) {
@@ -190,27 +190,27 @@ const loadEditData = (data: any) => {
   }
 }
 
-// 暴露表单数据给父组件
+// 鏆撮湶琛ㄥ崟鏁版嵁缁欑埗缁勪欢
 defineExpose({
   formData
 })
 
 /**
- * 处理提交
+ * 澶勭悊鎻愪氦
  */
 const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
     
-    // 触发父组件的提交事件，由父组件处理保存逻辑
+    // 瑙﹀彂鐖剁粍浠剁殑鎻愪氦浜嬩欢锛岀敱鐖剁粍浠跺鐞嗕繚瀛橀€昏緫
     emit('submit')
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('琛ㄥ崟楠岃瘉澶辫触:', error)
   }
 }
 
 /**
- * 监听打开状态变化
+ * 鐩戝惉鎵撳紑鐘舵€佸彉鍖?
  */
 watch(() => props.open, (newVal) => {
   dialogVisible.value = newVal
@@ -224,7 +224,7 @@ watch(() => props.open, (newVal) => {
 }, { immediate: true })
 
 /**
- * 监听对话框关闭
+ * 鐩戝惉瀵硅瘽妗嗗叧闂?
  */
 watch(() => dialogVisible.value, (newVal) => {
   emit('update:open', newVal)

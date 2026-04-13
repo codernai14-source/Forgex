@@ -111,8 +111,8 @@
                 />
                 <a-input
                   v-else-if="detail.segmentType === 'DATE'"
-                  v-model:value="detail.dateFormat"
-                  :placeholder="t('system.encodeRule.dateFormatPlaceholder')"
+                  v-model:value="detail.date表单at"
+                  :placeholder="t('system.encodeRule.date表单atPlaceholder')"
                 />
                 <a-input
                   v-else
@@ -221,10 +221,10 @@
  */
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, type FormInstance, type FormRule } from 'ant-design-vue'
+import { message, type 表单Instance, type 表单Rule } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
-import type { EncodeRule, EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
+import type { EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
 
 // 国际化
 const { t } = useI18n()
@@ -254,10 +254,28 @@ const dialogVisible = computed({
 })
 
 // 表单引用
-const formRef = ref<FormInstance>()
+const formRef = ref<表单Instance>()
 
+interface EncodeRule表单Detail extends Omit<EncodeRuleDetail, 'segmentType'> {
+  segmentType?: 'FIXED' | 'DATE' | 'SEQ' | 'CUSTOM'
+  date表单at?: string
+  seqStart?: number
+  seqLength?: number
+  seqResetType?: number
+}
+
+interface EncodeRule表单Model {
+  id?: string
+  ruleName: string
+  ruleCode: string
+  businessType: string
+  description: string
+  status: number
+  ruleDetails: EncodeRule表单Detail[]
+  remark: string
+}
 // 表单数据
-const form = reactive<SaveEncodeRuleParam>({
+const form = reactive<EncodeRule表单Model>({
   ruleName: '',
   ruleCode: '',
   businessType: '',
@@ -268,7 +286,7 @@ const form = reactive<SaveEncodeRuleParam>({
 })
 
 // 表单验证规则
-const formRules: Record<string, FormRule[]> = {
+const formRules: Record<string, 表单Rule[]> = {
   ruleName: [
     { required: true, message: t('system.encodeRule.ruleNameRequired'), trigger: 'blur' },
     { max: 50, message: t('system.encodeRule.ruleNameMaxLength'), trigger: 'blur' },
@@ -281,7 +299,7 @@ const formRules: Record<string, FormRule[]> = {
 }
 
 // 明细验证规则
-const detailRules: FormRule[] = [
+const detailRules: 表单Rule[] = [
   {
     required: true,
     validator: (_rule, value) => {
@@ -291,8 +309,8 @@ const detailRules: FormRule[] = [
       if (value.segmentType === 'FIXED' && !value.segmentValue) {
         return Promise.reject(t('system.encodeRule.segmentValueRequired'))
       }
-      if (value.segmentType === 'DATE' && !value.dateFormat) {
-        return Promise.reject(t('system.encodeRule.dateFormatRequired'))
+      if (value.segmentType === 'DATE' && !value.date表单at) {
+        return Promise.reject(t('system.encodeRule.date表单atRequired'))
       }
       if (value.segmentType === 'SEQ') {
         if (!value.seqStart && value.seqStart !== 0) {
@@ -313,8 +331,57 @@ const dialogTitle = computed(() => {
   return props.isEdit ? t('system.encodeRule.edit') : t('system.encodeRule.add')
 })
 
+function mapBackendDetailTo表单(detail: EncodeRuleDetail): EncodeRule表单Detail {
+  const backendType = String(detail?.segmentType || '').toUpperCase()
+  const formType =
+    backendType === 'SERIAL'
+      ? 'SEQ'
+      : backendType === 'EXPRESSION'
+        ? 'CUSTOM'
+        : backendType || 'FIXED'
+
+  return {
+    id: detail?.id != null ? String(detail.id) : undefined,
+    ruleId: detail?.ruleId != null ? String(detail.ruleId) : undefined,
+    segmentOrder: detail?.segmentOrder,
+    segmentType: formType,
+    segmentValue: detail?.segmentValue || detail?.conditionExpression || '',
+    date表单at: formType === 'DATE' ? (detail?.segmentValue || '') : undefined,
+    remark: detail?.remark || '',
+    connector: detail?.connector,
+    isRequired: detail?.isRequired,
+    conditionExpression: detail?.conditionExpression,
+  }
+}
+
+function map表单DetailToBackend(detail: EncodeRule表单Detail, index: number): EncodeRuleDetail {
+  const formType = String(detail?.segmentType || 'FIXED').toUpperCase()
+  const backendType =
+    formType === 'SEQ'
+      ? 'SERIAL'
+      : formType === 'CUSTOM'
+        ? 'EXPRESSION'
+        : formType
+
+  const segmentValue = formType === 'DATE'
+    ? (detail.date表单at || detail.segmentValue || '')
+    : (detail.segmentValue || '')
+
+  return {
+    id: detail.id,
+    ruleId: detail.ruleId,
+    segmentOrder: detail.segmentOrder || index + 1,
+    segmentType: backendType,
+    segmentValue,
+    connector: detail.connector,
+    isRequired: detail.isRequired ?? true,
+    conditionExpression: backendType === 'EXPRESSION' ? (detail.conditionExpression || segmentValue) : undefined,
+    remark: detail.remark || '',
+  }
+}
+
 // 重置表单
-function resetForm() {
+function reset表单() {
   form.id = undefined
   form.ruleName = ''
   form.ruleCode = ''
@@ -329,14 +396,14 @@ function resetForm() {
 async function loadRuleDetail() {
   if (!props.ruleId) return
   try {
-    const data: EncodeRule = await encodeRuleApi.getEncodeRule(props.ruleId)
+    const data = await encodeRuleApi.getEncodeRule(props.ruleId)
     form.id = data.id
     form.ruleName = data.ruleName || ''
     form.ruleCode = data.ruleCode || ''
-    form.businessType = data.businessType || ''
-    form.description = data.description || ''
-    form.status = data.status ?? 1
-    form.ruleDetails = data.ruleDetails || []
+    form.businessType = data.module || ''
+    form.description = ''
+    form.status = data.isEnabled === false ? 0 : 1
+    form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailTo表单(detail))
     form.remark = data.remark || ''
   } catch (error) {
     console.error('加载规则详情失败:', error)
@@ -346,7 +413,7 @@ async function loadRuleDetail() {
 
 // 添加明细
 function handleAddDetail() {
-  const newDetail: EncodeRuleDetail = {
+  const newDetail: EncodeRule表单Detail = {
     segmentOrder: (form.ruleDetails?.length || 0) + 1,
     segmentType: 'FIXED',
     segmentValue: '',
@@ -370,29 +437,29 @@ function handleRemoveDetail(index: number) {
 }
 
 // 段类型变化处理
-function handleSegmentTypeChange(detail: EncodeRuleDetail) {
+function handleSegmentTypeChange(detail: EncodeRule表单Detail) {
   // 根据段类型清空或设置默认值
   if (detail.segmentType === 'FIXED') {
     detail.segmentValue = ''
-    detail.dateFormat = undefined
+    detail.date表单at = undefined
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
   } else if (detail.segmentType === 'DATE') {
     detail.segmentValue = undefined
-    detail.dateFormat = 'YYYYMMDD'
+    detail.date表单at = 'YYYYMMDD'
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
   } else if (detail.segmentType === 'SEQ') {
     detail.segmentValue = undefined
-    detail.dateFormat = undefined
+    detail.date表单at = undefined
     detail.seqStart = 1
     detail.seqLength = 6
     detail.seqResetType = 0
   } else if (detail.segmentType === 'CUSTOM') {
     detail.segmentValue = ''
-    detail.dateFormat = undefined
+    detail.date表单at = undefined
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
@@ -419,7 +486,17 @@ async function handleSubmit() {
       }
     }
     
-    await encodeRuleApi.saveEncodeRule(form)
+    const requestPayload: SaveEncodeRuleParam = {
+      id: form.id,
+      ruleCode: form.ruleCode,
+      ruleName: form.ruleName,
+      module: form.businessType,
+      isEnabled: form.status === 1,
+      remark: form.remark,
+      detailList: (form.ruleDetails || []).map((detail, index) => map表单DetailToBackend(detail, index)),
+    }
+
+    await encodeRuleApi.saveEncodeRule(requestPayload)
     message.success(props.isEdit ? t('system.encodeRule.updateSuccess') : t('system.encodeRule.addSuccess'))
     dialogVisible.value = false
     emit('success')
@@ -431,15 +508,24 @@ async function handleSubmit() {
 // 关闭弹窗
 function handleDialogClose() {
   dialogVisible.value = false
-  resetForm()
+  reset表单()
   formRef.value?.resetFields()
 }
 
 // 监听 open 变化
 watch(() => props.open, async (newVal) => {
-  if (newVal && props.isEdit) {
-    await loadRuleDetail()
+  if (!newVal) {
+    return
   }
+
+  reset表单()
+
+  if (props.isEdit) {
+    await loadRuleDetail()
+    return
+  }
+
+  handleAddDetail()
 })
 
 // 初始化

@@ -6,7 +6,7 @@ import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
 import type { User, Department, Position } from '../types'
 
-export function useUserForm(onSuccess: () => void) {
+export function useUser表单(onSuccess: () => void) {
   // 弹窗显示状态
   const dialogVisible = ref(false)
   

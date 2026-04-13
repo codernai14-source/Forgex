@@ -120,7 +120,19 @@ public class SystemBasicConfig {
      * 用途：控制登录页是否显示Gitee、微信、钉钉登录按钮
      */
     private Boolean showOAuthLogin = true;
-    
+
+    /**
+     * 是否显示注册入口。
+     * 用途：控制登录页是否展示“注册”链接。
+     */
+    private Boolean showRegisterEntry = true;
+
+    /**
+     * 注册入口地址。
+     * 用途：支持跳转到站内注册说明页或外部注册系统。
+     */
+    private String registerUrl = "/register";
+
     // ==================== 主题配色 ===================
     
     /**

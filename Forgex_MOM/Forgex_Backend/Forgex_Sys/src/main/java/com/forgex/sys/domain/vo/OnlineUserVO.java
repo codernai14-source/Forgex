@@ -49,6 +49,7 @@ public class OnlineUserVO {
      */
     private String tenantName;
 
+
     /**
      * 最后登录时间（来自 {@code sys_user.last_login_time}）。
      */

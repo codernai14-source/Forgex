@@ -5,7 +5,7 @@
       table-code="ReportTemplateTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :fallback-config="fallbackConfig"
+      :降级方案-config="降级方案Config"
       :show-query-form="true"
       row-key="id"
     >
@@ -28,11 +28,11 @@
 
       <template #status="{ record }">
         <a-tag
-          v-if="resolveStatusTag(record.status)"
-          :color="resolveStatusTag(record.status)?.color"
-          :style="resolveStatusTag(record.status)?.style"
+          v-if="resolve状态Tag(record.status)"
+          :color="resolve状态Tag(record.status)?.color"
+          :style="resolve状态Tag(record.status)?.style"
         >
-          {{ resolveStatusTag(record.status)?.label }}
+          {{ resolve状态Tag(record.status)?.label }}
         </a-tag>
         <span v-else>{{ record.status ?? '-' }}</span>
       </template>
@@ -68,16 +68,16 @@
       </template>
     </FxDynamicTable>
 
-    <!-- 报表表单弹窗 -->
+    <!-- 鎶ヨ〃琛ㄥ崟寮圭獥 -->
     <ReportForm
       v-model:open="formVisible"
-      :form-data="currentFormData"
+      :form-data="current表单Data"
       :category-options="categoryOptions"
       :datasource-options="datasourceOptions"
-      @ok="handleFormOk"
+      @ok="handle表单Ok"
     />
 
-    <!-- 报表设计器弹窗 -->
+    <!-- 鎶ヨ〃璁捐鍣ㄥ脊绐?-->
     <ReportDesigner
       v-model:open="designerVisible"
       :report-code="currentDesignerCode"
@@ -85,7 +85,7 @@
       @ok="handleDesignerOk"
     />
 
-    <!-- 报表预览弹窗 -->
+    <!-- 鎶ヨ〃棰勮寮圭獥 -->
     <ReportPreview
       v-model:open="previewVisible"
       :report-code="currentPreviewCode"
@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { Modal, message } from 'ant-design-vue'
+import { Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { useDict } from '@/hooks/useDict'
@@ -120,7 +120,7 @@ const tableRef = ref()
 const formVisible = ref(false)
 const designerVisible = ref(false)
 const previewVisible = ref(false)
-const currentFormData = ref<Partial<ReportTemplate>>({})
+const current表单Data = ref<Partial<ReportTemplate>>({})
 const currentDesignerCode = ref('')
 const currentEngineType = ref<'UREPORT' | 'JIMU'>('UREPORT')
 const currentPreviewCode = ref('')
@@ -136,7 +136,7 @@ const dictOptions = computed(() => ({
   ],
 }))
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ReportTemplateTable',
   tableName: '报表模板管理',
   tableType: 'NORMAL',
@@ -172,7 +172,7 @@ function resolveEngineTypeLabel(value: string) {
   return value
 }
 
-function resolveStatusTag(value: unknown) {
+function resolve状态Tag(value: unknown) {
   const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
@@ -261,25 +261,24 @@ function flattenTreeToOptions(tree: ReportCategory[]): Array<{ label: string; va
 }
 
 function handleAdd() {
-  currentFormData.value = {}
+  current表单Data.value = {}
   formVisible.value = true
 }
 
 function handleEdit(record: ReportTemplate) {
-  currentFormData.value = { ...record }
+  current表单Data.value = { ...record }
   formVisible.value = true
 }
 
 function handleDelete(record: ReportTemplate) {
   Modal.confirm({
     title: '提示',
-    content: `确定要删除报表"${record.name}"吗？`,
+    content: `确定要删除报表“${record.name}”吗？`,
     okText: '确定',
     cancelText: '取消',
     onOk: async () => {
       try {
         await remove(record.id)
-        message.success('删除成功')
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('删除失败', error)
@@ -300,7 +299,7 @@ function handlePreview(record: ReportTemplate) {
   previewVisible.value = true
 }
 
-async function handleFormOk() {
+async function handle表单Ok() {
   formVisible.value = false
   await tableRef.value?.refresh?.()
 }

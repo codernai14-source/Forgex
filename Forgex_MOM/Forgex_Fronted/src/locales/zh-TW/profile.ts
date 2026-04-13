@@ -1,5 +1,5 @@
 /**
- * 個人中心頁面文案
+ * 个人中心页面文案
  *
  * @author Forgex
  * @version 1.0.0
@@ -21,7 +21,7 @@ export default {
     department: '所屬部門',
     position: '職位',
     entryDate: '入職時間',
-    status: '狀態',
+    status: '状态',
     oldPassword: '舊密碼',
     newPassword: '新密碼',
     confirmPassword: '確認密碼',

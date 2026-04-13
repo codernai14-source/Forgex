@@ -65,22 +65,33 @@
         </a-badge>
 
         <!-- 语言切换 -->
-        <a-select
-          v-if="showLangSwitch"
-          v-model:value="currentLocale"
-          size="small"
-          class="lang-select"
-          @change="onLocaleChange"
-          :loading="languageList.length === 0"
-        >
-          <a-select-option
-            v-for="lang in languageList"
-            :key="lang.langCode"
-            :value="lang.langCode"
+        <a-dropdown v-if="showLangSwitch" placement="bottomRight" trigger="click">
+          <a-button
+            type="text"
+            class="header-btn header-btn--icon"
+            :title="currentLanguageLabel"
+            :loading="languageList.length === 0"
           >
-            <span v-if="lang.icon">{{ lang.icon }} </span>{{ lang.langName }}
-          </a-select-option>
-        </a-select>
+            <template #icon>
+              <GlobalOutlined />
+            </template>
+          </a-button>
+          <template #overlay>
+            <a-menu :selected-keys="[currentLocale]" @click="onLanguageMenuClick">
+              <a-menu-item
+                v-for="lang in languageList"
+                :key="lang.langCode"
+              >
+                <div class="lang-menu-item">
+                  <span class="lang-menu-item__label">
+                    <span v-if="lang.icon">{{ lang.icon }} </span>{{ lang.langName }}
+                  </span>
+                  <CheckOutlined v-if="currentLocale === lang.langCode" class="lang-menu-item__check" />
+                </div>
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
 
         <!-- 刷新按钮 -->
         <a-button
@@ -157,6 +168,8 @@ import { getIcon } from '../../utils/icon'
 import {
   SearchOutlined,
   BellOutlined,
+  GlobalOutlined,
+  CheckOutlined,
   SettingOutlined,
   DownOutlined,
   UserOutlined,
@@ -312,6 +325,10 @@ const showModuleNav = computed(() => {
   return (props.layoutMode === 'mix' || props.layoutMode === 'top') && props.modules.length > 0
 })
 
+const currentLanguageLabel = computed(() => {
+  return languageList.value.find((lang) => lang.langCode === currentLocale.value)?.langName || 'Language'
+})
+
 // 用户名首字母
 const userInitial = computed(() => {
   const name = props.user.name || props.user.account || ''
@@ -352,8 +369,17 @@ const onUserMenuClick = (info: any) => {
 }
 
 // 语言切换
-const onLocaleChange = (locale: string) => {
+const onLocaleChange = (locale: LocaleCode) => {
+  currentLocale.value = locale
   emit('locale-change', locale)
+}
+
+const onLanguageMenuClick = (info: any) => {
+  const locale = String(info?.key || '') as LocaleCode
+  if (!locale || locale === currentLocale.value) {
+    return
+  }
+  onLocaleChange(locale)
 }
 
 // 刷新
@@ -491,8 +517,26 @@ const onMessageClick = () => {
   border-radius: 4px;
 }
 
-.lang-select {
-  width: 120px;
+.header-btn--icon {
+  justify-content: center;
+  min-width: 32px;
+  padding-inline: 8px;
+}
+
+.lang-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 120px;
+}
+
+.lang-menu-item__label {
+  white-space: nowrap;
+}
+
+.lang-menu-item__check {
+  color: var(--fx-theme-color, #1677ff);
 }
 
 .user-dropdown-trigger {

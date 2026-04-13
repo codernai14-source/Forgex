@@ -183,6 +183,17 @@
               <a-switch v-model:checked="basicConfig.showOAuthLogin" />
             </a-form-item>
 
+            <a-form-item :label="t('system.config.showRegisterEntry')" name="showRegisterEntry">
+              <a-switch v-model:checked="basicConfig.showRegisterEntry" />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.registerUrl')" name="registerUrl">
+              <a-input
+                v-model:value="basicConfig.registerUrl"
+                :placeholder="t('system.config.registerUrlPlaceholder')"
+              />
+            </a-form-item>
+
             <a-form-item :label="t('system.config.primaryColor')" name="primaryColor">
               <a-input
                 v-model:value="basicConfig.primaryColor"
@@ -840,6 +851,8 @@ function resetPortalConfig() {
     loginStyle: defaults.loginStyle,
     loginLayout: defaults.loginLayout,
     showOAuthLogin: defaults.showOAuthLogin,
+    showRegisterEntry: defaults.showRegisterEntry,
+    registerUrl: defaults.registerUrl,
     primaryColor: defaults.primaryColor,
     secondaryColor: defaults.secondaryColor,
   }

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 定义物料相关的核心业务逻辑，继承 MyBatis-Plus 的 IService 获得基础 CRUD 能力
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

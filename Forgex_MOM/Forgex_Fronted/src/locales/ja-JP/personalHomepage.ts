@@ -1,16 +1,16 @@
 /**
- * パーソナルホーム翻訳 - 日本語
+ * 个人首页翻译 - 日文注释
  * 
  * @author Forgex Team
  * @version 1.0.0
  */
 export default {
-  // Hero セクション
+  // 头部区域
   hero: {
     eyebrow: 'パーソナルワークスペース',
     title: '個人ホーム',
     titleManage: '個人ホーム初期設定',
-    desc: 'システムログイン後の初期表示ページで、個人の好みに応じてコンポーネントのレイアウトを保存できます。',
+    desc: 'システム日志イン後の初期表示ページで、個人の好みに応じてコンポーネントのレイアウトを保存できます。',
     descManage: 'パブリックレベルとテナントレベルの初期ポータルレイアウトを一括管理し、すべてのユーザーがこれを基にシステムを利用します。',
     badge: {
       default: '初期エントリー',
@@ -20,7 +20,7 @@ export default {
     },
   },
 
-  // ツールバー
+  // 工具栏
   toolbar: {
     editMode: 'レイアウト編集',
     exitMode: '編集終了',
@@ -33,25 +33,32 @@ export default {
     },
   },
 
-  // 設定パネル
+  // 设置面板
   panel: {
     title: 'ウィジェット設定',
-    subtitle: '表示/非表示、件数、その他のオプション',
+    subtitle: '表示/非表示、件数、其他のオプション',
   },
 
-  // ウィジェット設定フィールド
+  // 组件配置字段
   widget: {
     limit: '表示件数',
     showMore: 'もっと見るリンクを表示',
     more: 'もっと見る',
   },
 
-  // ウィジェットタイトル
+  // 组件标题
   components: {
     commonMenus: {
       title: 'よく使うメニュー',
-      subtitle: '頻繁に使用するエントリーと最近訪問したメニュー',
+      subtitle: 'システム集計による固定 Top 6 メニュー',
       empty: 'よく使うメニューはありません',
+    },
+    myFavorites: {
+      title: 'お気に入り',
+      subtitle: '自分で登録したショートカット',
+      empty: 'お気に入りメニューはありません',
+      add: 'お気に入りに追加',
+      remove: 'お気に入りを解除',
     },
     pendingApprovals: {
       title: '承認待ち',
@@ -63,10 +70,10 @@ export default {
       subtitle: 'ローカルカレンダービュー',
     },
     messages: {
-      title: '自分のメッセージ',
-      subtitle: 'ユーザーから送信された站内メッセージ',
-      empty: '未読メッセージはありません',
-      systemSender: '站内メッセージ',
+      title: '自分の消息',
+      subtitle: 'ユーザーから送信された站内消息',
+      empty: '未読消息はありません',
+      systemSender: '站内消息',
     },
     notices: {
       title: 'システム通知',
@@ -83,7 +90,7 @@ export default {
   // 空状態
   empty: '有効なホームウィジェットはありません',
 
-  // メッセージ
+  // 消息
   message: {
     loadFailed: 'ホーム設定の読み込みに失敗しました',
     saveSuccess: 'ホーム設定を保存しました',
@@ -92,7 +99,48 @@ export default {
     resetFailed: '初期レイアウトへのリセットに失敗しました',
   },
 
-  // サマリーカード
+  // お気に入り管理ページ
+  management: {
+    title: 'お気に入り管理',
+    desc: 'お気に入りメニューをまとめて管理し、表示順の調整や一括解除を行えます。',
+    alert: '「お気に入り」カードはここで保存した順序で表示されます。「よく使うメニュー」はシステム集計の Top 6 を固定表示します。',
+    empty: 'お気に入りメニューがありません。ホームまたはメニューから先に追加してください。',
+    stats: {
+      count: '{count} 件を登録済み',
+    },
+    table: {
+      order: '順序',
+      menu: 'メニュー',
+      path: 'ルートパス',
+      action: '操作',
+    },
+    action: {
+      refresh: '再読み込み',
+      batchCancel: '一括解除',
+      saveSort: '順序を保存',
+      moveUp: '上へ',
+      moveDown: '下へ',
+      open: '開く',
+      remove: '解除',
+    },
+    confirm: {
+      batchCancelTitle: '一括解除の確認',
+      batchCancelContent: '選択した {count} 件のお気に入りを解除しますか？',
+      singleCancelTitle: '解除の確認',
+      singleCancelContent: '「{title}」をお気に入りから解除しますか？',
+    },
+    message: {
+      loadFailed: 'お気に入り一覧の読み込みに失敗しました',
+      batchCancelSuccess: '一括解除が完了しました',
+      batchCancelFailed: '一括解除に失敗しました',
+      singleCancelSuccess: 'お気に入りを解除しました',
+      singleCancelFailed: 'お気に入りの解除に失敗しました',
+      sortSaveSuccess: 'お気に入り順序を保存しました',
+      sortSaveFailed: 'お気に入り順序の保存に失敗しました',
+    },
+  },
+
+  // 摘要卡片
   summary: {
     greeting: {
       honorificMale: '様',

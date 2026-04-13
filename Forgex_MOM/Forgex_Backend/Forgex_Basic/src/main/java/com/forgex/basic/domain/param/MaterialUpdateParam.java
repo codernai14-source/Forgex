@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
  * 用于接收前端修改物料时提交的表单数据
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

@@ -1,28 +1,28 @@
 /**
- * 权限指令
+ * 鏉冮檺鎸囦护
  * 
- * 用于控制按钮级别的权限显示
+ * 鐢ㄤ簬鎺у埗鎸夐挳绾у埆鐨勬潈闄愭樉绀?
  * 
  * @example
  * ```vue
- * <a-button v-permission="'sys:user:add'">新增</a-button>
- * <a-button v-permission="'sys:user:edit'">编辑</a-button>
+ * <a-button v-permission="'sys:user:add'">鏂板</a-button>
+ * <a-button v-permission="'sys:user:edit'">缂栬緫</a-button>
  * ```
  */
 import { Directive, DirectiveBinding } from 'vue'
-import { usePermissionStore } from '@/stores/permission'
+import { use权限Store } from '@/stores/permission'
 
 /**
- * 检查是否有权限
- * @param permKey 权限标识
- * @returns 是否有权限
+ * 妫€鏌ユ槸鍚︽湁鏉冮檺
+ * @param permKey 鏉冮檺鏍囪瘑
+ * @returns 鏄惁鏈夋潈闄?
  */
-function hasPermission(permKey: string): boolean {
-  const permissionStore = usePermissionStore()
+function has权限(permKey: string): boolean {
+  const permissionStore = use权限Store()
   
-  // 由于 store 中 hasPermission 是 computed，
-  // 这里统一通过 .value 调用
-  const checker = permissionStore.hasPermission
+  // 鐢变簬 store 涓?has权限 鏄?computed锛?
+  // 杩欓噷缁熶竴閫氳繃 .value 璋冪敤
+  const checker = permissionStore.has权限
   if (typeof checker === 'function') {
     return checker(permKey)
   }
@@ -33,19 +33,19 @@ function hasPermission(permKey: string): boolean {
 }
 
 /**
- * 权限指令
+ * 鏉冮檺鎸囦护
  */
 export const permission: Directive = {
   /**
-   * 元素挂载时检查权限
+   * 鍏冪礌鎸傝浇鏃舵鏌ユ潈闄?
    */
   mounted(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
 
     const originalDisplay = el.style.display
-    ;(el as any).__vPermissionOriginalDisplay = originalDisplay
+    ;(el as any).__v权限OriginalDisplay = originalDisplay
 
-    if (value && !hasPermission(value)) {
+    if (value && !has权限(value)) {
       el.style.display = 'none'
       return
     }
@@ -54,13 +54,13 @@ export const permission: Directive = {
   },
   
   /**
-   * 元素更新时检查权限
+   * 鍏冪礌鏇存柊鏃舵鏌ユ潈闄?
    */
   updated(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
 
-    const originalDisplay = (el as any).__vPermissionOriginalDisplay ?? ''
-    if (value && !hasPermission(value)) {
+    const originalDisplay = (el as any).__v权限OriginalDisplay ?? ''
+    if (value && !has权限(value)) {
       el.style.display = 'none'
       return
     }
@@ -70,7 +70,7 @@ export const permission: Directive = {
 }
 
 /**
- * 在 Vue 应用中注册权限指令
+ * 鍦?Vue 搴旂敤涓敞鍐屾潈闄愭寚浠?
  * 
  * @example
  * ```typescript

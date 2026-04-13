@@ -1,6 +1,12 @@
 <template>
   <div class="menu-container">
     <a-card :bordered="false" class="main-card">
+      <div class="terminal-tabs">
+        <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
+          <a-tab-pane key="B" tab="B端" />
+          <a-tab-pane key="C" tab="C端" />
+        </a-tabs>
+      </div>
       <div class="menu-layout">
         <div class="module-tabs">
           <a-tabs
@@ -21,7 +27,7 @@
             ref="tableRef"
             table-code="MenuTable"
             :request="handleRequest"
-            :fallback-config="fallbackConfig"
+            :降级方案-config="降级方案Config"
             :dict-options="dictOptions"
             :row-selection="{
               selectedRowKeys,
@@ -69,11 +75,11 @@
 
             <template #status="{ record }">
               <a-tag
-                v-if="resolveStatusTag(record.status)"
-                :color="resolveStatusTag(record.status)?.color"
-                :style="resolveStatusTag(record.status)?.style"
+                v-if="resolve状态Tag(record.status)"
+                :color="resolve状态Tag(record.status)?.color"
+                :style="resolve状态Tag(record.status)?.style"
               >
-                {{ resolveStatusTag(record.status)?.label }}
+                {{ resolve状态Tag(record.status)?.label }}
               </a-tag>
               <span v-else>{{ record.status ?? '-' }}</span>
             </template>
@@ -292,10 +298,16 @@ import IconPicker from '@/components/common/IconPicker.vue'
 import { listModules } from '@/api/system/module'
 import {
   addMenu,
+  addCMenu,
+  batchDeleteCMenus,
   batchDeleteMenus,
+  deleteCMenu,
   deleteMenu,
+  getCMenuById,
+  getCMenuTree,
   getMenuById,
   getMenuTree,
+  updateCMenu,
   updateMenu,
 } from '@/api/system/menu'
 import { useDict } from '@/hooks/useDict'
@@ -322,7 +334,7 @@ type MenuTreeRecord = {
   children?: MenuTreeRecord[]
 }
 
-type MenuFormData = {
+type Menu表单Data = {
   id?: string | number
   moduleId: string
   parentId: string
@@ -343,6 +355,7 @@ type MenuFormData = {
 
 const { t } = useI18n()
 
+const activeTerminal = ref<'B' | 'C'>('B')
 const modules = ref<any[]>([])
 const activeModuleId = ref('')
 const tableRef = ref()
@@ -364,7 +377,7 @@ const dictOptions = computed(() => ({
   status: statusOptions.value,
 }))
 
-const fallbackConfig = computed(() => ({
+const 降级方案Config = computed(() => ({
   tableCode: 'MenuTable',
   tableName: t('system.menu.title'),
   tableType: 'NORMAL',
@@ -391,6 +404,26 @@ const formTitle = computed(() => (
   isEdit.value ? t('system.menu.form.editMenu') : t('system.menu.form.addMenu')
 ))
 
+const currentMenuApi = computed(() => (
+  activeTerminal.value === 'C'
+    ? {
+        getTree: getCMenuTree,
+        getDetail: getCMenuById,
+        add: addCMenu,
+        update: updateCMenu,
+        remove: deleteCMenu,
+        batchRemove: batchDeleteCMenus,
+      }
+    : {
+        getTree: getMenuTree,
+        getDetail: getMenuById,
+        add: addMenu,
+        update: updateMenu,
+        remove: deleteMenu,
+        batchRemove: batchDeleteMenus,
+      }
+))
+
 function getRootTreeNode(children: any[] = []) {
   return [{
     key: '0',
@@ -400,7 +433,7 @@ function getRootTreeNode(children: any[] = []) {
   }]
 }
 
-function createDefaultForm(moduleId = activeModuleId.value): MenuFormData {
+function createDefault表单(moduleId = activeModuleId.value): Menu表单Data {
   return {
     id: undefined,
     moduleId: moduleId || '',
@@ -421,7 +454,7 @@ function createDefaultForm(moduleId = activeModuleId.value): MenuFormData {
   }
 }
 
-const formData = ref<MenuFormData>(createDefaultForm())
+const formData = ref<Menu表单Data>(createDefault表单())
 
 const showPath = computed(() => formData.value.type !== 'button')
 const showComponentKey = computed(() => formData.value.type === 'menu' && formData.value.menuMode === 'embedded')
@@ -456,12 +489,12 @@ function normalizeBoolean(value: unknown): boolean | undefined {
   return Boolean(value)
 }
 
-function normalizeStatusForTag(value: unknown): number {
+function normalize状态ForTag(value: unknown): number {
   return normalizeBoolean(value) ? 1 : 0
 }
 
-function resolveStatusTag(value: unknown) {
-  const normalizedValue = normalizeStatusForTag(value)
+function resolve状态Tag(value: unknown) {
+  const normalizedValue = normalize状态ForTag(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
     return null
@@ -508,11 +541,11 @@ function matchMenuName(node: MenuTreeRecord, keyword?: string) {
 }
 
 function filterMenuTree(nodes: MenuTreeRecord[] = [], filters: Record<string, any> = {}): MenuTreeRecord[] {
-  const expectedStatus = normalizeBoolean(filters.status)
+  const expected状态 = normalizeBoolean(filters.status)
 
   return nodes.reduce<MenuTreeRecord[]>((result, node) => {
     const selfMatched = matchMenuName(node, filters.name)
-      && (expectedStatus === undefined || normalizeBoolean(node.status) === expectedStatus)
+      && (expected状态 === undefined || normalizeBoolean(node.status) === expected状态)
 
     if (selfMatched) {
       result.push({
@@ -540,7 +573,7 @@ function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
     moduleId: node.moduleId != null ? String(node.moduleId) : node.moduleId,
     parentId: node.parentId != null ? String(node.parentId) : '0',
     name: getI18nValue(node.nameI18nJson, node.name),
-    status: normalizeStatusForTag(node.status),
+    status: normalize状态ForTag(node.status),
     children: normalizeTreeRows(node.children || []),
   }))
 }
@@ -557,7 +590,7 @@ async function handleRequest(payload: {
 
   loading.value = true
   try {
-    const tree = await getMenuTree({
+    const tree = await currentMenuApi.value.getTree({
       tenantId: Number(tenantId),
       moduleId: Number(activeModuleId.value),
     })
@@ -608,7 +641,7 @@ async function loadParentMenuTree(moduleId: string, excludeId?: string) {
   }
 
   try {
-    const tree = await getMenuTree({
+    const tree = await currentMenuApi.value.getTree({
       tenantId: Number(tenantId),
       moduleId: Number(moduleId),
     })
@@ -621,8 +654,8 @@ async function loadParentMenuTree(moduleId: string, excludeId?: string) {
   }
 }
 
-function resolveMenuNameForSave(nameI18nJson: string, fallbackName = '') {
-  const resolved = getI18nValue(nameI18nJson, fallbackName)
+function resolveMenuNameForSave(nameI18nJson: string, 降级方案Name = '') {
+  const resolved = getI18nValue(nameI18nJson, 降级方案Name)
   if (resolved && String(resolved).trim()) {
     return String(resolved).trim()
   }
@@ -631,7 +664,7 @@ function resolveMenuNameForSave(nameI18nJson: string, fallbackName = '') {
     const firstText = Object.values(parsed).find((item) => String(item || '').trim())
     return firstText ? String(firstText).trim() : ''
   } catch {
-    return fallbackName?.trim?.() || ''
+    return 降级方案Name?.trim?.() || ''
   }
 }
 
@@ -658,17 +691,17 @@ function calculateMenuLevel(parentId: string) {
 
 async function handleAdd() {
   isEdit.value = false
-  formData.value = createDefaultForm()
+  formData.value = createDefault表单()
   visible.value = true
   await loadParentMenuTree(formData.value.moduleId)
 }
 
 async function handleEdit(record: MenuTreeRecord) {
   try {
-    const detail = await getMenuById(String(record.id))
+    const detail = await currentMenuApi.value.getDetail(String(record.id))
     isEdit.value = true
     formData.value = {
-      ...createDefaultForm(String(detail?.moduleId || activeModuleId.value)),
+      ...createDefault表单(String(detail?.moduleId || activeModuleId.value)),
       ...detail,
       id: detail?.id != null ? String(detail.id) : record.id,
       moduleId: String(detail?.moduleId || activeModuleId.value),
@@ -710,7 +743,7 @@ function handleModeChange() {
 function handleCancel() {
   visible.value = false
   isEdit.value = false
-  formData.value = createDefaultForm()
+  formData.value = createDefault表单()
 }
 
 async function handleSubmit() {
@@ -749,16 +782,16 @@ async function handleSubmit() {
     }
 
     if (payload.id) {
-      await updateMenu(payload as any)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
+      await currentMenuApi.value.update(payload as any)
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
     } else {
-      await addMenu(payload as any)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
+      await currentMenuApi.value.add(payload as any)
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
     }
 
     visible.value = false
     isEdit.value = false
-    formData.value = createDefaultForm()
+    formData.value = createDefault表单()
     await tableRef.value?.refresh?.()
   } catch (error: any) {
     if (error?.errorFields) {
@@ -779,9 +812,9 @@ function handleDelete(id: string | number) {
     cancelText: t('common.cancel'),
     onOk: async () => {
       try {
-        await deleteMenu(String(id))
+        await currentMenuApi.value.remove(String(id))
         selectedRowKeys.value = selectedRowKeys.value.filter((item) => item !== String(id))
-        // 成功提示由后端返回，在 http 拦截器中统一处理
+        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('delete menu failed:', error)
@@ -804,9 +837,9 @@ function handleBatchDelete() {
     cancelText: t('common.cancel'),
     onOk: async () => {
       try {
-        await batchDeleteMenus(selectedRowKeys.value)
+        await currentMenuApi.value.batchRemove(selectedRowKeys.value)
         selectedRowKeys.value = []
-        // 成功提示由后端返回，在 http 拦截器中统一处理
+        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('batch delete menu failed:', error)
@@ -837,6 +870,14 @@ async function loadModules() {
 async function handleModuleChange(moduleId: string) {
   activeModuleId.value = moduleId
   selectedRowKeys.value = []
+  await tableRef.value?.refresh?.()
+}
+
+async function handleTerminalChange(terminal: string) {
+  activeTerminal.value = terminal === 'C' ? 'C' : 'B'
+  selectedRowKeys.value = []
+  visible.value = false
+  formData.value = createDefault表单(activeModuleId.value)
   await tableRef.value?.refresh?.()
 }
 
@@ -890,6 +931,12 @@ onMounted(async () => {
       min-height: 0;
       height: 100%;
     }
+  }
+
+  .terminal-tabs {
+    padding: 12px 16px 0;
+    border-bottom: 1px solid var(--fx-border-color);
+    background: var(--fx-bg-container);
   }
 
   .menu-layout {

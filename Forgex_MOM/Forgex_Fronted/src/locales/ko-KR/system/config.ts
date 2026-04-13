@@ -1,5 +1,5 @@
 /**
- * System Config Translations - English
+ * 系统配置翻译 - 中文注释
  */
 export default {
   title: 'System Config',
@@ -37,6 +37,9 @@ export default {
   bgColor: 'Solid Color',
   bgColorPlaceholder: 'e.g. #0d0221',
   showOAuth: 'Show third-party login',
+  showRegisterEntry: 'Show registration entry',
+  registerUrl: 'Registration URL',
+  registerUrlPlaceholder: 'Enter an internal path or external registration URL, e.g. /register or https://example.com/register',
   primaryColor: 'Primary Color',
   primaryColorPlaceholder: 'e.g. #05d9e8',
   secondaryColor: 'Secondary Color',
@@ -79,7 +82,7 @@ export default {
 
   transportCrypto: 'Transport Encryption',
   transportAlgorithm: 'Algorithm',
-  transportCipher: 'Cipher Format',
+  transportCipher: 'Cipher 表单at',
   transportPublicKey: 'Public Key',
   transportPublicKeyPlaceholder: 'Enter Base64 public key',
   transportPrivateKey: 'Private Key',

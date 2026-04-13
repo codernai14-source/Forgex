@@ -1,7 +1,7 @@
 /**
- * 通用翻譯 - 繁體中文
+ * 通用翻译 - 繁体中文注释
  *
- * 包含系統中常用的通用詞彙和操作
+ * 包含系统中常用的通用词汇与操作
  */
 export default {
   // 基礎操作
@@ -29,11 +29,11 @@ export default {
   detail: '詳情',
   action: '操作',
   
-  // 展開/收起
+  // 展开/收起
   expand: '展開',
   collapse: '收起',
 
-  /** 多語言輸入組件 {@link I18nInput} */
+  /** 多语言输入组件 {@link I18nInput} */
   i18nInput: {
     configureTooltip: '配置多語言',
     modalTitle: '多語言配置',
@@ -44,10 +44,20 @@ export default {
     columnLang: '語言',
     columnValue: '翻譯內容',
     loadLanguagesFailed: '加載語言列表失敗',
+    // 占位提示相关
+    placeholderLabel: '常用佔位符：',
+    placeholderHint: '點擊佔位符可插入到目前聚焦的語言輸入框中',
+    phUserName: '用戶名',
+    phUserAccount: '用戶帳號',
+    phTenantName: '租戶名稱',
+    phCurrentTime: '當前時間',
+    phTitle: '標題',
+    phContent: '內容',
+    phLinkUrl: '連結位址',
   },
 
-  // 狀態
-  status: '狀態',
+  // 状态
+  status: '状态',
   enabled: '啟用',
   disabled: '禁用',
   active: '激活',
@@ -78,7 +88,7 @@ export default {
   pleaseInput: '請輸入',
   home: '首頁',
   
-  // 系統配置相關
+  // 系统配置相关
   loadFailed: '加載失敗',
   saveSuccess: '保存成功',
   saveFailed: '保存失敗',
@@ -97,7 +107,6 @@ export default {
   saved: '已保存',
   deleted: '已刪除',
   remove: '移除',
-  confirm: '確定',
   login: {
     accountLabel: '帳號',
     accountPlaceholder: '請輸入帳號',
@@ -111,6 +120,11 @@ export default {
     languageLabel: '語言',
     rememberMe: '記住我',
     forgotPassword: '忘記密碼?',
+    noAccount: '還沒有帳號？',
+    register: '立即註冊',
+    registerGuideTitle: '帳號註冊說明',
+    registerGuideDesc: '目前系統尚未提供內建自助註冊流程，請聯繫管理員為您開通帳號，或使用企業提供的外部註冊連結。',
+    backToLogin: '返回登入',
     submit: '身份校驗',
     moreLoginMethods: '更多登入方式',
     sliderTitle: '滑塊驗證',

@@ -21,7 +21,7 @@ export default {
     department: 'Department',
     position: 'Position',
     entryDate: 'Entry Date',
-    status: 'Status',
+    status: '状态',
     oldPassword: 'Current Password',
     newPassword: 'New Password',
     confirmPassword: 'Confirm Password',

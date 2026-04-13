@@ -505,6 +505,12 @@ public class TenantInitServiceImpl implements ITenantInitService {
             ? "Aa123456"
             : policy.getDefaultPassword();
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
-        return provider.encrypt(defaultPassword);
+        if (provider.supportsEncrypt()) {
+            return provider.encrypt(defaultPassword);
+        }
+        if (provider.supportsHash()) {
+            return provider.hash(defaultPassword);
+        }
+        throw new IllegalStateException("Unsupported password store: " + provider.name());
     }
 }

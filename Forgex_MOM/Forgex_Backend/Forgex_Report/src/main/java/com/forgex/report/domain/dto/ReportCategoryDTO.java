@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 用于报表分类的数据传输和展示
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see com.forgex.report.domain.entity.ReportCategory

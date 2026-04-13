@@ -4,7 +4,7 @@
       ref="tableRef"
       table-code="ExcelImportConfigTable"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
+      :降级方案-config="降级方案Config"
       row-key="id"
       :show-query-form="true"
       :pagination="{
@@ -48,7 +48,7 @@
       </template>
     </FxDynamicTable>
     
-    <!-- 编辑弹窗 -->
+    <!-- 缂栬緫寮圭獥 -->
     <ExcelImportConfigModal
       ref="modalRef"
       v-model:open="modalOpen"
@@ -75,12 +75,12 @@ import {
 } from '@/api/system/excel'
 
 /**
- * 导入配置管理页面
+ * 瀵煎叆閰嶇疆绠＄悊椤甸潰
  * 
- * 功能：
- * 1. 导入配置列表查询（分页、搜索）
- * 2. 新增、编辑、删除导入配置
- * 3. 下载导入模板
+ * 鍔熻兘锛?
+ * 1. 瀵煎叆閰嶇疆鍒楄〃鏌ヨ锛堝垎椤点€佹悳绱級
+ * 2. 鏂板銆佺紪杈戙€佸垹闄ゅ鍏ラ厤缃?
+ * 3. 涓嬭浇瀵煎叆妯℃澘
  * 
  * @author Forgex
  * @version 1.0.0
@@ -89,19 +89,19 @@ import {
 
 const { t } = useI18n()
 
-// 表格引用
+// 琛ㄦ牸寮曠敤
 const tableRef = ref()
 
-// 弹窗状态
+// 寮圭獥鐘舵€?
 const modalOpen = ref(false)
 const isEdit = ref(false)
 const editData = ref<any>({})
 const modalRef = ref()
 
 /**
- * 表格列配置
+ * 琛ㄦ牸鍒楅厤缃?
  */
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ExcelImportConfigTable',
   tableName: t('system.excel.importConfigTitle'),
   tableType: 'NORMAL',
@@ -164,7 +164,7 @@ const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
 }))
 
 /**
- * 查询参数提取工具函数
+ * 鏌ヨ鍙傛暟鎻愬彇宸ュ叿鍑芥暟
  */
 function pickQueryValue(query: Record<string, any>, keys: string[]): string | undefined {
   for (const key of keys) {
@@ -177,7 +177,7 @@ function pickQueryValue(query: Record<string, any>, keys: string[]): string | un
 }
 
 /**
- * 数据请求函数
+ * 鏁版嵁璇锋眰鍑芥暟
  */
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -202,7 +202,7 @@ const handleRequest = async (payload: {
       total: res.total || 0
     }
   } catch (error) {
-    console.error('加载导入配置列表失败:', error)
+    console.error('鍔犺浇瀵煎叆閰嶇疆鍒楄〃澶辫触:', error)
     return {
       records: [],
       total: 0
@@ -211,7 +211,7 @@ const handleRequest = async (payload: {
 }
 
 /**
- * 打开编辑弹窗
+ * 鎵撳紑缂栬緫寮圭獥
  */
 const openEdit = async (id?: number) => {
   isEdit.value = !!id
@@ -222,7 +222,7 @@ const openEdit = async (id?: number) => {
       const detail: any = await importConfigDetail({ id })
       editData.value = detail || {}
     } catch (error) {
-      console.error('加载配置详情失败:', error)
+      console.error('鍔犺浇閰嶇疆璇︽儏澶辫触:', error)
       message.error(t('common.loadFailed'))
       return
     }
@@ -232,17 +232,17 @@ const openEdit = async (id?: number) => {
 }
 
 /**
- * 弹窗提交处理
+ * 寮圭獥鎻愪氦澶勭悊
  */
 const handleModalSubmit = async () => {
   try {
     const formData = modalRef.value?.formData
     if (!formData) {
-      message.error('表单数据为空')
+      message.error('琛ㄥ崟鏁版嵁涓虹┖')
       return
     }
     
-    // 构建保存参数
+    // 鏋勫缓淇濆瓨鍙傛暟
     const saveData = {
       id: formData.id,
       tableName: formData.tableName,
@@ -264,13 +264,13 @@ const handleModalSubmit = async () => {
     tableRef.value?.refresh?.()
     modalOpen.value = false
   } catch (error) {
-    console.error('保存失败:', error)
+    console.error('淇濆瓨澶辫触:', error)
     message.error(t('system.excel.message.saveConfigFailed'))
   }
 }
 
 /**
- * 删除配置
+ * 鍒犻櫎閰嶇疆
  */
 const handleDelete = async (id: number) => {
   Modal.confirm({
@@ -283,7 +283,7 @@ const handleDelete = async (id: number) => {
         message.success(t('common.deleted'))
         tableRef.value?.refresh?.()
       } catch (error) {
-        console.error('删除失败:', error)
+        console.error('鍒犻櫎澶辫触:', error)
         message.error(t('system.excel.message.deleteConfigFailed'))
       }
     }
@@ -291,7 +291,7 @@ const handleDelete = async (id: number) => {
 }
 
 /**
- * 下载模板
+ * 涓嬭浇妯℃澘
  */
 const handleDownload = async (tableCode: string) => {
   try {
@@ -309,7 +309,7 @@ const handleDownload = async (tableCode: string) => {
     window.URL.revokeObjectURL(url)
     message.success(t('system.excel.message.downloadTemplateSuccess'))
   } catch (error) {
-    console.error('下载模板失败:', error)
+    console.error('涓嬭浇妯℃澘澶辫触:', error)
     message.error(t('system.excel.message.downloadTemplateFailed'))
   }
 }

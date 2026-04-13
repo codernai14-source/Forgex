@@ -98,16 +98,20 @@
             <span>{{ i18nT('common.login.submit') }}</span>
             <span v-if="logging" class="spinner"></span>
           </button>
+          <div v-if="showRegisterEntry" class="register-hint">
+            <span>{{ i18nT('common.login.noAccount') }}</span>
+            <a class="register-link" href="#" @click.prevent="goToRegister">{{ i18nT('common.login.register') }}</a>
+          </div>
           <div class="divider" v-if="systemConfig.showOAuthLogin"><span>{{ i18nT('common.login.moreLoginMethods') }}</span></div>
           <div class="oauth-row" v-if="systemConfig.showOAuthLogin">
             <button type="button" class="oauth-btn gitee" title="Gitee">
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
             <button type="button" class="oauth-btn wechat" :title="i18nT('common.login.platform.wechat')" @click="onOAuth('WECHAT')">
-              <img src="/tubiao/weixin2.svg" alt="微信" />
+              <img src="/tubiao/weixin2.svg" alt="寰俊" />
             </button>
             <button type="button" class="oauth-btn dingtalk" :title="i18nT('common.login.platform.dingtalk')" @click="onOAuth('DINGTALK')">
-              <img src="/tubiao/dingding.svg" alt="钉钉" />
+              <img src="/tubiao/dingding.svg" alt="閽夐拤" />
             </button>
           </div>
         </form>
@@ -132,7 +136,7 @@
           >
             <div class="tenant-logo">
               <img v-if="t.logo" :src="resolveTenantLogo(t.logo)" alt="logo" />
-              <div v-else class="logo-fallback">
+              <div v-else class="logo-降级方案">
                 {{ t.name?.[0] || 'T' }}
               </div>
             </div>
@@ -243,15 +247,18 @@ import { getRoutes } from '../../../api/system/route'
 import router, { PERSONAL_HOME_PATH, injectDynamicRoutes } from '../../../router'
 import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
-import { getInitStatus } from '../../../api/system/init'
+import { getInit状态 } from '../../../api/system/init'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { sm2 } from 'sm-crypto'
 import { useUserStore } from '@/stores/user'
-import { usePermissionStore } from '@/stores/permission'
+import { use权限Store } from '@/stores/permission'
 import { getCurrentUserInfo } from '@/api/profile'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 
+/**
+ * 后端返回的滑块验证码数据结构。
+ */
 interface SliderCaptchaChallenge {
   id: string
   backgroundImage: string
@@ -262,6 +269,9 @@ interface SliderCaptchaChallenge {
   templateImageHeight: number
 }
 
+/**
+ * 用户拖动滑块时记录的单个轨迹点。
+ */
 interface SliderTrackPoint {
   x: number
   y: number
@@ -269,6 +279,9 @@ interface SliderTrackPoint {
   type: string
 }
 
+/**
+ * 提交给后端的滑块校验完整载荷。
+ */
 interface SliderTrackPayload {
   bgImageWidth: number
   bgImageHeight: number
@@ -281,9 +294,9 @@ interface SliderTrackPayload {
   trackList: SliderTrackPoint[]
 }
 
-// 初始化 stores
+// 初始化登录和租户选择流程共用的状态仓库。
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
+const permissionStore = use权限Store()
 
 const { t: i18nT } = useI18n({ useScope: 'global' })
 
@@ -315,7 +328,7 @@ const systemConfig = ref<SystemBasicConfig>({
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
-  loginPageTitle: '欢迎来到FORGEX_MOM！',
+  loginPageTitle: '欢迎来到 FORGEX_MOM',
   loginPageSubtitle: '',
   loginBackgroundType: 'image',
   loginBackgroundVideo: '/loading.mp4',
@@ -324,9 +337,13 @@ const systemConfig = ref<SystemBasicConfig>({
   loginStyle: 'cyber',
   loginLayout: 'center',
   showOAuthLogin: true,
+  showRegisterEntry: true,
+  registerUrl: '/register',
   primaryColor: '#05d9e8',
   secondaryColor: '#ff2a6d'
 })
+
+const showRegisterEntry = computed(() => systemConfig.value.showRegisterEntry !== false)
 
 const sliderTemplateWidth = computed(() => {
   return sliderChallenge.value?.templateImageWidth && sliderChallenge.value.templateImageWidth > 0
@@ -398,7 +415,7 @@ function formatMediaUrl(value: string): string {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  // 统一处理上传后的文件路径，确保登录页媒体资源可以直接预览。
   if (url.startsWith('/files/')) {
     return `/api${url}`
   }
@@ -413,7 +430,7 @@ function formatTenantLogo(url?: string) {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  // 统一处理上传后的文件路径，确保租户 Logo 能正确显示。
   if (url.startsWith('/files/')) {
     return `/api${url}`
   }
@@ -428,7 +445,7 @@ function formatLangIcon(icon?: string) {
   if (icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')) {
     return icon
   }
-  // 处理 /files/ 开头的路径（文件上传返回的路径）
+  // 统一处理上传后的文件路径，确保语言图标在不同环境下都能正确解析。
   if (icon.startsWith('/files/')) {
     return `/api${icon}`
   }
@@ -440,12 +457,49 @@ function formatLangIcon(icon?: string) {
 
 function resolveLangEmoji(langCode: string) {
   const code = String(langCode || '').toUpperCase()
-  if (code.startsWith('ZH-CN')) return '🇨🇳'
-  if (code.startsWith('ZH-TW')) return '🇹🇼'
-  if (code.startsWith('EN-US')) return '🇺🇸'
-  if (code.startsWith('JA-JP')) return '🇯🇵'
-  if (code.startsWith('KO-KR')) return '🇰🇷'
-  return '🌐'
+  if (code.startsWith('ZH-CN')) return '馃嚚馃嚦'
+  if (code.startsWith('ZH-TW')) return '馃嚬馃嚰'
+  if (code.startsWith('EN-US')) return '馃嚭馃嚫'
+  if (code.startsWith('JA-JP')) return '馃嚡馃嚨'
+  if (code.startsWith('KO-KR')) return '馃嚢馃嚪'
+  return '馃寪'
+}
+
+function isExternalUrl(url: string) {
+  return /^https?:\/\//i.test(String(url || '').trim())
+}
+
+function resolveRegisterUrl() {
+  const configured = String(systemConfig.value.registerUrl || '').trim()
+  return configured || '/register'
+}
+
+async function goToRegister() {
+  const target = resolveRegisterUrl()
+  if (!target) {
+    return
+  }
+  if (isExternalUrl(target)) {
+    window.open(target, '_blank', 'noopener')
+    return
+  }
+  await router.push(target)
+}
+
+async function refreshLoginCaptchaAfterFailure() {
+  captcha.value = ''
+  if (mode.value === 'image') {
+    await loadImage()
+    return
+  }
+  if (mode.value === 'slider') {
+    sliderVerified.value = false
+    sliderValue.value = 0
+    sliderChallenge.value = null
+    if (sliderOpen.value) {
+      await initSlider()
+    }
+  }
 }
 
 async function loadLanguages() {
@@ -538,6 +592,7 @@ async function onPreLogin() {
       message.error(i18nT('common.login.msg.noTenantBound'))
     }
   } catch (e) {
+    await refreshLoginCaptchaAfterFailure()
   } finally {
     logging.value = false
   }
@@ -575,9 +630,9 @@ async function confirmTenant() {
       tenantId: chosenTenant.value,
       account: account.value
     })
-    // 后端返回当前用户完整信息，token 通过 cookie 传递
+    // 后端会返回当前租户上下文，认证信息仍通过 Cookie 维持。
     if (result && result.account) {
-      // 存储用户信息到 Pinia Store（包含头像等）
+      // 先缓存当前用户信息，便于外层框架立即渲染头像和名称。
       userStore.setUserInfo({
         account: result.account,
         username: result.username || result.account || account.value,
@@ -588,11 +643,11 @@ async function confirmTenant() {
         tenantName: current.name
       })
       
-      // 将 account 和 tenantId 存储到 sessionStorage，用于路由守卫检查
+      // 将账号和租户写入 sessionStorage，供路由守卫和刷新恢复使用。
       sessionStorage.setItem('account', result.account)
       sessionStorage.setItem('tenantId', String(result.tenantId || chosenTenant.value))
       
-      // 获取路由时需要传递 account 和 tenantId
+      // 确认租户后再拉取该租户下的路由配置。
       const routesRes = await getRoutes({
         account: account.value,
         tenantId: chosenTenant.value
@@ -600,17 +655,17 @@ async function confirmTenant() {
       
       console.log('[Login] Routes response:', routesRes)
       
-      // 存储按钮权限到 Pinia Store
+      // 进入系统前先保存按钮级权限，避免页面初次渲染缺权限数据。
       if (routesRes && routesRes.buttons) {
-        permissionStore.setPermissions(routesRes.buttons)
-        console.log('[Login] Permissions stored to Pinia:', routesRes.buttons)
+        permissionStore.set权限s(routesRes.buttons)
+        console.log('[Login] 权限s stored to Pinia:', routesRes.buttons)
       } else {
-        // 如果没有权限数据，存储空数组
-        permissionStore.setPermissions([])
+        // 后端未返回权限时主动清空，避免沿用旧租户的残留权限。
+        permissionStore.set权限s([])
         console.log('[Login] No permissions found, stored empty array')
       }
       
-      // 存储路由和模块信息
+      // 保存路由和模块信息，供菜单渲染与路由控制使用。
       if (routesRes && routesRes.routes) {
         permissionStore.setRoutes(routesRes.routes)
       }
@@ -631,17 +686,17 @@ async function confirmTenant() {
         localStorage.removeItem('fx-remember-account')
       }
       
-      // 等待 DOM 更新和路由准备完成
+      // 等待动态路由注册完成，再执行页面跳转。
       await nextTick()
       await router.isReady()
       console.log('[Login] Router is ready')
       
-      // 跳转到系统管理主页
+      // 租户上下文准备完成后，进入个人主页入口。
       const targetPath = PERSONAL_HOME_PATH
       
       console.log('[Login] Navigating to:', targetPath)
       
-      // 直接导航，不需要 setTimeout
+      // 路由准备完成后直接跳转，不再额外延迟。
       router.push(targetPath).then(() => {
         console.log('[Login] Navigation completed')
       }).catch((err) => {
@@ -651,8 +706,8 @@ async function confirmTenant() {
       message.error(i18nT('common.login.msg.chooseTenantFailed'))
     }
   } catch (e: any) {
-    // http拦截器已经显示了错误，这里不再重复显示
-    console.error('选择租户失败:', e)
+    // 请求拦截器已经提示过错误，这里只保留调试日志。
+    console.error('閫夋嫨绉熸埛澶辫触:', e)
   }
 }
 
@@ -753,7 +808,6 @@ async function verifySliderCaptcha() {
   } catch (e) {
     sliderVerified.value = false
     captcha.value = ''
-    message.error(i18nT('common.operationFailed'))
     await initSlider()
   } finally {
     sliderVerifying.value = false
@@ -1116,6 +1170,23 @@ onMounted(async () => {
   justify-content: center;
   gap: 8px;
 }
+.register-hint {
+  margin-top: 12px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.register-link {
+  margin-left: 6px;
+  color: #05d9e8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-link:hover {
+  color: #d300c5;
+}
 .btn-disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -1228,7 +1299,7 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
 }
-.logo-fallback {
+.logo-降级方案 {
   color: #e5e7eb;
   font-size: 24px;
   font-weight: 700;

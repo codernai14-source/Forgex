@@ -1,24 +1,24 @@
 /**
- * システムダッシュボード翻訳 - 日本語
+ * 系统仪表盘翻译 - 日文注释
  */
 export default {
   title: 'システム管理',
 
-  // 統計
+  // 统计
   userCount: 'ユーザー総数',
   roleCount: 'ロール総数',
   menuCount: 'メニュー総数',
   onlineUsers: 'オンラインユーザー',
 
-  // クイックエントリー
-  quickEntry: 'クイックエントリー',
+  // 快捷入口
+  quickEntry: '快捷入口',
   userManagement: 'ユーザー管理',
   roleManagement: 'ロール管理',
   menuManagement: 'メニュー管理',
   moduleManagement: 'モジュール管理',
 
-  // システム情報
-  systemInfo: 'システム情報',
+  // 系统信息
+  systemInfo: '系统信息',
   systemName: 'システム名',
   appVersion: 'アプリバージョン',
   osKernelVersion: 'OS バージョン',
@@ -27,15 +27,15 @@ export default {
   currentUser: '現在のユーザー',
   defaultTenant: 'デフォルトテナント',
 
-  // チャート
+  // 图表
   cpuUsage: 'CPU 使用率',
   memoryUsage: 'サービスメモリ使用量',
   moduleUsage: 'モジュール使用状況',
   moduleMemoryUsage: 'JVM メモリプール',
   location: 'サーバーの場所',
 
-  // サーバー情報
-  serverInfo: 'サーバー情報',
+  // 服务器信息
+  serverInfo: '服务器信息',
   osName: 'オペレーティングシステム',
   osVersion: 'システムバージョン',
   osArch: 'システムアーキテクチャ',
@@ -52,11 +52,11 @@ export default {
   cpuModel: 'CPU モデル',
   cores: 'コア',
 
-  // ログ
-  recentOperationLogs: '最近の操作ログ',
-  recentLoginLogs: '最近のログインログ',
+  // 日志
+  recentOperationLogs: '最近の操作日志',
+  recentLoginLogs: '最近の日志イン日志',
 
-  // メッセージ
+  // 消息
   tenantInfoMissing: 'テナント情報がありません',
-  loadStatisticsFailed: '統計データの読み込みに失敗しました',
+  loadStatisticsFailed: '统计データの読み込みに失敗しました',
 }

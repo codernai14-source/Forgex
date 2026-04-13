@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+    dynamic:
+      enabled: true
+      primary: admin
+      strict: true
+      datasource:
+        admin:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_admin?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        common:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_common?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        history:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_history?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        job:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_job?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        workflow:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_workflow?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        scada:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_scada?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver

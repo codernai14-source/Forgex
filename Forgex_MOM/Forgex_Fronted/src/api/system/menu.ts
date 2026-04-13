@@ -67,6 +67,33 @@ export function batchDeleteMenus(ids: string[]) {
   return http.post('/sys/menu/batchDelete', { ids })
 }
 
+export function getCMenuTree(data: {
+  tenantId?: number
+  moduleId?: number
+}) {
+  return http.post('/sys/c-menu/tree', data)
+}
+
+export function getCMenuById(id: string) {
+  return http.post('/sys/c-menu/detail', { id })
+}
+
+export function addCMenu(data: Menu) {
+  return http.post('/sys/c-menu/create', data)
+}
+
+export function updateCMenu(data: Menu) {
+  return http.post('/sys/c-menu/update', data)
+}
+
+export function deleteCMenu(id: string) {
+  return http.post('/sys/c-menu/delete', { id })
+}
+
+export function batchDeleteCMenus(ids: string[]) {
+  return http.post('/sys/c-menu/batchDelete', { ids })
+}
+
 /**
  * 获取菜单树（别名，兼容旧代码）
  */

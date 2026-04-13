@@ -50,6 +50,9 @@ class HomeMenuRepository @Inject constructor(
             val path = node.path.orEmpty()
             val title = node.meta?.title ?: node.name ?: path
             val componentKey = node.component.orEmpty()
+            val pageRenderType = node.meta?.pageRenderType ?: node.pageRenderType
+            val menuMode = node.meta?.menuMode ?: node.menuMode
+            val externalUrl = node.meta?.externalUrl ?: node.externalUrl
 
             val isMenu = menuType.equals("menu", ignoreCase = true)
             if (isMenu && path.isNotBlank()) {
@@ -58,6 +61,9 @@ class HomeMenuRepository @Inject constructor(
                         title = title,
                         path = path,
                         componentKey = componentKey,
+                        pageRenderType = pageRenderType,
+                        menuMode = menuMode,
+                        externalUrl = externalUrl,
                         moduleCode = moduleCode,
                         menuType = menuType
                     )

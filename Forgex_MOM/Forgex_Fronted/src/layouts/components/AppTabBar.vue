@@ -1,6 +1,6 @@
 <template>
-  <div class="app-tabbar">
-    <div class="tabbar-inner" ref="tabbarRef">
+  <div ref="tabbarRootRef" class="app-tabbar">
+    <div class="tabbar-inner">
       <div
         v-for="tab in tabs"
         :key="tab.key"
@@ -28,7 +28,7 @@
 
     <!-- 右侧操作按钮 -->
     <div class="tabbar-actions">
-      <a-dropdown placement="bottomRight">
+      <a-dropdown placement="bottomRight" :get-popup-container="getPopupContainer">
         <a-button type="text" size="small" class="action-btn">
           <MoreOutlined />
         </a-button>
@@ -50,8 +50,8 @@
     <!-- 右键菜单 -->
     <a-dropdown
       v-model:open="contextMenuVisible"
-      :trigger="['contextmenu']"
-      :get-popup-container="() => $el"
+      :trigger="[]"
+      :get-popup-container="getPopupContainer"
     >
       <div
         :style="{
@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -172,10 +172,20 @@ const emit = defineEmits<{
 const draggingKey = ref<string>('')
 const dragFromIndex = ref<number>(-1)
 
+// 容器引用（用于稳定挂载下拉层，避免切页/卸载时访问失效的 $el）
+const tabbarRootRef = ref<HTMLElement | null>(null)
+
 // 右键菜单相关
 const contextMenuVisible = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 const contextTab = ref<Tab | null>(null)
+
+function getPopupContainer() {
+  if (typeof document === 'undefined') {
+    return tabbarRootRef.value as any
+  }
+  return tabbarRootRef.value || document.body
+}
 
 // 标签点击
 const onTabClick = (tab: Tab) => {
@@ -184,6 +194,10 @@ const onTabClick = (tab: Tab) => {
 
 // 标签关闭
 const onTabClose = (tab: Tab) => {
+  contextMenuVisible.value = false
+  if (contextTab.value?.key === tab.key) {
+    contextTab.value = null
+  }
   emit('tab-close', tab)
 }
 
@@ -288,6 +302,16 @@ const onQuickAction = (info: any) => {
       break
   }
 }
+
+watch(
+  () => props.tabs.map(tab => tab.key),
+  tabKeys => {
+    if (contextTab.value && !tabKeys.includes(contextTab.value.key)) {
+      contextMenuVisible.value = false
+      contextTab.value = null
+    }
+  },
+)
 </script>
 
 <style scoped lang="less">

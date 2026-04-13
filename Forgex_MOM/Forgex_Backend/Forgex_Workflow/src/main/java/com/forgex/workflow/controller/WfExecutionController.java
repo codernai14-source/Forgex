@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
+import com.forgex.workflow.domain.dto.WfDashboardAnalyticsVO;
 import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
@@ -184,5 +185,16 @@ public class WfExecutionController {
     public R<WfDashboardSummaryVO> loadDashboardSummary() {
         WfDashboardSummaryVO summary = executionService.loadDashboardSummary();
         return R.ok(summary);
+    }
+
+    /**
+     * 审批工作台图表统计数据。
+     *
+     * @return 图表统计结果
+     */
+    @PostMapping("/dashboard/analytics")
+    @RequirePerm("wf:dashboard:view")
+    public R<WfDashboardAnalyticsVO> loadDashboardAnalytics() {
+        return R.ok(executionService.loadDashboardAnalytics());
     }
 }

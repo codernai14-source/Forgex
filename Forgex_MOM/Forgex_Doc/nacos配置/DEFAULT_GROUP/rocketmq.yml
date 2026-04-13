@@ -1,0 +1,10 @@
+rocketmq:
+  name-server: 127.0.0.1:9876
+  access-key:
+  secret-key:
+  producer:
+    group: forgex-producer-group
+    send-message-timeout: 3000
+  consumer:
+    group: forgex-consumer-group
+    pull-batch-size: 10

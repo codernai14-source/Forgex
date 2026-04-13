@@ -1,78 +1,65 @@
 /**
- * Layout Translations - English
- * 
- * Contains translations for main layout, menu, tab bar, settings, etc.
+ * 布局翻译 - 中文注释
  */
 export default {
-  // Global Search
-  globalSearchPlaceholder: 'Search menu or page',
-  
-  // Language Switch
+  globalSearchPlaceholder: 'Search menus, modules, or pinyin initials...',
+  globalSearchResultsCount: '{count} results found',
+  globalSearchEmptyTitle: 'No matching menu found',
+  globalSearchEmptyHint: 'Try a menu name, module name, or pinyin initials',
+  globalSearchTipsTitle: 'Quick Search',
+  globalSearchTipNavigate: 'Navigate',
+  globalSearchTipSelect: 'Select',
+  globalSearchTipClose: 'Close',
+  globalSearchMatchTitle: 'Menu',
+  globalSearchMatchModule: 'Module',
+  globalSearchMatchTitlePinyin: 'Menu Pinyin',
+  globalSearchMatchModulePinyin: 'Module Pinyin',
+  globalSearchMatchBreadcrumb: 'Breadcrumb',
+  globalSearchMatchPath: 'Route',
   langZhCn: 'Chinese (Simplified)',
   langEnUs: 'English',
-  
-  // Header Actions
   refresh: 'Refresh',
   openSettings: 'Layout Settings',
-  
-  // Settings Drawer
   settingTitle: 'Layout & Theme Settings',
-  settingSubtitle: 'Customize navigation layout, theme color and appearance',
-  
-  // Menu Layout
+  settingSubtitle: 'Customize navigation layout, theme color, and appearance',
   menuLayout: 'Menu Layout',
   leftDoubleMenu: 'Left Double Menu',
   topMenu: 'Top Menu',
   leftMenu: 'Left Menu',
-  mixMenu: 'Mix Menu',
-  
-  // Basic Style
+  mixMenu: 'Mixed Menu',
   basicStyle: 'Basic Style',
   fontSize: 'Font Size',
   fontSizeSmall: 'Small',
   fontSizeDefault: 'Default',
   fontSizeLarge: 'Large',
   borderRadius: 'Border Radius',
-  
-  // Theme
   theme: 'Theme',
-  themeColor: 'Primary Color',
+  themeColor: 'Theme Color',
   themeMode: 'Mode',
   themeLight: 'Light',
   themeDark: 'Dark',
   themeSystem: 'Follow System',
-  
-  // Tab Bar
+  themePreset: 'Preset Themes',
   tabBar: 'Tab Bar',
   tabBarEnabled: 'Enable Tab Bar',
   tabBarStyle: 'Tab Bar Style',
   tabBarCard: 'Card',
   tabBarLine: 'Line',
-  
-  // Widgets
   widgets: 'Widgets',
   widgetRefresh: 'Enable Refresh Button',
   widgetSearch: 'Enable Global Search',
   widgetFullscreen: 'Enable Fullscreen Button',
-  
-  // Footer
   footer: 'Footer',
   footerEnabled: 'Show Footer',
   footerCopyright: 'Show Copyright',
-  
-  // Content Area
   contentWidth: 'Content Width',
   contentWidthFluid: 'Fluid',
   contentWidthFixed: 'Fixed',
-  
-  // Layout Mode
   layoutMode: 'Layout Mode',
   layoutVertical: 'Vertical',
-  layoutVerticalMix: 'Vertical Mix',
+  layoutVerticalMix: 'Vertical Double Column',
   layoutTop: 'Horizontal',
-  layoutMix: 'Mix',
-  
-  // Header
+  layoutMix: 'Mixed',
   header: 'Header',
   headerVisible: 'Show Header',
   headerMode: 'Mode',
@@ -83,44 +70,44 @@ export default {
   headerMenuAlignLeft: 'Left',
   headerMenuAlignCenter: 'Center',
   headerMenuAlignRight: 'Right',
-  
-  // Theme Color
   themeColorDawnBlue: 'Dawn Blue (Default)',
   themeColorTwilightPurple: 'Twilight Purple',
-  themeColorCyan: 'Cyan',
+  themeColorRosePink: 'Sakura Pink',
+  themeColorLemonYellow: 'Lemon Yellow',
+  themeColorSkyBlue: 'Sky Blue',
+  themeColorMintGreen: 'Mint Green',
+  themeColorZincGray: 'Zinc Gray',
+  themeColorTealGreen: 'Teal Green',
+  themeColorRoyalBlue: 'Royal Blue',
+  themeColorAmberOrange: 'Amber Orange',
+  themeColorRoseRed: 'Rose Red',
   themeColorAuroraGreen: 'Aurora Green',
   themeColorSunsetOrange: 'Sunset Orange',
   themeColorVolcanoRed: 'Volcano Red',
   themeColorNeutralGray: 'Neutral Gray',
-  
-  // Common Settings
+  themeColorSlateGray: 'Slate Gray',
+  themeColorCoolGray: 'Cool Gray',
+  themeColorCyan: 'Cyan',
   common: 'Common',
   watermark: 'Watermark',
   watermarkEnabled: 'Watermark',
   watermarkText: 'Watermark Text',
-  formMode: 'Form Mode',
+  formMode: '表单 Mode',
   formModeModal: 'Modal',
   formModeDrawer: 'Drawer',
   animateEnabled: 'Page Animation',
   pageTransition: 'Page Transition',
   pageTransitionHorizontal: 'Horizontal',
   pageTransitionFade: 'Fade',
-  
-  // Action Buttons
   reset: 'Reset',
   save: 'Save',
-  
-  // Tabs
   tabAppearance: 'Appearance',
   tabLayout: 'Layout',
   tabCommon: 'Common',
-  
-  // User Menu
   userProfile: 'Profile',
   userSettings: 'Settings',
   logout: 'Logout',
-  
-  // Breadcrumb
   home: 'Home',
   personalHomepage: 'Personal Homepage',
+  favoriteManagement: 'Favorite Management',
 }

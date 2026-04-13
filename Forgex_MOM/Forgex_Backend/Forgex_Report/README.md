@@ -181,7 +181,7 @@ A: 检查数据库字符集配置，确保使用 UTF-8 编码。
 
 ## 作者
 
-- LiDaoMoM
+- ForGexTeam
 
 ## 许可证
 

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * 用于配置报表模块的通用参数
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

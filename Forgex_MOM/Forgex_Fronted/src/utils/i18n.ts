@@ -1,8 +1,8 @@
 /**
  * 多语言工具函数
- * 
+ *
  * 提供多语言相关的工具方法，用于处理 I18n JSON 数据
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -11,28 +11,25 @@ import { getLocale } from '@/locales'
 
 /**
  * 从 I18n JSON 字符串中获取当前语言的值
- * 
- * @param i18nJson - 多语言 JSON 字符串，格式：{"zh-CN":"中文","en-US":"English"}
- * @param fallback - 回退值，当 JSON 为空或解析失败时返回
+ *
+ * @param i18nJson - 多语言 JSON 字符串，格式如：{"zh-CN":"中文","en-US":"English"}
+ * @param 降级方案 - 回退值，当 JSON 为空或解析失败时返回
  * @param langCode - 指定语言代码，不传则使用当前语言
  * @returns 对应语言的值
- * 
+ *
  * @example
  * ```typescript
  * const menuName = getI18nValue(menu.nameI18nJson, menu.name)
- * // 如果当前语言是 zh-CN，返回中文名称
- * // 如果当前语言是 en-US，返回英文名称
- * // 如果 JSON 为空或当前语言没有配置，返回 fallback
  * ```
  */
 export function getI18nValue(
   i18nJson: string | null | undefined,
-  fallback: string = '',
+  降级方案: string = '',
   langCode?: string
 ): string {
-  // 如果 JSON 为空，直接返回回退值
+  // 如果 JSON 为空，则直接返回回退值
   if (!i18nJson || i18nJson.trim() === '') {
-    return fallback
+    return 降级方案
   }
 
   try {
@@ -47,31 +44,31 @@ export function getI18nValue(
       return i18nObj[currentLang]
     }
     
-    // 如果当前语言没有配置，尝试返回默认语言（zh-CN）
+    // 如果当前语言没有配置，则尝试返回默认语言（zh-CN）
     if (i18nObj['zh-CN']) {
       return i18nObj['zh-CN']
     }
     
-    // 如果默认语言也没有，返回第一个可用的值
+    // 如果默认语言也没有，则返回第一个可用值
     const firstValue = Object.values(i18nObj)[0]
     if (firstValue && typeof firstValue === 'string') {
       return firstValue
     }
     
     // 都没有则返回回退值
-    return fallback
+    return 降级方案
   } catch (error) {
     console.error('解析 I18n JSON 失败:', error, 'JSON:', i18nJson)
-    return fallback
+    return 降级方案
   }
 }
 
 /**
  * 将对象转换为 I18n JSON 字符串
- * 
+ *
  * @param i18nObj - 多语言对象
  * @returns JSON 字符串
- * 
+ *
  * @example
  * ```typescript
  * const json = toI18nJson({
@@ -86,7 +83,7 @@ export function toI18nJson(i18nObj: Record<string, string>): string {
     return ''
   }
   
-  // 过滤掉空值
+  // 过滤空值
   const filtered: Record<string, string> = {}
   Object.entries(i18nObj).forEach(([key, value]) => {
     if (value && value.trim()) {
@@ -99,10 +96,10 @@ export function toI18nJson(i18nObj: Record<string, string>): string {
 
 /**
  * 解析 I18n JSON 字符串为对象
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @returns 多语言对象
- * 
+ *
  * @example
  * ```typescript
  * const obj = parseI18nJson('{"zh-CN":"用户管理","en-US":"User Management"}')
@@ -125,7 +122,7 @@ export function parseI18nJson(i18nJson: string | null | undefined): Record<strin
 
 /**
  * 检查 I18n JSON 是否为空
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @returns 是否为空
  */
@@ -144,10 +141,10 @@ export function isI18nJsonEmpty(i18nJson: string | null | undefined): boolean {
 
 /**
  * 合并多个 I18n JSON
- * 
+ *
  * @param jsonList - JSON 字符串数组
  * @returns 合并后的 JSON 字符串
- * 
+ *
  * @example
  * ```typescript
  * const merged = mergeI18nJson([
@@ -173,10 +170,10 @@ export function mergeI18nJson(...jsonList: (string | null | undefined)[]): strin
 
 /**
  * 获取 I18n JSON 中所有语言的列表
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @returns 语言代码数组
- * 
+ *
  * @example
  * ```typescript
  * const langs = getI18nLanguages('{"zh-CN":"用户","en-US":"User"}')
@@ -190,7 +187,7 @@ export function getI18nLanguages(i18nJson: string | null | undefined): string[] 
 
 /**
  * 检查 I18n JSON 是否包含指定语言
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @param langCode - 语言代码
  * @returns 是否包含
@@ -205,12 +202,12 @@ export function hasI18nLanguage(
 
 /**
  * 设置 I18n JSON 中指定语言的值
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @param langCode - 语言代码
  * @param value - 值
  * @returns 新的 JSON 字符串
- * 
+ *
  * @example
  * ```typescript
  * const newJson = setI18nValue('{"zh-CN":"用户"}', 'en-US', 'User')
@@ -229,7 +226,7 @@ export function setI18nValue(
 
 /**
  * 删除 I18n JSON 中指定语言的值
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @param langCode - 语言代码
  * @returns 新的 JSON 字符串
@@ -245,7 +242,7 @@ export function removeI18nValue(
 
 /**
  * 验证 I18n JSON 格式是否正确
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @returns 验证结果
  */
@@ -279,7 +276,7 @@ export function validateI18nJson(i18nJson: string | null | undefined): {
 
 /**
  * 格式化 I18n JSON（美化输出）
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @param indent - 缩进空格数
  * @returns 格式化后的 JSON 字符串
@@ -291,11 +288,11 @@ export function formatI18nJson(i18nJson: string | null | undefined, indent: numb
 
 /**
  * 获取 I18n JSON 的完整性百分比
- * 
+ *
  * @param i18nJson - 多语言 JSON 字符串
  * @param requiredLangs - 必需的语言列表
  * @returns 完整性百分比（0-100）
- * 
+ *
  * @example
  * ```typescript
  * const completeness = getI18nCompleteness(
@@ -321,12 +318,12 @@ export function getI18nCompleteness(
 
 /**
  * 批量获取多语言值
- * 
+ *
  * @param items - 包含 I18n JSON 的对象数组
  * @param jsonField - JSON 字段名
- * @param fallbackField - 回退字段名
+ * @param 降级方案Field - 回退字段名
  * @returns 处理后的数组
- * 
+ *
  * @example
  * ```typescript
  * const menus = [
@@ -341,12 +338,11 @@ export function getI18nCompleteness(
 export function batchGetI18nValue<T extends Record<string, any>>(
   items: T[],
   jsonField: keyof T,
-  fallbackField: keyof T,
+  降级方案Field: keyof T,
   outputField: string = 'displayName'
 ): (T & { [key: string]: string })[] {
   return items.map(item => ({
     ...item,
-    [outputField]: getI18nValue(item[jsonField] as string, item[fallbackField] as string)
+    [outputField]: getI18nValue(item[jsonField] as string, item[降级方案Field] as string)
   }))
 }
-

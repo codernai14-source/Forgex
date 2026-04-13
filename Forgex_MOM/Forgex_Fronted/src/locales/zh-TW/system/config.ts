@@ -1,5 +1,5 @@
 /**
- * 系統配置頁面翻譯 - 繁體中文
+ * 系统配置页面翻译 - 繁体中文注释
  */
 export default {
   title: '系統配置',
@@ -37,6 +37,9 @@ export default {
   bgColor: '純色背景',
   bgColorPlaceholder: '請輸入背景色，例如 #0d0221',
   showOAuth: '顯示第三方登入入口',
+  showRegisterEntry: '顯示註冊入口',
+  registerUrl: '註冊連結地址',
+  registerUrlPlaceholder: '請輸入站內路徑或外部註冊連結，例如 /register 或 https://example.com/register',
   primaryColor: '主色',
   primaryColorPlaceholder: '請輸入主色，例如 #05d9e8',
   secondaryColor: '輔助色',

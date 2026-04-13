@@ -1,8 +1,8 @@
 /**
- * 模塊管理翻譯 - 繁體中文
+ * 模块管理翻译 - 繁体中文注释
  */
 export default {
-  // 頁面標題
+  // 页面标题
   title: '模塊管理',
   list: '模塊列表',
   detail: '模塊詳情',
@@ -15,7 +15,7 @@ export default {
   createTime: '創建時間',
   updateTime: '更新時間',
   
-  // 表單
+  // 表单
   form: {
     addModule: '新增模塊',
     editModule: '編輯模塊',

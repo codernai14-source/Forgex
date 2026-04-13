@@ -1,5 +1,5 @@
 /**
- * 租戶管理翻譯 - 繁體中文
+ * 租户管理翻译 - 繁体中文注释
  */
 export default {
   title: '租戶管理',
@@ -13,10 +13,10 @@ export default {
   tenantType: '租戶類別',
   logo: 'Logo',
   description: '描述',
-  status: '狀態',
+  status: '状态',
   createTime: '創建時間',
   
-  // 表單
+  // 表单
   form: {
     addTenant: '新增租戶',
     editTenant: '編輯租戶',
@@ -24,7 +24,7 @@ export default {
     tenantCode: '請輸入租戶編碼',
     tenantType: '請選擇租戶類別',
     description: '請輸入描述',
-    status: '請選擇狀態',
+    status: '請選擇状态',
     parentTenant: '請選擇父租戶',
   },
   

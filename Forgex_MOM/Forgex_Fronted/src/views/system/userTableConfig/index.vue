@@ -4,7 +4,7 @@
       <a-form layout="inline">
         <a-form-item label="表格编码">
           <a-input
-            v-model:value="queryForm.tableCode"
+            v-model:value="query表单.tableCode"
             placeholder="请输入表格编码"
             allow-clear
             style="width: 220px"
@@ -28,7 +28,7 @@
       <div class="card-tip">
         <a-alert
           message="说明"
-          description="当前页面维护当前登录用户的列偏好设置。页面和按钮是否可见仍然严格取决于角色菜单授权；这里只负责保存已授权页面的个性化列显示。"
+          description="当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里只负责保存已授权页面的个性化列显示。"
           type="info"
           show-icon
         />
@@ -68,7 +68,7 @@
                   :style="{ color: record.userConfigured ? '#ff4d4f' : '#999999' }"
                   @click="handleResetUserConfig(record)"
                 >
-                  重置
+                  閲嶇疆
                 </a>
               </a-space>
             </template>
@@ -94,7 +94,7 @@
           <a-input v-model:value="formData.tableCode" disabled />
         </a-form-item>
 
-        <a-form-item label="每页条数">
+        <a-form-item label="姣忛〉鏉℃暟">
           <a-input-number
             v-model:value="formData.pageSize"
             :min="1"
@@ -129,14 +129,14 @@
           <template v-else-if="column.key === 'move'">
             <a-space>
               <a-button size="small" :disabled="index === 0" @click="moveColumn(index, -1)">
-                上移
+                涓婄Щ
               </a-button>
               <a-button
                 size="small"
                 :disabled="index === formData.columns.length - 1"
                 @click="moveColumn(index, 1)"
               >
-                下移
+                涓嬬Щ
               </a-button>
             </a-space>
           </template>
@@ -188,7 +188,7 @@ const tableWrapRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
 let computeScrollYRafPending = false
 
-const queryForm = reactive({
+const query表单 = reactive({
   tableCode: '',
 })
 
@@ -216,14 +216,14 @@ const columns = computed(() => [
     width: 220,
   },
   {
-    title: '表格名称',
+    title: '琛ㄦ牸鍚嶇О',
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 220,
     ellipsis: true,
   },
   {
-    title: '默认每页条数',
+    title: '榛樿姣忛〉鏉℃暟',
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 130,
@@ -242,7 +242,7 @@ const columns = computed(() => [
     align: 'center' as const,
   },
   {
-    title: '配置版本',
+    title: '閰嶇疆鐗堟湰',
     dataIndex: 'userVersion',
     key: 'userVersion',
     width: 100,
@@ -264,7 +264,7 @@ const columns = computed(() => [
 
 const columnTableColumns = [
   {
-    title: '字段',
+    title: '瀛楁',
     dataIndex: 'field',
     key: 'field',
     width: 180,
@@ -277,19 +277,19 @@ const columnTableColumns = [
     ellipsis: true,
   },
   {
-    title: '显示',
+    title: '鏄剧ず',
     key: 'visible',
     width: 90,
     align: 'center' as const,
   },
   {
-    title: '排序',
+    title: '鎺掑簭',
     key: 'order',
     width: 120,
     align: 'center' as const,
   },
   {
-    title: '调整顺序',
+    title: '璋冩暣椤哄簭',
     key: 'move',
     width: 180,
   },
@@ -369,7 +369,7 @@ const fetchData = async () => {
   loading.value = true
   try {
     const result = await getTableConfigList({
-      tableCode: queryForm.tableCode || undefined,
+      tableCode: query表单.tableCode || undefined,
       current: pagination.current,
       pageSize: pagination.pageSize,
     })
@@ -397,7 +397,7 @@ const handleSearch = () => {
 }
 
 const handleResetQuery = () => {
-  queryForm.tableCode = ''
+  query表单.tableCode = ''
   pagination.current = 1
   void fetchData()
 }

@@ -1,8 +1,8 @@
 /**
- * 職位管理翻譯 - 繁體中文
+ * 职位管理翻译 - 繁体中文注释
  */
 export default {
-  // 頁面標題
+  // 页面标题
   title: '職位管理',
   list: '職位列表',
   detail: '職位詳情',
@@ -11,18 +11,18 @@ export default {
   positionName: '職位名稱',
   positionCode: '職位編碼',
   department: '所屬部門',
-  status: '狀態',
+  status: '状态',
   createTime: '創建時間',
   updateTime: '更新時間',
   
-  // 表單
+  // 表单
   form: {
     addPosition: '新增職位',
     editPosition: '編輯職位',
     positionName: '請輸入職位名稱',
     positionCode: '請輸入職位編碼',
     department: '請選擇所屬部門',
-    status: '請選擇狀態',
+    status: '請選擇状态',
   },
   
   // 操作

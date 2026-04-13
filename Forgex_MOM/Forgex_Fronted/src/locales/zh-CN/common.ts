@@ -42,6 +42,16 @@ export default {
     columnLang: '语言',
     columnValue: '翻译内容',
     loadLanguagesFailed: '加载语言列表失败',
+    // 占位符相关
+    placeholderLabel: '常用占位符：',
+    placeholderHint: '点击占位符可插入到当前聚焦的语言输入框中',
+    phUserName: '用户名',
+    phUserAccount: '用户账号',
+    phTenantName: '租户名称',
+    phCurrentTime: '当前时间',
+    phTitle: '标题',
+    phContent: '内容',
+    phLinkUrl: '链接地址',
   },
   
   /** 国际化 JSON 编辑器组件 {@link I18nJsonEditor} */
@@ -156,7 +166,6 @@ export default {
   saved: '已保存',
   deleted: '已删除',
   remove: '移除',
-  confirm: '确定',
   login: {
     accountLabel: '账号',
     accountPlaceholder: '请输入账号',
@@ -170,6 +179,11 @@ export default {
     languageLabel: '语言',
     rememberMe: '记住我',
     forgotPassword: '忘记密码?',
+    noAccount: '还没有账号？',
+    register: '立即注册',
+    registerGuideTitle: '账号注册说明',
+    registerGuideDesc: '当前系统暂未提供内置自助注册流程，请联系管理员为您开通账号，或使用企业提供的外部注册链接。',
+    backToLogin: '返回登录',
     submit: '身份校验',
     moreLoginMethods: '更多登录方式',
     sliderTitle: '滑块验证',

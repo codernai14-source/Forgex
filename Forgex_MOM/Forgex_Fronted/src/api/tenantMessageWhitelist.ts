@@ -1,34 +1,34 @@
 import http from '@/api/http'
 
 /**
- * 租户消息白名单 API
+ * 绉熸埛娑堟伅鐧藉悕鍗?API
  */
 
 /**
- * 分页查询租户消息白名单。
+ * 鍒嗛〉鏌ヨ绉熸埛娑堟伅鐧藉悕鍗曘€?
  *
- * @param params 查询参数（current/size/senderTenantId/receiverTenantId/enabled）
- * @returns 白名单分页结果
+ * @param params 鏌ヨ鍙傛暟锛坈urrent/size/senderTenantId/receiverTenantId/enabled锛?
+ * @returns 鐧藉悕鍗曞垎椤电粨鏋?
  */
 export const pageTenantMessageWhitelist = (params: any) => {
   return http.get('/sys/tenant-message-whitelist/page', { params })
 }
 
 /**
- * 根据ID查询租户消息白名单。
+ * 鏍规嵁ID鏌ヨ绉熸埛娑堟伅鐧藉悕鍗曘€?
  *
- * @param id 白名单ID
- * @returns 白名单配置
+ * @param id 鐧藉悕鍗旾D
+ * @returns 鐧藉悕鍗曢厤缃?
  */
 export const getTenantMessageWhitelist = (id: number) => {
   return http.get(`/sys/tenant-message-whitelist/${id}`)
 }
 
 /**
- * 保存租户消息白名单（新增或修改）。
+ * 淇濆瓨绉熸埛娑堟伅鐧藉悕鍗曪紙鏂板鎴栦慨鏀癸級銆?
  *
- * @param data 白名单数据
- * @returns 是否成功
+ * @param data 鐧藉悕鍗曟暟鎹?
+ * @returns 鏄惁鎴愬姛
  */
 export const saveTenantMessageWhitelist = (data: any) => {
   if (data && data.id) {
@@ -39,34 +39,34 @@ export const saveTenantMessageWhitelist = (data: any) => {
 }
 
 /**
- * 删除租户消息白名单。
+ * 鍒犻櫎绉熸埛娑堟伅鐧藉悕鍗曘€?
  *
- * @param id 白名单ID
- * @returns 是否成功
+ * @param id 鐧藉悕鍗旾D
+ * @returns 鏄惁鎴愬姛
  */
 export const deleteTenantMessageWhitelist = (id: number) => {
   return http.delete(`/sys/tenant-message-whitelist/${id}`)
 }
 
 /**
- * 启用/禁用租户消息白名单。
+ * 鍚敤/绂佺敤绉熸埛娑堟伅鐧藉悕鍗曘€?
  *
- * @param id 白名单ID
- * @param enabled 是否启用
- * @returns 是否成功
+ * @param id 鐧藉悕鍗旾D
+ * @param enabled 鏄惁鍚敤
+ * @returns 鏄惁鎴愬姛
  */
 export const toggleEnabled = (id: number, enabled: boolean) => {
   return http.put(`/sys/tenant-message-whitelist/${id}/enabled`, {}, { params: { enabled } })
 }
 
 /**
- * 检查跨租户消息权限。
+ * 妫€鏌ヨ法绉熸埛娑堟伅鏉冮檺銆?
  *
- * @param senderTenantId 发送方租户ID
- * @param receiverTenantId 接收方租户ID
- * @returns 是否有权限
+ * @param senderTenantId 鍙戦€佹柟绉熸埛ID
+ * @param receiverTenantId 鎺ユ敹鏂圭鎴稩D
+ * @returns 鏄惁鏈夋潈闄?
  */
-export const checkCrossTenantPermission = (senderTenantId: number, receiverTenantId: number) => {
+export const checkCrossTenant权限 = (senderTenantId: number, receiverTenantId: number) => {
   return http.get('/sys/tenant-message-whitelist/check-permission', {
     params: { senderTenantId, receiverTenantId }
   })

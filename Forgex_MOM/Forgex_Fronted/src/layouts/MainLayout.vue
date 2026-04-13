@@ -28,7 +28,7 @@
     />
 
     <a-layout class="fx-main-content-wrapper">
-      <!-- 使用新的 AppSidebar 组件 -->
+      <!-- 使用新的侧边栏组件 -->
       <AppSidebar
         v-if="shouldShowSidebar"
         :menus="sidebarMenus"
@@ -63,16 +63,17 @@
                 {{ layoutConfig.watermarkText }}
               </div>
             </div>
-            <router-view v-slot="{ Component, route }">
+            <router-view v-slot="{ Component, route: currentRoute }">
               <transition
                 v-if="layoutConfig.animateEnabled"
                 :name="pageTransitionName"
+                mode="out-in"
               >
-                <div class="fx-page-wrapper" :key="route.fullPath">
+                <div v-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
                   <component :is="Component" />
                 </div>
               </transition>
-              <div v-else class="fx-page-wrapper" :key="route.fullPath">
+              <div v-else-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
                 <component :is="Component" />
               </div>
             </router-view>
@@ -163,7 +164,7 @@
 
               <!-- 主题颜色卡片选择器 -->
               <div class="fx-setting-section">
-                <div class="fx-setting-title fx-setting-title--sub">内置主题</div>
+                <div class="fx-setting-title fx-setting-title--sub">{{ t('layout.themePreset') }}</div>
                 <div class="fx-card-grid fx-card-grid--color">
                   <button
                     v-for="color in themeColorOptions"
@@ -331,7 +332,7 @@
             @click="openUserSelectModal"
           >
             <template #suffix>
-              <SearchOutlined style="color: var(--fx-text-tertiary)" />
+              <SearchOutlined :style="{ color: 'var(--fx-text-tertiary)' }" />
             </template>
           </a-input>
         </a-form-item>
@@ -383,7 +384,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message, notification } from 'ant-design-vue'
 import enUS from 'ant-design-vue/es/locale/en_US'
@@ -391,27 +392,20 @@ import jaJP from 'ant-design-vue/es/locale/ja_JP'
 import koKR from 'ant-design-vue/es/locale/ko_KR'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
-import { PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
+import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
+import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
 import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
+import { reportUserMenuVisit } from '../api/system/personalHomepage'
 import { getUserList } from '../api/system/user'
 import { useSse } from '../hooks/useSse'
 
 import {
   SearchOutlined,
-  BellOutlined,
-  SettingOutlined,
-  DownOutlined,
-  UserOutlined,
-  KeyOutlined,
-  MailOutlined,
-  LogoutOutlined,
-  AppstoreOutlined,
-  SyncOutlined,
   HighlightOutlined,
   EyeInvisibleOutlined,
   DesktopOutlined
@@ -426,7 +420,6 @@ import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
 import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
-import type { LayoutConfig } from '../theme/types'
 import { useAppStore } from '../stores/app'
 import { useUserStore } from '../stores/user'
 import type { SystemBasicConfig } from '../api/system/config'
@@ -469,6 +462,35 @@ interface LayoutConfig {
   loadingIndicatorEnabled: boolean
   pageTransition: 'horizontal' | 'fade'
   footerCopyrightEnabled: boolean
+}
+
+interface MessageSendForm {
+  receiverTenantId?: number
+  receiverUserId?: number
+  scope: 'INTERNAL'
+  title: string
+  content: string
+  linkUrl: string
+  bizType: string
+}
+
+interface LayoutTab {
+  key: string
+  path: string
+  title: string
+  closable: boolean
+}
+
+interface ThemeModeOption {
+  value: LayoutConfig['themeMode']
+  label: string
+  icon: unknown
+}
+
+interface LayoutModeOption {
+  value: LayoutConfig['layoutMode']
+  label: string
+  preview: string
 }
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
@@ -551,7 +573,7 @@ function resolveLayoutRootElement(): HTMLElement | null {
 }
 
 /**
- * 将设置抽屉挂到主布局容器内，确保 drawer 内仍能继承 `--fx-*` 主题变量。
+ * 将设置抽屉挂载到主布局容器内，确保 drawer 内仍能继承 `--fx-*` 主题变量。
  */
 function getSettingDrawerContainer(): HTMLElement {
   const layoutRoot =
@@ -570,11 +592,11 @@ function getSettingDrawerContainer(): HTMLElement {
  * 每个选项包含值、标签和对应图标
  * </p>
  */
-const themeModeOptions = [
-  { value: 'light', label: '浅色', icon: HighlightOutlined },
-  { value: 'dark', label: '暗色', icon: EyeInvisibleOutlined },
-  { value: 'system', label: '跟随系统', icon: DesktopOutlined },
-]
+const themeModeOptions = computed<ThemeModeOption[]>(() => [
+  { value: 'light', label: t('layout.themeLight'), icon: HighlightOutlined },
+  { value: 'dark', label: t('layout.themeDark'), icon: EyeInvisibleOutlined },
+  { value: 'system', label: t('layout.themeSystem'), icon: DesktopOutlined },
+])
 
 /**
  * 主题颜色选项配置
@@ -583,22 +605,22 @@ const themeModeOptions = [
  * 颜色经过精心挑选，确保视觉舒适度和可访问性
  * </p>
  */
-const themeColorOptions = [
-  { value: '#1677ff', label: '默认' },
-  { value: '#7c5cff', label: '紫罗兰' },
-  { value: '#ec4899', label: '樱花粉' },
-  { value: '#f6c445', label: '柠檬黄' },
-  { value: '#5b8ff9', label: '天蓝色' },
-  { value: '#34d399', label: '浅绿色' },
-  { value: '#71717a', label: '锌色灰' },
-  { value: '#14b8a6', label: '深绿色' },
-  { value: '#1d4ed8', label: '深蓝色' },
-  { value: '#f97316', label: '橙黄色' },
-  { value: '#e11d48', label: '玫瑰红' },
-  { value: '#525252', label: '中性色' },
-  { value: '#475569', label: '石板灰' },
-  { value: '#6b7280', label: '中灰色' },
-]
+const themeColorOptions = computed(() => [
+  { value: '#1677ff', label: t('layout.themeColorDawnBlue') },
+  { value: '#7c5cff', label: t('layout.themeColorTwilightPurple') },
+  { value: '#ec4899', label: t('layout.themeColorRosePink') },
+  { value: '#f6c445', label: t('layout.themeColorLemonYellow') },
+  { value: '#5b8ff9', label: t('layout.themeColorSkyBlue') },
+  { value: '#34d399', label: t('layout.themeColorMintGreen') },
+  { value: '#71717a', label: t('layout.themeColorZincGray') },
+  { value: '#14b8a6', label: t('layout.themeColorTealGreen') },
+  { value: '#1d4ed8', label: t('layout.themeColorRoyalBlue') },
+  { value: '#f97316', label: t('layout.themeColorAmberOrange') },
+  { value: '#e11d48', label: t('layout.themeColorRoseRed') },
+  { value: '#525252', label: t('layout.themeColorNeutralGray') },
+  { value: '#475569', label: t('layout.themeColorSlateGray') },
+  { value: '#6b7280', label: t('layout.themeColorCoolGray') },
+])
 
 const fontSizeSliderValue = computed({
   get: () => parseFontSizeValue(layoutConfig.value.fontSize),
@@ -614,10 +636,10 @@ const fontSizeSliderValue = computed({
  * 预览图使用简化的布局结构示意
  * </p>
  */
-const layoutModeOptions = [
+const layoutModeOptions = computed<LayoutModeOption[]>(() => [
   {
     value: 'vertical',
-    label: '垂直',
+    label: t('layout.layoutVertical'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="20" height="52" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -630,7 +652,7 @@ const layoutModeOptions = [
   },
   {
     value: 'vertical-mix',
-    label: '垂直双列',
+    label: t('layout.layoutVerticalMix'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="12" height="52" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -643,7 +665,7 @@ const layoutModeOptions = [
   },
   {
     value: 'top',
-    label: '水平',
+    label: t('layout.layoutTop'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="76" height="8" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -655,7 +677,7 @@ const layoutModeOptions = [
   },
   {
     value: 'mix',
-    label: '混合',
+    label: t('layout.layoutMix'),
     preview: `<svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="79" height="55" rx="4" stroke="currentColor" stroke-opacity="0.15" fill="transparent"/>
       <rect x="2" y="2" width="76" height="8" rx="2" fill="currentColor" fill-opacity="0.12"/>
@@ -667,22 +689,52 @@ const layoutModeOptions = [
       <rect x="5" y="21" width="10" height="2" rx="1" fill="currentColor" fill-opacity="0.18"/>
     </svg>`,
   },
-]
+])
 const siderCollapsed = ref(false)
 const openKeys = ref<string[]>([])
 const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
-const tabs = ref<{ key: string; title: string; closable: boolean }[]>([])
+const tabs = ref<LayoutTab[]>([])
 const activeTabKey = ref<string>('')
 const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
+const ROUTE_VISIT_STATS_STORAGE_KEY = 'fx-route-visit-stats'
 const MAX_RECENT_ROUTE_COUNT = 20
+const MAX_ROUTE_VISIT_STATS_COUNT = 200
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
+const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
+  'zh-CN': {
+    'workflow.execution.startApproval': '发起审批',
+  },
+  'en-US': {
+    'workflow.execution.startApproval': 'Start Approval',
+  },
+  'ja-JP': {
+    'workflow.execution.startApproval': '承認を開始',
+  },
+  'ko-KR': {
+    'workflow.execution.startApproval': '결재 시작',
+  },
+}
+
+function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const root = document.documentElement
+  Object.entries(styleMap).forEach(([key, value]) => {
+    if (!key.startsWith('--fx-') || value == null) {
+      return
+    }
+    root.style.setProperty(key, String(value))
+  })
+}
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
 const messageSendOpen = ref(false)
-const messageSendForm = ref({
+const messageSendForm = ref<MessageSendForm>({
   receiverTenantId: Number(sessionStorage.getItem('tenantId') || '') || undefined,
-  receiverUserId: undefined as unknown as number,
+  receiverUserId: undefined,
   scope: 'INTERNAL',
   title: '',
   content: '',
@@ -719,7 +771,7 @@ const systemConfig = ref<SystemBasicConfig>({
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
-  loginPageTitle: '欢迎来到FORGEX_MOM！',
+  loginPageTitle: '欢迎来到 FORGEX_MOM',
   loginPageSubtitle: '',
   loginBackgroundType: 'image',
   loginBackgroundVideo: '/loading.mp4',
@@ -727,6 +779,8 @@ const systemConfig = ref<SystemBasicConfig>({
   loginBackgroundColor: '#0d0221',
   loginStyle: 'cyber',
   showOAuthLogin: true,
+  showRegisterEntry: true,
+  registerUrl: '/register',
   primaryColor: '#05d9e8',
   secondaryColor: '#ff2a6d'
 })
@@ -760,15 +814,61 @@ function normalizeWorkspacePath(path: string) {
   return String(path || '').split('?')[0]
 }
 
+function getPendingClosedTabKeys(query: Record<string, unknown>) {
+  const rawValue = query[TAB_CLOSE_QUERY_KEY]
+  const rawKeys = Array.isArray(rawValue) ? rawValue : [rawValue]
+  return [...new Set(
+    rawKeys
+      .map(item => normalizeWorkspacePath(String(item || '')))
+      .filter(item => item.startsWith('/workspace'))
+  )]
+}
+
+function stripTabCloseQuery(query: Record<string, unknown>) {
+  const nextQuery = { ...query }
+  delete nextQuery[TAB_CLOSE_QUERY_KEY]
+  return nextQuery
+}
+
+function consumePendingTabCloseSignal() {
+  const currentPathKey = normalizeWorkspacePath(route.path || route.fullPath)
+  const closeKeys = getPendingClosedTabKeys(route.query as Record<string, unknown>)
+    .filter(key => key !== currentPathKey)
+  if (closeKeys.length === 0) {
+    return
+  }
+
+  removeTabsByKeys(closeKeys)
+
+  const nextQuery = stripTabCloseQuery(route.query as Record<string, unknown>) as LocationQueryRaw
+  const nextRoute = { path: route.path, query: nextQuery, hash: route.hash }
+  if (router.resolve(nextRoute as any).fullPath !== route.fullPath) {
+    router.replace(nextRoute as any).catch(() => {})
+  }
+}
+
+function isApprovalStartFormPath(path: string) {
+  return /^\/workspace\/approval\/execution\/start\/[^/]+$/.test(normalizeWorkspacePath(path))
+}
+
+function shouldAutoClosePreviousTab(previousPath: string, currentPath: string) {
+  const normalizedCurrentPath = normalizeWorkspacePath(currentPath)
+  return isApprovalStartFormPath(previousPath) && (
+    normalizedCurrentPath === '/workspace/approval/execution/start' ||
+    normalizedCurrentPath === '/workspace/approval/taskConfig'
+  )
+}
+
 function buildFixedTabs() {
   return [{
     key: PERSONAL_HOME_PATH,
+    path: PERSONAL_HOME_PATH,
     title: resolveTabTitle(PERSONAL_HOME_PATH),
     closable: false,
   }]
 }
 
-function ensureFixedTabs(tabList: { key: string; title: string; closable: boolean }[]) {
+function ensureFixedTabs(tabList: LayoutTab[]) {
   const fixedTabs = buildFixedTabs()
   const otherTabs = tabList.filter(tab => tab.key !== PERSONAL_HOME_PATH)
   return [...fixedTabs, ...otherTabs]
@@ -798,6 +898,46 @@ function saveRecentRoutes(routes: string[]) {
   }
 }
 
+function getRouteVisitStats(): Record<string, { count: number; lastVisitedAt: number }> {
+  try {
+    const raw = localStorage.getItem(ROUTE_VISIT_STATS_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : {}
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {}
+    }
+    return Object.entries(parsed).reduce<Record<string, { count: number; lastVisitedAt: number }>>((acc, [path, value]) => {
+      const normalizedPath = normalizeWorkspacePath(String(path || ''))
+      if (!normalizedPath.startsWith('/workspace') || normalizedPath === PERSONAL_HOME_PATH) {
+        return acc
+      }
+      const count = Number((value as any)?.count ?? 0)
+      const lastVisitedAt = Number((value as any)?.lastVisitedAt ?? 0)
+      if (!Number.isFinite(count) || count <= 0) {
+        return acc
+      }
+      acc[normalizedPath] = {
+        count,
+        lastVisitedAt: Number.isFinite(lastVisitedAt) ? lastVisitedAt : 0,
+      }
+      return acc
+    }, {})
+  } catch (error) {
+    console.error('[MainLayout] Failed to parse route visit stats:', error)
+    return {}
+  }
+}
+
+function saveRouteVisitStats(stats: Record<string, { count: number; lastVisitedAt: number }>) {
+  try {
+    const entries = Object.entries(stats)
+      .sort((a, b) => (b[1]?.lastVisitedAt || 0) - (a[1]?.lastVisitedAt || 0))
+      .slice(0, MAX_ROUTE_VISIT_STATS_COUNT)
+    localStorage.setItem(ROUTE_VISIT_STATS_STORAGE_KEY, JSON.stringify(Object.fromEntries(entries)))
+  } catch (error) {
+    console.error('[MainLayout] Failed to save route visit stats:', error)
+  }
+}
+
 function updateRecentRoutes(path: string) {
   const normalizedPath = normalizeWorkspacePath(path)
   if (!normalizedPath.startsWith('/workspace') || normalizedPath === PERSONAL_HOME_PATH) {
@@ -805,6 +945,16 @@ function updateRecentRoutes(path: string) {
   }
   const nextRoutes = [normalizedPath, ...getRecentRoutes().filter(item => item !== normalizedPath)]
   saveRecentRoutes(nextRoutes)
+
+  const currentStats = getRouteVisitStats()
+  const previousStat = currentStats[normalizedPath]
+  currentStats[normalizedPath] = {
+    count: Math.max(Number(previousStat?.count || 0), 0) + 1,
+    lastVisitedAt: Date.now(),
+  }
+  saveRouteVisitStats(currentStats)
+
+  reportUserMenuVisit(normalizedPath).catch(() => {})
 }
 
 function removeRecentRoute(path: string) {
@@ -844,6 +994,14 @@ const rootStyle = computed(() => {
   return generateCSSVariablesWithCache(tokens, layoutConfig.value)
 })
 
+watch(
+  rootStyle,
+  styleMap => {
+    syncThemeVariablesToDocument(styleMap as Record<string, unknown>)
+  },
+  { immediate: true },
+)
+
 const pageTransitionName = computed(() =>
   layoutConfig.value.pageTransition === 'fade' ? 'fx-fade' : 'fx-horizontal'
 )
@@ -854,11 +1012,11 @@ const lastScrollY = ref(typeof window !== 'undefined' ? window.scrollY || 0 : 0)
 const showHeader = computed(() => layoutConfig.value.headerVisible && !headerHiddenByScroll.value)
 
 /**
- * 将后端/路由返回的标题转换为当前语言的显示文案。
+ * 将后端路由返回的标题转换为当前语言的显示文案。
  * <p>
  * 兼容两种数据来源：
  * <ul>
- *   <li>后端已按语言解析后的“直出文本”（直接返回原值）</li>
+ *   <li>后端已按语言解析后的"直出文本"（直接返回原值）</li>
  *   <li>后端返回的是 i18n key（如 system.xxx / common.xxx），则使用 t() 翻译</li>
  * </ul>
  * </p>
@@ -879,7 +1037,12 @@ function resolveMenuTitle(rawTitle: unknown): string {
       title.startsWith('workflow.') || 
       title.startsWith('message.') || 
       title.includes('.')) {
-    return t(title)
+    const translated = t(title)
+    if (translated !== title) {
+      return translated
+    }
+    const localeKey = String(currentLocale.value || locale.value || 'zh-CN')
+    return ROUTE_TITLE_FALLBACKS[localeKey]?.[title] || ROUTE_TITLE_FALLBACKS['zh-CN']?.[title] || title
   }
   return title
 }
@@ -903,35 +1066,134 @@ function handleScroll() {
   lastScrollY.value = current
 }
 
-const moduleMenus = computed(() => {
-  const modules = Array.isArray(dynamicModules.value) ? dynamicModules.value : []
+type ModuleRouteNode = {
+  path?: string
+  meta?: Record<string, any>
+  children?: ModuleRouteNode[]
+}
+
+function getModuleRouteTree(moduleCode: string): ModuleRouteNode | undefined {
   const routes = Array.isArray(dynamicRoutes.value) ? dynamicRoutes.value : []
-  const result: { code: string; name: string; items: { title: string; fullPath: string }[] }[] = []
-  for (const mod of modules) {
-    const code = String(mod.code || '')
-    const name = String(mod.name || code)
-    if (!code) continue
-    const topRoute = routes.find((r: any) => (r.meta && r.meta.module) === code || r.path === code)
-    const items: { title: string; fullPath: string }[] = []
-    if (topRoute && Array.isArray(topRoute.children)) {
-      for (const c of topRoute.children) {
-        const childPath = String(c.path || '')
-        const title = resolveMenuTitle((c.meta && c.meta.title) || c.name || childPath)
-        const fullPath = `/workspace/${code}/${childPath}`.replace(/\/+/g, '/')
-        items.push({ title, fullPath })
+  return routes.find((item: any) => item?.path === moduleCode || item?.meta?.module === moduleCode)
+}
+
+function buildModuleMenuPath(moduleCode: string, parentSegments: string[], menuPath: string) {
+  const normalizedPath = String(menuPath || '').trim()
+  if (!normalizedPath) {
+    return {
+      fullPath: '',
+      segments: parentSegments
+    }
+  }
+  if (normalizedPath.startsWith('/')) {
+    return {
+      fullPath: normalizedPath,
+      segments: normalizedPath.split('/').filter(Boolean)
+    }
+  }
+  const currentSegments = normalizedPath.split('/').filter(Boolean)
+  const segments = [...parentSegments, ...currentSegments]
+  return {
+    fullPath: `/workspace/${moduleCode}/${segments.join('/')}`.replace(/\/+/g, '/'),
+    segments
+  }
+}
+
+function findFirstNavigableMenuPath(
+  moduleCode: string,
+  menus: ModuleRouteNode[],
+  options: { preferDashboard?: boolean } = {},
+  parentSegments: string[] = []
+): string {
+  for (const menu of menus) {
+    const menuPath = String(menu?.path || '')
+    const { fullPath, segments } = buildModuleMenuPath(moduleCode, parentSegments, menuPath)
+    const children = Array.isArray(menu?.children) ? menu.children : []
+    const isCatalog = String(menu?.meta?.type || '').toLowerCase() === 'catalog'
+    const isDashboard = segments[segments.length - 1] === 'dashboard'
+
+    if (options.preferDashboard && !isCatalog && fullPath && isDashboard) {
+      return fullPath
+    }
+
+    if (children.length > 0) {
+      const childTarget = findFirstNavigableMenuPath(moduleCode, children, options, segments)
+      if (childTarget) {
+        return childTarget
       }
     }
-    result.push({ code, name, items })
+
+    if (!isCatalog && fullPath) {
+      return fullPath
+    }
   }
+  return ''
+}
+
+function resolveModuleEntryPath(moduleCode: string): string {
+  const moduleRoute = getModuleRouteTree(moduleCode)
+  const children = Array.isArray(moduleRoute?.children) ? moduleRoute.children : []
+  if (children.length === 0) {
+    return ''
+  }
+  return (
+    findFirstNavigableMenuPath(moduleCode, children, { preferDashboard: true }) ||
+    findFirstNavigableMenuPath(moduleCode, children)
+  )
+}
+
+function buildSearchMenuNodes(
+  moduleCode: string,
+  nodes: ModuleRouteNode[] = [],
+  parentSegments: string[] = [],
+  moduleName = '',
+): any[] {
+  const result: any[] = []
+
+  for (const node of nodes) {
+    const hidden = node?.meta?.hidden === true
+    if (hidden) {
+      continue
+    }
+
+    const nodePath = String(node?.path || '')
+    const title = resolveMenuTitle((node?.meta && node.meta.title) || nodePath)
+    const icon = String(node?.meta?.icon || '')
+    const type = String(node?.meta?.type || 'menu').toLowerCase()
+    const { fullPath, segments } = buildModuleMenuPath(moduleCode, parentSegments, nodePath)
+    const children = buildSearchMenuNodes(
+      moduleCode,
+      Array.isArray(node?.children) ? node.children : [],
+      segments,
+      moduleName,
+    )
+
+    if (!title) {
+      result.push(...children)
+      continue
+    }
+
+    result.push({
+      key: fullPath || `${moduleCode}:${segments.join('/') || title}`,
+      title,
+      icon,
+      path: fullPath,
+      moduleCode,
+      moduleName,
+      type: type === 'catalog' ? 'dir' : 'menu',
+      children,
+    })
+  }
+
   return result
-})
+}
 
 const shouldShowSidebar = computed(() => {
   const currentPath = normalizeWorkspacePath(route.fullPath)
   if (layoutConfig.value.layoutMode === 'top') {
     return false
   }
-  if (currentPath === PERSONAL_HOME_PATH) {
+  if (currentPath === PERSONAL_HOME_PATH || currentPath === FAVORITE_MANAGEMENT_PATH) {
     return false
   }
   if (layoutConfig.value.layoutMode === 'mix' || layoutConfig.value.layoutMode === 'vertical-mix') {
@@ -943,18 +1205,37 @@ const shouldShowSidebar = computed(() => {
 // 为 GlobalSearch 组件转换菜单数据
 const searchMenus = computed(() => {
   const result: any[] = []
-  for (const mod of moduleMenus.value) {
-    for (const item of mod.items) {
-      result.push({
-        key: item.fullPath,
-        title: item.title,
-        path: item.fullPath,
-        moduleCode: mod.code,
-        moduleName: mod.name,
-        type: 'menu'
-      })
+  const modules = Array.isArray(dynamicModules.value) ? dynamicModules.value : []
+
+  for (const mod of modules) {
+    const moduleCode = String(mod?.code || '')
+    if (!moduleCode) {
+      continue
     }
+
+    const moduleName = String(mod?.name || moduleCode)
+    const moduleRoute = getModuleRouteTree(moduleCode)
+    const children = buildSearchMenuNodes(
+      moduleCode,
+      Array.isArray(moduleRoute?.children) ? moduleRoute.children : [],
+      [],
+      moduleName,
+    )
+    if (children.length === 0) {
+      continue
+    }
+
+    result.push({
+      key: `module:${moduleCode}`,
+      title: moduleName,
+      path: '',
+      moduleCode,
+      moduleName,
+      type: 'dir',
+      children,
+    })
   }
+
   return result
 })
 
@@ -969,7 +1250,7 @@ const moduleList = computed(() => {
   }))
 })
 
-// 侧边栏菜单数据（转换为 AppSidebar 期望的格式）
+// 侧边栏菜单数据（转换为侧边栏组件期望的格式）
 const sidebarMenus = computed(() => {
   const result: any[] = []
   const routes = Array.isArray(dynamicRoutes.value) ? dynamicRoutes.value : []
@@ -991,7 +1272,7 @@ const sidebarMenus = computed(() => {
         const type = (child.meta && child.meta.type) || 'menu'
         const menuLevel = (child.meta && child.meta.menuLevel) || 1
         
-        // 构建菜单项，保留children结构以支持多级菜单
+        // 构建菜单项，保留 children 结构以支持多级菜单
         const menuItem: any = {
           key: fullPath,
           title,
@@ -1003,12 +1284,12 @@ const sidebarMenus = computed(() => {
           children: []
         }
         
-        // 如果有子菜单，递归构建children
+        // 如果有子菜单，递归构建 children
         if (child.children && Array.isArray(child.children)) {
           menuItem.children = child.children.map((grandchild: any) => {
             const grandchildPath = String(grandchild.path || '')
             // 构建完整路径：/workspace/{moduleCode}/{childPath}/{grandchildPath}
-            // 注意：如果grandchild.path已经是完整路径，需要特殊处理
+            // 注意：如果 grandchild.path 已经是完整路径，需要特殊处理
             const grandchildFullPath = grandchildPath.startsWith('/') 
               ? grandchildPath 
               : `/workspace/${activeModuleCode.value}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
@@ -1048,7 +1329,7 @@ const sidebarMenus = computed(() => {
           const type = (child.meta && child.meta.type) || 'menu'
           const menuLevel = (child.meta && child.meta.menuLevel) || 1
           
-          // 构建菜单项，保留children结构以支持多级菜单
+          // 构建菜单项，保留 children 结构以支持多级菜单
           const menuItem: any = {
             key: fullPath,
             title,
@@ -1060,12 +1341,12 @@ const sidebarMenus = computed(() => {
             children: []
           }
           
-          // 如果有子菜单，递归构建children
+          // 如果有子菜单，递归构建 children
           if (child.children && Array.isArray(child.children)) {
             menuItem.children = child.children.map((grandchild: any) => {
               const grandchildPath = String(grandchild.path || '')
               // 构建完整路径：/workspace/{moduleCode}/{childPath}/{grandchildPath}
-              // 注意：如果grandchild.path已经是完整路径，需要特殊处理
+              // 注意：如果 grandchild.path 已经是完整路径，需要特殊处理
               const grandchildFullPath = grandchildPath.startsWith('/') 
                 ? grandchildPath 
                 : `/workspace/${moduleCode}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
@@ -1139,7 +1420,7 @@ watch(
 )
 
 /**
- * 解析标签标题（各模块工作台 dashboard 带模块名前缀，避免多个「首页」无法区分）
+ * 解析标签标题（各模块工作台 dashboard 带模块名前缀，避免多个"首页"无法区分）
  *
  * @param tabKey 标签路由 key，无 query
  * @returns 展示标题
@@ -1154,7 +1435,7 @@ function resolveTabTitle(tabKey: string): string {
 }
 
 /**
- * 各模块「工作台」页签标题
+ * 各模块"工作台"页签标题
  * <p>
  * 直接返回路由标题，不添加模块名前缀
  * </p>
@@ -1179,7 +1460,11 @@ function updateAllTabTitles() {
 
 watch(
   () => route.fullPath,
-  (path) => {
+  (path, previousPath) => {
+    consumePendingTabCloseSignal()
+    if (shouldAutoClosePreviousTab(String(previousPath || ''), path)) {
+      removeTabsByKeys([normalizeWorkspacePath(String(previousPath || ''))])
+    }
     const cleanPath = normalizeWorkspacePath(path)
     selectedKeys.value = [cleanPath]
     
@@ -1298,12 +1583,9 @@ function onModuleClick(moduleCode: string) {
   if (!moduleCode) return
   activeModuleCode.value = moduleCode
   // 切换模块时，跳转到该模块的第一个菜单项
-  const mod = moduleMenus.value.find(m => m.code === moduleCode)
-  if (mod && mod.items.length > 0) {
-    const firstItem = mod.items[0]
-    if (firstItem.fullPath !== route.fullPath) {
-      router.push(firstItem.fullPath).catch(() => {})
-    }
+  const targetPath = resolveModuleEntryPath(moduleCode)
+  if (targetPath && targetPath !== route.fullPath) {
+    router.push(targetPath).catch(() => {})
   }
 }
 
@@ -1373,14 +1655,14 @@ async function onLocaleChange(val: string) {
   try {
     console.log('[MainLayout] 语言切换开始:', val)
     
-    // 1. 调用setLocale函数更新语言设置
+    // 1. 调用 setLocale 函数更新语言设置
     setLocale(val as LocaleCode)
     
     // 2. 更新本地状态
     currentLocale.value = val
     appStore.setLocale(val as LocaleCode)
     
-    // 3. 调用后端API更新语言设置
+    // 3. 调用后端 API 更新语言设置
     await changeLanguage({ lang: val })
     
     // 4. 重新获取菜单数据（关键！后端返回的是翻译后的文本，需要重新获取）
@@ -1419,9 +1701,8 @@ function onUserMenuClick(key: string) {
   if (!key) return
   
   if (key === 'logout') {
-    // 调用userStore的logout方法，会自动调用后端登出接口
+    // 调用 userStore 的 logout 方法，会自动调用后端登出接口
     userStore.logout()
-    message.success('已退出登录')
     router.replace('/login')
     return
   }
@@ -1473,6 +1754,7 @@ function updateTabsByRoute(path: string) {
     if (!nextTabs.some(tab => tab.key === pathWithoutQuery)) {
       nextTabs.push({
         key: pathWithoutQuery,
+        path: pathWithoutQuery,
         title: resolveTabTitle(pathWithoutQuery),
         closable: true,
       })
@@ -1503,7 +1785,7 @@ function buildTitleFromRoute(path: string): string {
   if (matchedRouteWithTitle?.meta?.title) {
     const title = matchedRouteWithTitle.meta.title as string
     if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
-      return t(title)
+      return resolveMenuTitle(title)
     }
     return title
   }
@@ -1512,9 +1794,9 @@ function buildTitleFromRoute(path: string): string {
   const match = allRoutes.find(r => r.path === pathWithoutQuery)
   if (match && match.meta && match.meta.title) {
     const title = match.meta.title as string
-    // 如果title是国际化key，使用t函数翻译
+    // 如果 title 是国际化 key，使用 t 函数翻译
     if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
-      return t(title)
+      return resolveMenuTitle(title)
     }
     return title
   }
@@ -1533,9 +1815,9 @@ function buildTitleFromRoute(path: string): string {
     const child = topRoute.children.find((c: any) => String(c.path || '') === childPath)
     if (child && child.meta && child.meta.title) {
       const title = child.meta.title
-      // 如果title是国际化key，使用t函数翻译
+      // 如果 title 是国际化 key，使用 t 函数翻译
       if (title.startsWith('system.') || title.startsWith('common.') || title.includes('.')) {
-        return t(title)
+        return resolveMenuTitle(title)
       }
       return title
     }
@@ -1562,9 +1844,20 @@ function onTabClose(tab: { key: string }) {
   const idx = tabs.value.findIndex(t => t.key === key)
   if (idx === -1) return
   const isActive = activeTabKey.value === key
-  removeTabsByKeys([key])
-  if (!isActive) return
-  router.push(resolveNextTabKey(key)).catch(() => {})
+  const nextKey = resolveNextTabKey(key)
+  if (!isActive) {
+    removeTabsByKeys([key])
+    return
+  }
+
+  activeTabKey.value = nextKey
+  router.push(nextKey)
+    .then(() => {
+      removeTabsByKeys([key])
+    })
+    .catch(() => {
+      activeTabKey.value = key
+    })
 }
 
 function onTabDrag(fromIndex: number, toIndex: number) {
@@ -1627,7 +1920,7 @@ function openMessageNotification(m: SysMessageVO) {
     duration: 6,
     onClick: async () => {
       try {
-        await markMessageRead(m.id)
+        await markMessageRead(m.id, { showSuccessMessage: false })
       } catch (_) {}
       notification.close(key)
       if (m.linkUrl) {
@@ -1660,7 +1953,6 @@ async function handleMessageSend() {
       content: messageSendForm.value.content,
       linkUrl: messageSendForm.value.linkUrl,
     } as any)
-    message.success('发送成功')
     // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
     const selfId = userStore.userInfo?.id
     if (newId != null && selfId != null && Number(messageSendForm.value.receiverUserId) === selfId) {
@@ -1821,7 +2113,7 @@ onUnmounted(() => {
   position: relative;       /* 为 watermark 绝对定位提供参考 */
 }
 
-/* ==================== 卡片选择器样式（Vben5 风格）==================== */
+/* ==================== 卡片选择器样式（Vben5 风格） =================== */
 
 .fx-setting-section {
   margin-bottom: 20px;

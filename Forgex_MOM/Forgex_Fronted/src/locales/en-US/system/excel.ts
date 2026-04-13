@@ -1,5 +1,5 @@
 /**
- * Excel Import/Export Management Translation - English
+ * Excel 导入导出管理翻译 - 中文注释
  * 
  * @author Forgex
  * @version 1.0.0
@@ -87,7 +87,7 @@ export default {
   uploadData: 'Upload Data',
   previewData: 'Preview Data',
   
-  // Form
+  // 表单
   baseConfig: 'Base Configuration',
   pleaseInputTableName: 'Please enter table name',
   pleaseInputTableCode: 'Please enter table code',
@@ -96,7 +96,7 @@ export default {
   addImportConfig: 'Add Import Configuration',
   editImportConfig: 'Edit Import Configuration',
   
-  // Messages
+  // 消息
   message: {
     downloadTemplateSuccess: 'Download template successfully',
     downloadTemplateFailed: 'Download template failed',

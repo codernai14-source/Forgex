@@ -1,10 +1,10 @@
 /**
- * 공통 번역 - 한국어
+ * 通用翻译 - 韩文注释
  *
- * 시스템에서 자주 사용되는 공통 단어 및 작업을 포함합니다.
+ * 包含系统中常用的通用词汇与操作
  */
 export default {
-  // 기본 작업
+  // 基础操作
   ok: '확인',
   cancel: '취소',
   save: '저장',
@@ -42,10 +42,20 @@ export default {
     columnLang: '언어',
     columnValue: '번역',
     loadLanguagesFailed: '언어 목록을 불러오지 못했습니다',
+    // 占位提示
+    placeholderLabel: '占位提示:',
+    placeholderHint: '占位提示를 클릭하면 현재 포커스된 언어 입력란에 삽입됩니다',
+    phUserName: '사용자 이름',
+    phUserAccount: '사용자 계정',
+    phTenantName: '테넌트 이름',
+    phCurrentTime: '현재 时间',
+    phTitle: '제목',
+    phContent: '내용',
+    phLinkUrl: '링크 URL',
   },
 
-  // 상태
-  status: '상태',
+  // 状态
+  status: '状态',
   enabled: '활성화',
   disabled: '비활성화',
   active: '활성',
@@ -56,13 +66,13 @@ export default {
   processing: '처리 중',
   completed: '완료',
 
-  // 시간
-  createTime: '생성 시간',
-  updateTime: '업데이트 시간',
-  startTime: '시작 시간',
-  endTime: '종료 시간',
+  // 时间
+  createTime: '생성 时间',
+  updateTime: '업데이트 时间',
+  startTime: '시작 时间',
+  endTime: '종료 时间',
 
-  // 기타
+  // 其他
   operation: '작업',
   description: '설명',
   remark: '비고',
@@ -76,7 +86,7 @@ export default {
   pleaseInput: '입력해 주세요',
   home: '홈',
   
-  // 시스템 설정 관련
+  // 系统配置相关
   loadFailed: '로드 실패',
   saveSuccess: '저장 성공',
   saveFailed: '저장 실패',
@@ -90,12 +100,11 @@ export default {
   sizeLimit: '파일 크기 초과',
   preview: '미리보기',
   
-  // 메시지
+  // 消息
   confirmDelete: '삭제 확인?',
   saved: '저장됨',
   deleted: '삭제됨',
   remove: '제거',
-  confirm: '확인',
   login: {
     accountLabel: '계정',
     accountPlaceholder: '계정을 입력해 주세요',
@@ -107,10 +116,15 @@ export default {
     startSlider: '슬라이더 인증 시작',
     sliderAutoFillTip: '완료 후 인증코드를 자동으로 입력합니다',
     languageLabel: '언어',
-    rememberMe: '로그인 상태 유지',
+    rememberMe: '日志인 状态 유지',
     forgotPassword: '비밀번호를 잊으셨나요?',
-    submit: '로그인',
-    moreLoginMethods: '다른 로그인 방식',
+    noAccount: '아직 계정이 없으신가요?',
+    register: '지금 등록',
+    registerGuideTitle: '계정 등록 안내',
+    registerGuideDesc: '현재 이 시스템에는 내장된 셀프 등록 기능이 없습니다. 계정 개설은 관리자에게 문의하시거나, 회사에서 제공한 외부 등록 링크를 이용해 주세요.',
+    backToLogin: '日志인으로 돌아가기',
+    submit: '日志인',
+    moreLoginMethods: '다른 日志인 방식',
     sliderTitle: '슬라이더 인증',
     setSort: '정렬 설정',
     noIntro: '소개 없음',
@@ -128,7 +142,7 @@ export default {
       oauthDisabled: 'OAuth 설정이 활성화되어 있지 않습니다.',
       oauthUrlFailed: '인증 URL을 가져오지 못했습니다.',
       selectTenantFirst: '먼저 테넌트를 선택해 주세요.',
-      invalidTenant: '선택한 테넌트가 유효하지 않습니다. 다시 로그인 후 시도해 주세요.',
+      invalidTenant: '선택한 테넌트가 유효하지 않습니다. 다시 日志인 후 시도해 주세요.',
       chooseTenantFailed: '테넌트 선택에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       defaultTenantUpdated: '기본 테넌트가 업데이트되었습니다.',
       updateDefaultTenantFailed: '기본 테넌트를 업데이트하지 못했습니다.',

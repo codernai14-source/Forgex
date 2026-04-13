@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * 编码规则主表实体类
  * <p>
- * 映射表：{@code sys_encode_rule}。用于定义和管理系统各类单据、业务对象的编码生成规则。
+ * 映射表：{@code fx_encode_rule}。用于定义和管理系统各类单据、业务对象的编码生成规则。
  * 支持自定义编码前缀、日期格式、序列号长度、重置周期等配置。
  * </p>
  * <p>
@@ -42,14 +42,14 @@ import java.util.List;
  * </ul>
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRuleDetail 编码规则明细实体
  * @see com.forgex.common.base.BaseEntity 继承的基类
  */
 @Data
-@TableName("sys_encode_rule")
+@TableName("fx_encode_rule")
 public class SysEncodeRule {
 
     /**

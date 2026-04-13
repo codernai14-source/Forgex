@@ -3,6 +3,7 @@
     <fx-dynamic-table
       ref="tableRef"
       :table-code="'EncodeRuleTable'"
+      :降级方案-config="降级方案Config"
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
@@ -11,7 +12,7 @@
         onChange: handleSelectionChange
       }"
     >
-      <!-- 工具栏插槽 -->
+      <!-- 宸ュ叿鏍忔彃妲?-->
       <template #toolbar>
         <a-space :size="8">
           <a-button
@@ -38,10 +39,10 @@
         </a-space>
       </template>
       
-      <!-- 状态列自定义渲染 -->
-      <template #status="{ record }">
+      <!-- 鐘舵€佸垪鑷畾涔夋覆鏌?-->
+      <template #isEnabled="{ record }">
         <a-tag
-          v-if="record.status === 1"
+          v-if="record.isEnabled"
           color="success"
         >
           {{ t('system.encodeRule.statusActive') }}
@@ -54,7 +55,7 @@
         </a-tag>
       </template>
       
-      <!-- 操作列 -->
+      <!-- 鎿嶄綔鍒?-->
       <template #action="{ record }">
         <a-space>
           <a
@@ -80,7 +81,7 @@
       </template>
     </fx-dynamic-table>
   
-    <!-- 新增/编辑弹窗 -->
+    <!-- 鏂板/缂栬緫寮圭獥 -->
     <EncodeRuleFormDialog
       v-model:open="dialogVisible"
       :is-edit="isEdit"
@@ -92,44 +93,78 @@
 
 <script setup lang="ts">
 /**
- * 编码规则管理页面
+ * 缂栫爜瑙勫垯绠＄悊椤甸潰
  * 
- * 功能：
- * 1. 编码规则列表查询（分页、搜索）
- * 2. 新增、编辑、删除编码规则
- * 3. 生成编码、测试规则
- * 4. 批量删除
+ * 鍔熻兘锛?
+ * 1. 缂栫爜瑙勫垯鍒楄〃鏌ヨ锛堝垎椤点€佹悳绱級
+ * 2. 鏂板銆佺紪杈戙€佸垹闄ょ紪鐮佽鍒?
+ * 3. 鐢熸垚缂栫爜銆佹祴璇曡鍒?
+ * 4. 鎵归噺鍒犻櫎
  * 
  * @author Forgex
  * @version 1.0.0
  */
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import EncodeRuleFormDialog from './components/EncodeRuleFormDialog.vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
-import type { EncodeRule, EncodeRuleQuery } from '@/api/system/encodeRule'
+import type { EncodeRule } from '@/api/system/encodeRule'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 
-// 国际化
+// 鍥介檯鍖?
 const { t } = useI18n()
 
-// 弹窗状态
+// 寮圭獥鐘舵€?
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentRuleId = ref<string>()
 
-// 选中的规则 ID 列表
+// 閫変腑鐨勮鍒?ID 鍒楄〃
 const selectedRowKeys = ref<string[]>([])
 
-// 表格引用
+// 琛ㄦ牸寮曠敤
 const tableRef = ref()
 
-// 字典选项配置
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'EncodeRuleTable',
+  tableName: t('system.encodeRule.pageTitle'),
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 10,
+  columns: [
+    { field: 'ruleCode', title: t('system.encodeRule.ruleCode'), width: 160, align: 'left' },
+    { field: 'ruleName', title: t('system.encodeRule.ruleName'), width: 180, align: 'left' },
+    { field: 'module', title: t('system.encodeRule.businessType'), width: 140, align: 'left' },
+    { field: 'isEnabled', title: t('system.encodeRule.status'), width: 120, align: 'center' },
+    { field: 'remark', title: t('system.encodeRule.remark'), width: 220, align: 'left' },
+    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
+    { field: 'action', title: t('common.action'), width: 220, align: 'center', fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'ruleCode', label: t('system.encodeRule.ruleCode'), queryType: 'input', queryOperator: 'like' },
+    { field: 'ruleName', label: t('system.encodeRule.ruleName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'module', label: t('system.encodeRule.businessType'), queryType: 'input', queryOperator: 'like' },
+    {
+      field: 'isEnabled',
+      label: t('system.encodeRule.status'),
+      queryType: 'select',
+      queryOperator: 'eq',
+      options: [
+        { label: t('system.encodeRule.statusActive'), value: true },
+        { label: t('system.encodeRule.statusInactive'), value: false },
+      ],
+    },
+  ],
+  version: 1,
+}))
+
+// 瀛楀吀閫夐」閰嶇疆
 const dictOptions = ref<Record<string, any[]>>({
-  status: [
-    { label: t('system.encodeRule.statusActive'), value: 1 },
-    { label: t('system.encodeRule.statusInactive'), value: 0 }
+  isEnabled: [
+    { label: t('system.encodeRule.statusActive'), value: true },
+    { label: t('system.encodeRule.statusInactive'), value: false }
   ],
   segmentType: [
     { label: t('system.encodeRule.segmentTypeFixed'), value: 'FIXED' },
@@ -140,7 +175,7 @@ const dictOptions = ref<Record<string, any[]>>({
 })
 
 /**
- * 数据请求函数
+ * 鏁版嵁璇锋眰鍑芥暟
  */
 const handleRequest = async (payload: { 
   page: { current: number; pageSize: number }; 
@@ -152,28 +187,46 @@ const handleRequest = async (payload: {
     pageSize: payload.page.pageSize,
     ...payload.query,
   }
+
+  if (Object.prototype.hasOwnProperty.call(params, 'businessType') && !Object.prototype.hasOwnProperty.call(params, 'module')) {
+    params.module = params.businessType
+    delete params.businessType
+  }
+
+  if (Object.prototype.hasOwnProperty.call(params, 'status') && !Object.prototype.hasOwnProperty.call(params, 'isEnabled')) {
+    params.isEnabled = params.status === 1 || params.status === true || params.status === '1' || params.status === 'true'
+    delete params.status
+  }
+
+  if (Object.prototype.hasOwnProperty.call(params, 'isEnabled')) {
+    if (params.isEnabled === 1 || params.isEnabled === '1' || params.isEnabled === 'true') {
+      params.isEnabled = true
+    } else if (params.isEnabled === 0 || params.isEnabled === '0' || params.isEnabled === 'false') {
+      params.isEnabled = false
+    }
+  }
   
-  // 处理排序
+  // 澶勭悊鎺掑簭
   if (payload.sorter) {
     params.sortField = payload.sorter.field
     params.sortOrder = payload.sorter.order
   }
   
-  // http 拦截器已经返回了 data 字段
+  // http 鎷︽埅鍣ㄥ凡缁忚繑鍥炰簡 data 瀛楁
   const data = await encodeRuleApi.pageEncodeRules(params)
   const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
   return { records: data.records || [], total: total }
 }
 
 /**
- * 行选择变化
+ * 琛岄€夋嫨鍙樺寲
  */
 function handleSelectionChange(keys: string[]) {
   selectedRowKeys.value = keys
 }
 
 /**
- * 打开新增弹窗
+ * 鎵撳紑鏂板寮圭獥
  */
 function openAddDialog() {
   isEdit.value = false
@@ -182,7 +235,7 @@ function openAddDialog() {
 }
 
 /**
- * 打开编辑弹窗
+ * 鎵撳紑缂栬緫寮圭獥
  */
 function openEditDialog(record: EncodeRule) {
   isEdit.value = true
@@ -191,23 +244,23 @@ function openEditDialog(record: EncodeRule) {
 }
 
 /**
- * 打开测试对话框
+ * 鎵撳紑娴嬭瘯瀵硅瘽妗?
  */
 function openTestDialog() {
-  // TODO: 实现测试对话框
+  // TODO: 瀹炵幇娴嬭瘯瀵硅瘽妗?
   message.info(t('system.encodeRule.testNotImplemented'))
 }
 
 /**
- * 表单提交成功回调
+ * 琛ㄥ崟鎻愪氦鎴愬姛鍥炶皟
  */
 function handleFormSuccess() {
-  // 刷新表格数据
+  // 鍒锋柊琛ㄦ牸鏁版嵁
   tableRef.value?.refresh?.()
 }
 
 /**
- * 删除编码规则
+ * 鍒犻櫎缂栫爜瑙勫垯
  */
 async function handleDelete(id: string) {
   Modal.confirm({
@@ -221,7 +274,7 @@ async function handleDelete(id: string) {
 }
 
 /**
- * 批量删除编码规则
+ * 鎵归噺鍒犻櫎缂栫爜瑙勫垯
  */
 async function handleBatchDelete() {
   if (selectedRowKeys.value.length === 0) return
@@ -237,29 +290,29 @@ async function handleBatchDelete() {
 }
 
 /**
- * 生成编码
+ * 鐢熸垚缂栫爜
  */
 async function handleGenerateEncode(record: EncodeRule) {
   try {
     const result = await encodeRuleApi.generateEncode({
       ruleCode: record.ruleCode!,
     })
-    message.success(t('system.encodeRule.generateSuccess') + ': ' + result.encodeCode)
+    message.success(t('system.encodeRule.generateSuccess') + ': ' + result)
   } catch (error) {
-    console.error('生成编码失败:', error)
+    console.error('鐢熸垚缂栫爜澶辫触:', error)
     message.error(t('system.encodeRule.generateFailed'))
   }
 }
 
-// 初始化
+// 鍒濆鍖?
 onMounted(() => {
-  // 可以在这里加载额外的字典数据
+  // 鍙互鍦ㄨ繖閲屽姞杞介澶栫殑瀛楀吀鏁版嵁
 })
 </script>
 
 <style scoped lang="less">
 .encode-rule-management {
-  /* 移除 padding: 16px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
+  /* 绉婚櫎 padding: 16px锛堢幇鍦ㄧ敱 MainLayout 鐨?.fx-content-inner 缁熶竴澶勭悊锛?*/
   display: flex;
   flex-direction: column;
   height: 100%;
