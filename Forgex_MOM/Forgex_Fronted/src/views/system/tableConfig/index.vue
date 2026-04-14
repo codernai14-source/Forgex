@@ -2,6 +2,13 @@
   <div class="table-config-management">
     <a-card :bordered="false" class="query-card">
       <a-form layout="inline">
+        <a-form-item>
+          <a-radio-group v-model:value="publicConfig" button-style="solid" @change="handleModeChange">
+            <a-radio-button :value="false">租户配置</a-radio-button>
+            <a-radio-button :value="true">公共配置</a-radio-button>
+          </a-radio-group>
+        </a-form-item>
+
         <a-form-item :label="t('system.tableConfig.tableCode')">
           <a-input
             v-model:value="queryForm.tableCode"
@@ -40,11 +47,7 @@
             allow-clear
             style="width: 120px"
           >
-            <a-select-option
-              v-for="option in yesNoOptions"
-              :key="option.value"
-              :value="option.value"
-            >
+            <a-select-option v-for="option in yesNoOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </a-select-option>
           </a-select>
@@ -52,12 +55,8 @@
 
         <a-form-item>
           <a-space>
-            <a-button type="primary" @click="handleSearch">
-              {{ t('common.search') }}
-            </a-button>
-            <a-button @click="handleReset">
-              {{ t('common.reset') }}
-            </a-button>
+            <a-button type="primary" @click="handleSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -66,6 +65,13 @@
     <a-card :bordered="false" class="table-card">
       <div style="margin-bottom: 16px">
         <a-space>
+          <a-button
+            v-if="!publicConfig"
+            v-permission="'sys:tableConfig:add'"
+            @click="handlePullPublic"
+          >
+            拉取公共配置
+          </a-button>
           <a-button
             v-permission="'sys:tableConfig:add'"
             type="primary"
@@ -92,10 +98,7 @@
           :pagination="pagination"
           :scroll="tableScroll"
           :row-key="rowKey"
-          :row-selection="{
-            selectedRowKeys,
-            onChange: handleSelectionChange
-          }"
+          :row-selection="{ selectedRowKeys, onChange: handleSelectionChange }"
           @change="handleTableChange"
         >
           <template #bodyCell="{ column, record }">
@@ -104,15 +107,9 @@
             </template>
 
             <template v-else-if="column.key === 'tableType'">
-              <a-tag v-if="record.tableType === 'NORMAL'" color="blue">
-                {{ t('system.tableConfig.tableTypeNormal') }}
-              </a-tag>
-              <a-tag v-else-if="record.tableType === 'LAZY'" color="green">
-                {{ t('system.tableConfig.tableTypeLazy') }}
-              </a-tag>
-              <a-tag v-else-if="record.tableType === 'TREE'" color="orange">
-                {{ t('system.tableConfig.tableTypeTree') }}
-              </a-tag>
+              <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
+              <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
+              <a-tag v-else color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
             </template>
 
             <template v-else-if="column.key === 'enabled'">
@@ -126,19 +123,8 @@
 
             <template v-else-if="column.key === 'action'">
               <a-space>
-                <a
-                  v-permission="'sys:tableConfig:edit'"
-                  @click="openEditDialog(record)"
-                >
-                  {{ t('common.edit') }}
-                </a>
-                <a
-                  v-permission="'sys:tableConfig:delete'"
-                  style="color: #ff4d4f"
-                  @click="handleDelete(record.id!)"
-                >
-                  {{ t('common.delete') }}
-                </a>
+                <a v-permission="'sys:tableConfig:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
+                <a v-permission="'sys:tableConfig:delete'" style="color: #ff4d4f" @click="handleDelete(record.id!)">{{ t('common.delete') }}</a>
               </a-space>
             </template>
           </template>
@@ -150,28 +136,22 @@
       v-model:open="dialogVisible"
       :is-edit="isEdit"
       :config-id="currentConfigId"
+      :public-config="publicConfig"
       @success="handleFormSuccess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * 表格配置管理页面
- *
- * 功能：
- * 1. 查询表格配置列表
- * 2. 新增、编辑、删除表格配置
- * 3. 切换表格配置启用状态
- */
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
 import {
   batchDeleteTableConfig,
   deleteTableConfig,
   getTableConfigList,
+  pullPublicTableConfig,
   toggleTableConfigStatus,
 } from '@/api/system/tableConfig'
 import type { TableConfigItem } from '@/api/system/tableConfig'
@@ -181,6 +161,7 @@ import { getI18nValue } from '@/utils/i18n'
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: yesNoOptions } = useDict('yes_no')
 
+const publicConfig = ref(false)
 const loading = ref(false)
 const dataSource = ref<TableConfigItem[]>([])
 const selectedRowKeys = ref<number[]>([])
@@ -211,69 +192,18 @@ const pagination = reactive({
 })
 
 const columns = computed(() => [
-  {
-    title: t('system.tableConfig.tableCode'),
-    dataIndex: 'tableCode',
-    key: 'tableCode',
-    width: 180,
-  },
-  {
-    title: t('system.tableConfig.tableName'),
-    dataIndex: 'tableNameI18nJson',
-    key: 'tableNameI18nJson',
-    width: 200,
-    ellipsis: true,
-  },
-  {
-    title: t('system.tableConfig.tableType'),
-    dataIndex: 'tableType',
-    key: 'tableType',
-    width: 120,
-  },
-  {
-    title: t('system.tableConfig.rowKey'),
-    dataIndex: 'rowKey',
-    key: 'rowKey',
-    width: 120,
-  },
-  {
-    title: t('system.tableConfig.defaultPageSize'),
-    dataIndex: 'defaultPageSize',
-    key: 'defaultPageSize',
-    width: 120,
-  },
-  {
-    title: t('system.tableConfig.enabled'),
-    dataIndex: 'enabled',
-    key: 'enabled',
-    width: 100,
-    align: 'center' as const,
-  },
-  {
-    title: t('system.user.createBy'),
-    dataIndex: 'createBy',
-    key: 'createBy',
-    width: 120,
-  },
-  {
-    title: t('common.createTime'),
-    dataIndex: 'createTime',
-    key: 'createTime',
-    width: 180,
-  },
-  {
-    title: t('common.action'),
-    key: 'action',
-    width: 150,
-    fixed: 'right' as const,
-  },
+  { title: t('system.tableConfig.tableCode'), dataIndex: 'tableCode', key: 'tableCode', width: 180 },
+  { title: t('system.tableConfig.tableName'), dataIndex: 'tableNameI18nJson', key: 'tableNameI18nJson', width: 220, ellipsis: true },
+  { title: t('system.tableConfig.tableType'), dataIndex: 'tableType', key: 'tableType', width: 120 },
+  { title: t('system.tableConfig.rowKey'), dataIndex: 'rowKey', key: 'rowKey', width: 120 },
+  { title: t('system.tableConfig.defaultPageSize'), dataIndex: 'defaultPageSize', key: 'defaultPageSize', width: 120 },
+  { title: t('system.tableConfig.enabled'), dataIndex: 'enabled', key: 'enabled', width: 100, align: 'center' as const },
+  { title: t('system.user.createBy'), dataIndex: 'createBy', key: 'createBy', width: 120 },
+  { title: t('common.createTime'), dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: t('common.action'), key: 'action', width: 150, fixed: 'right' as const },
 ])
 
-const tableScroll = computed(() => ({
-  x: 1270,
-  y: autoScrollY.value,
-}))
-
+const tableScroll = computed(() => ({ x: 1310, y: autoScrollY.value }))
 const rowKey = (record: TableConfigItem) => record.id ?? record.tableCode
 
 async function fetchData() {
@@ -281,18 +211,34 @@ async function fetchData() {
   try {
     const result = await getTableConfigList({
       ...queryForm,
+      isPublicConfig: publicConfig.value,
       current: pagination.current,
       pageSize: pagination.pageSize,
     })
-
     dataSource.value = result.records || []
     pagination.total = result.total || 0
     await nextTick()
     scheduleComputeAutoScrollY()
   } catch (error) {
-    console.error('获取表格配置列表失败:', error)
+    console.error('load table config failed:', error)
   } finally {
     loading.value = false
+  }
+}
+
+function handleModeChange() {
+  pagination.current = 1
+  selectedRowKeys.value = []
+  fetchData()
+}
+
+async function handlePullPublic() {
+  try {
+    const count = await pullPublicTableConfig()
+    message.success(`已拉取 ${Number(count || 0)} 条公共配置`)
+    fetchData()
+  } catch (error) {
+    console.error('pull public table config failed:', error)
   }
 }
 
@@ -315,30 +261,17 @@ function computeAutoScrollY() {
     autoScrollY.value = undefined
     return
   }
-
   const rect = wrapEl.getBoundingClientRect()
-  if (!Number.isFinite(rect.height)) {
+  if (!Number.isFinite(rect.height) || rect.height <= 0) {
     autoScrollY.value = undefined
     return
   }
-
-  const availableHeight = rect.height
-  if (!Number.isFinite(availableHeight) || availableHeight <= 0) {
-    autoScrollY.value = undefined
-    return
-  }
-
   const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
   const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
-
   const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
   const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
-
-  const buffer = 36
-  const nextHeight = Math.floor(availableHeight - paginationHeight - headerHeight - buffer)
-  const nextY = nextHeight > 100 ? nextHeight : undefined
-  if (autoScrollY.value === nextY) return
-  autoScrollY.value = nextY
+  const nextY = Math.floor(rect.height - paginationHeight - headerHeight - 36)
+  autoScrollY.value = nextY > 100 ? nextY : undefined
 }
 
 function handleSearch() {
@@ -390,12 +323,8 @@ function handleDelete(id: number) {
     okText: t('common.confirm'),
     cancelText: t('common.cancel'),
     onOk: async () => {
-      try {
-        await deleteTableConfig(id)
-        fetchData()
-      } catch (error) {
-        console.error('删除表格配置失败:', error)
-      }
+      await deleteTableConfig(id, publicConfig.value)
+      fetchData()
     },
   })
 }
@@ -407,13 +336,9 @@ function handleBatchDelete() {
     okText: t('common.confirm'),
     cancelText: t('common.cancel'),
     onOk: async () => {
-      try {
-        await batchDeleteTableConfig(selectedRowKeys.value)
-        selectedRowKeys.value = []
-        fetchData()
-      } catch (error) {
-        console.error('批量删除表格配置失败:', error)
-      }
+      await batchDeleteTableConfig(selectedRowKeys.value, publicConfig.value)
+      selectedRowKeys.value = []
+      fetchData()
     },
   })
 }
@@ -421,13 +346,10 @@ function handleBatchDelete() {
 async function handleToggleStatus(id: number, enabled: boolean) {
   const record = dataSource.value.find((item) => item.id === id)
   if (!record) return
-
   record.statusLoading = true
   try {
-    await toggleTableConfigStatus(id, enabled)
+    await toggleTableConfigStatus(id, enabled, publicConfig.value)
     record.enabled = enabled
-  } catch (error) {
-    console.error('更新表格配置状态失败:', error)
   } finally {
     record.statusLoading = false
   }
@@ -435,97 +357,46 @@ async function handleToggleStatus(id: number, enabled: boolean) {
 
 onMounted(() => {
   fetchData()
-  window.addEventListener('resize', onResizeOrScroll, { passive: true })
-
-  const wrapEl = tableWrapRef.value
-  if (wrapEl) {
-    tableWrapObserver = new MutationObserver(() => {
-      scheduleComputeAutoScrollY()
-    })
-
-    tableWrapObserver.observe(wrapEl, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class'],
-    })
+  window.addEventListener('resize', onResizeOrScroll)
+  tableWrapObserver = new MutationObserver(() => scheduleComputeAutoScrollY())
+  if (tableWrapRef.value) {
+    tableWrapObserver.observe(tableWrapRef.value, { childList: true, subtree: true })
   }
-
-  setTimeout(scheduleComputeAutoScrollY, 100)
-  setTimeout(scheduleComputeAutoScrollY, 300)
-  setTimeout(scheduleComputeAutoScrollY, 500)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', onResizeOrScroll as EventListener)
+  window.removeEventListener('resize', onResizeOrScroll)
   tableWrapObserver?.disconnect()
-  tableWrapObserver = null
 })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .table-config-management {
   display: flex;
   flex-direction: column;
+  gap: 16px;
   height: 100%;
   min-height: 0;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.query-card {
-  margin-bottom: 16px;
-  background: var(--fx-bg-container, #ffffff);
-  border-radius: var(--fx-radius-lg, 8px);
 }
 
 .query-card :deep(.ant-card-body) {
-  padding: 12px;
+  padding-bottom: 8px;
 }
 
 .table-card {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-height: 0;
-  margin-bottom: 16px;
-  background: var(--fx-bg-container, #ffffff);
-  border-radius: var(--fx-radius-lg, 8px);
 }
 
 .table-card :deep(.ant-card-body) {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  flex: 1;
   height: 100%;
-  padding: 0;
-}
-
-.table-card > div:first-child {
-  padding: 12px 16px 0 16px;
+  min-height: 0;
 }
 
 .table-wrap {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0 16px 24px 16px;
-}
-
-.table-wrap :deep(.ant-table-wrapper) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.table-wrap :deep(.ant-pagination) {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 16px;
 }
 </style>

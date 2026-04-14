@@ -45,6 +45,7 @@ export interface TableConfigListParams {
   tableName?: string
   tableType?: string
   enabled?: boolean
+  isPublicConfig?: boolean
   current?: number
   pageSize?: number
 }
@@ -93,6 +94,7 @@ export interface TableColumnConfigItem {
 }
 
 export interface TableConfigDetail extends TableConfigItem {
+  publicConfig?: boolean
   columns: TableColumnConfigItem[]
 }
 
@@ -134,8 +136,8 @@ export function getTableConfigList(params: TableConfigListParams) {
   return http.post<TableConfigListResult>('/sys/common/table/config/list', params)
 }
 
-export function getTableConfigDetail(id: number) {
-  return http.post<TableConfigDetail>('/sys/common/table/config/info', { id })
+export function getTableConfigDetail(id: number, isPublicConfig: boolean = false) {
+  return http.post<TableConfigDetail>('/sys/common/table/config/info', { id, isPublicConfig })
 }
 
 export function createTableConfig(data: TableConfigDetail) {
@@ -146,16 +148,20 @@ export function updateTableConfig(data: TableConfigDetail) {
   return http.post<void>('/sys/common/table/config/update', data)
 }
 
-export function deleteTableConfig(id: number) {
-  return http.post<void>('/sys/common/table/config/delete', { id })
+export function deleteTableConfig(id: number, isPublicConfig: boolean = false) {
+  return http.post<void>('/sys/common/table/config/delete', { id, isPublicConfig })
 }
 
-export function batchDeleteTableConfig(ids: number[]) {
-  return http.post<void>('/sys/common/table/config/batchDelete', { ids })
+export function batchDeleteTableConfig(ids: number[], isPublicConfig: boolean = false) {
+  return http.post<void>('/sys/common/table/config/batchDelete', { ids, isPublicConfig })
 }
 
-export function toggleTableConfigStatus(id: number, enabled: boolean) {
-  return http.post<void>('/sys/common/table/config/updateStatus', { id, enabled })
+export function toggleTableConfigStatus(id: number, enabled: boolean, isPublicConfig: boolean = false) {
+  return http.post<void>('/sys/common/table/config/updateStatus', { id, enabled, isPublicConfig })
+}
+
+export function pullPublicTableConfig() {
+  return http.post<number>('/sys/common/table/config/pull-public')
 }
 
 export function getUserTableConfig(params: {

@@ -311,6 +311,10 @@ const loadUnreadCount = async () => {
 onMounted(() => {
   loadLanguageList()
   loadUnreadCount()
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('fx:message-refresh', loadUnreadCount as EventListener)
+  }
   
   // 每30秒刷新一次未读消息数量
   unreadCountTimer = setInterval(() => {
@@ -322,6 +326,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (unreadCountTimer) {
     clearInterval(unreadCountTimer)
+  }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('fx:message-refresh', loadUnreadCount as EventListener)
   }
 })
 

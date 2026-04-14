@@ -243,6 +243,37 @@ const currentMenus = computed(() => {
   }
 })
 
+watch(
+  () => [props.doubleColumn, props.activeModuleCode, props.menus],
+  () => {
+    if (!props.doubleColumn) {
+      selectedFirstLevelKeys.value = []
+      return
+    }
+
+    const firstMenus = firstLevelMenus.value
+    if (firstMenus.length === 0) {
+      selectedFirstLevelKeys.value = []
+      return
+    }
+
+    const currentKey = selectedFirstLevelKeys.value[0]
+    const exists = firstMenus.some(menu => menu.key === currentKey)
+    if (exists) {
+      return
+    }
+
+    const preferredCatalog = firstMenus.find(menu =>
+      menu.type === 'catalog' &&
+      Array.isArray(menu.children) &&
+      menu.children.length > 0,
+    )
+
+    selectedFirstLevelKeys.value = [preferredCatalog?.key || firstMenus[0].key]
+  },
+  { immediate: true, deep: true },
+)
+
 // 监听 activeKey 变化
 watch(
   () => [props.activeKey, props.menus],

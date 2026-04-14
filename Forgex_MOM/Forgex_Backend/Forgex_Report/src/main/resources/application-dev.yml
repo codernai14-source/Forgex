@@ -15,4 +15,4 @@ jmreport:
   preview-cross: true
 
 server:
-  port: 8084
+  port: 9006

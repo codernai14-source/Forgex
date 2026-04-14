@@ -1,0 +1,278 @@
+package com.forgex.integration.service.impl;
+
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.stp.StpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.forgex.common.exception.BusinessException;
+import com.forgex.common.tenant.TenantContext;
+import com.forgex.integration.domain.dto.ApiConfigDTO;
+import com.forgex.integration.domain.entity.ApiConfig;
+import com.forgex.integration.domain.param.ApiConfigParam;
+import com.forgex.integration.mapper.ApiConfigMapper;
+import com.forgex.integration.service.IApiConfigService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 接口配置信息服务实现类
+ * <p>
+ * 提供接口配置的增删改查、启用/停用等基础服务实现
+ * </p>
+ *
+ * @author ForGexTeam
+ * @version 1.0
+ * @since 2026-04-14
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig> 
+    implements IApiConfigService {
+
+    private final ApiConfigMapper apiConfigMapper;
+
+    @Override
+    public Page<ApiConfigDTO> pageApiConfigs(ApiConfigParam param) {
+        Page<ApiConfig> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(param.getStatus() != null, ApiConfig::getStatus, param.getStatus());
+        wrapper.like(param.getApiCode() != null && !param.getApiCode().isEmpty(), 
+                     ApiConfig::getApiCode, param.getApiCode());
+        wrapper.like(param.getApiName() != null && !param.getApiName().isEmpty(), 
+                     ApiConfig::getApiName, param.getApiName());
+        wrapper.eq(param.getModuleCode() != null && !param.getModuleCode().isEmpty(), 
+                   ApiConfig::getModuleCode, param.getModuleCode());
+        wrapper.eq(param.getDirection() != null && !param.getDirection().isEmpty(), 
+                   ApiConfig::getDirection, param.getDirection());
+        wrapper.orderByDesc(ApiConfig::getCreateTime);
+        
+        Page<ApiConfig> resultPage = this.page(page, wrapper);
+        
+        Page<ApiConfigDTO> dtoPage = new Page<>();
+        BeanUtils.copyProperties(resultPage, dtoPage, "records");
+        dtoPage.setRecords(resultPage.getRecords().stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList()));
+        
+        return dtoPage;
+    }
+
+    @Override
+    public List<ApiConfigDTO> listApiConfigs(ApiConfigParam param) {
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(param.getStatus() != null, ApiConfig::getStatus, param.getStatus());
+        wrapper.like(param.getApiCode() != null && !param.getApiCode().isEmpty(), 
+                     ApiConfig::getApiCode, param.getApiCode());
+        wrapper.like(param.getApiName() != null && !param.getApiName().isEmpty(), 
+                     ApiConfig::getApiName, param.getApiName());
+        wrapper.eq(param.getModuleCode() != null && !param.getModuleCode().isEmpty(), 
+                   ApiConfig::getModuleCode, param.getModuleCode());
+        wrapper.eq(param.getDirection() != null && !param.getDirection().isEmpty(), 
+                   ApiConfig::getDirection, param.getDirection());
+        wrapper.orderByDesc(ApiConfig::getCreateTime);
+        
+        List<ApiConfig> list = this.list(wrapper);
+        return list.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public ApiConfigDTO getApiConfigById(Long id) {
+        ApiConfig config = this.getById(id);
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            throw new BusinessException("接口配置不存在");
+        }
+        return convertToDTO(config);
+    }
+
+    @Override
+    public ApiConfigDTO getByApiCode(String apiCode) {
+        Long tenantId = getCurrentTenantId();
+        ApiConfig config = apiConfigMapper.selectByApiCode(apiCode, tenantId);
+        return config != null ? convertToDTO(config) : null;
+    }
+
+    @Override
+    public ApiConfigDTO getByProcessorBean(String processorBean) {
+        ApiConfig config = apiConfigMapper.selectByProcessorBean(processorBean);
+        return config != null ? convertToDTO(config) : null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createApiConfig(ApiConfigDTO dto) {
+        // 校验接口编码唯一性
+        ApiConfigDTO existing = getByApiCode(dto.getApiCode());
+        if (existing != null) {
+            throw new BusinessException("接口编码已存在：" + dto.getApiCode());
+        }
+        
+        ApiConfig config = new ApiConfig();
+        BeanUtils.copyProperties(dto, config);
+        config.setCreateBy(getCurrentUsername());
+        config.setUpdateBy(getCurrentUsername());
+        
+        boolean success = this.save(config);
+        if (!success) {
+            throw new BusinessException("创建接口配置失败");
+        }
+        
+        log.info("创建接口配置成功：{}", dto.getApiCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApiConfig(ApiConfigDTO dto) {
+        if (dto.getId() == null) {
+            throw new BusinessException("配置 ID 不能为空");
+        }
+        
+        // 校验配置是否存在
+        ApiConfig existing = this.getById(dto.getId());
+        if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
+            throw new BusinessException("接口配置不存在");
+        }
+        
+        // 校验接口编码唯一性（排除自身）
+        ApiConfigDTO sameCode = getByApiCode(dto.getApiCode());
+        if (sameCode != null && !sameCode.getId().equals(dto.getId())) {
+            throw new BusinessException("接口编码已存在：" + dto.getApiCode());
+        }
+        
+        ApiConfig config = new ApiConfig();
+        BeanUtils.copyProperties(dto, config);
+        config.setUpdateTime(LocalDateTime.now());
+        config.setUpdateBy(getCurrentUsername());
+        
+        boolean success = this.updateById(config);
+        if (!success) {
+            throw new BusinessException("更新接口配置失败");
+        }
+        
+        log.info("更新接口配置成功：{}", dto.getApiCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteApiConfig(Long id) {
+        ApiConfig config = this.getById(id);
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            throw new BusinessException("接口配置不存在");
+        }
+        
+        config.setDeleted(true);
+        config.setUpdateTime(LocalDateTime.now());
+        config.setUpdateBy(getCurrentUsername());
+        
+        boolean success = this.updateById(config);
+        if (!success) {
+            throw new BusinessException("删除接口配置失败");
+        }
+        
+        log.info("删除接口配置成功：ID={}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDeleteApiConfigs(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new BusinessException("删除 ID 列表不能为空");
+        }
+        
+        for (Long id : ids) {
+            try {
+                deleteApiConfig(id);
+            } catch (BusinessException e) {
+                log.warn("删除接口配置失败：ID={}, 原因：{}", id, e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void enableApiConfig(Long id) {
+        ApiConfig config = this.getById(id);
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            throw new BusinessException("接口配置不存在");
+        }
+        
+        config.setStatus(1);
+        config.setUpdateTime(LocalDateTime.now());
+        config.setUpdateBy(getCurrentUsername());
+        
+        boolean success = this.updateById(config);
+        if (!success) {
+            throw new BusinessException("启用接口配置失败");
+        }
+        
+        log.info("启用接口配置成功：ID={}, apiCode={}", id, config.getApiCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void disableApiConfig(Long id) {
+        ApiConfig config = this.getById(id);
+        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+            throw new BusinessException("接口配置不存在");
+        }
+        
+        config.setStatus(0);
+        config.setUpdateTime(LocalDateTime.now());
+        config.setUpdateBy(getCurrentUsername());
+        
+        boolean success = this.updateById(config);
+        if (!success) {
+            throw new BusinessException("停用接口配置失败");
+        }
+        
+        log.info("停用接口配置成功：ID={}, apiCode={}", id, config.getApiCode());
+    }
+
+    /**
+     * 实体转 DTO
+     *
+     * @param config 接口配置实体
+     * @return 接口配置 DTO
+     */
+    private ApiConfigDTO convertToDTO(ApiConfig config) {
+        ApiConfigDTO dto = new ApiConfigDTO();
+        BeanUtils.copyProperties(config, dto);
+        return dto;
+    }
+
+    /**
+     * 获取当前登录用户
+     *
+     * @return 当前登录用户名，未登录返回 system
+     */
+    private String getCurrentUsername() {
+        try {
+            return StpUtil.getLoginIdAsString();
+        } catch (NotLoginException e) {
+            return "system";
+        }
+    }
+
+    /**
+     * 获取当前租户 ID
+     *
+     * @return 当前租户 ID，默认返回 0L
+     */
+    private Long getCurrentTenantId() {
+        Long tenantId = TenantContext.get();
+        return tenantId != null ? tenantId : 0L;
+    }
+}

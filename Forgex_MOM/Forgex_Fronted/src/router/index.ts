@@ -261,6 +261,7 @@ const modulePathMap: Record<string, string> = {
   'system': 'system',   // 鍏煎瀹屾暣鍚嶇О
   /** 瀹℃壒绠＄悊妯″潡缂栫爜锟?approval锛岄〉闈㈢粍浠朵粛浣嶄簬 views/workflow */
   'approval': 'workflow',
+  'integration': 'system/integration',
   // 鏈潵鍙互娣诲姞鏇村鏄犲皠锛屼緥濡傦細
   // 'prod': 'production',
   // 'qc': 'quality',
