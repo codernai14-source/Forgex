@@ -9,7 +9,7 @@ import lombok.Data;
  * 用于接收前端导入物料时的策略配置参数
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

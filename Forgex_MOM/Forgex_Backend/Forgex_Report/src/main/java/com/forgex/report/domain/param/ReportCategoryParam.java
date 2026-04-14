@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 用于封装报表分类查询条件
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see BaseGetParam

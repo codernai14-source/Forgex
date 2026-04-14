@@ -1,5 +1,5 @@
 /**
- * 日本語翻訳統一エクスポート
+ * 日文翻译统一导出
  */
 import common from './common'
 import layout from './layout'

@@ -23,7 +23,7 @@ import java.util.List;
  * 支持新增和修改两种场景（通过 id 字段区分）。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleDetailSaveParam 明细保存参数

@@ -40,7 +40,7 @@ import java.time.LocalDateTime;
  * </ul>
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRule 编码规则主表实体

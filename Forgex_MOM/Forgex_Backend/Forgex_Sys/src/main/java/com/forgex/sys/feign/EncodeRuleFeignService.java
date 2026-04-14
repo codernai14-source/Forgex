@@ -51,7 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
  * ISysEncodeRuleService.generateCode()  [Sys 模块 Service]
  * }</pre>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see ISysEncodeRuleService 编码规则 Service

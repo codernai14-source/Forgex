@@ -1,49 +1,37 @@
 <template>
-  <a-tag v-if="tagInfo" :color="tagInfo.color">
-    {{ tagInfo.label }}
+  <a-tag v-if="displayItem" :color="displayItem.tagStyle?.color">
+    <template v-if="iconComponent" #icon>
+      <component :is="iconComponent" />
+    </template>
+    {{ displayItem.label }}
   </a-tag>
   <span v-else>{{ fallbackText }}</span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { getIcon } from '@/utils/icon'
+import type { DictItemOption } from '@/hooks/useDict'
 
 interface Props {
-  /** 记录对象，包含字典字段的原始值和翻译后的 JSON 值 */
-  record?: Record<string, any>
-  /** 字典字段名，用于从 record 中获取对应的字典值 */
-  dictField?: string
-  /** 降级文本，当无法解析字典 JSON 时显示的原始值 */
+  items?: DictItemOption[]
+  value?: string | number | null
   fallbackText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  record: () => ({}),
-  dictField: '',
-  fallbackText: ''
+  items: () => [],
+  value: undefined,
+  fallbackText: '',
 })
 
-const tagInfo = computed(() => {
-  if (!props.record || !props.dictField) {
+const displayItem = computed(() => {
+  const normalizedValue = String(props.value ?? '')
+  if (!normalizedValue) {
     return null
   }
-  
-  const value = props.record[props.dictField]
-  
-  if (!value) {
-    return null
-  }
-  
-  try {
-    const parsed = JSON.parse(value)
-    if (parsed.color && parsed.color !== 'default') {
-      return {
-        label: parsed.label || value,
-        color: parsed.color
-      }
-    }
-  } catch {
-    return null
-  }
+  return props.items.find(item => String(item?.value ?? '') === normalizedValue) || null
 })
+
+const iconComponent = computed(() => getIcon(displayItem.value?.tagStyle?.icon))
 </script>

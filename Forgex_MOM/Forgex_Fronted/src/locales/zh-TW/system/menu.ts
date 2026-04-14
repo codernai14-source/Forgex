@@ -13,7 +13,7 @@ export default {
   permission: '權限標識',
   sort: '排序',
   visible: '是否可見',
-  status: '狀態',
+  status: '状态',
   module: '所屬模組',
   parentMenu: '父選單',
   rootMenu: '根目錄',

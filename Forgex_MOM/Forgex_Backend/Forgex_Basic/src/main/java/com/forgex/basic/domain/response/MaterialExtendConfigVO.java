@@ -13,7 +13,7 @@ import java.util.Map;
  * 用于前端表单渲染，包含配置信息及解析后的选项数据
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

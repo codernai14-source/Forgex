@@ -1,7 +1,9 @@
 <template>
   <div class="tag-style-config">
-    <a-form :model="formData" layout="vertical">
-      <a-form-item label="标签颜色">
+    <!-- 颜色和图标在同一行 -->
+    <div class="tag-style-row">
+      <div class="tag-style-field">
+        <label class="tag-style-label">标签颜色</label>
         <a-select
           v-model:value="formData.color"
           placeholder="请选择标签颜色"
@@ -17,7 +19,7 @@
               <a-tag color="processing">进行中</a-tag>
             </a-select-option>
             <a-select-option value="error">
-              <a-tag color="error">错误</a-tag>
+              <a-tag color="error">失败</a-tag>
             </a-select-option>
             <a-select-option value="warning">
               <a-tag color="warning">警告</a-tag>
@@ -64,9 +66,10 @@
             </a-select-option>
           </a-select-opt-group>
         </a-select>
-      </a-form-item>
+      </div>
 
-      <a-form-item label="图标">
+      <div class="tag-style-field">
+        <label class="tag-style-label">图标</label>
         <a-select
           v-model:value="formData.icon"
           placeholder="请选择图标"
@@ -75,56 +78,85 @@
           :filter-option="filterOption"
         >
           <a-select-option value="CheckCircleOutlined">
-            <CheckCircleOutlined /> 成功图标
+            <template #label>
+              <span><CheckCircleOutlined /> 成功图标</span>
+            </template>
+            成功图标
           </a-select-option>
           <a-select-option value="CloseCircleOutlined">
-            <CloseCircleOutlined /> 错误图标
+            <template #label>
+              <span><CloseCircleOutlined /> 失败图标</span>
+            </template>
+            失败图标
           </a-select-option>
           <a-select-option value="ExclamationCircleOutlined">
-            <ExclamationCircleOutlined /> 警告图标
+            <template #label>
+              <span><ExclamationCircleOutlined /> 警告图标</span>
+            </template>
+            警告图标
           </a-select-option>
           <a-select-option value="SyncOutlined">
-            <SyncOutlined /> 加载图标
+            <template #label>
+              <span><SyncOutlined /> 加载图标</span>
+            </template>
+            加载图标
           </a-select-option>
           <a-select-option value="ClockCircleOutlined">
-            <ClockCircleOutlined /> 时钟图标
+            <template #label>
+              <span><ClockCircleOutlined /> 等待图标</span>
+            </template>
+            等待图标
           </a-select-option>
           <a-select-option value="InfoCircleOutlined">
-            <InfoCircleOutlined /> 信息图标
+            <template #label>
+              <span><InfoCircleOutlined /> 信息图标</span>
+            </template>
+            信息图标
           </a-select-option>
           <a-select-option value="CheckOutlined">
-            <CheckOutlined /> 勾选图标
+            <template #label>
+              <span><CheckOutlined /> 勾选图标</span>
+            </template>
+            勾选图标
           </a-select-option>
           <a-select-option value="CloseOutlined">
-            <CloseOutlined /> 关闭图标
+            <template #label>
+              <span><CloseOutlined /> 关闭图标</span>
+            </template>
+            关闭图标
           </a-select-option>
         </a-select>
-      </a-form-item>
+      </div>
+    </div>
 
-      <a-form-item label="预览">
+    <!-- 预览区域 -->
+    <div class="tag-style-preview">
+      <label class="tag-style-label">预览</label>
+      <div class="tag-style-preview-content">
         <a-tag v-if="formData.color" :color="formData.color">
-          <template v-if="formData.icon" #icon>
-            <component :is="formData.icon" />
+          <template v-if="currentIconComponent" #icon>
+            <component :is="currentIconComponent" />
           </template>
           示例标签
         </a-tag>
-        <span v-else style="color: #999">请配置标签样式</span>
-      </a-form-item>
-    </a-form>
+        <span v-else class="tag-style-preview-empty">请先配置标签样式</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
+import { getIcon } from '@/utils/icon'
 import {
   CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-  SyncOutlined,
-  ClockCircleOutlined,
-  InfoCircleOutlined,
   CheckOutlined,
-  CloseOutlined
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  SyncOutlined,
 } from '@ant-design/icons-vue'
 
 interface TagStyleForm {
@@ -132,8 +164,22 @@ interface TagStyleForm {
   icon?: string
 }
 
-const formData = reactive<TagStyleForm>({})
+const formData = reactive<TagStyleForm>({
+  color: undefined,
+  icon: undefined,
+})
 
+/**
+ * 当前选中的图标组件
+ */
+const currentIconComponent = computed(() => {
+  return getIcon(formData.icon)
+})
+
+/**
+ * 获取标签样式 JSON 字符串
+ * @returns 标签样式 JSON 字符串
+ */
 const getTagStyleJson = (): string => {
   const data: TagStyleForm = {}
   if (formData.color) {
@@ -145,28 +191,86 @@ const getTagStyleJson = (): string => {
   return Object.keys(data).length > 0 ? JSON.stringify(data) : ''
 }
 
+/**
+ * 设置标签样式
+ * @param json 标签样式 JSON 字符串
+ */
 const setTagStyleJson = (json: string) => {
+  if (!json || json.trim() === '') {
+    formData.color = undefined
+    formData.icon = undefined
+    return
+  }
   try {
     const data = JSON.parse(json)
+    // 直接赋值触发响应式更新
     formData.color = data.color || undefined
     formData.icon = data.icon || undefined
   } catch (e) {
-    console.error('解析标签样式失败', e)
+    console.error('[TagStyleConfig] 解析标签样式失败:', e, json)
   }
 }
 
 const filterOption = (input: string, option: any) => {
-  return option.label?.toLowerCase().includes(input.toLowerCase())
+  const text = option.children?.[0]?.children || option.label || ''
+  return String(text).toLowerCase().includes(input.toLowerCase())
 }
 
 defineExpose({
   getTagStyleJson,
-  setTagStyleJson
+  setTagStyleJson,
 })
 </script>
 
 <style scoped lang="less">
 .tag-style-config {
+  .tag-style-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .tag-style-field {
+    flex: 1;
+    min-width: 0;
+
+    .tag-style-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--fx-text-primary, #1f1f1f);
+      font-weight: 500;
+    }
+  }
+
+  .tag-style-preview {
+    .tag-style-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--fx-text-primary, #1f1f1f);
+      font-weight: 500;
+    }
+
+    .tag-style-preview-content {
+      padding: 12px 16px;
+      background: var(--fx-bg-layout, #f5f5f5);
+      border-radius: 6px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+
+      .tag-style-preview-empty {
+        color: var(--fx-text-disabled, #999);
+        font-size: 14px;
+      }
+    }
+  }
+
+  :deep(.ant-select) {
+    width: 100%;
+  }
+
   :deep(.ant-select-selection-item) {
     display: flex;
     align-items: center;

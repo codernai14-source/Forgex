@@ -13,14 +13,14 @@
 
         <!-- 右侧：职位列表 -->
         <a-col :span="18">
-          <!-- 操作按钮和表格 -->
+            <!-- 操作按钮和表格 -->
           <div class="table-area">
             <fx-dynamic-table
               ref="tableRef"
               :table-code="'PositionTable'"
               :request="handleRequest"
               :dict-options="dictOptions"
-              :fallback-config="fallbackConfig"
+              :降级方案-config="降级方案Config"
               row-key="id"
             >
               <template #toolbar>
@@ -72,7 +72,7 @@
     <!-- 新增/编辑弹窗 -->
     <BaseFormDialog
       v-model:open="visible"
-      :title="isEdit ? '编辑职位' : '新增职位'"
+      :title="isEdit ? '编辑岗位' : '新增岗位'"
       :confirm-loading="formLoading"
       @ok="handleSubmit"
       @cancel="handleCancel"
@@ -101,25 +101,25 @@
           />
         </a-form-item>
 
-        <a-form-item label="职位名称" name="positionName">
+        <a-form-item label="岗位名称" name="positionName">
           <a-input
             v-model:value="formData.positionName"
-            placeholder="请输入职位名称"
+            placeholder="请输入岗位名称"
           />
         </a-form-item>
 
-        <a-form-item label="职位编码" name="positionCode">
+        <a-form-item label="岗位编码" name="positionCode">
           <a-input
             v-model:value="formData.positionCode"
-            placeholder="请输入职位编码"
+            placeholder="请输入岗位编码"
             :disabled="isEdit"
           />
         </a-form-item>
 
-        <a-form-item label="职位级别" name="positionLevel">
+        <a-form-item label="岗位级别" name="positionLevel">
           <a-select
             v-model:value="formData.positionLevel"
-            placeholder="请选择职位级别"
+            placeholder="请选择岗位级别"
             style="width: 100%"
           >
             <a-select-option
@@ -162,7 +162,6 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { message } from 'ant-design-vue'
 import {
   PlusOutlined
 } from '@ant-design/icons-vue'
@@ -179,17 +178,17 @@ import type { FxTableConfig } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
 import type { Position, PositionSaveParam } from './types'
 
-// 租户ID
+// 租户 ID
 const currentTenantId = ref<string | null>(null)
 const deptTreeRef = ref()
 const treeData = ref<any[]>([])
 
-// 字典数据
+// 瀛楀吀鏁版嵁
 const { dictItems: positionLevelOptions } = useDict('position_level')
 const { dictItems: statusOptions } = useDict('status')
 
 // 搜索表单
-const searchForm = ref({
+const search表单 = ref({
   positionName: '',
   positionCode: '',
   status: undefined,
@@ -206,11 +205,11 @@ const dictOptions = ref({
   positionLevel: positionLevelOptions
 })
 
-const fallbackConfig: Partial<FxTableConfig> = {
+const 降级方案Config: Partial<FxTableConfig> = {
   columns: [
-    { field: 'positionName', title: '职位名称', width: 180, align: 'left' },
-    { field: 'positionCode', title: '职位编码', width: 140, align: 'left' },
-    { field: 'positionLevel', title: '职位级别', width: 120, align: 'center', dictCode: 'positionLevel' },
+    { field: 'positionName', title: '岗位名称', width: 180, align: 'left' },
+    { field: 'positionCode', title: '岗位编码', width: 140, align: 'left' },
+    { field: 'positionLevel', title: '岗位级别', width: 120, align: 'center', dictCode: 'positionLevel' },
     { field: 'orderNum', title: '排序', width: 90, align: 'center' },
     { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
     { field: 'remark', title: '备注', width: 220, align: 'left' },
@@ -218,8 +217,8 @@ const fallbackConfig: Partial<FxTableConfig> = {
     { field: 'action', title: '操作', width: 160, align: 'center', fixed: 'right' }
   ],
   queryFields: [
-    { field: 'positionName', label: '职位名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'positionCode', label: '职位编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'positionName', label: '岗位名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'positionCode', label: '岗位编码', queryType: 'input', queryOperator: 'like' },
     { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
   ]
 }
@@ -245,22 +244,15 @@ const handleRequest = async (payload: {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
       tenantId: currentTenantId.value,
-      ...searchForm.value,
+      ...search表单.value,
       ...payload.query
     }
     
-    // 处理排序
-    if (payload.sorter) {
-      params.sortField = payload.sorter.field
-      params.sortOrder = payload.sorter.order
-    }
-    
-    const data = await getPositionPage(params)
     // 确保total是数字类型
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total: total }
   } catch (e) {
-    message.error('加载职位列表失败')
+    console.error('加载岗位列表失败', e)
     return {
       records: [],
       total: 0
@@ -286,8 +278,8 @@ const formData = ref<PositionSaveParam & { departmentId?: string }>({
 // 表单验证规则
 const rules = {
   departmentId: [{ required: true, message: '请选择所属部门', trigger: 'change' }],
-  positionName: [{ required: true, message: '请输入职位名称', trigger: 'blur' }],
-  positionCode: [{ required: true, message: '请输入职位编码', trigger: 'blur' }]
+  positionName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
+  positionCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }]
 }
 
 /**
@@ -299,16 +291,16 @@ async function onSelectNode(keys: string[], node: any) {
   // So 'node' here is the data object
   
   if (keys.length > 0) {
-    searchForm.value.departmentId = keys[0]
+    search表单.value.departmentId = keys[0]
   } else {
-    searchForm.value.departmentId = undefined
+    search表单.value.departmentId = undefined
   }
   // Reset pagination if needed, but here we just reload
   await handleSearch()
 }
 
 /**
- * 加载部门树数据（用于下拉选）
+ * 加载部门树数据（用于下拉选择）
  */
 async function loadDeptTreeData() {
   if (!currentTenantId.value) return
@@ -331,8 +323,8 @@ async function handleSearch() {
  * 重置
  */
 async function handleReset() {
-  const currentDeptId = searchForm.value.departmentId
-  searchForm.value = {
+  const currentDeptId = search表单.value.departmentId
+  search表单.value = {
     positionName: '',
     positionCode: '',
     status: undefined,
@@ -348,7 +340,7 @@ function openAdd() {
   isEdit.value = false
   visible.value = true
   // 如果选中了部门，自动填入
-  const defaultDeptId = searchForm.value.departmentId
+  const defaultDeptId = search表单.value.departmentId
   
   formData.value = {
     tenantId: currentTenantId.value!,
@@ -412,7 +404,7 @@ async function handleSubmit() {
       // 表单验证失败
       return
     }
-    message.error(e.message || '保存失败')
+    console.error('保存失败', e)
   } finally {
     formLoading.value = false
   }
@@ -430,7 +422,7 @@ async function handleDelete(id: string) {
     // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (e: any) {
-    message.error(e.message || '删除失败')
+    console.error('删除失败', e)
   }
 }
 

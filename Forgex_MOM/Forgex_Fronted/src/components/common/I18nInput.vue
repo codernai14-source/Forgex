@@ -52,7 +52,7 @@
       </a-input>
     </div>
 
-    <!-- 表格模式：直接显示表格 -->
+      <!-- 表格模式：直接显示表格 -->
     <div v-else-if="mode === 'table'" class="table-mode">
       <a-table
         :columns="columns"
@@ -103,7 +103,7 @@
       </div>
     </div>
 
-    <!-- 弹窗模式 -->
+      <!-- 弹窗模式 -->
     <a-modal
       v-model:open="showModal"
       :title="t('common.i18nInput.modalTitle')"
@@ -207,13 +207,13 @@ const { t } = useI18n()
 
 /**
  * 多语言输入组件
- * 
+ *
  * 功能：
- * 1. 支持三种模式：simple（简单输入框+弹窗）、table（直接表格）、modal（仅弹窗）
- * 2. 支持两种输入类型：input（单行）、textarea（多行）
- * 3. 支持占位符快速插入（用于消息模板等场景）
- * 4. 自动从后端获取支持的语言列表
- * 5. 支持 v-model 双向绑定 JSON 字符串
+ * 1. 支持三种模式：simple、table、modal
+ * 2. 支持 input 和 textarea 两种输入类型
+ * 3. 支持占位符快速插入
+ * 4. 自动从后端获取启用的语言列表
+ * 5. 支持通过 v-model 双向绑定 JSON 字符串
  *
  * 使用示例：
  * <I18nInput v-model="form.nameI18nJson" mode="simple" placeholder="请输入菜单名称" />
@@ -221,19 +221,19 @@ const { t } = useI18n()
  */
 
 interface Props {
-  /** v-model 绑定的值（JSON 字符串） */
+  /** v-model 绑定值（JSON 字符串） */
   modelValue?: string
-  /** 显示模式：simple=简单输入框, table=表格, modal=仅弹窗 */
+  /** 显示模式：simple=简单输入框，table=表格，modal=仅弹窗 */
   mode?: 'simple' | 'table' | 'modal'
-  /** 输入类型：input=单行输入, textarea=多行文本框 */
+  /** 输入类型：input=单行输入，textarea=多行文本 */
   type?: 'input' | 'textarea'
   /** 占位符 */
   placeholder?: string
   /** 默认语言代码 */
   defaultLang?: string
-  /** textarea 行数（仅 type='textarea' 时生效） */
+  /** textarea 行数（仅在 type='textarea' 时生效） */
   rows?: number
-  /** 是否显示占位符快捷插入工具栏 */
+  /** 是否显示占位符快速插入工具栏 */
   showPlaceholders?: boolean
 }
 
@@ -320,7 +320,7 @@ function updateViewportHeight() {
 }
 
 /**
- * 保存弹窗中 textarea 的引用
+ * 淇濆瓨寮圭獥涓?textarea 鐨勫紩鐢?
  */
 function setModalTextareaRef(langCode: string, el: any) {
   if (el) {
@@ -333,7 +333,7 @@ function handleModalFieldFocus(langCode: string) {
 }
 
 /**
- * 在简单模式 textarea 中插入占位符
+ * 鍦ㄧ畝鍗曟ā寮?textarea 涓彃鍏ュ崰浣嶇
  */
 function insertPlaceholderAtSimple(placeholder: string) {
   const textareaEl = simpleTextareaRef.value?.$el?.querySelector?.('textarea')
@@ -350,7 +350,7 @@ function insertPlaceholderAtSimple(placeholder: string) {
       textareaEl.setSelectionRange(start + placeholder.length, start + placeholder.length)
     }, 0)
   } else {
-    // fallback: 追加到末尾
+    // 降级方案：追加到末尾
     defaultValue.value += placeholder
     handleSimpleChange(defaultValue.value)
   }

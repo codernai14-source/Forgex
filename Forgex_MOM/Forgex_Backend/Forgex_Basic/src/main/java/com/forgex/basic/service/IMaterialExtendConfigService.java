@@ -17,7 +17,7 @@ import java.util.List;
  * 4. 字段配置的唯一性校验
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  */

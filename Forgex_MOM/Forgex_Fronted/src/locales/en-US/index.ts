@@ -1,5 +1,5 @@
 /**
- * English Translations Unified Export
+ * 英文翻译统一导出
  */
 import common from './common'
 import layout from './layout'

@@ -279,7 +279,6 @@ const handleSubmit = async () => {
 
   await saveTenantMessageWhitelist(formData)
   modalVisible.value = false
-  message.success(t('system.tenantMessageWhitelist.message.saveSuccess'))
   await tableRef.value?.reload?.()
 }
 
@@ -291,7 +290,6 @@ const handleCancel = () => {
 // 删除
 const handleDelete = async (record: any) => {
   await deleteTenantMessageWhitelist(record.id)
-  message.success(t('system.tenantMessageWhitelist.message.deleteSuccess'))
   await tableRef.value?.reload?.()
 }
 
@@ -302,10 +300,9 @@ const handleBatchDelete = () => {
     content: t('system.tenantMessageWhitelist.confirm.batchDeleteContent', { count: selectedRowKeys.value.length }),
     onOk: async () => {
       for (const id of selectedRowKeys.value) {
-        await deleteTenantMessageWhitelist(id)
+        await deleteTenantMessageWhitelist(id, { showSuccessMessage: false })
       }
       selectedRowKeys.value = []
-      message.success(t('system.tenantMessageWhitelist.message.deleteSuccess'))
       await tableRef.value?.reload?.()
     }
   })

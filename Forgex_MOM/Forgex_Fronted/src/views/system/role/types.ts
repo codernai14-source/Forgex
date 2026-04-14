@@ -1,6 +1,6 @@
 /**
  * 角色管理模块 - 类型定义
- * 
+ *
  * @author Forgex
  * @version 1.0.0
  */
@@ -38,7 +38,7 @@ export interface RoleQuery {
  * 按钮作为菜单的子项，通过 parent_id 关联
  * sys_role_menu 表统一管理菜单和按钮权限
  */
-export interface RolePermission {
+export interface Role权限 {
   roleId: string
   menuIds: string[]      // 菜单和按钮权限 ID 列表（统一使用 sys_role_menu 表）
 }

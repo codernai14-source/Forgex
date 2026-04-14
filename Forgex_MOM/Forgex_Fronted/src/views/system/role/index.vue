@@ -5,7 +5,9 @@
         ref="tableRef"
         class="role-table"
         :table-code="'RoleTable'"
+        :show-query-form="true"
         :request="handleRequest"
+        :降级方案-config="降级方案Config"
         :dict-options="dictOptions"
         :row-selection="{
           selectedRowKeys,
@@ -77,11 +79,11 @@
 
         <template #status="{ record }">
           <a-tag
-            v-if="resolveStatusTag(record.status)"
-            :color="resolveStatusTag(record.status)?.color"
-            :style="resolveStatusTag(record.status)?.style"
+            v-if="resolve状态Tag(record.status)"
+            :color="resolve状态Tag(record.status)?.color"
+            :style="resolve状态Tag(record.status)?.style"
           >
-            {{ resolveStatusTag(record.status)?.label }}
+            {{ resolve状态Tag(record.status)?.label }}
           </a-tag>
           <span v-else>{{ record.status ?? '-' }}</span>
         </template>
@@ -139,7 +141,7 @@
             {{ $t('common.back') }}
           </a-button>
           <span class="grant-header__title">
-            {{ grantViewTitle }} · {{ currentRoleName || '-' }}
+            {{ grantViewTitle }} 路 {{ currentRoleName || '-' }}
           </span>
         </a-space>
       </div>
@@ -183,11 +185,36 @@ import {
 } from '@ant-design/icons-vue'
 import { getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 import type { Role } from './types'
 
 const { t } = useI18n()
 const { dictItems: statusOptions } = useDict('status')
 const dictOptions = computed(() => ({ status: statusOptions.value }))
+
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'RoleTable',
+  tableName: '角色管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'roleName', title: '角色名称', minWidth: 160, ellipsis: true },
+    { field: 'roleCode', title: '角色编码', width: 140 },
+    { field: 'description', title: '描述', minWidth: 180, ellipsis: true },
+    { field: 'status', title: '状态', width: 100, dictCode: 'status' },
+    { field: 'createBy', title: '创建人', width: 120 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'updateTime', title: '更新时间', width: 180 },
+    { field: 'action', title: '操作', width: 220, fixed: 'right' }
+  ],
+  queryFields: [
+    { field: 'roleName', label: '角色名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'roleCode', label: '角色编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ],
+  version: 1
+}))
 
 const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
@@ -201,7 +228,7 @@ function resolveTenantId(): string {
   return currentTenantId.value || sessionStorage.getItem('tenantId') || ''
 }
 
-function normalizeRoleStatusRecord(row: any) {
+function normalizeRole状态Record(row: any) {
   const s = row?.status
   let num: number
   if (typeof s === 'boolean') {
@@ -224,7 +251,7 @@ function normalizeBoolean(value: unknown): number {
   return value ? 1 : 0
 }
 
-function resolveStatusTag(value: unknown) {
+function resolve状态Tag(value: unknown) {
   const normalizedValue = normalizeBoolean(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
@@ -257,7 +284,7 @@ const handleRequest = async (params: any) => {
       pageNum: params.page?.current,
       pageSize: params.page?.pageSize,
     })
-    const records = (res.records || []).map((r: any) => normalizeRoleStatusRecord(r))
+    const records = (res.records || []).map((r: any) => normalizeRole状态Record(r))
     return {
       success: true,
       data: records,
@@ -378,7 +405,7 @@ function navigateToUserGrant(role: Role) {
 }
 
 function handleGrantSaved() {
-  // keep current embedded page; user can click back manually
+  // 保留当前嵌入页面，用户可以手动返回
 }
 
 onMounted(async () => {

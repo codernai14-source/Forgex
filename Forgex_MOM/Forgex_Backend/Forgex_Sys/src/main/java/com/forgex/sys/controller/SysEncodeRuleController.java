@@ -57,7 +57,7 @@ import java.util.List;
  *   <li>数据源配置：使用 common 库（common 数据源）</li>
  * </ul>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see ISysEncodeRuleService

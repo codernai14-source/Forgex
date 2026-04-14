@@ -42,7 +42,7 @@ import java.util.List;
  * </ul>
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRuleDetail 编码规则明细实体

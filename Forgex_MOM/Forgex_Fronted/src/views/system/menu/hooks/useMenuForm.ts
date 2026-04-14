@@ -1,40 +1,28 @@
 /**
- * 菜单表单逻辑Hook
+ * 菜单表单逻辑封装
  */
 
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { addMenu, updateMenu, getMenuTree } from '@/api/system/menu'
-import type { Menu, MenuTreeNode } from '../types'
 import type { FormInstance } from 'ant-design-vue'
+import { addMenu, getMenuTree, updateMenu } from '@/api/system/menu'
+import type { Menu, MenuTreeNode } from '../types'
 
 export function useMenuForm(emit: any) {
-  // 表单引用
   const formRef = ref<FormInstance>()
-  
-  // 弹窗显示状态
   const visible = ref(false)
-  
-  // 表单模式：add-新增，edit-编辑
   const mode = ref<'add' | 'edit'>('add')
-  
-  // 提交加载状态
   const submitLoading = ref(false)
-  
-  // 父菜单树数据
   const menuTreeData = ref<MenuTreeNode[]>([
     {
       key: '0',
-      title: '根目录',
+      title: '顶级菜单',
       value: '0',
-      children: []
-    }
+      children: [],
+    },
   ])
-  
-  // 当前模块的所有菜单（用于构建父菜单树）
   const allMenus = ref<Menu[]>([])
-  
-  // 表单数据
+
   const formData = reactive<Menu>({
     id: undefined,
     moduleId: '',
@@ -50,127 +38,78 @@ export function useMenuForm(emit: any) {
     externalUrl: undefined,
     orderNum: 0,
     visible: true,
-    status: true
+    status: true,
   })
-  
-  // 表单标题
-  const formTitle = computed(() => {
-    return mode.value === 'add' ? '新增菜单' : '编辑菜单'
-  })
-  
-  // 是否显示路径字段
-  const showPath = computed(() => {
-    return formData.type !== 'button'
-  })
-  
-  // 是否显示组件Key字段
-  const showComponentKey = computed(() => {
-    return formData.type === 'menu' && formData.menuMode === 'embedded'
-  })
-  
-  // 是否显示权限标识字段
-  const showPermKey = computed(() => {
-    return formData.type === 'button' || formData.type === 'menu'
-  })
-  
-  // 是否显示外联URL字段
-  const showExternalUrl = computed(() => {
-    return formData.menuMode === 'external'
-  })
-  
-  // 表单验证规则
+
+  const formTitle = computed(() => (mode.value === 'add' ? '新增菜单' : '编辑菜单'))
+  const showPath = computed(() => formData.type !== 'button')
+  const showComponentKey = computed(() => formData.type === 'menu' && formData.menuMode === 'embedded')
+  const showPermKey = computed(() => formData.type === 'button' || formData.type === 'menu')
+  const showExternalUrl = computed(() => formData.menuMode === 'external')
+
   const rules = {
-    moduleId: [
-      { required: true, message: '请选择所属模块', trigger: 'change' }
-    ],
+    moduleId: [{ required: true, message: '请选择所属模块', trigger: 'change' }],
     name: [
       { required: true, message: '请输入菜单名称', trigger: 'blur' },
-      { max: 50, message: '菜单名称不能超过50个字符', trigger: 'blur' }
+      { max: 50, message: '菜单名称不能超过 50 个字符', trigger: 'blur' },
     ],
-    type: [
-      { required: true, message: '请选择菜单类型', trigger: 'change' }
-    ],
-    path: [
-      { required: true, message: '请输入菜单路径', trigger: 'blur' }
-    ],
-    permKey: [
-      { required: true, message: '请输入权限标识', trigger: 'blur' }
-    ],
+    type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
+    path: [{ required: true, message: '请输入路由路径', trigger: 'blur' }],
+    permKey: [{ required: true, message: '请输入权限标识', trigger: 'blur' }],
     externalUrl: [
-      { required: true, message: '请输入外联URL', trigger: 'blur' },
-      { type: 'url', message: 'URL格式不正确', trigger: 'blur' }
-    ]
+      { required: true, message: '请输入外链 URL', trigger: 'blur' },
+      { type: 'url', message: 'URL 格式不正确', trigger: 'blur' },
+    ],
   }
-  
-  /**
-   * 打开新增弹窗
-   */
-  const openAdd = () => {
+
+  function openAdd() {
     mode.value = 'add'
     resetForm()
     visible.value = true
-    // 加载菜单树数据
     if (formData.moduleId) {
       loadMenuTreeData(formData.moduleId)
     }
   }
-  
-  /**
-   * 打开编辑弹窗
-   */
-  const openEdit = (record: Menu) => {
+
+  function openEdit(record: Menu) {
     mode.value = 'edit'
     Object.assign(formData, record)
     visible.value = true
-    // 加载菜单树数据
     if (formData.moduleId) {
       loadMenuTreeData(formData.moduleId)
     }
   }
-  
-  /**
-   * 关闭弹窗
-   */
-  const handleCancel = () => {
+
+  function handleCancel() {
     visible.value = false
     resetForm()
   }
-  
-  /**
-   * 提交表单
-   */
-  const handleSubmit = async () => {
+
+  async function handleSubmit() {
     try {
-      // 表单验证
       await formRef.value?.validate()
-      
       submitLoading.value = true
-      
+
       if (mode.value === 'add') {
         await addMenu(formData)
-        message.success('新增成功')
       } else {
         await updateMenu(formData)
-        message.success('更新成功')
       }
-      
+
       visible.value = false
       resetForm()
       emit('success')
     } catch (error) {
-      console.error('提交失败:', error)
-      if (error !== false) { // 排除表单验证失败
-        message.error('提交失败')
+      console.error('提交菜单表单失败:', error)
+      if ((error as any)?.errorFields || error === false) {
+        return
       }
     } finally {
       submitLoading.value = false
     }
   }
-  
-  /**
-   * 重置表单
-   */
-  const resetForm = () => {
+
+  function resetForm() {
     formRef.value?.resetFields()
     Object.assign(formData, {
       id: undefined,
@@ -187,165 +126,123 @@ export function useMenuForm(emit: any) {
       externalUrl: undefined,
       orderNum: 0,
       visible: true,
-      status: true
+      status: true,
     })
   }
-  
-  /**
-   * 菜单类型变化
-   */
-  const handleTypeChange = () => {
-    // 按钮类型不需要路径和组件Key
+
+  function handleTypeChange() {
     if (formData.type === 'button') {
       formData.path = ''
       formData.componentKey = undefined
       formData.menuMode = 'embedded'
     }
   }
-  
-  /**
-   * 菜单模式变化
-   */
-  const handleModeChange = () => {
-    // 外联模式不需要组件Key
+
+  function handleModeChange() {
     if (formData.menuMode === 'external') {
       formData.componentKey = undefined
     } else {
       formData.externalUrl = undefined
     }
   }
-  
-  /**
-   * 加载菜单树数据
-   * 用于构建父菜单选择器的数据源
-   */
-  const loadMenuTreeData = async (moduleId: string) => {
-    if (!moduleId) {
-      return
-    }
-    
+
+  async function loadMenuTreeData(moduleId: string) {
+    if (!moduleId) return
+
     try {
       const tenantId = sessionStorage.getItem('tenantId')
       if (!tenantId) {
-        message.warning('租户信息缺失')
+        message.warning('未获取到租户信息')
         return
       }
-      
-      const response = await getMenuTree({ 
-        tenantId: Number(tenantId), 
-        moduleId: Number(moduleId) 
+
+      const response = await getMenuTree({
+        tenantId: Number(tenantId),
+        moduleId: Number(moduleId),
       })
       allMenus.value = response || []
       buildParentMenuTree()
     } catch (error) {
       console.error('加载菜单树失败:', error)
-      // 失败时使用默认的根目录树
       allMenus.value = []
       buildParentMenuTree()
     }
   }
-  
-  /**
-   * 递归构建树节点
-   */
-  const buildTreeNodes = (menus: Menu[], parentId: string): MenuTreeNode[] => {
+
+  function buildTreeNodes(menus: Menu[], parentId: string): MenuTreeNode[] {
     return menus
-      .filter(m => String(m.parentId || '0') === String(parentId))
+      .filter((menu) => String(menu.parentId || '0') === String(parentId))
       .sort((a, b) => (a.orderNum || 0) - (b.orderNum || 0))
-      .map(menu => ({
+      .map((menu) => ({
         key: String(menu.id),
         title: menu.name,
         value: String(menu.id),
-        children: buildTreeNodes(menus, String(menu.id))
+        children: buildTreeNodes(menus, String(menu.id)),
       }))
   }
-  
-  /**
-   * 过滤当前菜单及其子菜单
-   * 防止循环引用
-   */
-  const filterCurrentMenuFromTree = (menus: Menu[], currentId?: string): Menu[] => {
+
+  function filterCurrentMenuFromTree(menus: Menu[], currentId?: string): Menu[] {
     if (!currentId) return menus
-    
-    // 收集当前菜单及其所有子菜单的ID
+
     const excludeIds = new Set<string>()
     const collectChildIds = (id: string) => {
       excludeIds.add(id)
       menus
-        .filter(m => String(m.parentId) === String(id))
-        .forEach(child => collectChildIds(String(child.id)))
+        .filter((menu) => String(menu.parentId) === String(id))
+        .forEach((child) => collectChildIds(String(child.id)))
     }
-    
+
     collectChildIds(currentId)
-    
-    // 过滤掉这些ID
-    return menus.filter(m => !excludeIds.has(String(m.id)))
+    return menus.filter((menu) => !excludeIds.has(String(menu.id)))
   }
-  
-  /**
-   * 构建父菜单树
-   * 将扁平化的菜单列表转换为树形结构
-   * 排除类型为 'button' 的菜单项
-   */
-  const buildParentMenuTree = () => {
+
+  function buildParentMenuTree() {
     const rootNode: MenuTreeNode = {
       key: '0',
-      title: '根目录',
+      title: '顶级菜单',
       value: '0',
-      children: []
+      children: [],
     }
-    
-    // 过滤掉按钮类型的菜单
-    const validMenus = allMenus.value.filter(m => m.type !== 'button')
-    
-    // 如果是编辑模式，过滤掉当前菜单及其子菜单
-    const filteredMenus = mode.value === 'edit' 
-      ? filterCurrentMenuFromTree(validMenus, formData.id)
-      : validMenus
-    
-    // 构建树形结构
+
+    const validMenus = allMenus.value.filter((menu) => menu.type !== 'button')
+    const filteredMenus =
+      mode.value === 'edit' ? filterCurrentMenuFromTree(validMenus, formData.id) : validMenus
+
     rootNode.children = buildTreeNodes(filteredMenus, '0')
     menuTreeData.value = [rootNode]
   }
-  
-  /**
-   * 自动计算菜单层级
-   * 根据父菜单ID计算当前菜单的层级
-   */
-  const calculateMenuLevel = (parentId: string): number => {
-    // 根目录下的菜单为一级菜单
+
+  function calculateMenuLevel(parentId: string): number {
     if (!parentId || parentId === '0') {
       return 1
     }
-    
-    // 查找父菜单
-    const parentMenu = allMenus.value.find(m => String(m.id) === String(parentId))
+
+    const parentMenu = allMenus.value.find((menu) => String(menu.id) === String(parentId))
     if (!parentMenu) {
       return 1
     }
-    
-    // 父菜单层级 + 1
+
     return (parentMenu.menuLevel || 1) + 1
   }
-  
-  /**
-   * 监听父菜单变化，自动计算层级
-   */
-  watch(() => formData.parentId, (newParentId) => {
-    if (newParentId !== undefined) {
-      formData.menuLevel = calculateMenuLevel(newParentId)
-    }
-  })
-  
-  /**
-   * 监听模块变化，重新加载菜单树
-   */
-  watch(() => formData.moduleId, (newModuleId) => {
-    if (newModuleId) {
-      loadMenuTreeData(newModuleId)
-    }
-  })
-  
+
+  watch(
+    () => formData.parentId,
+    (newParentId) => {
+      if (newParentId !== undefined) {
+        formData.menuLevel = calculateMenuLevel(newParentId)
+      }
+    },
+  )
+
+  watch(
+    () => formData.moduleId,
+    (newModuleId) => {
+      if (newModuleId) {
+        loadMenuTreeData(newModuleId)
+      }
+    },
+  )
+
   return {
     formRef,
     visible,
@@ -364,6 +261,6 @@ export function useMenuForm(emit: any) {
     handleCancel,
     handleSubmit,
     handleTypeChange,
-    handleModeChange
+    handleModeChange,
   }
 }

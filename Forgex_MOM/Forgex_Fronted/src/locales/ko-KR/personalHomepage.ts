@@ -1,16 +1,16 @@
 /**
- * 개인 홈 번역 - 한국어
+ * 个人首页翻译 - 韩文注释
  * 
  * @author Forgex Team
  * @version 1.0.0
  */
 export default {
-  // Hero 섹션
+  // 头部区域
   hero: {
     eyebrow: '개인 워크스페이스',
     title: '개인 홈',
     titleManage: '개인 홈 초기 설정',
-    desc: '시스템 로그인 후 초기 표시 페이지로, 개인의 취향에 따라 컴포넌트 레이아웃을 저장할 수 있습니다.',
+    desc: '시스템 日志인 후 초기 표시 페이지로, 개인의 취향에 따라 컴포넌트 레이아웃을 저장할 수 있습니다.',
     descManage: '퍼블릭 레벨과 테넌트 레벨의 초기 포털 레이아웃을 일괄 관리하며, 모든 사용자가 이를 기반으로 시스템을 이용합니다.',
     badge: {
       default: '초기 진입',
@@ -20,7 +20,7 @@ export default {
     },
   },
 
-  // 툴바
+  // 工具栏
   toolbar: {
     editMode: '레이아웃 편집',
     exitMode: '편집 종료',
@@ -33,25 +33,32 @@ export default {
     },
   },
 
-  // 설정 패널
+  // 设置面板
   panel: {
     title: '위젯 설정',
-    subtitle: '표시/비표시, 건수 및 기타 옵션',
+    subtitle: '표시/비표시, 건수 및 其他 옵션',
   },
 
-  // 위젯 설정 필드
+  // 组件配置字段
   widget: {
     limit: '표시 건수',
     showMore: '더 보기 링크 표시',
     more: '더 보기',
   },
 
-  // 위젯 제목
+  // 组件标题
   components: {
     commonMenus: {
       title: '자주 쓰는 메뉴',
-      subtitle: '자주 사용하는 진입 및 최근 방문한 메뉴',
+      subtitle: '시스템이 집계한 고정 Top 6 메뉴',
       empty: '자주 쓰는 메뉴가 없습니다',
+    },
+    myFavorites: {
+      title: '내 즐겨찾기',
+      subtitle: '내가 직접 고정한 바로가기',
+      empty: '즐겨찾기 메뉴가 없습니다',
+      add: '즐겨찾기에 추가',
+      remove: '즐겨찾기 해제',
     },
     pendingApprovals: {
       title: '승인 대기',
@@ -76,14 +83,14 @@ export default {
     },
     currentTime: {
       title: '현재 시각',
-      subtitle: '현재 날짜 및 시간',
+      subtitle: '현재 날짜 및 时间',
     },
   },
 
-  // 빈 상태
+  // 空状态
   empty: '활성화된 홈 위젯이 없습니다',
 
-  // 메시지
+  // 消息
   message: {
     loadFailed: '홈 설정을 불러오지 못했습니다',
     saveSuccess: '홈 설정을 저장했습니다',
@@ -92,7 +99,48 @@ export default {
     resetFailed: '초기 레이아웃으로 리셋하는 데 실패했습니다',
   },
 
-  // 요약 카드
+  // 즐겨찾기 관리 페이지
+  management: {
+    title: '즐겨찾기 관리',
+    desc: '즐겨찾기 메뉴를 한 곳에서 관리하고, 홈 표시 순서 조정과 일괄 해제를 지원합니다.',
+    alert: '“내 즐겨찾기” 카드는 여기서 저장한 순서대로 표시됩니다. “자주 쓰는 메뉴”는 시스템이 집계한 Top 6만 고정 표시됩니다.',
+    empty: '즐겨찾기 메뉴가 없습니다. 먼저 홈이나 메뉴에서 즐겨찾기를 추가하세요.',
+    stats: {
+      count: '{count}개 즐겨찾기',
+    },
+    table: {
+      order: '순서',
+      menu: '메뉴',
+      path: '라우트 경로',
+      action: '작업',
+    },
+    action: {
+      refresh: '새로고침',
+      batchCancel: '일괄 해제',
+      saveSort: '정렬 저장',
+      moveUp: '위로',
+      moveDown: '아래로',
+      open: '열기',
+      remove: '해제',
+    },
+    confirm: {
+      batchCancelTitle: '일괄 해제 확인',
+      batchCancelContent: '선택한 {count}개의 즐겨찾기를 해제하시겠습니까?',
+      singleCancelTitle: '해제 확인',
+      singleCancelContent: '“{title}” 즐겨찾기를 해제하시겠습니까?',
+    },
+    message: {
+      loadFailed: '즐겨찾기 목록을 불러오지 못했습니다',
+      batchCancelSuccess: '선택한 즐겨찾기를 해제했습니다',
+      batchCancelFailed: '일괄 해제에 실패했습니다',
+      singleCancelSuccess: '즐겨찾기를 해제했습니다',
+      singleCancelFailed: '즐겨찾기 해제에 실패했습니다',
+      sortSaveSuccess: '즐겨찾기 순서를 저장했습니다',
+      sortSaveFailed: '즐겨찾기 순서 저장에 실패했습니다',
+    },
+  },
+
+  // 摘要卡片
   summary: {
     greeting: {
       honorificMale: '님',
@@ -121,6 +169,6 @@ export default {
       6: '토요일',
     },
     todayLineKo: '오늘은 {month}월{day}일 {weekday}',
-    onlineDuration: '온라인 시간',
+    onlineDuration: '온라인 时间',
   },
 }

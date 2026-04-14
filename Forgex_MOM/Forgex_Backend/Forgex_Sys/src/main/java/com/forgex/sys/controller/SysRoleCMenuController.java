@@ -16,6 +16,7 @@
 
 package com.forgex.sys.controller;
 
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.service.ISysCMenuService;
@@ -61,6 +62,12 @@ public class SysRoleCMenuController {
 
     /**
      * 角色授权 C 端菜单
+     * <p>
+     * 将指定菜单授权给角色。
+     * </p>
+     * 
+     * @param body 请求体，包含 roleId 和 menuIds
+     * @return 授权结果
      */
     @PostMapping("/grant")
     @SuppressWarnings("unchecked")
@@ -68,7 +75,7 @@ public class SysRoleCMenuController {
         Long roleId = parseLong(body.get("roleId"));
         List<Long> menuIds = (List<Long>) body.get("menuIds");
         cMenuService.grantRoleCMenus(roleId, menuIds);
-        return R.ok();
+        return R.ok(CommonPrompt.AUTHORIZE_SUCCESS);
     }
 
     private Long parseLong(Object obj) {

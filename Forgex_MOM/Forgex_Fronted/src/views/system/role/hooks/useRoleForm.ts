@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 import { addRole, updateRole } from '@/api/system/role'
@@ -10,55 +10,40 @@ export const useRoleForm = (onSuccess: () => void) => {
   const loading = ref(false)
   const isEdit = ref(false)
 
-  // 表单数据
   const formData = reactive<Partial<Role>>({
     id: undefined,
     roleCode: '',
     roleName: '',
     description: '',
-    status: 1
+    status: 1,
   })
 
-  // 表单验证规则
   const rules: Record<string, Rule[]> = {
     roleCode: [
       { required: true, message: '请输入角色编码', trigger: 'blur' },
-      { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '角色编码只能包含字母、数字和下划线，且以字母开头', trigger: 'blur' }
+      { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '角色编码必须以字母开头，且只能包含字母、数字和下划线', trigger: 'blur' },
     ],
     roleName: [
       { required: true, message: '请输入角色名称', trigger: 'blur' },
-      { max: 50, message: '角色名称不能超过50个字符', trigger: 'blur' }
+      { max: 50, message: '角色名称长度不能超过 50 个字符', trigger: 'blur' },
     ],
-    description: [
-      { max: 200, message: '描述不能超过200个字符', trigger: 'blur' }
-    ],
-    status: [
-      { required: true, message: '请选择状态', trigger: 'change' }
-    ]
+    description: [{ max: 200, message: '描述长度不能超过 200 个字符', trigger: 'blur' }],
+    status: [{ required: true, message: '请选择状态', trigger: 'change' }],
   }
 
-  /**
-   * 打开新增弹窗
-   */
-  const openAdd = () => {
+  function openAdd() {
     isEdit.value = false
     visible.value = true
     resetForm()
   }
 
-  /**
-   * 打开编辑弹窗
-   */
-  const openEdit = (record: Role) => {
+  function openEdit(record: Role) {
     isEdit.value = true
     visible.value = true
     Object.assign(formData, record)
   }
 
-  /**
-   * 重置表单
-   */
-  const resetForm = () => {
+  function resetForm() {
     formData.id = undefined
     formData.roleCode = ''
     formData.roleName = ''
@@ -67,10 +52,7 @@ export const useRoleForm = (onSuccess: () => void) => {
     formRef.value?.clearValidate()
   }
 
-  /**
-   * 提交表单
-   */
-  const handleSubmit = async () => {
+  async function handleSubmit() {
     try {
       await formRef.value?.validate()
       loading.value = true
@@ -78,20 +60,19 @@ export const useRoleForm = (onSuccess: () => void) => {
       const apiFunc = isEdit.value ? updateRole : addRole
       await apiFunc(formData)
 
-      // 成功提示由后端返回，在 http 拦截器中统一处理
       visible.value = false
       onSuccess()
     } catch (error) {
-      console.error('表单验证失败:', error)
+      console.error('角色表单提交失败:', error)
+      if (!(error as any)?.errorFields) {
+        message.error('提交角色信息失败')
+      }
     } finally {
       loading.value = false
     }
   }
 
-  /**
-   * 取消
-   */
-  const handleCancel = () => {
+  function handleCancel() {
     visible.value = false
     resetForm()
   }
@@ -106,6 +87,6 @@ export const useRoleForm = (onSuccess: () => void) => {
     openAdd,
     openEdit,
     handleSubmit,
-    handleCancel
+    handleCancel,
   }
 }

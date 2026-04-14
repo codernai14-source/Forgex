@@ -1,31 +1,28 @@
 /**
- * 多语言配置 API 接口文件
- * 负责与后端多语言配置接口进行交互
- * @author Forgex Team
- * @version 1.0.0
+ * 语言配置 API
+ * 用于系统语言类型的查询、维护、导入与模板下载。
  */
 import http from '../http'
 
 /**
- * 多语言类型接口
- * 定义多语言类型的数据结构
+ * 语言类型
  */
 export interface LanguageType {
-  /** 语言ID */
+  /** ID */
   id: number
-  /** 语言代码，例如：zh-CN, en-US */
+  /** 语言代码，例如 zh-CN、en-US */
   langCode: string
-  /** 语言名称，例如：简体中文, English */
+  /** 语言名称，例如 简体中文、English */
   langName: string
-  /** 语言英文名称 */
+  /** 英文名称 */
   langNameEn: string
-  /** 语言图标 */
+  /** 图标 */
   icon: string
   /** 排序号 */
   orderNum: number
-  /** 是否启用：1启用 0禁用 */
+  /** 是否启用 */
   enabled: boolean
-  /** 是否默认语言：1默认 0非默认 */
+  /** 是否默认语言 */
   isDefault: boolean
   /** 创建人 */
   createBy: string
@@ -35,48 +32,31 @@ export interface LanguageType {
   updateBy: string | null
   /** 更新时间 */
   updateTime: string
-  /** 是否删除：1删除 0未删除 */
+  /** 删除标记 */
   deleted: number
 }
 
-/**
- * 获取所有启用的语言类型列表
- * @returns 启用的语言类型列表
- */
+/** 获取启用的语言列表。 */
 export function listEnabledLanguages() {
   return http.post<LanguageType[]>('/sys/i18n/languageType/listEnabled')
 }
 
-/**
- * 获取所有语言类型列表
- * @returns 所有语言类型列表
- */
+/** 获取全部语言列表。 */
 export function listAllLanguages() {
   return http.post<LanguageType[]>('/sys/i18n/languageType/listAll')
 }
 
-/**
- * 根据语言代码获取语言类型
- * @param langCode 语言代码
- * @returns 语言类型实体
- */
+/** 根据语言代码查询语言。 */
 export function getLanguageByCode(langCode: string) {
   return http.post<LanguageType>('/sys/i18n/languageType/getByLangCode', { langCode })
 }
 
-/**
- * 获取默认语言类型
- * @returns 默认语言类型实体
- */
+/** 获取默认语言。 */
 export function getDefaultLanguage() {
   return http.post<LanguageType>('/sys/i18n/languageType/getDefault')
 }
 
-/**
- * 分页查询语言类型列表
- * @param param 查询参数
- * @returns 分页结果
- */
+/** 分页查询语言。 */
 export function pageLanguages(param: {
   pageNum?: number
   pageSize?: number
@@ -87,56 +67,32 @@ export function pageLanguages(param: {
   return http.post<any>('/sys/i18n/languageType/page', param)
 }
 
-/**
- * 根据 ID 获取语言类型详情
- * @param id 语言类型 ID
- * @returns 语言类型实体
- */
+/** 根据 ID 查询语言详情。 */
 export function getLanguageById(id: number) {
   return http.post<LanguageType>('/sys/i18n/languageType/detail', { id })
 }
 
-/**
- * 创建语言类型
- * @param data 语言类型数据
- * @returns 是否创建成功
- */
+/** 新增语言。 */
 export function createLanguage(data: Partial<LanguageType>) {
   return http.post<boolean>('/sys/i18n/languageType/create', data)
 }
 
-/**
- * 更新语言类型
- * @param data 语言类型数据
- * @returns 是否更新成功
- */
+/** 更新语言。 */
 export function updateLanguage(data: Partial<LanguageType>) {
   return http.post<boolean>('/sys/i18n/languageType/update', data)
 }
 
-/**
- * 删除语言类型
- * @param id 语言类型 ID
- * @returns 是否删除成功
- */
+/** 删除语言。 */
 export function deleteLanguage(id: number) {
   return http.post<boolean>('/sys/i18n/languageType/delete', { id })
 }
 
-/**
- * 设置默认语言
- * @param id 语言类型 ID
- * @returns 是否设置成功
- */
+/** 设置默认语言。 */
 export function setDefaultLanguage(id: number) {
   return http.post<boolean>('/sys/i18n/languageType/setDefault', { id })
 }
 
-/**
- * 导入语言类型 Excel 文件
- * @param file Excel 文件
- * @returns 导入结果
- */
+/** 导入语言 Excel。 */
 export function importLanguages(file: File) {
   const formData = new FormData()
   formData.append('file', file)
@@ -147,10 +103,7 @@ export function importLanguages(file: File) {
   })
 }
 
-/**
- * 下载导入模板
- * @returns 模板文件 blob
- */
+/** 下载导入模板。 */
 export function downloadImportTemplate() {
   return http.post('/sys/i18n/languageType/template/download', {}, {
     responseType: 'blob',

@@ -22,7 +22,7 @@ import lombok.Data;
  * 支持固定字符、日期、序列号、表达式等多种段类型。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleSaveParam 主表保存参数

@@ -280,7 +280,7 @@ import {
   SendOutlined,
   SettingOutlined,
   TeamOutlined,
-  ThunderboltOutlined
+  ThunderboltOutlined,
 } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
@@ -291,16 +291,16 @@ import {
   type WfDashboardAnalyticsVO,
   type WfDashboardSummaryVO,
   type WfDashboardWeeklyResultDTO,
-  type WfExecutionDTO
+  type WfExecutionDTO,
 } from '@/api/workflow/execution'
 import {
   getTaskConfigPage,
   listTaskConfig,
   type WfTaskConfigDTO,
-  type WfTaskConfigSummaryDTO
+  type WfTaskConfigSummaryDTO,
 } from '@/api/workflow/taskConfig'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
-import { usePermissionStore } from '@/stores/permission'
+import { use权限Store } from '@/stores/permission'
 import './index.less'
 
 const SHORTCUT_LIMIT = 5
@@ -309,7 +309,7 @@ const RECENT_TASK_STORAGE_KEY = 'workflow-recent-task-codes'
 
 const { t } = useI18n()
 const router = useRouter()
-const permissionStore = usePermissionStore()
+const permissionStore = use权限Store()
 
 const summaryLoading = ref(false)
 const analyticsLoading = ref(false)
@@ -336,18 +336,20 @@ function hasAccessibleRoute(path: string) {
 }
 
 const canStartExecution = computed(() =>
-  permissionStore.hasPermission('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
+  permissionStore.has权限('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
 )
 const canViewTaskConfig = computed(() =>
-  permissionStore.hasPermission('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
+  permissionStore.has权限('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
 )
-const pageLoading = computed(() => summaryLoading.value || analyticsLoading.value || shortcutLoading.value || taskConfigLoading.value)
+const pageLoading = computed(() =>
+  summaryLoading.value || analyticsLoading.value || shortcutLoading.value || taskConfigLoading.value,
+)
 
 function createEmptyWeeklyResults(): WfDashboardWeeklyResultDTO[] {
   return Array.from({ length: 7 }, (_, index) => ({
     date: dayjs().subtract(6 - index, 'day').format('YYYY-MM-DD'),
     approvedCount: 0,
-    rejectedCount: 0
+    rejectedCount: 0,
   }))
 }
 
@@ -375,7 +377,7 @@ function buildWeeklyChartOption(): EChartsOption {
       top: 0,
       right: 0,
       textStyle: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
-      data: [t('workflow.dashboard.approvedLegend'), t('workflow.dashboard.rejectedLegend')]
+      data: [t('workflow.dashboard.approvedLegend'), t('workflow.dashboard.rejectedLegend')],
     },
     grid: { top: 48, left: 16, right: 16, bottom: 12, containLabel: true },
     xAxis: {
@@ -383,14 +385,14 @@ function buildWeeklyChartOption(): EChartsOption {
       data: analytics.weeklyResults.map(item => dayjs(item.date).format('MM-DD')),
       axisLine: { lineStyle: { color: resolveCssVar('--fx-border-color', '#e5e7eb') } },
       axisLabel: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
-      axisTick: { show: false }
+      axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
       minInterval: 1,
       axisLine: { show: false },
       axisLabel: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
-      splitLine: { lineStyle: { color: resolveCssVar('--fx-border-color', '#e5e7eb'), type: 'dashed' } }
+      splitLine: { lineStyle: { color: resolveCssVar('--fx-border-color', '#e5e7eb'), type: 'dashed' } },
     },
     series: [
       {
@@ -401,10 +403,10 @@ function buildWeeklyChartOption(): EChartsOption {
           borderRadius: [8, 8, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#2563eb' },
-            { offset: 1, color: '#60a5fa' }
-          ])
+            { offset: 1, color: '#60a5fa' },
+          ]),
         },
-        data: analytics.weeklyResults.map(item => item.approvedCount)
+        data: analytics.weeklyResults.map(item => item.approvedCount),
       },
       {
         name: t('workflow.dashboard.rejectedLegend'),
@@ -414,12 +416,12 @@ function buildWeeklyChartOption(): EChartsOption {
           borderRadius: [8, 8, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#f97316' },
-            { offset: 1, color: '#fb7185' }
-          ])
+            { offset: 1, color: '#fb7185' },
+          ]),
         },
-        data: analytics.weeklyResults.map(item => item.rejectedCount)
-      }
-    ]
+        data: analytics.weeklyResults.map(item => item.rejectedCount),
+      },
+    ],
   }
 }
 
@@ -430,9 +432,9 @@ function buildUserShareOption(): EChartsOption {
         text: t('workflow.dashboard.userShareEmpty'),
         left: 'center',
         top: 'center',
-        textStyle: { fontSize: 14, fontWeight: 500, color: resolveCssVar('--fx-text-secondary', '#6b7280') }
+        textStyle: { fontSize: 14, fontWeight: 500, color: resolveCssVar('--fx-text-secondary', '#6b7280') },
       },
-      series: []
+      series: [],
     }
   }
 
@@ -444,7 +446,7 @@ function buildUserShareOption(): EChartsOption {
       right: 0,
       top: 'middle',
       height: 220,
-      textStyle: { color: resolveCssVar('--fx-text-secondary', '#6b7280') }
+      textStyle: { color: resolveCssVar('--fx-text-secondary', '#6b7280') },
     },
     series: [
       {
@@ -458,16 +460,16 @@ function buildUserShareOption(): EChartsOption {
           label: {
             show: true,
             color: resolveCssVar('--fx-text-primary', '#111827'),
-            formatter: '{b}\n{d}%'
-          }
+            formatter: '{b}\n{d}%',
+          },
         },
         itemStyle: {
           borderColor: resolveCssVar('--fx-bg-container', '#ffffff'),
-          borderWidth: 4
+          borderWidth: 4,
         },
-        data: analytics.userShares.map(item => ({ name: item.initiatorName, value: item.count }))
-      }
-    ]
+        data: analytics.userShares.map(item => ({ name: item.initiatorName, value: item.count })),
+      },
+    ],
   }
 }
 
@@ -585,7 +587,7 @@ function getStatusText(status?: number) {
     0: t('workflow.dashboard.status.pending'),
     1: t('workflow.dashboard.status.processing'),
     2: t('workflow.dashboard.status.done'),
-    3: t('workflow.dashboard.status.rejected')
+    3: t('workflow.dashboard.status.rejected'),
   } as Record<number, string>)[status ?? 0] ?? '-'
 }
 
@@ -606,8 +608,8 @@ function getTaskCategory(task: Pick<WfTaskConfigDTO, 'taskCode' | 'taskName' | '
   const content = `${task.taskName}${task.taskCode}${task.remark || ''}`.toLowerCase()
   if (content.includes('请假') || content.includes('leave') || content.includes('hr')) return 'hr'
   if (content.includes('合同') || content.includes('contract')) return 'contract'
-  if (content.includes('财务') || content.includes('expense') || content.includes('付款')) return 'finance'
-  if (content.includes('采购') || content.includes('项目')) return 'project'
+  if (content.includes('费用') || content.includes('expense') || content.includes('报销')) return 'finance'
+  if (content.includes('项目') || content.includes('project')) return 'project'
   return 'general'
 }
 

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * 实现报表分类的业务逻辑
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see ServiceImpl

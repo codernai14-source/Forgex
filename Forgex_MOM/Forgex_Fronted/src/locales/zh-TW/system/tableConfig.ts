@@ -7,7 +7,7 @@ export default {
   tableType: '表格類型',
   rowKey: '行Key',
   defaultPageSize: '默認分頁大小',
-  enabled: '啟用狀態',
+  enabled: '啟用状态',
   tableTypeNormal: '普通表格',
   tableTypeLazy: '懶加載表格',
   tableTypeTree: '樹形表格',
@@ -29,7 +29,7 @@ export default {
   loadDetailFailed: '加載配置詳情失敗',
   
   /**
-   * 列設置相關
+   * 列设置相关
    */
   columnSetting: {
     title: '列設置',
@@ -44,7 +44,7 @@ export default {
     tableType: '請選擇表格類型',
     rowKey: '請輸入行Key',
     defaultPageSize: '請輸入默認分頁大小',
-    enabled: '請選擇啟用狀態',
+    enabled: '請選擇啟用状态',
     field: '請輸入字段名',
     title: '請輸入列標題'
   }

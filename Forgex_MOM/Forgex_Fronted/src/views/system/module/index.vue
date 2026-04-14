@@ -1,70 +1,67 @@
 <template>
   <div class="module-container">
-    <!-- 表格 -->
     <fx-dynamic-table
       ref="tableRef"
-      :table-code="'ModuleTable'"
+      table-code="ModuleTable"
       :show-query-form="true"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
+      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       :row-selection="{
-        selectedRowKeys: selectedRowKeys,
+        selectedRowKeys,
         onChange: handleSelectionChange
       }"
     >
-        <!-- 工具栏插槽 -->
-        <template #toolbar>
-          <a-space :size="8">
-            <a-button
-              v-permission="'sys:module:add'"
-              type="primary"
-              @click="openAddDialog"
-            >
-              {{ $t('system.module.addModule') }}
-            </a-button>
-            <a-button
-              v-permission="'sys:module:delete'"
-              danger
-              :disabled="selectedRowKeys.length === 0"
-              @click="handleBatchDeleteConfirm"
-            >
-              {{ $t('common.batchDelete') }}
-            </a-button>
-          </a-space>
-        </template>
-
-        <template #status="{ record }">
-          <a-tag
-            v-if="resolveStatusTag(record.status)"
-            :color="resolveStatusTag(record.status)?.color"
-            :style="resolveStatusTag(record.status)?.style"
+      <template #toolbar>
+        <a-space :size="8">
+          <a-button
+            v-permission="'sys:module:add'"
+            type="primary"
+            @click="openAddDialog"
           >
-            {{ resolveStatusTag(record.status)?.label }}
-          </a-tag>
-          <span v-else>{{ record.status ?? '-' }}</span>
-        </template>
+            {{ $t('system.module.addModule') }}
+          </a-button>
+          <a-button
+            v-permission="'sys:module:delete'"
+            danger
+            :disabled="selectedRowKeys.length === 0"
+            @click="handleBatchDeleteConfirm"
+          >
+            {{ $t('common.batchDelete') }}
+          </a-button>
+        </a-space>
+      </template>
 
-        <template #action="{ record }">
-          <a-space>
-            <a
-              v-permission="'sys:module:edit'"
-              @click="openEditDialog(record.id)"
-            >
-              {{ $t('common.edit') }}
-            </a>
-            <a
-              v-permission="'sys:module:delete'"
-              style="color: #ff4d4f;"
-              @click="handleDeleteConfirm(record.id)"
-            >
-              {{ $t('common.delete') }}
-            </a>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
+      <template #status="{ record }">
+        <a-tag
+          v-if="resolveStatusTag(record.status)"
+          :color="resolveStatusTag(record.status)?.color"
+          :style="resolveStatusTag(record.status)?.style"
+        >
+          {{ resolveStatusTag(record.status)?.label }}
+        </a-tag>
+        <span v-else>{{ record.status ?? '-' }}</span>
+      </template>
 
-    <!-- 新增/编辑对话框 -->
+      <template #action="{ record }">
+        <a-space>
+          <a
+            v-permission="'sys:module:edit'"
+            @click="openEditDialog(record.id)"
+          >
+            {{ $t('common.edit') }}
+          </a>
+          <a
+            v-permission="'sys:module:delete'"
+            style="color: #ff4d4f"
+            @click="handleDeleteConfirm(record.id)"
+          >
+            {{ $t('common.delete') }}
+          </a>
+        </a-space>
+      </template>
+    </fx-dynamic-table>
+
     <BaseFormDialog
       v-model:open="dialogVisible"
       :title="dialogTitle"
@@ -95,14 +92,18 @@
             placeholder="请输入模块名称"
           />
           <template #extra>
-            <span style="color: #999; font-size: 12px;">
+            <span style="color: #999; font-size: 12px">
               点击输入框右侧的地球图标可配置多语言
             </span>
           </template>
         </a-form-item>
 
         <a-form-item label="图标" name="icon">
-          <IconPicker v-model:value="formData.icon" placeholder="请选择或输入图标名称" :maxlength="100" />
+          <IconPicker
+            v-model:value="formData.icon"
+            placeholder="请选择或输入图标名称"
+            :maxlength="100"
+          />
         </a-form-item>
 
         <a-form-item label="排序号" name="orderNum">
@@ -138,46 +139,44 @@ import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import IconPicker from '@/components/common/IconPicker.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
-import { useModule } from './hooks/useModule'
-import { useModuleForm } from './hooks/useModuleForm'
 import { getModulePage } from '@/api/system/module'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
+import { useModule } from './hooks/useModule'
+import { useModuleForm } from './hooks/useModuleForm'
 
 const { dictItems: statusOptions } = useDict('status')
 const { dictItems: visibleOptions } = useDict('visible')
 
-// 表格相关
 const tableRef = ref()
 
-// 使用Hooks
 const {
   selectedRowKeys,
   handleDelete,
   handleBatchDelete,
-  handleSelectionChange
+  handleSelectionChange,
 } = useModule()
 
 const {
   formRef,
   dialogVisible,
   dialogTitle,
+  loading,
   isEdit,
   formData,
   rules,
   openAddDialog,
   openEditDialog,
   handleSubmit,
-  handleCancel
+  handleCancel,
 } = useModuleForm()
 
-// 字典配置
 const dictOptions = computed(() => ({
   status: statusOptions.value,
-  visible: visibleOptions.value
+  visible: visibleOptions.value,
 }))
 
-const fallbackConfig = computed(() => ({
+const dynamicTableConfig = computed(() => ({
   tableCode: 'ModuleTable',
   tableName: '模块管理',
   tableType: 'NORMAL',
@@ -191,15 +190,15 @@ const fallbackConfig = computed(() => ({
     { field: 'createBy', title: '创建人', width: 120 },
     { field: 'createTime', title: '创建时间', width: 180 },
     { field: 'updateTime', title: '更新时间', width: 180 },
-    { field: 'action', title: '操作', width: 140 }
+    { field: 'action', title: '操作', width: 140 },
   ],
   queryFields: [
     { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
     { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
     { field: 'description', label: '描述', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
   ],
-  version: 1
+  version: 1,
 }))
 
 function normalizeModuleStatusRecord(row: any) {
@@ -222,7 +221,7 @@ function normalizeModuleStatusRecord(row: any) {
   return {
     ...row,
     status: normalizedStatus,
-    visible: normalizedVisible
+    visible: normalizedVisible,
   }
 }
 
@@ -244,61 +243,50 @@ function resolveStatusTag(value: unknown) {
   return {
     label: dictItem.label,
     color: dictItem.tagStyle?.color || dictItem.color || 'blue',
-    style
+    style,
   }
 }
 
-/**
- * 处理表格数据请求
- */
-const handleRequest = async (payload: { 
-  page: { current: number; pageSize: number }; 
-  query: Record<string, any>; 
-  sorter?: { field?: string; order?: string } 
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
 }) => {
   try {
     const params: any = {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
-      ...payload.query
+      ...payload.query,
     }
-    
-    // 处理排序
+
     if (payload.sorter) {
       params.sortField = payload.sorter.field
       params.sortOrder = payload.sorter.order
     }
-    
+
     const data = await getModulePage(params)
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
-    
-    // 处理多语言显示
+
     const processedRecords = (data.records || []).map((item: any) => ({
       ...normalizeModuleStatusRecord(item),
-      displayName: getI18nValue(item.nameI18nJson, item.name)
+      displayName: getI18nValue(item.nameI18nJson, item.name),
     }))
-    
-    return { records: processedRecords, total: total }
+
+    return { records: processedRecords, total }
   } catch (error) {
     console.error('加载模块列表失败:', error)
     return { records: [], total: 0 }
   }
 }
 
-/**
- * 表单提交
- */
-const handleFormSubmit = async () => {
+async function handleFormSubmit() {
   const success = await handleSubmit()
   if (success) {
     await tableRef.value?.refresh?.()
   }
 }
 
-/**
- * 删除确认
- */
-const handleDeleteConfirm = (id: string) => {
+function handleDeleteConfirm(id: string) {
   Modal.confirm({
     title: '确认删除',
     content: '确定要删除该模块吗？',
@@ -307,14 +295,11 @@ const handleDeleteConfirm = (id: string) => {
     onOk: async () => {
       await handleDelete(id)
       await tableRef.value?.refresh?.()
-    }
+    },
   })
 }
 
-/**
- * 批量删除确认
- */
-const handleBatchDeleteConfirm = () => {
+function handleBatchDeleteConfirm() {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？`,
@@ -323,11 +308,10 @@ const handleBatchDeleteConfirm = () => {
     onOk: async () => {
       await handleBatchDelete()
       await tableRef.value?.refresh?.()
-    }
+    },
   })
 }
 
-// 初始化加载数据
 onMounted(() => {
   tableRef.value?.refresh?.()
 })
@@ -338,13 +322,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 0;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.module-container :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
   min-height: 0;
 }
 </style>

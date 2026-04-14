@@ -11,7 +11,7 @@
         onChange: handleSelectionChange
       }"
     >
-        <!-- 工具栏插槽 -->
+        <!-- 操作按钮 -->
         <template #toolbar>
           <a-space :size="8">
             <a-button
@@ -72,7 +72,7 @@
             </a>
             <a
               v-permission="'sys:user:edit'"
-              @click="toggleUserStatus(record.id, !record.status)"
+              @click="toggleUser状态(record.id, !record.status)"
             >
               {{ record.status ? t('system.user.statusInactive') : t('system.user.statusActive') }}
             </a>
@@ -99,7 +99,7 @@
         </template>
       </fx-dynamic-table>
     
-    <!-- 新增/编辑弹窗 -->
+    <!-- 用户表单/编辑对话框 -->
     <UserFormDialog
       v-model:open="dialogVisible"
       :is-edit="isEdit"
@@ -107,7 +107,7 @@
       @success="handleFormSuccess"
     />
 
-    <!-- 分配角色弹窗 -->
+    <!-- 角色分配对话框 -->
     <UserRoleAssignDialog
       v-model:open="assignRoleDialogVisible"
       :user-id="assignRoleUserId"
@@ -121,13 +121,13 @@
 <script setup lang="ts">
 /**
  * 用户管理页面
- * 
+ *
  * 功能：
  * 1. 用户列表查询（分页、搜索）
  * 2. 新增、编辑、删除用户
  * 3. 重置密码、分配角色
  * 4. 批量删除、导出用户
- * 
+ *
  * @author Forgex
  * @version 1.0.0
  */
@@ -355,15 +355,15 @@ async function handleBatchDelete() {
  */
 async function handleResetPassword(id: string) {
   // 实现重置密码逻辑
-  // 可参考原有useUser hook的实现
+  // 可参考原本 useUser hook 的实现
 }
 
 /**
  * 更新用户状态
  */
-async function handleUpdateStatus(id: string, status: boolean) {
+async function handleUpdate状态(id: string, status: boolean) {
   // 实现更新状态逻辑
-  // 可参考原有useUser hook的实现
+  // 可参考原本 useUser hook 的实现
 }
 
 /**
@@ -428,8 +428,8 @@ async function confirmResetPassword(id: string) {
   })
 }
 
-async function toggleUserStatus(id: string, status: boolean) {
-  await userApi.updateUserStatus(id, status)
+async function toggleUser状态(id: string, status: boolean) {
+  await userApi.updateUser状态(id, status)
   tableRef.value?.refresh?.()
 }
 

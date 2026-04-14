@@ -1,7 +1,7 @@
 /**
- * Pinia Store 入口文件
+ * Pinia Store 鍏ュ彛鏂囦欢
  * 
- * @description 统一导出所有 store
+ * @description 缁熶竴瀵煎嚭鎵€鏈?store
  * 
  * @author Forgex Team
  * @version 1.0.0
@@ -9,6 +9,6 @@
  */
 
 export { useUserStore } from './user'
-export { usePermissionStore } from './permission'
+export { use权限Store } from './permission'
 export { useAppStore } from './app'
 export { useSseStore } from './sse'

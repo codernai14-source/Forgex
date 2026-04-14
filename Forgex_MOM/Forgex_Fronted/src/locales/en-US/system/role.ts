@@ -1,21 +1,21 @@
 /**
- * Role Management Translations - English
+ * 角色管理翻译 - 中文注释
  */
 export default {
-  // Page Titles
+  // 页面标题
   title: 'Role Management',
   list: 'Role List',
   detail: 'Role Detail',
   
-  // Table Columns
+  // 表格列
   roleName: 'Role Name',
   roleCode: 'Role Code',
   description: 'Description',
-  status: 'Status',
+  status: '状态',
   createTime: 'Create Time',
   updateTime: 'Update Time',
   
-  // Form
+  // 表单
   form: {
     addRole: 'Add Role',
     editRole: 'Edit Role',
@@ -27,33 +27,33 @@ export default {
     status: 'Please select status',
   },
   
-  // Permission
+  // 权限
   permission: {
-    title: 'Permission Configuration',
-    menu: 'Menu Permission',
-    data: 'Data Permission',
-    api: 'API Permission',
+    title: '权限 Configuration',
+    menu: 'Menu 权限',
+    data: 'Data 权限',
+    api: 'API 权限',
     selectAll: 'Select All',
     expandAll: 'Expand All',
     collapseAll: 'Collapse All',
   },
   
-  // Status
+  // 状态
   statusActive: 'Active',
   statusInactive: 'Inactive',
   
-  // Actions
-  assignPermission: 'Assign Permission',
+  // 操作
+  assign权限: 'Assign 权限',
   copyRole: 'Copy Role',
   menuAuth: 'Menu Authorization',
   userAuth: 'User Authorization',
   
-  // Menu Grant
+  // 菜单授权
   menuGrant: 'Menu Authorization',
   menuGrantDesc: 'Assign menu and button permissions to role',
   moduleFilter: 'Module Filter',
   
-  // User Grant
+  // 用户授权
   userGrant: 'User Authorization',
   userGrantDesc: 'Assign users, departments, positions to role',
   selectGrantObject: 'Select Grant Object',
@@ -78,7 +78,7 @@ export default {
   clearAll: 'Clear All',
   saveGrant: 'Save Authorization',
   
-  // Messages
+  // 消息
   message: {
     loadListFailed: 'Failed to load role list',
     deleteFailed: 'Delete failed',
@@ -88,7 +88,7 @@ export default {
     deleteSuccess: 'Role deleted successfully',
     saveSuccess: 'Role saved successfully',
     roleCodeExists: 'Role code already exists',
-    assignPermissionSuccess: 'Permission assigned successfully',
+    assign权限Success: '权限 assigned successfully',
     missingRoleInfo: 'Role information is missing',
     saveGrantSuccess: 'Authorization saved successfully',
     saveGrantFailed: 'Failed to save authorization',

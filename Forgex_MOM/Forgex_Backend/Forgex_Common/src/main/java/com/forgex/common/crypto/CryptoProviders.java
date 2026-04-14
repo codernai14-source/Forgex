@@ -19,8 +19,8 @@ import com.forgex.common.domain.config.CryptoTransportConfig;
 /**
  * 密码处理 Provider 注册中心。
  * <p>
- * 负责根据策略键（例如：bcrypt、argon2、scrypt、pbkdf2、sm2、sm4）解析并返回具体 Provider 实现。
- * 部分算法需要从配置库读取参数（如 SM2 密钥对、SM4 密钥）。
+ * 负责根据策略键（例如：bcrypt、argon2、scrypt、pbkdf2、sm2、sm4、aes、rsa）解析并返回具体 Provider 实现。
+ * 部分算法需要从配置库读取参数（如 SM2 密钥对、SM4 密钥、AES 密钥、RSA 密钥对）。
  * <p>
  * 使用方式：调用 {@link #resolve(String, com.forgex.common.config.ConfigService)} 获取 Provider 后，
  * 使用其 {@code hash/encrypt/verify} 方法完成密码存储与校验。
@@ -42,6 +42,13 @@ public final class CryptoProviders {
                 return new Sm2PasswordProvider(c);
             case "sm4":
                 return new Sm4PasswordProvider(cfg);
+            case "aes":
+                return new AESPasswordProvider(cfg);
+            case "rsa":
+                java.util.Map rsaCfg = cfg.getJson("security.crypto.rsa", java.util.Map.class, null);
+                String rsaPub = rsaCfg == null ? null : (String) rsaCfg.get("publicKey");
+                String rsaPri = rsaCfg == null ? null : (String) rsaCfg.get("privateKey");
+                return new RSAPasswordProvider(rsaPub, rsaPri);
             case "argon2":
                 return new Argon2PasswordProvider();
             case "scrypt":

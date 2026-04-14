@@ -9,32 +9,32 @@
     >
       <template #toolbar>
         <a-button type="primary" v-permission="'wf:taskConfig:add'" @click="openCreate">
-          新建流程
+          {{ t('workflow.taskConfig.list.createFlow') }}
         </a-button>
       </template>
 
       <template #formType="{ record }">
         <a-tag :color="record.formType === 1 ? 'blue' : 'green'">
-          {{ record.formType === 1 ? '自定义表单' : '低代码表单' }}
+          {{ getFormTypeLabel(record.formType) }}
         </a-tag>
       </template>
 
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'success' : 'default'">
-          {{ record.status === 1 ? '启用' : '禁用' }}
+          {{ getStatusLabel(record.status) }}
         </a-tag>
       </template>
 
       <template #version="{ record }">
         <div class="version-cell">
           <a-tag v-if="record.publishedVersion" color="blue">
-            已发布 v{{ record.publishedVersion }}
+            {{ t('workflow.taskConfig.list.publishedVersion', { version: record.publishedVersion }) }}
           </a-tag>
           <a-tag v-if="record.draftVersion" color="orange">
-            草稿 v{{ record.draftVersion }}
+            {{ t('workflow.taskConfig.list.draftVersion', { version: record.draftVersion }) }}
           </a-tag>
           <span v-if="!record.publishedVersion && record.draftVersion" class="version-hint">
-            未发布
+            {{ t('workflow.taskConfig.list.unpublished') }}
           </span>
           <span v-if="!record.publishedVersion && !record.draftVersion">-</span>
         </div>
@@ -52,7 +52,7 @@
             v-permission="'wf:taskConfig:edit'"
             @click="openEdit(record)"
           >
-            编辑
+            {{ t('workflow.taskConfig.list.edit') }}
           </a-button>
           <a-button
             type="link"
@@ -60,7 +60,7 @@
             v-permission="'wf:taskConfig:config'"
             @click="handleNodeConfig(record)"
           >
-            节点配置
+            {{ t('workflow.taskConfig.nodeConfig') }}
           </a-button>
           <a-button
             type="link"
@@ -69,43 +69,43 @@
             v-permission="'wf:taskConfig:config'"
             @click="handlePublish(record)"
           >
-            发布
+            {{ t('workflow.taskConfig.list.publish') }}
           </a-button>
           <a-popconfirm
-            title="确认删除当前流程吗？当前草稿会删除，当前已发布版本会归档保留。"
-            ok-text="确认"
-            cancel-text="取消"
+            :title="t('workflow.taskConfig.list.confirmDeleteWithArchive')"
+            :ok-text="t('common.confirm')"
+            :cancel-text="t('common.cancel')"
             @confirm="handleDelete(record)"
           >
             <a-button type="link" size="small" danger v-permission="'wf:taskConfig:delete'">
-              删除
+              {{ t('common.delete') }}
             </a-button>
           </a-popconfirm>
         </a-space>
       </template>
     </FxDynamicTable>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="dialogVisible"
       :title="dialogTitle"
-      :confirm-loading="saving"
+      :loading="saving"
       width="720px"
-      destroy-on-close
-      @ok="handleSave"
+      @submit="handleSave"
+      @cancel="handleDialogCancel"
     >
       <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="流程名称" name="taskName">
-              <a-input v-model:value="formState.taskName" placeholder="请输入流程名称" />
+            <a-form-item :label="t('workflow.taskConfig.list.taskName')" name="taskName">
+              <a-input v-model:value="formState.taskName" :placeholder="t('workflow.taskConfig.form.taskName')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="流程编码" name="taskCode">
+            <a-form-item :label="t('workflow.taskConfig.list.taskCode')" name="taskCode">
               <a-input
                 v-model:value="formState.taskCode"
                 :disabled="Boolean(currentEditor?.hasPublished)"
-                placeholder="请输入流程编码"
+                :placeholder="t('workflow.taskConfig.form.taskCode')"
               />
             </a-form-item>
           </a-col>
@@ -113,61 +113,67 @@
 
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="审批解释器" name="interpreterBean">
-              <a-input v-model:value="formState.interpreterBean" placeholder="如 leaveApprovalInterpreter" />
+            <a-form-item :label="t('workflow.taskConfig.list.interpreterBean')" name="interpreterBean">
+              <a-input v-model:value="formState.interpreterBean" :placeholder="t('workflow.taskConfig.form.interpreterBean')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="表单类型" name="formType">
-              <a-select v-model:value="formState.formType" placeholder="请选择表单类型">
-                <a-select-option :value="1">自定义表单</a-select-option>
-                <a-select-option :value="2">低代码表单</a-select-option>
+            <a-form-item :label="t('workflow.taskConfig.formType')" name="formType">
+              <a-select v-model:value="formState.formType" :placeholder="t('workflow.taskConfig.form.formType')">
+                <a-select-option
+                  v-for="item in formTypeSelectOptions"
+                  :key="String(item.value)"
+                  :value="item.value"
+                >
+                  {{ item.label }}
+                </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item v-if="formState.formType === 1" label="表单路径" name="formPath">
-          <a-input v-model:value="formState.formPath" placeholder="例如 /workflow/form/leave" />
+        <a-form-item v-if="formState.formType === 1" :label="t('workflow.taskConfig.formPath')" name="formPath">
+          <a-input v-model:value="formState.formPath" :placeholder="t('workflow.taskConfig.form.formPath')" />
         </a-form-item>
 
-        <a-form-item v-else label="表单内容 JSON" name="formContent">
+        <a-form-item v-else :label="t('workflow.taskConfig.list.formContentJson')" name="formContent">
           <a-textarea
             v-model:value="formState.formContent"
             :rows="6"
-            placeholder="请输入低代码表单 JSON"
+            :placeholder="t('workflow.taskConfig.form.formContent')"
           />
         </a-form-item>
 
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="状态" name="status">
+            <a-form-item :label="t('workflow.taskConfig.status')" name="status">
               <a-radio-group v-model:value="formState.status">
-                <a-radio :value="1">启用</a-radio>
-                <a-radio :value="0">禁用</a-radio>
+                <a-radio v-for="item in statusSelectOptions" :key="String(item.value)" :value="item.value">
+                  {{ item.label }}
+                </a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="版本信息">
+            <a-form-item :label="t('workflow.taskConfig.list.versionInfo')">
               <a-space>
                 <a-tag v-if="currentEditor?.publishedVersion" color="blue">
-                  已发布 v{{ currentEditor.publishedVersion }}
+                  {{ t('workflow.taskConfig.list.publishedVersion', { version: currentEditor.publishedVersion }) }}
                 </a-tag>
                 <a-tag v-if="currentEditor?.draftVersion" color="orange">
-                  草稿 v{{ currentEditor.draftVersion }}
+                  {{ t('workflow.taskConfig.list.draftVersion', { version: currentEditor.draftVersion }) }}
                 </a-tag>
-                <span v-if="!currentEditor">新建草稿</span>
+                <span v-if="!currentEditor">{{ t('workflow.taskConfig.list.newDraft') }}</span>
               </a-space>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item label="流程说明" name="remark">
-          <a-textarea v-model:value="formState.remark" :rows="3" placeholder="请输入流程说明" />
+        <a-form-item :label="t('workflow.taskConfig.list.remark')" name="remark">
+          <a-textarea v-model:value="formState.remark" :rows="3" :placeholder="t('workflow.taskConfig.form.remark')" />
         </a-form-item>
       </a-form>
-    </a-modal>
+    </BaseFormDialog>
   </div>
 </template>
 
@@ -175,9 +181,11 @@
 import { computed, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useDict } from '@/hooks/useDict'
 import {
   deleteTaskConfig,
@@ -187,7 +195,7 @@ import {
   saveDraftBaseInfo,
   type WfTaskConfigSaveParam,
   type WfTaskConfigSummaryDTO,
-  type WfTaskDraftEditorDTO
+  type WfTaskDraftEditorDTO,
 } from '@/api/workflow/taskConfig'
 
 type TableRequestPayload = {
@@ -198,7 +206,9 @@ type TableRequestPayload = {
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n({ useScope: 'global' })
 const { dictItems: statusOptions } = useDict('status')
+const { dictItems: formTypeOptions } = useDict('wf_task_form_type')
 
 const tableRef = ref<any>()
 const formRef = ref<FormInstance>()
@@ -215,21 +225,57 @@ const formState = reactive<WfTaskConfigSaveParam>({
   formPath: '',
   formContent: '',
   status: 1,
-  remark: ''
+  remark: '',
 })
 
 const dictOptions = computed(() => ({
-  status: statusOptions.value || []
+  status: statusOptions.value || [],
+  wf_task_form_type: formTypeOptions.value || [],
+  formType: formTypeOptions.value || [],
 }))
 
-const rules = {
-  taskName: [{ required: true, message: '请输入流程名称', trigger: 'blur' }],
-  taskCode: [{ required: true, message: '请输入流程编码', trigger: 'blur' }],
-  formType: [{ required: true, message: '请选择表单类型', trigger: 'change' }]
+const statusSelectOptions = computed(() =>
+  (statusOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+
+const formTypeSelectOptions = computed(() =>
+  (formTypeOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+
+const rules = computed(() => ({
+  taskName: [{ required: true, message: t('workflow.taskConfig.form.taskName'), trigger: 'blur' }],
+  taskCode: [{ required: true, message: t('workflow.taskConfig.form.taskCode'), trigger: 'blur' }],
+  formType: [{ required: true, message: t('workflow.taskConfig.form.formType'), trigger: 'change' }],
+}))
+
+const dialogTitle = computed(() => (formState.id ? t('workflow.taskConfig.list.editDraftBaseInfo') : t('workflow.taskConfig.list.newDraftFlow')))
+const silentErrorConfig = { silentError: true }
+
+function resolveDictLabel(options: Array<{ label: string; value: number }>, value: number | undefined, fallback: string) {
+  return options.find(item => item.value === Number(value))?.label || fallback
 }
 
-const dialogTitle = computed(() => (formState.id ? '编辑草稿基础信息' : '新建流程草稿'))
-const silentErrorConfig = { silentError: true }
+function getFormTypeLabel(value?: number) {
+  return resolveDictLabel(
+    formTypeSelectOptions.value,
+    value,
+    value === 2 ? t('workflow.taskConfig.lowCodeForm') : t('workflow.taskConfig.customForm')
+  )
+}
+
+function getStatusLabel(value?: number) {
+  return resolveDictLabel(
+    statusSelectOptions.value,
+    value,
+    value === 1 ? t('workflow.dashboard.enabledText') : t('workflow.dashboard.disabledText')
+  )
+}
 
 function resetFormState() {
   Object.assign(formState, {
@@ -241,7 +287,7 @@ function resetFormState() {
     formPath: '',
     formContent: '',
     status: 1,
-    remark: ''
+    remark: '',
   })
   currentEditor.value = null
 }
@@ -257,7 +303,7 @@ function fillForm(editor: WfTaskDraftEditorDTO) {
     formPath: editor.formPath || '',
     formContent: editor.formContent || '',
     status: editor.status,
-    remark: editor.remark || ''
+    remark: editor.remark || '',
   })
 }
 
@@ -271,7 +317,7 @@ const handleRequest = async (payload: TableRequestPayload) => {
     const params: Record<string, any> = {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
-      ...payload.query
+      ...payload.query,
     }
 
     if (payload.sorter?.field) {
@@ -282,10 +328,10 @@ const handleRequest = async (payload: TableRequestPayload) => {
     const result = await getTaskConfigPage(params as any)
     return {
       records: result.records || [],
-      total: Number(result.total || 0)
+      total: Number(result.total || 0),
     }
   } catch (error: any) {
-    message.error(error.message || '加载审批任务配置失败')
+    message.error(error.message || t('workflow.taskConfig.list.loadListFailed'))
     return { records: [], total: 0 }
   } finally {
     loading.value = false
@@ -303,7 +349,7 @@ async function openEdit(record: WfTaskConfigSummaryDTO) {
     fillForm(editor)
     dialogVisible.value = true
   } catch (error: any) {
-    message.error(error.message || '加载草稿失败')
+    message.error(error.message || t('workflow.taskConfig.list.loadDraftEditorFailed'))
   }
 }
 
@@ -313,35 +359,33 @@ async function handleNodeConfig(record: WfTaskConfigSummaryDTO) {
     router.push({
       path: approvalRoutePaths.taskConfigNodes(editor.taskCode),
       query: {
-        from: route.fullPath
-      }
+        from: route.fullPath,
+      },
     })
   } catch (error: any) {
-    message.error(error.message || '进入节点配置失败')
+    message.error(error.message || t('workflow.taskConfig.list.loadNodeDraftFailed'))
   }
 }
 
 async function handlePublish(record: WfTaskConfigSummaryDTO) {
   if (!record.hasDraft) {
-    message.info('当前没有可发布的草稿')
+    message.info(t('workflow.taskConfig.list.noDraftToPublish'))
     return
   }
   try {
     await publishDraft({ taskCode: record.taskCode })
-    message.success('发布成功')
     await reloadTable()
   } catch (error: any) {
-    message.error(error.message || '发布失败')
+    message.error(error.message || t('workflow.taskConfig.list.publishFailed'))
   }
 }
 
 async function handleDelete(record: WfTaskConfigSummaryDTO) {
   try {
     await deleteTaskConfig({ id: record.draftId || record.publishedId || record.id })
-    message.success('删除成功')
     await reloadTable()
   } catch (error: any) {
-    message.error(error.message || '删除失败')
+    message.error(error.message || t('workflow.taskConfig.list.deleteFailed'))
   }
 }
 
@@ -352,16 +396,23 @@ async function handleSave() {
     const editor = await saveDraftBaseInfo({ ...formState })
     fillForm(editor)
     dialogVisible.value = false
-    message.success('草稿保存成功')
+    emit('success')
     await reloadTable()
   } catch (error: any) {
     if (error?.errorFields) {
       return
     }
-    message.error(error.message || '保存草稿失败')
+    message.error(error.message || t('workflow.taskConfig.list.saveDraftBaseInfoFailed'))
   } finally {
     saving.value = false
   }
+}
+
+/**
+ * 处理弹窗取消
+ */
+function handleDialogCancel() {
+  dialogVisible.value = false
 }
 </script>
 

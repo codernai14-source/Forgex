@@ -1,5 +1,5 @@
 /**
- * Operation Log Translations - English
+ * 操作日志翻译 - 中文注释
  */
 export default {
   title: 'Operation Log',
@@ -9,7 +9,7 @@ export default {
   module: 'Module',
   operationType: 'Operation Type',
   requestMethod: 'Request Method',
-  responseStatus: 'Response Status',
+  response状态: 'Response 状态',
   requestUrl: 'Request URL',
   ip: 'IP Address',
   costTime: 'Cost Time',

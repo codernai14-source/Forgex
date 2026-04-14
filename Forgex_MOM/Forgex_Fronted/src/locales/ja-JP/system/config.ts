@@ -1,5 +1,5 @@
 /**
- * System Config Translations - English
+ * 系统配置翻译 - 中文注释
  */
 export default {
   title: 'System Config',
@@ -48,6 +48,7 @@ export default {
   videoSizeLimit: 'Video must be smaller than 200MB',
 
   captchaConfig: 'Captcha',
+  captchaConfigDesc: 'ログインCaptchaのモードとパラメータを設定します。画像Captchaとスライダーに対応。',
   captchaMode: 'Captcha Mode',
   captchaNone: 'Disabled',
   captchaImage: 'Image Captcha',
@@ -64,6 +65,7 @@ export default {
   sliderSecondaryEnabled: 'Enable Secondary Check',
 
   passwordPolicy: 'Password Policy',
+  passwordPolicyDesc: 'パスワード暗号化方式、デフォルトパスワード、複雑さ要件を設定します。',
   passwordStore: 'Password Storage Strategy',
   defaultPassword: 'Default User Password',
   defaultPasswordPlaceholder: 'Password used when resetting users',
@@ -74,6 +76,7 @@ export default {
   passwordRequireSymbols: 'Require Symbols',
 
   loginSecurity: 'Login Failure Policy',
+  loginSecurityDesc: '連続ログイン失敗時のロックポリシーを設定し、ブルートフォース攻撃を防ぎます。',
   failWindowMinutes: 'Failure Window (minutes)',
   maxFailCount: 'Max Failure Count',
   lockMinutes: 'Lock Duration (minutes)',
@@ -81,8 +84,9 @@ export default {
   sessionTimeoutNoticeDesc: 'Browser session timeout is managed only by Nacos sa-token.yml. This page does not provide hour/minute writeback to avoid creating a second source of truth. Update the Sa-Token timeout config in Nacos and refresh related services instead.',
 
   transportCrypto: 'Transport Encryption',
+  transportCryptoDesc: 'クライアント・サーバー間通信のトランスポート暗号化アルゴリズムと鍵ペアを設定。',
   transportAlgorithm: 'Algorithm',
-  transportCipher: 'Cipher Format',
+  transportCipher: 'Cipher 表单at',
   transportPublicKey: 'Public Key',
   transportPublicKeyPlaceholder: 'Enter Base64 public key',
   transportPrivateKey: 'Private Key',
@@ -120,4 +124,50 @@ export default {
   providerConfigJsonPlaceholder: 'Input OSS/MinIO JSON config; leave empty for LOCAL',
 
   portalSaveHint: ' (Login page will apply new config after refresh)',
+
+  // Encryption Tab
+  tabCrypto: '暗号化設定',
+  symmetricKeys: '対称鍵管理',
+  symmetricKeysDesc: 'SM4とAES-256対称暗号化鍵を管理。ワンクリック生成に対応。',
+  keyChangeWarning: '⚠️ 鍵を変更すると、古い鍵で暗号化されたデータは復号できなくなります。データ移行が完了していることを確認してください。',
+  sm4Key: 'SM4 鍵',
+  sm4KeyPlaceholder: '32文字Hex（128ビット）、空欄の場合は自動生成',
+  aesKey: 'AES-256 鍵',
+  aesKeyPlaceholder: '64文字Hex（256ビット）、空欄の場合は自動生成',
+  generateKey: '生成',
+  asymmetricKeys: '非対称鍵管理',
+  asymmetricKeysDesc: 'RSA非対称暗号化鍵ペアを管理。2048/4096ビットに対応。',
+  rsaKeySize: 'RSA 鍵長',
+  rsaPublicKey: 'RSA 公開鍵',
+  rsaPublicKeyPlaceholder: '自動生成、Base64エンコード',
+  rsaPrivateKey: 'RSA 秘密鍵',
+  rsaPrivateKeyPlaceholder: '自動生成、Base64エンコード',
+  generateRsaKeyPair: 'RSA 鍵ペア生成',
+  sm2InSecurityTab: 'SM2 鍵はセキュリティタブ → 通信暗号化で管理',
+  fileEncrypt: 'ファイル暗号化',
+  dataEncryptTab: 'データ暗号化',
+  dataEncryptDesc: 'ファイル暗号化とフィールド透過暗号化のスイッチとアルゴリズムを設定。',
+  fileEncryptEnabled: 'ファイル暗号化を有効化',
+  fileEncryptAlgorithm: 'デフォルトアルゴリズム',
+  fieldEncrypt: 'フィールド透過暗号化',
+  fieldEncryptEnabled: 'フィールド暗号化を有効化',
+  fieldEncryptAlgorithm: 'デフォルトアルゴリズム',
+  kmsConfig: 'KMS 鍵管理',
+  kmsConfigDesc: 'KMSマスター鍵と鍵ローテーション通知を管理。マスター鍵は全サブ鍵を保護します。',
+  kmsMasterKey: 'KMS マスター鍵',
+  kmsMasterKeyPlaceholder: '64文字Hex（256ビット）、全KMSサブ鍵を保護',
+  kmsMasterKeyWarning: 'マスター鍵を変更すると、全KMSサブ鍵が復号不能になります！事前にバックアップしてください。',
+  kmsRotateRemindDays: '鍵ローテーション通知（日数）',
+  tdeStatus: 'TDE データベース暗号化',
+  tdeStatusDesc: 'データベース透過暗号化（TDE）の状態を検出。この機能はデータベースサーバーレベルで設定が必要です。',
+  tdeEnabled: 'TDE 状態',
+  tdeEnabledYes: '有効',
+  tdeEnabledNo: '無効',
+  tdeCheck: 'TDE 検出',
+  tdeCheckFailed: 'TDE 状態検出に失敗しました',
+  tdeEncryptedTables: '暗号化テーブル',
+  tdeNoEncryptedTables: '暗号化テーブルなし',
+  tdeKeyringPlugin: 'キーリングプラグイン',
+  tdeKeyringNotDetected: '未検出',
+  tdeInfoMessage: 'TDE（透過的データ暗号化）はデータベースサーバーレベルで設定する必要があり、このページからは管理できません。TDE設定ガイドを参照してください。',
 }

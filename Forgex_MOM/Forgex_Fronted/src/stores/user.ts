@@ -1,7 +1,7 @@
 /**
- * 用户信息 Store
+ * 鐢ㄦ埛淇℃伅 Store
  * 
- * @description 管理用户登录状态、用户信息等
+ * @description 绠＄悊鐢ㄦ埛鐧诲綍鐘舵€併€佺敤鎴蜂俊鎭瓑
  */
 
 import { defineStore } from 'pinia'
@@ -24,44 +24,44 @@ export const useUserStore = defineStore('user', () => {
   // ============ State ============
   
   /**
-   * 用户信息
+   * 鐢ㄦ埛淇℃伅
    */
   const userInfo = ref<UserInfo | null>(null)
   
   /**
-   * 是否已登录
+   * 鏄惁宸茬櫥褰?
    */
   const isLoggedIn = computed(() => !!userInfo.value)
   
   /**
-   * 当前账号
+   * 褰撳墠璐﹀彿
    */
   const account = computed(() => userInfo.value?.account || '')
   
   /**
-   * 当前租户ID
+   * 褰撳墠绉熸埛ID
    */
   const tenantId = computed(() => userInfo.value?.tenantId || '')
   
-  // ============ Actions ============
+  // ============ 操作 ============
   
   /**
-   * 设置用户信息
+   * 璁剧疆鐢ㄦ埛淇℃伅
    */
   function setUserInfo(info: UserInfo) {
     userInfo.value = info
     
-    // 同步到 sessionStorage（兼容旧代码）
+    // 鍚屾鍒?sessionStorage锛堝吋瀹规棫浠ｇ爜锛?
     sessionStorage.setItem('account', info.account)
     sessionStorage.setItem('tenantId', info.tenantId)
   }
   
   /**
-   * 更新用户信息
+   * 鏇存柊鐢ㄦ埛淇℃伅
    */
   function updateUserInfo(info: Partial<UserInfo>) {
     if (!userInfo.value) {
-      // 如果为空，尝试使用 sessionStorage 中的基本信息初始化
+      // 濡傛灉涓虹┖锛屽皾璇曚娇鐢?sessionStorage 涓殑鍩烘湰淇℃伅鍒濆鍖?
       const account = sessionStorage.getItem('account') || ''
       const tenantId = sessionStorage.getItem('tenantId') || ''
       if (account && tenantId) {
@@ -78,32 +78,32 @@ export const useUserStore = defineStore('user', () => {
   }
   
   /**
-   * 清除用户信息
+   * 娓呴櫎鐢ㄦ埛淇℃伅
    */
   function clearUserInfo() {
     userInfo.value = null
     
-    // 清除 sessionStorage
+    // 娓呴櫎 sessionStorage
     sessionStorage.removeItem('account')
     sessionStorage.removeItem('tenantId')
   }
   
   /**
-   * 从 sessionStorage 恢复用户信息（用于页面刷新）
+   * 浠?sessionStorage 鎭㈠鐢ㄦ埛淇℃伅锛堢敤浜庨〉闈㈠埛鏂帮級
    */
   async function restoreFromSession() {
     const account = sessionStorage.getItem('account')
     const tenantId = sessionStorage.getItem('tenantId')
     
     if (account && tenantId) {
-      // 先恢复基本信息，避免页面闪烁
+      // 鍏堟仮澶嶅熀鏈俊鎭紝閬垮厤椤甸潰闂儊
       userInfo.value = {
         account,
-        username: account, // 默认使用 account 作为 username
+        username: account, // 榛樿浣跨敤 account 浣滀负 username
         tenantId
       }
       
-      // 异步获取完整用户信息（包含头像等）
+      // 寮傛鑾峰彇瀹屾暣鐢ㄦ埛淇℃伅锛堝寘鍚ご鍍忕瓑锛?
       try {
         const res = await getCurrentUserInfo()
         if (res) {
@@ -114,29 +114,29 @@ export const useUserStore = defineStore('user', () => {
           }
         }
       } catch (error) {
-        console.error('获取用户信息失败:', error)
+        console.error('鑾峰彇鐢ㄦ埛淇℃伅澶辫触:', error)
       }
     }
   }
   
   /**
-   * 用户登出
+   * 鐢ㄦ埛鐧诲嚭
    */
   async function logout() {
     try {
-      // 调用后端登出接口
+      // 璋冪敤鍚庣鐧诲嚭鎺ュ彛
       await logoutApi()
     } catch (error) {
-      console.error('登出接口调用失败:', error)
+      console.error('鐧诲嚭鎺ュ彛璋冪敤澶辫触:', error)
     } finally {
-      // 清除用户信息
+      // 娓呴櫎鐢ㄦ埛淇℃伅
       clearUserInfo()
     }
   }
   
-  // ============ 初始化 ============
+  // ============ 鍒濆鍖?============
   
-  // 页面加载时尝试从 sessionStorage 恢复
+  // 椤甸潰鍔犺浇鏃跺皾璇曚粠 sessionStorage 鎭㈠
   restoreFromSession()
   
   return {
@@ -146,7 +146,7 @@ export const useUserStore = defineStore('user', () => {
     account,
     tenantId,
     
-    // Actions
+    // 操作
     setUserInfo,
     updateUserInfo,
     clearUserInfo,
@@ -154,7 +154,7 @@ export const useUserStore = defineStore('user', () => {
     logout
   }
 }, {
-  // 持久化配置（可选）
+  // 鎸佷箙鍖栭厤缃紙鍙€夛級
   // persist: {
   //   key: 'forgex-user',
   //   storage: sessionStorage,

@@ -43,7 +43,7 @@ import java.util.Map;
  *   <li>返回格式统一为 {@link R} 类型</li>
  * </ul>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-09
  * @see IMaterialService

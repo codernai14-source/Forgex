@@ -37,7 +37,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 数据源配置：使用 {@code @DS("admin")} 注解指定访问 common 库数据源。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRule 编码规则实体

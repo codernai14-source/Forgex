@@ -27,7 +27,7 @@ import java.util.List;
  * 支持一对多关联关系的数据封装。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRule 编码规则主表实体
