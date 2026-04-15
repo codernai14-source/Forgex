@@ -11,6 +11,7 @@ export interface WfTaskConfigDTO {
   formType: number
   formPath?: string
   formContent?: string
+  requiresSelectedApprovers?: boolean
   status: number
   version: number
   configStage?: string
@@ -90,12 +91,38 @@ export interface WfNodeApproverDTO {
   approverIds: number[]
 }
 
+export interface WfTaskNodeRuleDTO {
+  id?: number
+  ruleName?: string
+  ruleType?: number
+  approveMode?: number
+  approvalThreshold?: number
+  sortOrder?: number
+  timeoutHours?: number
+  timeoutAction?: number
+  allowInitiatorSelect?: boolean
+  superiorLevel?: number
+  allowAddSign?: boolean
+  allowTransfer?: boolean
+  allowDelegate?: boolean
+  allowRecall?: boolean
+  fallbackApproverIds?: number[]
+  approvers: WfNodeApproverDTO[]
+  extraConfig?: string
+}
+
 export interface WfBranchRuleDTO {
   fieldKey: string
   fieldLabel?: string
   operator: string
   value?: string
   nextNodeKey: string
+}
+
+export interface WfLowCodeFieldMetaDTO {
+  key: string
+  label: string
+  component?: string
 }
 
 export interface WfTaskNodeEditorDTO {
@@ -107,6 +134,7 @@ export interface WfTaskNodeEditorDTO {
   canvasY?: number
   defaultBranchNodeKey?: string
   approvers: WfNodeApproverDTO[]
+  ruleConfigs?: WfTaskNodeRuleDTO[]
   branchRules: WfBranchRuleDTO[]
 }
 
@@ -121,6 +149,7 @@ export interface WfTaskGraphDTO {
   taskCode: string
   nodes: WfTaskNodeEditorDTO[]
   edges: WfTaskEdgeDTO[]
+  availableFormFields?: WfLowCodeFieldMetaDTO[]
 }
 
 export interface WfTaskGraphSaveParam {

@@ -31,11 +31,11 @@
             {{ $t('workflow.myTask.history') }}
           </a-button>
           <a-popconfirm
+            v-if="record.status === 0 || record.status === 1"
             :title="t('workflow.myTask.confirmCancel')"
             :ok-text="$t('common.confirm')"
             :cancel-text="$t('common.cancel')"
             @confirm="handleCancel(record)"
-            v-if="record.status === 0 || record.status === 1"
           >
             <a-button
               type="link"
@@ -76,7 +76,7 @@
         <a-descriptions-item :label="t('workflow.myTask.status')">
           <DictTag :value="currentRecord?.status" :items="executionStatusOptions" :fallback-text="getStatusText(currentRecord?.status)" />
         </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.endTime')" v-if="currentRecord?.endTime">
+        <a-descriptions-item v-if="currentRecord?.endTime" :label="t('workflow.myTask.endTime')">
           {{ formatDateTime(currentRecord.endTime) }}
         </a-descriptions-item>
       </a-descriptions>
@@ -87,6 +87,10 @@
         <h4>{{ t('workflow.myTask.formContent') }}</h4>
         <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
       </div>
+
+      <a-divider />
+
+      <WorkflowTracePanel :instances="currentInstances" :show-action-logs="false" />
     </a-drawer>
 
     <a-modal
@@ -95,37 +99,7 @@
       :width="900"
       :footer="null"
     >
-      <a-timeline>
-        <a-timeline-item
-          v-for="(item, index) in historyList"
-          :key="index"
-          :color="getHistoryColor(item.approveStatus)"
-        >
-          <template #dot>
-            <component
-              :is="getHistoryIcon(item.approveStatus)"
-              :style="{ color: getHistoryColor(item.approveStatus) }"
-            />
-          </template>
-          <div class="history-item">
-            <div class="history-header">
-              <span class="history-node">{{ item.nodeName }}</span>
-              <span class="history-status" :style="{ color: getHistoryColor(item.approveStatus) }">
-                {{ getHistoryText(item.approveStatus) }}
-              </span>
-            </div>
-            <div class="history-content">
-              <div class="history-info">
-                <span>{{ t('workflow.myTask.handler') }}: {{ item.approverName }}</span>
-                <span>{{ t('workflow.myTask.approveTime') }}: {{ formatDateTime(item.approveTime) }}</span>
-              </div>
-              <div class="history-comment" v-if="item.comment">
-                <strong>{{ t('workflow.myTask.comment') }}: </strong>{{ item.comment }}
-              </div>
-            </div>
-          </div>
-        </a-timeline-item>
-      </a-timeline>
+      <WorkflowTracePanel :instances="[]" :action-logs="currentActionLogs" />
     </a-modal>
   </div>
 </template>
@@ -134,22 +108,21 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  EyeOutlined,
-  HistoryOutlined,
-  StopOutlined,
-} from '@ant-design/icons-vue'
+import { EyeOutlined, HistoryOutlined, StopOutlined } from '@ant-design/icons-vue'
 import {
   cancelExecution,
+  getExecutionDetail,
+  listApprovalActionLogs,
+  listApprovalInstances,
   pageMyInitiated,
+  type WfApprovalActionLogDTO,
+  type WfApprovalInstanceDTO,
   type WfExecutionDTO,
 } from '@/api/workflow/execution'
 import DictTag from '@/components/common/DictTag.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
+import WorkflowTracePanel from './WorkflowTracePanel.vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n({ useScope: 'global' })
@@ -159,9 +132,10 @@ const tableRef = ref()
 const loading = ref(false)
 
 const currentRecord = ref<WfExecutionDTO | null>(null)
+const currentInstances = ref<WfApprovalInstanceDTO[]>([])
+const currentActionLogs = ref<WfApprovalActionLogDTO[]>([])
 const detailDrawerVisible = ref(false)
 const historyModalVisible = ref(false)
-const historyList = ref<any[]>([])
 
 const dictOptions = computed(() => ({
   status: executionStatusOptions.value,
@@ -215,51 +189,28 @@ function formatFormContent(formContent?: string): string {
   }
 }
 
-function getHistoryColor(approveStatus?: number): string {
-  const colorMap: Record<number, string> = {
-    0: 'gray',
-    1: 'green',
-    2: 'red',
-  }
-  return colorMap[approveStatus || 0] || 'gray'
-}
-
-function getHistoryText(approveStatus?: number): string {
-  const textMap: Record<number, string> = {
-    0: t('workflow.myTask.historyStatus.started'),
-    1: t('workflow.myTask.historyStatus.approved'),
-    2: t('workflow.myTask.historyStatus.rejected'),
-  }
-  return textMap[approveStatus || 0] || t('workflow.myTask.unknownStatus')
-}
-
-function getHistoryIcon(approveStatus?: number) {
-  const iconMap: Record<number, any> = {
-    1: CheckCircleOutlined,
-    2: CloseCircleOutlined,
-  }
-  return iconMap[approveStatus || 0] || ClockCircleOutlined
-}
-
 function handleViewDetail(record: WfExecutionDTO) {
   currentRecord.value = record
   detailDrawerVisible.value = true
+  loadExecutionTrace(record.id)
 }
 
 async function handleViewHistory(record: WfExecutionDTO) {
   currentRecord.value = record
   historyModalVisible.value = true
+  await loadExecutionTrace(record.id)
+}
 
+async function loadExecutionTrace(executionId: number) {
   try {
-    historyList.value = [
-      {
-        nodeName: t('workflow.myTask.historyStartNode'),
-        approverName: record.initiatorName,
-        approveTime: record.startTime,
-        approveStatus: 0,
-        comment: t('workflow.myTask.historyComment.started'),
-      },
-    ]
+    const [detail, instances, logs] = await Promise.all([
+      getExecutionDetail({ executionId }),
+      listApprovalInstances({ executionId }),
+      listApprovalActionLogs({ executionId }),
+    ])
+    currentRecord.value = detail || currentRecord.value
+    currentInstances.value = instances || []
+    currentActionLogs.value = logs || []
   } catch (error: any) {
     message.error(error.message || t('workflow.myTask.loadHistoryFailed'))
   }
@@ -310,44 +261,5 @@ onMounted(() => {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 600;
-}
-
-.history-item {
-  margin-top: 8px;
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.history-node {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.history-status {
-  font-size: 13px;
-}
-
-.history-content {
-  background-color: #f5f5f5;
-  padding: 12px;
-  border-radius: 4px;
-}
-
-.history-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.history-comment {
-  font-size: 13px;
-  color: #333;
 }
 </style>

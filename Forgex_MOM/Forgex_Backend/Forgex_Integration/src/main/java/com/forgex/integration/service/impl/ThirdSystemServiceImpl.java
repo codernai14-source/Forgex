@@ -5,8 +5,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.dto.ThirdSystemDTO;
 import com.forgex.integration.domain.entity.ThirdSystem;
 import com.forgex.integration.domain.param.ThirdSystemParam;
@@ -85,7 +87,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
     public ThirdSystemDTO getThirdSystemById(Long id) {
         ThirdSystem system = this.getById(id);
         if (system == null || Boolean.TRUE.equals(system.getDeleted())) {
-            throw new BusinessException("第三方系统不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_NOT_FOUND);
         }
         return convertToDTO(system);
     }
@@ -103,7 +105,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         // 校验系统编码唯一性
         ThirdSystemDTO existing = getBySystemCode(dto.getSystemCode());
         if (existing != null) {
-            throw new BusinessException("系统编码已存在：" + dto.getSystemCode());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_CODE_EXISTS, dto.getSystemCode());
         }
         
         ThirdSystem system = new ThirdSystem();
@@ -113,7 +115,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         
         boolean success = this.save(system);
         if (!success) {
-            throw new BusinessException("创建第三方系统失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_CREATE_FAILED);
         }
         
         log.info("创建第三方系统成功：{}", dto.getSystemCode());
@@ -123,19 +125,19 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
     @Transactional(rollbackFor = Exception.class)
     public void updateThirdSystem(ThirdSystemDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("系统 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 校验系统是否存在
         ThirdSystem existing = this.getById(dto.getId());
         if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
-            throw new BusinessException("第三方系统不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_NOT_FOUND);
         }
         
         // 校验系统编码唯一性（排除自身）
         ThirdSystemDTO sameCode = getBySystemCode(dto.getSystemCode());
         if (sameCode != null && !sameCode.getId().equals(dto.getId())) {
-            throw new BusinessException("系统编码已存在：" + dto.getSystemCode());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_CODE_EXISTS, dto.getSystemCode());
         }
         
         ThirdSystem system = new ThirdSystem();
@@ -145,7 +147,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         
         boolean success = this.updateById(system);
         if (!success) {
-            throw new BusinessException("更新第三方系统失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_UPDATE_FAILED);
         }
         
         log.info("更新第三方系统成功：{}", dto.getSystemCode());
@@ -156,13 +158,13 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
     public void deleteThirdSystem(Long id) {
         ThirdSystem system = this.getById(id);
         if (system == null || Boolean.TRUE.equals(system.getDeleted())) {
-            throw new BusinessException("第三方系统不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_NOT_FOUND);
         }
         
         // TODO: 检查是否有关联的授权记录
         // ThirdAuthorization auth = authorizationMapper.getByThirdSystemId(id);
         // if (auth != null) {
-        //     throw new BusinessException("该系统下存在授权记录，无法删除");
+        //     throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_DELETE_FAILED);
         // }
         
         system.setDeleted(true);
@@ -171,7 +173,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         
         boolean success = this.updateById(system);
         if (!success) {
-            throw new BusinessException("删除第三方系统失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_DELETE_FAILED);
         }
         
         log.info("删除第三方系统成功：ID={}", id);
@@ -181,13 +183,13 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteThirdSystems(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new BusinessException("删除 ID 列表不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
         
         for (Long id : ids) {
             try {
                 deleteThirdSystem(id);
-            } catch (BusinessException e) {
+            } catch (I18nBusinessException e) {
                 log.warn("删除第三方系统失败：ID={}, 原因：{}", id, e.getMessage());
             }
         }

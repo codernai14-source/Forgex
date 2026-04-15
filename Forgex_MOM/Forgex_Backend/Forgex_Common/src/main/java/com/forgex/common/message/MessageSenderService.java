@@ -16,10 +16,12 @@ package com.forgex.common.message;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.enums.MessagePromptEnum;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.util.mq.MqSender;
+import com.forgex.common.web.StatusCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -96,7 +98,7 @@ public class MessageSenderService {
             return doSendMessage(templateCode, dataMap, senderName, bizType);
         } catch (Exception e) {
             log.error("发送消息失败: templateCode={}, error={}", templateCode, e.getMessage(), e);
-            throw new BusinessException("发送消息失败: " + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_SEND_FAILED, e.getMessage());
         }
     }
     
@@ -176,7 +178,7 @@ public class MessageSenderService {
             
             Object template = invokeMethod(templateMapper, "selectOne", templateWrapper);
             if (template == null) {
-                throw new BusinessException("消息模板不存在或已禁用: " + templateCode);
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_TEMPLATE_NOT_FOUND_OR_DISABLED, templateCode);
             }
             
             Long templateId = (Long) getField(template, "id");
@@ -270,11 +272,11 @@ public class MessageSenderService {
             log.info("消息发送完成: templateCode={}, sentCount={}", templateCode, sentCount);
             return sentCount;
             
-        } catch (BusinessException e) {
+        } catch (I18nBusinessException e) {
             throw e;
         } catch (Exception e) {
             log.error("发送消息异常: templateCode={}", templateCode, e);
-            throw new BusinessException("发送消息异常: " + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_SEND_EXCEPTION, e.getMessage());
         }
     }
     

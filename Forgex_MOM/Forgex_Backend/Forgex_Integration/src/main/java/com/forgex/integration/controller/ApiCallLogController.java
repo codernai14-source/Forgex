@@ -42,10 +42,12 @@ public class ApiCallLogController {
      * 自动根据时间范围查询对应的月份表
      * </p>
      *
-     * @param param 查询参数
-     * @return 分页结果
+     * @param param 查询参数，包含分页信息、时间范围、接口配置 ID 等
+     * @return 分页结果，包含调用记录列表和总数
      * @see ApiCallLogParam
      * @see ApiCallLogDTO
+     * @see com.forgex.integration.service.IApiCallLogService#pageCallLogs
+     * @see com.forgex.common.web.R
      */
     @PostMapping("/page")
     @Operation(summary = "分页查询调用记录", description = "支持按时间范围、接口配置、调用状态等条件查询")
@@ -57,13 +59,16 @@ public class ApiCallLogController {
     /**
      * 查询调用记录列表（不分页）
      * <p>
-     * 用于导出 Excel 等场景
+     * 用于导出 Excel、数据统计等场景
+     * 返回所有符合条件的记录，无分页限制
      * </p>
      *
-     * @param param 查询参数
+     * @param param 查询参数，包含时间范围、接口配置 ID 等筛选条件
      * @return 调用记录列表
      * @see ApiCallLogParam
      * @see ApiCallLogDTO
+     * @see com.forgex.integration.service.IApiCallLogService#listCallLogs
+     * @see com.forgex.common.web.R
      */
     @PostMapping("/list")
     @Operation(summary = "查询调用记录列表", description = "不分页查询，用于导出等场景")
@@ -76,12 +81,15 @@ public class ApiCallLogController {
      * 根据 ID 查询调用记录详情
      * <p>
      * 根据调用时间自动从对应的月份表中查询详情
+     * 包含完整的调用信息、请求参数、响应结果等
      * </p>
      *
-     * @param id 调用记录 ID
-     * @param callTime 调用时间（用于确定查询哪个月份表）
-     * @return 调用记录详情
+     * @param id 调用记录 ID（必填）
+     * @param callTime 调用时间（必填），用于确定查询哪个月份表
+     * @return 调用记录详情，如果不存在返回 null
      * @see ApiCallLogDTO
+     * @see com.forgex.integration.service.IApiCallLogService#getCallLogById
+     * @see com.forgex.common.web.R
      */
     @GetMapping("/detail/{id}")
     @Operation(summary = "查询调用记录详情", description = "根据 ID 和调用时间查询详细信息")
@@ -102,12 +110,15 @@ public class ApiCallLogController {
      * 统计调用次数
      * <p>
      * 统计指定接口在时间范围内的调用次数
+     * 可用于监控接口使用频率、生成统计报表等场景
      * </p>
      *
      * @param apiConfigId 接口配置 ID（可选，不传则统计所有接口）
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime 开始时间（必填）
+     * @param endTime 结束时间（必填）
      * @return 调用次数
+     * @see com.forgex.integration.service.IApiCallLogService#countCallLogs
+     * @see com.forgex.common.web.R
      */
     @GetMapping("/count")
     @Operation(summary = "统计调用次数", description = "统计指定接口在时间范围内的调用次数")
@@ -124,12 +135,15 @@ public class ApiCallLogController {
      * 统计调用成功率
      * <p>
      * 计算指定接口在时间范围内的调用成功率
+     * 成功率 = 成功调用次数 / 总调用次数 * 100
      * </p>
      *
      * @param apiConfigId 接口配置 ID（可选，不传则统计所有接口）
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 成功率（0-100 之间的数值）
+     * @param startTime 开始时间（必填）
+     * @param endTime 结束时间（必填）
+     * @return 成功率（0-100 之间的数值），保留两位小数
+     * @see com.forgex.integration.service.IApiCallLogService#calculateSuccessRate
+     * @see com.forgex.common.web.R
      */
     @GetMapping("/success-rate")
     @Operation(summary = "统计调用成功率", description = "计算指定接口在时间范围内的调用成功率")

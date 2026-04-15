@@ -4,9 +4,12 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.web.R;
 import com.forgex.common.exception.BusinessException;
+import com.forgex.common.web.R;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ThirdAuthorizationDTO;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.entity.ApiCallLog;
 import com.forgex.integration.domain.entity.ThirdAuthorization;
 import com.forgex.integration.domain.dto.ApiConfigDTO;
@@ -198,7 +201,7 @@ public class ApiRouterServiceImpl implements IApiRouterService {
             // 1. 获取接口配置
             ApiConfigDTO apiConfig = apiConfigService.getByApiCode(apiCode);
             if (apiConfig == null) {
-                throw new BusinessException("接口配置不存在：" + apiCode);
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND, apiCode);
             }
             
             // 2. 获取参数映射规则
@@ -225,7 +228,7 @@ public class ApiRouterServiceImpl implements IApiRouterService {
             
         } catch (Exception e) {
             log.error("参数转换失败：apiCode={}, error={}", apiCode, e.getMessage(), e);
-            throw new BusinessException("参数转换失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_PARAM_CONVERT_FAILED, e.getMessage());
         }
     }
 
@@ -248,7 +251,7 @@ public class ApiRouterServiceImpl implements IApiRouterService {
                 } else {
                     // 3. 如果找不到专用处理器，使用默认处理器
                     log.warn("未找到专用处理器，使用默认处理器：apiCode={}", apiCode);
-                    throw new BusinessException("未配置接口处理器：" + apiCode);
+                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_HANDLER_NOT_CONFIGURED, apiCode);
                 }
             }
             
@@ -261,13 +264,13 @@ public class ApiRouterServiceImpl implements IApiRouterService {
                 return handleMethod.invoke(processor, params);
             }
             
-            throw new BusinessException("处理器为空：" + apiCode);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_HANDLER_NULL, apiCode);
             
-        } catch (BusinessException e) {
+        } catch (I18nBusinessException e) {
             throw e;
         } catch (Exception e) {
             log.error("路由处理器失败：apiCode={}, error={}", apiCode, e.getMessage(), e);
-            throw new BusinessException("路由处理器失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_ROUTE_FAILED, e.getMessage());
         }
     }
 

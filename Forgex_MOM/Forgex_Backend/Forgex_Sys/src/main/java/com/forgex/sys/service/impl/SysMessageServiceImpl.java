@@ -3,7 +3,8 @@ package com.forgex.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.util.CurrentUserUtils;
@@ -16,6 +17,7 @@ import com.forgex.sys.mapper.SysMessageMapper;
 import com.forgex.sys.mapper.SysTenantMessageWhitelistMapper;
 import com.forgex.sys.service.SseEmitterService;
 import com.forgex.sys.service.SysMessageService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -104,7 +106,7 @@ public class SysMessageServiceImpl implements SysMessageService {
             if (!checkCrossTenantPermission(senderTenantId, receiverTenantId)) {
                 log.warn("跨租户消息发送被拒绝: senderTenantId={}, receiverTenantId={}",
                         senderTenantId, receiverTenantId);
-                throw new BusinessException("无权向该租户发送消息，请联系管理员配置租户消息白名单");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_NO_PERMISSION);
             }
         }
 

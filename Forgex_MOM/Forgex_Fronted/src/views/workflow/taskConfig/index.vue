@@ -136,11 +136,12 @@
           <a-input v-model:value="formState.formPath" :placeholder="t('workflow.taskConfig.form.formPath')" />
         </a-form-item>
 
-        <a-form-item v-else :label="t('workflow.taskConfig.list.formContentJson')" name="formContent">
-          <a-textarea
-            v-model:value="formState.formContent"
-            :rows="6"
-            :placeholder="t('workflow.taskConfig.form.formContent')"
+        <a-form-item v-else :label="t('workflow.taskConfig.list.formContentJson')">
+          <a-alert
+            message="低代码表单将在下一步设计"
+            description="新建草稿时会自动生成一个空的低代码表单结构。保存后进入“节点配置”页面，在第 1 步完成字段设计即可。"
+            type="info"
+            show-icon
           />
         </a-form-item>
 
@@ -178,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -187,6 +188,7 @@ import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useDict } from '@/hooks/useDict'
+import { stringifyLowCodeFormSchema, DEFAULT_LOW_CODE_FORM_SCHEMA } from './components/lowCodeSchema'
 import {
   deleteTaskConfig,
   getOrCreateDraftEditor,
@@ -307,6 +309,18 @@ function fillForm(editor: WfTaskDraftEditorDTO) {
   })
 }
 
+watch(
+  () => formState.formType,
+  (value) => {
+    if (value === 2 && !formState.formContent) {
+      formState.formContent = stringifyLowCodeFormSchema(DEFAULT_LOW_CODE_FORM_SCHEMA)
+    }
+    if (value === 1) {
+      formState.formContent = ''
+    }
+  }
+)
+
 async function reloadTable() {
   await tableRef.value?.reload?.()
 }
@@ -340,6 +354,7 @@ const handleRequest = async (payload: TableRequestPayload) => {
 
 function openCreate() {
   resetFormState()
+  formState.formContent = stringifyLowCodeFormSchema(DEFAULT_LOW_CODE_FORM_SCHEMA)
   dialogVisible.value = true
 }
 
@@ -393,7 +408,13 @@ async function handleSave() {
   try {
     await formRef.value?.validate()
     saving.value = true
-    const editor = await saveDraftBaseInfo({ ...formState })
+    const payload: WfTaskConfigSaveParam = {
+      ...formState,
+      formContent: formState.formType === 2
+        ? (formState.formContent || stringifyLowCodeFormSchema(DEFAULT_LOW_CODE_FORM_SCHEMA))
+        : formState.formContent
+    }
+    const editor = await saveDraftBaseInfo(payload)
     fillForm(editor)
     dialogVisible.value = false
     emit('success')
