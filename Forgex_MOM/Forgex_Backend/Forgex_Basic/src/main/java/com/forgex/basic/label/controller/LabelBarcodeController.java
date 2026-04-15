@@ -125,8 +125,6 @@ public class LabelBarcodeController {
     private Long getCurrentUserId() {
         // 从安全上下文获取当前用户 ID
         try {
-            // 示例：使用 Sa-Token
-            // return StpUtil.getLoginIdAsLong();
             return 1L; // 临时返回，实际需要从认证上下文获取
         } catch (Exception e) {
             return 1L;
