@@ -207,13 +207,108 @@ function extractErrorMessage(err: any): string {
   return t('message.gatewayError')
 }
 
+/**
+ * 判断接口路径是否需要显示成功消息
+ * 
+ * 根据 URL 路径中的关键词判断：
+ * - 写操作（新增、修改、删除、提交等）显示成功消息
+ * - 读操作（查询、列表、详情等）不显示成功消息
+ * 
+ * @param url 接口 URL
+ * @returns true-需要显示成功消息，false-不需要显示
+ */
+function shouldShowSuccessByPath(url: string): boolean {
+  const urlLower = url.toLowerCase()
+  
+  // 需要显示成功消息的关键词（写操作）
+  const showSuccessKeywords = [
+    // 新增类
+    '/create', '/add', '/insert', '/save', '/new',
+    // 修改类
+    '/update', '/edit', '/modify', '/change',
+    // 删除类
+    '/delete', '/remove', '/batchdelete', '/batch-delete',
+    // 状态变更类
+    '/updatestatus', '/changestatus', '/enable', '/disable',
+    // 授权类
+    '/auth', '/grant', '/assign', '/savebyuser', '/savebyrole',
+    // 密码类
+    '/resetpassword', '/changepassword', '/updatepassword',
+    // 提交类
+    '/submit', '/apply', '/approve', '/audit',
+    // 发送类
+    '/send', '/publish',
+    // 上传类
+    '/upload', '/import',
+    // 其他写操作
+    '/choose-tenant', '/register', '/logout', '/changelanguage'
+  ]
+  
+  // 不需要显示成功消息的关键词（读操作）
+  const hideSuccessKeywords = [
+    // 查询列表类
+    '/page', '/list', '/query', '/search', '/find',
+    // 查询详情类
+    '/detail', '/get', '/info', '/tree', '/byusername',
+    // 下载导出类
+    '/download', '/export', '/template',
+    // 检查验证类
+    '/count', '/check', '/exists', '/verify', '/validate',
+    // 配置查询类
+    '/config', '/settings', '/preferences',
+    // 其他读操作
+    '/routes', '/menu', '/permission', '/statistic', '/dashboard',
+    '/captcha', '/public-key', '/unread', '/read', '/read-all',
+    '/kickout', '/online', '/loginlog', '/operationlog',
+    '/provider', '/fields', '/layout', '/basic', '/security', '/email', '/file-upload'
+  ]
+  
+  // 优先匹配需要显示的关键词
+  for (const keyword of showSuccessKeywords) {
+    if (urlLower.includes(keyword)) {
+      return true
+    }
+  }
+  
+  // 如果匹配到不需要显示的关键词，则隐藏
+  for (const keyword of hideSuccessKeywords) {
+    if (urlLower.includes(keyword)) {
+      return false
+    }
+  }
+  
+  // 默认：POST 请求且后端返回了 message 则显示
+  return true
+}
+
+/**
+ * 判断是否需要显示成功消息
+ * 
+ * 判断逻辑：
+ * 1. 必须是 http 实例（非静默模式）
+ * 2. 后端必须返回了 message
+ * 3. 根据接口路径或显式配置决定是否显示
+ * 
+ * @param resp 响应对象
+ * @param httpInstance HTTP 实例
+ * @param backendMessage 后端返回的 message
+ * @returns true-显示成功消息，false-不显示
+ */
 function shouldShowSuccessMessage(resp: any, httpInstance: any, backendMessage: string): boolean {
+  // 非 http 实例或没有 backendMessage，不显示
   if (httpInstance !== http || !backendMessage) {
     return false
   }
 
   const cfgAny = resp?.config as any
-  return cfgAny?.showSuccessMessage !== false
+  // 如果显式配置了 showSuccessMessage，则优先使用配置
+  if (cfgAny?.showSuccessMessage !== undefined) {
+    return cfgAny.showSuccessMessage === true
+  }
+  
+  // 根据接口路径判断是否需要显示成功消息
+  const url = resp.config?.url || ''
+  return shouldShowSuccessByPath(url)
 }
 
 /**
@@ -250,13 +345,20 @@ http.interceptors.request.use(cfg => {
   
   // 添加语言头
   const locale = getLocale()
+  const tenantId = sessionStorage.getItem('tenantId')
   const headersAny: any = cfg.headers || {}
   if (typeof headersAny.set === 'function') {
     headersAny.set('Accept-Language', locale)
     headersAny.set('X-Lang', locale)
+    if (tenantId) {
+      headersAny.set('X-Tenant-Id', tenantId)
+    }
   } else {
     headersAny['Accept-Language'] = locale
     headersAny['X-Lang'] = locale
+    if (tenantId) {
+      headersAny['X-Tenant-Id'] = tenantId
+    }
   }
   cfg.headers = headersAny
   
@@ -270,13 +372,20 @@ http.interceptors.request.use(cfg => {
 silentHttp.interceptors.request.use(cfg => {
   // 添加语言头
   const locale = getLocale()
+  const tenantId = sessionStorage.getItem('tenantId')
   const headersAny: any = cfg.headers || {}
   if (typeof headersAny.set === 'function') {
     headersAny.set('Accept-Language', locale)
     headersAny.set('X-Lang', locale)
+    if (tenantId) {
+      headersAny.set('X-Tenant-Id', tenantId)
+    }
   } else {
     headersAny['Accept-Language'] = locale
     headersAny['X-Lang'] = locale
+    if (tenantId) {
+      headersAny['X-Tenant-Id'] = tenantId
+    }
   }
   cfg.headers = headersAny
   
@@ -473,10 +582,12 @@ http.interceptors.response.use(
  * 特点：
  * - 显示全局 loading
  * - 自动处理错误提示
- * - 默认不自动弹成功消息
+ * - 对于写操作（POST/PUT/DELETE/PATCH），如果后端返回了 message，自动显示成功消息
+ * - 对于读操作（GET），不自动显示成功消息
+ * - 可通过配置 showSuccessMessage: true/false 手动控制
  */
 const httpClient = createHttpClient(http, {
-  showSuccessMessage: false
+  showSuccessMessage: undefined // 不显式设置，由 shouldShowSuccessMessage 根据请求方法和后端 message 自动判断
 })
 
 /**

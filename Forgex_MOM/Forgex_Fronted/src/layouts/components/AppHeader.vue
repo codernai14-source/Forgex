@@ -89,7 +89,7 @@
               >
                 <div class="lang-menu-item">
                   <span class="lang-menu-item__label">
-                    <span v-if="lang.icon">{{ lang.icon }} </span>{{ lang.langName }}
+                    <span v-if="lang.icon">{{ lang.icon }} </span>{{ getLanguageLabel(lang) }}
                   </span>
                   <CheckOutlined v-if="currentLocale === lang.langCode" class="lang-menu-item__check" />
                 </div>
@@ -186,8 +186,7 @@ import {
 import { getUnreadMessageCount } from '../../api/message'
 import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
 import type { LocaleCode } from '../../locales'
-
-const LANG_SWITCH_ICON_SRC = '/diqiu.gif'
+import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 
 interface Module {
   code: string
@@ -312,6 +311,10 @@ const loadUnreadCount = async () => {
 onMounted(() => {
   loadLanguageList()
   loadUnreadCount()
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('fx:message-refresh', loadUnreadCount as EventListener)
+  }
   
   // 每30秒刷新一次未读消息数量
   unreadCountTimer = setInterval(() => {
@@ -324,6 +327,9 @@ onUnmounted(() => {
   if (unreadCountTimer) {
     clearInterval(unreadCountTimer)
   }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('fx:message-refresh', loadUnreadCount as EventListener)
+  }
 })
 
 // 是否显示模块导航
@@ -332,8 +338,12 @@ const showModuleNav = computed(() => {
 })
 
 const currentLanguageLabel = computed(() => {
-  return languageList.value.find((lang) => lang.langCode === currentLocale.value)?.langName || 'Language'
+  return getLanguageDisplayName(languageList.value.find((lang) => lang.langCode === currentLocale.value))
 })
+
+function getLanguageLabel(language: LanguageType): string {
+  return getLanguageDisplayName(language)
+}
 
 // 用户名首字母
 const userInitial = computed(() => {

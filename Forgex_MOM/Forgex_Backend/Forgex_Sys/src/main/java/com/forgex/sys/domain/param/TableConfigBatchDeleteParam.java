@@ -14,6 +14,9 @@ import java.util.List;
 public class TableConfigBatchDeleteParam {
     /** ID列表 */
     private List<Long> ids;
+
+    /** 是否操作公共配置，true=tenant_id=0 */
+    private Boolean isPublicConfig;
 }
 
 

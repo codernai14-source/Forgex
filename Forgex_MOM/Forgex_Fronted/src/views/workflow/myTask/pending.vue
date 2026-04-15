@@ -9,9 +9,7 @@
       :show-query-form="true"
     >
       <template #status="{ record }">
-        <a-tag :color="getStatusColor(record.status)">
-          {{ getStatusText(record.status) }}
-        </a-tag>
+        <DictTag :value="record.status" :items="executionStatusOptions" :fallback-text="getStatusText(record.status)" />
       </template>
 
       <template #startTime="{ record }">
@@ -61,26 +59,26 @@
         :label-col="{ span: 4 }"
         :wrapper-col="{ span: 18 }"
       >
-        <a-form-item label="审批任务">
+        <a-form-item :label="t('workflow.myTask.taskName')">
           <a-input :value="currentRecord?.taskName" disabled />
         </a-form-item>
 
-        <a-form-item label="发起人">
+        <a-form-item :label="t('workflow.myTask.initiator')">
           <a-input :value="currentRecord?.initiatorName" disabled />
         </a-form-item>
 
-        <a-form-item label="发起时间">
+        <a-form-item :label="t('workflow.myTask.startTime')">
           <a-input :value="formatDateTime(currentRecord?.startTime)" disabled />
         </a-form-item>
 
         <a-form-item
           v-if="approveAction === 'reject'"
-          label="驳回类型"
+          :label="t('workflow.myTask.rejectType')"
           name="rejectType"
         >
           <a-select
             v-model:value="approveFormData.rejectType"
-            placeholder="请选择驳回类型"
+            :placeholder="t('workflow.myTask.rejectTypePlaceholder')"
           >
             <a-select-option
               v-for="item in rejectTypeSelectOptions"
@@ -92,15 +90,15 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="审批意见" name="comment">
+        <a-form-item :label="t('workflow.myTask.comment')" name="comment">
           <a-textarea
             v-model:value="approveFormData.comment"
-            placeholder="请输入审批意见"
+            :placeholder="t('workflow.myTask.commentPlaceholder')"
             :rows="4"
           />
         </a-form-item>
 
-        <a-form-item label="表单内容">
+        <a-form-item :label="t('workflow.myTask.formContent')">
           <div class="form-content">
             <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
           </div>
@@ -110,37 +108,35 @@
 
     <a-drawer
       v-model:open="detailDrawerVisible"
-      title="审批详情"
+      :title="t('workflow.myTask.detailTitle')"
       :width="800"
       :body-style="{ paddingBottom: '80px' }"
     >
       <a-descriptions bordered :column="2">
-        <a-descriptions-item label="审批任务">
+        <a-descriptions-item :label="t('workflow.myTask.taskName')">
           {{ currentRecord?.taskName }}
         </a-descriptions-item>
-        <a-descriptions-item label="任务编码">
+        <a-descriptions-item :label="t('workflow.myTask.taskCode')">
           {{ currentRecord?.taskCode }}
         </a-descriptions-item>
-        <a-descriptions-item label="发起人">
+        <a-descriptions-item :label="t('workflow.myTask.initiator')">
           {{ currentRecord?.initiatorName }}
         </a-descriptions-item>
-        <a-descriptions-item label="发起时间">
+        <a-descriptions-item :label="t('workflow.myTask.startTime')">
           {{ formatDateTime(currentRecord?.startTime) }}
         </a-descriptions-item>
-        <a-descriptions-item label="当前节点">
+        <a-descriptions-item :label="t('workflow.myTask.currentNode')">
           {{ currentRecord?.currentNodeName || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="状态">
-          <a-tag :color="getStatusColor(currentRecord?.status)">
-            {{ getStatusText(currentRecord?.status) }}
-          </a-tag>
+        <a-descriptions-item :label="t('workflow.myTask.status')">
+          <DictTag :value="currentRecord?.status" :items="executionStatusOptions" :fallback-text="getStatusText(currentRecord?.status)" />
         </a-descriptions-item>
       </a-descriptions>
 
       <a-divider />
 
       <div class="form-content-detail">
-        <h4>表单内容</h4>
+        <h4>{{ t('workflow.myTask.formContent') }}</h4>
         <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
       </div>
     </a-drawer>
@@ -149,6 +145,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   CheckOutlined,
   CloseOutlined,
@@ -162,10 +160,12 @@ import {
   type WfExecutionDTO,
 } from '@/api/workflow/execution'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import DictTag from '@/components/common/DictTag.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { useDict } from '@/hooks/useDict'
+import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import dayjs from 'dayjs'
 
+const { t } = useI18n({ useScope: 'global' })
 const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
 const { dictItems: rejectTypeOptions } = useDict('wf_reject_type')
 
@@ -186,10 +186,10 @@ const approveFormData = reactive<WfExecutionApproveParam>({
   rejectType: undefined,
 })
 
-const approveRules = {
-  comment: [{ required: true, message: '请输入审批意见', trigger: 'blur' }],
-  rejectType: [{ required: true, message: '请选择驳回类型', trigger: 'change' }],
-}
+const approveRules = computed(() => ({
+  comment: [{ required: true, message: t('workflow.myTask.commentPlaceholder'), trigger: 'blur' }],
+  rejectType: [{ required: true, message: t('workflow.myTask.rejectTypePlaceholder'), trigger: 'change' }],
+}))
 
 const dictOptions = computed(() => ({
   status: executionStatusOptions.value,
@@ -197,13 +197,6 @@ const dictOptions = computed(() => ({
   rejectType: rejectTypeOptions.value,
   wf_reject_type: rejectTypeOptions.value,
 }))
-
-const statusSelectOptions = computed(() =>
-  (executionStatusOptions.value || []).map((item: { label: string; value: string | number }) => ({
-    label: item.label,
-    value: Number(item.value),
-  })),
-)
 
 const rejectTypeSelectOptions = computed(() =>
   (rejectTypeOptions.value || []).map((item: { label: string; value: string | number }) => ({
@@ -234,25 +227,15 @@ const handleRequest = async (payload: {
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total }
   } catch (error: any) {
-    console.error('加载待办审批列表失败', error)
+    message.error(error.message || t('workflow.myTask.loadPendingFailed'))
     return { records: [], total: 0 }
   } finally {
     loading.value = false
   }
 }
 
-function getStatusColor(status?: number): string {
-  const colorMap: Record<number, string> = {
-    0: 'default',
-    1: 'processing',
-    2: 'success',
-    3: 'error',
-  }
-  return colorMap[status || 0] || 'default'
-}
-
 function getStatusText(status?: number): string {
-  return statusSelectOptions.value.find((item: { label: string; value: number }) => item.value === Number(status))?.label || '未知'
+  return getDictItemLabel(executionStatusOptions.value, status, t('workflow.myTask.unknownStatus'))
 }
 
 function formatDateTime(dateTime?: string): string {
@@ -321,7 +304,7 @@ async function handleApproveSubmit() {
     if (error?.errorFields) {
       return
     }
-    console.error('审批处理失败', error)
+    message.error(error.message || t('workflow.myTask.approveActionFailed'))
   } finally {
     approving.value = false
   }

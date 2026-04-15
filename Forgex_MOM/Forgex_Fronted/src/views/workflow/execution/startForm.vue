@@ -3,15 +3,15 @@
     <div class="page-head">
       <div>
         <a-button type="link" class="page-head__back" @click="navigateAndCloseCurrent(approvalRoutePaths.executionStartList)">
-          返回流程选择
+          {{ t('workflow.execution.startForm.backToList') }}
         </a-button>
-        <h2>{{ taskConfig?.taskName || '填写审批表单' }}</h2>
-        <p>{{ taskConfig?.remark || '请确认流程信息后填写表单并发起审批。' }}</p>
+        <h2>{{ taskConfig?.taskName || t('workflow.execution.startForm.titleFallback') }}</h2>
+        <p>{{ taskConfig?.remark || t('workflow.execution.startForm.descFallback') }}</p>
       </div>
 
       <a-space>
         <a-tag v-if="taskConfig" :color="taskConfig.formType === 1 ? 'blue' : 'green'">
-          {{ taskConfig.formType === 1 ? '自定义表单' : '低代码表单' }}
+          {{ taskConfig.formType === 1 ? t('workflow.execution.startForm.customForm') : t('workflow.execution.startForm.lowCodeForm') }}
         </a-tag>
         <a-tag v-if="taskConfig" color="gold">{{ taskConfig.taskCode }}</a-tag>
       </a-space>
@@ -25,7 +25,7 @@
       class="error-alert"
     >
       <template #description>
-        <a-button type="link" @click="navigateAndCloseCurrent(approvalRoutePaths.executionStartList)">返回选择页</a-button>
+        <a-button type="link" @click="navigateAndCloseCurrent(approvalRoutePaths.executionStartList)">{{ t('workflow.execution.startForm.backToSelection') }}</a-button>
       </template>
     </a-alert>
 
@@ -34,16 +34,16 @@
         <div class="form-shell__inner">
           <div class="form-shell__summary">
             <div class="summary-item">
-              <span>流程名称</span>
+              <span>{{ t('workflow.execution.startForm.summaryTaskName') }}</span>
               <strong>{{ taskConfig?.taskName }}</strong>
             </div>
             <div class="summary-item">
-              <span>任务编码</span>
+              <span>{{ t('workflow.execution.startForm.summaryTaskCode') }}</span>
               <strong>{{ taskConfig?.taskCode }}</strong>
             </div>
             <div class="summary-item">
-              <span>流程说明</span>
-              <strong>{{ taskConfig?.remark || '未填写流程说明' }}</strong>
+              <span>{{ t('workflow.execution.startForm.summaryRemark') }}</span>
+              <strong>{{ taskConfig?.remark || t('workflow.execution.startForm.summaryRemarkEmpty') }}</strong>
             </div>
           </div>
 
@@ -59,7 +59,7 @@
               v-else-if="taskConfig?.formType === 1"
               type="warning"
               show-icon
-              message="未注册对应的前端表单组件"
+              :message="t('workflow.execution.startForm.unregisteredFormComponent')"
               :description="taskConfig?.formPath || ''"
             />
 
@@ -67,21 +67,21 @@
               <a-alert
                 type="info"
                 show-icon
-                message="低代码表单内容"
-                description="当前项目暂时使用 JSON 文本方式编辑低代码表单内容。"
+                :message="t('workflow.execution.startForm.lowCodeContent')"
+                :description="t('workflow.execution.startForm.lowCodeDesc')"
               />
               <a-textarea
                 v-model:value="lowCodeFormText"
                 :rows="12"
-                placeholder="请输入合法 JSON"
+                :placeholder="t('workflow.execution.startForm.lowCodeJsonPlaceholder')"
               />
             </div>
           </div>
 
           <div class="form-shell__footer">
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
             <a-button type="primary" :loading="submitting" @click="handleSubmit">
-              发起审批
+              {{ t('workflow.execution.startForm.submit') }}
             </a-button>
           </div>
         </div>
@@ -93,6 +93,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { approvalRoutePaths, TAB_CLOSE_QUERY_KEY } from '@/router/approvalRoutePaths'
 import { startExecution, type WfExecutionStartParam } from '@/api/workflow/execution'
@@ -106,6 +107,7 @@ interface DynamicFormExpose {
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n({ useScope: 'global' })
 
 const taskConfig = ref<WfTaskConfigDTO | null>(null)
 const loading = ref(false)
@@ -135,7 +137,7 @@ function navigateAndCloseCurrent(path: string, query: LocationQueryRaw = {}) {
 
 async function loadTaskConfig() {
   if (!taskCode.value) {
-    errorMessage.value = '缺少审批流程编码，无法加载表单。'
+    errorMessage.value = t('workflow.execution.startForm.missingTaskCode')
     return
   }
 
@@ -147,10 +149,10 @@ async function loadTaskConfig() {
     lowCodeFormText.value = result.formContent || '{}'
 
     if (result.formType === 1 && result.formPath && !workflowFormRegistry[result.formPath]) {
-      errorMessage.value = `未注册表单组件：${result.formPath}`
+      errorMessage.value = `${t('workflow.execution.startForm.unregisteredFormComponent')}：${result.formPath}`
     }
   } catch (error: any) {
-    errorMessage.value = error.message || '未找到当前已发布流程，无法发起审批。'
+    errorMessage.value = error.message || t('workflow.execution.startForm.taskNotFound')
   } finally {
     loading.value = false
   }
@@ -171,14 +173,14 @@ async function handleSubmit() {
     let formContent = ''
     if (taskConfig.value.formType === 1) {
       if (!dynamicFormComponent.value) {
-        message.error('当前流程未绑定可用的前端表单组件')
+        message.error(t('workflow.execution.startForm.missingFrontendForm'))
         return
       }
 
       const validatedFormData = await dynamicFormRef.value?.validate?.()
       const payload = validatedFormData || customFormData.value
       if (!payload || typeof payload !== 'object' || Object.keys(payload).length === 0) {
-        message.warning('请先填写表单内容')
+        message.warning(t('workflow.execution.startForm.fillFormFirst'))
         return
       }
       customFormData.value = payload
@@ -197,7 +199,7 @@ async function handleSubmit() {
     navigateAndCloseCurrent(approvalRoutePaths.myInitiated, { executionId })
   } catch (error: any) {
     if (error?.message?.includes('JSON')) {
-      message.error('低代码表单内容必须是合法 JSON')
+      message.error(t('workflow.execution.startForm.invalidLowCodeJson'))
       return
     }
     if (error?.errorFields) {

@@ -41,7 +41,10 @@ public class TableConfigDetailVO {
     
     /** 配置版本号 */
     private Integer version;
-    
+
+    /** 是否公共配置，true=tenant_id=0 */
+    private Boolean publicConfig;
+
     /** 创建人 */
     private String createBy;
     

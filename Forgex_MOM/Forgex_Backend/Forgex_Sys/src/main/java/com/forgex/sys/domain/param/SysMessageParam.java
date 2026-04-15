@@ -32,6 +32,9 @@ public class SysMessageParam extends BaseGetParam {
     
     /** 消息平台 */
     private String platform;
+
+    /** 消息分类 */
+    private String category;
     
     /** 状态(0=未读,1=已读) */
     private Integer status;

@@ -173,6 +173,22 @@ public class InitServiceImpl implements InitService {
             configService.setJson("security.crypto.sm4", sm4Cfg);
         }
 
+        if ("aes".equalsIgnoreCase(storeLower)) {
+            byte[] k = new byte[32]; new SecureRandom().nextBytes(k);
+            String keyHex = HexUtil.encodeHexStr(k);
+            Map<String, String> aesCfg = new HashMap<>();
+            aesCfg.put("keyHex", keyHex);
+            configService.setJson("security.crypto.aes", aesCfg);
+        }
+
+        if ("rsa".equalsIgnoreCase(storeLower)) {
+            String[] rsaKeys = com.forgex.common.crypto.RSAPasswordProvider.generateKeyPair2048();
+            Map<String, String> rsaCfg = new HashMap<>();
+            rsaCfg.put("publicKey", rsaKeys[0]);
+            rsaCfg.put("privateKey", rsaKeys[1]);
+            configService.setJson("security.crypto.rsa", rsaCfg);
+        }
+
         SM2 sm2 = new SM2();
         String pub = sm2.getPublicKeyBase64();
         String pri = sm2.getPrivateKeyBase64();
@@ -421,7 +437,7 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:menu:delete", "删除菜单", "Delete Menu"}
                 ));
 
-        SysMenu departmentMenu = addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
                 "ApartmentOutlined", "SystemDepartment", "sys:dept:view",
                 Arrays.asList(
                         new String[]{"sys:dept:add", "新增部门", "Add Department"},
@@ -429,13 +445,14 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:dept:delete", "删除部门", "Delete Department"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, departmentMenu.getId(), 2, grantedMenuIds, 10,
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 15,
                 "inviteCode", "邀请码管理", "Invite Code Management",
                 "KeyOutlined", "SystemInviteCode", "sys:invite-code:view",
                 Arrays.asList(
                         new String[]{"sys:invite-code:add", "新增邀请码", "Add Invite Code"},
                         new String[]{"sys:invite-code:edit", "编辑邀请码", "Edit Invite Code"},
-                        new String[]{"sys:invite-code:delete", "删除邀请码", "Delete Invite Code"}
+                        new String[]{"sys:invite-code:delete", "删除邀请码", "Delete Invite Code"},
+                        new String[]{"sys:invite-code:record:view", "查看使用记录", "View Invite Records"}
                 ));
 
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 60, "position", "岗位管理", "Position Management",
@@ -458,6 +475,28 @@ public class InitServiceImpl implements InitService {
                 "ClusterOutlined", "SystemOnline", "sys:online:view",
                 Collections.singletonList(new String[]{"sys:online:kickout", "强制下线", "Kick Out"})
         );
+
+        SysMenu i18nConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "i18nConfig",
+                "多语言配置", "I18n Config", "TranslationOutlined", null, null, 85, 1);
+        grantedMenuIds.add(i18nConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, i18nConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "i18nLanguageType", "语言配置", "Language Configuration",
+                "GlobalOutlined", "SystemI18nLanguageType", "sys:i18nLanguageType:view",
+                Arrays.asList(
+                        new String[]{"sys:i18nLanguageType:add", "新增语言", "Add Language"},
+                        new String[]{"sys:i18nLanguageType:edit", "编辑语言", "Edit Language"},
+                        new String[]{"sys:i18nLanguageType:delete", "删除语言", "Delete Language"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, i18nConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "i18nMessage", "多语言消息", "I18n Message",
+                "MessageOutlined", "SystemI18nMessage", "sys:i18nMessage:view",
+                Arrays.asList(
+                        new String[]{"sys:i18nMessage:add", "新增多语言消息", "Add I18n Message"},
+                        new String[]{"sys:i18nMessage:edit", "编辑多语言消息", "Edit I18n Message"},
+                        new String[]{"sys:i18nMessage:delete", "删除多语言消息", "Delete I18n Message"}
+                ));
 
         SysMenu excelConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "excelConfig",
                 "Excel配置", "Excel Config", "FileExcelOutlined", null, null, 90, 1);

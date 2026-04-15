@@ -117,6 +117,17 @@ public class SysMenuController {
         // 1. 参数解析
         String account = (String) body.get("account");
         Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            Object tenantIdRaw = body.get("tenantId");
+            if (tenantIdRaw instanceof Number numberValue) {
+                tenantId = numberValue.longValue();
+            } else if (tenantIdRaw instanceof String tenantIdStr) {
+                try {
+                    tenantId = Long.valueOf(tenantIdStr);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
         
         // 2. 参数校验
         menuValidator.validateRoutesParams(account, tenantId);

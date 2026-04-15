@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.forgex.common.crypto.FieldEncryptInterceptor;
 import com.forgex.common.dataperm.DataPermissionInterceptor;
 import com.forgex.common.tenant.TenantMetaObjectHandler;
 import com.forgex.common.tenant.TenantContext;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -45,7 +47,25 @@ public class MybatisPlusConfig {
     
     @Autowired
     private ApplicationContext applicationContext;
-    
+
+    @Lazy
+    @Autowired
+    private ConfigService configService;
+
+    /**
+     * 注册字段透明加密拦截器
+     * <p>
+     * 自动加密/解密标注了 {@link com.forgex.common.crypto.FieldEncrypt} 的字段
+     * </p>
+     * @return FieldEncryptInterceptor
+     * @see com.forgex.common.crypto.FieldEncrypt
+     * @see com.forgex.common.crypto.FieldEncryptInterceptor
+     */
+    @Bean
+    public FieldEncryptInterceptor fieldEncryptInterceptor() {
+        return new FieldEncryptInterceptor(configService);
+    }
+
     /**
      * 注册MyBatis-Plus拦截器
      * @return MybatisPlusInterceptor

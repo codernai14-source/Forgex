@@ -6,12 +6,36 @@
  * @author Forgex
  * @version 1.0.0
  */
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import http from '@/api/http'
-import { getLocale } from '@/locales'
+import i18n, { getLocale } from '@/locales'
+
+export interface DictTagStyle {
+  color?: string
+  icon?: string
+}
+
+export interface DictItemOption {
+  label: string
+  value: string | number
+  tagStyle?: DictTagStyle | null
+}
 
 // 字典缓存（按语言分离）
-const dictCache = new Map<string, any[]>()
+const dictCache = new Map<string, DictItemOption[]>()
+
+export function findDictItem(items: DictItemOption[] | undefined, value: string | number | null | undefined) {
+  const normalizedValue = String(value ?? '')
+  return (items || []).find(item => String(item?.value ?? '') === normalizedValue) || null
+}
+
+export function getDictItemLabel(items: DictItemOption[] | undefined, value: string | number | null | undefined, fallback = '') {
+  return findDictItem(items, value)?.label || fallback
+}
+
+export function getDictItemTagStyle(items: DictItemOption[] | undefined, value: string | number | null | undefined) {
+  return findDictItem(items, value)?.tagStyle || null
+}
 
 /**
  * 获取字典项
@@ -29,14 +53,14 @@ const dictCache = new Map<string, any[]>()
  * @throws 加载失败时在控制台输出错误日志
  */
 export function useDict(dictCode: string) {
-  const dictItems = ref<any[]>([])
+  const dictItems = ref<DictItemOption[]>([])
   const loading = ref(false)
 
-  const loadDict = async () => {
+  const loadDict = async (forceReload = false) => {
     const lang = getLocale()
     const cacheKey = `${dictCode}@@${lang}`
     // 先从缓存读取
-    if (dictCache.has(cacheKey)) {
+    if (!forceReload && dictCache.has(cacheKey)) {
       dictItems.value = dictCache.get(cacheKey) || []
       return
     }
@@ -44,10 +68,10 @@ export function useDict(dictCode: string) {
     // 从服务器加载
     loading.value = true
     try {
-      const res = await http.post('/sys/dict/items', { dictCode })
-      dictItems.value = res
+      const res = await http.post<DictItemOption[]>('/sys/dict/items', { dictCode })
+      dictItems.value = Array.isArray(res) ? res : []
       // 写入缓存
-      dictCache.set(cacheKey, res)
+      dictCache.set(cacheKey, dictItems.value)
     } catch (error) {
       console.error(`加载字典失败：${dictCode}`, error)
     } finally {
@@ -55,8 +79,13 @@ export function useDict(dictCode: string) {
     }
   }
 
-  // 立即加载
-  loadDict()
+  watch(
+    () => i18n.global.locale.value,
+    () => {
+      loadDict()
+    },
+    { immediate: true },
+  )
 
   return {
     dictItems,
@@ -81,21 +110,21 @@ export function useDict(dictCode: string) {
  * @throws 加载失败时在控制台输出错误日志
  */
 export function useDictByPath(nodePath: string) {
-  const dictItems = ref<any[]>([])
+  const dictItems = ref<DictItemOption[]>([])
   const loading = ref(false)
 
-  const loadDict = async () => {
+  const loadDict = async (forceReload = false) => {
     const lang = getLocale()
     const cacheKey = `${nodePath}@@${lang}`
-    if (dictCache.has(cacheKey)) {
+    if (!forceReload && dictCache.has(cacheKey)) {
       dictItems.value = dictCache.get(cacheKey) || []
       return
     }
     loading.value = true
     try {
-      const res = await http.post('/sys/dict/itemsByPath', { nodePath })
-      dictItems.value = res
-      dictCache.set(cacheKey, res)
+      const res = await http.post<DictItemOption[]>('/sys/dict/itemsByPath', { nodePath })
+      dictItems.value = Array.isArray(res) ? res : []
+      dictCache.set(cacheKey, dictItems.value)
     } catch (error) {
       console.error(`加载字典失败：${nodePath}`, error)
     } finally {
@@ -103,7 +132,13 @@ export function useDictByPath(nodePath: string) {
     }
   }
 
-  loadDict()
+  watch(
+    () => i18n.global.locale.value,
+    () => {
+      loadDict()
+    },
+    { immediate: true },
+  )
 
   return { dictItems, loading, reload: loadDict }
 }
