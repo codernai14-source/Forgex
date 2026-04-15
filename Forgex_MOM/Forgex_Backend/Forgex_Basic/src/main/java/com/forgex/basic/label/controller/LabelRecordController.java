@@ -5,7 +5,6 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
-import com.forgex.basic.label.domain.param.IdParam;
 import com.forgex.basic.label.domain.param.LabelReprintParam;
 import com.forgex.basic.label.domain.param.PrintRecordQueryParam;
 import com.forgex.basic.label.domain.vo.PrintRecordVO;
@@ -79,7 +78,6 @@ public class LabelRecordController {
         if (id == null) {
             return R.fail(CommonPrompt.PARAM_EMPTY);
         }
-
         Long tenantId = TenantContext.get();
         PrintRecordVO vo = labelRecordService.getRecordDetail(id, tenantId);
         return R.ok(vo);
