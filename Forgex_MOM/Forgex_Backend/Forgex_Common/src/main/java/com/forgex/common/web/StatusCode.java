@@ -66,4 +66,20 @@ public final class StatusCode {
      * </p>
      */
     public static final int MODULE_OFFLINE = 603;
+
+    /**
+     * 未授权状态码
+     * <p>
+     * 用于缺少授权文件或尚未激活的情况。
+     * </p>
+     */
+    public static final int LICENSE_REQUIRED = 604;
+
+    /**
+     * 授权无效状态码
+     * <p>
+     * 用于签名错误、机器码不匹配或授权已过期等情况。
+     * </p>
+     */
+    public static final int LICENSE_INVALID = 605;
 }
