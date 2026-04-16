@@ -6,6 +6,7 @@ spring:
       - nacos:redis.yml
       - nacos:rocketmq.yml
       - nacos:sa-token.yml
+      - nacos:captcha.yaml
   cloud:
     nacos:
       discovery:
@@ -17,18 +18,3 @@ spring:
         namespace: dev
         group: DEFAULT_GROUP
         file-extension: yml
-
-logging:
-  level:
-    com.forgex.report: debug
-
-ureport:
-  debug: true
-  cache-enabled: false
-
-jmreport:
-  mode: 0
-  preview-cross: true
-
-server:
-  port: ${FORGEX_REPORT_PORT:9006}

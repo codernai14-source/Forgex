@@ -8,6 +8,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 /**
  * Web configuration.
  */
@@ -40,6 +43,12 @@ public class WebConfig implements WebMvcConfigurer {
         return accessPrefix;
     }
 
+    private String buildFileResourceLocation(String path) {
+        Path uploadDir = Paths.get(path).toAbsolutePath().normalize();
+        String uri = uploadDir.toUri().toString();
+        return uri.endsWith("/") ? uri : uri + "/";
+    }
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String prefix = resolveAccessPrefix();
@@ -56,6 +65,6 @@ public class WebConfig implements WebMvcConfigurer {
         }
 
         registry.addResourceHandler(prefix + "/**")
-                .addResourceLocations("file:" + path + "/");
+                .addResourceLocations(buildFileResourceLocation(path));
     }
 }
