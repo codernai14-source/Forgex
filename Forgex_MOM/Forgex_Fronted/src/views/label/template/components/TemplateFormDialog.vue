@@ -9,11 +9,10 @@
       @save="handleSubmit"
       @cancel="handleCancel"
   >
-    <!-- 模板内容编辑器插槽 -->
     <template #templateContent="{ value, onChange }">
       <LabelTemplateEditor
-          v-model="value"
-          @change="onChange"
+          :model-value="value"
+          @update:model-value="onChange"
       />
     </template>
   </BaseFormDialog>

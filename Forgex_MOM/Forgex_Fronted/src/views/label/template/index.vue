@@ -3,8 +3,8 @@
   <div class="page-container">
     <FxDynamicTable
         ref="tableRef"
+        table-code="LabelTemplateTable"
         :request="loadData"
-        table-code="label_template_table"
         :row-selection="rowSelection"
     >
       <template #toolbar>

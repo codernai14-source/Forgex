@@ -16,6 +16,13 @@ export const labelBindingApi = {
     },
 
     /**
+     * 更新绑定关系
+     */
+    update(params: any) {
+        return http.post('/label/template/binding/update', params)
+    },
+
+    /**
      * 删除绑定关系
      */
     delete(id: number) {
@@ -25,7 +32,7 @@ export const labelBindingApi = {
     /**
      * 智能匹配模板（打印核心）
      */
-    match(params: any) {
+    matchTemplate(params: any) {
         return http.post('/label/template/match', params)
     }
 }

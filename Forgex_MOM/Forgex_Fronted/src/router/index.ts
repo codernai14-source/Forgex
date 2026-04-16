@@ -262,14 +262,11 @@ const EmptyView = {
  * 灏嗗悗绔殑妯″潡浠ｇ爜鏄犲皠鍒板墠绔殑鐩綍锟?
  */
 const modulePathMap: Record<string, string> = {
-  'sys': 'system',      // sys 妯″潡瀵瑰簲 system 鐩綍
-  'system': 'system',   // 鍏煎瀹屾暣鍚嶇О
-  /** 瀹℃壒绠＄悊妯″潡缂栫爜锟?approval锛岄〉闈㈢粍浠朵粛浣嶄簬 views/workflow */
+  'sys': 'system',
+  'system': 'system',
   'approval': 'workflow',
   'integration': 'integrationPlatform',
-  // 鏈潵鍙互娣诲姞鏇村鏄犲皠锛屼緥濡傦細
-  // 'prod': 'production',
-  // 'qc': 'quality',
+  'label': 'label',
 }
 
 /**
@@ -310,7 +307,12 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       }
     }
 
-    const specialComponentMap: Record<string, string> = {}
+    const specialComponentMap: Record<string, string> = {
+      LabelTemplate: '../views/label/template/index.vue',
+      LabelPrint: '../views/label/print/index.vue',
+      LabelRecord: '../views/label/record/index.vue',
+      LabelBinding: '../views/label/binding/index.vue',
+    }
     if (normalizedName && specialComponentMap[normalizedName]) {
       const mappedPath = specialComponentMap[normalizedName]
       const mappedLoader = viewModules[mappedPath]
