@@ -63,20 +63,22 @@
                 {{ layoutConfig.watermarkText }}
               </div>
             </div>
-            <router-view v-slot="{ Component, route: currentRoute }">
-              <transition
-                v-if="layoutConfig.animateEnabled"
-                :name="pageTransitionName"
-                mode="out-in"
-              >
-                <div v-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
+            <div class="fx-guide-content">
+              <router-view v-slot="{ Component, route: currentRoute }">
+                <transition
+                  v-if="layoutConfig.animateEnabled"
+                  :name="pageTransitionName"
+                  mode="out-in"
+                >
+                  <div v-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
+                    <component :is="Component" />
+                  </div>
+                </transition>
+                <div v-else-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
                   <component :is="Component" />
                 </div>
-              </transition>
-              <div v-else-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
-                <component :is="Component" />
-              </div>
-            </router-view>
+              </router-view>
+            </div>
           </div>
         </a-layout-content>
         
@@ -92,6 +94,18 @@
       :menus="searchMenus"
       @update:visible="globalSearchVisible = $event"
       @select="onGlobalSearchSelect"
+    />
+
+    <FxGuideTour
+      ref="systemGuideTourRef"
+      guide-code="system.main"
+      version="v1"
+      :steps="systemGuideSteps"
+      :auto-start="systemGuideAutoStart"
+      @open="handleSystemGuideOpen"
+      @close="handleSystemGuideClose"
+      @finish="handleSystemGuideFinish"
+      @skip="handleSystemGuideSkip"
     />
 
     <!-- 消息通知抽屉 -->
@@ -436,19 +450,24 @@ import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
+import FxGuideTour from '../components/common/FxGuideTour.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
 import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
+import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
+import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
 import type { SystemBasicConfig } from '../api/system/config'
+import type { FxGuideStep } from '../types/guide'
 
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
 const appStore = useAppStore()
+const guideStore = useGuideStore()
 const userStore = useUserStore()
 
 // 使用系统主题检测
@@ -549,6 +568,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
 
 const layoutRootRef = ref<HTMLElement | { $el?: unknown } | null>(null)
 const layoutConfig = ref<LayoutConfig>({ ...DEFAULT_LAYOUT_CONFIG })
+const systemGuideTourRef = ref<InstanceType<typeof FxGuideTour> | null>(null)
 const settingOpen = ref(false)
 const messageDrawerOpen = ref(false)
 const messageLoading = ref(false)
@@ -567,6 +587,59 @@ const FONT_SIZE_DEFAULT = 14
 const settingDrawerRootStyle = {
   position: 'absolute',
 } as const
+const systemGuideAutoStart = ref(false)
+const systemGuideReady = ref(false)
+
+const systemGuideSteps = computed<FxGuideStep[]>(() => [
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.welcome'),
+    placement: 'center',
+    useMask: false,
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.header'),
+    target: '.fx-guide-header',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.sidebar'),
+    target: '.fx-guide-sidebar',
+    placement: 'right',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.tabbar'),
+    target: '.fx-guide-tabbar',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.search'),
+    target: '.fx-guide-search-trigger',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.message'),
+    target: '.fx-guide-message-trigger',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.settings'),
+    target: '.fx-guide-settings-trigger',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.content'),
+    target: '.fx-guide-content',
+    placement: 'top',
+  },
+])
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
@@ -820,18 +893,7 @@ const systemConfig = ref<SystemBasicConfig>({
 })
 
 function formatMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api/') ? url : url
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 const headerLogo = computed(() => formatMediaUrl(systemConfig.value.systemLogo))
@@ -1421,27 +1483,55 @@ const currentUser = computed(() => {
   }
   
   // 处理头像 URL
-  let avatar = info.avatar || ''
-  if (avatar) {
-    if (avatar.startsWith('http') || avatar.startsWith('data:')) {
-      // 已经是绝对路径或 base64，保持不变
-    } else if (avatar.startsWith('/api')) {
-      // 已经是 /api 开头，保持不变
-    } else if (avatar.startsWith('/')) {
-      // 相对路径，补充 /api
-      avatar = `/api${avatar}`
-    } else {
-      // 非 / 开头的相对路径，同样补充 /api/
-      avatar = `/api/${avatar}`
-    }
-  }
-  
+  const avatar = normalizeMediaUrl(info.avatar)
+
   return {
     account: info.account,
     name: info.username || info.account,
     avatar
   }
 })
+
+function canAutoStartSystemGuide() {
+  if (!systemGuideReady.value) {
+    return false
+  }
+  if (route.path !== PERSONAL_HOME_PATH) {
+    return false
+  }
+  return guideStore.shouldAutoStartGuide('system.main', 'v1')
+}
+
+function syncSystemGuideAutoStart() {
+  systemGuideAutoStart.value = canAutoStartSystemGuide()
+}
+
+function handleSystemGuideOpen() {
+  guideStore.startGuide('system.main')
+}
+
+function handleSystemGuideClose() {
+  systemGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function handleSystemGuideFinish() {
+  await guideStore.markGuideCompleted('system.main', 'v1')
+  systemGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function handleSystemGuideSkip() {
+  await guideStore.markGuideSkipped('system.main', 'v1')
+  systemGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function loadGuidePreference() {
+  await guideStore.loadPreference()
+  systemGuideReady.value = true
+  syncSystemGuideAutoStart()
+}
 
 // 监听语言变化，更新标签标题
 watch(
@@ -1522,8 +1612,17 @@ watch(
     openKeys.value = activeModuleCode.value ? [activeModuleCode.value] : []
 
     updateTabsByRoute(path)
+    syncSystemGuideAutoStart()
   },
   { immediate: true }
+)
+
+watch(
+  () => guideStore.preference,
+  () => {
+    syncSystemGuideAutoStart()
+  },
+  { deep: true }
 )
 
 function normalizeLayoutConfig(raw: any): LayoutConfig {
@@ -1854,6 +1953,11 @@ function onUserMenuClick(key: string) {
   
   if (key === 'password') {
     router.push('/workspace/profile?tab=security')
+    return
+  }
+
+  if (key === 'guide') {
+    router.push('/workspace/profile?tab=guide')
     return
   }
 
@@ -2194,7 +2298,10 @@ onMounted(async () => {
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
   }
-  loadLayout()
+  await Promise.all([
+    loadLayout(),
+    loadGuidePreference(),
+  ])
   updateTabsByRoute(route.fullPath)
   
   try {
@@ -2264,6 +2371,15 @@ onUnmounted(() => {
   padding: 16px;            /* 统一页面内边距（可根据需要调整） */
   box-sizing: border-box;   /* 让 padding 包含在 height 100% 内 */
   position: relative;       /* 为 watermark 绝对定位提供参考 */
+}
+
+.fx-guide-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ==================== 卡片选择器样式（Vben5 风格） =================== */
