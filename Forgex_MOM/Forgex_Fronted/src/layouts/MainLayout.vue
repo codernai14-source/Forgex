@@ -63,20 +63,22 @@
                 {{ layoutConfig.watermarkText }}
               </div>
             </div>
-            <router-view v-slot="{ Component, route: currentRoute }">
-              <transition
-                v-if="layoutConfig.animateEnabled"
-                :name="pageTransitionName"
-                mode="out-in"
-              >
-                <div v-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
+            <div class="fx-guide-content">
+              <router-view v-slot="{ Component, route: currentRoute }">
+                <transition
+                  v-if="layoutConfig.animateEnabled"
+                  :name="pageTransitionName"
+                  mode="out-in"
+                >
+                  <div v-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
+                    <component :is="Component" />
+                  </div>
+                </transition>
+                <div v-else-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
                   <component :is="Component" />
                 </div>
-              </transition>
-              <div v-else-if="Component" class="fx-page-wrapper" :key="currentRoute.fullPath">
-                <component :is="Component" />
-              </div>
-            </router-view>
+              </router-view>
+            </div>
           </div>
         </a-layout-content>
         
@@ -94,25 +96,58 @@
       @select="onGlobalSearchSelect"
     />
 
+    <FxGuideTour
+      ref="systemGuideTourRef"
+      guide-code="system.main"
+      version="v1"
+      :steps="systemGuideSteps"
+      :auto-start="systemGuideAutoStart"
+      @open="handleSystemGuideOpen"
+      @close="handleSystemGuideClose"
+      @finish="handleSystemGuideFinish"
+      @skip="handleSystemGuideSkip"
+    />
+
     <!-- 消息通知抽屉 -->
     <a-drawer
       v-model:open="messageDrawerOpen"
       title="消息通知"
       placement="right"
-      width="400"
+      width="520"
       class="fx-message-drawer"
     >
       <a-spin :spinning="messageLoading">
-        <div v-if="messageList.length === 0" class="fx-message-empty">
-          <a-empty description="暂无消息" />
+        <a-tabs v-model:activeKey="activeMessageTab" @change="handleMessageTabChange">
+          <a-tab-pane key="SYSTEM">
+            <template #tab>
+              <span>系统通知</span>
+              <a-badge :count="messageCounts.SYSTEM" :number-style="{ backgroundColor: '#1677ff' }" />
+            </template>
+          </a-tab-pane>
+          <a-tab-pane key="MESSAGE">
+            <template #tab>
+              <span>消息通知</span>
+              <a-badge :count="messageCounts.MESSAGE" :number-style="{ backgroundColor: '#52c41a' }" />
+            </template>
+          </a-tab-pane>
+        </a-tabs>
+
+        <div v-if="currentMessageList.length === 0" class="fx-message-empty">
+          <a-empty :description="activeMessageTab === 'SYSTEM' ? '暂无系统通知' : '暂无消息通知'" />
         </div>
         <div v-else class="fx-message-list">
           <div
-            v-for="msg in messageList"
+            v-for="msg in currentMessageList"
             :key="msg.id"
             class="fx-message-item"
+            @click="handleMessageItemClick(msg)"
           >
-            <div class="fx-message-title">{{ msg.title }}</div>
+            <div class="fx-message-item__header">
+              <div class="fx-message-title">{{ msg.title }}</div>
+              <a-tag :color="msg.category === 'SYSTEM' ? 'blue' : 'green'">
+                {{ msg.category === 'SYSTEM' ? '系统通知' : '消息通知' }}
+              </a-tag>
+            </div>
             <div class="fx-message-content">{{ msg.content }}</div>
             <div class="fx-message-time">{{ msg.createTime }}</div>
           </div>
@@ -399,7 +434,7 @@ import { getRoutes } from '../api/system/route'
 import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
-import { listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
+import { getUnreadMessageCount, listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
 import { reportUserMenuVisit } from '../api/system/personalHomepage'
 import { getUserList } from '../api/system/user'
 import { useSse } from '../hooks/useSse'
@@ -415,19 +450,24 @@ import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
+import FxGuideTour from '../components/common/FxGuideTour.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
 import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
+import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
+import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
 import type { SystemBasicConfig } from '../api/system/config'
+import type { FxGuideStep } from '../types/guide'
 
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
 const appStore = useAppStore()
+const guideStore = useGuideStore()
 const userStore = useUserStore()
 
 // 使用系统主题检测
@@ -493,6 +533,8 @@ interface LayoutModeOption {
   preview: string
 }
 
+type MessageCategory = 'SYSTEM' | 'MESSAGE'
+
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   leftDoubleMenu: false,
   layoutMode: 'mix',
@@ -526,16 +568,78 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
 
 const layoutRootRef = ref<HTMLElement | { $el?: unknown } | null>(null)
 const layoutConfig = ref<LayoutConfig>({ ...DEFAULT_LAYOUT_CONFIG })
+const systemGuideTourRef = ref<InstanceType<typeof FxGuideTour> | null>(null)
 const settingOpen = ref(false)
 const messageDrawerOpen = ref(false)
-const messageList = ref<any[]>([])
 const messageLoading = ref(false)
+const activeMessageTab = ref<MessageCategory>('SYSTEM')
+const messageCounts = ref<Record<MessageCategory, number>>({
+  SYSTEM: 0,
+  MESSAGE: 0,
+})
+const messageLists = ref<Record<MessageCategory, SysMessageVO[]>>({
+  SYSTEM: [],
+  MESSAGE: [],
+})
 const FONT_SIZE_MIN = 14
 const FONT_SIZE_MAX = 28
 const FONT_SIZE_DEFAULT = 14
 const settingDrawerRootStyle = {
   position: 'absolute',
 } as const
+const systemGuideAutoStart = ref(false)
+const systemGuideReady = ref(false)
+
+const systemGuideSteps = computed<FxGuideStep[]>(() => [
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.welcome'),
+    placement: 'center',
+    useMask: false,
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.header'),
+    target: '.fx-guide-header',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.sidebar'),
+    target: '.fx-guide-sidebar',
+    placement: 'right',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.tabbar'),
+    target: '.fx-guide-tabbar',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.search'),
+    target: '.fx-guide-search-trigger',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.message'),
+    target: '.fx-guide-message-trigger',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.settings'),
+    target: '.fx-guide-settings-trigger',
+    placement: 'bottom',
+  },
+  {
+    title: t('layout.guide.system.title'),
+    description: t('layout.guide.system.steps.content'),
+    target: '.fx-guide-content',
+    placement: 'top',
+  },
+])
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
@@ -748,7 +852,10 @@ const userSelectList = ref<any[]>([])
 const userSelectLoading = ref(false)
 const selectedUserIds = ref<string[]>([])
 const selectedUserName = ref('')
+const selectedUserAccount = ref('')
 const userSearchKeyword = ref('')
+
+const currentMessageList = computed(() => messageLists.value[activeMessageTab.value] || [])
 
 const userSelectColumns = [
   { title: '用户名', dataIndex: 'username', width: 120 },
@@ -786,18 +893,7 @@ const systemConfig = ref<SystemBasicConfig>({
 })
 
 function formatMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api/') ? url : url
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 const headerLogo = computed(() => formatMediaUrl(systemConfig.value.systemLogo))
@@ -1387,27 +1483,55 @@ const currentUser = computed(() => {
   }
   
   // 处理头像 URL
-  let avatar = info.avatar || ''
-  if (avatar) {
-    if (avatar.startsWith('http') || avatar.startsWith('data:')) {
-      // 已经是绝对路径或 base64，保持不变
-    } else if (avatar.startsWith('/api')) {
-      // 已经是 /api 开头，保持不变
-    } else if (avatar.startsWith('/')) {
-      // 相对路径，补充 /api
-      avatar = `/api${avatar}`
-    } else {
-      // 非 / 开头的相对路径，同样补充 /api/
-      avatar = `/api/${avatar}`
-    }
-  }
-  
+  const avatar = normalizeMediaUrl(info.avatar)
+
   return {
     account: info.account,
     name: info.username || info.account,
     avatar
   }
 })
+
+function canAutoStartSystemGuide() {
+  if (!systemGuideReady.value) {
+    return false
+  }
+  if (route.path !== PERSONAL_HOME_PATH) {
+    return false
+  }
+  return guideStore.shouldAutoStartGuide('system.main', 'v1')
+}
+
+function syncSystemGuideAutoStart() {
+  systemGuideAutoStart.value = canAutoStartSystemGuide()
+}
+
+function handleSystemGuideOpen() {
+  guideStore.startGuide('system.main')
+}
+
+function handleSystemGuideClose() {
+  systemGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function handleSystemGuideFinish() {
+  await guideStore.markGuideCompleted('system.main', 'v1')
+  systemGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function handleSystemGuideSkip() {
+  await guideStore.markGuideSkipped('system.main', 'v1')
+  systemGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function loadGuidePreference() {
+  await guideStore.loadPreference()
+  systemGuideReady.value = true
+  syncSystemGuideAutoStart()
+}
 
 // 监听语言变化，更新标签标题
 watch(
@@ -1488,8 +1612,17 @@ watch(
     openKeys.value = activeModuleCode.value ? [activeModuleCode.value] : []
 
     updateTabsByRoute(path)
+    syncSystemGuideAutoStart()
   },
   { immediate: true }
+)
+
+watch(
+  () => guideStore.preference,
+  () => {
+    syncSystemGuideAutoStart()
+  },
+  { deep: true }
 )
 
 function normalizeLayoutConfig(raw: any): LayoutConfig {
@@ -1553,7 +1686,7 @@ function refreshPage() {
  */
 async function openMessageDrawer() {
   messageDrawerOpen.value = true
-  await loadMessages()
+  await refreshMessageCenter(true)
 }
 
 function handleOpenMessageDrawerEvent() {
@@ -1567,16 +1700,122 @@ function handleOpenGlobalSearchEvent() {
 /**
  * 加载消息列表
  */
-async function loadMessages() {
+async function loadMessages(category: MessageCategory = activeMessageTab.value) {
   messageLoading.value = true
   try {
-    const list = await listUnreadMessages(20)
-    messageList.value = Array.isArray(list) ? list : []
+    const list = await listUnreadMessages(20, category)
+    messageLists.value = {
+      ...messageLists.value,
+      [category]: Array.isArray(list) ? list : [],
+    }
   } catch (error) {
     console.error('加载消息列表失败:', error)
   } finally {
     messageLoading.value = false
   }
+}
+
+function normalizeMessageCategory(category?: string): MessageCategory {
+  return category === 'SYSTEM' ? 'SYSTEM' : 'MESSAGE'
+}
+
+function dispatchMessageRefreshEvent() {
+  if (typeof window === 'undefined') {
+    return
+  }
+  window.dispatchEvent(new CustomEvent('fx:message-refresh', {
+    detail: {
+      ...messageCounts.value,
+      total: messageCounts.value.SYSTEM + messageCounts.value.MESSAGE,
+    },
+  }))
+}
+
+async function refreshMessageCounts() {
+  try {
+    const [systemCount, messageCount] = await Promise.all([
+      getUnreadMessageCount('SYSTEM'),
+      getUnreadMessageCount('MESSAGE'),
+    ])
+    messageCounts.value = {
+      SYSTEM: Number(systemCount || 0),
+      MESSAGE: Number(messageCount || 0),
+    }
+    dispatchMessageRefreshEvent()
+  } catch (error) {
+    console.error('刷新未读消息数量失败:', error)
+  }
+}
+
+async function refreshMessageCenter(reloadCurrentList = false) {
+  await refreshMessageCounts()
+  if (reloadCurrentList || messageDrawerOpen.value) {
+    await loadMessages(activeMessageTab.value)
+  }
+}
+
+function removeMessageFromList(messageId: number, category: MessageCategory) {
+  const currentList = messageLists.value[category] || []
+  messageLists.value = {
+    ...messageLists.value,
+    [category]: currentList.filter(item => item.id !== messageId),
+  }
+}
+
+function prependMessageToList(messageRecord: SysMessageVO) {
+  const category = normalizeMessageCategory(messageRecord.category)
+  const currentList = messageLists.value[category] || []
+  if (currentList.some(item => item.id === messageRecord.id)) {
+    return
+  }
+  messageLists.value = {
+    ...messageLists.value,
+    [category]: [{
+      ...messageRecord,
+      category,
+      createTime: messageRecord.createTime || new Date().toLocaleString('zh-CN', { hour12: false }),
+    }, ...currentList].slice(0, 20),
+  }
+}
+
+async function handleMessageTabChange(key: string) {
+  activeMessageTab.value = normalizeMessageCategory(key)
+  await loadMessages(activeMessageTab.value)
+}
+
+async function handleMessageItemClick(messageRecord: SysMessageVO) {
+  const category = normalizeMessageCategory(messageRecord.category)
+  try {
+    await markMessageRead(messageRecord.id, { showSuccessMessage: false })
+    removeMessageFromList(messageRecord.id, category)
+    messageCounts.value = {
+      ...messageCounts.value,
+      [category]: Math.max(0, Number(messageCounts.value[category] || 0) - 1),
+    }
+    dispatchMessageRefreshEvent()
+    refreshMessageCounts().catch(() => {})
+    if (messageRecord.linkUrl) {
+      router.push(messageRecord.linkUrl).catch(() => {})
+    }
+  } catch (error) {
+    console.error('读取消息失败:', error)
+  }
+}
+
+function handleMessageReceivedEvent(event: Event) {
+  const detail = (event as CustomEvent<SysMessageVO | undefined>).detail
+  if (!detail || !detail.id) {
+    refreshMessageCenter(messageDrawerOpen.value).catch(() => {})
+    return
+  }
+  const normalized = {
+    ...detail,
+    category: normalizeMessageCategory(detail.category),
+  } as SysMessageVO
+  if (messageDrawerOpen.value && activeMessageTab.value === normalized.category) {
+    prependMessageToList(normalized)
+  }
+  refreshMessageCenter(messageDrawerOpen.value).catch(() => {})
 }
 
 function onModuleClick(moduleCode: string) {
@@ -1714,6 +1953,11 @@ function onUserMenuClick(key: string) {
   
   if (key === 'password') {
     router.push('/workspace/profile?tab=security')
+    return
+  }
+
+  if (key === 'guide') {
+    router.push('/workspace/profile?tab=guide')
     return
   }
 
@@ -1920,12 +2164,9 @@ function openMessageNotification(m: SysMessageVO) {
     duration: 6,
     onClick: async () => {
       try {
-        await markMessageRead(m.id, { showSuccessMessage: false })
+        await handleMessageItemClick(m)
       } catch (_) {}
       notification.close(key)
-      if (m.linkUrl) {
-        router.push(m.linkUrl).catch(() => {})
-      }
     },
   })
 }
@@ -1945,19 +2186,29 @@ async function handleMessageSend() {
   }
 
   try {
+    const isSendToSelf =
+      (!!selectedUserAccount.value && selectedUserAccount.value === currentUser.value.account)
+      || (
+        userStore.userInfo?.id != null
+        && Number(messageSendForm.value.receiverUserId) === Number(userStore.userInfo.id)
+      )
+
     const newId = await sendMessage({
       receiverTenantId: Number(sessionStorage.getItem('tenantId')),
       receiverUserId: Number(messageSendForm.value.receiverUserId),
       scope: 'INTERNAL',
+      category: 'MESSAGE',
       title: messageSendForm.value.title,
       content: messageSendForm.value.content,
       linkUrl: messageSendForm.value.linkUrl,
     } as any)
+    message.success('发送成功')
+    await refreshMessageCenter(messageDrawerOpen.value)
     // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
-    const selfId = userStore.userInfo?.id
-    if (newId != null && selfId != null && Number(messageSendForm.value.receiverUserId) === selfId) {
+    if (newId != null && isSendToSelf) {
       const selfMessage = {
         id: newId as number,
+        category: 'MESSAGE',
         title: messageSendForm.value.title,
         content: messageSendForm.value.content || '',
         linkUrl: messageSendForm.value.linkUrl,
@@ -1972,6 +2223,7 @@ async function handleMessageSend() {
     messageSendForm.value.linkUrl = ''
     messageSendForm.value.receiverUserId = undefined
     selectedUserName.value = ''
+    selectedUserAccount.value = ''
     selectedUserIds.value = []
   } catch (_) {}
 }
@@ -2024,6 +2276,7 @@ function confirmUserSelect() {
   if (selectedUser) {
     messageSendForm.value.receiverUserId = selectedUser.id
     selectedUserName.value = `${selectedUser.username} (${selectedUser.account})`
+    selectedUserAccount.value = selectedUser.account || ''
   }
   userSelectOpen.value = false
 }
@@ -2043,8 +2296,12 @@ onMounted(async () => {
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
+    window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
   }
-  loadLayout()
+  await Promise.all([
+    loadLayout(),
+    loadGuidePreference(),
+  ])
   updateTabsByRoute(route.fullPath)
   
   try {
@@ -2054,13 +2311,15 @@ onMounted(async () => {
     }
   } catch (_) {}
 
+  await refreshMessageCounts()
+
   try {
-    const unread = await listUnreadMessages(10)
-    if (Array.isArray(unread)) {
-      for (const m of unread) {
-        openMessageNotification(m as any)
-      }
-    }
+    const [systemUnread, normalUnread] = await Promise.all([
+      listUnreadMessages(10, 'SYSTEM'),
+      listUnreadMessages(10, 'MESSAGE'),
+    ])
+    ;[...(Array.isArray(systemUnread) ? systemUnread : []), ...(Array.isArray(normalUnread) ? normalUnread : [])]
+      .forEach((m) => openMessageNotification(m as SysMessageVO))
   } catch (_) {}
 
   connectMessageSse()
@@ -2071,6 +2330,7 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
+    window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
   }
   closeMessageSse()
 })
@@ -2111,6 +2371,15 @@ onUnmounted(() => {
   padding: 16px;            /* 统一页面内边距（可根据需要调整） */
   box-sizing: border-box;   /* 让 padding 包含在 height 100% 内 */
   position: relative;       /* 为 watermark 绝对定位提供参考 */
+}
+
+.fx-guide-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ==================== 卡片选择器样式（Vben5 风格） =================== */
@@ -2357,6 +2626,13 @@ onUnmounted(() => {
   &:hover {
     background: var(--fx-primary-bg, rgba(22, 119, 255, 0.08));
   }
+}
+
+.fx-message-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .fx-message-title {

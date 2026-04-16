@@ -256,6 +256,7 @@ import { use权限Store } from '@/stores/permission'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
+import { normalizeMediaUrl } from '@/utils/media'
 
 /**
  * 后端返回的滑块验证码数据结构。
@@ -388,18 +389,7 @@ const sliderPreviewHeight = computed(() => {
 })
 
 function resolveMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api/') ? url : url
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 function resolveTenantLogo(url?: string): string {
@@ -411,49 +401,15 @@ function resolveLangIcon(icon?: string): string {
 }
 
 function formatMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  // 统一处理上传后的文件路径，确保登录页媒体资源可以直接预览。
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 function formatTenantLogo(url?: string) {
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  // 统一处理上传后的文件路径，确保租户 Logo 能正确显示。
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(url)
 }
 
 function formatLangIcon(icon?: string) {
-  if (!icon) return ''
-  if (icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')) {
-    return icon
-  }
-  // 统一处理上传后的文件路径，确保语言图标在不同环境下都能正确解析。
-  if (icon.startsWith('/files/')) {
-    return `/api${icon}`
-  }
-  if (icon.startsWith('/')) {
-    return icon.startsWith('/api') ? icon : `/api${icon}`
-  }
-  return `/api/${icon}`
+  return normalizeMediaUrl(icon)
 }
 
 function getLanguageLabel(language: LanguageType) {

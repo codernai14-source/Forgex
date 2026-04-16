@@ -1,0 +1,19 @@
+instanceCode: __INSTANCE_CODE__
+deployProfile: __FORGEX_PROFILE__
+forgexHome: __FORGEX_HOME__
+licenseDir: __FORGEX_LICENSE_DIR__
+uploadDir: __FORGEX_UPLOAD_DIR__
+logDir: __FORGEX_LOG_DIR__
+backupDir: __FORGEX_BACKUP_DIR__
+nacosAddr: __FORGEX_NACOS_ADDR__
+redisAddr: __FORGEX_REDIS_ADDR__
+mysqlUrl: __FORGEX_MYSQL_URL__
+ports:
+  gateway: __FORGEX_GATEWAY_PORT__
+  auth: __FORGEX_AUTH_PORT__
+  sys: __FORGEX_SYS_PORT__
+  basic: __FORGEX_BASIC_PORT__
+  job: __FORGEX_JOB_PORT__
+  integration: __FORGEX_INTEGRATION_PORT__
+  workflow: __FORGEX_WORKFLOW_PORT__
+  report: __FORGEX_REPORT_PORT__

@@ -13,8 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.validator;
 
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.RolePermissionDTO;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -32,18 +34,18 @@ public class RoleMenuValidator {
     /**
      * 查询角色菜单权限参数校验
      * 
-     * @param roleId 角色ID
-     * @param tenantId 租户ID
+     * @param roleId 角色 ID
+     * @param tenantId 租户 ID
      */
     public void validateQueryParams(Long roleId, Long tenantId) {
-        Assert.notNull(roleId, "角色ID不能为空");
-        Assert.notNull(tenantId, "租户ID不能为空");
+        Assert.notNull(roleId, "角色 ID 不能为空");
+        Assert.notNull(tenantId, "租户 ID 不能为空");
         
         if (roleId <= 0) {
-            throw new BusinessException("角色ID格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_MENU_ROLE_ID_INVALID);
         }
         if (tenantId <= 0) {
-            throw new BusinessException("租户ID格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_MENU_TENANT_ID_INVALID);
         }
     }
     
@@ -54,14 +56,14 @@ public class RoleMenuValidator {
      */
     public void validateGrantParams(RolePermissionDTO permissionDTO) {
         Assert.notNull(permissionDTO, "权限信息不能为空");
-        Assert.notNull(permissionDTO.getRoleId(), "角色ID不能为空");
-        Assert.notNull(permissionDTO.getTenantId(), "租户ID不能为空");
+        Assert.notNull(permissionDTO.getRoleId(), "角色 ID 不能为空");
+        Assert.notNull(permissionDTO.getTenantId(), "租户 ID 不能为空");
         
         if (permissionDTO.getRoleId() <= 0) {
-            throw new BusinessException("角色ID格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_MENU_ROLE_ID_INVALID);
         }
         if (permissionDTO.getTenantId() <= 0) {
-            throw new BusinessException("租户ID格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_MENU_TENANT_ID_INVALID);
         }
     }
 }

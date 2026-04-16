@@ -1,16 +1,16 @@
 <template>
-  <div class="app-sidebar-wrapper">
+  <div class="app-sidebar-wrapper fx-guide-sidebar">
     <!-- 双列布局：第一列（一级菜单/目录） -->
     <a-layout-sider
       v-if="doubleColumn"
-      class="app-sidebar-mini"
+      class="app-sidebar-mini fx-guide-sidebar-mini"
       :collapsed="false"
       :width="100"
     >
       <a-menu
         mode="inline"
         :selected-keys="selectedFirstLevelKeys"
-        class="mini-menu"
+        class="mini-menu fx-guide-sidebar-mini-menu"
         @click="onFirstLevelMenuClick"
       >
         <a-menu-item
@@ -31,7 +31,7 @@
     <!-- 第二列宽度减少10%，从200px改为180px -->
     <a-layout-sider
       v-if="!doubleColumn || hasSecondLevelMenus"
-      class="app-sidebar"
+      class="app-sidebar fx-guide-sidebar-main"
       :collapsed="collapsed"
       :collapsible="true"
       :width="180"
@@ -42,7 +42,7 @@
         mode="inline"
         :selected-keys="selectedKeys"
         :open-keys="openKeys"
-        class="sidebar-menu"
+        class="sidebar-menu fx-guide-sidebar-menu"
         @openChange="onOpenChange"
         @click="onMenuClick"
       >
@@ -242,6 +242,37 @@ const currentMenus = computed(() => {
     )
   }
 })
+
+watch(
+  () => [props.doubleColumn, props.activeModuleCode, props.menus],
+  () => {
+    if (!props.doubleColumn) {
+      selectedFirstLevelKeys.value = []
+      return
+    }
+
+    const firstMenus = firstLevelMenus.value
+    if (firstMenus.length === 0) {
+      selectedFirstLevelKeys.value = []
+      return
+    }
+
+    const currentKey = selectedFirstLevelKeys.value[0]
+    const exists = firstMenus.some(menu => menu.key === currentKey)
+    if (exists) {
+      return
+    }
+
+    const preferredCatalog = firstMenus.find(menu =>
+      menu.type === 'catalog' &&
+      Array.isArray(menu.children) &&
+      menu.children.length > 0,
+    )
+
+    selectedFirstLevelKeys.value = [preferredCatalog?.key || firstMenus[0].key]
+  },
+  { immediate: true, deep: true },
+)
 
 // 监听 activeKey 变化
 watch(

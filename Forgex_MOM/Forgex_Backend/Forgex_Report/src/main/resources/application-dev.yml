@@ -1,6 +1,22 @@
 spring:
-  application:
-    name: forgex-report
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:datasource-forgex-dev.yml
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: dev
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: dev
+        group: DEFAULT_GROUP
+        file-extension: yml
 
 logging:
   level:
@@ -15,4 +31,4 @@ jmreport:
   preview-cross: true
 
 server:
-  port: 8084
+  port: ${FORGEX_REPORT_PORT:9006}

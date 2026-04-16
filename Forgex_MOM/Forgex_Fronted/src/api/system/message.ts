@@ -13,6 +13,7 @@ export interface SysMessageVO {
   receiverUserId: number
   scope: string
   messageType?: string
+  category?: 'SYSTEM' | 'MESSAGE'
   platform?: string
   title: string
   content?: string
@@ -31,6 +32,7 @@ export interface SysMessageSendDTO {
   messageType?: string
   /** 消息平台，默认 INTERNAL。 */
   platform?: string
+  category?: 'SYSTEM' | 'MESSAGE'
   title: string
   content?: string
   linkUrl?: string
@@ -46,11 +48,16 @@ export function sendMessage(dto: SysMessageSendDTO) {
     ...dto,
     messageType: dto.messageType ?? SYS_MESSAGE_DEFAULT_TYPE,
     platform: dto.platform ?? SYS_MESSAGE_DEFAULT_PLATFORM,
+    category: dto.category ?? 'MESSAGE',
   })
 }
 
-export function listUnreadMessages(limit = 20) {
-  return http.get('/sys/message/unread', { params: { limit } })
+export function listUnreadMessages(limit = 20, category?: 'SYSTEM' | 'MESSAGE') {
+  return http.get('/sys/message/unread', { params: { limit, category } })
+}
+
+export function getUnreadMessageCount(category?: 'SYSTEM' | 'MESSAGE') {
+  return http.post<number>('/sys/message/unread-count', category ? { category } : {})
 }
 
 export function markMessageRead(id: number, config?: any) {

@@ -6,8 +6,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.report.domain.dto.ReportCategoryDTO;
+import com.forgex.report.enums.ReportPromptEnum;
 import com.forgex.report.domain.dto.ReportDatasourceDTO;
 import com.forgex.report.domain.dto.ReportTemplateDTO;
 import com.forgex.report.domain.entity.ReportCategory;
@@ -106,7 +108,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
 
         ReportTemplate template = super.getById(id);
         if (template == null) {
-            throw new BusinessException("报表模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_NOT_FOUND);
         }
 
         return convertToDTOWithRelations(template);
@@ -134,7 +136,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
 
         ReportTemplate template = this.getOne(wrapper);
         if (template == null) {
-            throw new BusinessException("报表模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_NOT_FOUND);
         }
 
         return convertToDTOWithRelations(template);
@@ -165,7 +167,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
                     .eq(StrUtil.isNotBlank(dto.getEngineType()), ReportTemplate::getEngineType, dto.getEngineType())
                     .ne(dto.getId() != null, ReportTemplate::getId, dto.getId()));
             if (count > 0) {
-                throw new BusinessException("模板编码已存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_CODE_EXISTS);
             }
         }
 
@@ -199,7 +201,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
 
         ReportTemplate template = super.getById(id);
         if (template == null) {
-            throw new BusinessException("报表模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_NOT_FOUND);
         }
 
         template.setContent(content);
@@ -238,11 +240,11 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
     public String exportTemplate(Long id) {
         ReportTemplate template = super.getById(id);
         if (template == null) {
-            throw new BusinessException("报表模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_NOT_FOUND);
         }
 
         if (StrUtil.isBlank(template.getContent())) {
-            throw new BusinessException("模板内容为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_CONTENT_EMPTY);
         }
 
         try {
@@ -257,7 +259,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             return filePath;
         } catch (Exception e) {
             log.error("导出报表模板失败", e);
-            throw new BusinessException("导出模板失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_EXPORT_FAILED, e.getMessage());
         }
     }
 
@@ -303,7 +305,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             return this.save(dto);
         } catch (Exception e) {
             log.error("导入报表模板失败", e);
-            throw new BusinessException("导入模板失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_TEMPLATE_IMPORT_FAILED, e.getMessage());
         }
     }
 

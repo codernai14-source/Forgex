@@ -1,7 +1,9 @@
 package com.forgex.common.service.excel.provider;
 
 import com.forgex.common.domain.dto.excel.TemplateOption;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.enums.ExcelPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -83,7 +85,7 @@ public class TemplateOptionProviderRegistry {
     public TemplateOptionProvider getProvider(String code) {
         TemplateOptionProvider provider = providers.get(code);
         if (provider == null) {
-            throw new BusinessException("TemplateOptionProvider not found: " + code);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.TEMPLATE_OPTION_PROVIDER_NOT_FOUND, code);
         }
         return provider;
     }
@@ -109,7 +111,7 @@ public class TemplateOptionProviderRegistry {
         } catch (Exception e) {
             log.error("Get options failed, code={}, context={}, dataSourceValue={}", 
                      code, context, dataSourceValue, e);
-            throw new BusinessException("获取选项列表失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.TEMPLATE_OPTION_LIST_GET_FAILED, e.getMessage());
         }
     }
 

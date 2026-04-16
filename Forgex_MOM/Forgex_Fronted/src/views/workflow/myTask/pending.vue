@@ -5,9 +5,37 @@
       :table-code="'WfPendingTaskTable'"
       :request="handleRequest"
       :dict-options="dictOptions"
+      :row-selection="rowSelection"
       row-key="id"
       :show-query-form="true"
     >
+      <template #toolbar>
+        <a-space>
+          <a-button
+            type="primary"
+            :disabled="!selectedExecutionIds.length"
+            @click="handleBatchApprove"
+            v-permission="'wf:execution:approve'"
+          >
+            批量同意
+          </a-button>
+          <a-button
+            :disabled="!selectedExecutionIds.length"
+            @click="openBatchTransferDialog"
+            v-permission="'wf:execution:transfer'"
+          >
+            批量转交
+          </a-button>
+          <a-button
+            :disabled="!selectedExecutionIds.length"
+            @click="handleBatchRemind"
+            v-permission="'wf:execution:remind'"
+          >
+            批量催办
+          </a-button>
+        </a-space>
+      </template>
+
       <template #status="{ record }">
         <DictTag :value="record.status" :items="executionStatusOptions" :fallback-text="getStatusText(record.status)" />
       </template>
@@ -39,6 +67,22 @@
           <a-button type="link" size="small" @click="handleViewDetail(record)">
             <template #icon><EyeOutlined /></template>
             {{ $t('workflow.myTask.detail') }}
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            @click="openTransferDialog(record)"
+            v-permission="'wf:execution:transfer'"
+          >
+            转交
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            @click="openAddSignDialog(record)"
+            v-permission="'wf:execution:addSign'"
+          >
+            加签
           </a-button>
         </a-space>
       </template>
@@ -106,6 +150,39 @@
       </a-form>
     </BaseFormDialog>
 
+    <BaseFormDialog
+      v-model:open="actionDialogVisible"
+      :title="actionDialogTitle"
+      :loading="actionSubmitting"
+      :width="620"
+      @submit="handleActionSubmit"
+      @cancel="handleActionCancel"
+    >
+      <a-form
+        ref="actionFormRef"
+        :model="actionFormData"
+        :rules="actionRules"
+        :label-col="{ span: 4 }"
+        :wrapper-col="{ span: 18 }"
+      >
+        <a-form-item label="处理范围">
+          <a-input :value="actionScopeText" disabled />
+        </a-form-item>
+
+        <a-form-item label="接收人" name="receiverIds">
+          <ReceiverSelector v-model="actionReceiverModel" />
+        </a-form-item>
+
+        <a-form-item label="说明" name="comment">
+          <a-textarea
+            v-model:value="actionFormData.comment"
+            :rows="4"
+            placeholder="请输入处理说明"
+          />
+        </a-form-item>
+      </a-form>
+    </BaseFormDialog>
+
     <a-drawer
       v-model:open="detailDrawerVisible"
       :title="t('workflow.myTask.detailTitle')"
@@ -129,7 +206,11 @@
           {{ currentRecord?.currentNodeName || '-' }}
         </a-descriptions-item>
         <a-descriptions-item :label="t('workflow.myTask.status')">
-          <DictTag :value="currentRecord?.status" :items="executionStatusOptions" :fallback-text="getStatusText(currentRecord?.status)" />
+          <DictTag
+            :value="currentRecord?.status"
+            :items="executionStatusOptions"
+            :fallback-text="getStatusText(currentRecord?.status)"
+          />
         </a-descriptions-item>
       </a-descriptions>
 
@@ -139,13 +220,17 @@
         <h4>{{ t('workflow.myTask.formContent') }}</h4>
         <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
       </div>
+
+      <a-divider />
+
+      <WorkflowTracePanel :instances="currentInstances" :action-logs="currentActionLogs" />
     </a-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, type TableProps } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
   CheckOutlined,
@@ -153,31 +238,59 @@ import {
   EyeOutlined,
 } from '@ant-design/icons-vue'
 import {
+  addSign,
   approve,
+  batchApprove,
+  batchRemind,
+  batchTransfer,
+  getExecutionDetail,
+  listApprovalActionLogs,
+  listApprovalInstances,
   pageMyPending,
   reject,
+  transfer,
+  type WfApprovalActionLogDTO,
+  type WfApprovalInstanceDTO,
+  type WfExecutionAddSignParam,
   type WfExecutionApproveParam,
+  type WfExecutionBatchApproveParam,
+  type WfExecutionBatchTransferParam,
   type WfExecutionDTO,
+  type WfExecutionRemindParam,
+  type WfExecutionTransferParam,
 } from '@/api/workflow/execution'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import DictTag from '@/components/common/DictTag.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
+import { useUserStore } from '@/stores/user'
+import WorkflowTracePanel from './WorkflowTracePanel.vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
 const { dictItems: rejectTypeOptions } = useDict('wf_reject_type')
+const userStore = useUserStore()
 
 const tableRef = ref()
 const approveFormRef = ref()
+const actionFormRef = ref()
 const loading = ref(false)
 const approving = ref(false)
+const actionSubmitting = ref(false)
 
 const currentRecord = ref<WfExecutionDTO | null>(null)
+const currentInstances = ref<WfApprovalInstanceDTO[]>([])
+const currentActionLogs = ref<WfApprovalActionLogDTO[]>([])
 const approveDialogVisible = ref(false)
 const detailDrawerVisible = ref(false)
 const approveAction = ref<'approve' | 'reject'>('approve')
+const actionDialogVisible = ref(false)
+const actionMode = ref<'transfer' | 'addSign' | 'batchTransfer'>('transfer')
+const selectedExecutionIds = ref<number[]>([])
+const actionRecord = ref<WfExecutionDTO | null>(null)
+const actionInstance = ref<WfApprovalInstanceDTO | null>(null)
 
 const approveFormData = reactive<WfExecutionApproveParam>({
   executionId: 0,
@@ -186,9 +299,41 @@ const approveFormData = reactive<WfExecutionApproveParam>({
   rejectType: undefined,
 })
 
+const actionFormData = reactive<{
+  executionIds: number[]
+  comment: string
+}>({
+  executionIds: [],
+  comment: '',
+})
+
+const actionReceiverModel = ref<{
+  receiverType?: string
+  receiverIds: string[]
+}>({
+  receiverType: 'USER',
+  receiverIds: [],
+})
+
 const approveRules = computed(() => ({
   comment: [{ required: true, message: t('workflow.myTask.commentPlaceholder'), trigger: 'blur' }],
   rejectType: [{ required: true, message: t('workflow.myTask.rejectTypePlaceholder'), trigger: 'change' }],
+}))
+
+const actionRules = computed(() => ({
+  receiverIds: [
+    {
+      validator: async () => {
+        if (actionReceiverModel.value.receiverType !== 'USER') {
+          throw new Error('请选择指定用户作为接收人')
+        }
+        if (!actionReceiverModel.value.receiverIds.length) {
+          throw new Error('请选择接收人')
+        }
+      },
+      trigger: 'change',
+    },
+  ],
 }))
 
 const dictOptions = computed(() => ({
@@ -204,6 +349,29 @@ const rejectTypeSelectOptions = computed(() =>
     value: Number(item.value),
   })),
 )
+
+const rowSelection = computed<TableProps['rowSelection']>(() => ({
+  selectedRowKeys: selectedExecutionIds.value,
+  onChange: (keys: (string | number)[]) => {
+    selectedExecutionIds.value = keys.map((key) => Number(key))
+  },
+}))
+
+const actionDialogTitle = computed(() => {
+  const titleMap: Record<'transfer' | 'addSign' | 'batchTransfer', string> = {
+    transfer: '转交审批',
+    addSign: '加签审批人',
+    batchTransfer: '批量转交',
+  }
+  return titleMap[actionMode.value]
+})
+
+const actionScopeText = computed(() => {
+  if (actionMode.value === 'batchTransfer') {
+    return `已选 ${selectedExecutionIds.value.length} 条待办`
+  }
+  return actionRecord.value?.taskName || '-'
+})
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -275,6 +443,102 @@ function handleReject(record: WfExecutionDTO) {
 function handleViewDetail(record: WfExecutionDTO) {
   currentRecord.value = record
   detailDrawerVisible.value = true
+  loadExecutionTrace(record.id)
+}
+
+function resolveCurrentUserId(): number | undefined {
+  return userStore.userInfo?.id ? Number(userStore.userInfo.id) : undefined
+}
+
+function findCurrentUserInstance(record: WfExecutionDTO): WfApprovalInstanceDTO | undefined {
+  const currentUserId = resolveCurrentUserId()
+  if (!currentUserId) {
+    return undefined
+  }
+  return (record.currentApprovalInstances || []).find((item) =>
+    item.approverId === currentUserId &&
+    item.status === 0 &&
+    item.activated !== false,
+  )
+}
+
+function resetActionDialog() {
+  actionRecord.value = null
+  actionInstance.value = null
+  actionFormData.executionIds = []
+  actionFormData.comment = ''
+  actionReceiverModel.value = {
+    receiverType: 'USER',
+    receiverIds: [],
+  }
+}
+
+function openTransferDialog(record: WfExecutionDTO) {
+  const instance = findCurrentUserInstance(record)
+  if (!instance) {
+    message.warning('当前待办未找到可转交的审批实例，请刷新后重试')
+    return
+  }
+  actionMode.value = 'transfer'
+  actionRecord.value = record
+  actionInstance.value = instance
+  actionFormData.executionIds = [record.id]
+  actionFormData.comment = ''
+  actionReceiverModel.value = {
+    receiverType: 'USER',
+    receiverIds: [],
+  }
+  actionDialogVisible.value = true
+}
+
+function openAddSignDialog(record: WfExecutionDTO) {
+  const instance = findCurrentUserInstance(record)
+  if (!instance) {
+    message.warning('当前待办未找到可加签的审批实例，请刷新后重试')
+    return
+  }
+  actionMode.value = 'addSign'
+  actionRecord.value = record
+  actionInstance.value = instance
+  actionFormData.executionIds = [record.id]
+  actionFormData.comment = ''
+  actionReceiverModel.value = {
+    receiverType: 'USER',
+    receiverIds: [],
+  }
+  actionDialogVisible.value = true
+}
+
+function openBatchTransferDialog() {
+  if (!selectedExecutionIds.value.length) {
+    message.warning('请先选择待办')
+    return
+  }
+  actionMode.value = 'batchTransfer'
+  actionRecord.value = null
+  actionInstance.value = null
+  actionFormData.executionIds = [...selectedExecutionIds.value]
+  actionFormData.comment = ''
+  actionReceiverModel.value = {
+    receiverType: 'USER',
+    receiverIds: [],
+  }
+  actionDialogVisible.value = true
+}
+
+async function loadExecutionTrace(executionId: number) {
+  try {
+    const [detail, instances, logs] = await Promise.all([
+      getExecutionDetail({ executionId }),
+      listApprovalInstances({ executionId }),
+      listApprovalActionLogs({ executionId }),
+    ])
+    currentRecord.value = detail || currentRecord.value
+    currentInstances.value = instances || []
+    currentActionLogs.value = logs || []
+  } catch (error: any) {
+    message.error(error.message || t('workflow.myTask.loadHistoryFailed'))
+  }
 }
 
 async function handleApproveSubmit() {
@@ -310,9 +574,116 @@ async function handleApproveSubmit() {
   }
 }
 
+async function handleActionSubmit() {
+  try {
+    await actionFormRef.value?.validate()
+    const targetApproverId = Number(actionReceiverModel.value.receiverIds[0])
+    if (!targetApproverId) {
+      message.warning('请选择接收人')
+      return
+    }
+
+    actionSubmitting.value = true
+
+    if (actionMode.value === 'transfer') {
+      if (!actionRecord.value || !actionInstance.value) {
+        message.warning('当前转交数据不完整，请关闭后重试')
+        return
+      }
+      const params: WfExecutionTransferParam = {
+        executionId: actionRecord.value.id,
+        approvalInstanceId: actionInstance.value.id,
+        targetApproverId,
+        comment: actionFormData.comment,
+      }
+      await transfer(params)
+    } else if (actionMode.value === 'addSign') {
+      if (!actionRecord.value || !actionInstance.value) {
+        message.warning('当前加签数据不完整，请关闭后重试')
+        return
+      }
+      const params: WfExecutionAddSignParam = {
+        executionId: actionRecord.value.id,
+        approvalInstanceId: actionInstance.value.id,
+        targetApproverId,
+        comment: actionFormData.comment,
+      }
+      await addSign(params)
+    } else {
+      const params: WfExecutionBatchTransferParam = {
+        executionIds: [...actionFormData.executionIds],
+        targetApproverId,
+        comment: actionFormData.comment,
+      }
+      await batchTransfer(params)
+    }
+
+    message.success('处理成功')
+    actionDialogVisible.value = false
+    resetActionDialog()
+    clearSelection()
+    await tableRef.value?.refresh?.()
+  } catch (error: any) {
+    if (error?.errorFields) {
+      return
+    }
+    message.error(error.message || '处理失败')
+  } finally {
+    actionSubmitting.value = false
+  }
+}
+
 function handleApproveCancel() {
   approveDialogVisible.value = false
   approveFormRef.value?.resetFields()
+}
+
+function handleActionCancel() {
+  actionDialogVisible.value = false
+  actionFormRef.value?.resetFields()
+  resetActionDialog()
+}
+
+function clearSelection() {
+  selectedExecutionIds.value = []
+}
+
+async function handleBatchApprove() {
+  if (!selectedExecutionIds.value.length) {
+    message.warning('请先选择待办')
+    return
+  }
+  try {
+    const params: WfExecutionBatchApproveParam = {
+      executionIds: [...selectedExecutionIds.value],
+      approveStatus: 1,
+      comment: '批量同意',
+    }
+    await batchApprove(params)
+    message.success('批量同意成功')
+    clearSelection()
+    await tableRef.value?.refresh?.()
+  } catch (error: any) {
+    message.error(error.message || '批量同意失败')
+  }
+}
+
+async function handleBatchRemind() {
+  if (!selectedExecutionIds.value.length) {
+    message.warning('请先选择待办')
+    return
+  }
+  try {
+    const params: WfExecutionRemindParam = {
+      executionIds: [...selectedExecutionIds.value],
+      comment: '批量催办',
+    }
+    await batchRemind(params)
+    message.success('批量催办已发送')
+    clearSelection()
+  } catch (error: any) {
+    message.error(error.message || '批量催办失败')
+  }
 }
 
 onMounted(() => {

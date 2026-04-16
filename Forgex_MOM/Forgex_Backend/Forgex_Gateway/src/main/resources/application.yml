@@ -1,6 +1,8 @@
 spring:
   application:
     name: forgex-gateway
+  profiles:
+    active: ${FORGEX_PROFILE:dev}
   output:
     ansi:
       enabled: always
@@ -11,27 +13,11 @@ spring:
       - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
       - com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.jdbc.DataSourceHealthContributorAutoConfiguration
-  config:
-    import:
-      - nacos:common.yml
-      - nacos:redis.yml
-      - nacos:sa-token.yml
-  # 配置WebFlux文件上传大小限制
   codec:
     multipart:
       max-in-memory-size: 209715200
       max-parts: 10
   cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-        namespace: dev
-        group: DEFAULT_GROUP
-      config:
-        server-addr: 127.0.0.1:8848
-        namespace: dev
-        group: DEFAULT_GROUP
-        file-extension: yml
     gateway:
       server:
         webflux:
@@ -145,14 +131,54 @@ spring:
                   args:
                     name: api-app
                     fallbackUri: forward:/fallback/sys
+            - id: api-integration
+              uri: lb://forgex-integration
+              predicates:
+                - Path=/api/integration/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                - name: CircuitBreaker
+                  args:
+                    name: api-integration
+                    fallbackUri: forward:/fallback/sys
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:
     web-application-type: reactive
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
   charset:
     console: UTF-8
+
 server:
-  port: 9000
+  port: ${FORGEX_GATEWAY_PORT:9000}
+
+forgex:
+  deployment:
+    profile: ${FORGEX_PROFILE:dev}
+    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
+    home: ${FORGEX_HOME:./forgex}
+    license-dir: ${FORGEX_LICENSE_DIR:${FORGEX_HOME:./forgex}/license}
+    upload-dir: ${FORGEX_UPLOAD_DIR:${FORGEX_HOME:./forgex}/data/uploads}
+    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:./forgex}/logs}
+    backup-dir: ${FORGEX_BACKUP_DIR:${FORGEX_HOME:./forgex}/backup}
+    nacos-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+    redis-addr: ${FORGEX_REDIS_ADDR:127.0.0.1:6379}
+    mysql-url: ${FORGEX_MYSQL_URL:}
+  license:
+    enabled: ${FORGEX_LICENSE_ENABLED:true}
+    public-key: ${FORGEX_LICENSE_PUBLIC_KEY:}
+    public-key-file-name: ${FORGEX_LICENSE_PUBLIC_KEY_FILE_NAME:public-key.base64}
+    file-name: ${FORGEX_LICENSE_FILE_NAME:license.lic}
+    request-info-file-name: ${FORGEX_REQUEST_INFO_FILE_NAME:request-info.json}
+    history-file-name: ${FORGEX_LICENSE_HISTORY_FILE_NAME:activation-history.json}
+    override-machine-code: ${FORGEX_MACHINE_CODE:}
+    customer-code-prefix: ${FORGEX_CUSTOMER_CODE_PREFIX:FXC}
+    warning-days: ${FORGEX_LICENSE_WARNING_DAYS:30}

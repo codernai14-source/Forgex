@@ -3,6 +3,7 @@ package com.forgex.common.web;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotRoleException;
 import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.LogoutAuditService;
@@ -107,6 +108,17 @@ public class GlobalExceptionHandler {
             return R.failWithArgs(code, e.getMsg(), e.getMsgArgs());
         }
         return R.failWithArgs(StatusCode.BUSINESS_ERROR, e.getMsg(), e.getMsgArgs());
+    }
+
+    /** 普通业务异常 */
+    @ExceptionHandler(BusinessException.class)
+    public R<Object> handleBusiness(BusinessException e) {
+        log.warn("业务异常: {}", e.getMessage());
+        Integer code = e.getCode();
+        if (code == null) {
+            code = StatusCode.BUSINESS_ERROR;
+        }
+        return R.fail(code, CommonPrompt.BAD_REQUEST, e.getMessage());
     }
 
     /** 参数解析/校验错误 */

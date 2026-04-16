@@ -30,6 +30,11 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
       path: 'execution/start/:taskCode',
       component: () => import('../views/workflow/execution/startForm.vue'),
       meta: { title: 'workflow.execution.startApproval', hidden: true }
+    },
+    {
+      path: 'governance/compensation',
+      component: () => import('../views/workflow/governance/compensation/index.vue'),
+      meta: { title: 'workflow.execution.compensationCenter', hidden: true }
     }
   ]
 }
@@ -261,6 +266,7 @@ const modulePathMap: Record<string, string> = {
   'system': 'system',   // 鍏煎瀹屾暣鍚嶇О
   /** 瀹℃壒绠＄悊妯″潡缂栫爜锟?approval锛岄〉闈㈢粍浠朵粛浣嶄簬 views/workflow */
   'approval': 'workflow',
+  'integration': 'integrationPlatform',
   // 鏈潵鍙互娣诲姞鏇村鏄犲皠锛屼緥濡傦細
   // 'prod': 'production',
   // 'qc': 'quality',
@@ -277,6 +283,7 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
   ApprovalMyProcessed: () => import('../views/workflow/myTask/processed.vue'),
   ApprovalMyInitiated: () => import('../views/workflow/myTask/initiated.vue'),
+  ApprovalCompensationCenter: () => import('../views/workflow/governance/compensation/index.vue'),
 }
 
 const viewModules = import.meta.glob('../views/**/*.vue') as Record<string, () => Promise<any>>

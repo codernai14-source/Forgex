@@ -1,0 +1,46 @@
+version: 1
+profiles:
+  - profileId: windows-standard
+    os: windows
+    installerType: inno-setup
+    includes:
+      - jre
+      - nginx
+      - frontend
+      - backend
+      - license-tool
+      - scripts
+    embedded:
+      nacos: false
+      redis: false
+      mysql: false
+  - profileId: windows-allinone
+    os: windows
+    installerType: inno-setup
+    includes:
+      - jre
+      - nginx
+      - frontend
+      - backend
+      - license-tool
+      - scripts
+      - nacos
+      - redis
+    embedded:
+      nacos: true
+      redis: true
+      mysql: false
+  - profileId: linux-standard
+    os: linux
+    installerType: bundle
+    includes:
+      - docker-compose
+      - images
+      - frontend
+      - backend
+      - license-tool
+      - scripts
+    embedded:
+      nacos: false
+      redis: false
+      mysql: false

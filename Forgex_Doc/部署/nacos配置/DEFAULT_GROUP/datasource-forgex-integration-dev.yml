@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+    dynamic:
+      enabled: true
+      primary: integration
+      strict: true
+      datasource:
+        integration:
+          url: jdbc:mysql://127.0.0.1:3306/forgex_integration?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+          username: root
+          password: 123456
+          driver-class-name: com.mysql.cj.jdbc.Driver

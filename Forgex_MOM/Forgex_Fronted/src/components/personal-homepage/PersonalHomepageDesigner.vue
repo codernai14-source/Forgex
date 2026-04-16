@@ -358,6 +358,7 @@ import {
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
+import { normalizeMediaUrl } from '@/utils/media'
 import {
   createDefaultPersonalHomepageConfig,
   getCurrentPersonalHomepageConfig,
@@ -446,20 +447,7 @@ const MAX_COMMON_MENU_COUNT = 6
  * @returns 鍙姹傜殑瀹屾暣 URL锛涙棤鏁堟椂涓虹┖瀛楃涓?
  */
 function resolveUserAvatarSrc(raw?: string | null): string {
-  let avatar = raw?.trim() || ''
-  if (!avatar) {
-    return ''
-  }
-  if (avatar.startsWith('http') || avatar.startsWith('data:')) {
-    return avatar
-  }
-  if (avatar.startsWith('/api')) {
-    return avatar
-  }
-  if (avatar.startsWith('/')) {
-    return `/api${avatar}`
-  }
-  return `/api/${avatar}`
+  return normalizeMediaUrl(raw)
 }
 
 /**

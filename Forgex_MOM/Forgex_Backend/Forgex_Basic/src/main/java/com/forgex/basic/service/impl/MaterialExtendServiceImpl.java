@@ -3,12 +3,14 @@ package com.forgex.basic.service.impl;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.basic.domain.dto.MaterialExtendDTO;
 import com.forgex.basic.domain.entity.BasicMaterialExtend;
 import com.forgex.basic.domain.vo.MaterialExtendVO;
 import com.forgex.basic.mapper.BasicMaterialExtendMapper;
 import com.forgex.basic.service.IMaterialExtendService;
+import com.forgex.basic.enums.BasicPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -72,7 +74,7 @@ public class MaterialExtendServiceImpl extends ServiceImpl<BasicMaterialExtendMa
      */
     public MaterialExtendVO getExtendByModule(Long tenantId, Long materialId, String module) {
         if (!StringUtils.hasText(module)) {
-            throw new BusinessException("模块编码不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MODULE_CODE_REQUIRED);
         }
 
         LambdaQueryWrapper<BasicMaterialExtend> wrapper = new LambdaQueryWrapper<>();
@@ -97,7 +99,7 @@ public class MaterialExtendServiceImpl extends ServiceImpl<BasicMaterialExtendMa
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdateExtend(Long tenantId, Long materialId, MaterialExtendDTO dto) {
         if (!StringUtils.hasText(dto.getModule())) {
-            throw new BusinessException("模块编码不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MODULE_CODE_REQUIRED);
         }
 
         // 查询是否已存在该模块的扩展信息
@@ -154,7 +156,7 @@ public class MaterialExtendServiceImpl extends ServiceImpl<BasicMaterialExtendMa
     public void deleteExtend(Long tenantId, Long id) {
         BasicMaterialExtend extend = materialExtendMapper.selectById(id);
         if (extend == null || !extend.getTenantId().equals(tenantId)) {
-            throw new BusinessException("扩展信息不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_EXTEND_NOT_FOUND);
         }
 
         materialExtendMapper.deleteById(id);

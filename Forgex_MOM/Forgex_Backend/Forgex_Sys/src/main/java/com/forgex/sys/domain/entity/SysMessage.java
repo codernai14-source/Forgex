@@ -62,6 +62,12 @@ public class SysMessage extends BaseEntity {
     private String messageType;
 
     /**
+     * 消息分类(SYSTEM=系统通知,MESSAGE=消息通知)
+     */
+    @TableField("category")
+    private String category;
+
+    /**
      * 消息平台(INTERNAL=站内,WECHAT=企业微信,SMS=短信,EMAIL=邮箱)
      */
     @TableField("platform")

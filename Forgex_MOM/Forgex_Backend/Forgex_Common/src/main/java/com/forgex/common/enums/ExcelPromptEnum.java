@@ -28,6 +28,8 @@ public enum ExcelPromptEnum implements I18nPrompt {
     // ========== Excel 校验 ==========
     EXCEL_TEMPLATE_NOT_FOUND("EXCEL_TEMPLATE_NOT_FOUND", "Excel 模板不存在"),
     EXCEL_DATA_VALIDATION_FAILED("EXCEL_DATA_VALIDATION_FAILED", "Excel 数据校验失败"),
+    TEMPLATE_OPTION_PROVIDER_NOT_FOUND("TEMPLATE_OPTION_PROVIDER_NOT_FOUND", "TemplateOptionProvider 不存在：{0}"),
+    TEMPLATE_OPTION_LIST_GET_FAILED("TEMPLATE_OPTION_LIST_GET_FAILED", "获取选项列表失败：{0}"),
     
     // ========== Excel 统计 ==========
     EXCEL_ROW_IMPORT_SUCCESS("EXCEL_ROW_IMPORT_SUCCESS", "成功导入{0}行数据"),

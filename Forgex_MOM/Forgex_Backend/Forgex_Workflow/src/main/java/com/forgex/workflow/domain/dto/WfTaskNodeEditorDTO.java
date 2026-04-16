@@ -24,5 +24,7 @@ public class WfTaskNodeEditorDTO {
 
     private List<WfNodeApproverDTO> approvers = new ArrayList<>();
 
+    private List<WfTaskNodeRuleDTO> ruleConfigs = new ArrayList<>();
+
     private List<WfBranchRuleDTO> branchRules = new ArrayList<>();
 }

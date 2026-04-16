@@ -13,9 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.gateway;
 
+import com.forgex.common.license.LicenseAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.Import;
 
 /**
  * 网关服务启动类
@@ -42,6 +44,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @see org.springframework.cloud.client.discovery.EnableDiscoveryClient
  */
 @SpringBootApplication(scanBasePackages = "com.forgex.gateway")
+@Import(LicenseAutoConfiguration.class)
 @EnableDiscoveryClient
 public class ForgexGatewayApplication {
     /**

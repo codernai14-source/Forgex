@@ -50,6 +50,11 @@ public class SysMessageVO {
     private String messageType;
 
     /**
+     * 消息分类（SYSTEM/MESSAGE）
+     */
+    private String category;
+
+    /**
      * 前端统一使用的消息类型字段。
      */
     private String type;

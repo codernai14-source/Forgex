@@ -258,6 +258,28 @@
           <h4>{{ t('workflow.taskConfig.formContent') }}</h4>
           <pre>{{ formatFormContent(currentRecord.formContent) }}</pre>
         </div>
+        <a-divider />
+        <div class="detail-summary-list">
+          <div class="detail-summary-item">
+            <span class="detail-summary-label">活跃实例数</span>
+            <span class="detail-summary-value">{{ currentRecord.activeInstanceCount ?? 0 }}</span>
+          </div>
+          <div class="detail-summary-item">
+            <span class="detail-summary-label">超时标记</span>
+            <span class="detail-summary-value">{{ currentRecord.timeoutFlag ? '是' : '否' }}</span>
+          </div>
+          <div class="detail-summary-item">
+            <span class="detail-summary-label">委托命中</span>
+            <span class="detail-summary-value">{{ currentRecord.delegated ? '是' : '否' }}</span>
+          </div>
+          <div class="detail-summary-item">
+            <span class="detail-summary-label">转交命中</span>
+            <span class="detail-summary-value">{{ currentRecord.transferred ? '是' : '否' }}</span>
+          </div>
+        </div>
+        <div v-if="currentRecord.latestActionSummary" class="detail-latest-action">
+          最近动作：{{ currentRecord.latestActionSummary }}
+        </div>
       </template>
     </a-drawer>
   </div>
@@ -286,6 +308,7 @@ import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import dayjs from 'dayjs'
 import {
+  getExecutionDetail,
   loadDashboardAnalytics,
   loadDashboardSummary,
   type WfDashboardAnalyticsVO,
@@ -572,9 +595,14 @@ const goMore = (target: 'pending' | 'processed') => {
 
 const goToStartCenter = () => router.push(approvalRoutePaths.executionStartList)
 const goToTaskConfigList = () => router.push(approvalRoutePaths.taskConfigList)
-const openDetail = (record: WfExecutionDTO) => {
+const openDetail = async (record: WfExecutionDTO) => {
   currentRecord.value = record
   detailDrawerVisible.value = true
+  try {
+    currentRecord.value = await getExecutionDetail({ executionId: record.id })
+  } catch (error: any) {
+    message.error(error.message || t('workflow.myTask.loadHistoryFailed'))
+  }
 }
 const handleOpenShortcut = (task: WfTaskConfigDTO) => router.push(approvalRoutePaths.executionStartForm(task.taskCode))
 
