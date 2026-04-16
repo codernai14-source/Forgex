@@ -759,6 +759,7 @@ import {
   type CryptoConfig,
   type TdeStatus,
 } from '@/api/system/config'
+import { normalizeMediaUrl } from '@/utils/media'
 
 const { t } = useI18n()
 
@@ -930,18 +931,7 @@ function normalizeCryptoConfig(config: Partial<CryptoConfig> | null | undefined)
 }
 
 function formatMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api/') ? url : url
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 async function loadAllConfig() {
