@@ -27,7 +27,7 @@ public class PlaceholderExtractor {
     /**
      * 占位符正则表达式：{{fieldName}}
      */
-    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)\\}\\}");
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)}}");
 
     /**
      * 私有构造函数，防止实例化
@@ -160,7 +160,7 @@ public class PlaceholderExtractor {
             return false;
         }
 
-        String pattern = "\\{\\{" + Pattern.quote(fieldName) + "\\}\\}";
+        String pattern = "\\{\\{" + Pattern.quote(fieldName) + "}}";
         return Pattern.compile(pattern).matcher(templateContent).find();
     }
 

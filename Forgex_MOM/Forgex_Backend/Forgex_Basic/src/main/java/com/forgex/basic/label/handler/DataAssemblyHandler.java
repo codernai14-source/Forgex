@@ -196,9 +196,8 @@ public class DataAssemblyHandler {
         }
 
         // 批次号格式化
-        if (data.containsKey("batchNo") && data.get("batchNo") instanceof String) {
-            String batchNo = (String) data.get("batchNo");
-            data.put("batchNoFormatted", batchNo.replaceAll("-", ""));
+        if (data.containsKey("batchNo") && data.get("batchNo") instanceof String batchNo) {
+            data.put("batchNoFormatted", batchNo.replace("-", ""));
         }
     }
 

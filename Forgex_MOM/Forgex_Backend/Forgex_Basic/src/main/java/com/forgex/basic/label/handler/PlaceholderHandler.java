@@ -32,22 +32,22 @@ public class PlaceholderHandler {
     /**
      * 基础占位符正则：{{fieldName}} 或 {{fieldName:defaultValue}}
      */
-    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)(?::([^}]*))?\\}\\}");
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)(?::([^}]*))?}}");
 
     /**
      * 条件渲染正则：{{#if condition}}...{{/if}}
      */
-    private static final Pattern CONDITION_PATTERN = Pattern.compile("\\{\\{#if\\s+([a-zA-Z0-9_.]+)\\}\\}(.*?)\\{\\{/if\\}\\}", Pattern.DOTALL);
+    private static final Pattern CONDITION_PATTERN = Pattern.compile("\\{\\{#if\\s+([a-zA-Z0-9_.]+)}}(.*?)\\{\\{/if}}", Pattern.DOTALL);
 
     /**
      * 循环渲染正则：{{#each listName}}...{{/each}}
      */
-    private static final Pattern EACH_PATTERN = Pattern.compile("\\{\\{#each\\s+([a-zA-Z0-9_.]+)\\}\\}(.*?)\\{\\{/each\\}\\}", Pattern.DOTALL);
+    private static final Pattern EACH_PATTERN = Pattern.compile("\\{\\{#each\\s+([a-zA-Z0-9_.]+)}}(.*?)\\{\\{/each}}", Pattern.DOTALL);
 
     /**
      * 格式化指令正则：{{fieldName|format}}
      */
-    private static final Pattern FORMAT_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)\\|([a-zA-Z]+)(?::([^}]*))?\\}\\}");
+    private static final Pattern FORMAT_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)\\|([a-zA-Z]+)(?::([^}]*))?}}");
 
     /**
      * 处理模板，替换所有占位符

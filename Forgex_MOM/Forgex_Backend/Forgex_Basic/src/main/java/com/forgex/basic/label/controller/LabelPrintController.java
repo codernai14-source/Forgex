@@ -93,9 +93,6 @@ public class LabelPrintController {
      * @return 用户 ID
      */
     private Long getCurrentUserId() {
-        // 从安全上下文获取当前用户 ID
-        // 具体实现取决于项目的认证框架（如 Sa-Token、Spring Security 等）
-        // 这里假设有一个工具类可以获取
         try {
             // 示例：使用 Sa-Token
             // return StpUtil.getLoginIdAsLong();
