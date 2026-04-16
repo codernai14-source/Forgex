@@ -3,8 +3,10 @@ package com.forgex.integration.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ApiCallLogDTO;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.entity.ApiCallLog;
 import com.forgex.integration.domain.param.ApiCallLogParam;
 import com.forgex.integration.mapper.ApiCallLogMapper;
@@ -119,7 +121,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
     @Override
     public ApiCallLogDTO getCallLogById(Long id, LocalDateTime callTime) {
         if (id == null) {
-            throw new BusinessException("调用记录 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.CALL_LOG_ID_REQUIRED);
         }
         
         // 根据调用时间确定表名

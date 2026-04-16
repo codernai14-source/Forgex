@@ -5,7 +5,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ApiParamMappingDTO;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.entity.ApiParamMapping;
 import com.forgex.integration.domain.param.ApiParamMappingParam;
 import com.forgex.integration.mapper.ApiParamMappingMapper;
@@ -42,7 +45,7 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     @Override
     public List<ApiParamMappingDTO> listMappings(ApiParamMappingParam param) {
         if (param.getApiConfigId() == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 构建查询条件
@@ -67,12 +70,12 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     @Override
     public ApiParamMappingDTO getById(Long id) {
         if (id == null) {
-            throw new BusinessException("参数映射 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         ApiParamMapping mapping = this.baseMapper.selectById(id);
         if (mapping == null || mapping.getDeleted()) {
-            throw new BusinessException("参数映射不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_NOT_FOUND);
         }
         
         return convertToDTO(mapping);
@@ -83,16 +86,16 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     public void create(ApiParamMappingDTO dto) {
         // 1. 参数校验
         if (dto.getApiConfigId() == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getSourceFieldPath())) {
-            throw new BusinessException("源字段路径不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_SOURCE_FIELD_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getTargetFieldPath())) {
-            throw new BusinessException("目标字段路径不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_TARGET_FIELD_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getDirection())) {
-            throw new BusinessException("映射方向不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
         }
         
         // 2. 校验映射关系唯一性
@@ -100,8 +103,8 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
                                                        dto.getSourceFieldPath(), 
                                                        dto.getDirection());
         if (existing != null) {
-            throw new BusinessException("映射关系已存在：源字段=" + dto.getSourceFieldPath() + 
-                                      ", 方向=" + dto.getDirection());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_EXISTS, 
+                                      dto.getSourceFieldPath(), dto.getDirection());
         }
         
         // 3. 构建实体
@@ -112,7 +115,7 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
         // 4. 插入数据库
         boolean success = this.save(mapping);
         if (!success) {
-            throw new BusinessException("创建参数映射失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_CREATE_FAILED);
         }
         
         log.info("创建参数映射成功：mappingId={}, source={}, target={}", 
@@ -123,24 +126,24 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     @Transactional(rollbackFor = Exception.class)
     public void update(ApiParamMappingDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("参数映射 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 检查参数映射是否存在
         ApiParamMapping existing = this.baseMapper.selectById(dto.getId());
         if (existing == null || existing.getDeleted()) {
-            throw new BusinessException("参数映射不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_NOT_FOUND);
         }
         
         // 2. 参数校验
         if (!StringUtils.hasText(dto.getSourceFieldPath())) {
-            throw new BusinessException("源字段路径不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_SOURCE_FIELD_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getTargetFieldPath())) {
-            throw new BusinessException("目标字段路径不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_TARGET_FIELD_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getDirection())) {
-            throw new BusinessException("映射方向不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
         }
         
         // 3. 校验映射关系唯一性（排除自身）
@@ -148,8 +151,8 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
                                                           dto.getSourceFieldPath(), 
                                                           dto.getDirection());
         if (sameMapping != null && !sameMapping.getId().equals(dto.getId())) {
-            throw new BusinessException("映射关系已存在：源字段=" + dto.getSourceFieldPath() + 
-                                      ", 方向=" + dto.getDirection());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_EXISTS, 
+                                      dto.getSourceFieldPath(), dto.getDirection());
         }
         
         // 4. 构建更新实体
@@ -160,7 +163,7 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
         // 5. 更新数据库
         boolean success = this.updateById(mapping);
         if (!success) {
-            throw new BusinessException("更新参数映射失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_UPDATE_FAILED);
         }
         
         log.info("更新参数映射成功：mappingId={}, source={}, target={}", 
@@ -171,13 +174,13 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
         if (id == null) {
-            throw new BusinessException("参数映射 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 检查参数映射是否存在
         ApiParamMapping mapping = this.baseMapper.selectById(id);
         if (mapping == null || mapping.getDeleted()) {
-            throw new BusinessException("参数映射不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_NOT_FOUND);
         }
         
         // 2. 逻辑删除
@@ -187,7 +190,7 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
         
         boolean success = this.updateById(mapping);
         if (!success) {
-            throw new BusinessException("删除参数映射失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_DELETE_FAILED);
         }
         
         log.info("删除参数映射成功：mappingId={}", id);
@@ -197,13 +200,13 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     @Transactional(rollbackFor = Exception.class)
     public void batchDelete(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new BusinessException("删除 ID 列表不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
         
         for (Long id : ids) {
             try {
                 delete(id);
-            } catch (BusinessException e) {
+            } catch (I18nBusinessException e) {
                 log.warn("删除参数映射失败：ID={}, 原因：{}", id, e.getMessage());
             }
         }
@@ -213,10 +216,10 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     @Transactional(rollbackFor = Exception.class)
     public void batchSave(Long apiConfigId, String direction, List<ApiParamMappingDTO> dtos) {
         if (apiConfigId == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         if (!StringUtils.hasText(direction)) {
-            throw new BusinessException("映射方向不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
         }
         
         // 1. 删除该接口配置和方向下的所有映射关系

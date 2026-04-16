@@ -145,6 +145,21 @@ spring:
                   args:
                     name: api-app
                     fallbackUri: forward:/fallback/sys
+            - id: api-integration
+              uri: lb://forgex-integration
+              predicates:
+                - Path=/api/integration/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                - name: CircuitBreaker
+                  args:
+                    name: api-integration
+                    fallbackUri: forward:/fallback/sys
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:

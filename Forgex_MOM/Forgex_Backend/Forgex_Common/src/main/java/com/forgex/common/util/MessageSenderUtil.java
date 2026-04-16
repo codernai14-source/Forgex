@@ -16,10 +16,12 @@ package com.forgex.common.util;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.enums.MessagePromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.util.mq.MqSender;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -115,7 +117,7 @@ public class MessageSenderUtil {
             return doSendMessage(param);
         } catch (Exception e) {
             log.error("发送消息失败: templateCode={}, error={}", param.getTemplateCode(), e.getMessage(), e);
-            throw new BusinessException("发送消息失败: " + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_SEND_FAILED, e.getMessage());
         }
     }
     

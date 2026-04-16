@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ApiParamConfigDTO;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.entity.ApiParamConfig;
 import com.forgex.integration.domain.param.ApiParamConfigParam;
 import com.forgex.integration.domain.vo.ApiParamTreeVO;
@@ -51,7 +53,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Override
     public List<ApiParamTreeVO> listParamTree(Long apiConfigId, String direction) {
         if (apiConfigId == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 查询所有参数配置
@@ -69,7 +71,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Override
     public List<ApiParamConfigDTO> listChildren(ApiParamConfigParam param) {
         if (param.getApiConfigId() == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 根据父节点 ID 查询子节点
@@ -87,12 +89,12 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Override
     public ApiParamConfigDTO getById(Long id) {
         if (id == null) {
-            throw new BusinessException("参数配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         ApiParamConfig config = this.baseMapper.selectById(id);
         if (config == null || config.getDeleted()) {
-            throw new BusinessException("参数配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_NOT_FOUND);
         }
         
         return convertToDTO(config);
@@ -103,13 +105,13 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     public void create(ApiParamConfigDTO dto) {
         // 1. 参数校验
         if (dto.getApiConfigId() == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getFieldName())) {
-            throw new BusinessException("字段名称不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_FIELD_NAME_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getNodeType())) {
-            throw new BusinessException("节点类型不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_NODE_TYPE_REQUIRED);
         }
         
         // 2. 构建实体
@@ -121,7 +123,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         if (dto.getParentId() != null) {
             ApiParamConfig parent = this.baseMapper.selectById(dto.getParentId());
             if (parent == null) {
-                throw new BusinessException("父节点不存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_PARENT_NOT_FOUND);
             }
             // 子节点路径 = 父节点路径。字段名
             String fieldPath = StringUtils.hasText(parent.getFieldPath()) 
@@ -141,7 +143,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         // 5. 插入数据库
         boolean success = this.save(config);
         if (!success) {
-            throw new BusinessException("创建参数配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_CREATE_FAILED);
         }
         
         log.info("创建参数配置成功：configId={}, fieldName={}", config.getId(), config.getFieldName());
@@ -151,21 +153,21 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Transactional(rollbackFor = Exception.class)
     public void update(ApiParamConfigDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("参数配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 检查参数配置是否存在
         ApiParamConfig existing = this.baseMapper.selectById(dto.getId());
         if (existing == null || existing.getDeleted()) {
-            throw new BusinessException("参数配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_NOT_FOUND);
         }
         
         // 2. 参数校验
         if (!StringUtils.hasText(dto.getFieldName())) {
-            throw new BusinessException("字段名称不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_FIELD_NAME_REQUIRED);
         }
         if (!StringUtils.hasText(dto.getNodeType())) {
-            throw new BusinessException("节点类型不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_NODE_TYPE_REQUIRED);
         }
         
         // 3. 构建更新实体
@@ -177,7 +179,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         if (dto.getParentId() != null) {
             ApiParamConfig parent = this.baseMapper.selectById(dto.getParentId());
             if (parent == null) {
-                throw new BusinessException("父节点不存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_PARENT_NOT_FOUND);
             }
             String fieldPath = StringUtils.hasText(parent.getFieldPath())
                 ? parent.getFieldPath() + "." + dto.getFieldName()
@@ -190,7 +192,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         // 5. 更新数据库
         boolean success = this.updateById(config);
         if (!success) {
-            throw new BusinessException("更新参数配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_UPDATE_FAILED);
         }
         
         // 6. 递归更新所有子节点的路径
@@ -203,13 +205,13 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
         if (id == null) {
-            throw new BusinessException("参数配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 1. 检查参数配置是否存在
         ApiParamConfig config = this.baseMapper.selectById(id);
         if (config == null || config.getDeleted()) {
-            throw new BusinessException("参数配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_NOT_FOUND);
         }
         
         // 2. 级联删除所有子节点
@@ -222,7 +224,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         
         boolean success = this.updateById(config);
         if (!success) {
-            throw new BusinessException("删除参数配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_DELETE_FAILED);
         }
         
         log.info("删除参数配置成功：configId={}", id);
@@ -232,13 +234,13 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Transactional(rollbackFor = Exception.class)
     public void batchDelete(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new BusinessException("删除 ID 列表不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
         
         for (Long id : ids) {
             try {
                 delete(id);
-            } catch (BusinessException e) {
+            } catch (I18nBusinessException e) {
                 log.warn("删除参数配置失败：ID={}, 原因：{}", id, e.getMessage());
             }
         }
@@ -248,10 +250,10 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     @Transactional(rollbackFor = Exception.class)
     public void importFromJson(Long apiConfigId, String direction, String jsonString) {
         if (apiConfigId == null) {
-            throw new BusinessException("接口配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         if (!StringUtils.hasText(jsonString)) {
-            throw new BusinessException("JSON 字符串不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_NOT_FOUND);
         }
         
         // 1. 解析 JSON 为树形结构
@@ -281,7 +283,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
             
         } catch (JsonProcessingException e) {
             log.error("解析 JSON 失败", e);
-            throw new BusinessException("解析 JSON 失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_JSON_PARSE_FAILED, e.getMessage());
         }
     }
 

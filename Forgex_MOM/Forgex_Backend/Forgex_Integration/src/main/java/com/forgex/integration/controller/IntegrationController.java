@@ -51,8 +51,10 @@ public class IntegrationController {
      *
      * @param apiCode 接口编码（必填），用于识别路由到哪个处理器
      * @param request HTTP 请求对象，用于获取请求体和客户端 IP
-     * @return 调用结果
+     * @return 调用结果，成功时返回处理器响应，失败时返回错误信息
+     * @throws Exception 当读取请求体或路由处理失败时抛出
      * @see com.forgex.integration.service.IApiRouterService#routeRequest
+     * @see com.forgex.common.web.R
      */
     @PostMapping("/invoke")
     @Operation(summary = "统一对外接口", description = "所有第三方系统调用都通过此接口进行路由")
@@ -83,11 +85,15 @@ public class IntegrationController {
      * 统一对外接口（GET 方式）
      * <p>
      * 支持 GET 方式的接口调用，参数通过查询字符串传递
+     * 自动将查询参数转换为 JSON 格式进行路由
      * </p>
      *
-     * @param apiCode 接口编码
-     * @param request HTTP 请求对象
-     * @return 调用结果
+     * @param apiCode 接口编码（必填），用于识别路由到哪个处理器
+     * @param request HTTP 请求对象，用于获取查询参数和客户端 IP
+     * @return 调用结果，成功时返回处理器响应，失败时返回错误信息
+     * @throws Exception 当参数转换或路由处理失败时抛出
+     * @see com.forgex.integration.service.IApiRouterService#routeRequest
+     * @see com.forgex.common.web.R
      */
     @GetMapping("/invoke")
     @Operation(summary = "统一对外接口（GET）", description = "支持 GET 方式的接口调用")

@@ -18,6 +18,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.common.util.CurrentUserUtils;
@@ -31,6 +33,7 @@ import com.forgex.sys.mapper.SysMessageTemplateContentMapper;
 import com.forgex.sys.mapper.SysMessageTemplateMapper;
 import com.forgex.sys.mapper.SysMessageTemplateReceiverMapper;
 import com.forgex.sys.service.SysMessageTemplateService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,7 +104,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         return executeWithoutTenantIsolation(() -> {
             SysMessageTemplate template = getTemplateByIdAndTenant(id, targetTenantId);
             if (template == null) {
-                throw new BusinessException("消息模板不存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_NOT_FOUND);
             }
 
             SysMessageTemplateVO vo = entityToVO(template);
@@ -118,7 +121,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
     @Transactional(rollbackFor = Exception.class)
     public Long save(SysMessageTemplateSaveDTO dto) {
         if (dto == null) {
-            throw new BusinessException("请求参数不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_PARAM_EMPTY);
         }
         Long targetTenantId = resolveTargetTenantId(dto.getPublicConfig());
 
@@ -127,10 +130,10 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
 
             if (dto.getId() == null) {
                 if (existsByCodeInTenant(templateCode, targetTenantId, null)) {
-                    throw new BusinessException("模板编号已存在");
+                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_CODE_EXISTS);
                 }
             } else if (existsByCodeInTenant(templateCode, targetTenantId, dto.getId())) {
-                throw new BusinessException("模板编号已被其他模板使用");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_CODE_EXISTS_OTHER);
             }
 
             SysMessageTemplate template;
@@ -139,7 +142,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
             } else {
                 template = getTemplateByIdAndTenant(dto.getId(), targetTenantId);
                 if (template == null) {
-                    throw new BusinessException("消息模板不存在或不在当前配置范围");
+                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_NOT_IN_SCOPE);
                 }
             }
 
@@ -174,7 +177,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         return executeWithoutTenantIsolation(() -> {
             SysMessageTemplate template = getTemplateByIdAndTenant(id, targetTenantId);
             if (template == null) {
-                throw new BusinessException("消息模板不存在或不在当前配置范围");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_NOT_IN_SCOPE);
             }
             templateMapper.deleteById(id);
             deleteTemplateDetails(id, targetTenantId);
@@ -211,7 +214,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
     public int pullPublicConfig() {
         Long targetTenantId = requireCurrentTenantId();
         if (PUBLIC_TENANT_ID.equals(targetTenantId)) {
-            throw new BusinessException("公共租户无需执行拉取操作");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_PULL_NOT_NEEDED);
         }
 
         return executeWithoutTenantIsolation(() -> {
@@ -316,7 +319,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
                     List<Long> receiverIds = config.getReceiverIds() == null ? new ArrayList<>() : config.getReceiverIds();
                     receiver.setReceiverIds(objectMapper.writeValueAsString(receiverIds));
                 } catch (Exception e) {
-                    throw new BusinessException("接收人 ID 列表格式错误");
+                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_RECEIVER_IDS_FORMAT_ERROR);
                 }
             }
             receiverMapper.insert(receiver);
@@ -400,7 +403,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
             tenantId = TenantContext.get();
         }
         if (tenantId == null) {
-            throw new BusinessException("无法识别当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_TENANT_NOT_FOUND);
         }
         return tenantId;
     }

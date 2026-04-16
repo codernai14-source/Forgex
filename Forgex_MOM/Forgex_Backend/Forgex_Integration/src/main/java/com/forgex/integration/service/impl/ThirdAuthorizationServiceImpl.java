@@ -5,8 +5,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ThirdAuthorizationDTO;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.entity.ThirdAuthorization;
 import com.forgex.integration.domain.param.ThirdAuthorizationParam;
 import com.forgex.integration.mapper.ThirdAuthorizationMapper;
@@ -84,7 +86,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     public ThirdAuthorizationDTO getThirdAuthorizationById(Long id) {
         ThirdAuthorization authorization = this.baseMapper.selectById(id);
         if (authorization == null || authorization.getDeleted()) {
-            throw new BusinessException("第三方授权不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_FOUND);
         }
         return convertToDTO(authorization);
     }
@@ -107,7 +109,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
         // 校验第三方系统是否已存在授权配置
         ThirdAuthorizationDTO existing = getByThirdSystemId(dto.getThirdSystemId());
         if (existing != null) {
-            throw new BusinessException("该第三方系统已存在授权配置");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_EXISTS);
         }
         
         // 校验授权方式与 Token/白名单的匹配性
@@ -128,7 +130,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
         
         boolean success = this.save(authorization);
         if (!success) {
-            throw new BusinessException("创建第三方授权失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_CREATE_FAILED);
         }
         
         log.info("创建第三方授权成功：thirdSystemId={}, authType={}", 
@@ -139,13 +141,13 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     @Transactional(rollbackFor = Exception.class)
     public void updateThirdAuthorization(ThirdAuthorizationDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("授权 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 校验授权是否存在
         ThirdAuthorization existing = this.baseMapper.selectById(dto.getId());
         if (existing == null || existing.getDeleted()) {
-            throw new BusinessException("第三方授权不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_FOUND);
         }
         
         // 校验授权方式与 Token/白名单的匹配性
@@ -166,7 +168,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
         
         boolean success = this.updateById(authorization);
         if (!success) {
-            throw new BusinessException("更新第三方授权失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_UPDATE_FAILED);
         }
         
         log.info("更新第三方授权成功：id={}, authType={}", dto.getId(), dto.getAuthType());
@@ -177,7 +179,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     public void deleteThirdAuthorization(Long id) {
         ThirdAuthorization authorization = this.baseMapper.selectById(id);
         if (authorization == null || authorization.getDeleted()) {
-            throw new BusinessException("第三方授权不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_FOUND);
         }
         
         authorization.setDeleted(true);
@@ -186,7 +188,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
         
         boolean success = this.updateById(authorization);
         if (!success) {
-            throw new BusinessException("删除第三方授权失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_DELETE_FAILED);
         }
         
         log.info("删除第三方授权成功：id={}", id);
@@ -196,13 +198,13 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteThirdAuthorizations(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new BusinessException("删除 ID 列表不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
         
         for (Long id : ids) {
             try {
                 deleteThirdAuthorization(id);
-            } catch (BusinessException e) {
+            } catch (I18nBusinessException e) {
                 log.warn("删除第三方授权失败：id={}, 原因：{}", id, e.getMessage());
             }
         }
@@ -214,11 +216,11 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
         // 查询现有授权
         ThirdAuthorizationDTO authorizationDTO = getByThirdSystemId(thirdSystemId);
         if (authorizationDTO == null) {
-            throw new BusinessException("该第三方系统未配置授权信息");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_CONFIGURED);
         }
         
         if (!"TOKEN".equals(authorizationDTO.getAuthType())) {
-            throw new BusinessException("该系统的授权方式不是 TOKEN 方式");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_TOKEN_TYPE);
         }
         
         // 生成新 Token
@@ -329,12 +331,12 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     @Transactional(rollbackFor = Exception.class)
     public void refreshTokenExpire(String tokenValue, Integer expireHours) {
         if (tokenValue == null || tokenValue.trim().isEmpty()) {
-            throw new BusinessException("Token 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         ThirdAuthorization authorization = thirdAuthorizationMapper.getByTokenValue(tokenValue);
         if (authorization == null || authorization.getDeleted()) {
-            throw new BusinessException("Token 不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_FOUND);
         }
         
         LocalDateTime newExpireTime = null;
@@ -357,7 +359,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
      * 校验授权方式与配置信息的匹配性
      *
      * @param dto 授权信息 DTO
-     * @throws BusinessException 当配置不匹配时抛出
+     * @throws I18nBusinessException 当配置不匹配时抛出
      */
     private void validateAuthTypeConfig(ThirdAuthorizationDTO dto) {
         if ("TOKEN".equals(dto.getAuthType())) {
@@ -366,10 +368,10 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
         } else if ("WHITELIST".equals(dto.getAuthType())) {
             // 白名单方式必须配置 whitelistIps
             if (dto.getWhitelistIps() == null || dto.getWhitelistIps().trim().isEmpty()) {
-                throw new BusinessException("白名单授权方式必须配置白名单 IP 列表");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_WHITELIST_REQUIRED);
             }
         } else {
-            throw new BusinessException("不支持的授权方式：" + dto.getAuthType());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_UNSUPPORTED_TYPE, dto.getAuthType());
         }
     }
 

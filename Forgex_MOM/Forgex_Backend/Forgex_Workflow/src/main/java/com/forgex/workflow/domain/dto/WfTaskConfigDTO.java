@@ -73,6 +73,8 @@ public class WfTaskConfigDTO {
      */
     private String formContent;
 
+    private Boolean requiresSelectedApprovers;
+
     /**
      * 启用状态。
      * <p>

@@ -3,9 +3,42 @@
  */
 import http from '../http'
 
-/**
- * 审批执行记录
- */
+export interface WfApprovalInstanceDTO {
+  id: number
+  executionId: number
+  executionDetailId: number
+  nodeId: number
+  instanceNo: string
+  approverId: number
+  approverName?: string
+  approverSourceType?: number
+  sourceRuleId?: number
+  status: number
+  actionType?: number
+  comment?: string
+  approveTime?: string
+  deadlineTime?: string
+  activated?: boolean
+  delegateFromUserId?: number
+  transferFromUserId?: number
+}
+
+export interface WfApprovalActionLogDTO {
+  id: number
+  executionId: number
+  executionDetailId?: number
+  nodeId?: number
+  approvalInstanceId?: number
+  actionType: number
+  operatorId?: number
+  operatorName?: string
+  targetUserId?: number
+  targetUserName?: string
+  actionComment?: string
+  actionSnapshot?: string
+  createTime?: string
+}
+
 export interface WfExecutionDTO {
   id: number
   taskConfigId: number
@@ -23,29 +56,51 @@ export interface WfExecutionDTO {
   tenantId: number
   createTime: string
   updateTime?: string
+  currentApprovalInstances?: WfApprovalInstanceDTO[]
+  approvalActionLogs?: WfApprovalActionLogDTO[]
+  activeInstanceCount?: number
+  timeoutFlag?: boolean
+  delegated?: boolean
+  transferred?: boolean
+  latestActionSummary?: string
 }
 
-/**
- * 发起审批参数
- */
 export interface WfExecutionStartParam {
   taskCode: string
   formContent: string
+  selectedApprovers?: number[]
 }
 
-/**
- * 审批处理参数
- */
 export interface WfExecutionApproveParam {
   executionId: number
   approveStatus: number
   comment?: string
   rejectType?: number
+  approvalInstanceId?: number
+  actionType?: number
+  targetApproverId?: number
 }
 
-/**
- * 审批查询参数
- */
+export interface WfExecutionTransferParam {
+  executionId: number
+  approvalInstanceId: number
+  targetApproverId: number
+  comment?: string
+}
+
+export interface WfExecutionAddSignParam {
+  executionId: number
+  approvalInstanceId: number
+  targetApproverId: number
+  comment?: string
+}
+
+export interface WfExecutionDelegateSaveParam {
+  delegatorUserId: number
+  delegateUserId: number
+  comment?: string
+}
+
 export interface WfExecutionQueryParam {
   pageNum?: number
   pageSize?: number
@@ -58,36 +113,49 @@ export interface WfExecutionQueryParam {
   approveTimeEnd?: string
 }
 
-/**
- * 审批工作台摘要
- */
+export interface WfExecutionBatchApproveParam {
+  executionIds: number[]
+  approveStatus: number
+  comment?: string
+}
+
+export interface WfExecutionBatchTransferParam {
+  executionIds: number[]
+  targetApproverId: number
+  comment?: string
+}
+
+export interface WfExecutionRemindParam {
+  executionIds: number[]
+  comment?: string
+}
+
+export interface WfExecutionCompensateParam {
+  executionId?: number
+  nodeId?: number
+  approvalInstanceId?: number
+  timeBegin?: string
+  timeEnd?: string
+}
+
 export interface WfDashboardSummaryVO {
   pending: WfExecutionDTO[]
   yesterdayProcessed: WfExecutionDTO[]
   cc: WfExecutionDTO[]
 }
 
-/**
- * 近 7 日审批结果
- */
 export interface WfDashboardWeeklyResultDTO {
   date: string
   approvedCount: number
   rejectedCount: number
 }
 
-/**
- * 发起人审批占比
- */
 export interface WfDashboardUserShareDTO {
   initiatorId: number
   initiatorName: string
   count: number
 }
 
-/**
- * 审批工作台统计分析
- */
 export interface WfDashboardAnalyticsVO {
   weeklyResults: WfDashboardWeeklyResultDTO[]
   userShares: WfDashboardUserShareDTO[]
@@ -105,12 +173,56 @@ export function reject(params: WfExecutionApproveParam) {
   return http.post<boolean>('/wf/execution/reject', params)
 }
 
+export function transfer(params: WfExecutionTransferParam) {
+  return http.post<boolean>('/wf/execution/transfer', params)
+}
+
+export function addSign(params: WfExecutionAddSignParam) {
+  return http.post<boolean>('/wf/execution/addSign', params)
+}
+
+export function saveDelegate(params: WfExecutionDelegateSaveParam) {
+  return http.post<boolean>('/wf/execution/delegate/save', params)
+}
+
+export function cancelDelegate(params: { delegatorUserId: number }) {
+  return http.post<boolean>('/wf/execution/delegate/cancel', params)
+}
+
 export function cancelExecution(params: { executionId: number }) {
   return http.post<boolean>('/wf/execution/cancel', params)
 }
 
 export function getExecutionDetail(params: { executionId: number }) {
   return http.post<WfExecutionDTO>('/wf/execution/detail', params)
+}
+
+export function listApprovalInstances(params: { executionId: number }) {
+  return http.post<WfApprovalInstanceDTO[]>('/wf/execution/instances', params)
+}
+
+export function listApprovalActionLogs(params: { executionId: number }) {
+  return http.post<WfApprovalActionLogDTO[]>('/wf/execution/actions', params)
+}
+
+export function batchApprove(params: WfExecutionBatchApproveParam) {
+  return http.post<boolean>('/wf/execution/batch/approve', params)
+}
+
+export function batchTransfer(params: WfExecutionBatchTransferParam) {
+  return http.post<boolean>('/wf/execution/batch/transfer', params)
+}
+
+export function batchRemind(params: WfExecutionRemindParam) {
+  return http.post<boolean>('/wf/execution/batch/remind', params)
+}
+
+export function compensateExecution(params: WfExecutionCompensateParam) {
+  return http.post<boolean>('/wf/execution/compensate', params)
+}
+
+export function retryTimeoutJobs(params: WfExecutionCompensateParam) {
+  return http.post<boolean>('/wf/execution/timeout/retry', params)
 }
 
 export function pageMyInitiated(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {
@@ -127,6 +239,10 @@ export function pageMyProcessed(params: WfExecutionQueryParam & { pageNum: numbe
 
 export function pageMyCc(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {
   return http.post<{ records: WfExecutionDTO[]; total: number }>('/wf/execution/my/cc', params)
+}
+
+export function pageCompensationCenter(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {
+  return http.post<{ records: WfExecutionDTO[]; total: number }>('/wf/execution/compensation/page', params)
 }
 
 export function loadDashboardSummary() {

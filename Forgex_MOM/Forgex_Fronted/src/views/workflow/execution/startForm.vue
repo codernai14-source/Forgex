@@ -63,18 +63,23 @@
               :description="taskConfig?.formPath || ''"
             />
 
-            <div v-else-if="taskConfig?.formType === 2" class="lowcode-form">
-              <a-alert
-                type="info"
-                show-icon
-                :message="t('workflow.execution.startForm.lowCodeContent')"
-                :description="t('workflow.execution.startForm.lowCodeDesc')"
-              />
-              <a-textarea
-                v-model:value="lowCodeFormText"
-                :rows="12"
-                :placeholder="t('workflow.execution.startForm.lowCodeJsonPlaceholder')"
-              />
+            <LowCodeFormRenderer
+              v-else-if="taskConfig?.formType === 2 && lowCodeSchema.fields.length"
+              ref="lowCodeFormRef"
+              v-model="lowCodeFormData"
+              :schema="lowCodeSchema"
+            />
+
+            <a-alert
+              v-else-if="taskConfig?.formType === 2"
+              type="warning"
+              show-icon
+              :message="t('workflow.execution.startForm.lowCodeSchemaEmpty')"
+            />
+
+            <div v-if="needsSelectedApprovers" class="selected-approver-panel">
+              <div class="selected-approver-panel__title">发起人自选审批人</div>
+              <ReceiverSelector v-model:modelValue="selectedApproverModel" />
             </div>
           </div>
 
@@ -99,10 +104,18 @@ import { approvalRoutePaths, TAB_CLOSE_QUERY_KEY } from '@/router/approvalRouteP
 import { startExecution, type WfExecutionStartParam } from '@/api/workflow/execution'
 import { getTaskConfigByCode, type WfTaskConfigDTO } from '@/api/workflow/taskConfig'
 import { workflowFormRegistry } from './formRegistry'
+import LowCodeFormRenderer from './components/LowCodeFormRenderer.vue'
+import { normalizeLowCodeFormSchema } from '../taskConfig/components/lowCodeSchema'
+import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 
 interface DynamicFormExpose {
   validate?: () => Promise<Record<string, any> | void>
   reset?: () => void
+}
+
+interface ReceiverModel {
+  receiverType?: string
+  receiverIds: string[]
 }
 
 const route = useRoute()
@@ -114,10 +127,14 @@ const loading = ref(false)
 const submitting = ref(false)
 const errorMessage = ref('')
 const customFormData = ref<Record<string, any>>({})
-const lowCodeFormText = ref('{}')
+const lowCodeFormData = ref<Record<string, any>>({})
 const dynamicFormRef = ref<DynamicFormExpose>()
+const lowCodeFormRef = ref<DynamicFormExpose>()
+const selectedApproverModel = ref<ReceiverModel>({ receiverType: 'USER', receiverIds: [] })
 
 const taskCode = computed(() => String(route.params.taskCode || '').trim())
+const lowCodeSchema = computed(() => normalizeLowCodeFormSchema(taskConfig.value?.formContent))
+const needsSelectedApprovers = computed(() => Boolean(taskConfig.value?.requiresSelectedApprovers))
 const dynamicFormComponent = computed(() => {
   if (!taskConfig.value?.formPath) {
     return null
@@ -146,7 +163,7 @@ async function loadTaskConfig() {
     errorMessage.value = ''
     const result = await getTaskConfigByCode({ taskCode: taskCode.value })
     taskConfig.value = result
-    lowCodeFormText.value = result.formContent || '{}'
+    lowCodeFormData.value = {}
 
     if (result.formType === 1 && result.formPath && !workflowFormRegistry[result.formPath]) {
       errorMessage.value = `${t('workflow.execution.startForm.unregisteredFormComponent')}：${result.formPath}`
@@ -160,8 +177,10 @@ async function loadTaskConfig() {
 
 function handleReset() {
   customFormData.value = {}
-  lowCodeFormText.value = taskConfig.value?.formContent || '{}'
+  lowCodeFormData.value = {}
+  selectedApproverModel.value = { receiverType: 'USER', receiverIds: [] }
   dynamicFormRef.value?.reset?.()
+  lowCodeFormRef.value?.reset?.()
 }
 
 async function handleSubmit() {
@@ -186,25 +205,29 @@ async function handleSubmit() {
       customFormData.value = payload
       formContent = JSON.stringify(payload)
     } else {
-      JSON.parse(lowCodeFormText.value)
-      formContent = lowCodeFormText.value
+      const payload = await lowCodeFormRef.value?.validate?.()
+      formContent = JSON.stringify(payload || lowCodeFormData.value || {})
     }
 
     submitting.value = true
     const params: WfExecutionStartParam = {
       taskCode: taskConfig.value.taskCode,
-      formContent
+      formContent,
+      selectedApprovers: selectedApproverModel.value.receiverIds
+        .map(item => Number(item))
+        .filter(item => Number.isFinite(item) && item > 0)
+    }
+    if (needsSelectedApprovers.value && !params.selectedApprovers?.length) {
+      message.warning('请选择至少一位审批人')
+      return
     }
     const executionId = await startExecution(params)
     navigateAndCloseCurrent(approvalRoutePaths.myInitiated, { executionId })
   } catch (error: any) {
-    if (error?.message?.includes('JSON')) {
-      message.error(t('workflow.execution.startForm.invalidLowCodeJson'))
-      return
-    }
     if (error?.errorFields) {
       return
     }
+    message.error(error.message || t('workflow.execution.startForm.submitFailed'))
   } finally {
     submitting.value = false
   }
@@ -286,6 +309,19 @@ onMounted(() => {
 
 .form-shell__body {
   min-height: 240px;
+}
+
+.selected-approver-panel {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--fx-fill-alter);
+}
+
+.selected-approver-panel__title {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--fx-text-primary);
 }
 
 .lowcode-form {

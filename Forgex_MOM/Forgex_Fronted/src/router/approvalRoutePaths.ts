@@ -16,6 +16,7 @@ export const approvalRoutePaths = {
   myPending: `${APPROVAL_ROUTE_BASE}/my/pending`,
   myProcessed: `${APPROVAL_ROUTE_BASE}/my/processed`,
   myInitiated: `${APPROVAL_ROUTE_BASE}/my/initiated`,
+  compensationCenter: `${APPROVAL_ROUTE_BASE}/governance/compensation`,
 }
 
 export function normalizeApprovalRoutePath(path: unknown, fallback = approvalRoutePaths.taskConfigList) {

@@ -15,8 +15,9 @@ package com.forgex.common.api.aspect;
 
 import com.forgex.common.api.annotation.AutoFillUsername;
 import com.forgex.common.api.feign.SysUserFeignClient;
-import com.forgex.common.api.dto.UserInfoDTO;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.web.R;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -153,12 +154,12 @@ public class AutoFillUsernameAspect {
                             fillInfos.add(new FieldFillInfo(field, userId, annotation.required()));
                         }
                     } else if (annotation.required()) {
-                        throw new BusinessException("用户ID字段 " + userIdFieldName + " 不能为空");
+                        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.USER_ID_FIELD_CANNOT_BE_EMPTY, userIdFieldName);
                     }
                 } catch (NoSuchFieldException e) {
                     log.error("找不到用户ID字段: {}", userIdFieldName);
                     if (annotation.required()) {
-                        throw new BusinessException("找不到用户ID字段: " + userIdFieldName);
+                        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.USER_ID_FIELD_NOT_FOUND, userIdFieldName);
                     }
                 }
             }
@@ -181,7 +182,7 @@ public class AutoFillUsernameAspect {
                     if (username != null) {
                         fillInfo.getField().set(obj, username);
                     } else if (fillInfo.isRequired()) {
-                        throw new BusinessException("找不到用户ID为 " + fillInfo.getUserId() + " 的用户");
+                        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.USER_BY_ID_NOT_FOUND, fillInfo.getUserId());
                     }
                 }
             } else {

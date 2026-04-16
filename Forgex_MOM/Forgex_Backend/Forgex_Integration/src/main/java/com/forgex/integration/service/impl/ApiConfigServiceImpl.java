@@ -5,8 +5,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.dto.ApiConfigDTO;
 import com.forgex.integration.domain.entity.ApiConfig;
 import com.forgex.integration.domain.param.ApiConfigParam;
@@ -93,7 +95,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     public ApiConfigDTO getApiConfigById(Long id) {
         ApiConfig config = this.getById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
-            throw new BusinessException("接口配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
         return convertToDTO(config);
     }
@@ -117,7 +119,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         // 校验接口编码唯一性
         ApiConfigDTO existing = getByApiCode(dto.getApiCode());
         if (existing != null) {
-            throw new BusinessException("接口编码已存在：" + dto.getApiCode());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CODE_EXISTS, dto.getApiCode());
         }
         
         ApiConfig config = new ApiConfig();
@@ -127,7 +129,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         boolean success = this.save(config);
         if (!success) {
-            throw new BusinessException("创建接口配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_CREATE_FAILED);
         }
         
         log.info("创建接口配置成功：{}", dto.getApiCode());
@@ -137,19 +139,19 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     @Transactional(rollbackFor = Exception.class)
     public void updateApiConfig(ApiConfigDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("配置 ID 不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
         // 校验配置是否存在
         ApiConfig existing = this.getById(dto.getId());
         if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
-            throw new BusinessException("接口配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
         
         // 校验接口编码唯一性（排除自身）
         ApiConfigDTO sameCode = getByApiCode(dto.getApiCode());
         if (sameCode != null && !sameCode.getId().equals(dto.getId())) {
-            throw new BusinessException("接口编码已存在：" + dto.getApiCode());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CODE_EXISTS, dto.getApiCode());
         }
         
         ApiConfig config = new ApiConfig();
@@ -159,7 +161,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         boolean success = this.updateById(config);
         if (!success) {
-            throw new BusinessException("更新接口配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_UPDATE_FAILED);
         }
         
         log.info("更新接口配置成功：{}", dto.getApiCode());
@@ -170,7 +172,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     public void deleteApiConfig(Long id) {
         ApiConfig config = this.getById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
-            throw new BusinessException("接口配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
         
         config.setDeleted(true);
@@ -179,7 +181,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         boolean success = this.updateById(config);
         if (!success) {
-            throw new BusinessException("删除接口配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_DELETE_FAILED);
         }
         
         log.info("删除接口配置成功：ID={}", id);
@@ -189,13 +191,13 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteApiConfigs(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new BusinessException("删除 ID 列表不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
         
         for (Long id : ids) {
             try {
                 deleteApiConfig(id);
-            } catch (BusinessException e) {
+            } catch (I18nBusinessException e) {
                 log.warn("删除接口配置失败：ID={}, 原因：{}", id, e.getMessage());
             }
         }
@@ -206,7 +208,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     public void enableApiConfig(Long id) {
         ApiConfig config = this.getById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
-            throw new BusinessException("接口配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
         
         config.setStatus(1);
@@ -215,7 +217,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         boolean success = this.updateById(config);
         if (!success) {
-            throw new BusinessException("启用接口配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_ENABLE_FAILED);
         }
         
         log.info("启用接口配置成功：ID={}, apiCode={}", id, config.getApiCode());
@@ -226,7 +228,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     public void disableApiConfig(Long id) {
         ApiConfig config = this.getById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
-            throw new BusinessException("接口配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
         
         config.setStatus(0);
@@ -235,7 +237,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         boolean success = this.updateById(config);
         if (!success) {
-            throw new BusinessException("停用接口配置失败");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_DISABLE_FAILED);
         }
         
         log.info("停用接口配置成功：ID={}, apiCode={}", id, config.getApiCode());
