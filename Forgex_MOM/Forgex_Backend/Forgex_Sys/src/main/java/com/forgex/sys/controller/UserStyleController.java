@@ -13,11 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.controller;
 
+import com.forgex.common.domain.config.GuidePreferenceConfig;
 import com.forgex.common.config.UserStyleConfigService;
 import com.forgex.common.domain.config.LayoutStyleConfig;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
+import com.forgex.sys.domain.param.UserGuidePreferenceParam;
 import com.forgex.sys.domain.param.UserLayoutStyleParam;
 import com.forgex.sys.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +83,46 @@ public class UserStyleController {
         }
         Long tenantId = TenantContext.get();
         userStyleConfigService.saveLayoutConfig(userId, tenantId, param.getConfig());
+        return R.ok(Boolean.TRUE);
+    }
+
+    /**
+     * 读取当前用户在指定租户下的引导偏好配置。
+     *
+     * @param param 请求参数，需包含 account
+     * @return 引导偏好配置
+     */
+    @PostMapping("/get-guide")
+    public R<GuidePreferenceConfig> getGuide(@RequestBody UserGuidePreferenceParam param) {
+        if (param == null || param.getAccount() == null) {
+            return R.fail(CommonPrompt.ACCOUNT_EMPTY);
+        }
+        Long userId = userService.getUserIdByAccount(param.getAccount());
+        if (userId == null) {
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        Long tenantId = TenantContext.get();
+        GuidePreferenceConfig config = userStyleConfigService.getGuidePreference(userId, tenantId);
+        return R.ok(config);
+    }
+
+    /**
+     * 保存当前用户在指定租户下的引导偏好配置。
+     *
+     * @param param 请求参数，需包含 account 和 config
+     * @return 是否保存成功
+     */
+    @PostMapping("/save-guide")
+    public R<Boolean> saveGuide(@RequestBody UserGuidePreferenceParam param) {
+        if (param == null || param.getAccount() == null || param.getConfig() == null) {
+            return R.fail(CommonPrompt.ACCOUNT_CONFIG_CANNOT_BE_EMPTY);
+        }
+        Long userId = userService.getUserIdByAccount(param.getAccount());
+        if (userId == null) {
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        Long tenantId = TenantContext.get();
+        userStyleConfigService.saveGuidePreference(userId, tenantId, param.getConfig());
         return R.ok(Boolean.TRUE);
     }
 }

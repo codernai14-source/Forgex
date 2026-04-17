@@ -1,16 +1,16 @@
 <template>
-  <div class="app-sidebar-wrapper">
+  <div class="app-sidebar-wrapper fx-guide-sidebar">
     <!-- 双列布局：第一列（一级菜单/目录） -->
     <a-layout-sider
       v-if="doubleColumn"
-      class="app-sidebar-mini"
+      class="app-sidebar-mini fx-guide-sidebar-mini"
       :collapsed="false"
       :width="100"
     >
       <a-menu
         mode="inline"
         :selected-keys="selectedFirstLevelKeys"
-        class="mini-menu"
+        class="mini-menu fx-guide-sidebar-mini-menu"
         @click="onFirstLevelMenuClick"
       >
         <a-menu-item
@@ -31,7 +31,7 @@
     <!-- 第二列宽度减少10%，从200px改为180px -->
     <a-layout-sider
       v-if="!doubleColumn || hasSecondLevelMenus"
-      class="app-sidebar"
+      class="app-sidebar fx-guide-sidebar-main"
       :collapsed="collapsed"
       :collapsible="true"
       :width="180"
@@ -42,7 +42,7 @@
         mode="inline"
         :selected-keys="selectedKeys"
         :open-keys="openKeys"
-        class="sidebar-menu"
+        class="sidebar-menu fx-guide-sidebar-menu"
         @openChange="onOpenChange"
         @click="onMenuClick"
       >

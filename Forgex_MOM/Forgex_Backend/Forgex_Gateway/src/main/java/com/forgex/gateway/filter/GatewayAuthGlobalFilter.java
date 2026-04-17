@@ -2,6 +2,9 @@ package com.forgex.gateway.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.license.LicenseManager;
+import com.forgex.common.license.LicenseRuntimeInfo;
+import com.forgex.common.license.LicenseStatus;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -43,17 +46,20 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
     private final ObjectMapper objectMapper;
     private final WebClient.Builder webClientBuilder;
     private final GatewayLoginSessionSupport loginSessionSupport;
+    private final LicenseManager licenseManager;
 
     public GatewayAuthGlobalFilter(
             StringRedisTemplate redis,
             ObjectMapper objectMapper,
             WebClient.Builder webClientBuilder,
-            GatewayLoginSessionSupport loginSessionSupport
+            GatewayLoginSessionSupport loginSessionSupport,
+            LicenseManager licenseManager
     ) {
         this.redis = redis;
         this.objectMapper = objectMapper;
         this.webClientBuilder = webClientBuilder;
         this.loginSessionSupport = loginSessionSupport;
+        this.licenseManager = licenseManager;
     }
 
     @Override
@@ -71,6 +77,11 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         String path = request.getURI().getPath();
         if (!needAuth(path, method)) {
             return chain.filter(exchange);
+        }
+
+        LicenseRuntimeInfo licenseRuntimeInfo = licenseManager.current();
+        if (!licenseRuntimeInfo.isValid()) {
+            return writeLicenseDenied(exchange, licenseRuntimeInfo);
         }
 
         GatewayLoginSessionSupport.LoginSessionContext loginContext = loginSessionSupport.resolve(request);
@@ -105,6 +116,18 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         if (path.equals("/api/sys/init/apply") && HttpMethod.POST.equals(method)) {
             return false;
         }
+        if (path.equals("/api/sys/license/status") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/license/request-info") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/license/logs") && HttpMethod.GET.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/license/refresh") && HttpMethod.POST.equals(method)) {
+            return false;
+        }
         if (path.equals("/api/basic/module/ping") && HttpMethod.GET.equals(method)) {
             return false;
         }
@@ -131,6 +154,38 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
                         bytes = objectMapper.writeValueAsBytes(body);
                     } catch (Exception e) {
                         bytes = "{\"code\":602,\"message\":\"NOT_LOGIN\"}".getBytes(StandardCharsets.UTF_8);
+                    }
+                    return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+                });
+    }
+
+    private Mono<Void> writeLicenseDenied(ServerWebExchange exchange, LicenseRuntimeInfo runtimeInfo) {
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
+        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        CommonPrompt prompt = switch (runtimeInfo.getStatus()) {
+            case UNLICENSED -> CommonPrompt.LICENSE_REQUIRED;
+            case EXPIRED -> CommonPrompt.LICENSE_EXPIRED;
+            case GRACE -> CommonPrompt.LICENSE_GRACE;
+            case INVALID -> CommonPrompt.LICENSE_INVALID;
+            default -> CommonPrompt.LICENSE_INVALID;
+        };
+
+        Object[] args = prompt == CommonPrompt.LICENSE_INVALID ? new Object[]{runtimeInfo.getMessage()} : null;
+        int code = runtimeInfo.getStatus() == LicenseStatus.UNLICENSED ? StatusCode.LICENSE_REQUIRED : StatusCode.LICENSE_INVALID;
+        R<Object> body = args == null ? R.fail(code, prompt) : R.failWithArgs(code, prompt, args);
+        HttpHeaders headers = exchange.getRequest() == null ? null : exchange.getRequest().getHeaders();
+
+        return translate(prompt, body.getI18n() == null ? null : body.getI18n().getArgs(), headers)
+                .defaultIfEmpty(prompt.getDefaultTemplate())
+                .flatMap(message -> {
+                    body.setMessage(message);
+
+                    byte[] bytes;
+                    try {
+                        bytes = objectMapper.writeValueAsBytes(body);
+                    } catch (Exception e) {
+                        bytes = "{\"code\":605,\"message\":\"LICENSE_INVALID\"}".getBytes(StandardCharsets.UTF_8);
                     }
                     return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
                 });

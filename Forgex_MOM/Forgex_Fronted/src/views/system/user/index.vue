@@ -39,8 +39,10 @@
         </template>
         
         <template #avatar="{ record }">
-          <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
-            <template #icon><UserOutlined /></template>
+          <a-avatar :src="normalizeMediaUrl(record.avatar)">
+            <template #icon>
+              <UserOutlined />
+            </template>
           </a-avatar>
         </template>
 
@@ -133,6 +135,7 @@
  */
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { normalizeMediaUrl } from '@/utils/media'
 import { UserOutlined } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 import UserFormDialog from './components/UserFormDialog.vue'

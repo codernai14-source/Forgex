@@ -215,6 +215,7 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import TenantInitProgress from '@/components/tenant/TenantInitProgress.vue'
 import { useDict } from '@/hooks/useDict'
+import { normalizeMediaUrl } from '@/utils/media'
 
 const { dictItems: statusOptions } = useDict('status')
 
@@ -323,14 +324,7 @@ function getTenantTypeColor(type: TenantTypeEnum): string {
 }
 
 function formatLogoUrl(url: string): string {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/')) {
-    return '/api' + url
-  }
-  return '/api/' + url
+  return normalizeMediaUrl(url)
 }
 
 function openAdd() {

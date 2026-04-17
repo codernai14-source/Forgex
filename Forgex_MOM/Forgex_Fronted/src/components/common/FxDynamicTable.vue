@@ -159,7 +159,7 @@
       </div>
       
       <!-- 数据表格 -->
-      <div class="fx-table-content">
+      <div ref="tableContentRef" class="fx-table-content">
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
             :key="`table-${configVersion}`"
@@ -182,7 +182,12 @@
         </a-table>
         </div>
 
-        <div v-if="resolvedPaginationConfig" class="fx-table-pagination" :style="paginationAreaStyle">
+        <div
+          v-if="resolvedPaginationConfig"
+          ref="paginationRef"
+          class="fx-table-pagination"
+          :style="paginationAreaStyle"
+        >
           <a-pagination
             v-bind="resolvedPaginationConfig"
             @change="handlePaginationChange"
@@ -361,7 +366,7 @@ function tryRenderTagFromDictJson(dictText: any) {
           backgroundColor: parsed?.backgroundColor,
         }
       : undefined
-  return h(ATag, { color: parsed?.color || 'blue', style }, label)
+  return h(ATag, { color: parsed?.color || 'blue', style }, () => label)
 }
 
 /**
@@ -390,14 +395,14 @@ function renderTagByDictText(dictText: any, 降级方案Text: any) {
                   backgroundColor: parsed?.backgroundColor,
                 }
               : undefined
-          return h(ATag, { color: parsed?.color || 'blue', style }, label)
+          return h(ATag, { color: parsed?.color || 'blue', style }, () => label)
         }
       } catch (e) {
-        return h(ATag, { color: 'blue' }, dictText)
+        return h(ATag, { color: 'blue' }, () => dictText)
       }
     }
 
-    return h(ATag, { color: 'blue' }, dictText)
+    return h(ATag, { color: 'blue' }, () => dictText)
   }
 
   if (typeof dictText === 'object') {
@@ -410,7 +415,7 @@ function renderTagByDictText(dictText: any, 降级方案Text: any) {
             backgroundColor: parsed?.backgroundColor,
           }
         : undefined
-    return h(ATag, { color: parsed?.color || 'blue', style }, label)
+    return h(ATag, { color: parsed?.color || 'blue', style }, () => label)
   }
 
   return 降级方案Text
@@ -483,11 +488,14 @@ const rowSelection = computed(() => props.rowSelection)
 const defaultExpandAllRows = computed(() => props.defaultExpandAllRows)
 const expandable = computed(() => props.expandable)
 
+const tableContentRef = ref<HTMLElement | null>(null)
 const tableWrapRef = ref<HTMLElement | null>(null)
+const paginationRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
 const lastSorter = ref<any>(undefined)
 
 let computeScrollYRafPending = false
+let mutationObserver: MutationObserver | null = null
 
 const scheduleComputeAutoScrollY = () => {
   if (computeScrollYRafPending) return
@@ -1053,23 +1061,16 @@ onMounted(async () => {
   await loadConfig()
   await handleQuery()
   
-  // 娣诲姞 MutationObserver 鐩戝惉 DOM 鍙樺寲锛岀‘淇濊〃鏍奸珮搴︽纭绠?
+  // 监听表格结构变化，仅在节点增删时重算高度，避免 style/class 抖动造成死循环。
   const wrapEl = tableWrapRef.value
   if (wrapEl) {
-    const observer = new MutationObserver(() => {
+    mutationObserver = new MutationObserver(() => {
       scheduleComputeAutoScrollY()
     })
     
-    observer.observe(wrapEl, {
+    mutationObserver.observe(wrapEl, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    })
-    
-    // 鍦ㄧ粍浠跺嵏杞芥椂鏂紑瑙傚療
-    onBeforeUnmount(() => {
-      observer.disconnect()
     })
   }
   
@@ -1081,6 +1082,12 @@ onMounted(async () => {
   setTimeout(() => {
     scheduleComputeAutoScrollY()
   }, 300)
+})
+
+onBeforeUnmount(() => {
+  mutationObserver?.disconnect()
+  mutationObserver = null
+  window.removeEventListener('resize', onResizeOrScroll)
 })
 
 onBeforeUnmount(() => {

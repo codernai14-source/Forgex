@@ -24,6 +24,7 @@ import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(RocketMQTemplate.class)
 @ConditionalOnProperty(prefix = "mq.template-message", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class TemplateMessageSenderImpl implements TemplateMessageSender {
 

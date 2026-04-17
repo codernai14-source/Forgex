@@ -131,6 +131,42 @@
             :initial-edit-mode="true"
           />
         </a-tab-pane>
+        <a-tab-pane key="guide" :tab="$t('profile.tabs.guide')">
+          <div class="guide-setting-panel">
+            <a-alert
+              :message="$t('profile.guide.title')"
+              :description="$t('profile.guide.description')"
+              type="info"
+              show-icon
+              style="margin-bottom: 16px"
+            />
+            <a-card size="small">
+              <a-space direction="vertical" style="width: 100%" :size="16">
+                <div class="guide-setting-row">
+                  <div>
+                    <div class="guide-setting-title">{{ $t('profile.guide.babyModeTitle') }}</div>
+                    <div class="guide-setting-desc">{{ $t('profile.guide.babyModeDesc') }}</div>
+                  </div>
+                  <a-switch
+                    :checked="guideStore.babyModeEnabled"
+                    :loading="guideStore.saving"
+                    @change="handleBabyModeChange"
+                  />
+                </div>
+
+                <div class="guide-setting-row guide-setting-row--action">
+                  <div>
+                    <div class="guide-setting-title">{{ $t('profile.guide.replayTitle') }}</div>
+                    <div class="guide-setting-desc">{{ $t('profile.guide.replayDesc') }}</div>
+                  </div>
+                  <a-button type="primary" :loading="guideStore.saving" @click="handleReplaySystemGuide">
+                    {{ $t('profile.guide.replayAction') }}
+                  </a-button>
+                </div>
+              </a-space>
+            </a-card>
+          </div>
+        </a-tab-pane>
       </a-tabs>
     </a-card>
   </div>
@@ -144,11 +180,13 @@ import { message } from 'ant-design-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { getCurrentUserInfo, updateBasicInfo, changePassword } from '@/api/profile'
+import { useGuideStore } from '@/stores/guide'
 import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const guideStore = useGuideStore()
 const userStore = useUserStore()
 const loading = ref(false)
 const activeTab = ref('basic')
@@ -246,6 +284,18 @@ async function handleChangePassword() {
   router.push('/login')
 }
 
+async function handleBabyModeChange(checked: boolean) {
+  await guideStore.setBabyModeEnabled(checked)
+  if (checked) {
+    await guideStore.resetGuideState('system.main', 'v1')
+  }
+}
+
+async function handleReplaySystemGuide() {
+  await guideStore.resetGuideState('system.main', 'v1')
+  router.push('/workspace/home')
+}
+
 /**
  * 校验确认密码是否与新密码保持一致。
  */
@@ -260,6 +310,7 @@ onMounted(() => {
   if (route.query.tab) {
     activeTab.value = route.query.tab as string
   }
+  guideStore.loadPreference().catch(() => {})
   loadUserInfo()
 })
 </script>
@@ -273,5 +324,33 @@ onMounted(() => {
     justify-content: center;
     padding: 32px 0;
   }
+}
+
+.guide-setting-panel {
+  max-width: 860px;
+}
+
+.guide-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.guide-setting-row--action {
+  align-items: flex-start;
+}
+
+.guide-setting-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fx-text-primary, #1f2937);
+}
+
+.guide-setting-desc {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--fx-text-secondary, #6b7280);
+  line-height: 1.6;
 }
 </style>

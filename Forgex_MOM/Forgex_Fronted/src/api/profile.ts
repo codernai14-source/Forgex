@@ -29,9 +29,9 @@ export async function changePassword(data: { oldPassword: string; newPassword: s
  * 上传当前用户的新头像文件。
  */
 export async function uploadAvatar(file: File) {
-  const formData = new 表单Data()
+  const formData = new FormData()
   formData.append('file', file)
-  return http.post('/sys/file/upload', formData, {
+  return http.post<string>('/sys/file/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

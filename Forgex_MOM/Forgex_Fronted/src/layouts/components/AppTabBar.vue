@@ -1,6 +1,6 @@
 <template>
-  <div ref="tabbarRootRef" class="app-tabbar">
-    <div class="tabbar-inner">
+  <div ref="tabbarRootRef" class="app-tabbar fx-guide-tabbar">
+    <div class="tabbar-inner fx-guide-tabbar-list">
       <div
         v-for="tab in tabs"
         :key="tab.key"

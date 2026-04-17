@@ -1,0 +1,17 @@
+# 构建产物
+dist/
+staging/
+
+# .NET 编译产物
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# IDE 文件
+.idea/
+.vscode/
+*.iml

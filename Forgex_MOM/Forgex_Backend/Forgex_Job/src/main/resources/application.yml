@@ -1,20 +1,43 @@
 spring:
   application:
     name: forgex-job
+  profiles:
+    active: ${FORGEX_PROFILE:dev}
   output:
     ansi:
       enabled: always
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-        namespace: dev
-        group: DEFAULT_GROUP
+forgex:
+  deployment:
+    profile: ${FORGEX_PROFILE:dev}
+    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
+    home: ${FORGEX_HOME:./forgex}
+    license-dir: ${FORGEX_LICENSE_DIR:${FORGEX_HOME:./forgex}/license}
+    upload-dir: ${FORGEX_UPLOAD_DIR:${FORGEX_HOME:./forgex}/data/uploads}
+    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:./forgex}/logs}
+    backup-dir: ${FORGEX_BACKUP_DIR:${FORGEX_HOME:./forgex}/backup}
+    nacos-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+    redis-addr: ${FORGEX_REDIS_ADDR:127.0.0.1:6379}
+    mysql-url: ${FORGEX_MYSQL_URL:}
+  license:
+    enabled: ${FORGEX_LICENSE_ENABLED:true}
+    public-key: ${FORGEX_LICENSE_PUBLIC_KEY:}
+    public-key-file-name: ${FORGEX_LICENSE_PUBLIC_KEY_FILE_NAME:public-key.base64}
+    file-name: ${FORGEX_LICENSE_FILE_NAME:license.lic}
+    request-info-file-name: ${FORGEX_REQUEST_INFO_FILE_NAME:request-info.json}
+    history-file-name: ${FORGEX_LICENSE_HISTORY_FILE_NAME:activation-history.json}
+    override-machine-code: ${FORGEX_MACHINE_CODE:}
+    customer-code-prefix: ${FORGEX_CUSTOMER_CODE_PREFIX:FXC}
+    warning-days: ${FORGEX_LICENSE_WARNING_DAYS:30}
+    scheduler-enabled: ${FORGEX_LICENSE_SCHEDULER_ENABLED:true}
+    refresh-interval-ms: ${FORGEX_LICENSE_REFRESH_INTERVAL_MS:900000}
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
   charset:
     console: UTF-8
+mq:
+  template-message:
+    enabled: false
 server:
-  port: 9003
+  port: ${FORGEX_JOB_PORT:9004}
 

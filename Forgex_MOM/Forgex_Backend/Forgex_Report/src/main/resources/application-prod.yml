@@ -1,6 +1,22 @@
 spring:
-  application:
-    name: forgex-report
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:datasource-forgex-prod.yml
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: prod
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: prod
+        group: DEFAULT_GROUP
+        file-extension: yml
 
 logging:
   level:
@@ -11,7 +27,7 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
   file:
-    name: logs/forgex-report/forgex-report.log
+    name: ${FORGEX_LOG_DIR:logs}/forgex-report/forgex-report.log
     max-size: 100MB
     max-history: 30
 
@@ -23,6 +39,3 @@ ureport:
 jmreport:
   mode: 1
   preview-cross: false
-
-server:
-  port: 8084
