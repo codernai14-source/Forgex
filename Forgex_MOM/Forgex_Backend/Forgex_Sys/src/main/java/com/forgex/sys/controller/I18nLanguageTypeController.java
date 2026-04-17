@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
 import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.web.R;
@@ -52,6 +53,7 @@ public class I18nLanguageTypeController {
      *
      * @return 所有语言类型列表
      */
+    @RequirePerm("sys:i18nLanguageType:view")
     @PostMapping("/listAll")
     public R<List<FxI18nLanguageType>> listAll() {
         return R.ok(languageTypeService.listAll());
@@ -81,6 +83,7 @@ public class I18nLanguageTypeController {
      *
      * @return 默认语言类型实体
      */
+    @RequirePerm("sys:i18nLanguageType:view")
     @PostMapping("/getDefault")
     public R<FxI18nLanguageType> getDefault() {
         FxI18nLanguageType languageType = languageTypeService.getDefault();
@@ -96,6 +99,7 @@ public class I18nLanguageTypeController {
      * @param languageType 语言类型实体
      * @return 是否创建成功
      */
+    @RequirePerm("sys:i18nLanguageType:add")
     @PostMapping("/create")
     public R<Boolean> create(@RequestBody FxI18nLanguageType languageType) {
         if (languageType.getLangCode() == null || languageType.getLangCode().isEmpty()) {
@@ -113,6 +117,7 @@ public class I18nLanguageTypeController {
      * @param languageType 语言类型实体
      * @return 是否更新成功
      */
+    @RequirePerm("sys:i18nLanguageType:edit")
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody FxI18nLanguageType languageType) {
         if (languageType.getId() == null) {
@@ -127,6 +132,7 @@ public class I18nLanguageTypeController {
      * @param body 请求参数，包含 id
      * @return 是否删除成功
      */
+    @RequirePerm("sys:i18nLanguageType:delete")
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> body) {
         Object idObj = body.get("id");
@@ -150,6 +156,7 @@ public class I18nLanguageTypeController {
      * @param body 请求参数，包含 id
      * @return 是否设置成功
      */
+    @RequirePerm("sys:i18nLanguageType:setDefault")
     @PostMapping("/setDefault")
     public R<Boolean> setDefault(@RequestBody Map<String, Object> body) {
         Object idObj = body.get("id");
@@ -177,6 +184,7 @@ public class I18nLanguageTypeController {
      * @return 分页结果
      * @see FxI18nLanguageType
      */
+    @RequirePerm("sys:i18nLanguageType:view")
     @PostMapping("/page")
     public R<IPage<FxI18nLanguageType>> page(@RequestBody(required = false) Map<String, Object> param) {
         int pageNum = param != null && param.get("pageNum") != null 
@@ -196,6 +204,7 @@ public class I18nLanguageTypeController {
      * @return 语言类型实体
      * @see FxI18nLanguageType
      */
+    @RequirePerm("sys:i18nLanguageType:view")
     @PostMapping("/detail")
     public R<FxI18nLanguageType> detail(@RequestBody IdParam param) {
         if (param.getId() == null) {
@@ -218,6 +227,7 @@ public class I18nLanguageTypeController {
      * @return 导入结果，包含成功数量和失败数量
      * @throws Exception 文件读取失败时抛出
      */
+    @RequirePerm("sys:i18nLanguageType:import")
     @PostMapping("/import")
     public R<Map<String, Object>> importLanguageType(@RequestParam("file") MultipartFile file) throws Exception {
         if (file.isEmpty()) {
@@ -235,6 +245,7 @@ public class I18nLanguageTypeController {
      *
      * @param response HTTP 响应
      */
+    @RequirePerm("sys:i18nLanguageType:template:download")
     @PostMapping("/template/download")
     public void downloadTemplate(HttpServletResponse response) {
         // 获取导入配置

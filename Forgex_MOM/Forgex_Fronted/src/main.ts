@@ -10,6 +10,8 @@ import App from './App.vue'
 import router from './router'
 import i18n from './locales'
 import Antd from 'ant-design-vue'
+import FcDesigner from '@form-create/antd-designer'
+import formCreate from '@form-create/ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import * as Icons from '@ant-design/icons-vue'
 import { permission } from './directives/permission'
@@ -98,7 +100,7 @@ iconComponents.forEach(name => {
  * - i18n: 国际化支持
  * 最后将应用挂载到 id 为 'app' 的 DOM 元素上
  */
-app.use(pinia).use(router).use(Antd).use(i18n).mount('#app')
+app.use(pinia).use(router).use(Antd).use(FcDesigner).use(formCreate).use(i18n).mount('#app')
 
 /**
  * 页面关闭或刷新时调用登出接口

@@ -1,6 +1,7 @@
 package com.forgex.integration.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ApiConfigDTO;
 import com.forgex.integration.domain.param.ApiConfigParam;
@@ -45,6 +46,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#pageApiConfigs
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:view")
     @PostMapping("/page")
     @Operation(summary = "分页查询接口配置列表", description = "支持按接口编码、接口名称、状态、模块编码等条件查询")
     public R<Page<ApiConfigDTO>> pageApiConfigs(@RequestBody @Validated ApiConfigParam param) {
@@ -66,6 +68,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#listApiConfigs
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:view")
     @PostMapping("/list")
     @Operation(summary = "查询接口配置列表", description = "不分页查询，用于下拉框选择")
     public R<List<ApiConfigDTO>> listApiConfigs(@RequestBody ApiConfigParam param) {
@@ -86,6 +89,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#getApiConfigById
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:view")
     @GetMapping("/detail/{id}")
     @Operation(summary = "获取接口配置详情", description = "根据 ID 查询接口配置详细信息")
     public R<ApiConfigDTO> getApiConfigDetail(@PathVariable Long id) {
@@ -107,6 +111,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#createApiConfig
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:add")
     @PostMapping("/create")
     @Operation(summary = "创建接口配置", description = "新增接口配置信息")
     public R<Void> createApiConfig(@RequestBody @Validated ApiConfigDTO dto) {
@@ -128,6 +133,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#updateApiConfig
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:edit")
     @PostMapping("/update")
     @Operation(summary = "更新接口配置", description = "修改接口配置信息")
     public R<Void> updateApiConfig(@RequestBody @Validated ApiConfigDTO dto) {
@@ -148,6 +154,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#deleteApiConfig
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:delete")
     @PostMapping("/delete/{id}")
     @Operation(summary = "删除接口配置", description = "逻辑删除接口配置")
     public R<Void> deleteApiConfig(@PathVariable Long id) {
@@ -168,6 +175,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#batchDeleteApiConfigs
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:delete")
     @PostMapping("/batch-delete")
     @Operation(summary = "批量删除接口配置", description = "批量删除多个接口配置")
     public R<Void> batchDeleteApiConfigs(@RequestBody List<Long> ids) {
@@ -189,6 +197,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#enableApiConfig
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:edit")
     @PostMapping("/enable/{id}")
     @Operation(summary = "启用接口配置", description = "将接口配置状态设置为启用")
     public R<Void> enableApiConfig(@PathVariable Long id) {
@@ -210,6 +219,7 @@ public class ApiConfigController {
      * @see com.forgex.integration.service.IApiConfigService#disableApiConfig
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:edit")
     @PostMapping("/disable/{id}")
     @Operation(summary = "停用接口配置", description = "将接口配置状态设置为禁用")
     public R<Void> disableApiConfig(@PathVariable Long id) {

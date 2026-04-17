@@ -1,4 +1,5 @@
 import http from '../http'
+import { postJsonWithLongs } from '@/utils/longJson'
 
 type RequestConfig = Record<string, any>
 
@@ -88,7 +89,7 @@ export interface WfTaskDraftEditorDTO {
 
 export interface WfNodeApproverDTO {
   approverType: number
-  approverIds: number[]
+  approverIds: string[]
 }
 
 export interface WfTaskNodeRuleDTO {
@@ -106,7 +107,7 @@ export interface WfTaskNodeRuleDTO {
   allowTransfer?: boolean
   allowDelegate?: boolean
   allowRecall?: boolean
-  fallbackApproverIds?: number[]
+  fallbackApproverIds?: string[]
   approvers: WfNodeApproverDTO[]
   extraConfig?: string
 }
@@ -199,7 +200,17 @@ export function saveDraftBaseInfo(params: WfTaskConfigSaveParam, config?: Reques
 }
 
 export function getDraftGraph(params: WfTaskDraftEditorQueryParam, config?: RequestConfig) {
-  return http.post<WfTaskGraphDTO>('/wf/task/config/draft/graph/get', params, config)
+  if (config) {
+    return http.post<WfTaskGraphDTO>('/wf/task/config/draft/graph/get', params, config)
+  }
+  return postJsonWithLongs<WfTaskGraphDTO>(
+    '/wf/task/config/draft/graph/get',
+    params,
+    {
+      scalarKeys: ['draftId', 'publishedId'],
+      arrayKeys: ['approverIds', 'fallbackApproverIds'],
+    },
+  )
 }
 
 export function saveDraftGraph(params: WfTaskGraphSaveParam, config?: RequestConfig) {

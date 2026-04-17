@@ -1,63 +1,23 @@
-<!--
- * 低代码表单渲染器
- *
- * @author Forgex
- * @version 1.0
- * @since 2026-04-15
--->
 <template>
-  <a-form ref="formRef" :model="innerValue" layout="vertical">
-    <a-row :gutter="16">
-      <a-col v-for="field in schema.fields" :key="field.key" :span="field.component === 'textarea' ? 24 : 12">
-        <a-form-item :label="field.label || field.key" :name="field.key" :rules="buildRules(field)">
-          <a-input
-            v-if="field.component === 'input'"
-            v-model:value="innerValue[field.key]"
-            :placeholder="field.placeholder"
-          />
-          <a-textarea
-            v-else-if="field.component === 'textarea'"
-            v-model:value="innerValue[field.key]"
-            :rows="4"
-            :placeholder="field.placeholder"
-          />
-          <a-input-number
-            v-else-if="field.component === 'number'"
-            v-model:value="innerValue[field.key]"
-            :placeholder="field.placeholder"
-            style="width: 100%"
-          />
-          <a-select
-            v-else-if="field.component === 'select'"
-            v-model:value="innerValue[field.key]"
-            :placeholder="field.placeholder"
-            allow-clear
-          >
-            <a-select-option v-for="option in field.options || []" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
-          <a-date-picker
-            v-else-if="field.component === 'date'"
-            v-model:value="innerValue[field.key]"
-            value-format="YYYY-MM-DD"
-            style="width: 100%"
-          />
-          <a-input
-            v-else
-            v-model:value="innerValue[field.key]"
-            :placeholder="field.placeholder"
-          />
-        </a-form-item>
-      </a-col>
-    </a-row>
-  </a-form>
+  <div class="low-code-form-renderer">
+    <component
+      :is="runtimeFormComponent"
+      ref="formRef"
+      :rule="renderRule"
+      :option="renderOption"
+      :model-value="innerValue"
+      :api="formApi"
+      @update:modelValue="handleModelUpdate"
+      @update:api="handleApiUpdate"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { FormInstance } from 'ant-design-vue'
-import type { LowCodeFieldSchema, LowCodeFormSchema } from '@/views/workflow/taskConfig/components/lowCodeSchema'
+import { computed, ref, watch } from 'vue'
+import formCreate, { type Api } from '@form-create/ant-design-vue'
+import type { LowCodeFormSchema } from '@/views/workflow/taskConfig/components/lowCodeSchema'
+import { normalizeLowCodeFormSchema } from '@/views/workflow/taskConfig/components/lowCodeSchema'
 
 interface Props {
   schema: LowCodeFormSchema
@@ -68,55 +28,80 @@ interface Emits {
   (e: 'update:modelValue', value: Record<string, any>): void
 }
 
+interface FormCreateComponentExpose {
+  fapi?: Api
+}
+
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: () => ({})
+  modelValue: () => ({}),
 })
 
 const emit = defineEmits<Emits>()
-const formRef = ref<FormInstance>()
+const formRef = ref<FormCreateComponentExpose>()
+const formApi = ref<Api>()
 const innerValue = ref<Record<string, any>>({})
+const FormCreateComponent = (formCreate as any).$form()
+
+const normalizedSchema = computed(() => normalizeLowCodeFormSchema(props.schema))
+const runtimeFormComponent = computed(() => FormCreateComponent)
+const renderRule = computed(() => normalizedSchema.value.rule || [])
+const renderOption = computed(() => ({
+  ...(normalizedSchema.value.option || {}),
+  submitBtn: false,
+  resetBtn: false,
+})
+)
 
 watch(
-  () => [props.schema, props.modelValue],
-  () => {
-    const nextValue: Record<string, any> = {}
-    props.schema.fields.forEach(field => {
-      nextValue[field.key] = props.modelValue?.[field.key] ?? field.defaultValue ?? undefined
-    })
-    innerValue.value = nextValue
+  () => props.modelValue,
+  value => {
+    innerValue.value = { ...(value || {}) }
   },
   { immediate: true, deep: true }
 )
 
-watch(
-  innerValue,
-  value => {
-    emit('update:modelValue', { ...value })
-  },
-  { deep: true }
-)
+function handleModelUpdate(value: Record<string, any>) {
+  innerValue.value = { ...(value || {}) }
+  emit('update:modelValue', { ...innerValue.value })
+}
 
-function buildRules(field: LowCodeFieldSchema) {
-  return field.required
-    ? [{ required: true, message: `${field.label || field.key}不能为空`, trigger: 'change' }]
-    : []
+function handleApiUpdate(api?: Api) {
+  if (api) {
+    formApi.value = api
+  }
 }
 
 async function validate() {
-  await formRef.value?.validate()
+  const api = formApi.value || formRef.value?.fapi
+  if (api?.validate) {
+    await api.validate()
+  }
   return { ...innerValue.value }
 }
 
 function reset() {
-  const nextValue: Record<string, any> = {}
-  props.schema.fields.forEach(field => {
-    nextValue[field.key] = field.defaultValue ?? undefined
-  })
-  innerValue.value = nextValue
+  const api = formApi.value || formRef.value?.fapi
+  api?.resetFields?.()
+  innerValue.value = {}
+  emit('update:modelValue', {})
 }
 
 defineExpose({
   validate,
-  reset
+  reset,
 })
 </script>
+
+<style scoped>
+.low-code-form-renderer {
+  width: 100%;
+}
+
+.low-code-form-renderer :deep(.form-create) {
+  width: 100%;
+}
+
+.low-code-form-renderer :deep(.ant-form-item:last-child) {
+  margin-bottom: 0;
+}
+</style>

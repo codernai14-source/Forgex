@@ -244,8 +244,10 @@ onMounted(() => {
 .form-content-detail {
   margin-top: 16px;
   padding: 16px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
+  background: var(--fx-fill-secondary, #f5f5f5);
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: var(--fx-radius, 8px);
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 
 .form-content-detail pre {
@@ -255,11 +257,13 @@ onMounted(() => {
   font-family: 'Courier New', Courier, monospace;
   font-size: 12px;
   line-height: 1.5;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 
 .form-content-detail h4 {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 600;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 </style>

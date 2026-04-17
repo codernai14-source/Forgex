@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.basic;
 
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
+import com.forgex.common.api.feign.AuthPermClient;
 import com.forgex.common.feign.client.EncodeRuleFeignClient;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -34,7 +35,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication(scanBasePackages = {"com.forgex.basic", "com.forgex.common"},
         exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
-@EnableFeignClients(clients = EncodeRuleFeignClient.class)
+@EnableFeignClients(clients = {EncodeRuleFeignClient.class, AuthPermClient.class})
 @EnableAsync
 @Import(DynamicDataSourceAutoConfiguration.class)
 @MapperScan({"com.forgex.basic.mapper", "com.forgex.common.mapper"})

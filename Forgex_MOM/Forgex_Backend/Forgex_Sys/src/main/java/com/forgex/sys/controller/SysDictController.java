@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.DictDTO;
@@ -40,11 +41,13 @@ public class SysDictController {
     @Autowired
     private IDictService dictService;
 
+    @RequirePerm("sys:dict:view")
     @PostMapping("/tree")
     public R<List<DictTreeVO>> tree() {
         return R.ok(dictService.getDictTree(getCurrentTenantId()));
     }
 
+    @RequirePerm("sys:dict:view")
     @PostMapping("/page")
     public R<IPage<DictTreeVO>> page(@RequestBody(required = false) DictPageParam param) {
         DictPageParam query = param == null ? new DictPageParam() : param;
@@ -69,6 +72,7 @@ public class SysDictController {
         return R.ok(dictService.getDictItemsByPath(nodePath, getCurrentTenantId()));
     }
 
+    @RequirePerm("sys:dict:add")
     @PostMapping("/create")
     public R<Boolean> create(@RequestBody DictDTO dictDTO) {
         dictDTO.setTenantId(getCurrentTenantId());
@@ -76,6 +80,7 @@ public class SysDictController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, true);
     }
 
+    @RequirePerm("sys:dict:edit")
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody DictDTO dictDTO) {
         dictDTO.setTenantId(getCurrentTenantId());
@@ -83,6 +88,7 @@ public class SysDictController {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, true);
     }
 
+    @RequirePerm("sys:dict:delete")
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody IdParam param) {
         Long id = param.getId();

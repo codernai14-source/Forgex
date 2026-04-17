@@ -49,6 +49,7 @@ public class CommonTableController {
     private final FxUserTableConfigService userTableConfigService;
     private final FxUserTableConfigMapper userTableConfigMapper;
 
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/get")
     public R<FxTableConfigDTO> get(@RequestBody TableConfigGetParam param) {
         String tableCode = param == null ? null : param.getTableCode();
@@ -71,6 +72,7 @@ public class CommonTableController {
      * @param param 查询参数，包含 tableCode 和 isPublicConfig
      * @return 表格配置 DTO
      */
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/getWithMode")
     public R<FxTableConfigDTO> getWithMode(@RequestBody TableConfigGetParam param) {
         String tableCode = param == null ? null : param.getTableCode();
@@ -88,6 +90,7 @@ public class CommonTableController {
         return R.ok(cfg);
     }
 
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/list")
     public R<IPage<FxTableConfigDTO>> list(@RequestBody TableConfigGetParam param) {
         String tableCode = param == null ? null : param.getTableCode();
@@ -125,6 +128,7 @@ public class CommonTableController {
      * @param param 查询参数，包含id
      * @return 表格配置详情VO
      */
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/info")
     public R<TableConfigDetailVO> info(@RequestBody TableConfigGetParam param) {
         if (param == null || param.getId() == null) {
@@ -458,6 +462,7 @@ public class CommonTableController {
      * @param param 查询参数，包含id和enabled
      * @return 操作结果
      */
+    @RequirePerm("sys:tableConfig:edit")
     @PostMapping("/updateStatus")
     public R<Void> updateStatus(@RequestBody TableConfigGetParam param) {
         if (param == null || param.getId() == null) {

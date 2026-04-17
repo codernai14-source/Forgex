@@ -60,7 +60,7 @@
             v-permission="'wf:taskConfig:config'"
             @click="handleNodeConfig(record)"
           >
-            {{ t('workflow.taskConfig.nodeConfig') }}
+            {{ t('workflow.taskConfig.approvalConfig') }}
           </a-button>
           <a-button
             type="link"
@@ -138,8 +138,8 @@
 
         <a-form-item v-else :label="t('workflow.taskConfig.list.formContentJson')">
           <a-alert
-            message="低代码表单将在下一步设计"
-            description="新建草稿时会自动生成一个空的低代码表单结构。保存后进入“节点配置”页面，在第 1 步完成字段设计即可。"
+            :message="t('workflow.taskConfig.lowCodeDesigner.nextStepMessage')"
+            :description="t('workflow.taskConfig.lowCodeDesigner.nextStepDescription')"
             type="info"
             show-icon
           />

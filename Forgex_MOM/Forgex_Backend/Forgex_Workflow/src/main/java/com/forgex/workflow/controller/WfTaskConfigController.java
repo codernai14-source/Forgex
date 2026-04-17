@@ -1,9 +1,13 @@
 package com.forgex.workflow.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.PermKeyService;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import com.forgex.workflow.domain.dto.WfTaskConfigDTO;
 import com.forgex.workflow.domain.dto.WfTaskConfigSummaryDTO;
 import com.forgex.workflow.domain.dto.WfTaskDraftEditorDTO;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 审批任务配置控制器
@@ -47,6 +52,7 @@ import java.util.Map;
 public class WfTaskConfigController {
 
     private final IWfTaskConfigService taskConfigService;
+    private final PermKeyService permKeyService;
 
     /**
      * 分页查询审批任务配置
@@ -196,7 +202,7 @@ public class WfTaskConfigController {
      * @see IWfTaskConfigService#updateStatus(Long, Integer) 更新状态服务方法
      */
     @PostMapping("/updateStatus")
-    @RequirePerm({"wf:taskConfig:add", "wf:taskConfig:edit"})
+    @RequirePerm("wf:taskConfig:edit")
     public R<Boolean> updateStatus(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
         Integer status = Integer.valueOf(params.get("status").toString());
@@ -216,8 +222,8 @@ public class WfTaskConfigController {
      * @see WfTaskDraftEditorDTO 草稿编辑器数据传输对象
      */
     @PostMapping("/draft/editor")
-    @RequirePerm({"wf:taskConfig:add", "wf:taskConfig:edit", "wf:taskConfig:config"})
     public R<WfTaskDraftEditorDTO> getOrCreateDraftEditor(@RequestBody WfTaskDraftEditorQueryParam param) {
+        requireAnyTaskConfigPerm("wf:taskConfig:add", "wf:taskConfig:edit", "wf:taskConfig:config");
         return R.ok(taskConfigService.getOrCreateDraftEditor(param));
     }
 
@@ -234,8 +240,8 @@ public class WfTaskConfigController {
      * @see WfTaskDraftEditorDTO 草稿编辑器数据传输对象
      */
     @PostMapping("/draft/base/save")
-    @RequirePerm({"wf:taskConfig:add", "wf:taskConfig:edit"})
     public R<WfTaskDraftEditorDTO> saveDraftBaseInfo(@Validated @RequestBody WfTaskConfigSaveParam param) {
+        requireDraftBasePerm(param);
         return R.ok(CommonPrompt.UPDATE_SUCCESS, taskConfigService.saveDraftBaseInfo(param));
     }
 
@@ -252,7 +258,7 @@ public class WfTaskConfigController {
      * @see WfTaskGraphDTO 任务流程图数据传输对象
      */
     @PostMapping("/draft/graph/get")
-    @RequirePerm({"wf:taskConfig:edit", "wf:taskConfig:config"})
+    @RequirePerm("wf:taskConfig:config")
     public R<WfTaskGraphDTO> getDraftGraph(@RequestBody WfTaskDraftEditorQueryParam param) {
         return R.ok(taskConfigService.getDraftGraph(param));
     }
@@ -270,7 +276,7 @@ public class WfTaskConfigController {
      * @see WfTaskGraphSaveParam 流程图保存参数
      */
     @PostMapping("/draft/graph/save")
-    @RequirePerm({"wf:taskConfig:edit", "wf:taskConfig:config"})
+    @RequirePerm("wf:taskConfig:config")
     public R<Boolean> saveDraftGraph(@Validated @RequestBody WfTaskGraphSaveParam param) {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, taskConfigService.saveDraftGraph(param));
     }
@@ -287,8 +293,27 @@ public class WfTaskConfigController {
      * @see IWfTaskConfigService#publishDraft(WfTaskDraftEditorQueryParam) 发布草稿服务方法
      */
     @PostMapping("/draft/publish")
-    @RequirePerm({"wf:taskConfig:edit", "wf:taskConfig:config"})
+    @RequirePerm("wf:taskConfig:config")
     public R<Boolean> publishDraft(@RequestBody WfTaskDraftEditorQueryParam param) {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, taskConfigService.publishDraft(param));
+    }
+
+    private void requireDraftBasePerm(WfTaskConfigSaveParam param) {
+        String permKey = param != null && param.getId() == null ? "wf:taskConfig:add" : "wf:taskConfig:edit";
+        requireAnyTaskConfigPerm(permKey);
+    }
+
+    private void requireAnyTaskConfigPerm(String... permKeys) {
+        Long userId = CurrentUserUtils.getUserId();
+        Long tenantId = CurrentUserUtils.getTenantId();
+        if (userId == null || tenantId == null) {
+            throw new I18nBusinessException(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
+        }
+        for (String permKey : permKeys) {
+            if (permKeyService.hasAllPerms(userId, tenantId, Set.of(permKey))) {
+                return;
+            }
+        }
+        throw new I18nBusinessException(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
     }
 }

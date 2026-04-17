@@ -32,6 +32,7 @@ public class I18nMessageController {
     private final FxI18nMessageMapper i18nMessageMapper;
     private final ObjectMapper objectMapper;
 
+    @RequirePerm("sys:i18nMessage:view")
     @PostMapping("/page")
     public R<IPage<FxI18nMessage>> page(@RequestBody(required = false) I18nMessageQuery body) {
         I18nMessageQuery query = body == null ? new I18nMessageQuery() : body;
@@ -49,6 +50,7 @@ public class I18nMessageController {
         return R.ok(i18nMessageMapper.selectPage(page, wrapper));
     }
 
+    @RequirePerm("sys:i18nMessage:view")
     @PostMapping("/get")
     public R<FxI18nMessage> get(@RequestBody IdBody body) {
         if (body == null || body.getId() == null) {

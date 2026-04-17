@@ -131,10 +131,32 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         if (path.equals("/api/basic/module/ping") && HttpMethod.GET.equals(method)) {
             return false;
         }
+        if (path.equals("/api/integration/invoke")) {
+            return false;
+        }
+        if (path.equals("/api/integration/third-authorization/validate-token")) {
+            return false;
+        }
+        if (path.startsWith("/api/integration/third-authorization/check-ip-whitelist/")) {
+            return false;
+        }
         if (path.startsWith("/api/files/") && (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method))) {
             return false;
         }
-        return path.startsWith("/api/sys/") || path.startsWith("/api/basic/") || path.startsWith("/api/files/") || path.startsWith("/api/app/");
+        if (path.startsWith("/api/integration/api-config/")
+                || path.startsWith("/api/integration/call-log/")
+                || path.startsWith("/api/integration/param-config/")
+                || path.startsWith("/api/integration/param-mapping/")
+                || path.startsWith("/api/integration/third-system/")
+                || path.startsWith("/api/integration/third-authorization/")) {
+            return true;
+        }
+        return path.startsWith("/api/sys/")
+                || path.startsWith("/api/basic/")
+                || path.startsWith("/api/files/")
+                || path.startsWith("/api/app/")
+                || path.startsWith("/api/wf/")
+                || path.startsWith("/api/report/");
     }
 
     private Mono<Void> writeNotLogin(ServerWebExchange exchange) {
