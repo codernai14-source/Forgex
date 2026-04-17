@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("label_print_config")
+@TableName("basic_label_print_config")
 public class LabelPrintConfig extends BaseEntity {
 
     /**

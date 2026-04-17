@@ -173,10 +173,11 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
         LabelTemplate newVersion = new LabelTemplate();
         newVersion.setTemplateCode(existing.getTemplateCode());
         newVersion.setTemplateName(param.getTemplateName() != null ? param.getTemplateName() : existing.getTemplateName());
-        newVersion.setTemplateType(existing.getTemplateType());
+        // 如果传入了新的模板类型，使用新类型；否则使用旧类型
+        newVersion.setTemplateType(param.getTemplateType() != null ? param.getTemplateType() : existing.getTemplateType());
         newVersion.setTemplateVersion(existing.getTemplateVersion() + 1);
         newVersion.setTemplateContent(param.getTemplateContent() != null ? param.getTemplateContent() : existing.getTemplateContent());
-        newVersion.setDescription(existing.getDescription());
+        newVersion.setDescription(param.getDescription() != null ? param.getDescription() : existing.getDescription());
         newVersion.setStatus(param.getStatus() != null ? param.getStatus() : existing.getStatus());
         newVersion.setIsDefault(existing.getIsDefault());
         newVersion.setFactoryId(param.getFactoryId() != null ? param.getFactoryId() : existing.getFactoryId());
@@ -190,8 +191,8 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
             labelTemplateMapper.updateById(existing);
         }
 
-        log.info("更新模板成功，原模板 ID: {}, 新版本 ID: {}, 新版本号: {}",
-                existing.getId(), newVersion.getId(), newVersion.getTemplateVersion());
+        log.info("更新模板成功，原模板 ID: {}, 新版本 ID: {}, 新版本号: {}, 模板类型: {}",
+                existing.getId(), newVersion.getId(), newVersion.getTemplateVersion(), newVersion.getTemplateType());
     }
 
     /**

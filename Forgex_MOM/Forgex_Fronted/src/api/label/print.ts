@@ -13,5 +13,12 @@ export const labelPrintApi = {
      */
     preview(params: any) {
         return http.post('/label/print/preview', params)
+    },
+
+    /**
+     * 补打标签
+     */
+    reprint(params: any) {
+        return http.post('/label/record/reprint', params)
     }
 }

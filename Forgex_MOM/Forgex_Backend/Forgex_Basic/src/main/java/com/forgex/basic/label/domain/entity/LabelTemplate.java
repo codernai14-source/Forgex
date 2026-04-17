@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("label_template")
+@TableName("basic_label_template")
 public class LabelTemplate extends BaseEntity {
 
     /**

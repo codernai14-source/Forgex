@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  * @since 2026-04-14
  */
 @Data
-@TableName("label_print_record")
+@TableName("basic_label_print_record")
 public class LabelPrintRecord {
 
     /**

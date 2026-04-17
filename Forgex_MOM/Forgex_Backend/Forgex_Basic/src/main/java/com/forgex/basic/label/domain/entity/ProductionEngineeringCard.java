@@ -25,7 +25,7 @@ import java.time.LocalDate;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("production_engineering_card")
+@TableName("basic_production_engineering_card")
 public class ProductionEngineeringCard extends BaseEntity {
 
     /**

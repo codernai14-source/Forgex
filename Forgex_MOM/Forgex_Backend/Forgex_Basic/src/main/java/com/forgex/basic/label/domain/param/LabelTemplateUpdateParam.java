@@ -30,6 +30,11 @@ public class LabelTemplateUpdateParam {
      */
     @Schema(description = "模板名称")
     private String templateName;
+    /**
+     * 模板类型
+     */
+    @Schema(description = "模板类型")
+    private String templateType;
 
     /**
      * 模板内容 JSON

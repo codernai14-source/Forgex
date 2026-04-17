@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  * @since 2026-04-14
  */
 @Data
-@TableName("label_barcode_record")
+@TableName("basic_label_barcode_record")
 public class LabelBarcode {
 
     /**

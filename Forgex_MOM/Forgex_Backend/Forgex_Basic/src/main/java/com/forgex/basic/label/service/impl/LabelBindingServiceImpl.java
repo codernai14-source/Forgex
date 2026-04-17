@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.forgex.basic.factory.domain.entity.BasicFactory;
+import com.forgex.basic.factory.service.FactoryService;
 import com.forgex.basic.label.domain.entity.LabelBinding;
 import com.forgex.basic.label.domain.entity.LabelTemplate;
 import com.forgex.basic.label.enums.MatchPriorityEnum;
@@ -45,6 +47,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
 
     private final LabelBindingMapper labelBindingMapper;
     private final LabelTemplateService labelTemplateService;
+    private final FactoryService factoryService;
 
     /**
      * 分页查询绑定关系列表
@@ -59,7 +62,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
      * @return 绑定关系分页数据
      */
     @Override
-    public IPage<BindingVO> pageBindings(Integer pageNum, Integer pageSize, Long templateId,
+    public IPage<BindingVO> pageBindings(Integer pageNum, Integer pageSize, Long templateId, String templateCode,
                                          String bindingType, String bindingValue, Long factoryId, Long tenantId) {
         Page<LabelBinding> page = new Page<>(pageNum, pageSize);
 
@@ -83,10 +86,53 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
 
         IPage<LabelBinding> entityPage = labelBindingMapper.selectPage(page, wrapper);
 
-        // 转换为 VO
+        // 转换为 VO 并填充工厂名称和模板信息
         IPage<BindingVO> voPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(), entityPage.getTotal());
         List<BindingVO> voList = entityPage.getRecords().stream()
-                .map(this::convertToVO)
+                .map(entity -> {
+                    BindingVO vo = new BindingVO();
+                    vo.setId(entity.getId());
+                    vo.setTemplateId(entity.getTemplateId());
+                    vo.setBindingType(entity.getBindingType());
+                    vo.setBindingValue(entity.getBindingValue());
+                    vo.setPriority(entity.getPriority());
+                    vo.setFactoryId(entity.getFactoryId());
+                    vo.setTenantId(entity.getTenantId());
+                    vo.setCreateBy(entity.getCreateBy());
+                    vo.setCreateTime(entity.getCreateTime());
+                    vo.setUpdateBy(entity.getUpdateBy());
+                    vo.setUpdateTime(entity.getUpdateTime());
+
+                    // 查询模板名称和编码
+                    if (entity.getTemplateId() != null) {
+                        LabelTemplate template = labelTemplateService.getById(entity.getTemplateId());
+                        if (template != null) {
+                            vo.setTemplateName(template.getTemplateName());
+                            vo.setTemplateCode(template.getTemplateCode());
+                        }
+                    }
+
+                    // 查询工厂名称
+                    if (entity.getFactoryId() != null) {
+                        BasicFactory factory = factoryService.getById(entity.getFactoryId());
+                        if (factory != null) {
+                            vo.setFactoryName(factory.getFactoryName());
+                        }
+                    }
+
+                    // 设置绑定名称（根据绑定类型查询对应的名称）
+                    if (entity.getBindingValue() != null) {
+                        vo.setBindingName(entity.getBindingValue()); // 暂时使用绑定值
+                    }
+
+                    // 使用枚举设置绑定类型名称
+                    MatchPriorityEnum priorityEnum = MatchPriorityEnum.getByCode(entity.getBindingType());
+                    if (priorityEnum != null) {
+                        vo.setBindingTypeName(priorityEnum.getDescription());
+                    }
+
+                    return vo;
+                })
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
@@ -327,32 +373,5 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
             labelBindingMapper.insert(binding);
             log.info("创建标签绑定成功，绑定 ID: {}", binding.getId());
         }
-    }
-
-    /**
-     * 转换为 VO
-     *
-     * @param entity 实体对象
-     * @return VO 对象
-     */
-    private BindingVO convertToVO(LabelBinding entity) {
-        BindingVO vo = new BindingVO();
-        BeanUtils.copyProperties(entity, vo);
-
-        // 查询模板名称
-        if (entity.getTemplateId() != null) {
-            LabelTemplate template = labelTemplateService.getById(entity.getTemplateId());
-            if (template != null) {
-                vo.setTemplateName(template.getTemplateName());
-            }
-        }
-
-        // 使用枚举设置绑定类型名称
-        MatchPriorityEnum priorityEnum = MatchPriorityEnum.getByCode(entity.getBindingType());
-        if (priorityEnum != null) {
-            vo.setBindingTypeName(priorityEnum.getDescription());
-        }
-
-        return vo;
     }
 }

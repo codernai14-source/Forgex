@@ -5,6 +5,7 @@
         ref="tableRef"
         table-code="LabelTemplateTable"
         :request="loadData"
+        :dict-options="dictOptions"
         :row-selection="rowSelection"
     >
       <template #toolbar>
@@ -23,18 +24,20 @@
       </template>
 
       <template #status="{ record }">
-        <DictTag dict-code="common_status" :value="record.status" />
+        <a-tag v-if="record.status === 1" color="green">启用</a-tag>
+        <a-tag v-else-if="record.status === 0" color="red">禁用</a-tag>
+        <a-tag v-else color="default">未知</a-tag>
       </template>
 
       <!-- 行操作 -->
       <template #action="{ record }">
         <a-space>
-          <a @click="handleView(record)">查看</a>
-          <a @click="handleEdit(record)">编辑</a>
+          <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+          <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
           <a-dropdown>
-            <a class="ant-dropdown-link" @click.prevent>
+            <a-button type="link" size="small">
               更多 <DownOutlined />
-            </a>
+            </a-button>
             <template #overlay>
               <a-menu>
                 <a-menu-item @click="handleSetDefault(record)">设为默认</a-menu-item>
@@ -54,6 +57,12 @@
         :template-data="currentTemplate"
         @success="handleFormSuccess"
     />
+
+    <!-- 查看详情抽屉 -->
+    <TemplateDetailDrawer
+        v-model:visible="detailVisible"
+        :template-data="currentTemplate"
+    />
   </div>
 </template>
 
@@ -63,11 +72,29 @@ import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined, DownOutlined } from '@ant-design/icons-vue'
 import { labelTemplateApi } from '@/api/label/template'
 import TemplateFormDialog from './components/TemplateFormDialog.vue'
+import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue'
 
 const tableRef = ref()
 const formVisible = ref(false)
+const detailVisible = ref(false)
 const currentTemplate = ref<any>(null)
 const selectedRowKeys = ref<number[]>([])
+
+/**
+ * 字典选项配置
+ */
+const dictOptions = ref({
+  common_status: [
+    { label: '启用', value: 1, color: 'green' },
+    { label: '禁用', value: 0, color: 'red' }
+  ],
+  template_type: [
+    { label: '产品标签', value: 'PRODUCT', color: 'blue' },
+    { label: '物料标签', value: 'MATERIAL', color: 'orange' },
+    { label: '批次标签', value: 'BATCH', color: 'purple' }
+  ]
+})
+
 const rowSelection = ref({
   selectedRowKeys: selectedRowKeys.value,
   onChange: (keys: number[]) => {
@@ -83,20 +110,23 @@ function loadData(params: any) {
 
 // 新增
 function handleAdd() {
+  console.log('新增模板')
   currentTemplate.value = null
   formVisible.value = true
 }
 
 // 编辑
 function handleEdit(record: any) {
+  console.log('编辑模板:', record)
   currentTemplate.value = record
   formVisible.value = true
 }
 
 // 查看
 function handleView(record: any) {
-  // TODO: 跳转到详情页或打开详情弹窗
-  message.info('查看功能待实现')
+  console.log('查看模板:', record)
+  currentTemplate.value = record
+  detailVisible.value = true
 }
 
 // 删除

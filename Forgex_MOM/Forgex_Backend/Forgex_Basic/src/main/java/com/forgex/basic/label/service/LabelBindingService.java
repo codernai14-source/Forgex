@@ -36,7 +36,7 @@ public interface LabelBindingService extends IService<LabelBinding> {
      * @param tenantId 租户 ID
      * @return 绑定关系分页数据
      */
-    IPage<BindingVO> pageBindings(Integer pageNum, Integer pageSize, Long templateId,
+    IPage<BindingVO> pageBindings(Integer pageNum, Integer pageSize, Long templateId,String templateCode,
                                   String bindingType, String bindingValue, Long factoryId, Long tenantId);
 
     /**

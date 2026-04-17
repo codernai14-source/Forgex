@@ -4,7 +4,7 @@
     <FxDynamicTable
         ref="tableRef"
         :request="loadData"
-        table-code="label_binding_table"
+        table-code="LabelBindingTable"
     >
       <template #toolbar>
         <a-space>
@@ -25,8 +25,8 @@
 
       <template #action="{ record }">
         <a-space>
-          <a @click="handleEdit(record)">编辑</a>
-          <a @click="handleDelete(record)">删除</a>
+          <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
+          <a-button type="link" size="small" danger @click="handleDelete(record)">删除</a-button>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -55,11 +55,13 @@ function loadData(params: any) {
 }
 
 function handleAdd() {
+  console.log('新增绑定')
   currentBinding.value = null
   formVisible.value = true
 }
 
 function handleEdit(record: any) {
+  console.log('编辑绑定:', record)
   currentBinding.value = record
   formVisible.value = true
 }
@@ -83,7 +85,7 @@ async function handleMatchTemplate() {
     message.success('智能匹配执行成功')
     tableRef.value?.reload()
   } catch (error) {
-    // 错误由 http 拦截器处理
+    message.error('智能匹配失败')
   }
 }
 

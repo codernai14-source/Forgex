@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("label_print_exception")
+@TableName("basic_label_print_exception")
 public class LabelPrintException extends BaseEntity {
 
     /**

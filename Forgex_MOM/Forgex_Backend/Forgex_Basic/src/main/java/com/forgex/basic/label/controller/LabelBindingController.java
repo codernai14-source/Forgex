@@ -6,7 +6,6 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
-import com.forgex.basic.label.domain.dto.LabelBindingDTO;
 import com.forgex.basic.label.domain.param.IdParam;
 import com.forgex.basic.label.domain.param.LabelBindingMatchParam;
 import com.forgex.basic.label.domain.param.LabelBindingSaveParam;
@@ -53,15 +52,15 @@ public class LabelBindingController {
     @RequirePerm("label:binding:query")
     @PostMapping("/page")
     public R<IPage<BindingVO>> page(@RequestBody Map<String, Object> body) {
-        Integer pageNum = body.get("pageNum") != null ? Integer.valueOf(body.get("pageNum").toString()) : 1;
-        Integer pageSize = body.get("pageSize") != null ? Integer.valueOf(body.get("pageSize").toString()) : 10;
+        Integer pageNum = body.get("pageNum") != null ? Integer.parseInt(body.get("pageNum").toString()) : 1;
+        Integer pageSize = body.get("pageSize") != null ? Integer.parseInt(body.get("pageSize").toString()) : 10;
         Long templateId = body.get("templateId") != null ? Long.valueOf(body.get("templateId").toString()) : null;
+        String templateCode = body.get("templateCode") != null ? body.get("templateCode").toString() : null;
         String bindingType = body.get("bindingType") != null ? body.get("bindingType").toString() : null;
         String bindingValue = body.get("bindingValue") != null ? body.get("bindingValue").toString() : null;
         Long factoryId = body.get("factoryId") != null ? Long.valueOf(body.get("factoryId").toString()) : null;
-
         Long tenantId = TenantContext.get();
-        IPage<BindingVO> page = labelBindingService.pageBindings(pageNum, pageSize, templateId, bindingType, bindingValue, factoryId, tenantId);
+        IPage<BindingVO> page = labelBindingService.pageBindings(pageNum, pageSize, templateId, templateCode,bindingType,bindingValue, factoryId, tenantId);
         return R.ok(page);
     }
 
@@ -83,7 +82,6 @@ public class LabelBindingController {
         Long bindingId = labelBindingService.addBinding(param, tenantId);
         return R.ok(bindingId);
     }
-
     /**
      * 修改绑定关系
      * <p>
