@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.basic.customer.domain.entity.BasicCustomer;
 import com.forgex.basic.customer.service.ICustomerService;
 import com.forgex.basic.label.domain.entity.ProductionEngineeringCard;
-import com.forgex.basic.label.mapper.LabelBarcodeMapper;
 import com.forgex.basic.label.mapper.ProductionEngineeringCardMapper;
 import com.forgex.basic.material.domain.entity.BasicMaterial;
 import com.forgex.basic.material.service.IMaterialService;

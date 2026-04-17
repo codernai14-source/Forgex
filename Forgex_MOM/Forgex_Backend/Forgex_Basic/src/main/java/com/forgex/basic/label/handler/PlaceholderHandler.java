@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -99,11 +100,7 @@ public class PlaceholderHandler {
 
             if (value != null) {
                 replacement = String.valueOf(value);
-            } else if (defaultValue != null) {
-                replacement = defaultValue;
-            } else {
-                replacement = "";
-            }
+            } else replacement = Objects.requireNonNullElse(defaultValue, "");
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
         }
@@ -161,8 +158,7 @@ public class PlaceholderHandler {
 
             Object listObj = getDataValue(data, listField);
 
-            if (listObj instanceof List) {
-                List<?> list = (List<?>) listObj;
+            if (listObj instanceof List<?> list) {
                 StringBuilder itemsHtml = new StringBuilder();
 
                 for (Object item : list) {
@@ -281,18 +277,13 @@ public class PlaceholderHandler {
             return "";
         }
 
-        switch (formatType.toLowerCase()) {
-            case "uppercase":
-                return value.toString().toUpperCase();
-            case "lowercase":
-                return value.toString().toLowerCase();
-            case "date":
-                return formatDate(value, formatParam);
-            case "number":
-                return formatNumber(value, formatParam);
-            default:
-                return value.toString();
-        }
+        return switch (formatType.toLowerCase()) {
+            case "uppercase" -> value.toString().toUpperCase();
+            case "lowercase" -> value.toString().toLowerCase();
+            case "date" -> formatDate(value, formatParam);
+            case "number" -> formatNumber(value, formatParam);
+            default -> value.toString();
+        };
     }
 
     /**
