@@ -1,0 +1,22 @@
+[
+  {
+    "activatedAt": "2026-04-17T09:14:49.9390756+08:00",
+    "licenseId": "LIC-273EE13C46F144889C317285B5DDE86B",
+    "customerCode": "FXC-B6EA485F",
+    "machineCode": "23600FD1C3D798342B92C5274CA201048B8A292D4EAF11BE4C6ABA772AF434B0",
+    "effectiveAt": "2026-04-17T09:14:46.8489420+08:00",
+    "expireAt": "2036-04-14T09:14:46.8489420+08:00",
+    "edition": "dev",
+    "modules": [
+      "gateway",
+      "auth",
+      "sys",
+      "basic",
+      "job",
+      "integration",
+      "workflow",
+      "report"
+    ],
+    "licensePath": "D:\\forgex\\forgex\\license\\license.lic"
+  }
+]
