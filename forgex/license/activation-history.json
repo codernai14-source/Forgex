@@ -1,11 +1,11 @@
 [
   {
-    "activatedAt": "2026-04-17T09:14:49.9390756+08:00",
-    "licenseId": "LIC-273EE13C46F144889C317285B5DDE86B",
-    "customerCode": "FXC-B6EA485F",
-    "machineCode": "23600FD1C3D798342B92C5274CA201048B8A292D4EAF11BE4C6ABA772AF434B0",
-    "effectiveAt": "2026-04-17T09:14:46.8489420+08:00",
-    "expireAt": "2036-04-14T09:14:46.8489420+08:00",
+    "activatedAt": "2026-04-16T18:02:59.4806573+08:00",
+    "licenseId": "LIC-0F5E25EFA07A434A80B83EB209FF81F2",
+    "customerCode": "FXC-4A8C0F73",
+    "machineCode": "32ADF62B35DD02E1BA2D31EED7FFF445C0FF7216E24621CAF53ECFBACEA68F61",
+    "effectiveAt": "2026-04-16T18:02:59.2456617+08:00",
+    "expireAt": "2027-04-16T18:02:59.2456617+08:00",
     "edition": "dev",
     "modules": [
       "gateway",
@@ -17,6 +17,66 @@
       "workflow",
       "report"
     ],
-    "licensePath": "D:\\forgex\\forgex\\license\\license.lic"
+    "licensePath": "D:\\mine_product\\forgex\\forgex\\license\\license.lic"
+  },
+  {
+    "activatedAt": "2026-04-16T18:28:38.8055096+08:00",
+    "licenseId": "LIC-D13ED184A9064E50AE2415EF5E7D719D",
+    "customerCode": "FXC-4A8C0F73",
+    "machineCode": "32ADF62B35DD02E1BA2D31EED7FFF445C0FF7216E24621CAF53ECFBACEA68F61",
+    "effectiveAt": "2026-04-16T18:28:37.2632051+08:00",
+    "expireAt": "2036-04-13T18:28:37.2632051+08:00",
+    "edition": "dev",
+    "modules": [
+      "gateway",
+      "auth",
+      "sys",
+      "basic",
+      "job",
+      "integration",
+      "workflow",
+      "report"
+    ],
+    "licensePath": "D:\\mine_product\\forgex\\forgex\\license\\license.lic"
+  },
+  {
+    "activatedAt": "2026-04-16T18:51:44.5063965+08:00",
+    "licenseId": "LIC-773BD2B6186B47DDB04CA1CF460FA5A4",
+    "customerCode": "FXC-4A8C0F73",
+    "machineCode": "32ADF62B35DD02E1BA2D31EED7FFF445C0FF7216E24621CAF53ECFBACEA68F61",
+    "effectiveAt": "2026-04-16T18:51:42.6226545+08:00",
+    "expireAt": "2036-04-13T18:51:42.6226545+08:00",
+    "edition": "dev",
+    "modules": [
+      "gateway",
+      "auth",
+      "sys",
+      "basic",
+      "job",
+      "integration",
+      "workflow",
+      "report"
+    ],
+    "licensePath": "D:\\mine_product\\forgex\\forgex\\license\\license.lic"
+  },
+  {
+    "activatedAt": "2026-04-16T19:12:48.6522460+08:00",
+    "licenseId": "LIC-0B69319D72ED4398A32B007B5578BECA",
+    "customerCode": "FXC-4A8C0F73",
+    "machineCode": "32ADF62B35DD02E1BA2D31EED7FFF445C0FF7216E24621CAF53ECFBACEA68F61",
+    "effectiveAt": "2026-04-16T19:12:47.1699939+08:00",
+    "expireAt": "2036-04-13T19:12:47.1699939+08:00",
+    "edition": "dev",
+    "modules": [
+      "gateway",
+      "auth",
+      "sys",
+      "basic",
+      "job",
+      "integration",
+      "workflow",
+      "report"
+    ],
+    "licensePath": "D:\\mine_product\\forgex\\forgex\\license\\license.lic"
   }
 ]

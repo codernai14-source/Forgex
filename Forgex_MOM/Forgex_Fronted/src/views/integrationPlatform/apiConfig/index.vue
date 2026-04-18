@@ -1,80 +1,25 @@
 <template>
   <div class="api-config-management">
-    <a-card :bordered="false" class="query-card">
-      <a-form layout="inline" :model="queryForm">
-        <a-form-item :label="t('integration.apiConfig.apiCode')">
-          <a-input
-            v-model:value="queryForm.apiCode"
-            :placeholder="t('integration.apiConfig.form.apiCode')"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-
-        <a-form-item :label="t('integration.apiConfig.apiName')">
-          <a-input
-            v-model:value="queryForm.apiName"
-            :placeholder="t('integration.apiConfig.form.apiName')"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-
-        <a-form-item :label="t('integration.apiConfig.operationType')">
-          <a-select
-            v-model:value="queryForm.operationType"
-            :placeholder="t('integration.apiConfig.form.operationType')"
-            allow-clear
-            style="width: 150px"
-          >
-            <a-select-option value="CREATE">创建</a-select-option>
-            <a-select-option value="UPDATE">更新</a-select-option>
-            <a-select-option value="DELETE">删除</a-select-option>
-            <a-select-option value="READ">查询</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item :label="t('integration.apiConfig.callMethod')">
-          <a-select
-            v-model:value="queryForm.callMethod"
-            :placeholder="t('integration.apiConfig.form.callMethod')"
-            allow-clear
-            style="width: 150px"
-          >
-            <a-select-option value="SYNC">同步</a-select-option>
-            <a-select-option value="ASYNC">异步</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item :label="t('integration.apiConfig.status')">
-          <a-select
-            v-model:value="queryForm.status"
-            :placeholder="t('integration.apiConfig.form.status')"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option :value="1">启用</a-select-option>
-            <a-select-option :value="0">停用</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">{{ t('common.search') }}</a-button>
-            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
-    <a-card :bordered="false" class="table-card">
-      <div style="margin-bottom: 16px">
+    <fx-dynamic-table
+      ref="tableRef"
+      :table-code="'ApiConfigTable'"
+      :request="handleRequest"
+      :dynamic-table-config="dynamicTableConfig"
+      :dict-options="dictOptions"
+      :show-query-form="true"
+      row-key="id"
+      :row-selection="{
+        selectedRowKeys,
+        onChange: handleSelectionChange,
+      }"
+    >
+      <template #toolbar>
         <a-space>
-          <a-button v-permission="'integration:apiConfig:add'" type="primary" @click="openAddDialog">
+          <a-button v-permission="'integration:api-config:add'" type="primary" @click="openAddDialog">
             {{ t('integration.apiConfig.add') }}
           </a-button>
           <a-button
-            v-permission="'integration:apiConfig:delete'"
+            v-permission="'integration:api-config:delete'"
             danger
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
@@ -82,52 +27,39 @@
             {{ t('common.batchDelete') }}
           </a-button>
         </a-space>
-      </div>
+      </template>
 
-      <div ref="tableWrapRef" class="table-wrap">
-        <a-table
-          :columns="columns"
-          :data-source="dataSource"
-          :loading="loading"
-          :pagination="pagination"
-          :scroll="tableScroll"
-          :row-key="rowKey"
-          :row-selection="{ selectedRowKeys, onChange: handleSelectionChange }"
-          @change="handleTableChange"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'operationType'">
-              <a-tag v-if="record.operationType === 'CREATE'" color="green">创建</a-tag>
-              <a-tag v-else-if="record.operationType === 'UPDATE'" color="blue">更新</a-tag>
-              <a-tag v-else-if="record.operationType === 'DELETE'" color="red">删除</a-tag>
-              <a-tag v-else color="default">查询</a-tag>
-            </template>
+      <template #direction="{ record }">
+        <a-tag :color="record.direction === 'INBOUND' ? 'blue' : 'cyan'">
+          {{ record.direction === 'INBOUND' ? t('integration.common.inbound') : t('integration.common.outbound') }}
+        </a-tag>
+      </template>
 
-            <template v-else-if="column.key === 'callMethod'">
-              <a-tag v-if="record.callMethod === 'SYNC'" color="blue">同步</a-tag>
-              <a-tag v-else color="orange">异步</a-tag>
-            </template>
+      <template #callMethod="{ record }">
+        <a-tag color="purple">{{ record.callMethod || '-' }}</a-tag>
+      </template>
 
-            <template v-else-if="column.key === 'status'">
-              <a-switch
-                v-permission="'integration:apiConfig:edit'"
-                :checked="record.status === 1"
-                :loading="record.statusLoading"
-                @change="(checked: boolean) => handleToggleStatus(record.id!, checked ? 1 : 0)"
-              />
-            </template>
+      <template #status="{ record }">
+        <a-switch
+          v-permission="'integration:api-config:edit'"
+          :checked="record.status === 1"
+          :loading="record.statusLoading"
+          @change="(checked: boolean) => handleToggleStatus(record, checked)"
+        />
+      </template>
 
-            <template v-else-if="column.key === 'action'">
-              <a-space>
-                <a v-permission="'integration:apiConfig:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
-                <a v-permission="'integration:apiConfig:delete'" style="color: #ff4d4f" @click="handleDelete(record.id!)">{{ t('common.delete') }}</a>
-                <a v-permission="'integration:apiConfig:paramConfig'" @click="openParamConfigDialog(record)">参数配置</a>
-              </a-space>
-            </template>
-          </template>
-        </a-table>
-      </div>
-    </a-card>
+      <template #action="{ record }">
+        <a-space>
+          <a v-permission="'integration:api-config:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
+          <a v-permission="'integration:api-config:config-param'" @click="openParamConfigDialog(record)">
+            {{ t('integration.apiConfig.paramConfig') }}
+          </a>
+          <a v-permission="'integration:api-config:delete'" class="danger-link" @click="handleDelete(record.id!)">
+            {{ t('common.delete') }}
+          </a>
+        </a-space>
+      </template>
+    </fx-dynamic-table>
 
     <ApiConfigFormDialog
       v-model:open="dialogVisible"
@@ -135,139 +67,91 @@
       :config-id="currentConfigId"
       @success="handleFormSuccess"
     />
+
+    <ApiParamConfigDialog
+      v-model:open="paramDialogVisible"
+      :api-config="currentApiConfig"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { Modal } from 'ant-design-vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiConfigFormDialog from './components/ApiConfigFormDialog.vue'
+import ApiParamConfigDialog from './components/ApiParamConfigDialog.vue'
 import {
   batchDeleteApiConfigs,
   deleteApiConfig,
+  disableApiConfig,
+  enableApiConfig,
   getApiConfigList,
-  toggleApiConfigStatus,
 } from '@/api/system/integration'
-import type { ApiConfigItem } from '@/api/system/integration'
-import { getI18nValue } from '@/utils/i18n'
+import type { ApiConfigItem, IntegrationDirection } from '@/api/system/integration'
 
 const { t } = useI18n({ useScope: 'global' })
 
-const loading = ref(false)
-const dataSource = ref<ApiConfigItem[]>([])
+const tableRef = ref<InstanceType<typeof FxDynamicTable>>()
 const selectedRowKeys = ref<number[]>([])
-const tableWrapRef = ref<HTMLElement | null>(null)
-const autoScrollY = ref<number | undefined>(undefined)
 const dialogVisible = ref(false)
+const paramDialogVisible = ref(false)
 const isEdit = ref(false)
-const currentConfigId = ref<number | undefined>()
+const currentConfigId = ref<number>()
+const currentApiConfig = ref<ApiConfigItem>()
 
-let computeScrollYRafPending = false
-let tableWrapObserver: MutationObserver | null = null
-
-const queryForm = reactive({
-  apiCode: '',
-  apiName: '',
-  operationType: undefined as string | undefined,
-  callMethod: undefined as string | undefined,
-  status: undefined as number | undefined,
-})
-
-const pagination = reactive({
-  current: 1,
-  pageSize: 20,
-  total: 0,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => t('common.total', { total }),
-  hideOnSinglePage: false,
-})
-
-const columns = computed(() => [
-  { title: t('integration.apiConfig.apiCode'), dataIndex: 'apiCode', key: 'apiCode', width: 180 },
-  { title: t('integration.apiConfig.apiName'), dataIndex: 'apiName', key: 'apiName', width: 220, ellipsis: true },
-  { title: '操作方向', dataIndex: 'operationType', key: 'operationType', width: 120 },
-  { title: '调用方式', dataIndex: 'callMethod', key: 'callMethod', width: 100 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100, align: 'center' as const },
-  { title: t('system.user.createBy'), dataIndex: 'createBy', key: 'createBy', width: 120 },
-  { title: t('common.createTime'), dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: t('common.action'), key: 'action', width: 200, fixed: 'right' as const },
-])
-
-const tableScroll = computed(() => ({ x: 1210, y: autoScrollY.value }))
-const rowKey = (record: ApiConfigItem) => record.id ?? record.apiCode
-
-async function fetchData() {
-  loading.value = true
-  try {
-    const result = await getApiConfigList({
-      ...queryForm,
-      current: pagination.current,
-      pageSize: pagination.pageSize,
-    })
-    dataSource.value = result.records || []
-    pagination.total = result.total || 0
-    await nextTick()
-    scheduleComputeAutoScrollY()
-  } catch (error) {
-    console.error('load api config failed:', error)
-  } finally {
-    loading.value = false
-  }
+const dictOptions = {
+  integrationDirection: [
+    { label: t('integration.common.inbound'), value: 'INBOUND' },
+    { label: t('integration.common.outbound'), value: 'OUTBOUND' },
+  ],
+  integrationStatus: [
+    { label: t('integration.common.enabled'), value: 1 },
+    { label: t('integration.common.disabled'), value: 0 },
+  ],
 }
 
-function onResizeOrScroll() {
-  scheduleComputeAutoScrollY()
+const dynamicTableConfig: Partial<FxTableConfig> = {
+  columns: [
+    { field: 'apiCode', title: t('integration.apiConfig.apiCode'), width: 180, align: 'left', visible: true },
+    { field: 'apiName', title: t('integration.apiConfig.apiName'), width: 200, align: 'left', ellipsis: true, visible: true },
+    { field: 'direction', title: t('integration.apiConfig.direction'), width: 120, align: 'center', visible: true },
+    { field: 'apiPath', title: t('integration.apiConfig.apiPath'), width: 220, align: 'left', ellipsis: true, visible: true },
+    { field: 'callMethod', title: t('integration.apiConfig.callMethod'), width: 120, align: 'center', visible: true },
+    { field: 'targetUrl', title: t('integration.apiConfig.targetUrl'), width: 240, align: 'left', ellipsis: true, visible: true },
+    { field: 'callCount', title: t('integration.apiConfig.callCount'), width: 110, align: 'center', visible: true },
+    { field: 'status', title: t('integration.apiConfig.status'), width: 100, align: 'center', visible: true },
+    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center', visible: true },
+    { field: 'action', title: t('common.action'), width: 220, align: 'center', fixed: 'right', visible: true },
+  ],
+  queryFields: [
+    { field: 'apiCode', label: t('integration.apiConfig.apiCode'), queryType: 'input', queryOperator: 'like' },
+    { field: 'apiName', label: t('integration.apiConfig.apiName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'direction', label: t('integration.apiConfig.direction'), queryType: 'select', queryOperator: 'eq', dictCode: 'integrationDirection' },
+    { field: 'status', label: t('integration.apiConfig.status'), queryType: 'select', queryOperator: 'eq', dictCode: 'integrationStatus' },
+  ],
 }
 
-function scheduleComputeAutoScrollY() {
-  if (computeScrollYRafPending) return
-  computeScrollYRafPending = true
-  requestAnimationFrame(() => {
-    computeScrollYRafPending = false
-    computeAutoScrollY()
+async function handleRequest(payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+}) {
+  const query = { ...payload.query }
+  const result = await getApiConfigList({
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    apiCode: query.apiCode || undefined,
+    apiName: query.apiName || undefined,
+    direction: (query.direction || undefined) as IntegrationDirection | undefined,
+    status: query.status === '' || query.status === undefined ? undefined : Number(query.status),
   })
-}
 
-function computeAutoScrollY() {
-  const wrapEl = tableWrapRef.value
-  if (!wrapEl) {
-    autoScrollY.value = undefined
-    return
+  return {
+    records: (result.records || []).map(item => ({ ...item, statusLoading: false })),
+    total: Number(result.total || 0),
   }
-  const rect = wrapEl.getBoundingClientRect()
-  if (!Number.isFinite(rect.height) || rect.height <= 0) {
-    autoScrollY.value = undefined
-    return
-  }
-  const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
-  const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
-  const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
-  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
-  const nextY = Math.floor(rect.height - paginationHeight - headerHeight - 36)
-  autoScrollY.value = nextY > 100 ? nextY : undefined
-}
-
-function handleSearch() {
-  pagination.current = 1
-  fetchData()
-}
-
-function handleReset() {
-  queryForm.apiCode = ''
-  queryForm.apiName = ''
-  queryForm.operationType = undefined
-  queryForm.callMethod = undefined
-  queryForm.status = undefined
-  pagination.current = 1
-  fetchData()
-}
-
-function handleTableChange(pag: { current?: number; pageSize?: number }) {
-  pagination.current = pag.current || 1
-  pagination.pageSize = pag.pageSize || 20
-  fetchData()
 }
 
 function handleSelectionChange(keys: number[]) {
@@ -280,16 +164,15 @@ function openAddDialog() {
   dialogVisible.value = true
 }
 
-async function openEditDialog(record: ApiConfigItem) {
+function openEditDialog(record: ApiConfigItem) {
   isEdit.value = true
   currentConfigId.value = record.id
-  await nextTick()
   dialogVisible.value = true
 }
 
 function handleFormSuccess() {
   dialogVisible.value = false
-  fetchData()
+  void tableRef.value?.refresh?.()
 }
 
 function handleDelete(id: number) {
@@ -298,9 +181,9 @@ function handleDelete(id: number) {
     content: t('common.confirmDeleteMessage'),
     okText: t('common.confirm'),
     cancelText: t('common.cancel'),
-    onOk: async () => {
+    async onOk() {
       await deleteApiConfig(id)
-      fetchData()
+      await tableRef.value?.refresh?.()
     },
   })
 }
@@ -311,72 +194,41 @@ function handleBatchDelete() {
     content: t('common.confirmBatchDeleteMessage', { count: selectedRowKeys.value.length }),
     okText: t('common.confirm'),
     cancelText: t('common.cancel'),
-    onOk: async () => {
+    async onOk() {
       await batchDeleteApiConfigs(selectedRowKeys.value)
       selectedRowKeys.value = []
-      fetchData()
+      await tableRef.value?.refresh?.()
     },
   })
 }
 
-async function handleToggleStatus(id: number, status: number) {
-  const record = dataSource.value.find((item) => item.id === id)
-  if (!record) return
+async function handleToggleStatus(record: ApiConfigItem, checked: boolean) {
   record.statusLoading = true
   try {
-    await toggleApiConfigStatus(id, status)
-    record.status = status
+    if (checked) {
+      await enableApiConfig(record.id!)
+      record.status = 1
+    } else {
+      await disableApiConfig(record.id!)
+      record.status = 0
+    }
   } finally {
     record.statusLoading = false
   }
 }
 
 function openParamConfigDialog(record: ApiConfigItem) {
-  message.info(`参数配置功能开发中 - API: ${record.apiCode}`)
+  currentApiConfig.value = record
+  paramDialogVisible.value = true
 }
-
-onMounted(() => {
-  fetchData()
-  window.addEventListener('resize', onResizeOrScroll)
-  tableWrapObserver = new MutationObserver(() => scheduleComputeAutoScrollY())
-  if (tableWrapRef.value) {
-    tableWrapObserver.observe(tableWrapRef.value, { childList: true, subtree: true })
-  }
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', onResizeOrScroll)
-  tableWrapObserver?.disconnect()
-})
 </script>
 
 <style scoped lang="less">
 .api-config-management {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
   min-height: 0;
 }
 
-.query-card :deep(.ant-card-body) {
-  padding-bottom: 8px;
-}
-
-.table-card {
-  flex: 1;
-  min-height: 0;
-}
-
-.table-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.table-wrap {
-  flex: 1;
-  min-height: 0;
+.danger-link {
+  color: #ff4d4f;
 }
 </style>

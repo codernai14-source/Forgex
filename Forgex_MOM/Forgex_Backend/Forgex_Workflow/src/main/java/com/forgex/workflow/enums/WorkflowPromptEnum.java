@@ -88,6 +88,7 @@ public enum WorkflowPromptEnum implements I18nPrompt {
     WF_EXECUTION_NOT_FOUND_FOR_INIT("WF_EXECUTION_NOT_FOUND_FOR_INIT", "审批执行记录不存在"),
     WF_START_NODE_NOT_CONFIGURED("WF_START_NODE_NOT_CONFIGURED", "审批任务未配置开始节点"),
     WF_NEXT_NODE_NOT_FOUND("WF_NEXT_NODE_NOT_FOUND", "下一节点不存在"),
+    WF_NODE_APPROVER_RESOLVE_EMPTY("WF_NODE_APPROVER_RESOLVE_EMPTY", "审批节点未匹配到有效审批人，请检查角色、岗位或部门配置"),
     
     // ========== 任务配置相关 (WfTaskConfigServiceImpl) ==========
     WF_TASK_CODE_REQUIRED("WF_TASK_CODE_REQUIRED", "任务编码不能为空"),

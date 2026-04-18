@@ -103,13 +103,26 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     @Override
     public ApiConfigDTO getByApiCode(String apiCode) {
         Long tenantId = getCurrentTenantId();
-        ApiConfig config = apiConfigMapper.selectByApiCode(apiCode, tenantId);
+        
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(ApiConfig::getApiCode, apiCode);
+        wrapper.eq(ApiConfig::getTenantId, tenantId);
+        wrapper.last("LIMIT 1");
+        
+        ApiConfig config = apiConfigMapper.selectOne(wrapper);
         return config != null ? convertToDTO(config) : null;
     }
 
     @Override
     public ApiConfigDTO getByProcessorBean(String processorBean) {
-        ApiConfig config = apiConfigMapper.selectByProcessorBean(processorBean);
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(ApiConfig::getProcessorBean, processorBean);
+        wrapper.eq(ApiConfig::getStatus, 1);
+        wrapper.last("LIMIT 1");
+        
+        ApiConfig config = apiConfigMapper.selectOne(wrapper);
         return config != null ? convertToDTO(config) : null;
     }
 
@@ -124,8 +137,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         ApiConfig config = new ApiConfig();
         BeanUtils.copyProperties(dto, config);
-        config.setCreateBy(getCurrentUsername());
-        config.setUpdateBy(getCurrentUsername());
+        // 不需要手动设置 createBy 和 updateBy，MyBatis-Plus 会自动填充
         
         boolean success = this.save(config);
         if (!success) {
@@ -156,8 +168,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         ApiConfig config = new ApiConfig();
         BeanUtils.copyProperties(dto, config);
-        config.setUpdateTime(LocalDateTime.now());
-        config.setUpdateBy(getCurrentUsername());
+        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
         
         boolean success = this.updateById(config);
         if (!success) {
@@ -176,8 +187,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
         
         config.setDeleted(true);
-        config.setUpdateTime(LocalDateTime.now());
-        config.setUpdateBy(getCurrentUsername());
+        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
         
         boolean success = this.updateById(config);
         if (!success) {
@@ -212,8 +222,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
         
         config.setStatus(1);
-        config.setUpdateTime(LocalDateTime.now());
-        config.setUpdateBy(getCurrentUsername());
+        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
         
         boolean success = this.updateById(config);
         if (!success) {
@@ -232,8 +241,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
         
         config.setStatus(0);
-        config.setUpdateTime(LocalDateTime.now());
-        config.setUpdateBy(getCurrentUsername());
+        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
         
         boolean success = this.updateById(config);
         if (!success) {
@@ -253,19 +261,6 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         ApiConfigDTO dto = new ApiConfigDTO();
         BeanUtils.copyProperties(config, dto);
         return dto;
-    }
-
-    /**
-     * 获取当前登录用户
-     *
-     * @return 当前登录用户名，未登录返回 system
-     */
-    private String getCurrentUsername() {
-        try {
-            return StpUtil.getLoginIdAsString();
-        } catch (NotLoginException e) {
-            return "system";
-        }
     }
 
     /**

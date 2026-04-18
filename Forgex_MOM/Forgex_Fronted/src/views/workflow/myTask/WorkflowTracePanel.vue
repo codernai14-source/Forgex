@@ -94,20 +94,24 @@ function formatDateTime(dateTime?: string) {
 .form-content-detail {
   margin-top: 16px;
   padding: 16px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
+  background: var(--fx-fill-secondary, #f5f5f5);
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: var(--fx-radius, 8px);
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 
 .form-content-detail h4 {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 600;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 
 .trace-line {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
 }
 
 .history-item {
@@ -124,6 +128,7 @@ function formatDateTime(dateTime?: string) {
 .history-node {
   font-size: 14px;
   font-weight: 600;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 
 .history-status {
@@ -131,21 +136,30 @@ function formatDateTime(dateTime?: string) {
 }
 
 .history-content {
-  background-color: #f5f5f5;
+  background: var(--fx-bg-container, #ffffff);
+  border: 1px solid var(--fx-border-color, #e5e7eb);
   padding: 12px;
-  border-radius: 4px;
+  border-radius: var(--fx-radius, 8px);
 }
 
 .history-info {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #666;
+  color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
   margin-bottom: 8px;
 }
 
 .history-comment {
   font-size: 13px;
-  color: #333;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
+}
+
+.workflow-trace-panel :deep(.ant-empty-description) {
+  color: var(--fx-text-secondary, rgba(0, 0, 0, 0.45));
+}
+
+.workflow-trace-panel :deep(.ant-timeline-item-content) {
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 </style>

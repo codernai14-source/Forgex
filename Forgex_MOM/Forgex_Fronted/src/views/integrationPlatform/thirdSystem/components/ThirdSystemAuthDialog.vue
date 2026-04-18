@@ -1,166 +1,173 @@
 <template>
-  <a-modal
+  <BaseFormDialog
     v-model:open="visible"
-    title="第三方系统授权"
-    width="900px"
-    :confirm-loading="loading"
-    @ok="handleSubmit"
-    @cancel="handleCancel"
+    :title="t('integration.thirdSystem.auth')"
+    :loading="loading"
+    width="760px"
+    @submit="handleSubmit"
   >
-    <a-form
-      ref="formRef"
-      :model="formData"
-      :rules="rules"
-      :label-col="{ span: 6 }"
-      :wrapper-col="{ span: 16 }"
-    >
-      <a-form-item label="授权方式" name="authType">
-        <a-radio-group v-model:value="formData.authType" button-style="solid">
-          <a-radio-button value="WHITELIST">白名单</a-radio-button>
-          <a-radio-button value="TOKEN">Token 授权</a-radio-button>
+    <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
+      <a-form-item :label="t('integration.thirdSystem.form.authType')" name="authType">
+        <a-radio-group v-model:value="formState.authType">
+          <a-radio value="TOKEN">Token</a-radio>
+          <a-radio value="WHITELIST">IP Whitelist</a-radio>
         </a-radio-group>
       </a-form-item>
 
-      <!-- Token 授权配置 -->
-      <template v-if="formData.authType === 'TOKEN'">
-        <a-form-item label="Token 值" name="tokenValue">
-          <a-input
-            v-model:value="formData.tokenValue"
-            placeholder="请输入 Token 值（留空则自动生成）"
-          />
-        </a-form-item>
+      <template v-if="formState.authType === 'TOKEN'">
+        <a-row :gutter="16">
+          <a-col :span="16">
+            <a-form-item :label="t('integration.thirdSystem.form.tokenValue')" name="tokenValue">
+              <a-input
+                v-model:value="formState.tokenValue"
+                :placeholder="t('integration.thirdSystem.form.tokenValuePlaceholder')"
+              />
+            </a-form-item>
+          </a-col>
 
-        <a-form-item label="有效期（小时）" name="tokenExpireHours">
-          <a-input-number
-            v-model:value="formData.tokenExpireHours"
-            :min="1"
-            :max="8760"
-            placeholder="请输入有效期（1-8760 小时）"
-            style="width: 100%"
-          />
-          <div class="form-item-tip">
-            最长不超过 1 年（8760 小时）
-          </div>
-        </a-form-item>
+          <a-col :span="8">
+            <a-form-item :label="t('integration.thirdSystem.form.tokenExpireHours')" name="tokenExpireHours">
+              <a-input-number
+                v-model:value="formState.tokenExpireHours"
+                :min="1"
+                :max="8760"
+                :placeholder="t('integration.thirdSystem.form.tokenExpireHoursPlaceholder')"
+                style="width: 100%"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-button @click="handleGenerateToken">Generate Token</a-button>
       </template>
 
-      <!-- 白名单授权配置 -->
-      <template v-if="formData.authType === 'WHITELIST'">
-        <a-form-item label="白名单 IP" name="whitelistIps">
-          <a-textarea
-            v-model:value="formData.whitelistIps"
-            placeholder="请输入允许的 IP 地址，多个 IP 用逗号分隔"
-            :rows="4"
-          />
-          <div class="form-item-tip">
-            支持 IPv4 和 IPv6，例如：192.168.1.1,10.0.0.1
-          </div>
-        </a-form-item>
-      </template>
-
-      <a-form-item label="状态" name="status">
-        <a-radio-group v-model:value="formData.status">
-          <a-radio :value="1">启用</a-radio>
-          <a-radio :value="0">禁用</a-radio>
-        </a-radio-group>
-      </a-form-item>
-
-      <a-form-item label="备注" name="remark">
+      <a-form-item v-else :label="t('integration.thirdSystem.form.whitelistIps')" name="whitelistIps">
         <a-textarea
-          v-model:value="formData.remark"
-          placeholder="请输入备注信息"
-          :rows="3"
+          v-model:value="formState.whitelistIps"
+          :rows="4"
+          :placeholder="t('integration.thirdSystem.form.whitelistIpsPlaceholder')"
         />
       </a-form-item>
+
+      <a-form-item :label="t('integration.thirdSystem.status')" name="status">
+        <a-radio-group v-model:value="formState.status">
+          <a-radio :value="1">{{ t('integration.common.enabled') }}</a-radio>
+          <a-radio :value="0">{{ t('integration.common.disabled') }}</a-radio>
+        </a-radio-group>
+      </a-form-item>
+
+      <a-form-item :label="t('integration.thirdSystem.remark')" name="remark">
+        <a-textarea v-model:value="formState.remark" :rows="3" :placeholder="t('integration.thirdSystem.form.remark')" />
+      </a-form-item>
     </a-form>
-  </a-modal>
+  </BaseFormDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
-import type { AuthorizationInfo } from '../types'
+import { useI18n } from 'vue-i18n'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import {
+  addThirdAuthorization,
+  generateThirdAuthorizationToken,
+  getThirdAuthorizationBySystemId,
+  updateThirdAuthorization,
+} from '@/api/system/integration'
+import type { ThirdAuthorizationSubmit } from '@/api/system/integration'
 
 interface Props {
   open: boolean
   systemId?: number
 }
 
+interface Emits {
+  (e: 'update:open', value: boolean): void
+  (e: 'success'): void
+}
+
 const props = withDefaults(defineProps<Props>(), {
   open: false,
-  systemId: undefined
+  systemId: undefined,
 })
 
-const emit = defineEmits<{
-  (e: 'update:open', value: boolean): void
-  (e: 'submit'): void
-}>()
+const emit = defineEmits<Emits>()
+const { t } = useI18n({ useScope: 'global' })
 
-const visible = ref(false)
 const loading = ref(false)
 const formRef = ref<FormInstance>()
 
-const formData = reactive<AuthorizationInfo>({
-  thirdSystemId: props.systemId || 0,
+const visible = computed({
+  get: () => props.open,
+  set: (value: boolean) => emit('update:open', value),
+})
+
+const formState = reactive<ThirdAuthorizationSubmit>({
+  thirdSystemId: 0,
   authType: 'TOKEN',
   tokenValue: '',
   tokenExpireHours: 24,
   whitelistIps: '',
   status: 1,
-  remark: ''
+  remark: '',
 })
 
-const rules = {
-  authType: [
-    { required: true, message: '请选择授权方式', trigger: 'change' }
-  ],
-  tokenValue: [
-    { max: 255, message: 'Token 值不能超过 255 个字符', trigger: 'blur' }
-  ],
-  tokenExpireHours: [
-    { required: true, message: '请输入有效期', trigger: 'change' },
-    { type: 'number', min: 1, max: 8760, message: '有效期必须在 1-8760 之间', trigger: 'change' }
-  ],
-  whitelistIps: [
-    { required: true, message: '请输入白名单 IP', trigger: 'blur' }
-  ]
+const rules = computed(() => ({
+  authType: [{ required: true, message: t('integration.thirdSystem.form.authType'), trigger: 'change' }],
+  whitelistIps: formState.authType === 'WHITELIST'
+    ? [{ required: true, message: t('integration.thirdSystem.form.whitelistIps'), trigger: 'blur' }]
+    : [],
+}))
+
+watch(
+  () => props.open,
+  async (open) => {
+    if (!open || !props.systemId) {
+      return
+    }
+    formState.thirdSystemId = props.systemId
+    formState.id = undefined
+    formState.authType = 'TOKEN'
+    formState.tokenValue = ''
+    formState.tokenExpireHours = 24
+    formState.whitelistIps = ''
+    formState.status = 1
+    formState.remark = ''
+
+    const detail = await getThirdAuthorizationBySystemId(props.systemId)
+    if (detail) {
+      Object.assign(formState, detail)
+    }
+  },
+  { immediate: true }
+)
+
+async function handleGenerateToken() {
+  if (!props.systemId) {
+    return
+  }
+  formState.tokenValue = await generateThirdAuthorizationToken(props.systemId, formState.tokenExpireHours)
 }
 
-watch(() => props.open, (val) => {
-  visible.value = val
-  if (val && props.systemId) {
-    formData.thirdSystemId = props.systemId
-    // TODO: 加载已有的授权信息
+async function handleSubmit() {
+  if (!props.systemId) {
+    return
   }
-})
-
-watch(visible, (val) => {
-  emit('update:open', val)
-})
-
-const handleSubmit = async () => {
   try {
-    await formRef.value?.validate()
     loading.value = true
-    emit('submit')
-  } catch (error) {
-    console.error('表单验证失败', error)
+    await formRef.value?.validate()
+    const payload: ThirdAuthorizationSubmit = {
+      ...formState,
+      thirdSystemId: props.systemId,
+    }
+    if (payload.id) {
+      await updateThirdAuthorization(payload)
+    } else {
+      await addThirdAuthorization(payload)
+    }
+    emit('success')
   } finally {
     loading.value = false
   }
 }
-
-const handleCancel = () => {
-  visible.value = false
-  formRef.value?.resetFields()
-}
 </script>
-
-<style scoped lang="less">
-.form-item-tip {
-  color: #999;
-  font-size: 12px;
-  line-height: 1.5;
-  margin-top: 4px;
-}
-</style>

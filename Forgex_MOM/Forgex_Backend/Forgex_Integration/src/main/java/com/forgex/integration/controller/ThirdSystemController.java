@@ -2,6 +2,7 @@ package com.forgex.integration.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ThirdSystemDTO;
 import com.forgex.integration.domain.param.ThirdSystemParam;
@@ -46,6 +47,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#pageThirdSystems
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:view")
     @PostMapping("/page")
     @Operation(summary = "分页查询第三方系统列表", description = "支持按系统编码、系统名称、状态等条件查询")
     public R<Page<ThirdSystemDTO>> pageThirdSystems(@RequestBody @Validated ThirdSystemParam param) {
@@ -67,6 +69,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#listThirdSystems
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:view")
     @PostMapping("/list")
     @Operation(summary = "查询第三方系统列表", description = "不分页查询，用于下拉框选择")
     public R<List<ThirdSystemDTO>> listThirdSystems(@RequestBody ThirdSystemParam param) {
@@ -87,6 +90,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#getThirdSystemById
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:view")
     @GetMapping("/detail/{id}")
     @Operation(summary = "获取第三方系统详情", description = "根据 ID 查询系统详细信息")
     public R<ThirdSystemDTO> getThirdSystemDetail(@PathVariable Long id) {
@@ -108,6 +112,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#createThirdSystem
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:add")
     @PostMapping("/create")
     @Operation(summary = "创建第三方系统", description = "新增第三方系统信息")
     public R<Void> createThirdSystem(@RequestBody @Validated ThirdSystemDTO dto) {
@@ -129,6 +134,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#updateThirdSystem
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:edit")
     @PostMapping("/update")
     @Operation(summary = "更新第三方系统", description = "修改第三方系统信息")
     public R<Void> updateThirdSystem(@RequestBody @Validated ThirdSystemDTO dto) {
@@ -149,6 +155,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#deleteThirdSystem
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:delete")
     @PostMapping("/delete/{id}")
     @Operation(summary = "删除第三方系统", description = "逻辑删除第三方系统")
     public R<Void> deleteThirdSystem(@PathVariable Long id) {
@@ -170,6 +177,7 @@ public class ThirdSystemController {
      * @see com.forgex.integration.service.IThirdSystemService#batchDeleteThirdSystems
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:batch-delete")
     @PostMapping("/batch-delete")
     @Operation(summary = "批量删除第三方系统", description = "批量删除多个第三方系统")
     public R<Void> batchDeleteThirdSystems(@RequestBody List<Long> ids) {

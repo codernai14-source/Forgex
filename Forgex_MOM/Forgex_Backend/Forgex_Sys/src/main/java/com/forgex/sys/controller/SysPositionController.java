@@ -81,6 +81,7 @@ public class SysPositionController {
      * @see SysPositionQueryDTO
      * @see SysPositionDTO
      */
+    @RequirePerm("sys:position:view")
     @PostMapping("/list")
     public R<List<SysPositionDTO>> list(@RequestBody SysPositionQueryDTO queryDTO) {
         // 1. 从 TenantContext 获取当前租户 ID 并设置
@@ -119,6 +120,7 @@ public class SysPositionController {
      * @see SysPositionQueryDTO
      * @see SysPositionDTO
      */
+    @RequirePerm("sys:position:view")
     @PostMapping("/page")
     public R<IPage<SysPositionDTO>> page(@RequestBody SysPositionQueryDTO queryDTO) {
         // 1. 从 TenantContext 获取当前租户 ID 并设置
@@ -153,6 +155,7 @@ public class SysPositionController {
      * @throws NumberFormatException ID 格式不正确时抛出
      * @see SysPositionDTO
      */
+    @RequirePerm("sys:position:view")
     @PostMapping("/get")
     public R<SysPositionDTO> get(@RequestBody Map<String, Object> params) {
         // 1. 从 TenantContext 获取当前租户 ID

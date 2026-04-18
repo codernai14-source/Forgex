@@ -548,6 +548,116 @@ function normalizeSystemConfigRoutes(routes: any[]) {
   return cloned
 }
 
+function normalizeIntegrationRoutes(routes: any[]) {
+  const cloned = Array.isArray(routes)
+    ? JSON.parse(JSON.stringify(routes))
+    : []
+
+  const integrationRoute = cloned.find((item: any) => String(item?.path || '') === 'integration')
+  if (!integrationRoute || !Array.isArray(integrationRoute.children)) {
+    return cloned
+  }
+
+  const rootChildren = integrationRoute.children
+  const integrationEntryPaths = ['home', 'thirdSystem', 'apiConfig', 'apiCallLog']
+  const promotedMenus: any[] = []
+
+  const collectMenu = (menu: any) => {
+    if (!menu || typeof menu !== 'object') {
+      return
+    }
+    const path = String(menu?.path || '')
+    if (!path) {
+      return
+    }
+    if (integrationEntryPaths.includes(path)) {
+      const normalizedMenu = {
+        ...menu,
+        meta: {
+          ...(menu.meta || {}),
+          module: 'integration',
+          menuLevel: 1,
+          type: menu.meta?.type || 'menu',
+        },
+      }
+      if (path === 'home') {
+        normalizedMenu.meta = {
+          ...normalizedMenu.meta,
+          title: normalizedMenu.meta?.title || 'integration.home.title',
+        }
+      }
+      promotedMenus.push(normalizedMenu)
+    }
+  }
+
+  for (let index = rootChildren.length - 1; index >= 0; index--) {
+    const menu = rootChildren[index]
+    const path = String(menu?.path || '')
+    if (integrationEntryPaths.includes(path)) {
+      collectMenu(menu)
+      rootChildren.splice(index, 1)
+      continue
+    }
+    if (menu?.meta?.type === 'catalog' && Array.isArray(menu.children)) {
+      const remainChildren: any[] = []
+      menu.children.forEach((child: any) => {
+        const childPath = String(child?.path || '')
+        if (integrationEntryPaths.includes(childPath)) {
+          collectMenu(child)
+        } else {
+          remainChildren.push(child)
+        }
+      })
+      if (remainChildren.length === 0) {
+        rootChildren.splice(index, 1)
+      } else {
+        menu.children = remainChildren
+      }
+    }
+  }
+
+  const promotedPathSet = new Set(promotedMenus.map(item => String(item?.path || '')))
+  const homeMenu = promotedMenus.find(item => String(item?.path || '') === 'home') || {
+    path: 'home',
+    name: 'integrationHome',
+    component: 'IntegrationHome',
+    meta: {
+      title: 'integration.home.title',
+      icon: 'HomeOutlined',
+      module: 'integration',
+      menuLevel: 1,
+      type: 'menu',
+    },
+  }
+
+  const finalMenus = [
+    homeMenu,
+    ...promotedMenus.filter(item => String(item?.path || '') !== 'home'),
+  ]
+
+  finalMenus.forEach(menu => {
+    const path = String(menu?.path || '')
+    if (!promotedPathSet.has(path)) {
+      promotedPathSet.add(path)
+    }
+  })
+
+  if (!rootChildren.some((item: any) => String(item?.path || '') === 'home')) {
+    rootChildren.unshift(homeMenu)
+  }
+
+  finalMenus.reverse().forEach(menu => {
+    const path = String(menu?.path || '')
+    const existsIndex = rootChildren.findIndex((item: any) => String(item?.path || '') === path)
+    if (existsIndex !== -1) {
+      rootChildren.splice(existsIndex, 1)
+    }
+    rootChildren.unshift(menu)
+  })
+
+  return cloned
+}
+
 function groupSystemMenus(
   menuList: any[],
   options: {
@@ -658,7 +768,9 @@ export async function injectDynamicRoutes(payload: any) {
 
   // 瑙ｆ瀽妯″潡鍜岃矾鐢辨暟锟?
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
-  const routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
+  let routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
+  routesPayload = normalizeSystemConfigRoutes(routesPayload)
+  routesPayload = normalizeIntegrationRoutes(routesPayload)
 
   // 鏇存柊鍔ㄦ€佹ā鍧楀拰璺敱鍒楄〃
   dynamicModules.value = mods

@@ -362,7 +362,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
         Long tenantId = execution.getTenantId() != null ? execution.getTenantId() : getCurrentTenantId();
         Long[] approvers = determineApprovers(nodeId, tenantId);
         if (approvers.length == 0) {
-            return true;
+            return false;
         }
         LambdaQueryWrapper<WfTaskExecutionApprover> wrapper = new LambdaQueryWrapper<WfTaskExecutionApprover>()
                 .eq(WfTaskExecutionApprover::getExecutionId, executionId)
@@ -504,10 +504,8 @@ public class WfEngineServiceImpl implements IWfEngineService {
                 .distinct()
                 .toArray(Long[]::new);
         if (approvers.length == 0) {
-            detail.setCurrentStatus(1);
-            executionDetailMapper.updateById(detail);
-            log.warn("审批节点未配置审批人，自动流转，executionId={}, nodeId={}", execution.getId(), node.getId());
-            return activateFromNode(execution, node, taskConfig);
+            log.warn("审批节点未匹配到有效审批人，阻止自动流转，executionId={}, nodeId={}", execution.getId(), node.getId());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_NODE_APPROVER_RESOLVE_EMPTY);
         }
 
         createMyTask(execution, node, approvers);

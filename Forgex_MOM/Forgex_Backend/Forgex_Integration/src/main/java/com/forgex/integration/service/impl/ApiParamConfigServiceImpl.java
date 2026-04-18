@@ -74,13 +74,20 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
-        // 1. 根据父节点 ID 查询子节点
-        List<ApiParamConfig> configs = apiParamConfigMapper.listChildrenByParentId(
-            param.getApiConfigId(),
-            param.getParentId()
-        );
+        // 根据父节点 ID 查询子节点
+        LambdaQueryWrapper<ApiParamConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiParamConfig::getApiConfigId, param.getApiConfigId());
+        wrapper.eq(ApiParamConfig::getDeleted, 0);
+        wrapper.orderByAsc(ApiParamConfig::getOrderNum, ApiParamConfig::getId);
         
-        // 2. 转换为 DTO
+        if (param.getParentId() != null) {
+            wrapper.eq(ApiParamConfig::getParentId, param.getParentId());
+        } else {
+            wrapper.isNull(ApiParamConfig::getParentId);
+        }
+        
+        List<ApiParamConfig> configs = this.list(wrapper);
+        
         return configs.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
@@ -293,7 +300,16 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
             return null;
         }
         
-        ApiParamConfig config = apiParamConfigMapper.getByFieldPath(apiConfigId, fieldPath, direction);
+        LambdaQueryWrapper<ApiParamConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiParamConfig::getApiConfigId, apiConfigId);
+        wrapper.eq(ApiParamConfig::getDeleted, 0);
+        wrapper.eq(ApiParamConfig::getFieldPath, fieldPath);
+        if (StringUtils.hasText(direction)) {
+            wrapper.eq(ApiParamConfig::getDirection, direction);
+        }
+        wrapper.last("LIMIT 1");
+        
+        ApiParamConfig config = this.getOne(wrapper);
         return config != null ? convertToDTO(config) : null;
     }
 

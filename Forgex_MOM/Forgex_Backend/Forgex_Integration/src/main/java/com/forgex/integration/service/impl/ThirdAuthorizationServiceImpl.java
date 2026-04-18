@@ -93,13 +93,24 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
 
     @Override
     public ThirdAuthorizationDTO getByThirdSystemId(Long thirdSystemId) {
-        ThirdAuthorization authorization = thirdAuthorizationMapper.getByThirdSystemId(thirdSystemId);
+        LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ThirdAuthorization::getDeleted, 0);
+        wrapper.eq(ThirdAuthorization::getThirdSystemId, thirdSystemId);
+        wrapper.last("LIMIT 1");
+        
+        ThirdAuthorization authorization = thirdAuthorizationMapper.selectOne(wrapper);
         return authorization != null ? convertToDTO(authorization) : null;
     }
 
     @Override
     public ThirdAuthorizationDTO getByTokenValue(String tokenValue) {
-        ThirdAuthorization authorization = thirdAuthorizationMapper.getByTokenValue(tokenValue);
+        LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ThirdAuthorization::getDeleted, 0);
+        wrapper.eq(ThirdAuthorization::getTokenValue, tokenValue);
+        wrapper.eq(ThirdAuthorization::getStatus, 1);
+        wrapper.last("LIMIT 1");
+        
+        ThirdAuthorization authorization = thirdAuthorizationMapper.selectOne(wrapper);
         return authorization != null ? convertToDTO(authorization) : null;
     }
 
@@ -254,19 +265,15 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
             return false;
         }
         
-        ThirdAuthorization authorization = thirdAuthorizationMapper.getByTokenValue(tokenValue);
+        LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ThirdAuthorization::getDeleted, 0);
+        wrapper.eq(ThirdAuthorization::getTokenValue, tokenValue);
+        wrapper.eq(ThirdAuthorization::getStatus, 1);
+        wrapper.last("LIMIT 1");
+        
+        ThirdAuthorization authorization = thirdAuthorizationMapper.selectOne(wrapper);
         if (authorization == null) {
             log.warn("Token 不存在：tokenValue={}", tokenValue);
-            return false;
-        }
-        
-        if (authorization.getDeleted()) {
-            log.warn("Token 已删除：tokenValue={}", tokenValue);
-            return false;
-        }
-        
-        if (authorization.getStatus() != 1) {
-            log.warn("Token 已禁用：tokenValue={}, status={}", tokenValue, authorization.getStatus());
             return false;
         }
         
@@ -289,14 +296,15 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
             return false;
         }
         
-        ThirdAuthorization authorization = thirdAuthorizationMapper.getByThirdSystemId(thirdSystemId);
-        if (authorization == null || authorization.getDeleted()) {
-            log.warn("授权不存在：thirdSystemId={}", thirdSystemId);
-            return false;
-        }
+        LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ThirdAuthorization::getDeleted, 0);
+        wrapper.eq(ThirdAuthorization::getThirdSystemId, thirdSystemId);
+        wrapper.eq(ThirdAuthorization::getStatus, 1);
+        wrapper.last("LIMIT 1");
         
-        if (authorization.getStatus() != 1) {
-            log.warn("授权已禁用：thirdSystemId={}, status={}", thirdSystemId, authorization.getStatus());
+        ThirdAuthorization authorization = thirdAuthorizationMapper.selectOne(wrapper);
+        if (authorization == null) {
+            log.warn("授权不存在：thirdSystemId={}", thirdSystemId);
             return false;
         }
         
@@ -334,8 +342,13 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         
-        ThirdAuthorization authorization = thirdAuthorizationMapper.getByTokenValue(tokenValue);
-        if (authorization == null || authorization.getDeleted()) {
+        LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ThirdAuthorization::getDeleted, 0);
+        wrapper.eq(ThirdAuthorization::getTokenValue, tokenValue);
+        wrapper.last("LIMIT 1");
+        
+        ThirdAuthorization authorization = thirdAuthorizationMapper.selectOne(wrapper);
+        if (authorization == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_AUTH_NOT_FOUND);
         }
         

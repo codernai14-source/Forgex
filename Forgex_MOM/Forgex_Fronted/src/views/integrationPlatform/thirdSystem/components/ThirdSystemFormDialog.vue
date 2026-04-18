@@ -1,137 +1,139 @@
 <template>
-  <a-modal
+  <BaseFormDialog
     v-model:open="visible"
-    :title="isEdit ? '编辑第三方系统' : '新增第三方系统'"
-    width="800px"
-    :confirm-loading="loading"
-    @ok="handleSubmit"
-    @cancel="handleCancel"
+    :title="isEdit ? t('integration.thirdSystem.edit') : t('integration.thirdSystem.add')"
+    :loading="loading"
+    width="720px"
+    @submit="handleSubmit"
   >
-    <a-form
-      ref="formRef"
-      :model="formData"
-      :rules="rules"
-      :label-col="{ span: 6 }"
-      :wrapper-col="{ span: 16 }"
-    >
-      <a-form-item label="系统编码" name="systemCode">
-        <a-input
-          v-model:value="formData.systemCode"
-          placeholder="请输入系统编码（如：ERP、CRM 等）"
-          :disabled="isEdit"
-        />
-      </a-form-item>
+    <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item :label="t('integration.thirdSystem.systemCode')" name="systemCode">
+            <a-input
+              v-model:value="formState.systemCode"
+              :disabled="isEdit"
+              :placeholder="t('integration.thirdSystem.form.systemCode')"
+            />
+          </a-form-item>
+        </a-col>
 
-      <a-form-item label="系统名称" name="systemName">
-        <a-input
-          v-model:value="formData.systemName"
-          placeholder="请输入系统名称"
-        />
-      </a-form-item>
+        <a-col :span="12">
+          <a-form-item :label="t('integration.thirdSystem.systemName')" name="systemName">
+            <a-input v-model:value="formState.systemName" :placeholder="t('integration.thirdSystem.form.systemName')" />
+          </a-form-item>
+        </a-col>
+      </a-row>
 
-      <a-form-item label="IP 地址" name="ipAddress">
+      <a-form-item :label="t('integration.thirdSystem.ipAddress')" name="ipAddress">
         <a-textarea
-          v-model:value="formData.ipAddress"
-          placeholder="请输入 IP 地址，多个 IP 用逗号分隔"
+          v-model:value="formState.ipAddress"
           :rows="2"
+          :placeholder="t('integration.thirdSystem.form.ipAddress')"
         />
       </a-form-item>
 
-      <a-form-item label="联系信息" name="contactInfo">
-        <a-input
-          v-model:value="formData.contactInfo"
-          placeholder="请输入联系信息（联系人、电话等）"
-        />
+      <a-form-item :label="t('integration.thirdSystem.contactInfo')" name="contactInfo">
+        <a-input v-model:value="formState.contactInfo" :placeholder="t('integration.thirdSystem.form.contactInfo')" />
       </a-form-item>
 
-      <a-form-item label="备注" name="remark">
-        <a-textarea
-          v-model:value="formData.remark"
-          placeholder="请输入备注信息"
-          :rows="3"
-        />
+      <a-form-item :label="t('integration.thirdSystem.remark')" name="remark">
+        <a-textarea v-model:value="formState.remark" :rows="3" :placeholder="t('integration.thirdSystem.form.remark')" />
       </a-form-item>
 
-      <a-form-item label="状态" name="status">
-        <a-radio-group v-model:value="formData.status">
-          <a-radio :value="1">启用</a-radio>
-          <a-radio :value="0">禁用</a-radio>
+      <a-form-item :label="t('integration.thirdSystem.status')" name="status">
+        <a-radio-group v-model:value="formState.status">
+          <a-radio :value="1">{{ t('integration.common.enabled') }}</a-radio>
+          <a-radio :value="0">{{ t('integration.common.disabled') }}</a-radio>
         </a-radio-group>
       </a-form-item>
     </a-form>
-  </a-modal>
+  </BaseFormDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
-import type { ThirdSystemSubmit } from './types'
+import { useI18n } from 'vue-i18n'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import type { ThirdSystemSubmit } from '@/api/system/integration'
 
 interface Props {
   open: boolean
-  formData?: ThirdSystemSubmit
   isEdit?: boolean
+  formData?: ThirdSystemSubmit
+}
+
+interface Emits {
+  (e: 'update:open', value: boolean): void
+  (e: 'submit', payload: ThirdSystemSubmit): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   open: false,
-  isEdit: false
+  isEdit: false,
+  formData: () => ({
+    systemCode: '',
+    systemName: '',
+    ipAddress: '',
+    contactInfo: '',
+    remark: '',
+    status: 1,
+  }),
 })
 
-const emit = defineEmits<{
-  (e: 'update:open', value: boolean): void
-  (e: 'submit'): void
-}>()
+const emit = defineEmits<Emits>()
+const { t } = useI18n({ useScope: 'global' })
 
-const visible = ref(false)
 const loading = ref(false)
 const formRef = ref<FormInstance>()
 
-const formData = reactive<ThirdSystemSubmit>({
+const visible = computed({
+  get: () => props.open,
+  set: (value: boolean) => emit('update:open', value),
+})
+
+const formState = reactive<ThirdSystemSubmit>({
   systemCode: '',
   systemName: '',
   ipAddress: '',
   contactInfo: '',
   remark: '',
-  status: 1
+  status: 1,
 })
 
-const rules = {
+const rules = computed(() => ({
   systemCode: [
-    { required: true, message: '请输入系统编码', trigger: 'blur' },
-    { max: 64, message: '系统编码不能超过 64 个字符', trigger: 'blur' }
+    { required: true, message: t('integration.thirdSystem.form.systemCode'), trigger: 'blur' },
   ],
   systemName: [
-    { required: true, message: '请输入系统名称', trigger: 'blur' },
-    { max: 128, message: '系统名称不能超过 128 个字符', trigger: 'blur' }
-  ]
-}
+    { required: true, message: t('integration.thirdSystem.form.systemName'), trigger: 'blur' },
+  ],
+}))
 
-watch(() => props.open, (val) => {
-  visible.value = val
-  if (val && props.formData) {
-    Object.assign(formData, props.formData)
-  }
-})
+watch(
+  () => props.formData,
+  (value) => {
+    Object.assign(formState, {
+      systemCode: '',
+      systemName: '',
+      ipAddress: '',
+      contactInfo: '',
+      remark: '',
+      status: 1,
+      ...(value || {}),
+    })
+  },
+  { immediate: true, deep: true }
+)
 
-watch(visible, (val) => {
-  emit('update:open', val)
-})
-
-const handleSubmit = async () => {
+async function handleSubmit() {
   try {
-    await formRef.value?.validate()
     loading.value = true
-    emit('submit')
-  } catch (error) {
-    console.error('表单验证失败', error)
+    await formRef.value?.validate()
+    emit('submit', { ...formState })
   } finally {
     loading.value = false
   }
-}
-
-const handleCancel = () => {
-  visible.value = false
-  formRef.value?.resetFields()
 }
 </script>

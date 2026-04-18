@@ -1,8 +1,10 @@
 package com.forgex.integration.controller;
 
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ApiParamConfigDTO;
 import com.forgex.integration.domain.param.ApiParamConfigParam;
+import com.forgex.integration.domain.param.ApiParamJsonImportParam;
 import com.forgex.integration.domain.vo.ApiParamTreeVO;
 import com.forgex.integration.service.IApiParamConfigService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,6 +48,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#listParamTree
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @GetMapping("/tree")
     @Operation(summary = "查询参数配置树形列表", description = "根据接口配置 ID 和参数方向构建完整的树形结构")
     public R<List<ApiParamTreeVO>> listParamTree(
@@ -73,6 +76,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#listChildren
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/children")
     @Operation(summary = "查询子节点列表", description = "用于懒加载树形节点")
     public R<List<ApiParamConfigDTO>> listChildren(@RequestBody @Validated ApiParamConfigParam param) {
@@ -93,6 +97,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#getById
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @GetMapping("/detail/{id}")
     @Operation(summary = "获取参数配置详情", description = "用于编辑时回显数据")
     public R<ApiParamConfigDTO> getDetail(@PathVariable Long id) {
@@ -114,6 +119,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#create
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/create")
     @Operation(summary = "创建参数配置", description = "新增参数配置，自动计算字段路径和排序号")
     public R<Void> create(@RequestBody @Validated ApiParamConfigDTO dto) {
@@ -135,6 +141,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#update
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/update")
     @Operation(summary = "更新参数配置", description = "修改参数配置，自动更新字段路径")
     public R<Void> update(@RequestBody @Validated ApiParamConfigDTO dto) {
@@ -155,6 +162,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#delete
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/delete/{id}")
     @Operation(summary = "删除参数配置", description = "级联删除所有子节点")
     public R<Void> delete(@PathVariable Long id) {
@@ -176,6 +184,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#batchDelete
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/batch-delete")
     @Operation(summary = "批量删除参数配置", description = "批量删除多个参数配置")
     public R<Void> batchDelete(@RequestBody List<Long> ids) {
@@ -199,14 +208,15 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#importFromJson
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/import-json")
     @Operation(summary = "从 JSON 导入参数配置", description = "解析 JSON 结构并转换为树形参数配置")
-    public R<Void> importFromJson(@RequestBody Map<String, Object> request) {
-        Long apiConfigId = (Long) request.get("apiConfigId");
-        String direction = (String) request.get("direction");
-        String jsonString = (String) request.get("jsonString");
-        
-        apiParamConfigService.importFromJson(apiConfigId, direction, jsonString);
+    public R<Void> importFromJson(@RequestBody ApiParamJsonImportParam request) {
+        apiParamConfigService.importFromJson(
+            request.getApiConfigId(),
+            request.getDirection(),
+            request.getEffectiveJsonText()
+        );
         return R.ok();
     }
 
@@ -225,6 +235,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#parseJsonToTree
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @PostMapping("/parse-json")
     @Operation(summary = "解析 JSON 为树形结构", description = "将 JSON 对象解析为参数配置树，用于预览")
     public R<List<ApiParamTreeVO>> parseJson(@RequestBody Map<String, String> request) {
@@ -248,6 +259,7 @@ public class ApiParamConfigController {
      * @see com.forgex.integration.service.IApiParamConfigService#getByFieldPath
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-param")
     @GetMapping("/by-field-path")
     @Operation(summary = "根据字段路径查询参数配置", description = "用于参数映射时查找对应的字段")
     public R<ApiParamConfigDTO> getByFieldPath(
