@@ -1,6 +1,7 @@
 param(
     [switch]$DryRun,
-    [switch]$SkipReactivate
+    [switch]$SkipReactivate,
+    [string]$TargetHome
 )
 
 Set-StrictMode -Version Latest
@@ -81,15 +82,35 @@ function Get-LicenseSnapshot {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDir '..\..'))
-$canonicalHome = Join-Path $repoRoot 'forgex'
-$canonicalLicenseDir = Join-Path $canonicalHome 'license'
 $activateScript = Join-Path $scriptDir 'activate-dev-license.bat'
+
+$processHome = [System.Environment]::GetEnvironmentVariable('FORGEX_HOME', 'Process')
+$userHome = [System.Environment]::GetEnvironmentVariable('FORGEX_HOME', 'User')
+$machineHome = [System.Environment]::GetEnvironmentVariable('FORGEX_HOME', 'Machine')
+
+if ([string]::IsNullOrWhiteSpace($TargetHome) -and -not [string]::IsNullOrWhiteSpace($processHome)) {
+    $TargetHome = $processHome
+}
+if ([string]::IsNullOrWhiteSpace($TargetHome) -and -not [string]::IsNullOrWhiteSpace($userHome)) {
+    $TargetHome = $userHome
+}
+if ([string]::IsNullOrWhiteSpace($TargetHome) -and -not [string]::IsNullOrWhiteSpace($machineHome)) {
+    $TargetHome = $machineHome
+}
+if ([string]::IsNullOrWhiteSpace($TargetHome)) {
+    $TargetHome = Join-Path $repoRoot 'forgex'
+}
+
+$canonicalHome = [System.IO.Path]::GetFullPath($TargetHome)
+$canonicalLicenseDir = Join-Path $canonicalHome 'license'
 
 $candidateDirs = @(
     $canonicalLicenseDir,
+    (Join-Path $repoRoot 'forgex\license'),
     (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Gateway\forgex\license'),
     (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Sys\forgex\license'),
-    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Job\forgex\license')
+    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Job\forgex\license'),
+    'D:\forgex\forgex\license'
 ) | Select-Object -Unique
 
 $source = $candidateDirs |
@@ -165,20 +186,22 @@ $licenseFile = Join-Path $canonicalLicenseDir 'license.lic'
 $publicKeyFile = Join-Path $canonicalLicenseDir 'public-key.base64'
 $requestInfoFile = Join-Path $canonicalLicenseDir 'request-info.json'
 
-if (-not (Test-Path -LiteralPath $licenseFile) -or (Get-Item -LiteralPath $licenseFile).Length -le 0) {
-    throw "Canonical license file is missing or empty: $licenseFile"
-}
-if (-not (Test-Path -LiteralPath $publicKeyFile) -or (Get-Item -LiteralPath $publicKeyFile).Length -le 0) {
-    throw "Canonical public key file is missing or empty: $publicKeyFile"
-}
-if (-not (Test-Path -LiteralPath $requestInfoFile) -or (Get-Item -LiteralPath $requestInfoFile).Length -le 0) {
-    throw "Canonical request-info file is missing or empty: $requestInfoFile"
-}
+if (-not $DryRun) {
+    if (-not (Test-Path -LiteralPath $licenseFile) -or (Get-Item -LiteralPath $licenseFile).Length -le 0) {
+        throw "Canonical license file is missing or empty: $licenseFile"
+    }
+    if (-not (Test-Path -LiteralPath $publicKeyFile) -or (Get-Item -LiteralPath $publicKeyFile).Length -le 0) {
+        throw "Canonical public key file is missing or empty: $publicKeyFile"
+    }
+    if (-not (Test-Path -LiteralPath $requestInfoFile) -or (Get-Item -LiteralPath $requestInfoFile).Length -le 0) {
+        throw "Canonical request-info file is missing or empty: $requestInfoFile"
+    }
 
-$licenseText = (Get-Content -LiteralPath $licenseFile -Raw).Trim()
-$segments = $licenseText.Split('.')
-if ($segments.Length -ne 2) {
-    throw "Canonical license text format is invalid: expected 2 segments, got $($segments.Length)."
+    $licenseText = (Get-Content -LiteralPath $licenseFile -Raw).Trim()
+    $segments = $licenseText.Split('.')
+    if ($segments.Length -ne 2) {
+        throw "Canonical license text format is invalid: expected 2 segments, got $($segments.Length)."
+    }
 }
 
 Write-Step 'License repair completed.'
