@@ -14,13 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.forgex.mobile.core.ui.R
 
-/**
- * 注册入口占位页。
- * 在注册流程正式接入前，给用户明确反馈而不是无响应。
- */
 @Composable
 fun RegisterPlaceholderScreen(
     onBack: () -> Unit,
@@ -46,12 +44,12 @@ fun RegisterPlaceholderScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "注册功能正在开发中",
+                    text = stringResource(R.string.auth_register_placeholder_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "当前版本先提供登录与环境切换能力，注册入口将在后续迭代接入",
+                    text = stringResource(R.string.auth_register_placeholder_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF5B6478)
                 )
@@ -59,7 +57,7 @@ fun RegisterPlaceholderScreen(
                     onClick = onBack,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("返回登录")
+                    Text(stringResource(R.string.auth_back_login))
                 }
             }
         }

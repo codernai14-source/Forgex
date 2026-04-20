@@ -109,6 +109,12 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.27.1</version>
+        </dependency>
+
         <!-- Swagger 3 -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>

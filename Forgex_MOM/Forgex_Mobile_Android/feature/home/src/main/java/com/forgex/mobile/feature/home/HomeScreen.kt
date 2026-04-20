@@ -1,4 +1,4 @@
-﻿package com.forgex.mobile.feature.home
+package com.forgex.mobile.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,8 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.core.ui.device.DeviceType
 
 const val HOME_ROUTE = "home"
@@ -41,8 +43,11 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Text(text = "首页 (${deviceType.name})", style = MaterialTheme.typography.headlineSmall)
-        Text(text = "菜单已按后端 routes 动态渲染")
+        Text(
+            text = stringResource(R.string.home_title, deviceType.name),
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Text(text = stringResource(R.string.home_dynamic_menu))
 
         if (uiState.isLoading) {
             CircularProgressIndicator()
@@ -57,7 +62,7 @@ fun HomeScreen(
                     .widthIn(max = 480.dp)
             )
             Button(onClick = viewModel::refreshMenus) {
-                Text("重试")
+                Text(stringResource(R.string.common_retry))
             }
         }
 

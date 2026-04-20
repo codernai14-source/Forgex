@@ -23,15 +23,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.ui.R
 import kotlinx.coroutines.flow.collectLatest
 
-/**
- * 服务器配置页：
- * 支持在登录前切换网关地址，避免每个环境重新打包安装。
- */
 @Composable
 fun ServerSettingsScreen(
     onBack: () -> Unit,
@@ -67,24 +65,24 @@ fun ServerSettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "服务器配置",
+                    text = stringResource(R.string.server_settings_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "点击登录页系统图标可进入此页面，保存后登录接口会立即切换到新地址",
+                    text = stringResource(R.string.server_settings_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF5B6478)
                 )
                 Text(
-                    text = "默认地址: ${uiState.defaultEndpoint}",
+                    text = stringResource(R.string.server_settings_default, uiState.defaultEndpoint),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
                     text = if (uiState.usingCustomEndpoint) {
-                        "当前使用: ${uiState.currentEndpoint}（自定义）"
+                        stringResource(R.string.server_settings_current_custom, uiState.currentEndpoint)
                     } else {
-                        "当前使用: ${uiState.currentEndpoint}（默认）"
+                        stringResource(R.string.server_settings_current_default, uiState.currentEndpoint)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF1976D2)
@@ -108,7 +106,7 @@ fun ServerSettingsScreen(
                 OutlinedTextField(
                     value = uiState.host,
                     onValueChange = viewModel::updateHost,
-                    label = { Text("服务器 IP / 域名") },
+                    label = { Text(stringResource(R.string.server_settings_host)) },
                     singleLine = true,
                     enabled = !uiState.isSaving,
                     modifier = Modifier.fillMaxWidth()
@@ -116,22 +114,24 @@ fun ServerSettingsScreen(
                 OutlinedTextField(
                     value = uiState.port,
                     onValueChange = viewModel::updatePort,
-                    label = { Text("网关端口") },
+                    label = { Text(stringResource(R.string.server_settings_port)) },
                     singleLine = true,
                     enabled = !uiState.isSaving,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                if (!uiState.errorMessage.isNullOrBlank()) {
+                val errorMessageRes = uiState.errorMessageRes
+                if (errorMessageRes != null) {
                     Text(
-                        text = uiState.errorMessage ?: "",
+                        text = stringResource(errorMessageRes),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                if (!uiState.message.isNullOrBlank()) {
+                val messageRes = uiState.messageRes
+                if (messageRes != null) {
                     Text(
-                        text = uiState.message ?: "",
+                        text = stringResource(messageRes),
                         color = Color(0xFF2E7D32),
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -142,21 +142,21 @@ fun ServerSettingsScreen(
                     enabled = !uiState.isSaving,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("保存并返回登录")
+                    Text(stringResource(R.string.server_settings_save))
                 }
                 OutlinedButton(
                     onClick = viewModel::resetToDefault,
                     enabled = !uiState.isSaving,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("恢复默认并返回登录")
+                    Text(stringResource(R.string.server_settings_reset))
                 }
                 OutlinedButton(
                     onClick = onBack,
                     enabled = !uiState.isSaving,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         }

@@ -19,11 +19,11 @@ import org.springframework.context.annotation.Import;
  * @version 1.0
  * @since 2026-04-14
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.forgex")
 @EnableDiscoveryClient
 @EnableFeignClients(clients = AuthPermClient.class)
 @Import(PermissionInterceptor.class)
-@MapperScan("com.forgex.integration.mapper")
+@MapperScan({"com.forgex.integration.mapper", "com.forgex.common.mapper"})
 public class ForgexIntegrationApplication {
 
     public static void main(String[] args) {

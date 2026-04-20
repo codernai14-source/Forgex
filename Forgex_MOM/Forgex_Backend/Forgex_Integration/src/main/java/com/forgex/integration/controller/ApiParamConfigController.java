@@ -3,6 +3,7 @@ package com.forgex.integration.controller;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ApiParamConfigDTO;
+import com.forgex.integration.domain.param.ApiParamBatchSaveParam;
 import com.forgex.integration.domain.param.ApiParamConfigParam;
 import com.forgex.integration.domain.param.ApiParamJsonImportParam;
 import com.forgex.integration.domain.vo.ApiParamTreeVO;
@@ -192,6 +193,14 @@ public class ApiParamConfigController {
         return R.ok();
     }
 
+    @RequirePerm("integration:api-config:config-param")
+    @PostMapping("/replace-tree")
+    @Operation(summary = "整棵保存参数树", description = "按方向整棵替换保存接口参数树")
+    public R<Void> replaceTree(@RequestBody @Validated ApiParamBatchSaveParam request) {
+        apiParamConfigService.replaceTree(request.getApiConfigId(), request.getDirection(), request.getTree());
+        return R.ok();
+    }
+
     /**
      * 从 JSON 导入参数配置
      * <p>
@@ -242,6 +251,13 @@ public class ApiParamConfigController {
         String jsonString = request.get("jsonString");
         List<ApiParamTreeVO> treeList = apiParamConfigService.parseJsonToTree(jsonString);
         return R.ok(treeList);
+    }
+
+    @RequirePerm("integration:api-config:config-param")
+    @PostMapping("/parse-java")
+    @Operation(summary = "解析 Java 实体类", description = "将 Java 实体源码解析为参数树结构")
+    public R<List<ApiParamTreeVO>> parseJava(@RequestBody ApiParamJsonImportParam request) {
+        return R.ok(apiParamConfigService.parseJavaToTree(request.getJavaSource()));
     }
 
     /**

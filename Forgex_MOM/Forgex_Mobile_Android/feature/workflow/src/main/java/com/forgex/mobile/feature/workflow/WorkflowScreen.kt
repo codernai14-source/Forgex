@@ -19,9 +19,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.core.network.model.workflow.WfExecutionDTO
 
 const val WORKFLOW_ROUTE = "workflow"
@@ -29,14 +31,11 @@ const val WORKFLOW_PENDING_ROUTE = "workflow/pending"
 const val WORKFLOW_APPROVED_ROUTE = "workflow/approved"
 const val WORKFLOW_MINE_ROUTE = "workflow/mine"
 
-enum class WorkflowEntryMode(
-    val title: String,
-    val description: String
-) {
-    HOME("审批中心", "展示我待处理审批"),
-    PENDING("待我审批", "当前需要我处理的审批单"),
-    APPROVED("我已审批", "我已处理的审批单"),
-    MINE("我发起的", "我发起的审批单")
+enum class WorkflowEntryMode {
+    HOME,
+    PENDING,
+    APPROVED,
+    MINE
 }
 
 @Composable
@@ -65,21 +64,21 @@ fun WorkflowScreen(
         ) {
             Column {
                 Text(
-                    text = entryMode.title,
+                    text = entryMode.title(),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    text = entryMode.description,
+                    text = entryMode.description(),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { viewModel.load(entryMode, force = true) }) {
-                    Text("刷新")
+                    Text(stringResource(R.string.common_refresh))
                 }
                 Button(onClick = onBack) {
-                    Text("返回")
+                    Text(stringResource(R.string.common_back))
                 }
             }
         }
@@ -102,14 +101,14 @@ fun WorkflowScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = uiState.errorMessage ?: "审批列表加载失败",
+                        text = uiState.errorMessage ?: stringResource(R.string.workflow_load_failed),
                         color = MaterialTheme.colorScheme.error
                     )
                     Button(
                         onClick = { viewModel.load(entryMode, force = true) },
                         modifier = Modifier.padding(top = 12.dp)
                     ) {
-                        Text("重试")
+                        Text(stringResource(R.string.common_retry))
                     }
                 }
             }
@@ -120,7 +119,7 @@ fun WorkflowScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("暂无审批数据")
+                    Text(stringResource(R.string.workflow_empty))
                 }
             }
 
@@ -148,25 +147,46 @@ private fun WorkflowExecutionCard(execution: WfExecutionDTO) {
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = execution.taskName.orEmpty().ifBlank { "未命名审批任务" },
+                text = execution.taskName.orEmpty().ifBlank { stringResource(R.string.workflow_no_name) },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Text("任务编码：${execution.taskCode.orEmpty().ifBlank { "--" }}")
-            Text("发起人：${execution.initiatorName.orEmpty().ifBlank { "--" }}")
-            Text("当前节点：${execution.currentNodeName.orEmpty().ifBlank { "--" }}")
-            Text("状态：${execution.status.toWorkflowStatusText()}")
-            Text("发起时间：${execution.startTime.orEmpty().ifBlank { "--" }}")
+            Text(stringResource(R.string.workflow_task_code, execution.taskCode.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
+            Text(stringResource(R.string.workflow_initiator, execution.initiatorName.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
+            Text(stringResource(R.string.workflow_node, execution.currentNodeName.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
+            Text(stringResource(R.string.workflow_status, execution.status.toWorkflowStatusText()))
+            Text(stringResource(R.string.workflow_start_time, execution.startTime.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
         }
     }
 }
 
+@Composable
+private fun WorkflowEntryMode.title(): String {
+    return when (this) {
+        WorkflowEntryMode.HOME -> stringResource(R.string.workflow_center_title)
+        WorkflowEntryMode.PENDING -> stringResource(R.string.workflow_pending_title)
+        WorkflowEntryMode.APPROVED -> stringResource(R.string.workflow_approved_title)
+        WorkflowEntryMode.MINE -> stringResource(R.string.workflow_mine_title)
+    }
+}
+
+@Composable
+private fun WorkflowEntryMode.description(): String {
+    return when (this) {
+        WorkflowEntryMode.HOME -> stringResource(R.string.workflow_center_desc)
+        WorkflowEntryMode.PENDING -> stringResource(R.string.workflow_pending_desc)
+        WorkflowEntryMode.APPROVED -> stringResource(R.string.workflow_approved_desc)
+        WorkflowEntryMode.MINE -> stringResource(R.string.workflow_mine_desc)
+    }
+}
+
+@Composable
 private fun Int?.toWorkflowStatusText(): String {
     return when (this) {
-        0 -> "未审批"
-        1 -> "审批中"
-        2 -> "审批完成"
-        3 -> "已驳回"
-        else -> "未知"
+        0 -> stringResource(R.string.workflow_status_pending)
+        1 -> stringResource(R.string.workflow_status_running)
+        2 -> stringResource(R.string.workflow_status_done)
+        3 -> stringResource(R.string.workflow_status_rejected)
+        else -> stringResource(R.string.workflow_status_unknown)
     }
 }

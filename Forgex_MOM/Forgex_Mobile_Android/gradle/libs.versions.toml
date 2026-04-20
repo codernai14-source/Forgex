@@ -5,6 +5,7 @@ ksp = "1.9.24-1.0.20"
 compose-bom = "2024.06.00"
 compose-compiler = "1.5.14"
 core-ktx = "1.13.1"
+appcompat = "1.7.0"
 lifecycle-runtime-ktx = "2.8.3"
 activity-compose = "1.9.1"
 navigation-compose = "2.7.7"
@@ -23,6 +24,7 @@ espresso-core = "3.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle-runtime-ktx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }

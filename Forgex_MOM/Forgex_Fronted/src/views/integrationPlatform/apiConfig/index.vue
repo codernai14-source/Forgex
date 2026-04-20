@@ -1,82 +1,109 @@
 <template>
   <div class="api-config-management">
-    <fx-dynamic-table
-      ref="tableRef"
-      :table-code="'ApiConfigTable'"
-      :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
-      :dict-options="dictOptions"
-      :show-query-form="true"
-      row-key="id"
-      :row-selection="{
-        selectedRowKeys,
-        onChange: handleSelectionChange,
-      }"
-    >
-      <template #toolbar>
-        <a-space>
-          <a-button v-permission="'integration:api-config:add'" type="primary" @click="openAddDialog">
-            {{ t('integration.apiConfig.add') }}
-          </a-button>
-          <a-button
-            v-permission="'integration:api-config:delete'"
-            danger
-            :disabled="selectedRowKeys.length === 0"
-            @click="handleBatchDelete"
-          >
-            {{ t('common.batchDelete') }}
-          </a-button>
-        </a-space>
-      </template>
+    <section v-if="editor.mode === 'list'" class="api-config-panel">
+      <fx-dynamic-table
+        ref="tableRef"
+        :table-code="'ApiConfigTable'"
+        :request="handleRequest"
+        :dynamic-table-config="dynamicTableConfig"
+        :dict-options="dictOptions"
+        :show-query-form="true"
+        row-key="id"
+        :row-selection="{
+          selectedRowKeys,
+          onChange: handleSelectionChange,
+        }"
+      >
+        <template #toolbar>
+          <a-space>
+            <a-button v-permission="'integration:api-config:add'" type="primary" @click="openAddForm">
+              {{ t('integration.apiConfig.add') }}
+            </a-button>
+            <a-button
+              v-permission="'integration:api-config:delete'"
+              danger
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDelete"
+            >
+              {{ t('common.batchDelete') }}
+            </a-button>
+          </a-space>
+        </template>
 
-      <template #direction="{ record }">
-        <a-tag :color="record.direction === 'INBOUND' ? 'blue' : 'cyan'">
-          {{ record.direction === 'INBOUND' ? t('integration.common.inbound') : t('integration.common.outbound') }}
-        </a-tag>
-      </template>
+        <template #direction="{ record }">
+          <a-tag :color="record.direction === 'INBOUND' ? 'blue' : 'cyan'">
+            {{ record.direction === 'INBOUND' ? t('integration.common.inbound') : t('integration.common.outbound') }}
+          </a-tag>
+        </template>
 
-      <template #callMethod="{ record }">
-        <a-tag color="purple">{{ record.callMethod || '-' }}</a-tag>
-      </template>
+        <template #callMethod="{ record }">
+          <a-tag color="purple">{{ record.callMethod || '-' }}</a-tag>
+        </template>
 
-      <template #status="{ record }">
-        <a-switch
-          v-permission="'integration:api-config:edit'"
-          :checked="record.status === 1"
-          :loading="record.statusLoading"
-          @change="(checked: boolean) => handleToggleStatus(record, checked)"
-        />
-      </template>
+        <template #status="{ record }">
+          <a-switch
+            v-permission="'integration:api-config:edit'"
+            :checked="record.status === 1"
+            :loading="record.statusLoading"
+            @change="(checked: boolean) => handleToggleStatus(record, checked)"
+          />
+        </template>
 
-      <template #action="{ record }">
-        <a-space>
-          <a v-permission="'integration:api-config:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
-          <a v-permission="'integration:api-config:config-param'" @click="openParamConfigDialog(record)">
-            {{ t('integration.apiConfig.paramConfig') }}
-          </a>
-          <a v-permission="'integration:api-config:delete'" class="danger-link" @click="handleDelete(record.id!)">
-            {{ t('common.delete') }}
-          </a>
-        </a-space>
-      </template>
-    </fx-dynamic-table>
+        <template #action="{ record }">
+          <a-space>
+            <a v-permission="'integration:api-config:edit'" @click="openEditForm(record)">{{ t('common.edit') }}</a>
+            <a v-permission="'integration:api-config:config-param'" @click="openParamConfig(record)">
+              {{ t('integration.apiConfig.paramConfig') }}
+            </a>
+            <a v-permission="'integration:api-config:delete'" class="danger-link" @click="handleDelete(record.id!)">
+              {{ t('common.delete') }}
+            </a>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
+    </section>
 
-    <ApiConfigFormDialog
-      v-model:open="dialogVisible"
-      :is-edit="isEdit"
-      :config-id="currentConfigId"
-      @success="handleFormSuccess"
-    />
+    <section v-else-if="editor.mode === 'form'" class="api-config-panel api-config-panel--editor">
+      <div class="panel-header">
+        <div>
+          <h2>{{ editor.isEdit ? t('integration.apiConfig.edit') : t('integration.apiConfig.add') }}</h2>
+          <p>{{ t('integration.apiConfig.title') }}</p>
+        </div>
+        <a-button @click="backToList">{{ t('common.back') }}</a-button>
+      </div>
 
-    <ApiParamConfigDialog
-      v-model:open="paramDialogVisible"
-      :api-config="currentApiConfig"
-    />
+      <ApiConfigFormDialog
+        :open="true"
+        :is-edit="editor.isEdit"
+        :config-id="editor.apiConfig?.id"
+        mode="drawer"
+        width="100%"
+        @update:open="handleFormOpenChange"
+        @success="handleFormSuccess"
+      />
+    </section>
+
+    <section v-else class="api-config-panel api-config-panel--param">
+      <div class="panel-header">
+        <div>
+          <h2>{{ t('integration.apiConfig.paramConfig') }}</h2>
+          <p>{{ editor.apiConfig?.apiName || editor.apiConfig?.apiCode || '-' }}</p>
+        </div>
+        <a-button @click="backToFormOrList">{{ t('common.back') }}</a-button>
+      </div>
+
+      <ApiParamConfigDialog
+        :open="true"
+        :api-config="editor.apiConfig"
+        :page-mode="true"
+        @update:open="handleParamOpenChange"
+      />
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import type { FxTableConfig } from '@/api/system/tableConfig'
@@ -91,16 +118,17 @@ import {
   getApiConfigList,
 } from '@/api/system/integration'
 import type { ApiConfigItem, IntegrationDirection } from '@/api/system/integration'
+import type { ApiConfigEditorState } from './types'
 
 const { t } = useI18n({ useScope: 'global' })
 
 const tableRef = ref<InstanceType<typeof FxDynamicTable>>()
 const selectedRowKeys = ref<number[]>([])
-const dialogVisible = ref(false)
-const paramDialogVisible = ref(false)
-const isEdit = ref(false)
-const currentConfigId = ref<number>()
-const currentApiConfig = ref<ApiConfigItem>()
+const editor = reactive<ApiConfigEditorState>({
+  mode: 'list',
+  isEdit: false,
+  apiConfig: undefined,
+})
 
 const dictOptions = {
   integrationDirection: [
@@ -158,21 +186,60 @@ function handleSelectionChange(keys: number[]) {
   selectedRowKeys.value = keys
 }
 
-function openAddDialog() {
-  isEdit.value = false
-  currentConfigId.value = undefined
-  dialogVisible.value = true
+function openAddForm() {
+  editor.mode = 'form'
+  editor.isEdit = false
+  editor.apiConfig = undefined
 }
 
-function openEditDialog(record: ApiConfigItem) {
-  isEdit.value = true
-  currentConfigId.value = record.id
-  dialogVisible.value = true
+function openEditForm(record: ApiConfigItem) {
+  editor.mode = 'form'
+  editor.isEdit = true
+  editor.apiConfig = record
 }
 
-function handleFormSuccess() {
-  dialogVisible.value = false
+function openParamConfig(record: ApiConfigItem) {
+  editor.mode = 'param'
+  editor.isEdit = true
+  editor.apiConfig = record
+}
+
+function handleFormOpenChange(open: boolean) {
+  if (!open) {
+    backToList()
+  }
+}
+
+function handleParamOpenChange(open: boolean) {
+  if (!open) {
+    backToFormOrList()
+  }
+}
+
+function handleFormSuccess(record?: ApiConfigItem) {
+  if (record) {
+    editor.apiConfig = record
+    editor.isEdit = true
+    editor.mode = 'param'
+  } else {
+    backToList()
+  }
   void tableRef.value?.refresh?.()
+}
+
+function backToList() {
+  editor.mode = 'list'
+  editor.apiConfig = undefined
+  editor.isEdit = false
+}
+
+function backToFormOrList() {
+  if (editor.apiConfig?.id) {
+    editor.mode = 'form'
+    editor.isEdit = true
+    return
+  }
+  backToList()
 }
 
 function handleDelete(id: number) {
@@ -216,16 +283,66 @@ async function handleToggleStatus(record: ApiConfigItem, checked: boolean) {
     record.statusLoading = false
   }
 }
-
-function openParamConfigDialog(record: ApiConfigItem) {
-  currentApiConfig.value = record
-  paramDialogVisible.value = true
-}
 </script>
 
 <style scoped lang="less">
 .api-config-management {
   min-height: 0;
+}
+
+.api-config-panel {
+  min-height: 0;
+}
+
+.api-config-panel--editor,
+.api-config-panel--param {
+  display: flex;
+  min-height: calc(100vh - 170px);
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: 20px;
+  background: var(--fx-bg-container, #ffffff);
+  box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
+
+  h2 {
+    margin: 0 0 4px;
+    color: var(--fx-text-primary, #111827);
+  }
+
+  p {
+    margin: 0;
+    color: var(--fx-text-secondary, #6b7280);
+  }
+}
+
+:deep(.api-config-panel--editor .ant-drawer) {
+  position: static;
+}
+
+:deep(.api-config-panel--editor .ant-drawer-content-wrapper) {
+  position: static !important;
+  width: 100% !important;
+  box-shadow: none !important;
+}
+
+:deep(.api-config-panel--editor .ant-drawer-content) {
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--fx-bg-container, #ffffff);
+}
+
+:deep(.api-config-panel--editor .ant-drawer-header) {
+  display: none;
 }
 
 .danger-link {

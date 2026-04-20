@@ -4,6 +4,15 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.type.ArrayType;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.Type;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +35,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -120,6 +130,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         if (!StringUtils.hasText(dto.getNodeType())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_NODE_TYPE_REQUIRED);
         }
+        normalizeFieldIdentity(dto);
         
         // 2. 构建实体
         ApiParamConfig config = convertToEntity(dto);
@@ -152,6 +163,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         if (!success) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_CONFIG_CREATE_FAILED);
         }
+        dto.setId(config.getId());
         
         log.info("创建参数配置成功：configId={}, fieldName={}", config.getId(), config.getFieldName());
     }
@@ -176,6 +188,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         if (!StringUtils.hasText(dto.getNodeType())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_NODE_TYPE_REQUIRED);
         }
+        normalizeFieldIdentity(dto);
         
         // 3. 构建更新实体
         ApiParamConfig config = convertToEntity(dto);
@@ -255,6 +268,28 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void replaceTree(Long apiConfigId, String direction, List<ApiParamConfigDTO> tree) {
+        if (apiConfigId == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
+        }
+        if (!StringUtils.hasText(direction)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
+        }
+
+        LambdaQueryWrapper<ApiParamConfig> removeWrapper = new LambdaQueryWrapper<>();
+        removeWrapper.eq(ApiParamConfig::getApiConfigId, apiConfigId);
+        removeWrapper.eq(ApiParamConfig::getDirection, direction);
+        this.remove(removeWrapper);
+
+        List<ApiParamConfigDTO> safeTree = tree == null ? Collections.emptyList() : tree;
+        int order = 1;
+        for (ApiParamConfigDTO item : safeTree) {
+            persistTreeNode(apiConfigId, direction, item, null, order++);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void importFromJson(Long apiConfigId, String direction, String jsonString) {
         if (apiConfigId == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
@@ -291,6 +326,42 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         } catch (JsonProcessingException e) {
             log.error("解析 JSON 失败", e);
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_JSON_PARSE_FAILED, e.getMessage());
+        }
+    }
+
+    @Override
+    public List<ApiParamTreeVO> parseJavaToTree(String javaSource) {
+        if (!StringUtils.hasText(javaSource)) {
+            return Collections.emptyList();
+        }
+
+        try {
+            CompilationUnit cu = StaticJavaParser.parse(javaSource);
+            Map<String, ClassOrInterfaceDeclaration> classMap = cu.findAll(ClassOrInterfaceDeclaration.class)
+                .stream()
+                .collect(Collectors.toMap(
+                    ClassOrInterfaceDeclaration::getNameAsString,
+                    item -> item,
+                    (left, right) -> left,
+                    LinkedHashMap::new
+                ));
+            ClassOrInterfaceDeclaration rootClass = cu.findFirst(ClassOrInterfaceDeclaration.class)
+                .orElseThrow(() -> new IllegalArgumentException("No class declaration found"));
+
+            List<ApiParamTreeVO> result = new ArrayList<>();
+            int order = 1;
+            for (FieldDeclaration field : rootClass.getFields()) {
+                if (field.isStatic()) {
+                    continue;
+                }
+                for (VariableDeclarator variable : field.getVariables()) {
+                    result.add(buildTreeFromJavaField(variable, variable.getNameAsString(), null, order++, classMap));
+                }
+            }
+            return result;
+        } catch (Exception ex) {
+            log.error("解析 Java 实体失败", ex);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_JSON_PARSE_FAILED, ex.getMessage());
         }
     }
 
@@ -439,6 +510,42 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         }
     }
 
+    private void persistTreeNode(Long apiConfigId, String direction, ApiParamConfigDTO source, Long parentId, int orderNum) {
+        if (source == null || !StringUtils.hasText(source.getFieldName())) {
+            return;
+        }
+        normalizeFieldIdentity(source);
+
+        ApiParamConfig entity = new ApiParamConfig();
+        BeanUtils.copyProperties(source, entity);
+        entity.setId(null);
+        entity.setApiConfigId(apiConfigId);
+        entity.setDirection(direction);
+        entity.setParentId(parentId);
+        entity.setOrderNum(orderNum);
+        entity.setRequired(source.getRequired() == null ? 0 : source.getRequired());
+        entity.setCreateTime(LocalDateTime.now());
+        entity.setUpdateTime(LocalDateTime.now());
+        entity.setCreateBy(getCurrentUsername());
+        entity.setUpdateBy(getCurrentUsername());
+        entity.setDeleted(false);
+
+        if (parentId == null) {
+            entity.setFieldPath(source.getFieldName());
+        } else {
+            ApiParamConfig parent = this.baseMapper.selectById(parentId);
+            entity.setFieldPath(parent.getFieldPath() + "." + source.getFieldName());
+        }
+
+        this.save(entity);
+
+        List<ApiParamConfigDTO> children = source.getChildren() == null ? Collections.emptyList() : source.getChildren();
+        int childOrder = 1;
+        for (ApiParamConfigDTO child : children) {
+            persistTreeNode(apiConfigId, direction, child, entity.getId(), childOrder++);
+        }
+    }
+
     /**
      * 将 JSON 节点转换为树形 VO
      * <p>
@@ -457,6 +564,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
             // 对象类型
             ApiParamTreeVO vo = new ApiParamTreeVO();
             vo.setFieldName(fieldName != null ? fieldName : "root");
+            vo.setFieldLabel(vo.getFieldName());
             vo.setNodeType("OBJECT");
             vo.setFieldType("object");
             vo.setFieldPath(fieldName != null 
@@ -481,6 +589,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
             // 数组类型
             ApiParamTreeVO vo = new ApiParamTreeVO();
             vo.setFieldName(fieldName != null ? fieldName : "array");
+            vo.setFieldLabel(vo.getFieldName());
             vo.setNodeType("ARRAY");
             vo.setFieldType("array");
             vo.setFieldPath(fieldName != null
@@ -502,6 +611,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
             // 字段类型
             ApiParamTreeVO vo = new ApiParamTreeVO();
             vo.setFieldName(fieldName);
+            vo.setFieldLabel(fieldName);
             vo.setNodeType("FIELD");
             vo.setFieldType(getJsonFieldType(jsonNode));
             vo.setFieldPath(StringUtils.hasText(parentPath) ? parentPath + "." + fieldName : fieldName);
@@ -540,6 +650,165 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
         } else {
             return "string";
         }
+    }
+
+    private ApiParamTreeVO buildTreeFromJavaField(
+        VariableDeclarator variable,
+        String fieldName,
+        String parentPath,
+        int orderNum,
+        Map<String, ClassOrInterfaceDeclaration> classMap
+    ) {
+        Type type = variable.getType();
+        ApiParamTreeVO node = new ApiParamTreeVO();
+        node.setFieldName(fieldName);
+        node.setFieldLabel(fieldName);
+        node.setFieldPath(StringUtils.hasText(parentPath) ? parentPath + "." + fieldName : fieldName);
+        node.setRequired(0);
+        node.setOrderNum(orderNum);
+
+        if (type.isPrimitiveType()) {
+            node.setNodeType("FIELD");
+            node.setFieldType(mapJavaType(type));
+            return node;
+        }
+
+        if (type.isArrayType()) {
+            node.setNodeType("ARRAY");
+            node.setFieldType("array");
+            node.setChildren(buildChildrenFromType(((ArrayType) type).getComponentType(), node.getFieldPath(), classMap));
+            return node;
+        }
+
+        if (isCollectionType(type)) {
+            node.setNodeType("ARRAY");
+            node.setFieldType("array");
+            Type itemType = extractFirstTypeArgument(type);
+            node.setChildren(buildChildrenFromType(itemType, node.getFieldPath(), classMap));
+            return node;
+        }
+
+        if (isSimpleJavaType(type)) {
+            node.setNodeType("FIELD");
+            node.setFieldType(mapJavaType(type));
+            return node;
+        }
+
+        node.setNodeType("OBJECT");
+        node.setFieldType("object");
+        node.setChildren(buildChildrenFromType(type, node.getFieldPath(), classMap));
+        return node;
+    }
+
+    private List<ApiParamTreeVO> buildChildrenFromType(
+        Type type,
+        String parentPath,
+        Map<String, ClassOrInterfaceDeclaration> classMap
+    ) {
+        if (type == null) {
+            return Collections.emptyList();
+        }
+
+        if (type.isClassOrInterfaceType()) {
+            ClassOrInterfaceType classType = type.asClassOrInterfaceType();
+            String typeName = classType.getNameAsString();
+            ClassOrInterfaceDeclaration declaration = classMap.get(typeName);
+            if (declaration == null) {
+                return Collections.emptyList();
+            }
+
+            List<ApiParamTreeVO> children = new ArrayList<>();
+            int order = 1;
+            for (FieldDeclaration field : declaration.getFields()) {
+                if (field.isStatic()) {
+                    continue;
+                }
+                for (VariableDeclarator variable : field.getVariables()) {
+                    children.add(buildTreeFromJavaField(
+                        variable,
+                        variable.getNameAsString(),
+                        parentPath,
+                        order++,
+                        classMap
+                    ));
+                }
+            }
+            return children;
+        }
+
+        return Collections.emptyList();
+    }
+
+    private boolean isSimpleJavaType(Type type) {
+        if (type == null) {
+            return true;
+        }
+        if (type.isPrimitiveType()) {
+            return true;
+        }
+        String raw = type.asString();
+        return raw.startsWith("String")
+            || raw.startsWith("Integer")
+            || raw.startsWith("Long")
+            || raw.startsWith("Double")
+            || raw.startsWith("Float")
+            || raw.startsWith("Boolean")
+            || raw.startsWith("BigDecimal")
+            || raw.startsWith("BigInteger")
+            || raw.startsWith("Date")
+            || raw.startsWith("LocalDate")
+            || raw.startsWith("LocalDateTime")
+            || raw.startsWith("OffsetDateTime")
+            || raw.startsWith("Instant");
+    }
+
+    private boolean isCollectionType(Type type) {
+        if (!type.isClassOrInterfaceType()) {
+            return false;
+        }
+        String name = type.asClassOrInterfaceType().getNameAsString();
+        return "List".equals(name) || "Set".equals(name) || "Collection".equals(name);
+    }
+
+    private Type extractFirstTypeArgument(Type type) {
+        if (!type.isClassOrInterfaceType()) {
+            return null;
+        }
+        return type.asClassOrInterfaceType()
+            .getTypeArguments()
+            .flatMap(args -> args.stream().findFirst())
+            .orElse(null);
+    }
+
+    private String mapJavaType(Type type) {
+        if (type == null) {
+            return "string";
+        }
+        if (type.isPrimitiveType()) {
+            PrimitiveType.Primitive primitive = type.asPrimitiveType().getType();
+            return switch (primitive) {
+                case BOOLEAN -> "boolean";
+                case BYTE, SHORT, INT, LONG, FLOAT, DOUBLE -> "number";
+                case CHAR -> "string";
+            };
+        }
+        String raw = type.asString();
+        if (raw.startsWith("Boolean")) {
+            return "boolean";
+        }
+        if (raw.startsWith("Integer") || raw.startsWith("Long") || raw.startsWith("Double")
+            || raw.startsWith("Float") || raw.startsWith("Short") || raw.startsWith("Byte")
+            || raw.startsWith("BigDecimal") || raw.startsWith("BigInteger")) {
+            return "number";
+        }
+        if (raw.startsWith("List") || raw.startsWith("Set") || raw.startsWith("Collection") || type.isArrayType()) {
+            return "array";
+        }
+        if (raw.startsWith("Date") || raw.startsWith("LocalDate") || raw.startsWith("LocalDateTime")
+            || raw.startsWith("OffsetDateTime") || raw.startsWith("Instant")) {
+            return "date";
+        }
+        return "string";
     }
 
     /**
@@ -581,6 +850,9 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     private ApiParamConfigDTO convertToDTO(ApiParamConfig config) {
         ApiParamConfigDTO dto = new ApiParamConfigDTO();
         BeanUtils.copyProperties(config, dto);
+        if (!StringUtils.hasText(dto.getFieldLabel())) {
+            dto.setFieldLabel(dto.getFieldName());
+        }
         return dto;
     }
 
@@ -590,6 +862,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     private ApiParamConfigDTO convertFromTreeVO(ApiParamTreeVO treeVO) {
         ApiParamConfigDTO dto = new ApiParamConfigDTO();
         BeanUtils.copyProperties(treeVO, dto);
+        normalizeFieldIdentity(dto);
         return dto;
     }
 
@@ -599,7 +872,25 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     private ApiParamTreeVO convertToTreeVO(ApiParamConfig config) {
         ApiParamTreeVO vo = new ApiParamTreeVO();
         BeanUtils.copyProperties(config, vo);
+        if (!StringUtils.hasText(vo.getFieldLabel())) {
+            vo.setFieldLabel(vo.getFieldName());
+        }
         return vo;
+    }
+
+    private void normalizeFieldIdentity(ApiParamConfigDTO dto) {
+        if (dto == null) {
+            return;
+        }
+        if (StringUtils.hasText(dto.getFieldName())) {
+            dto.setFieldName(dto.getFieldName().trim());
+        }
+        if (StringUtils.hasText(dto.getFieldLabel())) {
+            dto.setFieldLabel(dto.getFieldLabel().trim());
+        }
+        if (!StringUtils.hasText(dto.getFieldLabel())) {
+            dto.setFieldLabel(dto.getFieldName());
+        }
     }
 
     /**

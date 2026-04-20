@@ -43,8 +43,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.forgex.mobile.R
 import com.forgex.mobile.core.network.model.workbench.CMenuVO
 import com.forgex.mobile.feature.home.FavoritesScreen
 import com.forgex.mobile.feature.home.WorkbenchScreen
@@ -52,31 +54,19 @@ import com.forgex.mobile.feature.message.MessageEntryMode
 import com.forgex.mobile.feature.message.MessageScreen
 import com.forgex.mobile.feature.profile.ProfileScreen
 
-/**
- * 底部 5-Tab 的数据定义。
- * 按需求顺序：收藏、通知、工作台、消息、我的。
- * 默认选中"工作台"（index=2）。
- */
 enum class MainTab(
-    val label: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    FAVORITES("收藏", Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
-    NOTIFICATION("通知", Icons.Filled.Notifications, Icons.Outlined.Notifications),
-    WORKBENCH("工作台", Icons.Filled.Widgets, Icons.Outlined.Widgets),
-    MESSAGE("消息", Icons.Filled.Mail, Icons.Outlined.Mail),
-    PROFILE("我的", Icons.Filled.Person, Icons.Outlined.Person);
+    FAVORITES(Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
+    NOTIFICATION(Icons.Filled.Notifications, Icons.Outlined.Notifications),
+    WORKBENCH(Icons.Filled.Widgets, Icons.Outlined.Widgets),
+    MESSAGE(Icons.Filled.Mail, Icons.Outlined.Mail),
+    PROFILE(Icons.Filled.Person, Icons.Outlined.Person);
 }
 
-private const val DEFAULT_TAB_INDEX = 2 // 工作台
+private const val DEFAULT_TAB_INDEX = 2
 
-/**
- * 首页主壳层：底部 5 Tab 导航。
- *
- * @param onMenuClick 工作台/收藏中菜单点击回调，由外层 NavHost 负责路由分发。
- * @param onLogout    退出登录回调。
- */
 @Composable
 fun MainShellScreen(
     onMenuClick: (CMenuVO) -> Unit,
@@ -85,6 +75,13 @@ fun MainShellScreen(
 ) {
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(DEFAULT_TAB_INDEX) }
     val tabs = MainTab.entries
+    val labels = listOf(
+        stringResource(R.string.tab_favorites),
+        stringResource(R.string.tab_notification),
+        stringResource(R.string.tab_workbench),
+        stringResource(R.string.tab_message),
+        stringResource(R.string.tab_profile)
+    )
 
     Scaffold(
         modifier = modifier,
@@ -98,13 +95,13 @@ fun MainShellScreen(
                         icon = {
                             Icon(
                                 imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                contentDescription = tab.label,
+                                contentDescription = labels[index],
                                 modifier = if (tab == MainTab.WORKBENCH) Modifier.size(28.dp) else Modifier.size(24.dp)
                             )
                         },
                         label = {
                             Text(
-                                text = tab.label,
+                                text = labels[index],
                                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                                 style = MaterialTheme.typography.labelSmall
                             )
@@ -127,10 +124,9 @@ fun MainShellScreen(
             }
 
             MainTab.NOTIFICATION -> {
-                // 通知 tab 复用消息页面的 UNREAD 模式
                 MessageScreen(
                     entryMode = MessageEntryMode.UNREAD,
-                    onBack = { /* 底部 tab 不需要返回 */ },
+                    onBack = { },
                     modifier = tabModifier
                 )
             }
@@ -145,18 +141,17 @@ fun MainShellScreen(
             MainTab.MESSAGE -> {
                 MessageScreen(
                     entryMode = MessageEntryMode.HOME,
-                    onBack = { /* 底部 tab 不需要返回 */ },
+                    onBack = { },
                     modifier = tabModifier
                 )
             }
 
             MainTab.PROFILE -> {
                 ProfileScreen(
-                    onBack = { /* 底部 tab 不需要返回 */ },
+                    onBack = onLogout,
                     modifier = tabModifier
                 )
             }
         }
     }
 }
-

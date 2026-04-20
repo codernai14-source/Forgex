@@ -128,7 +128,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createApiConfig(ApiConfigDTO dto) {
+    public ApiConfigDTO createApiConfig(ApiConfigDTO dto) {
         // 校验接口编码唯一性
         ApiConfigDTO existing = getByApiCode(dto.getApiCode());
         if (existing != null) {
@@ -137,7 +137,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         ApiConfig config = new ApiConfig();
         BeanUtils.copyProperties(dto, config);
-        // 不需要手动设置 createBy 和 updateBy，MyBatis-Plus 会自动填充
+        fillAuditFieldsOnCreate(config);
         
         boolean success = this.save(config);
         if (!success) {
@@ -145,11 +145,12 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
         
         log.info("创建接口配置成功：{}", dto.getApiCode());
+        return convertToDTO(config);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateApiConfig(ApiConfigDTO dto) {
+    public ApiConfigDTO updateApiConfig(ApiConfigDTO dto) {
         if (dto.getId() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
@@ -168,7 +169,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         
         ApiConfig config = new ApiConfig();
         BeanUtils.copyProperties(dto, config);
-        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
+        fillAuditFieldsOnUpdate(config, existing);
         
         boolean success = this.updateById(config);
         if (!success) {
@@ -176,6 +177,7 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
         
         log.info("更新接口配置成功：{}", dto.getApiCode());
+        return getApiConfigById(dto.getId());
     }
 
     @Override
@@ -271,5 +273,46 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
     private Long getCurrentTenantId() {
         Long tenantId = TenantContext.get();
         return tenantId != null ? tenantId : 0L;
+    }
+
+    private void fillAuditFieldsOnCreate(ApiConfig config) {
+        LocalDateTime now = LocalDateTime.now();
+        if (config.getTenantId() == null) {
+            config.setTenantId(getCurrentTenantId());
+        }
+        if (config.getCreateTime() == null) {
+            config.setCreateTime(now);
+        }
+        if (config.getUpdateTime() == null) {
+            config.setUpdateTime(now);
+        }
+        if (config.getDeleted() == null) {
+            config.setDeleted(Boolean.FALSE);
+        }
+        String operator = resolveCurrentOperator();
+        if (config.getCreateBy() == null) {
+            config.setCreateBy(operator);
+        }
+        if (config.getUpdateBy() == null) {
+            config.setUpdateBy(operator);
+        }
+    }
+
+    private void fillAuditFieldsOnUpdate(ApiConfig config, ApiConfig existing) {
+        config.setTenantId(existing.getTenantId());
+        config.setCreateTime(existing.getCreateTime());
+        config.setCreateBy(existing.getCreateBy());
+        config.setDeleted(existing.getDeleted());
+        config.setUpdateTime(LocalDateTime.now());
+        config.setUpdateBy(resolveCurrentOperator());
+    }
+
+    private String resolveCurrentOperator() {
+        try {
+            Object loginId = StpUtil.getLoginIdDefaultNull();
+            return loginId != null ? String.valueOf(loginId) : "system";
+        } catch (NotLoginException ex) {
+            return "system";
+        }
     }
 }

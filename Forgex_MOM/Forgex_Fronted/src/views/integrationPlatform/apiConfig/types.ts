@@ -5,6 +5,7 @@ import type {
   ApiParamConfigItem,
   ApiParamMappingItem,
   IntegrationDirection,
+  ParamSourceType,
   ParamDirection,
 } from '@/api/system/integration'
 
@@ -15,6 +16,7 @@ export type {
   ApiParamConfigItem,
   ApiParamMappingItem,
   IntegrationDirection,
+  ParamSourceType,
   ParamDirection,
 }
 
@@ -26,4 +28,10 @@ export interface ParamMappingRow {
   targetType?: string
   required?: boolean
   remark?: string
+}
+
+export interface ApiConfigEditorState {
+  mode: 'list' | 'form' | 'param'
+  isEdit: boolean
+  apiConfig?: ApiConfigItem
 }

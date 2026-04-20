@@ -27,7 +27,14 @@ if errorlevel 1 (
 )
 
 if "%FORGEX_LICENSE_DIR%"=="" (
-    set "FORGEX_LICENSE_DIR=%REPO_ROOT%\forgex\license"
+    if "%FORGEX_HOME%"=="" (
+        set "FORGEX_HOME=%REPO_ROOT%\forgex"
+    )
+    set "FORGEX_LICENSE_DIR=%FORGEX_HOME%\license"
+)
+
+if "%FORGEX_HOME%"=="" (
+    set "FORGEX_HOME=%REPO_ROOT%\forgex"
 )
 
 if "%FORGEX_INSTANCE_CODE%"=="" (
@@ -97,6 +104,7 @@ if errorlevel 1 (
 
 setx FORGEX_PROFILE "dev" >nul
 setx FORGEX_INSTANCE_CODE "%FORGEX_INSTANCE_CODE%" >nul
+setx FORGEX_HOME "%FORGEX_HOME%" >nul
 setx FORGEX_LICENSE_ENABLED "true" >nul
 setx FORGEX_LICENSE_DIR "%FORGEX_LICENSE_DIR%" >nul
 setx FORGEX_LICENSE_PUBLIC_KEY "%FORGEX_LICENSE_PUBLIC_KEY%" >nul
@@ -106,6 +114,7 @@ echo.
 echo [Forgex] Development license activation completed.
 echo [Forgex] Active profile: dev
 echo [Forgex] Instance code: %FORGEX_INSTANCE_CODE%
+echo [Forgex] Forgex home: %FORGEX_HOME%
 echo [Forgex] License directory: %FORGEX_LICENSE_DIR%
 echo [Forgex] Request file: %REQUEST_INFO_PATH%
 echo [Forgex] License file: %LICENSE_PATH%

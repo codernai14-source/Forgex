@@ -1243,7 +1243,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background-color: #fafafa;
+  background-color: var(--fx-fill-alter, #f9fafb);
 }
 
 .system-logo-upload :deep(.avatar-upload .upload-tips) {

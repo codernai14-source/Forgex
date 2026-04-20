@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,6 +22,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.forgex.mobile.R
+import com.forgex.mobile.core.ui.i18n.ProvideI18nBundle
 import com.forgex.mobile.core.ui.device.rememberDeviceType
 import com.forgex.mobile.feature.auth.AUTH_ROUTE
 import com.forgex.mobile.feature.auth.AuthScreen
@@ -43,7 +46,6 @@ import com.forgex.mobile.feature.workflow.WORKFLOW_PENDING_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_ROUTE
 import com.forgex.mobile.feature.workflow.WorkflowEntryMode
 import com.forgex.mobile.feature.workflow.WorkflowScreen
-import com.forgex.mobile.ui.navigation.AppDestinations
 import com.forgex.mobile.ui.navigation.MenuTargetResolver
 import com.forgex.mobile.ui.navigation.MenuTargetType
 import com.forgex.mobile.ui.navigation.WebViewDestination
@@ -52,12 +54,6 @@ import kotlinx.coroutines.launch
 
 private const val MAIN_SHELL_ROUTE = "main_shell"
 
-/**
- * 全局导航壳层：
- * 1. 管理登录 / 5-Tab 主壳 / 业务页 / WebView 路由。
- * 2. 登录成功后进入 MainShellScreen（底部 5 Tab）。
- * 3. 业务详情页（审批详情、消息子页等）仍由外层 NavHost 管理。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgexMobileApp() {
@@ -66,11 +62,13 @@ fun ForgexMobileApp() {
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val shellViewModel: AppShellViewModel = hiltViewModel()
-    val systemName by shellViewModel.systemName.collectAsState()
+    val shellState by shellViewModel.uiState.collectAsState()
+    val authRegisterLabel = stringResource(R.string.auth_register)
+    val commonNotAvailable = stringResource(R.string.common_not_available)
+    val commonUrlMissing = stringResource(R.string.common_url_missing)
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route.orEmpty()
 
-    // 登录页面、MainShell(自带底部导航) 及 WebView 不展示全局 TopBar
     val showGlobalTopBar = currentRoute !in setOf(
         AUTH_ROUTE,
         SERVER_SETTINGS_ROUTE,
@@ -78,209 +76,220 @@ fun ForgexMobileApp() {
         MAIN_SHELL_ROUTE
     ) && !currentRoute.startsWith(WebViewDestination.ROUTE)
 
-    Scaffold(
-        topBar = {
-            if (showGlobalTopBar) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "${systemName?.ifBlank { "FORGEX_MOM" } ?: "FORGEX_MOM"} (${deviceType.name})"
-                        )
-                    }
-                )
-            }
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = AUTH_ROUTE,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            // ==================== 认证 ====================
-            composable(AUTH_ROUTE) {
-                AuthScreen(
-                    onLoginSuccess = {
-                        navController.navigate(MAIN_SHELL_ROUTE) {
-                            popUpTo(AUTH_ROUTE) { inclusive = true }
+    ProvideI18nBundle(bundle = shellState.languageState.bundle) {
+        Scaffold(
+            topBar = {
+                if (showGlobalTopBar) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = stringResource(
+                                    R.string.common_device_title,
+                                    shellState.systemName,
+                                    deviceType.name
+                                )
+                            )
                         }
-                    },
-                    onOpenServerSettings = {
-                        navController.navigate(SERVER_SETTINGS_ROUTE) { launchSingleTop = true }
-                    },
-                    onOpenRegister = { registerUrl ->
-                        val resolvedUrl = registerUrl.trim()
-                        if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
-                            navController.navigate(
-                                WebViewDestination.buildRoute("注册", resolvedUrl)
-                            ) { launchSingleTop = true }
-                        } else {
-                            navController.navigate(REGISTER_ROUTE) { launchSingleTop = true }
+                    )
+                }
+            },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        ) { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = AUTH_ROUTE,
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                composable(AUTH_ROUTE) {
+                    AuthScreen(
+                        onLoginSuccess = {
+                            navController.navigate(MAIN_SHELL_ROUTE) {
+                                popUpTo(AUTH_ROUTE) { inclusive = true }
+                            }
+                        },
+                        onOpenServerSettings = {
+                            navController.navigate(SERVER_SETTINGS_ROUTE) { launchSingleTop = true }
+                        },
+                        onOpenRegister = { registerUrl ->
+                            val resolvedUrl = registerUrl.trim()
+                            if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
+                                navController.navigate(
+                                    WebViewDestination.buildRoute(authRegisterLabel, resolvedUrl)
+                                ) { launchSingleTop = true }
+                            } else {
+                                navController.navigate(REGISTER_ROUTE) { launchSingleTop = true }
+                            }
                         }
-                    }
-                )
-            }
-            composable(SERVER_SETTINGS_ROUTE) {
-                ServerSettingsScreen(onBack = { navController.popBackStack() })
-            }
-            composable(REGISTER_ROUTE) {
-                RegisterPlaceholderScreen(onBack = { navController.popBackStack() })
-            }
+                    )
+                }
+                composable(SERVER_SETTINGS_ROUTE) {
+                    ServerSettingsScreen(onBack = { navController.popBackStack() })
+                }
+                composable(REGISTER_ROUTE) {
+                    RegisterPlaceholderScreen(onBack = { navController.popBackStack() })
+                }
 
-            // ==================== 5-Tab 主壳 ====================
-            composable(MAIN_SHELL_ROUTE) {
-                MainShellScreen(
-                    onMenuClick = { cMenu ->
-                        val target = MenuTargetResolver.resolve(cMenu)
-                        when (target.type) {
-                            MenuTargetType.NATIVE -> {
-                                val destination = target.nativeRoute
-                                if (destination.isNullOrBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("功能尚未接入: ${cMenu.name}")
+                composable(MAIN_SHELL_ROUTE) {
+                    MainShellScreen(
+                        onMenuClick = { cMenu ->
+                            val target = MenuTargetResolver.resolve(cMenu)
+                            when (target.type) {
+                                MenuTargetType.NATIVE -> {
+                                    val destination = target.nativeRoute
+                                    if (destination.isNullOrBlank()) {
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "$commonNotAvailable: ${cMenu.name.orEmpty()}"
+                                            )
+                                        }
+                                    } else {
+                                        navController.navigate(destination) { launchSingleTop = true }
                                     }
-                                } else {
-                                    navController.navigate(destination) { launchSingleTop = true }
+                                }
+                                MenuTargetType.WEBVIEW -> {
+                                    val webUrl = target.webUrl
+                                    if (webUrl.isNullOrBlank()) {
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "$commonUrlMissing: ${cMenu.name.orEmpty()}"
+                                            )
+                                        }
+                                    } else {
+                                        navController.navigate(
+                                            WebViewDestination.buildRoute(cMenu.name.orEmpty(), webUrl)
+                                        ) { launchSingleTop = true }
+                                    }
+                                }
+                                MenuTargetType.UNSUPPORTED -> {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            target.reason ?: commonNotAvailable
+                                        )
+                                    }
                                 }
                             }
-                            MenuTargetType.WEBVIEW -> {
-                                val webUrl = target.webUrl
-                                if (webUrl.isNullOrBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("菜单未提供 URL: ${cMenu.name}")
-                                    }
-                                } else {
-                                    navController.navigate(
-                                        WebViewDestination.buildRoute(cMenu.name ?: "", webUrl)
-                                    ) { launchSingleTop = true }
-                                }
+                        },
+                        onLogout = {
+                            navController.navigate(AUTH_ROUTE) {
+                                popUpTo(0) { inclusive = true }
                             }
-                            MenuTargetType.UNSUPPORTED -> {
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        target.reason ?: "功能尚未接入: ${cMenu.name}"
-                                    )
+                        }
+                    )
+                }
+
+                composable(HOME_ROUTE) {
+                    HomeScreen(
+                        deviceType = deviceType,
+                        onMenuClick = { item ->
+                            val target = MenuTargetResolver.resolve(item)
+                            when (target.type) {
+                                MenuTargetType.NATIVE -> {
+                                    val destination = target.nativeRoute
+                                    if (destination.isNullOrBlank()) {
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "$commonNotAvailable: ${item.title}"
+                                            )
+                                        }
+                                    } else {
+                                        navController.navigate(destination) { launchSingleTop = true }
+                                    }
+                                }
+                                MenuTargetType.WEBVIEW -> {
+                                    val webUrl = target.webUrl
+                                    if (webUrl.isNullOrBlank()) {
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "$commonUrlMissing: ${item.title}"
+                                            )
+                                        }
+                                    } else {
+                                        navController.navigate(WebViewDestination.buildRoute(item.title, webUrl)) {
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                }
+                                MenuTargetType.UNSUPPORTED -> {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            target.reason ?: commonNotAvailable
+                                        )
+                                    }
                                 }
                             }
                         }
-                    },
-                    onLogout = {
-                        navController.navigate(AUTH_ROUTE) {
-                            popUpTo(0) { inclusive = true }
+                    )
+                }
+
+                composable(WORKFLOW_ROUTE) {
+                    WorkflowScreen(
+                        entryMode = WorkflowEntryMode.HOME,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(WORKFLOW_PENDING_ROUTE) {
+                    WorkflowScreen(
+                        entryMode = WorkflowEntryMode.PENDING,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(WORKFLOW_APPROVED_ROUTE) {
+                    WorkflowScreen(
+                        entryMode = WorkflowEntryMode.APPROVED,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(WORKFLOW_MINE_ROUTE) {
+                    WorkflowScreen(
+                        entryMode = WorkflowEntryMode.MINE,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(MESSAGE_ROUTE) {
+                    MessageScreen(
+                        entryMode = MessageEntryMode.HOME,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(MESSAGE_UNREAD_ROUTE) {
+                    MessageScreen(
+                        entryMode = MessageEntryMode.UNREAD,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(MESSAGE_READ_ROUTE) {
+                    MessageScreen(
+                        entryMode = MessageEntryMode.READ,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(PROFILE_ROUTE) {
+                    ProfileScreen(onBack = { navController.popBackStack() })
+                }
+
+                composable(
+                    route = WebViewDestination.ROUTE_PATTERN,
+                    arguments = listOf(
+                        navArgument(WebViewDestination.ARG_TITLE) {
+                            type = NavType.StringType
+                            defaultValue = ""
+                        },
+                        navArgument(WebViewDestination.ARG_URL) {
+                            type = NavType.StringType
+                            defaultValue = ""
                         }
-                    }
-                )
-            }
-
-            // ==================== 旧版首页（兼容保留） ====================
-            composable(HOME_ROUTE) {
-                HomeScreen(
-                    deviceType = deviceType,
-                    onMenuClick = { item ->
-                        val target = MenuTargetResolver.resolve(item)
-                        when (target.type) {
-                            MenuTargetType.NATIVE -> {
-                                val destination = target.nativeRoute
-                                if (destination.isNullOrBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("功能尚未接入: ${item.title}")
-                                    }
-                                } else {
-                                    navController.navigate(destination) { launchSingleTop = true }
-                                }
-                            }
-                            MenuTargetType.WEBVIEW -> {
-                                val webUrl = target.webUrl
-                                if (webUrl.isNullOrBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("菜单未提供 URL: ${item.title}")
-                                    }
-                                } else {
-                                    navController.navigate(WebViewDestination.buildRoute(item.title, webUrl)) {
-                                        launchSingleTop = true
-                                    }
-                                }
-                            }
-                            MenuTargetType.UNSUPPORTED -> {
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(target.reason ?: "功能尚未接入: ${item.title}")
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-
-            // ==================== 业务详情页 ====================
-            composable(WORKFLOW_ROUTE) {
-                WorkflowScreen(
-                    entryMode = WorkflowEntryMode.HOME,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(WORKFLOW_PENDING_ROUTE) {
-                WorkflowScreen(
-                    entryMode = WorkflowEntryMode.PENDING,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(WORKFLOW_APPROVED_ROUTE) {
-                WorkflowScreen(
-                    entryMode = WorkflowEntryMode.APPROVED,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(WORKFLOW_MINE_ROUTE) {
-                WorkflowScreen(
-                    entryMode = WorkflowEntryMode.MINE,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(MESSAGE_ROUTE) {
-                MessageScreen(
-                    entryMode = MessageEntryMode.HOME,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(MESSAGE_UNREAD_ROUTE) {
-                MessageScreen(
-                    entryMode = MessageEntryMode.UNREAD,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(MESSAGE_READ_ROUTE) {
-                MessageScreen(
-                    entryMode = MessageEntryMode.READ,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(PROFILE_ROUTE) {
-                ProfileScreen(onBack = { navController.popBackStack() })
-            }
-
-            // ==================== WebView ====================
-            composable(
-                route = WebViewDestination.ROUTE_PATTERN,
-                arguments = listOf(
-                    navArgument(WebViewDestination.ARG_TITLE) {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    },
-                    navArgument(WebViewDestination.ARG_URL) {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    }
-                )
-            ) { backStackEntry ->
-                val encodedTitle = backStackEntry.arguments
-                    ?.getString(WebViewDestination.ARG_TITLE).orEmpty()
-                val encodedUrl = backStackEntry.arguments
-                    ?.getString(WebViewDestination.ARG_URL).orEmpty()
-                MobileWebViewScreen(
-                    title = Uri.decode(encodedTitle),
-                    url = Uri.decode(encodedUrl),
-                    onBack = { navController.popBackStack() }
-                )
+                    )
+                ) { backStackEntry ->
+                    val encodedTitle = backStackEntry.arguments
+                        ?.getString(WebViewDestination.ARG_TITLE).orEmpty()
+                    val encodedUrl = backStackEntry.arguments
+                        ?.getString(WebViewDestination.ARG_URL).orEmpty()
+                    MobileWebViewScreen(
+                        title = Uri.decode(encodedTitle),
+                        url = Uri.decode(encodedUrl),
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

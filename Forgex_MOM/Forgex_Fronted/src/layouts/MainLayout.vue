@@ -1084,6 +1084,11 @@ watch(
   resolvedMode,
   mode => {
     document.documentElement.setAttribute('data-theme', mode)
+    document.documentElement.style.colorScheme = mode
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.setAttribute('data-theme', mode)
+      document.body.style.colorScheme = mode
+    }
   },
   { immediate: true },
 )
