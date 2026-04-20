@@ -9,6 +9,8 @@ import com.forgex.basic.material.domain.response.MaterialDetailResponse;
 import com.forgex.basic.material.domain.vo.MaterialVO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 物料管理服务接口
  * <p>
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface IMaterialService extends IService<BasicMaterial> {
 
     IPage<MaterialVO> pageMaterials(Long tenantId, MaterialPageParam param);
+
+    List<MaterialVO> listMaterials(Long tenantId, MaterialPageParam param);
 
     MaterialDetailResponse getMaterialDetail(Long tenantId, Long id);
 

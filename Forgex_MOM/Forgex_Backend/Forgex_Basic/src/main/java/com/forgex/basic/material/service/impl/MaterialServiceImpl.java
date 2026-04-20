@@ -105,6 +105,52 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
     }
 
     /**
+     * 查询物料列表（不分页）
+     * <p>
+     * 支持多条件筛选，返回物料 VO 列表
+     * </p>
+     *
+     * @param tenantId 租户 ID
+     * @param param 查询参数
+     * @return 物料列表
+     */
+    @Override
+    public List<MaterialVO> listMaterials(Long tenantId, MaterialPageParam param) {
+        // 构建查询条件
+        LambdaQueryWrapper<BasicMaterial> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BasicMaterial::getTenantId, tenantId)
+                .eq(BasicMaterial::getDeleted, 0);
+
+        // 动态添加查询条件
+        if (param != null) {
+            if (StringUtils.hasText(param.getMaterialCode())) {
+                wrapper.like(BasicMaterial::getMaterialCode, param.getMaterialCode());
+            }
+            if (StringUtils.hasText(param.getMaterialName())) {
+                wrapper.like(BasicMaterial::getMaterialName, param.getMaterialName());
+            }
+            if (StringUtils.hasText(param.getMaterialType())) {
+                wrapper.eq(BasicMaterial::getMaterialType, param.getMaterialType());
+            }
+            if (StringUtils.hasText(param.getMaterialCategory())) {
+                wrapper.eq(BasicMaterial::getMaterialCategory, param.getMaterialCategory());
+            }
+            if (param.getStatus() != null) {
+                wrapper.eq(BasicMaterial::getStatus, param.getStatus());
+            }
+            if (StringUtils.hasText(param.getApprovalStatus())) {
+                wrapper.eq(BasicMaterial::getApprovalStatus, param.getApprovalStatus());
+            }
+        }
+
+        // 执行查询，返回物料列表
+        List<BasicMaterial> materialList = materialMapper.selectList(wrapper);
+        return materialList.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 根据 ID 查询物料详情
      * <p>
      * 返回物料主表信息和所有扩展信息

@@ -92,6 +92,39 @@ public class BasicMaterialController {
     }
 
     /**
+     * 查询物料列表（不分页）
+     * <p>
+     * 接口路径：POST /basic/material/list
+     * 用于下拉框选择时不需要特殊权限
+     * </p>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>接收查询条件（物料编码/物料名称等）</li>
+     *   <li>从 TenantContext 获取当前租户 ID</li>
+     *   <li>调用 Service 层查询物料列表</li>
+     *   <li>返回物料列表</li>
+     * </ol>
+     *
+     * @param param 查询参数
+     *              - materialCode: 物料编码（可选，模糊查询）
+     *              - materialName: 物料名称（可选，模糊查询）
+     *              - materialType: 物料类型（可选，精确匹配）
+     *              - materialCategory: 物料分类（可选，精确匹配）
+     *              - status: 状态（可选）
+     *              - approvalStatus: 审批状态（可选）
+     * @return {@link R} 包含物料列表的统一返回结构
+     *         - code: 状态码（200=成功）
+     *         - data: 物料列表（List&lt;MaterialVO&gt;）
+     */
+    @Operation(summary = "查询物料列表", description = "查询所有物料列表，用于下拉框选择")
+    @PostMapping("/list")
+    public R<List<MaterialVO>> list(@RequestBody(required = false) MaterialPageParam param) {
+        Long tenantId = TenantContext.get();
+        List<MaterialVO> list = materialService.listMaterials(tenantId, param);
+        return R.ok(list);
+    }
+
+    /**
      * 根据 ID 查询物料详情
      * <p>
      * 接口路径：POST /basic/material/detail

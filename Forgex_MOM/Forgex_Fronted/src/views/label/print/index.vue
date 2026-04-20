@@ -35,7 +35,9 @@
         <!-- 工厂 -->
         <a-form-item label="工厂">
           <a-select v-model:value="formData.factoryId" placeholder="请选择工厂" allow-clear>
-            <a-select-option :value="1">主工厂</a-select-option>
+            <a-select-option :value="factory.id" v-for="factory in factories" :key="factory.id">
+              {{ factory.factoryCode?.replace('', '') }} - {{ factory.factoryName }}
+            </a-select-option>
           </a-select>
         </a-form-item>
 
@@ -107,6 +109,10 @@ import { message } from 'ant-design-vue'
 import { EyeOutlined, PrinterOutlined } from '@ant-design/icons-vue'
 import { labelPrintApi } from '@/api/label/print'
 import { labelTemplateApi } from '@/api/label/template'
+import { factoryApi } from '@/api/basic/factory'
+import { materialApi } from '@/api/basic/material'
+import { supplierApi } from '@/api/basic/supplier'
+import { customerApi } from '@/api/basic/customer'
 
 // 表单数据
 const formData = ref({
@@ -144,6 +150,7 @@ const printDataJson = computed({
 
 // 模板列表
 const templates = ref<any[]>([])
+const factories = ref<any[]>([])
 const materials = ref<any[]>([])
 const suppliers = ref<any[]>([])
 const customers = ref<any[]>([])
@@ -263,9 +270,52 @@ function handleReset() {
   templates.value = []
 }
 
+// 加载工厂列表
+async function loadFactories() {
+  try {
+    const res = await factoryApi.list({ status: 1 })
+    factories.value = res || []
+  } catch (e) {
+    console.error('加载工厂列表失败', e)
+  }
+}
+
+// 加载物料列表
+async function loadMaterials() {
+  try {
+    const res = await materialApi.list({ status: 1 })
+    materials.value = res || []
+  } catch (e) {
+    console.error('加载物料列表失败', e)
+  }
+}
+
+// 加载供应商列表
+async function loadSuppliers() {
+  try {
+    const res = await supplierApi.list({ status: 1 })
+    suppliers.value = res || []
+  } catch (e) {
+    console.error('加载供应商列表失败', e)
+  }
+}
+
+// 加载客户列表
+async function loadCustomers() {
+  try {
+    const res = await customerApi.list({ status: 1 })
+    customers.value = res || []
+  } catch (e) {
+    console.error('加载客户列表失败', e)
+  }
+}
+
 // 初始化
 onMounted(() => {
-  // TODO: 加载物料、供应商、客户列表
+  loadFactories()
+  loadMaterials()
+  loadSuppliers()
+  loadCustomers()
 })
 </script>
 
