@@ -11,6 +11,7 @@ import com.forgex.sys.domain.dto.SysMessageSendDTO;
 import com.forgex.sys.domain.dto.TemplateMessageSendDTO;
 import com.forgex.sys.domain.param.SysMessageParam;
 import com.forgex.sys.domain.vo.SysMessageVO;
+import com.forgex.sys.service.MessageSummaryService;
 import com.forgex.sys.service.SysMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 系统消息控制器
@@ -45,6 +47,11 @@ public class SysMessageController {
      * 模板消息服务
      */
     private final TemplateMessageService templateMessageService;
+    
+    /**
+     * 消息汇总服务
+     */
+    private final MessageSummaryService messageSummaryService;
 
     /**
      * 发送系统消息
@@ -62,7 +69,9 @@ public class SysMessageController {
         
         // 发送消息
         Long id = messageService.send(dto);
-        return id == null ? R.fail(CommonPrompt.OPERATION_FAILED) : R.ok(id);
+        return id == null 
+            ? R.fail(CommonPrompt.OPERATION_FAILED) 
+            : R.ok(CommonPrompt.SEND_SUCCESS, id);
     }
 
     /**
@@ -73,13 +82,14 @@ public class SysMessageController {
      * @return 未读消息列表，未登录返回错误信息
      */
     @GetMapping("/unread")
-    public R<List<SysMessageVO>> unread(@RequestParam(value = "limit", required = false) Integer limit) {
+    public R<List<SysMessageVO>> unread(@RequestParam(value = "limit", required = false) Integer limit,
+                                        @RequestParam(value = "category", required = false) String category) {
         // 检查登录状态
         if (TenantContext.get() == null || UserContext.get() == null) {
             return R.fail(CommonPrompt.NOT_LOGIN);
         }
         
-        return R.ok(messageService.listUnread(limit));
+        return R.ok(messageService.listUnread(limit, category));
     }
 
     /**
@@ -89,13 +99,14 @@ public class SysMessageController {
      * @return 未读消息数量
      */
     @PostMapping("/unread-count")
-    public R<Long> unreadCount() {
+    public R<Long> unreadCount(@RequestBody(required = false) Map<String, Object> body) {
         // 检查登录状态
         if (TenantContext.get() == null || UserContext.get() == null) {
             return R.fail(CommonPrompt.NOT_LOGIN);
         }
         
-        return R.ok(messageService.getUnreadCount());
+        String category = body == null ? null : (String) body.get("category");
+        return R.ok(messageService.getUnreadCount(category));
     }
 
     /**
@@ -191,7 +202,7 @@ public class SysMessageController {
                 dto.getBizType()
         );
 
-        return R.ok(count);
+        return R.ok(CommonPrompt.SEND_SUCCESS, count);
     }
 
     /**
@@ -228,6 +239,46 @@ public class SysMessageController {
                 dto.getBizType()
         );
 
-        return messageId != null ? R.ok(messageId) : R.fail(CommonPrompt.OPERATION_FAILED);
+        return messageId != null 
+            ? R.ok(CommonPrompt.SEND_SUCCESS, messageId) 
+            : R.fail(CommonPrompt.OPERATION_FAILED);
+    }
+    
+    /**
+     * 获取未读消息汇总
+     * <p>
+     * 接口路径：POST /sys/message/unread-summary
+     * 查询当前用户的未读消息数量，并推送汇总消息。
+     * </p>
+     * <p>执行步骤：</p>
+     * <ol>
+     *   <li>检查登录状态</li>
+     *   <li>调用 MessageSummaryService 推送未读消息汇总</li>
+     *   <li>返回汇总信息（未读消息数量、汇总文本）</li>
+     * </ol>
+     *
+     * @return 未读消息汇总信息
+     *         - unreadCount: 未读消息数量
+     *         - userName: 用户名称
+     *         - summary: 汇总文本
+     * @see MessageSummaryService
+     */
+    @PostMapping("/unread-summary")
+    public R<Map<String, Object>> getUnreadSummary() {
+        // 检查登录状态
+        if (TenantContext.get() == null || UserContext.get() == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        
+        Long userId = UserContext.get();
+        Long tenantId = TenantContext.get();
+        
+        // 调用服务推送汇总消息
+        Long unreadCount = messageSummaryService.pushUnreadSummary(userId, tenantId);
+        
+        // 获取汇总信息
+        Map<String, Object> summaryInfo = messageSummaryService.getUnreadSummaryInfo(userId, tenantId);
+        
+        return R.ok(summaryInfo);
     }
 }

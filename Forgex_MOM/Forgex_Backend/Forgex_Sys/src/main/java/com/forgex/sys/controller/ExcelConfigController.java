@@ -210,6 +210,21 @@ public class ExcelConfigController {
         excelExportService.exportUser(body, response);
     }
 
+    /**
+     * 获取所有已注册的 Provider 编码列表
+     * <p>
+     * 用于前端配置导入模板时选择数据源类型。
+     * </p>
+     *
+     * @return Provider 编码列表
+     * @since 1.1.0
+     */
+    @RequirePerm("sys:excel:importConfig:list")
+    @PostMapping("/provider/list")
+    public R<java.util.List<String>> listProviders() {
+        return R.ok(excelConfigService.listProviderCodes());
+    }
+
     private Long parseLong(Object obj) {
         if (obj == null) {
             return null;

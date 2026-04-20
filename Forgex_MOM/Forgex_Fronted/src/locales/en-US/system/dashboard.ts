@@ -1,5 +1,5 @@
 /**
- * System Dashboard Translation - English
+ * 系统仪表盘翻译 - 中文注释
  */
 export default {
   title: 'System Management',
@@ -56,7 +56,7 @@ export default {
   recentOperationLogs: 'Recent Operation Logs',
   recentLoginLogs: 'Recent Login Logs',
 
-  // Messages
+  // 消息
   tenantInfoMissing: 'Tenant information is missing',
   loadStatisticsFailed: 'Failed to load statistics',
 }

@@ -1,4 +1,5 @@
 import http from '../http'
+import { postJsonWithLongs } from '@/utils/longJson'
 
 type RequestConfig = Record<string, any>
 
@@ -11,6 +12,7 @@ export interface WfTaskConfigDTO {
   formType: number
   formPath?: string
   formContent?: string
+  requiresSelectedApprovers?: boolean
   status: number
   version: number
   configStage?: string
@@ -87,7 +89,27 @@ export interface WfTaskDraftEditorDTO {
 
 export interface WfNodeApproverDTO {
   approverType: number
-  approverIds: number[]
+  approverIds: string[]
+}
+
+export interface WfTaskNodeRuleDTO {
+  id?: number
+  ruleName?: string
+  ruleType?: number
+  approveMode?: number
+  approvalThreshold?: number
+  sortOrder?: number
+  timeoutHours?: number
+  timeoutAction?: number
+  allowInitiatorSelect?: boolean
+  superiorLevel?: number
+  allowAddSign?: boolean
+  allowTransfer?: boolean
+  allowDelegate?: boolean
+  allowRecall?: boolean
+  fallbackApproverIds?: string[]
+  approvers: WfNodeApproverDTO[]
+  extraConfig?: string
 }
 
 export interface WfBranchRuleDTO {
@@ -96,6 +118,12 @@ export interface WfBranchRuleDTO {
   operator: string
   value?: string
   nextNodeKey: string
+}
+
+export interface WfLowCodeFieldMetaDTO {
+  key: string
+  label: string
+  component?: string
 }
 
 export interface WfTaskNodeEditorDTO {
@@ -107,6 +135,7 @@ export interface WfTaskNodeEditorDTO {
   canvasY?: number
   defaultBranchNodeKey?: string
   approvers: WfNodeApproverDTO[]
+  ruleConfigs?: WfTaskNodeRuleDTO[]
   branchRules: WfBranchRuleDTO[]
 }
 
@@ -121,6 +150,7 @@ export interface WfTaskGraphDTO {
   taskCode: string
   nodes: WfTaskNodeEditorDTO[]
   edges: WfTaskEdgeDTO[]
+  availableFormFields?: WfLowCodeFieldMetaDTO[]
 }
 
 export interface WfTaskGraphSaveParam {
@@ -170,7 +200,17 @@ export function saveDraftBaseInfo(params: WfTaskConfigSaveParam, config?: Reques
 }
 
 export function getDraftGraph(params: WfTaskDraftEditorQueryParam, config?: RequestConfig) {
-  return http.post<WfTaskGraphDTO>('/wf/task/config/draft/graph/get', params, config)
+  if (config) {
+    return http.post<WfTaskGraphDTO>('/wf/task/config/draft/graph/get', params, config)
+  }
+  return postJsonWithLongs<WfTaskGraphDTO>(
+    '/wf/task/config/draft/graph/get',
+    params,
+    {
+      scalarKeys: ['draftId', 'publishedId'],
+      arrayKeys: ['approverIds', 'fallbackApproverIds'],
+    },
+  )
 }
 
 export function saveDraftGraph(params: WfTaskGraphSaveParam, config?: RequestConfig) {

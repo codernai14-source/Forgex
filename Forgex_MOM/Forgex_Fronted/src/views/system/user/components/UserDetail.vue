@@ -25,7 +25,7 @@
         <a-descriptions-item label="所属部门">
           {{ userDetail?.departmentName }}
         </a-descriptions-item>
-        <a-descriptions-item label="职位">
+        <a-descriptions-item label="岗位">
           {{ userDetail?.positionName }}
         </a-descriptions-item>
         <a-descriptions-item label="主租户">
@@ -40,7 +40,7 @@
       </a-descriptions>
       
       <a-divider orientation="left">关联租户</a-divider>
-      
+
       <a-table
         :columns="tenantColumns"
         :data-source="userDetail?.tenantList || []"
@@ -60,10 +60,10 @@
       </a-table>
       
       <a-divider orientation="left">附属信息</a-divider>
-      
+
       <a-descriptions :column="2" bordered v-if="userDetail?.profile">
         <a-descriptions-item label="政治面貌">
-          {{ userDetail.profile.politicalStatus || '-' }}
+          {{ userDetail.profile.political状态 || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="学历">
           {{ userDetail.profile.education || '-' }}
@@ -83,14 +83,14 @@
         <a-descriptions-item label="紧急联系电话">
           {{ userDetail.profile.emergencyPhone || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="引荐人" :span="2">
+        <a-descriptions-item label="介绍人" :span="2">
           {{ userDetail.profile.referrer || '-' }}
         </a-descriptions-item>
       </a-descriptions>
       
       <template v-if="userDetail?.profile?.workHistory && userDetail.profile.workHistory.length > 0">
         <a-divider orientation="left">工作经历</a-divider>
-        
+
         <a-timeline>
           <a-timeline-item
             v-for="(history, index) in userDetail.profile.workHistory"
@@ -141,7 +141,7 @@ const userDetail = ref<(User & { profile?: UserProfile, tenantList?: UserTenant[
 
 // 租户列表表格列定义
 const tenantColumns = [
-  { title: '租户ID', dataIndex: 'tenantId', key: 'tenantId', width: 120 },
+  { title: '租户 ID', dataIndex: 'tenantId', key: 'tenantId', width: 120 },
   { title: '是否默认', dataIndex: 'isDefault', key: 'isDefault', width: 100 },
   { title: '最后使用时间', dataIndex: 'lastUsed', key: 'lastUsed', width: 160 },
 ]
@@ -171,7 +171,7 @@ async function loadUserDetail() {
     if (data) {
       userDetail.value = data
     } else {
-      message.error('加载失败')
+        message.error('加载失败')
     }
   } catch (error) {
     console.error('加载用户详情失败:', error)

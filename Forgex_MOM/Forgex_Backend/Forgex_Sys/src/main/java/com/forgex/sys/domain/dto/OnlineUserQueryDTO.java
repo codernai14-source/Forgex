@@ -33,4 +33,6 @@ public class OnlineUserQueryDTO {
      * 租户ID（可选；优先使用 {@link com.forgex.common.tenant.TenantContext} 中的租户）。
      */
     private Long tenantId;
+
+    private String loginTerminal;
 }

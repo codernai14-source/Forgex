@@ -1,183 +1,234 @@
 <template>
   <div class="page-wrap">
-    <!-- 操作按钮和表格 -->
-    <fx-dynamic-table
-      ref="tableRef"
-      class="role-table"
-      :table-code="'RoleTable'"
-      :request="handleRequest"
-      :dict-options="dictOptions"
-      :row-selection="{
-        selectedRowKeys,
-        onChange: onSelectChange
-      }"
-      row-key="id"
-    >
-      <template #toolbar>
-        <a-space>
-          <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
-            <template #icon><PlusOutlined /></template>
-            {{ $t('common.add') }}{{ $t('system.role.roleName') }}
-          </a-button>
-          <a-button
-            danger
-            :disabled="selectedRowKeys.length === 0"
-            @click="handleBatchDelete"
-            v-permission="'sys:role:delete'"
-          >
-            <template #icon><DeleteOutlined /></template>
-            {{ $t('common.batchDelete') }}
-          </a-button>
-        </a-space>
-      </template>
+    <template v-if="activeView === 'list'">
+      <fx-dynamic-table
+        ref="tableRef"
+        class="role-table"
+        :table-code="'RoleTable'"
+        :show-query-form="true"
+        :request="handleRequest"
+        :降级方案-config="降级方案Config"
+        :dict-options="dictOptions"
+        :row-selection="{
+          selectedRowKeys,
+          onChange: onSelectChange
+        }"
+        row-key="id"
+      >
+        <template #toolbar>
+          <a-space>
+            <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
+              <template #icon><PlusOutlined /></template>
+              {{ $t('common.add') }}{{ $t('system.role.roleName') }}
+            </a-button>
+            <a-button
+              danger
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDelete"
+              v-permission="'sys:role:delete'"
+            >
+              <template #icon><DeleteOutlined /></template>
+              {{ $t('common.batchDelete') }}
+            </a-button>
+          </a-space>
+        </template>
 
-      <template #action="{ record }">
-        <a-space>
-          <a-button
-            type="link"
-            size="small"
-            @click="openEdit(record)"
-            v-permission="'sys:role:edit'"
-          >
-            {{ $t('common.edit') }}
-          </a-button>
-          <a-button
-            type="link"
-            size="small"
-            @click="navigateToMenuGrant(record)"
-            v-permission="'sys:role:authMenu'"
-          >
-            {{ $t('system.role.menuAuth') }}
-          </a-button>
-          <a-button
-            type="link"
-            size="small"
-            @click="navigateToUserGrant(record)"
-            v-permission="'sys:role:authUser'"
-          >
-            {{ $t('system.role.userAuth') }}
-          </a-button>
-          <a-popconfirm
-            :title="$t('system.role.message.deleteConfirm')"
-            :ok-text="$t('common.confirm')"
-            :cancel-text="$t('common.cancel')"
-            @confirm="handleDelete(record.id)"
-          >
+        <template #action="{ record }">
+          <a-space>
             <a-button
               type="link"
               size="small"
-              danger
-              v-permission="'sys:role:delete'"
+              @click="openEdit(record)"
+              v-permission="'sys:role:edit'"
             >
-              {{ $t('common.delete') }}
+              {{ $t('common.edit') }}
             </a-button>
-          </a-popconfirm>
-        </a-space>
-      </template>
+            <a-button
+              type="link"
+              size="small"
+              @click="navigateToMenuGrant(record)"
+              v-permission="'sys:role:authMenu'"
+            >
+              {{ $t('system.role.menuAuth') }}
+            </a-button>
+            <a-button
+              type="link"
+              size="small"
+              @click="navigateToUserGrant(record)"
+              v-permission="'sys:role:authUser'"
+            >
+              {{ $t('system.role.userAuth') }}
+            </a-button>
+            <a-popconfirm
+              :title="$t('system.role.message.deleteConfirm')"
+              :ok-text="$t('common.confirm')"
+              :cancel-text="$t('common.cancel')"
+              @confirm="handleDelete(record.id)"
+            >
+              <a-button
+                type="link"
+                size="small"
+                danger
+                v-permission="'sys:role:delete'"
+              >
+                {{ $t('common.delete') }}
+              </a-button>
+            </a-popconfirm>
+          </a-space>
+        </template>
 
-      <template #status="{ record }">
-        <a-tag
-          v-if="resolveStatusTag(record.status)"
-          :color="resolveStatusTag(record.status)?.color"
-          :style="resolveStatusTag(record.status)?.style"
-        >
-          {{ resolveStatusTag(record.status)?.label }}
-        </a-tag>
-        <span v-else>{{ record.status ?? '-' }}</span>
-      </template>
-    </fx-dynamic-table>
+        <template #status="{ record }">
+          <a-tag
+            v-if="resolve状态Tag(record.status)"
+            :color="resolve状态Tag(record.status)?.color"
+            :style="resolve状态Tag(record.status)?.style"
+          >
+            {{ resolve状态Tag(record.status)?.label }}
+          </a-tag>
+          <span v-else>{{ record.status ?? '-' }}</span>
+        </template>
+      </fx-dynamic-table>
 
-    <!-- 新增/编辑弹窗 -->
-    <BaseFormDialog
-      v-model:open="visible"
-      :title="isEdit ? $t('system.role.form.editRole') : $t('system.role.form.addRole')"
-      :confirm-loading="formLoading"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-    >
-      <a-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 16 }"
+      <BaseFormDialog
+        v-model:open="visible"
+        :title="isEdit ? $t('system.role.form.editRole') : $t('system.role.form.addRole')"
+        :confirm-loading="formLoading"
+        @ok="handleSubmit"
+        @cancel="handleCancel"
       >
-        <a-form-item :label="$t('system.role.roleCode')" name="roleCode">
-          <a-input
-            v-model:value="formData.roleCode"
-            :placeholder="$t('system.role.form.roleCode')"
-            :disabled="isEdit"
-          />
-        </a-form-item>
-        <a-form-item :label="$t('system.role.roleName')" name="roleName">
-          <a-input
-            v-model:value="formData.roleName"
-            :placeholder="$t('system.role.form.roleName')"
-          />
-        </a-form-item>
-        <a-form-item :label="$t('system.role.description')" name="description">
-          <a-textarea
-            v-model:value="formData.description"
-            :placeholder="$t('system.role.form.description')"
-            :rows="4"
-          />
-        </a-form-item>
-        <a-form-item :label="$t('common.status')" name="status">
-          <a-radio-group v-model:value="formData.status">
-            <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
-            <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
-          </a-radio-group>
-        </a-form-item>
-      </a-form>
-    </BaseFormDialog>
+        <a-form
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          :label-col="{ span: 6 }"
+          :wrapper-col="{ span: 16 }"
+        >
+          <a-form-item :label="$t('system.role.roleCode')" name="roleCode">
+            <a-input
+              v-model:value="formData.roleCode"
+              :placeholder="$t('system.role.form.roleCode')"
+              :disabled="isEdit"
+            />
+          </a-form-item>
+          <a-form-item :label="$t('system.role.roleName')" name="roleName">
+            <a-input
+              v-model:value="formData.roleName"
+              :placeholder="$t('system.role.form.roleName')"
+            />
+          </a-form-item>
+          <a-form-item :label="$t('system.role.description')" name="description">
+            <a-textarea
+              v-model:value="formData.description"
+              :placeholder="$t('system.role.form.description')"
+              :rows="4"
+            />
+          </a-form-item>
+          <a-form-item :label="$t('common.status')" name="status">
+            <a-radio-group v-model:value="formData.status">
+              <a-radio :value="true">{{ $t('common.enabled') }}</a-radio>
+              <a-radio :value="false">{{ $t('common.disabled') }}</a-radio>
+            </a-radio-group>
+          </a-form-item>
+        </a-form>
+      </BaseFormDialog>
+    </template>
+
+    <template v-else>
+      <div class="grant-header">
+        <a-space>
+          <a-button @click="returnToRoleList">
+            <template #icon><ArrowLeftOutlined /></template>
+            {{ $t('common.back') }}
+          </a-button>
+          <span class="grant-header__title">
+            {{ grantViewTitle }} 路 {{ currentRoleName || '-' }}
+          </span>
+        </a-space>
+      </div>
+
+      <div class="grant-content">
+        <MenuGrant
+          v-if="activeView === 'menuGrant'"
+          :key="`menu-${currentRoleId}`"
+          :role-id="currentRoleId"
+          :role-name="currentRoleName"
+          :tenant-id="currentTenantId"
+          :embedded="true"
+          @saved="handleGrantSaved"
+          @back="returnToRoleList"
+        />
+        <UserGrant
+          v-else
+          :key="`user-${currentRoleId}`"
+          :role-id="currentRoleId"
+          :role-name="currentRoleName"
+          :tenant-id="currentTenantId"
+          :embedded="true"
+          @back="returnToRoleList"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * 角色管理页面
- * 
- * 功能：
- * 1. 角色列表查询（分页、搜索）
- * 2. 新增、编辑、删除角色
- * 3. 跳转到菜单授权和人员授权页面
- * 
- * @author Forgex
- * @version 1.0.0
- */
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import MenuGrant from './MenuGrant.vue'
+import UserGrant from './UserGrant.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { useRouter } from 'vue-router'
 import {
   PlusOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  ArrowLeftOutlined,
 } from '@ant-design/icons-vue'
 import { getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 import type { Role } from './types'
 
 const { t } = useI18n()
 const { dictItems: statusOptions } = useDict('status')
 const dictOptions = computed(() => ({ status: statusOptions.value }))
 
-const router = useRouter()
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'RoleTable',
+  tableName: '角色管理',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'roleName', title: '角色名称', minWidth: 160, ellipsis: true },
+    { field: 'roleCode', title: '角色编码', width: 140 },
+    { field: 'description', title: '描述', minWidth: 180, ellipsis: true },
+    { field: 'status', title: '状态', width: 100, dictCode: 'status' },
+    { field: 'createBy', title: '创建人', width: 120 },
+    { field: 'createTime', title: '创建时间', width: 180 },
+    { field: 'updateTime', title: '更新时间', width: 180 },
+    { field: 'action', title: '操作', width: 220, fixed: 'right' }
+  ],
+  queryFields: [
+    { field: 'roleName', label: '角色名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'roleCode', label: '角色编码', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+  ],
+  version: 1
+}))
 
-// 选中的行
 const selectedRowKeys = ref<string[]>([])
-
-// 表格相关
 const tableRef = ref()
 const loading = ref(false)
-
-// 租户 ID
 const currentTenantId = ref<string>('')
+const activeView = ref<'list' | 'menuGrant' | 'userGrant'>('list')
+const currentRoleId = ref<string>('')
+const currentRoleName = ref<string>('')
 
-/**
- * 将接口返回的 status（布尔或数字）规范为与字典 {@code status} 一致的 0/1，便于 FxDynamicTable 字典列渲染。
- */
-function normalizeRoleStatusRecord(row: any) {
+function resolveTenantId(): string {
+  return currentTenantId.value || sessionStorage.getItem('tenantId') || ''
+}
+
+function normalizeRole状态Record(row: any) {
   const s = row?.status
   let num: number
   if (typeof s === 'boolean') {
@@ -190,11 +241,6 @@ function normalizeRoleStatusRecord(row: any) {
   return { ...row, status: num }
 }
 
-/**
- * 将布尔值或数字转换为 0/1
- * @param value 布尔值或数字
- * @returns 0 或 1
- */
 function normalizeBoolean(value: unknown): number {
   if (value === true || value === 1 || value === '1') {
     return 1
@@ -205,12 +251,7 @@ function normalizeBoolean(value: unknown): number {
   return value ? 1 : 0
 }
 
-/**
- * 根据状态值从字典中获取对应的标签配置
- * @param value 状态值（布尔或数字）
- * @returns 标签配置对象，包含 label、color、style，未找到返回 null
- */
-function resolveStatusTag(value: unknown) {
+function resolve状态Tag(value: unknown) {
   const normalizedValue = normalizeBoolean(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
@@ -232,17 +273,18 @@ function resolveStatusTag(value: unknown) {
   }
 }
 
-/**
- * 处理表格数据请求
- */
 const handleRequest = async (params: any) => {
   loading.value = true
   try {
+    const tenantId = resolveTenantId()
+    const query = { ...(params.query || {}) }
     const res = await getRolePage({
-      ...params.query,
-      ...params.page
+      ...query,
+      ...(tenantId ? { tenantId } : {}),
+      pageNum: params.page?.current,
+      pageSize: params.page?.pageSize,
     })
-    const records = (res.records || []).map((r: any) => normalizeRoleStatusRecord(r))
+    const records = (res.records || []).map((r: any) => normalizeRole状态Record(r))
     return {
       success: true,
       data: records,
@@ -260,29 +302,19 @@ const handleRequest = async (params: any) => {
   }
 }
 
-/**
- * 行选择变化
- */
 const onSelectChange = (keys: string[]) => {
   selectedRowKeys.value = keys
 }
 
-/**
- * 删除角色
- */
 const handleDelete = async (id: string) => {
   try {
     await deleteRole(id)
-    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
   } catch (error) {
     message.error(t('system.role.message.deleteFailed'))
   }
 }
 
-/**
- * 批量删除角色
- */
 const handleBatchDelete = async () => {
   if (selectedRowKeys.value.length === 0) {
     message.warning(t('system.role.message.selectToDelete'))
@@ -290,7 +322,6 @@ const handleBatchDelete = async () => {
   }
   try {
     await batchDeleteRoles(selectedRowKeys.value)
-    // 成功提示由后端返回，在 http 拦截器中统一处理
     await tableRef.value?.refresh?.()
     selectedRowKeys.value = []
   } catch (error) {
@@ -298,7 +329,6 @@ const handleBatchDelete = async () => {
   }
 }
 
-// 表单相关
 const formRef = ref()
 const visible = ref(false)
 const formLoading = ref(false)
@@ -321,9 +351,6 @@ const rules = computed(() => ({
   ],
 }))
 
-/**
- * 打开新增弹窗
- */
 const openAdd = () => {
   isEdit.value = false
   formData.value = {
@@ -335,47 +362,50 @@ const openAdd = () => {
   visible.value = true
 }
 
-/**
- * 打开编辑弹窗
- */
 const openEdit = (record: Role) => {
   isEdit.value = true
   formData.value = { ...record }
   visible.value = true
 }
 
-/**
- * 提交表单
- */
 const handleSubmit = async () => {
-  // 这里需要根据实际情况实现表单提交逻辑
   await tableRef.value?.refresh?.()
   visible.value = false
 }
 
-/**
- * 取消表单
- */
 const handleCancel = () => {
   visible.value = false
 }
 
-/**
- * 跳转到菜单授权页面
- */
-function navigateToMenuGrant(role: Role) {
-  router.push({
-    path: `/system/role/menu-grant/${role.id}`,
-  })
+function returnToRoleList() {
+  activeView.value = 'list'
 }
 
-/**
- * 跳转到人员授权页面
- */
+const grantViewTitle = computed(() =>
+  activeView.value === 'menuGrant' ? t('system.role.menuAuth') : t('system.role.userAuth'),
+)
+
+function openGrantView(view: 'menuGrant' | 'userGrant', role: Role) {
+  if (!role?.id) {
+    message.warning(t('system.role.message.missingRoleInfo'))
+    return
+  }
+  currentRoleId.value = String(role.id)
+  currentRoleName.value = role.roleName || ''
+  visible.value = false
+  activeView.value = view
+}
+
+function navigateToMenuGrant(role: Role) {
+  openGrantView('menuGrant', role)
+}
+
 function navigateToUserGrant(role: Role) {
-  router.push({
-    path: `/system/role/user-grant/${role.id}`,
-  })
+  openGrantView('userGrant', role)
+}
+
+function handleGrantSaved() {
+  // 保留当前嵌入页面，用户可以手动返回
 }
 
 onMounted(async () => {
@@ -396,6 +426,21 @@ onMounted(async () => {
 }
 
 .role-table {
+  flex: 1;
+  min-height: 0;
+}
+
+.grant-header {
+  margin-bottom: 12px;
+}
+
+.grant-header__title {
+  color: var(--fx-text-primary, #111827);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.grant-content {
   flex: 1;
   min-height: 0;
 }

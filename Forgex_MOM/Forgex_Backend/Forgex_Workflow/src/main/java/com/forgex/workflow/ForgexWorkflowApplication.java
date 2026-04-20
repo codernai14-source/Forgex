@@ -13,6 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.workflow;
 
+import com.forgex.common.feign.client.EncodeRuleFeignClient;
+import com.forgex.workflow.client.AuthPermClient;
+import com.forgex.workflow.client.SysMessageClient;
+import com.forgex.workflow.client.SysUserClient;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,21 +25,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
- * 工作流模块启动类。
- * <p>
- * 自研审批工作流引擎，支持灵活的审批任务配置和流转。
- * </p>
- *
- * <p>核心功能：</p>
- * <ul>
- *   <li>审批任务配置</li>
- *   <li>审批节点配置</li>
- *   <li>审批人配置</li>
- *   <li>分支条件配置</li>
- *   <li>发起审批</li>
- *   <li>审批处理</li>
- *   <li>审批解释器机制</li>
- * </ul>
+ * 工作流模块启动类
  *
  * @author coder_nai@163.com
  * @version 1.0.0
@@ -43,7 +33,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @SpringBootApplication(scanBasePackages = {"com.forgex.workflow", "com.forgex.common"})
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackageClasses = {
+        EncodeRuleFeignClient.class,
+        AuthPermClient.class,
+        SysMessageClient.class,
+        SysUserClient.class
+})
 @EnableAsync
 @MapperScan({"com.forgex.workflow.mapper", "com.forgex.common.mapper"})
 public class ForgexWorkflowApplication {

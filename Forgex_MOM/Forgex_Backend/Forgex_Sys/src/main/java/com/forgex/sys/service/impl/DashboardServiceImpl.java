@@ -19,11 +19,13 @@ import com.forgex.sys.domain.entity.SysMenu;
 import com.forgex.sys.domain.entity.SysOperationLog;
 import com.forgex.sys.domain.entity.SysRole;
 import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.mapper.LoginLogMapper;
 import com.forgex.sys.mapper.SysMenuMapper;
 import com.forgex.sys.mapper.SysOperationLogMapper;
 import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.IDashboardService;
 import com.forgex.sys.service.IOnlineUserService;
 import com.sun.management.OperatingSystemMXBean;
@@ -64,6 +66,7 @@ public class DashboardServiceImpl implements IDashboardService {
     private final SysMenuMapper menuMapper;
     private final SysOperationLogMapper operationLogMapper;
     private final LoginLogMapper loginLogMapper;
+    private final SysUserTenantMapper userTenantMapper;
     private final IOnlineUserService onlineUserService;
 
     /**
@@ -94,12 +97,22 @@ public class DashboardServiceImpl implements IDashboardService {
     public Map<String, Object> getStatistics(Long tenantId) {
         Map<String, Object> result = new HashMap<>();
 
-        // 按当前租户统计（避免把全库用户算进「用户总数」）
-        Long userCount = userMapper.selectCount(
-            new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getTenantId, tenantId)
-                .eq(SysUser::getDeleted, false)
-        );
+        List<Long> tenantUserIds = userTenantMapper.selectList(
+                new LambdaQueryWrapper<SysUserTenant>()
+                    .select(SysUserTenant::getUserId)
+                    .eq(SysUserTenant::getTenantId, tenantId)
+            ).stream()
+            .map(SysUserTenant::getUserId)
+            .distinct()
+            .toList();
+
+        Long userCount = tenantUserIds.isEmpty()
+            ? 0L
+            : userMapper.selectCount(
+                new LambdaQueryWrapper<SysUser>()
+                    .in(SysUser::getId, tenantUserIds)
+                    .eq(SysUser::getDeleted, false)
+            );
 
         Long roleCount = roleMapper.selectCount(
             new LambdaQueryWrapper<SysRole>()

@@ -244,7 +244,7 @@ com.forgex.sys/
  * 处理用户相关的 HTTP 请求，包括用户创建、查询、更新、删除等操作
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-03-28
  */
@@ -922,7 +922,7 @@ R{版本号}__rollback.sql
 
 **文档版本**: 1.0  
 **创建日期**: 2026-04-03  
-**作者**: LiDaoMoM  
+**作者**: ForGexTeam
 **参考文档**:
 - 项目结构规范.md
 - 开发使用指南.md

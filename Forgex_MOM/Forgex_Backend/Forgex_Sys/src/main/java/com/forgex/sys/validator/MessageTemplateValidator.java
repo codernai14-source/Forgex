@@ -53,11 +53,11 @@ public class MessageTemplateValidator {
         Assert.hasText(dto.getTemplateCode(), MSG_TEMPLATE_CODE_REQUIRED);
 
         if (dto.getId() == null) {
-            if (messageTemplateService.existsByCode(dto.getTemplateCode())) {
+            if (messageTemplateService.existsByCode(dto.getTemplateCode(), dto.getPublicConfig())) {
                 throw new BusinessException(MSG_TEMPLATE_CODE_EXISTS);
             }
         } else {
-            if (messageTemplateService.existsByCodeExcludeId(dto.getTemplateCode(), dto.getId())) {
+            if (messageTemplateService.existsByCodeExcludeId(dto.getTemplateCode(), dto.getId(), dto.getPublicConfig())) {
                 throw new BusinessException(MSG_TEMPLATE_CODE_IN_USE);
             }
         }

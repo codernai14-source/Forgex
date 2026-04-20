@@ -1,18 +1,18 @@
 /**
- * 角色人员授权页面
+ * 鐟欐帟澹婃禍鍝勬喅閹哄牊娼堟い鐢告桨
  * 
- * 功能：
- * 1. 支持用户、部门、职位三种授权类型
- * 2. 左侧选择器（用户列表/部门树/职位树）
- * 3. 右侧已授权列表表格
- * 4. 支持批量添加、移除授权
+ * 閸旂喕鍏橀敍?
+ * 1. 閺€顖涘瘮閻劍鍩涢妴渚€鍎撮梻銊ｂ偓浣戒捍娴ｅ秳绗佺粔宥嗗房閺夊啰琚崹?
+ * 2. 瀹革缚鏅堕柅澶嬪閸ｎ煉绱欓悽銊﹀煕閸掓銆?闁劑妫弽?閼卞奔缍呴弽鎴礆
+ * 3. 閸欏厖鏅跺鍙夊房閺夊啫鍨悰銊ㄣ€冮弽?
+ * 4. 閺€顖涘瘮閹靛綊鍣哄ǎ璇插閵嗕胶些闂勩倖宸块弶?
  * 
  * @author Forgex
  * @version 1.0.0
  */
 <template>
   <div class="role-grant-page">
-    <!-- Hero Panel -->
+    <!-- 头部面板 -->
     <section class="hero-panel">
       <div>
         <p class="hero-panel__eyebrow">{{ $t('system.role.userGrant') }}</p>
@@ -21,9 +21,9 @@
       </div>
     </section>
 
-    <!-- Board -->
+    <!-- 主体区域 -->
     <section class="board">
-      <!-- Sidebar: 选择器 -->
+      <!-- 侧边栏： 闁瀚ㄩ崳?-->
       <aside class="sidebar">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.selectGrantObject') }}</div>
@@ -77,7 +77,7 @@
         </div>
       </aside>
 
-      <!-- Content Panel: 已授权列表 -->
+      <!-- 内容区域： 瀹稿弶宸块弶鍐ㄥ灙鐞?-->
       <section class="content-panel">
         <div class="toolbar">
           <div class="toolbar__title">{{ $t('system.role.grantedList') }}</div>
@@ -93,7 +93,7 @@
           ref="tableRef"
           table-code="RoleUserGrantTable"
           :request="handleRequest"
-          :fallback-config="fallbackConfig"
+          :降级方案-config="降级方案Config"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -135,9 +135,20 @@ import { getRoleById, getGrantedUserList, grantBatch, revokeRoleUsers } from '@/
 import { useUserStore } from '@/stores/user'
 import type { RoleGrantVO } from './types'
 
+interface RoleUserGrantProps {
+  roleId?: string | number
+  roleName?: string
+  tenantId?: string
+  embedded?: boolean
+}
+
+const props = defineProps<RoleUserGrantProps>()
+defineEmits<{
+  (e: 'back'): void
+}>()
+
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const userStore = useUserStore()
 
 const roleId = ref<string>('')
@@ -166,7 +177,7 @@ const positionTreeFieldNames = {
   children: 'children',
 }
 
-const fallbackConfig = computed(() => ({
+const 降级方案Config = computed(() => ({
   tableCode: 'RoleUserGrantTable',
   tableName: t('system.role.userGrant'),
   tableType: 'NORMAL',
@@ -183,7 +194,7 @@ const fallbackConfig = computed(() => ({
 }))
 
 /**
- * 计算属性：过滤后的用户列表
+ * 鐠侊紕鐣荤仦鐐粹偓褝绱版潻鍥ㄦ姢閸氬海娈戦悽銊﹀煕閸掓銆?
  */
 const filteredUsers = computed(() => {
   if (!userSearchKeyword.value) {
@@ -198,7 +209,7 @@ const filteredUsers = computed(() => {
 })
 
 /**
- * 处理表格数据请求
+ * 婢跺嫮鎮婄悰銊︾壐閺佺増宓佺拠閿嬬湴
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !roleId.value) {
@@ -226,21 +237,21 @@ async function handleRequest(params: any) {
 }
 
 /**
- * 处理行选择变化
+ * 婢跺嫮鎮婄悰宀勨偓澶嬪閸欐ê瀵?
  */
 function handleSelectionChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys.map(String)
 }
 
 /**
- * 搜索用户
+ * 閹兼粎鍌ㄩ悽銊﹀煕
  */
 function handleSearchUsers() {
-  // 前端过滤，无需请求后端
+  // 閸撳秶顏潻鍥ㄦ姢閿涘本妫ら棁鈧拠閿嬬湴閸氬海顏?
 }
 
 /**
- * 加载所有用户
+ * 閸旂姾娴囬幍鈧張澶屾暏閹?
  */
 async function loadAllUsers() {
   if (!currentTenantId.value) {
@@ -260,7 +271,7 @@ async function loadAllUsers() {
 }
 
 /**
- * 加载部门树
+ * 閸旂姾娴囬柈銊╂，閺?
  */
 async function loadDepartmentTree() {
   if (!currentTenantId.value) {
@@ -275,7 +286,7 @@ async function loadDepartmentTree() {
 }
 
 /**
- * 加载职位树
+ * 閸旂姾娴囬懕灞肩秴閺?
  */
 async function loadPositionTree() {
   if (!currentTenantId.value) {
@@ -290,9 +301,13 @@ async function loadPositionTree() {
 }
 
 /**
- * 加载角色信息
+ * 閸旂姾娴囩憴鎺曞娣団剝浼?
  */
 async function loadRoleInfo() {
+  if (props.roleName) {
+    roleName.value = props.roleName
+    return
+  }
   if (!roleId.value) {
     return
   }
@@ -305,7 +320,7 @@ async function loadRoleInfo() {
 }
 
 /**
- * 全选
+ * 閸忋劑鈧?
  */
 function handleSelectAll() {
   if (activeTab.value === 'user') {
@@ -314,7 +329,7 @@ function handleSelectAll() {
 }
 
 /**
- * 清空
+ * 濞撳懐鈹?
  */
 function handleClearAll() {
   if (activeTab.value === 'user') {
@@ -327,7 +342,7 @@ function handleClearAll() {
 }
 
 /**
- * 添加到已授权
+ * 濞ｈ濮為崚鏉垮嚒閹哄牊娼?
  */
 async function handleAddToGranted() {
   if (!currentTenantId.value || !roleId.value) {
@@ -362,21 +377,17 @@ async function handleAddToGranted() {
       positionIds: positionIds.length > 0 ? positionIds : undefined,
     })
 
-    message.success(t('system.role.message.grantSuccess'))
     selectedUserIds.value = []
     selectedDepartmentIds.value = []
     selectedPositionIds.value = []
     await tableRef.value?.refresh?.()
   } catch (error: any) {
     console.error('grant failed:', error)
-    if (!error?.code) {
-      message.error(t('system.role.message.grantFailed'))
-    }
   }
 }
 
 /**
- * 移除单个授权
+ * 缁夊娅庨崡鏇氶嚋閹哄牊娼?
  */
 async function handleRevoke(id: number) {
   if (!currentTenantId.value || !roleId.value) {
@@ -390,18 +401,14 @@ async function handleRevoke(id: number) {
       userIds: [id],
     })
 
-    message.success(t('system.role.message.revokeSuccess'))
     await tableRef.value?.refresh?.()
   } catch (error: any) {
     console.error('revoke failed:', error)
-    if (!error?.code) {
-      message.error(t('system.role.message.revokeFailed'))
-    }
   }
 }
 
 /**
- * 批量移除授权
+ * 閹靛綊鍣虹粔濠氭珟閹哄牊娼?
  */
 async function handleBatchRevoke() {
   if (selectedRowKeys.value.length === 0) {
@@ -416,25 +423,23 @@ async function handleBatchRevoke() {
       userIds: selectedRowKeys.value.map(id => Number(id)),
     })
 
-    message.success(t('system.role.message.revokeSuccess'))
     selectedRowKeys.value = []
     await tableRef.value?.refresh?.()
   } catch (error: any) {
     console.error('batch revoke failed:', error)
-    if (!error?.code) {
-      message.error(t('system.role.message.revokeFailed'))
-    }
   }
 }
 
 onMounted(async () => {
-  // 优先从 userStore 获取租户 ID，其次从 sessionStorage 获取
-  const tid = userStore.tenantId || sessionStorage.getItem('tenantId')
+  const tid = props.tenantId || userStore.tenantId || sessionStorage.getItem('tenantId')
   if (tid) {
     currentTenantId.value = tid
   }
 
-  roleId.value = String(route.params.roleId || '')
+  roleId.value = String(props.roleId ?? route.params.roleId ?? '')
+  if (props.roleName) {
+    roleName.value = props.roleName
+  }
 
   await Promise.all([
     loadRoleInfo(),

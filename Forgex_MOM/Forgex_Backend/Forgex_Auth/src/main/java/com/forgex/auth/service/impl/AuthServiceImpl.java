@@ -27,8 +27,16 @@ import com.forgex.auth.domain.vo.TenantVO;
 import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
 import com.forgex.auth.mapper.SysUserTenantMapper;
+import com.forgex.auth.mapper.SysInviteCodeMapper;
+import com.forgex.auth.mapper.SysInviteRegisterRecordMapper;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.LoginLogService;
+import com.forgex.auth.strategy.AuthTerminalConstants;
+import com.forgex.auth.strategy.LoginTypeConstants;
+import com.forgex.auth.strategy.captcha.CaptchaStrategyFactory;
+import com.forgex.auth.strategy.captcha.CaptchaValidationResult;
+import com.forgex.auth.strategy.login.LoginStrategyFactory;
+import com.forgex.auth.strategy.tenant.ChooseTenantStrategyFactory;
 import com.forgex.common.config.ConfigService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.i18n.CommonPrompt;
@@ -44,7 +52,6 @@ import com.baomidou.dynamic.datasource.annotation.DS;
 
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.crypto.asymmetric.KeyType;
-import cn.hutool.core.util.HexUtil;
 import cn.hutool.json.JSONUtil;
 import java.nio.charset.StandardCharsets;
 import com.forgex.common.domain.config.CaptchaConfig;
@@ -53,44 +60,55 @@ import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.auth.enums.AuthPromptEnum;
 import com.forgex.common.crypto.CryptoProviders;
 
 /**
- * 认证服务实现。
+ * 认证服务实现类
  * <p>
- * 负责登录流程与租户选择、验证码校验、密码校验等逻辑，数据源为 admin 库。
+ * 负责处理用户登录、租户选择、安全校验、密码重置、登出等认证相关业务
  * </p>
- * <p>主要功能：</p>
+ * <p>主要功能包括：</p>
  * <ul>
- *   <li>{@link #login(LoginParam)} - 用户登录，返回绑定的租户列表</li>
- *   <li>{@link #chooseTenant(TenantChoiceParam)} - 选择租户，设置当前租户上下文</li>
- *   <li>{@link #secureAdmin()} - 管理员权限校验</li>
- *   <li>{@link #resetPasswordById(Long)} - 重置用户密码</li>
- *   <li>{@link #logout()} - 用户登出</li>
- *   <li>{@link #updateTenantPreferences(String, List, Long)} - 更新租户偏好设置</li>
+ *   <li>{@link #login(LoginParam)} - 用户登录，支持多种登录方式和终端类型</li>
+ *   <li>{@link #chooseTenant(TenantChoiceParam)} - 选择租户，切换当前登录租户</li>
+ *   <li>{@link #secureAdmin()} - 管理员安全校验（已废弃）</li>
+ *   <li>{@link #resetPasswordById(Long)} - 根据用户 ID 重置密码为默认密码</li>
+ *   <li>{@link #logout()} - 用户登出，清除登录状态和缓存</li>
+ *   <li>{@link #updateTenantPreferences(String, List, Long)} - 更新用户租户偏好设置</li>
  * </ul>
- * <p>使用：</p>
+ * <p>安全特性：</p>
  * <ul>
- *   <li>{@link #login(LoginParam)} 登录并返回可选租户列表；</li>
- *   <li>{@link #chooseTenant(TenantChoiceParam)} 选择默认租户；</li>
- *   <li>按配置读取 {@code security.crypto.transport} 执行 SM2 传输解密，再按 {@code security.password.policy.store} 进行存储校验。</li>
+ *   <li>支持 SM2 加密传输密码，支持 BCrypt/SM2 密码存储策略</li>
+ *   <li>支持登录失败锁定、验证码校验等安全机制</li>
+ *   <li>支持配置 {@code security.crypto.transport} 指定 SM2 加密传输策略</li>
+ *   <li>支持配置 {@code security.password.policy.store} 指定密码存储方式</li>
  * </ul>
- * <p>可扩展性：</p>
+ * <p>依赖说明：</p>
  * <ul>
- *   <li>支持在配置库扩展验证码模式与密码策略；</li>
- *   <li>新增密码算法时在 common 模块的 Provider 中扩展。</li>
+ *   <li>使用 Sa-Token 框架进行登录认证和 Token 管理</li>
+ *   <li>使用 Redis 缓存登录失败次数、锁定状态、在线用户信息等</li>
+ *   <li>支持多租户架构，通过 TenantContext 设置当前租户</li>
+ *   <li>支持多种登录策略，通过 LoginStrategyFactory 工厂类管理</li>
+ *   <li>支持多种验证码策略，通过 CaptchaStrategyFactory 工厂类管理</li>
+ *   <li>支持多种租户选择策略，通过 ChooseTenantStrategyFactory 工厂类管理</li>
+ *   <li>支持密码加密存储，通过 CryptoPasswordProvider 和 CryptoProviders 管理</li>
+ *   <li>支持登录日志记录，通过 LoginLogService 记录登录成功/失败日志</li>
+ *   <li>支持 IP 地址定位，通过 IpLocationService 获取登录地区</li>
  * </ul>
  *
  * @author Forgex Team
@@ -121,39 +139,43 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private StringRedisTemplate redis;
     @Autowired
+    private RedissonClient redissonClient;
+    @Autowired
     private LoginLogService loginLogService;
     @Autowired
     private com.forgex.common.util.IpLocationService ipLocationService;
+    @Autowired
+    private LoginStrategyFactory loginStrategyFactory;
+    @Autowired
+    private ChooseTenantStrategyFactory chooseTenantStrategyFactory;
+    @Autowired
+    private CaptchaStrategyFactory captchaStrategyFactory;
 
 
     /**
-     * 登录并返回租户列表。
+     * 用户登录
      * <p>
-     * 完整登录流程：
+     * 处理用户登录请求，支持多种登录方式（账号密码、手机号、邮箱等）和多种终端类型（Web、App 等）
      * </p>
      * <ol>
-     *   <li>参数校验：检查账号和密码是否为空</li>
-     *   <li>获取客户端信息：IP 地址、User-Agent、地理位置</li>
-     *   <li>密码解密：如果启用了 SM2 传输加密，解密密码</li>
-     *   <li>用户查询：根据账号查询用户信息</li>
-     *   <li>密码验证：根据密码策略（bcrypt/SM2）验证密码</li>
-     *   <li>验证码校验：根据配置校验图片验证码或滑块验证码</li>
-     *   <li>租户查询：查询用户绑定的所有租户</li>
-     *   <li>返回租户列表：将租户实体转换为 VO 返回</li>
+     *   <li>解析登录终端类型和登录方式，从请求参数中提取并规范化</li>
+     *   <li>根据登录终端和登录类型选择对应的登录策略进行处理</li>
+     *   <li>登录策略会执行验证码校验、账号密码验证、租户绑定查询等逻辑</li>
+     *   <li>返回用户绑定的租户列表，供用户选择要登录的租户</li>
      * </ol>
      * <p>
      * 安全特性：
      * </p>
      * <ul>
-     *   <li>支持 SM2 国密算法加密传输密码</li>
-     *   <li>支持 bcrypt 或 SM2 加密存储密码</li>
-     *   <li>支持图片验证码和滑块验证码两种模式</li>
-     *   <li>记录登录成功/失败日志</li>
+     *   <li>支持 SM2 加密传输密码，前端使用公钥加密，后端使用私钥解密</li>
+     *   <li>支持 BCrypt 或 SM2 密码存储策略，根据配置自动选择</li>
+     *   <li>支持登录失败次数限制和账号锁定机制</li>
+     *   <li>支持验证码校验，支持图片验证码和滑块验证码</li>
      * </ul>
      *
-     * @param param 登录参数，包含账号、密码、验证码等信息
-     * @return {@link R} 包含租户 VO 列表的统一返回结构
-     * @throws BusinessException 当参数校验失败、用户不存在、密码错误、验证码错误时抛出
+     * @param param 登录参数，包含账号、密码、验证码、登录终端、登录类型等信息
+     * @return {@link R} 统一响应对象，包含租户列表（TenantVO）
+     * @throws BusinessException 当登录失败时抛出业务异常，如账号不存在、密码错误、验证码错误等
      * @see com.forgex.auth.domain.param.LoginParam
      * @see com.forgex.auth.domain.vo.TenantVO
      * @see com.forgex.common.domain.config.CryptoTransportConfig
@@ -162,207 +184,153 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public R<List<TenantVO>> login(LoginParam param) {
-        // 从参数中提取账号
+        String loginTerminal = resolveLoginTerminal(param == null ? null : param.getLoginTerminal());
+        String loginType = resolveLoginType(param == null ? null : param.getLoginType());
+        if (param != null) {
+            param.setLoginTerminal(loginTerminal);
+            param.setLoginType(loginType);
+        }
+        return loginStrategyFactory.getStrategy(loginTerminal, loginType).login(param);
+    }
+
+    public R<List<TenantVO>> doAccountPasswordLogin(LoginParam param) {
+        // 获取账号信息
         String account = param == null ? null : param.getAccount();
-        // 从参数中提取密码
+        // 获取密码信息
         String password = param == null ? null : param.getPassword();
         
-        // 获取客户端IP和User-Agent
+        // 获取客户端 IP 地址
         String clientIp = getClientIp();
-        // 获取User-Agent信息
+        // 获取 User-Agent 信息
         String userAgent = getUserAgent();
-        // 根据IP获取地理位置信息
+        // 根据 IP 地址获取登录地区信息
         String region = ipLocationService.getLocationByIp(clientIp);
         
-        // 参数校验：账号和密码不能为空
+        // 校验账号和密码不能为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
-            log.warn("登录失败: 账号或密码为空");
+            log.warn("Login failed: account or password is empty");
             // 记录登录失败日志
-            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号或密码为空");
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account or password is empty");
             return R.fail(CommonPrompt.ACCOUNT_OR_PASSWORD_EMPTY);
         }
 
         LoginSecurityConfig loginSecurityConfig = getLoginSecurityConfig();
         R<List<TenantVO>> lockResult = checkLoginLocked(account, loginSecurityConfig);
         if (lockResult != null) {
-            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "账号已锁定");
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account is locked");
             return lockResult;
         }
         
-        // 如果启用了传输加密（SM2），优先尝试解密入参密码
+        // 如果配置了 SM2 加密传输，则解密密码
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
         if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
             try {
-                // 创建SM2加密对象
+                // 创建 SM2 解密对象
                 SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
-                // 获取密文格式
+                // 获取密码加密格式配置
                 String cipherFmt = cryptoCfg.getCipher();
-                // 根据密文格式解密
+                // 根据加密格式选择对应的解密方式
                 if ("BCD".equalsIgnoreCase(cipherFmt)) {
-                    // BCD格式解密
+                    // BCD 编码格式
                     byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
                     password = new String(plain, StandardCharsets.UTF_8);
                 } else {
-                    // 默认格式解密
+                    // 其他格式直接解密为字符串
                     password = sm2.decryptStr(password, KeyType.PrivateKey);
                 }
             } catch (Exception ignored) {
-                // 解密失败，使用原始密码
+                // 解密失败时忽略异常
             }
         }
         
-        // 查询用户信息
+        // 根据账号查询用户信息
         String idKey = account;
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .select(SysUser::getId, SysUser::getAccount, SysUser::getUsername, SysUser::getPassword, SysUser::getEmail, SysUser::getPhone, SysUser::getStatus)
                 .eq(SysUser::getAccount, idKey));
-        // 校验用户是否存在
+        // 如果用户不存在
         if (user == null) {
-            log.warn("登录失败: 用户不存在, account={}", idKey);
+            log.warn("用户登录失败：用户不存在 account={}", idKey);
             // 记录登录失败日志
-            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "用户不存在");
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "user not found");
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
         
-        // 验证密码：根据策略执行（sm2 可解密存储 / bcrypt 哈希）
+        // 获取密码策略配置
         PasswordPolicyConfig policy = getPasswordPolicyConfig();
-        // 获取密码存储策略，默认为bcrypt
+        // 解析密码存储方式
         String store = resolvePasswordStore(policy);
-        // 根据策略获取密码提供者
+        // 根据存储方式解析对应的密码加密提供者
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
-        // 验证密码是否正确
+        // 验证密码
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
-            log.warn("登录失败: 密码不正确, account={}", account);
+            log.warn("用户登录失败：密码错误 account={}", account);
             // 记录登录失败日志
-            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "密码不正确");
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "password incorrect");
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
         
-        // 验证码校验（由配置决定方式）
+        // 验证码校验
         CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
-        // 获取验证码模式
-        String mode = cfg.getMode();
-        // 图片验证码模式
-        if ("image".equalsIgnoreCase(mode)) {
-            // 获取验证码ID
-            String captchaId = param.getCaptchaId();
-            // 获取验证码
-            String captcha = param.getCaptcha();
-            if (!StringUtils.hasText(captchaId) || !StringUtils.hasText(captcha)) {
-                log.warn("登录失败: 图片验证码缺失, account={}", account);
-                // 记录登录失败日志
-                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
-                recordLoginFailureState(account, loginSecurityConfig);
-                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
-            }
-            if (!captchaService.verifyImage(captchaId, captcha)) {
-                log.warn("登录失败: 图片验证码错误, account={}", account);
-                // 记录登录失败日志
-                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
-                recordLoginFailureState(account, loginSecurityConfig);
-                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
-            }
-        } else if ("slider".equalsIgnoreCase(mode)) {
-            // 滑块验证码模式
-            // 获取滑块令牌
-            String token = param.getCaptcha();
-            // 校验令牌是否为空
-            if (!StringUtils.hasText(token)) {
-                log.warn("登录失败: 滑块令牌缺失, account={}", account);
-                // 记录登录失败日志
-                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码缺失");
-                recordLoginFailureState(account, loginSecurityConfig);
-                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
-            }
-            if (!captchaService.verifySlider(token)) {
-                log.warn("登录失败: 滑块令牌校验失败, account={}", account);
-                // 记录登录失败日志
-                loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "验证码错误");
-                recordLoginFailureState(account, loginSecurityConfig);
-                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
-            }
+        String mode = cfg == null ? null : cfg.getMode();
+        CaptchaValidationResult captchaValidationResult = captchaStrategyFactory.getStrategy(mode).validate(param);
+        if (!captchaValidationResult.isSuccess()) {
+            String logMessage = captchaValidationResult.getLogMessage();
+            log.warn("验证码校验失败：{} account={}", logMessage, account);
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, logMessage);
+            recordLoginFailureState(account, loginSecurityConfig);
+            return R.fail(captchaValidationResult.getPrompt());
         }
         
-        // 查询用户绑定的租户ID列表
+        // 清除登录失败状态
         clearLoginFailureState(account);
 
+        // 查询用户绑定的租户列表
         List<SysUserTenant> binds = userTenantMapper.selectList(new LambdaQueryWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .orderByDesc(SysUserTenant::getPrefOrder)
                 .orderByDesc(SysUserTenant::getLastUsed));
-        // 初始化租户ID列表
+        // 提取租户 ID 列表
         List<Long> tenantIds = new ArrayList<>();
-        // 提取租户ID
         for (SysUserTenant b : binds) tenantIds.add(b.getTenantId());
-        // 校验是否绑定租户
+        // 如果用户没有绑定任何租户
         if (tenantIds.isEmpty()) {
-            log.warn("登录提示: 用户未绑定任何租户, account={}", account);
+            log.warn("用户登录成功，但未绑定任何租户 account={}", account);
             return R.ok(Collections.emptyList());
         }
-        // 查询对应租户信息
+        // 查询租户详细信息
         List<SysTenant> tenants = tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
                 .in(SysTenant::getId, tenantIds));
-        // 初始化租户VO列表
+        // 构建租户 VO 列表
         List<TenantVO> vos = new ArrayList<>();
-        // 将租户实体转换为VO
         for (SysTenant t : tenants) {
-            // 创建租户VO对象
             TenantVO vo = new TenantVO();
-            // 设置租户ID
             vo.setId(t.getId() == null ? null : String.valueOf(t.getId()));
-            // 设置租户名称
             vo.setName(t.getTenantName());
-            // 设置租户描述
             vo.setIntro(t.getDescription());
-            // 设置租户Logo
             vo.setLogo(t.getLogo());
-            // 设置租户类型
             vo.setTenantType(t.getTenantType() == null ? null : t.getTenantType().getCode());
-            // 设置默认标记
+            // 设置是否为默认租户
             for (SysUserTenant b : binds) { if (b.getTenantId().equals(t.getId())) { vo.setIsDefault(b.getIsDefault()); break; } }
-            // 添加到列表
             vos.add(vo);
         }
-        log.info("预登录成功（身份校验通过）: account={}, tenants={}", idKey, vos.size());
+        log.info("用户登录成功：account={}, tenants={}", idKey, vos.size());
         return R.ok(vos);
     }
 
+
     /**
-     * 选择租户，设置上下文。
+     * 选择租户
      * <p>
-     * 完整流程：
+     * 用户登录后选择要访问的租户，切换当前会话的租户上下文
      * </p>
-     * <ol>
-     *   <li>参数提取：从参数中提取租户 ID 和账号</li>
-     *   <li>参数校验：检查租户 ID 和账号是否为空</li>
-     *   <li>用户查询：根据账号查询用户信息</li>
-     *   <li>绑定关系校验：检查用户与租户的绑定关系</li>
-     *   <li>SaToken 登录：调用 StpUtil.login() 进行登录</li>
-     *   <li>会话设置：设置用户 ID、租户 ID、账号到 SaSession</li>
-     *   <li>Token 获取：获取 StpUtil 生成的 Token</li>
-     *   <li>Redis 存储：将登录上下文存入 Redis，与 Token 过期时间一致</li>
-     *   <li>租户上下文设置：调用 TenantContext.set() 设置当前租户</li>
-     *   <li>更新绑定关系：更新用户租户绑定的最后使用时间和偏好顺序</li>
-     *   <li>记录登录日志：记录登录成功日志</li>
-     *   <li>更新用户信息：更新用户最后登录 IP、时间和区域</li>
-     *   <li>在线用户缓存：添加在线用户缓存到 Redis</li>
-     *   <li>返回用户信息：构建并返回用户 DTO</li>
-     * </ol>
-     * <p>
-     * 数据存储：
-     * </p>
-     * <ul>
-     *   <li>SaSession：存储 LOGIN_USER_ID、LOGIN_TENANT_ID、LOGIN_ACCOUNT</li>
-     *   <li>浏览器登录态统一通过 Sa-Token Cookie 传递</li>
-     *   <li>Redis fx:online:user:{tenantId}:{userId}：仅存储在线展示信息</li>
-     * </ul>
      *
-     * @param param 选择租户参数，包含账号和租户 ID
-     * @return {@link R} 包含当前登录用户信息的统一返回结构
-     * @throws BusinessException 当参数校验失败、用户不存在、租户未绑定时抛出
+     * @param param 租户选择参数，包含租户 ID、账号等信息
+     * @return {@link R} 统一响应对象，包含用户 DTO 信息
+     * @throws BusinessException 当选择失败时抛出业务异常，如未登录、用户未绑定租户等
      * @see com.forgex.auth.domain.param.TenantChoiceParam
      * @see com.forgex.auth.domain.dto.SysUserDTO
      * @see com.forgex.common.tenant.TenantContext
@@ -370,51 +338,61 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public R<SysUserDTO> chooseTenant(TenantChoiceParam param) {
-        // 从参数中提取租户ID
+        String loginTerminal = resolveLoginTerminal(param == null ? null : param.getLoginTerminal());
+        if (param != null) {
+            param.setLoginTerminal(loginTerminal);
+        }
+        return chooseTenantStrategyFactory.getStrategy(loginTerminal).chooseTenant(param);
+    }
+
+    public R<SysUserDTO> doChooseTenant(TenantChoiceParam param) {
+        // 获取租户 ID
         Long tenantId = param == null ? null : param.getTenantId();
+        // 获取账号
         String account = param == null ? null : param.getAccount();
         if (tenantId == null) {
             return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
         }
         if (!StringUtils.hasText(account)) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.ACCOUNT_CANNOT_BE_EMPTY);
         String idKey = account;
+        // 查询用户信息
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getAccount, idKey));
         if (user == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_FOUND);
+        // 查询用户与租户的绑定关系
         SysUserTenant bind = userTenantMapper.selectOne(new LambdaQueryWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .last("limit 1"));
         if (bind == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_BOUND_TO_TENANT);
-        // 调用SaToken进行登录
+        // 执行登录
         StpUtil.login(idKey);
-        // 获取SaSession对象
+        // 获取 Session 并设置用户信息
         SaSession session = StpUtil.getSession();
-        // 设置会话信息
         if (session != null) {
-            // 设置登录用户ID
+            // 设置用户 ID
             session.set("LOGIN_USER_ID", user.getId());
-            // 设置登录租户ID
+            // 设置租户 ID
             session.set("LOGIN_TENANT_ID", tenantId);
-            // 设置登录账号
+            // 设置账号
             session.set("LOGIN_ACCOUNT", idKey);
         }
-        // 获取Token值
+        // 获取 Token
         String token = StpUtil.getTokenValue();
-        // Sa-Token 会话已承载登录上下文，这里不再维护并行 Redis 登录上下文。
         // 设置租户上下文
         TenantContext.set(tenantId);
-        // 更新用户租户绑定关系
+        // 更新用户租户绑定信息（最后使用时间、优先级）
         userTenantMapper.update(null, new LambdaUpdateWrapper<SysUserTenant>()
                 .eq(SysUserTenant::getUserId, user.getId())
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .set(SysUserTenant::getLastUsed, LocalDateTime.now())
                 .setSql("pref_order = pref_order + 1"));
         
-        // 记录登录成功日志
+        // 获取客户端信息
         String clientIp = getClientIp();
         String userAgent = getUserAgent();
         String region = ipLocationService.getLocationByIp(clientIp);
+        // 记录登录成功日志
         loginLogService.recordLoginSuccess(user.getId(), account, tenantId, clientIp, region, userAgent, token);
         
         // 更新用户最后登录信息
@@ -424,30 +402,20 @@ public class AuthServiceImpl implements AuthService {
                 .set(SysUser::getLastLoginRegion, region)
                 .set(SysUser::getLastLoginTime, LocalDateTime.now()));
         
-        // 添加在线用户缓存（使用userId+tenantId作为key）
+        // 缓存在线用户信息到 Redis
         String onlineKey = "fx:online:user:" + tenantId + ":" + user.getId();
         try {
-            // 创建在线用户信息Map
             Map<String, Object> onlineInfo = new HashMap<>();
-            // 设置用户ID
             onlineInfo.put("userId", user.getId());
-            // 设置租户ID
             onlineInfo.put("tenantId", tenantId);
-            // 设置账号
             onlineInfo.put("account", idKey);
-            // 设置token
             onlineInfo.put("token", token);
-            // 设置登录时间
+            onlineInfo.put("loginTerminal", resolveLoginTerminal(param == null ? null : param.getLoginTerminal()));
             onlineInfo.put("loginTime", LocalDateTime.now().toString());
-            // 设置客户端IP
             onlineInfo.put("clientIp", clientIp);
-            // 设置User-Agent
             onlineInfo.put("userAgent", userAgent);
-            // 转换为JSON字符串
             String onlineJson = toJson(onlineInfo);
-            // 获取Token超时时间
             Duration onlineTtl = resolveCurrentTokenTtl(token);
-            // 设置Redis键值对，与token过期时间一致
             if (onlineTtl == null) {
                 redis.opsForValue().set(onlineKey, onlineJson);
             } else if (!onlineTtl.isZero() && !onlineTtl.isNegative()) {
@@ -455,58 +423,46 @@ public class AuthServiceImpl implements AuthService {
             } else {
                 redis.delete(onlineKey);
             }
-            log.info("添加在线用户缓存: userId={}, tenantId={}, token={}", user.getId(), tenantId, token);
+            log.info("缓存在线用户信息：userId={}, tenantId={}, token={}", user.getId(), tenantId, token);
         } catch (Exception e) {
-            log.warn("添加在线用户缓存失败: userId={}, tenantId={}", user.getId(), tenantId, e);
+            log.warn("缓存在线用户信息失败：userId={}, tenantId={}", user.getId(), tenantId, e);
         }
         
-        log.info("选择租户成功: account={}, tenantId={}", account, tenantId);
-        // 创建用户DTO对象
+        log.info("用户选择租户成功：account={}, tenantId={}", account, tenantId);
+        // 构建返回结果
         SysUserDTO result = new SysUserDTO();
-        // 设置用户ID
         result.setId(user.getId());
-        // 设置账号
         result.setAccount(user.getAccount());
-        // 设置用户名
         result.setUsername(user.getUsername());
-        // 设置邮箱
         result.setEmail(user.getEmail());
-        // 设置手机号
         result.setPhone(user.getPhone());
-        // 设置头像
         result.setAvatar(user.getAvatar());
-        // 设置状态
         result.setStatus(user.getStatus());
-        // 设置租户ID
         result.setTenantId(bind.getTenantId());
         return R.ok(result);
     }
 
+
     /**
-     * 更新租户偏好设置
-     * <p>用于更新用户的租户排序和默认租户设置。</p>
-     * <p>参数说明：</p>
-     * <ul>
-     *   <li>account：用户账号</li>
-     *   <li>ordered：租户ID排序列表</li>
-     *   <li>defaultTenantId：默认租户ID</li>
-     * </ul>
+     * 更新用户租户偏好设置
+     * <p>
+     * 允许用户自定义租户列表的显示顺序和默认租户
+     * </p>
      *
      * @param account 用户账号
-     * @param ordered 租户ID排序列表
-     * @param defaultTenantId 默认租户ID
-     * @return 更新结果
+     * @param ordered 租户 ID 有序列表，按优先级排序
+     * @param defaultTenantId 默认租户 ID
+     * @return {@link R} 统一响应对象
      */
     @Override
     public R<Boolean> updateTenantPreferences(String account, java.util.List<Long> ordered, Long defaultTenantId) {
         if (!StringUtils.hasText(account) || ordered == null) return R.fail(CommonPrompt.BAD_REQUEST);
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getAccount, account));
         if (user == null) return R.fail(CommonPrompt.USER_NOT_FOUND);
-        // 计算权重（排序列表长度）
+        // 遍历租户列表，更新优先级和默认设置
         int n = ordered.size(); int weight = n;
-        // 遍历排序列表，更新每个租户的偏好顺序
         for (Long tid : ordered) {
-            // 更新租户偏好顺序和默认标记
+            // 更新租户偏好设置
             userTenantMapper.update(null, new LambdaUpdateWrapper<SysUserTenant>()
                     .eq(SysUserTenant::getUserId, user.getId())
                     .eq(SysUserTenant::getTenantId, tid)
@@ -520,26 +476,26 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public R<Boolean> changeLanguage(String lang) {
-        // 参数校验：语言不能为空
+        // 校验语言参数不能为空
         if (!StringUtils.hasText(lang)) {
             return R.fail(500, AuthPromptEnum.LANG_EMPTY);
         }
-        // 获取当前用户ID
+        // 获取当前用户 ID
         Long userId = CurrentUserUtils.getUserId();
-        // 获取当前租户ID
+        // 获取当前租户 ID
         Long tenantId = CurrentUserUtils.getTenantId();
-        // 校验用户是否登录
+        // 校验用户必须已登录
         if (userId == null || tenantId == null) {
             return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
         }
 
-        // 构造语言偏好键
+        // 构建缓存键
         String prefKey = "fx:lang:" + tenantId + ":" + userId;
         try {
-            // 设置语言偏好到Redis
+            // 保存语言设置到 Redis
             redis.opsForValue().set(prefKey, lang);
         } catch (Exception e) {
-            // 设置失败
+            // 保存失败返回错误
             return R.fail(500, AuthPromptEnum.LANG_SET_FAILED);
         }
 
@@ -548,26 +504,27 @@ public class AuthServiceImpl implements AuthService {
 
 
     /**
-     * 管理员权限校验
-     * <p>逻辑：检查是否拥有 admin 角色</p>
+     * 管理员安全校验（已废弃）
      *
-     * @return 校验结果
+     * @return {@link R} 统一响应对象
      * @see cn.dev33.satoken.stp.StpUtil#checkRole(String)
      */
     @Override
     @Deprecated
     public R<Boolean> secureAdmin() {
-        // 检查当前用户是否拥有admin角色
+        // 检查是否已登录
         StpUtil.checkLogin();
         return R.fail(CommonPrompt.BAD_REQUEST);
     }
 
     /**
-     * 根据用户ID重置密码
-     * <p>将指定用户的密码重置为默认密码 "123456"，使用 BCrypt 算法进行哈希存储。</p>
+     * 重置用户密码
+     * <p>
+     * 根据用户 ID 重置密码为默认密码（123456），使用 BCrypt 或 SM2 加密存储
+     * </p>
      *
-     * @param userId 用户ID
-     * @return 重置结果
+     * @param userId 用户 ID
+     * @return {@link R} 统一响应对象
      */
     @Override
     public R<Boolean> resetPasswordById(Long userId) {
@@ -589,15 +546,24 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 获取密码策略配置
+     * 解析登录终端类型
      * <p>
-     * 从配置服务中读取密码策略配置，如果不存在则返回默认配置。
+     * 从配置中读取登录终端类型，支持 Web、App 等多种终端
      * </p>
      *
-     * @return 密码策略配置对象
+     * @param loginTerminal 登录终端参数
+     * @return 规范化后的登录终端类型
      * @see com.forgex.common.domain.config.PasswordPolicyConfig
      * @see com.forgex.common.config.ConfigService#getJson(String, Class, Object)
      */
+    private String resolveLoginTerminal(String loginTerminal) {
+        return StringUtils.hasText(loginTerminal) ? loginTerminal.trim().toUpperCase(Locale.ROOT) : AuthTerminalConstants.B;
+    }
+
+    private String resolveLoginType(String loginType) {
+        return StringUtils.hasText(loginType) ? loginType.trim().toUpperCase(Locale.ROOT) : LoginTypeConstants.ACCOUNT_PASSWORD;
+    }
+
     private PasswordPolicyConfig getPasswordPolicyConfig() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
@@ -607,13 +573,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 解析密码存储策略
+     * 解析密码存储方式
      * <p>
-     * 从密码策略配置中解析密码存储方式，默认为 bcrypt。
+     * 从密码策略配置中解析密码存储方式，支持 bcrypt、sm2 等
      * </p>
      *
-     * @param policy 密码策略配置对象
-     * @return 密码存储策略（bcrypt 或 sm2）
+     * @param policy 密码策略配置
+     * @return 密码存储方式
      * @see com.forgex.common.domain.config.PasswordPolicyConfig#getStore()
      */
     private String resolvePasswordStore(PasswordPolicyConfig policy) {
@@ -623,10 +589,10 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 解析默认密码
      * <p>
-     * 从密码策略配置中获取默认密码，用于重置用户密码。
+     * 从密码策略配置中读取默认密码，用于密码重置
      * </p>
      *
-     * @return 默认密码字符串
+     * @return 默认密码
      * @see com.forgex.common.domain.config.PasswordPolicyConfig#getDefaultPassword()
      */
     private String resolveDefaultPassword() {
@@ -637,26 +603,32 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 加密密码
      * <p>
-     * 根据密码策略配置的加密方式对原始密码进行加密。
+     * 根据密码存储策略对原始密码进行加密或哈希处理
      * </p>
      *
      * @param rawPassword 原始密码
-     * @return 加密后的密码字符串
+     * @return 加密后的密码
      * @see com.forgex.common.crypto.CryptoPasswordProvider#encrypt(String)
      * @see com.forgex.common.crypto.CryptoProviders#resolve(String, com.forgex.common.config.ConfigService)
      */
     private String encryptPassword(String rawPassword) {
         CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(getPasswordPolicyConfig()), configService);
-        return provider.encrypt(rawPassword);
+        if (provider.supportsEncrypt()) {
+            return provider.encrypt(rawPassword);
+        }
+        if (provider.supportsHash()) {
+            return provider.hash(rawPassword);
+        }
+        throw new IllegalStateException("Unsupported password store: " + provider.name());
     }
 
     /**
      * 获取登录安全配置
      * <p>
-     * 从配置服务中读取登录安全配置（登录失败限制），如果不存在则返回默认配置。
+     * 从配置中读取登录安全相关配置，包括失败次数限制、锁定时间等
      * </p>
      *
-     * @return 登录安全配置对象
+     * @return 登录安全配置
      * @see com.forgex.common.domain.config.LoginSecurityConfig
      * @see com.forgex.common.config.ConfigService#getJson(String, Class, Object)
      */
@@ -669,12 +641,12 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 检查账号是否被锁定
      * <p>
-     * 根据登录安全配置检查账号是否因连续登录失败而被锁定。
+     * 根据登录失败配置检查账号是否被锁定，如果锁定则返回锁定剩余时间
      * </p>
      *
-     * @param account 登录账号
+     * @param account 账号
      * @param config 登录安全配置
-     * @return 如果已锁定返回失败响应（包含剩余锁定时间），否则返回 null
+     * @return 如果账号被锁定返回错误响应，否则返回 null
      * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
      */
     private R<List<TenantVO>> checkLoginLocked(String account, LoginSecurityConfig config) {
@@ -682,7 +654,7 @@ public class AuthServiceImpl implements AuthService {
             return null;
         }
         String lockKey = LOGIN_LOCK_KEY_PREFIX + normalizeAccountKey(account);
-        Long ttl = redis.getExpire(lockKey, TimeUnit.SECONDS);
+        Long ttl = readKeyTtlSeconds(lockKey);
         if (ttl == null || ttl <= 0) {
             return null;
         }
@@ -693,16 +665,16 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 记录登录失败状态
      * <p>
-     * 记录账号的登录失败次数，当超过阈值时锁定账号。
+     * 记录登录失败次数，如果达到最大失败次数则锁定账号
      * </p>
-     * <p>处理逻辑：</p>
+     * <p>处理流程：</p>
      * <ol>
-     *   <li>失败次数加 1</li>
-     *   <li>设置失败次数记录的过期时间</li>
-     *   <li>如果超过最大失败次数，锁定账号</li>
+     *   <li>从配置中读取失败时间窗口、最大失败次数、锁定时间等参数</li>
+     *   <li>使用 Redisson 原子计数器记录失败次数</li>
+     *   <li>如果失败次数达到阈值，设置账号锁定并清除失败计数器</li>
      * </ol>
      *
-     * @param account 登录账号
+     * @param account 账号
      * @param config 登录安全配置
      * @see com.forgex.common.domain.config.LoginSecurityConfig#getMaxFailCount()
      * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
@@ -719,48 +691,83 @@ public class AuthServiceImpl implements AuthService {
         }
         String accountKey = normalizeAccountKey(account);
         String failKey = LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey;
-        Long currentCount = redis.opsForValue().increment(failKey);
-        redis.expire(failKey, Duration.ofMinutes(failWindowMinutes));
-        if (currentCount != null && currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
-            redis.opsForValue().set(LOGIN_LOCK_KEY_PREFIX + accountKey, "1", Duration.ofMinutes(lockMinutes));
-            redis.delete(failKey);
+        try {
+            RAtomicLong failCounter = redissonClient.getAtomicLong(failKey);
+            long currentCount = failCounter.incrementAndGet();
+            failCounter.expire(Duration.ofMinutes(failWindowMinutes));
+            if (currentCount >= maxFailCount && lockMinutes != null && lockMinutes > 0) {
+                redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).set("1", Duration.ofMinutes(lockMinutes));
+                failCounter.delete();
+            }
+        } catch (Exception e) {
+            log.warn("记录登录失败状态失败：account={}", account, e);
         }
     }
 
     /**
      * 清除登录失败状态
      * <p>
-     * 登录成功后清除账号的失败次数记录和锁定状态。
+     * 登录成功后清除登录失败计数器和账号锁定状态
      * </p>
      *
-     * @param account 登录账号
+     * @param account 账号
      */
     private void clearLoginFailureState(String account) {
         if (!StringUtils.hasText(account)) {
             return;
         }
         String accountKey = normalizeAccountKey(account);
-        redis.delete(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey);
-        redis.delete(LOGIN_LOCK_KEY_PREFIX + accountKey);
+        try {
+            redissonClient.getAtomicLong(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey).delete();
+            redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).delete();
+        } catch (Exception e) {
+            log.warn("清除登录失败状态失败：account={}", account, e);
+        }
     }
 
     /**
-     * 标准化账号键
+     * 规范化账号键
      * <p>
-     * 将账号转换为小写并去除首尾空格，用于 Redis 键的统一处理。
+     * 将账号转换为小写并去除首尾空格，用于 Redis 键名
      * </p>
      *
-     * @param account 原始账号
-     * @return 标准化后的账号键
+     * @param account 账号
+     * @return 规范化后的账号键
      */
     private String normalizeAccountKey(String account) {
-        return account == null ? "" : account.trim().toLowerCase();
+        return account == null ? "" : account.trim().toLowerCase(Locale.ROOT);
     }
 
     /**
-     * 将 Map 转换为 JSON 字符串
+     * 读取 Redis 键的剩余生存时间
      * <p>
-     * 使用 Hutool 工具类将 Map 对象序列化为 JSON 字符串。
+     * 使用 Redisson 读取键的 TTL，返回秒数
+     * </p>
+     *
+     * @param key Redis 键
+     * @return 剩余生存时间（秒），如果键不存在或已过期返回 null
+     */
+    private Long readKeyTtlSeconds(String key) {
+        if (!StringUtils.hasText(key)) {
+            return null;
+        }
+        try {
+            RBucket<Object> bucket = redissonClient.getBucket(key);
+            long ttlMillis = bucket.remainTimeToLive();
+            if (ttlMillis <= 0L) {
+                return null;
+            }
+            return Math.max(1L, (ttlMillis + 999L) / 1000L);
+        } catch (Exception e) {
+            log.warn("读取 Redis 键 TTL 失败：key={}", key, e);
+            return null;
+        }
+    }
+
+    /**
+     * Map 转 JSON 字符串
+     * <p>
+     * 使用 Hutool 工具类将 Map 对象转换为 JSON 字符串
      * </p>
      *
      * @param value Map 对象
@@ -774,11 +781,11 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 解析当前 Token 的 TTL
      * <p>
-     * 根据 Token 计算有效的过期时间，返回 Duration 对象。
+     * 根据 Token 解析其有效的生存时间
      * </p>
      *
      * @param token Token 字符串
-     * @return Token 的有效期时长
+     * @return Token 的生存时间，如果无效返回 null
      * @see #resolveEffectiveTtlSeconds(String)
      */
     private Duration resolveCurrentTokenTtl(String token) {
@@ -787,13 +794,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 解析有效的 TTL 秒数
+     * 解析有效的超时时间
      * <p>
-     * 计算 Token 的有效过期时间（秒），取 tokenTimeout 和 activeTimeout 的最小值。
+     * 从 Token 中解析 tokenTimeout 和 activeTimeout，返回较小的值作为有效超时时间
      * </p>
      *
      * @param token Token 字符串
-     * @return 有效的 TTL 秒数，永不过期返回 null
+     * @return 有效的超时时间（秒），如果无效返回 null
      * @see #readTokenTimeout(String)
      * @see #readActiveTimeout(String)
      * @see #normalizeTimeout(long)
@@ -814,13 +821,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 读取 Token 的超时时间
+     * 读取 Token 超时时间
      * <p>
-     * 从 Sa-Token 获取 Token 的剩余有效时间（秒）。
+     * 从 Sa-Token 中读取 Token 的超时时间
      * </p>
      *
      * @param token Token 字符串
-     * @return Token 超时时间（秒），获取失败返回 0
+     * @return Token 超时时间（秒），如果读取失败返回 0
      * @see cn.dev33.satoken.stp.StpUtil#getTokenTimeout(String)
      */
     private long readTokenTimeout(String token) {
@@ -832,13 +839,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 读取 Token 的活跃超时时间
+     * 读取 Token 活跃超时时间
      * <p>
-     * 从 Sa-Token 获取 Token 的活跃超时时间（秒），即用户活跃状态下的过期时间。
+     * 从 Sa-Token 中读取 Token 的活跃超时时间
      * </p>
      *
      * @param token Token 字符串
-     * @return 活跃超时时间（秒），获取失败返回 NOT_VALUE_EXPIRE
+     * @return Token 活跃超时时间（秒），如果读取失败返回 NOT_VALUE_EXPIRE
      * @see cn.dev33.satoken.dao.SaTokenDao#NOT_VALUE_EXPIRE
      */
     private long readActiveTimeout(String token) {
@@ -850,13 +857,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 标准化超时时间
+     * 规范化超时时间
      * <p>
-     * 将 Sa-Token 的超时时间标准化为 Long 类型，处理永不过期和无效值。
+     * 处理 Sa-Token 的特殊超时时间值（NEVER_EXPIRE、NOT_VALUE_EXPIRE）
      * </p>
      *
-     * @param seconds 原始超时时间（秒）
-     * @return 标准化后的超时时间，永不过期返回 null，无效值返回 0
+     * @param seconds 超时时间（秒）
+     * @return 规范化后的超时时间，永不过期或无效返回 null
      * @see cn.dev33.satoken.dao.SaTokenDao#NEVER_EXPIRE
      * @see cn.dev33.satoken.dao.SaTokenDao#NOT_VALUE_EXPIRE
      */
@@ -873,12 +880,12 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 清除在线用户缓存
      * <p>
-     * 根据租户 ID 和用户 ID 删除在线用户缓存，或者根据 Token 扫描删除对应的缓存。
+     * 根据 Token 或租户 ID+ 用户 ID 清除 Redis 中的在线用户缓存
      * </p>
-     * <p>处理逻辑：</p>
+     * <p>处理流程：</p>
      * <ol>
-     *   <li>如果提供了 tenantId 和 userId，直接删除对应缓存</li>
-     *   <li>否则扫描所有在线用户缓存，匹配 Token 后删除</li>
+     *   <li>如果提供了租户 ID 和用户 ID，直接删除对应的在线缓存</li>
+     *   <li>否则遍历所有在线用户缓存，查找匹配的 Token 并删除</li>
      * </ol>
      *
      * @param tokenValue Token 值
@@ -890,9 +897,9 @@ public class AuthServiceImpl implements AuthService {
             String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
             try {
                 redis.delete(onlineKey);
-                log.info("删除在线用户缓存: userId={}, tenantId={}", userId, tenantId);
+                log.info("清除在线用户缓存：userId={}, tenantId={}", userId, tenantId);
             } catch (Exception e) {
-                log.warn("删除在线用户缓存失败: {}", e.getMessage());
+                log.warn("清除在线用户缓存失败：{}", e.getMessage());
             }
             return;
         }
@@ -913,49 +920,51 @@ public class AuthServiceImpl implements AuthService {
                     cn.hutool.json.JSONObject onlineObj = JSONUtil.parseObj(onlineJson);
                     if (tokenValue.equals(onlineObj.getStr("token"))) {
                         redis.delete(key);
-                        log.info("按Token删除在线用户缓存: token={}", tokenValue);
+                        log.info("清除在线用户缓存：token={}", tokenValue);
                         break;
                     }
                 } catch (Exception ignored) {
                 }
             }
         } catch (Exception e) {
-            log.warn("扫描删除在线用户缓存失败: {}", e.getMessage());
+            log.warn("清除在线用户缓存失败：{}", e.getMessage());
         }
     }
 
     /**
      * 用户登出
-     * <p>清除用户登录状态，并同步清理在线用户展示缓存。</p>
+     * <p>
+     * 处理用户登出请求，清除登录状态和在线缓存
+     * </p>
      *
-     * @return 登出结果
+     * @return {@link R} 统一响应对象
      * @see StpUtil#logout()
      */
     @Override
     public R<Boolean> logout() {
         try {
-            // 获取当前登录用户ID（使用安全方法，不会抛异常）
+            // 获取当前登录用户 ID
             Object uid = StpUtil.getLoginIdDefaultNull();
             
-            // 初始化用户ID和租户ID
+            // 初始化用户信息变量
             Long userId = null;
             Long tenantId = null;
             String account = null;
             String tokenValue = null;
             
-            // 尝试获取Token值（可能为null）
+            // 获取 Token 值
             try {
                 tokenValue = StpUtil.getTokenValue();
             } catch (Exception e) {
-                log.debug("获取Token失败，可能用户未登录: {}", e.getMessage());
+                log.debug("获取 Token 失败：{}", e.getMessage());
             }
             
-            // 尝试获取SaSession对象
+            // 从 Session 中获取用户信息
             try {
                 SaSession session = StpUtil.getSession(false);
-                // 从会话中提取用户ID和租户ID
+                // 从 Session 中读取用户 ID、租户 ID 等信息
                 if (session != null) {
-                    // 提取用户ID
+                    // 获取用户 ID
                     Object uidObj = session.get("LOGIN_USER_ID");
                     if (uidObj instanceof Long) {
                         userId = (Long) uidObj;
@@ -964,7 +973,7 @@ public class AuthServiceImpl implements AuthService {
                     } else if (uidObj instanceof String) {
                         try { userId = Long.valueOf((String) uidObj); } catch (Exception ignored) { }
                     }
-                    // 提取租户ID
+                    // 获取租户 ID
                     Object tidObj = session.get("LOGIN_TENANT_ID");
                     if (tidObj instanceof Long) {
                         tenantId = (Long) tidObj;
@@ -975,48 +984,47 @@ public class AuthServiceImpl implements AuthService {
                     }
                 }
             } catch (Exception e) {
-                log.debug("获取Session失败，可能会话已过期: {}", e.getMessage());
+                log.debug("获取 Session 失败：{}", e.getMessage());
             }
             
             // 获取账号
             account = uid == null ? null : String.valueOf(uid);
 
-            // 记录登出时间/原因（异步，不影响主流程）
+            // 记录登出日志
             if (StringUtils.hasText(tokenValue)) {
                 try {
                     loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
                 } catch (Exception e) {
-                    log.warn("记录登出日志失败: {}", e.getMessage());
+                    log.warn("记录登出日志失败：{}", e.getMessage());
                 }
             }
 
-            // 删除在线用户缓存
+            // 清除在线用户缓存
             clearOnlineUserCache(tokenValue, tenantId, userId);
             
-            // 调用SaToken登出（即使未登录也不会报错）
+            // 执行登出
             try {
                 StpUtil.logout();
             } catch (Exception e) {
-                log.debug("SaToken登出失败（可能未登录）: {}", e.getMessage());
+                log.debug("Sa-Token 登出失败：{}", e.getMessage());
             }
             
-            log.info("退出成功: account={}", account);
+            log.info("用户登出成功：account={}", account);
             return R.ok(true);
         } catch (Exception e) {
-            // 记录详细的异常信息
-            log.error("登出过程发生异常", e);
+            // 登出失败记录错误日志
+            log.error("Logout process failed", e);
             return R.fail(CommonPrompt.LOGOUT_FAILED);
         }
     }
     
     /**
-     * 获取客户端真实IP
+     * 获取客户端 IP 地址
      * <p>
-     * 从请求头 X-Client-IP 获取（由网关透传）。
-     * 如果获取失败，返回 "unknown"。
+     * 从 HTTP 请求头中获取客户端 IP 地址，优先使用 X-Client-IP 头
      * </p>
      * 
-     * @return 客户端IP地址
+     * @return 客户端 IP 地址，如果获取失败返回"unknown"
      */
     private String getClientIp() {
         try {
@@ -1032,19 +1040,18 @@ public class AuthServiceImpl implements AuthService {
                 return request.getRemoteAddr();
             }
         } catch (Exception e) {
-            log.warn("获取客户端IP失败", e);
+            log.warn("Get client IP failed", e);
         }
         return "unknown";
     }
     
     /**
-     * 获取User-Agent
+     * 获取 User-Agent
      * <p>
-     * 从请求头获取浏览器User-Agent信息。
-     * 如果获取失败，返回 "unknown"。
+     * 从 HTTP 请求头中获取 User-Agent 信息
      * </p>
      * 
-     * @return User-Agent字符串
+     * @return User-Agent 字符串，如果获取失败返回"unknown"
      */
     private String getUserAgent() {
         try {
@@ -1059,8 +1066,205 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
         } catch (Exception e) {
-            log.warn("获取User-Agent失败", e);
+            log.warn("Get User-Agent failed", e);
         }
         return "unknown";
+    }
+
+    // ==================== 邀请码相关功能 ====================
+
+    @Autowired
+    private SysInviteCodeMapper inviteCodeMapper;
+
+    @Autowired
+    private SysInviteRegisterRecordMapper inviteRegisterRecordMapper;
+
+    /**
+     * 用户注册
+     * <p>
+     * 处理用户注册请求，支持邀请码注册
+     * </p>
+     */
+    @Override
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    public R<Boolean> register(com.forgex.auth.domain.param.RegisterParam param) {
+        // 1. 校验请求参数
+        if (param == null) {
+            return R.fail(CommonPrompt.BAD_REQUEST);
+        }
+        String account = param.getAccount();
+        String username = param.getUsername();
+        String password = param.getPassword();
+        String inviteCode = param.getInviteCode();
+
+        if (!StringUtils.hasText(account)) {
+            return R.fail(CommonPrompt.ACCOUNT_CANNOT_BE_EMPTY);
+        }
+        if (!StringUtils.hasText(password)) {
+            return R.fail(CommonPrompt.PASSWORD_CANNOT_BE_EMPTY);
+        }
+        if (!StringUtils.hasText(inviteCode)) {
+            return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
+        }
+
+        // 2. 验证码校验
+        CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
+        String mode = cfg.getMode();
+        if ("image".equalsIgnoreCase(mode)) {
+            if (!StringUtils.hasText(param.getCaptchaId()) || !StringUtils.hasText(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
+            }
+            if (!captchaService.verifyImage(param.getCaptchaId(), param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
+            }
+        } else if ("slider".equalsIgnoreCase(mode)) {
+            if (!StringUtils.hasText(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
+            }
+            if (!captchaService.verifySlider(param.getCaptcha())) {
+                return R.fail(CommonPrompt.VERIFICATION_CODE_INCORRECT);
+            }
+        }
+
+        // 3. 校验邀请码
+        com.forgex.auth.domain.entity.SysInviteCode inviteCodeEntity = inviteCodeMapper.selectOne(
+                new LambdaQueryWrapper<com.forgex.auth.domain.entity.SysInviteCode>()
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getInviteCode, inviteCode)
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getDeleted, false));
+        if (inviteCodeEntity == null) {
+            return R.fail(CommonPrompt.INVITE_CODE_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(inviteCodeEntity.getStatus())) {
+            return R.fail(CommonPrompt.INVITE_CODE_DISABLED);
+        }
+        if (inviteCodeEntity.getExpireTime() != null && LocalDateTime.now().isAfter(inviteCodeEntity.getExpireTime())) {
+            return R.fail(CommonPrompt.INVITE_CODE_EXPIRED);
+        }
+        if (inviteCodeEntity.getUsedCount() >= inviteCodeEntity.getMaxRegisterCount()) {
+            return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+
+        // 4. 校验账号是否已存在
+        Long existCount = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getAccount, account));
+        if (existCount > 0) {
+            return R.fail(CommonPrompt.ACCOUNT_ALREADY_EXISTS);
+        }
+
+        // 5. 如果配置了 SM2 加密传输，则解密密码
+        String rawPassword = password;
+        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
+        if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
+            try {
+                SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
+                String cipherFmt = cryptoCfg.getCipher();
+                if ("BCD".equalsIgnoreCase(cipherFmt)) {
+                    byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
+                    rawPassword = new String(plain, StandardCharsets.UTF_8);
+                } else {
+                    rawPassword = sm2.decryptStr(password, KeyType.PrivateKey);
+                }
+            } catch (Exception ignored) {
+                // 解密失败时忽略异常
+            }
+        }
+
+        // 6. 加密密码
+        String hashedPassword = encryptPassword(rawPassword);
+
+        // 7. 创建用户
+        SysUser newUser = new SysUser();
+        newUser.setAccount(account);
+        newUser.setUsername(StringUtils.hasText(username) ? username : account);
+        newUser.setPassword(hashedPassword);
+        newUser.setPhone(param.getPhone());
+        newUser.setEmail(param.getEmail());
+        newUser.setStatus(true);
+        userMapper.insert(newUser);
+
+        Long userId = newUser.getId();
+
+        // 8. 如果邀请码配置了部门 ID，则更新用户部门和职位
+        if (inviteCodeEntity.getDepartmentId() != null) {
+            LambdaUpdateWrapper<SysUser> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(SysUser::getId, userId);
+            // 使用 setSql 直接设置部门和职位
+            StringBuilder sqlParts = new StringBuilder();
+            sqlParts.append("department_id = ").append(inviteCodeEntity.getDepartmentId());
+            if (inviteCodeEntity.getPositionId() != null) {
+                sqlParts.append(", position_id = ").append(inviteCodeEntity.getPositionId());
+            }
+            updateWrapper.setSql(sqlParts.toString());
+            userMapper.update(null, updateWrapper);
+        }
+
+        // 9. 创建用户与租户的绑定关系
+        Long tenantId = inviteCodeEntity.getTenantId();
+        if (tenantId != null) {
+            SysUserTenant userTenant = new SysUserTenant();
+            userTenant.setUserId(userId);
+            userTenant.setTenantId(tenantId);
+            userTenant.setIsDefault(true);
+            userTenant.setPrefOrder(1);
+            userTenant.setLastUsed(LocalDateTime.now());
+            userTenantMapper.insert(userTenant);
+        }
+
+        // 10. 更新邀请码使用次数
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<com.forgex.auth.domain.entity.SysInviteCode> inviteUpdate =
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
+        inviteUpdate.eq(com.forgex.auth.domain.entity.SysInviteCode::getId, inviteCodeEntity.getId())
+                .setSql("used_count = used_count + 1");
+        inviteCodeMapper.update(null, inviteUpdate);
+
+        // 11. 记录邀请注册日志
+        String clientIp = getClientIp();
+        String region = ipLocationService.getLocationByIp(clientIp);
+
+        com.forgex.auth.domain.entity.SysInviteRegisterRecord record = new com.forgex.auth.domain.entity.SysInviteRegisterRecord();
+        record.setTenantId(tenantId);
+        record.setInviteId(inviteCodeEntity.getId());
+        record.setInviteCode(inviteCode);
+        record.setUserId(userId);
+        record.setAccount(account);
+        record.setUsername(StringUtils.hasText(username) ? username : account);
+        record.setDepartmentId(inviteCodeEntity.getDepartmentId());
+        record.setPositionId(inviteCodeEntity.getPositionId());
+        record.setRegisterIp(clientIp);
+        record.setRegisterRegion(region);
+        record.setRegisterTime(LocalDateTime.now());
+        record.setStatus(1);
+        inviteRegisterRecordMapper.insert(record);
+
+        log.info("用户注册成功：account={}, inviteCode={}, tenantId={}", account, inviteCode, tenantId);
+
+        return R.ok(CommonPrompt.REGISTER_SUCCESS, true);
+    }
+
+    /**
+     * 校验邀请码
+     */
+    @Override
+    public R<Boolean> validateInviteCode(String inviteCode) {
+        if (!StringUtils.hasText(inviteCode)) {
+            return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
+        }
+        com.forgex.auth.domain.entity.SysInviteCode entity = inviteCodeMapper.selectOne(
+                new LambdaQueryWrapper<com.forgex.auth.domain.entity.SysInviteCode>()
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getInviteCode, inviteCode)
+                        .eq(com.forgex.auth.domain.entity.SysInviteCode::getDeleted, false));
+        if (entity == null) {
+            return R.fail(CommonPrompt.INVITE_CODE_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(entity.getStatus())) {
+            return R.fail(CommonPrompt.INVITE_CODE_DISABLED);
+        }
+        if (entity.getExpireTime() != null && LocalDateTime.now().isAfter(entity.getExpireTime())) {
+            return R.fail(CommonPrompt.INVITE_CODE_EXPIRED);
+        }
+        if (entity.getUsedCount() >= entity.getMaxRegisterCount()) {
+            return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+        return R.ok(true);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * 繁體中文翻譯統一導出
+ * 繁体中文翻译统一导出
  */
 import common from './common'
 import layout from './layout'
@@ -10,6 +10,7 @@ import workflow from './workflow'
 import personalHomepage from './personalHomepage'
 import profile from './profile'
 import operationLog from './operationLog'
+import integration from './integration'
 
 export default {
   common,
@@ -18,6 +19,7 @@ export default {
   message,
   system,
   workflow,
+  integration,
   personalHomepage,
   profile,
   operationLog,

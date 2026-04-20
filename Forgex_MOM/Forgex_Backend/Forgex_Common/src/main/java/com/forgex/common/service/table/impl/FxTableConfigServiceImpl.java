@@ -570,8 +570,8 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
             queryField.setDictCode(POSITION_ID_FIELD);
         } else if (ROLE_ID_FIELD.equals(field)) {
             queryField.setLabel(resolveI18nText(ROLE_TITLE_I18N_JSON, ROLE_ID_FIELD));
-            queryField.setQueryType("select");
-            queryField.setQueryOperator("eq");
+            queryField.setQueryType("multiSelect");
+            queryField.setQueryOperator("in");
             queryField.setDictCode(ROLE_ID_FIELD);
         } else if (ENTRY_DATE_FIELD.equals(field)) {
             queryField.setLabel(resolveI18nText(ENTRY_DATE_TITLE_I18N_JSON, ENTRY_DATE_FIELD));

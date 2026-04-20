@@ -1,5 +1,5 @@
 /**
- * 個人首頁翻譯 - 繁體中文
+ * 个人首页翻译 - 繁体中文注释
  * 
  * @author Forgex Team
  * @version 1.0.0
@@ -50,8 +50,15 @@ export default {
   components: {
     commonMenus: {
       title: '常用菜單',
-      subtitle: '常看入口和最近訪問菜單',
+      subtitle: '系統自動統計的固定 Top 6 菜單',
       empty: '暫無常用菜單',
+    },
+    myFavorites: {
+      title: '我的收藏',
+      subtitle: '我主動收藏的快捷入口',
+      empty: '暫無收藏菜單',
+      add: '加入收藏',
+      remove: '取消收藏',
     },
     pendingApprovals: {
       title: '我收到的審批',
@@ -90,6 +97,47 @@ export default {
     saveFailed: '保存個人首頁配置失敗',
     resetSuccess: '已恢復為默認佈局',
     resetFailed: '恢復默認佈局失敗',
+  },
+
+  // 收藏管理頁面
+  management: {
+    title: '收藏管理',
+    desc: '統一維護我的收藏菜單，支持調整首頁展示順序與批量取消收藏。',
+    alert: '「我的收藏」卡片會按照這裡保存的順序展示；「常用菜單」固定保留系統自動統計的 Top 6。',
+    empty: '暫無收藏菜單，請先在首頁或菜單中添加收藏。',
+    stats: {
+      count: '已收藏 {count} 項',
+    },
+    table: {
+      order: '排序',
+      menu: '菜單',
+      path: '路由路徑',
+      action: '操作',
+    },
+    action: {
+      refresh: '刷新列表',
+      batchCancel: '批量取消收藏',
+      saveSort: '保存排序',
+      moveUp: '上移',
+      moveDown: '下移',
+      open: '打開',
+      remove: '取消收藏',
+    },
+    confirm: {
+      batchCancelTitle: '確認批量取消收藏',
+      batchCancelContent: '確認取消選中的 {count} 個收藏菜單嗎？',
+      singleCancelTitle: '確認取消收藏',
+      singleCancelContent: '確認取消收藏「{title}」嗎？',
+    },
+    message: {
+      loadFailed: '加載收藏管理列表失敗',
+      batchCancelSuccess: '批量取消收藏成功',
+      batchCancelFailed: '批量取消收藏失敗',
+      singleCancelSuccess: '取消收藏成功',
+      singleCancelFailed: '取消收藏失敗',
+      sortSaveSuccess: '收藏排序已保存',
+      sortSaveFailed: '保存收藏排序失敗',
+    },
   },
 
   // 摘要卡片

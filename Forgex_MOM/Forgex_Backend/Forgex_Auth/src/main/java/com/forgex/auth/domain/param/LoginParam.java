@@ -29,6 +29,9 @@ import lombok.Data;
  */
 @Data
 public class LoginParam {
+    private String loginTerminal;
+
+    private String loginType;
     /**
      * 账号
      * <p>用于登录的唯一标识（如用户名、手机号、邮箱等）</p>

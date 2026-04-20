@@ -1,6 +1,6 @@
 /**
- * システム管理モジュール翻訳
- * 統一エクスポート
+ * 系统管理模块翻译
+ * 统一导出
  */
 import user from './user'
 import role from './role'
@@ -13,6 +13,9 @@ import position from './position'
 import module from './module'
 import dashboard from './dashboard'
 import tenant from './tenant'
+import messageTemplate from './messageTemplate'
+import tenantMessageWhitelist from './tenantMessageWhitelist'
+import encodeRule from './encodeRule'
 
 export default {
   user,
@@ -26,4 +29,7 @@ export default {
   module,
   dashboard,
   tenant,
+  messageTemplate,
+  tenantMessageWhitelist,
+  encodeRule,
 }

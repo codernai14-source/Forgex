@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.forgex.integration.mapper.ApiCallLogMapper">
+
+  <resultMap id="ApiCallLogResultMap" type="com.forgex.integration.domain.entity.ApiCallLog">
+    <id property="id" column="id" />
+    <result property="tenantId" column="tenant_id" />
+    <result property="apiConfigId" column="api_config_id" />
+    <result property="callDirection" column="call_direction" />
+    <result property="callerIp" column="caller_ip" />
+    <result property="requestData" column="request_data" />
+    <result property="responseData" column="response_data" />
+    <result property="callStatus" column="call_status" />
+    <result property="errorMessage" column="error_message" />
+    <result property="costTimeMs" column="cost_time_ms" />
+    <result property="callTime" column="call_time" />
+    <result property="createBy" column="create_by" />
+    <result property="createTime" column="create_time" />
+    <result property="updateBy" column="update_by" />
+    <result property="updateTime" column="update_time" />
+  </resultMap>
+
+  <insert id="insertToTable">
+    INSERT INTO ${tableName} (
+      id,
+      tenant_id,
+      api_config_id,
+      call_direction,
+      caller_ip,
+      request_data,
+      response_data,
+      call_status,
+      error_message,
+      cost_time_ms,
+      call_time,
+      create_time,
+      create_by,
+      update_time,
+      update_by
+    ) VALUES (
+      #{log.id},
+      #{log.tenantId},
+      #{log.apiConfigId},
+      #{log.callDirection},
+      #{log.callerIp},
+      #{log.requestData},
+      #{log.responseData},
+      #{log.callStatus},
+      #{log.errorMessage},
+      #{log.costTimeMs},
+      #{log.callTime},
+      #{log.createTime},
+      #{log.createBy},
+      #{log.updateTime},
+      #{log.updateBy}
+    )
+  </insert>
+
+  <select id="selectFromTable" resultMap="ApiCallLogResultMap">
+    SELECT
+      id,
+      tenant_id,
+      api_config_id,
+      call_direction,
+      caller_ip,
+      request_data,
+      response_data,
+      call_status,
+      error_message,
+      cost_time_ms,
+      call_time,
+      create_time,
+      create_by,
+      update_time,
+      update_by
+    FROM ${tableName}
+    WHERE 1 = 1
+      <if test="apiConfigId != null">
+        AND api_config_id = #{apiConfigId}
+      </if>
+      <if test="callDirection != null and callDirection != ''">
+        AND call_direction = #{callDirection}
+      </if>
+      <if test="callStatus != null and callStatus != ''">
+        AND call_status = #{callStatus}
+      </if>
+      <if test="callerIp != null and callerIp != ''">
+        AND caller_ip LIKE CONCAT('%', #{callerIp}, '%')
+      </if>
+      <if test="startTime != null">
+        AND call_time <![CDATA[>=]]> #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND call_time <![CDATA[<=]]> #{endTime}
+      </if>
+    ORDER BY call_time DESC, id DESC
+    <if test="offset != null and pageSize != null">
+      LIMIT #{offset}, #{pageSize}
+    </if>
+  </select>
+
+  <select id="countFromTable" resultType="long">
+    SELECT COUNT(1)
+    FROM ${tableName}
+    WHERE 1 = 1
+      <if test="apiConfigId != null">
+        AND api_config_id = #{apiConfigId}
+      </if>
+      <if test="callDirection != null and callDirection != ''">
+        AND call_direction = #{callDirection}
+      </if>
+      <if test="callStatus != null and callStatus != ''">
+        AND call_status = #{callStatus}
+      </if>
+      <if test="callerIp != null and callerIp != ''">
+        AND caller_ip LIKE CONCAT('%', #{callerIp}, '%')
+      </if>
+      <if test="startTime != null">
+        AND call_time <![CDATA[>=]]> #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND call_time <![CDATA[<=]]> #{endTime}
+      </if>
+  </select>
+
+</mapper>

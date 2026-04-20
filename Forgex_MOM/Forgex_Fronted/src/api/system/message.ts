@@ -1,8 +1,8 @@
 import http from '../http'
 
-/** 站内通知默认消息类型，与表字段 message_type 一致 */
+/** 站内消息默认类型，未传 messageType 时使用。 */
 export const SYS_MESSAGE_DEFAULT_TYPE = 'NOTICE' as const
-/** 站内渠道默认值，与表字段 platform 一致（站内） */
+/** 站内消息默认平台，未传 platform 时使用。 */
 export const SYS_MESSAGE_DEFAULT_PLATFORM = 'INTERNAL' as const
 
 export interface SysMessageVO {
@@ -13,6 +13,7 @@ export interface SysMessageVO {
   receiverUserId: number
   scope: string
   messageType?: string
+  category?: 'SYSTEM' | 'MESSAGE'
   platform?: string
   title: string
   content?: string
@@ -27,10 +28,11 @@ export interface SysMessageSendDTO {
   receiverTenantId?: number
   receiverUserId: number
   scope?: string
-  /** 消息类型，默认 NOTICE */
+  /** 消息类型，默认 NOTICE。 */
   messageType?: string
-  /** 渠道，站内默认 INTERNAL */
+  /** 消息平台，默认 INTERNAL。 */
   platform?: string
+  category?: 'SYSTEM' | 'MESSAGE'
   title: string
   content?: string
   linkUrl?: string
@@ -38,23 +40,26 @@ export interface SysMessageSendDTO {
 }
 
 /**
- * 发送站内消息；未传 {@link SysMessageSendDTO#messageType} / {@link SysMessageSendDTO#platform} 时补齐库表非空字段默认值。
- *
- * @param dto 发送参数
+ * 发送站内消息；未传 {@link SysMessageSendDTO#messageType} /
+ * {@link SysMessageSendDTO#platform} 时自动补齐默认值。
  */
 export function sendMessage(dto: SysMessageSendDTO) {
   return http.post('/sys/message/send', {
     ...dto,
     messageType: dto.messageType ?? SYS_MESSAGE_DEFAULT_TYPE,
     platform: dto.platform ?? SYS_MESSAGE_DEFAULT_PLATFORM,
+    category: dto.category ?? 'MESSAGE',
   })
 }
 
-export function listUnreadMessages(limit = 20) {
-  return http.get('/sys/message/unread', { params: { limit } })
+export function listUnreadMessages(limit = 20, category?: 'SYSTEM' | 'MESSAGE') {
+  return http.get('/sys/message/unread', { params: { limit, category } })
 }
 
-export function markMessageRead(id: number) {
-  return http.post('/sys/message/read', { id })
+export function getUnreadMessageCount(category?: 'SYSTEM' | 'MESSAGE') {
+  return http.post<number>('/sys/message/unread-count', category ? { category } : {})
 }
 
+export function markMessageRead(id: number, config?: any) {
+  return http.post('/sys/message/read', { id }, config)
+}

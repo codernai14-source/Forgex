@@ -1,5 +1,5 @@
 /**
- * System Config Translations - English
+ * 系统配置翻译 - 中文注释
  */
 export default {
   title: 'System Config',
@@ -37,6 +37,9 @@ export default {
   bgColor: 'Solid Color',
   bgColorPlaceholder: 'e.g. #0d0221',
   showOAuth: 'Show third-party login',
+  showRegisterEntry: 'Show registration entry',
+  registerUrl: 'Registration URL',
+  registerUrlPlaceholder: 'Enter an internal path or external registration URL, e.g. /register or https://example.com/register',
   primaryColor: 'Primary Color',
   primaryColorPlaceholder: 'e.g. #05d9e8',
   secondaryColor: 'Secondary Color',
@@ -45,6 +48,7 @@ export default {
   videoSizeLimit: 'Video must be smaller than 200MB',
 
   captchaConfig: 'Captcha',
+  captchaConfigDesc: '로그인 Captcha 모드와 매개변수를 설정합니다. 이미지 및 슬라이더 Captcha를 지원합니다.',
   captchaMode: 'Captcha Mode',
   captchaNone: 'Disabled',
   captchaImage: 'Image Captcha',
@@ -61,6 +65,7 @@ export default {
   sliderSecondaryEnabled: 'Enable Secondary Check',
 
   passwordPolicy: 'Password Policy',
+  passwordPolicyDesc: '비밀번호 암호화 방식, 기본 비밀번호, 복잡도 요구사항을 설정합니다.',
   passwordStore: 'Password Storage Strategy',
   defaultPassword: 'Default User Password',
   defaultPasswordPlaceholder: 'Password used when resetting users',
@@ -71,6 +76,7 @@ export default {
   passwordRequireSymbols: 'Require Symbols',
 
   loginSecurity: 'Login Failure Policy',
+  loginSecurityDesc: '연속 로그인 실패 시 계정 잠금 정책을 설정하여 무차별 대입 공격을 방지합니다.',
   failWindowMinutes: 'Failure Window (minutes)',
   maxFailCount: 'Max Failure Count',
   lockMinutes: 'Lock Duration (minutes)',
@@ -78,8 +84,9 @@ export default {
   sessionTimeoutNoticeDesc: 'Browser session timeout is managed only by Nacos sa-token.yml. This page does not provide hour/minute writeback to avoid creating a second source of truth. Update the Sa-Token timeout config in Nacos and refresh related services instead.',
 
   transportCrypto: 'Transport Encryption',
+  transportCryptoDesc: '클라이언트-서버 통신을 위한 전송 계층 암호화 알고리즘 및 키 쌍을 설정합니다.',
   transportAlgorithm: 'Algorithm',
-  transportCipher: 'Cipher Format',
+  transportCipher: 'Cipher 表单at',
   transportPublicKey: 'Public Key',
   transportPublicKeyPlaceholder: 'Enter Base64 public key',
   transportPrivateKey: 'Private Key',
@@ -117,4 +124,50 @@ export default {
   providerConfigJsonPlaceholder: 'Input OSS/MinIO JSON config; leave empty for LOCAL',
 
   portalSaveHint: ' (Login page will apply new config after refresh)',
+
+  // Encryption Tab
+  tabCrypto: '암호화 설정',
+  symmetricKeys: '대칭 키 관리',
+  symmetricKeysDesc: 'SM4 및 AES-256 대칭 암호화 키를 관리합니다. 원클릭 생성을 지원합니다.',
+  keyChangeWarning: '⚠️ 키를 변경하면 이전 키로 암호화된 데이터는 복구할 수 없습니다. 데이터 마이그레이션이 완료되었는지 확인하세요.',
+  sm4Key: 'SM4 키',
+  sm4KeyPlaceholder: '32자 Hex (128비트), 비어있으면 자동 생성',
+  aesKey: 'AES-256 키',
+  aesKeyPlaceholder: '64자 Hex (256비트), 비어있으면 자동 생성',
+  generateKey: '생성',
+  asymmetricKeys: '비대칭 키 관리',
+  asymmetricKeysDesc: 'RSA 비대칭 암호화 키 쌍을 관리합니다. 2048/4096비트를 지원합니다.',
+  rsaKeySize: 'RSA 키 길이',
+  rsaPublicKey: 'RSA 공개 키',
+  rsaPublicKeyPlaceholder: '자동 생성, Base64 인코딩',
+  rsaPrivateKey: 'RSA 개인 키',
+  rsaPrivateKeyPlaceholder: '자동 생성, Base64 인코딩',
+  generateRsaKeyPair: 'RSA 키 쌍 생성',
+  sm2InSecurityTab: 'SM2 키는 보안 탭 → 전송 암호화에서 관리',
+  fileEncrypt: '파일 암호화',
+  dataEncryptTab: '데이터 암호화',
+  dataEncryptDesc: '파일 암호화 및 데이터베이스 필드 투명 암호화의 스위치와 기본 알고리즘을 설정합니다.',
+  fileEncryptEnabled: '파일 암호화 활성화',
+  fileEncryptAlgorithm: '기본 알고리즘',
+  fieldEncrypt: '필드 투명 암호화',
+  fieldEncryptEnabled: '필드 암호화 활성화',
+  fieldEncryptAlgorithm: '기본 알고리즘',
+  kmsConfig: 'KMS 키 관리',
+  kmsConfigDesc: 'KMS 마스터 키와 키 교체 알림을 관리합니다. 마스터 키는 모든 하위 키를 보호합니다.',
+  kmsMasterKey: 'KMS 마스터 키',
+  kmsMasterKeyPlaceholder: '64자 Hex (256비트), 모든 KMS 하위 키 보호',
+  kmsMasterKeyWarning: '마스터 키를 변경하면 모든 KMS 하위 키가 복구 불가능합니다! 먼저 백업하세요.',
+  kmsRotateRemindDays: '키 교체 알림 (일)',
+  tdeStatus: 'TDE 데이터베이스 암호화',
+  tdeStatusDesc: '데이터베이스 투명 암호화(TDE) 상태를 확인합니다. 이 기능은 DB 서버에서 구성해야 합니다.',
+  tdeEnabled: 'TDE 상태',
+  tdeEnabledYes: '활성화됨',
+  tdeEnabledNo: '비활성화됨',
+  tdeCheck: 'TDE 확인',
+  tdeCheckFailed: 'TDE 상태 확인 실패',
+  tdeEncryptedTables: '암호화된 테이블',
+  tdeNoEncryptedTables: '암호화된 테이블 없음',
+  tdeKeyringPlugin: '키링 플러그인',
+  tdeKeyringNotDetected: '감지되지 않음',
+  tdeInfoMessage: 'TDE(투명 데이터 암호화)는 데이터베이스 서버 수준에서 구성해야 하며, 이 페이지에서는 관리할 수 없습니다. TDE 구성 가이드를 참조하세요.',
 }

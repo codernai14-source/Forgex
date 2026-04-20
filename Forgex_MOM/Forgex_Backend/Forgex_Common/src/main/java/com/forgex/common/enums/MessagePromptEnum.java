@@ -27,6 +27,9 @@ public enum MessagePromptEnum implements I18nPrompt {
     // ========== 消息发送 ==========
     MSG_SEND_SUCCESS("MSG_SEND_SUCCESS", "消息发送成功"),
     MSG_SEND_FAILED("MSG_SEND_FAILED", "消息发送失败"),
+    MSG_SEND_EXCEPTION("MSG_SEND_EXCEPTION", "发送消息异常：{0}"),
+    MSG_TEMPLATE_NOT_FOUND_OR_DISABLED("MSG_TEMPLATE_NOT_FOUND_OR_DISABLED", "消息模板不存在或已禁用：{0}"),
+    ROCKETMQ_MSG_SEND_FAILED("ROCKETMQ_MSG_SEND_FAILED", "RocketMQ 消息发送失败：{0}"),
     MSG_TEMPLATE_TEST_SUCCESS("MSG_TEMPLATE_TEST_SUCCESS", "消息模板测试成功");
 
     private final String promptCode;

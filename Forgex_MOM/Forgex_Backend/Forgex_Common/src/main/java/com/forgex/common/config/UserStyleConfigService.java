@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.config;
 
+import com.forgex.common.domain.config.GuidePreferenceConfig;
 import com.forgex.common.domain.config.LayoutStyleConfig;
 
 /**
@@ -42,5 +43,23 @@ public interface UserStyleConfigService {
      * @param config   布局样式配置对象
      */
     void saveLayoutConfig(Long userId, Long tenantId, LayoutStyleConfig config);
+
+    /**
+     * 读取用户在某租户下的引导偏好配置。
+     *
+     * @param userId   用户ID
+     * @param tenantId 租户ID
+     * @return 引导偏好配置
+     */
+    GuidePreferenceConfig getGuidePreference(Long userId, Long tenantId);
+
+    /**
+     * 保存用户在某租户下的引导偏好配置。
+     *
+     * @param userId   用户ID
+     * @param tenantId 租户ID
+     * @param config   引导偏好配置
+     */
+    void saveGuidePreference(Long userId, Long tenantId, GuidePreferenceConfig config);
 }
 

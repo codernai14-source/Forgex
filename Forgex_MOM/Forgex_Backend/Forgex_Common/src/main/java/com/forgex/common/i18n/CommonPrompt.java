@@ -44,6 +44,7 @@ public enum CommonPrompt implements I18nPrompt {
     START_SUCCESS("common", "START_SUCCESS", "启动成功"),
     STOP_SUCCESS("common", "STOP_SUCCESS", "停止成功"),
     RESTART_SUCCESS("common", "RESTART_SUCCESS", "重启成功"),
+    SEND_SUCCESS("common", "SEND_SUCCESS", "发送成功"),
 
     NOT_LOGIN("common", "NOT_LOGIN", "未登录或登录过期"),
     NO_PERMISSION("common", "NO_PERMISSION", "无权限"),
@@ -81,6 +82,9 @@ public enum CommonPrompt implements I18nPrompt {
     USER_NOT_FOUND("common", "USER_NOT_FOUND", "用户不存在"),
     USER_NOT_BOUND_TO_TENANT("common", "USER_NOT_BOUND_TO_TENANT", "未绑定该租户"),
     USER_ID_CANNOT_BE_EMPTY("common", "USER_ID_CANNOT_BE_EMPTY", "用户ID不能为空"),
+    USER_ID_FIELD_CANNOT_BE_EMPTY("common", "USER_ID_FIELD_CANNOT_BE_EMPTY", "用户 ID 字段 {0} 不能为空"),
+    USER_ID_FIELD_NOT_FOUND("common", "USER_ID_FIELD_NOT_FOUND", "找不到用户 ID 字段：{0}"),
+    USER_BY_ID_NOT_FOUND("common", "USER_BY_ID_NOT_FOUND", "找不到用户 ID 为 {0} 的用户"),
     DICT_CODE_CANNOT_BE_EMPTY("common", "DICT_CODE_CANNOT_BE_EMPTY", "字典编码不能为空"),
     NODE_PATH_CANNOT_BE_EMPTY("common", "NODE_PATH_CANNOT_BE_EMPTY", "nodePath不能为空"),
     DICT_ID_CANNOT_BE_EMPTY("common", "DICT_ID_CANNOT_BE_EMPTY", "字典ID不能为空"),
@@ -94,11 +98,28 @@ public enum CommonPrompt implements I18nPrompt {
     ACCOUNT_EMPTY("common", "ACCOUNT_EMPTY", "account 不能为空"),
     CONFIG_EMPTY("common", "CONFIG_EMPTY", "config 不能为空"),
     MODULE_OFFLINE("common", "MODULE_OFFLINE", "{0}服务未启动"),
+    LICENSE_REQUIRED("common", "LICENSE_REQUIRED", "系统未授权，请先导入有效授权"),
+    LICENSE_INVALID("common", "LICENSE_INVALID", "系统授权无效：{0}"),
+    LICENSE_EXPIRED("common", "LICENSE_EXPIRED", "系统授权已过期"),
+    LICENSE_EXPIRING_SOON("common", "LICENSE_EXPIRING_SOON", "系统授权即将到期"),
+    LICENSE_GRACE("common", "LICENSE_GRACE", "系统授权已过期，当前处于宽限期"),
+    LICENSE_MACHINE_MISMATCH("common", "LICENSE_MACHINE_MISMATCH", "授权机器码不匹配"),
+    LICENSE_CUSTOMER_MISMATCH("common", "LICENSE_CUSTOMER_MISMATCH", "授权客户码不匹配"),
     INTERFACE_NOT_FOUND("common", "INTERFACE_NOT_FOUND", "接口不存在"),
     GATEWAY_ERROR("common", "GATEWAY_ERROR", "网关错误"),
     INTERNAL_SERVER_ERROR_MSG("common", "INTERNAL_SERVER_ERROR_MSG", "服务器内部错误：{0}"),
     OPERATION_FAILED("common", "OPERATION_FAILED", "操作失败"),
-    OPERATION_SUCCESS("common", "OPERATION_SUCCESS", "操作成功");
+    OPERATION_SUCCESS("common", "OPERATION_SUCCESS", "操作成功"),
+
+    // 邀请码注册相关
+    INVITE_CODE_NOT_FOUND("common", "INVITE_CODE_NOT_FOUND", "邀请码不存在"),
+    INVITE_CODE_EXPIRED("common", "INVITE_CODE_EXPIRED", "邀请码已过期"),
+    INVITE_CODE_DISABLED("common", "INVITE_CODE_DISABLED", "邀请码已停用"),
+    INVITE_CODE_USED_UP("common", "INVITE_CODE_USED_UP", "邀请码已用尽"),
+    INVITE_CODE_INVALID("common", "INVITE_CODE_INVALID", "邀请码无效"),
+    REGISTER_SUCCESS("common", "REGISTER_SUCCESS", "注册成功"),
+    ACCOUNT_ALREADY_EXISTS("common", "ACCOUNT_ALREADY_EXISTS", "账号已存在"),
+    INVITE_CODE_CANNOT_BE_EMPTY("common", "INVITE_CODE_CANNOT_BE_EMPTY", "邀请码不能为空");
 
     private final String module;
     private final String promptCode;

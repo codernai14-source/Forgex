@@ -1,33 +1,41 @@
 /**
  * 用户管理 API
- * 
- * 提供用户相关的 CRUD 操作、角色分配、状态管理等功能
- * 
- * @author Forgex
- * @version 1.0.0
+ *
+ * 提供用户查询、增删改、状态维护、角色分配、部门与岗位列表等接口封装。
  */
 import http from '../http'
-import type { User, UserProfile, UserQuery, Department, Position } from '@/views/system/user/types'
 import { exportUser } from '@/api/system/excel'
+import type { Department, Position, User, UserProfile, UserQuery } from '@/views/system/user/types'
+
+type UserSubmitPayload = User & { profile?: UserProfile }
+
+function normalizeBooleanValue(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    if (value === 1) return true
+    if (value === 0) return false
+    return undefined
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true' || normalized === '1') return true
+    if (normalized === 'false' || normalized === '0') return false
+  }
+  return undefined
+}
+
+function normalizeUserPayload(user: UserSubmitPayload): UserSubmitPayload {
+  const status = normalizeBooleanValue(user.status)
+  return {
+    ...user,
+    ...(status !== undefined ? { status } : {}),
+  }
+}
 
 /**
  * 获取用户分页列表
- * 
- * 执行步骤：
- * 1. 接收查询参数（包含分页、搜索条件）
- * 2. 调用后端分页接口
- * 3. 返回分页结果
- * 
- * @param query 查询参数
- * @param query.username 用户名（可选，模糊查询）
- * @param query.account 账号（可选，模糊查询）
- * @param query.status 状态（可选，true=启用，false=禁用）
- * @param query.departmentId 部门 ID（可选）
- * @param query.positionId 职位 ID（可选）
- * @param query.pageNum 页码，默认 1
- * @param query.pageSize 每页条数，默认 10
- * @returns 分页结果，包含 records（用户列表）和 total（总数）
- * @throws 查询失败时抛出异常
  */
 export async function getUserList(query: UserQuery) {
   return http.post('/sys/user/page', query)
@@ -43,15 +51,15 @@ export async function getUserDetail(id: string) {
 /**
  * 新增用户
  */
-export async function addUser(user: User & { profile?: UserProfile }) {
-  return http.post('/sys/user/create', user)
+export async function addUser(user: UserSubmitPayload) {
+  return http.post('/sys/user/create', normalizeUserPayload(user))
 }
 
 /**
  * 更新用户
  */
-export async function updateUser(user: User & { profile?: UserProfile }) {
-  return http.post('/sys/user/update', user)
+export async function updateUser(user: UserSubmitPayload) {
+  return http.post('/sys/user/update', normalizeUserPayload(user))
 }
 
 /**
@@ -83,23 +91,16 @@ export async function updateUserStatus(id: string, status: boolean) {
 }
 
 /**
- * 查询用户已分配角色（当前租户维度）。
- *
- * @param userId 用户ID
- * @returns { assignedRoleIds, tenantId }
+ * 查询用户已分配角色
  */
 export async function getUserAssignedRoles(userId: string) {
   return http.post('/sys/user/role/listByUser', { userId })
 }
 
 /**
- * 保存用户角色分配结果（当前租户维度）。
- *
- * @param userId 用户ID
- * @param roleIds 角色ID列表（为空表示清空）
- * @returns 执行结果
+ * 保存用户角色分配
  */
-export async function saveUserRoles(userId: string, roleIds: number[]) {
+export async function saveUserRoles(userId: string, roleIds: string[]) {
   return http.post('/sys/user/role/saveByUser', { userId, roleIds })
 }
 
@@ -107,28 +108,25 @@ export async function saveUserRoles(userId: string, roleIds: number[]) {
  * 获取部门树
  */
 export async function getDepartmentTree(params: { tenantId: string }) {
-  return http.post('/sys/department/tree', params)
+  return http.post<Department[]>('/sys/department/tree', params)
 }
 
 /**
  * 获取部门列表
  */
 export async function getDepartmentList() {
-  return http.post('/sys/department/list', {})
+  return http.post<Department[]>('/sys/department/list', {})
 }
 
 /**
- * 获取职位列表
+ * 获取岗位列表
  */
 export async function getPositionList() {
-  return http.post('/sys/position/list', {})
+  return http.post<Position[]>('/sys/position/list', {})
 }
 
 /**
- * 导出用户（按后台导出配置生成文件）。
- *
- * @param query 查询条件
- * @returns 文件下载响应（blob）
+ * 导出用户
  */
 export async function exportUsers(query: Partial<UserQuery>) {
   return exportUser({

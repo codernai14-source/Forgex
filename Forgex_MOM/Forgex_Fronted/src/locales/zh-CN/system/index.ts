@@ -13,6 +13,10 @@ import position from './position'
 import module from './module'
 import dashboard from './dashboard'
 import tenant from './tenant'
+import messageTemplate from './messageTemplate'
+import tenantMessageWhitelist from './tenantMessageWhitelist'
+import i18n from './i18n'
+import encodeRule from './encodeRule'
 
 export default {
   user,
@@ -26,4 +30,8 @@ export default {
   module,
   dashboard,
   tenant,
+  messageTemplate,
+  tenantMessageWhitelist,
+  i18n,
+  encodeRule,
 }

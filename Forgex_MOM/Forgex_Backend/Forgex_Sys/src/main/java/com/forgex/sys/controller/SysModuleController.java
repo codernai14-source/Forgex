@@ -102,6 +102,7 @@ public class SysModuleController {
      * @see SysModuleQueryDTO
      * @see SysModuleDTO
      */
+    @RequirePerm("sys:module:view")
     @PostMapping("/page")
     public R<IPage<SysModuleDTO>> page(@RequestBody SysModuleQueryDTO query) {
         // 1. 使用 BaseGetParam 中的 pageNum 和 pageSize 创建分页对象
@@ -135,6 +136,7 @@ public class SysModuleController {
      * @see SysModuleQueryDTO
      * @see SysModuleDTO
      */
+    @RequirePerm("sys:module:view")
     @PostMapping("/list")
     public R<List<SysModuleDTO>> list(@RequestBody SysModuleQueryDTO query) {
         // 1. 调用 Service 层查询所有符合条件的模块
@@ -165,6 +167,7 @@ public class SysModuleController {
      * @throws BusinessException ID 不合法或模块不存在时抛出
      * @see SysModuleDTO
      */
+    @RequirePerm("sys:module:view")
     @PostMapping("/detail")
     public R<SysModuleDTO> detail(@RequestBody Map<String, Object> body) {
         // 1. 从请求体中解析模块 ID

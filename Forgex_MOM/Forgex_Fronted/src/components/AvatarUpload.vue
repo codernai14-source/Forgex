@@ -56,6 +56,7 @@ import { ref, watch, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons-vue'
 import { uploadAvatar } from '@/api/profile'
+import { normalizeMediaUrl } from '@/utils/media'
 import 'vue-cropper/dist/index.css'
 import { VueCropper } from 'vue-cropper'
 
@@ -87,18 +88,9 @@ watch(() => props.modelValue, (val) => {
   imageUrl.value = val
 })
 
-// 处理图片显示 URL，如果是相对路径则自动拼接 /api
+// 处理图片显示 URL，统一兼容前端公共资源与后端文件地址。
 const displayUrl = computed(() => {
-  const url = imageUrl.value
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http') || url.startsWith('https')) {
-    return url
-  }
-  // 处理相对路径
-  if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(imageUrl.value)
 })
 
 /**

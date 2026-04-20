@@ -28,7 +28,7 @@
       <div class="card-tip">
         <a-alert
           message="说明"
-          description="当前页面维护当前登录用户的列偏好设置。页面和按钮是否可见仍然严格取决于角色菜单授权；这里只负责保存已授权页面的个性化列显示。"
+          description="当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。"
           type="info"
           show-icon
         />
@@ -85,16 +85,12 @@
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
-      <a-form
-        :model="formData"
-        :label-col="{ span: 5 }"
-        :wrapper-col="{ span: 17 }"
-      >
+      <a-form :model="formData" :label-col="{ span: 5 }" :wrapper-col="{ span: 17 }">
         <a-form-item label="表格编码">
           <a-input v-model:value="formData.tableCode" disabled />
         </a-form-item>
 
-        <a-form-item label="每页条数">
+        <a-form-item label="分页大小">
           <a-input-number
             v-model:value="formData.pageSize"
             :min="1"
@@ -223,14 +219,14 @@ const columns = computed(() => [
     ellipsis: true,
   },
   {
-    title: '默认每页条数',
+    title: '默认分页大小',
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 130,
     align: 'center' as const,
   },
   {
-    title: '用户每页条数',
+    title: '用户分页大小',
     key: 'userPageSize',
     width: 130,
     align: 'center' as const,
@@ -264,7 +260,7 @@ const columns = computed(() => [
 
 const columnTableColumns = [
   {
-    title: '字段',
+    title: '字段名',
     dataIndex: 'field',
     key: 'field',
     width: 180,
@@ -289,7 +285,7 @@ const columnTableColumns = [
     align: 'center' as const,
   },
   {
-    title: '调整顺序',
+    title: '移动',
     key: 'move',
     width: 180,
   },

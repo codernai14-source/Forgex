@@ -1,30 +1,32 @@
 <template>
   <div class="excel-config-container">
-    <a-card :bordered="false" class="excel-table-card">
-      <fx-dynamic-table
-        ref="tableRef"
-        :table-code="'ExcelExportConfigTable'"
-        :request="handleRequest"
-        row-key="id"
-        :pagination="{
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total: number) => `共 ${total} 条`,
-        }"
-      >
-        <template #toolbar>
-          <a-button type="primary" v-permission="'sys:excel:exportConfig:edit'" @click="openEdit()">
-            {{ t('common.add') }}
-          </a-button>
-        </template>
-        <template #action="{ record }">
-          <a-space>
-            <a v-permission="'sys:excel:exportConfig:edit'" @click="openEdit(record.id)">编辑</a>
-            <a v-permission="'sys:excel:exportConfig:delete'" style="color:#ff4d4f" @click="handleDelete(record.id)">删除</a>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
-    </a-card>
+    <FxDynamicTable
+      ref="tableRef"
+      table-code="ExcelExportConfigTable"
+      :request="handleRequest"
+      :dynamic-table-config="dynamicTableConfig"
+      row-key="id"
+      :show-query-form="true"
+      :pagination="{
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total: number) => t('common.total', { total }),
+      }"
+    >
+      <template #toolbar>
+        <a-button type="primary" v-permission="'sys:excel:exportConfig:edit'" @click="openEdit()">
+          {{ t('common.add') }}
+        </a-button>
+      </template>
+      <template #action="{ record }">
+        <a-space>
+          <a v-permission="'sys:excel:exportConfig:edit'" @click="openEdit(record.id)">{{ t('common.edit') }}</a>
+          <a v-permission="'sys:excel:exportConfig:delete'" style="color:#ff4d4f" @click="handleDelete(record.id)">
+            {{ t('common.delete') }}
+          </a>
+        </a-space>
+      </template>
+    </FxDynamicTable>
 
     <BaseFormDialog
       v-model:open="editOpen"
@@ -79,9 +81,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'
@@ -89,12 +92,33 @@ import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportCon
 const { t } = useI18n()
 const tableRef = ref()
 
-const itemColumns = [
-  { title: '导出字段', key: 'exportField', width: 260 },
-  { title: '列头名称', key: 'fieldName', width: 260 },
-  { title: '顺序', key: 'orderNum', width: 120 },
-  { title: '操作', key: 'action', width: 80 },
-]
+const itemColumns = computed(() => [
+  { title: t('system.excel.exportField'), key: 'exportField', width: 260 },
+  { title: t('system.excel.fieldName'), key: 'fieldName', width: 260 },
+  { title: t('common.order'), key: 'orderNum', width: 120 },
+  { title: t('common.action'), key: 'action', width: 80 },
+])
+
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'ExcelExportConfigTable',
+  tableName: t('system.excel.exportConfigTitle'),
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'tableName', title: t('system.excel.tableName'), minWidth: 180, align: 'left' },
+    { field: 'tableCode', title: t('system.excel.tableCode'), width: 180, align: 'left' },
+    { field: 'title', title: t('system.excel.title'), minWidth: 180, align: 'left' },
+    { field: 'subtitle', title: t('system.excel.subtitle'), minWidth: 180, align: 'left' },
+    { field: 'exportFormat', title: t('system.excel.exportFormat'), width: 120, align: 'center' },
+    { field: 'action', title: t('common.action'), width: 140, align: 'center', fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'tableName', label: t('system.excel.tableName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'tableCode', label: t('system.excel.tableCode'), queryType: 'input', queryOperator: 'like' },
+  ],
+  version: 1,
+}))
 
 const editOpen = ref(false)
 const saving = ref(false)
@@ -120,10 +144,10 @@ function pickQueryValue(query: Record<string, any>, keys: string[]): string | un
   return undefined
 }
 
-const handleRequest = async (payload: { 
-  page: { current: number; pageSize: number }; 
-  query: Record<string, any>; 
-  sorter?: { field?: string; order?: string } 
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
 }) => {
   try {
     const tableName = pickQueryValue(payload.query, ['tableName', 'table_name'])
@@ -137,16 +161,14 @@ const handleRequest = async (payload: {
       tableCode,
     })
     return {
-      success: true,
-      data: res.records || [],
-      total: res.total || 0
+      records: res.records || [],
+      total: res.total || 0,
     }
   } catch (error) {
-    console.error('加载导出配置列表失败:', error)
+    console.error('加载导出配置列表失败', error)
     return {
-      success: false,
-      data: [],
-      total: 0
+      records: [],
+      total: 0,
     }
   }
 }
@@ -164,8 +186,14 @@ async function openEdit(id?: number) {
 
   if (id) {
     const detail: any = await exportConfigDetail({ id })
-    Object.assign(editForm, detail || {})
-    editForm.items = (detail?.items || []).map((x: any, idx: number) => ({ ...x, _k: `${x.id || idx}-${Date.now()}` }))
+    Object.assign(editForm, {
+      ...detail,
+      exportFormat: detail?.exportFormat || detail?.exportFormat === '' ? detail.exportFormat : (detail?.export表单at || 'xlsx'),
+    })
+    editForm.items = (detail?.items || []).map((item: any, idx: number) => ({
+      ...item,
+      _k: `${item.id || idx}-${Date.now()}`,
+    }))
   }
   editOpen.value = true
 }
@@ -175,10 +203,10 @@ function addItem() {
 }
 
 function removeItem(k: string) {
-  editForm.items = editForm.items.filter((x: any) => x._k !== k)
+  editForm.items = editForm.items.filter((item: any) => item._k !== k)
 }
 
-async function handleDelete(id: number) {
+function handleDelete(id: number) {
   Modal.confirm({
     title: t('common.confirmDelete'),
     okText: t('common.confirm'),
@@ -196,14 +224,15 @@ async function handleSave() {
   try {
     const payload = {
       ...editForm,
-      items: (editForm.items || []).map((x: any) => ({
-        id: x.id,
-        exportField: x.exportField,
-        fieldName: x.fieldName,
-        i18nJson: x.i18nJson,
-        headerStyleJson: x.headerStyleJson,
-        cellStyleJson: x.cellStyleJson,
-        orderNum: x.orderNum,
+      exportFormat: editForm.exportFormat,
+      items: (editForm.items || []).map((item: any) => ({
+        id: item.id,
+        exportField: item.exportField,
+        fieldName: item.fieldName,
+        i18nJson: item.i18nJson,
+        headerStyleJson: item.headerStyleJson,
+        cellStyleJson: item.cellStyleJson,
+        orderNum: item.orderNum,
       })),
     }
     await saveExportConfig(payload)
@@ -222,27 +251,6 @@ async function handleSave() {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.excel-table-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.excel-table-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-}
-
-.excel-table-card :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
+  overflow: hidden;
 }
 </style>

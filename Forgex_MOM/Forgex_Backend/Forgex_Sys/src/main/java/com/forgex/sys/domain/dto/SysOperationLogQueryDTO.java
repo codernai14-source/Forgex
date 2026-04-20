@@ -40,5 +40,15 @@ public class SysOperationLogQueryDTO {
      * 结束时间
      */
     private String endTime;
+
+    /**
+     * 用户名
+     */
+    private String username;
+
+    /**
+     * 账号（用户 ID）
+     */
+    private Long userId;
 }
 

@@ -13,8 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.job;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 定时任务服务启动类
@@ -23,7 +28,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * </p>
  * <p>主要功能：</p>
  * <ul>
- *   <li>定时任务：支持基于Cron表达式的定时任务调度</li>
+ *   <li>定时任务：支持基于 Cron 表达式的定时任务调度</li>
  *   <li>异步任务：支持异步执行的业务逻辑</li>
  *   <li>任务管理：提供任务的启动、停止、监控等功能</li>
  * </ul>
@@ -40,18 +45,22 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @see org.springframework.scheduling.annotation.Scheduled
  * @see org.springframework.scheduling.annotation.EnableAsync
  */
-@SpringBootApplication(scanBasePackages = "com.forgex.job")
+@SpringBootApplication(scanBasePackages = {"com.forgex.job", "com.forgex.common"})
+@EnableDiscoveryClient
+@EnableFeignClients(basePackages = "com.forgex.common.feign.client")
+@EnableAsync
+@EnableScheduling
+@MapperScan({"com.forgex.job.mapper", "com.forgex.common.mapper"})
 public class ForgexJobApplication {
     /**
      * 应用入口
-     * <p>启动Spring Boot应用</p>
+     * <p>启动 Spring Boot 应用</p>
      *
      * @param args 启动参数
      * @see org.springframework.boot.SpringApplication#run(Class, String[])
      */
     public static void main(String[] args) {
-        // 启动Spring Boot应用
+        // 启动 Spring Boot 应用
         SpringApplication.run(ForgexJobApplication.class, args);
     }
 }
-

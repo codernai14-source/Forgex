@@ -1,5 +1,5 @@
 /**
- * Personal Homepage Translations - English
+ * 个人首页翻译 - 中文注释
  * 
  * @author Forgex Team
  * @version 1.0.0
@@ -50,8 +50,15 @@ export default {
   components: {
     commonMenus: {
       title: 'Common Menus',
-      subtitle: 'Frequently used entries and recently visited menus',
+      subtitle: 'System-ranked fixed Top 6 menus',
       empty: 'No common menus',
+    },
+    myFavorites: {
+      title: 'My Favorites',
+      subtitle: 'Shortcuts I pinned myself',
+      empty: 'No favorite menus',
+      add: 'Add to favorites',
+      remove: 'Remove from favorites',
     },
     pendingApprovals: {
       title: 'Pending Approvals',
@@ -63,8 +70,8 @@ export default {
       subtitle: 'Local calendar view',
     },
     messages: {
-      title: 'My Messages',
-      subtitle: 'Messages sent to me by users',
+      title: 'My 消息',
+      subtitle: '消息 sent to me by users',
       empty: 'No unread messages',
       systemSender: 'System Message',
     },
@@ -83,13 +90,54 @@ export default {
   // Empty State
   empty: 'No enabled homepage widgets',
 
-  // Messages
+  // 消息
   message: {
     loadFailed: 'Failed to load homepage configuration',
     saveSuccess: 'Homepage configuration saved',
     saveFailed: 'Failed to save homepage configuration',
     resetSuccess: 'Reset to default layout',
     resetFailed: 'Failed to reset to default layout',
+  },
+
+  // Favorite Management Page
+  management: {
+    title: 'Favorite Management',
+    desc: 'Manage all favorite menus in one place, including homepage order and batch removal.',
+    alert: 'The “My Favorites” card follows the order saved here. “Common Menus” always keeps the system-ranked Top 6.',
+    empty: 'No favorite menus yet. Add favorites from the homepage or menu first.',
+    stats: {
+      count: '{count} favorites',
+    },
+    table: {
+      order: 'Order',
+      menu: 'Menu',
+      path: 'Route Path',
+      action: 'Action',
+    },
+    action: {
+      refresh: 'Refresh',
+      batchCancel: 'Batch Remove',
+      saveSort: 'Save Order',
+      moveUp: 'Move Up',
+      moveDown: 'Move Down',
+      open: 'Open',
+      remove: 'Remove',
+    },
+    confirm: {
+      batchCancelTitle: 'Confirm Batch Remove',
+      batchCancelContent: 'Remove the selected {count} favorite menus?',
+      singleCancelTitle: 'Confirm Remove',
+      singleCancelContent: 'Remove “{title}” from favorites?',
+    },
+    message: {
+      loadFailed: 'Failed to load favorite menus',
+      batchCancelSuccess: 'Favorites removed successfully',
+      batchCancelFailed: 'Failed to remove selected favorites',
+      singleCancelSuccess: 'Favorite removed successfully',
+      singleCancelFailed: 'Failed to remove favorite',
+      sortSaveSuccess: 'Favorite order saved',
+      sortSaveFailed: 'Failed to save favorite order',
+    },
   },
 
   // Summary Card
@@ -104,12 +152,12 @@ export default {
       },
       closing: {
         morning: "Here's to a fresh start and a focused, productive day ahead.",
-        afternoon: 'Keep the momentum — remember to pause and breathe now and then.',
-        evening: "You've put in a solid day — unwind and recharge tonight.",
+        afternoon: 'Keep the momentum 鈥?remember to pause and breathe now and then.',
+        evening: "You've put in a solid day 鈥?unwind and recharge tonight.",
       },
-      lineEnMale: 'Dear Mr. {name}, {lead} — {closing}',
-      lineEnFemale: 'Dear Ms. {name}, {lead} — {closing}',
-      lineEnNeutral: 'Dear {name}, {lead} — {closing}',
+      lineEnMale: 'Dear Mr. {name}, {lead} 鈥?{closing}',
+      lineEnFemale: 'Dear Ms. {name}, {lead} 鈥?{closing}',
+      lineEnNeutral: 'Dear {name}, {lead} 鈥?{closing}',
     },
     weekday: {
       0: 'Sunday',

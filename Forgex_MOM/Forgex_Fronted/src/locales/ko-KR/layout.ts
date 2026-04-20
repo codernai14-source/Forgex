@@ -1,126 +1,113 @@
 /**
- * Layout Translations - English
- * 
- * Contains translations for main layout, menu, tab bar, settings, etc.
+ * 布局翻译 - 韩文注释
  */
 export default {
-  // Global Search
-  globalSearchPlaceholder: 'Search menu or page',
-  
-  // Language Switch
-  langZhCn: 'Chinese (Simplified)',
-  langEnUs: 'English',
-  
-  // Header Actions
-  refresh: 'Refresh',
-  openSettings: 'Layout Settings',
-  
-  // Settings Drawer
-  settingTitle: 'Layout & Theme Settings',
-  settingSubtitle: 'Customize navigation layout, theme color and appearance',
-  
-  // Menu Layout
-  menuLayout: 'Menu Layout',
-  leftDoubleMenu: 'Left Double Menu',
-  topMenu: 'Top Menu',
-  leftMenu: 'Left Menu',
-  mixMenu: 'Mix Menu',
-  
-  // Basic Style
-  basicStyle: 'Basic Style',
-  fontSize: 'Font Size',
-  fontSizeSmall: 'Small',
-  fontSizeDefault: 'Default',
-  fontSizeLarge: 'Large',
-  borderRadius: 'Border Radius',
-  
-  // Theme
-  theme: 'Theme',
-  themeColor: 'Primary Color',
-  themeMode: 'Mode',
-  themeLight: 'Light',
-  themeDark: 'Dark',
-  themeSystem: 'Follow System',
-  
-  // Tab Bar
-  tabBar: 'Tab Bar',
-  tabBarEnabled: 'Enable Tab Bar',
-  tabBarStyle: 'Tab Bar Style',
-  tabBarCard: 'Card',
-  tabBarLine: 'Line',
-  
-  // Widgets
-  widgets: 'Widgets',
-  widgetRefresh: 'Enable Refresh Button',
-  widgetSearch: 'Enable Global Search',
-  widgetFullscreen: 'Enable Fullscreen Button',
-  
-  // Footer
-  footer: 'Footer',
-  footerEnabled: 'Show Footer',
-  footerCopyright: 'Show Copyright',
-  
-  // Content Area
-  contentWidth: 'Content Width',
-  contentWidthFluid: 'Fluid',
-  contentWidthFixed: 'Fixed',
-  
-  // Layout Mode
-  layoutMode: 'Layout Mode',
-  layoutVertical: 'Vertical',
-  layoutVerticalMix: 'Vertical Mix',
-  layoutTop: 'Horizontal',
-  layoutMix: 'Mix',
-  
-  // Header
-  header: 'Header',
-  headerVisible: 'Show Header',
-  headerMode: 'Mode',
-  headerModeFixed: 'Fixed',
-  headerModeAuto: 'Auto',
-  headerModeHideOnScroll: 'Hide on Scroll',
-  headerMenuAlign: 'Menu Position',
-  headerMenuAlignLeft: 'Left',
-  headerMenuAlignCenter: 'Center',
-  headerMenuAlignRight: 'Right',
-  
-  // Theme Color
-  themeColorDawnBlue: 'Dawn Blue (Default)',
-  themeColorTwilightPurple: 'Twilight Purple',
-  themeColorCyan: 'Cyan',
-  themeColorAuroraGreen: 'Aurora Green',
-  themeColorSunsetOrange: 'Sunset Orange',
-  themeColorVolcanoRed: 'Volcano Red',
-  themeColorNeutralGray: 'Neutral Gray',
-  
-  // Common Settings
-  common: 'Common',
-  watermark: 'Watermark',
-  watermarkEnabled: 'Watermark',
-  watermarkText: 'Watermark Text',
-  formMode: 'Form Mode',
-  formModeModal: 'Modal',
-  formModeDrawer: 'Drawer',
-  animateEnabled: 'Page Animation',
-  pageTransition: 'Page Transition',
-  pageTransitionHorizontal: 'Horizontal',
-  pageTransitionFade: 'Fade',
-  
-  // Action Buttons
-  reset: 'Reset',
-  save: 'Save',
-  
-  // Tabs
-  tabAppearance: 'Appearance',
-  tabLayout: 'Layout',
-  tabCommon: 'Common',
-  
-  // User Menu
-  userProfile: 'Profile',
-  userSettings: 'Settings',
-  logout: 'Logout',
-  
-  // Breadcrumb
+  globalSearchPlaceholder: '메뉴, 모듈 또는 병음 첫 글자를 검색...',
+  globalSearchResultsCount: '{count}개의 결과',
+  globalSearchEmptyTitle: '일치하는 메뉴를 찾을 수 없습니다',
+  globalSearchEmptyHint: '메뉴명, 모듈명 또는 병음 첫 글자로 다시 시도해 보세요',
+  globalSearchTipsTitle: '빠른 검색',
+  globalSearchTipNavigate: '이동',
+  globalSearchTipSelect: '선택',
+  globalSearchTipClose: '닫기',
+  globalSearchMatchTitle: '메뉴',
+  globalSearchMatchModule: '모듈',
+  globalSearchMatchTitlePinyin: '메뉴 병음',
+  globalSearchMatchModulePinyin: '모듈 병음',
+  globalSearchMatchBreadcrumb: '경로',
+  globalSearchMatchPath: '라우트',
+  langZhCn: '중국어(간체)',
+  langEnUs: '영어',
+  refresh: '새로고침',
+  openSettings: '레이아웃 설정',
+  settingTitle: '레이아웃 및 테마 설정',
+  settingSubtitle: '탐색 레이아웃, 테마 색상, 화면 스타일을 조정합니다',
+  menuLayout: '메뉴 레이아웃',
+  leftDoubleMenu: '좌측 이중 메뉴',
+  topMenu: '상단 메뉴',
+  leftMenu: '좌측 메뉴',
+  mixMenu: '혼합 메뉴',
+  basicStyle: '기본 스타일',
+  fontSize: '글자 크기',
+  fontSizeSmall: '작게',
+  fontSizeDefault: '기본',
+  fontSizeLarge: '크게',
+  borderRadius: '모서리 반경',
+  theme: '테마',
+  themeColor: '테마 색상',
+  themeMode: '모드',
+  themeLight: '라이트',
+  themeDark: '다크',
+  themeSystem: '시스템 설정 따르기',
+  themePreset: '기본 테마',
+  tabBar: '탭 바',
+  tabBarEnabled: '탭 바 사용',
+  tabBarStyle: '탭 바 스타일',
+  tabBarCard: '카드',
+  tabBarLine: '라인',
+  widgets: '위젯',
+  widgetRefresh: '새로고침 버튼 표시',
+  widgetSearch: '전역 검색 표시',
+  widgetFullscreen: '전체 화면 버튼 표시',
+  footer: '푸터',
+  footerEnabled: '푸터 표시',
+  footerCopyright: '저작권 정보 표시',
+  contentWidth: '콘텐츠 너비',
+  contentWidthFluid: '유동형',
+  contentWidthFixed: '고정형',
+  layoutMode: '레이아웃 모드',
+  layoutVertical: '세로형',
+  layoutVerticalMix: '세로형 2단',
+  layoutTop: '가로형',
+  layoutMix: '혼합형',
+  header: '헤더',
+  headerVisible: '헤더 표시',
+  headerMode: '모드',
+  headerModeFixed: '고정',
+  headerModeAuto: '자동',
+  headerModeHideOnScroll: '스크롤 시 숨김',
+  headerMenuAlign: '메뉴 위치',
+  headerMenuAlignLeft: '왼쪽',
+  headerMenuAlignCenter: '가운데',
+  headerMenuAlignRight: '오른쪽',
+  themeColorDawnBlue: '새벽 블루(기본)',
+  themeColorTwilightPurple: '트와일라이트 퍼플',
+  themeColorRosePink: '벚꽃 핑크',
+  themeColorLemonYellow: '레몬 옐로',
+  themeColorSkyBlue: '스카이 블루',
+  themeColorMintGreen: '민트 그린',
+  themeColorZincGray: '징크 그레이',
+  themeColorTealGreen: '틸 그린',
+  themeColorRoyalBlue: '로열 블루',
+  themeColorAmberOrange: '앰버 오렌지',
+  themeColorRoseRed: '로즈 레드',
+  themeColorAuroraGreen: '오로라 그린',
+  themeColorSunsetOrange: '선셋 오렌지',
+  themeColorVolcanoRed: '볼케이노 레드',
+  themeColorNeutralGray: '중성 회색',
+  themeColorSlateGray: '슬레이트 그레이',
+  themeColorCoolGray: '쿨 그레이',
+  themeColorCyan: '시안',
+  common: '공통',
+  watermark: '워터마크',
+  watermarkEnabled: '워터마크',
+  watermarkText: '워터마크 문구',
+  formMode: '表单 표시 방식',
+  formModeModal: '모달',
+  formModeDrawer: '드로어',
+  animateEnabled: '페이지 애니메이션',
+  pageTransition: '페이지 전환',
+  pageTransitionHorizontal: '슬라이드',
+  pageTransitionFade: '페이드',
+  reset: '기본값 복원',
+  save: '저장',
+  tabAppearance: '외관',
+  tabLayout: '레이아웃',
+  tabCommon: '공통',
+  userProfile: '개인센터',
+  userSettings: '개인 설정',
+  logout: '日志아웃',
   home: '홈',
   personalHomepage: '개인 홈',
+  favoriteManagement: '즐겨찾기 관리',
 }

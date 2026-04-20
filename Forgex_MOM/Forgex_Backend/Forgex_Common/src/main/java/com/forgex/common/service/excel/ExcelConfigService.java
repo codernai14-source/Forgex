@@ -100,5 +100,16 @@ public interface ExcelConfigService {
      * @return 是否成功
      */
     Boolean deleteImportConfig(Long id);
+
+    /**
+     * 获取所有已注册的 Provider 编码列表
+     * <p>
+     * 用于前端配置导入模板时选择数据源类型。
+     * </p>
+     *
+     * @return Provider 编码列表
+     * @since 1.1.0
+     */
+    java.util.List<String> listProviderCodes();
 }
 

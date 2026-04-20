@@ -1,0 +1,113 @@
+services:
+  gateway:
+    image: forgex/forgex-gateway:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_LICENSE_DIR: ${FORGEX_LICENSE_DIR}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_GATEWAY_PORT}:9000"
+    volumes:
+      - ${FORGEX_LICENSE_DIR}:${FORGEX_LICENSE_DIR}:ro
+      - ${FORGEX_LOG_DIR}/gateway:/app/logs
+
+  auth:
+    image: forgex/forgex-auth:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_AUTH_PORT}:9001"
+    volumes:
+      - ${FORGEX_LOG_DIR}/auth:/app/logs
+
+  sys:
+    image: forgex/forgex-sys:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_LICENSE_DIR: ${FORGEX_LICENSE_DIR}
+      FORGEX_UPLOAD_DIR: ${FORGEX_UPLOAD_DIR}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_SYS_PORT}:9002"
+    volumes:
+      - ${FORGEX_LICENSE_DIR}:${FORGEX_LICENSE_DIR}:ro
+      - ${FORGEX_UPLOAD_DIR}:${FORGEX_UPLOAD_DIR}
+      - ${FORGEX_LOG_DIR}/sys:/app/logs
+
+  basic:
+    image: forgex/forgex-basic:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_BASIC_PORT}:9003"
+    volumes:
+      - ${FORGEX_LOG_DIR}/basic:/app/logs
+
+  job:
+    image: forgex/forgex-job:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_LICENSE_DIR: ${FORGEX_LICENSE_DIR}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_JOB_PORT}:9004"
+    volumes:
+      - ${FORGEX_LICENSE_DIR}:${FORGEX_LICENSE_DIR}:ro
+      - ${FORGEX_LOG_DIR}/job:/app/logs
+
+  integration:
+    image: forgex/forgex-integration:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_INTEGRATION_PORT}:9007"
+    volumes:
+      - ${FORGEX_LOG_DIR}/integration:/app/logs
+
+  workflow:
+    image: forgex/forgex-workflow:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+    ports:
+      - "${FORGEX_WORKFLOW_PORT}:9005"
+    volumes:
+      - ${FORGEX_LOG_DIR}/workflow:/app/logs
+
+  report:
+    image: forgex/forgex-report:${FORGEX_VERSION:-1.0.0}
+    environment:
+      FORGEX_INSTANCE_CODE: ${FORGEX_INSTANCE_CODE}
+      FORGEX_PROFILE: ${FORGEX_PROFILE}
+      FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
+      FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
+      FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+      FORGEX_LOG_DIR: ${FORGEX_LOG_DIR}
+    ports:
+      - "${FORGEX_REPORT_PORT}:8084"
+    volumes:
+      - ${FORGEX_LOG_DIR}/report:/app/logs

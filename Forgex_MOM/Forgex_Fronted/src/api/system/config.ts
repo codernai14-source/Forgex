@@ -19,6 +19,8 @@ export interface SystemBasicConfig {
   loginStyle: LoginStyle
   loginLayout?: LoginLayout
   showOAuthLogin: boolean
+  showRegisterEntry: boolean
+  registerUrl: string
   primaryColor: string
   secondaryColor: string
 }
@@ -109,6 +111,8 @@ export function createDefaultSystemBasicConfig(): SystemBasicConfig {
     loginStyle: 'cyber',
     loginLayout: 'center',
     showOAuthLogin: true,
+    showRegisterEntry: true,
+    registerUrl: '/register',
     primaryColor: '#05d9e8',
     secondaryColor: '#ff2a6d',
   }
@@ -217,3 +221,94 @@ export function getFileUploadConfig() {
 export function setFileUploadConfig(data: FileUploadConfig) {
   return http.put('/sys/config/file-upload', data)
 }
+
+// ========== 加密配置类型 ==========
+
+export interface Sm4Config {
+  keyHex: string
+}
+
+export interface AesConfig {
+  keyHex: string
+}
+
+export interface RsaConfig {
+  publicKey: string
+  privateKey: string
+  keySize: number
+}
+
+export interface KmsConfig {
+  masterKeyHex: string
+  rotateRemindDays: number
+}
+
+export interface FileEncryptConfig {
+  enabled: boolean
+  defaultAlgorithm: 'aes' | 'sm4'
+}
+
+export interface FieldEncryptConfig {
+  enabled: boolean
+  defaultAlgorithm: 'SM4' | 'AES'
+}
+
+export interface CryptoConfig {
+  sm4: Sm4Config
+  aes: AesConfig
+  rsa: RsaConfig
+  kms: KmsConfig
+  fileEncrypt: FileEncryptConfig
+  fieldEncrypt: FieldEncryptConfig
+}
+
+export interface TdeStatus {
+  enabled: boolean
+  encryptedTables: string[]
+  keyringPlugin: string
+  encryptionVariables: Record<string, string>
+}
+
+export function createDefaultCryptoConfig(): CryptoConfig {
+  return {
+    sm4: { keyHex: '' },
+    aes: { keyHex: '' },
+    rsa: { publicKey: '', privateKey: '', keySize: 2048 },
+    kms: { masterKeyHex: '', rotateRemindDays: 90 },
+    fileEncrypt: { enabled: false, defaultAlgorithm: 'aes' },
+    fieldEncrypt: { enabled: true, defaultAlgorithm: 'SM4' },
+  }
+}
+
+// ========== 加密配置 API ==========
+
+export function getCryptoConfig() {
+  return http.get<CryptoConfig>('/sys/config/crypto')
+}
+
+export function setCryptoConfig(data: CryptoConfig) {
+  return http.put('/sys/config/crypto', data)
+}
+
+export function generateSm4Key() {
+  return http.post<{ keyHex: string }>('/sys/config/crypto/generate/sm4')
+}
+
+export function generateAesKey() {
+  return http.post<{ keyHex: string }>('/sys/config/crypto/generate/aes')
+}
+
+export function generateRsaKeyPair(keySize: number = 2048) {
+  return http.post<{ publicKey: string; privateKey: string }>(
+    `/sys/config/crypto/generate/rsa?keySize=${keySize}`,
+  )
+}
+
+export function generateKmsMasterKey() {
+  return http.post<{ masterKeyHex: string }>('/sys/config/crypto/generate/kms-master')
+}
+
+export function getTdeStatus() {
+  return http.get<TdeStatus>('/sys/config/crypto/tde-status')
+}
+

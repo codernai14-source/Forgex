@@ -1,10 +1,10 @@
 /**
- * 系統儀表盤翻譯 - 繁體中文
+ * 系统仪表盘翻译 - 繁体中文注释
  */
 export default {
   title: '系統管理',
 
-  // 統計
+  // 统计
   userCount: '用戶總數',
   roleCount: '角色總數',
   menuCount: '菜單總數',
@@ -17,8 +17,8 @@ export default {
   menuManagement: '菜單管理',
   moduleManagement: '模塊管理',
 
-  // 系統信息
-  systemInfo: '系統信息',
+  // 系统信息
+  systemInfo: '系统信息',
   systemName: '系統名稱',
   appVersion: '應用版本',
   osKernelVersion: '操作系統版本',
@@ -34,8 +34,8 @@ export default {
   moduleMemoryUsage: 'JVM 內存分區佔用',
   location: '服務器位置',
 
-  // 服務器信息
-  serverInfo: '服務器信息',
+  // 服务器信息
+  serverInfo: '服务器信息',
   osName: '操作系統',
   osVersion: '系統版本',
   osArch: '系統架構',
@@ -58,5 +58,5 @@ export default {
 
   // 消息
   tenantInfoMissing: '租戶信息缺失',
-  loadStatisticsFailed: '加載統計數據失敗',
+  loadStatisticsFailed: '加載统计數據失敗',
 }

@@ -173,6 +173,22 @@ public class InitServiceImpl implements InitService {
             configService.setJson("security.crypto.sm4", sm4Cfg);
         }
 
+        if ("aes".equalsIgnoreCase(storeLower)) {
+            byte[] k = new byte[32]; new SecureRandom().nextBytes(k);
+            String keyHex = HexUtil.encodeHexStr(k);
+            Map<String, String> aesCfg = new HashMap<>();
+            aesCfg.put("keyHex", keyHex);
+            configService.setJson("security.crypto.aes", aesCfg);
+        }
+
+        if ("rsa".equalsIgnoreCase(storeLower)) {
+            String[] rsaKeys = com.forgex.common.crypto.RSAPasswordProvider.generateKeyPair2048();
+            Map<String, String> rsaCfg = new HashMap<>();
+            rsaCfg.put("publicKey", rsaKeys[0]);
+            rsaCfg.put("privateKey", rsaKeys[1]);
+            configService.setJson("security.crypto.rsa", rsaCfg);
+        }
+
         SM2 sm2 = new SM2();
         String pub = sm2.getPublicKeyBase64();
         String pri = sm2.getPrivateKeyBase64();
@@ -355,6 +371,9 @@ public class InitServiceImpl implements InitService {
         SysModule sysModule = insertModule(tenantId, "sys", "系统管理", "System Management", "SettingOutlined", 10);
         seedSystemModuleMenus(tenantId, sysModule.getId(), grantedMenuIds);
 
+        SysModule basicModule = insertModule(tenantId, "basic", "基础信息", "Basic Information", "DatabaseOutlined", 20);
+        seedBasicModuleMenus(tenantId, basicModule.getId(), grantedMenuIds);
+
         SysModule workflowModule = insertModule(tenantId, "approval", "审批管理", "Approval", "AuditOutlined", 50);
         seedWorkflowModuleMenus(tenantId, workflowModule.getId(), grantedMenuIds);
 
@@ -426,6 +445,16 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:dept:delete", "删除部门", "Delete Department"}
                 ));
 
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 15,
+                "inviteCode", "邀请码管理", "Invite Code Management",
+                "KeyOutlined", "SystemInviteCode", "sys:invite-code:view",
+                Arrays.asList(
+                        new String[]{"sys:invite-code:add", "新增邀请码", "Add Invite Code"},
+                        new String[]{"sys:invite-code:edit", "编辑邀请码", "Edit Invite Code"},
+                        new String[]{"sys:invite-code:delete", "删除邀请码", "Delete Invite Code"},
+                        new String[]{"sys:invite-code:record:view", "查看使用记录", "View Invite Records"}
+                ));
+
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 60, "position", "岗位管理", "Position Management",
                 "IdcardOutlined", "SystemPosition", "sys:position:view",
                 Arrays.asList(
@@ -446,6 +475,28 @@ public class InitServiceImpl implements InitService {
                 "ClusterOutlined", "SystemOnline", "sys:online:view",
                 Collections.singletonList(new String[]{"sys:online:kickout", "强制下线", "Kick Out"})
         );
+
+        SysMenu i18nConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "i18nConfig",
+                "多语言配置", "I18n Config", "TranslationOutlined", null, null, 85, 1);
+        grantedMenuIds.add(i18nConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, i18nConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "i18nLanguageType", "语言配置", "Language Configuration",
+                "GlobalOutlined", "SystemI18nLanguageType", "sys:i18nLanguageType:view",
+                Arrays.asList(
+                        new String[]{"sys:i18nLanguageType:add", "新增语言", "Add Language"},
+                        new String[]{"sys:i18nLanguageType:edit", "编辑语言", "Edit Language"},
+                        new String[]{"sys:i18nLanguageType:delete", "删除语言", "Delete Language"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, i18nConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "i18nMessage", "多语言消息", "I18n Message",
+                "MessageOutlined", "SystemI18nMessage", "sys:i18nMessage:view",
+                Arrays.asList(
+                        new String[]{"sys:i18nMessage:add", "新增多语言消息", "Add I18n Message"},
+                        new String[]{"sys:i18nMessage:edit", "编辑多语言消息", "Edit I18n Message"},
+                        new String[]{"sys:i18nMessage:delete", "删除多语言消息", "Delete I18n Message"}
+                ));
 
         SysMenu excelConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "excelConfig",
                 "Excel配置", "Excel Config", "FileExcelOutlined", null, null, 90, 1);
@@ -540,6 +591,18 @@ public class InitServiceImpl implements InitService {
         );
     }
 
+    private void seedBasicModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "encodeRule", "编码规则管理", "Encoding Rule Management",
+                "CodeOutlined", "BasicEncodeRule", "sys:encodeRule:view",
+                Arrays.asList(
+                        new String[]{"sys:encodeRule:add", "新增编码规则", "Add Encode Rule"},
+                        new String[]{"sys:encodeRule:edit", "编辑编码规则", "Edit Encode Rule"},
+                        new String[]{"sys:encodeRule:delete", "删除编码规则", "Delete Encode Rule"},
+                        new String[]{"sys:encodeRule:test", "测试编码规则", "Test Encode Rule"},
+                        new String[]{"sys:encodeRule:generate", "生成编码", "Generate Code"}
+                ));
+    }
+
     private void addRoleMenuButtons(Long tenantId, Long moduleId, Long parentId, List<Long> grantedMenuIds) {
         String[][] buttonDefs = {
                 {"sys:role:add", "新增角色", "Add Role"},
@@ -556,15 +619,15 @@ public class InitServiceImpl implements InitService {
         }
     }
 
-    private void addMenuWithButtons(Long tenantId, Long moduleId, List<Long> grantedMenuIds,
+    private SysMenu addMenuWithButtons(Long tenantId, Long moduleId, List<Long> grantedMenuIds,
                                     int orderNum, String path, String zhName, String enName,
                                     String icon, String componentKey, String menuPermKey,
                                     List<String[]> buttonDefs) {
-        addMenuWithButtons(tenantId, moduleId, 0L, 1, grantedMenuIds, orderNum, path, zhName, enName,
+        return addMenuWithButtons(tenantId, moduleId, 0L, 1, grantedMenuIds, orderNum, path, zhName, enName,
                 icon, componentKey, menuPermKey, buttonDefs);
     }
 
-    private void addMenuWithButtons(Long tenantId, Long moduleId, Long parentId, int menuLevel,
+    private SysMenu addMenuWithButtons(Long tenantId, Long moduleId, Long parentId, int menuLevel,
                                     List<Long> grantedMenuIds, int orderNum, String path,
                                     String zhName, String enName, String icon, String componentKey,
                                     String menuPermKey, List<String[]> buttonDefs) {
@@ -577,6 +640,8 @@ public class InitServiceImpl implements InitService {
                     buttonDef[0], buttonDef[1], buttonDef[2], buttonOrder++);
             grantedMenuIds.add(button.getId());
         }
+
+        return menu;
     }
 
     private SysModule insertModule(Long tenantId, String code, String zhName, String enName, String icon, int orderNum) {

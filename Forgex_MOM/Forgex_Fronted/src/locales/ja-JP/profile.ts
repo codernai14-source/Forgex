@@ -1,5 +1,5 @@
 /**
- * プロフィールページ
+ * 个人资料页面
  *
  * @author Forgex
  * @version 1.0.0
@@ -49,7 +49,7 @@ export default {
   },
   message: {
     loadFailed: 'ユーザー情報の読み込みに失敗しました',
-    passwordChanged: 'パスワードを変更しました。再度ログインしてください。',
+    passwordChanged: 'パスワードを変更しました。再度日志インしてください。',
     passwordChangeFailed: 'パスワードの変更に失敗しました',
   },
 }

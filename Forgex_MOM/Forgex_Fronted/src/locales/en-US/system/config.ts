@@ -1,5 +1,5 @@
 /**
- * System Config Translations - English
+ * 系统配置翻译 - 中文注释
  */
 export default {
   title: 'System Config',
@@ -37,6 +37,9 @@ export default {
   bgColor: 'Solid Color',
   bgColorPlaceholder: 'e.g. #0d0221',
   showOAuth: 'Show third-party login',
+  showRegisterEntry: 'Show registration entry',
+  registerUrl: 'Registration URL',
+  registerUrlPlaceholder: 'Enter an internal path or external registration URL, e.g. /register or https://example.com/register',
   primaryColor: 'Primary Color',
   primaryColorPlaceholder: 'e.g. #05d9e8',
   secondaryColor: 'Secondary Color',
@@ -45,6 +48,7 @@ export default {
   videoSizeLimit: 'Video must be smaller than 200MB',
 
   captchaConfig: 'Captcha',
+  captchaConfigDesc: 'Configure login captcha mode and parameters. Supports image and slider captcha.',
   captchaMode: 'Captcha Mode',
   captchaNone: 'Disabled',
   captchaImage: 'Image Captcha',
@@ -61,6 +65,7 @@ export default {
   sliderSecondaryEnabled: 'Enable Secondary Check',
 
   passwordPolicy: 'Password Policy',
+  passwordPolicyDesc: 'Configure password storage encryption, default password, and complexity requirements.',
   passwordStore: 'Password Storage Strategy',
   defaultPassword: 'Default User Password',
   defaultPasswordPlaceholder: 'Password used when resetting users',
@@ -71,6 +76,7 @@ export default {
   passwordRequireSymbols: 'Require Symbols',
 
   loginSecurity: 'Login Failure Policy',
+  loginSecurityDesc: 'Configure account lockout after consecutive login failures to prevent brute force attacks.',
   failWindowMinutes: 'Failure Window (minutes)',
   maxFailCount: 'Max Failure Count',
   lockMinutes: 'Lock Duration (minutes)',
@@ -78,8 +84,9 @@ export default {
   sessionTimeoutNoticeDesc: 'Browser session timeout is managed only by Nacos sa-token.yml. This page does not provide hour/minute writeback to avoid creating a second source of truth. Update the Sa-Token timeout config in Nacos and refresh related services instead.',
 
   transportCrypto: 'Transport Encryption',
+  transportCryptoDesc: 'Configure transport-layer encryption algorithm and key pair for client-server communication.',
   transportAlgorithm: 'Algorithm',
-  transportCipher: 'Cipher Format',
+  transportCipher: 'Cipher 表单at',
   transportPublicKey: 'Public Key',
   transportPublicKeyPlaceholder: 'Enter Base64 public key',
   transportPrivateKey: 'Private Key',
@@ -117,4 +124,50 @@ export default {
   providerConfigJsonPlaceholder: 'Input OSS/MinIO JSON config; leave empty for LOCAL',
 
   portalSaveHint: ' (Login page will apply new config after refresh)',
+
+  // Encryption Tab
+  tabCrypto: 'Encryption',
+  symmetricKeys: 'Symmetric Key Management',
+  symmetricKeysDesc: 'Manage SM4 and AES-256 symmetric encryption keys with one-click generation.',
+  keyChangeWarning: '⚠️ Changing keys will make data encrypted with old keys unrecoverable. Ensure data migration is complete.',
+  sm4Key: 'SM4 Key',
+  sm4KeyPlaceholder: '32-char Hex (128-bit), auto-generated if empty',
+  aesKey: 'AES-256 Key',
+  aesKeyPlaceholder: '64-char Hex (256-bit), auto-generated if empty',
+  generateKey: 'Generate',
+  asymmetricKeys: 'Asymmetric Key Management',
+  asymmetricKeysDesc: 'Manage RSA asymmetric key pairs. Supports 2048 and 4096-bit key sizes.',
+  rsaKeySize: 'RSA Key Size',
+  rsaPublicKey: 'RSA Public Key',
+  rsaPublicKeyPlaceholder: 'Auto-generated, Base64 encoded',
+  rsaPrivateKey: 'RSA Private Key',
+  rsaPrivateKeyPlaceholder: 'Auto-generated, Base64 encoded',
+  generateRsaKeyPair: 'Generate RSA Key Pair',
+  sm2InSecurityTab: 'SM2 keys managed in Security tab → Transport Encryption',
+  fileEncrypt: 'File Encryption',
+  dataEncryptTab: 'Data Encryption',
+  dataEncryptDesc: 'Configure file encryption and database field transparent encryption switches and default algorithms.',
+  fileEncryptEnabled: 'Enable File Encryption',
+  fileEncryptAlgorithm: 'Default Algorithm',
+  fieldEncrypt: 'Field Transparent Encryption',
+  fieldEncryptEnabled: 'Enable Field Encryption',
+  fieldEncryptAlgorithm: 'Default Algorithm',
+  kmsConfig: 'KMS Key Management',
+  kmsConfigDesc: 'Manage KMS master key and key rotation reminder. The master key protects all sub-keys.',
+  kmsMasterKey: 'KMS Master Key',
+  kmsMasterKeyPlaceholder: '64-char Hex (256-bit), protects all KMS sub-keys',
+  kmsMasterKeyWarning: 'Changing master key will make ALL KMS sub-keys unrecoverable! Please backup first.',
+  kmsRotateRemindDays: 'Key Rotation Reminder (days)',
+  tdeStatus: 'TDE Database Encryption',
+  tdeStatusDesc: 'Check Transparent Data Encryption (TDE) status. This must be configured at the database server level.',
+  tdeEnabled: 'TDE Status',
+  tdeEnabledYes: 'Enabled',
+  tdeEnabledNo: 'Disabled',
+  tdeCheck: 'Check TDE',
+  tdeCheckFailed: 'TDE status check failed',
+  tdeEncryptedTables: 'Encrypted Tables',
+  tdeNoEncryptedTables: 'No encrypted tables',
+  tdeKeyringPlugin: 'Keyring Plugin',
+  tdeKeyringNotDetected: 'Not detected',
+  tdeInfoMessage: 'TDE (Transparent Data Encryption) must be configured at the database server level and cannot be managed from this page. See the TDE Configuration Guide.',
 }

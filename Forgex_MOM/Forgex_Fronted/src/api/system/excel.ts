@@ -51,3 +51,21 @@ export function exportUser(body: any) {
   return http.post('/sys/excel/export/user', body, { responseType: 'blob' })
 }
 
+/**
+ * 获取 Provider 列表
+ * @param body 查询参数
+ * @returns Provider 列表
+ */
+export function getProviderList(body: any) {
+  return http.post('/sys/excel/provider/list', body)
+}
+
+/**
+ * 获取 Provider 字段列表
+ * @param body 查询参数，包含 providerCode
+ * @returns Provider 字段列表
+ */
+export function getProviderFields(body: { providerCode: string }) {
+  return http.post('/sys/excel/provider/fields', body)
+}
+

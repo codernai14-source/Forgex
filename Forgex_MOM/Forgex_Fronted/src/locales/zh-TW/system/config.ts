@@ -1,5 +1,5 @@
 /**
- * 系統配置頁面翻譯 - 繁體中文
+ * 系统配置页面翻译 - 繁体中文注释
  */
 export default {
   title: '系統配置',
@@ -37,6 +37,9 @@ export default {
   bgColor: '純色背景',
   bgColorPlaceholder: '請輸入背景色，例如 #0d0221',
   showOAuth: '顯示第三方登入入口',
+  showRegisterEntry: '顯示註冊入口',
+  registerUrl: '註冊連結地址',
+  registerUrlPlaceholder: '請輸入站內路徑或外部註冊連結，例如 /register 或 https://example.com/register',
   primaryColor: '主色',
   primaryColorPlaceholder: '請輸入主色，例如 #05d9e8',
   secondaryColor: '輔助色',
@@ -45,6 +48,7 @@ export default {
   videoSizeLimit: '視頻大小不能超過 200MB',
 
   captchaConfig: '驗證碼配置',
+  captchaConfigDesc: '配置登入驗證碼方式及參數，支援圖片驗證碼和滑塊驗證碼。',
   captchaMode: '驗證碼方式',
   captchaNone: '關閉驗證碼',
   captchaImage: '圖片驗證碼',
@@ -61,6 +65,7 @@ export default {
   sliderSecondaryEnabled: '啟用二次校驗',
 
   passwordPolicy: '密碼策略',
+  passwordPolicyDesc: '配置密碼存儲加密方式、預設密碼及密碼複雜度要求。',
   passwordStore: '密碼存儲加密策略',
   defaultPassword: '用戶默認密碼',
   defaultPasswordPlaceholder: '請輸入重置用戶時使用的默認密碼',
@@ -71,6 +76,7 @@ export default {
   passwordRequireSymbols: '必須包含特殊字符',
 
   loginSecurity: '登入失敗策略',
+  loginSecurityDesc: '配置連續登入失敗後的鎖定策略，防止暴力破解。',
   failWindowMinutes: '連續登入失敗持續時間 (分鐘)',
   maxFailCount: '連續登入失敗次數',
   lockMinutes: '鎖定時間 (分鐘)',
@@ -78,6 +84,7 @@ export default {
   sessionTimeoutNoticeDesc: '會話過期時間只認 Nacos 的 sa-token.yml。這裡不提供按小時或分鐘寫入入口，避免形成第二套配置源；如需調整，請修改 Nacos 中的 Sa-Token 超時配置並刷新相關服務。',
 
   transportCrypto: '傳輸加密',
+  transportCryptoDesc: '配置前後端通訊的傳輸層加密演算法及金鑰對。',
   transportAlgorithm: '傳輸算法',
   transportCipher: '密文格式',
   transportPublicKey: '公鑰',
@@ -117,4 +124,50 @@ export default {
   providerConfigJsonPlaceholder: '請輸入 OSS/MinIO 的 JSON 配置，LOCAL 可留空',
 
   portalSaveHint: '（刷新頁面後登入頁將應用新配置）',
+
+  // 加密配置 Tab
+  tabCrypto: '加密配置',
+  symmetricKeys: '對稱加密金鑰管理',
+  symmetricKeysDesc: '管理 SM4 和 AES-256 對稱加密金鑰，支援一鍵產生。',
+  keyChangeWarning: '⚠️ 修改金鑰後，使用舊金鑰加密的資料將無法解密。請確保已做好資料遷移。',
+  sm4Key: 'SM4 金鑰',
+  sm4KeyPlaceholder: '32字元Hex（128位元），留空則自動產生',
+  aesKey: 'AES-256 金鑰',
+  aesKeyPlaceholder: '64字元Hex（256位元），留空則自動產生',
+  generateKey: '一鍵產生',
+  asymmetricKeys: '非對稱加密金鑰管理',
+  asymmetricKeysDesc: '管理 RSA 非對稱加密金鑰對，支援 2048/4096 位元。',
+  rsaKeySize: 'RSA 金鑰長度',
+  rsaPublicKey: 'RSA 公鑰',
+  rsaPublicKeyPlaceholder: '自動產生，Base64 編碼',
+  rsaPrivateKey: 'RSA 私鑰',
+  rsaPrivateKeyPlaceholder: '自動產生，Base64 編碼',
+  generateRsaKeyPair: '一鍵產生 RSA 金鑰對',
+  sm2InSecurityTab: 'SM2 金鑰在「安全設定」Tab 的「傳輸加密」區域管理',
+  fileEncrypt: '檔案加密配置',
+  dataEncryptTab: '資料加密',
+  dataEncryptDesc: '配置檔案加密和資料庫欄位透明加密的開關與預設演算法。',
+  fileEncryptEnabled: '啟用檔案加密',
+  fileEncryptAlgorithm: '預設加密演算法',
+  fieldEncrypt: '欄位透明加密配置',
+  fieldEncryptEnabled: '啟用欄位加密',
+  fieldEncryptAlgorithm: '全域預設演算法',
+  kmsConfig: 'KMS 金鑰管理配置',
+  kmsConfigDesc: '管理 KMS 主金鑰及金鑰輪換提醒週期。主金鑰保護所有子金鑰。',
+  kmsMasterKey: 'KMS 主金鑰',
+  kmsMasterKeyPlaceholder: '64字元Hex（256位元），保護所有 KMS 子金鑰',
+  kmsMasterKeyWarning: '主金鑰變更將導致所有 KMS 子金鑰無法解密！請謹慎操作並提前備份。',
+  kmsRotateRemindDays: '金鑰輪換提醒天數',
+  tdeStatus: 'TDE 資料庫透明加密',
+  tdeStatusDesc: '偵測資料庫透明加密（TDE）狀態，此功能需在資料庫伺服器層面配置。',
+  tdeEnabled: 'TDE 狀態',
+  tdeEnabledYes: '已啟用',
+  tdeEnabledNo: '未啟用',
+  tdeCheck: '偵測 TDE',
+  tdeCheckFailed: 'TDE 狀態偵測失敗',
+  tdeEncryptedTables: '已加密表',
+  tdeNoEncryptedTables: '無加密表',
+  tdeKeyringPlugin: '金鑰環外掛',
+  tdeKeyringNotDetected: '未偵測到',
+  tdeInfoMessage: 'TDE（資料庫透明加密）需要在資料庫伺服器層面配置，無法透過此頁面操作。詳見 TDE 配置指南。',
 }

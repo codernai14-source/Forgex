@@ -17,6 +17,26 @@ export const listPositions = (params: any) => {
 }
 
 /**
+ * 获取岗位树
+ *
+ * 当前后端未提供独立树接口，这里兼容角色授权页面：
+ * 直接复用岗位列表接口，并转换成 a-tree 可消费的节点结构。
+ */
+export const getPositionTree = async (params: { tenantId: string }) => {
+  const list = await listPositions(params)
+  if (!Array.isArray(list)) {
+    return []
+  }
+
+  return list.map((item: any) => ({
+    ...item,
+    id: item?.id,
+    positionName: item?.positionName ?? item?.name ?? '',
+    children: [],
+  }))
+}
+
+/**
  * 分页查询职位
  * 
  * 执行步骤：

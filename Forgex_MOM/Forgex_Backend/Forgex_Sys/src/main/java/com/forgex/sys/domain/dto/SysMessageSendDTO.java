@@ -39,6 +39,12 @@ public class SysMessageSendDTO {
     private String platform;
 
     /**
+     * 消息分类：SYSTEM=系统通知，MESSAGE=消息通知。
+     * <p>人工发送默认落 MESSAGE，系统链路由服务端补齐。</p>
+     */
+    private String category;
+
+    /**
      * 消息标题
      */
     private String title;

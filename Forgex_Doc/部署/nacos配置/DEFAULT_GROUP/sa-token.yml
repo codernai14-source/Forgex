@@ -1,0 +1,8 @@
+sa-token:
+  token-name: Authorization
+  timeout: 2592000
+  active-timeout: 600
+  is-concurrent: true
+  is-share: false
+  token-style: random-64
+  is-log: false

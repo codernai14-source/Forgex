@@ -4,7 +4,7 @@ import { getModulePage, deleteModule, batchDeleteModules } from '@/api/system/mo
 import type { Module, ModuleQuery } from '../types'
 
 /**
- * 模块列表Hook
+ * 模块列表逻辑封装
  */
 export function useModule() {
   const loading = ref(false)
@@ -37,7 +37,6 @@ export function useModule() {
       total.value = response.total || 0
     } catch (error) {
       console.error('加载模块列表失败:', error)
-      message.error('加载模块列表失败')
     } finally {
       loading.value = false
     }
@@ -81,7 +80,6 @@ export function useModule() {
       loadData()
     } catch (error) {
       console.error('删除模块失败:', error)
-      message.error('删除模块失败')
     }
   }
 
@@ -101,7 +99,6 @@ export function useModule() {
       loadData()
     } catch (error) {
       console.error('批量删除失败:', error)
-      message.error('批量删除失败')
     }
   }
 

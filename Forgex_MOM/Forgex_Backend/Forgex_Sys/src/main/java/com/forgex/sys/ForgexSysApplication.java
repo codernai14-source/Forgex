@@ -15,10 +15,12 @@ package com.forgex.sys;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.EnableAsync;
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 
@@ -28,7 +30,9 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
  */
 @SpringBootApplication(scanBasePackages = "com.forgex", exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
+@EnableFeignClients(basePackages = "com.forgex.common.feign.client")
 @EnableAsync
+@EnableScheduling
 @Import(DynamicDataSourceAutoConfiguration.class)
 @MapperScan({"com.forgex.sys.mapper","com.forgex.common.mapper"})
 public class ForgexSysApplication {

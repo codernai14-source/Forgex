@@ -1,0 +1,14 @@
+#项目层面通用配置，如上传大小、项目标识
+forgex:
+  project:
+    name: Forgex-Backend
+    code: forgex
+    owner: team
+  trace:
+    enabled: true
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB

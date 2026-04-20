@@ -21,7 +21,7 @@ import lombok.Data;
  * 对应接口 {@code POST /sys/role/user/list}，用于按角色分页查询已绑定的用户。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see com.forgex.sys.controller.SysRoleUserController#list
@@ -48,4 +48,36 @@ public class RoleUserListParam {
      * 每页条数，默认 20
      */
     private Long pageSize = 20L;
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public Long getPageNum() {
+        return pageNum;
+    }
+
+    public void setPageNum(Long pageNum) {
+        this.pageNum = pageNum;
+    }
+
+    public Long getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(Long pageSize) {
+        this.pageSize = pageSize;
+    }
 }

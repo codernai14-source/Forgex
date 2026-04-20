@@ -24,7 +24,7 @@ import java.util.List;
  * 通过用户 ID 列表维护角色与用户的绑定关系。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see com.forgex.sys.controller.SysRoleUserController#grant
@@ -47,4 +47,28 @@ public class RoleUserIdsParam {
      * 用户 ID 列表（必填）
      */
     private List<Long> userIds;
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public List<Long> getUserIds() {
+        return userIds;
+    }
+
+    public void setUserIds(List<Long> userIds) {
+        this.userIds = userIds;
+    }
 }

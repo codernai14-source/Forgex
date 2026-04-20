@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -26,6 +27,7 @@ import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysPosition;
+import com.forgex.sys.domain.entity.SysRole;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserProfile;
 import com.forgex.sys.domain.entity.SysUserRole;
@@ -33,6 +35,7 @@ import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.vo.SysUserVO;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
+import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserProfileMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
@@ -45,7 +48,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import com.forgex.common.tenant.TenantContext;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -111,7 +120,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 职位Mapper
      */
     private final SysPositionMapper positionMapper;
-    
+
+    /**
+     * 角色Mapper
+     */
+    private final SysRoleMapper roleMapper;
+
     /**
      * 用户档案Mapper
      */
@@ -138,7 +152,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     public IPage<SysUserDTO> pageUsers(Page<SysUser> page, SysUserQueryDTO query) {
         LambdaQueryWrapper<SysUser> wrapper = buildQueryWrapper(query);
         IPage<SysUser> userPage = userMapper.selectPage(page, wrapper);
-        return userPage.convert(this::convertToDTO);
+        IPage<SysUserDTO> dtoPage = userPage.convert(this::convertToDTO);
+        enrichUserRoles(dtoPage.getRecords(), resolveQueryTenantId(query));
+        return dtoPage;
     }
     
     /**
@@ -161,7 +177,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     public List<SysUserDTO> listUsers(SysUserQueryDTO query) {
         LambdaQueryWrapper<SysUser> wrapper = buildQueryWrapper(query);
         List<SysUser> users = userMapper.selectList(wrapper);
-        return users.stream().map(this::convertToDTO).collect(Collectors.toList());
+        List<SysUserDTO> dtos = users.stream().map(this::convertToDTO).collect(Collectors.toList());
+        enrichUserRoles(dtos, resolveQueryTenantId(query));
+        return dtos;
     }
     
     /**
@@ -179,6 +197,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
         SysUserDTO dto = convertToDTO(user);
         dto.setProfile(getProfileByUserId(user.getId(), resolveTenantId(user)));
+        enrichUserRoles(Collections.singletonList(dto), resolveTenantId(user));
         return dto;
     }
     
@@ -188,7 +207,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @param userDTO 用户DTO
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void addUser(SysUserDTO userDTO) {
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
@@ -489,7 +508,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @return 是否成功
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public boolean changePassword(Long id, String oldPassword, String newPassword) {
         // 查询用户
         SysUser user = userMapper.selectById(id);
@@ -531,12 +550,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return userTenantMapper.selectList(wrapper);
     }
     
-    /**
-     * 构建查询条件
-     * <p>根据查询DTO构建Lambda查询条件。</p>
-     * @param query 查询条件DTO
-     * @return Lambda查询条件
-     */
     private PasswordPolicyConfig getPasswordPolicy() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
@@ -557,7 +570,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     private String encryptPassword(String rawPassword) {
         CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
-        return provider.encrypt(rawPassword);
+        if (provider.supportsEncrypt()) {
+            return provider.encrypt(rawPassword);
+        }
+        if (provider.supportsHash()) {
+            return provider.hash(rawPassword);
+        }
+        throw new IllegalStateException("Unsupported password store: " + provider.name());
     }
 
     private boolean verifyPassword(String rawPassword, String encodedPassword) {
@@ -592,8 +611,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 SysUser::getEntryDate, query.getEntryDateStart());
             wrapper.le(query.getEntryDateEnd() != null,
                 SysUser::getEntryDate, query.getEntryDateEnd());
-            if (query.getRoleId() != null) {
-                List<Long> userIds = listUserIdsByRole(query.getRoleId(), resolveRoleQueryTenantId(query));
+            List<Long> roleIds = normalizeQueryRoleIds(query);
+            if (!roleIds.isEmpty()) {
+                List<Long> userIds = listUserIdsByRoles(roleIds, resolveRoleQueryTenantId(query));
                 if (userIds.isEmpty()) {
                     wrapper.eq(SysUser::getId, -1L);
                 } else {
@@ -612,10 +632,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return resolveQueryTenantId(query);
     }
 
-    private List<Long> listUserIdsByRole(Long roleId, Long tenantId) {
+    private List<Long> listUserIdsByRoles(List<Long> roleIds, Long tenantId) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return Collections.emptyList();
+        }
         LambdaQueryWrapper<SysUserRole> wrapper = new LambdaQueryWrapper<SysUserRole>()
             .select(SysUserRole::getUserId)
-            .eq(SysUserRole::getRoleId, roleId);
+            .in(SysUserRole::getRoleId, roleIds);
         if (tenantId != null) {
             wrapper.eq(SysUserRole::getTenantId, tenantId);
         }
@@ -623,6 +646,24 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             .map(SysUserRole::getUserId)
             .distinct()
             .collect(Collectors.toList());
+    }
+
+    private List<Long> normalizeQueryRoleIds(SysUserQueryDTO query) {
+        if (query == null) {
+            return Collections.emptyList();
+        }
+        Set<Long> roleIds = new LinkedHashSet<>();
+        if (query.getRoleId() != null && query.getRoleId() > 0) {
+            roleIds.add(query.getRoleId());
+        }
+        if (query.getRoleIds() != null) {
+            for (Long roleId : query.getRoleIds()) {
+                if (roleId != null && roleId > 0) {
+                    roleIds.add(roleId);
+                }
+            }
+        }
+        return new ArrayList<>(roleIds);
     }
 
     private Long resolveQueryTenantId(SysUserQueryDTO query) {
@@ -646,7 +687,86 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             .distinct()
             .collect(Collectors.toList());
     }
-    
+
+    private void enrichUserRoles(List<SysUserDTO> dtos, Long tenantId) {
+        if (dtos == null || dtos.isEmpty()) {
+            return;
+        }
+        for (SysUserDTO dto : dtos) {
+            if (dto != null) {
+                dto.setRoleIds(Collections.emptyList());
+                dto.setRoleNames(Collections.emptyList());
+            }
+        }
+        if (tenantId == null) {
+            return;
+        }
+
+        List<Long> userIds = dtos.stream()
+                .map(SysUserDTO::getId)
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .collect(Collectors.toList());
+        if (userIds.isEmpty()) {
+            return;
+        }
+
+        List<SysUserRole> userRoles = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
+                .in(SysUserRole::getUserId, userIds)
+                .eq(SysUserRole::getTenantId, tenantId)
+                .orderByAsc(SysUserRole::getId));
+        if (userRoles == null || userRoles.isEmpty()) {
+            return;
+        }
+
+        List<Long> roleIds = userRoles.stream()
+                .map(SysUserRole::getRoleId)
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .collect(Collectors.toList());
+        if (roleIds.isEmpty()) {
+            return;
+        }
+
+        Map<Long, SysRole> roleMap = roleMapper.selectList(new LambdaQueryWrapper<SysRole>()
+                        .in(SysRole::getId, roleIds)
+                        .eq(SysRole::getTenantId, tenantId)
+                        .eq(SysRole::getDeleted, false))
+                .stream()
+                .collect(Collectors.toMap(SysRole::getId, role -> role, (left, right) -> left, LinkedHashMap::new));
+
+        Map<Long, List<Long>> userRoleIdMap = new LinkedHashMap<>();
+        Map<Long, List<String>> userRoleNameMap = new LinkedHashMap<>();
+        for (SysUserRole userRole : userRoles) {
+            if (userRole == null || userRole.getUserId() == null || userRole.getRoleId() == null) {
+                continue;
+            }
+            SysRole role = roleMap.get(userRole.getRoleId());
+            if (role == null) {
+                continue;
+            }
+            userRoleIdMap.computeIfAbsent(userRole.getUserId(), key -> new ArrayList<>());
+            List<Long> currentRoleIds = userRoleIdMap.get(userRole.getUserId());
+            if (!currentRoleIds.contains(role.getId())) {
+                currentRoleIds.add(role.getId());
+            }
+
+            userRoleNameMap.computeIfAbsent(userRole.getUserId(), key -> new ArrayList<>());
+            List<String> currentRoleNames = userRoleNameMap.get(userRole.getUserId());
+            if (StringUtils.hasText(role.getRoleName()) && !currentRoleNames.contains(role.getRoleName())) {
+                currentRoleNames.add(role.getRoleName());
+            }
+        }
+
+        for (SysUserDTO dto : dtos) {
+            if (dto == null || dto.getId() == null) {
+                continue;
+            }
+            dto.setRoleIds(userRoleIdMap.getOrDefault(dto.getId(), Collections.emptyList()));
+            dto.setRoleNames(userRoleNameMap.getOrDefault(dto.getId(), Collections.emptyList()));
+        }
+    }
+
     /**
      * 实体转DTO
      * <p>将用户实体转换为DTO，并关联查询部门名称、职位名称和租户列表。</p>

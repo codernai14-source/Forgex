@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 消息模板详情VO
+ * 消息模板详情 VO
  * <p>包含主表信息、接收人配置、模板内容配置</p>
  * 
  * @author Forgex Team
@@ -28,7 +28,7 @@ import java.util.List;
 @Data
 public class SysMessageTemplateVO {
     
-    /** 模板ID */
+    /** 模板 ID */
     private Long id;
     
     /** 模板编号 */
@@ -42,14 +42,20 @@ public class SysMessageTemplateVO {
     /** 模板版本 */
     private String templateVersion;
     
-    /** 消息类型(NOTICE=通知,WARNING=警告,ALARM=报警) */
+    /** 消息类型 (NOTICE=通知，WARNING=警告，ALARM=报警) */
     private String messageType;
     
-    /** 状态(false=禁用,true=启用) */
+    /** 业务类型 */
+    private String bizType;
+    
+    /** 状态 (false=禁用，true=启用) */
     private Boolean status;
     
     /** 备注 */
     private String remark;
+    
+    /** 是否公共配置 (true=tenantId=0) */
+    private Boolean publicConfig;
     
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
@@ -72,37 +78,37 @@ public class SysMessageTemplateVO {
     private List<ContentVO> contents;
     
     /**
-     * 接收人配置VO
+     * 接收人配置 VO
      */
     @Data
     public static class ReceiverVO {
         /** ID */
         private Long id;
         
-        /** 接收类型(ROLE=角色,DEPT=部门,POSITION=职位,USER=指定人) */
+        /** 接收类型 (ROLE=角色，DEPT=部门，POSITION=职位，USER=指定人，CUSTOM=自定义) */
         private String receiverType;
         
-        /** 接收人ID列表 */
+        /** 接收人 ID 列表 */
         private List<Long> receiverIds;
     }
     
     /**
-     * 模板内容配置VO
+     * 模板内容配置 VO
      */
     @Data
     public static class ContentVO {
         /** ID */
         private Long id;
         
-        /** 消息平台(INTERNAL=站内,WECHAT=企业微信,SMS=短信,EMAIL=邮箱) */
+        /** 消息平台 (INTERNAL=站内，WECHAT=企业微信，SMS=短信，EMAIL=邮箱) */
         private String platform;
         
-        /** 消息标题(支持占位符) */
+        /** 消息标题 (支持占位符) */
         private String contentTitle;
 
         private String contentTitleI18nJson;
         
-        /** 消息内容(支持占位符) */
+        /** 消息内容 (支持占位符) */
         private String contentBody;
 
         private String contentBodyI18nJson;
@@ -111,6 +117,3 @@ public class SysMessageTemplateVO {
         private String linkUrl;
     }
 }
-
-
-

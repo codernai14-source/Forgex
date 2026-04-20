@@ -1,13 +1,13 @@
 /**
- * Department Management Translations - English
+ * 部门管理翻译 - 中文注释
  */
 export default {
-  // Page Titles
+  // 页面标题
   title: 'Department Management',
   list: 'Department List',
   detail: 'Department Detail',
   
-  // Table Columns
+  // 表格列
   deptName: 'Department Name',
   deptCode: 'Department Code',
   orgType: 'Organization Type',
@@ -16,11 +16,11 @@ export default {
   phone: 'Phone',
   email: 'Email',
   orderNum: 'Order Number',
-  status: 'Status',
+  status: '状态',
   createTime: 'Create Time',
   updateTime: 'Update Time',
   
-  // Form
+  // 表单
   form: {
     addDept: 'Add Department',
     editDept: 'Edit Department',
@@ -35,11 +35,11 @@ export default {
     status: 'Please select status',
   },
   
-  // Actions
+  // 操作
   childDept: 'Sub Department',
   addRootDept: 'Add Root Department',
   
-  // Messages
+  // 消息
   message: {
     deleteConfirm: 'Are you sure you want to delete this department?',
     deleteSuccess: 'Department deleted successfully',
