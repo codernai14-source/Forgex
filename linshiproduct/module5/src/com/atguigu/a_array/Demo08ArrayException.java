@@ -7,7 +7,7 @@ public class Demo08ArrayException {
         arr[1]=200;
         arr[2]=300;
         //arr[3]=400;
-        //arr[-1]=400
+        arr[-1]=400;
 
     }
 }
