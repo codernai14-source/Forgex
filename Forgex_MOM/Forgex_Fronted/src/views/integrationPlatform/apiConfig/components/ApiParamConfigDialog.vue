@@ -1,11 +1,8 @@
 <template>
-  <a-modal
-    v-model:open="visible"
-    :title="`${t('integration.paramConfig.title')} - ${apiConfig?.apiName || apiConfig?.apiCode || ''}`"
-    width="1200px"
-    :footer="null"
-    destroy-on-close
-    @cancel="handleClose"
+  <component
+    :is="pageMode ? 'div' : 'a-modal'"
+    v-bind="pageMode ? {} : modalProps"
+    class="api-param-config-shell"
   >
     <a-spin :spinning="loading">
       <div class="param-config-layout">
@@ -15,19 +12,51 @@
               <h3>{{ t('integration.paramConfig.requestFields') }}</h3>
               <p>{{ t('integration.paramConfig.requestStructure') }}</p>
             </div>
-            <a-button size="small" @click="openJsonImport('REQUEST')">
-              {{ t('integration.paramConfig.importRequestJson') }}
-            </a-button>
+            <a-space wrap>
+              <a-button size="small" @click="appendRootNode('REQUEST')">{{ t('common.add') }}</a-button>
+              <a-button size="small" @click="openImportDialog('REQUEST', 'JSON')">
+                {{ t('integration.paramConfig.importRequestJson') }}
+              </a-button>
+              <a-button size="small" @click="openImportDialog('REQUEST', 'JAVA')">
+                {{ t('integration.paramConfig.importJavaEntity') }}
+              </a-button>
+            </a-space>
           </div>
 
-          <a-tree
-            v-if="requestTree.length"
-            :tree-data="buildTreeData(requestTree)"
-            default-expand-all
-            block-node
-            @select="(_, info) => handleSelectField('source', info.node.dataRef)"
-          />
-          <a-empty v-else :description="t('integration.paramConfig.empty')" />
+          <a-table
+            size="small"
+            :pagination="false"
+            :columns="treeColumns"
+            :data-source="requestTree"
+            :row-key="getRowKey"
+            :indent-size="18"
+            :scroll="{ x: 820 }"
+            class="tree-table"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'fieldName'">
+                <a-input v-model:value="record.fieldName" :placeholder="t('integration.paramConfig.field')" />
+              </template>
+              <template v-else-if="column.key === 'fieldLabel'">
+                <a-input v-model:value="record.fieldLabel" :placeholder="t('integration.paramConfig.fieldName')" />
+              </template>
+              <template v-else-if="column.key === 'fieldType'">
+                <a-select v-model:value="record.fieldType" :options="fieldTypeOptions" style="width: 120px" />
+              </template>
+              <template v-else-if="column.key === 'remark'">
+                <a-input v-model:value="record.remark" :placeholder="t('integration.paramConfig.remark')" />
+              </template>
+              <template v-else-if="column.key === 'required'">
+                <a-switch :checked="record.required === 1" @change="checked => record.required = checked ? 1 : 0" />
+              </template>
+              <template v-else-if="column.key === 'action'">
+                <a-space size="small">
+                  <a @click="appendChildNode(record, 'REQUEST')">{{ t('common.add') }}</a>
+                  <a class="danger-link" @click="removeNode(requestTree, record)">{{ t('common.delete') }}</a>
+                </a-space>
+              </template>
+            </template>
+          </a-table>
         </section>
 
         <section class="param-panel">
@@ -36,119 +65,150 @@
               <h3>{{ t('integration.paramConfig.responseFields') }}</h3>
               <p>{{ t('integration.paramConfig.responseStructure') }}</p>
             </div>
-            <a-button size="small" @click="openJsonImport('RESPONSE')">
-              {{ t('integration.paramConfig.importResponseJson') }}
-            </a-button>
+            <a-space wrap>
+              <a-button size="small" @click="appendRootNode('RESPONSE')">{{ t('common.add') }}</a-button>
+              <a-button size="small" @click="openImportDialog('RESPONSE', 'JSON')">
+                {{ t('integration.paramConfig.importResponseJson') }}
+              </a-button>
+              <a-button size="small" @click="openImportDialog('RESPONSE', 'JAVA')">
+                {{ t('integration.paramConfig.importJavaEntity') }}
+              </a-button>
+            </a-space>
           </div>
-
-          <a-tree
-            v-if="responseTree.length"
-            :tree-data="buildTreeData(responseTree)"
-            default-expand-all
-            block-node
-            @select="(_, info) => handleSelectField('target', info.node.dataRef)"
-          />
-          <a-empty v-else :description="t('integration.paramConfig.empty')" />
-        </section>
-
-        <section class="mapping-panel">
-          <div class="panel-header">
-            <div>
-              <h3>{{ t('integration.mapping.title') }}</h3>
-              <p>{{ t('integration.mapping.direction') }}</p>
-            </div>
-            <a-select v-model:value="mappingDirection" style="width: 180px" @change="reloadMappings">
-              <a-select-option value="INBOUND">{{ t('integration.mapping.requestToResponse') }}</a-select-option>
-              <a-select-option value="OUTBOUND">{{ t('integration.mapping.responseToRequest') }}</a-select-option>
-            </a-select>
-          </div>
-
-          <a-alert
-            v-if="warnings.length"
-            type="warning"
-            show-icon
-            class="mapping-alert"
-            :message="warnings.join(' / ')"
-          />
-
-          <a-space class="mapping-toolbar">
-            <a-button @click="handleAddMapping">{{ t('integration.mapping.addMapping') }}</a-button>
-            <a-button @click="handleAutoMatch">{{ t('integration.mapping.autoMatch') }}</a-button>
-            <a-button type="primary" :loading="savingMappings" @click="handleSaveMappings">
-              {{ t('integration.common.saveMapping') }}
-            </a-button>
-          </a-space>
 
           <a-table
             size="small"
             :pagination="false"
-            :columns="mappingColumns"
-            :data-source="mappingRows"
-            :row-key="(_, index) => String(index)"
-            class="mapping-table"
+            :columns="treeColumns"
+            :data-source="responseTree"
+            :row-key="getRowKey"
+            :indent-size="18"
+            :scroll="{ x: 820 }"
+            class="tree-table"
           >
-            <template #bodyCell="{ column, record, index }">
-              <template v-if="column.key === 'sourceFieldPath'">
-                <a-select
-                  v-model:value="record.sourceFieldPath"
-                  show-search
-                  :placeholder="t('integration.mapping.sourceUnselected')"
-                  :options="fieldOptions.source"
-                  style="width: 100%"
-                  @change="() => syncMappingMeta(index)"
-                />
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'fieldName'">
+                <a-input v-model:value="record.fieldName" :placeholder="t('integration.paramConfig.field')" />
               </template>
-
-              <template v-else-if="column.key === 'targetFieldPath'">
-                <a-select
-                  v-model:value="record.targetFieldPath"
-                  show-search
-                  :placeholder="t('integration.mapping.targetUnselected')"
-                  :options="fieldOptions.target"
-                  style="width: 100%"
-                  @change="() => syncMappingMeta(index)"
-                />
+              <template v-else-if="column.key === 'fieldLabel'">
+                <a-input v-model:value="record.fieldLabel" :placeholder="t('integration.paramConfig.fieldName')" />
               </template>
-
-              <template v-else-if="column.key === 'type'">
-                <a-tag :color="isTypeCompatible(record.sourceType, record.targetType) ? 'blue' : 'orange'">
-                  {{ record.sourceType || '-' }} -> {{ record.targetType || '-' }}
-                </a-tag>
+              <template v-else-if="column.key === 'fieldType'">
+                <a-select v-model:value="record.fieldType" :options="fieldTypeOptions" style="width: 120px" />
               </template>
-
               <template v-else-if="column.key === 'remark'">
-                <a-input v-model:value="record.remark" />
+                <a-input v-model:value="record.remark" :placeholder="t('integration.paramConfig.remark')" />
               </template>
-
+              <template v-else-if="column.key === 'required'">
+                <a-switch :checked="record.required === 1" @change="checked => record.required = checked ? 1 : 0" />
+              </template>
               <template v-else-if="column.key === 'action'">
-                <a @click="removeMapping(index)">{{ t('common.delete') }}</a>
+                <a-space size="small">
+                  <a @click="appendChildNode(record, 'RESPONSE')">{{ t('common.add') }}</a>
+                  <a class="danger-link" @click="removeNode(responseTree, record)">{{ t('common.delete') }}</a>
+                </a-space>
               </template>
             </template>
           </a-table>
         </section>
       </div>
+
+      <section class="mapping-panel">
+        <div class="panel-header">
+          <div>
+            <h3>{{ t('integration.mapping.title') }}</h3>
+            <p>{{ t('integration.mapping.direction') }}</p>
+          </div>
+          <a-space wrap>
+            <a-select v-model:value="mappingDirection" style="width: 180px" @change="reloadMappings">
+              <a-select-option value="INBOUND">{{ t('integration.mapping.requestToResponse') }}</a-select-option>
+              <a-select-option value="OUTBOUND">{{ t('integration.mapping.responseToRequest') }}</a-select-option>
+            </a-select>
+            <a-button @click="handleAddMapping">{{ t('integration.mapping.addMapping') }}</a-button>
+            <a-button @click="handleAutoMatch">{{ t('integration.mapping.autoMatch') }}</a-button>
+            <a-button type="primary" :loading="savingAll" @click="handleSaveAll">
+              {{ t('common.save') }}
+            </a-button>
+          </a-space>
+        </div>
+
+        <a-alert
+          v-if="warnings.length"
+          type="warning"
+          show-icon
+          class="mapping-alert"
+          :message="warnings.join(' / ')"
+        />
+
+        <a-table
+          size="small"
+          :pagination="false"
+          :columns="mappingColumns"
+          :data-source="mappingRows"
+          :row-key="(_, index) => String(index)"
+          class="mapping-table"
+        >
+          <template #bodyCell="{ column, record, index }">
+            <template v-if="column.key === 'sourceFieldPath'">
+              <a-select
+                v-model:value="record.sourceFieldPath"
+                show-search
+                :placeholder="t('integration.mapping.sourceUnselected')"
+                :options="fieldOptions.source"
+                style="width: 100%"
+                @change="() => syncMappingMeta(index)"
+              />
+            </template>
+
+            <template v-else-if="column.key === 'targetFieldPath'">
+              <a-select
+                v-model:value="record.targetFieldPath"
+                show-search
+                :placeholder="t('integration.mapping.targetUnselected')"
+                :options="fieldOptions.target"
+                style="width: 100%"
+                @change="() => syncMappingMeta(index)"
+              />
+            </template>
+
+            <template v-else-if="column.key === 'type'">
+              <a-tag :color="isTypeCompatible(record.sourceType, record.targetType) ? 'blue' : 'orange'">
+                {{ record.sourceType || '-' }} -> {{ record.targetType || '-' }}
+              </a-tag>
+            </template>
+
+            <template v-else-if="column.key === 'remark'">
+              <a-input v-model:value="record.remark" />
+            </template>
+
+            <template v-else-if="column.key === 'action'">
+              <a @click="removeMapping(index)">{{ t('common.delete') }}</a>
+            </template>
+          </template>
+        </a-table>
+      </section>
     </a-spin>
 
     <a-modal
-      v-model:open="jsonDialogOpen"
-      :title="jsonDialogTitle"
-      width="760px"
-      :confirm-loading="parsingJson || importingJson"
-      @ok="handleImportPreview"
+      v-model:open="importDialogOpen"
+      :title="importDialogTitle"
+      width="820px"
+      :confirm-loading="parsingSource || importingSource"
+      @ok="handleImportConfirm"
     >
       <a-form layout="vertical">
-        <a-form-item :label="t('integration.paramConfig.jsonInputLabel')">
+        <a-form-item :label="currentImportType === 'JAVA' ? t('integration.paramConfig.javaInputLabel') : t('integration.paramConfig.jsonInputLabel')">
           <a-textarea
-            v-model:value="jsonText"
-            :rows="8"
-            :placeholder="t('integration.paramConfig.jsonInputPlaceholder')"
+            v-model:value="importText"
+            :rows="12"
+            :placeholder="currentImportType === 'JAVA' ? t('integration.paramConfig.javaInputPlaceholder') : t('integration.paramConfig.jsonInputPlaceholder')"
           />
         </a-form-item>
       </a-form>
 
       <a-space class="preview-toolbar">
-        <a-button :loading="parsingJson" @click="handleParsePreview">
-          {{ t('integration.common.parseJson') }}
+        <a-button :loading="parsingSource" @click="handleParsePreview">
+          {{ currentImportType === 'JAVA' ? t('integration.paramConfig.parseJava') : t('integration.common.parseJson') }}
         </a-button>
         <span>{{ t('integration.paramConfig.parsePreviewDesc') }}</span>
       </a-space>
@@ -160,7 +220,7 @@
         class="preview-tree"
       />
     </a-modal>
-  </a-modal>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -172,7 +232,9 @@ import {
   getApiParamMappings,
   getApiParamTree,
   importApiParamJson,
+  parseApiParamJava,
   parseApiParamJson,
+  replaceApiParamTree,
 } from '@/api/system/integration'
 import type {
   ApiConfigItem,
@@ -180,53 +242,90 @@ import type {
   ApiParamMappingItem,
   IntegrationDirection,
   ParamDirection,
+  ParamSourceType,
 } from '@/api/system/integration'
 import type { ParamMappingRow } from '../types'
 
 interface Props {
   open: boolean
   apiConfig?: ApiConfigItem
+  pageMode?: boolean
 }
 
 interface Emits {
   (e: 'update:open', value: boolean): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  pageMode: false,
+})
 const emit = defineEmits<Emits>()
 const { t } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
-const savingMappings = ref(false)
-const parsingJson = ref(false)
-const importingJson = ref(false)
+const savingAll = ref(false)
+const parsingSource = ref(false)
+const importingSource = ref(false)
 const requestTree = ref<ApiParamConfigItem[]>([])
 const responseTree = ref<ApiParamConfigItem[]>([])
 const previewTree = ref<ApiParamConfigItem[]>([])
-const jsonText = ref('')
-const jsonDirection = ref<ParamDirection>('REQUEST')
-const jsonDialogOpen = ref(false)
+const importText = ref('')
+const importDirection = ref<ParamDirection>('REQUEST')
+const currentImportType = ref<ParamSourceType>('JSON')
+const importDialogOpen = ref(false)
 const mappingDirection = ref<IntegrationDirection>('INBOUND')
 const mappingRows = ref<ParamMappingRow[]>([])
+let localNodeSeed = 0
 
 const visible = computed({
   get: () => props.open,
   set: (value: boolean) => emit('update:open', value),
 })
 
-const jsonDialogTitle = computed(() =>
-  jsonDirection.value === 'REQUEST'
-    ? t('integration.paramConfig.importRequestJson')
-    : t('integration.paramConfig.importResponseJson')
-)
+const modalProps = computed(() => ({
+  open: visible.value,
+  title: `${t('integration.paramConfig.title')} - ${props.apiConfig?.apiName || props.apiConfig?.apiCode || ''}`,
+  width: '1440px',
+  footer: null,
+  destroyOnClose: true,
+  onCancel: handleClose,
+}))
+
+const treeColumns = computed(() => [
+  { title: t('integration.paramConfig.field'), key: 'fieldName', width: 190 },
+  { title: t('integration.paramConfig.fieldName'), key: 'fieldLabel', width: 180 },
+  { title: t('integration.paramConfig.fieldType'), key: 'fieldType', width: 130 },
+  { title: t('integration.paramConfig.remark'), key: 'remark' },
+  { title: t('integration.paramConfig.required'), key: 'required', width: 100, align: 'center' },
+  { title: t('common.action'), key: 'action', width: 120, align: 'center' },
+])
+
+const fieldTypeOptions = [
+  { label: 'string', value: 'string' },
+  { label: 'number', value: 'number' },
+  { label: 'boolean', value: 'boolean' },
+  { label: 'object', value: 'object' },
+  { label: 'array', value: 'array' },
+  { label: 'date', value: 'date' },
+]
 
 const mappingColumns = computed(() => [
-  { title: t('integration.mapping.sourcePath'), key: 'sourceFieldPath', width: 220 },
-  { title: t('integration.mapping.targetPath'), key: 'targetFieldPath', width: 220 },
-  { title: `${t('integration.mapping.sourceType')} / ${t('integration.mapping.targetType')}`, key: 'type', width: 160 },
+  { title: t('integration.mapping.sourcePath'), key: 'sourceFieldPath', width: 260 },
+  { title: t('integration.mapping.targetPath'), key: 'targetFieldPath', width: 260 },
+  { title: `${t('integration.mapping.sourceType')} / ${t('integration.mapping.targetType')}`, key: 'type', width: 180 },
   { title: t('integration.mapping.remark'), key: 'remark' },
   { title: t('common.action'), key: 'action', width: 80 },
 ])
+
+const importDialogTitle = computed(() => {
+  const sideTitle = importDirection.value === 'REQUEST'
+    ? t('integration.paramConfig.requestFields')
+    : t('integration.paramConfig.responseFields')
+  const sourceTitle = currentImportType.value === 'JAVA'
+    ? t('integration.paramConfig.importJavaEntity')
+    : t('integration.common.importJson')
+  return `${sourceTitle} - ${sideTitle}`
+})
 
 const flatRequestFields = computed(() => flattenFields(requestTree.value))
 const flatResponseFields = computed(() => flattenFields(responseTree.value))
@@ -256,11 +355,12 @@ const warnings = computed(() => {
 
 watch(
   () => props.open,
-  (open) => {
+  open => {
     if (open) {
       void reloadAll()
     }
-  }
+  },
+  { immediate: true },
 )
 
 async function reloadAll() {
@@ -273,8 +373,8 @@ async function reloadAll() {
       getApiParamTree(props.apiConfig.id, 'REQUEST'),
       getApiParamTree(props.apiConfig.id, 'RESPONSE'),
     ])
-    requestTree.value = request || []
-    responseTree.value = response || []
+    requestTree.value = attachLocalKeys(request || [], 'REQUEST')
+    responseTree.value = attachLocalKeys(response || [], 'RESPONSE')
     await reloadMappings()
   } finally {
     loading.value = false
@@ -290,77 +390,168 @@ async function reloadMappings() {
     direction: mappingDirection.value,
   })
   mappingRows.value = (rows || []).map(item => toMappingRow(item))
+  syncAllMappingMeta()
 }
 
 function handleClose() {
   emit('update:open', false)
 }
 
-function openJsonImport(direction: ParamDirection) {
-  jsonDirection.value = direction
-  jsonText.value = ''
+function openImportDialog(direction: ParamDirection, sourceType: ParamSourceType) {
+  importDirection.value = direction
+  currentImportType.value = sourceType
+  importText.value = ''
   previewTree.value = []
-  jsonDialogOpen.value = true
+  importDialogOpen.value = true
 }
 
 async function handleParsePreview() {
-  parsingJson.value = true
+  parsingSource.value = true
   try {
-    previewTree.value = await parseApiParamJson({ jsonString: jsonText.value })
+    previewTree.value = currentImportType.value === 'JAVA'
+      ? attachLocalKeys(await parseApiParamJava({ javaSource: importText.value }), importDirection.value)
+      : attachLocalKeys(await parseApiParamJson({ jsonString: importText.value }), importDirection.value)
   } finally {
-    parsingJson.value = false
+    parsingSource.value = false
   }
 }
 
-async function handleImportPreview() {
+async function handleImportConfirm() {
   if (!props.apiConfig?.id) {
     return
   }
-  const importTask = async () => {
-    importingJson.value = true
+
+  const applyImport = async () => {
+    importingSource.value = true
     try {
-      await importApiParamJson({
-        apiConfigId: props.apiConfig!.id!,
-        direction: jsonDirection.value,
-        jsonString: jsonText.value,
-      })
-      jsonDialogOpen.value = false
-      await reloadAll()
+      if (currentImportType.value === 'JAVA') {
+        const parsed = await parseApiParamJava({ javaSource: importText.value })
+        applyImportedTree(importDirection.value, parsed || [])
+      } else {
+        await importApiParamJson({
+          apiConfigId: props.apiConfig.id,
+          direction: importDirection.value,
+          jsonString: importText.value,
+        })
+        await reloadAll()
+      }
+      importDialogOpen.value = false
     } finally {
-      importingJson.value = false
+      importingSource.value = false
     }
   }
 
-  if ((jsonDirection.value === 'REQUEST' ? requestTree.value : responseTree.value).length) {
+  const currentTree = importDirection.value === 'REQUEST' ? requestTree.value : responseTree.value
+  if (currentTree.length) {
     Modal.confirm({
       title: t('common.tip'),
       content: t('integration.paramConfig.resetTreeConfirm'),
       okText: t('common.confirm'),
       cancelText: t('common.cancel'),
-      onOk: importTask,
+      onOk: applyImport,
     })
     return
   }
 
-  await importTask()
+  await applyImport()
 }
 
-function handleSelectField(side: 'source' | 'target', field: ApiParamConfigItem) {
-  if (field.nodeType !== 'FIELD') {
-    return
-  }
-  const last = mappingRows.value[mappingRows.value.length - 1]
-  if (!last || (last.sourceFieldPath && last.targetFieldPath)) {
-    mappingRows.value.push({
-      sourceFieldPath: side === 'source' ? field.fieldPath : '',
-      targetFieldPath: side === 'target' ? field.fieldPath : '',
-    })
-  } else if (side === 'source') {
-    last.sourceFieldPath = field.fieldPath
+function applyImportedTree(direction: ParamDirection, tree: ApiParamConfigItem[]) {
+  const normalized = attachLocalKeys(tree, direction)
+  if (direction === 'REQUEST') {
+    requestTree.value = normalized
   } else {
-    last.targetFieldPath = field.fieldPath
+    responseTree.value = normalized
   }
-  syncMappingMeta(mappingRows.value.length - 1)
+  syncAllMappingMeta()
+}
+
+function appendRootNode(direction: ParamDirection) {
+  const target = direction === 'REQUEST' ? requestTree.value : responseTree.value
+  target.push(createNode(direction))
+}
+
+function appendChildNode(record: ApiParamConfigItem, direction: ParamDirection) {
+  const child = createNode(direction)
+  if (!record.children) {
+    record.children = []
+  }
+  record.children.push(child)
+  if (record.nodeType === 'FIELD') {
+    record.nodeType = 'OBJECT'
+    record.fieldType = 'object'
+  }
+}
+
+function createNode(direction: ParamDirection): ApiParamConfigItem {
+  localNodeSeed += 1
+  return {
+    id: undefined,
+    apiConfigId: props.apiConfig?.id || 0,
+    direction,
+    nodeType: 'FIELD',
+    fieldName: `field${localNodeSeed}`,
+    fieldLabel: `field${localNodeSeed}`,
+    fieldPath: `field${localNodeSeed}`,
+    fieldType: 'string',
+    required: 0,
+    remark: '',
+    children: [],
+    __rowKey: `${direction}-local-${localNodeSeed}`,
+  } as ApiParamConfigItem & { __rowKey: string }
+}
+
+function removeNode(tree: ApiParamConfigItem[], target: ApiParamConfigItem) {
+  const removeRecursively = (items: ApiParamConfigItem[]) => {
+    const index = items.findIndex(item => getRowKey(item) === getRowKey(target))
+    if (index !== -1) {
+      items.splice(index, 1)
+      return true
+    }
+    return items.some(item => item.children?.length && removeRecursively(item.children))
+  }
+  removeRecursively(tree)
+}
+
+function getRowKey(record: ApiParamConfigItem) {
+  return String((record as ApiParamConfigItem & { __rowKey?: string }).__rowKey || record.id || record.fieldPath || record.fieldName)
+}
+
+function attachLocalKeys(tree: ApiParamConfigItem[], direction: ParamDirection): ApiParamConfigItem[] {
+  return (tree || []).map(item => {
+    localNodeSeed += 1
+    const normalizedItem = normalizeNode(item)
+    return {
+      ...normalizedItem,
+      direction,
+      __rowKey: `${direction}-${normalizedItem.id || normalizedItem.fieldPath || normalizedItem.fieldName}-${localNodeSeed}`,
+      children: normalizedItem.children?.length ? attachLocalKeys(normalizedItem.children, direction) : [],
+    } as ApiParamConfigItem & { __rowKey: string }
+  })
+}
+
+function flattenFields(tree: ApiParamConfigItem[]): ApiParamConfigItem[] {
+  const fields: ApiParamConfigItem[] = []
+  const walk = (items: ApiParamConfigItem[]) => {
+    items.forEach(item => {
+      if (item.nodeType === 'FIELD') {
+        fields.push(item)
+      }
+      if (item.children?.length) {
+        walk(item.children)
+      }
+    })
+  }
+  walk(tree)
+  return fields
+}
+
+function buildTreeData(tree: ApiParamConfigItem[]) {
+  return tree.map(item => ({
+    key: getRowKey(item),
+    title: `${item.fieldLabel || item.fieldName || item.fieldPath} (${item.fieldType || item.nodeType})`,
+    children: item.children?.length ? buildTreeData(item.children) : undefined,
+  }))
 }
 
 function handleAddMapping() {
@@ -372,6 +563,7 @@ function handleAutoMatch() {
   const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
   const existingTargets = new Set(mappingRows.value.map(row => row.targetFieldPath).filter(Boolean))
   const suggestions: ParamMappingRow[] = []
+
   sourceFields.forEach(source => {
     const sourceName = source.fieldPath.split('.').pop()
     const target = targetFields.find(item => item.fieldPath.split('.').pop() === sourceName && !existingTargets.has(item.fieldPath))
@@ -386,6 +578,7 @@ function handleAutoMatch() {
       })
     }
   })
+
   mappingRows.value = [...mappingRows.value, ...suggestions]
 }
 
@@ -407,12 +600,30 @@ function syncMappingMeta(index: number) {
   row.required = target?.required === 1
 }
 
-async function handleSaveMappings() {
+function syncAllMappingMeta() {
+  mappingRows.value.forEach((_, index) => syncMappingMeta(index))
+}
+
+async function handleSaveAll() {
   if (!props.apiConfig?.id) {
     return
   }
-  savingMappings.value = true
+
+  savingAll.value = true
   try {
+    await Promise.all([
+      replaceApiParamTree({
+        apiConfigId: props.apiConfig.id,
+        direction: 'REQUEST',
+        tree: normalizeTreeForSave(requestTree.value, props.apiConfig.id, 'REQUEST'),
+      }),
+      replaceApiParamTree({
+        apiConfigId: props.apiConfig.id,
+        direction: 'RESPONSE',
+        tree: normalizeTreeForSave(responseTree.value, props.apiConfig.id, 'RESPONSE'),
+      }),
+    ])
+
     await batchSaveApiParamMappings({
       apiConfigId: props.apiConfig.id,
       direction: mappingDirection.value,
@@ -426,9 +637,44 @@ async function handleSaveMappings() {
           remark: row.remark,
         })),
     })
-    await reloadMappings()
+
+    await reloadAll()
   } finally {
-    savingMappings.value = false
+    savingAll.value = false
+  }
+}
+
+function normalizeTreeForSave(tree: ApiParamConfigItem[], apiConfigId: number, direction: ParamDirection): ApiParamConfigItem[] {
+  return tree.map(rawItem => {
+    const item = normalizeNode(rawItem)
+    return {
+      id: item.id,
+      apiConfigId,
+      direction,
+      parentId: null,
+      nodeType: item.children?.length ? (item.nodeType === 'ARRAY' ? 'ARRAY' : 'OBJECT') : (item.nodeType || 'FIELD'),
+      fieldName: item.fieldName,
+      fieldLabel: item.fieldLabel,
+      fieldPath: item.fieldPath || item.fieldName,
+      fieldType: item.children?.length ? (item.nodeType === 'ARRAY' ? 'array' : 'object') : item.fieldType,
+      required: item.required ?? 0,
+      defaultValue: item.defaultValue,
+      dictCode: item.dictCode,
+      orderNum: item.orderNum,
+      remark: item.remark,
+      children: item.children?.length ? normalizeTreeForSave(item.children, apiConfigId, direction) : [],
+    }
+  })
+}
+
+function normalizeNode(item: ApiParamConfigItem): ApiParamConfigItem {
+  const fieldName = (item.fieldName || item.fieldPath || '').trim()
+  const fieldLabel = (item.fieldLabel || item.fieldName || item.fieldPath || '').trim()
+  return {
+    ...item,
+    fieldName,
+    fieldLabel,
+    fieldPath: item.fieldPath || fieldName,
   }
 }
 
@@ -439,31 +685,6 @@ function toMappingRow(item: ApiParamMappingItem): ParamMappingRow {
     targetFieldPath: item.targetFieldPath,
     remark: item.remark,
   }
-}
-
-function flattenFields(tree: ApiParamConfigItem[]): ApiParamConfigItem[] {
-  const fields: ApiParamConfigItem[] = []
-  const walk = (items: ApiParamConfigItem[]) => {
-    items.forEach(item => {
-      if (item.nodeType === 'FIELD') {
-        fields.push(item)
-      }
-      if (item.children?.length) {
-        walk(item.children)
-      }
-    })
-  }
-  walk(tree)
-  return fields
-}
-
-function buildTreeData(tree: ApiParamConfigItem[]) {
-  return tree.map(item => ({
-    key: `${item.direction}-${item.fieldPath}-${item.id || item.fieldName}`,
-    title: `${item.fieldName || item.fieldPath} (${item.fieldType || item.nodeType})`,
-    dataRef: item,
-    children: item.children?.length ? buildTreeData(item.children) : undefined,
-  }))
 }
 
 function isTypeCompatible(sourceType?: string, targetType?: string) {
@@ -478,19 +699,23 @@ function isTypeCompatible(sourceType?: string, targetType?: string) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
+.api-param-config-shell {
+  min-height: 0;
+}
+
 .param-config-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(420px, 1.2fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
-  min-height: 560px;
+  margin-bottom: 16px;
 }
 
 .param-panel,
 .mapping-panel {
   padding: 16px;
   border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--fx-bg-container, #fff);
   overflow: auto;
 }
@@ -499,27 +724,32 @@ function isTypeCompatible(sourceType?: string, targetType?: string) {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  align-items: flex-start;
   margin-bottom: 14px;
+
+  h3 {
+    margin: 0 0 4px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--fx-text-secondary, #64748b);
+  }
 }
 
-.panel-header h3 {
-  margin: 0 0 4px;
-}
-
-.panel-header p {
-  margin: 0;
-  color: var(--fx-text-secondary, #64748b);
+.tree-table,
+.mapping-table {
+  margin-top: 8px;
 }
 
 .mapping-alert,
-.mapping-toolbar,
 .preview-toolbar,
 .preview-tree {
   margin-bottom: 12px;
 }
 
-.mapping-table {
-  margin-top: 12px;
+.danger-link {
+  color: #ff4d4f;
 }
 
 @media (max-width: 1280px) {

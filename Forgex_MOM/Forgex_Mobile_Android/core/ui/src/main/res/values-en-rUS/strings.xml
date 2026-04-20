@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Back</string>
+    <string name="common_refresh">Refresh</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_loading">Loading...</string>
+    <string name="common_processing">Processing...</string>
+    <string name="common_unknown_error">Unknown error</string>
+    <string name="common_not_available">Feature not available yet</string>
+    <string name="common_url_missing">Menu URL is missing</string>
+    <string name="common_device_title">%1$s (%2$s)</string>
+
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_notification">Notifications</string>
+    <string name="tab_workbench">Workbench</string>
+    <string name="tab_message">Messages</string>
+    <string name="tab_profile">Profile</string>
+
+    <string name="webview_default_title">Web Page</string>
+    <string name="webview_empty_url">The current menu does not provide an accessible URL</string>
+
+    <string name="profile_title">Profile</string>
+    <string name="profile_subtitle">Personal info, settings and logout will be integrated later</string>
+    <string name="profile_language_title">Language Settings</string>
+    <string name="profile_language_follow_system">Follow system</string>
+    <string name="profile_language_current">Current language: %1$s</string>
+    <string name="profile_language_changed">Language switched. The current screen will refresh.</string>
+    <string name="profile_language_zh_cn">Simplified Chinese</string>
+    <string name="profile_language_en_us">English</string>
+
+    <string name="auth_login_welcome">Welcome to FORGEX</string>
+    <string name="auth_server_current">Current server: %1$s</string>
+    <string name="auth_account">Account</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_captcha">Captcha</string>
+    <string name="auth_login">Login</string>
+    <string name="auth_register">Register</string>
+    <string name="auth_click_logo_server">Tap the system icon to switch server</string>
+    <string name="auth_captcha_not_required">No captcha is required in the current environment</string>
+    <string name="auth_public_key_ready">SM2 public key warm-up is enabled. Passwords will be encrypted before sending.</string>
+    <string name="auth_public_key_missing">Public key is unavailable. Password will be sent in debug mode.</string>
+    <string name="auth_login_method_account">Account login</string>
+    <string name="auth_login_method_wechat">WeChat (Coming soon)</string>
+    <string name="auth_login_method_dingtalk">DingTalk (Coming soon)</string>
+    <string name="auth_login_method_feishu">Feishu (Coming soon)</string>
+    <string name="auth_captcha_load_failed">Failed to load captcha</string>
+    <string name="auth_captcha_refresh">Refresh</string>
+    <string name="auth_slider_loading">Loading slider captcha...</string>
+    <string name="auth_slider_verify">Verify slider</string>
+    <string name="auth_slider_verified">Slider verification passed. You can log in now.</string>
+    <string name="auth_slider_hint">Drag the puzzle piece and tap Verify slider</string>
+    <string name="auth_tenant_select">Please select a tenant</string>
+    <string name="auth_tenant_empty">No tenant is available</string>
+    <string name="auth_tenant_enter">Enter</string>
+    <string name="auth_back_login">Back to login</string>
+    <string name="auth_register_placeholder_title">Registration is under development</string>
+    <string name="auth_register_placeholder_desc">The current version only provides login and environment switching. Registration will be added in a later iteration.</string>
+    <string name="auth_third_party_pending">Third-party login is under development</string>
+    <string name="auth_required_account_password">Please enter both account and password</string>
+    <string name="auth_required_captcha">Please enter the captcha</string>
+    <string name="auth_required_slider">Please complete slider verification first</string>
+    <string name="auth_slider_mode_invalid">The current mode is not slider captcha</string>
+    <string name="auth_slider_param_invalid">Slider parameters are invalid. Please refresh the captcha.</string>
+    <string name="auth_no_tenant">Logged in successfully, but no tenant was returned. Please contact the administrator.</string>
+    <string name="auth_account_empty">Account is empty. Please go back and log in again.</string>
+    <string name="auth_tenant_required">Please select a tenant</string>
+    <string name="auth_encrypt_failed">Password encryption failed. Please refresh and try again.</string>
+
+    <string name="server_settings_title">Server Settings</string>
+    <string name="server_settings_desc">Tap the system icon on the login page to open this screen. After saving, login requests will switch to the new endpoint immediately.</string>
+    <string name="server_settings_default">Default endpoint: %1$s</string>
+    <string name="server_settings_current_custom">Current endpoint: %1$s (custom)</string>
+    <string name="server_settings_current_default">Current endpoint: %1$s (default)</string>
+    <string name="server_settings_host">Server IP / domain</string>
+    <string name="server_settings_port">Gateway port</string>
+    <string name="server_settings_save">Save and return to login</string>
+    <string name="server_settings_reset">Restore default and return to login</string>
+    <string name="server_settings_host_required">Please enter the server IP or domain</string>
+    <string name="server_settings_port_invalid">Port must be a number between 1 and 65535</string>
+    <string name="server_settings_saved">Server switched. Please log in again.</string>
+    <string name="server_settings_reset_done">Default server restored. Please log in again.</string>
+
+    <string name="home_title">Home (%1$s)</string>
+    <string name="home_dynamic_menu">Menus are rendered dynamically from backend routes</string>
+    <string name="home_empty_module">No module is available</string>
+    <string name="home_select_module">Tap a module above to view menus</string>
+    <string name="home_menu_default">Menu</string>
+    <string name="home_empty_menu">No menu is available in the current module</string>
+    <string name="home_empty_favorites">No favorites yet</string>
+    <string name="home_empty_favorites_hint">Long press a menu in Workbench to add it to favorites</string>
+    <string name="home_cancel_favorite">Remove favorite</string>
+
+    <string name="message_center_title">Message Center</string>
+    <string name="message_center_desc">Show unread messages</string>
+    <string name="message_unread_title">Unread Messages</string>
+    <string name="message_unread_desc">Current unread message list</string>
+    <string name="message_read_title">Read Messages</string>
+    <string name="message_read_desc">Processed message list</string>
+    <string name="message_load_failed">Failed to load messages</string>
+    <string name="message_empty">No messages available</string>
+    <string name="message_no_title">Untitled message</string>
+    <string name="message_sender">Sender: %1$s</string>
+    <string name="message_type">Type: %1$s</string>
+    <string name="message_time">Time: %1$s</string>
+    <string name="message_content">Content: %1$s</string>
+    <string name="message_link">Link: %1$s</string>
+    <string name="message_mark_read">Mark as read</string>
+    <string name="message_mark_read_failed">Failed to mark as read. Please try again later.</string>
+
+    <string name="workflow_center_title">Workflow Center</string>
+    <string name="workflow_center_desc">Show workflows waiting for my action</string>
+    <string name="workflow_pending_title">Pending Approvals</string>
+    <string name="workflow_pending_desc">Approval tasks waiting for me</string>
+    <string name="workflow_approved_title">Approved by Me</string>
+    <string name="workflow_approved_desc">Approval tasks already processed by me</string>
+    <string name="workflow_mine_title">Initiated by Me</string>
+    <string name="workflow_mine_desc">Approval tasks I initiated</string>
+    <string name="workflow_load_failed">Failed to load workflows</string>
+    <string name="workflow_empty">No workflow data available</string>
+    <string name="workflow_no_name">Unnamed workflow task</string>
+    <string name="workflow_task_code">Task code: %1$s</string>
+    <string name="workflow_initiator">Initiator: %1$s</string>
+    <string name="workflow_node">Current node: %1$s</string>
+    <string name="workflow_status">Status: %1$s</string>
+    <string name="workflow_start_time">Started at: %1$s</string>
+    <string name="workflow_status_pending">Pending</string>
+    <string name="workflow_status_running">In progress</string>
+    <string name="workflow_status_done">Completed</string>
+    <string name="workflow_status_rejected">Rejected</string>
+    <string name="workflow_status_unknown">Unknown</string>
+
+    <string name="placeholder_dash">--</string>
+</resources>

@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -180,6 +180,11 @@ const contextMenuVisible = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 const contextTab = ref<Tab | null>(null)
 
+const closeContextMenu = () => {
+  contextMenuVisible.value = false
+  contextTab.value = null
+}
+
 function getPopupContainer() {
   if (typeof document === 'undefined') {
     return tabbarRootRef.value as any
@@ -194,10 +199,7 @@ const onTabClick = (tab: Tab) => {
 
 // 标签关闭
 const onTabClose = (tab: Tab) => {
-  contextMenuVisible.value = false
-  if (contextTab.value?.key === tab.key) {
-    contextTab.value = null
-  }
+  closeContextMenu()
   emit('tab-close', tab)
 }
 
@@ -253,6 +255,26 @@ const onContextMenu = (tab: Tab, event: MouseEvent) => {
   contextMenuVisible.value = true
 }
 
+const handleDocumentPointerDown = (event: MouseEvent) => {
+  if (!contextMenuVisible.value) {
+    return
+  }
+
+  const root = tabbarRootRef.value
+  const target = event.target as Node | null
+  if (root && target && root.contains(target)) {
+    return
+  }
+
+  closeContextMenu()
+}
+
+const handleDocumentKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && contextMenuVisible.value) {
+    closeContextMenu()
+  }
+}
+
 // 右键菜单点击
 const onContextMenuClick = (info: any) => {
   const key = info.key as string
@@ -282,7 +304,7 @@ const onContextMenuClick = (info: any) => {
       break
   }
   
-  contextMenuVisible.value = false
+  closeContextMenu()
 }
 
 // 快速操作
@@ -307,11 +329,20 @@ watch(
   () => props.tabs.map(tab => tab.key),
   tabKeys => {
     if (contextTab.value && !tabKeys.includes(contextTab.value.key)) {
-      contextMenuVisible.value = false
-      contextTab.value = null
+      closeContextMenu()
     }
   },
 )
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleDocumentPointerDown)
+  document.addEventListener('keydown', handleDocumentKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', handleDocumentPointerDown)
+  document.removeEventListener('keydown', handleDocumentKeydown)
+})
 </script>
 
 <style scoped lang="less">

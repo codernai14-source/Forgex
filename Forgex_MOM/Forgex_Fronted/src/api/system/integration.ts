@@ -94,6 +94,7 @@ export interface ApiParamConfigItem {
   direction: ParamDirection
   nodeType: NodeType
   fieldName: string
+  fieldLabel?: string
   fieldType?: string
   fieldPath: string
   required?: number
@@ -104,10 +105,24 @@ export interface ApiParamConfigItem {
   children?: ApiParamConfigItem[]
 }
 
+export type ParamSourceType = 'JSON' | 'JAVA'
+
 export interface JsonImportParam {
   apiConfigId: number
   direction: ParamDirection
   jsonString: string
+}
+
+export interface ParamStructureParseParam {
+  sourceType: ParamSourceType
+  jsonString?: string
+  javaSource?: string
+}
+
+export interface ApiParamTreeReplaceParam {
+  apiConfigId: number
+  direction: ParamDirection
+  tree: ApiParamConfigItem[]
 }
 
 export interface ApiParamMappingQuery {
@@ -229,11 +244,11 @@ export function getApiConfigDetail(id: number) {
 }
 
 export function addApiConfig(apiConfig: ApiConfigSubmit) {
-  return http.post('/integration/api-config/create', apiConfig)
+  return http.post<ApiConfigItem>('/integration/api-config/create', apiConfig)
 }
 
 export function updateApiConfig(apiConfig: ApiConfigSubmit) {
-  return http.post('/integration/api-config/update', apiConfig)
+  return http.post<ApiConfigItem>('/integration/api-config/update', apiConfig)
 }
 
 export function deleteApiConfig(id: number) {
@@ -265,8 +280,16 @@ export function parseApiParamJson(payload: Pick<JsonImportParam, 'jsonString'>) 
   return http.post<ApiParamConfigItem[]>('/integration/param-config/parse-json', payload)
 }
 
+export function parseApiParamJava(payload: Pick<ParamStructureParseParam, 'javaSource'>) {
+  return http.post<ApiParamConfigItem[]>('/integration/param-config/parse-java', payload)
+}
+
 export function importApiParamJson(payload: JsonImportParam) {
   return http.post('/integration/param-config/import-json', payload)
+}
+
+export function replaceApiParamTree(payload: ApiParamTreeReplaceParam) {
+  return http.post('/integration/param-config/replace-tree', payload)
 }
 
 export function getApiParamMappings(payload: ApiParamMappingQuery) {
@@ -311,7 +334,9 @@ export const integrationApi = {
   disableApiConfig,
   getApiParamTree,
   parseApiParamJson,
+  parseApiParamJava,
   importApiParamJson,
+  replaceApiParamTree,
   getApiParamMappings,
   batchSaveApiParamMappings,
   getApiCallLogList,

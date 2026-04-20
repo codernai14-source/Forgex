@@ -31,6 +31,16 @@ public class ApiParamJsonImportParam {
     private String jsonString;
 
     /**
+     * 解析来源类型：JSON / JAVA
+     */
+    private String sourceType;
+
+    /**
+     * Java 实体源码
+     */
+    private String javaSource;
+
+    /**
      * JSON 文本，兼容方案中的 jsonText 字段
      */
     private String jsonText;

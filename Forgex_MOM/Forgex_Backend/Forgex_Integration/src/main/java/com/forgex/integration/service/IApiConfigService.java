@@ -93,7 +93,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * @throws BusinessException 当接口编码已存在时抛出异常
      * @see ApiConfigDTO
      */
-    void createApiConfig(ApiConfigDTO dto);
+    ApiConfigDTO createApiConfig(ApiConfigDTO dto);
 
     /**
      * 更新接口配置
@@ -105,7 +105,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * @throws BusinessException 当配置不存在或接口编码已存在时抛出异常
      * @see ApiConfigDTO
      */
-    void updateApiConfig(ApiConfigDTO dto);
+    ApiConfigDTO updateApiConfig(ApiConfigDTO dto);
 
     /**
      * 删除接口配置

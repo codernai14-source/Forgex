@@ -103,7 +103,7 @@ import {
   getApiConfigDetail,
   updateApiConfig,
 } from '@/api/system/integration'
-import type { ApiConfigSubmit } from '@/api/system/integration'
+import type { ApiConfigItem, ApiConfigSubmit } from '@/api/system/integration'
 
 interface Props {
   open: boolean
@@ -113,7 +113,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:open', value: boolean): void
-  (e: 'success'): void
+  (e: 'success', record?: ApiConfigItem): void
 }
 
 const props = defineProps<Props>()
@@ -182,11 +182,12 @@ async function handleSubmit() {
     loading.value = true
     await formRef.value?.validate()
     if (props.isEdit && props.configId) {
-      await updateApiConfig({ ...formState, id: props.configId })
+      const saved = await updateApiConfig({ ...formState, id: props.configId })
+      emit('success', saved)
     } else {
-      await addApiConfig({ ...formState })
+      const saved = await addApiConfig({ ...formState })
+      emit('success', saved)
     }
-    emit('success')
   } finally {
     loading.value = false
   }

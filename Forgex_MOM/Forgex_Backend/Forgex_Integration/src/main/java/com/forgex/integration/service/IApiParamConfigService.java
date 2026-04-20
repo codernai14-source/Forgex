@@ -3,6 +3,7 @@ package com.forgex.integration.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.forgex.integration.domain.dto.ApiParamConfigDTO;
 import com.forgex.integration.domain.entity.ApiParamConfig;
+import com.forgex.integration.domain.param.ApiParamBatchSaveParam;
 import com.forgex.integration.domain.param.ApiParamConfigParam;
 import com.forgex.integration.domain.vo.ApiParamTreeVO;
 
@@ -99,6 +100,15 @@ public interface IApiParamConfigService extends IService<ApiParamConfig> {
     void batchDelete(List<Long> ids);
 
     /**
+     * 整棵参数树替换保存
+     *
+     * @param apiConfigId 接口配置 ID
+     * @param direction 参数方向
+     * @param tree 参数树
+     */
+    void replaceTree(Long apiConfigId, String direction, List<ApiParamConfigDTO> tree);
+
+    /**
      * 从 JSON 导入参数配置
      * <p>
      * 解析 JSON 结构并转换为树形参数配置
@@ -120,6 +130,14 @@ public interface IApiParamConfigService extends IService<ApiParamConfig> {
      * @return 树形结构 VO 列表
      */
     List<ApiParamTreeVO> parseJsonToTree(String jsonString);
+
+    /**
+     * 解析 Java 实体类为参数树
+     *
+     * @param javaSource Java 源码
+     * @return 参数树
+     */
+    List<ApiParamTreeVO> parseJavaToTree(String javaSource);
 
     /**
      * 根据字段路径查询参数配置

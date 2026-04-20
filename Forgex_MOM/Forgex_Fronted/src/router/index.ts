@@ -531,7 +531,7 @@ function normalizeSystemConfigRoutes(routes: any[]) {
 
   groupSystemMenus(sysRoute.children, {
     catalogPath: 'pageTableConfig',
-    title: '椤佃〃閰嶇疆',
+    title: '表格管理',
     icon: 'TableOutlined',
     childPaths: ['tableConfig', 'userTableConfig'],
   })

@@ -55,6 +55,11 @@ public class ApiParamConfig extends BaseEntity {
     private String fieldName;
 
     /**
+     * 字段显示名称
+     */
+    private String fieldLabel;
+
+    /**
      * 字段类型（string, number, boolean, array, object）
      */
     private String fieldType;

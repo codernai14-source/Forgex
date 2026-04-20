@@ -114,9 +114,8 @@ public class ApiConfigController {
     @RequirePerm("integration:api-config:add")
     @PostMapping("/create")
     @Operation(summary = "创建接口配置", description = "新增接口配置信息")
-    public R<Void> createApiConfig(@RequestBody @Validated ApiConfigDTO dto) {
-        apiConfigService.createApiConfig(dto);
-        return R.ok();
+    public R<ApiConfigDTO> createApiConfig(@RequestBody @Validated ApiConfigDTO dto) {
+        return R.ok(apiConfigService.createApiConfig(dto));
     }
 
     /**
@@ -136,9 +135,8 @@ public class ApiConfigController {
     @RequirePerm("integration:api-config:edit")
     @PostMapping("/update")
     @Operation(summary = "更新接口配置", description = "修改接口配置信息")
-    public R<Void> updateApiConfig(@RequestBody @Validated ApiConfigDTO dto) {
-        apiConfigService.updateApiConfig(dto);
-        return R.ok();
+    public R<ApiConfigDTO> updateApiConfig(@RequestBody @Validated ApiConfigDTO dto) {
+        return R.ok(apiConfigService.updateApiConfig(dto));
     }
 
     /**

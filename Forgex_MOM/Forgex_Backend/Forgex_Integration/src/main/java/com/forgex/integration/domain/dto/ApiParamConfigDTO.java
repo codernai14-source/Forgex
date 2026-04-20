@@ -3,6 +3,7 @@ package com.forgex.integration.domain.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 接口参数配置信息 DTO
@@ -48,6 +49,11 @@ public class ApiParamConfigDTO {
     private String fieldName;
 
     /**
+     * 字段显示名称
+     */
+    private String fieldLabel;
+
+    /**
      * 字段类型（string, number, boolean, array, object）
      */
     private String fieldType;
@@ -81,6 +87,11 @@ public class ApiParamConfigDTO {
      * 备注信息
      */
     private String remark;
+
+    /**
+     * 子节点
+     */
+    private List<ApiParamConfigDTO> children;
 
     /**
      * 创建时间

@@ -19,22 +19,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.ui.R
+import com.forgex.mobile.core.ui.i18n.resolveAppText
 import com.forgex.mobile.core.network.model.message.SysMessageVO
 
 const val MESSAGE_ROUTE = "message"
 const val MESSAGE_UNREAD_ROUTE = "message/unread"
 const val MESSAGE_READ_ROUTE = "message/read"
 
-enum class MessageEntryMode(
-    val title: String,
-    val description: String
-) {
-    HOME("消息中心", "展示未读消息"),
-    UNREAD("未读消息", "当前未读消息列表"),
-    READ("已读消息", "已处理消息列表")
+enum class MessageEntryMode {
+    HOME,
+    UNREAD,
+    READ
 }
 
 @Composable
@@ -63,21 +63,21 @@ fun MessageScreen(
         ) {
             Column {
                 Text(
-                    text = entryMode.title,
+                    text = entryMode.title(),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    text = entryMode.description,
+                    text = entryMode.description(),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { viewModel.load(entryMode, force = true) }) {
-                    Text("刷新")
+                    Text(stringResource(R.string.common_refresh))
                 }
                 Button(onClick = onBack) {
-                    Text("返回")
+                    Text(stringResource(R.string.common_back))
                 }
             }
         }
@@ -93,21 +93,23 @@ fun MessageScreen(
                 }
             }
 
-            !uiState.errorMessage.isNullOrBlank() -> {
+            !uiState.errorMessage.isNullOrBlank() || uiState.errorText != null -> {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = uiState.errorMessage ?: "消息列表加载失败",
+                        text = uiState.errorMessage
+                            ?: resolveAppText(uiState.errorText)
+                            ?: stringResource(R.string.message_load_failed),
                         color = MaterialTheme.colorScheme.error
                     )
                     Button(
                         onClick = { viewModel.load(entryMode, force = true) },
                         modifier = Modifier.padding(top = 12.dp)
                     ) {
-                        Text("重试")
+                        Text(stringResource(R.string.common_retry))
                     }
                 }
             }
@@ -118,7 +120,7 @@ fun MessageScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("暂无消息数据")
+                    Text(stringResource(R.string.message_empty))
                 }
             }
 
@@ -159,18 +161,20 @@ private fun MessageCard(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = message.title.orEmpty().ifBlank { "无标题消息" },
+                text = message.title.orEmpty().ifBlank { stringResource(R.string.message_no_title) },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Text("发送人：${message.senderName.orEmpty().ifBlank { "--" }}")
-            Text("类型：${message.messageType.orEmpty().ifBlank { "--" }}")
-            Text("时间：${message.createTime.orEmpty().ifBlank { "--" }}")
-            if (!message.content.isNullOrBlank()) {
-                Text("内容：${message.content}")
+            Text(stringResource(R.string.message_sender, message.senderName.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
+            Text(stringResource(R.string.message_type, message.messageType.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
+            Text(stringResource(R.string.message_time, message.createTime.orEmpty().ifBlank { stringResource(R.string.placeholder_dash) }))
+            val content = message.content
+            if (!content.isNullOrBlank()) {
+                Text(stringResource(R.string.message_content, content))
             }
-            if (!message.linkUrl.isNullOrBlank()) {
-                Text("链接：${message.linkUrl}")
+            val linkUrl = message.linkUrl
+            if (!linkUrl.isNullOrBlank()) {
+                Text(stringResource(R.string.message_link, linkUrl))
             }
 
             if (canMarkRead && message.status == 0) {
@@ -179,9 +183,30 @@ private fun MessageCard(
                     enabled = !isReading,
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
-                    Text(if (isReading) "处理中..." else "标记已读")
+                    Text(
+                        if (isReading) stringResource(R.string.common_processing)
+                        else stringResource(R.string.message_mark_read)
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MessageEntryMode.title(): String {
+    return when (this) {
+        MessageEntryMode.HOME -> stringResource(R.string.message_center_title)
+        MessageEntryMode.UNREAD -> stringResource(R.string.message_unread_title)
+        MessageEntryMode.READ -> stringResource(R.string.message_read_title)
+    }
+}
+
+@Composable
+private fun MessageEntryMode.description(): String {
+    return when (this) {
+        MessageEntryMode.HOME -> stringResource(R.string.message_center_desc)
+        MessageEntryMode.UNREAD -> stringResource(R.string.message_unread_desc)
+        MessageEntryMode.READ -> stringResource(R.string.message_read_desc)
     }
 }

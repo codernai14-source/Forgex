@@ -1,5 +1,5 @@
 /**
- * 编码规则翻译 - 中文
+ * 编码规则 - 中文
  */
 export default {
   pageTitle: '编码规则管理',
@@ -20,12 +20,14 @@ export default {
   seqStart: '起始值',
   seqLength: '长度',
   seqResetType: '重置方式',
+
   ruleNamePlaceholder: '请输入规则名称',
   ruleCodePlaceholder: '请输入规则编码（字母和数字）',
   businessTypePlaceholder: '请输入业务类型（例如：ORDER、INVOICE）',
   descriptionPlaceholder: '请输入规则描述',
   remarkPlaceholder: '请输入备注',
   date表单atPlaceholder: '请输入日期格式（例如：YYYYMMDD）',
+
   ruleNameRequired: '请输入规则名称',
   ruleNameMaxLength: '规则名称最多 50 个字符',
   ruleCodeRequired: '请输入规则编码',
@@ -38,6 +40,7 @@ export default {
   seqLengthRequired: '请输入序列长度',
   detailRequired: '请至少添加一条规则明细',
   detailOrderError: '规则明细序号必须连续',
+
   statusActive: '启用',
   statusInactive: '禁用',
   segmentTypeFixed: '固定值',
@@ -48,6 +51,7 @@ export default {
   seqResetYearly: '按年重置',
   seqResetMonthly: '按月重置',
   seqResetDaily: '按日重置',
+
   add: '新增',
   edit: '编辑',
   delete: '删除',
@@ -60,6 +64,7 @@ export default {
   updateSuccess: '更新成功',
   addSuccess: '新增成功',
   loadDetailFailed: '加载详情失败',
+
   message: {
     deleteConfirm: '确定要删除该编码规则吗？',
     batchDeleteConfirm: '确定要批量删除选中的编码规则吗？',

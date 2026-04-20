@@ -2,7 +2,9 @@ package com.forgex.mobile.feature.message
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.forgex.mobile.core.common.i18n.AppText
 import com.forgex.mobile.core.common.result.AppResult
+import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.feature.message.data.MessageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -28,7 +30,7 @@ class MessageViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
 
             when (val result = messageRepository.loadMessages(entryMode = entryMode)) {
                 is AppResult.Success -> {
@@ -37,6 +39,7 @@ class MessageViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             errorMessage = null,
+                            errorText = null,
                             messages = result.data
                         )
                     }
@@ -47,6 +50,7 @@ class MessageViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             errorMessage = result.message,
+                            errorText = result.appText,
                             messages = emptyList()
                         )
                     }
@@ -66,18 +70,21 @@ class MessageViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(readingIds = it.readingIds + messageId) }
-            when (messageRepository.markRead(messageId)) {
+            when (val result = messageRepository.markRead(messageId)) {
                 is AppResult.Success -> {
                     load(entryMode, force = true)
                 }
 
                 is AppResult.Error -> {
-                    _uiState.update { it.copy(errorMessage = "标记已读失败，请稍后重试") }
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = result.message,
+                            errorText = result.appText ?: AppText.Resource(R.string.message_mark_read_failed)
+                        )
+                    }
                 }
 
-                AppResult.Loading -> {
-                    // no-op
-                }
+                AppResult.Loading -> Unit
             }
             _uiState.update { it.copy(readingIds = it.readingIds - messageId) }
         }

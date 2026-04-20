@@ -1,7 +1,6 @@
 package com.forgex.mobile.ui.navigation
 
 import android.net.Uri
-import com.forgex.mobile.core.network.model.workbench.CMenuVO
 import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeMenuItem
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
@@ -12,6 +11,7 @@ import com.forgex.mobile.feature.workflow.WORKFLOW_APPROVED_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_MINE_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_PENDING_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_ROUTE
+import com.forgex.mobile.core.network.model.workbench.CMenuVO
 
 enum class MenuTargetType {
     NATIVE,
@@ -27,6 +27,11 @@ data class MenuTarget(
 )
 
 object MenuTargetResolver {
+
+    private const val WEBVIEW_URL_MISSING = "WEBVIEW is configured but no accessible URL was provided"
+    private const val NATIVE_ROUTE_MISSING = "NATIVE is declared but no native screen matches the route"
+    private const val MENU_RULE_MISSING = "No menu mapping rule matched"
+    private const val EXTERNAL_URL_MISSING = "External menu is configured but URL is missing"
 
     private val componentKeyRouteMap = mapOf(
         "homescreen" to HOME_ROUTE,
@@ -57,10 +62,7 @@ object MenuTargetResolver {
             return if (url.isNotBlank()) {
                 MenuTarget(type = MenuTargetType.WEBVIEW, webUrl = url)
             } else {
-                MenuTarget(
-                    type = MenuTargetType.UNSUPPORTED,
-                    reason = "菜单已配置为 WEBVIEW，但缺少可访问 URL"
-                )
+                MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = WEBVIEW_URL_MISSING)
             }
         }
 
@@ -78,17 +80,10 @@ object MenuTargetResolver {
 
         return MenuTarget(
             type = MenuTargetType.UNSUPPORTED,
-            reason = if (renderType == "NATIVE") {
-                "菜单声明为 NATIVE，但未匹配到原生页面"
-            } else {
-                "未匹配到菜单映射规则"
-            }
+            reason = if (renderType == "NATIVE") NATIVE_ROUTE_MISSING else MENU_RULE_MISSING
         )
     }
 
-    /**
-     * 从 C 端菜单 VO 解析导航目标（工作台/收藏点击使用）。
-     */
     fun resolve(menu: CMenuVO): MenuTarget {
         val componentKey = menu.componentKey?.trim()?.lowercase().orEmpty()
         val path = menu.path?.trim().orEmpty()
@@ -101,7 +96,7 @@ object MenuTargetResolver {
             return if (url.isNotBlank()) {
                 MenuTarget(type = MenuTargetType.WEBVIEW, webUrl = url)
             } else {
-                MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = "菜单配置为外联，但缺少 URL")
+                MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = EXTERNAL_URL_MISSING)
             }
         }
 
@@ -117,7 +112,7 @@ object MenuTargetResolver {
             return MenuTarget(type = MenuTargetType.WEBVIEW, webUrl = path)
         }
 
-        return MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = "未匹配到菜单映射规则")
+        return MenuTarget(type = MenuTargetType.UNSUPPORTED, reason = MENU_RULE_MISSING)
     }
 
     private fun resolvePathRoute(path: String): String? {
