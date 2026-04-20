@@ -1,70 +1,25 @@
 <template>
   <div class="table-config-management">
-    <a-card :bordered="false" class="query-card">
-      <a-form layout="inline">
-        <a-form-item>
+    <FxDynamicTable
+      ref="tableRef"
+      table-code="TableConfigTable"
+      :request="handleRequest"
+      :dict-options="dictOptions"
+      :dynamic-table-config="dynamicTableConfig"
+      :show-query-form="true"
+      :show-column-setting="false"
+      :row-selection="{
+        selectedRowKeys,
+        onChange: handleSelectionChange
+      }"
+      :row-key="rowKey"
+    >
+      <template #toolbar>
+        <a-space :size="8">
           <a-radio-group v-model:value="publicConfig" button-style="solid" @change="handleModeChange">
             <a-radio-button :value="false">租户配置</a-radio-button>
             <a-radio-button :value="true">公共配置</a-radio-button>
           </a-radio-group>
-        </a-form-item>
-
-        <a-form-item :label="t('system.tableConfig.tableCode')">
-          <a-input
-            v-model:value="queryForm.tableCode"
-            :placeholder="t('system.tableConfig.form.tableCode')"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-
-        <a-form-item :label="t('system.tableConfig.tableName')">
-          <a-input
-            v-model:value="queryForm.tableName"
-            :placeholder="t('system.tableConfig.form.tableName')"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-
-        <a-form-item :label="t('system.tableConfig.tableType')">
-          <a-select
-            v-model:value="queryForm.tableType"
-            :placeholder="t('system.tableConfig.form.tableType')"
-            allow-clear
-            style="width: 150px"
-          >
-            <a-select-option value="NORMAL">{{ t('system.tableConfig.tableTypeNormal') }}</a-select-option>
-            <a-select-option value="LAZY">{{ t('system.tableConfig.tableTypeLazy') }}</a-select-option>
-            <a-select-option value="TREE">{{ t('system.tableConfig.tableTypeTree') }}</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item :label="t('system.tableConfig.enabled')">
-          <a-select
-            v-model:value="queryForm.enabled"
-            :placeholder="t('system.tableConfig.form.enabled')"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option v-for="option in yesNoOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">{{ t('common.search') }}</a-button>
-            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
-
-    <a-card :bordered="false" class="table-card">
-      <div style="margin-bottom: 16px">
-        <a-space>
           <a-button
             v-if="!publicConfig"
             v-permission="'sys:tableConfig:add'"
@@ -88,49 +43,36 @@
             {{ t('common.batchDelete') }}
           </a-button>
         </a-space>
-      </div>
+      </template>
 
-      <div ref="tableWrapRef" class="table-wrap">
-        <a-table
-          :columns="columns"
-          :data-source="dataSource"
-          :loading="loading"
-          :pagination="pagination"
-          :scroll="tableScroll"
-          :row-key="rowKey"
-          :row-selection="{ selectedRowKeys, onChange: handleSelectionChange }"
-          @change="handleTableChange"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'tableNameI18nJson'">
-              <span>{{ getI18nValue(record.tableNameI18nJson, record.tableName) }}</span>
-            </template>
+      <template #tableNameI18nJson="{ record }">
+        <span>{{ getI18nValue(record.tableNameI18nJson, record.tableName) }}</span>
+      </template>
 
-            <template v-else-if="column.key === 'tableType'">
-              <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
-              <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
-              <a-tag v-else color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
-            </template>
+      <template #tableType="{ record }">
+        <a-tag v-if="record.tableType === 'NORMAL'" color="blue">{{ t('system.tableConfig.tableTypeNormal') }}</a-tag>
+        <a-tag v-else-if="record.tableType === 'LAZY'" color="green">{{ t('system.tableConfig.tableTypeLazy') }}</a-tag>
+        <a-tag v-else color="orange">{{ t('system.tableConfig.tableTypeTree') }}</a-tag>
+      </template>
 
-            <template v-else-if="column.key === 'enabled'">
-              <a-switch
-                v-permission="'sys:tableConfig:edit'"
-                :checked="record.enabled"
-                :loading="record.statusLoading"
-                @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
-              />
-            </template>
+      <template #enabled="{ record }">
+        <a-switch
+          v-permission="'sys:tableConfig:edit'"
+          :checked="record.enabled"
+          :loading="record.statusLoading"
+          @change="(checked: boolean) => handleToggleStatus(record.id!, checked)"
+        />
+      </template>
 
-            <template v-else-if="column.key === 'action'">
-              <a-space>
-                <a v-permission="'sys:tableConfig:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
-                <a v-permission="'sys:tableConfig:delete'" style="color: #ff4d4f" @click="handleDelete(record.id!)">{{ t('common.delete') }}</a>
-              </a-space>
-            </template>
-          </template>
-        </a-table>
-      </div>
-    </a-card>
+      <template #action="{ record }">
+        <a-space>
+          <a v-permission="'sys:tableConfig:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
+          <a v-permission="'sys:tableConfig:delete'" style="color: #ff4d4f" @click="handleDelete(record.id!)">
+            {{ t('common.delete') }}
+          </a>
+        </a-space>
+      </template>
+    </FxDynamicTable>
 
     <TableConfigFormDialog
       v-model:open="dialogVisible"
@@ -143,9 +85,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
 import {
   batchDeleteTableConfig,
@@ -153,149 +96,97 @@ import {
   getTableConfigList,
   pullPublicTableConfig,
   toggleTableConfigStatus,
+  type FxTableConfig,
+  type TableConfigItem,
 } from '@/api/system/tableConfig'
-import type { TableConfigItem } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: yesNoOptions } = useDict('yes_no')
 
+const tableRef = ref()
 const publicConfig = ref(false)
-const loading = ref(false)
-const dataSource = ref<TableConfigItem[]>([])
 const selectedRowKeys = ref<number[]>([])
-const tableWrapRef = ref<HTMLElement | null>(null)
-const autoScrollY = ref<number | undefined>(undefined)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentConfigId = ref<number | undefined>()
 
-let computeScrollYRafPending = false
-let tableWrapObserver: MutationObserver | null = null
+const dictOptions = computed(() => ({
+  enabled: yesNoOptions.value,
+  tableType: [
+    { label: t('system.tableConfig.tableTypeNormal'), value: 'NORMAL' },
+    { label: t('system.tableConfig.tableTypeLazy'), value: 'LAZY' },
+    { label: t('system.tableConfig.tableTypeTree'), value: 'TREE' },
+  ],
+}))
 
-const queryForm = reactive({
-  tableCode: '',
-  tableName: '',
-  tableType: undefined as string | undefined,
-  enabled: undefined as boolean | undefined,
-})
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'TableConfigTable',
+  tableName: t('system.tableConfig.tableName'),
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'tableCode', title: t('system.tableConfig.tableCode'), width: 180, align: 'left', queryable: true, queryType: 'input', queryOperator: 'like' },
+    { field: 'tableNameI18nJson', title: t('system.tableConfig.tableName'), width: 220, align: 'left', ellipsis: true, queryable: true, queryType: 'input', queryOperator: 'like' },
+    { field: 'tableType', title: t('system.tableConfig.tableType'), width: 120, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq', dictCode: 'tableType' },
+    { field: 'rowKey', title: t('system.tableConfig.rowKey'), width: 120, align: 'left' },
+    { field: 'defaultPageSize', title: t('system.tableConfig.defaultPageSize'), width: 120, align: 'center' },
+    { field: 'enabled', title: t('system.tableConfig.enabled'), width: 110, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
+    { field: 'createBy', title: t('system.user.createBy'), width: 120, align: 'left' },
+    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
+    { field: 'action', title: t('common.action'), width: 150, align: 'center', fixed: 'right' },
+  ],
+  queryFields: [
+    { field: 'tableCode', label: t('system.tableConfig.tableCode'), queryType: 'input', queryOperator: 'like' },
+    { field: 'tableName', label: t('system.tableConfig.tableName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'tableType', label: t('system.tableConfig.tableType'), queryType: 'select', queryOperator: 'eq', dictCode: 'tableType' },
+    { field: 'enabled', label: t('system.tableConfig.enabled'), queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
+  ],
+  version: 1,
+}))
 
-const pagination = reactive({
-  current: 1,
-  pageSize: 20,
-  total: 0,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => t('common.total', { total }),
-  hideOnSinglePage: false,
-})
-
-const columns = computed(() => [
-  { title: t('system.tableConfig.tableCode'), dataIndex: 'tableCode', key: 'tableCode', width: 180 },
-  { title: t('system.tableConfig.tableName'), dataIndex: 'tableNameI18nJson', key: 'tableNameI18nJson', width: 220, ellipsis: true },
-  { title: t('system.tableConfig.tableType'), dataIndex: 'tableType', key: 'tableType', width: 120 },
-  { title: t('system.tableConfig.rowKey'), dataIndex: 'rowKey', key: 'rowKey', width: 120 },
-  { title: t('system.tableConfig.defaultPageSize'), dataIndex: 'defaultPageSize', key: 'defaultPageSize', width: 120 },
-  { title: t('system.tableConfig.enabled'), dataIndex: 'enabled', key: 'enabled', width: 100, align: 'center' as const },
-  { title: t('system.user.createBy'), dataIndex: 'createBy', key: 'createBy', width: 120 },
-  { title: t('common.createTime'), dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: t('common.action'), key: 'action', width: 150, fixed: 'right' as const },
-])
-
-const tableScroll = computed(() => ({ x: 1310, y: autoScrollY.value }))
 const rowKey = (record: TableConfigItem) => record.id ?? record.tableCode
 
-async function fetchData() {
-  loading.value = true
-  try {
-    const result = await getTableConfigList({
-      ...queryForm,
-      isPublicConfig: publicConfig.value,
-      current: pagination.current,
-      pageSize: pagination.pageSize,
-    })
-    dataSource.value = result.records || []
-    pagination.total = result.total || 0
-    await nextTick()
-    scheduleComputeAutoScrollY()
-  } catch (error) {
-    console.error('load table config failed:', error)
-  } finally {
-    loading.value = false
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+}) => {
+  const query = payload.query || {}
+  const result = await getTableConfigList({
+    tableCode: query.tableCode,
+    tableName: query.tableName,
+    tableType: query.tableType,
+    enabled: query.enabled,
+    isPublicConfig: publicConfig.value,
+    current: payload.page.current,
+    pageSize: payload.page.pageSize,
+  })
+
+  return {
+    records: (result.records || []).map((item) => ({ ...item })),
+    total: result.total || 0,
   }
 }
 
+function handleSelectionChange(keys: number[]) {
+  selectedRowKeys.value = keys
+}
+
 function handleModeChange() {
-  pagination.current = 1
   selectedRowKeys.value = []
-  fetchData()
+  tableRef.value?.refresh?.()
 }
 
 async function handlePullPublic() {
   try {
     const count = await pullPublicTableConfig()
     message.success(`已拉取 ${Number(count || 0)} 条公共配置`)
-    fetchData()
+    tableRef.value?.refresh?.()
   } catch (error) {
     console.error('pull public table config failed:', error)
   }
-}
-
-function onResizeOrScroll() {
-  scheduleComputeAutoScrollY()
-}
-
-function scheduleComputeAutoScrollY() {
-  if (computeScrollYRafPending) return
-  computeScrollYRafPending = true
-  requestAnimationFrame(() => {
-    computeScrollYRafPending = false
-    computeAutoScrollY()
-  })
-}
-
-function computeAutoScrollY() {
-  const wrapEl = tableWrapRef.value
-  if (!wrapEl) {
-    autoScrollY.value = undefined
-    return
-  }
-  const rect = wrapEl.getBoundingClientRect()
-  if (!Number.isFinite(rect.height) || rect.height <= 0) {
-    autoScrollY.value = undefined
-    return
-  }
-  const paginationEl = wrapEl.querySelector('.ant-pagination') as HTMLElement | null
-  const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 0
-  const headerEl = wrapEl.querySelector('.ant-table-thead') as HTMLElement | null
-  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
-  const nextY = Math.floor(rect.height - paginationHeight - headerHeight - 36)
-  autoScrollY.value = nextY > 100 ? nextY : undefined
-}
-
-function handleSearch() {
-  pagination.current = 1
-  fetchData()
-}
-
-function handleReset() {
-  queryForm.tableCode = ''
-  queryForm.tableName = ''
-  queryForm.tableType = undefined
-  queryForm.enabled = undefined
-  pagination.current = 1
-  fetchData()
-}
-
-function handleTableChange(pag: { current?: number; pageSize?: number }) {
-  pagination.current = pag.current || 1
-  pagination.pageSize = pag.pageSize || 20
-  fetchData()
-}
-
-function handleSelectionChange(keys: number[]) {
-  selectedRowKeys.value = keys
 }
 
 function openAddDialog() {
@@ -304,16 +195,15 @@ function openAddDialog() {
   dialogVisible.value = true
 }
 
-async function openEditDialog(record: TableConfigItem) {
+function openEditDialog(record: TableConfigItem) {
   isEdit.value = true
   currentConfigId.value = record.id
-  await nextTick()
   dialogVisible.value = true
 }
 
 function handleFormSuccess() {
   dialogVisible.value = false
-  fetchData()
+  tableRef.value?.refresh?.()
 }
 
 function handleDelete(id: number) {
@@ -324,7 +214,7 @@ function handleDelete(id: number) {
     cancelText: t('common.cancel'),
     onOk: async () => {
       await deleteTableConfig(id, publicConfig.value)
-      fetchData()
+      tableRef.value?.refresh?.()
     },
   })
 }
@@ -338,65 +228,27 @@ function handleBatchDelete() {
     onOk: async () => {
       await batchDeleteTableConfig(selectedRowKeys.value, publicConfig.value)
       selectedRowKeys.value = []
-      fetchData()
+      tableRef.value?.refresh?.()
     },
   })
 }
 
 async function handleToggleStatus(id: number, enabled: boolean) {
-  const record = dataSource.value.find((item) => item.id === id)
-  if (!record) return
-  record.statusLoading = true
   try {
     await toggleTableConfigStatus(id, enabled, publicConfig.value)
-    record.enabled = enabled
-  } finally {
-    record.statusLoading = false
+    tableRef.value?.refresh?.()
+  } catch (error) {
+    console.error('toggle table config status failed:', error)
   }
 }
-
-onMounted(() => {
-  fetchData()
-  window.addEventListener('resize', onResizeOrScroll)
-  tableWrapObserver = new MutationObserver(() => scheduleComputeAutoScrollY())
-  if (tableWrapRef.value) {
-    tableWrapObserver.observe(tableWrapRef.value, { childList: true, subtree: true })
-  }
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', onResizeOrScroll)
-  tableWrapObserver?.disconnect()
-})
 </script>
 
 <style scoped lang="less">
 .table-config-management {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   height: 100%;
   min-height: 0;
-}
-
-.query-card :deep(.ant-card-body) {
-  padding-bottom: 8px;
-}
-
-.table-card {
-  flex: 1;
-  min-height: 0;
-}
-
-.table-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.table-wrap {
-  flex: 1;
-  min-height: 0;
+  overflow: hidden;
 }
 </style>

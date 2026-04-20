@@ -5,7 +5,7 @@
       v-if="doubleColumn"
       class="app-sidebar-mini fx-guide-sidebar-mini"
       :collapsed="false"
-      :width="112"
+      :width="104"
     >
       <a-menu
         mode="inline"
@@ -19,8 +19,10 @@
           class="mini-menu-item"
         >
           <div class="mini-menu-content">
-            <component v-if="menu.icon" :is="getIcon(menu.icon)" class="mini-menu-icon" />
-            <FileOutlined v-else class="mini-menu-icon" />
+            <span class="mini-menu-icon-shell">
+              <component v-if="menu.icon" :is="getIcon(menu.icon)" class="mini-menu-icon" />
+              <FileOutlined v-else class="mini-menu-icon" />
+            </span>
             <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
           </div>
         </a-menu-item>
@@ -406,8 +408,8 @@ const onCollapse = (collapsed: boolean) => {
 }
 
 .app-sidebar-mini {
-  background: var(--fx-sider-mini-bg, #001529);
-  border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  background: var(--fx-sider-mini-bg, #161720);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   min-height: 0;
   overflow: hidden;
   
@@ -415,6 +417,7 @@ const onCollapse = (collapsed: boolean) => {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    padding: 10px 0 14px;
   }
 }
 
@@ -437,11 +440,11 @@ const onCollapse = (collapsed: boolean) => {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.16);
     border-radius: 3px;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.24);
     }
   }
   
@@ -449,17 +452,18 @@ const onCollapse = (collapsed: boolean) => {
     display: flex !important;
     align-items: stretch;
     justify-content: center;
-    height: 80px;
+    min-height: 76px;
+    height: auto;
     padding: 0 !important;
     padding-inline: 0 !important;
     padding-inline-start: 0 !important;
     padding-inline-end: 0 !important;
-    margin: 4px 8px;
-    color: var(--fx-text-color, rgba(255, 255, 255, 0.75)) !important;
+    margin: 2px 10px 4px;
+    color: rgba(224, 227, 237, 0.58) !important;
     line-height: 1.2;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease, background-color 0.2s ease;
     background: transparent !important;
-    border-radius: 16px;
+    border-radius: 14px;
     inset-inline-start: 0 !important;
     
     &::after {
@@ -467,14 +471,13 @@ const onCollapse = (collapsed: boolean) => {
     }
     
     &:hover {
-      color: var(--fx-theme-color, #1677ff) !important;
-      background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
-      transform: scale(1.02);
+      color: rgba(244, 246, 255, 0.9) !important;
+      background: rgba(255, 255, 255, 0.03) !important;
     }
     
     &.ant-menu-item-selected {
-      color: var(--fx-theme-color, #1677ff) !important;
-      background: var(--fx-tab-bg, rgba(255, 255, 255, 0.12)) !important;
+      color: var(--fx-theme-color, var(--fx-primary, #1677ff)) !important;
+      background: transparent !important;
     }
     
     .ant-menu-title-content {
@@ -499,29 +502,54 @@ const onCollapse = (collapsed: boolean) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   height: 100%;
-  padding: 8px 8px 7px;
+  min-height: 76px;
+  padding: 8px 10px 10px;
   margin: 0 auto;
   text-align: center;
   color: inherit;
   box-sizing: border-box;
 }
 
+.mini-menu-icon-shell {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: inherit;
+  background: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
 .mini-menu-icon {
-  font-size: 20px;
+  font-size: 19px;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
+  transition: color 0.2s ease;
   color: inherit !important;
   flex-shrink: 0;
 }
 
-.mini-menu :deep(.ant-menu-item:hover) .mini-menu-icon {
-  transform: scale(1.1);
+.mini-menu :deep(.ant-menu-item:hover) .mini-menu-icon-shell {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mini-menu :deep(.ant-menu-item-selected) .mini-menu-icon-shell {
+  background: rgba(22, 119, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.3);
+  background: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 46%, transparent);
+}
+
+.mini-menu :deep(.ant-menu-item-selected) .mini-menu-icon {
+  color: var(--fx-theme-color, var(--fx-primary, #1677ff)) !important;
 }
 
 .app-sidebar {
@@ -691,11 +719,12 @@ const onCollapse = (collapsed: boolean) => {
 
 // 涓€绾ц彍鍗曟爣棰樻牱寮忥紙鏀寔澶氳鏄剧ず锛?
 .mini-menu-title {
-  font-size: 13px;
+  font-size: 12px;
   margin-top: 0;
   text-align: center;
-  line-height: 1.3;
-  font-weight: 500;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   width: 100%;
   // 鏄剧ず鏈€澶?琛岋紝瓒呭嚭鏄剧ず鐪佺暐鍙?
   display: -webkit-box;
@@ -705,8 +734,13 @@ const onCollapse = (collapsed: boolean) => {
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: break-word;
-  max-height: calc(1.3em * 2);
+  max-height: calc(1.35em * 2);
   max-width: 100%;
+  color: inherit;
+}
+
+.mini-menu :deep(.ant-menu-item-selected) .mini-menu-title {
+  color: var(--fx-theme-color, var(--fx-primary, #1677ff));
 }
 
 // 鍝嶅簲寮忛€傞厤
