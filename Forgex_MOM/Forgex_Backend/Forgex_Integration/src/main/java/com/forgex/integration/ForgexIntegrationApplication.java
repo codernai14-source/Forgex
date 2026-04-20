@@ -1,9 +1,13 @@
 package com.forgex.integration;
 
+import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.security.perm.PermissionInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Import;
 
 /**
  * 接口平台服务启动类
@@ -15,9 +19,11 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @version 1.0
  * @since 2026-04-14
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.forgex")
 @EnableDiscoveryClient
-@MapperScan("com.forgex.integration.mapper")
+@EnableFeignClients(clients = AuthPermClient.class)
+@Import(PermissionInterceptor.class)
+@MapperScan({"com.forgex.integration.mapper", "com.forgex.common.mapper"})
 public class ForgexIntegrationApplication {
 
     public static void main(String[] args) {

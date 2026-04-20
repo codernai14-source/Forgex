@@ -1,7 +1,9 @@
 package com.forgex.integration.controller;
 
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ApiParamMappingDTO;
+import com.forgex.integration.domain.param.ApiParamMappingBatchSaveParam;
 import com.forgex.integration.domain.param.ApiParamMappingParam;
 import com.forgex.integration.service.IApiParamMappingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,7 +13,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 接口参数映射管理控制器
@@ -49,6 +50,7 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#listMappings
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @PostMapping("/list")
     @Operation(summary = "查询参数映射列表", description = "根据接口配置 ID 和映射方向查询所有映射关系")
     public R<List<ApiParamMappingDTO>> listMappings(@RequestBody @Validated ApiParamMappingParam param) {
@@ -69,6 +71,7 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#getById
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @GetMapping("/detail/{id}")
     @Operation(summary = "获取参数映射详情", description = "用于编辑时回显数据")
     public R<ApiParamMappingDTO> getDetail(@PathVariable Long id) {
@@ -90,6 +93,7 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#create
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @PostMapping("/create")
     @Operation(summary = "创建参数映射", description = "新增参数映射，自动校验映射关系的唯一性")
     public R<Void> create(@RequestBody @Validated ApiParamMappingDTO dto) {
@@ -111,6 +115,7 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#update
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @PostMapping("/update")
     @Operation(summary = "更新参数映射", description = "修改参数映射，自动校验映射关系的唯一性")
     public R<Void> update(@RequestBody @Validated ApiParamMappingDTO dto) {
@@ -131,6 +136,7 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#delete
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @PostMapping("/delete/{id}")
     @Operation(summary = "删除参数映射", description = "删除单个映射关系")
     public R<Void> delete(@PathVariable Long id) {
@@ -151,6 +157,7 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#batchDelete
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @PostMapping("/batch-delete")
     @Operation(summary = "批量删除参数映射", description = "批量删除多个映射关系")
     public R<Void> batchDelete(@RequestBody List<Long> ids) {
@@ -176,15 +183,15 @@ public class ApiParamMappingController {
      * @see com.forgex.integration.service.IApiParamMappingService#batchSave
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-config:config-mapping")
     @PostMapping("/batch-save")
     @Operation(summary = "批量保存参数映射", description = "一次性保存多个映射关系")
-    public R<Void> batchSave(@RequestBody Map<String, Object> request) {
-        Long apiConfigId = (Long) request.get("apiConfigId");
-        String direction = (String) request.get("direction");
-        @SuppressWarnings("unchecked")
-        List<ApiParamMappingDTO> mappings = (List<ApiParamMappingDTO>) request.get("mappings");
-        
-        apiParamMappingService.batchSave(apiConfigId, direction, mappings);
+    public R<Void> batchSave(@RequestBody ApiParamMappingBatchSaveParam request) {
+        apiParamMappingService.batchSave(
+            request.getApiConfigId(),
+            request.getDirection(),
+            request.getMappings()
+        );
         return R.ok();
     }
 }

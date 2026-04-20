@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.IntOffset
@@ -54,6 +55,8 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.forgex.mobile.core.ui.R
+import com.forgex.mobile.core.ui.i18n.resolveAppText
 import com.forgex.mobile.feature.auth.data.CaptchaMode
 import com.forgex.mobile.feature.auth.data.SliderCaptcha
 import kotlin.math.roundToInt
@@ -63,12 +66,6 @@ const val AUTH_ROUTE = "auth"
 const val SERVER_SETTINGS_ROUTE = "auth/server-settings"
 const val REGISTER_ROUTE = "auth/register"
 
-/**
- * 登录主页面：
- * 1. 展示系统配置驱动的标题/Logo/背景。
- * 2. 承载账号登录、验证码校验、租户选择。
- * 3. 提供服务器设置与注册入口。
- */
 @Composable
 fun AuthScreen(
     onLoginSuccess: () -> Unit,
@@ -88,10 +85,7 @@ fun AuthScreen(
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // 背景层：系统配置图/GIF/颜色
+    Box(modifier = modifier.fillMaxSize()) {
         LoginBackground(
             imageLoader = imageLoader,
             backgroundRaw = uiState.loginBackgroundImage,
@@ -100,7 +94,6 @@ fun AuthScreen(
             serverOrigin = uiState.serverOrigin
         )
 
-        // 遮罩层：提升前景卡片可读性
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -168,7 +161,9 @@ private fun LoginCard(
     onRefreshCaptcha: () -> Unit,
     onSubmit: () -> Unit
 ) {
-    // 登录区采用卡片容器，方便后续主题皮肤切换
+    val title = uiState.loginTitle.ifBlank { stringResource(R.string.auth_login_welcome) }
+    val errorText = uiState.errorMessage ?: resolveAppText(uiState.errorText)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -186,7 +181,7 @@ private fun LoginCard(
             LogoHeader(
                 imageLoader = imageLoader,
                 systemName = uiState.systemName,
-                title = uiState.loginTitle,
+                title = title,
                 subtitle = uiState.loginSubtitle,
                 logoRaw = uiState.systemLogo,
                 serverOrigin = uiState.serverOrigin,
@@ -194,7 +189,7 @@ private fun LoginCard(
             )
 
             Text(
-                text = "当前服务器: ${uiState.serverOrigin}",
+                text = stringResource(R.string.auth_server_current, uiState.serverOrigin),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF506080),
                 modifier = Modifier.fillMaxWidth()
@@ -202,7 +197,7 @@ private fun LoginCard(
 
             LoginMethodRow(
                 selected = uiState.selectedLoginMethod,
-                showOAuthLogin = true,
+                showOAuthLogin = uiState.showOAuthLogin,
                 onSwitchLoginMethod = onSwitchLoginMethod
             )
 
@@ -210,7 +205,7 @@ private fun LoginCard(
                 value = uiState.account,
                 onValueChange = onAccountChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("账号") },
+                label = { Text(stringResource(R.string.auth_account)) },
                 singleLine = true,
                 enabled = !uiState.isLoading
             )
@@ -219,7 +214,7 @@ private fun LoginCard(
                 value = uiState.password,
                 onValueChange = onPasswordChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("密码") },
+                label = { Text(stringResource(R.string.auth_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 enabled = !uiState.isLoading
@@ -253,7 +248,7 @@ private fun LoginCard(
 
                 CaptchaMode.NONE -> {
                     Text(
-                        text = "当前环境无需验证码",
+                        text = stringResource(R.string.auth_captcha_not_required),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF5B6478),
                         modifier = Modifier.fillMaxWidth()
@@ -263,18 +258,18 @@ private fun LoginCard(
 
             Text(
                 text = if (uiState.publicKeyLoaded) {
-                    "已启用 SM2 公钥预热，密码会加密后传输"
+                    stringResource(R.string.auth_public_key_ready)
                 } else {
-                    "未获取到公钥，当前按联调模式发送密码"
+                    stringResource(R.string.auth_public_key_missing)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF5B6478),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            if (!uiState.errorMessage.isNullOrBlank()) {
+            if (!errorText.isNullOrBlank()) {
                 Text(
-                    text = uiState.errorMessage.orEmpty(),
+                    text = errorText,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth()
@@ -286,17 +281,19 @@ private fun LoginCard(
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "登录")
+                Text(text = stringResource(R.string.auth_login))
             }
 
-            OutlinedButton(
-                onClick = {
-                    onOpenRegister(resolveRegisterUrl(uiState.registerUrl, uiState.serverOrigin))
-                },
-                enabled = !uiState.isLoading,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("注册")
+            if (uiState.showRegisterEntry) {
+                OutlinedButton(
+                    onClick = {
+                        onOpenRegister(resolveRegisterUrl(uiState.registerUrl, uiState.serverOrigin))
+                    },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.auth_register))
+                }
             }
         }
     }
@@ -364,7 +361,7 @@ private fun LogoHeader(
             )
         }
         Text(
-            text = "点击系统图标可切换服务器",
+            text = stringResource(R.string.auth_click_logo_server),
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFF1486A2),
             modifier = Modifier.padding(top = 4.dp)
@@ -389,23 +386,23 @@ private fun LoginMethodRow(
             FilterChip(
                 selected = selected == LoginMethod.ACCOUNT_PASSWORD,
                 onClick = { onSwitchLoginMethod(LoginMethod.ACCOUNT_PASSWORD) },
-                label = { Text("账号登录") }
+                label = { Text(stringResource(R.string.auth_login_method_account)) }
             )
             if (showOAuthLogin) {
                 AssistChip(
                     onClick = { onSwitchLoginMethod(LoginMethod.WECHAT) },
-                    label = { Text("微信(开发中)") }
+                    label = { Text(stringResource(R.string.auth_login_method_wechat)) }
                 )
                 AssistChip(
                     onClick = { onSwitchLoginMethod(LoginMethod.DING_TALK) },
-                    label = { Text("钉钉(开发中)") }
+                    label = { Text(stringResource(R.string.auth_login_method_dingtalk)) }
                 )
             }
         }
         if (showOAuthLogin) {
             AssistChip(
                 onClick = { onSwitchLoginMethod(LoginMethod.FEI_SHU) },
-                label = { Text("飞书(开发中)") }
+                label = { Text(stringResource(R.string.auth_login_method_feishu)) }
             )
         }
     }
@@ -425,7 +422,7 @@ private fun ImageCaptchaPanel(
         value = captcha,
         onValueChange = onCaptchaChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text("验证码") },
+        label = { Text(stringResource(R.string.auth_captcha)) },
         singleLine = true,
         enabled = !loading
     )
@@ -457,7 +454,7 @@ private fun ImageCaptchaPanel(
             } else {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "验证码加载失败",
+                        text = stringResource(R.string.auth_captcha_load_failed),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF6B7280)
                     )
@@ -468,7 +465,7 @@ private fun ImageCaptchaPanel(
             onClick = onRefreshCaptcha,
             enabled = !loading
         ) {
-            Text("刷新")
+            Text(stringResource(R.string.auth_captcha_refresh))
         }
     }
 }
@@ -484,16 +481,18 @@ private fun SliderCaptchaPanel(
     onVerifySlider: () -> Unit,
     onRefreshCaptcha: () -> Unit
 ) {
-    // 滑块数据还没拿到时，给出显式加载反馈和重试入口
     if (sliderCaptcha == null) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("滑块验证码加载中...", color = Color(0xFF6B7280))
+            Text(
+                text = stringResource(R.string.auth_slider_loading),
+                color = Color(0xFF6B7280)
+            )
             OutlinedButton(onClick = onRefreshCaptcha, enabled = !loading) {
-                Text("重试")
+                Text(stringResource(R.string.common_retry))
             }
         }
         return
@@ -519,7 +518,6 @@ private fun SliderCaptchaPanel(
             .fillMaxWidth()
             .height((220 / imageAspectRatio).dp.coerceAtLeast(120.dp))
     ) {
-        // 通过后端原始尺寸等比换算，确保滑块位移与校验值一致
         val boxWidthPx = constraints.maxWidth.toFloat().coerceAtLeast(1f)
         val boxHeightPx = constraints.maxHeight.toFloat().coerceAtLeast(1f)
         val templateWidthPx = (boxWidthPx * templateWidthRate).coerceAtLeast(8f)
@@ -574,21 +572,21 @@ private fun SliderCaptchaPanel(
             onClick = onVerifySlider,
             enabled = !loading
         ) {
-            Text("验证滑块")
+            Text(stringResource(R.string.auth_slider_verify))
         }
         OutlinedButton(
             onClick = onRefreshCaptcha,
             enabled = !loading
         ) {
-            Text("刷新")
+            Text(stringResource(R.string.common_refresh))
         }
     }
 
     Text(
         text = if (sliderToken.isNotBlank()) {
-            "滑块验证已通过，可直接登录"
+            stringResource(R.string.auth_slider_verified)
         } else {
-            "拖动拼图后点击“验证滑块”"
+            stringResource(R.string.auth_slider_hint)
         },
         style = MaterialTheme.typography.bodySmall,
         color = if (sliderToken.isNotBlank()) MaterialTheme.colorScheme.primary else Color(0xFF6B7280),
@@ -603,6 +601,8 @@ private fun TenantSelectionCard(
     onConfirm: () -> Unit,
     onBack: () -> Unit
 ) {
+    val errorText = uiState.errorMessage ?: resolveAppText(uiState.errorText)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -617,13 +617,16 @@ private fun TenantSelectionCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "请选择租户",
+                text = stringResource(R.string.auth_tenant_select),
                 style = MaterialTheme.typography.titleMedium,
                 color = Color(0xFF1E2A45)
             )
 
             if (uiState.tenants.isEmpty()) {
-                Text(text = "暂无租户可选", color = Color(0xFF6B7280))
+                Text(
+                    text = stringResource(R.string.auth_tenant_empty),
+                    color = Color(0xFF6B7280)
+                )
             } else {
                 uiState.tenants.forEach { tenant ->
                     FilterChip(
@@ -636,9 +639,9 @@ private fun TenantSelectionCard(
                 }
             }
 
-            if (!uiState.errorMessage.isNullOrBlank()) {
+            if (!errorText.isNullOrBlank()) {
                 Text(
-                    text = uiState.errorMessage.orEmpty(),
+                    text = errorText,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -649,7 +652,7 @@ private fun TenantSelectionCard(
                 enabled = !uiState.isLoading && !uiState.selectedTenantId.isNullOrBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("确认进入")
+                Text(stringResource(R.string.auth_tenant_enter))
             }
 
             OutlinedButton(
@@ -657,7 +660,7 @@ private fun TenantSelectionCard(
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("返回登录")
+                Text(stringResource(R.string.auth_back_login))
             }
         }
     }
@@ -671,7 +674,6 @@ private fun LoginBackground(
     backgroundColor: String,
     serverOrigin: String
 ) {
-    // 未配置背景图时默认尝试 /loading.gif，满足“优先 GIF 背景”的体验需求
     val backgroundModel = remember(backgroundRaw, serverOrigin) {
         val preferred = if (backgroundRaw.isBlank()) {
             "$serverOrigin/loading.gif"
@@ -723,13 +725,6 @@ private fun parseHexColor(raw: String): Color {
         .getOrElse { Color(0xFF0B1E48) }
 }
 
-/**
- * 统一解析图片来源：
- * 1. 绝对 URL；
- * 2. dataUri；
- * 3. base64；
- * 4. 站内相对路径（自动拼接当前服务器地址）。
- */
 private fun resolveImageModel(raw: String, serverOrigin: String): Any? {
     val value = raw.trim()
     if (value.isBlank()) return null
@@ -745,11 +740,6 @@ private fun resolveImageModel(raw: String, serverOrigin: String): Any? {
     return "$serverOrigin/$value"
 }
 
-/**
- * 注册链接解析：
- * - 外链保持原样；
- * - 相对路径按当前服务器地址拼接成可访问 URL。
- */
 private fun resolveRegisterUrl(raw: String, serverOrigin: String): String {
     val value = raw.trim()
     if (value.isBlank()) return ""
@@ -758,9 +748,6 @@ private fun resolveRegisterUrl(raw: String, serverOrigin: String): String {
     return "$serverOrigin/$value"
 }
 
-/**
- * 轻量判定字符串是否可能是 base64 图片内容。
- */
 private fun isLikelyBase64(raw: String): Boolean {
     if (raw.length < 40) return false
     return raw.matches(Regex("^[A-Za-z0-9+/=,:;._-]+$"))

@@ -7,7 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-const ROUTE_CACHE_VERSION = '20260414-menu-fix-v3'
+const ROUTE_CACHE_VERSION = '20260417-integration-menu-v5'
 
 export const use权限Store = defineStore('permission', () => {
   // ============ State ============

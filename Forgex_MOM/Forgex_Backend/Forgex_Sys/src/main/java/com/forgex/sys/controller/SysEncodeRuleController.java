@@ -14,8 +14,13 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.PermKeyService;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.param.BatchIdsParam;
 import com.forgex.sys.domain.param.EncodeRuleGetParam;
 import com.forgex.sys.domain.param.EncodeRulePageParam;
@@ -31,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 编码规则管理控制器
@@ -71,6 +77,7 @@ public class SysEncodeRuleController {
      * 编码规则 Service
      */
     private final ISysEncodeRuleService encodeRuleService;
+    private final PermKeyService permKeyService;
 
     /**
      * 分页查询编码规则列表
@@ -81,6 +88,7 @@ public class SysEncodeRuleController {
      * @param param 查询参数
      * @return 分页结果
      */
+    @RequirePerm("sys:encodeRule:view")
     @PostMapping("/page")
     public R<IPage<EncodeRuleVO>> page(@RequestBody(required = false) EncodeRulePageParam param) {
         EncodeRulePageParam query = param == null ? new EncodeRulePageParam() : param;
@@ -107,6 +115,7 @@ public class SysEncodeRuleController {
      * @param param 查询参数
      * @return 编码规则列表
      */
+    @RequirePerm("sys:encodeRule:view")
     @PostMapping("/list")
     public R<List<EncodeRuleVO>> list(@RequestBody(required = false) EncodeRulePageParam param) {
         EncodeRulePageParam query = param == null ? new EncodeRulePageParam() : param;
@@ -125,6 +134,7 @@ public class SysEncodeRuleController {
      * @param param 查询参数
      * @return 编码规则详情
      */
+    @RequirePerm("sys:encodeRule:view")
     @PostMapping("/get")
     public R<EncodeRuleVO> get(@RequestBody EncodeRuleGetParam param) {
         EncodeRuleVO vo = encodeRuleService.getEncodeRuleVOById(param.getId());
@@ -145,6 +155,7 @@ public class SysEncodeRuleController {
      */
     @PostMapping("/save")
     public R<Long> save(@RequestBody EncodeRuleSaveParam param) {
+        requireEncodeRuleSavePerm(param);
         Long ruleId = encodeRuleService.saveEncodeRule(param);
         return R.ok(SysPromptEnum.ENCODE_RULE_CREATE_SUCCESS, ruleId);
     }
@@ -158,6 +169,7 @@ public class SysEncodeRuleController {
      * @param param 删除参数
      * @return 删除结果
      */
+    @RequirePerm("sys:encodeRule:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody IdParam param) {
         encodeRuleService.deleteEncodeRule(param.getId());
@@ -173,6 +185,7 @@ public class SysEncodeRuleController {
      * @param param 批量删除参数
      * @return 批量删除结果
      */
+    @RequirePerm("sys:encodeRule:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody BatchIdsParam param) {
         encodeRuleService.batchDeleteEncodeRules(param.getIds());
@@ -190,6 +203,7 @@ public class SysEncodeRuleController {
      * @param param 规则代码参数
      * @return 生成的编码
      */
+    @RequirePerm("sys:encodeRule:generate")
     @PostMapping("/generate")
     public R<String> generate(@RequestBody GenerateCodeParam param) {
         String code = encodeRuleService.generateCode(param.getRuleCode());
@@ -205,6 +219,7 @@ public class SysEncodeRuleController {
      * @param param 启用参数
      * @return 启用结果
      */
+    @RequirePerm("sys:encodeRule:edit")
     @PostMapping("/enable")
     public R<Void> enable(@RequestBody IdParam param) {
         encodeRuleService.enableEncodeRule(param.getId());
@@ -220,10 +235,23 @@ public class SysEncodeRuleController {
      * @param param 禁用参数
      * @return 禁用结果
      */
+    @RequirePerm("sys:encodeRule:edit")
     @PostMapping("/disable")
     public R<Void> disable(@RequestBody IdParam param) {
         encodeRuleService.disableEncodeRule(param.getId());
         return R.ok(SysPromptEnum.ENCODE_RULE_DISABLE_SUCCESS);
+    }
+
+    private void requireEncodeRuleSavePerm(EncodeRuleSaveParam param) {
+        Long userId = CurrentUserUtils.getUserId();
+        Long tenantId = CurrentUserUtils.getTenantId();
+        if (userId == null || tenantId == null) {
+            throw new I18nBusinessException(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
+        }
+        String permKey = param != null && param.getId() == null ? "sys:encodeRule:add" : "sys:encodeRule:edit";
+        if (!permKeyService.hasAllPerms(userId, tenantId, Set.of(permKey))) {
+            throw new I18nBusinessException(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
+        }
     }
 
     /**

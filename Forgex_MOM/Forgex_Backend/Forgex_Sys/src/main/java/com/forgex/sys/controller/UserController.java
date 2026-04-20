@@ -104,6 +104,7 @@ public class UserController {
      * @see SysUserQueryDTO
      * @see SysUserVO
      */
+    @RequirePerm("sys:user:view")
     @PostMapping("/page")
     public R<IPage<SysUserVO>> page(@RequestBody SysUserQueryDTO query) {
         // 1. 创建 MyBatis-Plus 分页对象，使用查询参数中的 pageNum 和 pageSize
@@ -137,6 +138,7 @@ public class UserController {
      * @see SysUserQueryDTO
      * @see SysUserVO
      */
+    @RequirePerm("sys:user:view")
     @PostMapping("/list")
     public R<List<SysUserVO>> list(@RequestBody SysUserQueryDTO query) {
         // 委派给 Service 层查询用户 VO 列表（不分页）
@@ -168,6 +170,7 @@ public class UserController {
      * @see SysUserVO
      * @see UserValidator#validateId(Long)
      */
+    @RequirePerm("sys:user:view")
     @PostMapping("/detail")
     public R<SysUserVO> detail(@RequestBody IdParam param) {
         // 1. 调用 Validator 校验用户 ID 合法性

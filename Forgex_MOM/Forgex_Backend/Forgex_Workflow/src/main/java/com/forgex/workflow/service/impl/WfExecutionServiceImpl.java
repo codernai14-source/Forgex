@@ -740,6 +740,9 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         List<WfTaskApprovalInstance> matchedInstances = processedInstances.stream()
                 .filter(instance -> matchesApproveTime(instance.getApproveTime(), approveBegin, approveEnd))
                 .collect(Collectors.toList());
+        if (matchedInstances.isEmpty()) {
+            matchedInstances = loadLegacyProcessedInstances(currentUserId, approveBegin, approveEnd);
+        }
         List<WfTaskApprovalInstance> delegatedInstances = approvalInstanceMapper.selectList(
                 new LambdaQueryWrapper<WfTaskApprovalInstance>()
                         .eq(WfTaskApprovalInstance::getDelegateFromUserId, currentUserId)
@@ -775,6 +778,51 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
             matchedInstances.sort((left, right) -> compareProcessedInstanceTime(right, left));
         }
         return pageByExecutionIdsFromInstances(matchedInstances, param);
+    }
+
+    private List<WfTaskApprovalInstance> loadLegacyProcessedInstances(Long currentUserId,
+                                                                      LocalDateTime approveBegin,
+                                                                      LocalDateTime approveEnd) {
+        List<WfTaskExecutionApprover> approverRecords = executionApproverMapper.selectList(
+                new LambdaQueryWrapper<WfTaskExecutionApprover>()
+                        .orderByDesc(WfTaskExecutionApprover::getUpdateTime)
+                        .orderByDesc(WfTaskExecutionApprover::getCreateTime)
+                        .orderByDesc(WfTaskExecutionApprover::getId));
+        return approverRecords.stream()
+                .filter(record -> matchesMyProcessed(record.getApproverDetail(), currentUserId, approveBegin, approveEnd))
+                .map(record -> {
+                    WfTaskApprovalInstance instance = new WfTaskApprovalInstance();
+                    instance.setExecutionId(record.getExecutionId());
+                    instance.setNodeId(record.getNodeId());
+                    instance.setExecutionDetailId(record.getExecutionDetailId());
+                    instance.setApproveTime(resolveLegacyApproveTime(record.getApproverDetail(), currentUserId));
+                    instance.setCreateTime(record.getCreateTime());
+                    instance.setUpdateTime(record.getUpdateTime());
+                    return instance;
+                })
+                .sorted((left, right) -> compareProcessedInstanceTime(right, left))
+                .collect(Collectors.toList());
+    }
+
+    private LocalDateTime resolveLegacyApproveTime(String approverDetailJson, Long userId) {
+        if (!StringUtils.hasText(approverDetailJson) || userId == null) {
+            return null;
+        }
+        JSONArray approverDetails = JSON.parseArray(approverDetailJson);
+        if (approverDetails == null || approverDetails.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < approverDetails.size(); i++) {
+            JSONObject detail = approverDetails.getJSONObject(i);
+            if (detail == null || !Objects.equals(detail.getLong("approverId"), userId)) {
+                continue;
+            }
+            LocalDateTime approveTime = parseOptionalDateTime(detail.getString("approveTime"));
+            if (approveTime != null) {
+                return approveTime;
+            }
+        }
+        return null;
     }
 
     @Override

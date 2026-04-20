@@ -38,8 +38,6 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -52,19 +50,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.core.network.model.workbench.CMenuVO
 
-/**
- * 工作台 Tab 页面。
- * - 顶部展示模块宫格（最多 3 行）。
- * - 点击模块后下方展示该模块下的菜单列表。
- * - 支持菜单点击回调给外层导航。
- */
 @Composable
 fun WorkbenchScreen(
     onMenuClick: (CMenuVO) -> Unit,
@@ -78,7 +72,6 @@ fun WorkbenchScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // 错误提示
         if (!uiState.errorMessage.isNullOrBlank()) {
             Text(
                 text = uiState.errorMessage ?: "",
@@ -89,12 +82,11 @@ fun WorkbenchScreen(
                 onClick = viewModel::loadModules,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
-                Text("重试")
+                Text(stringResource(R.string.common_retry))
             }
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // 加载中
         if (uiState.isLoadingModules) {
             Box(
                 modifier = Modifier
@@ -105,7 +97,6 @@ fun WorkbenchScreen(
                 CircularProgressIndicator()
             }
         } else if (uiState.selectedModuleId == null) {
-            // 模块宫格视图
             ModuleGrid(
                 modules = uiState.modules,
                 onModuleClick = { module ->
@@ -115,7 +106,6 @@ fun WorkbenchScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 下半区留白提示
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,23 +113,22 @@ fun WorkbenchScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "点击上方模块查看菜单",
+                    text = stringResource(R.string.home_select_module),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
-            // 模块内菜单列表视图
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = viewModel::clearModuleSelection) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 val selectedModule = uiState.modules.find { it.id == uiState.selectedModuleId }
                 Text(
-                    text = selectedModule?.name ?: "菜单",
+                    text = selectedModule?.name ?: stringResource(R.string.home_menu_default),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -163,7 +152,7 @@ fun WorkbenchScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("当前模块暂无菜单")
+                    Text(stringResource(R.string.home_empty_menu))
                 }
             } else {
                 LazyColumn(
@@ -179,9 +168,6 @@ fun WorkbenchScreen(
     }
 }
 
-/**
- * 模块宫格：每行 4 个，最多展示 3 行（12 个模块）。
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ModuleGrid(
@@ -195,12 +181,12 @@ private fun ModuleGrid(
                 .height(120.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("暂无可用模块", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.home_empty_module), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }
 
-    val displayModules = modules.take(12) // 最多 3 行 × 4 列
+    val displayModules = modules.take(12)
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -301,4 +287,3 @@ private fun MenuListItem(
         }
     }
 }
-

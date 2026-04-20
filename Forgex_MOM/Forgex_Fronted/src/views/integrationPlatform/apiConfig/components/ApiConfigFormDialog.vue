@@ -3,145 +3,107 @@
     v-model:open="visible"
     :title="isEdit ? t('integration.apiConfig.edit') : t('integration.apiConfig.add')"
     :loading="loading"
-    width="800px"
+    width="760px"
     @submit="handleSubmit"
-    @cancel="handleCancel"
   >
-    <a-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      :label-col="{ span: 6 }"
-      :wrapper-col="{ span: 16 }"
-    >
-      <a-form-item :label="t('integration.apiConfig.apiCode')" name="apiCode">
-        <a-input
-          v-model:value="formData.apiCode"
-          :placeholder="t('integration.apiConfig.form.apiCode')"
-          :disabled="isEdit"
-        />
-      </a-form-item>
+    <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item :label="t('integration.apiConfig.apiCode')" name="apiCode">
+            <a-input
+              v-model:value="formState.apiCode"
+              :disabled="isEdit"
+              :placeholder="t('integration.apiConfig.form.apiCode')"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item :label="t('integration.apiConfig.apiName')" name="apiName">
+            <a-input v-model:value="formState.apiName" :placeholder="t('integration.apiConfig.form.apiName')" />
+          </a-form-item>
+        </a-col>
+      </a-row>
 
-      <a-form-item :label="t('integration.apiConfig.apiName')" name="apiName">
-        <a-input
-          v-model:value="formData.apiName"
-          :placeholder="t('integration.apiConfig.form.apiName')"
-        />
-      </a-form-item>
-
-      <a-form-item :label="t('integration.apiConfig.systemId')" name="systemId">
-        <a-select
-          v-model:value="formData.systemId"
-          :placeholder="t('integration.apiConfig.form.systemId')"
-          show-search
-          :filter-option="filterSystemOption"
-        >
-          <a-select-option
-            v-for="system in thirdSystemList"
-            :key="system.id"
-            :value="system.id"
-          >
-            {{ system.systemName }} ({{ system.systemCode }})
-          </a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item :label="请求路径" name="requestPath">
-        <a-input
-          v-model:value="formData.requestPath"
-          placeholder="请输入请求路径，如：/api/user/create"
-        />
-      </a-form-item>
-
-      <a-form-item :label="请求方法" name="requestMethod">
-        <a-select
-          v-model:value="formData.requestMethod"
-          placeholder="请选择请求方法"
-          allow-clear
-        >
-          <a-select-option value="GET">GET</a-select-option>
-          <a-select-option value="POST">POST</a-select-option>
-          <a-select-option value="PUT">PUT</a-select-option>
-          <a-select-option value="DELETE">DELETE</a-select-option>
-          <a-select-option value="PATCH">PATCH</a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item :label="操作方向" name="operationType">
-        <a-select
-          v-model:value="formData.operationType"
-          :placeholder="t('integration.apiConfig.form.operationType')"
-        >
-          <a-select-option value="CREATE">创建</a-select-option>
-          <a-select-option value="UPDATE">更新</a-select-option>
-          <a-select-option value="DELETE">删除</a-select-option>
-          <a-select-option value="READ">查询</a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item :label="调用方式" name="callMethod">
-        <a-select
-          v-model:value="formData.callMethod"
-          :placeholder="t('integration.apiConfig.form.callMethod')"
-        >
-          <a-select-option value="SYNC">同步</a-select-option>
-          <a-select-option value="ASYNC">异步</a-select-option>
-        </a-select>
+      <a-form-item :label="t('integration.apiConfig.apiDesc')" name="apiDesc">
+        <a-textarea v-model:value="formState.apiDesc" :rows="2" :placeholder="t('integration.apiConfig.form.apiDesc')" />
       </a-form-item>
 
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item :label="超时时间 (秒)" name="timeoutSeconds">
-            <a-input-number
-              v-model:value="formData.timeoutSeconds"
-              :min="1"
-              :max="300"
-              style="width: 100%"
-              placeholder="默认 30 秒"
-            />
+          <a-form-item :label="t('integration.apiConfig.direction')" name="direction">
+            <a-select v-model:value="formState.direction" :placeholder="t('integration.apiConfig.form.direction')">
+              <a-select-option value="INBOUND">{{ t('integration.common.inbound') }}</a-select-option>
+              <a-select-option value="OUTBOUND">{{ t('integration.common.outbound') }}</a-select-option>
+            </a-select>
           </a-form-item>
         </a-col>
-
         <a-col :span="12">
-          <a-form-item :label="重试次数" name="retryTimes">
+          <a-form-item :label="t('integration.apiConfig.callMethod')" name="callMethod">
+            <a-select v-model:value="formState.callMethod" :placeholder="t('integration.apiConfig.form.callMethod')">
+              <a-select-option value="HTTP">{{ t('integration.common.http') }}</a-select-option>
+              <a-select-option value="TCP">{{ t('integration.common.tcp') }}</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-form-item :label="t('integration.apiConfig.apiPath')" name="apiPath">
+        <a-input v-model:value="formState.apiPath" :placeholder="t('integration.apiConfig.form.apiPath')" />
+      </a-form-item>
+
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item :label="t('integration.apiConfig.processorBean')" name="processorBean">
+            <a-input v-model:value="formState.processorBean" :placeholder="t('integration.apiConfig.form.processorBean')" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item :label="t('integration.apiConfig.moduleCode')" name="moduleCode">
+            <a-input v-model:value="formState.moduleCode" :placeholder="t('integration.apiConfig.form.moduleCode')" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="16">
+        <a-col :span="16">
+          <a-form-item :label="t('integration.apiConfig.targetUrl')" name="targetUrl">
+            <a-input v-model:value="formState.targetUrl" :placeholder="t('integration.apiConfig.form.targetUrl')" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item :label="t('integration.apiConfig.timeoutMs')" name="timeoutMs">
             <a-input-number
-              v-model:value="formData.retryTimes"
-              :min="0"
-              :max="5"
+              v-model:value="formState.timeoutMs"
+              :min="100"
+              :step="100"
               style="width: 100%"
-              placeholder="默认 0 次"
+              :placeholder="t('integration.apiConfig.form.timeoutMs')"
             />
           </a-form-item>
         </a-col>
       </a-row>
 
-      <a-form-item :label="状态" name="status">
-        <a-switch v-model:checked="statusSwitchValue" :checked-value="1" :checked-children="'启用'" :un-checked-children="'停用'" />
-      </a-form-item>
-
-      <a-form-item :label="备注说明" name="remark">
-        <a-textarea
-          v-model:value="formData.remark"
-          :placeholder="t('integration.apiConfig.form.remark')"
-          :rows="3"
-        />
+      <a-form-item :label="t('integration.apiConfig.status')" name="status">
+        <a-radio-group v-model:value="formState.status">
+          <a-radio :value="1">{{ t('integration.common.enabled') }}</a-radio>
+          <a-radio :value="0">{{ t('integration.common.disabled') }}</a-radio>
+        </a-radio-group>
       </a-form-item>
     </a-form>
   </BaseFormDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch, onMounted } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import { message } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import {
   addApiConfig,
   getApiConfigDetail,
   updateApiConfig,
-  getThirdSystemList,
 } from '@/api/system/integration'
-import type { ApiConfigSubmit, ApiConfigDetail, ThirdSystemItem } from '@/api/system/integration'
+import type { ApiConfigItem, ApiConfigSubmit } from '@/api/system/integration'
 
 interface Props {
   open: boolean
@@ -151,153 +113,83 @@ interface Props {
 
 interface Emits {
   (e: 'update:open', value: boolean): void
-  (e: 'success'): void
+  (e: 'success', record?: ApiConfigItem): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
+
+const loading = ref(false)
+const formRef = ref<FormInstance>()
 
 const visible = computed({
   get: () => props.open,
-  set: (value) => emit('update:open', value),
+  set: (value: boolean) => emit('update:open', value),
 })
 
-const loading = ref(false)
-const formRef = ref()
-const thirdSystemList = ref<ThirdSystemItem[]>([])
-
-const formData = reactive<ApiConfigSubmit>({
+const formState = reactive<ApiConfigSubmit>({
   apiCode: '',
   apiName: '',
-  systemId: undefined as unknown as number,
-  requestPath: '',
-  requestMethod: 'POST',
-  operationType: 'CREATE',
-  callMethod: 'SYNC',
-  timeoutSeconds: 30,
-  retryTimes: 0,
+  apiDesc: '',
+  direction: 'INBOUND',
+  apiPath: '',
+  processorBean: '',
+  callMethod: 'HTTP',
+  targetUrl: '',
+  timeoutMs: 3000,
+  moduleCode: '',
   status: 1,
-  remark: '',
 })
 
-const statusSwitchValue = computed({
-  get: () => formData.status === 1,
-  set: (value) => {
-    formData.status = value ? 1 : 0
-  },
-})
-
-const formRules = {
-  apiCode: [
-    { required: true, message: t('integration.apiConfig.form.apiCode'), trigger: 'blur' },
-    {
-      pattern: /^[a-zA-Z0-9_:]+$/,
-      message: 'API 编码只能包含字母、数字、下划线和冒号',
-      trigger: 'blur',
-    },
-  ],
+const rules = computed(() => ({
+  apiCode: [{ required: true, message: t('integration.apiConfig.form.apiCode'), trigger: 'blur' }],
   apiName: [{ required: true, message: t('integration.apiConfig.form.apiName'), trigger: 'blur' }],
-  systemId: [{ required: true, message: t('integration.apiConfig.form.systemId'), trigger: 'change' }],
-  operationType: [{ required: true, message: t('integration.apiConfig.form.operationType'), trigger: 'change' }],
+  direction: [{ required: true, message: t('integration.apiConfig.form.direction'), trigger: 'change' }],
   callMethod: [{ required: true, message: t('integration.apiConfig.form.callMethod'), trigger: 'change' }],
-}
-
-function filterSystemOption(input: string, option: any) {
-  const text = (option.children as string) || ''
-  return text.toLowerCase().includes(input.toLowerCase())
-}
-
-async function loadThirdSystems() {
-  try {
-    const result = await getThirdSystemList({ pageNum: 1, pageSize: 100, status: 1 })
-    thirdSystemList.value = result.records || []
-  } catch (error) {
-    console.error('load third systems failed:', error)
-  }
-}
-
-async function handleSubmit() {
-  try {
-    await formRef.value?.validate()
-
-    loading.value = true
-    const submitData: ApiConfigSubmit = {
-      ...formData,
-    }
-
-    if (props.isEdit && props.configId) {
-      submitData.id = props.configId
-      await updateApiConfig(submitData)
-    } else {
-      await addApiConfig(submitData)
-    }
-
-    emit('success')
-  } catch (error) {
-    console.error('submit api config failed:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-function handleCancel() {
-  emit('update:open', false)
-}
-
-async function loadConfigDetail() {
-  if (!(props.isEdit && props.configId)) return
-  loading.value = true
-  try {
-    const detail = await getApiConfigDetail(props.configId)
-    Object.assign(formData, {
-      ...detail,
-    })
-  } catch (error) {
-    console.error('load api config detail failed:', error)
-    message.error('加载 API 配置详情失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-function resetForm() {
-  Object.assign(formData, {
-    apiCode: '',
-    apiName: '',
-    systemId: undefined as unknown as number,
-    requestPath: '',
-    requestMethod: 'POST',
-    operationType: 'CREATE',
-    callMethod: 'SYNC',
-    timeoutSeconds: 30,
-    retryTimes: 0,
-    status: 1,
-    remark: '',
-  })
-}
+}))
 
 watch(
   () => props.open,
-  (open) => {
-    if (!open) return
-    nextTick(() => {
-      if (props.isEdit) {
-        loadConfigDetail()
-      } else {
-        resetForm()
-      }
-    })
+  async (open) => {
+    if (!open) {
+      return
+    }
+    if (props.isEdit && props.configId) {
+      const detail = await getApiConfigDetail(props.configId)
+      Object.assign(formState, detail)
+    } else {
+      Object.assign(formState, {
+        apiCode: '',
+        apiName: '',
+        apiDesc: '',
+        direction: 'INBOUND',
+        apiPath: '',
+        processorBean: '',
+        callMethod: 'HTTP',
+        targetUrl: '',
+        timeoutMs: 3000,
+        moduleCode: '',
+        status: 1,
+      })
+    }
   },
+  { immediate: true }
 )
 
-onMounted(() => {
-  loadThirdSystems()
-})
-</script>
-
-<style scoped>
-:deep(.ant-form-item-label > label) {
-  font-weight: 500;
+async function handleSubmit() {
+  try {
+    loading.value = true
+    await formRef.value?.validate()
+    if (props.isEdit && props.configId) {
+      const saved = await updateApiConfig({ ...formState, id: props.configId })
+      emit('success', saved)
+    } else {
+      const saved = await addApiConfig({ ...formState })
+      emit('success', saved)
+    }
+  } finally {
+    loading.value = false
+  }
 }
-</style>
+</script>

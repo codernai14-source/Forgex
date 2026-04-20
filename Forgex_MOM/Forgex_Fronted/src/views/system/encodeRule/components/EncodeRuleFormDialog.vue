@@ -556,14 +556,14 @@ onMounted(() => {
 .detail-item {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--fx-border-color, #d9d9d9);
   border-radius: 4px;
   margin-bottom: 12px;
-  background-color: #fafafa;
+  background-color: var(--fx-content-bg, #fafafa);
   
   &:hover {
-    border-color: #1890ff;
-    background-color: #f0f5ff;
+    border-color: var(--fx-theme-color, #1890ff);
+    background-color: var(--fx-tab-hover-bg, #f0f5ff);
   }
 }
 </style>

@@ -1,6 +1,7 @@
 package com.forgex.integration.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ApiCallLogDTO;
 import com.forgex.integration.domain.param.ApiCallLogParam;
@@ -49,6 +50,7 @@ public class ApiCallLogController {
      * @see com.forgex.integration.service.IApiCallLogService#pageCallLogs
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-call-log:view")
     @PostMapping("/page")
     @Operation(summary = "分页查询调用记录", description = "支持按时间范围、接口配置、调用状态等条件查询")
     public R<Page<ApiCallLogDTO>> pageCallLogs(@RequestBody @Validated ApiCallLogParam param) {
@@ -70,6 +72,7 @@ public class ApiCallLogController {
      * @see com.forgex.integration.service.IApiCallLogService#listCallLogs
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-call-log:view")
     @PostMapping("/list")
     @Operation(summary = "查询调用记录列表", description = "不分页查询，用于导出等场景")
     public R<List<ApiCallLogDTO>> listCallLogs(@RequestBody ApiCallLogParam param) {
@@ -91,6 +94,7 @@ public class ApiCallLogController {
      * @see com.forgex.integration.service.IApiCallLogService#getCallLogById
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-call-log:view")
     @GetMapping("/detail/{id}")
     @Operation(summary = "查询调用记录详情", description = "根据 ID 和调用时间查询详细信息")
     public R<ApiCallLogDTO> getCallLogDetail(
@@ -120,6 +124,7 @@ public class ApiCallLogController {
      * @see com.forgex.integration.service.IApiCallLogService#countCallLogs
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-call-log:view")
     @GetMapping("/count")
     @Operation(summary = "统计调用次数", description = "统计指定接口在时间范围内的调用次数")
     public R<Long> countCallLogs(
@@ -145,6 +150,7 @@ public class ApiCallLogController {
      * @see com.forgex.integration.service.IApiCallLogService#calculateSuccessRate
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:api-call-log:view")
     @GetMapping("/success-rate")
     @Operation(summary = "统计调用成功率", description = "计算指定接口在时间范围内的调用成功率")
     public R<Double> calculateSuccessRate(

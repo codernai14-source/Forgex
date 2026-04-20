@@ -1,6 +1,7 @@
 package com.forgex.integration.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ThirdAuthorizationDTO;
 import com.forgex.integration.domain.param.ThirdAuthorizationParam;
@@ -46,6 +47,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#pageThirdAuthorizations
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/page")
     @Operation(summary = "分页查询第三方授权列表", description = "支持按第三方系统 ID、授权方式、状态等条件查询")
     public R<Page<ThirdAuthorizationDTO>> pageThirdAuthorizations(@RequestBody @Validated ThirdAuthorizationParam param) {
@@ -67,6 +69,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#listThirdAuthorizations
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/list")
     @Operation(summary = "查询第三方授权列表", description = "不分页查询，用于下拉框选择")
     public R<List<ThirdAuthorizationDTO>> listThirdAuthorizations(@RequestBody ThirdAuthorizationParam param) {
@@ -87,6 +90,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#getThirdAuthorizationById
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @GetMapping("/detail/{id}")
     @Operation(summary = "获取第三方授权详情", description = "根据 ID 查询授权详细信息")
     public R<ThirdAuthorizationDTO> getThirdAuthorizationDetail(@PathVariable Long id) {
@@ -107,6 +111,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#getByThirdSystemId
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @GetMapping("/by-system/{thirdSystemId}")
     @Operation(summary = "根据第三方系统 ID 获取授权信息", description = "查询指定第三方系统的授权配置")
     public R<ThirdAuthorizationDTO> getByThirdSystemId(@PathVariable Long thirdSystemId) {
@@ -128,6 +133,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#createThirdAuthorization
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/create")
     @Operation(summary = "创建第三方授权", description = "新增第三方授权信息")
     public R<Void> createThirdAuthorization(@RequestBody @Validated ThirdAuthorizationDTO dto) {
@@ -149,6 +155,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#updateThirdAuthorization
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/update")
     @Operation(summary = "更新第三方授权", description = "修改第三方授权信息")
     public R<Void> updateThirdAuthorization(@RequestBody @Validated ThirdAuthorizationDTO dto) {
@@ -169,6 +176,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#deleteThirdAuthorization
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/delete/{id}")
     @Operation(summary = "删除第三方授权", description = "逻辑删除第三方授权")
     public R<Void> deleteThirdAuthorization(@PathVariable Long id) {
@@ -189,6 +197,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#batchDeleteThirdAuthorizations
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/batch-delete")
     @Operation(summary = "批量删除第三方授权", description = "批量删除多个第三方授权")
     public R<Void> batchDeleteThirdAuthorizations(@RequestBody List<Long> ids) {
@@ -210,6 +219,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#generateToken
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/generate-token/{thirdSystemId}")
     @Operation(summary = "生成 Token", description = "为指定第三方系统生成新的 Token")
     public R<String> generateToken(@PathVariable Long thirdSystemId, 
@@ -285,6 +295,7 @@ public class ThirdAuthorizationController {
      * @see com.forgex.integration.service.IThirdAuthorizationService#refreshTokenExpire
      * @see com.forgex.common.web.R
      */
+    @RequirePerm("integration:third-system:auth")
     @PostMapping("/refresh-token")
     @Operation(summary = "刷新 Token 有效期", description = "更新 Token 的过期时间")
     public R<Void> refreshTokenExpire(@RequestParam String tokenValue,

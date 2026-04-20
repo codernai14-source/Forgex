@@ -22,7 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/sys/i18n/message")
@@ -32,6 +35,7 @@ public class I18nMessageController {
     private final FxI18nMessageMapper i18nMessageMapper;
     private final ObjectMapper objectMapper;
 
+    @RequirePerm("sys:i18nMessage:view")
     @PostMapping("/page")
     public R<IPage<FxI18nMessage>> page(@RequestBody(required = false) I18nMessageQuery body) {
         I18nMessageQuery query = body == null ? new I18nMessageQuery() : body;
@@ -49,6 +53,7 @@ public class I18nMessageController {
         return R.ok(i18nMessageMapper.selectPage(page, wrapper));
     }
 
+    @RequirePerm("sys:i18nMessage:view")
     @PostMapping("/get")
     public R<FxI18nMessage> get(@RequestBody IdBody body) {
         if (body == null || body.getId() == null) {
@@ -154,6 +159,41 @@ public class I18nMessageController {
         return R.ok(StringUtils.hasText(resolved) ? resolved : "");
     }
 
+    /**
+     * 获取移动端翻译包。
+     * <p>
+     * 复用现有 fx_i18n_message 表数据，按模块筛选后返回 key-value 结构，
+     * 供 Android 端在本地资源之外补齐业务文案。
+     * </p>
+     *
+     * @param body 请求参数，包含模块编码与语言编码
+     * @return 移动端翻译键值对
+     */
+    @PostMapping("/mobileBundle")
+    public R<Map<String, String>> mobileBundle(@RequestBody MobileBundleRequest body) {
+        if (body == null || !StringUtils.hasText(body.getLangCode())) {
+            return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.LANG_CODE_EMPTY);
+        }
+
+        String module = StringUtils.hasText(body.getModule()) ? body.getModule().trim() : "mobile";
+        String langCode = body.getLangCode().trim();
+
+        Map<String, String> bundle = new LinkedHashMap<>();
+        i18nMessageMapper.selectList(new LambdaQueryWrapper<FxI18nMessage>()
+                .eq(FxI18nMessage::getModule, module)
+                .eq(FxI18nMessage::getDeleted, false)
+                .eq(FxI18nMessage::getEnabled, true)
+                .orderByAsc(FxI18nMessage::getPromptCode))
+            .forEach(row -> {
+                String text = resolveTextByLang(row.getTextI18nJson(), langCode);
+                if (StringUtils.hasText(text)) {
+                    bundle.put(row.getPromptCode(), text);
+                }
+            });
+
+        return R.ok(bundle);
+    }
+
     private String validatePayload(FxI18nMessage body, boolean requireId) {
         if (body == null) {
             return "请求体不能为空";
@@ -246,6 +286,56 @@ public class I18nMessageController {
         }
     }
 
+    /**
+     * 按指定语言解析翻译文本。
+     *
+     * @param json 国际化 JSON
+     * @param langCode 语言编码
+     * @return 匹配到的翻译文本
+     */
+    private String resolveTextByLang(String json, String langCode) {
+        if (!StringUtils.hasText(json) || !StringUtils.hasText(langCode)) {
+            return null;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(json);
+
+            String direct = getText(node, langCode);
+            if (StringUtils.hasText(direct)) {
+                return direct;
+            }
+
+            int idx = langCode.indexOf('-');
+            if (idx > 0) {
+                String primary = getText(node, langCode.substring(0, idx));
+                if (StringUtils.hasText(primary)) {
+                    return primary;
+                }
+            }
+
+            String zhCn = getText(node, "zh-CN");
+            if (StringUtils.hasText(zhCn)) {
+                return zhCn;
+            }
+
+            String zh = getText(node, "zh");
+            if (StringUtils.hasText(zh)) {
+                return zh;
+            }
+
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                JsonNode value = fields.next().getValue();
+                if (value != null && value.isTextual() && StringUtils.hasText(value.asText())) {
+                    return value.asText();
+                }
+            }
+            return null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private String getText(JsonNode node, String key) {
         if (node == null || !node.isObject() || !StringUtils.hasText(key)) {
             return null;
@@ -277,5 +367,11 @@ public class I18nMessageController {
         private String module;
         private String promptCode;
         private Boolean enabled;
+    }
+
+    @Data
+    public static class MobileBundleRequest {
+        private String module;
+        private String langCode;
     }
 }

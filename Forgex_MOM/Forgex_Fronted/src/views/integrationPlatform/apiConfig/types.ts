@@ -1,36 +1,37 @@
-/**
- * API 接口配置管理类型定义
- * 
- * @author Forgex Team
- * @version 1.0.0
- * @since 2026-04-14
- */
 import type {
+  ApiConfigItem,
   ApiConfigQuery,
   ApiConfigSubmit,
-  ApiConfigDetail,
-  ApiConfigItem,
+  ApiParamConfigItem,
+  ApiParamMappingItem,
+  IntegrationDirection,
+  ParamSourceType,
+  ParamDirection,
 } from '@/api/system/integration'
 
 export type {
+  ApiConfigItem,
   ApiConfigQuery,
   ApiConfigSubmit,
-  ApiConfigDetail,
-  ApiConfigItem,
+  ApiParamConfigItem,
+  ApiParamMappingItem,
+  IntegrationDirection,
+  ParamSourceType,
+  ParamDirection,
 }
 
-/**
- * 参数配置项
- */
-export interface ApiParameterConfig {
+export interface ParamMappingRow {
   id?: number
-  apiId: number
-  paramName: string
-  paramType: string
-  paramDataType: string
-  required: boolean
-  defaultValue?: string
-  description?: string
-  orderNum: number
-  enabled: boolean
+  sourceFieldPath: string
+  targetFieldPath: string
+  sourceType?: string
+  targetType?: string
+  required?: boolean
+  remark?: string
+}
+
+export interface ApiConfigEditorState {
+  mode: 'list' | 'form' | 'param'
+  isEdit: boolean
+  apiConfig?: ApiConfigItem
 }

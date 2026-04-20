@@ -13,6 +13,12 @@
       </div>
 
       <a-space>
+        <a-button
+          v-if="currentStep === 1 && canBackToFormDesign"
+          @click="handleBackToFormDesign"
+        >
+          {{ t('workflow.taskConfig.nodes.steps.backToForm') }}
+        </a-button>
         <a-button v-if="currentStep === 1" :loading="saving" @click="handleSave">{{ t('workflow.taskConfig.nodes.saveDraft') }}</a-button>
         <a-button v-if="currentStep === 1" type="primary" :loading="publishing" @click="handlePublish">{{ t('workflow.taskConfig.nodes.publishDraft') }}</a-button>
       </a-space>
@@ -21,7 +27,7 @@
     <section class="designer-steps">
       <a-steps :current="currentStep">
         <a-step :title="t('workflow.taskConfig.nodes.steps.formDesign')" :description="t('workflow.taskConfig.nodes.steps.formDesignDesc')" />
-        <a-step :title="t('workflow.taskConfig.nodes.steps.nodeConfig')" :description="t('workflow.taskConfig.nodes.steps.nodeConfigDesc')" />
+        <a-step :title="t('workflow.taskConfig.nodes.steps.approvalConfig')" :description="t('workflow.taskConfig.nodes.steps.approvalConfigDesc')" />
       </a-steps>
     </section>
 
@@ -194,14 +200,14 @@
                 </div>
               </a-form-item>
 
-              <a-form-item label="规则类型">
+              <a-form-item :label="t('workflow.taskConfig.nodes.ruleType')">
                 <a-select
                   :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.ruleType"
                   @update:value="updatePrimaryRule({ ruleType: Number($event), allowInitiatorSelect: Number($event) === RULE_TYPES.INITIATOR_SELECTED })"
                 >
-                  <a-select-option :value="RULE_TYPES.STATIC">静态审批人</a-select-option>
-                  <a-select-option :value="RULE_TYPES.INITIATOR_SELECTED">发起人自选</a-select-option>
-                  <a-select-option :value="RULE_TYPES.SUPERIOR">多级上级</a-select-option>
+                  <a-select-option :value="RULE_TYPES.STATIC">{{ t('workflow.taskConfig.nodes.ruleTypes.static') }}</a-select-option>
+                  <a-select-option :value="RULE_TYPES.INITIATOR_SELECTED">{{ t('workflow.taskConfig.nodes.ruleTypes.initiatorSelected') }}</a-select-option>
+                  <a-select-option :value="RULE_TYPES.SUPERIOR">{{ t('workflow.taskConfig.nodes.ruleTypes.superior') }}</a-select-option>
                 </a-select>
               </a-form-item>
 
@@ -293,31 +299,31 @@
                 <a-button type="dashed" block @click="addApprover">{{ t('workflow.taskConfig.nodes.addApproverSource') }}</a-button>
               </a-form-item>
 
-              <a-form-item label="节点能力">
+              <a-form-item :label="t('workflow.taskConfig.nodes.nodeCapability')">
                 <a-space wrap>
                   <a-checkbox
                     :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowAddSign)"
                     @update:checked="updatePrimaryRule({ allowAddSign: Boolean($event) })"
                   >
-                    允许加签
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowAddSign') }}
                   </a-checkbox>
                   <a-checkbox
                     :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowTransfer)"
                     @update:checked="updatePrimaryRule({ allowTransfer: Boolean($event) })"
                   >
-                    允许转交
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowTransfer') }}
                   </a-checkbox>
                   <a-checkbox
                     :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowDelegate)"
                     @update:checked="updatePrimaryRule({ allowDelegate: Boolean($event) })"
                   >
-                    允许委托
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowDelegate') }}
                   </a-checkbox>
                   <a-checkbox
                     :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowRecall)"
                     @update:checked="updatePrimaryRule({ allowRecall: Boolean($event) })"
                   >
-                    允许撤回
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowRecall') }}
                   </a-checkbox>
                 </a-space>
               </a-form-item>
@@ -533,6 +539,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import LowCodeFormDesigner from './components/LowCodeFormDesigner.vue'
 import { extractLowCodeFieldOptions } from './components/lowCodeSchema'
+import { normalizeLongId } from '@/utils/longJson'
 
 interface WorkflowNodeData extends WfTaskNodeEditorDTO {
   nodeKey: string
@@ -637,7 +644,7 @@ const contextMenu = reactive<ContextMenuState>({
   x: 0,
   y: 0
 })
-const approverLabelMaps = reactive<Record<number, Record<number, string>>>({
+const approverLabelMaps = reactive<Record<number, Record<string, string>>>({
   [APPROVER_TYPES.USER]: {},
   [APPROVER_TYPES.DEPT]: {},
   [APPROVER_TYPES.ROLE]: {},
@@ -686,6 +693,7 @@ const operatorOptions = computed(() =>
 const canDeleteNode = computed(() =>
   Boolean(selectedNodeData.value && [NODE_TYPES.APPROVE, NODE_TYPES.BRANCH].includes(selectedNodeData.value.nodeType))
 )
+const canBackToFormDesign = computed(() => editorContext.value?.formType === 2)
 const selectedOutgoingNodeKeys = computed(() => {
   if (!selectedNodeKey.value) {
     return []
@@ -954,14 +962,14 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
 
   approverOptionsLoading[approverType] = true
   try {
-    const labelMap: Record<number, string> = {}
+    const labelMap: Record<string, string> = {}
 
     if (approverType === APPROVER_TYPES.USER) {
       const result = await getUserList({ pageNum: 1, pageSize: 1000 })
       const records = Array.isArray(result?.records) ? result.records : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.username ? `${item.username}${item.account ? `(${item.account})` : ''}` : t('workflow.taskConfig.nodes.approverFallback.user', { id })
         }
       })
@@ -969,8 +977,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
       const result = await listDepartments({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.deptName || t('workflow.taskConfig.nodes.approverFallback.department', { id })
         }
       })
@@ -978,8 +986,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
       const result = await getRoleList({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.roleName || t('workflow.taskConfig.nodes.approverFallback.role', { id })
         }
       })
@@ -987,8 +995,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
       const result = await listPositions({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.positionName || t('workflow.taskConfig.nodes.approverFallback.position', { id })
         }
       })
@@ -1125,6 +1133,14 @@ async function handleSaveFormStep() {
   } finally {
     savingForm.value = false
   }
+}
+
+function handleBackToFormDesign() {
+  if (!canBackToFormDesign.value) {
+    return
+  }
+  currentStep.value = 0
+  clearSelection()
 }
 
 function handleDragStart(event: DragEvent, nodeType: number) {
@@ -1369,8 +1385,8 @@ function handleApproverDialogOk() {
 
   const approverType = RECEIVER_TYPE_TO_APPROVER_TYPE[approverDialogModel.value.receiverType || '']
   const approverIds = approverDialogModel.value.receiverIds
-    .map(item => Number(item))
-    .filter(item => Number.isFinite(item) && item > 0)
+    .map(item => normalizeLongId(item))
+    .filter(Boolean)
 
   if (!approverType) {
     message.warning(t('workflow.taskConfig.nodes.selectApproverTypeFirst'))

@@ -10,6 +10,7 @@ import workflow from './workflow'
 import personalHomepage from './personalHomepage'
 import profile from './profile'
 import operationLog from './operationLog'
+import integration from './integration'
 
 export default {
   common,
@@ -18,6 +19,7 @@ export default {
   message,
   system,
   workflow,
+  integration,
   personalHomepage,
   profile,
   operationLog,

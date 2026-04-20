@@ -2,11 +2,13 @@ package com.forgex.mobile.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.forgex.mobile.core.common.i18n.AppText
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.core.datastore.ServerEndpointConfig
 import com.forgex.mobile.core.datastore.SessionStore
 import com.forgex.mobile.core.network.di.BaseUrl
 import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
+import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.feature.auth.data.AuthRepository
 import com.forgex.mobile.feature.auth.data.CaptchaMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,12 +24,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * 登录页状态管理：
- * 1. 拉取系统配置（标题/Logo/背景）并同步到 UI。
- * 2. 管理验证码模式（无/图片/滑块）与登录提交校验。
- * 3. 监听动态服务器地址，实时展示当前登录目标环境。
- */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -44,7 +40,6 @@ class AuthViewModel @Inject constructor(
     val events: SharedFlow<AuthEvent> = _events.asSharedFlow()
 
     init {
-        // 启动时并行完成：环境地址监听、系统配置预热、验证码模式预热、公钥预热
         observeServerEndpoint()
         preloadSystemBasicConfig()
         refreshCaptchaModeAndData(silent = true)
@@ -52,35 +47,34 @@ class AuthViewModel @Inject constructor(
     }
 
     fun updateAccount(value: String) {
-        _uiState.update { it.copy(account = value.trim(), errorMessage = null) }
+        _uiState.update { it.clearError().copy(account = value.trim()) }
     }
 
     fun updatePassword(value: String) {
-        _uiState.update { it.copy(password = value, errorMessage = null) }
+        _uiState.update { it.clearError().copy(password = value) }
     }
 
     fun updateCaptcha(value: String) {
-        _uiState.update { it.copy(captcha = value.trim(), errorMessage = null) }
+        _uiState.update { it.clearError().copy(captcha = value.trim()) }
     }
 
     fun updateSliderProgress(value: Float) {
         val normalized = value.coerceIn(0f, 1f)
         _uiState.update {
-            it.copy(
+            it.clearError().copy(
                 sliderProgress = normalized,
-                sliderToken = "",
-                errorMessage = null
+                sliderToken = ""
             )
         }
     }
 
     fun switchLoginMethod(method: LoginMethod) {
-        // 当前仅账号密码链路可用，其它入口保留占位提示
         if (method == LoginMethod.ACCOUNT_PASSWORD) {
             _uiState.update {
                 it.copy(
                     selectedLoginMethod = method,
-                    errorMessage = null
+                    errorMessage = null,
+                    errorText = null
                 )
             }
             return
@@ -88,7 +82,8 @@ class AuthViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 selectedLoginMethod = method,
-                errorMessage = "第三方登录正在开发中"
+                errorMessage = null,
+                errorText = AppText.Resource(R.string.auth_third_party_pending)
             )
         }
     }
@@ -98,7 +93,8 @@ class AuthViewModel @Inject constructor(
             it.copy(
                 loginStage = AuthLoginStage.PASSWORD_FORM,
                 selectedLoginMethod = LoginMethod.ACCOUNT_PASSWORD,
-                errorMessage = null
+                errorMessage = null,
+                errorText = null
             )
         }
     }
@@ -107,7 +103,8 @@ class AuthViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 loginStage = AuthLoginStage.ENTRY,
-                errorMessage = null
+                errorMessage = null,
+                errorText = null
             )
         }
     }
@@ -122,7 +119,6 @@ class AuthViewModel @Inject constructor(
 
     private fun observeServerEndpoint() {
         viewModelScope.launch {
-            // 当用户在“服务器配置页”修改地址后，这里会立即刷新登录页展示
             sessionStore.serverEndpoint.collectLatest { endpoint ->
                 _uiState.update {
                     it.copy(serverOrigin = resolveServerOrigin(endpoint))
@@ -134,24 +130,16 @@ class AuthViewModel @Inject constructor(
     private fun preloadSystemBasicConfig() {
         viewModelScope.launch {
             when (val result = authRepository.loadSystemBasicConfig()) {
-                is AppResult.Success -> {
-                    applySystemConfig(result.data)
-                }
-
-                is AppResult.Error -> {
-                    // 拉取失败时至少把默认系统名写入会话，确保全局标题有值
-                    sessionStore.saveSystemName(_uiState.value.systemName)
-                }
-
+                is AppResult.Success -> applySystemConfig(result.data)
+                is AppResult.Error -> sessionStore.saveSystemName(_uiState.value.systemName)
                 AppResult.Loading -> Unit
             }
         }
     }
 
     private suspend fun applySystemConfig(config: SystemBasicConfig) {
-        // 统一兜底，避免后端空值导致 UI 抖动或显示异常
         val systemName = config.systemName.safeOrDefault("FORGEX_MOM")
-        val loginTitle = config.loginPageTitle.safeOrDefault(systemName)
+        val loginTitle = config.loginPageTitle.safeOrDefault("")
         val loginSubtitle = config.loginPageSubtitle.safeOrDefault("")
         val loginBackgroundType = config.loginBackgroundType.safeOrDefault("image")
         val loginBackgroundImage = config.loginBackgroundImage.safeOrDefault("")
@@ -184,10 +172,9 @@ class AuthViewModel @Inject constructor(
     private fun refreshCaptchaModeAndData(silent: Boolean) {
         viewModelScope.launch {
             if (!silent) {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
             }
 
-            // 先确定模式，再拉取对应验证码数据，避免 UI 状态与后端配置错位
             when (val result = authRepository.loadCaptchaMode()) {
                 is AppResult.Success -> {
                     when (result.data) {
@@ -202,7 +189,8 @@ class AuthViewModel @Inject constructor(
                                     captchaId = "",
                                     captchaImageBase64 = "",
                                     isLoading = false,
-                                    errorMessage = null
+                                    errorMessage = null,
+                                    errorText = null
                                 )
                             }
                             refreshImageCaptcha(silent = true)
@@ -219,7 +207,8 @@ class AuthViewModel @Inject constructor(
                                     sliderToken = "",
                                     sliderCaptcha = null,
                                     isLoading = false,
-                                    errorMessage = null
+                                    errorMessage = null,
+                                    errorText = null
                                 )
                             }
                             refreshSliderCaptcha(silent = true)
@@ -236,7 +225,8 @@ class AuthViewModel @Inject constructor(
                                     sliderToken = "",
                                     sliderCaptcha = null,
                                     isLoading = false,
-                                    errorMessage = null
+                                    errorMessage = null,
+                                    errorText = null
                                 )
                             }
                         }
@@ -248,15 +238,14 @@ class AuthViewModel @Inject constructor(
                         it.copy(
                             captchaMode = CaptchaMode.IMAGE,
                             isLoading = false,
-                            errorMessage = if (silent) null else result.message
+                            errorMessage = if (silent) null else result.message,
+                            errorText = if (silent) null else result.appText
                         )
                     }
                     refreshImageCaptcha(silent = true)
                 }
 
-                AppResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
             }
         }
     }
@@ -264,7 +253,7 @@ class AuthViewModel @Inject constructor(
     private fun refreshImageCaptcha(silent: Boolean = false) {
         viewModelScope.launch {
             if (!silent) {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
             }
 
             when (val result = authRepository.loadImageCaptcha()) {
@@ -279,7 +268,8 @@ class AuthViewModel @Inject constructor(
                             sliderProgress = 0f,
                             sliderToken = "",
                             isLoading = false,
-                            errorMessage = null
+                            errorMessage = null,
+                            errorText = null
                         )
                     }
                 }
@@ -292,14 +282,13 @@ class AuthViewModel @Inject constructor(
                             captchaImageBase64 = "",
                             captcha = "",
                             isLoading = false,
-                            errorMessage = if (silent) null else result.message
+                            errorMessage = if (silent) null else result.message,
+                            errorText = if (silent) null else result.appText
                         )
                     }
                 }
 
-                AppResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
             }
         }
     }
@@ -307,7 +296,7 @@ class AuthViewModel @Inject constructor(
     private fun refreshSliderCaptcha(silent: Boolean = false) {
         viewModelScope.launch {
             if (!silent) {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
             }
 
             when (val result = authRepository.loadSliderCaptcha()) {
@@ -322,7 +311,8 @@ class AuthViewModel @Inject constructor(
                             captchaId = result.data.id,
                             captchaImageBase64 = "",
                             isLoading = false,
-                            errorMessage = null
+                            errorMessage = null,
+                            errorText = null
                         )
                     }
                 }
@@ -337,14 +327,13 @@ class AuthViewModel @Inject constructor(
                             captcha = "",
                             captchaId = "",
                             isLoading = false,
-                            errorMessage = if (silent) null else result.message
+                            errorMessage = if (silent) null else result.message,
+                            errorText = if (silent) null else result.appText
                         )
                     }
                 }
 
-                AppResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
             }
         }
     }
@@ -353,20 +342,29 @@ class AuthViewModel @Inject constructor(
         val snapshot = _uiState.value
         val slider = snapshot.sliderCaptcha
         if (snapshot.captchaMode != CaptchaMode.SLIDER || slider == null) {
-            _uiState.update { it.copy(errorMessage = "当前不是滑块验证码模式") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_slider_mode_invalid)
+                )
+            }
             return
         }
 
         val maxLeft = (slider.backgroundImageWidth - slider.templateImageWidth).coerceAtLeast(0)
         if (maxLeft <= 0) {
-            _uiState.update { it.copy(errorMessage = "滑块参数异常，请刷新验证码") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_slider_param_invalid)
+                )
+            }
             return
         }
 
         val left = snapshot.sliderProgress * maxLeft.toFloat()
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            // 按后端需要传入滑轨参数，获得可用于登录提交的 sliderToken
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
             when (
                 val result = authRepository.validateSliderCaptcha(
                     captchaId = slider.id,
@@ -383,7 +381,8 @@ class AuthViewModel @Inject constructor(
                             sliderToken = result.data,
                             captchaId = slider.id,
                             isLoading = false,
-                            errorMessage = null
+                            errorMessage = null,
+                            errorText = null
                         )
                     }
                 }
@@ -393,14 +392,13 @@ class AuthViewModel @Inject constructor(
                         it.copy(
                             sliderToken = "",
                             isLoading = false,
-                            errorMessage = result.message
+                            errorMessage = result.message,
+                            errorText = result.appText
                         )
                     }
                 }
 
-                AppResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
             }
         }
     }
@@ -430,7 +428,13 @@ class AuthViewModel @Inject constructor(
     }
 
     fun selectTenant(tenantId: String) {
-        _uiState.update { it.copy(selectedTenantId = tenantId, errorMessage = null) }
+        _uiState.update {
+            it.copy(
+                selectedTenantId = tenantId,
+                errorMessage = null,
+                errorText = null
+            )
+        }
     }
 
     fun backToLogin() {
@@ -439,7 +443,8 @@ class AuthViewModel @Inject constructor(
                 step = AuthStep.LOGIN,
                 tenants = emptyList(),
                 selectedTenantId = null,
-                errorMessage = null
+                errorMessage = null,
+                errorText = null
             )
         }
     }
@@ -447,25 +452,45 @@ class AuthViewModel @Inject constructor(
     fun submitLogin() {
         val snapshot = _uiState.value
         if (snapshot.selectedLoginMethod != LoginMethod.ACCOUNT_PASSWORD) {
-            _uiState.update { it.copy(errorMessage = "第三方登录正在开发中") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_third_party_pending)
+                )
+            }
             return
         }
         if (snapshot.account.isBlank() || snapshot.password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "请输入账号和密码") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_required_account_password)
+                )
+            }
             return
         }
 
         when (snapshot.captchaMode) {
             CaptchaMode.IMAGE -> {
                 if (snapshot.captchaId.isBlank() || snapshot.captcha.isBlank()) {
-                    _uiState.update { it.copy(errorMessage = "请输入验证码") }
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = null,
+                            errorText = AppText.Resource(R.string.auth_required_captcha)
+                        )
+                    }
                     return
                 }
             }
 
             CaptchaMode.SLIDER -> {
                 if (snapshot.sliderToken.isBlank()) {
-                    _uiState.update { it.copy(errorMessage = "请先完成滑块验证") }
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = null,
+                            errorText = AppText.Resource(R.string.auth_required_slider)
+                        )
+                    }
                     return
                 }
             }
@@ -474,9 +499,8 @@ class AuthViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
 
-            // 不同验证码模式对应不同提交字段
             val captcha = when (snapshot.captchaMode) {
                 CaptchaMode.IMAGE -> snapshot.captcha
                 CaptchaMode.SLIDER -> snapshot.sliderToken
@@ -502,18 +526,21 @@ class AuthViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                errorMessage = "登录成功但未获取到租户，请联系管理员"
+                                errorMessage = null,
+                                errorText = AppText.Resource(R.string.auth_no_tenant)
                             )
                         }
                     } else {
-                        val defaultTenant = tenants.firstOrNull { it.isDefault == true } ?: tenants.first()
+                        val defaultTenant = tenants.firstOrNull { tenant -> tenant.isDefault == true }
+                            ?: tenants.first()
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
                                 step = AuthStep.TENANT_SELECTION,
                                 tenants = tenants,
                                 selectedTenantId = defaultTenant.id,
-                                errorMessage = null
+                                errorMessage = null,
+                                errorText = null
                             )
                         }
                     }
@@ -523,15 +550,14 @@ class AuthViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = result.message
+                            errorMessage = result.message,
+                            errorText = result.appText
                         )
                     }
                     refreshCaptcha(silent = true)
                 }
 
-                AppResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
             }
         }
     }
@@ -541,20 +567,29 @@ class AuthViewModel @Inject constructor(
         val tenantId = snapshot.selectedTenantId
 
         if (snapshot.account.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "账号为空，请返回重新登录") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_account_empty)
+                )
+            }
             return
         }
         if (tenantId.isNullOrBlank()) {
-            _uiState.update { it.copy(errorMessage = "请选择租户") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_tenant_required)
+                )
+            }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
 
             when (val chooseResult = authRepository.chooseTenant(tenantId, snapshot.account)) {
                 is AppResult.Success -> {
-                    // 选租户成功后预加载菜单，不阻塞登录完成事件
                     authRepository.loadUserRoutes(snapshot.account)
                     _uiState.update { it.copy(isLoading = false) }
                     _events.emit(AuthEvent.LoginCompleted)
@@ -564,14 +599,13 @@ class AuthViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = chooseResult.message
+                            errorMessage = chooseResult.message,
+                            errorText = chooseResult.appText
                         )
                     }
                 }
 
-                AppResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
             }
         }
     }
@@ -584,10 +618,6 @@ class AuthViewModel @Inject constructor(
         return "$scheme://${endpoint.host}:${endpoint.port}"
     }
 
-    /**
-     * 从 BASE_URL 解析默认网关展示地址。
-     * 例：`http://10.0.2.2:9000/api/` -> `http://10.0.2.2:9000`
-     */
     private fun resolveDefaultOrigin(defaultBaseUrl: String): String {
         return runCatching {
             val uri = URI(defaultBaseUrl)
@@ -606,5 +636,9 @@ class AuthViewModel @Inject constructor(
 
     private fun String?.safeOrDefault(default: String): String {
         return this?.trim().takeUnless { it.isNullOrBlank() } ?: default
+    }
+
+    private fun AuthUiState.clearError(): AuthUiState {
+        return copy(errorMessage = null, errorText = null)
     }
 }

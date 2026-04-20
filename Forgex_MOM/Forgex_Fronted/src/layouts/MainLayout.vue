@@ -809,15 +809,23 @@ const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) 
 const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
   'zh-CN': {
     'workflow.execution.startApproval': '发起审批',
+    'integration.title': '接口平台',
+    'integration.home.title': '接口平台首页',
   },
   'en-US': {
     'workflow.execution.startApproval': 'Start Approval',
+    'integration.title': 'Integration Platform',
+    'integration.home.title': 'Integration Home',
   },
   'ja-JP': {
     'workflow.execution.startApproval': '承認を開始',
+    'integration.title': 'Integration Platform',
+    'integration.home.title': 'Integration Home',
   },
   'ko-KR': {
     'workflow.execution.startApproval': '결재 시작',
+    'integration.title': 'Integration Platform',
+    'integration.home.title': 'Integration Home',
   },
 }
 
@@ -1076,6 +1084,11 @@ watch(
   resolvedMode,
   mode => {
     document.documentElement.setAttribute('data-theme', mode)
+    document.documentElement.style.colorScheme = mode
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.setAttribute('data-theme', mode)
+      document.body.style.colorScheme = mode
+    }
   },
   { immediate: true },
 )
@@ -1125,13 +1138,14 @@ function resolveMenuTitle(rawTitle: unknown): string {
   if (!title) {
     return ''
   }
-  // 支持 system. / common. / layout. / profile. / workflow. / message. 等前缀
+  // 支持 system. / common. / layout. / profile. / workflow. / message. / integration. 等前缀
   if (title.startsWith('system.') || 
       title.startsWith('common.') || 
       title.startsWith('layout.') || 
       title.startsWith('profile.') || 
       title.startsWith('workflow.') || 
       title.startsWith('message.') || 
+      title.startsWith('integration.') ||
       title.includes('.')) {
     const translated = t(title)
     if (translated !== title) {
@@ -1141,6 +1155,29 @@ function resolveMenuTitle(rawTitle: unknown): string {
     return ROUTE_TITLE_FALLBACKS[localeKey]?.[title] || ROUTE_TITLE_FALLBACKS['zh-CN']?.[title] || title
   }
   return title
+}
+
+function resolveModuleDisplayName(moduleCode: string, rawName?: unknown): string {
+  const normalizedCode = String(moduleCode || '').trim()
+  const normalizedName = String(rawName ?? '').trim()
+  const moduleTitleKey = normalizedCode ? `${normalizedCode}.title` : ''
+
+  if (moduleTitleKey) {
+    const translated = resolveMenuTitle(moduleTitleKey)
+    if (translated && translated !== moduleTitleKey) {
+      return translated
+    }
+  }
+
+  if (normalizedName) {
+    const translatedName = resolveMenuTitle(normalizedName)
+    if (translatedName && translatedName !== normalizedName) {
+      return translatedName
+    }
+    return normalizedName
+  }
+
+  return normalizedCode
 }
 
 function handleScroll() {
@@ -1309,7 +1346,7 @@ const searchMenus = computed(() => {
       continue
     }
 
-    const moduleName = String(mod?.name || moduleCode)
+    const moduleName = resolveModuleDisplayName(moduleCode, mod?.name)
     const moduleRoute = getModuleRouteTree(moduleCode)
     const children = buildSearchMenuNodes(
       moduleCode,
@@ -1340,7 +1377,7 @@ const moduleList = computed(() => {
   const modules = Array.isArray(dynamicModules.value) ? dynamicModules.value : []
   return modules.map((mod: any) => ({
     code: String(mod.code || ''),
-    name: String(mod.name || mod.code || ''),
+    name: resolveModuleDisplayName(String(mod.code || ''), mod.name || mod.code),
     icon: mod.icon || 'appstore',
     order: mod.order || 0
   }))
@@ -2070,8 +2107,8 @@ function buildTitleFromRoute(path: string): string {
     }
   }
   const mod = (Array.isArray(dynamicModules.value) ? dynamicModules.value : []).find((m: any) => String(m.code || '') === moduleCode)
-  if (mod && mod.name) {
-    return mod.name
+  if (mod) {
+    return resolveModuleDisplayName(moduleCode, mod.name)
   }
   return clean || pathWithoutQuery
 }

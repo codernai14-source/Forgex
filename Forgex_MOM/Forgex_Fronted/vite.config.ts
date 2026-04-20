@@ -1,12 +1,15 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': resolve(__dirname, './src')
     }
   },
   server: {
@@ -14,15 +17,19 @@ export default defineConfig({
     fs: {
       strict: false,
       allow: [
-        path.resolve(__dirname, '../public'),
-        path.resolve(__dirname, '../../doc')
+        resolve(__dirname, '../public'),
+        resolve(__dirname, '../../doc')
       ]
     },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:9000',
-        changeOrigin: true
-      }
-    }
+        proxy: {
+          '/api/label': {
+            target: 'http://localhost:9000',
+            changeOrigin: true
+          },
+          '/api': {
+            target: 'http://localhost:9000',
+            changeOrigin: true
+          }
+        }
   }
 })

@@ -472,6 +472,7 @@ public class SysMenuController {
      * @see com.forgex.sys.domain.vo.MenuTreeVO
      * @see com.forgex.sys.service.ISysMenuService#getMenuTree(Long, Long)
      */
+    @RequirePerm("sys:menu:view")
     @PostMapping("/tree")
     public R<List<MenuTreeVO>> tree(@RequestBody Map<String, Object> body) {
         // 1. 参数解析
@@ -537,6 +538,7 @@ public class SysMenuController {
      * @see com.forgex.sys.domain.dto.SysMenuDTO
      * @see com.forgex.sys.service.ISysMenuService#pageMenus(Page, SysMenuQueryDTO)
      */
+    @RequirePerm("sys:menu:view")
     @PostMapping("/page")
     public R<IPage<SysMenuDTO>> page(@RequestBody SysMenuQueryDTO query) {
         // 使用 BaseGetParam 中的 pageNum 和 pageSize
@@ -585,6 +587,7 @@ public class SysMenuController {
      * @see com.forgex.sys.domain.dto.SysMenuDTO
      * @see com.forgex.sys.service.ISysMenuService#listMenus(SysMenuQueryDTO)
      */
+    @RequirePerm("sys:menu:view")
     @PostMapping("/list")
     public R<List<SysMenuDTO>> list(@RequestBody SysMenuQueryDTO query) {
         return R.ok(menuService.listMenus(query));
@@ -593,6 +596,7 @@ public class SysMenuController {
     /**
      * 根据ID获取菜单详情
      */
+    @RequirePerm("sys:menu:view")
     @PostMapping("/detail")
     public R<SysMenuDTO> detail(@RequestBody Map<String, Object> body) {
         Long id = parseLong(body.get("id"));
@@ -842,6 +846,7 @@ public class SysMenuController {
      * @see com.forgex.sys.service.ISysMenuService#batchDeleteMenus(List)
      * @see com.forgex.sys.validator.MenuValidator#validateForDelete(Long)
      */
+    @RequirePerm("sys:menu:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数

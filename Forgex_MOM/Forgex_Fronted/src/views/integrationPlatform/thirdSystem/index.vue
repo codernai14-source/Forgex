@@ -1,250 +1,247 @@
 <template>
-  <div class="third-system-page">
+  <div class="integration-page">
     <fx-dynamic-table
       ref="tableRef"
       :table-code="'ThirdSystemTable'"
-      :show-query-form="true"
       :request="handleRequest"
+      :dynamic-table-config="dynamicTableConfig"
+      :dict-options="dictOptions"
+      :show-query-form="true"
+      row-key="id"
       :row-selection="{
-        selectedRowKeys: selectedRowKeys,
-        onChange: handleSelectionChange
+        selectedRowKeys,
+        onChange: handleSelectionChange,
       }"
     >
-      <!-- 工具栏按钮 -->
       <template #toolbar>
-        <a-button v-permission="'integration:third-system:add'" type="primary" @click="openAddDialog">
-          新增系统
-        </a-button>
-        <a-button 
-          v-permission="'integration:third-system:batch-delete'" 
-          danger 
-          :disabled="selectedRowKeys.length === 0"
-          @click="handleBatchDelete"
-        >
-          批量删除
-        </a-button>
+        <a-space>
+          <a-button v-permission="'integration:third-system:add'" type="primary" @click="openAddDialog">
+            {{ t('integration.thirdSystem.add') }}
+          </a-button>
+          <a-button
+            v-permission="'integration:third-system:batch-delete'"
+            danger
+            :disabled="selectedRowKeys.length === 0"
+            @click="handleBatchDelete"
+          >
+            {{ t('common.batchDelete') }}
+          </a-button>
+        </a-space>
       </template>
 
-      <!-- 状态列自定义渲染 -->
       <template #status="{ record }">
         <a-switch
-          v-model:checked="record.status"
-          :checked-value="1"
-          :unchecked-value="0"
-          @change="handleStatusChange(record)"
-        >
-          <template #checkedChildren>启用</template>
-          <template #unCheckedChildren>禁用</template>
-        </a-switch>
+          v-permission="'integration:third-system:edit'"
+          :checked="record.status === 1"
+          :loading="record.statusLoading"
+          @change="(checked: boolean) => handleStatusChange(record, checked)"
+        />
       </template>
 
-      <!-- 操作列 -->
       <template #action="{ record }">
-        <a-button type="link" v-permission="'integration:third-system:edit'" @click="openEditDialog(record)">
-          编辑
-        </a-button>
-        <a-button type="link" v-permission="'integration:third-system:auth'" @click="openAuthDialog(record)">
-          授权
-        </a-button>
-        <a-popconfirm
-          title="确定要删除该第三方系统吗？"
-          ok-text="确定"
-          cancel-text="取消"
-          @confirm="handleDelete(record.id)"
-        >
-          <a-button type="link" danger v-permission="'integration:third-system:delete'">
-            删除
-          </a-button>
-        </a-popconfirm>
+        <a-space>
+          <a v-permission="'integration:third-system:edit'" @click="openEditDialog(record)">{{ t('common.edit') }}</a>
+          <a v-permission="'integration:third-system:auth'" @click="openAuthDialog(record)">
+            {{ t('integration.thirdSystem.auth') }}
+          </a>
+          <a v-permission="'integration:third-system:delete'" class="danger-link" @click="handleDelete(record.id!)">
+            {{ t('common.delete') }}
+          </a>
+        </a-space>
       </template>
     </fx-dynamic-table>
 
-    <!-- 新增/编辑弹窗 -->
-    <third-system-form-dialog
+    <ThirdSystemFormDialog
       v-model:open="formVisible"
-      :form-data="formData"
       :is-edit="isEdit"
+      :form-data="currentFormData"
       @submit="handleSubmit"
     />
 
-    <!-- 授权弹窗 -->
-    <third-system-auth-dialog
+    <ThirdSystemAuthDialog
       v-model:open="authVisible"
       :system-id="currentSystemId"
-      @submit="handleAuthSubmit"
+      @success="handleAuthSuccess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { message } from 'ant-design-vue'
-import { integrationApi, type ThirdSystemQuery, type ThirdSystemSubmit } from '@/api/system/integration'
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { Modal } from 'ant-design-vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ThirdSystemFormDialog from './components/ThirdSystemFormDialog.vue'
 import ThirdSystemAuthDialog from './components/ThirdSystemAuthDialog.vue'
+import {
+  addThirdSystem,
+  batchDeleteThirdSystems,
+  deleteThirdSystem,
+  getThirdSystemDetail,
+  getThirdSystemList,
+  updateThirdSystem,
+} from '@/api/system/integration'
+import type { ThirdSystemItem, ThirdSystemSubmit } from '@/api/system/integration'
 
-defineOptions({
-  name: 'ThirdSystemPage'
-})
+const { t } = useI18n({ useScope: 'global' })
 
-const tableRef = ref()
-const selectedRowKeys = ref<number[]>([])
+type TableRecord = ThirdSystemItem & { statusLoading?: boolean }
+
+const tableRef = ref<InstanceType<typeof FxDynamicTable>>()
 const formVisible = ref(false)
 const authVisible = ref(false)
 const isEdit = ref(false)
-const formData = reactive<ThirdSystemSubmit>({
+const currentSystemId = ref<number>()
+const selectedRowKeys = ref<number[]>([])
+
+const currentFormData = ref<ThirdSystemSubmit>({
   systemCode: '',
   systemName: '',
   ipAddress: '',
   contactInfo: '',
   remark: '',
-  status: 1
+  status: 1,
 })
-const currentSystemId = ref<number>()
 
-/**
- * 表格数据请求
- */
-const handleRequest = async (payload: { 
+const dynamicTableConfig: Partial<FxTableConfig> = {
+  columns: [
+    { field: 'systemCode', title: t('integration.thirdSystem.systemCode'), width: 180, align: 'left', visible: true },
+    { field: 'systemName', title: t('integration.thirdSystem.systemName'), width: 220, align: 'left', visible: true },
+    { field: 'ipAddress', title: t('integration.thirdSystem.ipAddress'), width: 200, align: 'left', ellipsis: true, visible: true },
+    { field: 'contactInfo', title: t('integration.thirdSystem.contactInfo'), width: 220, align: 'left', ellipsis: true, visible: true },
+    { field: 'status', title: t('integration.thirdSystem.status'), width: 120, align: 'center', visible: true },
+    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center', visible: true },
+    { field: 'action', title: t('common.action'), width: 180, align: 'center', fixed: 'right', visible: true },
+  ],
+  queryFields: [
+    { field: 'systemCode', label: t('integration.thirdSystem.systemCode'), queryType: 'input', queryOperator: 'like' },
+    { field: 'systemName', label: t('integration.thirdSystem.systemName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: t('integration.thirdSystem.status'), queryType: 'select', queryOperator: 'eq', dictCode: 'thirdSystemStatus' },
+  ],
+}
+
+const dictOptions = {
+  thirdSystemStatus: [
+    { label: t('integration.common.enabled'), value: 1 },
+    { label: t('integration.common.disabled'), value: 0 },
+  ],
+}
+
+async function handleRequest(payload: {
   page: { current: number; pageSize: number }
   query: Record<string, any>
-}) => {
-  const params: ThirdSystemQuery = {
+}) {
+  const query = { ...payload.query }
+  const result = await getThirdSystemList({
     pageNum: payload.page.current,
-    pageSize: payload.pageSize,
-    ...payload.query
-  }
-  
-  const data = await integrationApi.getThirdSystemList(params)
-  return { 
-    records: data.records || [], 
-    total: data.total 
+    pageSize: payload.page.pageSize,
+    systemCode: query.systemCode || undefined,
+    systemName: query.systemName || undefined,
+    status: query.status === '' || query.status === undefined ? undefined : Number(query.status),
+  })
+
+  return {
+    records: (result.records || []).map(item => ({ ...item, statusLoading: false })),
+    total: Number(result.total || 0),
   }
 }
 
-/**
- * 打开新增弹窗
- */
-const openAddDialog = () => {
+function handleSelectionChange(keys: number[]) {
+  selectedRowKeys.value = keys
+}
+
+function openAddDialog() {
   isEdit.value = false
-  Object.assign(formData, {
+  currentFormData.value = {
     systemCode: '',
     systemName: '',
     ipAddress: '',
     contactInfo: '',
     remark: '',
-    status: 1
-  })
+    status: 1,
+  }
   formVisible.value = true
 }
 
-/**
- * 打开编辑弹窗
- */
-const openEditDialog = async (record: any) => {
+async function openEditDialog(record: ThirdSystemItem) {
   isEdit.value = true
-  const detail = await integrationApi.getThirdSystemDetail(record.id)
-  Object.assign(formData, detail)
+  currentFormData.value = await getThirdSystemDetail(record.id!)
   formVisible.value = true
 }
 
-/**
- * 打开授权弹窗
- */
-const openAuthDialog = (record: any) => {
+function openAuthDialog(record: ThirdSystemItem) {
   currentSystemId.value = record.id
   authVisible.value = true
 }
 
-/**
- * 提交表单
- */
-const handleSubmit = async () => {
-  try {
-    if (isEdit.value) {
-      await integrationApi.updateThirdSystem(formData)
-      message.success('更新成功')
-    } else {
-      await integrationApi.addThirdSystem(formData)
-      message.success('创建成功')
-    }
-    formVisible.value = false
-    tableRef.value?.refresh()
-  } catch (error: any) {
-    message.error(error.message || '操作失败')
+async function handleSubmit(payload: ThirdSystemSubmit) {
+  if (isEdit.value) {
+    await updateThirdSystem(payload)
+  } else {
+    await addThirdSystem(payload)
   }
+  formVisible.value = false
+  await tableRef.value?.refresh?.()
 }
 
-/**
- * 提交授权
- */
-const handleAuthSubmit = async () => {
-  authVisible.value = false
-  message.success('授权成功')
-  tableRef.value?.refresh()
+function handleDelete(id: number) {
+  Modal.confirm({
+    title: t('common.confirmDelete'),
+    content: t('integration.thirdSystem.confirmDelete'),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
+    async onOk() {
+      await deleteThirdSystem(id)
+      await tableRef.value?.refresh?.()
+    },
+  })
 }
 
-/**
- * 删除
- */
-const handleDelete = async (id: number) => {
-  try {
-    await integrationApi.deleteThirdSystem(id)
-    message.success('删除成功')
-    tableRef.value?.refresh()
-  } catch (error: any) {
-    message.error(error.message || '删除失败')
-  }
+function handleBatchDelete() {
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedRowKeys.value.length }),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
+    async onOk() {
+      await batchDeleteThirdSystems(selectedRowKeys.value)
+      selectedRowKeys.value = []
+      await tableRef.value?.refresh?.()
+    },
+  })
 }
 
-/**
- * 批量删除
- */
-const handleBatchDelete = async () => {
-  if (selectedRowKeys.value.length === 0) {
-    message.warning('请选择要删除的数据')
-    return
-  }
-  
+async function handleStatusChange(record: TableRecord, checked: boolean) {
+  record.statusLoading = true
   try {
-    await integrationApi.batchDeleteThirdSystems(selectedRowKeys.value)
-    message.success('批量删除成功')
-    selectedRowKeys.value = []
-    tableRef.value?.refresh()
-  } catch (error: any) {
-    message.error(error.message || '批量删除失败')
-  }
-}
-
-/**
- * 状态变更
- */
-const handleStatusChange = async (record: any) => {
-  try {
-    await integrationApi.updateThirdSystem({
+    await updateThirdSystem({
       id: record.id,
       systemCode: record.systemCode,
       systemName: record.systemName,
-      status: record.status
+      ipAddress: record.ipAddress,
+      contactInfo: record.contactInfo,
+      remark: record.remark,
+      status: checked ? 1 : 0,
     })
-    message.success(record.status === 1 ? '启用成功' : '禁用成功')
-  } catch (error: any) {
-    message.error(error.message || '状态更新失败')
-    record.status = record.status === 1 ? 0 : 1
+    record.status = checked ? 1 : 0
+  } finally {
+    record.statusLoading = false
   }
 }
 
-/**
- * 选择变更
- */
-const handleSelectionChange = (keys: any[]) => {
-  selectedRowKeys.value = keys as number[]
+async function handleAuthSuccess() {
+  authVisible.value = false
+  await tableRef.value?.refresh?.()
 }
 </script>
 
 <style scoped lang="less">
-.third-system-page {
-  padding: 24px;
-  background: var(--fx-bg-base);
+.integration-page {
+  min-height: 0;
+}
+
+.danger-link {
+  color: #ff4d4f;
 }
 </style>

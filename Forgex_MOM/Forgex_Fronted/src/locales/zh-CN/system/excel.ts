@@ -1,60 +1,53 @@
 /**
- * Excel 导入导出管理翻译 - 中文
- * 
- * @author Forgex
- * @version 1.0.0
- * @since 2026-04-09
+ * Excel 导入导出配置 - 中文
  */
 export default {
-  // 页面标题
-  importConfigTitle: '导入配置管理',
-  exportConfigTitle: '导出配置管理',
-  
-  // 表格列
-  tableName: '表名',
+  importConfigTitle: 'Excel导入配置',
+  exportConfigTitle: 'Excel导出配置',
+
+  tableName: '表名称',
   tableCode: '表编码',
   title: '标题',
   subtitle: '副标题',
   version: '版本号',
   importFields: '导入字段配置',
   exportFields: '导出字段配置',
-  
-  // 字段配置
+  exportFormat: '导出格式',
+  exportField: '导出字段',
+  fieldName: '字段名称',
   importField: '导入字段',
+  importResult: '导入结果',
   fieldType: '字段类型',
   dictCode: '字典编码',
   required: '必填',
-  orderNum: '排序',
-  
-  // 字段类型
+  orderNum: '排序号',
+
   fieldTypes: {
     string: '字符串',
     number: '数字',
     date: '日期',
     time: '时间',
     datetime: '日期时间',
-    dict: '字典'
+    dict: '字典',
   },
-  
-  // 数据源配置
+
   dataSourceType: '数据源类型',
   dataSourceTypes: {
     DICT: '字典',
     JSON: 'JSON 数组',
-    PROVIDER: '数据提供方'
+    PROVIDER: '数据提供器',
   },
   selectType: '请选择数据源类型',
   typeDict: '字典',
   typeJson: 'JSON 数组',
-  typeProvider: '数据提供方',
+  typeProvider: '数据提供器',
   selectDict: '请选择字典',
-  selectProvider: '请选择数据提供方',
+  selectProvider: '请选择数据提供器',
   selectProviderField: '请选择字段',
-  providerCode: '提供方编码',
-  providerField: '提供方字段',
+  providerCode: '提供器编码',
+  providerField: '提供器字段',
   dataSourceJson: '数据源 JSON',
-  
-  // 样式配置
+
   backgroundColor: '背景颜色',
   fontSize: '字体大小',
   wordWrap: '自动换行',
@@ -65,38 +58,37 @@ export default {
   fontWeight: '字体加粗',
   stylePreview: '样式预览',
   previewText: '预览文本',
-  
-  // 国际化配置
+
   i18nConfig: '国际化配置',
   zhCn: '中文',
   enUs: '英文',
   zhCnPlaceholder: '请输入中文翻译',
   enUsPlaceholder: '请输入英文翻译',
-  
-  // 选项列表
+
   optionsList: '选项列表',
   addOption: '添加选项',
   valuePlaceholder: '请输入选项值',
   labelPlaceholder: '请输入选项标签',
-  
-  // JSON 预览
+
   jsonPreview: 'JSON 预览',
-  
-  // 操作
+
   downloadTemplate: '下载模板',
   uploadData: '上传数据',
   previewData: '预览数据',
-  
-  // 表单
+  downloadSuccess: '模板下载成功',
+  downloadFailed: '模板下载失败',
+  importSuccess: '导入成功',
+  importFail: '导入失败',
+  importFailed: '导入失败，请重试',
+
   baseConfig: '基础配置',
-  pleaseInputTableName: '请输入表名',
+  pleaseInputTableName: '请输入表名称',
   pleaseInputTableCode: '请输入表编码',
   pleaseInputTitle: '请输入标题',
   pleaseInputSubtitle: '请输入副标题',
   addImportConfig: '新增导入配置',
   editImportConfig: '编辑导入配置',
-  
-  // 消息
+
   message: {
     downloadTemplateSuccess: '下载模板成功',
     downloadTemplateFailed: '下载模板失败',
@@ -106,7 +98,7 @@ export default {
     saveConfigFailed: '保存配置失败',
     deleteConfigSuccess: '删除配置成功',
     deleteConfigFailed: '删除配置失败',
-    pleaseInputTableName: '请输入表名',
-    pleaseInputTableCode: '请输入表编码'
-  }
+    pleaseInputTableName: '请输入表名称',
+    pleaseInputTableCode: '请输入表编码',
+  },
 }
