@@ -323,16 +323,32 @@ public class LicenseManager {
      */
     private String resolvePublicKey() {
         if (StringUtils.hasText(licenseProperties.getPublicKey())) {
-            return sanitizeBase64(licenseProperties.getPublicKey());
+            String candidate = sanitizeBase64(licenseProperties.getPublicKey());
+            if (isValidBase64(candidate)) {
+                return candidate;
+            }
         }
         Path publicKeyPath = publicKeyPath();
         if (!Files.exists(publicKeyPath)) {
             return "";
         }
         try {
-            return sanitizeBase64(Files.readString(publicKeyPath, StandardCharsets.UTF_8));
+            String candidate = sanitizeBase64(Files.readString(publicKeyPath, StandardCharsets.UTF_8));
+            return isValidBase64(candidate) ? candidate : "";
         } catch (Exception ignored) {
             return "";
+        }
+    }
+
+    private boolean isValidBase64(String value) {
+        if (!StringUtils.hasText(value)) {
+            return false;
+        }
+        try {
+            Base64.getDecoder().decode(value);
+            return true;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 

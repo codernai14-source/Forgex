@@ -107,7 +107,7 @@ setx FORGEX_INSTANCE_CODE "%FORGEX_INSTANCE_CODE%" >nul
 setx FORGEX_HOME "%FORGEX_HOME%" >nul
 setx FORGEX_LICENSE_ENABLED "true" >nul
 setx FORGEX_LICENSE_DIR "%FORGEX_LICENSE_DIR%" >nul
-setx FORGEX_LICENSE_PUBLIC_KEY "%FORGEX_LICENSE_PUBLIC_KEY%" >nul
+setx FORGEX_LICENSE_PUBLIC_KEY "" >nul
 setx FORGEX_LICENSE_PUBLIC_KEY_FILE_NAME "public-key.base64" >nul
 
 echo.
@@ -120,7 +120,7 @@ echo [Forgex] Request file: %REQUEST_INFO_PATH%
 echo [Forgex] License file: %LICENSE_PATH%
 echo [Forgex] Public key file: %PUBLIC_KEY_PATH%
 echo [Forgex] FORGEX_PROFILE has been written as user env var: dev
-echo [Forgex] FORGEX_LICENSE_PUBLIC_KEY has been written to user env vars.
+echo [Forgex] FORGEX_LICENSE_PUBLIC_KEY has been cleared to avoid malformed env value issues.
 echo [Forgex] Restart Gateway and Sys services before login.
 
 exit /b 0

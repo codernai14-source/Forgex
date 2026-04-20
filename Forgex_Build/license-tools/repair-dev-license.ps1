@@ -141,14 +141,8 @@ Set-EnvValue -Name 'FORGEX_HOME' -Value $canonicalHome
 Set-EnvValue -Name 'FORGEX_LICENSE_DIR' -Value $canonicalLicenseDir
 Set-EnvValue -Name 'FORGEX_LICENSE_ENABLED' -Value 'true'
 Set-EnvValue -Name 'FORGEX_LICENSE_PUBLIC_KEY_FILE_NAME' -Value 'public-key.base64'
-
-$canonicalPublicKey = Join-Path $canonicalLicenseDir 'public-key.base64'
-if (Test-Path -LiteralPath $canonicalPublicKey) {
-    $publicKeyValue = (Get-Content -LiteralPath $canonicalPublicKey -Raw).Trim()
-    if ($publicKeyValue) {
-        Set-EnvValue -Name 'FORGEX_LICENSE_PUBLIC_KEY' -Value $publicKeyValue
-    }
-}
+# 清空环境变量公钥，强制运行时优先使用磁盘 public-key.base64，避免 BOM/编码污染。
+Set-EnvValue -Name 'FORGEX_LICENSE_PUBLIC_KEY' -Value ''
 
 if (-not $DryRun -and -not $SkipReactivate) {
     if (-not (Test-Path -LiteralPath $activateScript)) {
