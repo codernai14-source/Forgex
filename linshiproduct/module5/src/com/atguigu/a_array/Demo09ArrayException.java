@@ -4,7 +4,7 @@ public class Demo09ArrayException {
     static void main(String[] args) {
      int[] arr=new int[3];
         System.out.println(arr.length);
-        arr=null;
-        System.out.println(arr);
+       //arr[1]=null;
+        System.out.println(arr[1]);
     }
 }
