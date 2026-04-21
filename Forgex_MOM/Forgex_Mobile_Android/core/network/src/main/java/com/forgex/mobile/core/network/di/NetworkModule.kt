@@ -1,11 +1,14 @@
 ﻿package com.forgex.mobile.core.network.di
 
 import com.forgex.mobile.core.network.api.AuthApi
+import com.forgex.mobile.core.network.api.I18nApi
 import com.forgex.mobile.core.network.api.MessageApi
 import com.forgex.mobile.core.network.api.MenuApi
+import com.forgex.mobile.core.network.api.WorkbenchApi
 import com.forgex.mobile.core.network.api.WorkflowApi
 import com.forgex.mobile.core.network.interceptor.AuthInterceptor
 import com.forgex.mobile.core.network.interceptor.DynamicBaseUrlInterceptor
+import com.forgex.mobile.core.network.interceptor.LanguageInterceptor
 import com.forgex.mobile.core.network.interceptor.SessionCookieJar
 import com.forgex.mobile.core.network.interceptor.TenantInterceptor
 import dagger.Module
@@ -36,6 +39,7 @@ object NetworkModule {
         dynamicBaseUrlInterceptor: DynamicBaseUrlInterceptor,
         authInterceptor: AuthInterceptor,
         tenantInterceptor: TenantInterceptor,
+        languageInterceptor: LanguageInterceptor,
         sessionCookieJar: SessionCookieJar,
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
@@ -45,6 +49,7 @@ object NetworkModule {
             .addInterceptor(dynamicBaseUrlInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(tenantInterceptor)
+            .addInterceptor(languageInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
     }
@@ -70,6 +75,12 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideI18nApi(retrofit: Retrofit): I18nApi {
+        return retrofit.create(I18nApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideMenuApi(retrofit: Retrofit): MenuApi {
         return retrofit.create(MenuApi::class.java)
     }
@@ -84,5 +95,11 @@ object NetworkModule {
     @Singleton
     fun provideMessageApi(retrofit: Retrofit): MessageApi {
         return retrofit.create(MessageApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkbenchApi(retrofit: Retrofit): WorkbenchApi {
+        return retrofit.create(WorkbenchApi::class.java)
     }
 }

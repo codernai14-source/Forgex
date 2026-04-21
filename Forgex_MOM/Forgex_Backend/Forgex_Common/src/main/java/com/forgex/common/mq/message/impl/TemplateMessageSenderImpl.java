@@ -14,14 +14,17 @@ limitations under the License.*/
 package com.forgex.common.mq.message.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.enums.MessagePromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.mq.message.TemplateMessageRequest;
 import com.forgex.common.mq.message.TemplateMessageSender;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,7 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(RocketMQTemplate.class)
 @ConditionalOnProperty(prefix = "mq.template-message", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class TemplateMessageSenderImpl implements TemplateMessageSender {
 
@@ -86,7 +90,7 @@ public class TemplateMessageSenderImpl implements TemplateMessageSender {
         } catch (Exception e) {
             log.error("RocketMQ 模板消息发送失败: templateCode={}, tenantId={}, bizType={}",
                     request.getTemplateCode(), request.getTenantId(), request.getBizType(), e);
-            throw new BusinessException("RocketMQ 消息发送失败: " + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.ROCKETMQ_MSG_SEND_FAILED, e.getMessage());
         }
     }
 }

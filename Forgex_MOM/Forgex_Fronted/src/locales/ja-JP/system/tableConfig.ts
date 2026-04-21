@@ -1,5 +1,5 @@
 /**
- * テーブル設定管理 - 日本語
+ * 表格配置管理 - 日文注释
  */
 export default {
   tableCode: 'テーブルコード',
@@ -29,7 +29,7 @@ export default {
   loadDetailFailed: '設定詳細の読み込みに失敗しました',
   
   /**
-   * 列設定関連
+   * 列设置相关
    */
   columnSetting: {
     title: '列設定',

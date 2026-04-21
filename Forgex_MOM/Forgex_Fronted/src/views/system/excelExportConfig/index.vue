@@ -4,7 +4,7 @@
       ref="tableRef"
       table-code="ExcelExportConfigTable"
       :request="handleRequest"
-      :fallback-config="fallbackConfig"
+      :dynamic-table-config="dynamicTableConfig"
       row-key="id"
       :show-query-form="true"
       :pagination="{
@@ -99,7 +99,7 @@ const itemColumns = computed(() => [
   { title: t('common.action'), key: 'action', width: 80 },
 ])
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'ExcelExportConfigTable',
   tableName: t('system.excel.exportConfigTitle'),
   tableType: 'NORMAL',
@@ -161,15 +161,13 @@ const handleRequest = async (payload: {
       tableCode,
     })
     return {
-      success: true,
-      data: res.records || [],
+      records: res.records || [],
       total: res.total || 0,
     }
   } catch (error) {
-    console.error('加载导出配置列表失败:', error)
+    console.error('加载导出配置列表失败', error)
     return {
-      success: false,
-      data: [],
+      records: [],
       total: 0,
     }
   }
@@ -188,8 +186,14 @@ async function openEdit(id?: number) {
 
   if (id) {
     const detail: any = await exportConfigDetail({ id })
-    Object.assign(editForm, detail || {})
-    editForm.items = (detail?.items || []).map((x: any, idx: number) => ({ ...x, _k: `${x.id || idx}-${Date.now()}` }))
+    Object.assign(editForm, {
+      ...detail,
+      exportFormat: detail?.exportFormat || detail?.exportFormat === '' ? detail.exportFormat : (detail?.export表单at || 'xlsx'),
+    })
+    editForm.items = (detail?.items || []).map((item: any, idx: number) => ({
+      ...item,
+      _k: `${item.id || idx}-${Date.now()}`,
+    }))
   }
   editOpen.value = true
 }
@@ -199,10 +203,10 @@ function addItem() {
 }
 
 function removeItem(k: string) {
-  editForm.items = editForm.items.filter((x: any) => x._k !== k)
+  editForm.items = editForm.items.filter((item: any) => item._k !== k)
 }
 
-async function handleDelete(id: number) {
+function handleDelete(id: number) {
   Modal.confirm({
     title: t('common.confirmDelete'),
     okText: t('common.confirm'),
@@ -220,14 +224,15 @@ async function handleSave() {
   try {
     const payload = {
       ...editForm,
-      items: (editForm.items || []).map((x: any) => ({
-        id: x.id,
-        exportField: x.exportField,
-        fieldName: x.fieldName,
-        i18nJson: x.i18nJson,
-        headerStyleJson: x.headerStyleJson,
-        cellStyleJson: x.cellStyleJson,
-        orderNum: x.orderNum,
+      exportFormat: editForm.exportFormat,
+      items: (editForm.items || []).map((item: any) => ({
+        id: item.id,
+        exportField: item.exportField,
+        fieldName: item.fieldName,
+        i18nJson: item.i18nJson,
+        headerStyleJson: item.headerStyleJson,
+        cellStyleJson: item.cellStyleJson,
+        orderNum: item.orderNum,
       })),
     }
     await saveExportConfig(payload)

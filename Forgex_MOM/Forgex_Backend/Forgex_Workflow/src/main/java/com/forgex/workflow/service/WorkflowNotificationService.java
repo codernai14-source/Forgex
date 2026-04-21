@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -101,7 +102,7 @@ public class WorkflowNotificationService {
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final SysMessageClient sysMessageClient;
-    private final TemplateMessageSender templateMessageSender;
+    private final Optional<TemplateMessageSender> templateMessageSender;
 
     private enum TemplateSendResult {
         SUCCESS,
@@ -282,6 +283,11 @@ public class WorkflowNotificationService {
                                                  Map<String, Object> dataMap,
                                                  String bizType,
                                                  Long executionId) {
+        if (templateMessageSender.isEmpty()) {
+            log.info("TemplateMessageSender Bean 不存在，跳过模板消息并降级直发: templateCode={}, tenantId={}, executionId={}",
+                    templateCode, tenantId, executionId);
+            return TemplateSendResult.FAILED;
+        }
         try {
             TemplateMessageRequest request = new TemplateMessageRequest();
             request.setTenantId(tenantId);
@@ -289,7 +295,7 @@ public class WorkflowNotificationService {
             request.setReceiverUserIds(receiverIds);
             request.setDataMap(dataMap);
             request.setBizType(bizType);
-            templateMessageSender.sendToMq(request);
+            templateMessageSender.get().sendToMq(request);
             log.info("模板消息投递到MQ成功: templateCode={}, tenantId={}, receiverCount={}, executionId={}",
                     templateCode,
                     tenantId,

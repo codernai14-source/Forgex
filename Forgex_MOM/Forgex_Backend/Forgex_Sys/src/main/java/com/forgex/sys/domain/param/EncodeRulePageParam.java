@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
  * 继承 BaseGetParam，支持分页、排序、时间范围等通用查询参数。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see com.forgex.common.base.BaseGetParam 继承的基类

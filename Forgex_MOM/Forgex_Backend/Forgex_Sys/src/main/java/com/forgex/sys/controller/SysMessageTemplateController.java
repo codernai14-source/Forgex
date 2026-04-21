@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysMessageTemplateSaveDTO;
 import com.forgex.sys.domain.param.SysMessageTemplateBatchDeleteParam;
@@ -74,7 +75,8 @@ public class SysMessageTemplateController {
     @PostMapping("/save")
     public R<Long> save(@RequestBody @Validated SysMessageTemplateSaveDTO dto) {
         messageTemplateValidator.validateForSave(dto);
-        return R.ok(messageTemplateService.save(dto));
+        Long id = messageTemplateService.save(dto);
+        return R.ok(CommonPrompt.SAVE_SUCCESS, id);
     }
 
     /**
@@ -86,7 +88,8 @@ public class SysMessageTemplateController {
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody @Validated SysMessageTemplateIdParam param) {
         messageTemplateValidator.validateId(param.getId());
-        return R.ok(messageTemplateService.delete(param.getId(), param.getPublicConfig()));
+        Boolean success = messageTemplateService.delete(param.getId(), param.getPublicConfig());
+        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
     }
 
     /**
@@ -98,7 +101,8 @@ public class SysMessageTemplateController {
     @PostMapping("/delete-batch")
     public R<Boolean> deleteBatch(@RequestBody @Validated SysMessageTemplateBatchDeleteParam param) {
         messageTemplateValidator.validateBatchIds(param.getIds());
-        return R.ok(messageTemplateService.deleteBatch(param.getIds(), param.getPublicConfig()));
+        Boolean success = messageTemplateService.deleteBatch(param.getIds(), param.getPublicConfig());
+        return R.ok(CommonPrompt.DELETE_SUCCESS, success);
     }
 
     /**
@@ -108,6 +112,7 @@ public class SysMessageTemplateController {
      */
     @PostMapping("/pull-public")
     public R<Integer> pullPublicConfig() {
-        return R.ok(messageTemplateService.pullPublicConfig());
+        Integer count = messageTemplateService.pullPublicConfig();
+        return R.ok(CommonPrompt.OPERATION_SUCCESS, count);
     }
 }

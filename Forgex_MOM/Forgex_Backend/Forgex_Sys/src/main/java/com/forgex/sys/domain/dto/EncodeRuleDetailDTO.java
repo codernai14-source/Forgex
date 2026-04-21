@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
  * 支持编码段的类型、值、排序等详细配置。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see SysEncodeRuleDetail 编码规则明细实体

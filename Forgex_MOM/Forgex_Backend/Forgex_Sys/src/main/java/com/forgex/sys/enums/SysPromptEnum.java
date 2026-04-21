@@ -59,7 +59,7 @@ public enum SysPromptEnum implements I18nPrompt {
     
     // ========== 菜单管理 ==========
     MENU_EXISTS("MENU_EXISTS", "菜单已存在"),
-    MENU_PERM_KEY_EXISTS("MENU_PERM_KEY_EXISTS", "权限标识已存在"),
+    MENU_PERM_KEY_EXISTS_VALIDATOR("MENU_PERM_KEY_EXISTS", "权限标识已存在"),
     MENU_CREATE_SUCCESS("MENU_CREATE_SUCCESS", "菜单创建成功"),
     MENU_UPDATE_SUCCESS("MENU_UPDATE_SUCCESS", "菜单更新成功"),
     MENU_DELETE_SUCCESS("MENU_DELETE_SUCCESS", "菜单删除成功"),
@@ -84,7 +84,7 @@ public enum SysPromptEnum implements I18nPrompt {
     POSITION_CREATE_SUCCESS("POSITION_CREATE_SUCCESS", "职位创建成功"),
     POSITION_UPDATE_SUCCESS("POSITION_UPDATE_SUCCESS", "职位更新成功"),
     POSITION_DELETE_SUCCESS("POSITION_DELETE_SUCCESS", "职位删除成功"),
-    POSITION_NOT_FOUND("POSITION_NOT_FOUND", "职位不存在"),
+    POSITION_NOT_FOUND_SERVICE("POSITION_NOT_FOUND", "职位不存在"),
     POSITION_HAS_USERS("POSITION_HAS_USERS", "职位下存在用户，无法删除"),
     
     // ========== 字典管理 ==========
@@ -111,7 +111,7 @@ public enum SysPromptEnum implements I18nPrompt {
     
     // ========== 模块管理 ==========
     MODULE_EXISTS("MODULE_EXISTS", "模块已存在"),
-    MODULE_CODE_EXISTS("MODULE_CODE_EXISTS", "模块编码已存在"),
+    MODULE_CODE_EXISTS_VALIDATOR("MODULE_CODE_EXISTS", "模块编码已存在"),
     MODULE_CREATE_SUCCESS("MODULE_CREATE_SUCCESS", "模块创建成功"),
     MODULE_UPDATE_SUCCESS("MODULE_UPDATE_SUCCESS", "模块更新成功"),
     MODULE_DELETE_SUCCESS("MODULE_DELETE_SUCCESS", "模块删除成功"),
@@ -150,7 +150,110 @@ public enum SysPromptEnum implements I18nPrompt {
     ENCODE_RULE_DISABLE_SUCCESS("ENCODE_RULE_DISABLE_SUCCESS", "编码规则禁用成功"),
     ENCODE_RULE_GENERATE_SUCCESS("ENCODE_RULE_GENERATE_SUCCESS", "编码生成成功"),
     ENCODE_RULE_GENERATE_FAILED("ENCODE_RULE_GENERATE_FAILED", "编码生成失败"),
-    ENCODE_RULE_DETAIL_REQUIRED("ENCODE_RULE_DETAIL_REQUIRED", "编码规则明细不能为空");
+    ENCODE_RULE_DETAIL_REQUIRED("ENCODE_RULE_DETAIL_REQUIRED", "编码规则明细不能为空"),
+    
+    // ========== 用户校验（Validator 层）==========
+    USER_ACCOUNT_EMPTY("USER_ACCOUNT_EMPTY", "用户账号不能为空"),
+    USER_USERNAME_EMPTY("USER_USERNAME_EMPTY", "用户名不能为空"),
+    USER_ACCOUNT_EXISTS_OTHER("USER_ACCOUNT_EXISTS_OTHER", "账号已被其他用户使用"),
+    USER_NOT_FOUND_DELETE("USER_NOT_FOUND_DELETE", "用户不存在"),
+    USER_ID_INVALID("USER_ID_INVALID", "用户 ID 格式不正确"),
+    USER_EMAIL_INVALID("USER_EMAIL_INVALID", "邮箱格式不正确"),
+    USER_PHONE_INVALID("USER_PHONE_INVALID", "手机号格式不正确"),
+    
+    // ========== 角色校验（Validator 层）==========
+    ROLE_NAME_EMPTY("ROLE_NAME_EMPTY", "角色名称不能为空"),
+    ROLE_CODE_EMPTY("ROLE_CODE_EMPTY", "角色编码不能为空"),
+    ROLE_TENANT_ID_EMPTY("ROLE_TENANT_ID_EMPTY", "租户 ID 不能为空"),
+    ROLE_CODE_EXISTS_OTHER("ROLE_CODE_EXISTS_OTHER", "角色编码已被其他角色使用"),
+    ROLE_NAME_EXISTS_OTHER("ROLE_NAME_EXISTS_OTHER", "角色名称已被其他角色使用"),
+    ROLE_KEY_EXISTS_OTHER("ROLE_KEY_EXISTS_OTHER", "角色键已被其他角色使用"),
+    ROLE_NOT_FOUND_UPDATE("ROLE_NOT_FOUND_UPDATE", "角色不存在"),
+    ROLE_NOT_FOUND_DELETE("ROLE_NOT_FOUND_DELETE", "角色不存在"),
+    ROLE_HAS_USERS_DELETE("ROLE_HAS_USERS_DELETE", "该角色下还有用户，无法删除"),
+    ROLE_ID_INVALID("ROLE_ID_INVALID", "角色 ID 格式不正确"),
+    ROLE_CODE_IMMUTABLE("ROLE_CODE_IMMUTABLE", "角色编码不可修改"),
+    
+    // ========== 菜单校验（Validator 层）==========
+    MENU_MODULE_ID_EMPTY("MENU_MODULE_ID_EMPTY", "模块 ID 不能为空"),
+    MENU_NAME_EMPTY("MENU_NAME_EMPTY", "菜单名称不能为空"),
+    MENU_TYPE_EMPTY("MENU_TYPE_EMPTY", "菜单类型不能为空"),
+    MENU_TYPE_INVALID("MENU_TYPE_INVALID", "菜单类型不正确，只能是：catalog、menu、button"),
+    MENU_PATH_EMPTY("MENU_PATH_EMPTY", "菜单路径不能为空"),
+    MENU_EXTERNAL_URL_EMPTY("MENU_EXTERNAL_URL_EMPTY", "外联 URL 不能为空"),
+    MENU_URL_INVALID("MENU_URL_INVALID", "外联 URL 格式不正确"),
+    MENU_PERM_KEY_EMPTY("MENU_PERM_KEY_EMPTY", "按钮权限标识不能为空"),
+    MENU_PERM_KEY_INVALID("MENU_PERM_KEY_INVALID", "权限标识格式不正确，必须符合 {module}:{entity}:{action} 格式"),
+
+    MENU_PERM_KEY_EXISTS_OTHER("MENU_PERM_KEY_EXISTS_OTHER", "权限标识已被其他菜单使用"),
+    MENU_NOT_FOUND_UPDATE("MENU_NOT_FOUND_UPDATE", "菜单不存在"),
+    MENU_NOT_FOUND_DELETE("MENU_NOT_FOUND_DELETE", "菜单不存在"),
+    MENU_HAS_CHILDREN_DELETE("MENU_HAS_CHILDREN_DELETE", "该菜单下还有子菜单或按钮，无法删除"),
+    MENU_HAS_ROLE_ASSOCIATION_DELETE("MENU_HAS_ROLE_ASSOCIATION_DELETE", "该菜单已被角色授权，无法删除"),
+    MENU_ID_INVALID("MENU_ID_INVALID", "菜单 ID 格式不正确"),
+    MENU_ACCOUNT_EMPTY("MENU_ACCOUNT_EMPTY", "用户账号不能为空"),
+    MENU_TENANT_ID_EMPTY("MENU_TENANT_ID_EMPTY", "租户 ID 不能为空"),
+    
+    // ========== 模块校验（Validator 层）==========
+    MODULE_CODE_EMPTY("MODULE_CODE_EMPTY", "模块编码不能为空"),
+    MODULE_NAME_EMPTY("MODULE_NAME_EMPTY", "模块名称不能为空"),
+
+    MODULE_NAME_EXISTS("MODULE_NAME_EXISTS", "模块名称已存在"),
+    MODULE_CODE_EXISTS_OTHER("MODULE_CODE_EXISTS_OTHER", "模块编码已被其他模块使用"),
+    MODULE_NAME_EXISTS_OTHER("MODULE_NAME_EXISTS_OTHER", "模块名称已被其他模块使用"),
+    MODULE_NOT_FOUND_UPDATE("MODULE_NOT_FOUND_UPDATE", "模块不存在"),
+    MODULE_NOT_FOUND_DELETE("MODULE_NOT_FOUND_DELETE", "模块不存在"),
+    MODULE_HAS_MENUS_DELETE("MODULE_HAS_MENUS_DELETE", "该模块下还有菜单，无法删除"),
+    MODULE_HAS_ROLE_ASSOCIATION_DELETE("MODULE_HAS_ROLE_ASSOCIATION_DELETE", "该模块的菜单已被角色授权，无法删除"),
+    MODULE_ID_INVALID("MODULE_ID_INVALID", "模块 ID 格式不正确"),
+    MODULE_CODE_INVALID("MODULE_CODE_INVALID", "模块编码格式不正确，只能包含字母、数字、下划线，长度 2-50"),
+    
+    // ========== 角色菜单校验（Validator 层）==========
+    ROLE_MENU_ROLE_ID_EMPTY("ROLE_MENU_ROLE_ID_EMPTY", "角色 ID 不能为空"),
+    ROLE_MENU_TENANT_ID_EMPTY("ROLE_MENU_TENANT_ID_EMPTY", "租户 ID 不能为空"),
+    ROLE_MENU_ROLE_ID_INVALID("ROLE_MENU_ROLE_ID_INVALID", "角色 ID 格式不正确"),
+    ROLE_MENU_TENANT_ID_INVALID("ROLE_MENU_TENANT_ID_INVALID", "租户 ID 格式不正确"),
+    
+    // ========== 用户校验（Service 层）==========
+    USER_TENANT_ID_EMPTY("USER_TENANT_ID_EMPTY", "租户 ID 不能为空"),
+    USER_NOT_BOUND_TENANT("USER_NOT_BOUND_TENANT", "用户未绑定该租户，无法分配角色"),
+    
+    // ========== 角色校验（Service 层）==========
+    ROLE_INVALID_OR_CROSS_TENANT("ROLE_INVALID_OR_CROSS_TENANT", "存在无效角色或跨租户角色"),
+    
+    // ========== 职位校验（Service 层）==========
+
+    
+    // ========== 编码规则校验（Service 层）==========
+    ENCODE_RULE_CODE_EMPTY("ENCODE_RULE_CODE_EMPTY", "规则代码不能为空"),
+    ENCODE_RULE_NOT_FOUND_OR_DISABLED("ENCODE_RULE_NOT_FOUND_OR_DISABLED", "编码规则不存在或已禁用：{0}"),
+    DELETE_IDS_REQUIRED("DELETE_IDS_REQUIRED", "删除的 ID 列表不能为空"),
+
+    // ========== 代码生成器 ==========
+    CODEGEN_PARAM_EMPTY("CODEGEN_PARAM_EMPTY", "代码生成参数不能为空"),
+    CODEGEN_DATASOURCE_PARAM_EMPTY("CODEGEN_DATASOURCE_PARAM_EMPTY", "代码生成数据源参数不能为空"),
+    CODEGEN_DATASOURCE_NOT_FOUND("CODEGEN_DATASOURCE_NOT_FOUND", "代码生成数据源不存在"),
+    CODEGEN_DATASOURCE_CODE_EXISTS("CODEGEN_DATASOURCE_CODE_EXISTS", "代码生成数据源编码已存在"),
+    CODEGEN_DATASOURCE_TEST_FAILED("CODEGEN_DATASOURCE_TEST_FAILED", "数据源连接测试失败：{0}"),
+    CODEGEN_CONFIG_NOT_FOUND("CODEGEN_CONFIG_NOT_FOUND", "代码生成配置不存在"),
+    CODEGEN_TABLE_NOT_FOUND("CODEGEN_TABLE_NOT_FOUND", "数据表不存在：{0}"),
+    CODEGEN_MAIN_SUB_RELATION_INVALID("CODEGEN_MAIN_SUB_RELATION_INVALID", "主子表关联字段不匹配"),
+    CODEGEN_PAGE_TYPE_INVALID("CODEGEN_PAGE_TYPE_INVALID", "暂不支持的页面类型：{0}"),
+    CODEGEN_PREVIEW_SUCCESS("CODEGEN_PREVIEW_SUCCESS", "代码预览生成成功"),
+
+    // ========== 消息模板校验（Service 层）==========
+    MSG_TEMPLATE_CODE_EXISTS("MSG_TEMPLATE_CODE_EXISTS", "模板编号已存在"),
+    MSG_TEMPLATE_CODE_EXISTS_OTHER("MSG_TEMPLATE_CODE_EXISTS_OTHER", "模板编号已被其他模板使用"),
+    MSG_TEMPLATE_NOT_FOUND("MSG_TEMPLATE_NOT_FOUND", "消息模板不存在"),
+    MSG_TEMPLATE_NOT_IN_SCOPE("MSG_TEMPLATE_NOT_IN_SCOPE", "消息模板不存在或不在当前配置范围"),
+    MSG_TEMPLATE_PULL_NOT_NEEDED("MSG_TEMPLATE_PULL_NOT_NEEDED", "公共租户无需执行拉取操作"),
+    MSG_RECEIVER_IDS_FORMAT_ERROR("MSG_RECEIVER_IDS_FORMAT_ERROR", "接收人 ID 列表格式错误"),
+    MSG_TEMPLATE_PARAM_EMPTY("MSG_TEMPLATE_PARAM_EMPTY", "请求参数不能为空"),
+    MSG_TEMPLATE_TENANT_NOT_FOUND("MSG_TEMPLATE_TENANT_NOT_FOUND", "无法识别当前租户"),
+    
+    // ========== 消息发送校验（Service 层）==========
+    MSG_NO_PERMISSION("MSG_NO_PERMISSION", "无权向该租户发送消息，请联系管理员配置租户消息白名单"),
+    MSG_TEMPLATE_TEST_PARAM_REQUIRED("MSG_TEMPLATE_TEST_PARAM_REQUIRED", "请求参数不能为空");
 
     private final String promptCode;
     private final String defaultTemplate;

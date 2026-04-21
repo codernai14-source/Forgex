@@ -3,37 +3,70 @@
     <section class="designer-topbar">
       <div>
         <a-button type="link" class="designer-topbar__back" @click="navigateBackToList()">
-          返回流程列表
+          {{ t('workflow.taskConfig.nodes.backToList') }}
         </a-button>
-        <h2>{{ editorContext?.taskName || '审批节点配置' }}</h2>
+        <h2>{{ editorContext?.taskName || t('workflow.taskConfig.nodes.title') }}</h2>
         <p>
-          草稿版本 v{{ editorContext?.draftVersion || '-' }}
-          <span v-if="editorContext?.publishedVersion">，当前已发布 v{{ editorContext.publishedVersion }}</span>
+          {{ t('workflow.taskConfig.nodes.draftVersion', { version: editorContext?.draftVersion || '-' }) }}
+          <span v-if="editorContext?.publishedVersion">，{{ t('workflow.taskConfig.nodes.publishedVersion', { version: editorContext.publishedVersion }) }}</span>
         </p>
       </div>
 
       <a-space>
-        <a-button :loading="saving" @click="handleSave">保存草稿</a-button>
-        <a-button type="primary" :loading="publishing" @click="handlePublish">发布草稿</a-button>
+        <a-button
+          v-if="currentStep === 1 && canBackToFormDesign"
+          @click="handleBackToFormDesign"
+        >
+          {{ t('workflow.taskConfig.nodes.steps.backToForm') }}
+        </a-button>
+        <a-button v-if="currentStep === 1" :loading="saving" @click="handleSave">{{ t('workflow.taskConfig.nodes.saveDraft') }}</a-button>
+        <a-button v-if="currentStep === 1" type="primary" :loading="publishing" @click="handlePublish">{{ t('workflow.taskConfig.nodes.publishDraft') }}</a-button>
       </a-space>
     </section>
 
-    <section class="designer-shell">
-      <aside class="palette-panel">
-        <div class="panel-title">节点面板</div>
-        <p class="panel-desc">开始和结束节点由系统内置且唯一存在，审批节点与条件分支支持拖拽到画布中。</p>
+    <section class="designer-steps">
+      <a-steps :current="currentStep">
+        <a-step :title="t('workflow.taskConfig.nodes.steps.formDesign')" :description="t('workflow.taskConfig.nodes.steps.formDesignDesc')" @click="handleStepClick(0)" />
+        <a-step :title="t('workflow.taskConfig.nodes.steps.approvalConfig')" :description="t('workflow.taskConfig.nodes.steps.approvalConfigDesc')" @click="handleStepClick(1)" />
+      </a-steps>
+    </section>
 
-        <div class="panel-subtitle">系统节点</div>
+    <section v-if="currentStep === 0" class="designer-form-stage">
+      <LowCodeFormDesigner
+        v-if="editorContext?.formType === 2"
+        v-model="lowCodeFormContent"
+        @schema-change="handleLowCodeSchemaChange"
+      />
+      <a-alert
+        v-else
+        type="info"
+        show-icon
+        :message="t('workflow.taskConfig.nodes.steps.formDesignDesc')"
+        :description="`${t('workflow.taskConfig.formPath')}：${editorContext?.formPath || '-'}`"
+      />
+      <div class="designer-stage-actions">
+        <a-button type="primary" :loading="savingForm" @click="handleSaveFormStep">
+          {{ t('workflow.taskConfig.nodes.steps.nextStep') }}
+        </a-button>
+      </div>
+    </section>
+
+    <section v-else class="designer-shell">
+      <aside class="palette-panel">
+        <div class="panel-title">{{ t('workflow.taskConfig.nodes.paletteTitle') }}</div>
+        <p class="panel-desc">{{ t('workflow.taskConfig.nodes.paletteDesc') }}</p>
+
+        <div class="panel-subtitle">{{ t('workflow.taskConfig.nodes.systemNodes') }}</div>
         <button
           type="button"
           class="system-node-item"
           :class="{ 'system-node-item--active': selectedNodeKey === 'start' }"
           @click="focusSystemNode('start')"
         >
-          <span class="palette-item__badge palette-item__badge--start">开始</span>
+          <span class="palette-item__badge palette-item__badge--start">{{ t('workflow.taskConfig.nodes.startBadge') }}</span>
           <div>
-            <div class="palette-item__title">开始节点</div>
-            <div class="palette-item__desc">流程入口，只能有一条出线，支持修改节点名称。</div>
+            <div class="palette-item__title">{{ t('workflow.taskConfig.nodes.startTitle') }}</div>
+            <div class="palette-item__desc">{{ t('workflow.taskConfig.nodes.startDesc') }}</div>
           </div>
         </button>
 
@@ -43,25 +76,25 @@
           :class="{ 'system-node-item--active': selectedNodeKey === 'end' }"
           @click="focusSystemNode('end')"
         >
-          <span class="palette-item__badge palette-item__badge--end">结束</span>
+          <span class="palette-item__badge palette-item__badge--end">{{ t('workflow.taskConfig.nodes.endBadge') }}</span>
           <div>
-            <div class="palette-item__title">结束节点</div>
-            <div class="palette-item__desc">流程终点，不能删除，不允许再向外连线。</div>
+            <div class="palette-item__title">{{ t('workflow.taskConfig.nodes.endTitle') }}</div>
+            <div class="palette-item__desc">{{ t('workflow.taskConfig.nodes.endDesc') }}</div>
           </div>
         </button>
 
         <a-divider />
 
-        <div class="panel-subtitle">拖拽新增</div>
+        <div class="panel-subtitle">{{ t('workflow.taskConfig.nodes.dragToCreate') }}</div>
         <div
           class="palette-item"
           draggable="true"
           @dragstart="handleDragStart($event, NODE_TYPES.APPROVE)"
         >
-          <span class="palette-item__badge palette-item__badge--approve">审批</span>
+          <span class="palette-item__badge palette-item__badge--approve">{{ t('workflow.taskConfig.nodes.approveBadge') }}</span>
           <div>
-            <div class="palette-item__title">审批节点</div>
-            <div class="palette-item__desc">配置审批类型、审批人来源，并通过弹窗选择审批对象。</div>
+            <div class="palette-item__title">{{ t('workflow.taskConfig.nodes.approveTitle') }}</div>
+            <div class="palette-item__desc">{{ t('workflow.taskConfig.nodes.approveDesc') }}</div>
           </div>
         </div>
 
@@ -70,17 +103,17 @@
           draggable="true"
           @dragstart="handleDragStart($event, NODE_TYPES.BRANCH)"
         >
-          <span class="palette-item__badge palette-item__badge--branch">条件</span>
+          <span class="palette-item__badge palette-item__badge--branch">{{ t('workflow.taskConfig.nodes.branchBadge') }}</span>
           <div>
-            <div class="palette-item__title">条件分支</div>
-            <div class="palette-item__desc">为条件规则配置默认去向，规则目标必须来自该分支的出线。</div>
+            <div class="palette-item__title">{{ t('workflow.taskConfig.nodes.branchTitle') }}</div>
+            <div class="palette-item__desc">{{ t('workflow.taskConfig.nodes.branchDesc') }}</div>
           </div>
         </div>
 
         <a-divider />
 
-        <a-button block :disabled="!canDeleteNode" @click="handleDeleteSelectedNode">删除当前节点</a-button>
-        <div class="panel-hint">仅审批节点和条件分支支持删除。连线可通过右键菜单或 Delete 键删除。</div>
+        <a-button block :disabled="!canDeleteNode" @click="handleDeleteSelectedNode">{{ t('workflow.taskConfig.nodes.deleteCurrentNode') }}</a-button>
+        <div class="panel-hint">{{ t('workflow.taskConfig.nodes.panelHint') }}</div>
       </aside>
 
       <div class="canvas-panel" @dragover.prevent @drop="handleDrop">
@@ -133,11 +166,11 @@
       </div>
 
       <aside class="config-panel">
-        <div class="panel-title">属性配置</div>
+        <div class="panel-title">{{ t('workflow.taskConfig.nodes.configTitle') }}</div>
 
         <template v-if="selectedNodeData">
           <a-form layout="vertical">
-            <a-form-item label="节点名称">
+            <a-form-item :label="t('workflow.taskConfig.nodes.nodeName')">
               <a-input
                 :value="selectedNodeData.nodeName"
                 @update:value="updateSelectedNodeData({ nodeName: String($event || '') })"
@@ -145,15 +178,15 @@
             </a-form-item>
 
             <template v-if="selectedNodeData.nodeType === NODE_TYPES.START">
-              <div class="field-tip">开始节点由系统内置，是流程入口，不能有入线，且必须保留唯一一条出线。</div>
+              <div class="field-tip">{{ t('workflow.taskConfig.nodes.startFieldTip') }}</div>
             </template>
 
             <template v-else-if="selectedNodeData.nodeType === NODE_TYPES.END">
-              <div class="field-tip">结束节点由系统内置，是流程出口，不能删除，也不能再继续向外连线。</div>
+              <div class="field-tip">{{ t('workflow.taskConfig.nodes.endFieldTip') }}</div>
             </template>
 
             <template v-else-if="selectedNodeData.nodeType === NODE_TYPES.APPROVE">
-              <a-form-item label="审批类型">
+              <a-form-item :label="t('workflow.taskConfig.formType')">
                 <a-select
                   :value="selectedNodeData.approveType"
                   @update:value="updateSelectedNodeData({ approveType: Number($event) })"
@@ -167,10 +200,71 @@
                 </div>
               </a-form-item>
 
-              <a-form-item label="审批人来源">
+              <a-form-item :label="t('workflow.taskConfig.nodes.ruleType')">
+                <a-select
+                  :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.ruleType"
+                  @update:value="updatePrimaryRule({ ruleType: Number($event), allowInitiatorSelect: Number($event) === RULE_TYPES.INITIATOR_SELECTED })"
+                >
+                  <a-select-option :value="RULE_TYPES.STATIC">{{ t('workflow.taskConfig.nodes.ruleTypes.static') }}</a-select-option>
+                  <a-select-option :value="RULE_TYPES.INITIATOR_SELECTED">{{ t('workflow.taskConfig.nodes.ruleTypes.initiatorSelected') }}</a-select-option>
+                  <a-select-option :value="RULE_TYPES.SUPERIOR">{{ t('workflow.taskConfig.nodes.ruleTypes.superior') }}</a-select-option>
+                </a-select>
+              </a-form-item>
+
+              <a-row :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="超时小时">
+                    <a-input-number
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.timeoutHours"
+                      :min="1"
+                      style="width: 100%"
+                      @update:value="updatePrimaryRule({ timeoutHours: $event == null ? undefined : Number($event) })"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="超时动作">
+                    <a-select
+                      allow-clear
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.timeoutAction"
+                      @update:value="updatePrimaryRule({ timeoutAction: $event == null ? undefined : Number($event) })"
+                    >
+                      <a-select-option v-for="item in TIMEOUT_ACTIONS" :key="item.value" :value="item.value">
+                        {{ item.label }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-row v-if="ensureNodeRuleConfigs(selectedNodeData)[0]?.ruleType === RULE_TYPES.SUPERIOR" :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="上级层级">
+                    <a-input-number
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.superiorLevel || 1"
+                      :min="1"
+                      style="width: 100%"
+                      @update:value="updatePrimaryRule({ superiorLevel: $event == null ? 1 : Number($event) })"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="通过阈值">
+                    <a-input-number
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.approvalThreshold"
+                      :min="0"
+                      :step="0.1"
+                      style="width: 100%"
+                      @update:value="updatePrimaryRule({ approvalThreshold: $event == null ? undefined : Number($event) })"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-form-item :label="t('workflow.taskConfig.nodes.approverSource')">
                 <div class="editor-list">
                   <div
-                    v-for="(approver, index) in selectedNodeData.approvers"
+                    v-for="(approver, index) in (ensureNodeRuleConfigs(selectedNodeData)[0]?.approvers || selectedNodeData.approvers)"
                     :key="`${approver.approverType}-${index}`"
                     class="editor-card editor-card--column"
                   >
@@ -186,9 +280,9 @@
                       </a-select>
                       <a-space>
                         <a-button @click="openApproverDialog(index)">
-                          {{ approver.approverIds.length ? '编辑选择' : '选择对象' }}
+                          {{ approver.approverIds.length ? t('workflow.taskConfig.nodes.editSelection') : t('workflow.taskConfig.nodes.selectTarget') }}
                         </a-button>
-                        <a-button danger @click="removeApprover(index)">删除</a-button>
+                        <a-button danger @click="removeApprover(index)">{{ t('common.delete') }}</a-button>
                       </a-space>
                     </div>
 
@@ -198,21 +292,50 @@
                           {{ label }}
                         </a-tag>
                       </template>
-                      <span v-else class="approver-summary__empty">未选择{{ approverTypeLabel(approver.approverType) }}，请通过弹窗选择。</span>
+                      <span v-else class="approver-summary__empty">{{ t('workflow.taskConfig.nodes.approverEmpty', { type: approverTypeLabel(approver.approverType) }) }}</span>
                     </div>
                   </div>
                 </div>
-                <a-button type="dashed" block @click="addApprover">新增审批人来源</a-button>
+                <a-button type="dashed" block @click="addApprover">{{ t('workflow.taskConfig.nodes.addApproverSource') }}</a-button>
+              </a-form-item>
+
+              <a-form-item :label="t('workflow.taskConfig.nodes.nodeCapability')">
+                <a-space wrap>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowAddSign)"
+                    @update:checked="updatePrimaryRule({ allowAddSign: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowAddSign') }}
+                  </a-checkbox>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowTransfer)"
+                    @update:checked="updatePrimaryRule({ allowTransfer: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowTransfer') }}
+                  </a-checkbox>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowDelegate)"
+                    @update:checked="updatePrimaryRule({ allowDelegate: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowDelegate') }}
+                  </a-checkbox>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowRecall)"
+                    @update:checked="updatePrimaryRule({ allowRecall: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowRecall') }}
+                  </a-checkbox>
+                </a-space>
               </a-form-item>
             </template>
 
             <template v-else-if="selectedNodeData.nodeType === NODE_TYPES.BRANCH">
-              <a-form-item label="默认分支">
+              <a-form-item :label="t('workflow.taskConfig.nodes.defaultBranch')">
                 <a-select
                   allow-clear
                   :value="selectedNodeData.defaultBranchNodeKey"
                   :disabled="!branchTargetOptions.length"
-                  placeholder="请先为当前分支节点连出目标节点"
+                  :placeholder="t('workflow.taskConfig.nodes.defaultBranchPlaceholder')"
                   @update:value="updateSelectedNodeData({ defaultBranchNodeKey: normalizeSelectValue($event) })"
                 >
                   <a-select-option
@@ -223,10 +346,10 @@
                     {{ (node.data as WorkflowNodeData).nodeName }}
                   </a-select-option>
                 </a-select>
-                <div class="field-tip">默认分支和规则去向都只能从当前分支节点的出线中选择。</div>
+                <div class="field-tip">{{ t('workflow.taskConfig.nodes.defaultBranchTip') }}</div>
               </a-form-item>
 
-              <a-form-item label="分支规则">
+              <a-form-item :label="t('workflow.taskConfig.nodes.branchRules')">
                 <div class="editor-list">
                   <div
                     v-for="(rule, index) in selectedNodeData.branchRules"
@@ -235,16 +358,21 @@
                   >
                     <a-row :gutter="8">
                       <a-col :span="12">
-                        <a-input
+                        <a-select
+                          show-search
                           :value="rule.fieldKey"
-                          placeholder="字段键"
-                          @update:value="updateBranchRule(index, { fieldKey: String($event || '') })"
-                        />
+                          :placeholder="t('workflow.taskConfig.nodes.branchField')"
+                          @update:value="handleBranchFieldChange(index, String($event || ''))"
+                        >
+                          <a-select-option v-for="field in branchFieldOptions" :key="field.key" :value="field.key">
+                            {{ field.label }}
+                          </a-select-option>
+                        </a-select>
                       </a-col>
                       <a-col :span="12">
                         <a-input
                           :value="rule.fieldLabel"
-                          placeholder="字段显示名"
+                          :placeholder="t('workflow.taskConfig.nodes.fieldLabelPlaceholder')"
                           @update:value="updateBranchRule(index, { fieldLabel: String($event || '') })"
                         />
                       </a-col>
@@ -253,18 +381,18 @@
                       <a-col :span="8">
                         <a-select
                           :value="rule.operator"
-                          placeholder="操作符"
+                          :placeholder="t('workflow.taskConfig.nodes.operatorPlaceholder')"
                           @update:value="updateBranchRule(index, { operator: String($event || '') })"
                         >
-                          <a-select-option v-for="item in operatorOptions" :key="item" :value="item">
-                            {{ item }}
+                          <a-select-option v-for="item in operatorOptions" :key="item.value" :value="item.value">
+                            {{ item.label }}
                           </a-select-option>
                         </a-select>
                       </a-col>
                       <a-col :span="8">
                         <a-input
                           :value="rule.value"
-                          placeholder="比较值"
+                          :placeholder="t('workflow.taskConfig.nodes.compareValuePlaceholder')"
                           @update:value="updateBranchRule(index, { value: String($event || '') })"
                         />
                       </a-col>
@@ -273,7 +401,7 @@
                           allow-clear
                           :value="rule.nextNodeKey"
                           :disabled="!branchTargetOptions.length"
-                          placeholder="规则去向"
+                          :placeholder="t('workflow.taskConfig.nodes.ruleTargetPlaceholder')"
                           @update:value="updateBranchRule(index, { nextNodeKey: normalizeSelectValue($event) || '' })"
                         >
                           <a-select-option
@@ -286,10 +414,10 @@
                         </a-select>
                       </a-col>
                     </a-row>
-                    <a-button danger @click="removeBranchRule(index)">删除规则</a-button>
+                    <a-button danger @click="removeBranchRule(index)">{{ t('workflow.taskConfig.nodes.deleteRule') }}</a-button>
                   </div>
                 </div>
-                <a-button type="dashed" block @click="addBranchRule">新增规则</a-button>
+                <a-button type="dashed" block @click="addBranchRule">{{ t('workflow.taskConfig.nodes.addRule') }}</a-button>
               </a-form-item>
             </template>
           </a-form>
@@ -297,34 +425,32 @@
 
         <template v-else-if="selectedEdgeData">
           <div class="selected-edge-panel">
-            <div class="field-tip">已选中一条连线。可以通过 Delete 键、右键菜单或下面的按钮删除它。</div>
+            <div class="field-tip">{{ t('workflow.taskConfig.nodes.selectedEdgeTip') }}</div>
             <a-descriptions :column="1" size="small" bordered>
-              <a-descriptions-item label="起点">
+              <a-descriptions-item :label="t('workflow.taskConfig.nodes.edgeSource')">
                 {{ edgeNodeName(String(selectedEdgeData.source)) }}
               </a-descriptions-item>
-              <a-descriptions-item label="终点">
+              <a-descriptions-item :label="t('workflow.taskConfig.nodes.edgeTarget')">
                 {{ edgeNodeName(String(selectedEdgeData.target)) }}
               </a-descriptions-item>
             </a-descriptions>
-            <a-button danger block class="selected-edge-panel__button" @click="handleDeleteSelectedEdge">
-              删除当前连线
-            </a-button>
+            <a-button danger block class="selected-edge-panel__button" @click="handleDeleteSelectedEdge">{{ t('workflow.taskConfig.nodes.deleteCurrentEdge') }}</a-button>
           </div>
         </template>
 
-        <a-empty v-else description="点击节点后可在这里编辑属性，连线支持点击选中并删除。" />
+        <a-empty v-else :description="t('workflow.taskConfig.nodes.emptyConfigTip')" />
       </aside>
     </section>
 
     <a-modal
       v-model:open="approverDialogOpen"
-      title="选择审批人来源"
+      :title="t('workflow.taskConfig.nodes.selectApproverSource')"
       destroy-on-close
       @ok="handleApproverDialogOk"
       @cancel="closeApproverDialog"
     >
       <ReceiverSelector v-model:modelValue="approverDialogModel" />
-      <div class="field-tip approver-dialog-tip">选择结果会回填到当前审批节点，仅提交审批类型和对象 ID，不修改后端接口结构。</div>
+      <div class="field-tip approver-dialog-tip">{{ t('workflow.taskConfig.nodes.approverDialogTip') }}</div>
     </a-modal>
 
     <Teleport to="body">
@@ -335,16 +461,16 @@
       >
         <template v-if="contextMenu.kind === 'pane'">
           <button type="button" class="designer-context-menu__item" @click="handleContextMenuAction('createApprove')">
-            新增审批节点
+            {{ t('workflow.taskConfig.nodes.contextMenu.createApprove') }}
           </button>
           <button type="button" class="designer-context-menu__item" @click="handleContextMenuAction('createBranch')">
-            新增条件分支
+            {{ t('workflow.taskConfig.nodes.contextMenu.createBranch') }}
           </button>
         </template>
 
         <template v-else-if="contextMenu.kind === 'node'">
           <button type="button" class="designer-context-menu__item" @click="handleContextMenuAction('editNode')">
-            编辑节点
+            {{ t('workflow.taskConfig.nodes.contextMenu.editNode') }}
           </button>
           <button
             type="button"
@@ -352,13 +478,13 @@
             :disabled="!contextMenuNodeCanDelete"
             @click="handleContextMenuAction('deleteNode')"
           >
-            删除节点
+            {{ t('workflow.taskConfig.nodes.contextMenu.deleteNode') }}
           </button>
         </template>
 
         <template v-else-if="contextMenu.kind === 'edge'">
           <button type="button" class="designer-context-menu__item" @click="handleContextMenuAction('deleteEdge')">
-            删除连线
+            {{ t('workflow.taskConfig.nodes.contextMenu.deleteEdge') }}
           </button>
         </template>
       </div>
@@ -391,6 +517,7 @@ import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 import { approvalRoutePaths, normalizeApprovalRoutePath } from '@/router/approvalRoutePaths'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
+import { useDict } from '@/hooks/useDict'
 import { getRoleList } from '@/api/system/role'
 import { listDepartments } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
@@ -399,13 +526,20 @@ import {
   getDraftGraph,
   getOrCreateDraftEditor,
   publishDraft,
+  saveDraftBaseInfo,
   saveDraftGraph,
   type WfBranchRuleDTO,
+  type WfLowCodeFieldMetaDTO,
   type WfNodeApproverDTO,
   type WfTaskDraftEditorDTO,
   type WfTaskEdgeDTO,
-  type WfTaskNodeEditorDTO
+  type WfTaskNodeEditorDTO,
+  type WfTaskNodeRuleDTO
 } from '@/api/workflow/taskConfig'
+import { useI18n } from 'vue-i18n'
+import LowCodeFormDesigner from './components/LowCodeFormDesigner.vue'
+import { extractLowCodeFieldOptions } from './components/lowCodeSchema'
+import { normalizeLongId } from '@/utils/longJson'
 
 interface WorkflowNodeData extends WfTaskNodeEditorDTO {
   nodeKey: string
@@ -438,25 +572,34 @@ const APPROVER_TYPES = {
   USER: 1,
   DEPT: 2,
   ROLE: 3,
-  POSITION: 4
+  POSITION: 4,
+  INITIATOR_SELECTED: 5,
+  SUPERIOR: 6
 } as const
 
-const approveTypeOptions = [
-  { label: '会签', value: 1, description: '所有审批人都同意后才通过。' },
-  { label: '或签', value: 2, description: '任一审批人同意即可通过。' },
-  { label: '抄送', value: 3, description: '仅抄送通知，不要求审批动作。' },
-  { label: '投票', value: 4, description: '超过半数同意后通过。' },
-  { label: '顺序审批', value: 5, description: '按配置顺序依次审批。' }
-] as const
+const RULE_TYPES = {
+  STATIC: 1,
+  INITIATOR_SELECTED: 2,
+  SUPERIOR: 3
+} as const
 
-const approverTypeOptions = [
-  { label: '用户', value: APPROVER_TYPES.USER },
-  { label: '部门', value: APPROVER_TYPES.DEPT },
-  { label: '角色', value: APPROVER_TYPES.ROLE },
-  { label: '岗位', value: APPROVER_TYPES.POSITION }
-] as const
+const TIMEOUT_ACTIONS = [
+  { label: '仅提醒', value: 1 },
+  { label: '自动通过', value: 2 },
+  { label: '自动转交', value: 3 }
+]
 
-const operatorOptions = ['=', '!=', '>', '>=', '<', '<=', 'contains']
+const { dictItems: approveTypeDictItems } = useDict('wf_approve_type')
+const { dictItems: approverTypeDictItems } = useDict('wf_approver_type')
+const { dictItems: branchOperatorDictItems } = useDict('wf_branch_operator')
+
+const approveTypeDescriptionMap: Record<number, string> = {
+  1: 'workflow.taskConfig.nodes.approveTypeDescription.1',
+  2: 'workflow.taskConfig.nodes.approveTypeDescription.2',
+  3: 'workflow.taskConfig.nodes.approveTypeDescription.3',
+  4: 'workflow.taskConfig.nodes.approveTypeDescription.4',
+  5: 'workflow.taskConfig.nodes.approveTypeDescription.5',
+}
 
 const APPROVER_TYPE_TO_RECEIVER_TYPE: Record<number, string> = {
   [APPROVER_TYPES.USER]: 'USER',
@@ -475,6 +618,7 @@ const RECEIVER_TYPE_TO_APPROVER_TYPE: Record<string, number> = {
 const route = useRoute()
 const router = useRouter()
 const { screenToFlowCoordinate, setCenter } = useVueFlow()
+const { t } = useI18n({ useScope: 'global' })
 
 const designerRootRef = ref<HTMLElement | null>(null)
 const editorContext = ref<WfTaskDraftEditorDTO | null>(null)
@@ -482,8 +626,12 @@ const flowNodes = ref<FlowNode[]>([])
 const flowEdges = ref<FlowEdge[]>([])
 const selectedNodeKey = ref('')
 const selectedEdgeId = ref('')
+const currentStep = ref(0)
 const saving = ref(false)
+const savingForm = ref(false)
 const publishing = ref(false)
+const lowCodeFormContent = ref('')
+const availableFormFields = ref<WfLowCodeFieldMetaDTO[]>([])
 const approverDialogOpen = ref(false)
 const approverDialogIndex = ref<number | null>(null)
 const approverDialogModel = ref<ReceiverModel>({ receiverType: undefined, receiverIds: [] })
@@ -496,7 +644,7 @@ const contextMenu = reactive<ContextMenuState>({
   x: 0,
   y: 0
 })
-const approverLabelMaps = reactive<Record<number, Record<number, string>>>({
+const approverLabelMaps = reactive<Record<number, Record<string, string>>>({
   [APPROVER_TYPES.USER]: {},
   [APPROVER_TYPES.DEPT]: {},
   [APPROVER_TYPES.ROLE]: {},
@@ -524,9 +672,28 @@ const connectionLineStyle = computed(() => ({
 const selectedNode = computed(() => flowNodes.value.find(node => String(node.id) === selectedNodeKey.value) || null)
 const selectedNodeData = computed(() => (selectedNode.value?.data as WorkflowNodeData | undefined) || null)
 const selectedEdgeData = computed(() => flowEdges.value.find(edge => String(edge.id) === selectedEdgeId.value) || null)
+const approveTypeOptions = computed(() =>
+  (approveTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+const approverTypeOptions = computed(() =>
+  (approverTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+const operatorOptions = computed(() =>
+  (branchOperatorDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: String(item.value),
+  })),
+)
 const canDeleteNode = computed(() =>
   Boolean(selectedNodeData.value && [NODE_TYPES.APPROVE, NODE_TYPES.BRANCH].includes(selectedNodeData.value.nodeType))
 )
+const canBackToFormDesign = computed(() => editorContext.value?.formType === 2)
 const selectedOutgoingNodeKeys = computed(() => {
   if (!selectedNodeKey.value) {
     return []
@@ -541,6 +708,7 @@ const branchTargetOptions = computed(() => {
     allowedTargets.has(String(node.id)) && (node.data as WorkflowNodeData).nodeType !== NODE_TYPES.START
   )
 })
+const branchFieldOptions = computed(() => availableFormFields.value)
 const contextMenuNodeCanDelete = computed(() => {
   if (contextMenu.kind !== 'node' || !contextMenu.nodeId) {
     return false
@@ -570,6 +738,40 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value))
 }
 
+function syncAvailableFormFields() {
+  availableFormFields.value = extractLowCodeFieldOptions(lowCodeFormContent.value)
+}
+
+function canEnterApprovalStep() {
+  if (editorContext.value?.formType !== 2) {
+    return true
+  }
+  syncAvailableFormFields()
+  if (!availableFormFields.value.length) {
+    message.warning(t('workflow.taskConfig.nodes.missingLowCodeSchema'))
+    return false
+  }
+  return true
+}
+
+async function goToStep(step: number) {
+  if (step === currentStep.value) {
+    return
+  }
+  if (step === 1 && !canEnterApprovalStep()) {
+    return
+  }
+  if (step === 0) {
+    syncAvailableFormFields()
+    clearSelection()
+  }
+  currentStep.value = step
+}
+
+function handleStepClick(step: number) {
+  void goToStep(step)
+}
+
 function normalizeSelectValue(value: unknown) {
   const nextValue = String(value || '').trim()
   return nextValue || undefined
@@ -587,33 +789,40 @@ function nodeKind(nodeType: number) {
 }
 
 function nodeTypeLabel(nodeType: number) {
-  if (nodeType === NODE_TYPES.START) return '开始'
-  if (nodeType === NODE_TYPES.END) return '结束'
-  if (nodeType === NODE_TYPES.APPROVE) return '审批'
-  return '条件分支'
+  if (nodeType === NODE_TYPES.START) return t('workflow.taskConfig.nodes.startBadge')
+  if (nodeType === NODE_TYPES.END) return t('workflow.taskConfig.nodes.endBadge')
+  if (nodeType === NODE_TYPES.APPROVE) return t('workflow.taskConfig.nodes.approveBadge')
+  return t('workflow.taskConfig.nodes.branchBadge')
 }
 
 function approverTypeLabel(approverType?: number) {
-  return approverTypeOptions.find(item => item.value === approverType)?.label || '审批对象'
+  return approverTypeOptions.value.find(item => item.value === Number(approverType))?.label || t('workflow.taskConfig.nodes.approverObject')
 }
 
 function approveTypeDescription(approveType?: number) {
-  return approveTypeOptions.find(item => item.value === approveType)?.description || '请选择审批类型。'
+  return t(approveTypeDescriptionMap[Number(approveType)] || 'workflow.taskConfig.nodes.selectApproveTypeTip')
 }
 
 function nodeSummary(data: WorkflowNodeData) {
   if (data.nodeType === NODE_TYPES.START) {
-    return '流程入口，不能有入线。'
+    return t('workflow.taskConfig.nodes.startSummary')
   }
   if (data.nodeType === NODE_TYPES.END) {
-    return '流程结束节点，不能有出线。'
+    return t('workflow.taskConfig.nodes.endSummary')
   }
   if (data.nodeType === NODE_TYPES.APPROVE) {
-    const approveType = approveTypeOptions.find(item => item.value === data.approveType)?.label || '未配置'
+    const approveType = approveTypeOptions.value.find(item => item.value === Number(data.approveType))?.label || t('workflow.taskConfig.nodes.notConfigured')
     const approverCount = data.approvers.filter(item => item.approverType != null && item.approverIds?.length).length
-    return `审批类型：${approveType}，审批人来源：${approverCount} 组`
+    return t('workflow.taskConfig.nodes.approveSummary', { approveType, approverCount })
   }
-  return `规则 ${data.branchRules.length} 条，默认去向：${data.defaultBranchNodeKey || '待配置'}`
+  return t('workflow.taskConfig.nodes.branchSummary', {
+    ruleCount: data.branchRules.length,
+    target: data.defaultBranchNodeKey || t('workflow.taskConfig.nodes.toBeConfigured')
+  })
+}
+
+function handleLowCodeSchemaChange() {
+  syncAvailableFormFields()
 }
 
 function createNodeData(node: Partial<WfTaskNodeEditorDTO> & { nodeType: number; nodeKey: string }): WorkflowNodeData {
@@ -626,6 +835,7 @@ function createNodeData(node: Partial<WfTaskNodeEditorDTO> & { nodeType: number;
     canvasY: node.canvasY ?? 0,
     defaultBranchNodeKey: node.defaultBranchNodeKey,
     approvers: clone(node.approvers || []),
+    ruleConfigs: clone(node.ruleConfigs || []),
     branchRules: clone(node.branchRules || [])
   }
 }
@@ -712,9 +922,9 @@ function resolveThemeHost() {
   ) as HTMLElement
 }
 
-function readThemeVar(name: string, fallback: string) {
+function readThemeVar(name: string, fallbackValue: string) {
   const value = getComputedStyle(resolveThemeHost()).getPropertyValue(name).trim()
-  return value || fallback
+  return value || fallbackValue
 }
 
 function refreshFlowThemeColors() {
@@ -753,19 +963,21 @@ function buildDefaultGraph() {
     createFlowNode({
       nodeKey: 'start',
       nodeType: NODE_TYPES.START,
-      nodeName: '开始',
+      nodeName: t('workflow.taskConfig.nodes.startBadge'),
       canvasX: 220,
       canvasY: 120,
       approvers: [],
+      ruleConfigs: [],
       branchRules: []
     }),
     createFlowNode({
       nodeKey: 'end',
       nodeType: NODE_TYPES.END,
-      nodeName: '结束',
+      nodeName: t('workflow.taskConfig.nodes.endBadge'),
       canvasX: 220,
       canvasY: 420,
       approvers: [],
+      ruleConfigs: [],
       branchRules: []
     })
   ]
@@ -784,42 +996,42 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
 
   approverOptionsLoading[approverType] = true
   try {
-    const labelMap: Record<number, string> = {}
+    const labelMap: Record<string, string> = {}
 
     if (approverType === APPROVER_TYPES.USER) {
       const result = await getUserList({ pageNum: 1, pageSize: 1000 })
       const records = Array.isArray(result?.records) ? result.records : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
-          labelMap[id] = item.username ? `${item.username}${item.account ? `(${item.account})` : ''}` : `用户 ${id}`
+        const id = normalizeLongId(item.id)
+        if (id) {
+          labelMap[id] = item.username ? `${item.username}${item.account ? `(${item.account})` : ''}` : t('workflow.taskConfig.nodes.approverFallback.user', { id })
         }
       })
     } else if (approverType === APPROVER_TYPES.DEPT) {
       const result = await listDepartments({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
-          labelMap[id] = item.deptName || `部门 ${id}`
+        const id = normalizeLongId(item.id)
+        if (id) {
+          labelMap[id] = item.deptName || t('workflow.taskConfig.nodes.approverFallback.department', { id })
         }
       })
     } else if (approverType === APPROVER_TYPES.ROLE) {
       const result = await getRoleList({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
-          labelMap[id] = item.roleName || `角色 ${id}`
+        const id = normalizeLongId(item.id)
+        if (id) {
+          labelMap[id] = item.roleName || t('workflow.taskConfig.nodes.approverFallback.role', { id })
         }
       })
     } else if (approverType === APPROVER_TYPES.POSITION) {
       const result = await listPositions({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
-          labelMap[id] = item.positionName || `岗位 ${id}`
+        const id = normalizeLongId(item.id)
+        if (id) {
+          labelMap[id] = item.positionName || t('workflow.taskConfig.nodes.approverFallback.position', { id })
         }
       })
     }
@@ -827,8 +1039,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
     approverLabelMaps[approverType] = labelMap
     approverOptionsLoaded[approverType] = true
   } catch (error) {
-    console.error('加载审批对象名称失败:', error)
-    message.warning(`加载${approverTypeLabel(approverType)}名称失败，将先显示 ID。`)
+    console.error(t('workflow.taskConfig.nodes.loadApproverNamesFailedLog'), error)
+    message.warning(t('workflow.taskConfig.nodes.loadApproverNamesFailed', { type: approverTypeLabel(approverType) }))
   } finally {
     approverOptionsLoading[approverType] = false
   }
@@ -852,7 +1064,7 @@ function approverDisplayLabels(approver: WfNodeApproverDTO) {
   if (names.length <= 3) {
     return names
   }
-  return [...names.slice(0, 3), `+${names.length - 3}`]
+  return [...names.slice(0, 3), t('workflow.taskConfig.nodes.moreCount', { count: names.length - 3 })]
 }
 
 function edgeNodeName(nodeKey: string) {
@@ -898,27 +1110,71 @@ function sanitizeBranchReferences() {
 async function loadDesigner() {
   const currentTaskCode = taskCode()
   if (!currentTaskCode) {
-    message.error('缺少任务编码，无法加载设计器。')
+    message.error(t('workflow.taskConfig.nodes.missingTaskCode'))
     navigateBackToList()
     return
   }
 
   try {
     editorContext.value = await getOrCreateDraftEditor({ taskCode: currentTaskCode }, silentErrorConfig)
+    lowCodeFormContent.value = editorContext.value.formContent || ''
     const graph = await getDraftGraph({ taskCode: currentTaskCode }, silentErrorConfig)
+    syncAvailableFormFields()
     if (graph.nodes?.length) {
       flowNodes.value = graph.nodes.map(createFlowNode)
       flowEdges.value = graph.edges.map(createFlowEdge)
+      availableFormFields.value = graph.availableFormFields?.length ? graph.availableFormFields : availableFormFields.value
+      currentStep.value = editorContext.value.formType === 2 && lowCodeFormContent.value ? 1 : 0
       selectNode(graph.nodes[0]?.nodeKey || '')
       await warmUpApproverLabels(graph.nodes)
     } else {
+      availableFormFields.value = graph.availableFormFields?.length ? graph.availableFormFields : availableFormFields.value
       buildDefaultGraph()
     }
     syncEdgePresentation()
   } catch (error: any) {
-    message.error(error.message || '加载设计器失败。')
+    message.error(error.message || t('workflow.taskConfig.nodes.loadDesignerFailed'))
     navigateBackToList()
   }
+}
+
+async function handleSaveFormStep() {
+  if (!editorContext.value) {
+    return
+  }
+
+  if (!canEnterApprovalStep()) {
+    return
+  }
+
+  try {
+    savingForm.value = true
+    editorContext.value = await saveDraftBaseInfo({
+      id: editorContext.value.draftId,
+      taskName: editorContext.value.taskName,
+      taskCode: editorContext.value.taskCode,
+      categoryCode: editorContext.value.categoryCode,
+      interpreterBean: editorContext.value.interpreterBean,
+      formType: editorContext.value.formType,
+      formPath: editorContext.value.formPath,
+      formContent: editorContext.value.formType === 2 ? lowCodeFormContent.value : editorContext.value.formContent,
+      status: editorContext.value.status,
+      remark: editorContext.value.remark
+    }, silentErrorConfig)
+    message.success(t('workflow.taskConfig.nodes.steps.formSaved'))
+    await goToStep(1)
+  } catch (error: any) {
+    message.error(error.message || t('workflow.taskConfig.list.saveDraftBaseInfoFailed'))
+  } finally {
+    savingForm.value = false
+  }
+}
+
+function handleBackToFormDesign() {
+  if (!canBackToFormDesign.value) {
+    return
+  }
+  void goToStep(0)
 }
 
 function handleDragStart(event: DragEvent, nodeType: number) {
@@ -935,11 +1191,12 @@ function buildNewNode(nodeType: number, x: number, y: number) {
   return createFlowNode({
     nodeKey,
     nodeType,
-    nodeName: nodeType === NODE_TYPES.APPROVE ? '审批节点' : '条件分支',
+    nodeName: nodeType === NODE_TYPES.APPROVE ? t('workflow.taskConfig.nodes.approveTitle') : t('workflow.taskConfig.nodes.branchTitle'),
     canvasX: x,
     canvasY: y,
     approveType: nodeType === NODE_TYPES.APPROVE ? 2 : undefined,
     approvers: nodeType === NODE_TYPES.APPROVE ? [{ approverType: APPROVER_TYPES.USER, approverIds: [] }] : [],
+    ruleConfigs: nodeType === NODE_TYPES.APPROVE ? [buildDefaultRuleConfig()] : [],
     branchRules: nodeType === NODE_TYPES.BRANCH ? [] : []
   })
 }
@@ -973,18 +1230,18 @@ function handleConnect(connection: Connection) {
     return
   }
   if (connection.target === 'start') {
-    message.warning('开始节点不能有入线。')
+    message.warning(t('workflow.taskConfig.nodes.startNoIncoming'))
     return
   }
   if (connection.source === 'end') {
-    message.warning('结束节点不能有出线。')
+    message.warning(t('workflow.taskConfig.nodes.endNoOutgoing'))
     return
   }
 
   const sourceNodeData = flowNodes.value.find(node => String(node.id) === connection.source)?.data as WorkflowNodeData | undefined
   const sourceOutgoingCount = flowEdges.value.filter(edge => String(edge.source) === connection.source).length
   if (sourceNodeData && sourceNodeData.nodeType !== NODE_TYPES.BRANCH && sourceOutgoingCount >= 1) {
-    message.warning('当前节点只能保留一条出线。条件分支节点才允许多条出线。')
+    message.warning(t('workflow.taskConfig.nodes.singleOutgoingOnly'))
     return
   }
 
@@ -1101,9 +1358,9 @@ function addApprover() {
   if (!current) {
     return
   }
-  updateSelectedNodeData({
-    approvers: [...current.approvers, { approverType: APPROVER_TYPES.USER, approverIds: [] }]
-  })
+  const approvers = [...(ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers), { approverType: APPROVER_TYPES.USER, approverIds: [] }]
+  updateSelectedNodeData({ approvers })
+  updatePrimaryRuleApprovers(approvers)
 }
 
 function updateApprover(index: number, patch: Partial<WfNodeApproverDTO>) {
@@ -1112,12 +1369,13 @@ function updateApprover(index: number, patch: Partial<WfNodeApproverDTO>) {
     return
   }
 
-  const approvers = clone(current.approvers)
+  const approvers = clone(ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers)
   approvers[index] = {
     ...approvers[index],
     ...patch
   }
   updateSelectedNodeData({ approvers })
+  updatePrimaryRuleApprovers(approvers)
 }
 
 function updateApproverType(index: number, approverType: number) {
@@ -1130,9 +1388,9 @@ function removeApprover(index: number) {
   if (!current) {
     return
   }
-  updateSelectedNodeData({
-    approvers: current.approvers.filter((_, itemIndex) => itemIndex !== index)
-  })
+  const approvers = (ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers).filter((_, itemIndex) => itemIndex !== index)
+  updateSelectedNodeData({ approvers })
+  updatePrimaryRuleApprovers(approvers)
 }
 
 function openApproverDialog(index: number) {
@@ -1140,7 +1398,7 @@ function openApproverDialog(index: number) {
   if (!current) {
     return
   }
-  const approver = current.approvers[index]
+  const approver = (ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers)[index]
   approverDialogIndex.value = index
   approverDialogModel.value = buildApproverDialogModel(approver)
   approverDialogOpen.value = true
@@ -1161,15 +1419,15 @@ function handleApproverDialogOk() {
 
   const approverType = RECEIVER_TYPE_TO_APPROVER_TYPE[approverDialogModel.value.receiverType || '']
   const approverIds = approverDialogModel.value.receiverIds
-    .map(item => Number(item))
-    .filter(item => Number.isFinite(item) && item > 0)
+    .map(item => normalizeLongId(item))
+    .filter(Boolean)
 
   if (!approverType) {
-    message.warning('请先选择审批人来源类型。')
+    message.warning(t('workflow.taskConfig.nodes.selectApproverTypeFirst'))
     return
   }
   if (!approverIds.length) {
-    message.warning('请至少选择一个审批对象。')
+    message.warning(t('workflow.taskConfig.nodes.selectAtLeastOneApprover'))
     return
   }
 
@@ -1204,6 +1462,68 @@ function updateBranchRule(index: number, patch: Partial<WfBranchRuleDTO>) {
   updateSelectedNodeData({ branchRules })
 }
 
+function buildDefaultRuleConfig(): WfTaskNodeRuleDTO {
+  return {
+    ruleName: '默认规则',
+    ruleType: RULE_TYPES.STATIC,
+    approveMode: 2,
+    approvalThreshold: undefined,
+    sortOrder: 1,
+    timeoutHours: undefined,
+    timeoutAction: undefined,
+    allowInitiatorSelect: false,
+    superiorLevel: 1,
+    allowAddSign: false,
+    allowTransfer: false,
+    allowDelegate: false,
+    allowRecall: true,
+    fallbackApproverIds: [],
+    approvers: [{ approverType: APPROVER_TYPES.USER, approverIds: [] }],
+    extraConfig: ''
+  }
+}
+
+function ensureNodeRuleConfigs(current?: WorkflowNodeData | null) {
+  if (!current) {
+    return []
+  }
+  if (current.ruleConfigs?.length) {
+    return current.ruleConfigs
+  }
+  if (current.approvers?.length) {
+    return [{
+      ...buildDefaultRuleConfig(),
+      approvers: clone(current.approvers)
+    }]
+  }
+  return [buildDefaultRuleConfig()]
+}
+
+function updateRuleConfigs(ruleConfigs: WfTaskNodeRuleDTO[]) {
+  updateSelectedNodeData({ ruleConfigs, approvers: clone(ruleConfigs[0]?.approvers || []) })
+}
+
+function updatePrimaryRule(patch: Partial<WfTaskNodeRuleDTO>) {
+  const current = selectedNodeData.value
+  if (!current) {
+    return
+  }
+  const [firstRule, ...rest] = ensureNodeRuleConfigs(current)
+  updateRuleConfigs([{ ...firstRule, ...patch }, ...rest])
+}
+
+function updatePrimaryRuleApprovers(approvers: WfNodeApproverDTO[]) {
+  updatePrimaryRule({ approvers })
+}
+
+function handleBranchFieldChange(index: number, fieldKey: string) {
+  const field = branchFieldOptions.value.find(item => item.key === fieldKey)
+  updateBranchRule(index, {
+    fieldKey,
+    fieldLabel: field?.label || fieldKey
+  })
+}
+
 function removeBranchRule(index: number) {
   const current = selectedNodeData.value
   if (!current) {
@@ -1218,7 +1538,7 @@ function deleteNode(nodeKey: string) {
   const node = flowNodes.value.find(item => String(item.id) === nodeKey)
   const nodeType = (node?.data as WorkflowNodeData | undefined)?.nodeType
   if (!node || ![NODE_TYPES.APPROVE, NODE_TYPES.BRANCH].includes(nodeType || -1)) {
-    message.warning('开始和结束节点为系统内置节点，不能删除。')
+    message.warning(t('workflow.taskConfig.nodes.systemNodesCannotDelete'))
     return
   }
 
@@ -1261,7 +1581,7 @@ async function focusNode(nodeKey: string) {
   try {
     await setCenter(node.position.x + width / 2, node.position.y + height / 2, { duration: 260, zoom: 1 })
   } catch (error) {
-    console.warn('聚焦节点失败:', error)
+    console.warn(t('workflow.taskConfig.nodes.focusNodeFailedLog'), error)
   }
 }
 
@@ -1311,12 +1631,13 @@ function buildSavePayload(): WfTaskNodeEditorDTO[] {
       canvasY: Number(node.position.y),
       defaultBranchNodeKey: data.defaultBranchNodeKey,
       approvers: clone(data.approvers),
+      ruleConfigs: clone(data.ruleConfigs || []),
       branchRules: clone(data.branchRules)
     }
   })
 }
 
-async function handleSave() {
+async function handleSave(showSuccessMessage = true) {
   if (!editorContext.value) {
     return false
   }
@@ -1330,11 +1651,10 @@ async function handleSave() {
         sourceNodeKey: String(edge.source),
         targetNodeKey: String(edge.target)
       }))
-    }, silentErrorConfig)
-    message.success('草稿已保存。')
+    }, { showSuccessMessage })
     return true
   } catch (error: any) {
-    message.error(error.message || '保存草稿失败。')
+    console.error(t('workflow.taskConfig.nodes.saveDraftFailedLog'), error)
     return false
   } finally {
     saving.value = false
@@ -1347,15 +1667,15 @@ async function handlePublish() {
   }
   try {
     publishing.value = true
-    const saved = await handleSave()
+    const saved = await handleSave(false)
     if (!saved) {
       return
     }
-    await publishDraft({ taskCode: editorContext.value.taskCode }, silentErrorConfig)
-    message.success('发布成功。')
+    await publishDraft({ taskCode: editorContext.value.taskCode })
     navigateBackToList()
   } catch (error: any) {
-    message.error(error.message || '发布失败。')
+    console.error(t('workflow.taskConfig.nodes.publishFailedLog'), error)
+    message.error(error.message || t('workflow.taskConfig.nodes.publishFailed'))
   } finally {
     publishing.value = false
   }
@@ -1450,6 +1770,8 @@ onBeforeUnmount(() => {
 }
 
 .designer-topbar,
+.designer-steps,
+.designer-form-stage,
 .palette-panel,
 .config-panel,
 .canvas-panel {
@@ -1465,6 +1787,20 @@ onBeforeUnmount(() => {
   gap: 16px;
   align-items: center;
   padding: 22px 24px;
+}
+
+.designer-steps {
+  padding: 20px 24px;
+}
+
+.designer-form-stage {
+  padding: 24px;
+}
+
+.designer-stage-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .designer-topbar__back {

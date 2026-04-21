@@ -1,13 +1,12 @@
 <template>
   <div class="message-list-page">
-    <!-- 查询表单 -->
     <a-card :bordered="false" class="search-card">
       <a-form layout="inline" :model="searchForm">
         <a-form-item label="消息类型">
           <a-select v-model:value="searchForm.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
             <a-select-option value="NOTICE">通知</a-select-option>
-            <a-select-option value="WARNING">警告</a-select-option>
-            <a-select-option value="ALARM">报警</a-select-option>
+            <a-select-option value="WARNING">预警</a-select-option>
+            <a-select-option value="ALARM">告警</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="状态">
@@ -38,7 +37,6 @@
       </a-form>
     </a-card>
 
-    <!-- 数据列表 -->
     <a-card :bordered="false" class="list-card">
       <a-list
         :loading="loading"
@@ -91,7 +89,6 @@
       </a-list>
     </a-card>
 
-    <!-- 消息详情弹窗 -->
     <a-modal
       v-model:open="detailVisible"
       title="消息详情"
@@ -130,34 +127,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { message } from 'ant-design-vue'
+import { onMounted, reactive, ref } from 'vue'
 import {
   SearchOutlined,
   ReloadOutlined,
   CheckOutlined,
   BellOutlined,
   WarningOutlined,
-  AlertOutlined
+  AlertOutlined,
 } from '@ant-design/icons-vue'
 import {
-  pageMessage,
+  markAllMessageRead,
   markMessageRead,
-  markAllMessageRead
+  pageMessage,
 } from '@/api/message'
 
-// 查询表单
 const searchForm = reactive({
   messageType: undefined,
   platform: 'INTERNAL',
   status: undefined,
   title: '',
   pageNum: 1,
-  pageSize: 10
+  pageSize: 10,
 })
 
-// 列表数据
-const dataSource = ref([])
+const dataSource = ref<any[]>([])
 const loading = ref(false)
 const pagination = reactive({
   current: 1,
@@ -170,133 +164,117 @@ const pagination = reactive({
     pagination.current = page
     pagination.pageSize = pageSize
     loadData()
-  }
+  },
 })
 
-// 详情弹窗
 const detailVisible = ref(false)
 const currentMessage = ref<any>(null)
 
-// 获取消息类型颜色
-const getMessageTypeColor = (type: string) => {
+function getMessageTypeColor(type: string) {
   const colorMap: Record<string, string> = {
     NOTICE: '#1890ff',
     WARNING: '#faad14',
-    ALARM: '#ff4d4f'
+    ALARM: '#ff4d4f',
   }
   return colorMap[type] || '#1890ff'
 }
 
-// 获取消息类型文本
-const getMessageTypeText = (type: string) => {
+function getMessageTypeText(type: string) {
   const textMap: Record<string, string> = {
     NOTICE: '通知',
-    WARNING: '警告',
-    ALARM: '报警'
+    WARNING: '预警',
+    ALARM: '告警',
   }
   return textMap[type] || type
 }
 
-// 获取消息类型图标
-const getMessageTypeIcon = (type: string) => {
+function getMessageTypeIcon(type: string) {
   const iconMap: Record<string, any> = {
     NOTICE: BellOutlined,
     WARNING: WarningOutlined,
-    ALARM: AlertOutlined
+    ALARM: AlertOutlined,
   }
   return iconMap[type] || BellOutlined
 }
 
-// 查询数据
-const loadData = async () => {
+async function loadData() {
   loading.value = true
   try {
     const params = {
       ...searchForm,
       pageNum: pagination.current,
-      pageSize: pagination.pageSize
+      pageSize: pagination.pageSize,
     }
-    const res = await pageMessage(params)
+    const res: any = await pageMessage(params)
     dataSource.value = res.records || []
     pagination.total = res.total || 0
   } catch (error) {
-    console.error('查询失败:', error)
+    console.error('加载消息列表失败', error)
   } finally {
     loading.value = false
   }
 }
 
-// 查询
-const handleSearch = () => {
+function handleSearch() {
   pagination.current = 1
   loadData()
 }
 
-// 重置
-const handleReset = () => {
+function handleReset() {
   Object.assign(searchForm, {
     messageType: undefined,
     status: undefined,
-    title: ''
+    title: '',
   })
   handleSearch()
 }
 
-// 分页变化
-const handlePageChange = (page: number, pageSize: number) => {
+function handlePageChange(page: number, pageSize: number) {
   pagination.current = page
   pagination.pageSize = pageSize
   loadData()
 }
 
-// 列表项点击
-const handleItemClick = async (item: any) => {
+async function handleItemClick(item: any) {
   currentMessage.value = item
   detailVisible.value = true
-  
-  // 如果是未读消息，标记为已读
+
   if (item.status === 0) {
     try {
-      await markMessageRead(item.id)
+      await markMessageRead(item.id, { showSuccessMessage: false })
       item.status = 1
       item.readTime = new Date().toLocaleString()
     } catch (error) {
-      console.error('标记已读失败:', error)
+      console.error('标记消息已读失败', error)
     }
   }
 }
 
-// 标记已读
-const handleMarkRead = async (item: any) => {
+async function handleMarkRead(item: any) {
   try {
     await markMessageRead(item.id)
-    message.success('标记成功')
     item.status = 1
     item.readTime = new Date().toLocaleString()
   } catch (error) {
-    message.error('标记失败')
+    console.error('标记已读失败', error)
   }
 }
 
-// 全部已读
-const handleMarkAllRead = async () => {
+async function handleMarkAllRead() {
   try {
     await markAllMessageRead()
-    message.success('全部标记成功')
     loadData()
   } catch (error) {
-    message.error('标记失败')
+    console.error('全部标记已读失败', error)
   }
 }
 
-// 跳转链接
-const handleGoToLink = (item: any) => {
+function handleGoToLink(item: any) {
   if (item.linkUrl) {
     window.open(item.linkUrl, '_blank')
   }
 }
 
-// 初始化
 onMounted(() => {
   loadData()
 })
@@ -354,6 +332,3 @@ onMounted(() => {
   }
 }
 </style>
-
-
-

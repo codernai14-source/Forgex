@@ -1,5 +1,5 @@
 /**
- * 编码规则翻译 - 中文
+ * 编码规则 - 中文
  */
 export default {
   pageTitle: '编码规则管理',
@@ -8,7 +8,7 @@ export default {
   businessType: '业务类型',
   description: '规则描述',
   status: '状态',
-  exampleCode: '编码示例',
+  exampleCode: '示例编码',
   createTime: '创建时间',
   updateTime: '更新时间',
   remark: '备注',
@@ -16,16 +16,18 @@ export default {
   detailSegment: '段',
   segmentType: '段类型',
   segmentValue: '段值',
-  dateFormat: '日期格式',
+  date表单at: '日期格式',
   seqStart: '起始值',
   seqLength: '长度',
   seqResetType: '重置方式',
+
   ruleNamePlaceholder: '请输入规则名称',
-  ruleCodePlaceholder: '请输入规则编码（英文字母和数字）',
-  businessTypePlaceholder: '请输入业务类型（如：ORDER、INVOICE）',
+  ruleCodePlaceholder: '请输入规则编码（字母和数字）',
+  businessTypePlaceholder: '请输入业务类型（例如：ORDER、INVOICE）',
   descriptionPlaceholder: '请输入规则描述',
   remarkPlaceholder: '请输入备注',
-  dateFormatPlaceholder: '请输入日期格式（如：YYYYMMDD）',
+  date表单atPlaceholder: '请输入日期格式（例如：YYYYMMDD）',
+
   ruleNameRequired: '请输入规则名称',
   ruleNameMaxLength: '规则名称最多 50 个字符',
   ruleCodeRequired: '请输入规则编码',
@@ -33,11 +35,12 @@ export default {
   ruleCodePattern: '规则编码只能包含字母、数字和下划线',
   segmentTypeRequired: '请选择段类型',
   segmentValueRequired: '请输入段值',
-  dateFormatRequired: '请输入日期格式',
+  date表单atRequired: '请输入日期格式',
   seqStartRequired: '请输入起始值',
-  seqLengthRequired: '请输入序列号长度',
+  seqLengthRequired: '请输入序列长度',
   detailRequired: '请至少添加一条规则明细',
   detailOrderError: '规则明细序号必须连续',
+
   statusActive: '启用',
   statusInactive: '禁用',
   segmentTypeFixed: '固定值',
@@ -48,6 +51,7 @@ export default {
   seqResetYearly: '按年重置',
   seqResetMonthly: '按月重置',
   seqResetDaily: '按日重置',
+
   add: '新增',
   edit: '编辑',
   delete: '删除',
@@ -58,8 +62,9 @@ export default {
   generateSuccess: '生成编码成功',
   generateFailed: '生成编码失败',
   updateSuccess: '更新成功',
-  addSuccess: '添加成功',
+  addSuccess: '新增成功',
   loadDetailFailed: '加载详情失败',
+
   message: {
     deleteConfirm: '确定要删除该编码规则吗？',
     batchDeleteConfirm: '确定要批量删除选中的编码规则吗？',

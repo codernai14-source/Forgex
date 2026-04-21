@@ -18,9 +18,6 @@ import lombok.Data;
 
 /**
  * 审批处理参数。
- * <p>
- * 用于前端提交审批同意/驳回请求。
- * </p>
  *
  * @author coder_nai@163.com
  * @version 1.0.0
@@ -30,17 +27,13 @@ import lombok.Data;
 public class WfExecutionApproveParam {
 
     /**
-     * 审批执行 ID
+     * 审批执行ID
      */
-    @NotNull(message = "执行 ID 不能为空")
+    @NotNull(message = "执行ID不能为空")
     private Long executionId;
 
     /**
-     * 审批状态
-     * <p>
-     * 1=同意<br>
-     * 2=不同意
-     * </p>
+     * 审批状态，1=同意，2=驳回
      */
     @NotNull(message = "审批状态不能为空")
     private Integer approveStatus;
@@ -51,12 +44,22 @@ public class WfExecutionApproveParam {
     private String comment;
 
     /**
-     * 驳回类型
-     * <p>
-     * 1=驳回任务<br>
-     * 2=返回上一节点
-     * </p>
-     * （不同意时必填）
+     * 驳回类型，1=驳回任务，2=返回上一节点
      */
     private Integer rejectType;
+
+    /**
+     * 当前审批实例ID
+     */
+    private Long approvalInstanceId;
+
+    /**
+     * 动作类型
+     */
+    private Integer actionType;
+
+    /**
+     * 目标审批人ID
+     */
+    private Long targetApproverId;
 }

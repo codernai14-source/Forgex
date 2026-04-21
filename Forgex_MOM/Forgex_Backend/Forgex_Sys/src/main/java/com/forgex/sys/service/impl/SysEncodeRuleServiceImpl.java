@@ -18,7 +18,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.dynamic.datasource.annotation.DS;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.common.util.RedisHelper;
@@ -34,6 +35,7 @@ import com.forgex.sys.domain.vo.EncodeRuleDetailVO;
 import com.forgex.sys.mapper.SysEncodeRuleMapper;
 import com.forgex.sys.mapper.SysEncodeRuleDetailMapper;
 import com.forgex.sys.service.ISysEncodeRuleService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -72,7 +74,7 @@ import java.util.stream.Collectors;
  *   <li>支持字典翻译，返回前端友好的展示数据</li>
  * </ul>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see ISysEncodeRuleService
@@ -263,7 +265,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     public void deleteEncodeRule(Long id) {
         SysEncodeRule rule = this.getById(id);
         if (rule == null) {
-            throw new BusinessException("编码规则不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
         
         // 删除明细数据
@@ -288,7 +290,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteEncodeRules(List<Long> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new BusinessException("删除的 ID 列表不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.DELETE_IDS_REQUIRED);
         }
         
         for (Long id : ids) {
@@ -315,7 +317,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         TenantContextIgnore.setIgnore(true);
         try {
             if (!StringUtils.hasText(ruleCode)) {
-                throw new BusinessException("规则代码不能为空");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EMPTY);
             }
             
             // 查询编码规则
@@ -326,7 +328,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             
             if (rule == null) {
                 log.warn("编码规则不存在或已禁用：{}", ruleCode);
-                throw new BusinessException("编码规则不存在或已禁用：" + ruleCode);
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND_OR_DISABLED, ruleCode);
             }
             
             // 构建 Redis Key
@@ -382,7 +384,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     public void enableEncodeRule(Long id) {
         SysEncodeRule rule = this.getById(id);
         if (rule == null) {
-            throw new BusinessException("编码规则不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
         
         rule.setIsEnabled(true);
@@ -402,7 +404,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     public void disableEncodeRule(Long id) {
         SysEncodeRule rule = this.getById(id);
         if (rule == null) {
-            throw new BusinessException("编码规则不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
         
         rule.setIsEnabled(false);
@@ -466,7 +468,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      */
     private void validateRuleCodeUnique(String ruleCode, Long excludeId) {
         if (!StringUtils.hasText(ruleCode)) {
-            throw new BusinessException("规则代码不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EMPTY);
         }
         
         LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
@@ -479,7 +481,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         
         Long count = this.count(wrapper);
         if (count > 0) {
-            throw new BusinessException("规则代码已存在：" + ruleCode);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EXISTS, ruleCode);
         }
     }
     

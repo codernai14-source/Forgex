@@ -72,6 +72,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
      * 站内消息平台标识。
      */
     private static final String PLATFORM_INTERNAL = "INTERNAL";
+    private static final String CATEGORY_SYSTEM = "SYSTEM";
 
     /**
      * 默认消息类型。
@@ -466,6 +467,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         message.setScope("INTERNAL");
         message.setTemplateCode(template.getTemplateCode());
         message.setMessageType(template.getMessageType() != null ? template.getMessageType() : DEFAULT_MESSAGE_TYPE);
+        message.setCategory(CATEGORY_SYSTEM);
         message.setPlatform(content.getPlatform());
         message.setTitle(title);
         message.setContent(body);
@@ -545,6 +547,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
         vo.setReceiverUserId(msg.getReceiverUserId());
         vo.setScope(msg.getScope());
         vo.setMessageType(msg.getMessageType());
+        vo.setCategory(msg.getCategory());
         vo.setType(msg.getMessageType());
         vo.setPlatform(msg.getPlatform());
         vo.setSenderName(msg.getSenderName());

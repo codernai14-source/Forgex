@@ -10,7 +10,7 @@
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :fallback-config="fallbackConfig"
+      :降级方案-config="降级方案Config"
       :row-selection="{
         selectedRowKeys,
         onChange: handleSelectionChange
@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Modal, message } from 'ant-design-vue'
+import { Modal } from 'ant-design-vue'
 import type { FxTableConfig } from '@/api/system/tableConfig'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { kickoutOnlineUser, listOnlineUsers } from '@/api/system/online'
@@ -93,7 +93,7 @@ const terminalTabs = computed(() => [
   { key: 'THIRD_PARTY', label: `第三方 (${tabCounts.value.THIRD_PARTY || 0})` },
 ])
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
+const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'OnlineUserTable',
   tableName: '在线用户',
   tableType: 'NORMAL',
@@ -105,7 +105,7 @@ const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
     { field: 'loginTerminal', title: '登录端', width: 120, align: 'center', dictCode: 'loginTerminal' },
     { field: 'tenantName', title: '租户', width: 180, align: 'left' },
     { field: 'lastLoginTime', title: '最后登录时间', width: 180, align: 'center' },
-    { field: 'lastLoginIp', title: '最后登录IP', width: 150, align: 'left' },
+    { field: 'lastLoginIp', title: '最后登录 IP', width: 150, align: 'left' },
     { field: 'lastLoginRegion', title: '登录地区', width: 160, align: 'left' },
     { field: 'ttlSeconds', title: '会话剩余时长', width: 140, align: 'center' },
     { field: 'action', title: '操作', width: 120, align: 'center', fixed: 'right' },
@@ -198,13 +198,12 @@ function handleTerminalChange() {
 function handleKickout(token: string) {
   if (!token) return
   Modal.confirm({
-    title: '确认强制下线？',
-    content: '该操作会让对应会话立即失效。',
+    title: '确认强制下线',
+    content: '该操作会使对应会话立即失效。',
     okText: '确定',
     cancelText: '取消',
     onOk: async () => {
       await kickoutOnlineUser({ token })
-      message.success('已强制下线')
       await tableRef.value?.refresh?.()
       await fetchTabCounts(currentQuery.value)
     },
@@ -214,13 +213,12 @@ function handleKickout(token: string) {
 function handleBatchKickout() {
   if (selectedRowKeys.value.length === 0) return
   Modal.confirm({
-    title: '确认批量强制下线？',
+    title: '确认批量强制下线',
     content: `将对选中的 ${selectedRowKeys.value.length} 个会话执行强制下线。`,
     okText: '确定',
     cancelText: '取消',
     onOk: async () => {
-      await Promise.all(selectedRowKeys.value.map((token) => kickoutOnlineUser({ token })))
-      message.success('批量强制下线成功')
+      await Promise.all(selectedRowKeys.value.map((token) => kickoutOnlineUser({ token }, { showSuccessMessage: false })))
       selectedRowKeys.value = []
       await tableRef.value?.refresh?.()
       await fetchTabCounts(currentQuery.value)
@@ -231,7 +229,7 @@ function handleBatchKickout() {
 
 <style scoped lang="less">
 .online-user-container {
-  /* 移除 padding: 20px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
+  /* 去掉 padding: 20px，当前由 MainLayout 的 .fx-content-inner 统一处理 */
   display: flex;
   flex-direction: column;
   height: 100%;

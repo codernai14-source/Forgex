@@ -9,7 +9,7 @@
       <a-col :span="12">
         <a-form-item label="政治面貌">
           <a-select
-            v-model:value="profileData.politicalStatus"
+            v-model:value="profileData.political状态"
             placeholder="请选择政治面貌"
             allow-clear
           >
@@ -75,10 +75,10 @@
     
     <a-row :gutter="16">
       <a-col :span="12">
-        <a-form-item label="引荐人">
+        <a-form-item label="介绍人">
           <a-input
             v-model:value="profileData.referrer"
-            placeholder="请输入引荐人"
+            placeholder="请输入介绍人"
           />
         </a-form-item>
       </a-col>
@@ -86,7 +86,7 @@
     
     <!-- 工作经历 -->
     <a-divider orientation="left">工作经历</a-divider>
-    
+
     <div
       v-for="(history, index) in profileData.workHistory"
       :key="index"
@@ -217,7 +217,7 @@ function removeWorkHistory(index: number) {
 }
 
 /**
- * 暴露表单验证方法
+ * 暴露表单校验方法
  */
 defineExpose({
   validate: () => formRef.value?.validate(),
@@ -229,8 +229,9 @@ defineExpose({
 .work-history-item {
   padding: 16px;
   margin-bottom: 16px;
-  background-color: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #fafafa));
+  border-radius: var(--fx-radius, 6px);
+  border: 1px solid var(--fx-border-color, #f0f0f0);
+  box-shadow: var(--fx-shadow-secondary, 0 1px 2px rgba(0, 0, 0, 0.08));
 }
 </style>

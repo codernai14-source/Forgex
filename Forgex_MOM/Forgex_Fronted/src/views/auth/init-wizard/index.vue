@@ -37,6 +37,8 @@
                 <label><input type="radio" value="Argon2" v-model="security.passwordStore" /> Argon2</label>
                 <label><input type="radio" value="scrypt" v-model="security.passwordStore" /> scrypt</label>
                 <label><input type="radio" value="PBKDF2" v-model="security.passwordStore" /> PBKDF2</label>
+                <label><input type="radio" value="aes" v-model="security.passwordStore" /> AES-256-GCM</label>
+                <label><input type="radio" value="rsa" v-model="security.passwordStore" /> RSA-2048</label>
               </div>
             </div>
           </div>
@@ -285,8 +287,8 @@ function saveEdit() {
 async function onLogoUpload(file: any) {
   try {
     const res = await uploadFile(file)
-    if (res && res.url) {
-      editModel.logo = res.url
+    if (typeof res === 'string') {
+      editModel.logo = res
     }
   } catch (e) {
     message.error('上传失败')

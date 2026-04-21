@@ -1,8 +1,8 @@
 <template>
   <div class="personal-homepage-designer">
-    <!-- Hero 区：根据模式显示不同内容 -->
+    <!-- Hero 鍖猴細鏍规嵁妯″紡鏄剧ず涓嶅悓鍐呭 -->
     <div class="designer-hero">
-      <!-- 普通模式：显示用户摘要信息 -->
+      <!-- 鏅€氭ā寮忥細鏄剧ず鐢ㄦ埛鎽樿淇℃伅 -->
       <div v-if="mode === 'current'" class="designer-hero__user">
         <div class="designer-hero__avatar">
           <a-avatar :size="64" :src="heroAvatarSrc || undefined">
@@ -26,7 +26,7 @@
           </div>
         </div>
       </div>
-      <!-- 管理模式：显示标题和描述 -->
+      <!-- 绠＄悊妯″紡锛氭樉绀烘爣棰樺拰鎻忚堪 -->
       <div v-else>
         <p class="designer-hero__eyebrow">{{ $t('personalHomepage.hero.eyebrow') }}</p>
         <h2 class="designer-hero__title">{{ resolvedTitle }}</h2>
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <!-- 工具栏 -->
+    <!-- 宸ュ叿鏍?-->
     <div class="designer-toolbar">
       <a-space wrap>
         <a-select
@@ -61,7 +61,7 @@
           </template>
           {{ $t('personalHomepage.toolbar.refresh') }}
         </a-button>
-        <!-- 仅在编辑态显示以下按钮 -->
+        <!-- 浠呭湪缂栬緫鎬佹樉绀轰互涓嬫寜閽?-->
         <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
           <template #icon>
             <UndoOutlined />
@@ -134,7 +134,10 @@
                   </div>
                 </header>
 
-                <div class="widget-card__body">
+                <div
+                  class="widget-card__body"
+                  :class="{ 'widget-card__body--scrollable': item.i === 'commonMenus' || item.i === 'myFavorites' }"
+                >
                   <template v-if="item.i === 'commonMenus'">
                     <div v-if="commonMenus.length" class="menu-grid">
                       <button
@@ -144,11 +147,52 @@
                         class="menu-grid__item"
                         @click="openMenu(menuItem.path)"
                       >
-                        <span class="menu-grid__title">{{ menuItem.title }}</span>
-                        <span class="menu-grid__module">{{ menuItem.moduleName }}</span>
+                        <span
+                          class="menu-grid__favorite-btn"
+                          :title="isFavoriteMenu(menuItem.path) ? t('personalHomepage.components.myFavorites.remove') : t('personalHomepage.components.myFavorites.add')"
+                          @click.stop.prevent="handleToggleFavorite(menuItem)"
+                        >
+                          <StarFilled v-if="isFavoriteMenu(menuItem.path)" />
+                          <StarOutlined v-else />
+                        </span>
+                        <span class="menu-grid__icon-wrap">
+                          <component :is="getMenuIcon(menuItem.icon)" class="menu-grid__icon" />
+                        </span>
+                        <span class="menu-grid__content">
+                          <span class="menu-grid__title">{{ menuItem.title }}</span>
+                          <span class="menu-grid__module">{{ menuItem.moduleName }}</span>
+                        </span>
                       </button>
                     </div>
                     <a-empty v-else :description="getWidgetEmptyText('commonMenus')" />
+                  </template>
+
+                  <template v-else-if="item.i === 'myFavorites'">
+                    <div v-if="favoriteMenus.length" class="menu-grid">
+                      <button
+                        v-for="menuItem in favoriteMenus"
+                        :key="menuItem.path"
+                        type="button"
+                        class="menu-grid__item menu-grid__item--favorite"
+                        @click="openMenu(menuItem.path)"
+                      >
+                        <span
+                          class="menu-grid__favorite-btn menu-grid__favorite-btn--active"
+                          :title="t('personalHomepage.components.myFavorites.remove')"
+                          @click.stop.prevent="handleToggleFavorite(menuItem)"
+                        >
+                          <StarFilled />
+                        </span>
+                        <span class="menu-grid__icon-wrap">
+                          <component :is="getMenuIcon(menuItem.icon)" class="menu-grid__icon" />
+                        </span>
+                        <span class="menu-grid__content">
+                          <span class="menu-grid__title">{{ menuItem.title }}</span>
+                          <span class="menu-grid__module">{{ menuItem.moduleName }}</span>
+                        </span>
+                      </button>
+                    </div>
+                    <a-empty v-else :description="getWidgetEmptyText('myFavorites')" />
                   </template>
 
                   <template v-else-if="item.i === 'pendingApprovals'">
@@ -238,7 +282,7 @@
         </a-spin>
       </section>
 
-      <!-- 配置面板：仅在编辑态显示 -->
+      <!-- 閰嶇疆闈㈡澘锛氫粎鍦ㄧ紪杈戞€佹樉绀?-->
       <aside v-if="editMode" class="designer-panel">
         <div class="designer-panel__card">
           <div class="designer-panel__header">
@@ -269,8 +313,8 @@
                   <a-input-number
                     :value="toNumber(widget.params.limit, defaultLimit(widget.key))"
                     :min="0"
-                    :max="20"
-                    :disabled="!widget.visible"
+                    :max="getWidgetLimitMax(widget.key)"
+                    :disabled="!widget.visible || isFixedLimitWidget(widget.key)"
                     @change="updateWidgetParam(widget.key, 'limit', $event)"
                   />
                 </label>
@@ -278,7 +322,7 @@
                   <span>{{ $t('personalHomepage.widget.showMore') }}</span>
                   <a-switch
                     :checked="toBoolean(widget.params.showMore, defaultShowMore(widget.key))"
-                    :disabled="!widget.visible || !hasMoreAction(widget.key)"
+                    :disabled="!widget.visible || !hasMoreAction(widget.key) || isFixedMoreActionWidget(widget.key)"
                     @change="updateWidgetParam(widget.key, 'showMore', $event)"
                   />
                 </label>
@@ -293,9 +337,9 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { message } from 'ant-design-vue'
 import {
   AppstoreOutlined,
   BellOutlined,
@@ -307,31 +351,37 @@ import {
   ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
+  StarFilled,
+  StarOutlined,
   UndoOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
+import { normalizeMediaUrl } from '@/utils/media'
 import {
   createDefaultPersonalHomepageConfig,
   getCurrentPersonalHomepageConfig,
   getManagePersonalHomepageConfig,
   getPersonalHomepageSummary,
+  getUserCommonMenus,
+  getUserFavoriteMenus,
   mergePersonalHomepageConfig,
   resetCurrentPersonalHomepageConfig,
   saveCurrentPersonalHomepageConfig,
   saveManagePersonalHomepageConfig,
+  toggleUserFavoriteMenu,
   type PersonalHomepageConfig,
+  type PersonalMenuEntry,
   type PersonalHomepageScopeLevel,
-  type PersonalHomepageWidgetConfig,
   type PersonalHomepageSummaryVO,
 } from '@/api/system/personalHomepage'
-import { listUnreadMessages, markMessageRead, type SysMessageVO } from '@/api/system/message'
+import { listUnreadMessages, markMessageRead, SYS_MESSAGE_DEFAULT_TYPE, type SysMessageVO } from '@/api/system/message'
 import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
-import { PERSONAL_HOME_PATH } from '@/router'
+import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH } from '@/router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
-import { usePermissionStore } from '@/stores/permission'
 import { useUserStore } from '@/stores/user'
+import { getIcon } from '@/utils/icon'
 
 const { t, locale } = useI18n()
 
@@ -354,13 +404,6 @@ interface GridLayoutItem {
   minH: number
 }
 
-interface CommonMenuEntry {
-  path: string
-  title: string
-  moduleCode: string
-  moduleName: string
-}
-
 interface CalendarCell {
   key: string
   label: number
@@ -377,7 +420,6 @@ const props = withDefaults(defineProps<PersonalHomepageDesignerProps>(), {
 })
 
 const router = useRouter()
-const permissionStore = usePermissionStore()
 const userStore = useUserStore()
 
 const loading = ref(false)
@@ -386,6 +428,8 @@ const editMode = ref(props.initialEditMode)
 const scopeLevel = ref<Exclude<PersonalHomepageScopeLevel, 'USER'>>(props.initialScopeLevel)
 const config = ref<PersonalHomepageConfig>(createDefaultPersonalHomepageConfig())
 const gridLayout = ref<GridLayoutItem[]>([])
+const commonMenuItems = ref<PersonalMenuEntry[]>([])
+const favoriteMenuItems = ref<PersonalMenuEntry[]>([])
 const pendingApprovals = ref<WfExecutionDTO[]>([])
 const unreadMessages = ref<SysMessageVO[]>([])
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
@@ -393,33 +437,21 @@ const now = ref(dayjs())
 const syncingGrid = ref(false)
 const summary = ref<PersonalHomepageSummaryVO | null>(null)
 let clockTimer: number | undefined
+const MAX_COMMON_MENU_COUNT = 6
 
 /**
- * 解析用户头像地址，与 {@link MainLayout} 中顶部头像规则保持一致。
- * <p>相对路径会补全为网关 `/api` 前缀，便于 a-avatar 直接加载。</p>
+ * 瑙ｆ瀽鐢ㄦ埛澶村儚鍦板潃锛屼笌 {@link MainLayout} 涓《閮ㄥご鍍忚鍒欎繚鎸佷竴鑷淬€?
+ * <p>鐩稿璺緞浼氳ˉ鍏ㄤ负缃戝叧 `/api` 鍓嶇紑锛屼究浜?a-avatar 鐩存帴鍔犺浇銆?/p>
  *
- * @param raw 后端或 Store 中的原始路径
- * @returns 可请求的完整 URL；无效时为空字符串
+ * @param raw 鍚庣鎴?Store 涓殑鍘熷璺緞
+ * @returns 鍙姹傜殑瀹屾暣 URL锛涙棤鏁堟椂涓虹┖瀛楃涓?
  */
 function resolveUserAvatarSrc(raw?: string | null): string {
-  let avatar = raw?.trim() || ''
-  if (!avatar) {
-    return ''
-  }
-  if (avatar.startsWith('http') || avatar.startsWith('data:')) {
-    return avatar
-  }
-  if (avatar.startsWith('/api')) {
-    return avatar
-  }
-  if (avatar.startsWith('/')) {
-    return `/api${avatar}`
-  }
-  return `/api/${avatar}`
+  return normalizeMediaUrl(raw)
 }
 
 /**
- * 个人首页 Hero 区展示用头像（摘要接口优先，缺失时回退到当前登录用户信息）。
+ * 涓汉棣栭〉 Hero 鍖哄睍绀虹敤澶村儚锛堟憳瑕佹帴鍙ｄ紭鍏堬紝缂哄け鏃跺洖閫€鍒板綋鍓嶇櫥褰曠敤鎴蜂俊鎭級銆?
  */
 const heroAvatarSrc = computed(() => {
   const raw = summary.value?.avatar || userStore.userInfo?.avatar
@@ -427,7 +459,7 @@ const heroAvatarSrc = computed(() => {
 })
 
 /**
- * 问候语展示名：摘要昵称优先，其次为 Store 中的用户名、账号。
+ * 闂€欒灞曠ず鍚嶏細鎽樿鏄电О浼樺厛锛屽叾娆′负 Store 涓殑鐢ㄦ埛鍚嶃€佽处鍙枫€?
  */
 const displayNameForHero = computed(() => {
   return (
@@ -438,13 +470,13 @@ const displayNameForHero = computed(() => {
   )
 })
 
-/** 问候时段：早晨 / 下午 / 夜间（与后端摘要服务时段划分一致） */
+/** 闂€欐椂娈碉細鏃╂櫒 / 涓嬪崍 / 澶滈棿锛堜笌鍚庣鎽樿鏈嶅姟鏃舵鍒掑垎涓€鑷达級 */
 type GreetingPhase = 'morning' | 'afternoon' | 'evening'
 
 /**
- * 根据当前本地时间计算问候时段。
+ * 鏍规嵁褰撳墠鏈湴鏃堕棿璁＄畻闂€欐椂娈点€?
  *
- * @see now 由时钟定时刷新，跨时段会自动更新文案
+ * @see now 鐢辨椂閽熷畾鏃跺埛鏂帮紝璺ㄦ椂娈典細鑷姩鏇存柊鏂囨
  */
 const greetingPhase = computed<GreetingPhase>(() => {
   const hour = now.value.hour()
@@ -458,7 +490,7 @@ const greetingPhase = computed<GreetingPhase>(() => {
 })
 
 /**
- * 中文场景下的称谓后缀（先生 / 女士）；未知性别时为空。
+ * 涓枃鍦烘櫙涓嬬殑绉拌皳鍚庣紑锛堝厛鐢?/ 濂冲＋锛夛紱鏈煡鎬у埆鏃朵负绌恒€?
  */
 const honorificZh = computed(() => {
   const g = summary.value?.gender
@@ -472,7 +504,7 @@ const honorificZh = computed(() => {
 })
 
 /**
- * 国际化主问候语：尊敬的姓名称谓 + 分时段问候与结束语；英文分 Mr./Ms./无称谓三种句式。
+ * 鍥介檯鍖栦富闂€欒锛氬皧鏁殑濮撳悕绉拌皳 + 鍒嗘椂娈甸棶鍊欎笌缁撴潫璇紱鑻辨枃鍒?Mr./Ms./鏃犵О璋撲笁绉嶅彞寮忋€?
  */
 const heroGreetingLine = computed(() => {
   const name = displayNameForHero.value
@@ -498,7 +530,7 @@ const heroGreetingLine = computed(() => {
 })
 
 /**
- * 今日日期与星期副标题（与界面语言一致）。
+ * 浠婃棩鏃ユ湡涓庢槦鏈熷壇鏍囬锛堜笌鐣岄潰璇█涓€鑷达級銆?
  */
 const heroDateSubtitle = computed(() => {
   const d = now.value
@@ -517,6 +549,7 @@ const showScopeSelector = computed(() => props.showScopeSelector)
 
 const widgetMetaMap: Record<string, { icon: any }> = {
   commonMenus: { icon: AppstoreOutlined },
+  myFavorites: { icon: StarOutlined },
   pendingApprovals: { icon: CheckCircleOutlined },
   calendar: { icon: CalendarOutlined },
   messages: { icon: MessageOutlined },
@@ -524,9 +557,10 @@ const widgetMetaMap: Record<string, { icon: any }> = {
   currentTime: { icon: ClockCircleOutlined },
 }
 
-// 国际化：组件标题
+// 鍥介檯鍖栵細缁勪欢鏍囬
 const widgetTitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.title',
+  myFavorites: 'personalHomepage.components.myFavorites.title',
   pendingApprovals: 'personalHomepage.components.pendingApprovals.title',
   calendar: 'personalHomepage.components.calendar.title',
   messages: 'personalHomepage.components.messages.title',
@@ -534,9 +568,10 @@ const widgetTitleMap: Record<string, string> = {
   currentTime: 'personalHomepage.components.currentTime.title',
 }
 
-// 国际化：组件副标题
+// 鍥介檯鍖栵細缁勪欢鍓爣棰?
 const widgetSubtitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.subtitle',
+  myFavorites: 'personalHomepage.components.myFavorites.subtitle',
   pendingApprovals: 'personalHomepage.components.pendingApprovals.subtitle',
   calendar: 'personalHomepage.components.calendar.subtitle',
   messages: 'personalHomepage.components.messages.subtitle',
@@ -544,9 +579,10 @@ const widgetSubtitleMap: Record<string, string> = {
   currentTime: 'personalHomepage.components.currentTime.subtitle',
 }
 
-// 国际化：空状态文案
+// 鍥介檯鍖栵細绌虹姸鎬佹枃妗?
 const widgetEmptyMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.empty',
+  myFavorites: 'personalHomepage.components.myFavorites.empty',
   pendingApprovals: 'personalHomepage.components.pendingApprovals.empty',
   messages: 'personalHomepage.components.messages.empty',
   notices: 'personalHomepage.components.notices.empty',
@@ -604,22 +640,19 @@ const gridMargin = computed<[number, number]>(() => [
 ])
 
 const commonMenus = computed(() => {
-  const recentRoutes = getRecentRoutes()
-  const routeOrder = new Map<string, number>(recentRoutes.map((path, index) => [path, index]))
-  const entries = flattenCommonMenus()
-  entries.sort((left, right) => {
-    const leftOrder = routeOrder.has(left.path) ? routeOrder.get(left.path)! : Number.MAX_SAFE_INTEGER
-    const rightOrder = routeOrder.has(right.path) ? routeOrder.get(right.path)! : Number.MAX_SAFE_INTEGER
-    if (leftOrder !== rightOrder) {
-      return leftOrder - rightOrder
-    }
-    if (left.moduleName !== right.moduleName) {
-      return left.moduleName.localeCompare(right.moduleName)
-    }
-    return left.title.localeCompare(right.title)
-  })
-  const limit = toNumber(findWidget('commonMenus')?.params.limit, defaultLimit('commonMenus'))
-  return entries.slice(0, Math.max(limit, 0))
+  return commonMenuItems.value.slice(0, MAX_COMMON_MENU_COUNT)
+})
+
+const favoriteMenus = computed(() => {
+  const limit = Math.min(
+    Math.max(toNumber(findWidget('myFavorites')?.params.limit, defaultLimit('myFavorites')), 0),
+    MAX_COMMON_MENU_COUNT,
+  )
+  return favoriteMenuItems.value.slice(0, limit)
+})
+
+const favoriteMenuPathSet = computed(() => {
+  return new Set(favoriteMenuItems.value.map(item => String(item.path || '')))
 })
 
 const inboxMessages = computed(() => {
@@ -632,10 +665,44 @@ const noticeMessages = computed(() => {
   return unreadMessages.value.filter(isNoticeMessage).slice(0, Math.max(limit, 0))
 })
 
+function isNoticeMessage(messageItem: SysMessageVO) {
+  const messageType = String(messageItem?.messageType || SYS_MESSAGE_DEFAULT_TYPE).toUpperCase()
+  return ['NOTICE', 'WARNING', 'ALARM'].includes(messageType)
+}
+
+function formatIntlDate(value: Date, options: Intl.DateTimeFormatOptions) {
+  const localeValue = String(locale.value || 'zh-CN')
+  try {
+    return new Intl.DateTimeFormat(localeValue, options).format(value)
+  } catch (_) {
+    return new Intl.DateTimeFormat('zh-CN', options).format(value)
+  }
+}
+
 const nowTime = computed(() => now.value.format('HH:mm:ss'))
-const nowDate = computed(() => now.value.format('YYYY年MM月DD日 dddd'))
-const calendarTitle = computed(() => now.value.format('YYYY年MM月'))
-const weekDays = ['一', '二', '三', '四', '五', '六', '日']
+const nowDate = computed(() => {
+  const current = now.value.toDate()
+  return formatIntlDate(current, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  })
+})
+const calendarTitle = computed(() => {
+  return formatIntlDate(now.value.toDate(), {
+    year: 'numeric',
+    month: 'long',
+  })
+})
+const weekDays = computed(() => {
+  const monday = new Date(Date.UTC(2026, 0, 5))
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday)
+    date.setUTCDate(monday.getUTCDate() + index)
+    return formatIntlDate(date, { weekday: 'short' })
+  })
+})
 
 const calendarDays = computed<CalendarCell[]>(() => {
   const today = now.value
@@ -680,16 +747,36 @@ function defaultLimit(widgetKey: string) {
   return toNumber(createDefaultPersonalHomepageConfig().widgets.find(item => item.key === widgetKey)?.params.limit, 0)
 }
 
+function getWidgetLimitMax(widgetKey: string) {
+  return widgetKey === 'commonMenus' || widgetKey === 'myFavorites' ? MAX_COMMON_MENU_COUNT : 20
+}
+
+function isFixedLimitWidget(widgetKey: string) {
+  return widgetKey === 'commonMenus'
+}
+
+function isFixedMoreActionWidget(widgetKey: string) {
+  return widgetKey === 'myFavorites'
+}
+
+function getMenuIcon(iconName?: string): Component {
+  return getIcon(iconName) || AppstoreOutlined
+}
+
+function isFavoriteMenu(path: string) {
+  return favoriteMenuPathSet.value.has(String(path || ''))
+}
+
 function defaultShowMore(widgetKey: string) {
   return toBoolean(createDefaultPersonalHomepageConfig().widgets.find(item => item.key === widgetKey)?.params.showMore, false)
 }
 
-function toNumber(value: unknown, fallback: number) {
+function toNumber(value: unknown, fallbackValue: number) {
   const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : fallback
+  return Number.isFinite(parsed) ? parsed : fallbackValue
 }
 
-function toBoolean(value: unknown, fallback: boolean) {
+function toBoolean(value: unknown, fallbackValue: boolean) {
   if (typeof value === 'boolean') {
     return value
   }
@@ -699,7 +786,7 @@ function toBoolean(value: unknown, fallback: boolean) {
   if (value === 'false') {
     return false
   }
-  return fallback
+  return fallbackValue
 }
 
 function toggleEditMode() {
@@ -715,13 +802,12 @@ async function reloadConfig() {
     config.value = mergePersonalHomepageConfig(remoteConfig)
     syncGridFromConfig()
     await loadWidgetData()
-    // 加载摘要信息
+    // 鍔犺浇鎽樿淇℃伅
     if (props.mode === 'current') {
       await loadSummary()
     }
   } catch (error) {
     console.error('加载个人首页配置失败:', error)
-    message.error(t('personalHomepage.message.loadFailed'))
     config.value = createDefaultPersonalHomepageConfig()
     syncGridFromConfig()
   } finally {
@@ -734,7 +820,7 @@ async function loadSummary() {
     const data = await getPersonalHomepageSummary()
     summary.value = data
   } catch (error) {
-    console.error('加载摘要信息失败:', error)
+    console.error('加载首页摘要信息失败:', error)
   }
 }
 
@@ -747,12 +833,10 @@ async function saveConfig() {
     } else {
       await saveManagePersonalHomepageConfig(scopeLevel.value, payload)
     }
-    message.success(t('personalHomepage.message.saveSuccess'))
     config.value = payload
     syncGridFromConfig()
   } catch (error) {
     console.error('保存个人首页配置失败:', error)
-    message.error(t('personalHomepage.message.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -765,18 +849,49 @@ async function resetToDefault() {
   saving.value = true
   try {
     await resetCurrentPersonalHomepageConfig()
-    message.success(t('personalHomepage.message.resetSuccess'))
     await reloadConfig()
   } catch (error) {
     console.error('恢复默认布局失败:', error)
-    message.error(t('personalHomepage.message.resetFailed'))
   } finally {
     saving.value = false
   }
 }
 
 async function loadWidgetData() {
-  await Promise.all([loadPendingApprovals(), loadUnreadMessages()])
+  await Promise.all([
+    loadCommonMenus(),
+    loadFavoriteMenus(),
+    loadPendingApprovals(),
+    loadUnreadMessages(),
+  ])
+}
+
+async function loadCommonMenus() {
+  if (props.mode !== 'current') {
+    commonMenuItems.value = []
+    return
+  }
+  try {
+    const list = await getUserCommonMenus(MAX_COMMON_MENU_COUNT)
+    commonMenuItems.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('加载常用菜单失败:', error)
+    commonMenuItems.value = []
+  }
+}
+
+async function loadFavoriteMenus() {
+  if (props.mode !== 'current') {
+    favoriteMenuItems.value = []
+    return
+  }
+  try {
+    const list = await getUserFavoriteMenus(MAX_COMMON_MENU_COUNT)
+    favoriteMenuItems.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('加载收藏菜单失败:', error)
+    favoriteMenuItems.value = []
+  }
 }
 
 async function loadPendingApprovals() {
@@ -857,6 +972,12 @@ function updateWidgetVisibility(widgetKey: string, checked: boolean) {
 }
 
 function updateWidgetParam(widgetKey: string, field: string, value: unknown) {
+  if (widgetKey === 'commonMenus' && field === 'limit') {
+    return
+  }
+  if (widgetKey === 'myFavorites' && field === 'showMore') {
+    return
+  }
   config.value.widgets = config.value.widgets.map(widget => {
     if (widget.key !== widgetKey) {
       return widget
@@ -879,12 +1000,16 @@ function shouldShowMore(widgetKey: string) {
 }
 
 function hasMoreAction(widgetKey: string) {
-  return ['commonMenus', 'pendingApprovals', 'messages', 'notices'].includes(widgetKey)
+  return ['commonMenus', 'myFavorites', 'pendingApprovals', 'messages', 'notices'].includes(widgetKey)
 }
 
 function openWidgetMore(widgetKey: string) {
   if (widgetKey === 'commonMenus') {
     window.dispatchEvent(new CustomEvent('fx:open-global-search'))
+    return
+  }
+  if (widgetKey === 'myFavorites') {
+    router.push(FAVORITE_MANAGEMENT_PATH).catch(() => {})
     return
   }
   if (widgetKey === 'pendingApprovals') {
@@ -903,13 +1028,26 @@ function openMenu(path: string) {
   router.push(path).catch(() => {})
 }
 
+async function handleToggleFavorite(menuItem: PersonalMenuEntry) {
+  const path = String(menuItem?.path || '')
+  if (!path) {
+    return
+  }
+  try {
+    await toggleUserFavoriteMenu(path)
+    await loadFavoriteMenus()
+  } catch (error) {
+    console.error('切换收藏菜单失败:', error)
+  }
+}
+
 function openApproval(record: WfExecutionDTO) {
   router.push(approvalRoutePaths.myPending).catch(() => {})
 }
 
 async function openMessage(record: SysMessageVO) {
   try {
-    await markMessageRead(record.id)
+    await markMessageRead(record.id, { showSuccessMessage: false })
   } catch (error) {
     console.error('标记消息已读失败:', error)
   }
@@ -928,81 +1066,6 @@ function formatDateTime(value?: string) {
   return dayjs(value).format('MM-DD HH:mm')
 }
 
-function isNoticeMessage(messageItem: SysMessageVO) {
-  const bizType = String(messageItem.bizType || '').toUpperCase()
-  return !messageItem.senderUserId
-    || bizType.startsWith('WF_')
-    || bizType.includes('NOTICE')
-    || bizType.includes('SYSTEM')
-}
-
-function getRecentRoutes() {
-  try {
-    const raw = localStorage.getItem('fx-recent-routes')
-    const parsed = raw ? JSON.parse(raw) : []
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-    return parsed
-      .map(item => String(item || '').split('?')[0])
-      .filter(item => item && item.startsWith('/workspace/') && item !== PERSONAL_HOME_PATH)
-  } catch (error) {
-    console.error('读取最近访问记录失败:', error)
-    return []
-  }
-}
-
-function flattenCommonMenus() {
-  const moduleNameMap = new Map<string, string>(
-    (Array.isArray(permissionStore.modules) ? permissionStore.modules : []).map((module: any) => [
-      String(module.code || ''),
-      String(module.name || module.code || ''),
-    ]),
-  )
-
-  const collected: CommonMenuEntry[] = []
-  const seen = new Set<string>()
-
-  function walk(children: any[], moduleCode: string, parentSegments: string[] = []) {
-    children.forEach(child => {
-      if (!child || child.meta?.hidden) {
-        return
-      }
-      const childPath = String(child.path || '').replace(/^\/+/, '')
-      const currentSegments = childPath ? [...parentSegments, childPath] : [...parentSegments]
-      if (child.meta?.type === 'catalog') {
-        walk(Array.isArray(child.children) ? child.children : [], moduleCode, currentSegments)
-        return
-      }
-      const fullPath = child.path?.startsWith('/')
-        ? String(child.path)
-        : `/workspace/${moduleCode}/${currentSegments.join('/')}`.replace(/\/+/g, '/')
-      if (!fullPath || seen.has(fullPath) || fullPath === PERSONAL_HOME_PATH) {
-        return
-      }
-      seen.add(fullPath)
-      collected.push({
-        path: fullPath,
-        title: String(child.meta?.title || child.name || fullPath),
-        moduleCode,
-        moduleName: moduleNameMap.get(moduleCode) || moduleCode,
-      })
-      if (Array.isArray(child.children) && child.children.length > 0) {
-        walk(child.children, moduleCode, currentSegments)
-      }
-    })
-  }
-
-  ;(Array.isArray(permissionStore.routes) ? permissionStore.routes : []).forEach((routeItem: any) => {
-    const moduleCode = String(routeItem.meta?.module || routeItem.path || '')
-    if (!moduleCode) {
-      return
-    }
-    walk(Array.isArray(routeItem.children) ? routeItem.children : [], moduleCode)
-  })
-
-  return collected
-}
 
 function handleResize() {
   viewportWidth.value = window.innerWidth
@@ -1178,8 +1241,9 @@ onUnmounted(() => {
 }
 
 .designer-badge--soft {
-  background: var(--fx-primary-bg, rgba(22, 119, 255, 0.12));
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
   color: var(--fx-primary, #1677ff);
+  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent);
 }
 
 .designer-toolbar,
@@ -1317,10 +1381,15 @@ onUnmounted(() => {
   padding: 16px 18px 18px;
 }
 
+.widget-card__body--scrollable {
+  overflow-y: auto;
+}
+
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-content: start;
 }
 
 .menu-grid__item,
@@ -1332,30 +1401,110 @@ onUnmounted(() => {
 }
 
 .menu-grid__item {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 88px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: linear-gradient(
-    180deg,
-    var(--fx-bg-elevated, #f8fafc),
-    color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 50%, var(--fx-bg-container, #ffffff))
-  );
-  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 20%, var(--fx-border-color, #e5e7eb));
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--fx-bg-elevated, #f8fafc), var(--fx-bg-container, #ffffff));
+  border: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 82%, transparent);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease, background 0.3s ease;
 }
 
 .menu-grid__item:hover,
 .list-block__item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--fx-primary, #1677ff) 15%, rgba(0, 0, 0, 0.08));
-  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 40%, var(--fx-border-color, #e5e7eb));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--fx-primary, #1677ff) 12%, rgba(0, 0, 0, 0.08));
+  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 36%, var(--fx-border-color, #e5e7eb));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--fx-bg-elevated, #f8fafc) 88%, var(--fx-primary-bg, #eff6ff)),
+    var(--fx-bg-container, #ffffff)
+  );
+}
+
+.menu-grid__favorite-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  color: var(--fx-text-tertiary, #9ca3af);
+  background: color-mix(in srgb, var(--fx-bg-container, #ffffff) 88%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-border-color, #e5e7eb) 72%, transparent);
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    color: var(--fx-theme-color, #1677ff);
+    background: var(--fx-primary-soft, #eff6ff);
+    transform: scale(1.05);
+  }
+}
+
+.menu-grid__favorite-btn--active {
+  color: var(--fx-theme-color, #1677ff);
+  background: var(--fx-primary-soft, #eff6ff);
+}
+
+.menu-grid__item--favorite {
+  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 24%, var(--fx-border-color, #e5e7eb));
+}
+
+.menu-grid__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  color: var(--fx-primary, #1677ff);
+  background: color-mix(in srgb, var(--fx-primary-soft, #eff6ff) 82%, var(--fx-bg-elevated, #f8fafc));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 14%, transparent);
+}
+
+:global(html[data-theme='light']) .personal-homepage-designer .designer-badge--soft {
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+  color: var(--fx-primary, #1677ff);
+  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent);
+}
+
+:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__favorite-btn:hover,
+:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__favorite-btn--active,
+:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__icon-wrap {
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+}
+
+:global(html[data-theme='dark']) .personal-homepage-designer .designer-badge--soft,
+:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__favorite-btn:hover,
+:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__favorite-btn--active,
+:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__icon-wrap {
+  background: color-mix(in srgb, var(--fx-primary-soft-strong, rgba(22, 119, 255, 0.18)) 78%, var(--fx-bg-elevated, #1f2937));
+}
+
+.menu-grid__icon {
+  font-size: 18px;
+}
+
+.menu-grid__content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .menu-grid__title,
 .list-block__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
   color: var(--fx-text-primary, #111827);
 }
@@ -1365,6 +1514,20 @@ onUnmounted(() => {
 .list-block__time {
   font-size: 12px;
   color: var(--fx-text-secondary, #6b7280);
+}
+
+.menu-grid__module {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fx-fill-secondary, #f3f4f6) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 72%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-block {
@@ -1405,6 +1568,14 @@ onUnmounted(() => {
 .calendar-widget__weekdays {
   font-size: 12px;
   color: var(--fx-text-secondary, #6b7280);
+}
+
+.calendar-widget__weekdays span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .calendar-widget__day {

@@ -15,4 +15,6 @@ public class WfTaskGraphDTO {
     private List<WfTaskNodeEditorDTO> nodes = new ArrayList<>();
 
     private List<WfTaskEdgeDTO> edges = new ArrayList<>();
+
+    private List<WfLowCodeFieldMetaDTO> availableFormFields = new ArrayList<>();
 }

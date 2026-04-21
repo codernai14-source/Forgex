@@ -14,7 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.entity.SysRole;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserRole;
@@ -24,6 +25,7 @@ import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.ISysUserRoleService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,13 +38,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 用户-角色分配服务实现。
+ * 用户角色分配服务实现。
  * <p>
- * 说明：
- * <ul>
- *   <li>用户与角色绑定表：{@code sys_user_role}（含租户维度 tenant_id）</li>
- *   <li>本实现仅操作当前租户范围内的绑定关系</li>
- * </ul>
+ * 负责维护 {@code sys_user_role} 表中的用户角色绑定关系，且仅在指定租户范围内操作。
  * </p>
  *
  * @author coder_nai@163.com
@@ -60,11 +58,11 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
     private final SysUserTenantMapper userTenantMapper;
 
     /**
-     * 查询用户在指定租户下的已分配角色ID列表。
+     * 查询用户在指定租户下已分配的角色 ID 列表。
      *
-     * @param userId   用户ID
-     * @param tenantId 租户ID
-     * @return 角色ID列表
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @return 角色 ID 列表
      * @throws BusinessException 参数非法、用户不存在或用户未绑定该租户时抛出
      */
     @Override
@@ -74,21 +72,27 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
         validateUserAndTenant(userId, tenantId);
 
         LambdaQueryWrapper<SysUserRole> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserRole::getUserId, userId);
+        wrapper.eq(SysUserRole::getUserId, userId)
+                .eq(SysUserRole::getTenantId, tenantId);
         List<SysUserRole> list = userRoleMapper.selectList(wrapper);
         if (list == null || list.isEmpty()) {
             return new ArrayList<>();
         }
-        return list.stream().map(SysUserRole::getRoleId).collect(Collectors.toList());
+        return list.stream()
+                .map(SysUserRole::getRoleId)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
      * 保存用户在指定租户下的角色分配结果。
-     * <p>采用“先删后插”的方式保证结果与提交一致。</p>
+     * <p>
+     * 采用先删后插的方式，保证最终绑定关系与提交内容一致。
+     * </p>
      *
-     * @param userId   用户ID
-     * @param tenantId 租户ID
-     * @param roleIds  角色ID列表（为空表示清空）
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param roleIds 角色 ID 列表，为空表示清空
      * @throws BusinessException 用户不存在、用户未绑定租户、角色不存在或跨租户时抛出
      */
     @Override
@@ -119,16 +123,16 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
     }
 
     /**
-     * 校验用户是否存在，以及用户是否已绑定到指定租户。
+     * 校验用户是否存在，以及是否已绑定到指定租户。
      *
-     * @param userId   用户ID
-     * @param tenantId 租户ID
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
      * @throws BusinessException 不满足条件时抛出
      */
     private void validateUserAndTenant(Long userId, Long tenantId) {
         SysUser user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_NOT_FOUND);
         }
 
         LambdaQueryWrapper<SysUserTenant> tenantBindWrapper = new LambdaQueryWrapper<>();
@@ -137,15 +141,15 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
                 .last("limit 1");
         SysUserTenant bind = userTenantMapper.selectOne(tenantBindWrapper);
         if (bind == null) {
-            throw new BusinessException("用户未绑定该租户，无法分配角色");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_NOT_BOUND_TENANT);
         }
     }
 
     /**
-     * 将角色ID列表去重并保持原顺序。
+     * 将角色 ID 列表去重并保持原顺序。
      *
-     * @param roleIds 角色ID列表
-     * @return 去重后的角色ID集合
+     * @param roleIds 角色 ID 列表
+     * @return 去重后的角色 ID 集合
      */
     private Set<Long> toDistinctRoleIds(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
@@ -158,7 +162,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
                 continue;
             }
             if (roleId <= 0) {
-                throw new BusinessException("角色ID格式不正确");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_ID_INVALID);
             }
             distinct.add(roleId);
         }
@@ -168,9 +172,9 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
     /**
      * 校验角色是否存在且属于指定租户。
      *
-     * @param roleIds  角色ID集合
-     * @param tenantId 租户ID
-     * @throws BusinessException 存在无效/跨租户角色时抛出
+     * @param roleIds 角色 ID 集合
+     * @param tenantId 租户 ID
+     * @throws BusinessException 存在无效或跨租户角色时抛出
      */
     private void validateRolesInTenant(Set<Long> roleIds, Long tenantId) {
         if (roleIds == null || roleIds.isEmpty()) {
@@ -184,7 +188,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
 
         Long validCount = roleMapper.selectCount(roleWrapper);
         if (validCount == null || validCount.intValue() != roleIds.size()) {
-            throw new BusinessException("存在无效角色或跨租户角色");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT);
         }
     }
 }

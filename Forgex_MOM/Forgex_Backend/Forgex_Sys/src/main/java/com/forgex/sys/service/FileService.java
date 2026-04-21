@@ -20,46 +20,27 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * 文件服务接口
- * 
- * 提供文件上传、下载等功能，支持不同操作系统的存储目录管理
- * 
- * @author coder_nai@163.com
- * @date 2026-01-08
+ * File service interface.
  */
 public interface FileService {
-    
+
     /**
-     * 上传文件
-     * 
-     * @param file 上传的文件
-     * @return 可访问的文件URL
-     * @throws IOException 文件处理异常
+     * Upload file and return its public access URL.
      */
-    String upload(MultipartFile file) throws IOException;
-    
+    String upload(MultipartFile file, String moduleCode, String moduleName) throws IOException;
+
     /**
-     * 获取文件资源
-     * 
-     * @param filename 文件名
-     * @return 文件资源
-     * @throws IOException 文件处理异常
+     * Resolve file resource by relative path.
      */
     Resource getFile(String filename) throws IOException;
-    
+
     /**
-     * 获取基础存储目录
-     * 
-     * @return 存储目录路径
+     * Resolve base upload directory.
      */
     Path getBaseDir();
-    
+
     /**
-     * 获取文件的Media Type
-     * 
-     * @param filename 文件名
-     * @return Media Type字符串
-     * @throws IOException 文件处理异常
+     * Resolve media type for a file.
      */
     String getMediaType(String filename) throws IOException;
 }

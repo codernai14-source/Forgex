@@ -1,6 +1,6 @@
 <template>
-  <div class="app-tabbar">
-    <div class="tabbar-inner" ref="tabbarRef">
+  <div ref="tabbarRootRef" class="app-tabbar fx-guide-tabbar">
+    <div class="tabbar-inner fx-guide-tabbar-list">
       <div
         v-for="tab in tabs"
         :key="tab.key"
@@ -28,7 +28,7 @@
 
     <!-- 右侧操作按钮 -->
     <div class="tabbar-actions">
-      <a-dropdown placement="bottomRight">
+      <a-dropdown placement="bottomRight" :get-popup-container="getPopupContainer">
         <a-button type="text" size="small" class="action-btn">
           <MoreOutlined />
         </a-button>
@@ -50,8 +50,8 @@
     <!-- 右键菜单 -->
     <a-dropdown
       v-model:open="contextMenuVisible"
-      :trigger="['contextmenu']"
-      :get-popup-container="() => $el"
+      :trigger="[]"
+      :get-popup-container="getPopupContainer"
     >
       <div
         :style="{
@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -172,10 +172,25 @@ const emit = defineEmits<{
 const draggingKey = ref<string>('')
 const dragFromIndex = ref<number>(-1)
 
+// 容器引用（用于稳定挂载下拉层，避免切页/卸载时访问失效的 $el）
+const tabbarRootRef = ref<HTMLElement | null>(null)
+
 // 右键菜单相关
 const contextMenuVisible = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 const contextTab = ref<Tab | null>(null)
+
+const closeContextMenu = () => {
+  contextMenuVisible.value = false
+  contextTab.value = null
+}
+
+function getPopupContainer() {
+  if (typeof document === 'undefined') {
+    return tabbarRootRef.value as any
+  }
+  return tabbarRootRef.value || document.body
+}
 
 // 标签点击
 const onTabClick = (tab: Tab) => {
@@ -184,6 +199,7 @@ const onTabClick = (tab: Tab) => {
 
 // 标签关闭
 const onTabClose = (tab: Tab) => {
+  closeContextMenu()
   emit('tab-close', tab)
 }
 
@@ -239,6 +255,26 @@ const onContextMenu = (tab: Tab, event: MouseEvent) => {
   contextMenuVisible.value = true
 }
 
+const handleDocumentPointerDown = (event: MouseEvent) => {
+  if (!contextMenuVisible.value) {
+    return
+  }
+
+  const root = tabbarRootRef.value
+  const target = event.target as Node | null
+  if (root && target && root.contains(target)) {
+    return
+  }
+
+  closeContextMenu()
+}
+
+const handleDocumentKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && contextMenuVisible.value) {
+    closeContextMenu()
+  }
+}
+
 // 右键菜单点击
 const onContextMenuClick = (info: any) => {
   const key = info.key as string
@@ -268,7 +304,7 @@ const onContextMenuClick = (info: any) => {
       break
   }
   
-  contextMenuVisible.value = false
+  closeContextMenu()
 }
 
 // 快速操作
@@ -288,6 +324,25 @@ const onQuickAction = (info: any) => {
       break
   }
 }
+
+watch(
+  () => props.tabs.map(tab => tab.key),
+  tabKeys => {
+    if (contextTab.value && !tabKeys.includes(contextTab.value.key)) {
+      closeContextMenu()
+    }
+  },
+)
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleDocumentPointerDown)
+  document.addEventListener('keydown', handleDocumentKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', handleDocumentPointerDown)
+  document.removeEventListener('keydown', handleDocumentKeydown)
+})
 </script>
 
 <style scoped lang="less">

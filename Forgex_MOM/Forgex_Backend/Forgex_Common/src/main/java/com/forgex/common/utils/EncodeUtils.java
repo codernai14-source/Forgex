@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.forgex.common.util;
+package com.forgex.common.utils;
 
 import com.forgex.common.service.EncodeRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
  * String purchaseCode = EncodeUtils.nextEncode("PURCHASE_ORDER");
  * }</pre>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleService 编码生成服务

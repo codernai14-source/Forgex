@@ -2,26 +2,26 @@ import type { ThemeTokens, LayoutConfig } from './types'
 import type { CSSProperties } from 'vue'
 
 /**
- * 调整颜色亮度
+ * 璋冩暣棰滆壊浜害
  * 
- * 将十六进制颜色转换为 HSL，调整亮度后转回十六进制。
+ * 灏嗗崄鍏繘鍒堕鑹茶浆鎹负 HSL锛岃皟鏁翠寒搴﹀悗杞洖鍗佸叚杩涘埗銆?
  * 
- * @param hexColor - 十六进制颜色（如 "#1677ff"）
- * @param amount - 亮度调整量（-1 到 1 之间，负值变暗，正值变亮）
- * @returns 调整后的十六进制颜色
+ * @param hexColor - 鍗佸叚杩涘埗棰滆壊锛堝 "#1677ff"锛?
+ * @param amount - 浜害璋冩暣閲忥紙-1 鍒?1 涔嬮棿锛岃礋鍊煎彉鏆楋紝姝ｅ€煎彉浜級
+ * @returns 璋冩暣鍚庣殑鍗佸叚杩涘埗棰滆壊
  */
 function adjustColor(hexColor: string, amount: number): string {
   if (!hexColor || !hexColor.startsWith('#')) {
     return hexColor
   }
   
-  // 移除 # 并解析 RGB
+  // 绉婚櫎 # 骞惰В鏋?RGB
   const hex = hexColor.slice(1)
   const r = parseInt(hex.substring(0, 2), 16)
   const g = parseInt(hex.substring(2, 4), 16)
   const b = parseInt(hex.substring(4, 6), 16)
   
-  // 转换为 HSL
+  // 杞崲涓?HSL
   const rNorm = r / 255
   const gNorm = g / 255
   const bNorm = b / 255
@@ -49,10 +49,10 @@ function adjustColor(hexColor: string, amount: number): string {
     }
   }
   
-  // 调整亮度
+  // 璋冩暣浜害
   l = Math.max(0, Math.min(1, l + amount))
   
-  // 转回 RGB
+  // 杞洖 RGB
   const hue2rgb = (p: number, q: number, t: number) => {
     if (t < 0) t += 1
     if (t > 1) t -= 1
@@ -73,7 +73,7 @@ function adjustColor(hexColor: string, amount: number): string {
     bNew = hue2rgb(p, q, h - 1/3)
   }
   
-  // 转回十六进制
+  // 杞洖鍗佸叚杩涘埗
   const toHex = (x: number) => {
     const hex = Math.round(x * 255).toString(16)
     return hex.length === 1 ? '0' + hex : hex
@@ -83,42 +83,70 @@ function adjustColor(hexColor: string, amount: number): string {
 }
 
 /**
- * 将 Theme Token 转换为 CSS 变量
+ * 灏嗗崄鍏繘鍒堕鑹茶浆鎹负甯﹂€忔槑搴︾殑 rgba 棰滆壊銆?
+ *
+ * @param hexColor - 鍗佸叚杩涘埗棰滆壊锛堟敮鎸?#RGB / #RRGGBB锛?
+ * @param alpha - 閫忔槑搴︼紙0 鍒?1锛?
+ * @param 降级方案 - 鏃犳硶杞崲鏃剁殑鍏滃簳棰滆壊
+ */
+function withAlpha(hexColor: string, alpha: number, 降级方案: string): string {
+  if (!hexColor || !hexColor.startsWith('#')) {
+    return 降级方案
+  }
+
+  let hex = hexColor.slice(1)
+  if (hex.length === 3) {
+    hex = hex.split('').map(char => `${char}${char}`).join('')
+  }
+  if (hex.length !== 6) {
+    return 降级方案
+  }
+
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  const normalizedAlpha = Math.max(0, Math.min(1, alpha))
+
+  return `rgba(${r}, ${g}, ${b}, ${normalizedAlpha})`
+}
+
+/**
+ * 灏?Theme Token 杞崲涓?CSS 鍙橀噺
  * 
- * 将主题 Token 对象转换为 CSS 自定义属性（CSS Variables），
- * 保持与现有 --fx-xxx 变量命名的兼容性。生成的变量可直接应用到 DOM 元素上。
+ * 灏嗕富棰?Token 瀵硅薄杞崲涓?CSS 鑷畾涔夊睘鎬э紙CSS Variables锛夛紝
+ * 淇濇寔涓庣幇鏈?--fx-xxx 鍙橀噺鍛藉悕鐨勫吋瀹规€с€傜敓鎴愮殑鍙橀噺鍙洿鎺ュ簲鐢ㄥ埌 DOM 鍏冪礌涓娿€?
  * 
- * @param tokens - 主题 Token 对象（lightTokens 或 darkTokens）
- * @param layoutConfig - 布局配置对象，包含主题色、字号、圆角等设置
- * @returns CSS 属性对象，可直接用于 Vue 的 style 绑定
+ * @param tokens - 涓婚 Token 瀵硅薄锛坙ightTokens 鎴?darkTokens锛?
+ * @param layoutConfig - 甯冨眬閰嶇疆瀵硅薄锛屽寘鍚富棰樿壊銆佸瓧鍙枫€佸渾瑙掔瓑璁剧疆
+ * @returns CSS 灞炴€у璞★紝鍙洿鎺ョ敤浜?Vue 鐨?style 缁戝畾
  * 
  * @remarks
- * 生成的 CSS 变量分类：
- * - 布局背景：--fx-layout-bg, --fx-bg-base, --fx-bg-layout
- * - 容器背景：--fx-header-bg, --fx-sider-bg, --fx-content-bg 等
- * - 边框：--fx-border-color, --fx-border-secondary, --fx-split-color
- * - 文本：--fx-text-primary, --fx-text-secondary 等
- * - 填充色：--fx-fill, --fx-fill-secondary, --fx-fill-alter
- * - 主题色：--fx-primary, --fx-primary-hover, --fx-primary-active
- * - 功能色：--fx-success, --fx-warning, --fx-error, --fx-info
- * - 字体：--fx-font-size, --fx-font-family, --fx-line-height
- * - 圆角：--fx-radius, --fx-radius-lg, --fx-radius-sm
- * - 阴影：--fx-shadow, --fx-shadow-secondary
- * - 控件尺寸：--fx-control-height 系列
- * - 间距：--fx-padding, --fx-margin 系列
+ * 鐢熸垚鐨?CSS 鍙橀噺鍒嗙被锛?
+ * - 甯冨眬鑳屾櫙锛?-fx-layout-bg, --fx-bg-base, --fx-bg-layout
+ * - 瀹瑰櫒鑳屾櫙锛?-fx-header-bg, --fx-sider-bg, --fx-content-bg 绛?
+ * - 杈规锛?-fx-border-color, --fx-border-secondary, --fx-split-color
+ * - 鏂囨湰锛?-fx-text-primary, --fx-text-secondary 绛?
+ * - 濉厖鑹诧細--fx-fill, --fx-fill-secondary, --fx-fill-alter
+ * - 涓婚鑹诧細--fx-primary, --fx-primary-hover, --fx-primary-active
+ * - 鍔熻兘鑹诧細--fx-success, --fx-warning, --fx-error, --fx-info
+ * - 瀛椾綋锛?-fx-font-size, --fx-font-family, --fx-line-height
+ * - 鍦嗚锛?-fx-radius, --fx-radius-lg, --fx-radius-sm
+ * - 闃村奖锛?-fx-shadow, --fx-shadow-secondary
+ * - 鎺т欢灏哄锛?-fx-control-height 绯诲垪
+ * - 闂磋窛锛?-fx-padding, --fx-margin 绯诲垪
  * 
  * @example
  * ```typescript
  * const variables = generateCSSVariables(lightTokens, layoutConfig)
- * // 应用到根元素
+ * // 搴旂敤鍒版牴鍏冪礌
  * document.documentElement.style = variables
  * 
- * // 在 Vue 组件中使用
+ * // 鍦?Vue 缁勪欢涓娇鐢?
  * <div :style="cssVariables">
- *   <div class="custom-box">使用 CSS 变量</div>
+ *   <div class="custom-box">浣跨敤 CSS 鍙橀噺</div>
  * </div>
  * 
- * // 在 CSS 中引用
+ * // 鍦?CSS 涓紩鐢?
  * .custom-box {
  *   background: var(--fx-bg-container);
  *   color: var(--fx-text-primary);
@@ -130,18 +158,23 @@ export function generateCSSVariables(
   tokens: ThemeTokens,
   layoutConfig: LayoutConfig
 ): CSSProperties {
+  const primaryColor = layoutConfig.themeColor || tokens.colorPrimary
   const radius = `${layoutConfig.borderRadius}px`
   const fontSize = layoutConfig.fontSize || '14px'
   const contentWidth = layoutConfig.contentWidth === 'fixed' ? '1200px' : '100%'
-  
+  const themeColorSoft = withAlpha(primaryColor, 0.12, tokens.colorPrimaryBg)
+  const themeColorSoftStrong = withAlpha(primaryColor, 0.18, tokens.colorPrimaryBgHover)
+  const textSecondarySoft = withAlpha(tokens.colorTextSecondary, 0.24, tokens.colorBorder)
+  const textSecondarySoftHover = withAlpha(tokens.colorTextSecondary, 0.38, tokens.colorSplit)
+
   return {
-    // ==================== 布局背景 ====================
+    // ==================== 甯冨眬鑳屾櫙 ====================
     '--fx-layout-bg': tokens.colorBgBase,
     '--fx-layout-color': tokens.colorText,
     '--fx-bg-base': tokens.colorBgBase,
     '--fx-bg-layout': tokens.colorBgLayout,
     
-    // ==================== 容器背景 ====================
+    // ==================== 瀹瑰櫒鑳屾櫙 ====================
     '--fx-header-bg': tokens.colorBgContainer,
     '--fx-header-color': tokens.colorText,
     '--fx-sider-bg': tokens.colorBgContainer,
@@ -151,34 +184,36 @@ export function generateCSSVariables(
     '--fx-bg-container': tokens.colorBgContainer,
     '--fx-bg-elevated': tokens.colorBgElevated,
     
-    // ==================== 边框 ====================
+    // ==================== 杈规 ====================
     '--fx-border-color': tokens.colorBorder,
     '--fx-border-secondary': tokens.colorBorderSecondary,
     '--fx-split-color': tokens.colorSplit,
     
-    // ==================== 文本 ====================
+    // ==================== 鏂囨湰 ====================
     '--fx-text-color': tokens.colorTextSecondary,
     '--fx-text-primary': tokens.colorText,
     '--fx-text-secondary': tokens.colorTextSecondary,
     '--fx-text-tertiary': tokens.colorTextTertiary,
     '--fx-text-disabled': tokens.colorTextDisabled,
     
-    // ==================== 填充色（用于 hover、表头等）====================
+    // ==================== 濉厖鑹诧紙鐢ㄤ簬 hover銆佽〃澶寸瓑锛?===================
     '--fx-tab-bg': tokens.colorFillAlter,
     '--fx-tab-hover-bg': tokens.colorFill,
     '--fx-fill': tokens.colorFill,
     '--fx-fill-secondary': tokens.colorFillSecondary,
     '--fx-fill-alter': tokens.colorFillAlter,
     
-    // ==================== 主题色 ====================
-    // 使用用户选择的主题色，而不是固定的 Token 颜色
-    '--fx-theme-color': layoutConfig.themeColor || tokens.colorPrimary,
-    '--fx-primary': layoutConfig.themeColor || tokens.colorPrimary,
-    '--fx-primary-hover': adjustColor(layoutConfig.themeColor || tokens.colorPrimary, 0.15),
-    '--fx-primary-active': adjustColor(layoutConfig.themeColor || tokens.colorPrimary, -0.1),
-    '--fx-primary-bg': adjustColor(layoutConfig.themeColor || tokens.colorPrimary, -0.85),
-    
-    // ==================== 功能色 ====================
+    // ==================== 涓婚鑹?====================
+    // 浣跨敤鐢ㄦ埛閫夋嫨鐨勪富棰樿壊锛岃€屼笉鏄浐瀹氱殑 Token 棰滆壊
+    '--fx-theme-color': primaryColor,
+    '--fx-primary': primaryColor,
+    '--fx-primary-hover': adjustColor(primaryColor, 0.15),
+    '--fx-primary-active': adjustColor(primaryColor, -0.1),
+    '--fx-primary-bg': adjustColor(primaryColor, -0.85),
+    '--fx-primary-soft': themeColorSoft,
+    '--fx-primary-soft-strong': themeColorSoftStrong,
+
+    // ==================== 鍔熻兘鑹?====================
     '--fx-success': tokens.colorSuccess,
     '--fx-success-bg': tokens.colorSuccessBg,
     '--fx-warning': tokens.colorWarning,
@@ -188,29 +223,29 @@ export function generateCSSVariables(
     '--fx-info': tokens.colorInfo,
     '--fx-info-bg': tokens.colorInfoBg,
     
-    // ==================== 字体 ====================
+    // ==================== 瀛椾綋 ====================
     '--fx-font-size': fontSize,
     '--fx-font-size-lg': `${tokens.fontSizeLG}px`,
     '--fx-font-size-sm': `${tokens.fontSizeSM}px`,
     '--fx-font-family': tokens.fontFamily,
     '--fx-line-height': tokens.lineHeight.toString(),
     
-    // ==================== 圆角 ====================
+    // ==================== 鍦嗚 ====================
     '--fx-radius': radius,
     '--fx-radius-lg': `${tokens.borderRadiusLG}px`,
     '--fx-radius-sm': `${tokens.borderRadiusSM}px`,
     '--fx-radius-xs': `${tokens.borderRadiusXS}px`,
     
-    // ==================== 阴影 ====================
+    // ==================== 闃村奖 ====================
     '--fx-shadow': tokens.boxShadow,
     '--fx-shadow-secondary': tokens.boxShadowSecondary,
     
-    // ==================== 控件尺寸 ====================
+    // ==================== 鎺т欢灏哄 ====================
     '--fx-control-height': `${tokens.controlHeight}px`,
     '--fx-control-height-lg': `${tokens.controlHeightLG}px`,
     '--fx-control-height-sm': `${tokens.controlHeightSM}px`,
     
-    // ==================== 间距 ====================
+    // ==================== 闂磋窛 ====================
     '--fx-padding': `${tokens.padding}px`,
     '--fx-padding-lg': `${tokens.paddingLG}px`,
     '--fx-padding-sm': `${tokens.paddingSM}px`,
@@ -220,58 +255,77 @@ export function generateCSSVariables(
     '--fx-margin-sm': `${tokens.marginSM}px`,
     '--fx-margin-xs': `${tokens.marginXS}px`,
     
-    // ==================== 其他 ====================
+    // ==================== 鍏朵粬 ====================
     '--fx-content-width': contentWidth,
     '--fx-bg-mask': tokens.colorBgMask,
     
-    // 顶栏快捷键/按钮等辅助色
+    // 椤舵爮蹇嵎閿?鎸夐挳绛夎緟鍔╄壊
     '--fx-header-shortcut-bg': tokens.colorFillSecondary,
     '--fx-header-shortcut-color': tokens.colorTextSecondary,
     '--fx-header-btn-hover-bg': tokens.colorFill,
+
+    // 鍏ㄥ眬鎼滅储娴眰璇箟鑹?
+    '--fx-search-bg': tokens.colorBgElevated,
+    '--fx-search-input-bg': tokens.colorBgContainer,
+    '--fx-search-section-bg': tokens.colorFillAlter,
+    '--fx-search-hover-bg': themeColorSoft,
+    '--fx-search-active-bg': themeColorSoftStrong,
+    '--fx-search-icon-bg': themeColorSoft,
+    '--fx-search-highlight-bg': themeColorSoftStrong,
+    '--fx-search-highlight-color': primaryColor,
+    '--fx-search-badge-bg': themeColorSoft,
+    '--fx-search-badge-color': primaryColor,
+    '--fx-search-badge-border': themeColorSoftStrong,
+    '--fx-search-module-bg': tokens.colorFillSecondary,
+    '--fx-search-module-color': tokens.colorTextSecondary,
+    '--fx-search-module-border': tokens.colorBorder,
+    '--fx-search-scrollbar-thumb': textSecondarySoft,
+    '--fx-search-scrollbar-thumb-hover': textSecondarySoftHover,
+    '--fx-search-shadow': tokens.boxShadowSecondary,
   } as CSSProperties
 }
 
 /**
- * CSS 变量缓存
+ * CSS 鍙橀噺缂撳瓨
  * 
- * 使用 Map 缓存已生成的 CSS 变量对象，避免重复计算。
- * 缓存键由主题色、模式、字号、圆角等参数组合而成。
+ * 浣跨敤 Map 缂撳瓨宸茬敓鎴愮殑 CSS 鍙橀噺瀵硅薄锛岄伩鍏嶉噸澶嶈绠椼€?
+ * 缂撳瓨閿敱涓婚鑹层€佹ā寮忋€佸瓧鍙枫€佸渾瑙掔瓑鍙傛暟缁勫悎鑰屾垚銆?
  * 
  * @internal
  */
 const cssVariablesCache = new Map<string, CSSProperties>()
 
 /**
- * 生成 CSS 变量（带缓存）
+ * 鐢熸垚 CSS 鍙橀噺锛堝甫缂撳瓨锛?
  * 
- * 带缓存优化的 CSS 变量生成函数。首次调用时生成并缓存结果，
- * 后续相同参数的调用直接返回缓存值，提升性能。
+ * 甯︾紦瀛樹紭鍖栫殑 CSS 鍙橀噺鐢熸垚鍑芥暟銆傞娆¤皟鐢ㄦ椂鐢熸垚骞剁紦瀛樼粨鏋滐紝
+ * 鍚庣画鐩稿悓鍙傛暟鐨勮皟鐢ㄧ洿鎺ヨ繑鍥炵紦瀛樺€硷紝鎻愬崌鎬ц兘銆?
  * 
- * @param tokens - 主题 Token 对象（lightTokens 或 darkTokens）
- * @param layoutConfig - 布局配置对象
- * @returns CSS 属性对象，可直接用于 Vue 的 style 绑定
+ * @param tokens - 涓婚 Token 瀵硅薄锛坙ightTokens 鎴?darkTokens锛?
+ * @param layoutConfig - 甯冨眬閰嶇疆瀵硅薄
+ * @returns CSS 灞炴€у璞★紝鍙洿鎺ョ敤浜?Vue 鐨?style 缁戝畾
  * 
  * @remarks
- * 缓存策略：
- * - 缓存键：由关键背景 Token、themeMode、fontSize、borderRadius、themeColor 组合
- * - 缓存上限：50 个条目
- * - 淘汰策略：FIFO（先进先出），超过上限时删除最早的条目
+ * 缂撳瓨绛栫暐锛?
+ * - 缂撳瓨閿細鐢卞叧閿儗鏅?Token銆乼hemeMode銆乫ontSize銆乥orderRadius銆乼hemeColor 缁勫悎
+ * - 缂撳瓨涓婇檺锛?0 涓潯鐩?
+ * - 娣樻卑绛栫暐锛欶IFO锛堝厛杩涘厛鍑猴級锛岃秴杩囦笂闄愭椂鍒犻櫎鏈€鏃╃殑鏉＄洰
  * 
- * 性能优化：
- * - 避免重复计算 CSS 变量对象
- * - 减少对象创建和内存分配
- * - 适合频繁切换主题的场景
+ * 鎬ц兘浼樺寲锛?
+ * - 閬垮厤閲嶅璁＄畻 CSS 鍙橀噺瀵硅薄
+ * - 鍑忓皯瀵硅薄鍒涘缓鍜屽唴瀛樺垎閰?
+ * - 閫傚悎棰戠箒鍒囨崲涓婚鐨勫満鏅?
  * 
  * @example
  * ```typescript
- * // 首次调用，生成并缓存
+ * // 棣栨璋冪敤锛岀敓鎴愬苟缂撳瓨
  * const vars1 = generateCSSVariablesWithCache(lightTokens, config)
  * 
- * // 相同参数，直接返回缓存
+ * // 鐩稿悓鍙傛暟锛岀洿鎺ヨ繑鍥炵紦瀛?
  * const vars2 = generateCSSVariablesWithCache(lightTokens, config)
  * console.log(vars1 === vars2) // true
  * 
- * // 不同参数，重新生成
+ * // 涓嶅悓鍙傛暟锛岄噸鏂扮敓鎴?
  * const vars3 = generateCSSVariablesWithCache(darkTokens, config)
  * console.log(vars1 === vars3) // false
  * ```
@@ -289,10 +343,12 @@ export function generateCSSVariablesWithCache(
   const variables = generateCSSVariables(tokens, layoutConfig)
   cssVariablesCache.set(cacheKey, variables)
   
-  // 限制缓存大小
+  // 闄愬埗缂撳瓨澶у皬
   if (cssVariablesCache.size > 50) {
     const firstKey = cssVariablesCache.keys().next().value
-    cssVariablesCache.delete(firstKey)
+    if (typeof firstKey === 'string') {
+      cssVariablesCache.delete(firstKey)
+    }
   }
   
   return variables

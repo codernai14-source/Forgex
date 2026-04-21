@@ -1,9 +1,6 @@
 /**
- * 报表模块 API 接口封装
- * 提供报表模板、报表分类、数据源的 CRUD 操作
- * @author Forgex Team
- * @version 1.0
- * @since 2026-04-09
+ * 报表模块 API 封装
+ * 提供报表模板、报表分类和数据源相关接口。
  */
 import http from '../http'
 import type {
@@ -19,15 +16,7 @@ import type {
 } from './types'
 
 /**
- * 报表模板管理 API
- */
-
-/**
  * 分页查询报表模板
- * @param params 查询参数
- * @returns 分页结果
- * @see ReportTemplateParam - 查询参数类型
- * @see ReportTemplate - 返回数据类型
  */
 export function page(params: ReportTemplateParam) {
   return http<PageResult<ReportTemplate>>({
@@ -39,10 +28,6 @@ export function page(params: ReportTemplateParam) {
 
 /**
  * 根据编码获取报表模板
- * @param code 报表编码
- * @param engineType 引擎类型（可选，默认 UREPORT）
- * @returns 报表模板详情
- * @see ReportTemplate - 返回数据类型
  */
 export function getByCode(code: string, engineType = 'UREPORT') {
   return http<ReportTemplate>({
@@ -54,9 +39,6 @@ export function getByCode(code: string, engineType = 'UREPORT') {
 
 /**
  * 根据 ID 获取报表模板
- * @param id 报表 ID
- * @returns 报表模板详情
- * @see ReportTemplate - 返回数据类型
  */
 export function getById(id: number) {
   return http<ReportTemplate>({
@@ -66,10 +48,7 @@ export function getById(id: number) {
 }
 
 /**
- * 保存报表模板（新增或更新）
- * @param data 报表数据
- * @returns 操作结果
- * @see ReportSaveDTO - 保存数据类型
+ * 保存报表模板
  */
 export function save(data: ReportSaveDTO) {
   return http({
@@ -81,8 +60,6 @@ export function save(data: ReportSaveDTO) {
 
 /**
  * 删除报表模板
- * @param id 报表 ID
- * @returns 操作结果
  */
 export function remove(id: number) {
   return http({
@@ -92,52 +69,44 @@ export function remove(id: number) {
 }
 
 /**
- * 获取报表设计器 URL
- * @param code 报表编码
- * @param engineType 引擎类型
- * @returns 设计器 URL
+ * 获取报表设计器地址
  */
 export function getDesignerUrl(code: string, engineType = 'UREPORT'): string {
   const baseUrl = window.location.origin
   if (engineType === 'UREPORT') {
     return `${baseUrl}/ureport/designer?_u=${encodeURIComponent(`/api/report/template/${code}/content`)}`
-  } else if (engineType === 'JIMU') {
+  }
+  if (engineType === 'JIMU') {
     return `${baseUrl}/jimureport/design?reportCode=${code}`
   }
   return ''
 }
 
 /**
- * 预览报表
- * @param code 报表编码
- * @param engineType 引擎类型
- * @param params 报表参数
- * @returns 预览 URL
+ * 获取报表预览地址
  */
 export function getPreviewUrl(code: string, engineType = 'UREPORT', params?: Record<string, any>): string {
   const baseUrl = window.location.origin
   let url = ''
-  
+
   if (engineType === 'UREPORT') {
     url = `${baseUrl}/ureport/preview?_u=${encodeURIComponent(`/api/report/template/${code}/content`)}`
   } else if (engineType === 'JIMU') {
     url = `${baseUrl}/jimureport/preview?reportCode=${code}`
   }
-  
+
   if (params && Object.keys(params).length > 0) {
     const paramStr = Object.entries(params)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join('&')
     url += `&${paramStr}`
   }
-  
+
   return url
 }
 
 /**
- * 测试数据源连接
- * @param datasourceId 数据源 ID
- * @returns 测试结果
+ * 测试已保存的数据源连接
  */
 export function testDatasource(datasourceId: number) {
   return http({
@@ -147,15 +116,7 @@ export function testDatasource(datasourceId: number) {
 }
 
 /**
- * 报表分类管理 API
- */
-
-/**
  * 分页查询报表分类
- * @param params 查询参数
- * @returns 分页结果
- * @see ReportCategoryParam - 查询参数类型
- * @see ReportCategory - 返回数据类型
  */
 export function pageCategory(params: ReportCategoryParam) {
   return http<PageResult<ReportCategory>>({
@@ -167,9 +128,6 @@ export function pageCategory(params: ReportCategoryParam) {
 
 /**
  * 获取分类树
- * @param params 查询参数
- * @returns 分类树
- * @see ReportCategory - 返回数据类型
  */
 export function getCategoryTree(params?: { parentId?: number }) {
   return http<ReportCategory[]>({
@@ -181,9 +139,6 @@ export function getCategoryTree(params?: { parentId?: number }) {
 
 /**
  * 根据 ID 获取分类
- * @param id 分类 ID
- * @returns 分类详情
- * @see ReportCategory - 返回数据类型
  */
 export function getCategoryById(id: number) {
   return http<ReportCategory>({
@@ -193,9 +148,7 @@ export function getCategoryById(id: number) {
 }
 
 /**
- * 保存分类
- * @param data 分类数据
- * @returns 操作结果
+ * 保存报表分类
  */
 export function saveCategory(data: Partial<ReportCategory>) {
   return http({
@@ -206,9 +159,7 @@ export function saveCategory(data: Partial<ReportCategory>) {
 }
 
 /**
- * 删除分类
- * @param id 分类 ID
- * @returns 操作结果
+ * 删除报表分类
  */
 export function removeCategory(id: number) {
   return http({
@@ -218,15 +169,7 @@ export function removeCategory(id: number) {
 }
 
 /**
- * 报表数据源管理 API
- */
-
-/**
  * 分页查询数据源
- * @param params 查询参数
- * @returns 分页结果
- * @see ReportDatasourceParam - 查询参数类型
- * @see ReportDatasource - 返回数据类型
  */
 export function pageDatasource(params: ReportDatasourceParam) {
   return http<PageResult<ReportDatasource>>({
@@ -238,9 +181,6 @@ export function pageDatasource(params: ReportDatasourceParam) {
 
 /**
  * 根据编码获取数据源
- * @param code 数据源编码
- * @returns 数据源详情
- * @see ReportDatasource - 返回数据类型
  */
 export function getDatasourceByCode(code: string) {
   return http<ReportDatasource>({
@@ -251,9 +191,6 @@ export function getDatasourceByCode(code: string) {
 
 /**
  * 根据 ID 获取数据源
- * @param id 数据源 ID
- * @returns 数据源详情
- * @see ReportDatasource - 返回数据类型
  */
 export function getDatasourceById(id: number) {
   return http<ReportDatasource>({
@@ -263,10 +200,7 @@ export function getDatasourceById(id: number) {
 }
 
 /**
- * 保存数据源（新增或更新）
- * @param data 数据源数据
- * @returns 操作结果
- * @see DatasourceSaveDTO - 保存数据类型
+ * 保存数据源
  */
 export function saveDatasource(data: DatasourceSaveDTO) {
   return http({
@@ -278,8 +212,6 @@ export function saveDatasource(data: DatasourceSaveDTO) {
 
 /**
  * 删除数据源
- * @param id 数据源 ID
- * @returns 操作结果
  */
 export function removeDatasource(id: number) {
   return http({
@@ -289,9 +221,7 @@ export function removeDatasource(id: number) {
 }
 
 /**
- * 测试数据源连接
- * @param data 数据源配置（用于测试未保存的数据源）
- * @returns 测试结果
+ * 测试未保存的数据源配置
  */
 export function testDatasourceConfig(data: DatasourceSaveDTO) {
   return http({
@@ -302,9 +232,7 @@ export function testDatasourceConfig(data: DatasourceSaveDTO) {
 }
 
 /**
- * 获取所有可用的数据源列表（用于下拉框）
- * @returns 数据源列表
- * @see ReportDatasource - 返回数据类型
+ * 获取可用数据源列表
  */
 export function getAvailableDatasources() {
   return http<ReportDatasource[]>({

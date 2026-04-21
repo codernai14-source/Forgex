@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal
     v-model:open="dialogVisible"
     :title="dialogTitle"
@@ -50,11 +50,8 @@
       
       <a-form-item :label="t('system.encodeRule.status')" name="status">
         <a-radio-group v-model:value="form.status">
-          <a-radio :value="1">
-            {{ t('system.encodeRule.statusActive') }}
-          </a-radio>
-          <a-radio :value="0">
-            {{ t('system.encodeRule.statusInactive') }}
+          <a-radio v-for="item in statusRadioOptions" :key="String(item.value)" :value="item.value">
+            {{ item.label }}
           </a-radio>
         </a-radio-group>
       </a-form-item>
@@ -86,17 +83,12 @@
                   :placeholder="t('system.encodeRule.segmentType')"
                   @change="handleSegmentTypeChange(detail)"
                 >
-                  <a-select-option value="FIXED">
-                    {{ t('system.encodeRule.segmentTypeFixed') }}
-                  </a-select-option>
-                  <a-select-option value="DATE">
-                    {{ t('system.encodeRule.segmentTypeDate') }}
-                  </a-select-option>
-                  <a-select-option value="SEQ">
-                    {{ t('system.encodeRule.segmentTypeSeq') }}
-                  </a-select-option>
-                  <a-select-option value="CUSTOM">
-                    {{ t('system.encodeRule.segmentTypeCustom') }}
+                  <a-select-option
+                    v-for="item in segmentTypeSelectOptions"
+                    :key="String(item.value)"
+                    :value="item.value"
+                  >
+                    {{ item.label }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -111,8 +103,8 @@
                 />
                 <a-input
                   v-else-if="detail.segmentType === 'DATE'"
-                  v-model:value="detail.dateFormat"
-                  :placeholder="t('system.encodeRule.dateFormatPlaceholder')"
+                  v-model:value="detail.date表单at"
+                  :placeholder="t('system.encodeRule.date表单atPlaceholder')"
                 />
                 <a-input
                   v-else
@@ -155,17 +147,12 @@
                   v-model:value="detail.seqResetType"
                   :placeholder="t('system.encodeRule.seqResetType')"
                 >
-                  <a-select-option :value="0">
-                    {{ t('system.encodeRule.seqResetNever') }}
-                  </a-select-option>
-                  <a-select-option :value="1">
-                    {{ t('system.encodeRule.seqResetYearly') }}
-                  </a-select-option>
-                  <a-select-option :value="2">
-                    {{ t('system.encodeRule.seqResetMonthly') }}
-                  </a-select-option>
-                  <a-select-option :value="3">
-                    {{ t('system.encodeRule.seqResetDaily') }}
+                  <a-select-option
+                    v-for="item in seqResetTypeSelectOptions"
+                    :key="String(item.value)"
+                    :value="item.value"
+                  >
+                    {{ item.label }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -221,13 +208,17 @@
  */
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, type FormInstance, type FormRule } from 'ant-design-vue'
+import { message, type 表单Instance, type 表单Rule } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
+import { useDict } from '@/hooks/useDict'
 import type { EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
 
 // 国际化
 const { t } = useI18n()
+const { dictItems: encodeRuleEnabledOptions } = useDict('encode_rule_enabled')
+const { dictItems: segmentTypeDictItems } = useDict('encode_rule_segment_type')
+const { dictItems: seqResetTypeDictItems } = useDict('encode_rule_seq_reset_type')
 
 // Props
 interface Props {
@@ -254,28 +245,28 @@ const dialogVisible = computed({
 })
 
 // 表单引用
-const formRef = ref<FormInstance>()
+const formRef = ref<表单Instance>()
 
-interface EncodeRuleFormDetail extends Omit<EncodeRuleDetail, 'segmentType'> {
+interface EncodeRule表单Detail extends Omit<EncodeRuleDetail, 'segmentType'> {
   segmentType?: 'FIXED' | 'DATE' | 'SEQ' | 'CUSTOM'
-  dateFormat?: string
+  date表单at?: string
   seqStart?: number
   seqLength?: number
   seqResetType?: number
 }
 
-interface EncodeRuleFormModel {
+interface EncodeRule表单Model {
   id?: string
   ruleName: string
   ruleCode: string
   businessType: string
   description: string
   status: number
-  ruleDetails: EncodeRuleFormDetail[]
+  ruleDetails: EncodeRule表单Detail[]
   remark: string
 }
 // 表单数据
-const form = reactive<EncodeRuleFormModel>({
+const form = reactive<EncodeRule表单Model>({
   ruleName: '',
   ruleCode: '',
   businessType: '',
@@ -285,8 +276,32 @@ const form = reactive<EncodeRuleFormModel>({
   remark: '',
 })
 
+const statusRadioOptions = computed(() =>
+  (encodeRuleEnabledOptions.value || []).map((item: { label: string; value: string | number | boolean }) => ({
+    label: item.label,
+    value:
+      item.value === true || item.value === 'true' || item.value === 1 || item.value === '1'
+        ? 1
+        : 0,
+  })),
+)
+
+const segmentTypeSelectOptions = computed(() =>
+  (segmentTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: String(item.value),
+  })),
+)
+
+const seqResetTypeSelectOptions = computed(() =>
+  (seqResetTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: Number(item.value),
+  })),
+)
+
 // 表单验证规则
-const formRules: Record<string, FormRule[]> = {
+const formRules: Record<string, 表单Rule[]> = {
   ruleName: [
     { required: true, message: t('system.encodeRule.ruleNameRequired'), trigger: 'blur' },
     { max: 50, message: t('system.encodeRule.ruleNameMaxLength'), trigger: 'blur' },
@@ -299,7 +314,7 @@ const formRules: Record<string, FormRule[]> = {
 }
 
 // 明细验证规则
-const detailRules: FormRule[] = [
+const detailRules: 表单Rule[] = [
   {
     required: true,
     validator: (_rule, value) => {
@@ -309,8 +324,8 @@ const detailRules: FormRule[] = [
       if (value.segmentType === 'FIXED' && !value.segmentValue) {
         return Promise.reject(t('system.encodeRule.segmentValueRequired'))
       }
-      if (value.segmentType === 'DATE' && !value.dateFormat) {
-        return Promise.reject(t('system.encodeRule.dateFormatRequired'))
+      if (value.segmentType === 'DATE' && !value.date表单at) {
+        return Promise.reject(t('system.encodeRule.date表单atRequired'))
       }
       if (value.segmentType === 'SEQ') {
         if (!value.seqStart && value.seqStart !== 0) {
@@ -331,7 +346,7 @@ const dialogTitle = computed(() => {
   return props.isEdit ? t('system.encodeRule.edit') : t('system.encodeRule.add')
 })
 
-function mapBackendDetailToForm(detail: EncodeRuleDetail): EncodeRuleFormDetail {
+function mapBackendDetailTo表单(detail: EncodeRuleDetail): EncodeRule表单Detail {
   const backendType = String(detail?.segmentType || '').toUpperCase()
   const formType =
     backendType === 'SERIAL'
@@ -346,7 +361,7 @@ function mapBackendDetailToForm(detail: EncodeRuleDetail): EncodeRuleFormDetail 
     segmentOrder: detail?.segmentOrder,
     segmentType: formType,
     segmentValue: detail?.segmentValue || detail?.conditionExpression || '',
-    dateFormat: formType === 'DATE' ? (detail?.segmentValue || '') : undefined,
+    date表单at: formType === 'DATE' ? (detail?.segmentValue || '') : undefined,
     remark: detail?.remark || '',
     connector: detail?.connector,
     isRequired: detail?.isRequired,
@@ -354,7 +369,7 @@ function mapBackendDetailToForm(detail: EncodeRuleDetail): EncodeRuleFormDetail 
   }
 }
 
-function mapFormDetailToBackend(detail: EncodeRuleFormDetail, index: number): EncodeRuleDetail {
+function map表单DetailToBackend(detail: EncodeRule表单Detail, index: number): EncodeRuleDetail {
   const formType = String(detail?.segmentType || 'FIXED').toUpperCase()
   const backendType =
     formType === 'SEQ'
@@ -364,7 +379,7 @@ function mapFormDetailToBackend(detail: EncodeRuleFormDetail, index: number): En
         : formType
 
   const segmentValue = formType === 'DATE'
-    ? (detail.dateFormat || detail.segmentValue || '')
+    ? (detail.date表单at || detail.segmentValue || '')
     : (detail.segmentValue || '')
 
   return {
@@ -381,7 +396,7 @@ function mapFormDetailToBackend(detail: EncodeRuleFormDetail, index: number): En
 }
 
 // 重置表单
-function resetForm() {
+function reset表单() {
   form.id = undefined
   form.ruleName = ''
   form.ruleCode = ''
@@ -403,7 +418,7 @@ async function loadRuleDetail() {
     form.businessType = data.module || ''
     form.description = ''
     form.status = data.isEnabled === false ? 0 : 1
-    form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailToForm(detail))
+    form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailTo表单(detail))
     form.remark = data.remark || ''
   } catch (error) {
     console.error('加载规则详情失败:', error)
@@ -413,7 +428,7 @@ async function loadRuleDetail() {
 
 // 添加明细
 function handleAddDetail() {
-  const newDetail: EncodeRuleFormDetail = {
+  const newDetail: EncodeRule表单Detail = {
     segmentOrder: (form.ruleDetails?.length || 0) + 1,
     segmentType: 'FIXED',
     segmentValue: '',
@@ -437,29 +452,29 @@ function handleRemoveDetail(index: number) {
 }
 
 // 段类型变化处理
-function handleSegmentTypeChange(detail: EncodeRuleFormDetail) {
+function handleSegmentTypeChange(detail: EncodeRule表单Detail) {
   // 根据段类型清空或设置默认值
   if (detail.segmentType === 'FIXED') {
     detail.segmentValue = ''
-    detail.dateFormat = undefined
+    detail.date表单at = undefined
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
   } else if (detail.segmentType === 'DATE') {
     detail.segmentValue = undefined
-    detail.dateFormat = 'YYYYMMDD'
+    detail.date表单at = 'YYYYMMDD'
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
   } else if (detail.segmentType === 'SEQ') {
     detail.segmentValue = undefined
-    detail.dateFormat = undefined
+    detail.date表单at = undefined
     detail.seqStart = 1
     detail.seqLength = 6
     detail.seqResetType = 0
   } else if (detail.segmentType === 'CUSTOM') {
     detail.segmentValue = ''
-    detail.dateFormat = undefined
+    detail.date表单at = undefined
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
@@ -493,7 +508,7 @@ async function handleSubmit() {
       module: form.businessType,
       isEnabled: form.status === 1,
       remark: form.remark,
-      detailList: (form.ruleDetails || []).map((detail, index) => mapFormDetailToBackend(detail, index)),
+      detailList: (form.ruleDetails || []).map((detail, index) => map表单DetailToBackend(detail, index)),
     }
 
     await encodeRuleApi.saveEncodeRule(requestPayload)
@@ -508,7 +523,7 @@ async function handleSubmit() {
 // 关闭弹窗
 function handleDialogClose() {
   dialogVisible.value = false
-  resetForm()
+  reset表单()
   formRef.value?.resetFields()
 }
 
@@ -518,7 +533,7 @@ watch(() => props.open, async (newVal) => {
     return
   }
 
-  resetForm()
+  reset表单()
 
   if (props.isEdit) {
     await loadRuleDetail()
@@ -541,14 +556,14 @@ onMounted(() => {
 .detail-item {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--fx-border-color, #d9d9d9);
   border-radius: 4px;
   margin-bottom: 12px;
-  background-color: #fafafa;
+  background-color: var(--fx-content-bg, #fafafa);
   
   &:hover {
-    border-color: #1890ff;
-    background-color: #f0f5ff;
+    border-color: var(--fx-theme-color, #1890ff);
+    background-color: var(--fx-tab-hover-bg, #f0f5ff);
   }
 }
 </style>

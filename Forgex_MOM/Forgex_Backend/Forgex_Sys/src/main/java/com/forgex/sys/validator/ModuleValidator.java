@@ -13,8 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.validator;
 
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.SysModuleDTO;
+import com.forgex.sys.enums.SysPromptEnum;
 import com.forgex.sys.service.ISysModuleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -38,19 +40,19 @@ public class ModuleValidator {
      * @param moduleDTO 模块信息
      */
     public void validateForAdd(SysModuleDTO moduleDTO) {
-        // 1. 必填项校验（@Validated注解已处理，这里做额外校验）
+        // 1. 必填项校验（@Validated 注解已处理，这里做额外校验）
         Assert.hasText(moduleDTO.getCode(), "模块编码不能为空");
         Assert.hasText(moduleDTO.getName(), "模块名称不能为空");
-        Assert.notNull(moduleDTO.getTenantId(), "租户ID不能为空");
+        Assert.notNull(moduleDTO.getTenantId(), "租户 ID 不能为空");
         
         // 2. 业务规则校验：模块编码唯一性
         if (moduleService.existsByCode(moduleDTO.getCode())) {
-            throw new BusinessException("模块编码已存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_CODE_EXISTS_VALIDATOR);
         }
         
         // 3. 业务规则校验：模块名称唯一性（任务 12）
         if (moduleService.existsByName(moduleDTO.getName(), moduleDTO.getTenantId())) {
-            throw new BusinessException("模块名称已存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_NAME_EXISTS);
         }
         
         // 4. 数据格式校验
@@ -63,23 +65,23 @@ public class ModuleValidator {
      * @param moduleDTO 模块信息
      */
     public void validateForUpdate(SysModuleDTO moduleDTO) {
-        // 1. ID校验
-        Assert.notNull(moduleDTO.getId(), "模块ID不能为空");
-        Assert.notNull(moduleDTO.getTenantId(), "租户ID不能为空");
+        // 1. ID 校验
+        Assert.notNull(moduleDTO.getId(), "模块 ID 不能为空");
+        Assert.notNull(moduleDTO.getTenantId(), "租户 ID 不能为空");
         
         // 2. 存在性校验
         if (!moduleService.existsById(moduleDTO.getId())) {
-            throw new BusinessException("模块不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_NOT_FOUND);
         }
         
         // 3. 唯一性校验（排除自己）
         if (moduleService.existsByCodeExcludeId(moduleDTO.getCode(), moduleDTO.getId())) {
-            throw new BusinessException("模块编码已被其他模块使用");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_CODE_EXISTS_OTHER);
         }
         
         // 4. 模块名称唯一性校验（排除自己）（任务 12）
         if (moduleService.existsByNameExcludeId(moduleDTO.getName(), moduleDTO.getTenantId(), moduleDTO.getId())) {
-            throw new BusinessException("模块名称已被其他模块使用");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_NAME_EXISTS_OTHER);
         }
         
         // 5. 数据格式校验
@@ -89,37 +91,37 @@ public class ModuleValidator {
     /**
      * 删除模块校验（任务 13）
      * 
-     * @param id 模块ID
+     * @param id 模块 ID
      */
     public void validateForDelete(Long id) {
-        // 1. ID校验
+        // 1. ID 校验
         validateId(id);
         
         // 2. 存在性校验
         if (!moduleService.existsById(id)) {
-            throw new BusinessException("模块不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_NOT_FOUND);
         }
         
         // 3. 关联数据校验：检查是否有关联菜单
         if (moduleService.hasMenus(id)) {
-            throw new BusinessException("该模块下还有菜单，无法删除");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_HAS_MENUS_DELETE);
         }
         
         // 4. 角色关联检查：通过菜单查询是否有角色关联（任务 13）
         if (moduleService.hasRoleAssociationThroughMenus(id)) {
-            throw new BusinessException("该模块的菜单已被角色授权，无法删除");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_HAS_ROLE_ASSOCIATION_DELETE);
         }
     }
     
     /**
-     * ID校验
+     * ID 校验
      * 
-     * @param id 模块ID
+     * @param id 模块 ID
      */
     public void validateId(Long id) {
-        Assert.notNull(id, "模块ID不能为空");
+        Assert.notNull(id, "模块 ID 不能为空");
         if (id <= 0) {
-            throw new BusinessException("模块ID格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_ID_INVALID);
         }
     }
     
@@ -129,9 +131,9 @@ public class ModuleValidator {
      * @param code 模块编码
      */
     private void validateModuleCode(String code) {
-        // 模块编码规则：只能包含字母、数字、下划线，长度2-50
+        // 模块编码规则：只能包含字母、数字、下划线，长度 2-50
         if (!code.matches("^[a-zA-Z0-9_]{2,50}$")) {
-            throw new BusinessException("模块编码格式不正确，只能包含字母、数字、下划线，长度2-50");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MODULE_CODE_INVALID);
         }
     }
 }

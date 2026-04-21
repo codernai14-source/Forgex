@@ -1,5 +1,6 @@
-﻿package com.forgex.mobile.feature.auth.data
+package com.forgex.mobile.feature.auth.data
 
+import com.forgex.mobile.core.common.i18n.AppText
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.core.datastore.SessionStore
 import com.forgex.mobile.core.network.api.AuthApi
@@ -14,6 +15,7 @@ import com.forgex.mobile.core.network.model.auth.TenantChoiceRequest
 import com.forgex.mobile.core.network.model.auth.TenantVO
 import com.forgex.mobile.core.network.model.menu.RoutesRequest
 import com.forgex.mobile.core.network.model.menu.UserRoutesVO
+import com.forgex.mobile.core.ui.R
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
@@ -37,11 +39,16 @@ class AuthRepositoryImpl @Inject constructor(
                 password
             } else {
                 Sm2Encryptor.encryptToHex(password, publicKey)
-                    ?: return AppResult.Error("密码加密失败，请刷新后重试")
+                    ?: return AppResult.Error(
+                        message = "",
+                        appText = AppText.Resource(R.string.auth_encrypt_failed)
+                    )
             }
 
             val response = authApi.login(
                 LoginRequest(
+                    loginTerminal = "C",
+                    loginType = "ACCOUNT_PASSWORD",
                     account = account,
                     password = payloadPassword,
                     captcha = captcha?.takeIf { it.isNotBlank() },
@@ -95,7 +102,6 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.getImageCaptcha()
             val data = response.data
-            // 兼容后端可能的字段差异，减少“验证码不显示”问题
             val captchaId = extractString(data, "captchaId", "id")
             val imageBase64 = extractString(
                 data,
@@ -170,7 +176,10 @@ class AuthRepositoryImpl @Inject constructor(
         templateImageHeight: Int
     ): AppResult<String> {
         return try {
-            val normalizedLeft = left.coerceIn(0f, (bgImageWidth - templateImageWidth).coerceAtLeast(0).toFloat())
+            val normalizedLeft = left.coerceIn(
+                0f,
+                (bgImageWidth - templateImageWidth).coerceAtLeast(0).toFloat()
+            )
             val track = SliderTrackPayload(
                 bgImageWidth = bgImageWidth,
                 bgImageHeight = bgImageHeight,
@@ -181,12 +190,7 @@ class AuthRepositoryImpl @Inject constructor(
                 left = normalizedLeft.roundToInt(),
                 top = 0,
                 trackList = listOf(
-                    SliderTrackPointPayload(
-                        x = 0f,
-                        y = 0f,
-                        t = 0f,
-                        type = "DOWN"
-                    ),
+                    SliderTrackPointPayload(x = 0f, y = 0f, t = 0f, type = "DOWN"),
                     SliderTrackPointPayload(
                         x = normalizedLeft * 0.45f,
                         y = 0f,
@@ -236,6 +240,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.chooseTenant(
                 TenantChoiceRequest(
+                    loginTerminal = "C",
                     tenantId = tenantId,
                     account = account
                 )
@@ -289,7 +294,6 @@ class AuthRepositoryImpl @Inject constructor(
         vararg keys: String
     ): String {
         if (data == null) return ""
-        // 兜底清理空白符，避免 Base64 中换行导致图片解码失败
         val value = keys
             .firstNotNullOfOrNull { key -> data[key]?.toString()?.trim() }
             .orEmpty()

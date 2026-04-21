@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@form-create/ant-design-vue": "^3.2.33",
+    "@form-create/antd-designer": "^3.4.0",
     "@formily/antdv-x3": "latest",
     "@formily/core": "^2.3.7",
     "@formily/vue": "^2.3.7",
@@ -26,6 +28,7 @@
     "dayjs": "^1.11.19",
     "echarts": "^6.0.0",
     "pinia": "^3.0.4",
+    "pinyin-pro": "^3.28.1",
     "sm-crypto": "^0.3.12",
     "three": "^0.182.0",
     "vue": "^3.5.26",
@@ -39,6 +42,7 @@
     "vuestic-ui": "^1.10.3"
   },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "@types/sm-crypto": "^0.3.4",
     "@vitejs/plugin-vue": "^5.0.4",
     "less": "^4.2.0",

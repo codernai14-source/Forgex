@@ -13,11 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.job;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 定时任务服务启动类
@@ -47,6 +49,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.forgex.common.feign.client")
 @EnableAsync
+@EnableScheduling
+@MapperScan({"com.forgex.job.mapper", "com.forgex.common.mapper"})
 public class ForgexJobApplication {
     /**
      * 应用入口

@@ -2,10 +2,10 @@
  * 表格配置管理 - 中文
  */
 export default {
-  tableCode: '表格代码',
+  tableCode: '表格编码',
   tableName: '表格名称',
   tableType: '表格类型',
-  rowKey: '行Key',
+  rowKey: '行 Key',
   defaultPageSize: '默认分页大小',
   enabled: '启用状态',
   tableTypeNormal: '普通表格',
@@ -18,34 +18,29 @@ export default {
   align: '对齐方式',
   width: '列宽',
   fixed: '固定列',
-  ellipsis: '省略',
-  sortable: '可排序',
-  queryable: '可查询',
-  orderNum: '排序',
+  ellipsis: '省略显示',
+  sortable: '允许排序',
+  queryable: '允许查询',
+  orderNum: '排序号',
   add: '新增配置',
   edit: '编辑配置',
-  addColumn: '添加列',
+  addColumn: '新增列',
   columnRequired: '请至少添加一列配置',
   loadDetailFailed: '加载配置详情失败',
-  
-  /**
-   * 列设置相关
-   */
   columnSetting: {
     title: '列设置',
     reset: '重置',
-    resetSuccess: '已重置为默认配置',
-    hint: '勾选显示列，上下拖动调整顺序'
+    resetSuccess: '已恢复为默认列配置',
+    hint: '勾选需要显示的列，并拖动调整显示顺序',
   },
-  
   form: {
-    tableCode: '请输入表格代码',
+    tableCode: '请输入表格编码',
     tableName: '请输入表格名称',
     tableType: '请选择表格类型',
-    rowKey: '请输入行Key',
+    rowKey: '请输入行 Key',
     defaultPageSize: '请输入默认分页大小',
     enabled: '请选择启用状态',
     field: '请输入字段名',
-    title: '请输入列标题'
-  }
+    title: '请输入列标题',
+  },
 }

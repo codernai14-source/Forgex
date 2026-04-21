@@ -18,6 +18,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.sys.domain.dto.RoleGrantDTO;
 import com.forgex.sys.domain.entity.SysPosition;
@@ -33,6 +35,7 @@ import com.forgex.sys.mapper.SysRolePositionMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.ISysRolePositionService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -54,7 +57,7 @@ import java.util.stream.Collectors;
  * 职位授权通过查询职位下的所有用户，自动为这些用户建立角色 - 用户关联关系。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-06
  * @see ISysRolePositionService
@@ -208,7 +211,7 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
         // 3. 校验职位存在
         List<SysPosition> positions = positionMapper.selectByIds(grantDTO.getPositionIds());
         if (positions == null || positions.size() != grantDTO.getPositionIds().size()) {
-            throw new BusinessException("部分职位不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.POSITION_NOT_FOUND_SERVICE);
         }
 
         // 4. 查询已存在的角色 - 职位关联，避免重复插入
@@ -298,7 +301,7 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
         // 3. 校验职位存在
         List<SysPosition> positions = positionMapper.selectByIds(revokeDTO.getPositionIds());
         if (positions == null || positions.size() != revokeDTO.getPositionIds().size()) {
-            throw new BusinessException("部分职位不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.POSITION_NOT_FOUND_SERVICE);
         }
 
         // 4. 遍历职位，删除每个职位下用户的角色关联

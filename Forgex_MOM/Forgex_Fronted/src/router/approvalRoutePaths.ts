@@ -12,9 +12,11 @@ export const approvalRoutePaths = {
   taskConfigNodes: (taskCode: string) => `${APPROVAL_ROUTE_BASE}/taskConfig/${encodeTaskCode(taskCode)}/nodes`,
   executionStartList: `${APPROVAL_ROUTE_BASE}/execution/start`,
   executionStartForm: (taskCode: string) => `${APPROVAL_ROUTE_BASE}/execution/start/${encodeTaskCode(taskCode)}`,
+  executionStart表单: (taskCode: string) => `${APPROVAL_ROUTE_BASE}/execution/start/${encodeTaskCode(taskCode)}`,
   myPending: `${APPROVAL_ROUTE_BASE}/my/pending`,
   myProcessed: `${APPROVAL_ROUTE_BASE}/my/processed`,
   myInitiated: `${APPROVAL_ROUTE_BASE}/my/initiated`,
+  compensationCenter: `${APPROVAL_ROUTE_BASE}/governance/compensation`,
 }
 
 export function normalizeApprovalRoutePath(path: unknown, fallback = approvalRoutePaths.taskConfigList) {

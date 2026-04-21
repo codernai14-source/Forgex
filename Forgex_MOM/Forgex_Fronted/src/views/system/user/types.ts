@@ -17,6 +17,8 @@ export interface User {
   departmentName?: string  // 部门名称（关联查询）
   positionId: string
   positionName?: string    // 职位名称（关联查询）
+  roleIds?: string[]
+  roleNames?: string[]
   tenantId?: string    // 租户ID（用户绑定的主租户ID）
   status: boolean | number
   createTime?: string
@@ -41,7 +43,7 @@ export interface UserTenant {
 export interface UserProfile {
   id?: string
   userId: string
-  politicalStatus?: string  // 政治面貌
+  political状态?: string  // 政治面貌
   homeAddress?: string      // 家庭住址
   emergencyContact?: string // 紧急联系人
   emergencyPhone?: string   // 紧急联系人电话
@@ -72,7 +74,8 @@ export interface UserQuery {
   phone?: string
   departmentId?: string
   positionId?: string
-  roleId?: string
+  roleId?: string | string[]
+  roleIds?: string[]
   entryDate?: string[]
   entryDateStart?: string
   entryDateEnd?: string

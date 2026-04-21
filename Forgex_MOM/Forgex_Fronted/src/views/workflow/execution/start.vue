@@ -2,20 +2,20 @@
   <div class="approval-start-page">
     <section class="hero-panel">
       <div>
-        <p class="hero-panel__eyebrow">Approval Center</p>
-        <h2 class="hero-panel__title">选择要发起的审批流程</h2>
+        <p class="hero-panel__eyebrow">{{ t('workflow.execution.startPage.eyebrow') }}</p>
+        <h2 class="hero-panel__title">{{ t('workflow.execution.startPage.title') }}</h2>
         <p class="hero-panel__desc">
-          当前页只负责选择流程，不再直接展开表单。点击卡片后进入下一步填写并提交审批内容。
+          {{ t('workflow.execution.startPage.desc') }}
         </p>
       </div>
 
       <div class="hero-panel__stats">
         <div class="hero-panel__stat">
-          <span>可发起流程</span>
+          <span>{{ t('workflow.execution.startPage.availableCount') }}</span>
           <strong>{{ taskList.length }}</strong>
         </div>
         <div class="hero-panel__stat">
-          <span>筛选结果</span>
+          <span>{{ t('workflow.execution.startPage.filteredCount') }}</span>
           <strong>{{ filteredTasks.length }}</strong>
         </div>
       </div>
@@ -24,7 +24,7 @@
     <section class="board">
       <aside class="sidebar">
         <div class="panel">
-          <div class="panel__title">分类筛选</div>
+          <div class="panel__title">{{ t('workflow.execution.startPage.categoryFilter') }}</div>
           <button
             v-for="category in categoryOptions"
             :key="category.key"
@@ -39,7 +39,7 @@
         </div>
 
         <div v-if="recentTasks.length" class="panel">
-          <div class="panel__title">最近使用</div>
+          <div class="panel__title">{{ t('workflow.execution.startPage.recentTitle') }}</div>
           <button
             v-for="task in recentTasks"
             :key="task.taskCode"
@@ -50,7 +50,7 @@
             <component :is="getTaskIcon(task)" />
             <div>
               <div class="recent-item__name">{{ task.taskName }}</div>
-              <div class="recent-item__meta">{{ getTaskCategory(task) }}</div>
+              <div class="recent-item__meta">{{ getTaskCategoryLabel(getTaskCategoryKey(task)) }}</div>
             </div>
           </button>
         </div>
@@ -59,15 +59,15 @@
       <section class="content-panel">
         <div class="toolbar">
           <div>
-            <div class="toolbar__title">审批流程列表</div>
-            <div class="toolbar__meta">点击任意流程卡片进入第二步填写页面</div>
+            <div class="toolbar__title">{{ t('workflow.execution.startPage.taskListTitle') }}</div>
+            <div class="toolbar__meta">{{ t('workflow.execution.startPage.taskListDesc') }}</div>
           </div>
 
           <a-input
             v-model:value="searchKeyword"
             allow-clear
             class="toolbar__search"
-            placeholder="搜索流程名称、编码、说明"
+            :placeholder="t('workflow.execution.startPage.searchPlaceholder')"
           >
             <template #prefix>
               <SearchOutlined />
@@ -95,21 +95,24 @@
               <div class="task-card__header">
                 <div>
                   <div class="task-card__name">{{ task.taskName }}</div>
-                  <div class="task-card__category">{{ getTaskCategory(task) }}</div>
+                  <div class="task-card__category">{{ getTaskCategoryLabel(getTaskCategoryKey(task)) }}</div>
                 </div>
                 <a-tag :color="task.formType === 1 ? 'blue' : 'green'">
-                  {{ task.formType === 1 ? '自定义表单' : '低代码表单' }}
+                  {{ task.formType === 1 ? t('workflow.execution.startPage.customForm') : t('workflow.execution.startPage.lowCodeForm') }}
                 </a-tag>
               </div>
 
               <p class="task-card__remark">
-                {{ task.remark || '点击进入下一步填写审批表单。' }}
+                {{ task.remark || t('workflow.execution.startPage.remarkFallback') }}
               </p>
 
               <div class="task-card__footer">
                 <span>{{ task.taskCode }}</span>
+              </div>
+
+              <div class="task-card__action">
                 <span class="task-card__open">
-                  进入填写
+                  {{ t('workflow.execution.startPage.openForm') }}
                   <ArrowRightOutlined />
                 </span>
               </div>
@@ -117,7 +120,7 @@
           </button>
         </div>
 
-        <a-empty v-else class="state-wrap" description="暂无可发起的审批流程" />
+        <a-empty v-else class="state-wrap" :description="t('workflow.execution.startPage.empty')" />
       </section>
     </section>
   </div>
@@ -126,16 +129,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   AppstoreOutlined,
   ArrowRightOutlined,
   CalendarOutlined,
   FileTextOutlined,
   SearchOutlined,
-  TeamOutlined
+  TeamOutlined,
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
+import { useDict } from '@/hooks/useDict'
 import { listTaskConfig, type WfTaskConfigDTO } from '@/api/workflow/taskConfig'
 
 interface TaskCategoryOption {
@@ -146,7 +151,9 @@ interface TaskCategoryOption {
 
 const RECENT_TASK_STORAGE_KEY = 'workflow-recent-task-codes'
 
+const { t } = useI18n({ useScope: 'global' })
 const router = useRouter()
+const { dictItems: taskCategoryOptions } = useDict('wf_task_category')
 const taskListLoading = ref(false)
 const taskList = ref<WfTaskConfigDTO[]>([])
 const recentTaskCodes = ref<string[]>(loadRecentTaskCodes())
@@ -156,12 +163,16 @@ const activeCategory = ref('all')
 const categoryOptions = computed<TaskCategoryOption[]>(() => {
   const counters = new Map<string, number>()
   taskList.value.forEach(task => {
-    const category = getTaskCategory(task)
+    const category = getTaskCategoryKey(task)
     counters.set(category, (counters.get(category) || 0) + 1)
   })
   return [
-    { key: 'all', label: '全部流程', count: taskList.value.length },
-    ...Array.from(counters.entries()).map(([label, count]) => ({ key: label, label, count }))
+    { key: 'all', label: t('workflow.execution.startPage.categoryAll'), count: taskList.value.length },
+    ...Array.from(counters.entries()).map(([key, count]) => ({
+      key,
+      label: getTaskCategoryLabel(key),
+      count,
+    })),
   ]
 })
 
@@ -169,13 +180,13 @@ const filteredTasks = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase()
   return [...taskList.value]
     .filter(task => {
-      if (activeCategory.value !== 'all' && getTaskCategory(task) !== activeCategory.value) {
+      if (activeCategory.value !== 'all' && getTaskCategoryKey(task) !== activeCategory.value) {
         return false
       }
       if (!keyword) {
         return true
       }
-      return [task.taskName, task.taskCode, task.remark, getTaskCategory(task)]
+      return [task.taskName, task.taskCode, task.remark, getTaskCategoryLabel(getTaskCategoryKey(task))]
         .filter(Boolean)
         .some(value => String(value).toLowerCase().includes(keyword))
     })
@@ -216,31 +227,38 @@ function persistRecentTask(taskCode: string) {
   localStorage.setItem(RECENT_TASK_STORAGE_KEY, JSON.stringify(merged))
 }
 
-function getTaskCategory(task: WfTaskConfigDTO) {
-  const content = `${task.taskName}${task.taskCode}${task.remark || ''}`.toLowerCase()
-  if (content.includes('请假') || content.includes('leave') || content.includes('hr')) return '人事类'
-  if (content.includes('合同') || content.includes('contract')) return '合同类'
-  if (content.includes('财务') || content.includes('expense') || content.includes('付款')) return '财务类'
-  if (content.includes('采购') || content.includes('项目')) return '项目类'
-  return '通用类'
+function getTaskCategoryKey(task: WfTaskConfigDTO) {
+  return task.categoryCode || 'general'
+}
+
+function getTaskCategoryLabel(categoryKey: string) {
+  const matched = (taskCategoryOptions.value || []).find((item: { value: string | number; label: string }) =>
+    String(item.value) === categoryKey
+  )
+  if (matched?.label) {
+    return matched.label
+  }
+  return categoryKey === 'general'
+    ? t('workflow.execution.startPage.categoryGeneral')
+    : categoryKey
 }
 
 function getTaskIcon(task: WfTaskConfigDTO) {
-  const category = getTaskCategory(task)
-  if (task.taskCode === 'LEAVE_APPROVAL_DEMO' || category === '人事类') return CalendarOutlined
-  if (category === '合同类' || category === '财务类') return FileTextOutlined
-  if (category === '项目类') return TeamOutlined
+  const category = getTaskCategoryKey(task)
+  if (task.taskCode === 'LEAVE_APPROVAL_DEMO' || category === 'hr') return CalendarOutlined
+  if (category === 'contract' || category === 'finance') return FileTextOutlined
+  if (category === 'project') return TeamOutlined
   return AppstoreOutlined
 }
 
 function getTaskAccent(task: WfTaskConfigDTO) {
   if (task.taskCode === 'LEAVE_APPROVAL_DEMO') return 'orange'
-  switch (getTaskCategory(task)) {
-    case '人事类':
+  switch (getTaskCategoryKey(task)) {
+    case 'hr':
       return 'blue'
-    case '财务类':
+    case 'finance':
       return 'green'
-    case '合同类':
+    case 'contract':
       return 'pink'
     default:
       return 'violet'
@@ -252,7 +270,7 @@ async function loadTaskList() {
     taskListLoading.value = true
     taskList.value = (await listTaskConfig({ status: 1 })) || []
   } catch (error: any) {
-    message.error(error.message || '加载审批流程失败')
+    message.error(error.message || t('workflow.execution.startPage.loadFailed'))
   } finally {
     taskListLoading.value = false
   }
@@ -388,11 +406,13 @@ onMounted(() => {
   border-radius: 14px;
   color: var(--fx-text-secondary);
   background: var(--fx-fill-alter);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .filter-item--active {
-  color: var(--fx-text-primary);
-  background: var(--fx-primary-bg);
+  color: var(--fx-primary);
+  background: color-mix(in srgb, var(--fx-primary, #1677ff) 12%, var(--fx-bg-container, #ffffff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 28%, transparent);
 }
 
 .recent-item {
@@ -501,6 +521,12 @@ onMounted(() => {
   align-items: center;
   color: var(--fx-text-tertiary);
   font-size: 12px;
+}
+
+.task-card__action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .task-card__open {

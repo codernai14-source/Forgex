@@ -1,6 +1,7 @@
 package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysOperationTemplateDTO;
@@ -71,7 +72,7 @@ public class SysOperationTemplateController {
         
         // 参数校验
         if (dto == null || !StringUtils.hasText(dto.getModule()) || !StringUtils.hasText(dto.getOperationType()) || !StringUtils.hasText(dto.getTemplateCode())) {
-            return R.ok(0L);
+            return R.fail(CommonPrompt.PARAM_EMPTY);
         }
 
         // 查询是否已存在
@@ -93,7 +94,7 @@ public class SysOperationTemplateController {
             t.setPlaceholdersJson(dto.getPlaceholdersJson());
             t.setDeleted(false);
             templateMapper.insert(t);
-            return R.ok(t.getId());
+            return R.ok(CommonPrompt.SAVE_SUCCESS, t.getId());
         }
         
         // 更新操作模板
@@ -102,7 +103,7 @@ public class SysOperationTemplateController {
         u.setTextI18nJson(dto.getTextI18nJson());
         u.setPlaceholdersJson(dto.getPlaceholdersJson());
         templateMapper.updateById(u);
-        return R.ok(exist.getId());
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, exist.getId());
     }
 }
 

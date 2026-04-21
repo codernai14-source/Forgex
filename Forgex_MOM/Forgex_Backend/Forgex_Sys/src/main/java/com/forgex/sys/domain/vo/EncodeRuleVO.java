@@ -26,7 +26,7 @@ import java.util.List;
  * 支持重置周期、启用状态等字段的文本展示。
  * </p>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleDetailVO 明细 VO

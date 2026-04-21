@@ -1,10 +1,7 @@
 /**
  * 通用翻译 - 中文
- * 
- * 包含系统中常用的通用词汇和操作
  */
 export default {
-  // 基础操作
   ok: '确定',
   cancel: '取消',
   save: '保存',
@@ -30,21 +27,30 @@ export default {
   action: '操作',
   expand: '展开',
   collapse: '收起',
+  tip: '提示',
+  getDetailFailed: '获取详情失败',
 
-  /** 多语言输入组件 {@link I18nInput} */
   i18nInput: {
     configureTooltip: '配置多语言',
     modalTitle: '多语言配置',
     defaultTag: '默认',
-    placeholder: '请输入{lang}翻译',
+    placeholder: '请输入 {lang} 文本',
     tipTitle: '提示',
-    tipDesc: '请为每种语言配置对应的翻译文本。未填写的语言将使用默认值。',
+    tipDesc: '请为每种语言填写对应文本，未填写时将使用默认值。',
     columnLang: '语言',
     columnValue: '翻译内容',
     loadLanguagesFailed: '加载语言列表失败',
+    placeholderLabel: '常用占位符：',
+    placeholderHint: '点击占位符可插入到当前聚焦的语言输入框中',
+    phUserName: '用户名',
+    phUserAccount: '用户账号',
+    phTenantName: '租户名称',
+    phCurrentTime: '当前时间',
+    phTitle: '标题',
+    phContent: '内容',
+    phLinkUrl: '链接地址',
   },
-  
-  /** 国际化 JSON 编辑器组件 {@link I18nJsonEditor} */
+
   i18nJsonEditor: {
     zhCn: '中文',
     enUs: '英文',
@@ -52,19 +58,17 @@ export default {
     enUsPlaceholder: '请输入英文翻译',
     jsonPreview: 'JSON 预览',
   },
-  
-  /** JSON 数组编辑器组件 {@link JsonArrayEditor} */
+
   jsonArrayEditor: {
     optionsList: '选项列表',
-    addOption: '添加选项',
+    addOption: '新增选项',
     valuePlaceholder: '请输入选项值',
     labelPlaceholder: '请输入选项标签',
     columnValue: '选项值',
     columnLabel: '选项标签',
     jsonPreview: 'JSON 预览',
   },
-  
-  /** 样式配置编辑器组件 {@link StyleJsonEditor} */
+
   styleJsonEditor: {
     backgroundColor: '背景颜色',
     fontSize: '字体大小',
@@ -78,8 +82,7 @@ export default {
     stylePreview: '样式预览',
     previewText: '预览文本',
   },
-  
-  /** 数据源配置组件 {@link DataSourceConfig} */
+
   dataSourceConfig: {
     dataSourceType: '数据源类型',
     selectType: '请选择数据源类型',
@@ -95,7 +98,6 @@ export default {
     dataSourceJson: '数据源 JSON',
   },
 
-  // 状态
   status: '状态',
   enabled: '启用',
   disabled: '禁用',
@@ -106,14 +108,12 @@ export default {
   pending: '待处理',
   processing: '处理中',
   completed: '已完成',
-  
-  // 时间
+
   createTime: '创建时间',
   updateTime: '更新时间',
   startTime: '开始时间',
   endTime: '结束时间',
-  
-  // 其他
+
   operation: '操作',
   description: '描述',
   remark: '备注',
@@ -126,8 +126,7 @@ export default {
   pleaseSelect: '请选择',
   pleaseInput: '请输入',
   home: '首页',
-  
-  // 系统配置相关
+
   loadFailed: '加载失败',
   saveSuccess: '保存成功',
   saveFailed: '保存失败',
@@ -136,26 +135,27 @@ export default {
   uploadFailed: '上传失败',
   uploading: '上传中',
   upload: '上传',
-  uploadLogo: '上传Logo',
+  uploadLogo: '上传 Logo',
   uploadVideo: '上传视频',
   uploadImage: '上传图片',
   imageOnly: '只能上传图片文件',
   videoOnly: '只能上传视频文件',
   sizeLimit: '文件大小超出限制',
   preview: '预览',
+  createSuccess: '创建成功',
   addSuccess: '新增成功',
   updateSuccess: '更新成功',
   deleteSuccess: '删除成功',
   operationFailed: '操作失败',
-  
-  // 消息提示
-  confirmDelete: '确认删除？',
-  confirmDeleteMessage: '确定要删除该数据吗？',
+
+  confirmDelete: '确定要删除吗？',
+  confirmDeleteMessage: '确定要删除这条数据吗？',
   confirmBatchDelete: '确认批量删除',
   confirmBatchDeleteMessage: '确定要删除选中的 {count} 条数据吗？',
   saved: '已保存',
   deleted: '已删除',
   remove: '移除',
+
   login: {
     accountLabel: '账号',
     accountPlaceholder: '请输入账号',
@@ -168,7 +168,7 @@ export default {
     sliderAutoFillTip: '完成后自动填充验证码',
     languageLabel: '语言',
     rememberMe: '记住我',
-    forgotPassword: '忘记密码?',
+    forgotPassword: '忘记密码？',
     noAccount: '还没有账号？',
     register: '立即注册',
     registerGuideTitle: '账号注册说明',

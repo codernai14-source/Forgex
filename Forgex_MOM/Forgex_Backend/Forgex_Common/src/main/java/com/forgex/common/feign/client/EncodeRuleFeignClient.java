@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * String code = result.getData();
  * }</pre>
  *
- * @author LiDaoMoM
+ * @author ForGexTeam
  * @version 1.0
  * @since 2026-04-10
  * @see com.forgex.sys.feign.EncodeRuleFeignService Sys 模块的 Feign 服务实现

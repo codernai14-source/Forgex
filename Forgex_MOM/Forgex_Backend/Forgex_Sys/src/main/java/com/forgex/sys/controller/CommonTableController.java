@@ -28,6 +28,7 @@ import com.forgex.sys.domain.param.UserColumnItemParam;
 import com.forgex.sys.domain.vo.TableConfigDetailVO;
 import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,10 +49,11 @@ public class CommonTableController {
     private final FxUserTableConfigService userTableConfigService;
     private final FxUserTableConfigMapper userTableConfigMapper;
 
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/get")
     public R<FxTableConfigDTO> get(@RequestBody TableConfigGetParam param) {
         String tableCode = param == null ? null : param.getTableCode();
-        Long tenantId = TenantContext.get();
+        Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
         Long userId = UserContext.get();
         FxTableConfigDTO cfg = tableConfigService.getTableConfig(tableCode, tenantId, userId);
         if (cfg == null) {
@@ -70,6 +72,7 @@ public class CommonTableController {
      * @param param 查询参数，包含 tableCode 和 isPublicConfig
      * @return 表格配置 DTO
      */
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/getWithMode")
     public R<FxTableConfigDTO> getWithMode(@RequestBody TableConfigGetParam param) {
         String tableCode = param == null ? null : param.getTableCode();
@@ -87,17 +90,28 @@ public class CommonTableController {
         return R.ok(cfg);
     }
 
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/list")
     public R<IPage<FxTableConfigDTO>> list(@RequestBody TableConfigGetParam param) {
         String tableCode = param == null ? null : param.getTableCode();
-        Long tenantId = TenantContext.get();
+        Long tenantId = resolveConfigTenantId(param == null ? null : param.getIsPublicConfig());
         Long userId = UserContext.get();
 
         LambdaQueryWrapper<FxTableConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FxTableConfig::getDeleted, false);
+        wrapper.eq(FxTableConfig::getTenantId, tenantId);
 
         if (tableCode != null && !tableCode.isEmpty()) {
             wrapper.like(FxTableConfig::getTableCode, tableCode);
+        }
+        if (param != null && StringUtils.hasText(param.getTableName())) {
+            wrapper.like(FxTableConfig::getTableNameI18nJson, param.getTableName());
+        }
+        if (param != null && StringUtils.hasText(param.getTableType())) {
+            wrapper.eq(FxTableConfig::getTableType, param.getTableType());
+        }
+        if (param != null && param.getEnabled() != null) {
+            wrapper.eq(FxTableConfig::getEnabled, param.getEnabled());
         }
 
         wrapper.orderByAsc(FxTableConfig::getId);
@@ -114,6 +128,7 @@ public class CommonTableController {
      * @param param 查询参数，包含id
      * @return 表格配置详情VO
      */
+    @RequirePerm("sys:tableConfig:view")
     @PostMapping("/info")
     public R<TableConfigDetailVO> info(@RequestBody TableConfigGetParam param) {
         if (param == null || param.getId() == null) {
@@ -121,17 +136,18 @@ public class CommonTableController {
         }
         
         Long id = param.getId();
-        Long tenantId = TenantContext.get();
+        Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
         
         // 查询表格配置
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+        if (config == null || Boolean.TRUE.equals(config.getDeleted()) || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
         // 查询列配置
         LambdaQueryWrapper<FxTableColumnConfig> columnWrapper = new LambdaQueryWrapper<>();
         columnWrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode())
+                    .eq(FxTableColumnConfig::getTenantId, tenantId)
                     .eq(FxTableColumnConfig::getDeleted, false)
                     .orderByAsc(FxTableColumnConfig::getOrderNum);
         List<FxTableColumnConfig> columns = tableColumnConfigMapper.selectList(columnWrapper);
@@ -147,6 +163,7 @@ public class CommonTableController {
         vo.setDefaultSortJson(config.getDefaultSortJson());
         vo.setEnabled(config.getEnabled());
         vo.setVersion(config.getVersion());
+        vo.setPublicConfig(isPublicTenant(tenantId));
         vo.setCreateBy(config.getCreateBy());
         vo.setCreateTime(config.getCreateTime());
         vo.setUpdateBy(config.getUpdateBy());
@@ -177,7 +194,7 @@ public class CommonTableController {
     @RequirePerm("sys:tableConfig:add")
     @PostMapping
     public R<Long> create(@RequestBody TableConfigDetailVO vo) {
-        Long tenantId = TenantContext.get();
+        Long tenantId = resolveConfigTenantId(vo == null ? null : vo.getPublicConfig());
         String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
         
@@ -214,6 +231,69 @@ public class CommonTableController {
         return R.ok(config.getId());
     }
 
+    @RequirePerm("sys:tableConfig:add")
+    @PostMapping("/pull-public")
+    public R<Integer> pullPublicConfig() {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null || tenantId == 0L) {
+            return R.ok(CommonPrompt.OPERATION_SUCCESS, 0);
+        }
+
+        List<FxTableConfig> publicConfigs = tableConfigMapper.selectList(new LambdaQueryWrapper<FxTableConfig>()
+                .eq(FxTableConfig::getTenantId, 0L)
+                .eq(FxTableConfig::getDeleted, false)
+                .orderByAsc(FxTableConfig::getId));
+        if (publicConfigs == null || publicConfigs.isEmpty()) {
+            return R.ok(CommonPrompt.OPERATION_SUCCESS, 0);
+        }
+
+        String currentUser = currentUser();
+        LocalDateTime now = LocalDateTime.now();
+        int count = 0;
+        for (FxTableConfig publicConfig : publicConfigs) {
+            FxTableConfig existed = tableConfigMapper.selectOne(new LambdaQueryWrapper<FxTableConfig>()
+                    .eq(FxTableConfig::getTenantId, tenantId)
+                    .eq(FxTableConfig::getTableCode, publicConfig.getTableCode())
+                    .eq(FxTableConfig::getDeleted, false)
+                    .last("limit 1"));
+            if (existed != null) {
+                continue;
+            }
+
+            FxTableConfig target = new FxTableConfig();
+            BeanUtils.copyProperties(publicConfig, target, "id", "tenantId", "createBy", "createTime", "updateBy", "updateTime", "deleted");
+            target.setId(null);
+            target.setTenantId(tenantId);
+            target.setCreateBy(currentUser);
+            target.setCreateTime(now);
+            target.setUpdateBy(currentUser);
+            target.setUpdateTime(now);
+            target.setDeleted(false);
+            tableConfigMapper.insert(target);
+
+            List<FxTableColumnConfig> columns = tableColumnConfigMapper.selectList(new LambdaQueryWrapper<FxTableColumnConfig>()
+                    .eq(FxTableColumnConfig::getTenantId, 0L)
+                    .eq(FxTableColumnConfig::getTableCode, publicConfig.getTableCode())
+                    .eq(FxTableColumnConfig::getDeleted, false)
+                    .orderByAsc(FxTableColumnConfig::getOrderNum));
+            for (FxTableColumnConfig publicColumn : columns) {
+                FxTableColumnConfig targetColumn = new FxTableColumnConfig();
+                BeanUtils.copyProperties(publicColumn, targetColumn, "id", "tenantId", "createBy", "createTime", "updateBy", "updateTime", "deleted");
+                targetColumn.setId(null);
+                targetColumn.setTenantId(tenantId);
+                targetColumn.setCreateBy(currentUser);
+                targetColumn.setCreateTime(now);
+                targetColumn.setUpdateBy(currentUser);
+                targetColumn.setUpdateTime(now);
+                targetColumn.setDeleted(false);
+                tableColumnConfigMapper.insert(targetColumn);
+            }
+            count++;
+        }
+
+        return R.ok(CommonPrompt.OPERATION_SUCCESS, count);
+    }
+
     /**
      * 更新表格配置
      * 
@@ -228,13 +308,13 @@ public class CommonTableController {
         }
         
         Long id = vo.getId();
-        Long tenantId = TenantContext.get();
+        Long tenantId = resolveConfigTenantId(vo.getPublicConfig());
         String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
         
         // 更新表格配置
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+        if (config == null || Boolean.TRUE.equals(config.getDeleted()) || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
@@ -251,7 +331,8 @@ public class CommonTableController {
         
         // 删除旧的列配置
         LambdaQueryWrapper<FxTableColumnConfig> deleteWrapper = new LambdaQueryWrapper<>();
-        deleteWrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode());
+        deleteWrapper.eq(FxTableColumnConfig::getTenantId, tenantId)
+                .eq(FxTableColumnConfig::getTableCode, config.getTableCode());
         tableColumnConfigMapper.delete(deleteWrapper);
         
         // 保存新的列配置
@@ -299,8 +380,9 @@ public class CommonTableController {
         }
         
         Long id = param.getId();
+        Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null) {
+        if (config == null || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
@@ -310,7 +392,8 @@ public class CommonTableController {
         
         // 软删除列配置
         LambdaQueryWrapper<FxTableColumnConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode());
+        wrapper.eq(FxTableColumnConfig::getTenantId, tenantId)
+                .eq(FxTableColumnConfig::getTableCode, config.getTableCode());
         List<FxTableColumnConfig> columns = tableColumnConfigMapper.selectList(wrapper);
         for (FxTableColumnConfig column : columns) {
             column.setDeleted(true);
@@ -351,6 +434,7 @@ public class CommonTableController {
         for (Long id : param.getIds()) {
             TableConfigGetParam deleteParam = new TableConfigGetParam();
             deleteParam.setId(id);
+            deleteParam.setIsPublicConfig(param.getIsPublicConfig());
             delete(deleteParam);
         }
         
@@ -378,6 +462,7 @@ public class CommonTableController {
      * @param param 查询参数，包含id和enabled
      * @return 操作结果
      */
+    @RequirePerm("sys:tableConfig:edit")
     @PostMapping("/updateStatus")
     public R<Void> updateStatus(@RequestBody TableConfigGetParam param) {
         if (param == null || param.getId() == null) {
@@ -385,8 +470,9 @@ public class CommonTableController {
         }
         
         Long id = param.getId();
+        Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
         FxTableConfig config = tableConfigMapper.selectById(id);
-        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
+        if (config == null || Boolean.TRUE.equals(config.getDeleted()) || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
         
@@ -598,5 +684,16 @@ public class CommonTableController {
     private String currentUser() {
         Long userId = UserContext.get();
         return userId == null ? "system" : userId.toString();
+    }
+
+    private Long resolveConfigTenantId(Boolean publicConfig) {
+        if (Boolean.TRUE.equals(publicConfig)) {
+            return 0L;
+        }
+        return TenantContext.get();
+    }
+
+    private boolean isPublicTenant(Long tenantId) {
+        return tenantId != null && tenantId == 0L;
     }
 }

@@ -24,6 +24,11 @@ public class FileUploadConfig {
     private String accessPrefix = "/files";
 
     /**
+     * Public base URL for local file access, such as http://192.168.1.10:8082.
+     */
+    private String publicBaseUrl = "";
+
+    /**
      * Provider config json for OSS/MINIO (placeholder for now).
      */
     private String providerConfigJson = "";

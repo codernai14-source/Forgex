@@ -95,10 +95,10 @@
             </a-col>
             
             <a-col :span="12">
-              <a-form-item label="职位" name="positionId">
+              <a-form-item label="岗位" name="positionId">
                 <a-select
                   v-model:value="formData.positionId"
-                  placeholder="请选择职位"
+                  placeholder="请选择岗位"
                   show-search
                   :filter-option="filterOption"
                 >
@@ -118,7 +118,7 @@
             <a-col :span="12">
               <a-form-item label="状态" name="status">
                 <a-radio-group v-model:value="formData.status">
-                  <a-radio v-for="option in normalizedStatusOptions" :key="option.value" :value="option.value">
+                  <a-radio v-for="option in normalized状态Options" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-radio>
                 </a-radio-group>
@@ -140,11 +140,11 @@
             <a-col :span="12">
               <a-form-item label="政治面貌">
                 <a-select
-                  v-model:value="profileData.politicalStatus"
+                  v-model:value="profileData.political状态"
                   placeholder="请选择政治面貌"
                   allow-clear
                 >
-                  <a-select-option v-for="option in politicalStatusOptions" :key="option.value" :value="option.value">
+                  <a-select-option v-for="option in political状态Options" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-select-option>
                 </a-select>
@@ -222,10 +222,10 @@
           
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="引荐人">
+              <a-form-item label="介绍人">
                 <a-input
                   v-model:value="profileData.referrer"
-                  placeholder="请输入引荐人"
+                  placeholder="请输入介绍人"
                 />
               </a-form-item>
             </a-col>
@@ -233,7 +233,7 @@
           
           <!-- 工作经历 -->
           <a-divider orientation="left">工作经历</a-divider>
-          
+
           <div
             v-for="(history, index) in profileData.workHistory"
             :key="index"
@@ -383,8 +383,8 @@ const formData = reactive<Partial<User>>({
 const userDetail = ref<User | null>(null)
 
 // 附属信息表单数据
-const profileData = reactive<Partial<UserProfile>>({  
-  politicalStatus: '',
+const profileData = reactive<Partial<UserProfile>>({
+  political状态: '',
   homeAddress: '',
   emergencyContact: '',
   emergencyPhone: '',
@@ -403,11 +403,11 @@ const positionList = ref<Position[]>([])
 
 // 字典数据
 const { dictItems: genderOptions } = useDict('gender')
-const { dictItems: politicalStatusOptions } = useDict('political_status')
+const { dictItems: political状态Options } = useDict('political_status')
 const { dictItems: educationOptions } = useDict('education')
 const { dictItems: statusOptions } = useDict('status')
 
-function normalizeStatusValue(value: unknown): boolean | undefined {
+function normalize状态Value(value: unknown): boolean | undefined {
   if (typeof value === 'boolean') {
     return value
   }
@@ -424,10 +424,10 @@ function normalizeStatusValue(value: unknown): boolean | undefined {
   return undefined
 }
 
-const normalizedStatusOptions = computed(() =>
+const normalized状态Options = computed(() =>
   statusOptions.value.map(option => ({
     ...option,
-    value: normalizeStatusValue(option.value) ?? option.value,
+    value: normalize状态Value(option.value) ?? option.value,
   })),
 )
 
@@ -435,11 +435,11 @@ const normalizedStatusOptions = computed(() =>
 const basicRules = {
   account: [
     { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 3, max: 20, message: '账号长度在3-20个字符', trigger: 'blur' },
+    { min: 3, max: 20, message: '账号长度需在 3-20 个字符之间', trigger: 'blur' },
   ],
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在3-20个字符', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度需在 3-20 个字符之间', trigger: 'blur' },
   ],
   email: [
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
@@ -503,7 +503,7 @@ async function loadUserData() {
       
       if (data.profile) {
         Object.assign(profileData, {
-          politicalStatus: data.profile.politicalStatus || '',
+          political状态: data.profile.political状态 || '',
           homeAddress: data.profile.homeAddress || '',
           emergencyContact: data.profile.emergencyContact || '',
           emergencyPhone: data.profile.emergencyPhone || '',
@@ -540,7 +540,7 @@ function resetForm() {
   })
   
   Object.assign(profileData, {
-    politicalStatus: '',
+    political状态: '',
     homeAddress: '',
     emergencyContact: '',
     emergencyPhone: '',
@@ -636,10 +636,10 @@ async function handleSubmit() {
   
   loading.value = true
   try {
-    const normalizedStatus = normalizeStatusValue(formData.status)
+    const normalized状态 = normalize状态Value(formData.status)
     const submitData = {
       ...formData,
-      ...(normalizedStatus !== undefined ? { status: normalizedStatus } : {}),
+      ...(normalized状态 !== undefined ? { status: normalized状态 } : {}),
       profile: profileData,
     }
     
@@ -673,8 +673,9 @@ function handleCancel() {
 .work-history-item {
   padding: 16px;
   margin-bottom: 16px;
-  background-color: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #fafafa));
+  border-radius: var(--fx-radius, 6px);
+  border: 1px solid var(--fx-border-color, #f0f0f0);
+  box-shadow: var(--fx-shadow-secondary, 0 1px 2px rgba(0, 0, 0, 0.08));
 }
 </style>

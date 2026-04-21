@@ -1,22 +1,22 @@
 /**
- * Tenant Management Translations - English
+ * 租户管理翻译 - 中文注释
  */
 export default {
   title: 'Tenant Management',
   list: 'Tenant List',
   detail: 'Tenant Detail',
   
-  // Table Columns
+  // 表格列
   tenantId: 'Tenant ID',
   tenantName: 'Tenant Name',
   tenantCode: 'Tenant Code',
   tenantType: 'Tenant Type',
   logo: 'Logo',
   description: 'Description',
-  status: 'Status',
+  status: '状态',
   createTime: 'Create Time',
   
-  // Form
+  // 表单
   form: {
     addTenant: 'Add Tenant',
     editTenant: 'Edit Tenant',
@@ -33,7 +33,7 @@ export default {
     customer: 'Customer Tenant',
   },
   
-  // Messages
+  // 消息
   message: {
     deleteConfirm: 'Are you sure you want to delete this tenant?',
     deleteSuccess: 'Tenant deleted successfully',

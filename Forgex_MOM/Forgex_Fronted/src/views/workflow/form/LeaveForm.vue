@@ -2,12 +2,12 @@
   <div class="leave-form">
     <div class="leave-form__intro">
       <div>
-        <p class="leave-form__eyebrow">Leave Demo</p>
-        <h3>请假申请单</h3>
+        <p class="leave-form__eyebrow">{{ t('workflow.execution.leaveForm.eyebrow') }}</p>
+        <h3>{{ t('workflow.execution.leaveForm.title') }}</h3>
       </div>
       <div class="leave-form__summary">
-        <span>预计请假</span>
-        <strong>{{ formState.leaveDays || 0 }} 天</strong>
+        <span>{{ t('workflow.execution.leaveForm.summaryDays') }}</span>
+        <strong>{{ t('workflow.execution.leaveForm.summaryDaysValue', { days: formState.leaveDays || 0 }) }}</strong>
       </div>
     </div>
 
@@ -19,58 +19,58 @@
       class="leave-form__body"
     >
       <div class="leave-form__grid">
-        <a-form-item label="请假类型" name="leaveType">
+        <a-form-item :label="t('workflow.execution.leaveForm.leaveType')" name="leaveType">
           <a-select
             v-model:value="formState.leaveType"
-            placeholder="请选择请假类型"
+            :placeholder="t('workflow.execution.leaveForm.leaveTypePlaceholder')"
             :options="leaveTypeOptions"
           />
         </a-form-item>
 
-        <a-form-item label="开始日期" name="startDate">
+        <a-form-item :label="t('workflow.execution.leaveForm.startDate')" name="startDate">
           <a-date-picker
             v-model:value="formState.startDate"
             style="width: 100%"
             value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
-            placeholder="请选择开始日期"
+            :placeholder="t('workflow.execution.leaveForm.startDatePlaceholder')"
           />
         </a-form-item>
 
-        <a-form-item label="结束日期" name="endDate">
+        <a-form-item :label="t('workflow.execution.leaveForm.endDate')" name="endDate">
           <a-date-picker
             v-model:value="formState.endDate"
             style="width: 100%"
             value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
-            placeholder="请选择结束日期"
+            :placeholder="t('workflow.execution.leaveForm.endDatePlaceholder')"
           />
         </a-form-item>
 
-        <a-form-item label="紧急联系电话" name="contactPhone">
+        <a-form-item :label="t('workflow.execution.leaveForm.contactPhone')" name="contactPhone">
           <a-input
             v-model:value="formState.contactPhone"
-            placeholder="请输入联系手机号"
+            :placeholder="t('workflow.execution.leaveForm.contactPhonePlaceholder')"
           />
         </a-form-item>
 
-        <a-form-item label="工作交接人" name="handoverPerson">
+        <a-form-item :label="t('workflow.execution.leaveForm.handoverPerson')" name="handoverPerson">
           <a-input
             v-model:value="formState.handoverPerson"
-            placeholder="请输入交接人"
+            :placeholder="t('workflow.execution.leaveForm.handoverPersonPlaceholder')"
           />
         </a-form-item>
 
-        <a-form-item label="请假天数">
-          <a-input :value="`${formState.leaveDays || 0} 天`" disabled />
+        <a-form-item :label="t('workflow.execution.leaveForm.leaveDays')">
+          <a-input :value="t('workflow.execution.leaveForm.summaryDaysValue', { days: formState.leaveDays || 0 })" disabled />
         </a-form-item>
       </div>
 
-      <a-form-item label="请假原因" name="reason">
+      <a-form-item :label="t('workflow.execution.leaveForm.reason')" name="reason">
         <a-textarea
           v-model:value="formState.reason"
           :rows="5"
-          placeholder="请输入请假原因，建议补充时间安排和工作交接情况"
+          :placeholder="t('workflow.execution.leaveForm.reasonPlaceholder')"
         />
       </a-form-item>
     </a-form>
@@ -78,8 +78,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
 
 export interface LeaveFormModel {
@@ -92,12 +93,14 @@ export interface LeaveFormModel {
   contactPhone: string
 }
 
-const leaveTypeOptions = [
-  { label: '事假', value: 'personal' },
-  { label: '病假', value: 'sick' },
-  { label: '年假', value: 'annual' },
-  { label: '调休', value: 'adjust' }
-]
+const { t } = useI18n({ useScope: 'global' })
+
+const leaveTypeOptions = computed(() => [
+  { label: t('workflow.execution.leaveForm.leaveTypes.personal'), value: 'personal' },
+  { label: t('workflow.execution.leaveForm.leaveTypes.sick'), value: 'sick' },
+  { label: t('workflow.execution.leaveForm.leaveTypes.annual'), value: 'annual' },
+  { label: t('workflow.execution.leaveForm.leaveTypes.adjust'), value: 'adjust' },
+])
 
 const props = defineProps<{
   modelValue?: Partial<LeaveFormModel>
@@ -116,37 +119,34 @@ const createDefaultState = (): LeaveFormModel => ({
   leaveDays: 0,
   reason: '',
   handoverPerson: '',
-  contactPhone: ''
+  contactPhone: '',
 })
 
 const formState = reactive<LeaveFormModel>({
   ...createDefaultState(),
-  ...(props.modelValue || {})
+  ...(props.modelValue || {}),
 })
 
-/**
- * 为 true 时表示正从父组件同步 props，避免 v-model 与 props 互相触发造成递归更新（Ant Design Vue Spin 会报 Maximum recursive updates）。
- */
 const syncingFromParent = ref(false)
 
-const rules = {
-  leaveType: [{ required: true, message: '请选择请假类型', trigger: 'change' }],
-  startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
-  endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
-  contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  reason: [{ required: true, message: '请输入请假原因', trigger: 'blur' }]
-}
+const rules = computed(() => ({
+  leaveType: [{ required: true, message: t('workflow.execution.leaveForm.leaveTypePlaceholder'), trigger: 'change' }],
+  startDate: [{ required: true, message: t('workflow.execution.leaveForm.startDatePlaceholder'), trigger: 'change' }],
+  endDate: [{ required: true, message: t('workflow.execution.leaveForm.endDatePlaceholder'), trigger: 'change' }],
+  contactPhone: [{ required: true, message: t('workflow.execution.leaveForm.contactPhonePlaceholder'), trigger: 'blur' }],
+  reason: [{ required: true, message: t('workflow.execution.leaveForm.reasonPlaceholder'), trigger: 'blur' }],
+}))
 
 watch(
   () => props.modelValue,
-  value => {
+  (value) => {
     syncingFromParent.value = true
     Object.assign(formState, createDefaultState(), value || {})
     nextTick(() => {
       syncingFromParent.value = false
     })
   },
-  { deep: true }
+  { deep: true },
 )
 
 watch(
@@ -167,7 +167,7 @@ watch(
 
     formState.leaveDays = 0
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -178,14 +178,14 @@ watch(
     }
     emit('update:modelValue', { ...formState })
   },
-  { deep: true }
+  { deep: true },
 )
 
 async function validate() {
   await formRef.value?.validate()
 
   if (formState.leaveDays <= 0) {
-    message.error('结束日期不能早于开始日期')
+    message.error(t('workflow.execution.leaveForm.dateRangeInvalid'))
     throw new Error('leave-date-range-invalid')
   }
 
@@ -199,7 +199,7 @@ function reset() {
 
 defineExpose({
   validate,
-  reset
+  reset,
 })
 </script>
 
@@ -220,37 +220,41 @@ defineExpose({
 }
 
 .leave-form__eyebrow {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 12px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--fx-text-tertiary);
+  color: var(--fx-text-secondary);
 }
 
 .leave-form__intro h3 {
   margin: 0;
-  font-size: 22px;
-  color: var(--fx-text-primary);
+  font-size: 24px;
+  color: var(--fx-text-color);
 }
 
 .leave-form__summary {
-  min-width: 120px;
-  padding: 12px 14px;
+  min-width: 180px;
+  padding: 16px 18px;
   border-radius: 16px;
-  background: var(--fx-fill-alter);
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.12), rgba(82, 196, 26, 0.12));
   text-align: right;
 }
 
 .leave-form__summary span {
   display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: var(--fx-text-tertiary);
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--fx-text-secondary);
 }
 
 .leave-form__summary strong {
   font-size: 24px;
-  color: var(--fx-primary);
+  color: var(--fx-text-color);
+}
+
+.leave-form__body {
+  margin-top: 12px;
 }
 
 .leave-form__grid {
@@ -259,42 +263,18 @@ defineExpose({
   gap: 0 16px;
 }
 
-.leave-form__body :deep(.ant-form-item-label > label) {
-  color: var(--fx-text-secondary);
-}
-
-.leave-form__body :deep(.ant-input),
-.leave-form__body :deep(.ant-input-number),
-.leave-form__body :deep(.ant-picker),
-.leave-form__body :deep(.ant-select-selector),
-.leave-form__body :deep(.ant-input-affix-wrapper) {
-  border-color: var(--fx-border-color);
-  border-radius: 12px;
-  background: var(--fx-bg-elevated);
-}
-
-.leave-form__body :deep(.ant-input),
-.leave-form__body :deep(.ant-picker input),
-.leave-form__body :deep(.ant-select-selection-item),
-.leave-form__body :deep(.ant-select-selection-placeholder),
-.leave-form__body :deep(.ant-input:disabled) {
-  color: var(--fx-text-primary);
-}
-
-.leave-form__body :deep(.ant-input-disabled) {
-  background: var(--fx-fill-alter);
-}
-
 @media (max-width: 768px) {
-  .leave-form {
-    padding: 16px;
-  }
-
-  .leave-form__intro,
-  .leave-form__grid {
-    grid-template-columns: 1fr;
+  .leave-form__intro {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .leave-form__summary {
+    text-align: left;
+  }
+
+  .leave-form__grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

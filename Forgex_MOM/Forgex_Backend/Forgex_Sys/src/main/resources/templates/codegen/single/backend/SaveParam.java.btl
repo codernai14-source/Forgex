@@ -1,0 +1,28 @@
+package ${ctx.packageName}.domain.param;
+
+import lombok.Data;
+<% for(column in imports){ %>
+import ${column};
+<% } %>
+
+/**
+ * ${ctx.mainTableComment} 保存参数
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Data
+public class ${ctx.entityName}SaveParam {
+
+    /**
+     * 主键 ID
+     */
+    private Long id;
+<% for(column in ctx.mainFormColumns){ %>
+
+    /**
+     * ${column.columnComment!column.columnName}
+     */
+    private ${column.javaType} ${column.javaFieldName};
+<% } %>
+}

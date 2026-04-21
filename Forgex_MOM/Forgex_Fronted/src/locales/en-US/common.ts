@@ -1,5 +1,5 @@
 /**
- * Common Translations - English
+ * 通用翻译 - 中文注释
  * 
  * Contains common words and operations used throughout the system
  */
@@ -42,6 +42,16 @@ export default {
     columnLang: 'Language',
     columnValue: 'Translation',
     loadLanguagesFailed: 'Failed to load language list',
+    // Placeholders
+    placeholderLabel: 'Placeholders:',
+    placeholderHint: 'Click a placeholder to insert it into the currently focused language input',
+    phUserName: 'User Name',
+    phUserAccount: 'User Account',
+    phTenantName: 'Tenant Name',
+    phCurrentTime: 'Current Time',
+    phTitle: 'Title',
+    phContent: 'Content',
+    phLinkUrl: 'Link URL',
   },
   
   /** {@link I18nJsonEditor} */
@@ -95,8 +105,8 @@ export default {
     dataSourceJson: 'Data Source JSON',
   },
 
-  // Status
-  status: 'Status',
+  // 状态
+  status: '状态',
   enabled: 'Enabled',
   disabled: 'Disabled',
   active: 'Active',
@@ -145,7 +155,7 @@ export default {
   deleteSuccess: 'Delete Success',
   operationFailed: 'Operation Failed',
   
-  // Messages
+  // 消息
   confirmDelete: 'Confirm Delete?',
   confirmDeleteMessage: 'Are you sure you want to delete this data?',
   confirmBatchDelete: 'Confirm Batch Delete',

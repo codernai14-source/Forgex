@@ -32,11 +32,28 @@ public interface SysMessageService {
     List<SysMessageVO> listUnread(Integer limit);
 
     /**
+     * 查询指定分类的未读消息列表
+     *
+     * @param limit 最大返回数量
+     * @param category 消息分类
+     * @return 未读消息列表
+     */
+    List<SysMessageVO> listUnread(Integer limit, String category);
+
+    /**
      * 获取未读消息数量
      * 
      * @return 未读消息数量
      */
     Long getUnreadCount();
+
+    /**
+     * 获取指定分类未读消息数量
+     *
+     * @param category 消息分类
+     * @return 未读消息数量
+     */
+    Long getUnreadCount(String category);
 
     /**
      * 标记消息已读

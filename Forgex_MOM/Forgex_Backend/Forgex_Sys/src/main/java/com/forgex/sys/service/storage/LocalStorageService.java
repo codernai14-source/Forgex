@@ -45,9 +45,18 @@ public class LocalStorageService implements FileStorageService {
     private String resolveAccessPrefix() {
         FileUploadConfig cfg = loadConfig();
         if (cfg != null && StringUtils.hasText(cfg.getAccessPrefix())) {
-            return cfg.getAccessPrefix();
+            return cfg.getAccessPrefix().trim();
         }
         return accessPrefix;
+    }
+
+    private String resolvePublicBaseUrl() {
+        FileUploadConfig cfg = loadConfig();
+        if (cfg != null && StringUtils.hasText(cfg.getPublicBaseUrl())) {
+            String value = cfg.getPublicBaseUrl().trim();
+            return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+        }
+        return "";
     }
 
     @Override
@@ -117,6 +126,10 @@ public class LocalStorageService implements FileStorageService {
         }
         if (!prefix.startsWith("/")) {
             prefix = "/" + prefix;
+        }
+        String publicBaseUrl = resolvePublicBaseUrl();
+        if (StringUtils.hasText(publicBaseUrl)) {
+            return publicBaseUrl + prefix + "/" + filePath;
         }
         return prefix + "/" + filePath;
     }

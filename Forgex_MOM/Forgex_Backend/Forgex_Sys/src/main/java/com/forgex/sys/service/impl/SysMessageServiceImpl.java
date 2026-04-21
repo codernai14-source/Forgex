@@ -3,7 +3,8 @@ package com.forgex.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.util.CurrentUserUtils;
@@ -16,6 +17,7 @@ import com.forgex.sys.mapper.SysMessageMapper;
 import com.forgex.sys.mapper.SysTenantMessageWhitelistMapper;
 import com.forgex.sys.service.SseEmitterService;
 import com.forgex.sys.service.SysMessageService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,8 @@ public class SysMessageServiceImpl implements SysMessageService {
      * @see com.forgex.sys.domain.entity.SysMessage#getMessageType()
      */
     private static final String DEFAULT_MESSAGE_TYPE = "NOTICE";
+    private static final String CATEGORY_SYSTEM = "SYSTEM";
+    private static final String CATEGORY_MESSAGE = "MESSAGE";
 
     /**
      * 站内消息默认渠道。
@@ -102,7 +106,7 @@ public class SysMessageServiceImpl implements SysMessageService {
             if (!checkCrossTenantPermission(senderTenantId, receiverTenantId)) {
                 log.warn("跨租户消息发送被拒绝: senderTenantId={}, receiverTenantId={}",
                         senderTenantId, receiverTenantId);
-                throw new BusinessException("无权向该租户发送消息，请联系管理员配置租户消息白名单");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_NO_PERMISSION);
             }
         }
 
@@ -116,6 +120,7 @@ public class SysMessageServiceImpl implements SysMessageService {
         msg.setScope(scope);
         // message_type、platform 字段没有默认值时，使用系统默认值兜底。
         msg.setMessageType(resolveMessageType(dto.getMessageType()));
+        msg.setCategory(resolveCategory(dto.getCategory(), CATEGORY_MESSAGE));
         msg.setPlatform(resolvePlatform(dto.getPlatform()));
         msg.setTitle(dto.getTitle());
         msg.setContent(dto.getContent());
@@ -145,6 +150,11 @@ public class SysMessageServiceImpl implements SysMessageService {
      */
     @Override
     public List<SysMessageVO> listUnread(Integer limit) {
+        return listUnread(limit, null);
+    }
+
+    @Override
+    public List<SysMessageVO> listUnread(Integer limit, String category) {
         Long tenantId = TenantContext.get();
         Long userId = UserContext.get();
         if (tenantId == null || userId == null) {
@@ -152,11 +162,13 @@ public class SysMessageServiceImpl implements SysMessageService {
         }
 
         int l = limit == null || limit <= 0 ? 20 : Math.min(limit, 200);
-        List<SysMessage> list = messageMapper.selectList(new LambdaQueryWrapper<SysMessage>()
+        LambdaQueryWrapper<SysMessage> wrapper = new LambdaQueryWrapper<SysMessage>()
                 .eq(SysMessage::getReceiverUserId, userId)
                 .eq(SysMessage::getStatus, 0)
+                .eq(StringUtils.hasText(category), SysMessage::getCategory, normalizeCategory(category))
                 .orderByDesc(SysMessage::getCreateTime)
-                .last("limit " + l));
+                .last("limit " + l);
+        List<SysMessage> list = messageMapper.selectList(wrapper);
         if (list == null || list.isEmpty()) {
             return List.of();
         }
@@ -175,6 +187,11 @@ public class SysMessageServiceImpl implements SysMessageService {
      */
     @Override
     public Long getUnreadCount() {
+        return getUnreadCount(null);
+    }
+
+    @Override
+    public Long getUnreadCount(String category) {
         Long tenantId = TenantContext.get();
         Long userId = UserContext.get();
         if (tenantId == null || userId == null) {
@@ -183,6 +200,7 @@ public class SysMessageServiceImpl implements SysMessageService {
 
         return messageMapper.selectCount(new LambdaQueryWrapper<SysMessage>()
                 .eq(SysMessage::getReceiverUserId, userId)
+                .eq(StringUtils.hasText(category), SysMessage::getCategory, normalizeCategory(category))
                 .eq(SysMessage::getStatus, 0));
     }
 
@@ -260,6 +278,8 @@ public class SysMessageServiceImpl implements SysMessageService {
                         SysMessage::getMessageType, param.getMessageType())
                 .eq(StringUtils.hasText(param.getPlatform()),
                         SysMessage::getPlatform, param.getPlatform())
+                .eq(StringUtils.hasText(param.getCategory()),
+                        SysMessage::getCategory, normalizeCategory(param.getCategory()))
                 .eq(param.getStatus() != null,
                         SysMessage::getStatus, param.getStatus())
                 .like(StringUtils.hasText(param.getTitle()),
@@ -320,6 +340,21 @@ public class SysMessageServiceImpl implements SysMessageService {
         return DEFAULT_PLATFORM;
     }
 
+    private String resolveCategory(String raw, String defaultCategory) {
+        if (StringUtils.hasText(raw)) {
+            return normalizeCategory(raw);
+        }
+        return defaultCategory;
+    }
+
+    private String normalizeCategory(String raw) {
+        String value = StringUtils.hasText(raw) ? raw.trim().toUpperCase() : "";
+        if (CATEGORY_SYSTEM.equals(value)) {
+            return CATEGORY_SYSTEM;
+        }
+        return CATEGORY_MESSAGE;
+    }
+
     /**
      * 将消息实体转换为VO。
      *
@@ -336,6 +371,7 @@ public class SysMessageServiceImpl implements SysMessageService {
         vo.setReceiverUserId(msg.getReceiverUserId());
         vo.setScope(msg.getScope());
         vo.setMessageType(msg.getMessageType());
+        vo.setCategory(msg.getCategory());
         vo.setType(msg.getMessageType());
         vo.setPlatform(msg.getPlatform());
         vo.setSenderName(msg.getSenderName());

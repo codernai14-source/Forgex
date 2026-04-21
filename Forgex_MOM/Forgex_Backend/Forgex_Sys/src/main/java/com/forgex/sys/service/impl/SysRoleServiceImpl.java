@@ -17,6 +17,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.sys.domain.dto.SysRoleDTO;
 import com.forgex.sys.domain.dto.SysRoleQueryDTO;
 import com.forgex.sys.domain.entity.SysRole;
@@ -331,7 +333,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
      */
     private LambdaQueryWrapper<SysRole> buildQueryWrapper(SysRoleQueryDTO query) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
-        
+        Long tenantId = resolveQueryTenantId(query);
+        if (tenantId != null) {
+            wrapper.eq(SysRole::getTenantId, tenantId);
+        }
+
         if (query != null) {
             wrapper.like(StringUtils.hasText(query.getRoleName()), 
                 SysRole::getRoleName, query.getRoleName());
@@ -344,7 +350,19 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         wrapper.orderByDesc(SysRole::getCreateTime);
         return wrapper;
     }
-    
+
+    private Long resolveQueryTenantId(SysRoleQueryDTO query) {
+        Long tenantId = TenantContext.get();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        tenantId = CurrentUserUtils.getTenantId();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        return query == null ? null : query.getTenantId();
+    }
+
     /**
      * 角色实体转DTO对象
      * <p>

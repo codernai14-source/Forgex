@@ -1,76 +1,78 @@
 /**
- * 权限 Store
+ * 鏉冮檺 Store
  * 
- * @description 管理用户权限、按钮权限等
+ * @description 绠＄悊鐢ㄦ埛鏉冮檺銆佹寜閽潈闄愮瓑
  */
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export const usePermissionStore = defineStore('permission', () => {
+const ROUTE_CACHE_VERSION = '20260420-backend-menu-v1'
+
+export const use权限Store = defineStore('permission', () => {
   // ============ State ============
   
   /**
-   * 按钮权限列表
-   * 例如：['sys:user:add', 'sys:user:edit', 'sys:user:delete']
+   * 鎸夐挳鏉冮檺鍒楄〃
+   * 渚嬪锛歔'sys:user:add', 'sys:user:edit', 'sys:user:delete']
    */
   const permissions = ref<string[]>([])
   
   /**
-   * 路由权限列表
+   * 璺敱鏉冮檺鍒楄〃
    */
   const routes = ref<any[]>([])
   
   /**
-   * 模块列表
+   * 妯″潡鍒楄〃
    */
   const modules = ref<any[]>([])
   
   // ============ Getters ============
   
   /**
-   * 是否有权限
+   * 鏄惁鏈夋潈闄?
    */
-  const hasPermission = computed(() => {
+  const has权限 = computed(() => {
     return (permKey: string) => {
       return permissions.value.includes(permKey)
     }
   })
   
   /**
-   * 是否有任意一个权限
+   * 鏄惁鏈変换鎰忎竴涓潈闄?
    */
-  const hasAnyPermission = computed(() => {
+  const hasAny权限 = computed(() => {
     return (permKeys: string[]) => {
       return permKeys.some(key => permissions.value.includes(key))
     }
   })
   
   /**
-   * 是否有所有权限
+   * 鏄惁鏈夋墍鏈夋潈闄?
    */
-  const hasAllPermissions = computed(() => {
+  const hasAll权限s = computed(() => {
     return (permKeys: string[]) => {
       return permKeys.every(key => permissions.value.includes(key))
     }
   })
   
-  // ============ Actions ============
+  // ============ 操作 ============
   
   /**
-   * 设置权限列表
+   * 璁剧疆鏉冮檺鍒楄〃
    */
-  function setPermissions(perms: string[]) {
+  function set权限s(perms: string[]) {
     permissions.value = perms
     
-    // 同步到 sessionStorage（兼容旧代码）
+    // 鍚屾鍒?sessionStorage锛堝吋瀹规棫浠ｇ爜锛?
     sessionStorage.setItem('permissions', JSON.stringify(perms))
   }
   
   /**
-   * 添加权限
+   * 娣诲姞鏉冮檺
    */
-  function addPermission(perm: string) {
+  function add权限(perm: string) {
     if (!permissions.value.includes(perm)) {
       permissions.value.push(perm)
       sessionStorage.setItem('permissions', JSON.stringify(permissions.value))
@@ -78,9 +80,9 @@ export const usePermissionStore = defineStore('permission', () => {
   }
   
   /**
-   * 移除权限
+   * 绉婚櫎鏉冮檺
    */
-  function removePermission(perm: string) {
+  function remove权限(perm: string) {
     const index = permissions.value.indexOf(perm)
     if (index > -1) {
       permissions.value.splice(index, 1)
@@ -89,38 +91,53 @@ export const usePermissionStore = defineStore('permission', () => {
   }
   
   /**
-   * 设置路由列表
+   * 璁剧疆璺敱鍒楄〃
    */
   function setRoutes(routeList: any[]) {
     routes.value = routeList
     
-    // 持久化到 localStorage
+    // 鎸佷箙鍖栧埌 localStorage
     try {
       localStorage.setItem('fx-dynamic-routes', JSON.stringify(routeList))
+      localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
     } catch (error) {
       console.error('Failed to cache routes to localStorage:', error)
     }
   }
   
   /**
-   * 设置模块列表
+   * 璁剧疆妯″潡鍒楄〃
    */
   function setModules(moduleList: any[]) {
     modules.value = moduleList
     
-    // 持久化到 localStorage
+    // 鎸佷箙鍖栧埌 localStorage
     try {
       localStorage.setItem('fx-dynamic-modules', JSON.stringify(moduleList))
+      localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
     } catch (error) {
       console.error('Failed to cache modules to localStorage:', error)
     }
   }
   
   /**
-   * 从 localStorage 恢复路由和模块
+   * 浠?localStorage 鎭㈠璺敱鍜屾ā鍧?
    */
   function restoreRoutesAndModules() {
     try {
+      const cacheVersion = localStorage.getItem('fx-dynamic-routes-version')
+      if (cacheVersion !== ROUTE_CACHE_VERSION) {
+        localStorage.removeItem('fx-dynamic-routes')
+        localStorage.removeItem('fx-dynamic-modules')
+        localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
+        routes.value = []
+        modules.value = []
+        return {
+          routes: [],
+          modules: []
+        }
+      }
+
       const cachedRoutes = localStorage.getItem('fx-dynamic-routes')
       const cachedModules = localStorage.getItem('fx-dynamic-modules')
       
@@ -146,23 +163,24 @@ export const usePermissionStore = defineStore('permission', () => {
   }
   
   /**
-   * 清除所有权限
+   * 娓呴櫎鎵€鏈夋潈闄?
    */
-  function clearPermissions() {
+  function clear权限s() {
     permissions.value = []
     routes.value = []
     modules.value = []
     
-    // 清除 sessionStorage
+    // 娓呴櫎 sessionStorage
     sessionStorage.removeItem('permissions')
     
-    // 清除 localStorage 中的路由和模块缓存
+    // 娓呴櫎 localStorage 涓殑璺敱鍜屾ā鍧楃紦瀛?
     localStorage.removeItem('fx-dynamic-routes')
     localStorage.removeItem('fx-dynamic-modules')
+    localStorage.removeItem('fx-dynamic-routes-version')
   }
   
   /**
-   * 从 sessionStorage 恢复权限（用于页面刷新）
+   * 浠?sessionStorage 鎭㈠鏉冮檺锛堢敤浜庨〉闈㈠埛鏂帮級
    */
   function restoreFromSession() {
     const permsStr = sessionStorage.getItem('permissions')
@@ -176,9 +194,9 @@ export const usePermissionStore = defineStore('permission', () => {
     }
   }
   
-  // ============ 初始化 ============
+  // ============ 鍒濆鍖?============
   
-  // 页面加载时尝试从 sessionStorage 恢复
+  // 椤甸潰鍔犺浇鏃跺皾璇曚粠 sessionStorage 鎭㈠
   restoreFromSession()
   
   return {
@@ -188,22 +206,22 @@ export const usePermissionStore = defineStore('permission', () => {
     modules,
     
     // Getters
-    hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
+    has权限,
+    hasAny权限,
+    hasAll权限s,
     
-    // Actions
-    setPermissions,
-    addPermission,
-    removePermission,
+    // 操作
+    set权限s,
+    add权限,
+    remove权限,
     setRoutes,
     setModules,
-    clearPermissions,
+    clear权限s,
     restoreFromSession,
     restoreRoutesAndModules
   }
 }, {
-  // 持久化配置（可选）
+  // 鎸佷箙鍖栭厤缃紙鍙€夛級
   // persist: {
   //   key: 'forgex-permission',
   //   storage: sessionStorage,

@@ -1,27 +1,30 @@
-﻿package com.forgex.mobile.feature.auth
+package com.forgex.mobile.feature.auth
 
+import com.forgex.mobile.core.common.i18n.AppText
 import com.forgex.mobile.core.network.model.auth.TenantVO
 import com.forgex.mobile.feature.auth.data.CaptchaMode
 import com.forgex.mobile.feature.auth.data.SliderCaptcha
 
-/** 登录页面步骤：先登录，再选租户。 */
 enum class AuthStep {
     LOGIN,
     TENANT_SELECTION
 }
 
-/** 登录方式枚举：除账号登录外其余暂为占位。 */
-enum class LoginMethod {
-    ACCOUNT_PASSWORD,
-    WECHAT,
-    DING_TALK,
-    FEI_SHU
+enum class AuthLoginStage {
+    ENTRY,
+    PASSWORD_FORM
 }
 
-/** 登录页状态模型。 */
+enum class LoginMethod {
+    ACCOUNT_PASSWORD,
+    DING_TALK,
+    WECHAT,
+    GITEE
+}
+
 data class AuthUiState(
     val systemName: String = "FORGEX_MOM",
-    val loginTitle: String = "欢迎使用 FORGEX",
+    val loginTitle: String = "",
     val loginSubtitle: String = "",
     val systemLogo: String = "",
     val loginBackgroundType: String = "image",
@@ -33,6 +36,7 @@ data class AuthUiState(
     val primaryColor: String = "#05d9e8",
     val secondaryColor: String = "#ff2a6d",
     val serverOrigin: String = "",
+    val loginStage: AuthLoginStage = AuthLoginStage.ENTRY,
     val selectedLoginMethod: LoginMethod = LoginMethod.ACCOUNT_PASSWORD,
     val account: String = "",
     val password: String = "",
@@ -47,6 +51,7 @@ data class AuthUiState(
     val publicKey: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val errorText: AppText? = null,
     val step: AuthStep = AuthStep.LOGIN,
     val tenants: List<TenantVO> = emptyList(),
     val selectedTenantId: String? = null

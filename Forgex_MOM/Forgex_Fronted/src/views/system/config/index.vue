@@ -228,167 +228,168 @@
             :message="t('system.config.sessionTimeoutNoticeTitle')"
             :description="t('system.config.sessionTimeoutNoticeDesc')"
           />
-          <a-form
-            :model="securityConfig"
-            :label-col="{ span: 6 }"
-            :wrapper-col="{ span: 16 }"
-            layout="horizontal"
-          >
-            <a-divider orientation="left">{{ t('system.config.captchaConfig') }}</a-divider>
+          <div class="sidebar-config-layout">
+            <div class="sidebar-nav-list">
+              <button
+                v-for="item in securityNavOptions"
+                :key="item.value"
+                type="button"
+                class="sidebar-nav-card"
+                :class="{ 'sidebar-nav-card--active': securitySubTab === item.value }"
+                @click="securitySubTab = item.value"
+              >
+                <span class="sidebar-nav-card__title">{{ t(item.titleKey) }}</span>
+                <span class="sidebar-nav-card__desc">{{ t(item.descKey) }}</span>
+              </button>
+            </div>
 
-            <a-form-item :label="t('system.config.captchaMode')" name="captcha.mode">
-              <a-radio-group v-model:value="securityConfig.captcha.mode">
-                <a-radio value="none">{{ t('system.config.captchaNone') }}</a-radio>
-                <a-radio value="image">{{ t('system.config.captchaImage') }}</a-radio>
-                <a-radio value="slider">{{ t('system.config.captchaSlider') }}</a-radio>
-              </a-radio-group>
-            </a-form-item>
+            <div class="sidebar-config-main">
+              <div class="sidebar-config-banner">
+                <div class="sidebar-config-banner__label">{{ t(currentSecurityNav.titleKey) }}</div>
+                <div class="sidebar-config-banner__text">{{ t(currentSecurityNav.descKey) }}</div>
+              </div>
 
-            <template v-if="securityConfig.captcha.mode === 'image'">
-              <a-form-item :label="t('system.config.imageKeyPrefix')" name="captcha.image.keyPrefix">
-                <a-input v-model:value="securityConfig.captcha.image.keyPrefix" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.imageExpireSeconds')" name="captcha.image.expireSeconds">
-                <a-input-number v-model:value="securityConfig.captcha.image.expireSeconds" :min="30" :max="600" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.imageWidth')" name="captcha.image.width">
-                <a-input-number v-model:value="securityConfig.captcha.image.width" :min="80" :max="300" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.imageHeight')" name="captcha.image.height">
-                <a-input-number v-model:value="securityConfig.captcha.image.height" :min="30" :max="120" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.imageLength')" name="captcha.image.length">
-                <a-input-number v-model:value="securityConfig.captcha.image.length" :min="3" :max="8" />
-              </a-form-item>
-            </template>
+              <!-- 验证码配置 -->
+              <a-form v-if="securitySubTab === 'captcha'" :model="securityConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.captchaMode')" name="captcha.mode">
+                  <a-radio-group v-model:value="securityConfig.captcha.mode">
+                    <a-radio value="none">{{ t('system.config.captchaNone') }}</a-radio>
+                    <a-radio value="image">{{ t('system.config.captchaImage') }}</a-radio>
+                    <a-radio value="slider">{{ t('system.config.captchaSlider') }}</a-radio>
+                  </a-radio-group>
+                </a-form-item>
 
-            <template v-if="securityConfig.captcha.mode === 'slider'">
-              <a-form-item :label="t('system.config.sliderKeyPrefix')" name="captcha.slider.keyPrefix">
-                <a-input v-model:value="securityConfig.captcha.slider.keyPrefix" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.sliderSecondaryKeyPrefix')" name="captcha.slider.secondaryKeyPrefix">
-                <a-input v-model:value="securityConfig.captcha.slider.secondaryKeyPrefix" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.sliderTokenExpireSeconds')" name="captcha.slider.tokenExpireSeconds">
-                <a-input-number v-model:value="securityConfig.captcha.slider.tokenExpireSeconds" :min="30" :max="600" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.sliderProvider')" name="captcha.slider.provider">
-                <a-input v-model:value="securityConfig.captcha.slider.provider" />
-              </a-form-item>
-              <a-form-item :label="t('system.config.sliderSecondaryEnabled')" name="captcha.slider.secondaryEnabled">
-                <a-switch v-model:checked="securityConfig.captcha.slider.secondaryEnabled" />
-              </a-form-item>
-            </template>
+                <template v-if="securityConfig.captcha.mode === 'image'">
+                  <a-form-item :label="t('system.config.imageKeyPrefix')" name="captcha.image.keyPrefix">
+                    <a-input v-model:value="securityConfig.captcha.image.keyPrefix" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.imageExpireSeconds')" name="captcha.image.expireSeconds">
+                    <a-input-number v-model:value="securityConfig.captcha.image.expireSeconds" :min="30" :max="600" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.imageWidth')" name="captcha.image.width">
+                    <a-input-number v-model:value="securityConfig.captcha.image.width" :min="80" :max="300" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.imageHeight')" name="captcha.image.height">
+                    <a-input-number v-model:value="securityConfig.captcha.image.height" :min="30" :max="120" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.imageLength')" name="captcha.image.length">
+                    <a-input-number v-model:value="securityConfig.captcha.image.length" :min="3" :max="8" />
+                  </a-form-item>
+                </template>
 
-            <a-divider orientation="left">{{ t('system.config.passwordPolicy') }}</a-divider>
+                <template v-if="securityConfig.captcha.mode === 'slider'">
+                  <a-form-item :label="t('system.config.sliderKeyPrefix')" name="captcha.slider.keyPrefix">
+                    <a-input v-model:value="securityConfig.captcha.slider.keyPrefix" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.sliderSecondaryKeyPrefix')" name="captcha.slider.secondaryKeyPrefix">
+                    <a-input v-model:value="securityConfig.captcha.slider.secondaryKeyPrefix" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.sliderTokenExpireSeconds')" name="captcha.slider.tokenExpireSeconds">
+                    <a-input-number v-model:value="securityConfig.captcha.slider.tokenExpireSeconds" :min="30" :max="600" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.sliderProvider')" name="captcha.slider.provider">
+                    <a-input v-model:value="securityConfig.captcha.slider.provider" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.sliderSecondaryEnabled')" name="captcha.slider.secondaryEnabled">
+                    <a-switch v-model:checked="securityConfig.captcha.slider.secondaryEnabled" />
+                  </a-form-item>
+                </template>
 
-            <a-form-item :label="t('system.config.passwordStore')" name="passwordPolicy.store">
-              <a-select v-model:value="securityConfig.passwordPolicy.store">
-                <a-select-option value="bcrypt">bcrypt</a-select-option>
-                <a-select-option value="sm2">sm2</a-select-option>
-                <a-select-option value="sm4">sm4</a-select-option>
-                <a-select-option value="argon2">argon2</a-select-option>
-                <a-select-option value="scrypt">scrypt</a-select-option>
-                <a-select-option value="pbkdf2">pbkdf2</a-select-option>
-              </a-select>
-            </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingSecurity" @click="saveSecurityConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetSecurityConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
 
-            <a-form-item :label="t('system.config.defaultPassword')" name="passwordPolicy.defaultPassword">
-              <a-input-password
-                v-model:value="securityConfig.passwordPolicy.defaultPassword"
-                :placeholder="t('system.config.defaultPasswordPlaceholder')"
-              />
-            </a-form-item>
+              <!-- 密码策略 -->
+              <a-form v-if="securitySubTab === 'password'" :model="securityConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.passwordStore')" name="passwordPolicy.store">
+                  <a-select v-model:value="securityConfig.passwordPolicy.store">
+                    <a-select-option value="bcrypt">BCrypt（推荐，不可逆哈希）</a-select-option>
+                    <a-select-option value="argon2">Argon2（高安全哈希）</a-select-option>
+                    <a-select-option value="scrypt">SCrypt</a-select-option>
+                    <a-select-option value="pbkdf2">PBKDF2</a-select-option>
+                    <a-select-option value="sm4">SM4（国密对称加密）</a-select-option>
+                    <a-select-option value="aes">AES-256-GCM（对称加密）</a-select-option>
+                    <a-select-option value="sm2">SM2（国密非对称加密）</a-select-option>
+                    <a-select-option value="rsa">RSA-2048（非对称加密）</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item :label="t('system.config.defaultPassword')" name="passwordPolicy.defaultPassword">
+                  <a-input-password v-model:value="securityConfig.passwordPolicy.defaultPassword" :placeholder="t('system.config.defaultPasswordPlaceholder')" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.passwordMinLength')" name="passwordPolicy.minLength">
+                  <a-input-number v-model:value="securityConfig.passwordPolicy.minLength" :min="6" :max="32" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.passwordRequireNumbers')" name="passwordPolicy.requireNumbers">
+                  <a-switch v-model:checked="securityConfig.passwordPolicy.requireNumbers" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.passwordRequireUppercase')" name="passwordPolicy.requireUppercase">
+                  <a-switch v-model:checked="securityConfig.passwordPolicy.requireUppercase" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.passwordRequireLowercase')" name="passwordPolicy.requireLowercase">
+                  <a-switch v-model:checked="securityConfig.passwordPolicy.requireLowercase" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.passwordRequireSymbols')" name="passwordPolicy.requireSymbols">
+                  <a-switch v-model:checked="securityConfig.passwordPolicy.requireSymbols" />
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingSecurity" @click="saveSecurityConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetSecurityConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
 
-            <a-form-item :label="t('system.config.passwordMinLength')" name="passwordPolicy.minLength">
-              <a-input-number v-model:value="securityConfig.passwordPolicy.minLength" :min="6" :max="32" />
-            </a-form-item>
+              <!-- 登录失败策略 -->
+              <a-form v-if="securitySubTab === 'loginFailure'" :model="securityConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.failWindowMinutes')" name="loginSecurity.failWindowMinutes">
+                  <a-input-number v-model:value="securityConfig.loginSecurity.failWindowMinutes" :min="1" :max="1440" :style="{ width: '100%' }" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.maxFailCount')" name="loginSecurity.maxFailCount">
+                  <a-input-number v-model:value="securityConfig.loginSecurity.maxFailCount" :min="1" :max="20" :style="{ width: '100%' }" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.lockMinutes')" name="loginSecurity.lockMinutes">
+                  <a-input-number v-model:value="securityConfig.loginSecurity.lockMinutes" :min="1" :max="1440" :style="{ width: '100%' }" />
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingSecurity" @click="saveSecurityConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetSecurityConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
 
-            <a-form-item :label="t('system.config.passwordRequireNumbers')" name="passwordPolicy.requireNumbers">
-              <a-switch v-model:checked="securityConfig.passwordPolicy.requireNumbers" />
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.passwordRequireUppercase')" name="passwordPolicy.requireUppercase">
-              <a-switch v-model:checked="securityConfig.passwordPolicy.requireUppercase" />
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.passwordRequireLowercase')" name="passwordPolicy.requireLowercase">
-              <a-switch v-model:checked="securityConfig.passwordPolicy.requireLowercase" />
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.passwordRequireSymbols')" name="passwordPolicy.requireSymbols">
-              <a-switch v-model:checked="securityConfig.passwordPolicy.requireSymbols" />
-            </a-form-item>
-
-            <a-divider orientation="left">{{ t('system.config.loginSecurity') }}</a-divider>
-
-            <a-form-item :label="t('system.config.failWindowMinutes')" name="loginSecurity.failWindowMinutes">
-              <a-input-number
-                v-model:value="securityConfig.loginSecurity.failWindowMinutes"
-                :min="1"
-                :max="1440"
-                :style="{ width: '100%' }"
-              />
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.maxFailCount')" name="loginSecurity.maxFailCount">
-              <a-input-number
-                v-model:value="securityConfig.loginSecurity.maxFailCount"
-                :min="1"
-                :max="20"
-                :style="{ width: '100%' }"
-              />
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.lockMinutes')" name="loginSecurity.lockMinutes">
-              <a-input-number
-                v-model:value="securityConfig.loginSecurity.lockMinutes"
-                :min="1"
-                :max="1440"
-                :style="{ width: '100%' }"
-              />
-            </a-form-item>
-
-            <a-divider orientation="left">{{ t('system.config.transportCrypto') }}</a-divider>
-
-            <a-form-item :label="t('system.config.transportAlgorithm')" name="cryptoTransport.algorithm">
-              <a-select v-model:value="securityConfig.cryptoTransport.algorithm">
-                <a-select-option value="SM2">SM2</a-select-option>
-              </a-select>
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.transportCipher')" name="cryptoTransport.cipher">
-              <a-select v-model:value="securityConfig.cryptoTransport.cipher">
-                <a-select-option value="BCD">BCD</a-select-option>
-                <a-select-option value="Hex">Hex</a-select-option>
-              </a-select>
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.transportPublicKey')" name="cryptoTransport.publicKey">
-              <a-textarea
-                v-model:value="securityConfig.cryptoTransport.publicKey"
-                :rows="3"
-                :placeholder="t('system.config.transportPublicKeyPlaceholder')"
-              />
-            </a-form-item>
-
-            <a-form-item :label="t('system.config.transportPrivateKey')" name="cryptoTransport.privateKey">
-              <a-textarea
-                v-model:value="securityConfig.cryptoTransport.privateKey"
-                :rows="3"
-                :placeholder="t('system.config.transportPrivateKeyPlaceholder')"
-              />
-            </a-form-item>
-
-            <a-form-item :wrapper-col="{ span: 24 }">
-              <a-space>
-                <a-button type="primary" :loading="savingSecurity" @click="saveSecurityConfig">
-                  {{ t('common.save') }}
-                </a-button>
-                <a-button @click="resetSecurityConfig">{{ t('common.reset') }}</a-button>
-              </a-space>
-            </a-form-item>
-          </a-form>
+              <!-- 传输加密 -->
+              <a-form v-if="securitySubTab === 'transport'" :model="securityConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.transportAlgorithm')" name="cryptoTransport.algorithm">
+                  <a-select v-model:value="securityConfig.cryptoTransport.algorithm">
+                    <a-select-option value="SM2">SM2（国密非对称加密）</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item :label="t('system.config.transportCipher')" name="cryptoTransport.cipher">
+                  <a-select v-model:value="securityConfig.cryptoTransport.cipher">
+                    <a-select-option value="BCD">BCD</a-select-option>
+                    <a-select-option value="Hex">Hex</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item :label="t('system.config.transportPublicKey')" name="cryptoTransport.publicKey">
+                  <a-textarea v-model:value="securityConfig.cryptoTransport.publicKey" :rows="3" :placeholder="t('system.config.transportPublicKeyPlaceholder')" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.transportPrivateKey')" name="cryptoTransport.privateKey">
+                  <a-textarea v-model:value="securityConfig.cryptoTransport.privateKey" :rows="3" :placeholder="t('system.config.transportPrivateKeyPlaceholder')" />
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingSecurity" @click="saveSecurityConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetSecurityConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+            </div>
+          </div>
         </a-tab-pane>
 
         <a-tab-pane key="personalHomepage" tab="个人首页">
@@ -505,6 +506,19 @@
               />
             </a-form-item>
 
+            <a-form-item
+              :label="t('system.config.publicBaseUrl')"
+              name="publicBaseUrl"
+            >
+              <a-input
+                v-model:value="fileUploadConfig.publicBaseUrl"
+                :placeholder="t('system.config.publicBaseUrlPlaceholder')"
+              />
+              <div class="form-item-hint">
+                {{ t('system.config.publicBaseUrlHint') }}
+              </div>
+            </a-form-item>
+
             <a-form-item :label="t('system.config.accessPrefix')" name="accessPrefix">
               <a-input
                 v-model:value="fileUploadConfig.accessPrefix"
@@ -529,6 +543,156 @@
               </a-space>
             </a-form-item>
           </a-form>
+        </a-tab-pane>
+
+        <a-tab-pane key="crypto" :tab="t('system.config.tabCrypto')">
+          <div class="sidebar-config-layout">
+            <div class="sidebar-nav-list">
+              <button
+                v-for="item in cryptoNavOptions"
+                :key="item.value"
+                type="button"
+                class="sidebar-nav-card"
+                :class="{ 'sidebar-nav-card--active': cryptoSubTab === item.value }"
+                @click="cryptoSubTab = item.value"
+              >
+                <span class="sidebar-nav-card__title">{{ t(item.titleKey) }}</span>
+                <span class="sidebar-nav-card__desc">{{ t(item.descKey) }}</span>
+              </button>
+            </div>
+
+            <div class="sidebar-config-main">
+              <div class="sidebar-config-banner">
+                <div class="sidebar-config-banner__label">{{ t(currentCryptoNav.titleKey) }}</div>
+                <div class="sidebar-config-banner__text">{{ t(currentCryptoNav.descKey) }}</div>
+              </div>
+
+              <!-- 对称加密密钥 -->
+              <a-form v-if="cryptoSubTab === 'symmetric'" :model="cryptoConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-alert type="warning" :message="t('system.config.keyChangeWarning')" show-icon style="margin-bottom: 16px" />
+                <a-form-item :label="t('system.config.sm4Key')" name="sm4.keyHex">
+                  <a-input-group compact>
+                    <a-input-password v-model:value="cryptoConfig.sm4.keyHex" style="width: calc(100% - 120px)" :placeholder="t('system.config.sm4KeyPlaceholder')" />
+                    <a-button type="primary" @click="handleGenerateSm4Key">{{ t('system.config.generateKey') }}</a-button>
+                  </a-input-group>
+                  <div class="form-item-hint">128位（32字符Hex）</div>
+                </a-form-item>
+                <a-form-item :label="t('system.config.aesKey')" name="aes.keyHex">
+                  <a-input-group compact>
+                    <a-input-password v-model:value="cryptoConfig.aes.keyHex" style="width: calc(100% - 120px)" :placeholder="t('system.config.aesKeyPlaceholder')" />
+                    <a-button type="primary" @click="handleGenerateAesKey">{{ t('system.config.generateKey') }}</a-button>
+                  </a-input-group>
+                  <div class="form-item-hint">256位（64字符Hex）</div>
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingCrypto" @click="saveCryptoConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetCryptoConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+
+              <!-- 非对称加密密钥 -->
+              <a-form v-if="cryptoSubTab === 'asymmetric'" :model="cryptoConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.rsaKeySize')" name="rsa.keySize">
+                  <a-select v-model:value="cryptoConfig.rsa.keySize">
+                    <a-select-option :value="2048">RSA-2048（推荐）</a-select-option>
+                    <a-select-option :value="4096">RSA-4096（高安全）</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item :label="t('system.config.rsaPublicKey')" name="rsa.publicKey">
+                  <a-textarea v-model:value="cryptoConfig.rsa.publicKey" :rows="3" readonly :placeholder="t('system.config.rsaPublicKeyPlaceholder')" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.rsaPrivateKey')" name="rsa.privateKey">
+                  <a-textarea v-model:value="cryptoConfig.rsa.privateKey" :rows="3" :placeholder="t('system.config.rsaPrivateKeyPlaceholder')" />
+                </a-form-item>
+                <a-form-item :wrapper-col="{ offset: 6, span: 16 }">
+                  <a-button type="primary" @click="handleGenerateRsaKeyPair">
+                    <KeyOutlined /> {{ t('system.config.generateRsaKeyPair') }}
+                  </a-button>
+                  <span class="form-item-hint" style="margin-left: 12px">{{ t('system.config.sm2InSecurityTab') }}</span>
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingCrypto" @click="saveCryptoConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetCryptoConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+
+              <!-- 数据加密 -->
+              <a-form v-if="cryptoSubTab === 'dataEncrypt'" :model="cryptoConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-divider orientation="left"><FileProtectOutlined /> {{ t('system.config.fileEncrypt') }}</a-divider>
+                <a-form-item :label="t('system.config.fileEncryptEnabled')" name="fileEncrypt.enabled">
+                  <a-switch v-model:checked="cryptoConfig.fileEncrypt.enabled" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.fileEncryptAlgorithm')" name="fileEncrypt.defaultAlgorithm">
+                  <a-select v-model:value="cryptoConfig.fileEncrypt.defaultAlgorithm" :disabled="!cryptoConfig.fileEncrypt.enabled">
+                    <a-select-option value="aes">AES-256-GCM（国际标准，推荐）</a-select-option>
+                    <a-select-option value="sm4">SM4-CBC（国密标准）</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-divider orientation="left"><DatabaseOutlined /> {{ t('system.config.fieldEncrypt') }}</a-divider>
+                <a-form-item :label="t('system.config.fieldEncryptEnabled')" name="fieldEncrypt.enabled">
+                  <a-switch v-model:checked="cryptoConfig.fieldEncrypt.enabled" />
+                </a-form-item>
+                <a-form-item :label="t('system.config.fieldEncryptAlgorithm')" name="fieldEncrypt.defaultAlgorithm">
+                  <a-select v-model:value="cryptoConfig.fieldEncrypt.defaultAlgorithm" :disabled="!cryptoConfig.fieldEncrypt.enabled">
+                    <a-select-option value="SM4">SM4（国密标准，默认）</a-select-option>
+                    <a-select-option value="AES">AES-256-GCM（国际标准）</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingCrypto" @click="saveCryptoConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetCryptoConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+
+              <!-- KMS 密钥管理 -->
+              <a-form v-if="cryptoSubTab === 'kms'" :model="cryptoConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.kmsMasterKey')" name="kms.masterKeyHex">
+                  <a-input-group compact>
+                    <a-input-password v-model:value="cryptoConfig.kms.masterKeyHex" style="width: calc(100% - 120px)" :placeholder="t('system.config.kmsMasterKeyPlaceholder')" />
+                    <a-button type="primary" @click="handleGenerateKmsMasterKey">{{ t('system.config.generateKey') }}</a-button>
+                  </a-input-group>
+                  <a-alert type="error" :message="t('system.config.kmsMasterKeyWarning')" style="margin-top: 8px" show-icon />
+                </a-form-item>
+                <a-form-item :label="t('system.config.kmsRotateRemindDays')" name="kms.rotateRemindDays">
+                  <a-input-number v-model:value="cryptoConfig.kms.rotateRemindDays" :min="7" :max="365" :style="{ width: '100%' }" />
+                </a-form-item>
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingCrypto" @click="saveCryptoConfig">{{ t('common.save') }}</a-button>
+                    <a-button @click="resetCryptoConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+
+              <!-- TDE 状态检测 -->
+              <a-form v-if="cryptoSubTab === 'tde'" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
+                <a-form-item :label="t('system.config.tdeEnabled')">
+                  <a-tag :color="tdeStatus?.enabled ? 'green' : 'red'">
+                    {{ tdeStatus?.enabled ? t('system.config.tdeEnabledYes') : t('system.config.tdeEnabledNo') }}
+                  </a-tag>
+                  <a-button size="small" @click="handleCheckTde" :loading="checkingTde" style="margin-left: 8px">{{ t('system.config.tdeCheck') }}</a-button>
+                </a-form-item>
+                <template v-if="tdeStatus?.enabled">
+                  <a-form-item :label="t('system.config.tdeEncryptedTables')">
+                    <a-tag v-for="table in tdeStatus.encryptedTables" :key="table" color="blue">{{ table }}</a-tag>
+                    <span v-if="!tdeStatus.encryptedTables?.length">{{ t('system.config.tdeNoEncryptedTables') }}</span>
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.tdeKeyringPlugin')">
+                    {{ tdeStatus.keyringPlugin || t('system.config.tdeKeyringNotDetected') }}
+                  </a-form-item>
+                </template>
+                <a-alert type="info" style="margin-bottom: 16px">
+                  <template #message>{{ t('system.config.tdeInfoMessage') }}</template>
+                </a-alert>
+              </a-form>
+            </div>
+          </div>
         </a-tab-pane>
       </a-tabs>
     </a-card>
@@ -572,11 +736,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { UploadFile } from 'ant-design-vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import { DeleteOutlined, PictureOutlined, UploadOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, PictureOutlined, UploadOutlined, KeyOutlined, FileProtectOutlined, DatabaseOutlined } from '@ant-design/icons-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { uploadFile } from '@/api/system/file'
@@ -585,23 +749,36 @@ import {
   createDefaultFileUploadConfig,
   createDefaultSecurityConfig,
   createDefaultSystemBasicConfig,
+  createDefaultCryptoConfig,
   getEmailConfig,
   getFileUploadConfig,
   getSecurityConfig,
   getSystemBasicConfig,
+  getCryptoConfig,
   setEmailConfig,
   setFileUploadConfig,
   setSecurityConfig,
   setSystemBasicConfig,
+  setCryptoConfig,
+  generateSm4Key,
+  generateAesKey,
+  generateRsaKeyPair,
+  generateKmsMasterKey,
+  getTdeStatus,
   type EmailConfig,
   type FileUploadConfig,
   type SecurityConfig,
   type SystemBasicConfig,
+  type CryptoConfig,
+  type TdeStatus,
 } from '@/api/system/config'
+import { normalizeMediaUrl } from '@/utils/media'
 
 const { t } = useI18n()
 
 const activeTab = ref('system')
+const securitySubTab = ref('captcha')
+const cryptoSubTab = ref('symmetric')
 const loading = ref(false)
 const previewVisible = ref(false)
 
@@ -610,6 +787,8 @@ const savingPortal = ref(false)
 const savingSecurity = ref(false)
 const savingEmail = ref(false)
 const savingUpload = ref(false)
+const savingCrypto = ref(false)
+const checkingTde = ref(false)
 const videoUploading = ref(false)
 const bgImageUploading = ref(false)
 
@@ -620,6 +799,8 @@ const basicConfig = ref<SystemBasicConfig>(createDefaultSystemBasicConfig())
 const securityConfig = ref<SecurityConfig>(createDefaultSecurityConfig())
 const emailConfig = ref<EmailConfig>(createDefaultEmailConfig())
 const fileUploadConfig = ref<FileUploadConfig>(createDefaultFileUploadConfig())
+const cryptoConfig = ref<CryptoConfig>(createDefaultCryptoConfig())
+const tdeStatus = ref<TdeStatus | null>(null)
 
 type EmailProviderPreset = 'local' | 'aliyun' | 'qq'
 
@@ -672,6 +853,26 @@ const emailProviderPresets: Record<EmailProviderPreset, Partial<EmailConfig>> = 
   },
 }
 
+type NavOption = { value: string; titleKey: string; descKey: string }
+
+const securityNavOptions: NavOption[] = [
+  { value: 'captcha', titleKey: 'system.config.captchaConfig', descKey: 'system.config.captchaConfigDesc' },
+  { value: 'password', titleKey: 'system.config.passwordPolicy', descKey: 'system.config.passwordPolicyDesc' },
+  { value: 'loginFailure', titleKey: 'system.config.loginSecurity', descKey: 'system.config.loginSecurityDesc' },
+  { value: 'transport', titleKey: 'system.config.transportCrypto', descKey: 'system.config.transportCryptoDesc' },
+]
+
+const cryptoNavOptions: NavOption[] = [
+  { value: 'symmetric', titleKey: 'system.config.symmetricKeys', descKey: 'system.config.symmetricKeysDesc' },
+  { value: 'asymmetric', titleKey: 'system.config.asymmetricKeys', descKey: 'system.config.asymmetricKeysDesc' },
+  { value: 'dataEncrypt', titleKey: 'system.config.dataEncryptTab', descKey: 'system.config.dataEncryptDesc' },
+  { value: 'kms', titleKey: 'system.config.kmsConfig', descKey: 'system.config.kmsConfigDesc' },
+  { value: 'tde', titleKey: 'system.config.tdeStatus', descKey: 'system.config.tdeStatusDesc' },
+]
+
+const currentSecurityNav = computed(() => securityNavOptions.find(o => o.value === securitySubTab.value) || securityNavOptions[0])
+const currentCryptoNav = computed(() => cryptoNavOptions.find(o => o.value === cryptoSubTab.value) || cryptoNavOptions[0])
+
 function normalizeSystemBasicConfig(config: Partial<SystemBasicConfig> | null | undefined): SystemBasicConfig {
   const defaults = createDefaultSystemBasicConfig()
   return {
@@ -723,41 +924,48 @@ function normalizeEmailConfig(config: Partial<EmailConfig> | null | undefined): 
 
 function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | undefined): FileUploadConfig {
   const defaults = createDefaultFileUploadConfig()
+  const publicBaseUrl = String(config?.publicBaseUrl || defaults.publicBaseUrl || '').trim().replace(/\/+$/, '')
+  const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/files').trim()
   return {
     ...defaults,
     ...(config || {}),
     storageType: ((config?.storageType || defaults.storageType) as FileUploadConfig['storageType']),
+    publicBaseUrl,
+    accessPrefix: accessPrefix.startsWith('/') ? accessPrefix : `/${accessPrefix}`,
+  }
+}
+
+function normalizeCryptoConfig(config: Partial<CryptoConfig> | null | undefined): CryptoConfig {
+  const defaults = createDefaultCryptoConfig()
+  return {
+    sm4: { ...defaults.sm4, ...(config?.sm4 || {}) },
+    aes: { ...defaults.aes, ...(config?.aes || {}) },
+    rsa: { ...defaults.rsa, ...(config?.rsa || {}) },
+    kms: { ...defaults.kms, ...(config?.kms || {}) },
+    fileEncrypt: { ...defaults.fileEncrypt, ...(config?.fileEncrypt || {}) },
+    fieldEncrypt: { ...defaults.fieldEncrypt, ...(config?.fieldEncrypt || {}) },
   }
 }
 
 function formatMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api/') ? url : url
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 async function loadAllConfig() {
   loading.value = true
   try {
-    const [basic, security, email, upload] = await Promise.all([
+    const [basic, security, email, upload, crypto] = await Promise.all([
       getSystemBasicConfig(),
       getSecurityConfig(),
       getEmailConfig(),
       getFileUploadConfig(),
+      getCryptoConfig(),
     ])
     basicConfig.value = normalizeSystemBasicConfig(basic)
     securityConfig.value = normalizeSecurityConfig(security)
     emailConfig.value = normalizeEmailConfig(email)
     fileUploadConfig.value = normalizeFileUploadConfig(upload)
+    cryptoConfig.value = normalizeCryptoConfig(crypto)
   } catch (e) {
     message.error(t('common.loadFailed'))
   } finally {
@@ -804,6 +1012,10 @@ async function saveSecurityConfig() {
 async function saveFileUploadConfig() {
   savingUpload.value = true
   try {
+    if (fileUploadConfig.value.storageType === 'LOCAL' && !fileUploadConfig.value.publicBaseUrl.trim()) {
+      message.error(t('system.config.publicBaseUrlRequired'))
+      return
+    }
     await setFileUploadConfig(fileUploadConfig.value)
     // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
@@ -876,6 +1088,54 @@ function resetFileUploadConfig() {
   message.info(t('common.resetSuccess'))
 }
 
+async function saveCryptoConfig() {
+  savingCrypto.value = true
+  try {
+    await setCryptoConfig(cryptoConfig.value)
+  } catch (e) {
+    // 错误由 http 拦截器统一处理
+  } finally {
+    savingCrypto.value = false
+  }
+}
+
+function resetCryptoConfig() {
+  cryptoConfig.value = createDefaultCryptoConfig()
+  message.info(t('common.resetSuccess'))
+}
+
+async function handleGenerateSm4Key() {
+  const res = await generateSm4Key()
+  cryptoConfig.value.sm4.keyHex = res.keyHex
+}
+
+async function handleGenerateAesKey() {
+  const res = await generateAesKey()
+  cryptoConfig.value.aes.keyHex = res.keyHex
+}
+
+async function handleGenerateRsaKeyPair() {
+  const res = await generateRsaKeyPair(cryptoConfig.value.rsa.keySize)
+  cryptoConfig.value.rsa.publicKey = res.publicKey
+  cryptoConfig.value.rsa.privateKey = res.privateKey
+}
+
+async function handleGenerateKmsMasterKey() {
+  const res = await generateKmsMasterKey()
+  cryptoConfig.value.kms.masterKeyHex = res.masterKeyHex
+}
+
+async function handleCheckTde() {
+  checkingTde.value = true
+  try {
+    tdeStatus.value = await getTdeStatus()
+  } catch (e) {
+    message.error(t('system.config.tdeCheckFailed'))
+  } finally {
+    checkingTde.value = false
+  }
+}
+
 function handleEmailProviderChange(provider: EmailProviderPreset) {
   const current = emailConfig.value
   const preset = emailProviderPresets[provider]
@@ -919,7 +1179,10 @@ function handleVideoBeforeUpload(file: File) {
 async function handleVideoUpload(options: any) {
   videoUploading.value = true
   try {
-    const fileUrl = await uploadFile(options.file)
+    const fileUrl = await uploadFile(options.file, {
+      moduleCode: 'sys-config',
+      moduleName: '系统配置',
+    })
     basicConfig.value.loginBackgroundVideo = fileUrl
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
     options.onSuccess?.(fileUrl)
@@ -949,7 +1212,10 @@ function handleBgImageBeforeUpload(file: File) {
 async function handleBgImageUpload(options: any) {
   bgImageUploading.value = true
   try {
-    const fileUrl = await uploadFile(options.file)
+    const fileUrl = await uploadFile(options.file, {
+      moduleCode: 'sys-config',
+      moduleName: '系统配置',
+    })
     basicConfig.value.loginBackgroundImage = fileUrl
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
     options.onSuccess?.(fileUrl)
@@ -979,6 +1245,12 @@ onMounted(() => {
   overflow: auto;
 }
 
+.form-item-hint {
+  font-size: 12px;
+  color: var(--fx-text-secondary, #999);
+  margin-top: 4px;
+}
+
 .system-logo-upload {
   display: inline-block;
 }
@@ -998,7 +1270,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background-color: #fafafa;
+  background-color: var(--fx-fill-alter, #f9fafb);
 }
 
 .system-logo-upload :deep(.avatar-upload .upload-tips) {
@@ -1012,6 +1284,80 @@ onMounted(() => {
 
 .session-timeout-alert {
   margin-bottom: 16px;
+}
+
+/* ===== 通用侧边栏配置布局（安全验证 / 加密配置复用） ===== */
+.sidebar-config-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.sidebar-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-nav-card {
+  border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
+  border-radius: 16px;
+  background: var(--fx-bg-container);
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.04));
+}
+
+.sidebar-nav-card:hover,
+.sidebar-nav-card--active {
+  border-color: var(--fx-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--fx-shadow-secondary, 0 4px 12px rgba(22, 119, 255, 0.15));
+}
+
+.sidebar-nav-card__title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fx-text-primary);
+}
+
+.sidebar-nav-card__desc {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fx-text-secondary);
+}
+
+.sidebar-config-main {
+  border: 1px solid var(--fx-border-color);
+  border-radius: 20px;
+  padding: 24px 16px 8px;
+  background: var(--fx-bg-container);
+}
+
+.sidebar-config-banner {
+  margin: 0 16px 24px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--fx-primary) 0%, var(--fx-primary-hover) 100%);
+  color: #fff;
+}
+
+.sidebar-config-banner__label {
+  font-size: 13px;
+  opacity: 0.78;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar-config-banner__text {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .video-preview {
@@ -1241,11 +1587,13 @@ onMounted(() => {
 }
 
 @media (max-width: 960px) {
-  .email-config-layout {
+  .email-config-layout,
+  .sidebar-config-layout {
     grid-template-columns: 1fr;
   }
 
-  .email-provider-list {
+  .email-provider-list,
+  .sidebar-nav-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }

@@ -1,8 +1,21 @@
-﻿/**
- * Layout Translations - English
+/**
+ * Layout translations - English
  */
 export default {
-  globalSearchPlaceholder: 'Search menu or page',
+  globalSearchPlaceholder: 'Search menus, modules, or pinyin initials...',
+  globalSearchResultsCount: '{count} results found',
+  globalSearchEmptyTitle: 'No matching menu found',
+  globalSearchEmptyHint: 'Try a menu name, module name, or pinyin initials',
+  globalSearchTipsTitle: 'Quick Search',
+  globalSearchTipNavigate: 'Navigate',
+  globalSearchTipSelect: 'Select',
+  globalSearchTipClose: 'Close',
+  globalSearchMatchTitle: 'Menu',
+  globalSearchMatchModule: 'Module',
+  globalSearchMatchTitlePinyin: 'Menu Pinyin',
+  globalSearchMatchModulePinyin: 'Module Pinyin',
+  globalSearchMatchBreadcrumb: 'Breadcrumb',
+  globalSearchMatchPath: 'Route',
   langZhCn: 'Chinese (Simplified)',
   langEnUs: 'English',
   refresh: 'Refresh',
@@ -96,4 +109,20 @@ export default {
   logout: 'Logout',
   home: 'Home',
   personalHomepage: 'Personal Homepage',
+  favoriteManagement: 'Favorite Management',
+  guide: {
+    system: {
+      title: 'System Guide',
+      steps: {
+        welcome: 'Welcome to the system. This guide will walk you through the core features and help you get familiar with the initial operations.',
+        header: 'This is the top header with module navigation, search, notifications, and user actions.',
+        sidebar: 'This is the main navigation menu where you can quickly enter business pages.',
+        tabbar: 'Open pages are shown here as tabs so you can switch between them easily.',
+        search: 'Use global search when you want to find menus quickly.',
+        message: 'Notifications and internal messages appear here.',
+        settings: 'Adjust layout, theme, and other interface preferences here.',
+        content: 'This is the main workspace where business pages are rendered.',
+      },
+    },
+  },
 }
