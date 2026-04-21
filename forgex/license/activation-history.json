@@ -78,5 +78,25 @@
       "report"
     ],
     "licensePath": "D:\\mine_product\\forgex\\forgex\\license\\license.lic"
+  },
+  {
+    "activatedAt": "2026-04-20T11:38:59.6119781+08:00",
+    "licenseId": "LIC-7883F5328F554462B8FDC384F2B15C8A",
+    "customerCode": "FXC-4A8C0F73",
+    "machineCode": "32ADF62B35DD02E1BA2D31EED7FFF445C0FF7216E24621CAF53ECFBACEA68F61",
+    "effectiveAt": "2026-04-20T11:38:56.5135350+08:00",
+    "expireAt": "2036-04-17T11:38:56.5135350+08:00",
+    "edition": "dev",
+    "modules": [
+      "gateway",
+      "auth",
+      "sys",
+      "basic",
+      "job",
+      "integration",
+      "workflow",
+      "report"
+    ],
+    "licensePath": "D:\\forgex\\forgex\\license\\license.lic"
   }
 ]
