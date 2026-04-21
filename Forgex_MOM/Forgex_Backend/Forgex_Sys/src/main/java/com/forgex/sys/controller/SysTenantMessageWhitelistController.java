@@ -36,6 +36,7 @@ public class SysTenantMessageWhitelistController {
      * @param enabled 是否启用
      * @return 分页结果
      */
+    @RequirePerm("sys:tenant-message-whitelist:view")
     @GetMapping("/page")
     public R<Page<SysTenantMessageWhitelist>> page(
             @RequestParam(defaultValue = "1") Long current,
@@ -61,6 +62,7 @@ public class SysTenantMessageWhitelistController {
      * @param id 白名单ID
      * @return 白名单详情
      */
+    @RequirePerm("sys:tenant-message-whitelist:view")
     @GetMapping("/{id}")
     public R<SysTenantMessageWhitelist> getById(@PathVariable Long id) {
         SysTenantMessageWhitelist whitelist = whitelistMapper.selectById(id);

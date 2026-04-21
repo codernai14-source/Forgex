@@ -23,72 +23,73 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 角色菜单Service实现类
- * <p>负责角色与菜单的关联关系管理，包括查询角色菜单权限、授予角色菜单权限、删除角色菜单权限等操作。</p>
- * <p><strong>主要功能：</strong></p>
- * <ul>
- *   <li>查询角色拥有的菜单ID列表</li>
- *   <li>授予角色菜单权限（先删除原有权限，再插入新权限）</li>
- *   <li>删除角色菜单权限</li>
- * </ul>
- * 
+ * 角色菜单 Service 实现类
+ * <p>
+ * 负责角色与菜单的关联关系管理，包括查询角色菜单权限、授予角色菜单权限、
+ * 删除角色菜单权限等操作。
+ * </p>
+ *
  * @author coder_nai@163.com
  * @date 2025-01-07
  * @see ISysRoleMenuService
  */
 @Service
 @RequiredArgsConstructor
-public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleMenu> 
+public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleMenu>
     implements ISysRoleMenuService {
-    
+
     private final SysRoleMenuMapper roleMenuMapper;
-    
+
     /**
-     * 查询角色拥有的菜单ID列表
-     * <p>根据角色ID和租户ID查询角色拥有的所有菜单ID。</p>
-     * @param roleId 角色ID
-     * @param tenantId 租户ID
-     * @return 角色拥有的菜单ID列表
+     * 查询角色拥有的菜单 ID 列表
+     * <p>
+     * 按角色和租户双维度过滤，避免跨租户菜单授权回显串数据。
+     * </p>
+     *
+     * @param roleId 角色 ID
+     * @param tenantId 租户 ID
+     * @return 角色拥有的菜单 ID 列表
      */
     @Override
     public List<Long> getRoleMenuIds(Long roleId, Long tenantId) {
         LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRoleMenu::getRoleId, roleId);
-        
+        wrapper.eq(SysRoleMenu::getTenantId, tenantId);
+
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(wrapper);
         return roleMenus.stream()
             .map(SysRoleMenu::getMenuId)
+            .distinct()
             .collect(Collectors.toList());
     }
-    
+
     /**
      * 授予角色菜单权限
-     * <p>先删除角色原有的菜单权限，再插入新的菜单权限。</p>
-     * <p>处理流程：</p>
-     * <ol>
-     *   <li>删除角色原有的菜单权限</li>
-     *   <li>遍历新的菜单ID列表，为角色添加菜单权限</li>
-     * </ol>
-     * @param permissionDTO 角色权限DTO，包含角色ID、租户ID和菜单ID列表
-     * @see #deleteRolePermissions(Long, Long)
+     * <p>
+     * 采用先删除后新增的覆盖式写法，并在写入前对菜单 ID 去重，
+     * 避免重复授权导致脏数据。
+     * </p>
+     *
+     * @param permissionDTO 角色权限 DTO
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantPermission(RolePermissionDTO permissionDTO) {
-        // 1. 删除原有权限
+        // 1. 先删除当前租户下该角色原有的菜单授权
         deleteRolePermissions(permissionDTO.getRoleId(), permissionDTO.getTenantId());
-        
-        // 2. 插入新权限
+
+        // 2. 再插入新的菜单授权，并对菜单 ID 做去重处理
         if (permissionDTO.getMenuIds() != null && !permissionDTO.getMenuIds().isEmpty()) {
-            for (Long menuId : permissionDTO.getMenuIds()) {
+            for (Long menuId : new LinkedHashSet<>(permissionDTO.getMenuIds())) {
                 if (menuId == null) {
                     continue;
                 }
-                
+
                 SysRoleMenu roleMenu = new SysRoleMenu();
                 roleMenu.setRoleId(permissionDTO.getRoleId());
                 roleMenu.setTenantId(permissionDTO.getTenantId());
@@ -97,12 +98,12 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
             }
         }
     }
-    
+
     /**
      * 删除角色菜单权限
-     * <p>根据角色ID和租户ID删除角色的所有菜单权限。</p>
-     * @param roleId 角色ID
-     * @param tenantId 租户ID
+     *
+     * @param roleId 角色 ID
+     * @param tenantId 租户 ID
      */
     @Override
     @Transactional(rollbackFor = Exception.class)

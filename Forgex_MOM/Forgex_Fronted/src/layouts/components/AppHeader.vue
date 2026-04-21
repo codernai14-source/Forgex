@@ -1,7 +1,7 @@
 <template>
-  <a-layout-header class="app-header">
+  <a-layout-header class="app-header fx-guide-header">
     <!-- 左侧：Logo + 系统名称 -->
-    <div class="app-header-left">
+    <div class="app-header-left fx-guide-header-brand">
       <div class="app-logo">
         <img v-if="logo" :src="logo" alt="Logo" class="logo-image" @error="onLogoError" />
         <AppstoreOutlined v-else class="logo-icon" />
@@ -12,7 +12,7 @@
     <!-- 中间：模块导航（仅混合布局模式显示） -->
     <div
       v-if="showModuleNav"
-      class="app-header-middle"
+      class="app-header-middle fx-guide-module-nav"
     >
       <a-menu
         mode="horizontal"
@@ -35,13 +35,13 @@
     </div>
 
     <!-- 右侧：搜索 + 工具按钮 + 用户菜单 -->
-    <div class="app-header-right">
+    <div class="app-header-right fx-guide-header-actions">
       <a-space :size="12">
         <!-- 全局搜索按钮 -->
         <a-button
           v-if="showSearch"
           type="text"
-          class="header-btn"
+          class="header-btn fx-guide-search-trigger"
           @click="onSearchClick"
         >
           <template #icon>
@@ -55,7 +55,7 @@
         <a-badge :count="unreadCount" :overflow-count="99">
           <a-button
             type="text"
-            class="header-btn"
+            class="header-btn fx-guide-message-trigger"
             @click="onMessageClick"
           >
             <template #icon>
@@ -102,7 +102,7 @@
         <a-button
           v-if="showRefresh"
           type="text"
-          class="header-btn"
+          class="header-btn fx-guide-refresh-trigger"
           @click="onRefresh"
         >
           <template #icon>
@@ -113,7 +113,7 @@
         <!-- 布局设置按钮 -->
         <a-button
           type="text"
-          class="header-btn"
+          class="header-btn fx-guide-settings-trigger"
           @click="onSettingsClick"
         >
           <template #icon>
@@ -123,7 +123,7 @@
 
         <!-- 用户下拉菜单 -->
         <a-dropdown placement="bottomRight">
-          <div class="user-dropdown-trigger">
+          <div class="user-dropdown-trigger fx-guide-user-menu">
             <a-avatar
               v-if="user.avatar"
               :src="user.avatar"
@@ -149,6 +149,10 @@
               <a-menu-item key="password">
                 <KeyOutlined />
                 <span>修改密码</span>
+              </a-menu-item>
+              <a-menu-item key="guide">
+                <InfoCircleOutlined />
+                <span>引导设置</span>
               </a-menu-item>
               <a-menu-item key="messageSend">
                 <MailOutlined />
@@ -178,6 +182,7 @@ import {
   DownOutlined,
   UserOutlined,
   KeyOutlined,
+  InfoCircleOutlined,
   MailOutlined,
   LogoutOutlined,
   AppstoreOutlined,
@@ -311,6 +316,10 @@ const loadUnreadCount = async () => {
 onMounted(() => {
   loadLanguageList()
   loadUnreadCount()
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('fx:message-refresh', loadUnreadCount as EventListener)
+  }
   
   // 每30秒刷新一次未读消息数量
   unreadCountTimer = setInterval(() => {
@@ -322,6 +331,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (unreadCountTimer) {
     clearInterval(unreadCountTimer)
+  }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('fx:message-refresh', loadUnreadCount as EventListener)
   }
 })
 
@@ -468,14 +480,17 @@ const onMessageClick = () => {
     min-width: auto;
     max-width: none;
     overflow: visible;
+    color: var(--fx-header-module-color, var(--fx-header-color, #4b5563));
     
     &:hover {
       color: var(--fx-theme-color, #1677ff);
+      background: var(--fx-header-module-hover-bg, rgba(22, 119, 255, 0.08));
     }
     
     &.ant-menu-item-selected {
       color: var(--fx-theme-color, #1677ff);
       border-bottom: none;
+      background: var(--fx-header-module-active-bg, rgba(22, 119, 255, 0.1));
     }
     
     .ant-menu-title-content {
@@ -593,6 +608,13 @@ const onMessageClick = () => {
 .user-dropdown-icon {
   font-size: calc(var(--fx-font-size, 14px) * 0.85);
   color: #9ca3af;
+}
+
+:global(html[data-theme='light']) .module-menu,
+:global(body[data-theme='light']) .module-menu {
+  --fx-header-module-color: var(--fx-text-color, #4b5563);
+  --fx-header-module-hover-bg: var(--fx-fill-secondary, #f9fafb);
+  --fx-header-module-active-bg: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 10%, #ffffff);
 }
 
 // 响应式适配

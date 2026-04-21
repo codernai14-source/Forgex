@@ -89,6 +89,7 @@ public class SysRoleController {
      * @see SysRoleQueryDTO
      * @see SysRoleDTO
      */
+    @RequirePerm("sys:role:view")
     @PostMapping("/page")
     public R<IPage<SysRoleDTO>> page(@RequestBody SysRoleQueryDTO query) {
         // 使用 BaseGetParam 中的 pageNum 和 pageSize
@@ -130,6 +131,7 @@ public class SysRoleController {
      * @see SysRoleQueryDTO
      * @see SysRoleDTO
      */
+    @RequirePerm("sys:role:view")
     @PostMapping("/list")
     public R<List<SysRoleDTO>> list(@RequestBody SysRoleQueryDTO query) {
         return R.ok(roleService.listRoles(query));
@@ -172,6 +174,7 @@ public class SysRoleController {
      * @return 角色详情对象
      * @see SysRoleDTO
      */
+    @RequirePerm("sys:role:view")
     @PostMapping("/detail")
     public R<SysRoleDTO> detail(@RequestBody Map<String, Object> body) {
         Long id = parseLong(body.get("id"));

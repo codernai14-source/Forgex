@@ -13,12 +13,45 @@
       </div>
 
       <a-space>
-        <a-button :loading="saving" @click="handleSave">{{ t('workflow.taskConfig.nodes.saveDraft') }}</a-button>
-        <a-button type="primary" :loading="publishing" @click="handlePublish">{{ t('workflow.taskConfig.nodes.publishDraft') }}</a-button>
+        <a-button
+          v-if="currentStep === 1 && canBackToFormDesign"
+          @click="handleBackToFormDesign"
+        >
+          {{ t('workflow.taskConfig.nodes.steps.backToForm') }}
+        </a-button>
+        <a-button v-if="currentStep === 1" :loading="saving" @click="handleSave">{{ t('workflow.taskConfig.nodes.saveDraft') }}</a-button>
+        <a-button v-if="currentStep === 1" type="primary" :loading="publishing" @click="handlePublish">{{ t('workflow.taskConfig.nodes.publishDraft') }}</a-button>
       </a-space>
     </section>
 
-    <section class="designer-shell">
+    <section class="designer-steps">
+      <a-steps :current="currentStep">
+        <a-step :title="t('workflow.taskConfig.nodes.steps.formDesign')" :description="t('workflow.taskConfig.nodes.steps.formDesignDesc')" @click="handleStepClick(0)" />
+        <a-step :title="t('workflow.taskConfig.nodes.steps.approvalConfig')" :description="t('workflow.taskConfig.nodes.steps.approvalConfigDesc')" @click="handleStepClick(1)" />
+      </a-steps>
+    </section>
+
+    <section v-if="currentStep === 0" class="designer-form-stage">
+      <LowCodeFormDesigner
+        v-if="editorContext?.formType === 2"
+        v-model="lowCodeFormContent"
+        @schema-change="handleLowCodeSchemaChange"
+      />
+      <a-alert
+        v-else
+        type="info"
+        show-icon
+        :message="t('workflow.taskConfig.nodes.steps.formDesignDesc')"
+        :description="`${t('workflow.taskConfig.formPath')}：${editorContext?.formPath || '-'}`"
+      />
+      <div class="designer-stage-actions">
+        <a-button type="primary" :loading="savingForm" @click="handleSaveFormStep">
+          {{ t('workflow.taskConfig.nodes.steps.nextStep') }}
+        </a-button>
+      </div>
+    </section>
+
+    <section v-else class="designer-shell">
       <aside class="palette-panel">
         <div class="panel-title">{{ t('workflow.taskConfig.nodes.paletteTitle') }}</div>
         <p class="panel-desc">{{ t('workflow.taskConfig.nodes.paletteDesc') }}</p>
@@ -167,10 +200,71 @@
                 </div>
               </a-form-item>
 
+              <a-form-item :label="t('workflow.taskConfig.nodes.ruleType')">
+                <a-select
+                  :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.ruleType"
+                  @update:value="updatePrimaryRule({ ruleType: Number($event), allowInitiatorSelect: Number($event) === RULE_TYPES.INITIATOR_SELECTED })"
+                >
+                  <a-select-option :value="RULE_TYPES.STATIC">{{ t('workflow.taskConfig.nodes.ruleTypes.static') }}</a-select-option>
+                  <a-select-option :value="RULE_TYPES.INITIATOR_SELECTED">{{ t('workflow.taskConfig.nodes.ruleTypes.initiatorSelected') }}</a-select-option>
+                  <a-select-option :value="RULE_TYPES.SUPERIOR">{{ t('workflow.taskConfig.nodes.ruleTypes.superior') }}</a-select-option>
+                </a-select>
+              </a-form-item>
+
+              <a-row :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="超时小时">
+                    <a-input-number
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.timeoutHours"
+                      :min="1"
+                      style="width: 100%"
+                      @update:value="updatePrimaryRule({ timeoutHours: $event == null ? undefined : Number($event) })"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="超时动作">
+                    <a-select
+                      allow-clear
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.timeoutAction"
+                      @update:value="updatePrimaryRule({ timeoutAction: $event == null ? undefined : Number($event) })"
+                    >
+                      <a-select-option v-for="item in TIMEOUT_ACTIONS" :key="item.value" :value="item.value">
+                        {{ item.label }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-row v-if="ensureNodeRuleConfigs(selectedNodeData)[0]?.ruleType === RULE_TYPES.SUPERIOR" :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="上级层级">
+                    <a-input-number
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.superiorLevel || 1"
+                      :min="1"
+                      style="width: 100%"
+                      @update:value="updatePrimaryRule({ superiorLevel: $event == null ? 1 : Number($event) })"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="通过阈值">
+                    <a-input-number
+                      :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.approvalThreshold"
+                      :min="0"
+                      :step="0.1"
+                      style="width: 100%"
+                      @update:value="updatePrimaryRule({ approvalThreshold: $event == null ? undefined : Number($event) })"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
               <a-form-item :label="t('workflow.taskConfig.nodes.approverSource')">
                 <div class="editor-list">
                   <div
-                    v-for="(approver, index) in selectedNodeData.approvers"
+                    v-for="(approver, index) in (ensureNodeRuleConfigs(selectedNodeData)[0]?.approvers || selectedNodeData.approvers)"
                     :key="`${approver.approverType}-${index}`"
                     class="editor-card editor-card--column"
                   >
@@ -204,6 +298,35 @@
                 </div>
                 <a-button type="dashed" block @click="addApprover">{{ t('workflow.taskConfig.nodes.addApproverSource') }}</a-button>
               </a-form-item>
+
+              <a-form-item :label="t('workflow.taskConfig.nodes.nodeCapability')">
+                <a-space wrap>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowAddSign)"
+                    @update:checked="updatePrimaryRule({ allowAddSign: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowAddSign') }}
+                  </a-checkbox>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowTransfer)"
+                    @update:checked="updatePrimaryRule({ allowTransfer: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowTransfer') }}
+                  </a-checkbox>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowDelegate)"
+                    @update:checked="updatePrimaryRule({ allowDelegate: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowDelegate') }}
+                  </a-checkbox>
+                  <a-checkbox
+                    :checked="Boolean(ensureNodeRuleConfigs(selectedNodeData)[0]?.allowRecall)"
+                    @update:checked="updatePrimaryRule({ allowRecall: Boolean($event) })"
+                  >
+                    {{ t('workflow.taskConfig.nodes.capabilities.allowRecall') }}
+                  </a-checkbox>
+                </a-space>
+              </a-form-item>
             </template>
 
             <template v-else-if="selectedNodeData.nodeType === NODE_TYPES.BRANCH">
@@ -235,11 +358,16 @@
                   >
                     <a-row :gutter="8">
                       <a-col :span="12">
-                        <a-input
+                        <a-select
+                          show-search
                           :value="rule.fieldKey"
-                          :placeholder="t('workflow.taskConfig.nodes.fieldKeyPlaceholder')"
-                          @update:value="updateBranchRule(index, { fieldKey: String($event || '') })"
-                        />
+                          :placeholder="t('workflow.taskConfig.nodes.branchField')"
+                          @update:value="handleBranchFieldChange(index, String($event || ''))"
+                        >
+                          <a-select-option v-for="field in branchFieldOptions" :key="field.key" :value="field.key">
+                            {{ field.label }}
+                          </a-select-option>
+                        </a-select>
                       </a-col>
                       <a-col :span="12">
                         <a-input
@@ -398,14 +526,20 @@ import {
   getDraftGraph,
   getOrCreateDraftEditor,
   publishDraft,
+  saveDraftBaseInfo,
   saveDraftGraph,
   type WfBranchRuleDTO,
+  type WfLowCodeFieldMetaDTO,
   type WfNodeApproverDTO,
   type WfTaskDraftEditorDTO,
   type WfTaskEdgeDTO,
-  type WfTaskNodeEditorDTO
+  type WfTaskNodeEditorDTO,
+  type WfTaskNodeRuleDTO
 } from '@/api/workflow/taskConfig'
 import { useI18n } from 'vue-i18n'
+import LowCodeFormDesigner from './components/LowCodeFormDesigner.vue'
+import { extractLowCodeFieldOptions } from './components/lowCodeSchema'
+import { normalizeLongId } from '@/utils/longJson'
 
 interface WorkflowNodeData extends WfTaskNodeEditorDTO {
   nodeKey: string
@@ -438,8 +572,22 @@ const APPROVER_TYPES = {
   USER: 1,
   DEPT: 2,
   ROLE: 3,
-  POSITION: 4
+  POSITION: 4,
+  INITIATOR_SELECTED: 5,
+  SUPERIOR: 6
 } as const
+
+const RULE_TYPES = {
+  STATIC: 1,
+  INITIATOR_SELECTED: 2,
+  SUPERIOR: 3
+} as const
+
+const TIMEOUT_ACTIONS = [
+  { label: '仅提醒', value: 1 },
+  { label: '自动通过', value: 2 },
+  { label: '自动转交', value: 3 }
+]
 
 const { dictItems: approveTypeDictItems } = useDict('wf_approve_type')
 const { dictItems: approverTypeDictItems } = useDict('wf_approver_type')
@@ -478,8 +626,12 @@ const flowNodes = ref<FlowNode[]>([])
 const flowEdges = ref<FlowEdge[]>([])
 const selectedNodeKey = ref('')
 const selectedEdgeId = ref('')
+const currentStep = ref(0)
 const saving = ref(false)
+const savingForm = ref(false)
 const publishing = ref(false)
+const lowCodeFormContent = ref('')
+const availableFormFields = ref<WfLowCodeFieldMetaDTO[]>([])
 const approverDialogOpen = ref(false)
 const approverDialogIndex = ref<number | null>(null)
 const approverDialogModel = ref<ReceiverModel>({ receiverType: undefined, receiverIds: [] })
@@ -492,7 +644,7 @@ const contextMenu = reactive<ContextMenuState>({
   x: 0,
   y: 0
 })
-const approverLabelMaps = reactive<Record<number, Record<number, string>>>({
+const approverLabelMaps = reactive<Record<number, Record<string, string>>>({
   [APPROVER_TYPES.USER]: {},
   [APPROVER_TYPES.DEPT]: {},
   [APPROVER_TYPES.ROLE]: {},
@@ -541,6 +693,7 @@ const operatorOptions = computed(() =>
 const canDeleteNode = computed(() =>
   Boolean(selectedNodeData.value && [NODE_TYPES.APPROVE, NODE_TYPES.BRANCH].includes(selectedNodeData.value.nodeType))
 )
+const canBackToFormDesign = computed(() => editorContext.value?.formType === 2)
 const selectedOutgoingNodeKeys = computed(() => {
   if (!selectedNodeKey.value) {
     return []
@@ -555,6 +708,7 @@ const branchTargetOptions = computed(() => {
     allowedTargets.has(String(node.id)) && (node.data as WorkflowNodeData).nodeType !== NODE_TYPES.START
   )
 })
+const branchFieldOptions = computed(() => availableFormFields.value)
 const contextMenuNodeCanDelete = computed(() => {
   if (contextMenu.kind !== 'node' || !contextMenu.nodeId) {
     return false
@@ -582,6 +736,40 @@ function navigateBackToList() {
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value))
+}
+
+function syncAvailableFormFields() {
+  availableFormFields.value = extractLowCodeFieldOptions(lowCodeFormContent.value)
+}
+
+function canEnterApprovalStep() {
+  if (editorContext.value?.formType !== 2) {
+    return true
+  }
+  syncAvailableFormFields()
+  if (!availableFormFields.value.length) {
+    message.warning(t('workflow.taskConfig.nodes.missingLowCodeSchema'))
+    return false
+  }
+  return true
+}
+
+async function goToStep(step: number) {
+  if (step === currentStep.value) {
+    return
+  }
+  if (step === 1 && !canEnterApprovalStep()) {
+    return
+  }
+  if (step === 0) {
+    syncAvailableFormFields()
+    clearSelection()
+  }
+  currentStep.value = step
+}
+
+function handleStepClick(step: number) {
+  void goToStep(step)
 }
 
 function normalizeSelectValue(value: unknown) {
@@ -633,6 +821,10 @@ function nodeSummary(data: WorkflowNodeData) {
   })
 }
 
+function handleLowCodeSchemaChange() {
+  syncAvailableFormFields()
+}
+
 function createNodeData(node: Partial<WfTaskNodeEditorDTO> & { nodeType: number; nodeKey: string }): WorkflowNodeData {
   return {
     nodeKey: node.nodeKey,
@@ -643,6 +835,7 @@ function createNodeData(node: Partial<WfTaskNodeEditorDTO> & { nodeType: number;
     canvasY: node.canvasY ?? 0,
     defaultBranchNodeKey: node.defaultBranchNodeKey,
     approvers: clone(node.approvers || []),
+    ruleConfigs: clone(node.ruleConfigs || []),
     branchRules: clone(node.branchRules || [])
   }
 }
@@ -774,6 +967,7 @@ function buildDefaultGraph() {
       canvasX: 220,
       canvasY: 120,
       approvers: [],
+      ruleConfigs: [],
       branchRules: []
     }),
     createFlowNode({
@@ -783,6 +977,7 @@ function buildDefaultGraph() {
       canvasX: 220,
       canvasY: 420,
       approvers: [],
+      ruleConfigs: [],
       branchRules: []
     })
   ]
@@ -801,14 +996,14 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
 
   approverOptionsLoading[approverType] = true
   try {
-    const labelMap: Record<number, string> = {}
+    const labelMap: Record<string, string> = {}
 
     if (approverType === APPROVER_TYPES.USER) {
       const result = await getUserList({ pageNum: 1, pageSize: 1000 })
       const records = Array.isArray(result?.records) ? result.records : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.username ? `${item.username}${item.account ? `(${item.account})` : ''}` : t('workflow.taskConfig.nodes.approverFallback.user', { id })
         }
       })
@@ -816,8 +1011,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
       const result = await listDepartments({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.deptName || t('workflow.taskConfig.nodes.approverFallback.department', { id })
         }
       })
@@ -825,8 +1020,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
       const result = await getRoleList({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.roleName || t('workflow.taskConfig.nodes.approverFallback.role', { id })
         }
       })
@@ -834,8 +1029,8 @@ async function ensureApproverOptionsLoaded(approverType?: number) {
       const result = await listPositions({})
       const records = Array.isArray(result) ? result : []
       records.forEach((item: any) => {
-        const id = Number(item.id)
-        if (Number.isFinite(id)) {
+        const id = normalizeLongId(item.id)
+        if (id) {
           labelMap[id] = item.positionName || t('workflow.taskConfig.nodes.approverFallback.position', { id })
         }
       })
@@ -922,13 +1117,18 @@ async function loadDesigner() {
 
   try {
     editorContext.value = await getOrCreateDraftEditor({ taskCode: currentTaskCode }, silentErrorConfig)
+    lowCodeFormContent.value = editorContext.value.formContent || ''
     const graph = await getDraftGraph({ taskCode: currentTaskCode }, silentErrorConfig)
+    syncAvailableFormFields()
     if (graph.nodes?.length) {
       flowNodes.value = graph.nodes.map(createFlowNode)
       flowEdges.value = graph.edges.map(createFlowEdge)
+      availableFormFields.value = graph.availableFormFields?.length ? graph.availableFormFields : availableFormFields.value
+      currentStep.value = editorContext.value.formType === 2 && lowCodeFormContent.value ? 1 : 0
       selectNode(graph.nodes[0]?.nodeKey || '')
       await warmUpApproverLabels(graph.nodes)
     } else {
+      availableFormFields.value = graph.availableFormFields?.length ? graph.availableFormFields : availableFormFields.value
       buildDefaultGraph()
     }
     syncEdgePresentation()
@@ -936,6 +1136,45 @@ async function loadDesigner() {
     message.error(error.message || t('workflow.taskConfig.nodes.loadDesignerFailed'))
     navigateBackToList()
   }
+}
+
+async function handleSaveFormStep() {
+  if (!editorContext.value) {
+    return
+  }
+
+  if (!canEnterApprovalStep()) {
+    return
+  }
+
+  try {
+    savingForm.value = true
+    editorContext.value = await saveDraftBaseInfo({
+      id: editorContext.value.draftId,
+      taskName: editorContext.value.taskName,
+      taskCode: editorContext.value.taskCode,
+      categoryCode: editorContext.value.categoryCode,
+      interpreterBean: editorContext.value.interpreterBean,
+      formType: editorContext.value.formType,
+      formPath: editorContext.value.formPath,
+      formContent: editorContext.value.formType === 2 ? lowCodeFormContent.value : editorContext.value.formContent,
+      status: editorContext.value.status,
+      remark: editorContext.value.remark
+    }, silentErrorConfig)
+    message.success(t('workflow.taskConfig.nodes.steps.formSaved'))
+    await goToStep(1)
+  } catch (error: any) {
+    message.error(error.message || t('workflow.taskConfig.list.saveDraftBaseInfoFailed'))
+  } finally {
+    savingForm.value = false
+  }
+}
+
+function handleBackToFormDesign() {
+  if (!canBackToFormDesign.value) {
+    return
+  }
+  void goToStep(0)
 }
 
 function handleDragStart(event: DragEvent, nodeType: number) {
@@ -957,6 +1196,7 @@ function buildNewNode(nodeType: number, x: number, y: number) {
     canvasY: y,
     approveType: nodeType === NODE_TYPES.APPROVE ? 2 : undefined,
     approvers: nodeType === NODE_TYPES.APPROVE ? [{ approverType: APPROVER_TYPES.USER, approverIds: [] }] : [],
+    ruleConfigs: nodeType === NODE_TYPES.APPROVE ? [buildDefaultRuleConfig()] : [],
     branchRules: nodeType === NODE_TYPES.BRANCH ? [] : []
   })
 }
@@ -1118,9 +1358,9 @@ function addApprover() {
   if (!current) {
     return
   }
-  updateSelectedNodeData({
-    approvers: [...current.approvers, { approverType: APPROVER_TYPES.USER, approverIds: [] }]
-  })
+  const approvers = [...(ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers), { approverType: APPROVER_TYPES.USER, approverIds: [] }]
+  updateSelectedNodeData({ approvers })
+  updatePrimaryRuleApprovers(approvers)
 }
 
 function updateApprover(index: number, patch: Partial<WfNodeApproverDTO>) {
@@ -1129,12 +1369,13 @@ function updateApprover(index: number, patch: Partial<WfNodeApproverDTO>) {
     return
   }
 
-  const approvers = clone(current.approvers)
+  const approvers = clone(ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers)
   approvers[index] = {
     ...approvers[index],
     ...patch
   }
   updateSelectedNodeData({ approvers })
+  updatePrimaryRuleApprovers(approvers)
 }
 
 function updateApproverType(index: number, approverType: number) {
@@ -1147,9 +1388,9 @@ function removeApprover(index: number) {
   if (!current) {
     return
   }
-  updateSelectedNodeData({
-    approvers: current.approvers.filter((_, itemIndex) => itemIndex !== index)
-  })
+  const approvers = (ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers).filter((_, itemIndex) => itemIndex !== index)
+  updateSelectedNodeData({ approvers })
+  updatePrimaryRuleApprovers(approvers)
 }
 
 function openApproverDialog(index: number) {
@@ -1157,7 +1398,7 @@ function openApproverDialog(index: number) {
   if (!current) {
     return
   }
-  const approver = current.approvers[index]
+  const approver = (ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers)[index]
   approverDialogIndex.value = index
   approverDialogModel.value = buildApproverDialogModel(approver)
   approverDialogOpen.value = true
@@ -1178,8 +1419,8 @@ function handleApproverDialogOk() {
 
   const approverType = RECEIVER_TYPE_TO_APPROVER_TYPE[approverDialogModel.value.receiverType || '']
   const approverIds = approverDialogModel.value.receiverIds
-    .map(item => Number(item))
-    .filter(item => Number.isFinite(item) && item > 0)
+    .map(item => normalizeLongId(item))
+    .filter(Boolean)
 
   if (!approverType) {
     message.warning(t('workflow.taskConfig.nodes.selectApproverTypeFirst'))
@@ -1219,6 +1460,68 @@ function updateBranchRule(index: number, patch: Partial<WfBranchRuleDTO>) {
   const branchRules = clone(current.branchRules)
   branchRules[index] = { ...branchRules[index], ...patch }
   updateSelectedNodeData({ branchRules })
+}
+
+function buildDefaultRuleConfig(): WfTaskNodeRuleDTO {
+  return {
+    ruleName: '默认规则',
+    ruleType: RULE_TYPES.STATIC,
+    approveMode: 2,
+    approvalThreshold: undefined,
+    sortOrder: 1,
+    timeoutHours: undefined,
+    timeoutAction: undefined,
+    allowInitiatorSelect: false,
+    superiorLevel: 1,
+    allowAddSign: false,
+    allowTransfer: false,
+    allowDelegate: false,
+    allowRecall: true,
+    fallbackApproverIds: [],
+    approvers: [{ approverType: APPROVER_TYPES.USER, approverIds: [] }],
+    extraConfig: ''
+  }
+}
+
+function ensureNodeRuleConfigs(current?: WorkflowNodeData | null) {
+  if (!current) {
+    return []
+  }
+  if (current.ruleConfigs?.length) {
+    return current.ruleConfigs
+  }
+  if (current.approvers?.length) {
+    return [{
+      ...buildDefaultRuleConfig(),
+      approvers: clone(current.approvers)
+    }]
+  }
+  return [buildDefaultRuleConfig()]
+}
+
+function updateRuleConfigs(ruleConfigs: WfTaskNodeRuleDTO[]) {
+  updateSelectedNodeData({ ruleConfigs, approvers: clone(ruleConfigs[0]?.approvers || []) })
+}
+
+function updatePrimaryRule(patch: Partial<WfTaskNodeRuleDTO>) {
+  const current = selectedNodeData.value
+  if (!current) {
+    return
+  }
+  const [firstRule, ...rest] = ensureNodeRuleConfigs(current)
+  updateRuleConfigs([{ ...firstRule, ...patch }, ...rest])
+}
+
+function updatePrimaryRuleApprovers(approvers: WfNodeApproverDTO[]) {
+  updatePrimaryRule({ approvers })
+}
+
+function handleBranchFieldChange(index: number, fieldKey: string) {
+  const field = branchFieldOptions.value.find(item => item.key === fieldKey)
+  updateBranchRule(index, {
+    fieldKey,
+    fieldLabel: field?.label || fieldKey
+  })
 }
 
 function removeBranchRule(index: number) {
@@ -1328,6 +1631,7 @@ function buildSavePayload(): WfTaskNodeEditorDTO[] {
       canvasY: Number(node.position.y),
       defaultBranchNodeKey: data.defaultBranchNodeKey,
       approvers: clone(data.approvers),
+      ruleConfigs: clone(data.ruleConfigs || []),
       branchRules: clone(data.branchRules)
     }
   })
@@ -1466,6 +1770,8 @@ onBeforeUnmount(() => {
 }
 
 .designer-topbar,
+.designer-steps,
+.designer-form-stage,
 .palette-panel,
 .config-panel,
 .canvas-panel {
@@ -1481,6 +1787,20 @@ onBeforeUnmount(() => {
   gap: 16px;
   align-items: center;
   padding: 22px 24px;
+}
+
+.designer-steps {
+  padding: 20px 24px;
+}
+
+.designer-form-stage {
+  padding: 24px;
+}
+
+.designer-stage-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .designer-topbar__back {

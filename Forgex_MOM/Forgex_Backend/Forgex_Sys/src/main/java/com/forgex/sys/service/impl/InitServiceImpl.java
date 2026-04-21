@@ -43,6 +43,8 @@ import com.forgex.common.domain.config.InitStatusConfig;
 import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
+import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
+import com.forgex.common.service.i18n.I18nLanguageTypeService;
 
 /**
  * 系统初始化服务实现。
@@ -74,6 +76,9 @@ public class InitServiceImpl implements InitService {
     @Autowired private com.forgex.sys.mapper.SysModuleMapper moduleMapper;
     @Autowired private com.forgex.sys.mapper.SysMenuMapper menuMapper;
     @Autowired private com.forgex.sys.mapper.SysRoleMenuMapper roleMenuMapper;
+    @Autowired private SysCMenuMapper cMenuMapper;
+    @Autowired private SysRoleCMenuMapper roleCMenuMapper;
+    @Autowired private I18nLanguageTypeService i18nLanguageTypeService;
 
     /**
      * 查询初始化状态
@@ -208,8 +213,10 @@ public class InitServiceImpl implements InitService {
         TenantContextIgnore.setIgnore(true); // 临时忽略租户过滤
         try {
             roleMenuMapper.delete(new LambdaQueryWrapper<>()); // 清空角色-菜单绑定
+            roleCMenuMapper.delete(new LambdaQueryWrapper<>()); // 清空角色-C端菜单绑定
             userRoleMapper.delete(new LambdaQueryWrapper<>()); // 清空用户-角色绑定
             userTenantMapper.delete(new LambdaQueryWrapper<>()); // 清空用户-租户绑定
+            cMenuMapper.delete(new LambdaQueryWrapper<>()); // 清空 C 端菜单
             menuMapper.delete(new LambdaQueryWrapper<>()); // 清空菜单
             moduleMapper.delete(new LambdaQueryWrapper<>()); // 清空模块
             roleMapper.delete(new LambdaQueryWrapper<>()); // 清空角色表
@@ -378,6 +385,7 @@ public class InitServiceImpl implements InitService {
         seedWorkflowModuleMenus(tenantId, workflowModule.getId(), grantedMenuIds);
 
         grantRoleMenus(tenantId, adminRoleId, grantedMenuIds);
+        seedDefaultCWorkbenchData(tenantId, basicModule.getId(), adminRoleId);
     }
 
     private void seedSystemModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
@@ -437,7 +445,7 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:menu:delete", "删除菜单", "Delete Menu"}
                 ));
 
-        SysMenu departmentMenu = addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 50, "department", "部门管理", "Department Management",
                 "ApartmentOutlined", "SystemDepartment", "sys:dept:view",
                 Arrays.asList(
                         new String[]{"sys:dept:add", "新增部门", "Add Department"},
@@ -445,13 +453,14 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:dept:delete", "删除部门", "Delete Department"}
                 ));
 
-        addMenuWithButtons(tenantId, moduleId, departmentMenu.getId(), 2, grantedMenuIds, 10,
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 15,
                 "inviteCode", "邀请码管理", "Invite Code Management",
                 "KeyOutlined", "SystemInviteCode", "sys:invite-code:view",
                 Arrays.asList(
                         new String[]{"sys:invite-code:add", "新增邀请码", "Add Invite Code"},
                         new String[]{"sys:invite-code:edit", "编辑邀请码", "Edit Invite Code"},
-                        new String[]{"sys:invite-code:delete", "删除邀请码", "Delete Invite Code"}
+                        new String[]{"sys:invite-code:delete", "删除邀请码", "Delete Invite Code"},
+                        new String[]{"sys:invite-code:record:view", "查看使用记录", "View Invite Records"}
                 ));
 
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 60, "position", "岗位管理", "Position Management",
@@ -474,6 +483,28 @@ public class InitServiceImpl implements InitService {
                 "ClusterOutlined", "SystemOnline", "sys:online:view",
                 Collections.singletonList(new String[]{"sys:online:kickout", "强制下线", "Kick Out"})
         );
+
+        SysMenu i18nConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "i18nConfig",
+                "多语言配置", "I18n Config", "TranslationOutlined", null, null, 85, 1);
+        grantedMenuIds.add(i18nConfigCatalog.getId());
+
+        addMenuWithButtons(tenantId, moduleId, i18nConfigCatalog.getId(), 2, grantedMenuIds, 10,
+                "i18nLanguageType", "语言配置", "Language Configuration",
+                "GlobalOutlined", "SystemI18nLanguageType", "sys:i18nLanguageType:view",
+                Arrays.asList(
+                        new String[]{"sys:i18nLanguageType:add", "新增语言", "Add Language"},
+                        new String[]{"sys:i18nLanguageType:edit", "编辑语言", "Edit Language"},
+                        new String[]{"sys:i18nLanguageType:delete", "删除语言", "Delete Language"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, i18nConfigCatalog.getId(), 2, grantedMenuIds, 20,
+                "i18nMessage", "多语言消息", "I18n Message",
+                "MessageOutlined", "SystemI18nMessage", "sys:i18nMessage:view",
+                Arrays.asList(
+                        new String[]{"sys:i18nMessage:add", "新增多语言消息", "Add I18n Message"},
+                        new String[]{"sys:i18nMessage:edit", "编辑多语言消息", "Edit I18n Message"},
+                        new String[]{"sys:i18nMessage:delete", "删除多语言消息", "Delete I18n Message"}
+                ));
 
         SysMenu excelConfigCatalog = insertMenu(tenantId, moduleId, 0L, "catalog", "excelConfig",
                 "Excel配置", "Excel Config", "FileExcelOutlined", null, null, 90, 1);
@@ -580,6 +611,51 @@ public class InitServiceImpl implements InitService {
                 ));
     }
 
+    /**
+     * 初始化 C 端基础信息工作台菜单
+     *
+     * @param tenantId 租户 ID
+     * @param moduleId 基础信息模块 ID
+     * @param adminRoleId 管理员角色 ID
+     */
+    private void seedDefaultCWorkbenchData(Long tenantId, Long moduleId, Long adminRoleId) {
+        List<Long> grantedCMenuIds = new ArrayList<>();
+
+        SysCMenu basicModuleMenu = insertCMenu(
+                tenantId,
+                moduleId,
+                0L,
+                "catalog",
+                "basic",
+                "基础信息",
+                "Basic Information",
+                "DatabaseOutlined",
+                "BasicModule",
+                "c:basic:view",
+                10,
+                1
+        );
+        grantedCMenuIds.add(basicModuleMenu.getId());
+
+        SysCMenu testMenu = insertCMenu(
+                tenantId,
+                moduleId,
+                basicModuleMenu.getId(),
+                "menu",
+                "basic/info-test",
+                "基础信息测试页",
+                "Basic Info Test Page",
+                "ExperimentOutlined",
+                "BasicInfoTestScreen",
+                "c:basic:test:view",
+                10,
+                2
+        );
+        grantedCMenuIds.add(testMenu.getId());
+
+        grantRoleCMenus(tenantId, adminRoleId, grantedCMenuIds);
+    }
+
     private void addRoleMenuButtons(Long tenantId, Long moduleId, Long parentId, List<Long> grantedMenuIds) {
         String[][] buttonDefs = {
                 {"sys:role:add", "新增角色", "Add Role"},
@@ -675,6 +751,30 @@ public class InitServiceImpl implements InitService {
         return button;
     }
 
+    private SysCMenu insertCMenu(Long tenantId, Long moduleId, Long parentId, String type, String path,
+                                 String zhName, String enName, String icon, String componentKey,
+                                 String permKey, int orderNum, int menuLevel) {
+        SysCMenu menu = new SysCMenu();
+        menu.setTenantId(tenantId);
+        menu.setModuleId(moduleId);
+        menu.setParentId(parentId);
+        menu.setType(type);
+        menu.setPath(path);
+        menu.setName(zhName);
+        menu.setNameI18nJson(i18n(zhName, enName));
+        menu.setIcon(icon);
+        menu.setComponentKey(componentKey);
+        menu.setPermKey(permKey);
+        menu.setMenuMode("embedded");
+        menu.setOrderNum(orderNum);
+        menu.setVisible(true);
+        menu.setStatus(true);
+        menu.setMenuLevel(menuLevel);
+        menu.setDeviceType("ALL");
+        cMenuMapper.insert(menu);
+        return menu;
+    }
+
     private void grantRoleMenus(Long tenantId, Long roleId, List<Long> menuIds) {
         if (roleId == null || menuIds == null || menuIds.isEmpty()) {
             return;
@@ -688,8 +788,37 @@ public class InitServiceImpl implements InitService {
         }
     }
 
+    private void grantRoleCMenus(Long tenantId, Long roleId, List<Long> cMenuIds) {
+        if (roleId == null || cMenuIds == null || cMenuIds.isEmpty()) {
+            return;
+        }
+        for (Long cMenuId : cMenuIds) {
+            SysRoleCMenu rc = new SysRoleCMenu();
+            rc.setTenantId(tenantId);
+            rc.setRoleId(roleId);
+            rc.setCMenuId(cMenuId);
+            roleCMenuMapper.insert(rc);
+        }
+    }
+
     private String i18n(String zhName, String enName) {
-        return "{\"zh-CN\":\"" + zhName + "\",\"en-US\":\"" + enName + "\"}";
+        LinkedHashMap<String, String> values = new LinkedHashMap<>();
+        values.put("zh-CN", zhName);
+        values.put("en-US", enName);
+        try {
+            List<FxI18nLanguageType> enabledLanguages = i18nLanguageTypeService.listEnabled();
+            if (enabledLanguages != null) {
+                for (FxI18nLanguageType languageType : enabledLanguages) {
+                    if (languageType == null || !StringUtils.hasText(languageType.getLangCode())) {
+                        continue;
+                    }
+                    values.putIfAbsent(languageType.getLangCode(),
+                            languageType.getLangCode().toLowerCase(Locale.ROOT).startsWith("en") ? enName : zhName);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return new cn.hutool.json.JSONObject(values).toString();
     }
 
     /**

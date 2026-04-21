@@ -1,0 +1,14 @@
+package ${ctx.packageName}.service;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import ${ctx.packageName}.domain.entity.${ctx.subEntityName};
+import ${ctx.packageName}.domain.param.${ctx.subEntityName}PageParam;
+import ${ctx.packageName}.domain.param.${ctx.subEntityName}SaveParam;
+
+public interface ${ctx.subEntityName}Service {
+    IPage<${ctx.subEntityName}> page(${ctx.subEntityName}PageParam param);
+    ${ctx.subEntityName} detail(Long id);
+    void save(${ctx.subEntityName}SaveParam param);
+    void update(${ctx.subEntityName}SaveParam param);
+    void delete(Long id);
+}

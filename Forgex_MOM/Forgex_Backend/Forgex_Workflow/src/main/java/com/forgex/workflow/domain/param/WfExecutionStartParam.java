@@ -17,11 +17,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 发起审批参数。
- * <p>
- * 用于前端提交发起审批请求。
- * </p>
  *
  * @author coder_nai@163.com
  * @version 1.0.0
@@ -37,8 +37,13 @@ public class WfExecutionStartParam {
     private String taskCode;
 
     /**
-     * 表单内容（JSON）
+     * 表单内容JSON
      */
     @NotNull(message = "表单内容不能为空")
     private String formContent;
+
+    /**
+     * 发起人自选审批人列表
+     */
+    private List<Long> selectedApprovers = new ArrayList<>();
 }

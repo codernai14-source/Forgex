@@ -60,7 +60,7 @@
             v-permission="'wf:taskConfig:config'"
             @click="handleNodeConfig(record)"
           >
-            {{ t('workflow.taskConfig.nodeConfig') }}
+            {{ t('workflow.taskConfig.approvalConfig') }}
           </a-button>
           <a-button
             type="link"
@@ -132,15 +132,32 @@
           </a-col>
         </a-row>
 
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item :label="t('workflow.taskConfig.category')" name="categoryCode">
+              <a-select v-model:value="formState.categoryCode" :placeholder="t('workflow.taskConfig.form.categoryCode')">
+                <a-select-option
+                  v-for="item in categorySelectOptions"
+                  :key="String(item.value)"
+                  :value="String(item.value)"
+                >
+                  {{ item.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
         <a-form-item v-if="formState.formType === 1" :label="t('workflow.taskConfig.formPath')" name="formPath">
           <a-input v-model:value="formState.formPath" :placeholder="t('workflow.taskConfig.form.formPath')" />
         </a-form-item>
 
-        <a-form-item v-else :label="t('workflow.taskConfig.list.formContentJson')" name="formContent">
-          <a-textarea
-            v-model:value="formState.formContent"
-            :rows="6"
-            :placeholder="t('workflow.taskConfig.form.formContent')"
+        <a-form-item v-else :label="t('workflow.taskConfig.list.formContentJson')">
+          <a-alert
+            :message="t('workflow.taskConfig.lowCodeDesigner.nextStepMessage')"
+            :description="t('workflow.taskConfig.lowCodeDesigner.nextStepDescription')"
+            type="info"
+            show-icon
           />
         </a-form-item>
 
@@ -178,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -187,6 +204,7 @@ import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { useDict } from '@/hooks/useDict'
+import { stringifyLowCodeFormSchema, DEFAULT_LOW_CODE_FORM_SCHEMA } from './components/lowCodeSchema'
 import {
   deleteTaskConfig,
   getOrCreateDraftEditor,
@@ -209,6 +227,7 @@ const route = useRoute()
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: statusOptions } = useDict('status')
 const { dictItems: formTypeOptions } = useDict('wf_task_form_type')
+const { dictItems: taskCategoryOptions } = useDict('wf_task_category')
 
 const tableRef = ref<any>()
 const formRef = ref<FormInstance>()
@@ -220,6 +239,7 @@ const currentEditor = ref<WfTaskDraftEditorDTO | null>(null)
 const formState = reactive<WfTaskConfigSaveParam>({
   taskName: '',
   taskCode: '',
+  categoryCode: 'general',
   interpreterBean: '',
   formType: 1,
   formPath: '',
@@ -231,6 +251,7 @@ const formState = reactive<WfTaskConfigSaveParam>({
 const dictOptions = computed(() => ({
   status: statusOptions.value || [],
   wf_task_form_type: formTypeOptions.value || [],
+  wf_task_category: taskCategoryOptions.value || [],
   formType: formTypeOptions.value || [],
 }))
 
@@ -245,6 +266,13 @@ const formTypeSelectOptions = computed(() =>
   (formTypeOptions.value || []).map((item: { label: string; value: string | number }) => ({
     label: item.label,
     value: Number(item.value),
+  })),
+)
+
+const categorySelectOptions = computed(() =>
+  (taskCategoryOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: String(item.value),
   })),
 )
 
@@ -282,6 +310,7 @@ function resetFormState() {
     id: undefined,
     taskName: '',
     taskCode: '',
+    categoryCode: 'general',
     interpreterBean: '',
     formType: 1,
     formPath: '',
@@ -298,6 +327,7 @@ function fillForm(editor: WfTaskDraftEditorDTO) {
     id: editor.draftId,
     taskName: editor.taskName,
     taskCode: editor.taskCode,
+    categoryCode: editor.categoryCode || 'general',
     interpreterBean: editor.interpreterBean || '',
     formType: editor.formType,
     formPath: editor.formPath || '',
@@ -306,6 +336,18 @@ function fillForm(editor: WfTaskDraftEditorDTO) {
     remark: editor.remark || '',
   })
 }
+
+watch(
+  () => formState.formType,
+  (value) => {
+    if (value === 2 && !formState.formContent) {
+      formState.formContent = stringifyLowCodeFormSchema(DEFAULT_LOW_CODE_FORM_SCHEMA)
+    }
+    if (value === 1) {
+      formState.formContent = ''
+    }
+  }
+)
 
 async function reloadTable() {
   await tableRef.value?.reload?.()
@@ -340,6 +382,7 @@ const handleRequest = async (payload: TableRequestPayload) => {
 
 function openCreate() {
   resetFormState()
+  formState.formContent = stringifyLowCodeFormSchema(DEFAULT_LOW_CODE_FORM_SCHEMA)
   dialogVisible.value = true
 }
 
@@ -393,7 +436,13 @@ async function handleSave() {
   try {
     await formRef.value?.validate()
     saving.value = true
-    const editor = await saveDraftBaseInfo({ ...formState })
+    const payload: WfTaskConfigSaveParam = {
+      ...formState,
+      formContent: formState.formType === 2
+        ? (formState.formContent || stringifyLowCodeFormSchema(DEFAULT_LOW_CODE_FORM_SCHEMA))
+        : formState.formContent
+    }
+    const editor = await saveDraftBaseInfo(payload)
     fillForm(editor)
     dialogVisible.value = false
     emit('success')

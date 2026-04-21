@@ -13,8 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.validator;
 
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.SysUserDTO;
+import com.forgex.sys.enums.SysPromptEnum;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,17 +47,17 @@ public class UserValidator {
         
         // 2. 账号唯一性校验
         if (userService.existsByAccount(userDTO.getAccount())) {
-            throw new BusinessException("账号已存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_ACCOUNT_EXISTS);
         }
         
         // 3. 邮箱格式校验
         if (StringUtils.hasText(userDTO.getEmail()) && !isValidEmail(userDTO.getEmail())) {
-            throw new BusinessException("邮箱格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_EMAIL_INVALID);
         }
         
         // 4. 手机号格式校验
         if (StringUtils.hasText(userDTO.getPhone()) && !isValidPhone(userDTO.getPhone())) {
-            throw new BusinessException("手机号格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_PHONE_INVALID);
         }
     }
     
@@ -65,55 +67,55 @@ public class UserValidator {
      * @param userDTO 用户信息
      */
     public void validateForUpdate(SysUserDTO userDTO) {
-        // 1. ID校验
-        Assert.notNull(userDTO.getId(), "用户ID不能为空");
+        // 1. ID 校验
+        Assert.notNull(userDTO.getId(), "用户 ID 不能为空");
         
         // 2. 存在性校验
         if (!userService.existsById(userDTO.getId())) {
-            throw new BusinessException("用户不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_NOT_FOUND);
         }
         
         // 3. 账号唯一性校验（排除自己）
         if (StringUtils.hasText(userDTO.getAccount()) 
             && userService.existsByAccountExcludeId(userDTO.getAccount(), userDTO.getId())) {
-            throw new BusinessException("账号已被其他用户使用");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_ACCOUNT_EXISTS_OTHER);
         }
         
         // 4. 邮箱格式校验
         if (StringUtils.hasText(userDTO.getEmail()) && !isValidEmail(userDTO.getEmail())) {
-            throw new BusinessException("邮箱格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_EMAIL_INVALID);
         }
         
         // 5. 手机号格式校验
         if (StringUtils.hasText(userDTO.getPhone()) && !isValidPhone(userDTO.getPhone())) {
-            throw new BusinessException("手机号格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_PHONE_INVALID);
         }
     }
     
     /**
      * 删除用户校验
      * 
-     * @param id 用户ID
+     * @param id 用户 ID
      */
     public void validateForDelete(Long id) {
-        // 1. ID校验
+        // 1. ID 校验
         validateId(id);
         
         // 2. 存在性校验
         if (!userService.existsById(id)) {
-            throw new BusinessException("用户不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_NOT_FOUND);
         }
     }
     
     /**
-     * ID校验
+     * ID 校验
      * 
-     * @param id 用户ID
+     * @param id 用户 ID
      */
     public void validateId(Long id) {
-        Assert.notNull(id, "用户ID不能为空");
+        Assert.notNull(id, "用户 ID 不能为空");
         if (id <= 0) {
-            throw new BusinessException("用户ID格式不正确");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.USER_ID_INVALID);
         }
     }
     

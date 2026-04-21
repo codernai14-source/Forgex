@@ -1,473 +1,423 @@
+/*Copyright 2026 coder_nai@163.com
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 package com.forgex.sys.service.impl;
 
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.CodeGenContextDTO;
 import com.forgex.sys.domain.dto.CodeGenRequestDTO;
+import com.forgex.sys.domain.dto.CodegenRenderFileDTO;
 import com.forgex.sys.domain.dto.ColumnMetaDTO;
 import com.forgex.sys.domain.dto.TableMetaDTO;
+import com.forgex.sys.domain.entity.SysCodegenDatasource;
+import com.forgex.sys.domain.vo.CodegenFileVO;
+import com.forgex.sys.domain.vo.CodegenPreviewVO;
+import com.forgex.sys.enums.SysPromptEnum;
 import com.forgex.sys.service.CodeGenService;
 import com.forgex.sys.service.DbMetaService;
+import com.forgex.sys.service.ICodegenConfigService;
+import com.forgex.sys.service.ICodegenDatasourceService;
+import com.forgex.sys.service.codegen.CodeGenStrategy;
+import com.forgex.sys.service.codegen.CodeGenStrategyFactory;
 import lombok.RequiredArgsConstructor;
-import org.beetl.core.GroupTemplate;
-import org.beetl.core.Template;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * 代码生成服务实现类（增强版）
- * <p>
- * 使用 Beetl 模板引擎生成完整的代码，包括：
- * - 后端代码（Entity、Mapper、Service、Controller、Param）
- * - 前端代码（Vue 页面、API）
- * - SQL 脚本（菜单权限、表格配置、多语言）
- * </p>
- * 
- * @author Forgex Team
- * @version 2.0.0
+ * 代码生成服务实现
+ *
+ * @author coder_nai@163.com
+ * @since 2026-04-21
  */
 @Service
 @RequiredArgsConstructor
 public class CodeGenServiceImpl implements CodeGenService {
 
-    private final GroupTemplate groupTemplate;
+    private static final Set<String> BASE_ENTITY_FIELDS = new HashSet<>(
+        List.of("id", "tenant_id", "create_time", "create_by", "update_time", "update_by", "deleted")
+    );
+
+    private final ICodegenDatasourceService datasourceService;
+    private final ICodegenConfigService codegenConfigService;
     private final DbMetaService dbMetaService;
-    
-    /**
-     * BaseEntity 中的字段，生成时需要排除
-     */
-    private static final Set<String> BASE_ENTITY_FIELDS = new HashSet<>(Arrays.asList(
-        "id", "tenant_id", "create_time", "create_by", "update_time", "update_by", "deleted"
-    ));
+    private final CodeGenStrategyFactory strategyFactory;
 
     @Override
-    public Map<String, String> preview(CodeGenRequestDTO req) {
-        Map<String, String> files = new LinkedHashMap<>();
-        
-        // 参数校验
-        if (req == null || !StringUtils.hasText(req.getTableName())) {
-            return files;
-        }
-        
-        // 构建代码生成上下文
+    public CodegenPreviewVO preview(CodeGenRequestDTO req) {
+        validateRequest(req);
         CodeGenContextDTO context = buildContext(req);
-        
-        // 生成后端代码
-        files.putAll(generateBackendCode(context));
-        
-        // 生成前端代码
-        files.putAll(generateFrontendCode(context));
-        
-        // 生成 SQL 脚本
-        files.putAll(generateSqlScripts(context));
-        
-        // 生成 README
-        files.put("README.md", generateReadme(context));
-        
-        return files;
+        CodeGenStrategy strategy = strategyFactory.getStrategy(context.getPageType());
+        List<CodegenRenderFileDTO> renderFiles = strategy.generate(context);
+        CodegenPreviewVO preview = new CodegenPreviewVO();
+        preview.setZipFileName(buildZipFileName(context));
+        for (CodegenRenderFileDTO renderFile : renderFiles) {
+            CodegenFileVO fileVO = new CodegenFileVO();
+            fileVO.setPath(renderFile.getPath());
+            fileVO.setName(extractName(renderFile.getPath()));
+            fileVO.setCategory(renderFile.getCategory());
+            fileVO.setContent(renderFile.getContent());
+            preview.getFiles().add(fileVO);
+        }
+        return preview;
     }
 
     @Override
     public byte[] generateZip(CodeGenRequestDTO req) {
-        Map<String, String> files = preview(req);
-        
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
-            
-            for (Map.Entry<String, String> entry : files.entrySet()) {
-                ZipEntry zipEntry = new ZipEntry(entry.getKey());
-                zos.putNextEntry(zipEntry);
-                
-                byte[] bytes = (entry.getValue() == null ? "" : entry.getValue())
-                    .getBytes(StandardCharsets.UTF_8);
-                zos.write(bytes);
-                
-                zos.closeEntry();
+        CodegenPreviewVO preview = preview(req);
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            for (CodegenFileVO file : preview.getFiles()) {
+                ZipEntry entry = new ZipEntry(file.getPath());
+                zipOutputStream.putNextEntry(entry);
+                zipOutputStream.write((file.getContent() == null ? "" : file.getContent()).getBytes(StandardCharsets.UTF_8));
+                zipOutputStream.closeEntry();
             }
-            
-            zos.finish();
-            return baos.toByteArray();
+            zipOutputStream.finish();
+            return outputStream.toByteArray();
         } catch (Exception ex) {
-            return new byte[0];
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
         }
     }
 
-    /**
-     * 构建代码生成上下文
-     */
+    @Override
+    public CodegenPreviewVO previewByConfigId(Long configId) {
+        CodeGenRequestDTO request = codegenConfigService.buildRequest(configId);
+        CodegenPreviewVO preview = preview(request);
+        codegenConfigService.markGenerated(configId);
+        return preview;
+    }
+
+    @Override
+    public byte[] generateZipByConfigId(Long configId) {
+        CodeGenRequestDTO request = codegenConfigService.buildRequest(configId);
+        byte[] zip = generateZip(request);
+        codegenConfigService.markGenerated(configId);
+        return zip;
+    }
+
+    private void validateRequest(CodeGenRequestDTO req) {
+        if (req == null
+            || req.getDatasourceId() == null
+            || !StringUtils.hasText(req.getSchemaName())
+            || !StringUtils.hasText(req.getPageType())
+            || !StringUtils.hasText(req.getMainTableName())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
+        }
+        if ("MASTER_DETAIL".equalsIgnoreCase(req.getPageType())) {
+            if (!StringUtils.hasText(req.getSubTableName())
+                || !StringUtils.hasText(req.getMainPkColumn())
+                || !StringUtils.hasText(req.getSubFkColumn())
+                || !StringUtils.hasText(req.getSubPkColumn())) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
+            }
+        }
+    }
+
     private CodeGenContextDTO buildContext(CodeGenRequestDTO req) {
+        SysCodegenDatasource datasource = datasourceService.requireEntity(req.getDatasourceId());
+        TableMetaDTO mainTableMeta = dbMetaService.getTableMeta(datasource, req.getSchemaName(), req.getMainTableName());
+        List<ColumnMetaDTO> mainColumns = withDefaultColumnFeatures(
+            preferRequestColumns(req.getMainColumns(), dbMetaService.listColumns(datasource, req.getSchemaName(), req.getMainTableName()))
+        );
+        TableMetaDTO subTableMeta = null;
+        List<ColumnMetaDTO> subColumns = new ArrayList<>();
+        if ("MASTER_DETAIL".equalsIgnoreCase(req.getPageType())) {
+            subTableMeta = dbMetaService.getTableMeta(datasource, req.getSchemaName(), req.getSubTableName());
+            subColumns = withDefaultColumnFeatures(
+                preferRequestColumns(req.getSubColumns(), dbMetaService.listColumns(datasource, req.getSchemaName(), req.getSubTableName()))
+            );
+            validateMainSubRelation(mainColumns, subColumns, req);
+        }
+
         CodeGenContextDTO context = new CodeGenContextDTO();
-        
-        // 查询表元数据
-        TableMetaDTO tableMeta = dbMetaService.getTableMeta(req.getTableName());
-        List<ColumnMetaDTO> columns = dbMetaService.listColumns(req.getTableName());
-        
-        // 基础信息
-        context.setTableName(req.getTableName());
-        context.setTableComment(tableMeta.getTableComment());
-        context.setEntityName(StringUtils.hasText(req.getEntityName()) ? 
-            req.getEntityName() : toCamelCase(req.getTableName(), true));
-        context.setEntityNameLower(toLowerCamelCase(context.getEntityName()));
-        context.setModuleName(StringUtils.hasText(req.getModuleName()) ? 
-            req.getModuleName() : "sys");
-        context.setBasePackage(StringUtils.hasText(req.getBasePackage()) ? 
-            req.getBasePackage() : "com.forgex." + context.getModuleName());
-        context.setMode(StringUtils.hasText(req.getMode()) ? 
-            req.getMode().toUpperCase() : "SINGLE");
+        context.setDatasourceCode(datasource.getDatasourceCode());
+        context.setSchemaName(req.getSchemaName());
+        context.setPageType(req.getPageType().toUpperCase(Locale.ROOT));
+        context.setMainTableName(req.getMainTableName());
+        context.setMainTableComment(mainTableMeta.getTableComment());
+        context.setSubTableName(req.getSubTableName());
+        context.setSubTableComment(subTableMeta == null ? null : subTableMeta.getTableComment());
+        context.setEntityName(StringUtils.hasText(req.getEntityName()) ? req.getEntityName() : toCamelCase(req.getMainTableName(), true));
+        context.setEntityNameLower(toLowerCamel(context.getEntityName()));
+        String subEntityName = StringUtils.hasText(req.getSubEntityName())
+            ? req.getSubEntityName()
+            : (StringUtils.hasText(req.getSubTableName()) ? toCamelCase(req.getSubTableName(), true) : null);
+        context.setSubEntityName(subEntityName);
+        context.setSubEntityNameLower(toLowerCamel(subEntityName));
+        context.setModuleName(defaultText(req.getModuleName(), "system"));
+        context.setBizName(defaultText(req.getBizName(), context.getEntityNameLower()));
+        context.setPackageName(defaultText(req.getPackageName(), "com.forgex." + context.getModuleName()));
+        context.setAuthor(defaultText(req.getAuthor(), "Forgex CodeGen"));
         context.setDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        
-        // 处理列信息
-        columns.forEach(col -> {
-            col.setIsBaseField(BASE_ENTITY_FIELDS.contains(col.getColumnName()));
-        });
-        
-        context.setColumns(columns);
-        context.setQueryColumns(filterQueryColumns(columns));
-        context.setSaveColumns(filterSaveColumns(columns));
-        context.setTableColumns(filterTableColumns(columns));
-        
-        // 菜单权限信息
-        context.setMenuPath(context.getEntityNameLower());
-        context.setMenuNameCn(tableMeta.getTableComment());
-        context.setMenuNameEn(context.getEntityName());
-        context.setMenuIcon("TableOutlined");
-        context.setMenuOrderNum(100);
-        context.setComponentKey(context.getEntityName());
-        context.setPermKeyPrefix(context.getModuleName() + ":" + context.getEntityNameLower());
-        
-        // 模块信息
-        context.setModuleNameCn(context.getModuleName() + "模块");
-        context.setModuleNameEn(context.getModuleName().toUpperCase());
-        context.setModuleIcon("AppstoreOutlined");
-        context.setModuleOrderNum(10);
-        
-        // 表格配置信息
-        context.setTableCode(context.getModuleName() + "_" + context.getEntityNameLower());
-        context.setTableNameCn(tableMeta.getTableComment());
-        context.setTableNameEn(context.getEntityName());
-        
-        // 多语言信息
-        context.setI18nPrefix(context.getModuleName().toUpperCase() + "_" + 
-            toUnderscoreCase(context.getEntityName()).toUpperCase());
-        
+        context.setMainPkColumn(defaultText(req.getMainPkColumn(), detectPrimaryKey(mainColumns)));
+        context.setSubPkColumn(req.getSubPkColumn());
+        context.setSubFkColumn(req.getSubFkColumn());
+        context.setMainPkJavaField(resolveJavaFieldName(mainColumns, context.getMainPkColumn(), "id"));
+        context.setSubPkJavaField(resolveJavaFieldName(subColumns, context.getSubPkColumn(), "id"));
+        context.setSubFkJavaField(resolveJavaFieldName(subColumns, context.getSubFkColumn(), context.getEntityNameLower() + "Id"));
+        context.setMenuName(defaultText(req.getMenuName(), defaultText(mainTableMeta.getTableComment(), context.getEntityName())));
+        context.setMenuIcon(defaultText(req.getMenuIcon(), "TableOutlined"));
+        context.setMenuPath("/" + context.getModuleName() + "/" + context.getEntityNameLower());
+        context.setParentMenuPath(defaultText(req.getParentMenuPath(), "/system/codegen"));
+        context.setPermKeyPrefix(context.getModuleName() + ":" + context.getBizName());
+        String tablePrefix = defaultText(req.getTableCodePrefix(), context.getModuleName());
+        context.setMainTableCode(tablePrefix + "_" + context.getEntityNameLower());
+        context.setSubTableCode(StringUtils.hasText(context.getSubEntityNameLower())
+            ? tablePrefix + "_" + context.getSubEntityNameLower()
+            : null);
+        context.setI18nPrefix((context.getModuleName() + "." + context.getBizName()).toLowerCase(Locale.ROOT));
+        context.setGenerateItems(CollectionUtils.isEmpty(req.getGenerateItems())
+            ? List.of("backend", "frontend", "sql")
+            : req.getGenerateItems());
+        context.setMainColumns(mainColumns);
+        context.setSubColumns(subColumns);
+        context.setMainQueryColumns(filterQueryColumns(mainColumns));
+        context.setMainFormColumns(filterFormColumns(mainColumns));
+        context.setMainTableColumns(filterTableColumns(mainColumns));
+        context.setSubQueryColumns(filterQueryColumns(subColumns));
+        context.setSubFormColumns(filterFormColumns(subColumns));
+        context.setSubTableColumns(filterTableColumns(subColumns));
+        String subDefaultSortColumn = resolveSubDefaultSortColumn(subColumns);
+        context.setSubDefaultSortColumn(subDefaultSortColumn);
+        context.setSubDefaultSortJavaField(resolveJavaFieldName(subColumns, subDefaultSortColumn, "id"));
+        context.getImports().addAll(collectImports(mainColumns));
+        context.getImports().addAll(collectImports(subColumns));
         return context;
     }
 
-    /**
-     * 生成后端代码
-     */
-    private Map<String, String> generateBackendCode(CodeGenContextDTO context) {
-        Map<String, String> files = new LinkedHashMap<>();
-        String basePath = "backend/" + context.getBasePackage().replace('.', '/');
-        
-        // Entity
-        files.put(basePath + "/domain/entity/" + context.getEntityName() + ".java",
-            renderTemplate("Entity.java.btl", context));
-        
-        // Mapper
-        files.put(basePath + "/mapper/" + context.getEntityName() + "Mapper.java",
-            renderTemplate("Mapper.java.btl", context));
-        
-        // Service
-        files.put(basePath + "/service/" + context.getEntityName() + "Service.java",
-            renderTemplate("Service.java.btl", context));
-        
-        // ServiceImpl
-        files.put(basePath + "/service/impl/" + context.getEntityName() + "ServiceImpl.java",
-            renderTemplate("ServiceImpl.java.btl", context));
-        
-        // Controller
-        files.put(basePath + "/controller/" + context.getEntityName() + "Controller.java",
-            renderTemplate("Controller.java.btl", context));
-        
-        // PageParam
-        files.put(basePath + "/domain/param/" + context.getEntityName() + "PageParam.java",
-            renderTemplate("PageParam.java.btl", context));
-        
-        // SaveParam
-        files.put(basePath + "/domain/param/" + context.getEntityName() + "SaveParam.java",
-            renderTemplate("SaveParam.java.btl", context));
-        
-        return files;
+    private List<ColumnMetaDTO> preferRequestColumns(List<ColumnMetaDTO> requestColumns, List<ColumnMetaDTO> metaColumns) {
+        return CollectionUtils.isEmpty(requestColumns) ? metaColumns : requestColumns;
     }
 
-    /**
-     * 生成前端代码
-     */
-    private Map<String, String> generateFrontendCode(CodeGenContextDTO context) {
-        Map<String, String> files = new LinkedHashMap<>();
-        String basePath = "frontend/src";
-        
-        // Vue 页面
-        files.put(basePath + "/views/" + context.getModuleName() + "/" + 
-            context.getEntityNameLower() + "/index.vue",
-            renderTemplate("vue/index.vue.btl", context));
-        
-        // API
-        files.put(basePath + "/api/" + context.getModuleName() + "/" + 
-            context.getEntityNameLower() + ".ts",
-            renderTemplate("vue/api.ts.btl", context));
-        
-        return files;
+    private List<ColumnMetaDTO> withDefaultColumnFeatures(List<ColumnMetaDTO> columns) {
+        for (ColumnMetaDTO column : columns) {
+            column.setIsBaseField(BASE_ENTITY_FIELDS.contains(column.getColumnName()));
+            if (!StringUtils.hasText(column.getQueryType())) {
+                column.setQueryType(resolveQueryType(column.getJavaType()));
+            }
+            if (!StringUtils.hasText(column.getQueryOperator())) {
+                column.setQueryOperator("String".equals(column.getJavaType()) ? "like" : "eq");
+            }
+            if (!StringUtils.hasText(column.getFormType())) {
+                column.setFormType(resolveFormType(column));
+            }
+            if (column.getRequired() == null) {
+                column.setRequired(Boolean.FALSE.equals(column.getIsNullable()));
+            }
+            if (column.getWidth() == null) {
+                column.setWidth(resolveWidth(column.getJavaType()));
+            }
+            if (!StringUtils.hasText(column.getAlign())) {
+                column.setAlign(resolveAlign(column.getJavaType()));
+            }
+            if (column.getSortable() == null) {
+                column.setSortable(!"String".equals(column.getJavaType()));
+            }
+        }
+        return columns;
     }
 
-    /**
-     * 生成 SQL 脚本
-     */
-    private Map<String, String> generateSqlScripts(CodeGenContextDTO context) {
-        Map<String, String> files = new LinkedHashMap<>();
-        String basePath = "sql";
-        
-        // 菜单权限 SQL
-        files.put(basePath + "/01_menu_permission.sql",
-            renderTemplate("sql/menu_permission.sql.btl", context));
-        
-        // 表格配置 SQL
-        files.put(basePath + "/02_table_config.sql",
-            renderTemplate("sql/table_config.sql.btl", context));
-        
-        // 多语言 SQL
-        files.put(basePath + "/03_i18n_message.sql",
-            renderTemplate("sql/i18n_message.sql.btl", context));
-        
-        return files;
-    }
-
-    /**
-     * 生成 README
-     */
-    private String generateReadme(CodeGenContextDTO context) {
-        return "# " + context.getTableComment() + " 代码生成\n\n" +
-               "## 基本信息\n\n" +
-               "- 表名：" + context.getTableName() + "\n" +
-               "- 实体类：" + context.getEntityName() + "\n" +
-               "- 模块：" + context.getModuleName() + "\n" +
-               "- 包名：" + context.getBasePackage() + "\n" +
-               "- 生成时间：" + context.getDate() + "\n\n" +
-               "## 文件说明\n\n" +
-               "### 后端代码\n\n" +
-               "- Entity：实体类\n" +
-               "- Mapper：数据访问层\n" +
-               "- Service：业务逻辑层\n" +
-               "- Controller：控制器层\n" +
-               "- Param：参数类\n\n" +
-               "### 前端代码\n\n" +
-               "- index.vue：页面组件\n" +
-               "- api.ts：API 接口\n\n" +
-               "### SQL 脚本\n\n" +
-               "- 01_menu_permission.sql：菜单和权限初始化\n" +
-               "- 02_table_config.sql：表格配置初始化\n" +
-               "- 03_i18n_message.sql：多语言配置初始化\n\n" +
-               "## 使用说明\n\n" +
-               "1. 将后端代码复制到对应模块\n" +
-               "2. 将前端代码复制到前端项目\n" +
-               "3. 执行 SQL 脚本初始化数据\n" +
-               "4. 重启后端服务\n" +
-               "5. 刷新前端页面\n";
-    }
-
-    /**
-     * 渲染模板
-     */
-    private String renderTemplate(String templateName, CodeGenContextDTO context) {
-        try {
-            Template template = groupTemplate.getTemplate(templateName);
-            template.binding("tableName", context.getTableName());
-            template.binding("tableComment", context.getTableComment());
-            template.binding("entityName", context.getEntityName());
-            template.binding("entityNameLower", context.getEntityNameLower());
-            template.binding("moduleName", context.getModuleName());
-            template.binding("basePackage", context.getBasePackage());
-            template.binding("mode", context.getMode());
-            template.binding("date", context.getDate());
-            template.binding("columns", context.getColumns());
-            template.binding("queryColumns", context.getQueryColumns());
-            template.binding("saveColumns", context.getSaveColumns());
-            template.binding("tableColumns", context.getTableColumns());
-            template.binding("menuPath", context.getMenuPath());
-            template.binding("menuNameCn", context.getMenuNameCn());
-            template.binding("menuNameEn", context.getMenuNameEn());
-            template.binding("menuIcon", context.getMenuIcon());
-            template.binding("menuOrderNum", context.getMenuOrderNum());
-            template.binding("componentKey", context.getComponentKey());
-            template.binding("permKeyPrefix", context.getPermKeyPrefix());
-            template.binding("moduleNameCn", context.getModuleNameCn());
-            template.binding("moduleNameEn", context.getModuleNameEn());
-            template.binding("moduleIcon", context.getModuleIcon());
-            template.binding("moduleOrderNum", context.getModuleOrderNum());
-            template.binding("tableCode", context.getTableCode());
-            template.binding("tableNameCn", context.getTableNameCn());
-            template.binding("tableNameEn", context.getTableNameEn());
-            template.binding("i18nPrefix", context.getI18nPrefix());
-            
-            return template.render();
-        } catch (Exception e) {
-            return "// 模板渲染失败：" + e.getMessage();
+    private void validateMainSubRelation(List<ColumnMetaDTO> mainColumns, List<ColumnMetaDTO> subColumns, CodeGenRequestDTO req) {
+        ColumnMetaDTO mainPk = findColumn(mainColumns, req.getMainPkColumn());
+        ColumnMetaDTO subFk = findColumn(subColumns, req.getSubFkColumn());
+        ColumnMetaDTO subPk = findColumn(subColumns, req.getSubPkColumn());
+        if (mainPk == null || subFk == null || subPk == null || !StringUtils.pathEquals(mainPk.getJavaType(), subFk.getJavaType())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_MAIN_SUB_RELATION_INVALID);
+        }
+        if (findColumn(subColumns, resolveSubDefaultSortColumn(subColumns)) == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_MAIN_SUB_RELATION_INVALID);
         }
     }
 
-    /**
-     * 过滤查询列
-     */
+    private ColumnMetaDTO findColumn(List<ColumnMetaDTO> columns, String columnName) {
+        return columns.stream()
+            .filter(item -> StringUtils.pathEquals(item.getColumnName(), columnName))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private String resolveJavaFieldName(List<ColumnMetaDTO> columns, String columnName, String defaultValue) {
+        ColumnMetaDTO column = findColumn(columns, columnName);
+        return column == null || !StringUtils.hasText(column.getJavaFieldName()) ? defaultValue : column.getJavaFieldName();
+    }
+
+    private String detectPrimaryKey(List<ColumnMetaDTO> columns) {
+        return columns.stream()
+            .filter(column -> Boolean.TRUE.equals(column.getIsPrimaryKey()))
+            .map(ColumnMetaDTO::getColumnName)
+            .findFirst()
+            .orElse("id");
+    }
+
     private List<ColumnMetaDTO> filterQueryColumns(List<ColumnMetaDTO> columns) {
         return columns.stream()
-            .filter(col -> !col.getIsBaseField())
-            .filter(col -> !col.getIsPrimaryKey())
-            .limit(5) // 最多5个查询条件
-            .peek(col -> {
-                // 设置查询类型
-                if ("String".equals(col.getJavaType())) {
-                    col.setQueryType("input");
-                    col.setQueryOperator("like");
-                } else if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType())) {
-                    col.setQueryType("input");
-                    col.setQueryOperator("eq");
-                } else if ("LocalDate".equals(col.getJavaType()) || "LocalDateTime".equals(col.getJavaType())) {
-                    col.setQueryType("date");
-                    col.setQueryOperator("eq");
-                }
-            })
-            .collect(Collectors.toList());
+            .filter(column -> !Boolean.TRUE.equals(column.getIsBaseField()))
+            .filter(column -> !Boolean.TRUE.equals(column.getIsPrimaryKey()))
+            .limit(6)
+            .toList();
     }
 
-    /**
-     * 过滤保存列
-     */
-    private List<ColumnMetaDTO> filterSaveColumns(List<ColumnMetaDTO> columns) {
+    private List<ColumnMetaDTO> filterFormColumns(List<ColumnMetaDTO> columns) {
         return columns.stream()
-            .filter(col -> !col.getIsBaseField())
-            .filter(col -> !col.getIsPrimaryKey())
-            .filter(col -> !col.getIsAutoIncrement())
-            .peek(col -> {
-                // 设置表单类型
-                if ("String".equals(col.getJavaType())) {
-                    if (col.getCharacterMaximumLength() != null && col.getCharacterMaximumLength() > 200) {
-                        col.setFormType("textarea");
-                    } else {
-                        col.setFormType("input");
-                    }
-                } else if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType()) || 
-                           "BigDecimal".equals(col.getJavaType())) {
-                    col.setFormType("number");
-                } else if ("LocalDate".equals(col.getJavaType())) {
-                    col.setFormType("date");
-                } else if ("LocalDateTime".equals(col.getJavaType())) {
-                    col.setFormType("datetime");
-                } else if ("Boolean".equals(col.getJavaType())) {
-                    col.setFormType("select");
-                } else {
-                    col.setFormType("input");
-                }
-                
-                // 设置是否必填
-                col.setRequired(!col.getIsNullable());
-            })
-            .collect(Collectors.toList());
+            .filter(column -> !Boolean.TRUE.equals(column.getIsBaseField()))
+            .filter(column -> !Boolean.TRUE.equals(column.getIsPrimaryKey()))
+            .filter(column -> !Boolean.TRUE.equals(column.getIsAutoIncrement()))
+            .toList();
     }
 
-    /**
-     * 过滤表格列
-     */
     private List<ColumnMetaDTO> filterTableColumns(List<ColumnMetaDTO> columns) {
         return columns.stream()
-            .filter(col -> !col.getIsBaseField() || "id".equals(col.getColumnName()))
-            .peek(col -> {
-                // 设置列宽
-                if ("String".equals(col.getJavaType())) {
-                    col.setWidth(150);
-                } else if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType())) {
-                    col.setWidth(100);
-                } else if ("LocalDate".equals(col.getJavaType())) {
-                    col.setWidth(120);
-                } else if ("LocalDateTime".equals(col.getJavaType())) {
-                    col.setWidth(180);
-                } else {
-                    col.setWidth(120);
-                }
-                
-                // 设置对齐方式
-                if ("Integer".equals(col.getJavaType()) || "Long".equals(col.getJavaType()) || 
-                    "BigDecimal".equals(col.getJavaType())) {
-                    col.setAlign("right");
-                } else if ("LocalDate".equals(col.getJavaType()) || "LocalDateTime".equals(col.getJavaType())) {
-                    col.setAlign("center");
-                } else {
-                    col.setAlign("left");
-                }
-                
-                // 设置是否可排序
-                col.setSortable(!"String".equals(col.getJavaType()));
-            })
-            .collect(Collectors.toList());
+            .filter(column -> !Boolean.TRUE.equals(column.getIsBaseField()) || "id".equals(column.getColumnName()))
+            .limit(8)
+            .toList();
     }
 
-    /**
-     * 转换为驼峰命名
-     */
-    private String toCamelCase(String str, boolean upperFirst) {
-        if (!StringUtils.hasText(str)) {
-            return str;
+    private String resolveSubDefaultSortColumn(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return "id";
         }
-        
-        String[] parts = str.split("[_\\-\\s]+");
-        StringBuilder sb = new StringBuilder();
-        
+        List<String> candidates = List.of("sort_no", "sort_num", "sort_order", "order_num", "create_time", "id");
+        for (String candidate : candidates) {
+            if (findColumn(columns, candidate) != null) {
+                return candidate;
+            }
+        }
+        return columns.stream()
+            .filter(column -> Boolean.TRUE.equals(column.getIsPrimaryKey()))
+            .map(ColumnMetaDTO::getColumnName)
+            .findFirst()
+            .orElse(columns.get(0).getColumnName());
+    }
+
+    private Set<String> collectImports(List<ColumnMetaDTO> columns) {
+        Set<String> imports = new HashSet<>();
+        for (ColumnMetaDTO column : columns) {
+            if (Boolean.TRUE.equals(column.getNeedImport()) && StringUtils.hasText(column.getJavaTypeFullName())) {
+                imports.add(column.getJavaTypeFullName());
+            }
+        }
+        return imports;
+    }
+
+    private String resolveQueryType(String javaType) {
+        if ("LocalDate".equals(javaType) || "LocalDateTime".equals(javaType)) {
+            return "date";
+        }
+        return "String".equals(javaType) ? "input" : "input";
+    }
+
+    private String resolveFormType(ColumnMetaDTO column) {
+        String javaType = column.getJavaType();
+        if ("LocalDate".equals(javaType)) {
+            return "date";
+        }
+        if ("LocalDateTime".equals(javaType)) {
+            return "datetime";
+        }
+        if ("BigDecimal".equals(javaType) || "Integer".equals(javaType) || "Long".equals(javaType)
+            || "Float".equals(javaType) || "Double".equals(javaType)) {
+            return "number";
+        }
+        if ("Boolean".equals(javaType)) {
+            return "select";
+        }
+        if (column.getCharacterMaximumLength() != null && column.getCharacterMaximumLength() > 200) {
+            return "textarea";
+        }
+        return "input";
+    }
+
+    private Integer resolveWidth(String javaType) {
+        if ("LocalDateTime".equals(javaType)) {
+            return 180;
+        }
+        if ("LocalDate".equals(javaType)) {
+            return 140;
+        }
+        if ("Integer".equals(javaType) || "Long".equals(javaType) || "BigDecimal".equals(javaType)) {
+            return 120;
+        }
+        return 160;
+    }
+
+    private String resolveAlign(String javaType) {
+        if ("Integer".equals(javaType) || "Long".equals(javaType) || "BigDecimal".equals(javaType)) {
+            return "right";
+        }
+        if ("LocalDate".equals(javaType) || "LocalDateTime".equals(javaType)) {
+            return "center";
+        }
+        return "left";
+    }
+
+    private String buildZipFileName(CodeGenContextDTO context) {
+        return "codegen-" + context.getBizName() + "-" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".zip";
+    }
+
+    private String extractName(String path) {
+        if (!StringUtils.hasText(path) || !path.contains("/")) {
+            return path;
+        }
+        return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    private String defaultText(String value, String defaultValue) {
+        return StringUtils.hasText(value) ? value : defaultValue;
+    }
+
+    private String toCamelCase(String value, boolean upperFirst) {
+        if (!StringUtils.hasText(value)) {
+            return value;
+        }
+        String[] parts = value.split("_");
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (part.isEmpty()) continue;
-            
-            String lower = part.toLowerCase();
+            if (parts[i].isEmpty()) {
+                continue;
+            }
+            String lower = parts[i].toLowerCase(Locale.ROOT);
             if (i == 0 && !upperFirst) {
-                sb.append(lower);
+                builder.append(lower);
             } else {
-                sb.append(Character.toUpperCase(lower.charAt(0)));
+                builder.append(Character.toUpperCase(lower.charAt(0)));
                 if (lower.length() > 1) {
-                    sb.append(lower.substring(1));
+                    builder.append(lower.substring(1));
                 }
             }
         }
-        
-        return sb.toString();
+        return builder.toString();
     }
 
-    /**
-     * 转换为小写驼峰命名
-     */
-    private String toLowerCamelCase(String str) {
-        if (!StringUtils.hasText(str)) {
-            return str;
+    private String toLowerCamel(String value) {
+        if (!StringUtils.hasText(value)) {
+            return value;
         }
-        return Character.toLowerCase(str.charAt(0)) + str.substring(1);
-    }
-
-    /**
-     * 转换为下划线命名
-     */
-    private String toUnderscoreCase(String str) {
-        if (!StringUtils.hasText(str)) {
-            return str;
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (Character.isUpperCase(c)) {
-                if (i > 0) {
-                    sb.append('_');
-                }
-                sb.append(Character.toLowerCase(c));
-            } else {
-                sb.append(c);
-            }
-        }
-        
-        return sb.toString();
+        return Character.toLowerCase(value.charAt(0)) + value.substring(1);
     }
 }

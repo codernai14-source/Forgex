@@ -46,15 +46,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.core.network.model.workbench.CMenuVO
 
-/**
- * 收藏 Tab 页面。
- * 展示用户收藏的 C 端菜单，支持取消收藏和菜单点击跳转。
- */
 @Composable
 fun FavoritesScreen(
     onMenuClick: (CMenuVO) -> Unit,
@@ -68,7 +66,6 @@ fun FavoritesScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // 错误提示
         if (!uiState.errorMessage.isNullOrBlank()) {
             Text(
                 text = uiState.errorMessage ?: "",
@@ -79,7 +76,7 @@ fun FavoritesScreen(
                 onClick = viewModel::loadFavorites,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
-                Text("重试")
+                Text(stringResource(R.string.common_retry))
             }
         }
 
@@ -106,13 +103,13 @@ fun FavoritesScreen(
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            text = "暂无收藏",
+                            text = stringResource(R.string.home_empty_favorites),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 8.dp)
                         )
                         Text(
-                            text = "在工作台中长按菜单可添加收藏",
+                            text = stringResource(R.string.home_empty_favorites_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -188,7 +185,7 @@ private fun FavoriteMenuItem(
                 } else {
                     Icon(
                         imageVector = Icons.Default.Star,
-                        contentDescription = "取消收藏",
+                        contentDescription = stringResource(R.string.home_cancel_favorite),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -196,4 +193,3 @@ private fun FavoriteMenuItem(
         }
     }
 }
-

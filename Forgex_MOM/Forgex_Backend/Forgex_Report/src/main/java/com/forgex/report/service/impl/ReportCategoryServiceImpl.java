@@ -5,9 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.report.domain.dto.ReportCategoryDTO;
 import com.forgex.report.domain.entity.ReportCategory;
+import com.forgex.report.enums.ReportPromptEnum;
 import com.forgex.report.domain.param.ReportCategoryParam;
 import com.forgex.report.mapper.ReportCategoryMapper;
 import com.forgex.report.service.IReportCategoryService;
@@ -108,7 +110,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
 
         ReportCategory category = super.getById(id);
         if (category == null) {
-            throw new BusinessException("报表分类不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_CATEGORY_NOT_FOUND);
         }
 
         return convertToDTO(category);
@@ -137,7 +139,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
                     .eq(ReportCategory::getCode, dto.getCode())
                     .ne(dto.getId() != null, ReportCategory::getId, dto.getId()));
             if (count > 0) {
-                throw new BusinessException("分类编码已存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_CATEGORY_CODE_EXISTS);
             }
         }
 
@@ -170,7 +172,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
             long count = this.count(new LambdaQueryWrapper<ReportCategory>()
                     .eq(ReportCategory::getParentId, id));
             if (count > 0) {
-                throw new BusinessException("存在子分类，无法删除");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_CATEGORY_HAS_CHILDREN);
             }
         }
 

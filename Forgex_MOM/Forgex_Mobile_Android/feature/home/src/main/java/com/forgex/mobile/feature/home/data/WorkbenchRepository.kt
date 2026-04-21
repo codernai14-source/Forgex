@@ -37,7 +37,7 @@ class WorkbenchRepository @Inject constructor(
             }
             AppResult.Success(response.data.orEmpty())
         } catch (e: Exception) {
-            AppResult.Error(e.message ?: "加载工作台模块失败")
+            AppResult.Error(e.message ?: "Load workbench modules failed")
         }
     }
 
@@ -49,7 +49,7 @@ class WorkbenchRepository @Inject constructor(
             }
             AppResult.Success(response.data.orEmpty())
         } catch (e: Exception) {
-            AppResult.Error(e.message ?: "加载工作台菜单失败")
+            AppResult.Error(e.message ?: "Load workbench menus failed")
         }
     }
 
@@ -61,7 +61,7 @@ class WorkbenchRepository @Inject constructor(
             }
             AppResult.Success(response.data.orEmpty())
         } catch (e: Exception) {
-            AppResult.Error(e.message ?: "加载收藏列表失败")
+            AppResult.Error(e.message ?: "Load favorites failed")
         }
     }
 
@@ -73,7 +73,7 @@ class WorkbenchRepository @Inject constructor(
             }
             AppResult.Success(response.data ?: false)
         } catch (e: Exception) {
-            AppResult.Error(e.message ?: "收藏操作失败")
+            AppResult.Error(e.message ?: "Toggle favorite failed")
         }
     }
 }

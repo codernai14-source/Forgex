@@ -7,6 +7,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+const ROUTE_CACHE_VERSION = '20260420-backend-menu-v1'
+
 export const use权限Store = defineStore('permission', () => {
   // ============ State ============
   
@@ -97,6 +99,7 @@ export const use权限Store = defineStore('permission', () => {
     // 鎸佷箙鍖栧埌 localStorage
     try {
       localStorage.setItem('fx-dynamic-routes', JSON.stringify(routeList))
+      localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
     } catch (error) {
       console.error('Failed to cache routes to localStorage:', error)
     }
@@ -111,6 +114,7 @@ export const use权限Store = defineStore('permission', () => {
     // 鎸佷箙鍖栧埌 localStorage
     try {
       localStorage.setItem('fx-dynamic-modules', JSON.stringify(moduleList))
+      localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
     } catch (error) {
       console.error('Failed to cache modules to localStorage:', error)
     }
@@ -121,6 +125,19 @@ export const use权限Store = defineStore('permission', () => {
    */
   function restoreRoutesAndModules() {
     try {
+      const cacheVersion = localStorage.getItem('fx-dynamic-routes-version')
+      if (cacheVersion !== ROUTE_CACHE_VERSION) {
+        localStorage.removeItem('fx-dynamic-routes')
+        localStorage.removeItem('fx-dynamic-modules')
+        localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
+        routes.value = []
+        modules.value = []
+        return {
+          routes: [],
+          modules: []
+        }
+      }
+
       const cachedRoutes = localStorage.getItem('fx-dynamic-routes')
       const cachedModules = localStorage.getItem('fx-dynamic-modules')
       
@@ -159,6 +176,7 @@ export const use权限Store = defineStore('permission', () => {
     // 娓呴櫎 localStorage 涓殑璺敱鍜屾ā鍧楃紦瀛?
     localStorage.removeItem('fx-dynamic-routes')
     localStorage.removeItem('fx-dynamic-modules')
+    localStorage.removeItem('fx-dynamic-routes-version')
   }
   
   /**

@@ -1,0 +1,10 @@
+{
+  "product": "Forgex",
+  "edition": "standard",
+  "customerCode": "FXC-20260415-DEMO",
+  "machineCode": "REPLACE_ME",
+  "osType": "windows",
+  "hostname": "forgex-demo",
+  "generatedAt": "2026-04-15T10:00:00+08:00",
+  "toolVersion": "1.0.0"
+}

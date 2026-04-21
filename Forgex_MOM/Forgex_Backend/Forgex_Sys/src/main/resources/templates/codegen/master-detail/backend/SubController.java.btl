@@ -1,0 +1,49 @@
+package ${ctx.packageName}.controller;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.forgex.common.web.R;
+import ${ctx.packageName}.domain.entity.${ctx.subEntityName};
+import ${ctx.packageName}.domain.param.${ctx.subEntityName}PageParam;
+import ${ctx.packageName}.domain.param.${ctx.subEntityName}SaveParam;
+import ${ctx.packageName}.service.${ctx.subEntityName}Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/${ctx.moduleName}/${ctx.subEntityNameLower}")
+@RequiredArgsConstructor
+public class ${ctx.subEntityName}Controller {
+
+    private final ${ctx.subEntityName}Service ${ctx.subEntityNameLower}Service;
+
+    @PostMapping("/page")
+    public R<IPage<${ctx.subEntityName}>> page(@RequestBody(required = false) ${ctx.subEntityName}PageParam param) {
+        return R.ok(${ctx.subEntityNameLower}Service.page(param == null ? new ${ctx.subEntityName}PageParam() : param));
+    }
+
+    @PostMapping("/detail")
+    public R<${ctx.subEntityName}> detail(@RequestBody Long id) {
+        return R.ok(${ctx.subEntityNameLower}Service.detail(id));
+    }
+
+    @PostMapping("/create")
+    public R<Void> create(@RequestBody ${ctx.subEntityName}SaveParam param) {
+        ${ctx.subEntityNameLower}Service.save(param);
+        return R.ok();
+    }
+
+    @PostMapping("/update")
+    public R<Void> update(@RequestBody ${ctx.subEntityName}SaveParam param) {
+        ${ctx.subEntityNameLower}Service.update(param);
+        return R.ok();
+    }
+
+    @PostMapping("/delete")
+    public R<Void> delete(@RequestBody Long id) {
+        ${ctx.subEntityNameLower}Service.delete(id);
+        return R.ok();
+    }
+}

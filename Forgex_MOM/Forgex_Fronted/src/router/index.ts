@@ -30,6 +30,11 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
       path: 'execution/start/:taskCode',
       component: () => import('../views/workflow/execution/startForm.vue'),
       meta: { title: 'workflow.execution.startApproval', hidden: true }
+    },
+    {
+      path: 'governance/compensation',
+      component: () => import('../views/workflow/governance/compensation/index.vue'),
+      meta: { title: 'workflow.execution.compensationCenter', hidden: true }
     }
   ]
 }
@@ -257,13 +262,11 @@ const EmptyView = {
  * 灏嗗悗绔殑妯″潡浠ｇ爜鏄犲皠鍒板墠绔殑鐩綍锟?
  */
 const modulePathMap: Record<string, string> = {
-  'sys': 'system',      // sys 妯″潡瀵瑰簲 system 鐩綍
-  'system': 'system',   // 鍏煎瀹屾暣鍚嶇О
-  /** 瀹℃壒绠＄悊妯″潡缂栫爜锟?approval锛岄〉闈㈢粍浠朵粛浣嶄簬 views/workflow */
+  'sys': 'system',
+  'system': 'system',
   'approval': 'workflow',
-  // 鏈潵鍙互娣诲姞鏇村鏄犲皠锛屼緥濡傦細
-  // 'prod': 'production',
-  // 'qc': 'quality',
+  'integration': 'integrationPlatform',
+  'label': 'label',
 }
 
 /**
@@ -277,6 +280,7 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
   ApprovalMyProcessed: () => import('../views/workflow/myTask/processed.vue'),
   ApprovalMyInitiated: () => import('../views/workflow/myTask/initiated.vue'),
+  ApprovalCompensationCenter: () => import('../views/workflow/governance/compensation/index.vue'),
 }
 
 const viewModules = import.meta.glob('../views/**/*.vue') as Record<string, () => Promise<any>>
@@ -303,7 +307,12 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       }
     }
 
-    const specialComponentMap: Record<string, string> = {}
+    const specialComponentMap: Record<string, string> = {
+      LabelTemplate: '../views/label/template/index.vue',
+      LabelPrint: '../views/label/print/index.vue',
+      LabelRecord: '../views/label/record/index.vue',
+      LabelBinding: '../views/label/binding/index.vue',
+    }
     if (normalizedName && specialComponentMap[normalizedName]) {
       const mappedPath = specialComponentMap[normalizedName]
       const mappedLoader = viewModules[mappedPath]
@@ -516,6 +525,8 @@ function normalizeSystemConfigRoutes(routes: any[]) {
   const cloned = Array.isArray(routes)
     ? JSON.parse(JSON.stringify(routes))
     : []
+  // 2026-04-20: stop all frontend regrouping, keep backend menu tree as-is.
+  return cloned
 
   const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
   if (!sysRoute || !Array.isArray(sysRoute.children)) {
@@ -524,7 +535,7 @@ function normalizeSystemConfigRoutes(routes: any[]) {
 
   groupSystemMenus(sysRoute.children, {
     catalogPath: 'pageTableConfig',
-    title: '椤佃〃閰嶇疆',
+    title: '表格管理',
     icon: 'TableOutlined',
     childPaths: ['tableConfig', 'userTableConfig'],
   })
@@ -539,6 +550,116 @@ function normalizeSystemConfigRoutes(routes: any[]) {
   return cloned
 }
 
+function normalizeIntegrationRoutes(routes: any[]) {
+  const cloned = Array.isArray(routes)
+    ? JSON.parse(JSON.stringify(routes))
+    : []
+
+  const integrationRoute = cloned.find((item: any) => String(item?.path || '') === 'integration')
+  if (!integrationRoute || !Array.isArray(integrationRoute.children)) {
+    return cloned
+  }
+
+  const rootChildren = integrationRoute.children
+  const integrationEntryPaths = ['home', 'thirdSystem', 'apiConfig', 'apiCallLog']
+  const promotedMenus: any[] = []
+
+  const collectMenu = (menu: any) => {
+    if (!menu || typeof menu !== 'object') {
+      return
+    }
+    const path = String(menu?.path || '')
+    if (!path) {
+      return
+    }
+    if (integrationEntryPaths.includes(path)) {
+      const normalizedMenu = {
+        ...menu,
+        meta: {
+          ...(menu.meta || {}),
+          module: 'integration',
+          menuLevel: 1,
+          type: menu.meta?.type || 'menu',
+        },
+      }
+      if (path === 'home') {
+        normalizedMenu.meta = {
+          ...normalizedMenu.meta,
+          title: normalizedMenu.meta?.title || 'integration.home.title',
+        }
+      }
+      promotedMenus.push(normalizedMenu)
+    }
+  }
+
+  for (let index = rootChildren.length - 1; index >= 0; index--) {
+    const menu = rootChildren[index]
+    const path = String(menu?.path || '')
+    if (integrationEntryPaths.includes(path)) {
+      collectMenu(menu)
+      rootChildren.splice(index, 1)
+      continue
+    }
+    if (menu?.meta?.type === 'catalog' && Array.isArray(menu.children)) {
+      const remainChildren: any[] = []
+      menu.children.forEach((child: any) => {
+        const childPath = String(child?.path || '')
+        if (integrationEntryPaths.includes(childPath)) {
+          collectMenu(child)
+        } else {
+          remainChildren.push(child)
+        }
+      })
+      if (remainChildren.length === 0) {
+        rootChildren.splice(index, 1)
+      } else {
+        menu.children = remainChildren
+      }
+    }
+  }
+
+  const promotedPathSet = new Set(promotedMenus.map(item => String(item?.path || '')))
+  const homeMenu = promotedMenus.find(item => String(item?.path || '') === 'home') || {
+    path: 'home',
+    name: 'integrationHome',
+    component: 'IntegrationHome',
+    meta: {
+      title: 'integration.home.title',
+      icon: 'HomeOutlined',
+      module: 'integration',
+      menuLevel: 1,
+      type: 'menu',
+    },
+  }
+
+  const finalMenus = [
+    homeMenu,
+    ...promotedMenus.filter(item => String(item?.path || '') !== 'home'),
+  ]
+
+  finalMenus.forEach(menu => {
+    const path = String(menu?.path || '')
+    if (!promotedPathSet.has(path)) {
+      promotedPathSet.add(path)
+    }
+  })
+
+  if (!rootChildren.some((item: any) => String(item?.path || '') === 'home')) {
+    rootChildren.unshift(homeMenu)
+  }
+
+  finalMenus.reverse().forEach(menu => {
+    const path = String(menu?.path || '')
+    const existsIndex = rootChildren.findIndex((item: any) => String(item?.path || '') === path)
+    if (existsIndex !== -1) {
+      rootChildren.splice(existsIndex, 1)
+    }
+    rootChildren.unshift(menu)
+  })
+
+  return cloned
+}
+
 function groupSystemMenus(
   menuList: any[],
   options: {
@@ -548,6 +669,8 @@ function groupSystemMenus(
     childPaths: string[]
   },
 ) {
+  // 2026-04-20: no-op, frontend must not regroup system menus.
+  return
   const catalogIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
   const existingCatalog = catalogIndex >= 0 ? menuList[catalogIndex] : null
   const catalogChildren = Array.isArray(existingCatalog?.children) ? existingCatalog.children : []
@@ -649,7 +772,8 @@ export async function injectDynamicRoutes(payload: any) {
 
   // 瑙ｆ瀽妯″潡鍜岃矾鐢辨暟锟?
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
-  const routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
+  let routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
+  routesPayload = normalizeIntegrationRoutes(routesPayload)
 
   // 鏇存柊鍔ㄦ€佹ā鍧楀拰璺敱鍒楄〃
   dynamicModules.value = mods

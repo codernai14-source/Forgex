@@ -11,6 +11,8 @@ public class WfTaskDraftEditorDTO {
 
     private String taskCode;
 
+    private String categoryCode;
+
     private String taskName;
 
     private String taskNameI18nJson;

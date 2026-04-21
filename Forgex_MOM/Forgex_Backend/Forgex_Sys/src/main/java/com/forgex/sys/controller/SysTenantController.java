@@ -15,6 +15,7 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
@@ -87,6 +88,7 @@ public class SysTenantController {
      * @see SysTenantQueryDTO
      * @see SysTenantDTO
      */
+    @RequirePerm("sys:tenant:view")
     @PostMapping("/list")
     public R<List<SysTenantDTO>> list(@RequestBody SysTenantQueryDTO queryDTO) {
         List<SysTenantDTO> list = tenantService.list(queryDTO);
@@ -112,6 +114,7 @@ public class SysTenantController {
      * @see SysTenantQueryDTO
      * @see SysTenantDTO
      */
+    @RequirePerm("sys:tenant:view")
     @PostMapping("/page")
     public R<Page<SysTenantDTO>> page(@RequestBody SysTenantQueryDTO queryDTO) {
         Page<SysTenantDTO> page = tenantService.page(queryDTO);
@@ -137,6 +140,7 @@ public class SysTenantController {
      * @return {@link R} 包含租户详情 DTO 的统一返回结构；若不存在返回 404
      * @see SysTenantDTO
      */
+    @RequirePerm("sys:tenant:view")
     @PostMapping("/get")
     public R<SysTenantDTO> get(@RequestBody Map<String, Object> params) {
         // 从参数中提取租户 ID
@@ -170,6 +174,7 @@ public class SysTenantController {
      * @return {@link R} 包含主租户详情 DTO 的统一返回结构；若不存在返回 404
      * @see SysTenantDTO
      */
+    @RequirePerm("sys:tenant:view")
     @PostMapping("/getMainTenant")
     public R<SysTenantDTO> getMainTenant() {
         // 查询主租户
@@ -201,6 +206,7 @@ public class SysTenantController {
      * @return {@link R} 包含租户层级关系 DTO 的统一返回结构
      * @see TenantHierarchyDTO
      */
+    @RequirePerm("sys:tenant:view")
     @PostMapping("/hierarchy")
     public R<TenantHierarchyDTO> getHierarchy(@RequestBody Map<String, Object> param) {
         Long tenantId = param == null ? null : (Long) param.get("tenantId");
@@ -231,6 +237,7 @@ public class SysTenantController {
      * @return {@link R} 包含子租户 DTO 列表的统一返回结构
      * @see SysTenantDTO
      */
+    @RequirePerm("sys:tenant:view")
     @PostMapping("/children")
     public R<List<SysTenantDTO>> getChildren(@RequestBody Map<String, Object> param) {
         Long parentTenantId = param == null ? null : (Long) param.get("parentTenantId");
@@ -262,6 +269,7 @@ public class SysTenantController {
      * @throws IllegalArgumentException 当必填字段缺失时抛出
      * @see SysTenantSaveParam
      */
+    @RequirePerm("sys:tenant:add")
     @PostMapping("/create")
     public R<Long> create(@Validated @RequestBody SysTenantSaveParam param) {
         // 创建租户并返回 ID
@@ -288,6 +296,7 @@ public class SysTenantController {
      * @throws IllegalArgumentException 当租户 ID 为空时抛出
      * @see SysTenantSaveParam
      */
+    @RequirePerm("sys:tenant:edit")
     @PostMapping("/update")
     public R<Boolean> update(@Validated @RequestBody SysTenantSaveParam param) {
         // 更新租户
@@ -313,6 +322,7 @@ public class SysTenantController {
      * @return {@link R} 包含删除是否成功的统一返回结构
      * @see CommonPrompt#DELETE_SUCCESS
      */
+    @RequirePerm("sys:tenant:delete")
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         // 从参数中提取租户 ID

@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxLicenseCore", "FxLicenseCore\FxLicenseCore.csproj", "{11C3BC02-D49C-4AF2-B286-417B084451B8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issuer", "issuer", "{17ABFF7B-B3F8-41F3-8CB0-FC75D0752379}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxLicenseGenerator", "issuer\FxLicenseGenerator\FxLicenseGenerator.csproj", "{2908958C-737E-4D5E-9DF0-89CC0725B64A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "request-client", "request-client", "{8A339EA9-B208-4249-BE39-3FA06BEC7423}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxLicenseRequest", "request-client\FxLicenseRequest\FxLicenseRequest.csproj", "{155012E8-54FC-4E4F-8B3B-41BEDA697290}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{11C3BC02-D49C-4AF2-B286-417B084451B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11C3BC02-D49C-4AF2-B286-417B084451B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11C3BC02-D49C-4AF2-B286-417B084451B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11C3BC02-D49C-4AF2-B286-417B084451B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2908958C-737E-4D5E-9DF0-89CC0725B64A} = {17ABFF7B-B3F8-41F3-8CB0-FC75D0752379}
+		{155012E8-54FC-4E4F-8B3B-41BEDA697290} = {8A339EA9-B208-4249-BE39-3FA06BEC7423}
+	EndGlobalSection
+EndGlobal

@@ -55,6 +55,8 @@ public class WfTaskConfig extends BaseEntity {
      */
     private String taskCode;
 
+    private String categoryCode;
+
     /**
      * 审批任务解释器 Bean 名称。
      * <p>

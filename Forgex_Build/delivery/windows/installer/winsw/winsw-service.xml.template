@@ -1,0 +1,10 @@
+<service>
+  <id>__SERVICE_NAME__</id>
+  <name>__SERVICE_NAME__</name>
+  <description>Forgex service __SERVICE_NAME__</description>
+  <executable>__FORGEX_HOME__\app\jre\bin\java.exe</executable>
+  <arguments>-jar "__JAR_PATH__" --spring.profiles.active=__DEPLOY_PROFILE__</arguments>
+  <logpath>__FORGEX_HOME__\logs\__SERVICE_ID__</logpath>
+  <log mode="roll" />
+  <onfailure action="restart" delay="10 sec" />
+</service>

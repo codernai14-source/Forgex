@@ -39,8 +39,10 @@
         </template>
         
         <template #avatar="{ record }">
-          <a-avatar :src="record.avatar ? (record.avatar.startsWith('http') || record.avatar.startsWith('data:') ? record.avatar : (record.avatar.startsWith('/api') ? record.avatar : '/api' + (record.avatar.startsWith('/') ? '' : '/') + record.avatar)) : ''">
-            <template #icon><UserOutlined /></template>
+          <a-avatar :src="normalizeMediaUrl(record.avatar)">
+            <template #icon>
+              <UserOutlined />
+            </template>
           </a-avatar>
         </template>
 
@@ -62,6 +64,12 @@
           <span v-else>-</span>
         </template>
 
+        <template #status="{ record }">
+          <a-tag :color="normalizeUserStatus(record.status) ? 'success' : 'default'">
+            {{ record.statusText || (normalizeUserStatus(record.status) ? t('system.user.statusActive') : t('system.user.statusInactive')) }}
+          </a-tag>
+        </template>
+
         <template #action="{ record }">
           <a-space>
             <a
@@ -72,9 +80,9 @@
             </a>
             <a
               v-permission="'sys:user:edit'"
-              @click="toggleUser状态(record.id, !record.status)"
+              @click="toggleUserStatus(record.id, !normalizeUserStatus(record.status))"
             >
-              {{ record.status ? t('system.user.statusInactive') : t('system.user.statusActive') }}
+              {{ normalizeUserStatus(record.status) ? t('system.user.statusInactive') : t('system.user.statusActive') }}
             </a>
             <a
               v-permission="'sys:user:resetPwd'"
@@ -133,6 +141,7 @@
  */
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { normalizeMediaUrl } from '@/utils/media'
 import { UserOutlined } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 import UserFormDialog from './components/UserFormDialog.vue'
@@ -183,6 +192,20 @@ const dictOptions = ref<Record<string, any[]>>({
     { label: t('system.user.statusInactive'), value: false }
   ]
 })
+
+function normalizeUserStatus(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    return value === 1
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return normalized === 'true' || normalized === '1'
+  }
+  return false
+}
 
 function normalizeRoleFilterValues(value: unknown): string[] {
   if (value === undefined || value === null || value === '') {
@@ -361,7 +384,7 @@ async function handleResetPassword(id: string) {
 /**
  * 更新用户状态
  */
-async function handleUpdate状态(id: string, status: boolean) {
+async function handleUpdateStatus(id: string, status: boolean) {
   // 实现更新状态逻辑
   // 可参考原本 useUser hook 的实现
 }
@@ -428,8 +451,8 @@ async function confirmResetPassword(id: string) {
   })
 }
 
-async function toggleUser状态(id: string, status: boolean) {
-  await userApi.updateUser状态(id, status)
+async function toggleUserStatus(id: string, status: boolean) {
+  await userApi.updateUserStatus(id, status)
   tableRef.value?.refresh?.()
 }
 

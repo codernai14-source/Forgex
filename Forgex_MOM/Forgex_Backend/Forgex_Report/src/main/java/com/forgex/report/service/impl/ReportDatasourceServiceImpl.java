@@ -5,9 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.report.domain.dto.ReportDatasourceDTO;
 import com.forgex.report.domain.entity.ReportDatasource;
+import com.forgex.report.enums.ReportPromptEnum;
 import com.forgex.report.domain.param.ReportDatasourceParam;
 import com.forgex.report.mapper.ReportDatasourceMapper;
 import com.forgex.report.service.IReportDatasourceService;
@@ -111,7 +113,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
 
         ReportDatasource datasource = super.getById(id);
         if (datasource == null) {
-            throw new BusinessException("报表数据源不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_DATASOURCE_NOT_FOUND);
         }
 
         return convertToDTO(datasource);
@@ -133,7 +135,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
         ReportDatasource datasource = this.getOne(new LambdaQueryWrapper<ReportDatasource>()
                 .eq(ReportDatasource::getCode, code));
         if (datasource == null) {
-            throw new BusinessException("报表数据源不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_DATASOURCE_NOT_FOUND);
         }
 
         return convertToDTO(datasource);
@@ -163,7 +165,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
                     .eq(ReportDatasource::getCode, dto.getCode())
                     .ne(dto.getId() != null, ReportDatasource::getId, dto.getId()));
             if (count > 0) {
-                throw new BusinessException("数据源编码已存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_DATASOURCE_CODE_EXISTS);
             }
         }
 
@@ -213,7 +215,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
             }
         } catch (Exception e) {
             log.error("数据源连接测试失败：{}", dto.getName(), e);
-            throw new BusinessException("数据源连接失败：" + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ReportPromptEnum.REPORT_DATASOURCE_CONNECT_FAILED, e.getMessage());
         } finally {
             if (conn != null) {
                 try {

@@ -17,6 +17,9 @@ import messageTemplate from './messageTemplate'
 import tenantMessageWhitelist from './tenantMessageWhitelist'
 import i18n from './i18n'
 import encodeRule from './encodeRule'
+import file from './file'
+import codegen from './codegen'
+import codegenDatasource from './codegenDatasource'
 
 export default {
   user,
@@ -34,4 +37,7 @@ export default {
   tenantMessageWhitelist,
   i18n,
   encodeRule,
+  file,
+  codegen,
+  codegenDatasource,
 }

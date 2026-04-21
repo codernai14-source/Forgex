@@ -1,8 +1,5 @@
 /**
  * 个人中心页面文案
- *
- * @author Forgex
- * @version 1.0.0
  */
 export default {
   title: '个人信息',
@@ -11,6 +8,7 @@ export default {
     org: '组织信息',
     security: '安全设置',
     personalHomepage: '个人首页',
+    guide: '引导设置',
   },
   fields: {
     account: '账号',
@@ -39,6 +37,15 @@ export default {
   personalHomepage: {
     title: '我的个人首页',
     description: '这里保存你自己的首页布局，恢复默认后会重新继承租户级或公共级配置。',
+  },
+  guide: {
+    title: '新手引导与宝宝模式',
+    description: '你可以在这里控制系统首次引导是否自动出现，也可以手动重新播放系统引导。',
+    babyModeTitle: '开启宝宝模式',
+    babyModeDesc: '开启后，系统允许再次主动展示已经完成或跳过的引导。',
+    replayTitle: '重新播放系统引导',
+    replayDesc: '将系统首页引导重置为待开始状态，下次进入首页时会自动再次播放。',
+    replayAction: '重新播放',
   },
   validation: {
     oldPasswordRequired: '请输入旧密码',

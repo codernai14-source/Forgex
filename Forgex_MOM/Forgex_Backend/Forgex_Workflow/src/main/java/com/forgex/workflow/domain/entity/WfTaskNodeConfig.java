@@ -56,7 +56,10 @@ public class WfTaskNodeConfig {
     private Long taskConfigId;
 
     /**
-     * 璁捐鍣ㄧǔ瀹氳妭鐐归敭
+     * 设计器锚定节点键。
+     * <p>
+     * 用于前端流程设计器中唯一标识该节点。
+     * </p>
      */
     private String nodeKey;
 
@@ -147,12 +150,18 @@ public class WfTaskNodeConfig {
     private String branchConditions;
 
     /**
-     * 鐢诲竷 X 鍧愭爣
+     * 画布 X 坐标。
+     * <p>
+     * 用于前端流程设计器中节点的 X 轴位置。
+     * </p>
      */
     private Double canvasX;
 
     /**
-     * 鐢诲竷 Y 鍧愭爣
+     * 画布 Y 坐标。
+     * <p>
+     * 用于前端流程设计器中节点的 Y 轴位置。
+     * </p>
      */
     private Double canvasY;
 

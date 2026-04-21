@@ -16,11 +16,14 @@ package com.forgex.workflow.domain.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 审批执行 DTO。
+ * 审批执行数据传输对象。
  * <p>
- * 用于传输审批执行数据。
+ * 聚合执行单基础信息、当前审批实例、动作日志以及治理摘要字段，
+ * 供待办、已办、我发起、仪表盘和补偿中心统一复用。
  * </p>
  *
  * @author coder_nai@163.com
@@ -31,83 +34,112 @@ import java.time.LocalDateTime;
 public class WfExecutionDTO {
 
     /**
-     * 主键
+     * 执行单 ID。
      */
     private Long id;
 
     /**
-     * 审批任务配置表 ID
+     * 任务配置 ID。
      */
     private Long taskConfigId;
 
     /**
-     * 审批任务编码
+     * 任务编码。
      */
     private String taskCode;
 
     /**
-     * 审批任务名称
+     * 任务名称。
      */
     private String taskName;
 
     /**
-     * 发起人 ID
+     * 发起人 ID。
      */
     private Long initiatorId;
 
     /**
-     * 发起人名称
+     * 发起人名称。
      */
     private String initiatorName;
 
     /**
-     * 当前节点 ID
+     * 当前节点 ID。
      */
     private Long currentNodeId;
 
     /**
-     * 当前节点名称
+     * 当前节点名称。
      */
     private String currentNodeName;
 
     /**
-     * 表单内容（JSON）
+     * 表单内容。
      */
     private String formContent;
 
     /**
-     * 发起时间
+     * 发起时间。
      */
     private LocalDateTime startTime;
 
     /**
-     * 结束时间
+     * 结束时间。
      */
     private LocalDateTime endTime;
 
     /**
-     * 状态
-     * <p>
-     * 0=未审批<br>
-     * 1=审批中<br>
-     * 2=审批完成<br>
-     * 3=驳回
-     * </p>
+     * 执行状态。
      */
     private Integer status;
 
     /**
-     * 租户 ID
+     * 租户 ID。
      */
     private Long tenantId;
 
     /**
-     * 创建时间
+     * 创建时间。
      */
     private LocalDateTime createTime;
 
     /**
-     * 更新时间
+     * 更新时间。
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 当前审批实例列表。
+     */
+    private List<WfApprovalInstanceDTO> currentApprovalInstances = new ArrayList<>();
+
+    /**
+     * 审批动作日志列表。
+     */
+    private List<WfApprovalActionLogDTO> approvalActionLogs = new ArrayList<>();
+
+    /**
+     * 当前激活实例数量。
+     */
+    private Integer activeInstanceCount;
+
+    /**
+     * 是否存在超时标记。
+     */
+    private Boolean timeoutFlag;
+
+    /**
+     * 是否命中过委托链路。
+     */
+    private Boolean delegated;
+
+    /**
+     * 是否命中过转交链路。
+     */
+    private Boolean transferred;
+
+    /**
+     * 最近一次动作摘要。
+     */
+    private String latestActionSummary;
 }

@@ -265,6 +265,7 @@
         <module>Forgex_Job</module>
         <module>Forgex_Workflow</module>
         <module>Forgex_Report</module>
+        <module>Forgex_Integration</module>
     </modules>
 
     <build>

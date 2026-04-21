@@ -345,13 +345,20 @@ http.interceptors.request.use(cfg => {
   
   // 添加语言头
   const locale = getLocale()
+  const tenantId = sessionStorage.getItem('tenantId')
   const headersAny: any = cfg.headers || {}
   if (typeof headersAny.set === 'function') {
     headersAny.set('Accept-Language', locale)
     headersAny.set('X-Lang', locale)
+    if (tenantId) {
+      headersAny.set('X-Tenant-Id', tenantId)
+    }
   } else {
     headersAny['Accept-Language'] = locale
     headersAny['X-Lang'] = locale
+    if (tenantId) {
+      headersAny['X-Tenant-Id'] = tenantId
+    }
   }
   cfg.headers = headersAny
   
@@ -365,13 +372,20 @@ http.interceptors.request.use(cfg => {
 silentHttp.interceptors.request.use(cfg => {
   // 添加语言头
   const locale = getLocale()
+  const tenantId = sessionStorage.getItem('tenantId')
   const headersAny: any = cfg.headers || {}
   if (typeof headersAny.set === 'function') {
     headersAny.set('Accept-Language', locale)
     headersAny.set('X-Lang', locale)
+    if (tenantId) {
+      headersAny.set('X-Tenant-Id', tenantId)
+    }
   } else {
     headersAny['Accept-Language'] = locale
     headersAny['X-Lang'] = locale
+    if (tenantId) {
+      headersAny['X-Tenant-Id'] = tenantId
+    }
   }
   cfg.headers = headersAny
   

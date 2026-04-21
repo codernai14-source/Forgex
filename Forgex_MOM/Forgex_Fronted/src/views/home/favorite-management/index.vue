@@ -316,7 +316,16 @@ onMounted(() => {
   height: 36px;
   border-radius: 12px;
   color: var(--fx-primary, #1677ff);
-  background: color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 72%, var(--fx-bg-elevated, #f8fafc));
+  background: color-mix(in srgb, var(--fx-primary-soft, #eff6ff) 82%, var(--fx-bg-elevated, #f8fafc));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 14%, transparent);
+}
+
+:global(html[data-theme='light']) .favorite-management-page .favorite-menu-cell__icon {
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+}
+
+:global(html[data-theme='dark']) .favorite-management-page .favorite-menu-cell__icon {
+  background: color-mix(in srgb, var(--fx-primary-soft-strong, rgba(22, 119, 255, 0.18)) 78%, var(--fx-bg-elevated, #1f2937));
 }
 
 .favorite-menu-cell__content {

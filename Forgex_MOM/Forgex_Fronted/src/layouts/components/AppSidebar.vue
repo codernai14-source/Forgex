@@ -1,16 +1,16 @@
 <template>
-  <div class="app-sidebar-wrapper">
-    <!-- 双列布局：第一列（一级菜单/目录） -->
+  <div class="app-sidebar-wrapper fx-guide-sidebar">
+    <!-- 鍙屽垪甯冨眬锛氱涓€鍒楋紙涓€绾ц彍鍗?鐩綍锛?-->
     <a-layout-sider
       v-if="doubleColumn"
-      class="app-sidebar-mini"
+      class="app-sidebar-mini fx-guide-sidebar-mini"
       :collapsed="false"
-      :width="100"
+      :width="104"
     >
       <a-menu
         mode="inline"
         :selected-keys="selectedFirstLevelKeys"
-        class="mini-menu"
+        class="mini-menu fx-guide-sidebar-mini-menu"
         @click="onFirstLevelMenuClick"
       >
         <a-menu-item
@@ -18,20 +18,22 @@
           :key="menu.key"
           class="mini-menu-item"
         >
-          <template #icon>
-            <component v-if="menu.icon" :is="getIcon(menu.icon)" />
-            <FileOutlined v-else />
-          </template>
-          <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
+          <div class="mini-menu-content">
+            <span class="mini-menu-icon-shell">
+              <component v-if="menu.icon" :is="getIcon(menu.icon)" class="mini-menu-icon" />
+              <FileOutlined v-else class="mini-menu-icon" />
+            </span>
+            <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
+          </div>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
 
-    <!-- 主侧边栏（第二列：二三级菜单） -->
-    <!-- 第二列宽度减少10%，从200px改为180px -->
+    <!-- 涓讳晶杈规爮锛堢浜屽垪锛氫簩涓夌骇鑿滃崟锛?-->
+    <!-- 绗簩鍒楀搴﹀噺灏?0%锛屼粠200px鏀逛负180px -->
     <a-layout-sider
       v-if="!doubleColumn || hasSecondLevelMenus"
-      class="app-sidebar"
+      class="app-sidebar fx-guide-sidebar-main"
       :collapsed="collapsed"
       :collapsible="true"
       :width="180"
@@ -42,12 +44,12 @@
         mode="inline"
         :selected-keys="selectedKeys"
         :open-keys="openKeys"
-        class="sidebar-menu"
+        class="sidebar-menu fx-guide-sidebar-menu"
         @openChange="onOpenChange"
         @click="onMenuClick"
       >
         <template v-for="item in currentMenus" :key="item.key">
-          <!-- 目录（有子菜单） -->
+          <!-- 鐩綍锛堟湁瀛愯彍鍗曪級 -->
           <a-sub-menu v-if="item.children && item.children.length > 0" :key="item.key">
             <template #icon>
               <component v-if="item.icon" :is="getIcon(item.icon)" />
@@ -68,7 +70,7 @@
             </a-menu-item>
           </a-sub-menu>
 
-          <!-- 菜单（无子菜单） -->
+          <!-- 鑿滃崟锛堟棤瀛愯彍鍗曪級 -->
           <a-menu-item v-else :key="item.key">
             <template #icon>
               <component v-if="item.icon" :is="getIcon(item.icon)" />
@@ -98,7 +100,7 @@ interface MenuItem {
   path: string
   moduleCode: string
   parentKey?: string
-  menuLevel?: number  // 菜单层级：1=一级菜单, 2=二级菜单, 3=三级菜单
+  menuLevel?: number  // 鑿滃崟灞傜骇锛?=涓€绾ц彍鍗? 2=浜岀骇鑿滃崟, 3=涓夌骇鑿滃崟
   children?: MenuItem[]
   type: 'catalog' | 'menu' | 'button'
 }
@@ -111,17 +113,17 @@ interface Module {
 }
 
 interface AppSidebarProps {
-  /** 菜单项数组，包含所有菜单的层级结构数据 */
+  /** 鑿滃崟椤规暟缁勶紝鍖呭惈鎵€鏈夎彍鍗曠殑灞傜骇缁撴瀯鏁版嵁 */
   menus: MenuItem[]
-  /** 模块列表，用于双列布局模式显示模块导航 */
+  /** 妯″潡鍒楄〃锛岀敤浜庡弻鍒楀竷灞€妯″紡鏄剧ず妯″潡瀵艰埅 */
   modules?: Module[]
-  /** 当前激活的菜单 key，用于高亮显示选中的菜单项 */
+  /** 褰撳墠婵€娲荤殑鑿滃崟 key锛岀敤浜庨珮浜樉绀洪€変腑鐨勮彍鍗曢」 */
   activeKey?: string
-  /** 当前激活的模块 code，用于双列布局模式 */
+  /** 褰撳墠婵€娲荤殑妯″潡 code锛岀敤浜庡弻鍒楀竷灞€妯″紡 */
   activeModuleCode?: string
-  /** 侧边栏是否折叠，true 表示折叠状态 */
+  /** 渚ц竟鏍忔槸鍚︽姌鍙狅紝true 琛ㄧず鎶樺彔鐘舵€?*/
   collapsed?: boolean
-  /** 是否启用双列布局，true 表示显示两列侧边栏 */
+  /** 鏄惁鍚敤鍙屽垪甯冨眬锛宼rue 琛ㄧず鏄剧ず涓ゅ垪渚ц竟鏍?*/
   doubleColumn?: boolean
 }
 
@@ -136,40 +138,40 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 
 const emit = defineEmits<{
   /**
-   * 菜单点击事件
-   * 触发时机：用户点击菜单项时触发
-   * @param menuKey 被点击的菜单 key
+   * 鑿滃崟鐐瑰嚮浜嬩欢
+   * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑昏彍鍗曢」鏃惰Е鍙?
+   * @param menuKey 琚偣鍑荤殑鑿滃崟 key
    */
   'menu-click': [menuKey: string]
   /**
-   * 模块点击事件
-   * 触发时机：用户点击模块导航时触发
-   * @param moduleCode 被点击的模块 code
+   * 妯″潡鐐瑰嚮浜嬩欢
+   * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑绘ā鍧楀鑸椂瑙﹀彂
+   * @param moduleCode 琚偣鍑荤殑妯″潡 code
    */
   'module-click': [moduleCode: string]
   /**
-   * 侧边栏折叠状态变化事件
-   * 触发时机：用户点击折叠按钮时触发
-   * @param collapsed 新的折叠状态
+   * 渚ц竟鏍忔姌鍙犵姸鎬佸彉鍖栦簨浠?
+   * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑绘姌鍙犳寜閽椂瑙﹀彂
+   * @param collapsed 鏂扮殑鎶樺彔鐘舵€?
    */
   'collapse-change': [collapsed: boolean]
 }>()
 
-// 选中的菜单keys
+// 閫変腑鐨勮彍鍗昸eys
 const selectedKeys = ref<string[]>([])
-// 选中的一级菜单keys（用于双列布局）
+// 閫変腑鐨勪竴绾ц彍鍗昸eys锛堢敤浜庡弻鍒楀竷灞€锛?
 const selectedFirstLevelKeys = ref<string[]>([])
-// 展开的菜单keys
+// 灞曞紑鐨勮彍鍗昸eys
 const openKeys = ref<string[]>([])
 
-// 一级菜单列表（用于双列布局的第一列）
+// 涓€绾ц彍鍗曞垪琛紙鐢ㄤ簬鍙屽垪甯冨眬鐨勭涓€鍒楋級
 const firstLevelMenus = computed(() => {
   if (!props.doubleColumn) {
     return []
   }
   
-  // 返回所有一级菜单（menuLevel === 1），包含children
-  // 如果没有menuLevel属性，也视为一级菜单
+  // 杩斿洖鎵€鏈変竴绾ц彍鍗曪紙menuLevel === 1锛夛紝鍖呭惈children
+  // 濡傛灉娌℃湁menuLevel灞炴€э紝涔熻涓轰竴绾ц彍鍗?
   const menus = props.menus.filter(menu => 
     menu.menuLevel === 1 || 
     (menu.parentKey === undefined && !menu.children) || 
@@ -178,14 +180,14 @@ const firstLevelMenus = computed(() => {
   return menus
 })
 
-// 是否有二三级菜单（用于判断是否显示第二列）
+// 鏄惁鏈変簩涓夌骇鑿滃崟锛堢敤浜庡垽鏂槸鍚︽樉绀虹浜屽垪锛?
 const hasSecondLevelMenus = computed(() => {
   if (!props.doubleColumn) {
     return false
   }
   
-  // 只有点击了目录类型菜单且该菜单有children时，才显示第二列
-  // 获取当前选中的一级菜单
+  // 鍙湁鐐瑰嚮浜嗙洰褰曠被鍨嬭彍鍗曚笖璇ヨ彍鍗曟湁children鏃讹紝鎵嶆樉绀虹浜屽垪
+  // 鑾峰彇褰撳墠閫変腑鐨勪竴绾ц彍鍗?
   const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
     menu.key === selectedFirstLevelKeys.value[0]
   )
@@ -194,7 +196,7 @@ const hasSecondLevelMenus = computed(() => {
     return false
   }
   
-  // 如果选中的是目录类型菜单且有children，显示第二列
+  // 濡傛灉閫変腑鐨勬槸鐩綍绫诲瀷鑿滃崟涓旀湁children锛屾樉绀虹浜屽垪
   const showSecondLevel = selectedFirstLevelMenu.type === 'catalog' && 
                          selectedFirstLevelMenu.children && 
                          selectedFirstLevelMenu.children.length > 0
@@ -202,26 +204,26 @@ const hasSecondLevelMenus = computed(() => {
   return showSecondLevel
 })
 
-// 当前显示的菜单列表（第二列）
+// 褰撳墠鏄剧ず鐨勮彍鍗曞垪琛紙绗簩鍒楋級
 const currentMenus = computed(() => {
   if (!props.doubleColumn) {
-    // 单列模式：显示所有菜单
+    // 鍗曞垪妯″紡锛氭樉绀烘墍鏈夎彍鍗?
     return props.menus
   }
   
-  // 双列模式：只显示当前模块的二三级菜单
+  // 鍙屽垪妯″紡锛氬彧鏄剧ず褰撳墠妯″潡鐨勪簩涓夌骇鑿滃崟
   if (!props.activeModuleCode) {
     return []
   }
   
-  // 获取当前选中的一级菜单
-  // 使用firstLevelMenus.value.find，因为firstLevelMenus包含完整的children结构
+  // 鑾峰彇褰撳墠閫変腑鐨勪竴绾ц彍鍗?
+  // 浣跨敤firstLevelMenus.value.find锛屽洜涓篺irstLevelMenus鍖呭惈瀹屾暣鐨刢hildren缁撴瀯
   const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
     menu.key === selectedFirstLevelKeys.value[0]
   )
   
   if (!selectedFirstLevelMenu) {
-    // 如果没有选中的一级菜单，显示所有menuLevel >= 2的菜单
+    // 濡傛灉娌℃湁閫変腑鐨勪竴绾ц彍鍗曪紝鏄剧ず鎵€鏈塵enuLevel >= 2鐨勮彍鍗?
     return props.menus.filter(menu => 
       menu.moduleCode === props.activeModuleCode && 
       menu.menuLevel && 
@@ -229,9 +231,9 @@ const currentMenus = computed(() => {
     )
   }
   
-  // 显示选中的一级菜单对应的二级菜单
-  // 如果选中的是目录类型菜单，显示其所有子菜单
-  // 如果选中的是非目录类型菜单，显示所有menuLevel >= 2的菜单
+  // 鏄剧ず閫変腑鐨勪竴绾ц彍鍗曞搴旂殑浜岀骇鑿滃崟
+  // 濡傛灉閫変腑鐨勬槸鐩綍绫诲瀷鑿滃崟锛屾樉绀哄叾鎵€鏈夊瓙鑿滃崟
+  // 濡傛灉閫変腑鐨勬槸闈炵洰褰曠被鍨嬭彍鍗曪紝鏄剧ず鎵€鏈塵enuLevel >= 2鐨勮彍鍗?
   if (selectedFirstLevelMenu.type === 'catalog') {
     return selectedFirstLevelMenu.children || []
   } else {
@@ -243,7 +245,38 @@ const currentMenus = computed(() => {
   }
 })
 
-// 监听 activeKey 变化
+watch(
+  () => [props.doubleColumn, props.activeModuleCode, props.menus],
+  () => {
+    if (!props.doubleColumn) {
+      selectedFirstLevelKeys.value = []
+      return
+    }
+
+    const firstMenus = firstLevelMenus.value
+    if (firstMenus.length === 0) {
+      selectedFirstLevelKeys.value = []
+      return
+    }
+
+    const currentKey = selectedFirstLevelKeys.value[0]
+    const exists = firstMenus.some(menu => menu.key === currentKey)
+    if (exists) {
+      return
+    }
+
+    const preferredCatalog = firstMenus.find(menu =>
+      menu.type === 'catalog' &&
+      Array.isArray(menu.children) &&
+      menu.children.length > 0,
+    )
+
+    selectedFirstLevelKeys.value = [preferredCatalog?.key || firstMenus[0].key]
+  },
+  { immediate: true, deep: true },
+)
+
+// 鐩戝惉 activeKey 鍙樺寲
 watch(
   () => [props.activeKey, props.menus],
   ([newKey]) => {
@@ -255,7 +288,7 @@ watch(
     }
     selectedKeys.value = [normalizedKey]
       
-      // 自动展开父菜单
+      // 鑷姩灞曞紑鐖惰彍鍗?
       const menuPath = findMenuPath(props.menus, normalizedKey)
       if (!menuPath || menuPath.length === 0) {
         openKeys.value = []
@@ -275,7 +308,7 @@ watch(
   { immediate: true }
 )
 
-// 查找菜单项
+// 鏌ユ壘鑿滃崟椤?
 function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
   for (const menu of menus) {
     if (menu.key === key) {
@@ -308,44 +341,38 @@ function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = [
 }
 
 /**
- * 截断文本并添加省略号
- * @param text 原始文本
- * @param maxLength 最大长度
- * @returns 截断后的文本
+ * 鎴柇鏂囨湰骞舵坊鍔犵渷鐣ュ彿
+ * @param text 鍘熷鏂囨湰
+ * @param maxLength 鏈€澶ч暱搴?
+ * @returns 鎴柇鍚庣殑鏂囨湰
  */
-function truncateText(text: string, maxLength: number): string {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
-}
-
-// 查找一级菜单项
+// 鏌ユ壘涓€绾ц彍鍗曢」
 function findFirstLevelMenu(key: string): MenuItem | null {
-  // 直接从props.menus中查找一级菜单
+  // 鐩存帴浠巔rops.menus涓煡鎵句竴绾ц彍鍗?
   return props.menus.find(menu => 
     menu.key === key && 
     menu.menuLevel === 1
   ) || null
 }
 
-// 一级菜单点击（双列布局）
+// 涓€绾ц彍鍗曠偣鍑伙紙鍙屽垪甯冨眬锛?
 const onFirstLevelMenuClick = (info: any) => {
   const key = info.key as string
   if (key) {
     selectedFirstLevelKeys.value = [key]
     
-    // 查找当前点击的一级菜单
+    // 鏌ユ壘褰撳墠鐐瑰嚮鐨勪竴绾ц彍鍗?
     const clickedMenu = findFirstLevelMenu(key)
     
-    // 只有非目录类型的菜单才触发路由跳转
-    // 目录类型菜单只需要更新selectedFirstLevelKeys，让currentMenus自动更新显示对应的二级菜单
+    // 鍙湁闈炵洰褰曠被鍨嬬殑鑿滃崟鎵嶈Е鍙戣矾鐢辫烦杞?
+    // 鐩綍绫诲瀷鑿滃崟鍙渶瑕佹洿鏂皊electedFirstLevelKeys锛岃currentMenus鑷姩鏇存柊鏄剧ず瀵瑰簲鐨勪簩绾ц彍鍗?
     if (clickedMenu && clickedMenu.type !== 'catalog') {
       emit('menu-click', key)
     }
   }
 }
 
-// 模块点击
+// 妯″潡鐐瑰嚮
 const onModuleClick = (info: any) => {
   const key = info.key as string
   if (key) {
@@ -353,7 +380,7 @@ const onModuleClick = (info: any) => {
   }
 }
 
-// 菜单点击
+// 鑿滃崟鐐瑰嚮
 const onMenuClick = (info: any) => {
   const key = info.key as string
   if (key) {
@@ -361,12 +388,12 @@ const onMenuClick = (info: any) => {
   }
 }
 
-// 菜单展开/收起
+// 鑿滃崟灞曞紑/鏀惰捣
 const onOpenChange = (keys: string[]) => {
   openKeys.value = keys
 }
 
-// 侧边栏折叠/展开
+// 渚ц竟鏍忔姌鍙?灞曞紑
 const onCollapse = (collapsed: boolean) => {
   emit('collapse-change', collapsed)
 }
@@ -381,8 +408,8 @@ const onCollapse = (collapsed: boolean) => {
 }
 
 .app-sidebar-mini {
-  background: var(--fx-sider-mini-bg, #001529);
-  border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  background: var(--fx-sider-mini-bg, #161720);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   min-height: 0;
   overflow: hidden;
   
@@ -390,6 +417,7 @@ const onCollapse = (collapsed: boolean) => {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    padding: 10px 0 14px;
   }
 }
 
@@ -412,63 +440,116 @@ const onCollapse = (collapsed: boolean) => {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.16);
     border-radius: 3px;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.24);
     }
   }
   
   :deep(.ant-menu-item) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: flex !important;
+    align-items: stretch;
     justify-content: center;
-    height: 68px;
-    padding: 10px 8px;
-    margin: 4px 0;
-    color: var(--fx-text-color, rgba(255, 255, 255, 0.75)) !important;
+    min-height: 76px;
+    height: auto;
+    padding: 0 !important;
+    padding-inline: 0 !important;
+    padding-inline-start: 0 !important;
+    padding-inline-end: 0 !important;
+    margin: 2px 10px 4px;
+    color: var(--fx-sidebar-mini-text-color, rgba(224, 227, 237, 0.58)) !important;
     line-height: 1.2;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease, background-color 0.2s ease;
     background: transparent !important;
+    border-radius: 14px;
+    inset-inline-start: 0 !important;
     
     &::after {
       display: none !important;
     }
     
     &:hover {
-      color: var(--fx-theme-color, #1677ff) !important;
-      background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
-      transform: scale(1.02);
+      color: var(--fx-sidebar-mini-text-hover-color, rgba(244, 246, 255, 0.9)) !important;
+      background: var(--fx-sidebar-mini-item-hover-bg, rgba(255, 255, 255, 0.03)) !important;
     }
     
     &.ant-menu-item-selected {
-      color: var(--fx-theme-color, #1677ff) !important;
-      background: var(--fx-tab-bg, rgba(255, 255, 255, 0.12)) !important;
-    }
-    
-    .ant-menu-item-icon {
-      font-size: 22px;
-      margin: 0 0 6px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s ease;
-      color: inherit !important;
+      color: var(--fx-theme-color, var(--fx-primary, #1677ff)) !important;
+      background: transparent !important;
     }
     
     .ant-menu-title-content {
-      margin: 0;
+      margin: 0 !important;
       width: 100%;
-      text-align: center;
+      height: 100%;
+      flex: 1 1 auto;
+      max-width: 100%;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      text-align: center !important;
       color: inherit !important;
-    }
-    
-    &:hover .ant-menu-item-icon {
-      transform: scale(1.1);
+      white-space: normal !important;
+      overflow: visible !important;
     }
   }
+}
+
+.mini-menu-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  min-height: 76px;
+  padding: 8px 10px 10px;
+  margin: 0 auto;
+  text-align: center;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.mini-menu-icon-shell {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: inherit;
+  background: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mini-menu-icon {
+  font-size: 19px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  color: inherit !important;
+  flex-shrink: 0;
+}
+
+.mini-menu :deep(.ant-menu-item:hover) .mini-menu-icon-shell {
+  background: var(--fx-sidebar-mini-icon-hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.mini-menu :deep(.ant-menu-item-selected) .mini-menu-icon-shell {
+  background: rgba(22, 119, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.3);
+  background: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 46%, transparent);
+}
+
+.mini-menu :deep(.ant-menu-item-selected) .mini-menu-icon {
+  color: var(--fx-theme-color, var(--fx-primary, #1677ff)) !important;
 }
 
 .app-sidebar {
@@ -496,7 +577,7 @@ const onCollapse = (collapsed: boolean) => {
   overflow-x: hidden;
   max-height: 100vh;
   
-  // 滚动条样式
+  // 婊氬姩鏉℃牱寮?
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -519,7 +600,7 @@ const onCollapse = (collapsed: boolean) => {
     height: 40px;
     line-height: 40px;
     margin: 0;
-    color: var(--fx-text-color, rgba(255, 255, 255, 0.65)) !important;
+    color: var(--fx-sidebar-menu-text-color, var(--fx-text-color, rgba(255, 255, 255, 0.65))) !important;
     font-size: var(--fx-font-size, 14px);
     background: transparent !important;
     min-width: 0;
@@ -532,7 +613,7 @@ const onCollapse = (collapsed: boolean) => {
     
     &:hover {
       color: var(--fx-theme-color, #1677ff) !important;
-      background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
+      background: var(--fx-sidebar-menu-hover-bg, var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08))) !important;
     }
     
     .ant-menu-item-icon,
@@ -557,7 +638,7 @@ const onCollapse = (collapsed: boolean) => {
   
   :deep(.ant-menu-item-selected) {
     color: var(--fx-theme-color, #1677ff) !important;
-    background: var(--fx-tab-bg, rgba(255, 255, 255, 0.12)) !important;
+    background: var(--fx-sidebar-menu-active-bg, var(--fx-tab-bg, rgba(255, 255, 255, 0.12))) !important;
     
     &::after {
       border-right: 3px solid var(--fx-theme-color, #1677ff) !important;
@@ -575,7 +656,7 @@ const onCollapse = (collapsed: boolean) => {
   }
   
   :deep(.ant-menu-sub) {
-    background: rgba(0, 0, 0, 0.2) !important;
+    background: var(--fx-sidebar-menu-sub-bg, rgba(0, 0, 0, 0.2)) !important;
     
     .ant-menu-item {
       background: transparent !important;
@@ -583,7 +664,7 @@ const onCollapse = (collapsed: boolean) => {
       align-items: center;
       
       &:hover {
-        background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
+        background: var(--fx-sidebar-menu-hover-bg, var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08))) !important;
       }
       
       .ant-menu-item-icon {
@@ -597,12 +678,12 @@ const onCollapse = (collapsed: boolean) => {
     }
   }
   
-  // 确保子菜单也能滚动
+  // 纭繚瀛愯彍鍗曚篃鑳芥粴鍔?
   :deep(.ant-menu-submenu-popover) {
     max-height: 80vh;
     overflow-y: auto;
     
-    // 子菜单滚动条样式
+    // 瀛愯彍鍗曟粴鍔ㄦ潯鏍峰紡
     &::-webkit-scrollbar {
       width: 6px;
     }
@@ -622,32 +703,80 @@ const onCollapse = (collapsed: boolean) => {
   }
 }
 
-// 菜单文字样式
+// 鑿滃崟鏂囧瓧鏍峰紡
 .menu-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   max-width: 100%;
+  line-height: 1.35;
   vertical-align: middle;
-  display: inline-block;
-}
-
-// 一级菜单标题样式（支持多行显示）
-.mini-menu-title {
-  font-size: 13px;
-  margin-top: 4px;
-  text-align: center;
-  line-height: 1.3;
-  width: 100%;
-  // 显示最多2行，超出显示省略号
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   overflow: hidden;
+  white-space: normal;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   word-break: break-all;
 }
 
-// 响应式适配
+// 涓€绾ц彍鍗曟爣棰樻牱寮忥紙鏀寔澶氳鏄剧ず锛?
+.mini-menu-title {
+  font-size: 12px;
+  margin-top: 0;
+  text-align: center;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  width: 100%;
+  // 鏄剧ず鏈€澶?琛岋紝瓒呭嚭鏄剧ず鐪佺暐鍙?
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  max-height: calc(1.35em * 2);
+  max-width: 100%;
+  color: inherit;
+}
+
+.mini-menu :deep(.ant-menu-item-selected) .mini-menu-title {
+  color: var(--fx-theme-color, var(--fx-primary, #1677ff));
+}
+
+:global(html[data-theme='light']) .app-sidebar-mini,
+:global(body[data-theme='light']) .app-sidebar-mini {
+  border-right-color: var(--fx-border-color, #e5e7eb);
+}
+
+:global(html[data-theme='light']) .mini-menu,
+:global(body[data-theme='light']) .mini-menu {
+  --fx-sidebar-mini-text-color: var(--fx-text-color, #4b5563);
+  --fx-sidebar-mini-text-hover-color: var(--fx-theme-color, var(--fx-primary, #1677ff));
+  --fx-sidebar-mini-item-hover-bg: var(--fx-fill-secondary, #f9fafb);
+  --fx-sidebar-mini-icon-hover-bg: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 10%, transparent);
+}
+
+:global(html[data-theme='light']) .app-sidebar,
+:global(body[data-theme='light']) .app-sidebar {
+  background: var(--fx-sider-bg, #ffffff);
+  border-right-color: var(--fx-border-color, #e5e7eb);
+}
+
+:global(html[data-theme='light']) .app-sidebar :deep(.ant-layout-sider-trigger),
+:global(body[data-theme='light']) .app-sidebar :deep(.ant-layout-sider-trigger) {
+  background: var(--fx-fill-secondary, #f9fafb);
+  color: var(--fx-text-color, #4b5563);
+}
+
+:global(html[data-theme='light']) .sidebar-menu,
+:global(body[data-theme='light']) .sidebar-menu {
+  --fx-sidebar-menu-text-color: var(--fx-text-color, #4b5563);
+  --fx-sidebar-menu-hover-bg: var(--fx-fill-secondary, #f9fafb);
+  --fx-sidebar-menu-active-bg: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 10%, #ffffff);
+  --fx-sidebar-menu-sub-bg: var(--fx-fill-secondary, #f8fafc);
+}
+
+// 鍝嶅簲寮忛€傞厤
 @media (max-width: 768px) {
   .app-sidebar-mini {
     display: none;

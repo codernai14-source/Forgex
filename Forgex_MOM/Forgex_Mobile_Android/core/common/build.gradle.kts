@@ -22,5 +22,6 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.appcompat)
     implementation(libs.kotlinx.coroutines.android)
 }

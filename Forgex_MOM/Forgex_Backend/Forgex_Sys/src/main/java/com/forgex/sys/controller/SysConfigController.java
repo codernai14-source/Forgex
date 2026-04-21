@@ -22,6 +22,7 @@ import com.forgex.common.domain.config.EmailConfig;
 import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.config.CaptchaConfig;
 import com.forgex.sys.domain.config.CryptoConfig;
@@ -126,6 +127,7 @@ public class SysConfigController {
      *         - message: 提示信息（保存成功）
      * @see CaptchaConfig
      */
+    @RequirePerm("sys:config:edit")
     @PutMapping("/login-captcha")
     public R<Boolean> setLoginCaptcha(@RequestBody Map<String, Object> body) {
         // 1. 调用 ConfigService 保存配置
@@ -185,6 +187,7 @@ public class SysConfigController {
      *         - message: 提示信息（保存成功）
      * @see SystemBasicConfig
      */
+    @RequirePerm("sys:config:edit")
     @PutMapping("/system-basic")
     public R<Boolean> setSystemBasicConfig(@RequestBody SystemBasicConfig config) {
         // 1. 调用 ConfigService 保存全局配置
@@ -220,6 +223,7 @@ public class SysConfigController {
      * @see PasswordPolicyConfig
      * @see CryptoTransportConfig
      */
+    @RequirePerm("sys:config:view")
     @GetMapping("/security")
     public R<SecurityConfig> getSecurityConfig() {
         // 1. 获取默认安全配置
@@ -266,6 +270,7 @@ public class SysConfigController {
      *         - message: 提示信息（保存成功）
      * @see SecurityConfig
      */
+    @RequirePerm("sys:config:edit")
     @PutMapping("/security")
     public R<Boolean> setSecurityConfig(@RequestBody SecurityConfig body) {
         // 1. 使用默认值填充空配置
@@ -310,18 +315,21 @@ public class SysConfigController {
      *         - message: 提示信息
      * @see FileUploadConfig
      */
+    @RequirePerm("sys:config:view")
     @GetMapping("/email")
     public R<EmailConfig> getEmailConfig() {
         EmailConfig config = configService.getGlobalJson(KEY_MAIL_SETTINGS, EmailConfig.class, EmailConfig.defaults());
         return R.ok(config == null ? EmailConfig.defaults() : config);
     }
 
+    @RequirePerm("sys:config:edit")
     @PutMapping("/email")
     public R<Boolean> setEmailConfig(@RequestBody EmailConfig config) {
         configService.setGlobalJson(KEY_MAIL_SETTINGS, config == null ? EmailConfig.defaults() : config);
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
 
+    @RequirePerm("sys:config:view")
     @GetMapping("/file-upload")
     public R<FileUploadConfig> getFileUploadConfig() {
         // 1. 调用 ConfigService 获取全局文件上传配置，使用默认配置作为兜底
@@ -355,10 +363,15 @@ public class SysConfigController {
      *         - message: 提示信息（保存成功）
      * @see FileUploadConfig
      */
+    @RequirePerm("sys:config:edit")
     @PutMapping("/file-upload")
     public R<Boolean> setFileUploadConfig(@RequestBody FileUploadConfig config) {
         // 1. 使用默认配置填充空值
-        configService.setGlobalJson(KEY_FILE_UPLOAD, config == null ? FileUploadConfig.defaults() : config);
+        FileUploadConfig normalized = normalizeFileUploadConfig(config);
+        if ("LOCAL".equalsIgnoreCase(normalized.getStorageType()) && !org.springframework.util.StringUtils.hasText(normalized.getPublicBaseUrl())) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "LOCAL storage requires publicBaseUrl");
+        }
+        configService.setGlobalJson(KEY_FILE_UPLOAD, normalized);
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
@@ -374,6 +387,39 @@ public class SysConfigController {
      *
      * @return {@link R} 包含加密配置的统一返回结构
      */
+    private FileUploadConfig normalizeFileUploadConfig(FileUploadConfig source) {
+        FileUploadConfig defaults = FileUploadConfig.defaults();
+        FileUploadConfig config = source == null ? defaults : source;
+        if (!org.springframework.util.StringUtils.hasText(config.getStorageType())) {
+            config.setStorageType(defaults.getStorageType());
+        } else {
+            config.setStorageType(config.getStorageType().trim().toUpperCase());
+        }
+        if (!org.springframework.util.StringUtils.hasText(config.getLocalUploadPath())) {
+            config.setLocalUploadPath(defaults.getLocalUploadPath());
+        } else {
+            config.setLocalUploadPath(config.getLocalUploadPath().trim());
+        }
+        if (!org.springframework.util.StringUtils.hasText(config.getAccessPrefix())) {
+            config.setAccessPrefix(defaults.getAccessPrefix());
+        } else {
+            String prefix = config.getAccessPrefix().trim();
+            config.setAccessPrefix(prefix.startsWith("/") ? prefix : "/" + prefix);
+        }
+        if (config.getPublicBaseUrl() != null) {
+            String publicBaseUrl = config.getPublicBaseUrl().trim();
+            while (publicBaseUrl.endsWith("/")) {
+                publicBaseUrl = publicBaseUrl.substring(0, publicBaseUrl.length() - 1);
+            }
+            config.setPublicBaseUrl(publicBaseUrl);
+        }
+        if (config.getProviderConfigJson() == null) {
+            config.setProviderConfigJson("");
+        }
+        return config;
+    }
+
+    @RequirePerm("sys:config:view")
     @GetMapping("/crypto")
     public R<CryptoConfig> getCryptoConfig() {
         CryptoConfig config = new CryptoConfig();
@@ -402,6 +448,7 @@ public class SysConfigController {
      * @param config 加密配置聚合对象
      * @return {@link R} 操作结果
      */
+    @RequirePerm("sys:config:edit")
     @PutMapping("/crypto")
     public R<Boolean> setCryptoConfig(@RequestBody CryptoConfig config) {
         if (config.getSm4() != null) configService.setJson(KEY_CRYPTO_SM4, config.getSm4());
@@ -420,6 +467,7 @@ public class SysConfigController {
      * 需要权限：sys:config:edit
      * </p>
      */
+    @RequirePerm("sys:config:edit")
     @PostMapping("/crypto/generate/sm4")
     public R<Map<String, String>> generateSm4Key() {
         byte[] key = new byte[16];
@@ -435,6 +483,7 @@ public class SysConfigController {
      * 需要权限：sys:config:edit
      * </p>
      */
+    @RequirePerm("sys:config:edit")
     @PostMapping("/crypto/generate/aes")
     public R<Map<String, String>> generateAesKey() {
         byte[] key = new byte[32];
@@ -452,6 +501,7 @@ public class SysConfigController {
      *
      * @param keySize 密钥长度（2048 或 4096，默认 2048）
      */
+    @RequirePerm("sys:config:edit")
     @PostMapping("/crypto/generate/rsa")
     public R<Map<String, String>> generateRsaKeyPair(@RequestParam(defaultValue = "2048") int keySize) {
         String[] keys = RSAPasswordProvider.generateKeyPair(keySize);
@@ -465,6 +515,7 @@ public class SysConfigController {
      * 需要权限：sys:config:edit
      * </p>
      */
+    @RequirePerm("sys:config:edit")
     @PostMapping("/crypto/generate/kms-master")
     public R<Map<String, String>> generateKmsMasterKey() {
         byte[] key = new byte[32];
@@ -480,6 +531,7 @@ public class SysConfigController {
      * 需要权限：sys:config:query
      * </p>
      */
+    @RequirePerm("sys:config:view")
     @GetMapping("/crypto/tde-status")
     public R<TdeConfigChecker.TdeStatus> getTdeStatus() {
         TdeConfigChecker.TdeStatus status = TdeConfigChecker.check(dataSource);

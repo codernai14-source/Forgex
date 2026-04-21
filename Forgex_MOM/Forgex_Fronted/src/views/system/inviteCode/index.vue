@@ -23,6 +23,7 @@
           :table-code="'InviteCodeTable'"
           :request="handleRequest"
           :dynamic-table-config="dynamicTableConfig"
+          :dict-options="dictOptions"
           row-key="id"
         >
           <template #toolbar>
@@ -53,13 +54,14 @@
                 ok-text="确定"
                 cancel-text="取消"
                 @confirm="handleDisable(record.id)"
-                v-if="record.status === true"
+                :disabled="record.status !== true"
               >
                 <a-button
                   type="link"
                   size="small"
                   danger
                   v-permission="'sys:invite-code:edit'"
+                  :disabled="record.status !== true"
                 >
                   停用
                 </a-button>
@@ -222,6 +224,12 @@ const treeData = ref<any[]>([])
 const positionList = ref<any[]>([])
 const tableRef = ref()
 const loading = ref(false)
+const dictOptions = {
+  status: [
+    { label: '生效中', value: true },
+    { label: '已停用', value: false },
+  ],
+}
 
 const dynamicTableConfig: Partial<FxTableConfig> = {
   columns: [

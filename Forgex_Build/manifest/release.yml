@@ -1,0 +1,13 @@
+version: 1
+product:
+  name: Forgex
+  vendor: Forgex Team
+  outputDir: dist
+  stagingDir: staging
+  windowsArtifact: Forgex-Setup-{VERSION}.exe
+  linuxArtifact: forgex-linux-bundle-{VERSION}.tar.gz
+defaults:
+  version: 1.0.0
+  instanceCodeExample: ACME_PROD
+  windowsInstallRoot: D:\Forgex_{INSTANCE_CODE}
+  linuxInstallRoot: /opt/Forgex_{INSTANCE_CODE}

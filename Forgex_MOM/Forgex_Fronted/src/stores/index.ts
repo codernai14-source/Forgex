@@ -11,4 +11,5 @@
 export { useUserStore } from './user'
 export { use权限Store } from './permission'
 export { useAppStore } from './app'
+export { useGuideStore } from './guide'
 export { useSseStore } from './sse'

@@ -72,22 +72,20 @@
               <input type="checkbox" v-model="remember" />
               <span>{{ i18nT('common.login.rememberMe') }}</span>
             </label>
-            <div v-if="languages.length > 0" class="lang-switch-compact">
-              <img :src="LANG_SWITCH_ICON_SRC" alt="language" class="lang-switch-compact__icon" />
-              <a-select
-                v-model:value="selectedLang"
-                size="small"
-                class="lang-select-compact"
-                :dropdownMatchSelectWidth="false"
-                @change="onLangChange"
-              >
-                <a-select-option v-for="l in languages" :key="l.id" :value="l.langCode">
-                  <span class="lang-option">
-                    <span class="lang-label">{{ getLanguageLabel(l) }}</span>
-                  </span>
-                </a-select-option>
-              </a-select>
-            </div>
+            <a-dropdown v-if="languages.length > 0" placement="bottom" trigger="click" overlay-class-name="login-lang-dropdown">
+              <button type="button" class="lang-switch-compact__trigger" :title="currentLanguageLabel">
+                <img :src="LANG_SWITCH_ICON_SRC" alt="language" class="lang-switch-compact__icon" />
+              </button>
+              <template #overlay>
+                <a-menu :selected-keys="[selectedLang]" @click="onLanguageMenuClick">
+                  <a-menu-item v-for="l in languages" :key="l.langCode">
+                    <span class="lang-menu-item" :class="{ active: selectedLang === l.langCode }">
+                      {{ getLanguageLabel(l) }}
+                    </span>
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
             <a class="forgot" href="#">{{ i18nT('common.login.forgotPassword') }}</a>
           </div>
           <button
@@ -256,6 +254,7 @@ import { use权限Store } from '@/stores/permission'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
+import { normalizeMediaUrl } from '@/utils/media'
 
 /**
  * 后端返回的滑块验证码数据结构。
@@ -346,6 +345,10 @@ const systemConfig = ref<SystemBasicConfig>({
 
 const showRegisterEntry = computed(() => systemConfig.value.showRegisterEntry !== false)
 
+const currentLanguageLabel = computed(() => {
+  return getLanguageDisplayName(languages.value.find(l => l.langCode === selectedLang.value))
+})
+
 const sliderTemplateWidth = computed(() => {
   return sliderChallenge.value?.templateImageWidth && sliderChallenge.value.templateImageWidth > 0
     ? sliderChallenge.value.templateImageWidth
@@ -388,18 +391,7 @@ const sliderPreviewHeight = computed(() => {
 })
 
 function resolveMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api/') ? url : url
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 function resolveTenantLogo(url?: string): string {
@@ -411,49 +403,15 @@ function resolveLangIcon(icon?: string): string {
 }
 
 function formatMediaUrl(value: string): string {
-  const url = String(value || '')
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  // 统一处理上传后的文件路径，确保登录页媒体资源可以直接预览。
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(value)
 }
 
 function formatTenantLogo(url?: string) {
-  if (!url) return ''
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  // 统一处理上传后的文件路径，确保租户 Logo 能正确显示。
-  if (url.startsWith('/files/')) {
-    return `/api${url}`
-  }
-  if (url.startsWith('/')) {
-    return url.startsWith('/api') ? url : `/api${url}`
-  }
-  return `/api/${url}`
+  return normalizeMediaUrl(url)
 }
 
 function formatLangIcon(icon?: string) {
-  if (!icon) return ''
-  if (icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')) {
-    return icon
-  }
-  // 统一处理上传后的文件路径，确保语言图标在不同环境下都能正确解析。
-  if (icon.startsWith('/files/')) {
-    return `/api${icon}`
-  }
-  if (icon.startsWith('/')) {
-    return icon.startsWith('/api') ? icon : `/api${icon}`
-  }
-  return `/api/${icon}`
+  return normalizeMediaUrl(icon)
 }
 
 function getLanguageLabel(language: LanguageType) {
@@ -522,6 +480,14 @@ function onLangChange(val: string) {
   if (!val) return
   selectedLang.value = val
   setLocale(val as any)
+}
+
+function onLanguageMenuClick(info: { key?: string }) {
+  const nextLang = String(info?.key || '')
+  if (!nextLang || nextLang === selectedLang.value) {
+    return
+  }
+  onLangChange(nextLang)
 }
 
 async function loadMode() {
@@ -999,6 +965,32 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
+.lang-switch-compact__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.3);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.lang-switch-compact__trigger:hover {
+  border-color: rgba(5, 217, 232, 0.6);
+  background: rgba(15, 23, 42, 0.4);
+  box-shadow: 0 0 8px rgba(5, 217, 232, 0.3);
+}
+
+.lang-switch-compact__trigger:focus-visible {
+  outline: none;
+  border-color: #05d9e8;
+  box-shadow: 0 0 8px rgba(5, 217, 232, 0.45);
+}
+
 .lang-switch-compact__icon {
   width: 20px;
   height: 20px;
@@ -1016,6 +1008,41 @@ onMounted(async () => {
 .lang-label {
   line-height: 18px;
   flex: 1;
+}
+
+.lang-menu-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 96px;
+  color: #111827;
+}
+
+.lang-menu-item.active {
+  color: #05d9e8;
+}
+
+.login-wrap :deep(.login-lang-dropdown .ant-dropdown-menu) {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.login-wrap :deep(.login-lang-dropdown .ant-dropdown-menu-item) {
+  color: #111827;
+  font-size: 13px;
+}
+
+.login-wrap :deep(.login-lang-dropdown .ant-dropdown-menu-item:hover),
+.login-wrap :deep(.login-lang-dropdown .ant-dropdown-menu-item-active) {
+  background: rgba(5, 217, 232, 0.12);
+}
+
+.login-wrap :deep(.login-lang-dropdown .ant-dropdown-menu-item-selected) {
+  background: rgba(5, 217, 232, 0.18);
+}
+
+.login-wrap :deep(.login-lang-dropdown .ant-dropdown-menu-item-selected .lang-menu-item) {
+  color: #0891b2;
 }
 .cyber-form {
   display: flex;
@@ -1089,64 +1116,6 @@ onMounted(async () => {
   accent-color: #05d9e8;
 }
 
-.lang-select-compact {
-  width: 124px !important;
-}
-
-.lang-select-compact :deep(.ant-select-selector) {
-  background: rgba(15, 23, 42, 0.3) !important;
-  border-color: rgba(75, 85, 99, 0.5) !important;
-  color: #e5e7eb !important;
-  backdrop-filter: blur(8px);
-  height: 28px !important;
-  padding: 0 8px !important;
-}
-
-.lang-select-compact :deep(.ant-select-selector:hover) {
-  border-color: rgba(5, 217, 232, 0.6) !important;
-  background: rgba(15, 23, 42, 0.4) !important;
-}
-
-.lang-select-compact :deep(.ant-select-focused .ant-select-selector) {
-  border-color: #05d9e8 !important;
-  box-shadow: 0 0 8px rgba(5, 217, 232, 0.45) !important;
-  background: rgba(15, 23, 42, 0.5) !important;
-}
-
-.lang-select-compact :deep(.ant-select-selection-item) {
-  color: #e5e7eb !important;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 26px !important;
-  font-size: 13px;
-}
-
-.lang-select-compact :deep(.ant-select-arrow) {
-  color: #9ca3af !important;
-}
-
-.lang-select-compact :deep(.ant-select-dropdown) {
-  background: rgba(15, 23, 42, 0.95) !important;
-  border: 1px solid rgba(5, 217, 232, 0.45) !important;
-  box-shadow: 0 0 16px rgba(5, 217, 232, 0.25) !important;
-  backdrop-filter: blur(12px);
-}
-
-.lang-select-compact :deep(.ant-select-item) {
-  color: #e5e7eb !important;
-  background: transparent !important;
-  font-size: 13px;
-}
-
-.lang-select-compact :deep(.ant-select-item:hover) {
-  background: rgba(5, 217, 232, 0.15) !important;
-}
-
-.lang-select-compact :deep(.ant-select-item-option-selected) {
-  background: rgba(5, 217, 232, 0.25) !important;
-  color: #05d9e8 !important;
-}
 
 .forgot {
   color: #05d9e8;
