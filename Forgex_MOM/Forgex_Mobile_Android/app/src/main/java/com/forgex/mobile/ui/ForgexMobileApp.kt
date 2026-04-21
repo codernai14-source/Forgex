@@ -33,6 +33,8 @@ import com.forgex.mobile.feature.auth.SERVER_SETTINGS_ROUTE
 import com.forgex.mobile.feature.auth.ServerSettingsScreen
 import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeScreen
+import com.forgex.mobile.feature.home.BASIC_INFO_TEST_ROUTE
+import com.forgex.mobile.feature.home.BasicInfoTestScreen
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_UNREAD_ROUTE
@@ -219,6 +221,9 @@ fun ForgexMobileApp() {
                             }
                         }
                     )
+                }
+                composable(BASIC_INFO_TEST_ROUTE) {
+                    BasicInfoTestScreen()
                 }
 
                 composable(WORKFLOW_ROUTE) {

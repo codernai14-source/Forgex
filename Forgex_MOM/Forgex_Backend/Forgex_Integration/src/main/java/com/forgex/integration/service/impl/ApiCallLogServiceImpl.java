@@ -34,17 +34,26 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
     private final ApiCallLogMapper apiCallLogMapper;
 
     @Override
-    @Async
+    @Async("integrationLogExecutor")
     public boolean asyncSaveLog(ApiCallLog logEntity) {
         try {
             LocalDateTime callTime = logEntity.getCallTime() != null ? logEntity.getCallTime() : LocalDateTime.now();
             String tableName = getMonthTableName(callTime);
             int result = apiCallLogMapper.insertToTable(tableName, logEntity);
-            log.debug("Saved api call log into table {}, id={}", tableName, logEntity.getId());
             return result > 0;
         } catch (Exception e) {
             log.error("Failed to save api call log asynchronously", e);
             return false;
+        }
+    }
+
+    @Override
+    public void batchSaveLogs(List<ApiCallLog> logs) {
+        if (logs == null || logs.isEmpty()) {
+            return;
+        }
+        for (ApiCallLog logEntity : logs) {
+            asyncSaveLog(logEntity);
         }
     }
 

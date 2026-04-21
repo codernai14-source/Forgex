@@ -210,6 +210,8 @@ export function generateCSSVariables(
     '--fx-primary-hover': adjustColor(primaryColor, 0.15),
     '--fx-primary-active': adjustColor(primaryColor, -0.1),
     '--fx-primary-bg': adjustColor(primaryColor, -0.85),
+    '--fx-primary-soft': themeColorSoft,
+    '--fx-primary-soft-strong': themeColorSoftStrong,
 
     // ==================== 鍔熻兘鑹?====================
     '--fx-success': tokens.colorSuccess,

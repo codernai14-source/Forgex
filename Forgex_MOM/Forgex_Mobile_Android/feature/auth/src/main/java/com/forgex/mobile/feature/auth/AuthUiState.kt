@@ -17,9 +17,9 @@ enum class AuthLoginStage {
 
 enum class LoginMethod {
     ACCOUNT_PASSWORD,
-    WECHAT,
     DING_TALK,
-    FEI_SHU
+    WECHAT,
+    GITEE
 }
 
 data class AuthUiState(

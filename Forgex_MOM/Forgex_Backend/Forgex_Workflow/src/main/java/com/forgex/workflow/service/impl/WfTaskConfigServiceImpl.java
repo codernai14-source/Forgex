@@ -88,6 +88,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
 
+    private static final String DEFAULT_TASK_CATEGORY_CODE = "general";
+
     private static final List<String> VISIBLE_STAGES = Arrays.asList(
             WorkflowConstants.ConfigStage.DRAFT,
             WorkflowConstants.ConfigStage.PUBLISHED
@@ -428,6 +430,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         draft.setTaskName(trimToNull(param.getTaskName()));
         draft.setTaskNameI18nJson(trimToNull(param.getTaskNameI18nJson()));
         draft.setTaskCode(trimToNull(param.getTaskCode()));
+        draft.setCategoryCode(normalizeCategoryCode(param.getCategoryCode()));
         draft.setInterpreterBean(trimToNull(param.getInterpreterBean()));
         draft.setFormType(param.getFormType());
         draft.setFormPath(trimToNull(param.getFormPath()));
@@ -449,6 +452,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         dto.setDraftId(draft == null ? null : draft.getId());
         dto.setTaskName(display.getTaskName());
         dto.setTaskCode(display.getTaskCode());
+        dto.setCategoryCode(normalizeCategoryCode(display.getCategoryCode()));
         dto.setInterpreterBean(display.getInterpreterBean());
         dto.setFormType(display.getFormType());
         dto.setFormPath(display.getFormPath());
@@ -488,6 +492,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         dto.setDraftId(draft.getId());
         dto.setPublishedId(published == null ? null : published.getId());
         dto.setTaskCode(draft.getTaskCode());
+        dto.setCategoryCode(normalizeCategoryCode(draft.getCategoryCode()));
         dto.setTaskName(draft.getTaskName());
         dto.setTaskNameI18nJson(draft.getTaskNameI18nJson());
         dto.setInterpreterBean(draft.getInterpreterBean());
@@ -903,14 +908,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                 if (successors.size() != 1) {
                     throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_APPROVE_NODE_NOT_SINGLE_SUCCESSOR);
                 }
-                if (node.getApproveType() == null) {
-                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_APPROVE_NODE_NOT_CONFIGURED_APPROVE_TYPE);
-                }
-                boolean hasApprover = node.getApprovers().stream()
-                        .anyMatch(item -> item.getApproverType() != null && !item.getApproverIds().isEmpty());
-                if (!hasApprover) {
-                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_APPROVE_NODE_NOT_CONFIGURED_APPROVER);
-                }
+                validateApproveNode(node);
                 continue;
             }
 
@@ -971,6 +969,47 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                 || Objects.equals(nodeType, WorkflowConstants.NodeType.END)
                 || Objects.equals(nodeType, WorkflowConstants.NodeType.APPROVE)
                 || Objects.equals(nodeType, WorkflowConstants.NodeType.BRANCH);
+    }
+    private void validateApproveNode(WfTaskNodeEditorDTO node) {
+        if (node.getApproveType() == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_APPROVE_NODE_NOT_CONFIGURED_APPROVE_TYPE);
+        }
+        if (!hasResolvableApproverConfig(node)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_APPROVE_NODE_NOT_CONFIGURED_APPROVER);
+        }
+    }
+    private boolean hasResolvableApproverConfig(WfTaskNodeEditorDTO node) {
+        if (node == null) {
+            return false;
+        }
+        if (hasResolvableApproverSource(node.getApprovers())) {
+            return true;
+        }
+        if (node.getRuleConfigs() == null || node.getRuleConfigs().isEmpty()) {
+            return false;
+        }
+        return node.getRuleConfigs().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(rule -> hasResolvableApproverSource(rule.getApprovers())
+                        || hasFallbackApproverIds(rule)
+                        || Objects.equals(rule.getRuleType(), WorkflowConstants.RuleType.INITIATOR_SELECTED)
+                        || Boolean.TRUE.equals(rule.getAllowInitiatorSelect())
+                        || Objects.equals(rule.getRuleType(), WorkflowConstants.RuleType.SUPERIOR)
+                        || (rule.getSuperiorLevel() != null && rule.getSuperiorLevel() > 0));
+    }
+    private boolean hasResolvableApproverSource(List<WfNodeApproverDTO> approvers) {
+        if (approvers == null || approvers.isEmpty()) {
+            return false;
+        }
+        return approvers.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(approver -> approver.getApproverType() != null
+                        && (Objects.equals(approver.getApproverType(), WorkflowConstants.ApproverType.INITIATOR_SELECTED)
+                        || Objects.equals(approver.getApproverType(), WorkflowConstants.ApproverType.SUPERIOR)
+                        || (approver.getApproverIds() != null && !approver.getApproverIds().isEmpty())));
+    }
+    private boolean hasFallbackApproverIds(WfTaskNodeRuleDTO rule) {
+        return rule != null && rule.getFallbackApproverIds() != null && !rule.getFallbackApproverIds().isEmpty();
     }
     private List<WfTaskNodeEditorDTO> filterByNodeType(List<WfTaskNodeEditorDTO> nodes, Integer nodeType) {
         return nodes.stream()
@@ -1542,6 +1581,9 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         return values;
     }
     private String trimToNull(String value) { return StringUtils.hasText(value) ? value.trim() : null; }
+    private String normalizeCategoryCode(String categoryCode) {
+        return StringUtils.hasText(categoryCode) ? categoryCode.trim() : DEFAULT_TASK_CATEGORY_CODE;
+    }
     private Long requireCurrentTenantId() {
         Long tenantId = CurrentUserUtils.getTenantId();
         if (tenantId == null) {
@@ -1552,6 +1594,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
     private WfTaskConfigDTO convertToDTO(WfTaskConfig config) {
         WfTaskConfigDTO dto = new WfTaskConfigDTO();
         BeanUtils.copyProperties(config, dto);
+        dto.setCategoryCode(normalizeCategoryCode(config.getCategoryCode()));
         dto.setRequiresSelectedApprovers(requiresSelectedApprovers(config));
         return dto;
     }

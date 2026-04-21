@@ -264,7 +264,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         // 构建 DTO
         FxTableConfigDTO dto = new FxTableConfigDTO();
         dto.setTableCode(config.getTableCode());
-        dto.setTableName(config.getTableCode()); // 简化处理，不使用国际化
+        dto.setTableName(resolveI18nText(config.getTableNameI18nJson(), config.getTableCode()));
         dto.setTableType(config.getTableType());
         dto.setRowKey(config.getRowKey() != null ? config.getRowKey() : "id");
         dto.setDefaultPageSize(config.getDefaultPageSize() != null ? config.getDefaultPageSize() : 20);
@@ -285,7 +285,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             
             FxTableColumnDTO cd = new FxTableColumnDTO();
             cd.setField(c.getField());
-            cd.setTitle(c.getField()); // 简化处理
+            cd.setTitle(resolveI18nText(c.getTitleI18nJson(), c.getField()));
             cd.setAlign(c.getAlign());
             cd.setWidth(c.getWidth());
             cd.setFixed(c.getFixed());
@@ -305,7 +305,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             if (Boolean.TRUE.equals(c.getQueryable())) {
                 FxTableQueryFieldDTO q = new FxTableQueryFieldDTO();
                 q.setField(c.getField());
-                q.setLabel(c.getField());
+                q.setLabel(resolveI18nText(c.getTitleI18nJson(), c.getField()));
                 q.setQueryType(c.getQueryType() != null ? c.getQueryType() : "input");
                 q.setQueryOperator(c.getQueryOperator() != null ? c.getQueryOperator() : "like");
                 q.setDictCode(c.getDictCode());

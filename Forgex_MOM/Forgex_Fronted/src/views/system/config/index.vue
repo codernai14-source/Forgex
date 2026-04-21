@@ -506,6 +506,19 @@
               />
             </a-form-item>
 
+            <a-form-item
+              :label="t('system.config.publicBaseUrl')"
+              name="publicBaseUrl"
+            >
+              <a-input
+                v-model:value="fileUploadConfig.publicBaseUrl"
+                :placeholder="t('system.config.publicBaseUrlPlaceholder')"
+              />
+              <div class="form-item-hint">
+                {{ t('system.config.publicBaseUrlHint') }}
+              </div>
+            </a-form-item>
+
             <a-form-item :label="t('system.config.accessPrefix')" name="accessPrefix">
               <a-input
                 v-model:value="fileUploadConfig.accessPrefix"
@@ -911,10 +924,14 @@ function normalizeEmailConfig(config: Partial<EmailConfig> | null | undefined): 
 
 function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | undefined): FileUploadConfig {
   const defaults = createDefaultFileUploadConfig()
+  const publicBaseUrl = String(config?.publicBaseUrl || defaults.publicBaseUrl || '').trim().replace(/\/+$/, '')
+  const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/files').trim()
   return {
     ...defaults,
     ...(config || {}),
     storageType: ((config?.storageType || defaults.storageType) as FileUploadConfig['storageType']),
+    publicBaseUrl,
+    accessPrefix: accessPrefix.startsWith('/') ? accessPrefix : `/${accessPrefix}`,
   }
 }
 
@@ -995,6 +1012,10 @@ async function saveSecurityConfig() {
 async function saveFileUploadConfig() {
   savingUpload.value = true
   try {
+    if (fileUploadConfig.value.storageType === 'LOCAL' && !fileUploadConfig.value.publicBaseUrl.trim()) {
+      message.error(t('system.config.publicBaseUrlRequired'))
+      return
+    }
     await setFileUploadConfig(fileUploadConfig.value)
     // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
@@ -1158,7 +1179,10 @@ function handleVideoBeforeUpload(file: File) {
 async function handleVideoUpload(options: any) {
   videoUploading.value = true
   try {
-    const fileUrl = await uploadFile(options.file)
+    const fileUrl = await uploadFile(options.file, {
+      moduleCode: 'sys-config',
+      moduleName: '系统配置',
+    })
     basicConfig.value.loginBackgroundVideo = fileUrl
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
     options.onSuccess?.(fileUrl)
@@ -1188,7 +1212,10 @@ function handleBgImageBeforeUpload(file: File) {
 async function handleBgImageUpload(options: any) {
   bgImageUploading.value = true
   try {
-    const fileUrl = await uploadFile(options.file)
+    const fileUrl = await uploadFile(options.file, {
+      moduleCode: 'sys-config',
+      moduleName: '系统配置',
+    })
     basicConfig.value.loginBackgroundImage = fileUrl
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
     options.onSuccess?.(fileUrl)

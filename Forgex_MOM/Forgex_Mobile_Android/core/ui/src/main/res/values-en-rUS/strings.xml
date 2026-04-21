@@ -41,10 +41,13 @@
     <string name="auth_captcha_not_required">No captcha is required in the current environment</string>
     <string name="auth_public_key_ready">SM2 public key warm-up is enabled. Passwords will be encrypted before sending.</string>
     <string name="auth_public_key_missing">Public key is unavailable. Password will be sent in debug mode.</string>
+    <string name="auth_login_select_title">Choose a login method</string>
+    <string name="auth_login_select_subtitle">Select an entry first, then complete sign in</string>
     <string name="auth_login_method_account">Account login</string>
-    <string name="auth_login_method_wechat">WeChat (Coming soon)</string>
-    <string name="auth_login_method_dingtalk">DingTalk (Coming soon)</string>
-    <string name="auth_login_method_feishu">Feishu (Coming soon)</string>
+    <string name="auth_login_method_wechat">WeChat login</string>
+    <string name="auth_login_method_dingtalk">DingTalk login</string>
+    <string name="auth_login_method_gitee">Gitee login</string>
+    <string name="auth_back_to_login_methods">Back to method selection</string>
     <string name="auth_captcha_load_failed">Failed to load captcha</string>
     <string name="auth_captcha_refresh">Refresh</string>
     <string name="auth_slider_loading">Loading slider captcha...</string>
@@ -57,7 +60,7 @@
     <string name="auth_back_login">Back to login</string>
     <string name="auth_register_placeholder_title">Registration is under development</string>
     <string name="auth_register_placeholder_desc">The current version only provides login and environment switching. Registration will be added in a later iteration.</string>
-    <string name="auth_third_party_pending">Third-party login is under development</string>
+    <string name="auth_third_party_pending">On the way, coming soon</string>
     <string name="auth_required_account_password">Please enter both account and password</string>
     <string name="auth_required_captcha">Please enter the captcha</string>
     <string name="auth_required_slider">Please complete slider verification first</string>
@@ -91,6 +94,15 @@
     <string name="home_empty_favorites">No favorites yet</string>
     <string name="home_empty_favorites_hint">Long press a menu in Workbench to add it to favorites</string>
     <string name="home_cancel_favorite">Remove favorite</string>
+    <string name="basic_test_page_title">Basic Info Test Page</string>
+    <string name="basic_test_page_desc">Used to verify C-end menu permissions and native component rendering</string>
+    <string name="basic_test_page_dropdown">Dropdown</string>
+    <string name="basic_test_page_input">Input</string>
+    <string name="basic_test_page_switch">Switch on</string>
+    <string name="basic_test_page_checkbox">Checkbox</string>
+    <string name="basic_test_page_table">Table style list</string>
+    <string name="basic_test_page_group">Grouped list</string>
+    <string name="basic_test_page_action">Test button</string>
 
     <string name="message_center_title">Message Center</string>
     <string name="message_center_desc">Show unread messages</string>

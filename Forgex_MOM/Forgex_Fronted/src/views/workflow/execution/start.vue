@@ -108,6 +108,9 @@
 
               <div class="task-card__footer">
                 <span>{{ task.taskCode }}</span>
+              </div>
+
+              <div class="task-card__action">
                 <span class="task-card__open">
                   {{ t('workflow.execution.startPage.openForm') }}
                   <ArrowRightOutlined />
@@ -133,10 +136,11 @@ import {
   CalendarOutlined,
   FileTextOutlined,
   SearchOutlined,
-  TeamOutlined
+  TeamOutlined,
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
+import { useDict } from '@/hooks/useDict'
 import { listTaskConfig, type WfTaskConfigDTO } from '@/api/workflow/taskConfig'
 
 interface TaskCategoryOption {
@@ -149,6 +153,7 @@ const RECENT_TASK_STORAGE_KEY = 'workflow-recent-task-codes'
 
 const { t } = useI18n({ useScope: 'global' })
 const router = useRouter()
+const { dictItems: taskCategoryOptions } = useDict('wf_task_category')
 const taskListLoading = ref(false)
 const taskList = ref<WfTaskConfigDTO[]>([])
 const recentTaskCodes = ref<string[]>(loadRecentTaskCodes())
@@ -163,7 +168,11 @@ const categoryOptions = computed<TaskCategoryOption[]>(() => {
   })
   return [
     { key: 'all', label: t('workflow.execution.startPage.categoryAll'), count: taskList.value.length },
-    ...Array.from(counters.entries()).map(([key, count]) => ({ key, label: getTaskCategoryLabel(key), count }))
+    ...Array.from(counters.entries()).map(([key, count]) => ({
+      key,
+      label: getTaskCategoryLabel(key),
+      count,
+    })),
   ]
 })
 
@@ -219,23 +228,19 @@ function persistRecentTask(taskCode: string) {
 }
 
 function getTaskCategoryKey(task: WfTaskConfigDTO) {
-  const content = `${task.taskName}${task.taskCode}${task.remark || ''}`.toLowerCase()
-  if (content.includes('请假') || content.includes('leave') || content.includes('hr')) return 'hr'
-  if (content.includes('合同') || content.includes('contract')) return 'contract'
-  if (content.includes('财务') || content.includes('expense') || content.includes('付款')) return 'finance'
-  if (content.includes('采购') || content.includes('项目')) return 'project'
-  return 'general'
+  return task.categoryCode || 'general'
 }
 
 function getTaskCategoryLabel(categoryKey: string) {
-  const keyMap: Record<string, string> = {
-    hr: 'workflow.execution.startPage.categoryHr',
-    contract: 'workflow.execution.startPage.categoryContract',
-    finance: 'workflow.execution.startPage.categoryFinance',
-    project: 'workflow.execution.startPage.categoryProject',
-    general: 'workflow.execution.startPage.categoryGeneral',
+  const matched = (taskCategoryOptions.value || []).find((item: { value: string | number; label: string }) =>
+    String(item.value) === categoryKey
+  )
+  if (matched?.label) {
+    return matched.label
   }
-  return t(keyMap[categoryKey] || 'workflow.execution.startPage.categoryGeneral')
+  return categoryKey === 'general'
+    ? t('workflow.execution.startPage.categoryGeneral')
+    : categoryKey
 }
 
 function getTaskIcon(task: WfTaskConfigDTO) {
@@ -401,11 +406,13 @@ onMounted(() => {
   border-radius: 14px;
   color: var(--fx-text-secondary);
   background: var(--fx-fill-alter);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .filter-item--active {
-  color: var(--fx-text-primary);
-  background: var(--fx-primary-bg);
+  color: var(--fx-primary);
+  background: color-mix(in srgb, var(--fx-primary, #1677ff) 12%, var(--fx-bg-container, #ffffff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 28%, transparent);
 }
 
 .recent-item {
@@ -514,6 +521,12 @@ onMounted(() => {
   align-items: center;
   color: var(--fx-text-tertiary);
   font-size: 12px;
+}
+
+.task-card__action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .task-card__open {

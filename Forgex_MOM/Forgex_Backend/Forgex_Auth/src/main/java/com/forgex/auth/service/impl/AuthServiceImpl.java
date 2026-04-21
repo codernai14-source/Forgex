@@ -40,6 +40,8 @@ import com.forgex.auth.strategy.tenant.ChooseTenantStrategyFactory;
 import com.forgex.common.config.ConfigService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.LoginSessionKeys;
+import com.forgex.common.security.LoginSessionSupport;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
@@ -367,18 +369,9 @@ public class AuthServiceImpl implements AuthService {
         if (bind == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_BOUND_TO_TENANT);
         // 执行登录
         StpUtil.login(idKey);
-        // 获取 Session 并设置用户信息
-        SaSession session = StpUtil.getSession();
-        if (session != null) {
-            // 设置用户 ID
-            session.set("LOGIN_USER_ID", user.getId());
-            // 设置租户 ID
-            session.set("LOGIN_TENANT_ID", tenantId);
-            // 设置账号
-            session.set("LOGIN_ACCOUNT", idKey);
-        }
         // 获取 Token
         String token = StpUtil.getTokenValue();
+        populateLoginSession(user.getId(), tenantId, idKey, token);
         // 设置租户上下文
         TenantContext.set(tenantId);
         // 更新用户租户绑定信息（最后使用时间、优先级）
@@ -403,30 +396,15 @@ public class AuthServiceImpl implements AuthService {
                 .set(SysUser::getLastLoginTime, LocalDateTime.now()));
         
         // 缓存在线用户信息到 Redis
-        String onlineKey = "fx:online:user:" + tenantId + ":" + user.getId();
-        try {
-            Map<String, Object> onlineInfo = new HashMap<>();
-            onlineInfo.put("userId", user.getId());
-            onlineInfo.put("tenantId", tenantId);
-            onlineInfo.put("account", idKey);
-            onlineInfo.put("token", token);
-            onlineInfo.put("loginTerminal", resolveLoginTerminal(param == null ? null : param.getLoginTerminal()));
-            onlineInfo.put("loginTime", LocalDateTime.now().toString());
-            onlineInfo.put("clientIp", clientIp);
-            onlineInfo.put("userAgent", userAgent);
-            String onlineJson = toJson(onlineInfo);
-            Duration onlineTtl = resolveCurrentTokenTtl(token);
-            if (onlineTtl == null) {
-                redis.opsForValue().set(onlineKey, onlineJson);
-            } else if (!onlineTtl.isZero() && !onlineTtl.isNegative()) {
-                redis.opsForValue().set(onlineKey, onlineJson, onlineTtl);
-            } else {
-                redis.delete(onlineKey);
-            }
-            log.info("缓存在线用户信息：userId={}, tenantId={}, token={}", user.getId(), tenantId, token);
-        } catch (Exception e) {
-            log.warn("缓存在线用户信息失败：userId={}, tenantId={}", user.getId(), tenantId, e);
-        }
+        cacheOnlineUserSession(
+                user.getId(),
+                tenantId,
+                idKey,
+                token,
+                resolveLoginTerminal(param == null ? null : param.getLoginTerminal()),
+                clientIp,
+                userAgent
+        );
         
         log.info("用户选择租户成功：account={}, tenantId={}", account, tenantId);
         // 构建返回结果
@@ -779,6 +757,125 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
+     * 构建并写入登录会话上下文
+     * <p>
+     * 1. 当前 token 对应的 token-session 写入租户级上下文，避免多端登录互相覆盖。
+     * 2. 同步兼容旧的 login-session，保证仍依赖旧会话读取逻辑的代码可以继续工作。
+     * </p>
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param account 登录账号
+     * @param token 当前 token
+     */
+    private void populateLoginSession(Long userId, Long tenantId, String account, String token) {
+        // 1. 写入 token 维度会话，供多端并行登录场景优先读取。
+        writeLoginSession(LoginSessionSupport.getCurrentTokenSession(), userId, tenantId, account);
+
+        // 2. 同步写入旧会话，兼容仍通过 loginId 会话读取上下文的旧代码。
+        try {
+            writeLoginSession(StpUtil.getSession(), userId, tenantId, account);
+        } catch (Exception e) {
+            log.warn("写入兼容登录会话失败：account={}, token={}", account, token, e);
+        }
+    }
+
+    /**
+     * 写入统一的登录会话字段
+     *
+     * @param session Sa-Token 会话
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param account 登录账号
+     */
+    private void writeLoginSession(SaSession session, Long userId, Long tenantId, String account) {
+        if (session == null) {
+            return;
+        }
+        session.set(LoginSessionKeys.KEY_USER_ID, userId);
+        session.set(LoginSessionKeys.KEY_TENANT_ID, tenantId);
+        session.set(LoginSessionKeys.KEY_ACCOUNT, account);
+    }
+
+    /**
+     * 构建 token 维度在线用户缓存 key
+     *
+     * @param tenantId 租户 ID
+     * @param userId 用户 ID
+     * @param token token 值
+     * @return 在线用户缓存 key
+     */
+    private String buildOnlineUserKey(Long tenantId, Long userId, String token) {
+        return "fx:online:user:" + tenantId + ":" + userId + ":" + token;
+    }
+
+    /**
+     * 构建旧版在线用户缓存 key
+     *
+     * @param tenantId 租户 ID
+     * @param userId 用户 ID
+     * @return 旧版在线用户缓存 key
+     */
+    private String buildLegacyOnlineUserKey(Long tenantId, Long userId) {
+        return "fx:online:user:" + tenantId + ":" + userId;
+    }
+
+    /**
+     * 缓存在线用户会话
+     * <p>
+     * 1. 以 token 维度写入在线记录，支持同账号多端并行展示。
+     * 2. TTL 与当前 token 有效期保持一致。
+     * 3. 写入新 key 后顺带删除旧的按用户维度缓存，避免新旧展示重复。
+     * </p>
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param account 登录账号
+     * @param token token 值
+     * @param loginTerminal 登录终端
+     * @param clientIp 客户端 IP
+     * @param userAgent User-Agent
+     */
+    private void cacheOnlineUserSession(Long userId,
+                                        Long tenantId,
+                                        String account,
+                                        String token,
+                                        String loginTerminal,
+                                        String clientIp,
+                                        String userAgent) {
+        if (userId == null || tenantId == null || !StringUtils.hasText(token)) {
+            return;
+        }
+        String onlineKey = buildOnlineUserKey(tenantId, userId, token);
+        String legacyKey = buildLegacyOnlineUserKey(tenantId, userId);
+
+        Map<String, Object> onlineUser = new HashMap<>();
+        onlineUser.put("userId", userId);
+        onlineUser.put("tenantId", tenantId);
+        onlineUser.put("account", account);
+        onlineUser.put("token", token);
+        onlineUser.put("loginTerminal", resolveLoginTerminal(loginTerminal));
+        onlineUser.put("loginTime", LocalDateTime.now().toString());
+        onlineUser.put("clientIp", clientIp);
+        onlineUser.put("userAgent", userAgent);
+
+        String json = toJson(onlineUser);
+        Duration ttl = resolveCurrentTokenTtl(token);
+        try {
+            if (ttl == null) {
+                redis.opsForValue().set(onlineKey, json);
+            } else if (!ttl.isZero() && !ttl.isNegative()) {
+                redis.opsForValue().set(onlineKey, json, ttl);
+            } else {
+                redis.delete(onlineKey);
+            }
+            redis.delete(legacyKey);
+        } catch (Exception e) {
+            log.warn("缓存在线用户会话失败：account={}, tenantId={}, token={}", account, tenantId, token, e);
+        }
+    }
+
+    /**
      * 解析当前 Token 的 TTL
      * <p>
      * 根据 Token 解析其有效的生存时间
@@ -893,15 +990,19 @@ public class AuthServiceImpl implements AuthService {
      * @param userId 用户 ID
      */
     private void clearOnlineUserCache(String tokenValue, Long tenantId, Long userId) {
-        if (tenantId != null && userId != null) {
-            String onlineKey = "fx:online:user:" + tenantId + ":" + userId;
+        if (StringUtils.hasText(tokenValue) && tenantId != null && userId != null) {
             try {
-                redis.delete(onlineKey);
-                log.info("清除在线用户缓存：userId={}, tenantId={}", userId, tenantId);
+                redis.delete(buildOnlineUserKey(tenantId, userId, tokenValue));
+                log.info("清除在线用户缓存：userId={}, tenantId={}, token={}", userId, tenantId, tokenValue);
             } catch (Exception e) {
                 log.warn("清除在线用户缓存失败：{}", e.getMessage());
             }
-            return;
+        }
+        if (tenantId != null && userId != null) {
+            try {
+                redis.delete(buildLegacyOnlineUserKey(tenantId, userId));
+            } catch (Exception ignored) {
+            }
         }
         if (!StringUtils.hasText(tokenValue)) {
             return;
@@ -920,8 +1021,6 @@ public class AuthServiceImpl implements AuthService {
                     cn.hutool.json.JSONObject onlineObj = JSONUtil.parseObj(onlineJson);
                     if (tokenValue.equals(onlineObj.getStr("token"))) {
                         redis.delete(key);
-                        log.info("清除在线用户缓存：token={}", tokenValue);
-                        break;
                     }
                 } catch (Exception ignored) {
                 }
@@ -961,11 +1060,11 @@ public class AuthServiceImpl implements AuthService {
             
             // 从 Session 中获取用户信息
             try {
-                SaSession session = StpUtil.getSession(false);
+                SaSession session = LoginSessionSupport.getCurrentSession();
                 // 从 Session 中读取用户 ID、租户 ID 等信息
                 if (session != null) {
                     // 获取用户 ID
-                    Object uidObj = session.get("LOGIN_USER_ID");
+                    Object uidObj = session.get(LoginSessionKeys.KEY_USER_ID);
                     if (uidObj instanceof Long) {
                         userId = (Long) uidObj;
                     } else if (uidObj instanceof Integer) {
@@ -974,7 +1073,7 @@ public class AuthServiceImpl implements AuthService {
                         try { userId = Long.valueOf((String) uidObj); } catch (Exception ignored) { }
                     }
                     // 获取租户 ID
-                    Object tidObj = session.get("LOGIN_TENANT_ID");
+                    Object tidObj = session.get(LoginSessionKeys.KEY_TENANT_ID);
                     if (tidObj instanceof Long) {
                         tenantId = (Long) tidObj;
                     } else if (tidObj instanceof Integer) {

@@ -39,3 +39,37 @@ logging:
   level:
     root: INFO
     com.forgex.integration: DEBUG
+
+forgex:
+  integration:
+    async-result-retention-days: 7
+    cache:
+      local-expire-seconds: 300
+      redis-expire-seconds: 300
+      max-size: 2000
+    queue:
+      redis-key: integration:task:queue
+      batch-size: 100
+      lease-seconds: 60
+      compensate-limit: 200
+    log-buffer:
+      batch-size: 100
+      flush-interval-ms: 1000
+    sync-executor:
+      core-pool-size: 8
+      max-pool-size: 32
+      queue-capacity: 500
+      keep-alive-seconds: 60
+      rejected-policy: CALLER_RUNS
+    async-consumer-executor:
+      core-pool-size: 8
+      max-pool-size: 32
+      queue-capacity: 1000
+      keep-alive-seconds: 60
+      rejected-policy: CALLER_RUNS
+    log-executor:
+      core-pool-size: 4
+      max-pool-size: 8
+      queue-capacity: 1000
+      keep-alive-seconds: 60
+      rejected-policy: CALLER_RUNS
