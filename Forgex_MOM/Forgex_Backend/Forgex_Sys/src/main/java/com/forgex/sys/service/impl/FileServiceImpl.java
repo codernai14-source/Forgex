@@ -3,6 +3,7 @@ package com.forgex.sys.service.impl;
 import com.forgex.common.config.ConfigService;
 import com.forgex.sys.domain.config.FileUploadConfig;
 import com.forgex.sys.service.FileService;
+import com.forgex.sys.service.ISysFileRecordService;
 import com.forgex.sys.service.storage.FileStorageFactory;
 import com.forgex.sys.service.storage.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,9 @@ public class FileServiceImpl implements FileService {
     @jakarta.annotation.Resource
     private FileStorageFactory fileStorageFactory;
 
+    @jakarta.annotation.Resource
+    private ISysFileRecordService fileRecordService;
+
     private String resolveUploadPath() {
         FileUploadConfig cfg = configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, null);
         if (cfg != null && StringUtils.hasText(cfg.getLocalUploadPath())) {
@@ -47,16 +51,26 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public String upload(MultipartFile file) throws IOException {
+    public String upload(MultipartFile file, String moduleCode, String moduleName) throws IOException {
         FileStorageService storage = fileStorageFactory.getDefault();
         String relativePath = storage.upload(file);
-        return storage.getUrl(relativePath);
+        String accessUrl = storage.getUrl(relativePath);
+        fileRecordService.saveUploadRecord(
+                file,
+                moduleCode,
+                moduleName,
+                relativePath,
+                accessUrl,
+                fileStorageFactory.resolveStorageType(),
+                fileStorageFactory.resolveStorageConfigId()
+        );
+        return accessUrl;
     }
 
     @Override
     public Resource getFile(String filename) throws IOException {
         Path dir = getBaseDir();
-        Path filePath = dir.resolve(filename);
+        Path filePath = dir.resolve(filename).normalize();
         if (!Files.exists(filePath)) {
             return null;
         }
@@ -66,7 +80,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public String getMediaType(String filename) throws IOException {
         Path dir = getBaseDir();
-        Path filePath = dir.resolve(filename);
+        Path filePath = dir.resolve(filename).normalize();
         if (!Files.exists(filePath)) {
             return "application/octet-stream";
         }

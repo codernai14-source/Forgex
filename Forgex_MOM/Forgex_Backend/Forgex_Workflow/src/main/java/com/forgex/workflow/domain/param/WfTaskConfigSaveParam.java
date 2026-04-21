@@ -52,6 +52,8 @@ public class WfTaskConfigSaveParam {
     @NotBlank(message = "任务编码不能为空")
     private String taskCode;
 
+    private String categoryCode;
+
     /**
      * 审批任务解释器Bean名称
      */

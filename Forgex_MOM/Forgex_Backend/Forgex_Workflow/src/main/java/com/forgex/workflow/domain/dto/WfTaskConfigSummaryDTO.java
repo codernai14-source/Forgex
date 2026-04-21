@@ -17,6 +17,8 @@ public class WfTaskConfigSummaryDTO {
 
     private String taskCode;
 
+    private String categoryCode;
+
     private String interpreterBean;
 
     private Integer formType;

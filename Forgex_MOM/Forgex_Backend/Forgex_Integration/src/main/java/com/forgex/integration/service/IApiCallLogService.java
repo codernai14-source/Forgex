@@ -37,6 +37,11 @@ public interface IApiCallLogService extends IService<ApiCallLog> {
     boolean asyncSaveLog(ApiCallLog log);
 
     /**
+     * 鎵归噺淇濆瓨璋冪敤鏃ュ織
+     */
+    void batchSaveLogs(List<ApiCallLog> logs);
+
+    /**
      * 分页查询调用记录
      * <p>
      * 支持按时间范围、接口配置 ID、调用方向、调用状态等条件查询

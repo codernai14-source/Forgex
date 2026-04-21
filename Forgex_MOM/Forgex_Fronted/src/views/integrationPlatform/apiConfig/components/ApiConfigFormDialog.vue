@@ -59,7 +59,13 @@
         </a-col>
         <a-col :span="12">
           <a-form-item :label="t('integration.apiConfig.moduleCode')" name="moduleCode">
-            <a-input v-model:value="formState.moduleCode" :placeholder="t('integration.apiConfig.form.moduleCode')" />
+            <a-select
+              v-model:value="formState.moduleCode"
+              :options="moduleOptions"
+              allow-clear
+              show-search
+              :placeholder="t('integration.apiConfig.form.moduleCode')"
+            />
           </a-form-item>
         </a-col>
       </a-row>
@@ -98,12 +104,14 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import { listModules } from '@/api/system/module'
 import {
   addApiConfig,
   getApiConfigDetail,
   updateApiConfig,
 } from '@/api/system/integration'
 import type { ApiConfigItem, ApiConfigSubmit } from '@/api/system/integration'
+import type { Module } from '@/views/system/module/types'
 
 interface Props {
   open: boolean
@@ -122,6 +130,7 @@ const { t } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
 const formRef = ref<FormInstance>()
+const moduleOptions = ref<Array<{ label: string; value: string }>>([])
 
 const visible = computed({
   get: () => props.open,
@@ -173,6 +182,21 @@ watch(
         status: 1,
       })
     }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.open,
+  async (open) => {
+    if (!open || moduleOptions.value.length) {
+      return
+    }
+    const modules = await listModules({ pageNum: 1, pageSize: 999 })
+    moduleOptions.value = (modules || []).map((item: Module) => ({
+      label: `${item.name}${item.code ? ` (${item.code})` : ''}`,
+      value: item.code,
+    }))
   },
   { immediate: true }
 )
