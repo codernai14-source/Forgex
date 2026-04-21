@@ -149,8 +149,10 @@ const searchKeyword = ref('')
 const selectedRowKeys = ref<string[]>([])
 const currentTenantId = ref<string>('')
 const allMenus = ref<MenuTreeRecord[]>([])
-const moduleSelectedKeys = ref<Record<string, string[]>>({})
-const moduleSelectionInitialized = ref<Record<string, boolean>>({})
+const terminalModuleSelectedKeys = ref<Record<'B' | 'C', Record<string, string[]>>>({
+  B: {},
+  C: {},
+})
 
 const { dictItems: statusOptions } = useDict('status')
 
@@ -225,9 +227,9 @@ async function handleRequest(params: any) {
 
     // 姣忔鍔犺浇閮戒粠鍚庣杩斿洖鐨?checked 瀛楁閲嶆柊鍒濆鍖栭€変腑鐘舵€?
     const checkedIds = collectCheckedNodeIds(normalizedTree).map((id) => String(id))
-    selectedRowKeys.value = checkedIds
-    moduleSelectedKeys.value[activeModuleId.value] = [...checkedIds]
-    moduleSelectionInitialized.value[activeModuleId.value] = true
+    const cachedKeys = terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value]
+    selectedRowKeys.value = cachedKeys ? [...cachedKeys] : checkedIds
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
 
     return {
       records: normalizedTree,
@@ -325,7 +327,7 @@ function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
 function handleSelectionChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys.map(String)
   if (activeModuleId.value) {
-    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
   }
 }
 
@@ -334,15 +336,20 @@ function handleSelectionChange(keys: Array<string | number>) {
  */
 async function handleModuleChange(moduleId: string) {
   if (activeModuleId.value) {
-    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
   }
   activeModuleId.value = moduleId
-  selectedRowKeys.value = moduleSelectedKeys.value[moduleId] ? [...moduleSelectedKeys.value[moduleId]] : []
+  selectedRowKeys.value = terminalModuleSelectedKeys.value[activeTerminal.value][moduleId]
+    ? [...terminalModuleSelectedKeys.value[activeTerminal.value][moduleId]]
+    : []
   searchKeyword.value = ''
   await tableRef.value?.refresh?.()
 }
 
 async function handleTerminalChange(terminal: string) {
+  if (activeModuleId.value) {
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
+  }
   activeTerminal.value = terminal === 'C' ? 'C' : 'B'
   selectedRowKeys.value = []
   allMenus.value = []
@@ -356,7 +363,7 @@ async function handleTerminalChange(terminal: string) {
 function handleSelectAll() {
   selectedRowKeys.value = allMenus.value.map(m => String(m.id))
   if (activeModuleId.value) {
-    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
   }
 }
 
@@ -368,7 +375,7 @@ function handleSelectInvert() {
   const selectedSet = new Set(selectedRowKeys.value)
   selectedRowKeys.value = allIds.filter(id => !selectedSet.has(id))
   if (activeModuleId.value) {
-    moduleSelectedKeys.value[activeModuleId.value] = [...selectedRowKeys.value]
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
   }
 }
 
@@ -378,7 +385,7 @@ function handleSelectInvert() {
 function handleClearAll() {
   selectedRowKeys.value = []
   if (activeModuleId.value) {
-    moduleSelectedKeys.value[activeModuleId.value] = []
+    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = []
   }
 }
 
@@ -399,7 +406,17 @@ async function handleSave() {
   }
 
   try {
-    const menuIds = selectedRowKeys.value.map(id => Number(id))
+    if (activeModuleId.value) {
+      terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
+    }
+    const menuIds = Array.from(
+      new Set(
+        Object.values(terminalModuleSelectedKeys.value[activeTerminal.value])
+          .flat()
+          .map(id => Number(id))
+          .filter(id => !Number.isNaN(id))
+      )
+    )
     
     await (activeTerminal.value === 'C' ? grantRoleCMenus : grantRoleMenus)({
       roleId: Number(roleId.value),

@@ -1,0 +1,21 @@
+import http from '../http'
+
+export function page${ctx.subEntityName}(data: any) {
+  return http.post('/${ctx.moduleName}/${ctx.subEntityNameLower}/page', data)
+}
+
+export function detail${ctx.subEntityName}(id: number) {
+  return http.post('/${ctx.moduleName}/${ctx.subEntityNameLower}/detail', id)
+}
+
+export function create${ctx.subEntityName}(data: any) {
+  return http.post('/${ctx.moduleName}/${ctx.subEntityNameLower}/create', data)
+}
+
+export function update${ctx.subEntityName}(data: any) {
+  return http.post('/${ctx.moduleName}/${ctx.subEntityNameLower}/update', data)
+}
+
+export function delete${ctx.subEntityName}(id: number) {
+  return http.post('/${ctx.moduleName}/${ctx.subEntityNameLower}/delete', id)
+}

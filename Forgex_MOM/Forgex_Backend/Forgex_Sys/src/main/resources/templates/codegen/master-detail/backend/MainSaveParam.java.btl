@@ -1,0 +1,11 @@
+package ${ctx.packageName}.domain.param;
+
+import lombok.Data;
+
+@Data
+public class ${ctx.entityName}SaveParam {
+    private Long id;
+<% for(column in ctx.mainFormColumns){ %>
+    private ${column.javaType} ${column.javaFieldName};
+<% } %>
+}

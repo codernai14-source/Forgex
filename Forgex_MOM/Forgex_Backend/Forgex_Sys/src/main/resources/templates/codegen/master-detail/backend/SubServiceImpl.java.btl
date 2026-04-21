@@ -1,0 +1,57 @@
+package ${ctx.packageName}.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import ${ctx.packageName}.domain.entity.${ctx.subEntityName};
+import ${ctx.packageName}.domain.param.${ctx.subEntityName}PageParam;
+import ${ctx.packageName}.domain.param.${ctx.subEntityName}SaveParam;
+import ${ctx.packageName}.mapper.${ctx.subEntityName}Mapper;
+import ${ctx.packageName}.service.${ctx.subEntityName}Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class ${ctx.subEntityName}ServiceImpl implements ${ctx.subEntityName}Service {
+
+    private final ${ctx.subEntityName}Mapper ${ctx.subEntityNameLower}Mapper;
+
+    @Override
+    public IPage<${ctx.subEntityName}> page(${ctx.subEntityName}PageParam param) {
+        Page<${ctx.subEntityName}> page = new Page<>(param.getPageNum(), param.getPageSize());
+        LambdaQueryWrapper<${ctx.subEntityName}> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(${ctx.subEntityName}::get${ctx.subFkJavaField?cap_first}, param.get${ctx.entityName}Id());
+        wrapper.orderByDesc(${ctx.subEntityName}::get${ctx.subDefaultSortJavaField?cap_first});
+        return ${ctx.subEntityNameLower}Mapper.selectPage(page, wrapper);
+    }
+
+    @Override
+    public ${ctx.subEntityName} detail(Long id) {
+        return ${ctx.subEntityNameLower}Mapper.selectById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void save(${ctx.subEntityName}SaveParam param) {
+        ${ctx.subEntityName} entity = new ${ctx.subEntityName}();
+        BeanUtils.copyProperties(param, entity);
+        ${ctx.subEntityNameLower}Mapper.insert(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(${ctx.subEntityName}SaveParam param) {
+        ${ctx.subEntityName} entity = new ${ctx.subEntityName}();
+        BeanUtils.copyProperties(param, entity);
+        ${ctx.subEntityNameLower}Mapper.updateById(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(Long id) {
+        ${ctx.subEntityNameLower}Mapper.deleteById(id);
+    }
+}

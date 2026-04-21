@@ -1,0 +1,25 @@
+package ${ctx.packageName}.service;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import ${ctx.packageName}.domain.entity.${ctx.entityName};
+import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
+import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+
+/**
+ * ${ctx.mainTableComment} 服务接口
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+public interface ${ctx.entityName}Service {
+
+    IPage<${ctx.entityName}> page(${ctx.entityName}PageParam param);
+
+    ${ctx.entityName} detail(Long id);
+
+    void save(${ctx.entityName}SaveParam param);
+
+    void update(${ctx.entityName}SaveParam param);
+
+    void delete(Long id);
+}

@@ -1,49 +1,147 @@
+/*Copyright 2026 coder_nai@163.com
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 package com.forgex.sys.domain.dto;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * 代码生成请求DTO
- * <p>封装代码生成所需的参数信息。</p>
- * 
- * @author Forgex Team
- * @version 1.0.0
+ * 代码生成请求 DTO
+ * <p>
+ * 封装代码生成所需的完整配置，用于单表与主子表两类页面生成。
+ * </p>
+ *
+ * @author coder_nai@163.com
+ * @since 2026-04-21
  */
 @Data
 public class CodeGenRequestDTO {
-    /**
-     * 数据库表名
-     */
-    private String tableName;
 
     /**
-     * 生成模式（SINGLE、TREE、MASTER_DETAIL、DETAIL）
+     * 代码生成配置记录 ID
      */
-    private String mode;
+    private Long configId;
 
     /**
-     * 模块名称
+     * 数据源 ID
+     */
+    private Long datasourceId;
+
+    /**
+     * 数据源编码
+     */
+    private String datasourceCode;
+
+    /**
+     * schema/catalog 名称
+     */
+    private String schemaName;
+
+    /**
+     * 页面类型：SINGLE / MASTER_DETAIL
+     */
+    private String pageType;
+
+    /**
+     * 主表名称
+     */
+    private String mainTableName;
+
+    /**
+     * 子表名称
+     */
+    private String subTableName;
+
+    /**
+     * 主表主键列
+     */
+    private String mainPkColumn;
+
+    /**
+     * 子表外键列
+     */
+    private String subFkColumn;
+
+    /**
+     * 子表主键列
+     */
+    private String subPkColumn;
+
+    /**
+     * 模块编码
      */
     private String moduleName;
 
     /**
-     * 基础包名
+     * 业务标识
      */
-    private String basePackage;
+    private String bizName;
 
     /**
-     * 实体类名称
+     * 实体名称
      */
     private String entityName;
 
     /**
-     * 父ID字段名（树形结构使用）
+     * 子实体名称
      */
-    private String parentIdField;
+    private String subEntityName;
 
     /**
-     * 树名称字段名（树形结构使用）
+     * 包名
      */
-    private String treeNameField;
-}
+    private String packageName;
 
+    /**
+     * 作者
+     */
+    private String author;
+
+    /**
+     * 菜单名称
+     */
+    private String menuName;
+
+    /**
+     * 菜单图标
+     */
+    private String menuIcon;
+
+    /**
+     * 父级菜单路径
+     */
+    private String parentMenuPath;
+
+    /**
+     * 表格编码前缀
+     */
+    private String tableCodePrefix;
+
+    /**
+     * 生成项：backend / frontend / sql
+     */
+    private List<String> generateItems = new ArrayList<>();
+
+    /**
+     * 主表字段配置
+     */
+    private List<ColumnMetaDTO> mainColumns = new ArrayList<>();
+
+    /**
+     * 子表字段配置
+     */
+    private List<ColumnMetaDTO> subColumns = new ArrayList<>();
+}
