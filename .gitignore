@@ -43,3 +43,4 @@ hs_err_pid*
 /.tmp/
 /Forgex_MOM/Forgex_Backend/Forgex_Integration/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Gateway/target/
+/sql/
