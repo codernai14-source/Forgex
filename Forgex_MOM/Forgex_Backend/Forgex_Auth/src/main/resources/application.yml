@@ -2,9 +2,28 @@ spring:
   application:
     name: forgex-auth
   profiles:
-    active: ${FORGEX_PROFILE:dev}
+    active: dev
   datasource:
     type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:datasource-forgex-dev.yml
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - nacos:sa-token.yml
+      - nacos:captcha.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+        file-extension: yml
   output:
     ansi:
       enabled: always
@@ -17,5 +36,5 @@ logging:
     root: INFO
   group: {}
 server:
-  port: ${FORGEX_AUTH_PORT:9001}
+  port: 9001
 

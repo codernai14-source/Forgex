@@ -1,0 +1,28 @@
+package ${ctx.packageName}.domain.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.forgex.common.base.BaseEntity;
+<% for(importItem in imports){ %>
+import ${importItem};
+<% } %>
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * ${ctx.subTableComment} 子表实体
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("${ctx.subTableName}")
+public class ${ctx.subEntityName} extends BaseEntity {
+<% for(column in ctx.subColumns){ if(!column.isBaseField){ %>
+
+    /**
+     * ${column.columnComment!column.columnName}
+     */
+    private ${column.javaType} ${column.javaFieldName};
+<% }} %>
+}

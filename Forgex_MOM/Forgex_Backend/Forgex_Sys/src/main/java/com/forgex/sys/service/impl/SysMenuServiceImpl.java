@@ -19,7 +19,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
 import com.forgex.common.i18n.LangContext;
+import com.forgex.common.service.i18n.I18nLanguageTypeService;
 import com.forgex.sys.domain.dto.SysMenuDTO;
 import com.forgex.sys.domain.dto.SysMenuQueryDTO;
 import com.forgex.sys.domain.entity.SysMenu;
@@ -123,6 +125,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysUserMenuCommonMapper userMenuCommonMapper;
     private final SysUserMenuFavoriteMapper userMenuFavoriteMapper;
+    private final I18nLanguageTypeService languageTypeService;
 
     /**
      * 获取用户路由（仅返回当前租户、当前角色显式授权的模块/菜单/按钮）。
@@ -1553,13 +1556,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (StringUtils.hasText(zhValue)) {
             return zhValue;
         }
-        String enUsValue = obj.getStr("en-US");
-        if (StringUtils.hasText(enUsValue)) {
-            return enUsValue;
-        }
-        String enValue = obj.getStr("en");
-        if (StringUtils.hasText(enValue)) {
-            return enValue;
+        for (String fallbackLanguage : resolveFallbackLanguages()) {
+            String value = obj.getStr(fallbackLanguage);
+            if (StringUtils.hasText(value)) {
+                return value;
+            }
         }
         try {
             for (String key : obj.keySet()) {
@@ -1571,6 +1572,30 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         } catch (Exception ignored) {
         }
         return fallback;
+    }
+
+    private List<String> resolveFallbackLanguages() {
+        LinkedHashSet<String> fallbackLanguages = new LinkedHashSet<>();
+        try {
+            FxI18nLanguageType defaultLanguage = languageTypeService.getDefault();
+            if (defaultLanguage != null && StringUtils.hasText(defaultLanguage.getLangCode())) {
+                fallbackLanguages.add(defaultLanguage.getLangCode());
+            }
+            List<FxI18nLanguageType> enabledLanguages = languageTypeService.listEnabled();
+            if (enabledLanguages != null) {
+                enabledLanguages.stream()
+                        .map(FxI18nLanguageType::getLangCode)
+                        .filter(StringUtils::hasText)
+                        .forEach(fallbackLanguages::add);
+            }
+        } catch (Exception ex) {
+            log.warn("加载启用语言列表失败，菜单国际化将使用默认兜底", ex);
+        }
+        fallbackLanguages.add("zh-CN");
+        fallbackLanguages.add("zh");
+        fallbackLanguages.add("en-US");
+        fallbackLanguages.add("en");
+        return new ArrayList<>(fallbackLanguages);
     }
 
     /**
@@ -1635,14 +1660,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (menu.getModuleId() != null) {
             SysModule module = moduleMapper.selectById(menu.getModuleId());
             if (module != null) {
-                dto.setModuleName(module.getName());
+                dto.setModuleName(resolveI18nText(module.getNameI18nJson(), module.getName()));
             }
         }
 
         if (menu.getParentId() != null && menu.getParentId() > 0) {
             SysMenu parentMenu = menuMapper.selectById(menu.getParentId());
             if (parentMenu != null) {
-                dto.setParentName(parentMenu.getName());
+                dto.setParentName(resolveI18nText(parentMenu.getNameI18nJson(), parentMenu.getName()));
             }
         }
 

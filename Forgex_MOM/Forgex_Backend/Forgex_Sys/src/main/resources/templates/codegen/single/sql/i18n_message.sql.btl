@@ -1,0 +1,51 @@
+-- ================================================
+-- ${ctx.menuName} i18n 初始化
+-- i18n_prefix: ${ctx.i18nPrefix}
+-- ================================================
+
+SET @TENANT_ID = 0;
+SET @MODULE = '${ctx.moduleName}';
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.menuName', '{"zh-CN":"${ctx.menuName}","en-US":"${ctx.menuName}"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.menuName' AND deleted = 0
+);
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.createSuccess', '{"zh-CN":"新增成功","en-US":"Create success"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.createSuccess' AND deleted = 0
+);
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.updateSuccess', '{"zh-CN":"修改成功","en-US":"Update success"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.updateSuccess' AND deleted = 0
+);
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.deleteSuccess', '{"zh-CN":"删除成功","en-US":"Delete success"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.deleteSuccess' AND deleted = 0
+);
+
+<% for(column in ctx.mainColumns){ %>
+<% if(!column.isBaseField){ %>
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.field.${column.javaFieldName}', '{"zh-CN":"${column.columnComment!column.columnName}","en-US":"${column.columnComment!column.columnName}"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.field.${column.javaFieldName}' AND deleted = 0
+);
+<% } %>
+<% } %>

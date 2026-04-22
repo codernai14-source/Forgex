@@ -50,6 +50,8 @@ public class WfTaskConfigDTO {
      */
     private String taskCode;
 
+    private String categoryCode;
+
     /**
      * 审批任务解释器 Bean 名称。
      */

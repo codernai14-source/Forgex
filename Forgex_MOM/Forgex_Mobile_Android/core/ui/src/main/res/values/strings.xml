@@ -41,10 +41,13 @@
     <string name="auth_captcha_not_required">当前环境无需验证码</string>
     <string name="auth_public_key_ready">已启用 SM2 公钥预热，密码会加密后传输</string>
     <string name="auth_public_key_missing">未获取到公钥，当前按联调模式发送密码</string>
+    <string name="auth_login_select_title">请选择登录方式</string>
+    <string name="auth_login_select_subtitle">先选择入口，再完成登录</string>
     <string name="auth_login_method_account">账号登录</string>
-    <string name="auth_login_method_wechat">微信(开发中)</string>
-    <string name="auth_login_method_dingtalk">钉钉(开发中)</string>
-    <string name="auth_login_method_feishu">飞书(开发中)</string>
+    <string name="auth_login_method_wechat">微信登录</string>
+    <string name="auth_login_method_dingtalk">钉钉登录</string>
+    <string name="auth_login_method_gitee">Gitee 登录</string>
+    <string name="auth_back_to_login_methods">返回方式选择</string>
     <string name="auth_captcha_load_failed">验证码加载失败</string>
     <string name="auth_captcha_refresh">刷新</string>
     <string name="auth_slider_loading">滑块验证码加载中...</string>
@@ -57,7 +60,7 @@
     <string name="auth_back_login">返回登录</string>
     <string name="auth_register_placeholder_title">注册功能正在开发中</string>
     <string name="auth_register_placeholder_desc">当前版本先提供登录与环境切换能力，注册入口将在后续迭代接入</string>
-    <string name="auth_third_party_pending">第三方登录正在开发中</string>
+    <string name="auth_third_party_pending">正在上路中，敬请期待</string>
     <string name="auth_required_account_password">请输入账号和密码</string>
     <string name="auth_required_captcha">请输入验证码</string>
     <string name="auth_required_slider">请先完成滑块验证</string>
@@ -91,6 +94,15 @@
     <string name="home_empty_favorites">暂无收藏</string>
     <string name="home_empty_favorites_hint">在工作台中长按菜单可添加收藏</string>
     <string name="home_cancel_favorite">取消收藏</string>
+    <string name="basic_test_page_title">基础信息测试页</string>
+    <string name="basic_test_page_desc">用于验证 C 端菜单权限与原生组件展示</string>
+    <string name="basic_test_page_dropdown">下拉选项</string>
+    <string name="basic_test_page_input">输入框</string>
+    <string name="basic_test_page_switch">开关开启</string>
+    <string name="basic_test_page_checkbox">勾选项</string>
+    <string name="basic_test_page_table">表格样式列表</string>
+    <string name="basic_test_page_group">分组列表</string>
+    <string name="basic_test_page_action">测试按钮</string>
 
     <string name="message_center_title">消息中心</string>
     <string name="message_center_desc">展示未读消息</string>

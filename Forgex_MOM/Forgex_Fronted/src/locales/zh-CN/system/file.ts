@@ -1,0 +1,15 @@
+export default {
+  title: '文件管理',
+  moduleCode: '模块编码',
+  moduleName: '模块名称',
+  fileName: '文件名',
+  fileType: '文件类型',
+  fileUrl: '文件地址',
+  fileSize: '文件大小',
+  uploadBy: '上传人',
+  uploadTime: '上传时间',
+  openFile: '打开文件',
+  copyUrl: '复制地址',
+  copied: '文件地址已复制',
+  emptyUrl: '文件地址为空',
+}

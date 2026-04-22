@@ -72,6 +72,7 @@ class AuthViewModel @Inject constructor(
         if (method == LoginMethod.ACCOUNT_PASSWORD) {
             _uiState.update {
                 it.copy(
+                    loginStage = AuthLoginStage.PASSWORD_FORM,
                     selectedLoginMethod = method,
                     errorMessage = null,
                     errorText = null
@@ -81,6 +82,7 @@ class AuthViewModel @Inject constructor(
         }
         _uiState.update {
             it.copy(
+                loginStage = AuthLoginStage.ENTRY,
                 selectedLoginMethod = method,
                 errorMessage = null,
                 errorText = AppText.Resource(R.string.auth_third_party_pending)

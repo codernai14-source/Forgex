@@ -287,8 +287,8 @@ function saveEdit() {
 async function onLogoUpload(file: any) {
   try {
     const res = await uploadFile(file)
-    if (res && res.url) {
-      editModel.logo = res.url
+    if (typeof res === 'string') {
+      editModel.logo = res
     }
   } catch (e) {
     message.error('上传失败')

@@ -1,10 +1,18 @@
 package com.forgex.sys.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
+import com.forgex.sys.domain.dto.SysFileRecordQueryDTO;
+import com.forgex.sys.domain.entity.SysFileRecord;
+import com.forgex.sys.domain.vo.SysFileRecordVO;
 import com.forgex.sys.service.FileService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.forgex.sys.service.ISysFileRecordService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,41 +21,38 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 /**
- * 文件管理Controller
- * <p>处理文件上传等操作，Controller层仅负责参数接收与结果返回，业务逻辑委托给{@link FileService}处理。</p>
- *
- * @author coder_nai@163.com
- * @date 2025-01-11
- * @see FileService
+ * File controller.
  */
 @RestController
 @RequestMapping("/sys/file")
+@RequiredArgsConstructor
 public class FileController {
 
-    /**
-     * 文件服务接口
-     */
-    @Autowired
-    private FileService fileService;
+    private final FileService fileService;
+    private final ISysFileRecordService fileRecordService;
 
-    /**
-     * 上传文件
-     *
-     * @param file 文件对象
-     * @return 文件访问URL
-     */
     @PostMapping("/upload")
-    public R<String> upload(@RequestParam("file") MultipartFile file) {
+    public R<String> upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "moduleCode", required = false) String moduleCode,
+            @RequestParam(value = "moduleName", required = false) String moduleName
+    ) {
         if (file.isEmpty()) {
             return R.fail(CommonPrompt.FILE_EMPTY);
         }
 
         try {
-            String fileUrl = fileService.upload(file);
-            return R.<String>ok(CommonPrompt.UPLOAD_SUCCESS, fileUrl);
+            String fileUrl = fileService.upload(file, moduleCode, moduleName);
+            return R.ok(CommonPrompt.UPLOAD_SUCCESS, fileUrl);
         } catch (IOException e) {
-            e.printStackTrace();
             return R.fail(CommonPrompt.FILE_UPLOAD_FAILED);
         }
+    }
+
+    @RequirePerm("sys:file:view")
+    @PostMapping("/page")
+    public R<IPage<SysFileRecordVO>> page(@RequestBody SysFileRecordQueryDTO query) {
+        Page<SysFileRecord> page = new Page<>(query.getPageNum(), query.getPageSize());
+        return R.ok(fileRecordService.pageRecords(page, query));
     }
 }

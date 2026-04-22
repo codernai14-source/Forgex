@@ -5,8 +5,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forgex.common.domain.entity.dict.SysDictNode;
+import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
 import com.forgex.common.i18n.LangContext;
 import com.forgex.common.mapper.dict.SysDictNodeMapper;
+import com.forgex.common.service.i18n.I18nLanguageTypeService;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +82,8 @@ public class DictI18nResolver {
      */
     @Qualifier("dictItemCache")
     private final Cache<String, Map<String, DictItem>> dictItemCache;
+
+    private final I18nLanguageTypeService languageTypeService;
 
     /**
      * 获取字典子节点的标签映射（优化版 - 三级缓存）
@@ -156,7 +160,25 @@ public class DictI18nResolver {
         
         return result;
     }
-    
+
+    private List<String> resolveEnabledLanguageCodes() {
+        LinkedHashSet<String> languageCodes = new LinkedHashSet<>();
+        try {
+            List<FxI18nLanguageType> enabledLanguages = languageTypeService.listEnabled();
+            if (enabledLanguages != null) {
+                enabledLanguages.stream()
+                        .map(FxI18nLanguageType::getLangCode)
+                        .filter(StringUtils::hasText)
+                        .forEach(languageCodes::add);
+            }
+        } catch (Exception ex) {
+            log.warn("加载启用语言列表失败，使用默认语言兜底", ex);
+        }
+        languageCodes.add("zh-CN");
+        languageCodes.add("en-US");
+        return new ArrayList<>(languageCodes);
+    }
+
     /**
      * 从数据库加载字典数据
      * <p>
@@ -328,8 +350,7 @@ public class DictI18nResolver {
      */
     public void invalidateCache(Long tenantId, String nodePath) {
         // 清除所有语言的本地缓存
-        String[] langs = {"zh-CN", "en-US", "ja-JP"};
-        for (String lang : langs) {
+        for (String lang : resolveEnabledLanguageCodes()) {
             String cacheKey = buildCacheKey(tenantId, lang, nodePath);
             dictLabelCache.invalidate(cacheKey);
             dictItemCache.invalidate(cacheKey);

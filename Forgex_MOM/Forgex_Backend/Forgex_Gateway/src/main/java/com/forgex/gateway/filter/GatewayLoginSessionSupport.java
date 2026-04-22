@@ -3,6 +3,8 @@ package com.forgex.gateway.filter;
 import cn.dev33.satoken.dao.SaTokenDao;
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
+import com.forgex.common.security.LoginSessionKeys;
+import com.forgex.common.security.LoginSessionSupport;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.http.HttpCookie;
@@ -37,10 +39,6 @@ public class GatewayLoginSessionSupport {
     public static final String LOGIN_CONTEXT_ATTRIBUTE = GatewayLoginSessionSupport.class.getName() + ".LOGIN_CONTEXT";
 
     private static final String ONLINE_USER_PREFIX = "fx:online:user:";
-    private static final String SESSION_USER_ID = "LOGIN_USER_ID";
-    private static final String SESSION_TENANT_ID = "LOGIN_TENANT_ID";
-    private static final String SESSION_ACCOUNT = "LOGIN_ACCOUNT";
-
     /**
      * Redisson 客户端，用于在线用户缓存 TTL 的原子更新。
      */
@@ -111,18 +109,14 @@ public class GatewayLoginSessionSupport {
         }
 
         SaSession session;
-        try {
-            session = StpUtil.getSessionByLoginId(loginId, false);
-        } catch (Exception ignored) {
-            return null;
-        }
+        session = LoginSessionSupport.getSessionByLoginId(loginId, tokenValue);
         if (session == null) {
             return null;
         }
 
-        Long userId = parseLong(session.get(SESSION_USER_ID));
-        Long tenantId = parseLong(session.get(SESSION_TENANT_ID));
-        String account = parseText(session.get(SESSION_ACCOUNT));
+        Long userId = parseLong(session.get(LoginSessionKeys.KEY_USER_ID));
+        Long tenantId = parseLong(session.get(LoginSessionKeys.KEY_TENANT_ID));
+        String account = parseText(session.get(LoginSessionKeys.KEY_ACCOUNT));
         if (!StringUtils.hasText(account) && StringUtils.hasText(String.valueOf(loginId))) {
             account = String.valueOf(loginId);
         }
@@ -148,7 +142,7 @@ public class GatewayLoginSessionSupport {
 
         try {
             Long ttlSeconds = resolveEffectiveTtlSeconds(context.token);
-            String onlineKey = ONLINE_USER_PREFIX + context.tenantId + ":" + context.userId;
+            String onlineKey = ONLINE_USER_PREFIX + context.tenantId + ":" + context.userId + ":" + context.token;
 
             // 使用 Redisson 原生 API，避免 Spring Data Redis 连接适配层在 pExpire 上的错误委托
             RBucket<Object> bucket = redissonClient.getBucket(onlineKey);

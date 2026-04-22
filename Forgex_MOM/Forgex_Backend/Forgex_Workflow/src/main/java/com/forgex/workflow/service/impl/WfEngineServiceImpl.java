@@ -101,6 +101,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WfEngineServiceImpl implements IWfEngineService {
 
+    private static final ThreadLocal<List<Long>> START_SELECTED_APPROVERS = new ThreadLocal<>();
+
     private final WfTaskConfigMapper taskConfigMapper;
     private final WfTaskNodeConfigMapper nodeConfigMapper;
     private final WfTaskNodeApproverMapper nodeApproverMapper;
@@ -144,40 +146,40 @@ public class WfEngineServiceImpl implements IWfEngineService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void initExecution(Long executionId, Long taskConfigId, List<Long> selectedApprovers) {
-        WfTaskConfig taskConfig = taskConfigMapper.selectById(taskConfigId);
-        if (taskConfig == null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_TASK_CONFIG_NOT_FOUND_FOR_INIT);
+        START_SELECTED_APPROVERS.set(selectedApprovers == null ? Collections.emptyList() : new ArrayList<>(selectedApprovers));
+        try {
+            WfTaskConfig taskConfig = taskConfigMapper.selectById(taskConfigId);
+            if (taskConfig == null) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_TASK_CONFIG_NOT_FOUND_FOR_INIT);
+            }
+
+            WfTaskExecution execution = executionMapper.selectById(executionId);
+            if (execution == null) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_EXECUTION_NOT_FOUND_FOR_INIT);
+            }
+
+            WfTaskNodeConfig startNode = findFirstNode(taskConfigId, 1);
+            if (startNode == null) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_START_NODE_NOT_CONFIGURED);
+            }
+
+            updateExecutionCurrentNode(execution, startNode);
+            createExecutionDetail(executionId, startNode, 1, taskConfig.getTenantId());
+
+            callInterpreter(taskConfig.getInterpreterBean(), (interpreter, context) -> {
+                populateContext(context, execution, taskConfig);
+                context.setCurrentNodeId(startNode.getId());
+                context.setCurrentNodeName(startNode.getNodeName());
+                interpreter.onStart(context);
+            });
+
+            activateFromNode(execution, startNode, taskConfig);
+
+            log.info("初始化审批流程成功，executionId={}, taskCode={}, startNode={}",
+                    executionId, taskConfig.getTaskCode(), startNode.getNodeName());
+        } finally {
+            START_SELECTED_APPROVERS.remove();
         }
-
-        WfTaskExecution execution = executionMapper.selectById(executionId);
-        if (execution == null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_EXECUTION_NOT_FOUND_FOR_INIT);
-        }
-
-        // 查找第一个审批节点
-        WfTaskNodeConfig startNode = findFirstNode(taskConfigId, 1);
-        if (startNode == null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_START_NODE_NOT_CONFIGURED);
-        }
-
-        // 更新执行记录当前节点
-        updateExecutionCurrentNode(execution, startNode);
-        // 创建执行明细
-        createExecutionDetail(executionId, startNode, 1, taskConfig.getTenantId());
-
-        // 触发流程启动解释器
-        callInterpreter(taskConfig.getInterpreterBean(), (interpreter, context) -> {
-            populateContext(context, execution, taskConfig);
-            context.setCurrentNodeId(startNode.getId());
-            context.setCurrentNodeName(startNode.getNodeName());
-            interpreter.onStart(context);
-        });
-
-        // 激活起始节点
-        activateFromNode(execution, startNode, taskConfig);
-
-        log.info("初始化审批流程成功，executionId={}, taskCode={}, startNode={}",
-                executionId, taskConfig.getTaskCode(), startNode.getNodeName());
     }
 
     /**
@@ -922,8 +924,16 @@ public class WfEngineServiceImpl implements IWfEngineService {
         }
         Set<Long> deduplicated = new LinkedHashSet<>();
         List<ResolvedApprover> resolved = new ArrayList<>();
+        boolean hasRuntimeSelectionRule = false;
         for (WfTaskNodeRuleDTO rule : rules) {
+            boolean requiresSelectedApprovers = Objects.equals(rule.getRuleType(), WorkflowConstants.RuleType.INITIATOR_SELECTED)
+                    || Boolean.TRUE.equals(rule.getAllowInitiatorSelect());
+            hasRuntimeSelectionRule = hasRuntimeSelectionRule || requiresSelectedApprovers;
             List<WfNodeApproverDTO> approvers = rule.getApprovers() == null ? Collections.emptyList() : rule.getApprovers();
+            if (approvers.isEmpty() && requiresSelectedApprovers) {
+                approvers = Collections.singletonList(buildSyntheticApprover(WorkflowConstants.ApproverType.INITIATOR_SELECTED));
+            }
+            boolean ruleResolved = false;
             for (WfNodeApproverDTO approver : approvers) {
                 if (approver == null || approver.getApproverType() == null) {
                     continue;
@@ -932,6 +942,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
                     if (approverId == null || !deduplicated.add(approverId)) {
                         continue;
                     }
+                    ruleResolved = true;
                     resolved.add(new ResolvedApprover(
                             approverId,
                             "用户" + approverId,
@@ -941,8 +952,40 @@ public class WfEngineServiceImpl implements IWfEngineService {
                             rule.getTimeoutHours()));
                 }
             }
+            if (!ruleResolved && rule.getFallbackApproverIds() != null) {
+                for (Long approverId : rule.getFallbackApproverIds()) {
+                    if (approverId == null || !deduplicated.add(approverId)) {
+                        continue;
+                    }
+                    resolved.add(new ResolvedApprover(
+                            approverId,
+                            "鐢ㄦ埛" + approverId,
+                            WorkflowConstants.ApproverType.SINGLE,
+                            rule.getId(),
+                            JSON.toJSONString(rule),
+                            rule.getTimeoutHours()));
+                }
+            }
+        }
+        if (resolved.isEmpty() && !hasRuntimeSelectionRule) {
+            return Arrays.stream(determineApprovers(node.getId(), execution.getTenantId()))
+                    .map(approverId -> new ResolvedApprover(
+                            approverId,
+                            "鐢ㄦ埛" + approverId,
+                            WorkflowConstants.ApproverType.SINGLE,
+                            null,
+                            null,
+                            null))
+                    .collect(Collectors.toList());
         }
         return resolved;
+    }
+
+    private WfNodeApproverDTO buildSyntheticApprover(Integer approverType) {
+        WfNodeApproverDTO approver = new WfNodeApproverDTO();
+        approver.setApproverType(approverType);
+        approver.setApproverIds(Collections.emptyList());
+        return approver;
     }
 
     private List<Long> resolveApproverIdsByRule(WfNodeApproverDTO approver, WfTaskExecution execution) {
@@ -950,6 +993,10 @@ public class WfEngineServiceImpl implements IWfEngineService {
             return Collections.emptyList();
         }
         if (Objects.equals(approver.getApproverType(), WorkflowConstants.ApproverType.INITIATOR_SELECTED)) {
+            List<Long> selectedApprovers = START_SELECTED_APPROVERS.get();
+            if (selectedApprovers != null && !selectedApprovers.isEmpty()) {
+                return selectedApprovers;
+            }
             return approver.getApproverIds() == null ? Collections.emptyList() : approver.getApproverIds();
         }
         return parseApproverIds(approver.getApproverType(),

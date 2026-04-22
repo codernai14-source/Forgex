@@ -1,0 +1,41 @@
+-- ================================================
+-- ${ctx.menuName} 主子表公共表格配置
+-- main_table_code: ${ctx.mainTableCode}
+-- sub_table_code: ${ctx.subTableCode}
+-- ================================================
+
+SET @TENANT_ID = 0;
+
+INSERT INTO fx_table_config (
+    tenant_id, table_code, table_name_i18n_json, table_type, row_key,
+    default_page_size, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.mainTableCode}', '{"zh-CN":"${ctx.menuName}","en-US":"${ctx.menuName}"}', 'NORMAL', '${ctx.mainPkJavaField}', 20, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM fx_table_config WHERE tenant_id = @TENANT_ID AND table_code = '${ctx.mainTableCode}' AND deleted = 0);
+
+INSERT INTO fx_table_config (
+    tenant_id, table_code, table_name_i18n_json, table_type, row_key,
+    default_page_size, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.subTableCode}', '{"zh-CN":"${ctx.subTableComment!ctx.subEntityName}","en-US":"${ctx.subTableComment!ctx.subEntityName}"}', 'NORMAL', '${ctx.subPkJavaField}', 20, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM fx_table_config WHERE tenant_id = @TENANT_ID AND table_code = '${ctx.subTableCode}' AND deleted = 0);
+
+<% var mainOrderNum = 1; %>
+<% for(column in ctx.mainTableColumns){ %>
+INSERT INTO fx_table_column_config (
+    tenant_id, table_code, field, title_i18n_json, align, width, ellipsis, sortable, queryable, query_type, query_operator, dict_code, render_type, order_num, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.mainTableCode}', '${column.javaFieldName}', '{"zh-CN":"${column.columnComment!column.columnName}","en-US":"${column.columnComment!column.columnName}"}', '${column.align!"left"}', ${column.width!160}, 1, ${column.sortable ? 1 : 0}, ${column.queryable ? 1 : 0}, <% if(column.queryType){ %>'${column.queryType}'<% } else { %>NULL<% } %>, <% if(column.queryOperator){ %>'${column.queryOperator}'<% } else { %>NULL<% } %>, <% if(column.dictCode){ %>'${column.dictCode}'<% } else { %>NULL<% } %>, <% if(column.renderType){ %>'${column.renderType}'<% } else { %>'text'<% } %>, ${mainOrderNum}, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM fx_table_column_config WHERE tenant_id = @TENANT_ID AND table_code = '${ctx.mainTableCode}' AND field = '${column.javaFieldName}' AND deleted = 0);
+<% mainOrderNum = mainOrderNum + 1; %>
+<% } %>
+
+<% var subOrderNum = 1; %>
+<% for(column in ctx.subTableColumns){ %>
+INSERT INTO fx_table_column_config (
+    tenant_id, table_code, field, title_i18n_json, align, width, ellipsis, sortable, queryable, query_type, query_operator, dict_code, render_type, order_num, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.subTableCode}', '${column.javaFieldName}', '{"zh-CN":"${column.columnComment!column.columnName}","en-US":"${column.columnComment!column.columnName}"}', '${column.align!"left"}', ${column.width!160}, 1, ${column.sortable ? 1 : 0}, ${column.queryable ? 1 : 0}, <% if(column.queryType){ %>'${column.queryType}'<% } else { %>NULL<% } %>, <% if(column.queryOperator){ %>'${column.queryOperator}'<% } else { %>NULL<% } %>, <% if(column.dictCode){ %>'${column.dictCode}'<% } else { %>NULL<% } %>, <% if(column.renderType){ %>'${column.renderType}'<% } else { %>'text'<% } %>, ${subOrderNum}, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM fx_table_column_config WHERE tenant_id = @TENANT_ID AND table_code = '${ctx.subTableCode}' AND field = '${column.javaFieldName}' AND deleted = 0);
+<% subOrderNum = subOrderNum + 1; %>
+<% } %>

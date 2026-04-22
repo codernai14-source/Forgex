@@ -1,0 +1,144 @@
+<template>
+  <div class="${ctx.subEntityNameLower}-detail-page">
+    <FxDynamicTable
+      ref="tableRef"
+      :table-code="'${ctx.subTableCode}'"
+      :request="handleRequest"
+      :dynamic-table-config="tableConfig"
+      :show-query-form="false"
+    >
+      <template #toolbar>
+        <a-space :size="8">
+          <a-button type="primary" @click="openCreate">新增</a-button>
+        </a-space>
+      </template>
+      <template #action="{ record }">
+        <a-space>
+          <a @click="openDetail(record)">详情</a>
+          <a @click="openEdit(record)">编辑</a>
+          <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+        </a-space>
+      </template>
+    </FxDynamicTable>
+
+    <BaseFormDialog v-model:open="formVisible" :title="dialogTitle" :loading="submitting" @submit="handleSubmit">
+      <a-form :model="formData" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+<% for(column in ctx.subFormColumns){ %>
+        <a-form-item label="${column.columnComment!column.columnName}">
+          <a-input v-if="'${column.formType}' === 'input'" v-model:value="formData.${column.javaFieldName}" />
+          <a-textarea v-else-if="'${column.formType}' === 'textarea'" v-model:value="formData.${column.javaFieldName}" :rows="3" />
+          <a-input-number v-else-if="'${column.formType}' === 'number'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
+          <a-date-picker v-else-if="'${column.formType}' === 'date'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
+          <a-date-picker v-else-if="'${column.formType}' === 'datetime'" v-model:value="formData.${column.javaFieldName}" show-time style="width: 100%" />
+          <a-input v-else v-model:value="formData.${column.javaFieldName}" />
+        </a-form-item>
+<% } %>
+      </a-form>
+    </BaseFormDialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { Modal } from 'ant-design-vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import { page${ctx.subEntityName}, detail${ctx.subEntityName}, create${ctx.subEntityName}, update${ctx.subEntityName}, delete${ctx.subEntityName} } from '@/api/${ctx.moduleName}/${ctx.subEntityNameLower}'
+
+const route = useRoute()
+const tableRef = ref()
+const formVisible = ref(false)
+const submitting = ref(false)
+const isEdit = ref(false)
+const isDetail = ref(false)
+const formData = reactive<any>({ id: undefined, ${ctx.entityNameLower}Id: Number(route.params.id) })
+const tableConfig = computed(() => ({
+  tableCode: '${ctx.subTableCode}',
+  tableName: '${ctx.subTableComment}',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+<% for(column in ctx.subTableColumns){ %>
+    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}' },
+<% } %>
+    { field: 'action', title: '操作', width: 180, align: 'center' },
+  ],
+  queryFields: [],
+  version: 1,
+}))
+
+const dialogTitle = computed(() => {
+  if (isDetail.value) return '详情'
+  return isEdit.value ? '编辑' : '新增'
+})
+
+const handleRequest = async (payload: any) => {
+  const result = await page${ctx.subEntityName}({
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    ${ctx.entityNameLower}Id: Number(route.params.id),
+  })
+  return { records: result.records || [], total: result.total || 0 }
+}
+
+function resetForm() {
+  Object.keys(formData).forEach((key) => delete formData[key])
+  formData.id = undefined
+  formData.${ctx.entityNameLower}Id = Number(route.params.id)
+}
+
+function openCreate() {
+  resetForm()
+  isEdit.value = false
+  isDetail.value = false
+  formVisible.value = true
+}
+
+async function openEdit(record: any) {
+  resetForm()
+  Object.assign(formData, await detail${ctx.subEntityName}(record.id))
+  isEdit.value = true
+  isDetail.value = false
+  formVisible.value = true
+}
+
+async function openDetail(record: any) {
+  resetForm()
+  Object.assign(formData, await detail${ctx.subEntityName}(record.id))
+  isEdit.value = false
+  isDetail.value = true
+  formVisible.value = true
+}
+
+async function handleSubmit() {
+  if (isDetail.value) {
+    formVisible.value = false
+    return
+  }
+  submitting.value = true
+  try {
+    if (isEdit.value) {
+      await update${ctx.subEntityName}(formData)
+    } else {
+      await create${ctx.subEntityName}(formData)
+    }
+    formVisible.value = false
+    tableRef.value?.refresh?.()
+  } finally {
+    submitting.value = false
+  }
+}
+
+function handleDelete(id: number) {
+  Modal.confirm({
+    title: '确认删除',
+    content: '确定要删除这条记录吗？',
+    onOk: async () => {
+      await delete${ctx.subEntityName}(id)
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+</script>

@@ -14,12 +14,18 @@ limitations under the License.*/
 package com.forgex.common.dict;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
+import com.forgex.common.service.i18n.I18nLanguageTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,6 +65,8 @@ public class DictCacheInvalidationListener implements MessageListener {
      * 字典项本地缓存（包含样式）
      */
     private final Cache<String, Map<String, DictItem>> dictItemCache;
+
+    private final I18nLanguageTypeService languageTypeService;
     
     /**
      * 处理缓存失效消息
@@ -90,8 +98,7 @@ public class DictCacheInvalidationListener implements MessageListener {
                 String nodePath = parts[1];
                 
                 // 清除所有语言的本地缓存
-                String[] langs = {"zh-CN", "en-US", "ja-JP"};
-                for (String lang : langs) {
+                for (String lang : resolveEnabledLanguageCodes()) {
                     String cacheKey = tenantId + ":" + lang + ":" + nodePath;
                     dictLabelCache.invalidate(cacheKey);
                     dictItemCache.invalidate(cacheKey);
@@ -104,6 +111,23 @@ public class DictCacheInvalidationListener implements MessageListener {
         } catch (Exception e) {
             log.error("处理缓存失效消息失败", e);
         }
+    }
+    private List<String> resolveEnabledLanguageCodes() {
+        LinkedHashSet<String> languageCodes = new LinkedHashSet<>();
+        try {
+            List<FxI18nLanguageType> enabledLanguages = languageTypeService.listEnabled();
+            if (enabledLanguages != null) {
+                enabledLanguages.stream()
+                        .map(FxI18nLanguageType::getLangCode)
+                        .filter(StringUtils::hasText)
+                        .forEach(languageCodes::add);
+            }
+        } catch (Exception ex) {
+            log.warn("加载启用语言列表失败，使用默认语言兜底", ex);
+        }
+        languageCodes.add("zh-CN");
+        languageCodes.add("en-US");
+        return new ArrayList<>(languageCodes);
     }
 }
 

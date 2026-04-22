@@ -262,14 +262,11 @@ const EmptyView = {
  * 灏嗗悗绔殑妯″潡浠ｇ爜鏄犲皠鍒板墠绔殑鐩綍锟?
  */
 const modulePathMap: Record<string, string> = {
-  'sys': 'system',      // sys 妯″潡瀵瑰簲 system 鐩綍
-  'system': 'system',   // 鍏煎瀹屾暣鍚嶇О
-  /** 瀹℃壒绠＄悊妯″潡缂栫爜锟?approval锛岄〉闈㈢粍浠朵粛浣嶄簬 views/workflow */
+  'sys': 'system',
+  'system': 'system',
   'approval': 'workflow',
   'integration': 'integrationPlatform',
-  // 鏈潵鍙互娣诲姞鏇村鏄犲皠锛屼緥濡傦細
-  // 'prod': 'production',
-  // 'qc': 'quality',
+  'label': 'label',
 }
 
 /**
@@ -310,7 +307,12 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       }
     }
 
-    const specialComponentMap: Record<string, string> = {}
+    const specialComponentMap: Record<string, string> = {
+      LabelTemplate: '../views/label/template/index.vue',
+      LabelPrint: '../views/label/print/index.vue',
+      LabelRecord: '../views/label/record/index.vue',
+      LabelBinding: '../views/label/binding/index.vue',
+    }
     if (normalizedName && specialComponentMap[normalizedName]) {
       const mappedPath = specialComponentMap[normalizedName]
       const mappedLoader = viewModules[mappedPath]
@@ -523,6 +525,8 @@ function normalizeSystemConfigRoutes(routes: any[]) {
   const cloned = Array.isArray(routes)
     ? JSON.parse(JSON.stringify(routes))
     : []
+  // 2026-04-20: stop all frontend regrouping, keep backend menu tree as-is.
+  return cloned
 
   const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
   if (!sysRoute || !Array.isArray(sysRoute.children)) {
@@ -665,6 +669,8 @@ function groupSystemMenus(
     childPaths: string[]
   },
 ) {
+  // 2026-04-20: no-op, frontend must not regroup system menus.
+  return
   const catalogIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
   const existingCatalog = catalogIndex >= 0 ? menuList[catalogIndex] : null
   const catalogChildren = Array.isArray(existingCatalog?.children) ? existingCatalog.children : []
@@ -767,7 +773,6 @@ export async function injectDynamicRoutes(payload: any) {
   // 瑙ｆ瀽妯″潡鍜岃矾鐢辨暟锟?
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
   let routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
-  routesPayload = normalizeSystemConfigRoutes(routesPayload)
   routesPayload = normalizeIntegrationRoutes(routesPayload)
 
   // 鏇存柊鍔ㄦ€佹ā鍧楀拰璺敱鍒楄〃

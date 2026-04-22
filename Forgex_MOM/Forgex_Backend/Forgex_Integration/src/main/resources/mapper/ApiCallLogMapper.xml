@@ -8,11 +8,19 @@
     <id property="id" column="id" />
     <result property="tenantId" column="tenant_id" />
     <result property="apiConfigId" column="api_config_id" />
+    <result property="apiCode" column="api_code" />
     <result property="callDirection" column="call_direction" />
     <result property="callerIp" column="caller_ip" />
+    <result property="traceId" column="trace_id" />
+    <result property="taskId" column="task_id" />
+    <result property="invokeMode" column="invoke_mode" />
     <result property="requestData" column="request_data" />
+    <result property="rawRequestData" column="raw_request_data" />
+    <result property="assembledRequestData" column="assembled_request_data" />
     <result property="responseData" column="response_data" />
+    <result property="responseCode" column="response_code" />
     <result property="callStatus" column="call_status" />
+    <result property="resultType" column="result_type" />
     <result property="errorMessage" column="error_message" />
     <result property="costTimeMs" column="cost_time_ms" />
     <result property="callTime" column="call_time" />
@@ -27,11 +35,19 @@
       id,
       tenant_id,
       api_config_id,
+      api_code,
       call_direction,
       caller_ip,
+      trace_id,
+      task_id,
+      invoke_mode,
       request_data,
+      raw_request_data,
+      assembled_request_data,
       response_data,
+      response_code,
       call_status,
+      result_type,
       error_message,
       cost_time_ms,
       call_time,
@@ -43,11 +59,19 @@
       #{log.id},
       #{log.tenantId},
       #{log.apiConfigId},
+      #{log.apiCode},
       #{log.callDirection},
       #{log.callerIp},
+      #{log.traceId},
+      #{log.taskId},
+      #{log.invokeMode},
       #{log.requestData},
+      #{log.rawRequestData},
+      #{log.assembledRequestData},
       #{log.responseData},
+      #{log.responseCode},
       #{log.callStatus},
+      #{log.resultType},
       #{log.errorMessage},
       #{log.costTimeMs},
       #{log.callTime},
@@ -63,11 +87,19 @@
       id,
       tenant_id,
       api_config_id,
+      api_code,
       call_direction,
       caller_ip,
+      trace_id,
+      task_id,
+      invoke_mode,
       request_data,
+      raw_request_data,
+      assembled_request_data,
       response_data,
+      response_code,
       call_status,
+      result_type,
       error_message,
       cost_time_ms,
       call_time,

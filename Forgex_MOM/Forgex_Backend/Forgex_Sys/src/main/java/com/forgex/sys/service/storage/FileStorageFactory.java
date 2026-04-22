@@ -23,33 +23,19 @@ public class FileStorageFactory {
     private final SysFileStorageConfigService storageConfigService;
     private final LocalStorageService localStorageService;
 
-    /**
-     * Resolve storage service with priority:
-     * 1) global system config key: file.upload.settings
-     * 2) tenant table config: sys_file_storage
-     * 3) fallback local storage
-     */
     public FileStorageService getDefault() {
-        FileUploadConfig uploadConfig = configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, null);
-        if (uploadConfig != null && StringUtils.hasText(uploadConfig.getStorageType())) {
-            String type = uploadConfig.getStorageType().trim().toUpperCase();
-            if ("LOCAL".equals(type) || StringUtils.hasText(uploadConfig.getProviderConfigJson())) {
-                return getByType(type, uploadConfig.getProviderConfigJson());
-            }
-            log.warn("file.upload.settings ignored because providerConfigJson is empty for storageType={}", type);
-        }
-
-        SysFileStorage cfg = storageConfigService.getDefault();
-        if (cfg == null || !StringUtils.hasText(cfg.getStorageType())) {
-            log.info("No file storage config found, using local storage");
-            return localStorageService;
-        }
-        return getByType(cfg.getStorageType(), cfg.getConfigJson());
+        StorageResolved resolved = resolveStorage();
+        return getByType(resolved.storageType, resolved.configJson);
     }
 
-    /**
-     * Build storage service by storage type.
-     */
+    public String resolveStorageType() {
+        return resolveStorage().storageType;
+    }
+
+    public Long resolveStorageConfigId() {
+        return resolveStorage().storageConfigId;
+    }
+
     public FileStorageService getByType(String storageType, String configJson) {
         if (!StringUtils.hasText(storageType)) {
             throw new IllegalArgumentException("storageType must not be empty");
@@ -75,6 +61,36 @@ public class FileStorageFactory {
             }
         } catch (IOException e) {
             throw new RuntimeException("Create storage service failed: " + e.getMessage(), e);
+        }
+    }
+
+    private StorageResolved resolveStorage() {
+        FileUploadConfig uploadConfig = configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, null);
+        if (uploadConfig != null && StringUtils.hasText(uploadConfig.getStorageType())) {
+            String type = uploadConfig.getStorageType().trim().toUpperCase();
+            if ("LOCAL".equals(type) || StringUtils.hasText(uploadConfig.getProviderConfigJson())) {
+                return new StorageResolved(type, uploadConfig.getProviderConfigJson(), null);
+            }
+            log.warn("file.upload.settings ignored because providerConfigJson is empty for storageType={}", type);
+        }
+
+        SysFileStorage cfg = storageConfigService.getDefault();
+        if (cfg == null || !StringUtils.hasText(cfg.getStorageType())) {
+            log.info("No file storage config found, using local storage");
+            return new StorageResolved("LOCAL", null, null);
+        }
+        return new StorageResolved(cfg.getStorageType().trim().toUpperCase(), cfg.getConfigJson(), cfg.getId());
+    }
+
+    private static class StorageResolved {
+        private final String storageType;
+        private final String configJson;
+        private final Long storageConfigId;
+
+        private StorageResolved(String storageType, String configJson, Long storageConfigId) {
+            this.storageType = storageType;
+            this.configJson = configJson;
+            this.storageConfigId = storageConfigId;
         }
     }
 }

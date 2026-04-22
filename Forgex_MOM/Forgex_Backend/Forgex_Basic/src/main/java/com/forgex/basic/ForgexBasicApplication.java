@@ -38,7 +38,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableFeignClients(clients = {EncodeRuleFeignClient.class, AuthPermClient.class})
 @EnableAsync
 @Import(DynamicDataSourceAutoConfiguration.class)
-@MapperScan({"com.forgex.basic.mapper", "com.forgex.common.mapper"})
+@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper"})
 public class ForgexBasicApplication {
 
     /**
