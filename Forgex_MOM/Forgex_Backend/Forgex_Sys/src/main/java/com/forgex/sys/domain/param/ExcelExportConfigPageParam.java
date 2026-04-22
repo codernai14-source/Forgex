@@ -5,22 +5,33 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * Excel导出配置分页查询参数类
+ * Excel 导出配置分页查询参数。
+ * <p>
+ * 用于接收导出配置管理页面的分页、表名称、表编码以及启用状态筛选条件。
+ * </p>
+ *
  * @author coder_nai@163.com
- * @date 2026年01月16日
- * @description: 用于接收Excel导出配置分页查询的请求参数
- * @version: 1.0
+ * @version 1.0
+ * @since 2026-01-16
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ExcelExportConfigPageParam extends BaseGetParam {
     /**
-     * 表名
+     * 表名称，支持模糊查询。
      */
     private String tableName;
-    
+
     /**
-     * 表编码
+     * 表编码，支持模糊查询。
      */
     private String tableCode;
+
+    /**
+     * 启用状态。
+     * <p>
+     * true 表示启用，false 表示禁用；为空时不按状态过滤。
+     * </p>
+     */
+    private Boolean enabled;
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @HiltAndroidApp
 class ForgexApplication : Application() {
@@ -19,6 +20,9 @@ class ForgexApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        runBlocking {
+            appLanguageManager.applyBootstrapLanguage()
+        }
         applicationScope.launch {
             appLanguageManager.initialize()
         }

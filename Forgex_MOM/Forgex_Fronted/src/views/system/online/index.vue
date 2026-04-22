@@ -10,7 +10,7 @@
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :降级方案-config="降级方案Config"
+      :dynamic-table-config="dynamicTableConfig"
       :row-selection="{
         selectedRowKeys,
         onChange: handleSelectionChange
@@ -93,7 +93,7 @@ const terminalTabs = computed(() => [
   { key: 'THIRD_PARTY', label: `第三方 (${tabCounts.value.THIRD_PARTY || 0})` },
 ])
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'OnlineUserTable',
   tableName: '在线用户',
   tableType: 'NORMAL',

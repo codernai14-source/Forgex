@@ -68,7 +68,7 @@
           ref="tableRef"
           table-code="RoleMenuGrantTable"
           :request="handleRequest"
-          :降级方案-config="降级方案Config"
+          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -156,7 +156,7 @@ const terminalModuleSelectedKeys = ref<Record<'B' | 'C', Record<string, string[]
 
 const { dictItems: statusOptions } = useDict('status')
 
-const 降级方案Config = computed(() => ({
+const fallbackConfig = computed(() => ({
   tableCode: 'RoleMenuGrantTable',
   tableName: t('system.role.menuGrant'),
   tableType: 'TREE',

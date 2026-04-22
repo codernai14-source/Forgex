@@ -20,7 +20,7 @@
               :table-code="'PositionTable'"
               :request="handleRequest"
               :dict-options="dictOptions"
-              :降级方案-config="降级方案Config"
+              :fallback-config="fallbackConfig"
               row-key="id"
             >
               <template #toolbar>
@@ -205,7 +205,7 @@ const dictOptions = ref({
   positionLevel: positionLevelOptions
 })
 
-const 降级方案Config: Partial<FxTableConfig> = {
+const fallbackConfig: Partial<FxTableConfig> = {
   columns: [
     { field: 'positionName', title: '岗位名称', width: 180, align: 'left' },
     { field: 'positionCode', title: '岗位编码', width: 140, align: 'left' },

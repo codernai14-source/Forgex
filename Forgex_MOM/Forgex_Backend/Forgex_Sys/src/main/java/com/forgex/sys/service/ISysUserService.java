@@ -15,12 +15,15 @@ package com.forgex.sys.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.api.dto.UserThirdPartyPullResultDTO;
+import com.forgex.common.api.dto.UserThirdPartySyncDTO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.vo.SysUserVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -282,6 +285,14 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 用户 ID；若账号不存在则返回 null
      */
     Long getUserIdByAccount(String account);
+
+    /**
+     * 根据登录态标识解析用户 ID，兼容数字 ID 和账号字符串。
+     *
+     * @param loginId 登录态标识
+     * @return 用户 ID，不存在时返回 null
+     */
+    Long resolveUserIdByLoginId(Object loginId);
     
     /**
      * 查询用户关联的租户列表
@@ -347,4 +358,16 @@ public interface ISysUserService extends IService<SysUser> {
      * @throws RuntimeException 当用户不存在时抛出
      */
     boolean changePassword(Long id, String oldPassword, String newPassword);
+
+    List<UserThirdPartySyncDTO> listThirdPartyUsers(Long tenantId);
+
+    UserThirdPartyPullResultDTO syncThirdPartyUsers(Long tenantId, List<UserThirdPartySyncDTO> users);
+
+    UserThirdPartyPullResultDTO importUsers(Long tenantId, MultipartFile file) throws Exception;
+
+    List<Long> listUserIdsByDeptIds(Long tenantId, List<Long> deptIds);
+
+    List<Long> listUserIdsByRoleIds(Long tenantId, List<Long> roleIds);
+
+    List<Long> listUserIdsByPositionIds(Long tenantId, List<Long> positionIds);
 }

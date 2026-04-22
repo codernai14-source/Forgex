@@ -1,6 +1,7 @@
 package com.forgex.integration;
 
 import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.api.feign.IntegrationUserSyncFeignClient;
 import com.forgex.common.security.perm.PermissionInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -21,7 +22,7 @@ import org.springframework.context.annotation.Import;
  */
 @SpringBootApplication(scanBasePackages = "com.forgex")
 @EnableDiscoveryClient
-@EnableFeignClients(clients = AuthPermClient.class)
+@EnableFeignClients(clients = {AuthPermClient.class, IntegrationUserSyncFeignClient.class})
 @Import(PermissionInterceptor.class)
 @MapperScan({"com.forgex.integration.mapper", "com.forgex.common.mapper"})
 public class ForgexIntegrationApplication {

@@ -39,9 +39,12 @@
     <string name="auth_public_key_ready">已启用 SM2 公钥预热，密码会加密后传输</string>
     <string name="auth_public_key_missing">未获取到公钥，当前按联调模式发送密码</string>
     <string name="auth_login_method_account">账号登录</string>
-    <string name="auth_login_method_wechat">微信(开发中)</string>
-    <string name="auth_login_method_dingtalk">钉钉(开发中)</string>
-    <string name="auth_login_method_feishu">飞书(开发中)</string>
+    <string name="auth_login_method_wechat">微信</string>
+    <string name="auth_login_method_dingtalk">钉钉</string>
+    <string name="auth_login_method_feishu">飞书</string>
+    <string name="auth_third_party_hint">第三方登录暂未开放</string>
+    <string name="auth_language_switch">切换语言</string>
+    <string name="auth_language_default_option">跟随后端默认语言</string>
     <string name="auth_captcha_load_failed">验证码加载失败</string>
     <string name="auth_captcha_refresh">刷新</string>
     <string name="auth_slider_loading">滑块验证码加载中...</string>

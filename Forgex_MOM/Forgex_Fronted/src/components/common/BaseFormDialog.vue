@@ -7,6 +7,9 @@
     :width="width"
     :confirm-loading="loading"
     :destroy-on-close="destroyOnClose"
+    :body-style="bodyStyle"
+    :wrap-class-name="wrapClassName"
+    :mask-closable="maskClosable"
     @ok="handleSubmit"
     @cancel="handleCancel"
   >
@@ -31,6 +34,8 @@
     :title="title"
     :width="width"
     :destroy-on-close="destroyOnClose"
+    :body-style="bodyStyle"
+    :mask-closable="maskClosable"
     @close="handleCancel"
   >
     <slot />
@@ -54,6 +59,7 @@
 import { computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { Modal as AModal, Drawer as ADrawer, Space as ASpace, Button as AButton } from 'ant-design-vue'
+import type { CSSProperties } from 'vue'
 
 /**
  * 通用表单弹窗组件
@@ -77,6 +83,12 @@ interface Props {
   loading?: boolean
   /** 关闭时销毁子元素，默认 true，用于优化性能 */
   destroyOnClose?: boolean
+  /** 内容区样式，供复杂表单页面按需透传 */
+  bodyStyle?: CSSProperties
+  /** Modal 外层类名，供个别页面定制浮层样式 */
+  wrapClassName?: string
+  /** 是否允许点击遮罩关闭，默认 false 以避免误关闭复杂表单 */
+  maskClosable?: boolean
 }
 
 interface Emits {
@@ -109,6 +121,9 @@ const props = withDefaults(defineProps<Props>(), {
   width: 600,
   loading: false,
   destroyOnClose: true,
+  bodyStyle: undefined,
+  wrapClassName: '',
+  maskClosable: false,
 })
 
 const emit = defineEmits<Emits>()

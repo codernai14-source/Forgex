@@ -39,9 +39,7 @@ class LanguageRepository @Inject constructor(
                     ?: defaultLanguage.langCode
             }
             LanguageMode.FOLLOW_SYSTEM -> {
-                val systemLanguage = AppLanguage.currentSystemLanguage()
-                availableLanguages.firstOrNull { it.langCode == systemLanguage }?.langCode
-                    ?: defaultLanguage.langCode
+                defaultLanguage.langCode
             }
         }
 
@@ -81,7 +79,8 @@ class LanguageRepository @Inject constructor(
     suspend fun saveSelection(mode: LanguageMode, languageTag: String?) {
         sessionStore.saveLanguageSelection(mode, languageTag)
         val resolvedTag = if (mode == LanguageMode.FOLLOW_SYSTEM) {
-            AppLanguage.currentSystemLanguage()
+            loadDefaultLanguage().getOrNull()?.langCode
+                ?: AppLanguage.currentSystemLanguage()
         } else {
             AppLanguage.normalize(languageTag)
         }

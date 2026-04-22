@@ -50,12 +50,12 @@
       </template>
     </FxDynamicTable>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="modalVisible"
       :title="modalTitle"
       width="900px"
-      :confirm-loading="modalLoading"
-      @ok="handleModalOk"
+      :loading="modalLoading"
+      @submit="handleModalOk"
       @cancel="handleModalCancel"
     >
       <a-tabs v-model:activeKey="activeTab">
@@ -219,7 +219,7 @@
           <a-empty v-if="formData.contents.length === 0" :description="t('system.messageTemplate.content.empty')" />
         </a-tab-pane>
       </a-tabs>
-    </a-modal>
+    </BaseFormDialog>
 
     <TemplatePreview
       v-model:visible="previewVisible"
@@ -243,6 +243,7 @@ import {
 import I18nInput from '@/components/common/I18nInput.vue'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import TemplatePreview from '@/components/common/TemplatePreview.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getI18nValue, toI18nJson } from '@/utils/i18n'
 import {
   pageMessageTemplate,

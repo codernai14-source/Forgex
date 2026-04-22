@@ -16,7 +16,13 @@ public class ApiExecutionContext {
 
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     private String apiCode;
+
+    private String targetSystemCode;
+
+    private String targetSystemName;
 
     private String direction;
 

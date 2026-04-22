@@ -6,14 +6,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.forgex.common.exception.I18nBusinessException;
-import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
-import com.forgex.integration.enums.IntegrationPromptEnum;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ApiConfigDTO;
+import com.forgex.integration.domain.dto.ApiOutboundTargetDTO;
 import com.forgex.integration.domain.entity.ApiConfig;
 import com.forgex.integration.domain.param.ApiConfigParam;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.mapper.ApiConfigMapper;
 import com.forgex.integration.service.IApiConfigService;
+import com.forgex.integration.service.IApiOutboundTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -25,72 +27,83 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 接口配置信息服务实现类
+ * 接口配置服务实现。
  * <p>
- * 提供接口配置的增删改查、启用/停用等基础服务实现
+ * 负责第三方接口配置的分页查询、列表查询、详情、新增、编辑、删除以及启停用。
+ * 保存接口配置时同步维护出站目标配置。
  * </p>
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-14
+ * @author coder_nai@163.com
+ * @version 1.0.0
+ * @since 2026-04-01
+ * @see IApiConfigService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig> 
-    implements IApiConfigService {
+public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig> implements IApiConfigService {
 
+    /**
+     * 接口配置 Mapper。
+     */
     private final ApiConfigMapper apiConfigMapper;
 
+    /**
+     * 出站目标服务。
+     */
+    private final IApiOutboundTargetService apiOutboundTargetService;
+
+    /**
+     * 分页查询接口配置。
+     *
+     * @param param 查询参数
+     * @return 分页结果
+     */
     @Override
     public Page<ApiConfigDTO> pageApiConfigs(ApiConfigParam param) {
         Page<ApiConfig> page = new Page<>(param.getPageNum(), param.getPageSize());
-        
+
         LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(ApiConfig::getDeleted, false);
         wrapper.eq(param.getStatus() != null, ApiConfig::getStatus, param.getStatus());
-        wrapper.like(param.getApiCode() != null && !param.getApiCode().isEmpty(), 
-                     ApiConfig::getApiCode, param.getApiCode());
-        wrapper.like(param.getApiName() != null && !param.getApiName().isEmpty(), 
-                     ApiConfig::getApiName, param.getApiName());
-        wrapper.eq(param.getModuleCode() != null && !param.getModuleCode().isEmpty(), 
-                   ApiConfig::getModuleCode, param.getModuleCode());
-        wrapper.eq(param.getDirection() != null && !param.getDirection().isEmpty(), 
-                   ApiConfig::getDirection, param.getDirection());
+        wrapper.like(hasText(param.getApiCode()), ApiConfig::getApiCode, param.getApiCode());
+        wrapper.like(hasText(param.getApiName()), ApiConfig::getApiName, param.getApiName());
+        wrapper.eq(hasText(param.getModuleCode()), ApiConfig::getModuleCode, param.getModuleCode());
+        wrapper.eq(hasText(param.getDirection()), ApiConfig::getDirection, param.getDirection());
         wrapper.orderByDesc(ApiConfig::getCreateTime);
-        
+
         Page<ApiConfig> resultPage = this.page(page, wrapper);
-        
         Page<ApiConfigDTO> dtoPage = new Page<>();
         BeanUtils.copyProperties(resultPage, dtoPage, "records");
-        dtoPage.setRecords(resultPage.getRecords().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList()));
-        
+        dtoPage.setRecords(resultPage.getRecords().stream().map(this::convertToDTO).collect(Collectors.toList()));
         return dtoPage;
     }
 
+    /**
+     * 查询接口配置列表。
+     *
+     * @param param 查询参数
+     * @return 接口配置列表
+     */
     @Override
     public List<ApiConfigDTO> listApiConfigs(ApiConfigParam param) {
         LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(ApiConfig::getDeleted, false);
         wrapper.eq(param.getStatus() != null, ApiConfig::getStatus, param.getStatus());
-        wrapper.like(param.getApiCode() != null && !param.getApiCode().isEmpty(), 
-                     ApiConfig::getApiCode, param.getApiCode());
-        wrapper.like(param.getApiName() != null && !param.getApiName().isEmpty(), 
-                     ApiConfig::getApiName, param.getApiName());
-        wrapper.eq(param.getModuleCode() != null && !param.getModuleCode().isEmpty(), 
-                   ApiConfig::getModuleCode, param.getModuleCode());
-        wrapper.eq(param.getDirection() != null && !param.getDirection().isEmpty(), 
-                   ApiConfig::getDirection, param.getDirection());
+        wrapper.like(hasText(param.getApiCode()), ApiConfig::getApiCode, param.getApiCode());
+        wrapper.like(hasText(param.getApiName()), ApiConfig::getApiName, param.getApiName());
+        wrapper.eq(hasText(param.getModuleCode()), ApiConfig::getModuleCode, param.getModuleCode());
+        wrapper.eq(hasText(param.getDirection()), ApiConfig::getDirection, param.getDirection());
         wrapper.orderByDesc(ApiConfig::getCreateTime);
-        
-        List<ApiConfig> list = this.list(wrapper);
-        return list.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+        return this.list(wrapper).stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    /**
+     * 根据 ID 查询接口配置。
+     *
+     * @param id 接口配置 ID
+     * @return 接口配置 DTO
+     */
     @Override
     public ApiConfigDTO getApiConfigById(Long id) {
         ApiConfig config = this.getById(id);
@@ -100,86 +113,102 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         return convertToDTO(config);
     }
 
+    /**
+     * 根据接口编码查询配置。
+     *
+     * @param apiCode 接口编码
+     * @return 接口配置 DTO，不存在时返回 null
+     */
     @Override
     public ApiConfigDTO getByApiCode(String apiCode) {
-        Long tenantId = getCurrentTenantId();
-        
         LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(ApiConfig::getDeleted, false);
         wrapper.eq(ApiConfig::getApiCode, apiCode);
-        wrapper.eq(ApiConfig::getTenantId, tenantId);
+        wrapper.eq(ApiConfig::getTenantId, getCurrentTenantId());
         wrapper.last("LIMIT 1");
-        
         ApiConfig config = apiConfigMapper.selectOne(wrapper);
-        return config != null ? convertToDTO(config) : null;
+        return config == null ? null : convertToDTO(config);
     }
 
+    /**
+     * 根据处理器 Bean 查询启用的接口配置。
+     *
+     * @param processorBean 处理器 Bean 名称
+     * @return 接口配置 DTO，不存在时返回 null
+     */
     @Override
     public ApiConfigDTO getByProcessorBean(String processorBean) {
         LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ApiConfig::getDeleted, 0);
+        wrapper.eq(ApiConfig::getDeleted, false);
         wrapper.eq(ApiConfig::getProcessorBean, processorBean);
         wrapper.eq(ApiConfig::getStatus, 1);
         wrapper.last("LIMIT 1");
-        
         ApiConfig config = apiConfigMapper.selectOne(wrapper);
-        return config != null ? convertToDTO(config) : null;
+        return config == null ? null : convertToDTO(config);
     }
 
+    /**
+     * 新增接口配置。
+     *
+     * @param dto 接口配置 DTO
+     * @return 新增后的接口配置
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiConfigDTO createApiConfig(ApiConfigDTO dto) {
-        // 校验接口编码唯一性
         ApiConfigDTO existing = getByApiCode(dto.getApiCode());
         if (existing != null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CODE_EXISTS, dto.getApiCode());
         }
-        
+
         ApiConfig config = new ApiConfig();
         BeanUtils.copyProperties(dto, config);
         fillAuditFieldsOnCreate(config);
-        
         boolean success = this.save(config);
         if (!success) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_CREATE_FAILED);
         }
-        
-        log.info("创建接口配置成功：{}", dto.getApiCode());
-        return convertToDTO(config);
+        apiOutboundTargetService.replaceTargets(config.getId(), dto.getOutboundTargets());
+        return getApiConfigById(config.getId());
     }
 
+    /**
+     * 更新接口配置。
+     *
+     * @param dto 接口配置 DTO
+     * @return 更新后的接口配置
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiConfigDTO updateApiConfig(ApiConfigDTO dto) {
         if (dto.getId() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
-        
-        // 校验配置是否存在
         ApiConfig existing = this.getById(dto.getId());
         if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
-        
-        // 校验接口编码唯一性（排除自身）
         ApiConfigDTO sameCode = getByApiCode(dto.getApiCode());
         if (sameCode != null && !sameCode.getId().equals(dto.getId())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CODE_EXISTS, dto.getApiCode());
         }
-        
+
         ApiConfig config = new ApiConfig();
         BeanUtils.copyProperties(dto, config);
         fillAuditFieldsOnUpdate(config, existing);
-        
         boolean success = this.updateById(config);
         if (!success) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_UPDATE_FAILED);
         }
-        
-        log.info("更新接口配置成功：{}", dto.getApiCode());
+        apiOutboundTargetService.replaceTargets(dto.getId(), dto.getOutboundTargets());
         return getApiConfigById(dto.getId());
     }
 
+    /**
+     * 逻辑删除接口配置。
+     *
+     * @param id 接口配置 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteApiConfig(Long id) {
@@ -187,16 +216,10 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
-        
-        config.setDeleted(true);
-        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
-        
-        boolean success = this.updateById(config);
-        if (!success) {
+        config.setDeleted(Boolean.TRUE);
+        if (!this.updateById(config)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_DELETE_FAILED);
         }
-        
-        log.info("删除接口配置成功：ID={}", id);
     }
 
     @Override
@@ -205,71 +228,42 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         if (ids == null || ids.isEmpty()) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
-        
         for (Long id : ids) {
-            try {
-                deleteApiConfig(id);
-            } catch (I18nBusinessException e) {
-                log.warn("删除接口配置失败：ID={}, 原因：{}", id, e.getMessage());
-            }
+            deleteApiConfig(id);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void enableApiConfig(Long id) {
-        ApiConfig config = this.getById(id);
-        if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
-        }
-        
-        config.setStatus(1);
-        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
-        
-        boolean success = this.updateById(config);
-        if (!success) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_ENABLE_FAILED);
-        }
-        
-        log.info("启用接口配置成功：ID={}, apiCode={}", id, config.getApiCode());
+        updateStatus(id, 1, IntegrationPromptEnum.API_CONFIG_ENABLE_FAILED);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void disableApiConfig(Long id) {
+        updateStatus(id, 0, IntegrationPromptEnum.API_CONFIG_DISABLE_FAILED);
+    }
+
+    private void updateStatus(Long id, int status, IntegrationPromptEnum prompt) {
         ApiConfig config = this.getById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND);
         }
-        
-        config.setStatus(0);
-        // 不需要手动设置 updateTime 和 updateBy，MyBatis-Plus 会自动填充
-        
-        boolean success = this.updateById(config);
-        if (!success) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_DISABLE_FAILED);
+        config.setStatus(status);
+        if (!this.updateById(config)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, prompt);
         }
-        
-        log.info("停用接口配置成功：ID={}, apiCode={}", id, config.getApiCode());
     }
 
-    /**
-     * 实体转 DTO
-     *
-     * @param config 接口配置实体
-     * @return 接口配置 DTO
-     */
     private ApiConfigDTO convertToDTO(ApiConfig config) {
         ApiConfigDTO dto = new ApiConfigDTO();
         BeanUtils.copyProperties(config, dto);
+        List<ApiOutboundTargetDTO> targets = apiOutboundTargetService.listByApiConfigId(config.getId());
+        dto.setOutboundTargets(targets);
         return dto;
     }
 
-    /**
-     * 获取当前租户 ID
-     *
-     * @return 当前租户 ID，默认返回 0L
-     */
     private Long getCurrentTenantId() {
         Long tenantId = TenantContext.get();
         return tenantId != null ? tenantId : 0L;
@@ -314,5 +308,9 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         } catch (NotLoginException ex) {
             return "system";
         }
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

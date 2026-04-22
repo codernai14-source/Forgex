@@ -79,6 +79,21 @@ public class WfExecutionDTO {
     private String formContent;
 
     /**
+     * 发起审批时关联任务配置的表单类型。
+     */
+    private Integer formType;
+
+    /**
+     * 发起审批时关联任务配置的自定义表单路径。
+     */
+    private String formPath;
+
+    /**
+     * 发起审批时关联任务配置的低代码表单结构。
+     */
+    private String taskFormContent;
+
+    /**
      * 发起时间。
      */
     private LocalDateTime startTime;

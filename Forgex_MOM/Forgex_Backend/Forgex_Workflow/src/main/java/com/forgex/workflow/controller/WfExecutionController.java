@@ -32,6 +32,7 @@ import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
 import com.forgex.workflow.domain.param.WfExecutionTransferParam;
+import com.forgex.workflow.enums.WorkflowPromptEnum;
 import com.forgex.workflow.service.IWfExecutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -90,7 +91,7 @@ public class WfExecutionController {
     @PostMapping("/approve")
     @RequirePerm("wf:execution:approve")
     public R<Boolean> approve(@Validated @RequestBody WfExecutionApproveParam param) {
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.approve(param));
+        return R.ok(WorkflowPromptEnum.WF_APPROVE_SUCCESS, executionService.approve(param));
     }
 
     /**
@@ -108,7 +109,7 @@ public class WfExecutionController {
     @PostMapping("/reject")
     @RequirePerm("wf:execution:reject")
     public R<Boolean> reject(@Validated @RequestBody WfExecutionApproveParam param) {
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.reject(param));
+        return R.ok(WorkflowPromptEnum.WF_REJECT_SUCCESS, executionService.reject(param));
     }
 
     /**

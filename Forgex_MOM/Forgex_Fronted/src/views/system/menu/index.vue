@@ -27,7 +27,7 @@
             ref="tableRef"
             table-code="MenuTable"
             :request="handleRequest"
-            :降级方案-config="降级方案Config"
+            :fallback-config="fallbackConfig"
             :dict-options="dictOptions"
             :row-selection="{
               selectedRowKeys,
@@ -377,7 +377,7 @@ const dictOptions = computed(() => ({
   status: statusOptions.value,
 }))
 
-const 降级方案Config = computed(() => ({
+const fallbackConfig = computed(() => ({
   tableCode: 'MenuTable',
   tableName: t('system.menu.title'),
   tableType: 'NORMAL',

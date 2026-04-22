@@ -49,6 +49,9 @@ export interface WfExecutionDTO {
   currentNodeId?: number
   currentNodeName?: string
   formContent: string
+  formType?: number
+  formPath?: string
+  taskFormContent?: string
   startTime: string
   endTime?: string
   status: number

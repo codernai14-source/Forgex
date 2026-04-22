@@ -78,6 +78,7 @@ import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.auth.enums.AuthPromptEnum;
 import com.forgex.common.crypto.CryptoProviders;
+import com.forgex.common.enums.UserSourceEnum;
 
 /**
  * 认证服务实现类
@@ -1279,6 +1280,7 @@ public class AuthServiceImpl implements AuthService {
         newUser.setPhone(param.getPhone());
         newUser.setEmail(param.getEmail());
         newUser.setStatus(true);
+        newUser.setUserSource(UserSourceEnum.SELF_REGISTERED.getCode());
         userMapper.insert(newUser);
 
         Long userId = newUser.getId();

@@ -37,6 +37,8 @@ public interface ExcelFileService {
      */
     byte[] buildImportTemplateXlsx(FxExcelImportConfigDTO config);
 
+    byte[] buildImportTemplateXlsxOrThrow(FxExcelImportConfigDTO config);
+
     /**
      * 生成导出文件（xlsx/csv）。
      *

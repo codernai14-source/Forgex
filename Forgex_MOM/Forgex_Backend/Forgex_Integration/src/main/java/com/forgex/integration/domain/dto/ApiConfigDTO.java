@@ -3,6 +3,7 @@ package com.forgex.integration.domain.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 接口配置 DTO。
@@ -53,6 +54,8 @@ public class ApiConfigDTO {
     private Integer status;
 
     private String moduleCode;
+
+    private List<ApiOutboundTargetDTO> outboundTargets;
 
     private LocalDateTime createTime;
 

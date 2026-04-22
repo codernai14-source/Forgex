@@ -47,6 +47,9 @@
     <string name="auth_login_method_wechat">WeChat login</string>
     <string name="auth_login_method_dingtalk">DingTalk login</string>
     <string name="auth_login_method_gitee">Gitee login</string>
+    <string name="auth_language_switch">Switch language</string>
+    <string name="auth_language_default_option">Follow backend default language</string>
+    <string name="auth_third_party_hint">Third-party login is not available yet</string>
     <string name="auth_back_to_login_methods">Back to method selection</string>
     <string name="auth_captcha_load_failed">Failed to load captcha</string>
     <string name="auth_captcha_refresh">Refresh</string>

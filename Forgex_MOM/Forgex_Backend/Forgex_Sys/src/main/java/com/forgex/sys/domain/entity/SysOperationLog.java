@@ -31,6 +31,9 @@ public class SysOperationLog extends BaseEntity {
     @TableField("username")
     private String username;
 
+    @TableField(exist = false)
+    private String account;
+
     /**
      * 模块名称
      */

@@ -17,6 +17,8 @@ public class ApiParamBatchSaveParam {
      */
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     /**
      * 参数方向：REQUEST / RESPONSE
      */

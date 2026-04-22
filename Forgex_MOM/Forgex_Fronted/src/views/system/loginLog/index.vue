@@ -5,6 +5,7 @@
       table-code="sys.loginLog.list"
       :dict-options="dictOptions"
       :request="request"
+      :dynamic-table-config="dynamicTableConfig"
     >
       <template #toolbar>
         <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">{{ t('common.export') }}</a-button>
@@ -21,6 +22,7 @@ import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
 import { exportLoginLog } from '@/api/system/excel'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import type { FxTableConfig } from '@/api/system/tableConfig'
 
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -32,6 +34,29 @@ const dictOptions = computed(() => ({
     { label: t('common.success'), value: 1 },
     { label: t('common.failed'), value: 0 },
   ],
+}))
+
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'sys.loginLog.list',
+  tableName: '登录日志',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+    { field: 'account', title: '登录账号', width: 140, align: 'left' },
+    { field: 'status', title: '登录状态', width: 110, align: 'center', dictCode: 'status' },
+    { field: 'loginTime', title: '登录时间', width: 180, align: 'center' },
+    { field: 'loginIp', title: '登录 IP', width: 150, align: 'left' },
+    { field: 'loginRegion', title: '归属地', width: 180, align: 'left' },
+    { field: 'userAgent', title: '浏览器 UA', width: 220, align: 'left', ellipsis: true },
+    { field: 'reason', title: '失败原因', width: 160, align: 'left', ellipsis: true },
+  ],
+  queryFields: [
+    { field: 'account', label: '登录账号', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '登录状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+    { field: 'loginTime', label: '登录时间', queryType: 'dateRange', queryOperator: 'between' },
+  ],
+  version: 2,
 }))
 
 const request = async (payload: { page: { current: number; pageSize: number }; query: Record<string, any> }) => {

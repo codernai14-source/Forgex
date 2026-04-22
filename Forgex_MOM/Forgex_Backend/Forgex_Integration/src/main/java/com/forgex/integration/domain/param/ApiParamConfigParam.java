@@ -20,6 +20,8 @@ public class ApiParamConfigParam {
      */
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     /**
      * 参数方向：REQUEST-请求，RESPONSE-响应
      */
