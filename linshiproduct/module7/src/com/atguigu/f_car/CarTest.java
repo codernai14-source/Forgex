@@ -21,5 +21,10 @@ public class CarTest {
         car1.speedUp(30);
         car1.run();
         car2.speedUp(-40);
+        //给两个汽车对象分别调用brake()方法，再次调用run()验证速度是否成功置 0
+        car1.brake();
+        car1.run();
+        car2.brake();
+        car2.run();
     }
 }
