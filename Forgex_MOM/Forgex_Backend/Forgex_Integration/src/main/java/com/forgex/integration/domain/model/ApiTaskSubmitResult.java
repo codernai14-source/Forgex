@@ -15,4 +15,10 @@ public class ApiTaskSubmitResult {
     private String traceId;
 
     private String status;
+
+    private Long outboundTargetId;
+
+    private String targetSystemCode;
+
+    private String targetSystemName;
 }

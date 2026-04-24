@@ -26,9 +26,22 @@ class AppLanguageManager @Inject constructor(
     val currentLanguageTag: Flow<String> = sessionStore.lastResolvedLanguageTag
         .map { value -> value ?: AppLanguage.DEFAULT_LANGUAGE_TAG }
 
+    suspend fun applyBootstrapLanguage() {
+        val storedMode = sessionStore.languageMode.first()
+        val bootstrapTag = when (storedMode) {
+            LanguageMode.MANUAL -> {
+                sessionStore.languageTag.first()?.let(AppLanguage::normalize)
+            }
+            LanguageMode.FOLLOW_SYSTEM -> {
+                sessionStore.lastResolvedLanguageTag.first()?.let(AppLanguage::normalize)
+            }
+        } ?: AppLanguage.DEFAULT_LANGUAGE_TAG
+        AppLanguage.apply(LanguageMode.MANUAL, bootstrapTag)
+    }
+
     suspend fun initialize() {
         val resolved = languageRepository.resolveStartupLanguage()
-        AppLanguage.apply(resolved.languageMode, resolved.languageTag)
+        AppLanguage.apply(LanguageMode.MANUAL, resolved.languageTag)
         val bundle = i18nBundleRepository.readCachedBundle(resolved.languageTag)
         _state.value = AppLanguageState(
             mode = resolved.languageMode,
@@ -41,9 +54,9 @@ class AppLanguageManager @Inject constructor(
     }
 
     suspend fun followSystem() {
-        val resolved = languageRepository.resolveStartupLanguage()
         languageRepository.saveSelection(LanguageMode.FOLLOW_SYSTEM, null)
-        AppLanguage.apply(LanguageMode.FOLLOW_SYSTEM, null)
+        val resolved = languageRepository.resolveStartupLanguage()
+        AppLanguage.apply(LanguageMode.MANUAL, resolved.languageTag)
         updateState(
             mode = LanguageMode.FOLLOW_SYSTEM,
             languageTag = resolved.languageTag,

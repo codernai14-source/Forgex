@@ -20,8 +20,9 @@
     >
       <div class="leave-form__grid">
         <a-form-item :label="t('workflow.execution.leaveForm.leaveType')" name="leaveType">
-          <a-select
+        <a-select
             v-model:value="formState.leaveType"
+            :disabled="readonly"
             :placeholder="t('workflow.execution.leaveForm.leaveTypePlaceholder')"
             :options="leaveTypeOptions"
           />
@@ -33,6 +34,7 @@
             style="width: 100%"
             value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
+            :disabled="readonly"
             :placeholder="t('workflow.execution.leaveForm.startDatePlaceholder')"
           />
         </a-form-item>
@@ -43,6 +45,7 @@
             style="width: 100%"
             value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
+            :disabled="readonly"
             :placeholder="t('workflow.execution.leaveForm.endDatePlaceholder')"
           />
         </a-form-item>
@@ -50,6 +53,7 @@
         <a-form-item :label="t('workflow.execution.leaveForm.contactPhone')" name="contactPhone">
           <a-input
             v-model:value="formState.contactPhone"
+            :disabled="readonly"
             :placeholder="t('workflow.execution.leaveForm.contactPhonePlaceholder')"
           />
         </a-form-item>
@@ -57,6 +61,7 @@
         <a-form-item :label="t('workflow.execution.leaveForm.handoverPerson')" name="handoverPerson">
           <a-input
             v-model:value="formState.handoverPerson"
+            :disabled="readonly"
             :placeholder="t('workflow.execution.leaveForm.handoverPersonPlaceholder')"
           />
         </a-form-item>
@@ -70,6 +75,7 @@
         <a-textarea
           v-model:value="formState.reason"
           :rows="5"
+          :disabled="readonly"
           :placeholder="t('workflow.execution.leaveForm.reasonPlaceholder')"
         />
       </a-form-item>
@@ -104,7 +110,10 @@ const leaveTypeOptions = computed(() => [
 
 const props = defineProps<{
   modelValue?: Partial<LeaveFormModel>
+  readonly?: boolean
 }>()
+
+const readonly = computed(() => Boolean(props.readonly))
 
 const emit = defineEmits<{
   (event: 'update:modelValue', value: LeaveFormModel): void

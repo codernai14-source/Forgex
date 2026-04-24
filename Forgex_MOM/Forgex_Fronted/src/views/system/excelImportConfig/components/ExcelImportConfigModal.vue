@@ -6,71 +6,85 @@
     :loading="loading"
     @submit="handleSubmit"
   >
-    <a-form
-      ref="formRef"
-      :model="formData"
-      :label-col="{ span: 5 }"
-      :wrapper-col="{ span: 19 }"
-    >
-      <a-card size="small" :bordered="false" class="mb-16">
-        <template #title>
-          <span class="card-title">{{ t('system.excel.baseConfig') }}</span>
-        </template>
-
-        <a-form-item
-          :label="t('system.excel.tableName')"
-          name="tableName"
-          :rules="{ required: true, message: t('system.excel.message.pleaseInputTableName') }"
+    <a-tabs v-model:activeKey="activeTab" type="card">
+      <a-tab-pane key="basic" :tab="t('system.excel.basicDataTab')">
+        <a-form
+          ref="formRef"
+          :model="formData"
+          :label-col="{ span: 5 }"
+          :wrapper-col="{ span: 19 }"
         >
-          <a-input
-            v-model:value="formData.tableName"
-            :placeholder="t('system.excel.pleaseInputTableName')"
-          />
-        </a-form-item>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item
+                :label="t('system.excel.tableName')"
+                name="tableName"
+                :rules="{ required: true, message: t('system.excel.message.pleaseInputTableName') }"
+              >
+                <a-input
+                  v-model:value="formData.tableName"
+                  :placeholder="t('system.excel.pleaseInputTableName')"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item
+                :label="t('system.excel.tableCode')"
+                name="tableCode"
+                :rules="{ required: true, message: t('system.excel.message.pleaseInputTableCode') }"
+              >
+                <a-input
+                  v-model:value="formData.tableCode"
+                  :placeholder="t('system.excel.pleaseInputTableCode')"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
 
-        <a-form-item
-          :label="t('system.excel.tableCode')"
-          name="tableCode"
-          :rules="{ required: true, message: t('system.excel.message.pleaseInputTableCode') }"
-        >
-          <a-input
-            v-model:value="formData.tableCode"
-            :placeholder="t('system.excel.pleaseInputTableCode')"
-          />
-        </a-form-item>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item :label="t('system.excel.title')" name="title">
+                <a-input
+                  v-model:value="formData.title"
+                  :placeholder="t('system.excel.pleaseInputTitle')"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item :label="t('system.excel.subtitle')" name="subtitle">
+                <a-input
+                  v-model:value="formData.subtitle"
+                  :placeholder="t('system.excel.pleaseInputSubtitle')"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
 
-        <a-form-item :label="t('system.excel.title')" name="title">
-          <a-input
-            v-model:value="formData.title"
-            :placeholder="t('system.excel.pleaseInputTitle')"
-          />
-        </a-form-item>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item :label="t('system.excel.version')" name="version">
+                <a-input-number
+                  v-model:value="formData.version"
+                  :min="1"
+                  :step="1"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+      </a-tab-pane>
 
-        <a-form-item :label="t('system.excel.subtitle')" name="subtitle">
-          <a-input
-            v-model:value="formData.subtitle"
-            :placeholder="t('system.excel.pleaseInputSubtitle')"
-          />
-        </a-form-item>
+      <a-tab-pane key="fields" :tab="t('system.excel.importFields')">
+        <div class="field-toolbar">
+          <a-button type="primary" @click="addField">
+            {{ t('common.add') }}
+          </a-button>
+        </div>
 
-        <a-form-item :label="t('system.excel.version')" name="version">
-          <a-input-number
-            v-model:value="formData.version"
-            :min="1"
-            :step="1"
-            style="width: 100%"
-          />
-        </a-form-item>
-      </a-card>
-
-      <a-card size="small" :bordered="false" class="mt-16">
-        <template #title>
-          <span class="card-title">{{ t('system.excel.importFields') }}</span>
-        </template>
-
-        <FieldConfigList v-model="formData.fields" />
-      </a-card>
-    </a-form>
+        <FieldConfigList ref="fieldConfigListRef" v-model="formData.fields" />
+      </a-tab-pane>
+    </a-tabs>
   </BaseFormDialog>
 </template>
 
@@ -81,20 +95,9 @@ import type { FormInstance } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FieldConfigList from '@/components/excel/FieldConfigList.vue'
 
-/**
- * 导入配置编辑弹窗
- *
- * 功能：
- * 1. 维护基础配置
- * 2. 维护导入字段配置
- * 3. 对外暴露表单数据供父组件提交
- */
 interface Props {
-  /** 弹窗是否打开 */
   open?: boolean
-  /** 是否为编辑模式 */
   isEdit?: boolean
-  /** 编辑详情数据 */
   data?: any
 }
 
@@ -105,9 +108,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  /** 更新弹窗显示状态 */
   (e: 'update:open', value: boolean): void
-  /** 提交表单 */
   (e: 'submit'): void
 }>()
 
@@ -115,7 +116,9 @@ const { t } = useI18n()
 
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
+const fieldConfigListRef = ref<InstanceType<typeof FieldConfigList> | null>(null)
 const loading = ref(false)
+const activeTab = ref('basic')
 
 const formData = reactive({
   id: undefined,
@@ -135,6 +138,7 @@ function initFormData() {
   formData.subtitle = ''
   formData.version = 1
   formData.fields = []
+  activeTab.value = 'basic'
 }
 
 function loadEditData(data: any) {
@@ -146,9 +150,8 @@ function loadEditData(data: any) {
   formData.title = data.title || ''
   formData.subtitle = data.subtitle || ''
   formData.version = data.version || 1
-  formData.fields = (data.fields || []).map((field: any, index: number) => ({
+  formData.fields = (data.fields || []).map((field: any) => ({
     ...field,
-    _key: field.id ? `field-${field.id}` : `field-${index}-${Date.now()}`,
   }))
 }
 
@@ -159,10 +162,18 @@ defineExpose({
 async function handleSubmit() {
   try {
     await formRef.value?.validate()
+    if (!formData.fields.length) {
+      activeTab.value = 'fields'
+      return
+    }
     emit('submit')
   } catch (error) {
-    console.error('导入配置表单校验失败:', error)
+    console.error('import config form validate failed:', error)
   }
+}
+
+function addField() {
+  fieldConfigListRef.value?.addField?.()
 }
 
 watch(
@@ -189,17 +200,7 @@ watch(
 </script>
 
 <style scoped lang="less">
-.mb-16 {
+.field-toolbar {
   margin-bottom: 16px;
-}
-
-.mt-16 {
-  margin-top: 16px;
-}
-
-.card-title {
-  font-weight: 500;
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.85);
 }
 </style>

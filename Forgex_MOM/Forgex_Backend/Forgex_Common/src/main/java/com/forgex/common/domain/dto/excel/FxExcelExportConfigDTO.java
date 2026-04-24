@@ -73,6 +73,11 @@ public class FxExcelExportConfigDTO {
     private String exportFormat;
 
     /**
+     * 鏄惁鍚敤
+     */
+    private Boolean enabled;
+
+    /**
      * 是否启用合计行
      * <p>为true时，在Excel底部添加合计行。</p>
      */

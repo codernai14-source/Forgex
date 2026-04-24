@@ -28,6 +28,8 @@ public class ApiParamTreeVO {
      */
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     /**
      * 父节点 ID（树形结构，根节点为 null）
      */

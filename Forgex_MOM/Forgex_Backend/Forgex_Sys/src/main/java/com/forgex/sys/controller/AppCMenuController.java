@@ -21,6 +21,7 @@ import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.service.ISysCMenuService;
+import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,13 +43,14 @@ import java.util.Map;
 public class AppCMenuController {
 
     private final ISysCMenuService cMenuService;
+    private final ISysUserService sysUserService;
 
     /**
      * 获取工作台模块列表（顶级菜单/目录）
      */
     @PostMapping("/workbench/modules")
     public R<List<CMenuTreeVO>> workbenchModules() {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = resolveCurrentUserId();
         Long tenantId = TenantContext.get();
         return R.ok(cMenuService.getWorkbenchModules(userId, tenantId));
     }
@@ -58,7 +60,7 @@ public class AppCMenuController {
      */
     @PostMapping("/workbench/menus")
     public R<List<CMenuTreeVO>> workbenchMenus(@RequestBody Map<String, Object> body) {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = resolveCurrentUserId();
         Long tenantId = TenantContext.get();
         Long moduleId = parseLong(body.get("moduleId"));
         return R.ok(cMenuService.getWorkbenchMenus(userId, tenantId, moduleId));
@@ -69,7 +71,7 @@ public class AppCMenuController {
      */
     @PostMapping("/favorites/list")
     public R<List<CMenuTreeVO>> favoritesList() {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = resolveCurrentUserId();
         Long tenantId = TenantContext.get();
         return R.ok(cMenuService.getUserFavorites(userId, tenantId));
     }
@@ -81,11 +83,15 @@ public class AppCMenuController {
      */
     @PostMapping("/favorites/toggle")
     public R<Boolean> favoritesToggle(@RequestBody Map<String, Object> body) {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = resolveCurrentUserId();
         Long tenantId = TenantContext.get();
         Long cMenuId = parseLong(body.get("cMenuId"));
         boolean result = cMenuService.toggleFavorite(userId, tenantId, cMenuId);
         return R.ok(result);
+    }
+
+    private Long resolveCurrentUserId() {
+        return sysUserService.resolveUserIdByLoginId(StpUtil.getLoginIdDefaultNull());
     }
 
     private Long parseLong(Object obj) {

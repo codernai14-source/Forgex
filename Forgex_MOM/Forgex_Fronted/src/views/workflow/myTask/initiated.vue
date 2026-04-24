@@ -51,47 +51,13 @@
       </template>
     </fx-dynamic-table>
 
-    <a-drawer
+    <WorkflowDetailDrawer
       v-model:open="detailDrawerVisible"
-      :title="t('workflow.myTask.detailTitle')"
-      :width="800"
-      :body-style="{ paddingBottom: '80px' }"
-    >
-      <a-descriptions bordered :column="2">
-        <a-descriptions-item :label="t('workflow.myTask.taskName')">
-          {{ currentRecord?.taskName }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.taskCode')">
-          {{ currentRecord?.taskCode }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.initiator')">
-          {{ currentRecord?.initiatorName }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.startTime')">
-          {{ formatDateTime(currentRecord?.startTime) }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.currentNode')">
-          {{ currentRecord?.currentNodeName || '-' }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.status')">
-          <DictTag :value="currentRecord?.status" :items="executionStatusOptions" :fallback-text="getStatusText(currentRecord?.status)" />
-        </a-descriptions-item>
-        <a-descriptions-item v-if="currentRecord?.endTime" :label="t('workflow.myTask.endTime')">
-          {{ formatDateTime(currentRecord.endTime) }}
-        </a-descriptions-item>
-      </a-descriptions>
-
-      <a-divider />
-
-      <div class="form-content-detail">
-        <h4>{{ t('workflow.myTask.formContent') }}</h4>
-        <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
-      </div>
-
-      <a-divider />
-
-      <WorkflowTracePanel :instances="currentInstances" :show-action-logs="false" />
-    </a-drawer>
+      :record="currentRecord"
+      :instances="currentInstances"
+      :action-logs="currentActionLogs"
+      :show-action-logs="false"
+    />
 
     <a-modal
       v-model:open="historyModalVisible"
@@ -122,6 +88,7 @@ import {
 import DictTag from '@/components/common/DictTag.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
+import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
 import WorkflowTracePanel from './WorkflowTracePanel.vue'
 import dayjs from 'dayjs'
 
@@ -180,15 +147,6 @@ function formatDateTime(dateTime?: string): string {
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
 }
 
-function formatFormContent(formContent?: string): string {
-  if (!formContent) return '{}'
-  try {
-    return JSON.stringify(JSON.parse(formContent), null, 2)
-  } catch {
-    return formContent
-  }
-}
-
 function handleViewDetail(record: WfExecutionDTO) {
   currentRecord.value = record
   detailDrawerVisible.value = true
@@ -241,29 +199,4 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.form-content-detail {
-  margin-top: 16px;
-  padding: 16px;
-  background: var(--fx-fill-secondary, #f5f5f5);
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: var(--fx-radius, 8px);
-  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
-}
-
-.form-content-detail pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
-}
-
-.form-content-detail h4 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
-}
 </style>

@@ -24,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.forgex.mobile.R
 import com.forgex.mobile.core.ui.i18n.ProvideI18nBundle
+import com.forgex.mobile.core.ui.i18n.i18nString
 import com.forgex.mobile.core.ui.device.rememberDeviceType
 import com.forgex.mobile.feature.auth.AUTH_ROUTE
 import com.forgex.mobile.feature.auth.AuthScreen
@@ -65,9 +66,6 @@ fun ForgexMobileApp() {
     val coroutineScope = rememberCoroutineScope()
     val shellViewModel: AppShellViewModel = hiltViewModel()
     val shellState by shellViewModel.uiState.collectAsState()
-    val authRegisterLabel = stringResource(R.string.auth_register)
-    val commonNotAvailable = stringResource(R.string.common_not_available)
-    val commonUrlMissing = stringResource(R.string.common_url_missing)
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route.orEmpty()
 
@@ -79,6 +77,9 @@ fun ForgexMobileApp() {
     ) && !currentRoute.startsWith(WebViewDestination.ROUTE)
 
     ProvideI18nBundle(bundle = shellState.languageState.bundle) {
+        val authRegisterLabel = i18nString("auth.register", R.string.auth_register)
+        val commonNotAvailable = i18nString("common.not.available", R.string.common_not_available)
+        val commonUrlMissing = i18nString("common.url.missing", R.string.common_url_missing)
         Scaffold(
             topBar = {
                 if (showGlobalTopBar) {
@@ -107,6 +108,11 @@ fun ForgexMobileApp() {
                         onLoginSuccess = {
                             navController.navigate(MAIN_SHELL_ROUTE) {
                                 popUpTo(AUTH_ROUTE) { inclusive = true }
+                            }
+                        },
+                        onShowMessage = { message ->
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(message)
                             }
                         },
                         onOpenServerSettings = {

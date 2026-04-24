@@ -7,7 +7,6 @@
       :dict-options="dictOptions"
       :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
-      :show-column-setting="false"
       :row-selection="{
         selectedRowKeys,
         onChange: handleSelectionChange
@@ -196,6 +195,10 @@ function openAddDialog() {
 }
 
 function openEditDialog(record: TableConfigItem) {
+  if (!record.id) {
+    message.error('当前记录缺少配置ID，无法加载编辑详情，请先刷新列表或确认后端列表接口已返回id')
+    return
+  }
   isEdit.value = true
   currentConfigId.value = record.id
   dialogVisible.value = true

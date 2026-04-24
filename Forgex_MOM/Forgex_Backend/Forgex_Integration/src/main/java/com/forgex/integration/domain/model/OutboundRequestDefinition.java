@@ -24,4 +24,12 @@ public class OutboundRequestDefinition {
 
     @Builder.Default
     private Map<String, String> pathVariables = new LinkedHashMap<>();
+
+    private Long outboundTargetId;
+
+    private String targetSystemCode;
+
+    private String targetSystemName;
+
+    private String targetUrl;
 }

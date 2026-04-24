@@ -510,7 +510,6 @@ public class WfEngineServiceImpl implements IWfEngineService {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_NODE_APPROVER_RESOLVE_EMPTY);
         }
 
-        createMyTask(execution, node, approvers);
         workflowNotificationService.notifyPendingApprovers(execution, node, approvers);
         return true;
     }
@@ -651,6 +650,8 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (result.getCode() == 200 && result.getData() != null) {
                 return result.getData();
             }
+            log.warn("审批人部门匹配返回异常，tenantId={}, deptIds={}, result={}",
+                    getCurrentTenantId(), deptIds, JSON.toJSONString(result));
         } catch (Exception ex) {
             log.error("根据部门查询审批人失败，deptIds={}", deptIds, ex);
         }
@@ -663,6 +664,8 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (result.getCode() == 200 && result.getData() != null) {
                 return result.getData();
             }
+            log.warn("审批人角色匹配返回异常，tenantId={}, roleIds={}, result={}",
+                    getCurrentTenantId(), roleIds, JSON.toJSONString(result));
         } catch (Exception ex) {
             log.error("根据角色查询审批人失败，roleIds={}", roleIds, ex);
         }
@@ -675,6 +678,8 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (result.getCode() == 200 && result.getData() != null) {
                 return result.getData();
             }
+            log.warn("审批人岗位匹配返回异常，tenantId={}, positionIds={}, result={}",
+                    getCurrentTenantId(), positionIds, JSON.toJSONString(result));
         } catch (Exception ex) {
             log.error("根据职位查询审批人失败，positionIds={}", positionIds, ex);
         }
@@ -792,6 +797,14 @@ public class WfEngineServiceImpl implements IWfEngineService {
         List<WfTaskNodeRuleDTO> rules = loadNodeRuleConfigs(node.getId(), execution.getTenantId());
         List<ResolvedApprover> resolvedApprovers = resolveApproversForNode(node, execution, rules);
         if (resolvedApprovers.isEmpty()) {
+            log.warn("审批节点未匹配到有效审批人，tenantId={}, executionId={}, taskCode={}, nodeId={}, nodeName={}, approveType={}, rules={}",
+                    execution.getTenantId(),
+                    execution.getId(),
+                    execution.getTaskCode(),
+                    node.getId(),
+                    node.getNodeName(),
+                    node.getApproveType(),
+                    JSON.toJSONString(rules));
             return Collections.emptyList();
         }
 
@@ -819,14 +832,6 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (Boolean.TRUE.equals(instance.getActivated())) {
                 createInstanceMyTask(execution, node, detail, instance);
             }
-        }
-        if (!instances.isEmpty()) {
-            createMyTask(execution, node, instances.stream()
-                    .filter(item -> Boolean.TRUE.equals(item.getActivated()))
-                    .map(WfTaskApprovalInstance::getApproverId)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .toArray(Long[]::new));
         }
         return instances;
     }

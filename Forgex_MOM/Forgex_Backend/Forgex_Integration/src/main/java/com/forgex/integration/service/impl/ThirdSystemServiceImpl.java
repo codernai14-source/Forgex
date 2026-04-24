@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -108,6 +109,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createThirdSystem(ThirdSystemDTO dto) {
+        validateIpAddress(dto.getIpAddress());
         ThirdSystemDTO existing = getBySystemCode(dto.getSystemCode());
         if (existing != null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
@@ -139,6 +141,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         if (dto.getId() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
+        validateIpAddress(dto.getIpAddress());
 
         ThirdSystem existing = this.getById(dto.getId());
         if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
@@ -205,6 +208,15 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         ThirdSystemDTO dto = new ThirdSystemDTO();
         BeanUtils.copyProperties(system, dto);
         return dto;
+    }
+
+    private void validateIpAddress(String ipAddress) {
+        if (!StringUtils.hasText(ipAddress)) {
+            return;
+        }
+        if (ipAddress.contains(",") || ipAddress.contains("，") || ipAddress.contains("\n") || ipAddress.contains("\r")) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.THIRD_SYSTEM_IP_INVALID);
+        }
     }
 
     private Long getCurrentTenantId() {

@@ -47,6 +47,9 @@
     <string name="auth_login_method_wechat">微信登录</string>
     <string name="auth_login_method_dingtalk">钉钉登录</string>
     <string name="auth_login_method_gitee">Gitee 登录</string>
+    <string name="auth_language_switch">切换语言</string>
+    <string name="auth_language_default_option">跟随后端默认语言</string>
+    <string name="auth_third_party_hint">第三方登录暂未开放</string>
     <string name="auth_back_to_login_methods">返回方式选择</string>
     <string name="auth_captcha_load_failed">验证码加载失败</string>
     <string name="auth_captcha_refresh">刷新</string>

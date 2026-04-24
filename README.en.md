@@ -109,7 +109,7 @@ This version introduces:
 | **Internationalization** | Request-level multi-language | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
 | | Exception message translation | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
 | | 5 languages support | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| **Messaging** | Internal messages | ✅ | [Message Template & SSE](./Forgex_Doc/后端/配置与审计/消息模板与 SSE.md) |
+| **Messaging** | Internal messages | ✅ | [Common Messages & Prompts](./Forgex_Doc/后端/配置与审计/通用消息与提示.md) |
 | | Template messages | ✅ | [Message Template & SSE](./Forgex_Doc/后端/配置与审计/消息模板与 SSE.md) |
 | | SSE push notifications | ✅ | [Message Template & SSE](./Forgex_Doc/后端/配置与审计/消息模板与 SSE.md) |
 | **Redis Tools** | RedisHelper utility class | ✅ | [Redis Tools](./Forgex_Doc/后端/公共能力/Redis 工具.md) |

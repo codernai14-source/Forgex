@@ -14,6 +14,8 @@ public class ApiParamMappingDTO {
 
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     private String sourceFieldPath;
 
     private String targetFieldPath;

@@ -2,7 +2,7 @@
  * 在线开发代码生成器 - 中文
  */
 export default {
-  title: '在线开发',
+  title: '代码生成',
   listTitle: '代码生成记录',
   add: '新增配置',
   edit: '编辑配置',

@@ -8,93 +8,79 @@ import com.forgex.integration.domain.param.ApiParamMappingParam;
 import java.util.List;
 
 /**
- * 接口参数映射服务接口
+ * 接口参数映射服务接口。
  * <p>
- * 提供接口参数映射关系的增删改查、批量保存等功能
+ * 负责维护接口字段映射关系，包括单条增删改查和按接口配置、出站目标、参数方向批量保存。
  * </p>
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-14
+ * @author coder_nai@163.com
+ * @version 1.0.0
+ * @since 2026-04-01
  */
 public interface IApiParamMappingService extends IService<ApiParamMapping> {
 
     /**
-     * 查询参数映射列表
-     * <p>
-     * 根据接口配置 ID 和映射方向查询所有映射关系
-     * </p>
+     * 查询字段映射列表。
      *
      * @param param 查询参数
-     *              - apiConfigId: 接口配置 ID
-     *              - direction: 映射方向
-     *              - sourceFieldPath: 源字段路径（模糊查询）
-     *              - targetFieldPath: 目标字段路径（模糊查询）
-     * @return 参数映射 DTO 列表
+     * @return 字段映射 DTO 列表
      */
     List<ApiParamMappingDTO> listMappings(ApiParamMappingParam param);
 
     /**
-     * 根据 ID 获取参数映射详情
-     * <p>
-     * 用于编辑时回显数据
-     * </p>
+     * 根据 ID 查询字段映射。
      *
-     * @param id 参数映射 ID
-     * @return 参数映射 DTO
+     * @param id 映射 ID
+     * @return 字段映射 DTO
      */
     ApiParamMappingDTO getById(Long id);
 
     /**
-     * 创建参数映射
-     * <p>
-     * 自动校验映射关系的唯一性
-     * </p>
+     * 新增字段映射。
      *
-     * @param dto 参数映射 DTO
+     * @param dto 字段映射 DTO
      */
     void create(ApiParamMappingDTO dto);
 
     /**
-     * 更新参数映射
-     * <p>
-     * 自动校验映射关系的唯一性（排除自身）
-     * </p>
+     * 更新字段映射。
      *
-     * @param dto 参数映射 DTO
+     * @param dto 字段映射 DTO
      */
     void update(ApiParamMappingDTO dto);
 
     /**
-     * 删除参数映射
-     * <p>
-     * 删除单个映射关系
-     * </p>
+     * 删除字段映射。
      *
-     * @param id 参数映射 ID
+     * @param id 映射 ID
      */
     void delete(Long id);
 
     /**
-     * 批量删除参数映射
-     * <p>
-     * 支持批量删除多个映射关系
-     * </p>
+     * 批量删除字段映射。
      *
-     * @param ids 参数映射 ID 列表
+     * @param ids 映射 ID 列表
      */
     void batchDelete(List<Long> ids);
 
     /**
-     * 批量保存参数映射
-     * <p>
-     * 先删除指定接口配置和方向的所有映射，再批量插入新映射
-     * 用于一次性保存多个映射关系
-     * </p>
+     * 批量保存字段映射。
+     *
+     * @param apiConfigId      接口配置 ID
+     * @param outboundTargetId 出站目标 ID，可为空
+     * @param direction        参数方向
+     * @param dtos             字段映射列表
+     */
+    void batchSave(Long apiConfigId, Long outboundTargetId, String direction, List<ApiParamMappingDTO> dtos);
+
+    /**
+     * 批量保存字段映射。
      *
      * @param apiConfigId 接口配置 ID
-     * @param direction 映射方向
-     * @param dtos 参数映射 DTO 列表
+     * @param direction   参数方向
+     * @param dtos        字段映射列表
      */
-    void batchSave(Long apiConfigId, String direction, List<ApiParamMappingDTO> dtos);
+    default void batchSave(Long apiConfigId, String direction, List<ApiParamMappingDTO> dtos) {
+        batchSave(apiConfigId, null, direction, dtos);
+    }
 }
