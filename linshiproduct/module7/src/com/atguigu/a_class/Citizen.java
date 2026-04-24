@@ -5,5 +5,4 @@ public class Citizen {
     String idCard;
     MyDate birthday =new MyDate();
 
-
 }
