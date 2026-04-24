@@ -83,6 +83,10 @@ public class SysUser extends BaseEntity {
      */
     private Boolean status;
 
+    private Long employeeId;
+
+    private Integer userSource;
+
     /**
      * 最后登录 IP 地址
      * <p>记录用户最后一次登录的 IP 地址</p>

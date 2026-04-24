@@ -1,0 +1,174 @@
+/**
+ * FxDynamicTable 公共动态表格组件样式。
+ * <p>
+ * 由 {@code FxDynamicTable.vue} 通过 {@code scoped} 引入，类名仅作用于该组件根节点子树。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @see src/components/common/FxDynamicTable.vue
+ */
+
+.fx-dynamic-table {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.fx-card {
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+}
+
+.fx-query-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.fx-query-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+}
+
+.fx-query-row-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex: 1;
+  max-width: calc(100% - 200px);
+}
+
+.fx-query-row-content :deep(.ant-form-item) {
+  margin: 0;
+  margin-bottom: 0;
+}
+
+.fx-query-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.fx-query-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.fx-query-row-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fx-border-color, #e8e8e8);
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.fx-query-row-extra :deep(.ant-form-item) {
+  margin: 0;
+  margin-bottom: 16px;
+}
+
+.fx-table-card {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fx-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* 工具栏与列设置同一行：左侧工具栏、右侧列设置 */
+.fx-table-toolbar-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 8px 16px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.fx-table-toolbar-left {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.fx-table-toolbar-right {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* 表格内容区：与上方工具栏留出间距（toolbar-row 已设 margin-bottom） */
+.fx-table-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+}
+
+.fx-dynamic-table-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-spin-nested-loading),
+.fx-dynamic-table-wrap :deep(.ant-spin-container),
+.fx-dynamic-table-wrap :deep(.ant-table),
+.fx-dynamic-table-wrap :deep(.ant-table-container) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table) {
+  max-width: 100%;
+}
+
+/* 分页区域间距 */
+.fx-table-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  /* 顶部 12px，其余为 0（外层已有 padding） */
+  padding: 12px 0 0 0;
+}
+
+.fx-table-pagination :deep(.ant-pagination) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* 分页控件之间的间距 */
+  gap: 16px;
+}

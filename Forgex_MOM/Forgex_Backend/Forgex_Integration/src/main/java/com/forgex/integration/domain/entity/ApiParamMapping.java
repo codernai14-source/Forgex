@@ -20,6 +20,8 @@ public class ApiParamMapping extends BaseEntity {
 
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     private String sourceFieldPath;
 
     private String targetFieldPath;

@@ -93,7 +93,7 @@
           ref="tableRef"
           table-code="RoleUserGrantTable"
           :request="handleRequest"
-          :降级方案-config="降级方案Config"
+          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -177,7 +177,7 @@ const positionTreeFieldNames = {
   children: 'children',
 }
 
-const 降级方案Config = computed(() => ({
+const fallbackConfig = computed(() => ({
   tableCode: 'RoleUserGrantTable',
   tableName: t('system.role.userGrant'),
   tableType: 'NORMAL',

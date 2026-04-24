@@ -21,6 +21,11 @@ public class ApiParamJsonImportParam {
     private Long apiConfigId;
 
     /**
+     * 出站目标配置 ID
+     */
+    private Long outboundTargetId;
+
+    /**
      * 参数方向：REQUEST/RESPONSE
      */
     private String direction;

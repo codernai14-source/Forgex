@@ -29,7 +29,7 @@ public enum WorkflowPromptEnum implements I18nPrompt {
     WF_START_FAILED("WF_START_FAILED", "发起审批失败"),
     
     // ========== 审批处理 ==========
-    WF_APPROVE_SUCCESS("WF_APPROVE_SUCCESS", "审批通过成功"),
+    WF_APPROVE_SUCCESS("WF_APPROVE_SUCCESS", "审批同意成功"),
     WF_APPROVE_FAILED("WF_APPROVE_FAILED", "审批通过失败"),
     WF_REJECT_SUCCESS("WF_REJECT_SUCCESS", "审批驳回成功"),
     WF_REJECT_FAILED("WF_REJECT_FAILED", "审批驳回失败"),

@@ -8,6 +8,9 @@
     <id property="id" column="id" />
     <result property="tenantId" column="tenant_id" />
     <result property="apiConfigId" column="api_config_id" />
+    <result property="outboundTargetId" column="outbound_target_id" />
+    <result property="targetSystemCode" column="target_system_code" />
+    <result property="targetSystemName" column="target_system_name" />
     <result property="apiCode" column="api_code" />
     <result property="callDirection" column="call_direction" />
     <result property="callerIp" column="caller_ip" />
@@ -35,6 +38,9 @@
       id,
       tenant_id,
       api_config_id,
+      outbound_target_id,
+      target_system_code,
+      target_system_name,
       api_code,
       call_direction,
       caller_ip,
@@ -59,6 +65,9 @@
       #{log.id},
       #{log.tenantId},
       #{log.apiConfigId},
+      #{log.outboundTargetId},
+      #{log.targetSystemCode},
+      #{log.targetSystemName},
       #{log.apiCode},
       #{log.callDirection},
       #{log.callerIp},
@@ -87,6 +96,9 @@
       id,
       tenant_id,
       api_config_id,
+      outbound_target_id,
+      target_system_code,
+      target_system_name,
       api_code,
       call_direction,
       caller_ip,

@@ -15,6 +15,12 @@ public class ApiTaskResultDTO {
 
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
+    private String targetSystemCode;
+
+    private String targetSystemName;
+
     private String apiCode;
 
     private String direction;

@@ -7,7 +7,7 @@
         :table-code="'RoleTable'"
         :show-query-form="true"
         :request="handleRequest"
-        :降级方案-config="降级方案Config"
+        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
         :row-selection="{
           selectedRowKeys,
@@ -192,7 +192,7 @@ const { t } = useI18n()
 const { dictItems: statusOptions } = useDict('status')
 const dictOptions = computed(() => ({ status: statusOptions.value }))
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'RoleTable',
   tableName: '角色管理',
   tableType: 'NORMAL',

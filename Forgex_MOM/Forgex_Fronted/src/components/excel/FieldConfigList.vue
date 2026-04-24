@@ -1,22 +1,12 @@
 <template>
   <div class="field-config-list">
-    <div class="header-actions">
-      <span class="title">{{ t('system.excel.importFields') }}</span>
-      <a-space>
-        <a-button type="primary" @click="addField">
-          <PlusOutlined />
-          {{ t('common.add') }}
-        </a-button>
-      </a-space>
-    </div>
-    
     <a-table
       :columns="columns"
       :data-source="fields"
       row-key="_key"
       :pagination="false"
       size="small"
-      bordered
+      :scroll="{ x: 1100 }"
     >
       <template #bodyCell="{ column, record, index }">
         <!-- 字段名称 -->
@@ -30,12 +20,12 @@
         
         <!-- 字段类型 -->
         <template v-else-if="column.key === 'fieldType'">
-          <a-select
-            v-model:value="record.fieldType"
-            :placeholder="t('system.excel.fieldType')"
-            style="width: 140px"
-            @change="handleFieldChange"
-          >
+            <a-select
+              v-model:value="record.fieldType"
+              :placeholder="t('system.excel.fieldType')"
+              style="width: 100%"
+              @change="handleFieldChange"
+            >
             <a-select-option value="string">{{ t('system.excel.fieldTypes.string') }}</a-select-option>
             <a-select-option value="number">{{ t('system.excel.fieldTypes.number') }}</a-select-option>
             <a-select-option value="date">{{ t('system.excel.fieldTypes.date') }}</a-select-option>
@@ -47,9 +37,7 @@
         
         <!-- 数据源配置 -->
         <template v-else-if="column.key === 'dataSourceConfig'">
-          <DataSourceConfig
-            v-model="record.dataSourceConfig"
-          />
+          <DataSourceConfig v-model="record.dataSourceConfig" />
         </template>
         
         <!-- 是否必填 -->
@@ -74,30 +62,15 @@
         <!-- 操作 -->
         <template v-else-if="column.key === 'action'">
           <a-space :size="4">
-            <a
-              type="link"
-              size="small"
-              :disabled="index === 0"
-              @click="moveUp(index)"
-            >
-              <ArrowUpOutlined />
-            </a>
-            <a
-              type="link"
-              size="small"
-              :disabled="index === fields.length - 1"
-              @click="moveDown(index)"
-            >
-              <ArrowDownOutlined />
-            </a>
-            <a
-              type="link"
-              size="small"
-              danger
-              @click="removeField(index)"
-            >
-              <DeleteOutlined />
-            </a>
+            <a-button type="link" size="small" :disabled="index === 0" @click="moveUp(index)">
+              {{ t('common.moveUp', '上移') }}
+            </a-button>
+            <a-button type="link" size="small" :disabled="index === fields.length - 1" @click="moveDown(index)">
+              {{ t('common.moveDown', '下移') }}
+            </a-button>
+            <a-button type="link" size="small" danger @click="removeField(index)">
+              {{ t('common.delete') }}
+            </a-button>
           </a-space>
         </template>
       </template>
@@ -108,12 +81,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined
-} from '@ant-design/icons-vue'
 import DataSourceConfig from './DataSourceConfig.vue'
 
 /**
@@ -170,12 +137,12 @@ const { t } = useI18n()
 /**
  * 表格列配置
  */
-const columns = [
+const columns = computed(() => [
   {
     title: t('system.excel.importField'),
     key: 'fieldName',
     dataIndex: 'fieldName',
-    width: 200
+    width: 180
   },
   {
     title: t('system.excel.fieldType'),
@@ -187,6 +154,7 @@ const columns = [
     title: t('common.dataSourceConfig.dataSourceType'),
     key: 'dataSourceConfig',
     dataIndex: 'dataSourceConfig',
+    width: 360
   },
   {
     title: t('system.excel.required'),
@@ -205,11 +173,11 @@ const columns = [
   {
     title: t('common.action'),
     key: 'action',
-    width: 120,
+    width: 180,
     align: 'center',
     fixed: 'right'
   }
-]
+])
 
 // 字段列表
 const fields = ref<Array<any & { _key: string }>>([])
@@ -241,19 +209,15 @@ const handleFieldChange = () => {
   emitUpdate()
 }
 
-/**
- * 添加字段
- */
-const addField = () => {
-  fields.value.push({
+function createField() {
+  return {
     fieldName: '',
     fieldType: 'string',
     dataSourceConfig: {},
     required: false,
     orderNum: fields.value.length,
     _key: `field-${Date.now()}-${Math.random()}`
-  })
-  emitUpdate()
+  }
 }
 
 /**
@@ -261,6 +225,7 @@ const addField = () => {
  */
 const removeField = (index: number) => {
   fields.value.splice(index, 1)
+  resetOrder()
   emitUpdate()
 }
 
@@ -272,6 +237,7 @@ const moveUp = (index: number) => {
     const temp = fields.value[index]
     fields.value[index] = fields.value[index - 1]
     fields.value[index - 1] = temp
+    resetOrder()
     emitUpdate()
   }
 }
@@ -284,8 +250,16 @@ const moveDown = (index: number) => {
     const temp = fields.value[index]
     fields.value[index] = fields.value[index + 1]
     fields.value[index + 1] = temp
+    resetOrder()
     emitUpdate()
   }
+}
+
+function resetOrder() {
+  fields.value = fields.value.map((item, index) => ({
+    ...item,
+    orderNum: index,
+  }))
 }
 
 /**
@@ -295,6 +269,14 @@ const emitUpdate = () => {
   const cleanFields = fields.value.map(({ _key, ...rest }) => rest)
   emit('update:modelValue', cleanFields)
 }
+
+defineExpose({
+  addField: () => {
+    fields.value.push(createField())
+    resetOrder()
+    emitUpdate()
+  },
+})
 
 /**
  * 监听外部值变化
@@ -312,20 +294,7 @@ initFields()
 <style scoped lang="less">
 .field-config-list {
   width: 100%;
-  
-  .header-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    
-    .title {
-      font-weight: 500;
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.85);
-    }
-  }
-  
+
   :deep(.ant-table) {
     .ant-table-cell {
       vertical-align: top;

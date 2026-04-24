@@ -2,22 +2,28 @@ import type {
   ApiConfigItem,
   ApiConfigQuery,
   ApiConfigSubmit,
+  ApiOutboundTargetItem,
+  ApiOutboundTargetSubmit,
   ApiParamConfigItem,
   ApiParamMappingItem,
+  ApiInvokeMode,
   IntegrationDirection,
-  ParamSourceType,
   ParamDirection,
+  ParamSourceType,
 } from '@/api/system/integration'
 
 export type {
   ApiConfigItem,
   ApiConfigQuery,
   ApiConfigSubmit,
+  ApiOutboundTargetItem,
+  ApiOutboundTargetSubmit,
   ApiParamConfigItem,
   ApiParamMappingItem,
+  ApiInvokeMode,
   IntegrationDirection,
-  ParamSourceType,
   ParamDirection,
+  ParamSourceType,
 }
 
 export interface ParamMappingRow {

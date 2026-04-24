@@ -1,7 +1,10 @@
 package com.forgex.mobile.feature.auth
 
+import com.forgex.mobile.core.common.i18n.AppLanguage
 import com.forgex.mobile.core.common.i18n.AppText
+import com.forgex.mobile.core.common.i18n.LanguageMode
 import com.forgex.mobile.core.network.model.auth.TenantVO
+import com.forgex.mobile.core.network.model.i18n.LanguageType
 import com.forgex.mobile.feature.auth.data.CaptchaMode
 import com.forgex.mobile.feature.auth.data.SliderCaptcha
 
@@ -49,6 +52,7 @@ data class AuthUiState(
     val sliderToken: String = "",
     val publicKeyLoaded: Boolean = false,
     val publicKey: String = "",
+    val languageState: AuthLanguageUiState = AuthLanguageUiState(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val errorText: AppText? = null,
@@ -59,4 +63,13 @@ data class AuthUiState(
 
 sealed interface AuthEvent {
     data object LoginCompleted : AuthEvent
+    data class ShowMessage(val appText: AppText?, val fallbackMessage: String? = null) : AuthEvent
 }
+
+data class AuthLanguageUiState(
+    val mode: LanguageMode = LanguageMode.FOLLOW_SYSTEM,
+    val currentLanguageTag: String = AppLanguage.DEFAULT_LANGUAGE_TAG,
+    val defaultLanguageTag: String = AppLanguage.DEFAULT_LANGUAGE_TAG,
+    val languages: List<LanguageType> = emptyList(),
+    val languageDialogVisible: Boolean = false
+)

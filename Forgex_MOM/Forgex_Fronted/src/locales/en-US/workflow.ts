@@ -343,6 +343,8 @@ export default {
     approveReject: 'Approval Rejected',
     detailTitle: 'Approval Detail',
     historyTitle: 'Approval History',
+    detailInfoTab: 'Approval Info',
+    formDataTab: 'Form Data',
     taskName: 'Approval Task',
     taskCode: 'Task Code',
     initiator: 'Initiator',
@@ -377,6 +379,9 @@ export default {
     loadInitiatedFailed: 'Failed to load initiated approvals',
     loadHistoryFailed: 'Failed to load approval history',
     approveActionFailed: 'Failed to process the approval action',
+    unregisteredFormComponent: 'The matching form component is not registered, so the original form layout cannot be rendered.',
+    lowCodeSchemaMissing: 'The low-code form schema was not returned for this approval, so the form layout cannot be restored.',
+    formPreviewFallback: 'No form rendering configuration was found. Raw form data is shown below.',
     unknownStatus: 'Unknown',
   },
   dashboard: {

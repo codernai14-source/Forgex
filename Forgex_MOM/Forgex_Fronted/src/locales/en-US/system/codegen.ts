@@ -2,7 +2,7 @@
  * Online code generator - English
  */
 export default {
-  title: 'Online Development',
+  title: 'Code Generation',
   listTitle: 'Code Generation Records',
   add: 'Add Config',
   edit: 'Edit Config',

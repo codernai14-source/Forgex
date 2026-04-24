@@ -64,6 +64,7 @@ public enum IntegrationPromptEnum implements I18nPrompt {
     // ========== 第三方系统 ==========
     THIRD_SYSTEM_NOT_FOUND("THIRD_SYSTEM_NOT_FOUND", "第三方系统不存在"),
     THIRD_SYSTEM_CODE_EXISTS("THIRD_SYSTEM_CODE_EXISTS", "系统编码已存在：{0}"),
+    THIRD_SYSTEM_IP_INVALID("THIRD_SYSTEM_IP_INVALID", "第三方系统 IP 仅支持单个地址，不能包含多个 IP"),
     THIRD_SYSTEM_CREATE_FAILED("THIRD_SYSTEM_CREATE_FAILED", "创建第三方系统失败"),
     THIRD_SYSTEM_UPDATE_FAILED("THIRD_SYSTEM_UPDATE_FAILED", "更新第三方系统失败"),
     THIRD_SYSTEM_DELETE_FAILED("THIRD_SYSTEM_DELETE_FAILED", "删除第三方系统失败"),

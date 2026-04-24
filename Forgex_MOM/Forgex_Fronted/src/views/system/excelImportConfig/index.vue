@@ -102,7 +102,7 @@ const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   version: 1,
 }))
 
-function pickQueryValue(query: Record<string, any>, keys: string[]): string | undefined {
+function pickQueryValue(query: Record<string, any>, keys: string[]) {
   for (const key of keys) {
     const value = query?.[key]
     if (value !== undefined && value !== null && String(value).trim() !== '') {
@@ -216,20 +216,50 @@ function handleDelete(id: number) {
 async function handleDownload(tableCode: string) {
   try {
     const resp: any = await downloadTemplate({ tableCode })
+    const contentType = String(resp.headers?.['content-type'] || '').toLowerCase()
     const blob = new Blob([resp.data], {
       type: resp.headers?.['content-type'] || 'application/octet-stream',
     })
+
+    if (contentType.includes('application/json')) {
+      await showBlobError(blob)
+      return
+    }
+
+    const text = await blob.text()
+    if (text && text.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(text)
+        if (parsed && typeof parsed === 'object' && 'code' in parsed && Number(parsed.code) !== 200) {
+          message.error(parsed.message || t('system.excel.message.downloadTemplateFailed'))
+          return
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `import-template-${tableCode}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `import-template-${tableCode}.xlsx`
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
     window.URL.revokeObjectURL(url)
     message.success(t('system.excel.message.downloadTemplateSuccess'))
   } catch (error) {
     console.error('下载模板失败', error)
+    message.error(t('system.excel.message.downloadTemplateFailed'))
+  }
+}
+
+async function showBlobError(blob: Blob) {
+  try {
+    const text = await blob.text()
+    const parsed = JSON.parse(text)
+    message.error(parsed.message || t('system.excel.message.downloadTemplateFailed'))
+  } catch {
     message.error(t('system.excel.message.downloadTemplateFailed'))
   }
 }

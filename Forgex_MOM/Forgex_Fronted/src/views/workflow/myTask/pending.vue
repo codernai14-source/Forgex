@@ -183,48 +183,12 @@
       </a-form>
     </BaseFormDialog>
 
-    <a-drawer
+    <WorkflowDetailDrawer
       v-model:open="detailDrawerVisible"
-      :title="t('workflow.myTask.detailTitle')"
-      :width="800"
-      :body-style="{ paddingBottom: '80px' }"
-    >
-      <a-descriptions bordered :column="2">
-        <a-descriptions-item :label="t('workflow.myTask.taskName')">
-          {{ currentRecord?.taskName }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.taskCode')">
-          {{ currentRecord?.taskCode }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.initiator')">
-          {{ currentRecord?.initiatorName }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.startTime')">
-          {{ formatDateTime(currentRecord?.startTime) }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.currentNode')">
-          {{ currentRecord?.currentNodeName || '-' }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('workflow.myTask.status')">
-          <DictTag
-            :value="currentRecord?.status"
-            :items="executionStatusOptions"
-            :fallback-text="getStatusText(currentRecord?.status)"
-          />
-        </a-descriptions-item>
-      </a-descriptions>
-
-      <a-divider />
-
-      <div class="form-content-detail">
-        <h4>{{ t('workflow.myTask.formContent') }}</h4>
-        <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
-      </div>
-
-      <a-divider />
-
-      <WorkflowTracePanel :instances="currentInstances" :action-logs="currentActionLogs" />
-    </a-drawer>
+      :record="currentRecord"
+      :instances="currentInstances"
+      :action-logs="currentActionLogs"
+    />
   </div>
 </template>
 
@@ -265,7 +229,7 @@ import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import { useUserStore } from '@/stores/user'
-import WorkflowTracePanel from './WorkflowTracePanel.vue'
+import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n({ useScope: 'global' })
@@ -563,6 +527,11 @@ async function handleApproveSubmit() {
     }
 
     approveDialogVisible.value = false
+    approveFormRef.value?.resetFields()
+    currentRecord.value = null
+    currentInstances.value = []
+    currentActionLogs.value = []
+    clearSelection()
     await tableRef.value?.refresh?.()
   } catch (error: any) {
     if (error?.errorFields) {
@@ -706,8 +675,11 @@ onMounted(() => {
 .form-content-detail {
   margin-top: 16px;
   padding: 16px;
-  background-color: #f5f5f5;
+  background: var(--fx-fill-secondary, #f5f5f5);
+  border: 1px solid var(--fx-border-color, #d9d9d9);
   border-radius: 4px;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
+  font-family: var(--fx-font-family, inherit);
 }
 
 .form-content pre,
@@ -715,14 +687,16 @@ onMounted(() => {
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
+  font-family: var(--fx-font-family, inherit);
+  font-size: var(--fx-font-size-sm, 12px);
   line-height: 1.5;
 }
 
 .form-content-detail h4 {
   margin: 0 0 16px 0;
-  font-size: 14px;
+  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
+  font-size: var(--fx-font-size, 14px);
   font-weight: 600;
 }
 </style>

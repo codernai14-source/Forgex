@@ -7,8 +7,7 @@
     @submit="handleSubmit"
     @cancel="handleCancel"
   >
-    <a-tabs v-model:activeKey="activeTab" type="card">
-      <!-- 基础信息标签页 -->
+    <a-tabs v-model:activeKey="activeTab" type="card" class="sys-user-form-dialog">
       <a-tab-pane key="basic" tab="基础信息">
         <a-form
           ref="basicFormRef"
@@ -27,7 +26,6 @@
                 />
               </a-form-item>
             </a-col>
-
             <a-col :span="12">
               <a-form-item label="用户名" name="username">
                 <a-input
@@ -36,7 +34,6 @@
                 />
               </a-form-item>
             </a-col>
-            
             <a-col :span="12">
               <a-form-item label="邮箱" name="email">
                 <a-input
@@ -45,7 +42,6 @@
                 />
               </a-form-item>
             </a-col>
-            
             <a-col :span="12">
               <a-form-item label="手机号" name="phone">
                 <a-input
@@ -55,7 +51,7 @@
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="性别" name="gender">
@@ -66,19 +62,18 @@
                 </a-radio-group>
               </a-form-item>
             </a-col>
-            
             <a-col :span="12">
               <a-form-item label="入职时间" name="entryDate">
                 <a-date-picker
                   v-model:value="formData.entryDate"
                   placeholder="请选择入职时间"
-                  style="width: 100%;"
+                  style="width: 100%"
                   value-format="YYYY-MM-DD"
                 />
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="所属部门" name="departmentId">
@@ -93,7 +88,6 @@
                 />
               </a-form-item>
             </a-col>
-            
             <a-col :span="12">
               <a-form-item label="岗位" name="positionId">
                 <a-select
@@ -102,23 +96,35 @@
                   show-search
                   :filter-option="filterOption"
                 >
-                  <a-select-option
-                    v-for="pos in positionList"
-                    :key="pos.id"
-                    :value="pos.id"
-                  >
+                  <a-select-option v-for="pos in positionList" :key="pos.id" :value="pos.id">
                     {{ pos.positionName }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
           </a-row>
-          
+
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="关联员工ID" name="employeeId">
+                <a-input
+                  v-model:value="formData.employeeId"
+                  placeholder="请输入关联员工ID"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="用户来源">
+                <a-input :value="userSourceDisplayText" disabled />
+              </a-form-item>
+            </a-col>
+          </a-row>
+
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="状态" name="status">
                 <a-radio-group v-model:value="formData.status">
-                  <a-radio v-for="option in normalized状态Options" :key="option.value" :value="option.value">
+                  <a-radio v-for="option in normalizedStatusOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-radio>
                 </a-radio-group>
@@ -127,8 +133,7 @@
           </a-row>
         </a-form>
       </a-tab-pane>
-      
-      <!-- 附属信息标签页 -->
+
       <a-tab-pane key="profile" tab="附属信息（可选）">
         <a-form
           ref="profileFormRef"
@@ -140,17 +145,16 @@
             <a-col :span="12">
               <a-form-item label="政治面貌">
                 <a-select
-                  v-model:value="profileData.political状态"
+                  v-model:value="profileData.politicalStatus"
                   placeholder="请选择政治面貌"
                   allow-clear
                 >
-                  <a-select-option v-for="option in political状态Options" :key="option.value" :value="option.value">
+                  <a-select-option v-for="option in politicalStatusOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
-            
             <a-col :span="12">
               <a-form-item label="学历">
                 <a-select
@@ -188,7 +192,7 @@
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <a-row :gutter="16">
             <a-col :span="24">
               <a-form-item label="家庭住址" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
@@ -199,7 +203,7 @@
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="紧急联系人">
@@ -209,7 +213,6 @@
                 />
               </a-form-item>
             </a-col>
-            
             <a-col :span="12">
               <a-form-item label="紧急联系电话">
                 <a-input
@@ -219,7 +222,7 @@
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="介绍人">
@@ -230,8 +233,7 @@
               </a-form-item>
             </a-col>
           </a-row>
-          
-          <!-- 工作经历 -->
+
           <a-divider orientation="left">工作经历</a-divider>
 
           <div
@@ -248,7 +250,6 @@
                   />
                 </a-form-item>
               </a-col>
-              
               <a-col :span="11">
                 <a-form-item label="职位" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
                   <a-input
@@ -257,42 +258,36 @@
                   />
                 </a-form-item>
               </a-col>
-              
-              <a-col :span="2" style="text-align: right;">
-                <a-button
-                  type="link"
-                  danger
-                  @click="removeWorkHistory(index)"
-                >
+              <a-col :span="2" style="text-align: right">
+                <a-button type="link" danger @click="removeWorkHistory(index)">
                   删除
                 </a-button>
               </a-col>
             </a-row>
-            
+
             <a-row :gutter="16">
               <a-col :span="11">
                 <a-form-item label="开始时间" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
                   <a-date-picker
                     v-model:value="history.startDate"
                     placeholder="请选择开始时间"
-                    style="width: 100%;"
+                    style="width: 100%"
                     value-format="YYYY-MM-DD"
                   />
                 </a-form-item>
               </a-col>
-              
               <a-col :span="11">
                 <a-form-item label="结束时间" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
                   <a-date-picker
                     v-model:value="history.endDate"
                     placeholder="请选择结束时间"
-                    style="width: 100%;"
+                    style="width: 100%"
                     value-format="YYYY-MM-DD"
                   />
                 </a-form-item>
               </a-col>
             </a-row>
-            
+
             <a-row :gutter="16">
               <a-col :span="22">
                 <a-form-item label="工作描述" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
@@ -305,9 +300,9 @@
               </a-col>
             </a-row>
           </div>
-          
+
           <a-row>
-            <a-col :span="24" style="text-align: center;">
+            <a-col :span="24" style="text-align: center">
               <a-button type="dashed" block @click="addWorkHistory">
                 <template #icon><PlusOutlined /></template>
                 添加工作经历
@@ -321,21 +316,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { userApi } from '@/api/system/user'
 import { useDict } from '@/hooks/useDict'
-import type { User, UserProfile, WorkHistory, Department, Position } from '../types'
+import { normalizeBooleanValue } from '@/utils/user'
+import type { Department, Position, User, UserProfile } from '../types'
 
-// Props
 interface Props {
-  /** 对话框是否打开，用于控制组件的显示/隐藏状态 */
   open: boolean
-  /** 是否为编辑模式，true 表示编辑用户，false 表示新增用户 */
   isEdit: boolean
-  /** 用户 ID，编辑模式下必填，用于加载用户详情数据 */
   userId?: string
 }
 
@@ -345,28 +337,17 @@ const props = withDefaults(defineProps<Props>(), {
   userId: undefined,
 })
 
-// Emits
 const emit = defineEmits<{
-  /**
-   * 更新对话框打开状态
-   * @param value 新的打开状态
-   */
   'update:open': [value: boolean]
-  /**
-   * 操作成功事件
-   * 触发时机：新增或编辑用户成功保存后触发
-   */
-  'success': []
+  success: []
 }>()
 
-// 响应式数据
 const visible = ref(props.open)
 const loading = ref(false)
 const activeTab = ref('basic')
 const basicFormRef = ref()
 const profileFormRef = ref()
 
-// 基础信息表单数据
 const formData = reactive<Partial<User>>({
   account: '',
   username: '',
@@ -376,15 +357,14 @@ const formData = reactive<Partial<User>>({
   entryDate: '',
   departmentId: '',
   positionId: '',
+  employeeId: '',
+  userSource: 1,
+  userSourceText: '本站新增',
   status: true,
 })
 
-// 用户详情数据（用于显示字典翻译后的文本）
-const userDetail = ref<User | null>(null)
-
-// 附属信息表单数据
 const profileData = reactive<Partial<UserProfile>>({
-  political状态: '',
+  politicalStatus: '',
   homeAddress: '',
   emergencyContact: '',
   emergencyPhone: '',
@@ -395,43 +375,26 @@ const profileData = reactive<Partial<UserProfile>>({
   workHistory: [],
 })
 
-// 部门列表
 const departmentList = ref<Department[]>([])
-
-// 职位列表
 const positionList = ref<Position[]>([])
 
-// 字典数据
 const { dictItems: genderOptions } = useDict('gender')
-const { dictItems: political状态Options } = useDict('political_status')
+const { dictItems: politicalStatusOptions } = useDict('political_status')
 const { dictItems: educationOptions } = useDict('education')
 const { dictItems: statusOptions } = useDict('status')
 
-function normalize状态Value(value: unknown): boolean | undefined {
-  if (typeof value === 'boolean') {
-    return value
-  }
-  if (typeof value === 'number') {
-    if (value === 1) return true
-    if (value === 0) return false
-    return undefined
-  }
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase()
-    if (normalized === '1' || normalized === 'true') return true
-    if (normalized === '0' || normalized === 'false') return false
-  }
-  return undefined
-}
+/**
+ * 新增场景默认显示“本站新增”，编辑场景展示后端返回来源文本。
+ */
+const userSourceDisplayText = computed(() => formData.userSourceText || '本站新增')
 
-const normalized状态Options = computed(() =>
+const normalizedStatusOptions = computed(() =>
   statusOptions.value.map(option => ({
     ...option,
-    value: normalize状态Value(option.value) ?? option.value,
+    value: normalizeBooleanValue(option.value) ?? option.value,
   })),
 )
 
-// 基础信息校验规则
 const basicRules = {
   account: [
     { required: true, message: '请输入账号', trigger: 'blur' },
@@ -439,7 +402,7 @@ const basicRules = {
   ],
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度需在 3-20 个字符之间', trigger: 'blur' },
+    { min: 2, max: 20, message: '用户名长度需在 2-20 个字符之间', trigger: 'blur' },
   ],
   email: [
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
@@ -447,87 +410,74 @@ const basicRules = {
   phone: [
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
   ],
-  departmentId: [
-    { required: true, message: '请选择部门', trigger: 'change' },
-  ],
-  positionId: [
-    { required: true, message: '请选择职位', trigger: 'change' },
+  employeeId: [
+    { pattern: /^\d*$/, message: '关联员工ID必须为数字', trigger: 'blur' },
   ],
 }
 
-// 监听 props.open 变化
-watch(() => props.open, (val) => {
+watch(() => props.open, async (val) => {
   visible.value = val
-  if (val) {
-    activeTab.value = 'basic'
-    if (props.isEdit && props.userId) {
-      loadUserData()
-    } else {
-      resetForm()
-    }
-    fetchDepartmentList()
-    fetchPositionList()
+  if (!val) {
+    return
+  }
+  activeTab.value = 'basic'
+  await fetchDepartmentList()
+  await fetchPositionList()
+  if (props.isEdit && props.userId) {
+    await loadUserData()
+  } else {
+    resetForm()
   }
 })
 
-// 监听 visible 变化
 watch(visible, (val) => {
   emit('update:open', val)
 })
 
-/**
- * 加载用户数据
- */
 async function loadUserData() {
   if (!props.userId) return
-  
+
   loading.value = true
   try {
     const data = await userApi.getUserDetail(props.userId)
-    if (data) {
-      // 保存完整的用户详情数据，包含字典翻译字段
-      userDetail.value = data
-      
-      Object.assign(formData, {
-        id: data.id,
-        account: data.account,
-        username: data.username,
-        email: data.email,
-        phone: data.phone,
-        gender: data.gender,
-        entryDate: data.entryDate,
-        departmentId: data.departmentId,
-        positionId: data.positionId,
-        status: data.status,
-      })
-      
-      if (data.profile) {
-        Object.assign(profileData, {
-          political状态: data.profile.political状态 || '',
-          homeAddress: data.profile.homeAddress || '',
-          emergencyContact: data.profile.emergencyContact || '',
-          emergencyPhone: data.profile.emergencyPhone || '',
-          referrer: data.profile.referrer || '',
-          education: data.profile.education || '',
-          birthPlace: data.profile.birthPlace || '',
-          intro: data.profile.intro || '',
-          workHistory: data.profile.workHistory || [],
-        })
-      }
-    }
-  } catch (error) {
-    console.error('加载用户数据失败:', error)
+    Object.assign(formData, {
+      id: data.id,
+      account: data.account,
+      username: data.username,
+      email: data.email,
+      phone: data.phone,
+      gender: data.gender,
+      entryDate: data.entryDate,
+      departmentId: data.departmentId,
+      positionId: data.positionId,
+      employeeId: data.employeeId ? String(data.employeeId) : '',
+      userSource: data.userSource,
+      userSourceText: data.userSourceText || '',
+      status: data.status,
+    })
+
+    const profile = data.profile || {}
+    Object.assign(profileData, {
+      politicalStatus: profile.politicalStatus || '',
+      homeAddress: profile.homeAddress || '',
+      emergencyContact: profile.emergencyContact || '',
+      emergencyPhone: profile.emergencyPhone || '',
+      referrer: profile.referrer || '',
+      education: profile.education || '',
+      birthPlace: profile.birthPlace || '',
+      intro: profile.intro || '',
+      workHistory: Array.isArray(profile.workHistory) ? profile.workHistory : [],
+    })
+  } catch {
     message.error('加载用户数据失败')
   } finally {
     loading.value = false
   }
 }
 
-/**
- * 重置表单
- */
 function resetForm() {
   Object.assign(formData, {
+    id: undefined,
     account: '',
     username: '',
     email: '',
@@ -536,11 +486,14 @@ function resetForm() {
     entryDate: '',
     departmentId: '',
     positionId: '',
+    employeeId: '',
+    userSource: 1,
+    userSourceText: '本站新增',
     status: true,
   })
-  
+
   Object.assign(profileData, {
-    political状态: '',
+    politicalStatus: '',
     homeAddress: '',
     emergencyContact: '',
     emergencyPhone: '',
@@ -550,43 +503,26 @@ function resetForm() {
     intro: '',
     workHistory: [],
   })
-  
-  basicFormRef.value?.clearValidate()
-  profileFormRef.value?.clearValidate()
+
+  basicFormRef.value?.clearValidate?.()
+  profileFormRef.value?.clearValidate?.()
 }
 
-/**
- * 获取部门列表
- */
 async function fetchDepartmentList() {
   const tenantId = sessionStorage.getItem('tenantId')
   if (!tenantId) {
     departmentList.value = []
     return
   }
-  try {
-    const list = await userApi.getDepartmentTree({ tenantId })
-    departmentList.value = Array.isArray(list) ? list : []
-  } catch (error) {
-    console.error('获取部门列表失败:', error)
-  }
+  const list = await userApi.getDepartmentTree({ tenantId })
+  departmentList.value = Array.isArray(list) ? list : []
 }
 
-/**
- * 获取职位列表
- */
 async function fetchPositionList() {
-  try {
-    const list = await userApi.getPositionList()
-    positionList.value = Array.isArray(list) ? list : []
-  } catch (error) {
-    console.error('获取职位列表失败:', error)
-  }
+  const list = await userApi.getPositionList()
+  positionList.value = Array.isArray(list) ? list : []
 }
 
-/**
- * 添加工作经历
- */
 function addWorkHistory() {
   if (!profileData.workHistory) {
     profileData.workHistory = []
@@ -600,82 +536,56 @@ function addWorkHistory() {
   })
 }
 
-/**
- * 删除工作经历
- */
 function removeWorkHistory(index: number) {
   profileData.workHistory?.splice(index, 1)
 }
 
-/**
- * 树形节点过滤
- */
 function filterTreeNode(inputValue: string, treeNode: any) {
-  return treeNode.deptName.toLowerCase().indexOf(inputValue.toLowerCase()) >= 0
+  return String(treeNode.deptName || '').toLowerCase().includes(inputValue.toLowerCase())
 }
 
-/**
- * 下拉框过滤
- */
 function filterOption(input: string, option: any) {
-  return option.children[0].children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+  const label = option?.children?.[0]?.children ?? option?.label ?? ''
+  return String(label).toLowerCase().includes(input.toLowerCase())
 }
 
-/**
- * 提交表单
- */
 async function handleSubmit() {
-  // 先校验基础信息
   try {
     await basicFormRef.value?.validate()
-  } catch (error) {
+  } catch {
     message.warning('请完善基础信息')
     activeTab.value = 'basic'
     return
   }
-  
+
   loading.value = true
   try {
-    const normalized状态 = normalize状态Value(formData.status)
+    const normalizedStatus = normalizeBooleanValue(formData.status)
     const submitData = {
       ...formData,
-      ...(normalized状态 !== undefined ? { status: normalized状态 } : {}),
+      employeeId: formData.employeeId ? Number(formData.employeeId) : undefined,
+      ...(normalizedStatus !== undefined ? { status: normalizedStatus } : {}),
       profile: profileData,
     }
-    
+
     if (props.isEdit) {
       await userApi.updateUser(submitData as User)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
     } else {
       await userApi.addUser(submitData as User)
-      // 成功提示由后端返回，在 http 拦截器中统一处理
     }
-    
+
     visible.value = false
     emit('success')
-  } catch (error) {
-    console.error('提交失败:', error)
+  } catch {
     message.error('操作失败')
   } finally {
     loading.value = false
   }
 }
 
-/**
- * 取消
- */
 function handleCancel() {
   visible.value = false
 }
 </script>
 
-<style scoped lang="less">
-.work-history-item {
-  padding: 16px;
-  margin-bottom: 16px;
-  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #fafafa));
-  border-radius: var(--fx-radius, 6px);
-  border: 1px solid var(--fx-border-color, #f0f0f0);
-  box-shadow: var(--fx-shadow-secondary, 0 1px 2px rgba(0, 0, 0, 0.08));
-}
-</style>
+<style scoped lang="less" src="@/styles/system-user-form.less"></style>
