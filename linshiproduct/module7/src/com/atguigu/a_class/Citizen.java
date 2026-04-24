@@ -6,5 +6,4 @@ public class Citizen {
     MyDate birthday =new MyDate();
 
 
-
 }
