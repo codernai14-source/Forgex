@@ -1,0 +1,81 @@
+<template>
+  <div class="${ctx.entityNameLower}-page">
+    <FxDynamicTable
+      ref="tableRef"
+      :table-code="'${ctx.mainTableCode}'"
+      :request="handleRequest"
+      :dynamic-table-config="tableConfig"
+      :show-query-form="true"
+    >
+      <template #toolbar>
+        <a-space :size="8">
+          <a-button type="primary" @click="openCreate">新增</a-button>
+        </a-space>
+      </template>
+      <template #action="{ record }">
+        <a-space>
+          <a @click="openDetailPage(record)">明细</a>
+          <a @click="openEdit(record)">编辑</a>
+          <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+        </a-space>
+      </template>
+    </FxDynamicTable>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Modal } from 'ant-design-vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { page${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+
+const router = useRouter()
+const tableRef = ref()
+const tableConfig = computed(() => ({
+  tableCode: '${ctx.mainTableCode}',
+  tableName: '${ctx.menuName}',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+<% for(column in ctx.mainTableColumns){ %>
+    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}' },
+<% } %>
+    { field: 'action', title: '操作', width: 200, align: 'center' },
+  ],
+  queryFields: [
+<% for(column in ctx.mainQueryColumns){ %>
+    { field: '${column.javaFieldName}', label: '${column.columnComment!column.columnName}', queryType: '${column.queryType}', queryOperator: '${column.queryOperator}' },
+<% } %>
+  ],
+  version: 1,
+}))
+
+const handleRequest = async (payload: any) => {
+  const result = await page${ctx.entityName}({
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    ...payload.query,
+  })
+  return { records: result.records || [], total: result.total || 0 }
+}
+
+function openCreate() {}
+function openEdit(_record: any) {}
+
+function openDetailPage(record: any) {
+  router.push(`/${ctx.moduleName}/${ctx.entityNameLower}/detail/${record.id}`)
+}
+
+function handleDelete(id: number) {
+  Modal.confirm({
+    title: '确认删除',
+    content: '确定要删除这条记录吗？',
+    onOk: async () => {
+      await delete${ctx.entityName}(id)
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+</script>

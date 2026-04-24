@@ -525,6 +525,8 @@ function normalizeSystemConfigRoutes(routes: any[]) {
   const cloned = Array.isArray(routes)
     ? JSON.parse(JSON.stringify(routes))
     : []
+  // 2026-04-20: stop all frontend regrouping, keep backend menu tree as-is.
+  return cloned
 
   const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
   if (!sysRoute || !Array.isArray(sysRoute.children)) {
@@ -667,6 +669,8 @@ function groupSystemMenus(
     childPaths: string[]
   },
 ) {
+  // 2026-04-20: no-op, frontend must not regroup system menus.
+  return
   const catalogIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
   const existingCatalog = catalogIndex >= 0 ? menuList[catalogIndex] : null
   const catalogChildren = Array.isArray(existingCatalog?.children) ? existingCatalog.children : []
@@ -769,7 +773,6 @@ export async function injectDynamicRoutes(payload: any) {
   // 瑙ｆ瀽妯″潡鍜岃矾鐢辨暟锟?
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
   let routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
-  routesPayload = normalizeSystemConfigRoutes(routesPayload)
   routesPayload = normalizeIntegrationRoutes(routesPayload)
 
   // 鏇存柊鍔ㄦ€佹ā鍧楀拰璺敱鍒楄〃

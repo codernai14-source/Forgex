@@ -367,7 +367,11 @@ public class SysConfigController {
     @PutMapping("/file-upload")
     public R<Boolean> setFileUploadConfig(@RequestBody FileUploadConfig config) {
         // 1. 使用默认配置填充空值
-        configService.setGlobalJson(KEY_FILE_UPLOAD, config == null ? FileUploadConfig.defaults() : config);
+        FileUploadConfig normalized = normalizeFileUploadConfig(config);
+        if ("LOCAL".equalsIgnoreCase(normalized.getStorageType()) && !org.springframework.util.StringUtils.hasText(normalized.getPublicBaseUrl())) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "LOCAL storage requires publicBaseUrl");
+        }
+        configService.setGlobalJson(KEY_FILE_UPLOAD, normalized);
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
@@ -383,6 +387,38 @@ public class SysConfigController {
      *
      * @return {@link R} 包含加密配置的统一返回结构
      */
+    private FileUploadConfig normalizeFileUploadConfig(FileUploadConfig source) {
+        FileUploadConfig defaults = FileUploadConfig.defaults();
+        FileUploadConfig config = source == null ? defaults : source;
+        if (!org.springframework.util.StringUtils.hasText(config.getStorageType())) {
+            config.setStorageType(defaults.getStorageType());
+        } else {
+            config.setStorageType(config.getStorageType().trim().toUpperCase());
+        }
+        if (!org.springframework.util.StringUtils.hasText(config.getLocalUploadPath())) {
+            config.setLocalUploadPath(defaults.getLocalUploadPath());
+        } else {
+            config.setLocalUploadPath(config.getLocalUploadPath().trim());
+        }
+        if (!org.springframework.util.StringUtils.hasText(config.getAccessPrefix())) {
+            config.setAccessPrefix(defaults.getAccessPrefix());
+        } else {
+            String prefix = config.getAccessPrefix().trim();
+            config.setAccessPrefix(prefix.startsWith("/") ? prefix : "/" + prefix);
+        }
+        if (config.getPublicBaseUrl() != null) {
+            String publicBaseUrl = config.getPublicBaseUrl().trim();
+            while (publicBaseUrl.endsWith("/")) {
+                publicBaseUrl = publicBaseUrl.substring(0, publicBaseUrl.length() - 1);
+            }
+            config.setPublicBaseUrl(publicBaseUrl);
+        }
+        if (config.getProviderConfigJson() == null) {
+            config.setProviderConfigJson("");
+        }
+        return config;
+    }
+
     @RequirePerm("sys:config:view")
     @GetMapping("/crypto")
     public R<CryptoConfig> getCryptoConfig() {

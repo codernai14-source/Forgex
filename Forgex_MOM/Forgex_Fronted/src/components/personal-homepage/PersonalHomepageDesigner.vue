@@ -1241,8 +1241,9 @@ onUnmounted(() => {
 }
 
 .designer-badge--soft {
-  background: var(--fx-primary-bg, rgba(22, 119, 255, 0.12));
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
   color: var(--fx-primary, #1677ff);
+  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent);
 }
 
 .designer-toolbar,
@@ -1436,18 +1437,19 @@ onUnmounted(() => {
   border-radius: 999px;
   color: var(--fx-text-tertiary, #9ca3af);
   background: color-mix(in srgb, var(--fx-bg-container, #ffffff) 88%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-border-color, #e5e7eb) 72%, transparent);
   transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 
   &:hover {
     color: var(--fx-theme-color, #1677ff);
-    background: color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 82%, transparent);
+    background: var(--fx-primary-soft, #eff6ff);
     transform: scale(1.05);
   }
 }
 
 .menu-grid__favorite-btn--active {
   color: var(--fx-theme-color, #1677ff);
-  background: color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 82%, transparent);
+  background: var(--fx-primary-soft, #eff6ff);
 }
 
 .menu-grid__item--favorite {
@@ -1463,8 +1465,27 @@ onUnmounted(() => {
   height: 38px;
   border-radius: 14px;
   color: var(--fx-primary, #1677ff);
-  background: color-mix(in srgb, var(--fx-primary-bg, #eff6ff) 72%, var(--fx-bg-elevated, #f8fafc));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 10%, transparent);
+  background: color-mix(in srgb, var(--fx-primary-soft, #eff6ff) 82%, var(--fx-bg-elevated, #f8fafc));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 14%, transparent);
+}
+
+:global(html[data-theme='light']) .personal-homepage-designer .designer-badge--soft {
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+  color: var(--fx-primary, #1677ff);
+  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent);
+}
+
+:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__favorite-btn:hover,
+:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__favorite-btn--active,
+:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__icon-wrap {
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+}
+
+:global(html[data-theme='dark']) .personal-homepage-designer .designer-badge--soft,
+:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__favorite-btn:hover,
+:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__favorite-btn--active,
+:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__icon-wrap {
+  background: color-mix(in srgb, var(--fx-primary-soft-strong, rgba(22, 119, 255, 0.18)) 78%, var(--fx-bg-elevated, #1f2937));
 }
 
 .menu-grid__icon {

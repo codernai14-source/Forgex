@@ -8,6 +8,7 @@ export interface WfTaskConfigDTO {
   taskName: string
   taskNameI18nJson?: string
   taskCode: string
+  categoryCode?: string
   interpreterBean?: string
   formType: number
   formPath?: string
@@ -30,6 +31,7 @@ export interface WfTaskConfigSummaryDTO {
   draftId?: number
   taskName: string
   taskCode: string
+  categoryCode?: string
   interpreterBean?: string
   formType: number
   formPath?: string
@@ -48,6 +50,7 @@ export interface WfTaskConfigSaveParam {
   taskName: string
   taskNameI18nJson?: string
   taskCode: string
+  categoryCode?: string
   interpreterBean?: string
   formType: number
   formPath?: string
@@ -73,6 +76,7 @@ export interface WfTaskDraftEditorDTO {
   draftId: number
   publishedId?: number
   taskCode: string
+  categoryCode?: string
   taskName: string
   taskNameI18nJson?: string
   interpreterBean?: string

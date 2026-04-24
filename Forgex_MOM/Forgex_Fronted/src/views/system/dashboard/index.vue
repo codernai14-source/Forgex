@@ -408,6 +408,8 @@ const getThemeColors = () => {
     textColorSecondary: getThemeToken('--fx-text-secondary', isDark.value ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'),
     borderColor: getThemeToken('--fx-border-color', isDark.value ? '#303030' : '#f0f0f0'),
     axisLineColor: isDark.value ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+    splitLineColor: getThemeToken('--fx-border-secondary', isDark.value ? '#1e293b' : '#eeeeee'),
+    tooltipBg: isDark.value ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.96)',
     
     // 图表背景色
     chartBg: getThemeToken('--fx-bg-container', isDark.value ? '#141414' : '#ffffff')
@@ -563,7 +565,7 @@ const initCpuChart = () => {
         },
         axisLabel: {
           distance: 25,
-          color: isDark.value ? '#ffffff' : '#666666',
+          color: colors.textColorSecondary,
           fontSize: 12
         },
         anchor: {
@@ -639,9 +641,11 @@ const initMemoryChart = () => {
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} MB ({d}%)',
-      backgroundColor: isDark.value ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      textColor: isDark.value ? '#ffffff' : '#333333',
-      borderColor: isDark.value ? '#333333' : '#dddddd'
+      backgroundColor: colors.tooltipBg,
+      textStyle: {
+        color: colors.textColor
+      },
+      borderColor: colors.borderColor
     },
     legend: {
       orient: 'horizontal',
@@ -650,7 +654,7 @@ const initMemoryChart = () => {
       itemGap: 14,
       textStyle: {
         fontSize: 12,
-        color: isDark.value ? '#ffffff' : '#333333'
+        color: colors.textColorSecondary
       }
     },
     series: [
@@ -735,10 +739,10 @@ const initModuleChart = () => {
       axisPointer: {
         type: 'shadow'
       },
-      backgroundColor: isDark.value ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      borderColor: isDark.value ? '#333333' : '#dddddd',
+      backgroundColor: colors.tooltipBg,
+      borderColor: colors.borderColor,
       textStyle: {
-        color: isDark.value ? '#ffffff' : '#333333'
+        color: colors.textColor
       }
     },
     grid: {
@@ -752,21 +756,21 @@ const initModuleChart = () => {
       type: 'value',
       name: t('system.dashboard.memoryMb'),
       nameTextStyle: {
-        color: isDark.value ? '#ffffff' : '#333333'
+        color: colors.textColorSecondary
       },
       axisLine: {
         show: true,
         lineStyle: {
-          color: isDark.value ? '#444444' : '#dddddd'
+          color: colors.axisLineColor
         }
       },
       axisLabel: {
-        color: isDark.value ? '#ffffff' : '#666666'
+        color: colors.textColorSecondary
       },
       splitLine: {
         show: true,
         lineStyle: {
-          color: isDark.value ? '#333333' : '#eeeeee'
+          color: colors.splitLineColor
         }
       }
     },
@@ -776,11 +780,11 @@ const initModuleChart = () => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: isDark.value ? '#444444' : '#dddddd'
+          color: colors.axisLineColor
         }
       },
       axisLabel: {
-        color: isDark.value ? '#ffffff' : '#333333'
+        color: colors.textColorSecondary
       },
       splitLine: {
         show: false
@@ -803,7 +807,7 @@ const initModuleChart = () => {
         label: {
           show: true,
           position: 'right',
-          color: isDark.value ? '#ffffff' : '#333333',
+          color: colors.textColorSecondary,
           fontSize: 12
         }
       }
@@ -874,10 +878,10 @@ const initMapChart = async () => {
       backgroundColor: colors.chartBg,
       tooltip: {
         trigger: 'item',
-        backgroundColor: isDark.value ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-        borderColor: isDark.value ? '#333333' : '#dddddd',
+        backgroundColor: colors.tooltipBg,
+        borderColor: colors.borderColor,
         textStyle: {
-          color: isDark.value ? '#ffffff' : '#333333'
+          color: colors.textColor
         }
       },
       geo: {

@@ -480,14 +480,17 @@ const onMessageClick = () => {
     min-width: auto;
     max-width: none;
     overflow: visible;
+    color: var(--fx-header-module-color, var(--fx-header-color, #4b5563));
     
     &:hover {
       color: var(--fx-theme-color, #1677ff);
+      background: var(--fx-header-module-hover-bg, rgba(22, 119, 255, 0.08));
     }
     
     &.ant-menu-item-selected {
       color: var(--fx-theme-color, #1677ff);
       border-bottom: none;
+      background: var(--fx-header-module-active-bg, rgba(22, 119, 255, 0.1));
     }
     
     .ant-menu-title-content {
@@ -605,6 +608,13 @@ const onMessageClick = () => {
 .user-dropdown-icon {
   font-size: calc(var(--fx-font-size, 14px) * 0.85);
   color: #9ca3af;
+}
+
+:global(html[data-theme='light']) .module-menu,
+:global(body[data-theme='light']) .module-menu {
+  --fx-header-module-color: var(--fx-text-color, #4b5563);
+  --fx-header-module-hover-bg: var(--fx-fill-secondary, #f9fafb);
+  --fx-header-module-active-bg: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 10%, #ffffff);
 }
 
 // 响应式适配

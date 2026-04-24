@@ -132,6 +132,22 @@
           </a-col>
         </a-row>
 
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item :label="t('workflow.taskConfig.category')" name="categoryCode">
+              <a-select v-model:value="formState.categoryCode" :placeholder="t('workflow.taskConfig.form.categoryCode')">
+                <a-select-option
+                  v-for="item in categorySelectOptions"
+                  :key="String(item.value)"
+                  :value="String(item.value)"
+                >
+                  {{ item.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
         <a-form-item v-if="formState.formType === 1" :label="t('workflow.taskConfig.formPath')" name="formPath">
           <a-input v-model:value="formState.formPath" :placeholder="t('workflow.taskConfig.form.formPath')" />
         </a-form-item>
@@ -211,6 +227,7 @@ const route = useRoute()
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: statusOptions } = useDict('status')
 const { dictItems: formTypeOptions } = useDict('wf_task_form_type')
+const { dictItems: taskCategoryOptions } = useDict('wf_task_category')
 
 const tableRef = ref<any>()
 const formRef = ref<FormInstance>()
@@ -222,6 +239,7 @@ const currentEditor = ref<WfTaskDraftEditorDTO | null>(null)
 const formState = reactive<WfTaskConfigSaveParam>({
   taskName: '',
   taskCode: '',
+  categoryCode: 'general',
   interpreterBean: '',
   formType: 1,
   formPath: '',
@@ -233,6 +251,7 @@ const formState = reactive<WfTaskConfigSaveParam>({
 const dictOptions = computed(() => ({
   status: statusOptions.value || [],
   wf_task_form_type: formTypeOptions.value || [],
+  wf_task_category: taskCategoryOptions.value || [],
   formType: formTypeOptions.value || [],
 }))
 
@@ -247,6 +266,13 @@ const formTypeSelectOptions = computed(() =>
   (formTypeOptions.value || []).map((item: { label: string; value: string | number }) => ({
     label: item.label,
     value: Number(item.value),
+  })),
+)
+
+const categorySelectOptions = computed(() =>
+  (taskCategoryOptions.value || []).map((item: { label: string; value: string | number }) => ({
+    label: item.label,
+    value: String(item.value),
   })),
 )
 
@@ -284,6 +310,7 @@ function resetFormState() {
     id: undefined,
     taskName: '',
     taskCode: '',
+    categoryCode: 'general',
     interpreterBean: '',
     formType: 1,
     formPath: '',
@@ -300,6 +327,7 @@ function fillForm(editor: WfTaskDraftEditorDTO) {
     id: editor.draftId,
     taskName: editor.taskName,
     taskCode: editor.taskCode,
+    categoryCode: editor.categoryCode || 'general',
     interpreterBean: editor.interpreterBean || '',
     formType: editor.formType,
     formPath: editor.formPath || '',

@@ -135,6 +135,9 @@
 | API 接口配置 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
 | 参数配置与映射 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
 | 第三方授权 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
+| 内部统一出站门面 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
+| 对外统一入站调用 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
+| 异步任务与结果查询 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
 | 调用日志 | 已支持 | Forgex_Integration | [集成平台](./模块专题/集成平台.md) |
 
 ### 2.13 工作流 / 报表模块

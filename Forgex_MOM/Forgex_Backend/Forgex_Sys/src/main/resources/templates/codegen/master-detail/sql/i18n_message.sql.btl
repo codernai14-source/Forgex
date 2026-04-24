@@ -1,0 +1,18 @@
+-- ================================================
+-- ${ctx.menuName} 主子表 i18n 初始化
+-- ================================================
+
+SET @TENANT_ID = 0;
+SET @MODULE = '${ctx.moduleName}';
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.menuName', '{"zh-CN":"${ctx.menuName}","en-US":"${ctx.menuName}"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.menuName' AND deleted = 0);
+
+INSERT INTO fx_i18n_message (
+    tenant_id, module, prompt_code, text_i18n_json, enabled, version, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, @MODULE, '${ctx.i18nPrefix}.subMenuName', '{"zh-CN":"${ctx.subTableComment!ctx.subEntityName}","en-US":"${ctx.subTableComment!ctx.subEntityName}"}', 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM fx_i18n_message WHERE tenant_id = @TENANT_ID AND module = @MODULE AND prompt_code = '${ctx.i18nPrefix}.subMenuName' AND deleted = 0);

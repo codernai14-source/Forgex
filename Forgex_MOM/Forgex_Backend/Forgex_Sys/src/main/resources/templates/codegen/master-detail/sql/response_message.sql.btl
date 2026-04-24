@@ -1,0 +1,19 @@
+-- ================================================
+-- ${ctx.menuName} 主子表返回消息模板初始化
+-- ================================================
+
+SET @TENANT_ID = 0;
+
+INSERT INTO sys_response_message_template (
+    tenant_id, template_code, template_name, success_code, success_message,
+    fail_code, fail_message, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.permKeyPrefix}:create', '${ctx.menuName}主表新增', 200, '主表新增成功', 500, '主表新增失败', 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_response_message_template WHERE tenant_id = @TENANT_ID AND template_code = '${ctx.permKeyPrefix}:create' AND deleted = 0);
+
+INSERT INTO sys_response_message_template (
+    tenant_id, template_code, template_name, success_code, success_message,
+    fail_code, fail_message, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.permKeyPrefix}:subCreate', '${ctx.menuName}子表新增', 200, '子表新增成功', 500, '子表新增失败', 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_response_message_template WHERE tenant_id = @TENANT_ID AND template_code = '${ctx.permKeyPrefix}:subCreate' AND deleted = 0);

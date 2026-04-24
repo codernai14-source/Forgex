@@ -9,8 +9,8 @@
         <section class="param-panel">
           <div class="panel-header">
             <div>
-              <h3>{{ t('integration.paramConfig.requestFields') }}</h3>
-              <p>{{ t('integration.paramConfig.requestStructure') }}</p>
+              <h3>{{ senderTitle }}</h3>
+              <p>{{ senderDesc }}</p>
             </div>
             <a-space wrap>
               <a-button size="small" @click="appendRootNode('REQUEST')">{{ t('common.add') }}</a-button>
@@ -62,8 +62,8 @@
         <section class="param-panel">
           <div class="panel-header">
             <div>
-              <h3>{{ t('integration.paramConfig.responseFields') }}</h3>
-              <p>{{ t('integration.paramConfig.responseStructure') }}</p>
+              <h3>{{ receiverTitle }}</h3>
+              <p>{{ receiverDesc }}</p>
             </div>
             <a-space wrap>
               <a-button size="small" @click="appendRootNode('RESPONSE')">{{ t('common.add') }}</a-button>
@@ -352,6 +352,30 @@ const warnings = computed(() => {
   }
   return result
 })
+
+const senderTitle = computed(() =>
+  mappingDirection.value === 'INBOUND'
+    ? t('integration.paramConfig.requestFields')
+    : t('integration.paramConfig.responseFields')
+)
+
+const senderDesc = computed(() =>
+  mappingDirection.value === 'INBOUND'
+    ? t('integration.paramConfig.requestStructure')
+    : t('integration.paramConfig.responseStructure')
+)
+
+const receiverTitle = computed(() =>
+  mappingDirection.value === 'INBOUND'
+    ? t('integration.paramConfig.responseFields')
+    : t('integration.paramConfig.requestFields')
+)
+
+const receiverDesc = computed(() =>
+  mappingDirection.value === 'INBOUND'
+    ? t('integration.paramConfig.responseStructure')
+    : t('integration.paramConfig.requestStructure')
+)
 
 watch(
   () => props.open,

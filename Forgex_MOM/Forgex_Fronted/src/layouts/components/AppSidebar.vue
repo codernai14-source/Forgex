@@ -459,7 +459,7 @@ const onCollapse = (collapsed: boolean) => {
     padding-inline-start: 0 !important;
     padding-inline-end: 0 !important;
     margin: 2px 10px 4px;
-    color: rgba(224, 227, 237, 0.58) !important;
+    color: var(--fx-sidebar-mini-text-color, rgba(224, 227, 237, 0.58)) !important;
     line-height: 1.2;
     transition: color 0.2s ease, background-color 0.2s ease;
     background: transparent !important;
@@ -471,8 +471,8 @@ const onCollapse = (collapsed: boolean) => {
     }
     
     &:hover {
-      color: rgba(244, 246, 255, 0.9) !important;
-      background: rgba(255, 255, 255, 0.03) !important;
+      color: var(--fx-sidebar-mini-text-hover-color, rgba(244, 246, 255, 0.9)) !important;
+      background: var(--fx-sidebar-mini-item-hover-bg, rgba(255, 255, 255, 0.03)) !important;
     }
     
     &.ant-menu-item-selected {
@@ -538,7 +538,7 @@ const onCollapse = (collapsed: boolean) => {
 }
 
 .mini-menu :deep(.ant-menu-item:hover) .mini-menu-icon-shell {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--fx-sidebar-mini-icon-hover-bg, rgba(255, 255, 255, 0.05));
 }
 
 .mini-menu :deep(.ant-menu-item-selected) .mini-menu-icon-shell {
@@ -600,7 +600,7 @@ const onCollapse = (collapsed: boolean) => {
     height: 40px;
     line-height: 40px;
     margin: 0;
-    color: var(--fx-text-color, rgba(255, 255, 255, 0.65)) !important;
+    color: var(--fx-sidebar-menu-text-color, var(--fx-text-color, rgba(255, 255, 255, 0.65))) !important;
     font-size: var(--fx-font-size, 14px);
     background: transparent !important;
     min-width: 0;
@@ -613,7 +613,7 @@ const onCollapse = (collapsed: boolean) => {
     
     &:hover {
       color: var(--fx-theme-color, #1677ff) !important;
-      background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
+      background: var(--fx-sidebar-menu-hover-bg, var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08))) !important;
     }
     
     .ant-menu-item-icon,
@@ -638,7 +638,7 @@ const onCollapse = (collapsed: boolean) => {
   
   :deep(.ant-menu-item-selected) {
     color: var(--fx-theme-color, #1677ff) !important;
-    background: var(--fx-tab-bg, rgba(255, 255, 255, 0.12)) !important;
+    background: var(--fx-sidebar-menu-active-bg, var(--fx-tab-bg, rgba(255, 255, 255, 0.12))) !important;
     
     &::after {
       border-right: 3px solid var(--fx-theme-color, #1677ff) !important;
@@ -656,7 +656,7 @@ const onCollapse = (collapsed: boolean) => {
   }
   
   :deep(.ant-menu-sub) {
-    background: rgba(0, 0, 0, 0.2) !important;
+    background: var(--fx-sidebar-menu-sub-bg, rgba(0, 0, 0, 0.2)) !important;
     
     .ant-menu-item {
       background: transparent !important;
@@ -664,7 +664,7 @@ const onCollapse = (collapsed: boolean) => {
       align-items: center;
       
       &:hover {
-        background: var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08)) !important;
+        background: var(--fx-sidebar-menu-hover-bg, var(--fx-tab-hover-bg, rgba(255, 255, 255, 0.08))) !important;
       }
       
       .ant-menu-item-icon {
@@ -741,6 +741,39 @@ const onCollapse = (collapsed: boolean) => {
 
 .mini-menu :deep(.ant-menu-item-selected) .mini-menu-title {
   color: var(--fx-theme-color, var(--fx-primary, #1677ff));
+}
+
+:global(html[data-theme='light']) .app-sidebar-mini,
+:global(body[data-theme='light']) .app-sidebar-mini {
+  border-right-color: var(--fx-border-color, #e5e7eb);
+}
+
+:global(html[data-theme='light']) .mini-menu,
+:global(body[data-theme='light']) .mini-menu {
+  --fx-sidebar-mini-text-color: var(--fx-text-color, #4b5563);
+  --fx-sidebar-mini-text-hover-color: var(--fx-theme-color, var(--fx-primary, #1677ff));
+  --fx-sidebar-mini-item-hover-bg: var(--fx-fill-secondary, #f9fafb);
+  --fx-sidebar-mini-icon-hover-bg: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 10%, transparent);
+}
+
+:global(html[data-theme='light']) .app-sidebar,
+:global(body[data-theme='light']) .app-sidebar {
+  background: var(--fx-sider-bg, #ffffff);
+  border-right-color: var(--fx-border-color, #e5e7eb);
+}
+
+:global(html[data-theme='light']) .app-sidebar :deep(.ant-layout-sider-trigger),
+:global(body[data-theme='light']) .app-sidebar :deep(.ant-layout-sider-trigger) {
+  background: var(--fx-fill-secondary, #f9fafb);
+  color: var(--fx-text-color, #4b5563);
+}
+
+:global(html[data-theme='light']) .sidebar-menu,
+:global(body[data-theme='light']) .sidebar-menu {
+  --fx-sidebar-menu-text-color: var(--fx-text-color, #4b5563);
+  --fx-sidebar-menu-hover-bg: var(--fx-fill-secondary, #f9fafb);
+  --fx-sidebar-menu-active-bg: color-mix(in srgb, var(--fx-theme-color, var(--fx-primary, #1677ff)) 10%, #ffffff);
+  --fx-sidebar-menu-sub-bg: var(--fx-fill-secondary, #f8fafc);
 }
 
 // 鍝嶅簲寮忛€傞厤

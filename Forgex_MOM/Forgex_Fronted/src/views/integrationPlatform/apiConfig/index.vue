@@ -77,7 +77,7 @@
         :is-edit="editor.isEdit"
         :config-id="editor.apiConfig?.id"
         mode="drawer"
-        width="100%"
+        width="820px"
         @update:open="handleFormOpenChange"
         @success="handleFormSuccess"
       />
@@ -89,7 +89,7 @@
           <h2>{{ t('integration.apiConfig.paramConfig') }}</h2>
           <p>{{ editor.apiConfig?.apiName || editor.apiConfig?.apiCode || '-' }}</p>
         </div>
-        <a-button @click="backToFormOrList">{{ t('common.back') }}</a-button>
+        <a-button @click="backToList">{{ t('common.back') }}</a-button>
       </div>
 
       <ApiParamConfigDialog
@@ -212,7 +212,7 @@ function handleFormOpenChange(open: boolean) {
 
 function handleParamOpenChange(open: boolean) {
   if (!open) {
-    backToFormOrList()
+    backToList()
   }
 }
 
@@ -330,7 +330,8 @@ async function handleToggleStatus(record: ApiConfigItem, checked: boolean) {
 
 :deep(.api-config-panel--editor .ant-drawer-content-wrapper) {
   position: static !important;
-  width: 100% !important;
+  width: min(820px, 100%) !important;
+  margin: 0 auto;
   box-shadow: none !important;
 }
 

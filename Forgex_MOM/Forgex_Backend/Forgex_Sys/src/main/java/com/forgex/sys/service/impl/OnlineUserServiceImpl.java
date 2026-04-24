@@ -88,11 +88,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         List<OnlineUserInfo> userInfoList = new ArrayList<>();
         for (String key : keys) {
-            String json = redisTemplate.opsForValue().get(key);
-            if (!StringUtils.hasText(json)) {
-                continue;
-            }
-            OnlineUserInfo userInfo = parseOnlineUserInfo(json);
+            OnlineUserInfo userInfo = readOnlineUserInfo(key);
             if (userInfo == null) {
                 continue;
             }
@@ -187,7 +183,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (keys == null || keys.isEmpty()) {
             return 0L;
         }
-        return (long) keys.size();
+        return keys.stream()
+                .map(this::readOnlineUserInfo)
+                .filter(Objects::nonNull)
+                .count();
     }
 
     /**
@@ -215,13 +214,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             Set<String> keys = redisTemplate.keys(ONLINE_USER_PREFIX + "*");
             if (keys != null && !keys.isEmpty()) {
                 for (String key : keys) {
-                    String json = redisTemplate.opsForValue().get(key);
-                    if (StringUtils.hasText(json)) {
-                        OnlineUserInfo userInfo = parseOnlineUserInfo(json);
-                        if (userInfo != null && token.equals(userInfo.token)) {
-                            redisTemplate.delete(key);
-                            break;
-                        }
+                    OnlineUserInfo userInfo = readOnlineUserInfo(key);
+                    if (userInfo != null && token.equals(userInfo.token)) {
+                        redisTemplate.delete(key);
+                        break;
                     }
                 }
             }
@@ -245,6 +241,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             JsonNode accountNode = node.get("account");
             JsonNode tokenNode = node.get("token");
             JsonNode loginTerminalNode = node.get("loginTerminal");
+            JsonNode clientIpNode = node.get("clientIp");
+            JsonNode userAgentNode = node.get("userAgent");
+            JsonNode loginTimeNode = node.get("loginTime");
             if (userIdNode != null && userIdNode.isNumber()) {
                 userInfo.userId = userIdNode.longValue();
             } else if (userIdNode != null && userIdNode.isTextual()) {
@@ -272,10 +271,42 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             } else {
                 userInfo.loginTerminal = LOGIN_TERMINAL_B;
             }
+            if (clientIpNode != null && clientIpNode.isTextual()) {
+                userInfo.clientIp = clientIpNode.asText();
+            }
+            if (userAgentNode != null && userAgentNode.isTextual()) {
+                userInfo.userAgent = userAgentNode.asText();
+            }
+            if (loginTimeNode != null && loginTimeNode.isTextual()) {
+                userInfo.loginTime = loginTimeNode.asText();
+            }
             return userInfo;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private OnlineUserInfo readOnlineUserInfo(String key) {
+        String json = redisTemplate.opsForValue().get(key);
+        if (!StringUtils.hasText(json)) {
+            return null;
+        }
+        OnlineUserInfo userInfo = parseOnlineUserInfo(json);
+        if (userInfo == null) {
+            return null;
+        }
+        if (!StringUtils.hasText(userInfo.token)) {
+            userInfo.token = parseTokenFromKey(key);
+        }
+        return userInfo;
+    }
+
+    private String parseTokenFromKey(String key) {
+        if (!StringUtils.hasText(key)) {
+            return null;
+        }
+        String[] parts = key.split(":");
+        return parts.length >= 6 ? parts[5] : null;
     }
 
     private String normalizeLoginTerminal(String loginTerminal) {
@@ -301,6 +332,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         private Long tenantId;
         private String account;
         private String loginTerminal;
+        private String clientIp;
+        private String userAgent;
+        private String loginTime;
         private Long ttlSeconds;
     }
 }

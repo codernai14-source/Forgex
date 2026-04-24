@@ -26,8 +26,8 @@
 
     <section class="designer-steps">
       <a-steps :current="currentStep">
-        <a-step :title="t('workflow.taskConfig.nodes.steps.formDesign')" :description="t('workflow.taskConfig.nodes.steps.formDesignDesc')" />
-        <a-step :title="t('workflow.taskConfig.nodes.steps.approvalConfig')" :description="t('workflow.taskConfig.nodes.steps.approvalConfigDesc')" />
+        <a-step :title="t('workflow.taskConfig.nodes.steps.formDesign')" :description="t('workflow.taskConfig.nodes.steps.formDesignDesc')" @click="handleStepClick(0)" />
+        <a-step :title="t('workflow.taskConfig.nodes.steps.approvalConfig')" :description="t('workflow.taskConfig.nodes.steps.approvalConfigDesc')" @click="handleStepClick(1)" />
       </a-steps>
     </section>
 
@@ -738,6 +738,40 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value))
 }
 
+function syncAvailableFormFields() {
+  availableFormFields.value = extractLowCodeFieldOptions(lowCodeFormContent.value)
+}
+
+function canEnterApprovalStep() {
+  if (editorContext.value?.formType !== 2) {
+    return true
+  }
+  syncAvailableFormFields()
+  if (!availableFormFields.value.length) {
+    message.warning(t('workflow.taskConfig.nodes.missingLowCodeSchema'))
+    return false
+  }
+  return true
+}
+
+async function goToStep(step: number) {
+  if (step === currentStep.value) {
+    return
+  }
+  if (step === 1 && !canEnterApprovalStep()) {
+    return
+  }
+  if (step === 0) {
+    syncAvailableFormFields()
+    clearSelection()
+  }
+  currentStep.value = step
+}
+
+function handleStepClick(step: number) {
+  void goToStep(step)
+}
+
 function normalizeSelectValue(value: unknown) {
   const nextValue = String(value || '').trim()
   return nextValue || undefined
@@ -788,7 +822,7 @@ function nodeSummary(data: WorkflowNodeData) {
 }
 
 function handleLowCodeSchemaChange() {
-  availableFormFields.value = extractLowCodeFieldOptions(lowCodeFormContent.value)
+  syncAvailableFormFields()
 }
 
 function createNodeData(node: Partial<WfTaskNodeEditorDTO> & { nodeType: number; nodeKey: string }): WorkflowNodeData {
@@ -1085,15 +1119,16 @@ async function loadDesigner() {
     editorContext.value = await getOrCreateDraftEditor({ taskCode: currentTaskCode }, silentErrorConfig)
     lowCodeFormContent.value = editorContext.value.formContent || ''
     const graph = await getDraftGraph({ taskCode: currentTaskCode }, silentErrorConfig)
+    syncAvailableFormFields()
     if (graph.nodes?.length) {
       flowNodes.value = graph.nodes.map(createFlowNode)
       flowEdges.value = graph.edges.map(createFlowEdge)
-      availableFormFields.value = graph.availableFormFields || extractLowCodeFieldOptions(lowCodeFormContent.value)
+      availableFormFields.value = graph.availableFormFields?.length ? graph.availableFormFields : availableFormFields.value
       currentStep.value = editorContext.value.formType === 2 && lowCodeFormContent.value ? 1 : 0
       selectNode(graph.nodes[0]?.nodeKey || '')
       await warmUpApproverLabels(graph.nodes)
     } else {
-      availableFormFields.value = graph.availableFormFields || extractLowCodeFieldOptions(lowCodeFormContent.value)
+      availableFormFields.value = graph.availableFormFields?.length ? graph.availableFormFields : availableFormFields.value
       buildDefaultGraph()
     }
     syncEdgePresentation()
@@ -1108,8 +1143,7 @@ async function handleSaveFormStep() {
     return
   }
 
-  if (editorContext.value.formType === 2 && !availableFormFields.value.length) {
-    message.warning(t('workflow.taskConfig.nodes.missingLowCodeSchema'))
+  if (!canEnterApprovalStep()) {
     return
   }
 
@@ -1119,6 +1153,7 @@ async function handleSaveFormStep() {
       id: editorContext.value.draftId,
       taskName: editorContext.value.taskName,
       taskCode: editorContext.value.taskCode,
+      categoryCode: editorContext.value.categoryCode,
       interpreterBean: editorContext.value.interpreterBean,
       formType: editorContext.value.formType,
       formPath: editorContext.value.formPath,
@@ -1127,7 +1162,7 @@ async function handleSaveFormStep() {
       remark: editorContext.value.remark
     }, silentErrorConfig)
     message.success(t('workflow.taskConfig.nodes.steps.formSaved'))
-    currentStep.value = 1
+    await goToStep(1)
   } catch (error: any) {
     message.error(error.message || t('workflow.taskConfig.list.saveDraftBaseInfoFailed'))
   } finally {
@@ -1139,8 +1174,7 @@ function handleBackToFormDesign() {
   if (!canBackToFormDesign.value) {
     return
   }
-  currentStep.value = 0
-  clearSelection()
+  void goToStep(0)
 }
 
 function handleDragStart(event: DragEvent, nodeType: number) {

@@ -92,6 +92,7 @@ export interface FileUploadConfig {
   storageType: 'LOCAL' | 'OSS' | 'MINIO'
   localUploadPath: string
   accessPrefix: string
+  publicBaseUrl: string
   providerConfigJson: string
 }
 
@@ -178,6 +179,7 @@ export function createDefaultFileUploadConfig(): FileUploadConfig {
     storageType: 'LOCAL',
     localUploadPath: './uploads',
     accessPrefix: '/files',
+    publicBaseUrl: '',
     providerConfigJson: '',
   }
 }
