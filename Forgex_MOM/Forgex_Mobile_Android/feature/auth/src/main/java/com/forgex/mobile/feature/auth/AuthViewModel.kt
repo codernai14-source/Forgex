@@ -3,6 +3,7 @@ package com.forgex.mobile.feature.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forgex.mobile.core.common.i18n.AppText
+import com.forgex.mobile.core.model.FxScanResult
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.core.datastore.ServerEndpointConfig
 import com.forgex.mobile.core.datastore.SessionStore
@@ -50,7 +51,12 @@ class AuthViewModel @Inject constructor(
     }
 
     fun updateAccount(value: String) {
-        _uiState.update { it.clearError().copy(account = value.trim()) }
+        _uiState.update {
+            it.clearError().copy(
+                account = value.trim(),
+                latestAccountScanResult = null
+            )
+        }
     }
 
     fun updatePassword(value: String) {
@@ -454,10 +460,64 @@ class AuthViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 selectedTenantId = tenantId,
+                latestTenantScanResult = null,
                 errorMessage = null,
                 errorText = null
             )
         }
+    }
+
+    /**
+     * 应用账号扫描结果到登录表单。
+     */
+    fun applyAccountScan(result: FxScanResult) {
+        val account = result.rawValue.trim()
+        if (account.isBlank()) {
+            return
+        }
+        _uiState.update {
+            it.clearError().copy(
+                account = account,
+                latestAccountScanResult = result
+            )
+        }
+    }
+
+    /**
+     * 按扫描结果匹配租户并直接选中。
+     */
+    fun applyTenantScan(result: FxScanResult) {
+        val keyword = result.rawValue.trim()
+        if (keyword.isBlank()) {
+            return
+        }
+        val matchedTenant = _uiState.value.tenants.firstOrNull { tenant ->
+            tenant.id.equals(keyword, ignoreCase = true) ||
+                tenant.name.equals(keyword, ignoreCase = true) ||
+                tenant.name.contains(keyword, ignoreCase = true)
+        } ?: return
+        _uiState.update {
+            it.copy(
+                selectedTenantId = matchedTenant.id,
+                latestTenantScanResult = result,
+                errorMessage = null,
+                errorText = null
+            )
+        }
+    }
+
+    /**
+     * 标记账号扫描结果已被页面消费。
+     */
+    fun consumeAccountScanResult() {
+        _uiState.update { it.copy(latestAccountScanResult = null) }
+    }
+
+    /**
+     * 标记租户扫描结果已被页面消费。
+     */
+    fun consumeTenantScanResult() {
+        _uiState.update { it.copy(latestTenantScanResult = null) }
     }
 
     fun showLanguageDialog() {

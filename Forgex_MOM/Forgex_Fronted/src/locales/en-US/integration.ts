@@ -144,6 +144,8 @@ export default {
     sortOrder: 'Sort Order',
     remark: 'Remark',
     autoMatch: 'Auto Match',
+    autoMatchNoResult: 'No same-name fields available for auto match',
+    autoMatchApplied: 'Auto match completed with {count} new mappings',
     addMapping: 'Add Mapping',
     noMappings: 'No mappings yet',
     sourceUnselected: 'Please select a sender field',

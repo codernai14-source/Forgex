@@ -7,8 +7,8 @@ import ${ctx.packageName}.domain.param.${ctx.subEntityName}SaveParam;
 
 public interface ${ctx.subEntityName}Service {
     IPage<${ctx.subEntityName}> page(${ctx.subEntityName}PageParam param);
-    ${ctx.subEntityName} detail(Long id);
+    ${ctx.subEntityName} detail(${ctx.subPkJavaType!"Long"} id);
     void save(${ctx.subEntityName}SaveParam param);
     void update(${ctx.subEntityName}SaveParam param);
-    void delete(Long id);
+    void delete(${ctx.subPkJavaType!"Long"} id);
 }

@@ -83,7 +83,6 @@ public class I18nLanguageTypeController {
      *
      * @return 默认语言类型实体
      */
-    @RequirePerm("sys:i18nLanguageType:view")
     @PostMapping("/getDefault")
     public R<FxI18nLanguageType> getDefault() {
         FxI18nLanguageType languageType = languageTypeService.getDefault();

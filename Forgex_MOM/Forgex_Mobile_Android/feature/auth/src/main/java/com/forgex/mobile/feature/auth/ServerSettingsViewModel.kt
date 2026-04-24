@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forgex.mobile.core.datastore.ServerEndpointConfig
 import com.forgex.mobile.core.datastore.SessionStore
+import com.forgex.mobile.core.model.FxScanResult
 import com.forgex.mobile.core.network.di.BaseUrl
 import com.forgex.mobile.core.ui.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,22 +20,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ServerSettingsUiState(
-    val scheme: String = "http",
-    val host: String = "",
-    val port: String = "9000",
-    val defaultEndpoint: String = "http://10.0.2.2:9000",
-    val currentEndpoint: String = "http://10.0.2.2:9000",
-    val usingCustomEndpoint: Boolean = false,
-    val isSaving: Boolean = false,
-    val messageRes: Int? = null,
-    val errorMessageRes: Int? = null
-)
-
-sealed interface ServerSettingsEvent {
-    data object Saved : ServerSettingsEvent
-}
-
+/**
+ * 服务器配置页状态管理，负责维护地址表单与扫描回填结果。
+ */
 @HiltViewModel
 class ServerSettingsViewModel @Inject constructor(
     private val sessionStore: SessionStore,
@@ -61,6 +49,9 @@ class ServerSettingsViewModel @Inject constructor(
         observeCustomEndpoint()
     }
 
+    /**
+     * 更新服务器主机输入。
+     */
     fun updateHost(value: String) {
         _uiState.update {
             it.copy(
@@ -71,6 +62,9 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 更新端口输入。
+     */
     fun updatePort(value: String) {
         _uiState.update {
             it.copy(
@@ -81,6 +75,9 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 更新访问协议。
+     */
     fun updateScheme(value: String) {
         _uiState.update {
             it.copy(
@@ -91,6 +88,59 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 应用扫描结果到主机输入框。
+     */
+    fun applyHostScan(result: FxScanResult) {
+        val normalized = normalizeHost(result.rawValue)
+        if (normalized.isBlank()) {
+            return
+        }
+        _uiState.update {
+            it.copy(
+                host = normalized,
+                latestHostScanResult = result,
+                errorMessageRes = null,
+                messageRes = null
+            )
+        }
+    }
+
+    /**
+     * 应用扫描结果到端口输入框。
+     */
+    fun applyPortScan(result: FxScanResult) {
+        val normalizedPort = normalizePort(result.rawValue)
+        if (normalizedPort.isBlank()) {
+            return
+        }
+        _uiState.update {
+            it.copy(
+                port = normalizedPort,
+                latestPortScanResult = result,
+                errorMessageRes = null,
+                messageRes = null
+            )
+        }
+    }
+
+    /**
+     * 标记主机扫描结果已被页面消费。
+     */
+    fun consumeHostScanResult() {
+        _uiState.update { it.copy(latestHostScanResult = null) }
+    }
+
+    /**
+     * 标记端口扫描结果已被页面消费。
+     */
+    fun consumePortScanResult() {
+        _uiState.update { it.copy(latestPortScanResult = null) }
+    }
+
+    /**
+     * 保存当前服务器地址。
+     */
     fun saveEndpoint() {
         viewModelScope.launch {
             val snapshot = _uiState.value
@@ -123,6 +173,9 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 恢复默认服务器地址。
+     */
     fun resetToDefault() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, errorMessageRes = null, messageRes = null) }
@@ -142,6 +195,9 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 同步当前有效服务器地址。
+     */
     private fun observeCustomEndpoint() {
         viewModelScope.launch {
             sessionStore.serverEndpoint.collectLatest { endpoint ->
@@ -159,6 +215,9 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 解析默认 BaseUrl 为标准端点对象。
+     */
     private fun parseDefaultEndpoint(baseUrlValue: String): ServerEndpointConfig {
         return runCatching {
             val uri = URI(baseUrlValue)
@@ -177,10 +236,16 @@ class ServerSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 将端点对象格式化为完整地址字符串。
+     */
     private fun endpointToString(endpoint: ServerEndpointConfig): String {
         return "${endpoint.scheme}://${endpoint.host}:${endpoint.port}"
     }
 
+    /**
+     * 规范化主机字符串，去除协议、路径和端口残留。
+     */
     private fun normalizeHost(raw: String): String {
         val trimmed = raw.trim()
         if (trimmed.isBlank()) return ""
@@ -195,4 +260,35 @@ class ServerSettingsViewModel @Inject constructor(
         }
         return host.trim()
     }
+
+    /**
+     * 规范化端口字符串，只保留数字。
+     */
+    private fun normalizePort(raw: String): String {
+        return raw.filter(Char::isDigit)
+    }
+}
+
+/**
+ * 服务器配置页 UI 状态。
+ */
+data class ServerSettingsUiState(
+    val scheme: String = "http",
+    val host: String = "",
+    val port: String = "9000",
+    val defaultEndpoint: String = "http://10.0.2.2:9000",
+    val currentEndpoint: String = "http://10.0.2.2:9000",
+    val usingCustomEndpoint: Boolean = false,
+    val isSaving: Boolean = false,
+    val messageRes: Int? = null,
+    val errorMessageRes: Int? = null,
+    val latestHostScanResult: FxScanResult? = null,
+    val latestPortScanResult: FxScanResult? = null
+)
+
+/**
+ * 服务器配置页单次事件。
+ */
+sealed interface ServerSettingsEvent {
+    data object Saved : ServerSettingsEvent
 }

@@ -17,6 +17,7 @@
 package com.forgex.sys.controller;
 
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.service.ISysCMenuService;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * C 端角色菜单授权 Controller
@@ -48,7 +50,8 @@ public class SysRoleCMenuController {
     @PostMapping("/list")
     public R<List<Long>> list(@RequestBody Map<String, Object> body) {
         Long roleId = parseLong(body.get("roleId"));
-        return R.ok(cMenuService.getRoleCMenuIds(roleId));
+        Long tenantId = TenantContext.get();
+        return R.ok(cMenuService.getRoleCMenuIds(tenantId, roleId));
     }
 
     /**
@@ -57,7 +60,8 @@ public class SysRoleCMenuController {
     @PostMapping("/authData/module/{moduleId}")
     public R<List<CMenuTreeVO>> authData(@PathVariable Long moduleId, @RequestBody Map<String, Object> body) {
         Long roleId = parseLong(body.get("roleId"));
-        return R.ok(cMenuService.getAuthMenuTree(moduleId, roleId));
+        Long tenantId = TenantContext.get();
+        return R.ok(cMenuService.getAuthMenuTree(tenantId, moduleId, roleId));
     }
 
     /**
@@ -70,11 +74,11 @@ public class SysRoleCMenuController {
      * @return 授权结果
      */
     @PostMapping("/grant")
-    @SuppressWarnings("unchecked")
     public R<Void> grant(@RequestBody Map<String, Object> body) {
         Long roleId = parseLong(body.get("roleId"));
-        List<Long> menuIds = (List<Long>) body.get("menuIds");
-        cMenuService.grantRoleCMenus(roleId, menuIds);
+        List<Long> menuIds = parseLongList(body.get("menuIds"));
+        Long tenantId = TenantContext.get();
+        cMenuService.grantRoleCMenus(tenantId, roleId, menuIds);
         return R.ok(CommonPrompt.AUTHORIZE_SUCCESS);
     }
 
@@ -85,6 +89,20 @@ public class SysRoleCMenuController {
             try { return Long.parseLong((String) obj); } catch (NumberFormatException e) { return null; }
         }
         return null;
+    }
+
+    private List<Long> parseLongList(Object obj) {
+        if (!(obj instanceof List<?> rawList)) {
+            return null;
+        }
+        List<Long> result = new ArrayList<>();
+        for (Object item : rawList) {
+            Long value = parseLong(item);
+            if (value != null) {
+                result.add(value);
+            }
+        }
+        return result;
     }
 }
 

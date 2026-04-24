@@ -61,13 +61,13 @@ public interface ISysCMenuService extends IService<SysCMenu> {
     // ---- 角色菜单授权 ----
 
     /** 查询角色已授权的 C 端菜单 ID 列表 */
-    List<Long> getRoleCMenuIds(Long roleId);
+    List<Long> getRoleCMenuIds(Long tenantId, Long roleId);
 
     /** 获取模块下菜单树（含角色勾选状态） */
-    List<CMenuTreeVO> getAuthMenuTree(Long moduleId, Long roleId);
+    List<CMenuTreeVO> getAuthMenuTree(Long tenantId, Long moduleId, Long roleId);
 
     /** 角色授权 C 端菜单 */
-    void grantRoleCMenus(Long roleId, List<Long> menuIds);
+    void grantRoleCMenus(Long tenantId, Long roleId, List<Long> menuIds);
 
     // ---- 工作台/收藏（C 端 App 用） ----
 

@@ -893,6 +893,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .filter(m -> Objects.equals(m.getModuleId(), module.getId()))
                 .filter(m -> m.getParentId() == null || m.getParentId() == 0)
                 .filter(m -> !"button".equalsIgnoreCase(m.getType()))
+                .filter(m -> !"menu".equalsIgnoreCase(m.getType()) || StringUtils.hasText(m.getComponentKey()))
                 .sorted(Comparator.comparing(m -> m.getOrderNum() == null ? 0 : m.getOrderNum()))
                 .collect(Collectors.toList());
         if (rootMenus.isEmpty()) {
@@ -981,6 +982,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         List<SysMenu> childMenus = allMenus.stream()
                 .filter(m -> Objects.equals(m.getParentId(), menu.getId()))
                 .filter(m -> !"button".equalsIgnoreCase(m.getType()))
+                .filter(m -> !"menu".equalsIgnoreCase(m.getType()) || StringUtils.hasText(m.getComponentKey()))
                 .sorted(Comparator.comparing(m -> m.getOrderNum() == null ? 0 : m.getOrderNum()))
                 .collect(Collectors.toList());
 

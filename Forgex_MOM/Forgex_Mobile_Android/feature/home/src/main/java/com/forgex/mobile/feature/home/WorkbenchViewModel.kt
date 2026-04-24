@@ -1,20 +1,4 @@
-/*
- * Copyright 2026 coder_nai@163.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.forgex.mobile.feature.home
+﻿package com.forgex.mobile.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,6 +12,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * 工作台页面状态管理，负责模块列表与模块菜单的切换加载。
+ */
 @HiltViewModel
 class WorkbenchViewModel @Inject constructor(
     private val repository: WorkbenchRepository
@@ -40,6 +27,9 @@ class WorkbenchViewModel @Inject constructor(
         loadModules()
     }
 
+    /**
+     * 加载工作台模块列表。
+     */
     fun loadModules() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingModules = true, errorMessage = null) }
@@ -65,15 +55,24 @@ class WorkbenchViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 选中模块并触发对应菜单加载。
+     */
     fun selectModule(moduleId: Long) {
         _uiState.update { it.copy(selectedModuleId = moduleId) }
         loadMenusForModule(moduleId)
     }
 
+    /**
+     * 清空模块选择，回到模块总览态。
+     */
     fun clearModuleSelection() {
         _uiState.update { it.copy(selectedModuleId = null, menus = emptyList()) }
     }
 
+    /**
+     * 加载指定模块下的工作台菜单。
+     */
     private fun loadMenusForModule(moduleId: Long) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMenus = true) }
@@ -95,4 +94,3 @@ class WorkbenchViewModel @Inject constructor(
         }
     }
 }
-

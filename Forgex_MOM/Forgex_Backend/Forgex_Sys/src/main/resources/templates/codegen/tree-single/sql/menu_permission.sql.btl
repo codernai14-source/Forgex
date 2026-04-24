@@ -1,0 +1,96 @@
+-- ================================================
+-- ${ctx.menuName} tree-single menu and permission init
+-- ================================================
+
+SET @TENANT_ID = 0;
+SET @MENU_PATH = '${ctx.menuPath}';
+SET @MENU_NAME = '${ctx.menuName}';
+
+SET @PARENT_MENU_ID = (
+    SELECT id FROM sys_menu
+    WHERE tenant_id = @TENANT_ID
+      AND path = '${ctx.parentMenuPath}'
+      AND deleted = 0
+    LIMIT 1
+);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT
+    @TENANT_ID,
+    NULL,
+    COALESCE(@PARENT_MENU_ID, 0),
+    'menu',
+    2,
+    @MENU_PATH,
+    @MENU_NAME,
+    CONCAT('{"zh-CN":"', @MENU_NAME, '","en-US":"', @MENU_NAME, '"}'),
+    '${ctx.menuIcon}',
+    'SystemCodegen',
+    NULL,
+    90,
+    1,
+    1,
+    NOW(),
+    NOW(),
+    0
+WHERE NOT EXISTS (
+    SELECT 1 FROM sys_menu
+    WHERE tenant_id = @TENANT_ID
+      AND path = @MENU_PATH
+      AND type = 'menu'
+      AND deleted = 0
+);
+
+SET @MENU_ID = (
+    SELECT id FROM sys_menu
+    WHERE tenant_id = @TENANT_ID
+      AND path = @MENU_PATH
+      AND type = 'menu'
+      AND deleted = 0
+    LIMIT 1
+);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '查询', '{"zh-CN":"查询","en-US":"Query"}', NULL, NULL, '${ctx.permKeyPrefix}:page', 1, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:page' AND deleted = 0);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '详情', '{"zh-CN":"详情","en-US":"Detail"}', NULL, NULL, '${ctx.permKeyPrefix}:detail', 2, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:detail' AND deleted = 0);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '新增', '{"zh-CN":"新增","en-US":"Create"}', NULL, NULL, '${ctx.permKeyPrefix}:create', 3, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:create' AND deleted = 0);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '修改', '{"zh-CN":"修改","en-US":"Update"}', NULL, NULL, '${ctx.permKeyPrefix}:update', 4, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:update' AND deleted = 0);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '删除', '{"zh-CN":"删除","en-US":"Delete"}', NULL, NULL, '${ctx.permKeyPrefix}:delete', 5, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:delete' AND deleted = 0);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '树查询', '{"zh-CN":"树查询","en-US":"Tree Query"}', NULL, NULL, '${ctx.permKeyPrefix}:tree', 6, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:tree' AND deleted = 0);

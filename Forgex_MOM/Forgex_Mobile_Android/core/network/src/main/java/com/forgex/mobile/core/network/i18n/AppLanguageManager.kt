@@ -33,7 +33,7 @@ class AppLanguageManager @Inject constructor(
                 sessionStore.languageTag.first()?.let(AppLanguage::normalize)
             }
             LanguageMode.FOLLOW_SYSTEM -> {
-                sessionStore.lastResolvedLanguageTag.first()?.let(AppLanguage::normalize)
+                AppLanguage.DEFAULT_LANGUAGE_TAG
             }
         } ?: AppLanguage.DEFAULT_LANGUAGE_TAG
         AppLanguage.apply(LanguageMode.MANUAL, bootstrapTag)

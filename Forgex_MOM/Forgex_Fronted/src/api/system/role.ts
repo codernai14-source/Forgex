@@ -24,7 +24,7 @@ export const getRolePage = (params: any) => {
  * @param id 角色ID
  * @returns 角色详情
  */
-export const getRoleById = (id: number) => {
+export const getRoleById = (id: string | number) => {
   return http.post('/sys/role/detail', { id })
 }
 
@@ -69,7 +69,7 @@ export const batchDeleteRoles = (ids: number[]) => {
  * @param params 参数 { roleId, tenantId }
  * @returns 授权数据
  */
-export const getRoleAuthData = (params: { roleId: number; tenantId: string }) => {
+export const getRoleAuthData = (params: { roleId: string | number; tenantId: string }) => {
   return http.post('/sys/role/menu/authData', params)
 }
 
@@ -80,7 +80,7 @@ export const getRoleAuthData = (params: { roleId: number; tenantId: string }) =>
  * @returns 带 checked 状态的菜单树
  */
 export const getRoleModuleAuthData = (
-  moduleId: number,
+  moduleId: number | string,
   params: { roleId: number | string }
 ) => {
   return http.post(`/sys/role/menu/authData/module/${moduleId}`, params)
@@ -91,7 +91,7 @@ export const getRoleModuleAuthData = (
  * @param params 参数 { roleId, tenantId }
  * @returns 菜单列表
  */
-export const listRoleMenus = (params: { roleId: number; tenantId: string }) => {
+export const listRoleMenus = (params: { roleId: string | number; tenantId: string }) => {
   return http.post('/sys/role/menu/list', params)
 }
 
@@ -100,22 +100,22 @@ export const listRoleMenus = (params: { roleId: number; tenantId: string }) => {
  * @param data 授权数据 { roleId, tenantId, menuIds }
  * @returns 结果
  */
-export const grantRoleMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
+export const grantRoleMenus = (data: { roleId: string | number; tenantId: string; menuIds: Array<string | number> }) => {
   return httpSuccess.post('/sys/role/menu/grant', data)
 }
 
 export const getRoleCModuleAuthData = (
-  moduleId: number,
+  moduleId: number | string,
   params: { roleId: number | string }
 ) => {
   return http.post(`/sys/role/c-menu/authData/module/${moduleId}`, params)
 }
 
-export const listRoleCMenus = (params: { roleId: number; tenantId: string }) => {
+export const listRoleCMenus = (params: { roleId: string | number; tenantId: string }) => {
   return http.post('/sys/role/c-menu/list', params)
 }
 
-export const grantRoleCMenus = (data: { roleId: number; tenantId: string; menuIds: number[] }) => {
+export const grantRoleCMenus = (data: { roleId: string | number; tenantId: string; menuIds: Array<string | number> }) => {
   return httpSuccess.post('/sys/role/c-menu/grant', data)
 }
 

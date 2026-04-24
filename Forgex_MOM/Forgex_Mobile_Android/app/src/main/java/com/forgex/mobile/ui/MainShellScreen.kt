@@ -20,16 +20,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Mail
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -60,8 +60,8 @@ enum class MainTab(
 ) {
     FAVORITES(Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
     NOTIFICATION(Icons.Filled.Notifications, Icons.Outlined.Notifications),
-    WORKBENCH(Icons.Filled.Widgets, Icons.Outlined.Widgets),
-    MESSAGE(Icons.Filled.Mail, Icons.Outlined.Mail),
+    WORKBENCH(Icons.Filled.Home, Icons.Outlined.Home),
+    MESSAGE(Icons.Filled.Email, Icons.Outlined.Email),
     PROFILE(Icons.Filled.Person, Icons.Outlined.Person);
 }
 

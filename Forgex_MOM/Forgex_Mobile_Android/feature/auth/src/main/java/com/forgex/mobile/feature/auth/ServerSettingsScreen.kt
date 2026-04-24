@@ -3,40 +3,44 @@ package com.forgex.mobile.feature.auth
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.forgex.mobile.core.component.FxFormFooterBar
+import com.forgex.mobile.core.component.FxFormSection
+import com.forgex.mobile.core.component.FxPageScaffold
+import com.forgex.mobile.core.component.scanner.FxScanActionBar
+import com.forgex.mobile.core.component.scanner.FxScanInputBox
+import com.forgex.mobile.core.device.FxScannerManager
+import com.forgex.mobile.core.model.FxScanResult
 import com.forgex.mobile.core.ui.R
 import kotlinx.coroutines.flow.collectLatest
 
+/**
+ * 服务器配置页，基于公共表单组件承接环境地址维护与扫描回填。
+ */
 @Composable
 fun ServerSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ServerSettingsViewModel = hiltViewModel()
+    viewModel: ServerSettingsViewModel = hiltViewModel(),
+    scannerBridgeViewModel: ServerSettingsScanViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scannerManager = remember(scannerBridgeViewModel) { scannerBridgeViewModel.scannerManager }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
@@ -46,34 +50,30 @@ fun ServerSettingsScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 520.dp),
-            shape = MaterialTheme.shapes.large,
-            color = Color(0xFFF5F8FF)
+    LaunchedEffect(scannerManager) {
+        scannerManager.results.collectLatest { result ->
+            routeServerScanResult(
+                result = result,
+                onHostResult = viewModel::applyHostScan,
+                onPortResult = viewModel::applyPortScan
+            )
+            scannerManager.clearCachedResult()
+        }
+    }
+
+    FxPageScaffold(title = stringResource(R.string.server_settings_title)) { _ ->
+        Column(
+            modifier = modifier
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.server_settings_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = stringResource(R.string.server_settings_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF5B6478)
-                )
+            Text(
+                text = stringResource(R.string.server_settings_desc),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            FxFormSection(title = stringResource(R.string.server_settings_title)) {
                 Text(
                     text = stringResource(R.string.server_settings_default, uiState.defaultEndpoint),
                     style = MaterialTheme.typography.bodySmall
@@ -85,7 +85,7 @@ fun ServerSettingsScreen(
                         stringResource(R.string.server_settings_current_default, uiState.currentEndpoint)
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF1976D2)
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -103,62 +103,87 @@ fun ServerSettingsScreen(
                     )
                 }
 
-                OutlinedTextField(
+                FxScanInputBox(
                     value = uiState.host,
                     onValueChange = viewModel::updateHost,
-                    label = { Text(stringResource(R.string.server_settings_host)) },
-                    singleLine = true,
+                    label = stringResource(R.string.server_settings_host),
                     enabled = !uiState.isSaving,
-                    modifier = Modifier.fillMaxWidth()
+                    latestScanResult = uiState.latestHostScanResult,
+                    onScanConsumed = viewModel::consumeHostScanResult
                 )
-                OutlinedTextField(
+
+                FxScanInputBox(
                     value = uiState.port,
                     onValueChange = viewModel::updatePort,
-                    label = { Text(stringResource(R.string.server_settings_port)) },
-                    singleLine = true,
+                    label = stringResource(R.string.server_settings_port),
                     enabled = !uiState.isSaving,
-                    modifier = Modifier.fillMaxWidth()
+                    latestScanResult = uiState.latestPortScanResult,
+                    onScanConsumed = viewModel::consumePortScanResult
                 )
 
-                val errorMessageRes = uiState.errorMessageRes
-                if (errorMessageRes != null) {
-                    Text(
-                        text = stringResource(errorMessageRes),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                val messageRes = uiState.messageRes
-                if (messageRes != null) {
-                    Text(
-                        text = stringResource(messageRes),
-                        color = Color(0xFF2E7D32),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Button(
-                    onClick = viewModel::saveEndpoint,
+                FxScanActionBar(
+                    hint = stringResource(R.string.scan_hint_server),
                     enabled = !uiState.isSaving,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.server_settings_save))
-                }
-                OutlinedButton(
-                    onClick = viewModel::resetToDefault,
-                    enabled = !uiState.isSaving,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.server_settings_reset))
-                }
-                OutlinedButton(
-                    onClick = onBack,
-                    enabled = !uiState.isSaving,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.common_cancel))
-                }
+                    onActionClick = {}
+                )
             }
+
+            val errorMessageRes = uiState.errorMessageRes
+            if (errorMessageRes != null) {
+                Text(
+                    text = stringResource(errorMessageRes),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            val messageRes = uiState.messageRes
+            if (messageRes != null) {
+                Text(
+                    text = stringResource(messageRes),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            FxFormFooterBar(
+                confirmText = stringResource(R.string.server_settings_save),
+                onConfirm = viewModel::saveEndpoint,
+                secondaryText = stringResource(R.string.server_settings_reset),
+                onSecondary = viewModel::resetToDefault
+            )
+
+            FxFormFooterBar(
+                confirmText = stringResource(R.string.common_cancel),
+                onConfirm = onBack
+            )
         }
     }
 }
+
+/**
+ * 根据扫描内容路由到主机或端口输入。
+ */
+private fun routeServerScanResult(
+    result: FxScanResult,
+    onHostResult: (FxScanResult) -> Unit,
+    onPortResult: (FxScanResult) -> Unit
+) {
+    val rawValue = result.rawValue.trim()
+    if (rawValue.isBlank()) {
+        return
+    }
+    if (rawValue.all(Char::isDigit)) {
+        onPortResult(result)
+        return
+    }
+    onHostResult(result)
+}
+
+/**
+ * 扫描管理器桥接 ViewModel，负责向 Compose 层暴露全局单例。
+ */
+@dagger.hilt.android.lifecycle.HiltViewModel
+class ServerSettingsScanViewModel @javax.inject.Inject constructor(
+    val scannerManager: FxScannerManager
+) : androidx.lifecycle.ViewModel()

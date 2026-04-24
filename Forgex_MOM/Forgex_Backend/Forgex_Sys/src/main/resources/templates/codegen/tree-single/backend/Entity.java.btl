@@ -1,0 +1,38 @@
+package ${ctx.packageName}.domain.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.forgex.common.base.BaseEntity;
+<% for(importItem in imports){ %>
+import ${importItem};
+<% } %>
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ${ctx.mainTableComment} 实体
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@TableName("${ctx.mainTableName}")
+public class ${ctx.entityName} extends BaseEntity {
+<% for(column in ctx.mainColumns){ if(!column.isBaseField){ %>
+
+    /**
+     * ${column.columnComment!column.columnName}
+     */
+    private ${column.javaType} ${column.javaFieldName};
+<% }} %>
+
+    /**
+     * 子节点
+     */
+    private List<${ctx.entityName}> children = new ArrayList<>();
+}

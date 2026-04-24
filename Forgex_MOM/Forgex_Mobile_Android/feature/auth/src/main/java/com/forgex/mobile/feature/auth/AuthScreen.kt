@@ -20,12 +20,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
@@ -68,6 +69,9 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.forgex.mobile.core.component.scanner.FxScanActionBar
+import com.forgex.mobile.core.component.scanner.FxScanInputBox
+import com.forgex.mobile.core.device.FxScannerManager
 import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.core.ui.i18n.i18nString
 import com.forgex.mobile.core.ui.i18n.resolveAppText
@@ -87,11 +91,13 @@ fun AuthScreen(
     onOpenServerSettings: () -> Unit,
     onOpenRegister: (String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = hiltViewModel()
+    viewModel: AuthViewModel = hiltViewModel(),
+    scanBridgeViewModel: AuthScanBridgeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val imageLoader = rememberGifImageLoader()
     val context = LocalContext.current
+    val scannerManager = remember(scanBridgeViewModel) { scanBridgeViewModel.scannerManager }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
@@ -108,6 +114,16 @@ fun AuthScreen(
         }
     }
 
+    LaunchedEffect(scannerManager, uiState.step) {
+        scannerManager.results.collectLatest { result ->
+            when (uiState.step) {
+                AuthStep.LOGIN -> viewModel.applyAccountScan(result)
+                AuthStep.TENANT_SELECTION -> viewModel.applyTenantScan(result)
+            }
+            scannerManager.clearCachedResult()
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         LoginBackground(
             imageLoader = imageLoader,
@@ -120,6 +136,13 @@ fun AuthScreen(
         LoginActionButtons(
             onShowLanguageDialog = viewModel::showLanguageDialog
         )
+
+        if (uiState.step == AuthStep.TENANT_SELECTION) {
+            TenantBackButton(
+                enabled = !uiState.isLoading,
+                onBack = viewModel::backToLogin
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -158,16 +181,17 @@ fun AuthScreen(
                         onSliderProgressChange = viewModel::updateSliderProgress,
                         onVerifySlider = viewModel::verifySliderCaptcha,
                         onRefreshCaptcha = { viewModel.refreshCaptcha(silent = false) },
-                        onSubmit = viewModel::submitLogin
+                        onSubmit = viewModel::submitLogin,
+                        onAccountScanConsumed = viewModel::consumeAccountScanResult
                     )
                 }
             } else {
-                TenantSelectionCard(
+                TenantSelectionScreen(
                     uiState = uiState,
                     imageLoader = imageLoader,
                     onSelectTenant = viewModel::selectTenant,
                     onConfirm = viewModel::confirmTenantSelection,
-                    onBack = viewModel::backToLogin
+                    onTenantScanConsumed = viewModel::consumeTenantScanResult
                 )
             }
 
@@ -182,6 +206,35 @@ fun AuthScreen(
                 onDismiss = viewModel::dismissLanguageDialog,
                 onFollowDefault = viewModel::followDefaultLanguage,
                 onSelectLanguage = viewModel::selectLanguage
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.TenantBackButton(
+    enabled: Boolean,
+    onBack: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.95f),
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clickable(enabled = enabled, onClick = onBack),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowBack,
+                contentDescription = i18nString("common.back", R.string.common_back),
+                tint = Color(0xFF1E2A45)
             )
         }
     }
@@ -247,9 +300,7 @@ private fun LoginEntryCard(
                 title = uiState.loginTitle.ifBlank {
                     i18nString("auth.login.select.title", R.string.auth_login_select_title)
                 },
-                subtitle = uiState.loginSubtitle.ifBlank {
-                    i18nString("auth.login.select.subtitle", R.string.auth_login_select_subtitle)
-                },
+                subtitle = "",
                 logoRaw = uiState.systemLogo,
                 serverOrigin = uiState.serverOrigin,
                 onOpenServerSettings = null
@@ -293,14 +344,6 @@ private fun LoginEntryCard(
                     primary = false,
                     enabled = false,
                     onClick = { onSelectThirdParty(LoginMethod.GITEE) }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = i18nString("auth.third.party.hint", R.string.auth_third_party_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF7A7F91)
                 )
             }
 
@@ -379,7 +422,8 @@ private fun LoginCard(
     onSliderProgressChange: (Float) -> Unit,
     onVerifySlider: () -> Unit,
     onRefreshCaptcha: () -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    onAccountScanConsumed: () -> Unit
 ) {
     val title = uiState.loginTitle.ifBlank {
         i18nString("auth.login.method.account", R.string.auth_login_method_account)
@@ -405,7 +449,7 @@ private fun LoginCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(onClick = onBackToEntry) {
-                    Icon(Icons.Outlined.ArrowBack, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
                     Spacer(modifier = Modifier.size(6.dp))
                     Text(i18nString("auth.back.to.login.methods", R.string.auth_back_to_login_methods))
                 }
@@ -428,13 +472,20 @@ private fun LoginCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
+            FxScanInputBox(
                 value = uiState.account,
                 onValueChange = onAccountChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(i18nString("auth.account", R.string.auth_account)) },
-                singleLine = true,
-                enabled = !uiState.isLoading
+                label = i18nString("auth.account", R.string.auth_account),
+                enabled = !uiState.isLoading,
+                latestScanResult = uiState.latestAccountScanResult,
+                onScanConsumed = onAccountScanConsumed
+            )
+
+            FxScanActionBar(
+                hint = i18nString("scan.hint.auth.account", R.string.scan_hint_auth_account),
+                enabled = !uiState.isLoading,
+                onActionClick = {}
             )
 
             OutlinedTextField(
@@ -797,73 +848,76 @@ private fun SliderCaptchaPanel(
 }
 
 @Composable
-private fun TenantSelectionCard(
+private fun TenantSelectionScreen(
     uiState: AuthUiState,
     imageLoader: ImageLoader,
     onSelectTenant: (String) -> Unit,
     onConfirm: () -> Unit,
-    onBack: () -> Unit
+    onTenantScanConsumed: () -> Unit
 ) {
     val errorText = uiState.errorMessage ?: resolveAppText(uiState.errorText)
 
-    Card(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .widthIn(max = 460.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xEAF8FAFF)
-        )
+            .widthIn(max = 460.dp)
+            .wrapContentHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                OutlinedButton(onClick = onBack, enabled = !uiState.isLoading) {
-                    Icon(Icons.Outlined.ArrowBack, contentDescription = null)
-                }
+        if (uiState.latestTenantScanResult != null) {
+            Text(
+                text = stringResource(R.string.scan_source_hint, uiState.latestTenantScanResult.source.displayNameText()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            LaunchedEffect(uiState.latestTenantScanResult?.timestamp) {
+                onTenantScanConsumed()
             }
+        }
 
-            if (uiState.tenants.isEmpty()) {
+        if (uiState.tenants.isEmpty()) {
+            Card(
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xEAF8FAFF))
+            ) {
                 Text(
                     text = i18nString("auth.tenant.empty", R.string.auth_tenant_empty),
-                    color = Color(0xFF6B7280)
+                    color = Color(0xFF6B7280),
+                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp)
                 )
-            } else {
-                uiState.tenants.forEach { tenant ->
-                    TenantLogoButton(
-                        tenantName = tenant.name,
-                        tenantLogo = tenant.logo.orEmpty(),
-                        serverOrigin = uiState.serverOrigin,
-                        imageLoader = imageLoader,
-                        selected = uiState.selectedTenantId == tenant.id,
-                        enabled = !uiState.isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            onSelectTenant(tenant.id)
-                            onConfirm()
-                        }
-                    )
-                }
             }
+        } else {
+            uiState.tenants.forEach { tenant ->
+                TenantLogoCard(
+                    tenantName = tenant.name,
+                    tenantLogo = tenant.logo.orEmpty(),
+                    serverOrigin = uiState.serverOrigin,
+                    imageLoader = imageLoader,
+                    selected = uiState.selectedTenantId == tenant.id,
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onSelectTenant(tenant.id)
+                        onConfirm()
+                    }
+                )
+            }
+        }
 
-            if (!errorText.isNullOrBlank()) {
-                Text(
-                    text = errorText,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+        if (!errorText.isNullOrBlank()) {
+            Text(
+                text = errorText,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun TenantLogoButton(
+private fun TenantLogoCard(
     tenantName: String,
     tenantLogo: String,
     serverOrigin: String,
@@ -878,20 +932,20 @@ private fun TenantLogoButton(
     }
     Surface(
         modifier = modifier
-            .height(84.dp)
+            .height(118.dp)
             .alpha(if (enabled) 1f else 0.6f)
             .clickable(enabled = enabled, onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = if (selected) Color(0xFFEAF1FF) else Color.White,
-        tonalElevation = if (selected) 3.dp else 1.dp,
-        shadowElevation = 2.dp
+        shape = RoundedCornerShape(26.dp),
+        color = if (selected) Color(0xFFEAF1FF) else Color(0xF8FFFFFF),
+        tonalElevation = if (selected) 6.dp else 2.dp,
+        shadowElevation = if (selected) 10.dp else 5.dp
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             if (logoModel != null) {
                 AsyncImage(
@@ -899,14 +953,14 @@ private fun TenantLogoButton(
                     imageLoader = imageLoader,
                     contentDescription = tenantName,
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(18.dp)),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Surface(
-                    modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.size(56.dp),
+                    shape = RoundedCornerShape(18.dp),
                     color = Color(0xFF0D6B89)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -918,7 +972,7 @@ private fun TenantLogoButton(
                     }
                 }
             }
-            Spacer(modifier = Modifier.size(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = tenantName,
                 style = MaterialTheme.typography.titleMedium,
@@ -1069,5 +1123,24 @@ private fun resolveEventMessage(
             }.getOrNull()
         }
         is com.forgex.mobile.core.common.i18n.AppText.Dynamic -> appText.fallbackRaw
+    }
+}
+
+/**
+ * 扫描总线桥接 ViewModel，向登录页面暴露全局扫描管理器。
+ */
+@dagger.hilt.android.lifecycle.HiltViewModel
+class AuthScanBridgeViewModel @javax.inject.Inject constructor(
+    val scannerManager: FxScannerManager
+) : androidx.lifecycle.ViewModel()
+
+@Composable
+private fun com.forgex.mobile.core.model.FxScanSource.displayNameText(): String {
+    return when (this) {
+        com.forgex.mobile.core.model.FxScanSource.PDA_BROADCAST -> stringResource(R.string.scan_source_pda)
+        com.forgex.mobile.core.model.FxScanSource.HARDWARE_KEYBOARD -> stringResource(R.string.scan_source_keyboard)
+        com.forgex.mobile.core.model.FxScanSource.NFC -> stringResource(R.string.scan_source_nfc)
+        com.forgex.mobile.core.model.FxScanSource.CAMERA -> stringResource(R.string.scan_source_camera)
+        com.forgex.mobile.core.model.FxScanSource.MANUAL_INPUT -> stringResource(R.string.scan_source_manual)
     }
 }

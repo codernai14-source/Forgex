@@ -1,0 +1,5 @@
+# ${ctx.menuName} Android 接入说明
+
+- 输出目录：`android/${ctx.androidFeatureKey}/`
+- 包含内容：Retrofit API、网络模型、Repository、列表页/表单页 ViewModel 与 Screen、Routes、Navigation
+- 交互约定：移动端采用“树筛选列表 + 表单页”模式，不输出桌面式左右分栏

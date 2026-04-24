@@ -57,6 +57,7 @@
             :data-source="[requestRoot]"
             :row-key="getRowKey"
             :indent-size="18"
+            :children-column-name="'children'"
             class="tree-table"
           >
             <template #bodyCell="{ column, record }">
@@ -136,6 +137,7 @@
             :data-source="[responseRoot]"
             :row-key="getRowKey"
             :indent-size="18"
+            :children-column-name="'children'"
             class="tree-table"
           >
             <template #bodyCell="{ column, record }">
@@ -763,7 +765,7 @@ function flattenFields(root: TreeNode): ApiParamConfigItem[] {
   const fields: ApiParamConfigItem[] = []
   const walk = (items: ApiParamConfigItem[]) => {
     items.forEach(item => {
-      if (!isRoot(item) && item.nodeType === 'FIELD') {
+      if (!isRoot(item) && isMappableNode(item)) {
         fields.push(item)
       }
       if (item.children?.length) {
@@ -790,13 +792,20 @@ function handleAddMapping() {
 function handleAutoMatch() {
   const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
   const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const existingSources = new Set(mappingRows.value.map(row => row.sourceFieldPath).filter(Boolean))
   const existingTargets = new Set(mappingRows.value.map(row => row.targetFieldPath).filter(Boolean))
   const suggestions: ParamMappingRow[] = []
 
   sourceFields.forEach(source => {
+    if (existingSources.has(source.fieldPath)) {
+      return
+    }
     const sourceName = source.fieldPath.split('.').pop()
-    const target = targetFields.find(item => item.fieldPath.split('.').pop() === sourceName && !existingTargets.has(item.fieldPath))
+    const target = targetFields.find(item =>
+      item.fieldPath.split('.').pop() === sourceName && !existingTargets.has(item.fieldPath),
+    )
     if (target) {
+      existingSources.add(source.fieldPath)
       existingTargets.add(target.fieldPath)
       suggestions.push({
         sourceFieldPath: source.fieldPath,
@@ -808,7 +817,13 @@ function handleAutoMatch() {
     }
   })
 
+  if (!suggestions.length) {
+    message.info(t('integration.mapping.autoMatchNoResult'))
+    return
+  }
   mappingRows.value = [...mappingRows.value, ...suggestions]
+  syncAllMappingMeta()
+  message.success(t('integration.mapping.autoMatchApplied', { count: suggestions.length }))
 }
 
 function removeMapping(index: number) {
@@ -933,15 +948,38 @@ function isTypeCompatible(sourceType?: string, targetType?: string) {
   const numeric = ['number', 'integer', 'long', 'double', 'float']
   return numeric.includes(sourceType.toLowerCase()) && numeric.includes(targetType.toLowerCase())
 }
+
+function isMappableNode(node: ApiParamConfigItem) {
+  if (node.nodeType === 'ARRAY') {
+    return true
+  }
+  if (node.nodeType === 'FIELD') {
+    return true
+  }
+  return !node.children?.length
+}
 </script>
 
 <style scoped lang="less">
 .api-param-config-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
   color: var(--fx-text-primary, #111827);
 }
 
+:deep(.ant-spin-nested-loading),
+:deep(.ant-spin-container) {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
 .toolbar {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -966,22 +1004,27 @@ function isTypeCompatible(sourceType?: string, targetType?: string) {
 }
 
 .param-config-layout {
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
   gap: 16px;
   margin-bottom: 16px;
 }
 
 .param-panel,
 .mapping-panel {
+  min-height: 0;
   padding: 16px;
   border: 1px solid var(--fx-border-color, #e5e7eb);
   border-radius: 18px;
   background: var(--fx-bg-container, #ffffff);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .panel-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -1018,6 +1061,10 @@ function isTypeCompatible(sourceType?: string, targetType?: string) {
 
 .danger-link {
   color: #ff4d4f;
+}
+
+.tree-table {
+  min-width: 0;
 }
 
 :deep(.ant-table-wrapper),
