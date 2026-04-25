@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2026 coder_nai@163.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,8 @@
 
 package com.forgex.mobile.core.network.model.workbench
 
-import com.google.gson.annotations.SerializedName
-
 /**
- * 工作台模块/菜单 VO（对应后端 CMenuTreeVO）
+ * 工作台模块/菜单视图对象，对应后端菜单树节点。
  */
 data class CMenuVO(
     val id: Long? = null,
@@ -44,16 +42,15 @@ data class CMenuVO(
 )
 
 /**
- * 工作台菜单请求
+ * 工作台菜单查询请求。
  */
 data class WorkbenchMenusRequest(
     val moduleId: Long? = null
 )
 
 /**
- * 收藏切换请求
+ * 收藏切换请求。
  */
 data class ToggleFavoriteRequest(
     val cMenuId: Long
 )
-

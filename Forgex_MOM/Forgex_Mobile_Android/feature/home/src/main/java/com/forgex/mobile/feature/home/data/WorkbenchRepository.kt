@@ -24,11 +24,17 @@ import com.forgex.mobile.core.network.model.workbench.WorkbenchMenusRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * 工作台仓储，统一封装模块、菜单与收藏相关接口访问。
+ */
 @Singleton
 class WorkbenchRepository @Inject constructor(
     private val workbenchApi: WorkbenchApi
 ) {
 
+    /**
+     * 查询工作台模块列表。
+     */
     suspend fun loadModules(): AppResult<List<CMenuVO>> {
         return try {
             val response = workbenchApi.getWorkbenchModules()
@@ -41,6 +47,9 @@ class WorkbenchRepository @Inject constructor(
         }
     }
 
+    /**
+     * 查询指定模块下的菜单。
+     */
     suspend fun loadMenus(moduleId: Long?): AppResult<List<CMenuVO>> {
         return try {
             val response = workbenchApi.getWorkbenchMenus(WorkbenchMenusRequest(moduleId))
@@ -53,6 +62,9 @@ class WorkbenchRepository @Inject constructor(
         }
     }
 
+    /**
+     * 查询当前用户的收藏菜单。
+     */
     suspend fun loadFavorites(): AppResult<List<CMenuVO>> {
         return try {
             val response = workbenchApi.getFavorites()
@@ -65,6 +77,9 @@ class WorkbenchRepository @Inject constructor(
         }
     }
 
+    /**
+     * 切换菜单收藏状态。
+     */
     suspend fun toggleFavorite(cMenuId: Long): AppResult<Boolean> {
         return try {
             val response = workbenchApi.toggleFavorite(ToggleFavoriteRequest(cMenuId))

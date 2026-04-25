@@ -1,0 +1,25 @@
+import http from '../http'
+
+export function tree${ctx.entityName}() {
+  return http.post('/${ctx.moduleName}/${ctx.entityNameLower}/tree', {})
+}
+
+export function page${ctx.entityName}(data: any) {
+  return http.post('/${ctx.moduleName}/${ctx.entityNameLower}/page', data)
+}
+
+export function detail${ctx.entityName}(id: number) {
+  return http.post('/${ctx.moduleName}/${ctx.entityNameLower}/detail', id)
+}
+
+export function create${ctx.entityName}(data: any) {
+  return http.post('/${ctx.moduleName}/${ctx.entityNameLower}/create', data)
+}
+
+export function update${ctx.entityName}(data: any) {
+  return http.post('/${ctx.moduleName}/${ctx.entityNameLower}/update', data)
+}
+
+export function delete${ctx.entityName}(id: number) {
+  return http.post('/${ctx.moduleName}/${ctx.entityNameLower}/delete', id)
+}

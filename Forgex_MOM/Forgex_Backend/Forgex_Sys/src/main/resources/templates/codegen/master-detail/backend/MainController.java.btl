@@ -25,7 +25,7 @@ public class ${ctx.entityName}Controller {
     }
 
     @PostMapping("/detail")
-    public R<${ctx.entityName}> detail(@RequestBody Long id) {
+    public R<${ctx.entityName}> detail(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
         return R.ok(${ctx.entityNameLower}Service.detail(id));
     }
 
@@ -42,7 +42,7 @@ public class ${ctx.entityName}Controller {
     }
 
     @PostMapping("/delete")
-    public R<Void> delete(@RequestBody Long id) {
+    public R<Void> delete(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
         ${ctx.entityNameLower}Service.delete(id);
         return R.ok();
     }

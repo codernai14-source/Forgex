@@ -179,6 +179,10 @@ const isChildNode = computed(() => !!(form.parentId && form.parentId > 0))
 function mapDictTreeNodes(nodes: any[]): any[] {
   return (nodes || []).map((item: any) => ({
     ...item,
+    createByName: item.createByName || item.createBy || '',
+    updateByName: item.updateByName || item.updateBy || '',
+    createBy: item.createByName || item.createBy || '',
+    updateBy: item.updateByName || item.updateBy || '',
     children: Array.isArray(item.children) ? mapDictTreeNodes(item.children) : [],
   }))
 }

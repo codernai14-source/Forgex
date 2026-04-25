@@ -1,4 +1,4 @@
-package com.forgex.mobile.feature.workflow
+﻿package com.forgex.mobile.feature.workflow
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * 工作流列表状态管理，按入口模式加载对应任务数据。
+ */
 @HiltViewModel
 class WorkflowViewModel @Inject constructor(
     private val workflowRepository: WorkflowRepository
@@ -22,6 +25,9 @@ class WorkflowViewModel @Inject constructor(
 
     private var loadedEntryMode: WorkflowEntryMode? = null
 
+    /**
+     * 按入口模式加载工作流任务。
+     */
     fun load(entryMode: WorkflowEntryMode, force: Boolean = false) {
         if (!force && loadedEntryMode == entryMode && _uiState.value.executions.isNotEmpty()) {
             return

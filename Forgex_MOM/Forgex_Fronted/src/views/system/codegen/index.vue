@@ -17,8 +17,8 @@
       </template>
 
       <template #pageType="{ record }">
-        <a-tag :color="record.pageType === 'MASTER_DETAIL' ? 'blue' : 'green'">
-          {{ record.pageType === 'MASTER_DETAIL' ? t('system.codegen.pageTypeMasterDetail') : t('system.codegen.pageTypeSingle') }}
+        <a-tag :color="pageTypeColorMap[record.pageType] || 'default'">
+          {{ pageTypeLabel(record.pageType) }}
         </a-tag>
       </template>
 
@@ -65,6 +65,12 @@ const previewVisible = ref(false)
 const currentId = ref<number>()
 const previewTitle = ref('')
 const previewFiles = ref<CodegenPreviewFile[]>([])
+const pageTypeColorMap: Record<string, string> = {
+  SINGLE: 'green',
+  MASTER_DETAIL: 'blue',
+  TREE_SINGLE: 'gold',
+  TREE_DOUBLE: 'cyan',
+}
 
 const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'CodegenConfigTable',
@@ -163,6 +169,19 @@ function handleDelete(id?: number) {
 
 function handleDrawerSuccess() {
   tableRef.value?.refresh?.()
+}
+
+function pageTypeLabel(pageType?: string) {
+  switch (pageType) {
+    case 'MASTER_DETAIL':
+      return t('system.codegen.pageTypeMasterDetail')
+    case 'TREE_SINGLE':
+      return t('system.codegen.pageTypeTreeSingle')
+    case 'TREE_DOUBLE':
+      return t('system.codegen.pageTypeTreeDouble')
+    default:
+      return t('system.codegen.pageTypeSingle')
+  }
 }
 </script>
 

@@ -1,0 +1,63 @@
+-- ================================================
+-- ${ctx.menuName} tree-single table config init
+-- table_code: ${ctx.mainTableCode}
+-- ================================================
+
+SET @TENANT_ID = 0;
+SET @TABLE_CODE = '${ctx.mainTableCode}';
+
+INSERT INTO fx_table_config (
+    tenant_id, table_code, table_name_i18n_json, table_type, row_key,
+    default_page_size, enabled, version, create_time, update_time, deleted
+)
+SELECT
+    @TENANT_ID,
+    @TABLE_CODE,
+    '{"zh-CN":"${ctx.menuName}","en-US":"${ctx.menuName}"}',
+    'TREE',
+    '${ctx.mainPkJavaField}',
+    20,
+    1,
+    1,
+    NOW(),
+    NOW(),
+    0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_table_config WHERE tenant_id = @TENANT_ID AND table_code = @TABLE_CODE AND deleted = 0
+);
+
+<% var orderNum = 1; %>
+<% for(column in ctx.mainTableColumns){ %>
+INSERT INTO fx_table_column_config (
+    tenant_id, table_code, field, title_i18n_json, align, width,
+    ellipsis, sortable, queryable, query_type, query_operator, dict_code,
+    render_type, order_num, enabled, create_time, update_time, deleted
+)
+SELECT
+    @TENANT_ID,
+    @TABLE_CODE,
+    '${column.javaFieldName}',
+    '{"zh-CN":"${column.columnComment!column.columnName}","en-US":"${column.columnComment!column.columnName}"}',
+    '${column.align!"left"}',
+    ${column.width!160},
+    1,
+    ${column.sortable ? 1 : 0},
+    ${column.queryable ? 1 : 0},
+    <% if(column.queryType != null && column.queryType != ""){ %>'${column.queryType}'<% } else { %>NULL<% } %>,
+    <% if(column.queryOperator != null && column.queryOperator != ""){ %>'${column.queryOperator}'<% } else { %>NULL<% } %>,
+    <% if(column.dictCode != null && column.dictCode != ""){ %>'${column.dictCode}'<% } else { %>NULL<% } %>,
+    <% if(column.renderType != null && column.renderType != ""){ %>'${column.renderType}'<% } else { %>'text'<% } %>,
+    ${orderNum},
+    1,
+    NOW(),
+    NOW(),
+    0
+WHERE NOT EXISTS (
+    SELECT 1 FROM fx_table_column_config
+    WHERE tenant_id = @TENANT_ID
+      AND table_code = @TABLE_CODE
+      AND field = '${column.javaFieldName}'
+      AND deleted = 0
+);
+<% orderNum = orderNum + 1; %>
+<% } %>

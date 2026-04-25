@@ -1,0 +1,15 @@
+package com.forgex.mobile.feature.${ctx.androidFeatureKey}.ui
+
+import androidx.compose.runtime.Composable
+import com.forgex.mobile.core.component.FxListPage
+
+@Composable
+fun ${ctx.entityName}ListScreen() {
+    FxListPage(
+        title = "${ctx.menuName}",
+        loading = false,
+        error = null,
+        emptyText = "暂无数据",
+        hasData = false
+    ) {}
+}

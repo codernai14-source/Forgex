@@ -3,6 +3,7 @@ package com.forgex.mobile.feature.auth
 import com.forgex.mobile.core.common.i18n.AppLanguage
 import com.forgex.mobile.core.common.i18n.AppText
 import com.forgex.mobile.core.common.i18n.LanguageMode
+import com.forgex.mobile.core.model.FxScanResult
 import com.forgex.mobile.core.network.model.auth.TenantVO
 import com.forgex.mobile.core.network.model.i18n.LanguageType
 import com.forgex.mobile.feature.auth.data.CaptchaMode
@@ -58,7 +59,9 @@ data class AuthUiState(
     val errorText: AppText? = null,
     val step: AuthStep = AuthStep.LOGIN,
     val tenants: List<TenantVO> = emptyList(),
-    val selectedTenantId: String? = null
+    val selectedTenantId: String? = null,
+    val latestAccountScanResult: FxScanResult? = null,
+    val latestTenantScanResult: FxScanResult? = null
 )
 
 sealed interface AuthEvent {

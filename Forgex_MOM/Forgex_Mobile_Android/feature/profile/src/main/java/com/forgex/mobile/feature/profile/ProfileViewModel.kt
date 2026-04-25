@@ -1,4 +1,4 @@
-package com.forgex.mobile.feature.profile
+﻿package com.forgex.mobile.feature.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * 个人设置页状态管理，负责同步与切换应用语言。
+ */
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val appLanguageManager: AppLanguageManager
@@ -22,6 +25,9 @@ class ProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+    /**
+     * 初始化语言设置状态监听。
+     */
     fun initialize() {
         viewModelScope.launch {
             appLanguageManager.observeUiState().collect { state ->
@@ -36,6 +42,9 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 切回跟随系统语言模式。
+     */
     fun followSystem() {
         viewModelScope.launch {
             appLanguageManager.followSystem()
@@ -43,6 +52,9 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 手动切换当前应用语言。
+     */
     fun selectLanguage(languageTag: String) {
         viewModelScope.launch {
             appLanguageManager.selectLanguage(languageTag)
@@ -51,6 +63,9 @@ class ProfileViewModel @Inject constructor(
     }
 }
 
+/**
+ * 个人设置页 UI 状态。
+ */
 data class ProfileUiState(
     val mode: LanguageMode = LanguageMode.FOLLOW_SYSTEM,
     val currentLanguageTag: String = "zh-CN",

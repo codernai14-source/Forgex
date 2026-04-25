@@ -1,0 +1,3 @@
+package com.forgex.mobile.feature.${ctx.androidFeatureKey}.ui
+
+class ${ctx.entityName}ListViewModel
