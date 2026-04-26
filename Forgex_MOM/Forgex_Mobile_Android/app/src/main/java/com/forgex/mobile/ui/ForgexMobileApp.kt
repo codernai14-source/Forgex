@@ -32,23 +32,31 @@ import com.forgex.mobile.feature.auth.REGISTER_ROUTE
 import com.forgex.mobile.feature.auth.RegisterPlaceholderScreen
 import com.forgex.mobile.feature.auth.SERVER_SETTINGS_ROUTE
 import com.forgex.mobile.feature.auth.ServerSettingsScreen
+import com.forgex.mobile.feature.basic.navigation.basicScreen
 import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeScreen
 import com.forgex.mobile.feature.home.BASIC_INFO_TEST_ROUTE
 import com.forgex.mobile.feature.home.BasicInfoTestScreen
+import com.forgex.mobile.feature.integration.navigation.integrationScreen
+import com.forgex.mobile.feature.label.navigation.labelScreen
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_UNREAD_ROUTE
 import com.forgex.mobile.feature.message.MessageEntryMode
 import com.forgex.mobile.feature.message.MessageScreen
+import com.forgex.mobile.feature.production.navigation.productionScreen
 import com.forgex.mobile.feature.profile.PROFILE_ROUTE
 import com.forgex.mobile.feature.profile.ProfileScreen
+import com.forgex.mobile.feature.quality.navigation.qualityScreen
+import com.forgex.mobile.feature.report.navigation.reportScreen
+import com.forgex.mobile.feature.warehouse.navigation.warehouseScreen
 import com.forgex.mobile.feature.workflow.WORKFLOW_APPROVED_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_MINE_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_PENDING_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_ROUTE
 import com.forgex.mobile.feature.workflow.WorkflowEntryMode
 import com.forgex.mobile.feature.workflow.WorkflowScreen
+import com.forgex.mobile.feature.equipment.navigation.equipmentScreen
 import com.forgex.mobile.ui.navigation.MenuTargetResolver
 import com.forgex.mobile.ui.navigation.MenuTargetType
 import com.forgex.mobile.ui.navigation.WebViewDestination
@@ -231,6 +239,14 @@ fun ForgexMobileApp() {
                 composable(BASIC_INFO_TEST_ROUTE) {
                     BasicInfoTestScreen()
                 }
+                basicScreen()
+                reportScreen()
+                integrationScreen()
+                warehouseScreen()
+                productionScreen()
+                qualityScreen()
+                equipmentScreen()
+                labelScreen()
 
                 composable(WORKFLOW_ROUTE) {
                     WorkflowScreen(

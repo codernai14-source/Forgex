@@ -1,0 +1,122 @@
+package ${ctx.packageName}.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import ${ctx.packageName}.domain.entity.${ctx.entityName};
+import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
+import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+import ${ctx.packageName}.mapper.${ctx.entityName}Mapper;
+import ${ctx.packageName}.service.${ctx.entityName}Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * ${ctx.mainTableComment} 服务实现
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Service
+@RequiredArgsConstructor
+public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
+
+    private final ${ctx.entityName}Mapper ${ctx.entityNameLower}Mapper;
+
+    @Override
+    public List<${ctx.entityName}> tree() {
+        LambdaQueryWrapper<${ctx.entityName}> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByAsc(${ctx.entityName}::get${ctx.treeSortJavaFieldCapital!ctx.mainPkJavaFieldCapital});
+        return buildTree(${ctx.entityNameLower}Mapper.selectList(wrapper));
+    }
+
+    @Override
+    public IPage<${ctx.entityName}> page(${ctx.entityName}PageParam param) {
+        Page<${ctx.entityName}> page = new Page<>(param.getPageNum(), param.getPageSize());
+        LambdaQueryWrapper<${ctx.entityName}> wrapper = new LambdaQueryWrapper<>();
+<% for(column in ctx.mainQueryColumns){ %>
+        if (param.get${column.javaFieldNameCapital}() != null <% if(column.javaType == "String"){ %> && StringUtils.hasText(param.get${column.javaFieldNameCapital}())<% } %>) {
+            wrapper.${column.queryOperator == "like" ? "like" : "eq"}(${ctx.entityName}::get${column.javaFieldNameCapital}, param.get${column.javaFieldNameCapital}());
+        }
+<% } %>
+        if (param.getCurrentTreeId() != null) {
+            wrapper.eq(${ctx.entityName}::get${ctx.treeParentJavaFieldCapital}, param.getCurrentTreeId());
+        } else {
+            wrapper.and(item -> item.isNull(${ctx.entityName}::get${ctx.treeParentJavaFieldCapital})
+                .or().eq(${ctx.entityName}::get${ctx.treeParentJavaFieldCapital}, ${ctx.treeRootValueLiteral!"0"}));
+        }
+        wrapper.orderByAsc(${ctx.entityName}::get${ctx.treeSortJavaFieldCapital!ctx.mainPkJavaFieldCapital});
+        return ${ctx.entityNameLower}Mapper.selectPage(page, wrapper);
+    }
+
+    @Override
+    public ${ctx.entityName} detail(${ctx.mainPkJavaType!"Long"} id) {
+        return ${ctx.entityNameLower}Mapper.selectById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void save(${ctx.entityName}SaveParam param) {
+        ${ctx.entityName} entity = new ${ctx.entityName}();
+        BeanUtils.copyProperties(param, entity);
+        if (param.get${ctx.treeParentJavaFieldCapital}() == null && param.getCurrentTreeId() != null) {
+            entity.set${ctx.treeParentJavaFieldCapital}(param.getCurrentTreeId());
+        }
+        ${ctx.entityNameLower}Mapper.insert(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(${ctx.entityName}SaveParam param) {
+        ${ctx.entityName} entity = new ${ctx.entityName}();
+        BeanUtils.copyProperties(param, entity);
+        ${ctx.entityNameLower}Mapper.updateById(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(${ctx.mainPkJavaType!"Long"} id) {
+        LambdaQueryWrapper<${ctx.entityName}> childWrapper = new LambdaQueryWrapper<>();
+        childWrapper.eq(${ctx.entityName}::get${ctx.treeParentJavaFieldCapital}, id);
+        List<${ctx.entityName}> children = ${ctx.entityNameLower}Mapper.selectList(childWrapper);
+        if (!CollectionUtils.isEmpty(children)) {
+            throw new IllegalStateException("当前节点仍存在子节点，无法删除");
+        }
+        ${ctx.entityNameLower}Mapper.deleteById(id);
+    }
+
+    private List<${ctx.entityName}> buildTree(List<${ctx.entityName}> nodes) {
+        if (CollectionUtils.isEmpty(nodes)) {
+            return List.of();
+        }
+        Map<${ctx.mainPkJavaType!"Long"}, ${ctx.entityName}> nodeMap = new LinkedHashMap<>();
+        List<${ctx.entityName}> roots = new ArrayList<>();
+        for (${ctx.entityName} node : nodes) {
+            nodeMap.put(node.get${ctx.mainPkJavaFieldCapital}(), node);
+            node.setChildren(new ArrayList<>());
+        }
+        for (${ctx.entityName} node : nodes) {
+            ${ctx.treeParentJavaType!ctx.mainPkJavaType!"Long"} parentId = node.get${ctx.treeParentJavaFieldCapital}();
+            if (parentId == null || parentId.equals(${ctx.treeRootValueLiteral!"0"})) {
+                roots.add(node);
+                continue;
+            }
+            ${ctx.entityName} parent = nodeMap.get(parentId);
+            if (parent == null) {
+                roots.add(node);
+                continue;
+            }
+            parent.getChildren().add(node);
+        }
+        return roots;
+    }
+}

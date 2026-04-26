@@ -15,11 +15,11 @@ public interface ${ctx.entityName}Service {
 
     IPage<${ctx.entityName}> page(${ctx.entityName}PageParam param);
 
-    ${ctx.entityName} detail(Long id);
+    ${ctx.entityName} detail(${ctx.mainPkJavaType!"Long"} id);
 
     void save(${ctx.entityName}SaveParam param);
 
     void update(${ctx.entityName}SaveParam param);
 
-    void delete(Long id);
+    void delete(${ctx.mainPkJavaType!"Long"} id);
 }

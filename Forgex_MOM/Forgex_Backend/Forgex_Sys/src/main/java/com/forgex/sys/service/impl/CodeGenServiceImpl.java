@@ -58,6 +58,16 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 public class CodeGenServiceImpl implements CodeGenService {
 
+    private static final String PAGE_TYPE_SINGLE = "SINGLE";
+    private static final String PAGE_TYPE_MASTER_DETAIL = "MASTER_DETAIL";
+    private static final String PAGE_TYPE_TREE_SINGLE = "TREE_SINGLE";
+    private static final String PAGE_TYPE_TREE_DOUBLE = "TREE_DOUBLE";
+
+    private static final String GENERATE_BACKEND = "backend";
+    private static final String GENERATE_FRONTEND = "frontend";
+    private static final String GENERATE_SQL = "sql";
+    private static final String GENERATE_ANDROID = "android";
+
     private static final Set<String> BASE_ENTITY_FIELDS = new HashSet<>(
         List.of("id", "tenant_id", "create_time", "create_by", "update_time", "update_by", "deleted")
     );
@@ -128,7 +138,13 @@ public class CodeGenServiceImpl implements CodeGenService {
             || !StringUtils.hasText(req.getMainTableName())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
         }
-        if ("MASTER_DETAIL".equalsIgnoreCase(req.getPageType())) {
+
+        String pageType = req.getPageType().toUpperCase(Locale.ROOT);
+        if (!List.of(PAGE_TYPE_SINGLE, PAGE_TYPE_MASTER_DETAIL, PAGE_TYPE_TREE_SINGLE, PAGE_TYPE_TREE_DOUBLE).contains(pageType)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PAGE_TYPE_INVALID, req.getPageType());
+        }
+
+        if (PAGE_TYPE_MASTER_DETAIL.equals(pageType)) {
             if (!StringUtils.hasText(req.getSubTableName())
                 || !StringUtils.hasText(req.getMainPkColumn())
                 || !StringUtils.hasText(req.getSubFkColumn())
@@ -136,17 +152,35 @@ public class CodeGenServiceImpl implements CodeGenService {
                 throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
             }
         }
+
+        if (PAGE_TYPE_TREE_SINGLE.equals(pageType) || PAGE_TYPE_TREE_DOUBLE.equals(pageType)) {
+            if (!StringUtils.hasText(req.getTreeTableName())) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_FIELD_MISSING, "treeTableName");
+            }
+        }
     }
 
     private CodeGenContextDTO buildContext(CodeGenRequestDTO req) {
         SysCodegenDatasource datasource = datasourceService.requireEntity(req.getDatasourceId());
+        String pageType = req.getPageType().toUpperCase(Locale.ROOT);
+
         TableMetaDTO mainTableMeta = dbMetaService.getTableMeta(datasource, req.getSchemaName(), req.getMainTableName());
         List<ColumnMetaDTO> mainColumns = withDefaultColumnFeatures(
             preferRequestColumns(req.getMainColumns(), dbMetaService.listColumns(datasource, req.getSchemaName(), req.getMainTableName()))
         );
+
+        TableMetaDTO treeTableMeta = null;
+        List<ColumnMetaDTO> treeColumns = new ArrayList<>();
+        if (PAGE_TYPE_TREE_SINGLE.equals(pageType) || PAGE_TYPE_TREE_DOUBLE.equals(pageType)) {
+            treeTableMeta = dbMetaService.getTableMeta(datasource, req.getSchemaName(), req.getTreeTableName());
+            treeColumns = withDefaultColumnFeatures(
+                preferRequestColumns(req.getTreeColumns(), dbMetaService.listColumns(datasource, req.getSchemaName(), req.getTreeTableName()))
+            );
+        }
+
         TableMetaDTO subTableMeta = null;
         List<ColumnMetaDTO> subColumns = new ArrayList<>();
-        if ("MASTER_DETAIL".equalsIgnoreCase(req.getPageType())) {
+        if (PAGE_TYPE_MASTER_DETAIL.equals(pageType)) {
             subTableMeta = dbMetaService.getTableMeta(datasource, req.getSchemaName(), req.getSubTableName());
             subColumns = withDefaultColumnFeatures(
                 preferRequestColumns(req.getSubColumns(), dbMetaService.listColumns(datasource, req.getSchemaName(), req.getSubTableName()))
@@ -154,58 +188,140 @@ public class CodeGenServiceImpl implements CodeGenService {
             validateMainSubRelation(mainColumns, subColumns, req);
         }
 
+        if (PAGE_TYPE_TREE_DOUBLE.equals(pageType)) {
+            validateTreeDoubleRelation(mainColumns, treeColumns, req);
+        }
+        if (PAGE_TYPE_TREE_SINGLE.equals(pageType)) {
+            validateTreeSingleRelation(req, mainColumns, treeColumns);
+        }
+
         CodeGenContextDTO context = new CodeGenContextDTO();
         context.setDatasourceCode(datasource.getDatasourceCode());
         context.setSchemaName(req.getSchemaName());
-        context.setPageType(req.getPageType().toUpperCase(Locale.ROOT));
+        context.setPageType(pageType);
         context.setMainTableName(req.getMainTableName());
         context.setMainTableComment(mainTableMeta.getTableComment());
+        context.setTreeTableName(req.getTreeTableName());
+        context.setTreeTableComment(treeTableMeta == null ? null : treeTableMeta.getTableComment());
         context.setSubTableName(req.getSubTableName());
         context.setSubTableComment(subTableMeta == null ? null : subTableMeta.getTableComment());
+
         context.setEntityName(StringUtils.hasText(req.getEntityName()) ? req.getEntityName() : toCamelCase(req.getMainTableName(), true));
         context.setEntityNameLower(toLowerCamel(context.getEntityName()));
+
+        String treeEntityName = StringUtils.hasText(req.getTreeEntityName())
+            ? req.getTreeEntityName()
+            : (StringUtils.hasText(req.getTreeTableName()) ? toCamelCase(req.getTreeTableName(), true) : null);
+        context.setTreeEntityName(treeEntityName);
+        context.setTreeEntityNameLower(toLowerCamel(treeEntityName));
+
         String subEntityName = StringUtils.hasText(req.getSubEntityName())
             ? req.getSubEntityName()
             : (StringUtils.hasText(req.getSubTableName()) ? toCamelCase(req.getSubTableName(), true) : null);
         context.setSubEntityName(subEntityName);
         context.setSubEntityNameLower(toLowerCamel(subEntityName));
+
         context.setModuleName(defaultText(req.getModuleName(), "system"));
         context.setBizName(defaultText(req.getBizName(), context.getEntityNameLower()));
         context.setPackageName(defaultText(req.getPackageName(), "com.forgex." + context.getModuleName()));
         context.setAuthor(defaultText(req.getAuthor(), "Forgex CodeGen"));
         context.setDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
         context.setMainPkColumn(defaultText(req.getMainPkColumn(), detectPrimaryKey(mainColumns)));
+        context.setMainPkJavaField(resolveJavaFieldName(mainColumns, context.getMainPkColumn(), "id"));
+        context.setMainPkJavaFieldCapital(toUpperCamel(context.getMainPkJavaField()));
+        context.setMainPkJavaType(resolveJavaType(mainColumns, context.getMainPkColumn()));
+
+        if (PAGE_TYPE_TREE_SINGLE.equals(pageType) || PAGE_TYPE_TREE_DOUBLE.equals(pageType)) {
+            String treePkColumn = defaultText(req.getTreePkColumn(), detectPrimaryKey(treeColumns));
+            String treeParentColumn = defaultText(req.getTreeParentColumn(), detectTreeParentColumn(treeColumns));
+            String treeLabelColumn = defaultText(req.getTreeLabelColumn(), detectTreeLabelColumn(treeColumns));
+            String treeSortColumn = defaultText(req.getTreeSortColumn(), detectTreeSortColumn(treeColumns));
+            String treeFilterColumn = defaultText(req.getTreeFilterColumn(), PAGE_TYPE_TREE_DOUBLE.equals(pageType) ? detectTreeFilterColumn(mainColumns, treeColumns) : null);
+
+            if (!StringUtils.hasText(treePkColumn)
+                || !StringUtils.hasText(treeParentColumn)
+                || !StringUtils.hasText(treeLabelColumn)
+                || !StringUtils.hasText(treeSortColumn)
+                || (PAGE_TYPE_TREE_DOUBLE.equals(pageType) && !StringUtils.hasText(treeFilterColumn))) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_FIELD_MISSING);
+            }
+
+            context.setTreePkColumn(treePkColumn);
+            context.setTreePkJavaField(resolveJavaFieldName(treeColumns, treePkColumn, "id"));
+            context.setTreePkJavaFieldCapital(toUpperCamel(context.getTreePkJavaField()));
+            context.setTreePkJavaType(resolveJavaType(treeColumns, treePkColumn));
+            context.setTreeParentColumn(treeParentColumn);
+            context.setTreeParentJavaField(resolveJavaFieldName(treeColumns, treeParentColumn, "parentId"));
+            context.setTreeParentJavaFieldCapital(toUpperCamel(context.getTreeParentJavaField()));
+            context.setTreeParentJavaType(resolveJavaType(treeColumns, treeParentColumn));
+            context.setTreeLabelColumn(treeLabelColumn);
+            context.setTreeLabelJavaField(resolveJavaFieldName(treeColumns, treeLabelColumn, "name"));
+            context.setTreeLabelJavaFieldCapital(toUpperCamel(context.getTreeLabelJavaField()));
+            context.setTreeSortColumn(treeSortColumn);
+            context.setTreeSortJavaField(resolveJavaFieldName(treeColumns, treeSortColumn, "orderNum"));
+            context.setTreeSortJavaFieldCapital(toUpperCamel(context.getTreeSortJavaField()));
+            context.setTreeFilterColumn(treeFilterColumn);
+            context.setTreeFilterJavaField(resolveJavaFieldName(mainColumns, treeFilterColumn, context.getTreeEntityNameLower() + "Id"));
+            context.setTreeFilterJavaFieldCapital(toUpperCamel(context.getTreeFilterJavaField()));
+            context.setTreeFilterJavaType(resolveJavaType(mainColumns, treeFilterColumn));
+            context.setTreeRootValueLiteral(resolveZeroLiteral(context.getTreeParentJavaType()));
+        }
+
         context.setSubPkColumn(req.getSubPkColumn());
         context.setSubFkColumn(req.getSubFkColumn());
-        context.setMainPkJavaField(resolveJavaFieldName(mainColumns, context.getMainPkColumn(), "id"));
         context.setSubPkJavaField(resolveJavaFieldName(subColumns, context.getSubPkColumn(), "id"));
+        context.setSubPkJavaFieldCapital(toUpperCamel(context.getSubPkJavaField()));
+        context.setSubPkJavaType(resolveJavaType(subColumns, context.getSubPkColumn()));
         context.setSubFkJavaField(resolveJavaFieldName(subColumns, context.getSubFkColumn(), context.getEntityNameLower() + "Id"));
+        context.setSubFkJavaFieldCapital(toUpperCamel(context.getSubFkJavaField()));
+        context.setSubFkJavaType(resolveJavaType(subColumns, context.getSubFkColumn()));
+
         context.setMenuName(defaultText(req.getMenuName(), defaultText(mainTableMeta.getTableComment(), context.getEntityName())));
         context.setMenuIcon(defaultText(req.getMenuIcon(), "TableOutlined"));
         context.setMenuPath("/" + context.getModuleName() + "/" + context.getEntityNameLower());
         context.setParentMenuPath(defaultText(req.getParentMenuPath(), "/system/codegen"));
         context.setPermKeyPrefix(context.getModuleName() + ":" + context.getBizName());
+
         String tablePrefix = defaultText(req.getTableCodePrefix(), context.getModuleName());
         context.setMainTableCode(tablePrefix + "_" + context.getEntityNameLower());
-        context.setSubTableCode(StringUtils.hasText(context.getSubEntityNameLower())
-            ? tablePrefix + "_" + context.getSubEntityNameLower()
-            : null);
+        context.setTreeTableCode(StringUtils.hasText(context.getTreeEntityNameLower()) ? tablePrefix + "_" + context.getTreeEntityNameLower() : null);
+        context.setSubTableCode(StringUtils.hasText(context.getSubEntityNameLower()) ? tablePrefix + "_" + context.getSubEntityNameLower() : null);
         context.setI18nPrefix((context.getModuleName() + "." + context.getBizName()).toLowerCase(Locale.ROOT));
-        context.setGenerateItems(CollectionUtils.isEmpty(req.getGenerateItems())
-            ? List.of("backend", "frontend", "sql")
-            : req.getGenerateItems());
+
+        List<String> generateItems = CollectionUtils.isEmpty(req.getGenerateItems())
+            ? List.of(GENERATE_BACKEND, GENERATE_FRONTEND, GENERATE_SQL)
+            : req.getGenerateItems();
+        context.setGenerateItems(generateItems);
+        context.setAndroidFeatureKey(defaultText(req.getAndroidFeatureKey(), context.getBizName()));
+        context.setTreeSingle(PAGE_TYPE_TREE_SINGLE.equals(pageType));
+        context.setTreeDouble(PAGE_TYPE_TREE_DOUBLE.equals(pageType));
+        context.setAndroidEnabled(containsGenerateItem(generateItems, GENERATE_ANDROID) && !PAGE_TYPE_MASTER_DETAIL.equals(pageType));
+        context.setFrontendEnabled(containsGenerateItem(generateItems, GENERATE_FRONTEND));
+        context.setBackendEnabled(containsGenerateItem(generateItems, GENERATE_BACKEND));
+        context.setSqlEnabled(containsGenerateItem(generateItems, GENERATE_SQL));
+
         context.setMainColumns(mainColumns);
+        context.setTreeColumns(treeColumns);
         context.setSubColumns(subColumns);
         context.setMainQueryColumns(filterQueryColumns(mainColumns));
         context.setMainFormColumns(filterFormColumns(mainColumns));
         context.setMainTableColumns(filterTableColumns(mainColumns));
+        context.setTreeQueryColumns(filterQueryColumns(treeColumns));
+        context.setTreeFormColumns(filterTreeFormColumns(treeColumns, context));
+        context.setTreeTableColumns(filterTableColumns(treeColumns));
         context.setSubQueryColumns(filterQueryColumns(subColumns));
         context.setSubFormColumns(filterFormColumns(subColumns));
         context.setSubTableColumns(filterTableColumns(subColumns));
+
         String subDefaultSortColumn = resolveSubDefaultSortColumn(subColumns);
         context.setSubDefaultSortColumn(subDefaultSortColumn);
         context.setSubDefaultSortJavaField(resolveJavaFieldName(subColumns, subDefaultSortColumn, "id"));
+        context.setSubDefaultSortJavaFieldCapital(toUpperCamel(context.getSubDefaultSortJavaField()));
+        context.setAndroidRouteConst((context.getEntityNameLower() == null ? "FEATURE" : context.getEntityNameLower().toUpperCase(Locale.ROOT)) + "_ROUTE");
+
         context.getImports().addAll(collectImports(mainColumns));
+        context.getImports().addAll(collectImports(treeColumns));
         context.getImports().addAll(collectImports(subColumns));
         return context;
     }
@@ -238,6 +354,21 @@ public class CodeGenServiceImpl implements CodeGenService {
             if (column.getSortable() == null) {
                 column.setSortable(!"String".equals(column.getJavaType()));
             }
+            if (column.getQueryable() == null) {
+                column.setQueryable(!Boolean.TRUE.equals(column.getIsPrimaryKey()) && !Boolean.TRUE.equals(column.getIsBaseField()));
+            }
+            if (column.getTableShow() == null) {
+                column.setTableShow(Boolean.TRUE);
+            }
+            if (column.getFormShow() == null) {
+                column.setFormShow(!Boolean.TRUE.equals(column.getIsPrimaryKey()) && !Boolean.TRUE.equals(column.getIsAutoIncrement()));
+            }
+            if (column.getDefaultSort() == null) {
+                column.setDefaultSort(Boolean.FALSE);
+            }
+            if (!StringUtils.hasText(column.getSortDirection())) {
+                column.setSortDirection("DESC");
+            }
         }
         return columns;
     }
@@ -254,7 +385,36 @@ public class CodeGenServiceImpl implements CodeGenService {
         }
     }
 
+    private void validateTreeSingleRelation(CodeGenRequestDTO req, List<ColumnMetaDTO> mainColumns, List<ColumnMetaDTO> treeColumns) {
+        if (!StringUtils.hasText(req.getTreeTableName())
+            || !StringUtils.hasText(req.getMainTableName())
+            || !StringUtils.pathEquals(req.getTreeTableName(), req.getMainTableName())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_SINGLE_NOT_SELF_REF);
+        }
+        String treePkColumn = defaultText(req.getTreePkColumn(), detectPrimaryKey(treeColumns));
+        String treeParentColumn = defaultText(req.getTreeParentColumn(), detectTreeParentColumn(treeColumns));
+        if (findColumn(mainColumns, treePkColumn) == null || findColumn(mainColumns, treeParentColumn) == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_SINGLE_NOT_SELF_REF);
+        }
+    }
+
+    private void validateTreeDoubleRelation(List<ColumnMetaDTO> mainColumns, List<ColumnMetaDTO> treeColumns, CodeGenRequestDTO req) {
+        String treePkColumn = defaultText(req.getTreePkColumn(), detectPrimaryKey(treeColumns));
+        String treeFilterColumn = defaultText(req.getTreeFilterColumn(), detectTreeFilterColumn(mainColumns, treeColumns));
+        if (!StringUtils.hasText(treePkColumn) || !StringUtils.hasText(treeFilterColumn)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_FIELD_MISSING);
+        }
+        ColumnMetaDTO treePk = findColumn(treeColumns, treePkColumn);
+        ColumnMetaDTO mainFilter = findColumn(mainColumns, treeFilterColumn);
+        if (treePk == null || mainFilter == null || !StringUtils.pathEquals(treePk.getJavaType(), mainFilter.getJavaType())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_FILTER_TYPE_INVALID);
+        }
+    }
+
     private ColumnMetaDTO findColumn(List<ColumnMetaDTO> columns, String columnName) {
+        if (CollectionUtils.isEmpty(columns) || !StringUtils.hasText(columnName)) {
+            return null;
+        }
         return columns.stream()
             .filter(item -> StringUtils.pathEquals(item.getColumnName(), columnName))
             .findFirst()
@@ -267,6 +427,9 @@ public class CodeGenServiceImpl implements CodeGenService {
     }
 
     private String detectPrimaryKey(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return "id";
+        }
         return columns.stream()
             .filter(column -> Boolean.TRUE.equals(column.getIsPrimaryKey()))
             .map(ColumnMetaDTO::getColumnName)
@@ -274,25 +437,98 @@ public class CodeGenServiceImpl implements CodeGenService {
             .orElse("id");
     }
 
+    private String detectTreeParentColumn(List<ColumnMetaDTO> columns) {
+        return detectColumnByCandidates(columns, List.of("parent_id", "parentId", "pid", "parent_code"));
+    }
+
+    private String detectTreeLabelColumn(List<ColumnMetaDTO> columns) {
+        String detected = detectColumnByCandidates(columns, List.of("name", "tree_name", "dept_name", "menu_name", "title", "label"));
+        if (StringUtils.hasText(detected)) {
+            return detected;
+        }
+        return columns.stream()
+            .filter(column -> "String".equals(column.getJavaType()))
+            .map(ColumnMetaDTO::getColumnName)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private String detectTreeSortColumn(List<ColumnMetaDTO> columns) {
+        return detectColumnByCandidates(columns, List.of("order_num", "sort_no", "sort_order", "sort_num", "sort"));
+    }
+
+    private String detectTreeFilterColumn(List<ColumnMetaDTO> mainColumns, List<ColumnMetaDTO> treeColumns) {
+        String treePkJavaType = resolveJavaType(treeColumns, detectPrimaryKey(treeColumns));
+        List<String> candidates = List.of("tree_id", "category_id", "dept_id", "parent_id");
+        for (String candidate : candidates) {
+            ColumnMetaDTO column = findColumn(mainColumns, candidate);
+            if (column != null && StringUtils.pathEquals(column.getJavaType(), treePkJavaType)) {
+                return candidate;
+            }
+        }
+        return mainColumns.stream()
+            .filter(column -> StringUtils.pathEquals(column.getJavaType(), treePkJavaType))
+            .filter(column -> column.getColumnName().endsWith("_id"))
+            .map(ColumnMetaDTO::getColumnName)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private String detectColumnByCandidates(List<ColumnMetaDTO> columns, List<String> candidates) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return null;
+        }
+        for (String candidate : candidates) {
+            ColumnMetaDTO column = findColumn(columns, candidate);
+            if (column != null) {
+                return column.getColumnName();
+            }
+        }
+        return null;
+    }
+
+    private String resolveJavaType(List<ColumnMetaDTO> columns, String columnName) {
+        ColumnMetaDTO column = findColumn(columns, columnName);
+        return column == null ? null : column.getJavaType();
+    }
+
     private List<ColumnMetaDTO> filterQueryColumns(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return List.of();
+        }
         return columns.stream()
             .filter(column -> !Boolean.TRUE.equals(column.getIsBaseField()))
             .filter(column -> !Boolean.TRUE.equals(column.getIsPrimaryKey()))
+            .filter(column -> !Boolean.FALSE.equals(column.getQueryable()))
             .limit(6)
             .toList();
     }
 
     private List<ColumnMetaDTO> filterFormColumns(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return List.of();
+        }
         return columns.stream()
             .filter(column -> !Boolean.TRUE.equals(column.getIsBaseField()))
             .filter(column -> !Boolean.TRUE.equals(column.getIsPrimaryKey()))
             .filter(column -> !Boolean.TRUE.equals(column.getIsAutoIncrement()))
+            .filter(column -> !Boolean.FALSE.equals(column.getFormShow()))
+            .toList();
+    }
+
+    private List<ColumnMetaDTO> filterTreeFormColumns(List<ColumnMetaDTO> columns, CodeGenContextDTO context) {
+        return filterFormColumns(columns).stream()
+            .filter(column -> !StringUtils.pathEquals(column.getColumnName(), context.getTreeParentColumn()))
             .toList();
     }
 
     private List<ColumnMetaDTO> filterTableColumns(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return List.of();
+        }
         return columns.stream()
             .filter(column -> !Boolean.TRUE.equals(column.getIsBaseField()) || "id".equals(column.getColumnName()))
+            .filter(column -> !Boolean.FALSE.equals(column.getTableShow()))
             .limit(8)
             .toList();
     }
@@ -316,6 +552,9 @@ public class CodeGenServiceImpl implements CodeGenService {
 
     private Set<String> collectImports(List<ColumnMetaDTO> columns) {
         Set<String> imports = new HashSet<>();
+        if (CollectionUtils.isEmpty(columns)) {
+            return imports;
+        }
         for (ColumnMetaDTO column : columns) {
             if (Boolean.TRUE.equals(column.getNeedImport()) && StringUtils.hasText(column.getJavaTypeFullName())) {
                 imports.add(column.getJavaTypeFullName());
@@ -328,7 +567,7 @@ public class CodeGenServiceImpl implements CodeGenService {
         if ("LocalDate".equals(javaType) || "LocalDateTime".equals(javaType)) {
             return "date";
         }
-        return "String".equals(javaType) ? "input" : "input";
+        return "input";
     }
 
     private String resolveFormType(ColumnMetaDTO column) {
@@ -375,9 +614,16 @@ public class CodeGenServiceImpl implements CodeGenService {
         return "left";
     }
 
+    private boolean containsGenerateItem(List<String> generateItems, String target) {
+        if (CollectionUtils.isEmpty(generateItems)) {
+            return false;
+        }
+        return generateItems.stream().anyMatch(item -> item != null && item.equalsIgnoreCase(target));
+    }
+
     private String buildZipFileName(CodeGenContextDTO context) {
-        return "codegen-" + context.getBizName() + "-" +
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".zip";
+        return "codegen-" + context.getBizName() + "-"
+            + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".zip";
     }
 
     private String extractName(String path) {
@@ -419,5 +665,26 @@ public class CodeGenServiceImpl implements CodeGenService {
             return value;
         }
         return Character.toLowerCase(value.charAt(0)) + value.substring(1);
+    }
+
+    private String toUpperCamel(String value) {
+        if (!StringUtils.hasText(value)) {
+            return value;
+        }
+        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+    }
+
+    private String resolveZeroLiteral(String javaType) {
+        if (!StringUtils.hasText(javaType)) {
+            return "0";
+        }
+        return switch (javaType) {
+            case "Long" -> "0L";
+            case "Float" -> "0F";
+            case "Double" -> "0D";
+            case "Short" -> "(short) 0";
+            case "Byte" -> "(byte) 0";
+            default -> "0";
+        };
     }
 }

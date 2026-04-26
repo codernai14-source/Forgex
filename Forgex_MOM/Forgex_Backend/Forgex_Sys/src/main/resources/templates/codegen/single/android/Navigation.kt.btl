@@ -1,0 +1,11 @@
+package com.forgex.mobile.feature.${ctx.androidFeatureKey}.navigation
+
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import com.forgex.mobile.feature.${ctx.androidFeatureKey}.ui.${ctx.entityName}ListScreen
+
+fun NavGraphBuilder.${ctx.entityNameLower}Screen() {
+    composable(${ctx.androidRouteConst}) {
+        ${ctx.entityName}ListScreen()
+    }
+}

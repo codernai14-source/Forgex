@@ -63,4 +63,3 @@ public class CodegenConfigDTO extends CodeGenRequestDTO {
      */
     private LocalDateTime updateTime;
 }
-

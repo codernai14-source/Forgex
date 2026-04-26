@@ -2,6 +2,9 @@ import axios from 'axios'
 import http from '../http'
 import { getLocale } from '@/locales'
 
+export type CodegenPageType = 'SINGLE' | 'MASTER_DETAIL' | 'TREE_SINGLE' | 'TREE_DOUBLE'
+export type CodegenGenerateItem = 'backend' | 'frontend' | 'sql' | 'android'
+
 /**
  * 元数据选项
  */
@@ -55,15 +58,22 @@ export interface CodegenRequest {
   datasourceId: number
   datasourceCode?: string
   schemaName: string
-  pageType: 'SINGLE' | 'MASTER_DETAIL'
+  pageType: CodegenPageType
   mainTableName: string
+  treeTableName?: string
   subTableName?: string
   mainPkColumn?: string
+  treePkColumn?: string
+  treeParentColumn?: string
+  treeLabelColumn?: string
+  treeSortColumn?: string
+  treeFilterColumn?: string
   subFkColumn?: string
   subPkColumn?: string
   moduleName: string
   bizName: string
   entityName: string
+  treeEntityName?: string
   subEntityName?: string
   packageName: string
   author: string
@@ -71,8 +81,10 @@ export interface CodegenRequest {
   menuIcon?: string
   parentMenuPath?: string
   tableCodePrefix?: string
-  generateItems: Array<'backend' | 'frontend' | 'sql'>
+  androidFeatureKey?: string
+  generateItems: CodegenGenerateItem[]
   mainColumns: CodegenColumnConfig[]
+  treeColumns?: CodegenColumnConfig[]
   subColumns?: CodegenColumnConfig[]
 }
 
@@ -94,44 +106,26 @@ export interface CodegenPreviewResult {
   files: CodegenPreviewFile[]
 }
 
-/**
- * 查询 schema 列表
- */
 export function listCodegenSchemas(datasourceId: number) {
   return http.post<CodegenMetaOption[]>('/sys/codegen/meta/databases', { datasourceId })
 }
 
-/**
- * 查询表列表
- */
 export function listCodegenTables(datasourceId: number, schemaName: string) {
   return http.post<CodegenMetaOption[]>('/sys/codegen/meta/tables', { datasourceId, schemaName })
 }
 
-/**
- * 查询字段列表
- */
 export function listCodegenColumns(datasourceId: number, schemaName: string, tableName: string) {
   return http.post<CodegenColumnConfig[]>('/sys/codegen/meta/columns', { datasourceId, schemaName, tableName })
 }
 
-/**
- * 预览代码生成结果
- */
 export function previewCodegen(data: CodegenRequest) {
   return http.post<CodegenPreviewResult>('/sys/codegen/preview', data)
 }
 
-/**
- * 按配置记录预览代码
- */
 export function previewCodegenByConfigId(configId: number) {
   return http.post<CodegenPreviewResult>('/sys/codegen/preview', { configId })
 }
 
-/**
- * 下载生成 ZIP
- */
 export async function downloadCodegenZip(data: CodegenRequest) {
   const locale = getLocale()
   const tenantId = sessionStorage.getItem('tenantId')
@@ -155,9 +149,6 @@ export async function downloadCodegenZip(data: CodegenRequest) {
   }
 }
 
-/**
- * 按配置记录下载 ZIP
- */
 export function downloadCodegenZipByConfigId(configId: number) {
   return downloadCodegenZip({ configId } as CodegenRequest)
 }

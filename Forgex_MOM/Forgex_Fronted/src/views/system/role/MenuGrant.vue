@@ -216,7 +216,7 @@ async function handleRequest(params: any) {
   try {
     const tree = await (
       activeTerminal.value === 'C' ? getRoleCModuleAuthData : getRoleModuleAuthData
-    )(Number(activeModuleId.value), {
+    )(activeModuleId.value, {
       roleId: roleId.value,
     })
 
@@ -226,7 +226,7 @@ async function handleRequest(params: any) {
     allMenus.value = flattenTree(normalizedTree)
 
     // 姣忔鍔犺浇閮戒粠鍚庣杩斿洖鐨?checked 瀛楁閲嶆柊鍒濆鍖栭€変腑鐘舵€?
-    const checkedIds = collectCheckedNodeIds(normalizedTree).map((id) => String(id))
+    const checkedIds = collectCheckedNodeIds(normalizedTree)
     const cachedKeys = terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value]
     selectedRowKeys.value = cachedKeys ? [...cachedKeys] : checkedIds
     terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
@@ -272,11 +272,11 @@ function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTree
 /**
  * 鏉╁洦鎶ゅ鎻掑瑎闁娈戦懞鍌滃仯
  */
-function collectCheckedNodeIds(nodes: MenuTreeRecord[]): number[] {
-  const ids: number[] = []
+function collectCheckedNodeIds(nodes: MenuTreeRecord[]): string[] {
+  const ids: string[] = []
   nodes.forEach((node) => {
     if (node.checked === true && node.id != null) {
-      ids.push(Number(node.id))
+      ids.push(String(node.id))
     }
     if (node.children && node.children.length > 0) {
       ids.push(...collectCheckedNodeIds(node.children))
@@ -413,13 +413,12 @@ async function handleSave() {
       new Set(
         Object.values(terminalModuleSelectedKeys.value[activeTerminal.value])
           .flat()
-          .map(id => Number(id))
-          .filter(id => !Number.isNaN(id))
+          .filter(id => id !== '')
       )
     )
     
     await (activeTerminal.value === 'C' ? grantRoleCMenus : grantRoleMenus)({
-      roleId: Number(roleId.value),
+      roleId: roleId.value,
       tenantId: currentTenantId.value,
       menuIds: menuIds,
     })
@@ -442,7 +441,7 @@ async function loadModules() {
     return
   }
   try {
-    const res = await listModules({ tenantId: Number(currentTenantId.value) })
+    const res = await listModules({ tenantId: currentTenantId.value })
     modules.value = res || []
     if (modules.value.length > 0) {
       activeModuleId.value = String(modules.value[0].id)
@@ -466,7 +465,7 @@ async function loadRoleInfo() {
     return
   }
   try {
-    const role = await getRoleById(Number(roleId.value))
+    const role = await getRoleById(roleId.value)
     roleName.value = role?.roleName || ''
   } catch (error) {
     console.error('load role info failed:', error)

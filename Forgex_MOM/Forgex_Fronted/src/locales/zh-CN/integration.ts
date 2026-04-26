@@ -174,6 +174,8 @@ export default {
     sortOrder: '排序',
     remark: '备注',
     autoMatch: '自动匹配',
+    autoMatchNoResult: '未找到可自动匹配的同名字段',
+    autoMatchApplied: '自动匹配完成，新增 {count} 条映射',
     addMapping: '新增映射',
     noMappings: '暂无映射关系',
     sourceUnselected: '请选择来源字段',

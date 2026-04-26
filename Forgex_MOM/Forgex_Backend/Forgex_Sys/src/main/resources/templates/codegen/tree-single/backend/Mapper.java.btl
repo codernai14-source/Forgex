@@ -1,0 +1,15 @@
+package ${ctx.packageName}.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import ${ctx.packageName}.domain.entity.${ctx.entityName};
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * ${ctx.mainTableComment} Mapper
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Mapper
+public interface ${ctx.entityName}Mapper extends BaseMapper<${ctx.entityName}> {
+}

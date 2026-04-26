@@ -11,6 +11,19 @@
     <string name="common_not_available">Feature not available yet</string>
     <string name="common_url_missing">Menu URL is missing</string>
     <string name="common_device_title">%1$s (%2$s)</string>
+    <string name="scan_action_default">Scan</string>
+    <string name="scan_result_title">Scan Result</string>
+    <string name="scan_result_source">Source: %1$s</string>
+    <string name="scan_source_hint">Latest input source: %1$s</string>
+    <string name="scan_source_pda">PDA scanner</string>
+    <string name="scan_source_keyboard">Scanner keyboard</string>
+    <string name="scan_source_nfc">NFC tag</string>
+    <string name="scan_source_camera">Camera</string>
+    <string name="scan_source_manual">Manual input</string>
+    <string name="scan_hint_server">You can enter manually, or fill values by barcode scanner or NFC tag.</string>
+    <string name="scan_hint_auth_account">The account field supports manual entry, barcode scanner, and NFC tag input.</string>
+    <string name="server_settings_scan_host">Scan host</string>
+    <string name="server_settings_scan_port">Scan port</string>
 
     <string name="tab_favorites">Favorites</string>
     <string name="tab_notification">Notifications</string>
@@ -146,5 +159,6 @@
     <string name="workflow_status_rejected">Rejected</string>
     <string name="workflow_status_unknown">Unknown</string>
 
+    <string name="component_autocomplete_empty">No matches found</string>
     <string name="placeholder_dash">--</string>
 </resources>

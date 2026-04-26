@@ -25,16 +25,16 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
         Page<${ctx.entityName}> page = new Page<>(param.getPageNum(), param.getPageSize());
         LambdaQueryWrapper<${ctx.entityName}> wrapper = new LambdaQueryWrapper<>();
 <% for(column in ctx.mainQueryColumns){ %>
-        if (param.get${column.javaFieldNameCapital()}() != null <% if(column.javaType == "String"){ %> && StringUtils.hasText(param.get${column.javaFieldNameCapital()}())<% } %>) {
-            wrapper.${column.queryOperator == "like" ? "like" : "eq"}(${ctx.entityName}::get${column.javaFieldNameCapital()}, param.get${column.javaFieldNameCapital()}());
+        if (param.get${column.javaFieldNameCapital}() != null <% if(column.javaType == "String"){ %> && StringUtils.hasText(param.get${column.javaFieldNameCapital}())<% } %>) {
+            wrapper.${column.queryOperator == "like" ? "like" : "eq"}(${ctx.entityName}::get${column.javaFieldNameCapital}, param.get${column.javaFieldNameCapital}());
         }
 <% } %>
-        wrapper.orderByDesc(${ctx.entityName}::getId);
+        wrapper.orderByDesc(${ctx.entityName}::get${ctx.mainPkJavaFieldCapital});
         return ${ctx.entityNameLower}Mapper.selectPage(page, wrapper);
     }
 
     @Override
-    public ${ctx.entityName} detail(Long id) {
+    public ${ctx.entityName} detail(${ctx.mainPkJavaType!"Long"} id) {
         return ${ctx.entityNameLower}Mapper.selectById(id);
     }
 
@@ -56,7 +56,7 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Long id) {
+    public void delete(${ctx.mainPkJavaType!"Long"} id) {
         ${ctx.entityNameLower}Mapper.deleteById(id);
     }
 }

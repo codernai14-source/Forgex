@@ -142,6 +142,31 @@ public class ColumnMetaDTO {
      * 渲染类型（text、image、link、tag 等）
      */
     private String renderType;
+
+    /**
+     * 是否参与查询
+     */
+    private Boolean queryable;
+
+    /**
+     * 是否在表格中展示
+     */
+    private Boolean tableShow;
+
+    /**
+     * 是否在表单中展示
+     */
+    private Boolean formShow;
+
+    /**
+     * 是否默认排序
+     */
+    private Boolean defaultSort;
+
+    /**
+     * 排序方向
+     */
+    private String sortDirection;
     
     /**
      * 获取首字母大写的 Java 字段名

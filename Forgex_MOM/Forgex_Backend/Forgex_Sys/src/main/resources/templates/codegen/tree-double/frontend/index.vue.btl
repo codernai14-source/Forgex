@@ -1,0 +1,194 @@
+<template>
+  <div class="${ctx.entityNameLower}-page">
+    <a-card :bordered="false">
+      <a-row :gutter="16">
+        <a-col :span="6">
+          <div class="tree-panel">
+            <div class="tree-panel__title">${ctx.treeTableComment!ctx.treeEntityName}</div>
+            <a-tree
+              :tree-data="treeData"
+              :field-names="{ key: '${ctx.treePkColumn}', title: '${ctx.treeLabelColumn}', children: 'children' }"
+              :selected-keys="selectedKeys"
+              default-expand-all
+              block-node
+              @select="handleTreeSelect"
+            />
+          </div>
+        </a-col>
+        <a-col :span="18">
+          <a-alert v-if="!selectedTreeId" type="info" message="请选择左侧节点" show-icon style="margin-bottom: 12px" />
+          <FxDynamicTable
+            ref="tableRef"
+            :table-code="'${ctx.mainTableCode}'"
+            :request="handleRequest"
+            :dynamic-table-config="tableConfig"
+            :show-query-form="true"
+          >
+            <template #toolbar>
+              <a-space>
+                <a-button type="primary" :disabled="!selectedTreeId" @click="openCreate">新增</a-button>
+              </a-space>
+            </template>
+            <template #action="{ record }">
+              <a-space>
+                <a @click="openEdit(record)">编辑</a>
+                <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+              </a-space>
+            </template>
+          </FxDynamicTable>
+        </a-col>
+      </a-row>
+    </a-card>
+
+    <BaseFormDialog v-model:open="formVisible" :title="dialogTitle" :loading="submitting" @submit="handleSubmit">
+      <a-form ref="formRef" :model="formData" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+<% for(column in ctx.mainFormColumns){ %>
+        <a-form-item label="${column.columnComment!column.columnName}">
+          <a-input v-if="'${column.formType}' === 'input'" v-model:value="formData.${column.javaFieldName}" />
+          <a-textarea v-else-if="'${column.formType}' === 'textarea'" v-model:value="formData.${column.javaFieldName}" :rows="3" />
+          <a-input-number v-else-if="'${column.formType}' === 'number'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
+          <a-date-picker v-else-if="'${column.formType}' === 'date'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
+          <a-date-picker v-else-if="'${column.formType}' === 'datetime'" v-model:value="formData.${column.javaFieldName}" show-time style="width: 100%" />
+          <a-input v-else v-model:value="formData.${column.javaFieldName}" />
+        </a-form-item>
+<% } %>
+      </a-form>
+    </BaseFormDialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, reactive, ref, onMounted } from 'vue'
+import { Modal, message } from 'ant-design-vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import { tree${ctx.entityName}, page${ctx.entityName}, detail${ctx.entityName}, create${ctx.entityName}, update${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+
+const tableRef = ref()
+const formRef = ref()
+const treeData = ref<any[]>([])
+const selectedTreeId = ref<number | undefined>()
+const selectedKeys = computed(() => (selectedTreeId.value ? [selectedTreeId.value] : []))
+const formVisible = ref(false)
+const isEdit = ref(false)
+const submitting = ref(false)
+const formData = reactive<any>({ id: undefined, currentTreeId: undefined })
+
+const tableConfig = computed(() => ({
+  tableCode: '${ctx.mainTableCode}',
+  tableName: '${ctx.menuName}',
+  tableType: 'NORMAL',
+  rowKey: 'id',
+  defaultPageSize: 20,
+  columns: [
+<% for(column in ctx.mainTableColumns){ %>
+    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}' },
+<% } %>
+    { field: 'action', title: '操作', width: 160, align: 'center' },
+  ],
+  queryFields: [
+<% for(column in ctx.mainQueryColumns){ %>
+    { field: '${column.javaFieldName}', label: '${column.columnComment!column.columnName}', queryType: '${column.queryType}', queryOperator: '${column.queryOperator}' },
+<% } %>
+  ],
+  version: 1,
+}))
+
+const dialogTitle = computed(() => (isEdit.value ? '编辑' : '新增'))
+
+onMounted(async () => {
+  await loadTree()
+})
+
+async function loadTree() {
+  treeData.value = await tree${ctx.entityName}()
+}
+
+async function handleRequest(payload: any) {
+  if (!selectedTreeId.value) {
+    return { records: [], total: 0 }
+  }
+  const result = await page${ctx.entityName}({
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    currentTreeId: selectedTreeId.value,
+    ...payload.query,
+  })
+  return { records: result.records || [], total: result.total || 0 }
+}
+
+function handleTreeSelect(keys: (string | number)[]) {
+  selectedTreeId.value = Number(keys[0]) || undefined
+  tableRef.value?.refresh?.()
+}
+
+function resetForm() {
+  Object.keys(formData).forEach((key) => delete formData[key])
+  formData.id = undefined
+  formData.currentTreeId = selectedTreeId.value
+}
+
+function openCreate() {
+  if (!selectedTreeId.value) {
+    message.warning('请先选择左侧节点')
+    return
+  }
+  resetForm()
+  isEdit.value = false
+  formVisible.value = true
+}
+
+async function openEdit(record: any) {
+  resetForm()
+  const result = await detail${ctx.entityName}(record.id)
+  Object.assign(formData, result || {})
+  formData.currentTreeId = selectedTreeId.value
+  isEdit.value = true
+  formVisible.value = true
+}
+
+async function handleSubmit() {
+  if (!selectedTreeId.value) {
+    message.warning('请先选择左侧节点')
+    return
+  }
+  submitting.value = true
+  try {
+    formData.currentTreeId = selectedTreeId.value
+    if (isEdit.value) {
+      await update${ctx.entityName}(formData)
+    } else {
+      await create${ctx.entityName}(formData)
+    }
+    formVisible.value = false
+    tableRef.value?.refresh?.()
+  } finally {
+    submitting.value = false
+  }
+}
+
+function handleDelete(id: number) {
+  Modal.confirm({
+    title: '确认删除',
+    content: '确定要删除这条记录吗？',
+    onOk: async () => {
+      await delete${ctx.entityName}(id)
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+</script>
+
+<style scoped lang="less">
+.tree-panel {
+  min-height: 520px;
+  padding-right: 12px;
+  border-right: 1px solid #f0f0f0;
+}
+
+.tree-panel__title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+</style>
