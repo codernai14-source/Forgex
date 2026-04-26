@@ -721,32 +721,26 @@ function normalizeSorter(sorter: any) {
 async function loadConfig() {
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
-    const mergedConfig = mergeConfigs(backendConfig, props.dynamicTableConfig ?? props.fallbackConfig)
 
     // 新对象引用，确保 Vue 能检测到深层替换
     config.value = {
-      ...mergedConfig,
-      columns: mergedConfig.columns ? [...mergedConfig.columns] : [],
-      queryFields: mergedConfig.queryFields ? [...mergedConfig.queryFields] : [],
+      ...backendConfig,
+      columns: backendConfig.columns ? [...backendConfig.columns] : [],
+      queryFields: backendConfig.queryFields ? [...backendConfig.queryFields] : [],
     }
 
     configVersion.value++
   } catch (e) {
     console.error('[FxDynamicTable] 获取表格配置失败:', e)
-    if (props.dynamicTableConfig || props.fallbackConfig) {
-      config.value = { ...(props.dynamicTableConfig ?? props.fallbackConfig) } as any
-    } else {
-      config.value = {
-        tableCode: props.tableCode,
-        tableName: '默认表格',
-        tableType: 'NORMAL',
-        rowKey: 'id',
-        defaultPageSize: 20,
-        columns: [],
-        queryFields: [],
-        version: 1,
-      }
-      console.warn('[FxDynamicTable] 使用默认空配置，表格可能无法正常展示')
+    config.value = {
+      tableCode: props.tableCode,
+      tableName: props.tableCode,
+      tableType: 'NORMAL',
+      rowKey: 'id',
+      defaultPageSize: 20,
+      columns: [],
+      queryFields: [],
+      version: 1,
     }
     configVersion.value++
   }
@@ -763,85 +757,6 @@ async function loadConfig() {
   }
 }
 
-/**
- * 合并后端配置与前端兜底配置（列、查询字段按 field 对齐，前端可增补后端没有的项）。
- *
- * @param backendConfig 接口返回的配置，可为空
- * @param fallbackConfig 前端 Partial 配置
- * @returns 合并后的完整配置
- */
-function mergeConfigs(backendConfig: FxTableConfig | undefined, fallbackConfig: Partial<FxTableConfig> | undefined): FxTableConfig {
-  if (!backendConfig) {
-    return fallbackConfig as any
-  }
-
-  if (!fallbackConfig) {
-    return backendConfig
-  }
-
-  const merged: FxTableConfig = { ...(fallbackConfig as any), ...(backendConfig as any) }
-
-  const backendColumns = normalizeColumns(backendConfig.columns || [])
-  const fallbackColumns = normalizeColumns((fallbackConfig.columns || []) as any[])
-
-  if (fallbackColumns.length) {
-    const fallbackColMap = new Map<string, FxTableColumn>()
-    for (const fc of fallbackColumns) {
-      fallbackColMap.set(fc.field, fc)
-    }
-
-    const mergedColumns: FxTableColumn[] = backendColumns.map(bc => {
-      const fc = fallbackColMap.get(bc.field)
-      const mergedCol: any = { ...(fc as any), ...(bc as any) }
-
-      if ('fixed' in (bc as any)) {
-        mergedCol.fixed = (bc as any).fixed
-      } else if ('fixed' in (fc as any)) {
-        mergedCol.fixed = (fc as any).fixed
-      } else {
-        mergedCol.fixed = undefined
-      }
-
-      return mergedCol
-    })
-
-    const backendFieldSet = new Set(backendColumns.map(c => c.field))
-    for (const fc of fallbackColumns) {
-      if (!backendFieldSet.has(fc.field)) {
-        mergedColumns.push(fc)
-      }
-    }
-
-    merged.columns = mergedColumns
-  } else {
-    merged.columns = backendColumns
-  }
-
-  const backendQueryFields = backendConfig.queryFields || []
-  const fallbackQueryFields = (fallbackConfig.queryFields || []) as any[]
-
-  if (fallbackQueryFields.length) {
-    const fallbackQMap = new Map<string, any>()
-    for (const fq of fallbackQueryFields) {
-      fallbackQMap.set(fq.field, fq)
-    }
-    const mergedQueryFields = backendQueryFields.map((bq: any) => {
-      const fq = fallbackQMap.get(bq.field)
-      return { ...(fq as any), ...(bq as any) }
-    })
-    const backendFieldSet = new Set(backendQueryFields.map((q: any) => q.field))
-    for (const fq of fallbackQueryFields) {
-      if (!backendFieldSet.has(fq.field)) {
-        mergedQueryFields.push(fq)
-      }
-    }
-    merged.queryFields = mergedQueryFields as any
-  } else {
-    merged.queryFields = backendQueryFields
-  }
-
-  return merged
-}
 
 /**
  * 规范化列定义：补齐 field，过滤无效项。

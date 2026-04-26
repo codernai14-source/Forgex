@@ -3,7 +3,7 @@ package com.forgex.integration.service;
 import com.forgex.integration.domain.entity.ApiCallLog;
 
 /**
- * 璋冪敤鏃ュ織缂撳啿鏈嶅姟
+ * 调用日志缓冲服务
  */
 public interface IApiLogBufferService {
 

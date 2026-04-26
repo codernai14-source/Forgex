@@ -13,7 +13,7 @@ export const use权限Store = defineStore('permission', () => {
   // ============ State ============
   
   /**
-   * 鎸夐挳鏉冮檺鍒楄〃
+   * 按钮权限列表
    * 渚嬪锛歔'sys:user:add', 'sys:user:edit', 'sys:user:delete']
    */
   const permissions = ref<string[]>([])
@@ -24,7 +24,7 @@ export const use权限Store = defineStore('permission', () => {
   const routes = ref<any[]>([])
   
   /**
-   * 妯″潡鍒楄〃
+   * 模块列表
    */
   const modules = ref<any[]>([])
   
@@ -60,7 +60,7 @@ export const use权限Store = defineStore('permission', () => {
   // ============ 操作 ============
   
   /**
-   * 璁剧疆鏉冮檺鍒楄〃
+   * 设置权限列表
    */
   function set权限s(perms: string[]) {
     permissions.value = perms
@@ -96,7 +96,7 @@ export const use权限Store = defineStore('permission', () => {
   function setRoutes(routeList: any[]) {
     routes.value = routeList
     
-    // 鎸佷箙鍖栧埌 localStorage
+    // 持久化到 localStorage
     try {
       localStorage.setItem('fx-dynamic-routes', JSON.stringify(routeList))
       localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
@@ -111,7 +111,7 @@ export const use权限Store = defineStore('permission', () => {
   function setModules(moduleList: any[]) {
     modules.value = moduleList
     
-    // 鎸佷箙鍖栧埌 localStorage
+    // 持久化到 localStorage
     try {
       localStorage.setItem('fx-dynamic-modules', JSON.stringify(moduleList))
       localStorage.setItem('fx-dynamic-routes-version', ROUTE_CACHE_VERSION)
@@ -196,7 +196,7 @@ export const use权限Store = defineStore('permission', () => {
   
   // ============ 鍒濆鍖?============
   
-  // 椤甸潰鍔犺浇鏃跺皾璇曚粠 sessionStorage 鎭㈠
+  // 页面加载时尝试从 sessionStorage 鎭㈠
   restoreFromSession()
   
   return {

@@ -139,6 +139,18 @@ public class SysTenantServiceImpl implements SysTenantService {
         
         return convertToDTO(tenant);
     }
+
+    @Override
+    public SysTenantDTO getByCode(String tenantCode) {
+        if (!StringUtils.hasText(tenantCode)) {
+            return null;
+        }
+        SysTenant tenant = tenantMapper.selectOne(new LambdaQueryWrapper<SysTenant>()
+                .eq(SysTenant::getTenantCode, tenantCode.trim())
+                .eq(SysTenant::getDeleted, false)
+                .last("LIMIT 1"));
+        return tenant == null ? null : convertToDTO(tenant);
+    }
     
     @Override
     @Transactional(rollbackFor = Exception.class)

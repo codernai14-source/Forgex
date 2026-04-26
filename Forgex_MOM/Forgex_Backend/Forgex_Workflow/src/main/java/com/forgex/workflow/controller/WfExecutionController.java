@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.workflow.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -74,6 +75,21 @@ public class WfExecutionController {
     @RequirePerm("wf:execution:start")
     public R<Long> startExecution(@Validated @RequestBody WfExecutionStartParam param) {
         return R.ok(CommonPrompt.CREATE_SUCCESS, executionService.startExecution(param));
+    }
+
+    /**
+     * 内部接口：发起审批执行。
+     *
+     * @param request 发起审批参数
+     * @return 执行 ID
+     */
+    @PostMapping("/internal/start")
+    public R<Long> internalStartExecution(@Validated @RequestBody WorkflowExecutionStartRequestDTO request) {
+        WfExecutionStartParam param = new WfExecutionStartParam();
+        param.setTaskCode(request.getTaskCode());
+        param.setFormContent(request.getFormContent());
+        param.setSelectedApprovers(request.getSelectedApprovers());
+        return R.ok(executionService.startExecution(param));
     }
 
     /**
@@ -244,7 +260,7 @@ public class WfExecutionController {
      * 设置用户的审批委托关系，在用户无法审批时由受托人代为审批
      * </p>
      *
-     * @param param 委托保存参数，包含委托人 ID、受托人 ID、委托时间范围等（必填）
+     * @param param 委托保存参数，包含委托人 ID、受托人 ID、委托时间范围等（选填）
      * @return 是否保存成功
      * @throws BusinessException 当参数校验失败或保存失败时抛出业务异常
      * @see IWfExecutionService#saveDelegate(WfExecutionDelegateSaveParam) 保存审批委托服务方法

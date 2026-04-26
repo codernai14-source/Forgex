@@ -4,6 +4,7 @@
     :title="dialogTitle"
     :loading="submitLoading"
     width="860px"
+    :mask-closable="true"
     @submit="handleSubmit"
     @cancel="handleCancel"
   >

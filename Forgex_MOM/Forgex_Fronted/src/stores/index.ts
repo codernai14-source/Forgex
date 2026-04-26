@@ -1,5 +1,5 @@
 /**
- * Pinia Store 鍏ュ彛鏂囦欢
+ * Pinia Store 入口文件
  * 
  * @description 缁熶竴瀵煎嚭鎵€鏈?store
  * 

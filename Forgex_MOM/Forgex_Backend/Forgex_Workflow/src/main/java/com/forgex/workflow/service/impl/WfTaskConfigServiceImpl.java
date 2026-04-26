@@ -432,6 +432,8 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         draft.setTaskCode(trimToNull(param.getTaskCode()));
         draft.setCategoryCode(normalizeCategoryCode(param.getCategoryCode()));
         draft.setInterpreterBean(trimToNull(param.getInterpreterBean()));
+        draft.setCallbackUrl(trimToNull(param.getCallbackUrl()));
+        draft.setCallbackBean(trimToNull(param.getCallbackBean()));
         draft.setFormType(param.getFormType());
         draft.setFormPath(trimToNull(param.getFormPath()));
         draft.setFormContent(trimToNull(param.getFormContent()));

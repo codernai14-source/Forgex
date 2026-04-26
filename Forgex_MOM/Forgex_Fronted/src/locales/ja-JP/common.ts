@@ -6,6 +6,8 @@
 export default {
   // 基本操作
   ok: 'OK',
+  yes: 'はい',
+  no: 'いいえ',
   cancel: 'キャンセル',
   save: '保存',
   delete: '削除',

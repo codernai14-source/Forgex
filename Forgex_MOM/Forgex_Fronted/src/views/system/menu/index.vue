@@ -783,10 +783,10 @@ async function handleSubmit() {
 
     if (payload.id) {
       await currentMenuApi.value.update(payload as any)
-      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 拦截器中统一处理
     } else {
       await currentMenuApi.value.add(payload as any)
-      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
+      // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 拦截器中统一处理
     }
 
     visible.value = false
@@ -814,7 +814,7 @@ function handleDelete(id: string | number) {
       try {
         await currentMenuApi.value.remove(String(id))
         selectedRowKeys.value = selectedRowKeys.value.filter((item) => item !== String(id))
-        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
+        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 拦截器中统一处理
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('delete menu failed:', error)
@@ -839,7 +839,7 @@ function handleBatchDelete() {
       try {
         await currentMenuApi.value.batchRemove(selectedRowKeys.value)
         selectedRowKeys.value = []
-        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 鎷︽埅鍣ㄤ腑缁熶竴澶勭悊
+        // 鎴愬姛鎻愮ず鐢卞悗绔繑鍥烇紝鍦?http 拦截器中统一处理
         await tableRef.value?.refresh?.()
       } catch (error) {
         console.error('batch delete menu failed:', error)

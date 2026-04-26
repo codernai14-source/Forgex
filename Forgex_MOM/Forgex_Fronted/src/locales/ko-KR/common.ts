@@ -6,6 +6,8 @@
 export default {
   // 基础操作
   ok: '확인',
+  yes: '예',
+  no: '아니오',
   cancel: '취소',
   save: '저장',
   delete: '삭제',

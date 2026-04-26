@@ -964,7 +964,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
                     }
                     resolved.add(new ResolvedApprover(
                             approverId,
-                            "鐢ㄦ埛" + approverId,
+                            "用户" + approverId,
                             WorkflowConstants.ApproverType.SINGLE,
                             rule.getId(),
                             JSON.toJSONString(rule),
@@ -976,7 +976,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
             return Arrays.stream(determineApprovers(node.getId(), execution.getTenantId()))
                     .map(approverId -> new ResolvedApprover(
                             approverId,
-                            "鐢ㄦ埛" + approverId,
+                            "用户" + approverId,
                             WorkflowConstants.ApproverType.SINGLE,
                             null,
                             null,
