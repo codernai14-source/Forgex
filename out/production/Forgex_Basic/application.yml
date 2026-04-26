@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: forgex-basic
+  profiles:
+    active: ${FORGEX_PROFILE:dev}
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+server:
+  port: ${FORGEX_BASIC_PORT:9003}

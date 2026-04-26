@@ -1,5 +1,5 @@
 /**
- * 鐟欐帟澹婇懣婊冨礋閹哄牊娼堟い鐢告桨
+ * 角色菜单授权页面
  * 
  * 閸旂喕鍏橀敍?
  * 1. 閹稿膩閸ф鐫嶇粈楦垮綅閸楁洘鐖茶ぐ銏ｃ€冮弽?
@@ -45,7 +45,7 @@
         </div>
       </aside>
 
-      <!-- 内容区域： 閺嶆垵鑸扮悰銊︾壐 -->
+      <!-- 内容区域：树形表格 -->
       <section class="content-panel">
         <div class="toolbar">
           <a-space>
@@ -205,7 +205,7 @@ function resolve状态Tag(value: unknown) {
 }
 
 /**
- * 婢跺嫮鎮婄悰銊︾壐閺佺増宓佺拠閿嬬湴
+ * 处理表格数据请求
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !activeModuleId.value || !roleId.value) {
@@ -397,7 +397,7 @@ function handleSearch() {
 }
 
 /**
- * 娣囨繂鐡ㄩ幒鍫熸綀
+ * 保存授权
  */
 async function handleSave() {
   if (!currentTenantId.value || !roleId.value) {
@@ -643,5 +643,4 @@ onMounted(async () => {
   }
 }
 </style>
-
 

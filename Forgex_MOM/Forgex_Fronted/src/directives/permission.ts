@@ -1,5 +1,5 @@
 /**
- * 鏉冮檺鎸囦护
+ * 权限指令
  * 
  * 鐢ㄤ簬鎺у埗鎸夐挳绾у埆鐨勬潈闄愭樉绀?
  * 
@@ -14,7 +14,7 @@ import { use权限Store } from '@/stores/permission'
 
 /**
  * 妫€鏌ユ槸鍚︽湁鏉冮檺
- * @param permKey 鏉冮檺鏍囪瘑
+ * @param permKey 权限标识
  * @returns 鏄惁鏈夋潈闄?
  */
 function has权限(permKey: string): boolean {
@@ -33,7 +33,7 @@ function has权限(permKey: string): boolean {
 }
 
 /**
- * 鏉冮檺鎸囦护
+ * 权限指令
  */
 export const permission: Directive = {
   /**

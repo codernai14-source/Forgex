@@ -17,7 +17,7 @@ export const useRole = () => {
   })
 
   /**
-   * 鍔犺浇瑙掕壊鍒楄〃
+   * 加载角色列表
    */
   const loadRoles = async () => {
     loading.value = true
@@ -34,7 +34,7 @@ export const useRole = () => {
   }
 
   /**
-   * 閲嶇疆鎼滅储
+   * 重置搜索
    */
   const handleReset = () => {
     search表单.roleCode = ''
@@ -52,7 +52,7 @@ export const useRole = () => {
   }
 
   /**
-   * 鎵归噺鍒犻櫎
+   * 批量删除
    */
   const handleBatchDelete = async () => {
     if (selectedRowKeys.value.length === 0) {

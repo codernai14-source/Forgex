@@ -27,6 +27,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -92,9 +93,9 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
     public void unregisterCallback(String taskCode) {
         CallbackConfig removed = callbackRegistry.remove(taskCode);
         if (removed != null) {
-            log.info("注销审批回调成功，taskCode={}", taskCode);
+            log.info("注册工作流回调成功，taskCode={}", taskCode);
         } else {
-            log.warn("注销审批回调失败，任务编码未注册，taskCode={}", taskCode);
+            log.warn("注册工作流回调失败，回调处理器未注册，taskCode={}", taskCode);
         }
     }
     
@@ -116,8 +117,8 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
             }
             
             // 获取回调配置
-            CallbackConfig callbackConfig = callbackRegistry.get(taskConfig.getTaskCode());
-            if (callbackConfig == null) {
+            CallbackConfig callbackConfig = resolveCallbackConfig(taskConfig);
+            if (callbackConfig == null || !StringUtils.hasText(callbackConfig.getCallbackUrl())) {
                 // 没有配置回调，直接返回
                 log.debug("未配置回调，taskCode={}", taskConfig.getTaskCode());
                 return;
@@ -151,5 +152,25 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
             log.error("触发审批回调异常，executionId={}", executionId, e);
             // 回调失败不影响主流程，仅记录日志
         }
+    }
+
+    /**
+     * 解析审批回调配置。
+     * <p>
+     * 兼容历史内存注册方式，同时允许从任务配置表读取持久化回调地址。
+     * </p>
+     *
+     * @param taskConfig 审批任务配置
+     * @return 回调配置
+     */
+    private CallbackConfig resolveCallbackConfig(WfTaskConfig taskConfig) {
+        CallbackConfig registeredConfig = callbackRegistry.get(taskConfig.getTaskCode());
+        if (registeredConfig != null && StringUtils.hasText(registeredConfig.getCallbackUrl())) {
+            return registeredConfig;
+        }
+        if (!StringUtils.hasText(taskConfig.getCallbackUrl()) && !StringUtils.hasText(taskConfig.getCallbackBean())) {
+            return null;
+        }
+        return new CallbackConfig(taskConfig.getCallbackUrl(), taskConfig.getCallbackBean());
     }
 }

@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: forgex-report
+  profiles:
+    active: ${FORGEX_PROFILE:dev}
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+
+server:
+  port: ${FORGEX_REPORT_PORT:8084}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+
+forgex:
+  report:
+    template-path: templates/report
+    enable-ureport: true
+    enable-jimu: true
+    max-file-size: 10
+
+ureport:
+  enabled: true
+  debug: true
+  cache-enabled: true
+  cache-time: 600
+  prefix: classpath:templates/report/
+
+jmreport:
+  enabled: true
+  mode: 0
+  database: mysql
+  table-name: jimu_report
+  upload-path: upload/jimu
+  preview-cross: true
