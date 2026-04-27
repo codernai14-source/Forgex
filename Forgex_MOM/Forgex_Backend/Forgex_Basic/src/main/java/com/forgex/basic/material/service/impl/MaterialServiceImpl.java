@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.basic.material.domain.dto.MaterialDTO;
 import com.forgex.basic.material.domain.dto.MaterialExtendDTO;
 import com.forgex.basic.material.domain.entity.BasicMaterial;
@@ -165,7 +167,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
         // 查询物料主表
         BasicMaterial material = materialMapper.selectById(id);
         if (material == null || !material.getTenantId().equals(tenantId)) {
-            throw new BusinessException("物料不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_NOT_FOUND);
         }
 
         MaterialDetailResponse response = new MaterialDetailResponse();
@@ -205,7 +207,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
             // 自动生成编码
             dto.setMaterialCode(materialCodeGenerator.generateMaterialCode(tenantId));
         } else if (!materialCodeGenerator.validateMaterialCodeUnique(dto.getMaterialCode(), tenantId)) {
-            throw new BusinessException("物料编码已存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_CODE_EXISTS);
         }
 
         // 创建物料主表
@@ -245,14 +247,14 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
         // 校验物料是否存在
         BasicMaterial existing = materialMapper.selectById(dto.getId());
         if (existing == null || !existing.getTenantId().equals(tenantId)) {
-            throw new BusinessException("物料不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_NOT_FOUND);
         }
 
         // 校验物料编码唯一性（排除自身）
         if (StringUtils.hasText(dto.getMaterialCode())) {
             Integer count = materialMapper.countByMaterialCodeExclude(dto.getMaterialCode(), dto.getId(), tenantId);
             if (count != null && count > 0) {
-                throw new BusinessException("物料编码已存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_CODE_EXISTS);
             }
         }
 
@@ -296,7 +298,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
         // 校验物料是否存在
         BasicMaterial material = materialMapper.selectById(id);
         if (material == null || !material.getTenantId().equals(tenantId)) {
-            throw new BusinessException("物料不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_NOT_FOUND);
         }
 
         // 逻辑删除主表

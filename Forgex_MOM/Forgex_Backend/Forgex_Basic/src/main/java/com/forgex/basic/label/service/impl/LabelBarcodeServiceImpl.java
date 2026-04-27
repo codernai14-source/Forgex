@@ -14,7 +14,9 @@ import com.forgex.basic.label.enums.TemplateTypeEnum;
 import com.forgex.basic.label.mapper.LabelBarcodeMapper;
 import com.forgex.basic.label.service.LabelBarcodeService;
 import com.forgex.basic.label.utils.BarcodeGenerator;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -63,7 +65,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
         }
 
         if (retry >= 10) {
-            throw new BusinessException("生成条码号失败，请稍后重试");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_GENERATE_FAILED);
         }
 
         // 3. 创建条码记录
@@ -135,7 +137,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
      * @param barcodeNo 条码号
      * @param tenantId 租户 ID
      * @return 条码信息
-     * @throws BusinessException 条码不存在时抛出异常
+     * @throws I18nBusinessException 条码不存在时抛出异常
      */
     @Override
     public BarcodeVO getByBarcodeNo(String barcodeNo, Long tenantId) {
@@ -148,7 +150,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
 
         LabelBarcode barcode = labelBarcodeMapper.selectOne(wrapper);
         if (barcode == null) {
-            throw new BusinessException("条码不存在: " + barcodeNo);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_NOT_FOUND_WITH_NO, barcodeNo);
         }
 
         return convertToVO(barcode);
@@ -207,13 +209,13 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
     public void updateStatus(Long id, Integer status, Long tenantId) {
         LabelBarcode barcode = labelBarcodeMapper.selectById(id);
         if (barcode == null || !barcode.getTenantId().equals(tenantId)) {
-            throw new BusinessException("条码不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_NOT_FOUND);
         }
 
         // 验证状态值是否有效
         PrintStatusEnum statusEnum = PrintStatusEnum.getByCode(status);
         if (statusEnum == null) {
-            throw new BusinessException("无效的条码状态: " + status);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_STATUS_INVALID, status);
         }
 
         barcode.setStatus(status);
@@ -239,11 +241,11 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
 
         LabelBarcode barcode = labelBarcodeMapper.selectOne(wrapper);
         if (barcode == null) {
-            throw new BusinessException("条码不存在: " + barcodeNo);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_NOT_FOUND_WITH_NO, barcodeNo);
         }
 
         if (PrintStatusEnum.FAILED.getCode().equals(barcode.getStatus())) {
-            throw new BusinessException("条码已失效");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_EXPIRED);
         }
 
         barcode.setStatus(PrintStatusEnum.FAILED.getCode()); // 使用枚举：已失效
@@ -353,7 +355,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
      *
      * @param barcodeId 条码 ID
      * @param tenantId 租户 ID
-     * @throws BusinessException 条码不存在或已作废时抛出异常
+     * @throws I18nBusinessException 条码不存在或已作废时抛出异常
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -362,11 +364,11 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
 
         LabelBarcode barcode = labelBarcodeMapper.selectById(barcodeId);
         if (barcode == null || !barcode.getTenantId().equals(tenantId)) {
-            throw new BusinessException("条码不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_NOT_FOUND);
         }
 
         if (PrintStatusEnum.FAILED.getCode().equals(barcode.getStatus())) {
-            throw new BusinessException("条码已作废");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_VOIDED);
         }
 
         barcode.setStatus(PrintStatusEnum.FAILED.getCode()); // 使用枚举：已作废
@@ -421,7 +423,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
     public void deleteBarcode(Long id, Long tenantId) {
         LabelBarcode barcode = labelBarcodeMapper.selectById(id);
         if (barcode == null || !barcode.getTenantId().equals(tenantId)) {
-            throw new BusinessException("条码不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.BARCODE_NOT_FOUND);
         }
 
         labelBarcodeMapper.deleteById(id);

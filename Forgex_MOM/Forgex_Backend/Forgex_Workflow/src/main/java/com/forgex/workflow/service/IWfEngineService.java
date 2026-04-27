@@ -33,7 +33,7 @@ public interface IWfEngineService {
      * @param executionId 执行记录 ID
      * @param taskConfigId 任务配置 ID
      * @param selectedApprovers 发起人选择的审批人列表（仅发起人自选模式使用）
-     * @throws BusinessException 当任务配置或执行记录不存在时抛出业务异常
+     * @throws I18nBusinessException 当任务配置或执行记录不存在时抛出业务异常
      * @see WfTaskExecution
      * @see WfTaskConfig
      */
@@ -50,7 +50,7 @@ public interface IWfEngineService {
      * @param approveStatus 审批状态：1-通过，2-驳回
      * @param rejectType 驳回类型：1-驳回结束，2-退回上一步（仅驳回时有效）
      * @return 流转结果，成功返回 true
-     * @throws BusinessException 当执行记录或节点不存在时抛出业务异常
+     * @throws I18nBusinessException 当执行记录或节点不存在时抛出业务异常
      * @see WfTaskExecution
      * @see WfTaskNodeConfig
      */
@@ -65,7 +65,7 @@ public interface IWfEngineService {
      * @param nodeId 节点 ID
      * @param tenantId 租户 ID
      * @return 审批人 ID 数组
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see WfTaskNodeApprover
      */
     Long[] determineApprovers(Long nodeId, Long tenantId);
@@ -79,7 +79,7 @@ public interface IWfEngineService {
      * @param nodeId 分支节点 ID
      * @param formContent 表单内容（JSON 格式）
      * @return 命中的下一节点 ID，如果没有命中则返回默认节点 ID
-     * @throws BusinessException 当节点不存在或条件评估失败时抛出业务异常
+     * @throws I18nBusinessException 当节点不存在或条件评估失败时抛出业务异常
      * @see WfTaskNodeConfig
      */
     Long evaluateBranchConditions(Long nodeId, String formContent);
@@ -93,7 +93,7 @@ public interface IWfEngineService {
      * @param executionId 执行记录 ID
      * @param nodeId 节点 ID
      * @return 节点是否完成
-     * @throws BusinessException 当执行记录或节点不存在时抛出业务异常
+     * @throws I18nBusinessException 当执行记录或节点不存在时抛出业务异常
      * @see WfTaskApprovalInstance
      */
     Boolean isNodeCompleted(Long executionId, Long nodeId);
@@ -106,7 +106,7 @@ public interface IWfEngineService {
      *
      * @param executionId 执行记录 ID
      * @param status 最终状态：2-审批完成，3-已撤销
-     * @throws BusinessException 当执行记录不存在时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在时抛出业务异常
      * @see WfTaskExecution
      */
     void finishExecution(Long executionId, Integer status);

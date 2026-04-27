@@ -62,7 +62,7 @@ public class WfTaskConfigController {
      *
      * @param param 查询参数，包含页码、页数、筛选条件等
      * @return 分页结果，包含任务配置摘要列表
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see IWfTaskConfigService#page(WfTaskConfigQueryParam) 分页查询服务方法
      * @see WfTaskConfigSummaryDTO 任务配置摘要数据传输对象
      */
@@ -80,7 +80,7 @@ public class WfTaskConfigController {
      *
      * @param param 查询参数，包含筛选条件、排序规则等
      * @return 任务配置列表
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see IWfTaskConfigService#list(WfTaskConfigQueryParam) 列表查询服务方法
      * @see WfTaskConfigDTO 任务配置数据传输对象
      */
@@ -98,7 +98,7 @@ public class WfTaskConfigController {
      *
      * @param params 请求参数，包含 id（任务配置 ID，必填）
      * @return 任务配置详情，如果不存在返回 NOT_FOUND
-     * @throws BusinessException 当参数无效或查询失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或查询失败时抛出业务异常
      * @see IWfTaskConfigService#getById(Long) 根据 ID 查询服务方法
      * @see WfTaskConfigDTO 任务配置数据传输对象
      */
@@ -121,7 +121,7 @@ public class WfTaskConfigController {
      *
      * @param params 请求参数，包含 taskCode（任务编码，必填）
      * @return 任务配置详情，如果不存在返回 NOT_FOUND
-     * @throws BusinessException 当参数无效或查询失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或查询失败时抛出业务异常
      * @see IWfTaskConfigService#getByCode(String) 根据编码查询服务方法
      * @see WfTaskConfigDTO 任务配置数据传输对象
      */
@@ -144,7 +144,7 @@ public class WfTaskConfigController {
      *
      * @param param 任务配置保存参数，包含配置名称、编码、节点信息等（必填）
      * @return 新创建的任务配置 ID
-     * @throws BusinessException 当参数校验失败或创建失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或创建失败时抛出业务异常
      * @see IWfTaskConfigService#create(WfTaskConfigSaveParam) 创建服务方法
      * @see WfTaskConfigSaveParam 任务配置保存参数
      */
@@ -162,7 +162,7 @@ public class WfTaskConfigController {
      *
      * @param param 任务配置保存参数，包含 ID 和更新后的配置信息（必填）
      * @return 是否更新成功
-     * @throws BusinessException 当参数校验失败或更新失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或更新失败时抛出业务异常
      * @see IWfTaskConfigService#update(WfTaskConfigSaveParam) 更新服务方法
      * @see WfTaskConfigSaveParam 任务配置保存参数
      */
@@ -180,7 +180,7 @@ public class WfTaskConfigController {
      *
      * @param params 请求参数，包含 id（任务配置 ID，必填）
      * @return 是否删除成功
-     * @throws BusinessException 当参数无效或删除失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或删除失败时抛出业务异常
      * @see IWfTaskConfigService#delete(Long) 删除服务方法
      */
     @PostMapping("/delete")
@@ -198,7 +198,7 @@ public class WfTaskConfigController {
      *
      * @param params 请求参数，包含 id（任务配置 ID，必填）、status（状态值，必填）
      * @return 是否更新成功
-     * @throws BusinessException 当参数无效或更新失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或更新失败时抛出业务异常
      * @see IWfTaskConfigService#updateStatus(Long, Integer) 更新状态服务方法
      */
     @PostMapping("/updateStatus")
@@ -217,7 +217,7 @@ public class WfTaskConfigController {
      *
      * @param param 草稿编辑器查询参数，包含任务配置 ID（必填）
      * @return 草稿编辑器数据，包含可编辑的配置信息
-     * @throws BusinessException 当参数无效或操作失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或操作失败时抛出业务异常
      * @see IWfTaskConfigService#getOrCreateDraftEditor(WfTaskDraftEditorQueryParam) 获取或创建草稿服务方法
      * @see WfTaskDraftEditorDTO 草稿编辑器数据传输对象
      */
@@ -235,7 +235,7 @@ public class WfTaskConfigController {
      *
      * @param param 任务配置保存参数，包含草稿 ID 和基础信息（必填）
      * @return 保存后的草稿编辑器数据
-     * @throws BusinessException 当参数校验失败或保存失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或保存失败时抛出业务异常
      * @see IWfTaskConfigService#saveDraftBaseInfo(WfTaskConfigSaveParam) 保存草稿基础信息服务方法
      * @see WfTaskDraftEditorDTO 草稿编辑器数据传输对象
      */
@@ -253,7 +253,7 @@ public class WfTaskConfigController {
      *
      * @param param 草稿编辑器查询参数，包含任务配置 ID（必填）
      * @return 草稿流程图数据
-     * @throws BusinessException 当参数无效或查询失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或查询失败时抛出业务异常
      * @see IWfTaskConfigService#getDraftGraph(WfTaskDraftEditorQueryParam) 获取草稿流程图服务方法
      * @see WfTaskGraphDTO 任务流程图数据传输对象
      */
@@ -271,7 +271,7 @@ public class WfTaskConfigController {
      *
      * @param param 流程图保存参数，包含节点、连线、规则等信息（必填）
      * @return 是否保存成功
-     * @throws BusinessException 当参数校验失败或保存失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或保存失败时抛出业务异常
      * @see IWfTaskConfigService#saveDraftGraph(WfTaskGraphSaveParam) 保存草稿流程图服务方法
      * @see WfTaskGraphSaveParam 流程图保存参数
      */
@@ -289,7 +289,7 @@ public class WfTaskConfigController {
      *
      * @param param 草稿编辑器查询参数，包含任务配置 ID（必填）
      * @return 是否发布成功
-     * @throws BusinessException 当参数无效或发布失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或发布失败时抛出业务异常
      * @see IWfTaskConfigService#publishDraft(WfTaskDraftEditorQueryParam) 发布草稿服务方法
      */
     @PostMapping("/draft/publish")

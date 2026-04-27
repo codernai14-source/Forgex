@@ -103,7 +103,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
      *
      * @param id 数据源 ID
      * @return 数据源 DTO
-     * @throws BusinessException 当数据源不存在时抛出
+     * @throws I18nBusinessException 当数据源不存在时抛出
      */
     @Override
     public ReportDatasourceDTO getById(Long id) {
@@ -124,7 +124,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
      *
      * @param code 数据源编码
      * @return 数据源 DTO
-     * @throws BusinessException 当数据源不存在时抛出
+     * @throws I18nBusinessException 当数据源不存在时抛出
      */
     @Override
     public ReportDatasourceDTO getByCode(String code) {

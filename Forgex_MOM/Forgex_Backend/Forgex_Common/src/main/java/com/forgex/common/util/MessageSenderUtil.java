@@ -155,7 +155,7 @@ public class MessageSenderUtil {
         // 1. 根据模板编码查询模板主表
         // SysMessageTemplate template = templateMapper.selectOne(...)
         // if (template == null || !template.getStatus()) {
-        //     throw new BusinessException("消息模板不存在或已禁用");
+        //     throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_TEMPLATE_NOT_FOUND_OR_DISABLED, param.getTemplateCode());
         // }
         
         // 2. 查询接收人配置

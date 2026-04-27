@@ -58,7 +58,7 @@ public class AuthPermInternalController {
      *         - code: 状态码（200=成功）
      *         - data: 权限键集合（Set&lt;String&gt;）
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 用户或租户不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 用户或租户不存在时抛出
      * @see PermKeyService#getPermKeys(Long, Long)
      */
     @GetMapping("/keys/{userId}/{tenantId}")

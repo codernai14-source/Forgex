@@ -11,7 +11,9 @@ import com.forgex.basic.label.service.LabelRecordService;
 import com.forgex.basic.label.service.LabelTemplateService;
 import com.forgex.basic.label.domain.param.PrintRecordQueryParam;
 import com.forgex.basic.label.domain.vo.PrintRecordVO;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -121,7 +123,7 @@ public class LabelRecordServiceImpl extends ServiceImpl<LabelPrintRecordMapper, 
     public PrintRecordVO getRecordDetail(Long id, Long tenantId) {
         LabelPrintRecord record = labelPrintRecordMapper.selectById(id);
         if (record == null || !record.getTenantId().equals(tenantId)) {
-            throw new BusinessException("打印记录不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_PRINT_RECORD_NOT_FOUND);
         }
 
         return convertToVO(record);

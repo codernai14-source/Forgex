@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.common.i18n.CommonPrompt;
@@ -84,7 +83,7 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
     public Page<RoleGrantVO> getGrantedPositions(Page<SysRolePosition> page, RoleGrantQueryDTO query) {
         // 1. 参数校验
         if (query == null || query.getRoleId() == null || query.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = query.getRoleId();
@@ -99,7 +98,7 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         // 3. 分页查询角色 - 职位关联关系
@@ -190,10 +189,10 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
     public void grantPositions(RoleGrantDTO grantDTO) {
         // 1. 参数校验
         if (grantDTO == null || grantDTO.getRoleId() == null || grantDTO.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.PARAM_EMPTY.getDefaultTemplate());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.PARAM_EMPTY);
         }
         if (CollectionUtils.isEmpty(grantDTO.getPositionIds())) {
-            throw new BusinessException(400, CommonPrompt.PARAM_EMPTY.getDefaultTemplate());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.PARAM_EMPTY);
         }
 
         Long roleId = grantDTO.getRoleId();
@@ -205,7 +204,7 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         // 3. 校验职位存在
@@ -280,10 +279,10 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
     public void revokePositions(RoleGrantDTO revokeDTO) {
         // 1. 参数校验
         if (revokeDTO == null || revokeDTO.getRoleId() == null || revokeDTO.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.PARAM_EMPTY.getDefaultTemplate());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.PARAM_EMPTY);
         }
         if (CollectionUtils.isEmpty(revokeDTO.getPositionIds())) {
-            throw new BusinessException(400, CommonPrompt.PARAM_EMPTY.getDefaultTemplate());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.PARAM_EMPTY);
         }
 
         Long roleId = revokeDTO.getRoleId();
@@ -295,7 +294,7 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         // 3. 校验职位存在

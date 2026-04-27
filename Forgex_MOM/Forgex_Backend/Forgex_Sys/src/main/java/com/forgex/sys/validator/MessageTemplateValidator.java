@@ -13,8 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.validator;
 
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.SysMessageTemplateSaveDTO;
+import com.forgex.sys.enums.SysPromptEnum;
 import com.forgex.sys.service.SysMessageTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,8 +34,6 @@ public class MessageTemplateValidator {
     private static final String MSG_TEMPLATE_IDS_REQUIRED = "\u6a21\u677f ID \u5217\u8868\u4e0d\u80fd\u4e3a\u7a7a";
     private static final String MSG_TEMPLATE_NAME_REQUIRED = "\u6a21\u677f\u540d\u79f0\u4e0d\u80fd\u4e3a\u7a7a";
     private static final String MSG_TEMPLATE_CODE_REQUIRED = "\u6a21\u677f\u7f16\u7801\u4e0d\u80fd\u4e3a\u7a7a";
-    private static final String MSG_TEMPLATE_CODE_EXISTS = "\u6a21\u677f\u7f16\u7801\u5df2\u5b58\u5728";
-    private static final String MSG_TEMPLATE_CODE_IN_USE = "\u6a21\u677f\u7f16\u7801\u5df2\u88ab\u5176\u4ed6\u6a21\u677f\u4f7f\u7528";
 
     private final SysMessageTemplateService messageTemplateService;
 
@@ -54,11 +54,11 @@ public class MessageTemplateValidator {
 
         if (dto.getId() == null) {
             if (messageTemplateService.existsByCode(dto.getTemplateCode(), dto.getPublicConfig())) {
-                throw new BusinessException(MSG_TEMPLATE_CODE_EXISTS);
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_CODE_EXISTS);
             }
         } else {
             if (messageTemplateService.existsByCodeExcludeId(dto.getTemplateCode(), dto.getId(), dto.getPublicConfig())) {
-                throw new BusinessException(MSG_TEMPLATE_CODE_IN_USE);
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_TEMPLATE_CODE_EXISTS_OTHER);
             }
         }
     }
