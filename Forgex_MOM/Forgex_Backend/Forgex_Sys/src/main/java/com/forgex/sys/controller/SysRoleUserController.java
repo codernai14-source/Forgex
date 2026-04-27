@@ -114,7 +114,7 @@ public class SysRoleUserController {
      *
      * @param param 查询参数（角色 ID、租户 ID、分页）
      * @return 已授权用户分页结果，{@code data} 为 {@link Page}{@code <}{@link SysUserDTO}{@code >}
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败时抛出
      */
     @RequirePerm("sys:role:authUser")
     @PostMapping("/list")
@@ -221,7 +221,7 @@ public class SysRoleUserController {
      *
      * @param param 请求参数（角色 ID、租户 ID、用户 ID 列表）
      * @return 操作结果
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败时抛出
      */
     @RequirePerm("sys:role:authUser")
     @PostMapping("/grant")
@@ -279,7 +279,7 @@ public class SysRoleUserController {
      *
      * @param param 请求参数（角色 ID、租户 ID、用户 ID 列表）
      * @return 操作结果
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败时抛出
      */
     @RequirePerm("sys:role:authUser")
     @PostMapping("/revoke")
@@ -379,7 +379,7 @@ public class SysRoleUserController {
      *
      * @param query 查询参数（角色、租户、授权类型、关键字、分页）
      * @return 已授权列表分页结果，{@code data} 为 {@link Page}{@code <}{@link RoleGrantVO}{@code >}
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败或角色不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败或角色不存在时抛出
      * @see RoleGrantQueryDTO
      */
     @RequirePerm("sys:role:authUser")
@@ -401,7 +401,7 @@ public class SysRoleUserController {
      *
      * @param grantDTO 授权参数
      * @return 操作结果
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败、角色不存在或授权对象不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败、角色不存在或授权对象不存在时抛出
      * @see RoleGrantDTO
      */
     @RequirePerm("sys:role:authUser")
@@ -425,7 +425,7 @@ public class SysRoleUserController {
      *
      * @param revokeDTO 取消授权参数
      * @return 操作结果
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败或角色不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败或角色不存在时抛出
      * @see RoleGrantDTO
      */
     @RequirePerm("sys:role:authUser")

@@ -13,7 +13,9 @@ import com.forgex.basic.label.domain.param.LabelTemplateUpdateParam;
 import com.forgex.basic.label.domain.vo.TemplateVO;
 import com.forgex.basic.label.mapper.LabelTemplateMapper;
 import com.forgex.basic.label.service.LabelTemplateService;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -108,13 +110,15 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
                 template != null ? template.getTenantId() : "N/A",
                 tenantId);
         if (template == null) {
-            throw new BusinessException("模板不存在，ID: " + id);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_NOT_FOUND_WITH_ID, id);
         }
 
         if (!template.getTenantId().equals(tenantId)) {
-            throw new BusinessException(
-                    String.format("无权访问该模板，模板租户ID: %s，当前租户ID: %s",
-                            template.getTenantId(), tenantId)
+            throw new I18nBusinessException(
+                    StatusCode.BUSINESS_ERROR,
+                    BasicPromptEnum.LABEL_TEMPLATE_ACCESS_DENIED,
+                    template.getTenantId(),
+                    tenantId
             );
         }
 
@@ -136,7 +140,7 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
     public Long addTemplate(LabelTemplateSaveParam param, Long tenantId) {
         // 校验模板编码唯一性
         if (existsByCode(param.getTemplateCode(), tenantId)) {
-            throw new BusinessException("模板编码已存在：" + param.getTemplateCode());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_CODE_EXISTS, param.getTemplateCode());
         }
 
         LabelTemplate template = new LabelTemplate();
@@ -166,7 +170,7 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
     public void updateTemplate(LabelTemplateUpdateParam param, Long tenantId) {
         LabelTemplate existing = labelTemplateMapper.selectById(param.getId());
         if (existing == null || !existing.getTenantId().equals(tenantId)) {
-            throw new BusinessException("模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_NOT_FOUND);
         }
 
         // 创建新版本
@@ -206,7 +210,7 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
     public void deleteTemplate(Long id, Long tenantId) {
         LabelTemplate template = labelTemplateMapper.selectById(id);
         if (template == null || !template.getTenantId().equals(tenantId)) {
-            throw new BusinessException("模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_NOT_FOUND);
         }
 
         // 只更新 deleted 字段，避免更新其他字段
@@ -238,7 +242,7 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
             try {
                 deleteTemplate(id, tenantId);
                 successCount++;
-            } catch (BusinessException e) {
+            } catch (I18nBusinessException e) {
                 // 业务异常（如模板不存在、权限不足），记录警告但不中断
                 log.warn("跳过删除模板 ID: {}, 原因: {}", id, e.getMessage());
                 failCount++;
@@ -264,11 +268,11 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
     public void setDefaultTemplate(Long id, String templateType, Long tenantId) {
         LabelTemplate template = labelTemplateMapper.selectById(id);
         if (template == null || !template.getTenantId().equals(tenantId)) {
-            throw new BusinessException("模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_NOT_FOUND);
         }
 
         if (!template.getTemplateType().equals(templateType)) {
-            throw new BusinessException("模板类型不匹配");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_TYPE_MISMATCH);
         }
 
         // 取消同类型其他模板的默认状态

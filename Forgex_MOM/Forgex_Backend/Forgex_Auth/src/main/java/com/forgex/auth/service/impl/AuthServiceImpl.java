@@ -178,7 +178,7 @@ public class AuthServiceImpl implements AuthService {
      *
      * @param param 登录参数，包含账号、密码、验证码、登录终端、登录类型等信息
      * @return {@link R} 统一响应对象，包含租户列表（TenantVO）
-     * @throws BusinessException 当登录失败时抛出业务异常，如账号不存在、密码错误、验证码错误等
+     * @throws I18nBusinessException 当登录失败时抛出业务异常，如账号不存在、密码错误、验证码错误等
      * @see com.forgex.auth.domain.param.LoginParam
      * @see com.forgex.auth.domain.vo.TenantVO
      * @see com.forgex.common.domain.config.CryptoTransportConfig
@@ -333,7 +333,7 @@ public class AuthServiceImpl implements AuthService {
      *
      * @param param 租户选择参数，包含租户 ID、账号等信息
      * @return {@link R} 统一响应对象，包含用户 DTO 信息
-     * @throws BusinessException 当选择失败时抛出业务异常，如未登录、用户未绑定租户等
+     * @throws I18nBusinessException 当选择失败时抛出业务异常，如未登录、用户未绑定租户等
      * @see com.forgex.auth.domain.param.TenantChoiceParam
      * @see com.forgex.auth.domain.dto.SysUserDTO
      * @see com.forgex.common.tenant.TenantContext

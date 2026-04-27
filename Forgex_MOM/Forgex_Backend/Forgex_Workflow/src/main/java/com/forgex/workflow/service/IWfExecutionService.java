@@ -49,7 +49,7 @@ public interface IWfExecutionService {
      *
      * @param param 发起审批参数，包含任务编码、表单内容、选择的审批人等
      * @return 执行记录 ID
-     * @throws BusinessException 当任务配置不存在、已禁用或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在、已禁用或参数不合法时抛出业务异常
      * @see WfExecutionStartParam
      */
     Long startExecution(WfExecutionStartParam param);
@@ -62,7 +62,7 @@ public interface IWfExecutionService {
      *
      * @param param 审批参数，包含执行 ID、审批实例 ID、审批意见等
      * @return 审批结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
      * @see WfExecutionApproveParam
      */
     Boolean approve(WfExecutionApproveParam param);
@@ -75,7 +75,7 @@ public interface IWfExecutionService {
      *
      * @param param 审批参数，包含执行 ID、审批实例 ID、驳回类型、驳回意见等
      * @return 审批结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
      * @see WfExecutionApproveParam
      */
     Boolean reject(WfExecutionApproveParam param);
@@ -88,7 +88,7 @@ public interface IWfExecutionService {
      *
      * @param param 转交参数，包含执行 ID、审批实例 ID、目标审批人 ID、转交意见等
      * @return 转交结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
      * @see WfExecutionTransferParam
      */
     Boolean transfer(WfExecutionTransferParam param);
@@ -101,7 +101,7 @@ public interface IWfExecutionService {
      *
      * @param param 加签参数，包含执行 ID、审批实例 ID、目标审批人 ID、加签意见等
      * @return 加签结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
      * @see WfExecutionAddSignParam
      */
     Boolean addSign(WfExecutionAddSignParam param);
@@ -114,7 +114,7 @@ public interface IWfExecutionService {
      *
      * @param param 批量审批参数，包含执行 ID 列表、审批状态、审批意见等
      * @return 批量审批结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在或参数不合法时抛出业务异常
      * @see WfExecutionBatchApproveParam
      */
     Boolean batchApprove(WfExecutionBatchApproveParam param);
@@ -127,7 +127,7 @@ public interface IWfExecutionService {
      *
      * @param param 批量转交参数，包含执行 ID 列表、目标审批人 ID、转交意见等
      * @return 批量转交结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在或参数不合法时抛出业务异常
      * @see WfExecutionBatchTransferParam
      */
     Boolean batchTransfer(WfExecutionBatchTransferParam param);
@@ -140,7 +140,7 @@ public interface IWfExecutionService {
      *
      * @param param 批量提醒参数，包含执行 ID 列表、提醒意见等
      * @return 批量提醒结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在或参数不合法时抛出业务异常
      * @see WfExecutionBatchRemindParam
      */
     Boolean batchRemind(WfExecutionBatchRemindParam param);
@@ -153,7 +153,7 @@ public interface IWfExecutionService {
      *
      * @param param 补偿参数，包含执行 ID 等
      * @return 补偿结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在或参数不合法时抛出业务异常
      * @see WfExecutionCompensateParam
      */
     Boolean compensateExecution(WfExecutionCompensateParam param);
@@ -166,7 +166,7 @@ public interface IWfExecutionService {
      *
      * @param param 重试参数，包含执行 ID 等
      * @return 重试结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在或参数不合法时抛出业务异常
      * @see WfExecutionCompensateParam
      */
     Boolean retryTimeoutJobs(WfExecutionCompensateParam param);
@@ -179,7 +179,7 @@ public interface IWfExecutionService {
      *
      * @param param 委托保存参数，包含委托人 ID、受托人 ID、委托备注等
      * @return 保存结果，成功返回 true
-     * @throws BusinessException 当参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当参数不合法时抛出业务异常
      * @see WfExecutionDelegateSaveParam
      */
     Boolean saveDelegate(WfExecutionDelegateSaveParam param);
@@ -192,7 +192,7 @@ public interface IWfExecutionService {
      *
      * @param delegatorUserId 委托人用户 ID
      * @return 取消结果，成功返回 true
-     * @throws BusinessException 当参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当参数不合法时抛出业务异常
      */
     Boolean cancelDelegate(Long delegatorUserId);
 
@@ -204,7 +204,7 @@ public interface IWfExecutionService {
      *
      * @param executionId 执行记录 ID
      * @return 撤销结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在或用户无权限时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在或用户无权限时抛出业务异常
      */
     Boolean cancelExecution(Long executionId);
 
@@ -216,7 +216,7 @@ public interface IWfExecutionService {
      *
      * @param executionId 执行记录 ID
      * @return 执行记录 DTO
-     * @throws BusinessException 当执行记录不存在时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在时抛出业务异常
      * @see WfExecutionDTO
      */
     WfExecutionDTO getExecutionDetail(Long executionId);
@@ -229,7 +229,7 @@ public interface IWfExecutionService {
      *
      * @param executionId 执行记录 ID
      * @return 审批实例 DTO 列表
-     * @throws BusinessException 当执行记录不存在时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在时抛出业务异常
      * @see WfApprovalInstanceDTO
      */
     List<WfApprovalInstanceDTO> listApprovalInstances(Long executionId);
@@ -242,7 +242,7 @@ public interface IWfExecutionService {
      *
      * @param executionId 执行记录 ID
      * @return 审批操作日志 DTO 列表
-     * @throws BusinessException 当执行记录不存在时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在时抛出业务异常
      * @see WfApprovalActionLogDTO
      */
     List<WfApprovalActionLogDTO> listApprovalActionLogs(Long executionId);
@@ -255,7 +255,7 @@ public interface IWfExecutionService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 执行记录分页结果
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfExecutionQueryParam
      */
     Page<WfExecutionDTO> pageMyInitiated(WfExecutionQueryParam param);
@@ -268,7 +268,7 @@ public interface IWfExecutionService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 执行记录分页结果
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfExecutionQueryParam
      */
     Page<WfExecutionDTO> pageMyPending(WfExecutionQueryParam param);
@@ -281,7 +281,7 @@ public interface IWfExecutionService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态、审批时间范围等过滤条件
      * @return 执行记录分页结果
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfExecutionQueryParam
      */
     Page<WfExecutionDTO> pageMyProcessed(WfExecutionQueryParam param);
@@ -294,7 +294,7 @@ public interface IWfExecutionService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 执行记录分页结果
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfExecutionQueryParam
      */
     Page<WfExecutionDTO> pageMyCc(WfExecutionQueryParam param);
@@ -318,7 +318,7 @@ public interface IWfExecutionService {
      * </p>
      *
      * @return 工作台摘要 VO
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see WfDashboardSummaryVO
      */
     WfDashboardSummaryVO loadDashboardSummary();
@@ -330,7 +330,7 @@ public interface IWfExecutionService {
      * </p>
      *
      * @return 工作台分析 VO
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see WfDashboardAnalyticsVO
      */
     WfDashboardAnalyticsVO loadDashboardAnalytics();

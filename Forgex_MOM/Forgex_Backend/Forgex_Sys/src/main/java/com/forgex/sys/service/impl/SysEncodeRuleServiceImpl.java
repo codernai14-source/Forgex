@@ -192,7 +192,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * 
      * @param param 编码规则保存参数
      * @return 保存后的编码规则 ID
-     * @throws BusinessException 当规则代码已存在时抛出
+     * @throws I18nBusinessException 当规则代码已存在时抛出
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -258,7 +258,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * <p>根据编码规则 ID 删除规则及其关联的明细数据，并清理 Redis 缓存。</p>
      * 
      * @param id 编码规则 ID
-     * @throws BusinessException 当规则不存在时抛出
+     * @throws I18nBusinessException 当规则不存在时抛出
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -308,7 +308,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * 
      * @param ruleCode 规则代码
      * @return 生成的业务编码
-     * @throws BusinessException 当规则代码不存在或已禁用时抛出
+     * @throws I18nBusinessException 当规则代码不存在或已禁用时抛出
      */
     @Override
     public String generateCode(String ruleCode) {
@@ -464,7 +464,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * 
      * @param ruleCode 规则代码
      * @param excludeId 排除的 ID（更新时传入）
-     * @throws BusinessException 当规则代码已存在时抛出
+     * @throws I18nBusinessException 当规则代码已存在时抛出
      */
     private void validateRuleCodeUnique(String ruleCode, Long excludeId) {
         if (!StringUtils.hasText(ruleCode)) {

@@ -14,7 +14,9 @@ import com.forgex.basic.label.service.LabelBindingService;
 import com.forgex.basic.label.service.LabelTemplateService;
 import com.forgex.basic.label.domain.param.LabelBindingSaveParam;
 import com.forgex.basic.label.domain.vo.BindingVO;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -152,13 +154,13 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
         // 校验模板是否存在
         LabelTemplate template = labelTemplateService.getById(param.getTemplateId());
         if (template == null || !template.getTenantId().equals(tenantId)) {
-            throw new BusinessException("模板不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_NOT_FOUND);
         }
 
         // 验证绑定类型是否有效
         MatchPriorityEnum priorityEnum = MatchPriorityEnum.getByCode(param.getBindingType());
         if (priorityEnum == null) {
-            throw new BusinessException("无效的绑定类型: " + param.getBindingType());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_BINDING_TYPE_INVALID, param.getBindingType());
         }
 
         // 检查是否已存在相同维度的绑定
@@ -168,7 +170,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
                 .eq(LabelBinding::getBindingValue, param.getBindingValue());
 
         if (labelBindingMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException("该绑定关系已存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_BINDING_EXISTS);
         }
 
         LabelBinding binding = new LabelBinding();
@@ -198,7 +200,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
     public void updateBinding(Long id, Integer priority, Long factoryId, Long tenantId) {
         LabelBinding binding = labelBindingMapper.selectById(id);
         if (binding == null || !binding.getTenantId().equals(tenantId)) {
-            throw new BusinessException("绑定关系不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_BINDING_NOT_FOUND);
         }
 
         if (priority != null) {
@@ -223,7 +225,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
     public void deleteBinding(Long id, Long tenantId) {
         LabelBinding binding = labelBindingMapper.selectById(id);
         if (binding == null || !binding.getTenantId().equals(tenantId)) {
-            throw new BusinessException("绑定关系不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_BINDING_NOT_FOUND);
         }
 
         binding.setDeleted(true);
@@ -267,7 +269,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
             return defaultTemplate.getId();
         }
 
-        throw new BusinessException("未找到可用模板，请检查模板配置");
+        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_CONFIG_MISSING);
     }
 
     /**

@@ -16,8 +16,9 @@ package com.forgex.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.RoleGrantDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysPosition;
@@ -32,6 +33,7 @@ import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.ISysRoleUserService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -83,7 +85,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     @Override
     public Page<RoleGrantVO> getGrantedList(RoleGrantQueryDTO query) {
         if (query == null || query.getRoleId() == null || query.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = query.getRoleId();
@@ -98,7 +100,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, "角色不存在或不属于当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         Page<SysUserRole> relPage = new Page<>(pageNum, pageSize);
@@ -197,10 +199,10 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     @Transactional(rollbackFor = Exception.class)
     public void grantBatch(RoleGrantDTO grantDTO) {
         if (grantDTO == null || grantDTO.getRoleId() == null || grantDTO.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
         if (StringUtils.isBlank(grantDTO.getGrantType())) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = grantDTO.getRoleId();
@@ -212,7 +214,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, "角色不存在或不属于当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         if (GRANT_TYPE_USER.equals(grantType)) {
@@ -222,7 +224,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         } else if (GRANT_TYPE_POSITION.equals(grantType)) {
             grantPositions(grantDTO);
         } else {
-            throw new BusinessException(400, "不支持的授权类型：" + grantType);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_GRANT_TYPE_NOT_SUPPORTED, grantType);
         }
     }
 
@@ -230,10 +232,10 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     @Transactional(rollbackFor = Exception.class)
     public void revokeBatch(RoleGrantDTO revokeDTO) {
         if (revokeDTO == null || revokeDTO.getRoleId() == null || revokeDTO.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
         if (StringUtils.isBlank(revokeDTO.getGrantType())) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = revokeDTO.getRoleId();
@@ -245,7 +247,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, "角色不存在或不属于当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         if (GRANT_TYPE_USER.equals(grantType)) {
@@ -255,7 +257,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         } else if (GRANT_TYPE_POSITION.equals(grantType)) {
             revokePositions(revokeDTO);
         } else {
-            throw new BusinessException(400, "不支持的授权类型：" + grantType);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_GRANT_TYPE_NOT_SUPPORTED, grantType);
         }
     }
 
@@ -266,12 +268,12 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
      */
     private void grantUsers(RoleGrantDTO grantDTO) {
         if (CollectionUtils.isEmpty(grantDTO.getUserIds())) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         List<SysUser> users = userMapper.selectByIds(grantDTO.getUserIds());
         if (users == null || users.size() != grantDTO.getUserIds().size()) {
-            throw new BusinessException(400, "部分用户不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_GRANT_PART_USERS_NOT_FOUND);
         }
 
         List<SysUserRole> exists = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
@@ -320,7 +322,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
      */
     private void revokeUsers(RoleGrantDTO revokeDTO) {
         if (CollectionUtils.isEmpty(revokeDTO.getUserIds())) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()

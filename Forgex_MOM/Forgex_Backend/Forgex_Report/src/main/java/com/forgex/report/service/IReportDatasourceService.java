@@ -53,7 +53,7 @@ public interface IReportDatasourceService extends IService<ReportDatasource> {
      *
      * @param id 数据源 ID
      * @return 数据源 DTO
-     * @throws com.forgex.common.exception.BusinessException 当数据源不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当数据源不存在时抛出
      * @see ReportDatasourceDTO
      */
     ReportDatasourceDTO getById(Long id);
@@ -63,7 +63,7 @@ public interface IReportDatasourceService extends IService<ReportDatasource> {
      *
      * @param code 数据源编码
      * @return 数据源 DTO
-     * @throws com.forgex.common.exception.BusinessException 当数据源不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当数据源不存在时抛出
      * @see ReportDatasourceDTO
      */
     ReportDatasourceDTO getByCode(String code);

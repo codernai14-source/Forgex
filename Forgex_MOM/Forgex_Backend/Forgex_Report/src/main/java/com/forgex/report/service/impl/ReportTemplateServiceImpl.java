@@ -98,7 +98,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
      *
      * @param id 模板 ID
      * @return 模板 DTO
-     * @throws BusinessException 当模板不存在时抛出
+     * @throws I18nBusinessException 当模板不存在时抛出
      */
     @Override
     public ReportTemplateDTO getById(Long id) {
@@ -120,7 +120,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
      * @param code 模板编码
      * @param engineType 引擎类型
      * @return 模板 DTO
-     * @throws BusinessException 当模板不存在时抛出
+     * @throws I18nBusinessException 当模板不存在时抛出
      */
     @Override
     public ReportTemplateDTO getByCode(String code, String engineType) {
@@ -190,7 +190,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
      *
      * @param id 模板 ID
      * @param content 模板内容
-     * @throws BusinessException 当模板不存在时抛出
+     * @throws I18nBusinessException 当模板不存在时抛出
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -234,7 +234,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
      *
      * @param id 模板 ID
      * @return 文件路径
-     * @throws BusinessException 当模板不存在或导出失败时抛出
+     * @throws I18nBusinessException 当模板不存在或导出失败时抛出
      */
     @Override
     public String exportTemplate(Long id) {

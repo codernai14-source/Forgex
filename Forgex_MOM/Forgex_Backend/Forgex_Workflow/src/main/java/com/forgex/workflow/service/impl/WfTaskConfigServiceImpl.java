@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.common.util.CurrentUserUtils;
@@ -109,7 +108,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 任务配置摘要分页结果
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskConfigSummaryDTO
      * @see WfTaskConfigQueryParam
      */
@@ -160,7 +159,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 任务配置 DTO 列表
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskConfigDTO
      * @see WfTaskConfigQueryParam
      */
@@ -195,7 +194,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param id 任务配置 ID
      * @return 任务配置 DTO
-     * @throws BusinessException 当任务配置不存在时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在时抛出业务异常
      * @see WfTaskConfigDTO
      */
     @Override
@@ -211,7 +210,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param taskCode 任务编码
      * @return 任务配置 DTO，如果不存在返回 null
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskConfigDTO
      */
     @Override
@@ -228,7 +227,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param param 任务配置保存参数
      * @return 草稿 ID
-     * @throws BusinessException 当保存参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当保存参数不合法时抛出业务异常
      * @see WfTaskConfigSaveParam
      */
     @Override
@@ -245,7 +244,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param param 任务配置保存参数
      * @return 更新结果，成功返回 true
-     * @throws BusinessException 当任务配置不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在或参数不合法时抛出业务异常
      * @see WfTaskConfigSaveParam
      */
     @Override
@@ -264,7 +263,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param id 任务配置 ID
      * @return 删除结果，成功返回 true
-     * @throws BusinessException 当任务配置不存在时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在时抛出业务异常
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -300,7 +299,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      * @param id 任务配置 ID
      * @param status 新状态：0-禁用，1-启用
      * @return 更新结果，成功返回 true
-     * @throws BusinessException 当任务配置不存在或不是草稿状态时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在或不是草稿状态时抛出业务异常
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -319,7 +318,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param param 草稿编辑器查询参数
      * @return 草稿编辑器 DTO
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskDraftEditorDTO
      * @see WfTaskDraftEditorQueryParam
      */
@@ -340,7 +339,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
      *
      * @param param 任务配置保存参数
      * @return 草稿编辑器 DTO，包含草稿 ID 等完整信息
-     * @throws BusinessException 当保存参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当保存参数不合法时抛出业务异常
      * @see WfTaskDraftEditorDTO
      * @see WfTaskConfigSaveParam
      */
@@ -1189,7 +1188,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                 result.add(field);
             }
             return result;
-        } catch (BusinessException ex) {
+        } catch (I18nBusinessException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_LOW_CODE_FORM_INVALID_JSON);

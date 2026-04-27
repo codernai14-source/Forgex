@@ -20,7 +20,6 @@ import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.service.UserInfoService;
-import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.common.util.CurrentUserUtils;
@@ -168,7 +167,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
      *
      * @param param 发起审批参数，包含任务编码、表单内容、选择的审批人等
      * @return 执行记录 ID
-     * @throws BusinessException 当任务配置不存在、已禁用或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在、已禁用或参数不合法时抛出业务异常
      * @see WfExecutionStartParam
      * @see WfTaskExecution
      */
@@ -247,7 +246,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
      *
      * @param param 审批参数，包含执行 ID、审批实例 ID、审批意见等
      * @return 审批结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
      * @see WfExecutionApproveParam
      * @see WfTaskApprovalInstance
      */
@@ -339,7 +338,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
      *
      * @param param 审批参数，包含执行 ID、审批实例 ID、驳回类型、驳回意见等
      * @return 审批结果，成功返回 true
-     * @throws BusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当执行记录不存在、用户无权限或参数不合法时抛出业务异常
      * @see WfExecutionApproveParam
      * @see WfTaskApprovalInstance
      */

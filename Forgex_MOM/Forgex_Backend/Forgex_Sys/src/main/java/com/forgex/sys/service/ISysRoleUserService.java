@@ -43,7 +43,7 @@ public interface ISysRoleUserService extends IService<SysUserRole> {
      *
      * @param query 查询参数，包含角色 ID、租户 ID、授权类型、搜索关键字等
      * @return 已授权列表分页结果
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败或角色不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败或角色不存在时抛出
      * @see RoleGrantQueryDTO
      * @see RoleGrantVO
      */
@@ -57,7 +57,7 @@ public interface ISysRoleUserService extends IService<SysUserRole> {
      * </p>
      *
      * @param grantDTO 授权参数，包含角色 ID、租户 ID、授权类型、授权对象 ID 列表等
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败、角色不存在或授权对象不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败、角色不存在或授权对象不存在时抛出
      * @see RoleGrantDTO
      */
     void grantBatch(RoleGrantDTO grantDTO);
@@ -69,7 +69,7 @@ public interface ISysRoleUserService extends IService<SysUserRole> {
      * </p>
      *
      * @param revokeDTO 取消授权参数，包含角色 ID、租户 ID、授权类型、授权对象 ID 列表等
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败或角色不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败或角色不存在时抛出
      * @see RoleGrantDTO
      */
     void revokeBatch(RoleGrantDTO revokeDTO);

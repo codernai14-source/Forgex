@@ -38,7 +38,7 @@ public interface ISysUserRoleService {
      * @param userId   用户ID
      * @param tenantId 租户ID
      * @return 已分配角色ID列表（空列表表示未分配任何角色）
-     * @throws com.forgex.common.exception.BusinessException 参数非法或用户不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数非法或用户不存在时抛出
      */
     List<Long> listAssignedRoleIds(Long userId, Long tenantId);
 
@@ -49,7 +49,7 @@ public interface ISysUserRoleService {
      * @param userId   用户ID
      * @param tenantId 租户ID
      * @param roleIds  角色ID列表（为空则视为清空绑定）
-     * @throws com.forgex.common.exception.BusinessException 用户不存在、角色不存在或跨租户时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 用户不存在、角色不存在或跨租户时抛出
      */
     void saveUserRoles(Long userId, Long tenantId, List<Long> roleIds);
 }

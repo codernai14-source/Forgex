@@ -107,7 +107,7 @@ public class SysMenuController {
      *
      * @param body 请求体，包含 account 参数
      * @return {@link R} 包含用户路由信息的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败时抛出
      * @see com.forgex.sys.domain.vo.UserRoutesVO
      * @see com.forgex.sys.service.ISysMenuService#getUserRoutes(String, Long)
      * @see com.forgex.sys.validator.MenuValidator#validateRoutesParams(String, Long)
@@ -651,7 +651,7 @@ public class SysMenuController {
      *
      * @param menuDTO 菜单 DTO 对象
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败时抛出
      * @see com.forgex.sys.domain.dto.SysMenuDTO
      * @see com.forgex.sys.service.ISysMenuService#addMenu(SysMenuDTO)
      * @see com.forgex.sys.validator.MenuValidator#validateForAdd(SysMenuDTO)
@@ -717,7 +717,7 @@ public class SysMenuController {
      *
      * @param menuDTO 菜单 DTO 对象
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败时抛出
      * @see com.forgex.sys.domain.dto.SysMenuDTO
      * @see com.forgex.sys.service.ISysMenuService#updateMenu(SysMenuDTO)
      * @see com.forgex.sys.validator.MenuValidator#validateForUpdate(SysMenuDTO)
@@ -778,7 +778,7 @@ public class SysMenuController {
      *
      * @param body 请求体，包含 id 参数
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当 ID 为空、菜单不存在、有子菜单或有角色关联时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当 ID 为空、菜单不存在、有子菜单或有角色关联时抛出
      * @see com.forgex.sys.service.ISysMenuService#deleteMenu(Long)
      * @see com.forgex.sys.validator.MenuValidator#validateForDelete(Long)
      */
@@ -842,7 +842,7 @@ public class SysMenuController {
      *
      * @param body 请求体，包含 ids 参数
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当 IDs 为空、任何一个菜单不存在、有子菜单或有角色关联时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当 IDs 为空、任何一个菜单不存在、有子菜单或有角色关联时抛出
      * @see com.forgex.sys.service.ISysMenuService#batchDeleteMenus(List)
      * @see com.forgex.sys.validator.MenuValidator#validateForDelete(Long)
      */
