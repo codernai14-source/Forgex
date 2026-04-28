@@ -45,7 +45,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 任务配置摘要分页结果
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskConfigSummaryDTO
      * @see WfTaskConfigQueryParam
      */
@@ -59,7 +59,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
      * @return 任务配置 DTO 列表
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskConfigDTO
      * @see WfTaskConfigQueryParam
      */
@@ -73,7 +73,7 @@ public interface IWfTaskConfigService {
      *
      * @param id 任务配置 ID
      * @return 任务配置 DTO
-     * @throws BusinessException 当任务配置不存在时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在时抛出业务异常
      * @see WfTaskConfigDTO
      */
     WfTaskConfigDTO getById(Long id);
@@ -86,7 +86,7 @@ public interface IWfTaskConfigService {
      *
      * @param taskCode 任务编码
      * @return 任务配置 DTO，如果不存在返回 null
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskConfigDTO
      */
     WfTaskConfigDTO getByCode(String taskCode);
@@ -99,7 +99,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 任务配置保存参数
      * @return 草稿 ID
-     * @throws BusinessException 当保存参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当保存参数不合法时抛出业务异常
      * @see WfTaskConfigSaveParam
      */
     Long create(WfTaskConfigSaveParam param);
@@ -112,7 +112,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 任务配置保存参数
      * @return 更新结果，成功返回 true
-     * @throws BusinessException 当任务配置不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在或参数不合法时抛出业务异常
      * @see WfTaskConfigSaveParam
      */
     Boolean update(WfTaskConfigSaveParam param);
@@ -125,7 +125,7 @@ public interface IWfTaskConfigService {
      *
      * @param id 任务配置 ID
      * @return 删除结果，成功返回 true
-     * @throws BusinessException 当任务配置不存在时无抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在时无抛出业务异常
      */
     Boolean delete(Long id);
 
@@ -138,7 +138,7 @@ public interface IWfTaskConfigService {
      * @param id 任务配置 ID
      * @param status 新状态：0-禁用，1-启用
      * @return 更新结果，成功返回 true
-     * @throws BusinessException 当任务配置不存在或不是草稿状态时抛出业务异常
+     * @throws I18nBusinessException 当任务配置不存在或不是草稿状态时抛出业务异常
      */
     Boolean updateStatus(Long id, Integer status);
 
@@ -150,7 +150,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 草稿编辑器查询参数
      * @return 草稿编辑器 DTO
-     * @throws BusinessException 当查询参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当查询参数不合法时抛出业务异常
      * @see WfTaskDraftEditorDTO
      * @see WfTaskDraftEditorQueryParam
      */
@@ -164,7 +164,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 任务配置保存参数
      * @return 草稿编辑器 DTO，包含草稿 ID 等完整信息
-     * @throws BusinessException 当保存参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当保存参数不合法时抛出业务异常
      * @see WfTaskDraftEditorDTO
      * @see WfTaskConfigSaveParam
      */
@@ -178,7 +178,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 草稿编辑器查询参数
      * @return 流程图 DTO
-     * @throws BusinessException 当草稿不存在时抛出业务异常
+     * @throws I18nBusinessException 当草稿不存在时抛出业务异常
      * @see WfTaskGraphDTO
      * @see WfTaskDraftEditorQueryParam
      */
@@ -192,7 +192,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 流程图保存参数，包含节点和边的完整配置
      * @return 保存结果，成功返回 true
-     * @throws BusinessException 当草稿不存在或参数不合法时抛出业务异常
+     * @throws I18nBusinessException 当草稿不存在或参数不合法时抛出业务异常
      * @see WfTaskGraphSaveParam
      */
     Boolean saveDraftGraph(WfTaskGraphSaveParam param);
@@ -205,7 +205,7 @@ public interface IWfTaskConfigService {
      *
      * @param param 草稿编辑器查询参数
      * @return 发布结果，成功返回 true
-     * @throws BusinessException 当草稿不存在或发布失败时抛出业务异常
+     * @throws I18nBusinessException 当草稿不存在或发布失败时抛出业务异常
      * @see WfTaskDraftEditorQueryParam
      */
     Boolean publishDraft(WfTaskDraftEditorQueryParam param);

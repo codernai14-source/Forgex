@@ -128,7 +128,7 @@ public class ThirdAuthorizationController {
      *
      * @param dto 授权信息，包含授权方式、Token 配置、IP 白名单等
      * @return 创建结果
-     * @throws com.forgex.common.exception.BusinessException 当第三方系统已存在授权配置时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当第三方系统已存在授权配置时抛出
      * @see ThirdAuthorizationDTO
      * @see com.forgex.integration.service.IThirdAuthorizationService#createThirdAuthorization
      * @see com.forgex.common.web.R
@@ -150,7 +150,7 @@ public class ThirdAuthorizationController {
      *
      * @param dto 授权信息，ID 必须存在
      * @return 更新结果
-     * @throws com.forgex.common.exception.BusinessException 当授权不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当授权不存在时抛出
      * @see ThirdAuthorizationDTO
      * @see com.forgex.integration.service.IThirdAuthorizationService#updateThirdAuthorization
      * @see com.forgex.common.web.R
@@ -172,7 +172,7 @@ public class ThirdAuthorizationController {
      *
      * @param id 授权 ID（必填）
      * @return 删除结果
-     * @throws com.forgex.common.exception.BusinessException 当授权不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当授权不存在时抛出
      * @see com.forgex.integration.service.IThirdAuthorizationService#deleteThirdAuthorization
      * @see com.forgex.common.web.R
      */
@@ -193,7 +193,7 @@ public class ThirdAuthorizationController {
      *
      * @param ids 授权 ID 列表（不能为空）
      * @return 删除结果
-     * @throws com.forgex.common.exception.BusinessException 当批量删除失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当批量删除失败时抛出
      * @see com.forgex.integration.service.IThirdAuthorizationService#batchDeleteThirdAuthorizations
      * @see com.forgex.common.web.R
      */
@@ -215,7 +215,7 @@ public class ThirdAuthorizationController {
      * @param thirdSystemId 第三方系统 ID（必填）
      * @param expireHours Token 有效期（小时，可选），null 表示永不过期
      * @return 生成的 Token 值
-     * @throws com.forgex.common.exception.BusinessException 当第三方系统不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当第三方系统不存在时抛出
      * @see com.forgex.integration.service.IThirdAuthorizationService#generateToken
      * @see com.forgex.common.web.R
      */
@@ -291,7 +291,7 @@ public class ThirdAuthorizationController {
      * @param tokenValue Token 值（必填）
      * @param expireHours 新的有效期（小时，必填）
      * @return 刷新结果
-     * @throws com.forgex.common.exception.BusinessException 当 Token 不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当 Token 不存在时抛出
      * @see com.forgex.integration.service.IThirdAuthorizationService#refreshTokenExpire
      * @see com.forgex.common.web.R
      */

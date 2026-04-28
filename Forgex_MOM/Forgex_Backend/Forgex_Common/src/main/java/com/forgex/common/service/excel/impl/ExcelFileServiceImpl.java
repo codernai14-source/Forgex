@@ -2,13 +2,15 @@ package com.forgex.common.service.excel.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.exception.BusinessException;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigItemDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigItemDTO;
+import com.forgex.common.enums.ExcelPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.LangContext;
 import com.forgex.common.service.excel.ExcelFileService;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -89,7 +91,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
     @Override
     public byte[] buildImportTemplateXlsxOrThrow(FxExcelImportConfigDTO config) {
         if (config == null || config.getItems() == null || config.getItems().isEmpty()) {
-            throw new BusinessException("导入模板配置不存在或未配置导入字段");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_CONFIG_MISSING);
         }
 
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -152,7 +154,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             wb.write(bos);
             return bos.toByteArray();
         } catch (Exception e) {
-            throw new BusinessException("生成导入模板失败: " + e.getMessage());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_BUILD_FAILED, e.getMessage());
         }
     }
 

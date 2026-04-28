@@ -26,7 +26,7 @@
           </div>
         </div>
       </div>
-      <!-- 绠＄悊妯″紡锛氭樉绀烘爣棰樺拰鎻忚堪 -->
+      <!-- 管理模式：显示标题和描述 -->
       <div v-else>
         <p class="designer-hero__eyebrow">{{ $t('personalHomepage.hero.eyebrow') }}</p>
         <h2 class="designer-hero__title">{{ resolvedTitle }}</h2>
@@ -440,7 +440,7 @@ let clockTimer: number | undefined
 const MAX_COMMON_MENU_COUNT = 6
 
 /**
- * 瑙ｆ瀽鐢ㄦ埛澶村儚鍦板潃锛屼笌 {@link MainLayout} 涓《閮ㄥご鍍忚鍒欎繚鎸佷竴鑷淬€?
+ * 解析用户头像地址，与 {@link MainLayout} 涓《閮ㄥご鍍忚鍒欎繚鎸佷竴鑷淬€?
  * <p>鐩稿璺緞浼氳ˉ鍏ㄤ负缃戝叧 `/api` 鍓嶇紑锛屼究浜?a-avatar 鐩存帴鍔犺浇銆?/p>
  *
  * @param raw 鍚庣鎴?Store 涓殑鍘熷璺緞

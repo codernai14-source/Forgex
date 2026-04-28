@@ -106,7 +106,7 @@ public class ApiConfigController {
      *
      * @param dto 接口配置信息，包含接口编码、名称、请求方式等
      * @return 创建结果
-     * @throws com.forgex.common.exception.BusinessException 当接口编码已存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当接口编码已存在时抛出
      * @see ApiConfigDTO
      * @see com.forgex.integration.service.IApiConfigService#createApiConfig
      * @see com.forgex.common.web.R
@@ -127,7 +127,7 @@ public class ApiConfigController {
      *
      * @param dto 接口配置信息，ID 必须存在
      * @return 更新结果
-     * @throws com.forgex.common.exception.BusinessException 当接口配置不存在或与其他记录冲突时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当接口配置不存在或与其他记录冲突时抛出
      * @see ApiConfigDTO
      * @see com.forgex.integration.service.IApiConfigService#updateApiConfig
      * @see com.forgex.common.web.R
@@ -148,7 +148,7 @@ public class ApiConfigController {
      *
      * @param id 配置 ID（必填）
      * @return 删除结果
-     * @throws com.forgex.common.exception.BusinessException 当接口配置不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当接口配置不存在时抛出
      * @see com.forgex.integration.service.IApiConfigService#deleteApiConfig
      * @see com.forgex.common.web.R
      */
@@ -169,7 +169,7 @@ public class ApiConfigController {
      *
      * @param ids 配置 ID 列表（不能为空）
      * @return 删除结果
-     * @throws com.forgex.common.exception.BusinessException 当批量删除失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当批量删除失败时抛出
      * @see com.forgex.integration.service.IApiConfigService#batchDeleteApiConfigs
      * @see com.forgex.common.web.R
      */
@@ -190,7 +190,7 @@ public class ApiConfigController {
      *
      * @param id 配置 ID（必填）
      * @return 启用结果
-     * @throws com.forgex.common.exception.BusinessException 当接口配置不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当接口配置不存在时抛出
      * @see com.forgex.common.constant.SystemConstants#STATUS_NORMAL
      * @see com.forgex.integration.service.IApiConfigService#enableApiConfig
      * @see com.forgex.common.web.R
@@ -212,7 +212,7 @@ public class ApiConfigController {
      *
      * @param id 配置 ID（必填）
      * @return 停用结果
-     * @throws com.forgex.common.exception.BusinessException 当接口配置不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当接口配置不存在时抛出
      * @see com.forgex.common.constant.SystemConstants#STATUS_DISABLED
      * @see com.forgex.integration.service.IApiConfigService#disableApiConfig
      * @see com.forgex.common.web.R

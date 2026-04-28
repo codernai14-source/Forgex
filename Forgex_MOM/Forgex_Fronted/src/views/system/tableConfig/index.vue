@@ -5,7 +5,6 @@
       table-code="TableConfigTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       :row-selection="{
         selectedRowKeys,
@@ -95,7 +94,6 @@ import {
   getTableConfigList,
   pullPublicTableConfig,
   toggleTableConfigStatus,
-  type FxTableConfig,
   type TableConfigItem,
 } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
@@ -118,32 +116,6 @@ const dictOptions = computed(() => ({
     { label: t('system.tableConfig.tableTypeLazy'), value: 'LAZY' },
     { label: t('system.tableConfig.tableTypeTree'), value: 'TREE' },
   ],
-}))
-
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'TableConfigTable',
-  tableName: t('system.tableConfig.tableName'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'tableCode', title: t('system.tableConfig.tableCode'), width: 180, align: 'left', queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'tableNameI18nJson', title: t('system.tableConfig.tableName'), width: 220, align: 'left', ellipsis: true, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'tableType', title: t('system.tableConfig.tableType'), width: 120, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq', dictCode: 'tableType' },
-    { field: 'rowKey', title: t('system.tableConfig.rowKey'), width: 120, align: 'left' },
-    { field: 'defaultPageSize', title: t('system.tableConfig.defaultPageSize'), width: 120, align: 'center' },
-    { field: 'enabled', title: t('system.tableConfig.enabled'), width: 110, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
-    { field: 'createBy', title: t('system.user.createBy'), width: 120, align: 'left' },
-    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 150, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'tableCode', label: t('system.tableConfig.tableCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'tableName', label: t('system.tableConfig.tableName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'tableType', label: t('system.tableConfig.tableType'), queryType: 'select', queryOperator: 'eq', dictCode: 'tableType' },
-    { field: 'enabled', label: t('system.tableConfig.enabled'), queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
-  ],
-  version: 1,
 }))
 
 const rowKey = (record: TableConfigItem) => record.id ?? record.tableCode

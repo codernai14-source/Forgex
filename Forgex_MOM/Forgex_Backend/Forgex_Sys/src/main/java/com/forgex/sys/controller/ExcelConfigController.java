@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.excel.ExcelConfigService;
@@ -230,7 +230,9 @@ public class ExcelConfigController {
             response.setStatus(200);
             response.setContentType("application/json;charset=UTF-8");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            String message = ex instanceof BusinessException ? ex.getMessage() : "生成导入模板失败";
+            String message = ex instanceof I18nBusinessException i18nEx
+                    ? i18nEx.getMsg().getDefaultTemplate()
+                    : "生成导入模板失败";
             String body = "{\"code\":500,\"message\":\"" + escapeJson(message) + "\",\"data\":null}";
             response.getWriter().write(body);
             response.flushBuffer();

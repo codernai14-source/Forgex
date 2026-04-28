@@ -9,7 +9,9 @@ import com.forgex.basic.label.service.LabelBindingService;
 import com.forgex.basic.label.service.LabelPrintService;
 import com.forgex.basic.label.domain.param.LabelPrintExecuteParam;
 import com.forgex.basic.label.utils.PlaceholderExtractor;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -131,7 +133,7 @@ public class LabelPrintServiceImpl implements LabelPrintService {
 
         // 2. 校验打印张数（预览最多 10 张）
         if (param.getPrintCount() > 10) {
-            throw new BusinessException("预览最多支持 10 张");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_PREVIEW_LIMIT_EXCEEDED);
         }
 
         // 3. 【使用 DataAssemblyHandler】组装打印数据
@@ -202,7 +204,7 @@ public class LabelPrintServiceImpl implements LabelPrintService {
             // 直接查询指定模板
             template = labelTemplateMapper.selectById(param.getTemplateId());
             if (template == null || !template.getTenantId().equals(tenantId)) {
-                throw new BusinessException("模板不存在");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_NOT_FOUND);
             }
         } else {
             // 【使用 LabelBindingService】智能匹配模板
@@ -217,13 +219,13 @@ public class LabelPrintServiceImpl implements LabelPrintService {
 
             template = labelTemplateMapper.selectById(templateId);
             if (template == null) {
-                throw new BusinessException("未找到可用模板");
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_AVAILABLE_NOT_FOUND);
             }
         }
 
         // 校验模板状态
         if (template.getStatus() != 1) {
-            throw new BusinessException("模板已禁用，无法打印");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_TEMPLATE_DISABLED);
         }
 
         return template;
@@ -236,10 +238,10 @@ public class LabelPrintServiceImpl implements LabelPrintService {
      */
     private void validatePrintCount(Integer printCount) {
         if (printCount == null || printCount <= 0) {
-            throw new BusinessException("打印张数必须大于 0");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_PRINT_COUNT_REQUIRED);
         }
         if (printCount > 1000) {
-            throw new BusinessException("单次打印不能超过 1000 张");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_PRINT_COUNT_LIMIT_EXCEEDED);
         }
     }
 
@@ -263,7 +265,7 @@ public class LabelPrintServiceImpl implements LabelPrintService {
         );
 
         if (!missingFields.isEmpty()) {
-            throw new BusinessException("数据不完整，缺少字段: " + missingFields);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.LABEL_PRINT_DATA_INCOMPLETE, missingFields);
         }
 
         log.debug("数据完整性校验通过，共 {} 个占位符", placeholders.size());

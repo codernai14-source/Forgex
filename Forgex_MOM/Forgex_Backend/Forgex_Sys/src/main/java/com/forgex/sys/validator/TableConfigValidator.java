@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.validator;
 
-import com.forgex.common.exception.BusinessException;
 import com.forgex.sys.domain.param.TableConfigBatchDeleteParam;
 import com.forgex.sys.domain.param.TableConfigGetParam;
 import com.forgex.sys.domain.param.UserColumnConfigParam;
@@ -45,7 +44,7 @@ public class TableConfigValidator {
      * 校验表格配置 ID 合法性
      * 
      * @param param 查询参数
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateId(TableConfigGetParam param) {
         Assert.notNull(param, "查询参数不能为空");
@@ -56,7 +55,7 @@ public class TableConfigValidator {
      * 校验表格配置 ID 合法性（简化版）
      * 
      * @param id 表格配置 ID
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateId(Long id) {
         Assert.notNull(id, "表格配置 ID 不能为空");
@@ -66,7 +65,7 @@ public class TableConfigValidator {
      * 校验批量删除的 ID 列表
      * 
      * @param param 批量删除参数
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateBatchIds(TableConfigBatchDeleteParam param) {
         Assert.notNull(param, "批量删除参数不能为空");
@@ -77,7 +76,7 @@ public class TableConfigValidator {
      * 校验创建表格配置参数
      * 
      * @param vo 表格配置详情 VO
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateForCreate(TableConfigDetailVO vo) {
         Assert.notNull(vo, "表格配置参数不能为空");
@@ -89,7 +88,7 @@ public class TableConfigValidator {
      * 校验更新表格配置参数
      * 
      * @param vo 表格配置详情 VO
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateForUpdate(TableConfigDetailVO vo) {
         Assert.notNull(vo, "表格配置参数不能为空");
@@ -100,7 +99,7 @@ public class TableConfigValidator {
      * 校验用户列配置参数
      * 
      * @param param 用户列配置参数
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateUserColumnConfig(UserColumnConfigParam param) {
         Assert.notNull(param, "用户列配置参数不能为空");
@@ -112,7 +111,7 @@ public class TableConfigValidator {
      * 校验表格编码参数
      * 
      * @param tableCode 表格编码
-     * @throws BusinessException 参数校验失败时抛出
+     * @throws IllegalArgumentException 参数校验失败时抛出
      */
     public void validateTableCode(String tableCode) {
         Assert.isTrue(StringUtils.hasText(tableCode), "表格编码不能为空");

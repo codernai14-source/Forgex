@@ -46,6 +46,10 @@ public final class TenantIgnoreRegistry {
         // 表格配置表为全局共享配置，不参与租户隔离
         IGNORE_TABLES.add("fx_table_config");
         IGNORE_TABLES.add("fx_table_column_config");
+        IGNORE_TABLES.add("basic_supplier");
+        IGNORE_TABLES.add("basic_supplier_detail");
+        IGNORE_TABLES.add("basic_supplier_contact");
+        IGNORE_TABLES.add("basic_supplier_qualification");
     }
 
     /**
@@ -110,5 +114,9 @@ public final class TenantIgnoreRegistry {
         // 表格配置表为全局共享配置，不参与租户隔离
         IGNORE_TABLES.add("fx_table_config");
         IGNORE_TABLES.add("fx_table_column_config");
+        IGNORE_TABLES.add("basic_supplier");
+        IGNORE_TABLES.add("basic_supplier_detail");
+        IGNORE_TABLES.add("basic_supplier_contact");
+        IGNORE_TABLES.add("basic_supplier_qualification");
     }
 }

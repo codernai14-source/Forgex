@@ -104,7 +104,7 @@ public class AuthController {
      *         - code: 状态码（200=成功）
      *         - data: 租户列表（List&lt;TenantVO&gt;）
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 验证码错误或账号密码错误时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 验证码错误或账号密码错误时抛出
      * @see AuthService#login(LoginParam)
      * @see TenantVO
      */
@@ -134,7 +134,7 @@ public class AuthController {
      *         - code: 状态码（200=成功）
      *         - data: 用户详细信息（SysUserDTO）
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 租户不存在或无权访问时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 租户不存在或无权访问时抛出
      * @see AuthService#chooseTenant(TenantChoiceParam)
      * @see com.forgex.auth.domain.dto.SysUserDTO
      */
@@ -152,7 +152,7 @@ public class AuthController {
      *
      * @param param 选择租户参数
      * @return {@link R} 包含用户 DTO 的操作结果
-     * @throws com.forgex.common.exception.BusinessException 租户不存在或无权访问时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 租户不存在或无权访问时抛出
      * @see #chooseTenant(TenantChoiceParam)
      */
     @PostMapping("/choose-tenant")
@@ -184,7 +184,7 @@ public class AuthController {
      *         - code: 状态码（200=成功）
      *         - data: true=成功，false=失败
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 参数校验失败时抛出
      */
     @PostMapping("/tenant/preferences")
     public R<Boolean> updateTenantPreferences(@RequestBody Map<String, Object> body) {
@@ -256,7 +256,7 @@ public class AuthController {
      *         - code: 状态码（200=成功）
      *         - data: true=成功，false=失败
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 用户不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 用户不存在时抛出
      * @see AuthService#resetPasswordById(Long)
      */
     @PostMapping("/reset-password")
@@ -343,7 +343,7 @@ public class AuthController {
      *         - code: 状态码（200=成功）
      *         - data: 一次性令牌字符串
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 轨迹校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 轨迹校验失败时抛出
      * @see CaptchaService#validateSlider(String, Object)
      */
     @PostMapping("/captcha/slider/validate")
@@ -408,7 +408,7 @@ public class AuthController {
      *         - code: 状态码（200=成功）
      *         - data: true=成功，false=失败
      *         - message: 提示信息
-     * @throws com.forgex.common.exception.BusinessException 语言编码不支持时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 语言编码不支持时抛出
      */
     @PostMapping("/changeLanguage")
     public R<Boolean> changeLanguage(@RequestBody ChangeLanguageParam param) {

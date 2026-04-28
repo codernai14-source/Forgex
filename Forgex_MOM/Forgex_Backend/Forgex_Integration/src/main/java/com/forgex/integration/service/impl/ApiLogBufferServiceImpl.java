@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * 璋冪敤鏃ュ織鎵归噺缂撳啿鏈嶅姟
+ * 调用日志批量缓冲服务
  */
 @Slf4j
 @Service

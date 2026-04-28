@@ -6,6 +6,8 @@
 export default {
   // Basic Operations
   ok: 'OK',
+  yes: 'Yes',
+  no: 'No',
   cancel: 'Cancel',
   save: 'Save',
   delete: 'Delete',

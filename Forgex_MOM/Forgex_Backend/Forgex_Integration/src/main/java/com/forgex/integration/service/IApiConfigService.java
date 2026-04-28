@@ -54,7 +54,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      *
      * @param id 配置 ID
      * @return 接口配置详情
-     * @throws BusinessException 当配置不存在时抛出异常
+     * @throws I18nBusinessException 当配置不存在时抛出异常
      * @see ApiConfigDTO
      */
     ApiConfigDTO getApiConfigById(Long id);
@@ -90,7 +90,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * </p>
      *
      * @param dto 接口配置信息
-     * @throws BusinessException 当接口编码已存在时抛出异常
+     * @throws I18nBusinessException 当接口编码已存在时抛出异常
      * @see ApiConfigDTO
      */
     ApiConfigDTO createApiConfig(ApiConfigDTO dto);
@@ -102,7 +102,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * </p>
      *
      * @param dto 接口配置信息
-     * @throws BusinessException 当配置不存在或接口编码已存在时抛出异常
+     * @throws I18nBusinessException 当配置不存在或接口编码已存在时抛出异常
      * @see ApiConfigDTO
      */
     ApiConfigDTO updateApiConfig(ApiConfigDTO dto);
@@ -114,7 +114,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * </p>
      *
      * @param id 配置 ID
-     * @throws BusinessException 当配置不存在时抛出异常
+     * @throws I18nBusinessException 当配置不存在时抛出异常
      */
     void deleteApiConfig(Long id);
 
@@ -125,7 +125,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * </p>
      *
      * @param ids 配置 ID 列表
-     * @throws BusinessException 当 ID 列表为空时抛出异常
+     * @throws I18nBusinessException 当 ID 列表为空时抛出异常
      */
     void batchDeleteApiConfigs(List<Long> ids);
 
@@ -136,7 +136,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * </p>
      *
      * @param id 配置 ID
-     * @throws BusinessException 当配置不存在时抛出异常
+     * @throws I18nBusinessException 当配置不存在时抛出异常
      * @see com.forgex.common.constant.SystemConstants#STATUS_NORMAL
      */
     void enableApiConfig(Long id);
@@ -148,7 +148,7 @@ public interface IApiConfigService extends IService<ApiConfig> {
      * </p>
      *
      * @param id 配置 ID
-     * @throws BusinessException 当配置不存在时抛出异常
+     * @throws I18nBusinessException 当配置不存在时抛出异常
      * @see com.forgex.common.constant.SystemConstants#STATUS_DISABLED
      */
     void disableApiConfig(Long id);

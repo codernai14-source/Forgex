@@ -37,7 +37,7 @@ public interface IApiCallLogService extends IService<ApiCallLog> {
     boolean asyncSaveLog(ApiCallLog log);
 
     /**
-     * 鎵归噺淇濆瓨璋冪敤鏃ュ織
+     * 批量保存调用日志
      */
     void batchSaveLogs(List<ApiCallLog> logs);
 

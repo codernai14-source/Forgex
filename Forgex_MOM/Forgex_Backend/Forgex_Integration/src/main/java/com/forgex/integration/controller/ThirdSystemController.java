@@ -107,7 +107,7 @@ public class ThirdSystemController {
      *
      * @param dto 系统信息，包含系统编码、名称、描述等
      * @return 创建结果
-     * @throws com.forgex.common.exception.BusinessException 当系统编码已存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当系统编码已存在时抛出
      * @see ThirdSystemDTO
      * @see com.forgex.integration.service.IThirdSystemService#createThirdSystem
      * @see com.forgex.common.web.R
@@ -129,7 +129,7 @@ public class ThirdSystemController {
      *
      * @param dto 系统信息，ID 必须存在
      * @return 更新结果
-     * @throws com.forgex.common.exception.BusinessException 当系统不存在或与其他记录冲突时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当系统不存在或与其他记录冲突时抛出
      * @see ThirdSystemDTO
      * @see com.forgex.integration.service.IThirdSystemService#updateThirdSystem
      * @see com.forgex.common.web.R
@@ -151,7 +151,7 @@ public class ThirdSystemController {
      *
      * @param id 系统 ID（必填）
      * @return 删除结果
-     * @throws com.forgex.common.exception.BusinessException 当系统不存在或存在关联授权时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当系统不存在或存在关联授权时抛出
      * @see com.forgex.integration.service.IThirdSystemService#deleteThirdSystem
      * @see com.forgex.common.web.R
      */
@@ -173,7 +173,7 @@ public class ThirdSystemController {
      *
      * @param ids 系统 ID 列表（不能为空）
      * @return 删除结果
-     * @throws com.forgex.common.exception.BusinessException 当批量删除失败或存在关联授权时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当批量删除失败或存在关联授权时抛出
      * @see com.forgex.integration.service.IThirdSystemService#batchDeleteThirdSystems
      * @see com.forgex.common.web.R
      */

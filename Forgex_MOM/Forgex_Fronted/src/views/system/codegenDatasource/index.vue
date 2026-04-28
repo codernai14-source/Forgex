@@ -16,7 +16,6 @@
       ref="tableRef"
       table-code="CodegenDatasourceTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       :show-column-setting="false"
     >
@@ -52,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
@@ -63,38 +62,11 @@ import {
   testCodegenDatasource,
   type CodegenDatasourceItem,
 } from '@/api/system/codegenDatasource'
-import type { FxTableConfig } from '@/api/system/tableConfig'
 
 const { t } = useI18n({ useScope: 'global' })
 const tableRef = ref()
 const dialogVisible = ref(false)
 const currentId = ref<number>()
-
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'CodegenDatasourceTable',
-  tableName: t('system.codegenDatasource.title'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'datasourceCode', title: t('system.codegenDatasource.datasourceCode'), width: 160, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'datasourceName', title: t('system.codegenDatasource.datasourceName'), width: 180, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'dbType', title: t('system.codegenDatasource.dbType'), width: 120, queryable: true, queryType: 'input', queryOperator: 'eq' },
-    { field: 'jdbcUrl', title: t('system.codegenDatasource.jdbcUrl'), width: 260, ellipsis: true },
-    { field: 'username', title: t('system.codegenDatasource.username'), width: 140 },
-    { field: 'schemaName', title: t('system.codegenDatasource.schemaName'), width: 140 },
-    { field: 'enabled', title: t('common.status'), width: 100, align: 'center' },
-    { field: 'remark', title: t('common.remark'), width: 180, ellipsis: true },
-    { field: 'updateTime', title: t('common.updateTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 180, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'datasourceCode', label: t('system.codegenDatasource.datasourceCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'datasourceName', label: t('system.codegenDatasource.datasourceName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'dbType', label: t('system.codegenDatasource.dbType'), queryType: 'input', queryOperator: 'eq' },
-  ],
-  version: 1,
-}))
 
 /**
  * 表格请求

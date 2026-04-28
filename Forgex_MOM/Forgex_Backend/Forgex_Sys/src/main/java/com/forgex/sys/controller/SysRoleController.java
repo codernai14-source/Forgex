@@ -167,7 +167,7 @@ public class SysRoleController {
      * <p>异常说明：</p>
      * <ul>
      *     <li>- IllegalArgumentException: ID 不合法时抛出</li>
-     *     <li>- BusinessException: 角色不存在时抛出</li>
+     *     <li>- I18nBusinessException: 角色不存在时抛出</li>
      * </ul>
      * 
      * @param body 请求体，包含角色 ID
@@ -216,7 +216,7 @@ public class SysRoleController {
      * <p>异常说明：</p>
      * <ul>
      *     <li>- ConstraintViolationException: 数据校验失败时抛出</li>
-     *     <li>- BusinessException: 角色编码已存在时抛出</li>
+     *     <li>- I18nBusinessException: 角色编码已存在时抛出</li>
      * </ul>
      * 
      * @param roleDTO 角色数据传输对象
@@ -271,7 +271,7 @@ public class SysRoleController {
      * <p>异常说明：</p>
      * <ul>
      *     <li>- ConstraintViolationException: 数据校验失败时抛出</li>
-     *     <li>- BusinessException: 角色不存在或角色编码已存在时抛出</li>
+     *     <li>- I18nBusinessException: 角色不存在或角色编码已存在时抛出</li>
      * </ul>
      * 
      * @param roleDTO 角色数据传输对象
@@ -321,7 +321,7 @@ public class SysRoleController {
      * <p>异常说明：</p>
      * <ul>
      *     <li>- IllegalArgumentException: ID 不合法时抛出</li>
-     *     <li>- BusinessException: 角色不存在或已被使用时抛出</li>
+     *     <li>- I18nBusinessException: 角色不存在或已被使用时抛出</li>
      * </ul>
      * 
      * @param body 请求体，包含角色 ID
@@ -373,7 +373,7 @@ public class SysRoleController {
      * <p>异常说明：</p>
      * <ul>
      *     <li>- IllegalArgumentException: ID 列表为空或包含非法 ID 时抛出</li>
-     *     <li>- BusinessException: 任一角色不存在或已被使用时抛出</li>
+     *     <li>- I18nBusinessException: 任一角色不存在或已被使用时抛出</li>
      * </ul>
      * 
      * @param body 请求体，包含角色 ID 列表

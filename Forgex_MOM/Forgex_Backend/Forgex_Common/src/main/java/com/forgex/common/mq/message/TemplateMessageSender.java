@@ -53,7 +53,7 @@ public interface TemplateMessageSender {
      *
      * @param request 消息请求参数，不能为空
      * @throws IllegalArgumentException 当 request 为空或 templateCode 为空时抛出
-     * @throws BusinessException 当 MQ 发送失败时抛出
+     * @throws I18nBusinessException 当 MQ 发送失败时抛出
      * @see TemplateMessageRequest
      */
     void sendToMq(TemplateMessageRequest request);
@@ -68,7 +68,7 @@ public interface TemplateMessageSender {
      * @param templateCode 模板编码，不能为空
      * @param dataMap 占位符数据，可为空
      * @throws IllegalArgumentException 当 templateCode 为空时抛出
-     * @throws BusinessException 当 MQ 发送失败时抛出
+     * @throws I18nBusinessException 当 MQ 发送失败时抛出
      */
     default void sendToMq(String templateCode, Map<String, Object> dataMap) {
         TemplateMessageRequest request = new TemplateMessageRequest();

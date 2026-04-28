@@ -14,6 +14,8 @@ limitations under the License.*/
 package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.api.dto.SysTenantCreateRequestDTO;
+import com.forgex.common.api.dto.SysTenantSimpleDTO;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -155,6 +157,53 @@ public class SysTenantController {
         }
 
         return R.ok(tenant);
+    }
+
+    /**
+     * 内部接口：创建租户。
+     *
+     * @param param 租户创建参数
+     * @return 租户 ID
+     */
+    @PostMapping("/internal/create")
+    public R<Long> internalCreate(@Validated @RequestBody SysTenantCreateRequestDTO param) {
+        SysTenantSaveParam saveParam = new SysTenantSaveParam();
+        saveParam.setTenantName(param.getTenantName());
+        saveParam.setTenantCode(param.getTenantCode());
+        saveParam.setDescription(param.getDescription());
+        saveParam.setLogo(param.getLogo());
+        saveParam.setTenantType(param.getTenantType());
+        saveParam.setStatus(param.getStatus());
+        return R.ok(tenantService.create(saveParam));
+    }
+
+    /**
+     * 内部接口：按租户编码查询租户。
+     *
+     * @param params 请求参数，包含 tenantCode
+     * @return 租户简要信息
+     */
+    @PostMapping("/internal/get-by-code")
+    public R<SysTenantSimpleDTO> internalGetByCode(@RequestBody Map<String, Object> params) {
+        Object value = params == null ? null : params.get("tenantCode");
+        if (value == null) {
+            return R.fail(CommonPrompt.PARAM_EMPTY);
+        }
+        SysTenantDTO tenant = tenantService.getByCode(String.valueOf(value));
+        if (tenant == null) {
+            return R.ok();
+        }
+        SysTenantSimpleDTO dto = new SysTenantSimpleDTO();
+        dto.setId(tenant.getId());
+        dto.setTenantName(tenant.getTenantName());
+        dto.setTenantCode(tenant.getTenantCode());
+        dto.setDescription(tenant.getDescription());
+        dto.setLogo(tenant.getLogo());
+        dto.setTenantType(tenant.getTenantType());
+        dto.setStatus(tenant.getStatus());
+        dto.setCreateTime(tenant.getCreateTime());
+        dto.setUpdateTime(tenant.getUpdateTime());
+        return R.ok(dto);
     }
     
     /**

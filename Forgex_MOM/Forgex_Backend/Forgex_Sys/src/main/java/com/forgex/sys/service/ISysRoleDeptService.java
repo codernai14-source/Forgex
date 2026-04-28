@@ -93,7 +93,7 @@ public interface ISysRoleDeptService extends IService<SysRoleDept> {
      *
      * @param grantDTO 授权参数，包含角色 ID、租户 ID、部门 ID 列表
      * @throws IllegalArgumentException 当必填字段缺失时抛出
-     * @throws BusinessException 当角色或部门不存在时抛出
+     * @throws I18nBusinessException 当角色或部门不存在时抛出
      * @see RoleGrantDTO
      */
     void grantDepartments(RoleGrantDTO grantDTO);
@@ -114,7 +114,7 @@ public interface ISysRoleDeptService extends IService<SysRoleDept> {
      *
      * @param revokeDTO 取消授权参数，包含角色 ID、租户 ID、部门 ID 列表
      * @throws IllegalArgumentException 当必填字段缺失时抛出
-     * @throws BusinessException 当角色或部门不存在时抛出
+     * @throws I18nBusinessException 当角色或部门不存在时抛出
      * @see RoleGrantDTO
      */
     void revokeDepartments(RoleGrantDTO revokeDTO);

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 /**
  * 审批任务配置 DTO。
  * <p>
- * 用于服务层与接口层之间传递审批任务配置数据。
+ * 用于服务层和接口层之间传递审批任务配置数据。
  * </p>
  *
  * @author coder_nai@163.com
@@ -56,6 +56,16 @@ public class WfTaskConfigDTO {
      * 审批任务解释器 Bean 名称。
      */
     private String interpreterBean;
+
+    /**
+     * 审批结束 HTTP 回调地址。
+     */
+    private String callbackUrl;
+
+    /**
+     * 审批结束回调 Bean 名称。
+     */
+    private String callbackBean;
 
     /**
      * 表单类型。

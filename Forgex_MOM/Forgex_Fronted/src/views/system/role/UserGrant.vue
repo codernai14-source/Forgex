@@ -1,5 +1,5 @@
 /**
- * 鐟欐帟澹婃禍鍝勬喅閹哄牊娼堟い鐢告桨
+ * 角色人员授权页面
  * 
  * 閸旂喕鍏橀敍?
  * 1. 閺€顖涘瘮閻劍鍩涢妴渚€鍎撮梻銊ｂ偓浣戒捍娴ｅ秳绗佺粔宥嗗房閺夊啰琚崹?
@@ -209,7 +209,7 @@ const filteredUsers = computed(() => {
 })
 
 /**
- * 婢跺嫮鎮婄悰銊︾壐閺佺増宓佺拠閿嬬湴
+ * 处理表格数据请求
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !roleId.value) {

@@ -57,6 +57,14 @@ public interface SysTenantService {
      * @return 租户详情
      */
     SysTenantDTO getById(Long id);
+
+    /**
+     * 根据租户编码获取租户详情。
+     *
+     * @param tenantCode 租户编码
+     * @return 租户详情，不存在时返回 null
+     */
+    SysTenantDTO getByCode(String tenantCode);
     
     /**
      * 新增租户
