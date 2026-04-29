@@ -48,7 +48,5 @@ public class Student {
 
     }
 //    定义一个成员方法showInfo()，用来打印学生的全部信息
-    public void showInfo(){
-        System.out.println("姓名"+name+"年龄"+age+"成绩"+score);
-    }
+
 }

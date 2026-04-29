@@ -13,8 +13,8 @@ public static void main(String[] args) {
     s2.setAge(18);
     s2.setName("Bob");
     s2.setScore(89);
-    s1.showInfo();
-    s2.showInfo();
+    StudentOperator operator = new StudentOperator(s1);
+    operator.showInfo();
     //在主方法中：
     //使用无参构造创建对象，再通过 setter 设置属性
     //使用全参构造直接创建带完整数据的对象
@@ -24,8 +24,6 @@ public static void main(String[] args) {
     s3.setName("emma");
     s3.setScore(70);
     Student s4 = new Student("lily", 78, 18);
-    s3.showInfo();
-    s4.showInfo();
     //在 main 方法中，创建一个长度为 3 的Student 类型对象数组
     //键盘录入 3 个学生的姓名、年龄、成绩，封装为 3 个学生对象存入数组
     Student[] student = new Student[3];
@@ -41,7 +39,9 @@ public static void main(String[] args) {
         student[i]=stu;
     }
     for (int i = 0; i < student.length; i++) {
-        student[i].showInfo();
+        operator.showInfo();
+
+
     }
 }
 }
