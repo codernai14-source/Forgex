@@ -9,6 +9,8 @@ import com.forgex.common.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
+
 /**
  * 物料扩展信息实体类
  * <p>
@@ -51,5 +53,53 @@ public class BasicMaterialExtend extends BaseEntity {
      */
     @TableField("extend_json")
     private String extendJson;
+
+    /**
+     * 最低库存
+     */
+    @TableField("min_stock")
+    private BigDecimal minStock;
+
+    /**
+     * 最高库存
+     */
+    @TableField("max_stock")
+    private BigDecimal maxStock;
+
+    /**
+     * 安全库存
+     */
+    @TableField("safety_stock")
+    private BigDecimal safetyStock;
+
+    /**
+     * 有效周期值
+     */
+    @TableField("valid_period_value")
+    private Integer validPeriodValue;
+
+    /**
+     * 有效周期单位（YEAR=年, MONTH=月, DAY=日, HOUR=时）
+     */
+    @TableField("valid_period_unit")
+    private String validPeriodUnit;
+
+    /**
+     * 呆滞周期值
+     */
+    @TableField("stagnant_period_value")
+    private Integer stagnantPeriodValue;
+
+    /**
+     * 呆滞周期单位（YEAR=年, MONTH=月, DAY=日, HOUR=时）
+     */
+    @TableField("stagnant_period_unit")
+    private String stagnantPeriodUnit;
+
+    /**
+     * 包装方式ID（关联包装方式管理表）
+     */
+    @TableField("packaging_type_id")
+    private Long packagingTypeId;
 
 }
