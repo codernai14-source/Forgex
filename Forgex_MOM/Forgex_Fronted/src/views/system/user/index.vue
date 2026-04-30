@@ -14,16 +14,17 @@
     >
       <template #toolbar>
         <a-space :size="8" wrap>
-          <a-button v-permission="'sys:user:add'" type="primary" @click="openAddDialog">
+          <a-button data-guide-id="sys-user-add" v-permission="'sys:user:add'" type="primary" @click="openAddDialog">
             {{ t('system.user.add') }}
           </a-button>
-          <a-button v-permission="'sys:user:syncThirdParty'" @click="handleSyncThirdParty">
+          <a-button data-guide-id="sys-user-sync-third-party" v-permission="'sys:user:syncThirdParty'" @click="handleSyncThirdParty">
             同步第三方
           </a-button>
-          <a-button v-permission="'sys:user:pullThirdParty'" @click="handlePullThirdParty">
+          <a-button data-guide-id="sys-user-pull-third-party" v-permission="'sys:user:pullThirdParty'" @click="handlePullThirdParty">
             从第三方拉取
           </a-button>
           <a-upload
+            data-guide-id="sys-user-import"
             v-permission="'sys:user:import'"
             :show-upload-list="false"
             :before-upload="handleImport"
@@ -31,10 +32,11 @@
           >
             <a-button>导入</a-button>
           </a-upload>
-          <a-button v-permission="'sys:user:downloadTemplate'" @click="handleDownloadTemplate">
+          <a-button data-guide-id="sys-user-download-template" v-permission="'sys:user:downloadTemplate'" @click="handleDownloadTemplate">
             下载模板
           </a-button>
           <a-button
+            data-guide-id="sys-user-batch-delete"
             v-permission="'sys:user:batchDelete'"
             danger
             :disabled="selectedRowKeys.length === 0"
@@ -42,7 +44,7 @@
           >
             {{ t('common.batchDelete') }}
           </a-button>
-          <a-button v-permission="'sys:user:export'" @click="handleExport">
+          <a-button data-guide-id="sys-user-export" v-permission="'sys:user:export'" @click="handleExport">
             {{ t('system.user.export') }}
           </a-button>
         </a-space>
@@ -86,26 +88,7 @@
 
       <template #action="{ record }">
         <div class="user-action-cell">
-          <a-space wrap size="small" class="user-action-space">
-            <a v-permission="'sys:user:edit'" @click="openEditDialog(record)">
-              {{ t('system.user.edit') }}
-            </a>
-            <a
-              v-permission="'sys:user:edit'"
-              @click="toggleUserStatus(record.id, !normalizeUserStatus(record.status))"
-            >
-              {{ normalizeUserStatus(record.status) ? t('system.user.statusInactive') : t('system.user.statusActive') }}
-            </a>
-            <a v-permission="'sys:user:resetPwd'" @click="confirmResetPassword(record.id)">
-              {{ t('system.user.resetPassword') }}
-            </a>
-            <a v-permission="'sys:user:assignRole'" @click="openAssignRoleDialog(record)">
-              {{ t('system.user.assignRole') }}
-            </a>
-            <a v-permission="'sys:user:delete'" style="color: #ff4d4f" @click="handleDelete(record.id)">
-              {{ t('system.user.delete') }}
-            </a>
-          </a-space>
+          <FxActionGroup :actions="getUserRowActions(record)" :max-inline="5" />
         </div>
       </template>
     </fx-dynamic-table>
@@ -133,6 +116,7 @@ import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import { UserOutlined } from '@ant-design/icons-vue'
 import { normalizeMediaUrl } from '@/utils/media'
+import FxActionGroup, { type ActionItem } from '@/components/common/FxActionGroup.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
@@ -175,7 +159,7 @@ const dictOptions = ref<Record<string, any[]>>({
 const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'UserTable',
   columns: [
-    { field: 'action', title: t('common.action'), width: 210, align: 'center', fixed: 'right' },
+    { field: 'action', title: t('common.action'), width: 260, align: 'center', fixed: 'right' },
   ],
 }))
 
@@ -271,6 +255,49 @@ function openAssignRoleDialog(record: any) {
   assignRoleUserName.value = record.username
   assignRoleUserAccount.value = record.account
   assignRoleDialogVisible.value = true
+}
+
+function getUserRowActions(record: any): ActionItem[] {
+  return [
+    {
+      key: 'edit',
+      label: t('system.user.edit'),
+      permission: 'sys:user:edit',
+      guideId: 'sys-user-row-edit',
+      onClick: () => openEditDialog(record),
+    },
+    {
+      key: 'status',
+      label: normalizeUserStatus(record.status)
+        ? t('system.user.statusInactive')
+        : t('system.user.statusActive'),
+      permission: 'sys:user:edit',
+      guideId: 'sys-user-row-status',
+      onClick: () => toggleUserStatus(record.id, !normalizeUserStatus(record.status)),
+    },
+    {
+      key: 'resetPwd',
+      label: t('system.user.resetPassword'),
+      permission: 'sys:user:resetPwd',
+      guideId: 'sys-user-row-reset-password',
+      onClick: () => confirmResetPassword(record.id),
+    },
+    {
+      key: 'assignRole',
+      label: t('system.user.assignRole'),
+      permission: 'sys:user:assignRole',
+      guideId: 'sys-user-row-assign-role',
+      onClick: () => openAssignRoleDialog(record),
+    },
+    {
+      key: 'delete',
+      label: t('system.user.delete'),
+      permission: 'sys:user:delete',
+      danger: true,
+      guideId: 'sys-user-row-delete',
+      onClick: () => handleDelete(record.id),
+    },
+  ]
 }
 
 function handleAssignRoleSuccess() {

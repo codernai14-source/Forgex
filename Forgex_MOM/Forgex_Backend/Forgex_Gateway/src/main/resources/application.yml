@@ -1,8 +1,11 @@
 spring:
   application:
     name: forgex-gateway
-  profiles:
-    active: ${FORGEX_PROFILE:dev}
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:redis.yml
+      - optional:nacos:sa-token.yml
   output:
     ansi:
       enabled: always
@@ -18,6 +21,19 @@ spring:
       max-in-memory-size: 209715200
       max-parts: 10
   cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
     gateway:
       server:
         webflux:
@@ -54,8 +70,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 5
-                    redis-rate-limiter.burstCapacity: 10
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_AUTH_RATE:300}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_AUTH_BURST:600}
             - id: api-sys
               uri: lb://forgex-sys
               predicates:
@@ -65,8 +81,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 20
-                    redis-rate-limiter.burstCapacity: 40
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_SYS_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_SYS_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-sys
@@ -80,8 +96,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 10
-                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_BASIC_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_BASIC_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-basic
@@ -95,8 +111,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 10
-                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_FILES_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_FILES_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-files
@@ -110,8 +126,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 10
-                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_WF_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_WF_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-wf
@@ -125,8 +141,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 20
-                    redis-rate-limiter.burstCapacity: 40
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_APP_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_APP_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-app
@@ -139,8 +155,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 10
-                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_INTEGRATION_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_INTEGRATION_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-integration
@@ -154,8 +170,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 10
-                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_REPORT_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_REPORT_BURST:3000}
                 - name: CircuitBreaker
                   args:
                     name: api-report
@@ -164,6 +180,12 @@ spring:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:
     web-application-type: reactive
+
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 10s
 
 logging:
   pattern:
@@ -176,7 +198,7 @@ server:
 
 forgex:
   deployment:
-    profile: ${FORGEX_PROFILE:dev}
+    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
     instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
     home: ${FORGEX_HOME:./forgex}
     license-dir: ${FORGEX_LICENSE_DIR:${FORGEX_HOME:./forgex}/license}
@@ -184,7 +206,7 @@ forgex:
     log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:./forgex}/logs}
     backup-dir: ${FORGEX_BACKUP_DIR:${FORGEX_HOME:./forgex}/backup}
     nacos-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
-    redis-addr: ${FORGEX_REDIS_ADDR:127.0.0.1:6379}
+    redis-addr: ${FORGEX_REDIS_ADDR:175.27.135.204:6379}
     mysql-url: ${FORGEX_MYSQL_URL:}
   license:
     enabled: ${FORGEX_LICENSE_ENABLED:true}

@@ -264,6 +264,7 @@ const EmptyView = {
 const modulePathMap: Record<string, string> = {
   'sys': 'system',
   'system': 'system',
+  'basic': 'basic',
   'approval': 'workflow',
   'integration': 'integrationPlatform',
   'label': 'label',
@@ -322,9 +323,19 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
     }
 
     const stableComponentMap: Record<string, string> = {
+      BasicDashboard: '../views/basic/dashboard/index.vue',
+      BasicCustomer: '../views/basic/customer/index.vue',
+      BasicSupplier: '../views/basic/supplier/index.vue',
+      BasicEncodeRule: '../views/basic/encodeRule/index.vue',
+      BasicMaterial: '../views/basic/material/index.vue',
+      BasicMaterialRaw: '../views/basic/material/index.vue',
+      BasicMaterialSemiFinished: '../views/basic/material/index.vue',
+      BasicMaterialFinished: '../views/basic/material/index.vue',
+      SystemDashboard: '../views/system/dashboard/index.vue',
       SystemRole: '../views/system/role/index.vue',
       SystemRoleMenuGrant: '../views/system/role/MenuGrant.vue',
       SystemRoleUserGrant: '../views/system/role/UserGrant.vue',
+      ApprovalDashboard: '../views/workflow/dashboard/index.vue',
     }
     if (normalizedName && stableComponentMap[normalizedName]) {
       const stablePath = stableComponentMap[normalizedName]

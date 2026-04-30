@@ -11,7 +11,7 @@
       row-key="id"
     >
       <template #toolbar>
-        <a-button type="primary" @click="handleAdd(null)">新增字典</a-button>
+        <a-button data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">新增字典</a-button>
       </template>
 
       <template #moduleId="{ record }">

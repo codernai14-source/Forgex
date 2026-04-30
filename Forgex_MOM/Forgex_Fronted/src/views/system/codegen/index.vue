@@ -9,7 +9,7 @@
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openAddDrawer">
+          <a-button data-guide-id="sys-codegen-add" type="primary" @click="openAddDrawer">
             {{ t('system.codegen.add') }}
           </a-button>
         </a-space>

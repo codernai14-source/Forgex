@@ -15,6 +15,7 @@
     >
       <template #toolbar>
         <a-button
+          data-guide-id="sys-excel-import-edit"
           type="primary"
           v-permission="'sys:excel:importConfig:edit'"
           @click="openEdit()"

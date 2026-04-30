@@ -21,7 +21,7 @@
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openAddDialog">
+          <a-button data-guide-id="sys-codegen-datasource-add" type="primary" @click="openAddDialog">
             {{ t('system.codegenDatasource.add') }}
           </a-button>
         </a-space>

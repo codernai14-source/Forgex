@@ -14,15 +14,16 @@
       }"
     >
       <template #toolbar>
-        <a-button type="primary" @click="handleAdd">{{ t('common.add') }}</a-button>
+        <a-button data-guide-id="sys-i18n-language-add" type="primary" @click="handleAdd">{{ t('common.add') }}</a-button>
         <a-upload
+          data-guide-id="sys-i18n-language-import"
           :show-upload-list="false"
           :before-upload="handleImport"
           accept=".xlsx,.xls"
         >
           <a-button>导入 Excel</a-button>
         </a-upload>
-        <a-button @click="downloadTemplate">{{ t('system.excel.downloadTemplate') }}</a-button>
+        <a-button data-guide-id="sys-i18n-language-template" @click="downloadTemplate">{{ t('system.excel.downloadTemplate') }}</a-button>
       </template>
 
       <template #enabled="{ record }">

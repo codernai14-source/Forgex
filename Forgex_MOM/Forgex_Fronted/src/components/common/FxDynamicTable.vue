@@ -6,6 +6,7 @@
       :key="`query-${configVersion}`"
       :bordered="false"
       class="fx-card fx-query-card"
+      data-guide-id="fx-table-query"
       :body-style="{ padding: '12px' }"
     >
       <a-form layout="inline" :model="queryModel" class="fx-query-form">
@@ -142,13 +143,15 @@
       <div
         v-if="hasToolbarSlot || showColumnSettingBar"
         class="fx-table-toolbar-row"
+        data-guide-id="fx-table-toolbar"
       >
-        <div v-if="hasToolbarSlot" class="fx-table-toolbar-left">
+        <div v-if="hasToolbarSlot" class="fx-table-toolbar-left" data-guide-id="fx-table-toolbar-left">
           <slot name="toolbar" />
         </div>
         <div
           v-if="showColumnSettingBar"
           class="fx-table-toolbar-right"
+          data-guide-id="fx-table-column-setting"
         >
           <ColumnSettingButton
             :table-code="tableCode"
@@ -159,7 +162,7 @@
       </div>
 
       <!-- 数据表格 -->
-      <div ref="tableContentRef" class="fx-table-content">
+      <div ref="tableContentRef" class="fx-table-content" data-guide-id="fx-table-content">
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
             :key="`table-${configVersion}`"
@@ -186,6 +189,7 @@
           v-if="resolvedPaginationConfig"
           ref="paginationRef"
           class="fx-table-pagination"
+          data-guide-id="fx-table-pagination"
           :style="paginationAreaStyle"
         >
           <a-pagination
@@ -339,6 +343,33 @@ const showColumnSettingBar = computed(
 const configVersion = ref(0)
 
 const ATag = resolveComponent('a-tag') as any
+
+/**
+ * 获取页面传入的本地表格配置。
+ */
+function getLocalConfig() {
+  return props.dynamicTableConfig || props.fallbackConfig
+}
+
+/**
+ * 将局部配置补齐为组件内部可使用的完整配置。
+ *
+ * @param source 页面传入的局部配置
+ * @returns 完整表格配置
+ */
+function buildLocalConfig(source?: Partial<FxTableConfig>): FxTableConfig {
+  return {
+    tableCode: source?.tableCode || props.tableCode,
+    tableName: source?.tableName || props.tableCode,
+    tableType: source?.tableType || 'NORMAL',
+    rowKey: source?.rowKey || 'id',
+    defaultPageSize: source?.defaultPageSize || 20,
+    defaultSortJson: source?.defaultSortJson,
+    columns: source?.columns ? [...source.columns] : [],
+    queryFields: source?.queryFields ? [...source.queryFields] : [],
+    version: source?.version || 1,
+  }
+}
 
 /**
  * 尝试将字典翻译 JSON 字符串解析并渲染为 Tag。
@@ -719,6 +750,7 @@ function normalizeSorter(sorter: any) {
  * @throws 不向外抛出；失败时使用 fallback 或空配置并打日志
  */
 async function loadConfig() {
+  const localConfig = getLocalConfig()
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
 
@@ -731,16 +763,11 @@ async function loadConfig() {
 
     configVersion.value++
   } catch (e) {
-    console.error('[FxDynamicTable] 获取表格配置失败:', e)
-    config.value = {
-      tableCode: props.tableCode,
-      tableName: props.tableCode,
-      tableType: 'NORMAL',
-      rowKey: 'id',
-      defaultPageSize: 20,
-      columns: [],
-      queryFields: [],
-      version: 1,
+    config.value = buildLocalConfig(localConfig)
+    if (!localConfig?.columns?.length) {
+      console.error('[FxDynamicTable] 获取表格配置失败:', e)
+    } else {
+      console.warn('[FxDynamicTable] 后端表格配置不可用，已使用本地配置:', props.tableCode)
     }
     configVersion.value++
   }

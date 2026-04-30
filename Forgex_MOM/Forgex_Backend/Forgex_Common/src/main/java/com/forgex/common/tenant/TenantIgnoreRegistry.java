@@ -50,6 +50,10 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("basic_supplier_detail");
         IGNORE_TABLES.add("basic_supplier_contact");
         IGNORE_TABLES.add("basic_supplier_qualification");
+        IGNORE_TABLES.add("basic_customer");
+        IGNORE_TABLES.add("basic_customer_contact");
+        IGNORE_TABLES.add("basic_customer_invoice");
+        IGNORE_TABLES.add("basic_customer_extra");
     }
 
     /**
@@ -118,5 +122,9 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("basic_supplier_detail");
         IGNORE_TABLES.add("basic_supplier_contact");
         IGNORE_TABLES.add("basic_supplier_qualification");
+        IGNORE_TABLES.add("basic_customer");
+        IGNORE_TABLES.add("basic_customer_contact");
+        IGNORE_TABLES.add("basic_customer_invoice");
+        IGNORE_TABLES.add("basic_customer_extra");
     }
 }

@@ -37,6 +37,10 @@ Forgex_Build 是 Forgex 的统一交付工程，负责生成交付物：
 | `staging/` | 临时收集目录，打包前汇总 |
 | `dist/` | 最终交付产物目录 |
 
+前端为 Vue/Vite 项目，构建交付包时会自动在 `Forgex_MOM/Forgex_Fronted` 执行 `npm run build`，并将生成的 `dist` 静态文件复制到交付包的 `frontend/` 目录。若未安装 Node.js/npm，或前端构建失败，交付收集会直接失败，避免把旧版 `dist` 打入安装包。
+
+Windows 交付包会把 `Forgex_Build/shared/nginx/windows` 中的 Windows 版 Nginx 运行时复制到安装包的 `nginx/` 目录，并同时带上 `nginx/forgex.conf.template`。安装阶段会基于前端端口、网关端口和安装目录生成 `nginx/forgex.conf`，控制中心启动前端时优先使用安装目录内置的 `nginx/nginx.exe`。
+
 ### 3.2 构建脚本
 
 | 脚本 | 说明 |
@@ -57,12 +61,16 @@ powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 1.0.0
 # 仅构建 Windows 交付包
 powershell -ExecutionPolicy Bypass -File build-windows.ps1 -Version 1.0.0
 
+# 构建 Windows 交付包并直接编译安装 EXE
+powershell -ExecutionPolicy Bypass -File build-windows.ps1 -Version 1.0.0 -CompileInstaller
+
 # 仅构建 Linux 交付包
 powershell -ExecutionPolicy Bypass -File build-linux.ps1 -Version 1.0.0
 ```
 
 构建产物：
 - `dist/windows/Forgex-Windows-Package-{Version}.zip`：Windows 交付包
+- `dist/windows/Forgex-Setup-{Version}.exe`：Windows 安装程序（使用 `-CompileInstaller` 或手工通过 Inno Setup 编译生成）
 - `dist/linux/forgex-linux-bundle-{Version}.tar.gz`：Linux 交付包
 
 ## 四、Windows 部署
@@ -77,11 +85,17 @@ powershell -ExecutionPolicy Bypass -File build-linux.ps1 -Version 1.0.0
 ### 4.2 安装程序特性
 
 安装程序（ForgexSetup.iss）提供：
+- 安装器语言选择（中文 / English），内置按钮、退出确认、安装完成页跟随所选语言显示
 - 实例编码输入页面（默认 `ACME_PROD`）
 - 部署环境选择页面（dev/test/prod/yanshi）
+- 中间件地址输入页面（Nacos、Redis、RocketMQ、MySQL、前端端口）
+- 安装完成后可打开 Forgex 控制中心，控制中心支持中文 / English 运行时切换
 - 自动创建目录结构
 - 自动生成 `config/install-config.yml`
-- 创建开始菜单快捷方式（启停服务）
+- 自动生成 `nginx/forgex.conf`，前端根目录指向安装后的 `frontend/`，`/api/` 反向代理到网关服务端口
+- 创建开始菜单快捷方式（控制中心、启停服务、打开前端）
+
+控制中心启动前端时优先使用安装目录中的 `nginx.exe` 或系统 PATH 中的 Nginx，并加载 `nginx/forgex.conf`；如果客户机器没有 Nginx，则自动回退到控制中心内置静态 Web 服务，保证安装包仍可一键预览和调试。
 
 ### 4.3 目录结构
 
@@ -108,7 +122,7 @@ D:\Forgex_{INSTANCE_CODE}\
 ├── winsw\                  # Windows 服务包装
 ├── frontend\               # 前端静态文件
 ├── services\               # 后端服务 JAR
-├── nginx\                  # Nginx 配置
+├── nginx\                  # Windows Nginx 运行时、配置模板、生成后的 forgex.conf
 ├── nacos\                  # Nacos 环境变量
 └── license-tools\          # 授权客户端
     └── request-client\     # 请求授权客户端
@@ -206,7 +220,12 @@ docker compose up -d
 | 变量 | 说明 | 示例 |
 |---|---|---|
 | `FORGEX_INSTANCE_CODE` | 实例编码 | `ACME_PROD` |
-| `FORGEX_PROFILE` | 部署环境 | `dev/test/prod/yanshi` |
+| `FORGEX_DEPLOYMENT_PROFILE` | 部署环境展示标识，不再驱动 Spring profile | `dev/test/prod/yanshi` |
+| `FORGEX_NACOS_NAMESPACE` | Nacos 命名空间 | `forgex_dev` |
+| `FORGEX_NACOS_GROUP` | Nacos 分组 | `DEFAULT_GROUP` |
+| `FORGEX_NACOS_DISCOVERY_IP` | 服务注册到 Nacos 的 IP，开发环境建议固定 | `127.0.0.1` |
+| `FORGEX_DATASOURCE_CONFIG` | 默认数据源 Nacos 配置文件名 | `datasource-forgex-dev.yml` |
+| `FORGEX_INTEGRATION_DATASOURCE_CONFIG` | 集成平台数据源 Nacos 配置文件名 | `datasource-forgex-integration-dev.yml` |
 | `FORGEX_HOME` | 安装根目录 | `/opt/Forgex_ACME_PROD` |
 | `FORGEX_LICENSE_DIR` | 授权目录 | `/opt/Forgex_ACME_PROD/license` |
 | `FORGEX_UPLOAD_DIR` | 上传目录 | `/opt/Forgex_ACME_PROD/data/uploads` |
@@ -250,3 +269,37 @@ Nacos 配置示例存放在 `nacos配置/DEFAULT_GROUP/` 目录：
 - [文档中心首页](../README.md)
 - [网关与路由使用方式](../后端/模块专题/网关与路由使用方式.md)
 - [Forgex_Build README](../../Forgex_Build/README.md)
+
+## 九、Windows 控制台部署补充
+
+Windows 安装包会把前端静态资源、后端 Java 服务 JAR、授权公钥、脚本、Windows 版 Nginx 运行时和 Forgex Control Center 一起放入安装目录。Nacos、Redis、RocketMQ、MySQL 按外部中间件处理，安装时填写地址，不由 Forgex 安装包自动安装。
+
+安装后关键文件如下：
+
+```text
+D:\Forgex_{INSTANCE_CODE}\
+├─ config\install-config.yml
+├─ config\forgex-control.json
+├─ frontend\
+├─ nginx\nginx.exe
+├─ nginx\conf\mime.types
+├─ nginx\forgex.conf
+├─ services\
+├─ license\public-key.base64
+├─ license\request-info.json
+├─ license\license.lic
+├─ tools\control-center\ForgexControlCenter.exe
+└─ scripts\start-all.ps1 / stop-all.ps1
+```
+
+Forgex Control Center 功能：
+- 读取 `config/forgex-control.json` 控制本机 Java 服务。
+- 显示客户机器码。
+- 生成 `license/request-info.json`，用于提交给授权中心。
+- 导入授权中心签发的 `license.lic`。
+- 启动、停止、查看各后端 Java 服务状态。
+
+服务控制策略：
+- 如果安装包内存在 WinSW.exe，安装脚本会注册 Windows 服务。
+- 如果没有 WinSW.exe，控制台会以 Java 进程模式启动和停止服务，并在 `data/service-state` 记录 pid。
+- 启动服务时会注入 `FORGEX_HOME`、`FORGEX_LICENSE_DIR`、`FORGEX_NACOS_ADDR`、`FORGEX_REDIS_ADDR`、`FORGEX_ROCKETMQ_NAME_SERVER`、`FORGEX_MYSQL_URL` 等环境变量。

@@ -1,56 +1,29 @@
-import request from '@/utils/request';
+import http from '@/api/http';
 
 export function getUnitPage(data: any) {
-  return request({
-    url: '/basic/unit/page',
-    method: 'post',
-    data,
-  });
+  return http.post('/basic/unit/page', data);
 }
 
 export function getUnitDetail(id: number) {
-  return request({
-    url: '/basic/unit/detail',
-    method: 'post',
-    data: { id },
-  });
+  return http.post('/basic/unit/detail', { id });
 }
 
 export function createUnit(data: any) {
-  return request({
-    url: '/basic/unit/create',
-    method: 'post',
-    data,
-  });
+  return http.post('/basic/unit/create', data);
 }
 
 export function updateUnit(data: any) {
-  return request({
-    url: '/basic/unit/update',
-    method: 'post',
-    data,
-  });
+  return http.post('/basic/unit/update', data);
 }
 
 export function deleteUnit(id: number) {
-  return request({
-    url: '/basic/unit/delete',
-    method: 'post',
-    data: { id },
-  });
+  return http.post('/basic/unit/delete', { id });
 }
 
 export function batchDeleteUnit(ids: number[]) {
-  return request({
-    url: '/basic/unit/batchDelete',
-    method: 'post',
-    data: { ids },
-  });
+  return http.post('/basic/unit/batchDelete', { ids });
 }
 
 export function getAllUnits() {
-  return request({
-    url: '/basic/unit/list',
-    method: 'post',
-  });
+  return http.post('/basic/unit/list');
 }

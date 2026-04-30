@@ -6,42 +6,23 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 客户分页查询参数类
- * <p>
- * 用于接收前端分页搜索客户时的条件参数
- * </p>
+ * 客户主数据分页查询参数。
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-20
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-04-27
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "客户分页查询参数")
+@Schema(description = "客户主数据分页查询参数")
 public class CustomerPageParam extends BaseGetParam {
-
-    /**
-     * 客户编码（模糊查询）
-     */
-    @Schema(description = "客户编码")
     private String customerCode;
-
-    /**
-     * 客户名称（模糊查询）
-     */
-    @Schema(description = "客户名称")
     private String customerName;
-
-    /**
-     * 客户类型
-     * DOMESTIC=国内，OVERSEAS=海外
-     */
-    @Schema(description = "客户类型")
-    private String customerType;
-
-    /**
-     * 状态：0-禁用，1-启用
-     */
-    @Schema(description = "状态")
+    private String customerFullName;
+    private String customerValueLevel;
+    private String customerCreditLevel;
+    private String businessStatus;
+    private Integer approvalStatus;
+    private Boolean isRelatedTenant;
     private Integer status;
 }
