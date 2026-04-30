@@ -25,7 +25,7 @@
             >
               <template #toolbar>
                 <a-space>
-                  <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
+                  <a-button data-guide-id="sys-position-add" type="primary" @click="openAdd" v-permission="'sys:position:add'">
                     <template #icon><PlusOutlined /></template>
                     {{ $t('system.position.addPosition') }}
                   </a-button>
@@ -247,6 +247,7 @@ const handleRequest = async (payload: {
       ...search表单.value,
       ...payload.query
     }
+    const data = await getPositionPage(params)
     
     // 确保total是数字类型
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)

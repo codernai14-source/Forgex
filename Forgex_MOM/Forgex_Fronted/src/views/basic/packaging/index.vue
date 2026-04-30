@@ -132,7 +132,7 @@ import { ref, reactive } from 'vue';
 import { message, Modal } from 'ant-design-vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { createPackagingType, updatePackagingType, deletePackagingType, getPackagingTypePage } from '@/api/basic/packaging';
-import FxDynamicTable from '@/components/FxDynamicTable/index.vue';
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue';
 
 const tableRef = ref();
 const dialogVisible = ref(false);

@@ -12,6 +12,7 @@
       <template #toolbar>
         <a-space>
           <a-button
+            data-guide-id="sys-tenant-add"
             type="primary"
             @click="openAdd"
             v-permission="'sys:tenant:add'"

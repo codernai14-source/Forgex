@@ -249,6 +249,21 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 
 这也是为什么同一个 `tableCode` 在不同用户界面上，列显示可能不完全一样。
 
+## 页面引导锚点
+
+`FxDynamicTable.vue` 会在公共区域渲染稳定的 `data-guide-id`，供系统页面级引导复用：
+
+| 锚点 | 渲染区域 |
+|---|---|
+| `fx-table-query` | 查询卡片 |
+| `fx-table-toolbar` | 工具栏整体 |
+| `fx-table-toolbar-left` | 业务工具按钮区域 |
+| `fx-table-column-setting` | 列设置按钮区域 |
+| `fx-table-content` | 表格内容区域 |
+| `fx-table-pagination` | 分页器区域 |
+
+这让引导配置不需要依赖 Ant Design Vue 内部类名，也不需要猜测页面 DOM 层级。业务按钮仍由页面自己通过 `data-guide-id` 标记。
+
 ## 自适应高度逻辑
 
 `FxDynamicTable.vue` 除了表格配置能力，还做了一个比较重的 UI 能力：自动计算滚动高度。

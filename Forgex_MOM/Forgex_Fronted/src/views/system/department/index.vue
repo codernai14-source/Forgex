@@ -26,6 +26,7 @@
                   <h3>{{ selectedDept.deptName }}</h3>
                   <a-space>
                     <a-button
+                      data-guide-id="sys-dept-add"
                       type="primary"
                       @click="openAdd(selectedDept.id)"
                       v-permission="'sys:dept:add'"
@@ -34,6 +35,7 @@
                       {{ $t('common.add') }}{{ $t('system.department.childDept') }}
                     </a-button>
                     <a-button
+                      data-guide-id="sys-dept-edit"
                       @click="startEdit"
                       v-permission="'sys:dept:edit'"
                     >
@@ -47,6 +49,7 @@
                       @confirm="handleDelete"
                     >
                       <a-button
+                        data-guide-id="sys-dept-delete"
                         danger
                         v-permission="'sys:dept:delete'"
                       >
@@ -186,7 +189,7 @@
 
                   <a-form-item :wrapper-col="{ offset: 6, span: 16 }">
                     <a-space>
-                      <a-button type="primary" :loading="saving" @click="handleSave">
+                <a-button data-guide-id="sys-dept-save" type="primary" :loading="saving" @click="handleSave">
                         保存
                       </a-button>
                       <a-button @click="cancelEdit">

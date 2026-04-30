@@ -1,8 +1,11 @@
 <template>
-  <div class="system-dashboard">
-    <!-- 顶部统计卡片 -->
-    <a-row :gutter="16" class="stats-row">
-      <a-col :span="6">
+  <ModuleHomepageDesigner
+    module-code="sys"
+    :hidden-widget-keys="legacyWidgetKeys"
+    @layout-updated="handleHomepageLayoutUpdated"
+  >
+    <template #systemStats>
+      <div class="system-dashboard system-dashboard--stats">
         <a-card :bordered="false" class="stat-card">
           <a-statistic
             :title="$t('system.dashboard.userCount')"
@@ -17,8 +20,6 @@
             </template>
           </a-statistic>
         </a-card>
-      </a-col>
-      <a-col :span="6">
         <a-card :bordered="false" class="stat-card">
           <a-statistic
             :title="$t('system.dashboard.roleCount')"
@@ -33,8 +34,6 @@
             </template>
           </a-statistic>
         </a-card>
-      </a-col>
-      <a-col :span="6">
         <a-card :bordered="false" class="stat-card">
           <a-statistic
             :title="$t('system.dashboard.menuCount')"
@@ -49,8 +48,6 @@
             </template>
           </a-statistic>
         </a-card>
-      </a-col>
-      <a-col :span="6">
         <a-card :bordered="false" class="stat-card">
           <a-statistic
             :title="$t('system.dashboard.onlineUsers')"
@@ -65,44 +62,43 @@
             </template>
           </a-statistic>
         </a-card>
-      </a-col>
-    </a-row>
+      </div>
+    </template>
 
-    <!-- 图表区域 -->
-    <a-row :gutter="16" class="chart-row">
-      <!-- CPU 使用率仪表盘 -->
-      <a-col :span="8">
+    <template #systemCpu>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.cpuUsage')" :bordered="false" class="chart-card">
           <div ref="cpuChartRef" class="echart-container"></div>
         </a-card>
-      </a-col>
+      </div>
+    </template>
 
-      <!-- 服务内存/缓存占用饼图 -->
-      <a-col :span="8">
+    <template #systemMemory>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.memoryUsage')" :bordered="false" class="chart-card">
           <div ref="memoryChartRef" class="echart-container memory-chart-echart"></div>
         </a-card>
-      </a-col>
+      </div>
+    </template>
 
-      <!-- JVM 内存分区占用柱状图 -->
-      <a-col :span="8">
+    <template #systemJvmMemory>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.moduleMemoryUsage')" :bordered="false" class="chart-card">
           <div ref="moduleChartRef" class="echart-container"></div>
         </a-card>
-      </a-col>
-    </a-row>
+      </div>
+    </template>
 
-    <!-- 3D 地图和系统信息 -->
-    <a-row :gutter="16" class="chart-row">
-      <!-- 3D 地图 -->
-      <a-col :span="14">
+    <template #systemMap>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.location')" :bordered="false" class="chart-card">
           <div ref="mapChartRef" class="echart-container map-container"></div>
         </a-card>
-      </a-col>
+      </div>
+    </template>
 
-      <!-- 服务器系统信息 -->
-      <a-col :span="10">
+    <template #systemServerInfo>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.serverInfo')" :bordered="false" class="chart-card">
           <a-descriptions :column="1" size="small">
             <a-descriptions-item :label="$t('system.dashboard.appVersion')">
@@ -143,13 +139,11 @@
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
-      </a-col>
-    </a-row>
+      </div>
+    </template>
 
-    <!-- 最近日志 -->
-    <a-row :gutter="16" class="chart-row">
-      <!-- 最近操作日志 -->
-      <a-col :span="12">
+    <template #systemOperationLogs>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.recentOperationLogs')" :bordered="false" class="chart-card">
           <a-table
             :columns="operationLogColumns"
@@ -170,10 +164,11 @@
             </template>
           </a-table>
         </a-card>
-      </a-col>
+      </div>
+    </template>
 
-      <!-- 最近登录日志 -->
-      <a-col :span="12">
+    <template #systemLoginLogs>
+      <div class="system-dashboard">
         <a-card :title="$t('system.dashboard.recentLoginLogs')" :bordered="false" class="chart-card">
           <a-table
             :columns="loginLogColumns"
@@ -194,13 +189,13 @@
             </template>
           </a-table>
         </a-card>
-      </a-col>
-    </a-row>
-  </div>
+      </div>
+    </template>
+  </ModuleHomepageDesigner>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { nextTick, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
@@ -220,8 +215,10 @@ import {
   getRecentOperationLogs,
   getRecentLoginLogs
 } from '@/api/system/dashboard'
+import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
 
 const { t } = useI18n()
+const legacyWidgetKeys = ['systemOverview', 'systemHealth', 'systemLogs', 'systemConfig']
 
 /**
  * 是否与主布局深色模式一致（读取 document[data-theme]，与 MainLayout 中 layoutConfig 同步）
@@ -971,6 +968,15 @@ const initMapChart = async () => {
  * 刷新所有图表（主题切换或数据更新时调用）
  */
 const refreshAllCharts = async () => {
+  cpuChart?.dispose()
+  memoryChart?.dispose()
+  moduleChart?.dispose()
+  mapChart?.dispose()
+  cpuChart = null
+  memoryChart = null
+  moduleChart = null
+  mapChart = null
+
   initCpuChart()
   initMemoryChart()
   initModuleChart()
@@ -989,6 +995,46 @@ const handleResize = () => {
   memoryChart?.resize()
   moduleChart?.resize()
   mapChart?.resize()
+}
+
+async function handleHomepageLayoutUpdated() {
+  await nextTick()
+
+  if (!cpuChartRef.value && cpuChart) {
+    cpuChart.dispose()
+    cpuChart = null
+  }
+  if (!memoryChartRef.value && memoryChart) {
+    memoryChart.dispose()
+    memoryChart = null
+  }
+  if (!moduleChartRef.value && moduleChart) {
+    moduleChart.dispose()
+    moduleChart = null
+  }
+  if (!mapChartRef.value && mapChart) {
+    mapChart.dispose()
+    mapChart = null
+  }
+
+  if (cpuChartRef.value && !cpuChart) {
+    initCpuChart()
+  }
+  if (memoryChartRef.value && !memoryChart) {
+    initMemoryChart()
+  }
+  if (moduleChartRef.value && !moduleChart) {
+    initModuleChart()
+  }
+  if (mapChartRef.value && !mapChart) {
+    await initMapChart()
+  }
+
+  const cpu = Number(serverInfo.value.cpuUsage)
+  updateCpuChart(Number.isFinite(cpu) ? cpu : 0)
+  updateMemoryChart()
+  updateModuleChart()
+  handleResize()
 }
 
 /**
@@ -1041,19 +1087,23 @@ onBeforeUnmount(() => {
 <style scoped lang="less">
 /* 使用 MainLayout 注入的 --fx-* 变量，与 ConfigProvider 主题一致 */
 .system-dashboard {
-  padding: 16px;
-  background: var(--fx-layout-bg, #f3f4f6);
-  min-height: calc(100vh - 84px);
+  height: 100%;
+  min-height: 0;
+  background: transparent;
   transition: background 0.3s;
 
-  .stats-row {
-    margin-bottom: 16px;
+  &--stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
 
-    .stat-card {
+  .stat-card {
       border-radius: var(--fx-radius-lg, 8px);
       box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
       transition: all 0.3s;
       background: var(--fx-bg-container, #ffffff);
+      height: 100%;
 
       &:hover {
         box-shadow: var(--fx-shadow-secondary, 0 4px 16px rgba(0, 0, 0, 0.12));
@@ -1077,12 +1127,8 @@ onBeforeUnmount(() => {
         color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
       }
     }
-  }
 
-  .chart-row {
-    margin-bottom: 16px;
-
-    .chart-card {
+  .chart-card {
       border-radius: var(--fx-radius-lg, 8px);
       box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
       height: 100%;
@@ -1100,21 +1146,24 @@ onBeforeUnmount(() => {
       :deep(.ant-card-body) {
         background: var(--fx-bg-container, #ffffff);
         color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+        height: calc(100% - 57px);
+        overflow: hidden;
       }
 
       .echart-container {
-        height: 300px;
+        height: 100%;
+        min-height: 220px;
         width: 100%;
       }
 
       /** 服务内存饼图：略增高容器，便于环形放大且与底部图例留白 */
       .memory-chart-echart {
-        height: 380px;
-        min-height: 380px;
+        min-height: 260px;
       }
 
       .map-container {
-        height: 400px;
+        height: 100%;
+        min-height: 280px;
         overflow: hidden;
         border-radius: var(--fx-radius, 6px);
         background: var(--fx-bg-container, #ffffff);
@@ -1151,7 +1200,18 @@ onBeforeUnmount(() => {
           border-color: var(--fx-border-color, #e5e7eb);
         }
       }
-    }
+  }
+}
+
+@media (max-width: 992px) {
+  .system-dashboard--stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .system-dashboard--stats {
+    grid-template-columns: 1fr;
   }
 }
 </style>

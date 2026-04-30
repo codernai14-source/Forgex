@@ -39,19 +39,22 @@ import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.connection.ExpirationOptions;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -105,6 +108,8 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * Redis Key 前缀：编码规则序列号
      */
     private static final String REDIS_KEY_SERIAL_PREFIX = "encode:serial:";
+
+    private static final Long PUBLIC_TENANT_ID = 0L;
     
     /**
      * 分页查询编码规则列表
@@ -118,9 +123,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      */
     @Override
     public IPage<EncodeRuleDTO> pageEncodeRules(Page<SysEncodeRule> page, EncodeRulePageParam param) {
-        LambdaQueryWrapper<SysEncodeRule> wrapper = buildQueryWrapper(param);
-        Page<SysEncodeRule> resultPage = this.page(page, wrapper);
-        return resultPage.convert(this::convertToDTO);
+        return runWithTenantIgnore(() -> {
+            LambdaQueryWrapper<SysEncodeRule> wrapper = buildQueryWrapper(param);
+            Page<SysEncodeRule> resultPage = this.page(page, wrapper);
+            return resultPage.convert(this::convertToDTO);
+        });
     }
     
     /**
@@ -134,9 +141,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      */
     @Override
     public List<EncodeRuleDTO> listEncodeRules(EncodeRulePageParam param) {
-        LambdaQueryWrapper<SysEncodeRule> wrapper = buildQueryWrapper(param);
-        List<SysEncodeRule> rules = this.list(wrapper);
-        return rules.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return runWithTenantIgnore(() -> {
+            LambdaQueryWrapper<SysEncodeRule> wrapper = buildQueryWrapper(param);
+            List<SysEncodeRule> rules = this.list(wrapper);
+            return rules.stream().map(this::convertToDTO).collect(Collectors.toList());
+        });
     }
     
     /**
@@ -150,15 +159,16 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      */
     @Override
     public EncodeRuleDTO getEncodeRuleById(Long id) {
-        SysEncodeRule rule = this.getById(id);
-        if (rule == null) {
-            return null;
-        }
-        EncodeRuleDTO dto = convertToDTO(rule);
-        // 查询关联的明细列表
-        List<EncodeRuleDetailDTO> detailList = queryDetailsByRuleId(id);
-        dto.setDetailList(detailList);
-        return dto;
+        return runWithTenantIgnore(() -> {
+            SysEncodeRule rule = this.getById(id);
+            if (rule == null || !isCurrentOrPublicTenant(rule.getTenantId())) {
+                return null;
+            }
+            EncodeRuleDTO dto = convertToDTO(rule);
+            List<EncodeRuleDetailDTO> detailList = queryDetailsByRuleId(id);
+            dto.setDetailList(detailList);
+            return dto;
+        });
     }
     
     /**
@@ -197,60 +207,74 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveEncodeRule(EncodeRuleSaveParam param) {
-        // 校验规则代码唯一性
-        validateRuleCodeUnique(param.getRuleCode(), param.getId());
-        
-        // 保存或更新主表
-        SysEncodeRule rule = new SysEncodeRule();
-        BeanUtils.copyProperties(param, rule);
-        
-        // 新增时设置默认值
-        if (param.getId() == null) {
-            rule.setTenantId(TenantContext.get());
-            if (rule.getIsEnabled() == null) {
-                rule.setIsEnabled(true);
+        return runWithTenantIgnore(() -> {
+            SysEncodeRule existRule = null;
+            if (param.getId() != null) {
+                existRule = getAccessibleRuleById(param.getId());
+                if (existRule == null) {
+                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
+                }
             }
-            if (rule.getSortOrder() == null) {
-                rule.setSortOrder(0);
+
+            // 校验规则代码唯一性
+            validateRuleCodeUnique(param.getRuleCode(), param.getId());
+
+            // 保存或更新主表
+            SysEncodeRule rule = new SysEncodeRule();
+            BeanUtils.copyProperties(param, rule);
+
+            if (existRule == null) {
+                rule.setTenantId(resolveTenantId());
+                if (rule.getIsEnabled() == null) {
+                    rule.setIsEnabled(true);
+                }
+                if (rule.getSortOrder() == null) {
+                    rule.setSortOrder(0);
+                }
+            } else {
+                rule.setTenantId(existRule.getTenantId());
+                if (rule.getIsEnabled() == null) {
+                    rule.setIsEnabled(existRule.getIsEnabled());
+                }
+                if (rule.getSortOrder() == null) {
+                    rule.setSortOrder(existRule.getSortOrder());
+                }
             }
-        }
-        
-        this.saveOrUpdate(rule);
-        Long ruleId = rule.getId();
-        
-        // 保存或更新明细数据
-        if (!CollectionUtils.isEmpty(param.getDetailList())) {
-            // 先删除旧的明细数据
-            deleteDetailsByRuleId(ruleId);
-            
-            // 再新增明细数据
-            List<SysEncodeRuleDetail> detailList = new ArrayList<>();
-            for (EncodeRuleDetailSaveParam detailParam : param.getDetailList()) {
-                SysEncodeRuleDetail detail = new SysEncodeRuleDetail();
-                BeanUtils.copyProperties(detailParam, detail);
-                detail.setRuleId(ruleId);
-                detail.setTenantId(rule.getTenantId());
-                detailList.add(detail);
+
+            this.saveOrUpdate(rule);
+            Long ruleId = rule.getId();
+
+            // 保存或更新明细数据
+            if (!CollectionUtils.isEmpty(param.getDetailList())) {
+                // 先删除旧的明细数据
+                deleteDetailsByRuleId(ruleId);
+
+                // 再新增明细数据
+                List<SysEncodeRuleDetail> detailList = new ArrayList<>();
+                for (EncodeRuleDetailSaveParam detailParam : param.getDetailList()) {
+                    SysEncodeRuleDetail detail = new SysEncodeRuleDetail();
+                    BeanUtils.copyProperties(detailParam, detail);
+                    detail.setId(null);
+                    detail.setRuleId(ruleId);
+                    detail.setTenantId(rule.getTenantId());
+                    detailList.add(detail);
+                }
+                insertDetails(detailList);
             }
-            encodeRuleDetailMapper.insert(batchInsertDetails(detailList));
-        }
-        
-        return ruleId;
+
+            return ruleId;
+        });
     }
     
     /**
      * 批量插入明细数据
      *
      * @param detailList 明细列表
-     * @return 最后一条数据（用于返回）
      */
-    private SysEncodeRuleDetail batchInsertDetails(List<SysEncodeRuleDetail> detailList) {
-        SysEncodeRuleDetail lastDetail = null;
+    private void insertDetails(List<SysEncodeRuleDetail> detailList) {
         for (SysEncodeRuleDetail detail : detailList) {
             encodeRuleDetailMapper.insert(detail);
-            lastDetail = detail;
         }
-        return lastDetail;
     }
     
     /**
@@ -263,20 +287,24 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteEncodeRule(Long id) {
-        SysEncodeRule rule = this.getById(id);
+        SysEncodeRule rule = getAccessibleRuleById(id);
         if (rule == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
         
-        // 删除明细数据
-        deleteDetailsByRuleId(id);
-        
-        // 删除主表数据
-        this.removeById(id);
-        
-        // 清理 Redis 缓存
-        clearRedisCache(rule.getRuleCode());
-        
+        runWithTenantIgnore(() -> {
+            // 删除明细数据
+            deleteDetailsByRuleId(id);
+
+            // 删除主表数据
+            this.removeById(id);
+
+            // 清理 Redis 缓存
+            clearRedisCache(rule.getRuleCode());
+
+            return null;
+        });
+
         log.info("删除编码规则成功，规则代码：{}", rule.getRuleCode());
     }
     
@@ -324,6 +352,10 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(SysEncodeRule::getRuleCode, ruleCode);
             wrapper.eq(SysEncodeRule::getIsEnabled, true);
+            addCurrentAndPublicTenantCondition(wrapper);
+            wrapper.orderByDesc(SysEncodeRule::getTenantId)
+                    .orderByAsc(SysEncodeRule::getSortOrder)
+                    .last("LIMIT 1");
             SysEncodeRule rule = this.getOne(wrapper);
             
             if (rule == null) {
@@ -382,13 +414,16 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void enableEncodeRule(Long id) {
-        SysEncodeRule rule = this.getById(id);
+        SysEncodeRule rule = getAccessibleRuleById(id);
         if (rule == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
         
         rule.setIsEnabled(true);
-        this.updateById(rule);
+        runWithTenantIgnore(() -> {
+            this.updateById(rule);
+            return null;
+        });
         
         log.info("启用编码规则成功：{}", rule.getRuleCode());
     }
@@ -402,13 +437,16 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void disableEncodeRule(Long id) {
-        SysEncodeRule rule = this.getById(id);
+        SysEncodeRule rule = getAccessibleRuleById(id);
         if (rule == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
         
         rule.setIsEnabled(false);
-        this.updateById(rule);
+        runWithTenantIgnore(() -> {
+            this.updateById(rule);
+            return null;
+        });
         
         log.info("禁用编码规则成功：{}", rule.getRuleCode());
     }
@@ -424,10 +462,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
         
         // 租户隔离
-        Long tenantId = TenantContext.get();
-        if (tenantId != null) {
-            wrapper.eq(SysEncodeRule::getTenantId, tenantId);
-        }
+        addCurrentAndPublicTenantCondition(wrapper);
         
         if (param != null) {
             // 规则代码模糊查询
@@ -457,6 +492,50 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         
         return wrapper;
     }
+
+    private <T> T runWithTenantIgnore(Supplier<T> action) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            return action.get();
+        } finally {
+            if (!oldIgnore) {
+                TenantContextIgnore.clear();
+            }
+        }
+    }
+
+    private void addCurrentAndPublicTenantCondition(LambdaQueryWrapper<SysEncodeRule> wrapper) {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null || PUBLIC_TENANT_ID.equals(tenantId)) {
+            wrapper.eq(SysEncodeRule::getTenantId, PUBLIC_TENANT_ID);
+            return;
+        }
+        wrapper.in(SysEncodeRule::getTenantId, Arrays.asList(PUBLIC_TENANT_ID, tenantId));
+    }
+
+    private boolean isCurrentOrPublicTenant(Long tenantId) {
+        if (PUBLIC_TENANT_ID.equals(tenantId)) {
+            return true;
+        }
+        Long currentTenantId = TenantContext.get();
+        return currentTenantId != null && currentTenantId.equals(tenantId);
+    }
+
+    private Long resolveTenantId() {
+        Long tenantId = TenantContext.get();
+        return tenantId == null ? PUBLIC_TENANT_ID : tenantId;
+    }
+
+    private SysEncodeRule getAccessibleRuleById(Long id) {
+        return runWithTenantIgnore(() -> {
+            SysEncodeRule rule = this.getById(id);
+            if (rule == null || !isCurrentOrPublicTenant(rule.getTenantId())) {
+                return null;
+            }
+            return rule;
+        });
+    }
     
     /**
      * 校验规则代码唯一性
@@ -473,13 +552,14 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         
         LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysEncodeRule::getRuleCode, ruleCode);
+        addCurrentAndPublicTenantCondition(wrapper);
         
         // 更新时排除当前规则
         if (excludeId != null) {
             wrapper.ne(SysEncodeRule::getId, excludeId);
         }
         
-        Long count = this.count(wrapper);
+        Long count = runWithTenantIgnore(() -> this.count(wrapper));
         if (count > 0) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EXISTS, ruleCode);
         }
@@ -574,7 +654,12 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         }
         
         if (expireSeconds > 0) {
-            stringRedisTemplate.expire(redisKey, expireSeconds, TimeUnit.SECONDS);
+            stringRedisTemplate.execute((RedisCallback<Boolean>) connection ->
+                connection.keyCommands().expire(
+                    redisKey.getBytes(StandardCharsets.UTF_8),
+                    expireSeconds,
+                    ExpirationOptions.Condition.ALWAYS)
+            );
         }
     }
     

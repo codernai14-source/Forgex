@@ -28,7 +28,7 @@
         >
           <template #toolbar>
             <a-space>
-              <a-button type="primary" @click="openAdd" v-permission="'sys:invite-code:add'">
+              <a-button data-guide-id="sys-invite-add" type="primary" @click="openAdd" v-permission="'sys:invite-code:add'">
                 <template #icon><PlusOutlined /></template>
                 新增邀请码
               </a-button>

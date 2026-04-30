@@ -1,18 +1,41 @@
-server {
-    listen       80;
-    server_name  localhost;
+worker_processes  1;
 
-    root   __FORGEX_HOME__/app/frontend/dist;
-    index  index.html;
+error_log  __LOG_DIR__/nginx/error.log;
+pid        __STATE_DIR__/nginx.pid;
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+events {
+    worker_connections  1024;
+}
 
-    location /api/ {
-        proxy_pass http://127.0.0.1:__FORGEX_GATEWAY_PORT__/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+http {
+    include       __NGINX_DIR__/conf/mime.types;
+    default_type  application/octet-stream;
+
+    access_log  __LOG_DIR__/nginx/access.log;
+    sendfile    on;
+    keepalive_timeout  65;
+    client_body_temp_path __NGINX_DIR__/temp/client_body_temp;
+    proxy_temp_path       __NGINX_DIR__/temp/proxy_temp;
+    fastcgi_temp_path     __NGINX_DIR__/temp/fastcgi_temp;
+    uwsgi_temp_path       __NGINX_DIR__/temp/uwsgi_temp;
+    scgi_temp_path        __NGINX_DIR__/temp/scgi_temp;
+
+    server {
+        listen       __FRONTEND_PORT__;
+        server_name  localhost;
+
+        root   __FRONTEND_DIR__;
+        index  index.html;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api/ {
+            proxy_pass http://127.0.0.1:__FORGEX_GATEWAY_PORT__/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
     }
 }

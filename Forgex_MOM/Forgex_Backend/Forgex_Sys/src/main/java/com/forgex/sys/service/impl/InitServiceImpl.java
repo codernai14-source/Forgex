@@ -600,14 +600,46 @@ public class InitServiceImpl implements InitService {
     }
 
     private void seedBasicModuleMenus(Long tenantId, Long moduleId, List<Long> grantedMenuIds) {
-        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "encodeRule", "编码规则管理", "Encoding Rule Management",
-                "CodeOutlined", "BasicEncodeRule", "sys:encodeRule:view",
+        SysMenu dashboard = insertMenu(tenantId, moduleId, 0L, "menu", "dashboard",
+                "基础信息主页", "Basic Dashboard", "DashboardOutlined", "BasicDashboard", "basic:dashboard:view", 1, 1);
+        grantedMenuIds.add(dashboard.getId());
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 20, "supplier", "供应商管理", "Supplier Management",
+                "ApartmentOutlined", "BasicSupplier", "basic:supplier:query",
                 Arrays.asList(
-                        new String[]{"sys:encodeRule:add", "新增编码规则", "Add Encode Rule"},
-                        new String[]{"sys:encodeRule:edit", "编辑编码规则", "Edit Encode Rule"},
-                        new String[]{"sys:encodeRule:delete", "删除编码规则", "Delete Encode Rule"},
-                        new String[]{"sys:encodeRule:test", "测试编码规则", "Test Encode Rule"},
-                        new String[]{"sys:encodeRule:generate", "生成编码", "Generate Code"}
+                        new String[]{"basic:supplier:add", "新增供应商", "Add Supplier"},
+                        new String[]{"basic:supplier:edit", "编辑供应商", "Edit Supplier"},
+                        new String[]{"basic:supplier:delete", "删除供应商", "Delete Supplier"},
+                        new String[]{"basic:supplier:import", "导入供应商", "Import Supplier"},
+                        new String[]{"basic:supplier:export", "导出供应商", "Export Supplier"},
+                        new String[]{"basic:supplier:generateTenant", "生成供应商租户", "Generate Supplier Tenant"},
+                        new String[]{"basic:supplier:review", "供应商审查", "Review Supplier"},
+                        new String[]{"basic:supplier:sync", "同步供应商", "Sync Supplier"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 30, "customer", "客户管理", "Customer Management",
+                "TeamOutlined", "BasicCustomer", "basic:customer:query",
+                Arrays.asList(
+                        new String[]{"basic:customer:add", "新增客户", "Add Customer"},
+                        new String[]{"basic:customer:edit", "编辑客户", "Edit Customer"},
+                        new String[]{"basic:customer:delete", "删除客户", "Delete Customer"},
+                        new String[]{"basic:customer:generateTenant", "生成客户租户", "Generate Customer Tenant"},
+                        new String[]{"basic:customer:approval", "客户审批", "Approve Customer"}
+                ));
+
+        SysMenu materialCatalog = insertMenu(tenantId, moduleId, 0L, "menu", "material",
+                "物料管理", "Material Management", "AppstoreOutlined", "BasicMaterial", "basic:material:query", 40, 1);
+        grantedMenuIds.add(materialCatalog.getId());
+        addMaterialButtons(tenantId, moduleId, materialCatalog.getId(), grantedMenuIds);
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 10, "encodeRule", "编码规则管理", "Encoding Rule Management",
+                "CodeOutlined", "BasicEncodeRule", "basic:encodeRule:query",
+                Arrays.asList(
+                        new String[]{"basic:encodeRule:add", "新增编码规则", "Add Encode Rule"},
+                        new String[]{"basic:encodeRule:edit", "编辑编码规则", "Edit Encode Rule"},
+                        new String[]{"basic:encodeRule:delete", "删除编码规则", "Delete Encode Rule"},
+                        new String[]{"basic:encodeRule:test", "测试编码规则", "Test Encode Rule"},
+                        new String[]{"basic:encodeRule:generate", "生成编码", "Generate Code"}
                 ));
     }
 
@@ -663,6 +695,20 @@ public class InitServiceImpl implements InitService {
                 {"sys:role:delete", "删除角色", "Delete Role"},
                 {"sys:role:authMenu", "菜单授权", "Authorize Menu"},
                 {"sys:role:authUser", "用户授权", "Authorize User"}
+        };
+        int buttonOrder = 1;
+        for (String[] buttonDef : buttonDefs) {
+            SysMenu button = insertButton(tenantId, moduleId, parentId,
+                    buttonDef[0], buttonDef[1], buttonDef[2], buttonOrder++);
+            grantedMenuIds.add(button.getId());
+        }
+    }
+
+    private void addMaterialButtons(Long tenantId, Long moduleId, Long parentId, List<Long> grantedMenuIds) {
+        String[][] buttonDefs = {
+                {"basic:material:add", "新增物料", "Add Material"},
+                {"basic:material:edit", "编辑物料", "Edit Material"},
+                {"basic:material:delete", "删除物料", "Delete Material"}
         };
         int buttonOrder = 1;
         for (String[] buttonDef : buttonDefs) {

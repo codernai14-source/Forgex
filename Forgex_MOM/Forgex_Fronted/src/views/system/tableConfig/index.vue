@@ -19,6 +19,7 @@
             <a-radio-button :value="true">公共配置</a-radio-button>
           </a-radio-group>
           <a-button
+            data-guide-id="sys-table-config-pull-public"
             v-if="!publicConfig"
             v-permission="'sys:tableConfig:add'"
             @click="handlePullPublic"
@@ -26,6 +27,7 @@
             拉取公共配置
           </a-button>
           <a-button
+            data-guide-id="sys-table-config-add"
             v-permission="'sys:tableConfig:add'"
             type="primary"
             @click="openAddDialog"
@@ -33,6 +35,7 @@
             {{ t('system.tableConfig.add') }}
           </a-button>
           <a-button
+            data-guide-id="sys-table-config-batch-delete"
             v-permission="'sys:tableConfig:delete'"
             danger
             :disabled="selectedRowKeys.length === 0"

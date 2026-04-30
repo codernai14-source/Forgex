@@ -1,56 +1,29 @@
-import request from '@/utils/request';
+import http from '@/api/http';
 
 export function getPackagingTypePage(data: any) {
-  return request({
-    url: '/basic/packaging/page',
-    method: 'post',
-    data,
-  });
+  return http.post('/basic/packaging/page', data);
 }
 
 export function getPackagingTypeDetail(id: number) {
-  return request({
-    url: '/basic/packaging/detail',
-    method: 'post',
-    data: { id },
-  });
+  return http.post('/basic/packaging/detail', { id });
 }
 
 export function createPackagingType(data: any) {
-  return request({
-    url: '/basic/packaging/create',
-    method: 'post',
-    data,
-  });
+  return http.post('/basic/packaging/create', data);
 }
 
 export function updatePackagingType(data: any) {
-  return request({
-    url: '/basic/packaging/update',
-    method: 'post',
-    data,
-  });
+  return http.post('/basic/packaging/update', data);
 }
 
 export function deletePackagingType(id: number) {
-  return request({
-    url: '/basic/packaging/delete',
-    method: 'post',
-    data: { id },
-  });
+  return http.post('/basic/packaging/delete', { id });
 }
 
 export function batchDeletePackagingType(ids: number[]) {
-  return request({
-    url: '/basic/packaging/batchDelete',
-    method: 'post',
-    data: { ids },
-  });
+  return http.post('/basic/packaging/batchDelete', { ids });
 }
 
 export function getAllPackagingTypes() {
-  return request({
-    url: '/basic/packaging/list',
-    method: 'post',
-  });
+  return http.post('/basic/packaging/list');
 }

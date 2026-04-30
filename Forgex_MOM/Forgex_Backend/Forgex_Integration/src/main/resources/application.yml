@@ -1,8 +1,27 @@
 spring:
   application:
     name: forgex-integration
-  profiles:
-    active: ${FORGEX_PROFILE:dev}
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_INTEGRATION_DATASOURCE_CONFIG:datasource-forgex-integration-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
   datasource:
     type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
   output:

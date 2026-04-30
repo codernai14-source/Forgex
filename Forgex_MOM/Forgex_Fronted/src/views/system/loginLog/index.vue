@@ -8,7 +8,7 @@
       :dynamic-table-config="dynamicTableConfig"
     >
       <template #toolbar>
-        <a-button v-permission="'sys:excel:export:loginLog'" @click="handleExport">{{ t('common.export') }}</a-button>
+        <a-button data-guide-id="sys-login-log-export" v-permission="'sys:excel:export:loginLog'" @click="handleExport">{{ t('common.export') }}</a-button>
       </template>
     </FxDynamicTable>
   </div>

@@ -30,8 +30,10 @@ import com.forgex.sys.domain.entity.SysRoleMenu;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserMenuCommon;
 import com.forgex.sys.domain.entity.SysUserMenuFavorite;
+import com.forgex.sys.domain.entity.SysUserMenuOpenCount;
 import com.forgex.sys.domain.entity.SysUserRole;
 import com.forgex.sys.domain.vo.MenuTreeVO;
+import com.forgex.sys.domain.vo.UserMenuOpenReportVO;
 import com.forgex.sys.domain.vo.UserMenuPreferenceVO;
 import com.forgex.sys.domain.vo.UserRoutesVO;
 import com.forgex.sys.mapper.SysMenuMapper;
@@ -39,6 +41,7 @@ import com.forgex.sys.mapper.SysModuleMapper;
 import com.forgex.sys.mapper.SysRoleMenuMapper;
 import com.forgex.sys.mapper.SysUserMenuCommonMapper;
 import com.forgex.sys.mapper.SysUserMenuFavoriteMapper;
+import com.forgex.sys.mapper.SysUserMenuOpenCountMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.ISysMenuService;
@@ -125,6 +128,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysUserMenuCommonMapper userMenuCommonMapper;
     private final SysUserMenuFavoriteMapper userMenuFavoriteMapper;
+    private final SysUserMenuOpenCountMapper userMenuOpenCountMapper;
     private final I18nLanguageTypeService languageTypeService;
 
     /**
@@ -786,6 +790,83 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * @return 空的用户路由对象，modules、routes、buttons 均为空列表
      * @see com.forgex.sys.domain.vo.UserRoutesVO
      */
+    /**
+     * 上报用户菜单打开次数。
+     * <p>
+     * 该统计用于菜单首次打开引导，独立于常用菜单统计表，避免被 Top 6 裁剪逻辑影响。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param fullPath 前端上报的菜单完整路径
+     * @return 打开次数上报结果
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public UserMenuOpenReportVO reportUserMenuOpen(Long userId, Long tenantId, String fullPath) {
+        UserMenuOpenReportVO vo = new UserMenuOpenReportVO();
+        String normalizedPath = normalizeReportedMenuPath(fullPath);
+        vo.setPath(normalizedPath);
+        vo.setOpenCount(0);
+        vo.setFirstOpen(false);
+
+        if (userId == null || tenantId == null || !StringUtils.hasText(normalizedPath)) {
+            return vo;
+        }
+
+        AuthorizedMenuSnapshot snapshot = getAuthorizedMenuSnapshots(userId, tenantId).get(normalizedPath);
+        if (snapshot == null) {
+            return vo;
+        }
+
+        LambdaQueryWrapper<SysUserMenuOpenCount> wrapper = new LambdaQueryWrapper<SysUserMenuOpenCount>()
+                .eq(SysUserMenuOpenCount::getTenantId, tenantId)
+                .eq(SysUserMenuOpenCount::getUserId, userId)
+                .eq(SysUserMenuOpenCount::getMenuPath, normalizedPath)
+                .eq(SysUserMenuOpenCount::getDeleted, false)
+                .last("limit 1");
+        SysUserMenuOpenCount existing = userMenuOpenCountMapper.selectOne(wrapper);
+        LocalDateTime now = LocalDateTime.now();
+
+        if (existing == null) {
+            SysUserMenuOpenCount record = new SysUserMenuOpenCount();
+            record.setTenantId(tenantId);
+            record.setUserId(userId);
+            record.setMenuPath(snapshot.path);
+            record.setMenuTitle(snapshot.title);
+            record.setModuleCode(snapshot.moduleCode);
+            record.setModuleName(snapshot.moduleName);
+            record.setMenuIcon(snapshot.icon);
+            record.setOpenCount(1);
+            record.setFirstOpenAt(now);
+            record.setLastOpenAt(now);
+            record.setDeleted(false);
+            userMenuOpenCountMapper.insert(record);
+            vo.setPath(snapshot.path);
+            vo.setOpenCount(1);
+            vo.setFirstOpen(true);
+            return vo;
+        }
+
+        int nextOpenCount = Math.max(existing.getOpenCount() == null ? 0 : existing.getOpenCount(), 0) + 1;
+        existing.setMenuTitle(snapshot.title);
+        existing.setModuleCode(snapshot.moduleCode);
+        existing.setModuleName(snapshot.moduleName);
+        existing.setMenuIcon(snapshot.icon);
+        existing.setOpenCount(nextOpenCount);
+        if (existing.getFirstOpenAt() == null) {
+            existing.setFirstOpenAt(now);
+        }
+        existing.setLastOpenAt(now);
+        existing.setDeleted(false);
+        userMenuOpenCountMapper.updateById(existing);
+
+        vo.setPath(snapshot.path);
+        vo.setOpenCount(nextOpenCount);
+        vo.setFirstOpen(false);
+        return vo;
+    }
+
     private UserRoutesVO createEmptyRoutes() {
         UserRoutesVO vo = new UserRoutesVO();
         vo.setModules(Collections.emptyList());

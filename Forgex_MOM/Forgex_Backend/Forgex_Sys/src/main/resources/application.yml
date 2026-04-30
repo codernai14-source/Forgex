@@ -1,8 +1,13 @@
 spring:
   application:
     name: forgex-sys
-  profiles:
-    active: ${FORGEX_PROFILE:dev}
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_DATASOURCE_CONFIG:datasource-forgex-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
   datasource:
     type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
   output:
@@ -14,6 +19,20 @@ spring:
     multipart:
       max-file-size: 200MB
       max-request-size: 200MB
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
 
 file:
   upload:
@@ -34,7 +53,7 @@ server:
 
 forgex:
   deployment:
-    profile: ${FORGEX_PROFILE:dev}
+    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
     instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
     home: ${FORGEX_HOME:./forgex}
     license-dir: ${FORGEX_LICENSE_DIR:${FORGEX_HOME:./forgex}/license}
@@ -42,7 +61,7 @@ forgex:
     log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:./forgex}/logs}
     backup-dir: ${FORGEX_BACKUP_DIR:${FORGEX_HOME:./forgex}/backup}
     nacos-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
-    redis-addr: ${FORGEX_REDIS_ADDR:127.0.0.1:6379}
+    redis-addr: ${FORGEX_REDIS_ADDR:175.27.135.204:6379}
     mysql-url: ${FORGEX_MYSQL_URL:}
   license:
     enabled: ${FORGEX_LICENSE_ENABLED:true}

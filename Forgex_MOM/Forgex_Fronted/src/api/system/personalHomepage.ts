@@ -1,6 +1,11 @@
 import http from '../http'
 
 export type PersonalHomepageScopeLevel = 'PUBLIC' | 'TENANT' | 'USER'
+export type ModuleHomepageCode = 'personal' | 'basic' | 'approval' | 'sys'
+
+export interface HomepageConfigRequestOptions {
+  moduleCode?: string
+}
 
 export interface PersonalHomepageLayoutConfig {
   colNum: number
@@ -38,6 +43,31 @@ export const PERSONAL_HOMEPAGE_WIDGET_KEYS = [
   'messages',
   'notices',
   'currentTime',
+] as const
+
+export const MODULE_HOMEPAGE_WIDGET_KEYS = [
+  'supplierInfo',
+  'encodeRuleInfo',
+  'systemOverview',
+  'systemHealth',
+  'systemLogs',
+  'systemConfig',
+  'systemStats',
+  'systemCpu',
+  'systemMemory',
+  'systemJvmMemory',
+  'systemMap',
+  'systemServerInfo',
+  'systemOperationLogs',
+  'systemLoginLogs',
+  'approvalStats',
+  'approvalShortcuts',
+  'approvalPending',
+  'approvalTaskConfig',
+  'approvalWeeklyTrend',
+  'approvalUserShare',
+  'approvalProcessed',
+  'approvalCc',
 ] as const
 
 const DEFAULT_WIDGET_TITLES: Record<(typeof PERSONAL_HOMEPAGE_WIDGET_KEYS)[number], string> = {
@@ -98,6 +128,95 @@ function createWidget(
       showMore,
     },
   }
+}
+
+function createModuleWidget(
+  key: (typeof MODULE_HOMEPAGE_WIDGET_KEYS)[number],
+  title: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  orderNum: number,
+): PersonalHomepageWidgetConfig {
+  return {
+    key,
+    title,
+    visible: true,
+    x,
+    y,
+    w,
+    h,
+    minW: Math.min(w, 3),
+    minH: Math.min(h, 2),
+    orderNum,
+    params: {},
+  }
+}
+
+function normalizeModuleCode(moduleCode?: string | null): ModuleHomepageCode {
+  const normalized = String(moduleCode || 'personal').trim().toLowerCase()
+  if (!normalized || normalized === 'personal') {
+    return 'personal'
+  }
+  if (normalized === 'system') {
+    return 'sys'
+  }
+  if (normalized === 'workflow') {
+    return 'approval'
+  }
+  if (normalized === 'basic' || normalized === 'approval' || normalized === 'sys') {
+    return normalized
+  }
+  return 'personal'
+}
+
+export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalHomepageConfig {
+  const normalized = normalizeModuleCode(moduleCode)
+  const baseLayout = createDefaultPersonalHomepageConfig().layout
+
+  if (normalized === 'basic') {
+    return {
+      layout: baseLayout,
+      widgets: [
+        createModuleWidget('supplierInfo', '供应商信息', 0, 0, 6, 4, 10),
+        createModuleWidget('encodeRuleInfo', '编码规则信息', 6, 0, 6, 4, 20),
+      ],
+    }
+  }
+
+  if (normalized === 'approval') {
+    return {
+      layout: baseLayout,
+      widgets: [
+        createModuleWidget('approvalWeeklyTrend', '近 7 天审批趋势', 0, 0, 12, 5, 10),
+        createModuleWidget('approvalShortcuts', '快捷发起审批', 0, 5, 12, 4, 20),
+        createModuleWidget('approvalUserShare', '发起人占比', 0, 9, 7, 5, 30),
+        createModuleWidget('approvalTaskConfig', '任务配置预览', 7, 9, 5, 5, 40),
+        createModuleWidget('approvalPending', '我的待办', 0, 14, 4, 5, 50),
+        createModuleWidget('approvalProcessed', '昨日已办', 4, 14, 4, 5, 60),
+        createModuleWidget('approvalCc', '抄送我的', 8, 14, 4, 5, 70),
+      ],
+    }
+  }
+
+  if (normalized === 'sys') {
+    return {
+      layout: baseLayout,
+      widgets: [
+        createModuleWidget('systemStats', '系统统计', 0, 0, 12, 2, 10),
+        createModuleWidget('systemCpu', 'CPU 使用率', 0, 2, 4, 5, 20),
+        createModuleWidget('systemMemory', '服务内存占用', 4, 2, 4, 5, 30),
+        createModuleWidget('systemJvmMemory', 'JVM 内存分区', 8, 2, 4, 5, 40),
+        createModuleWidget('systemMap', '服务器位置', 0, 7, 7, 6, 50),
+        createModuleWidget('systemServerInfo', '服务器信息', 7, 7, 5, 6, 60),
+        createModuleWidget('systemOperationLogs', '最近操作日志', 0, 13, 6, 5, 70),
+        createModuleWidget('systemLoginLogs', '最近登录日志', 6, 13, 6, 5, 80),
+      ],
+    }
+  }
+
+  return createDefaultPersonalHomepageConfig()
 }
 
 export function mergePersonalHomepageConfig(config?: Partial<PersonalHomepageConfig> | null): PersonalHomepageConfig {
@@ -169,27 +288,99 @@ export function mergePersonalHomepageConfig(config?: Partial<PersonalHomepageCon
   }
 }
 
-export function getCurrentPersonalHomepageConfig() {
-  return http.post<PersonalHomepageConfig>('/sys/homepage/current/get', {})
+export function mergeModuleHomepageConfig(
+  config?: Partial<PersonalHomepageConfig> | null,
+  moduleCode = 'personal',
+): PersonalHomepageConfig {
+  const normalized = normalizeModuleCode(moduleCode)
+  if (normalized === 'personal') {
+    return mergePersonalHomepageConfig(config)
+  }
+
+  const defaults = createDefaultModuleHomepageConfig(normalized)
+  const rawWidgets = Array.isArray(config?.widgets) ? config.widgets : []
+  const rawWidgetMap = new Map(rawWidgets.map(widget => [String(widget?.key || ''), widget]))
+
+  const widgets = defaults.widgets.map(defaultWidget => {
+    const currentWidget = rawWidgetMap.get(defaultWidget.key)
+    return {
+      ...defaultWidget,
+      ...currentWidget,
+      title: String(currentWidget?.title || defaultWidget.title),
+      visible: currentWidget?.visible ?? defaultWidget.visible,
+      params: {
+        ...defaultWidget.params,
+        ...(currentWidget?.params || {}),
+      },
+    }
+  })
+
+  rawWidgets.forEach(widget => {
+    const key = String(widget?.key || '')
+    if (!key || widgets.some(item => item.key === key)) {
+      return
+    }
+    widgets.push({
+      key,
+      title: String(widget?.title || key),
+      visible: widget?.visible ?? true,
+      x: Number(widget?.x ?? 0),
+      y: Number(widget?.y ?? 0),
+      w: Number(widget?.w ?? 6),
+      h: Number(widget?.h ?? 4),
+      minW: Number(widget?.minW ?? 3),
+      minH: Number(widget?.minH ?? 2),
+      orderNum: Number(widget?.orderNum ?? widgets.length * 10),
+      params: { ...(widget?.params || {}) },
+    })
+  })
+
+  widgets.sort((left, right) => {
+    const leftOrder = Number(left.orderNum ?? 0)
+    const rightOrder = Number(right.orderNum ?? 0)
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder
+    }
+    return left.key.localeCompare(right.key)
+  })
+
+  return {
+    layout: {
+      ...defaults.layout,
+      ...(config?.layout || {}),
+    },
+    widgets,
+  }
 }
 
-export function saveCurrentPersonalHomepageConfig(config: PersonalHomepageConfig) {
-  return http.post<boolean>('/sys/homepage/current/save', { config })
+export function getCurrentPersonalHomepageConfig(options: HomepageConfigRequestOptions = {}) {
+  return http.post<PersonalHomepageConfig>('/sys/homepage/current/get', options)
 }
 
-export function resetCurrentPersonalHomepageConfig() {
-  return http.post<boolean>('/sys/homepage/current/reset', {})
+export function saveCurrentPersonalHomepageConfig(
+  config: PersonalHomepageConfig,
+  options: HomepageConfigRequestOptions = {},
+) {
+  return http.post<boolean>('/sys/homepage/current/save', { ...options, config })
 }
 
-export function getManagePersonalHomepageConfig(scopeLevel: Exclude<PersonalHomepageScopeLevel, 'USER'> = 'TENANT') {
-  return http.post<PersonalHomepageConfig>('/sys/homepage/manage/get', { scopeLevel })
+export function resetCurrentPersonalHomepageConfig(options: HomepageConfigRequestOptions = {}) {
+  return http.post<boolean>('/sys/homepage/current/reset', options)
+}
+
+export function getManagePersonalHomepageConfig(
+  scopeLevel: Exclude<PersonalHomepageScopeLevel, 'USER'> = 'TENANT',
+  options: HomepageConfigRequestOptions = {},
+) {
+  return http.post<PersonalHomepageConfig>('/sys/homepage/manage/get', { ...options, scopeLevel })
 }
 
 export function saveManagePersonalHomepageConfig(
   scopeLevel: Exclude<PersonalHomepageScopeLevel, 'USER'>,
   config: PersonalHomepageConfig,
+  options: HomepageConfigRequestOptions = {},
 ) {
-  return http.post<boolean>('/sys/homepage/manage/save', { scopeLevel, config })
+  return http.post<boolean>('/sys/homepage/manage/save', { ...options, scopeLevel, config })
 }
 
 /**
@@ -308,5 +499,21 @@ export function sortUserFavoriteMenus(paths: string[]) {
  */
 export function reportUserMenuVisit(path: string) {
   return http.post<boolean>('/sys/menu/personal/visit/report', { path })
+}
+
+export interface UserMenuOpenReportVO {
+  path: string
+  openCount: number
+  firstOpen: boolean
+}
+
+/**
+ * 上报菜单打开次数。
+ *
+ * @param path 当前打开菜单的完整路由路径
+ * @param payload 可选菜单冗余信息，后端仍以授权菜单快照为准
+ */
+export function reportUserMenuOpen(path: string, payload: Partial<PersonalMenuEntry> = {}) {
+  return http.post<UserMenuOpenReportVO>('/sys/menu/personal/open/report', { ...payload, path })
 }
 
