@@ -55,17 +55,21 @@
 import { ref, watch, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons-vue'
-import { uploadAvatar } from '@/api/profile'
+import { uploadFile } from '@/api/system/file'
 import { normalizeMediaUrl } from '@/utils/media'
 import 'vue-cropper/dist/index.css'
 import { VueCropper } from 'vue-cropper'
 
 interface Props {
   modelValue?: string
+  moduleCode?: string
+  moduleName?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: ''
+  modelValue: '',
+  moduleCode: 'sys_user_avatar',
+  moduleName: '用户头像'
 })
 
 const emit = defineEmits<{
@@ -138,7 +142,10 @@ function handleCrop() {
       const file = new File([blob], fileName, { type: 'image/png' })
       
       loading.value = true
-      const url = await uploadAvatar(file)
+      const url = await uploadFile(file, {
+        moduleCode: props.moduleCode,
+        moduleName: props.moduleName,
+      })
       imageUrl.value = url
       emit('update:modelValue', url)
       emit('success', url)

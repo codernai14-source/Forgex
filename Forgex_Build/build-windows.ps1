@@ -77,6 +77,11 @@ if (Test-Path -LiteralPath $zipPath) {
 }
 Compress-Archive -Path (Join-Path $packageRoot "*") -DestinationPath $zipPath
 
+$packagedJavaExe = Join-Path $packageRoot "app\\jre\\bin\\java.exe"
+if (-not (Test-Path -LiteralPath $packagedJavaExe)) {
+    throw "Windows package is missing app\\jre\\bin\\java.exe. Run collect-artifacts.ps1 with a valid JRE before packaging."
+}
+
 if ($CompileInstaller) {
     $isccPath = $InnoSetupCompiler
     if ([string]::IsNullOrWhiteSpace($isccPath)) {

@@ -177,7 +177,7 @@ export function createDefaultEmailConfig(): EmailConfig {
 export function createDefaultFileUploadConfig(): FileUploadConfig {
   return {
     storageType: 'LOCAL',
-    localUploadPath: './uploads',
+    localUploadPath: 'C:/forgex/data/uploads',
     accessPrefix: '/files',
     publicBaseUrl: '',
     providerConfigJson: '',

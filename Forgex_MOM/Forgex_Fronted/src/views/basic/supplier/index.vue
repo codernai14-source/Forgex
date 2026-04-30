@@ -751,8 +751,13 @@ function reviewColor(value?: number) {
 
 <style scoped lang="less">
 .supplier-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-height: 100%;
   padding: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
   background: var(--supplier-page-bg);
 }
 
@@ -769,6 +774,7 @@ function reviewColor(value?: number) {
 }
 
 .supplier-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -779,6 +785,11 @@ function reviewColor(value?: number) {
   border-radius: 8px;
   background: var(--fx-bg-container, #ffffff);
   box-shadow: var(--fx-shadow-secondary, 0 10px 28px rgba(15, 23, 42, 0.06));
+}
+
+.supplier-page :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .supplier-page__header h1 {

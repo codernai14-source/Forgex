@@ -117,7 +117,7 @@ export default {
   storageOss: 'OSS',
   storageMinio: 'MinIO',
   localUploadPath: 'Local Upload Path',
-  localUploadPathPlaceholder: 'e.g. ./uploads',
+  localUploadPathPlaceholder: 'e.g. C:/forgex/data/uploads',
   accessPrefix: 'Access Prefix',
   accessPrefixPlaceholder: 'e.g. /files',
   providerConfigJson: 'Provider Config (JSON)',

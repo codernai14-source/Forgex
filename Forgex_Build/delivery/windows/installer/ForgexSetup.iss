@@ -7,7 +7,7 @@ AppId={{B8A7C81A-6D66-4F76-9E8C-FA56F0A5A1BC}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-DefaultDirName=D:\Forgex_{code:GetInstanceCode}
+DefaultDirName=C:\Forgex_{code:GetInstanceCode}
 PrivilegesRequired=admin
 DisableDirPage=no
 DisableProgramGroupPage=yes
@@ -44,8 +44,8 @@ en.ProfileTitle=Deployment Profile
 zh.ProfileTitle=部署环境
 en.ProfileSubtitle=Choose the target runtime profile
 zh.ProfileSubtitle=请选择目标运行环境
-en.ProfileDescription=Select the Nacos namespace and configuration profile used by this installation.
-zh.ProfileDescription=请选择本次安装使用的 Nacos 命名空间和配置环境。
+en.ProfileDescription=Customer installations can only use production or demo profiles.
+zh.ProfileDescription=客户安装程序仅允许选择生产环境或演示环境。
 en.MiddlewareTitle=Middleware Endpoints
 zh.MiddlewareTitle=中间件地址
 en.MiddlewareSubtitle=Configure external middleware endpoints
@@ -100,10 +100,6 @@ begin
   if DeployProfilePage = nil then
     Result := 'prod'
   else if DeployProfilePage.SelectedValueIndex = 0 then
-    Result := 'dev'
-  else if DeployProfilePage.SelectedValueIndex = 1 then
-    Result := 'test'
-  else if DeployProfilePage.SelectedValueIndex = 2 then
     Result := 'prod'
   else
     Result := 'yanshi';
@@ -188,11 +184,9 @@ begin
       CustomMessage('ProfileDescription'),
       True,
       False);
-  DeployProfilePage.Add('dev');
-  DeployProfilePage.Add('test');
   DeployProfilePage.Add('prod');
   DeployProfilePage.Add('yanshi');
-  DeployProfilePage.SelectedValueIndex := 2;
+  DeployProfilePage.SelectedValueIndex := 0;
 
   MiddlewarePage :=
     CreateInputQueryPage(

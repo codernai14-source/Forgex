@@ -22,7 +22,12 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($InstallRoot)) {
-    $InstallRoot = "D:\Forgex_$InstanceCode"
+    $InstallRoot = "C:\Forgex_$InstanceCode"
+}
+
+$allowedDeployProfiles = @("prod", "yanshi")
+if ($DeployProfile -notin $allowedDeployProfiles) {
+    throw "Windows customer installer only supports DeployProfile=prod or DeployProfile=yanshi. Current value: $DeployProfile"
 }
 
 if ([string]::IsNullOrWhiteSpace($NacosNamespace)) {

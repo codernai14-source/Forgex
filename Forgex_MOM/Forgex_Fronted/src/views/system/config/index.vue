@@ -18,7 +18,12 @@
 
             <a-form-item :label="t('system.config.systemLogo')" name="systemLogo">
               <div class="system-logo-upload">
-                <AvatarUpload v-model="basicConfig.systemLogo" @success="handleLogoUploadSuccess" />
+                <AvatarUpload
+                  v-model="basicConfig.systemLogo"
+                  module-code="sys_config_logo"
+                  module-name="系统配置Logo"
+                  @success="handleLogoUploadSuccess"
+                />
               </div>
             </a-form-item>
 

@@ -117,7 +117,7 @@ export default {
   storageOss: 'OSS',
   storageMinio: 'MinIO',
   localUploadPath: '本地上傳目錄',
-  localUploadPathPlaceholder: '請輸入本地上傳目錄，例如 ./uploads',
+  localUploadPathPlaceholder: '請輸入本地上傳目錄，例如 C:/forgex/data/uploads',
   accessPrefix: '訪問前缀',
   accessPrefixPlaceholder: '請輸入訪問前缀，例如 /files',
   providerConfigJson: '上傳方式配置 (JSON)',
