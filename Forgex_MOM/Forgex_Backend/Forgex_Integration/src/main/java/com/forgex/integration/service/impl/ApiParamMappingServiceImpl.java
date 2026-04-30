@@ -4,13 +4,12 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ApiParamMappingDTO;
-import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.entity.ApiParamMapping;
 import com.forgex.integration.domain.param.ApiParamMappingParam;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.mapper.ApiParamMappingMapper;
 import com.forgex.integration.service.IApiParamMappingService;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +24,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 接口参数映射服务实现类
+ * 接口参数映射服务实现。
  * <p>
- * 提供接口参数映射关系的增删改查、批量保存等功能实现
+ * 负责维护源字段路径到目标字段路径的映射关系，并保证同一接口、出站目标和方向下源字段映射唯一。
  * </p>
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-14
+ * @author coder_nai@163.com
+ * @version 1.0.0
+ * @since 2026-04-01
+ * @see IApiParamMappingService
  */
 @Slf4j
 @Service
@@ -40,272 +40,260 @@ import java.util.stream.Collectors;
 public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMapper, ApiParamMapping>
     implements IApiParamMappingService {
 
-    private final ApiParamMappingMapper apiParamMappingMapper;
-
+    /**
+     * 查询字段映射列表。
+     *
+     * @param param 查询参数
+     * @return 字段映射 DTO 列表
+     */
     @Override
     public List<ApiParamMappingDTO> listMappings(ApiParamMappingParam param) {
         if (param.getApiConfigId() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
-        
-        // 1. 构建查询条件
-        LambdaQueryWrapper<ApiParamMapping> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ApiParamMapping::getApiConfigId, param.getApiConfigId());
-        wrapper.eq(StringUtils.hasText(param.getDirection()), ApiParamMapping::getDirection, param.getDirection());
-        wrapper.like(StringUtils.hasText(param.getSourceFieldPath()), 
-                   ApiParamMapping::getSourceFieldPath, param.getSourceFieldPath());
-        wrapper.like(StringUtils.hasText(param.getTargetFieldPath()), 
-                   ApiParamMapping::getTargetFieldPath, param.getTargetFieldPath());
+        LambdaQueryWrapper<ApiParamMapping> wrapper = baseWrapper(param.getApiConfigId(), param.getOutboundTargetId(), param.getDirection());
+        wrapper.like(hasText(param.getSourceFieldPath()), ApiParamMapping::getSourceFieldPath, param.getSourceFieldPath());
+        wrapper.like(hasText(param.getTargetFieldPath()), ApiParamMapping::getTargetFieldPath, param.getTargetFieldPath());
         wrapper.orderByDesc(ApiParamMapping::getCreateTime);
-        
-        // 2. 查询列表
-        List<ApiParamMapping> mappings = this.list(wrapper);
-        
-        // 3. 转换为 DTO
-        return mappings.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+        return this.list(wrapper).stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    /**
+     * 根据 ID 查询字段映射详情。
+     *
+     * @param id 映射 ID
+     * @return 字段映射 DTO
+     */
     @Override
     public ApiParamMappingDTO getById(Long id) {
-        if (id == null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
-        }
-        
         ApiParamMapping mapping = this.baseMapper.selectById(id);
-        if (mapping == null || mapping.getDeleted()) {
+        if (mapping == null || Boolean.TRUE.equals(mapping.getDeleted())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_NOT_FOUND);
         }
-        
         return convertToDTO(mapping);
     }
 
+    /**
+     * 新增字段映射。
+     *
+     * @param dto 字段映射 DTO
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(ApiParamMappingDTO dto) {
-        // 1. 参数校验
-        if (dto.getApiConfigId() == null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
-        }
-        if (!StringUtils.hasText(dto.getSourceFieldPath())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_SOURCE_FIELD_REQUIRED);
-        }
-        if (!StringUtils.hasText(dto.getTargetFieldPath())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_TARGET_FIELD_REQUIRED);
-        }
-        if (!StringUtils.hasText(dto.getDirection())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
-        }
-        
-        // 2. 校验映射关系唯一性
-        ApiParamMapping existing = getMappingByFields(dto.getApiConfigId(), 
-                                                       dto.getSourceFieldPath(), 
-                                                       dto.getDirection());
+        validate(dto);
+        ApiParamMapping existing = getMappingByFields(dto.getApiConfigId(), dto.getOutboundTargetId(), dto.getSourceFieldPath(), dto.getDirection());
         if (existing != null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_EXISTS, 
-                                      dto.getSourceFieldPath(), dto.getDirection());
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_EXISTS,
+                dto.getSourceFieldPath(), dto.getDirection());
         }
-        
-        // 3. 构建实体
         ApiParamMapping mapping = convertToEntity(dto);
-        mapping.setCreateBy(getCurrentUsername());
-        mapping.setUpdateBy(getCurrentUsername());
-        
-        // 4. 插入数据库
-        boolean success = this.save(mapping);
-        if (!success) {
+        mapping.setCreateBy(resolveOperator());
+        mapping.setUpdateBy(resolveOperator());
+        if (!this.save(mapping)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_CREATE_FAILED);
         }
-        
-        log.info("创建参数映射成功：mappingId={}, source={}, target={}", 
-                 mapping.getId(), mapping.getSourceFieldPath(), mapping.getTargetFieldPath());
     }
 
+    /**
+     * 更新字段映射。
+     *
+     * @param dto 字段映射 DTO
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(ApiParamMappingDTO dto) {
         if (dto.getId() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
-        
-        // 1. 检查参数映射是否存在
-        ApiParamMapping existing = this.baseMapper.selectById(dto.getId());
-        if (existing == null || existing.getDeleted()) {
+        ApiParamMapping current = this.baseMapper.selectById(dto.getId());
+        if (current == null || Boolean.TRUE.equals(current.getDeleted())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_NOT_FOUND);
         }
-        
-        // 2. 参数校验
-        if (!StringUtils.hasText(dto.getSourceFieldPath())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_SOURCE_FIELD_REQUIRED);
+        validate(dto);
+        ApiParamMapping same = getMappingByFields(dto.getApiConfigId(), dto.getOutboundTargetId(), dto.getSourceFieldPath(), dto.getDirection());
+        if (same != null && !same.getId().equals(dto.getId())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_EXISTS,
+                dto.getSourceFieldPath(), dto.getDirection());
         }
-        if (!StringUtils.hasText(dto.getTargetFieldPath())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_TARGET_FIELD_REQUIRED);
-        }
-        if (!StringUtils.hasText(dto.getDirection())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
-        }
-        
-        // 3. 校验映射关系唯一性（排除自身）
-        ApiParamMapping sameMapping = getMappingByFields(dto.getApiConfigId(), 
-                                                          dto.getSourceFieldPath(), 
-                                                          dto.getDirection());
-        if (sameMapping != null && !sameMapping.getId().equals(dto.getId())) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_EXISTS, 
-                                      dto.getSourceFieldPath(), dto.getDirection());
-        }
-        
-        // 4. 构建更新实体
         ApiParamMapping mapping = convertToEntity(dto);
         mapping.setUpdateTime(LocalDateTime.now());
-        mapping.setUpdateBy(getCurrentUsername());
-        
-        // 5. 更新数据库
-        boolean success = this.updateById(mapping);
-        if (!success) {
+        mapping.setUpdateBy(resolveOperator());
+        if (!this.updateById(mapping)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_UPDATE_FAILED);
         }
-        
-        log.info("更新参数映射成功：mappingId={}, source={}, target={}", 
-                 mapping.getId(), mapping.getSourceFieldPath(), mapping.getTargetFieldPath());
     }
 
+    /**
+     * 逻辑删除字段映射。
+     *
+     * @param id 映射 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
-        if (id == null) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
-        }
-        
-        // 1. 检查参数映射是否存在
         ApiParamMapping mapping = this.baseMapper.selectById(id);
-        if (mapping == null || mapping.getDeleted()) {
+        if (mapping == null || Boolean.TRUE.equals(mapping.getDeleted())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_NOT_FOUND);
         }
-        
-        // 2. 逻辑删除
-        mapping.setDeleted(true);
+        mapping.setDeleted(Boolean.TRUE);
         mapping.setUpdateTime(LocalDateTime.now());
-        mapping.setUpdateBy(getCurrentUsername());
-        
-        boolean success = this.updateById(mapping);
-        if (!success) {
+        mapping.setUpdateBy(resolveOperator());
+        if (!this.updateById(mapping)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_MAPPING_DELETE_FAILED);
         }
-        
-        log.info("删除参数映射成功：mappingId={}", id);
     }
 
+    /**
+     * 批量删除字段映射。
+     *
+     * @param ids 映射 ID 列表
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDelete(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.DELETE_IDS_REQUIRED);
         }
-        
         for (Long id : ids) {
-            try {
-                delete(id);
-            } catch (I18nBusinessException e) {
-                log.warn("删除参数映射失败：ID={}, 原因：{}", id, e.getMessage());
-            }
+            delete(id);
         }
     }
 
+    /**
+     * 批量保存字段映射。
+     * <p>
+     * 当前接口、出站目标和方向下先清空旧映射，再逐条保存新映射。
+     * </p>
+     *
+     * @param apiConfigId      接口配置 ID
+     * @param outboundTargetId 出站目标 ID，可为空
+     * @param direction        参数方向
+     * @param dtos             字段映射列表
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSave(Long apiConfigId, String direction, List<ApiParamMappingDTO> dtos) {
+    public void batchSave(Long apiConfigId, Long outboundTargetId, String direction, List<ApiParamMappingDTO> dtos) {
         if (apiConfigId == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
         }
         if (!StringUtils.hasText(direction)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
         }
-        
-        // 1. 删除该接口配置和方向下的所有映射关系
-        LambdaQueryWrapper<ApiParamMapping> deleteWrapper = new LambdaQueryWrapper<>();
-        deleteWrapper.eq(ApiParamMapping::getApiConfigId, apiConfigId);
-        deleteWrapper.eq(ApiParamMapping::getDirection, direction);
-        this.remove(deleteWrapper);
-        
-        log.info("已删除接口配置{}方向{}的所有映射关系", apiConfigId, direction);
-        
-        // 2. 批量插入新映射
-        if (dtos != null && !dtos.isEmpty()) {
-            for (ApiParamMappingDTO dto : dtos) {
-                try {
-                    // 为每个映射设置公共字段
-                    dto.setApiConfigId(apiConfigId);
-                    dto.setDirection(direction);
-                    
-                    // 校验必填字段
-                    if (!StringUtils.hasText(dto.getSourceFieldPath()) || 
-                        !StringUtils.hasText(dto.getTargetFieldPath())) {
-                        log.warn("跳过无效映射：source={}, target={}", 
-                                dto.getSourceFieldPath(), dto.getTargetFieldPath());
-                        continue;
-                    }
-                    
-                    // 创建映射
-                    create(dto);
-                } catch (BusinessException e) {
-                    log.warn("创建映射失败：source={}, target={}, 原因：{}", 
-                            dto.getSourceFieldPath(), dto.getTargetFieldPath(), e.getMessage());
-                }
-            }
-            
-            log.info("批量保存参数映射成功：apiConfigId={}, direction={}, 数量={}", 
-                     apiConfigId, direction, dtos.size());
+        LambdaQueryWrapper<ApiParamMapping> wrapper = baseWrapper(apiConfigId, outboundTargetId, direction);
+        this.remove(wrapper);
+        if (dtos == null || dtos.isEmpty()) {
+            return;
+        }
+        for (ApiParamMappingDTO dto : dtos) {
+            dto.setApiConfigId(apiConfigId);
+            dto.setOutboundTargetId(outboundTargetId);
+            dto.setDirection(direction);
+            create(dto);
         }
     }
 
     /**
-     * 根据字段查询映射关系
-     * <p>
-     * 用于校验映射关系的唯一性
-     * </p>
+     * 构建字段映射基础查询条件。
      *
-     * @param apiConfigId 接口配置 ID
-     * @param sourceFieldPath 源字段路径
-     * @param direction 映射方向
-     * @return 映射关系，不存在返回 null
+     * @param apiConfigId      接口配置 ID
+     * @param outboundTargetId 出站目标 ID，可为空
+     * @param direction        参数方向
+     * @return 查询包装器
      */
-    private ApiParamMapping getMappingByFields(Long apiConfigId, String sourceFieldPath, String direction) {
+    private LambdaQueryWrapper<ApiParamMapping> baseWrapper(Long apiConfigId, Long outboundTargetId, String direction) {
         LambdaQueryWrapper<ApiParamMapping> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ApiParamMapping::getApiConfigId, apiConfigId);
+        wrapper.eq(ApiParamMapping::getDeleted, false);
+        wrapper.eq(hasText(direction), ApiParamMapping::getDirection, direction);
+        if (outboundTargetId == null) {
+            wrapper.isNull(ApiParamMapping::getOutboundTargetId);
+        } else {
+            wrapper.eq(ApiParamMapping::getOutboundTargetId, outboundTargetId);
+        }
+        return wrapper;
+    }
+
+    /**
+     * 根据源字段路径查询映射。
+     *
+     * @param apiConfigId      接口配置 ID
+     * @param outboundTargetId 出站目标 ID，可为空
+     * @param sourceFieldPath  源字段路径
+     * @param direction        参数方向
+     * @return 字段映射实体
+     */
+    private ApiParamMapping getMappingByFields(Long apiConfigId, Long outboundTargetId, String sourceFieldPath, String direction) {
+        LambdaQueryWrapper<ApiParamMapping> wrapper = baseWrapper(apiConfigId, outboundTargetId, direction);
         wrapper.eq(ApiParamMapping::getSourceFieldPath, sourceFieldPath);
-        wrapper.eq(ApiParamMapping::getDirection, direction);
-        wrapper.select(ApiParamMapping::getId, ApiParamMapping::getSourceFieldPath);
-        
+        wrapper.last("LIMIT 1");
         return this.getOne(wrapper);
     }
 
     /**
-     * DTO 转 Entity
+     * 校验字段映射参数。
+     *
+     * @param dto 字段映射 DTO
      */
-    private ApiParamMapping convertToEntity(ApiParamMappingDTO dto) {
-        ApiParamMapping mapping = new ApiParamMapping();
-        BeanUtils.copyProperties(dto, mapping);
-        return mapping;
+    private void validate(ApiParamMappingDTO dto) {
+        if (dto.getApiConfigId() == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.ID_REQUIRED);
+        }
+        if (!hasText(dto.getSourceFieldPath())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_SOURCE_FIELD_REQUIRED);
+        }
+        if (!hasText(dto.getTargetFieldPath())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_TARGET_FIELD_REQUIRED);
+        }
+        if (!hasText(dto.getDirection())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
+        }
     }
 
     /**
-     * Entity 转 DTO
+     * DTO 转实体。
+     *
+     * @param dto 字段映射 DTO
+     * @return 字段映射实体
      */
-    private ApiParamMappingDTO convertToDTO(ApiParamMapping mapping) {
+    private ApiParamMapping convertToEntity(ApiParamMappingDTO dto) {
+        ApiParamMapping entity = new ApiParamMapping();
+        BeanUtils.copyProperties(dto, entity);
+        return entity;
+    }
+
+    /**
+     * 实体转 DTO。
+     *
+     * @param entity 字段映射实体
+     * @return 字段映射 DTO
+     */
+    private ApiParamMappingDTO convertToDTO(ApiParamMapping entity) {
         ApiParamMappingDTO dto = new ApiParamMappingDTO();
-        BeanUtils.copyProperties(mapping, dto);
+        BeanUtils.copyProperties(entity, dto);
         return dto;
     }
 
     /**
-     * 获取当前登录用户
+     * 解析当前操作人。
+     *
+     * @return 当前登录 ID，未登录时返回 system
      */
-    private String getCurrentUsername() {
+    private String resolveOperator() {
         try {
             return StpUtil.getLoginIdAsString();
-        } catch (NotLoginException e) {
+        } catch (NotLoginException ex) {
             return "system";
         }
+    }
+
+    /**
+     * 判断文本是否非空。
+     *
+     * @param value 文本值
+     * @return true 表示非空
+     */
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

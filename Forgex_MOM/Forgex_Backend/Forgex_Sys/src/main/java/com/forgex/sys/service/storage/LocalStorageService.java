@@ -21,7 +21,7 @@ import java.util.UUID;
 public class LocalStorageService implements FileStorageService {
     private static final String KEY_FILE_UPLOAD = "file.upload.settings";
 
-    @Value("${file.upload.path:./uploads}")
+    @Value("${file.upload.path:C:/forgex/data/uploads}")
     private String uploadPath;
 
     @Value("${file.access.prefix:/files}")

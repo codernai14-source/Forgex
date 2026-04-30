@@ -24,24 +24,19 @@ class LanguageRepository @Inject constructor(
         val defaultLanguage = loadDefaultLanguage().getOrNull()
             ?: availableLanguages.firstOrNull { it.isDefault }
             ?: availableLanguages.firstOrNull()
-            ?: LanguageType(
-                langCode = AppLanguage.DEFAULT_LANGUAGE_TAG,
-                langName = "简体中文",
-                langNameEn = "Simplified Chinese",
-                enabled = true,
-                isDefault = true
-            )
+            ?: fallbackDefaultLanguage()
+        val normalizedDefaultLanguage = defaultLanguage.copy(
+            langCode = AppLanguage.normalize(defaultLanguage.langCode)
+        )
 
         val resolvedTag = when (storedMode) {
             LanguageMode.MANUAL -> {
                 val manual = storedTag?.let(AppLanguage::normalize)
                 availableLanguages.firstOrNull { it.langCode == manual }?.langCode
-                    ?: defaultLanguage.langCode
+                    ?: normalizedDefaultLanguage.langCode
             }
             LanguageMode.FOLLOW_SYSTEM -> {
-                val systemLanguage = AppLanguage.currentSystemLanguage()
-                availableLanguages.firstOrNull { it.langCode == systemLanguage }?.langCode
-                    ?: defaultLanguage.langCode
+                normalizedDefaultLanguage.langCode
             }
         }
 
@@ -50,7 +45,7 @@ class LanguageRepository @Inject constructor(
             languageMode = storedMode,
             languageTag = resolvedTag,
             availableLanguages = availableLanguages,
-            defaultLanguage = defaultLanguage
+            defaultLanguage = normalizedDefaultLanguage
         )
     }
 
@@ -81,7 +76,8 @@ class LanguageRepository @Inject constructor(
     suspend fun saveSelection(mode: LanguageMode, languageTag: String?) {
         sessionStore.saveLanguageSelection(mode, languageTag)
         val resolvedTag = if (mode == LanguageMode.FOLLOW_SYSTEM) {
-            AppLanguage.currentSystemLanguage()
+            loadDefaultLanguage().getOrNull()?.langCode
+                ?: AppLanguage.DEFAULT_LANGUAGE_TAG
         } else {
             AppLanguage.normalize(languageTag)
         }
@@ -90,14 +86,7 @@ class LanguageRepository @Inject constructor(
 
     private fun defaultAvailableLanguages(): List<LanguageType> {
         return listOf(
-            LanguageType(
-                langCode = "zh-CN",
-                langName = "简体中文",
-                langNameEn = "Simplified Chinese",
-                enabled = true,
-                isDefault = true,
-                orderNum = 1
-            ),
+            fallbackDefaultLanguage(),
             LanguageType(
                 langCode = "en-US",
                 langName = "English",
@@ -106,6 +95,17 @@ class LanguageRepository @Inject constructor(
                 isDefault = false,
                 orderNum = 2
             )
+        )
+    }
+
+    private fun fallbackDefaultLanguage(): LanguageType {
+        return LanguageType(
+            langCode = AppLanguage.DEFAULT_LANGUAGE_TAG,
+            langName = "\u7B80\u4F53\u4E2D\u6587",
+            langNameEn = "Simplified Chinese",
+            enabled = true,
+            isDefault = true,
+            orderNum = 1
         )
     }
 }

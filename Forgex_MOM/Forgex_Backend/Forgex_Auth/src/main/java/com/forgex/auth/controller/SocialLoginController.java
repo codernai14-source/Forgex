@@ -64,7 +64,7 @@ public class SocialLoginController {
      * 
      * @param platform 第三方平台类型，如"wechat"、"dingtalk"
      * @return 包含授权 URL 的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 平台类型不支持时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 平台类型不支持时抛出
      * @see SocialLoginService#buildAuthorizeUrl(String)
      */
     @GetMapping("/authorizeUrl")

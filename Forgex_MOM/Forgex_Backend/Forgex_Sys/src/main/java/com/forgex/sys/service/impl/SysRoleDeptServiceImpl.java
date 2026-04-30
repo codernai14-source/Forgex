@@ -17,8 +17,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.RoleGrantDTO;
 import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysRole;
@@ -33,6 +34,7 @@ import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.ISysRoleDeptService;
+import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -75,7 +77,7 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
     @Override
     public Page<RoleGrantVO> getGrantedDepartments(Page<SysRoleDept> page, RoleGrantQueryDTO query) {
         if (query == null || query.getRoleId() == null || query.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = query.getRoleId();
@@ -89,7 +91,7 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, "角色不存在或不属于当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         LambdaQueryWrapper<SysRoleDept> relQw = new LambdaQueryWrapper<SysRoleDept>()
@@ -173,10 +175,10 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
     @Transactional(rollbackFor = Exception.class)
     public void grantDepartments(RoleGrantDTO grantDTO) {
         if (grantDTO == null || grantDTO.getRoleId() == null || grantDTO.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
         if (CollectionUtils.isEmpty(grantDTO.getDepartmentIds())) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = grantDTO.getRoleId();
@@ -187,12 +189,12 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, "角色不存在或不属于当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         List<SysDepartment> departments = departmentMapper.selectByIds(grantDTO.getDepartmentIds());
         if (departments == null || departments.size() != grantDTO.getDepartmentIds().size()) {
-            throw new BusinessException(400, "部分部门不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_GRANT_PART_DEPTS_NOT_FOUND);
         }
 
         List<SysRoleDept> existsRels = roleDeptMapper.selectList(new LambdaQueryWrapper<SysRoleDept>()
@@ -254,10 +256,10 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
     @Transactional(rollbackFor = Exception.class)
     public void revokeDepartments(RoleGrantDTO revokeDTO) {
         if (revokeDTO == null || revokeDTO.getRoleId() == null || revokeDTO.getTenantId() == null) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
         if (CollectionUtils.isEmpty(revokeDTO.getDepartmentIds())) {
-            throw new BusinessException(400, CommonPrompt.BAD_REQUEST.getDefaultTemplate().replace("{0}", ""));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "");
         }
 
         Long roleId = revokeDTO.getRoleId();
@@ -268,12 +270,12 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
                 .eq(SysRole::getTenantId, tenantId)
                 .eq(SysRole::getDeleted, false));
         if (role == null) {
-            throw new BusinessException(400, "角色不存在或不属于当前租户");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_INVALID_OR_CROSS_TENANT_SINGLE);
         }
 
         List<SysDepartment> departments = departmentMapper.selectByIds(revokeDTO.getDepartmentIds());
         if (departments == null || departments.size() != revokeDTO.getDepartmentIds().size()) {
-            throw new BusinessException(400, "部分部门不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ROLE_GRANT_PART_DEPTS_NOT_FOUND);
         }
 
         for (SysDepartment dept : departments) {

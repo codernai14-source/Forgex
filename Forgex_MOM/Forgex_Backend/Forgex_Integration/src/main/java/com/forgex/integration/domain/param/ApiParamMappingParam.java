@@ -20,6 +20,8 @@ public class ApiParamMappingParam {
      */
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     /**
      * 映射方向：INBOUND-外对内，OUTBOUND-内调外
      */

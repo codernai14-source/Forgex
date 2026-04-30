@@ -70,6 +70,13 @@ public class SysUserVO extends BaseEntity {
     /** 职位名称（关联查询结果） */
     private String positionName;
 
+    private Long employeeId;
+
+    @DictI18n(nodePathConst = "user_source", targetField = "userSourceText")
+    private Integer userSource;
+
+    private String userSourceText;
+
     /** 当前租户下角色ID列表 */
     private List<Long> roleIds;
 

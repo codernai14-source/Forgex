@@ -5,9 +5,7 @@
       table-code="TableConfigTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
-      :show-column-setting="false"
       :row-selection="{
         selectedRowKeys,
         onChange: handleSelectionChange
@@ -21,6 +19,7 @@
             <a-radio-button :value="true">公共配置</a-radio-button>
           </a-radio-group>
           <a-button
+            data-guide-id="sys-table-config-pull-public"
             v-if="!publicConfig"
             v-permission="'sys:tableConfig:add'"
             @click="handlePullPublic"
@@ -28,6 +27,7 @@
             拉取公共配置
           </a-button>
           <a-button
+            data-guide-id="sys-table-config-add"
             v-permission="'sys:tableConfig:add'"
             type="primary"
             @click="openAddDialog"
@@ -35,6 +35,7 @@
             {{ t('system.tableConfig.add') }}
           </a-button>
           <a-button
+            data-guide-id="sys-table-config-batch-delete"
             v-permission="'sys:tableConfig:delete'"
             danger
             :disabled="selectedRowKeys.length === 0"
@@ -96,7 +97,6 @@ import {
   getTableConfigList,
   pullPublicTableConfig,
   toggleTableConfigStatus,
-  type FxTableConfig,
   type TableConfigItem,
 } from '@/api/system/tableConfig'
 import { useDict } from '@/hooks/useDict'
@@ -119,32 +119,6 @@ const dictOptions = computed(() => ({
     { label: t('system.tableConfig.tableTypeLazy'), value: 'LAZY' },
     { label: t('system.tableConfig.tableTypeTree'), value: 'TREE' },
   ],
-}))
-
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'TableConfigTable',
-  tableName: t('system.tableConfig.tableName'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'tableCode', title: t('system.tableConfig.tableCode'), width: 180, align: 'left', queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'tableNameI18nJson', title: t('system.tableConfig.tableName'), width: 220, align: 'left', ellipsis: true, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'tableType', title: t('system.tableConfig.tableType'), width: 120, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq', dictCode: 'tableType' },
-    { field: 'rowKey', title: t('system.tableConfig.rowKey'), width: 120, align: 'left' },
-    { field: 'defaultPageSize', title: t('system.tableConfig.defaultPageSize'), width: 120, align: 'center' },
-    { field: 'enabled', title: t('system.tableConfig.enabled'), width: 110, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
-    { field: 'createBy', title: t('system.user.createBy'), width: 120, align: 'left' },
-    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 150, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'tableCode', label: t('system.tableConfig.tableCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'tableName', label: t('system.tableConfig.tableName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'tableType', label: t('system.tableConfig.tableType'), queryType: 'select', queryOperator: 'eq', dictCode: 'tableType' },
-    { field: 'enabled', label: t('system.tableConfig.enabled'), queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
-  ],
-  version: 1,
 }))
 
 const rowKey = (record: TableConfigItem) => record.id ?? record.tableCode
@@ -196,6 +170,10 @@ function openAddDialog() {
 }
 
 function openEditDialog(record: TableConfigItem) {
+  if (!record.id) {
+    message.error('当前记录缺少配置ID，无法加载编辑详情，请先刷新列表或确认后端列表接口已返回id')
+    return
+  }
   isEdit.value = true
   currentConfigId.value = record.id
   dialogVisible.value = true

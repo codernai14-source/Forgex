@@ -2,31 +2,33 @@ package com.forgex.basic.customer.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.basic.customer.domain.dto.CustomerDTO;
+import com.forgex.basic.customer.domain.param.CustomerApprovalStartParam;
 import com.forgex.basic.customer.domain.param.CustomerPageParam;
+import com.forgex.basic.customer.domain.param.CustomerSaveParam;
+import com.forgex.basic.customer.domain.param.CustomerWorkflowCallbackParam;
 import com.forgex.basic.customer.service.ICustomerService;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * 客户管理 Controller
- * <p>
- * 提供客户管理的 HTTP 接口，包括客户的分页查询、详情获取、列表查询等操作。
- * 所有接口统一使用 POST 方法，参数统一封装为对象。
- * </p>
+ * 客户主数据控制器。
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-20
- * @see ICustomerService
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-04-27
  */
-@Tag(name = "客户管理", description = "客户管理接口")
+@Tag(name = "客户主数据", description = "客户主数据管理接口")
 @RestController
 @RequestMapping("/basic/customer")
 @RequiredArgsConstructor
@@ -34,55 +36,64 @@ public class CustomerController {
 
     private final ICustomerService customerService;
 
-    /**
-     * 分页查询客户列表
-     * <p>
-     * 根据查询条件分页获取客户列表。
-     * </p>
-     *
-     * @param param 查询参数，包含分页信息和筛选条件
-     * @return 客户分页列表
-     */
-    @Operation(summary = "分页查询客户列表", description = "根据条件分页查询客户列表")
+    @Operation(summary = "分页查询客户")
     @RequirePerm("basic:customer:query")
     @PostMapping("/page")
-    public R<Page<CustomerDTO>> page(@RequestBody CustomerPageParam param) {
-        Page<CustomerDTO> page = customerService.page(param);
-        return R.ok(page);
+    public R<Page<CustomerDTO>> page(@RequestBody(required = false) CustomerPageParam param) {
+        return R.ok(customerService.page(param));
     }
 
-    /**
-     * 查询客户列表（不分页）
-     * <p>
-     * 查询所有启用的客户列表，用于下拉框选择。
-     * 用于下拉框选择时不需要特殊权限
-     * </p>
-     *
-     * @param param 查询参数，包含筛选条件
-     * @return 客户列表
-     */
-    @Operation(summary = "查询客户列表", description = "查询所有启用的客户列表，用于下拉框选择")
+    @Operation(summary = "查询客户列表")
     @PostMapping("/list")
     public R<List<CustomerDTO>> list(@RequestBody(required = false) CustomerPageParam param) {
-        List<CustomerDTO> list = customerService.list(param);
-        return R.ok(list);
+        return R.ok(customerService.list(param));
     }
 
-    /**
-     * 获取客户详情
-     * <p>
-     * 根据客户 ID 获取详细信息。
-     * </p>
-     *
-     * @param params 参数，包含客户 ID
-     * @return 客户详情
-     */
-    @Operation(summary = "获取客户详情", description = "根据 ID 获取客户详细信息")
+    @Operation(summary = "获取客户详情")
     @RequirePerm("basic:customer:query")
     @PostMapping("/detail")
     public R<CustomerDTO> detail(@RequestBody Map<String, Object> params) {
-        Long id = (Long) params.get("id");
-        CustomerDTO detail = customerService.getDetailById(id);
-        return R.ok(detail);
+        return R.ok(customerService.getDetailById(Long.valueOf(String.valueOf(params.get("id")))));
+    }
+
+    @Operation(summary = "新增客户")
+    @RequirePerm("basic:customer:add")
+    @PostMapping("/create")
+    public R<Long> create(@RequestBody CustomerSaveParam param) {
+        return R.ok(CommonPrompt.CREATE_SUCCESS, customerService.create(param));
+    }
+
+    @Operation(summary = "修改客户")
+    @RequirePerm("basic:customer:edit")
+    @PostMapping("/update")
+    public R<Boolean> update(@RequestBody CustomerSaveParam param) {
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, customerService.update(param));
+    }
+
+    @Operation(summary = "删除客户")
+    @RequirePerm("basic:customer:delete")
+    @PostMapping("/delete")
+    public R<Boolean> delete(@RequestBody Map<String, Object> params) {
+        return R.ok(CommonPrompt.DELETE_SUCCESS, customerService.delete(Long.valueOf(String.valueOf(params.get("id")))));
+    }
+
+    @Operation(summary = "创建客户租户")
+    @RequirePerm("basic:customer:generateTenant")
+    @PostMapping("/generate-tenant")
+    public R<String> generateTenant(@RequestBody Map<String, Object> params) {
+        return R.ok(CommonPrompt.CREATE_SUCCESS, customerService.generateTenant(Long.valueOf(String.valueOf(params.get("id")))));
+    }
+
+    @Operation(summary = "发起客户审批")
+    @RequirePerm("basic:customer:approval")
+    @PostMapping("/approval/start")
+    public R<Long> startApproval(@RequestBody CustomerApprovalStartParam param) {
+        return R.ok(CommonPrompt.SUBMIT_SUCCESS, customerService.startApproval(param));
+    }
+
+    @Operation(summary = "工作流回调：客户审批")
+    @PostMapping("/workflow/callback")
+    public R<Boolean> workflowCallback(@RequestBody CustomerWorkflowCallbackParam param) {
+        return R.ok(customerService.handleWorkflowCallback(param));
     }
 }

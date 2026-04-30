@@ -4,21 +4,20 @@
       ref="tableRef"
       table-code="CodegenConfigTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       :show-column-setting="false"
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openAddDrawer">
+          <a-button data-guide-id="sys-codegen-add" type="primary" @click="openAddDrawer">
             {{ t('system.codegen.add') }}
           </a-button>
         </a-space>
       </template>
 
       <template #pageType="{ record }">
-        <a-tag :color="record.pageType === 'MASTER_DETAIL' ? 'blue' : 'green'">
-          {{ record.pageType === 'MASTER_DETAIL' ? t('system.codegen.pageTypeMasterDetail') : t('system.codegen.pageTypeSingle') }}
+        <a-tag :color="pageTypeColorMap[record.pageType] || 'default'">
+          {{ pageTypeLabel(record.pageType) }}
         </a-tag>
       </template>
 
@@ -47,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
@@ -55,7 +54,6 @@ import CodegenConfigDrawer from './components/CodegenConfigDrawer.vue'
 import CodegenPreviewModal from './components/CodegenPreviewModal.vue'
 import { deleteCodegenConfig, getCodegenConfigPage } from '@/api/system/codegenConfig'
 import { downloadCodegenZipByConfigId, previewCodegenByConfigId, type CodegenPreviewFile } from '@/api/system/codegen'
-import type { FxTableConfig } from '@/api/system/tableConfig'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -65,34 +63,12 @@ const previewVisible = ref(false)
 const currentId = ref<number>()
 const previewTitle = ref('')
 const previewFiles = ref<CodegenPreviewFile[]>([])
-
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'CodegenConfigTable',
-  tableName: t('system.codegen.listTitle'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'configName', title: t('system.codegen.columns.configName'), width: 180, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'pageType', title: t('system.codegen.columns.pageType'), width: 120, align: 'center', queryable: true, queryType: 'select', queryOperator: 'eq' },
-    { field: 'moduleName', title: t('system.codegen.columns.moduleName'), width: 120, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'bizName', title: t('system.codegen.columns.bizName'), width: 140, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'entityName', title: t('system.codegen.columns.entityName'), width: 140 },
-    { field: 'mainTableName', title: t('system.codegen.columns.mainTableName'), width: 160, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'datasourceName', title: t('system.codegen.columns.datasourceName'), width: 160 },
-    { field: 'author', title: t('system.codegen.columns.author'), width: 120 },
-    { field: 'updateTime', title: t('system.codegen.columns.updateTime'), width: 180, align: 'center' },
-    { field: 'lastGenerateTime', title: t('system.codegen.columns.lastGenerateTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 240, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'configName', label: t('system.codegen.columns.configName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'moduleName', label: t('system.codegen.columns.moduleName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'bizName', label: t('system.codegen.columns.bizName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'mainTableName', label: t('system.codegen.columns.mainTableName'), queryType: 'input', queryOperator: 'like' },
-  ],
-  version: 1,
-}))
+const pageTypeColorMap: Record<string, string> = {
+  SINGLE: 'green',
+  MASTER_DETAIL: 'blue',
+  TREE_SINGLE: 'gold',
+  TREE_DOUBLE: 'cyan',
+}
 
 async function handleRequest(payload: {
   page: { current: number; pageSize: number }
@@ -163,6 +139,19 @@ function handleDelete(id?: number) {
 
 function handleDrawerSuccess() {
   tableRef.value?.refresh?.()
+}
+
+function pageTypeLabel(pageType?: string) {
+  switch (pageType) {
+    case 'MASTER_DETAIL':
+      return t('system.codegen.pageTypeMasterDetail')
+    case 'TREE_SINGLE':
+      return t('system.codegen.pageTypeTreeSingle')
+    case 'TREE_DOUBLE':
+      return t('system.codegen.pageTypeTreeDouble')
+    default:
+      return t('system.codegen.pageTypeSingle')
+  }
 }
 </script>
 

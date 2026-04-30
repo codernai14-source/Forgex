@@ -4,7 +4,6 @@
       ref="tableRef"
       table-code="SysFileRecordTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       :show-column-setting="false"
     >
@@ -43,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
@@ -52,32 +51,6 @@ import { getFileRecordPage, type SysFileRecordItem } from '@/api/system/file'
 const { t } = useI18n({ useScope: 'global' })
 
 const tableRef = ref()
-
-const dynamicTableConfig = computed(() => ({
-  tableCode: 'SysFileRecordTable',
-  tableName: t('system.file.title'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'moduleName', title: t('system.file.moduleName'), width: 150, align: 'left', queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'moduleCode', title: t('system.file.moduleCode'), width: 150, align: 'left', queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'originalName', title: t('system.file.fileName'), minWidth: 220, align: 'left', ellipsis: true, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'fileType', title: t('system.file.fileType'), width: 120, align: 'center', queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'accessUrl', title: t('system.file.fileUrl'), minWidth: 320, align: 'left', ellipsis: true },
-    { field: 'fileSize', title: t('system.file.fileSize'), width: 120, align: 'right' },
-    { field: 'createBy', title: t('system.file.uploadBy'), width: 120, align: 'left' },
-    { field: 'createTime', title: t('system.file.uploadTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 150, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'moduleCode', label: t('system.file.moduleCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'moduleName', label: t('system.file.moduleName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'originalName', label: t('system.file.fileName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'fileType', label: t('system.file.fileType'), queryType: 'input', queryOperator: 'like' },
-  ],
-  version: 1,
-}))
 
 async function handleRequest(payload: {
   page: { current: number; pageSize: number }

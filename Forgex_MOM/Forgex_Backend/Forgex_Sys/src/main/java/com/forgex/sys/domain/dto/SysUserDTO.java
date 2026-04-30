@@ -89,6 +89,10 @@ public class SysUserDTO {
      * 职位ID
      */
     private Long positionId;
+
+    private Long employeeId;
+
+    private Integer userSource;
     
     /**
      * 职位名称（关联查询）
@@ -104,7 +108,22 @@ public class SysUserDTO {
      * 创建时间
      */
     private LocalDateTime createTime;
-    
+
+    /**
+     * 最后登录时间
+     */
+    private LocalDateTime lastLoginTime;
+
+    /**
+     * 最后登录IP
+     */
+    private String lastLoginIp;
+
+    /**
+     * 最后登录地区
+     */
+    private String lastLoginRegion;
+
     /**
      * 更新时间
      */

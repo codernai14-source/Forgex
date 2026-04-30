@@ -1,10 +1,7 @@
 .approval-dashboard {
-  padding: 16px;
   min-height: 100%;
   box-sizing: border-box;
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--fx-primary, #1677ff) 10%, transparent), transparent 34%),
-    linear-gradient(180deg, var(--fx-bg-layout, #f8fafc) 0%, color-mix(in srgb, var(--fx-bg-layout, #f8fafc) 92%, var(--fx-bg-container, #ffffff)) 100%);
+  background: transparent;
 
   .dashboard-header {
     margin-bottom: 20px;
@@ -30,10 +27,17 @@
     border: 1px solid var(--fx-border-color, #e5e7eb);
     background: color-mix(in srgb, var(--fx-bg-container, #ffffff) 96%, white);
     box-shadow: var(--fx-shadow-secondary, 0 12px 28px rgba(15, 23, 42, 0.08));
+    height: 100%;
+    overflow: hidden;
+
+    :deep(.ant-card-body) {
+      height: calc(100% - 57px);
+      overflow: auto;
+    }
   }
 
   .section-card {
-    min-height: 100%;
+    min-height: 0;
   }
 
   .section-card-chart {
@@ -41,7 +45,7 @@
   }
 
   .dash-card {
-    min-height: 320px;
+    min-height: 0;
   }
 
   .dash-card-pending {
@@ -77,11 +81,12 @@
 
   .chart-block {
     width: 100%;
-    height: 320px;
+    height: calc(100% - 48px);
+    min-height: 220px;
   }
 
   .chart-block-pie {
-    height: 340px;
+    min-height: 240px;
   }
 
   .section-empty {

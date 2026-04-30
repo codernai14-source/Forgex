@@ -79,7 +79,7 @@ public class TemplateOptionProviderRegistry {
      *
      * @param code Provider 编码
      * @return Provider 实例
-     * @throws BusinessException 当 Provider 不存在时抛出
+     * @throws I18nBusinessException 当 Provider 不存在时抛出
      * @see TemplateOptionProvider
      */
     public TemplateOptionProvider getProvider(String code) {
@@ -100,7 +100,7 @@ public class TemplateOptionProviderRegistry {
      * @param context 上下文参数，包含当前已填写的字段值
      * @param dataSourceValue 数据源值，Provider 特定的配置参数
      * @return 选项列表
-     * @throws BusinessException 当 Provider 不存在时抛出
+     * @throws I18nBusinessException 当 Provider 不存在时抛出
      * @see TemplateOption
      * @see TemplateOptionContext
      */

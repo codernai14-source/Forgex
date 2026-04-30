@@ -1,5 +1,5 @@
 /**
- * 鐢ㄦ埛淇℃伅 Store
+ * 用户信息 Store
  * 
  * @description 绠＄悊鐢ㄦ埛鐧诲綍鐘舵€併€佺敤鎴蜂俊鎭瓑
  */
@@ -24,7 +24,7 @@ export const useUserStore = defineStore('user', () => {
   // ============ State ============
   
   /**
-   * 鐢ㄦ埛淇℃伅
+   * 用户信息
    */
   const userInfo = ref<UserInfo | null>(null)
   
@@ -57,7 +57,7 @@ export const useUserStore = defineStore('user', () => {
   }
   
   /**
-   * 鏇存柊鐢ㄦ埛淇℃伅
+   * 更新用户信息
    */
   function updateUserInfo(info: Partial<UserInfo>) {
     if (!userInfo.value) {
@@ -114,20 +114,20 @@ export const useUserStore = defineStore('user', () => {
           }
         }
       } catch (error) {
-        console.error('鑾峰彇鐢ㄦ埛淇℃伅澶辫触:', error)
+        console.error('获取用户信息失败:', error)
       }
     }
   }
   
   /**
-   * 鐢ㄦ埛鐧诲嚭
+   * 用户登出
    */
   async function logout() {
     try {
       // 璋冪敤鍚庣鐧诲嚭鎺ュ彛
       await logoutApi()
     } catch (error) {
-      console.error('鐧诲嚭鎺ュ彛璋冪敤澶辫触:', error)
+      console.error('登出接口调用失败:', error)
     } finally {
       // 娓呴櫎鐢ㄦ埛淇℃伅
       clearUserInfo()
@@ -136,7 +136,7 @@ export const useUserStore = defineStore('user', () => {
   
   // ============ 鍒濆鍖?============
   
-  // 椤甸潰鍔犺浇鏃跺皾璇曚粠 sessionStorage 鎭㈠
+  // 页面加载时尝试从 sessionStorage 鎭㈠
   restoreFromSession()
   
   return {

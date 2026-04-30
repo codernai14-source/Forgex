@@ -12,6 +12,7 @@
       <template #toolbar>
         <a-space>
           <a-button
+            data-guide-id="sys-tenant-add"
             type="primary"
             @click="openAdd"
             v-permission="'sys:tenant:add'"
@@ -164,7 +165,11 @@
 
         <a-form-item label="Logo" name="logo">
           <div class="tenant-logo-upload">
-            <AvatarUpload v-model="formData.logo" />
+            <AvatarUpload
+              v-model="formData.logo"
+              module-code="sys_tenant_logo"
+              module-name="租户Logo"
+            />
           </div>
         </a-form-item>
 

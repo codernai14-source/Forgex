@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 public class FileServiceImpl implements FileService {
     private static final String KEY_FILE_UPLOAD = "file.upload.settings";
 
-    @Value("${file.upload.path:./uploads}")
+    @Value("${file.upload.path:C:/forgex/data/uploads}")
     private String uploadPath;
 
     @jakarta.annotation.Resource

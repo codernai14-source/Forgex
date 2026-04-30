@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="${ctx.packageName}.mapper.${ctx.entityName}Mapper">
+
+    <select id="selectTreeList" resultType="${ctx.packageName}.domain.entity.${ctx.treeEntityName}">
+        SELECT *
+        FROM ${ctx.treeTableName}
+        WHERE deleted = 0
+        ORDER BY ${ctx.treeSortColumn!ctx.treePkColumn}
+    </select>
+
+</mapper>

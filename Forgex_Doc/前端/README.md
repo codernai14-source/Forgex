@@ -23,6 +23,7 @@
 | 部门树与组织选择 | `src/components/system/DeptTree.vue` | [实现逻辑](./组件与页面/部门树与组织选择实现逻辑.md) | [使用方式](./组件与页面/部门树与组织选择使用方式.md) |
 | 图标选择器 | `src/components/common/IconPicker.vue` | [实现逻辑](./组件与页面/图标选择器实现逻辑.md) | [使用方式](./组件与页面/图标选择器使用方式.md) |
 | 消息模板预览与接收人选择 | `TemplatePreview.vue` / `ReceiverSelector.vue` | [实现逻辑](./组件与页面/消息模板预览与接收人选择实现逻辑.md) | [使用方式](./组件与页面/消息模板预览与接收人选择使用方式.md) |
+| 系统页面引导 | `FxGuideTour.vue` / `systemPageGuides.ts` | [实现逻辑](./组件与页面/系统页面引导实现逻辑.md) | [使用方式](./组件与页面/系统页面引导使用方式.md) |
 | 多语言输入 | `I18nInput.vue` / `I18nJsonEditor.vue` | [实现逻辑](./国际化与布局/多语言输入实现逻辑.md) | [使用方式](./国际化与布局/多语言输入使用方式.md) |
 | 个人首页与可拖拽布局 | `PersonalHomepageDesigner.vue` | [实现逻辑](./国际化与布局/个人首页与可拖拽布局实现逻辑.md) | [使用方式](./国际化与布局/个人首页与可拖拽布局使用方式.md) |
 

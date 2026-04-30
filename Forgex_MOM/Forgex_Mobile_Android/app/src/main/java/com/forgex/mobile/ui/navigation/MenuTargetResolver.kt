@@ -1,18 +1,26 @@
 package com.forgex.mobile.ui.navigation
 
 import android.net.Uri
+import com.forgex.mobile.feature.basic.navigation.BASIC_ROUTE
 import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeMenuItem
 import com.forgex.mobile.feature.home.BASIC_INFO_TEST_ROUTE
+import com.forgex.mobile.feature.integration.navigation.INTEGRATION_ROUTE
+import com.forgex.mobile.feature.label.navigation.LABEL_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_UNREAD_ROUTE
+import com.forgex.mobile.feature.production.navigation.PRODUCTION_ROUTE
 import com.forgex.mobile.feature.profile.PROFILE_ROUTE
+import com.forgex.mobile.feature.quality.navigation.QUALITY_ROUTE
+import com.forgex.mobile.feature.report.navigation.REPORT_ROUTE
+import com.forgex.mobile.feature.warehouse.navigation.WAREHOUSE_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_APPROVED_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_MINE_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_PENDING_ROUTE
 import com.forgex.mobile.feature.workflow.WORKFLOW_ROUTE
 import com.forgex.mobile.core.network.model.workbench.CMenuVO
+import com.forgex.mobile.feature.equipment.navigation.EQUIPMENT_ROUTE
 
 enum class MenuTargetType {
     NATIVE,
@@ -44,7 +52,15 @@ object MenuTargetResolver {
         "unreadmessagelist" to MESSAGE_UNREAD_ROUTE,
         "readmessagelist" to MESSAGE_READ_ROUTE,
         "profilescreen" to PROFILE_ROUTE,
-        "basicinfotestscreen" to BASIC_INFO_TEST_ROUTE
+        "basicinfotestscreen" to BASIC_INFO_TEST_ROUTE,
+        "basicscreen" to BASIC_ROUTE,
+        "reportscreen" to REPORT_ROUTE,
+        "integrationscreen" to INTEGRATION_ROUTE,
+        "warehousescreen" to WAREHOUSE_ROUTE,
+        "productionscreen" to PRODUCTION_ROUTE,
+        "qualityscreen" to QUALITY_ROUTE,
+        "equipmentscreen" to EQUIPMENT_ROUTE,
+        "labelscreen" to LABEL_ROUTE
     )
 
     fun resolve(item: HomeMenuItem): MenuTarget {
@@ -145,6 +161,38 @@ object MenuTargetResolver {
 
         if (path.contains("basic/info-test") || path.contains("basicinfotest")) {
             return BASIC_INFO_TEST_ROUTE
+        }
+
+        if (path.contains("feature/basic") || path.contains("/basic")) {
+            return BASIC_ROUTE
+        }
+
+        if (path.contains("feature/report") || path.contains("/report")) {
+            return REPORT_ROUTE
+        }
+
+        if (path.contains("feature/integration") || path.contains("/integration")) {
+            return INTEGRATION_ROUTE
+        }
+
+        if (path.contains("feature/warehouse") || path.contains("/warehouse")) {
+            return WAREHOUSE_ROUTE
+        }
+
+        if (path.contains("feature/production") || path.contains("/production")) {
+            return PRODUCTION_ROUTE
+        }
+
+        if (path.contains("feature/quality") || path.contains("/quality")) {
+            return QUALITY_ROUTE
+        }
+
+        if (path.contains("feature/equipment") || path.contains("/equipment")) {
+            return EQUIPMENT_ROUTE
+        }
+
+        if (path.contains("feature/label") || path.contains("/label")) {
+            return LABEL_ROUTE
         }
 
         return null

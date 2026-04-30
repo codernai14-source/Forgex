@@ -68,6 +68,16 @@ public class WfTaskConfig extends BaseEntity {
     private String interpreterBean;
 
     /**
+     * 审批结束 HTTP 回调地址。
+     */
+    private String callbackUrl;
+
+    /**
+     * 审批结束回调 Bean 名称。
+     */
+    private String callbackBean;
+
+    /**
      * 表单类型。
      * <p>
      * 1 表示自定义表单，2 表示低代码表单。

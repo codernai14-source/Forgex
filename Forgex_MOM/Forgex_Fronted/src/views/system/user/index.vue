@@ -5,109 +5,94 @@
       :table-code="'UserTable'"
       :show-query-form="true"
       :request="handleRequest"
+      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       :row-selection="{
-        selectedRowKeys: selectedRowKeys,
-        onChange: handleSelectionChange
+        selectedRowKeys,
+        onChange: handleSelectionChange,
       }"
     >
-        <!-- 操作按钮 -->
-        <template #toolbar>
-          <a-space :size="8">
-            <a-button
-              v-permission="'sys:user:add'"
-              type="primary"
-              @click="openAddDialog"
-            >
-              {{ t('system.user.add') }}
-            </a-button>
-            <a-button
-              v-permission="'sys:user:delete'"
-              danger
-              :disabled="selectedRowKeys.length === 0"
-              @click="handleBatchDelete"
-            >
-              {{ t('common.batchDelete') }}
-            </a-button>
-            <a-button
-              v-permission="'sys:user:export'"
-              @click="handleExport"
-            >
-              {{ t('system.user.export') }}
-            </a-button>
-          </a-space>
-        </template>
-        
-        <template #avatar="{ record }">
-          <a-avatar :src="normalizeMediaUrl(record.avatar)">
-            <template #icon>
-              <UserOutlined />
-            </template>
-          </a-avatar>
-        </template>
+      <template #toolbar>
+        <a-space :size="8" wrap>
+          <a-button data-guide-id="sys-user-add" v-permission="'sys:user:add'" type="primary" @click="openAddDialog">
+            {{ t('system.user.add') }}
+          </a-button>
+          <a-button data-guide-id="sys-user-sync-third-party" v-permission="'sys:user:syncThirdParty'" @click="handleSyncThirdParty">
+            同步第三方
+          </a-button>
+          <a-button data-guide-id="sys-user-pull-third-party" v-permission="'sys:user:pullThirdParty'" @click="handlePullThirdParty">
+            从第三方拉取
+          </a-button>
+          <a-upload
+            data-guide-id="sys-user-import"
+            v-permission="'sys:user:import'"
+            :show-upload-list="false"
+            :before-upload="handleImport"
+            accept=".xlsx,.xls"
+          >
+            <a-button>导入</a-button>
+          </a-upload>
+          <a-button data-guide-id="sys-user-download-template" v-permission="'sys:user:downloadTemplate'" @click="handleDownloadTemplate">
+            下载模板
+          </a-button>
+          <a-button
+            data-guide-id="sys-user-batch-delete"
+            v-permission="'sys:user:batchDelete'"
+            danger
+            :disabled="selectedRowKeys.length === 0"
+            @click="handleBatchDelete"
+          >
+            {{ t('common.batchDelete') }}
+          </a-button>
+          <a-button data-guide-id="sys-user-export" v-permission="'sys:user:export'" @click="handleExport">
+            {{ t('system.user.export') }}
+          </a-button>
+        </a-space>
+      </template>
 
-        <template #role_ids="{ record }">
-          <a-space v-if="Array.isArray(record.roleNames) && record.roleNames.length > 0" wrap :size="[4, 4]">
-            <a-tag v-for="roleName in record.roleNames" :key="`${record.id}-${roleName}`">
-              {{ roleName }}
-            </a-tag>
-          </a-space>
-          <span v-else>-</span>
-        </template>
+      <template #avatar="{ record }">
+        <a-avatar :src="normalizeMediaUrl(record.avatar)">
+          <template #icon>
+            <UserOutlined />
+          </template>
+        </a-avatar>
+      </template>
 
-        <template #roleId="{ record }">
-          <a-space v-if="Array.isArray(record.roleNames) && record.roleNames.length > 0" wrap :size="[4, 4]">
-            <a-tag v-for="roleName in record.roleNames" :key="`${record.id}-legacy-${roleName}`">
-              {{ roleName }}
-            </a-tag>
-          </a-space>
-          <span v-else>-</span>
-        </template>
-
-        <template #status="{ record }">
-          <a-tag :color="normalizeUserStatus(record.status) ? 'success' : 'default'">
-            {{ record.statusText || (normalizeUserStatus(record.status) ? t('system.user.statusActive') : t('system.user.statusInactive')) }}
+      <template #role_ids="{ record }">
+        <a-space v-if="Array.isArray(record.roleNames) && record.roleNames.length > 0" wrap :size="[4, 4]">
+          <a-tag v-for="roleName in record.roleNames" :key="`${record.id}-${roleName}`">
+            {{ roleName }}
           </a-tag>
-        </template>
+        </a-space>
+        <span v-else>-</span>
+      </template>
 
-        <template #action="{ record }">
-          <a-space>
-            <a
-              v-permission="'sys:user:edit'"
-              @click="openEditDialog(record)"
-            >
-              {{ t('system.user.edit') }}
-            </a>
-            <a
-              v-permission="'sys:user:edit'"
-              @click="toggleUserStatus(record.id, !normalizeUserStatus(record.status))"
-            >
-              {{ normalizeUserStatus(record.status) ? t('system.user.statusInactive') : t('system.user.statusActive') }}
-            </a>
-            <a
-              v-permission="'sys:user:resetPwd'"
-              @click="confirmResetPassword(record.id)"
-            >
-              {{ t('system.user.resetPassword') }}
-            </a>
-            <a
-              v-permission="'sys:user:assignRole'"
-              @click="openAssignRoleDialog(record)"
-            >
-              {{ t('system.user.assignRole') }}
-            </a>
-            <a
-              v-permission="'sys:user:delete'"
-              style="color: #ff4d4f;"
-              @click="handleDelete(record.id)"
-            >
-              {{ t('system.user.delete') }}
-            </a>
-          </a-space>
-        </template>
-      </fx-dynamic-table>
-    
-    <!-- 用户表单/编辑对话框 -->
+      <template #roleId="{ record }">
+        <a-space v-if="Array.isArray(record.roleNames) && record.roleNames.length > 0" wrap :size="[4, 4]">
+          <a-tag v-for="roleName in record.roleNames" :key="`${record.id}-legacy-${roleName}`">
+            {{ roleName }}
+          </a-tag>
+        </a-space>
+        <span v-else>-</span>
+      </template>
+
+      <template #status="{ record }">
+        <a-tag :color="normalizeUserStatus(record.status) ? 'success' : 'default'">
+          {{ record.statusText || (normalizeUserStatus(record.status) ? t('system.user.statusActive') : t('system.user.statusInactive')) }}
+        </a-tag>
+      </template>
+
+      <template #userSource="{ record }">
+        <a-tag>{{ record.userSourceText || getUserSourceLabel(record.userSource) || '-' }}</a-tag>
+      </template>
+
+      <template #action="{ record }">
+        <div class="user-action-cell">
+          <FxActionGroup :actions="getUserRowActions(record)" :max-inline="5" />
+        </div>
+      </template>
+    </fx-dynamic-table>
+
     <UserFormDialog
       v-model:open="dialogVisible"
       :is-edit="isEdit"
@@ -115,7 +100,6 @@
       @success="handleFormSuccess"
     />
 
-    <!-- 角色分配对话框 -->
     <UserRoleAssignDialog
       v-model:open="assignRoleDialogVisible"
       :user-id="assignRoleUserId"
@@ -127,199 +111,145 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 用户管理页面
- *
- * 功能：
- * 1. 用户列表查询（分页、搜索）
- * 2. 新增、编辑、删除用户
- * 3. 重置密码、分配角色
- * 4. 批量删除、导出用户
- *
- * @author Forgex
- * @version 1.0.0
- */
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { normalizeMediaUrl } from '@/utils/media'
+import { Modal, message } from 'ant-design-vue'
 import { UserOutlined } from '@ant-design/icons-vue'
-import { message, Modal } from 'ant-design-vue'
+import { normalizeMediaUrl } from '@/utils/media'
+import FxActionGroup, { type ActionItem } from '@/components/common/FxActionGroup.vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
-import { userApi } from '@/api/system/user'
+import { useDict, getDictItemLabel } from '@/hooks/useDict'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
-import type { Department, Position, User } from './types'
-import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { exportUsers } from '@/api/system/user'
+import { exportUsers, userApi } from '@/api/system/user'
+import { downloadBlobResponse, normalizeUserQuery, normalizeUserStatus } from '@/utils/user'
+import type { FxTableConfig } from '@/api/system/tableConfig'
+import type { Department, Position, UserQuery } from './types'
 
-// 国际化
 const { t } = useI18n()
+const { dictItems: userSourceOptions } = useDict('user_source')
 
-// 部门树数据
 const departmentTreeData = ref<Department[]>([])
-
-// 职位列表
 const positionList = ref<Position[]>([])
-
-// 弹窗状态
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentUserId = ref<string>()
-
 const assignRoleDialogVisible = ref(false)
 const assignRoleUserId = ref<string>()
 const assignRoleUserName = ref<string>()
 const assignRoleUserAccount = ref<string>()
-
-// 选中的用户ID列表
 const selectedRowKeys = ref<string[]>([])
-
-
-
-// 表格引用
 const tableRef = ref()
 
-// 字典选项配置
 const dictOptions = ref<Record<string, any[]>>({
   departmentId: [],
   positionId: [],
   roleId: [],
   role_ids: [],
+  userSource: [],
   status: [
     { label: t('system.user.statusActive'), value: true },
-    { label: t('system.user.statusInactive'), value: false }
-  ]
+    { label: t('system.user.statusInactive'), value: false },
+  ],
 })
 
-function normalizeUserStatus(value: unknown): boolean {
-  if (typeof value === 'boolean') {
-    return value
-  }
-  if (typeof value === 'number') {
-    return value === 1
-  }
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase()
-    return normalized === 'true' || normalized === '1'
-  }
-  return false
-}
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
+  tableCode: 'UserTable',
+  columns: [
+    { field: 'action', title: t('common.action'), width: 260, align: 'center', fixed: 'right' },
+  ],
+}))
 
-function normalizeRoleFilterValues(value: unknown): string[] {
-  if (value === undefined || value === null || value === '') {
-    return []
-  }
-  const values = Array.isArray(value) ? value : [value]
-  const uniqueValues = new Set<string>()
-  values.forEach((item) => {
-    const normalized = String(item).trim()
-    if (normalized) {
-      uniqueValues.add(normalized)
-    }
-  })
-  return Array.from(uniqueValues)
-}
+watch(userSourceOptions, (value) => {
+  dictOptions.value.userSource = value || []
+}, { immediate: true })
 
 /**
- * 数据请求函数
+ * 根据字典配置获取用户来源显示文本，未匹配时回退为默认占位。
  */
-const handleRequest = async (payload: { 
-  page: { current: number; pageSize: number }; 
-  query: Record<string, any>; 
-  sorter?: { field?: string; order?: string } 
+function getUserSourceLabel(value: unknown) {
+  return getDictItemLabel(userSourceOptions.value, value, '')
+}
+
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+  sorter?: { field?: string; order?: string }
 }) => {
-  const query = { ...payload.query }
-  const entryDateRange = Array.isArray(query.entryDate) ? query.entryDate : []
-  if (entryDateRange.length === 2) {
-    query.entryDateStart = String(entryDateRange[0]).slice(0, 10)
-    query.entryDateEnd = String(entryDateRange[1]).slice(0, 10)
-  }
-  delete query.entryDate
-
-  const roleFilterValues = normalizeRoleFilterValues(query.roleIds ?? query.roleId ?? query.role_ids)
-  if (roleFilterValues.length > 0) {
-    query.roleIds = roleFilterValues
-  }
-  delete query.roleId
-  delete query.role_ids
-
+  const query = normalizeUserQuery(payload.query) as Partial<UserQuery>
   const params: any = {
     pageNum: payload.page.current,
     pageSize: payload.page.pageSize,
     ...query,
   }
-  
-  // 处理排序
   if (payload.sorter) {
     params.sortField = payload.sorter.field
     params.sortOrder = payload.sorter.order
   }
-  
-  // http拦截器已经返回了data字段
+
   const data = await userApi.getUserList(params)
   const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
-  return { records: data.records || [], total: total }
+  return { records: data.records || [], total }
 }
 
-/**
- * 导出用户数据
- */
 async function handleExport() {
   try {
-    // 获取当前查询条件
-    const currentQuery = tableRef.value?.getQuery?.() || {}
+    // 导出时沿用动态表格当前筛选条件。
+    const currentQuery = normalizeUserQuery(tableRef.value?.getQuery?.() || {}) as Partial<UserQuery>
     const resp: any = await exportUsers(currentQuery)
-    const blob = new Blob([resp.data], { type: resp.headers?.['content-type'] || 'application/octet-stream' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `sys-user-${Date.now()}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  } catch (e) {
+    downloadBlobResponse(resp, `sys-user-${Date.now()}.xlsx`)
+  } catch {
     message.error(t('common.failed'))
   }
 }
 
-/**
- * 行选择变化
- */
+async function handleSyncThirdParty() {
+  await userApi.syncThirdParty('sys_user_sync')
+}
+
+async function handlePullThirdParty() {
+  await userApi.pullFromThirdParty('sys_user_pull')
+  tableRef.value?.refresh?.()
+}
+
+async function handleDownloadTemplate() {
+  try {
+    const resp: any = await userApi.downloadUserTemplate()
+    downloadBlobResponse(resp, 'sys-user-template.xlsx')
+  } catch {
+    message.error(t('common.failed'))
+  }
+}
+
+async function handleImport(file: File) {
+  try {
+    await userApi.importUsers(file)
+    tableRef.value?.refresh?.()
+  } catch {
+    message.error(t('common.failed'))
+  }
+  return false
+}
+
 function handleSelectionChange(keys: string[]) {
   selectedRowKeys.value = keys
 }
 
-/**
- * 行操作
- */
-function handleRowAction(action: string, record: any) {
-  // 可根据需要添加行操作处理
-}
-
-/**
- * 打开新增弹窗
- */
 function openAddDialog() {
   isEdit.value = false
   currentUserId.value = undefined
   dialogVisible.value = true
 }
 
-/**
- * 打开编辑弹窗
- */
 function openEditDialog(record: any) {
   isEdit.value = true
   currentUserId.value = record.id
   dialogVisible.value = true
 }
 
-/**
- * 打开分配角色弹窗
- */
 function openAssignRoleDialog(record: any) {
   assignRoleUserId.value = record.id
   assignRoleUserName.value = record.username
@@ -327,25 +257,57 @@ function openAssignRoleDialog(record: any) {
   assignRoleDialogVisible.value = true
 }
 
-/**
- * 分配角色成功回调
- */
+function getUserRowActions(record: any): ActionItem[] {
+  return [
+    {
+      key: 'edit',
+      label: t('system.user.edit'),
+      permission: 'sys:user:edit',
+      guideId: 'sys-user-row-edit',
+      onClick: () => openEditDialog(record),
+    },
+    {
+      key: 'status',
+      label: normalizeUserStatus(record.status)
+        ? t('system.user.statusInactive')
+        : t('system.user.statusActive'),
+      permission: 'sys:user:edit',
+      guideId: 'sys-user-row-status',
+      onClick: () => toggleUserStatus(record.id, !normalizeUserStatus(record.status)),
+    },
+    {
+      key: 'resetPwd',
+      label: t('system.user.resetPassword'),
+      permission: 'sys:user:resetPwd',
+      guideId: 'sys-user-row-reset-password',
+      onClick: () => confirmResetPassword(record.id),
+    },
+    {
+      key: 'assignRole',
+      label: t('system.user.assignRole'),
+      permission: 'sys:user:assignRole',
+      guideId: 'sys-user-row-assign-role',
+      onClick: () => openAssignRoleDialog(record),
+    },
+    {
+      key: 'delete',
+      label: t('system.user.delete'),
+      permission: 'sys:user:delete',
+      danger: true,
+      guideId: 'sys-user-row-delete',
+      onClick: () => handleDelete(record.id),
+    },
+  ]
+}
+
 function handleAssignRoleSuccess() {
-  // 刷新表格数据
   tableRef.value?.refresh?.()
 }
 
-/**
- * 表单提交成功回调
- */
 function handleFormSuccess() {
-  // 刷新表格数据
   tableRef.value?.refresh?.()
 }
 
-/**
- * 删除用户
- */
 async function handleDelete(id: string) {
   Modal.confirm({
     title: t('common.confirm'),
@@ -357,14 +319,11 @@ async function handleDelete(id: string) {
   })
 }
 
-/**
- * 批量删除用户
- */
 async function handleBatchDelete() {
   if (selectedRowKeys.value.length === 0) return
   Modal.confirm({
     title: t('common.confirm'),
-    content: t('system.user.message.batchDeleteConfirm'),
+    content: t('system.user.message.batchDeleteConfirm', { count: selectedRowKeys.value.length }),
     onOk: async () => {
       await userApi.batchDeleteUsers(selectedRowKeys.value)
       selectedRowKeys.value = []
@@ -373,25 +332,6 @@ async function handleBatchDelete() {
   })
 }
 
-/**
- * 重置密码
- */
-async function handleResetPassword(id: string) {
-  // 实现重置密码逻辑
-  // 可参考原本 useUser hook 的实现
-}
-
-/**
- * 更新用户状态
- */
-async function handleUpdateStatus(id: string, status: boolean) {
-  // 实现更新状态逻辑
-  // 可参考原本 useUser hook 的实现
-}
-
-/**
- * 将部门树转换为下拉选项（扁平化）
- */
 function flattenDepartmentTree(tree: Department[], prefix = ''): any[] {
   const result: any[] = []
   for (const node of tree) {
@@ -404,9 +344,6 @@ function flattenDepartmentTree(tree: Department[], prefix = ''): any[] {
   return result
 }
 
-/**
- * 加载部门树数据
- */
 async function loadDepartmentTree() {
   const tenantId = sessionStorage.getItem('tenantId')
   if (!tenantId) {
@@ -414,31 +351,18 @@ async function loadDepartmentTree() {
     dictOptions.value.departmentId = []
     return
   }
-  try {
-    const result = await getDepartmentTree({ tenantId })
-    departmentTreeData.value = result || []
-    // 转换为下拉选项
-    dictOptions.value.departmentId = flattenDepartmentTree(result || [])
-  } catch (error) {
-    console.error('加载部门树失败:', error)
-  }
+  const result = await getDepartmentTree({ tenantId })
+  departmentTreeData.value = result || []
+  dictOptions.value.departmentId = flattenDepartmentTree(result || [])
 }
 
-/**
- * 加载职位列表
- */
 async function loadPositionList() {
-  try {
-    const result = await listPositions({})
-    positionList.value = result || []
-    // 转换为下拉选项
-    dictOptions.value.positionId = (result || []).map((item: any) => ({
-      label: item.positionName,
-      value: item.id
-    }))
-  } catch (error) {
-    console.error('加载职位列表失败:', error)
-  }
+  const result = await listPositions({})
+  positionList.value = result || []
+  dictOptions.value.positionId = (result || []).map((item: any) => ({
+    label: item.positionName,
+    value: item.id,
+  }))
 }
 
 async function confirmResetPassword(id: string) {
@@ -460,37 +384,23 @@ async function loadRoleList() {
   const tenantId = sessionStorage.getItem('tenantId')
   if (!tenantId) {
     dictOptions.value.roleId = []
+    dictOptions.value.role_ids = []
     return
   }
-  try {
-    const result = await getRoleList({ tenantId })
-    const roleOptions = (result || []).map((item: any) => ({
-      label: [item.roleName, item.roleCode || item.roleKey].filter(Boolean).join(' / '),
-      value: item.id
-    }))
-    dictOptions.value.roleId = roleOptions
-    dictOptions.value.role_ids = roleOptions
-  } catch (error) {
-    console.error('加载角色列表失败:', error)
-  }
+  const result = await getRoleList({ tenantId })
+  const roleOptions = (result || []).map((item: any) => ({
+    label: [item.roleName, item.roleCode || item.roleKey].filter(Boolean).join(' / '),
+    value: item.id,
+  }))
+  dictOptions.value.roleId = roleOptions
+  dictOptions.value.role_ids = roleOptions
 }
 
-// 初始化
-onMounted(() => {
-  loadDepartmentTree()
-  loadPositionList()
-  loadRoleList()
+onMounted(async () => {
+  await loadDepartmentTree()
+  await loadPositionList()
+  await loadRoleList()
 })
 </script>
 
-<style scoped lang="less">
-.user-management {
-  /* 移除 padding: 16px（现在由 MainLayout 的 .fx-content-inner 统一处理） */
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  /* 如果你仍想在页面内部加点间距，可以在这里加 margin 或在 FxDynamicTable 外包一层 div 加 padding */
-}
-</style>
+<style scoped lang="less" src="@/styles/system-user.less"></style>

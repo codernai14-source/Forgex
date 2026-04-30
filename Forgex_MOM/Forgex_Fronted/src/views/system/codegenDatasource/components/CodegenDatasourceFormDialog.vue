@@ -1,21 +1,10 @@
-<!--
- * 代码生成数据源表单弹窗
- *
- * 功能描述：
- * 1. 支持代码生成数据源新增与编辑
- * 2. 支持表单内直接测试连接
- * 3. 复用系统统一表单弹窗样式
- *
- * @author Forgex
- * @version 1.0
- * @since 2026-04-21
--->
 <template>
   <BaseFormDialog
     v-model:open="dialogVisible"
     :title="dialogTitle"
     :loading="submitLoading"
-    width="760px"
+    width="860px"
+    :mask-closable="true"
     @submit="handleSubmit"
     @cancel="handleCancel"
   >
@@ -23,108 +12,97 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      :label-col="{ span: 5 }"
-      :wrapper-col="{ span: 18 }"
+      layout="vertical"
+      class="datasource-form"
     >
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="t('system.codegenDatasource.datasourceCode')" name="datasourceCode">
-            <a-input
-              v-model:value="formData.datasourceCode"
-              :maxlength="50"
-              :disabled="isEdit"
-              :placeholder="t('system.codegenDatasource.form.datasourceCode')"
-            />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item :label="t('system.codegenDatasource.datasourceName')" name="datasourceName">
-            <a-input
-              v-model:value="formData.datasourceName"
-              :maxlength="100"
-              :placeholder="t('system.codegenDatasource.form.datasourceName')"
-            />
-          </a-form-item>
-        </a-col>
-      </a-row>
+      <div class="form-grid">
+        <a-form-item
+          class="form-item"
+          :label="t('system.codegenDatasource.datasourceCode')"
+          name="datasourceCode"
+        >
+          <a-input
+            v-model:value="formData.datasourceCode"
+            :maxlength="50"
+            :disabled="isEdit"
+            :placeholder="t('system.codegenDatasource.form.datasourceCode')"
+          />
+        </a-form-item>
 
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="t('system.codegenDatasource.dbType')" name="dbType">
-            <a-select
-              v-model:value="formData.dbType"
-              :options="dbTypeOptions"
-              :placeholder="t('system.codegenDatasource.form.dbType')"
-            />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item :label="t('common.status')" name="enabled">
-            <a-radio-group v-model:value="formData.enabled">
-              <a-radio :value="true">{{ t('common.enabled') }}</a-radio>
-              <a-radio :value="false">{{ t('common.disabled') }}</a-radio>
-            </a-radio-group>
-          </a-form-item>
-        </a-col>
-      </a-row>
+        <a-form-item
+          class="form-item"
+          :label="t('system.codegenDatasource.datasourceName')"
+          name="datasourceName"
+        >
+          <a-input
+            v-model:value="formData.datasourceName"
+            :maxlength="100"
+            :placeholder="t('system.codegenDatasource.form.datasourceName')"
+          />
+        </a-form-item>
 
-      <a-form-item :label="t('system.codegenDatasource.jdbcUrl')" name="jdbcUrl">
-        <a-input
-          v-model:value="formData.jdbcUrl"
-          :maxlength="300"
-          :placeholder="t('system.codegenDatasource.form.jdbcUrl')"
-        />
-      </a-form-item>
+        <a-form-item class="form-item" :label="t('system.codegenDatasource.dbType')" name="dbType">
+          <a-select
+            v-model:value="formData.dbType"
+            :options="dbTypeOptions"
+            :placeholder="t('system.codegenDatasource.form.dbType')"
+          />
+        </a-form-item>
 
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="t('system.codegenDatasource.username')" name="username">
-            <a-input
-              v-model:value="formData.username"
-              :maxlength="100"
-              :placeholder="t('system.codegenDatasource.form.username')"
-            />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item :label="t('system.codegenDatasource.password')" name="password">
-            <a-input-password
-              v-model:value="formData.password"
-              :maxlength="100"
-              :placeholder="t('system.codegenDatasource.form.password')"
-            />
-          </a-form-item>
-        </a-col>
-      </a-row>
+        <a-form-item class="form-item" :label="t('common.status')" name="enabled">
+          <a-radio-group v-model:value="formData.enabled">
+            <a-radio :value="true">{{ t('common.enabled') }}</a-radio>
+            <a-radio :value="false">{{ t('common.disabled') }}</a-radio>
+          </a-radio-group>
+        </a-form-item>
 
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="t('system.codegenDatasource.schemaName')" name="schemaName">
-            <a-input
-              v-model:value="formData.schemaName"
-              :maxlength="100"
-              :placeholder="t('system.codegenDatasource.form.schemaName')"
-            />
-          </a-form-item>
-        </a-col>
-      </a-row>
+        <a-form-item class="form-item full-row" :label="t('system.codegenDatasource.jdbcUrl')" name="jdbcUrl">
+          <a-input
+            v-model:value="formData.jdbcUrl"
+            :maxlength="300"
+            :placeholder="t('system.codegenDatasource.form.jdbcUrl')"
+          />
+        </a-form-item>
 
-      <a-form-item :label="t('common.remark')" name="remark">
-        <a-textarea
-          v-model:value="formData.remark"
-          :rows="3"
-          :maxlength="200"
-          :placeholder="t('system.codegenDatasource.form.remark')"
-        />
-      </a-form-item>
+        <a-form-item class="form-item" :label="t('system.codegenDatasource.username')" name="username">
+          <a-input
+            v-model:value="formData.username"
+            :maxlength="100"
+            :placeholder="t('system.codegenDatasource.form.username')"
+          />
+        </a-form-item>
 
-      <a-form-item :wrapper-col="{ offset: 5, span: 18 }">
-        <a-space>
-          <a-button :loading="testLoading" @click="handleTestConnection">
-            {{ t('system.codegenDatasource.testConnection') }}
-          </a-button>
-        </a-space>
-      </a-form-item>
+        <a-form-item class="form-item" :label="t('system.codegenDatasource.password')" name="password">
+          <a-input-password
+            v-model:value="formData.password"
+            :maxlength="100"
+            :placeholder="t('system.codegenDatasource.form.password')"
+          />
+        </a-form-item>
+
+        <a-form-item class="form-item full-row" :label="t('system.codegenDatasource.schemaName')" name="schemaName">
+          <a-input
+            v-model:value="formData.schemaName"
+            :maxlength="100"
+            :placeholder="t('system.codegenDatasource.form.schemaName')"
+          />
+        </a-form-item>
+
+        <a-form-item class="form-item full-row" :label="t('common.remark')" name="remark">
+          <a-textarea
+            v-model:value="formData.remark"
+            :rows="3"
+            :maxlength="200"
+            :placeholder="t('system.codegenDatasource.form.remark')"
+          />
+        </a-form-item>
+      </div>
+
+      <div class="form-actions">
+        <a-button :loading="testLoading" @click="handleTestConnection">
+          {{ t('system.codegenDatasource.testConnection') }}
+        </a-button>
+      </div>
     </a-form>
   </BaseFormDialog>
 </template>
@@ -196,9 +174,6 @@ const formRules: Record<string, Rule[]> = {
   username: [{ required: true, message: t('system.codegenDatasource.form.username'), trigger: 'blur' }],
 }
 
-/**
- * 重置表单
- */
 function resetForm() {
   formData.id = undefined
   formData.datasourceCode = ''
@@ -212,9 +187,6 @@ function resetForm() {
   formData.remark = ''
 }
 
-/**
- * 加载详情
- */
 async function loadDetail() {
   if (!props.datasourceId) {
     return
@@ -232,9 +204,6 @@ async function loadDetail() {
   formData.remark = detail.remark || ''
 }
 
-/**
- * 测试连接
- */
 async function handleTestConnection() {
   await formRef.value?.validateFields(['dbType', 'jdbcUrl', 'username'])
   testLoading.value = true
@@ -252,9 +221,6 @@ async function handleTestConnection() {
   }
 }
 
-/**
- * 提交表单
- */
 async function handleSubmit() {
   await formRef.value?.validate()
   submitLoading.value = true
@@ -267,9 +233,6 @@ async function handleSubmit() {
   }
 }
 
-/**
- * 关闭弹窗
- */
 function handleCancel() {
   dialogVisible.value = false
 }
@@ -284,9 +247,47 @@ watch(
     }
 
     resetForm()
+    formRef.value?.clearValidate?.()
     if (props.datasourceId) {
       await loadDetail()
     }
   },
 )
 </script>
+
+<style scoped lang="less">
+.datasource-form {
+  :deep(.ant-form-item) {
+    margin-bottom: 16px;
+  }
+
+  :deep(.ant-form-item-label) {
+    padding-bottom: 6px;
+    text-align: left;
+  }
+
+  :deep(.ant-form-item-control-input) {
+    min-height: auto;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.form-item {
+  min-width: 0;
+}
+
+.full-row {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+</style>

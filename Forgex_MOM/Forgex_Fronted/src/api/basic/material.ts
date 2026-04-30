@@ -16,6 +16,11 @@ export interface Material {
     description: string
     status: number
     approvalStatus: string
+    tenantId: number
+    createTime: string
+    updateTime: string
+    createBy: string
+    updateBy: string
 }
 
 export interface MaterialPageParam {
@@ -30,24 +35,31 @@ export interface MaterialPageParam {
 }
 
 export const materialApi = {
-    /**
-     * 分页查询物料列表
-     */
     page(params: MaterialPageParam) {
         return http.post('/basic/material/page', params)
     },
 
-    /**
-     * 查询物料列表（不分页）
-     */
-    list(params?: { status?: number }) {
+    list(params?: { status?: number; materialType?: string }) {
         return http.post('/basic/material/list', params || {})
     },
 
-    /**
-     * 获取物料详情
-     */
     detail(params: { id: number }) {
         return http.post('/basic/material/detail', params)
+    },
+
+    create(data: any) {
+        return http.post('/basic/material/create', data)
+    },
+
+    update(data: any) {
+        return http.post('/basic/material/update', data)
+    },
+
+    delete(params: { id: number }) {
+        return http.post('/basic/material/delete', params)
+    },
+
+    batchDelete(params: { ids: number[] }) {
+        return http.post('/basic/material/batchDelete', params)
     }
 }

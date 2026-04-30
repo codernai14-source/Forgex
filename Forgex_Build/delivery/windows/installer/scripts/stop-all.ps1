@@ -2,4 +2,11 @@ param(
     [string]$InstallRoot = $PSScriptRoot | Split-Path -Parent
 )
 
-Write-Host "请在此脚本中补充 WinSW 服务停止逻辑。安装目录: $InstallRoot"
+$ErrorActionPreference = "Stop"
+
+$controlCenter = Join-Path $InstallRoot "tools\control-center\ForgexControlCenter.exe"
+if (-not (Test-Path -LiteralPath $controlCenter)) {
+    throw "Forgex Control Center not found: $controlCenter"
+}
+
+& $controlCenter --install-root $InstallRoot --stop-all

@@ -23,6 +23,8 @@ public class ApiParamMappingBatchSaveParam {
      */
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
     /**
      * 映射方向：INBOUND/OUTBOUND
      */

@@ -5,6 +5,7 @@ export type ParamDirection = 'REQUEST' | 'RESPONSE'
 export type AuthorizationType = 'WHITELIST' | 'TOKEN'
 export type CallMethod = 'HTTP' | 'TCP'
 export type NodeType = 'OBJECT' | 'ARRAY' | 'FIELD'
+export type ApiInvokeMode = 'SYNC' | 'ASYNC'
 
 export interface ThirdSystemQuery {
   pageNum?: number
@@ -27,6 +28,7 @@ export interface ThirdSystemSubmit {
 export interface ThirdSystemItem extends ThirdSystemSubmit {
   createTime?: string
   updateTime?: string
+  statusLoading?: boolean
 }
 
 export interface ThirdAuthorizationQuery {
@@ -53,6 +55,29 @@ export interface ThirdAuthorizationItem extends ThirdAuthorizationSubmit {
   updateTime?: string
 }
 
+export interface ApiOutboundTargetSubmit {
+  id?: number
+  apiConfigId?: number
+  thirdSystemId?: number
+  targetCode?: string
+  targetName?: string
+  targetUrl?: string
+  httpMethod?: string
+  contentType?: string
+  invokeMode?: ApiInvokeMode
+  timeoutMs?: number
+  retryCount?: number
+  retryIntervalMs?: number
+  orderNum?: number
+  status?: number
+  remark?: string
+}
+
+export interface ApiOutboundTargetItem extends ApiOutboundTargetSubmit {
+  createTime?: string
+  updateTime?: string
+}
+
 export interface ApiConfigQuery {
   pageNum?: number
   pageSize?: number
@@ -72,10 +97,16 @@ export interface ApiConfigSubmit {
   apiPath?: string
   processorBean?: string
   callMethod: CallMethod
+  httpMethod?: string
+  invokeMode?: ApiInvokeMode
+  contentType?: string
   targetUrl?: string
   timeoutMs?: number
+  retryCount?: number
+  retryIntervalMs?: number
   moduleCode?: string
   status?: number
+  outboundTargets?: ApiOutboundTargetSubmit[]
 }
 
 export interface ApiConfigItem extends ApiConfigSubmit {
@@ -84,12 +115,14 @@ export interface ApiConfigItem extends ApiConfigSubmit {
   updateBy?: string
   createTime?: string
   updateTime?: string
+  outboundTargets?: ApiOutboundTargetItem[]
   statusLoading?: boolean
 }
 
 export interface ApiParamConfigItem {
   id?: number
   apiConfigId: number
+  outboundTargetId?: number | null
   parentId?: number | null
   direction: ParamDirection
   nodeType: NodeType
@@ -109,6 +142,7 @@ export type ParamSourceType = 'JSON' | 'JAVA'
 
 export interface JsonImportParam {
   apiConfigId: number
+  outboundTargetId?: number | null
   direction: ParamDirection
   jsonString: string
 }
@@ -121,12 +155,14 @@ export interface ParamStructureParseParam {
 
 export interface ApiParamTreeReplaceParam {
   apiConfigId: number
+  outboundTargetId?: number | null
   direction: ParamDirection
   tree: ApiParamConfigItem[]
 }
 
 export interface ApiParamMappingQuery {
   apiConfigId: number
+  outboundTargetId?: number | null
   direction: IntegrationDirection
   sourceFieldPath?: string
   targetFieldPath?: string
@@ -135,10 +171,15 @@ export interface ApiParamMappingQuery {
 export interface ApiParamMappingItem {
   id?: number
   apiConfigId: number
+  outboundTargetId?: number | null
   direction: IntegrationDirection
   sourceFieldPath: string
   targetFieldPath: string
   transformRule?: string
+  defaultValue?: string
+  constantValue?: string
+  targetScope?: string
+  valueType?: string
   remark?: string
   createTime?: string
   updateTime?: string
@@ -146,6 +187,7 @@ export interface ApiParamMappingItem {
 
 export interface ApiParamMappingBatchSaveParam {
   apiConfigId: number
+  outboundTargetId?: number | null
   direction: IntegrationDirection
   mappings: ApiParamMappingItem[]
 }
@@ -164,9 +206,14 @@ export interface ApiCallLogQuery {
 export interface ApiCallLogItem {
   id: number
   apiConfigId?: number
+  outboundTargetId?: number
+  targetSystemCode?: string
+  targetSystemName?: string
   callDirection?: IntegrationDirection
   callerIp?: string
   requestData?: string
+  rawRequestData?: string
+  assembledRequestData?: string
   responseData?: string
   callStatus?: string
   errorMessage?: string
@@ -267,11 +314,14 @@ export function disableApiConfig(id: number) {
   return http.post(`/integration/api-config/disable/${id}`)
 }
 
-export function getApiParamTree(apiConfigId: number, direction?: ParamDirection) {
+export function getApiParamTree(apiConfigId: number, direction?: ParamDirection, outboundTargetId?: number | null) {
   const search = new URLSearchParams()
   search.set('apiConfigId', String(apiConfigId))
   if (direction) {
     search.set('direction', direction)
+  }
+  if (outboundTargetId !== undefined && outboundTargetId !== null) {
+    search.set('outboundTargetId', String(outboundTargetId))
   }
   return http.get<ApiParamConfigItem[]>(`/integration/param-config/tree?${search.toString()}`)
 }

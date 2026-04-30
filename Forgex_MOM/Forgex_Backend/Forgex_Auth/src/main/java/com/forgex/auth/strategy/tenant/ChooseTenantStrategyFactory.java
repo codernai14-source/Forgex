@@ -1,6 +1,8 @@
 package com.forgex.auth.strategy.tenant;
 
-import com.forgex.common.exception.BusinessException;
+import com.forgex.auth.enums.AuthPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,10 @@ public class ChooseTenantStrategyFactory {
         return strategies.stream()
                 .filter(strategy -> strategy.supports(loginTerminal))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException("暂不支持的租户选择终端: " + loginTerminal));
+                .orElseThrow(() -> new I18nBusinessException(
+                        StatusCode.BUSINESS_ERROR,
+                        AuthPromptEnum.TENANT_TERMINAL_NOT_SUPPORTED,
+                        loginTerminal
+                ));
     }
 }

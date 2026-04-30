@@ -1,0 +1,3 @@
+package com.forgex.mobile.feature.${ctx.androidFeatureKey}.repository
+
+class ${ctx.entityName}Repository

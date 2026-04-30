@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.workflow.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -32,6 +33,7 @@ import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
 import com.forgex.workflow.domain.param.WfExecutionTransferParam;
+import com.forgex.workflow.enums.WorkflowPromptEnum;
 import com.forgex.workflow.service.IWfExecutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -65,7 +67,7 @@ public class WfExecutionController {
      *
      * @param param 审批执行启动参数，包含任务编码、业务数据、发起人信息等（必填）
      * @return 新创建的审批执行 ID
-     * @throws BusinessException 当参数校验失败或发起审批失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或发起审批失败时抛出业务异常
      * @see IWfExecutionService#startExecution(WfExecutionStartParam) 发起审批服务方法
      * @see WfExecutionStartParam 审批执行启动参数
      */
@@ -76,6 +78,21 @@ public class WfExecutionController {
     }
 
     /**
+     * 内部接口：发起审批执行。
+     *
+     * @param request 发起审批参数
+     * @return 执行 ID
+     */
+    @PostMapping("/internal/start")
+    public R<Long> internalStartExecution(@Validated @RequestBody WorkflowExecutionStartRequestDTO request) {
+        WfExecutionStartParam param = new WfExecutionStartParam();
+        param.setTaskCode(request.getTaskCode());
+        param.setFormContent(request.getFormContent());
+        param.setSelectedApprovers(request.getSelectedApprovers());
+        return R.ok(executionService.startExecution(param));
+    }
+
+    /**
      * 审批通过
      * <p>
      * 对当前待办审批任务进行审批通过操作，流转到下一节点或结束流程
@@ -83,14 +100,14 @@ public class WfExecutionController {
      *
      * @param param 审批参数，包含执行 ID、审批意见、审批动作等（必填）
      * @return 是否审批成功
-     * @throws BusinessException 当参数校验失败或审批失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或审批失败时抛出业务异常
      * @see IWfExecutionService#approve(WfExecutionApproveParam) 审批通过服务方法
      * @see WfExecutionApproveParam 审批参数
      */
     @PostMapping("/approve")
     @RequirePerm("wf:execution:approve")
     public R<Boolean> approve(@Validated @RequestBody WfExecutionApproveParam param) {
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.approve(param));
+        return R.ok(WorkflowPromptEnum.WF_APPROVE_SUCCESS, executionService.approve(param));
     }
 
     /**
@@ -101,14 +118,14 @@ public class WfExecutionController {
      *
      * @param param 审批参数，包含执行 ID、驳回意见、驳回目标节点等（必填）
      * @return 是否驳回成功
-     * @throws BusinessException 当参数校验失败或驳回失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或驳回失败时抛出业务异常
      * @see IWfExecutionService#reject(WfExecutionApproveParam) 审批驳回服务方法
      * @see WfExecutionApproveParam 审批参数
      */
     @PostMapping("/reject")
     @RequirePerm("wf:execution:reject")
     public R<Boolean> reject(@Validated @RequestBody WfExecutionApproveParam param) {
-        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.reject(param));
+        return R.ok(WorkflowPromptEnum.WF_REJECT_SUCCESS, executionService.reject(param));
     }
 
     /**
@@ -119,7 +136,7 @@ public class WfExecutionController {
      *
      * @param param 转交参数，包含执行 ID、转交目标用户 ID、转交意见等（必填）
      * @return 是否转交成功
-     * @throws BusinessException 当参数校验失败或转交失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或转交失败时抛出业务异常
      * @see IWfExecutionService#transfer(WfExecutionTransferParam) 审批转交服务方法
      * @see WfExecutionTransferParam 转交参数
      */
@@ -137,7 +154,7 @@ public class WfExecutionController {
      *
      * @param param 加签参数，包含执行 ID、加签用户 ID、加签类型（前加签/后加签）、加签意见等（必填）
      * @return 是否加签成功
-     * @throws BusinessException 当参数校验失败或加签失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或加签失败时抛出业务异常
      * @see IWfExecutionService#addSign(WfExecutionAddSignParam) 审批加签服务方法
      * @see WfExecutionAddSignParam 加签参数
      */
@@ -155,7 +172,7 @@ public class WfExecutionController {
      *
      * @param param 批量审批参数，包含执行 ID 列表、审批意见等（必填）
      * @return 是否批量审批成功
-     * @throws BusinessException 当参数校验失败或批量审批失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或批量审批失败时抛出业务异常
      * @see IWfExecutionService#batchApprove(WfExecutionBatchApproveParam) 批量审批通过服务方法
      * @see WfExecutionBatchApproveParam 批量审批参数
      */
@@ -173,7 +190,7 @@ public class WfExecutionController {
      *
      * @param param 批量转交参数，包含执行 ID 列表、转交目标用户 ID、转交意见等（必填）
      * @return 是否批量转交成功
-     * @throws BusinessException 当参数校验失败或批量转交失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或批量转交失败时抛出业务异常
      * @see IWfExecutionService#batchTransfer(WfExecutionBatchTransferParam) 批量转交服务方法
      * @see WfExecutionBatchTransferParam 批量转交参数
      */
@@ -191,7 +208,7 @@ public class WfExecutionController {
      *
      * @param param 批量提醒参数，包含执行 ID 列表、提醒方式等（必填）
      * @return 是否批量提醒成功
-     * @throws BusinessException 当参数校验失败或批量提醒失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或批量提醒失败时抛出业务异常
      * @see IWfExecutionService#batchRemind(WfExecutionBatchRemindParam) 批量提醒服务方法
      * @see WfExecutionBatchRemindParam 批量提醒参数
      */
@@ -209,7 +226,7 @@ public class WfExecutionController {
      *
      * @param param 补偿参数，包含执行 ID、补偿类型、补偿参数等（必填）
      * @return 是否补偿成功
-     * @throws BusinessException 当参数校验失败或补偿失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或补偿失败时抛出业务异常
      * @see IWfExecutionService#compensateExecution(WfExecutionCompensateParam) 补偿审批执行服务方法
      * @see WfExecutionCompensateParam 补偿参数
      */
@@ -227,7 +244,7 @@ public class WfExecutionController {
      *
      * @param param 补偿参数，包含执行 ID、重试参数等（必填）
      * @return 是否重试成功
-     * @throws BusinessException 当参数校验失败或重试失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或重试失败时抛出业务异常
      * @see IWfExecutionService#retryTimeoutJobs(WfExecutionCompensateParam) 重试超时任务服务方法
      * @see WfExecutionCompensateParam 补偿参数
      */
@@ -243,9 +260,9 @@ public class WfExecutionController {
      * 设置用户的审批委托关系，在用户无法审批时由受托人代为审批
      * </p>
      *
-     * @param param 委托保存参数，包含委托人 ID、受托人 ID、委托时间范围等（必填）
+     * @param param 委托保存参数，包含委托人 ID、受托人 ID、委托时间范围等（选填）
      * @return 是否保存成功
-     * @throws BusinessException 当参数校验失败或保存失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或保存失败时抛出业务异常
      * @see IWfExecutionService#saveDelegate(WfExecutionDelegateSaveParam) 保存审批委托服务方法
      * @see WfExecutionDelegateSaveParam 委托保存参数
      */
@@ -263,7 +280,7 @@ public class WfExecutionController {
      *
      * @param params 请求参数，包含 delegatorUserId（委托人 ID，必填）
      * @return 是否取消成功
-     * @throws BusinessException 当参数无效或取消失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或取消失败时抛出业务异常
      * @see IWfExecutionService#cancelDelegate(Long) 取消审批委托服务方法
      */
     @PostMapping("/delegate/cancel")
@@ -281,7 +298,7 @@ public class WfExecutionController {
      *
      * @param params 请求参数，包含 executionId（审批执行 ID，必填）
      * @return 是否取消成功
-     * @throws BusinessException 当参数无效或取消失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或取消失败时抛出业务异常
      * @see IWfExecutionService#cancelExecution(Long) 取消审批执行服务方法
      */
     @PostMapping("/cancel")
@@ -299,7 +316,7 @@ public class WfExecutionController {
      *
      * @param params 请求参数，包含 executionId（审批执行 ID，必填）
      * @return 审批执行详情，如果不存在返回 NOT_FOUND
-     * @throws BusinessException 当参数无效或查询失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或查询失败时抛出业务异常
      * @see IWfExecutionService#getExecutionDetail(Long) 查询审批执行详情服务方法
      * @see WfExecutionDTO 审批执行数据传输对象
      */
@@ -318,7 +335,7 @@ public class WfExecutionController {
      *
      * @param params 请求参数，包含 executionId（审批执行 ID，必填）
      * @return 审批实例列表
-     * @throws BusinessException 当参数无效或查询失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或查询失败时抛出业务异常
      * @see IWfExecutionService#listApprovalInstances(Long) 查询审批实例列表服务方法
      * @see WfApprovalInstanceDTO 审批实例数据传输对象
      */
@@ -336,7 +353,7 @@ public class WfExecutionController {
      *
      * @param params 请求参数，包含 executionId（审批执行 ID，必填）
      * @return 审批操作日志列表
-     * @throws BusinessException 当参数无效或查询失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或查询失败时抛出业务异常
      * @see IWfExecutionService#listApprovalActionLogs(Long) 查询审批操作日志服务方法
      * @see WfApprovalActionLogDTO 审批操作日志数据传输对象
      */
@@ -354,7 +371,7 @@ public class WfExecutionController {
      *
      * @param param 查询参数，包含页码、页数、筛选条件等（必填）
      * @return 分页结果，包含我发起的审批执行列表
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see IWfExecutionService#pageMyInitiated(WfExecutionQueryParam) 分页查询我发起的审批服务方法
      * @see WfExecutionQueryParam 审批执行查询参数
      */
@@ -372,7 +389,7 @@ public class WfExecutionController {
      *
      * @param param 查询参数，包含页码、页数、筛选条件等（必填）
      * @return 分页结果，包含我的待办审批列表
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see IWfExecutionService#pageMyPending(WfExecutionQueryParam) 分页查询我的待办审批服务方法
      * @see WfExecutionQueryParam 审批执行查询参数
      */
@@ -390,7 +407,7 @@ public class WfExecutionController {
      *
      * @param param 查询参数，包含页码、页数、筛选条件等（必填）
      * @return 分页结果，包含我的已办审批列表
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see IWfExecutionService#pageMyProcessed(WfExecutionQueryParam) 分页查询我的已办审批服务方法
      * @see WfExecutionQueryParam 审批执行查询参数
      */
@@ -408,7 +425,7 @@ public class WfExecutionController {
      *
      * @param param 查询参数，包含页码、页数、筛选条件等（必填）
      * @return 分页结果，包含我的抄送审批列表
-     * @throws BusinessException 当查询失败时抛出业务异常
+     * @throws I18nBusinessException 当查询失败时抛出业务异常
      * @see IWfExecutionService#pageMyCc(WfExecutionQueryParam) 分页查询我的抄送审批服务方法
      * @see WfExecutionQueryParam 审批执行查询参数
      */
@@ -441,7 +458,7 @@ public class WfExecutionController {
      * </p>
      *
      * @return 仪表盘汇总数据
-     * @throws BusinessException 当加载失败时抛出业务异常
+     * @throws I18nBusinessException 当加载失败时抛出业务异常
      * @see IWfExecutionService#loadDashboardSummary() 加载仪表盘汇总数据服务方法
      * @see WfDashboardSummaryVO 仪表盘汇总视图对象
      */
@@ -458,7 +475,7 @@ public class WfExecutionController {
      * </p>
      *
      * @return 仪表盘分析数据
-     * @throws BusinessException 当加载失败时抛出业务异常
+     * @throws I18nBusinessException 当加载失败时抛出业务异常
      * @see IWfExecutionService#loadDashboardAnalytics() 加载仪表盘分析数据服务方法
      * @see WfDashboardAnalyticsVO 仪表盘分析视图对象
      */

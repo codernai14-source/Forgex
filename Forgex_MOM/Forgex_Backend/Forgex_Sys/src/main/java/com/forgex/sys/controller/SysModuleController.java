@@ -164,7 +164,7 @@ public class SysModuleController {
      *         - code: 状态码（200=成功）
      *         - data: 模块详情对象（SysModuleDTO）
      *         - message: 提示信息
-     * @throws BusinessException ID 不合法或模块不存在时抛出
+     * @throws I18nBusinessException ID 不合法或模块不存在时抛出
      * @see SysModuleDTO
      */
     @RequirePerm("sys:module:view")
@@ -204,7 +204,7 @@ public class SysModuleController {
      *         - code: 状态码（200=成功）
      *         - data: null
      *         - message: "创建成功"
-     * @throws BusinessException 数据校验失败或模块编码已存在时抛出
+     * @throws I18nBusinessException 数据校验失败或模块编码已存在时抛出
      * @see SysModuleDTO
      */
     @RequirePerm("sys:module:add")
@@ -244,7 +244,7 @@ public class SysModuleController {
      *         - code: 状态码（200=成功）
      *         - data: null
      *         - message: "更新成功"
-     * @throws BusinessException 数据校验失败或模块不存在时抛出
+     * @throws I18nBusinessException 数据校验失败或模块不存在时抛出
      * @see SysModuleDTO
      */
     @RequirePerm("sys:module:edit")
@@ -279,7 +279,7 @@ public class SysModuleController {
      *         - code: 状态码（200=成功）
      *         - data: null
      *         - message: "删除成功"
-     * @throws BusinessException ID 不合法或模块不存在或已被使用时抛出
+     * @throws I18nBusinessException ID 不合法或模块不存在或已被使用时抛出
      */
     @RequirePerm("sys:module:delete")
     @PostMapping("/delete")
@@ -315,7 +315,7 @@ public class SysModuleController {
      *         - code: 状态码（200=成功）
      *         - data: null
      *         - message: "删除成功"
-     * @throws BusinessException ID 列表为空或包含非法 ID 时抛出
+     * @throws I18nBusinessException ID 列表为空或包含非法 ID 时抛出
      */
     @RequirePerm("sys:module:delete")
     @PostMapping("/batchDelete")

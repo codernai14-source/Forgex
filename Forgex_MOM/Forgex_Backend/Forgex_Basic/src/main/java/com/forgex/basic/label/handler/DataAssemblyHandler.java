@@ -26,7 +26,7 @@ import java.util.Map;
  * 负责在标签打印前组装完整的业务数据，包括：
  * 1. 根据 ID 查询关联信息（物料、供应商、客户、工程卡）
  * 2. 数据格式化处理
- * 3. 补充系统字段（打印时间、操作员、周别、箱号等）
+ * 3. 补充系统字段，包括打印时间、操作员、防伪编号等
  * 4. 条码生成
  * 5. 数据完整性校验
  * </p>
@@ -67,7 +67,7 @@ public class DataAssemblyHandler {
 
         Map<String, Object> assembledData = new HashMap<>(baseData);
 
-        // 1. 补充工程卡信息（包含工单、LOT、批次、销售订单等）
+        // 1. 补充工程卡信息（包含工单、LOT号、批次号、销售订单等）
         enrichEngineeringCardInfo(assembledData);
 
         // 2. 补充物料信息
@@ -95,7 +95,7 @@ public class DataAssemblyHandler {
     /**
      * 补充工程卡信息
      * <p>
-     * 从工程卡实体中提取工单号、LOT号、批次号、销售订单号、周别等关键信息
+     * 从工程卡实体中提取工单号、LOT号、批次号、销售订单号、总包等关键信息
      * </p>
      *
      * @param data 数据 Map
@@ -191,10 +191,10 @@ public class DataAssemblyHandler {
             BasicSupplier supplier = supplierService.getById(supplierId);
             if (supplier != null) {
                 data.putIfAbsent("supplierCode", supplier.getSupplierCode());
-                data.putIfAbsent("supplierName", supplier.getSupplierName());
-                data.putIfAbsent("supplierContact", supplier.getContactPerson());
+                data.putIfAbsent("supplierName", supplier.getSupplierFullName());
+                data.putIfAbsent("supplierContact", supplier.getPrimaryContact());
                 data.putIfAbsent("supplierPhone", supplier.getContactPhone());
-                log.debug("补充供应商信息成功: {}", supplier.getSupplierName());
+                log.debug("补充供应商信息成功: {}", supplier.getSupplierFullName());
             }
         } catch (Exception e) {
             log.warn("查询供应商信息失败，supplierId: {}", supplierId, e);
@@ -344,7 +344,7 @@ public class DataAssemblyHandler {
             data.put("batchNoFormatted", batchNo.replace("-", ""));
         }
 
-        // 销售订单号格式化（去掉分隔符）
+        // 销售订单号格式化，去掉分隔符。
         if (data.containsKey("salesOrderNo") && data.get("salesOrderNo") instanceof String soNo) {
             data.put("salesOrderNoFormatted", soNo.replace("-", ""));
         }

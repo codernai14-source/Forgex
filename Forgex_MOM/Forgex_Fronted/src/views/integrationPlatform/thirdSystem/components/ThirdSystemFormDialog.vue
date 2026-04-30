@@ -26,9 +26,8 @@
       </a-row>
 
       <a-form-item :label="t('integration.thirdSystem.ipAddress')" name="ipAddress">
-        <a-textarea
+        <a-input
           v-model:value="formState.ipAddress"
-          :rows="2"
           :placeholder="t('integration.thirdSystem.form.ipAddress')"
         />
       </a-form-item>
@@ -102,6 +101,8 @@ const formState = reactive<ThirdSystemSubmit>({
   status: 1,
 })
 
+const singleIpPattern = /^([0-9a-zA-Z:.%-]+)?$/
+
 const rules = computed(() => ({
   systemCode: [
     { required: true, message: t('integration.thirdSystem.form.systemCode'), trigger: 'blur' },
@@ -109,11 +110,28 @@ const rules = computed(() => ({
   systemName: [
     { required: true, message: t('integration.thirdSystem.form.systemName'), trigger: 'blur' },
   ],
+  ipAddress: [
+    {
+      validator: async (_rule: unknown, value: string | undefined) => {
+        const raw = (value || '').trim()
+        if (!raw) {
+          return
+        }
+        if (raw.includes(',') || raw.includes('，') || raw.includes('\n') || raw.includes('\r')) {
+          throw new Error(t('integration.thirdSystem.form.singleIpOnly'))
+        }
+        if (!singleIpPattern.test(raw)) {
+          throw new Error(t('integration.thirdSystem.form.singleIpOnly'))
+        }
+      },
+      trigger: 'blur',
+    },
+  ],
 }))
 
 watch(
   () => props.formData,
-  (value) => {
+  value => {
     Object.assign(formState, {
       systemCode: '',
       systemName: '',
@@ -124,14 +142,14 @@ watch(
       ...(value || {}),
     })
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 async function handleSubmit() {
   try {
     loading.value = true
     await formRef.value?.validate()
-    emit('submit', { ...formState })
+    emit('submit', { ...formState, ipAddress: formState.ipAddress?.trim() || '' })
   } finally {
     loading.value = false
   }

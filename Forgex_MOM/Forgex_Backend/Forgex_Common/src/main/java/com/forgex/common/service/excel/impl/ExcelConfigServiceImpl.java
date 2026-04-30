@@ -43,11 +43,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
     private final TemplateOptionProviderRegistry providerRegistry;
 
     @Override
-    public IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode) {
+    public IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode, Boolean enabled) {
         Page<FxExcelExportConfig> p = new Page<>(page.getCurrent(), page.getSize());
         IPage<FxExcelExportConfig> entityPage = exportConfigMapper.selectPage(p, new LambdaQueryWrapper<FxExcelExportConfig>()
                 .like(StringUtils.hasText(tableName), FxExcelExportConfig::getTableName, tableName)
                 .like(StringUtils.hasText(tableCode), FxExcelExportConfig::getTableCode, tableCode)
+                .eq(enabled != null, FxExcelExportConfig::getEnabled, enabled)
                 .orderByDesc(FxExcelExportConfig::getId));
 
         Page<FxExcelExportConfigDTO> result = new Page<>(entityPage.getCurrent(), entityPage.getSize(), entityPage.getTotal());
@@ -104,6 +105,7 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         entity.setTitle(dto.getTitle());
         entity.setSubtitle(dto.getSubtitle());
         entity.setExportFormat(dto.getExportFormat());
+        entity.setEnabled(dto.getEnabled() == null ? Boolean.TRUE : dto.getEnabled());
         entity.setEnableTotal(dto.getEnableTotal());
         entity.setVersion(dto.getVersion());
 
@@ -252,6 +254,7 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         dto.setTitle(cfg.getTitle());
         dto.setSubtitle(cfg.getSubtitle());
         dto.setExportFormat(cfg.getExportFormat());
+        dto.setEnabled(cfg.getEnabled());
         dto.setEnableTotal(cfg.getEnableTotal());
         dto.setVersion(cfg.getVersion());
         return dto;

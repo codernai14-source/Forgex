@@ -43,7 +43,7 @@ public interface IReportTemplateService extends IService<ReportTemplate> {
      *
      * @param id 模板 ID
      * @return 模板 DTO
-     * @throws com.forgex.common.exception.BusinessException 当模板不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当模板不存在时抛出
      * @see ReportTemplateDTO
      */
     ReportTemplateDTO getById(Long id);
@@ -54,7 +54,7 @@ public interface IReportTemplateService extends IService<ReportTemplate> {
      * @param code 模板编码
      * @param engineType 引擎类型
      * @return 模板 DTO
-     * @throws com.forgex.common.exception.BusinessException 当模板不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当模板不存在时抛出
      * @see ReportTemplateDTO
      */
     ReportTemplateDTO getByCode(String code, String engineType);
@@ -81,7 +81,7 @@ public interface IReportTemplateService extends IService<ReportTemplate> {
      *
      * @param id 模板 ID
      * @param content 模板内容
-     * @throws com.forgex.common.exception.BusinessException 当模板不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当模板不存在时抛出
      */
     void updateContent(Long id, String content);
 
@@ -101,7 +101,7 @@ public interface IReportTemplateService extends IService<ReportTemplate> {
      *
      * @param id 模板 ID
      * @return 文件路径
-     * @throws com.forgex.common.exception.BusinessException 当模板不存在或导出失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当模板不存在或导出失败时抛出
      */
     String exportTemplate(Long id);
 

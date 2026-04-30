@@ -347,6 +347,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         // 遍历查询结果，构建表格配置 DTO 列表
         for (FxTableConfig config : result.getRecords()) {
             FxTableConfigDTO dto = new FxTableConfigDTO();
+            dto.setId(config.getId());
             dto.setTableCode(config.getTableCode());
             dto.setTableName(resolveI18nText(config.getTableNameI18nJson(), config.getTableCode()));
             dto.setTableType(config.getTableType());

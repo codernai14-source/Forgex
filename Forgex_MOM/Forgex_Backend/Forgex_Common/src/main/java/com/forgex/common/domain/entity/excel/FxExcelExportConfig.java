@@ -51,6 +51,11 @@ public class FxExcelExportConfig extends BaseEntity {
     private String exportFormat;
 
     /**
+     * 鏄惁鍚敤閰嶇疆銆?
+     */
+    private Boolean enabled;
+
+    /**
      * 是否开启总计。
      */
     private Boolean enableTotal;

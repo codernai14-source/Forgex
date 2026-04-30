@@ -1,5 +1,5 @@
 /**
- * 鐟欐帟澹婇懣婊冨礋閹哄牊娼堟い鐢告桨
+ * 角色菜单授权页面
  * 
  * 閸旂喕鍏橀敍?
  * 1. 閹稿膩閸ф鐫嶇粈楦垮綅閸楁洘鐖茶ぐ銏ｃ€冮弽?
@@ -30,7 +30,7 @@
     <!-- 主体区域 -->
     <section class="board">
       <!-- 侧边栏： 濡€虫健缁涙盯鈧?-->
-      <aside class="sidebar">
+      <aside class="sidebar" data-guide-id="sys-role-menu-grant-module-filter">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.moduleFilter') }}</div>
           <button
@@ -45,19 +45,20 @@
         </div>
       </aside>
 
-      <!-- 内容区域： 閺嶆垵鑸扮悰銊︾壐 -->
+      <!-- 内容区域：树形表格 -->
       <section class="content-panel">
         <div class="toolbar">
           <a-space>
-            <a-button type="primary" @click="handleSave">
+            <a-button data-guide-id="sys-role-menu-grant-save" type="primary" @click="handleSave">
               <template #icon><SaveOutlined /></template>
               {{ $t('system.role.saveGrant') }}
             </a-button>
-            <a-button @click="handleSelectAll">{{ $t('system.role.selectAll') }}</a-button>
-            <a-button @click="handleSelectInvert">{{ $t('system.role.selectInvert') }}</a-button>
-            <a-button @click="handleClearAll">{{ $t('system.role.clearAll') }}</a-button>
+            <a-button data-guide-id="sys-role-menu-grant-select-all" @click="handleSelectAll">{{ $t('system.role.selectAll') }}</a-button>
+            <a-button data-guide-id="sys-role-menu-grant-invert" @click="handleSelectInvert">{{ $t('system.role.selectInvert') }}</a-button>
+            <a-button data-guide-id="sys-role-menu-grant-clear" @click="handleClearAll">{{ $t('system.role.clearAll') }}</a-button>
           </a-space>
           <a-input-search
+            data-guide-id="sys-role-menu-grant-search"
             v-model:value="searchKeyword"
             :placeholder="$t('system.role.searchMenu')"
             @search="handleSearch"
@@ -68,7 +69,7 @@
           ref="tableRef"
           table-code="RoleMenuGrantTable"
           :request="handleRequest"
-          :降级方案-config="降级方案Config"
+          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -156,7 +157,7 @@ const terminalModuleSelectedKeys = ref<Record<'B' | 'C', Record<string, string[]
 
 const { dictItems: statusOptions } = useDict('status')
 
-const 降级方案Config = computed(() => ({
+const fallbackConfig = computed(() => ({
   tableCode: 'RoleMenuGrantTable',
   tableName: t('system.role.menuGrant'),
   tableType: 'TREE',
@@ -205,7 +206,7 @@ function resolve状态Tag(value: unknown) {
 }
 
 /**
- * 婢跺嫮鎮婄悰銊︾壐閺佺増宓佺拠閿嬬湴
+ * 处理表格数据请求
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !activeModuleId.value || !roleId.value) {
@@ -216,7 +217,7 @@ async function handleRequest(params: any) {
   try {
     const tree = await (
       activeTerminal.value === 'C' ? getRoleCModuleAuthData : getRoleModuleAuthData
-    )(Number(activeModuleId.value), {
+    )(activeModuleId.value, {
       roleId: roleId.value,
     })
 
@@ -226,7 +227,7 @@ async function handleRequest(params: any) {
     allMenus.value = flattenTree(normalizedTree)
 
     // 姣忔鍔犺浇閮戒粠鍚庣杩斿洖鐨?checked 瀛楁閲嶆柊鍒濆鍖栭€変腑鐘舵€?
-    const checkedIds = collectCheckedNodeIds(normalizedTree).map((id) => String(id))
+    const checkedIds = collectCheckedNodeIds(normalizedTree)
     const cachedKeys = terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value]
     selectedRowKeys.value = cachedKeys ? [...cachedKeys] : checkedIds
     terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
@@ -272,11 +273,11 @@ function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTree
 /**
  * 鏉╁洦鎶ゅ鎻掑瑎闁娈戦懞鍌滃仯
  */
-function collectCheckedNodeIds(nodes: MenuTreeRecord[]): number[] {
-  const ids: number[] = []
+function collectCheckedNodeIds(nodes: MenuTreeRecord[]): string[] {
+  const ids: string[] = []
   nodes.forEach((node) => {
     if (node.checked === true && node.id != null) {
-      ids.push(Number(node.id))
+      ids.push(String(node.id))
     }
     if (node.children && node.children.length > 0) {
       ids.push(...collectCheckedNodeIds(node.children))
@@ -397,7 +398,7 @@ function handleSearch() {
 }
 
 /**
- * 娣囨繂鐡ㄩ幒鍫熸綀
+ * 保存授权
  */
 async function handleSave() {
   if (!currentTenantId.value || !roleId.value) {
@@ -413,13 +414,12 @@ async function handleSave() {
       new Set(
         Object.values(terminalModuleSelectedKeys.value[activeTerminal.value])
           .flat()
-          .map(id => Number(id))
-          .filter(id => !Number.isNaN(id))
+          .filter(id => id !== '')
       )
     )
     
     await (activeTerminal.value === 'C' ? grantRoleCMenus : grantRoleMenus)({
-      roleId: Number(roleId.value),
+      roleId: roleId.value,
       tenantId: currentTenantId.value,
       menuIds: menuIds,
     })
@@ -442,7 +442,7 @@ async function loadModules() {
     return
   }
   try {
-    const res = await listModules({ tenantId: Number(currentTenantId.value) })
+    const res = await listModules({ tenantId: currentTenantId.value })
     modules.value = res || []
     if (modules.value.length > 0) {
       activeModuleId.value = String(modules.value[0].id)
@@ -466,7 +466,7 @@ async function loadRoleInfo() {
     return
   }
   try {
-    const role = await getRoleById(Number(roleId.value))
+    const role = await getRoleById(roleId.value)
     roleName.value = role?.roleName || ''
   } catch (error) {
     console.error('load role info failed:', error)
@@ -644,5 +644,3 @@ onMounted(async () => {
   }
 }
 </style>
-
-

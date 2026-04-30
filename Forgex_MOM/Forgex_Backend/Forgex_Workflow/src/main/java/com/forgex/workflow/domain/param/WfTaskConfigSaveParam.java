@@ -31,7 +31,7 @@ import lombok.Data;
 public class WfTaskConfigSaveParam {
 
     /**
-     * 主键（修改时必填）
+     * 主键 ID（新增时为空，修改时必填）
      */
     private Long id;
 
@@ -58,6 +58,16 @@ public class WfTaskConfigSaveParam {
      * 审批任务解释器Bean名称
      */
     private String interpreterBean;
+
+    /**
+     * 审批结束 HTTP 回调地址。
+     */
+    private String callbackUrl;
+
+    /**
+     * 审批结束回调 Bean 名称。
+     */
+    private String callbackBean;
 
     /**
      * 表单类型：1=自定义，2=低代码

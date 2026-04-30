@@ -63,7 +63,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
      * @param userId 用户 ID
      * @param tenantId 租户 ID
      * @return 角色 ID 列表
-     * @throws BusinessException 参数非法、用户不存在或用户未绑定该租户时抛出
+     * @throws I18nBusinessException 参数非法、用户不存在或用户未绑定该租户时抛出
      */
     @Override
     public List<Long> listAssignedRoleIds(Long userId, Long tenantId) {
@@ -93,7 +93,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
      * @param userId 用户 ID
      * @param tenantId 租户 ID
      * @param roleIds 角色 ID 列表，为空表示清空
-     * @throws BusinessException 用户不存在、用户未绑定租户、角色不存在或跨租户时抛出
+     * @throws I18nBusinessException 用户不存在、用户未绑定租户、角色不存在或跨租户时抛出
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -127,7 +127,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
      *
      * @param userId 用户 ID
      * @param tenantId 租户 ID
-     * @throws BusinessException 不满足条件时抛出
+     * @throws I18nBusinessException 不满足条件时抛出
      */
     private void validateUserAndTenant(Long userId, Long tenantId) {
         SysUser user = userMapper.selectById(userId);
@@ -174,7 +174,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
      *
      * @param roleIds 角色 ID 集合
      * @param tenantId 租户 ID
-     * @throws BusinessException 存在无效或跨租户角色时抛出
+     * @throws I18nBusinessException 存在无效或跨租户角色时抛出
      */
     private void validateRolesInTenant(Set<Long> roleIds, Long tenantId) {
         if (roleIds == null || roleIds.isEmpty()) {

@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.forgex.common.exception.BusinessException;
+import com.forgex.basic.enums.BasicPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.basic.material.domain.entity.BasicMaterialExtendConfig;
 import com.forgex.basic.material.domain.response.MaterialExtendConfigVO;
 import com.forgex.basic.material.mapper.BasicMaterialExtendConfigMapper;
@@ -91,7 +93,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
      */
     public List<MaterialExtendConfigVO> getConfigsByModule(Long tenantId, String module) {
         if (!StringUtils.hasText(module)) {
-            throw new BusinessException("模块编码不能为空");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MODULE_CODE_EMPTY);
         }
 
         LambdaQueryWrapper<BasicMaterialExtendConfig> wrapper = new LambdaQueryWrapper<>();
@@ -118,7 +120,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
     public MaterialExtendConfigVO getConfigById(Long tenantId, Long id) {
         BasicMaterialExtendConfig config = extendConfigMapper.selectById(id);
         if (config == null || !config.getTenantId().equals(tenantId)) {
-            throw new BusinessException("扩展配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_EXTEND_CONFIG_NOT_FOUND);
         }
 
         return convertToVO(config);
@@ -160,7 +162,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
     public void updateConfig(Long tenantId, BasicMaterialExtendConfig config) {
         BasicMaterialExtendConfig existing = extendConfigMapper.selectById(config.getId());
         if (existing == null || !existing.getTenantId().equals(tenantId)) {
-            throw new BusinessException("扩展配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_EXTEND_CONFIG_NOT_FOUND);
         }
 
         validateConfigUniqueness(tenantId, config.getModule(), config.getFieldName(), config.getId());
@@ -179,7 +181,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
     public void deleteConfig(Long tenantId, Long id) {
         BasicMaterialExtendConfig config = extendConfigMapper.selectById(id);
         if (config == null || !config.getTenantId().equals(tenantId)) {
-            throw new BusinessException("扩展配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_EXTEND_CONFIG_NOT_FOUND);
         }
 
         extendConfigMapper.deleteById(id);
@@ -217,7 +219,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
     public void updateConfigStatus(Long tenantId, Long id, Integer status) {
         BasicMaterialExtendConfig config = extendConfigMapper.selectById(id);
         if (config == null || !config.getTenantId().equals(tenantId)) {
-            throw new BusinessException("扩展配置不存在");
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.MATERIAL_EXTEND_CONFIG_NOT_FOUND);
         }
 
         config.setStatus(status);
@@ -246,7 +248,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
 
         Long count = extendConfigMapper.selectCount(wrapper);
         if (count > 0) {
-            throw new BusinessException(String.format("模块 [%s] 下字段 [%s] 已存在", module, fieldName));
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, BasicPromptEnum.FIELD_NAME_EXISTS, module, fieldName);
         }
     }
 

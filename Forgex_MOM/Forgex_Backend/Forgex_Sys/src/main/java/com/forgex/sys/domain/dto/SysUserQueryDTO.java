@@ -57,6 +57,10 @@ public class SysUserQueryDTO extends BaseGetParam {
      */
     private Long positionId;
 
+    private Long employeeId;
+
+    private Integer userSource;
+
     /**
      * 角色ID
      */

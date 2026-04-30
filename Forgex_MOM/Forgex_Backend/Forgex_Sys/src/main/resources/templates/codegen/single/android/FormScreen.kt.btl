@@ -1,0 +1,14 @@
+package com.forgex.mobile.feature.${ctx.androidFeatureKey}.ui
+
+import androidx.compose.runtime.Composable
+import com.forgex.mobile.core.component.FxFormFooterBar
+import com.forgex.mobile.core.component.FxFormSection
+import com.forgex.mobile.core.component.FxTextField
+
+@Composable
+fun ${ctx.entityName}FormScreen() {
+    FxFormSection(title = "${ctx.menuName}表单") {
+        FxTextField(value = "", onValueChange = {}, label = "${ctx.menuName}")
+        FxFormFooterBar(confirmText = "保存", onConfirm = {})
+    }
+}

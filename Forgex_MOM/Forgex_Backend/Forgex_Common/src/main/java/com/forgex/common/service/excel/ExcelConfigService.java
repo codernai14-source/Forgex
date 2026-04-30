@@ -25,7 +25,7 @@ public interface ExcelConfigService {
      * @param tableCode 表编号（可选，模糊匹配）
      * @return 分页结果
      */
-    IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode);
+    IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode, Boolean enabled);
 
     /**
      * 获取导出配置（包含子项）。

@@ -4,7 +4,6 @@
       ref="tableRef"
       :table-code="'ApiCallLogTable'"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       :show-query-form="true"
       row-key="id"
@@ -44,7 +43,6 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
-import type { FxTableConfig } from '@/api/system/tableConfig'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiCallLogDetailDialog from './components/ApiCallLogDetailDialog.vue'
 import { getApiCallLogList } from '@/api/system/integration'
@@ -63,26 +61,6 @@ const dictOptions = {
   callStatus: [
     { label: t('common.success'), value: 'SUCCESS' },
     { label: t('common.failed'), value: 'FAIL' },
-  ],
-}
-
-const dynamicTableConfig: Partial<FxTableConfig> = {
-  columns: [
-    { field: 'apiConfigId', title: t('integration.apiCallLog.apiConfigId'), width: 120, align: 'center', visible: true },
-    { field: 'callDirection', title: t('integration.apiCallLog.callDirection'), width: 140, align: 'center', visible: true },
-    { field: 'callStatus', title: t('integration.apiCallLog.callStatus'), width: 120, align: 'center', visible: true },
-    { field: 'callerIp', title: t('integration.apiCallLog.callerIp'), width: 160, align: 'center', visible: true },
-    { field: 'costTimeMs', title: t('integration.apiCallLog.costTimeMs'), width: 130, align: 'center', visible: true },
-    { field: 'errorMessage', title: t('integration.apiCallLog.errorMessage'), width: 260, align: 'left', ellipsis: true, visible: true },
-    { field: 'callTime', title: t('integration.apiCallLog.callTime'), width: 180, align: 'center', visible: true },
-    { field: 'action', title: t('common.action'), width: 100, align: 'center', fixed: 'right', visible: true },
-  ],
-  queryFields: [
-    { field: 'apiConfigId', label: t('integration.apiCallLog.apiConfigId'), queryType: 'input', queryOperator: 'eq' },
-    { field: 'callDirection', label: t('integration.apiCallLog.callDirection'), queryType: 'select', queryOperator: 'eq', dictCode: 'integrationDirection' },
-    { field: 'callStatus', label: t('integration.apiCallLog.callStatus'), queryType: 'select', queryOperator: 'eq', dictCode: 'callStatus' },
-    { field: 'callerIp', label: t('integration.apiCallLog.callerIp'), queryType: 'input', queryOperator: 'like' },
-    { field: 'callTime', label: t('integration.apiCallLog.callTime'), queryType: 'dateRange', queryOperator: 'between' },
   ],
 }
 

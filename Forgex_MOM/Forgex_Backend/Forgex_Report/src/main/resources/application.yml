@@ -1,8 +1,13 @@
 spring:
   application:
     name: forgex-report
-  profiles:
-    active: ${FORGEX_PROFILE:dev}
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_DATASOURCE_CONFIG:datasource-forgex-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
   datasource:
     type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
   output:
@@ -14,9 +19,23 @@ spring:
     multipart:
       max-file-size: 200MB
       max-request-size: 200MB
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
 
 server:
-  port: ${FORGEX_REPORT_PORT:8084}
+  port: ${FORGEX_REPORT_PORT:9006}
 
 logging:
   pattern:
@@ -25,8 +44,14 @@ logging:
     console: UTF-8
   level:
     root: INFO
+    com.forgex.report: ${FORGEX_REPORT_LOG_LEVEL:DEBUG}
 
 forgex:
+  deployment:
+    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
+    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
+    home: ${FORGEX_HOME:C:/forgex}
+    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:C:/forgex}/logs}
   report:
     template-path: templates/report
     enable-ureport: true
@@ -35,15 +60,15 @@ forgex:
 
 ureport:
   enabled: true
-  debug: true
-  cache-enabled: true
+  debug: ${FORGEX_REPORT_UREPORT_DEBUG:true}
+  cache-enabled: ${FORGEX_REPORT_UREPORT_CACHE_ENABLED:false}
   cache-time: 600
   prefix: classpath:templates/report/
 
 jmreport:
   enabled: true
-  mode: 0
+  mode: ${FORGEX_REPORT_JIMU_MODE:0}
   database: mysql
   table-name: jimu_report
   upload-path: upload/jimu
-  preview-cross: true
+  preview-cross: ${FORGEX_REPORT_JIMU_PREVIEW_CROSS:true}

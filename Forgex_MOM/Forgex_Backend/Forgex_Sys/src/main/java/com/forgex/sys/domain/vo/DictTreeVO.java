@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.domain.vo;
 
+import com.forgex.common.api.annotation.AutoFillUsername;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -79,9 +80,15 @@ public class DictTreeVO {
 
     private String createBy;
 
+    @AutoFillUsername(userIdField = "createBy")
+    private String createByName;
+
     private LocalDateTime updateTime;
 
     private String updateBy;
+
+    @AutoFillUsername(userIdField = "updateBy")
+    private String updateByName;
     
     /**
      * 子节点列表

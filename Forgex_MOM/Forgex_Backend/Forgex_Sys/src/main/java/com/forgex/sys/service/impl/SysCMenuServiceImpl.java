@@ -20,6 +20,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.sys.domain.dto.SysCMenuDTO;
 import com.forgex.sys.domain.dto.SysCMenuQueryDTO;
 import com.forgex.sys.domain.entity.SysCMenu;
@@ -39,6 +40,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -79,9 +81,10 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         if (moduleId != null) {
             wrapper.eq(SysCMenu::getModuleId, moduleId);
         }
+        applyMenuTenantScope(wrapper, tenantId);
         wrapper.eq(SysCMenu::getStatus, true)
                .orderByAsc(SysCMenu::getOrderNum);
-        List<SysCMenu> menus = this.list(wrapper);
+        List<SysCMenu> menus = executeIgnoringTenant(() -> this.list(wrapper));
         return buildTree(menus, null);
     }
 
@@ -131,38 +134,43 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
     // ======================== 角色授权 ========================
 
     @Override
-    public List<Long> getRoleCMenuIds(Long roleId) {
+    public List<Long> getRoleCMenuIds(Long tenantId, Long roleId) {
         LambdaQueryWrapper<SysRoleCMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRoleCMenu::getRoleId, roleId);
-        return roleCMenuMapper.selectList(wrapper).stream()
+        applyRoleCMenuTenantScope(wrapper, tenantId);
+        return executeIgnoringTenant(() -> roleCMenuMapper.selectList(wrapper).stream()
                 .map(SysRoleCMenu::getCMenuId)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     @Override
-    public List<CMenuTreeVO> getAuthMenuTree(Long moduleId, Long roleId) {
-        List<CMenuTreeVO> tree = getMenuTree(null, moduleId);
-        Set<Long> grantedIds = new HashSet<>(getRoleCMenuIds(roleId));
+    public List<CMenuTreeVO> getAuthMenuTree(Long tenantId, Long moduleId, Long roleId) {
+        List<CMenuTreeVO> tree = getMenuTree(tenantId, moduleId);
+        Set<Long> grantedIds = new HashSet<>(getRoleCMenuIds(tenantId, roleId));
         markChecked(tree, grantedIds);
         return tree;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void grantRoleCMenus(Long roleId, List<Long> menuIds) {
+    public void grantRoleCMenus(Long tenantId, Long roleId, List<Long> menuIds) {
         // 1. 删除旧关联
         LambdaQueryWrapper<SysRoleCMenu> delWrapper = new LambdaQueryWrapper<>();
         delWrapper.eq(SysRoleCMenu::getRoleId, roleId);
-        roleCMenuMapper.delete(delWrapper);
+        applyRoleCMenuTenantScope(delWrapper, tenantId);
+        runIgnoringTenant(() -> roleCMenuMapper.delete(delWrapper));
 
         // 2. 批量插入新关联
         if (!CollectionUtils.isEmpty(menuIds)) {
-            for (Long menuId : menuIds) {
-                SysRoleCMenu rm = new SysRoleCMenu();
-                rm.setRoleId(roleId);
-                rm.setCMenuId(menuId);
-                roleCMenuMapper.insert(rm);
-            }
+            runIgnoringTenant(() -> {
+                for (Long menuId : menuIds) {
+                    SysRoleCMenu rm = new SysRoleCMenu();
+                    rm.setTenantId(tenantId);
+                    rm.setRoleId(roleId);
+                    rm.setCMenuId(menuId);
+                    roleCMenuMapper.insert(rm);
+                }
+            });
         }
         log.info("角色 [{}] C 端菜单授权完成, 菜单数: {}", roleId, menuIds != null ? menuIds.size() : 0);
     }
@@ -172,7 +180,7 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
     @Override
     public List<CMenuTreeVO> getWorkbenchModules(Long userId, Long tenantId) {
         // 查询用户有权的所有顶级 C 端菜单（模块级别）
-        List<Long> menuIds = getUserCMenuIds(userId);
+        List<Long> menuIds = getUserCMenuIds(userId, tenantId);
         if (CollectionUtils.isEmpty(menuIds)) return Collections.emptyList();
 
         LambdaQueryWrapper<SysCMenu> wrapper = new LambdaQueryWrapper<>();
@@ -181,25 +189,27 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
                .eq(SysCMenu::getVisible, true)
                .eq(SysCMenu::getStatus, true)
                .orderByAsc(SysCMenu::getOrderNum);
-        List<SysCMenu> modules = this.list(wrapper);
+        applyMenuTenantScope(wrapper, tenantId);
+        List<SysCMenu> modules = executeIgnoringTenant(() -> this.list(wrapper));
         return modules.stream().map(this::toTreeVO).collect(Collectors.toList());
     }
 
     @Override
     public List<CMenuTreeVO> getWorkbenchMenus(Long userId, Long tenantId, Long moduleId) {
-        List<Long> menuIds = getUserCMenuIds(userId);
+        List<Long> menuIds = getUserCMenuIds(userId, tenantId);
         if (CollectionUtils.isEmpty(menuIds)) return Collections.emptyList();
 
         LambdaQueryWrapper<SysCMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(SysCMenu::getId, menuIds)
                .eq(SysCMenu::getVisible, true)
                .eq(SysCMenu::getStatus, true);
+        applyMenuTenantScope(wrapper, tenantId);
         if (moduleId != null) {
             wrapper.and(w -> w.eq(SysCMenu::getParentId, moduleId)
                               .or().eq(SysCMenu::getModuleId, moduleId));
         }
         wrapper.orderByAsc(SysCMenu::getOrderNum);
-        List<SysCMenu> menus = this.list(wrapper);
+        List<SysCMenu> menus = executeIgnoringTenant(() -> this.list(wrapper));
         return buildTree(menus, null);
     }
 
@@ -216,7 +226,8 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         wrapper.in(SysCMenu::getId, favMenuIds)
                .eq(SysCMenu::getStatus, true)
                .orderByAsc(SysCMenu::getOrderNum);
-        return this.list(wrapper).stream().map(this::toTreeVO).collect(Collectors.toList());
+        applyMenuTenantScope(wrapper, tenantId);
+        return executeIgnoringTenant(() -> this.list(wrapper).stream().map(this::toTreeVO).collect(Collectors.toList()));
     }
 
     @Override
@@ -243,32 +254,86 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
 
     // ======================== 私有方法 ========================
 
-    private List<Long> getUserCMenuIds(Long userId) {
+    private List<Long> getUserCMenuIds(Long userId, Long tenantId) {
         // 1. 查询用户角色
-        List<Long> roleIds = getUserRoleIds(userId);
+        List<Long> roleIds = getUserRoleIds(userId, tenantId);
         if (CollectionUtils.isEmpty(roleIds)) return Collections.emptyList();
 
         // 2. 查询角色关联的 C 端菜单 ID
         LambdaQueryWrapper<SysRoleCMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(SysRoleCMenu::getRoleId, roleIds);
-        return roleCMenuMapper.selectList(wrapper).stream()
+        applyRoleCMenuTenantScope(wrapper, tenantId);
+        return executeIgnoringTenant(() -> roleCMenuMapper.selectList(wrapper).stream()
                 .map(SysRoleCMenu::getCMenuId)
                 .distinct()
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
-    private List<Long> getUserRoleIds(Long userId) {
+    private List<Long> getUserRoleIds(Long userId, Long tenantId) {
         // 通过 sys_user_role 表查询
         try {
             LambdaQueryWrapper<com.forgex.sys.domain.entity.SysUserRole> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(com.forgex.sys.domain.entity.SysUserRole::getUserId, userId);
-            return userRoleMapper.selectList(wrapper).stream()
+            applyUserRoleTenantScope(wrapper, tenantId);
+            return executeIgnoringTenant(() -> userRoleMapper.selectList(wrapper).stream()
                     .map(com.forgex.sys.domain.entity.SysUserRole::getRoleId)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()));
         } catch (Exception e) {
             log.warn("查询用户角色失败: userId={}, error={}", userId, e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    private <T> T executeIgnoringTenant(Supplier<T> supplier) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            return supplier.get();
+        } finally {
+            if (!oldIgnore) {
+                TenantContextIgnore.clear();
+            }
+        }
+    }
+
+    private void runIgnoringTenant(Runnable runnable) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            runnable.run();
+        } finally {
+            if (!oldIgnore) {
+                TenantContextIgnore.clear();
+            }
+        }
+    }
+
+    private void applyMenuTenantScope(LambdaQueryWrapper<SysCMenu> wrapper, Long tenantId) {
+        if (tenantId == null) {
+            wrapper.isNull(SysCMenu::getTenantId);
+            return;
+        }
+        wrapper.and(w -> w.isNull(SysCMenu::getTenantId).or().eq(SysCMenu::getTenantId, tenantId));
+    }
+
+    private void applyRoleCMenuTenantScope(LambdaQueryWrapper<SysRoleCMenu> wrapper, Long tenantId) {
+        if (tenantId == null) {
+            wrapper.isNull(SysRoleCMenu::getTenantId);
+            return;
+        }
+        wrapper.and(w -> w.isNull(SysRoleCMenu::getTenantId).or().eq(SysRoleCMenu::getTenantId, tenantId));
+    }
+
+    private void applyUserRoleTenantScope(
+            LambdaQueryWrapper<com.forgex.sys.domain.entity.SysUserRole> wrapper,
+            Long tenantId
+    ) {
+        if (tenantId == null) {
+            wrapper.isNull(com.forgex.sys.domain.entity.SysUserRole::getTenantId);
+            return;
+        }
+        wrapper.and(w -> w.isNull(com.forgex.sys.domain.entity.SysUserRole::getTenantId)
+                .or().eq(com.forgex.sys.domain.entity.SysUserRole::getTenantId, tenantId));
     }
 
     private LambdaQueryWrapper<SysCMenu> buildQueryWrapper(SysCMenuQueryDTO query) {

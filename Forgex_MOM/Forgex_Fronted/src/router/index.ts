@@ -1,6 +1,6 @@
 /**
- * 璺敱閰嶇疆鏂囦欢
- * 璐熻矗瀹氫箟搴旂敤鐨勮矾鐢辫鍒欍€佽矾鐢卞畧鍗拰鍔ㄦ€佽矾鐢辨敞鍏ラ€昏緫
+ * 路由配置文件
+ * 负责定义应用路由规则、路由守卫和动态路由注入逻辑。
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -40,18 +40,18 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
 }
 
 /**
- * 闈欐€佽矾鐢遍厤锟?
- * 瀹氫箟搴旂敤鐨勫熀纭€璺敱锛屽寘鎷櫥褰曢〉銆佸垵濮嬪寲椤点€佸伐浣滃尯鍜岄噸瀹氬悜璺敱
+ * 静态路由配置
+ * 定义应用基础路由，包括登录页、初始化页、工作区和重定向路由。
  */
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/login' }, // 榛樿閲嶅畾鍚戝埌鐧诲綍锟?
-  { path: '/login', component: () => import('../views/auth/login/index.vue') }, // 鐧诲綍锟?
+  { path: '/', redirect: '/login' }, // 默认重定向到登录页
+  { path: '/login', component: () => import('../views/auth/login/index.vue') }, // 登录页
   { path: '/register', component: () => import('../views/auth/register/index.vue') },
-  { path: '/init', component: () => import('../views/auth/init-wizard/index.vue') }, // 鍒濆鍖栧悜瀵奸〉
+  { path: '/init', component: () => import('../views/auth/init-wizard/index.vue') }, // 初始化向导页
   {
     path: '/workspace',
     name: 'Workspace',
-    component: () => import('../layouts/MainLayout.vue'), // 涓诲竷灞€缁勪欢
+    component: () => import('../layouts/MainLayout.vue'), // 主布局组件
     children: [
       {
         path: 'home',
@@ -69,13 +69,13 @@ const routes: RouteRecordRaw[] = [
         path: 'profile',
         name: 'UserProfile',
         component: () => import('../views/profile/index.vue'),
-        meta: { title: 'profile.title', module: 'sys' } // 涓汉淇℃伅锟?
+        meta: { title: 'profile.title', module: 'sys' } // 个人信息页
       },
       {
         path: 'sys/config',
         name: 'SystemConfig',
         component: () => import('../views/system/config/index.vue'),
-        meta: { title: 'system.config.title', module: 'sys' } // 绯荤粺閰嶇疆锟?
+        meta: { title: 'system.config.title', module: 'sys' } // 系统配置页
       }
     ]
   },
@@ -111,9 +111,9 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       const target = (to.query as any)?.to as string | undefined
       if (target) {
-        next(target) // 閲嶅畾鍚戝埌鐩爣璺緞
+        next(target) // 重定向到目标路径
       } else {
-        next('/workspace') // 榛樿閲嶅畾鍚戝埌宸ヤ綔锟?
+        next('/workspace') // 默认重定向到工作区
       }
     }
   }
@@ -123,32 +123,32 @@ const routes: RouteRecordRaw[] = [
  * 鍒涘缓璺敱瀹炰緥
  */
 const router = createRouter({
-  history: createWebHistory(), // 浣跨敤 HTML5 History 妯″紡
-  routes // 娉ㄥ唽闈欐€佽矾锟?
+  history: createWebHistory(), // 浣跨敤 HTML5 History 模式
+  routes // 注册静态路由
 })
 
 /**
- * 璺敱鎭㈠鐘舵€佹爣锟?
- * 鐢ㄤ簬闃叉璺敱鎭㈠杩囩▼涓嚭鐜版棤闄愬惊锟?
+ * 路由恢复状态标记
+ * 用于防止路由恢复过程中出现无限循环。
  */
 let isRestoringRoutes = false
 
 /**
- * 鍏ㄥ眬璺敱瀹堝崼
- * 妫€鏌ョ櫥褰曠姸鎬佸拰鍔ㄦ€佽矾鐢憋紝瀹炵幇璺敱鎷︽埅鍜屾潈闄愭帶锟?
- * @param to 鐩爣璺敱
- * @param from 婧愯矾锟?
- * @param next 璺敱璺宠浆鍑芥暟
+ * 全局路由守卫
+ * 检查登录状态和动态路由，实现路由拦截和权限控制。
+ * @param to 目标路由
+ * @param from 来源路由
+ * @param next 路由跳转函数
  */
 router.beforeEach(async (to, from, next) => {
   console.log('[Guard] Navigating to:', to.path, 'from:', from.path)
 
-  // 鑾峰彇浼氳瘽淇℃伅
+  // 获取会话信息
   const account = sessionStorage.getItem('account')
   const tenantId = sessionStorage.getItem('tenantId')
   const permissionStore = use权限Store()
 
-  // 濡傛灉璁块棶鐧诲綍椤垫垨鍒濆鍖栭〉锛岀洿鎺ユ斁锟?
+  // 如果访问登录页或初始化页，直接放行。
   if (to.path === '/login' || to.path === '/register' || to.path === '/init') {
     next()
     return
@@ -174,36 +174,36 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 濡傛灉鏈櫥褰曪紝璺宠浆鍒扮櫥褰曢〉
+  // 如果未登录，跳转到登录页。
   if (!account || !tenantId) {
     next('/login')
     return
   }
 
-  // 濡傛灉鍔ㄦ€佽矾鐢变负绌轰笖涓嶅湪鎭㈠杩囩▼涓紝灏濊瘯鎭㈠璺敱
+  // 如果动态路由为空且不在恢复过程中，尝试恢复路由。
   if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
     isRestoringRoutes = true
 
     try {
-      // 浼樺厛浠庣紦瀛樻仮澶嶏紙閬垮厤涓嶅繀瑕佺殑API璋冪敤锟?
+      // 优先从缓存恢复，避免不必要的 API 调用。
       const cached = permissionStore.restoreRoutesAndModules()
 
       if (cached.routes.length > 0 || cached.modules.length > 0) {
         console.log('[Guard] Restoring routes from cache')
         
-        // 閲嶆柊娉ㄥ叆鍔ㄦ€佽矾锟?
+        // 重新注入动态路由。
         await injectDynamicRoutes({
           routes: cached.routes,
           modules: cached.modules
         })
 
         isRestoringRoutes = false
-        // 璺敱宸叉仮澶嶏紝閲嶆柊瀵艰埅鍒扮洰鏍囪矾锟?
+        // 路由已恢复，重新导航到目标路由。
         next({ ...to, replace: true })
         return
       }
 
-      // 濡傛灉缂撳瓨涓虹┖锛屽皾璇曚粠鍚庣鑾峰彇
+      // 如果缓存为空，尝试从后端获取。
       console.log('[Guard] No cached routes, fetching from backend')
       try {
         const payload = await getRoutes({ account, tenantId })
@@ -224,7 +224,7 @@ router.beforeEach(async (to, from, next) => {
         console.error('[Guard] Failed to fetch routes from backend:', e)
       }
 
-      // 濡傛灉閮藉け璐ヤ簡锛岃烦杞埌鐧诲綍锟?
+      // 如果都失败了，跳转到登录页。
       isRestoringRoutes = false
       next('/login')
       return
@@ -236,7 +236,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 濡傛灉璁块棶 /workspace 鏍硅矾寰勶紝閲嶅畾鍚戝埌绯荤粺绠＄悊涓婚〉
+  // 濡傛灉璁块棶 /workspace 根路径，重定向到系统管理主页
   if (to.path === '/workspace' || to.path === '/workspace/') {
     next(PERSONAL_HOME_PATH)
     return
@@ -249,8 +249,8 @@ router.beforeEach(async (to, from, next) => {
 export default router
 
 /**
- * 绌鸿鍥剧粍锟?
- * 鐢ㄤ簬璺敱缁勪欢鍔犺浇澶辫触鏃剁殑榛樿鏄剧ず
+ * 空视图组件
+ * 用于路由组件加载失败时的默认显示。
  */
 const EmptyView = {
   name: 'RouteEmptyView',
@@ -258,20 +258,21 @@ const EmptyView = {
 }
 
 /**
- * 妯″潡浠ｇ爜鏄犲皠锟?
- * 灏嗗悗绔殑妯″潡浠ｇ爜鏄犲皠鍒板墠绔殑鐩綍锟?
+ * 模块代码映射
+ * 将后端模块代码映射到前端目录。
  */
 const modulePathMap: Record<string, string> = {
   'sys': 'system',
   'system': 'system',
+  'basic': 'basic',
   'approval': 'workflow',
   'integration': 'integrationPlatform',
   'label': 'label',
 }
 
 /**
- * 瀹℃壒妯″潡鑿滃崟浣跨敤锟?component 閿笌鐩綍缁撴瀯锛坵orkflow 涓嬪绾ц矾寰勶級鐨勯潤鎬佹槧灏勶拷?
- * <p>涓庢暟鎹簱鑴氭湰 {@code V2.0.1_瀹℃壒绠＄悊妯″潡涓庤彍锟?sql}銆亄@code V2.0.2_瀹℃壒宸ヤ綔鍙拌彍锟?sql} 锟?component_key 淇濇寔涓€鑷达拷?/p>
+ * 审批模块菜单 component key 与目录结构的静态映射。
+ * 与数据库脚本中的 component_key 保持一致。
  */
 const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalDashboard: () => import('../views/workflow/dashboard/index.vue'),
@@ -286,13 +287,13 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
 const viewModules = import.meta.glob('../views/**/*.vue') as Record<string, () => Promise<any>>
 
 /**
- * 鍔ㄦ€佸鍏ョ粍锟?
- * 绾﹀畾锛氱粍浠跺悕鏍煎紡锟?ModulePage锛屼緥锟?SystemUser, SysDashboard
- * 鑷姩鏄犲皠鍒拌矾寰勶細../views/{module}/{page}.vue锛堝崟鏂囦欢缁撴瀯锟?
+ * 动态导入组件。
+ * 约定组件名格式为 ModulePage，例如 SystemUser、SysDashboard。
+ * 自动映射到 ../views/{module}/{page}.vue。
  *
- * @param componentName 缁勪欢鍚嶇О锛屼緥锟?"SystemUser", "SysDashboard"
- * @returns 鍔ㄦ€佸鍏ョ殑缁勪欢
- * @throws {Error} 缁勪欢鍔犺浇澶辫触鏃舵姏鍑洪敊锟?
+ * @param componentName 组件名称，例如 "SystemUser"、"SysDashboard"
+ * @returns 动态导入的组件
+ * @throws {Error} 组件加载失败时抛出错误
  */
 function loadComponent(componentName: string, moduleHint?: string, routePathHint?: string) {
   try {
@@ -322,9 +323,19 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
     }
 
     const stableComponentMap: Record<string, string> = {
+      BasicDashboard: '../views/basic/dashboard/index.vue',
+      BasicCustomer: '../views/basic/customer/index.vue',
+      BasicSupplier: '../views/basic/supplier/index.vue',
+      BasicEncodeRule: '../views/basic/encodeRule/index.vue',
+      BasicMaterial: '../views/basic/material/index.vue',
+      BasicMaterialRaw: '../views/basic/material/index.vue',
+      BasicMaterialSemiFinished: '../views/basic/material/index.vue',
+      BasicMaterialFinished: '../views/basic/material/index.vue',
+      SystemDashboard: '../views/system/dashboard/index.vue',
       SystemRole: '../views/system/role/index.vue',
       SystemRoleMenuGrant: '../views/system/role/MenuGrant.vue',
       SystemRoleUserGrant: '../views/system/role/UserGrant.vue',
+      ApprovalDashboard: '../views/workflow/dashboard/index.vue',
     }
     if (normalizedName && stableComponentMap[normalizedName]) {
       const stablePath = stableComponentMap[normalizedName]
@@ -468,292 +479,36 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
 }
 
 /**
- * 鍔ㄦ€佹ā鍧楀垪锟?
+ * 动态模块列表。
  * 瀛樺偍浠庡悗绔幏鍙栫殑妯″潡淇℃伅
  */
 export const dynamicModules = ref<any[]>([])
 
 /**
- * 鍔ㄦ€佽矾鐢卞垪锟?
+ * 动态路由列表。
  * 瀛樺偍浠庡悗绔幏鍙栫殑璺敱淇℃伅
  */
 export const dynamicRoutes = ref<any[]>([])
 
-function normalizeAuthorizationRoutes(routes: any[]) {
-  const cloned = Array.isArray(routes)
-    ? JSON.parse(JSON.stringify(routes))
-    : []
-
-  const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
-  if (!sysRoute || !Array.isArray(sysRoute.children)) {
-    return cloned
-  }
-
-  const authorizationCatalog = sysRoute.children.find((item: any) =>
-    item?.meta?.type === 'catalog' && String(item?.path || '') === 'authorization',
-  )
-  if (!authorizationCatalog) {
-    return cloned
-  }
-
-  authorizationCatalog.children = Array.isArray(authorizationCatalog.children)
-    ? authorizationCatalog.children
-    : []
-
-  const moduleIndex = sysRoute.children.findIndex((item: any) => String(item?.path || '') === 'module')
-  if (moduleIndex === -1) {
-    return cloned
-  }
-
-  const [moduleMenu] = sysRoute.children.splice(moduleIndex, 1)
-  const existedModuleIndex = authorizationCatalog.children.findIndex((item: any) => String(item?.path || '') === 'module')
-  if (existedModuleIndex !== -1) {
-    authorizationCatalog.children[existedModuleIndex] = moduleMenu
-  } else {
-    authorizationCatalog.children.push(moduleMenu)
-    authorizationCatalog.children.sort((a: any, b: any) => {
-      const orderA = Number(a?.meta?.order ?? a?.order ?? 0)
-      const orderB = Number(b?.meta?.order ?? b?.order ?? 0)
-      return orderA - orderB
-    })
-  }
-
-  return cloned
-}
-
-function normalizeSystemConfigRoutes(routes: any[]) {
-  const cloned = Array.isArray(routes)
-    ? JSON.parse(JSON.stringify(routes))
-    : []
-  // 2026-04-20: stop all frontend regrouping, keep backend menu tree as-is.
-  return cloned
-
-  const sysRoute = cloned.find((item: any) => String(item?.path || '') === 'sys')
-  if (!sysRoute || !Array.isArray(sysRoute.children)) {
-    return cloned
-  }
-
-  groupSystemMenus(sysRoute.children, {
-    catalogPath: 'pageTableConfig',
-    title: '表格管理',
-    icon: 'TableOutlined',
-    childPaths: ['tableConfig', 'userTableConfig'],
-  })
-
-  groupSystemMenus(sysRoute.children, {
-    catalogPath: 'excelConfig',
-    title: 'Excel閰嶇疆',
-    icon: 'FileExcelOutlined',
-    childPaths: ['excelImportConfig', 'excelExportConfig'],
-  })
-
-  return cloned
-}
-
-function normalizeIntegrationRoutes(routes: any[]) {
-  const cloned = Array.isArray(routes)
-    ? JSON.parse(JSON.stringify(routes))
-    : []
-
-  const integrationRoute = cloned.find((item: any) => String(item?.path || '') === 'integration')
-  if (!integrationRoute || !Array.isArray(integrationRoute.children)) {
-    return cloned
-  }
-
-  const rootChildren = integrationRoute.children
-  const integrationEntryPaths = ['home', 'thirdSystem', 'apiConfig', 'apiCallLog']
-  const promotedMenus: any[] = []
-
-  const collectMenu = (menu: any) => {
-    if (!menu || typeof menu !== 'object') {
-      return
-    }
-    const path = String(menu?.path || '')
-    if (!path) {
-      return
-    }
-    if (integrationEntryPaths.includes(path)) {
-      const normalizedMenu = {
-        ...menu,
-        meta: {
-          ...(menu.meta || {}),
-          module: 'integration',
-          menuLevel: 1,
-          type: menu.meta?.type || 'menu',
-        },
-      }
-      if (path === 'home') {
-        normalizedMenu.meta = {
-          ...normalizedMenu.meta,
-          title: normalizedMenu.meta?.title || 'integration.home.title',
-        }
-      }
-      promotedMenus.push(normalizedMenu)
-    }
-  }
-
-  for (let index = rootChildren.length - 1; index >= 0; index--) {
-    const menu = rootChildren[index]
-    const path = String(menu?.path || '')
-    if (integrationEntryPaths.includes(path)) {
-      collectMenu(menu)
-      rootChildren.splice(index, 1)
-      continue
-    }
-    if (menu?.meta?.type === 'catalog' && Array.isArray(menu.children)) {
-      const remainChildren: any[] = []
-      menu.children.forEach((child: any) => {
-        const childPath = String(child?.path || '')
-        if (integrationEntryPaths.includes(childPath)) {
-          collectMenu(child)
-        } else {
-          remainChildren.push(child)
-        }
-      })
-      if (remainChildren.length === 0) {
-        rootChildren.splice(index, 1)
-      } else {
-        menu.children = remainChildren
-      }
-    }
-  }
-
-  const promotedPathSet = new Set(promotedMenus.map(item => String(item?.path || '')))
-  const homeMenu = promotedMenus.find(item => String(item?.path || '') === 'home') || {
-    path: 'home',
-    name: 'integrationHome',
-    component: 'IntegrationHome',
-    meta: {
-      title: 'integration.home.title',
-      icon: 'HomeOutlined',
-      module: 'integration',
-      menuLevel: 1,
-      type: 'menu',
-    },
-  }
-
-  const finalMenus = [
-    homeMenu,
-    ...promotedMenus.filter(item => String(item?.path || '') !== 'home'),
-  ]
-
-  finalMenus.forEach(menu => {
-    const path = String(menu?.path || '')
-    if (!promotedPathSet.has(path)) {
-      promotedPathSet.add(path)
-    }
-  })
-
-  if (!rootChildren.some((item: any) => String(item?.path || '') === 'home')) {
-    rootChildren.unshift(homeMenu)
-  }
-
-  finalMenus.reverse().forEach(menu => {
-    const path = String(menu?.path || '')
-    const existsIndex = rootChildren.findIndex((item: any) => String(item?.path || '') === path)
-    if (existsIndex !== -1) {
-      rootChildren.splice(existsIndex, 1)
-    }
-    rootChildren.unshift(menu)
-  })
-
-  return cloned
-}
-
-function groupSystemMenus(
-  menuList: any[],
-  options: {
-    catalogPath: string
-    title: string
-    icon: string
-    childPaths: string[]
-  },
-) {
-  // 2026-04-20: no-op, frontend must not regroup system menus.
-  return
-  const catalogIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
-  const existingCatalog = catalogIndex >= 0 ? menuList[catalogIndex] : null
-  const catalogChildren = Array.isArray(existingCatalog?.children) ? existingCatalog.children : []
-
-  const detachedChildren: any[] = []
-  let insertIndex = catalogIndex >= 0 ? catalogIndex : menuList.length
-
-  options.childPaths.forEach(childPath => {
-    const rootIndex = menuList.findIndex((item: any) => String(item?.path || '') === childPath)
-    if (rootIndex !== -1) {
-      if (detachedChildren.length === 0) {
-        insertIndex = Math.min(insertIndex, rootIndex)
-      }
-      detachedChildren.push(menuList[rootIndex])
-      menuList.splice(rootIndex, 1)
-    }
-  })
-
-  const mergedChildren = [...catalogChildren]
-  detachedChildren.forEach(child => {
-    const exists = mergedChildren.some((item: any) => String(item?.path || '') === String(child?.path || ''))
-    if (!exists) {
-      mergedChildren.push(child)
-    }
-  })
-
-  if (mergedChildren.length === 0) {
-    return
-  }
-
-  const catalog = existingCatalog || {
-    path: options.catalogPath,
-    name: options.catalogPath,
-    meta: {
-      title: options.title,
-      icon: options.icon,
-      module: 'sys',
-      menuLevel: 1,
-      type: 'catalog',
-    },
-    children: [],
-  }
-
-  catalog.meta = {
-    ...(catalog.meta || {}),
-    title: options.title,
-    icon: options.icon,
-    module: 'sys',
-    menuLevel: 1,
-    type: 'catalog',
-  }
-  catalog.children = mergedChildren
-
-  if (catalogIndex >= 0) {
-    const refreshedIndex = menuList.findIndex((item: any) => String(item?.path || '') === options.catalogPath)
-    if (refreshedIndex !== -1) {
-      menuList[refreshedIndex] = catalog
-    }
-    return
-  }
-
-  menuList.splice(Math.min(insertIndex, menuList.length), 0, catalog)
-}
-
 /**
- * 宸叉敞鍏ョ殑鍔ㄦ€佽矾鐢卞悕绉伴泦锟?
+ * 已注入的动态路由名称集合。
  * <p>
- * 鐢ㄤ簬鍦ㄩ噸鏂版敞鍏ワ紙渚嬪鍒囨崲璇█锛夋椂娓呯悊鏃ц矾鐢憋紝閬垮厤璺敱璁板綍閲嶅瀵艰嚧椤甸潰蹇呴』鍒锋柊鎵嶈兘鐢熸晥锟?
+ * 用于重新注入时清理旧路由，避免路由记录重复导致页面需要刷新才生效。
  * </p>
  */
 const injectedRouteNames = new Set<string>()
 
 /**
- * 鍔ㄦ€佽矾鐢辨敞鍏ュ嚱锟?
- * 鏍规嵁鍚庣杩斿洖鐨勮矾鐢辨暟鎹紝鍔ㄦ€佹敞鍐岃矾鐢卞埌璺敱瀹炰緥
+ * 动态路由注入函数。
+ * 根据后端返回的路由数据，动态注册路由到路由实例。
  *
- * @param payload 鍖呭惈妯″潡鍜岃矾鐢辨暟鎹殑璐熻浇
+ * @param payload 包含模块和路由数据的负载
  * @returns Promise<void>
  */
 export async function injectDynamicRoutes(payload: any) {
   const r = router
 
-  // 閲嶆柊娉ㄥ叆鍓嶅厛娓呯悊鏃х殑鍔ㄦ€佽矾鐢憋紝閬垮厤锟?path 鐨勬棫璺敱璁板綍娈嬬暀
+  // 重新注入前先清理旧的动态路由，避免旧路由记录残留。
   if (injectedRouteNames.size > 0) {
     for (const name of injectedRouteNames) {
       try {
@@ -770,16 +525,17 @@ export async function injectDynamicRoutes(payload: any) {
     injectedRouteNames.clear()
   }
 
-  // 瑙ｆ瀽妯″潡鍜岃矾鐢辨暟锟?
+  // 解析模块和路由数据。
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
-  let routesPayload = normalizeAuthorizationRoutes(Array.isArray(payload?.routes) ? payload.routes : [])
-  routesPayload = normalizeIntegrationRoutes(routesPayload)
+  const routesPayload = Array.isArray(payload?.routes)
+    ? JSON.parse(JSON.stringify(payload.routes))
+    : []
 
-  // 鏇存柊鍔ㄦ€佹ā鍧楀拰璺敱鍒楄〃
+  // 更新动态模块和路由列表。
   dynamicModules.value = mods
   dynamicRoutes.value = routesPayload
 
-  // 缂撳瓨锟?Pinia store锛堜細鑷姩鎸佷箙鍖栧埌 localStorage锟?
+  // 缓存到 Pinia store，会自动持久化到 localStorage。
   const permissionStore = use权限Store()
   permissionStore.setRoutes(routesPayload)
   permissionStore.setModules(mods)
@@ -791,24 +547,24 @@ export async function injectDynamicRoutes(payload: any) {
     return `dyn:${normalized}`
   }
 
-  // 閬嶅巻璺敱鏁版嵁锛屾敞鍐屽姩鎬佽矾锟?
+  // 遍历路由数据，注册动态路由。
   for (const routeItem of routesPayload) {
     const moduleCode = routeItem.path
     const children = Array.isArray(routeItem.children) ? routeItem.children : []
     const registeredModulePaths = new Set<string>()
 
-    // 娉ㄥ唽妯″潡涓嬬殑瀛愯矾锟?
+    // 注册模块下的子路由。
     for (const c of children) {
       const key = c.component
       const childPath = c.path
 
-      // 鏋勫缓瀹屾暣璺緞锟?workspace/{moduleCode}/{childPath}
+      // 构建完整路径：workspace/{moduleCode}/{childPath}
       const fullPath = `${moduleCode}/${childPath}`
 
-      // catalog绫诲瀷鐨勮彍鍗曚笉娉ㄥ唽璺敱锛屼絾闇€瑕佸鐞嗗叾涓嬬殑瀛愯彍锟?
+      // catalog 类型菜单不注册路由，但需要处理其下的子菜单。
       if (c.meta && c.meta.type === 'catalog') {
 
-        // 澶勭悊catalog鑿滃崟涓嬬殑瀛愯彍锟?
+        // 处理 catalog 菜单下的子菜单。
         const catalogChildren = Array.isArray(c.children) ? c.children : []
         for (const subChild of catalogChildren) {
           const subKey = subChild.component
@@ -816,13 +572,13 @@ export async function injectDynamicRoutes(payload: any) {
 
           const subComp = loadComponent(subKey, moduleCode, `${childPath}/${subChildPath}`)
 
-          // 鏋勫缓瀹屾暣璺緞锟?workspace/{moduleCode}/{childPath}/{subChildPath}
+          // 构建完整路径：workspace/{moduleCode}/{childPath}/{subChildPath}
           const subFullPath = `${fullPath}/${subChildPath}`
           const subRouteName = buildDynamicRouteName(subFullPath)
 
 
 
-          // 娣诲姞瀛愯矾鐢卞埌 Workspace 璺敱锟?
+          // 添加子路由到 Workspace 路由。
           r.addRoute('Workspace', {
             path: subFullPath,
             name: subRouteName,
@@ -835,17 +591,17 @@ export async function injectDynamicRoutes(payload: any) {
           injectedRouteNames.add(subRouteName)
           registeredModulePaths.add(subFullPath)
         }
-        // catalog绫诲瀷鑿滃崟鏈韩涓嶉渶瑕佹敞鍐岃矾鐢憋紝缁х画澶勭悊涓嬩竴涓彍锟?
+        // catalog 类型菜单本身不需要注册路由，继续处理下一个菜单。
         continue
       }
 
-      // 闈瀋atalog绫诲瀷鑿滃崟鐩存帴娉ㄥ唽璺敱
+      // 非 catalog 类型菜单直接注册路由。
       const comp = loadComponent(key, moduleCode, childPath)
       const routeName = buildDynamicRouteName(fullPath)
 
 
 
-      // 娣诲姞瀛愯矾鐢卞埌 Workspace 璺敱锟?
+      // 添加子路由到 Workspace 路由。
       r.addRoute('Workspace', {
         path: fullPath,
         name: routeName,
@@ -882,7 +638,7 @@ export async function injectDynamicRoutes(payload: any) {
 
   }
 
-  // 鎵撳嵃鎵€鏈夋敞鍐岀殑璺敱锛堣皟璇曠敤锟?
+  // 遍历所有已注册路由，调试时可在此处输出。
 
   r.getRoutes().forEach(route => {
     if (route.path.includes('workspace')) {
@@ -891,4 +647,3 @@ export async function injectDynamicRoutes(payload: any) {
   })
 
 }
-

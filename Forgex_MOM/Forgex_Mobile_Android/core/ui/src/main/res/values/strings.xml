@@ -11,6 +11,19 @@
     <string name="common_not_available">功能暂未开放</string>
     <string name="common_url_missing">菜单未提供 URL</string>
     <string name="common_device_title">%1$s (%2$s)</string>
+    <string name="scan_action_default">扫码</string>
+    <string name="scan_result_title">扫描结果</string>
+    <string name="scan_result_source">来源：%1$s</string>
+    <string name="scan_source_hint">最近输入来源：%1$s</string>
+    <string name="scan_source_pda">PDA 扫描</string>
+    <string name="scan_source_keyboard">扫描枪键盘</string>
+    <string name="scan_source_nfc">NFC 标签</string>
+    <string name="scan_source_camera">摄像头</string>
+    <string name="scan_source_manual">手动输入</string>
+    <string name="scan_hint_server">可直接手输，也可通过扫描枪或 NFC 标签回填地址信息</string>
+    <string name="scan_hint_auth_account">账号支持手输，也支持扫描枪或 NFC 标签回填</string>
+    <string name="server_settings_scan_host">扫描主机</string>
+    <string name="server_settings_scan_port">扫描端口</string>
 
     <string name="tab_favorites">收藏</string>
     <string name="tab_notification">通知</string>
@@ -47,6 +60,9 @@
     <string name="auth_login_method_wechat">微信登录</string>
     <string name="auth_login_method_dingtalk">钉钉登录</string>
     <string name="auth_login_method_gitee">Gitee 登录</string>
+    <string name="auth_language_switch">切换语言</string>
+    <string name="auth_language_default_option">跟随后端默认语言</string>
+    <string name="auth_third_party_hint">第三方登录暂未开放</string>
     <string name="auth_back_to_login_methods">返回方式选择</string>
     <string name="auth_captcha_load_failed">验证码加载失败</string>
     <string name="auth_captcha_refresh">刷新</string>
@@ -143,5 +159,6 @@
     <string name="workflow_status_rejected">已驳回</string>
     <string name="workflow_status_unknown">未知</string>
 
+    <string name="component_autocomplete_empty">未找到匹配项</string>
     <string name="placeholder_dash">--</string>
 </resources>

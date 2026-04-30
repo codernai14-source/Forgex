@@ -21,12 +21,13 @@
     >
       <template #toolbar>
         <a-space>
-          <a-button type="primary" @click="handleAdd" v-permission="'sys:tenant-message-whitelist:create'">
+        <a-button data-guide-id="sys-tenant-message-whitelist-add" type="primary" @click="handleAdd" v-permission="'sys:tenant-message-whitelist:create'">
             <template #icon><PlusOutlined /></template>
             {{ t('common.add') }}
           </a-button>
-          <a-button
-            danger
+        <a-button
+          data-guide-id="sys-tenant-message-whitelist-batch-delete"
+          danger
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
             v-permission="'sys:tenant-message-whitelist:delete'"

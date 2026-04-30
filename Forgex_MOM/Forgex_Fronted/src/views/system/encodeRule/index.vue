@@ -14,14 +14,14 @@
       <template #toolbar>
         <a-space :size="8">
           <a-button
-            v-permission="'sys:encodeRule:add'"
+            v-permission="'basic:encodeRule:add'"
             type="primary"
             @click="openAddDialog"
           >
             {{ t('system.encodeRule.add') }}
           </a-button>
           <a-button
-            v-permission="'sys:encodeRule:delete'"
+            v-permission="'basic:encodeRule:delete'"
             danger
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchDelete"
@@ -29,7 +29,7 @@
             {{ t('common.batchDelete') }}
           </a-button>
           <a-button
-            v-permission="'sys:encodeRule:test'"
+            v-permission="'basic:encodeRule:test'"
             @click="openTestDialog"
           >
             {{ t('system.encodeRule.test') }}
@@ -49,19 +49,19 @@
       <template #action="{ record }">
         <a-space>
           <a
-            v-permission="'sys:encodeRule:edit'"
+            v-permission="'basic:encodeRule:edit'"
             @click="openEditDialog(record)"
           >
             {{ t('system.encodeRule.edit') }}
           </a>
           <a
-            v-permission="'sys:encodeRule:generate'"
+            v-permission="'basic:encodeRule:generate'"
             @click="handleGenerateEncode(record)"
           >
             {{ t('system.encodeRule.generate') }}
           </a>
           <a
-            v-permission="'sys:encodeRule:delete'"
+            v-permission="'basic:encodeRule:delete'"
             style="color: #ff4d4f"
             @click="handleDelete(record.id)"
           >

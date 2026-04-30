@@ -3,6 +3,8 @@
  */
 export default {
   ok: '确定',
+  yes: '是',
+  no: '否',
   cancel: '取消',
   save: '保存',
   delete: '删除',
