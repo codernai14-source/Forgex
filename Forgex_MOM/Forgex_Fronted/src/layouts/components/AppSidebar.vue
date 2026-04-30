@@ -70,7 +70,7 @@
             </a-menu-item>
           </a-sub-menu>
 
-          <!-- 鑿滃崟锛堟棤瀛愯彍鍗曪級 -->
+          <!-- 菜单（无子菜单） -->
           <a-menu-item v-else :key="item.key">
             <template #icon>
               <component v-if="item.icon" :is="getIcon(item.icon)" />
@@ -121,7 +121,7 @@ interface AppSidebarProps {
   activeKey?: string
   /** 褰撳墠婵€娲荤殑妯″潡 code锛岀敤浜庡弻鍒楀竷灞€妯″紡 */
   activeModuleCode?: string
-  /** 渚ц竟鏍忔槸鍚︽姌鍙狅紝true 琛ㄧず鎶樺彔鐘舵€?*/
+  /** 侧边栏是否折叠，true 琛ㄧず鎶樺彔鐘舵€?*/
   collapsed?: boolean
   /** 鏄惁鍚敤鍙屽垪甯冨眬锛宼rue 琛ㄧず鏄剧ず涓ゅ垪渚ц竟鏍?*/
   doubleColumn?: boolean
@@ -138,7 +138,7 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 
 const emit = defineEmits<{
   /**
-   * 鑿滃崟鐐瑰嚮浜嬩欢
+   * 菜单点击事件
    * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑昏彍鍗曢」鏃惰Е鍙?
    * @param menuKey 琚偣鍑荤殑鑿滃崟 key
    */
@@ -157,11 +157,11 @@ const emit = defineEmits<{
   'collapse-change': [collapsed: boolean]
 }>()
 
-// 閫変腑鐨勮彍鍗昸eys
+// 选中的菜单keys
 const selectedKeys = ref<string[]>([])
-// 閫変腑鐨勪竴绾ц彍鍗昸eys锛堢敤浜庡弻鍒楀竷灞€锛?
+// 选中的一级菜单keys锛堢敤浜庡弻鍒楀竷灞€锛?
 const selectedFirstLevelKeys = ref<string[]>([])
-// 灞曞紑鐨勮彍鍗昸eys
+// 展开的菜单keys
 const openKeys = ref<string[]>([])
 
 // 涓€绾ц彍鍗曞垪琛紙鐢ㄤ簬鍙屽垪甯冨眬鐨勭涓€鍒楋級
@@ -170,7 +170,7 @@ const firstLevelMenus = computed(() => {
     return []
   }
   
-  // 杩斿洖鎵€鏈変竴绾ц彍鍗曪紙menuLevel === 1锛夛紝鍖呭惈children
+  // 杩斿洖鎵€鏈変竴绾ц彍鍗曪紙menuLevel === 1），包含children
   // 濡傛灉娌℃湁menuLevel灞炴€э紝涔熻涓轰竴绾ц彍鍗?
   const menus = props.menus.filter(menu => 
     menu.menuLevel === 1 || 
@@ -211,13 +211,13 @@ const currentMenus = computed(() => {
     return props.menus
   }
   
-  // 鍙屽垪妯″紡锛氬彧鏄剧ず褰撳墠妯″潡鐨勪簩涓夌骇鑿滃崟
+  // 双列模式：只显示当前模块的二三级菜单
   if (!props.activeModuleCode) {
     return []
   }
   
   // 鑾峰彇褰撳墠閫変腑鐨勪竴绾ц彍鍗?
-  // 浣跨敤firstLevelMenus.value.find锛屽洜涓篺irstLevelMenus鍖呭惈瀹屾暣鐨刢hildren缁撴瀯
+  // 浣跨敤firstLevelMenus.value.find锛屽洜涓篺irstLevelMenus包含完整的children缁撴瀯
   const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
     menu.key === selectedFirstLevelKeys.value[0]
   )
@@ -380,7 +380,7 @@ const onModuleClick = (info: any) => {
   }
 }
 
-// 鑿滃崟鐐瑰嚮
+// 菜单点击
 const onMenuClick = (info: any) => {
   const key = info.key as string
   if (key) {
@@ -683,7 +683,7 @@ const onCollapse = (collapsed: boolean) => {
     max-height: 80vh;
     overflow-y: auto;
     
-    // 瀛愯彍鍗曟粴鍔ㄦ潯鏍峰紡
+    // 子菜单滚动条样式
     &::-webkit-scrollbar {
       width: 6px;
     }
@@ -703,7 +703,7 @@ const onCollapse = (collapsed: boolean) => {
   }
 }
 
-// 鑿滃崟鏂囧瓧鏍峰紡
+// 菜单文字样式
 .menu-text {
   max-width: 100%;
   line-height: 1.35;

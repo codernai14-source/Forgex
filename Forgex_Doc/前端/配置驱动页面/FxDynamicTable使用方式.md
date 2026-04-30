@@ -209,12 +209,47 @@ async function handleRequest(payload) {
 
 ```vue
 <template #action="{ record }">
-  <a-space>
-    <a @click="handleEdit(record)">编辑</a>
-    <a @click="handleDelete(record.id)">删除</a>
-  </a-space>
+  <FxActionGroup :actions="getRowActions(record)" />
 </template>
 ```
+
+## 操作列按钮规则
+
+表格 `action` 列统一使用 `src/components/common/FxActionGroup.vue` 表达行操作。页面传入 `ActionItem[]`，组件会先按 `permission`、`hidden` 过滤，再按传入顺序决定常用操作优先级。
+
+- 权限过滤后操作数 `<= 3` 时，全部平铺显示。
+- 权限过滤后操作数 `> 3` 时，只显示前 3 个操作 + 1 个“更多”下拉。
+- 操作列最多只出现 4 个可见控件，避免按钮换行、挤压表格或影响固定列宽度。
+- 删除等危险操作设置 `danger: true`，禁用态设置 `disabled: true`，不要在页面里额外写换行类样式。
+- 如果行操作需要被页面引导直接定位，可以在 `ActionItem` 中传 `guideId`。被折叠到“更多”下拉里的操作默认不适合作为引导目标；必要时在页面上调大 `max-inline`。
+
+```ts
+import FxActionGroup, { type ActionItem } from '@/components/common/FxActionGroup.vue'
+
+function getRowActions(record: any): ActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', permission: 'xxx:edit', guideId: 'demo-row-edit', onClick: () => handleEdit(record) },
+    { key: 'status', label: '启用/停用', permission: 'xxx:edit', onClick: () => handleStatus(record) },
+    { key: 'detail', label: '详情', permission: 'xxx:view', onClick: () => handleDetail(record) },
+    { key: 'delete', label: '删除', permission: 'xxx:delete', danger: true, onClick: () => handleDelete(record.id) },
+  ]
+}
+```
+
+## 页面引导锚点
+
+`FxDynamicTable` 已内置系统页面引导需要的稳定锚点：
+
+| 锚点 | 位置 |
+|---|---|
+| `fx-table-query` | 查询区 |
+| `fx-table-toolbar` | 工具栏 |
+| `fx-table-toolbar-left` | 工具栏左侧业务操作 |
+| `fx-table-column-setting` | 列设置 |
+| `fx-table-content` | 表格内容 |
+| `fx-table-pagination` | 分页区 |
+
+系统管理模块页面如果使用 `FxDynamicTable`，页面级引导可以直接复用这些公共锚点。页面自己的新增、导入、导出、批量删除等按钮，需要在业务页面上补 `data-guide-id`。
 
 例如列字段是 `status`：
 
@@ -317,6 +352,7 @@ async function handleRequest(payload) {
 - 查询参数尽量通过 `payload.query` 统一传递
 - 保存、删除后由页面主动调用 `refresh()`
 - 自定义列尽量少而精，避免把所有列都改成插槽
+- 页面外层如果还有标题、工具条、页签等固定区域，外层容器需要使用 `height: 100%`、`display: flex`、`flex-direction: column`、`overflow: hidden`，并让 `FxDynamicTable` 所在区域 `flex: 1`、`min-height: 0`。否则动态表格按父容器高度计算时，容易叠加固定区域高度导致底部出现大块空白或页面整体滚动。
 
 ## 常见排查
 

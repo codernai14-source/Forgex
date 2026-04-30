@@ -20,12 +20,12 @@
               :table-code="'PositionTable'"
               :request="handleRequest"
               :dict-options="dictOptions"
-              :降级方案-config="降级方案Config"
+              :fallback-config="fallbackConfig"
               row-key="id"
             >
               <template #toolbar>
                 <a-space>
-                  <a-button type="primary" @click="openAdd" v-permission="'sys:position:add'">
+                  <a-button data-guide-id="sys-position-add" type="primary" @click="openAdd" v-permission="'sys:position:add'">
                     <template #icon><PlusOutlined /></template>
                     {{ $t('system.position.addPosition') }}
                   </a-button>
@@ -205,7 +205,7 @@ const dictOptions = ref({
   positionLevel: positionLevelOptions
 })
 
-const 降级方案Config: Partial<FxTableConfig> = {
+const fallbackConfig: Partial<FxTableConfig> = {
   columns: [
     { field: 'positionName', title: '岗位名称', width: 180, align: 'left' },
     { field: 'positionCode', title: '岗位编码', width: 140, align: 'left' },
@@ -247,6 +247,7 @@ const handleRequest = async (payload: {
       ...search表单.value,
       ...payload.query
     }
+    const data = await getPositionPage(params)
     
     // 确保total是数字类型
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)

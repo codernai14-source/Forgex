@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
@@ -126,7 +125,7 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         Long targetTenantId = resolveTargetTenantId(dto.getPublicConfig());
 
         return executeWithoutTenantIsolation(() -> {
-            String templateCode = normalizeRequiredText(dto.getTemplateCode(), "模板编号不能为空");
+        String templateCode = normalizeRequiredText(dto.getTemplateCode(), SysPromptEnum.MSG_TEMPLATE_CODE_REQUIRED);
 
             if (dto.getId() == null) {
                 if (existsByCodeInTenant(templateCode, targetTenantId, null)) {
@@ -408,9 +407,9 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         return tenantId;
     }
 
-    private String normalizeRequiredText(String value, String errorMessage) {
+    private String normalizeRequiredText(String value, SysPromptEnum prompt) {
         if (!StringUtils.hasText(value)) {
-            throw new BusinessException(errorMessage);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, prompt);
         }
         return value.trim();
     }

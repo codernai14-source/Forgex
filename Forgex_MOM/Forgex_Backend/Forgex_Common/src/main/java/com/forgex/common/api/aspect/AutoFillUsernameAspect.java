@@ -17,8 +17,8 @@ import com.forgex.common.api.annotation.AutoFillUsername;
 import com.forgex.common.api.feign.SysUserFeignClient;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
-import com.forgex.common.web.StatusCode;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -27,13 +27,19 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * 自动填充用户名切面
- * <p>拦截方法返回值，自动填充带有 @AutoFillUsername 注解的字段</p>
- * 
+ *
  * @author coder_nai@163.com
  * @date 2026-01-27
  */
@@ -42,182 +48,207 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class AutoFillUsernameAspect {
-    
+
     private final SysUserFeignClient sysUserFeignClient;
-    
-    /**
-     * 拦截所有 Controller 方法的返回值
-     */
+
     @Around("execution(public * com.forgex..controller..*.*(..))")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        // 执行原方法
         Object result = joinPoint.proceed();
-        
-        // 如果返回值为空，直接返回
         if (result == null) {
-            return result;
+            return null;
         }
-        
-        // 处理返回值
         processResult(result);
-        
         return result;
     }
-    
-    /**
-     * 处理返回结果
-     */
+
     private void processResult(Object result) {
         try {
-            // 如果是 R 类型，处理其 data 字段
+            Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
             if (result instanceof R) {
-                R<?> r = (R<?>) result;
-                Object data = r.getData();
+                Object data = ((R<?>) result).getData();
                 if (data != null) {
-                    fillUsername(data);
+                    fillUsername(data, visited);
                 }
-            } else {
-                // 直接处理对象
-                fillUsername(result);
+                return;
             }
+            fillUsername(result, visited);
         } catch (Exception e) {
             log.error("自动填充用户名失败", e);
         }
     }
-    
-    /**
-     * 填充用户名
-     */
-    private void fillUsername(Object obj) throws Exception {
+
+    private void fillUsername(Object obj, Set<Object> visited) throws Exception {
         if (obj == null) {
             return;
         }
-        
-        // 处理集合类型
+
         if (obj instanceof Collection) {
-            Collection<?> collection = (Collection<?>) obj;
-            for (Object item : collection) {
-                fillUsername(item);
+            for (Object item : (Collection<?>) obj) {
+                fillUsername(item, visited);
             }
             return;
         }
-        
-        // 处理分页对象
-        if (obj.getClass().getName().contains("IPage") || obj.getClass().getName().contains("Page")) {
-            try {
-                Field recordsField = obj.getClass().getDeclaredField("records");
-                recordsField.setAccessible(true);
-                Object records = recordsField.get(obj);
-                if (records instanceof Collection) {
-                    fillUsername(records);
-                }
-            } catch (NoSuchFieldException e) {
-                // 忽略
+
+        if (obj instanceof Map) {
+            for (Object value : ((Map<?, ?>) obj).values()) {
+                fillUsername(value, visited);
             }
             return;
         }
-        
-        // 处理普通对象
+
+        if (isPageObject(obj)) {
+            fillPageRecords(obj, visited);
+            return;
+        }
+
         Class<?> clazz = obj.getClass();
-        
-        // 跳过基本类型和常见类型
         if (clazz.isPrimitive() || clazz.getName().startsWith("java.")) {
             return;
         }
-        
-        // 收集需要填充的字段信息
+
+        if (!visited.add(obj)) {
+            return;
+        }
+
+        List<FieldFillInfo> fillInfos = collectFillInfos(obj, clazz);
+        if (!fillInfos.isEmpty()) {
+            fillFieldValues(obj, fillInfos);
+        }
+        fillNestedFields(obj, clazz, visited);
+    }
+
+    private boolean isPageObject(Object obj) {
+        String className = obj.getClass().getName();
+        return className.contains("IPage") || className.contains("Page");
+    }
+
+    private void fillPageRecords(Object pageObject, Set<Object> visited) throws Exception {
+        try {
+            Field recordsField = pageObject.getClass().getDeclaredField("records");
+            recordsField.setAccessible(true);
+            fillUsername(recordsField.get(pageObject), visited);
+        } catch (NoSuchFieldException ignored) {
+            // ignore
+        }
+    }
+
+    private List<FieldFillInfo> collectFillInfos(Object obj, Class<?> clazz) throws IllegalAccessException {
         List<FieldFillInfo> fillInfos = new ArrayList<>();
-        
         for (Field field : clazz.getDeclaredFields()) {
             AutoFillUsername annotation = field.getAnnotation(AutoFillUsername.class);
-            if (annotation != null) {
+            if (annotation == null) {
+                continue;
+            }
+            Long userId = resolveUserId(obj, clazz, annotation);
+            if (userId != null) {
                 field.setAccessible(true);
-                
-                // 获取用户ID字段
-                String userIdFieldName = annotation.userIdField();
-                try {
-                    Field userIdField = clazz.getDeclaredField(userIdFieldName);
-                    userIdField.setAccessible(true);
-                    Object userIdValue = userIdField.get(obj);
-                    
-                    if (userIdValue != null) {
-                        Long userId = null;
-                        if (userIdValue instanceof Long) {
-                            userId = (Long) userIdValue;
-                        } else if (userIdValue instanceof Integer) {
-                            userId = ((Integer) userIdValue).longValue();
-                        } else if (userIdValue instanceof String) {
-                            userId = Long.parseLong((String) userIdValue);
-                        }
-                        
-                        if (userId != null) {
-                            fillInfos.add(new FieldFillInfo(field, userId, annotation.required()));
-                        }
-                    } else if (annotation.required()) {
-                        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.USER_ID_FIELD_CANNOT_BE_EMPTY, userIdFieldName);
-                    }
-                } catch (NoSuchFieldException e) {
-                    log.error("找不到用户ID字段: {}", userIdFieldName);
-                    if (annotation.required()) {
-                        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.USER_ID_FIELD_NOT_FOUND, userIdFieldName);
-                    }
-                }
+                fillInfos.add(new FieldFillInfo(field, userId, annotation.required()));
             }
         }
-        
-        // 批量查询用户名
-        if (!fillInfos.isEmpty()) {
-            List<Long> userIds = fillInfos.stream()
-                    .map(FieldFillInfo::getUserId)
-                    .distinct()
-                    .collect(Collectors.toList());
-            
-            R<Map<Long, String>> response = sysUserFeignClient.getUsernameMap(userIds);
-            if (response != null && response.getCode() == 200 && response.getData() != null) {
-                Map<Long, String> usernameMap = response.getData();
-                
-                // 填充用户名
-                for (FieldFillInfo fillInfo : fillInfos) {
-                    String username = usernameMap.get(fillInfo.getUserId());
-                    if (username != null) {
-                        fillInfo.getField().set(obj, username);
-                    } else if (fillInfo.isRequired()) {
-                        throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.USER_BY_ID_NOT_FOUND, fillInfo.getUserId());
-                    }
+        return fillInfos;
+    }
+
+    private Long resolveUserId(Object obj, Class<?> clazz, AutoFillUsername annotation) throws IllegalAccessException {
+        String userIdFieldName = annotation.userIdField();
+        try {
+            Field userIdField = clazz.getDeclaredField(userIdFieldName);
+            userIdField.setAccessible(true);
+            Object userIdValue = userIdField.get(obj);
+            if (userIdValue == null) {
+                if (annotation.required()) {
+                    throw new I18nBusinessException(
+                            StatusCode.BUSINESS_ERROR,
+                            CommonPrompt.USER_ID_FIELD_CANNOT_BE_EMPTY,
+                            userIdFieldName
+                    );
                 }
-            } else {
-                log.warn("批量查询用户名失败: {}", response);
+                return null;
+            }
+            if (userIdValue instanceof Long) {
+                return (Long) userIdValue;
+            }
+            if (userIdValue instanceof Integer) {
+                return ((Integer) userIdValue).longValue();
+            }
+            if (userIdValue instanceof String && !((String) userIdValue).isBlank()) {
+                return Long.parseLong((String) userIdValue);
+            }
+            return null;
+        } catch (NoSuchFieldException e) {
+            log.error("找不到用户ID字段: {}", userIdFieldName);
+            if (annotation.required()) {
+                throw new I18nBusinessException(
+                        StatusCode.BUSINESS_ERROR,
+                        CommonPrompt.USER_ID_FIELD_NOT_FOUND,
+                        userIdFieldName
+                );
+            }
+            return null;
+        }
+    }
+
+    private void fillFieldValues(Object obj, List<FieldFillInfo> fillInfos) throws IllegalAccessException {
+        List<Long> userIds = fillInfos.stream()
+                .map(FieldFillInfo::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        R<Map<Long, String>> response = sysUserFeignClient.getUsernameMap(userIds);
+        if (response == null || response.getCode() != 200 || response.getData() == null) {
+            log.warn("批量查询用户名失败: {}", response);
+            return;
+        }
+
+        Map<Long, String> usernameMap = response.getData();
+        for (FieldFillInfo fillInfo : fillInfos) {
+            String username = usernameMap.get(fillInfo.getUserId());
+            if (username != null) {
+                fillInfo.getField().set(obj, username);
+            } else if (fillInfo.isRequired()) {
+                throw new I18nBusinessException(
+                        StatusCode.BUSINESS_ERROR,
+                        CommonPrompt.USER_BY_ID_NOT_FOUND,
+                        fillInfo.getUserId()
+                );
             }
         }
     }
-    
-    /**
-     * 字段填充信息
-     */
+
+    private void fillNestedFields(Object obj, Class<?> clazz, Set<Object> visited) throws Exception {
+        for (Field field : clazz.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            field.setAccessible(true);
+            Object nestedValue = field.get(obj);
+            if (nestedValue == null) {
+                continue;
+            }
+            fillUsername(nestedValue, visited);
+        }
+    }
+
     private static class FieldFillInfo {
         private final Field field;
         private final Long userId;
         private final boolean required;
-        
-        public FieldFillInfo(Field field, Long userId, boolean required) {
+
+        FieldFillInfo(Field field, Long userId, boolean required) {
             this.field = field;
             this.userId = userId;
             this.required = required;
         }
-        
+
         public Field getField() {
             return field;
         }
-        
+
         public Long getUserId() {
             return userId;
         }
-        
+
         public boolean isRequired() {
             return required;
         }
     }
 }
-
-
-

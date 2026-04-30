@@ -20,6 +20,7 @@ import com.forgex.sys.domain.dto.SysMenuDTO;
 import com.forgex.sys.domain.dto.SysMenuQueryDTO;
 import com.forgex.sys.domain.entity.SysMenu;
 import com.forgex.sys.domain.vo.MenuTreeVO;
+import com.forgex.sys.domain.vo.UserMenuOpenReportVO;
 import com.forgex.sys.domain.vo.UserMenuPreferenceVO;
 import com.forgex.sys.domain.vo.UserRoutesVO;
 
@@ -385,4 +386,17 @@ public interface ISysMenuService extends IService<SysMenu> {
      * @param fullPath 前端上报的菜单完整路径
      */
     void reportUserMenuVisit(Long userId, Long tenantId, String fullPath);
+
+    /**
+     * 上报用户菜单打开次数。
+     * <p>
+     * 写入独立的菜单打开次数表，不受常用菜单 Top 6 裁剪影响，并返回是否首次打开。
+     * </p>
+     *
+     * @param userId 当前用户 ID
+     * @param tenantId 当前租户 ID
+     * @param fullPath 前端上报的菜单完整路径
+     * @return 打开次数上报结果
+     */
+    UserMenuOpenReportVO reportUserMenuOpen(Long userId, Long tenantId, String fullPath);
 }

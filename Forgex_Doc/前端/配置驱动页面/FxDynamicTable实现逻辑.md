@@ -249,6 +249,21 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 
 这也是为什么同一个 `tableCode` 在不同用户界面上，列显示可能不完全一样。
 
+## 页面引导锚点
+
+`FxDynamicTable.vue` 会在公共区域渲染稳定的 `data-guide-id`，供系统页面级引导复用：
+
+| 锚点 | 渲染区域 |
+|---|---|
+| `fx-table-query` | 查询卡片 |
+| `fx-table-toolbar` | 工具栏整体 |
+| `fx-table-toolbar-left` | 业务工具按钮区域 |
+| `fx-table-column-setting` | 列设置按钮区域 |
+| `fx-table-content` | 表格内容区域 |
+| `fx-table-pagination` | 分页器区域 |
+
+这让引导配置不需要依赖 Ant Design Vue 内部类名，也不需要猜测页面 DOM 层级。业务按钮仍由页面自己通过 `data-guide-id` 标记。
+
 ## 自适应高度逻辑
 
 `FxDynamicTable.vue` 除了表格配置能力，还做了一个比较重的 UI 能力：自动计算滚动高度。
@@ -265,6 +280,8 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 - 卡片布局页面
 - 左右分栏页面
 - 高度撑满的管理后台页面
+
+页面接入时要保证父级布局可以提供明确的剩余高度。常见写法是页面根节点使用满高 flex 布局，头部、页签、工具条等固定区域设置 `flex-shrink: 0`，`FxDynamicTable` 容器设置 `flex: 1` 和 `min-height: 0`。如果页面根节点只有 `min-height: 100%` 或自身继续产生外层滚动，组件无法准确拿到表格区域的剩余高度，可能导致表格底部空白过大。
 
 ## 为什么这样设计
 

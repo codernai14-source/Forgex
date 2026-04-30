@@ -6,8 +6,11 @@ import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigItemDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigItemDTO;
+import com.forgex.common.enums.ExcelPromptEnum;
+import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.LangContext;
 import com.forgex.common.service.excel.ExcelFileService;
+import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -78,8 +81,17 @@ public class ExcelFileServiceImpl implements ExcelFileService {
      */
     @Override
     public byte[] buildImportTemplateXlsx(FxExcelImportConfigDTO config) {
-        if (config == null || config.getItems() == null || config.getItems().isEmpty()) {
+        try {
+            return buildImportTemplateXlsxOrThrow(config);
+        } catch (Exception e) {
             return new byte[0];
+        }
+    }
+
+    @Override
+    public byte[] buildImportTemplateXlsxOrThrow(FxExcelImportConfigDTO config) {
+        if (config == null || config.getItems() == null || config.getItems().isEmpty()) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_CONFIG_MISSING);
         }
 
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -142,7 +154,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             wb.write(bos);
             return bos.toByteArray();
         } catch (Exception e) {
-            return new byte[0];
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_BUILD_FAILED, e.getMessage());
         }
     }
 

@@ -18,7 +18,12 @@
 
             <a-form-item :label="t('system.config.systemLogo')" name="systemLogo">
               <div class="system-logo-upload">
-                <AvatarUpload v-model="basicConfig.systemLogo" @success="handleLogoUploadSuccess" />
+                <AvatarUpload
+                  v-model="basicConfig.systemLogo"
+                  module-code="sys_config_logo"
+                  module-name="系统配置Logo"
+                  @success="handleLogoUploadSuccess"
+                />
               </div>
             </a-form-item>
 
@@ -45,10 +50,10 @@
 
             <a-form-item :wrapper-col="{ span: 24 }">
               <a-space>
-                <a-button type="primary" :loading="savingSystem" @click="saveSystemConfig">
+                <a-button data-guide-id="sys-config-save" type="primary" :loading="savingSystem" @click="saveSystemConfig">
                   {{ t('common.save') }}
                 </a-button>
-                <a-button @click="resetSystemConfig">{{ t('common.reset') }}</a-button>
+                <a-button data-guide-id="sys-config-reset" @click="resetSystemConfig">{{ t('common.reset') }}</a-button>
               </a-space>
             </a-form-item>
           </a-form>
@@ -393,12 +398,43 @@
         </a-tab-pane>
 
         <a-tab-pane key="personalHomepage" tab="个人首页">
-          <PersonalHomepageDesigner
-            mode="manage"
-            title="个人首页默认配置"
-            description="维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。"
-            :show-scope-selector="true"
-          />
+          <div class="homepage-config-layout">
+            <div class="homepage-module-list">
+              <button
+                v-for="moduleCard in homepageModuleCards"
+                :key="moduleCard.value"
+                type="button"
+                class="homepage-module-card"
+                :class="{ 'homepage-module-card--active': activeHomepageModule === moduleCard.value }"
+                @click="activeHomepageModule = moduleCard.value"
+              >
+                <component :is="moduleCard.icon" class="homepage-module-card__icon" />
+                <span class="homepage-module-card__body">
+                  <span class="homepage-module-card__title">{{ moduleCard.title }}</span>
+                  <span class="homepage-module-card__desc">{{ moduleCard.desc }}</span>
+                </span>
+              </button>
+            </div>
+            <div class="homepage-config-main">
+              <PersonalHomepageDesigner
+                v-if="activeHomepageModule === 'personal'"
+                mode="manage"
+                title="个人首页默认配置"
+                description="维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。"
+                :show-scope-selector="true"
+              />
+              <ModuleHomepageDesigner
+                v-else
+                :key="activeHomepageModule"
+                :module-code="activeHomepageModule"
+                mode="manage"
+                :title="activeHomepageModuleCard.title"
+                :description="activeHomepageModuleCard.desc"
+                :show-scope-selector="true"
+                :initial-edit-mode="true"
+              />
+            </div>
+          </div>
         </a-tab-pane>
 
         <a-tab-pane key="email" :tab="t('system.config.tabEmail')">
@@ -740,8 +776,20 @@ import { computed, onMounted, ref } from 'vue'
 import type { UploadFile } from 'ant-design-vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import { DeleteOutlined, PictureOutlined, UploadOutlined, KeyOutlined, FileProtectOutlined, DatabaseOutlined } from '@ant-design/icons-vue'
+import {
+  AuditOutlined,
+  DashboardOutlined,
+  DatabaseOutlined,
+  DeleteOutlined,
+  FileProtectOutlined,
+  KeyOutlined,
+  PictureOutlined,
+  SettingOutlined,
+  UploadOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
 import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { uploadFile } from '@/api/system/file'
 import {
@@ -779,6 +827,7 @@ const { t } = useI18n()
 const activeTab = ref('system')
 const securitySubTab = ref('captcha')
 const cryptoSubTab = ref('symmetric')
+const activeHomepageModule = ref<'personal' | 'basic' | 'approval' | 'sys'>('personal')
 const loading = ref(false)
 const previewVisible = ref(false)
 
@@ -854,6 +903,37 @@ const emailProviderPresets: Record<EmailProviderPreset, Partial<EmailConfig>> = 
 }
 
 type NavOption = { value: string; titleKey: string; descKey: string }
+
+const homepageModuleCards = [
+  {
+    value: 'personal',
+    title: '个人首页',
+    desc: '个人工作台默认布局',
+    icon: UserOutlined,
+  },
+  {
+    value: 'basic',
+    title: '基础信息',
+    desc: '供应商与编码规则首页',
+    icon: DatabaseOutlined,
+  },
+  {
+    value: 'approval',
+    title: '审批管理',
+    desc: '审批工作台首页',
+    icon: AuditOutlined,
+  },
+  {
+    value: 'sys',
+    title: '系统管理',
+    desc: '系统运行与配置首页',
+    icon: SettingOutlined,
+  },
+] as const
+
+const activeHomepageModuleCard = computed(() => {
+  return homepageModuleCards.find(item => item.value === activeHomepageModule.value) || homepageModuleCards[0]
+})
 
 const securityNavOptions: NavOption[] = [
   { value: 'captcha', titleKey: 'system.config.captchaConfig', descKey: 'system.config.captchaConfigDesc' },
@@ -1339,6 +1419,83 @@ onMounted(() => {
   background: var(--fx-bg-container);
 }
 
+.homepage-config-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.homepage-module-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.homepage-module-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
+  border-radius: 8px;
+  background: var(--fx-bg-container);
+  color: var(--fx-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.homepage-module-card:hover,
+.homepage-module-card--active {
+  border-color: var(--fx-primary);
+  box-shadow: var(--fx-shadow-secondary, 0 4px 12px rgba(22, 119, 255, 0.15));
+}
+
+.homepage-module-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fx-primary, #1677ff) 10%, transparent);
+  color: var(--fx-primary, #1677ff);
+  flex: 0 0 auto;
+}
+
+.homepage-module-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.homepage-module-card__title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.homepage-module-card__desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fx-text-secondary);
+}
+
+.homepage-config-main {
+  min-width: 0;
+  border: 1px solid var(--fx-border-color);
+  border-radius: 8px;
+  background: var(--fx-bg-container);
+  overflow: hidden;
+}
+
+.homepage-config-main :deep(.personal-homepage-designer),
+.homepage-config-main :deep(.module-homepage-designer) {
+  padding: 16px;
+}
+
 .sidebar-config-banner {
   margin: 0 16px 24px;
   padding: 16px 18px;
@@ -1587,11 +1744,13 @@ onMounted(() => {
 }
 
 @media (max-width: 960px) {
+  .homepage-config-layout,
   .email-config-layout,
   .sidebar-config-layout {
     grid-template-columns: 1fr;
   }
 
+  .homepage-module-list,
   .email-provider-list,
   .sidebar-nav-list {
     display: grid;

@@ -98,10 +98,12 @@
 
     <FxGuideTour
       ref="systemGuideTourRef"
-      guide-code="system.main"
-      version="v1"
+      :guide-code="currentSystemGuideCode"
+      :version="currentSystemGuideVersion"
       :steps="systemGuideSteps"
       :auto-start="systemGuideAutoStart"
+      :start-key="systemGuideStartKey"
+      skip-text="跳过引导"
       @open="handleSystemGuideOpen"
       @close="handleSystemGuideClose"
       @finish="handleSystemGuideFinish"
@@ -418,7 +420,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message, notification } from 'ant-design-vue'
@@ -435,7 +437,7 @@ import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
 import { getUnreadMessageCount, listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
-import { reportUserMenuVisit } from '../api/system/personalHomepage'
+import { reportUserMenuOpen, reportUserMenuVisit } from '../api/system/personalHomepage'
 import { getUserList } from '../api/system/user'
 import { useSse } from '../hooks/useSse'
 
@@ -460,6 +462,7 @@ import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
+import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
 
@@ -589,57 +592,77 @@ const settingDrawerRootStyle = {
 } as const
 const systemGuideAutoStart = ref(false)
 const systemGuideReady = ref(false)
+const currentSystemGuideCode = ref('system.main')
+const currentSystemGuideVersion = ref('v1')
+const currentSystemPageGuideSteps = ref<FxGuideStep[]>([])
+const pendingSystemFirstOpenGuide = ref(false)
+const systemGuideStartKey = ref(0)
 
-const systemGuideSteps = computed<FxGuideStep[]>(() => [
+const systemMainGuideSteps = computed<FxGuideStep[]>(() => [
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.welcome'),
     placement: 'center',
     useMask: false,
+    category: 'intro',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.header'),
     target: '.fx-guide-header',
     placement: 'bottom',
+    category: 'navigation',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.sidebar'),
     target: '.fx-guide-sidebar',
     placement: 'right',
+    category: 'navigation',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.tabbar'),
     target: '.fx-guide-tabbar',
     placement: 'bottom',
+    category: 'navigation',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.search'),
     target: '.fx-guide-search-trigger',
     placement: 'bottom',
+    category: 'navigation',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.message'),
     target: '.fx-guide-message-trigger',
     placement: 'bottom',
+    category: 'navigation',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.settings'),
     target: '.fx-guide-settings-trigger',
     placement: 'bottom',
+    category: 'navigation',
   },
   {
     title: t('layout.guide.system.title'),
     description: t('layout.guide.system.steps.content'),
     target: '.fx-guide-content',
     placement: 'top',
+    category: 'navigation',
   },
 ])
+
+const systemGuideSteps = computed<FxGuideStep[]>(() => {
+  if (currentSystemGuideCode.value === 'system.main') {
+    return systemMainGuideSteps.value
+  }
+  return currentSystemPageGuideSteps.value
+})
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
@@ -1059,6 +1082,32 @@ function updateRecentRoutes(path: string) {
   saveRouteVisitStats(currentStats)
 
   reportUserMenuVisit(normalizedPath).catch(() => {})
+  reportSystemMenuOpenIfNeeded(normalizedPath)
+}
+
+async function reportSystemMenuOpenIfNeeded(path: string) {
+  const normalizedPath = normalizeWorkspacePath(path)
+  if (!normalizedPath.startsWith('/workspace/sys/')) {
+    return
+  }
+
+  const currentGuideConfig = resolveSystemPageGuide(normalizedPath)
+  const currentGuideState = guideStore.getMergedGuideState(currentGuideConfig.guideCode)
+  if (currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled) {
+    reportUserMenuOpen(normalizedPath).catch(() => {})
+    await startSystemGuide(currentGuideConfig)
+    return
+  }
+
+  try {
+    const result = await reportUserMenuOpen(normalizedPath)
+    if (!result?.firstOpen) {
+      return
+    }
+    const guideConfig = resolveSystemPageGuide(result.path || normalizedPath)
+    await startSystemGuide(guideConfig)
+  } catch (_) {
+  }
 }
 
 function removeRecentRoute(path: string) {
@@ -1533,9 +1582,14 @@ function canAutoStartSystemGuide() {
   if (!systemGuideReady.value) {
     return false
   }
+  if (currentSystemGuideCode.value !== 'system.main') {
+    return pendingSystemFirstOpenGuide.value
+      && guideStore.shouldAutoStartGuide(currentSystemGuideCode.value, currentSystemGuideVersion.value)
+  }
   if (route.path !== PERSONAL_HOME_PATH) {
     return false
   }
+  currentSystemGuideVersion.value = 'v1'
   return guideStore.shouldAutoStartGuide('system.main', 'v1')
 }
 
@@ -1543,30 +1597,52 @@ function syncSystemGuideAutoStart() {
   systemGuideAutoStart.value = canAutoStartSystemGuide()
 }
 
+async function startSystemGuide(config: { guideCode: string; version: string; steps: FxGuideStep[] }) {
+  currentSystemGuideCode.value = config.guideCode
+  currentSystemGuideVersion.value = config.version
+  currentSystemPageGuideSteps.value = config.steps
+  pendingSystemFirstOpenGuide.value = true
+  await nextTick()
+  systemGuideStartKey.value += 1
+  syncSystemGuideAutoStart()
+}
+
 function handleSystemGuideOpen() {
-  guideStore.startGuide('system.main')
+  guideStore.startGuide(currentSystemGuideCode.value)
 }
 
 function handleSystemGuideClose() {
   systemGuideAutoStart.value = false
+  pendingSystemFirstOpenGuide.value = false
   guideStore.finishCurrentGuide()
 }
 
-async function handleSystemGuideFinish() {
-  await guideStore.markGuideCompleted('system.main', 'v1')
+async function handleSystemGuideFinish(guideCode = currentSystemGuideCode.value, version = 'v1') {
+  await guideStore.markGuideCompleted(guideCode, version)
   systemGuideAutoStart.value = false
+  pendingSystemFirstOpenGuide.value = false
   guideStore.finishCurrentGuide()
 }
 
-async function handleSystemGuideSkip() {
-  await guideStore.markGuideSkipped('system.main', 'v1')
+async function handleSystemGuideSkip(guideCode = currentSystemGuideCode.value, version = 'v1') {
+  await guideStore.markGuideSkipped(guideCode, version)
   systemGuideAutoStart.value = false
+  pendingSystemFirstOpenGuide.value = false
   guideStore.finishCurrentGuide()
 }
 
 async function loadGuidePreference() {
   await guideStore.loadPreference()
   systemGuideReady.value = true
+  const normalizedPath = normalizeWorkspacePath(route.fullPath || route.path)
+  if (normalizedPath.startsWith('/workspace/sys/')) {
+    const currentGuideConfig = resolveSystemPageGuide(normalizedPath)
+    const currentGuideState = guideStore.getMergedGuideState(currentGuideConfig.guideCode)
+    if (currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled) {
+      await startSystemGuide(currentGuideConfig)
+      return
+    }
+  }
   syncSystemGuideAutoStart()
 }
 
@@ -1628,6 +1704,12 @@ watch(
     }
     const cleanPath = normalizeWorkspacePath(path)
     selectedKeys.value = [cleanPath]
+    if (!cleanPath.startsWith('/workspace/sys/')) {
+      currentSystemGuideCode.value = 'system.main'
+      currentSystemGuideVersion.value = 'v1'
+      currentSystemPageGuideSteps.value = []
+      pendingSystemFirstOpenGuide.value = false
+    }
     
     // 优先从路由 meta 中获取模块代码
     let moduleCode = ''

@@ -33,7 +33,7 @@ export interface SseMessage {
 }
 
 /**
- * 璁㈤槄鍥炶皟鍑芥暟绫诲瀷
+ * 订阅回调函数类型
  */
 type SubscribeCallback = (message: any) => void
 
@@ -120,7 +120,7 @@ export const useSseStore = defineStore('sse', () => {
       connectionUrl.value = url
       eventSource.value = new EventSource(url)
       
-      // 鐩戝惉杩炴帴鎵撳紑浜嬩欢
+      // 监听连接打开事件
       eventSource.value.onopen = () => {
         console.log('[SSE] 连接已建立')
         isConnected.value = true
@@ -190,7 +190,7 @@ export const useSseStore = defineStore('sse', () => {
   }
   
   /**
-   * 澶勭悊鎺ユ敹鍒扮殑娑堟伅
+   * 处理接收到的消息
    * 
    * @param message SSE 娑堟伅瀵硅薄
    */
@@ -201,7 +201,7 @@ export const useSseStore = defineStore('sse', () => {
       timestamp: Date.now()
     })
     
-    // 闄愬埗鍘嗗彶璁板綍鏁伴噺
+    // 限制历史记录数量
     if (messageHistory.value.length > 100) {
       messageHistory.value.shift()
     }
@@ -218,7 +218,7 @@ export const useSseStore = defineStore('sse', () => {
       })
     }
     
-    // 瑙﹀彂閫氱敤璁㈤槄鍥炶皟锛坱ype 涓?'*'锛?
+    // 触发通用订阅回调（type 涓?'*'锛?
     const globalCallbacks = subscribers.value.get('*')
     if (globalCallbacks && globalCallbacks.size > 0) {
       globalCallbacks.forEach(callback => {
@@ -235,7 +235,7 @@ export const useSseStore = defineStore('sse', () => {
    * 璁㈤槄鎸囧畾绫诲瀷鐨勬秷鎭?
    * 
    * @param type 娑堟伅绫诲瀷锛堝 'message', 'notification', '*' 琛ㄧず璁㈤槄鎵€鏈夋秷鎭級
-   * @param callback 鍥炶皟鍑芥暟
+   * @param callback 回调函数
    * @returns 鍙栨秷璁㈤槄鐨勫嚱鏁?
    * 
    * @example
@@ -260,7 +260,7 @@ export const useSseStore = defineStore('sse', () => {
     const callbacks = subscribers.value.get(type)!
     callbacks.add(callback)
     
-    // 杩斿洖鍙栨秷璁㈤槄鍑芥暟
+    // 返回取消订阅函数
     return () => {
       callbacks.delete(callback)
       
@@ -302,7 +302,7 @@ export const useSseStore = defineStore('sse', () => {
     return messages.slice(-count)
   }
   
-  // ============ 鐢熷懡鍛ㄦ湡 ============
+  // ============ 生命周期 ============
   
   /**
    * 缁勪欢鍗歌浇鏃惰嚜鍔ㄦ柇寮€杩炴帴

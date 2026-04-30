@@ -22,6 +22,12 @@ public class ApiCallLog extends BaseEntity {
 
     private Long apiConfigId;
 
+    private Long outboundTargetId;
+
+    private String targetSystemCode;
+
+    private String targetSystemName;
+
     private String apiCode;
 
     private String callDirection;

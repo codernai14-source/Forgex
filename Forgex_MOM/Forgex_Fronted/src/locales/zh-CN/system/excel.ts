@@ -1,10 +1,6 @@
-/**
- * Excel 导入导出配置 - 中文
- */
 export default {
   importConfigTitle: 'Excel导入配置',
   exportConfigTitle: 'Excel导出配置',
-
   tableName: '表名称',
   tableCode: '表编码',
   title: '标题',
@@ -21,7 +17,13 @@ export default {
   dictCode: '字典编码',
   required: '必填',
   orderNum: '排序号',
-
+  enabled: '启用状态',
+  enableTotal: '启用总计',
+  basicDataTab: '基础数据',
+  exportFieldsTab: '导出列字段',
+  i18nJson: '多语言标题',
+  headerStyleJson: '表头样式',
+  cellStyleJson: '单元格样式',
   fieldTypes: {
     string: '字符串',
     number: '数字',
@@ -30,65 +32,21 @@ export default {
     datetime: '日期时间',
     dict: '字典',
   },
-
-  dataSourceType: '数据源类型',
-  dataSourceTypes: {
-    DICT: '字典',
-    JSON: 'JSON 数组',
-    PROVIDER: '数据提供器',
-  },
-  selectType: '请选择数据源类型',
-  typeDict: '字典',
-  typeJson: 'JSON 数组',
-  typeProvider: '数据提供器',
-  selectDict: '请选择字典',
-  selectProvider: '请选择数据提供器',
-  selectProviderField: '请选择字段',
-  providerCode: '提供器编码',
-  providerField: '提供器字段',
-  dataSourceJson: '数据源 JSON',
-
-  backgroundColor: '背景颜色',
-  fontSize: '字体大小',
-  wordWrap: '自动换行',
-  align: '对齐方式',
-  alignLeft: '左对齐',
-  alignCenter: '居中',
-  alignRight: '右对齐',
-  fontWeight: '字体加粗',
-  stylePreview: '样式预览',
-  previewText: '预览文本',
-
-  i18nConfig: '国际化配置',
-  zhCn: '中文',
-  enUs: '英文',
-  zhCnPlaceholder: '请输入中文翻译',
-  enUsPlaceholder: '请输入英文翻译',
-
-  optionsList: '选项列表',
-  addOption: '添加选项',
-  valuePlaceholder: '请输入选项值',
-  labelPlaceholder: '请输入选项标签',
-
-  jsonPreview: 'JSON 预览',
-
   downloadTemplate: '下载模板',
-  uploadData: '上传数据',
-  previewData: '预览数据',
   downloadSuccess: '模板下载成功',
   downloadFailed: '模板下载失败',
   importSuccess: '导入成功',
   importFail: '导入失败',
   importFailed: '导入失败，请重试',
-
   baseConfig: '基础配置',
   pleaseInputTableName: '请输入表名称',
   pleaseInputTableCode: '请输入表编码',
   pleaseInputTitle: '请输入标题',
   pleaseInputSubtitle: '请输入副标题',
+  pleaseSelectExportFormat: '请选择导出格式',
+  pleaseAddExportFields: '请至少维护一条导出列字段',
   addImportConfig: '新增导入配置',
   editImportConfig: '编辑导入配置',
-
   message: {
     downloadTemplateSuccess: '下载模板成功',
     downloadTemplateFailed: '下载模板失败',

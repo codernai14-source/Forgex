@@ -1,0 +1,31 @@
+package ${ctx.packageName}.domain.param;
+
+import com.forgex.common.base.BaseGetParam;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+<% for(column in imports){ if(column == "java.time.LocalDate" || column == "java.time.LocalDateTime"){ %>
+import ${column};
+<% }} %>
+
+/**
+ * ${ctx.mainTableComment} 分页查询参数
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ${ctx.entityName}PageParam extends BaseGetParam {
+<% for(column in ctx.mainQueryColumns){ %>
+
+    /**
+     * ${column.columnComment!column.columnName}
+     */
+    private ${column.javaType} ${column.javaFieldName};
+<% } %>
+
+    /**
+     * 当前树节点 ID
+     */
+    private ${ctx.treePkJavaType!ctx.mainPkJavaType!"Long"} currentTreeId;
+}

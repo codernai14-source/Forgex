@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 代码生成配置服务实现
@@ -53,6 +54,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper, SysCodegenConfig>
     implements ICodegenConfigService {
+
+    private static final String PAGE_TYPE_MASTER_DETAIL = "MASTER_DETAIL";
+    private static final String PAGE_TYPE_TREE_SINGLE = "TREE_SINGLE";
+    private static final String PAGE_TYPE_TREE_DOUBLE = "TREE_DOUBLE";
 
     private final SysCodegenConfigMapper configMapper;
     private final ICodegenDatasourceService datasourceService;
@@ -79,7 +84,7 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         entity.setDatasourceId(param.getDatasourceId());
         entity.setDatasourceCode(datasource.getDatasourceCode());
         entity.setSchemaName(param.getSchemaName());
-        entity.setPageType(param.getPageType());
+        entity.setPageType(normalizePageType(param.getPageType()));
         entity.setMainTableName(param.getMainTableName());
         entity.setSubTableName(param.getSubTableName());
         entity.setMainPkColumn(param.getMainPkColumn());
@@ -98,7 +103,11 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         entity.setGenerateItemsJson(JSONUtil.toJsonStr(param.getGenerateItems()));
         entity.setConfigJson(JSONUtil.toJsonStr(copyRequest(param)));
         entity.setRemark(param.getRemark());
-        saveOrUpdate(entity);
+        if (entity.getId() == null) {
+            configMapper.insert(entity);
+        } else {
+            configMapper.updateById(entity);
+        }
         return entity.getId();
     }
 
@@ -156,14 +165,14 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         }
         SysCodegenConfig entity = requireEntity(id);
         entity.setLastGenerateTime(LocalDateTime.now());
-        updateById(entity);
+        configMapper.updateById(entity);
     }
 
     private LambdaQueryWrapper<SysCodegenConfig> buildWrapper(CodegenConfigQueryDTO query) {
         LambdaQueryWrapper<SysCodegenConfig> wrapper = new LambdaQueryWrapper<>();
         if (query != null) {
             wrapper.like(StringUtils.hasText(query.getConfigName()), SysCodegenConfig::getConfigName, query.getConfigName());
-            wrapper.eq(StringUtils.hasText(query.getPageType()), SysCodegenConfig::getPageType, query.getPageType());
+            wrapper.eq(StringUtils.hasText(query.getPageType()), SysCodegenConfig::getPageType, normalizePageType(query.getPageType()));
             wrapper.like(StringUtils.hasText(query.getModuleName()), SysCodegenConfig::getModuleName, query.getModuleName());
             wrapper.like(StringUtils.hasText(query.getBizName()), SysCodegenConfig::getBizName, query.getBizName());
             wrapper.like(StringUtils.hasText(query.getMenuName()), SysCodegenConfig::getMenuName, query.getMenuName());
@@ -188,12 +197,19 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
             || !StringUtils.hasText(param.getMenuName())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
         }
-        if ("MASTER_DETAIL".equalsIgnoreCase(param.getPageType())
+
+        String pageType = normalizePageType(param.getPageType());
+        if (PAGE_TYPE_MASTER_DETAIL.equals(pageType)
             && (!StringUtils.hasText(param.getSubTableName())
             || !StringUtils.hasText(param.getMainPkColumn())
             || !StringUtils.hasText(param.getSubFkColumn())
             || !StringUtils.hasText(param.getSubPkColumn()))) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_PARAM_EMPTY);
+        }
+
+        if ((PAGE_TYPE_TREE_SINGLE.equals(pageType) || PAGE_TYPE_TREE_DOUBLE.equals(pageType))
+            && !StringUtils.hasText(param.getTreeTableName())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TREE_FIELD_MISSING, "treeTableName");
         }
     }
 
@@ -216,15 +232,22 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         request.setDatasourceId(param.getDatasourceId());
         request.setDatasourceCode(param.getDatasourceCode());
         request.setSchemaName(param.getSchemaName());
-        request.setPageType(param.getPageType());
+        request.setPageType(normalizePageType(param.getPageType()));
         request.setMainTableName(param.getMainTableName());
+        request.setTreeTableName(param.getTreeTableName());
         request.setSubTableName(param.getSubTableName());
         request.setMainPkColumn(param.getMainPkColumn());
+        request.setTreePkColumn(param.getTreePkColumn());
+        request.setTreeParentColumn(param.getTreeParentColumn());
+        request.setTreeLabelColumn(param.getTreeLabelColumn());
+        request.setTreeSortColumn(param.getTreeSortColumn());
+        request.setTreeFilterColumn(param.getTreeFilterColumn());
         request.setSubFkColumn(param.getSubFkColumn());
         request.setSubPkColumn(param.getSubPkColumn());
         request.setModuleName(param.getModuleName());
         request.setBizName(param.getBizName());
         request.setEntityName(param.getEntityName());
+        request.setTreeEntityName(param.getTreeEntityName());
         request.setSubEntityName(param.getSubEntityName());
         request.setPackageName(param.getPackageName());
         request.setAuthor(param.getAuthor());
@@ -232,8 +255,10 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         request.setMenuIcon(param.getMenuIcon());
         request.setParentMenuPath(param.getParentMenuPath());
         request.setTableCodePrefix(param.getTableCodePrefix());
+        request.setAndroidFeatureKey(param.getAndroidFeatureKey());
         request.setGenerateItems(param.getGenerateItems());
         request.setMainColumns(param.getMainColumns());
+        request.setTreeColumns(param.getTreeColumns());
         request.setSubColumns(param.getSubColumns());
         return request;
     }
@@ -256,13 +281,20 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         dto.setSchemaName(defaultText(request.getSchemaName(), entity.getSchemaName()));
         dto.setPageType(defaultText(request.getPageType(), entity.getPageType()));
         dto.setMainTableName(defaultText(request.getMainTableName(), entity.getMainTableName()));
+        dto.setTreeTableName(request.getTreeTableName());
         dto.setSubTableName(defaultText(request.getSubTableName(), entity.getSubTableName()));
         dto.setMainPkColumn(defaultText(request.getMainPkColumn(), entity.getMainPkColumn()));
+        dto.setTreePkColumn(request.getTreePkColumn());
+        dto.setTreeParentColumn(request.getTreeParentColumn());
+        dto.setTreeLabelColumn(request.getTreeLabelColumn());
+        dto.setTreeSortColumn(request.getTreeSortColumn());
+        dto.setTreeFilterColumn(request.getTreeFilterColumn());
         dto.setSubFkColumn(defaultText(request.getSubFkColumn(), entity.getSubFkColumn()));
         dto.setSubPkColumn(defaultText(request.getSubPkColumn(), entity.getSubPkColumn()));
         dto.setModuleName(defaultText(request.getModuleName(), entity.getModuleName()));
         dto.setBizName(defaultText(request.getBizName(), entity.getBizName()));
         dto.setEntityName(defaultText(request.getEntityName(), entity.getEntityName()));
+        dto.setTreeEntityName(request.getTreeEntityName());
         dto.setSubEntityName(defaultText(request.getSubEntityName(), entity.getSubEntityName()));
         dto.setPackageName(defaultText(request.getPackageName(), entity.getPackageName()));
         dto.setAuthor(defaultText(request.getAuthor(), entity.getAuthor()));
@@ -270,8 +302,10 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         dto.setMenuIcon(defaultText(request.getMenuIcon(), entity.getMenuIcon()));
         dto.setParentMenuPath(defaultText(request.getParentMenuPath(), entity.getParentMenuPath()));
         dto.setTableCodePrefix(defaultText(request.getTableCodePrefix(), entity.getTableCodePrefix()));
+        dto.setAndroidFeatureKey(request.getAndroidFeatureKey());
         dto.setGenerateItems(resolveGenerateItems(request.getGenerateItems(), entity.getGenerateItemsJson()));
         dto.setMainColumns(request.getMainColumns());
+        dto.setTreeColumns(request.getTreeColumns());
         dto.setSubColumns(request.getSubColumns());
         dto.setDatasourceName(resolveDatasourceName(entity.getDatasourceId()));
         dto.setLastGenerateTime(entity.getLastGenerateTime());
@@ -297,6 +331,10 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         }
         CodegenDatasourceDTO datasource = datasourceService.getDatasourceById(datasourceId);
         return datasource == null ? null : datasource.getDatasourceName();
+    }
+
+    private String normalizePageType(String pageType) {
+        return StringUtils.hasText(pageType) ? pageType.toUpperCase(Locale.ROOT) : pageType;
     }
 
     private String defaultText(String value, String defaultValue) {

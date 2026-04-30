@@ -1,5 +1,5 @@
 /**
- * 鐟欐帟澹婃禍鍝勬喅閹哄牊娼堟い鐢告桨
+ * 角色人员授权页面
  * 
  * 閸旂喕鍏橀敍?
  * 1. 閺€顖涘瘮閻劍鍩涢妴渚€鍎撮梻銊ｂ偓浣戒捍娴ｅ秳绗佺粔宥嗗房閺夊啰琚崹?
@@ -24,7 +24,7 @@
     <!-- 主体区域 -->
     <section class="board">
       <!-- 侧边栏： 闁瀚ㄩ崳?-->
-      <aside class="sidebar">
+      <aside class="sidebar" data-guide-id="sys-role-user-grant-object-panel">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.selectGrantObject') }}</div>
           <a-tabs v-model:activeKey="activeTab" tab-position="left">
@@ -68,12 +68,12 @@
           </a-tabs>
         </div>
         <div class="panel-actions">
-          <a-button type="primary" block @click="handleAddToGranted">
+          <a-button data-guide-id="sys-role-user-grant-add" type="primary" block @click="handleAddToGranted">
             <template #icon><PlusOutlined /></template>
             {{ $t('system.role.addToGranted') }}
           </a-button>
-          <a-button block @click="handleSelectAll">{{ $t('system.role.selectAll') }}</a-button>
-          <a-button block @click="handleClearAll">{{ $t('system.role.clearAll') }}</a-button>
+          <a-button data-guide-id="sys-role-user-grant-select-all" block @click="handleSelectAll">{{ $t('system.role.selectAll') }}</a-button>
+          <a-button data-guide-id="sys-role-user-grant-clear" block @click="handleClearAll">{{ $t('system.role.clearAll') }}</a-button>
         </div>
       </aside>
 
@@ -82,7 +82,7 @@
         <div class="toolbar">
           <div class="toolbar__title">{{ $t('system.role.grantedList') }}</div>
           <a-space>
-            <a-button danger @click="handleBatchRevoke">
+            <a-button data-guide-id="sys-role-user-grant-batch-revoke" danger @click="handleBatchRevoke">
               <template #icon><DeleteOutlined /></template>
               {{ $t('system.role.batchRevoke') }}
             </a-button>
@@ -93,7 +93,7 @@
           ref="tableRef"
           table-code="RoleUserGrantTable"
           :request="handleRequest"
-          :降级方案-config="降级方案Config"
+          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -107,6 +107,7 @@
           </template>
           <template #action="{ record }">
             <a-button
+              data-guide-id="sys-role-user-grant-row-revoke"
               type="link"
               size="small"
               danger
@@ -177,7 +178,7 @@ const positionTreeFieldNames = {
   children: 'children',
 }
 
-const 降级方案Config = computed(() => ({
+const fallbackConfig = computed(() => ({
   tableCode: 'RoleUserGrantTable',
   tableName: t('system.role.userGrant'),
   tableType: 'NORMAL',
@@ -209,7 +210,7 @@ const filteredUsers = computed(() => {
 })
 
 /**
- * 婢跺嫮鎮婄悰銊︾壐閺佺増宓佺拠閿嬬湴
+ * 处理表格数据请求
  */
 async function handleRequest(params: any) {
   if (!currentTenantId.value || !roleId.value) {

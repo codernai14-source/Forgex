@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 鍏ユ牳瑙ｉ噴鍣ㄦ敞鍐岃〃
+ * 入站解释器注册表
  */
 @Component
 @RequiredArgsConstructor

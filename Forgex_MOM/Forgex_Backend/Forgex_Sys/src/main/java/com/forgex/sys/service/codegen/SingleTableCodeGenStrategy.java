@@ -44,6 +44,7 @@ public class SingleTableCodeGenStrategy extends AbstractCodeGenStrategy {
         String javaPath = "backend/" + context.getPackageName().replace('.', '/');
         String viewPath = "frontend/src/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
         String apiPath = "frontend/src/api/" + context.getModuleName();
+        String androidBasePath = "android/" + context.getAndroidFeatureKey();
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getEntityName() + ".java",
             "single/backend/Entity.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
@@ -64,7 +65,33 @@ public class SingleTableCodeGenStrategy extends AbstractCodeGenStrategy {
         addFile(files, "sql", "sql/02_table_config.sql", "single/sql/table_config.sql.btl", context);
         addFile(files, "sql", "sql/03_i18n_message.sql", "single/sql/i18n_message.sql.btl", context);
         addFile(files, "sql", "sql/04_response_message.sql", "single/sql/response_message.sql.btl", context);
+        addAndroidFiles(files, androidBasePath, "single/android", context);
         addFile(files, "doc", "README.md", "common/README.md.btl", context);
         return files;
+    }
+
+    private void addAndroidFiles(List<CodegenRenderFileDTO> files, String androidBasePath, String templateRoot, CodeGenContextDTO context) {
+        if (!context.isAndroidEnabled()) {
+            return;
+        }
+        addFile(files, "android", androidBasePath + "/api/" + context.getEntityName() + "Api.kt",
+            templateRoot + "/Api.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/model/" + context.getEntityName() + "Models.kt",
+            templateRoot + "/Models.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/repository/" + context.getEntityName() + "Repository.kt",
+            templateRoot + "/Repository.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/ui/" + context.getEntityName() + "ListViewModel.kt",
+            templateRoot + "/ListViewModel.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/ui/" + context.getEntityName() + "ListScreen.kt",
+            templateRoot + "/ListScreen.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/ui/" + context.getEntityName() + "FormViewModel.kt",
+            templateRoot + "/FormViewModel.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/ui/" + context.getEntityName() + "FormScreen.kt",
+            templateRoot + "/FormScreen.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/navigation/" + context.getEntityName() + "Routes.kt",
+            templateRoot + "/Routes.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/navigation/" + context.getEntityName() + "Navigation.kt",
+            templateRoot + "/Navigation.kt.btl", context);
+        addFile(files, "android", androidBasePath + "/README.md", templateRoot + "/README.md.btl", context);
     }
 }

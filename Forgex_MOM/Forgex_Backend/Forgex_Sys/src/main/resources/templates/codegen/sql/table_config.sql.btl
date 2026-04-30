@@ -51,10 +51,10 @@ VALUES (
     <% } %>
     1, <% if(column.sortable) { %>1<% } else { %>0<% } %>, 
     <% if(column.queryable) { %>1<% } else { %>0<% } %>, 
-    <% if(column.queryType) { %>'${column.queryType}'<% } else { %>NULL<% } %>, 
-    <% if(column.queryOperator) { %>'${column.queryOperator}'<% } else { %>NULL<% } %>,
-    <% if(column.dictCode) { %>'${column.dictCode}'<% } else { %>NULL<% } %>,
-    <% if(column.renderType) { %>'${column.renderType}'<% } else { %>'text'<% } %>,
+    <% if(column.queryType != null && column.queryType != "") { %>'${column.queryType}'<% } else { %>NULL<% } %>, 
+    <% if(column.queryOperator != null && column.queryOperator != "") { %>'${column.queryOperator}'<% } else { %>NULL<% } %>,
+    <% if(column.dictCode != null && column.dictCode != "") { %>'${column.dictCode}'<% } else { %>NULL<% } %>,
+    <% if(column.renderType != null && column.renderType != "") { %>'${column.renderType}'<% } else { %>'text'<% } %>,
     ${orderNum}, 1, NOW(), NOW(), 0
 )
 ON DUPLICATE KEY UPDATE

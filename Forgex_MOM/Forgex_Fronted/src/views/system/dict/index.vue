@@ -11,7 +11,7 @@
       row-key="id"
     >
       <template #toolbar>
-        <a-button type="primary" @click="handleAdd(null)">新增字典</a-button>
+        <a-button data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">新增字典</a-button>
       </template>
 
       <template #moduleId="{ record }">
@@ -41,18 +41,19 @@
       </template>
     </FxDynamicTable>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="dialogVisible"
       :title="dialogTitle"
-      width="600px"
-      @ok="handleSubmit"
+      width="640px"
+      @submit="handleSubmit"
       @cancel="handleDialogClose"
     >
-      <a-form :model="form" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-        <a-form-item label="字典名称" required>
+      <a-form ref="formRef" :model="form" :rules="formRules" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+        <a-form-item label="字典名称" name="dictName">
           <a-input v-model:value="form.dictName" placeholder="请输入字典名称" />
         </a-form-item>
-        <a-form-item label="所属模块">
+
+        <a-form-item label="所属模块" name="moduleId">
           <a-select
             v-model:value="form.moduleId"
             :options="moduleOptions"
@@ -61,46 +62,54 @@
             placeholder="请选择所属模块"
           />
         </a-form-item>
-        <a-form-item v-if="!isChildNode" label="字典编码" required>
+
+        <a-form-item v-if="!isChildNode" label="字典编码" name="dictCode">
           <a-input v-model:value="form.dictCode" placeholder="请输入字典编码" />
         </a-form-item>
-        <a-form-item v-else label="字典值" required>
+
+        <a-form-item v-else label="字典值" name="dictValue">
           <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
         </a-form-item>
-        <a-form-item v-if="isChildNode" label="国际化配置">
-          <I18nInput 
-            v-model="form.dictValueI18nJson" 
-            mode="simple" 
-            placeholder="请输入字典值（点击右侧地球图标配置多语言）"
+
+        <a-form-item v-if="isChildNode" label="国际化配置" name="dictValueI18nJson">
+          <I18nInput
+            v-model="form.dictValueI18nJson"
+            mode="simple"
+            placeholder="请输入字典值（可点击右侧地球图标配置多语言）"
           />
         </a-form-item>
+
         <a-form-item v-if="isChildNode" label="标签样式">
           <TagStyleConfig ref="tagStyleConfigRef" />
         </a-form-item>
-        <a-form-item label="排序号">
+
+        <a-form-item label="排序号" name="orderNum">
           <a-input-number v-model:value="form.orderNum" :min="0" style="width: 100%" />
         </a-form-item>
-        <a-form-item label="状态">
+
+        <a-form-item label="状态" name="status">
           <a-radio-group v-model:value="form.status">
             <a-radio v-for="option in statusOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="备注">
+
+        <a-form-item label="备注" name="remark">
           <a-textarea v-model:value="form.remark" :rows="3" placeholder="请输入备注" />
         </a-form-item>
       </a-form>
-    </a-modal>
+    </BaseFormDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
-import { Modal } from 'ant-design-vue'
+import { Modal, type FormInstance, type Rule } from 'ant-design-vue'
 import http from '@/api/http'
 import { listModules } from '@/api/system/module'
 import type { FxTableConfig } from '@/api/system/tableConfig'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
@@ -109,6 +118,7 @@ import { useDict } from '@/hooks/useDict'
 const { dictItems: statusOptions } = useDict('status')
 
 const tableRef = ref()
+const formRef = ref<FormInstance>()
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const tagStyleConfigRef = ref()
@@ -157,11 +167,22 @@ const form = reactive({
   remark: '',
 })
 
+const formRules = computed<Record<string, Rule[]>>(() => ({
+  dictName: [{ required: true, message: '请输入字典名称', trigger: 'blur' }],
+  dictCode: isChildNode.value ? [] : [{ required: true, message: '请输入字典编码', trigger: 'blur' }],
+  dictValue: isChildNode.value ? [{ required: true, message: '请输入字典值', trigger: 'blur' }] : [],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+}))
+
 const isChildNode = computed(() => !!(form.parentId && form.parentId > 0))
 
 function mapDictTreeNodes(nodes: any[]): any[] {
   return (nodes || []).map((item: any) => ({
     ...item,
+    createByName: item.createByName || item.createBy || '',
+    updateByName: item.updateByName || item.updateBy || '',
+    createBy: item.createByName || item.createBy || '',
+    updateBy: item.updateByName || item.updateBy || '',
     children: Array.isArray(item.children) ? mapDictTreeNodes(item.children) : [],
   }))
 }
@@ -212,7 +233,7 @@ const handleRequest = async (payload: {
       total: Number(res?.total || 0),
     }
   } catch (error) {
-    console.error('加载字典分页数据失败', error)
+    console.error('load dict page failed', error)
     return {
       records: [],
       total: 0,
@@ -228,7 +249,7 @@ async function loadModules() {
       value: Number(item.id),
     }))
   } catch (error) {
-    console.error('加载模块列表失败', error)
+    console.error('load modules failed', error)
     moduleOptions.value = []
   }
 }
@@ -244,7 +265,15 @@ function resetForm() {
   form.orderNum = 0
   form.status = 1
   form.remark = ''
+  formRef.value?.clearValidate?.()
   tagStyleConfigRef.value?.setTagStyleJson('')
+}
+
+function openDialog() {
+  dialogVisible.value = true
+  nextTick(() => {
+    formRef.value?.clearValidate?.()
+  })
 }
 
 function handleAdd(row: any) {
@@ -252,10 +281,11 @@ function handleAdd(row: any) {
   dialogTitle.value = row ? '新增字典子项' : '新增字典类型'
   form.parentId = row ? Number(row.id) : 0
   form.moduleId = row?.moduleId != null ? Number(row.moduleId) : undefined
-  dialogVisible.value = true
+  openDialog()
 }
 
 function handleEdit(row: any) {
+  resetForm()
   dialogTitle.value = '编辑字典'
   form.id = Number(row.id)
   form.parentId = Number(row.parentId || 0)
@@ -267,8 +297,7 @@ function handleEdit(row: any) {
   form.orderNum = Number(row.orderNum || 0)
   form.status = row.status === 0 || row.status === '0' ? 0 : 1
   form.remark = row.remark || ''
-  dialogVisible.value = true
-  // 等待弹窗渲染完成后设置标签样式
+  openDialog()
   nextTick(() => {
     tagStyleConfigRef.value?.setTagStyleJson(row.tagStyleJson || '')
   })
@@ -288,6 +317,7 @@ function handleDelete(row: any) {
 }
 
 async function handleSubmit() {
+  await formRef.value?.validate()
   const tagStyleJson = tagStyleConfigRef.value?.getTagStyleJson() || ''
   const url = form.id ? '/sys/dict/update' : '/sys/dict/create'
   await http.post(url, {
@@ -296,12 +326,13 @@ async function handleSubmit() {
     tagStyleJson,
   })
   dialogVisible.value = false
+  resetForm()
   await tableRef.value?.refresh?.()
 }
 
 function handleDialogClose() {
   dialogVisible.value = false
-  tagStyleConfigRef.value?.setTagStyleJson('')
+  resetForm()
 }
 
 onMounted(async () => {

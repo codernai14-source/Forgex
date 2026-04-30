@@ -8,7 +8,7 @@ import type { CSSProperties } from 'vue'
  * 
  * @param hexColor - 鍗佸叚杩涘埗棰滆壊锛堝 "#1677ff"锛?
  * @param amount - 浜害璋冩暣閲忥紙-1 鍒?1 涔嬮棿锛岃礋鍊煎彉鏆楋紝姝ｅ€煎彉浜級
- * @returns 璋冩暣鍚庣殑鍗佸叚杩涘埗棰滆壊
+ * @returns 调整后的十六进制颜色
  */
 function adjustColor(hexColor: string, amount: number): string {
   if (!hexColor || !hexColor.startsWith('#')) {
@@ -128,7 +128,7 @@ function withAlpha(hexColor: string, alpha: number, 降级方案: string): strin
  * - 鏂囨湰锛?-fx-text-primary, --fx-text-secondary 绛?
  * - 濉厖鑹诧細--fx-fill, --fx-fill-secondary, --fx-fill-alter
  * - 涓婚鑹诧細--fx-primary, --fx-primary-hover, --fx-primary-active
- * - 鍔熻兘鑹诧細--fx-success, --fx-warning, --fx-error, --fx-info
+ * - 功能色：--fx-success, --fx-warning, --fx-error, --fx-info
  * - 瀛椾綋锛?-fx-font-size, --fx-font-family, --fx-line-height
  * - 鍦嗚锛?-fx-radius, --fx-radius-lg, --fx-radius-sm
  * - 闃村奖锛?-fx-shadow, --fx-shadow-secondary
@@ -138,7 +138,7 @@ function withAlpha(hexColor: string, alpha: number, 降级方案: string): strin
  * @example
  * ```typescript
  * const variables = generateCSSVariables(lightTokens, layoutConfig)
- * // 搴旂敤鍒版牴鍏冪礌
+ * // 应用到根元素
  * document.documentElement.style = variables
  * 
  * // 鍦?Vue 缁勪欢涓娇鐢?
@@ -259,7 +259,7 @@ export function generateCSSVariables(
     '--fx-content-width': contentWidth,
     '--fx-bg-mask': tokens.colorBgMask,
     
-    // 椤舵爮蹇嵎閿?鎸夐挳绛夎緟鍔╄壊
+    // 椤舵爮蹇嵎閿?按钮等辅助色
     '--fx-header-shortcut-bg': tokens.colorFillSecondary,
     '--fx-header-shortcut-color': tokens.colorTextSecondary,
     '--fx-header-btn-hover-bg': tokens.colorFill,

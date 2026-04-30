@@ -49,7 +49,12 @@ public enum AuthPromptEnum implements I18nPrompt {
     
     // ========== 第三方登录 ==========
     SOCIAL_LOGIN_FAILED("SOCIAL_LOGIN_FAILED", "第三方登录失败"),
-    SOCIAL_ACCOUNT_BOUND("SOCIAL_ACCOUNT_BOUND", "第三方账号已绑定");
+    SOCIAL_ACCOUNT_BOUND("SOCIAL_ACCOUNT_BOUND", "第三方账号已绑定"),
+
+    // ========== 策略选择 ==========
+    CAPTCHA_MODE_NOT_SUPPORTED("CAPTCHA_MODE_NOT_SUPPORTED", "暂不支持的验证码模式: {0}"),
+    LOGIN_METHOD_NOT_SUPPORTED("LOGIN_METHOD_NOT_SUPPORTED", "暂不支持的登录方式: terminal={0}, type={1}"),
+    TENANT_TERMINAL_NOT_SUPPORTED("TENANT_TERMINAL_NOT_SUPPORTED", "暂不支持的租户选择终端: {0}");
 
     private final String promptCode;
     private final String defaultTemplate;

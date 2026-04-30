@@ -15,15 +15,15 @@
             <a-radio-button :value="false">{{ t('system.messageTemplate.configMode.tenant') }}</a-radio-button>
             <a-radio-button :value="true">{{ t('system.messageTemplate.configMode.public') }}</a-radio-button>
           </a-radio-group>
-          <a-button v-if="!publicConfig" @click="handlePullPublicConfig">
+          <a-button data-guide-id="sys-message-template-pull-public" v-if="!publicConfig" @click="handlePullPublicConfig">
             <template #icon><SyncOutlined /></template>
             {{ t('system.messageTemplate.toolbar.pullPublicConfig') }}
           </a-button>
-          <a-button type="primary" @click="handleAdd">
+          <a-button data-guide-id="sys-message-template-add" type="primary" @click="handleAdd">
             <template #icon><PlusOutlined /></template>
             {{ t('common.add') }}
           </a-button>
-          <a-button danger :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete">
+          <a-button data-guide-id="sys-message-template-batch-delete" danger :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete">
             <template #icon><DeleteOutlined /></template>
             {{ t('common.batchDelete') }}
           </a-button>
@@ -50,12 +50,12 @@
       </template>
     </FxDynamicTable>
 
-    <a-modal
+    <BaseFormDialog
       v-model:open="modalVisible"
       :title="modalTitle"
       width="900px"
-      :confirm-loading="modalLoading"
-      @ok="handleModalOk"
+      :loading="modalLoading"
+      @submit="handleModalOk"
       @cancel="handleModalCancel"
     >
       <a-tabs v-model:activeKey="activeTab">
@@ -219,7 +219,7 @@
           <a-empty v-if="formData.contents.length === 0" :description="t('system.messageTemplate.content.empty')" />
         </a-tab-pane>
       </a-tabs>
-    </a-modal>
+    </BaseFormDialog>
 
     <TemplatePreview
       v-model:visible="previewVisible"
@@ -243,6 +243,7 @@ import {
 import I18nInput from '@/components/common/I18nInput.vue'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import TemplatePreview from '@/components/common/TemplatePreview.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getI18nValue, toI18nJson } from '@/utils/i18n'
 import {
   pageMessageTemplate,

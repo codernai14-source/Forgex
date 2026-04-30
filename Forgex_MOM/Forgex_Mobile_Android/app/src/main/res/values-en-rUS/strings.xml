@@ -39,9 +39,12 @@
     <string name="auth_public_key_ready">SM2 public key warm-up is enabled. Passwords will be encrypted before sending.</string>
     <string name="auth_public_key_missing">Public key is unavailable. Password will be sent in debug mode.</string>
     <string name="auth_login_method_account">Account login</string>
-    <string name="auth_login_method_wechat">WeChat (Coming soon)</string>
-    <string name="auth_login_method_dingtalk">DingTalk (Coming soon)</string>
-    <string name="auth_login_method_feishu">Feishu (Coming soon)</string>
+    <string name="auth_login_method_wechat">WeChat</string>
+    <string name="auth_login_method_dingtalk">DingTalk</string>
+    <string name="auth_login_method_feishu">Feishu</string>
+    <string name="auth_third_party_hint">Third-party login is not available yet</string>
+    <string name="auth_language_switch">Switch language</string>
+    <string name="auth_language_default_option">Follow default language</string>
     <string name="auth_captcha_load_failed">Failed to load captcha</string>
     <string name="auth_captcha_refresh">Refresh</string>
     <string name="auth_slider_loading">Loading slider captcha...</string>

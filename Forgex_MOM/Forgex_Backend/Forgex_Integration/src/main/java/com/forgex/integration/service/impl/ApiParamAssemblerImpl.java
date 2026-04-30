@@ -4,6 +4,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forgex.integration.domain.dto.ApiOutboundTargetDTO;
 import com.forgex.integration.domain.dto.ApiParamMappingDTO;
 import com.forgex.integration.domain.model.ApiDefinitionSnapshot;
 import com.forgex.integration.domain.model.OutboundRequestDefinition;
@@ -20,28 +21,69 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 鍙傛暟缁勮鍣?
+ * 接口参数组装器实现。
+ * <p>
+ * 根据接口定义快照中的字段映射规则，将入站原始参数组装为业务处理参数，
+ * 或将业务对象组装为出站 HTTP 请求定义。
+ * </p>
+ *
+ * @author coder_nai@163.com
+ * @version 1.0.0
+ * @since 2026-04-01
+ * @see IApiParamAssembler
  */
 @Service
 @RequiredArgsConstructor
 public class ApiParamAssemblerImpl implements IApiParamAssembler {
 
+    /**
+     * JSON 对象转换器。
+     */
     private final ObjectMapper objectMapper;
 
+    /**
+     * 组装入站参数。
+     *
+     * @param snapshot   接口定义快照
+     * @param rawPayload 原始请求参数
+     * @return 组装后的业务参数
+     */
     @Override
     public Map<String, Object> assembleInbound(ApiDefinitionSnapshot snapshot, Map<String, Object> rawPayload) {
         Map<String, Object> source = rawPayload == null ? Map.of() : rawPayload;
         return applyMappings(snapshot.getInboundMappings(), source);
     }
 
+    /**
+     * 组装出站请求定义。
+     *
+     * @param snapshot   接口定义快照
+     * @param rawPayload 原始请求参数
+     * @return 出站请求定义
+     */
     @Override
     public OutboundRequestDefinition assembleOutbound(ApiDefinitionSnapshot snapshot, Map<String, Object> rawPayload) {
+        return assembleOutbound(snapshot, rawPayload, null);
+    }
+
+    /**
+     * 按目标系统组装出站请求定义。
+     *
+     * @param snapshot   接口定义快照
+     * @param rawPayload 原始请求参数
+     * @param target     出站目标配置
+     * @return 出站请求定义
+     */
+    @Override
+    public OutboundRequestDefinition assembleOutbound(ApiDefinitionSnapshot snapshot,
+                                                      Map<String, Object> rawPayload,
+                                                      ApiOutboundTargetDTO target) {
         Map<String, Object> source = rawPayload == null ? Map.of() : rawPayload;
         Map<String, Object> body = new LinkedHashMap<>();
         Map<String, String> query = new LinkedHashMap<>();
         Map<String, String> headers = new LinkedHashMap<>();
         Map<String, String> pathVariables = new LinkedHashMap<>();
-        List<ApiParamMappingDTO> mappings = snapshot.getOutboundMappings();
+        List<ApiParamMappingDTO> mappings = resolveOutboundMappings(snapshot, target);
         if (mappings != null) {
             for (ApiParamMappingDTO mapping : mappings) {
                 Object value = resolveValue(mapping, source);
@@ -49,12 +91,12 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
                     continue;
                 }
                 ApiMappingTargetScopeEnum scope = ApiMappingTargetScopeEnum.fromValue(mapping.getTargetScope());
-                String target = mapping.getTargetFieldPath();
+                String targetField = mapping.getTargetFieldPath();
                 switch (scope) {
-                    case QUERY -> query.put(target, String.valueOf(value));
-                    case HEADER -> headers.put(target, String.valueOf(value));
-                    case PATH -> pathVariables.put(target, String.valueOf(value));
-                    case BODY -> setNestedValue(body, target, value);
+                    case QUERY -> query.put(targetField, String.valueOf(value));
+                    case HEADER -> headers.put(targetField, String.valueOf(value));
+                    case PATH -> pathVariables.put(targetField, String.valueOf(value));
+                    case BODY -> setNestedValue(body, targetField, value);
                 }
             }
         }
@@ -63,7 +105,24 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
             .query(query)
             .headers(headers)
             .pathVariables(pathVariables)
+            .outboundTargetId(target == null ? null : target.getId())
+            .targetSystemCode(target == null ? null : target.getTargetCode())
+            .targetSystemName(target == null ? null : target.getTargetName())
+            .targetUrl(target == null ? snapshot.getApiConfig().getTargetUrl() : target.getTargetUrl())
             .build();
+    }
+
+    private List<ApiParamMappingDTO> resolveOutboundMappings(ApiDefinitionSnapshot snapshot, ApiOutboundTargetDTO target) {
+        if (target == null) {
+            return snapshot.getOutboundMappings();
+        }
+        List<ApiParamMappingDTO> mappings = snapshot.getOutboundMappings();
+        if (mappings == null) {
+            return List.of();
+        }
+        return mappings.stream()
+            .filter(item -> target.getId().equals(item.getOutboundTargetId()))
+            .toList();
     }
 
     private Map<String, Object> applyMappings(List<ApiParamMappingDTO> mappings, Map<String, Object> source) {

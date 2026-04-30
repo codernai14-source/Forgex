@@ -349,6 +349,8 @@ export default {
     approveReject: '审批驳回',
     detailTitle: '审批详情',
     historyTitle: '审批历史',
+    detailInfoTab: '审批信息',
+    formDataTab: '表单数据',
     taskName: '审批任务',
     taskCode: '任务编码',
     initiator: '发起人',
@@ -398,6 +400,9 @@ export default {
     loadInitiatedFailed: '加载我发起的审批列表失败',
     loadHistoryFailed: '加载审批历史失败',
     approveActionFailed: '审批处理失败',
+    unregisteredFormComponent: '未注册对应的表单组件，无法按原表单样式渲染',
+    lowCodeSchemaMissing: '当前审批未返回低代码表单结构，无法还原表单样式',
+    formPreviewFallback: '未找到表单渲染配置，以下为原始表单数据',
     unknownStatus: '未知',
   },
   dashboard: {

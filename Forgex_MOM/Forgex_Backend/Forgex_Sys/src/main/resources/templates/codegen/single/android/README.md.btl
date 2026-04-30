@@ -1,0 +1,5 @@
+# Android 接入说明
+
+- 输出目录：`android/${ctx.androidFeatureKey}/`
+- 已生成：Retrofit API、模型、Repository、列表页、表单页、Routes、Navigation
+- 建议接入现有 `core/component` 中的 `FxListPage`、`FxTextField`、`FxFormFooterBar`

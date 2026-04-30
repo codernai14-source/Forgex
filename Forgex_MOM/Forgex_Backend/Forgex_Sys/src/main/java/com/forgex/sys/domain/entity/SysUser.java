@@ -79,6 +79,10 @@ public class SysUser extends BaseEntity {
     /** 职位ID */
     private Long positionId;
 
+    private Long employeeId;
+
+    private Integer userSource;
+
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
     

@@ -51,7 +51,7 @@ public class WfCallbackController {
      *
      * @param param 回调注册参数，包含任务编码、回调 URL、回调 Bean 名称（必填）
      * @return 操作成功响应
-     * @throws BusinessException 当参数校验失败或注册失败时抛出业务异常
+     * @throws I18nBusinessException 当参数校验失败或注册失败时抛出业务异常
      * @see IWfCallbackService#registerCallback(String, String, String) 注册回调服务方法
      * @see CallbackRegisterParam 回调注册参数类
      */
@@ -71,7 +71,7 @@ public class WfCallbackController {
      *
      * @param params 请求参数，包含 taskCode（任务编码，必填）
      * @return 操作成功响应
-     * @throws BusinessException 当参数无效或注销失败时抛出业务异常
+     * @throws I18nBusinessException 当参数无效或注销失败时抛出业务异常
      * @see IWfCallbackService#unregisterCallback(String) 注销回调服务方法
      */
     @PostMapping("/unregister")

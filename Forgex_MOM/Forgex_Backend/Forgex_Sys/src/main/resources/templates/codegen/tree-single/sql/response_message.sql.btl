@@ -1,0 +1,32 @@
+-- ================================================
+-- ${ctx.menuName} tree-single response message init
+-- ================================================
+
+SET @TENANT_ID = 0;
+
+INSERT INTO sys_response_message_template (
+    tenant_id, template_code, template_name, success_code, success_message,
+    fail_code, fail_message, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.permKeyPrefix}:create', '${ctx.menuName}新增', 200, '新增成功', 500, '新增失败', 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM sys_response_message_template WHERE tenant_id = @TENANT_ID AND template_code = '${ctx.permKeyPrefix}:create' AND deleted = 0
+);
+
+INSERT INTO sys_response_message_template (
+    tenant_id, template_code, template_name, success_code, success_message,
+    fail_code, fail_message, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.permKeyPrefix}:update', '${ctx.menuName}修改', 200, '修改成功', 500, '修改失败', 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM sys_response_message_template WHERE tenant_id = @TENANT_ID AND template_code = '${ctx.permKeyPrefix}:update' AND deleted = 0
+);
+
+INSERT INTO sys_response_message_template (
+    tenant_id, template_code, template_name, success_code, success_message,
+    fail_code, fail_message, enabled, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, '${ctx.permKeyPrefix}:delete', '${ctx.menuName}删除', 200, '删除成功', 500, '删除失败', 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM sys_response_message_template WHERE tenant_id = @TENANT_ID AND template_code = '${ctx.permKeyPrefix}:delete' AND deleted = 0
+);

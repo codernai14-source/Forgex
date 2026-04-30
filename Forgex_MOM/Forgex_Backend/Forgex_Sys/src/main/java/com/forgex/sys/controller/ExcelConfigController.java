@@ -2,48 +2,36 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
+import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
-import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
-import com.forgex.common.i18n.CommonPrompt;
-import com.forgex.sys.service.ExcelExportService;
-import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
-import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
-import com.forgex.sys.domain.dto.LoginLogQueryDTO;
-import com.forgex.sys.domain.dto.SysUserQueryDTO;
-import com.forgex.sys.domain.entity.LoginLog;
-import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.param.ExcelExportConfigPageParam;
 import com.forgex.sys.domain.param.ExcelImportConfigPageParam;
 import com.forgex.sys.domain.param.IdParam;
 import com.forgex.sys.domain.param.TableCodeParam;
-import com.forgex.sys.mapper.LoginLogMapper;
-import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.service.ExcelExportService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * Excel 导入导出配置与文件能力 Controller。
+ * Excel 导入导出配置与文件能力控制器。
  * <p>
- * - 系统管理：配置导入模板/导出字段与样式（存放 forgex_common）；\n
- * - 业务页面：下载导入模板、导出数据文件。\n
+ * 负责导入模板配置、导出字段配置、模板下载、系统日志/用户等数据导出能力。
+ * 配置数据存放在 {@code forgex_common} 库，供系统管理页面和业务导入导出流程复用。
  * </p>
  *
  * @author coder_nai@163.com
@@ -54,28 +42,39 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExcelConfigController {
 
+    /**
+     * Excel 配置服务。
+     */
     private final ExcelConfigService excelConfigService;
+
+    /**
+     * Excel 文件生成服务。
+     */
     private final ExcelFileService excelFileService;
+
+    /**
+     * Excel 导出服务。
+     */
     private final ExcelExportService excelExportService;
 
     /**
      * 分页查询导出配置。
      *
-     * @param param 入参：current/size/tableName/tableCode
-     * @return 分页结果
+     * @param param 查询参数
+     * @return 导出配置分页结果
      */
     @RequirePerm("sys:excel:exportConfig:list")
     @PostMapping("/exportConfig/page")
     public R<IPage<FxExcelExportConfigDTO>> pageExportConfig(@RequestBody ExcelExportConfigPageParam param) {
         Page<FxExcelExportConfigDTO> page = new Page<>(param.getPageNum(), param.getPageSize());
-        return R.ok(excelConfigService.pageExportConfig(page, param.getTableName(), param.getTableCode()));
+        return R.ok(excelConfigService.pageExportConfig(page, param.getTableName(), param.getTableCode(), param.getEnabled()));
     }
 
     /**
-     * 获取导出配置详情（含子项）。
+     * 获取导出配置详情。
      *
-     * @param param 入参：id
-     * @return 配置
+     * @param param ID 参数
+     * @return 导出配置详情，包含子项字段配置
      */
     @RequirePerm("sys:excel:exportConfig:list")
     @PostMapping("/exportConfig/detail")
@@ -84,10 +83,10 @@ public class ExcelConfigController {
     }
 
     /**
-     * 保存导出配置（主+子）。
+     * 保存导出配置。
      *
-     * @param dto 导出配置
-     * @return 主表ID
+     * @param dto 导出配置数据
+     * @return 主表 ID
      */
     @RequirePerm("sys:excel:exportConfig:edit")
     @PostMapping("/exportConfig/save")
@@ -96,10 +95,10 @@ public class ExcelConfigController {
     }
 
     /**
-     * 删除导出配置（主+子）。
+     * 删除导出配置。
      *
-     * @param param 入参：id
-     * @return 结果
+     * @param param ID 参数
+     * @return 删除结果
      */
     @RequirePerm("sys:excel:exportConfig:delete")
     @PostMapping("/exportConfig/delete")
@@ -110,8 +109,8 @@ public class ExcelConfigController {
     /**
      * 分页查询导入配置。
      *
-     * @param param 入参：current/size/tableName/tableCode
-     * @return 分页结果
+     * @param param 查询参数
+     * @return 导入配置分页结果
      */
     @RequirePerm("sys:excel:importConfig:list")
     @PostMapping("/importConfig/page")
@@ -121,10 +120,10 @@ public class ExcelConfigController {
     }
 
     /**
-     * 获取导入配置详情（含子项）。
+     * 获取导入配置详情。
      *
-     * @param param 入参：id
-     * @return 配置
+     * @param param ID 参数
+     * @return 导入配置详情，包含导入字段配置
      */
     @RequirePerm("sys:excel:importConfig:list")
     @PostMapping("/importConfig/detail")
@@ -133,10 +132,10 @@ public class ExcelConfigController {
     }
 
     /**
-     * 保存导入配置（主+子）。
+     * 保存导入配置。
      *
-     * @param dto 导入配置
-     * @return 主表ID
+     * @param dto 导入配置数据
+     * @return 主表 ID
      */
     @RequirePerm("sys:excel:importConfig:edit")
     @PostMapping("/importConfig/save")
@@ -145,10 +144,10 @@ public class ExcelConfigController {
     }
 
     /**
-     * 删除导入配置（主+子）。
+     * 删除导入配置。
      *
-     * @param body 入参：id
-     * @return 是否成功
+     * @param param ID 参数
+     * @return 删除结果
      */
     @RequirePerm("sys:excel:importConfig:delete")
     @PostMapping("/importConfig/delete")
@@ -157,67 +156,61 @@ public class ExcelConfigController {
     }
 
     /**
-     * 下载导入模板（按 tableCode 配置生成）。
+     * 下载导入模板。
+     * <p>
+     * 模板生成成功时返回 xlsx 二进制；生成失败时返回 JSON 错误，避免前端把错误内容当 Excel 保存。
+     * </p>
      *
-     * @param param     入参：tableCode
-     * @param response 响应
+     * @param param    表编码参数
+     * @param response HTTP 响应
      */
     @RequirePerm("sys:excel:template:download")
     @PostMapping("/template/download")
     public void downloadTemplate(@RequestBody TableCodeParam param, HttpServletResponse response) {
-        String tableCode = param.getTableCode();
-        FxExcelImportConfigDTO cfg = excelConfigService.getImportConfigByCode(tableCode);
-        byte[] bytes = excelFileService.buildImportTemplateXlsx(cfg);
-        
-        // 使用ExcelExportService的方法处理文件下载
-        String filename = "import-template-" + tableCode + ".xlsx";
-        String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        String safeFilename = excelExportService.getSafeFilename(filename);
-        
         try {
-            response.setContentType(contentType);
-            response.setCharacterEncoding("UTF-8");
-            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + safeFilename);
-            response.getOutputStream().write(bytes == null ? new byte[0] : bytes);
+            String tableCode = param.getTableCode();
+            FxExcelImportConfigDTO cfg = excelConfigService.getImportConfigByCode(tableCode);
+            byte[] bytes = excelFileService.buildImportTemplateXlsxOrThrow(cfg);
+            String filename = "import-template-" + tableCode + ".xlsx";
+
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + excelExportService.getSafeFilename(filename));
+            response.getOutputStream().write(bytes);
             response.flushBuffer();
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            writeJsonError(response, ex);
         }
     }
 
     /**
-     * 导出登录日志（按 tableCode 配置生成）。
+     * 导出登录日志。
      *
-     * @param body     入参：tableCode + query(LoginLogQueryDTO)
-     * @param response 响应
+     * @param body     导出参数
+     * @param response HTTP 响应
      */
     @RequirePerm("sys:excel:export:loginLog")
     @PostMapping("/export/loginLog")
     public void exportLoginLog(@RequestBody ExcelLoginLogExportDTO body, HttpServletResponse response) {
-        // 调用Excel导出服务处理登录日志导出
         excelExportService.exportLoginLog(body, response);
     }
 
     /**
-     * 导出用户（按 tableCode 配置生成）。
+     * 导出用户数据。
      *
-     * @param body     入参：tableCode + query(SysUserQueryDTO)
-     * @param response 响应
+     * @param body     导出参数
+     * @param response HTTP 响应
      */
     @RequirePerm({"sys:user:export", "sys:excel:export:user"})
     @PostMapping("/export/user")
     public void exportUser(@RequestBody ExcelUserExportDTO body, HttpServletResponse response) {
-        // 调用Excel导出服务处理用户数据导出
         excelExportService.exportUser(body, response);
     }
 
     /**
-     * 获取所有已注册的 Provider 编码列表
-     * <p>
-     * 用于前端配置导入模板时选择数据源类型。
-     * </p>
+     * 获取所有已注册的导入数据源 Provider 编码。
      *
      * @return Provider 编码列表
-     * @since 1.1.0
      */
     @RequirePerm("sys:excel:importConfig:list")
     @PostMapping("/provider/list")
@@ -225,20 +218,38 @@ public class ExcelConfigController {
         return R.ok(excelConfigService.listProviderCodes());
     }
 
-    private Long parseLong(Object obj) {
-        if (obj == null) {
-            return null;
+    /**
+     * 写入 JSON 格式错误响应。
+     *
+     * @param response HTTP 响应
+     * @param ex       异常信息
+     */
+    private void writeJsonError(HttpServletResponse response, Exception ex) {
+        try {
+            response.reset();
+            response.setStatus(200);
+            response.setContentType("application/json;charset=UTF-8");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            String message = ex instanceof I18nBusinessException i18nEx
+                    ? i18nEx.getMsg().getDefaultTemplate()
+                    : "生成导入模板失败";
+            String body = "{\"code\":500,\"message\":\"" + escapeJson(message) + "\",\"data\":null}";
+            response.getWriter().write(body);
+            response.flushBuffer();
+        } catch (IOException ignored) {
         }
-        if (obj instanceof Number) {
-            return ((Number) obj).longValue();
+    }
+
+    /**
+     * 转义 JSON 字符串内容。
+     *
+     * @param value 原始字符串
+     * @return 转义后的字符串
+     */
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
         }
-        if (obj instanceof String) {
-            try {
-                return Long.valueOf((String) obj);
-            } catch (Exception ignored) {
-                return null;
-            }
-        }
-        return null;
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,15 +20,18 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,7 +69,11 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.forgex.mobile.core.component.scanner.FxScanActionBar
+import com.forgex.mobile.core.component.scanner.FxScanInputBox
+import com.forgex.mobile.core.device.FxScannerManager
 import com.forgex.mobile.core.ui.R
+import com.forgex.mobile.core.ui.i18n.i18nString
 import com.forgex.mobile.core.ui.i18n.resolveAppText
 import com.forgex.mobile.feature.auth.data.CaptchaMode
 import com.forgex.mobile.feature.auth.data.SliderCaptcha
@@ -77,19 +87,40 @@ const val REGISTER_ROUTE = "auth/register"
 @Composable
 fun AuthScreen(
     onLoginSuccess: () -> Unit,
+    onShowMessage: (String) -> Unit,
     onOpenServerSettings: () -> Unit,
     onOpenRegister: (String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = hiltViewModel()
+    viewModel: AuthViewModel = hiltViewModel(),
+    scanBridgeViewModel: AuthScanBridgeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val imageLoader = rememberGifImageLoader()
+    val context = LocalContext.current
+    val scannerManager = remember(scanBridgeViewModel) { scanBridgeViewModel.scannerManager }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
-            if (event is AuthEvent.LoginCompleted) {
-                onLoginSuccess()
+            when (event) {
+                is AuthEvent.LoginCompleted -> onLoginSuccess()
+                is AuthEvent.ShowMessage -> {
+                    val message = resolveEventMessage(context, event)
+                        ?: event.fallbackMessage
+                    if (!message.isNullOrBlank()) {
+                        onShowMessage(message)
+                    }
+                }
             }
+        }
+    }
+
+    LaunchedEffect(scannerManager, uiState.step) {
+        scannerManager.results.collectLatest { result ->
+            when (uiState.step) {
+                AuthStep.LOGIN -> viewModel.applyAccountScan(result)
+                AuthStep.TENANT_SELECTION -> viewModel.applyTenantScan(result)
+            }
+            scannerManager.clearCachedResult()
         }
     }
 
@@ -101,6 +132,17 @@ fun AuthScreen(
             backgroundColor = uiState.loginBackgroundColor,
             serverOrigin = uiState.serverOrigin
         )
+
+        LoginActionButtons(
+            onShowLanguageDialog = viewModel::showLanguageDialog
+        )
+
+        if (uiState.step == AuthStep.TENANT_SELECTION) {
+            TenantBackButton(
+                enabled = !uiState.isLoading,
+                onBack = viewModel::backToLogin
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -123,7 +165,6 @@ fun AuthScreen(
                     AuthLoginStage.ENTRY -> LoginEntryCard(
                         uiState = uiState,
                         imageLoader = imageLoader,
-                        onOpenServerSettings = onOpenServerSettings,
                         onOpenPasswordLogin = viewModel::openPasswordLogin,
                         onSelectThirdParty = viewModel::switchLoginMethod
                     )
@@ -140,20 +181,91 @@ fun AuthScreen(
                         onSliderProgressChange = viewModel::updateSliderProgress,
                         onVerifySlider = viewModel::verifySliderCaptcha,
                         onRefreshCaptcha = { viewModel.refreshCaptcha(silent = false) },
-                        onSubmit = viewModel::submitLogin
+                        onSubmit = viewModel::submitLogin,
+                        onAccountScanConsumed = viewModel::consumeAccountScanResult
                     )
                 }
             } else {
-                TenantSelectionCard(
+                TenantSelectionScreen(
                     uiState = uiState,
+                    imageLoader = imageLoader,
                     onSelectTenant = viewModel::selectTenant,
                     onConfirm = viewModel::confirmTenantSelection,
-                    onBack = viewModel::backToLogin
+                    onTenantScanConsumed = viewModel::consumeTenantScanResult
                 )
             }
 
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+            }
+        }
+
+        if (uiState.languageState.languageDialogVisible) {
+            LanguageDialog(
+                state = uiState.languageState,
+                onDismiss = viewModel::dismissLanguageDialog,
+                onFollowDefault = viewModel::followDefaultLanguage,
+                onSelectLanguage = viewModel::selectLanguage
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.TenantBackButton(
+    enabled: Boolean,
+    onBack: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.95f),
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clickable(enabled = enabled, onClick = onBack),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowBack,
+                contentDescription = i18nString("common.back", R.string.common_back),
+                tint = Color(0xFF1E2A45)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.LoginActionButtons(
+    onShowLanguageDialog: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        horizontalArrangement = Arrangement.End
+    ) {
+        Surface(
+            modifier = Modifier.clickable(onClick = onShowLanguageDialog),
+            shape = CircleShape,
+            color = Color.White.copy(alpha = 0.92f),
+            tonalElevation = 4.dp,
+            shadowElevation = 4.dp
+        ) {
+            Box(
+                modifier = Modifier.padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = i18nString("auth.language.switch", R.string.auth_language_switch),
+                    tint = Color(0xFF1F2433)
+                )
             }
         }
     }
@@ -163,7 +275,6 @@ fun AuthScreen(
 private fun LoginEntryCard(
     uiState: AuthUiState,
     imageLoader: ImageLoader,
-    onOpenServerSettings: () -> Unit,
     onOpenPasswordLogin: () -> Unit,
     onSelectThirdParty: (LoginMethod) -> Unit
 ) {
@@ -186,53 +297,60 @@ private fun LoginEntryCard(
             LogoHeader(
                 imageLoader = imageLoader,
                 systemName = uiState.systemName,
-                title = uiState.loginTitle.ifBlank { stringResource(R.string.auth_login_select_title) },
-                subtitle = uiState.loginSubtitle.ifBlank { stringResource(R.string.auth_login_select_subtitle) },
+                title = uiState.loginTitle.ifBlank {
+                    i18nString("auth.login.select.title", R.string.auth_login_select_title)
+                },
+                subtitle = "",
                 logoRaw = uiState.systemLogo,
                 serverOrigin = uiState.serverOrigin,
-                onOpenServerSettings = onOpenServerSettings
+                onOpenServerSettings = null
             )
 
             Spacer(modifier = Modifier.height(34.dp))
 
             LoginEntryButton(
                 icon = Icons.Outlined.Lock,
-                text = stringResource(R.string.auth_login_method_account),
+                text = i18nString("auth.login.method.account", R.string.auth_login_method_account),
                 primary = true,
                 onClick = onOpenPasswordLogin
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            LoginEntryButton(
-                icon = Icons.Outlined.Notifications,
-                text = stringResource(R.string.auth_login_method_dingtalk),
-                primary = false,
-                onClick = { onSelectThirdParty(LoginMethod.DING_TALK) }
-            )
+            if (uiState.showOAuthLogin) {
+                LoginEntryButton(
+                    icon = Icons.Outlined.Notifications,
+                    text = i18nString("auth.login.method.dingtalk", R.string.auth_login_method_dingtalk),
+                    primary = false,
+                    enabled = false,
+                    onClick = { onSelectThirdParty(LoginMethod.DING_TALK) }
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            LoginEntryButton(
-                icon = Icons.Outlined.Person,
-                text = stringResource(R.string.auth_login_method_wechat),
-                primary = false,
-                onClick = { onSelectThirdParty(LoginMethod.WECHAT) }
-            )
+                LoginEntryButton(
+                    icon = Icons.Outlined.Person,
+                    text = i18nString("auth.login.method.wechat", R.string.auth_login_method_wechat),
+                    primary = false,
+                    enabled = false,
+                    onClick = { onSelectThirdParty(LoginMethod.WECHAT) }
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            LoginEntryButton(
-                icon = Icons.Outlined.Person,
-                text = stringResource(R.string.auth_login_method_gitee),
-                primary = false,
-                onClick = { onSelectThirdParty(LoginMethod.GITEE) }
-            )
+                LoginEntryButton(
+                    icon = Icons.Outlined.Person,
+                    text = i18nString("auth.login.method.gitee", R.string.auth_login_method_gitee),
+                    primary = false,
+                    enabled = false,
+                    onClick = { onSelectThirdParty(LoginMethod.GITEE) }
+                )
+            }
 
             Spacer(modifier = Modifier.height(22.dp))
 
             Text(
-                text = stringResource(R.string.auth_server_current, uiState.serverOrigin),
+                text = i18nString("auth.server.current", R.string.auth_server_current, uiState.serverOrigin),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF7A7F91)
             )
@@ -254,10 +372,12 @@ private fun LoginEntryButton(
     icon: ImageVector,
     text: String,
     primary: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .height(54.dp),
@@ -271,7 +391,9 @@ private fun LoginEntryButton(
         } else {
             ButtonDefaults.buttonColors(
                 containerColor = Color.White,
-                contentColor = Color(0xFF1F2433)
+                contentColor = Color(0xFF1F2433),
+                disabledContainerColor = Color(0xFFF3F5FA),
+                disabledContentColor = Color(0xFF8A90A2)
             )
         }
     ) {
@@ -300,9 +422,12 @@ private fun LoginCard(
     onSliderProgressChange: (Float) -> Unit,
     onVerifySlider: () -> Unit,
     onRefreshCaptcha: () -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    onAccountScanConsumed: () -> Unit
 ) {
-    val title = uiState.loginTitle.ifBlank { stringResource(R.string.auth_login_method_account) }
+    val title = uiState.loginTitle.ifBlank {
+        i18nString("auth.login.method.account", R.string.auth_login_method_account)
+    }
     val errorText = uiState.errorMessage ?: resolveAppText(uiState.errorText)
 
     Card(
@@ -324,9 +449,9 @@ private fun LoginCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(onClick = onBackToEntry) {
-                    Icon(Icons.Outlined.ArrowBack, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
                     Spacer(modifier = Modifier.size(6.dp))
-                    Text(stringResource(R.string.auth_back_to_login_methods))
+                    Text(i18nString("auth.back.to.login.methods", R.string.auth_back_to_login_methods))
                 }
             }
 
@@ -341,26 +466,33 @@ private fun LoginCard(
             )
 
             Text(
-                text = stringResource(R.string.auth_server_current, uiState.serverOrigin),
+                text = i18nString("auth.server.current", R.string.auth_server_current, uiState.serverOrigin),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF506080),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
+            FxScanInputBox(
                 value = uiState.account,
                 onValueChange = onAccountChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.auth_account)) },
-                singleLine = true,
-                enabled = !uiState.isLoading
+                label = i18nString("auth.account", R.string.auth_account),
+                enabled = !uiState.isLoading,
+                latestScanResult = uiState.latestAccountScanResult,
+                onScanConsumed = onAccountScanConsumed
+            )
+
+            FxScanActionBar(
+                hint = i18nString("scan.hint.auth.account", R.string.scan_hint_auth_account),
+                enabled = !uiState.isLoading,
+                onActionClick = {}
             )
 
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = onPasswordChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.auth_password)) },
+                label = { Text(i18nString("auth.password", R.string.auth_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 enabled = !uiState.isLoading
@@ -394,7 +526,7 @@ private fun LoginCard(
 
                 CaptchaMode.NONE -> {
                     Text(
-                        text = stringResource(R.string.auth_captcha_not_required),
+                        text = i18nString("auth.captcha.not.required", R.string.auth_captcha_not_required),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF5B6478),
                         modifier = Modifier.fillMaxWidth()
@@ -404,9 +536,9 @@ private fun LoginCard(
 
             Text(
                 text = if (uiState.publicKeyLoaded) {
-                    stringResource(R.string.auth_public_key_ready)
+                    i18nString("auth.public.key.ready", R.string.auth_public_key_ready)
                 } else {
-                    stringResource(R.string.auth_public_key_missing)
+                    i18nString("auth.public.key.missing", R.string.auth_public_key_missing)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF5B6478),
@@ -427,7 +559,7 @@ private fun LoginCard(
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = stringResource(R.string.auth_login))
+                Text(text = i18nString("auth.login", R.string.auth_login))
             }
 
             if (uiState.showRegisterEntry) {
@@ -438,7 +570,7 @@ private fun LoginCard(
                     enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(R.string.auth_register))
+                    Text(i18nString("auth.register", R.string.auth_register))
                 }
             }
         }
@@ -453,7 +585,7 @@ private fun LogoHeader(
     subtitle: String,
     logoRaw: String,
     serverOrigin: String,
-    onOpenServerSettings: () -> Unit
+    onOpenServerSettings: (() -> Unit)?
 ) {
     val logoModel = remember(logoRaw, serverOrigin) {
         resolveImageModel(logoRaw, serverOrigin)
@@ -469,14 +601,26 @@ private fun LogoHeader(
                     .size(76.dp)
                     .clip(CircleShape)
                     .border(2.dp, Color(0xFF18B9D8), CircleShape)
-                    .clickable(onClick = onOpenServerSettings),
+                    .then(
+                        if (onOpenServerSettings != null) {
+                            Modifier.clickable(onClick = onOpenServerSettings)
+                        } else {
+                            Modifier
+                        }
+                    ),
                 contentScale = ContentScale.Crop
             )
         } else {
             Surface(
                 modifier = Modifier
                     .size(76.dp)
-                    .clickable(onClick = onOpenServerSettings),
+                    .then(
+                        if (onOpenServerSettings != null) {
+                            Modifier.clickable(onClick = onOpenServerSettings)
+                        } else {
+                            Modifier
+                        }
+                    ),
                 shape = CircleShape,
                 color = Color(0xFF0D6B89)
             ) {
@@ -506,12 +650,14 @@ private fun LogoHeader(
                 modifier = Modifier.padding(top = 2.dp)
             )
         }
-        Text(
-            text = stringResource(R.string.auth_click_logo_server),
-            style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF1486A2),
-            modifier = Modifier.padding(top = 4.dp)
-        )
+        if (onOpenServerSettings != null) {
+            Text(
+                text = i18nString("auth.click.logo.server", R.string.auth_click_logo_server),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF1486A2),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
     }
 }
 
@@ -529,7 +675,7 @@ private fun ImageCaptchaPanel(
         value = captcha,
         onValueChange = onCaptchaChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.auth_captcha)) },
+        label = { Text(i18nString("auth.captcha", R.string.auth_captcha)) },
         singleLine = true,
         enabled = !loading
     )
@@ -561,7 +707,7 @@ private fun ImageCaptchaPanel(
             } else {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = stringResource(R.string.auth_captcha_load_failed),
+                        text = i18nString("auth.captcha.load.failed", R.string.auth_captcha_load_failed),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF6B7280)
                     )
@@ -572,7 +718,7 @@ private fun ImageCaptchaPanel(
             onClick = onRefreshCaptcha,
             enabled = !loading
         ) {
-            Text(stringResource(R.string.auth_captcha_refresh))
+            Text(i18nString("auth.captcha.refresh", R.string.auth_captcha_refresh))
         }
     }
 }
@@ -595,11 +741,11 @@ private fun SliderCaptchaPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(R.string.auth_slider_loading),
+                text = i18nString("auth.slider.loading", R.string.auth_slider_loading),
                 color = Color(0xFF6B7280)
             )
             OutlinedButton(onClick = onRefreshCaptcha, enabled = !loading) {
-                Text(stringResource(R.string.common_retry))
+                Text(i18nString("common.retry", R.string.common_retry))
             }
         }
         return
@@ -679,21 +825,21 @@ private fun SliderCaptchaPanel(
             onClick = onVerifySlider,
             enabled = !loading
         ) {
-            Text(stringResource(R.string.auth_slider_verify))
+            Text(i18nString("auth.slider.verify", R.string.auth_slider_verify))
         }
         OutlinedButton(
             onClick = onRefreshCaptcha,
             enabled = !loading
         ) {
-            Text(stringResource(R.string.common_refresh))
+            Text(i18nString("common.refresh", R.string.common_refresh))
         }
     }
 
     Text(
         text = if (sliderToken.isNotBlank()) {
-            stringResource(R.string.auth_slider_verified)
+            i18nString("auth.slider.verified", R.string.auth_slider_verified)
         } else {
-            stringResource(R.string.auth_slider_hint)
+            i18nString("auth.slider.hint", R.string.auth_slider_hint)
         },
         style = MaterialTheme.typography.bodySmall,
         color = if (sliderToken.isNotBlank()) MaterialTheme.colorScheme.primary else Color(0xFF6B7280),
@@ -702,82 +848,179 @@ private fun SliderCaptchaPanel(
 }
 
 @Composable
-private fun TenantSelectionCard(
+private fun TenantSelectionScreen(
     uiState: AuthUiState,
+    imageLoader: ImageLoader,
     onSelectTenant: (String) -> Unit,
     onConfirm: () -> Unit,
-    onBack: () -> Unit
+    onTenantScanConsumed: () -> Unit
 ) {
     val errorText = uiState.errorMessage ?: resolveAppText(uiState.errorText)
 
-    Card(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .widthIn(max = 460.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xEAF8FAFF)
-        )
+            .widthIn(max = 460.dp)
+            .wrapContentHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        if (uiState.latestTenantScanResult != null) {
+            Text(
+                text = stringResource(R.string.scan_source_hint, uiState.latestTenantScanResult.source.displayNameText()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            LaunchedEffect(uiState.latestTenantScanResult?.timestamp) {
+                onTenantScanConsumed()
+            }
+        }
+
+        if (uiState.tenants.isEmpty()) {
+            Card(
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xEAF8FAFF))
+            ) {
+                Text(
+                    text = i18nString("auth.tenant.empty", R.string.auth_tenant_empty),
+                    color = Color(0xFF6B7280),
+                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp)
+                )
+            }
+        } else {
+            uiState.tenants.forEach { tenant ->
+                TenantLogoCard(
+                    tenantName = tenant.name,
+                    tenantLogo = tenant.logo.orEmpty(),
+                    serverOrigin = uiState.serverOrigin,
+                    imageLoader = imageLoader,
+                    selected = uiState.selectedTenantId == tenant.id,
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onSelectTenant(tenant.id)
+                        onConfirm()
+                    }
+                )
+            }
+        }
+
+        if (!errorText.isNullOrBlank()) {
+            Text(
+                text = errorText,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TenantLogoCard(
+    tenantName: String,
+    tenantLogo: String,
+    serverOrigin: String,
+    imageLoader: ImageLoader,
+    selected: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val logoModel = remember(tenantLogo, serverOrigin) {
+        resolveImageModel(tenantLogo, serverOrigin)
+    }
+    Surface(
+        modifier = modifier
+            .height(118.dp)
+            .alpha(if (enabled) 1f else 0.6f)
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(26.dp),
+        color = if (selected) Color(0xFFEAF1FF) else Color(0xF8FFFFFF),
+        tonalElevation = if (selected) 6.dp else 2.dp,
+        shadowElevation = if (selected) 10.dp else 5.dp
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = stringResource(R.string.auth_tenant_select),
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF1E2A45)
-            )
-
-            if (uiState.tenants.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.auth_tenant_empty),
-                    color = Color(0xFF6B7280)
+            if (logoModel != null) {
+                AsyncImage(
+                    model = logoModel,
+                    imageLoader = imageLoader,
+                    contentDescription = tenantName,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(18.dp)),
+                    contentScale = ContentScale.Crop
                 )
             } else {
-                uiState.tenants.forEach { tenant ->
-                    OutlinedButton(
-                        onClick = { onSelectTenant(tenant.id) },
-                        enabled = !uiState.isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (uiState.selectedTenantId == tenant.id) {
-                                Color(0xFFE8EEFF)
-                            } else {
-                                Color.White
-                            }
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    color = Color(0xFF0D6B89)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = tenantName.trim().take(1).ifBlank { "T" },
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
                         )
-                    ) {
-                        Text(tenant.name)
                     }
                 }
             }
-
-            if (!errorText.isNullOrBlank()) {
-                Text(
-                    text = errorText,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            Button(
-                onClick = onConfirm,
-                enabled = !uiState.isLoading && !uiState.selectedTenantId.isNullOrBlank(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.auth_tenant_enter))
-            }
-
-            OutlinedButton(
-                onClick = onBack,
-                enabled = !uiState.isLoading,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.auth_back_login))
-            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = tenantName,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF1E2A45),
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
+}
+
+@Composable
+private fun LanguageDialog(
+    state: AuthLanguageUiState,
+    onDismiss: () -> Unit,
+    onFollowDefault: () -> Unit,
+    onSelectLanguage: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(i18nString("profile.language.title", R.string.profile_language_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onFollowDefault, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = i18nString("auth.language.default.option", R.string.auth_language_default_option),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                state.languages.forEach { language ->
+                    TextButton(
+                        onClick = { onSelectLanguage(language.langCode) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = language.langName.ifBlank { language.langNameEn.ifBlank { language.langCode } },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(i18nString("common.cancel", R.string.common_cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -865,4 +1108,39 @@ private fun resolveRegisterUrl(raw: String, serverOrigin: String): String {
 private fun isLikelyBase64(raw: String): Boolean {
     if (raw.length < 40) return false
     return raw.matches(Regex("^[A-Za-z0-9+/=,:;._-]+$"))
+}
+
+private fun resolveEventMessage(
+    context: android.content.Context,
+    event: AuthEvent.ShowMessage
+): String? {
+    return when (val appText = event.appText) {
+        null -> null
+        is com.forgex.mobile.core.common.i18n.AppText.Raw -> appText.value
+        is com.forgex.mobile.core.common.i18n.AppText.Resource -> {
+            runCatching {
+                context.getString(appText.resId, *appText.args.toTypedArray())
+            }.getOrNull()
+        }
+        is com.forgex.mobile.core.common.i18n.AppText.Dynamic -> appText.fallbackRaw
+    }
+}
+
+/**
+ * 扫描总线桥接 ViewModel，向登录页面暴露全局扫描管理器。
+ */
+@dagger.hilt.android.lifecycle.HiltViewModel
+class AuthScanBridgeViewModel @javax.inject.Inject constructor(
+    val scannerManager: FxScannerManager
+) : androidx.lifecycle.ViewModel()
+
+@Composable
+private fun com.forgex.mobile.core.model.FxScanSource.displayNameText(): String {
+    return when (this) {
+        com.forgex.mobile.core.model.FxScanSource.PDA_BROADCAST -> stringResource(R.string.scan_source_pda)
+        com.forgex.mobile.core.model.FxScanSource.HARDWARE_KEYBOARD -> stringResource(R.string.scan_source_keyboard)
+        com.forgex.mobile.core.model.FxScanSource.NFC -> stringResource(R.string.scan_source_nfc)
+        com.forgex.mobile.core.model.FxScanSource.CAMERA -> stringResource(R.string.scan_source_camera)
+        com.forgex.mobile.core.model.FxScanSource.MANUAL_INPUT -> stringResource(R.string.scan_source_manual)
+    }
 }

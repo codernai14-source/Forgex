@@ -70,7 +70,7 @@ public class TenantIgnoreController {
      * </ol>
      * 
      * @return 包含操作结果的统一返回结构，true 表示成功，false 表示失败
-     * @throws com.forgex.common.exception.BusinessException 重新加载配置失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 重新加载配置失败时抛出
      * @see TenantIgnoreService#reload()
      */
     @PostMapping("/reload")

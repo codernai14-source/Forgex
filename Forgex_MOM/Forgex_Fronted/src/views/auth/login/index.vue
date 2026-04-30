@@ -1389,3 +1389,44 @@ onMounted(async () => {
   }
 }
 </style>
+
+<style lang="less">
+.login-lang-dropdown {
+  .ant-dropdown-menu {
+    padding: 6px;
+    background: rgba(15, 23, 42, 0.96) !important;
+    border: 1px solid rgba(5, 217, 232, 0.28) !important;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(2, 6, 23, 0.45) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  .ant-dropdown-menu-item {
+    margin: 0;
+    border-radius: 8px;
+    color: #e5f7ff !important;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .ant-dropdown-menu-item:hover,
+  .ant-dropdown-menu-item-active {
+    background: rgba(5, 217, 232, 0.14) !important;
+  }
+
+  .ant-dropdown-menu-item-selected {
+    background: linear-gradient(90deg, rgba(5, 217, 232, 0.16), rgba(255, 42, 109, 0.16)) !important;
+  }
+
+  .ant-dropdown-menu-title-content,
+  .lang-menu-item {
+    color: #e5f7ff !important;
+  }
+
+  .lang-menu-item.active,
+  .ant-dropdown-menu-item-selected .lang-menu-item {
+    color: #22d3ee !important;
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.18);
+  }
+}
+</style>

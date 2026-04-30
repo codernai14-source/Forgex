@@ -53,7 +53,7 @@ public interface IReportCategoryService extends IService<ReportCategory> {
      *
      * @param id 分类 ID
      * @return 分类 DTO
-     * @throws com.forgex.common.exception.BusinessException 当分类不存在时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当分类不存在时抛出
      * @see ReportCategoryDTO
      */
     ReportCategoryDTO getById(Long id);

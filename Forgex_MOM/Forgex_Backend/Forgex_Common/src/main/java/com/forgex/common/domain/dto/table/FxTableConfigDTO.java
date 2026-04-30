@@ -33,6 +33,7 @@ import java.util.List;
  */
 @Data
 public class FxTableConfigDTO {
+    private Long id;
     /**
      * 表编码
      * <p>唯一标识一个表格，用于查询和配置管理。</p>

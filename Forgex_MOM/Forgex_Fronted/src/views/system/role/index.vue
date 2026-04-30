@@ -7,7 +7,7 @@
         :table-code="'RoleTable'"
         :show-query-form="true"
         :request="handleRequest"
-        :降级方案-config="降级方案Config"
+        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
         :row-selection="{
           selectedRowKeys,
@@ -17,11 +17,12 @@
       >
         <template #toolbar>
           <a-space>
-            <a-button type="primary" @click="openAdd" v-permission="'sys:role:add'">
+            <a-button data-guide-id="sys-role-add" type="primary" @click="openAdd" v-permission="'sys:role:add'">
               <template #icon><PlusOutlined /></template>
               {{ $t('common.add') }}{{ $t('system.role.roleName') }}
             </a-button>
             <a-button
+              data-guide-id="sys-role-batch-delete"
               danger
               :disabled="selectedRowKeys.length === 0"
               @click="handleBatchDelete"
@@ -36,6 +37,7 @@
         <template #action="{ record }">
           <a-space>
             <a-button
+              data-guide-id="sys-role-row-edit"
               type="link"
               size="small"
               @click="openEdit(record)"
@@ -44,6 +46,7 @@
               {{ $t('common.edit') }}
             </a-button>
             <a-button
+              data-guide-id="sys-role-row-menu-grant"
               type="link"
               size="small"
               @click="navigateToMenuGrant(record)"
@@ -52,6 +55,7 @@
               {{ $t('system.role.menuAuth') }}
             </a-button>
             <a-button
+              data-guide-id="sys-role-row-user-grant"
               type="link"
               size="small"
               @click="navigateToUserGrant(record)"
@@ -66,6 +70,7 @@
               @confirm="handleDelete(record.id)"
             >
               <a-button
+                data-guide-id="sys-role-row-delete"
                 type="link"
                 size="small"
                 danger
@@ -141,7 +146,7 @@
             {{ $t('common.back') }}
           </a-button>
           <span class="grant-header__title">
-            {{ grantViewTitle }} 路 {{ currentRoleName || '-' }}
+            {{ grantViewTitle }} - {{ currentRoleName || '-' }}
           </span>
         </a-space>
       </div>
@@ -167,15 +172,29 @@
           @back="returnToRoleList"
         />
       </div>
+
+      <FxGuideTour
+        v-if="embeddedGrantGuideCode"
+        :guide-code="embeddedGrantGuideCode"
+        :version="embeddedGrantGuideVersion"
+        :steps="embeddedGrantGuideSteps"
+        :auto-start="embeddedGrantGuideAutoStart"
+        skip-text="跳过引导"
+        @open="handleEmbeddedGrantGuideOpen"
+        @close="handleEmbeddedGrantGuideClose"
+        @finish="handleEmbeddedGrantGuideFinish"
+        @skip="handleEmbeddedGrantGuideSkip"
+      />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import FxGuideTour from '@/components/common/FxGuideTour.vue'
 import MenuGrant from './MenuGrant.vue'
 import UserGrant from './UserGrant.vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
@@ -184,15 +203,19 @@ import {
   ArrowLeftOutlined,
 } from '@ant-design/icons-vue'
 import { getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
+import { resolveSystemPageGuide } from '@/guide/systemPageGuides'
 import { useDict } from '@/hooks/useDict'
+import { useGuideStore } from '@/stores/guide'
 import type { FxTableConfig } from '@/api/system/tableConfig'
+import type { FxGuideStep } from '@/types/guide'
 import type { Role } from './types'
 
 const { t } = useI18n()
 const { dictItems: statusOptions } = useDict('status')
 const dictOptions = computed(() => ({ status: statusOptions.value }))
+const guideStore = useGuideStore()
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'RoleTable',
   tableName: '角色管理',
   tableType: 'NORMAL',
@@ -223,6 +246,10 @@ const currentTenantId = ref<string>('')
 const activeView = ref<'list' | 'menuGrant' | 'userGrant'>('list')
 const currentRoleId = ref<string>('')
 const currentRoleName = ref<string>('')
+const embeddedGrantGuideCode = ref('')
+const embeddedGrantGuideVersion = ref('v2')
+const embeddedGrantGuideSteps = ref<FxGuideStep[]>([])
+const embeddedGrantGuideAutoStart = ref(false)
 
 function resolveTenantId(): string {
   return currentTenantId.value || sessionStorage.getItem('tenantId') || ''
@@ -396,6 +423,55 @@ function openGrantView(view: 'menuGrant' | 'userGrant', role: Role) {
   activeView.value = view
 }
 
+async function syncEmbeddedGrantGuide(view: 'list' | 'menuGrant' | 'userGrant') {
+  embeddedGrantGuideAutoStart.value = false
+  if (view === 'list') {
+    embeddedGrantGuideCode.value = ''
+    embeddedGrantGuideVersion.value = 'v2'
+    embeddedGrantGuideSteps.value = []
+    return
+  }
+
+  const guideConfig = resolveSystemPageGuide(
+    view === 'menuGrant' ? '/workspace/sys/role/MenuGrant' : '/workspace/sys/role/UserGrant',
+  )
+  embeddedGrantGuideCode.value = guideConfig.guideCode
+  embeddedGrantGuideVersion.value = guideConfig.version
+  embeddedGrantGuideSteps.value = guideConfig.steps
+  await guideStore.loadPreference()
+  await nextTick()
+  embeddedGrantGuideAutoStart.value = guideStore.shouldAutoStartGuide(
+    guideConfig.guideCode,
+    guideConfig.version,
+  )
+}
+
+function handleEmbeddedGrantGuideOpen() {
+  guideStore.startGuide(embeddedGrantGuideCode.value)
+}
+
+function handleEmbeddedGrantGuideClose() {
+  embeddedGrantGuideAutoStart.value = false
+}
+
+async function handleEmbeddedGrantGuideFinish(
+  guideCode = embeddedGrantGuideCode.value,
+  version = embeddedGrantGuideVersion.value,
+) {
+  await guideStore.markGuideCompleted(guideCode, version)
+  embeddedGrantGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function handleEmbeddedGrantGuideSkip(
+  guideCode = embeddedGrantGuideCode.value,
+  version = embeddedGrantGuideVersion.value,
+) {
+  await guideStore.markGuideSkipped(guideCode, version)
+  embeddedGrantGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
 function navigateToMenuGrant(role: Role) {
   openGrantView('menuGrant', role)
 }
@@ -414,6 +490,14 @@ onMounted(async () => {
     currentTenantId.value = tid
   }
 })
+
+watch(
+  activeView,
+  view => {
+    syncEmbeddedGrantGuide(view)
+  },
+  { flush: 'post' },
+)
 </script>
 
 <style scoped>

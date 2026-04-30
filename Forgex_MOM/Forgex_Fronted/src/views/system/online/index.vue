@@ -10,7 +10,7 @@
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :降级方案-config="降级方案Config"
+      :dynamic-table-config="dynamicTableConfig"
       :row-selection="{
         selectedRowKeys,
         onChange: handleSelectionChange
@@ -19,8 +19,9 @@
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button
-            v-permission="'sys:online:kickout'"
+        <a-button
+          data-guide-id="sys-online-kickout"
+          v-permission="'sys:online:kickout'"
             danger
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchKickout"
@@ -93,7 +94,7 @@ const terminalTabs = computed(() => [
   { key: 'THIRD_PARTY', label: `第三方 (${tabCounts.value.THIRD_PARTY || 0})` },
 ])
 
-const 降级方案Config = computed<Partial<FxTableConfig>>(() => ({
+const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   tableCode: 'OnlineUserTable',
   tableName: '在线用户',
   tableType: 'NORMAL',

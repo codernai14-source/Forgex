@@ -117,7 +117,7 @@ export default {
   storageOss: 'OSS',
   storageMinio: 'MinIO',
   localUploadPath: 'Local Upload Path',
-  localUploadPathPlaceholder: 'e.g. ./uploads',
+  localUploadPathPlaceholder: 'e.g. C:/forgex/data/uploads',
   publicBaseUrl: 'Public Base URL',
   publicBaseUrlPlaceholder: 'e.g. http://192.168.1.10:8082',
   publicBaseUrlHint: 'For LOCAL storage, fill in an externally accessible IP or domain so other devices can access uploaded files.',

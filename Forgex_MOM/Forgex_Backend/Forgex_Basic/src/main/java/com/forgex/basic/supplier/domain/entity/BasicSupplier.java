@@ -1,72 +1,113 @@
 package com.forgex.basic.supplier.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * 供应商主数据主表实体。
+ * <p>
+ * 对应表 {@code basic_supplier}，保存平台共享供应商主数据的核心识别与状态字段。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-04-26
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("basic_supplier")
 public class BasicSupplier extends BaseEntity {
 
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
-
+    /**
+     * 供应商编码，全局唯一。
+     */
     @TableField("supplier_code")
     private String supplierCode;
 
-    @TableField("supplier_name")
-    private String supplierName;
+    /**
+     * 供应商全称。
+     */
+    @TableField("supplier_full_name")
+    private String supplierFullName;
 
+    /**
+     * 供应商简称。
+     */
     @TableField("supplier_short_name")
     private String supplierShortName;
 
-    @TableField("supplier_type")
-    private String supplierType;
+    /**
+     * 供应商 Logo 图片访问地址。
+     */
+    @TableField("logo_url")
+    private String logoUrl;
 
-    @TableField("country")
-    private String country;
+    /**
+     * 英文名。
+     */
+    @TableField("english_name")
+    private String englishName;
 
-    @TableField("province")
-    private String province;
+    /**
+     * 现地址。
+     */
+    @TableField("current_address")
+    private String currentAddress;
 
-    @TableField("city")
-    private String city;
+    /**
+     * 主联系人。
+     */
+    @TableField("primary_contact")
+    private String primaryContact;
 
-    @TableField("address")
-    private String address;
-
-    @TableField("contact_person")
-    private String contactPerson;
-
+    /**
+     * 联系电话。
+     */
     @TableField("contact_phone")
     private String contactPhone;
 
-    @TableField("contact_email")
-    private String contactEmail;
+    /**
+     * 合作状态：1-潜在 2-正式 3-暂停 4-淘汰。
+     */
+    @TableField("cooperation_status")
+    private String cooperationStatus;
 
-    @TableField("tax_number")
-    private String taxNumber;
+    /**
+     * 信用等级：A/B/C/D。
+     */
+    @TableField("credit_level")
+    private String creditLevel;
 
-    @TableField("bank_account")
-    private String bankAccount;
+    /**
+     * 风险等级。
+     */
+    @TableField("risk_level")
+    private String riskLevel;
 
-    @TableField("payment_terms")
-    private String paymentTerms;
+    /**
+     * 供应商分级：1-战略 2-核心 3-一般。
+     */
+    @TableField("supplier_level")
+    private String supplierLevel;
 
-    @TableField("quality_level")
-    private String qualityLevel;
+    /**
+     * 关联供应商租户编码。
+     */
+    @TableField("related_tenant_code")
+    private String relatedTenantCode;
 
-    @TableField("certification")
-    private String certification;
+    /**
+     * 审查状态：0-无需审查 1-未审查 2-审查中 3-已审查。
+     */
+    @TableField("review_status")
+    private Integer reviewStatus;
 
-    @TableField("status")
-    private Integer status;
-
+    /**
+     * 备注。
+     */
     @TableField("remark")
     private String remark;
 }

@@ -151,6 +151,14 @@ public class CommonTableController {
                     .eq(FxTableColumnConfig::getDeleted, false)
                     .orderByAsc(FxTableColumnConfig::getOrderNum);
         List<FxTableColumnConfig> columns = tableColumnConfigMapper.selectList(columnWrapper);
+        if (!isPublicTenant(tenantId) && (columns == null || columns.isEmpty())) {
+            LambdaQueryWrapper<FxTableColumnConfig> fallbackWrapper = new LambdaQueryWrapper<>();
+            fallbackWrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode())
+                    .eq(FxTableColumnConfig::getTenantId, 0L)
+                    .eq(FxTableColumnConfig::getDeleted, false)
+                    .orderByAsc(FxTableColumnConfig::getOrderNum);
+            columns = tableColumnConfigMapper.selectList(fallbackWrapper);
+        }
         
         // 构建返回对象
         TableConfigDetailVO vo = new TableConfigDetailVO();

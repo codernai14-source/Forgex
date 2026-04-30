@@ -3,10 +3,12 @@ package com.forgex.mobile.feature.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forgex.mobile.core.common.i18n.AppText
+import com.forgex.mobile.core.model.FxScanResult
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.core.datastore.ServerEndpointConfig
 import com.forgex.mobile.core.datastore.SessionStore
 import com.forgex.mobile.core.network.di.BaseUrl
+import com.forgex.mobile.core.network.i18n.AppLanguageManager
 import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
 import com.forgex.mobile.core.ui.R
 import com.forgex.mobile.feature.auth.data.AuthRepository
@@ -28,6 +30,7 @@ import kotlinx.coroutines.launch
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionStore: SessionStore,
+    private val appLanguageManager: AppLanguageManager,
     @BaseUrl private val baseUrl: String
 ) : ViewModel() {
 
@@ -41,13 +44,19 @@ class AuthViewModel @Inject constructor(
 
     init {
         observeServerEndpoint()
+        observeLanguageState()
         preloadSystemBasicConfig()
         refreshCaptchaModeAndData(silent = true)
         preloadPublicKey()
     }
 
     fun updateAccount(value: String) {
-        _uiState.update { it.clearError().copy(account = value.trim()) }
+        _uiState.update {
+            it.clearError().copy(
+                account = value.trim(),
+                latestAccountScanResult = null
+            )
+        }
     }
 
     fun updatePassword(value: String) {
@@ -88,6 +97,7 @@ class AuthViewModel @Inject constructor(
                 errorText = AppText.Resource(R.string.auth_third_party_pending)
             )
         }
+        emitErrorMessage(AppText.Resource(R.string.auth_third_party_pending), null)
     }
 
     fun openPasswordLogin() {
@@ -124,6 +134,23 @@ class AuthViewModel @Inject constructor(
             sessionStore.serverEndpoint.collectLatest { endpoint ->
                 _uiState.update {
                     it.copy(serverOrigin = resolveServerOrigin(endpoint))
+                }
+            }
+        }
+    }
+
+    private fun observeLanguageState() {
+        viewModelScope.launch {
+            appLanguageManager.observeUiState().collectLatest { state ->
+                _uiState.update {
+                    it.copy(
+                        languageState = it.languageState.copy(
+                            mode = state.mode,
+                            currentLanguageTag = state.currentLanguageTag,
+                            defaultLanguageTag = state.defaultLanguageTag,
+                            languages = state.availableLanguages
+                        )
+                    )
                 }
             }
         }
@@ -433,9 +460,93 @@ class AuthViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 selectedTenantId = tenantId,
+                latestTenantScanResult = null,
                 errorMessage = null,
                 errorText = null
             )
+        }
+    }
+
+    /**
+     * 应用账号扫描结果到登录表单。
+     */
+    fun applyAccountScan(result: FxScanResult) {
+        val account = result.rawValue.trim()
+        if (account.isBlank()) {
+            return
+        }
+        _uiState.update {
+            it.clearError().copy(
+                account = account,
+                latestAccountScanResult = result
+            )
+        }
+    }
+
+    /**
+     * 按扫描结果匹配租户并直接选中。
+     */
+    fun applyTenantScan(result: FxScanResult) {
+        val keyword = result.rawValue.trim()
+        if (keyword.isBlank()) {
+            return
+        }
+        val matchedTenant = _uiState.value.tenants.firstOrNull { tenant ->
+            tenant.id.equals(keyword, ignoreCase = true) ||
+                tenant.name.equals(keyword, ignoreCase = true) ||
+                tenant.name.contains(keyword, ignoreCase = true)
+        } ?: return
+        _uiState.update {
+            it.copy(
+                selectedTenantId = matchedTenant.id,
+                latestTenantScanResult = result,
+                errorMessage = null,
+                errorText = null
+            )
+        }
+    }
+
+    /**
+     * 标记账号扫描结果已被页面消费。
+     */
+    fun consumeAccountScanResult() {
+        _uiState.update { it.copy(latestAccountScanResult = null) }
+    }
+
+    /**
+     * 标记租户扫描结果已被页面消费。
+     */
+    fun consumeTenantScanResult() {
+        _uiState.update { it.copy(latestTenantScanResult = null) }
+    }
+
+    fun showLanguageDialog() {
+        _uiState.update {
+            it.copy(
+                languageState = it.languageState.copy(languageDialogVisible = true)
+            )
+        }
+    }
+
+    fun dismissLanguageDialog() {
+        _uiState.update {
+            it.copy(
+                languageState = it.languageState.copy(languageDialogVisible = false)
+            )
+        }
+    }
+
+    fun followDefaultLanguage() {
+        viewModelScope.launch {
+            appLanguageManager.followSystem()
+            dismissLanguageDialog()
+        }
+    }
+
+    fun selectLanguage(languageTag: String) {
+        viewModelScope.launch {
+            appLanguageManager.selectLanguage(languageTag)
+            dismissLanguageDialog()
         }
     }
 
@@ -460,6 +571,7 @@ class AuthViewModel @Inject constructor(
                     errorText = AppText.Resource(R.string.auth_third_party_pending)
                 )
             }
+            emitErrorMessage(AppText.Resource(R.string.auth_third_party_pending), null)
             return
         }
         if (snapshot.account.isBlank() || snapshot.password.isBlank()) {
@@ -469,6 +581,7 @@ class AuthViewModel @Inject constructor(
                     errorText = AppText.Resource(R.string.auth_required_account_password)
                 )
             }
+            emitErrorMessage(AppText.Resource(R.string.auth_required_account_password), null)
             return
         }
 
@@ -481,6 +594,7 @@ class AuthViewModel @Inject constructor(
                             errorText = AppText.Resource(R.string.auth_required_captcha)
                         )
                     }
+                    emitErrorMessage(AppText.Resource(R.string.auth_required_captcha), null)
                     return
                 }
             }
@@ -493,6 +607,7 @@ class AuthViewModel @Inject constructor(
                             errorText = AppText.Resource(R.string.auth_required_slider)
                         )
                     }
+                    emitErrorMessage(AppText.Resource(R.string.auth_required_slider), null)
                     return
                 }
             }
@@ -556,6 +671,7 @@ class AuthViewModel @Inject constructor(
                             errorText = result.appText
                         )
                     }
+                    emitErrorMessage(result.appText, result.message)
                     refreshCaptcha(silent = true)
                 }
 
@@ -575,6 +691,7 @@ class AuthViewModel @Inject constructor(
                     errorText = AppText.Resource(R.string.auth_account_empty)
                 )
             }
+            emitErrorMessage(AppText.Resource(R.string.auth_account_empty), null)
             return
         }
         if (tenantId.isNullOrBlank()) {
@@ -584,6 +701,7 @@ class AuthViewModel @Inject constructor(
                     errorText = AppText.Resource(R.string.auth_tenant_required)
                 )
             }
+            emitErrorMessage(AppText.Resource(R.string.auth_tenant_required), null)
             return
         }
 
@@ -605,6 +723,7 @@ class AuthViewModel @Inject constructor(
                             errorText = chooseResult.appText
                         )
                     }
+                    emitErrorMessage(chooseResult.appText, chooseResult.message)
                 }
 
                 AppResult.Loading -> _uiState.update { it.copy(isLoading = true) }
@@ -642,5 +761,14 @@ class AuthViewModel @Inject constructor(
 
     private fun AuthUiState.clearError(): AuthUiState {
         return copy(errorMessage = null, errorText = null)
+    }
+
+    private fun emitErrorMessage(appText: AppText?, fallbackMessage: String?) {
+        viewModelScope.launch {
+            val normalizedFallback = fallbackMessage?.takeIf { it.isNotBlank() }
+            if (appText != null || normalizedFallback != null) {
+                _events.emit(AuthEvent.ShowMessage(appText, normalizedFallback))
+            }
+        }
     }
 }

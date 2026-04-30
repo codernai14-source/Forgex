@@ -29,7 +29,7 @@ public class ${ctx.subEntityName}ServiceImpl implements ${ctx.subEntityName}Serv
     }
 
     @Override
-    public ${ctx.subEntityName} detail(Long id) {
+    public ${ctx.subEntityName} detail(${ctx.subPkJavaType!"Long"} id) {
         return ${ctx.subEntityNameLower}Mapper.selectById(id);
     }
 
@@ -51,7 +51,7 @@ public class ${ctx.subEntityName}ServiceImpl implements ${ctx.subEntityName}Serv
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Long id) {
+    public void delete(${ctx.subPkJavaType!"Long"} id) {
         ${ctx.subEntityNameLower}Mapper.deleteById(id);
     }
 }

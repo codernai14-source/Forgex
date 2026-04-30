@@ -1,10 +1,26 @@
 <service>
-  <id>__SERVICE_NAME__</id>
+  <id>__SERVICE_ID__</id>
   <name>__SERVICE_NAME__</name>
   <description>Forgex service __SERVICE_NAME__</description>
-  <executable>__FORGEX_HOME__\app\jre\bin\java.exe</executable>
-  <arguments>-jar "__JAR_PATH__" --spring.profiles.active=__DEPLOY_PROFILE__</arguments>
+  <executable>__JAVA_EXE__</executable>
+  <arguments>-Dfile.encoding=UTF-8 -jar "__JAR_PATH__" --spring.profiles.active=__DEPLOY_PROFILE__ --server.port=__SERVICE_PORT__</arguments>
+  <workingdirectory>__FORGEX_HOME__</workingdirectory>
   <logpath>__FORGEX_HOME__\logs\__SERVICE_ID__</logpath>
   <log mode="roll" />
+  <startmode>Automatic</startmode>
+  <env name="FORGEX_HOME" value="__FORGEX_HOME__" />
+  <env name="FORGEX_INSTANCE_CODE" value="__INSTANCE_CODE__" />
+  <env name="FORGEX_PROFILE" value="__DEPLOY_PROFILE__" />
+  <env name="FORGEX_DEPLOYMENT_PROFILE" value="__DEPLOY_PROFILE__" />
+  <env name="FORGEX_LICENSE_DIR" value="__LICENSE_DIR__" />
+  <env name="FORGEX_UPLOAD_DIR" value="__UPLOAD_DIR__" />
+  <env name="FORGEX_LOG_DIR" value="__LOG_DIR__" />
+  <env name="FORGEX_BACKUP_DIR" value="__BACKUP_DIR__" />
+  <env name="FORGEX_NACOS_ADDR" value="__NACOS_ADDR__" />
+  <env name="FORGEX_NACOS_NAMESPACE" value="__NACOS_NAMESPACE__" />
+  <env name="FORGEX_NACOS_GROUP" value="__NACOS_GROUP__" />
+  <env name="FORGEX_REDIS_ADDR" value="__REDIS_ADDR__" />
+  <env name="FORGEX_ROCKETMQ_NAME_SERVER" value="__ROCKETMQ_ADDR__" />
+  <env name="FORGEX_MYSQL_URL" value="__MYSQL_URL__" />
   <onfailure action="restart" delay="10 sec" />
 </service>

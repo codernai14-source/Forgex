@@ -13,99 +13,43 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
-import com.forgex.sys.domain.entity.LoginLog;
-import com.forgex.sys.mapper.LoginLogMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.time.LocalDateTime;
 
 /**
- * 登出审计服务实现。
+ * 登录日志已收缩为“仅登录日志”，登出事件不再回写到登录日志。
  * <p>
- * 用于记录用户登出信息，包括登出时间和登出原因。
- * 通过 tokenValue 定位到对应的登录日志记录并更新。
+ * Sys 模块保留该实现用于兼容公共登出审计接口，避免登出流程因为缺少实现而失败。
+ * 当前业务约定是登录日志只记录登录事件，登出事件仅输出调试日志。
  * </p>
  *
  * @author coder_nai@163.com
  * @version 1.0.0
  * @date 2026-01-27
+ * @see LogoutAuditService
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class LogoutAuditServiceImpl implements LogoutAuditService {
 
-    private final LoginLogMapper loginLogMapper;
-
     /**
-     * 按 token 回写登出信息（异步执行）。
+     * 按 token 记录登出审计。
      * <p>
-     * 根据 tokenValue 查找对应的登录日志记录，更新登出时间和登出原因。
-     * 如果找不到对应的记录，则记录警告日志。
+     * 当前实现不再回写登录日志，仅保持接口幂等返回，避免影响登出主流程。
      * </p>
      *
-     * @param tokenValue   tokenValue
+     * @param tokenValue   Token 值
      * @param logoutReason 登出原因
-     * @return 是否更新成功
+     * @return 固定返回 true，表示登出流程可继续
      */
     @Async
     @Override
     public boolean recordLogoutByToken(String tokenValue, LogoutReason logoutReason) {
-        if (!StringUtils.hasText(tokenValue)) {
-            log.warn("记录登出日志失败：tokenValue 为空");
-            return false;
-        }
-
-        if (logoutReason == null) {
-            logoutReason = LogoutReason.UNKNOWN;
-        }
-
-        try {
-            // 构建更新条件：根据 tokenValue 查找登录日志
-            LambdaUpdateWrapper<LoginLog> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(LoginLog::getTokenValue, tokenValue)
-                    .isNull(LoginLog::getLogoutTime); // 只更新还未记录登出时间的记录
-
-            // 设置更新字段
-            updateWrapper.set(LoginLog::getLogoutTime, LocalDateTime.now())
-                    .set(LoginLog::getLogoutReason, logoutReason.name());
-
-            // 执行更新
-            int updateCount = loginLogMapper.update(null, updateWrapper);
-
-            if (updateCount > 0) {
-                log.info("记录登出日志成功：tokenValue={}, 登出原因={}, 更新记录数={}", 
-                        maskToken(tokenValue), logoutReason.name(), updateCount);
-                return true;
-            } else {
-                log.warn("记录登出日志失败：未找到对应的登录记录，tokenValue={}", maskToken(tokenValue));
-                return false;
-            }
-        } catch (Exception e) {
-            log.error("记录登出日志异常：tokenValue={}, 登出原因={}", 
-                    maskToken(tokenValue), logoutReason.name(), e);
-            return false;
-        }
-    }
-
-    /**
-     * 脱敏 token（只显示前后各4位）。
-     *
-     * @param token token
-     * @return 脱敏后的 token
-     */
-    private String maskToken(String token) {
-        if (token == null || token.length() <= 8) {
-            return "****";
-        }
-        return token.substring(0, 4) + "****" + token.substring(token.length() - 4);
+        // 登录日志表只保留登录事件，登出信息不再写入该表。
+        log.debug("skip logout audit for login log, tokenValue={}, reason={}", tokenValue, logoutReason);
+        return true;
     }
 }
-

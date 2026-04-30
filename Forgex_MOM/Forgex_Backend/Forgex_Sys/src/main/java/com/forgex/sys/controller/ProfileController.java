@@ -101,7 +101,7 @@ public class ProfileController {
      * @return {@link R} 操作结果
      *         - code: 状态码（200=成功）
      *         - message: 提示信息（更新成功）
-     * @throws BusinessException 用户不存在时抛出
+     * @throws I18nBusinessException 用户不存在时抛出
      * @see SysUserDTO
      */
     @PostMapping("/updateBasic")
@@ -143,7 +143,7 @@ public class ProfileController {
      * @return {@link R} 操作结果
      *         - code: 状态码（200=成功）
      *         - message: 提示信息（更新成功或错误信息）
-     * @throws BusinessException 密码校验失败或旧密码不正确时抛出
+     * @throws I18nBusinessException 密码校验失败或旧密码不正确时抛出
      * @see CommonPrompt#OLD_PASSWORD_CANNOT_BE_EMPTY
      * @see CommonPrompt#NEW_PASSWORD_CANNOT_BE_EMPTY
      * @see CommonPrompt#PASSWORD_TOO_SHORT

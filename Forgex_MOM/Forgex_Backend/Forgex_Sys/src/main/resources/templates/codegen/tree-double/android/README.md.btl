@@ -1,0 +1,6 @@
+# ${ctx.menuName} Android 接入说明
+
+- 输出目录：`android/${ctx.androidFeatureKey}/`
+- 树侧仅用于筛选，不生成树维护页面
+- 列表页未选树节点时返回空，并提示先选择左侧节点
+- 新增时默认回填 `${ctx.treeFilterColumn}` 到当前选中节点

@@ -4,14 +4,24 @@ import com.forgex.common.domain.config.PersonalHomepageConfig;
 import lombok.Data;
 
 /**
- * 个人首页管理参数。
+ * 首页配置管理参数。
  */
 @Data
 public class PersonalHomepageManageParam {
 
-    /** 配置层级：PUBLIC / TENANT */
+    /**
+     * 模块编码。
+     * <p>空值或 personal 表示个人首页，其它值表示模块首页。</p>
+     */
+    private String moduleCode;
+
+    /**
+     * 配置层级：PUBLIC / TENANT。
+     */
     private String scopeLevel;
 
-    /** 配置内容 */
+    /**
+     * 首页配置内容。
+     */
     private PersonalHomepageConfig config;
 }

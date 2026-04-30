@@ -53,4 +53,43 @@ public class PersonalHomepageConfig {
         config.setWidgets(widgets);
         return config;
     }
+
+    /**
+     * 创建指定模块的默认首页配置。
+     *
+     * @param moduleCode 模块编码，空值或 personal 返回个人首页默认配置
+     * @return 默认首页配置
+     */
+    public static PersonalHomepageConfig defaults(String moduleCode) {
+        if (moduleCode == null || moduleCode.trim().isEmpty() || "personal".equalsIgnoreCase(moduleCode.trim())) {
+            return defaults();
+        }
+        String normalizedModuleCode = moduleCode.trim().toLowerCase();
+        return switch (normalizedModuleCode) {
+            case "basic" -> ofWidgets(
+                    PersonalHomepageWidgetConfig.of("supplierInfo", "供应商信息", 0, 0, 6, 4, 10, 6),
+                    PersonalHomepageWidgetConfig.of("encodeRuleInfo", "编码规则信息", 6, 0, 6, 4, 20, 6)
+            );
+            case "sys", "system" -> ofWidgets(
+                    PersonalHomepageWidgetConfig.of("systemOverview", "系统概览", 0, 0, 6, 4, 10, 6),
+                    PersonalHomepageWidgetConfig.of("systemHealth", "运行状态", 6, 0, 6, 4, 20, 6),
+                    PersonalHomepageWidgetConfig.of("systemLogs", "操作日志", 0, 4, 6, 4, 30, 6),
+                    PersonalHomepageWidgetConfig.of("systemConfig", "系统配置", 6, 4, 6, 4, 40, 6)
+            );
+            case "approval", "workflow" -> ofWidgets(
+                    PersonalHomepageWidgetConfig.of("approvalStats", "审批概览", 0, 0, 6, 4, 10, 6),
+                    PersonalHomepageWidgetConfig.of("approvalShortcuts", "审批入口", 6, 0, 6, 4, 20, 6),
+                    PersonalHomepageWidgetConfig.of("approvalPending", "我的待办", 0, 4, 6, 4, 30, 6),
+                    PersonalHomepageWidgetConfig.of("approvalTaskConfig", "任务配置", 6, 4, 6, 4, 40, 6)
+            );
+            default -> defaults();
+        };
+    }
+
+    private static PersonalHomepageConfig ofWidgets(PersonalHomepageWidgetConfig... widgets) {
+        PersonalHomepageConfig config = new PersonalHomepageConfig();
+        config.setLayout(PersonalHomepageLayoutConfig.defaults());
+        config.setWidgets(new ArrayList<>(List.of(widgets)));
+        return config;
+    }
 }

@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: forgex-basic
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_DATASOURCE_CONFIG:datasource-forgex-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+server:
+  port: ${FORGEX_BASIC_PORT:9003}

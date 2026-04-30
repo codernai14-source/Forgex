@@ -8,37 +8,52 @@
     <a-spin :spinning="loading">
       <a-descriptions :column="2" bordered>
         <a-descriptions-item label="用户名">
-          {{ userDetail?.username }}
+          {{ userDetail?.username || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="账号">
+          {{ userDetail?.account || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="邮箱">
-          {{ userDetail?.email }}
+          {{ userDetail?.email || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="手机号">
-          {{ userDetail?.phone }}
+          {{ userDetail?.phone || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="关联员工ID">
+          {{ userDetail?.employeeId || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="用户来源">
+          {{ userDetail?.userSourceText || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="性别">
-          <DictTag :record="userDetail" dict-field="genderText" />
+          {{ userDetail?.genderText || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="入职时间">
-          {{ userDetail?.entryDate }}
+          {{ userDetail?.entryDate || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="所属部门">
-          {{ userDetail?.departmentName }}
+          {{ userDetail?.departmentName || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="岗位">
-          {{ userDetail?.positionName }}
-        </a-descriptions-item>
-        <a-descriptions-item label="主租户">
-          {{ userDetail?.tenantId || '-' }}
+          {{ userDetail?.positionName || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <DictTag :record="userDetail" dict-field="statusText" />
+          {{ userDetail?.statusText || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">
-          {{ userDetail?.createTime }}
+          {{ userDetail?.createTime || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="最后登录时间">
+          {{ userDetail?.lastLoginTime || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="最后登录IP">
+          {{ userDetail?.lastLoginIp || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="最后登录地区">
+          {{ userDetail?.lastLoginRegion || '-' }}
         </a-descriptions-item>
       </a-descriptions>
-      
+
       <a-divider orientation="left">关联租户</a-divider>
 
       <a-table
@@ -52,18 +67,17 @@
             <a-tag v-if="record.isDefault" color="blue">默认</a-tag>
             <a-tag v-else>非默认</a-tag>
           </template>
-          
           <template v-else-if="column.key === 'lastUsed'">
             {{ record.lastUsed || '-' }}
           </template>
         </template>
       </a-table>
-      
+
       <a-divider orientation="left">附属信息</a-divider>
 
       <a-descriptions :column="2" bordered v-if="userDetail?.profile">
         <a-descriptions-item label="政治面貌">
-          {{ userDetail.profile.political状态 || '-' }}
+          {{ userDetail.profile.politicalStatus || '-' }}
         </a-descriptions-item>
         <a-descriptions-item label="学历">
           {{ userDetail.profile.education || '-' }}
@@ -87,7 +101,7 @@
           {{ userDetail.profile.referrer || '-' }}
         </a-descriptions-item>
       </a-descriptions>
-      
+
       <template v-if="userDetail?.profile?.workHistory && userDetail.profile.workHistory.length > 0">
         <a-divider orientation="left">工作经历</a-divider>
 
@@ -97,13 +111,13 @@
             :key="index"
           >
             <p><strong>{{ history.company }}</strong> - {{ history.position }}</p>
-            <p style="color: #999;">{{ history.startDate }} ~ {{ history.endDate }}</p>
+            <p style="color: #999">{{ history.startDate }} ~ {{ history.endDate }}</p>
             <p v-if="history.description">{{ history.description }}</p>
           </a-timeline-item>
         </a-timeline>
       </template>
     </a-spin>
-    
+
     <template #footer>
       <a-button @click="visible = false">关闭</a-button>
     </template>
@@ -114,9 +128,8 @@
 import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
-import type { User, UserProfile, UserTenant } from '../types'
+import type { User } from '../types'
 
-// Props
 interface Props {
   open: boolean
   userId?: string
@@ -127,54 +140,37 @@ const props = withDefaults(defineProps<Props>(), {
   userId: undefined,
 })
 
-// Emits
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-// 响应式数据
 const visible = ref(props.open)
 const loading = ref(false)
-const userDetail = ref<(User & { profile?: UserProfile, tenantList?: UserTenant[] }) | null>(null)
+const userDetail = ref<User | null>(null)
 
-
-
-// 租户列表表格列定义
 const tenantColumns = [
-  { title: '租户 ID', dataIndex: 'tenantId', key: 'tenantId', width: 120 },
+  { title: '租户 ID', dataIndex: 'tenantId', key: 'tenantId', width: 180 },
   { title: '是否默认', dataIndex: 'isDefault', key: 'isDefault', width: 100 },
   { title: '最后使用时间', dataIndex: 'lastUsed', key: 'lastUsed', width: 160 },
 ]
 
-// 监听 props.open 变化
-watch(() => props.open, (val) => {
+watch(() => props.open, async (val) => {
   visible.value = val
   if (val && props.userId) {
-    loadUserDetail()
+    await loadUserDetail()
   }
 })
 
-// 监听 visible 变化
 watch(visible, (val) => {
   emit('update:open', val)
 })
 
-/**
- * 加载用户详情
- */
 async function loadUserDetail() {
   if (!props.userId) return
-  
   loading.value = true
   try {
-    const data = await userApi.getUserDetail(props.userId)
-    if (data) {
-      userDetail.value = data
-    } else {
-        message.error('加载失败')
-    }
-  } catch (error) {
-    console.error('加载用户详情失败:', error)
+    userDetail.value = await userApi.getUserDetail(props.userId)
+  } catch {
     message.error('加载用户详情失败')
   } finally {
     loading.value = false

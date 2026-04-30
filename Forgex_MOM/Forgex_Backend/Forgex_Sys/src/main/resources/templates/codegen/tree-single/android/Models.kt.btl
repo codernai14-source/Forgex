@@ -1,0 +1,6 @@
+package com.forgex.mobile.feature.${ctx.androidFeatureKey}.model
+
+data class ${ctx.entityName}ListItem(
+    val id: Long? = null,
+    val title: String = ""
+)

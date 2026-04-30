@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
 
     <name>Forgex_Common</name>
-    <description>锻冶项目通用工具模块</description>
+    <description>Forgex 项目通用功能模块</description>
 
     <dependencies>
         <!-- 通用工具依赖 -->
@@ -38,6 +38,10 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
         </dependency>
         <!-- Tianai Captcha 滑块验证码 -->
         <dependency>
@@ -120,6 +124,12 @@
         <dependency>
             <groupId>com.aliyun</groupId>
             <artifactId>dysmsapi20170525</artifactId>
+        </dependency>
+        <!-- Spring Boot 配置元数据处理器（@ConfigurationProperties 注解处理） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
         <!-- Caffeine 本地缓存 -->
         <dependency>

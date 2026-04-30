@@ -100,7 +100,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
      *
      * @param id 分类 ID
      * @return 分类 DTO
-     * @throws BusinessException 当分类不存在时抛出
+     * @throws I18nBusinessException 当分类不存在时抛出
      */
     @Override
     public ReportCategoryDTO getById(Long id) {

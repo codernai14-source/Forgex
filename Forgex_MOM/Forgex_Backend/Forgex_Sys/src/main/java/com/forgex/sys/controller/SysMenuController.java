@@ -27,6 +27,7 @@ import com.forgex.sys.domain.param.UserMenuPathListParam;
 import com.forgex.sys.domain.param.UserMenuPathParam;
 import com.forgex.sys.domain.param.UserMenuQueryParam;
 import com.forgex.sys.domain.vo.MenuTreeVO;
+import com.forgex.sys.domain.vo.UserMenuOpenReportVO;
 import com.forgex.sys.domain.vo.UserMenuPreferenceVO;
 import com.forgex.sys.domain.vo.UserRoutesVO;
 import com.forgex.sys.service.ISysMenuService;
@@ -107,7 +108,7 @@ public class SysMenuController {
      *
      * @param body 请求体，包含 account 参数
      * @return {@link R} 包含用户路由信息的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败时抛出
      * @see com.forgex.sys.domain.vo.UserRoutesVO
      * @see com.forgex.sys.service.ISysMenuService#getUserRoutes(String, Long)
      * @see com.forgex.sys.validator.MenuValidator#validateRoutesParams(String, Long)
@@ -424,6 +425,30 @@ public class SysMenuController {
     }
 
     /**
+     * 上报当前用户菜单打开次数。
+     * <p>
+     * 接口路径：POST /sys/menu/personal/open/report。
+     * 用于判断当前菜单是否首次打开，从而触发菜单引导。
+     * </p>
+     *
+     * @param param 请求参数，包含当前打开菜单的完整路径 path
+     * @return 打开次数与是否首次打开
+     * @see ISysMenuService#reportUserMenuOpen(Long, Long, String)
+     */
+    @PostMapping("/personal/open/report")
+    public R<UserMenuOpenReportVO> reportPersonalOpen(@RequestBody UserMenuPathParam param) {
+        Long userId = UserContext.get();
+        Long tenantId = TenantContext.get();
+        if (userId == null || tenantId == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        if (param == null || param.getPath() == null || param.getPath().trim().isEmpty()) {
+            return R.fail(CommonPrompt.PARAM_EMPTY);
+        }
+        return R.ok(menuService.reportUserMenuOpen(userId, tenantId, param.getPath()));
+    }
+
+    /**
      * 获取菜单树。
      * <p>
      * 接口信息：
@@ -651,7 +676,7 @@ public class SysMenuController {
      *
      * @param menuDTO 菜单 DTO 对象
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败时抛出
      * @see com.forgex.sys.domain.dto.SysMenuDTO
      * @see com.forgex.sys.service.ISysMenuService#addMenu(SysMenuDTO)
      * @see com.forgex.sys.validator.MenuValidator#validateForAdd(SysMenuDTO)
@@ -717,7 +742,7 @@ public class SysMenuController {
      *
      * @param menuDTO 菜单 DTO 对象
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当参数校验失败时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当参数校验失败时抛出
      * @see com.forgex.sys.domain.dto.SysMenuDTO
      * @see com.forgex.sys.service.ISysMenuService#updateMenu(SysMenuDTO)
      * @see com.forgex.sys.validator.MenuValidator#validateForUpdate(SysMenuDTO)
@@ -778,7 +803,7 @@ public class SysMenuController {
      *
      * @param body 请求体，包含 id 参数
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当 ID 为空、菜单不存在、有子菜单或有角色关联时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当 ID 为空、菜单不存在、有子菜单或有角色关联时抛出
      * @see com.forgex.sys.service.ISysMenuService#deleteMenu(Long)
      * @see com.forgex.sys.validator.MenuValidator#validateForDelete(Long)
      */
@@ -842,7 +867,7 @@ public class SysMenuController {
      *
      * @param body 请求体，包含 ids 参数
      * @return {@link R} 空内容的统一返回结构
-     * @throws com.forgex.common.exception.BusinessException 当 IDs 为空、任何一个菜单不存在、有子菜单或有角色关联时抛出
+     * @throws com.forgex.common.exception.I18nBusinessException 当 IDs 为空、任何一个菜单不存在、有子菜单或有角色关联时抛出
      * @see com.forgex.sys.service.ISysMenuService#batchDeleteMenus(List)
      * @see com.forgex.sys.validator.MenuValidator#validateForDelete(Long)
      */

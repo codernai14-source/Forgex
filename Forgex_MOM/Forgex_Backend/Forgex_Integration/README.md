@@ -91,13 +91,17 @@ Forgex_Integration/
 
 ### 2.4 菜单和表格配置 ✅
 
-SQL 脚本位置：`doc/sql/20260414_init_integration_module_menu.sql`
+SQL 脚本位置：
+- `doc/sql/20260414_init_integration_module_menu.sql`
+- `doc/sql/20260427_fix_integration_menu_level.sql`
+- `doc/sql/20260427_fix_integration_menu_level_navicat_safe.sql`
+- `doc/sql/20260427_fix_integration_menu_level_simple.sql`
 
 **已配置菜单**：
-- 接口平台（一级菜单）
-  - 第三方系统管理（二级菜单）
-  - 接口配置管理（二级菜单）
-  - 调用记录查询（二级菜单）
+- 接口平台主页（根菜单）
+- 第三方系统管理（根菜单）
+- 接口配置管理（根菜单）
+- 调用记录查询（根菜单）
 
 **已配置表格**：
 - ThirdSystemTable

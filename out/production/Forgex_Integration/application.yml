@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: forgex-integration
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_INTEGRATION_DATASOURCE_CONFIG:datasource-forgex-integration-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+
+server:
+  port: ${FORGEX_INTEGRATION_PORT:9007}
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.forgex.integration.domain.entity
+  global-config:
+    db-config:
+      id-type: assign_id
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+    com.forgex.integration: DEBUG
+
+forgex:
+  integration:
+    async-result-retention-days: 7
+    cache:
+      local-expire-seconds: 300
+      redis-expire-seconds: 300
+      max-size: 2000
+    queue:
+      redis-key: integration:task:queue
+      batch-size: 100
+      lease-seconds: 60
+      compensate-limit: 200
+    log-buffer:
+      batch-size: 100
+      flush-interval-ms: 1000
+    sync-executor:
+      core-pool-size: 8
+      max-pool-size: 32
+      queue-capacity: 500
+      keep-alive-seconds: 60
+      rejected-policy: CALLER_RUNS
+    async-consumer-executor:
+      core-pool-size: 8
+      max-pool-size: 32
+      queue-capacity: 1000
+      keep-alive-seconds: 60
+      rejected-policy: CALLER_RUNS
+    log-executor:
+      core-pool-size: 4
+      max-pool-size: 8
+      queue-capacity: 1000
+      keep-alive-seconds: 60
+      rejected-policy: CALLER_RUNS

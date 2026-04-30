@@ -229,6 +229,8 @@ async function handleSubmit() {
 }
 
 function handleCancel() {
+  resetForm()
+  basicFormRef.value?.clearValidate?.()
   emit('update:open', false)
 }
 
@@ -237,14 +239,22 @@ async function loadConfigDetail() {
   loading.value = true
   try {
     const detail = await getTableConfigDetail(props.configId, props.publicConfig)
+    const columns = Array.isArray(detail.columns) ? detail.columns : []
     Object.assign(formData, {
-      ...detail,
+      tableCode: detail.tableCode || '',
+      tableNameI18nJson: detail.tableNameI18nJson || '',
+      tableType: detail.tableType || 'NORMAL',
+      rowKey: detail.rowKey || 'id',
+      defaultPageSize: detail.defaultPageSize || 20,
+      defaultSortJson: detail.defaultSortJson || '',
+      enabled: detail.enabled !== false,
       publicConfig: props.publicConfig,
-      columns: (detail.columns || []).map((column) => ({
+      columns: columns.map((column, index) => ({
         ...column,
-        tempId: column.id || Date.now() + Math.random(),
+        tempId: column.id || Date.now() + index + Math.random(),
       })),
     })
+    basicFormRef.value?.clearValidate?.()
   } catch (error) {
     console.error('load table config detail failed:', error)
     message.error(t('system.tableConfig.loadDetailFailed'))
@@ -260,6 +270,7 @@ function resetForm() {
     tableType: 'NORMAL',
     rowKey: 'id',
     defaultPageSize: 20,
+    defaultSortJson: '',
     enabled: true,
     publicConfig: props.publicConfig,
     columns: [],
@@ -270,14 +281,29 @@ function resetForm() {
 watch(
   () => props.open,
   (open) => {
-    if (!open) return
+    if (!open) {
+      resetForm()
+      basicFormRef.value?.clearValidate?.()
+      return
+    }
     nextTick(() => {
+      resetForm()
       if (props.isEdit) {
-        loadConfigDetail()
+        void loadConfigDetail()
       } else {
-        resetForm()
+        basicFormRef.value?.clearValidate?.()
       }
     })
+  },
+)
+
+watch(
+  () => [props.open, props.isEdit, props.configId, props.publicConfig],
+  ([open, isEdit, configId]) => {
+    if (!open || !isEdit || !configId) {
+      return
+    }
+    void loadConfigDetail()
   },
 )
 </script>

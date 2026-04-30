@@ -1,6 +1,22 @@
 <template>
   <div class="api-config-management">
-    <section v-if="editor.mode === 'list'" class="api-config-panel">
+    <section v-if="editor.mode === 'param'" class="api-config-panel api-config-panel--param">
+      <div class="panel-header">
+        <div>
+          <h2>{{ t('integration.apiConfig.paramConfig') }}</h2>
+          <p>{{ editor.apiConfig?.apiName || editor.apiConfig?.apiCode || '-' }}</p>
+        </div>
+        <a-button @click="backToList">{{ t('common.back') }}</a-button>
+      </div>
+
+      <ApiParamConfigDialog
+        :open="true"
+        :api-config="editor.apiConfig"
+        :page-mode="true"
+        @update:open="handleParamOpenChange"
+      />
+    </section>
+    <section v-else class="api-config-panel">
       <fx-dynamic-table
         ref="tableRef"
         :table-code="'ApiConfigTable'"
@@ -40,6 +56,13 @@
           <a-tag color="purple">{{ record.callMethod || '-' }}</a-tag>
         </template>
 
+        <template #apiPath="{ record }">
+          <span v-if="record.direction === 'INBOUND'">
+            {{ record.apiPath || '/api/integration/public/invoke' }}
+          </span>
+          <span v-else>-</span>
+        </template>
+
         <template #status="{ record }">
           <a-switch
             v-permission="'integration:api-config:edit'"
@@ -63,42 +86,13 @@
       </fx-dynamic-table>
     </section>
 
-    <section v-else-if="editor.mode === 'form'" class="api-config-panel api-config-panel--editor">
-      <div class="panel-header">
-        <div>
-          <h2>{{ editor.isEdit ? t('integration.apiConfig.edit') : t('integration.apiConfig.add') }}</h2>
-          <p>{{ t('integration.apiConfig.title') }}</p>
-        </div>
-        <a-button @click="backToList">{{ t('common.back') }}</a-button>
-      </div>
-
-      <ApiConfigFormDialog
-        :open="true"
-        :is-edit="editor.isEdit"
-        :config-id="editor.apiConfig?.id"
-        mode="drawer"
-        width="820px"
-        @update:open="handleFormOpenChange"
-        @success="handleFormSuccess"
-      />
-    </section>
-
-    <section v-else class="api-config-panel api-config-panel--param">
-      <div class="panel-header">
-        <div>
-          <h2>{{ t('integration.apiConfig.paramConfig') }}</h2>
-          <p>{{ editor.apiConfig?.apiName || editor.apiConfig?.apiCode || '-' }}</p>
-        </div>
-        <a-button @click="backToList">{{ t('common.back') }}</a-button>
-      </div>
-
-      <ApiParamConfigDialog
-        :open="true"
-        :api-config="editor.apiConfig"
-        :page-mode="true"
-        @update:open="handleParamOpenChange"
-      />
-    </section>
+    <ApiConfigFormDialog
+      v-model:open="formDialogVisible"
+      :is-edit="editor.isEdit"
+      :config-id="editor.apiConfig?.id"
+      :width="960"
+      @success="handleFormSuccess"
+    />
   </div>
 </template>
 
@@ -124,6 +118,7 @@ const { t } = useI18n({ useScope: 'global' })
 
 const tableRef = ref<InstanceType<typeof FxDynamicTable>>()
 const selectedRowKeys = ref<number[]>([])
+const formDialogVisible = ref(false)
 const editor = reactive<ApiConfigEditorState>({
   mode: 'list',
   isEdit: false,
@@ -187,27 +182,17 @@ function handleSelectionChange(keys: number[]) {
 }
 
 function openAddForm() {
-  editor.mode = 'form'
+  editor.mode = 'list'
   editor.isEdit = false
   editor.apiConfig = undefined
+  formDialogVisible.value = true
 }
 
 function openEditForm(record: ApiConfigItem) {
-  editor.mode = 'form'
+  editor.mode = 'list'
   editor.isEdit = true
   editor.apiConfig = record
-}
-
-function openParamConfig(record: ApiConfigItem) {
-  editor.mode = 'param'
-  editor.isEdit = true
-  editor.apiConfig = record
-}
-
-function handleFormOpenChange(open: boolean) {
-  if (!open) {
-    backToList()
-  }
+  formDialogVisible.value = true
 }
 
 function handleParamOpenChange(open: boolean) {
@@ -217,29 +202,23 @@ function handleParamOpenChange(open: boolean) {
 }
 
 function handleFormSuccess(record?: ApiConfigItem) {
-  if (record) {
-    editor.apiConfig = record
-    editor.isEdit = true
-    editor.mode = 'param'
-  } else {
-    backToList()
-  }
+  formDialogVisible.value = false
+  editor.apiConfig = record
+  editor.isEdit = false
+  editor.mode = 'list'
   void tableRef.value?.refresh?.()
+}
+
+function openParamConfig(record: ApiConfigItem) {
+  editor.mode = 'param'
+  editor.isEdit = true
+  editor.apiConfig = record
 }
 
 function backToList() {
   editor.mode = 'list'
   editor.apiConfig = undefined
   editor.isEdit = false
-}
-
-function backToFormOrList() {
-  if (editor.apiConfig?.id) {
-    editor.mode = 'form'
-    editor.isEdit = true
-    return
-  }
-  backToList()
 }
 
 function handleDelete(id: number) {
@@ -285,68 +264,4 @@ async function handleToggleStatus(record: ApiConfigItem, checked: boolean) {
 }
 </script>
 
-<style scoped lang="less">
-.api-config-management {
-  min-height: 0;
-}
-
-.api-config-panel {
-  min-height: 0;
-}
-
-.api-config-panel--editor,
-.api-config-panel--param {
-  display: flex;
-  min-height: calc(100vh - 170px);
-  flex-direction: column;
-  gap: 16px;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 24px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 20px;
-  background: var(--fx-bg-container, #ffffff);
-  box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
-
-  h2 {
-    margin: 0 0 4px;
-    color: var(--fx-text-primary, #111827);
-  }
-
-  p {
-    margin: 0;
-    color: var(--fx-text-secondary, #6b7280);
-  }
-}
-
-:deep(.api-config-panel--editor .ant-drawer) {
-  position: static;
-}
-
-:deep(.api-config-panel--editor .ant-drawer-content-wrapper) {
-  position: static !important;
-  width: min(820px, 100%) !important;
-  margin: 0 auto;
-  box-shadow: none !important;
-}
-
-:deep(.api-config-panel--editor .ant-drawer-content) {
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 20px;
-  overflow: hidden;
-  background: var(--fx-bg-container, #ffffff);
-}
-
-:deep(.api-config-panel--editor .ant-drawer-header) {
-  display: none;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-</style>
+<style scoped lang="less" src="@/styles/integration-api-config.less"></style>

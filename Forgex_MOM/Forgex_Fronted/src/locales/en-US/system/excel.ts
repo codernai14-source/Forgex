@@ -1,112 +1,62 @@
-/**
- * Excel 导入导出管理翻译 - 中文注释
- * 
- * @author Forgex
- * @version 1.0.0
- * @since 2026-04-09
- */
 export default {
-  // Page titles
-  importConfigTitle: 'Import Configuration Management',
-  exportConfigTitle: 'Export Configuration Management',
-  
-  // Table columns
+  importConfigTitle: 'Excel Import Config',
+  exportConfigTitle: 'Excel Export Config',
   tableName: 'Table Name',
   tableCode: 'Table Code',
   title: 'Title',
   subtitle: 'Subtitle',
   version: 'Version',
-  importFields: 'Import Field Configuration',
-  exportFields: 'Export Field Configuration',
-  
-  // Field configuration
+  importFields: 'Import Fields',
+  exportFields: 'Export Fields',
+  exportFormat: 'Export Format',
+  exportField: 'Export Field',
+  fieldName: 'Field Name',
   importField: 'Import Field',
+  importResult: 'Import Result',
   fieldType: 'Field Type',
   dictCode: 'Dictionary Code',
   required: 'Required',
   orderNum: 'Order',
-  
-  // Field types
+  enabled: 'Enabled',
+  enableTotal: 'Enable Total',
+  basicDataTab: 'Basic Data',
+  exportFieldsTab: 'Export Columns',
+  i18nJson: 'I18n Title',
+  headerStyleJson: 'Header Style',
+  cellStyleJson: 'Cell Style',
   fieldTypes: {
     string: 'String',
     number: 'Number',
     date: 'Date',
     time: 'Time',
-    datetime: 'DateTime',
-    dict: 'Dictionary'
+    datetime: 'Datetime',
+    dict: 'Dictionary',
   },
-  
-  // Data source configuration
-  dataSourceType: 'Data Source Type',
-  dataSourceTypes: {
-    DICT: 'Dictionary',
-    JSON: 'JSON Array',
-    PROVIDER: 'Data Provider'
-  },
-  selectType: 'Please select data source type',
-  typeDict: 'Dictionary',
-  typeJson: 'JSON Array',
-  typeProvider: 'Data Provider',
-  selectDict: 'Please select dictionary',
-  selectProvider: 'Please select data provider',
-  selectProviderField: 'Please select field',
-  providerCode: 'Provider Code',
-  providerField: 'Provider Field',
-  dataSourceJson: 'Data Source JSON',
-  
-  // Style configuration
-  backgroundColor: 'Background Color',
-  fontSize: 'Font Size',
-  wordWrap: 'Word Wrap',
-  align: 'Alignment',
-  alignLeft: 'Left',
-  alignCenter: 'Center',
-  alignRight: 'Right',
-  fontWeight: 'Font Weight',
-  stylePreview: 'Style Preview',
-  previewText: 'Preview Text',
-  
-  // Internationalization configuration
-  i18nConfig: 'Internationalization Configuration',
-  zhCn: 'Chinese',
-  enUs: 'English',
-  zhCnPlaceholder: 'Please enter Chinese translation',
-  enUsPlaceholder: 'Please enter English translation',
-  
-  // Options list
-  optionsList: 'Options List',
-  addOption: 'Add Option',
-  valuePlaceholder: 'Please enter option value',
-  labelPlaceholder: 'Please enter option label',
-  
-  // JSON preview
-  jsonPreview: 'JSON Preview',
-  
-  // Operations
   downloadTemplate: 'Download Template',
-  uploadData: 'Upload Data',
-  previewData: 'Preview Data',
-  
-  // 表单
-  baseConfig: 'Base Configuration',
+  downloadSuccess: 'Template downloaded successfully',
+  downloadFailed: 'Template download failed',
+  importSuccess: 'Import succeeded',
+  importFail: 'Import failed',
+  importFailed: 'Import failed, please try again',
+  baseConfig: 'Basic Config',
   pleaseInputTableName: 'Please enter table name',
   pleaseInputTableCode: 'Please enter table code',
   pleaseInputTitle: 'Please enter title',
   pleaseInputSubtitle: 'Please enter subtitle',
-  addImportConfig: 'Add Import Configuration',
-  editImportConfig: 'Edit Import Configuration',
-  
-  // 消息
+  pleaseSelectExportFormat: 'Please select export format',
+  pleaseAddExportFields: 'Please add at least one export column',
+  addImportConfig: 'Add Import Config',
+  editImportConfig: 'Edit Import Config',
   message: {
     downloadTemplateSuccess: 'Download template successfully',
     downloadTemplateFailed: 'Download template failed',
     uploadDataSuccess: 'Upload data successfully',
     uploadDataFailed: 'Upload data failed',
-    saveConfigSuccess: 'Save configuration successfully',
-    saveConfigFailed: 'Save configuration failed',
-    deleteConfigSuccess: 'Delete configuration successfully',
-    deleteConfigFailed: 'Delete configuration failed',
+    saveConfigSuccess: 'Save config successfully',
+    saveConfigFailed: 'Save config failed',
+    deleteConfigSuccess: 'Delete config successfully',
+    deleteConfigFailed: 'Delete config failed',
     pleaseInputTableName: 'Please enter table name',
-    pleaseInputTableCode: 'Please enter table code'
-  }
+    pleaseInputTableCode: 'Please enter table code',
+  },
 }

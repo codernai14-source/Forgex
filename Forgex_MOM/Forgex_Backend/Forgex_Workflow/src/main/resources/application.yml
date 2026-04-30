@@ -1,8 +1,13 @@
 spring:
   application:
     name: forgex-workflow
-  profiles:
-    active: ${FORGEX_PROFILE:dev}
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_DATASOURCE_CONFIG:datasource-forgex-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
   datasource:
     type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
   output:
@@ -10,6 +15,20 @@ spring:
       enabled: always
   main:
     allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
@@ -19,3 +38,10 @@ logging:
     root: INFO
 server:
   port: ${FORGEX_WORKFLOW_PORT:9005}
+
+forgex:
+  deployment:
+    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
+    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
+    home: ${FORGEX_HOME:C:/forgex}
+    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:C:/forgex}/logs}

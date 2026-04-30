@@ -110,6 +110,12 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         if (path.equals("/api/sys/i18n/languageType/listEnabled") && HttpMethod.POST.equals(method)) {
             return false;
         }
+        if (path.equals("/api/sys/i18n/languageType/getDefault") && HttpMethod.POST.equals(method)) {
+            return false;
+        }
+        if (path.equals("/api/sys/i18n/message/mobileBundle") && HttpMethod.POST.equals(method)) {
+            return false;
+        }
         if (path.equals("/api/sys/init/status") && HttpMethod.GET.equals(method)) {
             return false;
         }

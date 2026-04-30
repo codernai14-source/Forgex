@@ -4,7 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Integration 妯″潡鍙傛暟閰嶇疆
+ * Integration 模块参数配置
  */
 @Data
 @ConfigurationProperties(prefix = "forgex.integration")

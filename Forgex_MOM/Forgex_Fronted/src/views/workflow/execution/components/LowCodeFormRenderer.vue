@@ -3,7 +3,7 @@
     <component
       :is="runtimeFormComponent"
       ref="formRef"
-      :rule="renderRule"
+      :rule="readonlyRule"
       :option="renderOption"
       :model-value="innerValue"
       :api="formApi"
@@ -22,6 +22,7 @@ import { normalizeLowCodeFormSchema } from '@/views/workflow/taskConfig/componen
 interface Props {
   schema: LowCodeFormSchema
   modelValue?: Record<string, any>
+  readonly?: boolean
 }
 
 interface Emits {
@@ -34,6 +35,7 @@ interface FormCreateComponentExpose {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => ({}),
+  readonly: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -45,8 +47,13 @@ const FormCreateComponent = (formCreate as any).$form()
 const normalizedSchema = computed(() => normalizeLowCodeFormSchema(props.schema))
 const runtimeFormComponent = computed(() => FormCreateComponent)
 const renderRule = computed(() => normalizedSchema.value.rule || [])
+const readonlyRule = computed(() => props.readonly ? disableRules(renderRule.value) : renderRule.value)
 const renderOption = computed(() => ({
   ...(normalizedSchema.value.option || {}),
+  form: {
+    ...((normalizedSchema.value.option || {}).form || {}),
+    disabled: props.readonly,
+  },
   submitBtn: false,
   resetBtn: false,
 })
@@ -68,7 +75,26 @@ function handleModelUpdate(value: Record<string, any>) {
 function handleApiUpdate(api?: Api) {
   if (api) {
     formApi.value = api
+    if (props.readonly) {
+      api.disabled?.(true)
+    }
   }
+}
+
+function disableRules(rules: any[]): any[] {
+  return (rules || []).map(rule => {
+    const nextRule = {
+      ...rule,
+      props: {
+        ...(rule?.props || {}),
+        disabled: true,
+      },
+    }
+    if (Array.isArray(rule?.children)) {
+      nextRule.children = disableRules(rule.children)
+    }
+    return nextRule
+  })
 }
 
 async function validate() {

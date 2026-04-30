@@ -30,7 +30,7 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
  */
 @SpringBootApplication(scanBasePackages = "com.forgex", exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
-@EnableFeignClients(basePackages = "com.forgex.common.feign.client")
+@EnableFeignClients(basePackages = {"com.forgex.common.feign.client", "com.forgex.common.api.feign"})
 @EnableAsync
 @EnableScheduling
 @Import(DynamicDataSourceAutoConfiguration.class)

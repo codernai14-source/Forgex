@@ -17,8 +17,11 @@ export interface FxGuideStep {
   target?: string | (() => HTMLElement | null)
   placement?: 'top' | 'bottom' | 'left' | 'right' | 'center'
   useMask?: boolean
+  category?: 'intro' | 'navigation' | 'form' | 'action' | 'table' | 'detail'
 }
 
 export interface GuideResolvedStep extends Omit<FxGuideStep, 'target'> {
-  target: () => HTMLElement | null
+  target?: () => HTMLElement | null
+  hasTarget: boolean
+  renderPanel?: (step: any, current: number) => unknown
 }

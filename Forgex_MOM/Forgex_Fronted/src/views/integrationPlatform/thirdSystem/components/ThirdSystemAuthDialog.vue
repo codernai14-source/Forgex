@@ -41,13 +41,21 @@
         <a-button @click="handleGenerateToken">Generate Token</a-button>
       </template>
 
-      <a-form-item v-else :label="t('integration.thirdSystem.form.whitelistIps')" name="whitelistIps">
-        <a-textarea
-          v-model:value="formState.whitelistIps"
-          :rows="4"
-          :placeholder="t('integration.thirdSystem.form.whitelistIpsPlaceholder')"
+      <template v-else>
+        <a-alert
+          type="info"
+          show-icon
+          class="auth-tip"
+          :message="t('integration.thirdSystem.form.whitelistTip')"
         />
-      </a-form-item>
+        <a-form-item :label="t('integration.thirdSystem.form.whitelistIps')" name="whitelistIps">
+          <a-textarea
+            v-model:value="formState.whitelistIps"
+            :rows="4"
+            :placeholder="t('integration.thirdSystem.form.whitelistIpsPlaceholder')"
+          />
+        </a-form-item>
+      </template>
 
       <a-form-item :label="t('integration.thirdSystem.status')" name="status">
         <a-radio-group v-model:value="formState.status">
@@ -121,7 +129,7 @@ const rules = computed(() => ({
 
 watch(
   () => props.open,
-  async (open) => {
+  async open => {
     if (!open || !props.systemId) {
       return
     }
@@ -139,7 +147,7 @@ watch(
       Object.assign(formState, detail)
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 async function handleGenerateToken() {
@@ -159,6 +167,7 @@ async function handleSubmit() {
     const payload: ThirdAuthorizationSubmit = {
       ...formState,
       thirdSystemId: props.systemId,
+      whitelistIps: formState.authType === 'WHITELIST' ? formState.whitelistIps?.trim() : '',
     }
     if (payload.id) {
       await updateThirdAuthorization(payload)
@@ -171,3 +180,9 @@ async function handleSubmit() {
   }
 }
 </script>
+
+<style scoped lang="less">
+.auth-tip {
+  margin-bottom: 16px;
+}
+</style>

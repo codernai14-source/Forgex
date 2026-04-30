@@ -1,13 +1,12 @@
 <template>
   <div class="approval-dashboard">
     <a-spin :spinning="pageLoading">
-      <div class="dashboard-header">
-        <h2 class="title">{{ t('workflow.dashboard.title') }}</h2>
-        <p class="subtitle">{{ t('workflow.dashboard.subtitle') }}</p>
-      </div>
-
-      <a-row :gutter="[16, 16]">
-        <a-col :span="24">
+      <ModuleHomepageDesigner
+        module-code="approval"
+        :hidden-widget-keys="hiddenWidgetKeys"
+        @layout-updated="handleHomepageLayoutUpdated"
+      >
+        <template #approvalWeeklyTrend>
           <a-card class="section-card section-card-chart" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -18,9 +17,9 @@
             <p class="section-intro">{{ t('workflow.dashboard.weeklyTrendSubtitle') }}</p>
             <div ref="weeklyChartRef" class="chart-block"></div>
           </a-card>
-        </a-col>
+        </template>
 
-        <a-col v-if="canStartExecution" :span="24">
+        <template #approvalShortcuts>
           <a-card class="section-card" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -67,9 +66,9 @@
               </button>
             </div>
           </a-card>
-        </a-col>
+        </template>
 
-        <a-col :xs="24" :lg="canViewTaskConfig ? 14 : 24">
+        <template #approvalUserShare>
           <a-card class="section-card section-card-chart" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -80,9 +79,9 @@
             <p class="section-intro">{{ t('workflow.dashboard.userShareSubtitle') }}</p>
             <div ref="shareChartRef" class="chart-block chart-block-pie"></div>
           </a-card>
-        </a-col>
+        </template>
 
-        <a-col v-if="canViewTaskConfig" :xs="24" :lg="10">
+        <template #approvalTaskConfig>
           <a-card class="section-card" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -125,9 +124,9 @@
               </li>
             </ul>
           </a-card>
-        </a-col>
+        </template>
 
-        <a-col :xs="24" :lg="8">
+        <template #approvalPending>
           <a-card class="dash-card dash-card-pending" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -160,9 +159,9 @@
               </li>
             </ul>
           </a-card>
-        </a-col>
+        </template>
 
-        <a-col :xs="24" :lg="8">
+        <template #approvalProcessed>
           <a-card class="dash-card dash-card-done" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -195,9 +194,9 @@
               </li>
             </ul>
           </a-card>
-        </a-col>
+        </template>
 
-        <a-col :xs="24" :lg="8">
+        <template #approvalCc>
           <a-card class="dash-card dash-card-cc" :bordered="false">
             <template #title>
               <span class="card-title">
@@ -230,8 +229,8 @@
               </li>
             </ul>
           </a-card>
-        </a-col>
-      </a-row>
+        </template>
+      </ModuleHomepageDesigner>
     </a-spin>
 
     <a-drawer
@@ -324,6 +323,7 @@ import {
 } from '@/api/workflow/taskConfig'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { use权限Store } from '@/stores/permission'
+import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
 import './index.less'
 
 const SHORTCUT_LIMIT = 5
@@ -364,6 +364,11 @@ const canStartExecution = computed(() =>
 const canViewTaskConfig = computed(() =>
   permissionStore.has权限('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
 )
+const hiddenWidgetKeys = computed(() => [
+  'approvalStats',
+  ...(!canStartExecution.value ? ['approvalShortcuts'] : []),
+  ...(!canViewTaskConfig.value ? ['approvalTaskConfig'] : []),
+])
 const pageLoading = computed(() =>
   summaryLoading.value || analyticsLoading.value || shortcutLoading.value || taskConfigLoading.value,
 )
@@ -675,6 +680,22 @@ function getVersionText(record: WfTaskConfigSummaryDTO) {
 function handleResize() {
   weeklyChart?.resize()
   shareChart?.resize()
+}
+
+async function handleHomepageLayoutUpdated() {
+  await nextTick()
+
+  if (!weeklyChartRef.value && weeklyChart) {
+    weeklyChart.dispose()
+    weeklyChart = null
+  }
+  if (!shareChartRef.value && shareChart) {
+    shareChart.dispose()
+    shareChart = null
+  }
+
+  refreshCharts()
+  handleResize()
 }
 
 onMounted(async () => {

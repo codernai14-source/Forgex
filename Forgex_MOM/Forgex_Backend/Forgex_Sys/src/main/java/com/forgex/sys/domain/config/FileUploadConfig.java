@@ -16,7 +16,7 @@ public class FileUploadConfig {
     /**
      * Local upload path, only used when storageType=LOCAL.
      */
-    private String localUploadPath = "./uploads";
+    private String localUploadPath = "C:/forgex/data/uploads";
 
     /**
      * URL access prefix for local files.

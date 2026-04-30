@@ -1,11 +1,11 @@
 <template>
-  <a-modal
+  <BaseFormDialog
     v-model:open="dialogVisible"
     :title="dialogTitle"
     width="900px"
-    @ok="handleSubmit"
+    :body-style="{ maxHeight: '72vh', overflowY: 'auto' }"
+    @submit="handleSubmit"
     @cancel="handleDialogClose"
-    destroy-on-close
   >
     <a-form
       ref="formRef"
@@ -14,6 +14,8 @@
       :label-col="{ span: 6 }"
       :wrapper-col="{ span: 16 }"
     >
+      <a-tabs v-model:active-key="activeTab">
+        <a-tab-pane key="main" tab="主信息">
       <a-form-item :label="t('system.encodeRule.ruleName')" name="ruleName">
         <a-input
           v-model:value="form.ruleName"
@@ -55,10 +57,18 @@
           </a-radio>
         </a-radio-group>
       </a-form-item>
+
+      <a-form-item :label="t('system.encodeRule.remark')" name="remark">
+        <a-textarea
+          v-model:value="form.remark"
+          :placeholder="t('system.encodeRule.remarkPlaceholder')"
+          :rows="2"
+          :maxlength="200"
+        />
+      </a-form-item>
+        </a-tab-pane>
       
-      <a-divider orientation="left">
-        {{ t('system.encodeRule.ruleDetails') }}
-      </a-divider>
+        <a-tab-pane key="details" tab="明细信息">
       
       <a-form-item :wrapper-col="{ offset: 6, span: 16 }">
         <a-button type="dashed" block @click="handleAddDetail">
@@ -118,27 +128,36 @@
             <a-col :span="6" v-if="detail.segmentType === 'SEQ'">
               <a-row :gutter="8">
                 <a-col :span="12">
-                  <a-form-item :name="['ruleDetails', index, 'seqStart']" no-style>
-                    <a-input-number
-                      v-model:value="detail.seqStart"
-                      :placeholder="t('system.encodeRule.seqStart')"
-                      :min="0"
-                      style="width: 100%"
-                    />
-                  </a-form-item>
+                  <div class="seq-field">
+                    <span>起始值</span>
+                    <a-form-item :name="['ruleDetails', index, 'seqStart']" no-style>
+                      <a-input-number
+                        v-model:value="detail.seqStart"
+                        placeholder="如 1"
+                        :min="0"
+                        style="width: 100%"
+                      />
+                    </a-form-item>
+                  </div>
                 </a-col>
                 <a-col :span="12">
-                  <a-form-item :name="['ruleDetails', index, 'seqLength']" no-style>
-                    <a-input-number
-                      v-model:value="detail.seqLength"
-                      :placeholder="t('system.encodeRule.seqLength')"
-                      :min="1"
-                      :max="20"
-                      style="width: 100%"
-                    />
-                  </a-form-item>
+                  <div class="seq-field">
+                    <span>流水位数</span>
+                    <a-form-item :name="['ruleDetails', index, 'seqLength']" no-style>
+                      <a-input-number
+                        v-model:value="detail.seqLength"
+                        placeholder="如 6"
+                        :min="1"
+                        :max="20"
+                        style="width: 100%"
+                      />
+                    </a-form-item>
+                  </div>
                 </a-col>
               </a-row>
+              <a-typography-text type="secondary" class="seq-help">
+                初始值是第一个流水号，流水位数不足时会补零，例如初始值 1、位数 6 会生成 000001。
+              </a-typography-text>
             </a-col>
             
             <a-col :span="6" v-if="detail.segmentType === 'SEQ'">
@@ -181,16 +200,10 @@
         </div>
       </a-form-item>
       
-      <a-form-item :label="t('system.encodeRule.remark')" name="remark">
-        <a-textarea
-          v-model:value="form.remark"
-          :placeholder="t('system.encodeRule.remarkPlaceholder')"
-          :rows="2"
-          :maxlength="200"
-        />
-      </a-form-item>
+        </a-tab-pane>
+      </a-tabs>
     </a-form>
-  </a-modal>
+  </BaseFormDialog>
 </template>
 
 <script setup lang="ts">
@@ -210,6 +223,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, type 表单Instance, type 表单Rule } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { encodeRuleApi } from '@/api/system/encodeRule'
 import { useDict } from '@/hooks/useDict'
 import type { EncodeRuleDetail, SaveEncodeRuleParam } from '@/api/system/encodeRule'
@@ -243,6 +257,8 @@ const dialogVisible = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value),
 })
+
+const activeTab = ref('main')
 
 // 表单引用
 const formRef = ref<表单Instance>()
@@ -397,6 +413,7 @@ function map表单DetailToBackend(detail: EncodeRule表单Detail, index: number)
 
 // 重置表单
 function reset表单() {
+  activeTab.value = 'main'
   form.id = undefined
   form.ruleName = ''
   form.ruleCode = ''
@@ -565,5 +582,26 @@ onMounted(() => {
     border-color: var(--fx-theme-color, #1890ff);
     background-color: var(--fx-tab-hover-bg, #f0f5ff);
   }
+}
+
+.seq-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.seq-field span,
+.seq-help {
+  font-size: 12px;
+}
+
+.seq-field span {
+  color: var(--fx-text-secondary, #64748b);
+}
+
+.seq-help {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.5;
 }
 </style>
