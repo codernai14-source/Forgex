@@ -1,7 +1,0 @@
-spring:
-  cloud:
-    nacos:
-      discovery:
-        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
-        namespace: prod
-        group: DEFAULT_GROUP

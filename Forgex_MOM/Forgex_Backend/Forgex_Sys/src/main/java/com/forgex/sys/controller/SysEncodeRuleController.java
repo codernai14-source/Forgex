@@ -88,7 +88,7 @@ public class SysEncodeRuleController {
      * @param param 查询参数
      * @return 分页结果
      */
-    @RequirePerm("sys:encodeRule:view")
+    @RequirePerm("basic:encodeRule:query")
     @PostMapping("/page")
     public R<IPage<EncodeRuleVO>> page(@RequestBody(required = false) EncodeRulePageParam param) {
         EncodeRulePageParam query = param == null ? new EncodeRulePageParam() : param;
@@ -115,7 +115,7 @@ public class SysEncodeRuleController {
      * @param param 查询参数
      * @return 编码规则列表
      */
-    @RequirePerm("sys:encodeRule:view")
+    @RequirePerm("basic:encodeRule:query")
     @PostMapping("/list")
     public R<List<EncodeRuleVO>> list(@RequestBody(required = false) EncodeRulePageParam param) {
         EncodeRulePageParam query = param == null ? new EncodeRulePageParam() : param;
@@ -134,7 +134,7 @@ public class SysEncodeRuleController {
      * @param param 查询参数
      * @return 编码规则详情
      */
-    @RequirePerm("sys:encodeRule:view")
+    @RequirePerm("basic:encodeRule:query")
     @PostMapping("/get")
     public R<EncodeRuleVO> get(@RequestBody EncodeRuleGetParam param) {
         EncodeRuleVO vo = encodeRuleService.getEncodeRuleVOById(param.getId());
@@ -169,7 +169,7 @@ public class SysEncodeRuleController {
      * @param param 删除参数
      * @return 删除结果
      */
-    @RequirePerm("sys:encodeRule:delete")
+    @RequirePerm("basic:encodeRule:delete")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody IdParam param) {
         encodeRuleService.deleteEncodeRule(param.getId());
@@ -185,7 +185,7 @@ public class SysEncodeRuleController {
      * @param param 批量删除参数
      * @return 批量删除结果
      */
-    @RequirePerm("sys:encodeRule:delete")
+    @RequirePerm("basic:encodeRule:delete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody BatchIdsParam param) {
         encodeRuleService.batchDeleteEncodeRules(param.getIds());
@@ -203,7 +203,7 @@ public class SysEncodeRuleController {
      * @param param 规则代码参数
      * @return 生成的编码
      */
-    @RequirePerm("sys:encodeRule:generate")
+    @RequirePerm("basic:encodeRule:generate")
     @PostMapping("/generate")
     public R<String> generate(@RequestBody GenerateCodeParam param) {
         String code = encodeRuleService.generateCode(param.getRuleCode());
@@ -219,7 +219,7 @@ public class SysEncodeRuleController {
      * @param param 启用参数
      * @return 启用结果
      */
-    @RequirePerm("sys:encodeRule:edit")
+    @RequirePerm("basic:encodeRule:edit")
     @PostMapping("/enable")
     public R<Void> enable(@RequestBody IdParam param) {
         encodeRuleService.enableEncodeRule(param.getId());
@@ -235,7 +235,7 @@ public class SysEncodeRuleController {
      * @param param 禁用参数
      * @return 禁用结果
      */
-    @RequirePerm("sys:encodeRule:edit")
+    @RequirePerm("basic:encodeRule:edit")
     @PostMapping("/disable")
     public R<Void> disable(@RequestBody IdParam param) {
         encodeRuleService.disableEncodeRule(param.getId());
@@ -248,7 +248,7 @@ public class SysEncodeRuleController {
         if (userId == null || tenantId == null) {
             throw new I18nBusinessException(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
         }
-        String permKey = param != null && param.getId() == null ? "sys:encodeRule:add" : "sys:encodeRule:edit";
+        String permKey = param != null && param.getId() == null ? "basic:encodeRule:add" : "basic:encodeRule:edit";
         if (!permKeyService.hasAllPerms(userId, tenantId, Set.of(permKey))) {
             throw new I18nBusinessException(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
         }

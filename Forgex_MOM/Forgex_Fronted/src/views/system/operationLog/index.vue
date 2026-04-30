@@ -10,7 +10,7 @@
       :dynamic-table-config="fallbackConfig"
     >
       <template #toolbar>
-        <a-button @click="handleExport" v-permission="'sys:operation-log:export'">
+        <a-button data-guide-id="sys-operation-log-export" @click="handleExport" v-permission="'sys:operation-log:export'">
           <template #icon><ExportOutlined /></template>
           {{ t('common.export') }}
         </a-button>

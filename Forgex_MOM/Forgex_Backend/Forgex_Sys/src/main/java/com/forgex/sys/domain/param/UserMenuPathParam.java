@@ -19,13 +19,13 @@ package com.forgex.sys.domain.param;
 import lombok.Data;
 
 /**
- * 用户菜单路径参数类。
+ * 用户菜单路径参数。
  * <p>
- * 用于菜单收藏切换、访问上报等接口接收前端传入的菜单完整路径。
+ * 用于菜单收藏切换、访问上报、打开次数上报等接口接收前端传入的菜单完整路径。
  * </p>
  *
  * @author ForGexTeam
- * @version 1.0
+ * @version 1.1
  * @since 2026-04-12
  */
 @Data
@@ -33,8 +33,24 @@ public class UserMenuPathParam {
 
     /**
      * 前端完整菜单路径，例如 /workspace/sys/authorization/role。
-     * 服务端会基于该路径定位当前用户有权限访问的菜单。
      */
     private String path;
-}
 
+    /**
+     * 菜单标题。
+     * <p>该字段为前端上报冗余信息，后端仍以授权菜单快照为准。</p>
+     */
+    private String title;
+
+    /**
+     * 模块编码。
+     * <p>该字段为前端上报冗余信息，后端仍以授权菜单快照为准。</p>
+     */
+    private String moduleCode;
+
+    /**
+     * 模块名称。
+     * <p>该字段为前端上报冗余信息，后端仍以授权菜单快照为准。</p>
+     */
+    private String moduleName;
+}

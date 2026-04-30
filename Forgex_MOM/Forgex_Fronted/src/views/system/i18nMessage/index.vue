@@ -14,7 +14,7 @@
       }"
     >
       <template #toolbar>
-        <a-button v-permission="'sys:i18nMessage:add'" type="primary" @click="handleAdd">
+        <a-button data-guide-id="sys-i18n-message-add" v-permission="'sys:i18nMessage:add'" type="primary" @click="handleAdd">
           {{ t('common.add') }}
         </a-button>
       </template>

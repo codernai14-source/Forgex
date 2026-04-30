@@ -40,6 +40,7 @@
             <template #toolbar>
               <a-space>
                 <a-button
+                  data-guide-id="sys-menu-add"
                   v-permission="'sys:menu:add'"
                   type="primary"
                   @click="handleAdd"
@@ -49,6 +50,7 @@
                 </a-button>
 
                 <a-button
+                  data-guide-id="sys-menu-batch-delete"
                   v-permission="'sys:menu:delete'"
                   danger
                   :disabled="selectedRowKeys.length === 0"

@@ -15,15 +15,15 @@
             <a-radio-button :value="false">{{ t('system.messageTemplate.configMode.tenant') }}</a-radio-button>
             <a-radio-button :value="true">{{ t('system.messageTemplate.configMode.public') }}</a-radio-button>
           </a-radio-group>
-          <a-button v-if="!publicConfig" @click="handlePullPublicConfig">
+          <a-button data-guide-id="sys-message-template-pull-public" v-if="!publicConfig" @click="handlePullPublicConfig">
             <template #icon><SyncOutlined /></template>
             {{ t('system.messageTemplate.toolbar.pullPublicConfig') }}
           </a-button>
-          <a-button type="primary" @click="handleAdd">
+          <a-button data-guide-id="sys-message-template-add" type="primary" @click="handleAdd">
             <template #icon><PlusOutlined /></template>
             {{ t('common.add') }}
           </a-button>
-          <a-button danger :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete">
+          <a-button data-guide-id="sys-message-template-batch-delete" danger :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete">
             <template #icon><DeleteOutlined /></template>
             {{ t('common.batchDelete') }}
           </a-button>

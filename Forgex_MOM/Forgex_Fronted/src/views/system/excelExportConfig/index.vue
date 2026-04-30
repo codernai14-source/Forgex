@@ -15,7 +15,7 @@
       }"
     >
       <template #toolbar>
-        <a-button type="primary" v-permission="'sys:excel:exportConfig:edit'" @click="openEdit()">
+        <a-button data-guide-id="sys-excel-export-edit" type="primary" v-permission="'sys:excel:exportConfig:edit'" @click="openEdit()">
           {{ t('common.add') }}
         </a-button>
       </template>

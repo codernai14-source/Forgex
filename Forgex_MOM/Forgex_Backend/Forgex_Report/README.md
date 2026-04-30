@@ -55,9 +55,7 @@ Forgex_Report/
 │   │       └── ReportEngineType.java   # 报表引擎类型
 │   └── config/                         # 配置类
 └── src/main/resources/
-    ├── application.yml                 # 基础配置
-    ├── application-dev.yml             # 开发环境配置
-    └── application-prod.yml            # 生产环境配置
+    └── application.yml                 # 唯一启动配置，环境差异通过环境变量和 Nacos namespace 控制
 ```
 
 ## 启动说明
@@ -71,15 +69,11 @@ Forgex_Report/
 
 ### 2. 配置数据源
 
-修改 `application-dev.yml` 中的数据库连接配置：
+报表服务通过 Nacos 加载数据源配置，默认读取 `datasource-forgex-dev.yml`。如需切换环境，在启动参数或环境变量中覆盖：
 
-```yaml
-spring.datasource.dynamic:
-  datasource:
-    master:
-      url: jdbc:mysql://localhost:3306/forgex_report?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-      username: root
-      password: root
+```bash
+FORGEX_DATASOURCE_CONFIG=datasource-forgex-prod.yml
+FORGEX_NACOS_NAMESPACE=prod
 ```
 
 ### 3. 启动服务
@@ -95,11 +89,11 @@ mvn spring-boot:run
 
 ### 4. 访问服务
 
-服务启动后，默认端口为 8084：
+服务启动后，默认端口为 9006，可通过 `FORGEX_REPORT_PORT` 覆盖：
 
-- **Swagger API 文档**: http://localhost:8084/swagger-ui.html
-- **UReport2 设计器**: http://localhost:8084/ureport/designer
-- **JimuReport 设计器**: http://localhost:8084/jmreport
+- **Swagger API 文档**: http://localhost:9006/swagger-ui.html
+- **UReport2 设计器**: http://localhost:9006/ureport/designer
+- **JimuReport 设计器**: http://localhost:9006/jmreport
 
 ## API 接口
 

@@ -38,13 +38,13 @@ public class PersonalHomepageController {
     private final PersonalHomepageSummaryService personalHomepageSummaryService;
 
     @PostMapping("/current/get")
-    public R<PersonalHomepageConfig> getCurrentConfig() {
+    public R<PersonalHomepageConfig> getCurrentConfig(@RequestBody(required = false) PersonalHomepageSaveParam param) {
         Long userId = UserContext.get();
         Long tenantId = TenantContext.get();
         if (userId == null || tenantId == null) {
             return R.fail(CommonPrompt.NOT_LOGIN);
         }
-        return R.ok(personalHomepageConfigService.getEffectiveConfig(userId, tenantId));
+        return R.ok(personalHomepageConfigService.getEffectiveConfig(userId, tenantId, param == null ? null : param.getModuleCode()));
     }
 
     @PostMapping("/current/save")
@@ -57,18 +57,18 @@ public class PersonalHomepageController {
         if (param == null || param.getConfig() == null) {
             return R.fail(CommonPrompt.PARAM_EMPTY);
         }
-        personalHomepageConfigService.saveUserConfig(userId, tenantId, param.getConfig());
+        personalHomepageConfigService.saveUserConfig(userId, tenantId, param.getModuleCode(), param.getConfig());
         return R.ok(CommonPrompt.SAVE_SUCCESS, Boolean.TRUE);
     }
 
     @PostMapping("/current/reset")
-    public R<Boolean> resetCurrentConfig() {
+    public R<Boolean> resetCurrentConfig(@RequestBody(required = false) PersonalHomepageSaveParam param) {
         Long userId = UserContext.get();
         Long tenantId = TenantContext.get();
         if (userId == null || tenantId == null) {
             return R.fail(CommonPrompt.NOT_LOGIN);
         }
-        personalHomepageConfigService.resetUserConfig(userId, tenantId);
+        personalHomepageConfigService.resetUserConfig(userId, tenantId, param == null ? null : param.getModuleCode());
         return R.ok(CommonPrompt.RESTORE_SUCCESS, Boolean.TRUE);
     }
 
@@ -76,10 +76,11 @@ public class PersonalHomepageController {
     public R<PersonalHomepageConfig> getManageConfig(@RequestBody PersonalHomepageManageParam param) {
         Long tenantId = TenantContext.get();
         String scopeLevel = normalizeScope(param == null ? null : param.getScopeLevel());
+        String moduleCode = param == null ? null : param.getModuleCode();
         if ("PUBLIC".equals(scopeLevel)) {
-            return R.ok(personalHomepageConfigService.getPublicConfig());
+            return R.ok(personalHomepageConfigService.getPublicConfig(moduleCode));
         }
-        return R.ok(personalHomepageConfigService.getTenantConfig(tenantId));
+        return R.ok(personalHomepageConfigService.getTenantConfig(tenantId, moduleCode));
     }
 
     @PostMapping("/manage/save")
@@ -89,9 +90,9 @@ public class PersonalHomepageController {
         }
         String scopeLevel = normalizeScope(param.getScopeLevel());
         if ("PUBLIC".equals(scopeLevel)) {
-            personalHomepageConfigService.savePublicConfig(param.getConfig());
+            personalHomepageConfigService.savePublicConfig(param.getModuleCode(), param.getConfig());
         } else {
-            personalHomepageConfigService.saveTenantConfig(TenantContext.get(), param.getConfig());
+            personalHomepageConfigService.saveTenantConfig(TenantContext.get(), param.getModuleCode(), param.getConfig());
         }
         return R.ok(CommonPrompt.SAVE_SUCCESS, Boolean.TRUE);
     }

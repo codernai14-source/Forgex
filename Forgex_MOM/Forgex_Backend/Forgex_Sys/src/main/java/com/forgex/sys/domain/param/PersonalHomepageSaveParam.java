@@ -4,11 +4,19 @@ import com.forgex.common.domain.config.PersonalHomepageConfig;
 import lombok.Data;
 
 /**
- * 个人首页保存参数。
+ * 首页配置保存参数。
  */
 @Data
 public class PersonalHomepageSaveParam {
 
-    /** 个人首页配置 */
+    /**
+     * 模块编码。
+     * <p>空值或 personal 表示个人首页，其它值表示模块首页。</p>
+     */
+    private String moduleCode;
+
+    /**
+     * 首页配置。
+     */
     private PersonalHomepageConfig config;
 }

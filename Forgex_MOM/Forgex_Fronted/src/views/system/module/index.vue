@@ -15,6 +15,7 @@
       <template #toolbar>
         <a-space :size="8">
           <a-button
+            data-guide-id="sys-module-add"
             v-permission="'sys:module:add'"
             type="primary"
             @click="openAddDialog"
@@ -22,6 +23,7 @@
             {{ $t('system.module.addModule') }}
           </a-button>
           <a-button
+            data-guide-id="sys-module-batch-delete"
             v-permission="'sys:module:delete'"
             danger
             :disabled="selectedRowKeys.length === 0"

@@ -30,7 +30,7 @@
     <!-- 主体区域 -->
     <section class="board">
       <!-- 侧边栏： 濡€虫健缁涙盯鈧?-->
-      <aside class="sidebar">
+      <aside class="sidebar" data-guide-id="sys-role-menu-grant-module-filter">
         <div class="panel">
           <div class="panel__title">{{ $t('system.role.moduleFilter') }}</div>
           <button
@@ -49,15 +49,16 @@
       <section class="content-panel">
         <div class="toolbar">
           <a-space>
-            <a-button type="primary" @click="handleSave">
+            <a-button data-guide-id="sys-role-menu-grant-save" type="primary" @click="handleSave">
               <template #icon><SaveOutlined /></template>
               {{ $t('system.role.saveGrant') }}
             </a-button>
-            <a-button @click="handleSelectAll">{{ $t('system.role.selectAll') }}</a-button>
-            <a-button @click="handleSelectInvert">{{ $t('system.role.selectInvert') }}</a-button>
-            <a-button @click="handleClearAll">{{ $t('system.role.clearAll') }}</a-button>
+            <a-button data-guide-id="sys-role-menu-grant-select-all" @click="handleSelectAll">{{ $t('system.role.selectAll') }}</a-button>
+            <a-button data-guide-id="sys-role-menu-grant-invert" @click="handleSelectInvert">{{ $t('system.role.selectInvert') }}</a-button>
+            <a-button data-guide-id="sys-role-menu-grant-clear" @click="handleClearAll">{{ $t('system.role.clearAll') }}</a-button>
           </a-space>
           <a-input-search
+            data-guide-id="sys-role-menu-grant-search"
             v-model:value="searchKeyword"
             :placeholder="$t('system.role.searchMenu')"
             @search="handleSearch"
@@ -643,4 +644,3 @@ onMounted(async () => {
   }
 }
 </style>
-

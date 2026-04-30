@@ -182,6 +182,7 @@ import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHom
 import { getCurrentUserInfo, updateBasicInfo, changePassword } from '@/api/profile'
 import { useGuideStore } from '@/stores/guide'
 import { useUserStore } from '@/stores/user'
+import { listSystemPageGuideCodes } from '@/guide/systemPageGuides'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -288,11 +289,13 @@ async function handleBabyModeChange(checked: boolean) {
   await guideStore.setBabyModeEnabled(checked)
   if (checked) {
     await guideStore.resetGuideState('system.main', 'v1')
+    await Promise.all(listSystemPageGuideCodes().map(code => guideStore.resetGuideState(code, 'v2')))
   }
 }
 
 async function handleReplaySystemGuide() {
   await guideStore.resetGuideState('system.main', 'v1')
+  await Promise.all(listSystemPageGuideCodes().map(code => guideStore.resetGuideState(code, 'v2')))
   router.push('/workspace/home')
 }
 

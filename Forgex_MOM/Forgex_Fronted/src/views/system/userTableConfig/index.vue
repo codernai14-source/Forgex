@@ -13,10 +13,10 @@
 
         <a-form-item>
           <a-space>
-            <a-button type="primary" @click="handleSearch">
+          <a-button data-guide-id="sys-user-table-search" type="primary" @click="handleSearch">
               {{ t('common.search') }}
             </a-button>
-            <a-button @click="handleResetQuery">
+          <a-button data-guide-id="sys-user-table-reset" @click="handleResetQuery">
               {{ t('common.reset') }}
             </a-button>
           </a-space>

@@ -19,8 +19,9 @@
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button
-            v-permission="'sys:online:kickout'"
+        <a-button
+          data-guide-id="sys-online-kickout"
+          v-permission="'sys:online:kickout'"
             danger
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchKickout"
