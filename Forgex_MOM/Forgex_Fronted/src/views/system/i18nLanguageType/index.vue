@@ -15,15 +15,9 @@
     >
       <template #toolbar>
         <a-button data-guide-id="sys-i18n-language-add" type="primary" @click="handleAdd">{{ t('common.add') }}</a-button>
-        <a-upload
-          data-guide-id="sys-i18n-language-import"
-          :show-upload-list="false"
-          :before-upload="handleImport"
-          accept=".xlsx,.xls"
-        >
-          <a-button>导入 Excel</a-button>
-        </a-upload>
-        <a-button data-guide-id="sys-i18n-language-template" @click="downloadTemplate">{{ t('system.excel.downloadTemplate') }}</a-button>
+        <a-button data-guide-id="sys-i18n-language-import" @click="importDialogVisible = true">
+          {{ t('system.excel.commonImport.title') }}
+        </a-button>
       </template>
 
       <template #enabled="{ record }">
@@ -93,6 +87,12 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <CommonImportDialog
+      v-model:open="importDialogVisible"
+      table-code="I18nLanguageTypeTable"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
@@ -103,6 +103,7 @@ import { Modal, message } from 'ant-design-vue'
 import type { FxTableConfig } from '@/api/system/tableConfig'
 import type { Rule } from 'ant-design-vue/es/form'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import type { LanguageType } from '@/api/system/i18n'
 import {
   pageLanguages,
@@ -111,8 +112,6 @@ import {
   updateLanguage,
   deleteLanguage,
   setDefaultLanguage,
-  importLanguages,
-  downloadImportTemplate,
 } from '@/api/system/i18n'
 
 const { t } = useI18n()
@@ -122,6 +121,7 @@ const formRef = ref()
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const saving = ref(false)
+const importDialogVisible = ref(false)
 
 const form = reactive<Partial<LanguageType>>({
   id: null,
@@ -284,41 +284,8 @@ async function handleSetDefault(row: any) {
   })
 }
 
-async function handleImport(file: File) {
-  try {
-    const res = await importLanguages(file)
-    const { successCount, failCount, errorMessage } = res
-    if (failCount > 0 && errorMessage) {
-      Modal.warning({
-        title: t('system.excel.importResult'),
-        content: `${t('system.excel.importSuccess')}: ${successCount}, ${t('system.excel.importFail')}: ${failCount}`,
-        okText: t('common.ok'),
-      })
-    } else {
-      message.success(`${t('system.excel.importSuccess')}: ${successCount}`)
-    }
-    await tableRef.value?.refresh?.()
-  } catch (error) {
-    console.error('导入语言失败', error)
-    message.error(t('system.excel.importFailed'))
-  }
-  return false
-}
-
-async function downloadTemplate() {
-  try {
-    const blob = await downloadImportTemplate()
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'import-template-I18nLanguageTypeTable.xlsx'
-    link.click()
-    window.URL.revokeObjectURL(url)
-    message.success(t('system.excel.downloadSuccess'))
-  } catch (error) {
-    console.error('下载模板失败', error)
-    message.error(t('system.excel.downloadFailed'))
-  }
+async function handleImportSuccess() {
+  await tableRef.value?.refresh?.()
 }
 
 function handleDialogClose() {

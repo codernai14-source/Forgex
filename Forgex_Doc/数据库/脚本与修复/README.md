@@ -35,3 +35,4 @@
 | `doc/sql/20260429_basic_homepage_module_homepage_guide.sql` | 基础信息主页一级菜单、客户/物料菜单权限、模块首页配置、系统管理菜单打开次数表与管理员授权修复 |
 | `doc/sql/20260429_fix_basic_info_material_customer_encode_rule.sql` | 删除空基础信息目录关系，合并物料菜单为单入口，补齐客户主数据字段和子表，新增 `CUSTOMER_CODE` 公共编码规则，并补齐 `CustomerMasterTable`、`MaterialTable` 公共表格配置 |
 | `doc/sql/20260430_fix_invite_encode_codegen_unit.sql` | 补齐 `InviteCodeTable` 公共表格配置、编码规则明细字段、代码生成本地数据源和 `basic_unit` 计量单位表 |
+| `Forgex_Doc/数据库/脚本与修复/20260501_common_import_upgrade.sql` | 公共导入升级脚本，补齐导入配置处理器 Bean、导入权限、多 Sheet 字段，初始化用户、供应商、语言类型导入配置，并写入 Excel 导入提示五语言国际化文案 |

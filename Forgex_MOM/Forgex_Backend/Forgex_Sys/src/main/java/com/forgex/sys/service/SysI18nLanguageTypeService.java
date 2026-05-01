@@ -1,6 +1,8 @@
 package com.forgex.sys.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.domain.entity.i18n.FxI18nLanguageType;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -116,4 +118,12 @@ public interface SysI18nLanguageTypeService {
      * @throws Exception 导入失败时抛出异常
      */
     Map<String, Object> importExcel(MultipartFile file) throws Exception;
+
+    /**
+     * 执行公共导入。
+     *
+     * @param param 公共导入参数
+     * @return 导入结果
+     */
+    FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param);
 }

@@ -26,6 +26,22 @@ public class FxExcelImportConfigItem extends BaseEntity {
     private Long configId;
 
     /**
+     * Sheet 编码。
+     * <p>
+     * 多 Sheet 导入时用于把字段分组；单 Sheet 导入默认使用 {@code main}。
+     * </p>
+     */
+    private String sheetCode;
+
+    /**
+     * Sheet 名称。
+     * <p>
+     * 用于模板生成和前端解析时匹配工作表名称。
+     * </p>
+     */
+    private String sheetName;
+
+    /**
      * 字段多语言配置（JSON）。
      */
     private String i18nJson;
