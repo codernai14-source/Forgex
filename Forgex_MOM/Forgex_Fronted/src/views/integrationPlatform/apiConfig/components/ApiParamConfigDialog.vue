@@ -56,6 +56,7 @@
             :columns="treeColumns"
             :data-source="[requestRoot]"
             :row-key="getRowKey"
+            :scroll="treeTableScroll"
             :indent-size="18"
             :children-column-name="'children'"
             class="tree-table"
@@ -136,6 +137,7 @@
             :columns="treeColumns"
             :data-source="[responseRoot]"
             :row-key="getRowKey"
+            :scroll="treeTableScroll"
             :indent-size="18"
             :children-column-name="'children'"
             class="tree-table"
@@ -217,6 +219,7 @@
           :columns="mappingColumns"
           :data-source="mappingRows"
           :row-key="(_, index) => String(index)"
+          :scroll="mappingTableScroll"
           class="mapping-table"
         >
           <template #bodyCell="{ column, record, index }">
@@ -385,9 +388,11 @@ const treeColumns = computed(() => [
   { title: t('integration.paramConfig.fieldName'), key: 'fieldLabel', width: 180 },
   { title: t('integration.paramConfig.fieldType'), key: 'fieldType', width: 130 },
   { title: t('integration.paramConfig.required'), key: 'required', width: 100, align: 'center' },
-  { title: t('integration.paramConfig.remark'), key: 'remark' },
+  { title: t('integration.paramConfig.remark'), key: 'remark', width: 220 },
   { title: t('common.action'), key: 'action', width: 120, align: 'center' },
 ])
+
+const treeTableScroll = { x: 940 }
 
 const fieldTypeOptions = [
   { label: 'object', value: 'object' },
@@ -399,12 +404,14 @@ const fieldTypeOptions = [
 ]
 
 const mappingColumns = computed(() => [
-  { title: t('integration.mapping.sourcePath'), key: 'sourceFieldPath', width: 260 },
-  { title: t('integration.mapping.targetPath'), key: 'targetFieldPath', width: 260 },
-  { title: `${t('integration.mapping.sourceType')} / ${t('integration.mapping.targetType')}`, key: 'type', width: 180 },
-  { title: t('integration.mapping.remark'), key: 'remark' },
-  { title: t('common.action'), key: 'action', width: 80 },
+  { title: t('integration.mapping.sourcePath'), key: 'sourceFieldPath', width: 280 },
+  { title: t('integration.mapping.targetPath'), key: 'targetFieldPath', width: 280 },
+  { title: `${t('integration.mapping.sourceType')} / ${t('integration.mapping.targetType')}`, key: 'type', width: 170 },
+  { title: t('integration.mapping.remark'), key: 'remark', width: 360 },
+  { title: t('common.action'), key: 'action', width: 90 },
 ])
+
+const mappingTableScroll = { x: 1180, y: 220 }
 
 const importDialogTitle = computed(() => {
   const sideTitle = importDirection.value === 'REQUEST'
@@ -966,7 +973,8 @@ function isMappableNode(node: ApiParamConfigItem) {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--fx-text-primary, #111827);
 }
 
@@ -1004,21 +1012,34 @@ function isMappableNode(node: ApiParamConfigItem) {
 }
 
 .param-config-layout {
-  flex: 1;
+  flex: 1 1 340px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  min-height: 0;
+  min-height: 300px;
   gap: 16px;
   margin-bottom: 16px;
 }
 
 .param-panel,
 .mapping-panel {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   padding: 16px;
   border: 1px solid var(--fx-border-color, #e5e7eb);
   border-radius: 18px;
   background: var(--fx-bg-container, #ffffff);
+  overflow: hidden;
+}
+
+.param-panel {
+  max-height: 100%;
+}
+
+.mapping-panel {
+  flex: 0 0 330px;
+  min-height: 280px;
+  max-height: 38vh;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -1064,7 +1085,44 @@ function isMappableNode(node: ApiParamConfigItem) {
 }
 
 .tree-table {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.mapping-table {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tree-table :deep(.ant-spin-nested-loading),
+.tree-table :deep(.ant-spin-container),
+.mapping-table :deep(.ant-spin-nested-loading),
+.mapping-table :deep(.ant-spin-container) {
+  height: 100%;
+  min-height: 0;
+}
+
+.tree-table :deep(.ant-table-content) {
+  max-height: 100%;
+  overflow: auto !important;
+}
+
+.mapping-table :deep(.ant-table-content) {
+  width: 100%;
+  overflow-x: auto !important;
+}
+
+.mapping-table :deep(.ant-table-body) {
+  overflow: auto !important;
+}
+
+.mapping-table :deep(.ant-table table) {
+  min-width: 1180px;
+  table-layout: fixed !important;
 }
 
 :deep(.ant-table-wrapper),

@@ -281,6 +281,8 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 - 左右分栏页面
 - 高度撑满的管理后台页面
 
+页面接入时要保证父级布局可以提供明确的剩余高度。常见写法是页面根节点使用满高 flex 布局，头部、页签、工具条等固定区域设置 `flex-shrink: 0`，`FxDynamicTable` 容器设置 `flex: 1` 和 `min-height: 0`。如果页面根节点只有 `min-height: 100%` 或自身继续产生外层滚动，组件无法准确拿到表格区域的剩余高度，可能导致表格底部空白过大。
+
 ## 为什么这样设计
 
 ### 1. 避免每个列表页重复造轮子

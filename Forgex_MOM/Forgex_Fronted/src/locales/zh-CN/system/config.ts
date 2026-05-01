@@ -117,7 +117,7 @@ export default {
   storageOss: 'OSS',
   storageMinio: 'MinIO',
   localUploadPath: '本地上传目录',
-  localUploadPathPlaceholder: '请输入本地上传目录，例如 ./uploads',
+  localUploadPathPlaceholder: '请输入本地上传目录，例如 C:/forgex/data/uploads',
   publicBaseUrl: '对外访问地址',
   publicBaseUrlPlaceholder: '请输入外部可访问地址，例如 http://192.168.1.10:8082',
   publicBaseUrlHint: 'LOCAL 模式必须填写其它电脑可访问的 IP 或域名，上传后会基于该地址返回完整文件 URL。',

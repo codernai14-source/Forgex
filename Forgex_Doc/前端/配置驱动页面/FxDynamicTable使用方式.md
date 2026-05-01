@@ -352,6 +352,7 @@ async function handleRequest(payload) {
 - 查询参数尽量通过 `payload.query` 统一传递
 - 保存、删除后由页面主动调用 `refresh()`
 - 自定义列尽量少而精，避免把所有列都改成插槽
+- 页面外层如果还有标题、工具条、页签等固定区域，外层容器需要使用 `height: 100%`、`display: flex`、`flex-direction: column`、`overflow: hidden`，并让 `FxDynamicTable` 所在区域 `flex: 1`、`min-height: 0`。否则动态表格按父容器高度计算时，容易叠加固定区域高度导致底部出现大块空白或页面整体滚动。
 
 ## 常见排查
 

@@ -31,7 +31,7 @@ Forgex_Build 是 Forgex 的统一交付工程，负责生成交付物：
 |---|---|
 | `delivery/windows/installer/` | Windows 安装器（Inno Setup 脚本、启停脚本、WinSW 服务包装） |
 | `delivery/linux/scripts/` | Linux 部署脚本（install.sh、upgrade.sh、rollback.sh、backup.sh、restore.sh） |
-| `license-tools/` | 授权签发工具与请求客户端 |
+| `license-tools/` | 授权签发工具与请求客户端（交付包内仅保留请求客户端发布产物） |
 | `shared/` | 公共模板（Nacos、Nginx、授权示例、安装配置） |
 | `manifest/` | 交付清单（服务清单、版本清单、画像） |
 | `staging/` | 临时收集目录，打包前汇总 |
@@ -87,23 +87,27 @@ powershell -ExecutionPolicy Bypass -File build-linux.ps1 -Version 1.0.0
 安装程序（ForgexSetup.iss）提供：
 - 安装器语言选择（中文 / English），内置按钮、退出确认、安装完成页跟随所选语言显示
 - 实例编码输入页面（默认 `ACME_PROD`）
-- 部署环境选择页面（dev/test/prod/yanshi）
+- 部署环境选择页面仅开放 `prod`（生产环境）和 `yanshi`（演示环境）；`dev`、`test` 为公司内部环境，不在客户安装器中提供
 - 中间件地址输入页面（Nacos、Redis、RocketMQ、MySQL、前端端口）
 - 安装完成后可打开 Forgex 控制中心，控制中心支持中文 / English 运行时切换
 - 自动创建目录结构
 - 自动生成 `config/install-config.yml`
 - 自动生成 `nginx/forgex.conf`，前端根目录指向安装后的 `frontend/`，`/api/` 反向代理到网关服务端口
+- 自动携带 Windows JRE 到 `app/jre/`，客户机器无需再单独安装 Java
 - 创建开始菜单快捷方式（控制中心、启停服务、打开前端）
 
 控制中心启动前端时优先使用安装目录中的 `nginx.exe` 或系统 PATH 中的 Nginx，并加载 `nginx/forgex.conf`；如果客户机器没有 Nginx，则自动回退到控制中心内置静态 Web 服务，保证安装包仍可一键预览和调试。
+
+Windows 默认安装根目录已调整为 `C:\Forgex_{INSTANCE_CODE}`，便于只有 `C` 盘的服务器直接部署。
 
 ### 4.3 目录结构
 
 安装后的目录结构：
 
 ```text
-D:\Forgex_{INSTANCE_CODE}\
-├── app\                    # 应用程序（JAR 文件）
+C:\Forgex_{INSTANCE_CODE}\
+├── app\                    # 应用程序目录
+│   └── jre\                # Windows 内置 JRE
 ├── config\                 # 配置文件
 │   └── install-config.yml  # 安装配置
 ├── data\                   # 数据目录
@@ -125,7 +129,7 @@ D:\Forgex_{INSTANCE_CODE}\
 ├── nginx\                  # Windows Nginx 运行时、配置模板、生成后的 forgex.conf
 ├── nacos\                  # Nacos 环境变量
 └── license-tools\          # 授权客户端
-    └── request-client\     # 请求授权客户端
+    └── request-client\     # 请求授权客户端发布产物（Windows: FxLicenseRequest.exe，Linux: FxLicenseRequest）
 ```
 
 ## 五、Linux 部署
@@ -172,7 +176,7 @@ D:\Forgex_{INSTANCE_CODE}\
 ├── services\               # 后端服务 JAR
 ├── nginx\                  # Nginx 配置
 ├── nacos\                  # Nacos 环境变量
-├── license-tools\          # 授权客户端
+├── license-tools\          # 授权客户端发布产物
 ├── .env                    # 环境变量
 ├── docker-compose.yml      # Docker Compose 配置
 └── *.sh                    # 部署脚本
@@ -220,16 +224,16 @@ docker compose up -d
 | 变量 | 说明 | 示例 |
 |---|---|---|
 | `FORGEX_INSTANCE_CODE` | 实例编码 | `ACME_PROD` |
-| `FORGEX_DEPLOYMENT_PROFILE` | 部署环境展示标识，不再驱动 Spring profile | `dev/test/prod/yanshi` |
+| `FORGEX_DEPLOYMENT_PROFILE` | 部署环境展示标识，不再驱动 Spring profile；客户 Windows 安装器仅允许 `prod` / `yanshi` | `prod` |
 | `FORGEX_NACOS_NAMESPACE` | Nacos 命名空间 | `forgex_dev` |
 | `FORGEX_NACOS_GROUP` | Nacos 分组 | `DEFAULT_GROUP` |
 | `FORGEX_NACOS_DISCOVERY_IP` | 服务注册到 Nacos 的 IP，开发环境建议固定 | `127.0.0.1` |
 | `FORGEX_DATASOURCE_CONFIG` | 默认数据源 Nacos 配置文件名 | `datasource-forgex-dev.yml` |
 | `FORGEX_INTEGRATION_DATASOURCE_CONFIG` | 集成平台数据源 Nacos 配置文件名 | `datasource-forgex-integration-dev.yml` |
-| `FORGEX_HOME` | 安装根目录 | `/opt/Forgex_ACME_PROD` |
+| `FORGEX_HOME` | 安装根目录 | `/opt/Forgex_ACME_PROD` 或 `C:/forgex` |
 | `FORGEX_LICENSE_DIR` | 授权目录 | `/opt/Forgex_ACME_PROD/license` |
-| `FORGEX_UPLOAD_DIR` | 上传目录 | `/opt/Forgex_ACME_PROD/data/uploads` |
-| `FORGEX_LOG_DIR` | 日志目录 | `/opt/Forgex_ACME_PROD/logs` |
+| `FORGEX_UPLOAD_DIR` | 上传目录 | `/opt/Forgex_ACME_PROD/data/uploads` 或 `C:/forgex/data/uploads` |
+| `FORGEX_LOG_DIR` | 日志目录 | `/opt/Forgex_ACME_PROD/logs` 或 `C:/forgex/logs` |
 | `FORGEX_BACKUP_DIR` | 备份目录 | `/opt/Forgex_ACME_PROD/backup` |
 | `FORGEX_NACOS_ADDR` | Nacos 地址 | `127.0.0.1:8848` |
 | `FORGEX_REDIS_ADDR` | Redis 地址 | `127.0.0.1:6379` |
@@ -248,6 +252,13 @@ docker compose up -d
 | `FORGEX_INTEGRATION_PORT` | 9007 | 集成服务端口 |
 | `FORGEX_WORKFLOW_PORT` | 9005 | 工作流端口 |
 | `FORGEX_REPORT_PORT` | 8084 | 报表服务端口 |
+
+### 6.3 上传目录与日志目录说明
+
+1. 文件上传目录优先走系统数据库配置 `file.upload.settings.localUploadPath`，部署时也可以通过 `FORGEX_UPLOAD_DIR` 提供启动兜底值。
+2. 上传后的访问地址会写入 `sys_file_record.access_url`，前端页面直接使用该地址即可。
+3. 运行日志目录不能走数据库配置。原因是日志系统在应用启动早期就要初始化，此时数据库连接和系统配置服务尚未可用。
+4. 因此日志目录统一通过 `FORGEX_LOG_DIR` / `forgex.deployment.log-dir` 控制，上传目录与日志目录的配置方式是不同的。
 
 ## 七、Nacos 配置
 
@@ -272,14 +283,15 @@ Nacos 配置示例存放在 `nacos配置/DEFAULT_GROUP/` 目录：
 
 ## 九、Windows 控制台部署补充
 
-Windows 安装包会把前端静态资源、后端 Java 服务 JAR、授权公钥、脚本、Windows 版 Nginx 运行时和 Forgex Control Center 一起放入安装目录。Nacos、Redis、RocketMQ、MySQL 按外部中间件处理，安装时填写地址，不由 Forgex 安装包自动安装。
+Windows 安装包会把前端静态资源、后端 Java 服务 JAR、Windows JRE、授权公钥、脚本、Windows 版 Nginx 运行时和 Forgex Control Center 一起放入安装目录。Nacos、Redis、RocketMQ、MySQL 按外部中间件处理，安装时填写地址，不由 Forgex 安装包自动安装。
 
 安装后关键文件如下：
 
 ```text
-D:\Forgex_{INSTANCE_CODE}\
+C:\Forgex_{INSTANCE_CODE}\
 ├─ config\install-config.yml
 ├─ config\forgex-control.json
+├─ app\jre\bin\java.exe
 ├─ frontend\
 ├─ nginx\nginx.exe
 ├─ nginx\conf\mime.types
@@ -302,4 +314,4 @@ Forgex Control Center 功能：
 服务控制策略：
 - 如果安装包内存在 WinSW.exe，安装脚本会注册 Windows 服务。
 - 如果没有 WinSW.exe，控制台会以 Java 进程模式启动和停止服务，并在 `data/service-state` 记录 pid。
-- 启动服务时会注入 `FORGEX_HOME`、`FORGEX_LICENSE_DIR`、`FORGEX_NACOS_ADDR`、`FORGEX_REDIS_ADDR`、`FORGEX_ROCKETMQ_NAME_SERVER`、`FORGEX_MYSQL_URL` 等环境变量。
+- 启动服务时会注入 `FORGEX_HOME`、`FORGEX_LICENSE_DIR`、`FORGEX_UPLOAD_DIR`、`FORGEX_LOG_DIR`、`FORGEX_NACOS_ADDR`、`FORGEX_REDIS_ADDR`、`FORGEX_ROCKETMQ_NAME_SERVER`、`FORGEX_MYSQL_URL` 等环境变量。

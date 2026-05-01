@@ -47,6 +47,11 @@ logging:
     com.forgex.report: ${FORGEX_REPORT_LOG_LEVEL:DEBUG}
 
 forgex:
+  deployment:
+    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
+    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
+    home: ${FORGEX_HOME:C:/forgex}
+    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:C:/forgex}/logs}
   report:
     template-path: templates/report
     enable-ureport: true

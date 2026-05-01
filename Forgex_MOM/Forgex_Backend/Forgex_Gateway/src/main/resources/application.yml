@@ -200,11 +200,11 @@ forgex:
   deployment:
     profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
     instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
-    home: ${FORGEX_HOME:./forgex}
-    license-dir: ${FORGEX_LICENSE_DIR:${FORGEX_HOME:./forgex}/license}
-    upload-dir: ${FORGEX_UPLOAD_DIR:${FORGEX_HOME:./forgex}/data/uploads}
-    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:./forgex}/logs}
-    backup-dir: ${FORGEX_BACKUP_DIR:${FORGEX_HOME:./forgex}/backup}
+    home: ${FORGEX_HOME:C:/forgex}
+    license-dir: ${FORGEX_LICENSE_DIR:${FORGEX_HOME:C:/forgex}/license}
+    upload-dir: ${FORGEX_UPLOAD_DIR:${FORGEX_HOME:C:/forgex}/data/uploads}
+    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:C:/forgex}/logs}
+    backup-dir: ${FORGEX_BACKUP_DIR:${FORGEX_HOME:C:/forgex}/backup}
     nacos-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
     redis-addr: ${FORGEX_REDIS_ADDR:175.27.135.204:6379}
     mysql-url: ${FORGEX_MYSQL_URL:}
