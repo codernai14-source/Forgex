@@ -328,6 +328,7 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       BasicSupplier: '../views/basic/supplier/index.vue',
       BasicEncodeRule: '../views/basic/encodeRule/index.vue',
       BasicMaterial: '../views/basic/material/index.vue',
+      BasicUnit: '../views/basic/unit/index.vue',
       BasicMaterialRaw: '../views/basic/material/index.vue',
       BasicMaterialSemiFinished: '../views/basic/material/index.vue',
       BasicMaterialFinished: '../views/basic/material/index.vue',

@@ -213,6 +213,18 @@ async function handleRequest(payload) {
 </template>
 ```
 
+## 列设置与列宽
+
+公共列设置入口默认显示在表格工具栏右侧。用户可以：
+
+- 勾选或取消勾选列，控制显示 / 隐藏。
+- 拖拽列名前的排序手柄调整显示顺序。
+- 在列宽输入框中设置宽度，保存后刷新仍生效。
+- 直接拖拽表头右侧手柄实时调整列宽，释放鼠标后自动持久化。
+- 直接拖拽表头文字区域调整列顺序，释放到目标列后自动持久化。
+
+列设置保存到用户个性化配置 `fx_user_table_config.column_config`，结构包含 `field`、`visible`、`order`、`width`。列宽允许范围为 `60px` 到 `800px`。`action` 操作列由组件固定到最右侧，不开放拖拽改宽或换位。
+
 ## 操作列按钮规则
 
 表格 `action` 列统一使用 `src/components/common/FxActionGroup.vue` 表达行操作。页面传入 `ActionItem[]`，组件会先按 `permission`、`hidden` 过滤，再按传入顺序决定常用操作优先级。
