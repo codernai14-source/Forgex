@@ -6,11 +6,27 @@
       row-key="_key"
       :pagination="false"
       size="small"
-      :scroll="{ x: 1100 }"
+      :scroll="{ x: 1500 }"
     >
       <template #bodyCell="{ column, record, index }">
         <!-- 字段名称 -->
-        <template v-if="column.key === 'fieldName'">
+        <template v-if="column.key === 'sheetCode'">
+          <a-input
+            v-model:value="record.sheetCode"
+            :placeholder="t('system.excel.sheetCode')"
+            @update:value="handleFieldChange"
+          />
+        </template>
+
+        <template v-else-if="column.key === 'sheetName'">
+          <a-input
+            v-model:value="record.sheetName"
+            :placeholder="t('system.excel.sheetName')"
+            @update:value="handleFieldChange"
+          />
+        </template>
+
+        <template v-else-if="column.key === 'fieldName'">
           <a-input
             v-model:value="record.fieldName"
             :placeholder="t('system.excel.importField')"
@@ -139,6 +155,18 @@ const { t } = useI18n()
  */
 const columns = computed(() => [
   {
+    title: t('system.excel.sheetCode'),
+    key: 'sheetCode',
+    dataIndex: 'sheetCode',
+    width: 140
+  },
+  {
+    title: t('system.excel.sheetName'),
+    key: 'sheetName',
+    dataIndex: 'sheetName',
+    width: 140
+  },
+  {
     title: t('system.excel.importField'),
     key: 'fieldName',
     dataIndex: 'fieldName',
@@ -212,6 +240,9 @@ const handleFieldChange = () => {
 function createField() {
   return {
     fieldName: '',
+    importField: '',
+    sheetCode: 'main',
+    sheetName: '',
     fieldType: 'string',
     dataSourceConfig: {},
     required: false,
@@ -266,7 +297,11 @@ function resetOrder() {
  * 触发更新事件
  */
 const emitUpdate = () => {
-  const cleanFields = fields.value.map(({ _key, ...rest }) => rest)
+  const cleanFields = fields.value.map(({ _key, ...rest }) => ({
+    ...rest,
+    importField: rest.importField || rest.fieldName,
+    sheetCode: rest.sheetCode || 'main',
+  }))
   emit('update:modelValue', cleanFields)
 }
 

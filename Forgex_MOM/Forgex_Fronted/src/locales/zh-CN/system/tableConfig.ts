@@ -32,6 +32,8 @@ export default {
     reset: '重置',
     resetSuccess: '已恢复为默认列配置',
     hint: '勾选需要显示的列，并拖动调整显示顺序',
+    dragSort: '拖拽排序',
+    dragResize: '拖拽调整列宽',
   },
   form: {
     tableCode: '请输入表格编码',

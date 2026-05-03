@@ -45,6 +45,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,65 +98,133 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              Workbook wb = new XSSFWorkbook()) {
 
-            Sheet sheet = wb.createSheet("Template");
-
-            List<FxExcelImportConfigItemDTO> items = new ArrayList<>(config.getItems());
-            items.sort(Comparator.comparing(i -> i.getOrderNum() == null ? 0 : i.getOrderNum()));
-
-            int columnSize = items.isEmpty() ? 1 : items.size();
-
-            int rowIndex = 0;
-            
-            // 第 1 行：模板说明（带样式）
-            if (StringUtils.hasText(config.getSubtitle())) {
-                Row row = sheet.createRow(rowIndex);
-                Cell cell = row.createCell(0);
-                cell.setCellValue(config.getSubtitle());
-                if (columnSize > 1) {
-                    sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, columnSize - 1));
-                }
-                // 应用说明样式（背景色#8EC67F，自动换行）
-                applySubtitleStyle(wb, cell, config.getSubtitleStyleJson());
-                rowIndex++;
+            Map<String, List<FxExcelImportConfigItemDTO>> sheetItemMap = groupImportItemsBySheet(config.getItems());
+            for (Map.Entry<String, List<FxExcelImportConfigItemDTO>> entry : sheetItemMap.entrySet()) {
+                List<FxExcelImportConfigItemDTO> items = entry.getValue();
+                String sheetName = resolveSheetName(entry.getKey(), items);
+                Sheet sheet = wb.createSheet(safeSheetName(wb, sheetName));
+                writeImportTemplateSheet(wb, sheet, config, items);
             }
-            
-            // 第 2 行：模板标题
-            if (StringUtils.hasText(config.getTitle())) {
-                Row row = sheet.createRow(rowIndex);
-                Cell cell = row.createCell(0);
-                cell.setCellValue(config.getTitle());
-                if (columnSize > 1) {
-                    sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, columnSize - 1));
-                }
-                rowIndex++;
-            }
-
-            // 第 3 行：列头
-            Row headerRow = sheet.createRow(rowIndex);
-            int colIndex = 0;
-            for (FxExcelImportConfigItemDTO item : items) {
-                String header = resolveHeader(item.getI18nJson(), item.getImportField());
-                if (Boolean.TRUE.equals(item.getRequired())) {
-                    header = header + " *";
-                }
-                // 添加字段备注（如果有）
-                if (StringUtils.hasText(item.getFieldRemark())) {
-                    header = header + " (" + item.getFieldRemark() + ")";
-                }
-                Cell cell = headerRow.createCell(colIndex++);
-                cell.setCellValue(header);
-                
-                // 添加数据验证（下拉框）
-                addDataValidation(wb, sheet, item, rowIndex, colIndex - 1);
-            }
-
-            sheet.createFreezePane(0, rowIndex + 1);
 
             wb.write(bos);
             return bos.toByteArray();
         } catch (Exception e) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_BUILD_FAILED, e.getMessage());
         }
+    }
+
+    /**
+     * 写入单个导入模板 Sheet。
+     *
+     * @param wb     工作簿
+     * @param sheet  工作表
+     * @param config 导入配置
+     * @param items  当前 Sheet 字段
+     */
+    private void writeImportTemplateSheet(Workbook wb,
+                                          Sheet sheet,
+                                          FxExcelImportConfigDTO config,
+                                          List<FxExcelImportConfigItemDTO> items) {
+        items.sort(Comparator.comparing(i -> i.getOrderNum() == null ? 0 : i.getOrderNum()));
+        int columnSize = items.isEmpty() ? 1 : items.size();
+        int rowIndex = 0;
+
+        if (StringUtils.hasText(config.getSubtitle())) {
+            Row row = sheet.createRow(rowIndex);
+            Cell cell = row.createCell(0);
+            cell.setCellValue(config.getSubtitle());
+            if (columnSize > 1) {
+                sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, columnSize - 1));
+            }
+            applySubtitleStyle(wb, cell, config.getSubtitleStyleJson());
+            rowIndex++;
+        }
+
+        if (StringUtils.hasText(config.getTitle())) {
+            Row row = sheet.createRow(rowIndex);
+            Cell cell = row.createCell(0);
+            cell.setCellValue(config.getTitle());
+            if (columnSize > 1) {
+                sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, columnSize - 1));
+            }
+            rowIndex++;
+        }
+
+        Row headerRow = sheet.createRow(rowIndex);
+        int colIndex = 0;
+        for (FxExcelImportConfigItemDTO item : items) {
+            String header = resolveHeader(item.getI18nJson(), item.getImportField());
+            if (Boolean.TRUE.equals(item.getRequired())) {
+                header = header + " *";
+            }
+            if (StringUtils.hasText(item.getFieldRemark())) {
+                header = header + " (" + item.getFieldRemark() + ")";
+            }
+            Cell cell = headerRow.createCell(colIndex++);
+            cell.setCellValue(header);
+            sheet.setColumnWidth(colIndex - 1, 18 * 256);
+            addDataValidation(wb, sheet, item, rowIndex, colIndex - 1);
+        }
+        sheet.createFreezePane(0, rowIndex + 1);
+    }
+
+    /**
+     * 按 Sheet 编码分组导入字段。
+     *
+     * @param items 导入字段
+     * @return Sheet 分组
+     */
+    private Map<String, List<FxExcelImportConfigItemDTO>> groupImportItemsBySheet(List<FxExcelImportConfigItemDTO> items) {
+        Map<String, List<FxExcelImportConfigItemDTO>> result = new LinkedHashMap<>();
+        for (FxExcelImportConfigItemDTO item : items) {
+            String sheetCode = StringUtils.hasText(item.getSheetCode()) ? item.getSheetCode().trim() : "main";
+            result.computeIfAbsent(sheetCode, key -> new ArrayList<>()).add(item);
+        }
+        return result;
+    }
+
+    /**
+     * 解析 Sheet 名称。
+     *
+     * @param sheetCode Sheet 编码
+     * @param items     字段列表
+     * @return Sheet 名称
+     */
+    private String resolveSheetName(String sheetCode, List<FxExcelImportConfigItemDTO> items) {
+        if (items != null) {
+            for (FxExcelImportConfigItemDTO item : items) {
+                if (StringUtils.hasText(item.getSheetName())) {
+                    return item.getSheetName().trim();
+                }
+            }
+        }
+        if ("main".equalsIgnoreCase(sheetCode)) {
+            return "Template";
+        }
+        return StringUtils.hasText(sheetCode) ? sheetCode : "Template";
+    }
+
+    /**
+     * 转换为 Excel 允许的 Sheet 名称，并避免重名。
+     *
+     * @param wb        工作簿
+     * @param sheetName 原始 Sheet 名称
+     * @return 安全 Sheet 名称
+     */
+    private String safeSheetName(Workbook wb, String sheetName) {
+        String value = StringUtils.hasText(sheetName) ? sheetName.trim() : "Template";
+        value = value.replaceAll("[\\\\/?*\\[\\]:]", "_");
+        if (value.length() > 31) {
+            value = value.substring(0, 31);
+        }
+        String candidate = value;
+        int index = 1;
+        while (wb.getSheet(candidate) != null) {
+            String suffix = "_" + index++;
+            int maxLength = Math.max(1, 31 - suffix.length());
+            candidate = value.substring(0, Math.min(value.length(), maxLength)) + suffix;
+        }
+        return candidate;
     }
 
     /**

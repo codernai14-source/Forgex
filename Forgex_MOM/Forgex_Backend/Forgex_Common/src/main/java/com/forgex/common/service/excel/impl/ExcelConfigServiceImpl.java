@@ -200,6 +200,8 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         }
         entity.setTableName(dto.getTableName());
         entity.setTableCode(dto.getTableCode());
+        entity.setHandlerBeanName(dto.getHandlerBeanName());
+        entity.setImportPermission(dto.getImportPermission());
         entity.setTitle(dto.getTitle());
         entity.setTitleI18nJson(dto.getTitleI18nJson());
         entity.setSubtitle(dto.getSubtitle());
@@ -218,6 +220,8 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
             for (FxExcelImportConfigItemDTO item : dto.getItems()) {
                 FxExcelImportConfigItem it = new FxExcelImportConfigItem();
                 it.setConfigId(entity.getId());
+                it.setSheetCode(item.getSheetCode());
+                it.setSheetName(item.getSheetName());
                 it.setI18nJson(item.getI18nJson());
                 it.setImportField(item.getImportField());
                 it.setFieldType(item.getFieldType());
@@ -287,6 +291,8 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         dto.setId(cfg.getId());
         dto.setTableName(cfg.getTableName());
         dto.setTableCode(cfg.getTableCode());
+        dto.setHandlerBeanName(cfg.getHandlerBeanName());
+        dto.setImportPermission(cfg.getImportPermission());
         dto.setTitle(cfg.getTitle());
         dto.setTitleI18nJson(cfg.getTitleI18nJson());
         dto.setSubtitle(cfg.getSubtitle());
@@ -302,12 +308,15 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         }
         List<FxExcelImportConfigItem> list = importItemMapper.selectList(new LambdaQueryWrapper<FxExcelImportConfigItem>()
                 .eq(FxExcelImportConfigItem::getConfigId, configId)
+                .orderByAsc(FxExcelImportConfigItem::getSheetCode)
                 .orderByAsc(FxExcelImportConfigItem::getOrderNum)
                 .orderByAsc(FxExcelImportConfigItem::getId));
         return list.stream().map(it -> {
             FxExcelImportConfigItemDTO dto = new FxExcelImportConfigItemDTO();
             dto.setId(it.getId());
             dto.setConfigId(it.getConfigId());
+            dto.setSheetCode(it.getSheetCode());
+            dto.setSheetName(it.getSheetName());
             dto.setI18nJson(it.getI18nJson());
             dto.setImportField(it.getImportField());
             dto.setFieldType(it.getFieldType());

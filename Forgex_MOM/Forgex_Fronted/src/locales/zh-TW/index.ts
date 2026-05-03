@@ -11,6 +11,7 @@ import personalHomepage from './personalHomepage'
 import profile from './profile'
 import operationLog from './operationLog'
 import integration from './integration'
+import basic from './basic'
 
 export default {
   common,
@@ -20,6 +21,7 @@ export default {
   system,
   workflow,
   integration,
+  basic,
   personalHomepage,
   profile,
   operationLog,

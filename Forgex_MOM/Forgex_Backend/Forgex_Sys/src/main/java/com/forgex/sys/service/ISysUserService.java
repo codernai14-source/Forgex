@@ -18,6 +18,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.dto.UserThirdPartyPullResultDTO;
 import com.forgex.common.api.dto.UserThirdPartySyncDTO;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysUser;
@@ -364,6 +366,14 @@ public interface ISysUserService extends IService<SysUser> {
     UserThirdPartyPullResultDTO syncThirdPartyUsers(Long tenantId, List<UserThirdPartySyncDTO> users);
 
     UserThirdPartyPullResultDTO importUsers(Long tenantId, MultipartFile file) throws Exception;
+
+    /**
+     * 执行公共导入。
+     *
+     * @param param 公共导入参数
+     * @return 导入结果
+     */
+    FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param);
 
     List<Long> listUserIdsByDeptIds(Long tenantId, List<Long> deptIds);
 

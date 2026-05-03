@@ -6,6 +6,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.i18n.LegacyMessageTranslator;
 import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
 import lombok.extern.slf4j.Slf4j;
@@ -118,7 +119,7 @@ public class GlobalExceptionHandler {
         if (code == null) {
             code = StatusCode.BUSINESS_ERROR;
         }
-        return R.fail(code, CommonPrompt.BAD_REQUEST, e.getMessage());
+        return R.fail(code, CommonPrompt.BAD_REQUEST, LegacyMessageTranslator.translate(e.getMessage()));
     }
 
     /** 参数解析/校验错误 */
@@ -127,14 +128,14 @@ public class GlobalExceptionHandler {
         String msg = "";
         if (e instanceof MethodArgumentNotValidException manv) {
             msg = manv.getBindingResult().getFieldErrors().stream()
-                    .map(fe -> fe.getField() + ":" + (fe.getDefaultMessage() == null ? "不合法" : fe.getDefaultMessage()))
+                    .map(fe -> formatFieldError(fe))
                     .collect(Collectors.joining("; "));
         } else if (e instanceof BindException be) {
             msg = be.getBindingResult().getFieldErrors().stream()
-                    .map(fe -> fe.getField() + ":" + (fe.getDefaultMessage() == null ? "不合法" : fe.getDefaultMessage()))
+                    .map(fe -> formatFieldError(fe))
                     .collect(Collectors.joining("; "));
         } else if (e instanceof HttpMessageNotReadableException hm) {
-            msg = hm.getMessage();
+            msg = LegacyMessageTranslator.translate(hm.getMessage());
         }
         log.warn("参数错误: {}", msg);
         return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, msg);
@@ -159,6 +160,11 @@ public class GlobalExceptionHandler {
     public R<Object> handleDefault(Exception e) {
         log.error("未处理异常", e);
         String msg = e.getMessage() == null ? "" : e.getMessage();
-        return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.INTERNAL_SERVER_ERROR, msg);
+        return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.INTERNAL_SERVER_ERROR, LegacyMessageTranslator.translate(msg));
+    }
+
+    private String formatFieldError(FieldError fieldError) {
+        String defaultMessage = fieldError.getDefaultMessage() == null ? "不合法" : fieldError.getDefaultMessage();
+        return fieldError.getField() + ":" + LegacyMessageTranslator.translate(defaultMessage);
     }
 }

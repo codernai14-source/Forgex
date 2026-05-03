@@ -29,12 +29,15 @@ import com.forgex.common.api.dto.SupplierQueryRequestDTO;
 import com.forgex.common.api.dto.SupplierThirdPartyInvokeDTO;
 import com.forgex.common.api.dto.SupplierThirdPartySyncRequestDTO;
 import com.forgex.common.api.dto.SupplierThirdPartySyncResultDTO;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.api.dto.SysTenantCreateRequestDTO;
 import com.forgex.common.api.dto.SysTenantSimpleDTO;
 import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
 import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
+import com.forgex.common.enums.FxExcelImportMode;
 import com.forgex.common.enums.TenantTypeEnum;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.service.EncodeRuleService;
@@ -410,6 +413,34 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param) {
+        return handle(param);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
+        FxExcelImportMode mode = FxExcelImportMode.parse(param == null ? null : param.getImportMode());
+        List<SupplierAggregateDTO> aggregates = readImportData(param);
+        FxExcelImportResultDTO result = new FxExcelImportResultDTO();
+        result.setTotalCount(aggregates.size());
+        if (mode == FxExcelImportMode.COVER) {
+            coverSuppliers();
+        }
+        for (SupplierAggregateDTO aggregate : aggregates) {
+            String supplierCode = aggregate == null ? null : normalizeCode(aggregate.getSupplierCode());
+            try {
+                validateAggregate(aggregate);
+                handleSupplierAggregate(mode, aggregate, result);
+            } catch (Exception ex) {
+                log.warn("公共导入供应商失败，supplierCode={}", supplierCode, ex);
+                result.addError(StringUtils.hasText(supplierCode) ? supplierCode : "UNKNOWN");
+            }
+        }
+        return result;
+    }
+
+    @Override
     public void exportExcel(SupplierPageParam param, OutputStream outputStream) throws IOException {
         List<SupplierDTO> suppliers = list(param);
         List<SupplierDTO> details = suppliers.stream()
@@ -654,6 +685,238 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                 aggregate.getContactList() != null,
                 aggregate.getQualificationList() != null);
         return created;
+    }
+
+    /**
+     * 按公共导入模式处理供应商聚合数据。
+     *
+     * @param mode      导入模式
+     * @param aggregate 供应商聚合
+     * @param result    导入结果
+     */
+    private void handleSupplierAggregate(FxExcelImportMode mode, SupplierAggregateDTO aggregate, FxExcelImportResultDTO result) {
+        BasicSupplier existing = findByCode(aggregate.getSupplierCode());
+        if (existing == null) {
+            if (mode == FxExcelImportMode.UPDATE) {
+                result.increaseSkipped();
+                return;
+            }
+            saveAggregate(null, aggregate);
+            result.increaseCreated();
+            return;
+        }
+        if (mode == FxExcelImportMode.ADD) {
+            result.increaseSkipped();
+            return;
+        }
+        saveAggregate(existing, aggregate);
+        result.increaseUpdated();
+    }
+
+    /**
+     * 保存供应商聚合。
+     *
+     * @param supplier  已存在供应商，为空时新增
+     * @param aggregate 供应商聚合
+     */
+    private void saveAggregate(BasicSupplier supplier, SupplierAggregateDTO aggregate) {
+        boolean created = supplier == null;
+        BasicSupplier target = created ? new BasicSupplier() : supplier;
+        if (created) {
+            target.setTenantId(PUBLIC_TENANT_ID);
+            target.setReviewStatus(aggregate.getReviewStatus() == null ? REVIEW_PENDING : aggregate.getReviewStatus());
+        }
+        fillSupplierFromAggregate(target, aggregate);
+        target.setTenantId(PUBLIC_TENANT_ID);
+        if (created) {
+            supplierMapper.insert(target);
+        } else {
+            supplierMapper.updateById(target);
+        }
+        saveChildren(target.getId(),
+                aggregate.getDetail(),
+                aggregate.getContactList(),
+                aggregate.getQualificationList(),
+                aggregate.getContactList() != null,
+                aggregate.getQualificationList() != null);
+    }
+
+    /**
+     * 覆盖导入前清理供应商主数据及子表。
+     */
+    private void coverSuppliers() {
+        List<Long> supplierIds = supplierMapper.selectList(new LambdaQueryWrapper<BasicSupplier>()
+                        .select(BasicSupplier::getId)
+                        .eq(BasicSupplier::getDeleted, false))
+                .stream()
+                .map(BasicSupplier::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (supplierIds.isEmpty()) {
+            return;
+        }
+        detailMapper.delete(new LambdaQueryWrapper<BasicSupplierDetail>().in(BasicSupplierDetail::getSupplierId, supplierIds));
+        contactMapper.delete(new LambdaQueryWrapper<BasicSupplierContact>().in(BasicSupplierContact::getSupplierId, supplierIds));
+        qualificationMapper.delete(new LambdaQueryWrapper<BasicSupplierQualification>().in(BasicSupplierQualification::getSupplierId, supplierIds));
+        supplierMapper.delete(new LambdaQueryWrapper<BasicSupplier>().in(BasicSupplier::getId, supplierIds));
+    }
+
+    /**
+     * 从公共导入参数读取供应商聚合数据。
+     *
+     * @param param 导入参数
+     * @return 供应商聚合列表
+     */
+    private List<SupplierAggregateDTO> readImportData(FxExcelImportExecuteParam param) {
+        if (param == null || param.getImportData() == null) {
+            return Collections.emptyList();
+        }
+        Map<String, SupplierAggregateDTO> aggregateMap = new LinkedHashMap<>();
+        Set<String> mainCodes = readMainImportData(param.getImportData().get("main"), aggregateMap);
+        readDetailImportData(param.getImportData().get("detail"), aggregateMap, mainCodes);
+        readContactImportData(param.getImportData().get("contact"), aggregateMap, mainCodes);
+        readQualificationImportData(param.getImportData().get("qualification"), aggregateMap, mainCodes);
+        return new ArrayList<>(aggregateMap.values());
+    }
+
+    private Set<String> readMainImportData(List<Map<String, Object>> rows, Map<String, SupplierAggregateDTO> aggregateMap) {
+        Set<String> mainCodes = new java.util.HashSet<>();
+        if (CollectionUtils.isEmpty(rows)) {
+            throw supplierException(BasicPromptEnum.SUPPLIER_IMPORT_MAIN_SHEET_EMPTY);
+        }
+        for (Map<String, Object> row : rows) {
+            String supplierCode = normalizeCode(value(row, "supplierCode"));
+            if (!StringUtils.hasText(supplierCode)) {
+                continue;
+            }
+            if (!mainCodes.add(supplierCode)) {
+                throw supplierException(BasicPromptEnum.SUPPLIER_IMPORT_MAIN_CODE_DUPLICATED, supplierCode);
+            }
+            SupplierAggregateDTO dto = aggregateMap.computeIfAbsent(supplierCode, code -> {
+                SupplierAggregateDTO item = new SupplierAggregateDTO();
+                item.setSupplierCode(code);
+                return item;
+            });
+            dto.setSupplierFullName(value(row, "supplierFullName"));
+            dto.setSupplierShortName(value(row, "supplierShortName"));
+            dto.setLogoUrl(value(row, "logoUrl"));
+            dto.setEnglishName(value(row, "englishName"));
+            dto.setCurrentAddress(value(row, "currentAddress"));
+            dto.setPrimaryContact(value(row, "primaryContact"));
+            dto.setContactPhone(value(row, "contactPhone"));
+            dto.setCooperationStatus(value(row, "cooperationStatus"));
+            dto.setCreditLevel(value(row, "creditLevel"));
+            dto.setRiskLevel(value(row, "riskLevel"));
+            dto.setSupplierLevel(value(row, "supplierLevel"));
+            dto.setRelatedTenantCode(value(row, "relatedTenantCode"));
+            dto.setReviewStatus(parseInteger(value(row, "reviewStatus")));
+            dto.setRemark(value(row, "remark"));
+        }
+        if (mainCodes.isEmpty()) {
+            throw supplierException(BasicPromptEnum.SUPPLIER_IMPORT_MAIN_SHEET_EMPTY);
+        }
+        return mainCodes;
+    }
+
+    private void readDetailImportData(List<Map<String, Object>> rows, Map<String, SupplierAggregateDTO> aggregateMap, Set<String> mainCodes) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        for (Map<String, Object> row : rows) {
+            String supplierCode = normalizeCode(value(row, "supplierCode"));
+            if (!StringUtils.hasText(supplierCode)) {
+                continue;
+            }
+            validateImportSupplierCode(supplierCode, mainCodes, "详情", 0);
+            SupplierAggregateDTO aggregate = aggregateMap.computeIfAbsent(supplierCode, code -> {
+                SupplierAggregateDTO item = new SupplierAggregateDTO();
+                item.setSupplierCode(code);
+                return item;
+            });
+            SupplierDetailDTO detail = new SupplierDetailDTO();
+            detail.setLegalRepresentative(value(row, "legalRepresentative"));
+            detail.setRegisteredCapital(parseBigDecimal(value(row, "registeredCapital")));
+            detail.setEstablishmentDate(parseDate(value(row, "establishmentDate")));
+            detail.setEnterpriseNature(value(row, "enterpriseNature"));
+            detail.setIndustryCategory(value(row, "industryCategory"));
+            detail.setRegisteredAddress(value(row, "registeredAddress"));
+            detail.setBusinessAddress(value(row, "businessAddress"));
+            detail.setEmail(value(row, "email"));
+            detail.setTaxNumber(value(row, "taxNumber"));
+            detail.setBankName(value(row, "bankName"));
+            detail.setBankAccount(value(row, "bankAccount"));
+            detail.setInvoiceType(value(row, "invoiceType"));
+            detail.setDefaultTaxRate(parseBigDecimal(value(row, "defaultTaxRate")));
+            aggregate.setDetail(detail);
+        }
+    }
+
+    private void readContactImportData(List<Map<String, Object>> rows, Map<String, SupplierAggregateDTO> aggregateMap, Set<String> mainCodes) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        for (Map<String, Object> row : rows) {
+            String supplierCode = normalizeCode(value(row, "supplierCode"));
+            if (!StringUtils.hasText(supplierCode)) {
+                continue;
+            }
+            validateImportSupplierCode(supplierCode, mainCodes, "联系人", 0);
+            SupplierAggregateDTO aggregate = aggregateMap.computeIfAbsent(supplierCode, code -> {
+                SupplierAggregateDTO item = new SupplierAggregateDTO();
+                item.setSupplierCode(code);
+                return item;
+            });
+            if (aggregate.getContactList() == null) {
+                aggregate.setContactList(new ArrayList<>());
+            }
+            SupplierContactDTO contact = new SupplierContactDTO();
+            contact.setContactName(value(row, "contactName"));
+            contact.setContactPhone(value(row, "contactPhone"));
+            contact.setContactPosition(value(row, "contactPosition"));
+            contact.setContactEmail(value(row, "contactEmail"));
+            aggregate.getContactList().add(contact);
+        }
+    }
+
+    private void readQualificationImportData(List<Map<String, Object>> rows, Map<String, SupplierAggregateDTO> aggregateMap, Set<String> mainCodes) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        for (Map<String, Object> row : rows) {
+            String supplierCode = normalizeCode(value(row, "supplierCode"));
+            if (!StringUtils.hasText(supplierCode)) {
+                continue;
+            }
+            validateImportSupplierCode(supplierCode, mainCodes, "资质", 0);
+            SupplierAggregateDTO aggregate = aggregateMap.computeIfAbsent(supplierCode, code -> {
+                SupplierAggregateDTO item = new SupplierAggregateDTO();
+                item.setSupplierCode(code);
+                return item;
+            });
+            if (aggregate.getQualificationList() == null) {
+                aggregate.setQualificationList(new ArrayList<>());
+            }
+            SupplierQualificationDTO qualification = new SupplierQualificationDTO();
+            qualification.setQualificationType(value(row, "qualificationType"));
+            qualification.setCertificateNo(value(row, "certificateNo"));
+            qualification.setIssueDate(parseDate(value(row, "issueDate")));
+            qualification.setExpireDate(parseDate(value(row, "expireDate")));
+            qualification.setAttachment(value(row, "attachment"));
+            qualification.setValid(parseBoolean(value(row, "valid")));
+            aggregate.getQualificationList().add(qualification);
+        }
+    }
+
+    private String value(Map<String, Object> row, String key) {
+        if (row == null || key == null) {
+            return null;
+        }
+        Object value = row.get(key);
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return StringUtils.hasText(text) ? text : null;
     }
 
     private void fillSupplierFromAggregate(BasicSupplier supplier, SupplierAggregateDTO aggregate) {

@@ -109,6 +109,7 @@ export interface UserColumnItem {
   field: string
   visible: boolean
   order: number
+  width?: number
 }
 
 export interface UserColumnConfigParam {

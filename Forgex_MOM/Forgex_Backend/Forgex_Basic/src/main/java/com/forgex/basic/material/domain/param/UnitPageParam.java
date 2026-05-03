@@ -1,44 +1,32 @@
 package com.forgex.basic.material.domain.param;
 
+import com.forgex.common.base.BaseGetParam;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * 计量单位分页查询参数
+ * 计量单位分页查询参数。
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-28
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-05-02
  */
 @Data
-public class UnitPageParam {
-    
+@EqualsAndHashCode(callSuper = true)
+public class UnitPageParam extends BaseGetParam {
+
     /**
-     * 页码
+     * 计量单位类型 ID
      */
-    private Integer pageNum = 1;
-    
+    private Long unitTypeId;
+
     /**
-     * 每页大小
-     */
-    private Integer pageSize = 10;
-    
-    /**
-     * 单位编码
+     * 计量单位编码
      */
     private String unitCode;
-    
+
     /**
-     * 单位名称
+     * 计量单位名称
      */
     private String unitName;
-    
-    /**
-     * 单位分类
-     */
-    private String unitCategory;
-    
-    /**
-     * 状态：0-禁用，1-启用
-     */
-    private Integer status;
 }

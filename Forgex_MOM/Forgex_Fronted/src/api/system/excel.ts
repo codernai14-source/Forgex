@@ -31,6 +31,10 @@ export function importConfigDetail(body: any) {
   return http.post('/sys/excel/importConfig/detail', body)
 }
 
+export function importConfigDetailByCode(body: any) {
+  return http.post('/sys/excel/importConfig/detailByCode', body)
+}
+
 export function saveImportConfig(body: any) {
   return http.post('/sys/excel/importConfig/save', body)
 }
@@ -41,6 +45,10 @@ export function deleteImportConfig(body: any) {
 
 export function downloadTemplate(body: any) {
   return http.post('/sys/excel/template/download', body, { responseType: 'blob' })
+}
+
+export function executeImport(body: any) {
+  return http.post('/sys/excel/import/execute', body, { showSuccessMessage: false })
 }
 
 export function exportLoginLog(body: any) {

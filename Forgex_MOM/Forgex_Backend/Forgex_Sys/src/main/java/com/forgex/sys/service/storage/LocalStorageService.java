@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 /**
@@ -20,12 +22,17 @@ import java.util.UUID;
 @Service
 public class LocalStorageService implements FileStorageService {
     private static final String KEY_FILE_UPLOAD = "file.upload.settings";
+    private static final int DEFAULT_GATEWAY_PORT = 9000;
+    private static final String DEFAULT_GATEWAY_API_PREFIX = "/api";
 
     @Value("${file.upload.path:C:/forgex/data/uploads}")
     private String uploadPath;
 
     @Value("${file.access.prefix:/files}")
     private String accessPrefix;
+
+    @Value("${forgex.gateway.port:9000}")
+    private int gatewayPort;
 
     @jakarta.annotation.Resource
     private ConfigService configService;
@@ -44,19 +51,57 @@ public class LocalStorageService implements FileStorageService {
 
     private String resolveAccessPrefix() {
         FileUploadConfig cfg = loadConfig();
+        String prefix;
         if (cfg != null && StringUtils.hasText(cfg.getAccessPrefix())) {
-            return cfg.getAccessPrefix().trim();
+            prefix = cfg.getAccessPrefix().trim();
+        } else {
+            prefix = accessPrefix;
         }
-        return accessPrefix;
+        while (prefix.endsWith("/") && prefix.length() > 1) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+        return prefix.startsWith("/") ? prefix : "/" + prefix;
     }
 
     private String resolvePublicBaseUrl() {
         FileUploadConfig cfg = loadConfig();
         if (cfg != null && StringUtils.hasText(cfg.getPublicBaseUrl())) {
-            String value = cfg.getPublicBaseUrl().trim();
-            return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+            return normalizePublicBaseUrl(cfg.getPublicBaseUrl());
         }
         return "";
+    }
+
+    private String normalizePublicBaseUrl(String rawValue) {
+        String value = rawValue.trim();
+        while (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            value = "http://" + value;
+        }
+        try {
+            URI uri = new URI(value);
+            String scheme = StringUtils.hasText(uri.getScheme()) ? uri.getScheme() : "http";
+            String host = uri.getHost();
+            if (!StringUtils.hasText(host)) {
+                return value;
+            }
+            int port = uri.getPort() > 0 ? uri.getPort() : resolveGatewayPort();
+            String path = StringUtils.hasText(uri.getPath()) ? uri.getPath() : "";
+            if (port == resolveGatewayPort() && !path.equals(DEFAULT_GATEWAY_API_PREFIX) && !path.startsWith(DEFAULT_GATEWAY_API_PREFIX + "/")) {
+                path = DEFAULT_GATEWAY_API_PREFIX + path;
+            }
+            while (path.endsWith("/") && path.length() > 1) {
+                path = path.substring(0, path.length() - 1);
+            }
+            return new URI(scheme, null, host, port, path, null, null).toString();
+        } catch (URISyntaxException e) {
+            return value;
+        }
+    }
+
+    private int resolveGatewayPort() {
+        return gatewayPort > 0 ? gatewayPort : DEFAULT_GATEWAY_PORT;
     }
 
     @Override

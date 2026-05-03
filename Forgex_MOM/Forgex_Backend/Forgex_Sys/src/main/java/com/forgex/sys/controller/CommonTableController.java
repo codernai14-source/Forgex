@@ -42,6 +42,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/sys/common/table/config")
 @RequiredArgsConstructor
 public class CommonTableController {
+    private static final int MIN_COLUMN_WIDTH = 60;
+    private static final int MAX_COLUMN_WIDTH = 800;
+    private static final String ACTION_FIELD = "action";
     
     private final FxTableConfigService tableConfigService;
     private final FxTableConfigMapper tableConfigMapper;
@@ -670,6 +673,9 @@ public class CommonTableController {
                 // 设置显示状态和排序顺序
                 mergedCol.setVisible(userParam.getVisible() != null ? userParam.getVisible() : true);
                 mergedCol.setOrder(userParam.getOrder() != null ? userParam.getOrder() : Integer.MAX_VALUE);
+                if (userParam.getWidth() != null && !ACTION_FIELD.equals(baseCol.getField())) {
+                    mergedCol.setWidth(clampColumnWidth(userParam.getWidth()));
+                }
             } else {
                 // 用户没有配置该列，默认显示，排序靠后
                 mergedCol.setVisible(true);
@@ -687,6 +693,13 @@ public class CommonTableController {
         });
         
         return mergedColumns;
+    }
+
+    private Integer clampColumnWidth(Integer width) {
+        if (width == null) {
+            return null;
+        }
+        return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, width));
     }
 
     private String currentUser() {
