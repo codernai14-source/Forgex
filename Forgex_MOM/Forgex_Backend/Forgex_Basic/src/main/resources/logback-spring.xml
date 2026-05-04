@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="10 seconds">
-
     <property name="jansi" value="true"/>
-    <springProperty scope="context" name="LOG_DIR" source="forgex.deployment.log-dir" defaultValue="C:/forgex/logs"/>
+    <springProperty scope="context" name="LOG_DIR" source="forgex.deployment.log-dir" defaultValue="./logs"/>
 
     <property name="CONSOLE_LOG_PATTERN"
               value="%highlight(%d{yyyy-MM-dd HH:mm:ss.SSS} [%level] [%thread] %logger{36} - %msg%n){
@@ -22,26 +21,32 @@
     </appender>
 
     <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/basic/forgex-info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/basic/forgex-info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>2000MB</maxFileSize>
+            <fileNamePattern>${LOG_DIR}/basic/basic-info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>2GB</maxFileSize>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>10GB</totalSizeCap>
+            <totalSizeCap>20GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%level] [%thread] %logger{36} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>DENY</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
     </appender>
 
     <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/basic/forgex-error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/basic/forgex-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>2000MB</maxFileSize>
+            <fileNamePattern>${LOG_DIR}/basic/basic-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>2GB</maxFileSize>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>10GB</totalSizeCap>
+            <totalSizeCap>20GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%level] [%thread] %logger{36} - %msg%n</pattern>
@@ -60,9 +65,9 @@
         <appender-ref ref="FILE_ERROR"/>
     </root>
 
-    <logger name="com.forgex" level="DEBUG" additivity="false">
+    <logger name="com.forgex" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE_INFO"/>
+        <appender-ref ref="FILE_ERROR"/>
     </logger>
-
 </configuration>

@@ -44,7 +44,7 @@ logging:
     console: UTF-8
   level:
     root: INFO
-    com.forgex.report: ${FORGEX_REPORT_LOG_LEVEL:DEBUG}
+    com.forgex.report: ${FORGEX_REPORT_LOG_LEVEL:INFO}
 
 forgex:
   deployment:

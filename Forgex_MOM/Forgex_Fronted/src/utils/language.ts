@@ -26,7 +26,7 @@ const FALLBACK_LANGUAGE_LABELS: Record<string, string> = {
   'ko-KR': '한국어',
 }
 
-const GARBLED_TEXT_PATTERN = /�|\?{2,}|馃|寰|鏉|鍒|璇|閰|缂|鐎|闄|琛|锛|鎴|閫|甯|妗/
+const GARBLED_TEXT_PATTERN = /[\uE000-\uF8FF]|\uFFFD|\?{2,}|\u9983|\u5bf0|\u93c9|\u9352|\u7487|\u95b0|\u7f02|\u940e|\u95c4|\u741b|\u951b|\u93b4|\u95ab|\u752f|\u5997/
 
 export function isPotentiallyGarbledText(value?: string | null): boolean {
   const text = String(value || '').trim()

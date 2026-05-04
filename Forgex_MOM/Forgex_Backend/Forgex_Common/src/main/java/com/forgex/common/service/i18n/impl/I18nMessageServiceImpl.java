@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
+import java.util.regex.Pattern;
 
 /**
  * 国际化消息解析服务实现
@@ -34,9 +35,19 @@ import java.text.MessageFormat;
 @Service
 @RequiredArgsConstructor
 public class I18nMessageServiceImpl implements I18nMessageService {
+    private static final Pattern UNRESOLVED_PLACEHOLDER_PATTERN = Pattern.compile("\\{\\d+(?:,[^{}]+)?\\}");
+    private static final Pattern TRAILING_SEPARATOR_PATTERN = Pattern.compile("[\\s:：,，;；-]+$");
+
     private final FxI18nMessageMapper i18nMessageMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * 处理resolve。
+     *
+     * @param prompt prompt
+     * @param args 模板参数
+     * @return 字符串结果
+     */
     @Override
     public String resolve(I18nPrompt prompt, Object[] args) {
         if (prompt == null) {
@@ -50,12 +61,20 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             return null;
         }
         try {
-            return MessageFormat.format(template, args == null ? new Object[0] : args);
+            return cleanUnresolvedPlaceholders(MessageFormat.format(template, args == null ? new Object[0] : args));
         } catch (Exception e) {
-            return template;
+            return cleanUnresolvedPlaceholders(template);
         }
     }
 
+    /**
+     * 处理resolve。
+     *
+     * @param module 模块
+     * @param promptCode prompt编码
+     * @param args 模板参数
+     * @return 字符串结果
+     */
     @Override
     public String resolve(String module, String promptCode, Object[] args) {
         if (!StringUtils.hasText(module) || !StringUtils.hasText(promptCode)) {
@@ -66,9 +85,9 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             return null;
         }
         try {
-            return MessageFormat.format(template, args == null ? new Object[0] : args);
+            return cleanUnresolvedPlaceholders(MessageFormat.format(template, args == null ? new Object[0] : args));
         } catch (Exception e) {
-            return template;
+            return cleanUnresolvedPlaceholders(template);
         }
     }
 
@@ -103,7 +122,7 @@ public class I18nMessageServiceImpl implements I18nMessageService {
                     }
                 }
             }
-            
+
             val = getText(node, "zh-CN");
             if (StringUtils.hasText(val)) {
                 return LegacyMessageTranslator.translate(val, lang);
@@ -121,7 +140,7 @@ public class I18nMessageServiceImpl implements I18nMessageService {
                     }
                 }
             }
-            
+
             return getDefaultTemplateByLang(defaultTemplate);
         } catch (Exception e) {
             return getDefaultTemplateByLang(defaultTemplate);
@@ -151,5 +170,14 @@ public class I18nMessageServiceImpl implements I18nMessageService {
             return v.asText();
         }
         return null;
+    }
+
+    private String cleanUnresolvedPlaceholders(String message) {
+        if (!StringUtils.hasText(message)) {
+            return message;
+        }
+        String cleaned = UNRESOLVED_PLACEHOLDER_PATTERN.matcher(message).replaceAll("");
+        cleaned = TRAILING_SEPARATOR_PATTERN.matcher(cleaned).replaceAll("");
+        return StringUtils.hasText(cleaned) ? cleaned.trim() : "";
     }
 }
