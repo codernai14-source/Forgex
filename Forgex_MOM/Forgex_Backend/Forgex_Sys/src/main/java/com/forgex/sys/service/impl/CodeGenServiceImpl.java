@@ -53,6 +53,8 @@ import java.util.zip.ZipOutputStream;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Service
 @RequiredArgsConstructor
@@ -77,6 +79,12 @@ public class CodeGenServiceImpl implements CodeGenService {
     private final DbMetaService dbMetaService;
     private final CodeGenStrategyFactory strategyFactory;
 
+    /**
+     * 预览代码生成结果。
+     *
+     * @param req 数据传输对象
+     * @return 处理结果
+     */
     @Override
     public CodegenPreviewVO preview(CodeGenRequestDTO req) {
         validateRequest(req);
@@ -96,6 +104,12 @@ public class CodeGenServiceImpl implements CodeGenService {
         return preview;
     }
 
+    /**
+     * 生成代码压缩包。
+     *
+     * @param req 数据传输对象
+     * @return 处理结果
+     */
     @Override
     public byte[] generateZip(CodeGenRequestDTO req) {
         CodegenPreviewVO preview = preview(req);
@@ -114,6 +128,12 @@ public class CodeGenServiceImpl implements CodeGenService {
         }
     }
 
+    /**
+     * 按配置 ID 预览代码生成结果。
+     *
+     * @param configId 配置 ID
+     * @return 处理结果
+     */
     @Override
     public CodegenPreviewVO previewByConfigId(Long configId) {
         CodeGenRequestDTO request = codegenConfigService.buildRequest(configId);
@@ -122,6 +142,12 @@ public class CodeGenServiceImpl implements CodeGenService {
         return preview;
     }
 
+    /**
+     * 按配置 ID 生成代码压缩包。
+     *
+     * @param configId 配置 ID
+     * @return 处理结果
+     */
     @Override
     public byte[] generateZipByConfigId(Long configId) {
         CodeGenRequestDTO request = codegenConfigService.buildRequest(configId);

@@ -6,6 +6,12 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 用户thirdparty调用数据传输对象。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Data
 public class UserThirdPartyInvokeDTO implements Serializable {
 

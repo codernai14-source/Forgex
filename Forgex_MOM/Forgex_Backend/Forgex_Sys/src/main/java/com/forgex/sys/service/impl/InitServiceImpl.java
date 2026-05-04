@@ -20,10 +20,28 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.forgex.common.config.ConfigService;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
-import com.forgex.sys.domain.entity.*;
+import com.forgex.sys.domain.entity.SysCMenu;
+import com.forgex.sys.domain.entity.SysMenu;
+import com.forgex.sys.domain.entity.SysModule;
+import com.forgex.sys.domain.entity.SysRole;
+import com.forgex.sys.domain.entity.SysRoleCMenu;
+import com.forgex.sys.domain.entity.SysRoleMenu;
+import com.forgex.sys.domain.entity.SysTenant;
+import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserRole;
+import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.param.InitApplyParam;
 import com.forgex.sys.domain.vo.InitStatusVO;
-import com.forgex.sys.mapper.*;
+import com.forgex.sys.mapper.SysCMenuMapper;
+import com.forgex.sys.mapper.SysMenuMapper;
+import com.forgex.sys.mapper.SysModuleMapper;
+import com.forgex.sys.mapper.SysRoleCMenuMapper;
+import com.forgex.sys.mapper.SysRoleMapper;
+import com.forgex.sys.mapper.SysRoleMenuMapper;
+import com.forgex.sys.mapper.SysTenantMapper;
+import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.mapper.SysUserRoleMapper;
+import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.InitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,7 +50,14 @@ import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.time.Duration;
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.core.util.HexUtil;
@@ -59,6 +84,9 @@ import com.forgex.common.service.i18n.I18nLanguageTypeService;
  * - 安全策略可在 {@link #writeSecurityConfigsToCommon(InitApplyParam)} 中扩展配置项；
  * - 数据种子在 {@link #seedAdminData(InitApplyParam)} 中扩展角色/租户/用户构造；
  * - 校验规则在 {@link #validatePassword(String, com.forgex.common.domain.config.PasswordPolicyConfig)} 中扩展。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Service
 public class InitServiceImpl implements InitService {

@@ -73,6 +73,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 未登录或登录过期 */
+    /**
+     * 处理notlogin。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(NotLoginException.class)
     public R<Object> handleNotLogin(NotLoginException e) {
         log.warn("未登录或登录过期: {}", e.getMessage());
@@ -96,12 +102,24 @@ public class GlobalExceptionHandler {
     }
 
     /** 无角色/无权限 */
+    /**
+     * 处理not角色。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(NotRoleException.class)
     public R<Object> handleNotRole(NotRoleException e) {
         log.warn("无权限: {}", e.getMessage());
         return R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
     }
 
+    /**
+     * 处理国际化业务。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(I18nBusinessException.class)
     public R<Object> handleI18nBusiness(I18nBusinessException e) {
         int code = e.getCode();
@@ -112,6 +130,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 普通业务异常 */
+    /**
+     * 处理业务。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(BusinessException.class)
     public R<Object> handleBusiness(BusinessException e) {
         log.warn("业务异常: {}", e.getMessage());
@@ -123,6 +147,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 参数解析/校验错误 */
+    /**
+     * 处理bad请求。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class, HttpMessageNotReadableException.class})
     public R<Object> handleBadRequest(Exception e) {
         String msg = "";
@@ -142,6 +172,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 数据库连接失败，返回业务错误 */
+    /**
+     * 处理dbconnect。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(CannotGetJdbcConnectionException.class)
     public R<Object> handleDbConnect(CannotGetJdbcConnectionException e) {
         log.error("数据库连接失败", e);
@@ -149,6 +185,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 通用数据访问异常 */
+    /**
+     * 处理数据access。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(DataAccessException.class)
     public R<Object> handleDataAccess(DataAccessException e) {
         log.error("数据访问异常", e);
@@ -156,6 +198,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 其它未捕获异常：打印堆栈并返回具体信息 */
+    /**
+     * 处理默认。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(Exception.class)
     public R<Object> handleDefault(Exception e) {
         log.error("未处理异常", e);

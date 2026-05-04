@@ -23,7 +23,10 @@ import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.service.ISysCMenuService;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +39,8 @@ import java.util.Map;
  *
  * @author Forgex Team
  * @since 2026-04-11
+ *
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/app/c-menu")
@@ -103,4 +108,3 @@ public class AppCMenuController {
         return null;
     }
 }
-

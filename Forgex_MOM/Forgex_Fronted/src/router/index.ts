@@ -120,7 +120,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 /**
- * 鍒涘缓璺敱瀹炰緥
+ * 创建路由实例
  */
 const router = createRouter({
   history: createWebHistory(), // 浣跨敤 HTML5 History 模式
@@ -242,7 +242,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 濡傛灉宸茬櫥褰曚笖璺敱宸叉敞鍏ワ紝鐩存帴鏀捐
+  // 如果已登录且路由已注入，直接放行
   next()
 })
 
@@ -481,13 +481,13 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
 
 /**
  * 动态模块列表。
- * 瀛樺偍浠庡悗绔幏鍙栫殑妯″潡淇℃伅
+ * 存储从后端获取的模块信息
  */
 export const dynamicModules = ref<any[]>([])
 
 /**
  * 动态路由列表。
- * 瀛樺偍浠庡悗绔幏鍙栫殑璺敱淇℃伅
+ * 存储从后端获取的路由信息
  */
 export const dynamicRoutes = ref<any[]>([])
 

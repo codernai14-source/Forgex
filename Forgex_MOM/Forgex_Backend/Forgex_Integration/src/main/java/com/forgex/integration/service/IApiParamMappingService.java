@@ -81,6 +81,9 @@ public interface IApiParamMappingService extends IService<ApiParamMapping> {
      * @param dtos        字段映射列表
      */
     default void batchSave(Long apiConfigId, String direction, List<ApiParamMappingDTO> dtos) {
+      /**
+       * 执行接口参数映射的batchsave操作。
+       */
         batchSave(apiConfigId, null, direction, dtos);
     }
 }

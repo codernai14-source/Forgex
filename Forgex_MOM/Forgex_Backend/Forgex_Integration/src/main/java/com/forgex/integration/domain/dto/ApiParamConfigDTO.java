@@ -28,6 +28,9 @@ public class ApiParamConfigDTO {
      */
     private Long apiConfigId;
 
+    /**
+     * 出站目标 ID。
+     */
     private Long outboundTargetId;
 
     /**
@@ -81,7 +84,7 @@ public class ApiParamConfigDTO {
     private String dictCode;
 
     /**
-     * 排序号
+     * 排序号。
      */
     private Integer orderNum;
 
@@ -91,7 +94,7 @@ public class ApiParamConfigDTO {
     private String remark;
 
     /**
-     * 子节点
+     * 子节点列表。
      */
     private List<ApiParamConfigDTO> children;
 

@@ -19,7 +19,10 @@ import com.forgex.workflow.service.IWfCallbackService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -40,11 +43,11 @@ import java.util.Map;
 @RequestMapping("/wf/callback")
 @RequiredArgsConstructor
 public class WfCallbackController {
-    
+
     private final IWfCallbackService callbackService;
-    
+
     /**
-     * 注册审批回调接口
+     * 注册工作流回调处理器。
      * <p>
      * 为指定的审批任务配置注册回调接口，当审批状态发生变化时会调用注册的回调地址
      * </p>
@@ -57,14 +60,14 @@ public class WfCallbackController {
      */
     @PostMapping("/register")
     public R<Void> registerCallback(@RequestBody CallbackRegisterParam param) {
-        callbackService.registerCallback(param.getTaskCode(), 
-                                        param.getCallbackUrl(), 
+        callbackService.registerCallback(param.getTaskCode(),
+                                        param.getCallbackUrl(),
                                         param.getCallbackBean());
         return R.ok(CommonPrompt.OPERATION_SUCCESS);
     }
-    
+
     /**
-     * 注销审批回调接口
+     * 注销工作流回调处理器。
      * <p>
      * 移除已注册的审批任务回调接口，停止回调通知
      * </p>
@@ -80,7 +83,7 @@ public class WfCallbackController {
         callbackService.unregisterCallback(taskCode);
         return R.ok(CommonPrompt.OPERATION_SUCCESS);
     }
-    
+
     /**
      * 回调注册参数
      * <p>
@@ -100,7 +103,7 @@ public class WfCallbackController {
          * </p>
          */
         private String taskCode;
-        
+
         /**
          * 回调 URL
          * <p>
@@ -108,7 +111,7 @@ public class WfCallbackController {
          * </p>
          */
         private String callbackUrl;
-        
+
         /**
          * 回调 Bean 名称
          * <p>

@@ -7,6 +7,9 @@ import com.forgex.common.domain.config.PersonalHomepageConfig;
  * <p>
  * 空模块编码保持个人首页历史配置键，非空模块编码用于基础信息、审批管理、系统管理等模块首页配置。
  * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 public interface PersonalHomepageConfigService {
 
@@ -14,6 +17,11 @@ public interface PersonalHomepageConfigService {
      * 读取当前用户生效的个人首页配置。
      */
     default PersonalHomepageConfig getEffectiveConfig(Long userId, Long tenantId) {
+        /**
+         * 获取effective配置。
+         *
+         * @return 处理结果
+         */
         return getEffectiveConfig(userId, tenantId, null);
     }
 
@@ -31,6 +39,11 @@ public interface PersonalHomepageConfigService {
      * 读取用户级个人首页配置。
      */
     default PersonalHomepageConfig getUserConfig(Long userId, Long tenantId) {
+        /**
+         * 获取用户配置。
+         *
+         * @return 处理结果
+         */
         return getUserConfig(userId, tenantId, null);
     }
 
@@ -48,6 +61,9 @@ public interface PersonalHomepageConfigService {
      * 保存用户级个人首页配置。
      */
     default void saveUserConfig(Long userId, Long tenantId, PersonalHomepageConfig config) {
+      /**
+       * 保存用户配置。
+       */
         saveUserConfig(userId, tenantId, null, config);
     }
 
@@ -65,6 +81,11 @@ public interface PersonalHomepageConfigService {
      * 重置用户级个人首页配置。
      */
     default boolean resetUserConfig(Long userId, Long tenantId) {
+        /**
+         * 执行personal首页配置的reset用户配置操作。
+         *
+         * @return 处理结果
+         */
         return resetUserConfig(userId, tenantId, null);
     }
 
@@ -82,6 +103,11 @@ public interface PersonalHomepageConfigService {
      * 读取租户级个人首页配置。
      */
     default PersonalHomepageConfig getTenantConfig(Long tenantId) {
+        /**
+         * 获取租户配置。
+         *
+         * @return 处理结果
+         */
         return getTenantConfig(tenantId, null);
     }
 
@@ -98,6 +124,9 @@ public interface PersonalHomepageConfigService {
      * 保存租户级个人首页配置。
      */
     default void saveTenantConfig(Long tenantId, PersonalHomepageConfig config) {
+      /**
+       * 保存租户配置。
+       */
         saveTenantConfig(tenantId, null, config);
     }
 
@@ -114,6 +143,11 @@ public interface PersonalHomepageConfigService {
      * 读取公共级个人首页配置。
      */
     default PersonalHomepageConfig getPublicConfig() {
+        /**
+         * 获取public配置。
+         *
+         * @return 处理结果
+         */
         return getPublicConfig(null);
     }
 
@@ -129,6 +163,9 @@ public interface PersonalHomepageConfigService {
      * 保存公共级个人首页配置。
      */
     default void savePublicConfig(PersonalHomepageConfig config) {
+      /**
+       * 保存public配置。
+       */
         savePublicConfig(null, config);
     }
 

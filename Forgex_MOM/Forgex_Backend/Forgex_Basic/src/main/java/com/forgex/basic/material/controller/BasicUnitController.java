@@ -40,18 +40,35 @@ public class BasicUnitController {
 
     private final IBasicUnitService unitService;
 
+    /**
+     * 查询计量单位类型树。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:query")
     @PostMapping("/type/tree")
     public R<List<UnitTypeTreeVO>> typeTree() {
         return R.ok(unitService.typeTree());
     }
 
+    /**
+     * 查询计量单位类型详情。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:query")
     @PostMapping("/type/detail")
     public R<BasicUnitType> typeDetail(@RequestBody Map<String, Object> body) {
         return R.ok(unitService.typeDetail(id(body)));
     }
 
+    /**
+     * 创建计量单位类型。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:add")
     @PostMapping("/type/create")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.ADD)
@@ -59,6 +76,12 @@ public class BasicUnitController {
         return R.ok(unitService.createType(param));
     }
 
+    /**
+     * 更新类型。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:edit")
     @PostMapping("/type/update")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.UPDATE)
@@ -66,6 +89,12 @@ public class BasicUnitController {
         return R.ok(unitService.updateType(param));
     }
 
+    /**
+     * 删除类型。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:delete")
     @PostMapping("/type/delete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
@@ -73,23 +102,47 @@ public class BasicUnitController {
         return R.ok(unitService.deleteType(id(body)));
     }
 
+    /**
+     * 分页查询计量单位。
+     *
+     * @param param 分页查询参数
+     * @return 计量单位分页结果
+     */
     @RequirePerm("basic:unit:query")
     @PostMapping("/page")
     public R<Page<UnitVO>> page(@RequestBody(required = false) UnitPageParam param) {
         return R.ok(unitService.pageUnits(param));
     }
 
+    /**
+     * 查询计量单位列表。
+     *
+     * @param param 查询参数
+     * @return 计量单位列表
+     */
     @PostMapping("/list")
     public R<List<UnitVO>> list(@RequestBody(required = false) UnitPageParam param) {
         return R.ok(unitService.listUnits(param));
     }
 
+    /**
+     * 查询数据详情。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:query")
     @PostMapping("/detail")
     public R<UnitVO> detail(@RequestBody Map<String, Object> body) {
         return R.ok(unitService.detail(id(body)));
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param unit 单位
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:add")
     @PostMapping("/create")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.ADD)
@@ -97,6 +150,12 @@ public class BasicUnitController {
         return R.ok(unitService.create(unit));
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param unit 单位
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:edit")
     @PostMapping("/update")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.UPDATE)
@@ -104,6 +163,12 @@ public class BasicUnitController {
         return R.ok(unitService.updateUnit(unit));
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:delete")
     @PostMapping("/delete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
@@ -111,6 +176,12 @@ public class BasicUnitController {
         return R.ok(unitService.deleteUnit(id(body)));
     }
 
+    /**
+     * 批量删除数据。
+     *
+     * @param body 请求体，包含 ids
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:delete")
     @PostMapping("/batchDelete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
@@ -118,12 +189,24 @@ public class BasicUnitController {
         return R.ok(unitService.batchDeleteUnits(body.get("ids")));
     }
 
+    /**
+     * 查询计量单位换算关系列表。
+     *
+     * @param body 请求体，包含 unitId
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:query")
     @PostMapping("/conversion/list")
     public R<List<UnitConversionVO>> listConversions(@RequestBody Map<String, Object> body) {
         return R.ok(unitService.listConversions(Long.valueOf(String.valueOf(body.get("unitId")))));
     }
 
+    /**
+     * 保存conversions。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:edit")
     @PostMapping("/conversion/save")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.UPDATE)
@@ -131,6 +214,12 @@ public class BasicUnitController {
         return R.ok(unitService.saveConversions(param));
     }
 
+    /**
+     * 删除conversion。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:edit")
     @PostMapping("/conversion/delete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)

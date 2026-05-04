@@ -129,6 +129,11 @@ public enum BasicPromptEnum implements I18nPrompt {
         this.defaultTemplate = defaultTemplate;
     }
 
+    /**
+     * 获取模块。
+     *
+     * @return 字符串结果
+     */
     @Override
     public String getModule() {
         return "basic";

@@ -24,7 +24,7 @@ public class SupplierReviewStartParam {
     private Long supplierId;
 
     /**
-     * 发起人自选审批人。
+     * 发起人选择的审批人列表。
      */
     @Schema(description = "发起人自选审批人")
     private List<Long> selectedApprovers = new ArrayList<>();

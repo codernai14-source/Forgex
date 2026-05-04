@@ -19,6 +19,9 @@ import org.springframework.util.StringUtils;
 
 /**
  * Sa-Token 权限与角色提供实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Component
 @RequiredArgsConstructor
@@ -41,6 +44,13 @@ public class StpInterfaceImpl implements StpInterface {
     private final PermKeyService permKeyService;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * 获取permission列表。
+     *
+     * @param loginId login ID
+     * @param loginType login类型
+     * @return 列表数据
+     */
     @Override
     @DS("admin")
     public List<String> getPermissionList(Object loginId, String loginType) {
@@ -66,6 +76,13 @@ public class StpInterfaceImpl implements StpInterface {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 获取角色列表。
+     *
+     * @param loginId login ID
+     * @param loginType login类型
+     * @return 列表数据
+     */
     @Override
     @DS("admin")
     public List<String> getRoleList(Object loginId, String loginType) {

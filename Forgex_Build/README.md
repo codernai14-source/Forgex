@@ -16,7 +16,7 @@
 - `delivery/windows/installer/`
   - Windows 安装器相关内容。
   - `ForgexSetup.iss`：Inno Setup 安装脚本。
-  - `scripts/`：Windows 安装、启停脚本。
+  - `scripts/`：Windows 安装、启停、Nacos 配置导入、数据库导入、运行配置修复与卸载清理脚本。
   - `winsw/`：Windows 服务包装模板。
 - `delivery/linux/scripts/`
   - Linux 部署脚本目录。
@@ -28,6 +28,12 @@
 - `license-tools/issuer/FxLicenseGenerator/`
   - 授权签发工具。
   - 用于授权中心或开发侧生成正式授权。
+- `license-tools/issuer/FxLicenseIssuer/`
+  - 授权签发端 Windows 图形化工具。
+  - 用于授权人员选择 `request-info.json`、填写授权参数并生成 `license.lic`。
+- `license-tools/publish-license-issuer.ps1`
+  - 发布签发端图形化 EXE。
+  - 默认输出到 `license-tools/issuer/publish/win-x64/FxLicenseIssuer.exe`。
 - `license-tools/request-client/FxLicenseRequest/`
   - 现场请求授权客户端。
   - 用于生成 `request-info.json`、导入 `license.lic`。
@@ -44,6 +50,9 @@
   - 授权示例模板，例如 `request-info.sample.json`。
 - `shared/nacos/`
   - 部署时需要下发的环境变量模板。
+- `Forgex_Doc/部署/nacos配置/`
+  - Nacos 配置中心示例配置。
+  - 构建时会复制到交付包 `nacos/DEFAULT_GROUP/`，供 `scripts/import-nacos-config.bat` 一键导入。
 - `shared/nginx/`
   - Nginx 模板。
 
@@ -82,3 +91,12 @@
 - 哪些内容只给 Linux 部署现场使用
 - 哪些内容属于授权签发端
 - 哪些内容属于客户现场申请授权端
+## Windows 轻量升级
+
+`delivery/windows/installer/scripts/upgrade.ps1` 用于现场只替换前端 `frontend/` 和后端 `services/*.jar`。脚本不会重新安装 JRE、不会导入数据库、不会导入 Nacos；执行时会备份旧文件、停止服务、替换文件、更新控制配置和 WinSW JAR 路径，再按需启动服务。
+
+示例：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Forgex_ACME_PROD\scripts\upgrade.ps1 -InstallRoot C:\Forgex_ACME_PROD -PackageRoot D:\Forgex-Windows-Package-1.0.1
+```

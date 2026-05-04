@@ -50,6 +50,9 @@ public class WfTaskConfigDTO {
      */
     private String taskCode;
 
+    /**
+     * 分类编码。
+     */
     private String categoryCode;
 
     /**
@@ -85,6 +88,9 @@ public class WfTaskConfigDTO {
      */
     private String formContent;
 
+    /**
+     * 是否需要发起人选择审批人。
+     */
     private Boolean requiresSelectedApprovers;
 
     /**

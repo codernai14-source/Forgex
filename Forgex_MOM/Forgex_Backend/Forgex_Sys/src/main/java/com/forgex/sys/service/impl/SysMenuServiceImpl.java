@@ -256,6 +256,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return tree;
     }
 
+    /**
+     * 分页查询菜单。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 处理结果
+     */
     @Override
     public IPage<SysMenuDTO> pageMenus(Page<SysMenu> page, SysMenuQueryDTO query) {
         LambdaQueryWrapper<SysMenu> wrapper = buildQueryWrapper(query);
@@ -263,6 +270,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return menuPage.convert(this::convertToDTO);
     }
 
+    /**
+     * 查询菜单列表。
+     *
+     * @param query 查询参数
+     * @return 列表数据
+     */
     @Override
     public List<SysMenuDTO> listMenus(SysMenuQueryDTO query) {
         LambdaQueryWrapper<SysMenu> wrapper = buildQueryWrapper(query);
@@ -270,12 +283,23 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return menus.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    /**
+     * 获取菜单byID。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public SysMenuDTO getMenuById(Long id) {
         SysMenu menu = menuMapper.selectById(id);
         return menu != null ? convertToDTO(menu) : null;
     }
 
+    /**
+     * 新增菜单。
+     *
+     * @param menuDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMenu(SysMenuDTO menuDTO) {
@@ -284,6 +308,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         menuMapper.insert(menu);
     }
 
+    /**
+     * 更新菜单。
+     *
+     * @param menuDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateMenu(SysMenuDTO menuDTO) {
@@ -292,6 +321,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         menuMapper.updateById(menu);
     }
 
+    /**
+     * 删除菜单。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMenu(Long id) {
@@ -302,6 +336,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         menuMapper.delete(wrapper);
     }
 
+    /**
+     * 批量删除菜单。
+     *
+     * @param ids 主键 ID 集合
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteMenus(List<Long> ids) {
@@ -310,11 +349,23 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         }
     }
 
+    /**
+     * 判断 ID 对应数据是否存在。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public boolean existsById(Long id) {
         return menuMapper.selectById(id) != null;
     }
 
+    /**
+     * 判断是否存在子节点。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public boolean hasChildren(Long id) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -322,6 +373,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return menuMapper.selectCount(wrapper) > 0;
     }
 
+    /**
+     * 判断是否存在角色关联。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public boolean hasRoleAssociation(Long id) {
         LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
@@ -329,6 +386,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return roleMenuMapper.selectCount(wrapper) > 0;
     }
 
+    /**
+     * 判断权限标识是否存在。
+     *
+     * @param permKey 权限key
+     * @param tenantId 租户 ID
+     * @return 是否处理成功
+     */
     @Override
     public boolean existsByPermKey(String permKey, Long tenantId) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -337,6 +401,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return menuMapper.selectCount(wrapper) > 0;
     }
 
+    /**
+     * 判断排除指定 ID 后权限标识是否存在。
+     *
+     * @param permKey 权限key
+     * @param tenantId 租户 ID
+     * @param excludeId exclude ID
+     * @return 是否处理成功
+     */
     @Override
     public boolean existsByPermKeyExcludeId(String permKey, Long tenantId, Long excludeId) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper, ReportCategory> 
+public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper, ReportCategory>
         implements IReportCategoryService {
 
     /**
@@ -58,7 +58,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
         }
 
         Page<ReportCategory> page = new Page<>(param.getPageNum(), param.getPageSize());
-        
+
         // 构建动态查询条件
         LambdaQueryWrapper<ReportCategory> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StrUtil.isNotBlank(param.getName()), ReportCategory::getName, param.getName())
@@ -68,20 +68,20 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
                .orderByAsc(ReportCategory::getSortOrder);
 
         Page<ReportCategory> resultPage = this.page(page, wrapper);
-        
+
         // 转换为 DTO
         List<ReportCategoryDTO> dtoList = resultPage.getRecords().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         Page<ReportCategoryDTO> dtoPage = new Page<>(param.getPageNum(), param.getPageSize(), resultPage.getTotal());
         dtoPage.setRecords(dtoList);
-        
+
         return dtoPage;
     }
 
     /**
-     * 查询所有分类列表
+     * 查询全部数据列表。
      * <p>
      * 按排序号升序排列
      * </p>
@@ -117,7 +117,7 @@ public class ReportCategoryServiceImpl extends ServiceImpl<ReportCategoryMapper,
     }
 
     /**
-     * 保存分类
+     * 保存数据。
      * <p>
      * 支持新增和更新，根据 ID 判断
      * </p>

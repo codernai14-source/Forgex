@@ -26,6 +26,8 @@ import java.util.List;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @RequiredArgsConstructor
 public abstract class AbstractCodeGenStrategy implements CodeGenStrategy {
@@ -58,6 +60,13 @@ public abstract class AbstractCodeGenStrategy implements CodeGenStrategy {
         return new ArrayList<>();
     }
 
+    /**
+     * 处理shouldgenerate。
+     *
+     * @param category 分类
+     * @param context 数据传输对象
+     * @return 是否处理成功
+     */
     protected boolean shouldGenerate(String category, CodeGenContextDTO context) {
         if ("doc".equalsIgnoreCase(category)) {
             return true;

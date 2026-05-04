@@ -74,12 +74,14 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
     private static final String USER_TABLE_CODE = "UserTable";
     private static final String POSITION_TABLE_CODE = "PositionTable";
     private static final String DICT_TABLE_CODE = "DictTable";
+    private static final String INVITE_CODE_TABLE_CODE = "InviteCodeTable";
     private static final int MIN_COLUMN_WIDTH = 60;
     private static final int MAX_COLUMN_WIDTH = 800;
     private static final String USERNAME_FIELD = "username";
     private static final String ACCOUNT_FIELD = "account";
     private static final String POSITION_ID_FIELD = "positionId";
     private static final String ROLE_ID_FIELD = "roleId";
+    private static final String ROLE_NAME_FIELD = "roleName";
     private static final String ENTRY_DATE_FIELD = "entryDate";
     private static final String ACTION_FIELD = "action";
     private static final String USERNAME_TITLE_I18N_JSON =
@@ -90,6 +92,8 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
             "{\"zh-CN\":\"\\u804c\\u4f4d\",\"en-US\":\"Position\",\"zh-TW\":\"\\u8077\\u4f4d\",\"ja-JP\":\"\\u8077\\u4f4d\",\"ko-KR\":\"\\uc9c1\\ucc45\"}";
     private static final String ROLE_TITLE_I18N_JSON =
             "{\"zh-CN\":\"\\u89d2\\u8272\",\"en-US\":\"Role\",\"zh-TW\":\"\\u89d2\\u8272\",\"ja-JP\":\"\\u30ed\\u30fc\\u30eb\",\"ko-KR\":\"\\uc5ed\\ud560\"}";
+    private static final String INVITE_ROLE_TITLE_I18N_JSON =
+            "{\"zh-CN\":\"\\u7ed1\\u5b9a\\u89d2\\u8272\",\"en-US\":\"Bound Role\",\"zh-TW\":\"\\u7d81\\u5b9a\\u89d2\\u8272\",\"ja-JP\":\"\\u7d10\\u4ed8\\u3051\\u30ed\\u30fc\\u30eb\",\"ko-KR\":\"\\ubc14\\uc778\\ub529 \\uc5ed\\ud560\"}";
     private static final String ENTRY_DATE_TITLE_I18N_JSON =
             "{\"zh-CN\":\"\\u5165\\u804c\\u65f6\\u95f4\",\"en-US\":\"Entry Date\",\"zh-TW\":\"\\u5165\\u8077\\u6642\\u9593\",\"ja-JP\":\"\\u5165\\u793e\\u65e5\",\"ko-KR\":\"\\uc785\\uc0ac\\uc77c\"}";
 
@@ -102,7 +106,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
      * 表格列配置 Mapper
      */
     private final FxTableColumnConfigMapper tableColumnConfigMapper;
-    
+
     /**
      * 用户级别表格配置 Mapper
      */
@@ -133,7 +137,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
      *   <li>构建查询字段列表</li>
      *   <li>组装表格配置 DTO 并返回</li>
      * </ol>
-     * 
+     *
      * @param tableCode 表编码，不能为空
      * @param tenantId 租户 ID，不能为空
      * @param userId 用户 ID，如果为空则跳过用户级别配置
@@ -150,31 +154,31 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         if (userId != null) {
             FxTableConfigDTO userConfig = getUserTableConfig(tableCode, tenantId, userId);
             if (userConfig != null) {
-                log.debug("使用用户级别表格配置，tableCode: {}, userId: {}, tenantId: {}", 
+                log.debug("使用用户级别表格配置，tableCode: {}, userId: {}, tenantId: {}",
                         tableCode, userId, tenantId);
                 return userConfig;
             }
         }
-        
+
         // 2. 查询租户级别配置
         FxTableConfigDTO tenantConfig = getTenantTableConfig(tableCode, tenantId);
         if (tenantConfig != null) {
             log.debug("使用租户级别表格配置，tableCode: {}, tenantId: {}", tableCode, tenantId);
             return tenantConfig;
         }
-        
+
         // 3. 查询公共配置（tenant_id=0）
         FxTableConfigDTO publicConfig = getTenantTableConfig(tableCode, 0L);
         if (publicConfig != null) {
             log.debug("使用公共表格配置，tableCode: {}", tableCode);
             return publicConfig;
         }
-        
+
         // 所有配置都不存在，返回 null
         log.debug("未找到表格配置，tableCode: {}, tenantId: {}, userId: {}", tableCode, tenantId, userId);
         return null;
     }
-    
+
     /**
      * 查询用户级别表格配置
      * <p>
@@ -196,21 +200,21 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 .eq(FxUserTableConfig::getDeleted, 0)
                 .last("limit 1")
         );
-        
+
         if (userConfig == null) {
             return null;
         }
-        
+
         // 从租户或公共配置加载基础配置（列配置和查询字段）
         FxTableConfigDTO baseConfig = getTenantTableConfig(tableCode, tenantId);
         if (baseConfig == null) {
             baseConfig = getTenantTableConfig(tableCode, 0L);
         }
-        
+
         if (baseConfig == null) {
             return null;
         }
-        
+
         // 构建用户配置 DTO
         FxTableConfigDTO dto = new FxTableConfigDTO();
         dto.setTableCode(userConfig.getTableCode());
@@ -222,10 +226,10 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         dto.setDefaultPageSize(userConfig.getPageSize() != null ? userConfig.getPageSize() : baseConfig.getDefaultPageSize());
         dto.setDefaultSortJson(userConfig.getSortConfig() != null ? userConfig.getSortConfig() : baseConfig.getDefaultSortJson());
         dto.setVersion(userConfig.getVersion());
-        
+
         return dto;
     }
-    
+
     /**
      * 查询租户级别表格配置
      * <p>
@@ -244,7 +248,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 .eq(FxTableConfig::getDeleted, 0)
                 .orderByAsc(FxTableConfig::getId)
                 .last("limit 1"));
-        
+
         // 检查表格是否启用
         if (cfg == null || Boolean.FALSE.equals(cfg.getEnabled())) {
             return null;
@@ -255,21 +259,21 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 .eq(FxTableColumnConfig::getTableCode, tableCode)
                 .eq(FxTableColumnConfig::getTenantId, tenantId)
                 .eq(FxTableColumnConfig::getDeleted, 0));
-        
+
         // 过滤启用的列并按排序字段排序
         cols.sort(Comparator.comparing(c -> c.getOrderNum() == null ? 0 : c.getOrderNum()));
-        
+
         // 构建列 DTO 列表
         List<FxTableColumnDTO> columnDtos = new ArrayList<>();
         List<FxTableQueryFieldDTO> queryFields = new ArrayList<>();
-        
+
         // 遍历列配置，构建 DTO
         for (FxTableColumnConfig c : cols) {
             // 跳过未启用的列
             if (Boolean.FALSE.equals(c.getEnabled())) {
                 continue;
             }
-            
+
             // 构建列 DTO
             FxTableColumnDTO cd = new FxTableColumnDTO();
             cd.setField(c.getField());
@@ -333,7 +337,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
      *   <li>解析表格名称的国际化文本</li>
      *   <li>组装分页结果并返回</li>
      * </ol>
-     * 
+     *
      * @param page 分页参数
      * @param wrapper 查询条件包装器
      * @param tenantId 租户 ID，预留参数，当前版本未使用
@@ -345,7 +349,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         // 根据查询条件执行分页查询
         Page<FxTableConfig> result = tableConfigMapper.selectPage(page, wrapper);
         List<FxTableConfigDTO> dtoList = new ArrayList<>();
-        
+
         // 遍历查询结果，构建表格配置 DTO 列表
         for (FxTableConfig config : result.getRecords()) {
             FxTableConfigDTO dto = new FxTableConfigDTO();
@@ -364,11 +368,11 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
             dto.setUpdateTime(config.getUpdateTime());
             dtoList.add(dto);
         }
-        
+
         // 组装分页结果
         Page<FxTableConfigDTO> dtoPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         dtoPage.setRecords(dtoList);
-        
+
         return dtoPage;
     }
 
@@ -384,7 +388,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
      *   <li>当前语言的主语言部分（如"en"、"ja"）</li>
      *   <li>第一个可用的语言值</li>
      * </ol>
-     * 
+     *
      * @param i18nJson 国际化 JSON 字符串
      * @param fallback 回退文本，当所有语言都不可用时使用
      * @return 解析后的国际化文本，解析失败时返回回退文本
@@ -394,7 +398,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         if (!StringUtils.hasText(i18nJson)) {
             return fallback;
         }
-        
+
         JSONObject obj;
         try {
             // 解析 JSON 为对象
@@ -402,10 +406,10 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         } catch (Exception e) {
             return fallback;
         }
-        
+
         // 获取当前语言环境
         String lang = LangContext.get();
-        
+
         // 尝试获取当前语言的文本
         if (StringUtils.hasText(lang) && obj.containsKey(lang)) {
             String v = obj.getStr(lang);
@@ -413,7 +417,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 return v;
             }
         }
-        
+
         // 尝试获取主语言的文本（如 en-US -> en）
         if (StringUtils.hasText(lang)) {
             int idx = lang.indexOf('-');
@@ -427,7 +431,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 }
             }
         }
-        
+
         // 尝试使用第一个可用的语言值
         try {
             for (String key : obj.keySet()) {
@@ -437,7 +441,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 }
             }
         } catch (Exception ignored) {}
-        
+
         // 所有尝试都失败，返回回退文本
         return fallback;
     }
@@ -639,6 +643,10 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         }
         if (DICT_TABLE_CODE.equals(tableCode)) {
             ensureDictActionColumn(columns);
+            return;
+        }
+        if (INVITE_CODE_TABLE_CODE.equals(tableCode)) {
+            ensureInviteCodeRoleColumn(columns);
         }
     }
 
@@ -648,6 +656,9 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         }
         if (POSITION_TABLE_CODE.equals(tableCode)) {
             return ensurePositionTableQueryFields(queryFields);
+        }
+        if (INVITE_CODE_TABLE_CODE.equals(tableCode)) {
+            return ensureInviteCodeRoleQueryField(queryFields);
         }
         return queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
     }
@@ -729,6 +740,53 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         actionColumn.setQueryable(false);
         actionColumn.setVisible(true);
         columns.add(actionColumn);
+    }
+
+    private void ensureInviteCodeRoleColumn(List<FxTableColumnDTO> columns) {
+        boolean hasRoleNameColumn = columns.stream()
+                .anyMatch(column -> ROLE_NAME_FIELD.equals(column.getField()));
+        if (hasRoleNameColumn) {
+            return;
+        }
+
+        FxTableColumnDTO roleColumn = new FxTableColumnDTO();
+        roleColumn.setField(ROLE_NAME_FIELD);
+        roleColumn.setTitle(resolveI18nText(INVITE_ROLE_TITLE_I18N_JSON, ROLE_NAME_FIELD));
+        roleColumn.setAlign("left");
+        roleColumn.setWidth(140);
+        roleColumn.setEllipsis(false);
+        roleColumn.setSortable(false);
+        roleColumn.setQueryable(false);
+        roleColumn.setRenderType("text");
+        roleColumn.setVisible(true);
+
+        int insertIndex = columns.size();
+        for (int i = 0; i < columns.size(); i++) {
+            if ("positionName".equals(columns.get(i).getField())) {
+                insertIndex = i + 1;
+                break;
+            }
+        }
+        columns.add(insertIndex, roleColumn);
+    }
+
+    private List<FxTableQueryFieldDTO> ensureInviteCodeRoleQueryField(List<FxTableQueryFieldDTO> queryFields) {
+        List<FxTableQueryFieldDTO> safeQueryFields =
+                queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        boolean hasRoleIdQuery = safeQueryFields.stream()
+                .anyMatch(queryField -> queryField != null && ROLE_ID_FIELD.equals(queryField.getField()));
+        if (hasRoleIdQuery) {
+            return safeQueryFields;
+        }
+
+        FxTableQueryFieldDTO roleQuery = new FxTableQueryFieldDTO();
+        roleQuery.setField(ROLE_ID_FIELD);
+        roleQuery.setLabel(resolveI18nText(INVITE_ROLE_TITLE_I18N_JSON, ROLE_ID_FIELD));
+        roleQuery.setQueryType("select");
+        roleQuery.setQueryOperator("eq");
+        roleQuery.setDictCode("role");
+        safeQueryFields.add(roleQuery);
+        return safeQueryFields;
     }
 
     private String normalizePositionField(String field) {

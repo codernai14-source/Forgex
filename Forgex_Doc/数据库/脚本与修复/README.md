@@ -37,3 +37,4 @@
 | `doc/sql/20260430_fix_invite_encode_codegen_unit.sql` | 补齐 `InviteCodeTable` 公共表格配置、编码规则明细字段、代码生成本地数据源和 `basic_unit` 计量单位表 |
 | `Forgex_Doc/数据库/脚本与修复/20260501_common_import_upgrade.sql` | 公共导入升级脚本，补齐导入配置处理器 Bean、导入权限、多 Sheet 字段，初始化用户、供应商、语言类型导入配置，并写入 Excel 导入提示五语言国际化文案 |
 | `Forgex_Doc/数据库/脚本与修复/20260502_basic_unit_and_table_upgrade.sql` | 计量单位三表升级脚本，在 `forgex_admin` 新增 `basic_unit_type`、`basic_unit`、`basic_unit_conversion`，兼容旧版 `basic_unit` 单表并补齐 `unit_type_id` 与默认类型，在 `forgex_common` 初始化 `BasicUnitTable` 公共表格配置，补齐计量单位菜单、按钮权限、管理员授权、页面文案和后端返回消息 |
+| `Forgex_Doc/数据库/脚本与修复/20260504_invite_code_role_binding.sql` | 邀请码角色绑定升级脚本，为 `sys_invite_code` 与 `sys_invite_register_record` 增加 `role_id`，回填普通用户角色，并补齐 `InviteCodeTable` 绑定角色列与角色查询条件 |

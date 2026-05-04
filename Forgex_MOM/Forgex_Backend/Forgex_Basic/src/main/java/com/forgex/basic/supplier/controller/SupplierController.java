@@ -55,6 +55,12 @@ public class SupplierController {
     @Qualifier("basicSupplierImportHandler")
     private final FxExcelImportHandler basicSupplierImportHandler;
 
+    /**
+     * 分页查询供应商主数据。
+     *
+     * @param param 分页查询参数
+     * @return 供应商分页结果
+     */
     @Operation(summary = "分页查询供应商")
     @RequirePerm("basic:supplier:query")
     @PostMapping("/page")
@@ -62,12 +68,24 @@ public class SupplierController {
         return R.ok(supplierService.page(param));
     }
 
+    /**
+     * 查询供应商主数据列表。
+     *
+     * @param param 查询参数
+     * @return 供应商列表
+     */
     @Operation(summary = "查询供应商列表")
     @PostMapping("/list")
     public R<List<SupplierDTO>> list(@RequestBody(required = false) SupplierPageParam param) {
         return R.ok(supplierService.list(param));
     }
 
+    /**
+     * 获取供应商详情。
+     *
+     * @param params 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "获取供应商详情")
     @RequirePerm("basic:supplier:query")
     @PostMapping("/detail")
@@ -76,6 +94,12 @@ public class SupplierController {
         return R.ok(supplierService.getDetailById(id));
     }
 
+    /**
+     * 新增供应商。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "新增供应商")
     @RequirePerm("basic:supplier:add")
     @PostMapping("/create")
@@ -83,6 +107,12 @@ public class SupplierController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, supplierService.create(param));
     }
 
+    /**
+     * 修改供应商。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "修改供应商")
     @RequirePerm("basic:supplier:edit")
     @PostMapping("/update")
@@ -90,6 +120,12 @@ public class SupplierController {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, supplierService.update(param));
     }
 
+    /**
+     * 删除供应商。
+     *
+     * @param params 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "删除供应商")
     @RequirePerm("basic:supplier:delete")
     @PostMapping("/delete")
@@ -98,6 +134,13 @@ public class SupplierController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, supplierService.delete(id));
     }
 
+    /**
+     * 导出供应商主数据 Excel。
+     *
+     * @param param 查询参数
+     * @param response HTTP 响应
+     * @throws IOException 写出文件失败时抛出
+     */
     @Operation(summary = "导出供应商")
     @RequirePerm("basic:supplier:export")
     @PostMapping("/export")
@@ -106,6 +149,12 @@ public class SupplierController {
         supplierService.exportExcel(param, response.getOutputStream());
     }
 
+    /**
+     * 生成供应商租户。
+     *
+     * @param params 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "生成供应商租户")
     @RequirePerm("basic:supplier:generateTenant")
     @PostMapping("/generate-tenant")
@@ -114,6 +163,12 @@ public class SupplierController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, supplierService.generateTenant(id));
     }
 
+    /**
+     * 发起供应商资质审查。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "发起供应商资质审查")
     @RequirePerm("basic:supplier:review")
     @PostMapping("/review/start")
@@ -121,6 +176,12 @@ public class SupplierController {
         return R.ok(CommonPrompt.SUBMIT_SUCCESS, supplierService.startQualificationReview(param));
     }
 
+    /**
+     * 同步供应商主数据到第三方系统。
+     *
+     * @param request 同步请求参数
+     * @return 同步结果
+     */
     @Operation(summary = "同步供应商到第三方")
     @RequirePerm("basic:supplier:sync")
     @PostMapping("/sync-third-party")
@@ -128,37 +189,79 @@ public class SupplierController {
         return R.ok(CommonPrompt.SYNC_SUCCESS, supplierService.syncToThirdParty(request));
     }
 
+    /**
+     * 工作流回调：供应商审查结果。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "工作流回调：供应商审查结果")
     @PostMapping("/workflow/callback")
     public R<Boolean> workflowCallback(@RequestBody SupplierWorkflowCallbackParam param) {
         return R.ok(supplierService.handleWorkflowCallback(param));
     }
 
+    /**
+     * 内部接口：按供应商编码查询聚合数据。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/internal/get-by-code")
     public R<SupplierAggregateDTO> internalGetByCode(@RequestBody SupplierQueryRequestDTO request) {
         return R.ok(supplierService.getByCode(request));
     }
 
+    /**
+     * 内部接口：按供应商编码批量查询聚合数据。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/internal/list-by-codes")
     public R<List<SupplierAggregateDTO>> internalListByCodes(@RequestBody SupplierQueryRequestDTO request) {
         return R.ok(supplierService.listByCodes(request));
     }
 
+    /**
+     * 内部接口：查询供应商下拉选项。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/internal/options")
     public R<List<SupplierOptionDTO>> internalOptions(@RequestBody SupplierQueryRequestDTO request) {
         return R.ok(supplierService.listOptions(request));
     }
 
+    /**
+     * 内部接口：同步第三方供应商数据。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/internal/sync-third-party-suppliers")
     public R<SupplierThirdPartySyncResultDTO> internalSyncThirdPartySuppliers(@RequestBody SupplierThirdPartySyncRequestDTO request) {
         return R.ok(supplierService.syncThirdPartySuppliers(request));
     }
 
+    /**
+     * 内部接口：导出第三方供应商数据。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/internal/export-third-party-suppliers")
     public R<List<SupplierAggregateDTO>> internalExportThirdPartySuppliers(@RequestBody SupplierThirdPartySyncRequestDTO request) {
         return R.ok(supplierService.exportThirdPartySuppliers(request));
     }
 
+    /**
+     * 内部接口：执行供应商导入。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/internal/import/execute")
     public R<FxExcelImportResultDTO> internalImportExecute(@RequestBody FxExcelImportExecuteParam param) {
         return R.ok(basicSupplierImportHandler.handle(param));

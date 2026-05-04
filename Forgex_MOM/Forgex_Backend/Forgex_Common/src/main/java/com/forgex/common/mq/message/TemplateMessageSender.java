@@ -30,7 +30,7 @@ import java.util.Map;
  * request.setDataMap(Map.of("userName", "张三"));
  * request.setReceiverUserIds(List.of(123L));
  * templateMessageSender.sendToMq(request);
- * 
+ *
  * // 方式 2：简化参数（接收人从模板配置读取）
  * templateMessageSender.sendToMq("WF_APPROVED", Map.of("userName", "张三"));
  * }</pre>
@@ -43,7 +43,7 @@ import java.util.Map;
  * @see TemplateMessageSenderImpl
  */
 public interface TemplateMessageSender {
-    
+
     /**
      * 发送模板消息到 MQ
      * <p>
@@ -57,7 +57,7 @@ public interface TemplateMessageSender {
      * @see TemplateMessageRequest
      */
     void sendToMq(TemplateMessageRequest request);
-    
+
     /**
      * 发送模板消息到 MQ（简化版）
      * <p>
@@ -74,6 +74,9 @@ public interface TemplateMessageSender {
         TemplateMessageRequest request = new TemplateMessageRequest();
         request.setTemplateCode(templateCode);
         request.setDataMap(dataMap);
+      /**
+       * 执行模板消息sender的sendtomq操作。
+       */
         sendToMq(request);
     }
 }

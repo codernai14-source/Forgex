@@ -8,6 +8,9 @@ import java.util.List;
 
 /**
  * 参数树批量保存参数
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 public class ApiParamBatchSaveParam {
@@ -17,6 +20,9 @@ public class ApiParamBatchSaveParam {
      */
     private Long apiConfigId;
 
+    /**
+     * 出站目标 ID。
+     */
     private Long outboundTargetId;
 
     /**

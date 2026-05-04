@@ -25,10 +25,12 @@ import com.forgex.sys.domain.entity.SysDepartment;
 import com.forgex.sys.domain.entity.SysInviteCode;
 import com.forgex.sys.domain.entity.SysInviteRegisterRecord;
 import com.forgex.sys.domain.entity.SysPosition;
+import com.forgex.sys.domain.entity.SysRole;
 import com.forgex.sys.mapper.SysDepartmentMapper;
 import com.forgex.sys.mapper.SysInviteCodeMapper;
 import com.forgex.sys.mapper.SysInviteRegisterRecordMapper;
 import com.forgex.sys.mapper.SysPositionMapper;
+import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.service.SysInviteCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +56,7 @@ public class SysInviteCodeServiceImpl implements SysInviteCodeService {
     private final SysInviteRegisterRecordMapper registerRecordMapper;
     private final SysDepartmentMapper departmentMapper;
     private final SysPositionMapper positionMapper;
+    private final SysRoleMapper roleMapper;
 
     @Override
     public IPage<SysInviteCodeDTO> pageInviteCodes(Page<SysInviteCode> page, SysInviteCodeQueryDTO queryDTO) {
@@ -86,13 +89,29 @@ public class SysInviteCodeServiceImpl implements SysInviteCodeService {
         if (dept == null || Boolean.TRUE.equals(dept.getDeleted())) {
             throw new RuntimeException("部门不存在");
         }
+        Long tenantId = param.getTenantId() != null ? param.getTenantId() : dept.getTenantId();
+        if (tenantId == null) {
+            throw new RuntimeException("租户ID不能为空");
+        }
+        if (param.getTenantId() != null && dept.getTenantId() != null && !param.getTenantId().equals(dept.getTenantId())) {
+            throw new RuntimeException("部门不存在");
+        }
 
         // 校验职位是否存在（可选）
         if (param.getPositionId() != null) {
             SysPosition pos = positionMapper.selectById(param.getPositionId());
-            if (pos == null || Boolean.TRUE.equals(pos.getDeleted())) {
+            if (pos == null || Boolean.TRUE.equals(pos.getDeleted()) || (tenantId != null && !tenantId.equals(pos.getTenantId()))) {
                 throw new RuntimeException("职位不存在");
             }
+        }
+
+        SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
+                .eq(SysRole::getId, param.getRoleId())
+                .eq(SysRole::getTenantId, tenantId)
+                .eq(SysRole::getStatus, true)
+                .eq(SysRole::getDeleted, false));
+        if (role == null) {
+            throw new RuntimeException("角色不存在或已停用");
         }
 
         // 生成邀请码
@@ -100,6 +119,7 @@ public class SysInviteCodeServiceImpl implements SysInviteCodeService {
 
         SysInviteCode inviteCode = new SysInviteCode();
         BeanUtils.copyProperties(param, inviteCode);
+        inviteCode.setTenantId(tenantId);
         inviteCode.setInviteCode(code);
         inviteCode.setUsedCount(0);
         inviteCode.setStatus(true);
@@ -218,6 +238,14 @@ public class SysInviteCodeServiceImpl implements SysInviteCodeService {
             }
         }
 
+        // 查询绑定角色名称
+        if (entity.getRoleId() != null) {
+            SysRole role = selectRole(entity.getRoleId(), entity.getTenantId());
+            if (role != null) {
+                dto.setRoleName(role.getRoleName());
+            }
+        }
+
         return dto;
     }
 
@@ -243,6 +271,12 @@ public class SysInviteCodeServiceImpl implements SysInviteCodeService {
     private SysInviteRecordDTO convertRecordToDTO(SysInviteRegisterRecord record) {
         SysInviteRecordDTO dto = new SysInviteRecordDTO();
         BeanUtils.copyProperties(record, dto);
+        if (record.getRoleId() != null) {
+            SysRole role = selectRole(record.getRoleId(), record.getTenantId());
+            if (role != null) {
+                dto.setRoleName(role.getRoleName());
+            }
+        }
         return dto;
     }
 
@@ -262,11 +296,24 @@ public class SysInviteCodeServiceImpl implements SysInviteCodeService {
         if (queryDTO.getDepartmentId() != null) {
             wrapper.eq(SysInviteCode::getDepartmentId, queryDTO.getDepartmentId());
         }
+        if (queryDTO.getRoleId() != null) {
+            wrapper.eq(SysInviteCode::getRoleId, queryDTO.getRoleId());
+        }
         if (queryDTO.getStatus() != null) {
             wrapper.eq(SysInviteCode::getStatus, queryDTO.getStatus());
         }
 
         return wrapper;
+    }
+
+    private SysRole selectRole(Long roleId, Long tenantId) {
+        LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<SysRole>()
+                .eq(SysRole::getId, roleId)
+                .eq(SysRole::getDeleted, false);
+        if (tenantId != null) {
+            wrapper.eq(SysRole::getTenantId, tenantId);
+        }
+        return roleMapper.selectOne(wrapper);
     }
 }
 

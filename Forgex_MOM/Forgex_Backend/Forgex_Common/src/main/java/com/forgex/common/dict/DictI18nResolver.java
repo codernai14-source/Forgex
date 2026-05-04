@@ -17,7 +17,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,13 +76,13 @@ public class DictI18nResolver {
      * JSON序列化工具
      */
     private final ObjectMapper objectMapper;
-    
+
     /**
      * 字典标签本地缓存
      */
     @Qualifier("dictLabelCache")
     private final Cache<String, Map<String, String>> dictLabelCache;
-    
+
     /**
      * 字典项本地缓存（包含样式）
      */
@@ -103,7 +109,7 @@ public class DictI18nResolver {
      *   <li>Redis缓存命中：响应时间 < 20ms（提升60%）</li>
      *   <li>数据库查询：响应时间 50-100ms</li>
      * </ul>
-     * 
+     *
      * @param tenantId 租户ID
      * @param nodePath 字典节点路径
      * @return 字典值到国际化文本的映射，参数无效或节点不存在时返回空Map
@@ -116,17 +122,17 @@ public class DictI18nResolver {
 
         // 获取当前语言环境
         String lang = LangContext.get();
-        
+
         // 构建缓存键
         String cacheKey = buildCacheKey(tenantId, lang, nodePath);
-        
+
         // L1: 本地缓存查询（Caffeine）
         Map<String, String> result = dictLabelCache.getIfPresent(cacheKey);
         if (result != null) {
             log.debug("字典本地缓存命中: {}", cacheKey);
             return result;
         }
-        
+
         // L2: Redis缓存查询
         try {
             String raw = redis.opsForValue().get("dicti18n:" + cacheKey);
@@ -143,12 +149,12 @@ public class DictI18nResolver {
 
         // L3: 数据库查询
         result = loadFromDatabase(tenantId, nodePath);
-        
+
         // 写入缓存
         if (!result.isEmpty()) {
             // 写入本地缓存
             dictLabelCache.put(cacheKey, result);
-            
+
             // 写入Redis缓存
             try {
                 String json = objectMapper.writeValueAsString(result);
@@ -157,7 +163,7 @@ public class DictI18nResolver {
                 log.warn("Redis缓存写入失败: {}", e.getMessage());
             }
         }
-        
+
         return result;
     }
 
@@ -184,7 +190,7 @@ public class DictI18nResolver {
      * <p>
      * 查询字典节点及其所有启用状态的子节点，构建字典值到标签的映射。
      * </p>
-     * 
+     *
      * @param tenantId 租户ID
      * @param nodePath 字典节点路径
      * @return 字典值到标签的映射
@@ -195,7 +201,7 @@ public class DictI18nResolver {
                 .eq(SysDictNode::getNodePath, nodePath)
                 .eq(SysDictNode::getTenantId, tenantId)
                 .last("limit 1"));
-        
+
         // 节点不存在，返回空Map
         if (node == null) {
             return Collections.emptyMap();
@@ -206,7 +212,7 @@ public class DictI18nResolver {
                 .eq(SysDictNode::getParentId, node.getId())
                 .eq(SysDictNode::getStatus, 1)
                 .orderByAsc(SysDictNode::getOrderNum));
-        
+
         // 构建字典值到国际化文本的映射
         Map<String, String> map = new LinkedHashMap<>();
         for (SysDictNode c : children) {
@@ -216,7 +222,7 @@ public class DictI18nResolver {
                 map.put(c.getDictValue(), resolveI18nText(c.getDictValueI18nJson(), c.getDictName()));
             }
         }
-        
+
         return map;
     }
 
@@ -232,7 +238,7 @@ public class DictI18nResolver {
      *   <li>L2: Redis缓存 - 24小时过期</li>
      *   <li>L3: 数据库查询</li>
      * </ol>
-     * 
+     *
      * @param tenantId 租户ID
      * @param nodePath 字典节点路径
      * @return 字典值到字典项的映射，参数无效或节点不存在时返回空Map
@@ -245,17 +251,17 @@ public class DictI18nResolver {
 
         // 获取当前语言环境
         String lang = LangContext.get();
-        
+
         // 构建缓存键
         String cacheKey = buildCacheKey(tenantId, lang, nodePath);
-        
+
         // L1: 本地缓存查询
         Map<String, DictItem> result = dictItemCache.getIfPresent(cacheKey);
         if (result != null) {
             log.debug("字典项本地缓存命中: {}", cacheKey);
             return result;
         }
-        
+
         // L2: Redis缓存查询
         try {
             String raw = redis.opsForValue().get("dictitem:" + cacheKey);
@@ -272,12 +278,12 @@ public class DictI18nResolver {
 
         // L3: 数据库查询
         result = loadItemsFromDatabase(tenantId, nodePath);
-        
+
         // 写入缓存
         if (!result.isEmpty()) {
             // 写入本地缓存
             dictItemCache.put(cacheKey, result);
-            
+
             // 写入Redis缓存
             try {
                 String json = objectMapper.writeValueAsString(result);
@@ -286,16 +292,16 @@ public class DictI18nResolver {
                 log.warn("Redis缓存写入失败: {}", e.getMessage());
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * 从数据库加载字典项数据
      * <p>
      * 查询字典节点及其所有启用状态的子节点，构建字典值到字典项的映射。
      * </p>
-     * 
+     *
      * @param tenantId 租户ID
      * @param nodePath 字典节点路径
      * @return 字典值到字典项的映射
@@ -306,7 +312,7 @@ public class DictI18nResolver {
                 .eq(SysDictNode::getNodePath, nodePath)
                 .eq(SysDictNode::getTenantId, tenantId)
                 .last("limit 1"));
-        
+
         // 节点不存在，返回空Map
         if (node == null) {
             return Collections.emptyMap();
@@ -317,7 +323,7 @@ public class DictI18nResolver {
                 .eq(SysDictNode::getParentId, node.getId())
                 .eq(SysDictNode::getStatus, 1)
                 .orderByAsc(SysDictNode::getOrderNum));
-        
+
         // 构建字典值到字典项的映射
         Map<String, DictItem> map = new LinkedHashMap<>();
         for (SysDictNode c : children) {
@@ -330,10 +336,10 @@ public class DictI18nResolver {
                 map.put(c.getDictValue(), new DictItem(c.getDictValue(), label, tagStyle));
             }
         }
-        
+
         return map;
     }
-    
+
     /**
      * 清除指定字典的缓存
      * <p>
@@ -344,7 +350,7 @@ public class DictI18nResolver {
      *   <li>字典数据更新后调用此方法</li>
      *   <li>确保所有节点的缓存同步</li>
      * </ul>
-     * 
+     *
      * @param tenantId 租户ID
      * @param nodePath 字典节点路径
      */
@@ -354,18 +360,18 @@ public class DictI18nResolver {
             String cacheKey = buildCacheKey(tenantId, lang, nodePath);
             dictLabelCache.invalidate(cacheKey);
             dictItemCache.invalidate(cacheKey);
-            
+
             // 清除Redis缓存
             redis.delete("dicti18n:" + cacheKey);
             redis.delete("dictitem:" + cacheKey);
         }
-        
+
         // 发布缓存失效消息，通知其他节点
         redis.convertAndSend("dict:cache:invalidate", tenantId + ":" + nodePath);
-        
+
         log.info("字典缓存已清除: tenantId={}, nodePath={}", tenantId, nodePath);
     }
-    
+
     /**
      * 预热常用字典
      * <p>
@@ -377,13 +383,13 @@ public class DictI18nResolver {
      *   <li>减少首次访问的延迟</li>
      *   <li>提升用户体验</li>
      * </ul>
-     * 
+     *
      * @param tenantId 租户ID
      * @param nodePaths 需要预热的字典节点路径列表
      */
     public void warmupCache(Long tenantId, List<String> nodePaths) {
         log.info("开始预热字典缓存: tenantId={}, paths={}", tenantId, nodePaths);
-        
+
         for (String nodePath : nodePaths) {
             try {
                 // 加载字典标签
@@ -394,10 +400,10 @@ public class DictI18nResolver {
                 log.warn("字典预热失败: nodePath={}, error={}", nodePath, e.getMessage());
             }
         }
-        
+
         log.info("字典缓存预热完成");
     }
-    
+
     /**
      * 获取缓存统计信息
      * <p>
@@ -411,7 +417,7 @@ public class DictI18nResolver {
      *   <li>加载次数（loadCount）</li>
      *   <li>平均加载时间（averageLoadPenalty）</li>
      * </ul>
-     * 
+     *
      * @return 缓存统计信息Map
      */
     public Map<String, Object> getCacheStats() {
@@ -420,13 +426,13 @@ public class DictI18nResolver {
         stats.put("itemCache", dictItemCache.stats());
         return stats;
     }
-    
+
     /**
      * 构建缓存键
      * <p>
      * 统一的缓存键构建方法，格式：{@code tenantId:lang:nodePath}
      * </p>
-     * 
+     *
      * @param tenantId 租户ID
      * @param lang 语言代码
      * @param nodePath 字典节点路径
@@ -441,7 +447,7 @@ public class DictI18nResolver {
      * <p>
      * 从JSON字符串中解析标签样式信息。
      * </p>
-     * 
+     *
      * @param tagStyleJson 标签样式JSON字符串
      * @return 标签样式对象，解析失败时返回null
      */
@@ -449,11 +455,11 @@ public class DictI18nResolver {
         if (!StringUtils.hasText(tagStyleJson)) {
             return null;
         }
-        
+
         try {
             JsonNode node = objectMapper.readTree(tagStyleJson);
             DictItem.TagStyle tagStyle = new DictItem.TagStyle();
-            
+
             if (node.has("color")) {
                 tagStyle.setColor(node.get("color").asText());
             }
@@ -463,7 +469,7 @@ public class DictI18nResolver {
             if (node.has("backgroundColor")) {
                 tagStyle.setBackgroundColor(node.get("backgroundColor").asText());
             }
-            
+
             return tagStyle;
         } catch (Exception e) {
             return null;
@@ -484,7 +490,7 @@ public class DictI18nResolver {
      *   <li>中文（"zh"）</li>
      *   <li>第一个可用的语言值</li>
      * </ol>
-     * 
+     *
      * @param i18nJson 国际化JSON字符串
      * @param fallback 回退文本，当所有语言都不可用时使用
      * @return 解析后的国际化文本，解析失败时返回回退文本
@@ -494,20 +500,20 @@ public class DictI18nResolver {
         if (!StringUtils.hasText(i18nJson)) {
             return fallback;
         }
-        
+
         try {
             // 解析JSON为树结构
             JsonNode node = objectMapper.readTree(i18nJson);
-            
+
             // 获取当前语言环境
             String lang = LangContext.get();
-            
+
             // 尝试获取当前语言的文本
             String val = getText(node, lang);
             if (StringUtils.hasText(val)) {
                 return val;
             }
-            
+
             // 尝试获取主语言的文本（如en-US -> en）
             if (StringUtils.hasText(lang)) {
                 int idx = lang.indexOf('-');
@@ -518,19 +524,19 @@ public class DictI18nResolver {
                     }
                 }
             }
-            
+
             // 回退到简体中文
             val = getText(node, "zh-CN");
             if (StringUtils.hasText(val)) {
                 return val;
             }
-            
+
             // 回退到中文
             val = getText(node, "zh");
             if (StringUtils.hasText(val)) {
                 return val;
             }
-            
+
             // 使用第一个可用的语言值
             if (node.isObject()) {
                 java.util.Iterator<Map.Entry<String, JsonNode>> it = node.fields();
@@ -541,7 +547,7 @@ public class DictI18nResolver {
                     }
                 }
             }
-            
+
             // 所有尝试都失败，返回回退文本
             return fallback;
         } catch (Exception e) {
@@ -555,7 +561,7 @@ public class DictI18nResolver {
      * <p>
      * 根据语言键从JSON对象中获取对应的文本值。
      * </p>
-     * 
+     *
      * @param node JSON节点对象
      * @param key 语言键（如"en-US"、"zh-CN"）
      * @return 对应语言的文本值，不存在或格式错误时返回null
@@ -565,13 +571,13 @@ public class DictI18nResolver {
         if (node == null || !node.isObject() || !StringUtils.hasText(key)) {
             return null;
         }
-        
+
         // 获取指定键的值
         JsonNode v = node.get(key);
         if (v != null && v.isTextual() && StringUtils.hasText(v.asText())) {
             return v.asText();
         }
-        
+
         return null;
     }
 }

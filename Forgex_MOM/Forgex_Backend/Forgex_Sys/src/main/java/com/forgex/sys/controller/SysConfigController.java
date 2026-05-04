@@ -35,7 +35,13 @@ import com.forgex.sys.domain.dto.FileUploadFolderNodeDTO;
 import com.forgex.sys.domain.dto.FileUploadRuntimeDefaultsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -60,16 +66,16 @@ import java.util.Set;
 
 /**
  * 系统配置控制器。
- * 
+ *
  * 职责：
  * - 接收 HTTP 请求
  * - 参数校验（调用 Validator）
  * - 调用 ConfigService 层方法
  * - 返回响应结果
- * 
+ *
  * 提供登录验证码配置、系统基础配置、安全配置、文件上传配置的读取与更新接口。
  * Controller 仅负责参数接收与结果返回，配置持久化由配置服务完成。
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  * @see ConfigService
@@ -133,7 +139,7 @@ public class SysConfigController {
         // 2. 返回验证码配置对象
         return R.ok(c);
     }
-    
+
     /**
      * 更新登录验证码配置
      * <p>
@@ -165,7 +171,7 @@ public class SysConfigController {
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
-    
+
     /**
      * 获取全局系统基础配置
      * <p>
@@ -192,7 +198,7 @@ public class SysConfigController {
         // 2. 返回系统基础配置对象
         return R.ok(normalizeSystemBasicConfig(c == null ? SystemBasicConfig.defaults() : c));
     }
-    
+
     /**
      * 更新全局系统基础配置
      * <p>
@@ -225,7 +231,7 @@ public class SysConfigController {
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
-    
+
     /**
      * 获取聚合安全配置
      * <p>
@@ -258,7 +264,7 @@ public class SysConfigController {
     public R<SecurityConfig> getSecurityConfig() {
         // 1. 获取默认安全配置
         SecurityConfig defaults = SecurityConfig.defaults();
-        
+
         // 2. 从 ConfigService 获取各项配置
         CaptchaConfig captcha = configService.getJson(KEY_LOGIN_CAPTCHA, CaptchaConfig.class, defaults.getCaptcha());
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults.getPasswordPolicy());
@@ -271,11 +277,11 @@ public class SysConfigController {
         result.setPasswordPolicy(policy == null ? SecurityConfig.defaults().getPasswordPolicy() : policy);
         result.setLoginSecurity(loginSecurity == null ? SecurityConfig.defaults().getLoginSecurity() : loginSecurity);
         result.setCryptoTransport(transport == null ? SecurityConfig.defaults().getCryptoTransport() : transport);
-        
+
         // 4. 返回安全配置对象
         return R.ok(result);
     }
-    
+
     /**
      * 保存聚合安全配置
      * <p>
@@ -321,11 +327,11 @@ public class SysConfigController {
         configService.setJson(KEY_SECURITY_PASSWORD_POLICY, policy);
         configService.setJson(KEY_SECURITY_LOGIN_FAILURE, loginSecurity);
         configService.setJson(KEY_SECURITY_CRYPTO_TRANSPORT, transport);
-        
+
         // 4. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
-    
+
     /**
      * 获取文件上传配置
      * <p>
@@ -352,6 +358,12 @@ public class SysConfigController {
         return R.ok(config == null ? EmailConfig.defaults() : config);
     }
 
+    /**
+     * 处理setemail配置。
+     *
+     * @param config 配置对象
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:edit")
     @PutMapping("/email")
     public R<Boolean> setEmailConfig(@RequestBody EmailConfig config) {
@@ -359,6 +371,11 @@ public class SysConfigController {
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
 
+    /**
+     * 获取文件upload配置。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @GetMapping("/file-upload")
     public R<FileUploadConfig> getFileUploadConfig() {
@@ -368,6 +385,11 @@ public class SysConfigController {
         return R.ok(normalizeFileUploadConfig(c == null ? FileUploadConfig.defaults() : c));
     }
 
+    /**
+     * 获取文件uploadruntimedefaults。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @GetMapping("/file-upload/runtime-defaults")
     public R<FileUploadRuntimeDefaultsDTO> getFileUploadRuntimeDefaults() {
@@ -386,6 +408,11 @@ public class SysConfigController {
         return R.ok(defaults);
     }
 
+    /**
+     * 获取文件uploadfolderroots。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @GetMapping("/file-upload/folders/roots")
     public R<List<FileUploadFolderNodeDTO>> getFileUploadFolderRoots() {
@@ -403,6 +430,12 @@ public class SysConfigController {
         return R.ok(roots);
     }
 
+    /**
+     * 获取文件uploadfolderchildren。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @PostMapping("/file-upload/folders/children")
     public R<List<FileUploadFolderNodeDTO>> getFileUploadFolderChildren(@RequestBody FileUploadFolderChildrenParam param) {
@@ -422,6 +455,12 @@ public class SysConfigController {
         return R.ok(children);
     }
 
+    /**
+     * 处理create文件上传folder。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:edit")
     @PostMapping("/file-upload/folders/create")
     public R<FileUploadFolderNodeDTO> createFileUploadFolder(@RequestBody FileUploadFolderCreateParam param) {
@@ -444,7 +483,7 @@ public class SysConfigController {
             return R.fail(CommonPrompt.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
-    
+
     /**
      * 保存文件上传配置
      * <p>
@@ -669,6 +708,11 @@ public class SysConfigController {
         }
     }
 
+    /**
+     * 获取crypto配置。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @GetMapping("/crypto")
     public R<CryptoConfig> getCryptoConfig() {

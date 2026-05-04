@@ -304,7 +304,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 判断用户是否存在。
+     * 判断 ID 对应数据是否存在。
      *
      * @param id 用户 ID
      * @return true 表示存在
@@ -358,6 +358,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return user == null ? null : user.getId();
     }
 
+    /**
+     * 根据登录 ID 解析用户 ID。
+     *
+     * @param loginId login ID
+     * @return 数据主键 ID
+     */
     @Override
     public Long resolveUserIdByLoginId(Object loginId) {
         if (loginId == null) {
@@ -451,7 +457,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 查询可同步到第三方系统的用户列表。
+     * 查询第三方用户列表。
      *
      * @param tenantId 租户 ID
      * @return 第三方用户同步 DTO 列表
@@ -469,7 +475,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 同步第三方用户到本系统。
+     * 同步第三方用户。
      * <p>
      * 按账号执行新增或更新，统计新增、更新和失败账号，单条失败不影响后续用户处理。
      * </p>
@@ -503,7 +509,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 导入用户文件。
+     * 导入用户数据。
      * <p>
      * 根据用户导入配置解析 Excel，逐行按账号新增或更新用户。
      * </p>
@@ -550,12 +556,24 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return result;
     }
 
+    /**
+     * 执行通用导入。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param) {
         return handle(param);
     }
 
+    /**
+     * 处理导入数据。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Transactional(rollbackFor = Exception.class)
     public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
         FxExcelImportMode mode = FxExcelImportMode.parse(param == null ? null : param.getImportMode());
@@ -577,7 +595,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 根据部门 ID 查询有效用户 ID。
+     * 按部门 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按部门匹配审批人使用。
      * </p>
@@ -605,7 +623,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 根据角色 ID 查询有效用户 ID。
+     * 按角色 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按角色匹配审批人使用，先查用户角色绑定，再回查有效用户。
      * </p>
@@ -644,7 +662,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 根据岗位 ID 查询有效用户 ID。
+     * 按岗位 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按岗位匹配审批人使用。
      * </p>

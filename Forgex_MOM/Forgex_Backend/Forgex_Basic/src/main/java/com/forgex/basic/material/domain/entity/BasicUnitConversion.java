@@ -44,7 +44,7 @@ public class BasicUnitConversion extends BaseEntity {
     private Long targetUnitId;
 
     /**
-     * 换算后数值，公式为 1 源单位 = conversionValue 目标单位
+     * 换算值。
      */
     @TableField("conversion_value")
     private BigDecimal conversionValue;

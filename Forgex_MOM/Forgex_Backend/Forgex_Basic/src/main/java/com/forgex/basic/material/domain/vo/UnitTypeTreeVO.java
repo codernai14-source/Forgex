@@ -15,15 +15,33 @@ import java.util.List;
 @Data
 public class UnitTypeTreeVO {
 
+    /**
+     * 主键 ID。
+     */
     private Long id;
 
+    /**
+     * 单位类型编码。
+     */
     private String unitTypeCode;
 
+    /**
+     * 单位类型名称。
+     */
     private String unitTypeName;
 
+    /**
+     * 父级 ID。
+     */
     private Long parentId;
 
+    /**
+     * 等级路径。
+     */
     private String levelPath;
 
+    /**
+     * 子节点列表。
+     */
     private List<UnitTypeTreeVO> children = new ArrayList<>();
 }
