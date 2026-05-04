@@ -385,10 +385,11 @@ function approvalColor(value?: number) {
 </script>
 
 <style scoped lang="less">
-.master-page { min-height: 100%; padding: 20px; background: var(--fx-bg-layout, #f8fafc); }
-.page-header { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; padding: 24px 28px; border: 1px solid var(--fx-border-color, #e5e7eb); border-radius: 8px; background: var(--fx-bg-container, #fff); }
+.master-page { display: flex; flex-direction: column; height: 100%; min-height: 100%; padding: 20px; overflow: hidden; box-sizing: border-box; background: var(--fx-bg-layout, #f8fafc); }
+.page-header { flex-shrink: 0; display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; padding: 24px 28px; border: 1px solid var(--fx-border-color, #e5e7eb); border-radius: 8px; background: var(--fx-bg-container, #fff); }
 .page-header h1 { margin: 10px 0 8px; font-size: 28px; }
 .page-header p { margin: 0; color: var(--fx-text-secondary, #64748b); }
+.master-page :deep(.fx-dynamic-table) { flex: 1 1 auto; min-height: 0; }
 .name-cell { display: flex; flex-direction: column; gap: 4px; }
 .name-cell span { color: var(--fx-text-secondary, #64748b); font-size: 12px; }
 .danger-link { color: #ff4d4f; }

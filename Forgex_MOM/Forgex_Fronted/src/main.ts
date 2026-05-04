@@ -18,6 +18,7 @@ import { permission } from './directives/permission'
 import FxDynamicTable from './components/common/FxDynamicTable.vue'
 import MessageNotification from './components/Notification/MessageNotification.vue'
 import { useUserStore } from './stores/user'
+import { installLegacyI18nBridge } from './utils/legacyI18n'
 
 /**
  * 创建 Vue 应用实例
@@ -101,6 +102,7 @@ iconComponents.forEach(name => {
  * 最后将应用挂载到 id 为 'app' 的 DOM 元素上
  */
 app.use(pinia).use(router).use(Antd).use(FcDesigner).use(formCreate).use(i18n).mount('#app')
+installLegacyI18nBridge()
 
 /**
  * 页面关闭或刷新时调用登出接口

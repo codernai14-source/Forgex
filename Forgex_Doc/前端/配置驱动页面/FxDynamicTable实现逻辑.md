@@ -238,6 +238,7 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 后端在 `FxUserTableConfigServiceImpl.java` 中负责：
 
 - 保存用户的列显隐和顺序
+- 保存用户配置的列宽
 - 与租户级 / 公共级基础配置合并
 - 过滤掉 `visible=false` 的列
 
@@ -248,6 +249,10 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 ```
 
 这也是为什么同一个 `tableCode` 在不同用户界面上，列显示可能不完全一样。
+
+列设置面板现在支持通过拖拽手柄直接拖拽排序。每列可以配置 `width`，保存时进入 `fx_user_table_config.column_config` JSON，字段结构为 `{ field, visible, order, width }`。列设置弹层始终使用完整列集合渲染，避免隐藏列被过滤后无法重新勾选。`action` 操作列固定在最右侧，不参与表头拖拽改宽或换位。
+
+表头列宽调整由 `FxDynamicTable.vue` 在表头标题区域渲染拖拽手柄完成。拖动时仅更新当前表格列宽，不弹出遮罩层；鼠标释放后防抖调用 `/sys/common/table/config/user/columns/save` 持久化。列头标题本身支持横向拖拽换列顺序，释放到目标列后同样保存用户列配置。列宽统一约束为最小 `60px`、最大 `800px`，后端合并用户配置时也会做同样的边界裁剪。
 
 ## 页面引导锚点
 
@@ -280,6 +285,8 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 - 卡片布局页面
 - 左右分栏页面
 - 高度撑满的管理后台页面
+
+页面接入时要保证父级布局可以提供明确的剩余高度。常见写法是页面根节点使用满高 flex 布局，头部、页签、工具条等固定区域设置 `flex-shrink: 0`，`FxDynamicTable` 容器设置 `flex: 1` 和 `min-height: 0`。如果页面根节点只有 `min-height: 100%` 或自身继续产生外层滚动，组件无法准确拿到表格区域的剩余高度，可能导致表格底部空白过大。
 
 ## 为什么这样设计
 

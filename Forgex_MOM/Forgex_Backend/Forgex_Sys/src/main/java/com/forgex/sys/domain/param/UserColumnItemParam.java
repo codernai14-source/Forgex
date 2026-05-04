@@ -50,4 +50,10 @@ public class UserColumnItemParam {
      * <p>数值越小排在越前面，用于控制列的显示顺序。</p>
      */
     private Integer order;
+
+    /**
+     * 鍒楀搴?
+     * <p>鐢ㄤ簬鐢ㄦ埛涓€у寲閰嶇疆锛屽崟浣嶄负 px銆?/p>
+     */
+    private Integer width;
 }

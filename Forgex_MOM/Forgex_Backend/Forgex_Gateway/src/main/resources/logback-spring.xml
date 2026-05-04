@@ -3,6 +3,7 @@
 
     <!-- 强制开启 Windows 彩色支持 -->
     <property name="jansi" value="true"/>
+    <springProperty scope="context" name="LOG_DIR" source="forgex.deployment.log-dir" defaultValue="C:/forgex/logs"/>
 
     <!-- 终极整行同色（你最爱的骚气效果） -->
     <property name="CONSOLE_LOG_PATTERN"
@@ -25,9 +26,9 @@
 
     <!-- 日常 info+ 日志文件：每天一个 + 单文件最大 2000MB 自动切分 -->
     <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>d:/forgex/log/gateway/forgex-info.log</file>
+        <file>${LOG_DIR}/gateway/forgex-info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>d:/forgex/log/gateway/forgex-info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/gateway/forgex-info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>2000MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>10GB</totalSizeCap>
@@ -40,9 +41,9 @@
 
     <!-- 单独的 error.log（只记录 ERROR 及以上级别） -->
     <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>d:/forgex/log/gateway/forgex-error.log</file>
+        <file>${LOG_DIR}/gateway/forgex-error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>d:/forgex/log/gateway/forgex-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/gateway/forgex-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>2000MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>10GB</totalSizeCap>

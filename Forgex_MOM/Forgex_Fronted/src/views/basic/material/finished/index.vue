@@ -303,9 +303,16 @@ onMounted(async () => {
 
 <style scoped>
 .material-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .page-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -322,5 +329,9 @@ onMounted(async () => {
 }
 .danger-link {
   color: #ff4d4f;
+}
+.material-page :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

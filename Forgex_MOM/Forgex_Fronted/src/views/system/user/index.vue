@@ -23,17 +23,8 @@
           <a-button data-guide-id="sys-user-pull-third-party" v-permission="'sys:user:pullThirdParty'" @click="handlePullThirdParty">
             从第三方拉取
           </a-button>
-          <a-upload
-            data-guide-id="sys-user-import"
-            v-permission="'sys:user:import'"
-            :show-upload-list="false"
-            :before-upload="handleImport"
-            accept=".xlsx,.xls"
-          >
-            <a-button>导入</a-button>
-          </a-upload>
-          <a-button data-guide-id="sys-user-download-template" v-permission="'sys:user:downloadTemplate'" @click="handleDownloadTemplate">
-            下载模板
+          <a-button data-guide-id="sys-user-import" v-permission="'sys:user:import'" @click="importDialogVisible = true">
+            {{ t('system.excel.commonImport.title') }}
           </a-button>
           <a-button
             data-guide-id="sys-user-batch-delete"
@@ -107,6 +98,12 @@
       :user-account="assignRoleUserAccount"
       @success="handleAssignRoleSuccess"
     />
+
+    <CommonImportDialog
+      v-model:open="importDialogVisible"
+      table-code="sys_user"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
@@ -118,6 +115,7 @@ import { UserOutlined } from '@ant-design/icons-vue'
 import { normalizeMediaUrl } from '@/utils/media'
 import FxActionGroup, { type ActionItem } from '@/components/common/FxActionGroup.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
 import { useDict, getDictItemLabel } from '@/hooks/useDict'
@@ -143,6 +141,7 @@ const assignRoleUserName = ref<string>()
 const assignRoleUserAccount = ref<string>()
 const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
+const importDialogVisible = ref(false)
 
 const dictOptions = ref<Record<string, any[]>>({
   departmentId: [],
@@ -215,27 +214,12 @@ async function handlePullThirdParty() {
   tableRef.value?.refresh?.()
 }
 
-async function handleDownloadTemplate() {
-  try {
-    const resp: any = await userApi.downloadUserTemplate()
-    downloadBlobResponse(resp, 'sys-user-template.xlsx')
-  } catch {
-    message.error(t('common.failed'))
-  }
-}
-
-async function handleImport(file: File) {
-  try {
-    await userApi.importUsers(file)
-    tableRef.value?.refresh?.()
-  } catch {
-    message.error(t('common.failed'))
-  }
-  return false
-}
-
 function handleSelectionChange(keys: string[]) {
   selectedRowKeys.value = keys
+}
+
+function handleImportSuccess() {
+  tableRef.value?.refresh?.()
 }
 
 function openAddDialog() {

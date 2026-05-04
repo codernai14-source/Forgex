@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 public class WebConfig implements WebMvcConfigurer {
     private static final String KEY_FILE_UPLOAD = "file.upload.settings";
 
-    @Value("${file.upload.path:./uploads}")
+    @Value("${file.upload.path:C:/forgex/data/uploads}")
     private String uploadPath;
 
     @Value("${file.access.prefix:/files}")
@@ -61,7 +61,7 @@ public class WebConfig implements WebMvcConfigurer {
             prefix = "/" + prefix;
         }
         if (!StringUtils.hasText(path)) {
-            path = "./uploads";
+            path = "C:/forgex/data/uploads";
         }
 
         registry.addResourceHandler(prefix + "/**")

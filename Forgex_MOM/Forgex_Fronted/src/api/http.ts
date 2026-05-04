@@ -7,6 +7,7 @@
 import axios, { type AxiosRequestConfig, type AxiosInstance } from 'axios'
 import { message, Modal } from 'ant-design-vue'
 import i18n, { getLocale } from '../locales'
+import { translateLegacyContent, translateLegacyText } from '@/utils/legacyI18n'
 
 /**
  * Forgex 请求扩展配置
@@ -57,9 +58,10 @@ function shouldSuppressFrontendMessage(type: 'success' | 'error'): boolean {
 }
 
 function callOriginalMessage(type: 'success' | 'error', content: any) {
+  const translatedContent = translateLegacyContent(content)
   return type === 'success'
-    ? originalMessageSuccess?.(content)
-    : originalMessageError?.(content)
+    ? originalMessageSuccess?.(translatedContent)
+    : originalMessageError?.(translatedContent)
 }
 
 function showBackendMessage(type: 'success' | 'error', content: string) {
@@ -85,7 +87,7 @@ if (!(message as any).__fxBackendToastPatched) {
       }
 
       const original = type === 'success' ? originalMessageSuccess : originalMessageError
-      return original?.(content, ...rest)
+      return original?.(translateLegacyContent(content), ...rest)
     }
   }
 
@@ -446,9 +448,9 @@ async function handleResponse(resp: any, httpInstance: any) {
     if (!loginBack.open) {
       loginBack.open = true
       Modal.error({
-        title: `${t('message.tipTitle')}:`,
+        title: `${translateLegacyText(t('message.tipTitle'))}:`,
         okText: t('message.relogin'),
-        content: t('message.sessionExpired'),
+        content: translateLegacyText(t('message.sessionExpired')),
         onOk: () => {
           redirectToLogin()
         },

@@ -213,6 +213,18 @@ async function handleRequest(payload) {
 </template>
 ```
 
+## 列设置与列宽
+
+公共列设置入口默认显示在表格工具栏右侧。用户可以：
+
+- 勾选或取消勾选列，控制显示 / 隐藏。
+- 拖拽列名前的排序手柄调整显示顺序。
+- 在列宽输入框中设置宽度，保存后刷新仍生效。
+- 直接拖拽表头右侧手柄实时调整列宽，释放鼠标后自动持久化。
+- 直接拖拽表头文字区域调整列顺序，释放到目标列后自动持久化。
+
+列设置保存到用户个性化配置 `fx_user_table_config.column_config`，结构包含 `field`、`visible`、`order`、`width`。列宽允许范围为 `60px` 到 `800px`。`action` 操作列由组件固定到最右侧，不开放拖拽改宽或换位。
+
 ## 操作列按钮规则
 
 表格 `action` 列统一使用 `src/components/common/FxActionGroup.vue` 表达行操作。页面传入 `ActionItem[]`，组件会先按 `permission`、`hidden` 过滤，再按传入顺序决定常用操作优先级。
@@ -352,6 +364,7 @@ async function handleRequest(payload) {
 - 查询参数尽量通过 `payload.query` 统一传递
 - 保存、删除后由页面主动调用 `refresh()`
 - 自定义列尽量少而精，避免把所有列都改成插槽
+- 页面外层如果还有标题、工具条、页签等固定区域，外层容器需要使用 `height: 100%`、`display: flex`、`flex-direction: column`、`overflow: hidden`，并让 `FxDynamicTable` 所在区域 `flex: 1`、`min-height: 0`。否则动态表格按父容器高度计算时，容易叠加固定区域高度导致底部出现大块空白或页面整体滚动。
 
 ## 常见排查
 

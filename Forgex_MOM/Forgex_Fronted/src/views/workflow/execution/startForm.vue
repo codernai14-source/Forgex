@@ -111,6 +111,12 @@ import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 interface DynamicFormExpose {
   validate?: () => Promise<Record<string, any> | void>
   reset?: () => void
+  startWorkflow?: (context: {
+    taskCode: string
+    formContent: string
+    formData: Record<string, any>
+    selectedApprovers: number[]
+  }) => Promise<number | void>
 }
 
 interface ReceiverModel {
@@ -221,8 +227,15 @@ async function handleSubmit() {
       message.warning('请选择至少一位审批人')
       return
     }
-    const executionId = await startExecution(params)
-    navigateAndCloseCurrent(approvalRoutePaths.myInitiated, { executionId })
+    const executionId = dynamicFormRef.value?.startWorkflow
+      ? await dynamicFormRef.value.startWorkflow({
+        taskCode: params.taskCode,
+        formContent: params.formContent,
+        formData: customFormData.value,
+        selectedApprovers: params.selectedApprovers || [],
+      })
+      : await startExecution(params)
+    navigateAndCloseCurrent(approvalRoutePaths.myInitiated, executionId ? { executionId } : {})
   } catch (error: any) {
     if (error?.errorFields) {
       return

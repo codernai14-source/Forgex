@@ -44,6 +44,16 @@ public class FxExcelImportConfigItemDTO {
     private Long configId;
 
     /**
+     * Sheet 编码。
+     */
+    private String sheetCode;
+
+    /**
+     * Sheet 名称。
+     */
+    private String sheetName;
+
+    /**
      * 字段名称国际化 JSON
      * <p>包含多语言的字段名称配置，用于国际化显示。</p>
      */

@@ -66,6 +66,8 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
     private static final String USER_TABLE_CODE = "UserTable";
     private static final String POSITION_TABLE_CODE = "PositionTable";
     private static final String DICT_TABLE_CODE = "DictTable";
+    private static final int MIN_COLUMN_WIDTH = 60;
+    private static final int MAX_COLUMN_WIDTH = 800;
     private static final String USERNAME_FIELD = "username";
     private static final String ACCOUNT_FIELD = "account";
     private static final String POSITION_ID_FIELD = "positionId";
@@ -352,11 +354,21 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             FxTableColumnDTO userCol = userColumnsMap.get(baseCol.getField());
             mergedCol.setVisible(userCol != null ? userCol.getVisible() : Boolean.TRUE);
             mergedCol.setOrder(userCol != null && userCol.getOrder() != null ? userCol.getOrder() : i);
+            if (userCol != null && userCol.getWidth() != null && !ACTION_FIELD.equals(baseCol.getField())) {
+                mergedCol.setWidth(clampColumnWidth(userCol.getWidth()));
+            }
             mergedColumns.add(mergedCol);
         }
 
         mergedColumns.sort(Comparator.comparing(col -> col.getOrder() == null ? Integer.MAX_VALUE : col.getOrder()));
         return mergedColumns;
+    }
+
+    private Integer clampColumnWidth(Integer width) {
+        if (width == null) {
+            return null;
+        }
+        return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, width));
     }
 
     private Map<String, FxTableColumnDTO> parseUserColumns(String columnConfigJson) {

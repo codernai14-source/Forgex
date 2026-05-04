@@ -13,21 +13,23 @@ import com.forgex.common.api.dto.SupplierQueryRequestDTO;
 import com.forgex.common.api.dto.SupplierThirdPartyInvokeDTO;
 import com.forgex.common.api.dto.SupplierThirdPartySyncRequestDTO;
 import com.forgex.common.api.dto.SupplierThirdPartySyncResultDTO;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.service.excel.FxExcelImportHandler;
 import com.forgex.common.web.R;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -50,6 +52,8 @@ import java.util.Map;
 public class SupplierController {
 
     private final ISupplierService supplierService;
+    @Qualifier("basicSupplierImportHandler")
+    private final FxExcelImportHandler basicSupplierImportHandler;
 
     @Operation(summary = "分页查询供应商")
     @RequirePerm("basic:supplier:query")
@@ -92,21 +96,6 @@ public class SupplierController {
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(String.valueOf(params.get("id")));
         return R.ok(CommonPrompt.DELETE_SUCCESS, supplierService.delete(id));
-    }
-
-    @Operation(summary = "下载供应商导入模板")
-    @RequirePerm("basic:supplier:import")
-    @PostMapping("/import-template")
-    public void importTemplate(HttpServletResponse response) throws IOException {
-        prepareExcelResponse(response, "供应商主数据导入模板.xlsx");
-        supplierService.writeImportTemplate(response.getOutputStream());
-    }
-
-    @Operation(summary = "导入供应商")
-    @RequirePerm("basic:supplier:import")
-    @PostMapping("/import")
-    public R<SupplierThirdPartySyncResultDTO> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
-        return R.ok(CommonPrompt.IMPORT_SUCCESS, supplierService.importExcel(file));
     }
 
     @Operation(summary = "导出供应商")
@@ -168,6 +157,11 @@ public class SupplierController {
     @PostMapping("/internal/export-third-party-suppliers")
     public R<List<SupplierAggregateDTO>> internalExportThirdPartySuppliers(@RequestBody SupplierThirdPartySyncRequestDTO request) {
         return R.ok(supplierService.exportThirdPartySuppliers(request));
+    }
+
+    @PostMapping("/internal/import/execute")
+    public R<FxExcelImportResultDTO> internalImportExecute(@RequestBody FxExcelImportExecuteParam param) {
+        return R.ok(basicSupplierImportHandler.handle(param));
     }
 
     private void prepareExcelResponse(HttpServletResponse response, String fileName) {

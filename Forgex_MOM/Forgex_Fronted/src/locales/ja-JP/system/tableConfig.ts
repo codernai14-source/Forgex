@@ -35,7 +35,9 @@ export default {
     title: '列設定',
     reset: 'リセット',
     resetSuccess: 'デフォルト設定にリセットしました',
-    hint: '表示列をチェックし、ドラッグして順序を調整'
+    hint: '表示列をチェックし、ドラッグして順序を調整',
+    dragSort: 'ドラッグして並び替え',
+    dragResize: 'ドラッグして列幅を調整'
   },
   
   form: {

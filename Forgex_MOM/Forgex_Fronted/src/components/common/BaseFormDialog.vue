@@ -87,7 +87,7 @@ interface Props {
   bodyStyle?: CSSProperties
   /** Modal 外层类名，供个别页面定制浮层样式 */
   wrapClassName?: string
-  /** 是否允许点击遮罩关闭，默认 false 以避免误关闭复杂表单 */
+  /** 是否允许点击遮罩关闭，默认 true 以保持管理页新增编辑弹窗交互一致 */
   maskClosable?: boolean
 }
 
@@ -123,7 +123,7 @@ const props = withDefaults(defineProps<Props>(), {
   destroyOnClose: true,
   bodyStyle: undefined,
   wrapClassName: '',
-  maskClosable: false,
+  maskClosable: true,
 })
 
 const emit = defineEmits<Emits>()

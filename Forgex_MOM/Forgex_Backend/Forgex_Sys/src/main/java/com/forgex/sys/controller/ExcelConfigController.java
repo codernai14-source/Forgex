@@ -2,14 +2,22 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
+import com.forgex.common.enums.ExcelPromptEnum;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.security.perm.PermKeyService;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
+import com.forgex.common.service.excel.FxExcelImportExecuteService;
+import com.forgex.common.service.i18n.I18nMessageService;
+import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
 import com.forgex.sys.domain.param.ExcelExportConfigPageParam;
@@ -26,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 /**
  * Excel 导入导出配置与文件能力控制器。
@@ -51,6 +60,18 @@ public class ExcelConfigController {
      * Excel 文件生成服务。
      */
     private final ExcelFileService excelFileService;
+
+    /**
+     * Excel 公共导入执行服务。
+     */
+    private final FxExcelImportExecuteService excelImportExecuteService;
+
+    /**
+     * 权限服务。
+     */
+    private final PermKeyService permKeyService;
+
+    private final I18nMessageService i18nMessageService;
 
     /**
      * Excel 导出服务。
@@ -132,6 +153,23 @@ public class ExcelConfigController {
     }
 
     /**
+     * 根据表编码获取导入配置详情。
+     *
+     * @param param 表编码参数
+     * @return 导入配置详情
+     */
+    @PostMapping("/importConfig/detailByCode")
+    public R<FxExcelImportConfigDTO> importConfigDetailByCode(@RequestBody TableCodeParam param) {
+        String tableCode = param == null ? null : param.getTableCode();
+        FxExcelImportConfigDTO config = excelConfigService.getImportConfigByCode(tableCode);
+        if (config == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_CONFIG_MISSING);
+        }
+        requireImportPermission(config);
+        return R.ok(config);
+    }
+
+    /**
      * 保存导入配置。
      *
      * @param dto 导入配置数据
@@ -164,12 +202,15 @@ public class ExcelConfigController {
      * @param param    表编码参数
      * @param response HTTP 响应
      */
-    @RequirePerm("sys:excel:template:download")
     @PostMapping("/template/download")
     public void downloadTemplate(@RequestBody TableCodeParam param, HttpServletResponse response) {
         try {
-            String tableCode = param.getTableCode();
+            String tableCode = param == null ? null : param.getTableCode();
             FxExcelImportConfigDTO cfg = excelConfigService.getImportConfigByCode(tableCode);
+            if (cfg == null) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_CONFIG_MISSING);
+            }
+            requireImportPermission(cfg);
             byte[] bytes = excelFileService.buildImportTemplateXlsxOrThrow(cfg);
             String filename = "import-template-" + tableCode + ".xlsx";
 
@@ -181,6 +222,37 @@ public class ExcelConfigController {
         } catch (Exception ex) {
             writeJsonError(response, ex);
         }
+    }
+
+    /**
+     * 执行公共导入。
+     * <p>
+     * 前端解析文件后提交结构化数据，后端按表编码读取导入配置、动态校验业务导入权限，
+     * 再根据处理器 Bean 名称分发给业务处理器。
+     * </p>
+     *
+     * @param param 导入参数
+     * @return 导入统计结果
+     */
+    @PostMapping("/import/execute")
+    public R<FxExcelImportResultDTO> executeImport(@RequestBody FxExcelImportExecuteParam param) {
+        if (param == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, CommonPrompt.PARAM_EMPTY);
+        }
+        FxExcelImportConfigDTO config = excelConfigService.getImportConfigByCode(param == null ? null : param.getTableCode());
+        if (config == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_CONFIG_MISSING);
+        }
+        requireImportPermission(config);
+        param.setImportConfig(config);
+        FxExcelImportResultDTO result = excelImportExecuteService.execute(param);
+        return R.okWithArgsAndData(ExcelPromptEnum.EXCEL_IMPORT_EXECUTE_SUCCESS,
+                result,
+                result.getTotalCount(),
+                result.getCreatedCount(),
+                result.getUpdatedCount(),
+                result.getSkippedCount(),
+                result.getFailedCount());
     }
 
     /**
@@ -230,13 +302,43 @@ public class ExcelConfigController {
             response.setStatus(200);
             response.setContentType("application/json;charset=UTF-8");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            String message = ex instanceof I18nBusinessException i18nEx
-                    ? i18nEx.getMsg().getDefaultTemplate()
-                    : "生成导入模板失败";
+            String message = resolveErrorMessage(ex);
             String body = "{\"code\":500,\"message\":\"" + escapeJson(message) + "\",\"data\":null}";
             response.getWriter().write(body);
             response.flushBuffer();
         } catch (IOException ignored) {
+        }
+    }
+
+    private String resolveErrorMessage(Exception ex) {
+        if (ex instanceof I18nBusinessException i18nEx) {
+            String resolved = i18nMessageService.resolve(i18nEx.getMsg(), i18nEx.getMsgArgs());
+            if (resolved != null && !resolved.isBlank()) {
+                return resolved;
+            }
+        }
+        String reason = ex == null || ex.getMessage() == null ? "" : ex.getMessage();
+        String fallback = i18nMessageService.resolve(ExcelPromptEnum.EXCEL_IMPORT_TEMPLATE_BUILD_FAILED, new Object[]{reason});
+        return fallback == null || fallback.isBlank() ? "Failed to generate import template" : fallback;
+    }
+
+    /**
+     * 校验导入权限。
+     *
+     * @param config 导入配置
+     */
+    private void requireImportPermission(FxExcelImportConfigDTO config) {
+        String importPermission = config == null ? null : config.getImportPermission();
+        if (importPermission == null || importPermission.isBlank()) {
+            throw new I18nBusinessException(StatusCode.UNAUTHORIZED, ExcelPromptEnum.EXCEL_IMPORT_PERMISSION_NOT_CONFIGURED);
+        }
+        Long userId = CurrentUserUtils.getUserId();
+        Long tenantId = CurrentUserUtils.getTenantId();
+        if (userId == null || tenantId == null) {
+            throw new I18nBusinessException(StatusCode.NOT_LOGIN, CommonPrompt.NOT_LOGIN);
+        }
+        if (!permKeyService.hasAllPerms(userId, tenantId, Set.of(importPermission))) {
+            throw new I18nBusinessException(StatusCode.UNAUTHORIZED, ExcelPromptEnum.EXCEL_IMPORT_PERMISSION_DENIED);
         }
     }
 
