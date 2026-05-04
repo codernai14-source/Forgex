@@ -4,7 +4,10 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * 寮傛浠诲姟鎻愪氦缁撴灉
+ * 异步任务提交结果
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 @Builder

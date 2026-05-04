@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMapper, ReportDatasource> 
+public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMapper, ReportDatasource>
         implements IReportDatasourceService {
 
     /**
@@ -60,7 +60,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
         }
 
         Page<ReportDatasource> page = new Page<>(param.getPageNum(), param.getPageSize());
-        
+
         // 构建动态查询条件
         LambdaQueryWrapper<ReportDatasource> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StrUtil.isNotBlank(param.getName()), ReportDatasource::getName, param.getName())
@@ -70,20 +70,20 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
                .orderByDesc(ReportDatasource::getCreateTime);
 
         Page<ReportDatasource> resultPage = this.page(page, wrapper);
-        
+
         // 转换为 DTO
         List<ReportDatasourceDTO> dtoList = resultPage.getRecords().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         Page<ReportDatasourceDTO> dtoPage = new Page<>(param.getPageNum(), param.getPageSize(), resultPage.getTotal());
         dtoPage.setRecords(dtoList);
-        
+
         return dtoPage;
     }
 
     /**
-     * 查询所有数据源列表
+     * 查询启用数据列表。
      * <p>
      * 仅返回启用状态的数据源
      * </p>
@@ -142,7 +142,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
     }
 
     /**
-     * 保存数据源
+     * 保存数据。
      * <p>
      * 支持新增和更新，根据 ID 判断
      * 密码字段会自动加密处理
@@ -186,7 +186,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
     }
 
     /**
-     * 测试数据源连接
+     * 测试数据源连接。
      * <p>
      * 验证数据源配置是否正确
      * </p>
@@ -205,10 +205,10 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
         try {
             // 加载驱动
             Class.forName(dto.getDriverClass());
-            
+
             // 尝试连接
             conn = DriverManager.getConnection(dto.getUrl(), dto.getUsername(), dto.getPassword());
-            
+
             if (conn != null && !conn.isClosed()) {
                 log.info("数据源连接测试成功：{}", dto.getName());
                 return true;
@@ -225,7 +225,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
                 }
             }
         }
-        
+
         return false;
     }
 

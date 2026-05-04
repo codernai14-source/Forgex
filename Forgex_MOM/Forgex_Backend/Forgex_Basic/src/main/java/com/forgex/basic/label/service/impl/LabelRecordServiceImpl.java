@@ -49,7 +49,7 @@ public class LabelRecordServiceImpl extends ServiceImpl<LabelPrintRecordMapper, 
     private final LabelTemplateService labelTemplateService;
 
     /**
-     * 分页查询打印记录列表
+     * 分页查询文件记录。
      *
      * @param param 查询参数
      * @param tenantId 租户 ID

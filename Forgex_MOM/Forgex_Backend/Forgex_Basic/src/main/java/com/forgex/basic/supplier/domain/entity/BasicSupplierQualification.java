@@ -48,7 +48,7 @@ public class BasicSupplierQualification extends BaseEntity {
     private LocalDate issueDate;
 
     /**
-     * 有效期至。
+     * 失效日期。
      */
     @TableField("expire_date")
     private LocalDate expireDate;

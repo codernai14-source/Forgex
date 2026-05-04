@@ -6,7 +6,10 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 鎺ュ彛鎵ц涓婁笅鏂?
+ * API 执行上下文。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 @Builder

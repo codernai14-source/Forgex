@@ -36,16 +36,31 @@ import java.util.Locale;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Service
 public class DbMetaServiceImpl implements DbMetaService {
 
+    /**
+     * 查询数据库 Schema 列表。
+     *
+     * @param datasource 数据源
+     * @return 列表数据
+     */
     @Override
     public List<String> listSchemas(SysCodegenDatasource datasource) {
         String sql = "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name";
         return queryList(datasource, sql);
     }
 
+    /**
+     * 查询数据库表列表。
+     *
+     * @param datasource 数据源
+     * @param schemaName 数据库模式名称
+     * @return 列表数据
+     */
     @Override
     public List<String> listTables(SysCodegenDatasource datasource, String schemaName) {
         String sql = "SELECT TABLE_NAME FROM information_schema.TABLES " +
@@ -53,6 +68,14 @@ public class DbMetaServiceImpl implements DbMetaService {
         return queryList(datasource, sql, normalizeSchema(datasource, schemaName));
     }
 
+    /**
+     * 获取表格meta。
+     *
+     * @param datasource 数据源
+     * @param schemaName 数据库模式名称
+     * @param tableName 表格名称
+     * @return 处理结果
+     */
     @Override
     public TableMetaDTO getTableMeta(SysCodegenDatasource datasource, String schemaName, String tableName) {
         String sql = "SELECT TABLE_NAME, TABLE_COMMENT, ENGINE, TABLE_COLLATION, CREATE_TIME " +
@@ -80,6 +103,14 @@ public class DbMetaServiceImpl implements DbMetaService {
         }
     }
 
+    /**
+     * 查询数据库列列表。
+     *
+     * @param datasource 数据源
+     * @param schemaName 数据库模式名称
+     * @param tableName 表格名称
+     * @return 列表数据
+     */
     @Override
     public List<ColumnMetaDTO> listColumns(SysCodegenDatasource datasource, String schemaName, String tableName) {
         String sql = "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, COLUMN_COMMENT, COLUMN_KEY, EXTRA, " +

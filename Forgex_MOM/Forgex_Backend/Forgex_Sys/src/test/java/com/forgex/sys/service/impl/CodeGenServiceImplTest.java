@@ -32,6 +32,12 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+/**
+ * 编码genserviceimpltest实体。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 class CodeGenServiceImplTest {
 
     private ICodegenDatasourceService datasourceService;

@@ -9,12 +9,20 @@ import org.springframework.util.StringUtils;
 
 /**
  * 当前登录人工具类。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 public class CurrentUserUtils {
 
     private CurrentUserUtils() {
     }
 
+    /**
+     * 获取用户ID。
+     *
+     * @return 数据主键 ID
+     */
     public static Long getUserId() {
         Long uid = UserContext.get();
         if (uid != null) {
@@ -24,6 +32,11 @@ public class CurrentUserUtils {
         return session == null ? null : parseLong(session.get(LoginSessionKeys.KEY_USER_ID));
     }
 
+    /**
+     * 获取租户ID。
+     *
+     * @return 数据主键 ID
+     */
     public static Long getTenantId() {
         Long tid = TenantContext.get();
         if (tid != null) {
@@ -33,6 +46,11 @@ public class CurrentUserUtils {
         return session == null ? null : parseLong(session.get(LoginSessionKeys.KEY_TENANT_ID));
     }
 
+    /**
+     * 获取账号。
+     *
+     * @return 字符串结果
+     */
     public static String getAccount() {
         SaSession session = LoginSessionSupport.getCurrentSession();
         if (session == null) {

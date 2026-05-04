@@ -230,7 +230,7 @@ public class ApiParamConfigServiceImpl extends ServiceImpl<ApiParamConfigMapper,
     }
 
     /**
-     * 批量删除参数节点。
+     * 批量删除数据。
      *
      * @param ids 参数节点 ID 列表
      */

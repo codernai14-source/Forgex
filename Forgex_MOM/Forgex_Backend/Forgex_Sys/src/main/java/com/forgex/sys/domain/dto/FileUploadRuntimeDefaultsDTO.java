@@ -7,6 +7,9 @@ import java.util.List;
 
 /**
  * Runtime defaults for local file upload public access.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 public class FileUploadRuntimeDefaultsDTO {

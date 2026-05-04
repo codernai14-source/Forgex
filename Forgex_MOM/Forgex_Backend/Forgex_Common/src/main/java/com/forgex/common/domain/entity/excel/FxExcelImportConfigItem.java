@@ -120,7 +120,7 @@ public class FxExcelImportConfigItem extends BaseEntity {
     private Boolean required;
 
     /**
-     * 顺序（越小越靠前）。
+     * 排序号。
      */
     private Integer orderNum;
 }

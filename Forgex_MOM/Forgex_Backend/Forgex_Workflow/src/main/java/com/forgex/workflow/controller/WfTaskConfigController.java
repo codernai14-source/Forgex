@@ -91,7 +91,7 @@ public class WfTaskConfigController {
     }
 
     /**
-     * 根据 ID 查询审批任务配置详情
+     * 查询数据详情。
      * <p>
      * 通过任务配置 ID 获取详细的配置信息，包含完整的配置数据
      * </p>
@@ -282,7 +282,7 @@ public class WfTaskConfigController {
     }
 
     /**
-     * 发布草稿
+     * 发布任务配置草稿。
      * <p>
      * 将草稿状态的审批任务配置发布为正式版本，使其可用于发起审批
      * </p>

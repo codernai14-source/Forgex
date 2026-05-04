@@ -10,7 +10,10 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 鎺ュ彛瀹氫箟蹇収
+ * 接口定义快照
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 @Builder

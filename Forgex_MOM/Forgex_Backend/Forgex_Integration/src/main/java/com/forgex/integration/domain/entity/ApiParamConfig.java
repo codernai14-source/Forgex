@@ -34,6 +34,9 @@ public class ApiParamConfig extends BaseEntity {
      */
     private Long apiConfigId;
 
+    /**
+     * 出站目标 ID。
+     */
     private Long outboundTargetId;
 
     /**
@@ -87,7 +90,7 @@ public class ApiParamConfig extends BaseEntity {
     private String dictCode;
 
     /**
-     * 排序号
+     * 排序号。
      */
     private Integer orderNum;
 

@@ -333,7 +333,7 @@ function handleModalFieldFocus(langCode: string) {
 }
 
 /**
- * 鍦ㄧ畝鍗曟ā寮?textarea 涓彃鍏ュ崰浣嶇
+  * ??? textarea ?????????????
  */
 function insertPlaceholderAtSimple(placeholder: string) {
   const textareaEl = simpleTextareaRef.value?.$el?.querySelector?.('textarea')

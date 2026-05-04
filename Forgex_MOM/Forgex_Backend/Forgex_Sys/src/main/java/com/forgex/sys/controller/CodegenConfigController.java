@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/sys/codegen/config")
@@ -66,7 +68,7 @@ public class CodegenConfigController {
     }
 
     /**
-     * 保存配置
+     * 保存数据。
      *
      * @param param 保存参数
      * @return 主键 ID

@@ -54,7 +54,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
     private final MaterialCodeGenerator materialCodeGenerator;
 
     /**
-     * 分页查询物料列表
+     * 分页查询物料主数据。
      * <p>
      * 支持多条件筛选，返回物料 VO 列表
      * </p>
@@ -107,7 +107,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
     }
 
     /**
-     * 查询物料列表（不分页）
+     * 查询物料主数据列表。
      * <p>
      * 支持多条件筛选，返回物料 VO 列表
      * </p>
@@ -190,7 +190,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
     }
 
     /**
-     * 创建物料
+     * 创建物料主数据。
      * <p>
      * 支持自动生成物料编码，支持保存扩展信息
      * </p>

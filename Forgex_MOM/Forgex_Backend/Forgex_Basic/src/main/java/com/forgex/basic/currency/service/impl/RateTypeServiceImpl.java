@@ -18,6 +18,12 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 汇率类型服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Service
 @RequiredArgsConstructor
 public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, MdmExchangeRateType> implements IRateTypeService {
@@ -25,17 +31,35 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
     private static final Long PUBLIC_TENANT_ID = 0L;
     private final MdmExchangeRateTypeMapper rateTypeMapper;
 
+    /**
+     * 分页查询数据。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<MdmExchangeRateType> page(RateTypePageParam param) {
         RateTypePageParam safeParam = param == null ? new RateTypePageParam() : param;
         return rateTypeMapper.selectPage(new Page<>(safeParam.getPageNum(), safeParam.getPageSize()), wrapper(safeParam));
     }
 
+    /**
+     * 查询数据列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<MdmExchangeRateType> list(RateTypePageParam param) {
         return rateTypeMapper.selectList(wrapper(param == null ? new RateTypePageParam() : param));
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(MdmExchangeRateType param) {
@@ -51,6 +75,12 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
         return param.getId();
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(MdmExchangeRateType param) {
@@ -68,6 +98,12 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
         return true;
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public Boolean delete(Long id) {
         requireRateType(id);
@@ -75,6 +111,12 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
         return true;
     }
 
+    /**
+     * 设置默认汇率类型。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean setDefault(Long id) {
@@ -85,6 +127,12 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
         return true;
     }
 
+    /**
+     * 根据汇率类型编码获取汇率类型，不存在时抛出业务异常。
+     *
+     * @param code 编码
+     * @return 处理结果
+     */
     public MdmExchangeRateType requireRateTypeByCode(String code) {
         MdmExchangeRateType type = rateTypeMapper.selectOne(new LambdaQueryWrapper<MdmExchangeRateType>()
                 .eq(MdmExchangeRateType::getRateTypeCode, normalizeCode(code))

@@ -49,7 +49,7 @@
         @click="onMenuClick"
       >
         <template v-for="item in currentMenus" :key="item.key">
-          <!-- 鐩綍锛堟湁瀛愯彍鍗曪級 -->
+          <!-- 目录（有子菜单） -->
           <a-sub-menu v-if="item.children && item.children.length > 0" :key="item.key">
             <template #icon>
               <component v-if="item.icon" :is="getIcon(item.icon)" />
@@ -140,18 +140,18 @@ const emit = defineEmits<{
   /**
    * 菜单点击事件
    * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑昏彍鍗曢」鏃惰Е鍙?
-   * @param menuKey 琚偣鍑荤殑鑿滃崟 key
+   * @param menuKey 被点击的菜单 key
    */
   'menu-click': [menuKey: string]
   /**
    * 妯″潡鐐瑰嚮浜嬩欢
-   * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑绘ā鍧楀鑸椂瑙﹀彂
-   * @param moduleCode 琚偣鍑荤殑妯″潡 code
+   * 触发时机：用户点击模块导航时触发
+   * @param moduleCode 被点击的模块 code
    */
   'module-click': [moduleCode: string]
   /**
    * 渚ц竟鏍忔姌鍙犵姸鎬佸彉鍖栦簨浠?
-   * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑绘姌鍙犳寜閽椂瑙﹀彂
+   * 触发时机：用户点击折叠按钮时触发
    * @param collapsed 鏂扮殑鎶樺彔鐘舵€?
    */
   'collapse-change': [collapsed: boolean]
@@ -186,7 +186,7 @@ const hasSecondLevelMenus = computed(() => {
     return false
   }
   
-  // 鍙湁鐐瑰嚮浜嗙洰褰曠被鍨嬭彍鍗曚笖璇ヨ彍鍗曟湁children鏃讹紝鎵嶆樉绀虹浜屽垪
+  // 只有点击了目录类型菜单且该菜单有children时，才显示第二列
   // 鑾峰彇褰撳墠閫変腑鐨勪竴绾ц彍鍗?
   const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
     menu.key === selectedFirstLevelKeys.value[0]
@@ -196,7 +196,7 @@ const hasSecondLevelMenus = computed(() => {
     return false
   }
   
-  // 濡傛灉閫変腑鐨勬槸鐩綍绫诲瀷鑿滃崟涓旀湁children锛屾樉绀虹浜屽垪
+  // 如果选中的是目录类型菜单且有children，显示第二列
   const showSecondLevel = selectedFirstLevelMenu.type === 'catalog' && 
                          selectedFirstLevelMenu.children && 
                          selectedFirstLevelMenu.children.length > 0
@@ -204,7 +204,7 @@ const hasSecondLevelMenus = computed(() => {
   return showSecondLevel
 })
 
-// 褰撳墠鏄剧ず鐨勮彍鍗曞垪琛紙绗簩鍒楋級
+// 当前显示的菜单列表（第二列）
 const currentMenus = computed(() => {
   if (!props.doubleColumn) {
     // 鍗曞垪妯″紡锛氭樉绀烘墍鏈夎彍鍗?
@@ -231,7 +231,7 @@ const currentMenus = computed(() => {
     )
   }
   
-  // 鏄剧ず閫変腑鐨勪竴绾ц彍鍗曞搴旂殑浜岀骇鑿滃崟
+  // 显示选中的一级菜单对应的二级菜单
   // 濡傛灉閫変腑鐨勬槸鐩綍绫诲瀷鑿滃崟锛屾樉绀哄叾鎵€鏈夊瓙鑿滃崟
   // 濡傛灉閫変腑鐨勬槸闈炵洰褰曠被鍨嬭彍鍗曪紝鏄剧ず鎵€鏈塵enuLevel >= 2鐨勮彍鍗?
   if (selectedFirstLevelMenu.type === 'catalog') {
@@ -341,10 +341,10 @@ function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = [
 }
 
 /**
- * 鎴柇鏂囨湰骞舵坊鍔犵渷鐣ュ彿
- * @param text 鍘熷鏂囨湰
+ * 截断文本并添加省略号
+ * @param text 原始文本
  * @param maxLength 鏈€澶ч暱搴?
- * @returns 鎴柇鍚庣殑鏂囨湰
+ * @returns 截断后的文本
  */
 // 鏌ユ壘涓€绾ц彍鍗曢」
 function findFirstLevelMenu(key: string): MenuItem | null {

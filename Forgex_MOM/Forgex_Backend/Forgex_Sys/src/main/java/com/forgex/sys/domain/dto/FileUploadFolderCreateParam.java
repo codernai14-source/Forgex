@@ -4,6 +4,9 @@ import lombok.Data;
 
 /**
  * Request body for creating a server folder.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 public class FileUploadFolderCreateParam {

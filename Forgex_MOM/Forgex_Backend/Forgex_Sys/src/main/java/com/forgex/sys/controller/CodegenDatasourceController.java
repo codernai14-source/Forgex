@@ -36,6 +36,8 @@ import java.util.List;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/sys/codegen/datasource")
@@ -79,7 +81,7 @@ public class CodegenDatasourceController {
     }
 
     /**
-     * 保存数据源
+     * 保存数据。
      *
      * @param param 保存参数
      * @return 数据源主键

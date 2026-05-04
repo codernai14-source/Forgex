@@ -28,6 +28,12 @@ public class BasicSupplierImportProxyHandler implements FxExcelImportHandler {
 
     private final BasicSupplierImportFeignClient basicSupplierImportFeignClient;
 
+    /**
+     * 处理导入数据。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
         R<FxExcelImportResultDTO> response = basicSupplierImportFeignClient.execute(param);

@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * 鍐呴儴鍏叡璋冪敤闂ㄩ潰瀹炵幇
+ * 内部公共调用门面实现
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Service
 @RequiredArgsConstructor
@@ -15,6 +18,13 @@ public class IntegrationFacadeImpl implements IntegrationFacade {
 
     private final IApiGatewayService apiGatewayService;
 
+    /**
+     * 调用集成接口。
+     *
+     * @param apiCode 接口编码
+     * @param requestEntity 请求实体
+     * @return 处理结果
+     */
     @Override
     public IntegrationExecuteResult invoke(String apiCode, Object requestEntity) {
         return apiGatewayService.invokeOutbound(apiCode, requestEntity);

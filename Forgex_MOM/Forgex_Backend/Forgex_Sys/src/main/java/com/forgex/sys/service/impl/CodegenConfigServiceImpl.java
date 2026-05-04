@@ -49,6 +49,8 @@ import java.util.Locale;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Service
 @RequiredArgsConstructor
@@ -62,17 +64,36 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
     private final SysCodegenConfigMapper configMapper;
     private final ICodegenDatasourceService datasourceService;
 
+    /**
+     * 分页查询代码生成配置。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 处理结果
+     */
     @Override
     public IPage<CodegenConfigDTO> pageConfigs(Page<SysCodegenConfig> page, CodegenConfigQueryDTO query) {
         LambdaQueryWrapper<SysCodegenConfig> wrapper = buildWrapper(query);
         return configMapper.selectPage(page, wrapper).convert(this::toDTO);
     }
 
+    /**
+     * 获取配置详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public CodegenConfigDTO getConfigDetail(Long id) {
         return toDTO(requireEntity(id));
     }
 
+    /**
+     * 保存配置。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveConfig(CodegenConfigSaveParam param) {
@@ -111,6 +132,11 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         return entity.getId();
     }
 
+    /**
+     * 删除配置。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteConfig(Long id) {
@@ -118,6 +144,12 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         configMapper.deleteById(id);
     }
 
+    /**
+     * 构建请求。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public CodeGenRequestDTO buildRequest(Long id) {
         SysCodegenConfig entity = requireEntity(id);
@@ -148,6 +180,12 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         return request;
     }
 
+    /**
+     * 获取实体数据，不存在时抛出业务异常。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public SysCodegenConfig requireEntity(Long id) {
         SysCodegenConfig entity = configMapper.selectById(id);
@@ -157,6 +195,11 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         return entity;
     }
 
+    /**
+     * 标记代码生成配置已生成。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void markGenerated(Long id) {

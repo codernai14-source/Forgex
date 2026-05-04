@@ -23,6 +23,12 @@ public class SysUserImportProxyHandler implements FxExcelImportHandler {
 
     private final ISysUserService userService;
 
+    /**
+     * 处理导入数据。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
         return userService.executeCommonImport(param);

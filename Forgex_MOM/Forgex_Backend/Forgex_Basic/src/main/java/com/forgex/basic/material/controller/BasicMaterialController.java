@@ -14,7 +14,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -276,7 +279,7 @@ public class BasicMaterialController {
     }
 
     /**
-     * 批量删除物料
+     * 批量删除数据。
      * <p>
      * 接口路径：POST /basic/material/batchDelete
      * 需要权限：basic:material:delete

@@ -432,7 +432,7 @@ const validate表单 = () => {
       activeTab.value = 'receiver'
       return false
     }
-    // 鑷畾涔夌被鍨嬩笉闇€瑕佹寚瀹氭帴鏀朵汉 ID
+        // ????????????? ID?
     if (receiver.receiverType !== 'CUSTOM' && (!receiver.receiverIds || receiver.receiverIds.length === 0)) {
       message.error(t('system.messageTemplate.receiver.targetRequired', { index: i + 1 }))
       activeTab.value = 'receiver'

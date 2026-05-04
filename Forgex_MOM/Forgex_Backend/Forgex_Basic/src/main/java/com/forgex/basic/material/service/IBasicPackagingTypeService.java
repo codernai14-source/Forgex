@@ -19,7 +19,7 @@ import com.forgex.basic.material.domain.param.PackagingTypePageParam;
  * @since 2026-04-28
  */
 public interface IBasicPackagingTypeService extends IService<BasicPackagingType> {
-    
+
     /**
      * 分页查询包装方式列表
      *

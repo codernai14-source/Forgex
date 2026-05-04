@@ -22,6 +22,9 @@ import java.io.IOException;
 
 /**
  * File controller.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/sys/file")
@@ -49,6 +52,12 @@ public class FileController {
         }
     }
 
+    /**
+     * 分页查询数据。
+     *
+     * @param query 查询参数
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:file:view")
     @PostMapping("/page")
     public R<IPage<SysFileRecordVO>> page(@RequestBody SysFileRecordQueryDTO query) {

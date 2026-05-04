@@ -36,6 +36,12 @@ public class CustomerController {
 
     private final ICustomerService customerService;
 
+    /**
+     * 分页查询客户主数据。
+     *
+     * @param param 分页查询参数
+     * @return 客户分页结果
+     */
     @Operation(summary = "分页查询客户")
     @RequirePerm("basic:customer:query")
     @PostMapping("/page")
@@ -43,12 +49,24 @@ public class CustomerController {
         return R.ok(customerService.page(param));
     }
 
+    /**
+     * 查询客户主数据列表。
+     *
+     * @param param 查询参数
+     * @return 客户列表
+     */
     @Operation(summary = "查询客户列表")
     @PostMapping("/list")
     public R<List<CustomerDTO>> list(@RequestBody(required = false) CustomerPageParam param) {
         return R.ok(customerService.list(param));
     }
 
+    /**
+     * 获取客户详情。
+     *
+     * @param params 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "获取客户详情")
     @RequirePerm("basic:customer:query")
     @PostMapping("/detail")
@@ -56,6 +74,12 @@ public class CustomerController {
         return R.ok(customerService.getDetailById(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
+    /**
+     * 新增客户。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "新增客户")
     @RequirePerm("basic:customer:add")
     @PostMapping("/create")
@@ -63,6 +87,12 @@ public class CustomerController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, customerService.create(param));
     }
 
+    /**
+     * 修改客户。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "修改客户")
     @RequirePerm("basic:customer:edit")
     @PostMapping("/update")
@@ -70,6 +100,12 @@ public class CustomerController {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, customerService.update(param));
     }
 
+    /**
+     * 删除客户。
+     *
+     * @param params 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "删除客户")
     @RequirePerm("basic:customer:delete")
     @PostMapping("/delete")
@@ -77,6 +113,12 @@ public class CustomerController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, customerService.delete(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
+    /**
+     * 创建客户租户。
+     *
+     * @param params 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "创建客户租户")
     @RequirePerm("basic:customer:generateTenant")
     @PostMapping("/generate-tenant")
@@ -84,6 +126,12 @@ public class CustomerController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, customerService.generateTenant(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
+    /**
+     * 发起客户审批。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "发起客户审批")
     @RequirePerm("basic:customer:approval")
     @PostMapping("/approval/start")
@@ -91,6 +139,12 @@ public class CustomerController {
         return R.ok(CommonPrompt.SUBMIT_SUCCESS, customerService.startApproval(param));
     }
 
+    /**
+     * 工作流回调：客户审批。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @Operation(summary = "工作流回调：客户审批")
     @PostMapping("/workflow/callback")
     public R<Boolean> workflowCallback(@RequestBody CustomerWorkflowCallbackParam param) {

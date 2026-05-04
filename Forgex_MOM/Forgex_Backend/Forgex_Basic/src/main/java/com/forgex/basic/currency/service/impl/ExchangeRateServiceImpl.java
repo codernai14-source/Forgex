@@ -35,6 +35,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * 汇率服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Service
 @RequiredArgsConstructor
 public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRateMapper, MdmCurrencyExchangeRate> implements IExchangeRateService {
@@ -54,17 +60,35 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
     private final WorkflowExecutionFeignClient workflowExecutionFeignClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 分页查询数据。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<MdmCurrencyExchangeRate> page(ExchangeRatePageParam param) {
         ExchangeRatePageParam safeParam = param == null ? new ExchangeRatePageParam() : param;
         return exchangeRateMapper.selectPage(new Page<>(safeParam.getPageNum(), safeParam.getPageSize()), wrapper(safeParam));
     }
 
+    /**
+     * 查询数据详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public MdmCurrencyExchangeRate detail(Long id) {
         return id == null ? null : exchangeRateMapper.selectById(id);
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(MdmCurrencyExchangeRate param) {
@@ -81,6 +105,12 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         return param.getId();
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(MdmCurrencyExchangeRate param) {
@@ -98,6 +128,12 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         return true;
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
@@ -107,6 +143,12 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         return true;
     }
 
+    /**
+     * 发起审批流程。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long startApproval(ExchangeRateApprovalStartParam param) {
@@ -131,6 +173,12 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         return response.getData();
     }
 
+    /**
+     * 处理工作流回调。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleWorkflowCallback(ExchangeRateWorkflowCallbackParam param) {
@@ -149,6 +197,12 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         return true;
     }
 
+    /**
+     * 查询当前有效汇率。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     public MdmCurrencyExchangeRate current(ExchangeRateCurrentParam param) {
         if (param == null
@@ -172,6 +226,12 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
                 .last("LIMIT 1"));
     }
 
+    /**
+     * 分页查询汇率变更日志。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<MdmExchangeRateLog> logPage(ExchangeRatePageParam param) {
         ExchangeRatePageParam safeParam = param == null ? new ExchangeRatePageParam() : param;

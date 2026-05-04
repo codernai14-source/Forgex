@@ -85,29 +85,37 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
     private static final String ENTRY_DATE_TITLE_I18N_JSON =
             "{\"zh-CN\":\"\\u5165\\u804c\\u65f6\\u95f4\",\"en-US\":\"Entry Date\",\"zh-TW\":\"\\u5165\\u8077\\u6642\\u9593\",\"ja-JP\":\"\\u5165\\u793e\\u65e5\",\"ko-KR\":\"\\uc785\\uc0ac\\uc77c\"}";
 
-    
+
     /**
      * 用户级别表格配置 Mapper
      */
     private final FxUserTableConfigMapper userTableConfigMapper;
-    
+
     /**
      * 表格配置 Mapper
      */
     private final FxTableConfigMapper tableConfigMapper;
-    
+
     /**
      * 表格列配置 Mapper
      */
     private final FxTableColumnConfigMapper tableColumnConfigMapper;
-    
+
+    /**
+     * 获取用户表格配置。
+     *
+     * @param tableCode 表格编码
+     * @param tenantId 租户 ID
+     * @param userId 用户 ID
+     * @return 处理结果
+     */
     @Override
     public FxUserTableConfigDTO getUserTableConfig(String tableCode, Long tenantId, Long userId) {
         // 参数校验
         if (!StringUtils.hasText(tableCode) || tenantId == null || userId == null) {
             return null;
         }
-        
+
         // 查询用户级别配置
         LambdaQueryWrapper<FxUserTableConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FxUserTableConfig::getTableCode, tableCode)
@@ -115,12 +123,12 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                .eq(FxUserTableConfig::getUserId, userId)
                .eq(FxUserTableConfig::getDeleted, 0)
                .last("limit 1");
-        
+
         FxUserTableConfig userConfig = userTableConfigMapper.selectOne(wrapper);
         if (userConfig == null) {
             return null;
         }
-        
+
         // 构建 DTO
         FxUserTableConfigDTO dto = new FxUserTableConfigDTO();
         dto.setTableCode(userConfig.getTableCode());
@@ -133,20 +141,27 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         dto.setCreateTime(userConfig.getCreateTime());
         dto.setUpdateBy(userConfig.getUpdateBy());
         dto.setUpdateTime(userConfig.getUpdateTime());
-        
+
         // 从租户或公共配置加载列配置和查询字段
         FxTableConfigDTO baseConfig = loadBaseTableConfig(tableCode, tenantId);
         if (baseConfig != null) {
             dto.setColumns(mergeUserColumns(baseConfig.getColumns(), userConfig.getColumnConfig()));
             dto.setQueryFields(mergeUserQueryFields(tableCode, baseConfig.getQueryFields(), userConfig.getQueryConfig()));
         }
-        
-        log.debug("获取用户级别表格配置成功，tableCode: {}, userId: {}, tenantId: {}", 
+
+        log.debug("获取用户级别表格配置成功，tableCode: {}, userId: {}, tenantId: {}",
                 tableCode, userId, tenantId);
-        
+
         return dto;
     }
-    
+
+    /**
+     * 保存用户表格配置。
+     *
+     * @param dto 数据传输对象
+     * @param userId 用户 ID
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @DS("common")
@@ -155,7 +170,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         if (!StringUtils.hasText(dto.getTableCode()) || dto.getTenantId() == null || userId == null) {
             throw new IllegalArgumentException("表编码、租户 ID 和用户 ID 不能为空");
         }
-        
+
         // 检查是否已存在配置
         LambdaQueryWrapper<FxUserTableConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FxUserTableConfig::getTableCode, dto.getTableCode())
@@ -163,9 +178,9 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                .eq(FxUserTableConfig::getUserId, userId)
                .eq(FxUserTableConfig::getDeleted, 0)
                .last("limit 1");
-        
+
         FxUserTableConfig existingConfig = userTableConfigMapper.selectOne(wrapper);
-        
+
         FxUserTableConfig config;
         if (existingConfig != null) {
             // 更新现有配置
@@ -175,9 +190,9 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             config.setColumnConfig(dto.getColumns() != null ? JSONUtil.toJsonStr(dto.getColumns()) : null);
             config.setQueryConfig(dto.getQueryFields() != null ? JSONUtil.toJsonStr(dto.getQueryFields()) : null);
             config.setVersion(config.getVersion() + 1);
-            
+
             userTableConfigMapper.updateById(config);
-            log.info("更新用户级别表格配置成功，tableCode: {}, userId: {}, configId: {}", 
+            log.info("更新用户级别表格配置成功，tableCode: {}, userId: {}, configId: {}",
                     dto.getTableCode(), userId, config.getId());
         } else {
             // 创建新配置
@@ -190,15 +205,23 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             config.setColumnConfig(dto.getColumns() != null ? JSONUtil.toJsonStr(dto.getColumns()) : null);
             config.setQueryConfig(dto.getQueryFields() != null ? JSONUtil.toJsonStr(dto.getQueryFields()) : null);
             config.setVersion(1);
-            
+
             userTableConfigMapper.insert(config);
-            log.info("创建用户级别表格配置成功，tableCode: {}, userId: {}, configId: {}", 
+            log.info("创建用户级别表格配置成功，tableCode: {}, userId: {}, configId: {}",
                     dto.getTableCode(), userId, config.getId());
         }
-        
+
         return config.getId();
     }
-    
+
+    /**
+     * 删除用户表格配置。
+     *
+     * @param tableCode 表格编码
+     * @param tenantId 租户 ID
+     * @param userId 用户 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteUserTableConfig(String tableCode, Long tenantId, Long userId) {
@@ -206,7 +229,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         if (!StringUtils.hasText(tableCode) || tenantId == null || userId == null) {
             return false;
         }
-        
+
         // 查询配置
         LambdaQueryWrapper<FxUserTableConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FxUserTableConfig::getTableCode, tableCode)
@@ -214,24 +237,24 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                .eq(FxUserTableConfig::getUserId, userId)
                .eq(FxUserTableConfig::getDeleted, 0)
                .last("limit 1");
-        
+
         FxUserTableConfig config = userTableConfigMapper.selectOne(wrapper);
         if (config == null) {
-            log.warn("删除用户级别表格配置失败，配置不存在，tableCode: {}, userId: {}, tenantId: {}", 
+            log.warn("删除用户级别表格配置失败，配置不存在，tableCode: {}, userId: {}, tenantId: {}",
                     tableCode, userId, tenantId);
             return false;
         }
-        
+
         // 逻辑删除
         config.setDeleted(true);
         userTableConfigMapper.updateById(config);
-        
-        log.info("删除用户级别表格配置成功，tableCode: {}, userId: {}, configId: {}", 
+
+        log.info("删除用户级别表格配置成功，tableCode: {}, userId: {}, configId: {}",
                 tableCode, userId, config.getId());
-        
+
         return true;
     }
-    
+
     /**
      * 加载基础表格配置（租户或公共配置）
      * <p>
@@ -245,16 +268,16 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
     private FxTableConfigDTO loadBaseTableConfig(String tableCode, Long tenantId) {
         // 先查询租户配置
         FxTableConfig config = queryTableConfig(tableCode, tenantId);
-        
+
         // 如果租户配置不存在，查询公共配置
         if (config == null) {
             config = queryTableConfig(tableCode, 0L);
         }
-        
+
         if (config == null || Boolean.FALSE.equals(config.getEnabled())) {
             return null;
         }
-        
+
         // 查询列配置
         List<FxTableColumnConfig> cols = tableColumnConfigMapper.selectList(
             new LambdaQueryWrapper<FxTableColumnConfig>()
@@ -262,7 +285,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                 .eq(FxTableColumnConfig::getTenantId, config.getTenantId())
                 .eq(FxTableColumnConfig::getDeleted, 0)
         );
-        
+
         // 构建 DTO
         FxTableConfigDTO dto = new FxTableConfigDTO();
         dto.setTableCode(config.getTableCode());
@@ -273,18 +296,18 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         dto.setDefaultSortJson(config.getDefaultSortJson());
         dto.setVersion(config.getVersion());
         dto.setEnabled(config.getEnabled());
-        
+
         // 构建列配置列表
         List<FxTableColumnDTO> columnDtos = new ArrayList<>();
         List<FxTableQueryFieldDTO> queryFields = new ArrayList<>();
-        
+
         cols.sort(Comparator.comparing(c -> c.getOrderNum() == null ? 0 : c.getOrderNum()));
-        
+
         for (FxTableColumnConfig c : cols) {
             if (Boolean.FALSE.equals(c.getEnabled())) {
                 continue;
             }
-            
+
             FxTableColumnDTO cd = new FxTableColumnDTO();
             cd.setField(c.getField());
             cd.setTitle(resolveI18nText(c.getTitleI18nJson(), c.getField()));
@@ -302,7 +325,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             cd.setRenderType(c.getRenderType());
             cd.setPermKey(c.getPermKey());
             columnDtos.add(cd);
-            
+
             // 构建查询字段
             if (Boolean.TRUE.equals(c.getQueryable())) {
                 FxTableQueryFieldDTO q = new FxTableQueryFieldDTO();
@@ -314,15 +337,15 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                 queryFields.add(q);
             }
         }
-        
+
         normalizeBuiltinColumns(tableCode, columnDtos);
 
         dto.setColumns(columnDtos);
         dto.setQueryFields(normalizeBuiltinQueryFields(tableCode, queryFields));
-        
+
         return dto;
     }
-    
+
     /**
      * 查询表格配置
      *

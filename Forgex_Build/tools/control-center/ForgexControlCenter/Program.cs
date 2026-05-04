@@ -43,13 +43,56 @@ internal static class Program
             return CommandRunner.RunHeadless(installRoot, ServiceCommand.StopWeb);
         }
 
+        if (options.StartService)
+        {
+            return CommandRunner.RunHeadless(installRoot, ServiceCommand.StartService, options.ServiceId);
+        }
+
+        if (options.StopService)
+        {
+            return CommandRunner.RunHeadless(installRoot, ServiceCommand.StopService, options.ServiceId);
+        }
+
+        if (options.RestartService)
+        {
+            return CommandRunner.RunHeadless(installRoot, ServiceCommand.RestartService, options.ServiceId);
+        }
+
         if (options.ServeWeb)
         {
             return StaticWebServer.RunForeground(installRoot);
         }
 
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm(installRoot));
+        Application.ThreadException += (_, eventArgs) =>
+        {
+            ControlCenterDiagnostics.Write(installRoot, "UI thread exception", eventArgs.Exception);
+            MessageBox.Show(eventArgs.Exception.Message, "Forgex Control Center", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+        {
+            if (eventArgs.ExceptionObject is Exception ex)
+            {
+                ControlCenterDiagnostics.Write(installRoot, "Unhandled exception", ex);
+            }
+        };
+        TaskScheduler.UnobservedTaskException += (_, eventArgs) =>
+        {
+            ControlCenterDiagnostics.Write(installRoot, "Unobserved task exception", eventArgs.Exception);
+            eventArgs.SetObserved();
+        };
+
+        try
+        {
+            Application.Run(new MainForm(installRoot));
+        }
+        catch (Exception ex)
+        {
+            ControlCenterDiagnostics.Write(installRoot, "Fatal application exception", ex);
+            MessageBox.Show(ex.Message, "Forgex Control Center", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return 1;
+        }
+
         return 0;
     }
 }
@@ -60,12 +103,17 @@ internal enum ServiceCommand
     StopAll,
     Status,
     StartWeb,
-    StopWeb
+    StopWeb,
+    StartService,
+    StopService,
+    RestartService
 }
 
 internal sealed class ControlCenterOptions
 {
     public string? InstallRoot { get; private init; }
+
+    public string? ServiceId { get; private init; }
 
     public bool StartAll { get; private init; }
 
@@ -79,15 +127,25 @@ internal sealed class ControlCenterOptions
 
     public bool ServeWeb { get; private init; }
 
+    public bool StartService { get; private init; }
+
+    public bool StopService { get; private init; }
+
+    public bool RestartService { get; private init; }
+
     public static ControlCenterOptions Parse(string[] args)
     {
         string? installRoot = null;
+        string? serviceId = null;
         var startAll = false;
         var stopAll = false;
         var status = false;
         var startWeb = false;
         var stopWeb = false;
         var serveWeb = false;
+        var startService = false;
+        var stopService = false;
+        var restartService = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -128,6 +186,27 @@ internal sealed class ControlCenterOptions
                 continue;
             }
 
+            if (arg.Equals("--start-service", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                startService = true;
+                serviceId = args[++i];
+                continue;
+            }
+
+            if (arg.Equals("--stop-service", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                stopService = true;
+                serviceId = args[++i];
+                continue;
+            }
+
+            if (arg.Equals("--restart-service", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                restartService = true;
+                serviceId = args[++i];
+                continue;
+            }
+
             if (arg.Equals("--serve-web", StringComparison.OrdinalIgnoreCase))
             {
                 serveWeb = true;
@@ -137,19 +216,23 @@ internal sealed class ControlCenterOptions
         return new ControlCenterOptions
         {
             InstallRoot = installRoot,
+            ServiceId = serviceId,
             StartAll = startAll,
             StopAll = stopAll,
             Status = status,
             StartWeb = startWeb,
             StopWeb = stopWeb,
-            ServeWeb = serveWeb
+            ServeWeb = serveWeb,
+            StartService = startService,
+            StopService = stopService,
+            RestartService = restartService
         };
     }
 }
 
 internal static class CommandRunner
 {
-    public static int RunHeadless(string installRoot, ServiceCommand command)
+    public static int RunHeadless(string installRoot, ServiceCommand command, string? serviceId = null)
     {
         try
         {
@@ -180,6 +263,54 @@ internal static class CommandRunner
                     break;
                 case ServiceCommand.StopWeb:
                     webServer.Stop(message => Console.WriteLine(message));
+                    break;
+                case ServiceCommand.StartService:
+                    if (string.IsNullOrWhiteSpace(serviceId))
+                    {
+                        throw new InvalidOperationException("Service id is required.");
+                    }
+
+                    if (string.Equals(serviceId, "web", StringComparison.OrdinalIgnoreCase))
+                    {
+                        webServer.Start(message => Console.WriteLine(message));
+                    }
+                    else
+                    {
+                        manager.StartService(serviceId, message => Console.WriteLine(message));
+                    }
+
+                    break;
+                case ServiceCommand.StopService:
+                    if (string.IsNullOrWhiteSpace(serviceId))
+                    {
+                        throw new InvalidOperationException("Service id is required.");
+                    }
+
+                    if (string.Equals(serviceId, "web", StringComparison.OrdinalIgnoreCase))
+                    {
+                        webServer.Stop(message => Console.WriteLine(message));
+                    }
+                    else
+                    {
+                        manager.StopService(serviceId, message => Console.WriteLine(message));
+                    }
+
+                    break;
+                case ServiceCommand.RestartService:
+                    if (string.IsNullOrWhiteSpace(serviceId))
+                    {
+                        throw new InvalidOperationException("Service id is required.");
+                    }
+
+                    if (string.Equals(serviceId, "web", StringComparison.OrdinalIgnoreCase))
+                    {
+                        webServer.Restart(message => Console.WriteLine(message));
+                    }
+                    else
+                    {
+                        manager.RestartService(serviceId, message => Console.WriteLine(message));
+                    }
+
                     break;
             }
 
@@ -227,7 +358,7 @@ internal sealed class MainForm : Form
         RefreshView();
 
         _timer.Interval = 5000;
-        _timer.Tick += (_, _) => RefreshServiceGrid();
+        _timer.Tick += (_, _) => SafeUiAction(RefreshServiceGrid);
         _timer.Start();
     }
 
@@ -314,10 +445,13 @@ internal sealed class MainForm : Form
         _serviceGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         _serviceGrid.RowHeadersVisible = false;
         _serviceGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        _serviceGrid.MultiSelect = false;
+        _serviceGrid.ReadOnly = true;
         _serviceGrid.Columns.Add("serviceId", "");
         _serviceGrid.Columns.Add("status", "");
         _serviceGrid.Columns.Add("port", "");
         _serviceGrid.Columns.Add("jarPath", "");
+        _serviceGrid.SelectionChanged += (_, _) => UpdateServiceActionButtons();
         root.Controls.Add(_serviceGrid, 0, 2);
 
         _logTextBox.Dock = DockStyle.Fill;
@@ -338,11 +472,17 @@ internal sealed class MainForm : Form
         buttonPanel.Controls.Add(CreateButton("startWeb", StartWeb));
         buttonPanel.Controls.Add(CreateButton("stopWeb", StopWeb));
         buttonPanel.Controls.Add(CreateButton("openWeb", OpenWeb));
+        buttonPanel.Controls.Add(CreateButton("startSelectedService", StartSelectedService));
+        buttonPanel.Controls.Add(CreateButton("stopSelectedService", StopSelectedService));
+        buttonPanel.Controls.Add(CreateButton("restartSelectedService", RestartSelectedService));
+        buttonPanel.Controls.Add(CreateButton("openSelectedLogDir", OpenSelectedServiceLogDirectory));
         buttonPanel.Controls.Add(CreateButton("startAll", StartAll));
         buttonPanel.Controls.Add(CreateButton("stopAll", StopAll));
         buttonPanel.Controls.Add(CreateButton("refresh", RefreshView));
         buttonPanel.Controls.Add(CreateButton("openInstallFolder", OpenInstallFolder));
         root.Controls.Add(buttonPanel, 0, 4);
+
+        UpdateServiceActionButtons();
 
         Controls.Add(root);
     }
@@ -356,8 +496,20 @@ internal sealed class MainForm : Form
             Margin = new Padding(0, 0, 8, 0)
         };
         _localizedControls[button] = textKey;
-        button.Click += (_, _) => action();
+        button.Click += (_, _) => SafeUiAction(action);
         return button;
+    }
+
+    private void SafeUiAction(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
     }
 
     private void RefreshView()
@@ -370,6 +522,10 @@ internal sealed class MainForm : Form
 
     private void RefreshServiceGrid()
     {
+        var selectedServiceId = _serviceGrid.CurrentRow is null
+            ? null
+            : Convert.ToString(_serviceGrid.CurrentRow.Cells["serviceId"].Value);
+
         _serviceGrid.Rows.Clear();
         foreach (var service in _config.Services.OrderBy(item => item.StartOrder))
         {
@@ -385,6 +541,9 @@ internal sealed class MainForm : Form
             LocalizeStatus(_webServer.GetStatus()),
             _config.FrontendPort,
             _config.FrontendDir);
+
+        RestoreSelectedServiceRow(selectedServiceId);
+        UpdateServiceActionButtons();
     }
 
     private async void GenerateRequest()
@@ -461,6 +620,74 @@ internal sealed class MainForm : Form
         }
     }
 
+    private void StartSelectedService()
+    {
+        ExecuteSelectedServiceAction(service =>
+        {
+            if (service.ServiceId.Equals("web", StringComparison.OrdinalIgnoreCase))
+            {
+                _webServer.Start(AppendRuntimeLog);
+                return;
+            }
+
+            _serviceManager.StartService(service.ServiceId, AppendRuntimeLog);
+        });
+    }
+
+    private void StopSelectedService()
+    {
+        ExecuteSelectedServiceAction(service =>
+        {
+            if (service.ServiceId.Equals("web", StringComparison.OrdinalIgnoreCase))
+            {
+                _webServer.Stop(AppendRuntimeLog);
+                return;
+            }
+
+            _serviceManager.StopService(service.ServiceId, AppendRuntimeLog);
+        });
+    }
+
+    private void RestartSelectedService()
+    {
+        ExecuteSelectedServiceAction(service =>
+        {
+            if (service.ServiceId.Equals("web", StringComparison.OrdinalIgnoreCase))
+            {
+                _webServer.Stop(AppendRuntimeLog);
+                _webServer.Start(AppendRuntimeLog);
+                return;
+            }
+
+            _serviceManager.RestartService(service.ServiceId, AppendRuntimeLog);
+        });
+    }
+
+    private void OpenSelectedServiceLogDirectory()
+    {
+        ExecuteSelectedServiceAction(service =>
+        {
+            var logDir = ResolveLogDirectory(service.ServiceId);
+            Directory.CreateDirectory(logDir);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = logDir,
+                UseShellExecute = true
+            });
+        });
+    }
+
+    private string ResolveLogDirectory(string serviceId)
+    {
+        if (serviceId.Equals("web", StringComparison.OrdinalIgnoreCase))
+        {
+            var nginxLogDir = Path.Combine(_config.LogDir, "nginx");
+            return Directory.Exists(nginxLogDir) ? nginxLogDir : Path.Combine(_config.LogDir, "web");
+        }
+
+        return _serviceManager.GetServiceLogDirectory(serviceId);
+    }
+
     private void StopAll()
     {
         try
@@ -535,6 +762,83 @@ internal sealed class MainForm : Form
         }
     }
 
+    private void ExecuteSelectedServiceAction(Action<ForgexServiceConfig> action)
+    {
+        try
+        {
+            var service = GetSelectedService();
+            if (service is null)
+            {
+                throw new InvalidOperationException(T("selectServicePrompt"));
+            }
+
+            action(service);
+            RefreshServiceGrid();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+    }
+
+    private ForgexServiceConfig? GetSelectedService()
+    {
+        if (_serviceGrid.CurrentRow is null || _serviceGrid.CurrentRow.IsNewRow)
+        {
+            return null;
+        }
+
+        var serviceId = Convert.ToString(_serviceGrid.CurrentRow.Cells["serviceId"].Value);
+        if (string.IsNullOrWhiteSpace(serviceId) || serviceId.Equals("web", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ForgexServiceConfig
+            {
+                ServiceId = "web",
+                LogDir = Path.Combine(_config.LogDir, "web"),
+                JarPath = _config.FrontendDir
+            };
+        }
+
+        return _config.Services.FirstOrDefault(item => item.ServiceId.Equals(serviceId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void RestoreSelectedServiceRow(string? selectedServiceId)
+    {
+        if (_serviceGrid.Rows.Count == 0)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedServiceId))
+        {
+            _serviceGrid.Rows[0].Selected = true;
+            _serviceGrid.CurrentCell = _serviceGrid.Rows[0].Cells["serviceId"];
+            return;
+        }
+
+        foreach (DataGridViewRow row in _serviceGrid.Rows)
+        {
+            if (string.Equals(Convert.ToString(row.Cells["serviceId"].Value), selectedServiceId, StringComparison.OrdinalIgnoreCase))
+            {
+                row.Selected = true;
+                _serviceGrid.CurrentCell = row.Cells["serviceId"];
+                return;
+            }
+        }
+    }
+
+    private void UpdateServiceActionButtons()
+    {
+        var hasSelection = GetSelectedService() is not null;
+        foreach (var item in _localizedControls)
+        {
+            if (item.Value is "startSelectedService" or "stopSelectedService" or "restartSelectedService" or "openSelectedLogDir")
+            {
+                item.Key.Enabled = hasSelection;
+            }
+        }
+    }
+
     private void AppendLog(string message)
     {
         _logTextBox.AppendText($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
@@ -547,6 +851,7 @@ internal sealed class MainForm : Form
 
     private void ShowError(Exception ex)
     {
+        ControlCenterDiagnostics.Write(_config.InstallRoot, "Control center action failed", ex);
         AppendLog(ex.Message);
         MessageBox.Show(this, ex.Message, T("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
@@ -725,6 +1030,18 @@ internal sealed class MainForm : Form
             return $"{serviceId} 已通过 Windows 服务停止。";
         }
 
+        const string failedToStart = "failed to start: ";
+        if (detail.StartsWith(failedToStart, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{serviceId} 启动失败：{detail[failedToStart.Length..]}";
+        }
+
+        const string failedToStop = "failed to stop: ";
+        if (detail.StartsWith(failedToStop, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{serviceId} 停止失败：{detail[failedToStop.Length..]}";
+        }
+
         const string jarNotFound = "skipped, jar not found: ";
         if (detail.StartsWith(jarNotFound, StringComparison.OrdinalIgnoreCase))
         {
@@ -784,6 +1101,11 @@ internal static class ControlCenterText
         ["gridStatus"] = "状态",
         ["gridPort"] = "端口",
         ["gridJar"] = "Jar",
+        ["startSelectedService"] = "启动选中服务",
+        ["stopSelectedService"] = "停止选中服务",
+        ["restartSelectedService"] = "重启选中服务",
+        ["openSelectedLogDir"] = "打开选中日志目录",
+        ["selectServicePrompt"] = "请先在服务列表中选择一个服务。",
         ["generateRequest"] = "生成授权申请",
         ["importLicense"] = "导入授权",
         ["startWeb"] = "启动前端",
@@ -819,10 +1141,15 @@ internal static class ControlCenterText
         ["startWeb"] = "Start Web",
         ["stopWeb"] = "Stop Web",
         ["openWeb"] = "Open Web",
+        ["startSelectedService"] = "Start Selected",
+        ["stopSelectedService"] = "Stop Selected",
+        ["restartSelectedService"] = "Restart Selected",
+        ["openSelectedLogDir"] = "Open Selected Logs",
         ["startAll"] = "Start All",
         ["stopAll"] = "Stop All",
         ["refresh"] = "Refresh",
         ["openInstallFolder"] = "Open Install Folder",
+        ["selectServicePrompt"] = "Select a service in the service list first.",
         ["licenseTitle"] = "Forgex License",
         ["selectLicenseTitle"] = "Select license.lic",
         ["licenseFilter"] = "Forgex license (*.lic)|*.lic|All files (*.*)|*.*",
@@ -847,6 +1174,102 @@ internal static class ControlCenterText
     }
 }
 
+internal static class ControlCenterDiagnostics
+{
+    public static void Write(string installRoot, string message, Exception ex)
+    {
+        try
+        {
+            var logRoot = Path.Combine(installRoot, "logs", "control-center");
+            Directory.CreateDirectory(logRoot);
+            var logFile = Path.Combine(logRoot, "control-center-error.log");
+            var content = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}{ex}{Environment.NewLine}";
+            File.AppendAllText(logFile, content, JsonHelper.Utf8NoBom);
+        }
+        catch
+        {
+            // Diagnostics must never crash the control center.
+        }
+    }
+}
+
+internal sealed class ProcessLogRelay : IDisposable
+{
+    private readonly object _syncRoot = new();
+    private readonly StreamWriter _stdoutWriter;
+    private readonly StreamWriter _stderrWriter;
+    private bool _disposed;
+
+    public ProcessLogRelay(string stdoutPath, string stderrPath)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(stdoutPath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(stderrPath)!);
+        _stdoutWriter = new StreamWriter(new FileStream(stdoutPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+        _stderrWriter = new StreamWriter(new FileStream(stderrPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+    }
+
+    public void Attach(Process process)
+    {
+        process.OutputDataReceived += (_, eventArgs) => Write(_stdoutWriter, eventArgs.Data);
+        process.ErrorDataReceived += (_, eventArgs) => Write(_stderrWriter, eventArgs.Data);
+        process.Exited += (_, _) => Dispose();
+    }
+
+    private void Write(StreamWriter writer, string? data)
+    {
+        if (data is null)
+        {
+            return;
+        }
+
+        lock (_syncRoot)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                writer.WriteLine(data);
+                writer.Flush();
+            }
+            catch
+            {
+                // Output redirection is best-effort and must not terminate the control center.
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (_syncRoot)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            try
+            {
+                _stdoutWriter.Dispose();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                _stderrWriter.Dispose();
+            }
+            catch
+            {
+            }
+        }
+    }
+}
+
 internal sealed class ForgexServiceManager
 {
     private readonly ForgexControlConfig _config;
@@ -860,7 +1283,15 @@ internal sealed class ForgexServiceManager
     {
         foreach (var service in _config.Services.OrderBy(item => item.StartOrder))
         {
-            Start(service, log);
+            try
+            {
+                Start(service, log);
+            }
+            catch (Exception ex)
+            {
+                ControlCenterDiagnostics.Write(_config.InstallRoot, $"{service.ServiceId} start failed", ex);
+                log($"{service.ServiceId} failed to start: {ex.Message}");
+            }
         }
     }
 
@@ -868,8 +1299,53 @@ internal sealed class ForgexServiceManager
     {
         foreach (var service in _config.Services.OrderByDescending(item => item.StartOrder))
         {
-            Stop(service, log);
+            try
+            {
+                Stop(service, log);
+            }
+            catch (Exception ex)
+            {
+                ControlCenterDiagnostics.Write(_config.InstallRoot, $"{service.ServiceId} stop failed", ex);
+                log($"{service.ServiceId} failed to stop: {ex.Message}");
+            }
         }
+    }
+
+    public bool TryGetService(string serviceId, out ForgexServiceConfig? service)
+    {
+        service = _config.Services.FirstOrDefault(item => item.ServiceId.Equals(serviceId, StringComparison.OrdinalIgnoreCase));
+        return service is not null;
+    }
+
+    public void StartService(string serviceId, Action<string> log)
+    {
+        if (!TryGetService(serviceId, out var service) || service is null)
+        {
+            throw new InvalidOperationException($"Service not found: {serviceId}");
+        }
+
+        Start(service, log);
+    }
+
+    public void StopService(string serviceId, Action<string> log)
+    {
+        if (!TryGetService(serviceId, out var service) || service is null)
+        {
+            throw new InvalidOperationException($"Service not found: {serviceId}");
+        }
+
+        Stop(service, log);
+    }
+
+    public void RestartService(string serviceId, Action<string> log)
+    {
+        if (!TryGetService(serviceId, out var service) || service is null)
+        {
+            throw new InvalidOperationException($"Service not found: {serviceId}");
+        }
+
+        Stop(service, log);
+        Start(service, log);
     }
 
     public string GetStatus(ForgexServiceConfig service)
@@ -898,8 +1374,26 @@ internal sealed class ForgexServiceManager
         return "NotInstalled";
     }
 
+    public string GetServiceLogDirectory(string serviceId)
+    {
+        if (serviceId.Equals("web", StringComparison.OrdinalIgnoreCase))
+        {
+            return Path.Combine(_config.LogDir, "web");
+        }
+
+        if (!TryGetService(serviceId, out var service) || service is null)
+        {
+            throw new InvalidOperationException($"Service not found: {serviceId}");
+        }
+
+        return service.LogDir;
+    }
+
     private void Start(ForgexServiceConfig service, Action<string> log)
     {
+        EnsureServiceDirectories(service);
+        EnsureWindowsServiceWrapperConfig(service, log);
+
         if (TryGetWindowsService(service, out var controller) && controller is not null)
         {
             using (controller)
@@ -967,15 +1461,14 @@ internal sealed class ForgexServiceManager
             }
         }
 
-        Directory.CreateDirectory(service.LogDir);
-        Directory.CreateDirectory(Path.GetDirectoryName(service.PidFile)!);
+        EnsureServiceDirectories(service);
 
         var stdout = Path.Combine(service.LogDir, "stdout.log");
         var stderr = Path.Combine(service.LogDir, "stderr.log");
         var startInfo = new ProcessStartInfo
         {
             FileName = _config.JavaExe,
-            Arguments = $"-Dfile.encoding=UTF-8 -jar \"{service.JarPath}\" --spring.profiles.active={_config.DeployProfile} --server.port={service.Port}",
+            Arguments = $"-Dfile.encoding=UTF-8 -Dforgex.deployment.log-dir=\"{_config.LogDir}\" -DLOG_DIR=\"{_config.LogDir}\" -Dlogging.file.path=\"{_config.LogDir}\" -jar \"{service.JarPath}\" --spring.profiles.active={_config.DeployProfile} --server.port={service.Port}",
             WorkingDirectory = _config.InstallRoot,
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -987,34 +1480,22 @@ internal sealed class ForgexServiceManager
         startInfo.Environment["SERVER_PORT"] = service.Port.ToString();
 
         var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        var stdoutWriter = new StreamWriter(new FileStream(stdout, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
-        var stderrWriter = new StreamWriter(new FileStream(stderr, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+        var relay = new ProcessLogRelay(stdout, stderr);
+        relay.Attach(process);
 
-        process.OutputDataReceived += (_, eventArgs) =>
+        try
         {
-            if (eventArgs.Data is not null)
-            {
-                stdoutWriter.WriteLine(eventArgs.Data);
-                stdoutWriter.Flush();
-            }
-        };
-        process.ErrorDataReceived += (_, eventArgs) =>
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
+        catch
         {
-            if (eventArgs.Data is not null)
-            {
-                stderrWriter.WriteLine(eventArgs.Data);
-                stderrWriter.Flush();
-            }
-        };
-        process.Exited += (_, _) =>
-        {
-            stdoutWriter.Dispose();
-            stderrWriter.Dispose();
-        };
+            relay.Dispose();
+            process.Dispose();
+            throw;
+        }
 
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
         File.WriteAllText(service.PidFile, process.Id.ToString(), JsonHelper.Utf8NoBom);
         log($"{service.ServiceId} started in process mode, pid {process.Id}.");
     }
@@ -1060,10 +1541,15 @@ internal sealed class ForgexServiceManager
         startInfo.Environment["FORGEX_LICENSE_DIR"] = _config.LicenseDir;
         startInfo.Environment["FORGEX_UPLOAD_DIR"] = _config.UploadDir;
         startInfo.Environment["FORGEX_LOG_DIR"] = _config.LogDir;
+        startInfo.Environment["LOG_DIR"] = _config.LogDir;
+        startInfo.Environment["LOG_PATH"] = _config.LogDir;
+        startInfo.Environment["LOGGING_FILE_PATH"] = _config.LogDir;
         startInfo.Environment["FORGEX_BACKUP_DIR"] = _config.BackupDir;
         startInfo.Environment["FORGEX_NACOS_ADDR"] = _config.NacosAddr;
         startInfo.Environment["FORGEX_NACOS_NAMESPACE"] = _config.NacosNamespace;
         startInfo.Environment["FORGEX_NACOS_GROUP"] = _config.NacosGroup;
+        startInfo.Environment["FORGEX_DATASOURCE_CONFIG"] = _config.DatasourceConfig;
+        startInfo.Environment["FORGEX_INTEGRATION_DATASOURCE_CONFIG"] = _config.IntegrationDatasourceConfig;
         startInfo.Environment["FORGEX_REDIS_ADDR"] = _config.RedisAddr;
         startInfo.Environment["FORGEX_ROCKETMQ_NAME_SERVER"] = _config.RocketMqAddr;
         startInfo.Environment["FORGEX_MYSQL_URL"] = _config.MysqlUrl;
@@ -1071,6 +1557,124 @@ internal sealed class ForgexServiceManager
         startInfo.Environment["FORGEX_LICENSE_FILE_NAME"] = "license.lic";
         startInfo.Environment["FORGEX_REQUEST_INFO_FILE_NAME"] = "request-info.json";
         startInfo.Environment["FORGEX_LICENSE_HISTORY_FILE_NAME"] = "activation-history.json";
+    }
+
+    private void EnsureServiceDirectories(ForgexServiceConfig service)
+    {
+        if (!string.IsNullOrWhiteSpace(_config.LogDir))
+        {
+            Directory.CreateDirectory(_config.LogDir);
+            Directory.CreateDirectory(Path.Combine(_config.LogDir, service.ServiceId));
+        }
+
+        Directory.CreateDirectory(service.LogDir);
+        Directory.CreateDirectory(Path.GetDirectoryName(service.PidFile)!);
+    }
+
+    private void EnsureWindowsServiceWrapperConfig(ForgexServiceConfig service, Action<string> log)
+    {
+        if (string.IsNullOrWhiteSpace(service.WrapperXmlPath) || !File.Exists(service.WrapperXmlPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var content = File.ReadAllText(service.WrapperXmlPath);
+            var original = content;
+            var serviceLogDir = Path.Combine(_config.LogDir, service.ServiceId);
+            Directory.CreateDirectory(serviceLogDir);
+
+            content = ReplaceSpringProfileArgument(content, _config.DeployProfile);
+            content = SetJavaSystemPropertyArgument(content, "forgex.deployment.log-dir", _config.LogDir);
+            content = SetJavaSystemPropertyArgument(content, "LOG_DIR", _config.LogDir);
+            content = SetJavaSystemPropertyArgument(content, "logging.file.path", _config.LogDir);
+            content = SetWrapperLogPath(content, serviceLogDir);
+            content = SetWrapperEnvironment(content, "FORGEX_LOG_DIR", _config.LogDir, "FORGEX_UPLOAD_DIR");
+            content = SetWrapperEnvironment(content, "LOG_DIR", _config.LogDir, "FORGEX_LOG_DIR");
+            content = SetWrapperEnvironment(content, "LOG_PATH", _config.LogDir, "LOG_DIR");
+            content = SetWrapperEnvironment(content, "LOGGING_FILE_PATH", _config.LogDir, "LOG_PATH");
+            content = SetWrapperEnvironment(content, "FORGEX_PROFILE", _config.DeployProfile, "FORGEX_INSTANCE_CODE");
+            content = SetWrapperEnvironment(content, "FORGEX_DEPLOYMENT_PROFILE", _config.DeployProfile, "FORGEX_PROFILE");
+            content = SetWrapperEnvironment(content, "FORGEX_NACOS_NAMESPACE", _config.NacosNamespace, "FORGEX_NACOS_ADDR");
+            content = SetWrapperEnvironment(content, "FORGEX_NACOS_GROUP", _config.NacosGroup, "FORGEX_NACOS_NAMESPACE");
+            content = SetWrapperEnvironment(content, "FORGEX_DATASOURCE_CONFIG", _config.DatasourceConfig, "FORGEX_NACOS_GROUP");
+            content = SetWrapperEnvironment(content, "FORGEX_INTEGRATION_DATASOURCE_CONFIG", _config.IntegrationDatasourceConfig, "FORGEX_DATASOURCE_CONFIG");
+
+            if (!string.Equals(content, original, StringComparison.Ordinal))
+            {
+                File.WriteAllText(service.WrapperXmlPath, content, JsonHelper.Utf8NoBom);
+                log($"{service.ServiceId} Windows service wrapper config repaired.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ControlCenterDiagnostics.Write(_config.InstallRoot, $"{service.ServiceId} wrapper repair failed", ex);
+            log($"{service.ServiceId} wrapper repair failed: {ex.Message}");
+        }
+    }
+
+    private static string ReplaceSpringProfileArgument(string content, string profile)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            content,
+            @"(\s--spring\.profiles\.active=)[^\s<""]+",
+            match => $"{match.Groups[1].Value}{profile}");
+    }
+
+    private static string SetJavaSystemPropertyArgument(string content, string name, string value)
+    {
+        var escapedName = System.Text.RegularExpressions.Regex.Escape(name);
+        var argument = $"-D{name}=\"{value}\"";
+        var propertyPattern = $@"-D{escapedName}=(?:""[^""]*""|[^\s<""]+)";
+        if (System.Text.RegularExpressions.Regex.IsMatch(content, propertyPattern))
+        {
+            return System.Text.RegularExpressions.Regex.Replace(content, propertyPattern, argument);
+        }
+
+        return System.Text.RegularExpressions.Regex.Replace(
+            content,
+            @"(\s-jar\s+)",
+            match => $" {argument}{match.Groups[1].Value}",
+            System.Text.RegularExpressions.RegexOptions.None,
+            TimeSpan.FromSeconds(2));
+    }
+
+    private static string SetWrapperLogPath(string content, string logPath)
+    {
+        var escapedValue = System.Security.SecurityElement.Escape(logPath);
+        if (System.Text.RegularExpressions.Regex.IsMatch(content, @"<logpath>.*?</logpath>", System.Text.RegularExpressions.RegexOptions.Singleline))
+        {
+            return System.Text.RegularExpressions.Regex.Replace(
+                content,
+                @"<logpath>.*?</logpath>",
+                $"<logpath>{escapedValue}</logpath>",
+                System.Text.RegularExpressions.RegexOptions.Singleline);
+        }
+
+        return content.Replace("</service>", $"  <logpath>{escapedValue}</logpath>{Environment.NewLine}</service>", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string SetWrapperEnvironment(string content, string name, string value, string insertAfter)
+    {
+        var escapedName = System.Text.RegularExpressions.Regex.Escape(name);
+        var escapedValue = System.Security.SecurityElement.Escape(value);
+        var line = $"  <env name=\"{name}\" value=\"{escapedValue}\" />";
+        var envPattern = $@"<env\s+name=""{escapedName}""\s+value=""[^""]*""\s*/>";
+
+        if (System.Text.RegularExpressions.Regex.IsMatch(content, envPattern))
+        {
+            return System.Text.RegularExpressions.Regex.Replace(content, envPattern, line);
+        }
+
+        var escapedAnchor = System.Text.RegularExpressions.Regex.Escape(insertAfter);
+        var anchorPattern = $@"(<env\s+name=""{escapedAnchor}""\s+value=""[^""]*""\s*/>)";
+        if (System.Text.RegularExpressions.Regex.IsMatch(content, anchorPattern))
+        {
+            return System.Text.RegularExpressions.Regex.Replace(content, anchorPattern, match => $"{match.Groups[1].Value}{Environment.NewLine}{line}");
+        }
+
+        return content.Replace("</service>", $"{line}{Environment.NewLine}</service>", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryGetWindowsService(ForgexServiceConfig service, out ServiceController? controller)
@@ -1201,34 +1805,22 @@ internal sealed class StaticWebServer
         var stdout = Path.Combine(_config.LogDir, "web", "stdout.log");
         var stderr = Path.Combine(_config.LogDir, "web", "stderr.log");
         var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        var stdoutWriter = new StreamWriter(new FileStream(stdout, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
-        var stderrWriter = new StreamWriter(new FileStream(stderr, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+        var relay = new ProcessLogRelay(stdout, stderr);
+        relay.Attach(process);
 
-        process.OutputDataReceived += (_, eventArgs) =>
+        try
         {
-            if (eventArgs.Data is not null)
-            {
-                stdoutWriter.WriteLine(eventArgs.Data);
-                stdoutWriter.Flush();
-            }
-        };
-        process.ErrorDataReceived += (_, eventArgs) =>
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
+        catch
         {
-            if (eventArgs.Data is not null)
-            {
-                stderrWriter.WriteLine(eventArgs.Data);
-                stderrWriter.Flush();
-            }
-        };
-        process.Exited += (_, _) =>
-        {
-            stdoutWriter.Dispose();
-            stderrWriter.Dispose();
-        };
+            relay.Dispose();
+            process.Dispose();
+            throw;
+        }
 
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
         File.WriteAllText(_pidFile, process.Id.ToString(), JsonHelper.Utf8NoBom);
         log($"Web server started: http://127.0.0.1:{_config.FrontendPort}/");
     }
@@ -1338,6 +1930,12 @@ internal sealed class FrontendWebServer
         _nginxServer.Stop(log);
         _fallbackServer.Stop(log);
     }
+
+    public void Restart(Action<string> log)
+    {
+        Stop(log);
+        Start(log);
+    }
 }
 
 internal sealed class NginxFrontendServer
@@ -1424,34 +2022,22 @@ internal sealed class NginxFrontendServer
         var stdout = Path.Combine(_config.LogDir, "nginx", "stdout.log");
         var stderr = Path.Combine(_config.LogDir, "nginx", "stderr.log");
         var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        var stdoutWriter = new StreamWriter(new FileStream(stdout, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
-        var stderrWriter = new StreamWriter(new FileStream(stderr, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+        var relay = new ProcessLogRelay(stdout, stderr);
+        relay.Attach(process);
 
-        process.OutputDataReceived += (_, eventArgs) =>
+        try
         {
-            if (eventArgs.Data is not null)
-            {
-                stdoutWriter.WriteLine(eventArgs.Data);
-                stdoutWriter.Flush();
-            }
-        };
-        process.ErrorDataReceived += (_, eventArgs) =>
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
+        catch
         {
-            if (eventArgs.Data is not null)
-            {
-                stderrWriter.WriteLine(eventArgs.Data);
-                stderrWriter.Flush();
-            }
-        };
-        process.Exited += (_, _) =>
-        {
-            stdoutWriter.Dispose();
-            stderrWriter.Dispose();
-        };
+            relay.Dispose();
+            process.Dispose();
+            throw;
+        }
 
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
         WaitForPidFile(process);
         log($"Nginx started: http://127.0.0.1:{_config.FrontendPort}/");
     }
@@ -1776,7 +2362,7 @@ internal sealed class ForgexControlConfig
 
     public string InstanceCode { get; set; } = "DEFAULT";
 
-    public string DeployProfile { get; set; } = "prod";
+    public string DeployProfile { get; set; } = "yanshi";
 
     public string InstallRoot { get; set; } = AppContext.BaseDirectory;
 
@@ -1802,9 +2388,13 @@ internal sealed class ForgexControlConfig
 
     public string NacosAddr { get; set; } = "127.0.0.1:8848";
 
-    public string NacosNamespace { get; set; } = "prod";
+    public string NacosNamespace { get; set; } = "yanshi";
 
     public string NacosGroup { get; set; } = "DEFAULT_GROUP";
+
+    public string DatasourceConfig { get; set; } = "datasource-forgex-dev.yml";
+
+    public string IntegrationDatasourceConfig { get; set; } = "datasource-forgex-integration-dev.yml";
 
     public string RedisAddr { get; set; } = "127.0.0.1:6379";
 

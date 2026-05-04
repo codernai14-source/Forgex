@@ -20,6 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 用户集成内部控制器。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @RestController
 @RequestMapping("/api/integration/internal/user")
 @RequiredArgsConstructor
@@ -29,6 +35,12 @@ public class InternalUserIntegrationController {
     private final IntegrationUserSyncFeignClient integrationUserSyncFeignClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 同步用户数据。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/sync")
     public R<UserThirdPartyPullResultDTO> syncUsers(@RequestBody UserThirdPartyInvokeDTO request) {
         List<UserThirdPartySyncDTO> users = exportUsers(request.getTenantId());
@@ -45,6 +57,12 @@ public class InternalUserIntegrationController {
         }
     }
 
+    /**
+     * 拉取用户数据。
+     *
+     * @param request 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/pull")
     public R<UserThirdPartyPullResultDTO> pullUsers(@RequestBody UserThirdPartyInvokeDTO request) {
         try {

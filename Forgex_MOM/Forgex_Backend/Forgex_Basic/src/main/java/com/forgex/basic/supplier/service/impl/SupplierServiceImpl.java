@@ -127,6 +127,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
     private final EncodeRuleService encodeRuleService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 分页查询数据。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<SupplierDTO> page(SupplierPageParam param) {
         SupplierPageParam safeParam = param == null ? new SupplierPageParam() : param;
@@ -139,6 +145,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return dtoPage;
     }
 
+    /**
+     * 查询数据列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<SupplierDTO> list(SupplierPageParam param) {
         SupplierPageParam safeParam = param == null ? new SupplierPageParam() : param;
@@ -147,6 +159,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                 .toList();
     }
 
+    /**
+     * 根据主键查询详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public SupplierDTO getDetailById(Long id) {
         if (id == null) {
@@ -156,6 +174,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return supplier == null ? null : convertToDTO(supplier, true);
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(SupplierSaveParam param) {
@@ -173,6 +197,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return supplier.getId();
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SupplierSaveParam param) {
@@ -191,6 +221,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return true;
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
@@ -203,6 +239,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return true;
     }
 
+    /**
+     * 生成关联租户。
+     *
+     * @param id 主键 ID
+     * @return 字符串结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String generateTenant(Long id) {
@@ -238,6 +280,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return tenantCode;
     }
 
+    /**
+     * 发起供应商资质评审。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long startQualificationReview(SupplierReviewStartParam param) {
@@ -269,6 +317,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return response.getData();
     }
 
+    /**
+     * 处理工作流回调。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleWorkflowCallback(SupplierWorkflowCallbackParam param) {
@@ -285,6 +339,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return true;
     }
 
+    /**
+     * 同步第三方供应商数据。
+     *
+     * @param request 请求参数
+     * @return 处理结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SupplierThirdPartySyncResultDTO syncThirdPartySuppliers(SupplierThirdPartySyncRequestDTO request) {
@@ -313,6 +373,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return result;
     }
 
+    /**
+     * 导出第三方供应商数据。
+     *
+     * @param request 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<SupplierAggregateDTO> exportThirdPartySuppliers(SupplierThirdPartySyncRequestDTO request) {
         LambdaQueryWrapper<BasicSupplier> wrapper = new LambdaQueryWrapper<BasicSupplier>()
@@ -323,6 +389,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                 .toList();
     }
 
+    /**
+     * 同步供应商到第三方系统。
+     *
+     * @param request 请求参数
+     * @return 处理结果
+     */
     @Override
     public SupplierThirdPartySyncResultDTO syncToThirdParty(SupplierThirdPartyInvokeDTO request) {
         SupplierThirdPartyInvokeDTO safeRequest = request == null ? new SupplierThirdPartyInvokeDTO() : request;
@@ -339,6 +411,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return response.getData();
     }
 
+    /**
+     * 获取by编码。
+     *
+     * @param request 请求参数
+     * @return 处理结果
+     */
     @Override
     public SupplierAggregateDTO getByCode(SupplierQueryRequestDTO request) {
         String supplierCode = request == null ? null : request.getSupplierCode();
@@ -352,6 +430,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return convertToDTO(supplier, true);
     }
 
+    /**
+     * 按供应商编码批量查询。
+     *
+     * @param request 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<SupplierAggregateDTO> listByCodes(SupplierQueryRequestDTO request) {
         if (request == null || CollectionUtils.isEmpty(request.getSupplierCodes())) {
@@ -374,6 +458,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                 .toList();
     }
 
+    /**
+     * 查询供应商下拉选项。
+     *
+     * @param request 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<SupplierOptionDTO> listOptions(SupplierQueryRequestDTO request) {
         LambdaQueryWrapper<BasicSupplier> wrapper = new LambdaQueryWrapper<BasicSupplier>()
@@ -387,6 +477,11 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                 .toList();
     }
 
+    /**
+     * 写出导入模板。
+     *
+     * @param outputStream outputstream
+     */
     @Override
     public void writeImportTemplate(OutputStream outputStream) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -398,6 +493,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         }
     }
 
+    /**
+     * 导入 Excel 数据。
+     *
+     * @param file 文件
+     * @return 处理结果
+     */
     @Override
     public SupplierThirdPartySyncResultDTO importExcel(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -412,12 +513,24 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         }
     }
 
+    /**
+     * 执行通用导入。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param) {
         return handle(param);
     }
 
+    /**
+     * 处理导入数据。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Transactional(rollbackFor = Exception.class)
     public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
         FxExcelImportMode mode = FxExcelImportMode.parse(param == null ? null : param.getImportMode());
@@ -440,6 +553,12 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return result;
     }
 
+    /**
+     * 导出 Excel 数据。
+     *
+     * @param param 请求参数
+     * @param outputStream outputstream
+     */
     @Override
     public void exportExcel(SupplierPageParam param, OutputStream outputStream) throws IOException {
         List<SupplierDTO> suppliers = list(param);

@@ -150,6 +150,8 @@ $licensePublicKeyPath = Join-Path $PSScriptRoot "license-tools\\keys\\public-key
 $controlCenterProject = Join-Path $PSScriptRoot "tools\\control-center\\ForgexControlCenter\\ForgexControlCenter.csproj"
 $controlCenterPublishDir = Join-Path $PSScriptRoot "tools\\control-center\\publish\\win-x64"
 $nginxTemplatePath = Join-Path $sharedRoot "nginx\\forgex.conf.template"
+$docNacosConfigRoot = Join-Path $repoRoot "Forgex_Doc\\部署\\nacos配置"
+$docDatabaseInitRoot = Join-Path $repoRoot "Forgex_Doc\\部署\\数据库初始化脚本"
 $windowsNginxRuntimeRoot = Join-Path $sharedRoot "nginx\\windows"
 $resolvedWindowsJreHome = Resolve-WindowsJreHome -ConfiguredHome $WindowsJreHome
 
@@ -273,6 +275,10 @@ if (Test-Path -LiteralPath $licensePublicKeyPath) {
 }
 Copy-DirectoryContents -Source (Join-Path $sharedRoot "nacos") -Destination (Join-Path $windowsStaging "nacos")
 Copy-DirectoryContents -Source (Join-Path $sharedRoot "nacos") -Destination (Join-Path $linuxStaging "nacos")
+Copy-DirectoryContents -Source $docNacosConfigRoot -Destination (Join-Path $windowsStaging "nacos")
+Copy-DirectoryContents -Source $docNacosConfigRoot -Destination (Join-Path $linuxStaging "nacos")
+Copy-DirectoryContents -Source $docDatabaseInitRoot -Destination (Join-Path $windowsStaging "database-init")
+Copy-DirectoryContents -Source $docDatabaseInitRoot -Destination (Join-Path $linuxStaging "database-init")
 if (Test-Path -LiteralPath $windowsNginxRuntimeRoot) {
     Copy-DirectoryContents -Source $windowsNginxRuntimeRoot -Destination (Join-Path $windowsStaging "nginx")
 }

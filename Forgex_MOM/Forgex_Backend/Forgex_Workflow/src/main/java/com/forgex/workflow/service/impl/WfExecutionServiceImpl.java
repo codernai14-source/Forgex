@@ -398,6 +398,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 转交审批任务。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean transfer(WfExecutionTransferParam param) {
@@ -406,6 +412,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .handle(param);
     }
 
+    /**
+     * 处理transferaction。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     public Boolean handleTransferAction(WfExecutionTransferParam param) {
         Long currentUserId = requireCurrentUserId();
         WfTaskExecution execution = requireRunningExecution(param.getExecutionId());
@@ -436,6 +448,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 加签审批任务。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addSign(WfExecutionAddSignParam param) {
@@ -444,6 +462,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .handle(param);
     }
 
+    /**
+     * 处理addsignaction。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     public Boolean handleAddSignAction(WfExecutionAddSignParam param) {
         Long currentUserId = requireCurrentUserId();
         WfTaskExecution execution = requireRunningExecution(param.getExecutionId());
@@ -462,6 +486,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 批量审批任务。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchApprove(WfExecutionBatchApproveParam param) {
@@ -483,6 +513,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 批量转交审批任务。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchTransfer(WfExecutionBatchTransferParam param) {
@@ -507,6 +543,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 批量催办审批任务。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     public Boolean batchRemind(WfExecutionBatchRemindParam param) {
         Long currentUserId = requireCurrentUserId();
@@ -528,6 +570,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 补偿审批执行数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean compensateExecution(WfExecutionCompensateParam param) {
@@ -552,6 +600,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 重试超时任务。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean retryTimeoutJobs(WfExecutionCompensateParam param) {
@@ -560,6 +614,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .handle(param);
     }
 
+    /**
+     * 处理retrytimeoutjobsaction。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     public Boolean handleRetryTimeoutJobsAction(WfExecutionCompensateParam param) {
         // 1. 第一段：筛出当前已超时且仍处于激活待办状态的审批实例，作为超时重试候选集。
         LambdaQueryWrapper<WfTaskApprovalInstance> wrapper = new LambdaQueryWrapper<WfTaskApprovalInstance>()
@@ -599,6 +659,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 保存delegate。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveDelegate(WfExecutionDelegateSaveParam param) {
@@ -607,6 +673,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .handle(param);
     }
 
+    /**
+     * 处理savedelegateaction。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     public Boolean handleSaveDelegateAction(WfExecutionDelegateSaveParam param) {
         validateDelegateUsers(param);
         List<WfTaskApprovalInstance> pendingInstances = approvalInstanceMapper.selectList(new LambdaQueryWrapper<WfTaskApprovalInstance>()
@@ -632,6 +704,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 取消委托审批。
+     *
+     * @param delegatorUserId delegator用户 ID
+     * @return 是否处理成功
+     */
     @Override
     public Boolean cancelDelegate(Long delegatorUserId) {
         if (delegatorUserId == null) {
@@ -651,6 +729,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 取消审批实例。
+     *
+     * @param executionId 执行 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean cancelExecution(Long executionId) {
@@ -666,12 +750,24 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return true;
     }
 
+    /**
+     * 获取执行详情。
+     *
+     * @param executionId 执行 ID
+     * @return 处理结果
+     */
     @Override
     public WfExecutionDTO getExecutionDetail(Long executionId) {
         WfTaskExecution execution = executionMapper.selectById(executionId);
         return execution == null ? null : convertToDTO(execution);
     }
 
+    /**
+     * 查询审批实例列表。
+     *
+     * @param executionId 执行 ID
+     * @return 列表数据
+     */
     @Override
     public List<WfApprovalInstanceDTO> listApprovalInstances(Long executionId) {
         validateExecutionExists(executionId);
@@ -685,6 +781,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 查询审批操作日志。
+     *
+     * @param executionId 执行 ID
+     * @return 列表数据
+     */
     @Override
     public List<WfApprovalActionLogDTO> listApprovalActionLogs(Long executionId) {
         validateExecutionExists(executionId);
@@ -698,6 +800,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 分页查询我发起的审批。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<WfExecutionDTO> pageMyInitiated(WfExecutionQueryParam param) {
         Page<WfTaskExecution> page = new Page<>(param.getPageNum(), param.getPageSize());
@@ -707,6 +815,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return convertToDTOPage(executionMapper.selectPage(page, wrapper));
     }
 
+    /**
+     * 分页查询我的待办审批。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<WfExecutionDTO> pageMyPending(WfExecutionQueryParam param) {
         Long currentUserId = requireCurrentUserId();
@@ -722,6 +836,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return pageByExecutionIdsFromInstances(pendingInstances, param);
     }
 
+    /**
+     * 分页查询我的已办审批。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<WfExecutionDTO> pageMyProcessed(WfExecutionQueryParam param) {
         Long currentUserId = requireCurrentUserId();
@@ -830,6 +950,12 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return null;
     }
 
+    /**
+     * 分页查询抄送我的审批。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<WfExecutionDTO> pageMyCc(WfExecutionQueryParam param) {
         Long currentUserId = requireCurrentUserId();
@@ -898,6 +1024,11 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return pageByExecutionIdsFromInstances(compensationInstances, param);
     }
 
+    /**
+     * 加载审批看板汇总数据。
+     *
+     * @return 处理结果
+     */
     @Override
     public WfDashboardSummaryVO loadDashboardSummary() {
         WfDashboardSummaryVO vo = new WfDashboardSummaryVO();
@@ -923,6 +1054,11 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         return vo;
     }
 
+    /**
+     * 加载审批看板统计数据。
+     *
+     * @return 处理结果
+     */
     @Override
     public WfDashboardAnalyticsVO loadDashboardAnalytics() {
         Long tenantId = requireCurrentTenantId();

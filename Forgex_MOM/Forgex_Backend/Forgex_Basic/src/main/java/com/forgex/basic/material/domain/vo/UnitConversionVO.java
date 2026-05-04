@@ -14,19 +14,43 @@ import java.math.BigDecimal;
 @Data
 public class UnitConversionVO {
 
+    /**
+     * 主键 ID。
+     */
     private Long id;
 
+    /**
+     * 单位 ID。
+     */
     private Long unitId;
 
+    /**
+     * 单位编码。
+     */
     private String unitCode;
 
+    /**
+     * 单位名称。
+     */
     private String unitName;
 
+    /**
+     * 目标单位 ID。
+     */
     private Long targetUnitId;
 
+    /**
+     * 目标单位编码。
+     */
     private String targetUnitCode;
 
+    /**
+     * 目标单位名称。
+     */
     private String targetUnitName;
 
+    /**
+     * 换算值。
+     */
     private BigDecimal conversionValue;
 }

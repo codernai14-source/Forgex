@@ -1,19 +1,6 @@
 spring:
-  data:
-    redis:
-      host: 175.27.135.204
-      port: 6379
-      database: 0
-      password:
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: 1000ms
   redis:
-    host: 175.27.135.204
+    host: 127.0.0.1
     port: 6379
     database: 0
     password:

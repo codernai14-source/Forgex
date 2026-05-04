@@ -32,7 +32,7 @@ public class I18nLanguageTypeController {
     private final SysI18nLanguageTypeService languageTypeService;
 
     /**
-     * 获取所有启用的语言类型列表。
+     * 查询启用数据列表。
      *
      * @return 启用的语言类型列表
      */
@@ -42,7 +42,7 @@ public class I18nLanguageTypeController {
     }
 
     /**
-     * 获取所有语言类型列表。
+     * 查询全部数据列表。
      *
      * @return 所有语言类型列表
      */
@@ -135,7 +135,7 @@ public class I18nLanguageTypeController {
     }
 
     /**
-     * 设置默认语言。
+     * 设置默认汇率类型。
      *
      * @param body 请求参数，包含 id
      * @return 是否设置成功
