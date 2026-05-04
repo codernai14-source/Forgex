@@ -58,6 +58,80 @@ function Copy-DirectoryContents {
     }
 }
 
+function Get-LockingProcesses {
+    param(
+        [string]$Path
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) {
+        return @()
+    }
+
+    $resolvedPath = [System.IO.Path]::GetFullPath($Path)
+    $result = New-Object System.Collections.Generic.List[object]
+    Get-Process -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            if ($null -ne $_.Path -and [System.StringComparer]::OrdinalIgnoreCase.Equals([System.IO.Path]::GetFullPath($_.Path), $resolvedPath)) {
+                $result.Add($_)
+            }
+        } catch {
+        }
+    }
+
+    return $result.ToArray()
+}
+
+function Wait-FileUnlocked {
+    param(
+        [string]$Path,
+        [int]$TimeoutSeconds = 60
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) {
+        return
+    }
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $stream = $null
+        try {
+            $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+            return
+        } catch [System.IO.IOException] {
+            $lockingProcesses = @(Get-LockingProcesses -Path $Path)
+            if ($lockingProcesses.Count -gt 0) {
+                $processText = ($lockingProcesses | ForEach-Object { "$($_.ProcessName)(pid:$($_.Id))" }) -join ", "
+                Write-Host "Waiting for file to be released: $Path"
+                Write-Host "Please close: $processText"
+            } else {
+                Write-Host "Waiting for file to be released: $Path"
+            }
+            Start-Sleep -Seconds 2
+        } finally {
+            if ($null -ne $stream) {
+                $stream.Dispose()
+            }
+        }
+    }
+
+    throw "File is still in use after $TimeoutSeconds seconds. Please close the running program and rerun upgrade: $Path"
+}
+
+function Copy-ControlCenterDirectory {
+    param(
+        [string]$Source,
+        [string]$Destination
+    )
+
+    if (-not (Test-Path -LiteralPath $Source)) {
+        return
+    }
+
+    $targetExe = Join-Path $Destination "ForgexControlCenter.exe"
+    Wait-FileUnlocked -Path $targetExe -TimeoutSeconds 60
+    Copy-DirectoryContents -Source $Source -Destination $Destination
+}
+
 function Test-SamePath {
     param(
         [string]$Left,
@@ -220,6 +294,9 @@ function Invoke-ControlCenter {
     }
 
     & $ControlCenter --install-root $Root $Argument | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "Forgex Control Center command failed: $Argument"
+    }
 }
 
 $resolvedInstallRoot = Resolve-InstallRoot
@@ -271,7 +348,12 @@ if (Test-Path -LiteralPath $packageFrontendDir) {
 foreach ($dirName in @("tools\control-center", "nginx", "winsw", "scripts")) {
     $sourceDir = Join-Path $resolvedPackageRoot $dirName
     if (Test-Path -LiteralPath $sourceDir) {
-        Copy-DirectoryContents -Source $sourceDir -Destination (Join-Path $resolvedInstallRoot $dirName)
+        $destinationDir = Join-Path $resolvedInstallRoot $dirName
+        if ($dirName -eq "tools\control-center") {
+            Copy-ControlCenterDirectory -Source $sourceDir -Destination $destinationDir
+        } else {
+            Copy-DirectoryContents -Source $sourceDir -Destination $destinationDir
+        }
     }
 }
 
