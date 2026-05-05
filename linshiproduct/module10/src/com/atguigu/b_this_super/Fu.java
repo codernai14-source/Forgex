@@ -10,4 +10,8 @@ public class Fu {
     public Fu(int age) {
         this.age = age;
     }
+
+    private void method1(){
+
+    }
 }
