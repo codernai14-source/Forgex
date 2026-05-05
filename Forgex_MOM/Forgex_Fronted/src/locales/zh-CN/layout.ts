@@ -60,6 +60,8 @@ export default {
   layoutVerticalMix: '垂直双列',
   layoutTop: '水平',
   layoutMix: '混合',
+  horizontalModuleMenuHint: '当前模块下的菜单入口',
+  horizontalModuleMenuCount: '{count} 个可进入页面',
   header: '顶栏',
   headerVisible: '显示顶栏',
   headerMode: '模式',

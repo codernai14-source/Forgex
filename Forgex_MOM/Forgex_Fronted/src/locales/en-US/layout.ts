@@ -60,6 +60,8 @@ export default {
   layoutVerticalMix: 'Vertical Double Column',
   layoutTop: 'Horizontal',
   layoutMix: 'Mixed',
+  horizontalModuleMenuHint: 'Menu entries in the current module',
+  horizontalModuleMenuCount: '{count} available pages',
   header: 'Header',
   headerVisible: 'Show Header',
   headerMode: 'Mode',

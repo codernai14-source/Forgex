@@ -60,6 +60,8 @@ export default {
   layoutVerticalMix: '縦型二列',
   layoutTop: '横型',
   layoutMix: 'ミックス',
+  horizontalModuleMenuHint: '現在のモジュールのメニュー入口',
+  horizontalModuleMenuCount: '{count} 件の利用可能ページ',
   header: 'ヘッダー',
   headerVisible: 'ヘッダーを表示',
   headerMode: 'モード',
