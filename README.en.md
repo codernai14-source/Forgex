@@ -8,9 +8,14 @@ Forgex is an enterprise-grade scaffold for manufacturing digitalization projects
 ## Demo
 
 - Online demo: <http://175.27.135.204:18080/login>
+
+To try Forgex, register with one of the role-based invitation codes below and experience the system as a normal user, department manager, or system auditor.
+
 - Normal user invitation code: `D83F9B1E`
 - Department manager invitation code: `C40EDD46`
 - System auditor invitation code: `948F2D80`
+
+Forgex includes an external-facing user registration capability for enterprise use. Companies can issue invitation codes by role, position, or business scenario, allowing new employees, project members, or trial users to create accounts by themselves. The invitation code completes account creation, role binding, and basic permission activation, so administrators do not need to manually create every user one by one.
 
 ## What Makes It Different
 
