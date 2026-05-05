@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <a-config-provider :theme="antdTheme" :locale="antdLocale">
     <a-layout 
       ref="layoutRootRef"
@@ -35,8 +35,9 @@
         :modules="moduleList"
         :active-key="normalizeWorkspacePath(route.fullPath)"
         :active-module-code="activeModuleCode"
+        :layout-mode="layoutConfig.layoutMode"
         :collapsed="siderCollapsed"
-        :double-column="layoutConfig.leftDoubleMenu || layoutConfig.layoutMode === 'vertical-mix' || layoutConfig.layoutMode === 'mix'"
+        :double-column="sidebarDoubleColumn"
         @module-click="onModuleClick"
         @menu-click="onMenuClick"
         @collapse-change="onCollapse"
@@ -95,6 +96,61 @@
       @update:visible="globalSearchVisible = $event"
       @select="onGlobalSearchSelect"
     />
+
+    <a-drawer
+      v-model:open="horizontalMenuDrawerOpen"
+      placement="top"
+      :height="360"
+      class="fx-horizontal-menu-drawer"
+      :get-container="getSettingDrawerContainer"
+      :root-style="settingDrawerRootStyle"
+    >
+      <template #title>
+        <div class="fx-horizontal-menu-drawer__header">
+          <div class="fx-horizontal-menu-drawer__title">{{ activeModuleName }}</div>
+          <div class="fx-horizontal-menu-drawer__subtitle">{{ t('layout.horizontalModuleMenuHint') }}</div>
+        </div>
+      </template>
+      <div class="fx-horizontal-module-panel__grid" data-guide-id="fx-horizontal-module-panel">
+        <button
+          v-for="item in horizontalModuleMenus"
+          :key="item.key"
+          type="button"
+          class="fx-horizontal-menu-card"
+          :class="{ 'fx-horizontal-menu-card--active': isHorizontalMenuActive(item) }"
+          @click="onHorizontalMenuClick(item)"
+        >
+          <span class="fx-horizontal-menu-card__icon">
+            <component :is="resolveMenuIcon(item)" />
+          </span>
+          <span class="fx-horizontal-menu-card__body">
+            <span class="fx-horizontal-menu-card__title" :title="item.title">{{ item.title }}</span>
+            <span
+              v-if="item.children?.length"
+              class="fx-horizontal-menu-card__meta"
+            >
+              {{ t('layout.horizontalModuleMenuCount', { count: countNavigableMenus(item.children) }) }}
+            </span>
+          </span>
+          <span
+            v-if="item.children?.length"
+            class="fx-horizontal-menu-card__children"
+            @click.stop
+          >
+            <button
+              v-for="child in getHorizontalMenuChildren(item)"
+              :key="child.key"
+              type="button"
+              class="fx-horizontal-menu-card__child"
+              :class="{ 'fx-horizontal-menu-card__child--active': isHorizontalMenuActive(child) }"
+              @click="onHorizontalMenuClick(child)"
+            >
+              {{ child.title }}
+            </button>
+          </span>
+        </button>
+      </div>
+    </a-drawer>
 
     <FxGuideTour
       ref="systemGuideTourRef"
@@ -222,7 +278,7 @@
                 <span>{{ t('layout.fontSize') }}</span>
                 <div class="fx-setting-slider">
                   <a-slider v-model:value="fontSizeSliderValue" :min="FONT_SIZE_MIN" :max="FONT_SIZE_MAX" />
-                  <span class="fx-setting-slider__value">{{ fontSizeSliderValue }}px</span>
+                  <span class="fx-setting-slider__value">{{ fontSizeLabel }}</span>
                 </div>
               </div>
 
@@ -445,7 +501,10 @@ import {
   SearchOutlined,
   HighlightOutlined,
   EyeInvisibleOutlined,
-  DesktopOutlined
+  DesktopOutlined,
+  AppstoreOutlined,
+  FolderOutlined,
+  FileOutlined
 } from '@ant-design/icons-vue'
 
 import AppHeader from './components/AppHeader.vue'
@@ -462,6 +521,7 @@ import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
+import { getIcon } from '../utils/icon'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
@@ -537,6 +597,20 @@ interface LayoutModeOption {
 }
 
 type MessageCategory = 'SYSTEM' | 'MESSAGE'
+type SidebarMenuType = 'module' | 'catalog' | 'menu' | 'button'
+
+interface SidebarMenuItem {
+  key: string
+  title: string
+  icon?: string
+  path: string
+  moduleCode: string
+  moduleName?: string
+  parentKey?: string
+  menuLevel: number
+  children?: SidebarMenuItem[]
+  type: SidebarMenuType
+}
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   leftDoubleMenu: false,
@@ -573,6 +647,7 @@ const layoutRootRef = ref<HTMLElement | { $el?: unknown } | null>(null)
 const layoutConfig = ref<LayoutConfig>({ ...DEFAULT_LAYOUT_CONFIG })
 const systemGuideTourRef = ref<InstanceType<typeof FxGuideTour> | null>(null)
 const settingOpen = ref(false)
+const horizontalMenuDrawerOpen = ref(false)
 const messageDrawerOpen = ref(false)
 const messageLoading = ref(false)
 const activeMessageTab = ref<MessageCategory>('SYSTEM')
@@ -756,6 +831,13 @@ const fontSizeSliderValue = computed({
   },
 })
 
+const fontSizeLabel = computed(() => {
+  const value = fontSizeSliderValue.value
+  if (value <= 14) return t('layout.fontSizeSmall')
+  if (value >= 18) return t('layout.fontSizeLarge')
+  return t('layout.fontSizeDefault')
+})
+
 /**
  * 布局模式选项配置
  * <p>
@@ -827,6 +909,7 @@ const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
 const ROUTE_VISIT_STATS_STORAGE_KEY = 'fx-route-visit-stats'
 const MAX_RECENT_ROUTE_COUNT = 20
 const MAX_ROUTE_VISIT_STATS_COUNT = 200
+const HORIZONTAL_MENU_CHILD_LIMIT = 6
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
 const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
@@ -1249,6 +1332,7 @@ function handleScroll() {
 }
 
 type ModuleRouteNode = {
+  name?: string
   path?: string
   meta?: Record<string, any>
   children?: ModuleRouteNode[]
@@ -1433,134 +1517,184 @@ const moduleList = computed(() => {
 })
 
 // 侧边栏菜单数据（转换为侧边栏组件期望的格式）
-const sidebarMenus = computed(() => {
-  const result: any[] = []
-  const routes = Array.isArray(dynamicRoutes.value) ? dynamicRoutes.value : []
-  
-  // 在混合模式下，需要构建两级菜单结构
-  if (layoutConfig.value.layoutMode === 'mix' && activeModuleCode.value) {
-    // 找到当前模块的路由
-    const topRoute = routes.find((r: any) => 
-      r.path === activeModuleCode.value || (r.meta && r.meta.module === activeModuleCode.value)
-    )
-    
-    if (topRoute && Array.isArray(topRoute.children)) {
-      // 构建一级菜单（目录）和二三级菜单
-      for (const child of topRoute.children) {
-        const childPath = String(child.path || '')
-        const fullPath = `/workspace/${activeModuleCode.value}/${childPath}`.replace(/\/+/g, '/')
-        const title = resolveMenuTitle((child.meta && child.meta.title) || child.name || childPath)
-        const icon = (child.meta && child.meta.icon) || ''
-        const type = (child.meta && child.meta.type) || 'menu'
-        const menuLevel = (child.meta && child.meta.menuLevel) || 1
-        
-        // 构建菜单项，保留 children 结构以支持多级菜单
-        const menuItem: any = {
-          key: fullPath,
-          title,
-          icon,
-          path: fullPath,
-          moduleCode: activeModuleCode.value,
-          type,
-          menuLevel,
-          children: []
-        }
-        
-        // 如果有子菜单，递归构建 children
-        if (child.children && Array.isArray(child.children)) {
-          menuItem.children = child.children.map((grandchild: any) => {
-            const grandchildPath = String(grandchild.path || '')
-            // 构建完整路径：/workspace/{moduleCode}/{childPath}/{grandchildPath}
-            // 注意：如果 grandchild.path 已经是完整路径，需要特殊处理
-            const grandchildFullPath = grandchildPath.startsWith('/') 
-              ? grandchildPath 
-              : `/workspace/${activeModuleCode.value}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
-            const grandchildTitle = resolveMenuTitle((grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath)
-            const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
-            const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
-            const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
-            
-            return {
-              key: grandchildFullPath,
-              title: grandchildTitle,
-              icon: grandchildIcon,
-              path: grandchildFullPath,
-              moduleCode: activeModuleCode.value,
-              type: grandchildType,
-              menuLevel: grandchildMenuLevel,
-              parentKey: fullPath,
-              children: []
-            }
-          })
-        }
-        
-        result.push(menuItem)
-      }
-    }
-  } else {
-    // 非混合模式，显示所有菜单
-    for (const topRoute of routes) {
-      const moduleCode = topRoute.path
-      
-      if (topRoute && Array.isArray(topRoute.children)) {
-        for (const child of topRoute.children) {
-          const childPath = String(child.path || '')
-          const fullPath = `/workspace/${moduleCode}/${childPath}`.replace(/\/+/g, '/')
-          const title = resolveMenuTitle((child.meta && child.meta.title) || child.name || childPath)
-          const icon = (child.meta && child.meta.icon) || ''
-          const type = (child.meta && child.meta.type) || 'menu'
-          const menuLevel = (child.meta && child.meta.menuLevel) || 1
-          
-          // 构建菜单项，保留 children 结构以支持多级菜单
-          const menuItem: any = {
-            key: fullPath,
-            title,
-            icon,
-            path: fullPath,
-            moduleCode,
-            type,
-            menuLevel,
-            children: []
-          }
-          
-          // 如果有子菜单，递归构建 children
-          if (child.children && Array.isArray(child.children)) {
-            menuItem.children = child.children.map((grandchild: any) => {
-              const grandchildPath = String(grandchild.path || '')
-              // 构建完整路径：/workspace/{moduleCode}/{childPath}/{grandchildPath}
-              // 注意：如果 grandchild.path 已经是完整路径，需要特殊处理
-              const grandchildFullPath = grandchildPath.startsWith('/') 
-                ? grandchildPath 
-                : `/workspace/${moduleCode}/${childPath}/${grandchildPath}`.replace(/\/+/g, '/')
-              const grandchildTitle = resolveMenuTitle((grandchild.meta && grandchild.meta.title) || grandchild.name || grandchildPath)
-              const grandchildIcon = (grandchild.meta && grandchild.meta.icon) || ''
-              const grandchildType = (grandchild.meta && grandchild.meta.type) || 'menu'
-              const grandchildMenuLevel = (grandchild.meta && grandchild.meta.menuLevel) || 2
-              
-              return {
-                key: grandchildFullPath,
-                title: grandchildTitle,
-                icon: grandchildIcon,
-                path: grandchildFullPath,
-                moduleCode,
-                type: grandchildType,
-                menuLevel: grandchildMenuLevel,
-                parentKey: fullPath,
-                children: []
-              }
-            })
-          }
-          
-          result.push(menuItem)
-        }
-      }
-    }
+const activeModuleName = computed(() => {
+  const module = moduleList.value.find(item => item.code === activeModuleCode.value)
+  return module?.name || ''
+})
+
+function normalizeMenuType(rawType: unknown, hasChildren = false): SidebarMenuType {
+  const type = String(rawType || '').toLowerCase()
+  if (type === 'button') {
+    return 'button'
   }
-  
+  if (type === 'catalog' || type === 'dir' || type === 'directory') {
+    return 'catalog'
+  }
+  return hasChildren ? 'catalog' : 'menu'
+}
+
+function buildSidebarMenuNodes(
+  moduleCode: string,
+  nodes: ModuleRouteNode[] = [],
+  parentSegments: string[] = [],
+  parentKey?: string,
+  moduleName = '',
+  level = 1,
+): SidebarMenuItem[] {
+  const result: SidebarMenuItem[] = []
+
+  for (const node of nodes) {
+    if (node?.meta?.hidden === true) {
+      continue
+    }
+
+    const nodePath = String(node?.path || '')
+    const { fullPath, segments } = buildModuleMenuPath(moduleCode, parentSegments, nodePath)
+    const childItems = buildSidebarMenuNodes(
+      moduleCode,
+      Array.isArray(node?.children) ? node.children : [],
+      segments,
+      fullPath || parentKey,
+      moduleName,
+      level + 1,
+    )
+    const title = resolveMenuTitle((node?.meta && node.meta.title) || node.name || nodePath)
+    const type = normalizeMenuType(node?.meta?.type, childItems.length > 0)
+
+    if (!title) {
+      result.push(...childItems)
+      continue
+    }
+
+    result.push({
+      key: fullPath || `${moduleCode}:${segments.join('/') || title}`,
+      title,
+      icon: String(node?.meta?.icon || ''),
+      path: fullPath,
+      moduleCode,
+      moduleName,
+      parentKey,
+      menuLevel: Number(node?.meta?.menuLevel || level),
+      type,
+      children: childItems,
+    })
+  }
+
   return result
+}
+
+function getModuleMenus(moduleCode: string): SidebarMenuItem[] {
+  const moduleRoute = getModuleRouteTree(moduleCode)
+  const moduleName = resolveModuleDisplayName(moduleCode, moduleRoute?.meta?.title || moduleCode)
+  return buildSidebarMenuNodes(
+    moduleCode,
+    Array.isArray(moduleRoute?.children) ? moduleRoute.children : [],
+    [],
+    undefined,
+    moduleName,
+    1,
+  )
+}
+
+function buildModuleRootMenu(module: { code: string; name: string; icon?: string }): SidebarMenuItem {
+  const children = getModuleMenus(module.code)
+  return {
+    key: `module:${module.code}`,
+    title: module.name,
+    icon: module.icon || 'appstore',
+    path: '',
+    moduleCode: module.code,
+    moduleName: module.name,
+    menuLevel: 1,
+    type: 'module',
+    children,
+  }
+}
+
+const sidebarMenus = computed<SidebarMenuItem[]>(() => {
+  const mode = layoutConfig.value.layoutMode
+  if (mode === 'mix' || mode === 'top') {
+    return activeModuleCode.value ? getModuleMenus(activeModuleCode.value) : []
+  }
+
+  return moduleList.value
+    .filter(module => module.code)
+    .map(module => buildModuleRootMenu(module))
 })
 
 // 当前用户信息
+const sidebarDoubleColumn = computed(() => (
+  layoutConfig.value.layoutMode === 'vertical-mix' ||
+  layoutConfig.value.layoutMode === 'mix'
+))
+
+const horizontalModuleMenus = computed(() => (
+  layoutConfig.value.layoutMode === 'top' && activeModuleCode.value
+    ? getModuleMenus(activeModuleCode.value)
+    : []
+))
+
+function flattenNavigableMenus(menus: SidebarMenuItem[] = []): SidebarMenuItem[] {
+  const result: SidebarMenuItem[] = []
+  for (const item of menus) {
+    if (item.type !== 'catalog' && item.type !== 'module' && item.path) {
+      result.push(item)
+    }
+    if (item.children?.length) {
+      result.push(...flattenNavigableMenus(item.children))
+    }
+  }
+  return result
+}
+
+function countNavigableMenus(menus: SidebarMenuItem[] = []) {
+  return flattenNavigableMenus(menus).length
+}
+
+function getHorizontalMenuChildren(item: SidebarMenuItem) {
+  return flattenNavigableMenus(item.children || []).slice(0, HORIZONTAL_MENU_CHILD_LIMIT)
+}
+
+function resolveFirstNavigableMenu(item: SidebarMenuItem): SidebarMenuItem | null {
+  if (item.type !== 'catalog' && item.type !== 'module' && item.path) {
+    return item
+  }
+  const children = item.children || []
+  for (const child of children) {
+    const found = resolveFirstNavigableMenu(child)
+    if (found) {
+      return found
+    }
+  }
+  return null
+}
+
+function onHorizontalMenuClick(item: SidebarMenuItem) {
+  const target = resolveFirstNavigableMenu(item)
+  if (target?.path) {
+    horizontalMenuDrawerOpen.value = false
+    onMenuClick(target.path)
+  }
+}
+
+function isHorizontalMenuActive(item: SidebarMenuItem) {
+  const currentPath = normalizeWorkspacePath(route.fullPath)
+  if (item.path && currentPath === item.path) {
+    return true
+  }
+  return flattenNavigableMenus(item.children || []).some(child => child.path === currentPath)
+}
+
+function resolveMenuIcon(item: SidebarMenuItem) {
+  if (item.icon) {
+    return getIcon(item.icon)
+  }
+  if (item.type === 'module') {
+    return AppstoreOutlined
+  }
+  return item.children?.length ? FolderOutlined : FileOutlined
+}
+
 const currentUser = computed(() => {
   const info = userStore.userInfo || {
     account: currentAccount.value,
@@ -1940,6 +2074,10 @@ function handleMessageReceivedEvent(event: Event) {
 function onModuleClick(moduleCode: string) {
   if (!moduleCode) return
   activeModuleCode.value = moduleCode
+  if (layoutConfig.value.layoutMode === 'top') {
+    horizontalMenuDrawerOpen.value = true
+    return
+  }
   // 切换模块时，跳转到该模块的第一个菜单项
   const targetPath = resolveModuleEntryPath(moduleCode)
   if (targetPath && targetPath !== route.fullPath) {
@@ -2501,6 +2639,132 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+.fx-horizontal-menu-drawer__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fx-horizontal-menu-drawer__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fx-text-primary, #1f2937);
+  line-height: 1.4;
+}
+
+.fx-horizontal-menu-drawer__subtitle {
+  font-size: 12px;
+  color: var(--fx-text-tertiary, #9ca3af);
+}
+
+.fx-horizontal-menu-drawer {
+  :deep(.ant-drawer-body) {
+    padding: 14px 16px 18px;
+    background: var(--fx-bg-container, #ffffff);
+  }
+}
+
+.fx-horizontal-module-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+  gap: 10px;
+}
+
+.fx-horizontal-menu-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 70px;
+  padding: 10px;
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--fx-bg-elevated, #ffffff);
+  color: var(--fx-text-primary, #1f2937);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover,
+  &--active {
+    border-color: var(--fx-primary, #1677ff);
+    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.fx-horizontal-menu-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: var(--fx-primary, #1677ff);
+  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
+  font-size: 17px;
+}
+
+.fx-horizontal-menu-card__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fx-horizontal-menu-card__title {
+  overflow: hidden;
+  color: var(--fx-text-primary, #1f2937);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-horizontal-menu-card__meta {
+  color: var(--fx-text-tertiary, #9ca3af);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.fx-horizontal-menu-card__children {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.fx-horizontal-menu-card__child {
+  max-width: 100%;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--fx-bg-container, #ffffff);
+  color: var(--fx-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 22px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover,
+  &--active {
+    border-color: var(--fx-primary, #1677ff);
+    color: var(--fx-primary, #1677ff);
+    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
+  }
+}
+
+@media (max-width: 768px) {
+  .fx-horizontal-module-panel__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ==================== 卡片选择器样式（Vben5 风格） =================== */
 
 .fx-setting-section {
@@ -2570,7 +2834,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 14px 8px;
   border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--fx-bg-container, #ffffff);
   cursor: pointer;
   transition: all 0.25s ease;
@@ -2584,7 +2848,7 @@ onUnmounted(() => {
 
   &--active {
     border-color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.06));
+    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
 
     .fx-mode-card__icon {
       color: var(--fx-primary, #1677ff);
@@ -2618,7 +2882,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 12px 8px;
   border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--fx-bg-container, #ffffff);
   cursor: pointer;
   transition: all 0.25s ease;
@@ -2630,11 +2894,12 @@ onUnmounted(() => {
   }
 
   &--active {
-    border-color: var(--fx-text-primary, #1f2937);
+    border-color: var(--fx-primary, #1677ff);
+    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
 
     .fx-color-card__label {
       font-weight: 600;
-      color: var(--fx-text-primary, #1f2937);
+      color: var(--fx-primary, #1677ff);
     }
   }
 
@@ -2653,7 +2918,7 @@ onUnmounted(() => {
 
   &--active &__swatch {
     transform: scale(1.05);
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-primary, #1677ff) 20%, transparent), 0 2px 8px rgba(0, 0, 0, 0.18);
   }
 
   &__label {
@@ -2672,7 +2937,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 12px 8px;
   border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--fx-bg-container, #ffffff);
   cursor: pointer;
   transition: all 0.25s ease;
@@ -2686,7 +2951,7 @@ onUnmounted(() => {
 
   &--active {
     border-color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.06));
+    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
 
     .fx-layout-card__label {
       color: var(--fx-primary, #1677ff);

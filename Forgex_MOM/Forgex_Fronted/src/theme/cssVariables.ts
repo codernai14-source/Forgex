@@ -165,7 +165,7 @@ export function generateCSSVariables(
     '--fx-primary': primaryColor,
     '--fx-primary-hover': adjustColor(primaryColor, 0.15),
     '--fx-primary-active': adjustColor(primaryColor, -0.1),
-    '--fx-primary-bg': adjustColor(primaryColor, -0.85),
+    '--fx-primary-bg': themeColorSoft,
     '--fx-primary-soft': themeColorSoft,
     '--fx-primary-soft-strong': themeColorSoftStrong,
 

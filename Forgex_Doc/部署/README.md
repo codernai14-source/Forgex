@@ -1,6 +1,6 @@
 # 部署文档导航
 
-> 版本：**V0.6.1**  
+> 版本：**V0.6.5**
 > 更新时间：**2026-04-22**
 
 本目录用于统一维护 Forgex 的部署、授权、环境配置与交付说明。
@@ -41,6 +41,8 @@ Forgex_Build 是 Forgex 的统一交付工程，负责生成交付物：
 | `dist/` | 最终交付产物目录 |
 
 前端为 Vue/Vite 项目，构建交付包时会自动在 `Forgex_MOM/Forgex_Fronted` 执行 `npm run build`，并将生成的 `dist` 静态文件复制到交付包的 `frontend/` 目录。若未安装 Node.js/npm，或前端构建失败，交付收集会直接失败，避免把旧版 `dist` 打入安装包。
+
+交付包会同时携带 `database-init/` 和 `database-upgrade/` 两类数据库脚本。`database-init/` 用于首次初始化，`database-upgrade/` 由构建工程从 `doc/sql/upgrade` 收集，用于已有环境执行数据库升级 SQL。现场升级前必须先备份数据库，再按升级包内 SQL 文件名顺序执行需要的脚本。
 
 Windows 交付包会把 `Forgex_Build/shared/nginx/windows` 中的 Windows 版 Nginx 运行时复制到安装包的 `nginx/` 目录，并同时带上 `nginx/forgex.conf.template`。安装阶段会基于前端端口、网关端口和安装目录生成 `nginx/forgex.conf`，控制中心启动前端时优先使用安装目录内置的 `nginx/nginx.exe`。
 
