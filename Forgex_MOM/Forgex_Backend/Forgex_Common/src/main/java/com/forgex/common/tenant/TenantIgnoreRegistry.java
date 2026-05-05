@@ -20,6 +20,9 @@ import java.util.Set;
 /**
  * 租户隔离跳过注册表
  * 配置哪些表不参与租户隔离（例如无 tenant_id 的全局表）
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 public final class TenantIgnoreRegistry {
     /** 默认忽略的表（不含租户字段或需要跨租户查询） */
@@ -74,21 +77,43 @@ public final class TenantIgnoreRegistry {
     }
 
     /** 添加忽略的服务实现类 */
+    /**
+     * 处理新增忽略service。
+     *
+     * @param fqcn fqcn
+     */
     public static void addIgnoreService(String fqcn) {
         IGNORE_SERVICES.add(fqcn);
     }
 
     /** 添加忽略的Mapper方法（全限定类名#方法名） */
+    /**
+     * 处理新增忽略Mappermethod。
+     *
+     * @param fqn fqn
+     */
     public static void addIgnoreMapperMethod(String fqn) {
         IGNORE_MAPPER_METHODS.add(fqn);
     }
 
     /** 是否忽略服务实现类 */
+    /**
+     * 处理isserviceignored。
+     *
+     * @param fqcn fqcn
+     * @return 是否处理成功
+     */
     public static boolean isServiceIgnored(String fqcn) {
         return IGNORE_SERVICES.contains(fqcn);
     }
 
     /** 是否忽略Mapper方法 */
+    /**
+     * 处理isMappermethodignored。
+     *
+     * @param fqn fqn
+     * @return 是否处理成功
+     */
     public static boolean isMapperMethodIgnored(String fqn) {
         return IGNORE_MAPPER_METHODS.contains(fqn);
     }
@@ -102,6 +127,9 @@ public final class TenantIgnoreRegistry {
     }
 
     /** 重置所有忽略集合（用于热更新） */
+    /**
+     * 处理重置。
+     */
     public static void reset() {
         IGNORE_TABLES.clear();
         IGNORE_SERVICES.clear();

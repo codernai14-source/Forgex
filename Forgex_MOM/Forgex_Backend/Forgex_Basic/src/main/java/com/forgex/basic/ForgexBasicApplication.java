@@ -45,6 +45,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
         WorkflowExecutionFeignClient.class,
         IntegrationInternalSupplierFeignClient.class
 })
+/**
+ * 基础资料服务启动类。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @EnableAsync
 @Import(DynamicDataSourceAutoConfiguration.class)
 @MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper"})

@@ -145,7 +145,7 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
     }
 
     /**
-     * 批量删除字段映射。
+     * 批量删除数据。
      *
      * @param ids 映射 ID 列表
      */

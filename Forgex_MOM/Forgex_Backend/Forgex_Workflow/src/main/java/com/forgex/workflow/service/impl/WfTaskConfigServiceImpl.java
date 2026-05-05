@@ -386,6 +386,12 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         return buildDraftEditor(draft, findPublishedByTaskCode(draft.getTaskCode(), tenantId));
     }
 
+    /**
+     * 获取草稿graph。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WfTaskGraphDTO getDraftGraph(WfTaskDraftEditorQueryParam param) {
@@ -393,6 +399,12 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         return buildGraph(resolveOrCreateDraft(param, tenantId), tenantId);
     }
 
+    /**
+     * 保存草稿graph。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveDraftGraph(WfTaskGraphSaveParam param) {
@@ -404,6 +416,12 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         return true;
     }
 
+    /**
+     * 发布任务配置草稿。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean publishDraft(WfTaskDraftEditorQueryParam param) {

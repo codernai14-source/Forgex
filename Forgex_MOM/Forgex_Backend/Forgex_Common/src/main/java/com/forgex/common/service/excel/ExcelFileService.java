@@ -37,6 +37,12 @@ public interface ExcelFileService {
      */
     byte[] buildImportTemplateXlsx(FxExcelImportConfigDTO config);
 
+    /**
+     * 构建导入模板xlsxorthrow。
+     *
+     * @param config 配置对象
+     * @return 处理结果
+     */
     byte[] buildImportTemplateXlsxOrThrow(FxExcelImportConfigDTO config);
 
     /**

@@ -1,7 +1,7 @@
 # FxDynamicTable 实现逻辑
 
-> 分类：前端 / 配置驱动页面  
-> 版本：**V0.6.0**  
+> 分类：前端 / 配置驱动页面
+> 版本：**V0.6.5**
 > 更新时间：**2026-04-17**
 
 本文档说明 `FxDynamicTable` 在 Forgex 中的真实实现方式，包括配置来源、前后端调用链路、列设置合并逻辑，以及实际代码所在位置。
@@ -98,7 +98,7 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 4. 初始化分页大小与查询模型
 5. 刷新 `configVersion`，强制依赖配置的计算属性重新渲染
 
-这里有一个很关键的设计：页面传入的 `dynamicTableConfig` 不是替代后端配置，而是补充或覆盖。  
+这里有一个很关键的设计：页面传入的 `dynamicTableConfig` 不是替代后端配置，而是补充或覆盖。
 也就是说，系统允许：
 
 - 后端维护公共默认配置
@@ -136,7 +136,7 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 - `datetime`
 - `time`
 
-对应的字典选项通过 `dictOptions` 注入。  
+对应的字典选项通过 `dictOptions` 注入。
 例如某个查询字段配置了 `dictCode: 'status'`，则组件会读取：
 
 ```ts
@@ -171,6 +171,8 @@ dictOptions.status
 ```
 
 只要插槽名和列字段 `field` 一致，`FxDynamicTable` 就会优先使用页面插槽渲染该列。
+
+如果某列已经配置了 `dictCode` 或 `dictField`，默认会由 `FxDynamicTable` 解析 `xxxText` 字段中的字典文本或 `@DictI18n` 返回的 `{"label":"...","color":"..."}` JSON，并渲染为 `a-tag`。业务页面只有在确实需要特殊展示时才应该声明同名插槽；一旦声明同名插槽，就会覆盖内置字典 Tag 渲染，插槽内部需要自行解析字典 JSON，否则会把整段 JSON 当普通文本显示。
 
 这条规则很重要，因为很多“列不显示自定义内容”的问题，最终都出在这里：
 
@@ -238,6 +240,7 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 后端在 `FxUserTableConfigServiceImpl.java` 中负责：
 
 - 保存用户的列显隐和顺序
+- 保存用户配置的列宽
 - 与租户级 / 公共级基础配置合并
 - 过滤掉 `visible=false` 的列
 
@@ -248,6 +251,10 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 ```
 
 这也是为什么同一个 `tableCode` 在不同用户界面上，列显示可能不完全一样。
+
+列设置面板现在支持通过拖拽手柄直接拖拽排序。每列可以配置 `width`，保存时进入 `fx_user_table_config.column_config` JSON，字段结构为 `{ field, visible, order, width }`。列设置弹层始终使用完整列集合渲染，避免隐藏列被过滤后无法重新勾选。`action` 操作列固定在最右侧，不参与表头拖拽改宽或换位。
+
+表头列宽调整由 `FxDynamicTable.vue` 在表头标题区域渲染拖拽手柄完成。拖动时仅更新当前表格列宽，不弹出遮罩层；鼠标释放后防抖调用 `/sys/common/table/config/user/columns/save` 持久化。列头标题本身支持横向拖拽换列顺序，释放到目标列后同样保存用户列配置。列宽统一约束为最小 `60px`、最大 `800px`，后端合并用户配置时也会做同样的边界裁剪。
 
 ## 页面引导锚点
 

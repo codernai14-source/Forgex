@@ -5,6 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Integration 模块参数配置
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 @ConfigurationProperties(prefix = "forgex.integration")

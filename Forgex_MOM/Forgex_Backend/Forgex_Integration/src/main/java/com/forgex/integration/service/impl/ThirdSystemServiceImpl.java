@@ -42,6 +42,12 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
 
     private final ThirdSystemMapper thirdSystemMapper;
 
+    /**
+     * 分页查询thirdsystems。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<ThirdSystemDTO> pageThirdSystems(ThirdSystemParam param) {
         Page<ThirdSystem> page = new Page<>(param.getPageNum(), param.getPageSize());
@@ -66,6 +72,12 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         return dtoPage;
     }
 
+    /**
+     * 查询thirdsystems列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<ThirdSystemDTO> listThirdSystems(ThirdSystemParam param) {
         LambdaQueryWrapper<ThirdSystem> wrapper = new LambdaQueryWrapper<>();
@@ -83,6 +95,12 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
             .collect(Collectors.toList());
     }
 
+    /**
+     * 获取third系统byID。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public ThirdSystemDTO getThirdSystemById(Long id) {
         ThirdSystem system = this.getById(id);
@@ -92,6 +110,12 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         return convertToDTO(system);
     }
 
+    /**
+     * 获取by系统编码。
+     *
+     * @param systemCode 系统编码
+     * @return 处理结果
+     */
     @Override
     public ThirdSystemDTO getBySystemCode(String systemCode) {
         Long tenantId = getCurrentTenantId();
@@ -106,6 +130,11 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         return system != null ? convertToDTO(system) : null;
     }
 
+    /**
+     * 处理createthirdsystem。
+     *
+     * @param dto 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createThirdSystem(ThirdSystemDTO dto) {
@@ -135,6 +164,11 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         log.info("创建第三方系统成功：{}", dto.getSystemCode());
     }
 
+    /**
+     * 更新third系统。
+     *
+     * @param dto 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateThirdSystem(ThirdSystemDTO dto) {
@@ -168,6 +202,11 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         log.info("更新第三方系统成功：{}", dto.getSystemCode());
     }
 
+    /**
+     * 删除third系统。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteThirdSystem(Long id) {
@@ -188,6 +227,11 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         log.info("删除第三方系统成功：ID={}", id);
     }
 
+    /**
+     * 批量删除第三方系统。
+     *
+     * @param ids 主键 ID 集合
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteThirdSystems(List<Long> ids) {

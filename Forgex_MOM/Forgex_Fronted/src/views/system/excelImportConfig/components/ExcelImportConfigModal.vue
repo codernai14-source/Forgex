@@ -4,6 +4,7 @@
     :title="isEdit ? t('system.excel.editImportConfig') : t('system.excel.addImportConfig')"
     :width="1200"
     :loading="loading"
+    :mask-closable="true"
     @submit="handleSubmit"
   >
     <a-tabs v-model:activeKey="activeTab" type="card">
@@ -36,6 +37,33 @@
                 <a-input
                   v-model:value="formData.tableCode"
                   :placeholder="t('system.excel.pleaseInputTableCode')"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item
+                :label="t('system.excel.handlerBeanName')"
+                name="handlerBeanName"
+                :rules="{ required: true, message: t('system.excel.pleaseInputHandlerBeanName') }"
+              >
+                <a-input
+                  v-model:value="formData.handlerBeanName"
+                  :placeholder="t('system.excel.pleaseInputHandlerBeanName')"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item
+                :label="t('system.excel.importPermission')"
+                name="importPermission"
+                :rules="{ required: true, message: t('system.excel.pleaseInputImportPermission') }"
+              >
+                <a-input
+                  v-model:value="formData.importPermission"
+                  :placeholder="t('system.excel.pleaseInputImportPermission')"
                 />
               </a-form-item>
             </a-col>
@@ -124,6 +152,8 @@ const formData = reactive({
   id: undefined,
   tableName: '',
   tableCode: '',
+  handlerBeanName: '',
+  importPermission: '',
   title: '',
   subtitle: '',
   version: 1,
@@ -134,6 +164,8 @@ function initFormData() {
   formData.id = undefined
   formData.tableName = ''
   formData.tableCode = ''
+  formData.handlerBeanName = ''
+  formData.importPermission = ''
   formData.title = ''
   formData.subtitle = ''
   formData.version = 1
@@ -147,12 +179,29 @@ function loadEditData(data: any) {
   formData.id = data.id
   formData.tableName = data.tableName || ''
   formData.tableCode = data.tableCode || ''
+  formData.handlerBeanName = data.handlerBeanName || ''
+  formData.importPermission = data.importPermission || ''
   formData.title = data.title || ''
   formData.subtitle = data.subtitle || ''
   formData.version = data.version || 1
-  formData.fields = (data.fields || []).map((field: any) => ({
+  formData.fields = (data.items || data.fields || []).map((field: any) => normalizeField(field))
+}
+
+function normalizeField(field: any) {
+  return {
     ...field,
-  }))
+    fieldName: field.importField || field.fieldName || '',
+    importField: field.importField || field.fieldName || '',
+    sheetCode: field.sheetCode || 'main',
+    sheetName: field.sheetName || '',
+    dataSourceConfig: field.dataSourceConfig || {
+      dataSourceType: field.dataSourceType && field.dataSourceType !== 'NONE' ? field.dataSourceType : '',
+      dictCode: field.dictCode || (field.dataSourceType === 'DICT' ? field.dataSourceValue : ''),
+      dataSourceJson: field.dataSourceType === 'JSON' ? field.dataSourceValue : '',
+      providerCode: field.dataSourceType === 'PROVIDER' ? String(field.dataSourceValue || '').split(':')[0] : '',
+      providerField: field.dataSourceType === 'PROVIDER' ? String(field.dataSourceValue || '').split(':')[1] : '',
+    },
+  }
 }
 
 defineExpose({

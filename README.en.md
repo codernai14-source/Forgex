@@ -1,282 +1,98 @@
 # Forgex
 
-> Enterprise application scaffold and business platform preview edition  
-> Current version: **Preview V0.5.0**
+<div align="center" style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3rem;margin:10px auto 14px;width:100%;box-sizing:border-box;">
+  <a href="https://gitee.com/coder_nai/forgex/stargazers" title="Gitee Stars" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark" alt="Gitee Stars"/></a>
+  <a href="https://gitee.com/coder_nai/forgex/members" title="Gitee Forks" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/fork.svg?theme=dark" alt="Gitee Forks"/></a>
+</div>
 
-## Overview
+> Full-stack enterprise scaffold and business platform foundation for production manufacturing
+> Documentation version: **V0.6.5**
 
-Forgex is a full-stack enterprise scaffold for business systems. It combines a Vue-based admin console, Spring Cloud microservices, and an Android client skeleton so teams can build on top of a reusable platform instead of recreating common infrastructure from scratch.
+Forgex is an enterprise-grade scaffold for manufacturing digitalization projects such as MES, WMS, QMS, equipment integration, workflow collaboration, reporting, and private deployment. It is not just a generic admin template for login, menus, and CRUD pages. Forgex packages the repetitive production concerns of enterprise systems into a reusable platform foundation: identity, tenants, permissions, dynamic tables, dictionaries, workflow, messaging, reports, import/export, file storage, integration, packaging, deployment, and upgrade support.
 
-The repository currently includes:
+## Demo
 
-- **Web admin console**: Vue 3 + TypeScript + Vite
-- **Backend microservice suite**: Spring Boot 3 + Spring Cloud + Spring Cloud Alibaba
-- **Android mobile project skeleton**: Kotlin + Compose + Hilt + Retrofit + DataStore
+- Online demo: <http://175.27.135.204:18080/login>
 
-## What changed in Preview V0.5.0
+To try Forgex, register with one of the role-based invitation codes below and experience the system as a normal user, department manager, or system auditor.
 
-V0.5.0 is a major preview milestone focused on **documentation completeness and capability clarity**.
+- Normal user invitation code: `D83F9B1E`
+- Department manager invitation code: `C40EDD46`
+- System auditor invitation code: `948F2D80`
 
-This version introduces:
+Forgex includes an external-facing user registration capability for enterprise use. Companies can issue invitation codes by role, position, or business scenario, allowing new employees, project members, or trial users to create accounts by themselves. The invitation code completes account creation, role binding, and basic permission activation, so administrators do not need to manually create every user one by one.
 
-1. A new unified documentation hub under `Forgex_Doc`
-2. Clear support matrices for backend, frontend, database, Android, and deployment topics
-3. Structured navigation from the root README into detailed developer-facing docs
+## What Makes It Different
 
-## Documentation Navigation
+Many teams need more than faster CRUD screens. After go-live, enterprise programs keep evolving: org/permission changes, exploding table/dictionary metadata, **consistent multi-language UI + server messages**, **tenant isolation**, **approvals and reporting**, **native mobile access**, **external integrations**, and repeatable **Windows / Linux private deployment** with upgrades. Forgex targets manufacturing-style MOM delivery and keeps these concerns inside one **microservices + web admin + Android skeleton + build/delivery engineering** story, reducing bespoke glue and repetitive platform work.
 
-### Main documentation hub
+### Richer platform capabilities (i18n, multi-tenant, workflow, reports, Android, integration)
 
-- [Documentation Home](./Forgex_Doc/README.md)
-- [Development Standards](./Forgex_Doc/开发规范/README.md)
-- [Backend Docs](./Forgex_Doc/后端/README.md)
-- [Frontend Docs](./Forgex_Doc/前端/README.md)
-- [Database Docs](./Forgex_Doc/数据库/README.md)
-- [Android Docs](./Forgex_Doc/安卓端/README.md)
-- [Deployment Docs](./Forgex_Doc/部署/README.md)
+- **Deep internationalization**: web defaults for **Simplified & Traditional Chinese, English, Japanese, Korean**; aligns with backend `LangContext`, modular prompts (e.g. `fx_i18n_message`), and **multi-locale JSON + fallback chains** for dictionaries and dynamic table metadata—reducing “English UI, Chinese errors”; includes productized multi-language input patterns for maintainers.
+- **Multi-tenant & multi-org**: tenant context propagation, row isolation, ignore rules, public configuration fallback and tenant-facing basics—fits groups, outsourced delivery or domain-separated SaaS.
+- **Approval & workflow**: model, start, approve, todo/done queues, business callbacks—extends to QA, exceptions, labor reporting, purchasing-style sign-off paths common on the shop floor.
+- **Reporting center**: categories, datasources, template management plus **UReport2 / JimuReport** hooks so analytics lives in the platform instead of scattered one-off scripts.
+- **Native Android**: `Forgex_Mobile_Android` (Kotlin, Jetpack Compose, Hilt, Retrofit, DataStore) with dev/test/prod flavors and starter modules aligned to the **same gateway / auth semantics** for roaming tasks and approvals.
+- **Integration hub**: third-party systems, authorization, API definitions, parameter mapping, synchronous/asynchronous outbound calls and call logs—less point-to-point glue to ERP/OA/etc.
+- **Data-heavy UX engineering**: `FxDynamicTable`, per-user column preferences, dictionary rendering, Excel import/export with templates/providers, avatar/logo/attachment strategies across storage backends.
+- **Messaging, jobs & auditing**: templated notices, inbox, SSE push; distributed job scheduling; login/operation trails and auditing field conventions.
 
-### Key direct-entry documents
+This section summarizes *why Forgex* at capability level—see documentation links below for endpoints and operational detail.
 
-- [Project Architecture Design](./Forgex_Doc/开发规范/架构设计/项目架构设计文档.md)
-- [Backend Common Capabilities Handbook](./Forgex_Doc/后端/后端公共能力与核心功能手册.md)
-- [Frontend Common Capabilities Handbook](./Forgex_Doc/前端/前端公共能力与核心功能手册.md)
-- [Module document mapping](./Forgex_Doc/开发规范/模块文档映射/README.md)
+### Private deployment paths (Windows / Linux)
 
-## Page Preview
+Forgex ships **artifacts and scripts**, not “clone and figure out production yourself”:
 
-### System Homepage
+- **Windows bundles**: `Forgex_Build` produces ZIP packages with web static assets, service JARs, **bundled Nginx**, **Windows JRE**, **control center**, **license request client**, Nacos config snapshots, database **init** and **upgrade** SQL—suited to intranet appliances or desktop servers.
+- **Linux bundles**: tarball delivery, `install.sh`, Nginx templates and the same upgrade/database story—works with Docker Compose, systemd, or customer ops standards.
 
-![System Homepage](./Forgex_Doc/img/sysshouye.png)
+Follow the “Deployment” section in this README and [deployment docs](./Forgex_Doc/部署/README.md) for exact commands and paths.
 
-### Login Page
+### Documentation system (how it works × how to use)
 
-![Login Page](./Forgex_Doc/img/login.png)
+`Forgex_Doc` is the official documentation hub, split by **frontend, backend, Android, database, deployment, and engineering standards**. Important frontend topics are often documented as paired **implementation + usage** guides so onboarding, QA, and ops share one source of truth. Start here: [documentation home](./Forgex_Doc/README.md).
 
-### Personal Homepage (Draggable Layout)
+### Deep internationalization (more than two locale files)
 
-![Personal Homepage](./Forgex_Doc/img/shouye.png)
+Forgex aims for a consistent language experience end-to-end—**after a user switches language, dictionary tags, table headers, and server-side prompts should follow the same language story** instead of showing English UI with Chinese error messages.
 
-### Personal Homepage Drag Configuration
+- **Web**: Vue I18n with multiple first-class locales, integrated with Ant Design Vue locale packs.
+- **Backend context**: language is propagated through the request path; `fx_i18n_message` supports **module + prompt code + multi-locale JSON** with ordered fallbacks (current locale → primary language tag → Chinese, etc.).
+- **Data & metadata**: dictionary values and platform configuration can carry **JSON i18n text**, which matters when the same master data must read well in five languages.
+- **Authoring UX**: the console includes multi-language input patterns for business maintainers (see [i18n & layout docs](./Forgex_Doc/前端/国际化与布局/README.md)).
+- **Legacy pages**: compatibility paths exist for historical hard-coded strings; new work should prefer standard `t(...)` and server prompt resolution.
 
-![Drag Configuration](./Forgex_Doc/img/shouyetuozhuai.png)
+Forgex designs **UI language, dictionary/platform copy, and server prompts** as one coherent story—suited to multinational operations and multilingual maintenance teams.
 
-### System Configuration
+### Three ends: Web × microservices × Android
 
-![System Configuration 1](./Forgex_Doc/img/xtpz1.png)
+Forgex “three ends” means: **web admin**, **Java microservice cluster**, and **native Android client skeleton**, sharing auth/gateway semantics.
 
-![System Configuration 2](./Forgex_Doc/img/xtpz2.png)
+- **Web**: `Forgex_Fronted` (Vue 3 + TypeScript + Vite).
+- **Backend**: `Forgex_Gateway` as the entry; services such as `Forgex_Auth`, `Forgex_Sys`, `Forgex_Workflow`, `Forgex_Integration`, `Forgex_Report`, etc. (see repository layout below).
+- **Android**: `Forgex_Mobile_Android` with dev/test/prod flavors; starter modules for login, home, workflow, messaging, and profile.
 
-### Multi-language User Interface
+Aligning the three ends makes **session/permission semantics, release boundaries, and on-site security policies** easier to govern, while keeping a clear surface for **native capabilities** such as push, offline behavior, and device integration.
 
-![Chinese User](./Forgex_Doc/img/hanyuuser.png)
+### UI quality: a refined enterprise console
 
-![English User](./Forgex_Doc/img/yingwenuser.png)
+On top of Ant Design Vue, Forgex standardizes the “first impression” layer:
 
-### Message Center
+- **Theme system**: token-driven light/dark themes and semantic color ramps; brand theming is systematic (see `Forgex_Fronted/src/theme/README.md`).
+- **Layouts**: multiple navigation modes for different information architectures.
+- **Personal workspace**: draggable home widgets with sizing and per-user visibility—more like a real operator cockpit than a fixed demo dashboard.
+- **Data-heavy screens**: `FxDynamicTable`, shared dialogs, dictionary rendering, imports/exports—optimized for throughput **and** visual consistency.
 
-![Message Center](./Forgex_Doc/img/message.png)
+More detail: [frontend docs](./Forgex_Doc/前端/README.md) and [theme README](./Forgex_MOM/Forgex_Fronted/src/theme/README.md).
 
-### Dynamic Layout
+## Capabilities
 
-![Dynamic Layout](./Forgex_Doc/img/dongtaibuju.png)
-
-### Approval Homepage
-
-![Approval Homepage](./Forgex_Doc/img/spshouye.png)
-
-## Supported Features
-
-### Backend Features
-
-| Module | Feature | Status | Documentation |
-|---|---|---|---|
-| **Authentication & Authorization** | Account login, registration, logout | ✅ | [Auth & Authorization](./Forgex_Doc/后端/身份与权限/认证授权.md) |
-| | Image captcha, slider captcha | ✅ | [Auth & Authorization](./Forgex_Doc/后端/身份与权限/认证授权.md) |
-| | Password policy (bcrypt/SM2/SM4) | ✅ | [Encryption](./Forgex_Doc/后端/模块专题/加密功能.md) |
-| | Permission check (@RequirePerm) | ✅ | [Auth & Authorization](./Forgex_Doc/后端/身份与权限/认证授权.md) |
-| | Dynamic route generation | ✅ | [Auth & Authorization](./Forgex_Doc/后端/身份与权限/认证授权.md) |
-| | Social login (WeChat, DingTalk) | ✅ | [Auth & Authorization](./Forgex_Doc/后端/身份与权限/认证授权.md) |
-| **Multi-tenancy** | Row-level tenant isolation | ✅ | [Multi-tenancy](./Forgex_Doc/后端/租户与上下文/多租户.md) |
-| | Tenant context propagation | ✅ | [Multi-tenancy](./Forgex_Doc/后端/租户与上下文/多租户.md) |
-| | Tenant ignore configuration | ✅ | [Multi-tenancy](./Forgex_Doc/后端/租户与上下文/多租户.md) |
-| | Public config fallback mechanism | ✅ | [Multi-tenancy](./Forgex_Doc/后端/租户与上下文/多租户.md) |
-| **User & Role** | User management (CRUD) | ✅ | [User & Role](./Forgex_Doc/后端/身份与权限/用户与角色.md) |
-| | Role management, authorization | ✅ | [User & Role](./Forgex_Doc/后端/身份与权限/用户与角色.md) |
-| | Department, position management | ✅ | System module |
-| **Unified Response** | Unified response R<T> | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| | Status code management | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| | Business exception handling | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| **Internationalization** | Request-level multi-language | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| | Exception message translation | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| | 5 languages support | ✅ | [Response & i18n](./Forgex_Doc/后端/配置与审计/统一返回与国际化.md) |
-| **Messaging** | Internal messages | ✅ | [Common Messages & Prompts](./Forgex_Doc/后端/配置与审计/通用消息与提示.md) |
-| | Template messages | ✅ | [Message Template & SSE](./Forgex_Doc/后端/配置与审计/消息模板与 SSE.md) |
-| | SSE push notifications | ✅ | [Message Template & SSE](./Forgex_Doc/后端/配置与审计/消息模板与 SSE.md) |
-| **Redis Tools** | RedisHelper utility class | ✅ | [Redis Tools](./Forgex_Doc/后端/公共能力/Redis 工具.md) |
-| | Distributed lock | ✅ | [Redis Tools](./Forgex_Doc/后端/公共能力/Redis 工具.md) |
-| | Cache annotations | ✅ | [Redis Tools](./Forgex_Doc/后端/公共能力/Redis 工具.md) |
-| **Data Dictionary** | Dictionary management (tree) | ✅ | [Dict & Log](./Forgex_Doc/后端/配置与审计/数据字典与日志.md) |
-| | Dictionary tag rendering | ✅ | [Dict & Log](./Forgex_Doc/后端/配置与审计/数据字典与日志.md) |
-| | Two-level cache architecture | ✅ | [Dict & Log](./Forgex_Doc/后端/配置与审计/数据字典与日志.md) |
-| **Encryption** | Password storage encryption | ✅ | [Encryption](./Forgex_Doc/后端/模块专题/加密功能.md) |
-| | Transport encryption (SM2) | ✅ | [Encryption](./Forgex_Doc/后端/模块专题/加密功能.md) |
-| | Field transparent encryption | ✅ | [Encryption](./Forgex_Doc/后端/模块专题/加密功能.md) |
-| | KMS key management | ✅ | [Encryption](./Forgex_Doc/后端/模块专题/加密功能.md) |
-| **Import/Export** | Excel export configuration | ✅ | [Import/Export](./Forgex_Doc/后端/模块专题/导入导出.md) |
-| | Excel import configuration | ✅ | [Import/Export](./Forgex_Doc/后端/模块专题/导入导出.md) |
-| | Template download | ✅ | [Import/Export](./Forgex_Doc/后端/模块专题/导入导出.md) |
-| | Dropdown option provider | ✅ | [Import/Export](./Forgex_Doc/后端/模块专题/导入导出.md) |
-| **File Upload** | Local storage | ✅ | [File Upload](./Forgex_Doc/后端/模块专题/文件上传.md) |
-| | OSS object storage | ✅ | [File Upload](./Forgex_Doc/后端/模块专题/文件上传.md) |
-| | Factory pattern selection | ✅ | [File Upload](./Forgex_Doc/后端/模块专题/文件上传.md) |
-| **Workflow** | Process configuration | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| | Start approval, process approval | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| | Pending/processed task management | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| | Callback registration mechanism | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| **Reporting** | Report category management | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| | Report datasource management | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| | Report template management | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| | UReport2, JimuReport integration | ✅ | [Workflow & Report](./Forgex_Doc/后端/模块专题/工作流与报表.md) |
-| **Log Audit** | Login logs | ✅ | [Dict & Log](./Forgex_Doc/后端/配置与审计/数据字典与日志.md) |
-| | Operation logs | ✅ | [Dict & Log](./Forgex_Doc/后端/配置与审计/数据字典与日志.md) |
-| | Audit field auto-filling | ✅ | [Multi-tenancy](./Forgex_Doc/后端/租户与上下文/多租户.md) |
-
-### Frontend Features
-
-| Module | Feature | Status | Documentation |
-|---|---|---|---|
-| **HTTP Request** | Unified HTTP client | ✅ | [HTTP & Messages](./Forgex_Doc/前端/请求与反馈/HTTP 请求与消息提示.md) |
-| | Automatic success/error messages | ✅ | [HTTP & Messages](./Forgex_Doc/前端/请求与反馈/HTTP 请求与消息提示.md) |
-| | Silent request mode | ✅ | [HTTP & Messages](./Forgex_Doc/前端/请求与反馈/HTTP 请求与消息提示.md) |
-| **Dynamic Table** | FxDynamicTable component | ✅ | [FxDynamicTable](./Forgex_Doc/前端/配置驱动页面/FxDynamicTable 与列设置.md) |
-| | User column settings | ✅ | [FxDynamicTable](./Forgex_Doc/前端/配置驱动页面/FxDynamicTable 与列设置.md) |
-| | Dictionary translation | ✅ | [FxDynamicTable](./Forgex_Doc/前端/配置驱动页面/FxDynamicTable 与列设置.md) |
-| | Pagination & sorting | ✅ | [FxDynamicTable](./Forgex_Doc/前端/配置驱动页面/FxDynamicTable 与列设置.md) |
-| **Common Components** | BaseFormDialog | ✅ | [Dialog](./Forgex_Doc/前端/请求与反馈/公共弹窗.md) |
-| | DictTag | ✅ | [Dict Docs](./Forgex_Doc/后端/配置与审计/数据字典与日志.md) |
-| | IconPicker | ✅ | Component directory |
-| | DeptTree | ✅ | [Dept Tree](./Forgex_Doc/前端/组件与页面/部门树与组织选择.md) |
-| **Multi-language Input** | I18nInput | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/多语言输入与动态布局.md) |
-| | I18nJsonEditor | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/多语言输入与动态布局.md) |
-| | 5 languages support | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/多语言输入与动态布局.md) |
-| **Draggable Layout** | Personal homepage designer | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/个人首页与可拖拽布局.md) |
-| | Component drag & drop sorting | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/个人首页与可拖拽布局.md) |
-| | Size adjustment | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/个人首页与可拖拽布局.md) |
-| | Visibility control | ✅ | [i18n & Layout](./Forgex_Doc/前端/国际化与布局/个人首页与可拖拽布局.md) |
-| **Message Template** | TemplatePreview | ✅ | Message template topic |
-| | ReceiverSelector | ✅ | Message template topic |
-| **Workflow Pages** | Start approval page | ✅ | Workflow guide |
-| | Pending task page | ✅ | Workflow guide |
-| | Processed/initiated page | ✅ | Workflow guide |
-| **Report Pages** | Report view page | ✅ | Report guide |
-| | Report designer integration | ✅ | Report guide |
-
-### Android Features
-
-| Module | Feature | Status | Description |
-|---|---|---|---|
-| **Architecture** | Multi-module structure | ✅ | app, core/*, feature/* |
-| | Dependency injection (Hilt) | ✅ | Unified dependency management |
-| | Network request (Retrofit) | ✅ | HTTP client wrapper |
-| | Local storage (DataStore) | ✅ | Data persistence |
-| **Basic Features** | Login module | ✅ | auth module |
-| | Homepage framework | ✅ | home module |
-| | Workflow module | ✅ | workflow module |
-| | Message module | ✅ | message module |
-| | Profile center | ✅ | profile module |
-| **Environment** | Multi-environment config | ✅ | dev / test / prod |
-| | Device recognition | ✅ | MOBILE / TABLET |
-
-## Repository Structure
-
-```text
-forgex
-├─ Forgex_Doc                    # Documentation center
-├─ doc                           # Old docs (retained)
-├─ Forgex_MOM                    # Main project
-│  ├─ Forgex_Backend             # Backend
-│  │  ├─ Forgex_Auth             # Auth service (8081)
-│  │  ├─ Forgex_Sys              # System service (8082)
-│  │  ├─ Forgex_Basic            # Basic service
-│  │  ├─ Forgex_Common           # Common module
-│  │  ├─ Forgex_Gateway          # Gateway (8080)
-│  │  ├─ Forgex_Job              # Job service (8083)
-│  │  ├─ Forgex_Workflow         # Workflow service (8084)
-│  │  └─ Forgex_Report           # Report service (8085)
-│  ├─ Forgex_Fronted             # Frontend
-│  └─ Forgex_Mobile_Android      # Android mobile
-└─ logs                          # Logs
-```
-
-## Tech Stack
-
-### Backend
-
-| Technology | Version | Purpose |
-|---|---|---|
-| Java | 17 | Programming language |
-| Spring Boot | 3.5.6 | Application framework |
-| Spring Cloud | 2025.0.0 | Microservice framework |
-| Spring Cloud Alibaba | 2025.0.0.0-preview | Alibaba microservice suite |
-| Sa-Token | 1.44.0 | Authentication framework |
-| MyBatis-Plus | 3.5.14 | ORM framework |
-| MyBatis-Plus-Join | 1.5.4 | MP join query extension |
-| Dynamic Datasource | 4.3.1 | Dynamic datasource |
-| Snail-Job | 1.8.1 | Distributed job scheduler |
-| FastExcel | 1.3.0 | Excel processing |
-| Hutool | 5.8.23 | Java utility library |
-| MapStruct | 1.5.5.Final | Object mapping |
-| springdoc-openapi | 2.6.0 | API documentation |
-| UReport2 | 2.2.10 | Report engine |
-| JimuReport | 1.9.0 | Jimu report engine |
-
-### Frontend
-
-| Technology | Version | Purpose |
-|---|---|---|
-| Vue | 3.5.26 | Frontend framework |
-| TypeScript | 5.6.3 | Type system |
-| Vite | 5.4.3 | Build tool |
-| Ant Design Vue | 4.2.6 | UI component library |
-| Pinia | 3.0.4 | State management |
-| Vue Router | 4.3.0 | Route management |
-| Vue I18n | 9.14.0 | Internationalization |
-| Formily | 2.3.7 | Form solution |
-| Vue Flow | 1.48.x | Flowchart component |
-| ECharts | 6.0.0 | Chart library |
-| ApexCharts | 5.3.6 | Chart library |
-| Three.js | 0.182.0 | 3D rendering engine |
-
-### Mobile
-
-| Technology | Purpose |
+| Area | Capabilities |
 |---|---|
-| Kotlin | Programming language |
-| Jetpack Compose | UI framework |
-| Hilt | Dependency injection |
-| Retrofit | Network request |
-| DataStore | Data persistence |
-
-## Recommended Reading Paths
-
-### Backend development
-
-1. [Backend Docs](./Forgex_Doc/后端/README.md)
-2. [Backend Common Capabilities Handbook](./Forgex_Doc/后端/后端公共能力与核心功能手册.md)
-3. [Authentication and Authorization](./Forgex_Doc/后端/身份与权限/认证授权.md)
-4. [Multi-tenancy](./Forgex_Doc/后端/租户与上下文/多租户.md)
-
-### Frontend development
-
-1. [Frontend Docs](./Forgex_Doc/前端/README.md)
-2. [Frontend Common Capabilities Handbook](./Forgex_Doc/前端/前端公共能力与核心功能手册.md)
-3. [FxDynamicTable and Column Settings](./Forgex_Doc/前端/配置驱动页面/FxDynamicTable 与列设置.md)
-4. [Frontend HTTP and message guide](./Forgex_Doc/前端/请求与反馈/HTTP 请求与消息提示.md)
-
-### Database and standards
-
-1. [Database Docs](./Forgex_Doc/数据库/README.md)
-2. [Development Standards](./Forgex_Doc/开发规范/README.md)
+| Backend | Spring Cloud microservices, authentication, tenant isolation, dictionaries, workflow, reports, integration, messaging, audit logs |
+| Frontend | Vue 3 admin console, dynamic tables, reusable dialogs, dictionary tags, department tree, import component, i18n, draggable homepage |
+| Mobile | Android skeleton with Kotlin, Jetpack Compose, Hilt, Retrofit, DataStore |
+| Delivery | Windows/Linux bundles, startup scripts, upgrade scripts, Nacos files, database scripts, license request client |
 
 ## Quick Start
 
@@ -288,19 +104,7 @@ forgex
 - MySQL 8.0+
 - Redis 6.0+
 - Nacos 2.x
-
-### Clone
-
-```bash
-git clone <your-repository-url>
-cd forgex
-```
-
-### Database setup
-
-- Follow the initialization / diagnose / repair script guidance under `Forgex_Doc/数据库/脚本与修复`
-- Prepare MySQL, Redis, and Nacos
-- See [Database Docs](./Forgex_Doc/数据库/README.md)
+- RocketMQ 5.x
 
 ### Backend
 
@@ -309,12 +113,15 @@ cd Forgex_MOM/Forgex_Backend
 mvn clean install
 ```
 
-Start the required services such as:
+Start the required services:
 
 - `Forgex_Gateway`
 - `Forgex_Auth`
 - `Forgex_Sys`
+- `Forgex_Basic`
+- `Forgex_Job`
 - `Forgex_Workflow`
+- `Forgex_Integration`
 - `Forgex_Report`
 
 ### Frontend
@@ -337,23 +144,37 @@ cd Forgex_MOM/Forgex_Mobile_Android
 gradlew.bat :app:assembleDevDebug
 ```
 
-## Release Notes
+## Deployment
 
-### Preview V0.5.0 · 2026-04
+Use `Forgex_Build` to create delivery packages:
 
-- Introduced `Forgex_Doc` as the unified documentation hub
-- Added structured navigation for standards, backend, frontend, database, Android, and deployment
-- Clarified supported features with cleaner capability lists
-- Consolidated documentation for shared backend/frontend capabilities and important implementation flows
-- Linked the root README directly to detailed developer-facing documents
-- Improved backend documentation for multi-tenancy, authentication, encryption, import/export, Redis tools
-- Improved frontend documentation for HTTP tools, multi-language input, dialogs, dynamic tables, department tree
+```powershell
+cd Forgex_Build
+powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 0.6.5 -AllowDistFallback
+```
 
-## License
+Main outputs:
 
-[Apache 2.0](./LICENSE)
+- `Forgex_Build/dist/windows/Forgex-Windows-Package-0.6.5.zip`
+- `Forgex_Build/dist/linux/forgex-linux-bundle-0.6.5.tar.gz`
+
+Database initialization scripts are under `Forgex_Doc/部署/数据库初始化脚本`. Upgrade SQL is packaged under `database-upgrade/`. Back up the database before running upgrade SQL.
+
+## Documentation
+
+- [Documentation home](./Forgex_Doc/README.md)
+- [Development standards](./Forgex_Doc/开发规范/README.md)
+- [Backend docs](./Forgex_Doc/后端/README.md)
+- [Frontend docs](./Forgex_Doc/前端/README.md)
+- [Android docs](./Forgex_Doc/安卓端/README.md)
+- [Database docs](./Forgex_Doc/数据库/README.md)
+- [Deployment docs](./Forgex_Doc/部署/README.md)
 
 ## Contact
 
 - QQ: 3096821283
 - Email: coder_nai@163.com
+
+## License
+
+[Apache 2.0](./LICENSE)

@@ -1,6 +1,6 @@
 # 部署文档导航
 
-> 版本：**V0.6.1**  
+> 版本：**V0.6.5**
 > 更新时间：**2026-04-22**
 
 本目录用于统一维护 Forgex 的部署、授权、环境配置与交付说明。
@@ -10,6 +10,7 @@
 | 主题 | 实现逻辑 | 使用方式 |
 |---|---|---|
 | 授权说明 | [进入](./授权说明实现逻辑.md) | [进入](./授权说明使用方式.md) |
+| 部署软件 | [进入](./部署软件实现逻辑与二开说明.md) | [进入](#三构建与交付工程) |
 
 ## 二、目录内容
 
@@ -19,7 +20,9 @@
 | `授权说明.md` | 兼容索引页 |
 | `授权说明实现逻辑.md` | 授权文件生成、校验、密钥管理等技术实现 |
 | `授权说明使用方式.md` | 开发、测试、演示、生产环境授权申请与导入流程 |
+| `部署软件实现逻辑与二开说明.md` | Windows 安装器、控制中心、授权工具、构建脚本的编译工具、技术栈、实现链路和二开入口 |
 | `nacos配置/` | Nacos 配置中心示例配置文件 |
+| `数据库初始化脚本/` | Windows 交付包一键初始化 MySQL 使用的建表与基础数据脚本 |
 
 ## 三、构建与交付工程
 
@@ -38,6 +41,8 @@ Forgex_Build 是 Forgex 的统一交付工程，负责生成交付物：
 | `dist/` | 最终交付产物目录 |
 
 前端为 Vue/Vite 项目，构建交付包时会自动在 `Forgex_MOM/Forgex_Fronted` 执行 `npm run build`，并将生成的 `dist` 静态文件复制到交付包的 `frontend/` 目录。若未安装 Node.js/npm，或前端构建失败，交付收集会直接失败，避免把旧版 `dist` 打入安装包。
+
+交付包会同时携带 `database-init/` 和 `database-upgrade/` 两类数据库脚本。`database-init/` 用于首次初始化，`database-upgrade/` 由构建工程从 `doc/sql/upgrade` 收集，用于已有环境执行数据库升级 SQL。现场升级前必须先备份数据库，再按升级包内 SQL 文件名顺序执行需要的脚本。
 
 Windows 交付包会把 `Forgex_Build/shared/nginx/windows` 中的 Windows 版 Nginx 运行时复制到安装包的 `nginx/` 目录，并同时带上 `nginx/forgex.conf.template`。安装阶段会基于前端端口、网关端口和安装目录生成 `nginx/forgex.conf`，控制中心启动前端时优先使用安装目录内置的 `nginx/nginx.exe`。
 
@@ -88,17 +93,27 @@ powershell -ExecutionPolicy Bypass -File build-linux.ps1 -Version 1.0.0
 - 安装器语言选择（中文 / English），内置按钮、退出确认、安装完成页跟随所选语言显示
 - 实例编码输入页面（默认 `ACME_PROD`）
 - 部署环境选择页面仅开放 `prod`（生产环境）和 `yanshi`（演示环境）；`dev`、`test` 为公司内部环境，不在客户安装器中提供
+- Nacos 命名空间默认跟随部署环境：选择 `prod` 时默认为 `prod`，选择 `yanshi` 时默认为 `yanshi`；用户也可以在中间件页面手工覆盖
 - 中间件地址输入页面（Nacos、Redis、RocketMQ、MySQL、前端端口）
+- 运行目录输入页面，日志目录默认跟随安装目录的 `logs` 子目录，也可指定到服务器已有且可写的其他磁盘
 - 安装完成后可打开 Forgex 控制中心，控制中心支持中文 / English 运行时切换
+- 控制中心启动服务时会逐个记录启动结果；单个后端服务启动失败不会导致控制中心退出，控制中心自身异常会写入 `logs/control-center/control-center-error.log`
 - 自动创建目录结构
 - 自动生成 `config/install-config.yml`
 - 自动生成 `nginx/forgex.conf`，前端根目录指向安装后的 `frontend/`，`/api/` 反向代理到网关服务端口
+- 自动创建日志根目录及 `auth`、`sys`、`basic`、`job`、`workflow`、`integration`、`report`、`gateway`、`nginx` 子目录，服务启动时也会再次兜底创建
 - 自动携带 Windows JRE 到 `app/jre/`，客户机器无需再单独安装 Java
-- 创建开始菜单快捷方式（控制中心、启停服务、打开前端）
+- 安装前会先尝试停止当前安装目录关联的 Forgex 服务与进程，并清理旧的 `app/jre/`；卸载时也会执行 `scripts/uninstall-cleanup.ps1`，尽量避免 Java 文件占用导致 JRE 目录残留
+- 创建开始菜单快捷方式（控制中心、启停服务、打开前端、导入数据库、导入 Nacos 配置、修复运行配置）
+- 交付包携带 `database-init/` 与 `nacos/DEFAULT_GROUP/`，可在服务器上直接一键导入 MySQL 数据库、Nacos 命名空间和配置
 
 控制中心启动前端时优先使用安装目录中的 `nginx.exe` 或系统 PATH 中的 Nginx，并加载 `nginx/forgex.conf`；如果客户机器没有 Nginx，则自动回退到控制中心内置静态 Web 服务，保证安装包仍可一键预览和调试。
 
+前端对外访问端口默认是 `18080`，网关服务端口默认是 `9000`。浏览器访问 `http://服务器IP:18080/api/...` 时会先进入 Nginx，再由 Nginx 转发到网关。`nginx/forgex.conf` 中 `/api/` 的 `proxy_pass` 必须配置为 `http://127.0.0.1:9000`，不能写成带尾部斜杠的 `http://127.0.0.1:9000/`，否则 Nginx 会提前剥掉 `/api` 前缀，导致网关无法匹配 `/api/sys/**` 等路由，表现为 HTTP 状态 200 但业务响应 `code=404`、提示“接口不存在”。旧安装目录可先停止服务，运行 `scripts/repair-runtime-config.bat` 重新生成 Nginx 配置，再重新启动服务。
+
 Windows 默认安装根目录已调整为 `C:\Forgex_{INSTANCE_CODE}`，便于只有 `C` 盘的服务器直接部署。
+
+卸载后如果只残留 `app/jre/`，通常是 `java.exe` 或已注册的 Windows 服务仍占用 JRE 文件。此残留不会改变业务数据和授权文件，但同目录再次安装时可能导致覆盖失败。可先重启服务器后删除残留目录，或直接运行新版安装器；新版安装器会在安装开始前自动执行清理。
 
 ### 4.3 目录结构
 
@@ -120,17 +135,42 @@ C:\Forgex_{INSTANCE_CODE}\
 ├── scripts\                # 脚本目录
 │   ├── install.ps1         # 安装脚本
 │   ├── start-all.ps1       # 启动脚本
-│   └── stop-all.ps1        # 停止脚本
+│   ├── stop-all.ps1        # 停止脚本
+│   ├── import-database.bat # 一键导入 MySQL 数据库
+│   ├── import-nacos-config.bat # 一键导入 Nacos 命名空间与配置
+│   └── repair-runtime-config.bat # 修复已安装环境的 profile、namespace 和服务 XML
 ├── backup\                 # 备份目录
+├── database-init\          # MySQL 初始化脚本，按 forgex_*.sql 文件名建库并导入
 ├── tools\                  # 工具目录
 ├── winsw\                  # Windows 服务包装
 ├── frontend\               # 前端静态文件
 ├── services\               # 后端服务 JAR
 ├── nginx\                  # Windows Nginx 运行时、配置模板、生成后的 forgex.conf
-├── nacos\                  # Nacos 环境变量
+├── nacos\                  # Nacos 环境变量与配置导入文件
+│   └── DEFAULT_GROUP\      # Nacos 配置中心 dataId 文件
 └── license-tools\          # 授权客户端
     └── request-client\     # 请求授权客户端发布产物（Windows: FxLicenseRequest.exe，Linux: FxLicenseRequest）
 ```
+
+### 4.4 首次初始化顺序
+
+Windows 服务器首次部署时，中间件和业务服务按以下顺序处理：
+
+1. 安装并启动 MySQL、Redis、RocketMQ、Nacos。
+2. 运行 Forgex 安装程序，部署环境默认选择 `yanshi`；Nacos 命名空间默认跟随部署环境，默认也是 `yanshi`；日志目录默认是安装目录下的 `logs`，服务器没有 D 盘时不要指定到 `D:\forgex\log`。
+3. 在开始菜单 `Forgex` 目录运行 `导入数据库`，脚本会读取安装目录 `database-init/*.sql`，按文件名创建 `forgex_admin`、`forgex_common`、`forgex_history`、`forgex_job`、`forgex_workflow`、`forgex_scada`、`forgex_integration` 并导入数据。
+4. 在开始菜单 `Forgex` 目录运行 `导入 Nacos 配置`，脚本会创建/复用 `yanshi` 命名空间，并导入 `nacos/DEFAULT_GROUP` 下的配置文件。
+5. 打开 Forgex 控制中心，点击启动全部服务。
+
+`import-database.bat` 默认使用 Nacos 数据源配置中的 MySQL 账号密码；当前交付配置默认是 `root / 123456`。如服务器密码不同，可运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Forgex_ACME_PROD\scripts\import-database.ps1 -InstallRoot C:\Forgex_ACME_PROD -User root -PromptPassword
+```
+
+数据库脚本默认只在目标库为空时导入，避免误覆盖已有数据。干净重装需要重建库时，可显式追加 `-ResetDatabase`。
+
+如果服务器已经按旧安装器生成了 `prod` 或错误日志目录配置，先停止服务，再运行开始菜单中的 `修复运行配置`；它会把 `config/forgex-control.json`、`config/install-config.yml` 和 `services/wrappers/*.xml` 统一修正为 `yanshi`，并把日志目录修正为安装目录下的 `logs` 后再重新启动服务。从新交付包的 `scripts/repair-runtime-config.bat` 临时运行时，脚本也会自动识别服务器上唯一的 `C:\Forgex_*` / `D:\Forgex_*` 安装目录。
 
 ## 五、Linux 部署
 
@@ -274,6 +314,20 @@ Nacos 配置示例存放在 `nacos配置/DEFAULT_GROUP/` 目录：
 | `sa-token.yml` | Sa-Token 认证配置 |
 | `captcha.yaml` | 验证码配置 |
 | `rocketmq.yml` | RocketMQ 配置 |
+
+Windows 安装包会把上述配置复制到安装目录 `nacos/DEFAULT_GROUP/`。如果 Nacos 控制台命名空间和配置列表为空，在安装目录执行：
+
+```bat
+scripts\import-nacos-config.bat
+```
+
+脚本会读取 `config/forgex-control.json` 中的 `nacosAddr`、`nacosNamespace`、`nacosGroup`，自动创建缺失命名空间并发布 `nacos/DEFAULT_GROUP/` 下的配置文件。重复执行会覆盖同名 `dataId`，适合初始化和配置修复。
+
+如果需要手工指定命名空间或 Nacos 地址：
+
+```bat
+scripts\import-nacos-config.bat -NacosAddr 127.0.0.1:8848 -Namespace yanshi -Group DEFAULT_GROUP
+```
 
 ## 八、配套资料
 

@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper, ReportTemplate> 
+public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper, ReportTemplate>
         implements IReportTemplateService {
 
     private final IReportCategoryService categoryService;
@@ -70,7 +70,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
         }
 
         Page<ReportTemplate> page = new Page<>(param.getPageNum(), param.getPageSize());
-        
+
         // 构建动态查询条件
         LambdaQueryWrapper<ReportTemplate> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StrUtil.isNotBlank(param.getName()), ReportTemplate::getName, param.getName())
@@ -81,15 +81,15 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
                .orderByDesc(ReportTemplate::getCreateTime);
 
         Page<ReportTemplate> resultPage = this.page(page, wrapper);
-        
+
         // 转换为 DTO 并填充关联信息
         List<ReportTemplateDTO> dtoList = resultPage.getRecords().stream()
                 .map(this::convertToDTOWithRelations)
                 .collect(Collectors.toList());
-        
+
         Page<ReportTemplateDTO> dtoPage = new Page<>(param.getPageNum(), param.getPageSize(), resultPage.getTotal());
         dtoPage.setRecords(dtoList);
-        
+
         return dtoPage;
     }
 
@@ -143,7 +143,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
     }
 
     /**
-     * 保存模板
+     * 保存数据。
      * <p>
      * 支持新增和更新，根据 ID 判断
      * 编码唯一性校验
@@ -206,7 +206,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
 
         template.setContent(content);
         this.updateById(template);
-        
+
         log.info("更新报表模板内容成功，ID: {}", id);
     }
 
@@ -251,10 +251,10 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             // 生成文件路径
             String fileName = template.getCode() + (template.getEngineType().equals("UREPORT") ? ".ureport.xml" : ".json");
             String filePath = "temp/templates/" + fileName;
-            
+
             // 写入文件
             FileUtil.writeUtf8String(template.getContent(), filePath);
-            
+
             log.info("导出报表模板成功：{}", filePath);
             return filePath;
         } catch (Exception e) {
@@ -289,11 +289,11 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
         try {
             // 读取文件内容
             String content = FileUtil.readUtf8String(filePath);
-            
+
             // 从文件名提取编码
             String fileName = file.getName();
             String code = fileName.substring(0, fileName.lastIndexOf("."));
-            
+
             // 创建模板
             ReportTemplateDTO dto = new ReportTemplateDTO();
             dto.setCode(code);
@@ -301,7 +301,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
             dto.setEngineType(engineType);
             dto.setContent(content);
             dto.setStatus(1);
-            
+
             return this.save(dto);
         } catch (Exception e) {
             log.error("导入报表模板失败", e);
@@ -337,7 +337,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
         }
 
         ReportTemplateDTO dto = convertToDTO(entity);
-        
+
         // 填充分类名称
         if (entity.getCategoryId() != null) {
             try {
@@ -349,7 +349,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
                 log.warn("获取分类信息失败", e);
             }
         }
-        
+
         // 填充数据源名称
         if (entity.getDatasourceId() != null) {
             try {
@@ -361,7 +361,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
                 log.warn("获取数据源信息失败", e);
             }
         }
-        
+
         return dto;
     }
 }

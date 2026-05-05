@@ -2,6 +2,9 @@ package com.forgex.common.security;
 
 /**
  * 登录会话字段常量。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 public final class LoginSessionKeys {
 

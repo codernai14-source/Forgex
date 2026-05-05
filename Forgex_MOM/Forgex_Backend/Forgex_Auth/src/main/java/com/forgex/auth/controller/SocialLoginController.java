@@ -61,7 +61,7 @@ public class SocialLoginController {
      *   <li>构建失败时返回操作失败</li>
      *   <li>成功时返回授权 URL</li>
      * </ol>
-     * 
+     *
      * @param platform 第三方平台类型，如"wechat"、"dingtalk"
      * @return 包含授权 URL 的统一返回结构
      * @throws com.forgex.common.exception.I18nBusinessException 平台类型不支持时抛出
@@ -73,15 +73,15 @@ public class SocialLoginController {
         if (!StringUtils.hasText(platform)) {
             return R.fail(CommonPrompt.PARAM_EMPTY);
         }
-        
+
         // 调用服务构建授权 URL
         String url = socialLoginService.buildAuthorizeUrl(platform);
-        
+
         // 构建失败时返回操作失败
         if (!StringUtils.hasText(url)) {
             return R.fail(CommonPrompt.OPERATION_FAILED);
         }
-        
+
         // 成功时返回授权 URL
         return R.ok(url);
     }
@@ -92,7 +92,7 @@ public class SocialLoginController {
      * 处理微信授权后的回调请求。
      * 当前版本暂未实现，直接返回操作失败。
      * </p>
-     * 
+     *
      * @param code 授权码，第三方平台返回
      * @param state 状态参数，用于防止 CSRF 攻击
      * @return 包含登录结果的统一返回结构，当前版本返回操作失败
@@ -110,7 +110,7 @@ public class SocialLoginController {
      * 处理钉钉授权后的回调请求。
      * 当前版本暂未实现，直接返回操作失败。
      * </p>
-     * 
+     *
      * @param code 授权码，第三方平台返回
      * @param state 状态参数，用于防止 CSRF 攻击
      * @return 包含登录结果的统一返回结构，当前版本返回操作失败

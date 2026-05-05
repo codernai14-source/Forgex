@@ -57,7 +57,7 @@ import java.util.Map;
  *   <li>需要登录认证（@PreAuthorize）</li>
  *   <li>返回格式统一为 {@link R} 类型</li>
  * </ul>
- * 
+ *
  * @author coder_nai
  * @version 1.0
  * @see com.forgex.sys.service.SysTenantService
@@ -68,9 +68,9 @@ import java.util.Map;
 @RequestMapping("/sys/tenant")
 @RequiredArgsConstructor
 public class SysTenantController {
-    
+
     private final SysTenantService tenantService;
-    
+
     /**
      * 查询租户列表
      * <p>
@@ -84,7 +84,7 @@ public class SysTenantController {
      *   <li>调用 Service 的 list 方法查询租户列表</li>
      *   <li>返回租户 DTO 列表</li>
      * </ol>
-     * 
+     *
      * @param queryDTO 查询参数，包含租户名称、租户编码等过滤条件
      * @return {@link R} 包含租户 DTO 列表的统一返回结构
      * @see SysTenantQueryDTO
@@ -96,7 +96,7 @@ public class SysTenantController {
         List<SysTenantDTO> list = tenantService.list(queryDTO);
         return R.ok(list);
     }
-    
+
     /**
      * 分页查询租户列表
      * <p>
@@ -110,7 +110,7 @@ public class SysTenantController {
      *   <li>调用 Service 的 page 方法分页查询租户</li>
      *   <li>返回分页结果（包含租户列表和总数）</li>
      * </ol>
-     * 
+     *
      * @param queryDTO 查询参数，包含租户名称、租户编码等过滤条件和分页参数
      * @return {@link R} 包含租户分页数据的统一返回结构
      * @see SysTenantQueryDTO
@@ -122,9 +122,9 @@ public class SysTenantController {
         Page<SysTenantDTO> page = tenantService.page(queryDTO);
         return R.ok(page);
     }
-    
+
     /**
-     * 获取租户详情
+     * 查询数据详情。
      * <p>
      * 根据租户 ID 查询租户详细信息。
      * </p>
@@ -205,7 +205,7 @@ public class SysTenantController {
         dto.setUpdateTime(tenant.getUpdateTime());
         return R.ok(dto);
     }
-    
+
     /**
      * 获取主租户
      * <p>
@@ -236,7 +236,7 @@ public class SysTenantController {
 
         return R.ok(tenant);
     }
-    
+
     /**
      * 获取租户层级关系
      * <p>
@@ -259,15 +259,15 @@ public class SysTenantController {
     @PostMapping("/hierarchy")
     public R<TenantHierarchyDTO> getHierarchy(@RequestBody Map<String, Object> param) {
         Long tenantId = param == null ? null : (Long) param.get("tenantId");
-        
+
         if (tenantId == null) {
             return R.fail(CommonPrompt.BAD_REQUEST, "租户 ID 不能为空");
         }
-        
+
         TenantHierarchyDTO dto = tenantService.getTenantHierarchy(tenantId);
         return R.ok(dto);
     }
-    
+
     /**
      * 获取子租户列表
      * <p>
@@ -290,15 +290,15 @@ public class SysTenantController {
     @PostMapping("/children")
     public R<List<SysTenantDTO>> getChildren(@RequestBody Map<String, Object> param) {
         Long parentTenantId = param == null ? null : (Long) param.get("parentTenantId");
-        
+
         if (parentTenantId == null) {
             return R.fail(CommonPrompt.BAD_REQUEST, "父租户 ID 不能为空");
         }
-        
+
         List<SysTenantDTO> children = tenantService.getChildTenants(parentTenantId);
         return R.ok(children);
     }
-    
+
     /**
      * 新增租户
      * <p>

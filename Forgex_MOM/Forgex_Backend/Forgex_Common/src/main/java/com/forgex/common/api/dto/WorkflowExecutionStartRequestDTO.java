@@ -36,7 +36,7 @@ public class WorkflowExecutionStartRequestDTO implements Serializable {
     private String formContent;
 
     /**
-     * 发起人自选审批人
+     * 发起人选择的审批人列表。
      */
     private List<Long> selectedApprovers = new ArrayList<>();
 }

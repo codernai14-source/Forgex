@@ -1,27 +1,26 @@
 /**
  * 权限指令
- * 
- * 鐢ㄤ簬鎺у埗鎸夐挳绾у埆鐨勬潈闄愭樉绀?
- * 
+ *
+ * 用于根据按钮权限控制元素显示。
+ *
  * @example
  * ```vue
- * <a-button v-permission="'sys:user:add'">鏂板</a-button>
- * <a-button v-permission="'sys:user:edit'">缂栬緫</a-button>
+ * <a-button v-permission="'sys:user:add'">新增</a-button>
+ * <a-button v-permission="'sys:user:edit'">编辑</a-button>
  * ```
  */
 import { Directive, DirectiveBinding } from 'vue'
 import { use权限Store } from '@/stores/permission'
 
 /**
- * 妫€鏌ユ槸鍚︽湁鏉冮檺
+ * 判断是否拥有指定权限。
  * @param permKey 权限标识
- * @returns 鏄惁鏈夋潈闄?
+ * @returns 是否拥有指定权限。
  */
 function has权限(permKey: string): boolean {
   const permissionStore = use权限Store()
-  
-  // 鐢变簬 store 涓?has权限 鏄?computed锛?
-  // 杩欓噷缁熶竴閫氳繃 .value 璋冪敤
+
+  // Pinia setup store 中的 computed 在实例上会自动解包，这里兼容未解包的情况。
   const checker = permissionStore.has权限
   if (typeof checker === 'function') {
     return checker(permKey)
@@ -33,11 +32,11 @@ function has权限(permKey: string): boolean {
 }
 
 /**
- * 权限指令
+ * 权限指令。
  */
 export const permission: Directive = {
   /**
-   * 鍏冪礌鎸傝浇鏃舵鏌ユ潈闄?
+   * 元素挂载时检查权限。
    */
   mounted(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
@@ -52,9 +51,9 @@ export const permission: Directive = {
 
     el.style.display = originalDisplay
   },
-  
+
   /**
-   * 鍏冪礌鏇存柊鏃舵鏌ユ潈闄?
+   * 绑定值更新时重新检查权限。
    */
   updated(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
@@ -70,13 +69,13 @@ export const permission: Directive = {
 }
 
 /**
- * 鍦?Vue 搴旂敤涓敞鍐屾潈闄愭寚浠?
- * 
+ * Vue 权限指令。
+ *
  * @example
  * ```typescript
  * import { createApp } from 'vue'
  * import { permission } from './directives/permission'
- * 
+ *
  * const app = createApp(App)
  * app.directive('permission', permission)
  * ```

@@ -43,56 +43,107 @@ import java.time.LocalDateTime;
  *   <li>{@code lastLoginRegion} 最后登录地区</li>
  *   <li>{@code lastLoginTime} 最后登录时间</li>
  * </ul>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 @TableName("sys_user")
 public class SysUser extends BaseEntity {
 
     /** 账号 */
+    /**
+     * 账号。
+     */
     private String account;
 
     /** 显示名 */
+    /**
+     * username。
+     */
     private String username;
 
     /** 密码（哈希或密文） */
+    /**
+     * password。
+     */
     private String password;
 
     /** 邮箱 */
+    /**
+     * 邮箱。
+     */
     private String email;
 
     /** 手机号 */
+    /**
+     * 手机号。
+     */
     private String phone;
 
     /** 性别（0=未知，1=男，2=女） */
+    /**
+     * 性别。
+     */
     private Integer gender;
 
     /** 头像URL */
+    /**
+     * 头像。
+     */
     private String avatar;
 
     /** 入职时间 */
+    /**
+     * entry日期。
+     */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDate entryDate;
 
     /** 所属部门ID */
+    /**
+     * 部门 ID。
+     */
     private Long departmentId;
 
     /** 职位ID */
+    /**
+     * position ID。
+     */
     private Long positionId;
 
+    /**
+     * 员工 ID。
+     */
     private Long employeeId;
 
+    /**
+     * 用户来源。
+     */
     private Integer userSource;
 
     /** 状态：false=禁用，true=启用 */
+    /**
+     * 状态。
+     */
     private Boolean status;
-    
+
     /** 最后登录IP */
+    /**
+     * lastloginIP。
+     */
     private String lastLoginIp;
-    
+
     /** 最后登录地区 */
+    /**
+     * lastlogin地区。
+     */
     private String lastLoginRegion;
-    
+
     /** 最后登录时间 */
+    /**
+     * lastlogin时间。
+     */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime lastLoginTime;
 }

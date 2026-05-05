@@ -35,7 +35,9 @@ export default {
     title: '列設置',
     reset: '重置',
     resetSuccess: '已重置為默認配置',
-    hint: '勾選顯示列，上下拖動調整順序'
+    hint: '勾選顯示列，上下拖動調整順序',
+    dragSort: '拖曳排序',
+    dragResize: '拖曳調整列寬'
   },
   
   form: {

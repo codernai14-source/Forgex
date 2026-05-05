@@ -7,13 +7,10 @@
         <p>统一维护供应商共享主数据，并为租户创建、接口同步和资质审查提供数据来源。</p>
       </div>
       <a-space wrap>
-        <a-upload :show-upload-list="false" :before-upload="handleImport">
-          <a-button v-permission="'basic:supplier:import'">
-            <UploadOutlined />
-            导入
-          </a-button>
-        </a-upload>
-        <a-button v-permission="'basic:supplier:import'" @click="downloadTemplate">下载模板</a-button>
+        <a-button v-permission="'basic:supplier:import'" @click="importDialogVisible = true">
+          <UploadOutlined />
+          {{ t('system.excel.commonImport.title') }}
+        </a-button>
         <a-button v-permission="'basic:supplier:export'" @click="handleExport">导出</a-button>
         <a-button v-permission="'basic:supplier:sync'" @click="handleSync">同步第三方</a-button>
         <a-button v-permission="'basic:supplier:add'" type="primary" @click="openCreate">新增供应商</a-button>
@@ -395,15 +392,23 @@
         </a-tab-pane>
       </a-tabs>
     </BaseFormDialog>
+
+    <CommonImportDialog
+      v-model:open="importDialogVisible"
+      table-code="basic_supplier"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import { uploadFile } from '@/api/system/file'
 import { supplierApi, type Supplier, type SupplierContact, type SupplierPageParam, type SupplierQualification } from '@/api/basic/supplier'
 import { useDict, type DictItemOption } from '@/hooks/useDict'
@@ -417,12 +422,14 @@ interface OptionItem {
 }
 
 const appStore = useAppStore()
+const { t } = useI18n()
 const tableRef = ref()
 const saving = ref(false)
 const editorVisible = ref(false)
 const activeTab = ref('main')
 const readonly = ref(false)
 const form = ref<Supplier>(createEmptySupplier())
+const importDialogVisible = ref(false)
 
 const fallbackCooperationOptions: OptionItem[] = [
   { label: '潜在', value: '1' },
@@ -700,16 +707,8 @@ async function handleSync() {
   message.success(`同步完成：总数 ${result.totalCount || 0}，失败 ${result.failedCount || 0}`)
 }
 
-async function handleImport(file: File) {
-  const result = await supplierApi.import(file)
-  message.success(`导入完成：新增 ${result.createdCount || 0}，更新 ${result.updatedCount || 0}`)
+async function handleImportSuccess() {
   await tableRef.value?.refresh?.()
-  return false
-}
-
-async function downloadTemplate() {
-  const response: any = await supplierApi.importTemplate()
-  downloadBlob(response?.data || response, '供应商主数据导入模板.xlsx')
 }
 
 async function handleExport() {

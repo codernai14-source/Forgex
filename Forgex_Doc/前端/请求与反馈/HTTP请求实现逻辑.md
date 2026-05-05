@@ -1,7 +1,7 @@
 # HTTP 请求实现逻辑
 
-> 分类：前端 / 请求与反馈  
-> 版本：**V0.6.0**  
+> 分类：前端 / 请求与反馈
+> 版本：**V0.6.5**
 > 更新时间：**2026-04-17**
 
 本文档说明 Forgex 前端统一 HTTP 能力的实现链路、关键代码位置、客户端分层设计和消息提示机制。
@@ -196,6 +196,7 @@ const reloadCodes = [602]
 
 - 缓存最近一次后端提示
 - 在短时间窗口内抑制前端重复调用 `message.success` / `message.error`
+- 对存量硬编码提示先走 `legacyI18n` 翻译兜底，再交给 Ant Design Vue 的消息组件显示
 
 相关变量包括：
 
@@ -204,6 +205,15 @@ recentBackendToast
 backendToastDepth
 backendToastSuppressWindow
 ```
+
+存量硬编码提示的兼容入口：
+
+```text
+Forgex_MOM/Forgex_Fronted/src/utils/legacyI18n.ts
+Forgex_MOM/Forgex_Fronted/src/locales/legacyText.ts
+```
+
+这层只用于历史页面过渡。新增页面仍应优先使用 `useI18n().t(...)` 或后端统一返回消息，避免继续新增散落的中文提示。
 
 ## 6. 成功消息判定
 

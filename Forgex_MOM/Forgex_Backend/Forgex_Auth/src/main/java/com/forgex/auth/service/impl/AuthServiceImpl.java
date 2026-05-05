@@ -19,13 +19,17 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.auth.domain.entity.SysTenant;
 import com.forgex.auth.domain.entity.SysUser;
+import com.forgex.auth.domain.entity.SysRolePerm;
+import com.forgex.auth.domain.entity.SysUserRolePerm;
 import com.forgex.auth.domain.entity.SysUserTenant;
 import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.dto.SysUserDTO;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.vo.TenantVO;
+import com.forgex.auth.mapper.SysRolePermMapper;
 import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
+import com.forgex.auth.mapper.SysUserRolePermMapper;
 import com.forgex.auth.mapper.SysUserTenantMapper;
 import com.forgex.auth.mapper.SysInviteCodeMapper;
 import com.forgex.auth.mapper.SysInviteRegisterRecordMapper;
@@ -43,6 +47,7 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.LoginSessionKeys;
 import com.forgex.common.security.LoginSessionSupport;
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +56,7 @@ import org.springframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.baomidou.dynamic.datasource.annotation.DS;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 
 import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.crypto.asymmetric.KeyType;
@@ -196,19 +202,25 @@ public class AuthServiceImpl implements AuthService {
         return loginStrategyFactory.getStrategy(loginTerminal, loginType).login(param);
     }
 
+    /**
+     * 执行账号密码登录。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     public R<List<TenantVO>> doAccountPasswordLogin(LoginParam param) {
         // 获取账号信息
         String account = param == null ? null : param.getAccount();
         // 获取密码信息
         String password = param == null ? null : param.getPassword();
-        
+
         // 获取客户端 IP 地址
         String clientIp = getClientIp();
         // 获取 User-Agent 信息
         String userAgent = getUserAgent();
         // 根据 IP 地址获取登录地区信息
         String region = ipLocationService.getLocationByIp(clientIp);
-        
+
         // 校验账号和密码不能为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
             log.warn("Login failed: account or password is empty");
@@ -223,7 +235,7 @@ public class AuthServiceImpl implements AuthService {
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account is locked");
             return lockResult;
         }
-        
+
         // 如果配置了 SM2 加密传输，则解密密码
         CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
         if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
@@ -245,7 +257,7 @@ public class AuthServiceImpl implements AuthService {
                 // 解密失败时忽略异常
             }
         }
-        
+
         // 根据账号查询用户信息
         String idKey = account;
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
@@ -259,7 +271,7 @@ public class AuthServiceImpl implements AuthService {
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(CommonPrompt.USER_NOT_FOUND);
         }
-        
+
         // 获取密码策略配置
         PasswordPolicyConfig policy = getPasswordPolicyConfig();
         // 解析密码存储方式
@@ -275,7 +287,7 @@ public class AuthServiceImpl implements AuthService {
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
-        
+
         // 验证码校验
         CaptchaConfig cfg = configService.getJson("login.captcha", CaptchaConfig.class, CaptchaConfig.defaults());
         String mode = cfg == null ? null : cfg.getMode();
@@ -287,7 +299,7 @@ public class AuthServiceImpl implements AuthService {
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(captchaValidationResult.getPrompt());
         }
-        
+
         // 清除登录失败状态
         clearLoginFailureState(account);
 
@@ -348,6 +360,12 @@ public class AuthServiceImpl implements AuthService {
         return chooseTenantStrategyFactory.getStrategy(loginTerminal).chooseTenant(param);
     }
 
+    /**
+     * 选择登录租户。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     public R<SysUserDTO> doChooseTenant(TenantChoiceParam param) {
         // 获取租户 ID
         Long tenantId = param == null ? null : param.getTenantId();
@@ -381,21 +399,21 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .set(SysUserTenant::getLastUsed, LocalDateTime.now())
                 .setSql("pref_order = pref_order + 1"));
-        
+
         // 获取客户端信息
         String clientIp = getClientIp();
         String userAgent = getUserAgent();
         String region = ipLocationService.getLocationByIp(clientIp);
         // 记录登录成功日志
         loginLogService.recordLoginSuccess(user.getId(), account, tenantId, clientIp, region, userAgent, token);
-        
+
         // 更新用户最后登录信息
         userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
                 .eq(SysUser::getId, user.getId())
                 .set(SysUser::getLastLoginIp, clientIp)
                 .set(SysUser::getLastLoginRegion, region)
                 .set(SysUser::getLastLoginTime, LocalDateTime.now()));
-        
+
         // 缓存在线用户信息到 Redis
         cacheOnlineUserSession(
                 user.getId(),
@@ -406,7 +424,7 @@ public class AuthServiceImpl implements AuthService {
                 clientIp,
                 userAgent
         );
-        
+
         log.info("用户选择租户成功：account={}, tenantId={}", account, tenantId);
         // 构建返回结果
         SysUserDTO result = new SysUserDTO();
@@ -453,6 +471,12 @@ public class AuthServiceImpl implements AuthService {
         return R.ok(true);
     }
 
+    /**
+     * 切换登录语言。
+     *
+     * @param lang 语言
+     * @return 统一响应结果
+     */
     @Override
     public R<Boolean> changeLanguage(String lang) {
         // 校验语言参数不能为空
@@ -1045,20 +1069,20 @@ public class AuthServiceImpl implements AuthService {
         try {
             // 获取当前登录用户 ID
             Object uid = StpUtil.getLoginIdDefaultNull();
-            
+
             // 初始化用户信息变量
             Long userId = null;
             Long tenantId = null;
             String account = null;
             String tokenValue = null;
-            
+
             // 获取 Token 值
             try {
                 tokenValue = StpUtil.getTokenValue();
             } catch (Exception e) {
                 log.debug("获取 Token 失败：{}", e.getMessage());
             }
-            
+
             // 从 Session 中获取用户信息
             try {
                 SaSession session = LoginSessionSupport.getCurrentSession();
@@ -1086,7 +1110,7 @@ public class AuthServiceImpl implements AuthService {
             } catch (Exception e) {
                 log.debug("获取 Session 失败：{}", e.getMessage());
             }
-            
+
             // 获取账号
             account = uid == null ? null : String.valueOf(uid);
 
@@ -1101,14 +1125,14 @@ public class AuthServiceImpl implements AuthService {
 
             // 清除在线用户缓存
             clearOnlineUserCache(tokenValue, tenantId, userId);
-            
+
             // 执行登出
             try {
                 StpUtil.logout();
             } catch (Exception e) {
                 log.debug("Sa-Token 登出失败：{}", e.getMessage());
             }
-            
+
             log.info("用户登出成功：account={}", account);
             return R.ok(true);
         } catch (Exception e) {
@@ -1117,21 +1141,21 @@ public class AuthServiceImpl implements AuthService {
             return R.fail(CommonPrompt.LOGOUT_FAILED);
         }
     }
-    
+
     /**
      * 获取客户端 IP 地址
      * <p>
      * 从 HTTP 请求头中获取客户端 IP 地址，优先使用 X-Client-IP 头
      * </p>
-     * 
+     *
      * @return 客户端 IP 地址，如果获取失败返回"unknown"
      */
     private String getClientIp() {
         try {
-            org.springframework.web.context.request.RequestAttributes attrs = 
+            org.springframework.web.context.request.RequestAttributes attrs =
                 org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
-                jakarta.servlet.http.HttpServletRequest request = 
+                jakarta.servlet.http.HttpServletRequest request =
                     ((org.springframework.web.context.request.ServletRequestAttributes) attrs).getRequest();
                 String ip = request.getHeader("X-Client-IP");
                 if (StringUtils.hasText(ip)) {
@@ -1144,21 +1168,21 @@ public class AuthServiceImpl implements AuthService {
         }
         return "unknown";
     }
-    
+
     /**
      * 获取 User-Agent
      * <p>
      * 从 HTTP 请求头中获取 User-Agent 信息
      * </p>
-     * 
+     *
      * @return User-Agent 字符串，如果获取失败返回"unknown"
      */
     private String getUserAgent() {
         try {
-            org.springframework.web.context.request.RequestAttributes attrs = 
+            org.springframework.web.context.request.RequestAttributes attrs =
                 org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
-                jakarta.servlet.http.HttpServletRequest request = 
+                jakarta.servlet.http.HttpServletRequest request =
                     ((org.springframework.web.context.request.ServletRequestAttributes) attrs).getRequest();
                 String ua = request.getHeader("User-Agent");
                 if (StringUtils.hasText(ua)) {
@@ -1179,6 +1203,12 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private SysInviteRegisterRecordMapper inviteRegisterRecordMapper;
 
+    @Autowired
+    private SysUserRolePermMapper userRolePermMapper;
+
+    @Autowired
+    private SysRolePermMapper rolePermMapper;
+
     /**
      * 用户注册
      * <p>
@@ -1186,8 +1216,18 @@ public class AuthServiceImpl implements AuthService {
      * </p>
      */
     @Override
-    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public R<Boolean> register(com.forgex.auth.domain.param.RegisterParam param) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            return doRegister(param);
+        } finally {
+            restoreTenantIgnore(oldIgnore);
+        }
+    }
+
+    private R<Boolean> doRegister(com.forgex.auth.domain.param.RegisterParam param) {
         // 1. 校验请求参数
         if (param == null) {
             return R.fail(CommonPrompt.BAD_REQUEST);
@@ -1242,6 +1282,11 @@ public class AuthServiceImpl implements AuthService {
         }
         if (inviteCodeEntity.getUsedCount() >= inviteCodeEntity.getMaxRegisterCount()) {
             return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
+        }
+        Long inviteTenantId = inviteCodeEntity.getTenantId();
+        Long roleId = inviteCodeEntity.getRoleId();
+        if (!isValidInviteRole(roleId, inviteTenantId)) {
+            return R.fail(AuthPromptEnum.ROLE_NOT_FOUND);
         }
 
         // 4. 校验账号是否已存在
@@ -1300,30 +1345,36 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 9. 创建用户与租户的绑定关系
-        Long tenantId = inviteCodeEntity.getTenantId();
-        if (tenantId != null) {
+        if (inviteTenantId != null) {
             SysUserTenant userTenant = new SysUserTenant();
             userTenant.setUserId(userId);
-            userTenant.setTenantId(tenantId);
+            userTenant.setTenantId(inviteTenantId);
             userTenant.setIsDefault(true);
             userTenant.setPrefOrder(1);
             userTenant.setLastUsed(LocalDateTime.now());
             userTenantMapper.insert(userTenant);
         }
 
-        // 10. 更新邀请码使用次数
+        // 10. 创建用户与邀请码绑定角色的关系
+        SysUserRolePerm userRole = new SysUserRolePerm();
+        userRole.setUserId(userId);
+        userRole.setRoleId(roleId);
+        userRole.setTenantId(inviteTenantId);
+        userRolePermMapper.insert(userRole);
+
+        // 11. 更新邀请码使用次数
         com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<com.forgex.auth.domain.entity.SysInviteCode> inviteUpdate =
                 new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
         inviteUpdate.eq(com.forgex.auth.domain.entity.SysInviteCode::getId, inviteCodeEntity.getId())
                 .setSql("used_count = used_count + 1");
         inviteCodeMapper.update(null, inviteUpdate);
 
-        // 11. 记录邀请注册日志
+        // 12. 记录邀请注册日志
         String clientIp = getClientIp();
         String region = ipLocationService.getLocationByIp(clientIp);
 
         com.forgex.auth.domain.entity.SysInviteRegisterRecord record = new com.forgex.auth.domain.entity.SysInviteRegisterRecord();
-        record.setTenantId(tenantId);
+        record.setTenantId(inviteTenantId);
         record.setInviteId(inviteCodeEntity.getId());
         record.setInviteCode(inviteCode);
         record.setUserId(userId);
@@ -1331,13 +1382,14 @@ public class AuthServiceImpl implements AuthService {
         record.setUsername(StringUtils.hasText(username) ? username : account);
         record.setDepartmentId(inviteCodeEntity.getDepartmentId());
         record.setPositionId(inviteCodeEntity.getPositionId());
+        record.setRoleId(roleId);
         record.setRegisterIp(clientIp);
         record.setRegisterRegion(region);
         record.setRegisterTime(LocalDateTime.now());
         record.setStatus(1);
         inviteRegisterRecordMapper.insert(record);
 
-        log.info("用户注册成功：account={}, inviteCode={}, tenantId={}", account, inviteCode, tenantId);
+        log.info("用户注册成功：account={}, inviteCode={}, inviteTenantId={}", account, inviteCode, inviteTenantId);
 
         return R.ok(CommonPrompt.REGISTER_SUCCESS, true);
     }
@@ -1347,6 +1399,16 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public R<Boolean> validateInviteCode(String inviteCode) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            return doValidateInviteCode(inviteCode);
+        } finally {
+            restoreTenantIgnore(oldIgnore);
+        }
+    }
+
+    private R<Boolean> doValidateInviteCode(String inviteCode) {
         if (!StringUtils.hasText(inviteCode)) {
             return R.fail(CommonPrompt.INVITE_CODE_CANNOT_BE_EMPTY);
         }
@@ -1366,6 +1428,29 @@ public class AuthServiceImpl implements AuthService {
         if (entity.getUsedCount() >= entity.getMaxRegisterCount()) {
             return R.fail(CommonPrompt.INVITE_CODE_USED_UP);
         }
+        if (!isValidInviteRole(entity.getRoleId(), entity.getTenantId())) {
+            return R.fail(AuthPromptEnum.ROLE_NOT_FOUND);
+        }
         return R.ok(true);
+    }
+
+    private void restoreTenantIgnore(boolean oldIgnore) {
+        if (oldIgnore) {
+            TenantContextIgnore.setIgnore(true);
+        } else {
+            TenantContextIgnore.clear();
+        }
+    }
+
+    private boolean isValidInviteRole(Long roleId, Long inviteTenantId) {
+        if (roleId == null || inviteTenantId == null) {
+            return false;
+        }
+        SysRolePerm role = rolePermMapper.selectOne(new LambdaQueryWrapper<SysRolePerm>()
+                .eq(SysRolePerm::getId, roleId)
+                .eq(SysRolePerm::getTenantId, inviteTenantId)
+                .eq(SysRolePerm::getStatus, true)
+                .eq(SysRolePerm::getDeleted, false));
+        return role != null;
     }
 }

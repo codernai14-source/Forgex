@@ -42,6 +42,8 @@ import java.util.stream.Collectors;
  *
  * @author coder_nai@163.com
  * @date 2026-01-27
+ *
+ * @version 1.0.0
  */
 @Slf4j
 @Aspect
@@ -51,6 +53,12 @@ public class AutoFillUsernameAspect {
 
     private final SysUserFeignClient sysUserFeignClient;
 
+    /**
+     * 拦截并自动填充用户名。
+     *
+     * @param joinPoint joinpoint
+     * @return 处理结果
+     */
     @Around("execution(public * com.forgex..controller..*.*(..))")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         Object result = joinPoint.proceed();
@@ -239,14 +247,29 @@ public class AutoFillUsernameAspect {
             this.required = required;
         }
 
+        /**
+         * 获取字段。
+         *
+         * @return 处理结果
+         */
         public Field getField() {
             return field;
         }
 
+        /**
+         * 获取用户ID。
+         *
+         * @return 数据主键 ID
+         */
         public Long getUserId() {
             return userId;
         }
 
+        /**
+         * 判断字段是否需要填充。
+         *
+         * @return 是否处理成功
+         */
         public boolean isRequired() {
             return required;
         }

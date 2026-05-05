@@ -116,4 +116,5 @@ public interface I18nLanguageTypeService {
      * @throws Exception 导入失败时抛出异常
      */
     Map<String, Object> importExcel(MultipartFile file) throws Exception;
+
 }

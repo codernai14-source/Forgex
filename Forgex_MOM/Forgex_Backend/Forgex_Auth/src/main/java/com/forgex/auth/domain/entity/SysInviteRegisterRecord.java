@@ -53,6 +53,9 @@ public class SysInviteRegisterRecord extends BaseEntity {
     /** 注册落入职位ID */
     private Long positionId;
 
+    /** 注册绑定角色ID */
+    private Long roleId;
+
     /** 注册IP */
     private String registerIp;
 

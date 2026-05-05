@@ -38,6 +38,11 @@ public interface IApiParamConfigService extends IService<ApiParamConfig> {
      * @return 参数树
      */
     default List<ApiParamTreeVO> listParamTree(Long apiConfigId, String direction) {
+        /**
+         * 执行接口参数配置的列表参数树操作。
+         *
+         * @return 处理结果
+         */
         return listParamTree(apiConfigId, null, direction);
     }
 
@@ -103,6 +108,9 @@ public interface IApiParamConfigService extends IService<ApiParamConfig> {
      * @param tree        参数树
      */
     default void replaceTree(Long apiConfigId, String direction, List<ApiParamConfigDTO> tree) {
+      /**
+       * 执行接口参数配置的replace树操作。
+       */
         replaceTree(apiConfigId, null, direction, tree);
     }
 
@@ -124,6 +132,9 @@ public interface IApiParamConfigService extends IService<ApiParamConfig> {
      * @param jsonString  JSON 文本
      */
     default void importFromJson(Long apiConfigId, String direction, String jsonString) {
+      /**
+       * 执行接口参数配置的导入fromjson操作。
+       */
         importFromJson(apiConfigId, null, direction, jsonString);
     }
 
@@ -163,6 +174,11 @@ public interface IApiParamConfigService extends IService<ApiParamConfig> {
      * @return 参数节点 DTO，不存在时返回 null
      */
     default ApiParamConfigDTO getByFieldPath(Long apiConfigId, String fieldPath, String direction) {
+        /**
+         * 获取by字段路径。
+         *
+         * @return 处理结果
+         */
         return getByFieldPath(apiConfigId, null, fieldPath, direction);
     }
 }

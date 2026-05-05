@@ -32,7 +32,11 @@ hs_err_pid*
 /Forgex_MOM/Forgex_Backend/Forgex_Sys/logs/
 /Forgex_MOM/Forgex_Backend/Forgex_Gateway/logs/
 /.trae/
-/doc/
+/doc/*
+!/doc/sql/
+/doc/sql/*
+!/doc/sql/upgrade/
+!/doc/sql/upgrade/**
 /.vscode/
 /Forgex_MOM/Forgex_Backend/Forgex_Job/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Report/target/
@@ -40,7 +44,12 @@ hs_err_pid*
 /Forgex_MOM/Forgex_Backend/Forgex_Auth/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Workflow/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Basic/target/
+/Forgex_MOM/Forgex_Backend/Forgex_Common/target/
 /.tmp/
+/out/
+/Forgex_Build/scratch/
+/Forgex_Build/现场/
+/Forgex_Build/**/publish/
 /Forgex_MOM/Forgex_Backend/Forgex_Integration/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Gateway/target/
 /sql/
@@ -48,4 +57,5 @@ hs_err_pid*
 /forgex/license/license.lic
 /forgex/license/public-key.base64
 /forgex/license/request-info.json
+/forgex/data/
 /Forgex_MOM/Forgex_Backend/Forgex_Common/target/classes/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports

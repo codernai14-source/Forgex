@@ -1,7 +1,7 @@
 # Redis 工具使用方式
 
-> 分类：后端 / 公共能力  
-> 版本：**V0.6.0**  
+> 分类：后端 / 公共能力
+> 版本：**V0.6.5**
 > 更新时间：**2026-04-22**
 
 本文重点讲"代码如何正确使用 RedisHelper"、"如何使用 Redisson 分布式能力"和"如何利用字典二级缓存"。
@@ -97,7 +97,7 @@ public User getUserById(Long id) {
     if (cached != null) {
         return cached;
     }
-    
+
     // 缓存不存在，查数据库
     User user = userMapper.selectById(id);
     if (user == null) {
@@ -105,7 +105,7 @@ public User getUserById(Long id) {
         redisHelper.setString(key, "NULL", Duration.ofMinutes(10));
         return null;
     }
-    
+
     // 缓存有效数据
     redisHelper.setJson(key, user, Duration.ofDays(1));
     return user;
@@ -225,10 +225,10 @@ try {
 public void recordLoginFailure(String account, LoginSecurityConfig config) {
     String failKey = "fx:auth:login:fail:" + account.toLowerCase();
     RAtomicLong failCounter = redissonClient.getAtomicLong(failKey);
-    
+
     long currentCount = failCounter.incrementAndGet();
     failCounter.expire(Duration.ofMinutes(config.getFailWindowMinutes()));
-    
+
     if (currentCount >= config.getMaxFailCount()) {
         // 达到阈值，锁定账号
         String lockKey = "fx:auth:login:lock:" + account.toLowerCase();

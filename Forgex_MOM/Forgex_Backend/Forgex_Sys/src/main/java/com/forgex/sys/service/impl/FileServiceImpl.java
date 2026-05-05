@@ -20,6 +20,9 @@ import java.nio.file.Paths;
 
 /**
  * File service implementation.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Service
 public class FileServiceImpl implements FileService {
@@ -45,11 +48,24 @@ public class FileServiceImpl implements FileService {
         return uploadPath;
     }
 
+    /**
+     * 获取本位dir。
+     *
+     * @return 处理结果
+     */
     @Override
     public Path getBaseDir() {
         return Paths.get(resolveUploadPath());
     }
 
+    /**
+     * 上传文件。
+     *
+     * @param file 文件
+     * @param moduleCode 模块编码
+     * @param moduleName 模块名称
+     * @return 字符串结果
+     */
     @Override
     public String upload(MultipartFile file, String moduleCode, String moduleName) throws IOException {
         FileStorageService storage = fileStorageFactory.getDefault();
@@ -67,6 +83,12 @@ public class FileServiceImpl implements FileService {
         return accessUrl;
     }
 
+    /**
+     * 获取文件。
+     *
+     * @param filename filename
+     * @return 处理结果
+     */
     @Override
     public Resource getFile(String filename) throws IOException {
         Path dir = getBaseDir();
@@ -77,6 +99,12 @@ public class FileServiceImpl implements FileService {
         return new InputStreamResource(Files.newInputStream(filePath));
     }
 
+    /**
+     * 获取media类型。
+     *
+     * @param filename filename
+     * @return 字符串结果
+     */
     @Override
     public String getMediaType(String filename) throws IOException {
         Path dir = getBaseDir();

@@ -47,6 +47,12 @@ public class SysInviteCodeDTO {
     /** 归属职位名称 */
     private String positionName;
 
+    /** 注册后绑定角色ID */
+    private Long roleId;
+
+    /** 注册后绑定角色名称 */
+    private String roleName;
+
     /** 失效时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime expireTime;

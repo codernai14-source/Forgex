@@ -30,7 +30,14 @@ import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,17 +45,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * common表格控制器。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @RestController
 @RequestMapping("/sys/common/table/config")
 @RequiredArgsConstructor
 public class CommonTableController {
-    
+    private static final int MIN_COLUMN_WIDTH = 60;
+    private static final int MAX_COLUMN_WIDTH = 800;
+    private static final String ACTION_FIELD = "action";
+
     private final FxTableConfigService tableConfigService;
     private final FxTableConfigMapper tableConfigMapper;
     private final FxTableColumnConfigMapper tableColumnConfigMapper;
     private final FxUserTableConfigService userTableConfigService;
     private final FxUserTableConfigMapper userTableConfigMapper;
 
+    /**
+     * 查询数据详情。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:tableConfig:view")
     @PostMapping("/get")
     public R<FxTableConfigDTO> get(@RequestBody TableConfigGetParam param) {
@@ -61,7 +83,7 @@ public class CommonTableController {
         }
         return R.ok(cfg);
     }
-    
+
     /**
      * 获取表格配置（支持公共配置模式）
      * <p>
@@ -78,11 +100,11 @@ public class CommonTableController {
         String tableCode = param == null ? null : param.getTableCode();
         Boolean isPublicConfig = param == null ? false : param.getIsPublicConfig();
         Long tenantId = TenantContext.get();
-        
+
         if (isPublicConfig == null) {
             isPublicConfig = false;
         }
-        
+
         FxTableConfigDTO cfg = tableConfigService.getTableConfig(tableCode, tenantId, isPublicConfig);
         if (cfg == null) {
             return R.fail(500, SysPromptEnum.TABLE_CONFIG_NOT_FOUND, tableCode);
@@ -90,6 +112,12 @@ public class CommonTableController {
         return R.ok(cfg);
     }
 
+    /**
+     * 查询数据列表。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:tableConfig:view")
     @PostMapping("/list")
     public R<IPage<FxTableConfigDTO>> list(@RequestBody TableConfigGetParam param) {
@@ -124,7 +152,7 @@ public class CommonTableController {
 
     /**
      * 获取表格配置详情（包含列配置）
-     * 
+     *
      * @param param 查询参数，包含id
      * @return 表格配置详情VO
      */
@@ -134,16 +162,16 @@ public class CommonTableController {
         if (param == null || param.getId() == null) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
         }
-        
+
         Long id = param.getId();
         Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
-        
+
         // 查询表格配置
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted()) || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
-        
+
         // 查询列配置
         LambdaQueryWrapper<FxTableColumnConfig> columnWrapper = new LambdaQueryWrapper<>();
         columnWrapper.eq(FxTableColumnConfig::getTableCode, config.getTableCode())
@@ -159,7 +187,7 @@ public class CommonTableController {
                     .orderByAsc(FxTableColumnConfig::getOrderNum);
             columns = tableColumnConfigMapper.selectList(fallbackWrapper);
         }
-        
+
         // 构建返回对象
         TableConfigDetailVO vo = new TableConfigDetailVO();
         vo.setId(config.getId());
@@ -177,13 +205,13 @@ public class CommonTableController {
         vo.setUpdateBy(config.getUpdateBy());
         vo.setUpdateTime(config.getUpdateTime());
         vo.setColumns(columns);
-        
+
         return R.ok(vo);
     }
 
     /**
      * 获取表格配置详情（包含列配置）- RESTful风格接口（保留兼容）
-     * 
+     *
      * @param id 配置ID
      * @return 表格配置详情VO
      * @deprecated 建议使用 POST /info 接口
@@ -205,7 +233,7 @@ public class CommonTableController {
         Long tenantId = resolveConfigTenantId(vo == null ? null : vo.getPublicConfig());
         String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
-        
+
         // 保存表格配置
         FxTableConfig config = new FxTableConfig();
         config.setTableCode(vo.getTableCode());
@@ -220,9 +248,9 @@ public class CommonTableController {
         config.setCreateBy(currentUser);
         config.setCreateTime(now);
         config.setDeleted(false);
-        
+
         tableConfigMapper.insert(config);
-        
+
         // 保存列配置
         if (vo.getColumns() != null && !vo.getColumns().isEmpty()) {
             for (FxTableColumnConfig column : vo.getColumns()) {
@@ -235,10 +263,15 @@ public class CommonTableController {
                 tableColumnConfigMapper.insert(column);
             }
         }
-        
+
         return R.ok(config.getId());
     }
 
+    /**
+     * 拉取公共配置。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:tableConfig:add")
     @PostMapping("/pull-public")
     public R<Integer> pullPublicConfig() {
@@ -304,7 +337,7 @@ public class CommonTableController {
 
     /**
      * 更新表格配置
-     * 
+     *
      * @param vo 表格配置详情VO
      * @return 操作结果
      */
@@ -314,18 +347,18 @@ public class CommonTableController {
         if (vo == null || vo.getId() == null) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
         }
-        
+
         Long id = vo.getId();
         Long tenantId = resolveConfigTenantId(vo.getPublicConfig());
         String currentUser = currentUser();
         LocalDateTime now = LocalDateTime.now();
-        
+
         // 更新表格配置
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted()) || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
-        
+
         config.setTableNameI18nJson(vo.getTableNameI18nJson());
         config.setTableType(vo.getTableType());
         config.setRowKey(vo.getRowKey());
@@ -334,15 +367,15 @@ public class CommonTableController {
         config.setEnabled(vo.getEnabled());
         config.setUpdateBy(currentUser);
         config.setUpdateTime(now);
-        
+
         tableConfigMapper.updateById(config);
-        
+
         // 删除旧的列配置
         LambdaQueryWrapper<FxTableColumnConfig> deleteWrapper = new LambdaQueryWrapper<>();
         deleteWrapper.eq(FxTableColumnConfig::getTenantId, tenantId)
                 .eq(FxTableColumnConfig::getTableCode, config.getTableCode());
         tableColumnConfigMapper.delete(deleteWrapper);
-        
+
         // 保存新的列配置
         if (vo.getColumns() != null && !vo.getColumns().isEmpty()) {
             for (FxTableColumnConfig column : vo.getColumns()) {
@@ -355,13 +388,13 @@ public class CommonTableController {
                 tableColumnConfigMapper.insert(column);
             }
         }
-        
+
         return R.ok();
     }
 
     /**
      * 更新表格配置 - RESTful风格接口（保留兼容）
-     * 
+     *
      * @param id 配置ID
      * @param vo 表格配置详情VO
      * @return 操作结果
@@ -376,7 +409,7 @@ public class CommonTableController {
 
     /**
      * 删除表格配置
-     * 
+     *
      * @param param 查询参数，包含id
      * @return 操作结果
      */
@@ -386,18 +419,18 @@ public class CommonTableController {
         if (param == null || param.getId() == null) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
         }
-        
+
         Long id = param.getId();
         Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
-        
+
         // 软删除表格配置
         config.setDeleted(true);
         tableConfigMapper.updateById(config);
-        
+
         // 软删除列配置
         LambdaQueryWrapper<FxTableColumnConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FxTableColumnConfig::getTenantId, tenantId)
@@ -407,13 +440,13 @@ public class CommonTableController {
             column.setDeleted(true);
             tableColumnConfigMapper.updateById(column);
         }
-        
+
         return R.ok();
     }
 
     /**
      * 删除表格配置 - RESTful风格接口（保留兼容）
-     * 
+     *
      * @param id 配置ID
      * @return 操作结果
      * @deprecated 建议使用 POST /delete 接口
@@ -427,8 +460,8 @@ public class CommonTableController {
     }
 
     /**
-     * 批量删除表格配置
-     * 
+     * 批量删除数据。
+     *
      * @param param 查询参数，包含ids列表
      * @return 操作结果
      */
@@ -438,20 +471,20 @@ public class CommonTableController {
         if (param == null || param.getIds() == null || param.getIds().isEmpty()) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID列表不能为空");
         }
-        
+
         for (Long id : param.getIds()) {
             TableConfigGetParam deleteParam = new TableConfigGetParam();
             deleteParam.setId(id);
             deleteParam.setIsPublicConfig(param.getIsPublicConfig());
             delete(deleteParam);
         }
-        
+
         return R.ok();
     }
 
     /**
      * 批量删除表格配置 - RESTful风格接口（保留兼容）
-     * 
+     *
      * @param ids ID列表
      * @return 操作结果
      * @deprecated 建议使用 POST /batchDelete 接口
@@ -466,7 +499,7 @@ public class CommonTableController {
 
     /**
      * 更新表格配置状态
-     * 
+     *
      * @param param 查询参数，包含id和enabled
      * @return 操作结果
      */
@@ -476,25 +509,25 @@ public class CommonTableController {
         if (param == null || param.getId() == null) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "ID不能为空");
         }
-        
+
         Long id = param.getId();
         Long tenantId = resolveConfigTenantId(param.getIsPublicConfig());
         FxTableConfig config = tableConfigMapper.selectById(id);
         if (config == null || Boolean.TRUE.equals(config.getDeleted()) || !tenantId.equals(config.getTenantId())) {
             return R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
         }
-        
+
         config.setEnabled(param.getEnabled());
         config.setUpdateBy(currentUser());
         config.setUpdateTime(LocalDateTime.now());
         tableConfigMapper.updateById(config);
-        
+
         return R.ok();
     }
 
     /**
      * 更新表格配置状态 - RESTful风格接口（保留兼容）
-     * 
+     *
      * @param id 配置ID
      * @param param 查询参数，包含enabled
      * @return 操作结果
@@ -521,17 +554,17 @@ public class CommonTableController {
         if (param == null || !StringUtils.hasText(param.getTableCode())) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "tableCode 不能为空");
         }
-        
+
         Long tenantId = TenantContext.get();
         Long userId = UserContext.get();
-        
+
         if (userId == null) {
             return R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NOT_LOGIN);
         }
-        
+
         // 获取用户配置
         FxUserTableConfigDTO userConfig = userTableConfigService.getUserTableConfig(param.getTableCode(), tenantId, userId);
-        
+
         if (userConfig == null) {
             // 用户没有配置，返回空对象
             FxUserTableConfigDTO emptyConfig = new FxUserTableConfigDTO();
@@ -541,7 +574,7 @@ public class CommonTableController {
             emptyConfig.setColumns(null);
             return R.ok(emptyConfig);
         }
-        
+
         return R.ok(userConfig);
     }
 
@@ -559,38 +592,38 @@ public class CommonTableController {
         if (param == null || !StringUtils.hasText(param.getTableCode())) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "tableCode 不能为空");
         }
-        
+
         if (param.getColumns() == null || param.getColumns().isEmpty()) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "列配置不能为空");
         }
-        
+
         Long tenantId = TenantContext.get();
         Long userId = UserContext.get();
-        
+
         if (userId == null) {
             return R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NOT_LOGIN);
         }
-        
+
         // 获取原始表格配置
         // 保存列设置时必须基于完整基础列配置合并，不能使用当前用户已过滤掉隐藏列的结果
         FxTableConfigDTO baseConfig = tableConfigService.getTableConfig(param.getTableCode(), tenantId, null);
         if (baseConfig == null || baseConfig.getColumns() == null) {
             return R.fail(StatusCode.NOT_FOUND, SysPromptEnum.TABLE_CONFIG_NOT_FOUND, param.getTableCode());
         }
-        
+
         // 构建用户配置 DTO
         FxUserTableConfigDTO dto = new FxUserTableConfigDTO();
         dto.setTableCode(param.getTableCode());
         dto.setUserId(userId);
         dto.setTenantId(tenantId);
-        
+
         // 合并列配置：基于原始配置，根据用户参数更新 visible 和 order
         List<FxTableColumnDTO> mergedColumns = mergeColumnConfig(baseConfig.getColumns(), param.getColumns());
         dto.setColumns(mergedColumns);
-        
+
         // 保存用户配置
         Long configId = userTableConfigService.saveUserTableConfig(dto, userId);
-        
+
         return R.ok(configId);
     }
 
@@ -608,22 +641,22 @@ public class CommonTableController {
         if (param == null || !StringUtils.hasText(param.getTableCode())) {
             return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, "tableCode 不能为空");
         }
-        
+
         Long tenantId = TenantContext.get();
         Long userId = UserContext.get();
-        
+
         if (userId == null) {
             return R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NOT_LOGIN);
         }
-        
+
         // 删除用户配置
         Boolean deleted = userTableConfigService.deleteUserTableConfig(param.getTableCode(), tenantId, userId);
-        
+
         if (!deleted) {
             // 用户没有配置，无需删除
             return R.ok();
         }
-        
+
         return R.ok();
     }
 
@@ -641,10 +674,10 @@ public class CommonTableController {
         // 构建用户配置的 field -> param 映射
         Map<String, UserColumnItemParam> userParamMap = userColumns.stream()
                 .collect(Collectors.toMap(UserColumnItemParam::getField, p -> p, (a, b) -> a));
-        
+
         // 合并配置
         List<FxTableColumnDTO> mergedColumns = new ArrayList<>();
-        
+
         for (FxTableColumnDTO baseCol : baseColumns) {
             FxTableColumnDTO mergedCol = new FxTableColumnDTO();
             // 复制所有属性
@@ -663,30 +696,40 @@ public class CommonTableController {
             mergedCol.setDictField(baseCol.getDictField());
             mergedCol.setRenderType(baseCol.getRenderType());
             mergedCol.setPermKey(baseCol.getPermKey());
-            
+
             // 应用用户配置
             UserColumnItemParam userParam = userParamMap.get(baseCol.getField());
             if (userParam != null) {
                 // 设置显示状态和排序顺序
                 mergedCol.setVisible(userParam.getVisible() != null ? userParam.getVisible() : true);
                 mergedCol.setOrder(userParam.getOrder() != null ? userParam.getOrder() : Integer.MAX_VALUE);
+                if (userParam.getWidth() != null && !ACTION_FIELD.equals(baseCol.getField())) {
+                    mergedCol.setWidth(clampColumnWidth(userParam.getWidth()));
+                }
             } else {
                 // 用户没有配置该列，默认显示，排序靠后
                 mergedCol.setVisible(true);
                 mergedCol.setOrder(Integer.MAX_VALUE);
             }
-            
+
             mergedColumns.add(mergedCol);
         }
-        
+
         // 按照用户的 order 排序
         mergedColumns.sort((a, b) -> {
             int orderA = a.getOrder() != null ? a.getOrder() : Integer.MAX_VALUE;
             int orderB = b.getOrder() != null ? b.getOrder() : Integer.MAX_VALUE;
             return Integer.compare(orderA, orderB);
         });
-        
+
         return mergedColumns;
+    }
+
+    private Integer clampColumnWidth(Integer width) {
+        if (width == null) {
+            return null;
+        }
+        return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, width));
     }
 
     private String currentUser() {

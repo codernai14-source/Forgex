@@ -129,7 +129,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 审批转交
+     * 转交审批任务。
      * <p>
      * 将当前待办审批任务转交给其他人处理
      * </p>
@@ -147,7 +147,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 审批加签
+     * 加签审批任务。
      * <p>
      * 在当前审批节点增加审批人，支持前加签和后加签
      * </p>
@@ -165,7 +165,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 批量审批通过
+     * 批量审批任务。
      * <p>
      * 批量审批通过多个待办审批任务
      * </p>
@@ -183,7 +183,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 批量转交
+     * 批量转交审批任务。
      * <p>
      * 批量转交多个待办审批任务给同一人
      * </p>
@@ -201,7 +201,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 批量提醒
+     * 批量催办审批任务。
      * <p>
      * 批量发送审批提醒通知给多个待办任务的审批人
      * </p>
@@ -219,7 +219,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 补偿审批执行
+     * 补偿审批执行数据。
      * <p>
      * 对异常或失败的审批执行进行补偿处理，用于恢复或修正执行状态
      * </p>
@@ -237,7 +237,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 重试超时任务
+     * 重试超时任务。
      * <p>
      * 重试因超时未处理的审批任务，重新触发审批流程
      * </p>
@@ -273,7 +273,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 取消审批委托
+     * 取消委托审批。
      * <p>
      * 取消用户的审批委托关系
      * </p>
@@ -291,7 +291,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 取消审批执行
+     * 取消审批实例。
      * <p>
      * 取消进行中的审批执行，终止审批流程
      * </p>
@@ -328,7 +328,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 查询审批实例列表
+     * 查询审批实例列表。
      * <p>
      * 获取审批执行的所有审批实例，包含各节点的审批信息
      * </p>
@@ -346,7 +346,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 查询审批操作日志列表
+     * 查询审批操作日志。
      * <p>
      * 获取审批执行的所有操作日志，记录审批历史
      * </p>
@@ -364,7 +364,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 分页查询我发起的审批
+     * 分页查询我发起的审批。
      * <p>
      * 查询当前用户发起的所有审批执行记录
      * </p>
@@ -382,7 +382,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 分页查询我的待办审批
+     * 分页查询我的待办审批。
      * <p>
      * 查询当前用户待处理的所有审批执行记录
      * </p>
@@ -400,7 +400,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 分页查询我的已办审批
+     * 分页查询我的已办审批。
      * <p>
      * 查询当前用户已处理的所有审批执行记录
      * </p>
@@ -418,7 +418,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 分页查询我的抄送审批
+     * 分页查询抄送我的审批。
      * <p>
      * 查询当前用户被抄送的所有审批执行记录
      * </p>
@@ -452,7 +452,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 加载仪表盘汇总数据
+     * 加载审批看板汇总数据。
      * <p>
      * 获取审批仪表盘的汇总统计数据，包含待办数、已办数、发起数等
      * </p>
@@ -469,7 +469,7 @@ public class WfExecutionController {
     }
 
     /**
-     * 加载仪表盘分析数据
+     * 加载审批看板统计数据。
      * <p>
      * 获取审批仪表盘的分析图表数据，包含趋势分析、分布统计等
      * </p>

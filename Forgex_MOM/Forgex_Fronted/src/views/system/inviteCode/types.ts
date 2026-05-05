@@ -21,6 +21,8 @@ export interface InviteCode {
   departmentName?: string
   positionId?: string
   positionName?: string
+  roleId?: string
+  roleName?: string
   expireTime: string
   maxRegisterCount: number
   usedCount: number
@@ -37,6 +39,7 @@ export interface InviteCodeQueryParam {
   tenantId?: string
   inviteCode?: string
   departmentId?: string
+  roleId?: string
   status?: boolean
 }
 
@@ -44,6 +47,7 @@ export interface InviteCodeSaveParam {
   tenantId?: string
   departmentId: string
   positionId?: string
+  roleId: string
   expireTime: string
   maxRegisterCount: number
   remark?: string
@@ -58,6 +62,8 @@ export interface InviteRecord {
   username: string
   departmentId?: string
   positionId?: string
+  roleId?: string
+  roleName?: string
   registerIp?: string
   registerRegion?: string
   registerTime: string

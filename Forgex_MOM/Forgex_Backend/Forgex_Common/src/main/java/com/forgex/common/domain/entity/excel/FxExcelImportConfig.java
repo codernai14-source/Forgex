@@ -31,6 +31,23 @@ public class FxExcelImportConfig extends BaseEntity {
     private String tableCode;
 
     /**
+     * 导入处理器 Bean 名称。
+     * <p>
+     * 公共导入执行接口根据该名称从 Spring 容器中查找业务处理器，
+     * 并把导入模式、导入配置和导入数据统一传入业务处理器。
+     * </p>
+     */
+    private String handlerBeanName;
+
+    /**
+     * 导入权限码。
+     * <p>
+     * 公共导入执行接口按表编码读取配置后，使用该权限码进行动态鉴权。
+     * </p>
+     */
+    private String importPermission;
+
+    /**
      * 标题列名称。
      */
     private String title;

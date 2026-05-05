@@ -34,6 +34,7 @@
               class="cyber-input"
               type="text"
               v-model="account"
+              autocomplete="username"
               :placeholder="i18nT('common.login.accountPlaceholder')"
             />
           </div>
@@ -43,6 +44,7 @@
               class="cyber-input"
               type="password"
               v-model="password"
+              autocomplete="current-password"
               :placeholder="i18nT('common.login.passwordPlaceholder')"
             />
           </div>
@@ -53,6 +55,7 @@
                 class="cyber-input captcha-input"
                 type="text"
                 v-model="captcha"
+                autocomplete="off"
                 :placeholder="i18nT('common.login.captchaPlaceholder')"
               />
               <img class="captcha-img" :src="imageBase64" alt="captcha" @click="loadImage" />
@@ -108,7 +111,7 @@
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
             <button type="button" class="oauth-btn wechat" :title="i18nT('common.login.platform.wechat')" @click="onOAuth('WECHAT')">
-              <img src="/tubiao/weixin2.svg" alt="寰俊" />
+              <img src="/tubiao/weixin2.svg" alt="微信" />
             </button>
             <button type="button" class="oauth-btn dingtalk" :title="i18nT('common.login.platform.dingtalk')" @click="onOAuth('DINGTALK')">
               <img src="/tubiao/dingding.svg" alt="閽夐拤" />
@@ -857,6 +860,7 @@ onMounted(async () => {
 .login-wrap {
   position: relative;
   height: 100%;
+  --auth-field-bg: rgba(15, 23, 42, 0.46);
 }
 .bg-video {
   position: absolute;
@@ -1063,9 +1067,18 @@ onMounted(async () => {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #4b5563;
-  background: transparent;
+  background: var(--auth-field-bg);
   color: #e5e7eb;
   outline: none;
+}
+.cyber-input:-webkit-autofill,
+.cyber-input:-webkit-autofill:hover,
+.cyber-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e5e7eb !important;
+  caret-color: #05d9e8;
+  box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
+  transition: background-color 9999s ease-out 0s, color 9999s ease-out 0s;
 }
 .cyber-input::placeholder {
   color: #94a3b8;

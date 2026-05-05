@@ -62,6 +62,13 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         this.licenseManager = licenseManager;
     }
 
+    /**
+     * 过滤网关请求。
+     *
+     * @param exchange 汇率
+     * @param chain chain
+     * @return 处理结果
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
@@ -356,6 +363,11 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         public String data;
     }
 
+    /**
+     * 获取order。
+     *
+     * @return 处理结果数量
+     */
     @Override
     public int getOrder() {
         return -150;

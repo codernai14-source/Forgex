@@ -29,25 +29,53 @@ import com.forgex.sys.domain.config.CryptoConfig;
 import com.forgex.sys.domain.config.FileUploadConfig;
 import com.forgex.sys.domain.config.SecurityConfig;
 import com.forgex.sys.domain.config.SystemBasicConfig;
+import com.forgex.sys.domain.dto.FileUploadFolderChildrenParam;
+import com.forgex.sys.domain.dto.FileUploadFolderCreateParam;
+import com.forgex.sys.domain.dto.FileUploadFolderNodeDTO;
+import com.forgex.sys.domain.dto.FileUploadRuntimeDefaultsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.sql.DataSource;
+import java.io.File;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 系统配置控制器。
- * 
+ *
  * 职责：
  * - 接收 HTTP 请求
  * - 参数校验（调用 Validator）
  * - 调用 ConfigService 层方法
  * - 返回响应结果
- * 
+ *
  * 提供登录验证码配置、系统基础配置、安全配置、文件上传配置的读取与更新接口。
  * Controller 仅负责参数接收与结果返回，配置持久化由配置服务完成。
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  * @see ConfigService
@@ -55,6 +83,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/sys/config")
 public class SysConfigController {
+    private static final int DEFAULT_GATEWAY_PORT = 9000;
+    private static final String DEFAULT_GATEWAY_API_PREFIX = "/api";
+    private static final String DEFAULT_ACCESS_PREFIX = "/files";
+    private static final String PREVIEW_EXAMPLE_FILE = "example.png";
+
     private static final String KEY_LOGIN_CAPTCHA = "login.captcha";
     private static final String KEY_SYSTEM_BASIC = "system.basic";
     private static final String KEY_SECURITY_PASSWORD_POLICY = "security.password.policy";
@@ -76,6 +109,9 @@ public class SysConfigController {
 
     @Autowired
     private DataSource dataSource;
+
+    @Value("${forgex.gateway.port:9000}")
+    private int gatewayPort;
 
     /**
      * 获取登录验证码配置
@@ -103,7 +139,7 @@ public class SysConfigController {
         // 2. 返回验证码配置对象
         return R.ok(c);
     }
-    
+
     /**
      * 更新登录验证码配置
      * <p>
@@ -135,7 +171,7 @@ public class SysConfigController {
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
-    
+
     /**
      * 获取全局系统基础配置
      * <p>
@@ -160,9 +196,9 @@ public class SysConfigController {
         // 1. 调用 ConfigService 获取全局系统基础配置，使用默认配置作为兜底
         SystemBasicConfig c = configService.getGlobalJson(KEY_SYSTEM_BASIC, SystemBasicConfig.class, SystemBasicConfig.defaults());
         // 2. 返回系统基础配置对象
-        return R.ok(c);
+        return R.ok(normalizeSystemBasicConfig(c == null ? SystemBasicConfig.defaults() : c));
     }
-    
+
     /**
      * 更新全局系统基础配置
      * <p>
@@ -191,11 +227,11 @@ public class SysConfigController {
     @PutMapping("/system-basic")
     public R<Boolean> setSystemBasicConfig(@RequestBody SystemBasicConfig config) {
         // 1. 调用 ConfigService 保存全局配置
-        configService.setGlobalJson(KEY_SYSTEM_BASIC, config);
+        configService.setGlobalJson(KEY_SYSTEM_BASIC, normalizeSystemBasicConfig(config == null ? SystemBasicConfig.defaults() : config));
         // 2. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
-    
+
     /**
      * 获取聚合安全配置
      * <p>
@@ -228,7 +264,7 @@ public class SysConfigController {
     public R<SecurityConfig> getSecurityConfig() {
         // 1. 获取默认安全配置
         SecurityConfig defaults = SecurityConfig.defaults();
-        
+
         // 2. 从 ConfigService 获取各项配置
         CaptchaConfig captcha = configService.getJson(KEY_LOGIN_CAPTCHA, CaptchaConfig.class, defaults.getCaptcha());
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults.getPasswordPolicy());
@@ -241,11 +277,11 @@ public class SysConfigController {
         result.setPasswordPolicy(policy == null ? SecurityConfig.defaults().getPasswordPolicy() : policy);
         result.setLoginSecurity(loginSecurity == null ? SecurityConfig.defaults().getLoginSecurity() : loginSecurity);
         result.setCryptoTransport(transport == null ? SecurityConfig.defaults().getCryptoTransport() : transport);
-        
+
         // 4. 返回安全配置对象
         return R.ok(result);
     }
-    
+
     /**
      * 保存聚合安全配置
      * <p>
@@ -291,11 +327,11 @@ public class SysConfigController {
         configService.setJson(KEY_SECURITY_PASSWORD_POLICY, policy);
         configService.setJson(KEY_SECURITY_LOGIN_FAILURE, loginSecurity);
         configService.setJson(KEY_SECURITY_CRYPTO_TRANSPORT, transport);
-        
+
         // 4. 返回保存成功提示
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
-    
+
     /**
      * 获取文件上传配置
      * <p>
@@ -322,6 +358,12 @@ public class SysConfigController {
         return R.ok(config == null ? EmailConfig.defaults() : config);
     }
 
+    /**
+     * 处理setemail配置。
+     *
+     * @param config 配置对象
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:edit")
     @PutMapping("/email")
     public R<Boolean> setEmailConfig(@RequestBody EmailConfig config) {
@@ -329,15 +371,119 @@ public class SysConfigController {
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
     }
 
+    /**
+     * 获取文件upload配置。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @GetMapping("/file-upload")
     public R<FileUploadConfig> getFileUploadConfig() {
         // 1. 调用 ConfigService 获取全局文件上传配置，使用默认配置作为兜底
         FileUploadConfig c = configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, FileUploadConfig.defaults());
         // 2. 返回文件上传配置对象（为空时返回默认配置）
-        return R.ok(c == null ? FileUploadConfig.defaults() : c);
+        return R.ok(normalizeFileUploadConfig(c == null ? FileUploadConfig.defaults() : c));
     }
-    
+
+    /**
+     * 获取文件uploadruntimedefaults。
+     *
+     * @return 统一响应结果
+     */
+    @RequirePerm("sys:config:view")
+    @GetMapping("/file-upload/runtime-defaults")
+    public R<FileUploadRuntimeDefaultsDTO> getFileUploadRuntimeDefaults() {
+        FileUploadConfig config = normalizeFileUploadConfig(
+                configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, FileUploadConfig.defaults())
+        );
+        FileUploadRuntimeDefaultsDTO defaults = new FileUploadRuntimeDefaultsDTO();
+        List<String> ipCandidates = resolveLocalIpCandidates();
+        String ip = ipCandidates.isEmpty() ? "127.0.0.1" : ipCandidates.get(0);
+        String recommendedBaseUrl = buildGatewayPublicBaseUrl(ip);
+        String accessPrefix = normalizeAccessPrefix(config.getAccessPrefix());
+        defaults.setIpCandidates(ipCandidates);
+        defaults.setRecommendedPublicBaseUrl(recommendedBaseUrl);
+        defaults.setAccessPrefix(accessPrefix);
+        defaults.setPreviewExample(recommendedBaseUrl + accessPrefix + "/" + PREVIEW_EXAMPLE_FILE);
+        return R.ok(defaults);
+    }
+
+    /**
+     * 获取文件uploadfolderroots。
+     *
+     * @return 统一响应结果
+     */
+    @RequirePerm("sys:config:view")
+    @GetMapping("/file-upload/folders/roots")
+    public R<List<FileUploadFolderNodeDTO>> getFileUploadFolderRoots() {
+        List<FileUploadFolderNodeDTO> roots = new ArrayList<>();
+        File[] rootFiles = File.listRoots();
+        if (rootFiles != null) {
+            for (File rootFile : rootFiles) {
+                roots.add(toFolderNode(rootFile.toPath(), true));
+            }
+        }
+        if (roots.isEmpty()) {
+            roots.add(toFolderNode(Paths.get(System.getProperty("user.home", ".")), true));
+        }
+        roots.sort(Comparator.comparing(FileUploadFolderNodeDTO::getPath, String.CASE_INSENSITIVE_ORDER));
+        return R.ok(roots);
+    }
+
+    /**
+     * 获取文件uploadfolderchildren。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
+    @RequirePerm("sys:config:view")
+    @PostMapping("/file-upload/folders/children")
+    public R<List<FileUploadFolderNodeDTO>> getFileUploadFolderChildren(@RequestBody FileUploadFolderChildrenParam param) {
+        Path parent = resolveServerFolder(param == null ? null : param.getPath());
+        if (parent == null || !Files.isDirectory(parent)) {
+            return R.ok(new ArrayList<>());
+        }
+        List<FileUploadFolderNodeDTO> children = new ArrayList<>();
+        try (java.util.stream.Stream<Path> stream = Files.list(parent)) {
+            stream.filter(Files::isDirectory)
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString(), String.CASE_INSENSITIVE_ORDER))
+                    .limit(300)
+                    .forEach(path -> children.add(toFolderNode(path, false)));
+        } catch (IOException | SecurityException e) {
+            return R.ok(children);
+        }
+        return R.ok(children);
+    }
+
+    /**
+     * 处理create文件上传folder。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
+    @RequirePerm("sys:config:edit")
+    @PostMapping("/file-upload/folders/create")
+    public R<FileUploadFolderNodeDTO> createFileUploadFolder(@RequestBody FileUploadFolderCreateParam param) {
+        if (param == null || !org.springframework.util.StringUtils.hasText(param.getParentPath())
+                || !org.springframework.util.StringUtils.hasText(param.getFolderName())) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "parentPath and folderName are required");
+        }
+        String folderName = param.getFolderName().trim();
+        if (folderName.contains("/") || folderName.contains("\\") || ".".equals(folderName) || "..".equals(folderName)) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "folderName is invalid");
+        }
+        Path parent = resolveServerFolder(param.getParentPath());
+        if (parent == null || !Files.isDirectory(parent)) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "parentPath is invalid");
+        }
+        try {
+            Path created = Files.createDirectories(parent.resolve(folderName).normalize());
+            return R.ok(CommonPrompt.CREATE_SUCCESS, toFolderNode(created, false));
+        } catch (IOException | SecurityException e) {
+            return R.fail(CommonPrompt.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
     /**
      * 保存文件上传配置
      * <p>
@@ -401,17 +547,12 @@ public class SysConfigController {
             config.setLocalUploadPath(config.getLocalUploadPath().trim());
         }
         if (!org.springframework.util.StringUtils.hasText(config.getAccessPrefix())) {
-            config.setAccessPrefix(defaults.getAccessPrefix());
+            config.setAccessPrefix(normalizeAccessPrefix(defaults.getAccessPrefix()));
         } else {
-            String prefix = config.getAccessPrefix().trim();
-            config.setAccessPrefix(prefix.startsWith("/") ? prefix : "/" + prefix);
+            config.setAccessPrefix(normalizeAccessPrefix(config.getAccessPrefix()));
         }
         if (config.getPublicBaseUrl() != null) {
-            String publicBaseUrl = config.getPublicBaseUrl().trim();
-            while (publicBaseUrl.endsWith("/")) {
-                publicBaseUrl = publicBaseUrl.substring(0, publicBaseUrl.length() - 1);
-            }
-            config.setPublicBaseUrl(publicBaseUrl);
+            config.setPublicBaseUrl(normalizePublicBaseUrl(config.getPublicBaseUrl()));
         }
         if (config.getProviderConfigJson() == null) {
             config.setProviderConfigJson("");
@@ -419,6 +560,159 @@ public class SysConfigController {
         return config;
     }
 
+    private SystemBasicConfig normalizeSystemBasicConfig(SystemBasicConfig source) {
+        SystemBasicConfig config = source == null ? SystemBasicConfig.defaults() : source;
+        config.setSystemLogo(normalizeConfigMediaUrl(config.getSystemLogo()));
+        config.setLoginBackgroundImage(normalizeConfigMediaUrl(config.getLoginBackgroundImage()));
+        config.setLoginBackgroundVideo(normalizeConfigMediaUrl(config.getLoginBackgroundVideo()));
+        return config;
+    }
+
+    private String normalizeConfigMediaUrl(String value) {
+        if (!org.springframework.util.StringUtils.hasText(value)) {
+            return "";
+        }
+        String url = value.trim().replace("\\", "/");
+        if (url.startsWith("data:") || url.startsWith("blob:")
+                || url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//")) {
+            return url;
+        }
+        if (url.startsWith(DEFAULT_GATEWAY_API_PREFIX + DEFAULT_ACCESS_PREFIX + "/")) {
+            return resolveConfiguredPublicBaseUrl() + url.substring(DEFAULT_GATEWAY_API_PREFIX.length());
+        }
+        if (url.startsWith(DEFAULT_ACCESS_PREFIX + "/")) {
+            return resolveConfiguredPublicBaseUrl() + url;
+        }
+        return url;
+    }
+
+    private String normalizeAccessPrefix(String accessPrefix) {
+        String prefix = org.springframework.util.StringUtils.hasText(accessPrefix)
+                ? accessPrefix.trim()
+                : DEFAULT_ACCESS_PREFIX;
+        while (prefix.endsWith("/") && prefix.length() > 1) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+        return prefix.startsWith("/") ? prefix : "/" + prefix;
+    }
+
+    private String normalizePublicBaseUrl(String rawValue) {
+        if (!org.springframework.util.StringUtils.hasText(rawValue)) {
+            return "";
+        }
+        String value = rawValue.trim();
+        while (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            value = "http://" + value;
+        }
+        try {
+            URI uri = new URI(value);
+            String scheme = org.springframework.util.StringUtils.hasText(uri.getScheme()) ? uri.getScheme() : "http";
+            String host = uri.getHost();
+            if (!org.springframework.util.StringUtils.hasText(host)) {
+                return value;
+            }
+            boolean explicitPort = uri.getPort() > 0;
+            int port = explicitPort ? uri.getPort() : resolveGatewayPort();
+            String path = org.springframework.util.StringUtils.hasText(uri.getPath()) ? uri.getPath() : "";
+            if (port == resolveGatewayPort() && !path.equals(DEFAULT_GATEWAY_API_PREFIX) && !path.startsWith(DEFAULT_GATEWAY_API_PREFIX + "/")) {
+                path = DEFAULT_GATEWAY_API_PREFIX + path;
+            }
+            while (path.endsWith("/") && path.length() > 1) {
+                path = path.substring(0, path.length() - 1);
+            }
+            URI normalized = new URI(scheme, null, host, port, path, null, null);
+            return normalized.toString();
+        } catch (URISyntaxException e) {
+            return value;
+        }
+    }
+
+    private int resolveGatewayPort() {
+        return gatewayPort > 0 ? gatewayPort : DEFAULT_GATEWAY_PORT;
+    }
+
+    private String buildGatewayPublicBaseUrl(String ip) {
+        return "http://" + ip + ":" + resolveGatewayPort() + DEFAULT_GATEWAY_API_PREFIX;
+    }
+
+    private String resolveConfiguredPublicBaseUrl() {
+        FileUploadConfig config = normalizeFileUploadConfig(
+                configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, FileUploadConfig.defaults())
+        );
+        if (org.springframework.util.StringUtils.hasText(config.getPublicBaseUrl())) {
+            return config.getPublicBaseUrl();
+        }
+        return buildGatewayPublicBaseUrl(resolvePrimaryLocalIp());
+    }
+
+    private String resolvePrimaryLocalIp() {
+        List<String> ipCandidates = resolveLocalIpCandidates();
+        return ipCandidates.isEmpty() ? "127.0.0.1" : ipCandidates.get(0);
+    }
+
+    private List<String> resolveLocalIpCandidates() {
+        Set<String> addresses = new LinkedHashSet<>();
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces != null && interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                if (!networkInterface.isUp() || networkInterface.isLoopback() || networkInterface.isVirtual()) {
+                    continue;
+                }
+                Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                while (inetAddresses.hasMoreElements()) {
+                    InetAddress address = inetAddresses.nextElement();
+                    if (address instanceof Inet4Address && !address.isLoopbackAddress()) {
+                        addresses.add(address.getHostAddress());
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Fallback below keeps the page usable when network interfaces cannot be enumerated.
+        }
+        addresses.add("127.0.0.1");
+        return new ArrayList<>(addresses);
+    }
+
+    private Path resolveServerFolder(String value) {
+        if (!org.springframework.util.StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return Paths.get(value.trim()).toAbsolutePath().normalize();
+        } catch (InvalidPathException e) {
+            return null;
+        }
+    }
+
+    private FileUploadFolderNodeDTO toFolderNode(Path path, boolean root) {
+        Path normalized = path.toAbsolutePath().normalize();
+        FileUploadFolderNodeDTO node = new FileUploadFolderNodeDTO();
+        Path fileName = normalized.getFileName();
+        String displayName = fileName == null ? normalized.toString() : fileName.toString();
+        node.setName(root ? normalized.toString() : displayName);
+        node.setPath(normalized.toString());
+        node.setWritable(Files.isWritable(normalized));
+        node.setLeaf(!hasReadableChildDirectory(normalized));
+        return node;
+    }
+
+    private boolean hasReadableChildDirectory(Path path) {
+        try (java.util.stream.Stream<Path> stream = Files.list(path)) {
+            return stream.anyMatch(Files::isDirectory);
+        } catch (IOException | SecurityException e) {
+            return false;
+        }
+    }
+
+    /**
+     * 获取crypto配置。
+     *
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:config:view")
     @GetMapping("/crypto")
     public R<CryptoConfig> getCryptoConfig() {

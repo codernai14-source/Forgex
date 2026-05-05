@@ -20,21 +20,21 @@ import java.util.List;
  */
 @Data
 public class PersonalHomepageConfig {
-    
+
     /**
      * 布局配置
      * <p>包含首页栅格布局的基础参数，如列数、行高、间距等。</p>
      */
     private PersonalHomepageLayoutConfig layout;
-    
+
     /**
      * 组件配置
      * <p>首页中所有组件的配置列表，定义每个组件的位置、大小和显示状态。</p>
      */
     private List<PersonalHomepageWidgetConfig> widgets;
-    
+
     /**
-     * 创建默认的个人首页配置
+     * 获取默认配置。
      *
      * @return 默认的个人首页配置对象，包含常用的默认组件
      */
@@ -55,7 +55,7 @@ public class PersonalHomepageConfig {
     }
 
     /**
-     * 创建指定模块的默认首页配置。
+     * 获取默认配置。
      *
      * @param moduleCode 模块编码，空值或 personal 返回个人首页默认配置
      * @return 默认首页配置

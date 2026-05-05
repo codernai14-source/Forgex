@@ -1,9 +1,4 @@
 <template>
-  <!--
-    使用 Popover 而非 Dropdown：Dropdown 会将 overlay 当作 Menu 处理（注入 ant-dropdown-menu 等），
-    自定义面板在受控 open 下易与 Trigger 的 document 点击检测产生竞态，表现为闪一下即关。
-    Popover 基于 Tooltip，适合任意内容浮层。
-  -->
   <a-popover
     v-model:open="dropdownOpen"
     trigger="click"
@@ -22,47 +17,43 @@
             <a-button type="link" size="small" @click="handleReset">
               {{ t('system.tableConfig.columnSetting.reset') }}
             </a-button>
-            <a-button type="primary" size="small" @click="handleSave" :loading="saving">
+            <a-button type="primary" size="small" :loading="saving" @click="handleSave">
               {{ t('common.save') }}
             </a-button>
           </a-space>
         </div>
 
         <div class="column-setting-body">
-          <div class="column-list">
-            <div
-              v-for="(col, index) in localColumns"
-              :key="col.field"
-              class="column-item"
-            >
+          <VueDraggableNext
+            v-model="localColumns"
+            item-key="field"
+            class="column-list"
+            handle=".column-drag-handle"
+            @end="normalizeLocalOrder"
+          >
+            <div v-for="col in localColumns" :key="col.field" class="column-item">
+              <div class="column-drag-handle" :title="t('system.tableConfig.columnSetting.dragSort')">
+                <MenuOutlined />
+              </div>
               <div class="column-item-left">
-                <a-checkbox
-                  v-model:checked="col.visible"
-                  :disabled="col.field === 'action'"
-                >
-                  {{ col.title }}
+                <a-checkbox v-model:checked="col.visible" :disabled="col.field === ACTION_FIELD">
+                  {{ col.title || col.field }}
                 </a-checkbox>
               </div>
-              <div class="column-item-right">
-                <a-button
-                  type="text"
+              <div class="column-width-control">
+                <a-input-number
+                  v-model:value="col.width"
                   size="small"
-                  :disabled="index === 0"
-                  @click="moveUp(index)"
-                >
-                  <UpOutlined />
-                </a-button>
-                <a-button
-                  type="text"
-                  size="small"
-                  :disabled="index === localColumns.length - 1"
-                  @click="moveDown(index)"
-                >
-                  <DownOutlined />
-                </a-button>
+                  :min="MIN_COLUMN_WIDTH"
+                  :max="MAX_COLUMN_WIDTH"
+                  :precision="0"
+                  :disabled="col.field === ACTION_FIELD"
+                  :placeholder="t('system.tableConfig.width')"
+                  @change="value => handleWidthInput(col, value)"
+                />
               </div>
             </div>
-          </div>
+          </VueDraggableNext>
         </div>
 
         <div class="column-setting-footer">
@@ -81,34 +72,31 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 列设置按钮组件
- * <p>
- * 提供表格列的显示/隐藏和排序设置功能，支持保存用户个性化配置。
- * </p>
- *
- * @author Forgex Team
- * @version 1.0.0
- */
 import { nextTick, ref, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { SettingOutlined, UpOutlined, DownOutlined } from '@ant-design/icons-vue'
+import { MenuOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { VueDraggableNext } from 'vue-draggable-next'
 import {
   getUserColumns,
-  saveUserColumns,
   resetUserColumns,
+  saveUserColumns,
   type FxTableColumn,
-  type UserColumnItem
+  type UserColumnItem,
 } from '@/api/system/tableConfig'
 
-/**
- * Popover 内层（.ant-popover-inner）样式。
- * <p>
- * 使用与面板一致的 elevated 背景，避免仅最内层 div 着色时 Ant 结构缝隙透底；
- * 变量依赖 {@link getColumnSettingPopupContainer} 将浮层挂到 {@code .fx-main-layout} 内解析。
- * </p>
- */
+const MIN_COLUMN_WIDTH = 60
+const MAX_COLUMN_WIDTH = 800
+const ACTION_FIELD = 'action'
+
+type LocalColumn = {
+  field: string
+  title: string
+  visible: boolean
+  order: number
+  width?: number
+}
+
 const popoverOverlayInnerStyle: CSSProperties = {
   padding: 0,
   backgroundColor: 'var(--fx-bg-elevated)',
@@ -116,266 +104,171 @@ const popoverOverlayInnerStyle: CSSProperties = {
   boxShadow: 'none',
 }
 
-/**
- * 列表面板表面（与 elevated 浮层同色系，并保留边框与圆角）。
- */
 const panelSurfaceStyle: CSSProperties = {
   backgroundColor: 'var(--fx-bg-elevated)',
   color: 'var(--fx-text-primary)',
   border: '1px solid var(--fx-border-color)',
   borderRadius: 'var(--fx-radius-lg)',
   padding: '12px',
-  width: '300px',
-  minWidth: '300px',
-  maxWidth: '360px',
+  width: '360px',
+  minWidth: '360px',
+  maxWidth: '480px',
 }
 
-/**
- * 将列设置浮层挂到主布局内，使 {@code --fx-*} 主题变量生效（默认挂 body 时变量未定义，导致透底与浅色字色）。
- *
- * @param triggerNode 触发器 DOM 节点
- * @returns 挂载容器元素
- */
 function getColumnSettingPopupContainer(triggerNode: HTMLElement): HTMLElement {
   const layout = triggerNode?.closest?.('.fx-main-layout')
-  if (layout instanceof HTMLElement) {
-    return layout
-  }
-  return document.body
+  return layout instanceof HTMLElement ? layout : document.body
 }
 
-/**
- * 组件属性
- */
 const props = defineProps<{
-  /**
-   * 表格编码，用于获取和保存用户的列配置
-   */
   tableCode: string
-
-  /**
-   * 原始列配置数组，来自表格配置的 columns 字段
-   */
   columns: FxTableColumn[]
 }>()
 
-/**
- * 组件事件
- */
 const emit = defineEmits<{
-  /**
-   * 列配置变更事件
-   * 触发时机：用户点击保存按钮成功保存列配置后触发
-   * @param columns 更新后的列配置数组，包含可见性和排序信息
-   */
   (e: 'change', columns: FxTableColumn[]): void
 }>()
 
 const { t } = useI18n()
-
-/**
- * 下拉层是否展开（Ant Design Vue 4 使用 open，与 visible 对应）
- */
 const dropdownOpen = ref(false)
-
-/**
- * 保存中状态
- */
 const saving = ref(false)
+const localColumns = ref<LocalColumn[]>([])
 
-/**
- * 本地列配置（用于编辑）
- */
-const localColumns = ref<Array<{ field: string; title: string; visible: boolean; order: number }>>([])
-
-/**
- * 初始化本地列配置
- * <p>
- * 将原始列配置转换为本地可编辑格式。
- * </p>
- */
-function initLocalColumns() {
-  localColumns.value = props.columns.map((col, index) => ({
-    field: col.field,
-    title: col.title,
-    visible: col.visible !== false, // 默认显示
-    order: col.order ?? index
-  }))
-  // 按 order 排序
-  localColumns.value.sort((a, b) => a.order - b.order)
+function normalizeColumnWidth(width: unknown) {
+  const numeric = typeof width === 'number' ? width : Number(width)
+  if (!Number.isFinite(numeric)) {
+    return undefined
+  }
+  return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, Math.round(numeric)))
 }
 
-/**
- * 加载用户列配置
- * <p>
- * 从后端加载用户个性化的列配置。
- * </p>
- */
+function normalizeLocalOrder() {
+  localColumns.value.forEach((col, index) => {
+    col.order = index
+    if (col.field !== ACTION_FIELD) {
+      col.width = normalizeColumnWidth(col.width)
+    }
+  })
+}
+
+function toLocalColumn(col: FxTableColumn, index: number): LocalColumn {
+  return {
+    field: col.field,
+    title: col.title || col.field,
+    visible: col.field === ACTION_FIELD ? true : col.visible !== false,
+    order: col.order ?? index,
+    width: normalizeColumnWidth(col.width),
+  }
+}
+
+function initLocalColumns() {
+  localColumns.value = props.columns.map(toLocalColumn).sort((a, b) => a.order - b.order)
+  normalizeLocalOrder()
+}
+
 async function loadUserConfig() {
   try {
     const result = await getUserColumns(props.tableCode)
-    if (result && result.columns && result.columns.length > 0) {
-      // 列设置面板要保留完整列，隐藏列也必须继续展示为“已隐藏”状态
-      localColumns.value = result.columns.map((col, index) => ({
-        field: col.field,
-        title: col.title,
-        visible: col.visible !== false,
-        order: col.order ?? index
-      }))
-      // 按 order 排序
-      localColumns.value.sort((a, b) => a.order - b.order)
-    } else {
-      // 用户没有配置，使用默认配置
-      initLocalColumns()
+    if (result?.columns?.length) {
+      localColumns.value = result.columns.map(toLocalColumn).sort((a, b) => a.order - b.order)
+      normalizeLocalOrder()
+      return
     }
+    initLocalColumns()
   } catch (error) {
-    console.error('加载用户列配置失败:', error)
-    // 使用默认配置
+    console.error('[ColumnSettingButton] load user columns failed:', error)
     initLocalColumns()
   }
 }
 
-/**
- * 展开时先同步填充默认列，再异步拉取用户列配置。
- * <p>
- * 使用 {@link nextTick} 推迟首帧数据写入，避免与 Popover/Tooltip 打开过程同一 tick 内强刷子树导致 open 状态异常。
- * </p>
- */
 watch(dropdownOpen, open => {
-  if (!open) {
-    return
-  }
+  if (!open) return
   void nextTick(() => {
     initLocalColumns()
     void loadUserConfig()
   })
 })
 
-/**
- * 向上移动列
- *
- * @param index 当前索引
- */
-function moveUp(index: number) {
-  if (index <= 0) return
-  const cols = localColumns.value
-  // 交换 order
-  const currentOrder = cols[index].order
-  const prevOrder = cols[index - 1].order
-  cols[index].order = prevOrder
-  cols[index - 1].order = currentOrder
-  // 重新排序
-  cols.sort((a, b) => a.order - b.order)
+function handleWidthInput(col: LocalColumn, value: number | string | null) {
+  if (col.field === ACTION_FIELD) return
+  col.width = normalizeColumnWidth(value)
 }
 
-/**
- * 向下移动列
- *
- * @param index 当前索引
- */
-function moveDown(index: number) {
-  if (index >= localColumns.value.length - 1) return
-  const cols = localColumns.value
-  // 交换 order
-  const currentOrder = cols[index].order
-  const nextOrder = cols[index + 1].order
-  cols[index].order = nextOrder
-  cols[index + 1].order = currentOrder
-  // 重新排序
-  cols.sort((a, b) => a.order - b.order)
-}
-
-/**
- * 保存用户列配置
- */
 async function handleSave() {
   saving.value = true
   try {
-    // 构建保存参数
+    normalizeLocalOrder()
     const columns: UserColumnItem[] = localColumns.value.map((col, index) => ({
       field: col.field,
-      visible: col.visible,
-      order: index // 使用当前顺序作为 order
+      visible: col.field === ACTION_FIELD ? true : col.visible,
+      order: index,
+      width: col.field === ACTION_FIELD ? undefined : normalizeColumnWidth(col.width),
     }))
 
     await saveUserColumns({
       tableCode: props.tableCode,
-      columns
+      columns,
     })
 
     dropdownOpen.value = false
 
-    // 触发变更事件，更新表格列
-    const updatedColumns: FxTableColumn[] = props.columns.map(baseCol => {
-      const localCol = localColumns.value.find(lc => lc.field === baseCol.field)
-      return {
-        ...baseCol,
-        visible: localCol?.visible ?? true,
-        order: localCol?.order ?? 0
-      }
-    })
-    // 按 order 排序并过滤隐藏列
-    const sortedColumns = updatedColumns
-      .filter(col => col.visible !== false)
+    const updatedColumns = props.columns
+      .map(baseCol => {
+        const localCol = localColumns.value.find(item => item.field === baseCol.field)
+        return {
+          ...baseCol,
+          visible: localCol?.field === ACTION_FIELD ? true : localCol?.visible ?? true,
+          order: localCol?.order ?? 0,
+          width: localCol?.field === ACTION_FIELD
+            ? baseCol.width
+            : (normalizeColumnWidth(localCol?.width) ?? baseCol.width),
+        }
+      })
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
-    emit('change', sortedColumns)
+    emit('change', updatedColumns)
   } catch (error) {
-    console.error('保存用户列配置失败:', error)
+    console.error('[ColumnSettingButton] save user columns failed:', error)
   } finally {
     saving.value = false
   }
 }
 
-/**
- * 重置用户列配置
- */
 async function handleReset() {
   try {
     await resetUserColumns(props.tableCode)
-    // 重置为默认配置
     initLocalColumns()
     dropdownOpen.value = false
-
-    // 触发变更事件，恢复默认列配置
     emit('change', props.columns)
   } catch (error) {
-    console.error('重置用户列配置失败:', error)
+    console.error('[ColumnSettingButton] reset user columns failed:', error)
   }
 }
 
-// 监听原始列配置变化
 watch(
   () => props.columns,
   () => {
     if (dropdownOpen.value) {
-      loadUserConfig()
+      void loadUserConfig()
     }
   },
-  { deep: true }
+  { deep: true },
 )
 
-// 监听 tableCode 变化
 watch(
   () => props.tableCode,
   () => {
     if (dropdownOpen.value) {
-      loadUserConfig()
+      void loadUserConfig()
     }
-  }
+  },
 )
 </script>
 
 <style scoped>
-/**
- * 主按钮样式由 Ant Design Vue token / 全局主题（含系统主题色）统一控制，
- * 与工具栏「新增」等 type="primary" 按钮一致。
- */
 .column-setting-btn {
   flex-shrink: 0;
 }
-
-/* 背景/边框/阴影见 panelSurfaceStyle 内联 */
 
 .column-setting-header {
   display: flex;
@@ -392,7 +285,7 @@ watch(
 }
 
 .column-setting-body {
-  max-height: 300px;
+  max-height: 360px;
   overflow-y: auto;
 }
 
@@ -403,10 +296,12 @@ watch(
 }
 
 .column-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 104px;
   align-items: center;
-  padding: 4px 8px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 6px;
   border-radius: var(--fx-radius-sm, 4px);
   transition: background-color 0.2s;
 }
@@ -415,33 +310,32 @@ watch(
   background-color: var(--fx-fill-alter, var(--fx-fill, rgba(0, 0, 0, 0.04)));
 }
 
+.column-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fx-text-secondary, rgba(0, 0, 0, 0.45));
+  cursor: grab;
+}
+
+.column-drag-handle:active {
+  cursor: grabbing;
+}
+
 .column-item-left {
-  flex: 1;
   min-width: 0;
 }
 
-.column-item-right {
-  display: flex;
-  gap: 4px;
+.column-width-control :deep(.ant-input-number) {
+  width: 100%;
 }
 
-/* 勾选列名：与面板主字同色，避免 Ant Checkbox 在浮层内继承错误 token */
 .column-setting-panel :deep(.ant-checkbox-wrapper) {
   color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
 }
 
 .column-setting-panel :deep(.ant-checkbox-wrapper .ant-checkbox + span) {
   color: inherit;
-}
-
-/* 上移/下移：图标用次级字色，hover 用主色，保证深浅色均可见 */
-.column-item-right :deep(.ant-btn.ant-btn-text) {
-  color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
-}
-
-.column-item-right :deep(.ant-btn.ant-btn-text:not(:disabled):hover) {
-  color: var(--fx-primary, #1677ff);
-  background: transparent;
 }
 
 .column-setting-footer {
@@ -456,9 +350,6 @@ watch(
 }
 </style>
 
-<!--
-  与 overlayInnerStyle 一致：不透底、主字色；变量在挂到 .fx-main-layout 后可用。
--->
 <style lang="less">
 .fx-column-setting-popover.ant-popover .ant-popover-inner {
   padding: 0 !important;

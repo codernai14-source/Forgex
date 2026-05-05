@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * <p>
  * 提供租户管理的业务逻辑实现，包含租户的增删改查功能
  * </p>
- * 
+ *
  * @author coder_nai
  * @version 1.0
  * @see com.forgex.sys.service.SysTenantService
@@ -50,34 +50,46 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SysTenantServiceImpl implements SysTenantService {
-    
+
     private final SysTenantMapper tenantMapper;
     private final ITenantInitService tenantInitService;
-    
+
+    /**
+     * 查询数据列表。
+     *
+     * @param queryDTO 数据传输对象
+     * @return 列表数据
+     */
     @Override
     public List<SysTenantDTO> list(SysTenantQueryDTO queryDTO) {
         LambdaQueryWrapper<SysTenant> wrapper = buildQueryWrapper(queryDTO);
         wrapper.orderByDesc(SysTenant::getCreateTime);
-        
+
         List<SysTenant> tenants = tenantMapper.selectList(wrapper);
-        
+
         return tenants.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    
+
+    /**
+     * 分页查询数据。
+     *
+     * @param queryDTO 数据传输对象
+     * @return 分页结果
+     */
     @Override
     public Page<SysTenantDTO> page(SysTenantQueryDTO queryDTO) {
         // 构建分页对象
         Page<SysTenant> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-        
+
         // 构建查询条件
         LambdaQueryWrapper<SysTenant> wrapper = buildQueryWrapper(queryDTO);
         wrapper.orderByDesc(SysTenant::getCreateTime);
-        
+
         // 执行分页查询
         Page<SysTenant> tenantPage = tenantMapper.selectPage(page, wrapper);
-        
+
         // 转换为DTO
         Page<SysTenantDTO> dtoPage = new Page<>();
         dtoPage.setCurrent(tenantPage.getCurrent());
@@ -88,58 +100,70 @@ public class SysTenantServiceImpl implements SysTenantService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList())
         );
-        
+
         return dtoPage;
     }
-    
+
     /**
      * 构建查询条件
-     * 
+     *
      * @param queryDTO 查询参数
      * @return 查询条件包装器
      */
     private LambdaQueryWrapper<SysTenant> buildQueryWrapper(SysTenantQueryDTO queryDTO) {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getDeleted, false);
-        
+
         // 租户名称模糊查询
         if (StringUtils.hasText(queryDTO.getTenantName())) {
             wrapper.like(SysTenant::getTenantName, queryDTO.getTenantName());
         }
-        
+
         // 租户编码模糊查询
         if (StringUtils.hasText(queryDTO.getTenantCode())) {
             wrapper.like(SysTenant::getTenantCode, queryDTO.getTenantCode());
         }
-        
+
         // 租户类别
         if (queryDTO.getTenantType() != null) {
             wrapper.eq(SysTenant::getTenantType, queryDTO.getTenantType());
         }
-        
+
         // 状态
         if (queryDTO.getStatus() != null) {
             wrapper.eq(SysTenant::getStatus, queryDTO.getStatus());
         }
-        
+
         return wrapper;
     }
-    
+
+    /**
+     * 获取byID。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public SysTenantDTO getById(Long id) {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getId, id)
                .eq(SysTenant::getDeleted, false);
-        
+
         SysTenant tenant = tenantMapper.selectOne(wrapper);
-        
+
         if (tenant == null) {
             return null;
         }
-        
+
         return convertToDTO(tenant);
     }
 
+    /**
+     * 获取by编码。
+     *
+     * @param tenantCode 租户编码
+     * @return 处理结果
+     */
     @Override
     public SysTenantDTO getByCode(String tenantCode) {
         if (!StringUtils.hasText(tenantCode)) {
@@ -151,7 +175,13 @@ public class SysTenantServiceImpl implements SysTenantService {
                 .last("LIMIT 1"));
         return tenant == null ? null : convertToDTO(tenant);
     }
-    
+
+    /**
+     * 创建数据。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(SysTenantSaveParam param) {
@@ -159,94 +189,106 @@ public class SysTenantServiceImpl implements SysTenantService {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getTenantCode, param.getTenantCode())
                .eq(SysTenant::getDeleted, false);
-        
+
         Long count = tenantMapper.selectCount(wrapper);
         if (count > 0) {
             throw new RuntimeException("租户编码已存在");
         }
-        
+
         // 如果是主租户，检查系统中是否已存在主租户
         if (TenantTypeEnum.MAIN_TENANT.equals(param.getTenantType())) {
             LambdaQueryWrapper<SysTenant> mainTenantWrapper = new LambdaQueryWrapper<>();
             mainTenantWrapper.eq(SysTenant::getTenantType, TenantTypeEnum.MAIN_TENANT)
                             .eq(SysTenant::getDeleted, false);
-            
+
             Long mainTenantCount = tenantMapper.selectCount(mainTenantWrapper);
             if (mainTenantCount > 0) {
                 throw new RuntimeException("系统中已存在主租户，不允许创建多个主租户");
             }
         }
-        
+
         // 创建租户
         SysTenant tenant = new SysTenant();
         BeanUtils.copyProperties(param, tenant);
-        
+
         // 设置默认值
         if (tenant.getStatus() == null) {
             tenant.setStatus(true);
         }
-        
+
         tenantMapper.insert(tenant);
-        
-        log.info("创建租户成功，租户ID：{}，租户名称：{}，租户类别：{}", 
+
+        log.info("创建租户成功，租户ID：{}，租户名称：{}，租户类别：{}",
                 tenant.getId(), tenant.getTenantName(), tenant.getTenantType());
-        
+
         // 初始化租户数据（模块、菜单、角色、用户）
         tenantInitService.initTenant(tenant.getId(), tenant.getTenantName(), param.getTenantType());
-        
+
         return tenant.getId();
     }
-    
+
+    /**
+     * 更新数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SysTenantSaveParam param) {
         if (param.getId() == null) {
             throw new RuntimeException("租户ID不能为空");
         }
-        
+
         // 检查租户是否存在
         SysTenant existTenant = tenantMapper.selectById(param.getId());
         if (existTenant == null || existTenant.getDeleted()) {
             throw new RuntimeException("租户不存在");
         }
-        
+
         // 检查租户编码是否重复（排除自己）
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getTenantCode, param.getTenantCode())
                .eq(SysTenant::getDeleted, false)
                .ne(SysTenant::getId, param.getId());
-        
+
         Long count = tenantMapper.selectCount(wrapper);
         if (count > 0) {
             throw new RuntimeException("租户编码已存在");
         }
-        
+
         // 如果修改为其他类型的主租户，检查系统中是否已存在主租户（排除自己）
-        if (TenantTypeEnum.MAIN_TENANT.equals(param.getTenantType()) 
+        if (TenantTypeEnum.MAIN_TENANT.equals(param.getTenantType())
                 && !TenantTypeEnum.MAIN_TENANT.equals(existTenant.getTenantType())) {
             LambdaQueryWrapper<SysTenant> mainTenantWrapper = new LambdaQueryWrapper<>();
             mainTenantWrapper.eq(SysTenant::getTenantType, TenantTypeEnum.MAIN_TENANT)
                             .eq(SysTenant::getDeleted, false)
                             .ne(SysTenant::getId, param.getId());
-            
+
             Long mainTenantCount = tenantMapper.selectCount(mainTenantWrapper);
             if (mainTenantCount > 0) {
                 throw new RuntimeException("系统中已存在主租户，不允许创建多个主租户");
             }
         }
-        
+
         // 更新租户
         SysTenant tenant = new SysTenant();
         BeanUtils.copyProperties(param, tenant);
-        
+
         int rows = tenantMapper.updateById(tenant);
-        
-        log.info("更新租户成功，租户ID：{}，租户名称：{}，租户类别：{}", 
+
+        log.info("更新租户成功，租户ID：{}，租户名称：{}，租户类别：{}",
                 tenant.getId(), tenant.getTenantName(), tenant.getTenantType());
-        
+
         return rows > 0;
     }
-    
+
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
@@ -255,57 +297,68 @@ public class SysTenantServiceImpl implements SysTenantService {
         if (existTenant == null || existTenant.getDeleted()) {
             throw new RuntimeException("租户不存在");
         }
-        
+
         // 检查是否为主租户，主租户不允许删除
         if (TenantTypeEnum.MAIN_TENANT.equals(existTenant.getTenantType())) {
             throw new RuntimeException("主租户不允许删除");
         }
-        
+
         // TODO: 检查租户下是否存在用户
-        
+
         // 逻辑删除
         SysTenant tenant = new SysTenant();
         tenant.setId(id);
         tenant.setDeleted(true);
-        
+
         int rows = tenantMapper.updateById(tenant);
-        
+
         log.info("删除租户成功，租户ID：{}", id);
-        
+
         return rows > 0;
     }
-    
+
+    /**
+     * 获取主表租户。
+     *
+     * @return 处理结果
+     */
     @Override
     public SysTenantDTO getMainTenant() {
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getTenantType, TenantTypeEnum.MAIN_TENANT)
                .eq(SysTenant::getDeleted, false)
                .last("LIMIT 1");
-        
+
         SysTenant tenant = tenantMapper.selectOne(wrapper);
-        
+
         if (tenant == null) {
             return null;
         }
-        
+
         return convertToDTO(tenant);
     }
-    
+
+    /**
+     * 获取租户hierarchy。
+     *
+     * @param tenantId 租户 ID
+     * @return 处理结果
+     */
     @Override
     public TenantHierarchyDTO getTenantHierarchy(Long tenantId) {
         if (tenantId == null) {
             throw new RuntimeException("租户 ID 不能为空");
         }
-        
+
         // 查询当前租户
         SysTenant currentTenant = tenantMapper.selectById(tenantId);
         if (currentTenant == null || currentTenant.getDeleted()) {
             throw new RuntimeException("租户不存在");
         }
-        
+
         TenantHierarchyDTO dto = new TenantHierarchyDTO();
         dto.setCurrentTenant(currentTenant);
-        
+
         // 查询父租户
         if (currentTenant.getParentTenantId() != null) {
             SysTenant parentTenant = tenantMapper.selectById(currentTenant.getParentTenantId());
@@ -313,53 +366,59 @@ public class SysTenantServiceImpl implements SysTenantService {
                 dto.setParentTenant(parentTenant);
             }
         }
-        
+
         // 查询子租户列表
         LambdaQueryWrapper<SysTenant> childWrapper = new LambdaQueryWrapper<>();
         childWrapper.eq(SysTenant::getParentTenantId, tenantId)
                    .eq(SysTenant::getDeleted, false)
                    .orderByDesc(SysTenant::getCreateTime);
-        
+
         List<SysTenant> childTenants = tenantMapper.selectList(childWrapper);
         dto.setChildTenants(childTenants);
-        
+
         return dto;
     }
-    
+
+    /**
+     * 获取childtenants。
+     *
+     * @param parentTenantId 父级租户 ID
+     * @return 列表数据
+     */
     @Override
     public List<SysTenantDTO> getChildTenants(Long parentTenantId) {
         if (parentTenantId == null) {
             throw new RuntimeException("父租户 ID 不能为空");
         }
-        
+
         // 查询子租户列表
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getParentTenantId, parentTenantId)
                .eq(SysTenant::getDeleted, false)
                .orderByDesc(SysTenant::getCreateTime);
-        
+
         List<SysTenant> tenants = tenantMapper.selectList(wrapper);
-        
+
         return tenants.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * 实体转DTO
-     * 
+     *
      * @param tenant 租户实体
      * @return 租户DTO
      */
     private SysTenantDTO convertToDTO(SysTenant tenant) {
         SysTenantDTO dto = new SysTenantDTO();
         BeanUtils.copyProperties(tenant, dto);
-        
+
         // 设置租户类别描述
         if (tenant.getTenantType() != null) {
             dto.setTenantTypeDesc(tenant.getTenantType().getDesc());
         }
-        
+
         if (tenant.getParentTenantId() != null) {
             SysTenant parentTenant = tenantMapper.selectById(tenant.getParentTenantId());
             if (parentTenant != null && !Boolean.TRUE.equals(parentTenant.getDeleted())) {

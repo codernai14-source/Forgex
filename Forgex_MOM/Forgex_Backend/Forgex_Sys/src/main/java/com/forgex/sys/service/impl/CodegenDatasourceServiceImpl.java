@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Service
 @RequiredArgsConstructor
@@ -52,12 +54,24 @@ public class CodegenDatasourceServiceImpl
 
     private final SysCodegenDatasourceMapper datasourceMapper;
 
+    /**
+     * 分页查询代码生成数据源。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 处理结果
+     */
     @Override
     public IPage<CodegenDatasourceDTO> pageDatasources(Page<SysCodegenDatasource> page, CodegenDatasourceQueryDTO query) {
         LambdaQueryWrapper<SysCodegenDatasource> wrapper = buildWrapper(query);
         return datasourceMapper.selectPage(page, wrapper).convert(this::toDTO);
     }
 
+    /**
+     * 查询启用的数据源列表。
+     *
+     * @return 列表数据
+     */
     @Override
     public List<CodegenDatasourceDTO> listEnabledDatasources() {
         LambdaQueryWrapper<SysCodegenDatasource> wrapper = new LambdaQueryWrapper<>();
@@ -66,12 +80,24 @@ public class CodegenDatasourceServiceImpl
         return datasourceMapper.selectList(wrapper).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    /**
+     * 获取数据源byID。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public CodegenDatasourceDTO getDatasourceById(Long id) {
         SysCodegenDatasource entity = datasourceMapper.selectById(id);
         return entity == null ? null : toDTO(entity);
     }
 
+    /**
+     * 保存数据源。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveDatasource(CodegenDatasourceSaveParam param) {
@@ -85,6 +111,11 @@ public class CodegenDatasourceServiceImpl
         return entity.getId();
     }
 
+    /**
+     * 删除数据源。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDatasource(Long id) {
@@ -92,6 +123,12 @@ public class CodegenDatasourceServiceImpl
         datasourceMapper.deleteById(id);
     }
 
+    /**
+     * 测试数据源连接。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     public boolean testConnection(CodegenDatasourceTestParam param) {
         if (param == null) {
@@ -116,6 +153,12 @@ public class CodegenDatasourceServiceImpl
         }
     }
 
+    /**
+     * 获取实体数据，不存在时抛出业务异常。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public SysCodegenDatasource requireEntity(Long id) {
         SysCodegenDatasource entity = datasourceMapper.selectById(id);

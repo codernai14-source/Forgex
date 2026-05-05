@@ -109,6 +109,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public void addRole(SysRoleDTO roleDTO) {
         SysRole role = new SysRole();
         BeanUtils.copyProperties(roleDTO, role);
+        role.setRoleKey(roleDTO.getRoleCode());
         roleMapper.insert(role);
     }
     
@@ -125,6 +126,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public void updateRole(SysRoleDTO roleDTO) {
         SysRole role = new SysRole();
         BeanUtils.copyProperties(roleDTO, role);
+        role.setRoleKey(roleDTO.getRoleCode());
         roleMapper.updateById(role);
     }
     

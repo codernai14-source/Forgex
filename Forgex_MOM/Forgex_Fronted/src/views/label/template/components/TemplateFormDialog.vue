@@ -5,7 +5,7 @@
       :title="drawerTitle"
       width="1000px"
       :closable="true"
-      :mask-closable="false"
+      :mask-closable="true"
       placement="right"
   >
     <a-form :model="formData" layout="vertical">

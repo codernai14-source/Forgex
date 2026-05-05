@@ -14,6 +14,8 @@ import com.forgex.common.api.dto.SupplierQueryRequestDTO;
 import com.forgex.common.api.dto.SupplierThirdPartyInvokeDTO;
 import com.forgex.common.api.dto.SupplierThirdPartySyncRequestDTO;
 import com.forgex.common.api.dto.SupplierThirdPartySyncResultDTO;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -165,6 +167,14 @@ public interface ISupplierService extends IService<BasicSupplier> {
      * @throws IOException 读取异常
      */
     SupplierThirdPartySyncResultDTO importExcel(MultipartFile file) throws IOException;
+
+    /**
+     * 执行公共导入。
+     *
+     * @param param 公共导入参数
+     * @return 导入结果
+     */
+    FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param);
 
     /**
      * 导出供应商 Excel。

@@ -521,64 +521,134 @@
         </a-tab-pane>
 
         <a-tab-pane key="upload" :tab="t('system.config.tabUpload')">
-          <a-form
-            :model="fileUploadConfig"
-            :label-col="{ span: 6 }"
-            :wrapper-col="{ span: 16 }"
-            layout="horizontal"
-          >
-            <a-form-item :label="t('system.config.storageType')" name="storageType">
-              <a-select v-model:value="fileUploadConfig.storageType">
-                <a-select-option value="LOCAL">{{ t('system.config.storageLocal') }}</a-select-option>
-                <a-select-option value="OSS">{{ t('system.config.storageOss') }}</a-select-option>
-                <a-select-option value="MINIO">{{ t('system.config.storageMinio') }}</a-select-option>
-              </a-select>
-            </a-form-item>
+          <div class="sidebar-config-layout">
+            <div class="sidebar-nav-list">
+              <button
+                v-for="item in uploadNavOptions"
+                :key="item.value"
+                type="button"
+                class="sidebar-nav-card"
+                :class="{ 'sidebar-nav-card--active': fileUploadConfig.storageType === item.value }"
+                @click="handleUploadTypeChange(item.value)"
+              >
+                <span class="sidebar-nav-card__heading">
+                  <component :is="item.icon" class="sidebar-nav-card__icon" />
+                  <span class="sidebar-nav-card__title">{{ t(item.titleKey) }}</span>
+                </span>
+                <span class="sidebar-nav-card__desc">{{ t(item.descKey) }}</span>
+              </button>
+            </div>
 
-            <a-form-item :label="t('system.config.localUploadPath')" name="localUploadPath">
-              <a-input
-                v-model:value="fileUploadConfig.localUploadPath"
-                :placeholder="t('system.config.localUploadPathPlaceholder')"
-              />
-            </a-form-item>
-
-            <a-form-item
-              :label="t('system.config.publicBaseUrl')"
-              name="publicBaseUrl"
-            >
-              <a-input
-                v-model:value="fileUploadConfig.publicBaseUrl"
-                :placeholder="t('system.config.publicBaseUrlPlaceholder')"
-              />
-              <div class="form-item-hint">
-                {{ t('system.config.publicBaseUrlHint') }}
+            <div class="sidebar-config-main">
+              <div class="sidebar-config-banner">
+                <div class="sidebar-config-banner__label">{{ t(currentUploadNav.titleKey) }}</div>
+                <div class="sidebar-config-banner__text">{{ t(currentUploadNav.descKey) }}</div>
               </div>
-            </a-form-item>
 
-            <a-form-item :label="t('system.config.accessPrefix')" name="accessPrefix">
-              <a-input
-                v-model:value="fileUploadConfig.accessPrefix"
-                :placeholder="t('system.config.accessPrefixPlaceholder')"
-              />
-            </a-form-item>
+              <a-form
+                :model="fileUploadConfig"
+                :label-col="{ span: 6 }"
+                :wrapper-col="{ span: 16 }"
+                layout="horizontal"
+              >
+                <template v-if="fileUploadConfig.storageType === 'LOCAL'">
+                  <a-form-item :label="t('system.config.localUploadPath')" name="localUploadPath">
+                    <a-input-group compact>
+                      <a-input
+                        v-model:value="fileUploadConfig.localUploadPath"
+                        readonly
+                        style="width: calc(100% - 120px)"
+                        :placeholder="t('system.config.localUploadPathPlaceholder')"
+                      />
+                      <a-button @click="openFolderPicker">{{ t('system.config.selectFolder') }}</a-button>
+                    </a-input-group>
+                    <div class="form-item-hint">
+                      {{ t('system.config.localUploadPathHint') }}
+                    </div>
+                  </a-form-item>
 
-            <a-form-item :label="t('system.config.providerConfigJson')" name="providerConfigJson">
-              <a-textarea
-                v-model:value="fileUploadConfig.providerConfigJson"
-                :rows="5"
-                :placeholder="t('system.config.providerConfigJsonPlaceholder')"
-              />
-            </a-form-item>
+                  <a-form-item :label="t('system.config.publicBaseUrl')" name="publicBaseUrl">
+                    <a-input
+                      v-model:value="fileUploadConfig.publicBaseUrl"
+                      :placeholder="runtimeDefaults?.recommendedPublicBaseUrl || t('system.config.publicBaseUrlPlaceholder')"
+                    />
+                    <div class="form-item-hint">
+                      {{ t('system.config.publicBaseUrlHint') }}
+                      <a-button
+                        v-if="runtimeDefaults?.recommendedPublicBaseUrl"
+                        type="link"
+                        size="small"
+                        class="inline-link-button"
+                        @click="applyRecommendedPublicBaseUrl"
+                      >
+                        {{ t('system.config.applyRecommendedUrl') }}
+                      </a-button>
+                    </div>
+                  </a-form-item>
 
-            <a-form-item :wrapper-col="{ span: 24 }">
-              <a-space>
-                <a-button type="primary" :loading="savingUpload" @click="saveFileUploadConfig">
-                  {{ t('common.save') }}
-                </a-button>
-                <a-button @click="resetFileUploadConfig">{{ t('common.reset') }}</a-button>
-              </a-space>
-            </a-form-item>
-          </a-form>
+                  <a-form-item :label="t('system.config.accessPrefix')" name="accessPrefix">
+                    <a-input
+                      v-model:value="fileUploadConfig.accessPrefix"
+                      :placeholder="t('system.config.accessPrefixPlaceholder')"
+                    />
+                  </a-form-item>
+
+                  <a-alert
+                    class="upload-url-preview"
+                    type="info"
+                    show-icon
+                    :message="t('system.config.finalAccessExample')"
+                    :description="fileUploadPreviewUrl"
+                  />
+                </template>
+
+                <template v-else-if="fileUploadConfig.storageType === 'MINIO'">
+                  <a-form-item :label="t('system.config.providerEndpoint')" name="minio.endpoint">
+                    <a-input v-model:value="minioConfig.endpoint" placeholder="http://127.0.0.1:9000" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerBucketName')" name="minio.bucketName">
+                    <a-input v-model:value="minioConfig.bucketName" placeholder="forgex" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerAccessKey')" name="minio.accessKey">
+                    <a-input v-model:value="minioConfig.accessKey" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerSecretKey')" name="minio.secretKey">
+                    <a-input-password v-model:value="minioConfig.secretKey" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerDomain')" name="minio.domain">
+                    <a-input v-model:value="minioConfig.domain" placeholder="http://127.0.0.1:9000" />
+                  </a-form-item>
+                </template>
+
+                <template v-else>
+                  <a-form-item :label="t('system.config.providerEndpoint')" name="oss.endpoint">
+                    <a-input v-model:value="ossConfig.endpoint" placeholder="oss-cn-hangzhou.aliyuncs.com" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerBucketName')" name="oss.bucketName">
+                    <a-input v-model:value="ossConfig.bucketName" placeholder="forgex-files" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerAccessKeyId')" name="oss.accessKeyId">
+                    <a-input v-model:value="ossConfig.accessKeyId" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerAccessKeySecret')" name="oss.accessKeySecret">
+                    <a-input-password v-model:value="ossConfig.accessKeySecret" />
+                  </a-form-item>
+                  <a-form-item :label="t('system.config.providerDomain')" name="oss.domain">
+                    <a-input v-model:value="ossConfig.domain" placeholder="https://cdn.example.com" />
+                  </a-form-item>
+                </template>
+
+                <a-form-item :wrapper-col="{ span: 24 }">
+                  <a-space>
+                    <a-button type="primary" :loading="savingUpload" @click="saveFileUploadConfig">
+                      {{ t('common.save') }}
+                    </a-button>
+                    <a-button @click="resetFileUploadConfig">{{ t('common.reset') }}</a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+            </div>
+          </div>
         </a-tab-pane>
 
         <a-tab-pane key="crypto" :tab="t('system.config.tabCrypto')">
@@ -768,6 +838,45 @@
         </div>
       </div>
     </a-modal>
+
+    <a-modal
+      v-model:open="folderPickerVisible"
+      :title="t('system.config.selectUploadFolder')"
+      width="720px"
+      :confirm-loading="folderPickerLoading"
+      @ok="confirmFolderSelection"
+      @cancel="folderPickerVisible = false"
+    >
+      <div class="folder-picker">
+        <div class="folder-picker-toolbar">
+          <a-input
+            v-model:value="newFolderName"
+            :placeholder="t('system.config.newFolderNamePlaceholder')"
+            @pressEnter="handleCreateFolder"
+          />
+          <a-button type="primary" :disabled="!selectedFolderPath" @click="handleCreateFolder">
+            {{ t('system.config.createFolder') }}
+          </a-button>
+        </div>
+        <a-tree
+          v-model:expandedKeys="folderExpandedKeys"
+          v-model:selectedKeys="folderSelectedKeys"
+          :tree-data="folderTreeData"
+          :load-data="loadFolderChildren"
+          :field-names="{ title: 'name', key: 'path', children: 'children' }"
+          @select="handleFolderSelect"
+        >
+          <template #title="{ name, path, writable }">
+            <span class="folder-node-title">
+              <span>{{ name }}</span>
+              <a-tag v-if="writable" color="green">{{ t('system.config.folderWritable') }}</a-tag>
+              <a-tag v-else color="default">{{ t('system.config.folderReadonly') }}</a-tag>
+              <span class="folder-node-path">{{ path }}</span>
+            </span>
+          </template>
+        </a-tree>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -782,6 +891,7 @@ import {
   DatabaseOutlined,
   DeleteOutlined,
   FileProtectOutlined,
+  FolderOpenOutlined,
   KeyOutlined,
   PictureOutlined,
   SettingOutlined,
@@ -813,8 +923,14 @@ import {
   generateRsaKeyPair,
   generateKmsMasterKey,
   getTdeStatus,
+  getFileUploadRuntimeDefaults,
+  getFileUploadFolderRoots,
+  getFileUploadFolderChildren,
+  createFileUploadFolder,
   type EmailConfig,
   type FileUploadConfig,
+  type FileUploadFolderNode,
+  type FileUploadRuntimeDefaults,
   type SecurityConfig,
   type SystemBasicConfig,
   type CryptoConfig,
@@ -850,6 +966,40 @@ const emailConfig = ref<EmailConfig>(createDefaultEmailConfig())
 const fileUploadConfig = ref<FileUploadConfig>(createDefaultFileUploadConfig())
 const cryptoConfig = ref<CryptoConfig>(createDefaultCryptoConfig())
 const tdeStatus = ref<TdeStatus | null>(null)
+const runtimeDefaults = ref<FileUploadRuntimeDefaults | null>(null)
+const folderPickerVisible = ref(false)
+const folderPickerLoading = ref(false)
+const folderTreeData = ref<FolderTreeNode[]>([])
+const folderExpandedKeys = ref<string[]>([])
+const folderSelectedKeys = ref<string[]>([])
+const selectedFolderPath = ref('')
+const newFolderName = ref('')
+
+type StorageType = FileUploadConfig['storageType']
+
+type ProviderConfig = Record<string, string>
+
+type FolderTreeNode = FileUploadFolderNode & {
+  key: string
+  isLeaf: boolean
+  children?: FolderTreeNode[]
+}
+
+const minioConfig = ref<ProviderConfig>({
+  endpoint: '',
+  accessKey: '',
+  secretKey: '',
+  bucketName: '',
+  domain: '',
+})
+
+const ossConfig = ref<ProviderConfig>({
+  endpoint: '',
+  accessKeyId: '',
+  accessKeySecret: '',
+  bucketName: '',
+  domain: '',
+})
 
 type EmailProviderPreset = 'local' | 'aliyun' | 'qq'
 
@@ -942,6 +1092,12 @@ const securityNavOptions: NavOption[] = [
   { value: 'transport', titleKey: 'system.config.transportCrypto', descKey: 'system.config.transportCryptoDesc' },
 ]
 
+const uploadNavOptions: Array<NavOption & { value: StorageType; icon: any }> = [
+  { value: 'LOCAL', titleKey: 'system.config.storageLocal', descKey: 'system.config.storageLocalDesc', icon: FolderOpenOutlined },
+  { value: 'MINIO', titleKey: 'system.config.storageMinio', descKey: 'system.config.storageMinioDesc', icon: DatabaseOutlined },
+  { value: 'OSS', titleKey: 'system.config.storageOss', descKey: 'system.config.storageOssDesc', icon: UploadOutlined },
+]
+
 const cryptoNavOptions: NavOption[] = [
   { value: 'symmetric', titleKey: 'system.config.symmetricKeys', descKey: 'system.config.symmetricKeysDesc' },
   { value: 'asymmetric', titleKey: 'system.config.asymmetricKeys', descKey: 'system.config.asymmetricKeysDesc' },
@@ -951,7 +1107,13 @@ const cryptoNavOptions: NavOption[] = [
 ]
 
 const currentSecurityNav = computed(() => securityNavOptions.find(o => o.value === securitySubTab.value) || securityNavOptions[0])
+const currentUploadNav = computed(() => uploadNavOptions.find(o => o.value === fileUploadConfig.value.storageType) || uploadNavOptions[0])
 const currentCryptoNav = computed(() => cryptoNavOptions.find(o => o.value === cryptoSubTab.value) || cryptoNavOptions[0])
+const fileUploadPreviewUrl = computed(() => {
+  const base = normalizePublicBaseUrl(fileUploadConfig.value.publicBaseUrl || runtimeDefaults.value?.recommendedPublicBaseUrl || '')
+  const prefix = normalizeAccessPrefix(fileUploadConfig.value.accessPrefix || runtimeDefaults.value?.accessPrefix || '/files')
+  return base ? `${base}${prefix}/example.png` : `${prefix}/example.png`
+})
 
 function normalizeSystemBasicConfig(config: Partial<SystemBasicConfig> | null | undefined): SystemBasicConfig {
   const defaults = createDefaultSystemBasicConfig()
@@ -1004,7 +1166,7 @@ function normalizeEmailConfig(config: Partial<EmailConfig> | null | undefined): 
 
 function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | undefined): FileUploadConfig {
   const defaults = createDefaultFileUploadConfig()
-  const publicBaseUrl = String(config?.publicBaseUrl || defaults.publicBaseUrl || '').trim().replace(/\/+$/, '')
+  const publicBaseUrl = normalizePublicBaseUrl(config?.publicBaseUrl || defaults.publicBaseUrl || '')
   const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/files').trim()
   return {
     ...defaults,
@@ -1012,6 +1174,136 @@ function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | un
     storageType: ((config?.storageType || defaults.storageType) as FileUploadConfig['storageType']),
     publicBaseUrl,
     accessPrefix: accessPrefix.startsWith('/') ? accessPrefix : `/${accessPrefix}`,
+  }
+}
+
+function normalizeSystemBasicMedia(config: SystemBasicConfig): SystemBasicConfig {
+  return {
+    ...config,
+    systemLogo: normalizeConfigMediaUrl(config.systemLogo),
+    loginBackgroundImage: normalizeConfigMediaUrl(config.loginBackgroundImage),
+    loginBackgroundVideo: normalizeConfigMediaUrl(config.loginBackgroundVideo),
+  }
+}
+
+function normalizeConfigMediaUrl(value: string): string {
+  const rawValue = String(value || '').trim().replace(/\\/g, '/')
+  if (!rawValue) {
+    return ''
+  }
+  if (
+    rawValue.startsWith('data:') ||
+    rawValue.startsWith('blob:') ||
+    rawValue.startsWith('http://') ||
+    rawValue.startsWith('https://') ||
+    rawValue.startsWith('//')
+  ) {
+    return rawValue
+  }
+
+  const recommendedBaseUrl = normalizePublicBaseUrl(
+    fileUploadConfig.value.publicBaseUrl || runtimeDefaults.value?.recommendedPublicBaseUrl || '',
+  )
+  if (!recommendedBaseUrl) {
+    return rawValue
+  }
+
+  if (rawValue.startsWith('/api/files/')) {
+    return `${recommendedBaseUrl}${rawValue.substring('/api'.length)}`
+  }
+  if (rawValue.startsWith('api/files/')) {
+    return `${recommendedBaseUrl}/${rawValue.substring('api/'.length)}`
+  }
+  if (rawValue.startsWith('/files/')) {
+    return `${recommendedBaseUrl}${rawValue}`
+  }
+  if (rawValue.startsWith('files/')) {
+    return `${recommendedBaseUrl}/${rawValue}`
+  }
+  return rawValue
+}
+
+function normalizeAccessPrefix(value: string): string {
+  const normalized = String(value || '/files').trim().replace(/\/+$/, '') || '/files'
+  return normalized.startsWith('/') ? normalized : `/${normalized}`
+}
+
+function normalizePublicBaseUrl(value: string): string {
+  let rawValue = String(value || '').trim().replace(/\/+$/, '')
+  if (!rawValue) {
+    return ''
+  }
+  if (!/^https?:\/\//i.test(rawValue)) {
+    rawValue = `http://${rawValue}`
+  }
+
+  try {
+    const url = new URL(rawValue)
+    const recommended = new URL(runtimeDefaults.value?.recommendedPublicBaseUrl || 'http://127.0.0.1:9000/api')
+    const gatewayPort = recommended.port || '9000'
+    const gatewayPrefix = (recommended.pathname || '/api').replace(/\/+$/, '') || '/api'
+    const port = url.port || gatewayPort
+    const inputPath = (url.pathname === '/' ? '' : (url.pathname || '').replace(/\/+$/, ''))
+    const shouldUseGatewayPrefix = port === gatewayPort
+      && inputPath !== gatewayPrefix
+      && !inputPath.startsWith(`${gatewayPrefix}/`)
+    const path = shouldUseGatewayPrefix
+      ? `${gatewayPrefix}${inputPath === '/' ? '' : inputPath}`
+      : (inputPath === '/' ? '' : inputPath)
+
+    return `${url.protocol}//${url.hostname}${port ? `:${port}` : ''}${path}`
+  } catch (e) {
+    return rawValue
+  }
+}
+
+function parseProviderConfig(value: string): ProviderConfig {
+  if (!value.trim()) {
+    return {}
+  }
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch (e) {
+    return {}
+  }
+}
+
+function stringifyProviderConfig(config: ProviderConfig): string {
+  const normalized = Object.entries(config).reduce<ProviderConfig>((acc, [key, value]) => {
+    const text = String(value || '').trim()
+    if (text) {
+      acc[key] = text
+    }
+    return acc
+  }, {})
+  return JSON.stringify(normalized, null, 2)
+}
+
+function syncProviderForms(config: FileUploadConfig) {
+  const parsed = parseProviderConfig(config.providerConfigJson || '')
+  minioConfig.value = {
+    endpoint: parsed.endpoint || '',
+    accessKey: parsed.accessKey || '',
+    secretKey: parsed.secretKey || '',
+    bucketName: parsed.bucketName || '',
+    domain: parsed.domain || '',
+  }
+  ossConfig.value = {
+    endpoint: parsed.endpoint || '',
+    accessKeyId: parsed.accessKeyId || '',
+    accessKeySecret: parsed.accessKeySecret || '',
+    bucketName: parsed.bucketName || '',
+    domain: parsed.domain || '',
+  }
+}
+
+function toFolderTreeNode(node: FileUploadFolderNode): FolderTreeNode {
+  return {
+    ...node,
+    key: node.path,
+    isLeaf: node.leaf,
+    children: node.leaf ? [] : undefined,
   }
 }
 
@@ -1034,17 +1326,27 @@ function formatMediaUrl(value: string): string {
 async function loadAllConfig() {
   loading.value = true
   try {
-    const [basic, security, email, upload, crypto] = await Promise.all([
+    const [basic, security, email, upload, crypto, uploadDefaults] = await Promise.all([
       getSystemBasicConfig(),
       getSecurityConfig(),
       getEmailConfig(),
       getFileUploadConfig(),
       getCryptoConfig(),
+      getFileUploadRuntimeDefaults(),
     ])
-    basicConfig.value = normalizeSystemBasicConfig(basic)
+    runtimeDefaults.value = uploadDefaults
+    fileUploadConfig.value = normalizeFileUploadConfig(upload)
+    basicConfig.value = normalizeSystemBasicMedia(normalizeSystemBasicConfig(basic))
     securityConfig.value = normalizeSecurityConfig(security)
     emailConfig.value = normalizeEmailConfig(email)
-    fileUploadConfig.value = normalizeFileUploadConfig(upload)
+    if (fileUploadConfig.value.storageType === 'LOCAL' && !fileUploadConfig.value.publicBaseUrl && uploadDefaults.recommendedPublicBaseUrl) {
+      fileUploadConfig.value.publicBaseUrl = uploadDefaults.recommendedPublicBaseUrl
+    }
+    if (!fileUploadConfig.value.accessPrefix && uploadDefaults.accessPrefix) {
+      fileUploadConfig.value.accessPrefix = uploadDefaults.accessPrefix
+    }
+    basicConfig.value = normalizeSystemBasicMedia(basicConfig.value)
+    syncProviderForms(fileUploadConfig.value)
     cryptoConfig.value = normalizeCryptoConfig(crypto)
   } catch (e) {
     message.error(t('common.loadFailed'))
@@ -1056,6 +1358,7 @@ async function loadAllConfig() {
 async function saveSystemConfig() {
   savingSystem.value = true
   try {
+    basicConfig.value = normalizeSystemBasicMedia(basicConfig.value)
     await setSystemBasicConfig(basicConfig.value)
     // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
@@ -1068,6 +1371,7 @@ async function saveSystemConfig() {
 async function savePortalConfig() {
   savingPortal.value = true
   try {
+    basicConfig.value = normalizeSystemBasicMedia(basicConfig.value)
     await setSystemBasicConfig(basicConfig.value)
     // 成功/失败提示均由后端返回，http 拦截器会自动显示
   } catch (e) {
@@ -1092,9 +1396,18 @@ async function saveSecurityConfig() {
 async function saveFileUploadConfig() {
   savingUpload.value = true
   try {
+    fileUploadConfig.value.accessPrefix = normalizeAccessPrefix(fileUploadConfig.value.accessPrefix)
+    fileUploadConfig.value.publicBaseUrl = normalizePublicBaseUrl(fileUploadConfig.value.publicBaseUrl)
     if (fileUploadConfig.value.storageType === 'LOCAL' && !fileUploadConfig.value.publicBaseUrl.trim()) {
       message.error(t('system.config.publicBaseUrlRequired'))
       return
+    }
+    if (fileUploadConfig.value.storageType === 'LOCAL') {
+      fileUploadConfig.value.providerConfigJson = ''
+    } else if (fileUploadConfig.value.storageType === 'MINIO') {
+      fileUploadConfig.value.providerConfigJson = stringifyProviderConfig(minioConfig.value)
+    } else {
+      fileUploadConfig.value.providerConfigJson = stringifyProviderConfig(ossConfig.value)
     }
     await setFileUploadConfig(fileUploadConfig.value)
     // 成功/失败提示均由后端返回，http 拦截器会自动显示
@@ -1165,6 +1478,13 @@ function resetEmailConfig() {
 
 function resetFileUploadConfig() {
   fileUploadConfig.value = createDefaultFileUploadConfig()
+  if (runtimeDefaults.value?.recommendedPublicBaseUrl) {
+    fileUploadConfig.value.publicBaseUrl = runtimeDefaults.value.recommendedPublicBaseUrl
+  }
+  if (runtimeDefaults.value?.accessPrefix) {
+    fileUploadConfig.value.accessPrefix = runtimeDefaults.value.accessPrefix
+  }
+  syncProviderForms(fileUploadConfig.value)
   message.info(t('common.resetSuccess'))
 }
 
@@ -1216,6 +1536,102 @@ async function handleCheckTde() {
   }
 }
 
+function handleUploadTypeChange(type: StorageType) {
+  fileUploadConfig.value.storageType = type
+  if (type === 'LOCAL' && !fileUploadConfig.value.publicBaseUrl && runtimeDefaults.value?.recommendedPublicBaseUrl) {
+    fileUploadConfig.value.publicBaseUrl = runtimeDefaults.value.recommendedPublicBaseUrl
+  }
+  if (type !== 'LOCAL') {
+    syncProviderForms(fileUploadConfig.value)
+  }
+}
+
+function applyRecommendedPublicBaseUrl() {
+  if (runtimeDefaults.value?.recommendedPublicBaseUrl) {
+    fileUploadConfig.value.publicBaseUrl = runtimeDefaults.value.recommendedPublicBaseUrl
+  }
+  if (runtimeDefaults.value?.accessPrefix) {
+    fileUploadConfig.value.accessPrefix = runtimeDefaults.value.accessPrefix
+  }
+}
+
+async function openFolderPicker() {
+  folderPickerVisible.value = true
+  folderPickerLoading.value = true
+  try {
+    const roots = await getFileUploadFolderRoots()
+    folderTreeData.value = roots.map(toFolderTreeNode)
+    if (fileUploadConfig.value.localUploadPath) {
+      selectedFolderPath.value = fileUploadConfig.value.localUploadPath
+      folderSelectedKeys.value = [fileUploadConfig.value.localUploadPath]
+    }
+  } finally {
+    folderPickerLoading.value = false
+  }
+}
+
+async function loadFolderChildren(treeNode: any) {
+  const node = treeNode.dataRef as FolderTreeNode
+  if (node.children && node.children.length) {
+    return
+  }
+  const children = await getFileUploadFolderChildren(node.path)
+  node.children = children.map(toFolderTreeNode)
+  folderTreeData.value = [...folderTreeData.value]
+}
+
+function handleFolderSelect(keys: string[]) {
+  selectedFolderPath.value = keys[0] || ''
+}
+
+function confirmFolderSelection() {
+  if (selectedFolderPath.value) {
+    fileUploadConfig.value.localUploadPath = selectedFolderPath.value
+  }
+  folderPickerVisible.value = false
+}
+
+async function handleCreateFolder() {
+  const parentPath = selectedFolderPath.value
+  const folderName = newFolderName.value.trim()
+  if (!parentPath || !folderName) {
+    return
+  }
+  folderPickerLoading.value = true
+  try {
+    const created = await createFileUploadFolder(parentPath, folderName)
+    const createdNode = toFolderTreeNode(created)
+    selectedFolderPath.value = created.path
+    folderSelectedKeys.value = [created.path]
+    folderExpandedKeys.value = Array.from(new Set([...folderExpandedKeys.value, parentPath]))
+    await refreshFolderNode(parentPath, createdNode)
+    newFolderName.value = ''
+  } finally {
+    folderPickerLoading.value = false
+  }
+}
+
+async function refreshFolderNode(parentPath: string, selectedChild?: FolderTreeNode) {
+  const children = (await getFileUploadFolderChildren(parentPath)).map(toFolderTreeNode)
+  const attachChildren = (nodes: FolderTreeNode[]): boolean => {
+    for (const node of nodes) {
+      if (node.path === parentPath) {
+        node.children = children
+        return true
+      }
+      if (node.children && attachChildren(node.children)) {
+        return true
+      }
+    }
+    return false
+  }
+  attachChildren(folderTreeData.value)
+  if (selectedChild && !children.some(item => item.path === selectedChild.path)) {
+    folderTreeData.value.push(selectedChild)
+  }
+  folderTreeData.value = [...folderTreeData.value]
+}
+
 function handleEmailProviderChange(provider: EmailProviderPreset) {
   const current = emailConfig.value
   const preset = emailProviderPresets[provider]
@@ -1263,7 +1679,7 @@ async function handleVideoUpload(options: any) {
       moduleCode: 'sys-config',
       moduleName: '系统配置',
     })
-    basicConfig.value.loginBackgroundVideo = fileUrl
+    basicConfig.value.loginBackgroundVideo = normalizeConfigMediaUrl(fileUrl)
     videoFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
     options.onSuccess?.(fileUrl)
   } catch (e) {
@@ -1296,7 +1712,7 @@ async function handleBgImageUpload(options: any) {
       moduleCode: 'sys-config',
       moduleName: '系统配置',
     })
-    basicConfig.value.loginBackgroundImage = fileUrl
+    basicConfig.value.loginBackgroundImage = normalizeConfigMediaUrl(fileUrl)
     bgImageFileList.value = [{ uid: options.file.uid, name: options.file.name, status: 'done', url: fileUrl }]
     options.onSuccess?.(fileUrl)
   } catch (e) {
@@ -1308,7 +1724,8 @@ async function handleBgImageUpload(options: any) {
   }
 }
 
-function handleLogoUploadSuccess() {
+function handleLogoUploadSuccess(url?: string) {
+  basicConfig.value.systemLogo = normalizeConfigMediaUrl(url || basicConfig.value.systemLogo)
   message.success(t('common.uploadSuccess'))
 }
 
@@ -1398,10 +1815,20 @@ onMounted(() => {
 }
 
 .sidebar-nav-card__title {
-  display: block;
   font-size: 15px;
   font-weight: 600;
   color: var(--fx-text-primary);
+}
+
+.sidebar-nav-card__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-nav-card__icon {
+  color: var(--fx-primary);
+  font-size: 16px;
 }
 
 .sidebar-nav-card__desc {
@@ -1410,6 +1837,38 @@ onMounted(() => {
   font-size: 13px;
   line-height: 1.6;
   color: var(--fx-text-secondary);
+}
+
+.inline-link-button {
+  height: auto;
+  padding: 0 0 0 8px;
+}
+
+.upload-url-preview {
+  margin: 0 16px 24px 25%;
+}
+
+.folder-picker {
+  min-height: 360px;
+}
+
+.folder-picker-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.folder-node-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.folder-node-path {
+  color: var(--fx-text-secondary);
+  font-size: 12px;
 }
 
 .sidebar-config-main {
@@ -1755,6 +2214,10 @@ onMounted(() => {
   .sidebar-nav-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .upload-url-preview {
+    margin-left: 0;
   }
 }
 </style>

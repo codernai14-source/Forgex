@@ -19,7 +19,7 @@
           <a-space>
             <a-button data-guide-id="sys-role-add" type="primary" @click="openAdd" v-permission="'sys:role:add'">
               <template #icon><PlusOutlined /></template>
-              {{ $t('common.add') }}{{ $t('system.role.roleName') }}
+              {{ $t('system.role.form.addRole') }}
             </a-button>
             <a-button
               data-guide-id="sys-role-batch-delete"
@@ -97,7 +97,7 @@
       <BaseFormDialog
         v-model:open="visible"
         :title="isEdit ? $t('system.role.form.editRole') : $t('system.role.form.addRole')"
-        :confirm-loading="formLoading"
+        :loading="formLoading"
         @ok="handleSubmit"
         @cancel="handleCancel"
       >
@@ -202,7 +202,7 @@ import {
   DeleteOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons-vue'
-import { getRolePage, deleteRole, batchDeleteRoles } from '@/api/system/role'
+import { getRolePage, addRole, updateRole, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import { resolveSystemPageGuide } from '@/guide/systemPageGuides'
 import { useDict } from '@/hooks/useDict'
 import { useGuideStore } from '@/stores/guide'
@@ -391,13 +391,41 @@ const openAdd = () => {
 
 const openEdit = (record: Role) => {
   isEdit.value = true
-  formData.value = { ...record }
+  formData.value = {
+    ...record,
+    status: normalizeBoolean(record.status) === 1,
+  }
   visible.value = true
 }
 
 const handleSubmit = async () => {
-  await tableRef.value?.refresh?.()
-  visible.value = false
+  try {
+    await formRef.value?.validate()
+    formLoading.value = true
+
+    const tenantId = resolveTenantId()
+    const payload = {
+      ...formData.value,
+      status: formData.value.status === true,
+      ...(tenantId ? { tenantId } : {}),
+    }
+
+    if (isEdit.value) {
+      await updateRole(payload)
+    } else {
+      await addRole(payload)
+    }
+
+    visible.value = false
+    formRef.value?.resetFields()
+    await tableRef.value?.refresh?.()
+  } catch (error: any) {
+    if (!error?.errorFields) {
+      message.error(t('common.saveFailed'))
+    }
+  } finally {
+    formLoading.value = false
+  }
 }
 
 const handleCancel = () => {

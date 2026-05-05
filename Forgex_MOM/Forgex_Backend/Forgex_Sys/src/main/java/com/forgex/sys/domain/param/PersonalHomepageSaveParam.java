@@ -5,6 +5,9 @@ import lombok.Data;
 
 /**
  * 首页配置保存参数。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 public class PersonalHomepageSaveParam {

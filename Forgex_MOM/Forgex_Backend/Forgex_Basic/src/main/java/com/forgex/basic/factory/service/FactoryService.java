@@ -9,6 +9,12 @@ import com.forgex.basic.factory.domain.param.FactoryPageParam;
 
 import java.util.List;
 
+/**
+ * 工厂服务接口。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 public interface FactoryService extends IService<BasicFactory> {
 
     /**

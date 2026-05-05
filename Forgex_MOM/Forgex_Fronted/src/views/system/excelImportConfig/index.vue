@@ -91,6 +91,8 @@ const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
   columns: [
     { field: 'tableName', title: t('system.excel.tableName'), minWidth: 180, align: 'left' },
     { field: 'tableCode', title: t('system.excel.tableCode'), width: 180, align: 'left' },
+    { field: 'handlerBeanName', title: t('system.excel.handlerBeanName'), minWidth: 180, align: 'left' },
+    { field: 'importPermission', title: t('system.excel.importPermission'), minWidth: 180, align: 'left' },
     { field: 'title', title: t('system.excel.title'), minWidth: 180, align: 'left' },
     { field: 'subtitle', title: t('system.excel.subtitle'), minWidth: 180, align: 'left' },
     { field: 'version', title: t('system.excel.version'), width: 100, align: 'center' },
@@ -174,15 +176,26 @@ async function handleModalSubmit() {
       id: formData.id,
       tableName: formData.tableName,
       tableCode: formData.tableCode,
+      handlerBeanName: formData.handlerBeanName,
+      importPermission: formData.importPermission,
       title: formData.title,
       subtitle: formData.subtitle,
       version: formData.version,
-      fields: formData.fields.map((field: any) => ({
-        fieldName: field.fieldName,
+      items: formData.fields.map((field: any, index: number) => ({
+        id: field.id,
+        sheetCode: field.sheetCode || 'main',
+        sheetName: field.sheetName || (field.sheetCode === 'main' || !field.sheetCode ? t('system.excel.commonImport.mainSheet') : field.sheetCode),
+        i18nJson: field.i18nJson,
+        importField: field.importField || field.fieldName,
         fieldType: field.fieldType,
-        dataSourceConfig: field.dataSourceConfig,
+        dictCode: field.dictCode || field.dataSourceConfig?.dictCode,
+        dataSourceType: field.dataSourceType || field.dataSourceConfig?.dataSourceType || 'NONE',
+        dataSourceValue: field.dataSourceValue || resolveDataSourceValue(field.dataSourceConfig),
+        dependsOnFieldKey: field.dependsOnFieldKey,
+        separator: field.separator,
+        fieldRemark: field.fieldRemark,
         required: field.required,
-        orderNum: field.orderNum,
+        orderNum: field.orderNum ?? index,
       })),
     }
 
@@ -194,6 +207,22 @@ async function handleModalSubmit() {
     console.error('保存导入配置失败', error)
     message.error(t('system.excel.message.saveConfigFailed'))
   }
+}
+
+function resolveDataSourceValue(config?: any) {
+  if (!config) {
+    return undefined
+  }
+  if (config.dataSourceType === 'DICT') {
+    return config.dictCode
+  }
+  if (config.dataSourceType === 'JSON') {
+    return config.dataSourceJson
+  }
+  if (config.dataSourceType === 'PROVIDER') {
+    return [config.providerCode, config.providerField].filter(Boolean).join(':')
+  }
+  return undefined
 }
 
 function handleDelete(id: number) {

@@ -93,12 +93,12 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * 编码规则明细 Mapper
      */
     private final SysEncodeRuleDetailMapper encodeRuleDetailMapper;
-    
+
     /**
      * Redis 工具类
      */
     private final RedisHelper redisHelper;
-    
+
     /**
      * Redis StringTemplate，用于原子递增操作
      */
@@ -110,11 +110,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     private static final String REDIS_KEY_SERIAL_PREFIX = "encode:serial:";
 
     private static final Long PUBLIC_TENANT_ID = 0L;
-    
+
     /**
      * 分页查询编码规则列表
      * <p>根据查询条件分页查询编码规则列表，支持按规则代码、规则名称、模块等条件过滤。</p>
-     * 
+     *
      * @param page 分页参数
      * @param param 查询条件
      * @return 分页编码规则 DTO 列表
@@ -129,11 +129,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             return resultPage.convert(this::convertToDTO);
         });
     }
-    
+
     /**
      * 查询编码规则列表
      * <p>根据查询条件查询所有符合条件的编码规则列表。</p>
-     * 
+     *
      * @param param 查询条件
      * @return 编码规则 DTO 列表
      * @see #buildQueryWrapper(EncodeRulePageParam)
@@ -147,11 +147,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             return rules.stream().map(this::convertToDTO).collect(Collectors.toList());
         });
     }
-    
+
     /**
      * 根据 ID 获取编码规则详情
      * <p>根据编码规则 ID 查询详细信息，包含主表和明细表的完整数据。</p>
-     * 
+     *
      * @param id 编码规则 ID
      * @return 编码规则详情 DTO
      * @see #convertToDTO(SysEncodeRule)
@@ -170,11 +170,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             return dto;
         });
     }
-    
+
     /**
      * 根据 ID 获取编码规则详情（VO）
      * <p>根据编码规则 ID 查询详细信息，并将结果转换为 VO 返回给前端。</p>
-     * 
+     *
      * @param id 编码规则 ID
      * @return 编码规则详情 VO
      * @see #getEncodeRuleById(Long)
@@ -188,7 +188,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         }
         return convertToVO(dto);
     }
-    
+
     /**
      * 保存编码规则（新增或更新）
      * <p>根据参数中是否包含 ID 来判断是新增还是更新操作。</p>
@@ -199,7 +199,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      *   <li>保存或更新主表数据</li>
      *   <li>保存或更新明细数据（先删除后新增）</li>
      * </ol>
-     * 
+     *
      * @param param 编码规则保存参数
      * @return 保存后的编码规则 ID
      * @throws I18nBusinessException 当规则代码已存在时抛出
@@ -265,7 +265,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             return ruleId;
         });
     }
-    
+
     /**
      * 批量插入明细数据
      *
@@ -276,11 +276,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             encodeRuleDetailMapper.insert(detail);
         }
     }
-    
+
     /**
      * 删除编码规则
      * <p>根据编码规则 ID 删除规则及其关联的明细数据，并清理 Redis 缓存。</p>
-     * 
+     *
      * @param id 编码规则 ID
      * @throws I18nBusinessException 当规则不存在时抛出
      */
@@ -291,7 +291,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         if (rule == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
-        
+
         runWithTenantIgnore(() -> {
             // 删除明细数据
             deleteDetailsByRuleId(id);
@@ -307,11 +307,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
 
         log.info("删除编码规则成功，规则代码：{}", rule.getRuleCode());
     }
-    
+
     /**
      * 批量删除编码规则
      * <p>批量删除多个编码规则及其关联的明细数据。</p>
-     * 
+     *
      * @param ids 编码规则 ID 列表
      */
     @Override
@@ -320,20 +320,20 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         if (CollectionUtils.isEmpty(ids)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.DELETE_IDS_REQUIRED);
         }
-        
+
         for (Long id : ids) {
             deleteEncodeRule(id);
         }
-        
+
         log.info("批量删除编码规则成功，删除数量：{}", ids.size());
     }
-    
+
     /**
      * 根据规则代码生成编码
      * <p>根据指定的规则代码生成唯一的业务编码，支持序列号原子递增。</p>
      * <p>编码格式：前缀 + 日期格式 + 序列号</p>
      * <p>示例：SO202604100001</p>
-     * 
+     *
      * @param ruleCode 规则代码
      * @return 生成的业务编码
      * @throws I18nBusinessException 当规则代码不存在或已禁用时抛出
@@ -347,7 +347,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             if (!StringUtils.hasText(ruleCode)) {
                 throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EMPTY);
             }
-            
+
             // 查询编码规则
             LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(SysEncodeRule::getRuleCode, ruleCode);
@@ -357,46 +357,46 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
                     .orderByAsc(SysEncodeRule::getSortOrder)
                     .last("LIMIT 1");
             SysEncodeRule rule = this.getOne(wrapper);
-            
+
             if (rule == null) {
                 log.warn("编码规则不存在或已禁用：{}", ruleCode);
                 throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND_OR_DISABLED, ruleCode);
             }
-            
+
             // 构建 Redis Key
             String redisKey = buildRedisKey(rule);
-            
+
             // 使用 Redis INCR 原子递增获取序列号
             Long serial = stringRedisTemplate.opsForValue().increment(redisKey);
-            
+
             // 如果是第一个序列号，设置过期时间
             if (serial == 1) {
                 setRedisKeyExpire(rule, redisKey);
             }
-            
+
             // 格式化序列号
             String formattedSerial = formatSerial(serial, rule.getSerialLength());
-            
+
             // 构建完整编码
             StringBuilder code = new StringBuilder();
-            
+
             // 添加前缀
             if (StringUtils.hasText(rule.getPrefix())) {
                 code.append(rule.getPrefix());
             }
-            
+
             // 添加日期格式
             if (StringUtils.hasText(rule.getDateFormat())) {
                 String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern(rule.getDateFormat()));
                 code.append(dateStr);
             }
-            
+
             // 添加序列号
             code.append(formattedSerial);
-            
+
             String generatedCode = code.toString();
             log.info("生成编码成功：规则代码={}, 生成编码={}", ruleCode, generatedCode);
-            
+
             return generatedCode;
         } finally {
             if (!oldIgnore) {
@@ -404,11 +404,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             }
         }
     }
-    
+
     /**
      * 启用编码规则
      * <p>将指定编码规则的状态设置为启用。</p>
-     * 
+     *
      * @param id 编码规则 ID
      */
     @Override
@@ -418,20 +418,20 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         if (rule == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
-        
+
         rule.setIsEnabled(true);
         runWithTenantIgnore(() -> {
             this.updateById(rule);
             return null;
         });
-        
+
         log.info("启用编码规则成功：{}", rule.getRuleCode());
     }
-    
+
     /**
      * 禁用编码规则
      * <p>将指定编码规则的状态设置为禁用。</p>
-     * 
+     *
      * @param id 编码规则 ID
      */
     @Override
@@ -441,55 +441,55 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         if (rule == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND);
         }
-        
+
         rule.setIsEnabled(false);
         runWithTenantIgnore(() -> {
             this.updateById(rule);
             return null;
         });
-        
+
         log.info("禁用编码规则成功：{}", rule.getRuleCode());
     }
-    
+
     /**
      * 构建查询条件
      * <p>根据查询参数构建 LambdaQueryWrapper 查询条件。</p>
-     * 
+     *
      * @param param 查询参数
      * @return LambdaQueryWrapper 查询条件
      */
     private LambdaQueryWrapper<SysEncodeRule> buildQueryWrapper(EncodeRulePageParam param) {
         LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
-        
+
         // 租户隔离
         addCurrentAndPublicTenantCondition(wrapper);
-        
+
         if (param != null) {
             // 规则代码模糊查询
-            wrapper.like(StringUtils.hasText(param.getRuleCode()), 
+            wrapper.like(StringUtils.hasText(param.getRuleCode()),
                 SysEncodeRule::getRuleCode, param.getRuleCode());
-            
+
             // 规则名称模糊查询
-            wrapper.like(StringUtils.hasText(param.getRuleName()), 
+            wrapper.like(StringUtils.hasText(param.getRuleName()),
                 SysEncodeRule::getRuleName, param.getRuleName());
-            
+
             // 模块精确查询
-            wrapper.eq(StringUtils.hasText(param.getModule()), 
+            wrapper.eq(StringUtils.hasText(param.getModule()),
                 SysEncodeRule::getModule, param.getModule());
-            
+
             // 是否启用精确查询
-            wrapper.eq(param.getIsEnabled() != null, 
+            wrapper.eq(param.getIsEnabled() != null,
                 SysEncodeRule::getIsEnabled, param.getIsEnabled());
-            
+
             // 重置周期精确查询
-            wrapper.eq(StringUtils.hasText(param.getResetCycle()), 
+            wrapper.eq(StringUtils.hasText(param.getResetCycle()),
                 SysEncodeRule::getResetCycle, param.getResetCycle());
         }
-        
+
         // 按排序号升序，创建时间降序
         wrapper.orderByAsc(SysEncodeRule::getSortOrder)
                .orderByDesc(SysEncodeRule::getCreateTime);
-        
+
         return wrapper;
     }
 
@@ -536,11 +536,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             return rule;
         });
     }
-    
+
     /**
      * 校验规则代码唯一性
      * <p>检查规则代码是否已存在，排除当前规则（更新场景）。</p>
-     * 
+     *
      * @param ruleCode 规则代码
      * @param excludeId 排除的 ID（更新时传入）
      * @throws I18nBusinessException 当规则代码已存在时抛出
@@ -549,25 +549,25 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         if (!StringUtils.hasText(ruleCode)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EMPTY);
         }
-        
+
         LambdaQueryWrapper<SysEncodeRule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysEncodeRule::getRuleCode, ruleCode);
         addCurrentAndPublicTenantCondition(wrapper);
-        
+
         // 更新时排除当前规则
         if (excludeId != null) {
             wrapper.ne(SysEncodeRule::getId, excludeId);
         }
-        
+
         Long count = runWithTenantIgnore(() -> this.count(wrapper));
         if (count > 0) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_CODE_EXISTS, ruleCode);
         }
     }
-    
+
     /**
      * 根据规则 ID 查询明细列表
-     * 
+     *
      * @param ruleId 规则 ID
      * @return 明细 DTO 列表
      */
@@ -575,14 +575,14 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         LambdaQueryWrapper<SysEncodeRuleDetail> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysEncodeRuleDetail::getRuleId, ruleId);
         wrapper.orderByAsc(SysEncodeRuleDetail::getSegmentOrder);
-        
+
         List<SysEncodeRuleDetail> details = encodeRuleDetailMapper.selectList(wrapper);
         return details.stream().map(this::convertToDetailDTO).collect(Collectors.toList());
     }
-    
+
     /**
      * 根据规则 ID 删除明细数据
-     * 
+     *
      * @param ruleId 规则 ID
      */
     private void deleteDetailsByRuleId(Long ruleId) {
@@ -590,18 +590,18 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         wrapper.eq(SysEncodeRuleDetail::getRuleId, ruleId);
         encodeRuleDetailMapper.delete(wrapper);
     }
-    
+
     /**
      * 构建 Redis Key
      * <p>根据重置周期生成不同的 Redis Key。</p>
-     * 
+     *
      * @param rule 编码规则
      * @return Redis Key
      */
     private String buildRedisKey(SysEncodeRule rule) {
         StringBuilder key = new StringBuilder(REDIS_KEY_SERIAL_PREFIX);
         key.append(rule.getRuleCode());
-        
+
         // 根据重置周期添加时间维度
         String resetCycle = rule.getResetCycle();
         if ("DAILY".equals(resetCycle)) {
@@ -612,20 +612,20 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             key.append(":").append(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy")));
         }
         // NEVER 或不设置则不添加时间维度
-        
+
         return key.toString();
     }
-    
+
     /**
      * 设置 Redis Key 过期时间
      * <p>根据重置周期设置不同的过期时间。</p>
-     * 
+     *
      * @param rule 编码规则
      * @param redisKey Redis Key
      */
     private void setRedisKeyExpire(SysEncodeRule rule, String redisKey) {
         long expireSeconds;
-        
+
         switch (rule.getResetCycle()) {
             case "DAILY":
                 // 每日重置：设置到当天 23:59:59
@@ -652,7 +652,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
                 // 从不重置：永久不过期
                 return;
         }
-        
+
         if (expireSeconds > 0) {
             stringRedisTemplate.execute((RedisCallback<Boolean>) connection ->
                 connection.keyCommands().expire(
@@ -662,11 +662,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             );
         }
     }
-    
+
     /**
      * 格式化序列号
      * <p>将序列号格式化为指定长度的字符串，不足补零。</p>
-     * 
+     *
      * @param serial 序列号
      * @param length 长度
      * @return 格式化后的序列号
@@ -675,12 +675,12 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         if (length == null || length <= 0) {
             length = 4; // 默认长度为 4
         }
-        
+
         String serialStr = String.valueOf(serial);
         if (serialStr.length() >= length) {
             return serialStr;
         }
-        
+
         // 不足长度时前面补零
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < length - serialStr.length(); i++) {
@@ -689,11 +689,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         sb.append(serialStr);
         return sb.toString();
     }
-    
+
     /**
      * 清理 Redis 缓存
      * <p>删除编码规则相关的 Redis 缓存。</p>
-     * 
+     *
      * @param ruleCode 规则代码
      */
     private void clearRedisCache(String ruleCode) {
@@ -702,11 +702,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         // 实际应用中可能需要使用 SCAN 命令匹配删除
         redisHelper.delete(redisKey);
     }
-    
+
     /**
      * 实体转 DTO
      * <p>将编码规则实体转换为 DTO。</p>
-     * 
+     *
      * @param rule 编码规则实体
      * @return 编码规则 DTO
      */
@@ -715,11 +715,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         BeanUtils.copyProperties(rule, dto);
         return dto;
     }
-    
+
     /**
      * 明细实体转 DTO
      * <p>将编码规则明细实体转换为 DTO。</p>
-     * 
+     *
      * @param detail 明细实体
      * @return 明细 DTO
      */
@@ -728,22 +728,22 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         BeanUtils.copyProperties(detail, dto);
         return dto;
     }
-    
+
     /**
      * DTO 转 VO
      * <p>将编码规则 DTO 转换为 VO，添加字典翻译等展示字段。</p>
-     * 
+     *
      * @param dto 编码规则 DTO
      * @return 编码规则 VO
      */
     private EncodeRuleVO convertToVO(EncodeRuleDTO dto) {
         EncodeRuleVO vo = new EncodeRuleVO();
         BeanUtils.copyProperties(dto, vo);
-        
+
         // TODO: 添加字典翻译逻辑
         // vo.setResetCycleText(translateResetCycle(dto.getResetCycle()));
         // vo.setIsEnabledText(dto.getIsEnabled() ? "启用" : "禁用");
-        
+
         // 转换明细列表
         if (!CollectionUtils.isEmpty(dto.getDetailList())) {
             List<EncodeRuleDetailVO> detailVoList = dto.getDetailList().stream()
@@ -751,25 +751,25 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
                 .collect(Collectors.toList());
             vo.setDetailList(detailVoList);
         }
-        
+
         return vo;
     }
-    
+
     /**
      * 明细 DTO 转 VO
      * <p>将编码规则明细 DTO 转换为 VO。</p>
-     * 
+     *
      * @param dto 明细 DTO
      * @return 明细 VO
      */
     private EncodeRuleDetailVO convertDetailToVO(EncodeRuleDetailDTO dto) {
         EncodeRuleDetailVO vo = new EncodeRuleDetailVO();
         BeanUtils.copyProperties(dto, vo);
-        
+
         // TODO: 添加字典翻译逻辑
         // vo.setSegmentTypeText(translateSegmentType(dto.getSegmentType()));
         // vo.setIsRequiredText(dto.getIsRequired() ? "是" : "否");
-        
+
         return vo;
     }
 }

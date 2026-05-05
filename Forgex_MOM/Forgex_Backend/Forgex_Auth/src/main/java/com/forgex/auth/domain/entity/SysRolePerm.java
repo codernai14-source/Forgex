@@ -13,5 +13,7 @@ public class SysRolePerm {
 
     private String roleKey;
 
+    private Boolean status;
+
     private Boolean deleted;
 }

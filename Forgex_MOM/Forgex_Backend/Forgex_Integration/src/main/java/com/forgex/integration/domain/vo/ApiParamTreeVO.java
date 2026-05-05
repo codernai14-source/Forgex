@@ -28,6 +28,9 @@ public class ApiParamTreeVO {
      */
     private Long apiConfigId;
 
+    /**
+     * 出站目标 ID。
+     */
     private Long outboundTargetId;
 
     /**
@@ -81,7 +84,7 @@ public class ApiParamTreeVO {
     private String dictCode;
 
     /**
-     * 排序号
+     * 排序号。
      */
     private Integer orderNum;
 
@@ -91,7 +94,7 @@ public class ApiParamTreeVO {
     private String remark;
 
     /**
-     * 子节点列表
+     * 子节点列表。
      */
     private List<ApiParamTreeVO> children;
 

@@ -13,6 +13,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 用户thirdpartyinboundinterpreter实体。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Component("userThirdPartyInboundInterpreter")
 @RequiredArgsConstructor
 public class UserThirdPartyInboundInterpreter implements ApiInboundInterpreter {
@@ -20,6 +26,13 @@ public class UserThirdPartyInboundInterpreter implements ApiInboundInterpreter {
     private final IntegrationUserSyncFeignClient integrationUserSyncFeignClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 处理导入数据。
+     *
+     * @param context context
+     * @param payload payload
+     * @return 处理结果
+     */
     @Override
     public Object handle(ApiExecutionContext context, Object payload) {
         UserThirdPartySyncRequestDTO request = new UserThirdPartySyncRequestDTO();
