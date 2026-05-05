@@ -21,6 +21,9 @@ import java.nio.file.Path;
 
 /**
  * File service interface.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 public interface FileService {
 

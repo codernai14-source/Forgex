@@ -55,19 +55,19 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class DictCacheInvalidationListener implements MessageListener {
-    
+
     /**
      * 字典标签本地缓存
      */
     private final Cache<String, Map<String, String>> dictLabelCache;
-    
+
     /**
      * 字典项本地缓存（包含样式）
      */
     private final Cache<String, Map<String, DictItem>> dictItemCache;
 
     private final I18nLanguageTypeService languageTypeService;
-    
+
     /**
      * 处理缓存失效消息
      * <p>
@@ -90,20 +90,20 @@ public class DictCacheInvalidationListener implements MessageListener {
             // 解析消息内容
             String msg = new String(message.getBody());
             log.info("收到字典缓存失效消息: {}", msg);
-            
+
             // 消息格式: tenantId:nodePath
             String[] parts = msg.split(":", 2);
             if (parts.length >= 2) {
                 Long tenantId = Long.parseLong(parts[0]);
                 String nodePath = parts[1];
-                
+
                 // 清除所有语言的本地缓存
                 for (String lang : resolveEnabledLanguageCodes()) {
                     String cacheKey = tenantId + ":" + lang + ":" + nodePath;
                     dictLabelCache.invalidate(cacheKey);
                     dictItemCache.invalidate(cacheKey);
                 }
-                
+
                 log.info("本地缓存已清除: tenantId={}, nodePath={}", tenantId, nodePath);
             } else {
                 log.warn("缓存失效消息格式错误: {}", msg);

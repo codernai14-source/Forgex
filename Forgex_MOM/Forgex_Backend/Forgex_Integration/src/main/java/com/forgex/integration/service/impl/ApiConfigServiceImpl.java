@@ -222,6 +222,11 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
     }
 
+    /**
+     * 批量删除接口配置。
+     *
+     * @param ids 主键 ID 集合
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteApiConfigs(List<Long> ids) {
@@ -233,12 +238,22 @@ public class ApiConfigServiceImpl extends ServiceImpl<ApiConfigMapper, ApiConfig
         }
     }
 
+    /**
+     * 处理enable接口配置。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void enableApiConfig(Long id) {
         updateStatus(id, 1, IntegrationPromptEnum.API_CONFIG_ENABLE_FAILED);
     }
 
+    /**
+     * 处理disable接口配置。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void disableApiConfig(Long id) {

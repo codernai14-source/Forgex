@@ -52,6 +52,9 @@ public class WfTaskConfigSaveParam {
     @NotBlank(message = "任务编码不能为空")
     private String taskCode;
 
+    /**
+     * 分类编码。
+     */
     private String categoryCode;
 
     /**

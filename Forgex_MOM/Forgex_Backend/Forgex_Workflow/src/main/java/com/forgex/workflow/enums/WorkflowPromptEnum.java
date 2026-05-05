@@ -27,7 +27,7 @@ public enum WorkflowPromptEnum implements I18nPrompt {
     // ========== 审批发起 ==========
     WF_START_SUCCESS("WF_START_SUCCESS", "发起审批成功"),
     WF_START_FAILED("WF_START_FAILED", "发起审批失败"),
-    
+
     // ========== 审批处理 ==========
     WF_APPROVE_SUCCESS("WF_APPROVE_SUCCESS", "审批同意成功"),
     WF_APPROVE_FAILED("WF_APPROVE_FAILED", "审批通过失败"),
@@ -35,13 +35,13 @@ public enum WorkflowPromptEnum implements I18nPrompt {
     WF_REJECT_FAILED("WF_REJECT_FAILED", "审批驳回失败"),
     WF_CANCEL_SUCCESS("WF_CANCEL_SUCCESS", "审批取消成功"),
     WF_CANCEL_FAILED("WF_CANCEL_FAILED", "审批取消失败"),
-    
+
     // ========== 任务相关 ==========
     WF_TASK_NOT_FOUND("WF_TASK_NOT_FOUND", "审批任务不存在"),
     WF_ALREADY_PROCESSED("WF_ALREADY_PROCESSED", "该任务已被处理"),
     WF_NO_PERMISSION("WF_NO_PERMISSION", "无权处理该任务"),
     WF_NOT_INITIATOR("WF_NOT_INITIATOR", "只有发起人可以执行此操作"),
-    
+
     // ========== 任务配置 ==========
     WF_TASK_CONFIG_NOT_FOUND("WF_TASK_CONFIG_NOT_FOUND", "审批任务配置不存在"),
     WF_TASK_CONFIG_EXISTS("WF_TASK_CONFIG_EXISTS", "审批任务配置已存在"),
@@ -57,11 +57,11 @@ public enum WorkflowPromptEnum implements I18nPrompt {
     // ========== 节点相关 ==========
     WF_NODE_NOT_FOUND("WF_NODE_NOT_FOUND", "审批节点不存在"),
     WF_NODE_CONFIG_INVALID("WF_NODE_CONFIG_INVALID", "审批节点配置无效"),
-    
+
     // ========== 回调处理 ==========
     WF_CALLBACK_SUCCESS("WF_CALLBACK_SUCCESS", "回调处理成功"),
     WF_CALLBACK_FAILED("WF_CALLBACK_FAILED", "回调处理失败"),
-    
+
     // ========== 审批执行相关 (WfExecutionServiceImpl) ==========
     WF_EXECUTION_NOT_FOUND("WF_EXECUTION_NOT_FOUND", "审批执行记录不存在"),
     WF_EXECUTION_NOT_RUNNING("WF_EXECUTION_NOT_RUNNING", "当前审批不在审批中状态"),
@@ -82,14 +82,14 @@ public enum WorkflowPromptEnum implements I18nPrompt {
     WF_USER_NO_PERMISSION_ADD_SIGN("WF_USER_NO_PERMISSION_ADD_SIGN", "当前用户无权加签该审批实例"),
     WF_APPROVAL_INSTANCE_REQUIRED("WF_APPROVAL_INSTANCE_REQUIRED", "审批实例不能为空"),
     WF_EXECUTION_IDS_REQUIRED("WF_EXECUTION_IDS_REQUIRED", "审批执行记录不存在"),
-    
+
     // ========== 引擎相关 (WfEngineServiceImpl) ==========
     WF_TASK_CONFIG_NOT_FOUND_FOR_INIT("WF_TASK_CONFIG_NOT_FOUND_FOR_INIT", "审批任务配置不存在"),
     WF_EXECUTION_NOT_FOUND_FOR_INIT("WF_EXECUTION_NOT_FOUND_FOR_INIT", "审批执行记录不存在"),
     WF_START_NODE_NOT_CONFIGURED("WF_START_NODE_NOT_CONFIGURED", "审批任务未配置开始节点"),
     WF_NEXT_NODE_NOT_FOUND("WF_NEXT_NODE_NOT_FOUND", "下一节点不存在"),
     WF_NODE_APPROVER_RESOLVE_EMPTY("WF_NODE_APPROVER_RESOLVE_EMPTY", "审批节点未匹配到有效审批人，请检查角色、岗位或部门配置"),
-    
+
     // ========== 任务配置相关 (WfTaskConfigServiceImpl) ==========
     WF_TASK_CODE_REQUIRED("WF_TASK_CODE_REQUIRED", "任务编码不能为空"),
     WF_TASK_CODE_EXISTS("WF_TASK_CODE_EXISTS", "任务编码已存在"),
@@ -139,6 +139,11 @@ public enum WorkflowPromptEnum implements I18nPrompt {
         this.defaultTemplate = defaultTemplate;
     }
 
+    /**
+     * 获取模块。
+     *
+     * @return 字符串结果
+     */
     @Override
     public String getModule() {
         return "workflow";

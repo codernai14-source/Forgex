@@ -59,7 +59,7 @@ public class LicenseManager {
     }
 
     /**
-     * 获取当前授权状态。
+     * 查询当前有效汇率。
      *
      * @return 授权运行时状态
      */

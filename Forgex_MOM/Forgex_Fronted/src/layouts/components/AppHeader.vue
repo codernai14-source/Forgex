@@ -98,17 +98,56 @@
           </template>
         </a-dropdown>
 
-        <!-- 刷新按钮 -->
-        <a-button
+        <!-- 安卓版本按钮 -->
+        <a-popover
           v-if="showRefresh"
-          type="text"
-          class="header-btn fx-guide-refresh-trigger"
-          @click="onRefresh"
+          v-model:open="androidPopoverOpen"
+          placement="bottomRight"
+          trigger="click"
+          @openChange="handleAndroidPopoverChange"
         >
-          <template #icon>
-            <SyncOutlined />
+          <template #content>
+            <div class="android-version-popover">
+              <div v-if="androidLoading" class="android-version-popover__loading">
+                正在加载最新版本...
+              </div>
+              <div v-else-if="latestAndroidVersion" class="android-version-popover__content">
+                <div class="android-version-popover__title">
+                  Android {{ latestAndroidVersion.versionName }}
+                </div>
+                <div class="android-version-popover__meta">
+                  版本号：{{ latestAndroidVersion.versionCode }}
+                </div>
+                <div v-if="latestAndroidVersion.changelog" class="android-version-popover__changelog">
+                  {{ latestAndroidVersion.changelog }}
+                </div>
+                <div v-if="qrCodeDataUrl" class="android-version-popover__qr">
+                  <img :src="qrCodeDataUrl" alt="Android QR Code" />
+                </div>
+                <a
+                  v-if="latestAndroidVersion.fileUrl"
+                  :href="normalizeMediaUrl(latestAndroidVersion.fileUrl)"
+                  target="_blank"
+                  class="android-version-popover__link"
+                >
+                  下载 APK
+                </a>
+              </div>
+              <div v-else class="android-version-popover__empty">
+                暂无可用安卓版本
+              </div>
+            </div>
           </template>
-        </a-button>
+
+          <a-button
+            type="text"
+            class="header-btn fx-guide-refresh-trigger"
+          >
+            <template #icon>
+              <AndroidOutlined />
+            </template>
+          </a-button>
+        </a-popover>
 
         <!-- 布局设置按钮 -->
         <a-button
@@ -186,12 +225,15 @@ import {
   MailOutlined,
   LogoutOutlined,
   AppstoreOutlined,
-  SyncOutlined
+  AndroidOutlined
 } from '@ant-design/icons-vue'
 import { getUnreadMessageCount } from '../../api/message'
 import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
+import { getLatestAndroidVersion, type AndroidVersionItem } from '../../api/system/androidVersion'
 import type { LocaleCode } from '../../locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
+import { normalizeMediaUrl } from '@/utils/media'
+import QRCode from 'qrcode/lib/browser'
 
 interface Module {
   code: string
@@ -285,6 +327,10 @@ const currentLocale = ref<LocaleCode>((localStorage.getItem('fx-locale') as Loca
 
 // 语言列表
 const languageList = ref<LanguageType[]>([])
+const androidPopoverOpen = ref(false)
+const androidLoading = ref(false)
+const latestAndroidVersion = ref<AndroidVersionItem | null>(null)
+const qrCodeDataUrl = ref('')
 
 // 未读消息数量
 const unreadCount = ref(0)
@@ -309,6 +355,23 @@ const loadUnreadCount = async () => {
     unreadCount.value = count || 0
   } catch (error) {
     console.error('Failed to load unread message count:', error)
+  }
+}
+
+const loadLatestAndroidVersion = async () => {
+  androidLoading.value = true
+  try {
+    const version = await getLatestAndroidVersion()
+    latestAndroidVersion.value = version
+    qrCodeDataUrl.value = version?.fileUrl
+      ? await QRCode.toDataURL(normalizeMediaUrl(version.fileUrl), { width: 180, margin: 1 })
+      : ''
+  } catch (error) {
+    latestAndroidVersion.value = null
+    qrCodeDataUrl.value = ''
+    console.error('Failed to load latest android version:', error)
+  } finally {
+    androidLoading.value = false
   }
 }
 
@@ -403,9 +466,11 @@ const onLanguageMenuClick = (info: any) => {
   onLocaleChange(locale)
 }
 
-// 刷新
-const onRefresh = () => {
-  emit('refresh')
+const handleAndroidPopoverChange = (open: boolean) => {
+  androidPopoverOpen.value = open
+  if (open) {
+    loadLatestAndroidVersion()
+  }
 }
 
 // 消息点击
@@ -570,6 +635,52 @@ const onMessageClick = () => {
 
 .lang-menu-item__check {
   color: var(--fx-theme-color, #1677ff);
+}
+
+.android-version-popover {
+  width: 260px;
+}
+
+.android-version-popover__loading,
+.android-version-popover__empty {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.android-version-popover__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.android-version-popover__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.android-version-popover__meta,
+.android-version-popover__changelog {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.android-version-popover__qr {
+  display: flex;
+  justify-content: center;
+}
+
+.android-version-popover__qr img {
+  width: 144px;
+  height: 144px;
+  object-fit: contain;
+}
+
+.android-version-popover__link {
+  color: var(--fx-theme-color, #1677ff);
+  font-size: 13px;
 }
 
 .user-dropdown-trigger {

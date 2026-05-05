@@ -42,6 +42,9 @@ public class SysInviteCode extends BaseEntity {
     /** 归属职位ID（可选） */
     private Long positionId;
 
+    /** 注册后绑定角色ID */
+    private Long roleId;
+
     /** 失效时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime expireTime;

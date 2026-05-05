@@ -17,12 +17,24 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @TableName("basic_customer_contact")
 public class BasicCustomerContact extends BaseEntity {
+    /**
+     * 客户 ID。
+     */
     @TableField("customer_id")
     private Long customerId;
+    /**
+     * 联系人名称。
+     */
     @TableField("contact_name")
     private String contactName;
+    /**
+     * 联系人position。
+     */
     @TableField("contact_position")
     private String contactPosition;
+    /**
+     * 联系人手机号。
+     */
     @TableField("contact_phone")
     private String contactPhone;
 }

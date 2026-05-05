@@ -13,6 +13,9 @@ import java.nio.file.Paths;
 
 /**
  * Web configuration.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -49,6 +52,11 @@ public class WebConfig implements WebMvcConfigurer {
         return uri.endsWith("/") ? uri : uri + "/";
     }
 
+    /**
+     * 注册静态资源处理器。
+     *
+     * @param registry registry
+     */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String prefix = resolveAccessPrefix();

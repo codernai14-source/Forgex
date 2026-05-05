@@ -35,7 +35,9 @@ export default {
     title: 'Column Setting',
     reset: 'Reset',
     resetSuccess: 'Reset to default config',
-    hint: 'Check to show columns, drag to reorder'
+    hint: 'Check to show columns, drag to reorder',
+    dragSort: 'Drag to sort',
+    dragResize: 'Drag to resize column'
   },
   
   form: {

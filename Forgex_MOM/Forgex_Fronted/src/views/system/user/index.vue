@@ -23,17 +23,8 @@
           <a-button data-guide-id="sys-user-pull-third-party" v-permission="'sys:user:pullThirdParty'" @click="handlePullThirdParty">
             从第三方拉取
           </a-button>
-          <a-upload
-            data-guide-id="sys-user-import"
-            v-permission="'sys:user:import'"
-            :show-upload-list="false"
-            :before-upload="handleImport"
-            accept=".xlsx,.xls"
-          >
-            <a-button>导入</a-button>
-          </a-upload>
-          <a-button data-guide-id="sys-user-download-template" v-permission="'sys:user:downloadTemplate'" @click="handleDownloadTemplate">
-            下载模板
+          <a-button data-guide-id="sys-user-import" v-permission="'sys:user:import'" @click="importDialogVisible = true">
+            {{ t('system.excel.commonImport.title') }}
           </a-button>
           <a-button
             data-guide-id="sys-user-batch-delete"
@@ -82,10 +73,6 @@
         </a-tag>
       </template>
 
-      <template #userSource="{ record }">
-        <a-tag>{{ record.userSourceText || getUserSourceLabel(record.userSource) || '-' }}</a-tag>
-      </template>
-
       <template #action="{ record }">
         <div class="user-action-cell">
           <FxActionGroup :actions="getUserRowActions(record)" :max-inline="5" />
@@ -107,6 +94,12 @@
       :user-account="assignRoleUserAccount"
       @success="handleAssignRoleSuccess"
     />
+
+    <CommonImportDialog
+      v-model:open="importDialogVisible"
+      table-code="sys_user"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
@@ -118,9 +111,10 @@ import { UserOutlined } from '@ant-design/icons-vue'
 import { normalizeMediaUrl } from '@/utils/media'
 import FxActionGroup, { type ActionItem } from '@/components/common/FxActionGroup.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
-import { useDict, getDictItemLabel } from '@/hooks/useDict'
+import { useDict } from '@/hooks/useDict'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
@@ -131,6 +125,13 @@ import type { Department, Position, UserQuery } from './types'
 
 const { t } = useI18n()
 const { dictItems: userSourceOptions } = useDict('user_source')
+
+const USER_SOURCE_FALLBACK_OPTIONS = [
+  { label: '站点创建', value: 1 },
+  { label: '站点导入', value: 2 },
+  { label: '第三方同步', value: 3 },
+  { label: '自主注册', value: 4 },
+]
 
 const departmentTreeData = ref<Department[]>([])
 const positionList = ref<Position[]>([])
@@ -143,13 +144,15 @@ const assignRoleUserName = ref<string>()
 const assignRoleUserAccount = ref<string>()
 const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
+const importDialogVisible = ref(false)
 
 const dictOptions = ref<Record<string, any[]>>({
   departmentId: [],
   positionId: [],
   roleId: [],
   role_ids: [],
-  userSource: [],
+  userSource: USER_SOURCE_FALLBACK_OPTIONS,
+  user_source: USER_SOURCE_FALLBACK_OPTIONS,
   status: [
     { label: t('system.user.statusActive'), value: true },
     { label: t('system.user.statusInactive'), value: false },
@@ -164,15 +167,10 @@ const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
 }))
 
 watch(userSourceOptions, (value) => {
-  dictOptions.value.userSource = value || []
+  const options = value?.length ? value : USER_SOURCE_FALLBACK_OPTIONS
+  dictOptions.value.userSource = options
+  dictOptions.value.user_source = options
 }, { immediate: true })
-
-/**
- * 根据字典配置获取用户来源显示文本，未匹配时回退为默认占位。
- */
-function getUserSourceLabel(value: unknown) {
-  return getDictItemLabel(userSourceOptions.value, value, '')
-}
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -215,27 +213,12 @@ async function handlePullThirdParty() {
   tableRef.value?.refresh?.()
 }
 
-async function handleDownloadTemplate() {
-  try {
-    const resp: any = await userApi.downloadUserTemplate()
-    downloadBlobResponse(resp, 'sys-user-template.xlsx')
-  } catch {
-    message.error(t('common.failed'))
-  }
-}
-
-async function handleImport(file: File) {
-  try {
-    await userApi.importUsers(file)
-    tableRef.value?.refresh?.()
-  } catch {
-    message.error(t('common.failed'))
-  }
-  return false
-}
-
 function handleSelectionChange(keys: string[]) {
   selectedRowKeys.value = keys
+}
+
+function handleImportSuccess() {
+  tableRef.value?.refresh?.()
 }
 
 function openAddDialog() {

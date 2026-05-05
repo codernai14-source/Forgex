@@ -45,6 +45,16 @@ public class FxExcelImportConfigDTO {
     private String tableCode;
 
     /**
+     * 导入处理器 Bean 名称。
+     */
+    private String handlerBeanName;
+
+    /**
+     * 导入权限码。
+     */
+    private String importPermission;
+
+    /**
      * 标题
      * <p>支持国际化的导入配置标题。</p>
      */

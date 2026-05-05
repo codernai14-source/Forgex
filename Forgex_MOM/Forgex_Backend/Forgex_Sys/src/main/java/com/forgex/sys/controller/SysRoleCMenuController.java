@@ -22,7 +22,11 @@ import com.forgex.common.web.R;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.service.ISysCMenuService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +40,8 @@ import java.util.ArrayList;
  *
  * @author Forgex Team
  * @since 2026-04-11
+ *
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/sys/role/c-menu")
@@ -69,7 +75,7 @@ public class SysRoleCMenuController {
      * <p>
      * 将指定菜单授权给角色。
      * </p>
-     * 
+     *
      * @param body 请求体，包含 roleId 和 menuIds
      * @return 授权结果
      */
@@ -105,4 +111,3 @@ public class SysRoleCMenuController {
         return result;
     }
 }
-

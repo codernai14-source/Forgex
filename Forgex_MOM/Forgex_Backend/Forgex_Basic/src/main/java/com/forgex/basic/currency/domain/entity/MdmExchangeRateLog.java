@@ -17,12 +17,24 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @TableName("mdm_exchange_rate_log")
 public class MdmExchangeRateLog extends BaseEntity {
+    /**
+     * 汇率 ID。
+     */
     @TableField("rate_id")
     private Long rateId;
+    /**
+     * 操作类型。
+     */
     @TableField("operation_type")
     private String operationType;
+    /**
+     * 操作内容。
+     */
     @TableField("operation_content")
     private String operationContent;
+    /**
+     * 操作人 IP。
+     */
     @TableField("operator_ip")
     private String operatorIp;
 }

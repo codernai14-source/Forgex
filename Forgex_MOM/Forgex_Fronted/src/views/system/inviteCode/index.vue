@@ -135,6 +135,27 @@
           </a-select>
         </a-form-item>
 
+        <a-form-item label="绑定角色" name="roleId">
+          <a-select
+            v-model:value="formData.roleId"
+            placeholder="请选择注册后绑定的角色"
+            allow-clear
+            show-search
+            option-label-prop="label"
+            :filter-option="filterRoleOption"
+            style="width: 100%"
+          >
+            <a-select-option
+              v-for="role in roleList"
+              :key="role.id"
+              :value="role.id"
+              :label="role.roleName"
+            >
+              {{ role.roleName }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+
         <a-form-item label="过期时间" name="expireTime">
           <a-date-picker
             v-model:value="formData.expireTime"
@@ -203,12 +224,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
+import { getRoleList } from '@/api/system/role'
 import {
   getInviteCodePage,
   createInviteCode,
@@ -222,20 +244,23 @@ import type { InviteCodeSaveParam, InviteRecord } from './types'
 const currentTenantId = ref<string | null>(null)
 const treeData = ref<any[]>([])
 const positionList = ref<any[]>([])
+const roleList = ref<any[]>([])
 const tableRef = ref()
 const loading = ref(false)
-const dictOptions = {
+const dictOptions = reactive<Record<string, any[]>>({
   status: [
     { label: '生效中', value: true },
     { label: '已停用', value: false },
   ],
-}
+  role: [],
+})
 
 const dynamicTableConfig: Partial<FxTableConfig> = {
   columns: [
     { field: 'inviteCode', title: '邀请码', width: 140, align: 'center' },
     { field: 'departmentName', title: '归属部门', width: 160, align: 'left' },
     { field: 'positionName', title: '归属岗位', width: 140, align: 'left' },
+    { field: 'roleName', title: '绑定角色', width: 140, align: 'left' },
     { field: 'expireTime', title: '过期时间', width: 180, align: 'center' },
     { field: 'maxRegisterCount', title: '最大人数', width: 100, align: 'center' },
     { field: 'usedCount', title: '已用人数', width: 100, align: 'center' },
@@ -247,6 +272,7 @@ const dynamicTableConfig: Partial<FxTableConfig> = {
   ],
   queryFields: [
     { field: 'inviteCode', label: '邀请码', queryType: 'input', queryOperator: 'like' },
+    { field: 'roleId', label: '绑定角色', queryType: 'select', queryOperator: 'eq', dictCode: 'role' },
     { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
   ],
 }
@@ -302,12 +328,14 @@ const createdCode = ref('')
 
 const formData = ref<InviteCodeSaveParam>({
   departmentId: '',
+  roleId: '',
   expireTime: '',
   maxRegisterCount: 10,
 })
 
 const rules = {
   departmentId: [{ required: true, message: '请选择归属部门', trigger: 'change' }],
+  roleId: [{ required: true, message: '请选择绑定角色', trigger: 'change' }],
   expireTime: [{ required: true, message: '请选择过期时间', trigger: 'change' }],
   maxRegisterCount: [{ required: true, message: '请输入最大注册人数', trigger: 'blur' }],
 }
@@ -316,6 +344,7 @@ function openAdd() {
   addVisible.value = true
   formData.value = {
     departmentId: '',
+    roleId: '',
     expireTime: '',
     maxRegisterCount: 10,
   }
@@ -330,7 +359,10 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate()
     formLoading.value = true
-    const result = await createInviteCode(formData.value)
+    const result = await createInviteCode({
+      ...formData.value,
+      tenantId: currentTenantId.value || undefined,
+    })
     addVisible.value = false
     if (result && result.inviteCode) {
       createdCode.value = result.inviteCode
@@ -394,6 +426,7 @@ const recordPagination = ref({
 const recordColumns = [
   { title: '注册账号', dataIndex: 'account', width: 120 },
   { title: '用户名', dataIndex: 'username', width: 120 },
+  { title: '绑定角色', dataIndex: 'roleName', width: 160 },
   { title: '注册 IP', dataIndex: 'registerIp', width: 130 },
   { title: '注册地区', dataIndex: 'registerRegion', width: 130 },
   { title: '注册时间', dataIndex: 'registerTime', width: 180 },
@@ -449,6 +482,28 @@ async function loadPositions() {
   }
 }
 
+async function loadRoles() {
+  if (!currentTenantId.value) return
+  try {
+    const data = await getRoleList({ tenantId: currentTenantId.value, status: true })
+    roleList.value = (Array.isArray(data) ? data : []).map((role: any) => ({
+      ...role,
+      id: String(role.id),
+    }))
+    dictOptions.role = roleList.value.map((role: any) => ({
+      label: role.roleName,
+      value: role.id,
+    }))
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+function filterRoleOption(input: string, option: any) {
+  const label = String(option?.label || '')
+  return label.toLowerCase().includes(input.toLowerCase())
+}
+
 watch(() => formData.value.departmentId, (newDeptId) => {
   if (newDeptId) {
     loadPositions()
@@ -463,6 +518,7 @@ onMounted(async () => {
       tableRef.value?.refresh?.(),
       loadDeptTree(),
       loadPositions(),
+      loadRoles(),
     ])
   }
 })

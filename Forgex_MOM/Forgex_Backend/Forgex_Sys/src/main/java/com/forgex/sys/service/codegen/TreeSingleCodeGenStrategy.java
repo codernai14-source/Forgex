@@ -25,6 +25,8 @@ import java.util.List;
  *
  * @author coder_nai@163.com
  * @since 2026-04-24
+ *
+ * @version 1.0.0
  */
 @Component
 public class TreeSingleCodeGenStrategy extends AbstractCodeGenStrategy {
@@ -33,11 +35,23 @@ public class TreeSingleCodeGenStrategy extends AbstractCodeGenStrategy {
         super(templateRenderer);
     }
 
+    /**
+     * 判断是否支持当前代码生成类型。
+     *
+     * @param pageType 分页类型
+     * @return 是否处理成功
+     */
     @Override
     public boolean supports(String pageType) {
         return "TREE_SINGLE".equalsIgnoreCase(pageType);
     }
 
+    /**
+     * 生成代码文件。
+     *
+     * @param context 数据传输对象
+     * @return 列表数据
+     */
     @Override
     public List<CodegenRenderFileDTO> generate(CodeGenContextDTO context) {
         List<CodegenRenderFileDTO> files = newFiles();

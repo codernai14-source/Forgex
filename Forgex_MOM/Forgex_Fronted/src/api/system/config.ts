@@ -96,6 +96,20 @@ export interface FileUploadConfig {
   providerConfigJson: string
 }
 
+export interface FileUploadRuntimeDefaults {
+  ipCandidates: string[]
+  recommendedPublicBaseUrl: string
+  accessPrefix: string
+  previewExample: string
+}
+
+export interface FileUploadFolderNode {
+  name: string
+  path: string
+  writable: boolean
+  leaf: boolean
+}
+
 export function createDefaultSystemBasicConfig(): SystemBasicConfig {
   return {
     systemName: 'FORGEX_MOM',
@@ -222,6 +236,22 @@ export function getFileUploadConfig() {
 
 export function setFileUploadConfig(data: FileUploadConfig) {
   return http.put('/sys/config/file-upload', data)
+}
+
+export function getFileUploadRuntimeDefaults() {
+  return http.get<FileUploadRuntimeDefaults>('/sys/config/file-upload/runtime-defaults')
+}
+
+export function getFileUploadFolderRoots() {
+  return http.get<FileUploadFolderNode[]>('/sys/config/file-upload/folders/roots')
+}
+
+export function getFileUploadFolderChildren(path: string) {
+  return http.post<FileUploadFolderNode[]>('/sys/config/file-upload/folders/children', { path })
+}
+
+export function createFileUploadFolder(parentPath: string, folderName: string) {
+  return http.post<FileUploadFolderNode>('/sys/config/file-upload/folders/create', { parentPath, folderName })
 }
 
 // ========== 加密配置类型 ==========

@@ -25,7 +25,10 @@ import com.forgex.sys.service.ISysModuleService;
 import com.forgex.sys.validator.ModuleValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -54,12 +57,12 @@ import java.util.Map;
  *   <li>新增、修改、删除操作需要对应权限</li>
  *   <li>返回格式统一为 {@link R} 类型</li>
  * </ul>
- * 
+ *
  * 接口规范：
  * - 所有接口统一使用 POST 方法
  * - 参数统一封装为对象
  * - 分页查询使用 BaseGetParam（pageNum/pageSize）
- * 
+ *
  * @author coder_nai@163.com
  * @version 1.0.0
  * @date 2025-01-07
@@ -71,10 +74,10 @@ import java.util.Map;
 @RequestMapping("/sys/module")
 @RequiredArgsConstructor
 public class SysModuleController {
-    
+
     private final ISysModuleService moduleService;
     private final ModuleValidator moduleValidator;
-    
+
     /**
      * 分页查询模块列表
      * <p>
@@ -88,7 +91,7 @@ public class SysModuleController {
      *   <li>调用 Service 层分页查询模块</li>
      *   <li>返回分页结果，包含模块列表和总数</li>
      * </ol>
-     * 
+     *
      * @param query 查询参数对象，包含分页信息和查询条件
      *              - pageNum: 页码（必填，从 1 开始）
      *              - pageSize: 每页大小（必填）
@@ -111,7 +114,7 @@ public class SysModuleController {
         // 3. 返回分页结果
         return R.ok(moduleService.pageModules(page, query));
     }
-    
+
     /**
      * 查询所有模块列表（不分页）
      * <p>
@@ -124,7 +127,7 @@ public class SysModuleController {
      *   <li>调用 Service 层查询所有符合条件的模块</li>
      *   <li>返回模块列表，不分页</li>
      * </ol>
-     * 
+     *
      * @param query 查询参数对象，包含查询条件
      *              - moduleName: 模块名称（可选，模糊查询）
      *              - moduleCode: 模块编码（可选，精确查询）
@@ -143,7 +146,7 @@ public class SysModuleController {
         // 2. 返回模块列表
         return R.ok(moduleService.listModules(query));
     }
-    
+
     /**
      * 根据 ID 获取模块详情
      * <p>
@@ -157,7 +160,7 @@ public class SysModuleController {
      *   <li>调用 Service 层根据 ID 查询模块详情</li>
      *   <li>返回模块详细信息</li>
      * </ol>
-     * 
+     *
      * @param body 请求体，包含模块 ID
      *             - id: 模块 ID（必填，正整数）
      * @return {@link R} 包含模块详情的统一返回结构
@@ -178,7 +181,7 @@ public class SysModuleController {
         // 4. 返回模块详细信息
         return R.ok(moduleService.getModuleById(id));
     }
-    
+
     /**
      * 新增模块
      * <p>
@@ -193,7 +196,7 @@ public class SysModuleController {
      *   <li>调用 Service 层保存模块</li>
      *   <li>返回成功响应</li>
      * </ol>
-     * 
+     *
      * @param moduleDTO 模块数据传输对象
      *                  - moduleName: 模块名称（必填）
      *                  - moduleCode: 模块编码（必填，唯一）
@@ -217,7 +220,7 @@ public class SysModuleController {
         // 3. 返回成功响应
         return R.ok(CommonPrompt.CREATE_SUCCESS);
     }
-    
+
     /**
      * 更新模块
      * <p>
@@ -232,7 +235,7 @@ public class SysModuleController {
      *   <li>调用 Service 层更新模块</li>
      *   <li>返回成功响应</li>
      * </ol>
-     * 
+     *
      * @param moduleDTO 模块数据传输对象
      *                  - id: 模块 ID（必填）
      *                  - moduleName: 模块名称（可选）
@@ -257,7 +260,7 @@ public class SysModuleController {
         // 3. 返回成功响应
         return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
-    
+
     /**
      * 删除模块
      * <p>
@@ -272,7 +275,7 @@ public class SysModuleController {
      *   <li>调用 Service 层删除模块</li>
      *   <li>返回成功响应</li>
      * </ol>
-     * 
+     *
      * @param body 请求体，包含模块 ID
      *             - id: 模块 ID（必填，正整数）
      * @return {@link R} 操作结果
@@ -293,9 +296,9 @@ public class SysModuleController {
         // 4. 返回成功响应
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
-    
+
     /**
-     * 批量删除模块
+     * 批量删除数据。
      * <p>
      * 接口路径：POST /sys/module/batchDelete
      * </p>
@@ -308,7 +311,7 @@ public class SysModuleController {
      *   <li>调用 Service 层批量删除模块</li>
      *   <li>返回成功响应</li>
      * </ol>
-     * 
+     *
      * @param body 请求体，包含模块 ID 列表
      *             - ids: 模块 ID 列表（必填，至少包含一个 ID）
      * @return {@link R} 操作结果
@@ -330,7 +333,7 @@ public class SysModuleController {
         // 4. 返回成功响应
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
-    
+
     /**
      * 解析 Long 类型参数
      * <p>

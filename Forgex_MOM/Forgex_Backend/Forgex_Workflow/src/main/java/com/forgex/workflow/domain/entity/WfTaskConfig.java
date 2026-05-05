@@ -55,6 +55,9 @@ public class WfTaskConfig extends BaseEntity {
      */
     private String taskCode;
 
+    /**
+     * 分类编码。
+     */
     private String categoryCode;
 
     /**

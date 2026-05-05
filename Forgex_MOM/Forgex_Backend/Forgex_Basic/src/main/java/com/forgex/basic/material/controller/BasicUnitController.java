@@ -1,26 +1,37 @@
-
 package com.forgex.basic.material.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.basic.material.domain.entity.BasicUnit;
+import com.forgex.basic.material.domain.entity.BasicUnitType;
+import com.forgex.basic.material.domain.param.UnitConversionSaveParam;
 import com.forgex.basic.material.domain.param.UnitPageParam;
+import com.forgex.basic.material.domain.param.UnitTypeParam;
+import com.forgex.basic.material.domain.vo.UnitConversionVO;
+import com.forgex.basic.material.domain.vo.UnitTypeTreeVO;
+import com.forgex.basic.material.domain.vo.UnitVO;
 import com.forgex.basic.material.service.IBasicUnitService;
-import com.forgex.common.tenant.TenantContext;
-import com.forgex.common.web.R;
 import com.forgex.common.audit.OperationLog;
 import com.forgex.common.audit.OperationType;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.web.R;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * 计量单位控制器
+ * 计量单位管理控制器。
+ * <p>
+ * 提供计量单位类型树、单位主数据和换算关系维护接口。
+ * </p>
  *
- * @author ForGexTeam
- * @version 1.0
- * @since 2026-04-28
+ * @author Forgex Team
+ * @version 1.0.0
+ * @since 2026-05-02
  */
 @RestController
 @RequestMapping("/basic/unit")
@@ -29,59 +40,195 @@ public class BasicUnitController {
 
     private final IBasicUnitService unitService;
 
+    /**
+     * 查询计量单位类型树。
+     *
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:query")
+    @PostMapping("/type/tree")
+    public R<List<UnitTypeTreeVO>> typeTree() {
+        return R.ok(unitService.typeTree());
+    }
+
+    /**
+     * 查询计量单位类型详情。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:query")
+    @PostMapping("/type/detail")
+    public R<BasicUnitType> typeDetail(@RequestBody Map<String, Object> body) {
+        return R.ok(unitService.typeDetail(id(body)));
+    }
+
+    /**
+     * 创建计量单位类型。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:add")
+    @PostMapping("/type/create")
+    @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.ADD)
+    public R<Long> createType(@RequestBody UnitTypeParam param) {
+        return R.ok(unitService.createType(param));
+    }
+
+    /**
+     * 更新类型。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:edit")
+    @PostMapping("/type/update")
+    @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.UPDATE)
+    public R<Boolean> updateType(@RequestBody UnitTypeParam param) {
+        return R.ok(unitService.updateType(param));
+    }
+
+    /**
+     * 删除类型。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:delete")
+    @PostMapping("/type/delete")
+    @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
+    public R<Boolean> deleteType(@RequestBody Map<String, Object> body) {
+        return R.ok(unitService.deleteType(id(body)));
+    }
+
+    /**
+     * 分页查询计量单位。
+     *
+     * @param param 分页查询参数
+     * @return 计量单位分页结果
+     */
     @RequirePerm("basic:unit:query")
     @PostMapping("/page")
-    public R<Page<BasicUnit>> page(@RequestBody UnitPageParam param) {
+    public R<Page<UnitVO>> page(@RequestBody(required = false) UnitPageParam param) {
         return R.ok(unitService.pageUnits(param));
     }
 
-    @RequirePerm("basic:unit:query")
-    @PostMapping("/detail")
-    public R<BasicUnit> detail(@RequestBody java.util.Map<String, Long> body) {
-        return R.ok(unitService.getById(body.get("id")));
+    /**
+     * 查询计量单位列表。
+     *
+     * @param param 查询参数
+     * @return 计量单位列表
+     */
+    @PostMapping("/list")
+    public R<List<UnitVO>> list(@RequestBody(required = false) UnitPageParam param) {
+        return R.ok(unitService.listUnits(param));
     }
 
+    /**
+     * 查询数据详情。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:query")
+    @PostMapping("/detail")
+    public R<UnitVO> detail(@RequestBody Map<String, Object> body) {
+        return R.ok(unitService.detail(id(body)));
+    }
+
+    /**
+     * 创建数据。
+     *
+     * @param unit 单位
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:add")
     @PostMapping("/create")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.ADD)
     public R<Long> create(@RequestBody BasicUnit unit) {
-        unit.setTenantId(TenantContext.get());
-        unitService.save(unit);
-        return R.ok(unit.getId());
+        return R.ok(unitService.create(unit));
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param unit 单位
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:edit")
     @PostMapping("/update")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.UPDATE)
-    public R<Void> update(@RequestBody BasicUnit unit) {
-        unitService.updateById(unit);
-        return R.ok();
+    public R<Boolean> update(@RequestBody BasicUnit unit) {
+        return R.ok(unitService.updateUnit(unit));
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:delete")
     @PostMapping("/delete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
-    public R<Void> delete(@RequestBody java.util.Map<String, Long> body) {
-        unitService.removeById(body.get("id"));
-        return R.ok();
+    public R<Boolean> delete(@RequestBody Map<String, Object> body) {
+        return R.ok(unitService.deleteUnit(id(body)));
     }
 
+    /**
+     * 批量删除数据。
+     *
+     * @param body 请求体，包含 ids
+     * @return 统一响应结果
+     */
     @RequirePerm("basic:unit:delete")
     @PostMapping("/batchDelete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
-    public R<Void> batchDelete(@RequestBody java.util.Map<String, List<Long>> body) {
-        unitService.removeBatchByIds(body.get("ids"));
-        return R.ok();
+    public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> body) {
+        return R.ok(unitService.batchDeleteUnits(body.get("ids")));
     }
 
-    @PostMapping("/list")
-    public R<List<BasicUnit>> list() {
-        Long tenantId = TenantContext.get();
-        return R.ok(unitService.lambdaQuery()
-                .eq(BasicUnit::getTenantId, tenantId)
-                .eq(BasicUnit::getStatus, 1)
-                .eq(BasicUnit::getDeleted, 0)
-                .orderByAsc(BasicUnit::getSortOrder)
-                .list());
+    /**
+     * 查询计量单位换算关系列表。
+     *
+     * @param body 请求体，包含 unitId
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:query")
+    @PostMapping("/conversion/list")
+    public R<List<UnitConversionVO>> listConversions(@RequestBody Map<String, Object> body) {
+        return R.ok(unitService.listConversions(Long.valueOf(String.valueOf(body.get("unitId")))));
+    }
+
+    /**
+     * 保存conversions。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:edit")
+    @PostMapping("/conversion/save")
+    @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.UPDATE)
+    public R<Boolean> saveConversions(@RequestBody UnitConversionSaveParam param) {
+        return R.ok(unitService.saveConversions(param));
+    }
+
+    /**
+     * 删除conversion。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
+    @RequirePerm("basic:unit:edit")
+    @PostMapping("/conversion/delete")
+    @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
+    public R<Boolean> deleteConversion(@RequestBody Map<String, Object> body) {
+        return R.ok(unitService.deleteConversion(id(body)));
+    }
+
+    private Long id(Map<String, Object> body) {
+        Object value = body == null ? null : body.get("id");
+        return value == null ? null : Long.valueOf(String.valueOf(value));
     }
 }

@@ -6,6 +6,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.forgex.common.exception.BusinessException;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.i18n.LegacyMessageTranslator;
 import com.forgex.common.security.LogoutAuditService;
 import com.forgex.common.security.LogoutReason;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 未登录或登录过期 */
+    /**
+     * 处理notlogin。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(NotLoginException.class)
     public R<Object> handleNotLogin(NotLoginException e) {
         log.warn("未登录或登录过期: {}", e.getMessage());
@@ -95,12 +102,24 @@ public class GlobalExceptionHandler {
     }
 
     /** 无角色/无权限 */
+    /**
+     * 处理not角色。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(NotRoleException.class)
     public R<Object> handleNotRole(NotRoleException e) {
         log.warn("无权限: {}", e.getMessage());
         return R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
     }
 
+    /**
+     * 处理国际化业务。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(I18nBusinessException.class)
     public R<Object> handleI18nBusiness(I18nBusinessException e) {
         int code = e.getCode();
@@ -111,6 +130,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 普通业务异常 */
+    /**
+     * 处理业务。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(BusinessException.class)
     public R<Object> handleBusiness(BusinessException e) {
         log.warn("业务异常: {}", e.getMessage());
@@ -118,29 +143,41 @@ public class GlobalExceptionHandler {
         if (code == null) {
             code = StatusCode.BUSINESS_ERROR;
         }
-        return R.fail(code, CommonPrompt.BAD_REQUEST, e.getMessage());
+        return R.fail(code, CommonPrompt.BAD_REQUEST, LegacyMessageTranslator.translate(e.getMessage()));
     }
 
     /** 参数解析/校验错误 */
+    /**
+     * 处理bad请求。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class, HttpMessageNotReadableException.class})
     public R<Object> handleBadRequest(Exception e) {
         String msg = "";
         if (e instanceof MethodArgumentNotValidException manv) {
             msg = manv.getBindingResult().getFieldErrors().stream()
-                    .map(fe -> fe.getField() + ":" + (fe.getDefaultMessage() == null ? "不合法" : fe.getDefaultMessage()))
+                    .map(fe -> formatFieldError(fe))
                     .collect(Collectors.joining("; "));
         } else if (e instanceof BindException be) {
             msg = be.getBindingResult().getFieldErrors().stream()
-                    .map(fe -> fe.getField() + ":" + (fe.getDefaultMessage() == null ? "不合法" : fe.getDefaultMessage()))
+                    .map(fe -> formatFieldError(fe))
                     .collect(Collectors.joining("; "));
         } else if (e instanceof HttpMessageNotReadableException hm) {
-            msg = hm.getMessage();
+            msg = LegacyMessageTranslator.translate(hm.getMessage());
         }
         log.warn("参数错误: {}", msg);
         return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, msg);
     }
 
     /** 数据库连接失败，返回业务错误 */
+    /**
+     * 处理dbconnect。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(CannotGetJdbcConnectionException.class)
     public R<Object> handleDbConnect(CannotGetJdbcConnectionException e) {
         log.error("数据库连接失败", e);
@@ -148,6 +185,12 @@ public class GlobalExceptionHandler {
     }
 
     /** 通用数据访问异常 */
+    /**
+     * 处理数据access。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(DataAccessException.class)
     public R<Object> handleDataAccess(DataAccessException e) {
         log.error("数据访问异常", e);
@@ -155,10 +198,21 @@ public class GlobalExceptionHandler {
     }
 
     /** 其它未捕获异常：打印堆栈并返回具体信息 */
+    /**
+     * 处理默认。
+     *
+     * @param e e
+     * @return 统一响应结果
+     */
     @ExceptionHandler(Exception.class)
     public R<Object> handleDefault(Exception e) {
         log.error("未处理异常", e);
         String msg = e.getMessage() == null ? "" : e.getMessage();
-        return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.INTERNAL_SERVER_ERROR, msg);
+        return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.INTERNAL_SERVER_ERROR, LegacyMessageTranslator.translate(msg));
+    }
+
+    private String formatFieldError(FieldError fieldError) {
+        String defaultMessage = fieldError.getDefaultMessage() == null ? "不合法" : fieldError.getDefaultMessage();
+        return fieldError.getField() + ":" + LegacyMessageTranslator.translate(defaultMessage);
     }
 }

@@ -21,77 +21,109 @@ import java.util.List;
 
 /**
  * 数据字典树形 VO
- * 
+ *
  * @author coder_nai@163.com
  * @date 2025-01-13
+ *
+ * @version 1.0.0
  */
 @Data
 public class DictTreeVO {
-    
+
     /**
      * 主键
      */
     private Long id;
-    
+
     /**
      * 父节点ID
      */
     private Long parentId;
-    
+
     /**
      * 字典名称
      */
     private String dictName;
-    
+
     /**
      * 字典编码
      */
     private String dictCode;
-    
+
     /**
      * 字典值
      */
     private String dictValue;
 
+    /**
+     * 模块 ID。
+     */
     private Long moduleId;
 
+    /**
+     * 模块名称。
+     */
     private String moduleName;
 
+    /**
+     * dict价值国际化json。
+     */
     private String dictValueI18nJson;
 
-    private String tagStyleJson;
-    
     /**
-     * 排序号
+     * tagstylejson。
+     */
+    private String tagStyleJson;
+
+    /**
+     * 排序号。
      */
     private Integer orderNum;
-    
+
     /**
      * 状态：1-启用，0-禁用
      */
     private Integer status;
-    
+
     /**
      * 备注
      */
     private String remark;
 
+    /**
+     * 创建时间。
+     */
     private LocalDateTime createTime;
 
+    /**
+     * 创建人。
+     */
     private String createBy;
 
+    /**
+     * 创建by名称。
+     */
     @AutoFillUsername(userIdField = "createBy")
     private String createByName;
 
+    /**
+     * 更新时间。
+     */
     private LocalDateTime updateTime;
 
+    /**
+     * 更新人。
+     */
     private String updateBy;
 
+    /**
+     * 更新by名称。
+     */
     @AutoFillUsername(userIdField = "updateBy")
     private String updateByName;
-    
+
     /**
-     * 子节点列表
+     * 子节点列表。
      */
     private List<DictTreeVO> children;
 }

@@ -41,6 +41,10 @@ public class SysInviteCodeSaveParam {
     /** 归属职位ID（可选） */
     private Long positionId;
 
+    /** 注册后绑定角色ID */
+    @NotNull(message = "角色ID不能为空")
+    private Long roleId;
+
     /** 失效时间 */
     @NotNull(message = "失效时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

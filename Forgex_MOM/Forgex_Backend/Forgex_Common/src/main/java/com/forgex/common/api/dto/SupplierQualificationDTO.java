@@ -48,7 +48,7 @@ public class SupplierQualificationDTO implements Serializable {
     private LocalDate issueDate;
 
     /**
-     * 有效期至
+     * 失效日期。
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDate expireDate;

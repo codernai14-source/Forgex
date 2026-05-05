@@ -31,7 +31,7 @@ public class SupplierMasterInboundInterpreter implements ApiInboundInterpreter {
     private final ObjectMapper objectMapper;
 
     /**
-     * 处理供应商主数据入站报文。
+     * 处理导入数据。
      *
      * @param context 接口平台执行上下文
      * @param payload 已按接口配置装配后的报文

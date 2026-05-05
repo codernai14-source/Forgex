@@ -66,7 +66,7 @@ public class TemplateOptionProviderRegistry {
         if (provider == null) {
             throw new IllegalArgumentException("Provider instance cannot be null");
         }
-        
+
         log.info("Register TemplateOptionProvider: code={}", code);
         providers.put(code, provider);
     }
@@ -109,7 +109,7 @@ public class TemplateOptionProviderRegistry {
         try {
             return provider.getOptions(context, dataSourceValue);
         } catch (Exception e) {
-            log.error("Get options failed, code={}, context={}, dataSourceValue={}", 
+            log.error("Get options failed, code={}, context={}, dataSourceValue={}",
                      code, context, dataSourceValue, e);
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, ExcelPromptEnum.TEMPLATE_OPTION_LIST_GET_FAILED, e.getMessage());
         }

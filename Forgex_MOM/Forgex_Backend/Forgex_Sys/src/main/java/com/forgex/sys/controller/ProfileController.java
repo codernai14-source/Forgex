@@ -19,21 +19,24 @@ import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
 /**
  * 个人信息 Controller
- * 
+ *
  * 职责：
  * - 接收 HTTP 请求
  * - 参数校验（调用 Validator）
  * - 调用 Service 层方法
  * - 返回响应结果
- * 
+ *
  * 提供当前登录用户的个人信息管理接口，包括查看个人信息、更新基本信息、修改密码等
- * 
+ *
  * @author coder_nai@163.com
  * @version 1.0.0
  * @date 2025-01-10
@@ -44,11 +47,11 @@ import java.util.Map;
 @RequestMapping("/sys/profile")
 @RequiredArgsConstructor
 public class ProfileController {
-    
+
     private final ISysUserService userService;
-    
+
     /**
-     * 获取当前用户信息
+     * 查询数据详情。
      * <p>
      * 接口路径：POST /sys/profile/get
      * 需要认证：是（从 UserContext 获取当前用户 ID）
@@ -75,7 +78,7 @@ public class ProfileController {
         // 3. 返回用户详情对象
         return R.ok(user);
     }
-    
+
     /**
      * 更新基本信息
      * <p>
@@ -110,16 +113,16 @@ public class ProfileController {
         Long userId = UserContext.get();
         // 2. 设置用户 ID 到 DTO 中
         userDTO.setId(userId);
-        
+
         // 3. 清空账号字段（不允许修改账号）
         userDTO.setAccount(null);
-        
+
         // 4. 调用 Service 层更新用户信息
         userService.updateUser(userDTO);
         // 5. 返回更新成功提示
         return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
-    
+
     /**
      * 修改密码
      * <p>
@@ -154,17 +157,17 @@ public class ProfileController {
         // 1. 从请求体中提取密码参数
         String oldPassword = body.get("oldPassword");
         String newPassword = body.get("newPassword");
-        
+
         // 2. 参数校验：检查旧密码是否为空
         if (oldPassword == null || oldPassword.isEmpty()) {
             return R.fail(CommonPrompt.OLD_PASSWORD_CANNOT_BE_EMPTY);
         }
-        
+
         // 3. 参数校验：检查新密码是否为空
         if (newPassword == null || newPassword.isEmpty()) {
             return R.fail(CommonPrompt.NEW_PASSWORD_CANNOT_BE_EMPTY);
         }
-        
+
         // 4. 参数校验：检查新密码长度（至少 6 位）
         if (newPassword.length() < 6) {
             return R.fail(CommonPrompt.PASSWORD_TOO_SHORT);
@@ -175,12 +178,12 @@ public class ProfileController {
 
         // 6. 调用 Service 层修改密码
         boolean success = userService.changePassword(userId, oldPassword, newPassword);
-        
+
         // 7. 返回修改结果
         if (!success) {
             return R.fail(CommonPrompt.PASSWORD_INCORRECT);
         }
-        
+
         return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
 }

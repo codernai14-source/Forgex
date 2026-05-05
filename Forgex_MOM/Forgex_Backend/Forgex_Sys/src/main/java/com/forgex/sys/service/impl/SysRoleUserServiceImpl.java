@@ -82,6 +82,12 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     /** 授权类型：岗位 */
     private static final String GRANT_TYPE_POSITION = "POSITION";
 
+    /**
+     * 获取granted列表。
+     *
+     * @param query 查询参数
+     * @return 分页结果
+     */
     @Override
     public Page<RoleGrantVO> getGrantedList(RoleGrantQueryDTO query) {
         if (query == null || query.getRoleId() == null || query.getTenantId() == null) {
@@ -195,6 +201,11 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         return result;
     }
 
+    /**
+     * 批量授权。
+     *
+     * @param grantDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantBatch(RoleGrantDTO grantDTO) {
@@ -228,6 +239,11 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
         }
     }
 
+    /**
+     * 批量撤销授权。
+     *
+     * @param revokeDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void revokeBatch(RoleGrantDTO revokeDTO) {
@@ -298,7 +314,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 授予部门权限。
+     * 授权角色部门。
      *
      * @param grantDTO 授权参数
      */
@@ -307,7 +323,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 授予岗位权限。
+     * 授权角色岗位。
      *
      * @param grantDTO 授权参数
      */
@@ -332,7 +348,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 取消部门授权。
+     * 撤销角色部门授权。
      *
      * @param revokeDTO 取消授权参数
      */
@@ -341,7 +357,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
     }
 
     /**
-     * 取消岗位授权。
+     * 撤销角色岗位授权。
      *
      * @param revokeDTO 取消授权参数
      */

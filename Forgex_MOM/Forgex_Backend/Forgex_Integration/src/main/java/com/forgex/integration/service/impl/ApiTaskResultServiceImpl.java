@@ -10,11 +10,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+/**
+ * 接口任务结果服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Service
 @RequiredArgsConstructor
 public class ApiTaskResultServiceImpl extends ServiceImpl<ApiTaskResultMapper, ApiTaskResult>
     implements IApiTaskResultService {
 
+    /**
+     * 获取by任务ID。
+     *
+     * @param taskId 任务 ID
+     * @return 处理结果
+     */
     @Override
     public ApiTaskResultDTO getByTaskId(String taskId) {
         LambdaQueryWrapper<ApiTaskResult> wrapper = new LambdaQueryWrapper<>();

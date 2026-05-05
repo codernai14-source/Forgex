@@ -1,5 +1,7 @@
 package com.forgex.auth.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -19,6 +21,7 @@ public class SysUserRolePerm {
     /**
      * 主键ID（不同初始化脚本可能存在/不存在，保留字段不影响查询）。
      */
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

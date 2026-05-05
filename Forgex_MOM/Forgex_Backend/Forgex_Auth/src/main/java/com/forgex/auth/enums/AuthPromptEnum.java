@@ -28,7 +28,7 @@ public enum AuthPromptEnum implements I18nPrompt {
     // ========== 语言设置 ==========
     LANG_EMPTY("LANG_EMPTY", "lang不能为空"),
     LANG_SET_FAILED("LANG_SET_FAILED", "设置语言失败"),
-    
+
     // ========== 登录认证 ==========
     NOT_LOGIN("NOT_LOGIN", "未登录"),
     LOGIN_SUCCESS("LOGIN_SUCCESS", "登录成功"),
@@ -38,15 +38,15 @@ public enum AuthPromptEnum implements I18nPrompt {
     CAPTCHA_REQUIRED("CAPTCHA_REQUIRED", "验证码为必填项"),
     CAPTCHA_INVALID("CAPTCHA_INVALID", "验证码无效"),
     ACCOUNT_DISABLED("ACCOUNT_DISABLED", "账号已被禁用"),
-    
+
     // ========== Token 管理 ==========
     TOKEN_EXPIRED("TOKEN_EXPIRED", "Token 已过期"),
     TOKEN_INVALID("TOKEN_INVALID", "Token 无效"),
-    
+
     // ========== 权限校验 ==========
     PERMISSION_DENIED("PERMISSION_DENIED", "权限不足"),
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "角色不存在"),
-    
+
     // ========== 第三方登录 ==========
     SOCIAL_LOGIN_FAILED("SOCIAL_LOGIN_FAILED", "第三方登录失败"),
     SOCIAL_ACCOUNT_BOUND("SOCIAL_ACCOUNT_BOUND", "第三方账号已绑定"),
@@ -64,6 +64,11 @@ public enum AuthPromptEnum implements I18nPrompt {
         this.defaultTemplate = defaultTemplate;
     }
 
+    /**
+     * 获取模块。
+     *
+     * @return 字符串结果
+     */
     @Override
     public String getModule() {
         return "auth";

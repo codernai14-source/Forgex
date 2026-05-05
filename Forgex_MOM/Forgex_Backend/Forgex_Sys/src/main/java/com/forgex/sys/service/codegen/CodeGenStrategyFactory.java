@@ -25,6 +25,8 @@ import java.util.List;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Component
 public class CodeGenStrategyFactory {
@@ -36,7 +38,7 @@ public class CodeGenStrategyFactory {
     }
 
     /**
-     * 根据页面类型选择策略
+     * 获取匹配的策略实现。
      *
      * @param pageType 页面类型
      * @return 对应策略

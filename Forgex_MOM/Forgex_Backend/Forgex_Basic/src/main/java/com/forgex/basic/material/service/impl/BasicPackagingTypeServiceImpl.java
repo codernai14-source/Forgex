@@ -24,13 +24,19 @@ import org.springframework.util.StringUtils;
 @Service
 public class BasicPackagingTypeServiceImpl extends ServiceImpl<BasicPackagingTypeMapper, BasicPackagingType> implements IBasicPackagingTypeService {
 
+    /**
+     * 分页查询包装类型。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<BasicPackagingType> pagePackagingTypes(PackagingTypePageParam param) {
         Page<BasicPackagingType> page = new Page<>(param.getPageNum(), param.getPageSize());
-        
+
         LambdaQueryWrapper<BasicPackagingType> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BasicPackagingType::getDeleted, 0);
-        
+
         if (StringUtils.hasText(param.getPackagingCode())) {
             queryWrapper.like(BasicPackagingType::getPackagingCode, param.getPackagingCode());
         }
@@ -43,10 +49,10 @@ public class BasicPackagingTypeServiceImpl extends ServiceImpl<BasicPackagingTyp
         if (param.getStatus() != null) {
             queryWrapper.eq(BasicPackagingType::getStatus, param.getStatus());
         }
-        
+
         queryWrapper.orderByAsc(BasicPackagingType::getSortOrder)
                     .orderByDesc(BasicPackagingType::getCreateTime);
-        
+
         return page(page, queryWrapper);
     }
 }

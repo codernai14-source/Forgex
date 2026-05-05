@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * 操作日志实体类
  * <p>记录用户的操作日志信息。</p>
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -31,6 +31,9 @@ public class SysOperationLog extends BaseEntity {
     @TableField("username")
     private String username;
 
+    /**
+     * 账号。
+     */
     @TableField(exist = false)
     private String account;
 

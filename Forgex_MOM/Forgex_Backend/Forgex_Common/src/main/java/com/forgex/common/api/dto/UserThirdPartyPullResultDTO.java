@@ -6,6 +6,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 用户thirdpartypull结果数据传输对象。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Data
 public class UserThirdPartyPullResultDTO implements Serializable {
 

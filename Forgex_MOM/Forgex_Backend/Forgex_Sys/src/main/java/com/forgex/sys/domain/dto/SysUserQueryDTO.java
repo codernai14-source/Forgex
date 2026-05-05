@@ -24,41 +24,49 @@ import java.util.List;
 
 /**
  * 用户查询DTO
- * 
+ *
  * @author coder_nai@163.com
  * @date 2025-01-07
+ *
+ * @version 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysUserQueryDTO extends BaseGetParam {
-    
+
     /**
      * 账号（模糊查询）
      */
     private String account;
-    
+
     /**
      * 用户名（模糊查询）
      */
     private String username;
-    
+
     /**
      * 手机号（模糊查询）
      */
     private String phone;
-    
+
     /**
      * 部门ID
      */
     private Long departmentId;
-    
+
     /**
      * 职位ID
      */
     private Long positionId;
 
+    /**
+     * 员工 ID。
+     */
     private Long employeeId;
 
+    /**
+     * 用户来源。
+     */
     private Integer userSource;
 
     /**
@@ -80,12 +88,12 @@ public class SysUserQueryDTO extends BaseGetParam {
      * 入职结束日期
      */
     private LocalDate entryDateEnd;
-    
+
     /**
      * 状态：false=禁用，true=启用
      */
     private Boolean status;
-    
+
     /**
      * 租户ID
      */

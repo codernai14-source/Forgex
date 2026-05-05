@@ -5,7 +5,7 @@
  * 1. 閹稿膩閸ф鐫嶇粈楦垮綅閸楁洘鐖茶ぐ銏ｃ€冮弽?
  * 2. 閺€顖涘瘮閸曢箖鈧褰嶉崡鏇熸綀闂?
  * 3. 閺€顖涘瘮閹兼粎鍌ㄩ妴浣稿弿闁鈧礁寮介柅澶堚偓浣圭缁岀儤鎼锋担?
- * 4. 娣囨繂鐡ㄧ憴鎺曞閼挎粌宕熼幒鍫熸綀
+ * 4. 淇濆瓨瑙掕壊鑿滃崟鎺堟潈
  * 
  * @author Forgex
  * @version 1.0.0
@@ -14,13 +14,18 @@
   <div class="role-grant-page">
     <!-- 头部面板 -->
     <section class="hero-panel">
-      <div>
-        <p class="hero-panel__eyebrow">{{ $t('system.role.menuGrant') }}</p>
-        <h2 class="hero-panel__title">{{ roleName }}</h2>
-        <p class="hero-panel__desc">{{ $t('system.role.menuGrantDesc') }}</p>
+      <div class="hero-panel__main">
+        <div class="hero-panel__copy">
+          <p class="hero-panel__eyebrow">{{ $t('system.role.menuGrant') }}</p>
+          <p class="hero-panel__desc">{{ $t('system.role.menuGrantDesc') }}</p>
+        </div>
+        <div class="hero-panel__role">
+          <span class="hero-panel__role-label">{{ $t('system.role.roleName') }}</span>
+          <strong class="hero-panel__role-name">{{ roleName || '-' }}</strong>
+        </div>
       </div>
       <div class="hero-panel__tabs">
-        <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
+        <a-tabs :active-key="activeTerminal" @change="handleTerminalChange">
           <a-tab-pane key="B" tab="B端菜单" />
           <a-tab-pane key="C" tab="C端菜单" />
         </a-tabs>
@@ -72,10 +77,12 @@
           :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
-            onChange: handleSelectionChange
+            onChange: handleSelectionChange,
+            checkStrictly: false
           }"
           row-key="id"
           :pagination="false"
+          :show-query-form="false"
           :default-expand-all-rows="true"
         >
           <template #type="{ record }">
@@ -114,6 +121,8 @@ import {
   getRoleModuleAuthData,
   grantRoleCMenus,
   grantRoleMenus,
+  listRoleCMenus,
+  listRoleMenus,
 } from '@/api/system/role'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
@@ -150,7 +159,12 @@ const searchKeyword = ref('')
 const selectedRowKeys = ref<string[]>([])
 const currentTenantId = ref<string>('')
 const allMenus = ref<MenuTreeRecord[]>([])
+const currentModuleTree = ref<MenuTreeRecord[]>([])
 const terminalModuleSelectedKeys = ref<Record<'B' | 'C', Record<string, string[]>>>({
+  B: {},
+  C: {},
+})
+const terminalModuleKnownMenuKeys = ref<Record<'B' | 'C', Record<string, string[]>>>({
   B: {},
   C: {},
 })
@@ -221,20 +235,26 @@ async function handleRequest(params: any) {
       roleId: roleId.value,
     })
 
-    const filteredTree = filterTreeByKeyword(tree || [], searchKeyword.value)
-    const normalizedTree = normalizeTreeRows(filteredTree)
-    
+    const normalizedTree = normalizeTreeRows(tree || [])
+    currentModuleTree.value = normalizedTree
     allMenus.value = flattenTree(normalizedTree)
+    terminalModuleKnownMenuKeys.value[activeTerminal.value][activeModuleId.value] = allMenus.value
+      .map(menu => String(menu.id ?? ''))
+      .filter(id => id !== '')
+
+    const filteredTree = filterTreeByKeyword(normalizedTree, searchKeyword.value)
 
     // 姣忔鍔犺浇閮戒粠鍚庣杩斿洖鐨?checked 瀛楁閲嶆柊鍒濆鍖栭€変腑鐘舵€?
     const checkedIds = collectCheckedNodeIds(normalizedTree)
     const cachedKeys = terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value]
-    selectedRowKeys.value = cachedKeys ? [...cachedKeys] : checkedIds
-    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
+    selectedRowKeys.value = cachedKeys
+      ? expandSelectedKeys(cachedKeys, normalizedTree)
+      : expandSelectedKeys(checkedIds, normalizedTree)
+    syncActiveModuleSelection()
 
     return {
-      records: normalizedTree,
-      total: countTreeNodes(normalizedTree),
+      records: filteredTree,
+      total: countTreeNodes(filteredTree),
     }
   } catch (error) {
     console.error('load menu tree failed:', error)
@@ -271,7 +291,7 @@ function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTree
 }
 
 /**
- * 鏉╁洦鎶ゅ鎻掑瑎闁娈戦懞鍌滃仯
+ * 杩囨护宸插嬀閫夌殑鑺傜偣
  */
 function collectCheckedNodeIds(nodes: MenuTreeRecord[]): string[] {
   const ids: string[] = []
@@ -300,6 +320,60 @@ function flattenTree(tree: MenuTreeRecord[]): MenuTreeRecord[] {
   return res
 }
 
+function buildNodeMap(tree: MenuTreeRecord[]): Map<string, MenuTreeRecord> {
+  const map = new Map<string, MenuTreeRecord>()
+  flattenTree(tree).forEach((node) => {
+    if (node.id != null) {
+      map.set(String(node.id), node)
+    }
+  })
+  return map
+}
+
+function collectNodeAndDescendantIds(node?: MenuTreeRecord): string[] {
+  if (!node || node.id == null) {
+    return []
+  }
+
+  const ids = [String(node.id)]
+  ;(node.children || []).forEach((child) => {
+    ids.push(...collectNodeAndDescendantIds(child))
+  })
+  return ids
+}
+
+function expandSelectedKeys(keys: Array<string | number>, tree: MenuTreeRecord[] = currentModuleTree.value): string[] {
+  if (!keys.length) {
+    return []
+  }
+
+  const nodeMap = buildNodeMap(tree)
+  const expandedIds = keys.flatMap((key) => {
+    const id = String(key)
+    const node = nodeMap.get(id)
+    return node ? collectNodeAndDescendantIds(node) : [id]
+  })
+  return Array.from(new Set(expandedIds.filter(id => id !== '')))
+}
+
+function syncActiveModuleSelection(
+  keys: Array<string | number> = selectedRowKeys.value,
+  terminal: 'B' | 'C' = activeTerminal.value,
+  moduleId: string = activeModuleId.value,
+  tree: MenuTreeRecord[] = currentModuleTree.value
+) {
+  if (!moduleId) {
+    return
+  }
+
+  const expandedKeys = expandSelectedKeys(keys, tree)
+  terminalModuleSelectedKeys.value[terminal][moduleId] = expandedKeys
+
+  if (terminal === activeTerminal.value && moduleId === activeModuleId.value) {
+    selectedRowKeys.value = expandedKeys
+  }
+}
+
 /**
  * 缂佺喕顓搁弽鎴ｅΝ閻愯鏆熼柌?
  */
@@ -308,7 +382,7 @@ function countTreeNodes(nodes: MenuTreeRecord[] = []): number {
 }
 
 /**
- * 鐟欏嫯瀵栭崠鏍ㄧ埐缂佹挻鐎弫鐗堝祦
+ * 瑙勮寖鍖栨爲缁撴瀯鏁版嵁
  */
 function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
   return nodes.map((node) => ({
@@ -327,19 +401,17 @@ function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
  */
 function handleSelectionChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys.map(String)
-  if (activeModuleId.value) {
-    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
-  }
+  syncActiveModuleSelection()
 }
 
 /**
  * 婢跺嫮鎮婂Ο鈥虫健閸掑洦宕?
  */
 async function handleModuleChange(moduleId: string) {
-  if (activeModuleId.value) {
-    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
-  }
+  syncActiveModuleSelection()
   activeModuleId.value = moduleId
+  currentModuleTree.value = []
+  allMenus.value = []
   selectedRowKeys.value = terminalModuleSelectedKeys.value[activeTerminal.value][moduleId]
     ? [...terminalModuleSelectedKeys.value[activeTerminal.value][moduleId]]
     : []
@@ -348,12 +420,15 @@ async function handleModuleChange(moduleId: string) {
 }
 
 async function handleTerminalChange(terminal: string) {
-  if (activeModuleId.value) {
-    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
-  }
-  activeTerminal.value = terminal === 'C' ? 'C' : 'B'
-  selectedRowKeys.value = []
+  const previousTerminal = activeTerminal.value
+  syncActiveModuleSelection(selectedRowKeys.value, previousTerminal)
+  const nextTerminal = terminal === 'C' ? 'C' : 'B'
+  activeTerminal.value = nextTerminal
+  selectedRowKeys.value = activeModuleId.value && terminalModuleSelectedKeys.value[nextTerminal][activeModuleId.value]
+    ? [...terminalModuleSelectedKeys.value[nextTerminal][activeModuleId.value]]
+    : []
   allMenus.value = []
+  currentModuleTree.value = []
   searchKeyword.value = ''
   await tableRef.value?.refresh?.()
 }
@@ -363,9 +438,7 @@ async function handleTerminalChange(terminal: string) {
  */
 function handleSelectAll() {
   selectedRowKeys.value = allMenus.value.map(m => String(m.id))
-  if (activeModuleId.value) {
-    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
-  }
+  syncActiveModuleSelection()
 }
 
 /**
@@ -375,9 +448,7 @@ function handleSelectInvert() {
   const allIds = allMenus.value.map(m => String(m.id))
   const selectedSet = new Set(selectedRowKeys.value)
   selectedRowKeys.value = allIds.filter(id => !selectedSet.has(id))
-  if (activeModuleId.value) {
-    terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
-  }
+  syncActiveModuleSelection()
 }
 
 /**
@@ -407,14 +478,27 @@ async function handleSave() {
   }
 
   try {
-    if (activeModuleId.value) {
-      terminalModuleSelectedKeys.value[activeTerminal.value][activeModuleId.value] = [...selectedRowKeys.value]
-    }
+    syncActiveModuleSelection()
+
+    const existingMenuIds = await (activeTerminal.value === 'C' ? listRoleCMenus : listRoleMenus)({
+      roleId: roleId.value,
+      tenantId: currentTenantId.value,
+    })
+    const managedMenuIds = new Set(
+      Object.values(terminalModuleKnownMenuKeys.value[activeTerminal.value])
+        .flat()
+        .map(String)
+    )
+    const selectedMenuIds = Object.values(terminalModuleSelectedKeys.value[activeTerminal.value])
+      .flat()
+      .map(String)
+      .filter(id => id !== '')
+    const preservedMenuIds = (existingMenuIds || [])
+      .map(String)
+      .filter(id => id !== '' && !managedMenuIds.has(id))
     const menuIds = Array.from(
       new Set(
-        Object.values(terminalModuleSelectedKeys.value[activeTerminal.value])
-          .flat()
-          .filter(id => id !== '')
+        [...preservedMenuIds, ...selectedMenuIds]
       )
     )
     
@@ -500,8 +584,8 @@ onMounted(async () => {
   background: var(--fx-bg-layout, #f9fafb);
 
   .hero-panel {
-    margin-bottom: 24px;
-    padding: 24px;
+    margin-bottom: 12px;
+    padding: 14px 16px 10px;
     background: linear-gradient(
       135deg,
       color-mix(in srgb, var(--fx-primary, #1677ff) 72%, #ffffff 28%) 0%,
@@ -510,16 +594,22 @@ onMounted(async () => {
     border-radius: 8px;
     color: #fff;
 
-    &__eyebrow {
-      font-size: 14px;
-      opacity: 0.9;
-      margin-bottom: 8px;
+    &__main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
 
-    &__title {
-      font-size: 28px;
+    &__copy {
+      min-width: 0;
+    }
+
+    &__eyebrow {
+      margin: 0 0 4px;
+      font-size: 14px;
       font-weight: 600;
-      margin: 0 0 8px 0;
+      opacity: 0.9;
     }
 
     &__desc {
@@ -528,14 +618,47 @@ onMounted(async () => {
       margin: 0;
     }
 
+    &__role {
+      flex: 0 0 auto;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      text-align: right;
+    }
+
+    &__role-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 12px;
+      line-height: 1.3;
+      opacity: 0.76;
+    }
+
+    &__role-name {
+      display: block;
+      overflow: hidden;
+      color: #fff;
+      font-size: 16px;
+      line-height: 1.4;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     &__tabs {
-      margin-top: 16px;
+      margin-top: 8px;
 
       :deep(.ant-tabs-nav) {
         margin-bottom: 0;
+        &::before {
+          border-bottom-color: rgba(255, 255, 255, 0.24);
+        }
       }
 
       :deep(.ant-tabs-tab) {
+        padding: 8px 0;
         color: rgba(255, 255, 255, 0.75);
       }
 
@@ -555,9 +678,9 @@ onMounted(async () => {
     box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
 
     .sidebar {
-      width: 280px;
+      width: 240px;
       border-right: 1px solid var(--fx-border-color, #e5e7eb);
-      padding: 16px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
 
@@ -568,7 +691,7 @@ onMounted(async () => {
         &__title {
           font-size: 16px;
           font-weight: 600;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
           color: var(--fx-text-primary, #111827);
         }
       }
@@ -576,8 +699,8 @@ onMounted(async () => {
       .filter-item {
         display: block;
         width: 100%;
-        padding: 12px 16px;
-        margin-bottom: 8px;
+        padding: 9px 12px;
+        margin-bottom: 6px;
         border: none;
         background: var(--fx-bg-elevated, #ffffff);
         color: var(--fx-text-primary, #111827);
@@ -599,7 +722,7 @@ onMounted(async () => {
 
     .content-panel {
       flex: 1;
-      padding: 16px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       min-width: 0;
@@ -608,7 +731,7 @@ onMounted(async () => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
         gap: 12px;
 
         :deep(.ant-input-search) {
@@ -620,6 +743,24 @@ onMounted(async () => {
       :deep(.fx-dynamic-table) {
         flex: 1;
         min-height: 0;
+        gap: 0;
+      }
+
+      :deep(.fx-table-toolbar-row) {
+        padding: 6px 8px;
+      }
+
+      :deep(.fx-table-card) {
+        flex: 1;
+        min-height: 0;
+      }
+
+      :deep(.fx-table-card > .ant-card-body) {
+        height: 100%;
+      }
+
+      :deep(.fx-table-content) {
+        height: 100%;
       }
 
       :deep(.ant-table) {
@@ -639,6 +780,45 @@ onMounted(async () => {
 
       :deep(.ant-table-tbody > tr:hover > td) {
         background: var(--fx-fill, #f3f4f6);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px;
+
+    .hero-panel {
+      &__main {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      &__role {
+        max-width: none;
+        text-align: left;
+      }
+    }
+
+    .board {
+      flex-direction: column;
+
+      .sidebar {
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--fx-border-color, #e5e7eb);
+      }
+
+      .content-panel {
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+
+          :deep(.ant-input-search) {
+            width: 100%;
+            max-width: none;
+          }
+        }
       }
     }
   }

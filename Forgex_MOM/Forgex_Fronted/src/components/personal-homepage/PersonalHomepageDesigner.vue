@@ -1,6 +1,6 @@
 <template>
   <div class="personal-homepage-designer">
-    <!-- Hero 鍖猴細鏍规嵁妯″紡鏄剧ず涓嶅悓鍐呭 -->
+    <!-- Hero 区：根据模式显示不同内容 -->
     <div class="designer-hero">
       <!-- 鏅€氭ā寮忥細鏄剧ず鐢ㄦ埛鎽樿淇℃伅 -->
       <div v-if="mode === 'current'" class="designer-hero__user">
@@ -476,7 +476,7 @@ type GreetingPhase = 'morning' | 'afternoon' | 'evening'
 /**
  * 鏍规嵁褰撳墠鏈湴鏃堕棿璁＄畻闂€欐椂娈点€?
  *
- * @see now 鐢辨椂閽熷畾鏃跺埛鏂帮紝璺ㄦ椂娈典細鑷姩鏇存柊鏂囨
+ * @see now 由时钟定时刷新，跨时段会自动更新文案
  */
 const greetingPhase = computed<GreetingPhase>(() => {
   const hour = now.value.hour()
@@ -557,7 +557,7 @@ const widgetMetaMap: Record<string, { icon: any }> = {
   currentTime: { icon: ClockCircleOutlined },
 }
 
-// 鍥介檯鍖栵細缁勪欢鏍囬
+// 国际化：组件标题
 const widgetTitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.title',
   myFavorites: 'personalHomepage.components.myFavorites.title',
@@ -802,7 +802,7 @@ async function reloadConfig() {
     config.value = mergePersonalHomepageConfig(remoteConfig)
     syncGridFromConfig()
     await loadWidgetData()
-    // 鍔犺浇鎽樿淇℃伅
+    // 加载摘要信息
     if (props.mode === 'current') {
       await loadSummary()
     }

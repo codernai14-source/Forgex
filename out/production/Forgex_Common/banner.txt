@@ -1,9 +1,0 @@
-   ______                        
-  |  ____|                       
-  | |__   ___  _ __ ___   _ __   
-  |  __| / _ \| '_ ` _ \ | '_ \  
-  | |___| (_) | | | | | || | | | 
-  |______\___/|_| |_| |_||_| |_| 
-
-  Forgex Platform  |  ${spring.application.name}  |  ${spring.profiles.active:dev}
-  Build: ${build.version:1.0.0}  Java: ${java.version}  PID: ${PID}

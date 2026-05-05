@@ -1,7 +1,7 @@
 /**
- * 搴旂敤鍏ㄥ眬 Store
- * 
- * @description 绠＄悊搴旂敤鍏ㄥ眬鐘舵€侊紝濡備富棰樸€佽瑷€銆佷晶杈规爮绛?
+ * 应用全局 Store
+ *
+ * @description 管理应用级状态，如侧边栏、主题、语言和加载状态。
  */
 
 import { defineStore } from 'pinia'
@@ -10,64 +10,64 @@ import { setLocale as setI18nLocale, type LocaleCode } from '../locales'
 
 export const useAppStore = defineStore('app', () => {
   // ============ State ============
-  
+
   /**
-   * 渚ц竟鏍忔槸鍚︽姌鍙?
+   * 侧边栏折叠状态。
    */
   const sidebarCollapsed = ref(false)
-  
+
   /**
-   * 褰撳墠涓婚
+   * 当前主题。
    */
   const theme = ref<'light' | 'dark'>('light')
-  
+
   /**
-   * 褰撳墠璇█
+   * 当前语言。
    */
   const locale = ref<LocaleCode>('zh-CN')
-  
+
   /**
-   * 鍔犺浇鐘舵€?
+   * 全局加载状态。
    */
   const loading = ref(false)
 
   /**
-   * 琛ㄥ崟妯″紡锛歮odal-寮圭獥锛宒rawer-鎶藉眽
+   * 表单展示模式，modal 表示弹窗，drawer 表示抽屉。
    */
   const formMode = ref<'modal' | 'drawer'>('drawer')
-  
+
   // ============ 操作 ============
-  
+
   /**
-   * 鍒囨崲渚ц竟鏍忔姌鍙犵姸鎬?
+   * 切换侧边栏折叠状态。
    */
   function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value
   }
-  
+
   /**
-   * 璁剧疆渚ц竟鏍忔姌鍙犵姸鎬?
+   * 设置侧边栏折叠状态。
    */
   function setSidebarCollapsed(collapsed: boolean) {
     sidebarCollapsed.value = collapsed
   }
-  
+
   /**
-   * 鍒囨崲涓婚
+   * 切换主题。
    */
   function toggleTheme() {
     theme.value = theme.value === 'light' ? 'dark' : 'light'
   }
-  
+
   /**
-   * 璁剧疆涓婚
+   * 设置主题。
    */
   function setTheme(newTheme: 'light' | 'dark') {
     theme.value = newTheme
   }
-  
+
   /**
-   * 鍒囨崲璇█
+   * 切换语言。
    */
   function toggleLocale() {
     const locales: LocaleCode[] = ['zh-CN', 'en-US', 'zh-TW', 'ja-JP', 'ko-KR']
@@ -77,30 +77,30 @@ export const useAppStore = defineStore('app', () => {
     locale.value = newLocale
     setI18nLocale(newLocale)
   }
-  
+
   /**
-   * 璁剧疆璇█
-   * @param newLocale 鏂扮殑璇█浠ｇ爜
+   * 设置语言。
+   * @param newLocale 新的语言代码
    */
   function setLocale(newLocale: LocaleCode) {
     locale.value = newLocale
     setI18nLocale(newLocale)
   }
-  
+
   /**
-   * 璁剧疆鍔犺浇鐘舵€?
+   * 设置全局加载状态。
    */
   function setLoading(isLoading: boolean) {
     loading.value = isLoading
   }
-  
+
   return {
     // State
     sidebarCollapsed,
     theme,
     locale,
     loading,
-    
+
     // 操作
     toggleSidebar,
     setSidebarCollapsed,
@@ -113,7 +113,7 @@ export const useAppStore = defineStore('app', () => {
     set表单Mode: (mode: 'modal' | 'drawer') => formMode.value = mode
   }
 }, {
-  // 鎸佷箙鍖栭厤缃紙鍙€夛級
+  // 持久化配置
   // persist: {
   //   key: 'forgex-app',
   //   storage: localStorage,

@@ -190,15 +190,15 @@ public class AuthController {
     public R<Boolean> updateTenantPreferences(@RequestBody Map<String, Object> body) {
         // 1. 从请求体中提取账号
         String account = (String) body.get("account");
-        
+
         // 2. 提取租户排序列表（前端保存的顺序）
         Object orderedObj = body.get("ordered");
-        
+
         // 3. 提取默认租户 ID（可选，可能为 null）
-        Long defaultTenantId = body.get("defaultTenantId") == null 
-            ? null 
+        Long defaultTenantId = body.get("defaultTenantId") == null
+            ? null
             : Long.valueOf(String.valueOf(body.get("defaultTenantId")));
-        
+
         // 4. 将 ordered 对象转换为 Long 列表
         java.util.List<Long> ordered = new java.util.ArrayList<>();
         if (orderedObj instanceof java.util.List<?>) {
@@ -206,7 +206,7 @@ public class AuthController {
                 ordered.add(Long.valueOf(String.valueOf(o)));
             }
         }
-        
+
         // 5. 委派给服务层更新租户偏好设置
         return authService.updateTenantPreferences(account, ordered, defaultTenantId);
     }
@@ -352,10 +352,10 @@ public class AuthController {
         if (param == null || param.getId() == null || param.getTrack() == null) {
             return R.fail(CommonPrompt.VERIFICATION_CODE_CANNOT_BE_EMPTY);
         }
-        
+
         // 2. 调用服务层校验滑块轨迹
         String token = captchaService.validateSlider(param.getId(), param.getTrack());
-        
+
         // 3. 返回校验结果
         if (token != null) {
             return R.ok(token);
@@ -390,7 +390,7 @@ public class AuthController {
     }
 
     /**
-     * 切换用户语言偏好
+     * 切换登录语言。
      * <p>
      * 接口路径：POST /auth/changeLanguage
      * 需要认证：是

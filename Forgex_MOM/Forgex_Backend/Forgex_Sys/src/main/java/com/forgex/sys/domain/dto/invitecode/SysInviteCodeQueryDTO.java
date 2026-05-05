@@ -38,6 +38,9 @@ public class SysInviteCodeQueryDTO extends BaseGetParam {
     /** 部门ID */
     private Long departmentId;
 
+    /** 角色ID */
+    private Long roleId;
+
     /** 状态 */
     private Boolean status;
 }

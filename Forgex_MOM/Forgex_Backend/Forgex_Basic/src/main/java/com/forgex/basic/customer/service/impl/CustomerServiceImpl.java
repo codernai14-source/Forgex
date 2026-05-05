@@ -77,6 +77,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
     private final EncodeRuleService encodeRuleService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 分页查询数据。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<CustomerDTO> page(CustomerPageParam param) {
         CustomerPageParam safeParam = param == null ? new CustomerPageParam() : param;
@@ -87,6 +93,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return dtoPage;
     }
 
+    /**
+     * 查询数据列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<CustomerDTO> list(CustomerPageParam param) {
         CustomerPageParam safeParam = param == null ? new CustomerPageParam() : param;
@@ -95,6 +107,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
                 .toList();
     }
 
+    /**
+     * 根据主键查询详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public CustomerDTO getDetailById(Long id) {
         if (id == null) {
@@ -104,6 +122,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return customer == null ? null : convertToDTO(customer, true);
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(CustomerSaveParam param) {
@@ -123,6 +147,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return customer.getId();
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(CustomerSaveParam param) {
@@ -138,6 +168,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return true;
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
@@ -150,6 +186,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return true;
     }
 
+    /**
+     * 生成关联租户。
+     *
+     * @param id 主键 ID
+     * @return 字符串结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String generateTenant(Long id) {
@@ -187,6 +229,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return tenantCode;
     }
 
+    /**
+     * 发起审批流程。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long startApproval(CustomerApprovalStartParam param) {
@@ -210,6 +258,12 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return response.getData();
     }
 
+    /**
+     * 处理工作流回调。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleWorkflowCallback(CustomerWorkflowCallbackParam param) {

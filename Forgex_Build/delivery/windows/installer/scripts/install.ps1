@@ -1,13 +1,16 @@
 param(
     [string]$InstanceCode = "ACME_PROD",
     [string]$InstallRoot = "",
-    [string]$DeployProfile = "prod",
+    [string]$DeployProfile = "yanshi",
     [string]$NacosAddr = "127.0.0.1:8848",
     [string]$NacosNamespace = "",
     [string]$NacosGroup = "DEFAULT_GROUP",
     [string]$RedisAddr = "127.0.0.1:6379",
     [string]$RocketMqAddr = "127.0.0.1:9876",
     [string]$MysqlUrl = "",
+    [string]$LogDir = "",
+    [string]$DatasourceConfig = "datasource-forgex-dev.yml",
+    [string]$IntegrationDatasourceConfig = "datasource-forgex-integration-dev.yml",
     [int]$GatewayPort = 9000,
     [int]$AuthPort = 9001,
     [int]$SysPort = 9002,
@@ -34,9 +37,15 @@ if ([string]::IsNullOrWhiteSpace($NacosNamespace)) {
     $NacosNamespace = $DeployProfile
 }
 
+if ([string]::IsNullOrWhiteSpace($LogDir)) {
+    $LogDir = Join-Path $InstallRoot "logs"
+}
+
+$LogDir = [System.IO.Path]::GetFullPath($LogDir)
+
 $licenseDir = Join-Path $InstallRoot "license"
 $uploadDir = Join-Path $InstallRoot "data\uploads"
-$logDir = Join-Path $InstallRoot "logs"
+$logDir = $LogDir
 $backupDir = Join-Path $InstallRoot "backup"
 $servicesDir = Join-Path $InstallRoot "services"
 $frontendDir = Join-Path $InstallRoot "frontend"
@@ -52,8 +61,7 @@ $dirs = @(
     "data\uploads",
     "data\service-state",
     "license",
-    "logs",
-    "logs\nginx",
+    "database-init",
     "scripts",
     "backup",
     "tools",
@@ -72,6 +80,17 @@ foreach ($dir in $dirs) {
     $fullPath = Join-Path $InstallRoot $dir
     if (-not (Test-Path -LiteralPath $fullPath)) {
         New-Item -ItemType Directory -Path $fullPath | Out-Null
+    }
+}
+
+$runtimeDirs = @(
+    $logDir,
+    (Join-Path $logDir "nginx")
+)
+
+foreach ($dir in $runtimeDirs) {
+    if (-not (Test-Path -LiteralPath $dir)) {
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
     }
 }
 
@@ -132,7 +151,7 @@ $services = @(
 
 foreach ($service in $services) {
     if (-not (Test-Path -LiteralPath $service.logDir)) {
-        New-Item -ItemType Directory -Path $service.logDir | Out-Null
+        New-Item -ItemType Directory -Force -Path $service.logDir | Out-Null
     }
 }
 
@@ -156,6 +175,8 @@ nacosGroup: $NacosGroup
 redisAddr: $RedisAddr
 rocketMqAddr: $RocketMqAddr
 mysqlUrl: $MysqlUrl
+datasourceConfig: $DatasourceConfig
+integrationDatasourceConfig: $IntegrationDatasourceConfig
 ports:
   gateway: $GatewayPort
   auth: $AuthPort
@@ -227,6 +248,8 @@ $controlConfig = [ordered]@{
     redisAddr = $RedisAddr
     rocketMqAddr = $RocketMqAddr
     mysqlUrl = $MysqlUrl
+    datasourceConfig = $DatasourceConfig
+    integrationDatasourceConfig = $IntegrationDatasourceConfig
     frontendPort = $FrontendPort
     services = $services
 }
@@ -282,6 +305,8 @@ function Install-WinSwServices {
             Replace("__NACOS_ADDR__", $NacosAddr).
             Replace("__NACOS_NAMESPACE__", $NacosNamespace).
             Replace("__NACOS_GROUP__", $NacosGroup).
+            Replace("__DATASOURCE_CONFIG__", $DatasourceConfig).
+            Replace("__INTEGRATION_DATASOURCE_CONFIG__", $IntegrationDatasourceConfig).
             Replace("__REDIS_ADDR__", $RedisAddr).
             Replace("__ROCKETMQ_ADDR__", $RocketMqAddr).
             Replace("__MYSQL_URL__", $MysqlUrl).

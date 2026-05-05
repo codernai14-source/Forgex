@@ -33,6 +33,8 @@ import java.nio.charset.StandardCharsets;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/sys/codegen")
@@ -42,7 +44,7 @@ public class CodeGenController {
     private final CodeGenService codeGenService;
 
     /**
-     * 预览生成代码
+     * 预览代码生成结果。
      *
      * @param req 生成请求
      * @return 预览结果
@@ -56,7 +58,7 @@ public class CodeGenController {
     }
 
     /**
-     * 下载 ZIP
+     * 下载文件。
      *
      * @param req 生成请求
      * @param response 响应对象

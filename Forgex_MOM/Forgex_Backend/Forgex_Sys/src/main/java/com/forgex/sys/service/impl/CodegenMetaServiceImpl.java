@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,12 @@ public class CodegenMetaServiceImpl implements CodegenMetaService {
     private final DbMetaService dbMetaService;
     private final ICodegenDatasourceService datasourceService;
 
+    /**
+     * 查询数据库 Schema 列表。
+     *
+     * @param datasourceId 数据源 ID
+     * @return 列表数据
+     */
     @Override
     public List<CodegenMetaOptionVO> listSchemas(Long datasourceId) {
         SysCodegenDatasource datasource = datasourceService.requireEntity(datasourceId);
@@ -47,6 +55,13 @@ public class CodegenMetaServiceImpl implements CodegenMetaService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * 查询数据库表列表。
+     *
+     * @param datasourceId 数据源 ID
+     * @param schemaName 数据库模式名称
+     * @return 列表数据
+     */
     @Override
     public List<CodegenMetaOptionVO> listTables(Long datasourceId, String schemaName) {
         SysCodegenDatasource datasource = datasourceService.requireEntity(datasourceId);
@@ -55,12 +70,28 @@ public class CodegenMetaServiceImpl implements CodegenMetaService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * 查询数据库列列表。
+     *
+     * @param datasourceId 数据源 ID
+     * @param schemaName 数据库模式名称
+     * @param tableName 表格名称
+     * @return 列表数据
+     */
     @Override
     public List<ColumnMetaDTO> listColumns(Long datasourceId, String schemaName, String tableName) {
         SysCodegenDatasource datasource = datasourceService.requireEntity(datasourceId);
         return dbMetaService.listColumns(datasource, schemaName, tableName);
     }
 
+    /**
+     * 获取表格meta。
+     *
+     * @param datasourceId 数据源 ID
+     * @param schemaName 数据库模式名称
+     * @param tableName 表格名称
+     * @return 处理结果
+     */
     @Override
     public TableMetaDTO getTableMeta(Long datasourceId, String schemaName, String tableName) {
         SysCodegenDatasource datasource = datasourceService.requireEntity(datasourceId);

@@ -50,9 +50,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -212,7 +210,7 @@ public class UserController {
     }
 
     /**
-     * 批量删除用户。
+     * 批量删除数据。
      *
      * @param param 用户 ID 列表参数
      * @return 删除结果
@@ -323,19 +321,6 @@ public class UserController {
      * @return 导入结果
      * @throws Exception 文件读取或解析异常
      */
-    @RequirePerm("sys:user:import")
-    @PostMapping("/import")
-    public R<UserThirdPartyPullResultDTO> importUsers(@RequestParam("file") MultipartFile file) throws Exception {
-        if (file == null || file.isEmpty()) {
-            return R.fail(CommonPrompt.FILE_EMPTY);
-        }
-        Long tenantId = resolveCurrentTenantId();
-        if (tenantId == null) {
-            return R.fail(CommonPrompt.TENANT_ID_EMPTY);
-        }
-        return R.ok(CommonPrompt.IMPORT_SUCCESS, userService.importUsers(tenantId, file));
-    }
-
     /**
      * 导出第三方用户同步数据。
      *
@@ -348,7 +333,7 @@ public class UserController {
     }
 
     /**
-     * 同步第三方用户数据。
+     * 同步第三方用户。
      *
      * @param request 第三方用户同步请求
      * @return 同步结果
@@ -359,7 +344,7 @@ public class UserController {
     }
 
     /**
-     * 根据部门 ID 列表查询当前租户下有效用户 ID。
+     * 按部门 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按部门匹配审批人使用。
      * </p>
@@ -377,7 +362,7 @@ public class UserController {
     }
 
     /**
-     * 根据角色 ID 列表查询当前租户下有效用户 ID。
+     * 按角色 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按角色匹配审批人使用。
      * </p>
@@ -395,7 +380,7 @@ public class UserController {
     }
 
     /**
-     * 根据岗位 ID 列表查询当前租户下有效用户 ID。
+     * 按岗位 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按岗位匹配审批人使用。
      * </p>

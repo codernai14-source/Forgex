@@ -16,6 +16,7 @@
 
 package com.forgex.auth.mapper;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.forgex.auth.domain.entity.SysInviteCode;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,6 +25,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 邀请码 Mapper（Auth 模块）
  */
 @Mapper
+@DS("admin")
 public interface SysInviteCodeMapper extends BaseMapper<SysInviteCode> {
 }
 

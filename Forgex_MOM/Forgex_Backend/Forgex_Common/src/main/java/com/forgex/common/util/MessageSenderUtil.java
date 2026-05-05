@@ -28,7 +28,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +46,7 @@ import java.util.regex.Pattern;
  * 4. 支持多平台发送（站内、企业微信、短信、邮箱）
  * 5. 支持MQ异步发送
  * </p>
- * 
+ *
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -50,52 +54,51 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class MessageSenderUtil {
-    
+
     private final ObjectMapper objectMapper;
     private final MqSender mqSender;
-    
+
     // 占位符正则表达式：${变量名}
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
-    
+
     /**
      * 消息发送参数
      */
     public static class MessageSendParam {
         /** 模板编码 */
         private String templateCode;
-        
+
         /** 数据Map（用于填充占位符，可为空） */
         private Map<String, Object> dataMap;
-        
+
         /** 发送人名称（可为空，默认为当前用户或系统） */
         private String senderName;
-        
+
         /** 业务类型（可为空） */
         private String bizType;
-        
+
         public MessageSendParam(String templateCode) {
             this.templateCode = templateCode;
         }
-        
+
         public MessageSendParam(String templateCode, Map<String, Object> dataMap) {
             this.templateCode = templateCode;
             this.dataMap = dataMap;
         }
-        
+
         public MessageSendParam(String templateCode, Map<String, Object> dataMap, String senderName) {
             this.templateCode = templateCode;
             this.dataMap = dataMap;
             this.senderName = senderName;
         }
-        
+
         public MessageSendParam(String templateCode, Map<String, Object> dataMap, String senderName, String bizType) {
             this.templateCode = templateCode;
             this.dataMap = dataMap;
             this.senderName = senderName;
             this.bizType = bizType;
         }
-        
-        // Getters and Setters
+
         public String getTemplateCode() { return templateCode; }
         public void setTemplateCode(String templateCode) { this.templateCode = templateCode; }
         public Map<String, Object> getDataMap() { return dataMap; }
@@ -105,10 +108,10 @@ public class MessageSenderUtil {
         public String getBizType() { return bizType; }
         public void setBizType(String bizType) { this.bizType = bizType; }
     }
-    
+
     /**
      * 发送消息（同步）
-     * 
+     *
      * @param param 消息发送参数
      * @return 发送成功的消息数量
      */
@@ -120,17 +123,15 @@ public class MessageSenderUtil {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_SEND_FAILED, e.getMessage());
         }
     }
-    
+
     /**
      * 发送消息（异步，通过MQ）
-     * 
+     *
      * @param param 消息发送参数
      */
     public void sendMessageAsync(MessageSendParam param) {
         try {
-            // 将参数序列化为JSON
             String json = objectMapper.writeValueAsString(param);
-            // 发送到MQ
             boolean success = mqSender.send("MESSAGE_SEND_TOPIC", "ASYNC_SEND", json);
             if (!success) {
                 log.warn("消息发送到MQ失败，将同步发送: templateCode={}", param.getTemplateCode());
@@ -141,32 +142,30 @@ public class MessageSenderUtil {
             sendMessage(param);
         }
     }
-    
+
     /**
      * 执行消息发送
      */
     private int doSendMessage(MessageSendParam param) {
-        // 注意：这里需要注入相关的Mapper和Service，为了避免循环依赖，
-        // 实际实现时应该通过ApplicationContext动态获取Bean
-        // 这里提供核心逻辑框架
-        
+        // 当前工具类保留模板、接收人、内容查询的接入点，正式接入时通过 ApplicationContext 获取依赖，避免循环依赖。
+
         log.info("开始发送消息: templateCode={}", param.getTemplateCode());
-        
+
         // 1. 根据模板编码查询模板主表
         // SysMessageTemplate template = templateMapper.selectOne(...)
         // if (template == null || !template.getStatus()) {
         //     throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, MessagePromptEnum.MSG_TEMPLATE_NOT_FOUND_OR_DISABLED, param.getTemplateCode());
         // }
-        
+
         // 2. 查询接收人配置
         // List<SysMessageTemplateReceiver> receivers = receiverMapper.selectList(...)
-        
+
         // 3. 解析接收人列表
         // Set<Long> receiverUserIds = parseReceiverUserIds(receivers);
-        
+
         // 4. 查询模板内容配置
         // List<SysMessageTemplateContent> contents = contentMapper.selectList(...)
-        
+
         // 5. 准备发送人信息
         String senderName = param.getSenderName();
         if (!StringUtils.hasText(senderName)) {
@@ -180,7 +179,7 @@ public class MessageSenderUtil {
                 senderName = "系统(admin)";
             }
         }
-        
+
         // 6. 遍历接收人和平台，发送消息
         int sentCount = 0;
         // for (Long receiverUserId : receiverUserIds) {
@@ -188,7 +187,7 @@ public class MessageSenderUtil {
         //         // 填充占位符
         //         String title = fillPlaceholder(content.getContentTitle(), param.getDataMap());
         //         String body = fillPlaceholder(content.getContentBody(), param.getDataMap());
-        //         
+        //
         //         // 创建消息记录
         //         SysMessage message = new SysMessage();
         //         message.setTenantId(TenantContext.get());
@@ -202,36 +201,36 @@ public class MessageSenderUtil {
         //         message.setLinkUrl(content.getLinkUrl());
         //         message.setBizType(param.getBizType());
         //         message.setStatus(0); // 未读
-        //         
+        //
         //         // 保存消息记录
         //         messageMapper.insert(message);
         //         sentCount++;
-        //         
+        //
         //         // 如果是站内消息，通过SSE推送
         //         if ("INTERNAL".equals(content.getPlatform())) {
         //             sseEmitterService.sendToUser(receiverUserId, message);
         //         }
         //     }
         // }
-        
+
         log.info("消息发送完成: templateCode={}, sentCount={}", param.getTemplateCode(), sentCount);
         return sentCount;
     }
-    
+
     /**
      * 解析接收人用户ID列表
-     * 
+     *
      * @param receivers 接收人配置列表
      * @return 用户ID集合
      */
     private Set<Long> parseReceiverUserIds(List<?> receivers) {
         Set<Long> userIds = new HashSet<>();
-        
+
         // 遍历接收人配置
         // for (SysMessageTemplateReceiver receiver : receivers) {
         //     String receiverType = receiver.getReceiverType();
         //     List<Long> receiverIds = parseReceiverIds(receiver.getReceiverIds());
-        //     
+        //
         //     switch (receiverType) {
         //         case "USER": // 指定人
         //             userIds.addAll(receiverIds);
@@ -268,10 +267,10 @@ public class MessageSenderUtil {
         //             break;
         //     }
         // }
-        
+
         return userIds;
     }
-    
+
     /**
      * 解析接收人ID列表（JSON字符串转List）
      */
@@ -283,10 +282,10 @@ public class MessageSenderUtil {
             return new ArrayList<>();
         }
     }
-    
+
     /**
      * 填充占位符
-     * 
+     *
      * @param template 模板字符串（包含${变量名}格式的占位符）
      * @param dataMap 数据Map
      * @return 填充后的字符串
@@ -295,14 +294,14 @@ public class MessageSenderUtil {
         if (!StringUtils.hasText(template)) {
             return template;
         }
-        
+
         if (dataMap == null || dataMap.isEmpty()) {
             return template;
         }
-        
+
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
         StringBuffer result = new StringBuffer();
-        
+
         while (matcher.find()) {
             String key = matcher.group(1);
             Object value = dataMap.get(key);
@@ -310,10 +309,8 @@ public class MessageSenderUtil {
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);
-        
+
         return result.toString();
     }
 }
-
-
 

@@ -39,7 +39,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -48,6 +53,8 @@ import java.util.stream.Collectors;
  *
  * @author Forgex Team
  * @since 2026-04-11
+ *
+ * @version 1.0.0
  */
 @Slf4j
 @Service
@@ -60,6 +67,13 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
 
     // ======================== CRUD ========================
 
+    /**
+     * 分页查询菜单。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 处理结果
+     */
     @Override
     public IPage<SysCMenuDTO> pageMenus(Page<SysCMenu> page, SysCMenuQueryDTO query) {
         LambdaQueryWrapper<SysCMenu> wrapper = buildQueryWrapper(query);
@@ -68,6 +82,12 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return result.convert(this::toDTO);
     }
 
+    /**
+     * 查询菜单列表。
+     *
+     * @param query 查询参数
+     * @return 列表数据
+     */
     @Override
     public List<SysCMenuDTO> listMenus(SysCMenuQueryDTO query) {
         LambdaQueryWrapper<SysCMenu> wrapper = buildQueryWrapper(query);
@@ -75,6 +95,13 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return this.list(wrapper).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    /**
+     * 获取菜单树。
+     *
+     * @param tenantId 租户 ID
+     * @param moduleId 模块 ID
+     * @return 列表数据
+     */
     @Override
     public List<CMenuTreeVO> getMenuTree(Long tenantId, Long moduleId) {
         LambdaQueryWrapper<SysCMenu> wrapper = new LambdaQueryWrapper<>();
@@ -88,12 +115,23 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return buildTree(menus, null);
     }
 
+    /**
+     * 获取菜单byID。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public SysCMenuDTO getMenuById(Long id) {
         SysCMenu menu = this.getById(id);
         return menu != null ? toDTO(menu) : null;
     }
 
+    /**
+     * 新增菜单。
+     *
+     * @param dto 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMenu(SysCMenuDTO dto) {
@@ -102,6 +140,11 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         log.info("新增 C 端菜单: {}", entity.getName());
     }
 
+    /**
+     * 更新菜单。
+     *
+     * @param dto 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateMenu(SysCMenuDTO dto) {
@@ -111,6 +154,11 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         log.info("更新 C 端菜单: id={}", dto.getId());
     }
 
+    /**
+     * 删除菜单。
+     *
+     * @param id 主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMenu(Long id) {
@@ -122,6 +170,11 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         log.info("删除 C 端菜单: id={}", id);
     }
 
+    /**
+     * 批量删除菜单。
+     *
+     * @param ids 主键 ID 集合
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteMenus(List<Long> ids) {
@@ -133,6 +186,13 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
 
     // ======================== 角色授权 ========================
 
+    /**
+     * 获取角色c菜单ids。
+     *
+     * @param tenantId 租户 ID
+     * @param roleId 角色 ID
+     * @return 列表数据
+     */
     @Override
     public List<Long> getRoleCMenuIds(Long tenantId, Long roleId) {
         LambdaQueryWrapper<SysRoleCMenu> wrapper = new LambdaQueryWrapper<>();
@@ -143,6 +203,14 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
                 .collect(Collectors.toList()));
     }
 
+    /**
+     * 获取认证菜单树。
+     *
+     * @param tenantId 租户 ID
+     * @param moduleId 模块 ID
+     * @param roleId 角色 ID
+     * @return 列表数据
+     */
     @Override
     public List<CMenuTreeVO> getAuthMenuTree(Long tenantId, Long moduleId, Long roleId) {
         List<CMenuTreeVO> tree = getMenuTree(tenantId, moduleId);
@@ -151,6 +219,13 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return tree;
     }
 
+    /**
+     * 授权角色常用菜单。
+     *
+     * @param tenantId 租户 ID
+     * @param roleId 角色 ID
+     * @param menuIds 菜单ids
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantRoleCMenus(Long tenantId, Long roleId, List<Long> menuIds) {
@@ -177,6 +252,13 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
 
     // ======================== 工作台 / 收藏 ========================
 
+    /**
+     * 获取workbenchmodules。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @return 列表数据
+     */
     @Override
     public List<CMenuTreeVO> getWorkbenchModules(Long userId, Long tenantId) {
         // 查询用户有权的所有顶级 C 端菜单（模块级别）
@@ -194,6 +276,14 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return modules.stream().map(this::toTreeVO).collect(Collectors.toList());
     }
 
+    /**
+     * 获取workbenchmenus。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param moduleId 模块 ID
+     * @return 列表数据
+     */
     @Override
     public List<CMenuTreeVO> getWorkbenchMenus(Long userId, Long tenantId, Long moduleId) {
         List<Long> menuIds = getUserCMenuIds(userId, tenantId);
@@ -213,6 +303,13 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return buildTree(menus, null);
     }
 
+    /**
+     * 获取用户favorites。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @return 列表数据
+     */
     @Override
     public List<CMenuTreeVO> getUserFavorites(Long userId, Long tenantId) {
         LambdaQueryWrapper<SysUserCMenuFavorite> fWrapper = new LambdaQueryWrapper<>();
@@ -230,6 +327,14 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return executeIgnoringTenant(() -> this.list(wrapper).stream().map(this::toTreeVO).collect(Collectors.toList()));
     }
 
+    /**
+     * 切换常用菜单收藏状态。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param cMenuId c菜单 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean toggleFavorite(Long userId, Long tenantId, Long cMenuId) {
@@ -457,4 +562,3 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         return vo;
     }
 }
-

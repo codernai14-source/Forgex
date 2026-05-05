@@ -126,7 +126,7 @@ public class SysEncodeRuleController {
     }
 
     /**
-     * 根据 ID 获取编码规则详情
+     * 查询数据详情。
      * <p>
      * 根据编码规则 ID 查询详细信息，包含主表和明细表的完整数据。
      * </p>
@@ -145,7 +145,7 @@ public class SysEncodeRuleController {
     }
 
     /**
-     * 保存编码规则（新增或更新）
+     * 保存数据。
      * <p>
      * 根据参数中是否包含 ID 来判断是新增还是更新操作。
      * </p>
@@ -177,7 +177,7 @@ public class SysEncodeRuleController {
     }
 
     /**
-     * 批量删除编码规则
+     * 批量删除数据。
      * <p>
      * 批量删除多个编码规则及其关联的明细数据。
      * </p>
@@ -193,7 +193,7 @@ public class SysEncodeRuleController {
     }
 
     /**
-     * 根据规则代码生成编码
+     * 生成代码文件。
      * <p>
      * 根据指定的规则代码生成唯一的业务编码，支持序列号原子递增。
      * </p>

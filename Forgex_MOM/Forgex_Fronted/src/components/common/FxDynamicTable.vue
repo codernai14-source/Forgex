@@ -218,7 +218,7 @@ import { computed, getCurrentInstance, onBeforeUnmount, onMounted, nextTick, rea
 import type { TableProps } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { DownOutlined } from '@ant-design/icons-vue'
-import { getTableConfig, type FxTableConfig, type FxTableColumn } from '@/api/system/tableConfig'
+import { getTableConfig, saveUserColumns, type FxTableConfig, type FxTableColumn, type UserColumnItem } from '@/api/system/tableConfig'
 import { useI18n } from 'vue-i18n'
 import ColumnSettingButton from './ColumnSettingButton.vue'
 
@@ -343,6 +343,19 @@ const showColumnSettingBar = computed(
 const configVersion = ref(0)
 
 const ATag = resolveComponent('a-tag') as any
+const MIN_COLUMN_WIDTH = 60
+const MAX_COLUMN_WIDTH = 800
+const ACTION_FIELD = 'action'
+
+type ResizingState = {
+  field: string
+  startX: number
+  startWidth: number
+}
+
+type HeaderDragState = {
+  field: string
+}
 
 /**
  * 获取页面传入的本地表格配置。
@@ -544,6 +557,9 @@ const lastSorter = ref<any>(undefined)
 
 let computeScrollYRafPending = false
 let mutationObserver: MutationObserver | null = null
+let resizingState: ResizingState | null = null
+let headerDragState: HeaderDragState | null = null
+let saveColumnWidthTimer: number | undefined
 
 const scheduleComputeAutoScrollY = () => {
   if (computeScrollYRafPending) return
@@ -573,7 +589,7 @@ const resolvedRowKey = computed(() => props.rowKey || config.value?.rowKey || 'i
 const tableColumns = computed(() => {
   // 依赖 configVersion 触发重算
   const _ = configVersion.value
-  const cols: FxTableColumn[] = config.value?.columns || []
+  const cols: FxTableColumn[] = (config.value?.columns || []).filter(c => c.visible !== false)
 
   // 将操作列固定到最后一列
   const actionCol = cols.find(c => c.field === 'action')
@@ -581,13 +597,16 @@ const tableColumns = computed(() => {
   const finalCols = actionCol ? [...otherCols, actionCol] : otherCols
 
   return finalCols.map(c => {
+    const columnWidth = c.field === ACTION_FIELD
+      ? c.width
+      : clampWidth(Number(c.width ?? 160))
     const column: any = {
-      title: c.title,
+      title: renderColumnTitle(c, columnWidth),
       dataIndex: c.field,
       key: c.field,
       align: c.align,
-      width: c.width,
-      fixed: c.field === 'action' ? (c.fixed || 'right') : c.fixed,
+      width: columnWidth,
+      fixed: c.field === ACTION_FIELD ? (c.fixed || 'right') : c.fixed,
       ellipsis: c.ellipsis,
       sorter: !!c.sortable,
     }
@@ -800,6 +819,186 @@ function normalizeColumns(cols: any[]) {
     .filter((c: any) => !!c?.field)
 }
 
+function clampWidth(value: number) {
+  return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, Math.round(value)))
+}
+
+function renderColumnTitle(column: FxTableColumn, width?: number) {
+  const titleText = column.title
+  if (!titleText || column.field === ACTION_FIELD) {
+    return titleText
+  }
+  return h('div', {
+    class: [
+      'fx-table-th-title',
+      headerDragState?.field === column.field ? 'is-dragging' : '',
+    ],
+    draggable: true,
+    onDragstart: (event: DragEvent) => startHeaderDrag(event, column.field),
+    onDragover: (event: DragEvent) => handleHeaderDragOver(event, column.field),
+    onDrop: (event: DragEvent) => handleHeaderDrop(event, column.field),
+    onDragend: stopHeaderDrag,
+    title: t('system.tableConfig.columnSetting.dragSort'),
+  }, [
+    h('span', { class: 'fx-table-th-title-text' }, titleText),
+    h('span', {
+      class: 'fx-table-th-resize-handle',
+      onMousedown: (event: MouseEvent) => startColumnResize(event, column.field, width ?? MIN_COLUMN_WIDTH),
+      onClick: (event: MouseEvent) => event.stopPropagation(),
+      title: t('system.tableConfig.columnSetting.dragResize'),
+    }),
+  ])
+}
+
+function startHeaderDrag(event: DragEvent, field: string) {
+  if (field === ACTION_FIELD || resizingState) {
+    event.preventDefault()
+    return
+  }
+  headerDragState = { field }
+  event.dataTransfer?.setData('text/plain', field)
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+  document.body.classList.add('fx-column-header-dragging')
+}
+
+function handleHeaderDragOver(event: DragEvent, field: string) {
+  if (!headerDragState || field === ACTION_FIELD || headerDragState.field === field) {
+    return
+  }
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+}
+
+function handleHeaderDrop(event: DragEvent, targetField: string) {
+  if (!headerDragState || targetField === ACTION_FIELD || headerDragState.field === targetField) {
+    stopHeaderDrag()
+    return
+  }
+  event.preventDefault()
+  reorderColumns(headerDragState.field, targetField)
+  stopHeaderDrag()
+}
+
+function stopHeaderDrag() {
+  headerDragState = null
+  document.body.classList.remove('fx-column-header-dragging')
+}
+
+function reorderColumns(sourceField: string, targetField: string) {
+  if (!config.value?.columns?.length) {
+    return
+  }
+  const columns = [...config.value.columns]
+  const actionCol = columns.find(column => column.field === ACTION_FIELD)
+  const movableColumns = columns.filter(column => column.field !== ACTION_FIELD)
+  const sourceIndex = movableColumns.findIndex(column => column.field === sourceField)
+  const targetIndex = movableColumns.findIndex(column => column.field === targetField)
+  if (sourceIndex < 0 || targetIndex < 0) {
+    return
+  }
+  const [moved] = movableColumns.splice(sourceIndex, 1)
+  movableColumns.splice(targetIndex, 0, moved)
+  const nextColumns = actionCol ? [...movableColumns, actionCol] : movableColumns
+  nextColumns.forEach((column, index) => {
+    column.order = index
+  })
+  config.value = {
+    ...config.value,
+    columns: nextColumns,
+  }
+  configVersion.value++
+  scheduleSaveColumnConfig()
+}
+
+function startColumnResize(event: MouseEvent, field: string, width: number) {
+  if (field === ACTION_FIELD) {
+    return
+  }
+  event.preventDefault()
+  event.stopPropagation()
+  resizingState = {
+    field,
+    startX: event.clientX,
+    startWidth: clampWidth(width),
+  }
+  document.body.classList.add('fx-column-resizing')
+  window.addEventListener('mousemove', handleColumnResizeMove)
+  window.addEventListener('mouseup', stopColumnResize)
+}
+
+function handleColumnResizeMove(event: MouseEvent) {
+  if (!resizingState || !config.value?.columns?.length) {
+    return
+  }
+  const column = getColumnByField(resizingState.field)
+  if (!column || column.field === ACTION_FIELD) {
+    return
+  }
+  const nextWidth = clampWidth(resizingState.startWidth + event.clientX - resizingState.startX)
+  if (column.width === nextWidth) {
+    return
+  }
+  column.width = nextWidth
+  config.value = {
+    ...config.value,
+    columns: [...config.value.columns],
+  }
+  configVersion.value++
+}
+
+function stopColumnResize() {
+  if (!resizingState) {
+    return
+  }
+  resizingState = null
+  document.body.classList.remove('fx-column-resizing')
+  window.removeEventListener('mousemove', handleColumnResizeMove)
+  window.removeEventListener('mouseup', stopColumnResize)
+  scheduleSaveColumnWidths()
+}
+
+function getColumnByField(field: string) {
+  return config.value?.columns?.find(column => column.field === field)
+}
+
+function scheduleSaveColumnWidths() {
+  scheduleSaveColumnConfig()
+}
+
+function scheduleSaveColumnConfig() {
+  if (saveColumnWidthTimer) {
+    window.clearTimeout(saveColumnWidthTimer)
+  }
+  saveColumnWidthTimer = window.setTimeout(() => {
+    saveColumnWidthTimer = undefined
+    void persistColumnConfig()
+  }, 350)
+}
+
+async function persistColumnConfig() {
+  if (!config.value?.columns?.length || !props.tableCode) {
+    return
+  }
+  try {
+    const columns: UserColumnItem[] = config.value.columns.map((column, index) => ({
+      field: column.field,
+      visible: column.visible !== false,
+      order: column.order ?? index,
+      width: column.field === ACTION_FIELD ? undefined : clampWidth(Number(column.width ?? 160) || 160),
+    }))
+    await saveUserColumns({
+      tableCode: props.tableCode,
+      columns,
+    })
+  } catch (error) {
+    console.error('[FxDynamicTable] persist column config failed:', error)
+  }
+}
+
 /**
  * 将 queryModel 转为接口所需查询对象（日期范围格式化为字符串）。
  *
@@ -906,9 +1105,14 @@ defineExpose({ getQuery, getPage, reload, refresh })
  */
 function handleColumnChange(columns: FxTableColumn[]) {
   if (config.value) {
+    const columnMap = new Map(columns.map(column => [column.field, column]))
+    const mergedColumns = config.value.columns.map(column => {
+      const changed = columnMap.get(column.field)
+      return changed ? { ...column, ...changed } : column
+    })
     config.value = {
       ...config.value,
-      columns: [...columns],
+      columns: mergedColumns,
     }
     configVersion.value++
   }
@@ -1008,6 +1212,13 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   mutationObserver?.disconnect()
   mutationObserver = null
+  if (saveColumnWidthTimer) {
+    window.clearTimeout(saveColumnWidthTimer)
+  }
+  window.removeEventListener('mousemove', handleColumnResizeMove)
+  window.removeEventListener('mouseup', stopColumnResize)
+  document.body.classList.remove('fx-column-resizing')
+  document.body.classList.remove('fx-column-header-dragging')
   window.removeEventListener('resize', onResizeOrScroll)
 })
 </script>

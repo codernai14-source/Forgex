@@ -79,6 +79,13 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
      */
     private static final String GRANT_TYPE_POSITION = "POSITION";
 
+    /**
+     * 获取grantedpositions。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 分页结果
+     */
     @Override
     public Page<RoleGrantVO> getGrantedPositions(Page<SysRolePosition> page, RoleGrantQueryDTO query) {
         // 1. 参数校验
@@ -184,6 +191,11 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
         return result;
     }
 
+    /**
+     * 授权角色岗位。
+     *
+     * @param grantDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantPositions(RoleGrantDTO grantDTO) {
@@ -274,6 +286,11 @@ public class SysRolePositionServiceImpl extends ServiceImpl<SysRolePositionMappe
         }
     }
 
+    /**
+     * 撤销角色岗位授权。
+     *
+     * @param revokeDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void revokePositions(RoleGrantDTO revokeDTO) {

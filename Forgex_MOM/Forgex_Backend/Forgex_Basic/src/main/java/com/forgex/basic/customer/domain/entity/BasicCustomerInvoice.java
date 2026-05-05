@@ -17,20 +17,44 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @TableName("basic_customer_invoice")
 public class BasicCustomerInvoice extends BaseEntity {
+    /**
+     * 客户 ID。
+     */
     @TableField("customer_id")
     private Long customerId;
+    /**
+     * 开票全称名称。
+     */
     @TableField("invoice_full_name")
     private String invoiceFullName;
+    /**
+     * 税号。
+     */
     @TableField("tax_number")
     private String taxNumber;
+    /**
+     * 注册地址。
+     */
     @TableField("registered_address")
     private String registeredAddress;
+    /**
+     * 注册电话。
+     */
     @TableField("registered_phone")
     private String registeredPhone;
+    /**
+     * 开户银行。
+     */
     @TableField("bank_name")
     private String bankName;
+    /**
+     * 银行账号。
+     */
     @TableField("bank_account")
     private String bankAccount;
+    /**
+     * 开票required。
+     */
     @TableField("invoice_required")
     private Boolean invoiceRequired;
 }

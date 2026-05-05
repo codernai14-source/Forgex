@@ -60,6 +60,8 @@ export default {
   layoutVerticalMix: '垂直雙欄',
   layoutTop: '水平',
   layoutMix: '混合',
+  horizontalModuleMenuHint: '當前模組下的選單入口',
+  horizontalModuleMenuCount: '{count} 個可進入頁面',
   header: '頂欄',
   headerVisible: '顯示頂欄',
   headerMode: '模式',

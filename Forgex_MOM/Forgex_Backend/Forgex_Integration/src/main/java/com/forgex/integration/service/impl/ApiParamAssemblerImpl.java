@@ -217,6 +217,12 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
         current.put(parts[parts.length - 1], value);
     }
 
+    /**
+     * 处理tomap。
+     *
+     * @param entity 实体对象
+     * @return 映射结果
+     */
     public Map<String, Object> toMap(Object entity) {
         if (entity == null) {
             return Map.of();

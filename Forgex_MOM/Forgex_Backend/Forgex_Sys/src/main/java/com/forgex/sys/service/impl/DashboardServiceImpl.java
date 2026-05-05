@@ -93,6 +93,12 @@ public class DashboardServiceImpl implements IDashboardService {
     @Value("${forgex.dashboard.map-location-name:北京市}")
     private String mapLocationName;
 
+    /**
+     * 获取statistics。
+     *
+     * @param tenantId 租户 ID
+     * @return 映射结果
+     */
     @Override
     public Map<String, Object> getStatistics(Long tenantId) {
         Map<String, Object> result = new HashMap<>();
@@ -136,6 +142,11 @@ public class DashboardServiceImpl implements IDashboardService {
         return result;
     }
 
+    /**
+     * 获取serverinfo。
+     *
+     * @return 映射结果
+     */
     @Override
     public Map<String, Object> getServerInfo() {
         Map<String, Object> result = new HashMap<>();
@@ -271,6 +282,11 @@ public class DashboardServiceImpl implements IDashboardService {
         return 0.0;
     }
 
+    /**
+     * 获取模块usage。
+     *
+     * @return 列表数据
+     */
     @Override
     public List<Map<String, Object>> getModuleUsage() {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -308,6 +324,11 @@ public class DashboardServiceImpl implements IDashboardService {
         return result;
     }
 
+    /**
+     * 获取servicememoryusage。
+     *
+     * @return 列表数据
+     */
     @Override
     public List<Map<String, Object>> getServiceMemoryUsage() {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -375,6 +396,12 @@ public class DashboardServiceImpl implements IDashboardService {
         return result;
     }
 
+    /**
+     * 获取recent操作logs。
+     *
+     * @param size size
+     * @return 列表数据
+     */
     @Override
     public List<Map<String, Object>> getRecentOperationLogs(Integer size) {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -411,6 +438,12 @@ public class DashboardServiceImpl implements IDashboardService {
         return result;
     }
 
+    /**
+     * 获取recentloginlogs。
+     *
+     * @param size size
+     * @return 列表数据
+     */
     @Override
     public List<Map<String, Object>> getRecentLoginLogs(Integer size) {
         List<Map<String, Object>> result = new ArrayList<>();

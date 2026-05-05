@@ -34,7 +34,7 @@ public enum IntegrationPromptEnum implements I18nPrompt {
     API_CONFIG_DELETE_FAILED("API_CONFIG_DELETE_FAILED", "删除接口配置失败"),
     API_CONFIG_ENABLE_FAILED("API_CONFIG_ENABLE_FAILED", "启用接口配置失败"),
     API_CONFIG_DISABLE_FAILED("API_CONFIG_DISABLE_FAILED", "停用接口配置失败"),
-    
+
     // ========== 参数配置 ==========
     PARAM_CONFIG_NOT_FOUND("PARAM_CONFIG_NOT_FOUND", "参数配置不存在"),
     PARAM_FIELD_NAME_REQUIRED("PARAM_FIELD_NAME_REQUIRED", "字段名称不能为空"),
@@ -44,7 +44,7 @@ public enum IntegrationPromptEnum implements I18nPrompt {
     PARAM_CONFIG_UPDATE_FAILED("PARAM_CONFIG_UPDATE_FAILED", "更新参数配置失败"),
     PARAM_CONFIG_DELETE_FAILED("PARAM_CONFIG_DELETE_FAILED", "删除参数配置失败"),
     PARAM_JSON_PARSE_FAILED("PARAM_JSON_PARSE_FAILED", "解析 JSON 失败：{0}"),
-    
+
     // ========== 参数映射 ==========
     PARAM_MAPPING_NOT_FOUND("PARAM_MAPPING_NOT_FOUND", "参数映射不存在"),
     PARAM_SOURCE_FIELD_REQUIRED("PARAM_SOURCE_FIELD_REQUIRED", "源字段路径不能为空"),
@@ -54,13 +54,13 @@ public enum IntegrationPromptEnum implements I18nPrompt {
     PARAM_MAPPING_CREATE_FAILED("PARAM_MAPPING_CREATE_FAILED", "创建参数映射失败"),
     PARAM_MAPPING_UPDATE_FAILED("PARAM_MAPPING_UPDATE_FAILED", "更新参数映射失败"),
     PARAM_MAPPING_DELETE_FAILED("PARAM_MAPPING_DELETE_FAILED", "删除参数映射失败"),
-    
+
     // ========== API 路由 ==========
     API_HANDLER_NOT_CONFIGURED("API_HANDLER_NOT_CONFIGURED", "未配置接口处理器：{0}"),
     API_HANDLER_NULL("API_HANDLER_NULL", "处理器为空：{0}"),
     API_ROUTE_FAILED("API_ROUTE_FAILED", "路由处理器失败：{0}"),
     API_PARAM_CONVERT_FAILED("API_PARAM_CONVERT_FAILED", "参数转换失败：{0}"),
-    
+
     // ========== 第三方系统 ==========
     THIRD_SYSTEM_NOT_FOUND("THIRD_SYSTEM_NOT_FOUND", "第三方系统不存在"),
     THIRD_SYSTEM_CODE_EXISTS("THIRD_SYSTEM_CODE_EXISTS", "系统编码已存在：{0}"),
@@ -68,7 +68,7 @@ public enum IntegrationPromptEnum implements I18nPrompt {
     THIRD_SYSTEM_CREATE_FAILED("THIRD_SYSTEM_CREATE_FAILED", "创建第三方系统失败"),
     THIRD_SYSTEM_UPDATE_FAILED("THIRD_SYSTEM_UPDATE_FAILED", "更新第三方系统失败"),
     THIRD_SYSTEM_DELETE_FAILED("THIRD_SYSTEM_DELETE_FAILED", "删除第三方系统失败"),
-    
+
     // ========== 第三方授权 ==========
     THIRD_AUTH_NOT_FOUND("THIRD_AUTH_NOT_FOUND", "第三方授权不存在"),
     THIRD_AUTH_EXISTS("THIRD_AUTH_EXISTS", "该第三方系统已存在授权配置"),
@@ -79,10 +79,10 @@ public enum IntegrationPromptEnum implements I18nPrompt {
     THIRD_AUTH_NOT_TOKEN_TYPE("THIRD_AUTH_NOT_TOKEN_TYPE", "该系统的授权方式不是 TOKEN 方式"),
     THIRD_AUTH_WHITELIST_REQUIRED("THIRD_AUTH_WHITELIST_REQUIRED", "白名单授权方式必须配置白名单 IP 列表"),
     THIRD_AUTH_UNSUPPORTED_TYPE("THIRD_AUTH_UNSUPPORTED_TYPE", "不支持的授权方式：{0}"),
-    
+
     // ========== 调用日志 ==========
     CALL_LOG_ID_REQUIRED("CALL_LOG_ID_REQUIRED", "调用记录 ID 不能为空"),
-    
+
     // ========== 通用 ==========
     ID_REQUIRED("ID_REQUIRED", "ID 不能为空"),
     DELETE_IDS_REQUIRED("DELETE_IDS_REQUIRED", "删除 ID 列表不能为空"),
@@ -96,6 +96,11 @@ public enum IntegrationPromptEnum implements I18nPrompt {
         this.defaultTemplate = defaultTemplate;
     }
 
+    /**
+     * 获取模块。
+     *
+     * @return 字符串结果
+     */
     @Override
     public String getModule() {
         return "integration";

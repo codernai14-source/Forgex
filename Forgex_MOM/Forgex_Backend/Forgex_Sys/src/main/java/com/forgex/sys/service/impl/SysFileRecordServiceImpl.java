@@ -18,6 +18,9 @@ import java.util.Locale;
 
 /**
  * File record service implementation.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Service
 public class SysFileRecordServiceImpl extends ServiceImpl<SysFileRecordMapper, SysFileRecord>
@@ -51,6 +54,13 @@ public class SysFileRecordServiceImpl extends ServiceImpl<SysFileRecordMapper, S
         save(record);
     }
 
+    /**
+     * 分页查询文件记录。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 处理结果
+     */
     @Override
     public IPage<SysFileRecordVO> pageRecords(Page<SysFileRecord> page, SysFileRecordQueryDTO query) {
         LambdaQueryWrapper<SysFileRecord> wrapper = new LambdaQueryWrapper<>();

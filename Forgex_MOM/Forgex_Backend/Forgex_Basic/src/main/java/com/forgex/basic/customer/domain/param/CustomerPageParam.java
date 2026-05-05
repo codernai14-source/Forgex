@@ -16,13 +16,40 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "客户主数据分页查询参数")
 public class CustomerPageParam extends BaseGetParam {
+    /**
+     * 客户编码。
+     */
     private String customerCode;
+    /**
+     * 客户名称。
+     */
     private String customerName;
+    /**
+     * 客户全称。
+     */
     private String customerFullName;
+    /**
+     * 客户价值等级。
+     */
     private String customerValueLevel;
+    /**
+     * 客户信用等级。
+     */
     private String customerCreditLevel;
+    /**
+     * 经营状态。
+     */
     private String businessStatus;
+    /**
+     * 审批状态。
+     */
     private Integer approvalStatus;
+    /**
+     * 是否关联租户。
+     */
     private Boolean isRelatedTenant;
+    /**
+     * 状态。
+     */
     private Integer status;
 }

@@ -24,6 +24,8 @@ import org.springframework.stereotype.Component;
  *
  * @author coder_nai@163.com
  * @since 2026-04-21
+ *
+ * @version 1.0.0
  */
 @Component
 @RequiredArgsConstructor
