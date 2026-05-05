@@ -143,7 +143,7 @@ public class FxExcelImportConfigItemDTO {
     private Boolean required;
 
     /**
-     * 排序号
+     * 排序号。
      * <p>用于指定字段的显示顺序，数值越小越靠前。</p>
      */
     private Integer orderNum;

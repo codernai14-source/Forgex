@@ -33,6 +33,9 @@ import java.util.List;
  */
 @Data
 public class FxTableConfigDTO {
+    /**
+     * 主键 ID。
+     */
     private Long id;
     /**
      * 表编码

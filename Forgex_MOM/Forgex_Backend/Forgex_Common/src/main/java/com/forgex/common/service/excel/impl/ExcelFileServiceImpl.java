@@ -89,6 +89,12 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         }
     }
 
+    /**
+     * 构建导入模板xlsxorthrow。
+     *
+     * @param config 配置对象
+     * @return 处理结果
+     */
     @Override
     public byte[] buildImportTemplateXlsxOrThrow(FxExcelImportConfigDTO config) {
         if (config == null || config.getItems() == null || config.getItems().isEmpty()) {
@@ -881,7 +887,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             // 使用默认样式
             styleJson = "{\"backgroundColor\": \"#8EC67F\", \"wrapText\": true, \"fontSize\": 12}";
         }
-        
+
         try {
             JsonNode node = objectMapper.readTree(styleJson);
             CellStyle base = cell.getCellStyle();
@@ -890,7 +896,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
                 style.cloneStyleFrom(base);
             }
             Font font = wb.createFont();
-            
+
             // 设置字体大小
             JsonNode fontSize = node.get("fontSize");
             if (fontSize != null && fontSize.canConvertToInt()) {
@@ -899,7 +905,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
                 font.setFontHeightInPoints((short) 12);
             }
             style.setFont(font);
-            
+
             // 设置自动换行
             JsonNode wrapText = node.get("wrapText");
             if (wrapText != null && wrapText.isBoolean()) {
@@ -907,7 +913,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             } else {
                 style.setWrapText(true);
             }
-            
+
             // 设置背景色
             JsonNode bgColor = node.get("backgroundColor");
             if (bgColor != null && bgColor.isTextual() && StringUtils.hasText(bgColor.asText())) {
@@ -917,7 +923,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
                     style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 }
             }
-            
+
             cell.setCellStyle(style);
         } catch (Exception e) {
             // 使用默认样式
@@ -945,41 +951,41 @@ public class ExcelFileServiceImpl implements ExcelFileService {
      * @param headerRowIndex 列头所在行号
      * @param columnIndex 列索引
      */
-    private void addDataValidation(Workbook wb, Sheet sheet, FxExcelImportConfigItemDTO item, 
+    private void addDataValidation(Workbook wb, Sheet sheet, FxExcelImportConfigItemDTO item,
                                    int headerRowIndex, int columnIndex) {
         // 检查是否需要添加数据验证
         String dataSourceType = item.getDataSourceType();
         String dataSourceValue = item.getDataSourceValue();
-        
+
         if (!StringUtils.hasText(dataSourceType) || "NONE".equals(dataSourceType)) {
             return;
         }
-        
+
         // 获取下拉选项
         String[] options = getDropdownOptions(dataSourceType, dataSourceValue);
         if (options == null || options.length == 0) {
             return;
         }
-        
+
         try {
             // 创建数据验证辅助对象
             DataValidationHelper helper = sheet.getDataValidationHelper();
-            
+
             // 创建数据验证约束
             DataValidationConstraint constraint = helper.createExplicitListConstraint(options);
-            
+
             // 设置数据验证区域（从列头下一行到第 1000 行）
             CellRangeAddressList regionList = new CellRangeAddressList(
                 headerRowIndex + 1, 1000, columnIndex, columnIndex
             );
-            
+
             // 创建数据验证规则
             DataValidation dataValidation = helper.createValidation(constraint, regionList);
-            
+
             // 设置错误提示
             dataValidation.createErrorBox("输入值无效", "请从下拉列表中选择一个有效的值！");
             dataValidation.setShowErrorBox(true);
-            
+
             // 添加数据验证到工作表
             sheet.addValidationData(dataValidation);
         } catch (Exception e) {
@@ -1001,7 +1007,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         if (!StringUtils.hasText(dataSourceValue)) {
             return new String[0];
         }
-        
+
         try {
             if ("JSON".equals(dataSourceType)) {
                 // JSON 类型：直接解析 JSON 数组
@@ -1031,7 +1037,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         } catch (Exception e) {
             // 忽略异常
         }
-        
+
         return new String[0];
     }
 
@@ -1045,12 +1051,12 @@ public class ExcelFileServiceImpl implements ExcelFileService {
         if (hexColor == null || !hexColor.startsWith("#") || hexColor.length() != 7) {
             return null;
         }
-        
+
         try {
             int r = Integer.parseInt(hexColor.substring(1, 3), 16);
             int g = Integer.parseInt(hexColor.substring(3, 5), 16);
             int b = Integer.parseInt(hexColor.substring(5, 7), 16);
-            
+
             // POI 的 IndexedColors 不支持自定义 RGB，这里返回最接近的索引颜色
             // 简化处理：根据颜色特征返回近似的索引颜色
             if (r > 200 && g > 200 && b > 200) {
@@ -1064,7 +1070,7 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             } else if (b > r && b > g) {
                 return IndexedColors.BLUE.getIndex();
             }
-            
+
             return IndexedColors.GREY_25_PERCENT.getIndex();
         } catch (Exception e) {
             return null;

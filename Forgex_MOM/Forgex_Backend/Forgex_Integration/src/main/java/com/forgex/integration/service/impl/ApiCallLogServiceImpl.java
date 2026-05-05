@@ -22,6 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 接口调用日志服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,12 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
 
     private final ApiCallLogMapper apiCallLogMapper;
 
+    /**
+     * 处理asyncsavelog。
+     *
+     * @param logEntity 日志实体
+     * @return 是否处理成功
+     */
     @Override
     @Async("integrationLogExecutor")
     public boolean asyncSaveLog(ApiCallLog logEntity) {
@@ -47,6 +59,11 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         }
     }
 
+    /**
+     * 处理批量savelogs。
+     *
+     * @param logs logs
+     */
     @Override
     public void batchSaveLogs(List<ApiCallLog> logs) {
         if (logs == null || logs.isEmpty()) {
@@ -57,6 +74,12 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         }
     }
 
+    /**
+     * 分页查询calllogs。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<ApiCallLogDTO> pageCallLogs(ApiCallLogParam param) {
         List<String> tableNames = getMonthTableNames(param.getStartTime(), param.getEndTime());
@@ -116,6 +139,13 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         return page;
     }
 
+    /**
+     * 获取调用日志byID。
+     *
+     * @param id 主键 ID
+     * @param callTime 调用时间
+     * @return 处理结果
+     */
     @Override
     public ApiCallLogDTO getCallLogById(Long id, LocalDateTime callTime) {
         if (id == null) {
@@ -147,6 +177,12 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         return null;
     }
 
+    /**
+     * 查询calllogs列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<ApiCallLogDTO> listCallLogs(ApiCallLogParam param) {
         List<String> tableNames = getMonthTableNames(param.getStartTime(), param.getEndTime());
@@ -172,6 +208,14 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         return result;
     }
 
+    /**
+     * 处理countcalllogs。
+     *
+     * @param apiConfigId 接口配置 ID
+     * @param startTime start时间
+     * @param endTime end时间
+     * @return 数据主键 ID
+     */
     @Override
     public long countCallLogs(Long apiConfigId, LocalDateTime startTime, LocalDateTime endTime) {
         ApiCallLogParam param = new ApiCallLogParam();
@@ -183,6 +227,14 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
             .sum();
     }
 
+    /**
+     * 处理calculatesuccessrate。
+     *
+     * @param apiConfigId 接口配置 ID
+     * @param startTime start时间
+     * @param endTime end时间
+     * @return 处理结果
+     */
     @Override
     public double calculateSuccessRate(Long apiConfigId, LocalDateTime startTime, LocalDateTime endTime) {
         ApiCallLogParam totalParam = new ApiCallLogParam();
@@ -209,6 +261,12 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         return (double) successCount / totalCount * 100;
     }
 
+    /**
+     * 获取month表格名称。
+     *
+     * @param date 日期
+     * @return 字符串结果
+     */
     @Override
     public String getMonthTableName(LocalDateTime date) {
         LocalDateTime safeDate = date != null ? date : LocalDateTime.now();

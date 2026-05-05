@@ -63,6 +63,12 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
     private final SysMessageTemplateContentMapper contentMapper;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 分页查询数据。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<SysMessageTemplateVO> page(SysMessageTemplateParam param) {
         SysMessageTemplateParam queryParam = param == null ? new SysMessageTemplateParam() : param;
@@ -97,6 +103,13 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         });
     }
 
+    /**
+     * 获取byID。
+     *
+     * @param id 主键 ID
+     * @param publicConfig public配置
+     * @return 处理结果
+     */
     @Override
     public SysMessageTemplateVO getById(Long id, Boolean publicConfig) {
         Long targetTenantId = resolveTargetTenantId(publicConfig);
@@ -116,6 +129,12 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         });
     }
 
+    /**
+     * 保存数据。
+     *
+     * @param dto 数据传输对象
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long save(SysMessageTemplateSaveDTO dto) {
@@ -169,6 +188,13 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         });
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @param publicConfig public配置
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean delete(Long id, Boolean publicConfig) {
@@ -184,6 +210,13 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         });
     }
 
+    /**
+     * 删除batch。
+     *
+     * @param ids 主键 ID 集合
+     * @param publicConfig public配置
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteBatch(List<Long> ids, Boolean publicConfig) {
@@ -196,18 +229,38 @@ public class SysMessageTemplateServiceImpl implements SysMessageTemplateService 
         return true;
     }
 
+    /**
+     * 判断编码是否存在。
+     *
+     * @param code 编码
+     * @param publicConfig public配置
+     * @return 是否处理成功
+     */
     @Override
     public boolean existsByCode(String code, Boolean publicConfig) {
         Long targetTenantId = resolveTargetTenantId(publicConfig);
         return executeWithoutTenantIsolation(() -> existsByCodeInTenant(code, targetTenantId, null));
     }
 
+    /**
+     * 判断排除指定 ID 后编码是否存在。
+     *
+     * @param code 编码
+     * @param id 主键 ID
+     * @param publicConfig public配置
+     * @return 是否处理成功
+     */
     @Override
     public boolean existsByCodeExcludeId(String code, Long id, Boolean publicConfig) {
         Long targetTenantId = resolveTargetTenantId(publicConfig);
         return executeWithoutTenantIsolation(() -> existsByCodeInTenant(code, targetTenantId, id));
     }
 
+    /**
+     * 拉取公共配置。
+     *
+     * @return 处理结果数量
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int pullPublicConfig() {

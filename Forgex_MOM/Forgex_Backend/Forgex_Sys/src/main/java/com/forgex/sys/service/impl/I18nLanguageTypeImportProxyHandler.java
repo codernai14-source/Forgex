@@ -23,6 +23,12 @@ public class I18nLanguageTypeImportProxyHandler implements FxExcelImportHandler 
 
     private final SysI18nLanguageTypeService languageTypeService;
 
+    /**
+     * 处理导入数据。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
         return languageTypeService.executeCommonImport(param);

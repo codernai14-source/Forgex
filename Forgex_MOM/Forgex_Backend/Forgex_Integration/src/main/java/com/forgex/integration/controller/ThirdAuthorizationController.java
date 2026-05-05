@@ -10,7 +10,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -222,7 +228,7 @@ public class ThirdAuthorizationController {
     @RequirePerm("integration:third-system:auth")
     @PostMapping("/generate-token/{thirdSystemId}")
     @Operation(summary = "生成 Token", description = "为指定第三方系统生成新的 Token")
-    public R<String> generateToken(@PathVariable Long thirdSystemId, 
+    public R<String> generateToken(@PathVariable Long thirdSystemId,
                                    @RequestParam(required = false) Integer expireHours) {
         String tokenValue = thirdAuthorizationService.generateToken(thirdSystemId, expireHours);
         R<String> result = R.ok(tokenValue);
@@ -274,7 +280,7 @@ public class ThirdAuthorizationController {
         if (ipAddress == null || ipAddress.trim().isEmpty()) {
             ipAddress = request.getRemoteAddr();
         }
-        
+
         boolean inWhitelist = thirdAuthorizationService.checkIpWhitelist(thirdSystemId, ipAddress);
         R<Boolean> result = R.ok(inWhitelist);
         result.setMessage(inWhitelist ? "IP 在白名单中" : "IP 不在白名单中");

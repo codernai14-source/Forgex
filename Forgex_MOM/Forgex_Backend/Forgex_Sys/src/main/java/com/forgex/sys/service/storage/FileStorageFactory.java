@@ -12,6 +12,9 @@ import java.io.IOException;
 
 /**
  * File storage factory.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Slf4j
 @Service
@@ -23,19 +26,41 @@ public class FileStorageFactory {
     private final SysFileStorageConfigService storageConfigService;
     private final LocalStorageService localStorageService;
 
+    /**
+     * 获取默认。
+     *
+     * @return 处理结果
+     */
     public FileStorageService getDefault() {
         StorageResolved resolved = resolveStorage();
         return getByType(resolved.storageType, resolved.configJson);
     }
 
+    /**
+     * 解析文件存储类型。
+     *
+     * @return 字符串结果
+     */
     public String resolveStorageType() {
         return resolveStorage().storageType;
     }
 
+    /**
+     * 解析文件存储配置 ID。
+     *
+     * @return 数据主键 ID
+     */
     public Long resolveStorageConfigId() {
         return resolveStorage().storageConfigId;
     }
 
+    /**
+     * 获取by类型。
+     *
+     * @param storageType storage类型
+     * @param configJson 配置json
+     * @return 处理结果
+     */
     public FileStorageService getByType(String storageType, String configJson) {
         if (!StringUtils.hasText(storageType)) {
             throw new IllegalArgumentException("storageType must not be empty");

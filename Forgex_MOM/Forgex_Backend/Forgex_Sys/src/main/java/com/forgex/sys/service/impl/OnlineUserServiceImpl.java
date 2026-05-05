@@ -137,7 +137,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             vo.setAccount(userInfo.account);
             vo.setLoginTerminal(normalizeLoginTerminal(userInfo.loginTerminal));
             vo.setTtlSeconds(userInfo.ttlSeconds);
-            
+
             // 设置用户名称
             SysUser u = userInfo.userId == null ? null : userMap.get(userInfo.userId);
             if (u != null) {
@@ -146,13 +146,13 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                 vo.setLastLoginIp(u.getLastLoginIp());
                 vo.setLastLoginRegion(u.getLastLoginRegion());
             }
-            
+
             // 设置租户名称
             SysTenant t = userInfo.tenantId == null ? null : tenantMap.get(userInfo.tenantId);
             if (t != null) {
                 vo.setTenantName(t.getTenantName());
             }
-            
+
             return vo;
         }).collect(Collectors.toList());
 

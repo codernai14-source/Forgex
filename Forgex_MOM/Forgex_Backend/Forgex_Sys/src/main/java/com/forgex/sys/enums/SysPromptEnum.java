@@ -44,7 +44,7 @@ public enum SysPromptEnum implements I18nPrompt {
     USER_PASSWORD_CHANGE_FAILED("USER_PASSWORD_CHANGE_FAILED", "密码修改失败"),
     USER_IMPORT_SUCCESS("USER_IMPORT_SUCCESS", "用户导入成功"),
     USER_EXPORT_SUCCESS("USER_EXPORT_SUCCESS", "用户导出成功"),
-    
+
     // ========== 角色管理 ==========
     ROLE_EXISTS("ROLE_EXISTS", "角色已存在"),
     ROLE_KEY_EXISTS("ROLE_KEY_EXISTS", "角色标识已存在"),
@@ -56,7 +56,7 @@ public enum SysPromptEnum implements I18nPrompt {
     ROLE_HAS_USERS("ROLE_HAS_USERS", "角色下存在关联用户，无法删除"),
     ROLE_ASSIGN_MENU_SUCCESS("ROLE_ASSIGN_MENU_SUCCESS", "角色分配菜单成功"),
     ROLE_ASSIGN_USER_SUCCESS("ROLE_ASSIGN_USER_SUCCESS", "角色分配用户成功"),
-    
+
     // ========== 菜单管理 ==========
     MENU_EXISTS("MENU_EXISTS", "菜单已存在"),
     MENU_PERM_KEY_EXISTS_VALIDATOR("MENU_PERM_KEY_EXISTS", "权限标识已存在"),
@@ -67,7 +67,7 @@ public enum SysPromptEnum implements I18nPrompt {
     MENU_HAS_CHILDREN("MENU_HAS_CHILDREN", "菜单存在子菜单，无法删除"),
     MENU_HAS_ROLE_ASSOCIATION("MENU_HAS_ROLE_ASSOCIATION", "菜单已被角色关联，无法删除"),
     MENU_ROUTE_GENERATE_SUCCESS("MENU_ROUTE_GENERATE_SUCCESS", "菜单路由生成成功"),
-    
+
     // ========== 部门管理 ==========
     DEPT_EXISTS("DEPT_EXISTS", "部门已存在"),
     DEPT_NAME_EXISTS("DEPT_NAME_EXISTS", "部门名称已存在"),
@@ -78,7 +78,7 @@ public enum SysPromptEnum implements I18nPrompt {
     DEPT_HAS_CHILDREN("DEPT_HAS_CHILDREN", "部门存在下级部门，无法删除"),
     DEPT_HAS_USERS("DEPT_HAS_USERS", "部门下存在用户，无法删除"),
     DEPT_PARENT_INVALID("DEPT_PARENT_INVALID", "上级部门不能选择自身或下级部门"),
-    
+
     // ========== 职位管理 ==========
     POSITION_EXISTS("POSITION_EXISTS", "职位已存在"),
     POSITION_CREATE_SUCCESS("POSITION_CREATE_SUCCESS", "职位创建成功"),
@@ -86,7 +86,7 @@ public enum SysPromptEnum implements I18nPrompt {
     POSITION_DELETE_SUCCESS("POSITION_DELETE_SUCCESS", "职位删除成功"),
     POSITION_NOT_FOUND_SERVICE("POSITION_NOT_FOUND", "职位不存在"),
     POSITION_HAS_USERS("POSITION_HAS_USERS", "职位下存在用户，无法删除"),
-    
+
     // ========== 字典管理 ==========
     DICT_TYPE_EXISTS("DICT_TYPE_EXISTS", "字典类型已存在"),
     DICT_TYPE_CREATE_SUCCESS("DICT_TYPE_CREATE_SUCCESS", "字典类型创建成功"),
@@ -98,7 +98,7 @@ public enum SysPromptEnum implements I18nPrompt {
     DICT_VALUE_UPDATE_SUCCESS("DICT_VALUE_UPDATE_SUCCESS", "字典值更新成功"),
     DICT_VALUE_DELETE_SUCCESS("DICT_VALUE_DELETE_SUCCESS", "字典值删除成功"),
     DICT_VALUE_NOT_FOUND("DICT_VALUE_NOT_FOUND", "字典值不存在"),
-    
+
     // ========== 租户管理 ==========
     TENANT_EXISTS("TENANT_EXISTS", "租户已存在"),
     TENANT_NAME_EXISTS("TENANT_NAME_EXISTS", "租户名称已存在"),
@@ -108,7 +108,7 @@ public enum SysPromptEnum implements I18nPrompt {
     TENANT_NOT_FOUND("TENANT_NOT_FOUND", "租户不存在"),
     TENANT_HAS_USERS("TENANT_HAS_USERS", "租户下存在用户，无法删除"),
     TENANT_STATUS_UPDATE_SUCCESS("TENANT_STATUS_UPDATE_SUCCESS", "租户状态更新成功"),
-    
+
     // ========== 模块管理 ==========
     MODULE_EXISTS("MODULE_EXISTS", "模块已存在"),
     MODULE_CODE_EXISTS_VALIDATOR("MODULE_CODE_EXISTS", "模块编码已存在"),
@@ -117,7 +117,7 @@ public enum SysPromptEnum implements I18nPrompt {
     MODULE_DELETE_SUCCESS("MODULE_DELETE_SUCCESS", "模块删除成功"),
     MODULE_NOT_FOUND("MODULE_NOT_FOUND", "模块不存在"),
     MODULE_HAS_MENUS("MODULE_HAS_MENUS", "模块下存在菜单，无法删除"),
-    
+
     // ========== 配置管理 ==========
     CONFIG_EXISTS("CONFIG_EXISTS", "配置已存在"),
     CONFIG_KEY_EXISTS("CONFIG_KEY_EXISTS", "配置键已存在"),
@@ -125,19 +125,19 @@ public enum SysPromptEnum implements I18nPrompt {
     CONFIG_UPDATE_SUCCESS("CONFIG_UPDATE_SUCCESS", "配置更新成功"),
     CONFIG_DELETE_SUCCESS("CONFIG_DELETE_SUCCESS", "配置删除成功"),
     CONFIG_NOT_FOUND("CONFIG_NOT_FOUND", "配置不存在"),
-    
+
     // ========== 日志管理 ==========
     OPERATION_LOG_QUERY_SUCCESS("OPERATION_LOG_QUERY_SUCCESS", "操作日志查询成功"),
     OPERATION_LOG_EXPORT_SUCCESS("OPERATION_LOG_EXPORT_SUCCESS", "操作日志导出成功"),
     LOGIN_LOG_QUERY_SUCCESS("LOGIN_LOG_QUERY_SUCCESS", "登录日志查询成功"),
     LOGIN_LOG_EXPORT_SUCCESS("LOGIN_LOG_EXPORT_SUCCESS", "登录日志导出成功"),
-    
+
     // ========== 表格配置 ==========
     TABLE_CONFIG_NOT_FOUND("TABLE_CONFIG_NOT_FOUND", "表格配置{0}不存在"),
     TABLE_QUERY_NOT_ALLOWED("TABLE_QUERY_NOT_ALLOWED", "表格{0}不允许通用查询"),
     TABLE_CONFIG_SAVE_SUCCESS("TABLE_CONFIG_SAVE_SUCCESS", "表格配置保存成功"),
     TABLE_CONFIG_RESET_SUCCESS("TABLE_CONFIG_RESET_SUCCESS", "表格配置重置成功"),
-    
+
     // ========== 编码规则管理 ==========
     ENCODE_RULE_EXISTS("ENCODE_RULE_EXISTS", "编码规则已存在"),
     ENCODE_RULE_CODE_EXISTS("ENCODE_RULE_CODE_EXISTS", "规则代码已存在"),
@@ -151,7 +151,7 @@ public enum SysPromptEnum implements I18nPrompt {
     ENCODE_RULE_GENERATE_SUCCESS("ENCODE_RULE_GENERATE_SUCCESS", "编码生成成功"),
     ENCODE_RULE_GENERATE_FAILED("ENCODE_RULE_GENERATE_FAILED", "编码生成失败"),
     ENCODE_RULE_DETAIL_REQUIRED("ENCODE_RULE_DETAIL_REQUIRED", "编码规则明细不能为空"),
-    
+
     // ========== 用户校验（Validator 层）==========
     USER_ACCOUNT_EMPTY("USER_ACCOUNT_EMPTY", "用户账号不能为空"),
     USER_USERNAME_EMPTY("USER_USERNAME_EMPTY", "用户名不能为空"),
@@ -160,7 +160,7 @@ public enum SysPromptEnum implements I18nPrompt {
     USER_ID_INVALID("USER_ID_INVALID", "用户 ID 格式不正确"),
     USER_EMAIL_INVALID("USER_EMAIL_INVALID", "邮箱格式不正确"),
     USER_PHONE_INVALID("USER_PHONE_INVALID", "手机号格式不正确"),
-    
+
     // ========== 角色校验（Validator 层）==========
     ROLE_NAME_EMPTY("ROLE_NAME_EMPTY", "角色名称不能为空"),
     ROLE_CODE_EMPTY("ROLE_CODE_EMPTY", "角色编码不能为空"),
@@ -177,7 +177,7 @@ public enum SysPromptEnum implements I18nPrompt {
     ROLE_GRANT_TYPE_NOT_SUPPORTED("ROLE_GRANT_TYPE_NOT_SUPPORTED", "不支持的授权类型：{0}"),
     ROLE_GRANT_PART_DEPTS_NOT_FOUND("ROLE_GRANT_PART_DEPTS_NOT_FOUND", "部分部门不存在"),
     ROLE_GRANT_PART_USERS_NOT_FOUND("ROLE_GRANT_PART_USERS_NOT_FOUND", "部分用户不存在"),
-    
+
     // ========== 菜单校验（Validator 层）==========
     MENU_MODULE_ID_EMPTY("MENU_MODULE_ID_EMPTY", "模块 ID 不能为空"),
     MENU_NAME_EMPTY("MENU_NAME_EMPTY", "菜单名称不能为空"),
@@ -197,7 +197,7 @@ public enum SysPromptEnum implements I18nPrompt {
     MENU_ID_INVALID("MENU_ID_INVALID", "菜单 ID 格式不正确"),
     MENU_ACCOUNT_EMPTY("MENU_ACCOUNT_EMPTY", "用户账号不能为空"),
     MENU_TENANT_ID_EMPTY("MENU_TENANT_ID_EMPTY", "租户 ID 不能为空"),
-    
+
     // ========== 模块校验（Validator 层）==========
     MODULE_CODE_EMPTY("MODULE_CODE_EMPTY", "模块编码不能为空"),
     MODULE_NAME_EMPTY("MODULE_NAME_EMPTY", "模块名称不能为空"),
@@ -211,23 +211,23 @@ public enum SysPromptEnum implements I18nPrompt {
     MODULE_HAS_ROLE_ASSOCIATION_DELETE("MODULE_HAS_ROLE_ASSOCIATION_DELETE", "该模块的菜单已被角色授权，无法删除"),
     MODULE_ID_INVALID("MODULE_ID_INVALID", "模块 ID 格式不正确"),
     MODULE_CODE_INVALID("MODULE_CODE_INVALID", "模块编码格式不正确，只能包含字母、数字、下划线，长度 2-50"),
-    
+
     // ========== 角色菜单校验（Validator 层）==========
     ROLE_MENU_ROLE_ID_EMPTY("ROLE_MENU_ROLE_ID_EMPTY", "角色 ID 不能为空"),
     ROLE_MENU_TENANT_ID_EMPTY("ROLE_MENU_TENANT_ID_EMPTY", "租户 ID 不能为空"),
     ROLE_MENU_ROLE_ID_INVALID("ROLE_MENU_ROLE_ID_INVALID", "角色 ID 格式不正确"),
     ROLE_MENU_TENANT_ID_INVALID("ROLE_MENU_TENANT_ID_INVALID", "租户 ID 格式不正确"),
-    
+
     // ========== 用户校验（Service 层）==========
     USER_TENANT_ID_EMPTY("USER_TENANT_ID_EMPTY", "租户 ID 不能为空"),
     USER_NOT_BOUND_TENANT("USER_NOT_BOUND_TENANT", "用户未绑定该租户，无法分配角色"),
-    
+
     // ========== 角色校验（Service 层）==========
     ROLE_INVALID_OR_CROSS_TENANT("ROLE_INVALID_OR_CROSS_TENANT", "存在无效角色或跨租户角色"),
-    
+
     // ========== 职位校验（Service 层）==========
 
-    
+
     // ========== 编码规则校验（Service 层）==========
     ENCODE_RULE_CODE_EMPTY("ENCODE_RULE_CODE_EMPTY", "规则代码不能为空"),
     ENCODE_RULE_NOT_FOUND_OR_DISABLED("ENCODE_RULE_NOT_FOUND_OR_DISABLED", "编码规则不存在或已禁用：{0}"),
@@ -258,7 +258,7 @@ public enum SysPromptEnum implements I18nPrompt {
     MSG_RECEIVER_IDS_FORMAT_ERROR("MSG_RECEIVER_IDS_FORMAT_ERROR", "接收人 ID 列表格式错误"),
     MSG_TEMPLATE_PARAM_EMPTY("MSG_TEMPLATE_PARAM_EMPTY", "请求参数不能为空"),
     MSG_TEMPLATE_TENANT_NOT_FOUND("MSG_TEMPLATE_TENANT_NOT_FOUND", "无法识别当前租户"),
-    
+
     // ========== 消息发送校验（Service 层）==========
     MSG_NO_PERMISSION("MSG_NO_PERMISSION", "无权向该租户发送消息，请联系管理员配置租户消息白名单"),
     MSG_TEMPLATE_TEST_PARAM_REQUIRED("MSG_TEMPLATE_TEST_PARAM_REQUIRED", "请求参数不能为空");
@@ -271,6 +271,11 @@ public enum SysPromptEnum implements I18nPrompt {
         this.defaultTemplate = defaultTemplate;
     }
 
+    /**
+     * 获取模块。
+     *
+     * @return 字符串结果
+     */
     @Override
     public String getModule() {
         return "sys";

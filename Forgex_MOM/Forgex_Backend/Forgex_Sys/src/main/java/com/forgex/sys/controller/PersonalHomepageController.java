@@ -37,6 +37,12 @@ public class PersonalHomepageController {
 
     private final PersonalHomepageSummaryService personalHomepageSummaryService;
 
+    /**
+     * 获取当前用户个人首页配置。
+     *
+     * @param param 查询参数
+     * @return 当前生效的首页配置
+     */
     @PostMapping("/current/get")
     public R<PersonalHomepageConfig> getCurrentConfig(@RequestBody(required = false) PersonalHomepageSaveParam param) {
         Long userId = UserContext.get();
@@ -47,6 +53,12 @@ public class PersonalHomepageController {
         return R.ok(personalHomepageConfigService.getEffectiveConfig(userId, tenantId, param == null ? null : param.getModuleCode()));
     }
 
+    /**
+     * 保存当前配置。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/current/save")
     public R<Boolean> saveCurrentConfig(@RequestBody PersonalHomepageSaveParam param) {
         Long userId = UserContext.get();
@@ -61,6 +73,12 @@ public class PersonalHomepageController {
         return R.ok(CommonPrompt.SAVE_SUCCESS, Boolean.TRUE);
     }
 
+    /**
+     * 重置当前用户个人首页配置。
+     *
+     * @param param 重置参数
+     * @return 是否重置成功
+     */
     @PostMapping("/current/reset")
     public R<Boolean> resetCurrentConfig(@RequestBody(required = false) PersonalHomepageSaveParam param) {
         Long userId = UserContext.get();
@@ -72,6 +90,12 @@ public class PersonalHomepageController {
         return R.ok(CommonPrompt.RESTORE_SUCCESS, Boolean.TRUE);
     }
 
+    /**
+     * 获取manage配置。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/manage/get")
     public R<PersonalHomepageConfig> getManageConfig(@RequestBody PersonalHomepageManageParam param) {
         Long tenantId = TenantContext.get();
@@ -83,6 +107,12 @@ public class PersonalHomepageController {
         return R.ok(personalHomepageConfigService.getTenantConfig(tenantId, moduleCode));
     }
 
+    /**
+     * 保存manage配置。
+     *
+     * @param param 请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/manage/save")
     public R<Boolean> saveManageConfig(@RequestBody PersonalHomepageManageParam param) {
         if (param == null || param.getConfig() == null) {

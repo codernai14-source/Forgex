@@ -5,6 +5,12 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * 用户thirdparty同步请求数据传输对象。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Data
 public class UserThirdPartySyncRequestDTO implements Serializable {
 

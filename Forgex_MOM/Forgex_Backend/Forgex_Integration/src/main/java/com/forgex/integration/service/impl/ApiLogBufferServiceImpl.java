@@ -14,6 +14,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 调用日志批量缓冲服务
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Slf4j
 @Service
@@ -24,6 +27,11 @@ public class ApiLogBufferServiceImpl implements IApiLogBufferService {
 
     private final ConcurrentLinkedQueue<ApiCallLog> queue = new ConcurrentLinkedQueue<>();
 
+    /**
+     * 处理buffer。
+     *
+     * @param log 日志
+     */
     @Override
     public void buffer(ApiCallLog log) {
         if (log != null) {
@@ -31,6 +39,9 @@ public class ApiLogBufferServiceImpl implements IApiLogBufferService {
         }
     }
 
+    /**
+     * 处理flush。
+     */
     @Override
     @Scheduled(fixedDelayString = "${forgex.integration.log-buffer.flush-interval-ms:1000}")
     public void flush() {

@@ -291,7 +291,7 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
     }
 
     /**
-     * 检查模板编码是否存在
+     * 判断编码是否存在。
      *
      * @param templateCode 模板编码
      * @param tenantId 租户 ID
@@ -305,7 +305,7 @@ public class LabelTemplateServiceImpl extends ServiceImpl<LabelTemplateMapper, L
     }
 
     /**
-     * 检查模板编码是否存在（排除指定 ID）
+     * 判断排除指定 ID 后编码是否存在。
      *
      * @param templateCode 模板编码
      * @param excludeId 排除的模板 ID

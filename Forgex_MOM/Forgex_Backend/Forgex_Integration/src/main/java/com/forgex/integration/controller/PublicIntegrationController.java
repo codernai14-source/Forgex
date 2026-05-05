@@ -10,21 +10,36 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 瀵瑰鍏叡鎺ュ彛
+ * 对外公共接口。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/api/integration/public")
 @RequiredArgsConstructor
-@Tag(name = "闆嗘垚鍏叡鎺ュ彛", description = "瀵瑰缁熶竴鍏ュ彛涓庡紓姝ョ粨鏋滄煡璇?")
+@Tag(name = "集成公共接口", description = "对外统一入口与异步结果查询")
 public class PublicIntegrationController {
 
     private final IApiGatewayService apiGatewayService;
 
+    /**
+     * 调用集成接口。
+     *
+     * @param request 请求参数
+     * @param servletRequest servlet 请求
+     * @return 统一响应结果
+     */
     @PostMapping("/invoke")
-    @Operation(summary = "瀵瑰鍏叡璋冪敤")
+    @Operation(summary = "对外公共调用")
     public R<IntegrationExecuteResult> invoke(@RequestBody PublicInvokeRequest request, HttpServletRequest servletRequest) {
         IntegrationExecuteResult result = apiGatewayService.invokeInbound(
             request.getInterfaceCode(),
@@ -34,8 +49,14 @@ public class PublicIntegrationController {
         return R.ok(result);
     }
 
+    /**
+     * 查询异步任务结果。
+     *
+     * @param taskId 任务 ID
+     * @return 统一响应结果
+     */
     @GetMapping("/task/{taskId}")
-    @Operation(summary = "鏌ヨ寮傛浠诲姟缁撴灉")
+    @Operation(summary = "查询异步任务结果")
     public R<ApiTaskResultDTO> queryTask(@PathVariable String taskId) {
         ApiTaskResultDTO result = ((ApiGatewayServiceImpl) apiGatewayService).getTaskResult(taskId);
         if (result == null) {

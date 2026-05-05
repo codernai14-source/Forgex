@@ -74,6 +74,13 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
     /** 授权类型：部门 */
     private static final String GRANT_TYPE_DEPARTMENT = "DEPARTMENT";
 
+    /**
+     * 获取granteddepartments。
+     *
+     * @param page 分页对象
+     * @param query 查询参数
+     * @return 分页结果
+     */
     @Override
     public Page<RoleGrantVO> getGrantedDepartments(Page<SysRoleDept> page, RoleGrantQueryDTO query) {
         if (query == null || query.getRoleId() == null || query.getTenantId() == null) {
@@ -171,6 +178,11 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
         return result;
     }
 
+    /**
+     * 授权角色部门。
+     *
+     * @param grantDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void grantDepartments(RoleGrantDTO grantDTO) {
@@ -252,6 +264,11 @@ public class SysRoleDeptServiceImpl extends ServiceImpl<SysRoleDeptMapper, SysRo
         }
     }
 
+    /**
+     * 撤销角色部门授权。
+     *
+     * @param revokeDTO 数据传输对象
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void revokeDepartments(RoleGrantDTO revokeDTO) {

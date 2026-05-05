@@ -12,32 +12,32 @@ import lombok.Data;
  */
 @Data
 public class PackagingTypePageParam {
-    
+
     /**
      * 页码
      */
     private Integer pageNum = 1;
-    
+
     /**
      * 每页大小
      */
     private Integer pageSize = 10;
-    
+
     /**
      * 包装方式编码
      */
     private String packagingCode;
-    
+
     /**
      * 包装方式名称
      */
     private String packagingName;
-    
+
     /**
      * 包装材料
      */
     private String packagingMaterial;
-    
+
     /**
      * 状态：0-禁用，1-启用
      */

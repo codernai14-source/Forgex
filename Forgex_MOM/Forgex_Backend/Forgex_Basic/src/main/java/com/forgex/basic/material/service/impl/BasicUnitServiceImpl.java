@@ -60,6 +60,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
     private final BasicUnitTypeMapper unitTypeMapper;
     private final BasicUnitConversionMapper conversionMapper;
 
+    /**
+     * 分页查询计量单位。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<UnitVO> pageUnits(UnitPageParam param) {
         UnitPageParam safeParam = param == null ? new UnitPageParam() : param;
@@ -70,18 +76,36 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return result;
     }
 
+    /**
+     * 查询计量单位列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<UnitVO> listUnits(UnitPageParam param) {
         UnitPageParam safeParam = param == null ? new UnitPageParam() : param;
         return toUnitVOList(unitMapper.selectList(unitWrapper(safeParam)));
     }
 
+    /**
+     * 查询数据详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public UnitVO detail(Long id) {
         BasicUnit unit = requireUnit(id);
         return toUnitVO(unit, typeMap(List.of(unit.getUnitTypeId())));
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param unit 单位
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(BasicUnit unit) {
@@ -92,6 +116,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return unit.getId();
     }
 
+    /**
+     * 更新单位。
+     *
+     * @param unit 单位
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateUnit(BasicUnit unit) {
@@ -107,6 +137,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 删除单位。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteUnit(Long id) {
@@ -124,6 +160,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 批量删除计量单位。
+     *
+     * @param ids 主键 ID 集合
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchDeleteUnits(List<Long> ids) {
@@ -136,6 +178,11 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 查询计量单位类型树。
+     *
+     * @return 列表数据
+     */
     @Override
     public List<UnitTypeTreeVO> typeTree() {
         List<BasicUnitType> types = unitTypeMapper.selectList(new LambdaQueryWrapper<BasicUnitType>()
@@ -146,11 +193,23 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return buildTypeTree(types);
     }
 
+    /**
+     * 查询计量单位类型详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public BasicUnitType typeDetail(Long id) {
         return requireType(id);
     }
 
+    /**
+     * 创建计量单位类型。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createType(UnitTypeParam param) {
@@ -166,6 +225,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return type.getId();
     }
 
+    /**
+     * 更新类型。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateType(UnitTypeParam param) {
@@ -186,6 +251,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 删除类型。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteType(Long id) {
@@ -208,6 +279,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 查询计量单位换算关系列表。
+     *
+     * @param unitId 单位 ID
+     * @return 列表数据
+     */
     @Override
     public List<UnitConversionVO> listConversions(Long unitId) {
         BasicUnit source = requireUnit(unitId);
@@ -225,6 +302,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
                 .toList();
     }
 
+    /**
+     * 保存conversions。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveConversions(UnitConversionSaveParam param) {
@@ -269,6 +352,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 删除conversion。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteConversion(Long id) {
@@ -277,6 +366,12 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
         return true;
     }
 
+    /**
+     * 换算单位相关字段。
+     *
+     * @param request 请求参数
+     * @return 处理结果
+     */
     @Override
     public JSONObject convertFields(UnitConvertRequestDTO request) {
         validateConvertRequest(request);
@@ -626,7 +721,7 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
     }
 
     /**
-     * 兼容直接传入 Java Bean 的本地调用场景。
+     * 换算单位相关字段。
      *
      * @param entity 实体对象
      * @param targetUnitCode 目标计量单位编码

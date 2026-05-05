@@ -108,7 +108,7 @@
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
             <button type="button" class="oauth-btn wechat" :title="i18nT('common.login.platform.wechat')" @click="onOAuth('WECHAT')">
-              <img src="/tubiao/weixin2.svg" alt="寰俊" />
+              <img src="/tubiao/weixin2.svg" alt="微信" />
             </button>
             <button type="button" class="oauth-btn dingtalk" :title="i18nT('common.login.platform.dingtalk')" @click="onOAuth('DINGTALK')">
               <img src="/tubiao/dingding.svg" alt="閽夐拤" />

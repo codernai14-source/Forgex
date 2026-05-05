@@ -27,6 +27,12 @@ import java.util.LinkedHashMap;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * 国际化消息控制器。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @RestController
 @RequestMapping("/sys/i18n/message")
 @RequiredArgsConstructor
@@ -35,6 +41,12 @@ public class I18nMessageController {
     private final FxI18nMessageMapper i18nMessageMapper;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 分页查询国际化消息。
+     *
+     * @param body 查询参数
+     * @return 国际化消息分页结果
+     */
     @RequirePerm("sys:i18nMessage:view")
     @PostMapping("/page")
     public R<IPage<FxI18nMessage>> page(@RequestBody(required = false) I18nMessageQuery body) {
@@ -53,6 +65,12 @@ public class I18nMessageController {
         return R.ok(i18nMessageMapper.selectPage(page, wrapper));
     }
 
+    /**
+     * 查询数据详情。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:i18nMessage:view")
     @PostMapping("/get")
     public R<FxI18nMessage> get(@RequestBody IdBody body) {
@@ -66,6 +84,12 @@ public class I18nMessageController {
         return R.ok(row);
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param body 国际化消息
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:i18nMessage:add")
     @PostMapping("/create")
     public R<Long> create(@RequestBody FxI18nMessage body) {
@@ -100,6 +124,12 @@ public class I18nMessageController {
         return R.ok(body.getId());
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param body 国际化消息
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:i18nMessage:edit")
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody FxI18nMessage body) {
@@ -134,6 +164,12 @@ public class I18nMessageController {
         return R.ok(true);
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param body 请求体，包含 id
+     * @return 统一响应结果
+     */
     @RequirePerm("sys:i18nMessage:delete")
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody IdBody body) {
@@ -149,6 +185,12 @@ public class I18nMessageController {
         return rows > 0 ? R.ok(true) : R.fail(StatusCode.NOT_FOUND, CommonPrompt.NOT_FOUND);
     }
 
+    /**
+     * 处理resolve。
+     *
+     * @param body 解析请求参数
+     * @return 统一响应结果
+     */
     @PostMapping("/resolve")
     public R<String> resolve(@RequestBody ResolveRequest body) {
         if (body == null || !StringUtils.hasText(body.getModule()) || !StringUtils.hasText(body.getCode())) {

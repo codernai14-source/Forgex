@@ -34,7 +34,10 @@ import com.forgex.sys.service.ISysMenuService;
 import com.forgex.sys.validator.MenuValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -52,7 +55,7 @@ import java.util.Map;
  * - 所有接口统一使用 POST 方法
  * - 参数统一封装为对象
  * - 分页查询使用 BaseGetParam（pageNum/pageSize）
- * 
+ *
  * @author coder_nai@163.com
  * @version 1.1
  * @since 2026-04-12
@@ -61,10 +64,10 @@ import java.util.Map;
 @RequestMapping("/sys/menu")
 @RequiredArgsConstructor
 public class SysMenuController {
-    
+
     private final ISysMenuService menuService;
     private final MenuValidator menuValidator;
-    
+
     /**
      * 获取用户路由（包含模块、菜单、按钮权限）。
      * <p>
@@ -86,13 +89,13 @@ public class SysMenuController {
      *   <li>返回结果：将路由信息封装到 R 对象中返回</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>body.account：用户账号，String 类型，必填</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -129,13 +132,13 @@ public class SysMenuController {
                 }
             }
         }
-        
+
         // 2. 参数校验
         menuValidator.validateRoutesParams(account, tenantId);
-        
+
         // 3. 调用Service
         UserRoutesVO routes = menuService.getUserRoutes(account, tenantId);
-        
+
         // 4. 返回结果
         return R.ok(routes);
     }
@@ -468,13 +471,13 @@ public class SysMenuController {
      *   <li>返回结果：将菜单树封装到 R 对象中返回</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>body.moduleId：模块 ID，Long 类型，可选，不传则返回所有菜单</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -503,14 +506,14 @@ public class SysMenuController {
         // 1. 参数解析
         Long tenantId = TenantContext.get();
         Long moduleId = parseLong(body.get("moduleId"));
-        
+
         // 2. 调用Service
         List<MenuTreeVO> tree = menuService.getMenuTree(tenantId, moduleId);
-        
+
         // 3. 返回结果
         return R.ok(tree);
     }
-    
+
     /**
      * 分页查询菜单列表。
      * <p>
@@ -530,7 +533,7 @@ public class SysMenuController {
      *   <li>返回结果：将分页结果封装到 R 对象中返回</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>query.pageNum：页码，Integer 类型，默认 1</li>
@@ -542,7 +545,7 @@ public class SysMenuController {
      *   <li>query.status：状态，Boolean 类型，可选</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -570,7 +573,7 @@ public class SysMenuController {
         Page<SysMenu> page = new Page<>(query.getPageNum(), query.getPageSize());
         return R.ok(menuService.pageMenus(page, query));
     }
-    
+
     /**
      * 查询菜单列表（不分页）。
      * <p>
@@ -589,7 +592,7 @@ public class SysMenuController {
      *   <li>返回结果：将菜单列表封装到 R 对象中返回</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>query.tenantId：租户 ID，Long 类型，可选</li>
@@ -599,7 +602,7 @@ public class SysMenuController {
      *   <li>query.status：状态，Boolean 类型，可选</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -617,7 +620,7 @@ public class SysMenuController {
     public R<List<SysMenuDTO>> list(@RequestBody SysMenuQueryDTO query) {
         return R.ok(menuService.listMenus(query));
     }
-    
+
     /**
      * 根据ID获取菜单详情
      */
@@ -628,7 +631,7 @@ public class SysMenuController {
         menuValidator.validateId(id);
         return R.ok(menuService.getMenuById(id));
     }
-    
+
     /**
      * 新增菜单。
      * <p>
@@ -648,7 +651,7 @@ public class SysMenuController {
      *   <li>返回结果：返回成功提示</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>menuDTO.tenantId：租户 ID，Long 类型，必填</li>
@@ -666,7 +669,7 @@ public class SysMenuController {
      *   <li>menuDTO.status：状态，Boolean 类型，可选</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -686,14 +689,14 @@ public class SysMenuController {
     public R<Void> create(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
         menuValidator.validateForAdd(menuDTO);
-        
+
         // 2. 调用Service
         menuService.addMenu(menuDTO);
-        
+
         // 3. 返回结果
         return R.ok(CommonPrompt.CREATE_SUCCESS);
     }
-    
+
     /**
      * 更新菜单。
      * <p>
@@ -713,7 +716,7 @@ public class SysMenuController {
      *   <li>返回结果：返回成功提示</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>menuDTO.id：菜单 ID，Long 类型，必填</li>
@@ -732,7 +735,7 @@ public class SysMenuController {
      *   <li>menuDTO.status：状态，Boolean 类型，可选</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -752,14 +755,14 @@ public class SysMenuController {
     public R<Void> update(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
         menuValidator.validateForUpdate(menuDTO);
-        
+
         // 2. 调用Service
         menuService.updateMenu(menuDTO);
-        
+
         // 3. 返回结果
         return R.ok(CommonPrompt.UPDATE_SUCCESS);
     }
-    
+
     /**
      * 删除菜单。
      * <p>
@@ -780,13 +783,13 @@ public class SysMenuController {
      *   <li>返回结果：返回成功提示</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>body.id：菜单 ID，Long 类型，必填</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -812,19 +815,19 @@ public class SysMenuController {
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数
         Long id = parseLong(body.get("id"));
-        
+
         // 2. 数据校验
         menuValidator.validateForDelete(id);
-        
+
         // 3. 调用Service
         menuService.deleteMenu(id);
-        
+
         // 4. 返回结果
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
-    
+
     /**
-     * 批量删除菜单。
+     * 批量删除数据。
      * <p>
      * 接口信息：
      * </p>
@@ -843,13 +846,13 @@ public class SysMenuController {
      *   <li>返回结果：返回成功提示</li>
      * </ol>
      * <p>
-     * 参数说明：
+     * 请求参数：
      * </p>
      * <ul>
      *   <li>body.ids：菜单 ID 列表，List<Long> 类型，必填</li>
      * </ul>
      * <p>
-     * 返回值说明：
+     * 响应结果：
      * </p>
      * <ul>
      *   <li>code：200 表示成功</li>
@@ -877,19 +880,19 @@ public class SysMenuController {
         // 1. 解析参数
         @SuppressWarnings("unchecked")
         List<Long> ids = (List<Long>) body.get("ids");
-        
+
         // 2. 校验每个ID
         for (Long id : ids) {
             menuValidator.validateForDelete(id);
         }
-        
+
         // 3. 调用Service
         menuService.batchDeleteMenus(ids);
-        
+
         // 4. 返回结果
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
-    
+
     /**
      * 解析Long类型参数
      */

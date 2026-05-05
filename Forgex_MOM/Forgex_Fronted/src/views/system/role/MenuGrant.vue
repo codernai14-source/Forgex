@@ -5,7 +5,7 @@
  * 1. 閹稿膩閸ф鐫嶇粈楦垮綅閸楁洘鐖茶ぐ銏ｃ€冮弽?
  * 2. 閺€顖涘瘮閸曢箖鈧褰嶉崡鏇熸綀闂?
  * 3. 閺€顖涘瘮閹兼粎鍌ㄩ妴浣稿弿闁鈧礁寮介柅澶堚偓浣圭缁岀儤鎼锋担?
- * 4. 娣囨繂鐡ㄧ憴鎺曞閼挎粌宕熼幒鍫熸綀
+ * 4. 淇濆瓨瑙掕壊鑿滃崟鎺堟潈
  * 
  * @author Forgex
  * @version 1.0.0
@@ -271,7 +271,7 @@ function filterTreeByKeyword(nodes: MenuTreeRecord[], keyword: string): MenuTree
 }
 
 /**
- * 鏉╁洦鎶ゅ鎻掑瑎闁娈戦懞鍌滃仯
+ * 杩囨护宸插嬀閫夌殑鑺傜偣
  */
 function collectCheckedNodeIds(nodes: MenuTreeRecord[]): string[] {
   const ids: string[] = []
@@ -308,7 +308,7 @@ function countTreeNodes(nodes: MenuTreeRecord[] = []): number {
 }
 
 /**
- * 鐟欏嫯瀵栭崠鏍ㄧ埐缂佹挻鐎弫鐗堝祦
+ * 瑙勮寖鍖栨爲缁撴瀯鏁版嵁
  */
 function normalizeTreeRows(nodes: MenuTreeRecord[] = []): MenuTreeRecord[] {
   return nodes.map((node) => ({

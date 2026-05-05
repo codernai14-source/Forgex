@@ -26,6 +26,12 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+/**
+ * 消息模板校验器。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Component
 @RequiredArgsConstructor
 public class MessageTemplateValidator {
@@ -37,14 +43,29 @@ public class MessageTemplateValidator {
 
     private final SysMessageTemplateService messageTemplateService;
 
+    /**
+     * 校验ID。
+     *
+     * @param id 主键 ID
+     */
     public void validateId(Long id) {
         Assert.notNull(id, MSG_TEMPLATE_ID_REQUIRED);
     }
 
+    /**
+     * 校验batchids。
+     *
+     * @param ids 主键 ID 集合
+     */
     public void validateBatchIds(List<Long> ids) {
         Assert.isTrue(!CollectionUtils.isEmpty(ids), MSG_TEMPLATE_IDS_REQUIRED);
     }
 
+    /**
+     * 校验forsave。
+     *
+     * @param dto 数据传输对象
+     */
     public void validateForSave(SysMessageTemplateSaveDTO dto) {
         Assert.isTrue(
                 StringUtils.hasText(dto.getTemplateName()) || StringUtils.hasText(dto.getTemplateNameI18nJson()),

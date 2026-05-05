@@ -73,7 +73,7 @@ public class FxExcelExportConfigDTO {
     private String exportFormat;
 
     /**
-     * 鏄惁鍚敤
+     * 是否启用
      */
     private Boolean enabled;
 

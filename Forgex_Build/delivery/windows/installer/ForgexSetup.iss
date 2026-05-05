@@ -30,6 +30,14 @@ en.StopServices=Stop Services
 zh.StopServices=停止服务
 en.OpenWeb=Open Web
 zh.OpenWeb=打开前端
+en.ImportDatabase=Import Database
+zh.ImportDatabase=导入数据库
+en.ImportNacos=Import Nacos Config
+zh.ImportNacos=导入 Nacos 配置
+en.RepairRuntimeConfig=Repair Runtime Config
+zh.RepairRuntimeConfig=修复运行配置
+en.UpgradeProgram=Upgrade Frontend/Backend
+zh.UpgradeProgram=Upgrade Frontend/Backend
 en.PostInstallOpenControlCenter=Open Forgex Control Center
 zh.PostInstallOpenControlCenter=打开 Forgex 控制中心
 en.InstanceTitle=Instance Code
@@ -52,6 +60,14 @@ en.MiddlewareSubtitle=Configure external middleware endpoints
 zh.MiddlewareSubtitle=配置外部中间件地址
 en.MiddlewareDescription=MySQL, Redis, RocketMQ and Nacos are expected to be installed before starting Forgex services.
 zh.MiddlewareDescription=启动 Forgex 服务前，请先安装并配置 MySQL、Redis、RocketMQ 和 Nacos。
+en.RuntimeDirTitle=Runtime Directories
+zh.RuntimeDirTitle=运行目录
+en.RuntimeDirSubtitle=Choose where runtime files are stored
+zh.RuntimeDirSubtitle=请选择运行时文件存放位置
+en.RuntimeDirDescription=Logs should be stored on an existing writable disk. The installer will create missing subdirectories.
+zh.RuntimeDirDescription=日志目录应放在服务器存在且可写的磁盘上，安装程序会自动创建缺失的子目录。
+en.LogDir=Log directory:
+zh.LogDir=日志目录:
 en.NacosAddr=Nacos address:
 zh.NacosAddr=Nacos 地址:
 en.NacosNamespace=Nacos namespace:
@@ -67,23 +83,43 @@ zh.FrontendPort=前端访问端口:
 
 [Files]
 Source: "..\..\..\staging\windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "scripts\uninstall-cleanup.ps1"; Flags: dontcopy
+
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\app\jre"
 
 [Icons]
 Name: "{autoprograms}\Forgex\{cm:ControlCenterName}"; Filename: "{app}\tools\control-center\ForgexControlCenter.exe"; Parameters: "--install-root ""{app}"""
 Name: "{autoprograms}\Forgex\{cm:StartServices}"; Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\scripts\start-all.ps1"" -InstallRoot ""{app}"""
 Name: "{autoprograms}\Forgex\{cm:StopServices}"; Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\scripts\stop-all.ps1"" -InstallRoot ""{app}"""
 Name: "{autoprograms}\Forgex\{cm:OpenWeb}"; Filename: "http://127.0.0.1:{code:GetFrontendPort}/"
+Name: "{autoprograms}\Forgex\{cm:ImportDatabase}"; Filename: "{app}\scripts\import-database.bat"; WorkingDir: "{app}"
+Name: "{autoprograms}\Forgex\{cm:ImportNacos}"; Filename: "{app}\scripts\import-nacos-config.bat"; WorkingDir: "{app}"
+Name: "{autoprograms}\Forgex\{cm:RepairRuntimeConfig}"; Filename: "{app}\scripts\repair-runtime-config.bat"; WorkingDir: "{app}"
+Name: "{autoprograms}\Forgex\{cm:UpgradeProgram}"; Filename: "{app}\scripts\upgrade.bat"; WorkingDir: "{app}"
 Name: "{autodesktop}\{cm:ControlCenterName}"; Filename: "{app}\tools\control-center\ForgexControlCenter.exe"; Parameters: "--install-root ""{app}"""
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\scripts\install.ps1"" -InstanceCode ""{code:GetInstanceCode}"" -InstallRoot ""{app}"" -DeployProfile ""{code:GetDeployProfile}"" -NacosAddr ""{code:GetNacosAddr}"" -NacosNamespace ""{code:GetNacosNamespace}"" -RedisAddr ""{code:GetRedisAddr}"" -RocketMqAddr ""{code:GetRocketMqAddr}"" -MysqlUrl ""{code:GetMysqlUrl}"" -FrontendPort ""{code:GetFrontendPort}"""; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\scripts\install.ps1"" -InstanceCode ""{code:GetInstanceCode}"" -InstallRoot ""{app}"" -DeployProfile ""{code:GetDeployProfile}"" -NacosAddr ""{code:GetNacosAddr}"" -NacosNamespace ""{code:GetNacosNamespace}"" -RedisAddr ""{code:GetRedisAddr}"" -RocketMqAddr ""{code:GetRocketMqAddr}"" -MysqlUrl ""{code:GetMysqlUrl}"" -LogDir ""{code:GetLogDir}"" -FrontendPort ""{code:GetFrontendPort}"""; Flags: runhidden waituntilterminated
 Filename: "{app}\tools\control-center\ForgexControlCenter.exe"; Parameters: "--install-root ""{app}"""; Description: "{cm:PostInstallOpenControlCenter}"; Flags: nowait postinstall skipifsilent
+
+[UninstallRun]
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\uninstall-cleanup.ps1"" -InstallRoot ""{app}"""; Flags: runhidden waituntilterminated skipifdoesntexist; RunOnceId: "ForgexRuntimeCleanup"
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\app"
+Type: filesandordirs; Name: "{app}\services\wrappers"
+Type: dirifempty; Name: "{app}\services"
+Type: dirifempty; Name: "{app}"
 
 [Code]
 var
   InstanceCodePage: TInputQueryWizardPage;
   DeployProfilePage: TInputOptionWizardPage;
+  RuntimeDirPage: TInputDirWizardPage;
   MiddlewarePage: TInputQueryWizardPage;
+  LastAutoNacosNamespace: String;
+  LastAutoLogDir: String;
 
 function GetInstanceCode(Param: String): String;
 begin
@@ -98,11 +134,45 @@ end;
 function GetDeployProfile(Param: String): String;
 begin
   if DeployProfilePage = nil then
-    Result := 'prod'
+    Result := 'yanshi'
   else if DeployProfilePage.SelectedValueIndex = 0 then
     Result := 'prod'
   else
     Result := 'yanshi';
+end;
+
+function GetInstallRoot(Param: String): String;
+begin
+  Result := WizardDirValue;
+  if Result = '' then
+    Result := ExpandConstant('{app}');
+end;
+
+function GetLogDir(Param: String): String;
+begin
+  if RuntimeDirPage = nil then
+    Result := AddBackslash(GetInstallRoot('')) + 'logs'
+  else
+    Result := Trim(RuntimeDirPage.Values[0]);
+  if Result = '' then
+    Result := AddBackslash(GetInstallRoot('')) + 'logs';
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+  CleanupScript: String;
+begin
+  Result := '';
+  ExtractTemporaryFile('uninstall-cleanup.ps1');
+  CleanupScript := ExpandConstant('{tmp}\uninstall-cleanup.ps1');
+  Exec(
+    'powershell.exe',
+    '-NoProfile -ExecutionPolicy Bypass -File "' + CleanupScript + '" -InstallRoot "' + GetInstallRoot('') + '"',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode);
 end;
 
 function GetNacosAddr(Param: String): String;
@@ -186,11 +256,23 @@ begin
       False);
   DeployProfilePage.Add('prod');
   DeployProfilePage.Add('yanshi');
-  DeployProfilePage.SelectedValueIndex := 0;
+  DeployProfilePage.SelectedValueIndex := 1;
+
+  RuntimeDirPage :=
+    CreateInputDirPage(
+      wpSelectDir,
+      CustomMessage('RuntimeDirTitle'),
+      CustomMessage('RuntimeDirSubtitle'),
+      CustomMessage('RuntimeDirDescription'),
+      False,
+      '');
+  RuntimeDirPage.Add(CustomMessage('LogDir'));
+  LastAutoLogDir := 'C:\Forgex_' + InstanceCodePage.Values[0] + '\logs';
+  RuntimeDirPage.Values[0] := LastAutoLogDir;
 
   MiddlewarePage :=
     CreateInputQueryPage(
-      DeployProfilePage.ID,
+      RuntimeDirPage.ID,
       CustomMessage('MiddlewareTitle'),
       CustomMessage('MiddlewareSubtitle'),
       CustomMessage('MiddlewareDescription'));
@@ -201,9 +283,36 @@ begin
   MiddlewarePage.Add(CustomMessage('MysqlUrl'), False);
   MiddlewarePage.Add(CustomMessage('FrontendPort'), False);
   MiddlewarePage.Values[0] := '127.0.0.1:8848';
-  MiddlewarePage.Values[1] := 'prod';
+  LastAutoNacosNamespace := GetDeployProfile('');
+  MiddlewarePage.Values[1] := LastAutoNacosNamespace;
   MiddlewarePage.Values[2] := '127.0.0.1:6379';
   MiddlewarePage.Values[3] := '127.0.0.1:9876';
   MiddlewarePage.Values[4] := 'jdbc:mysql://127.0.0.1:3306/forgex_admin?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai';
   MiddlewarePage.Values[5] := '18080';
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  nextNamespace: String;
+begin
+  Result := True;
+
+  if (MiddlewarePage <> nil) and (DeployProfilePage <> nil) and (CurPageID = DeployProfilePage.ID) then
+  begin
+    nextNamespace := GetDeployProfile('');
+    if (Trim(MiddlewarePage.Values[1]) = '') or (Trim(MiddlewarePage.Values[1]) = LastAutoNacosNamespace) then
+    begin
+      MiddlewarePage.Values[1] := nextNamespace;
+      LastAutoNacosNamespace := nextNamespace;
+    end;
+  end;
+
+  if (RuntimeDirPage <> nil) and (CurPageID = wpSelectDir) then
+  begin
+    if (Trim(RuntimeDirPage.Values[0]) = '') or (Trim(RuntimeDirPage.Values[0]) = LastAutoLogDir) then
+    begin
+      RuntimeDirPage.Values[0] := AddBackslash(GetInstallRoot('')) + 'logs';
+      LastAutoLogDir := RuntimeDirPage.Values[0];
+    end;
+  end;
 end;

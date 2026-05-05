@@ -18,6 +18,9 @@ import java.util.UUID;
 
 /**
  * Local file storage service.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Service
 public class LocalStorageService implements FileStorageService {
@@ -104,6 +107,12 @@ public class LocalStorageService implements FileStorageService {
         return gatewayPort > 0 ? gatewayPort : DEFAULT_GATEWAY_PORT;
     }
 
+    /**
+     * 上传文件。
+     *
+     * @param file 文件
+     * @return 字符串结果
+     */
     @Override
     public String upload(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -127,6 +136,12 @@ public class LocalStorageService implements FileStorageService {
         return relativePath;
     }
 
+    /**
+     * 下载文件。
+     *
+     * @param filePath 文件路径
+     * @param response 响应数据
+     */
     @Override
     public void download(String filePath, HttpServletResponse response) throws IOException {
         if (!StringUtils.hasText(filePath)) {
@@ -151,6 +166,12 @@ public class LocalStorageService implements FileStorageService {
         }
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param filePath 文件路径
+     * @return 是否处理成功
+     */
     @Override
     public boolean delete(String filePath) {
         if (!StringUtils.hasText(filePath)) {
@@ -160,6 +181,12 @@ public class LocalStorageService implements FileStorageService {
         return file.exists() && file.delete();
     }
 
+    /**
+     * 获取url。
+     *
+     * @param filePath 文件路径
+     * @return 字符串结果
+     */
     @Override
     public String getUrl(String filePath) {
         if (!StringUtils.hasText(filePath)) {

@@ -38,7 +38,7 @@ public class SupplierDetailDTO implements Serializable {
     private String legalRepresentative;
 
     /**
-     * 注册资本
+     * 注册资本。
      */
     private BigDecimal registeredCapital;
 
@@ -59,7 +59,7 @@ public class SupplierDetailDTO implements Serializable {
     private String industryCategory;
 
     /**
-     * 注册地址
+     * 注册地址。
      */
     private String registeredAddress;
 
@@ -74,17 +74,17 @@ public class SupplierDetailDTO implements Serializable {
     private String email;
 
     /**
-     * 税号
+     * 税号。
      */
     private String taxNumber;
 
     /**
-     * 开户银行
+     * 开户银行。
      */
     private String bankName;
 
     /**
-     * 银行账号
+     * 银行账号。
      */
     private String bankAccount;
 

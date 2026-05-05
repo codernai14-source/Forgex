@@ -42,6 +42,15 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
     private final FxExcelImportConfigItemMapper importItemMapper;
     private final TemplateOptionProviderRegistry providerRegistry;
 
+    /**
+     * 分页查询导出配置。
+     *
+     * @param page 分页对象
+     * @param tableName 表格名称
+     * @param tableCode 表格编码
+     * @param enabled 启用
+     * @return 处理结果
+     */
     @Override
     public IPage<FxExcelExportConfigDTO> pageExportConfig(Page<FxExcelExportConfigDTO> page, String tableName, String tableCode, Boolean enabled) {
         Page<FxExcelExportConfig> p = new Page<>(page.getCurrent(), page.getSize());
@@ -56,6 +65,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return result;
     }
 
+    /**
+     * 获取export配置。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public FxExcelExportConfigDTO getExportConfig(Long id) {
         FxExcelExportConfig cfg = exportConfigMapper.selectById(id);
@@ -67,6 +82,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return dto;
     }
 
+    /**
+     * 获取export配置by编码。
+     *
+     * @param tableCode 表格编码
+     * @return 处理结果
+     */
     @Override
     public FxExcelExportConfigDTO getExportConfigByCode(String tableCode) {
         if (!StringUtils.hasText(tableCode)) {
@@ -83,6 +104,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return dto;
     }
 
+    /**
+     * 保存export配置。
+     *
+     * @param dto 数据传输对象
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveExportConfig(FxExcelExportConfigDTO dto) {
@@ -132,6 +159,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return entity.getId();
     }
 
+    /**
+     * 删除export配置。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteExportConfig(Long id) {
@@ -142,6 +175,14 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return exportConfigMapper.deleteById(id) > 0;
     }
 
+    /**
+     * 分页查询导入配置。
+     *
+     * @param page 分页对象
+     * @param tableName 表格名称
+     * @param tableCode 表格编码
+     * @return 处理结果
+     */
     @Override
     public IPage<FxExcelImportConfigDTO> pageImportConfig(Page<FxExcelImportConfigDTO> page, String tableName, String tableCode) {
         Page<FxExcelImportConfig> p = new Page<>(page.getCurrent(), page.getSize());
@@ -155,6 +196,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return result;
     }
 
+    /**
+     * 获取导入配置。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public FxExcelImportConfigDTO getImportConfig(Long id) {
         FxExcelImportConfig cfg = importConfigMapper.selectById(id);
@@ -166,6 +213,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return dto;
     }
 
+    /**
+     * 获取导入配置by编码。
+     *
+     * @param tableCode 表格编码
+     * @return 处理结果
+     */
     @Override
     public FxExcelImportConfigDTO getImportConfigByCode(String tableCode) {
         if (!StringUtils.hasText(tableCode)) {
@@ -182,6 +235,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return dto;
     }
 
+    /**
+     * 保存导入配置。
+     *
+     * @param dto 数据传输对象
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveImportConfig(FxExcelImportConfigDTO dto) {
@@ -239,6 +298,12 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         return entity.getId();
     }
 
+    /**
+     * 删除导入配置。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteImportConfig(Long id) {
@@ -332,6 +397,11 @@ public class ExcelConfigServiceImpl implements ExcelConfigService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * 查询providercodes列表。
+     *
+     * @return 处理结果
+     */
     @Override
     public java.util.List<String> listProviderCodes() {
         return providerRegistry.getAllProviderCodes();

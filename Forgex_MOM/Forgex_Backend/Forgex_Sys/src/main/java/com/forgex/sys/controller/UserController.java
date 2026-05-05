@@ -210,7 +210,7 @@ public class UserController {
     }
 
     /**
-     * 批量删除用户。
+     * 批量删除数据。
      *
      * @param param 用户 ID 列表参数
      * @return 删除结果
@@ -333,7 +333,7 @@ public class UserController {
     }
 
     /**
-     * 同步第三方用户数据。
+     * 同步第三方用户。
      *
      * @param request 第三方用户同步请求
      * @return 同步结果
@@ -344,7 +344,7 @@ public class UserController {
     }
 
     /**
-     * 根据部门 ID 列表查询当前租户下有效用户 ID。
+     * 按部门 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按部门匹配审批人使用。
      * </p>
@@ -362,7 +362,7 @@ public class UserController {
     }
 
     /**
-     * 根据角色 ID 列表查询当前租户下有效用户 ID。
+     * 按角色 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按角色匹配审批人使用。
      * </p>
@@ -380,7 +380,7 @@ public class UserController {
     }
 
     /**
-     * 根据岗位 ID 列表查询当前租户下有效用户 ID。
+     * 按岗位 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按岗位匹配审批人使用。
      * </p>

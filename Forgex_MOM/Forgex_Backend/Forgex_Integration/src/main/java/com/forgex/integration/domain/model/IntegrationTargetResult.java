@@ -3,6 +3,12 @@ package com.forgex.integration.domain.model;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * integration目标结果实体。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Data
 @Builder
 public class IntegrationTargetResult {

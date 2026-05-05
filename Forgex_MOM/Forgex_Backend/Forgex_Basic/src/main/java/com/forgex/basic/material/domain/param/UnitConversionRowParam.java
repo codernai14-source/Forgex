@@ -25,7 +25,7 @@ public class UnitConversionRowParam {
     private Long targetUnitId;
 
     /**
-     * 换算后数值，表示 1 源单位 = conversionValue 目标单位
+     * 换算值。
      */
     private BigDecimal conversionValue;
 }

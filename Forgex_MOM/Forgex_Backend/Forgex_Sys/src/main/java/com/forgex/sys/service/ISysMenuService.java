@@ -57,7 +57,7 @@ import java.util.List;
  *   <li>状态字段 status：true=启用，false=禁用</li>
  *   <li>可见性字段 visible：true=可见，false=隐藏</li>
  * </ul>
- * 
+ *
  * @author coder_nai@163.com
  * @version 1.0.0
  * @since 2026-04-12
@@ -68,7 +68,7 @@ import java.util.List;
  * @see com.forgex.sys.domain.entity.SysMenu
  */
 public interface ISysMenuService extends IService<SysMenu> {
-    
+
     /**
      * 获取用户路由（包含模块、菜单、按钮权限）
      * <p>
@@ -83,14 +83,14 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>查询菜单所属的模块信息</li>
      *   <li>构建路由结构并返回</li>
      * </ol>
-     * 
+     *
      * @param account 用户账号，必填参数
      * @param tenantId 租户 ID，必填参数
      * @return 用户路由信息，包含模块列表、路由树、按钮权限列表
      * @see UserRoutesVO
      */
     UserRoutesVO getUserRoutes(String account, Long tenantId);
-    
+
     /**
      * 获取菜单树
      * <p>
@@ -103,14 +103,14 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>递归构建完整的树形结构</li>
      *   <li>返回根节点列表</li>
      * </ol>
-     * 
+     *
      * @param tenantId 租户 ID，必填参数
      * @param moduleId 模块 ID，可选参数；为 null 时查询所有模块的菜单
      * @return 菜单树列表，包含完整的父子层级关系
      * @see MenuTreeVO
      */
     List<MenuTreeVO> getMenuTree(Long tenantId, Long moduleId);
-    
+
     /**
      * 分页查询菜单列表
      * <p>
@@ -124,7 +124,7 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>菜单类型精确查询</li>
      *   <li>状态精确查询</li>
      * </ul>
-     * 
+     *
      * @param page 分页参数，包含页码和页面大小
      * @param query 查询条件，包含租户 ID、模块 ID、名称等过滤条件
      * @return 菜单分页数据，包含菜单 DTO 列表和总数
@@ -132,7 +132,7 @@ public interface ISysMenuService extends IService<SysMenu> {
      * @see SysMenuDTO
      */
     IPage<SysMenuDTO> pageMenus(Page<SysMenu> page, SysMenuQueryDTO query);
-    
+
     /**
      * 查询菜单列表
      * <p>
@@ -146,14 +146,14 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>菜单类型精确查询</li>
      *   <li>状态精确查询</li>
      * </ul>
-     * 
+     *
      * @param query 查询条件，包含租户 ID、模块 ID、名称等过滤条件
      * @return 菜单列表，包含所有符合条件的菜单 DTO
      * @see SysMenuQueryDTO
      * @see SysMenuDTO
      */
     List<SysMenuDTO> listMenus(SysMenuQueryDTO query);
-    
+
     /**
      * 根据 ID 获取菜单详情
      * <p>
@@ -164,13 +164,13 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>根据模块 ID 查询模块名称</li>
      *   <li>根据父级菜单 ID 查询父级菜单名称</li>
      * </ul>
-     * 
+     *
      * @param id 菜单 ID，必填参数
      * @return 菜单详情 DTO，包含菜单完整信息；若菜单不存在则返回 null
      * @see SysMenuDTO
      */
     SysMenuDTO getMenuById(Long id);
-    
+
     /**
      * 新增菜单
      * <p>
@@ -181,25 +181,25 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>将 DTO 转换为实体对象</li>
      *   <li>插入菜单数据</li>
      * </ol>
-     * 
+     *
      * @param menuDTO 菜单信息，包含菜单名称、类型、路径等必填字段
      * @throws IllegalArgumentException 当必填字段缺失时抛出
      * @see SysMenuDTO
      */
     void addMenu(SysMenuDTO menuDTO);
-    
+
     /**
      * 更新菜单
      * <p>
      * 将菜单 DTO 转换为实体对象，并更新数据库。
      * </p>
-     * 
+     *
      * @param menuDTO 菜单信息，包含菜单 ID 和需要更新的字段
      * @throws IllegalArgumentException 当菜单 ID 为空时抛出
      * @see SysMenuDTO
      */
     void updateMenu(SysMenuDTO menuDTO);
-    
+
     /**
      * 删除菜单（级联删除子菜单和按钮）
      * <p>
@@ -211,12 +211,12 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>查询所有子菜单（递归）</li>
      *   <li>批量删除所有子菜单</li>
      * </ol>
-     * 
+     *
      * @param id 菜单 ID，必填参数
      * @throws IllegalArgumentException 当菜单 ID 为空时抛出
      */
     void deleteMenu(Long id);
-    
+
     /**
      * 批量删除菜单
      * <p>
@@ -227,67 +227,67 @@ public interface ISysMenuService extends IService<SysMenu> {
      *   <li>遍历菜单 ID 列表</li>
      *   <li>逐个调用 {@link #deleteMenu(Long)} 方法删除</li>
      * </ol>
-     * 
+     *
      * @param ids 菜单 ID 列表，必填参数
      * @throws IllegalArgumentException 当 ID 列表为空时抛出
      */
     void batchDeleteMenus(List<Long> ids);
-    
+
     /**
      * 检查菜单是否存在
      * <p>
      * 根据菜单 ID 检查菜单是否存在。
      * </p>
-     * 
+     *
      * @param id 菜单 ID，必填参数
      * @return true-菜单存在，false-菜单不存在
      */
     boolean existsById(Long id);
-    
+
     /**
      * 检查菜单是否有子菜单
      * <p>
      * 根据菜单 ID 检查该菜单是否有子菜单。
      * </p>
      * <p>用途：用于删除菜单前判断是否可以删除。</p>
-     * 
+     *
      * @param id 菜单 ID，必填参数
      * @return true-有子菜单，false-无子菜单
      */
     boolean hasChildren(Long id);
-    
+
     /**
      * 检查菜单是否已被角色授权
      * <p>
      * 根据菜单 ID 检查该菜单是否已被角色关联。
      * </p>
      * <p>用途：用于删除菜单前判断是否可以删除。</p>
-     * 
+     *
      * @param id 菜单 ID，必填参数
      * @return true-已被角色授权，false-未被角色授权
      */
     boolean hasRoleAssociation(Long id);
-    
+
     /**
      * 检查权限标识是否已存在
      * <p>
      * 根据权限标识和租户 ID 检查菜单是否已存在。
      * </p>
      * <p>用途：用于新增菜单时验证权限标识唯一性。</p>
-     * 
+     *
      * @param permKey 权限标识，必填参数
      * @param tenantId 租户 ID，必填参数
      * @return true-权限标识已存在，false-权限标识不存在
      */
     boolean existsByPermKey(String permKey, Long tenantId);
-    
+
     /**
      * 检查权限标识是否已存在（排除指定 ID）
      * <p>
      * 根据权限标识和租户 ID 检查菜单是否已存在，排除指定的菜单 ID。
      * </p>
      * <p>用途：用于更新菜单时验证权限标识唯一性。</p>
-     * 
+     *
      * @param permKey 权限标识，必填参数
      * @param tenantId 租户 ID，必填参数
      * @param excludeId 排除的菜单 ID，更新操作时传入当前菜单 ID

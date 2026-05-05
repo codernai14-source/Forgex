@@ -43,6 +43,7 @@ hs_err_pid*
 /.tmp/
 /out/
 /Forgex_Build/scratch/
+/Forgex_Build/现场/
 /Forgex_Build/**/publish/
 /Forgex_MOM/Forgex_Backend/Forgex_Integration/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Gateway/target/

@@ -30,6 +30,12 @@ public class FxExcelImportExecuteServiceImpl implements FxExcelImportExecuteServ
 
     private final ApplicationContext applicationContext;
 
+    /**
+     * 处理execute。
+     *
+     * @param param 请求参数
+     * @return 处理结果
+     */
     @Override
     public FxExcelImportResultDTO execute(FxExcelImportExecuteParam param) {
         if (param == null || param.getImportConfig() == null) {

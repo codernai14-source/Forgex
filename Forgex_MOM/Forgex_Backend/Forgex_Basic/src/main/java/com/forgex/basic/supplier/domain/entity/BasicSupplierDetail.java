@@ -92,7 +92,7 @@ public class BasicSupplierDetail extends BaseEntity {
     private String bankName;
 
     /**
-     * 银行账号，加密存储。
+     * 银行账号。
      */
     @FieldEncrypt
     @TableField("bank_account")

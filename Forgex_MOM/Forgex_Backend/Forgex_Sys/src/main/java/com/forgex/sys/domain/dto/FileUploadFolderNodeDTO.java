@@ -4,6 +4,9 @@ import lombok.Data;
 
 /**
  * Server folder node used by file upload configuration.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 public class FileUploadFolderNodeDTO {

@@ -1,0 +1,4 @@
+logging:
+  level:
+    root: INFO
+# 通用配置示例，后续可添加如数据源、Redis等

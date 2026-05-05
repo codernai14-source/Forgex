@@ -27,6 +27,9 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
 /**
  * 系统管理服务启动类
  * 提供系统配置、用户角色等管理能力
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @SpringBootApplication(scanBasePackages = "com.forgex", exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient

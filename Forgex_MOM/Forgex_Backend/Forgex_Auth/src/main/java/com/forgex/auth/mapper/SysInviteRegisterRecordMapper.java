@@ -16,6 +16,7 @@
 
 package com.forgex.auth.mapper;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.forgex.auth.domain.entity.SysInviteRegisterRecord;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,6 +25,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 邀请注册记录 Mapper（Auth 模块）
  */
 @Mapper
+@DS("admin")
 public interface SysInviteRegisterRecordMapper extends BaseMapper<SysInviteRegisterRecord> {
 }
 

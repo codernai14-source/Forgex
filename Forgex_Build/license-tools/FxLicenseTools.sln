@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issuer", "issuer", "{17ABFF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxLicenseGenerator", "issuer\FxLicenseGenerator\FxLicenseGenerator.csproj", "{2908958C-737E-4D5E-9DF0-89CC0725B64A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxLicenseIssuer", "issuer\FxLicenseIssuer\FxLicenseIssuer.csproj", "{6F3F6F7D-56A7-43F3-8D13-25E01809A395}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "request-client", "request-client", "{8A339EA9-B208-4249-BE39-3FA06BEC7423}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxLicenseRequest", "request-client\FxLicenseRequest\FxLicenseRequest.csproj", "{155012E8-54FC-4E4F-8B3B-41BEDA697290}"
@@ -32,6 +34,10 @@ Global
 		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2908958C-737E-4D5E-9DF0-89CC0725B64A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F3F6F7D-56A7-43F3-8D13-25E01809A395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F3F6F7D-56A7-43F3-8D13-25E01809A395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F3F6F7D-56A7-43F3-8D13-25E01809A395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F3F6F7D-56A7-43F3-8D13-25E01809A395}.Release|Any CPU.Build.0 = Release|Any CPU
 		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{155012E8-54FC-4E4F-8B3B-41BEDA697290}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -43,6 +49,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2908958C-737E-4D5E-9DF0-89CC0725B64A} = {17ABFF7B-B3F8-41F3-8CB0-FC75D0752379}
+		{6F3F6F7D-56A7-43F3-8D13-25E01809A395} = {17ABFF7B-B3F8-41F3-8CB0-FC75D0752379}
 		{155012E8-54FC-4E4F-8B3B-41BEDA697290} = {8A339EA9-B208-4249-BE39-3FA06BEC7423}
 	EndGlobalSection
 EndGlobal

@@ -26,6 +26,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 接口出站目标服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,6 +40,12 @@ public class ApiOutboundTargetServiceImpl extends ServiceImpl<ApiOutboundTargetM
 
     private final IThirdSystemService thirdSystemService;
 
+    /**
+     * 查询by接口配置id列表。
+     *
+     * @param apiConfigId 接口配置 ID
+     * @return 列表数据
+     */
     @Override
     public List<ApiOutboundTargetDTO> listByApiConfigId(Long apiConfigId) {
         if (apiConfigId == null) {
@@ -46,6 +58,12 @@ public class ApiOutboundTargetServiceImpl extends ServiceImpl<ApiOutboundTargetM
         return this.list(wrapper).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    /**
+     * 查询enabledby接口配置id列表。
+     *
+     * @param apiConfigId 接口配置 ID
+     * @return 列表数据
+     */
     @Override
     public List<ApiOutboundTargetDTO> listEnabledByApiConfigId(Long apiConfigId) {
         LambdaQueryWrapper<ApiOutboundTarget> wrapper = new LambdaQueryWrapper<>();
@@ -56,6 +74,12 @@ public class ApiOutboundTargetServiceImpl extends ServiceImpl<ApiOutboundTargetM
         return this.list(wrapper).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    /**
+     * 处理replacetargets。
+     *
+     * @param apiConfigId 接口配置 ID
+     * @param targets targets
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void replaceTargets(Long apiConfigId, List<ApiOutboundTargetDTO> targets) {

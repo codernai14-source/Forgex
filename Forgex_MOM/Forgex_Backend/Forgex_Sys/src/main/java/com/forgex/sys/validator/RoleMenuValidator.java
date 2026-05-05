@@ -35,6 +35,8 @@ import java.util.Set;
  *
  * @author coder_nai@163.com
  * @date 2025-01-07
+ *
+ * @version 1.0.0
  */
 @Component
 @RequiredArgsConstructor

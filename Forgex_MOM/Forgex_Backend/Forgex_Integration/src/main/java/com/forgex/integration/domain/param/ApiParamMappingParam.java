@@ -20,6 +20,9 @@ public class ApiParamMappingParam {
      */
     private Long apiConfigId;
 
+    /**
+     * 出站目标 ID。
+     */
     private Long outboundTargetId;
 
     /**

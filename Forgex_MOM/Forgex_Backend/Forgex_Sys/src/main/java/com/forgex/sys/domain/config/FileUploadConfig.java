@@ -4,6 +4,9 @@ import lombok.Data;
 
 /**
  * File upload configuration.
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 public class FileUploadConfig {
@@ -33,6 +36,11 @@ public class FileUploadConfig {
      */
     private String providerConfigJson = "";
 
+    /**
+     * 获取默认配置。
+     *
+     * @return 处理结果
+     */
     public static FileUploadConfig defaults() {
         return new FileUploadConfig();
     }

@@ -1,17 +1,17 @@
 import http from '../http'
 
 /**
- * 鑾峰彇绯荤粺鍒濆鍖栫姸鎬?
- * @returns 鍒濆鍖栫姸鎬?
+ * 获取系统初始化状态。
+ * @returns 初始化状态。
  */
 export function getInit状态() {
   return http.get('/sys/init/status')
 }
 
 /**
- * 搴旂敤鍒濆鍖?
- * @param body 鍒濆鍖栨暟鎹?
- * @returns 缁撴灉
+ * 提交系统初始化。
+ * @param body 初始化参数。
+ * @returns 请求结果。
  */
 export function applyInit(body: any) {
   return http.post('/sys/init/apply', body)

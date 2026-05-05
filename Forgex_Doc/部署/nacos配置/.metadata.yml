@@ -28,6 +28,18 @@ metadata:
   group: DEFAULT_GROUP
   type: yaml
 - appName: ''
+  dataId: shared-config.yaml
+  group: FORGEX_GROUP
+  type: yaml
+- appName: ''
   dataId: captcha.yaml
+  group: DEFAULT_GROUP
+  type: yaml
+- appName: ''
+  dataId: lidao-common.yaml
+  group: DEFAULT_GROUP
+  type: yaml
+- appName: ''
+  dataId: datasource-forgex-integration-dev.yml
   group: DEFAULT_GROUP
   type: yaml

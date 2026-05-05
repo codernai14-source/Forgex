@@ -2,6 +2,12 @@ package com.forgex.common.enums;
 
 import lombok.Getter;
 
+/**
+ * 用户来源枚举。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Getter
 public enum UserSourceEnum {
 

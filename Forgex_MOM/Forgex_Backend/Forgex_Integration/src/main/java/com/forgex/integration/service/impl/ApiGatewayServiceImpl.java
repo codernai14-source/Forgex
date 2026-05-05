@@ -399,6 +399,9 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
      *
      * @param inboundPayload  入站参数
      * @param outboundRequest 出站请求定义
+     *
+     * @author Forgex Team
+     * @version 1.0.0
      */
     public record ApiTaskPayload(Map<String, Object> inboundPayload, OutboundRequestDefinition outboundRequest) {
     }

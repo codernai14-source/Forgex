@@ -8,6 +8,9 @@ import java.util.Map;
 
 /**
  * 鍑虹珯 HTTP 璇锋眰瀹氫箟
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Data
 @Builder

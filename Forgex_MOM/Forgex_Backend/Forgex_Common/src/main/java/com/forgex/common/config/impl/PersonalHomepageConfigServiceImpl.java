@@ -14,6 +14,9 @@ import org.springframework.util.StringUtils;
 
 /**
  * 个人首页配置服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
  */
 @Service
 @DS("common")
@@ -28,6 +31,14 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
     private final ConfigService configService;
     private final SysUserStyleConfigMapper userStyleConfigMapper;
 
+    /**
+     * 获取effective配置。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param moduleCode 模块编码
+     * @return 处理结果
+     */
     @Override
     public PersonalHomepageConfig getEffectiveConfig(Long userId, Long tenantId, String moduleCode) {
         PersonalHomepageConfig userConfig = getUserConfig(userId, tenantId, moduleCode);
@@ -48,6 +59,14 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
         return defaultConfig(moduleCode);
     }
 
+    /**
+     * 获取用户配置。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param moduleCode 模块编码
+     * @return 处理结果
+     */
     @Override
     public PersonalHomepageConfig getUserConfig(Long userId, Long tenantId, String moduleCode) {
         if (userId == null || tenantId == null) {
@@ -64,6 +83,14 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
         return parse(entity == null ? null : entity.getConfigJson(), moduleCode);
     }
 
+    /**
+     * 保存用户配置。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param moduleCode 模块编码
+     * @param config 配置对象
+     */
     @Override
     public void saveUserConfig(Long userId, Long tenantId, String moduleCode, PersonalHomepageConfig config) {
         if (userId == null || tenantId == null || config == null) {
@@ -94,6 +121,14 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
         userStyleConfigMapper.updateById(existing);
     }
 
+    /**
+     * 处理重置user配置。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param moduleCode 模块编码
+     * @return 是否处理成功
+     */
     @Override
     public boolean resetUserConfig(Long userId, Long tenantId, String moduleCode) {
         if (userId == null || tenantId == null) {
@@ -113,6 +148,13 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
         return userStyleConfigMapper.deleteById(existing.getId()) > 0;
     }
 
+    /**
+     * 获取租户配置。
+     *
+     * @param tenantId 租户 ID
+     * @param moduleCode 模块编码
+     * @return 处理结果
+     */
     @Override
     public PersonalHomepageConfig getTenantConfig(Long tenantId, String moduleCode) {
         if (tenantId == null) {
@@ -129,6 +171,13 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
         return getPublicConfig(moduleCode);
     }
 
+    /**
+     * 保存租户配置。
+     *
+     * @param tenantId 租户 ID
+     * @param moduleCode 模块编码
+     * @param config 配置对象
+     */
     @Override
     public void saveTenantConfig(Long tenantId, String moduleCode, PersonalHomepageConfig config) {
         if (tenantId == null || config == null) {
@@ -137,12 +186,24 @@ public class PersonalHomepageConfigServiceImpl implements PersonalHomepageConfig
         configService.setJson(tenantDefaultConfigKey(tenantId, moduleCode), normalize(config, moduleCode));
     }
 
+    /**
+     * 获取public配置。
+     *
+     * @param moduleCode 模块编码
+     * @return 处理结果
+     */
     @Override
     public PersonalHomepageConfig getPublicConfig(String moduleCode) {
         PersonalHomepageConfig config = configService.getGlobalJson(defaultConfigKey(moduleCode), PersonalHomepageConfig.class, null);
         return config == null ? defaultConfig(moduleCode) : normalize(config, moduleCode);
     }
 
+    /**
+     * 保存public配置。
+     *
+     * @param moduleCode 模块编码
+     * @param config 配置对象
+     */
     @Override
     public void savePublicConfig(String moduleCode, PersonalHomepageConfig config) {
         if (config == null) {

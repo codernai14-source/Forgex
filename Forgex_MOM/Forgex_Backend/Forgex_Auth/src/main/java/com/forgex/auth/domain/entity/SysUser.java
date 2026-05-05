@@ -83,8 +83,14 @@ public class SysUser extends BaseEntity {
      */
     private Boolean status;
 
+    /**
+     * 员工 ID。
+     */
     private Long employeeId;
 
+    /**
+     * 用户来源。
+     */
     private Integer userSource;
 
     /**

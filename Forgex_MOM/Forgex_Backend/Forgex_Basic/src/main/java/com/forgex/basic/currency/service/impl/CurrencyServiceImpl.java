@@ -19,6 +19,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+/**
+ * 币种服务实现。
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ */
 @Service
 @RequiredArgsConstructor
 public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurrency> implements ICurrencyService {
@@ -28,6 +34,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
 
     private final MdmCurrencyMapper currencyMapper;
 
+    /**
+     * 分页查询数据。
+     *
+     * @param param 请求参数
+     * @return 分页结果
+     */
     @Override
     public Page<MdmCurrency> page(CurrencyPageParam param) {
         CurrencyPageParam safeParam = param == null ? new CurrencyPageParam() : param;
@@ -35,16 +47,34 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         return currencyMapper.selectPage(page, wrapper(safeParam));
     }
 
+    /**
+     * 查询数据列表。
+     *
+     * @param param 请求参数
+     * @return 列表数据
+     */
     @Override
     public List<MdmCurrency> list(CurrencyPageParam param) {
         return currencyMapper.selectList(wrapper(param == null ? new CurrencyPageParam() : param));
     }
 
+    /**
+     * 查询数据详情。
+     *
+     * @param id 主键 ID
+     * @return 处理结果
+     */
     @Override
     public MdmCurrency detail(Long id) {
         return id == null ? null : currencyMapper.selectById(id);
     }
 
+    /**
+     * 创建数据。
+     *
+     * @param param 请求参数
+     * @return 数据主键 ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(MdmCurrency param) {
@@ -60,6 +90,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         return param.getId();
     }
 
+    /**
+     * 更新数据。
+     *
+     * @param param 请求参数
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(MdmCurrency param) {
@@ -77,6 +113,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         return true;
     }
 
+    /**
+     * 删除数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public Boolean delete(Long id) {
         requireCurrency(id);
@@ -84,6 +126,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         return true;
     }
 
+    /**
+     * 设置本位币。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean setBase(Long id) {
@@ -94,6 +142,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         return true;
     }
 
+    /**
+     * 启用数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public Boolean enable(Long id) {
         MdmCurrency currency = requireCurrency(id);
@@ -102,6 +156,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         return true;
     }
 
+    /**
+     * 禁用数据。
+     *
+     * @param id 主键 ID
+     * @return 是否处理成功
+     */
     @Override
     public Boolean disable(Long id) {
         MdmCurrency currency = requireCurrency(id);
@@ -137,6 +197,12 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
         }
     }
 
+    /**
+     * 根据币种编码获取币种，不存在时抛出业务异常。
+     *
+     * @param code 编码
+     * @return 处理结果
+     */
     public MdmCurrency requireCurrencyByCode(String code) {
         MdmCurrency currency = currencyMapper.selectOne(new LambdaQueryWrapper<MdmCurrency>()
                 .eq(MdmCurrency::getCurrencyCode, normalizeCode(code))

@@ -7,9 +7,9 @@ import lombok.Data;
 /**
  * Excel 导出配置主表实体。
  * <p>
- * 数据源：{@code forgex_common}。\n
- * 主表保存导出配置的基础信息（表编号、标题、格式、总计开关、样式等）。\n
- * 字段明细由子表 {@link FxExcelExportConfigItem} 维护。\n
+ * 数据源：{@code forgex_common}。
+ * 主表保存导出配置的基础信息（表编号、标题、格式、总计开关、样式等）。
+ * 字段明细由子表 {@link FxExcelExportConfigItem} 维护。
  * </p>
  *
  * @author coder_nai@163.com
@@ -51,7 +51,7 @@ public class FxExcelExportConfig extends BaseEntity {
     private String exportFormat;
 
     /**
-     * 鏄惁鍚敤閰嶇疆銆?
+     * 是否启用配置。
      */
     private Boolean enabled;
 
@@ -65,4 +65,3 @@ public class FxExcelExportConfig extends BaseEntity {
      */
     private Integer version;
 }
-

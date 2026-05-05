@@ -258,22 +258,47 @@ public class GatewayLoginSessionSupport {
             this.account = account;
         }
 
+        /**
+         * 获取token。
+         *
+         * @return 字符串结果
+         */
         public String getToken() {
             return token;
         }
 
+        /**
+         * 获取loginID。
+         *
+         * @return 处理结果
+         */
         public Object getLoginId() {
             return loginId;
         }
 
+        /**
+         * 获取用户ID。
+         *
+         * @return 数据主键 ID
+         */
         public Long getUserId() {
             return userId;
         }
 
+        /**
+         * 获取租户ID。
+         *
+         * @return 数据主键 ID
+         */
         public Long getTenantId() {
             return tenantId;
         }
 
+        /**
+         * 获取账号。
+         *
+         * @return 字符串结果
+         */
         public String getAccount() {
             return account;
         }
