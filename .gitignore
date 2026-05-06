@@ -32,7 +32,11 @@ hs_err_pid*
 /Forgex_MOM/Forgex_Backend/Forgex_Sys/logs/
 /Forgex_MOM/Forgex_Backend/Forgex_Gateway/logs/
 /.trae/
-/doc/
+/doc/*
+!/doc/sql/
+/doc/sql/*
+!/doc/sql/upgrade/
+!/doc/sql/upgrade/**
 /.vscode/
 /Forgex_MOM/Forgex_Backend/Forgex_Job/target/
 /Forgex_MOM/Forgex_Backend/Forgex_Report/target/

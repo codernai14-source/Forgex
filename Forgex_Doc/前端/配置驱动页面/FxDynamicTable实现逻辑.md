@@ -1,7 +1,7 @@
 # FxDynamicTable 实现逻辑
 
-> 分类：前端 / 配置驱动页面  
-> 版本：**V0.6.0**  
+> 分类：前端 / 配置驱动页面
+> 版本：**V0.6.5**
 > 更新时间：**2026-04-17**
 
 本文档说明 `FxDynamicTable` 在 Forgex 中的真实实现方式，包括配置来源、前后端调用链路、列设置合并逻辑，以及实际代码所在位置。
@@ -98,7 +98,7 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 4. 初始化分页大小与查询模型
 5. 刷新 `configVersion`，强制依赖配置的计算属性重新渲染
 
-这里有一个很关键的设计：页面传入的 `dynamicTableConfig` 不是替代后端配置，而是补充或覆盖。  
+这里有一个很关键的设计：页面传入的 `dynamicTableConfig` 不是替代后端配置，而是补充或覆盖。
 也就是说，系统允许：
 
 - 后端维护公共默认配置
@@ -136,7 +136,7 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 - `datetime`
 - `time`
 
-对应的字典选项通过 `dictOptions` 注入。  
+对应的字典选项通过 `dictOptions` 注入。
 例如某个查询字段配置了 `dictCode: 'status'`，则组件会读取：
 
 ```ts
@@ -171,6 +171,8 @@ dictOptions.status
 ```
 
 只要插槽名和列字段 `field` 一致，`FxDynamicTable` 就会优先使用页面插槽渲染该列。
+
+如果某列已经配置了 `dictCode` 或 `dictField`，默认会由 `FxDynamicTable` 解析 `xxxText` 字段中的字典文本或 `@DictI18n` 返回的 `{"label":"...","color":"..."}` JSON，并渲染为 `a-tag`。业务页面只有在确实需要特殊展示时才应该声明同名插槽；一旦声明同名插槽，就会覆盖内置字典 Tag 渲染，插槽内部需要自行解析字典 JSON，否则会把整段 JSON 当普通文本显示。
 
 这条规则很重要，因为很多“列不显示自定义内容”的问题，最终都出在这里：
 

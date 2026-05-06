@@ -60,6 +60,8 @@ export default {
   layoutVerticalMix: '세로형 2단',
   layoutTop: '가로형',
   layoutMix: '혼합형',
+  horizontalModuleMenuHint: '현재 모듈의 메뉴 진입점',
+  horizontalModuleMenuCount: '이동 가능한 페이지 {count}개',
   header: '헤더',
   headerVisible: '헤더 표시',
   headerMode: '모드',

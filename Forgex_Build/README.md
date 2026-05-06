@@ -95,6 +95,8 @@
 
 `delivery/windows/installer/scripts/upgrade.ps1` 用于现场只替换前端 `frontend/` 和后端 `services/*.jar`。脚本不会重新安装 JRE、不会导入数据库、不会导入 Nacos；执行时会备份旧文件、停止服务、替换文件、更新控制配置和 WinSW JAR 路径，再按需启动服务。
 
+交付包会额外携带 `database-upgrade/`，来源为 `../doc/sql/upgrade`。现场升级涉及数据库变更时，先备份数据库，再按升级说明和 SQL 文件名顺序执行需要的脚本；应用升级脚本不会自动执行 SQL。
+
 示例：
 
 ```powershell

@@ -1,6 +1,8 @@
 <template>
-  <div class="app-sidebar-wrapper fx-guide-sidebar">
-    <!-- 鍙屽垪甯冨眬锛氱涓€鍒楋紙涓€绾ц彍鍗?鐩綍锛?-->
+  <div
+    class="app-sidebar-wrapper fx-guide-sidebar"
+    :class="{ 'app-sidebar-wrapper--vertical': isVerticalLayout }"
+  >
     <a-layout-sider
       v-if="doubleColumn"
       class="app-sidebar-mini fx-guide-sidebar-mini"
@@ -21,6 +23,8 @@
           <div class="mini-menu-content">
             <span class="mini-menu-icon-shell">
               <component v-if="menu.icon" :is="getIcon(menu.icon)" class="mini-menu-icon" />
+              <AppstoreOutlined v-else-if="menu.type === 'module'" class="mini-menu-icon" />
+              <FolderOutlined v-else-if="menu.children?.length" class="mini-menu-icon" />
               <FileOutlined v-else class="mini-menu-icon" />
             </span>
             <span class="mini-menu-title" :title="menu.title">{{ menu.title }}</span>
@@ -29,14 +33,12 @@
       </a-menu>
     </a-layout-sider>
 
-    <!-- 涓讳晶杈规爮锛堢浜屽垪锛氫簩涓夌骇鑿滃崟锛?-->
-    <!-- 绗簩鍒楀搴﹀噺灏?0%锛屼粠200px鏀逛负180px -->
     <a-layout-sider
       v-if="!doubleColumn || hasSecondLevelMenus"
       class="app-sidebar fx-guide-sidebar-main"
       :collapsed="collapsed"
       :collapsible="true"
-      :width="180"
+      :width="mainSiderWidth"
       :collapsed-width="64"
       @collapse="onCollapse"
     >
@@ -44,41 +46,16 @@
         mode="inline"
         :selected-keys="selectedKeys"
         :open-keys="openKeys"
+        :inline-indent="menuInlineIndent"
         class="sidebar-menu fx-guide-sidebar-menu"
         @openChange="onOpenChange"
         @click="onMenuClick"
       >
-        <template v-for="item in currentMenus" :key="item.key">
-          <!-- 目录（有子菜单） -->
-          <a-sub-menu v-if="item.children && item.children.length > 0" :key="item.key">
-            <template #icon>
-              <component v-if="item.icon" :is="getIcon(item.icon)" />
-              <FolderOutlined v-else />
-            </template>
-            <template #title>
-              <span class="menu-text" :title="item.title">{{ item.title }}</span>
-            </template>
-            <a-menu-item
-              v-for="child in item.children"
-              :key="child.key"
-            >
-              <template #icon>
-                <component v-if="child.icon" :is="getIcon(child.icon)" />
-                <FileOutlined v-else />
-              </template>
-              <span class="menu-text" :title="child.title">{{ child.title }}</span>
-            </a-menu-item>
-          </a-sub-menu>
-
-          <!-- 菜单（无子菜单） -->
-          <a-menu-item v-else :key="item.key">
-            <template #icon>
-              <component v-if="item.icon" :is="getIcon(item.icon)" />
-              <FileOutlined v-else />
-            </template>
-            <span class="menu-text" :title="item.title">{{ item.title }}</span>
-          </a-menu-item>
-        </template>
+        <SidebarMenuNode
+          v-for="item in currentMenus"
+          :key="item.key"
+          :item="item"
+        />
       </a-menu>
     </a-layout-sider>
   </div>
@@ -90,20 +67,11 @@ import { getIcon } from '../../utils/icon'
 import {
   AppstoreOutlined,
   FolderOutlined,
-  FileOutlined
+  FileOutlined,
 } from '@ant-design/icons-vue'
+import SidebarMenuNode, { type SidebarMenuNodeItem } from './SidebarMenuNode.vue'
 
-interface MenuItem {
-  key: string
-  title: string
-  icon?: string
-  path: string
-  moduleCode: string
-  parentKey?: string
-  menuLevel?: number  // 鑿滃崟灞傜骇锛?=涓€绾ц彍鍗? 2=浜岀骇鑿滃崟, 3=涓夌骇鑿滃崟
-  children?: MenuItem[]
-  type: 'catalog' | 'menu' | 'button'
-}
+interface MenuItem extends SidebarMenuNodeItem {}
 
 interface Module {
   code: string
@@ -113,17 +81,12 @@ interface Module {
 }
 
 interface AppSidebarProps {
-  /** 鑿滃崟椤规暟缁勶紝鍖呭惈鎵€鏈夎彍鍗曠殑灞傜骇缁撴瀯鏁版嵁 */
   menus: MenuItem[]
-  /** 妯″潡鍒楄〃锛岀敤浜庡弻鍒楀竷灞€妯″紡鏄剧ず妯″潡瀵艰埅 */
   modules?: Module[]
-  /** 褰撳墠婵€娲荤殑鑿滃崟 key锛岀敤浜庨珮浜樉绀洪€変腑鐨勮彍鍗曢」 */
   activeKey?: string
-  /** 褰撳墠婵€娲荤殑妯″潡 code锛岀敤浜庡弻鍒楀竷灞€妯″紡 */
   activeModuleCode?: string
-  /** 侧边栏是否折叠，true 琛ㄧず鎶樺彔鐘舵€?*/
+  layoutMode?: 'vertical' | 'vertical-mix' | 'top' | 'mix'
   collapsed?: boolean
-  /** 鏄惁鍚敤鍙屽垪甯冨眬锛宼rue 琛ㄧず鏄剧ず涓ゅ垪渚ц竟鏍?*/
   doubleColumn?: boolean
 }
 
@@ -132,117 +95,39 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
   modules: () => [],
   activeKey: '',
   activeModuleCode: '',
+  layoutMode: 'vertical',
   collapsed: false,
-  doubleColumn: false
+  doubleColumn: false,
 })
 
 const emit = defineEmits<{
-  /**
-   * 菜单点击事件
-   * 瑙﹀彂鏃舵満锛氱敤鎴风偣鍑昏彍鍗曢」鏃惰Е鍙?
-   * @param menuKey 被点击的菜单 key
-   */
   'menu-click': [menuKey: string]
-  /**
-   * 妯″潡鐐瑰嚮浜嬩欢
-   * 触发时机：用户点击模块导航时触发
-   * @param moduleCode 被点击的模块 code
-   */
-  'module-click': [moduleCode: string]
-  /**
-   * 渚ц竟鏍忔姌鍙犵姸鎬佸彉鍖栦簨浠?
-   * 触发时机：用户点击折叠按钮时触发
-   * @param collapsed 鏂扮殑鎶樺彔鐘舵€?
-   */
   'collapse-change': [collapsed: boolean]
 }>()
 
-// 选中的菜单keys
 const selectedKeys = ref<string[]>([])
-// 选中的一级菜单keys锛堢敤浜庡弻鍒楀竷灞€锛?
 const selectedFirstLevelKeys = ref<string[]>([])
-// 展开的菜单keys
 const openKeys = ref<string[]>([])
 
-// 涓€绾ц彍鍗曞垪琛紙鐢ㄤ簬鍙屽垪甯冨眬鐨勭涓€鍒楋級
-const firstLevelMenus = computed(() => {
-  if (!props.doubleColumn) {
-    return []
-  }
-  
-  // 杩斿洖鎵€鏈変竴绾ц彍鍗曪紙menuLevel === 1），包含children
-  // 濡傛灉娌℃湁menuLevel灞炴€э紝涔熻涓轰竴绾ц彍鍗?
-  const menus = props.menus.filter(menu => 
-    menu.menuLevel === 1 || 
-    (menu.parentKey === undefined && !menu.children) || 
-    (menu.parentKey === undefined && menu.children && menu.type === 'menu')
-  )
-  return menus
-})
+const isVerticalLayout = computed(() => props.layoutMode === 'vertical' && !props.doubleColumn)
+const mainSiderWidth = computed(() => (isVerticalLayout.value ? 220 : 180))
+const menuInlineIndent = computed(() => (isVerticalLayout.value ? 12 : 16))
 
-// 鏄惁鏈変簩涓夌骇鑿滃崟锛堢敤浜庡垽鏂槸鍚︽樉绀虹浜屽垪锛?
-const hasSecondLevelMenus = computed(() => {
-  if (!props.doubleColumn) {
-    return false
-  }
-  
-  // 只有点击了目录类型菜单且该菜单有children时，才显示第二列
-  // 鑾峰彇褰撳墠閫変腑鐨勪竴绾ц彍鍗?
-  const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
-    menu.key === selectedFirstLevelKeys.value[0]
-  )
-  
-  if (!selectedFirstLevelMenu) {
-    return false
-  }
-  
-  // 如果选中的是目录类型菜单且有children，显示第二列
-  const showSecondLevel = selectedFirstLevelMenu.type === 'catalog' && 
-                         selectedFirstLevelMenu.children && 
-                         selectedFirstLevelMenu.children.length > 0
-  
-  return showSecondLevel
-})
+const firstLevelMenus = computed(() => (props.doubleColumn ? props.menus : []))
 
-// 当前显示的菜单列表（第二列）
+const selectedFirstLevelMenu = computed(() => (
+  firstLevelMenus.value.find(menu => menu.key === selectedFirstLevelKeys.value[0]) || null
+))
+
+const hasSecondLevelMenus = computed(() => (
+  props.doubleColumn && !!selectedFirstLevelMenu.value?.children?.length
+))
+
 const currentMenus = computed(() => {
   if (!props.doubleColumn) {
-    // 鍗曞垪妯″紡锛氭樉绀烘墍鏈夎彍鍗?
     return props.menus
   }
-  
-  // 双列模式：只显示当前模块的二三级菜单
-  if (!props.activeModuleCode) {
-    return []
-  }
-  
-  // 鑾峰彇褰撳墠閫変腑鐨勪竴绾ц彍鍗?
-  // 浣跨敤firstLevelMenus.value.find锛屽洜涓篺irstLevelMenus包含完整的children缁撴瀯
-  const selectedFirstLevelMenu = firstLevelMenus.value.find(menu => 
-    menu.key === selectedFirstLevelKeys.value[0]
-  )
-  
-  if (!selectedFirstLevelMenu) {
-    // 濡傛灉娌℃湁閫変腑鐨勪竴绾ц彍鍗曪紝鏄剧ず鎵€鏈塵enuLevel >= 2鐨勮彍鍗?
-    return props.menus.filter(menu => 
-      menu.moduleCode === props.activeModuleCode && 
-      menu.menuLevel && 
-      menu.menuLevel >= 2
-    )
-  }
-  
-  // 显示选中的一级菜单对应的二级菜单
-  // 濡傛灉閫変腑鐨勬槸鐩綍绫诲瀷鑿滃崟锛屾樉绀哄叾鎵€鏈夊瓙鑿滃崟
-  // 濡傛灉閫変腑鐨勬槸闈炵洰褰曠被鍨嬭彍鍗曪紝鏄剧ず鎵€鏈塵enuLevel >= 2鐨勮彍鍗?
-  if (selectedFirstLevelMenu.type === 'catalog') {
-    return selectedFirstLevelMenu.children || []
-  } else {
-    return props.menus.filter(menu => 
-      menu.moduleCode === props.activeModuleCode && 
-      menu.menuLevel && 
-      menu.menuLevel >= 2
-    )
-  }
+  return selectedFirstLevelMenu.value?.children || []
 })
 
 watch(
@@ -260,25 +145,18 @@ watch(
     }
 
     const currentKey = selectedFirstLevelKeys.value[0]
-    const exists = firstMenus.some(menu => menu.key === currentKey)
-    if (exists) {
+    if (firstMenus.some(menu => menu.key === currentKey)) {
       return
     }
 
-    const preferredCatalog = firstMenus.find(menu =>
-      menu.type === 'catalog' &&
-      Array.isArray(menu.children) &&
-      menu.children.length > 0,
-    )
-
-    selectedFirstLevelKeys.value = [preferredCatalog?.key || firstMenus[0].key]
+    const preferredMenu = firstMenus.find(menu => menu.children?.length) || firstMenus[0]
+    selectedFirstLevelKeys.value = [preferredMenu.key]
   },
   { immediate: true, deep: true },
 )
 
-// 鐩戝惉 activeKey 鍙樺寲
 watch(
-  () => [props.activeKey, props.menus],
+  () => [props.activeKey, props.menus, props.doubleColumn],
   ([newKey]) => {
     const normalizedKey = String(newKey || '').split('?')[0]
     if (!normalizedKey) {
@@ -286,39 +164,35 @@ watch(
       openKeys.value = []
       return
     }
+
     selectedKeys.value = [normalizedKey]
-      
-      // 鑷姩灞曞紑鐖惰彍鍗?
-      const menuPath = findMenuPath(props.menus, normalizedKey)
-      if (!menuPath || menuPath.length === 0) {
-        openKeys.value = []
-        return
-      }
+    const menuPath = findMenuPath(props.menus, normalizedKey)
+    if (!menuPath?.length) {
+      openKeys.value = []
+      return
+    }
 
-      const firstLevelMenu = menuPath.find(menu => menu.menuLevel === 1) || menuPath[0]
-      if (firstLevelMenu) {
-        selectedFirstLevelKeys.value = [firstLevelMenu.key]
-      }
+    const firstLevelMenu = menuPath[0]
+    if (props.doubleColumn && firstLevelMenu) {
+      selectedFirstLevelKeys.value = [firstLevelMenu.key]
+    }
 
-      openKeys.value = menuPath
-        .slice(0, -1)
-        .filter(menu => menu.key !== firstLevelMenu?.key)
-        .map(menu => menu.key)
+    openKeys.value = menuPath
+      .slice(0, -1)
+      .filter(menu => !props.doubleColumn || menu.key !== firstLevelMenu?.key)
+      .map(menu => menu.key)
   },
-  { immediate: true }
+  { immediate: true, deep: true },
 )
 
-// 鏌ユ壘鑿滃崟椤?
 function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
   for (const menu of menus) {
     if (menu.key === key) {
       return menu
     }
-    if (menu.children) {
-      const found = findMenuByKey(menu.children, key)
-      if (found) {
-        return found
-      }
+    const found = findMenuByKey(menu.children || [], key)
+    if (found) {
+      return found
     }
   }
   return null
@@ -327,78 +201,67 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
 function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = []): MenuItem[] | null {
   for (const menu of menus) {
     const currentPath = [...parentPath, menu]
-    if (menu.key === key) {
+    if (menu.key === key || menu.path === key) {
       return currentPath
     }
-    if (menu.children && menu.children.length > 0) {
-      const found = findMenuPath(menu.children, key, currentPath)
-      if (found) {
-        return found
-      }
+    const found = findMenuPath(menu.children || [], key, currentPath)
+    if (found) {
+      return found
     }
   }
   return null
 }
 
-/**
- * 截断文本并添加省略号
- * @param text 原始文本
- * @param maxLength 鏈€澶ч暱搴?
- * @returns 截断后的文本
- */
-// 鏌ユ壘涓€绾ц彍鍗曢」
-function findFirstLevelMenu(key: string): MenuItem | null {
-  // 鐩存帴浠巔rops.menus涓煡鎵句竴绾ц彍鍗?
-  return props.menus.find(menu => 
-    menu.key === key && 
-    menu.menuLevel === 1
-  ) || null
-}
-
-// 涓€绾ц彍鍗曠偣鍑伙紙鍙屽垪甯冨眬锛?
-const onFirstLevelMenuClick = (info: any) => {
-  const key = info.key as string
-  if (key) {
-    selectedFirstLevelKeys.value = [key]
-    
-    // 鏌ユ壘褰撳墠鐐瑰嚮鐨勪竴绾ц彍鍗?
-    const clickedMenu = findFirstLevelMenu(key)
-    
-    // 鍙湁闈炵洰褰曠被鍨嬬殑鑿滃崟鎵嶈Е鍙戣矾鐢辫烦杞?
-    // 鐩綍绫诲瀷鑿滃崟鍙渶瑕佹洿鏂皊electedFirstLevelKeys锛岃currentMenus鑷姩鏇存柊鏄剧ず瀵瑰簲鐨勪簩绾ц彍鍗?
-    if (clickedMenu && clickedMenu.type !== 'catalog') {
-      emit('menu-click', key)
+function findFirstNavigableMenu(menu: MenuItem): MenuItem | null {
+  if (!menu.children?.length && menu.path) {
+    return menu
+  }
+  for (const child of menu.children || []) {
+    const found = findFirstNavigableMenu(child)
+    if (found) {
+      return found
     }
   }
+  return null
 }
 
-// 妯″潡鐐瑰嚮
-const onModuleClick = (info: any) => {
-  const key = info.key as string
-  if (key) {
-    emit('module-click', key)
+function onFirstLevelMenuClick(info: any) {
+  const key = String(info.key || '')
+  const clickedMenu = findMenuByKey(props.menus, key)
+  if (!clickedMenu) {
+    return
   }
-}
 
-// 菜单点击
-const onMenuClick = (info: any) => {
-  const key = info.key as string
-  if (key) {
-    emit('menu-click', key)
+  selectedFirstLevelKeys.value = [clickedMenu.key]
+  if (clickedMenu.children?.length) {
+    const firstTarget = findFirstNavigableMenu(clickedMenu)
+    if (firstTarget?.path) {
+      selectedKeys.value = [firstTarget.path]
+    }
+    return
   }
+
+  emit('menu-click', clickedMenu.path || clickedMenu.key)
 }
 
-// 鑿滃崟灞曞紑/鏀惰捣
-const onOpenChange = (keys: string[]) => {
+function onMenuClick(info: any) {
+  const key = String(info.key || '')
+  const clickedMenu = findMenuByKey(currentMenus.value, key) || findMenuByKey(props.menus, key)
+  if (!key || clickedMenu?.children?.length) {
+    return
+  }
+
+  emit('menu-click', clickedMenu?.path || key)
+}
+
+function onOpenChange(keys: string[]) {
   openKeys.value = keys
 }
 
-// 渚ц竟鏍忔姌鍙?灞曞紑
-const onCollapse = (collapsed: boolean) => {
+function onCollapse(collapsed: boolean) {
   emit('collapse-change', collapsed)
 }
 </script>
-
 <style scoped lang="less">
 .app-sidebar-wrapper {
   display: flex;
@@ -565,6 +428,31 @@ const onCollapse = (collapsed: boolean) => {
     &:hover {
       background: rgba(0, 0, 0, 0.3);
     }
+  }
+}
+
+.app-sidebar-wrapper--vertical {
+  .sidebar-menu {
+    :deep(.ant-menu-item),
+    :deep(.ant-menu-submenu-title) {
+      padding-inline-end: 12px !important;
+    }
+
+    :deep(.ant-menu-item-icon),
+    :deep(.ant-menu-submenu-icon) {
+      margin-right: 6px;
+    }
+
+    :deep(.ant-menu-title-content) {
+      min-width: 0;
+    }
+  }
+
+  .menu-text {
+    display: block;
+    white-space: nowrap;
+    word-break: keep-all;
+    -webkit-line-clamp: unset;
   }
 }
 

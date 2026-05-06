@@ -73,10 +73,6 @@
         </a-tag>
       </template>
 
-      <template #userSource="{ record }">
-        <a-tag>{{ record.userSourceText || getUserSourceLabel(record.userSource) || '-' }}</a-tag>
-      </template>
-
       <template #action="{ record }">
         <div class="user-action-cell">
           <FxActionGroup :actions="getUserRowActions(record)" :max-inline="5" />
@@ -118,7 +114,7 @@ import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import UserFormDialog from './components/UserFormDialog.vue'
 import UserRoleAssignDialog from './components/UserRoleAssignDialog.vue'
-import { useDict, getDictItemLabel } from '@/hooks/useDict'
+import { useDict } from '@/hooks/useDict'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
@@ -129,6 +125,13 @@ import type { Department, Position, UserQuery } from './types'
 
 const { t } = useI18n()
 const { dictItems: userSourceOptions } = useDict('user_source')
+
+const USER_SOURCE_FALLBACK_OPTIONS = [
+  { label: '站点创建', value: 1 },
+  { label: '站点导入', value: 2 },
+  { label: '第三方同步', value: 3 },
+  { label: '自主注册', value: 4 },
+]
 
 const departmentTreeData = ref<Department[]>([])
 const positionList = ref<Position[]>([])
@@ -148,7 +151,8 @@ const dictOptions = ref<Record<string, any[]>>({
   positionId: [],
   roleId: [],
   role_ids: [],
-  userSource: [],
+  userSource: USER_SOURCE_FALLBACK_OPTIONS,
+  user_source: USER_SOURCE_FALLBACK_OPTIONS,
   status: [
     { label: t('system.user.statusActive'), value: true },
     { label: t('system.user.statusInactive'), value: false },
@@ -163,15 +167,10 @@ const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
 }))
 
 watch(userSourceOptions, (value) => {
-  dictOptions.value.userSource = value || []
+  const options = value?.length ? value : USER_SOURCE_FALLBACK_OPTIONS
+  dictOptions.value.userSource = options
+  dictOptions.value.user_source = options
 }, { immediate: true })
-
-/**
- * 根据字典配置获取用户来源显示文本，未匹配时回退为默认占位。
- */
-function getUserSourceLabel(value: unknown) {
-  return getDictItemLabel(userSourceOptions.value, value, '')
-}
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
