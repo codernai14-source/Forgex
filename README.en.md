@@ -1,5 +1,10 @@
 # Forgex
 
+<div align="center" style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3rem;margin:10px auto 14px;width:100%;box-sizing:border-box;">
+  <a href="https://gitee.com/coder_nai/forgex/stargazers" title="Gitee Stars" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark" alt="Gitee Stars"/></a>
+  <a href="https://gitee.com/coder_nai/forgex/members" title="Gitee Forks" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/fork.svg?theme=dark" alt="Gitee Forks"/></a>
+</div>
+
 > Full-stack enterprise scaffold and business platform foundation for production manufacturing
 > Documentation version: **V0.6.5**
 
@@ -19,16 +24,66 @@ Forgex includes an external-facing user registration capability for enterprise u
 
 ## What Makes It Different
 
-Many scaffolds focus on generating a CRUD page faster. Forgex focuses on what happens after an enterprise project goes live: permissions keep changing, table fields grow, customer sites need private deployment, manufacturing systems need integration, and upgrades may include SQL changes. These are the problems Forgex moves into the platform layer.
+Many teams need more than faster CRUD screens. After go-live, enterprise programs keep evolving: org/permission changes, exploding table/dictionary metadata, **consistent multi-language UI + server messages**, **tenant isolation**, **approvals and reporting**, **native mobile access**, **external integrations**, and repeatable **Windows / Linux private deployment** with upgrades. Forgex targets manufacturing-style MOM delivery and keeps these concerns inside one **microservices + web admin + Android skeleton + build/delivery engineering** story, reducing bespoke glue and repetitive platform work.
 
-Forgex helps with:
+### Richer platform capabilities (i18n, multi-tenant, workflow, reports, Android, integration)
 
-- **Complex enterprise permissions**: authentication, roles, menus, role-user grants, dynamic routes, permission keys, and audit logs.
-- **Fast-changing manufacturing pages**: `FxDynamicTable` moves columns, queries, sorting, dictionary rendering, and user column preferences into configurable table metadata.
-- **Tenant and organization isolation**: tenant context, row-level isolation, tenant ignore rules, and public configuration fallback.
-- **External system integration**: third-party systems, authorization, API configuration, parameter structures, parameter mapping, outbound calls, async execution, and call logs.
-- **Workflow and reporting**: approval flows, task handling, callbacks, report categories, datasources, templates, UReport2, and JimuReport.
-- **Private delivery**: Windows/Linux packages, embedded Nginx, Windows JRE, control center, license request client, Nacos configuration, and database initialization/upgrade scripts.
+- **Deep internationalization**: web defaults for **Simplified & Traditional Chinese, English, Japanese, Korean**; aligns with backend `LangContext`, modular prompts (e.g. `fx_i18n_message`), and **multi-locale JSON + fallback chains** for dictionaries and dynamic table metadata—reducing “English UI, Chinese errors”; includes productized multi-language input patterns for maintainers.
+- **Multi-tenant & multi-org**: tenant context propagation, row isolation, ignore rules, public configuration fallback and tenant-facing basics—fits groups, outsourced delivery or domain-separated SaaS.
+- **Approval & workflow**: model, start, approve, todo/done queues, business callbacks—extends to QA, exceptions, labor reporting, purchasing-style sign-off paths common on the shop floor.
+- **Reporting center**: categories, datasources, template management plus **UReport2 / JimuReport** hooks so analytics lives in the platform instead of scattered one-off scripts.
+- **Native Android**: `Forgex_Mobile_Android` (Kotlin, Jetpack Compose, Hilt, Retrofit, DataStore) with dev/test/prod flavors and starter modules aligned to the **same gateway / auth semantics** for roaming tasks and approvals.
+- **Integration hub**: third-party systems, authorization, API definitions, parameter mapping, synchronous/asynchronous outbound calls and call logs—less point-to-point glue to ERP/OA/etc.
+- **Data-heavy UX engineering**: `FxDynamicTable`, per-user column preferences, dictionary rendering, Excel import/export with templates/providers, avatar/logo/attachment strategies across storage backends.
+- **Messaging, jobs & auditing**: templated notices, inbox, SSE push; distributed job scheduling; login/operation trails and auditing field conventions.
+
+This section summarizes *why Forgex* at capability level—see documentation links below for endpoints and operational detail.
+
+### Private deployment paths (Windows / Linux)
+
+Forgex ships **artifacts and scripts**, not “clone and figure out production yourself”:
+
+- **Windows bundles**: `Forgex_Build` produces ZIP packages with web static assets, service JARs, **bundled Nginx**, **Windows JRE**, **control center**, **license request client**, Nacos config snapshots, database **init** and **upgrade** SQL—suited to intranet appliances or desktop servers.
+- **Linux bundles**: tarball delivery, `install.sh`, Nginx templates and the same upgrade/database story—works with Docker Compose, systemd, or customer ops standards.
+
+Follow the “Deployment” section in this README and [deployment docs](./Forgex_Doc/部署/README.md) for exact commands and paths.
+
+### Documentation system (how it works × how to use)
+
+`Forgex_Doc` is the official documentation hub, split by **frontend, backend, Android, database, deployment, and engineering standards**. Important frontend topics are often documented as paired **implementation + usage** guides so onboarding, QA, and ops share one source of truth. Start here: [documentation home](./Forgex_Doc/README.md).
+
+### Deep internationalization (more than two locale files)
+
+Forgex aims for a consistent language experience end-to-end—**after a user switches language, dictionary tags, table headers, and server-side prompts should follow the same language story** instead of showing English UI with Chinese error messages.
+
+- **Web**: Vue I18n with multiple first-class locales, integrated with Ant Design Vue locale packs.
+- **Backend context**: language is propagated through the request path; `fx_i18n_message` supports **module + prompt code + multi-locale JSON** with ordered fallbacks (current locale → primary language tag → Chinese, etc.).
+- **Data & metadata**: dictionary values and platform configuration can carry **JSON i18n text**, which matters when the same master data must read well in five languages.
+- **Authoring UX**: the console includes multi-language input patterns for business maintainers (see [i18n & layout docs](./Forgex_Doc/前端/国际化与布局/README.md)).
+- **Legacy pages**: compatibility paths exist for historical hard-coded strings; new work should prefer standard `t(...)` and server prompt resolution.
+
+Forgex designs **UI language, dictionary/platform copy, and server prompts** as one coherent story—suited to multinational operations and multilingual maintenance teams.
+
+### Three ends: Web × microservices × Android
+
+Forgex “three ends” means: **web admin**, **Java microservice cluster**, and **native Android client skeleton**, sharing auth/gateway semantics.
+
+- **Web**: `Forgex_Fronted` (Vue 3 + TypeScript + Vite).
+- **Backend**: `Forgex_Gateway` as the entry; services such as `Forgex_Auth`, `Forgex_Sys`, `Forgex_Workflow`, `Forgex_Integration`, `Forgex_Report`, etc. (see repository layout below).
+- **Android**: `Forgex_Mobile_Android` with dev/test/prod flavors; starter modules for login, home, workflow, messaging, and profile.
+
+Aligning the three ends makes **session/permission semantics, release boundaries, and on-site security policies** easier to govern, while keeping a clear surface for **native capabilities** such as push, offline behavior, and device integration.
+
+### UI quality: a refined enterprise console
+
+On top of Ant Design Vue, Forgex standardizes the “first impression” layer:
+
+- **Theme system**: token-driven light/dark themes and semantic color ramps; brand theming is systematic (see `Forgex_Fronted/src/theme/README.md`).
+- **Layouts**: multiple navigation modes for different information architectures.
+- **Personal workspace**: draggable home widgets with sizing and per-user visibility—more like a real operator cockpit than a fixed demo dashboard.
+- **Data-heavy screens**: `FxDynamicTable`, shared dialogs, dictionary rendering, imports/exports—optimized for throughput **and** visual consistency.
+
+More detail: [frontend docs](./Forgex_Doc/前端/README.md) and [theme README](./Forgex_MOM/Forgex_Fronted/src/theme/README.md).
 
 ## Capabilities
 

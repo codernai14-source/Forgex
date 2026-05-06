@@ -333,6 +333,7 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       BasicMaterialSemiFinished: '../views/basic/material/index.vue',
       BasicMaterialFinished: '../views/basic/material/index.vue',
       SystemDashboard: '../views/system/dashboard/index.vue',
+      SystemAndroidVersion: '../views/system/androidVersion/index.vue',
       SystemRole: '../views/system/role/index.vue',
       SystemRoleMenuGrant: '../views/system/role/MenuGrant.vue',
       SystemRoleUserGrant: '../views/system/role/UserGrant.vue',
