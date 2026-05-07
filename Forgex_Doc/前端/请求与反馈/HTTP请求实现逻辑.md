@@ -103,10 +103,11 @@ sessionStorage.getItem('tenantId')
 
 ### 3. 管理全局 loading
 
-`http` 实例会通过 `activeReq` 计数器管理全局 loading：
+`http` 实例会通过 `activeReq` 计数器和延迟展示策略管理全局 loading：
 
 ```text
-请求发起 -> activeReq++
+请求发起 -> activeReq++，但不立即显示遮罩
+请求超过 loadingDelay（默认 500ms）仍未结束 -> 显示全局 loading
 请求结束 -> activeReq--
 activeReq 为 0 -> 关闭全局 loading
 ```
@@ -117,7 +118,7 @@ activeReq 为 0 -> 关闭全局 loading
 (window as any).__globalLoader
 ```
 
-这意味着所有页面不需要自己单独写“开始请求显示 loading、结束请求关闭 loading”的公共逻辑。
+这意味着所有页面不需要自己单独写“开始请求显示 loading、结束请求关闭 loading”的公共逻辑。遮罩一旦显示，会保持到所有参与全局 loading 的请求结束；`minVisibleDuration` 只用于请求已经结束后的最短展示补足，不会提前关闭仍在进行的请求。
 
 ### 4. 扩展配置
 
@@ -128,8 +129,15 @@ activeReq 为 0 -> 关闭全局 loading
 | `showSuccessMessage` | 是否显示后端成功消息 |
 | `silentError` | 是否静默错误提示 |
 | `customErrorMessage` | 自定义错误提示文案 |
+| `loadingMode` | loading 策略：`global` 参与全局遮罩，`local` 由页面或组件处理，`silent` 不显示全局遮罩 |
+| `loadingDelay` | 全局遮罩延迟显示时间，默认 `500ms` |
+| `minVisibleDuration` | 全局遮罩已显示后的最短展示时间，默认 `300ms` |
+| `actionKey` | 保存、提交、审批等操作的防重复请求标识 |
+| `dedupeMode` | 去重策略，默认复用同一个 `actionKey` 的进行中请求，`none` 表示不去重 |
 
 这些字段会在响应拦截器阶段决定最终提示策略。
+
+`actionKey` 去重在 HTTP 客户端包装层处理，而不是在 Axios 拦截器里抛取消异常。相同 `actionKey` 的请求未结束时，后续调用会复用首个请求的 Promise，避免重复提交和额外错误提示。
 
 ## 响应阶段实现链路
 
