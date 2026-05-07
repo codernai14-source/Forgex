@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/role/menu")
+@RequestMapping("/role/menu")
 @RequiredArgsConstructor
 public class SysRoleMenuController {
 

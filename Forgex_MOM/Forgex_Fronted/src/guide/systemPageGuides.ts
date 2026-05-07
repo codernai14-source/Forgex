@@ -398,7 +398,6 @@ function createSteps(meta: PageGuideMeta): FxGuideStep[] {
       title: meta.title,
       description: meta.intro,
       placement: 'center',
-      useMask: false,
       category: 'intro',
     },
   ]

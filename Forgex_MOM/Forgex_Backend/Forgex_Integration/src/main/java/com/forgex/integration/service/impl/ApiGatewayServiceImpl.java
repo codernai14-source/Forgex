@@ -118,8 +118,11 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
         if (snapshot == null || snapshot.getApiConfig() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND, apiCode);
         }
+        ApiExecutionContext context = newContext(snapshot.getApiConfig(), null, null, callerIp, null);
         String token = rawPayload == null ? null : String.valueOf(rawPayload.getOrDefault("token", ""));
         if (token != null && !token.isBlank() && !thirdAuthorizationService.validateToken(token)) {
+            writeLog(snapshot.getApiConfig(), context, rawPayload, null, null,
+                ApiResultTypeEnum.AUTH_FAIL.name(), "FAIL", "authorization failed", 0);
             return IntegrationExecuteResult.builder()
                 .accepted(false)
                 .success(false)
@@ -128,7 +131,6 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
                 .errorMessage("authorization failed")
                 .build();
         }
-        ApiExecutionContext context = newContext(snapshot.getApiConfig(), null, null, callerIp, null);
         Map<String, Object> assembled = apiParamAssembler.assembleInbound(snapshot, rawPayload);
         ApiInvokeModeEnum mode = ApiInvokeModeEnum.fromValue(snapshot.getApiConfig().getInvokeMode());
         if (mode == ApiInvokeModeEnum.ASYNC) {
@@ -176,7 +178,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
             ApiInvokeModeEnum mode = ApiInvokeModeEnum.fromValue(target.getInvokeMode());
             if (mode == ApiInvokeModeEnum.ASYNC) {
                 ApiTaskSubmitResult submitResult = apiTaskService.submit(snapshot, context, rawPayload, assembled);
-                writeLog(snapshot.getApiConfig(), context, rawPayload, assembled.getBody(), null,
+                writeLog(snapshot.getApiConfig(), context, rawPayload, assembled, null,
                     ApiResultTypeEnum.SUCCESS.name(), "WAITING", null, 0);
                 asyncResults.add(toTargetResult(submitResult));
             } else {
@@ -275,7 +277,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
         long start = System.currentTimeMillis();
         try {
             Object result = apiOutboundExecutor.execute(snapshot, context, assembled);
-            writeLog(snapshot.getApiConfig(), context, rawPayload, assembled.getBody(), result,
+            writeLog(snapshot.getApiConfig(), context, rawPayload, assembled, result,
                 ApiResultTypeEnum.SUCCESS.name(), "SUCCESS", null, (int) (System.currentTimeMillis() - start));
             return IntegrationTargetResult.builder()
                 .accepted(true)
@@ -289,7 +291,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
                 .data(result)
                 .build();
         } catch (Exception ex) {
-            writeLog(snapshot.getApiConfig(), context, rawPayload, assembled.getBody(), null,
+            writeLog(snapshot.getApiConfig(), context, rawPayload, assembled, null,
                 ApiResultTypeEnum.SYSTEM_FAIL.name(), "FAIL", ex.getMessage(), (int) (System.currentTimeMillis() - start));
             return IntegrationTargetResult.builder()
                 .accepted(true)
@@ -366,7 +368,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
             logEntity.setInvokeMode(context.getInvokeMode());
             logEntity.setRawRequestData(objectMapper.writeValueAsString(rawPayload));
             logEntity.setRequestData(objectMapper.writeValueAsString(rawPayload));
-            logEntity.setAssembledRequestData(objectMapper.writeValueAsString(assembledPayload));
+            logEntity.setAssembledRequestData(assembledPayload == null ? null : objectMapper.writeValueAsString(assembledPayload));
             logEntity.setResponseData(result == null ? null : objectMapper.writeValueAsString(result));
             logEntity.setResponseCode("200");
             logEntity.setCallStatus(callStatus);

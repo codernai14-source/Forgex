@@ -53,7 +53,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/role")
+@RequestMapping("/role")
 @RequiredArgsConstructor
 public class SysRoleController {
 

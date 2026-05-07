@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  * @see com.forgex.sys.controller.UserController
  */
 @RestController
-@RequestMapping("/sys/role/user")
+@RequestMapping("/role/user")
 @RequiredArgsConstructor
 public class SysRoleUserController {
 

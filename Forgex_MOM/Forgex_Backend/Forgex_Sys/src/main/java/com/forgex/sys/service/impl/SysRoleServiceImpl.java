@@ -19,6 +19,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
+import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserRole;
 import com.forgex.sys.domain.dto.SysRoleDTO;
 import com.forgex.sys.domain.dto.SysRoleQueryDTO;
 import com.forgex.sys.domain.entity.SysRole;
@@ -47,6 +49,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     private final SysRoleMapper roleMapper;
     private final com.forgex.sys.mapper.SysRoleMenuMapper roleMenuMapper;
     private final com.forgex.sys.mapper.SysUserRoleMapper userRoleMapper;
+    private final com.forgex.sys.mapper.SysUserMapper userMapper;
     
     /**
      * 分页查询角色列表
@@ -62,7 +65,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public IPage<SysRoleDTO> pageRoles(Page<SysRole> page, SysRoleQueryDTO query) {
         LambdaQueryWrapper<SysRole> wrapper = buildQueryWrapper(query);
         IPage<SysRole> rolePage = roleMapper.selectPage(page, wrapper);
-        return rolePage.convert(this::convertToDTO);
+        return rolePage.convert(this::convertToDTOWithCreator);
     }
     
     /**
@@ -78,7 +81,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public List<SysRoleDTO> listRoles(SysRoleQueryDTO query) {
         LambdaQueryWrapper<SysRole> wrapper = buildQueryWrapper(query);
         List<SysRole> roles = roleMapper.selectList(wrapper);
-        return roles.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return roles.stream().map(this::convertToDTOWithCreator).collect(Collectors.toList());
     }
     
     /**
@@ -93,7 +96,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Override
     public SysRoleDTO getRoleById(Long id) {
         SysRole role = roleMapper.selectById(id);
-        return role != null ? convertToDTO(role) : null;
+        return role != null ? convertToDTOWithCreator(role) : null;
     }
     
     /**
@@ -380,5 +383,59 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         // 手动映射：roleKey -> roleCode（前端使用roleCode字段）
         dto.setRoleCode(role.getRoleKey());
         return dto;
+    }
+
+    private SysRoleDTO convertToDTOWithCreator(SysRole role) {
+        ensureCreator(role);
+        return convertToDTO(role);
+    }
+
+    private void ensureCreator(SysRole role) {
+        if (role == null || StringUtils.hasText(role.getCreateBy())) {
+            return;
+        }
+        Long creatorId = resolveCreatorId(role);
+        if (creatorId == null) {
+            return;
+        }
+        String creator = String.valueOf(creatorId);
+        role.setCreateBy(creator);
+        role.setUpdateBy(creator);
+
+        SysRole update = new SysRole();
+        update.setId(role.getId());
+        update.setCreateBy(creator);
+        update.setUpdateBy(creator);
+        roleMapper.updateById(update);
+    }
+
+    private Long resolveCreatorId(SysRole role) {
+        if (role == null || role.getId() == null) {
+            return null;
+        }
+
+        if (role.getTenantId() != null) {
+            LambdaQueryWrapper<SysUserRole> relationWrapper = new LambdaQueryWrapper<>();
+            relationWrapper.eq(SysUserRole::getRoleId, role.getId())
+                    .eq(SysUserRole::getTenantId, role.getTenantId())
+                    .orderByAsc(SysUserRole::getId)
+                    .last("LIMIT 1");
+            SysUserRole relation = userRoleMapper.selectOne(relationWrapper);
+            if (relation != null && relation.getUserId() != null) {
+                return relation.getUserId();
+            }
+
+            LambdaQueryWrapper<SysUser> userWrapper = new LambdaQueryWrapper<>();
+            userWrapper.eq(SysUser::getTenantId, role.getTenantId())
+                    .eq(SysUser::getDeleted, false)
+                    .orderByAsc(SysUser::getId)
+                    .last("LIMIT 1");
+            SysUser user = userMapper.selectOne(userWrapper);
+            if (user != null && user.getId() != null) {
+                return user.getId();
+            }
+        }
+
+        return CurrentUserUtils.getUserId();
     }
 }

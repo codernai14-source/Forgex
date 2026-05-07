@@ -518,6 +518,9 @@ const tableFallbackConfig = {
     { field: 'supplierCode', label: '供应商编码', queryType: 'input', queryOperator: 'like' },
     { field: 'supplierFullName', label: '供应商名称', queryType: 'input', queryOperator: 'like' },
     { field: 'cooperationStatus', label: '合作状态', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_cooperation_status' },
+    { field: 'supplierLevel', label: '供应商分级', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_level' },
+    { field: 'creditLevel', label: '信用等级', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_credit_level' },
+    { field: 'riskLevel', label: '风险等级', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_risk_level' },
     { field: 'reviewStatus', label: '审查状态', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_review_status' },
   ],
   columns: [
@@ -778,8 +781,8 @@ function reviewColor(value?: number) {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 16px;
-  padding: 24px 28px;
+  margin-bottom: 12px;
+  padding: 14px 18px;
   border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.18));
   border-radius: 8px;
   background: var(--fx-bg-container, #ffffff);
@@ -792,14 +795,17 @@ function reviewColor(value?: number) {
 }
 
 .supplier-page__header h1 {
-  margin: 10px 0 8px;
+  margin: 6px 0 4px;
   color: var(--fx-text-primary, #111827);
-  font-size: 28px;
+  font-size: 22px;
+  line-height: 1.25;
 }
 
 .supplier-page__header p {
   margin: 0;
   color: var(--fx-text-secondary, #64748b);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .supplier-name {
@@ -850,7 +856,7 @@ function reviewColor(value?: number) {
   .supplier-page__header {
     align-items: flex-start;
     flex-direction: column;
-    padding: 18px;
+    padding: 14px;
   }
 }
 </style>

@@ -102,21 +102,6 @@ spring:
                   args:
                     name: api-basic
                     fallbackUri: forward:/fallback/basic
-            - id: api-files
-              uri: lb://forgex-sys
-              predicates:
-                - Path=/api/files/**
-              filters:
-                - StripPrefix=1
-                - name: RequestRateLimiter
-                  args:
-                    key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_FILES_RATE:1000}
-                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_FILES_BURST:3000}
-                - name: CircuitBreaker
-                  args:
-                    name: api-files
-                    fallbackUri: forward:/fallback/files
             - id: api-wf
               uri: lb://forgex-workflow
               predicates:
@@ -132,26 +117,12 @@ spring:
                   args:
                     name: api-wf
                     fallbackUri: forward:/fallback/sys
-            - id: api-app
-              uri: lb://forgex-sys
-              predicates:
-                - Path=/api/app/**
-              filters:
-                - StripPrefix=1
-                - name: RequestRateLimiter
-                  args:
-                    key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_APP_RATE:1000}
-                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_APP_BURST:3000}
-                - name: CircuitBreaker
-                  args:
-                    name: api-app
-                    fallbackUri: forward:/fallback/sys
             - id: api-integration
               uri: lb://forgex-integration
               predicates:
                 - Path=/api/integration/**
               filters:
+                - StripPrefix=1
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@ipKeyResolver}"

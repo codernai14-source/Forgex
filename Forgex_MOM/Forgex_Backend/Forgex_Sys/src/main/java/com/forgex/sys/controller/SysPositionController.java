@@ -49,7 +49,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/sys/position")
+@RequestMapping("/position")
 @RequiredArgsConstructor
 public class SysPositionController {
     

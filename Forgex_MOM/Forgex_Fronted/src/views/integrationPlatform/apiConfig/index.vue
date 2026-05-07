@@ -58,7 +58,7 @@
 
         <template #apiPath="{ record }">
           <span v-if="record.direction === 'INBOUND'">
-            {{ record.apiPath || '/api/integration/public/invoke' }}
+            {{ record.apiPath || '/integration/public/invoke' }}
           </span>
           <span v-else>-</span>
         </template>

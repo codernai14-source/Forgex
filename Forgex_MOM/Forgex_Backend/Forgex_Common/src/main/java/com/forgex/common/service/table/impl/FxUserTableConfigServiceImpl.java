@@ -404,6 +404,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             List<FxTableColumnDTO> userColumns = JSONUtil.toList(JSONUtil.parseArray(columnConfigJson), FxTableColumnDTO.class);
             for (FxTableColumnDTO userColumn : userColumns) {
                 if (userColumn != null && StringUtils.hasText(userColumn.getField())) {
+                    userColumn.setField(normalizeAuditField(userColumn.getField()));
                     userColumnsMap.put(userColumn.getField(), userColumn);
                 }
             }
@@ -541,6 +542,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
         if (columns == null) {
             return;
         }
+        normalizeAuditColumns(columns);
         if (USER_TABLE_CODE.equals(tableCode)) {
             ensureBuiltinUserTableColumns(tableCode, columns);
             return;
@@ -555,13 +557,74 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
     }
 
     private List<FxTableQueryFieldDTO> normalizeBuiltinQueryFields(String tableCode, List<FxTableQueryFieldDTO> queryFields) {
+        List<FxTableQueryFieldDTO> normalizedQueryFields = normalizeAuditQueryFields(queryFields);
         if (USER_TABLE_CODE.equals(tableCode)) {
-            return ensureBuiltinUserTableQueryFields(tableCode, queryFields);
+            return ensureBuiltinUserTableQueryFields(tableCode, normalizedQueryFields);
         }
         if (POSITION_TABLE_CODE.equals(tableCode)) {
-            return ensurePositionTableQueryFields(queryFields);
+            return ensurePositionTableQueryFields(normalizedQueryFields);
         }
-        return queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        return normalizedQueryFields;
+    }
+
+    private void normalizeAuditColumns(List<FxTableColumnDTO> columns) {
+        Map<String, FxTableColumnDTO> normalizedMap = new LinkedHashMap<>();
+        for (FxTableColumnDTO column : columns) {
+            if (column == null || !StringUtils.hasText(column.getField())) {
+                continue;
+            }
+            String normalizedField = normalizeAuditField(column.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableColumnDTO normalized = new FxTableColumnDTO();
+            BeanUtils.copyProperties(column, normalized);
+            normalized.setField(normalizedField);
+            if ("createBy".equals(normalizedField) || "updateBy".equals(normalizedField)) {
+                normalized.setDictField(normalizedField + "Name");
+            } else {
+                normalized.setDictField(normalizedField + "Text");
+            }
+            normalizedMap.put(normalizedField, normalized);
+        }
+        columns.clear();
+        columns.addAll(normalizedMap.values());
+    }
+
+    private List<FxTableQueryFieldDTO> normalizeAuditQueryFields(List<FxTableQueryFieldDTO> queryFields) {
+        List<FxTableQueryFieldDTO> safeQueryFields =
+                queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        Map<String, FxTableQueryFieldDTO> normalizedMap = new LinkedHashMap<>();
+        for (FxTableQueryFieldDTO queryField : safeQueryFields) {
+            if (queryField == null || !StringUtils.hasText(queryField.getField())) {
+                continue;
+            }
+            String normalizedField = normalizeAuditField(queryField.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableQueryFieldDTO normalized = new FxTableQueryFieldDTO();
+            BeanUtils.copyProperties(queryField, normalized);
+            normalized.setField(normalizedField);
+            normalizedMap.put(normalizedField, normalized);
+        }
+        return new ArrayList<>(normalizedMap.values());
+    }
+
+    private String normalizeAuditField(String field) {
+        if ("create_by".equals(field)) {
+            return "createBy";
+        }
+        if ("create_time".equals(field)) {
+            return "createTime";
+        }
+        if ("update_by".equals(field)) {
+            return "updateBy";
+        }
+        if ("update_time".equals(field)) {
+            return "updateTime";
+        }
+        return field;
     }
 
     private void normalizePositionTableColumns(List<FxTableColumnDTO> columns) {

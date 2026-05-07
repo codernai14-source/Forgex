@@ -244,7 +244,12 @@ const tableFallbackConfig = {
   queryFields: [
     { field: 'materialCode', label: '物料编码', queryType: 'input', queryOperator: 'like' },
     { field: 'materialName', label: '物料名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'materialType', label: '物料类型', queryType: 'select', queryOperator: 'eq', dictCode: 'material_type' },
     { field: 'materialCategory', label: '物料分类', queryType: 'input', queryOperator: 'like' },
+    { field: 'unit', label: '计量单位', queryType: 'input', queryOperator: 'like' },
+    { field: 'brand', label: '品牌', queryType: 'input', queryOperator: 'like' },
+    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'common_status' },
+    { field: 'approvalStatus', label: '审批状态', queryType: 'select', queryOperator: 'eq', dictCode: 'material_approval_status' },
   ],
 }
 
@@ -394,24 +399,27 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  padding: 10px 0 0;
 }
 
 .page-header h1 {
-  margin: 8px 0 4px;
+  margin: 6px 0 4px;
   font-size: 20px;
+  line-height: 1.25;
   font-weight: 600;
 }
 
 .page-header p {
   margin: 0;
   color: #666;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .material-tabs {
   flex-shrink: 0;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .material-page :deep(.fx-dynamic-table) {

@@ -44,7 +44,7 @@ public class LabelTemplateController {
     /**
      * 分页查询模板列表
      * <p>
-     * 接口路径：POST /label/template/page
+     * 接口路径：POST /basic/label/template/page
      * 需要权限：label:template:query
      * </p>
      *
@@ -63,7 +63,7 @@ public class LabelTemplateController {
     /**
      * 查询模板详情
      * <p>
-     * 接口路径：POST /label/template/detail
+     * 接口路径：POST /basic/label/template/detail
      * 需要权限：label:template:query
      * </p>
      *
@@ -87,7 +87,7 @@ public class LabelTemplateController {
     /**
      * 新增模板
      * <p>
-     * 接口路径：POST /label/template/add
+     * 接口路径：POST /basic/label/template/add
      * 需要权限：label:template:add
      * </p>
      *
@@ -106,7 +106,7 @@ public class LabelTemplateController {
     /**
      * 修改模板（新版本）
      * <p>
-     * 接口路径：POST /label/template/update
+     * 接口路径：POST /basic/label/template/update
      * 需要权限：label:template:edit
      * </p>
      *
@@ -125,7 +125,7 @@ public class LabelTemplateController {
     /**
      * 删除模板
      * <p>
-     * 接口路径：POST /label/template/delete
+     * 接口路径：POST /basic/label/template/delete
      * 需要权限：label:template:delete
      * </p>
      *
@@ -144,7 +144,7 @@ public class LabelTemplateController {
     /**
      * 批量删除模板
      * <p>
-     * 接口路径：POST /label/template/batchDelete
+     * 接口路径：POST /basic/label/template/batchDelete
      * 需要权限：label:template:delete
      * </p>
      *
@@ -163,7 +163,7 @@ public class LabelTemplateController {
     /**
      * 设置默认模板
      * <p>
-     * 接口路径：POST /label/template/setDefault
+     * 接口路径：POST /basic/label/template/setDefault
      * 需要权限：label:template:edit
      * </p>
      *

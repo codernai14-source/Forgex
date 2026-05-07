@@ -34,7 +34,7 @@ import java.util.Map;
  * @since 2026-05-02
  */
 @RestController
-@RequestMapping("/basic/unit")
+@RequestMapping("/unit")
 @RequiredArgsConstructor
 public class BasicUnitController {
 

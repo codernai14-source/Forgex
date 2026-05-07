@@ -50,6 +50,12 @@ public class CMenuTreeVO {
     private Boolean checked;
     private LocalDateTime createTime;
     private String createBy;
+
+    /**
+     * 创建人名称。
+     */
+    @com.forgex.common.api.annotation.AutoFillUsername(userIdField = "createBy")
+    private String createByName;
     private List<CMenuTreeVO> children;
 }
 

@@ -26,7 +26,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/basic/currency/exchange-rate")
+@RequestMapping("/currency/exchange-rate")
 @RequiredArgsConstructor
 public class ExchangeRateController {
     private final IExchangeRateService exchangeRateService;

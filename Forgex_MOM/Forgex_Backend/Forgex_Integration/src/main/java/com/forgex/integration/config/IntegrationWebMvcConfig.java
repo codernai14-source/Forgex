@@ -32,11 +32,11 @@ public class IntegrationWebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(permissionInterceptor)
                 .addPathPatterns(
-                        "/api/integration/api-config/**",
-                        "/api/integration/call-log/**",
-                        "/api/integration/param-config/**",
-                        "/api/integration/param-mapping/**",
-                        "/api/integration/third-system/**"
+                        "/api-config/**",
+                        "/call-log/**",
+                        "/param-config/**",
+                        "/param-mapping/**",
+                        "/third-system/**"
                 );
     }
 }

@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/codegen/config")
+@RequestMapping("/codegen/config")
 @RequiredArgsConstructor
 public class CodegenConfigController {
 

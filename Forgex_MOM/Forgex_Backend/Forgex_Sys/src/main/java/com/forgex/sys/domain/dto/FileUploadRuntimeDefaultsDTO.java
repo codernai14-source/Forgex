@@ -27,7 +27,7 @@ public class FileUploadRuntimeDefaultsDTO {
     /**
      * Recommended local access prefix.
      */
-    private String accessPrefix = "/files";
+    private String accessPrefix = "/sys/files";
 
     /**
      * Full URL example for previewing an uploaded file.

@@ -36,6 +36,8 @@ spring:
 
 server:
   port: ${FORGEX_REPORT_PORT:9006}
+  servlet:
+    context-path: /report
 
 logging:
   pattern:

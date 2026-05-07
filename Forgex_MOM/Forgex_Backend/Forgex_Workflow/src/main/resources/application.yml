@@ -38,6 +38,8 @@ logging:
     root: INFO
 server:
   port: ${FORGEX_WORKFLOW_PORT:9005}
+  servlet:
+    context-path: /wf
 
 forgex:
   deployment:

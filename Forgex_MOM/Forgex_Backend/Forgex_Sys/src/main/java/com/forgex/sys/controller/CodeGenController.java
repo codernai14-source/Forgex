@@ -37,7 +37,7 @@ import java.nio.charset.StandardCharsets;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/codegen")
+@RequestMapping("/codegen")
 @RequiredArgsConstructor
 public class CodeGenController {
 

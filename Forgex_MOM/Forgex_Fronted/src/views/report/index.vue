@@ -102,7 +102,7 @@ import type {
   ReportDatasource,
   ReportTemplate,
   ReportTemplateParam,
-} from '@/api/report/types'
+} from '@/report/types'
 import {
   getAvailableDatasources,
   getCategoryTree,

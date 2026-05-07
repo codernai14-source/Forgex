@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/tenant-message-whitelist")
+@RequestMapping("/tenant-message-whitelist")
 @RequiredArgsConstructor
 public class SysTenantMessageWhitelistController {
 

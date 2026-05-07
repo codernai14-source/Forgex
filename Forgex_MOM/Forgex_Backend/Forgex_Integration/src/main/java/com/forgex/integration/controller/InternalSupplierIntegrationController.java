@@ -32,7 +32,7 @@ import java.util.Map;
  * @since 2026-04-26
  */
 @RestController
-@RequestMapping("/api/integration/internal/supplier")
+@RequestMapping("/internal/supplier")
 @RequiredArgsConstructor
 public class InternalSupplierIntegrationController {
 

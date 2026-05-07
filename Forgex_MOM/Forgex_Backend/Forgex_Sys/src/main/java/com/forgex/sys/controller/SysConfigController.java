@@ -81,11 +81,11 @@ import java.util.Set;
  * @see ConfigService
  */
 @RestController
-@RequestMapping("/sys/config")
+@RequestMapping("/config")
 public class SysConfigController {
     private static final int DEFAULT_GATEWAY_PORT = 9000;
     private static final String DEFAULT_GATEWAY_API_PREFIX = "/api";
-    private static final String DEFAULT_ACCESS_PREFIX = "/files";
+    private static final String DEFAULT_ACCESS_PREFIX = "/sys/files";
     private static final String PREVIEW_EXAMPLE_FILE = "example.png";
 
     private static final String KEY_LOGIN_CAPTCHA = "login.captcha";
@@ -580,8 +580,17 @@ public class SysConfigController {
         if (url.startsWith(DEFAULT_GATEWAY_API_PREFIX + DEFAULT_ACCESS_PREFIX + "/")) {
             return resolveConfiguredPublicBaseUrl() + url.substring(DEFAULT_GATEWAY_API_PREFIX.length());
         }
+        if (url.startsWith(DEFAULT_GATEWAY_API_PREFIX + "/files/")) {
+            return resolveConfiguredPublicBaseUrl() + "/sys" + url.substring(DEFAULT_GATEWAY_API_PREFIX.length());
+        }
+        if (url.startsWith(DEFAULT_GATEWAY_API_PREFIX + "/api/files/")) {
+            return resolveConfiguredPublicBaseUrl() + "/sys" + url.substring(DEFAULT_GATEWAY_API_PREFIX.length() + 4);
+        }
         if (url.startsWith(DEFAULT_ACCESS_PREFIX + "/")) {
             return resolveConfiguredPublicBaseUrl() + url;
+        }
+        if (url.startsWith("/files/")) {
+            return resolveConfiguredPublicBaseUrl() + "/sys" + url;
         }
         return url;
     }
@@ -590,6 +599,9 @@ public class SysConfigController {
         String prefix = org.springframework.util.StringUtils.hasText(accessPrefix)
                 ? accessPrefix.trim()
                 : DEFAULT_ACCESS_PREFIX;
+        if ("/files".equals(prefix) || "files".equals(prefix)) {
+            prefix = DEFAULT_ACCESS_PREFIX;
+        }
         while (prefix.endsWith("/") && prefix.length() > 1) {
             prefix = prefix.substring(0, prefix.length() - 1);
         }

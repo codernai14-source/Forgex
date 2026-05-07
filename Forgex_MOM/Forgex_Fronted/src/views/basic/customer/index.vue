@@ -278,7 +278,11 @@ const tableFallbackConfig = {
   queryFields: [
     { field: 'customerCode', label: '客户编码', queryType: 'input', queryOperator: 'like' },
     { field: 'customerFullName', label: '客户名称', queryType: 'input', queryOperator: 'like' },
+    { field: 'customerValueLevel', label: '价值等级', queryType: 'select', queryOperator: 'eq' },
+    { field: 'customerCreditLevel', label: '信用等级', queryType: 'select', queryOperator: 'eq' },
+    { field: 'businessStatus', label: '经营状态', queryType: 'select', queryOperator: 'eq' },
     { field: 'approvalStatus', label: '审批状态', queryType: 'select', queryOperator: 'eq' },
+    { field: 'isRelatedTenant', label: '关联租户', queryType: 'select', queryOperator: 'eq' },
   ],
 }
 
@@ -386,9 +390,9 @@ function approvalColor(value?: number) {
 
 <style scoped lang="less">
 .master-page { display: flex; flex-direction: column; height: 100%; min-height: 100%; padding: 20px; overflow: hidden; box-sizing: border-box; background: var(--fx-bg-layout, #f8fafc); }
-.page-header { flex-shrink: 0; display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; padding: 24px 28px; border: 1px solid var(--fx-border-color, #e5e7eb); border-radius: 8px; background: var(--fx-bg-container, #fff); }
-.page-header h1 { margin: 10px 0 8px; font-size: 28px; }
-.page-header p { margin: 0; color: var(--fx-text-secondary, #64748b); }
+.page-header { flex-shrink: 0; display: flex; justify-content: space-between; gap: 20px; margin-bottom: 12px; padding: 14px 18px; border: 1px solid var(--fx-border-color, #e5e7eb); border-radius: 8px; background: var(--fx-bg-container, #fff); }
+.page-header h1 { margin: 6px 0 4px; font-size: 22px; line-height: 1.25; }
+.page-header p { margin: 0; color: var(--fx-text-secondary, #64748b); font-size: 13px; line-height: 1.5; }
 .master-page :deep(.fx-dynamic-table) { flex: 1 1 auto; min-height: 0; }
 .name-cell { display: flex; flex-direction: column; gap: 4px; }
 .name-cell span { color: var(--fx-text-secondary, #64748b); font-size: 12px; }
@@ -396,5 +400,5 @@ function approvalColor(value?: number) {
 .disabled { color: var(--fx-text-disabled, #bfbfbf); cursor: not-allowed; pointer-events: none; }
 .sub-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .full-width { width: 100%; }
-@media (max-width: 768px) { .master-page { padding: 12px; } .page-header { flex-direction: column; padding: 18px; } }
+@media (max-width: 768px) { .master-page { padding: 12px; } .page-header { flex-direction: column; padding: 14px; } }
 </style>

@@ -18,7 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/message")
+@RequestMapping("/message")
 @RequiredArgsConstructor
 public class SysMessageSseController {
 

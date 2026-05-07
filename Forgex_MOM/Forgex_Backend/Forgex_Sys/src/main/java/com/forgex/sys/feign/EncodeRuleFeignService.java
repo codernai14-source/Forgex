@@ -58,7 +58,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see com.forgex.common.feign.client.EncodeRuleFeignClient Feign Client
  */
 @RestController
-@RequestMapping("/sys/encodeRule/feign")
+@RequestMapping("/encodeRule/feign")
 @Slf4j
 @RequiredArgsConstructor
 public class EncodeRuleFeignService {

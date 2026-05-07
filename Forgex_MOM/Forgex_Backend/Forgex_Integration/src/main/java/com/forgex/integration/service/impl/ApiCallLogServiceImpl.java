@@ -9,7 +9,9 @@ import com.forgex.integration.domain.entity.ApiCallLog;
 import com.forgex.integration.domain.param.ApiCallLogParam;
 import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.mapper.ApiCallLogMapper;
+import com.forgex.integration.service.IApiConfigService;
 import com.forgex.integration.service.IApiCallLogService;
+import com.forgex.integration.service.IApiCallLogTableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +40,8 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
     private static final String TABLE_PREFIX = "fx_api_call_log_";
 
     private final ApiCallLogMapper apiCallLogMapper;
+    private final IApiCallLogTableService apiCallLogTableService;
+    private final IApiConfigService apiConfigService;
 
     /**
      * 处理asyncsavelog。
@@ -49,12 +53,19 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
     @Async("integrationLogExecutor")
     public boolean asyncSaveLog(ApiCallLog logEntity) {
         try {
+            if (logEntity == null) {
+                return false;
+            }
             LocalDateTime callTime = logEntity.getCallTime() != null ? logEntity.getCallTime() : LocalDateTime.now();
+            apiCallLogTableService.ensureTable(callTime);
             String tableName = getMonthTableName(callTime);
             int result = apiCallLogMapper.insertToTable(tableName, logEntity);
             return result > 0;
         } catch (Exception e) {
-            log.error("Failed to save api call log asynchronously", e);
+            log.error("Failed to save api call log asynchronously, table={}, traceId={}, apiCode={}",
+                logEntity == null ? null : getMonthTableName(logEntity.getCallTime()),
+                logEntity == null ? null : logEntity.getTraceId(),
+                logEntity == null ? null : logEntity.getApiCode(), e);
             return false;
         }
     }
@@ -70,7 +81,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
             return;
         }
         for (ApiCallLog logEntity : logs) {
-            asyncSaveLog(logEntity);
+            saveLogSync(logEntity);
         }
     }
 
@@ -82,7 +93,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
      */
     @Override
     public Page<ApiCallLogDTO> pageCallLogs(ApiCallLogParam param) {
-        List<String> tableNames = getMonthTableNames(param.getStartTime(), param.getEndTime());
+        List<String> tableNames = getExistingMonthTableNames(param.getStartTime(), param.getEndTime());
         Page<ApiCallLogDTO> page = new Page<>(param.getPageNum(), param.getPageSize());
         if (tableNames.isEmpty()) {
             page.setTotal(0);
@@ -157,21 +168,13 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
             : getMonthTableNames(LocalDateTime.now().minusMonths(1), LocalDateTime.now());
 
         for (int index = tableNames.size() - 1; index >= 0; index--) {
-            List<ApiCallLog> logs = apiCallLogMapper.selectFromTable(
-                tableNames.get(index),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            );
-            for (ApiCallLog logEntity : logs) {
-                if (id.equals(logEntity.getId())) {
-                    return convertToDTO(logEntity);
-                }
+            String tableName = tableNames.get(index);
+            if (!apiCallLogTableService.tableExists(tableName)) {
+                continue;
+            }
+            ApiCallLog logEntity = apiCallLogMapper.selectByIdFromTable(tableName, id);
+            if (logEntity != null) {
+                return convertToDTO(logEntity);
             }
         }
         return null;
@@ -185,7 +188,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
      */
     @Override
     public List<ApiCallLogDTO> listCallLogs(ApiCallLogParam param) {
-        List<String> tableNames = getMonthTableNames(param.getStartTime(), param.getEndTime());
+        List<String> tableNames = getExistingMonthTableNames(param.getStartTime(), param.getEndTime());
         if (tableNames.isEmpty()) {
             return new ArrayList<>();
         }
@@ -222,7 +225,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         param.setApiConfigId(apiConfigId);
         param.setStartTime(startTime);
         param.setEndTime(endTime);
-        return getMonthTableNames(startTime, endTime).stream()
+        return getExistingMonthTableNames(startTime, endTime).stream()
             .mapToLong(tableName -> countFromTable(tableName, param))
             .sum();
     }
@@ -250,7 +253,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
 
         long totalCount = 0;
         long successCount = 0;
-        List<String> tableNames = getMonthTableNames(startTime, endTime);
+        List<String> tableNames = getExistingMonthTableNames(startTime, endTime);
         for (String tableName : tableNames) {
             totalCount += countFromTable(tableName, totalParam);
             successCount += countFromTable(tableName, successParam);
@@ -285,6 +288,36 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         );
     }
 
+    private boolean saveLogSync(ApiCallLog logEntity) {
+        try {
+            if (logEntity == null) {
+                return false;
+            }
+            LocalDateTime callTime = logEntity.getCallTime() != null ? logEntity.getCallTime() : LocalDateTime.now();
+            apiCallLogTableService.ensureTable(callTime);
+            String tableName = getMonthTableName(callTime);
+            return apiCallLogMapper.insertToTable(tableName, logEntity) > 0;
+        } catch (Exception e) {
+            log.error("Failed to save api call log synchronously, table={}, traceId={}, apiCode={}",
+                logEntity == null ? null : getMonthTableName(logEntity.getCallTime()),
+                logEntity == null ? null : logEntity.getTraceId(),
+                logEntity == null ? null : logEntity.getApiCode(), e);
+            return false;
+        }
+    }
+
+    private List<String> getExistingMonthTableNames(LocalDateTime startTime, LocalDateTime endTime) {
+        return getMonthTableNames(startTime, endTime).stream()
+            .filter(tableName -> {
+                boolean exists = apiCallLogTableService.tableExists(tableName);
+                if (!exists) {
+                    log.warn("Api call log month table does not exist, skip query: {}", tableName);
+                }
+                return exists;
+            })
+            .toList();
+    }
+
     private List<String> getMonthTableNames(LocalDateTime startTime, LocalDateTime endTime) {
         List<String> tableNames = new ArrayList<>();
         if (startTime == null && endTime == null) {
@@ -307,6 +340,19 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
     private ApiCallLogDTO convertToDTO(ApiCallLog entity) {
         ApiCallLogDTO dto = new ApiCallLogDTO();
         BeanUtils.copyProperties(entity, dto);
+        dto.setApiName(resolveApiName(entity));
         return dto;
+    }
+
+    private String resolveApiName(ApiCallLog entity) {
+        if (entity == null || entity.getApiConfigId() == null) {
+            return null;
+        }
+        try {
+            return apiConfigService.getApiConfigById(entity.getApiConfigId()).getApiName();
+        } catch (Exception ex) {
+            log.warn("Resolve api name failed, apiConfigId={}", entity.getApiConfigId(), ex);
+            return null;
+        }
     }
 }
