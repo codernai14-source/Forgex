@@ -3,6 +3,7 @@
 <div align="center" style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3rem;margin:10px auto 14px;width:100%;box-sizing:border-box;">
   <a href="https://gitee.com/coder_nai/forgex/stargazers" title="Gitee Stars" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark" alt="Gitee Stars"/></a>
   <a href="https://gitee.com/coder_nai/forgex/members" title="Gitee Forks" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/fork.svg?theme=dark" alt="Gitee Forks"/></a>
+<img src="https://compass.gitee.com/badge/sc3ka4w2.svg" alt="OSS Compass Analyze" />
 </div>
 
 > 面向企业级生产制造行业的全栈开发脚手架与业务中台底座
