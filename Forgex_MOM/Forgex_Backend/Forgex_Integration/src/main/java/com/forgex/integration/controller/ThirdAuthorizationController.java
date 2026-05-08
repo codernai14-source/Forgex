@@ -32,7 +32,7 @@ import java.util.List;
  * @since 2026-04-14
  */
 @RestController
-@RequestMapping("/api/integration/third-authorization")
+@RequestMapping("/third-authorization")
 @RequiredArgsConstructor
 @Tag(name = "第三方授权管理", description = "提供第三方授权的增删改查、Token 生成、Token 校验等功能")
 public class ThirdAuthorizationController {

@@ -16,6 +16,8 @@ package com.forgex.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.sys.domain.dto.LoginLogQueryDTO;
 import com.forgex.sys.domain.entity.LoginLog;
 import com.forgex.sys.domain.vo.LoginLogVO;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.function.Supplier;
 
 /**
  * 登录日志服务实现
@@ -104,28 +107,30 @@ public class LoginLogServiceImpl implements ILoginLogService {
         LambdaQueryWrapper<LoginLog> wrapper = new LambdaQueryWrapper<>();
         
         // 账号模糊查询
-        if (StringUtils.hasText(query.getAccount())) {
+        if (query != null && StringUtils.hasText(query.getAccount())) {
             wrapper.like(LoginLog::getAccount, query.getAccount());
         }
         
         // 状态查询
-        if (query.getStatus() != null) {
+        if (query != null && query.getStatus() != null) {
             wrapper.eq(LoginLog::getStatus, query.getStatus());
         }
         
         // 时间区间查询
-        if (query.getStartTime() != null) {
+        if (query != null && query.getStartTime() != null) {
             wrapper.ge(LoginLog::getLoginTime, query.getStartTime());
         }
-        if (query.getEndTime() != null) {
+        if (query != null && query.getEndTime() != null) {
             wrapper.le(LoginLog::getLoginTime, query.getEndTime());
         }
+
+        applyLoginLogTenantScope(wrapper);
         
         // 按登录时间倒序
         wrapper.orderByDesc(LoginLog::getLoginTime);
         
         // 分页查询
-        IPage<LoginLog> loginLogPage = loginLogMapper.selectPage(page, wrapper);
+        IPage<LoginLog> loginLogPage = executeIgnoringTenant(() -> loginLogMapper.selectPage(page, wrapper));
         
         // 转换为 VO
         IPage<LoginLogVO> voPage = loginLogPage.convert(loginLog -> {
@@ -135,5 +140,27 @@ public class LoginLogServiceImpl implements ILoginLogService {
         });
         
         return voPage;
+    }
+
+    private void applyLoginLogTenantScope(LambdaQueryWrapper<LoginLog> wrapper) {
+        Long tenantId = TenantContext.get();
+        wrapper.and(w -> {
+            if (tenantId != null) {
+                w.eq(LoginLog::getTenantId, tenantId).or();
+            }
+            w.eq(LoginLog::getTenantId, 0L).or().isNull(LoginLog::getTenantId);
+        });
+    }
+
+    private <T> T executeIgnoringTenant(Supplier<T> supplier) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            return supplier.get();
+        } finally {
+            if (!oldIgnore) {
+                TenantContextIgnore.clear();
+            }
+        }
     }
 }

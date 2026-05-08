@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.upload.path:C:/forgex/data/uploads}")
     private String uploadPath;
 
-    @Value("${file.access.prefix:/files}")
+    @Value("${file.access.prefix:/sys/files}")
     private String accessPrefix;
 
     @jakarta.annotation.Resource
@@ -41,7 +41,11 @@ public class WebConfig implements WebMvcConfigurer {
     private String resolveAccessPrefix() {
         FileUploadConfig cfg = configService.getGlobalJson(KEY_FILE_UPLOAD, FileUploadConfig.class, null);
         if (cfg != null && StringUtils.hasText(cfg.getAccessPrefix())) {
-            return cfg.getAccessPrefix();
+            String prefix = cfg.getAccessPrefix().trim();
+            if ("/files".equals(prefix) || "files".equals(prefix) || "/api/files".equals(prefix) || "api/files".equals(prefix)) {
+                return "/sys/files";
+            }
+            return prefix;
         }
         return accessPrefix;
     }
@@ -63,7 +67,7 @@ public class WebConfig implements WebMvcConfigurer {
         String path = resolveUploadPath();
 
         if (!StringUtils.hasText(prefix)) {
-            prefix = "/files";
+            prefix = "/sys/files";
         }
         if (!prefix.startsWith("/")) {
             prefix = "/" + prefix;

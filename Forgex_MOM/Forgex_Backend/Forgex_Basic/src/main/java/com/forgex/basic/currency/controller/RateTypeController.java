@@ -23,7 +23,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/basic/currency/rate-type")
+@RequestMapping("/currency/rate-type")
 @RequiredArgsConstructor
 public class RateTypeController {
     private final IRateTypeService rateTypeService;

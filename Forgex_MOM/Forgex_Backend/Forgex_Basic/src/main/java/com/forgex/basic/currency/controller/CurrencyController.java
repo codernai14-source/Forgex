@@ -23,7 +23,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/basic/currency")
+@RequestMapping("/currency")
 @RequiredArgsConstructor
 public class CurrencyController {
     private final ICurrencyService currencyService;

@@ -36,7 +36,7 @@ public class LabelPrintController {
     /**
      * 标签打印（单/批量）
      * <p>
-     * 接口路径：POST /label/print/execute
+     * 接口路径：POST /basic/label/print/execute
      * 需要权限：label:print:execute
      * </p>
      * <p>
@@ -66,7 +66,7 @@ public class LabelPrintController {
     /**
      * 打印预览
      * <p>
-     * 接口路径：POST /label/print/preview
+     * 接口路径：POST /basic/label/print/preview
      * 需要权限：label:print:query
      * </p>
      * <p>

@@ -193,6 +193,22 @@
                 <InfoCircleOutlined />
                 <span>引导设置</span>
               </a-menu-item>
+              <a-menu-sub-menu key="tenant" :disabled="tenantLoading || tenantOptions.length === 0">
+                <template #title>
+                  <ApartmentOutlined />
+                  <span>选择租户</span>
+                </template>
+                <a-menu-item
+                  v-for="tenant in tenantOptions"
+                  :key="`tenant:${tenant.id}`"
+                  :disabled="tenant.id === currentTenantId || switchingTenantId === tenant.id"
+                >
+                  <div class="tenant-menu-item">
+                    <span class="tenant-menu-item__name">{{ tenant.name || tenant.id }}</span>
+                    <CheckOutlined v-if="tenant.id === currentTenantId" class="tenant-menu-item__check" />
+                  </div>
+                </a-menu-item>
+              </a-menu-sub-menu>
               <a-menu-item key="messageSend">
                 <MailOutlined />
                 <span>发送消息</span>
@@ -221,6 +237,7 @@ import {
   DownOutlined,
   UserOutlined,
   KeyOutlined,
+  ApartmentOutlined,
   InfoCircleOutlined,
   MailOutlined,
   LogoutOutlined,
@@ -248,6 +265,11 @@ interface User {
   avatar?: string
 }
 
+interface TenantOption {
+  id: string
+  name: string
+}
+
 interface AppHeaderProps {
   /** Logo 图片 URL，为空时显示默认图标 */
   logo?: string
@@ -267,6 +289,10 @@ interface AppHeaderProps {
   showRefresh?: boolean
   /** 当前登录用户信息，包含头像、姓名、账号等 */
   user: User
+  tenantOptions?: TenantOption[]
+  currentTenantId?: string
+  tenantLoading?: boolean
+  switchingTenantId?: string
 }
 
 const props = withDefaults(defineProps<AppHeaderProps>(), {
@@ -278,7 +304,11 @@ const props = withDefaults(defineProps<AppHeaderProps>(), {
   showSearch: true,
   showLangSwitch: true,
   showRefresh: true,
-  user: () => ({ account: '', name: '', avatar: '' })
+  user: () => ({ account: '', name: '', avatar: '' }),
+  tenantOptions: () => [],
+  currentTenantId: '',
+  tenantLoading: false,
+  switchingTenantId: ''
 })
 
 const emit = defineEmits<{
@@ -304,6 +334,7 @@ const emit = defineEmits<{
    * @param key 菜单项 key，如 profile、password、logout
    */
   'user-menu-click': [key: string]
+  'tenant-change': [tenantId: string]
   /**
    * 语言切换事件
    * 触发时机：用户切换语言时触发
@@ -448,6 +479,10 @@ const onSettingsClick = () => {
 const onUserMenuClick = (info: any) => {
   const key = info.key as string
   if (key) {
+    if (key.startsWith('tenant:')) {
+      emit('tenant-change', key.slice('tenant:'.length))
+      return
+    }
     emit('user-menu-click', key)
   }
 }
@@ -634,6 +669,25 @@ const onMessageClick = () => {
 }
 
 .lang-menu-item__check {
+  color: var(--fx-theme-color, #1677ff);
+}
+
+.tenant-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 160px;
+}
+
+.tenant-menu-item__name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tenant-menu-item__check {
   color: var(--fx-theme-color, #1677ff);
 }
 

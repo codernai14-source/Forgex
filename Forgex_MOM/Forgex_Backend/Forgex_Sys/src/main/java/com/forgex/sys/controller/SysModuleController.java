@@ -71,7 +71,7 @@ import java.util.Map;
  * @see SysModuleDTO
  */
 @RestController
-@RequestMapping("/sys/module")
+@RequestMapping("/module")
 @RequiredArgsConstructor
 public class SysModuleController {
 

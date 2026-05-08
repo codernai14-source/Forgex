@@ -243,7 +243,8 @@ import {
   chooseTenant,
   getPublicKey,
   getSocialAuthorizeUrl,
-  updateTenantPreferences
+  updateTenantPreferences,
+  type TenantOption
 } from '../../../api/auth/login'
 import { captchaImage, captchaSlider, captchaSliderValidate } from '../../../api/auth/captcha'
 import { getRoutes } from '../../../api/system/route'
@@ -303,14 +304,14 @@ const permissionStore = use权限Store()
 
 const { t: i18nT } = useI18n({ useScope: 'global' })
 
-const account = ref('admin')
-const password = ref('password')
+const account = ref('')
+const password = ref('')
 const remember = ref(false)
 const captcha = ref('')
 const captchaId = ref('')
 const imageBase64 = ref('')
 const mode = ref<'none' | 'image' | 'slider'>('none')
-const tenants = ref<{ id: string; name: string; logo?: string; intro?: string; isDefault?: boolean }[]>([])
+const tenants = ref<TenantOption[]>([])
 const tenantOpen = ref(false)
 const chosenTenant = ref<string | null>(null)
 const sliderOpen = ref(false)

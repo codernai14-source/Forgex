@@ -91,6 +91,8 @@ public interface AuthService {
      */
     R<SysUserDTO> chooseTenant(TenantChoiceParam param);
 
+    R<List<TenantVO>> listCurrentTenants();
+
     /**
      * 管理员权限校验
      * <p>

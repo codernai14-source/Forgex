@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Tag(name = "报表分类管理", description = "报表分类管理接口")
 @RestController
-@RequestMapping("/api/report/category")
+@RequestMapping("/category")
 @RequiredArgsConstructor
 public class ReportCategoryController {
 

@@ -24,7 +24,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/operationTemplate")
+@RequestMapping("/operationTemplate")
 @RequiredArgsConstructor
 public class SysOperationTemplateController {
 

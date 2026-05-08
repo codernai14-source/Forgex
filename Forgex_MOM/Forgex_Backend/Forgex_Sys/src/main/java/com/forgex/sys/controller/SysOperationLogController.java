@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/operationLog")
+@RequestMapping("/operationLog")
 @RequiredArgsConstructor
 public class SysOperationLogController {
 

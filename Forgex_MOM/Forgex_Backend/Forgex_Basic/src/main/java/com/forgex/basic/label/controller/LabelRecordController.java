@@ -44,7 +44,7 @@ public class LabelRecordController {
     /**
      * 分页查询打印记录列表
      * <p>
-     * 接口路径：POST /label/record/page
+     * 接口路径：POST /basic/label/record/page
      * 需要权限：label:record:query
      * </p>
      *
@@ -63,7 +63,7 @@ public class LabelRecordController {
     /**
      * 查询打印记录详情
      * <p>
-     * 接口路径：POST /label/record/detail
+     * 接口路径：POST /basic/label/record/detail
      * 需要权限：label:record:query
      * </p>
      *
@@ -86,7 +86,7 @@ public class LabelRecordController {
     /**
      * 标签补打
      * <p>
-     * 接口路径：POST /label/print/reprint
+     * 接口路径：POST /basic/label/record/reprint
      * 需要权限：label:print:reprint
      * </p>
      * <p>

@@ -44,7 +44,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/sys/invite-code")
+@RequestMapping("/invite-code")
 @RequiredArgsConstructor
 public class SysInviteCodeController {
 

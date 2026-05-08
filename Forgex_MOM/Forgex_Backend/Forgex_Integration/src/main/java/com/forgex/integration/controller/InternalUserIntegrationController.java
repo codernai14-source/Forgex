@@ -27,7 +27,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/integration/internal/user")
+@RequestMapping("/internal/user")
 @RequiredArgsConstructor
 public class InternalUserIntegrationController {
 

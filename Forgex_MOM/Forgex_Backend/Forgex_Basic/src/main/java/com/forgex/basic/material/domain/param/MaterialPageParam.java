@@ -45,6 +45,18 @@ public class MaterialPageParam extends BaseGetParam {
     private String materialCategory;
 
     /**
+     * 计量单位（模糊查询）
+     */
+    @Schema(description = "计量单位")
+    private String unit;
+
+    /**
+     * 品牌（模糊查询）
+     */
+    @Schema(description = "品牌")
+    private String brand;
+
+    /**
      * 状态：0-禁用，1-启用
      */
     @Schema(description = "状态")

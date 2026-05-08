@@ -43,8 +43,10 @@ export default {
     description: '你可以在这里控制系统首次引导是否自动出现，也可以手动重新播放系统引导。',
     babyModeTitle: '开启宝宝模式',
     babyModeDesc: '开启后，系统允许再次主动展示已经完成或跳过的引导。',
+    systemPageGuideTitle: '系统页面引导',
+    systemPageGuideDesc: '关闭后，后续系统管理页面将不再自动弹出引导，已打开的当前页面不受影响。',
     replayTitle: '重新播放系统引导',
-    replayDesc: '将系统首页引导重置为待开始状态，下次进入首页时会自动再次播放。',
+    replayDesc: '清除当前引导禁用状态，并将系统首页与各系统页面引导重置为待开始状态。',
     replayAction: '重新播放',
   },
   validation: {

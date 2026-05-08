@@ -52,7 +52,7 @@ import java.util.Map;
  */
 @Tag(name = "物料管理", description = "物料管理接口")
 @RestController
-@RequestMapping("/basic/material")
+@RequestMapping("/material")
 @RequiredArgsConstructor
 public class BasicMaterialController {
 

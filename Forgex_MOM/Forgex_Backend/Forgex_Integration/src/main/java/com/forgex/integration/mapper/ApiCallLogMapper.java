@@ -16,6 +16,12 @@ public interface ApiCallLogMapper extends MPJBaseMapper<ApiCallLog> {
     int insertToTable(@Param("tableName") String tableName, @Param("log") ApiCallLog log);
 
     @InterceptorIgnore(tenantLine = "true")
+    long tableExists(@Param("tableName") String tableName);
+
+    @InterceptorIgnore(tenantLine = "true")
+    int createMonthTable(@Param("tableName") String tableName);
+
+    @InterceptorIgnore(tenantLine = "true")
     List<ApiCallLog> selectFromTable(
         @Param("tableName") String tableName,
         @Param("apiConfigId") Long apiConfigId,
@@ -26,6 +32,12 @@ public interface ApiCallLogMapper extends MPJBaseMapper<ApiCallLog> {
         @Param("endTime") LocalDateTime endTime,
         @Param("offset") Integer offset,
         @Param("pageSize") Integer pageSize
+    );
+
+    @InterceptorIgnore(tenantLine = "true")
+    ApiCallLog selectByIdFromTable(
+        @Param("tableName") String tableName,
+        @Param("id") Long id
     );
 
     @InterceptorIgnore(tenantLine = "true")

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @version 1.1.0
  */
 @RestController
-@RequestMapping("/sys/homepage")
+@RequestMapping("/homepage")
 @RequiredArgsConstructor
 public class PersonalHomepageController {
 

@@ -9,9 +9,7 @@
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openUploadDialog">
-            上传版本
-          </a-button>
+          <a-button type="primary" @click="openUploadDialog">上传版本</a-button>
         </a-space>
       </template>
 
@@ -45,7 +43,7 @@
       v-model:open="dialogVisible"
       :title="dialogMode === 'upload' ? '上传安卓版本' : '编辑安卓版本'"
       :loading="saving"
-      :width="680"
+      :width="720"
       @submit="handleSubmit"
     >
       <a-form
@@ -80,12 +78,24 @@
             :before-upload="beforeUpload"
             :show-upload-list="true"
             :max-count="1"
+            :disabled="saving"
             accept=".apk,application/vnd.android.package-archive"
           >
-            <a-button>选择 APK</a-button>
+            <a-button :disabled="saving">选择 APK</a-button>
           </a-upload>
           <div v-if="selectedFile" class="file-hint">
             {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+          </div>
+        </a-form-item>
+
+        <a-form-item v-if="dialogMode === 'upload' && uploadTask.uploadId" label="上传进度">
+          <div class="upload-progress">
+            <a-progress :percent="uploadTask.progress" :status="uploadTask.status === 'FAILED' ? 'exception' : undefined" />
+            <div class="upload-progress__meta">
+              <span>{{ uploadTask.statusText }}</span>
+              <span>{{ uploadTask.uploadedChunks }}/{{ uploadTask.totalChunks }} 分片</span>
+            </div>
+            <a-button v-if="saving" size="small" danger @click="handleCancelUpload">取消上传</a-button>
           </div>
         </a-form-item>
 
@@ -107,10 +117,15 @@ import { message, Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import {
+  cancelAndroidVersionUpload,
+  completeAndroidVersionUpload,
   deleteAndroidVersion,
   getAndroidVersionPage,
+  getAndroidVersionUploadStatus,
+  initAndroidVersionUpload,
   updateAndroidVersion,
-  uploadAndroidVersion,
+  uploadAndroidVersionChunk,
+  type AndroidUploadTask,
   type AndroidVersionItem,
   type AndroidVersionSaveParam,
 } from '@/api/system/androidVersion'
@@ -118,12 +133,27 @@ import { normalizeMediaUrl } from '@/utils/media'
 
 type DialogMode = 'upload' | 'edit'
 
+const CHUNK_SIZE = 8 * 1024 * 1024
+const MAX_RETRY = 3
+const HASH_MAX_SIZE = 128 * 1024 * 1024
+const TASK_STORAGE_PREFIX = 'fx-android-version-upload:'
+
 const tableRef = ref()
 const formRef = ref()
 const dialogVisible = ref(false)
 const saving = ref(false)
 const dialogMode = ref<DialogMode>('upload')
 const selectedFile = ref<File | null>(null)
+const cancelRequested = ref(false)
+
+const uploadTask = reactive({
+  uploadId: '',
+  progress: 0,
+  uploadedChunks: 0,
+  totalChunks: 0,
+  status: '',
+  statusText: '等待上传',
+})
 
 const formData = reactive<AndroidVersionSaveParam>({
   id: undefined,
@@ -160,6 +190,17 @@ function resetForm() {
   formData.changelog = ''
   formData.status = 1
   selectedFile.value = null
+  resetUploadTask()
+}
+
+function resetUploadTask() {
+  uploadTask.uploadId = ''
+  uploadTask.progress = 0
+  uploadTask.uploadedChunks = 0
+  uploadTask.totalChunks = 0
+  uploadTask.status = ''
+  uploadTask.statusText = '等待上传'
+  cancelRequested.value = false
 }
 
 function openUploadDialog() {
@@ -176,6 +217,7 @@ function openEditDialog(record: AndroidVersionItem) {
   formData.changelog = record.changelog || ''
   formData.status = record.status ?? 1
   selectedFile.value = null
+  resetUploadTask()
   dialogVisible.value = true
 }
 
@@ -186,6 +228,7 @@ function beforeUpload(file: File) {
     return false
   }
   selectedFile.value = file
+  resetUploadTask()
   return false
 }
 
@@ -197,9 +240,11 @@ async function handleSubmit() {
   }
 
   saving.value = true
+  cancelRequested.value = false
   try {
     if (dialogMode.value === 'upload' && selectedFile.value) {
-      await uploadAndroidVersion(selectedFile.value, formData)
+      await uploadByChunks(selectedFile.value)
+      message.success('安卓版本上传成功')
     } else {
       await updateAndroidVersion(formData)
     }
@@ -208,6 +253,124 @@ async function handleSubmit() {
   } finally {
     saving.value = false
   }
+}
+
+async function uploadByChunks(file: File) {
+  uploadTask.statusText = '初始化上传任务'
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+  const cacheKey = getUploadCacheKey(file)
+  let task = await restoreUploadTask(cacheKey, file)
+  if (!task) {
+    task = await initAndroidVersionUpload({
+      fileName: file.name,
+      fileSize: file.size,
+      chunkSize: CHUNK_SIZE,
+      totalChunks,
+      fileHash: await calculateFileHash(file),
+    })
+    localStorage.setItem(cacheKey, task.uploadId)
+  }
+
+  let status = await getAndroidVersionUploadStatus(task.uploadId)
+  syncUploadTask(status)
+
+  const uploadedSet = new Set(status.uploadedChunks || [])
+  for (let index = 0; index < totalChunks; index++) {
+    if (cancelRequested.value) {
+      throw new Error('上传已取消')
+    }
+    if (uploadedSet.has(index)) {
+      continue
+    }
+    const start = index * CHUNK_SIZE
+    const end = Math.min(file.size, start + CHUNK_SIZE)
+    const chunk = file.slice(start, end)
+    status = await uploadChunkWithRetry(task.uploadId, index, chunk)
+    syncUploadTask(status)
+  }
+
+  uploadTask.statusText = '合并安装包'
+  await completeAndroidVersionUpload(task.uploadId, formData)
+  localStorage.removeItem(cacheKey)
+  uploadTask.progress = 100
+  uploadTask.statusText = '上传完成'
+}
+
+async function uploadChunkWithRetry(uploadId: string, chunkIndex: number, chunk: Blob): Promise<AndroidUploadTask> {
+  let lastError: any
+  for (let retry = 1; retry <= MAX_RETRY; retry++) {
+    try {
+      uploadTask.statusText = `上传分片 ${chunkIndex + 1}/${uploadTask.totalChunks || ''}`
+      return await uploadAndroidVersionChunk(uploadId, chunkIndex, chunk)
+    } catch (error) {
+      lastError = error
+      if (retry >= MAX_RETRY) {
+        break
+      }
+      uploadTask.statusText = `分片 ${chunkIndex + 1} 重试 ${retry}/${MAX_RETRY - 1}`
+    }
+  }
+  throw lastError
+}
+
+async function handleCancelUpload() {
+  cancelRequested.value = true
+  if (uploadTask.uploadId) {
+    await cancelAndroidVersionUpload(uploadTask.uploadId)
+    if (selectedFile.value) {
+      localStorage.removeItem(getUploadCacheKey(selectedFile.value))
+    }
+  }
+  uploadTask.statusText = '已取消'
+  saving.value = false
+}
+
+function syncUploadTask(task: AndroidUploadTask) {
+  uploadTask.uploadId = task.uploadId
+  uploadTask.uploadedChunks = task.uploadedCount || task.uploadedChunks?.length || 0
+  uploadTask.totalChunks = task.totalChunks || uploadTask.totalChunks
+  uploadTask.status = task.status
+  uploadTask.progress = task.totalChunks ? Math.floor((uploadTask.uploadedChunks / task.totalChunks) * 100) : 0
+  uploadTask.statusText = task.status === 'FAILED' ? (task.errorMessage || '上传失败') : '上传中'
+}
+
+async function calculateFileHash(file: File) {
+  if (file.size > HASH_MAX_SIZE) {
+    return ''
+  }
+  if (!window.crypto?.subtle) {
+    return ''
+  }
+  const buffer = await file.arrayBuffer()
+  const digest = await window.crypto.subtle.digest('SHA-256', buffer)
+  return Array.from(new Uint8Array(digest))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+async function restoreUploadTask(cacheKey: string, file: File) {
+  const uploadId = localStorage.getItem(cacheKey)
+  if (!uploadId) {
+    return null
+  }
+  try {
+    const task = await getAndroidVersionUploadStatus(uploadId)
+    if (
+      task.fileName === file.name
+      && task.fileSize === file.size
+      && task.status === 'UPLOADING'
+    ) {
+      return task
+    }
+  } catch (error) {
+    // stale cache is ignored and a new task will be created
+  }
+  localStorage.removeItem(cacheKey)
+  return null
+}
+
+function getUploadCacheKey(file: File) {
+  return `${TASK_STORAGE_PREFIX}${file.name}:${file.size}:${file.lastModified}`
 }
 
 function handleDelete(id?: number) {
@@ -261,6 +424,19 @@ function formatFileSize(size?: number) {
 
 .file-hint {
   margin-top: 8px;
+  color: #666;
+  font-size: 12px;
+}
+
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-progress__meta {
+  display: flex;
+  justify-content: space-between;
   color: #666;
   font-size: 12px;
 }

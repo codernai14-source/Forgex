@@ -34,6 +34,8 @@ public interface ISysAndroidVersionService extends IService<SysAndroidVersion> {
      */
     IPage<SysAndroidVersionVO> pageVersions(Page<SysAndroidVersion> page, SysAndroidVersionQueryDTO query);
 
+    SysAndroidVersionVO getVersion(Long id);
+
     /**
      * 上传 APK 并创建版本记录
      *

@@ -26,7 +26,7 @@ import java.util.List;
  * @since 2026-04-28
  */
 @RestController
-@RequestMapping("/basic/packaging")
+@RequestMapping("/packaging")
 @RequiredArgsConstructor
 public class BasicPackagingTypeController {
 

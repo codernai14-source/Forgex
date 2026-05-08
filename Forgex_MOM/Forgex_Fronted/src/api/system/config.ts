@@ -192,7 +192,7 @@ export function createDefaultFileUploadConfig(): FileUploadConfig {
   return {
     storageType: 'LOCAL',
     localUploadPath: 'C:/forgex/data/uploads',
-    accessPrefix: '/files',
+    accessPrefix: '/sys/files',
     publicBaseUrl: '',
     providerConfigJson: '',
   }

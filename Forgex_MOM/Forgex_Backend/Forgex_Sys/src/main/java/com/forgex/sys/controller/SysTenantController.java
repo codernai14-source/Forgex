@@ -65,7 +65,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/sys/tenant")
+@RequestMapping("/tenant")
 @RequiredArgsConstructor
 public class SysTenantController {
 

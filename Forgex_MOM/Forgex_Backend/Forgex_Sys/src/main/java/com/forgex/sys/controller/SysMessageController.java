@@ -34,7 +34,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/message")
+@RequestMapping("/message")
 @RequiredArgsConstructor
 public class SysMessageController {
 
