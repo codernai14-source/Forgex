@@ -40,7 +40,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/codegen/datasource")
+@RequestMapping("/codegen/datasource")
 @RequiredArgsConstructor
 public class CodegenDatasourceController {
 

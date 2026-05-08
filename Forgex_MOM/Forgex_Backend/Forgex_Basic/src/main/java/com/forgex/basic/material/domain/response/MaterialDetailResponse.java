@@ -54,6 +54,12 @@ public class MaterialDetailResponse {
     private String createBy;
 
     /**
+     * 创建人名称。
+     */
+    @com.forgex.common.api.annotation.AutoFillUsername(userIdField = "createBy")
+    private String createByName;
+
+    /**
      * 创建时间
      */
     @Schema(description = "创建时间")

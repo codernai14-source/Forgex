@@ -47,7 +47,7 @@ import java.util.Map;
  */
 @Tag(name = "供应商主数据", description = "供应商主数据管理接口")
 @RestController
-@RequestMapping("/basic/supplier")
+@RequestMapping("/supplier")
 @RequiredArgsConstructor
 public class SupplierController {
 

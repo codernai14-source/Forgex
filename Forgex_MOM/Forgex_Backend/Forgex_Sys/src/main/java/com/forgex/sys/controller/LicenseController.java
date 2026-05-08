@@ -22,7 +22,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/license")
+@RequestMapping("/license")
 public class LicenseController {
 
     private final LicenseManager licenseManager;

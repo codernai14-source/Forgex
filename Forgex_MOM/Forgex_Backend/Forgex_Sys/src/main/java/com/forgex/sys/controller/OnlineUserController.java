@@ -27,7 +27,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/online")
+@RequestMapping("/online")
 @RequiredArgsConstructor
 public class OnlineUserController {
 

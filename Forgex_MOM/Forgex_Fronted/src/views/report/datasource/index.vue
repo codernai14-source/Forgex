@@ -183,7 +183,7 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { useDict } from '@/hooks/useDict'
 import type { FxTableConfig } from '@/api/system/tableConfig'
-import type { ReportDatasource, ReportDatasourceParam, DatasourceSaveDTO } from '@/api/report/types'
+import type { ReportDatasource, ReportDatasourceParam, DatasourceSaveDTO } from '@/report/types'
 import {
   pageDatasource,
   removeDatasource,

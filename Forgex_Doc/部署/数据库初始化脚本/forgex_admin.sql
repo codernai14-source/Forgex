@@ -1298,6 +1298,75 @@ INSERT INTO `sys_dict` VALUES (5000000000000000227, 5000000000000000216, '停用
 INSERT INTO `sys_dict` VALUES (5000000000000000228, 5000000000000000216, '启用', 'thirdSystemStatusEnabled', NULL, '1', '{\"en-US\": \"Enabled\", \"ja-JP\": \"有効\", \"ko-KR\": \"활성화\", \"zh-CN\": \"启用\", \"zh-TW\": \"啟用\"}', '/thirdSystemStatus/thirdSystemStatusEnabled', 2, 0, 1, 1, NULL, 0, 0, '2026-04-26 21:50:10', 0, '2026-04-26 21:50:34', 0, NULL);
 
 -- ----------------------------
+-- Table structure for sys_android_version
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_android_version`;
+CREATE TABLE `sys_android_version`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `version_code` int NOT NULL COMMENT '版本号',
+  `version_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '版本名称',
+  `changelog` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '更新日志',
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '原始文件名',
+  `file_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '文件访问URL',
+  `file_size` bigint NOT NULL DEFAULT 0 COMMENT '文件大小，字节',
+  `storage_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'LOCAL' COMMENT '存储类型',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_version_code`(`version_code` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '安卓版本管理' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_android_version
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for sys_android_version_upload_task
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_android_version_upload_task`;
+CREATE TABLE `sys_android_version_upload_task`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `upload_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '上传任务ID',
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '原始文件名',
+  `file_size` bigint NOT NULL DEFAULT 0 COMMENT '文件总大小，字节',
+  `chunk_size` bigint NOT NULL DEFAULT 0 COMMENT '分片大小，字节',
+  `total_chunks` int NOT NULL DEFAULT 0 COMMENT '总分片数',
+  `uploaded_chunks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '已上传分片索引',
+  `uploaded_count` int NOT NULL DEFAULT 0 COMMENT '已上传分片数',
+  `status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'UPLOADING' COMMENT '任务状态',
+  `file_hash` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文件SHA-256',
+  `temp_dir` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '临时目录',
+  `merged_file_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '合并后临时文件路径',
+  `final_file_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '最终文件URL',
+  `version_id` bigint NULL DEFAULT NULL COMMENT '安卓版本记录ID',
+  `error_message` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '错误信息',
+  `version_code` int NULL DEFAULT NULL COMMENT '版本号',
+  `version_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '版本名称',
+  `changelog` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '更新日志',
+  `expire_time` datetime NULL DEFAULT NULL COMMENT '过期时间',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_upload_id`(`upload_id` ASC) USING BTREE,
+  INDEX `idx_file_hash`(`file_hash` ASC) USING BTREE,
+  INDEX `idx_status_expire`(`status` ASC, `expire_time` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '安卓版本分片上传任务' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_android_version_upload_task
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for sys_file_record
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_file_record`;

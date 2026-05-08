@@ -18,6 +18,7 @@ import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelOperationLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
@@ -46,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -131,18 +133,46 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         FxExcelExportConfigDTO cfg = excelConfigService.getExportConfigByCode(tableCode);
 
         // 按页面筛选条件查询登录日志，确保导出结果与列表筛选一致。
-        List<LoginLog> list = loginLogMapper.selectList(new LambdaQueryWrapper<LoginLog>()
-            .like(query != null && StringUtils.hasText(query.getAccount()), LoginLog::getAccount, query.getAccount())
-            .eq(query != null && query.getStatus() != null, LoginLog::getStatus, query.getStatus())
-            .ge(query != null && query.getStartTime() != null, LoginLog::getLoginTime, query.getStartTime())
-            .le(query != null && query.getEndTime() != null, LoginLog::getLoginTime, query.getEndTime())
-            .orderByDesc(LoginLog::getLoginTime));
+        List<LoginLog> list = executeIgnoringTenant(() -> loginLogMapper.selectList(buildLoginLogWrapper(query)));
 
         // 转为通用 Map 后交给公共 Excel 服务按动态列配置生成文件。
         List<Map<String, Object>> rows = list.stream().map(this::toLoginLogMap).collect(Collectors.toList());
         byte[] bytes = excelFileService.buildExportFile(cfg, rows);
         String filename = "login-log-" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + getFileExtension(cfg);
         writeFileToResponse(response, bytes, getContentType(cfg), filename);
+    }
+
+    private LambdaQueryWrapper<LoginLog> buildLoginLogWrapper(LoginLogQueryDTO query) {
+        LambdaQueryWrapper<LoginLog> wrapper = new LambdaQueryWrapper<LoginLog>()
+            .like(query != null && StringUtils.hasText(query.getAccount()), LoginLog::getAccount, query == null ? null : query.getAccount())
+            .eq(query != null && query.getStatus() != null, LoginLog::getStatus, query == null ? null : query.getStatus())
+            .ge(query != null && query.getStartTime() != null, LoginLog::getLoginTime, query == null ? null : query.getStartTime())
+            .le(query != null && query.getEndTime() != null, LoginLog::getLoginTime, query == null ? null : query.getEndTime());
+        applyLoginLogTenantScope(wrapper);
+        wrapper.orderByDesc(LoginLog::getLoginTime);
+        return wrapper;
+    }
+
+    private void applyLoginLogTenantScope(LambdaQueryWrapper<LoginLog> wrapper) {
+        Long tenantId = TenantContext.get();
+        wrapper.and(w -> {
+            if (tenantId != null) {
+                w.eq(LoginLog::getTenantId, tenantId).or();
+            }
+            w.eq(LoginLog::getTenantId, 0L).or().isNull(LoginLog::getTenantId);
+        });
+    }
+
+    private <T> T executeIgnoringTenant(Supplier<T> supplier) {
+        boolean oldIgnore = TenantContextIgnore.isIgnore();
+        TenantContextIgnore.setIgnore(true);
+        try {
+            return supplier.get();
+        } finally {
+            if (!oldIgnore) {
+                TenantContextIgnore.clear();
+            }
+        }
     }
 
     /**

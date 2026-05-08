@@ -385,6 +385,58 @@ function buildLocalConfig(source?: Partial<FxTableConfig>): FxTableConfig {
 }
 
 /**
+ * 规范化查询字段定义，避免后端配置缺少查询区时页面兜底字段无法展示。
+ *
+ * @param fields 显式查询字段
+ * @param columns 可查询列配置
+ * @returns 可用于查询表单渲染的字段集合
+ */
+function normalizeQueryFields(fields?: any[], columns?: FxTableColumn[]) {
+  const explicitFields = (Array.isArray(fields) ? fields : [])
+    .map((field: any) => ({
+      ...field,
+      field: field?.field ?? field?.dataIndex ?? field?.key,
+      label: field?.label ?? field?.title,
+      queryType: field?.queryType || 'input',
+      queryOperator: field?.queryOperator || 'like',
+    }))
+    .filter((field: any) => !!field.field && !!field.label)
+
+  const columnFields = (Array.isArray(columns) ? columns : [])
+    .filter(column => column.queryable)
+    .map((column: FxTableColumn) => ({
+      field: column.field,
+      label: column.title,
+      queryType: column.queryType || 'input',
+      queryOperator: column.queryOperator || 'like',
+      dictCode: column.dictCode,
+    }))
+    .filter(field => !!field.field && !!field.label)
+
+  return mergeQueryFields(explicitFields, columnFields)
+}
+
+/**
+ * 合并查询字段，保留主配置顺序，本地兜底只补缺失字段。
+ *
+ * @param primary 主配置查询字段
+ * @param fallback 兜底查询字段
+ * @returns 合并后的查询字段
+ */
+function mergeQueryFields(primary?: any[], fallback?: any[]) {
+  const merged: any[] = []
+  const seen = new Set<string>()
+  for (const field of [...(primary || []), ...(fallback || [])]) {
+    if (!field?.field || seen.has(field.field)) {
+      continue
+    }
+    seen.add(field.field)
+    merged.push(field)
+  }
+  return merged
+}
+
+/**
  * 尝试将字典翻译 JSON 字符串解析并渲染为 Tag。
  *
  * @param dictText 字典展示文本，可能为 JSON 字符串或对象
@@ -485,6 +537,28 @@ function renderTagByDictText(dictText: any, fallbackText: any) {
   }
 
   return fallbackText
+}
+
+function resolveAuditDisplayValue(record: any, field?: string) {
+  if (!record || !field) {
+    return undefined
+  }
+  const auditNameFieldMap: Record<string, string> = {
+    createBy: 'createByName',
+    create_by: 'createByName',
+    updateBy: 'updateByName',
+    update_by: 'updateByName',
+    createdBy: 'createdByName',
+    created_by: 'createdByName',
+    updatedBy: 'updatedByName',
+    updated_by: 'updatedByName',
+  }
+  const nameField = auditNameFieldMap[field]
+  if (!nameField) {
+    return undefined
+  }
+  const nameValue = record?.[nameField]
+  return nameValue === undefined || nameValue === null || nameValue === '' ? undefined : nameValue
 }
 
 /** 内部 loading，可与外部 props.loading 合并 */
@@ -652,6 +726,11 @@ const tableColumns = computed(() => {
         }
         return value
       }
+    } else {
+      column.customRender = ({ record }: any) => {
+        const auditDisplayValue = resolveAuditDisplayValue(record, c.field)
+        return auditDisplayValue === undefined ? record?.[c.field] : auditDisplayValue
+      }
     }
 
     return column
@@ -772,27 +851,35 @@ async function loadConfig() {
   const localConfig = getLocalConfig()
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
+    const backendColumns = normalizeColumns(backendConfig.columns || [])
+    const localColumns = normalizeColumns(localConfig?.columns || [])
+    const resolvedColumns = backendColumns.length ? backendColumns : localColumns
+    const backendQueryFields = normalizeQueryFields(backendConfig.queryFields, backendColumns)
+    const localQueryFields = normalizeQueryFields(localConfig?.queryFields, localColumns)
+    const columnQueryFields = normalizeQueryFields([], resolvedColumns)
 
     // 新对象引用，确保 Vue 能检测到深层替换
     config.value = {
       ...backendConfig,
-      columns: backendConfig.columns ? [...backendConfig.columns] : [],
-      queryFields: backendConfig.queryFields ? [...backendConfig.queryFields] : [],
+      columns: resolvedColumns,
+      queryFields: mergeQueryFields(backendQueryFields, [...localQueryFields, ...columnQueryFields]),
     }
 
     configVersion.value++
   } catch (e) {
-    config.value = buildLocalConfig(localConfig)
+    const builtLocalConfig = buildLocalConfig(localConfig)
+    const localColumns = normalizeColumns(builtLocalConfig.columns || [])
+    config.value = {
+      ...builtLocalConfig,
+      columns: localColumns,
+      queryFields: normalizeQueryFields(builtLocalConfig.queryFields, localColumns),
+    }
     if (!localConfig?.columns?.length) {
       console.error('[FxDynamicTable] 获取表格配置失败:', e)
     } else {
       console.warn('[FxDynamicTable] 后端表格配置不可用，已使用本地配置:', props.tableCode)
     }
     configVersion.value++
-  }
-
-  if (config.value?.columns?.length) {
-    config.value.columns = normalizeColumns(config.value.columns as any)
   }
 
   pagination.pageSize = config.value?.defaultPageSize || pagination.pageSize

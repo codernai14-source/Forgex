@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.StatusCode;
@@ -24,19 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-/**
- * 安卓版本管理服务实现类
- * <p>
- * 实现安卓安装包版本的增删改查和文件上传功能，
- * 文件存储复用系统现有的 FileService（支持 Local / OSS / MinIO）
- * </p>
- *
- * @author ForGexTeam
- * @version 1.0.0
- * @since 2026-05-05
- * @see ISysAndroidVersionService
- * @see FileService
- */
 @Service
 @RequiredArgsConstructor
 public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionMapper, SysAndroidVersion>
@@ -47,13 +35,6 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
 
     private final FileService fileService;
 
-    /**
-     * 分页查询安卓版本列表
-     *
-     * @param page  分页对象
-     * @param query 查询参数（支持版本名称模糊搜索、状态筛选）
-     * @return 分页 VO 结果
-     */
     @Override
     public IPage<SysAndroidVersionVO> pageVersions(Page<SysAndroidVersion> page, SysAndroidVersionQueryDTO query) {
         LambdaQueryWrapper<SysAndroidVersion> wrapper = new LambdaQueryWrapper<>();
@@ -66,26 +47,17 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
         return page(page, wrapper).convert(this::toVO);
     }
 
-    /**
-     * 上传 APK 文件并创建版本记录
-     * <p>
-     * 通过 FileService 上传文件获取访问 URL，然后保存版本信息到数据库
-     * </p>
-     *
-     * @param file APK 文件
-     * @param dto  版本信息参数（版本号、版本名称、更新日志等）
-     * @return 创建后的 VO
-     * @throws IOException 文件上传失败时抛出
-     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    public SysAndroidVersionVO getVersion(Long id) {
+        return toVO(requireEntity(id));
+    }
+
+    @Override
+    @DSTransactional(rollbackFor = Exception.class)
     public SysAndroidVersionVO uploadApk(MultipartFile file, SysAndroidVersionDTO dto) throws IOException {
         validateUploadParam(file, dto);
-
-        // 通过 FileService 上传文件
         String fileUrl = fileService.upload(file, MODULE_CODE, MODULE_NAME);
 
-        // 构建版本记录
         SysAndroidVersion entity = new SysAndroidVersion();
         entity.setVersionCode(dto.getVersionCode());
         entity.setVersionName(dto.getVersionName());
@@ -100,12 +72,6 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
         return toVO(entity);
     }
 
-    /**
-     * 编辑版本信息（不涉及文件替换）
-     *
-     * @param dto 版本信息参数（必须包含 id）
-     * @return 更新后的 VO
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SysAndroidVersionVO updateVersion(SysAndroidVersionDTO dto) {
@@ -121,11 +87,6 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
         return toVO(entity);
     }
 
-    /**
-     * 删除版本记录。
-     *
-     * @param id 主键 ID
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteVersion(Long id) {
@@ -136,14 +97,6 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
         removeById(id);
     }
 
-    /**
-     * 获取最新启用的版本信息
-     * <p>
-     * 按版本号降序排列，取第一条状态为启用的记录
-     * </p>
-     *
-     * @return 最新版本 VO，无数据时返回 null
-     */
     @Override
     public SysAndroidVersionVO getLatestVersion() {
         LambdaQueryWrapper<SysAndroidVersion> wrapper = new LambdaQueryWrapper<>();
@@ -154,12 +107,6 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
         return entity != null ? toVO(entity) : null;
     }
 
-    /**
-     * 实体转 VO
-     *
-     * @param entity 实体对象
-     * @return VO 对象
-     */
     private SysAndroidVersionVO toVO(SysAndroidVersion entity) {
         SysAndroidVersionVO vo = new SysAndroidVersionVO();
         BeanUtils.copyProperties(entity, vo);
@@ -188,12 +135,6 @@ public class SysAndroidVersionServiceImpl extends ServiceImpl<SysAndroidVersionM
         return entity;
     }
 
-    /**
-     * 规范化查询值（去除空白）
-     *
-     * @param value 原始值
-     * @return 规范化后的值，空字符串返回 null
-     */
     private String normalizeQueryValue(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
     }

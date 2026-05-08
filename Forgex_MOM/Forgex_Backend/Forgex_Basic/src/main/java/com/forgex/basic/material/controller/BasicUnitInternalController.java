@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-05-02
  */
 @RestController
-@RequestMapping("/basic/unit/internal")
+@RequestMapping("/unit/internal")
 @RequiredArgsConstructor
 public class BasicUnitInternalController {
 

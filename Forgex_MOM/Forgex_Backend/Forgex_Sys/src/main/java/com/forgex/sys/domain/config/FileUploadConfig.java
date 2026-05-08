@@ -24,7 +24,7 @@ public class FileUploadConfig {
     /**
      * URL access prefix for local files.
      */
-    private String accessPrefix = "/files";
+    private String accessPrefix = "/sys/files";
 
     /**
      * Public base URL for local file access, such as http://192.168.1.10:8082.

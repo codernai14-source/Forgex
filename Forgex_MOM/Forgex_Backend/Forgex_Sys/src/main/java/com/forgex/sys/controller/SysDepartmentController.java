@@ -47,7 +47,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/sys/department")
+@RequestMapping("/department")
 @RequiredArgsConstructor
 public class SysDepartmentController {
     

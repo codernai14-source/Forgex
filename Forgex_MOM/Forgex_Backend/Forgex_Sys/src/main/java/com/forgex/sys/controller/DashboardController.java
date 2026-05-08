@@ -31,7 +31,7 @@ import java.util.Map;
  * @version 1.1
  */
 @RestController
-@RequestMapping("/sys/dashboard")
+@RequestMapping("/dashboard")
 @RequiredArgsConstructor
 public class DashboardController {
 

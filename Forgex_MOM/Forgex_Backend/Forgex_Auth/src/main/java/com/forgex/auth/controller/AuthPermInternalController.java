@@ -36,7 +36,7 @@ import java.util.Set;
  * @see PermKeyService
  */
 @RestController
-@RequestMapping("/auth/perm/internal")
+@RequestMapping("/perm/internal")
 @RequiredArgsConstructor
 public class AuthPermInternalController {
 

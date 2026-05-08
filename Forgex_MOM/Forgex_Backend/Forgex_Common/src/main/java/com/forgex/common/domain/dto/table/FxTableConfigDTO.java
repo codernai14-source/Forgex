@@ -110,6 +110,12 @@ public class FxTableConfigDTO {
     private String createBy;
 
     /**
+     * 创建人名称。
+     */
+    @com.forgex.common.api.annotation.AutoFillUsername(userIdField = "createBy")
+    private String createByName;
+
+    /**
      * 创建时间
      * <p>表格配置的创建时间。</p>
      */
@@ -127,4 +133,3 @@ public class FxTableConfigDTO {
      */
     private LocalDateTime updateTime;
 }
-

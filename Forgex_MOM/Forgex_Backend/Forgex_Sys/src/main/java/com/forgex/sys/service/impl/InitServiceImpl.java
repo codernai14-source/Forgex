@@ -333,6 +333,7 @@ public class InitServiceImpl implements InitService {
             users.add(newUser(cname, rawInitPwd, store));
         }
         for (SysUser u : users) userMapper.insert(u);
+        Long seedOperatorId = users.isEmpty() ? null : users.get(0).getId();
 
         if (p != null && p.getUserTenantBinds() != null && !p.getUserTenantBinds().isEmpty()) {
             for (InitApplyParam.UserTenantBind b : p.getUserTenantBinds()) {
@@ -362,7 +363,19 @@ public class InitServiceImpl implements InitService {
         if (p != null && p.isRoleTester()) roles.add(newRole("测试员", "tester", defaultTenantId));
         if (p != null && p.isRoleDeveloper()) roles.add(newRole("开发人员", "developer", defaultTenantId));
         if (p != null && p.isRoleCustomer()) roles.add(newRole("客户", "customer", defaultTenantId));
-        for (SysRole r : roles) roleMapper.insert(r);
+        for (SysRole r : roles) {
+            roleMapper.insert(r);
+            if (seedOperatorId != null) {
+                String operator = String.valueOf(seedOperatorId);
+                r.setCreateBy(operator);
+                r.setUpdateBy(operator);
+                SysRole update = new SysRole();
+                update.setId(r.getId());
+                update.setCreateBy(operator);
+                update.setUpdateBy(operator);
+                roleMapper.updateById(update);
+            }
+        }
 
         Map<String, Long> roleIdByKey = new HashMap<>();
         for (SysRole r : roles) roleIdByKey.put(r.getRoleKey(), r.getId());
@@ -579,6 +592,14 @@ public class InitServiceImpl implements InitService {
                         new String[]{"sys:tenant-message-whitelist:create", "新增白名单", "Add Whitelist"},
                         new String[]{"sys:tenant-message-whitelist:update", "编辑白名单", "Edit Whitelist"},
                         new String[]{"sys:tenant-message-whitelist:delete", "删除白名单", "Delete Whitelist"}
+                ));
+
+        addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 115, "androidVersion", "安卓版本管理", "Android Version Management",
+                "AndroidOutlined", "SystemAndroidVersion", "sys:androidVersion:view",
+                Arrays.asList(
+                        new String[]{"sys:androidVersion:add", "上传版本", "Upload Version"},
+                        new String[]{"sys:androidVersion:edit", "编辑版本", "Edit Version"},
+                        new String[]{"sys:androidVersion:delete", "删除版本", "Delete Version"}
                 ));
 
         addMenuWithButtons(tenantId, moduleId, grantedMenuIds, 120, "loginLog", "登录日志", "Login Log",

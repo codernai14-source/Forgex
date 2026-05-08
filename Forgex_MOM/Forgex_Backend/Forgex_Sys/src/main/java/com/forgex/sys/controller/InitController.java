@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
  * 业务逻辑委托 {@link com.forgex.sys.service.InitService} 处理。
  */
 @RestController
-@RequestMapping("/sys/init")
+@RequestMapping("/init")
 public class InitController {
     @Autowired
     private InitService initService;

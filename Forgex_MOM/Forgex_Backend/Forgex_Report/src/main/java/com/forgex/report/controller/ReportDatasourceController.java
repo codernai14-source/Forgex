@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Tag(name = "报表数据源管理", description = "报表数据源管理接口")
 @RestController
-@RequestMapping("/api/report/datasource")
+@RequestMapping("/datasource")
 @RequiredArgsConstructor
 public class ReportDatasourceController {
 

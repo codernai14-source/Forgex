@@ -75,6 +75,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
     private static final String POSITION_TABLE_CODE = "PositionTable";
     private static final String DICT_TABLE_CODE = "DictTable";
     private static final String INVITE_CODE_TABLE_CODE = "InviteCodeTable";
+    private static final String API_CALL_LOG_TABLE_CODE = "ApiCallLogTable";
     private static final int MIN_COLUMN_WIDTH = 60;
     private static final int MAX_COLUMN_WIDTH = 800;
     private static final String USERNAME_FIELD = "username";
@@ -633,6 +634,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         if (columns == null) {
             return;
         }
+        normalizeAuditColumns(columns);
         if (USER_TABLE_CODE.equals(tableCode)) {
             ensureBuiltinUserTableColumns(tableCode, columns);
             return;
@@ -647,20 +649,314 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         }
         if (INVITE_CODE_TABLE_CODE.equals(tableCode)) {
             ensureInviteCodeRoleColumn(columns);
+            return;
+        }
+        if (API_CALL_LOG_TABLE_CODE.equals(tableCode)) {
+            normalizeApiCallLogTableColumns(columns);
         }
     }
 
     private List<FxTableQueryFieldDTO> normalizeBuiltinQueryFields(String tableCode, List<FxTableQueryFieldDTO> queryFields) {
+        List<FxTableQueryFieldDTO> normalizedQueryFields = normalizeAuditQueryFields(queryFields);
         if (USER_TABLE_CODE.equals(tableCode)) {
-            return ensureBuiltinUserTableQueryFields(tableCode, queryFields);
+            return ensureBuiltinUserTableQueryFields(tableCode, normalizedQueryFields);
         }
         if (POSITION_TABLE_CODE.equals(tableCode)) {
-            return ensurePositionTableQueryFields(queryFields);
+            return ensurePositionTableQueryFields(normalizedQueryFields);
         }
         if (INVITE_CODE_TABLE_CODE.equals(tableCode)) {
-            return ensureInviteCodeRoleQueryField(queryFields);
+            return ensureInviteCodeRoleQueryField(normalizedQueryFields);
         }
-        return queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        if (API_CALL_LOG_TABLE_CODE.equals(tableCode)) {
+            return normalizeApiCallLogTableQueryFields(normalizedQueryFields);
+        }
+        return normalizedQueryFields;
+    }
+
+    private void normalizeApiCallLogTableColumns(List<FxTableColumnDTO> columns) {
+        Map<String, FxTableColumnDTO> normalizedMap = new LinkedHashMap<>();
+        for (FxTableColumnDTO column : columns) {
+            if (column == null || !StringUtils.hasText(column.getField())) {
+                continue;
+            }
+            String normalizedField = normalizeApiCallLogField(column.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableColumnDTO normalized = new FxTableColumnDTO();
+            BeanUtils.copyProperties(column, normalized);
+            normalized.setField(normalizedField);
+            applyApiCallLogColumnDefaults(normalized);
+            normalizedMap.put(normalizedField, normalized);
+        }
+
+        List<FxTableColumnDTO> orderedColumns = new ArrayList<>();
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "apiName"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "callDirection"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "callStatus"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "callerIp"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "rawRequestData"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "assembledRequestData"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "responseData"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "costTimeMs"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "errorMessage"));
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, "callTime"));
+
+        for (Map.Entry<String, FxTableColumnDTO> entry : normalizedMap.entrySet()) {
+            if (containsField(orderedColumns, entry.getKey()) || ACTION_FIELD.equals(entry.getKey())) {
+                continue;
+            }
+            orderedColumns.add(entry.getValue());
+        }
+
+        orderedColumns.add(getOrCreateApiCallLogColumn(normalizedMap, ACTION_FIELD));
+        columns.clear();
+        columns.addAll(orderedColumns);
+    }
+
+    private List<FxTableQueryFieldDTO> normalizeApiCallLogTableQueryFields(List<FxTableQueryFieldDTO> queryFields) {
+        Map<String, FxTableQueryFieldDTO> normalizedMap = new LinkedHashMap<>();
+        List<FxTableQueryFieldDTO> safeQueryFields =
+                queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        for (FxTableQueryFieldDTO queryField : safeQueryFields) {
+            if (queryField == null || !StringUtils.hasText(queryField.getField())) {
+                continue;
+            }
+            String normalizedField = normalizeApiCallLogField(queryField.getField());
+            if (!StringUtils.hasText(normalizedField)
+                    || "apiName".equals(normalizedField)
+                    || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableQueryFieldDTO normalized = new FxTableQueryFieldDTO();
+            BeanUtils.copyProperties(queryField, normalized);
+            normalized.setField(normalizedField);
+            applyApiCallLogQueryDefaults(normalized);
+            normalizedMap.put(normalizedField, normalized);
+        }
+
+        addApiCallLogQueryField(normalizedMap, "callDirection");
+        addApiCallLogQueryField(normalizedMap, "callStatus");
+        addApiCallLogQueryField(normalizedMap, "callerIp");
+        addApiCallLogQueryField(normalizedMap, "callTime");
+        return new ArrayList<>(normalizedMap.values());
+    }
+
+    private String normalizeApiCallLogField(String field) {
+        if ("apiConfigId".equals(field) || "api_config_id".equals(field)) {
+            return "apiName";
+        }
+        if ("call_direction".equals(field)) {
+            return "callDirection";
+        }
+        if ("call_status".equals(field)) {
+            return "callStatus";
+        }
+        if ("caller_ip".equals(field)) {
+            return "callerIp";
+        }
+        if ("request_data".equals(field) || "raw_request_data".equals(field)) {
+            return "rawRequestData";
+        }
+        if ("assembled_request_data".equals(field)) {
+            return "assembledRequestData";
+        }
+        if ("response_data".equals(field)) {
+            return "responseData";
+        }
+        if ("cost_time_ms".equals(field)) {
+            return "costTimeMs";
+        }
+        if ("error_message".equals(field)) {
+            return "errorMessage";
+        }
+        if ("call_time".equals(field)) {
+            return "callTime";
+        }
+        return normalizeAuditField(field);
+    }
+
+    private FxTableColumnDTO getOrCreateApiCallLogColumn(Map<String, FxTableColumnDTO> normalizedMap, String field) {
+        FxTableColumnDTO column = normalizedMap.get(field);
+        if (column == null) {
+            column = new FxTableColumnDTO();
+            column.setField(field);
+        }
+        applyApiCallLogColumnDefaults(column);
+        return column;
+    }
+
+    private void applyApiCallLogColumnDefaults(FxTableColumnDTO column) {
+        if (column == null || !StringUtils.hasText(column.getField())) {
+            return;
+        }
+        column.setVisible(column.getVisible() == null || column.getVisible());
+        if (!StringUtils.hasText(column.getAlign())) {
+            column.setAlign("center");
+        }
+        if (column.getQueryable() == null) {
+            column.setQueryable(false);
+        }
+
+        switch (column.getField()) {
+            case "apiName":
+                applyColumnDefaults(column, "接口名称", "left", 180, null);
+                column.setEllipsis(true);
+                column.setQueryable(false);
+                break;
+            case "callDirection":
+                applyColumnDefaults(column, "调用方向", "center", 110, null);
+                column.setQueryable(true);
+                column.setQueryType("select");
+                column.setQueryOperator("eq");
+                break;
+            case "callStatus":
+                applyColumnDefaults(column, "调用状态", "center", 110, null);
+                column.setQueryable(true);
+                column.setQueryType("select");
+                column.setQueryOperator("eq");
+                break;
+            case "callerIp":
+                applyColumnDefaults(column, "调用方IP", "left", 150, null);
+                column.setEllipsis(true);
+                column.setQueryable(true);
+                column.setQueryType("input");
+                column.setQueryOperator("like");
+                break;
+            case "rawRequestData":
+                applyColumnDefaults(column, "组装前参数", "center", 140, null);
+                break;
+            case "assembledRequestData":
+                applyColumnDefaults(column, "组装后参数", "center", 140, null);
+                break;
+            case "responseData":
+                applyColumnDefaults(column, "响应结果", "center", 140, null);
+                break;
+            case "costTimeMs":
+                applyColumnDefaults(column, "耗时(ms)", "center", 110, null);
+                break;
+            case "errorMessage":
+                applyColumnDefaults(column, "错误信息", "left", 180, null);
+                column.setEllipsis(true);
+                break;
+            case "callTime":
+                applyColumnDefaults(column, "调用时间", "center", 180, null);
+                column.setQueryable(true);
+                column.setQueryType("dateRange");
+                column.setQueryOperator("between");
+                break;
+            case ACTION_FIELD:
+                applyColumnDefaults(column, "操作", "center", 150, null);
+                column.setFixed("right");
+                column.setQueryable(false);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void addApiCallLogQueryField(Map<String, FxTableQueryFieldDTO> normalizedMap, String field) {
+        if (!normalizedMap.containsKey(field)) {
+            FxTableQueryFieldDTO queryField = new FxTableQueryFieldDTO();
+            queryField.setField(field);
+            applyApiCallLogQueryDefaults(queryField);
+            normalizedMap.put(field, queryField);
+        }
+    }
+
+    private void applyApiCallLogQueryDefaults(FxTableQueryFieldDTO queryField) {
+        if (queryField == null || !StringUtils.hasText(queryField.getField())) {
+            return;
+        }
+        switch (queryField.getField()) {
+            case "apiName":
+                queryField.setLabel("接口名称");
+                queryField.setQueryType("input");
+                queryField.setQueryOperator("like");
+                break;
+            case "callDirection":
+                queryField.setLabel("调用方向");
+                queryField.setQueryType("select");
+                queryField.setQueryOperator("eq");
+                break;
+            case "callStatus":
+                queryField.setLabel("调用状态");
+                queryField.setQueryType("select");
+                queryField.setQueryOperator("eq");
+                break;
+            case "callerIp":
+                queryField.setLabel("调用方IP");
+                queryField.setQueryType("input");
+                queryField.setQueryOperator("like");
+                break;
+            case "callTime":
+                queryField.setLabel("调用时间");
+                queryField.setQueryType("dateRange");
+                queryField.setQueryOperator("between");
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void normalizeAuditColumns(List<FxTableColumnDTO> columns) {
+        Map<String, FxTableColumnDTO> normalizedMap = new LinkedHashMap<>();
+        for (FxTableColumnDTO column : columns) {
+            if (column == null || !StringUtils.hasText(column.getField())) {
+                continue;
+            }
+            String normalizedField = normalizeAuditField(column.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableColumnDTO normalized = new FxTableColumnDTO();
+            BeanUtils.copyProperties(column, normalized);
+            normalized.setField(normalizedField);
+            if ("createBy".equals(normalizedField) || "updateBy".equals(normalizedField)) {
+                normalized.setDictField(normalizedField + "Name");
+            } else {
+                normalized.setDictField(normalizedField + "Text");
+            }
+            normalizedMap.put(normalizedField, normalized);
+        }
+        columns.clear();
+        columns.addAll(normalizedMap.values());
+    }
+
+    private List<FxTableQueryFieldDTO> normalizeAuditQueryFields(List<FxTableQueryFieldDTO> queryFields) {
+        List<FxTableQueryFieldDTO> safeQueryFields =
+                queryFields == null ? new ArrayList<>() : new ArrayList<>(queryFields);
+        Map<String, FxTableQueryFieldDTO> normalizedMap = new LinkedHashMap<>();
+        for (FxTableQueryFieldDTO queryField : safeQueryFields) {
+            if (queryField == null || !StringUtils.hasText(queryField.getField())) {
+                continue;
+            }
+            String normalizedField = normalizeAuditField(queryField.getField());
+            if (!StringUtils.hasText(normalizedField) || normalizedMap.containsKey(normalizedField)) {
+                continue;
+            }
+            FxTableQueryFieldDTO normalized = new FxTableQueryFieldDTO();
+            BeanUtils.copyProperties(queryField, normalized);
+            normalized.setField(normalizedField);
+            normalizedMap.put(normalizedField, normalized);
+        }
+        return new ArrayList<>(normalizedMap.values());
+    }
+
+    private String normalizeAuditField(String field) {
+        if ("create_by".equals(field)) {
+            return "createBy";
+        }
+        if ("create_time".equals(field)) {
+            return "createTime";
+        }
+        if ("update_by".equals(field)) {
+            return "updateBy";
+        }
+        if ("update_time".equals(field)) {
+            return "updateTime";
+        }
+        return field;
     }
 
     private void normalizePositionTableColumns(List<FxTableColumnDTO> columns) {

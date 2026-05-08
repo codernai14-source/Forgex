@@ -44,7 +44,7 @@ import java.util.Map;
  * @see SysUserDTO
  */
 @RestController
-@RequestMapping("/sys/profile")
+@RequestMapping("/profile")
 @RequiredArgsConstructor
 public class ProfileController {
 

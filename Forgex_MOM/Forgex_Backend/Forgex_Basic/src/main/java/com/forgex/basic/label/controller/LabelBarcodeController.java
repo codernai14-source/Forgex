@@ -41,7 +41,7 @@ public class LabelBarcodeController {
     /**
      * 分页查询条码列表
      * <p>
-     * 接口路径：POST /label/barcode/page
+     * 接口路径：POST /basic/label/barcode/page
      * 需要权限：label:barcode:query
      * </p>
      *
@@ -60,7 +60,7 @@ public class LabelBarcodeController {
     /**
      * 条码反查（扫码查询）
      * <p>
-     * 接口路径：POST /label/barcode/queryByBarcode
+     * 接口路径：POST /basic/label/barcode/queryByBarcode
      * 需要权限：label:barcode:query
      * </p>
      * <p>
@@ -92,7 +92,7 @@ public class LabelBarcodeController {
     /**
      * 条码生成
      * <p>
-     * 接口路径：POST /label/barcode/generate
+     * 接口路径：POST /basic/label/barcode/generate
      * 需要权限：label:barcode:add
      * </p>
      * <p>

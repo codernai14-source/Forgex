@@ -976,7 +976,7 @@ onMounted(async () => {
   border-color: #4b5563;
   border-radius: 8px;
   background: var(--auth-field-bg) !important;
-  color: #e5e7eb;
+  color: #f8fafc !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1002,7 +1002,8 @@ onMounted(async () => {
 
 .register-form :deep(.ant-input::placeholder),
 .register-form :deep(.ant-input-password input::placeholder) {
-  color: #94a3b8;
+  color: rgba(203, 213, 225, 0.86) !important;
+  opacity: 1;
 }
 
 .register-form :deep(.ant-input-password input),
@@ -1011,7 +1012,8 @@ onMounted(async () => {
   border: 0;
   background: transparent !important;
   box-shadow: none;
-  color: #e5e7eb;
+  color: #f8fafc !important;
+  caret-color: var(--primary-color);
 }
 
 .register-form :deep(.ant-input:-webkit-autofill),
@@ -1031,8 +1033,12 @@ onMounted(async () => {
   color: #9ca3af;
 }
 
-.register-form :deep(.ant-input-affix-wrapper) {
-  background: transparent !important;
+.register-form :deep(.ant-input[disabled]),
+.register-form :deep(.ant-input-affix-wrapper-disabled),
+.register-form :deep(.ant-input-affix-wrapper-disabled input) {
+  background: rgba(15, 23, 42, 0.72) !important;
+  color: rgba(226, 232, 240, 0.78) !important;
+  -webkit-text-fill-color: rgba(226, 232, 240, 0.78) !important;
 }
 
 .inline-row {

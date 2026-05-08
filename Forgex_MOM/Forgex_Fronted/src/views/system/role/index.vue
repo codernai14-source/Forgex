@@ -180,10 +180,12 @@
         :steps="embeddedGrantGuideSteps"
         :auto-start="embeddedGrantGuideAutoStart"
         skip-text="跳过引导"
+        :show-skip-all="true"
         @open="handleEmbeddedGrantGuideOpen"
         @close="handleEmbeddedGrantGuideClose"
         @finish="handleEmbeddedGrantGuideFinish"
         @skip="handleEmbeddedGrantGuideSkip"
+        @skip-all="handleEmbeddedGrantGuideSkipAll"
       />
     </template>
   </div>
@@ -468,7 +470,7 @@ async function syncEmbeddedGrantGuide(view: 'list' | 'menuGrant' | 'userGrant') 
   embeddedGrantGuideSteps.value = guideConfig.steps
   await guideStore.loadPreference()
   await nextTick()
-  embeddedGrantGuideAutoStart.value = guideStore.shouldAutoStartGuide(
+  embeddedGrantGuideAutoStart.value = guideStore.shouldAutoStartSystemPageGuide(
     guideConfig.guideCode,
     guideConfig.version,
   )
@@ -496,6 +498,16 @@ async function handleEmbeddedGrantGuideSkip(
   version = embeddedGrantGuideVersion.value,
 ) {
   await guideStore.markGuideSkipped(guideCode, version)
+  embeddedGrantGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
+async function handleEmbeddedGrantGuideSkipAll(
+  guideCode = embeddedGrantGuideCode.value,
+  version = embeddedGrantGuideVersion.value,
+) {
+  await guideStore.markGuideSkipped(guideCode, version)
+  await guideStore.setSystemPageGuideDisabled(true)
   embeddedGrantGuideAutoStart.value = false
   guideStore.finishCurrentGuide()
 }

@@ -30,8 +30,49 @@
         {{ formatDateTime(record.callTime) }}
       </template>
 
+      <template #rawRequestData="{ record }">
+        <a-space size="small">
+          <a-button type="link" size="small" @click="handleViewDetail(record)">
+            查看
+          </a-button>
+          <a-tooltip title="复制组装前参数">
+            <a-button type="text" size="small" @click="copyPayload(record.rawRequestData)">
+              <template #icon><CopyOutlined /></template>
+            </a-button>
+          </a-tooltip>
+        </a-space>
+      </template>
+
+      <template #assembledRequestData="{ record }">
+        <a-space size="small">
+          <a-button type="link" size="small" @click="handleViewDetail(record)">
+            查看
+          </a-button>
+          <a-tooltip title="复制组装后参数">
+            <a-button type="text" size="small" @click="copyPayload(record.assembledRequestData)">
+              <template #icon><CopyOutlined /></template>
+            </a-button>
+          </a-tooltip>
+        </a-space>
+      </template>
+
+      <template #responseData="{ record }">
+        <a-space size="small">
+          <a-button type="link" size="small" @click="handleViewDetail(record)">
+            查看
+          </a-button>
+          <a-tooltip title="复制响应结果">
+            <a-button type="text" size="small" @click="copyPayload(record.responseData)">
+              <template #icon><CopyOutlined /></template>
+            </a-button>
+          </a-tooltip>
+        </a-space>
+      </template>
+
       <template #action="{ record }">
-        <a @click="handleViewDetail(record)">{{ t('common.detail') }}</a>
+        <a-button type="link" size="small" @click="handleViewDetail(record)">
+          {{ t('common.detail') }}
+        </a-button>
       </template>
     </fx-dynamic-table>
 
@@ -42,6 +83,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { message } from 'ant-design-vue'
+import { CopyOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiCallLogDetailDialog from './components/ApiCallLogDetailDialog.vue'
@@ -89,6 +132,16 @@ async function handleRequest(payload: {
 
 function handleViewDetail(record: ApiCallLogItem) {
   detailDialogRef.value?.open(record)
+}
+
+async function copyPayload(payload?: string) {
+  try {
+    await navigator.clipboard.writeText(payload || '')
+    message.success('复制成功')
+  } catch (error) {
+    console.error(error)
+    message.error('复制失败')
+  }
 }
 
 function getCostTimeColor(costTime?: number) {

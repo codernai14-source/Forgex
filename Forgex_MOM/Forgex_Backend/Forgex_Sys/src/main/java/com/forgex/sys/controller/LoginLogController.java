@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see LoginLogVO
  */
 @RestController
-@RequestMapping("/sys/loginLog")
+@RequestMapping("/loginLog")
 public class LoginLogController {
     
     @Autowired

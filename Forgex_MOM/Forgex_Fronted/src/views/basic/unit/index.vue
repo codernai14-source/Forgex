@@ -260,6 +260,7 @@ const tableFallbackConfig = {
   queryFields: [
     { field: 'unitCode', label: t('basic.unit.unitCode'), queryType: 'input', queryOperator: 'like' },
     { field: 'unitName', label: t('basic.unit.unitName'), queryType: 'input', queryOperator: 'like' },
+    { field: 'unitTypeName', label: t('basic.unit.typeName'), queryType: 'input', queryOperator: 'like' },
   ],
 }
 
@@ -618,18 +619,21 @@ onMounted(async () => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px 24px 12px;
+  padding: 12px 18px 8px;
 }
 
 .unit-main-header h1 {
-  margin: 10px 0 6px;
+  margin: 6px 0 4px;
   color: var(--fx-text-primary, #111827);
-  font-size: 24px;
+  font-size: 22px;
+  line-height: 1.25;
 }
 
 .unit-main-header p {
   margin: 0;
   color: var(--fx-text-secondary, #64748b);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .unit-main-panel :deep(.fx-dynamic-table) {

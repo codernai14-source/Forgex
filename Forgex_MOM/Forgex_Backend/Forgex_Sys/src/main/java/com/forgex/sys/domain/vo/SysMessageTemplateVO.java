@@ -63,6 +63,12 @@ public class SysMessageTemplateVO {
     
     /** 创建人 */
     private String createBy;
+
+    /**
+     * 创建人名称。
+     */
+    @com.forgex.common.api.annotation.AutoFillUsername(userIdField = "createBy")
+    private String createByName;
     
     /** 更新时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

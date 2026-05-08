@@ -162,6 +162,8 @@ async function handleRequest(payload) {
 - 在页面把 `dictOptions` 准备好
 - 在 `request` 中正确消费 `payload.query`
 
+如果已有环境的后端表格配置暂时没有维护查询字段，页面可以通过 `fallbackConfig.queryFields` 或 `dynamicTableConfig.queryFields` 提供兜底查询项；组件会在后端查询字段为空或缺字段时自动补齐。也可以在列配置上设置 `queryable: true`、`queryType`、`queryOperator`、`dictCode`，由组件生成基础查询项。
+
 适合放到 `queryFields` 的条件通常有：
 
 - 名称关键字

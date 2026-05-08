@@ -1,10 +1,11 @@
 <template>
   <div class="fx-guide-tour">
+    <div v-if="open && showBackdropMask" class="fx-guide-tour__mask" aria-hidden="true" />
     <a-tour
       v-model:current="currentStep"
       :open="open"
       :steps="resolvedSteps"
-      :mask="currentMask"
+      :mask="tourMask"
       :placement="defaultPlacement"
       :z-index="2000"
       :gap="guideGap"
@@ -26,6 +27,8 @@ interface Props {
   autoStart?: boolean
   startKey?: string | number
   skipText?: string
+  skipAllText?: string
+  showSkipAll?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -34,6 +37,8 @@ const props = withDefaults(defineProps<Props>(), {
   autoStart: false,
   startKey: '',
   skipText: '跳过引导',
+  skipAllText: '跳过后续页面引导',
+  showSkipAll: false,
 })
 
 const emit = defineEmits<{
@@ -41,6 +46,7 @@ const emit = defineEmits<{
   close: []
   finish: [guideCode: string, version?: string]
   skip: [guideCode: string, version?: string]
+  skipAll: [guideCode: string, version?: string]
 }>()
 
 const open = ref(false)
@@ -50,6 +56,7 @@ const finished = ref(false)
 const skipEmitted = ref(false)
 
 const skipText = computed(() => props.skipText || '跳过引导')
+const skipAllText = computed(() => props.skipAllText || '跳过后续页面引导')
 const guideGap = { offset: 0, radius: 2 }
 
 const resolvedSteps = computed(() => {
@@ -83,8 +90,27 @@ const defaultPlacement = computed(() => {
   return resolvedSteps.value[currentStep.value]?.placement || 'bottom'
 })
 
+const currentResolvedStep = computed(() => resolvedSteps.value[currentStep.value])
+
 const currentMask = computed(() => {
-  return resolvedSteps.value[currentStep.value]?.useMask !== false
+  return currentResolvedStep.value?.useMask !== false
+})
+
+const currentStepHasTarget = computed(() => {
+  const step = currentResolvedStep.value
+  return !!(step?.hasTarget && step.target?.())
+})
+
+const showBackdropMask = computed(() => {
+  return currentMask.value && !currentStepHasTarget.value
+})
+
+const tourMask = computed(() => {
+  return currentMask.value && currentStepHasTarget.value
+    ? {
+        color: 'rgba(15, 23, 42, 0.42)',
+      }
+    : false
 })
 
 function resolveCategoryText(category: FxGuideStep['category']) {
@@ -113,6 +139,44 @@ function renderGuidePanel(step: any, index: number): VNodeChild {
   const category = resolvedStep?.category || 'navigation'
   const title = step?.title ?? resolvedStep?.title ?? ''
   const description = step?.description ?? resolvedStep?.description ?? ''
+  const actionNodes = [
+    h(Button, {
+      key: 'skip',
+      size: 'small',
+      type: 'text',
+      class: 'fx-guide-panel__button fx-guide-panel__button--skip',
+      onClick: handleSkipClick,
+    }, () => skipText.value),
+    props.showSkipAll
+      ? h(Button, {
+          key: 'skip-all',
+          size: 'small',
+          type: 'text',
+          class: 'fx-guide-panel__button fx-guide-panel__button--skip-all',
+          onClick: handleSkipAllClick,
+        }, () => skipAllText.value)
+      : null,
+    h(Button, {
+      key: 'prev',
+      size: 'small',
+      class: 'fx-guide-panel__button',
+      disabled: isFirst,
+      onClick: () => goToStep(current - 1),
+    }, () => '上一步'),
+    h(Button, {
+      key: 'next',
+      size: 'small',
+      type: 'primary',
+      class: 'fx-guide-panel__button fx-guide-panel__button--primary',
+      onClick: () => {
+        if (isLast) {
+          handleFinish()
+          return
+        }
+        goToStep(current + 1)
+      },
+    }, () => (isLast ? '完成' : '下一步')),
+  ].filter(Boolean) as VNodeChild[]
 
   return h('div', { class: ['fx-guide-panel', `fx-guide-panel--${category}`] }, [
     h('div', { class: 'fx-guide-panel__header' }, [
@@ -133,32 +197,7 @@ function renderGuidePanel(step: any, index: number): VNodeChild {
           class: ['fx-guide-panel__dot', dotIndex === current ? 'fx-guide-panel__dot--active' : ''],
         }))),
       ]),
-      h('div', { class: 'fx-guide-panel__actions' }, [
-        h(Button, {
-          size: 'small',
-          type: 'text',
-          class: 'fx-guide-panel__button fx-guide-panel__button--skip',
-          onClick: handleSkipClick,
-        }, () => skipText.value),
-        h(Button, {
-          size: 'small',
-          class: 'fx-guide-panel__button',
-          disabled: isFirst,
-          onClick: () => goToStep(current - 1),
-        }, () => '上一步'),
-        h(Button, {
-          size: 'small',
-          type: 'primary',
-          class: 'fx-guide-panel__button fx-guide-panel__button--primary',
-          onClick: () => {
-            if (isLast) {
-              handleFinish()
-              return
-            }
-            goToStep(current + 1)
-          },
-        }, () => (isLast ? '完成' : '下一步')),
-      ]),
+      h('div', { class: 'fx-guide-panel__actions' }, actionNodes),
     ]),
   ])
 }
@@ -246,6 +285,15 @@ function handleSkipClick() {
   emit('skip', props.guideCode, props.version)
 }
 
+function handleSkipAllClick() {
+  if (skipEmitted.value) {
+    return
+  }
+  skipEmitted.value = true
+  closeTour()
+  emit('skipAll', props.guideCode, props.version)
+}
+
 watch(currentStep, async value => {
   if (!open.value) {
     return
@@ -294,8 +342,8 @@ defineExpose({
 
 <style>
 .fx-guide-panel {
-  width: 360px;
-  max-width: min(360px, calc(100vw - 48px));
+  width: clamp(360px, 32vw, 420px);
+  max-width: min(420px, calc(100vw - 32px));
   padding: 16px;
   border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
   border-radius: 10px;
@@ -305,6 +353,15 @@ defineExpose({
     var(--fx-bg-container, #ffffff);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.2);
   box-sizing: border-box;
+}
+
+.fx-guide-tour__mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1990;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: grayscale(0.18) saturate(0.82) brightness(0.72) blur(1px);
+  pointer-events: auto;
 }
 
 [data-theme='dark'] .fx-guide-panel,
@@ -380,15 +437,18 @@ body[data-theme='dark'] .fx-guide-panel {
 }
 
 .fx-guide-panel__footer {
+  flex-direction: column;
+  align-items: stretch;
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
 }
 
 .fx-guide-panel__progress {
-  min-width: 86px;
+  width: 100%;
+  min-width: 0;
   gap: 8px;
-  flex: 1;
+  flex: none;
   overflow: hidden;
 }
 
@@ -418,13 +478,22 @@ body[data-theme='dark'] .fx-guide-panel {
 }
 
 .fx-guide-panel__actions {
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: stretch;
   gap: 8px;
+  width: 100%;
   flex-shrink: 0;
 }
 
 .fx-guide-panel__button {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding-inline: 8px;
   border-radius: 6px;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .fx-guide-panel__button--skip {
@@ -434,6 +503,15 @@ body[data-theme='dark'] .fx-guide-panel {
 .fx-guide-panel__button--skip:hover {
   color: var(--fx-primary, #1677ff);
   background: rgba(22, 119, 255, 0.08);
+}
+
+.fx-guide-panel__button--skip-all {
+  color: var(--fx-text-tertiary, #6b7280);
+}
+
+.fx-guide-panel__button--skip-all:hover {
+  color: #fa8c16;
+  background: rgba(250, 140, 22, 0.1);
 }
 
 .fx-guide-panel__button--primary {
@@ -453,7 +531,9 @@ body[data-theme='dark'] .fx-guide-panel__description {
 [data-theme='dark'] .fx-guide-panel__progress-text,
 body[data-theme='dark'] .fx-guide-panel__progress-text,
 [data-theme='dark'] .fx-guide-panel__button--skip,
-body[data-theme='dark'] .fx-guide-panel__button--skip {
+body[data-theme='dark'] .fx-guide-panel__button--skip,
+[data-theme='dark'] .fx-guide-panel__button--skip-all,
+body[data-theme='dark'] .fx-guide-panel__button--skip-all {
   color: var(--fx-text-secondary, #cbd5e1);
 }
 

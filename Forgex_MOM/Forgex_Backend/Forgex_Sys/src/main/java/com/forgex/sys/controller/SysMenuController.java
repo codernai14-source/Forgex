@@ -61,7 +61,7 @@ import java.util.Map;
  * @since 2026-04-12
  */
 @RestController
-@RequestMapping("/sys/menu")
+@RequestMapping("/menu")
 @RequiredArgsConstructor
 public class SysMenuController {
 

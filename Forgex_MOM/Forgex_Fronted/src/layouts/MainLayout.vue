@@ -18,12 +18,17 @@
       :show-lang-switch="layoutConfig.widgetLangSwitch"
       :show-refresh="layoutConfig.widgetRefresh"
       :user="currentUser"
+      :tenant-options="tenantOptions"
+      :current-tenant-id="currentTenantId"
+      :tenant-loading="tenantLoading"
+      :switching-tenant-id="switchingTenantId"
       @module-click="onModuleClick"
       @search-click="globalSearchVisible = true"
       @locale-change="onLocaleChange"
       @refresh="refreshPage"
       @message-click="openMessageDrawer"
       @user-menu-click="onUserMenuClick"
+      @tenant-change="onTenantChange"
       @settings-click="settingOpen = true"
     />
 
@@ -160,10 +165,12 @@
       :auto-start="systemGuideAutoStart"
       :start-key="systemGuideStartKey"
       skip-text="跳过引导"
+      :show-skip-all="true"
       @open="handleSystemGuideOpen"
       @close="handleSystemGuideClose"
       @finish="handleSystemGuideFinish"
       @skip="handleSystemGuideSkip"
+      @skip-all="handleSystemGuideSkipAll"
     />
 
     <!-- 消息通知抽屉 -->
@@ -487,7 +494,7 @@ import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
 import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
-import { changeLanguage } from '../api/auth/login'
+import { changeLanguage, chooseTenant, listCurrentTenants, type TenantOption } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
@@ -521,6 +528,7 @@ import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
+import { use权限Store } from '../stores/permission'
 import { getIcon } from '../utils/icon'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
@@ -532,6 +540,7 @@ const { t, locale } = useI18n()
 const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
+const permissionStore = use权限Store()
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -949,6 +958,10 @@ function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
   })
 }
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
+const currentTenantId = ref<string>(sessionStorage.getItem('tenantId') || '')
+const tenantOptions = ref<TenantOption[]>([])
+const tenantLoading = ref(false)
+const switchingTenantId = ref('')
 const messageSendOpen = ref(false)
 const messageSendForm = ref<MessageSendForm>({
   receiverTenantId: Number(sessionStorage.getItem('tenantId') || '') || undefined,
@@ -1176,7 +1189,8 @@ async function reportSystemMenuOpenIfNeeded(path: string) {
 
   const currentGuideConfig = resolveSystemPageGuide(normalizedPath)
   const currentGuideState = guideStore.getMergedGuideState(currentGuideConfig.guideCode)
-  if (currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled) {
+  if ((currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled)
+    && guideStore.shouldAutoStartSystemPageGuide(currentGuideConfig.guideCode, currentGuideConfig.version)) {
     reportUserMenuOpen(normalizedPath).catch(() => {})
     await startSystemGuide(currentGuideConfig)
     return
@@ -1188,6 +1202,9 @@ async function reportSystemMenuOpenIfNeeded(path: string) {
       return
     }
     const guideConfig = resolveSystemPageGuide(result.path || normalizedPath)
+    if (!guideStore.shouldAutoStartSystemPageGuide(guideConfig.guideCode, guideConfig.version)) {
+      return
+    }
     await startSystemGuide(guideConfig)
   } catch (_) {
   }
@@ -1712,19 +1729,91 @@ const currentUser = computed(() => {
   }
 })
 
+async function loadTenantOptions() {
+  tenantLoading.value = true
+  try {
+    const list = await listCurrentTenants()
+    tenantOptions.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('[MainLayout] 加载可切换租户失败:', error)
+    tenantOptions.value = []
+  } finally {
+    tenantLoading.value = false
+  }
+}
+
+async function onTenantChange(tenantId: string) {
+  const targetTenantId = String(tenantId || '')
+  if (!targetTenantId || targetTenantId === currentTenantId.value || switchingTenantId.value) {
+    return
+  }
+
+  const account = currentUser.value.account || currentAccount.value || sessionStorage.getItem('account') || ''
+  if (!account) {
+    message.warning('当前账号信息缺失，请重新登录')
+    return
+  }
+
+  const targetTenant = tenantOptions.value.find(item => String(item.id) === targetTenantId)
+  switchingTenantId.value = targetTenantId
+  try {
+    const result = await chooseTenant({ account, tenantId: targetTenantId })
+    const nextTenantId = String(result?.tenantId || targetTenantId)
+
+    userStore.setUserInfo({
+      account: result?.account || account,
+      username: result?.username || result?.account || account,
+      email: result?.email,
+      phone: result?.phone,
+      avatar: result?.avatar,
+      tenantId: nextTenantId,
+      tenantName: targetTenant?.name
+    })
+    currentAccount.value = result?.account || account
+    currentTenantId.value = nextTenantId
+    sessionStorage.setItem('account', currentAccount.value)
+    sessionStorage.setItem('tenantId', nextTenantId)
+
+    const routesRes = await getRoutes({ account: currentAccount.value, tenantId: nextTenantId })
+    permissionStore.set权限s(routesRes?.buttons || [])
+    permissionStore.setRoutes(routesRes?.routes || [])
+    permissionStore.setModules(routesRes?.modules || [])
+    await injectDynamicRoutes(routesRes)
+
+    tabs.value = buildFixedTabs()
+    activeTabKey.value = PERSONAL_HOME_PATH
+    selectedKeys.value = [PERSONAL_HOME_PATH]
+    activeModuleCode.value = ''
+    openKeys.value = []
+    messageSendForm.value.receiverTenantId = Number(nextTenantId) || undefined
+
+    await loadTenantOptions()
+    await router.push(PERSONAL_HOME_PATH)
+    message.success('租户切换成功')
+  } catch (error) {
+    console.error('[MainLayout] 切换租户失败:', error)
+    message.error('切换租户失败，请稍后重试')
+  } finally {
+    switchingTenantId.value = ''
+  }
+}
+
 function canAutoStartSystemGuide() {
   if (!systemGuideReady.value) {
     return false
   }
+  if (guideStore.systemPageGuideDisabled && !guideStore.babyModeEnabled) {
+    return false
+  }
   if (currentSystemGuideCode.value !== 'system.main') {
     return pendingSystemFirstOpenGuide.value
-      && guideStore.shouldAutoStartGuide(currentSystemGuideCode.value, currentSystemGuideVersion.value)
+      && guideStore.shouldAutoStartSystemPageGuide(currentSystemGuideCode.value, currentSystemGuideVersion.value)
   }
   if (route.path !== PERSONAL_HOME_PATH) {
     return false
   }
   currentSystemGuideVersion.value = 'v1'
-  return guideStore.shouldAutoStartGuide('system.main', 'v1')
+  return guideStore.shouldAutoStartSystemPageGuide('system.main', 'v1')
 }
 
 function syncSystemGuideAutoStart() {
@@ -1765,6 +1854,14 @@ async function handleSystemGuideSkip(guideCode = currentSystemGuideCode.value, v
   guideStore.finishCurrentGuide()
 }
 
+async function handleSystemGuideSkipAll(guideCode = currentSystemGuideCode.value, version = 'v1') {
+  await guideStore.markGuideSkipped(guideCode, version)
+  await guideStore.setSystemPageGuideDisabled(true)
+  systemGuideAutoStart.value = false
+  pendingSystemFirstOpenGuide.value = false
+  guideStore.finishCurrentGuide()
+}
+
 async function loadGuidePreference() {
   await guideStore.loadPreference()
   systemGuideReady.value = true
@@ -1772,7 +1869,8 @@ async function loadGuidePreference() {
   if (normalizedPath.startsWith('/workspace/sys/')) {
     const currentGuideConfig = resolveSystemPageGuide(normalizedPath)
     const currentGuideState = guideStore.getMergedGuideState(currentGuideConfig.guideCode)
-    if (currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled) {
+    if ((currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled)
+      && guideStore.shouldAutoStartSystemPageGuide(currentGuideConfig.guideCode, currentGuideConfig.version)) {
       await startSystemGuide(currentGuideConfig)
       return
     }
@@ -2558,6 +2656,7 @@ onMounted(async () => {
   await Promise.all([
     loadLayout(),
     loadGuidePreference(),
+    loadTenantOptions(),
   ])
   updateTabsByRoute(route.fullPath)
   

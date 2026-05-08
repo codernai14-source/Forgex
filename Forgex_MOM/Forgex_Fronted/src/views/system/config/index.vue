@@ -1111,7 +1111,7 @@ const currentUploadNav = computed(() => uploadNavOptions.find(o => o.value === f
 const currentCryptoNav = computed(() => cryptoNavOptions.find(o => o.value === cryptoSubTab.value) || cryptoNavOptions[0])
 const fileUploadPreviewUrl = computed(() => {
   const base = normalizePublicBaseUrl(fileUploadConfig.value.publicBaseUrl || runtimeDefaults.value?.recommendedPublicBaseUrl || '')
-  const prefix = normalizeAccessPrefix(fileUploadConfig.value.accessPrefix || runtimeDefaults.value?.accessPrefix || '/files')
+  const prefix = normalizeAccessPrefix(fileUploadConfig.value.accessPrefix || runtimeDefaults.value?.accessPrefix || '/sys/files')
   return base ? `${base}${prefix}/example.png` : `${prefix}/example.png`
 })
 
@@ -1167,7 +1167,7 @@ function normalizeEmailConfig(config: Partial<EmailConfig> | null | undefined): 
 function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | undefined): FileUploadConfig {
   const defaults = createDefaultFileUploadConfig()
   const publicBaseUrl = normalizePublicBaseUrl(config?.publicBaseUrl || defaults.publicBaseUrl || '')
-  const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/files').trim()
+  const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/sys/files').trim()
   return {
     ...defaults,
     ...(config || {}),
@@ -1208,23 +1208,35 @@ function normalizeConfigMediaUrl(value: string): string {
     return rawValue
   }
 
-  if (rawValue.startsWith('/api/files/')) {
+  if (rawValue.startsWith('/api/sys/files/')) {
     return `${recommendedBaseUrl}${rawValue.substring('/api'.length)}`
   }
-  if (rawValue.startsWith('api/files/')) {
+  if (rawValue.startsWith('/api/files/')) {
+    return `${recommendedBaseUrl}/sys${rawValue.substring('/api'.length)}`
+  }
+  if (rawValue.startsWith('api/sys/files/')) {
     return `${recommendedBaseUrl}/${rawValue.substring('api/'.length)}`
   }
-  if (rawValue.startsWith('/files/')) {
+  if (rawValue.startsWith('api/files/')) {
+    return `${recommendedBaseUrl}/sys/${rawValue.substring('api/'.length)}`
+  }
+  if (rawValue.startsWith('/sys/files/')) {
     return `${recommendedBaseUrl}${rawValue}`
   }
-  if (rawValue.startsWith('files/')) {
+  if (rawValue.startsWith('/files/')) {
+    return `${recommendedBaseUrl}/sys${rawValue}`
+  }
+  if (rawValue.startsWith('sys/files/')) {
     return `${recommendedBaseUrl}/${rawValue}`
+  }
+  if (rawValue.startsWith('files/')) {
+    return `${recommendedBaseUrl}/sys/${rawValue}`
   }
   return rawValue
 }
 
 function normalizeAccessPrefix(value: string): string {
-  const normalized = String(value || '/files').trim().replace(/\/+$/, '') || '/files'
+  const normalized = String(value || '/sys/files').trim().replace(/\/+$/, '') || '/sys/files'
   return normalized.startsWith('/') ? normalized : `/${normalized}`
 }
 

@@ -29,4 +29,9 @@ public class UnitPageParam extends BaseGetParam {
      * 计量单位名称
      */
     private String unitName;
+
+    /**
+     * 计量单位类型名称
+     */
+    private String unitTypeName;
 }

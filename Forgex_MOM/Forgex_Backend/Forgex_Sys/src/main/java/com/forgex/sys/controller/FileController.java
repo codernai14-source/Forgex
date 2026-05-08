@@ -27,7 +27,7 @@ import java.io.IOException;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/file")
+@RequestMapping("/file")
 @RequiredArgsConstructor
 public class FileController {
 

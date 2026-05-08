@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
  * @see MessageTemplateValidator
  */
 @RestController
-@RequestMapping("/sys/message-template")
+@RequestMapping("/message-template")
 @RequiredArgsConstructor
 public class SysMessageTemplateController {
 

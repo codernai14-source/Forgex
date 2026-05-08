@@ -154,6 +154,18 @@
                   />
                 </div>
 
+                <div class="guide-setting-row">
+                  <div>
+                    <div class="guide-setting-title">{{ $t('profile.guide.systemPageGuideTitle') }}</div>
+                    <div class="guide-setting-desc">{{ $t('profile.guide.systemPageGuideDesc') }}</div>
+                  </div>
+                  <a-switch
+                    :checked="!guideStore.systemPageGuideDisabled"
+                    :loading="guideStore.saving"
+                    @change="handleSystemPageGuideToggle"
+                  />
+                </div>
+
                 <div class="guide-setting-row guide-setting-row--action">
                   <div>
                     <div class="guide-setting-title">{{ $t('profile.guide.replayTitle') }}</div>
@@ -288,12 +300,18 @@ async function handleChangePassword() {
 async function handleBabyModeChange(checked: boolean) {
   await guideStore.setBabyModeEnabled(checked)
   if (checked) {
+    await guideStore.setSystemPageGuideDisabled(false)
     await guideStore.resetGuideState('system.main', 'v1')
     await Promise.all(listSystemPageGuideCodes().map(code => guideStore.resetGuideState(code, 'v2')))
   }
 }
 
+async function handleSystemPageGuideToggle(checked: boolean) {
+  await guideStore.setSystemPageGuideDisabled(!checked)
+}
+
 async function handleReplaySystemGuide() {
+  await guideStore.setSystemPageGuideDisabled(false)
   await guideStore.resetGuideState('system.main', 'v1')
   await Promise.all(listSystemPageGuideCodes().map(code => guideStore.resetGuideState(code, 'v2')))
   router.push('/workspace/home')
