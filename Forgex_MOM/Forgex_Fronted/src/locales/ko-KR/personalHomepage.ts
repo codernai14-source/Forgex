@@ -170,5 +170,36 @@ export default {
     },
     todayLineKo: '오늘은 {month}월{day}일 {weekday}',
     onlineDuration: '온라인 时间',
+    zeroMinutes: '0?',
   },
+  module: {
+    mode: { editing: '편집 중', view: '보기' },
+    toolbar: { exitConfig: '설정 종료', hint: { edit: '카드를 드래그하거나 크기를 조정한 후 저장하세요.', view: '설정에 들어가 모듈 홈 위젯을 조정할 수 있습니다.' } },
+    empty: '표시할 위젯이 없습니다',
+    action: { enter: '열기' },
+    panel: { width: '너비', height: '높이' },
+    message: { saveSuccess: '모듈 홈 설정을 저장했습니다', saveFailed: '모듈 홈 설정 저장에 실패했습니다' },
+    modules: {
+      personal: { name: '개인 홈', title: '개인 홈 기본 설정', desc: '개인 홈의 기본 레이아웃을 관리합니다.' },
+      basic: { name: '기본 정보', title: '기본 정보 홈', desc: '기본 정보 모듈의 마스터 데이터 진입점과 설정 상태를 한곳에서 확인합니다.' },
+      approval: { name: '승인 관리', title: '승인 관리 홈', desc: '승인 작업, 대기 항목, 워크플로 설정을 한곳에서 확인합니다.' },
+      sys: { name: '시스템 관리', title: '시스템 관리 홈', desc: '시스템 실행 상태, 권한 설정, 시스템 파라미터 진입점을 한곳에서 제공합니다.' },
+    },
+    widgets: {
+      supplierInfo: { title: '공급업체 정보', subtitle: '공급업체 마스터 데이터 및 등록 관리', summary: '공급업체 프로필, 연락처, 자격 및 협업 상태를 관리합니다.' },
+      encodeRuleInfo: { title: '인코딩 규칙', subtitle: '통합 코드 생성 규칙', summary: '기본 정보 모듈의 인코딩 규칙, 일련번호 및 테스트 생성을 관리합니다.' },
+      systemOverview: { title: '시스템 개요', subtitle: '조직, 사용자 및 권한 진입점', summary: '사용자, 역할, 메뉴 권한 등 핵심 시스템 기능에 빠르게 접근합니다.' },
+      systemHealth: { title: '실행 상태', subtitle: '시스템 실행 및 보안 상태', summary: '온라인 사용자, 로그인 동작, 시스템 실행 관련 정보를 확인합니다.' },
+      systemLogs: { title: '작업 로그', subtitle: '시스템 감사 및 추적', summary: '로그인 로그, 작업 로그 등 감사 화면으로 이동합니다.' },
+      systemConfig: { title: '시스템 설정', subtitle: '플랫폼 파라미터 및 화면 설정', summary: '포털, 테마, 보안, 메일, 업로드 및 기본 홈 레이아웃을 관리합니다.' },
+      approvalStats: { title: '승인 개요', subtitle: '승인 실행 현황', summary: '대기, 처리 완료, 승인 실행의 전체 현황을 확인합니다.' },
+      approvalShortcuts: { title: '승인 진입점', subtitle: '승인 시작 및 자주 쓰는 흐름', summary: '시작 가능한 승인 작업과 업무 흐름으로 빠르게 이동합니다.' },
+      approvalPending: { title: '내 대기 작업', subtitle: '현재 처리 대기 승인', summary: '현재 사용자가 처리해야 하는 승인 인스턴스를 확인합니다.' },
+      approvalTaskConfig: { title: '작업 설정', subtitle: '승인 작업 및 노드 규칙', summary: '작업 양식, 노드 승인자, 워크플로 규칙을 설정합니다.' },
+      custom: { subtitle: '사용자 정의 위젯', summary: '저장된 모듈 홈 설정에서 가져온 위젯입니다.' },
+    },
+    stats: {
+      masterData: '마스터 데이터', supplierArchive: '공급업체 프로필', approval: '승인', admissionChange: '등록/변경', rule: '규칙', byModule: '모듈별', capability: '기능', testGenerate: '테스트/생성', user: '사용자', accountManage: '계정 관리', role: '역할', authConfig: '권한 설정', status: '상태', onlineSession: '온라인/세션', security: '보안', loginAudit: '로그인 감사', audit: '감사', operationLog: '작업 로그', trace: '추적', loginRecord: '로그인 기록', scope: '범위', publicTenant: '공용/테넌트', config: '설정', systemParams: '시스템 파라미터', pending: '대기', myTasks: '내 작업', processed: '처리 완료', processRecord: '처리 기록', entry: '진입점', startApproval: '승인 시작', flow: '흐름', taskTemplate: '작업 템플릿', action: '작업', approveReject: '승인/반려', task: '작업', flowConfig: '흐름 설정', node: '노드', approvalRule: '승인 규칙', type: '유형', extension: '확장', enabled: '사용', pendingApproval: '승인 대기',
+    },
+  }
 }

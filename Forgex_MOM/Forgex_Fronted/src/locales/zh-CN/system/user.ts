@@ -1,14 +1,9 @@
-/**
- * 用户管理翻译 - 中文
- */
 export default {
-  // 页面标题
   title: '用户管理',
   userManagement: '用户管理',
   list: '用户列表',
   detail: '用户详情',
 
-  // 表格列
   avatar: '头像',
   username: '用户名',
   realName: '真实姓名',
@@ -25,83 +20,100 @@ export default {
   updateTime: '更新时间',
   updateBy: '更新人',
   lastLoginTime: '最后登录时间',
-  lastLoginIp: '最后登录 IP',
+  lastLoginIp: '最后登录IP',
   lastLoginRegion: '最后登录地区',
   action: '操作',
 
-  // 性别
   genderOptions: {
     unknown: '未知',
     male: '男',
     female: '女',
   },
 
-  // 表单
-  form: {
-    addUser: '新增用户',
-    editUser: '编辑用户',
-    userDetail: '用户详情',
-    username: '请输入用户名',
-    realName: '请输入真实姓名',
-    email: '请输入邮箱',
-    phone: '请输入手机号',
-    password: '请输入密码',
-    confirmPassword: '请再次输入密码',
-    gender: '请选择性别',
-    entryDate: '请选择入职时间',
-    department: '请选择部门',
-    position: '请选择岗位',
-    role: '请选择角色',
-    status: '请选择状态',
-  },
-
-  // 标签页
   tabs: {
     basic: '基本信息',
     profile: '附属信息',
+    profileOptional: '附属信息（可选）',
   },
 
-  // 附属信息
   profile: {
-    political状态: '政治面貌',
-    homeAddress: '家庭住址',
-    emergencyContact: '紧急联系人',
-    emergencyPhone: '紧急联系人电话',
-    referrer: '推荐人',
+    politicalStatus: '政治面貌',
+    selectPoliticalStatus: '请选择政治面貌',
+    politicalOptions: {
+      mass: '群众',
+      leagueMember: '共青团员',
+      partyMember: '中共党员',
+      democraticParty: '民主党派',
+      nonPartisan: '无党派人士',
+    },
     education: '学历',
+    selectEducation: '请选择学历',
+    educationOptions: {
+      primary: '小学',
+      junior: '初中',
+      high: '高中',
+      secondaryTechnical: '中专',
+      juniorCollege: '大专',
+      bachelor: '本科',
+      master: '硕士',
+      doctor: '博士',
+    },
+    birthPlace: '籍贯',
+    birthPlacePlaceholder: '请输入籍贯',
+    homeAddress: '家庭住址',
+    homeAddressPlaceholder: '请输入家庭住址',
+    emergencyContact: '紧急联系人',
+    emergencyContactPlaceholder: '请输入紧急联系人',
+    emergencyPhone: '紧急联系人电话',
+    emergencyPhonePlaceholder: '请输入紧急联系人电话',
+    referrer: '推荐人',
+    referrerPlaceholder: '请输入推荐人',
+    intro: '个人简介',
+    introPlaceholder: '请输入个人简介',
     workHistory: '工作经历',
     company: '公司名称',
-    position: '岗位',
+    companyPlaceholder: '请输入公司名称',
+    position: '职位',
+    positionPlaceholder: '请输入职位',
     startDate: '开始时间',
+    startDatePlaceholder: '请选择开始时间',
     endDate: '结束时间',
+    endDatePlaceholder: '请选择结束时间',
     description: '工作描述',
+    descriptionPlaceholder: '请输入工作描述',
     addWorkHistory: '添加工作经历',
   },
 
-  // 状态
   statusActive: '启用',
   statusInactive: '禁用',
   statusLocked: '锁定',
 
-  // 操作
   add: '新增用户',
   edit: '编辑',
   delete: '删除',
   export: '导出',
   resetPassword: '重置密码',
+  syncThirdParty: '同步第三方',
+  pullThirdParty: '从第三方拉取',
   lockUser: '锁定用户',
   unlockUser: '解锁用户',
   assignRole: '分配角色',
   viewDetail: '查看详情',
 
-  // 分配角色弹窗
+  userSource: {
+    siteCreate: '本站新增',
+    siteImport: '本站导入',
+    thirdPartySync: '第三方同步',
+    selfRegister: '自主注册',
+  },
+
   roleAssign: {
     searchPlaceholder: '搜索角色名称或编码',
     selectAll: '全选',
     clearAll: '清空',
     roleName: '角色名称',
     roleCode: '角色编码',
-    assigned状态: '分配状态',
+    assignedStatus: '分配状态',
     assigned: '已分配',
     summary: '共 {total} 个角色，已选 {selected} 个',
     loadFailed: '加载角色数据失败',
@@ -109,9 +121,9 @@ export default {
     missingUserId: '缺少用户 ID',
   },
 
-  // 消息
   message: {
     loadListFailed: '获取用户列表失败',
+    loadDetailFailed: '加载用户数据失败',
     deleteFailed: '删除失败',
     batchDeleteFailed: '批量删除失败',
     selectToDelete: '请选择要删除的用户',
@@ -129,6 +141,33 @@ export default {
     exportSuccess: '导出成功',
     usernameExists: '用户名已存在',
     emailExists: '邮箱已存在',
-    update状态Failed: '更新状态失败',
+    updateStatusFailed: '更新状态失败',
+  },
+
+  form: {
+    addUser: '新增用户',
+    editUser: '编辑用户',
+    userDetail: '用户详情',
+    account: '请输入账号',
+    accountLength: '账号长度需在 3-20 个字符之间',
+    username: '请输入用户名',
+    usernameLength: '用户名长度需在 2-20 个字符之间',
+    realName: '请输入真实姓名',
+    email: '请输入邮箱',
+    emailFormat: '请输入正确的邮箱格式',
+    phone: '请输入手机号',
+    phoneFormat: '请输入正确的手机号',
+    password: '请输入密码',
+    confirmPassword: '请再次输入密码',
+    gender: '请选择性别',
+    entryDate: '请选择入职时间',
+    department: '请选择部门',
+    position: '请选择岗位',
+    role: '请选择角色',
+    status: '请选择状态',
+    employeeId: '关联员工ID',
+    employeeIdPlaceholder: '请输入关联员工ID',
+    employeeIdNumber: '关联员工ID必须为数字',
+    userSource: '用户来源',
   },
 }

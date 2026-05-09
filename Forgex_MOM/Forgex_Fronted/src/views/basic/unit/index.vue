@@ -67,7 +67,6 @@
         ref="tableRef"
         table-code="BasicUnitTable"
         :request="handleRequest"
-        :fallback-config="tableFallbackConfig"
         row-key="id"
       >
         <template #action="{ record }">
@@ -198,7 +197,7 @@ import { message, Modal } from 'ant-design-vue'
 import { MoreOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { type UnitConversion, type UnitMaster, type UnitTypeNode, unitApi } from '@/api/basic/unit'
+import { type UnitConversion, type UnitMaster, type UnitTypeNode, unitApi } from '@/api/basic/unit'import { translateLegacyText } from '@/utils/legacyI18n'
 
 type TreeNode = {
   key: number
@@ -242,27 +241,6 @@ const unitForm = reactive<UnitMaster>({
 const conversionRows = ref<ConversionRow[]>([])
 const unitOptions = ref<UnitMaster[]>([])
 
-const tableFallbackConfig = {
-  tableCode: 'BasicUnitTable',
-  tableName: '计量单位主数据',
-  tableType: 'BUSINESS',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  version: 1,
-  columns: [
-    { field: 'unitCode', title: t('basic.unit.unitCode'), width: 140, visible: true, order: 1, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'unitName', title: t('basic.unit.unitName'), width: 160, visible: true, order: 2, queryable: true, queryType: 'input', queryOperator: 'like' },
-    { field: 'unitTypeName', title: t('basic.unit.typeName'), width: 160, visible: true, order: 3 },
-    { field: 'remark', title: t('common.remark'), width: 220, visible: true, order: 4, ellipsis: true },
-    { field: 'createTime', title: t('common.createTime'), width: 180, visible: true, order: 5 },
-    { field: 'action', title: t('common.action'), width: 220, fixed: 'right', visible: true, order: 99 },
-  ],
-  queryFields: [
-    { field: 'unitCode', label: t('basic.unit.unitCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'unitName', label: t('basic.unit.unitName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'unitTypeName', label: t('basic.unit.typeName'), queryType: 'input', queryOperator: 'like' },
-  ],
-}
 
 const typeSelectData = computed(() => [
   {

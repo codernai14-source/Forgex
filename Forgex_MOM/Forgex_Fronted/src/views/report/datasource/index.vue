@@ -5,7 +5,6 @@
       table-code="ReportDatasourceTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
     >
@@ -16,7 +15,7 @@
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          新增数据源
+          {{ $tl('新增数据源') }}
         </a-button>
       </template>
 
@@ -43,20 +42,20 @@
             v-permission="'report:datasource:edit'"
             @click="handleEdit(record)"
           >
-            编辑
+            {{ $tl('编辑') }}
           </a>
           <a
             v-permission="'report:datasource:test'"
             @click="handleTest(record)"
           >
-            连接测试
+            {{ $tl('连接测试') }}
           </a>
           <a
             v-permission="'report:datasource:delete'"
             style="color: #ff4d4f"
             @click="handleDelete(record)"
           >
-            删除
+            {{ $tl('删除') }}
           </a>
         </a-space>
       </template>
@@ -77,29 +76,29 @@
         :label-col="{ span: 5 }"
         :wrapper-col="{ span: 16, offset: 1 }"
       >
-        <a-form-item label="数据源名称" name="name">
+        <a-form-item :label="$tl('数据源名称')" name="name">
           <a-input
             v-model:value="form.name"
-            placeholder="请输入数据源名称"
+            :placeholder="$tl('请输入数据源名称')"
             maxlength="100"
             show-count
           />
         </a-form-item>
 
-        <a-form-item label="数据源编码" name="code">
+        <a-form-item :label="$tl('数据源编码')" name="code">
           <a-input
             v-model:value="form.code"
-            placeholder="请输入数据源编码，首字母必须为字母，可包含字母、数字和下划线"
+            :placeholder="$tl('请输入数据源编码，首字母必须为字母，可包含字母、数字和下划线')"
             maxlength="50"
             show-count
             :disabled="!!form.id"
           />
         </a-form-item>
 
-        <a-form-item label="数据库类型" name="type">
+        <a-form-item :label="$tl('数据库类型')" name="type">
           <a-select
             v-model:value="form.type"
-            placeholder="请选择数据库类型"
+            :placeholder="$tl('请选择数据库类型')"
             @change="handleDbTypeChange"
           >
             <a-select-option value="mysql">MySQL</a-select-option>
@@ -110,62 +109,62 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="连接地址 URL" name="url">
+        <a-form-item :label="$tl('连接地址 URL')" name="url">
           <a-textarea
             v-model:value="form.url"
-            placeholder="请输入数据库连接地址 URL"
+            :placeholder="$tl('请输入数据库连接地址 URL')"
             :rows="2"
             maxlength="500"
             show-count
           />
         </a-form-item>
 
-        <a-form-item label="用户名" name="username">
+        <a-form-item :label="$tl('用户名')" name="username">
           <a-input
             v-model:value="form.username"
-            placeholder="请输入数据库用户名"
+            :placeholder="$tl('请输入数据库用户名')"
             maxlength="100"
           />
         </a-form-item>
 
-        <a-form-item label="密码" name="password">
+        <a-form-item :label="$tl('密码')" name="password">
           <a-input-password
             v-model:value="form.password"
-            placeholder="请输入数据库密码"
+            :placeholder="$tl('请输入数据库密码')"
             maxlength="100"
           />
         </a-form-item>
 
-        <a-form-item label="驱动类名" name="driverClass">
+        <a-form-item :label="$tl('驱动类名')" name="driverClass">
           <a-input
             v-model:value="form.driverClass"
-            placeholder="请输入数据库驱动类名"
+            :placeholder="$tl('请输入数据库驱动类名')"
             maxlength="200"
             :disabled="autoFillDriver"
           />
         </a-form-item>
 
-        <a-form-item label="连接池配置" name="poolConfig">
+        <a-form-item :label="$tl('连接池配置')" name="poolConfig">
           <a-textarea
             v-model:value="form.poolConfig"
-            placeholder="请输入连接池配置 JSON 字符串，如无特殊需求可留空"
+            :placeholder="$tl('请输入连接池配置 JSON 字符串，如无特殊需求可留空')"
             :rows="3"
             maxlength="1000"
             show-count
           />
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$tl('状态')" name="status">
           <a-radio-group v-model:value="form.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio :value="1">{{ $tl('启用') }}</a-radio>
+            <a-radio :value="0">{{ $tl('禁用') }}</a-radio>
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item label="备注" name="remark">
+        <a-form-item :label="$tl('备注')" name="remark">
           <a-textarea
             v-model:value="form.remark"
-            placeholder="请输入备注"
+            :placeholder="$tl('请输入备注')"
             :rows="2"
             maxlength="500"
             show-count
@@ -181,11 +180,11 @@ import { computed, onMounted, reactive, ref, nextTick } from 'vue'
 import { Modal, type FormInstance } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { useDict } from '@/hooks/useDict'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { useDict } from '@/hooks/useDict'
 import type { ReportDatasource, ReportDatasourceParam, DatasourceSaveDTO } from '@/report/types'
+import { translateLegacyText } from '@/utils/legacyI18n'
 import {
-  pageDatasource,
+pageDatasource,
   removeDatasource,
   testDatasourceConfig,
   testDatasource,
@@ -213,30 +212,30 @@ const form = reactive<DatasourceSaveDTO>({
 
 const autoFillDriver = ref(false)
 
-const formTitle = computed(() => (form.id ? '编辑数据源' : '新增数据源'))
+const formTitle = computed(() => (form.id ? translateLegacyText('编辑数据源') : translateLegacyText('新增数据源')))
 
 const formRules = {
   name: [
-    { required: true, message: '请输入数据源名称', trigger: 'blur' },
-    { max: 100, message: '数据源名称不能超过 100 个字符', trigger: 'blur' },
+    { required: true, message: translateLegacyText('请输入数据源名称'), trigger: 'blur' },
+    { max: 100, message: translateLegacyText('数据源名称不能超过 100 个字符'), trigger: 'blur' },
   ],
   code: [
-    { required: true, message: '请输入数据源编码', trigger: 'blur' },
+    { required: true, message: translateLegacyText('请输入数据源编码'), trigger: 'blur' },
     {
       pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-      message: '数据源编码必须以字母开头，且只能包含字母、数字和下划线',
+      message: translateLegacyText('数据源编码必须以字母开头，且只能包含字母、数字和下划线'),
       trigger: 'blur',
     },
-    { max: 50, message: '数据源编码不能超过 50 个字符', trigger: 'blur' },
+    { max: 50, message: translateLegacyText('数据源编码不能超过 50 个字符'), trigger: 'blur' },
   ],
-  type: [{ required: true, message: '请选择数据库类型', trigger: 'change' }],
+  type: [{ required: true, message: translateLegacyText('请选择数据库类型'), trigger: 'change' }],
   url: [
-    { required: true, message: '请输入数据库连接地址 URL', trigger: 'blur' },
-    { max: 500, message: 'URL 不能超过 500 个字符', trigger: 'blur' },
+    { required: true, message: translateLegacyText('请输入数据库连接地址 URL'), trigger: 'blur' },
+    { max: 500, message: translateLegacyText('URL 不能超过 500 个字符'), trigger: 'blur' },
   ],
   username: [
-    { required: true, message: '请输入数据库用户名', trigger: 'blur' },
-    { max: 100, message: '用户名不能超过 100 个字符', trigger: 'blur' },
+    { required: true, message: translateLegacyText('请输入数据库用户名'), trigger: 'blur' },
+    { max: 100, message: translateLegacyText('用户名不能超过 100 个字符'), trigger: 'blur' },
   ],
 }
 
@@ -251,31 +250,6 @@ const dictOptions = computed(() => ({
   ],
 }))
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'ReportDatasourceTable',
-  tableName: '数据源管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  columns: [
-    { field: 'id', title: 'ID', width: 80, align: 'center' },
-    { field: 'name', title: '数据源名称', width: 180, align: 'left' },
-    { field: 'code', title: '数据源编码', width: 150, align: 'left' },
-    { field: 'type', title: '数据库类型', width: 120, align: 'center', dictCode: 'dbType' },
-    { field: 'url', title: '连接地址 URL', width: 300, align: 'left' },
-    { field: 'username', title: '用户名', width: 120, align: 'center' },
-    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
-    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'name', label: '数据源名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'code', label: '数据源编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'type', label: '数据库类型', queryType: 'select', queryOperator: 'eq', dictCode: 'dbType' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
-  ],
-  version: 1,
-}))
 
 function resolveDbTypeLabel(value: string) {
   const typeMap: Record<string, string> = {
@@ -406,10 +380,10 @@ function handleEdit(record: ReportDatasource) {
 
 function handleDelete(record: ReportDatasource) {
   Modal.confirm({
-    title: '提示',
-    content: `确定要删除数据源“${record.name}”吗？`,
-    okText: '确定',
-    cancelText: '取消',
+    title: translateLegacyText('提示'),
+    content: translateLegacyText(`确定要删除数据源“${record.name}”吗？`),
+    okText: translateLegacyText('确定'),
+    cancelText: translateLegacyText('取消'),
     onOk: async () => {
       try {
         await removeDatasource(record.id)

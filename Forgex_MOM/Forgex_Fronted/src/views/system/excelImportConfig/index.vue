@@ -4,7 +4,6 @@
       ref="tableRef"
       table-code="ExcelImportConfigTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       row-key="id"
       :show-query-form="true"
       :pagination="{
@@ -62,12 +61,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal, message } from 'ant-design-vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { Modal, message } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ExcelImportConfigModal from './components/ExcelImportConfigModal.vue'
+import { translateLegacyText } from '@/utils/legacyI18n'
 import {
-  deleteImportConfig,
+deleteImportConfig,
   downloadTemplate,
   importConfigDetail,
   pageImportConfig,
@@ -82,28 +81,6 @@ const isEdit = ref(false)
 const editData = ref<any>({})
 const modalRef = ref()
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'ExcelImportConfigTable',
-  tableName: t('system.excel.importConfigTitle'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'tableName', title: t('system.excel.tableName'), minWidth: 180, align: 'left' },
-    { field: 'tableCode', title: t('system.excel.tableCode'), width: 180, align: 'left' },
-    { field: 'handlerBeanName', title: t('system.excel.handlerBeanName'), minWidth: 180, align: 'left' },
-    { field: 'importPermission', title: t('system.excel.importPermission'), minWidth: 180, align: 'left' },
-    { field: 'title', title: t('system.excel.title'), minWidth: 180, align: 'left' },
-    { field: 'subtitle', title: t('system.excel.subtitle'), minWidth: 180, align: 'left' },
-    { field: 'version', title: t('system.excel.version'), width: 100, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 220, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'tableName', label: t('system.excel.tableName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'tableCode', label: t('system.excel.tableCode'), queryType: 'input', queryOperator: 'like' },
-  ],
-  version: 1,
-}))
 
 function pickQueryValue(query: Record<string, any>, keys: string[]) {
   for (const key of keys) {
@@ -168,7 +145,7 @@ async function handleModalSubmit() {
   try {
     const formData = modalRef.value?.formData
     if (!formData) {
-      message.error('表单数据为空')
+      message.error(translateLegacyText('表单数据为空'))
       return
     }
 

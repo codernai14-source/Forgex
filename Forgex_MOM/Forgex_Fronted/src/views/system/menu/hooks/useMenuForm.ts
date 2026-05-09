@@ -1,3 +1,4 @@
+import { translateLegacyText } from '@/utils/legacyI18n'
 /**
  * 菜单表单逻辑封装
  */
@@ -16,7 +17,7 @@ export function useMenuForm(emit: any) {
   const menuTreeData = ref<MenuTreeNode[]>([
     {
       key: '0',
-      title: '顶级菜单',
+      title: translateLegacyText('顶级菜单'),
       value: '0',
       children: [],
     },
@@ -41,24 +42,24 @@ export function useMenuForm(emit: any) {
     status: true,
   })
 
-  const formTitle = computed(() => (mode.value === 'add' ? '新增菜单' : '编辑菜单'))
+  const formTitle = computed(() => (mode.value === 'add' ? translateLegacyText('新增菜单') : translateLegacyText('编辑菜单')))
   const showPath = computed(() => formData.type !== 'button')
   const showComponentKey = computed(() => formData.type === 'menu' && formData.menuMode === 'embedded')
   const showPermKey = computed(() => formData.type === 'button' || formData.type === 'menu')
   const showExternalUrl = computed(() => formData.menuMode === 'external')
 
   const rules = {
-    moduleId: [{ required: true, message: '请选择所属模块', trigger: 'change' }],
+    moduleId: [{ required: true, message: translateLegacyText('请选择所属模块'), trigger: 'change' }],
     name: [
-      { required: true, message: '请输入菜单名称', trigger: 'blur' },
-      { max: 50, message: '菜单名称不能超过 50 个字符', trigger: 'blur' },
+      { required: true, message: translateLegacyText('请输入菜单名称'), trigger: 'blur' },
+      { max: 50, message: translateLegacyText('菜单名称不能超过 50 个字符'), trigger: 'blur' },
     ],
-    type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
-    path: [{ required: true, message: '请输入路由路径', trigger: 'blur' }],
-    permKey: [{ required: true, message: '请输入权限标识', trigger: 'blur' }],
+    type: [{ required: true, message: translateLegacyText('请选择菜单类型'), trigger: 'change' }],
+    path: [{ required: true, message: translateLegacyText('请输入路由路径'), trigger: 'blur' }],
+    permKey: [{ required: true, message: translateLegacyText('请输入权限标识'), trigger: 'blur' }],
     externalUrl: [
-      { required: true, message: '请输入外链 URL', trigger: 'blur' },
-      { type: 'url', message: 'URL 格式不正确', trigger: 'blur' },
+      { required: true, message: translateLegacyText('请输入外链 URL'), trigger: 'blur' },
+      { type: 'url', message: translateLegacyText('URL 格式不正确'), trigger: 'blur' },
     ],
   }
 
@@ -152,7 +153,7 @@ export function useMenuForm(emit: any) {
     try {
       const tenantId = sessionStorage.getItem('tenantId')
       if (!tenantId) {
-        message.warning('未获取到租户信息')
+        message.warning(translateLegacyText('未获取到租户信息'))
         return
       }
 
@@ -199,7 +200,7 @@ export function useMenuForm(emit: any) {
   function buildParentMenuTree() {
     const rootNode: MenuTreeNode = {
       key: '0',
-      title: '顶级菜单',
+      title: translateLegacyText('顶级菜单'),
       value: '0',
       children: [],
     }

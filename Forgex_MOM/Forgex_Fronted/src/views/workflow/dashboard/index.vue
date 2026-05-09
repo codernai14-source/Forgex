@@ -260,24 +260,24 @@
         <a-divider />
         <div class="detail-summary-list">
           <div class="detail-summary-item">
-            <span class="detail-summary-label">活跃实例数</span>
+            <span class="detail-summary-label">{{ t('workflow.dashboard.activeInstanceCount') }}</span>
             <span class="detail-summary-value">{{ currentRecord.activeInstanceCount ?? 0 }}</span>
           </div>
           <div class="detail-summary-item">
-            <span class="detail-summary-label">超时标记</span>
-            <span class="detail-summary-value">{{ currentRecord.timeoutFlag ? '是' : '否' }}</span>
+            <span class="detail-summary-label">{{ t('workflow.dashboard.timeoutFlag') }}</span>
+            <span class="detail-summary-value">{{ currentRecord.timeoutFlag ? t('common.yes') : t('common.no') }}</span>
           </div>
           <div class="detail-summary-item">
-            <span class="detail-summary-label">委托命中</span>
-            <span class="detail-summary-value">{{ currentRecord.delegated ? '是' : '否' }}</span>
+            <span class="detail-summary-label">{{ t('workflow.dashboard.delegatedHit') }}</span>
+            <span class="detail-summary-value">{{ currentRecord.delegated ? t('common.yes') : t('common.no') }}</span>
           </div>
           <div class="detail-summary-item">
-            <span class="detail-summary-label">转交命中</span>
-            <span class="detail-summary-value">{{ currentRecord.transferred ? '是' : '否' }}</span>
+            <span class="detail-summary-label">{{ t('workflow.dashboard.transferredHit') }}</span>
+            <span class="detail-summary-value">{{ currentRecord.transferred ? t('common.yes') : t('common.no') }}</span>
           </div>
         </div>
         <div v-if="currentRecord.latestActionSummary" class="detail-latest-action">
-          最近动作：{{ currentRecord.latestActionSummary }}
+          {{ t('workflow.dashboard.latestAction', { action: currentRecord.latestActionSummary }) }}
         </div>
       </template>
     </a-drawer>

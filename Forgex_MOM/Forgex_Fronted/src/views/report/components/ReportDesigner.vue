@@ -12,8 +12,8 @@
     <div class="designer-container">
       <a-alert
         v-if="showTips"
-        message="提示"
-        description="在报表设计器中完成设计后，请点击保存按钮。关闭此窗口将自动刷新列表。"
+        :message="t('common.tip')"
+        :description="t('report.designer.saveTip')"
         type="info"
         show-icon
         closable
@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getDesignerUrl } from '@/api/report'
 
 interface Props {
@@ -55,6 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const visible = computed({
   get: () => props.open,
@@ -67,7 +69,7 @@ const iframeLoaded = ref(false)
 
 const designerTitle = computed(() => {
   const engineName = props.engineType === 'UREPORT' ? 'UReport2' : 'JimuReport'
-  return `${engineName} 报表设计器`
+  return t('report.designer.title', { engineName })
 })
 
 const designerUrl = computed(() => {
@@ -79,7 +81,7 @@ const designerUrl = computed(() => {
 
 function handleIframeLoad() {
   iframeLoaded.value = true
-  console.log('报表设计器加载完成')
+  console.log('[ReportDesigner] iframe loaded')
 }
 
 function handleOk() {

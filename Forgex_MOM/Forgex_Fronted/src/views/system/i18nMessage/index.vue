@@ -4,7 +4,6 @@
       ref="tableRef"
       table-code="I18nMessageTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
       :pagination="{
@@ -54,29 +53,29 @@
         :label-col="{ span: 4 }"
         :wrapper-col="{ span: 19 }"
       >
-        <a-form-item label="模块" name="module">
-          <a-input v-model:value="form.module" placeholder="请输入模块编码" />
+        <a-form-item :label="$tl('模块')" name="module">
+          <a-input v-model:value="form.module" :placeholder="$tl('请输入模块编码')" />
         </a-form-item>
-        <a-form-item label="消息编码" name="promptCode">
-          <a-input v-model:value="form.promptCode" placeholder="请输入消息编码" />
+        <a-form-item :label="$tl('消息编码')" name="promptCode">
+          <a-input v-model:value="form.promptCode" :placeholder="$tl('请输入消息编码')" />
         </a-form-item>
-        <a-form-item label="多语言内容" name="textI18nJson">
+        <a-form-item :label="$tl('多语言内容')" name="textI18nJson">
           <I18nInput
             v-model="form.textI18nJson"
             mode="simple"
             type="textarea"
             :rows="6"
-            placeholder="请输入消息内容，点击右侧图标配置多语言"
+            :placeholder="$tl('请输入消息内容，点击右侧图标配置多语言')"
             :show-placeholders="true"
           />
         </a-form-item>
-        <a-form-item label="状态" name="enabled">
+        <a-form-item :label="$tl('状态')" name="enabled">
           <a-radio-group v-model:value="form.enabled">
             <a-radio :value="true">{{ t('common.enabled') }}</a-radio>
             <a-radio :value="false">{{ t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="版本" name="version">
+        <a-form-item :label="$tl('版本')" name="version">
           <a-input-number v-model:value="form.version" :min="1" style="width: 100%" />
         </a-form-item>
       </a-form>
@@ -90,10 +89,10 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import I18nInput from '@/components/common/I18nInput.vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import I18nInput from '@/components/common/I18nInput.vue'
+import { translateLegacyText } from '@/utils/legacyI18n'
 import {
-  createI18nMessage,
+createI18nMessage,
   deleteI18nMessage,
   getI18nMessage,
   pageI18nMessages,
@@ -120,42 +119,11 @@ const form = reactive<Partial<I18nMessageItem>>({
 })
 
 const formRules: Record<string, Rule[]> = {
-  module: [{ required: true, message: '请输入模块编码', trigger: 'blur' }],
-  promptCode: [{ required: true, message: '请输入消息编码', trigger: 'blur' }],
-  textI18nJson: [{ required: true, message: '请配置多语言内容', trigger: 'change' }],
+  module: [{ required: true, message: translateLegacyText('请输入模块编码'), trigger: 'blur' }],
+  promptCode: [{ required: true, message: translateLegacyText('请输入消息编码'), trigger: 'blur' }],
+  textI18nJson: [{ required: true, message: translateLegacyText('请配置多语言内容'), trigger: 'change' }],
 }
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'I18nMessageTable',
-  tableName: '多语言消息',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  columns: [
-    { field: 'module', title: '模块', width: 160, align: 'left' },
-    { field: 'promptCode', title: '消息编码', width: 220, align: 'left' },
-    { field: 'textI18nJson', title: '当前语言内容', width: 280, align: 'left', ellipsis: true },
-    { field: 'enabled', title: t('common.status'), width: 100, align: 'center' },
-    { field: 'version', title: '版本', width: 90, align: 'center' },
-    { field: 'updateTime', title: t('common.updateTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 140, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'module', label: '模块', queryType: 'input', queryOperator: 'like' },
-    { field: 'promptCode', label: '消息编码', queryType: 'input', queryOperator: 'like' },
-    {
-      field: 'enabled',
-      label: t('common.status'),
-      queryType: 'select',
-      queryOperator: 'eq',
-      options: [
-        { label: t('common.enabled'), value: true },
-        { label: t('common.disabled'), value: false },
-      ],
-    },
-  ],
-  version: 1,
-}))
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -194,13 +162,13 @@ function resetForm() {
 
 function handleAdd() {
   resetForm()
-  dialogTitle.value = '新增多语言消息'
+  dialogTitle.value = translateLegacyText('新增多语言消息')
   dialogVisible.value = true
 }
 
 async function handleEdit(row: I18nMessageItem) {
   resetForm()
-  dialogTitle.value = '编辑多语言消息'
+  dialogTitle.value = translateLegacyText('编辑多语言消息')
   try {
     const detail = await getI18nMessage(Number(row.id))
     form.id = detail.id
@@ -212,14 +180,14 @@ async function handleEdit(row: I18nMessageItem) {
     dialogVisible.value = true
   } catch (error) {
     console.error('加载多语言消息详情失败', error)
-    message.error('加载详情失败')
+    message.error(translateLegacyText('加载详情失败'))
   }
 }
 
 function handleDelete(row: I18nMessageItem) {
   Modal.confirm({
     title: t('common.tip'),
-    content: '确认删除该多语言消息吗？',
+    content: translateLegacyText('确认删除该多语言消息吗？'),
     okText: t('common.ok'),
     cancelText: t('common.cancel'),
     onOk: async () => {

@@ -18,6 +18,7 @@
 <script setup lang="ts">
 import { Button } from 'ant-design-vue'
 import { computed, h, nextTick, ref, watch, type VNodeChild } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { GuideResolvedStep, FxGuideStep } from '@/types/guide'
 
 interface Props {
@@ -36,8 +37,8 @@ const props = withDefaults(defineProps<Props>(), {
   steps: () => [],
   autoStart: false,
   startKey: '',
-  skipText: '跳过引导',
-  skipAllText: '跳过后续页面引导',
+  skipText: '',
+  skipAllText: '',
   showSkipAll: false,
 })
 
@@ -54,9 +55,10 @@ const currentStep = ref(0)
 const previousStep = ref(0)
 const finished = ref(false)
 const skipEmitted = ref(false)
+const { t } = useI18n()
 
-const skipText = computed(() => props.skipText || '跳过引导')
-const skipAllText = computed(() => props.skipAllText || '跳过后续页面引导')
+const skipText = computed(() => props.skipText || t('common.guide.skip'))
+const skipAllText = computed(() => props.skipAllText || t('common.guide.skipAll'))
 const guideGap = { offset: 0, radius: 2 }
 
 const resolvedSteps = computed(() => {
@@ -116,17 +118,17 @@ const tourMask = computed(() => {
 function resolveCategoryText(category: FxGuideStep['category']) {
   switch (category) {
     case 'intro':
-      return '页面说明'
+      return t('common.guide.category.intro')
     case 'form':
-      return '查询筛选'
+      return t('common.guide.category.form')
     case 'action':
-      return '功能操作'
+      return t('common.guide.category.action')
     case 'table':
-      return '数据列表'
+      return t('common.guide.category.table')
     case 'detail':
-      return '明细操作'
+      return t('common.guide.category.detail')
     default:
-      return '导航提示'
+      return t('common.guide.category.navigation')
   }
 }
 
@@ -162,7 +164,7 @@ function renderGuidePanel(step: any, index: number): VNodeChild {
       class: 'fx-guide-panel__button',
       disabled: isFirst,
       onClick: () => goToStep(current - 1),
-    }, () => '上一步'),
+    }, () => t('common.previous')),
     h(Button, {
       key: 'next',
       size: 'small',
@@ -175,7 +177,7 @@ function renderGuidePanel(step: any, index: number): VNodeChild {
         }
         goToStep(current + 1)
       },
-    }, () => (isLast ? '完成' : '下一步')),
+    }, () => (isLast ? t('common.completed') : t('common.next'))),
   ].filter(Boolean) as VNodeChild[]
 
   return h('div', { class: ['fx-guide-panel', `fx-guide-panel--${category}`] }, [
@@ -184,14 +186,14 @@ function renderGuidePanel(step: any, index: number): VNodeChild {
       h('button', {
         type: 'button',
         class: 'fx-guide-panel__close',
-        'aria-label': '关闭引导',
+        'aria-label': t('common.guide.close'),
         onClick: () => handleClose(),
       }, '×'),
     ]),
     h('div', { class: 'fx-guide-panel__title' }, title),
     h('div', { class: 'fx-guide-panel__description' }, description),
     h('div', { class: 'fx-guide-panel__footer' }, [
-      h('div', { class: 'fx-guide-panel__progress', 'aria-label': `第 ${current + 1} 步，共 ${total} 步` }, [
+      h('div', { class: 'fx-guide-panel__progress', 'aria-label': t('common.guide.progress', { current: current + 1, total }) }, [
         h('span', { class: 'fx-guide-panel__progress-text' }, `${current + 1} / ${total}`),
         h('span', { class: 'fx-guide-panel__dots' }, resolvedSteps.value.map((_, dotIndex) => h('span', {
           class: ['fx-guide-panel__dot', dotIndex === current ? 'fx-guide-panel__dot--active' : ''],

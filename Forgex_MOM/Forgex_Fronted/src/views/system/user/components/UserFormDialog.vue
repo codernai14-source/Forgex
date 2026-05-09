@@ -1,14 +1,14 @@
-<template>
+﻿<template>
   <BaseFormDialog
     v-model:open="visible"
-    :title="isEdit ? '编辑用户' : '新增用户'"
+    :title="isEdit ? t('system.user.form.editUser') : t('system.user.form.addUser')"
     :loading="loading"
     width="900px"
     @submit="handleSubmit"
     @cancel="handleCancel"
   >
     <a-tabs v-model:activeKey="activeTab" type="card" class="sys-user-form-dialog">
-      <a-tab-pane key="basic" tab="基础信息">
+      <a-tab-pane key="basic" :tab="t('system.user.tabs.basic')">
         <a-form
           ref="basicFormRef"
           :model="formData"
@@ -18,35 +18,35 @@
         >
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="账号" name="account">
+              <a-form-item :label="t('common.login.accountLabel')" name="account">
                 <a-input
                   v-model:value="formData.account"
-                  placeholder="请输入账号"
+                  :placeholder="t('system.user.form.account')"
                   :disabled="isEdit"
                 />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="用户名" name="username">
+              <a-form-item :label="t('system.user.username')" name="username">
                 <a-input
                   v-model:value="formData.username"
-                  placeholder="请输入用户名"
+                  :placeholder="t('system.user.form.username')"
                 />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="邮箱" name="email">
+              <a-form-item :label="t('system.user.email')" name="email">
                 <a-input
                   v-model:value="formData.email"
-                  placeholder="请输入邮箱"
+                  :placeholder="t('system.user.form.email')"
                 />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="手机号" name="phone">
+              <a-form-item :label="t('system.user.phone')" name="phone">
                 <a-input
                   v-model:value="formData.phone"
-                  placeholder="请输入手机号"
+                  :placeholder="t('system.user.form.phone')"
                 />
               </a-form-item>
             </a-col>
@@ -54,7 +54,7 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="性别" name="gender">
+              <a-form-item :label="t('system.user.gender')" name="gender">
                 <a-radio-group v-model:value="formData.gender">
                   <a-radio v-for="option in genderOptions" :key="option.value" :value="Number(option.value)">
                     {{ option.label }}
@@ -63,10 +63,10 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="入职时间" name="entryDate">
+              <a-form-item :label="t('system.user.entryDate')" name="entryDate">
                 <a-date-picker
                   v-model:value="formData.entryDate"
-                  placeholder="请选择入职时间"
+                  :placeholder="t('system.user.form.entryDate')"
                   style="width: 100%"
                   value-format="YYYY-MM-DD"
                 />
@@ -76,10 +76,10 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="所属部门" name="departmentId">
+              <a-form-item :label="t('system.user.department')" name="departmentId">
                 <a-tree-select
                   v-model:value="formData.departmentId"
-                  placeholder="请选择部门"
+                  :placeholder="t('system.user.form.department')"
                   show-search
                   tree-default-expand-all
                   :tree-data="departmentList"
@@ -89,10 +89,10 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="岗位" name="positionId">
+              <a-form-item :label="t('system.user.position')" name="positionId">
                 <a-select
                   v-model:value="formData.positionId"
-                  placeholder="请选择岗位"
+                  :placeholder="t('system.user.form.position')"
                   show-search
                   :filter-option="filterOption"
                 >
@@ -106,15 +106,15 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="关联员工ID" name="employeeId">
+              <a-form-item :label="t('system.user.form.employeeId')" name="employeeId">
                 <a-input
                   v-model:value="formData.employeeId"
-                  placeholder="请输入关联员工ID"
+                  :placeholder="t('system.user.form.employeeIdPlaceholder')"
                 />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="用户来源">
+              <a-form-item :label="t('system.user.form.userSource')">
                 <a-input :value="userSourceDisplayText" disabled />
               </a-form-item>
             </a-col>
@@ -122,7 +122,7 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="状态" name="status">
+              <a-form-item :label="t('system.user.status')" name="status">
                 <a-radio-group v-model:value="formData.status">
                   <a-radio v-for="option in normalizedStatusOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
@@ -134,7 +134,7 @@
         </a-form>
       </a-tab-pane>
 
-      <a-tab-pane key="profile" tab="附属信息（可选）">
+      <a-tab-pane key="profile" :tab="t('system.user.tabs.profileOptional')">
         <a-form
           ref="profileFormRef"
           :model="profileData"
@@ -143,10 +143,10 @@
         >
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="政治面貌">
+              <a-form-item :label="t('system.user.profile.politicalStatus')">
                 <a-select
                   v-model:value="profileData.politicalStatus"
-                  placeholder="请选择政治面貌"
+                  :placeholder="t('system.user.profile.selectPoliticalStatus')"
                   allow-clear
                 >
                   <a-select-option v-for="option in politicalStatusOptions" :key="option.value" :value="option.value">
@@ -156,10 +156,10 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="学历">
+              <a-form-item :label="t('system.user.profile.education')">
                 <a-select
                   v-model:value="profileData.education"
-                  placeholder="请选择学历"
+                  :placeholder="t('system.user.profile.selectEducation')"
                   allow-clear
                 >
                   <a-select-option v-for="option in educationOptions" :key="option.value" :value="option.value">
@@ -172,10 +172,10 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="籍贯">
+              <a-form-item :label="t('system.user.profile.birthPlace')">
                 <a-input
                   v-model:value="profileData.birthPlace"
-                  placeholder="请输入籍贯"
+                  :placeholder="t('system.user.profile.birthPlacePlaceholder')"
                 />
               </a-form-item>
             </a-col>
@@ -183,10 +183,10 @@
 
           <a-row :gutter="16">
             <a-col :span="24">
-              <a-form-item label="个人简介" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
+              <a-form-item :label="t('system.user.profile.intro')" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
                 <a-textarea
                   v-model:value="profileData.intro"
-                  placeholder="请输入个人简介"
+                  :placeholder="t('system.user.profile.introPlaceholder')"
                   :rows="3"
                 />
               </a-form-item>
@@ -195,10 +195,10 @@
 
           <a-row :gutter="16">
             <a-col :span="24">
-              <a-form-item label="家庭住址" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
+              <a-form-item :label="t('system.user.profile.homeAddress')" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
                 <a-input
                   v-model:value="profileData.homeAddress"
-                  placeholder="请输入家庭住址"
+                  :placeholder="t('system.user.profile.homeAddressPlaceholder')"
                 />
               </a-form-item>
             </a-col>
@@ -206,18 +206,18 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="紧急联系人">
+              <a-form-item :label="t('system.user.profile.emergencyContact')">
                 <a-input
                   v-model:value="profileData.emergencyContact"
-                  placeholder="请输入紧急联系人"
+                  :placeholder="t('system.user.profile.emergencyContactPlaceholder')"
                 />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="紧急联系电话">
+              <a-form-item :label="t('system.user.profile.emergencyPhone')">
                 <a-input
                   v-model:value="profileData.emergencyPhone"
-                  placeholder="请输入紧急联系电话"
+                  :placeholder="t('system.user.profile.emergencyPhonePlaceholder')"
                 />
               </a-form-item>
             </a-col>
@@ -225,16 +225,16 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="介绍人">
+              <a-form-item :label="t('system.user.profile.referrer')">
                 <a-input
                   v-model:value="profileData.referrer"
-                  placeholder="请输入介绍人"
+                  :placeholder="t('system.user.profile.referrerPlaceholder')"
                 />
               </a-form-item>
             </a-col>
           </a-row>
 
-          <a-divider orientation="left">工作经历</a-divider>
+          <a-divider orientation="left">{{ t('system.user.profile.workHistory') }}</a-divider>
 
           <div
             v-for="(history, index) in profileData.workHistory"
@@ -243,44 +243,44 @@
           >
             <a-row :gutter="16">
               <a-col :span="11">
-                <a-form-item label="公司名称" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
+                <a-form-item :label="t('system.user.profile.company')" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
                   <a-input
                     v-model:value="history.company"
-                    placeholder="请输入公司名称"
+                    :placeholder="t('system.user.profile.companyPlaceholder')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :span="11">
-                <a-form-item label="职位" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+                <a-form-item :label="t('system.user.profile.position')" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
                   <a-input
                     v-model:value="history.position"
-                    placeholder="请输入职位"
+                    :placeholder="t('system.user.profile.positionPlaceholder')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :span="2" style="text-align: right">
                 <a-button type="link" danger @click="removeWorkHistory(index)">
-                  删除
+                  {{ t('common.delete') }}
                 </a-button>
               </a-col>
             </a-row>
 
             <a-row :gutter="16">
               <a-col :span="11">
-                <a-form-item label="开始时间" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
+                <a-form-item :label="t('system.user.profile.startDate')" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
                   <a-date-picker
                     v-model:value="history.startDate"
-                    placeholder="请选择开始时间"
+                    :placeholder="t('system.user.profile.startDatePlaceholder')"
                     style="width: 100%"
                     value-format="YYYY-MM-DD"
                   />
                 </a-form-item>
               </a-col>
               <a-col :span="11">
-                <a-form-item label="结束时间" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+                <a-form-item :label="t('system.user.profile.endDate')" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
                   <a-date-picker
                     v-model:value="history.endDate"
-                    placeholder="请选择结束时间"
+                    :placeholder="t('system.user.profile.endDatePlaceholder')"
                     style="width: 100%"
                     value-format="YYYY-MM-DD"
                   />
@@ -290,10 +290,10 @@
 
             <a-row :gutter="16">
               <a-col :span="22">
-                <a-form-item label="工作描述" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
+                <a-form-item :label="t('system.user.profile.description')" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
                   <a-textarea
                     v-model:value="history.description"
-                    placeholder="请输入工作描述"
+                    :placeholder="t('system.user.profile.descriptionPlaceholder')"
                     :rows="2"
                   />
                 </a-form-item>
@@ -305,7 +305,7 @@
             <a-col :span="24" style="text-align: center">
               <a-button type="dashed" block @click="addWorkHistory">
                 <template #icon><PlusOutlined /></template>
-                添加工作经历
+                {{ t('system.user.profile.addWorkHistory') }}
               </a-button>
             </a-col>
           </a-row>
@@ -319,12 +319,12 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { userApi } from '@/api/system/user'
 import { useDict } from '@/hooks/useDict'
 import { normalizeBooleanValue } from '@/utils/user'
 import type { Department, Position, User, UserProfile } from '../types'
-
 interface Props {
   open: boolean
   isEdit: boolean
@@ -347,6 +347,7 @@ const loading = ref(false)
 const activeTab = ref('basic')
 const basicFormRef = ref()
 const profileFormRef = ref()
+const { t } = useI18n({ useScope: 'global' })
 
 const formData = reactive<Partial<User>>({
   account: '',
@@ -359,7 +360,7 @@ const formData = reactive<Partial<User>>({
   positionId: '',
   employeeId: '',
   userSource: 1,
-  userSourceText: '本站新增',
+  userSourceText: t('system.user.userSource.siteCreate'),
   status: true,
 })
 
@@ -384,9 +385,9 @@ const { dictItems: educationOptions } = useDict('education')
 const { dictItems: statusOptions } = useDict('status')
 
 /**
- * 新增场景默认显示“本站新增”，编辑场景展示后端返回来源文本。
+ * 鏂板鍦烘櫙榛樿鏄剧ず鈥滄湰绔欐柊澧炩€濓紝缂栬緫鍦烘櫙灞曠ず鍚庣杩斿洖鏉ユ簮鏂囨湰銆?
  */
-const userSourceDisplayText = computed(() => formData.userSourceText || '本站新增')
+const userSourceDisplayText = computed(() => formData.userSourceText || t('system.user.userSource.siteCreate'))
 
 const normalizedStatusOptions = computed(() =>
   statusOptions.value.map(option => ({
@@ -397,21 +398,21 @@ const normalizedStatusOptions = computed(() =>
 
 const basicRules = {
   account: [
-    { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 3, max: 20, message: '账号长度需在 3-20 个字符之间', trigger: 'blur' },
+    { required: true, message: t('system.user.form.account'), trigger: 'blur' },
+    { min: 3, max: 20, message: t('system.user.form.accountLength'), trigger: 'blur' },
   ],
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度需在 2-20 个字符之间', trigger: 'blur' },
+    { required: true, message: t('system.user.form.username'), trigger: 'blur' },
+    { min: 2, max: 20, message: t('system.user.form.usernameLength'), trigger: 'blur' },
   ],
   email: [
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+    { type: 'email', message: t('system.user.form.emailFormat'), trigger: 'blur' },
   ],
   phone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: t('system.user.form.phoneFormat'), trigger: 'blur' },
   ],
   employeeId: [
-    { pattern: /^\d*$/, message: '关联员工ID必须为数字', trigger: 'blur' },
+    { pattern: /^\d*$/, message: t('system.user.form.employeeIdNumber'), trigger: 'blur' },
   ],
 }
 
@@ -469,8 +470,7 @@ async function loadUserData() {
       workHistory: Array.isArray(profile.workHistory) ? profile.workHistory : [],
     })
   } catch {
-    message.error('加载用户数据失败')
-  } finally {
+    message.error(t('system.user.message.loadDetailFailed'))
     loading.value = false
   }
 }
@@ -488,8 +488,7 @@ function resetForm() {
     positionId: '',
     employeeId: '',
     userSource: 1,
-    userSourceText: '本站新增',
-    status: true,
+    userSourceText: t('system.user.userSource.siteCreate'),
   })
 
   Object.assign(profileData, {
@@ -553,7 +552,7 @@ async function handleSubmit() {
   try {
     await basicFormRef.value?.validate()
   } catch {
-    message.warning('请完善基础信息')
+    message.warning(t('validation.required'))
     activeTab.value = 'basic'
     return
   }
@@ -577,15 +576,15 @@ async function handleSubmit() {
     visible.value = false
     emit('success')
   } catch {
-    message.error('操作失败')
+    message.error(t('common.operationFailed'))
   } finally {
     loading.value = false
   }
 }
-
 function handleCancel() {
   visible.value = false
 }
 </script>
 
 <style scoped lang="less" src="@/styles/system-user-form.less"></style>
+

@@ -4,7 +4,6 @@
       ref="tableRef"
       table-code="I18nLanguageTypeTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
       :pagination="{
@@ -100,7 +99,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+
 import type { Rule } from 'ant-design-vue/es/form'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
@@ -139,39 +138,6 @@ const formRules: Record<string, Rule[]> = {
   langName: [{ required: true, message: t('system.i18n.langNameRequired'), trigger: 'blur' }],
 }
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'I18nLanguageTypeTable',
-  tableName: t('system.i18n.languageType'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  columns: [
-    { field: 'langCode', title: t('system.i18n.langCode'), width: 120, align: 'left' },
-    { field: 'langName', title: t('system.i18n.langName'), width: 150, align: 'left' },
-    { field: 'langNameEn', title: t('system.i18n.langNameEn'), width: 150, align: 'left' },
-    { field: 'icon', title: t('system.i18n.icon'), width: 100, align: 'center' },
-    { field: 'orderNum', title: t('system.i18n.orderNum'), width: 90, align: 'center', sortable: true },
-    { field: 'enabled', title: t('system.i18n.enabled'), width: 100, align: 'center' },
-    { field: 'isDefault', title: t('system.i18n.isDefault'), width: 120, align: 'center' },
-    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 200, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'langCode', label: t('system.i18n.langCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'langName', label: t('system.i18n.langName'), queryType: 'input', queryOperator: 'like' },
-    {
-      field: 'enabled',
-      label: t('system.i18n.enabled'),
-      queryType: 'select',
-      queryOperator: 'eq',
-      options: [
-        { label: t('common.enabled'), value: true },
-        { label: t('common.disabled'), value: false },
-      ],
-    },
-  ],
-  version: 1,
-}))
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }

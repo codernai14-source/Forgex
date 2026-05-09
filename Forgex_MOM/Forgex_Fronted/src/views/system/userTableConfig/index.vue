@@ -2,10 +2,10 @@
   <div class="user-table-config-management">
     <a-card :bordered="false" class="query-card">
       <a-form layout="inline">
-        <a-form-item label="表格编码">
+        <a-form-item :label="$tl('表格编码')">
           <a-input
             v-model:value="queryForm.tableCode"
-            placeholder="请输入表格编码"
+            :placeholder="$tl('请输入表格编码')"
             allow-clear
             style="width: 220px"
           />
@@ -27,8 +27,8 @@
     <a-card :bordered="false" class="table-card">
       <div class="card-tip">
         <a-alert
-          message="说明"
-          description="当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。"
+          :message="$tl('说明')"
+          :description="$tl('当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。')"
           type="info"
           show-icon
         />
@@ -51,7 +51,7 @@
 
             <template v-else-if="column.key === 'userConfigured'">
               <a-tag :color="record.userConfigured ? 'green' : 'default'">
-                {{ record.userConfigured ? '已配置' : '未配置' }}
+                {{ record.userConfigured ? $tl('已配置') : $tl('未配置') }}
               </a-tag>
             </template>
 
@@ -68,7 +68,7 @@
                   :style="{ color: record.userConfigured ? '#ff4d4f' : '#999999' }"
                   @click="handleResetUserConfig(record)"
                 >
-                  重置
+                  {{ $tl('重置') }}
                 </a>
               </a-space>
             </template>
@@ -79,18 +79,18 @@
 
     <a-modal
       v-model:open="dialogVisible"
-      title="编辑用户列设置"
+      :title="$tl('编辑用户列设置')"
       width="960px"
       :confirm-loading="saving"
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
       <a-form :model="formData" :label-col="{ span: 5 }" :wrapper-col="{ span: 17 }">
-        <a-form-item label="表格编码">
+        <a-form-item :label="$tl('表格编码')">
           <a-input v-model:value="formData.tableCode" disabled />
         </a-form-item>
 
-        <a-form-item label="分页大小">
+        <a-form-item :label="$tl('分页大小')">
           <a-input-number
             v-model:value="formData.pageSize"
             :min="1"
@@ -125,14 +125,14 @@
           <template v-else-if="column.key === 'move'">
             <a-space>
               <a-button size="small" :disabled="index === 0" @click="moveColumn(index, -1)">
-                上移
+                {{ $tl('上移') }}
               </a-button>
               <a-button
                 size="small"
                 :disabled="index === formData.columns.length - 1"
                 @click="moveColumn(index, 1)"
               >
-                下移
+                {{ $tl('下移') }}
               </a-button>
             </a-space>
           </template>
@@ -146,8 +146,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
+import { translateLegacyText } from '@/utils/legacyI18n'
 import {
-  getTableConfig,
+getTableConfig,
   getTableConfigList,
   getUserColumns,
   resetUserColumns,
@@ -206,46 +207,46 @@ const formData = reactive({
 
 const columns = computed(() => [
   {
-    title: '表格编码',
+    title: translateLegacyText('表格编码'),
     dataIndex: 'tableCode',
     key: 'tableCode',
     width: 220,
   },
   {
-    title: '表格名称',
+    title: translateLegacyText('表格名称'),
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 220,
     ellipsis: true,
   },
   {
-    title: '默认分页大小',
+    title: translateLegacyText('默认分页大小'),
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 130,
     align: 'center' as const,
   },
   {
-    title: '用户分页大小',
+    title: translateLegacyText('用户分页大小'),
     key: 'userPageSize',
     width: 130,
     align: 'center' as const,
   },
   {
-    title: '配置状态',
+    title: translateLegacyText('配置状态'),
     key: 'userConfigured',
     width: 120,
     align: 'center' as const,
   },
   {
-    title: '配置版本',
+    title: translateLegacyText('配置版本'),
     dataIndex: 'userVersion',
     key: 'userVersion',
     width: 100,
     align: 'center' as const,
   },
   {
-    title: '最后更新时间',
+    title: translateLegacyText('最后更新时间'),
     dataIndex: 'userUpdateTime',
     key: 'userUpdateTime',
     width: 180,
@@ -260,32 +261,32 @@ const columns = computed(() => [
 
 const columnTableColumns = [
   {
-    title: '字段名',
+    title: translateLegacyText('字段名'),
     dataIndex: 'field',
     key: 'field',
     width: 180,
   },
   {
-    title: '标题',
+    title: translateLegacyText('标题'),
     dataIndex: 'title',
     key: 'title',
     width: 220,
     ellipsis: true,
   },
   {
-    title: '显示',
+    title: translateLegacyText('显示'),
     key: 'visible',
     width: 90,
     align: 'center' as const,
   },
   {
-    title: '排序',
+    title: translateLegacyText('排序'),
     key: 'order',
     width: 120,
     align: 'center' as const,
   },
   {
-    title: '移动',
+    title: translateLegacyText('移动'),
     key: 'move',
     width: 180,
   },
@@ -413,7 +414,7 @@ const openEditDialog = async (record: UserTableConfigRow) => {
     ])
 
     if (!baseConfig?.columns?.length) {
-      message.error('未找到对应的基础表格配置')
+      message.error(translateLegacyText('未找到对应的基础表格配置'))
       return
     }
 
@@ -428,7 +429,7 @@ const openEditDialog = async (record: UserTableConfigRow) => {
     dialogVisible.value = true
   } catch (error) {
     console.error('open user table config dialog failed', error)
-    message.error('加载用户列设置失败')
+    message.error(translateLegacyText('加载用户列设置失败'))
   } finally {
     loading.value = false
   }
@@ -436,12 +437,12 @@ const openEditDialog = async (record: UserTableConfigRow) => {
 
 const handleSubmit = async () => {
   if (!formData.tableCode) {
-    message.error('表格编码不能为空')
+    message.error(translateLegacyText('表格编码不能为空'))
     return
   }
 
   if (!formData.columns.length) {
-    message.error('列配置不能为空')
+    message.error(translateLegacyText('列配置不能为空'))
     return
   }
 
@@ -473,10 +474,10 @@ const handleCancel = () => {
 
 const handleResetUserConfig = (record: UserTableConfigRow) => {
   Modal.confirm({
-    title: '确认重置',
-    content: `确认重置表格 [${record.tableCode}] 的当前用户列设置吗？重置后将恢复为租户或默认表格配置。`,
-    okText: '确认',
-    cancelText: '取消',
+    title: translateLegacyText('确认重置'),
+    content: translateLegacyText(`确认重置表格 [${record.tableCode}] 的当前用户列设置吗？重置后将恢复为租户或默认表格配置。`),
+    okText: translateLegacyText('确认'),
+    cancelText: translateLegacyText('取消'),
     onOk: async () => {
       await resetUserColumns(record.tableCode)
       await fetchData()

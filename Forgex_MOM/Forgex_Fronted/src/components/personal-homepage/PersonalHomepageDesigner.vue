@@ -21,7 +21,7 @@
           <div class="designer-hero__stats">
             <span class="designer-hero__stat">
               <ClockCircleOutlined />
-              {{ $t('personalHomepage.summary.onlineDuration') }}：{{ summary?.onlineDurationText || '0分钟' }}
+              {{ $t('personalHomepage.summary.onlineDuration') }}: {{ summary?.onlineDurationText || t('personalHomepage.summary.zeroMinutes') }}
             </span>
           </div>
         </div>

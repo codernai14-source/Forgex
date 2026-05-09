@@ -20,6 +20,9 @@ import encodeRule from './encodeRule'
 import file from './file'
 import codegen from './codegen'
 import codegenDatasource from './codegenDatasource'
+import inviteCode from './inviteCode'
+import androidVersion from './androidVersion'
+import online from './online'
 
 export default {
   user,
@@ -40,4 +43,7 @@ export default {
   file,
   codegen,
   codegenDatasource,
+  inviteCode,
+  androidVersion,
+  online,
 }

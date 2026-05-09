@@ -1,151 +1,166 @@
 <template>
   <div class="init-wrap">
     <div class="carousel">
-      <div class="slides" :style="{ transform: 'translateY(' + (-step*100) + 'vh)' }">
+      <div class="slides" :style="{ transform: `translateY(${-step * 100}vh)` }">
         <section class="slide">
-          <div class="slide-head">密码与验证码安全策略初始化</div>
-          <div class="slide-hint">请选择密码强度、初始密码、验证码与加密方式</div>
+          <div class="slide-head">{{ t('auth.initWizard.securityTitle') }}</div>
+          <div class="slide-hint">{{ t('auth.initWizard.securityHint') }}</div>
           <div class="form-grid">
             <div class="block">
-              <div class="block-title">密码强度</div>
+              <div class="block-title">{{ t('auth.initWizard.passwordStrength') }}</div>
               <div class="item-hint">{{ strengthHint }}</div>
               <div class="radio-row">
-                <label><input type="radio" value="high" v-model="security.pwdStrength" /> 高</label>
-                <label><input type="radio" value="normal" v-model="security.pwdStrength" /> 普通</label>
-                <label><input type="radio" value="low" v-model="security.pwdStrength" /> 低</label>
+                <label><input v-model="security.pwdStrength" type="radio" value="high" /> {{ t('auth.initWizard.strength.high') }}</label>
+                <label><input v-model="security.pwdStrength" type="radio" value="normal" /> {{ t('auth.initWizard.strength.normal') }}</label>
+                <label><input v-model="security.pwdStrength" type="radio" value="low" /> {{ t('auth.initWizard.strength.low') }}</label>
               </div>
             </div>
             <div class="block">
-              <div class="block-title">初始密码</div>
-              <div class="item-hint">此值用于所有用户初始密码，重置密码将恢复为此值</div>
-              <input class="input" type="text" v-model="security.initialPassword" placeholder="默认 Aa123456" />
+              <div class="block-title">{{ t('auth.initWizard.initialPassword') }}</div>
+              <div class="item-hint">{{ t('auth.initWizard.initialPasswordHint') }}</div>
+              <input v-model="security.initialPassword" class="input" type="text" :placeholder="t('auth.initWizard.initialPasswordPlaceholder')" />
             </div>
             <div class="block">
-              <div class="block-title">验证码</div>
-              <label class="ck"><input type="checkbox" v-model="security.captchaEnabled" /> 开启验证码</label>
+              <div class="block-title">{{ t('auth.initWizard.captcha') }}</div>
+              <label class="ck"><input v-model="security.captchaEnabled" type="checkbox" /> {{ t('auth.initWizard.enableCaptcha') }}</label>
               <div class="item-hint">{{ captchaHint }}</div>
-              <div class="radio-row" v-if="security.captchaEnabled">
-                <label><input type="radio" value="image" v-model="security.captchaMode" /> 图片验证码</label>
-                <label><input type="radio" value="slider" v-model="security.captchaMode" /> 滑块验证码</label>
+              <div v-if="security.captchaEnabled" class="radio-row">
+                <label><input v-model="security.captchaMode" type="radio" value="image" /> {{ t('auth.initWizard.imageCaptcha') }}</label>
+                <label><input v-model="security.captchaMode" type="radio" value="slider" /> {{ t('auth.initWizard.sliderCaptcha') }}</label>
               </div>
             </div>
             <div class="block">
-              <div class="block-title">密码加密方式</div>
+              <div class="block-title">{{ t('auth.initWizard.passwordStore') }}</div>
               <div class="item-hint">{{ storeHint }}</div>
               <div class="radio-row">
-                <label><input type="radio" value="BCrypt" v-model="security.passwordStore" /> BCrypt</label>
-                <label><input type="radio" value="Argon2" v-model="security.passwordStore" /> Argon2</label>
-                <label><input type="radio" value="scrypt" v-model="security.passwordStore" /> scrypt</label>
-                <label><input type="radio" value="PBKDF2" v-model="security.passwordStore" /> PBKDF2</label>
-                <label><input type="radio" value="aes" v-model="security.passwordStore" /> AES-256-GCM</label>
-                <label><input type="radio" value="rsa" v-model="security.passwordStore" /> RSA-2048</label>
+                <label><input v-model="security.passwordStore" type="radio" value="BCrypt" /> BCrypt</label>
+                <label><input v-model="security.passwordStore" type="radio" value="Argon2" /> Argon2</label>
+                <label><input v-model="security.passwordStore" type="radio" value="scrypt" /> scrypt</label>
+                <label><input v-model="security.passwordStore" type="radio" value="PBKDF2" /> PBKDF2</label>
+                <label><input v-model="security.passwordStore" type="radio" value="aes" /> AES-256-GCM</label>
+                <label><input v-model="security.passwordStore" type="radio" value="rsa" /> RSA-2048</label>
               </div>
             </div>
           </div>
         </section>
 
         <section class="slide">
-          <div class="slide-head">用户、角色、租户初始化</div>
-          <div class="slide-hint">选择用户与角色，配置租户与关联关系</div>
+          <div class="slide-head">{{ t('auth.initWizard.accountTitle') }}</div>
+          <div class="slide-hint">{{ t('auth.initWizard.accountHint') }}</div>
           <div class="form-grid">
             <div class="block">
-              <div class="block-title">用户</div>
+              <div class="block-title">{{ t('auth.initWizard.users') }}</div>
               <div class="inline-row">
-                <label class="ck"><input type="checkbox" disabled checked /> admin（默认）</label>
-                <label class="ck"><input type="checkbox" v-model="form.addDev" /> dev 系统开发者</label>
-                <label class="ck"><input type="checkbox" v-model="form.addTest" /> test 系统测试员</label>
-                <label class="ck"><input type="checkbox" v-model="form.addCustom" /> custom 客户账号</label>
+                <label class="ck"><input type="checkbox" disabled checked /> {{ t('auth.initWizard.userAdmin') }}</label>
+                <label class="ck"><input v-model="form.addDev" type="checkbox" /> {{ t('auth.initWizard.userDev') }}</label>
+                <label class="ck"><input v-model="form.addTest" type="checkbox" /> {{ t('auth.initWizard.userTest') }}</label>
+                <label class="ck"><input v-model="form.addCustom" type="checkbox" /> {{ t('auth.initWizard.userCustom') }}</label>
               </div>
-              <div class="item-hint">客户账号默认为 custom，不支持在此创建更多客户用户</div>
+              <div class="item-hint">{{ t('auth.initWizard.customUserHint') }}</div>
             </div>
             <div class="block">
-              <div class="block-title">角色</div>
+              <div class="block-title">{{ t('auth.initWizard.roles') }}</div>
               <div class="inline-row">
-                <label class="ck"><input type="checkbox" disabled checked /> 系统管理员</label>
-                <label class="ck"><input type="checkbox" v-model="form.roleDeveloper" /> 开发者</label>
-                <label class="ck"><input type="checkbox" v-model="form.roleTester" /> 测试</label>
-                <label class="ck"><input type="checkbox" v-model="form.roleCustomer" /> 客户</label>
+                <label class="ck"><input type="checkbox" disabled checked /> {{ t('auth.initWizard.roleAdmin') }}</label>
+                <label class="ck"><input v-model="form.roleDeveloper" type="checkbox" /> {{ t('auth.initWizard.roleDeveloper') }}</label>
+                <label class="ck"><input v-model="form.roleTester" type="checkbox" /> {{ t('auth.initWizard.roleTester') }}</label>
+                <label class="ck"><input v-model="form.roleCustomer" type="checkbox" /> {{ t('auth.initWizard.roleCustomer') }}</label>
               </div>
             </div>
             <div class="block">
-              <div class="block-title">租户</div>
+              <div class="block-title">{{ t('auth.initWizard.tenants') }}</div>
               <div class="inline-row tenant-actions">
-                <a-button size="small" type="default" @click="addForgex">添加 Forgex 租户</a-button>
-                <a-button size="small" type="default" @click="addCustomer">添加 客户 租户</a-button>
+                <a-button size="small" type="default" @click="addForgex">{{ t('auth.initWizard.addForgexTenant') }}</a-button>
+                <a-button size="small" type="default" @click="addCustomer">{{ t('auth.initWizard.addCustomerTenant') }}</a-button>
               </div>
-              <a-table :columns="tenantColumns" :dataSource="tenantRows" size="small" :pagination="false" rowKey="key" :key="(tenants.default.logo||'')+(tenants.forgex.logo||'')+(tenants.customer.logo||'')">
+              <a-table
+                :columns="tenantColumns"
+                :dataSource="tenantRows"
+                size="small"
+                :pagination="false"
+                rowKey="key"
+                :key="tenantTableKey"
+              >
                 <template #bodyCell="{ column, record }">
-                  <template v-if="column.dataIndex==='logo' || column.key==='logo'">
+                  <template v-if="column.dataIndex === 'logo' || column.key === 'logo'">
                     <img v-if="record.logo" :src="record.logo" alt="logo" class="logo-sm" />
-                    <span v-else style="color:#c3b37b">无</span>
+                    <span v-else style="color:#c3b37b">-</span>
                   </template>
-                  <template v-if="column.key==='ops'">
-                    <a-button size="small" @click="openEdit(record.key)">编辑</a-button>
-                    <a-button size="small" danger style="margin-left:6px" v-if="record.key!=='default'" @click="removeTenant(record.key)">移除</a-button>
+                  <template v-if="column.key === 'ops'">
+                    <a-button size="small" @click="openEdit(record.key)">{{ t('common.edit') }}</a-button>
+                    <a-button
+                      v-if="record.key !== 'default'"
+                      size="small"
+                      danger
+                      style="margin-left:6px"
+                      @click="removeTenant(record.key)"
+                    >
+                      {{ t('auth.initWizard.remove') }}
+                    </a-button>
                   </template>
                 </template>
               </a-table>
             </div>
             <div class="block">
-              <div class="block-title">用户租户关联</div>
-              <div v-for="(b,i) in binds" :key="i" class="bind-row">
-                <a-select :key="'user-'+refreshKey" style="width:160px" v-model:value="b.account" placeholder="选择用户">
+              <div class="block-title">{{ t('auth.initWizard.userTenantBinding') }}</div>
+              <div v-for="(b, i) in binds" :key="i" class="bind-row">
+                <a-select :key="`user-${refreshKey}`" v-model:value="b.account" style="width:160px" :placeholder="t('auth.initWizard.selectUser')">
                   <a-select-option v-for="opt in userOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
                 </a-select>
-                <a-select :key="'tenant-'+refreshKey" mode="multiple" style="min-width:260px" v-model:value="b.tenants" placeholder="选择租户">
+                <a-select :key="`tenant-${refreshKey}`" v-model:value="b.tenants" mode="multiple" style="min-width:260px" :placeholder="t('auth.initWizard.selectTenant')">
                   <a-select-option v-for="opt in tenantOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
                 </a-select>
-                <a-button size="small" @click="removeBind(i)">删除</a-button>
+                <a-button size="small" @click="removeBind(i)">{{ t('common.delete') }}</a-button>
               </div>
-              <a-button size="small" type="default" @click="addBind">添加关联</a-button>
+              <a-button size="small" type="default" @click="addBind">{{ t('auth.initWizard.addBinding') }}</a-button>
             </div>
             <div class="block">
-              <div class="block-title">用户角色关联</div>
-              <div v-for="(r,i) in roleBinds" :key="i" class="bind-row">
-                <a-select :key="'user-'+refreshKey" style="width:160px" v-model:value="r.account" placeholder="选择用户">
+              <div class="block-title">{{ t('auth.initWizard.userRoleBinding') }}</div>
+              <div v-for="(r, i) in roleBinds" :key="i" class="bind-row">
+                <a-select :key="`role-user-${refreshKey}`" v-model:value="r.account" style="width:160px" :placeholder="t('auth.initWizard.selectUser')">
                   <a-select-option v-for="opt in userOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
                 </a-select>
-                <a-select :key="'tenant-'+refreshKey" style="width:160px" v-model:value="r.tenant" placeholder="选择租户">
+                <a-select :key="`role-tenant-${refreshKey}`" v-model:value="r.tenant" style="width:160px" :placeholder="t('auth.initWizard.selectTenant')">
                   <a-select-option v-for="opt in tenantOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
                 </a-select>
-                <a-select :key="'role-'+refreshKey" mode="multiple" style="min-width:260px" v-model:value="r.roles" placeholder="选择角色">
+                <a-select :key="`role-${refreshKey}`" v-model:value="r.roles" mode="multiple" style="min-width:260px" :placeholder="t('auth.initWizard.selectRole')">
                   <a-select-option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
                 </a-select>
-                <a-button size="small" @click="removeRoleBind(i)">删除</a-button>
+                <a-button size="small" @click="removeRoleBind(i)">{{ t('common.delete') }}</a-button>
               </div>
-              <a-button size="small" type="default" @click="addRoleBind">添加关联</a-button>
+              <a-button size="small" type="default" @click="addRoleBind">{{ t('auth.initWizard.addBinding') }}</a-button>
             </div>
           </div>
         </section>
 
         <section class="slide">
-          <div class="slide-head">菜单初始化</div>
-          <div class="slide-hint">预留，暂不做实现</div>
+          <div class="slide-head">{{ t('auth.initWizard.menuTitle') }}</div>
+          <div class="slide-hint">{{ t('auth.initWizard.menuHint') }}</div>
           <div class="footer-actions">
-            <a-button type="primary" :loading="submitting" @click="submit">提交初始化</a-button>
+            <a-button type="primary" :loading="submitting" @click="submit">{{ t('auth.initWizard.submitInit') }}</a-button>
           </div>
         </section>
       </div>
-      <a-modal v-model:open="modalOpen" title="编辑租户" wrapClassName="dark-modal">
+      <a-modal v-model:open="modalOpen" :title="t('auth.initWizard.editTenant')" wrapClassName="dark-modal">
         <div class="grid-modal">
-          <label>名称</label>
-          <input class="input" v-model="editModel.name" placeholder="租户名称" />
-          <label>编码</label>
-          <input class="input" v-model="editModel.code" placeholder="租户编码" />
-          <label>简介</label>
-          <input class="input" v-model="editModel.intro" placeholder="租户简介" />
+          <label>{{ t('auth.initWizard.name') }}</label>
+          <input v-model="editModel.name" class="input" :placeholder="t('auth.initWizard.tenantNamePlaceholder')" />
+          <label>{{ t('auth.initWizard.code') }}</label>
+          <input v-model="editModel.code" class="input" :placeholder="t('auth.initWizard.tenantCodePlaceholder')" />
+          <label>{{ t('auth.initWizard.intro') }}</label>
+          <input v-model="editModel.intro" class="input" :placeholder="t('auth.initWizard.tenantIntroPlaceholder')" />
           <label>Logo</label>
           <a-upload :showUploadList="false" :beforeUpload="onLogoUpload">
-            <a-button size="small">选择文件</a-button>
+            <a-button size="small">{{ t('auth.initWizard.chooseFile') }}</a-button>
           </a-upload>
-          <div class="logo-preview" v-if="editModel.logo">
-            <img :src="editModel.logo" class="logo-sm" />
+          <div v-if="editModel.logo" class="logo-preview">
+            <img :src="editModel.logo" class="logo-sm" alt="logo" />
           </div>
         </div>
         <template #footer>
           <div class="modal-actions">
-            <a-button style="margin-right:8px" @click="modalOpen=false">取消</a-button>
-            <a-button type="primary" @click="saveEdit">保存</a-button>
+            <a-button style="margin-right:8px" @click="modalOpen = false">{{ t('common.cancel') }}</a-button>
+            <a-button type="primary" @click="saveEdit">{{ t('common.save') }}</a-button>
           </div>
         </template>
       </a-modal>
@@ -154,12 +169,16 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { applyInit } from '../../../api/system/init'
 import { uploadFile } from '../../../api/system/file'
-import { useRouter } from 'vue-router'
 
+type TenantKey = 'default' | 'forgex' | 'customer'
+
+const { t, locale } = useI18n()
 const submitting = ref(false)
 const router = useRouter()
 const step = ref(0)
@@ -170,24 +189,20 @@ const security = reactive({
   initialPassword: 'Aa123456',
   captchaEnabled: true,
   captchaMode: 'image',
-  passwordStore: 'BCrypt'
+  passwordStore: 'BCrypt',
 })
 
-const strengthHint = computed(() => {
-  if (security.pwdStrength === 'high') return '高：必须包含字母、数字、符号'
-  if (security.pwdStrength === 'normal') return '普通：必须包含数字和字母'
-  return '低：仅数字'
-})
+const strengthHint = computed(() => t(`auth.initWizard.strengthHint.${security.pwdStrength}`))
 const captchaHint = computed(() => {
-  if (!security.captchaEnabled) return '验证码已关闭'
-  return security.captchaMode === 'slider' ? '滑块验证码：提升人机识别，降低误拦' : '图片验证码：拦截暴力尝试'
+  if (!security.captchaEnabled) return t('auth.initWizard.captchaDisabledHint')
+  return security.captchaMode === 'slider' ? t('auth.initWizard.sliderCaptchaHint') : t('auth.initWizard.imageCaptchaHint')
 })
 const storeHint = computed(() => {
-  const v = security.passwordStore.toLowerCase()
-  if (v === 'bcrypt') return 'BCrypt：不可逆哈希，安全与性能平衡'
-  if (v === 'argon2') return 'Argon2：内存硬耗型不可逆哈希（Argon2id）'
-  if (v === 'scrypt') return 'scrypt：抗GPU/ASIC的不可逆哈希'
-  return 'PBKDF2：迭代不可逆哈希（HmacSHA256）'
+  const key = security.passwordStore.toLowerCase()
+  if (key === 'bcrypt' || key === 'argon2' || key === 'scrypt') return t(`auth.initWizard.storeHint.${key}`)
+  if (key === 'aes') return t('auth.initWizard.storeHint.aes')
+  if (key === 'rsa') return t('auth.initWizard.storeHint.rsa')
+  return t('auth.initWizard.storeHint.pbkdf2')
 })
 
 const form = reactive({
@@ -201,113 +216,139 @@ const form = reactive({
   tenantNames: [] as string[],
   defaultTenantName: 'default',
   defaultTenantCode: 'default',
-  defaultTenantIntro: '默认租户',
-  defaultTenantLogo: '' as string,
+  defaultTenantIntro: '',
+  defaultTenantLogo: '',
   addForgexTenant: false,
-  forgexTenantIntro: '您的系统开发供应商，专注MOM系统开发与交付，是您可以信赖的专业合作伙伴！',
+  forgexTenantIntro: '',
   addCustomerTenant: false,
   customerTenantName: '',
   customerTenantCode: '',
   customerTenantIntro: '',
-  customerTenantLogo: '' as string,
-  userTenantBinds: [] as any[],
-  userRoleBinds: [] as any[]
+  customerTenantLogo: '',
+  userTenantBinds: [] as Array<Record<string, unknown>>,
+  userRoleBinds: [] as Array<Record<string, unknown>>,
 })
 
 const tenants = reactive({
-  default: { selected: true, name: 'default', code: 'default', intro: '默认租户', logo: '' },
-  forgex: { selected: false, code: 'forgex', intro: '您的系统开发供应商，专注MOM系统开发与交付，是您可以信赖的专业合作伙伴！', logo: '' },
-  customer: { selected: false, name: '', code: '', intro: '', logo: '' }
+  default: { selected: true, name: 'default', code: 'default', intro: '', logo: '' },
+  forgex: { selected: false, name: 'Forgex', code: 'forgex', intro: '', logo: '' },
+  customer: { selected: false, name: '', code: '', intro: '', logo: '' },
 })
 
-const tenantColumns = [
-  { title: '租户标识', dataIndex: 'key', key: 'key' },
+function resetLocalizedDefaults() {
+  if (!form.defaultTenantIntro) form.defaultTenantIntro = t('auth.initWizard.defaultTenantIntro')
+  if (!form.forgexTenantIntro) form.forgexTenantIntro = t('auth.initWizard.forgexTenantIntro')
+  if (!tenants.default.intro) tenants.default.intro = t('auth.initWizard.defaultTenantIntro')
+  if (!tenants.forgex.intro) tenants.forgex.intro = t('auth.initWizard.forgexTenantIntro')
+}
+
+resetLocalizedDefaults()
+
+const tenantColumns = computed(() => [
+  { title: t('auth.initWizard.tenantKey'), dataIndex: 'key', key: 'key' },
   { title: 'Logo', dataIndex: 'logo', key: 'logo' },
-  { title: '名称', dataIndex: 'name', key: 'name' },
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '简介', dataIndex: 'intro', key: 'intro' },
-  { title: '操作', key: 'ops' }
-]
+  { title: t('auth.initWizard.name'), dataIndex: 'name', key: 'name' },
+  { title: t('auth.initWizard.code'), dataIndex: 'code', key: 'code' },
+  { title: t('auth.initWizard.intro'), dataIndex: 'intro', key: 'intro' },
+  { title: t('common.action'), key: 'ops', width: 150 },
+])
+
 const tenantRows = computed(() => {
-  const rows: any[] = []
-  rows.push({ key: 'default', logo: tenants.default.logo, name: tenants.default.name, code: tenants.default.code, intro: tenants.default.intro })
-  if (tenants.forgex.selected) rows.push({ key: 'forgex', logo: tenants.forgex.logo, name: 'Forgex', code: tenants.forgex.code, intro: tenants.forgex.intro })
+  const rows: Array<Record<string, string>> = [
+    { key: 'default', logo: tenants.default.logo, name: tenants.default.name, code: tenants.default.code, intro: tenants.default.intro },
+  ]
+  if (tenants.forgex.selected) rows.push({ key: 'forgex', logo: tenants.forgex.logo, name: tenants.forgex.name, code: tenants.forgex.code, intro: tenants.forgex.intro })
   if (tenants.customer.selected) rows.push({ key: 'customer', logo: tenants.customer.logo, name: tenants.customer.name || 'customer', code: tenants.customer.code, intro: tenants.customer.intro })
   return rows
 })
+
+const tenantTableKey = computed(() => `${locale.value}-${tenants.default.logo}${tenants.forgex.logo}${tenants.customer.logo}`)
 const userOptions = computed(() => {
-  const opts: any[] = [{ label: 'admin', value: 'admin' }]
+  const opts: Array<{ label: string; value: string }> = [{ label: 'admin', value: 'admin' }]
   if (form.addDev) opts.push({ label: 'dev', value: 'dev' })
   if (form.addTest) opts.push({ label: 'test', value: 'test' })
   if (form.addCustom) opts.push({ label: form.customUsername || 'custom', value: form.customUsername || 'custom' })
   return opts
 })
-const tenantOptions = computed(() => tenantRows.value.map(r => ({ label: r.name, value: r.name, logo: r.logo })))
+const tenantOptions = computed(() => tenantRows.value.map((r) => ({ label: r.name, value: r.name, logo: r.logo })))
 const roleOptions = computed(() => {
-  const opts: any[] = [{ label: 'admin', value: 'admin' }]
+  const opts: Array<{ label: string; value: string }> = [{ label: 'admin', value: 'admin' }]
   if (form.roleDeveloper) opts.push({ label: 'developer', value: 'developer' })
   if (form.roleTester) opts.push({ label: 'tester', value: 'tester' })
   if (form.roleCustomer) opts.push({ label: 'customer', value: 'customer' })
   return opts
 })
+
 const modalOpen = ref(false)
-const editTargetKey = ref<'default'|'forgex'|'customer' | ''>('')
+const editTargetKey = ref<TenantKey | ''>('')
 const editModel = reactive({ name: '', code: '', intro: '', logo: '' })
-function addForgex() { tenants.forgex.selected = true }
-function addCustomer() { tenants.customer.selected = true; if (!tenants.customer.name) tenants.customer.name = 'customer' }
-function removeTenant(key: 'forgex'|'customer') { if (key==='forgex') tenants.forgex.selected=false; else tenants.customer.selected=false }
-function openEdit(key: 'default'|'forgex'|'customer') {
+
+function addForgex() {
+  tenants.forgex.selected = true
+  form.addForgexTenant = true
+}
+
+function addCustomer() {
+  tenants.customer.selected = true
+  form.addCustomerTenant = true
+  if (!tenants.customer.name) tenants.customer.name = 'customer'
+}
+
+function removeTenant(key: Exclude<TenantKey, 'default'>) {
+  tenants[key].selected = false
+  if (key === 'forgex') form.addForgexTenant = false
+  if (key === 'customer') form.addCustomerTenant = false
+}
+
+function openEdit(key: TenantKey) {
   editTargetKey.value = key
-  if (key === 'default') { editModel.name = tenants.default.name; editModel.code = tenants.default.code; editModel.intro = tenants.default.intro; editModel.logo = tenants.default.logo }
-  if (key === 'forgex') { editModel.name = 'Forgex'; editModel.code = tenants.forgex.code; editModel.intro = tenants.forgex.intro; editModel.logo = tenants.forgex.logo }
-  if (key === 'customer') { editModel.name = tenants.customer.name || 'customer'; editModel.code = tenants.customer.code; editModel.intro = tenants.customer.intro; editModel.logo = tenants.customer.logo }
+  const target = tenants[key]
+  editModel.name = target.name || (key === 'customer' ? 'customer' : key)
+  editModel.code = target.code
+  editModel.intro = target.intro
+  editModel.logo = target.logo
   modalOpen.value = true
 }
+
 function saveEdit() {
-  if (editTargetKey.value === 'default') {
-    tenants.default.name = editModel.name || 'default'
-    tenants.default.code = editModel.code || 'default'
-    tenants.default.intro = editModel.intro || '默认租户'
-    tenants.default.logo = editModel.logo
-  }
-  if (editTargetKey.value === 'forgex') {
-    tenants.forgex.code = editModel.code || 'forgex'
-    tenants.forgex.intro = editModel.intro || tenants.forgex.intro
-    tenants.forgex.logo = editModel.logo
-  }
-  if (editTargetKey.value === 'customer') {
-    tenants.customer.name = editModel.name || 'customer'
-    tenants.customer.code = editModel.code || tenants.customer.code
-    tenants.customer.intro = editModel.intro || tenants.customer.intro
-    tenants.customer.logo = editModel.logo
-  }
+  if (!editTargetKey.value) return
+  const key = editTargetKey.value
+  const target = tenants[key]
+  target.name = editModel.name || (key === 'customer' ? 'customer' : key)
+  target.code = editModel.code || key
+  target.intro = editModel.intro || (key === 'default' ? t('auth.initWizard.defaultTenantIntro') : target.intro)
+  target.logo = editModel.logo
   modalOpen.value = false
-  refreshKey.value++
+  refreshKey.value += 1
 }
-async function onLogoUpload(file: any) {
+
+async function onLogoUpload(file: File) {
   try {
     const res = await uploadFile(file)
-    if (typeof res === 'string') {
-      editModel.logo = res
-    }
-  } catch (e) {
-    message.error('上传失败')
+    if (typeof res === 'string') editModel.logo = res
+  } catch {
+    message.error(t('auth.initWizard.uploadFailed'))
   }
   return false
 }
-const binds = ref<{ account: string; tenants: string[] }[]>([])
-const roleBinds = ref<{ account: string; tenant: string; roles: string[] }[]>([])
+
+const binds = ref<Array<{ account: string; tenants: string[] }>>([])
+const roleBinds = ref<Array<{ account: string; tenant: string; roles: string[] }>>([])
+
 function addBind() {
   binds.value.push({ account: 'admin', tenants: ['default'] })
 }
-function removeBind(i: number) {
-  binds.value.splice(i, 1)
+
+function removeBind(index: number) {
+  binds.value.splice(index, 1)
 }
+
 function addRoleBind() {
   roleBinds.value.push({ account: 'admin', tenant: 'default', roles: ['admin'] })
 }
-function removeRoleBind(i: number) {
-  roleBinds.value.splice(i, 1)
+
+function removeRoleBind(index: number) {
+  roleBinds.value.splice(index, 1)
 }
 
 async function submit() {
@@ -320,28 +361,24 @@ async function submit() {
       tenants: {
         default: { ...tenants.default },
         forgex: tenants.forgex.selected ? { ...tenants.forgex } : null,
-        customer: tenants.customer.selected ? { ...tenants.customer } : null
+        customer: tenants.customer.selected ? { ...tenants.customer } : null,
       },
       binds: binds.value.slice(),
-      roleBinds: roleBinds.value.slice()
+      roleBinds: roleBinds.value.slice(),
     }
     await applyInit(payload)
-    message.success('初始化完成')
+    message.success(t('auth.initWizard.initSuccess'))
     router.replace('/login')
-  } catch (e) {
-    message.error('初始化失败')
+  } catch {
+    message.error(t('auth.initWizard.initFailed'))
   } finally {
     submitting.value = false
   }
 }
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'ArrowDown') {
-    step.value = Math.min(step.value + 1, 2)
-  }
-  if (e.key === 'ArrowUp') {
-    step.value = Math.max(step.value - 1, 0)
-  }
+  if (e.key === 'ArrowDown') step.value = Math.min(step.value + 1, 2)
+  if (e.key === 'ArrowUp') step.value = Math.max(step.value - 1, 0)
 }
 
 onMounted(() => {
@@ -401,7 +438,7 @@ watch(
 }
 .block {
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.4);
 }
@@ -445,6 +482,7 @@ watch(
 .bind-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -462,9 +500,9 @@ watch(
   width: 40px;
   height: 40px;
   border-radius: 8px;
+  object-fit: contain;
 }
 .modal-actions {
   text-align: right;
 }
 </style>
-

@@ -51,6 +51,18 @@ export default {
   cpuCores: 'CPU 核心數',
   cpuModel: 'CPU 型號',
   cores: '核',
+  peopleUnit: '人',
+  itemUnit: '個',
+  operationTime: '操作時間',
+  operator: '操作人',
+  operationModule: '操作模組',
+  operationContent: '操作內容',
+  loginTime: '登入時間',
+  username: '用戶名',
+  ipAddress: 'IP 位址',
+  loginLocation: '登入地點',
+  serverLocation: '伺服器位置',
+  mapLoadFailed: '地圖資料載入失敗\n請檢查網路或稍後再試',
 
   // 日誌
   recentOperationLogs: '最近操作日誌',

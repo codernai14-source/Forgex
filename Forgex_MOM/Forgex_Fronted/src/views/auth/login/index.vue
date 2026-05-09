@@ -111,10 +111,10 @@
               <img src="/tubiao/GITEE.svg" alt="Gitee" />
             </button>
             <button type="button" class="oauth-btn wechat" :title="i18nT('common.login.platform.wechat')" @click="onOAuth('WECHAT')">
-              <img src="/tubiao/weixin2.svg" alt="微信" />
+              <img src="/tubiao/weixin2.svg" :alt="i18nT('common.login.platform.wechat')" />
             </button>
             <button type="button" class="oauth-btn dingtalk" :title="i18nT('common.login.platform.dingtalk')" @click="onOAuth('DINGTALK')">
-              <img src="/tubiao/dingding.svg" alt="閽夐拤" />
+              <img src="/tubiao/dingding.svg" :alt="i18nT('common.login.platform.dingtalk')" />
             </button>
           </div>
         </form>
@@ -139,7 +139,7 @@
           >
             <div class="tenant-logo">
               <img v-if="t.logo" :src="resolveTenantLogo(t.logo)" alt="logo" />
-              <div v-else class="logo-降级方案">
+              <div v-else class="logo-fallback">
                 {{ t.name?.[0] || 'T' }}
               </div>
             </div>
@@ -332,7 +332,7 @@ const systemConfig = ref<SystemBasicConfig>({
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
-  loginPageTitle: '欢迎来到 FORGEX_MOM',
+  loginPageTitle: i18nT('common.login.defaultTitle'),
   loginPageSubtitle: '',
   loginBackgroundType: 'image',
   loginBackgroundVideo: '/loading.mp4',
@@ -1282,7 +1282,7 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
 }
-.logo-降级方案 {
+.logo-fallback {
   color: #e5e7eb;
   font-size: 24px;
   font-weight: 700;

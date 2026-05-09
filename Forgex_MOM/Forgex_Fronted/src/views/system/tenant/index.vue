@@ -25,7 +25,7 @@
       
       <template #tenantType="{ record }">
         <a-tag :color="getTenantTypeColor(record.tenantType)">
-          {{ TenantTypeLabels[record.tenantType] }}
+          {{ getTenantTypeLabel(record.tenantType) }}
         </a-tag>
       </template>
       
@@ -64,10 +64,10 @@
             v-permission="'sys:tenant:edit'"
           >
             <template #icon><EditOutlined /></template>
-            编辑
+            {{ $t('common.edit') }}
           </a-button>
           <a-popconfirm
-            title="确定要删除这个租户吗？"
+            :title="$t('system.tenant.message.deleteConfirm')"
             :ok-text="$t('common.confirm')"
             :cancel-text="$t('common.cancel')"
             @confirm="handleDelete(record)"
@@ -80,7 +80,7 @@
               :disabled="record.tenantType === TenantTypeEnum.MAIN_TENANT"
             >
               <template #icon><DeleteOutlined /></template>
-              删除
+              {{ $t('common.delete') }}
             </a-button>
           </a-popconfirm>
         </a-space>
@@ -124,11 +124,11 @@
             :disabled="formData.id && formData.tenantType === TenantTypeEnum.MAIN_TENANT"
           >
             <a-select-option
-              v-for="(label, value) in TenantTypeLabels"
-              :key="value"
-              :value="value"
+              v-for="option in tenantTypeOptions"
+              :key="option.value"
+              :value="option.value"
             >
-              {{ label }}
+              {{ option.label }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -150,7 +150,7 @@
               :key="tenant.id"
               :value="tenant.id"
             >
-              {{ tenant.tenantName }} ({{ TenantTypeLabels[tenant.tenantType] }})
+              {{ tenant.tenantName }} ({{ getTenantTypeLabel(tenant.tenantType) }})
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -168,7 +168,7 @@
             <AvatarUpload
               v-model="formData.logo"
               module-code="sys_tenant_logo"
-              module-name="租户Logo"
+              :module-name="$t('system.tenant.logoModuleName')"
             />
           </div>
         </a-form-item>
@@ -194,13 +194,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  ReloadOutlined
+  DeleteOutlined
 } from '@ant-design/icons-vue'
 import {
   getTenantPage,
@@ -209,12 +208,10 @@ import {
   deleteTenant,
   listTenantForSelect,
   TenantTypeEnum,
-  TenantTypeLabels,
   type TenantDTO,
-  type TenantQueryDTO,
   type TenantSaveParam
 } from '@/api/system/tenant'
-import { getTaskDetail, getTaskByTenantId } from '@/api/system/tenantInitTask'
+import { getTaskByTenantId } from '@/api/system/tenantInitTask'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
@@ -223,6 +220,7 @@ import { useDict } from '@/hooks/useDict'
 import { normalizeMediaUrl } from '@/utils/media'
 
 const { dictItems: statusOptions } = useDict('status')
+const { t } = useI18n()
 
 const formRef = ref()
 const tableRef = ref()
@@ -254,11 +252,11 @@ const formData = reactive<TenantSaveParam>({
   status: true
 })
 
-const rules = {
-  tenantName: [{ required: true, message: '请输入租户名称', trigger: 'blur' }],
-  tenantCode: [{ required: true, message: '请输入租户编码', trigger: 'blur' }],
-  tenantType: [{ required: true, message: '请选择租户类型', trigger: 'change' }]
-}
+const rules = computed(() => ({
+  tenantName: [{ required: true, message: t('system.tenant.form.tenantName'), trigger: 'blur' }],
+  tenantCode: [{ required: true, message: t('system.tenant.form.tenantCode'), trigger: 'blur' }],
+  tenantType: [{ required: true, message: t('system.tenant.form.tenantType'), trigger: 'change' }]
+}))
 
 /**
  * 过滤租户选项
@@ -283,8 +281,19 @@ const loadTenantOptions = async () => {
 // 字典配置
 const dictOptions = computed(() => ({
   status: statusOptions.value,
-  tenantType: Object.entries(TenantTypeLabels).map(([value, label]) => ({ label, value })),
+  tenantType: tenantTypeOptions.value,
 }))
+
+const tenantTypeOptions = computed(() => [
+  { value: TenantTypeEnum.MAIN_TENANT, label: t('system.tenant.type.main') },
+  { value: TenantTypeEnum.CUSTOMER_TENANT, label: t('system.tenant.type.customer') },
+  { value: TenantTypeEnum.SUPPLIER_TENANT, label: t('system.tenant.type.supplier') },
+  { value: TenantTypeEnum.PARTNER_TENANT, label: t('system.tenant.type.partner') },
+])
+
+function getTenantTypeLabel(type: TenantTypeEnum) {
+  return tenantTypeOptions.value.find(item => item.value === type)?.label || type
+}
 
 // 处理表格数据请求
 const handleRequest = async (payload: {
@@ -311,7 +320,7 @@ const handleRequest = async (payload: {
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total: total }
   } catch (e: any) {
-    message.error(e.message || '加载租户列表失败')
+    message.error(e.message || t('system.tenant.message.loadListFailed'))
     return { records: [], total: 0 }
   } finally {
     loading.value = false

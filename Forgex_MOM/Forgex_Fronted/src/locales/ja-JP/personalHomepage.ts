@@ -170,5 +170,36 @@ export default {
     },
     todayLineJa: '今日は{month}月{day}日 {weekday}',
     onlineDuration: 'オンライン時間',
+    zeroMinutes: '0?',
   },
+  module: {
+    mode: { editing: '編集中', view: '表示' },
+    toolbar: { exitConfig: '設定を終了', hint: { edit: 'カードをドラッグまたはサイズ変更してから保存します。', view: '設定に入り、モジュールホームのウィジェットを調整できます。' } },
+    empty: '表示できるウィジェットがありません',
+    action: { enter: '開く' },
+    panel: { width: '幅', height: '高さ' },
+    message: { saveSuccess: 'モジュールホーム設定を保存しました', saveFailed: 'モジュールホーム設定の保存に失敗しました' },
+    modules: {
+      personal: { name: '個人ホーム', title: '個人ホーム既定設定', desc: '個人ホームの既定レイアウトを管理します。' },
+      basic: { name: '基本情報', title: '基本情報ホーム', desc: '基本情報モジュールのマスターデータ入口と設定状態をまとめて表示します。' },
+      approval: { name: '承認管理', title: '承認管理ホーム', desc: '承認タスク、保留中の入口、ワークフロー設定をまとめて表示します。' },
+      sys: { name: 'システム管理', title: 'システム管理ホーム', desc: 'システム稼働状況、権限設定、システムパラメータ入口をまとめて提供します。' },
+    },
+    widgets: {
+      supplierInfo: { title: 'サプライヤー情報', subtitle: 'サプライヤーマスターデータと登録管理', summary: 'サプライヤープロファイル、連絡先、資格、協業状態を管理します。' },
+      encodeRuleInfo: { title: '採番ルール', subtitle: '統一コード生成ルール', summary: '基本情報モジュールの採番ルール、連番、テスト生成を管理します。' },
+      systemOverview: { title: 'システム概要', subtitle: '組織、ユーザー、権限入口', summary: 'ユーザー、ロール、メニュー権限など主要なシステム機能へ素早くアクセスします。' },
+      systemHealth: { title: '稼働状態', subtitle: 'システム稼働とセキュリティ状態', summary: 'オンラインユーザー、ログイン動作、システム稼働関連情報を確認します。' },
+      systemLogs: { title: '操作ログ', subtitle: 'システム監査と追跡', summary: 'ログインログ、操作ログなどの監査画面を開きます。' },
+      systemConfig: { title: 'システム設定', subtitle: 'プラットフォームパラメータと外観設定', summary: 'ポータル、テーマ、セキュリティ、メール、アップロード、既定ホームレイアウトを管理します。' },
+      approvalStats: { title: '承認概要', subtitle: '承認稼働状況', summary: '保留、処理済み、承認実行の全体状況を確認します。' },
+      approvalShortcuts: { title: '承認入口', subtitle: '承認開始とよく使うフロー', summary: '開始可能な承認タスクと業務フローへ素早く移動します。' },
+      approvalPending: { title: '自分の保留タスク', subtitle: '現在処理待ちの承認', summary: '現在のユーザーが処理する必要のある承認インスタンスを確認します。' },
+      approvalTaskConfig: { title: 'タスク設定', subtitle: '承認タスクとノードルール', summary: 'タスクフォーム、ノード承認者、ワークフロールールを設定します。' },
+      custom: { subtitle: 'カスタムウィジェット', summary: '保存済みのモジュールホーム設定から取得したウィジェットです。' },
+    },
+    stats: {
+      masterData: 'マスターデータ', supplierArchive: 'サプライヤープロファイル', approval: '承認', admissionChange: '登録/変更', rule: 'ルール', byModule: 'モジュール別', capability: '機能', testGenerate: 'テスト/生成', user: 'ユーザー', accountManage: 'アカウント管理', role: 'ロール', authConfig: '権限設定', status: '状態', onlineSession: 'オンライン/セッション', security: 'セキュリティ', loginAudit: 'ログイン監査', audit: '監査', operationLog: '操作ログ', trace: '追跡', loginRecord: 'ログイン記録', scope: '範囲', publicTenant: '共通/テナント', config: '設定', systemParams: 'システムパラメータ', pending: '保留', myTasks: '自分のタスク', processed: '処理済み', processRecord: '処理記録', entry: '入口', startApproval: '承認開始', flow: 'フロー', taskTemplate: 'タスクテンプレート', action: '操作', approveReject: '承認/却下', task: 'タスク', flowConfig: 'フロー設定', node: 'ノード', approvalRule: '承認ルール', type: 'タイプ', extension: '拡張', enabled: '有効', pendingApproval: '承認待ち',
+    },
+  }
 }

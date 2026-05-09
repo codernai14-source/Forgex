@@ -7,7 +7,8 @@
  * @version 1.0.0
  */
 
-import { getLocale } from '@/locales'
+import i18n, { getLocale } from '@/locales'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 /**
  * 从 I18n JSON 字符串中获取当前语言的值
@@ -61,6 +62,64 @@ export function getI18nValue(
     console.error('解析 I18n JSON 失败:', error, 'JSON:', i18nJson)
     return 降级方案
   }
+}
+
+/**
+ * Resolve display text from a locale JSON string/object, an i18n key, or plain fallback text.
+ *
+ * This is intended for dynamic UI configuration such as table columns and local fallback
+ * configs where older pages may still pass plain labels.
+ */
+export function resolveI18nText(
+  source: unknown,
+  fallback = '',
+  langCode?: string
+): string {
+  if (source === undefined || source === null || source === '') {
+    return fallback
+  }
+
+  if (typeof source === 'object' && !Array.isArray(source)) {
+    const currentLang = langCode || getLocale()
+    const obj = source as Record<string, unknown>
+    const direct = obj[currentLang]
+    if (typeof direct === 'string' && direct.trim()) {
+      return direct
+    }
+    const zhCn = obj['zh-CN']
+    if (typeof zhCn === 'string' && zhCn.trim()) {
+      return zhCn
+    }
+    const first = Object.values(obj).find(value => typeof value === 'string' && value.trim())
+    return typeof first === 'string' ? first : fallback
+  }
+
+  const raw = String(source)
+  const trimmed = raw.trim()
+  if (!trimmed) {
+    return fallback
+  }
+
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    return getI18nValue(trimmed, fallback || raw, langCode)
+  }
+
+  const globalI18n = i18n.global as any
+  if (typeof globalI18n.te === 'function' && globalI18n.te(trimmed)) {
+    return String(globalI18n.t(trimmed))
+  }
+
+  const translated = String(globalI18n.t(trimmed))
+  if (translated && translated !== trimmed) {
+    return translated
+  }
+
+  const legacyTranslated = translateLegacyText(raw, langCode as any)
+  if (legacyTranslated && legacyTranslated !== raw) {
+    return legacyTranslated
+  }
+
+  return raw || fallback
 }
 
 /**
