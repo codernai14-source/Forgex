@@ -1,7 +1,7 @@
 <template>
   <div class="json-tree-viewer">
     <div v-if="!treeData || treeData.length === 0" class="empty-content">
-      <a-empty description="暂无数据" />
+      <a-empty :description="t('common.noData')" />
     </div>
     
     <a-tree
@@ -24,7 +24,7 @@
           
           <!-- 必填标记 -->
           <a-tag v-if="required" color="red" size="small" class="node-required-tag">
-            必填
+            {{ t('integration.paramConfig.required') }}
           </a-tag>
           
           <!-- 数据类型 -->
@@ -51,9 +51,9 @@
               <template #icon><EditOutlined /></template>
             </a-button>
             <a-popconfirm
-              title="确定删除该节点吗？"
-              ok-text="确定"
-              cancel-text="取消"
+              :title="t('integration.paramConfig.deleteNodeConfirm')"
+              :ok-text="t('common.ok')"
+              :cancel-text="t('common.cancel')"
               @confirm="handleDeleteNode(key)"
             >
               <a-button type="link" size="small" danger>
@@ -79,6 +79,7 @@
  */
 
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 import type { JsonTreeNode, TreeNodeType } from '@/utils/jsonTree';
 import { getFieldTypeName } from '@/utils/jsonTree';
@@ -157,6 +158,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
+const { t } = useI18n();
 
 /**
  * 内部展开状态

@@ -8,7 +8,9 @@
       </div>
       <div class="module-homepage-hero__meta">
         <span class="module-homepage-badge">{{ scopeLabel }}</span>
-        <span class="module-homepage-badge module-homepage-badge--soft">{{ editMode ? '编辑中' : '浏览' }}</span>
+        <span class="module-homepage-badge module-homepage-badge--soft">
+          {{ editMode ? t('personalHomepage.module.mode.editing') : t('personalHomepage.module.mode.view') }}
+        </span>
       </div>
     </div>
 
@@ -19,43 +21,43 @@
           v-model:value="scopeLevel"
           style="width: 160px"
         >
-          <a-select-option value="TENANT">租户级</a-select-option>
-          <a-select-option value="PUBLIC">公共级</a-select-option>
+          <a-select-option value="TENANT">{{ t('personalHomepage.hero.badge.tenant') }}</a-select-option>
+          <a-select-option value="PUBLIC">{{ t('personalHomepage.hero.badge.public') }}</a-select-option>
         </a-select>
         <a-button @click="toggleEditMode">
           <template #icon>
             <SettingOutlined />
           </template>
-          {{ editMode ? '退出配置' : '配置布局' }}
+          {{ editMode ? t('personalHomepage.module.toolbar.exitConfig') : t('personalHomepage.toolbar.editMode') }}
         </a-button>
         <a-button @click="reloadConfig">
           <template #icon>
             <ReloadOutlined />
           </template>
-          刷新
+          {{ t('personalHomepage.toolbar.refresh') }}
         </a-button>
         <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
           <template #icon>
             <UndoOutlined />
           </template>
-          恢复默认
+          {{ t('personalHomepage.toolbar.resetDefault') }}
         </a-button>
         <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
           <template #icon>
             <SaveOutlined />
           </template>
-          保存布局
+          {{ t('personalHomepage.toolbar.saveLayout') }}
         </a-button>
       </a-space>
       <span class="module-homepage-toolbar__hint">
-        {{ editMode ? '拖拽卡片或调整尺寸后保存。' : '进入配置后可以调整模块首页组件。' }}
+        {{ editMode ? t('personalHomepage.module.toolbar.hint.edit') : t('personalHomepage.module.toolbar.hint.view') }}
       </span>
     </div>
 
     <div class="module-homepage-content" :class="{ 'module-homepage-content--editing': editMode }">
       <section class="module-homepage-stage" data-guide-id="module-homepage-stage">
         <a-spin :spinning="loading">
-          <a-empty v-if="visibleWidgets.length === 0" description="暂无可显示组件" />
+          <a-empty v-if="visibleWidgets.length === 0" :description="t('personalHomepage.module.empty')" />
           <GridLayout
             v-else
             v-model:layout="gridLayout"
@@ -115,7 +117,7 @@
                       size="small"
                       @click="openPath(getWidgetMeta(item.i).path)"
                     >
-                      进入
+                      {{ t('personalHomepage.module.action.enter') }}
                       <template #icon>
                         <ArrowRightOutlined />
                       </template>
@@ -141,7 +143,7 @@
       <aside v-if="editMode" class="module-homepage-panel">
         <div class="module-homepage-panel__card">
           <div class="module-homepage-panel__header">
-            <h3>组件配置</h3>
+            <h3>{{ t('personalHomepage.panel.title') }}</h3>
             <span>{{ visibleWidgets.length }}/{{ configurableWidgets.length }}</span>
           </div>
           <div class="module-homepage-widget-settings">
@@ -159,7 +161,7 @@
               </div>
               <div class="module-homepage-widget-setting__fields">
                 <label>
-                  宽度
+                  {{ t('personalHomepage.module.panel.width') }}
                   <a-input-number
                     :value="widget.w"
                     :min="widget.minW || 1"
@@ -169,7 +171,7 @@
                   />
                 </label>
                 <label>
-                  高度
+                  {{ t('personalHomepage.module.panel.height') }}
                   <a-input-number
                     :value="widget.h"
                     :min="widget.minH || 1"
@@ -191,6 +193,7 @@
 import type { Component } from 'vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
   ApartmentOutlined,
@@ -271,6 +274,7 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -286,24 +290,24 @@ const normalizedModuleCode = computed<ModuleHomepageCode>(() => normalizeModuleC
 const moduleMeta = computed(() => {
   const map: Record<ModuleHomepageCode, { name: string; title: string; desc: string }> = {
     personal: {
-      name: '个人首页',
-      title: '个人首页默认配置',
-      desc: '维护个人首页默认布局。',
+      name: t('personalHomepage.module.modules.personal.name'),
+      title: t('personalHomepage.module.modules.personal.title'),
+      desc: t('personalHomepage.module.modules.personal.desc'),
     },
     basic: {
-      name: '基础信息',
-      title: '基础信息主页',
-      desc: '集中展示基础信息模块的主数据入口和配置状态。',
+      name: t('personalHomepage.module.modules.basic.name'),
+      title: t('personalHomepage.module.modules.basic.title'),
+      desc: t('personalHomepage.module.modules.basic.desc'),
     },
     approval: {
-      name: '审批管理',
-      title: '审批管理主页',
-      desc: '集中展示审批任务、待办入口和流程配置。',
+      name: t('personalHomepage.module.modules.approval.name'),
+      title: t('personalHomepage.module.modules.approval.title'),
+      desc: t('personalHomepage.module.modules.approval.desc'),
     },
     sys: {
-      name: '系统管理',
-      title: '系统管理主页',
-      desc: '集中展示系统运行、权限配置和系统参数入口。',
+      name: t('personalHomepage.module.modules.sys.name'),
+      title: t('personalHomepage.module.modules.sys.title'),
+      desc: t('personalHomepage.module.modules.sys.desc'),
     },
   }
   return map[normalizedModuleCode.value] || map.basic
@@ -313,9 +317,9 @@ const resolvedTitle = computed(() => props.title || moduleMeta.value.title)
 const resolvedDescription = computed(() => props.description || moduleMeta.value.desc)
 const scopeLabel = computed(() => {
   if (props.mode === 'current') {
-    return '用户级'
+    return t('personalHomepage.hero.badge.user')
   }
-  return scopeLevel.value === 'PUBLIC' ? '公共级' : '租户级'
+  return scopeLevel.value === 'PUBLIC' ? t('personalHomepage.hero.badge.public') : t('personalHomepage.hero.badge.tenant')
 })
 
 const orderedWidgets = computed(() => {
@@ -369,131 +373,131 @@ function normalizeModuleCode(moduleCode?: string | null): ModuleHomepageCode {
 function getWidgetMeta(widgetKey: string): WidgetMeta {
   const metaMap: Record<string, WidgetMeta> = {
     supplierInfo: {
-      title: '供应商信息',
-      subtitle: '供应商主数据与准入维护',
-      summary: '管理供应商档案、联系人、资质与协同状态。',
+      title: t('personalHomepage.module.widgets.supplierInfo.title'),
+      subtitle: t('personalHomepage.module.widgets.supplierInfo.subtitle'),
+      summary: t('personalHomepage.module.widgets.supplierInfo.summary'),
       icon: ApartmentOutlined,
       path: '/workspace/basic/supplier',
       stats: [
-        { label: '主数据', value: '供应商档案' },
-        { label: '审批', value: '准入/变更' },
+        { label: t('personalHomepage.module.stats.masterData'), value: t('personalHomepage.module.stats.supplierArchive') },
+        { label: t('personalHomepage.module.stats.approval'), value: t('personalHomepage.module.stats.admissionChange') },
       ],
     },
     encodeRuleInfo: {
-      title: '编码规则信息',
-      subtitle: '统一编码生成规则',
-      summary: '维护基础信息模块的编码规则、流水号和测试生成。',
+      title: t('personalHomepage.module.widgets.encodeRuleInfo.title'),
+      subtitle: t('personalHomepage.module.widgets.encodeRuleInfo.subtitle'),
+      summary: t('personalHomepage.module.widgets.encodeRuleInfo.summary'),
       icon: CodeOutlined,
       path: '/workspace/basic/encodeRule',
       stats: [
-        { label: '规则', value: '按模块维护' },
-        { label: '能力', value: '测试/生成' },
+        { label: t('personalHomepage.module.stats.rule'), value: t('personalHomepage.module.stats.byModule') },
+        { label: t('personalHomepage.module.stats.capability'), value: t('personalHomepage.module.stats.testGenerate') },
       ],
     },
     systemOverview: {
-      title: '系统概览',
-      subtitle: '组织、用户与权限入口',
-      summary: '快速进入用户、角色和菜单授权等系统核心能力。',
+      title: t('personalHomepage.module.widgets.systemOverview.title'),
+      subtitle: t('personalHomepage.module.widgets.systemOverview.subtitle'),
+      summary: t('personalHomepage.module.widgets.systemOverview.summary'),
       icon: DashboardOutlined,
       path: '/workspace/sys/user',
       stats: [
-        { label: '用户', value: '账号管理' },
-        { label: '角色', value: '授权配置' },
+        { label: t('personalHomepage.module.stats.user'), value: t('personalHomepage.module.stats.accountManage') },
+        { label: t('personalHomepage.module.stats.role'), value: t('personalHomepage.module.stats.authConfig') },
       ],
     },
     systemHealth: {
-      title: '运行状态',
-      subtitle: '系统运行与安全状态',
-      summary: '查看在线用户、登录行为和系统运行相关信息。',
+      title: t('personalHomepage.module.widgets.systemHealth.title'),
+      subtitle: t('personalHomepage.module.widgets.systemHealth.subtitle'),
+      summary: t('personalHomepage.module.widgets.systemHealth.summary'),
       icon: SafetyCertificateOutlined,
       path: '/workspace/sys/online',
       stats: [
-        { label: '状态', value: '在线/会话' },
-        { label: '安全', value: '登录审计' },
+        { label: t('personalHomepage.module.stats.status'), value: t('personalHomepage.module.stats.onlineSession') },
+        { label: t('personalHomepage.module.stats.security'), value: t('personalHomepage.module.stats.loginAudit') },
       ],
     },
     systemLogs: {
-      title: '操作日志',
-      subtitle: '系统审计与追踪',
-      summary: '进入登录日志、操作日志等审计页面。',
+      title: t('personalHomepage.module.widgets.systemLogs.title'),
+      subtitle: t('personalHomepage.module.widgets.systemLogs.subtitle'),
+      summary: t('personalHomepage.module.widgets.systemLogs.summary'),
       icon: FileTextOutlined,
       path: '/workspace/sys/log/operation',
       stats: [
-        { label: '审计', value: '操作日志' },
-        { label: '追踪', value: '登录记录' },
+        { label: t('personalHomepage.module.stats.audit'), value: t('personalHomepage.module.stats.operationLog') },
+        { label: t('personalHomepage.module.stats.trace'), value: t('personalHomepage.module.stats.loginRecord') },
       ],
     },
     systemConfig: {
-      title: '系统配置',
-      subtitle: '平台参数与外观配置',
-      summary: '维护门户、主题、安全、邮件、上传和首页默认布局。',
+      title: t('personalHomepage.module.widgets.systemConfig.title'),
+      subtitle: t('personalHomepage.module.widgets.systemConfig.subtitle'),
+      summary: t('personalHomepage.module.widgets.systemConfig.summary'),
       icon: SettingOutlined,
       path: '/workspace/sys/config',
       stats: [
-        { label: '范围', value: '公共/租户' },
-        { label: '配置', value: '系统参数' },
+        { label: t('personalHomepage.module.stats.scope'), value: t('personalHomepage.module.stats.publicTenant') },
+        { label: t('personalHomepage.module.stats.config'), value: t('personalHomepage.module.stats.systemParams') },
       ],
     },
     approvalStats: {
-      title: '审批概览',
-      subtitle: '审批运行概况',
-      summary: '查看待办、已办和审批执行的整体情况。',
+      title: t('personalHomepage.module.widgets.approvalStats.title'),
+      subtitle: t('personalHomepage.module.widgets.approvalStats.subtitle'),
+      summary: t('personalHomepage.module.widgets.approvalStats.summary'),
       icon: AuditOutlined,
       path: '/workspace/approval/my/pending',
       stats: [
-        { label: '待办', value: '我的任务' },
-        { label: '已办', value: '处理记录' },
+        { label: t('personalHomepage.module.stats.pending'), value: t('personalHomepage.module.stats.myTasks') },
+        { label: t('personalHomepage.module.stats.processed'), value: t('personalHomepage.module.stats.processRecord') },
       ],
     },
     approvalShortcuts: {
-      title: '审批入口',
-      subtitle: '发起审批与常用流程',
-      summary: '快速进入可发起的审批任务和业务流程。',
+      title: t('personalHomepage.module.widgets.approvalShortcuts.title'),
+      subtitle: t('personalHomepage.module.widgets.approvalShortcuts.subtitle'),
+      summary: t('personalHomepage.module.widgets.approvalShortcuts.summary'),
       icon: ThunderboltOutlined,
       path: '/workspace/approval/execution/start',
       stats: [
-        { label: '入口', value: '发起审批' },
-        { label: '流程', value: '任务模板' },
+        { label: t('personalHomepage.module.stats.entry'), value: t('personalHomepage.module.stats.startApproval') },
+        { label: t('personalHomepage.module.stats.flow'), value: t('personalHomepage.module.stats.taskTemplate') },
       ],
     },
     approvalPending: {
-      title: '我的待办',
-      subtitle: '当前待处理审批',
-      summary: '查看需要当前用户处理的审批实例。',
+      title: t('personalHomepage.module.widgets.approvalPending.title'),
+      subtitle: t('personalHomepage.module.widgets.approvalPending.subtitle'),
+      summary: t('personalHomepage.module.widgets.approvalPending.summary'),
       icon: CheckCircleOutlined,
       path: '/workspace/approval/my/pending',
       stats: [
-        { label: '状态', value: '待审批' },
-        { label: '动作', value: '同意/驳回' },
+        { label: t('personalHomepage.module.stats.status'), value: t('personalHomepage.module.stats.pendingApproval') },
+        { label: t('personalHomepage.module.stats.action'), value: t('personalHomepage.module.stats.approveReject') },
       ],
     },
     approvalTaskConfig: {
-      title: '任务配置',
-      subtitle: '审批任务与节点规则',
-      summary: '配置任务表单、节点审批人和流程规则。',
+      title: t('personalHomepage.module.widgets.approvalTaskConfig.title'),
+      subtitle: t('personalHomepage.module.widgets.approvalTaskConfig.subtitle'),
+      summary: t('personalHomepage.module.widgets.approvalTaskConfig.summary'),
       icon: TeamOutlined,
       path: '/workspace/approval/taskConfig',
       stats: [
-        { label: '任务', value: '流程配置' },
-        { label: '节点', value: '审批规则' },
+        { label: t('personalHomepage.module.stats.task'), value: t('personalHomepage.module.stats.flowConfig') },
+        { label: t('personalHomepage.module.stats.node'), value: t('personalHomepage.module.stats.approvalRule') },
       ],
     },
   }
+  const widget = config.value.widgets.find(item => item.key === widgetKey)
   return metaMap[widgetKey] || {
-    title: widgetKey,
-    subtitle: '自定义组件',
-    summary: '该组件来自已保存的模块首页配置。',
+    title: widget?.title || widgetKey,
+    subtitle: t('personalHomepage.module.widgets.custom.subtitle'),
+    summary: t('personalHomepage.module.widgets.custom.summary'),
     icon: AppstoreOutlined,
     stats: [
-      { label: '状态', value: '已启用' },
-      { label: '类型', value: '扩展' },
+      { label: t('personalHomepage.module.stats.status'), value: t('personalHomepage.module.stats.enabled') },
+      { label: t('personalHomepage.module.stats.type'), value: t('personalHomepage.module.stats.extension') },
     ],
   }
 }
 
 function getWidgetTitle(widgetKey: string) {
-  const widget = config.value.widgets.find(item => item.key === widgetKey)
-  return widget?.title || getWidgetMeta(widgetKey).title
+  return getWidgetMeta(widgetKey).title
 }
 
 function getWidgetConfig(widgetKey: string) {
@@ -575,10 +579,10 @@ async function saveConfig() {
     }
     config.value = payload
     syncGridFromConfig()
-    message.success('模块首页配置已保存')
+    message.success(t('personalHomepage.module.message.saveSuccess'))
   } catch (error) {
     console.error('保存模块首页配置失败:', error)
-    message.error('保存模块首页配置失败')
+    message.error(t('personalHomepage.module.message.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -589,10 +593,10 @@ async function resetToDefault() {
   try {
     await resetCurrentPersonalHomepageConfig({ moduleCode: normalizedModuleCode.value })
     await reloadConfig()
-    message.success('已恢复默认布局')
+    message.success(t('personalHomepage.message.resetSuccess'))
   } catch (error) {
     console.error('恢复模块首页默认布局失败:', error)
-    message.error('恢复默认布局失败')
+    message.error(t('personalHomepage.message.resetFailed'))
   } finally {
     saving.value = false
   }

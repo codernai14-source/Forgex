@@ -1,4 +1,4 @@
-import http from '../http'
+﻿import http from '../http'
 
 export type LoginBackgroundType = 'video' | 'image' | 'color'
 export type LoginStyle = 'cyber' | 'simple' | 'classic'
@@ -117,8 +117,7 @@ export function createDefaultSystemBasicConfig(): SystemBasicConfig {
     systemVersion: '1.0.0',
     copyright: '© 2025 FORGEX_MOM',
     copyrightLink: '#',
-    loginPageTitle: '欢迎来到FORGEX_MOM！',
-    loginPageSubtitle: '',
+    loginPageTitle: 'FORGEX_MOM',
     loginBackgroundType: 'image',
     loginBackgroundVideo: '/loading.mp4',
     loginBackgroundImage: '/back.jpg',
@@ -254,7 +253,7 @@ export function createFileUploadFolder(parentPath: string, folderName: string) {
   return http.post<FileUploadFolderNode>('/sys/config/file-upload/folders/create', { parentPath, folderName })
 }
 
-// ========== 加密配置类型 ==========
+// ========== 鍔犲瘑閰嶇疆绫诲瀷 ==========
 
 export interface Sm4Config {
   keyHex: string
@@ -312,7 +311,7 @@ export function createDefaultCryptoConfig(): CryptoConfig {
   }
 }
 
-// ========== 加密配置 API ==========
+// ========== 鍔犲瘑閰嶇疆 API ==========
 
 export function getCryptoConfig() {
   return http.get<CryptoConfig>('/sys/config/crypto')
@@ -343,4 +342,5 @@ export function generateKmsMasterKey() {
 export function getTdeStatus() {
   return http.get<TdeStatus>('/sys/config/crypto/tde-status')
 }
+
 

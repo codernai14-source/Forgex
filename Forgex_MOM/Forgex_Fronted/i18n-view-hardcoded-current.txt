@@ -1,0 +1,1938 @@
+﻿src\views\auth\init-wizard\index.vue:6: <div class="slide-head">密码与验证码安全策略初始化</div>
+src\views\auth\init-wizard\index.vue:7: <div class="slide-hint">请选择密码强度、初始密码、验证码与加密方式</div>
+src\views\auth\init-wizard\index.vue:10: <div class="block-title">密码强度</div>
+src\views\auth\init-wizard\index.vue:13: <label><input type="radio" value="high" v-model="security.pwdStrength" /> 高</label>
+src\views\auth\init-wizard\index.vue:14: <label><input type="radio" value="normal" v-model="security.pwdStrength" /> 普通</label>
+src\views\auth\init-wizard\index.vue:15: <label><input type="radio" value="low" v-model="security.pwdStrength" /> 低</label>
+src\views\auth\init-wizard\index.vue:19: <div class="block-title">初始密码</div>
+src\views\auth\init-wizard\index.vue:20: <div class="item-hint">此值用于所有用户初始密码，重置密码将恢复为此值</div>
+src\views\auth\init-wizard\index.vue:21: <input class="input" type="text" v-model="security.initialPassword" placeholder="默认 Aa123456" />
+src\views\auth\init-wizard\index.vue:24: <div class="block-title">验证码</div>
+src\views\auth\init-wizard\index.vue:25: <label class="ck"><input type="checkbox" v-model="security.captchaEnabled" /> 开启验证码</label>
+src\views\auth\init-wizard\index.vue:28: <label><input type="radio" value="image" v-model="security.captchaMode" /> 图片验证码</label>
+src\views\auth\init-wizard\index.vue:29: <label><input type="radio" value="slider" v-model="security.captchaMode" /> 滑块验证码</label>
+src\views\auth\init-wizard\index.vue:33: <div class="block-title">密码加密方式</div>
+src\views\auth\init-wizard\index.vue:48: <div class="slide-head">用户、角色、租户初始化</div>
+src\views\auth\init-wizard\index.vue:49: <div class="slide-hint">选择用户与角色，配置租户与关联关系</div>
+src\views\auth\init-wizard\index.vue:52: <div class="block-title">用户</div>
+src\views\auth\init-wizard\index.vue:54: <label class="ck"><input type="checkbox" disabled checked /> admin（默认）</label>
+src\views\auth\init-wizard\index.vue:55: <label class="ck"><input type="checkbox" v-model="form.addDev" /> dev 系统开发者</label>
+src\views\auth\init-wizard\index.vue:56: <label class="ck"><input type="checkbox" v-model="form.addTest" /> test 系统测试员</label>
+src\views\auth\init-wizard\index.vue:57: <label class="ck"><input type="checkbox" v-model="form.addCustom" /> custom 客户账号</label>
+src\views\auth\init-wizard\index.vue:59: <div class="item-hint">客户账号默认为 custom，不支持在此创建更多客户用户</div>
+src\views\auth\init-wizard\index.vue:62: <div class="block-title">角色</div>
+src\views\auth\init-wizard\index.vue:64: <label class="ck"><input type="checkbox" disabled checked /> 系统管理员</label>
+src\views\auth\init-wizard\index.vue:65: <label class="ck"><input type="checkbox" v-model="form.roleDeveloper" /> 开发者</label>
+src\views\auth\init-wizard\index.vue:66: <label class="ck"><input type="checkbox" v-model="form.roleTester" /> 测试</label>
+src\views\auth\init-wizard\index.vue:67: <label class="ck"><input type="checkbox" v-model="form.roleCustomer" /> 客户</label>
+src\views\auth\init-wizard\index.vue:71: <div class="block-title">租户</div>
+src\views\auth\init-wizard\index.vue:73: <a-button size="small" type="default" @click="addForgex">添加 Forgex 租户</a-button>
+src\views\auth\init-wizard\index.vue:74: <a-button size="small" type="default" @click="addCustomer">添加 客户 租户</a-button>
+src\views\auth\init-wizard\index.vue:80: <span v-else style="color:#c3b37b">无</span>
+src\views\auth\init-wizard\index.vue:83: <a-button size="small" @click="openEdit(record.key)">编辑</a-button>
+src\views\auth\init-wizard\index.vue:84: <a-button size="small" danger style="margin-left:6px" v-if="record.key!=='default'" @click="removeTenant(record.key)">移除</a-button>
+src\views\auth\init-wizard\index.vue:90: <div class="block-title">用户租户关联</div>
+src\views\auth\init-wizard\index.vue:92: <a-select :key="'user-'+refreshKey" style="width:160px" v-model:value="b.account" placeholder="选择用户">
+src\views\auth\init-wizard\index.vue:95: <a-select :key="'tenant-'+refreshKey" mode="multiple" style="min-width:260px" v-model:value="b.tenants" placeholder="选择租户">
+src\views\auth\init-wizard\index.vue:98: <a-button size="small" @click="removeBind(i)">删除</a-button>
+src\views\auth\init-wizard\index.vue:100: <a-button size="small" type="default" @click="addBind">添加关联</a-button>
+src\views\auth\init-wizard\index.vue:103: <div class="block-title">用户角色关联</div>
+src\views\auth\init-wizard\index.vue:105: <a-select :key="'user-'+refreshKey" style="width:160px" v-model:value="r.account" placeholder="选择用户">
+src\views\auth\init-wizard\index.vue:108: <a-select :key="'tenant-'+refreshKey" style="width:160px" v-model:value="r.tenant" placeholder="选择租户">
+src\views\auth\init-wizard\index.vue:111: <a-select :key="'role-'+refreshKey" mode="multiple" style="min-width:260px" v-model:value="r.roles" placeholder="选择角色">
+src\views\auth\init-wizard\index.vue:114: <a-button size="small" @click="removeRoleBind(i)">删除</a-button>
+src\views\auth\init-wizard\index.vue:116: <a-button size="small" type="default" @click="addRoleBind">添加关联</a-button>
+src\views\auth\init-wizard\index.vue:122: <div class="slide-head">菜单初始化</div>
+src\views\auth\init-wizard\index.vue:123: <div class="slide-hint">预留，暂不做实现</div>
+src\views\auth\init-wizard\index.vue:125: <a-button type="primary" :loading="submitting" @click="submit">提交初始化</a-button>
+src\views\auth\init-wizard\index.vue:129: <a-modal v-model:open="modalOpen" title="编辑租户" wrapClassName="dark-modal">
+src\views\auth\init-wizard\index.vue:131: <label>名称</label>
+src\views\auth\init-wizard\index.vue:132: <input class="input" v-model="editModel.name" placeholder="租户名称" />
+src\views\auth\init-wizard\index.vue:133: <label>编码</label>
+src\views\auth\init-wizard\index.vue:134: <input class="input" v-model="editModel.code" placeholder="租户编码" />
+src\views\auth\init-wizard\index.vue:135: <label>简介</label>
+src\views\auth\init-wizard\index.vue:136: <input class="input" v-model="editModel.intro" placeholder="租户简介" />
+src\views\auth\init-wizard\index.vue:139: <a-button size="small">选择文件</a-button>
+src\views\auth\init-wizard\index.vue:147: <a-button style="margin-right:8px" @click="modalOpen=false">取消</a-button>
+src\views\auth\init-wizard\index.vue:148: <a-button type="primary" @click="saveEdit">保存</a-button>
+src\views\auth\init-wizard\index.vue:177: if (security.pwdStrength === 'high') return '高：必须包含字母、数字、符号'
+src\views\auth\init-wizard\index.vue:178: if (security.pwdStrength === 'normal') return '普通：必须包含数字和字母'
+src\views\auth\init-wizard\index.vue:179: return '低：仅数字'
+src\views\auth\init-wizard\index.vue:182: if (!security.captchaEnabled) return '验证码已关闭'
+src\views\auth\init-wizard\index.vue:183: return security.captchaMode === 'slider' ? '滑块验证码：提升人机识别，降低误拦' : '图片验证码：拦截暴力尝试'
+src\views\auth\init-wizard\index.vue:187: if (v === 'bcrypt') return 'BCrypt：不可逆哈希，安全与性能平衡'
+src\views\auth\init-wizard\index.vue:188: if (v === 'argon2') return 'Argon2：内存硬耗型不可逆哈希（Argon2id）'
+src\views\auth\init-wizard\index.vue:189: if (v === 'scrypt') return 'scrypt：抗GPU/ASIC的不可逆哈希'
+src\views\auth\init-wizard\index.vue:190: return 'PBKDF2：迭代不可逆哈希（HmacSHA256）'
+src\views\auth\init-wizard\index.vue:204: defaultTenantIntro: '默认租户',
+src\views\auth\init-wizard\index.vue:207: forgexTenantIntro: '您的系统开发供应商，专注MOM系统开发与交付，是您可以信赖的专业合作伙伴！',
+src\views\auth\init-wizard\index.vue:218: default: { selected: true, name: 'default', code: 'default', intro: '默认租户', logo: '' },
+src\views\auth\init-wizard\index.vue:219: forgex: { selected: false, code: 'forgex', intro: '您的系统开发供应商，专注MOM系统开发与交付，是您可以信赖的专业合作伙伴！', logo: '' },
+src\views\auth\init-wizard\index.vue:224: { title: '租户标识', dataIndex: 'key', key: 'key' },
+src\views\auth\init-wizard\index.vue:226: { title: '名称', dataIndex: 'name', key: 'name' },
+src\views\auth\init-wizard\index.vue:227: { title: '编码', dataIndex: 'code', key: 'code' },
+src\views\auth\init-wizard\index.vue:228: { title: '简介', dataIndex: 'intro', key: 'intro' },
+src\views\auth\init-wizard\index.vue:229: { title: '操作', key: 'ops' }
+src\views\auth\init-wizard\index.vue:270: tenants.default.intro = editModel.intro || '默认租户'
+src\views\auth\init-wizard\index.vue:294: message.error('上传失败')
+src\views\auth\init-wizard\index.vue:329: message.success('初始化完成')
+src\views\auth\init-wizard\index.vue:332: message.error('初始化失败')
+src\views\auth\login\index.vue:114: <img src="/tubiao/weixin2.svg" alt="微信" />
+src\views\auth\login\index.vue:117: <img src="/tubiao/dingding.svg" alt="閽夐拤" />
+src\views\auth\login\index.vue:142: <div v-else class="logo-降级方案">
+src\views\auth\login\index.vue:257: import { use权限Store } from '@/stores/permission'
+src\views\auth\login\index.vue:303: const permissionStore = use权限Store()
+src\views\auth\login\index.vue:335: loginPageTitle: '欢迎来到 FORGEX_MOM',
+src\views\auth\login\index.vue:625: permissionStore.set权限s(routesRes.buttons)
+src\views\auth\login\index.vue:626: console.log('[Login] 权限s stored to Pinia:', routesRes.buttons)
+src\views\auth\login\index.vue:629: permissionStore.set权限s([])
+src\views\auth\login\index.vue:675: console.error('閫夋嫨绉熸埛澶辫触:', e)
+src\views\auth\login\index.vue:1285: .logo-降级方案 {
+src\views\basic\currency\index.vue:6: <h1>币种与汇率管理</h1>
+src\views\basic\currency\index.vue:7: <p>维护 ISO 币种、汇率类型、汇率生效记录和操作日志。</p>
+src\views\basic\currency\index.vue:10: <a-button v-if="activeTab === 'currency'" v-permission="'basic:currency:add'" type="primary" @click="openCurrency()">新增币种</a-button>
+src\views\basic\currency\index.vue:11: <a-button v-if="activeTab === 'rateType'" v-permission="'basic:currency:add'" type="primary" @click="openRateType()">新增汇率类型</a-button>
+src\views\basic\currency\index.vue:12: <a-button v-if="activeTab === 'rate'" v-permission="'basic:exchangeRate:add'" type="primary" @click="openRate()">新增汇率</a-button>
+src\views\basic\currency\index.vue:17: <a-tab-pane key="currency" tab="币种主数据">
+src\views\basic\currency\index.vue:19: <template #isBaseCurrency="{ record }"><a-tag :color="record.isBaseCurrency ? 'green' : 'default'">{{ record.isBaseCurrency ? '本位币' : '外币' }}</a-tag></template>
+src\views\basic\currency\index.vue:20: <template #status="{ record }"><a-tag :color="record.status === 1 ? 'green' : 'red'">{{ record.status === 1 ? '启用' : '禁用' }}</a-tag></template>
+src\views\basic\currency\index.vue:23: <a v-permission="'basic:currency:edit'" @click="openCurrency(record)">编辑</a>
+src\views\basic\currency\index.vue:24: <a v-permission="'basic:currency:setBase'" :class="{ disabled: record.isBaseCurrency }" @click="setBase(record)">设为本位币</a>
+src\views\basic\currency\index.vue:25: <a v-permission="'basic:currency:edit'" @click="toggleCurrency(record)">{{ record.status === 1 ? '禁用' : '启用' }}</a>
+src\views\basic\currency\index.vue:26: <a v-permission="'basic:currency:delete'" class="danger-link" @click="deleteCurrency(record)">删除</a>
+src\views\basic\currency\index.vue:32: <a-tab-pane key="rateType" tab="汇率类型">
+src\views\basic\currency\index.vue:34: <template #isDefault="{ record }"><a-tag :color="record.isDefault ? 'green' : 'default'">{{ record.isDefault ? '默认' : '普通' }}</a-tag></template>
+src\views\basic\currency\index.vue:35: <template #status="{ record }"><a-tag :color="record.status === 1 ? 'green' : 'red'">{{ record.status === 1 ? '启用' : '禁用' }}</a-tag></template>
+src\views\basic\currency\index.vue:38: <a v-permission="'basic:currency:edit'" @click="openRateType(record)">编辑</a>
+src\views\basic\currency\index.vue:39: <a v-permission="'basic:currency:edit'" :class="{ disabled: record.isDefault }" @click="setDefaultRateType(record)">设为默认</a>
+src\views\basic\currency\index.vue:40: <a v-permission="'basic:currency:delete'" class="danger-link" @click="deleteRateType(record)">删除</a>
+src\views\basic\currency\index.vue:46: <a-tab-pane key="rate" tab="汇率明细">
+src\views\basic\currency\index.vue:52: <a v-permission="'basic:exchangeRate:edit'" @click="openRate(record)">编辑</a>
+src\views\basic\currency\index.vue:53: <a v-permission="'basic:exchangeRate:approval'" :class="{ disabled: record.approveStatus === 3 }" @click="startRateApproval(record)">发起审批</a>
+src\views\basic\currency\index.vue:54: <a v-permission="'basic:exchangeRate:delete'" class="danger-link" @click="deleteRate(record)">删除</a>
+src\views\basic\currency\index.vue:60: <a-tab-pane key="log" tab="操作日志">
+src\views\basic\currency\index.vue:65: <BaseFormDialog v-model:open="currencyVisible" :title="currencyForm.id ? '编辑币种' : '新增币种'" width="720px" :loading="saving" @submit="saveCurrency">
+src\views\basic\currency\index.vue:68: <a-col :span="8"><a-form-item label="币种编码" required><a-input v-model:value="currencyForm.currencyCode" :disabled="!!currencyForm.id" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:69: <a-col :span="8"><a-form-item label="数字编码"><a-input v-model:value="currencyForm.currencyNumCode" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:70: <a-col :span="8"><a-form-item label="小数位" required><a-input-number v-model:value="currencyForm.decimalDigits" class="full-width" :min="0" :max="8" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:71: <a-col :span="12"><a-form-item label="中文名称" required><a-input v-model:value="currencyForm.currencyNameCn" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:72: <a-col :span="12"><a-form-item label="英文名称"><a-input v-model:value="currencyForm.currencyNameEn" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:73: <a-col :span="8"><a-form-item label="符号"><a-input v-model:value="currencyForm.currencySymbol" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:74: <a-col :span="8"><a-form-item label="国家/地区"><a-input v-model:value="currencyForm.countryRegion" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:75: <a-col :span="8"><a-form-item label="本位币"><a-switch v-model:checked="currencyForm.isBaseCurrency" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:76: <a-col :span="24"><a-form-item label="备注"><a-textarea v-model:value="currencyForm.remark" :rows="2" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:81: <BaseFormDialog v-model:open="rateTypeVisible" :title="rateTypeForm.id ? '编辑汇率类型' : '新增汇率类型'" width="720px" :loading="saving" @submit="saveRateType">
+src\views\basic\currency\index.vue:84: <a-col :span="12"><a-form-item label="类型编码" required><a-input v-model:value="rateTypeForm.rateTypeCode" :disabled="!!rateTypeForm.id" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:85: <a-col :span="12"><a-form-item label="类型名称" required><a-input v-model:value="rateTypeForm.rateTypeName" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:86: <a-col :span="8"><a-form-item label="默认"><a-switch v-model:checked="rateTypeForm.isDefault" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:87: <a-col :span="8"><a-form-item label="状态"><a-select v-model:value="rateTypeForm.status" :options="statusOptions" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:88: <a-col :span="24"><a-form-item label="业务场景"><a-textarea v-model:value="rateTypeForm.businessScene" :rows="2" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:93: <BaseFormDialog v-model:open="rateVisible" :title="rateForm.id ? '编辑汇率' : '新增汇率'" width="760px" :loading="saving" @submit="saveRate">
+src\views\basic\currency\index.vue:96: <a-col :span="8"><a-form-item label="源币种" required><a-input v-model:value="rateForm.sourceCurrencyCode" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:97: <a-col :span="8"><a-form-item label="目标币种" required><a-input v-model:value="rateForm.targetCurrencyCode" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:98: <a-col :span="8"><a-form-item label="汇率类型" required><a-input v-model:value="rateForm.rateTypeCode" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:99: <a-col :span="8"><a-form-item label="生效日期" required><a-date-picker v-model:value="rateForm.effectiveDate" value-format="YYYY-MM-DD" class="full-width" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:100: <a-col :span="8"><a-form-item label="失效日期"><a-date-picker v-model:value="rateForm.expireDate" value-format="YYYY-MM-DD" class="full-width" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:101: <a-col :span="8"><a-form-item label="汇率值" required><a-input-number v-model:value="rateForm.exchangeRate" class="full-width" :precision="8" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:102: <a-col :span="8"><a-form-item label="组织ID"><a-input-number v-model:value="rateForm.orgId" class="full-width" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:103: <a-col :span="24"><a-form-item label="备注"><a-textarea v-model:value="rateForm.remark" :rows="2" /></a-form-item></a-col>
+src\views\basic\currency\index.vue:128: const statusOptions = [{ label: '启用', value: 1 }, { label: '禁用', value: 0 }]
+src\views\basic\currency\index.vue:130: const currencyTableConfig = tableConfig('CurrencyMasterTable', '币种主数据', [
+src\views\basic\currency\index.vue:131: ['currencyCode', '币种编码', 120], ['currencyNameCn', '中文名称', 160], ['currencyNameEn', '英文名称', 180],
+src\views\basic\currency\index.vue:132: ['currencySymbol', '符号', 80], ['decimalDigits', '小数位', 90], ['isBaseCurrency', '本位币', 100],
+src\views\basic\currency\index.vue:133: ['status', '状态', 90], ['action', '操作', 260],
+src\views\basic\currency\index.vue:135: const rateTypeTableConfig = tableConfig('ExchangeRateTypeTable', '汇率类型', [
+src\views\basic\currency\index.vue:136: ['rateTypeCode', '类型编码', 140], ['rateTypeName', '类型名称', 160], ['businessScene', '业务场景', 260],
+src\views\basic\currency\index.vue:137: ['isDefault', '默认', 90], ['status', '状态', 90], ['action', '操作', 220],
+src\views\basic\currency\index.vue:139: const rateTableConfig = tableConfig('CurrencyExchangeRateTable', '汇率明细', [
+src\views\basic\currency\index.vue:140: ['pair', '币种对', 140], ['rateTypeCode', '汇率类型', 130], ['effectiveDate', '生效日期', 120],
+src\views\basic\currency\index.vue:141: ['expireDate', '失效日期', 120], ['exchangeRate', '汇率值', 130], ['approveStatus', '审批状态', 120],
+src\views\basic\currency\index.vue:142: ['action', '操作', 240],
+src\views\basic\currency\index.vue:144: const logTableConfig = tableConfig('ExchangeRateLogTable', '汇率日志', [
+src\views\basic\currency\index.vue:145: ['rateId', '汇率ID', 100], ['operationType', '操作类型', 120], ['operationContent', '操作内容', 260], ['createTime', '操作时间', 180],
+src\views\basic\currency\index.vue:208: function deleteCurrency(record: Currency) { Modal.confirm({ title: '确认删除币种？', async onOk() { await currencyApi.delete(record.id!); await currencyTableRef.value?.refresh?.() } }) }
+src\views\basic\currency\index.vue:210: function deleteRateType(record: RateType) { Modal.confirm({ title: '确认删除汇率类型？', async onOk() { await rateTypeApi.delete(record.id!); await rateTypeTableRef.value?.refresh?.() } }) }
+src\views\basic\currency\index.vue:211: async function startRateApproval(record: ExchangeRate) { await exchangeRateApi.startApproval(record.id!); message.success('已发起审批'); await rateTableRef.value?.refresh?.() }
+src\views\basic\currency\index.vue:212: function deleteRate(record: ExchangeRate) { Modal.confirm({ title: '确认删除汇率？', async onOk() { await exchangeRateApi.delete(record.id!); await rateTableRef.value?.refresh?.() } }) }
+src\views\basic\currency\index.vue:213: function approveLabel(value?: number) { return ({ 0: '待审批', 1: '已生效', 2: '已驳回', 3: '审批中' } as Record<number, string>)[Number(value)] || '-' }
+src\views\basic\customer\index.vue:6: <h1>客户主数据</h1>
+src\views\basic\customer\index.vue:7: <p>维护客户基础信息、联系人、发票抬头、经营扩展信息和客户租户关联。</p>
+src\views\basic\customer\index.vue:10: <a-button v-permission="'basic:customer:add'" type="primary" @click="openCreate">新增客户</a-button>
+src\views\basic\customer\index.vue:30: {{ record.isRelatedTenant || record.relatedTenantCode ? '已关联' : '未关联' }}
+src\views\basic\customer\index.vue:40: <a v-permission="'basic:customer:query'" @click="openDetail(record)">详情</a>
+src\views\basic\customer\index.vue:41: <a v-permission="'basic:customer:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\customer\index.vue:47: 创建客户租户
+src\views\basic\customer\index.vue:54: 发起审批
+src\views\basic\customer\index.vue:62: 删除
+src\views\basic\customer\index.vue:79: <a-tab-pane key="main" tab="主数据">
+src\views\basic\customer\index.vue:83: <a-form-item label="自动生成编码">
+src\views\basic\customer\index.vue:88: <a-form-item label="客户编码" required>
+src\views\basic\customer\index.vue:93: <a-form-item label="客户全称" required>
+src\views\basic\customer\index.vue:98: <a-form-item label="客户简称">
+src\views\basic\customer\index.vue:103: <a-form-item label="客户价值等级">
+src\views\basic\customer\index.vue:108: <a-form-item label="客户信用等级">
+src\views\basic\customer\index.vue:113: <a-form-item label="经营状态">
+src\views\basic\customer\index.vue:118: <a-form-item label="审批状态">
+src\views\basic\customer\index.vue:123: <a-form-item label="是否关联租户">
+src\views\basic\customer\index.vue:128: <a-form-item label="关联租户编码">
+src\views\basic\customer\index.vue:133: <a-form-item label="运输方式">
+src\views\basic\customer\index.vue:138: <a-form-item label="支付条件">
+src\views\basic\customer\index.vue:143: <a-form-item label="国家">
+src\views\basic\customer\index.vue:148: <a-form-item label="企业性质">
+src\views\basic\customer\index.vue:153: <a-form-item label="实际经营地址">
+src\views\basic\customer\index.vue:158: <a-form-item label="收款地址">
+src\views\basic\customer\index.vue:163: <a-form-item label="收货地址">
+src\views\basic\customer\index.vue:170: <a-tab-pane key="contacts" tab="联系人">
+src\views\basic\customer\index.vue:171: <div class="sub-toolbar"><a-button v-if="!readonly" type="dashed" @click="addContact">新增联系人</a-button></div>
+src\views\basic\customer\index.vue:173: <a-table-column title="联系人"><template #default="{ record }"><a-input v-model:value="record.contactName" :disabled="readonly" /></template></a-table-column>
+src\views\basic\customer\index.vue:174: <a-table-column title="职位"><template #default="{ record }"><a-input v-model:value="record.contactPosition" :disabled="readonly" /></template></a-table-column>
+src\views\basic\customer\index.vue:175: <a-table-column title="联系方式"><template #default="{ record }"><a-input v-model:value="record.contactPhone" :disabled="readonly" /></template></a-table-column>
+src\views\basic\customer\index.vue:176: <a-table-column v-if="!readonly" title="操作" width="80"><template #default="{ index }"><a class="danger-link" @click="removeContact(index)">删除</a></template></a-table-column>
+src\views\basic\customer\index.vue:179: <a-tab-pane key="invoice" tab="发票抬头">
+src\views\basic\customer\index.vue:181: <a-col :span="8"><a-form-item label="全称"><a-input v-model:value="form.invoice!.invoiceFullName" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:182: <a-col :span="8"><a-form-item label="税号"><a-input v-model:value="form.invoice!.taxNumber" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:183: <a-col :span="8"><a-form-item label="开票必备"><a-switch v-model:checked="form.invoice!.invoiceRequired" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:184: <a-col :span="12"><a-form-item label="注册地址"><a-textarea v-model:value="form.invoice!.registeredAddress" :disabled="readonly" :rows="2" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:185: <a-col :span="12"><a-form-item label="注册电话"><a-input v-model:value="form.invoice!.registeredPhone" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:186: <a-col :span="12"><a-form-item label="开户行"><a-input v-model:value="form.invoice!.bankName" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:187: <a-col :span="12"><a-form-item label="银行账号"><a-input v-model:value="form.invoice!.bankAccount" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:190: <a-tab-pane key="extra" tab="其它信息">
+src\views\basic\customer\index.vue:192: <a-col :span="8"><a-form-item label="企业官网"><a-input v-model:value="form.extra!.officialWebsite" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:193: <a-col :span="8"><a-form-item label="总机电话"><a-input v-model:value="form.extra!.switchboardPhone" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:194: <a-col :span="8"><a-form-item label="官方邮箱域名"><a-input v-model:value="form.extra!.officialEmailDomain" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:195: <a-col :span="8"><a-form-item label="传真号码"><a-input v-model:value="form.extra!.faxNumber" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:196: <a-col :span="8"><a-form-item label="渠道伙伴等级"><a-select v-model:value="form.extra!.channelPartnerLevel" :disabled="readonly" :options="channelOptions" allow-clear /></a-form-item></a-col>
+src\views\basic\customer\index.vue:197: <a-col :span="8"><a-form-item label="国标行业编码"><a-input v-model:value="form.extra!.nationalIndustryCode" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:198: <a-col :span="8"><a-form-item label="注册资本"><a-input-number v-model:value="form.extra!.registeredCapital" :disabled="readonly" class="full-width" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:199: <a-col :span="8"><a-form-item label="注册资本币种"><a-input v-model:value="form.extra!.registeredCapitalCurrency" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:200: <a-col :span="8"><a-form-item label="实缴资本"><a-input-number v-model:value="form.extra!.paidInCapital" :disabled="readonly" class="full-width" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:201: <a-col :span="8"><a-form-item label="实缴资本币种"><a-input v-model:value="form.extra!.paidInCapitalCurrency" :disabled="readonly" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:202: <a-col :span="24"><a-form-item label="经营范围"><a-textarea v-model:value="form.extra!.businessScope" :disabled="readonly" :rows="3" /></a-form-item></a-col>
+src\views\basic\customer\index.vue:225: { label: '战略客户', value: 'STRATEGIC' },
+src\views\basic\customer\index.vue:226: { label: '重点客户', value: 'KEY' },
+src\views\basic\customer\index.vue:227: { label: '普通客户', value: 'NORMAL' },
+src\views\basic\customer\index.vue:228: { label: '小微客户', value: 'SMALL' },
+src\views\basic\customer\index.vue:231: const businessStatusOptions = ['存续', '在业', '吊销', '注销', '迁入', '迁出'].map(value => ({ label: value, value }))
+src\views\basic\customer\index.vue:233: { label: '未提交', value: 0 },
+src\views\basic\customer\index.vue:234: { label: '审批中', value: 1 },
+src\views\basic\customer\index.vue:235: { label: '已通过', value: 2 },
+src\views\basic\customer\index.vue:236: { label: '已驳回', value: 3 },
+src\views\basic\customer\index.vue:239: { label: '国企', value: 'SOE' },
+src\views\basic\customer\index.vue:240: { label: '民企', value: 'PRIVATE' },
+src\views\basic\customer\index.vue:241: { label: '外资', value: 'FOREIGN' },
+src\views\basic\customer\index.vue:242: { label: '合资', value: 'JOINT' },
+src\views\basic\customer\index.vue:243: { label: '事业单位', value: 'INSTITUTION' },
+src\views\basic\customer\index.vue:244: { label: '政府机构', value: 'GOVERNMENT' },
+src\views\basic\customer\index.vue:247: { label: '核心', value: 'CORE' },
+src\views\basic\customer\index.vue:248: { label: '金牌', value: 'GOLD' },
+src\views\basic\customer\index.vue:249: { label: '银牌', value: 'SILVER' },
+src\views\basic\customer\index.vue:250: { label: '普通', value: 'NORMAL' },
+src\views\basic\customer\index.vue:258: isRelatedTenant: [{ label: '已关联', value: true }, { label: '未关联', value: false }],
+src\views\basic\customer\index.vue:263: tableName: '客户主数据',
+src\views\basic\customer\index.vue:268: { field: 'customerCode', title: '客户编码', width: 140, visible: true, order: 1 },
+src\views\basic\customer\index.vue:269: { field: 'customerFullName', title: '客户名称', width: 240, visible: true, order: 2 },
+src\views\basic\customer\index.vue:270: { field: 'customerValueLevel', title: '价值等级', width: 120, visible: true, order: 3 },
+src\views\basic\customer\index.vue:271: { field: 'customerCreditLevel', title: '信用等级', width: 120, visible: true, order: 4 },
+src\views\basic\customer\index.vue:272: { field: 'businessStatus', title: '经营状态', width: 120, visible: true, order: 5 },
+src\views\basic\customer\index.vue:273: { field: 'isRelatedTenant', title: '关联租户', width: 120, visible: true, order: 6 },
+src\views\basic\customer\index.vue:274: { field: 'approvalStatus', title: '审批状态', width: 120, visible: true, order: 7 },
+src\views\basic\customer\index.vue:275: { field: 'createTime', title: '创建时间', width: 180, visible: true, order: 8 },
+src\views\basic\customer\index.vue:276: { field: 'action', title: '操作', width: 340, fixed: 'right', visible: true, order: 9 },
+src\views\basic\customer\index.vue:279: { field: 'customerCode', label: '客户编码', queryType: 'input', queryOperator: 'like' },
+src\views\basic\customer\index.vue:280: { field: 'customerFullName', label: '客户名称', queryType: 'input', queryOperator: 'like' },
+src\views\basic\customer\index.vue:281: { field: 'customerValueLevel', label: '价值等级', queryType: 'select', queryOperator: 'eq' },
+src\views\basic\customer\index.vue:282: { field: 'customerCreditLevel', label: '信用等级', queryType: 'select', queryOperator: 'eq' },
+src\views\basic\customer\index.vue:283: { field: 'businessStatus', label: '经营状态', queryType: 'select', queryOperator: 'eq' },
+src\views\basic\customer\index.vue:284: { field: 'approvalStatus', label: '审批状态', queryType: 'select', queryOperator: 'eq' },
+src\views\basic\customer\index.vue:285: { field: 'isRelatedTenant', label: '关联租户', queryType: 'select', queryOperator: 'eq' },
+src\views\basic\customer\index.vue:289: const editorTitle = computed(() => readonly.value ? '客户详情' : form.value.id ? '编辑客户' : '新增客户')
+src\views\basic\customer\index.vue:331: message.warning('客户编码不能为空')
+src\views\basic\customer\index.vue:335: message.warning('客户全称不能为空')
+src\views\basic\customer\index.vue:363: title: '确认删除客户？',
+src\views\basic\customer\index.vue:373: message.success(`客户租户已创建：${tenantCode}`)
+src\views\basic\material\finished\index.vue:5: <a-tag color="blue">基础数据</a-tag>
+src\views\basic\material\finished\index.vue:6: <h1>成品管理</h1>
+src\views\basic\material\finished\index.vue:7: <p>管理成品物料信息，支持新增、编辑、删除和审批操作。</p>
+src\views\basic\material\finished\index.vue:11: <PlusOutlined /> 新增成品
+src\views\basic\material\finished\index.vue:25: {{ record.status === 1 ? '启用' : '禁用' }}
+src\views\basic\material\finished\index.vue:37: <a v-permission="'basic:material:query'" @click="openDetail(record)">详情</a>
+src\views\basic\material\finished\index.vue:38: <a v-permission="'basic:material:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\material\finished\index.vue:39: <a v-permission="'basic:material:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+src\views\basic\material\finished\index.vue:46: title="成品详情"
+src\views\basic\material\finished\index.vue:51: <a-descriptions-item label="物料编码">{{ detailData.materialCode }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:52: <a-descriptions-item label="物料名称">{{ detailData.materialName }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:53: <a-descriptions-item label="物料类型">{{ labelOf(materialTypeOptions, detailData.materialType) }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:54: <a-descriptions-item label="物料分类">{{ detailData.materialCategory }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:55: <a-descriptions-item label="规格型号">{{ detailData.specification || '-' }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:56: <a-descriptions-item label="计量单位">{{ detailData.unit }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:57: <a-descriptions-item label="品牌">{{ detailData.brand || '-' }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:58: <a-descriptions-item label="状态">
+src\views\basic\material\finished\index.vue:60: {{ detailData.status === 1 ? '启用' : '禁用' }}
+src\views\basic\material\finished\index.vue:63: <a-descriptions-item label="审批状态">
+src\views\basic\material\finished\index.vue:68: <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:69: <a-descriptions-item label="详细描述" :span="2">{{ detailData.description || '-' }}</a-descriptions-item>
+src\views\basic\material\finished\index.vue:84: <a-form-item label="物料编码" required>
+src\views\basic\material\finished\index.vue:85: <a-input v-model:value="form.materialCode" placeholder="请输入物料编码" />
+src\views\basic\material\finished\index.vue:89: <a-form-item label="物料名称" required>
+src\views\basic\material\finished\index.vue:90: <a-input v-model:value="form.materialName" placeholder="请输入物料名称" />
+src\views\basic\material\finished\index.vue:96: <a-form-item label="物料分类">
+src\views\basic\material\finished\index.vue:97: <a-input v-model:value="form.materialCategory" placeholder="请输入物料分类" />
+src\views\basic\material\finished\index.vue:101: <a-form-item label="规格型号">
+src\views\basic\material\finished\index.vue:102: <a-input v-model:value="form.specification" placeholder="请输入规格型号" />
+src\views\basic\material\finished\index.vue:108: <a-form-item label="计量单位">
+src\views\basic\material\finished\index.vue:109: <a-select v-model:value="form.unit" placeholder="请选择计量单位" allow-clear show-search>
+src\views\basic\material\finished\index.vue:117: <a-form-item label="品牌">
+src\views\basic\material\finished\index.vue:118: <a-input v-model:value="form.brand" placeholder="请输入品牌" />
+src\views\basic\material\finished\index.vue:124: <a-form-item label="状态">
+src\views\basic\material\finished\index.vue:126: <a-select-option :value="1">启用</a-select-option>
+src\views\basic\material\finished\index.vue:127: <a-select-option :value="0">禁用</a-select-option>
+src\views\basic\material\finished\index.vue:132: <a-form-item label="备注">
+src\views\basic\material\finished\index.vue:133: <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+src\views\basic\material\finished\index.vue:135: <a-form-item label="详细描述">
+src\views\basic\material\finished\index.vue:136: <a-textarea v-model:value="form.description" :rows="3" placeholder="请输入详细描述" />
+src\views\basic\material\finished\index.vue:174: { value: 'RAW_MATERIAL', label: '原材料' },
+src\views\basic\material\finished\index.vue:175: { value: 'SEMI_FINISHED', label: '半成品' },
+src\views\basic\material\finished\index.vue:176: { value: 'FINISHED_GOODS', label: '成品' },
+src\views\basic\material\finished\index.vue:177: { value: 'OTHER', label: '其它' },
+src\views\basic\material\finished\index.vue:181: { value: 'NO_APPROVAL_REQUIRED', label: '无需审批' },
+src\views\basic\material\finished\index.vue:182: { value: 'PENDING', label: '未审批' },
+src\views\basic\material\finished\index.vue:183: { value: 'APPROVED', label: '已审批' },
+src\views\basic\material\finished\index.vue:184: { value: 'REJECTED', label: '已驳回' },
+src\views\basic\material\finished\index.vue:189: { title: '物料编码', dataIndex: 'materialCode', key: 'materialCode', width: 120 },
+src\views\basic\material\finished\index.vue:190: { title: '物料名称', dataIndex: 'materialName', key: 'materialName', width: 150 },
+src\views\basic\material\finished\index.vue:191: { title: '规格型号', dataIndex: 'specification', key: 'specification', width: 150, ellipsis: true },
+src\views\basic\material\finished\index.vue:192: { title: '计量单位', dataIndex: 'unit', key: 'unit', width: 80 },
+src\views\basic\material\finished\index.vue:193: { title: '品牌', dataIndex: 'brand', key: 'brand', width: 100 },
+src\views\basic\material\finished\index.vue:194: { title: '状态', dataIndex: 'status', key: 'status', slotName: 'status', width: 80 },
+src\views\basic\material\finished\index.vue:195: { title: '审批状态', dataIndex: 'approvalStatus', key: 'approvalStatus', slotName: 'approvalStatus', width: 100 },
+src\views\basic\material\finished\index.vue:196: { title: '备注', dataIndex: 'remark', key: 'remark', width: 150, ellipsis: true },
+src\views\basic\material\finished\index.vue:197: { title: '操作', key: 'action', slotName: 'action', width: 180, fixed: 'right' },
+src\views\basic\material\finished\index.vue:244: dialogTitle.value = '新增成品';
+src\views\basic\material\finished\index.vue:252: dialogTitle.value = '编辑成品';
+src\views\basic\material\finished\index.vue:263: message.warning('请填写必填项');
+src\views\basic\material\finished\index.vue:270: message.success('更新成功');
+src\views\basic\material\finished\index.vue:273: message.success('创建成功');
+src\views\basic\material\finished\index.vue:284: title: '确认删除',
+src\views\basic\material\finished\index.vue:285: content: `确定要删除成品"${record.materialName}"吗？`,
+src\views\basic\material\finished\index.vue:288: message.success('删除成功');
+src\views\basic\material\raw\index.vue:5: <a-tag color="blue">基础数据</a-tag>
+src\views\basic\material\raw\index.vue:6: <h1>物料管理（原材料）</h1>
+src\views\basic\material\raw\index.vue:7: <p>管理原材料物料信息，支持新增、编辑、删除和审批操作。</p>
+src\views\basic\material\raw\index.vue:11: <PlusOutlined /> 新增原材料
+src\views\basic\material\raw\index.vue:25: {{ record.status === 1 ? '启用' : '禁用' }}
+src\views\basic\material\raw\index.vue:37: <a v-permission="'basic:material:query'" @click="openDetail(record)">详情</a>
+src\views\basic\material\raw\index.vue:38: <a v-permission="'basic:material:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\material\raw\index.vue:39: <a v-permission="'basic:material:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+src\views\basic\material\raw\index.vue:47: title="物料详情"
+src\views\basic\material\raw\index.vue:52: <a-descriptions-item label="物料编码">{{ detailData.materialCode }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:53: <a-descriptions-item label="物料名称">{{ detailData.materialName }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:54: <a-descriptions-item label="物料类型">{{ labelOf(materialTypeOptions, detailData.materialType) }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:55: <a-descriptions-item label="物料分类">{{ detailData.materialCategory }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:56: <a-descriptions-item label="规格型号">{{ detailData.specification || '-' }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:57: <a-descriptions-item label="计量单位">{{ detailData.unit }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:58: <a-descriptions-item label="品牌">{{ detailData.brand || '-' }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:59: <a-descriptions-item label="状态">
+src\views\basic\material\raw\index.vue:61: {{ detailData.status === 1 ? '启用' : '禁用' }}
+src\views\basic\material\raw\index.vue:64: <a-descriptions-item label="审批状态">
+src\views\basic\material\raw\index.vue:69: <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:70: <a-descriptions-item label="详细描述" :span="2">{{ detailData.description || '-' }}</a-descriptions-item>
+src\views\basic\material\raw\index.vue:86: <a-form-item label="物料编码" required>
+src\views\basic\material\raw\index.vue:87: <a-input v-model:value="form.materialCode" placeholder="请输入物料编码" />
+src\views\basic\material\raw\index.vue:91: <a-form-item label="物料名称" required>
+src\views\basic\material\raw\index.vue:92: <a-input v-model:value="form.materialName" placeholder="请输入物料名称" />
+src\views\basic\material\raw\index.vue:98: <a-form-item label="物料分类">
+src\views\basic\material\raw\index.vue:99: <a-input v-model:value="form.materialCategory" placeholder="请输入物料分类" />
+src\views\basic\material\raw\index.vue:103: <a-form-item label="规格型号">
+src\views\basic\material\raw\index.vue:104: <a-input v-model:value="form.specification" placeholder="请输入规格型号" />
+src\views\basic\material\raw\index.vue:110: <a-form-item label="计量单位">
+src\views\basic\material\raw\index.vue:111: <a-select v-model:value="form.unit" placeholder="请选择计量单位" allow-clear show-search>
+src\views\basic\material\raw\index.vue:119: <a-form-item label="品牌">
+src\views\basic\material\raw\index.vue:120: <a-input v-model:value="form.brand" placeholder="请输入品牌" />
+src\views\basic\material\raw\index.vue:126: <a-form-item label="状态">
+src\views\basic\material\raw\index.vue:128: <a-select-option :value="1">启用</a-select-option>
+src\views\basic\material\raw\index.vue:129: <a-select-option :value="0">禁用</a-select-option>
+src\views\basic\material\raw\index.vue:134: <a-form-item label="备注">
+src\views\basic\material\raw\index.vue:135: <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+src\views\basic\material\raw\index.vue:137: <a-form-item label="详细描述">
+src\views\basic\material\raw\index.vue:138: <a-textarea v-model:value="form.description" :rows="3" placeholder="请输入详细描述" />
+src\views\basic\material\raw\index.vue:176: { value: 'RAW_MATERIAL', label: '原材料' },
+src\views\basic\material\raw\index.vue:177: { value: 'SEMI_FINISHED', label: '半成品' },
+src\views\basic\material\raw\index.vue:178: { value: 'FINISHED_GOODS', label: '成品' },
+src\views\basic\material\raw\index.vue:179: { value: 'OTHER', label: '其它' },
+src\views\basic\material\raw\index.vue:183: { value: 'NO_APPROVAL_REQUIRED', label: '无需审批' },
+src\views\basic\material\raw\index.vue:184: { value: 'PENDING', label: '未审批' },
+src\views\basic\material\raw\index.vue:185: { value: 'APPROVED', label: '已审批' },
+src\views\basic\material\raw\index.vue:186: { value: 'REJECTED', label: '已驳回' },
+src\views\basic\material\raw\index.vue:191: { title: '物料编码', dataIndex: 'materialCode', key: 'materialCode', width: 120 },
+src\views\basic\material\raw\index.vue:192: { title: '物料名称', dataIndex: 'materialName', key: 'materialName', width: 150 },
+src\views\basic\material\raw\index.vue:193: { title: '规格型号', dataIndex: 'specification', key: 'specification', width: 150, ellipsis: true },
+src\views\basic\material\raw\index.vue:194: { title: '计量单位', dataIndex: 'unit', key: 'unit', width: 80 },
+src\views\basic\material\raw\index.vue:195: { title: '品牌', dataIndex: 'brand', key: 'brand', width: 100 },
+src\views\basic\material\raw\index.vue:196: { title: '状态', dataIndex: 'status', key: 'status', slotName: 'status', width: 80 },
+src\views\basic\material\raw\index.vue:197: { title: '审批状态', dataIndex: 'approvalStatus', key: 'approvalStatus', slotName: 'approvalStatus', width: 100 },
+src\views\basic\material\raw\index.vue:198: { title: '备注', dataIndex: 'remark', key: 'remark', width: 150, ellipsis: true },
+src\views\basic\material\raw\index.vue:199: { title: '操作', key: 'action', slotName: 'action', width: 180, fixed: 'right' },
+src\views\basic\material\raw\index.vue:246: dialogTitle.value = '新增原材料';
+src\views\basic\material\raw\index.vue:254: dialogTitle.value = '编辑原材料';
+src\views\basic\material\raw\index.vue:265: message.warning('请填写必填项');
+src\views\basic\material\raw\index.vue:272: message.success('更新成功');
+src\views\basic\material\raw\index.vue:275: message.success('创建成功');
+src\views\basic\material\raw\index.vue:286: title: '确认删除',
+src\views\basic\material\raw\index.vue:287: content: `确定要删除物料"${record.materialName}"吗？`,
+src\views\basic\material\raw\index.vue:290: message.success('删除成功');
+src\views\basic\material\semi-finished\index.vue:5: <a-tag color="blue">基础数据</a-tag>
+src\views\basic\material\semi-finished\index.vue:6: <h1>半成品管理</h1>
+src\views\basic\material\semi-finished\index.vue:7: <p>管理半成品物料信息，支持新增、编辑、删除和审批操作。</p>
+src\views\basic\material\semi-finished\index.vue:11: <PlusOutlined /> 新增半成品
+src\views\basic\material\semi-finished\index.vue:25: {{ record.status === 1 ? '启用' : '禁用' }}
+src\views\basic\material\semi-finished\index.vue:37: <a v-permission="'basic:material:query'" @click="openDetail(record)">详情</a>
+src\views\basic\material\semi-finished\index.vue:38: <a v-permission="'basic:material:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\material\semi-finished\index.vue:39: <a v-permission="'basic:material:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+src\views\basic\material\semi-finished\index.vue:46: title="半成品详情"
+src\views\basic\material\semi-finished\index.vue:51: <a-descriptions-item label="物料编码">{{ detailData.materialCode }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:52: <a-descriptions-item label="物料名称">{{ detailData.materialName }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:53: <a-descriptions-item label="物料类型">{{ labelOf(materialTypeOptions, detailData.materialType) }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:54: <a-descriptions-item label="物料分类">{{ detailData.materialCategory }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:55: <a-descriptions-item label="规格型号">{{ detailData.specification || '-' }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:56: <a-descriptions-item label="计量单位">{{ detailData.unit }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:57: <a-descriptions-item label="品牌">{{ detailData.brand || '-' }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:58: <a-descriptions-item label="状态">
+src\views\basic\material\semi-finished\index.vue:60: {{ detailData.status === 1 ? '启用' : '禁用' }}
+src\views\basic\material\semi-finished\index.vue:63: <a-descriptions-item label="审批状态">
+src\views\basic\material\semi-finished\index.vue:68: <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:69: <a-descriptions-item label="详细描述" :span="2">{{ detailData.description || '-' }}</a-descriptions-item>
+src\views\basic\material\semi-finished\index.vue:84: <a-form-item label="物料编码" required>
+src\views\basic\material\semi-finished\index.vue:85: <a-input v-model:value="form.materialCode" placeholder="请输入物料编码" />
+src\views\basic\material\semi-finished\index.vue:89: <a-form-item label="物料名称" required>
+src\views\basic\material\semi-finished\index.vue:90: <a-input v-model:value="form.materialName" placeholder="请输入物料名称" />
+src\views\basic\material\semi-finished\index.vue:96: <a-form-item label="物料分类">
+src\views\basic\material\semi-finished\index.vue:97: <a-input v-model:value="form.materialCategory" placeholder="请输入物料分类" />
+src\views\basic\material\semi-finished\index.vue:101: <a-form-item label="规格型号">
+src\views\basic\material\semi-finished\index.vue:102: <a-input v-model:value="form.specification" placeholder="请输入规格型号" />
+src\views\basic\material\semi-finished\index.vue:108: <a-form-item label="计量单位">
+src\views\basic\material\semi-finished\index.vue:109: <a-select v-model:value="form.unit" placeholder="请选择计量单位" allow-clear show-search>
+src\views\basic\material\semi-finished\index.vue:117: <a-form-item label="品牌">
+src\views\basic\material\semi-finished\index.vue:118: <a-input v-model:value="form.brand" placeholder="请输入品牌" />
+src\views\basic\material\semi-finished\index.vue:124: <a-form-item label="状态">
+src\views\basic\material\semi-finished\index.vue:126: <a-select-option :value="1">启用</a-select-option>
+src\views\basic\material\semi-finished\index.vue:127: <a-select-option :value="0">禁用</a-select-option>
+src\views\basic\material\semi-finished\index.vue:132: <a-form-item label="备注">
+src\views\basic\material\semi-finished\index.vue:133: <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+src\views\basic\material\semi-finished\index.vue:135: <a-form-item label="详细描述">
+src\views\basic\material\semi-finished\index.vue:136: <a-textarea v-model:value="form.description" :rows="3" placeholder="请输入详细描述" />
+src\views\basic\material\semi-finished\index.vue:174: { value: 'RAW_MATERIAL', label: '原材料' },
+src\views\basic\material\semi-finished\index.vue:175: { value: 'SEMI_FINISHED', label: '半成品' },
+src\views\basic\material\semi-finished\index.vue:176: { value: 'FINISHED_GOODS', label: '成品' },
+src\views\basic\material\semi-finished\index.vue:177: { value: 'OTHER', label: '其它' },
+src\views\basic\material\semi-finished\index.vue:181: { value: 'NO_APPROVAL_REQUIRED', label: '无需审批' },
+src\views\basic\material\semi-finished\index.vue:182: { value: 'PENDING', label: '未审批' },
+src\views\basic\material\semi-finished\index.vue:183: { value: 'APPROVED', label: '已审批' },
+src\views\basic\material\semi-finished\index.vue:184: { value: 'REJECTED', label: '已驳回' },
+src\views\basic\material\semi-finished\index.vue:189: { title: '物料编码', dataIndex: 'materialCode', key: 'materialCode', width: 120 },
+src\views\basic\material\semi-finished\index.vue:190: { title: '物料名称', dataIndex: 'materialName', key: 'materialName', width: 150 },
+src\views\basic\material\semi-finished\index.vue:191: { title: '规格型号', dataIndex: 'specification', key: 'specification', width: 150, ellipsis: true },
+src\views\basic\material\semi-finished\index.vue:192: { title: '计量单位', dataIndex: 'unit', key: 'unit', width: 80 },
+src\views\basic\material\semi-finished\index.vue:193: { title: '品牌', dataIndex: 'brand', key: 'brand', width: 100 },
+src\views\basic\material\semi-finished\index.vue:194: { title: '状态', dataIndex: 'status', key: 'status', slotName: 'status', width: 80 },
+src\views\basic\material\semi-finished\index.vue:195: { title: '审批状态', dataIndex: 'approvalStatus', key: 'approvalStatus', slotName: 'approvalStatus', width: 100 },
+src\views\basic\material\semi-finished\index.vue:196: { title: '备注', dataIndex: 'remark', key: 'remark', width: 150, ellipsis: true },
+src\views\basic\material\semi-finished\index.vue:197: { title: '操作', key: 'action', slotName: 'action', width: 180, fixed: 'right' },
+src\views\basic\material\semi-finished\index.vue:244: dialogTitle.value = '新增半成品';
+src\views\basic\material\semi-finished\index.vue:252: dialogTitle.value = '编辑半成品';
+src\views\basic\material\semi-finished\index.vue:263: message.warning('请填写必填项');
+src\views\basic\material\semi-finished\index.vue:270: message.success('更新成功');
+src\views\basic\material\semi-finished\index.vue:273: message.success('创建成功');
+src\views\basic\material\semi-finished\index.vue:284: title: '确认删除',
+src\views\basic\material\semi-finished\index.vue:285: content: `确定要删除半成品"${record.materialName}"吗？`,
+src\views\basic\material\semi-finished\index.vue:288: message.success('删除成功');
+src\views\basic\material\index.vue:5: <a-tag color="blue">基础数据</a-tag>
+src\views\basic\material\index.vue:6: <h1>物料管理</h1>
+src\views\basic\material\index.vue:7: <p>统一维护全部物料，并按物料类型快速筛选。</p>
+src\views\basic\material\index.vue:11: <PlusOutlined /> 新增物料
+src\views\basic\material\index.vue:36: {{ record.status === 1 ? '启用' : '停用' }}
+src\views\basic\material\index.vue:48: <a v-permission="'basic:material:query'" @click="openDetail(record)">详情</a>
+src\views\basic\material\index.vue:49: <a v-permission="'basic:material:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\material\index.vue:50: <a v-permission="'basic:material:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+src\views\basic\material\index.vue:55: <a-modal v-model:open="detailVisible" title="物料详情" width="800px" :footer="null">
+src\views\basic\material\index.vue:57: <a-descriptions-item label="物料编码">{{ detailData.materialCode || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:58: <a-descriptions-item label="物料名称">{{ detailData.materialName || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:59: <a-descriptions-item label="物料类型">{{ labelOf(materialTypeOptions, detailData.materialType) }}</a-descriptions-item>
+src\views\basic\material\index.vue:60: <a-descriptions-item label="物料分类">{{ detailData.materialCategory || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:61: <a-descriptions-item label="规格型号">{{ detailData.specification || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:62: <a-descriptions-item label="计量单位">{{ detailData.unit || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:63: <a-descriptions-item label="品牌">{{ detailData.brand || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:64: <a-descriptions-item label="状态">
+src\views\basic\material\index.vue:66: {{ detailData.status === 1 ? '启用' : '停用' }}
+src\views\basic\material\index.vue:69: <a-descriptions-item label="审批状态">
+src\views\basic\material\index.vue:74: <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:75: <a-descriptions-item label="详细描述" :span="2">{{ detailData.description || '-' }}</a-descriptions-item>
+src\views\basic\material\index.vue:90: <a-form-item label="物料编码" required>
+src\views\basic\material\index.vue:91: <a-input v-model:value="form.materialCode" placeholder="请输入物料编码" />
+src\views\basic\material\index.vue:95: <a-form-item label="物料名称" required>
+src\views\basic\material\index.vue:96: <a-input v-model:value="form.materialName" placeholder="请输入物料名称" />
+src\views\basic\material\index.vue:102: <a-form-item label="物料类型" required>
+src\views\basic\material\index.vue:107: placeholder="请选择物料类型"
+src\views\basic\material\index.vue:112: <a-form-item label="物料分类">
+src\views\basic\material\index.vue:113: <a-input v-model:value="form.materialCategory" placeholder="请输入物料分类" />
+src\views\basic\material\index.vue:119: <a-form-item label="规格型号">
+src\views\basic\material\index.vue:120: <a-input v-model:value="form.specification" placeholder="请输入规格型号" />
+src\views\basic\material\index.vue:124: <a-form-item label="计量单位">
+src\views\basic\material\index.vue:125: <a-select v-model:value="form.unit" placeholder="请选择计量单位" allow-clear show-search>
+src\views\basic\material\index.vue:135: <a-form-item label="品牌">
+src\views\basic\material\index.vue:136: <a-input v-model:value="form.brand" placeholder="请输入品牌" />
+src\views\basic\material\index.vue:140: <a-form-item label="状态">
+src\views\basic\material\index.vue:145: <a-form-item label="备注">
+src\views\basic\material\index.vue:146: <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+src\views\basic\material\index.vue:148: <a-form-item label="详细描述">
+src\views\basic\material\index.vue:149: <a-textarea v-model:value="form.description" :rows="3" placeholder="请输入详细描述" />
+src\views\basic\material\index.vue:177: { value: ALL_TAB, label: '全部' },
+src\views\basic\material\index.vue:178: { value: 'RAW_MATERIAL', label: '原材料' },
+src\views\basic\material\index.vue:179: { value: 'SEMI_FINISHED', label: '半成品' },
+src\views\basic\material\index.vue:180: { value: 'FINISHED_GOODS', label: '成品' },
+src\views\basic\material\index.vue:184: { value: 'RAW_MATERIAL', label: '原材料' },
+src\views\basic\material\index.vue:185: { value: 'SEMI_FINISHED', label: '半成品' },
+src\views\basic\material\index.vue:186: { value: 'FINISHED_GOODS', label: '成品' },
+src\views\basic\material\index.vue:187: { value: 'OTHER', label: '其它' },
+src\views\basic\material\index.vue:191: { value: 'NO_APPROVAL_REQUIRED', label: '无需审批' },
+src\views\basic\material\index.vue:192: { value: 'PENDING', label: '待审批' },
+src\views\basic\material\index.vue:193: { value: 'APPROVED', label: '已审批' },
+src\views\basic\material\index.vue:194: { value: 'REJECTED', label: '已驳回' },
+src\views\basic\material\index.vue:198: { value: 1, label: '启用' },
+src\views\basic\material\index.vue:199: { value: 0, label: '停用' },
+src\views\basic\material\index.vue:227: tableName: '物料管理',
+src\views\basic\material\index.vue:232: { field: 'materialCode', title: '物料编码', width: 140, visible: true, order: 1 },
+src\views\basic\material\index.vue:233: { field: 'materialName', title: '物料名称', width: 180, visible: true, order: 2 },
+src\views\basic\material\index.vue:234: { field: 'materialType', title: '物料类型', width: 120, visible: true, order: 3 },
+src\views\basic\material\index.vue:235: { field: 'materialCategory', title: '物料分类', width: 140, visible: true, order: 4 },
+src\views\basic\material\index.vue:236: { field: 'specification', title: '规格型号', width: 160, visible: true, ellipsis: true, order: 5 },
+src\views\basic\material\index.vue:237: { field: 'unit', title: '计量单位', width: 100, visible: true, order: 6 },
+src\views\basic\material\index.vue:238: { field: 'brand', title: '品牌', width: 120, visible: true, order: 7 },
+src\views\basic\material\index.vue:239: { field: 'status', title: '状态', width: 90, visible: true, order: 8 },
+src\views\basic\material\index.vue:240: { field: 'approvalStatus', title: '审批状态', width: 120, visible: true, order: 9 },
+src\views\basic\material\index.vue:241: { field: 'createTime', title: '创建时间', width: 180, visible: true, order: 10 },
+src\views\basic\material\index.vue:242: { field: 'action', title: '操作', width: 180, fixed: 'right', visible: true, order: 99 },
+src\views\basic\material\index.vue:245: { field: 'materialCode', label: '物料编码', queryType: 'input', queryOperator: 'like' },
+src\views\basic\material\index.vue:246: { field: 'materialName', label: '物料名称', queryType: 'input', queryOperator: 'like' },
+src\views\basic\material\index.vue:247: { field: 'materialType', label: '物料类型', queryType: 'select', queryOperator: 'eq', dictCode: 'material_type' },
+src\views\basic\material\index.vue:248: { field: 'materialCategory', label: '物料分类', queryType: 'input', queryOperator: 'like' },
+src\views\basic\material\index.vue:249: { field: 'unit', label: '计量单位', queryType: 'input', queryOperator: 'like' },
+src\views\basic\material\index.vue:250: { field: 'brand', label: '品牌', queryType: 'input', queryOperator: 'like' },
+src\views\basic\material\index.vue:251: { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'common_status' },
+src\views\basic\material\index.vue:252: { field: 'approvalStatus', label: '审批状态', queryType: 'select', queryOperator: 'eq', dictCode: 'material_approval_status' },
+src\views\basic\material\index.vue:256: const dialogTitle = computed(() => (isEdit.value ? '编辑物料' : '新增物料'))
+src\views\basic\material\index.vue:319: message.warning('请填写必填项')
+src\views\basic\material\index.vue:326: message.success('更新成功')
+src\views\basic\material\index.vue:329: message.success('创建成功')
+src\views\basic\material\index.vue:340: title: '确认删除',
+src\views\basic\material\index.vue:341: content: `确定要删除物料 "${record.materialName}" 吗？`,
+src\views\basic\material\index.vue:344: message.success('删除成功')
+src\views\basic\packaging\index.vue:5: <a-tag color="blue">基础数据</a-tag>
+src\views\basic\packaging\index.vue:6: <h1>包装方式管理</h1>
+src\views\basic\packaging\index.vue:7: <p>统一维护物料的包装方式信息，支持多种包装规格和材质配置。</p>
+src\views\basic\packaging\index.vue:11: <PlusOutlined /> 新增包装
+src\views\basic\packaging\index.vue:25: {{ record.status === 1 ? '启用' : '禁用' }}
+src\views\basic\packaging\index.vue:31: <a v-permission="'basic:packaging:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\packaging\index.vue:32: <a v-permission="'basic:packaging:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+src\views\basic\packaging\index.vue:48: <a-form-item label="包装方式编码" required>
+src\views\basic\packaging\index.vue:49: <a-input v-model:value="form.packagingCode" placeholder="请输入包装方式编码" />
+src\views\basic\packaging\index.vue:53: <a-form-item label="包装方式名称" required>
+src\views\basic\packaging\index.vue:54: <a-input v-model:value="form.packagingName" placeholder="请输入包装方式名称" />
+src\views\basic\packaging\index.vue:60: <a-form-item label="包装材料">
+src\views\basic\packaging\index.vue:61: <a-select v-model:value="form.packagingMaterial" placeholder="请选择包装材料" allow-clear>
+src\views\basic\packaging\index.vue:62: <a-select-option value="carton">纸箱</a-select-option>
+src\views\basic\packaging\index.vue:63: <a-select-option value="wooden_box">木箱</a-select-option>
+src\views\basic\packaging\index.vue:64: <a-select-option value="pallet">托盘</a-select-option>
+src\views\basic\packaging\index.vue:65: <a-select-option value="iron_drum">铁桶</a-select-option>
+src\views\basic\packaging\index.vue:66: <a-select-option value="plastic_bag">塑料袋</a-select-option>
+src\views\basic\packaging\index.vue:67: <a-select-option value="bubble_wrap">气泡膜</a-select-option>
+src\views\basic\packaging\index.vue:68: <a-select-option value="other">其它</a-select-option>
+src\views\basic\packaging\index.vue:73: <a-form-item label="单位成本">
+src\views\basic\packaging\index.vue:74: <a-input-number v-model:value="form.unitCost" :min="0" :precision="2" style="width: 100%" placeholder="单位成本" />
+src\views\basic\packaging\index.vue:80: <a-form-item label="长度(mm)">
+src\views\basic\packaging\index.vue:85: <a-form-item label="宽度(mm)">
+src\views\basic\packaging\index.vue:90: <a-form-item label="高度(mm)">
+src\views\basic\packaging\index.vue:97: <a-form-item label="包装自重(kg)">
+src\views\basic\packaging\index.vue:102: <a-form-item label="最大承重(kg)">
+src\views\basic\packaging\index.vue:109: <a-form-item label="状态">
+src\views\basic\packaging\index.vue:111: <a-select-option :value="1">启用</a-select-option>
+src\views\basic\packaging\index.vue:112: <a-select-option :value="0">禁用</a-select-option>
+src\views\basic\packaging\index.vue:117: <a-form-item label="排序号">
+src\views\basic\packaging\index.vue:122: <a-form-item label="备注">
+src\views\basic\packaging\index.vue:123: <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+src\views\basic\packaging\index.vue:160: { title: '包装编码', dataIndex: 'packagingCode', key: 'packagingCode', width: 120 },
+src\views\basic\packaging\index.vue:161: { title: '包装名称', dataIndex: 'packagingName', key: 'packagingName', width: 120 },
+src\views\basic\packaging\index.vue:162: { title: '包装材料', dataIndex: 'packagingMaterial', key: 'packagingMaterial', width: 100 },
+src\views\basic\packaging\index.vue:163: { title: '尺寸(mm)', key: 'dimensions', width: 150, customRender: ({ record }: any) => {
+src\views\basic\packaging\index.vue:167: { title: '自重(kg)', dataIndex: 'weightKg', key: 'weightKg', width: 90 },
+src\views\basic\packaging\index.vue:168: { title: '承重(kg)', dataIndex: 'maxLoadKg', key: 'maxLoadKg', width: 90 },
+src\views\basic\packaging\index.vue:169: { title: '单位成本', dataIndex: 'unitCost', key: 'unitCost', width: 100 },
+src\views\basic\packaging\index.vue:170: { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 80 },
+src\views\basic\packaging\index.vue:171: { title: '状态', dataIndex: 'status', key: 'status', slotName: 'status', width: 80 },
+src\views\basic\packaging\index.vue:172: { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
+src\views\basic\packaging\index.vue:173: { title: '操作', key: 'action', slotName: 'action', width: 150, fixed: 'right' },
+src\views\basic\packaging\index.vue:206: dialogTitle.value = '新增包装方式';
+src\views\basic\packaging\index.vue:214: dialogTitle.value = '编辑包装方式';
+src\views\basic\packaging\index.vue:220: message.warning('请填写必填项');
+src\views\basic\packaging\index.vue:227: message.success('更新成功');
+src\views\basic\packaging\index.vue:230: message.success('创建成功');
+src\views\basic\packaging\index.vue:241: title: '确认删除',
+src\views\basic\packaging\index.vue:242: content: `确定要删除包装方式"${record.packagingName}"吗？`,
+src\views\basic\packaging\index.vue:245: message.success('删除成功');
+src\views\basic\supplier\index.vue:6: <h1>供应商主数据</h1>
+src\views\basic\supplier\index.vue:7: <p>统一维护供应商共享主数据，并为租户创建、接口同步和资质审查提供数据来源。</p>
+src\views\basic\supplier\index.vue:14: <a-button v-permission="'basic:supplier:export'" @click="handleExport">导出</a-button>
+src\views\basic\supplier\index.vue:15: <a-button v-permission="'basic:supplier:sync'" @click="handleSync">同步第三方</a-button>
+src\views\basic\supplier\index.vue:16: <a-button v-permission="'basic:supplier:add'" type="primary" @click="openCreate">新增供应商</a-button>
+src\views\basic\supplier\index.vue:59: {{ isTenantLinked(record) ? '已关联' : '未关联' }}
+src\views\basic\supplier\index.vue:71: <a v-permission="'basic:supplier:query'" @click="openDetail(record)">详情</a>
+src\views\basic\supplier\index.vue:72: <a v-permission="'basic:supplier:edit'" @click="openEdit(record)">编辑</a>
+src\views\basic\supplier\index.vue:78: 生成租户
+src\views\basic\supplier\index.vue:85: 发起审查
+src\views\basic\supplier\index.vue:93: 删除
+src\views\basic\supplier\index.vue:110: <a-tab-pane key="main" tab="主数据">
+src\views\basic\supplier\index.vue:114: <a-form-item label="自动生成编码">
+src\views\basic\supplier\index.vue:119: <a-form-item label="供应商编码" required>
+src\views\basic\supplier\index.vue:123: :placeholder="form.autoGenerateCode ? '保存时按编码规则自动生成' : '请输入供应商编码'"
+src\views\basic\supplier\index.vue:128: <a-form-item label="供应商全称" required>
+src\views\basic\supplier\index.vue:133: <a-form-item label="供应商Logo">
+src\views\basic\supplier\index.vue:143: <span>{{ form.logoUrl ? '更换Logo' : '上传Logo' }}</span>
+src\views\basic\supplier\index.vue:149: <a-form-item label="简称">
+src\views\basic\supplier\index.vue:154: <a-form-item label="英文名">
+src\views\basic\supplier\index.vue:159: <a-form-item label="主联系人">
+src\views\basic\supplier\index.vue:164: <a-form-item label="联系电话">
+src\views\basic\supplier\index.vue:169: <a-form-item label="合作状态">
+src\views\basic\supplier\index.vue:178: <a-form-item label="信用等级">
+src\views\basic\supplier\index.vue:187: <a-form-item label="风险等级">
+src\views\basic\supplier\index.vue:196: <a-form-item label="分级">
+src\views\basic\supplier\index.vue:205: <a-form-item label="关联租户编号">
+src\views\basic\supplier\index.vue:210: <a-form-item label="审查状态">
+src\views\basic\supplier\index.vue:219: <a-form-item label="现地址">
+src\views\basic\supplier\index.vue:224: <a-form-item label="备注">
+src\views\basic\supplier\index.vue:232: <a-tab-pane key="detail" tab="详情信息">
+src\views\basic\supplier\index.vue:235: <a-form-item label="法人代表">
+src\views\basic\supplier\index.vue:240: <a-form-item label="注册资本">
+src\views\basic\supplier\index.vue:245: <a-form-item label="成立日期">
+src\views\basic\supplier\index.vue:250: <a-form-item label="企业性质">
+src\views\basic\supplier\index.vue:259: <a-form-item label="行业分类">
+src\views\basic\supplier\index.vue:268: <a-form-item label="邮箱">
+src\views\basic\supplier\index.vue:273: <a-form-item label="税号">
+src\views\basic\supplier\index.vue:278: <a-form-item label="开户银行">
+src\views\basic\supplier\index.vue:283: <a-form-item label="银行账号">
+src\views\basic\supplier\index.vue:288: <a-form-item label="发票类型">
+src\views\basic\supplier\index.vue:297: <a-form-item label="默认税率">
+src\views\basic\supplier\index.vue:302: <a-form-item label="注册地址">
+src\views\basic\supplier\index.vue:307: <a-form-item label="经营地址">
+src\views\basic\supplier\index.vue:314: <a-tab-pane key="contacts" tab="联系人">
+src\views\basic\supplier\index.vue:316: <a-button v-if="!readonly" type="dashed" @click="addContact">新增联系人</a-button>
+src\views\basic\supplier\index.vue:319: <a-table-column title="姓名">
+src\views\basic\supplier\index.vue:324: <a-table-column title="电话">
+src\views\basic\supplier\index.vue:329: <a-table-column title="职位">
+src\views\basic\supplier\index.vue:334: <a-table-column title="邮箱">
+src\views\basic\supplier\index.vue:339: <a-table-column v-if="!readonly" title="操作" width="90">
+src\views\basic\supplier\index.vue:341: <a class="danger-link" @click="removeContact(index)">删除</a>
+src\views\basic\supplier\index.vue:347: <a-tab-pane key="qualifications" tab="资质">
+src\views\basic\supplier\index.vue:349: <a-button v-if="!readonly" type="dashed" @click="addQualification">新增资质</a-button>
+src\views\basic\supplier\index.vue:352: <a-table-column title="资质类型">
+src\views\basic\supplier\index.vue:361: <a-table-column title="证书编号">
+src\views\basic\supplier\index.vue:366: <a-table-column title="发证日期">
+src\views\basic\supplier\index.vue:371: <a-table-column title="有效期至">
+src\views\basic\supplier\index.vue:376: <a-table-column title="附件">
+src\views\basic\supplier\index.vue:378: <a-input v-model:value="record.attachment" :disabled="readonly" placeholder="文件标识或 URL" />
+src\views\basic\supplier\index.vue:381: <a-table-column title="有效" width="90">
+src\views\basic\supplier\index.vue:386: <a-table-column v-if="!readonly" title="操作" width="90">
+src\views\basic\supplier\index.vue:388: <a class="danger-link" @click="removeQualification(index)">删除</a>
+src\views\basic\supplier\index.vue:435: { label: '潜在', value: '1' },
+src\views\basic\supplier\index.vue:436: { label: '正式', value: '2' },
+src\views\basic\supplier\index.vue:437: { label: '暂停', value: '3' },
+src\views\basic\supplier\index.vue:438: { label: '淘汰', value: '4' },
+src\views\basic\supplier\index.vue:442: { label: '战略', value: '1' },
+src\views\basic\supplier\index.vue:443: { label: '核心', value: '2' },
+src\views\basic\supplier\index.vue:444: { label: '一般', value: '3' },
+src\views\basic\supplier\index.vue:447: { label: '无需审查', value: 0 },
+src\views\basic\supplier\index.vue:448: { label: '未审查', value: 1 },
+src\views\basic\supplier\index.vue:449: { label: '审查中', value: 2 },
+src\views\basic\supplier\index.vue:450: { label: '已审查', value: 3 },
+src\views\basic\supplier\index.vue:453: { label: '国企', value: '1' },
+src\views\basic\supplier\index.vue:454: { label: '民营', value: '2' },
+src\views\basic\supplier\index.vue:455: { label: '外资', value: '3' },
+src\views\basic\supplier\index.vue:456: { label: '合资', value: '4' },
+src\views\basic\supplier\index.vue:505: { label: '已关联', value: true },
+src\views\basic\supplier\index.vue:506: { label: '未关联', value: false },
+src\views\basic\supplier\index.vue:512: tableName: '供应商主数据',
+src\views\basic\supplier\index.vue:518: { field: 'supplierCode', label: '供应商编码', queryType: 'input', queryOperator: 'like' },
+src\views\basic\supplier\index.vue:519: { field: 'supplierFullName', label: '供应商名称', queryType: 'input', queryOperator: 'like' },
+src\views\basic\supplier\index.vue:520: { field: 'cooperationStatus', label: '合作状态', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_cooperation_status' },
+src\views\basic\supplier\index.vue:521: { field: 'supplierLevel', label: '供应商分级', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_level' },
+src\views\basic\supplier\index.vue:522: { field: 'creditLevel', label: '信用等级', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_credit_level' },
+src\views\basic\supplier\index.vue:523: { field: 'riskLevel', label: '风险等级', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_risk_level' },
+src\views\basic\supplier\index.vue:524: { field: 'reviewStatus', label: '审查状态', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_review_status' },
+src\views\basic\supplier\index.vue:528: { field: 'supplierCode', title: '供应商编码', width: 140, visible: true, order: 2 },
+src\views\basic\supplier\index.vue:529: { field: 'supplierFullName', title: '供应商名称', width: 240, visible: true, order: 3 },
+src\views\basic\supplier\index.vue:530: { field: 'cooperationStatus', title: '合作状态', width: 110, dictCode: 'supplier_cooperation_status', visible: true, order: 4 },
+src\views\basic\supplier\index.vue:531: { field: 'creditRisk', title: '信用/风险', width: 160, visible: true, order: 5 },
+src\views\basic\supplier\index.vue:532: { field: 'supplierLevel', title: '分级', width: 100, dictCode: 'supplier_level', visible: true, order: 6 },
+src\views\basic\supplier\index.vue:533: { field: 'hasRelatedTenant', title: '关联租户', width: 120, visible: true, order: 7 },
+src\views\basic\supplier\index.vue:534: { field: 'reviewStatus', title: '审查状态', width: 120, dictCode: 'supplier_review_status', visible: true, order: 8 },
+src\views\basic\supplier\index.vue:535: { field: 'createTime', title: '创建时间', width: 180, visible: true, order: 9 },
+src\views\basic\supplier\index.vue:536: { field: 'action', title: '操作', width: 330, fixed: 'right', visible: true, order: 10 },
+src\views\basic\supplier\index.vue:542: return '供应商详情'
+src\views\basic\supplier\index.vue:544: return form.value.id ? '编辑供应商' : '新增供应商'
+src\views\basic\supplier\index.vue:618: message.warning('供应商编码不能为空')
+src\views\basic\supplier\index.vue:623: message.warning('供应商全称不能为空')
+src\views\basic\supplier\index.vue:652: const url = await uploadFile(file, { moduleCode: 'basic_supplier', moduleName: '供应商Logo' })
+src\views\basic\supplier\index.vue:677: message.warning('已关联租户的供应商不允许删除')
+src\views\basic\supplier\index.vue:681: title: '确认删除供应商？',
+src\views\basic\supplier\index.vue:682: content: `删除后会同步删除 ${record.supplierFullName} 的详情、联系人和资质信息。`,
+src\views\basic\supplier\index.vue:695: message.success(`供应商租户已关联：${tenantCode}`)
+src\views\basic\supplier\index.vue:701: message.warning('仅未审查供应商允许发起审查')
+src\views\basic\supplier\index.vue:710: message.success(`同步完成：总数 ${result.totalCount || 0}，失败 ${result.failedCount || 0}`)
+src\views\basic\supplier\index.vue:720: downloadBlob(response?.data || response, '供应商主数据.xlsx')
+src\views\basic\unit\index.vue:247: tableName: '计量单位主数据',
+src\views\home\favorite-management\index.vue:153: console.error('加载收藏管理列表失败:', error)
+src\views\home\favorite-management\index.vue:208: console.error('批量取消收藏失败:', error)
+src\views\home\favorite-management\index.vue:237: console.error('取消单条收藏失败:', error)
+src\views\home\favorite-management\index.vue:253: console.error('保存收藏排序失败:', error)
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:11: <a-descriptions-item label="接口名称">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:14: <a-descriptions-item label="接口编码">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:31: <a-descriptions-item label="链路ID">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:34: <a-descriptions-item label="任务ID">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:37: <a-descriptions-item label="调用模式">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:40: <a-descriptions-item label="响应编码">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:43: <a-descriptions-item label="结果类型">
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:56: <span>组装前参数</span>
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:58: 复制组装前参数
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:66: <span>组装后参数</span>
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:68: 复制组装后参数
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:78: 复制响应结果
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:116: message.success('复制成功')
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:119: message.error('复制失败')
+src\views\integrationPlatform\apiCallLog\components\ApiCallLogDetailDialog.vue:124: if (!value) return '暂无数据'
+src\views\integrationPlatform\apiCallLog\index.vue:36: 查看
+src\views\integrationPlatform\apiCallLog\index.vue:38: <a-tooltip title="复制组装前参数">
+src\views\integrationPlatform\apiCallLog\index.vue:49: 查看
+src\views\integrationPlatform\apiCallLog\index.vue:51: <a-tooltip title="复制组装后参数">
+src\views\integrationPlatform\apiCallLog\index.vue:62: 查看
+src\views\integrationPlatform\apiCallLog\index.vue:64: <a-tooltip title="复制响应结果">
+src\views\integrationPlatform\apiCallLog\index.vue:140: message.success('复制成功')
+src\views\integrationPlatform\apiCallLog\index.vue:143: message.error('复制失败')
+src\views\label\binding\components\BindingFormDialog.vue:11: <a-form-item label="选择模板" required>
+src\views\label\binding\components\BindingFormDialog.vue:14: placeholder="请选择模板"
+src\views\label\binding\components\BindingFormDialog.vue:24: <span style="margin-left: 8px; font-size: 12px; color: #999;">模板 ID: {{ formData.templateId }}</span>
+src\views\label\binding\components\BindingFormDialog.vue:28: <a-form-item label="绑定类型" required>
+src\views\label\binding\components\BindingFormDialog.vue:29: <a-select v-model:value="formData.bindingType" placeholder="请选择绑定类型">
+src\views\label\binding\components\BindingFormDialog.vue:31: <a-tag color="blue">按物料匹配</a-tag>
+src\views\label\binding\components\BindingFormDialog.vue:34: <a-tag color="green">按供应商匹配</a-tag>
+src\views\label\binding\components\BindingFormDialog.vue:37: <a-tag color="orange">按客户匹配</a-tag>
+src\views\label\binding\components\BindingFormDialog.vue:42: <a-form-item label="绑定值" required>
+src\views\label\binding\components\BindingFormDialog.vue:49: <a-form-item label="工厂">
+src\views\label\binding\components\BindingFormDialog.vue:52: placeholder="不填表示全局生效"
+src\views\label\binding\components\BindingFormDialog.vue:62: <span style="margin-left: 8px; font-size: 12px; color: #999;">工厂 ID: {{ formData.factoryId }}</span>
+src\views\label\binding\components\BindingFormDialog.vue:66: <a-form-item label="优先级" required>
+src\views\label\binding\components\BindingFormDialog.vue:69: <a-tag color="red">高 (1)</a-tag>
+src\views\label\binding\components\BindingFormDialog.vue:72: <a-tag color="orange">中 (2)</a-tag>
+src\views\label\binding\components\BindingFormDialog.vue:75: <a-tag color="blue">低 (3)</a-tag>
+src\views\label\binding\components\BindingFormDialog.vue:80: 优先级越高，匹配时越优先使用
+src\views\label\binding\components\BindingFormDialog.vue:114: props.bindingData ? '编辑绑定关系' : '新增绑定关系'
+src\views\label\binding\components\BindingFormDialog.vue:130: console.log('BindingFormDialog visible 变化:', newVal, 'bindingData:', props.bindingData)
+src\views\label\binding\components\BindingFormDialog.vue:144: console.log('填充编辑数据:', formData.value)
+src\views\label\binding\components\BindingFormDialog.vue:167: MATERIAL: '请输入物料编码（如：MAT001）',
+src\views\label\binding\components\BindingFormDialog.vue:168: SUPPLIER: '请输入供应商编码（如：SUP001）',
+src\views\label\binding\components\BindingFormDialog.vue:169: CUSTOMER: '请输入客户编码（如：CUS001）'
+src\views\label\binding\components\BindingFormDialog.vue:171: return placeholders[formData.value.bindingType] || '请先选择绑定类型'
+src\views\label\binding\components\BindingFormDialog.vue:175: message.info('模板选择功能开发中')
+src\views\label\binding\components\BindingFormDialog.vue:179: message.info('工厂选择功能开发中')
+src\views\label\binding\components\BindingFormDialog.vue:185: message.warning('请选择模板')
+src\views\label\binding\components\BindingFormDialog.vue:189: message.warning('请选择绑定类型')
+src\views\label\binding\components\BindingFormDialog.vue:193: message.warning('请输入绑定值')
+src\views\label\binding\components\BindingFormDialog.vue:197: message.warning('请选择优先级')
+src\views\label\binding\components\BindingFormDialog.vue:210: message.success('更新成功')
+src\views\label\binding\components\BindingFormDialog.vue:220: message.success('创建成功')
+src\views\label\binding\components\BindingFormDialog.vue:225: message.error(error.message || (props.bindingData ? '更新失败' : '创建失败'))
+src\views\label\binding\index.vue:12: <PlusOutlined /> 新增绑定
+src\views\label\binding\index.vue:15: <ThunderboltOutlined /> 智能匹配
+src\views\label\binding\index.vue:28: <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
+src\views\label\binding\index.vue:29: <a-button type="link" size="small" danger @click="handleDelete(record)">删除</a-button>
+src\views\label\binding\index.vue:58: console.log('新增绑定')
+src\views\label\binding\index.vue:64: console.log('编辑绑定:', record)
+src\views\label\binding\index.vue:71: title: '确认删除',
+src\views\label\binding\index.vue:72: content: `确定删除该绑定关系吗？（${record.bindingType}: ${record.bindingValue}）`,
+src\views\label\binding\index.vue:73: okText: '确定',
+src\views\label\binding\index.vue:74: cancelText: '取消',
+src\views\label\binding\index.vue:85: message.success('智能匹配执行成功')
+src\views\label\binding\index.vue:88: message.error('智能匹配失败')
+src\views\label\binding\index.vue:97: if (priority === 1) return '高'
+src\views\label\binding\index.vue:98: if (priority === 2) return '中'
+src\views\label\binding\index.vue:99: return '低'
+src\views\label\print\index.vue:3: <a-card title="标签打印" :bordered="false">
+src\views\label\print\index.vue:6: <a-form-item label="打印类型" required>
+src\views\label\print\index.vue:7: <a-select v-model:value="formData.templateType" placeholder="请选择标签类型" @change="handleTypeChange">
+src\views\label\print\index.vue:8: <a-select-option value="INCOMING">来料标签</a-select-option>
+src\views\label\print\index.vue:9: <a-select-option value="PRODUCT">产品标签</a-select-option>
+src\views\label\print\index.vue:10: <a-select-option value="LOT">LOT批次标签</a-select-option>
+src\views\label\print\index.vue:11: <a-select-option value="CUSTOMER_MARK">客户唛头</a-select-option>
+src\views\label\print\index.vue:12: <a-select-option value="SPQ_INNER">SPQ内箱标签</a-select-option>
+src\views\label\print\index.vue:13: <a-select-option value="PQ_OUTER">PQ外箱标签</a-select-option>
+src\views\label\print\index.vue:14: <a-select-option value="ENG_CARD_PACKAGE">工程卡包装标签</a-select-option>
+src\views\label\print\index.vue:15: <a-select-option value="WORKSTATION">工位标识标签</a-select-option>
+src\views\label\print\index.vue:16: <a-select-option value="EQUIPMENT">设备标识标签</a-select-option>
+src\views\label\print\index.vue:21: <a-form-item label="选择模板">
+src\views\label\print\index.vue:22: <a-select v-model:value="formData.templateId" placeholder="不选则自动匹配" allow-clear>
+src\views\label\print\index.vue:25: <a-tag v-if="tpl.isDefault" color="green">默认</a-tag>
+src\views\label\print\index.vue:31: <a-form-item label="打印张数" required>
+src\views\label\print\index.vue:36: <a-form-item label="工厂">
+src\views\label\print\index.vue:37: <a-select v-model:value="formData.factoryId" placeholder="请选择工厂" allow-clear>
+src\views\label\print\index.vue:45: <a-divider orientation="left">绑定维度（智能匹配使用）</a-divider>
+src\views\label\print\index.vue:47: <a-form-item label="物料">
+src\views\label\print\index.vue:48: <a-select v-model:value="formData.materialId" placeholder="请选择物料" show-search allow-clear
+src\views\label\print\index.vue:56: <a-form-item label="供应商">
+src\views\label\print\index.vue:57: <a-select v-model:value="formData.supplierId" placeholder="请选择供应商" allow-clear>
+src\views\label\print\index.vue:64: <a-form-item label="客户">
+src\views\label\print\index.vue:65: <a-select v-model:value="formData.customerId" placeholder="请选择客户" allow-clear>
+src\views\label\print\index.vue:73: <a-divider orientation="left">打印数据</a-divider>
+src\views\label\print\index.vue:75: <a-form-item label="工程卡号">
+src\views\label\print\index.vue:76: <a-input v-model:value="printData.engineeringCardNo" placeholder="输入工程卡号自动填充"
+src\views\label\print\index.vue:80: <a-form-item label="打印数据">
+src\views\label\print\index.vue:81: <a-textarea v-model:value="printDataJson" :rows="10" placeholder="打印数据 JSON 格式" />
+src\views\label\print\index.vue:88: <EyeOutlined /> 预览
+src\views\label\print\index.vue:91: <PrinterOutlined /> 打印
+src\views\label\print\index.vue:93: <a-button @click="handleReset">重置</a-button>
+src\views\label\print\index.vue:100: <a-modal v-model:open="previewVisible" title="打印预览" width="800px" :footer="null">
+src\views\label\print\index.vue:180: console.error('加载模板失败', e)
+src\views\label\print\index.vue:189: message.info('工程卡自动填充功能待实现')
+src\views\label\print\index.vue:200: message.warning('请选择打印类型')
+src\views\label\print\index.vue:220: message.error(e.message || '预览失败')
+src\views\label\print\index.vue:227: message.warning('请选择打印类型')
+src\views\label\print\index.vue:244: message.success('打印成功')
+src\views\label\print\index.vue:246: message.error(e.message || '打印失败')
+src\views\label\print\index.vue:279: console.error('加载工厂列表失败', e)
+src\views\label\print\index.vue:289: console.error('加载物料列表失败', e)
+src\views\label\print\index.vue:299: console.error('加载供应商列表失败', e)
+src\views\label\print\index.vue:309: console.error('加载客户列表失败', e)
+src\views\label\record\index.vue:15: <a-tag v-if="record.isReprint" color="orange">补打</a-tag>
+src\views\label\record\index.vue:16: <a-tag v-else color="green">首次</a-tag>
+src\views\label\record\index.vue:22: <a @click="handleView(record)">详情</a>
+src\views\label\record\index.vue:23: <a @click="handleReprint(record)">补打</a>
+src\views\label\record\index.vue:31: title="打印记录详情"
+src\views\label\record\index.vue:36: <a-descriptions-item label="打印流水号">
+src\views\label\record\index.vue:39: <a-descriptions-item label="模板类型">
+src\views\label\record\index.vue:42: <a-descriptions-item label="模板名称">{{ detailData.templateName }}</a-descriptions-item>
+src\views\label\record\index.vue:43: <a-descriptions-item label="模板版本">v{{ detailData.templateVersion }}</a-descriptions-item>
+src\views\label\record\index.vue:44: <a-descriptions-item label="条码号">
+src\views\label\record\index.vue:47: <a-descriptions-item label="LOT号">{{ detailData.lotNo || '-' }}</a-descriptions-item>
+src\views\label\record\index.vue:48: <a-descriptions-item label="批次号">{{ detailData.batchNo || '-' }}</a-descriptions-item>
+src\views\label\record\index.vue:49: <a-descriptions-item label="物料编码">{{ detailData.materialCode || '-' }}</a-descriptions-item>
+src\views\label\record\index.vue:50: <a-descriptions-item label="物料名称">{{ detailData.materialName || '-' }}</a-descriptions-item>
+src\views\label\record\index.vue:51: <a-descriptions-item label="打印张数">
+src\views\label\record\index.vue:52: <a-tag color="green">{{ detailData.printCount }} 张</a-tag>
+src\views\label\record\index.vue:54: <a-descriptions-item label="打印类型">
+src\views\label\record\index.vue:55: <a-tag v-if="detailData.printType === 'REPRINT'" color="orange">补打</a-tag>
+src\views\label\record\index.vue:56: <a-tag v-else color="green">正常打印</a-tag>
+src\views\label\record\index.vue:58: <a-descriptions-item label="操作人">{{ detailData.operatorName }}</a-descriptions-item>
+src\views\label\record\index.vue:59: <a-descriptions-item label="打印时间">{{ detailData.printTime }}</a-descriptions-item>
+src\views\label\record\index.vue:60: <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+src\views\label\record\index.vue:66: <DatabaseOutlined /> 打印数据快照
+src\views\label\record\index.vue:71: <a-tab-pane key="json" tab="JSON 格式">
+src\views\label\record\index.vue:78: <a-tab-pane key="table" tab="表格视图" v-if="snapshotDataArray.length > 0">
+src\views\label\record\index.vue:99: <FileTextOutlined /> 打印结果模板
+src\views\label\record\index.vue:102: <a-collapse-panel key="1" header="查看打印模板内容">
+src\views\label\record\index.vue:112: <a-button @click="detailVisible = false">关闭</a-button>
+src\views\label\record\index.vue:114: <PrinterOutlined /> 补打
+src\views\label\record\index.vue:139: tableName: '打印记录',
+src\views\label\record\index.vue:143: { field: 'printNo', title: '打印流水号', width: 180, align: 'center' },
+src\views\label\record\index.vue:144: { field: 'templateName', title: '模板名称', width: 150, align: 'center' },
+src\views\label\record\index.vue:145: { field: 'templateType', title: '模板类型', width: 120, align: 'center' },
+src\views\label\record\index.vue:146: { field: 'barcodeNo', title: '条码号', width: 160, align: 'center' },
+src\views\label\record\index.vue:147: { field: 'materialCode', title: '物料编码', width: 130, align: 'center' },
+src\views\label\record\index.vue:148: { field: 'materialName', title: '物料名称', width: 150, align: 'center' },
+src\views\label\record\index.vue:149: { field: 'lotNo', title: 'LOT号', width: 130, align: 'center' },
+src\views\label\record\index.vue:150: { field: 'batchNo', title: '批次号', width: 130, align: 'center' },
+src\views\label\record\index.vue:151: { field: 'printCount', title: '打印张数', width: 100, align: 'center' },
+src\views\label\record\index.vue:152: { field: 'operatorName', title: '操作人', width: 100, align: 'center' },
+src\views\label\record\index.vue:153: { field: 'printTime', title: '打印时间', width: 170, align: 'center', sortable: true },
+src\views\label\record\index.vue:154: { field: 'printType', title: '打印类型', width: 100, align: 'center' },
+src\views\label\record\index.vue:155: { field: 'remark', title: '备注', width: 150, align: 'center', ellipsis: true },
+src\views\label\record\index.vue:156: { field: 'action', title: '操作', width: 140, align: 'center', fixed: 'right' }
+src\views\label\record\index.vue:159: { field: 'printNo', label: '打印流水号', queryType: 'input' },
+src\views\label\record\index.vue:160: { field: 'templateType', label: '模板类型', queryType: 'select' },
+src\views\label\record\index.vue:161: { field: 'barcodeNo', label: '条码号', queryType: 'input' },
+src\views\label\record\index.vue:162: { field: 'materialCode', label: '物料编码', queryType: 'input' },
+src\views\label\record\index.vue:163: { field: 'materialName', label: '物料名称', queryType: 'input' },
+src\views\label\record\index.vue:164: { field: 'printTime', label: '打印时间', queryType: 'dateRange' }
+src\views\label\record\index.vue:191: message.error('加载详情失败')
+src\views\label\record\index.vue:202: message.success('补打成功')
+src\views\label\record\index.vue:205: message.error(e.message || '补打失败')
+src\views\label\record\index.vue:216: message.success('补打成功')
+src\views\label\record\index.vue:220: message.error(e.message || '补打失败')
+src\views\label\record\index.vue:227: INCOMING: '来料标签',
+src\views\label\record\index.vue:228: PRODUCT: '产品标签',
+src\views\label\record\index.vue:229: LOT: 'LOT批次标签',
+src\views\label\record\index.vue:230: CUSTOMER_MARK: '客户唛头',
+src\views\label\record\index.vue:231: SPQ_INNER: 'SPQ内箱标签',
+src\views\label\record\index.vue:232: PQ_OUTER: 'PQ外箱标签',
+src\views\label\record\index.vue:233: ENG_CARD_PACKAGE: '工程卡包装标签',
+src\views\label\record\index.vue:234: WORKSTATION: '工位标识标签',
+src\views\label\record\index.vue:235: EQUIPMENT: '设备标识标签'
+src\views\label\record\index.vue:243: if (!detailData.value.dataSnapshot) return '暂无快照数据'
+src\views\label\record\index.vue:249: return detailData.value.dataSnapshot || '暂无快照数据'
+src\views\label\record\index.vue:304: { title: '序号', dataIndex: 'index', width: 60, align: 'center' },
+src\views\label\record\index.vue:305: { title: '字段名', dataIndex: 'fieldName', width: 200 },
+src\views\label\record\index.vue:306: { title: '字段值', dataIndex: 'fieldValue' }
+src\views\label\record\index.vue:311: { title: '序号', dataIndex: 'index', width: 60, align: 'center' },
+src\views\label\template\components\LabelTemplateEditor.vue:7: <a-card title="组件库" size="small" class="panel-card">
+src\views\label\template\components\LabelTemplateEditor.vue:11: <span>组件库</span>
+src\views\label\template\components\LabelTemplateEditor.vue:15: <a-collapse-panel key="basic" header="基础组件">
+src\views\label\template\components\LabelTemplateEditor.vue:27: <a-collapse-panel key="data" header="数据字段">
+src\views\label\template\components\LabelTemplateEditor.vue:47: <a-card title="画布预览" size="small" class="panel-card">
+src\views\label\template\components\LabelTemplateEditor.vue:51: <span>画布预览</span>
+src\views\label\template\components\LabelTemplateEditor.vue:56: <a-tooltip title="纸张尺寸">
+src\views\label\template\components\LabelTemplateEditor.vue:66: 预览
+src\views\label\template\components\LabelTemplateEditor.vue:70: 清空
+src\views\label\template\components\LabelTemplateEditor.vue:83: <div class="empty-text">拖拽组件到此处</div>
+src\views\label\template\components\LabelTemplateEditor.vue:84: <div class="empty-hint">从左侧选择组件或数据字段，拖拽到画布中</div>
+src\views\label\template\components\LabelTemplateEditor.vue:95: <span>{{ el.content || '文本' }}</span>
+src\views\label\template\components\LabelTemplateEditor.vue:99: <span>{{ el.content || '条码' }}</span>
+src\views\label\template\components\LabelTemplateEditor.vue:103: <span>{{ el.content || '二维码' }}</span>
+src\views\label\template\components\LabelTemplateEditor.vue:107: <span>{{ el.content || '图片' }}</span>
+src\views\label\template\components\LabelTemplateEditor.vue:133: <a-card title="属性配置" size="small" class="panel-card">
+src\views\label\template\components\LabelTemplateEditor.vue:137: <span>属性配置</span>
+src\views\label\template\components\LabelTemplateEditor.vue:141: <a-divider orientation="left" style="font-size: 12px;">基本信息</a-divider>
+src\views\label\template\components\LabelTemplateEditor.vue:142: <a-form-item label="元素类型">
+src\views\label\template\components\LabelTemplateEditor.vue:149: <a-form-item label="文本内容">
+src\views\label\template\components\LabelTemplateEditor.vue:152: placeholder="输入文本内容"
+src\views\label\template\components\LabelTemplateEditor.vue:156: <a-form-item label="字体大小">
+src\views\label\template\components\LabelTemplateEditor.vue:165: <a-form-item label="字体粗细">
+src\views\label\template\components\LabelTemplateEditor.vue:167: <a-select-option :value="400">常规</a-select-option>
+src\views\label\template\components\LabelTemplateEditor.vue:168: <a-select-option :value="600">加粗</a-select-option>
+src\views\label\template\components\LabelTemplateEditor.vue:169: <a-select-option :value="700">粗体</a-select-option>
+src\views\label\template\components\LabelTemplateEditor.vue:174: <a-divider orientation="left" style="font-size: 12px;">位置尺寸</a-divider>
+src\views\label\template\components\LabelTemplateEditor.vue:177: <a-form-item label="X 坐标">
+src\views\label\template\components\LabelTemplateEditor.vue:186: <a-form-item label="Y 坐标">
+src\views\label\template\components\LabelTemplateEditor.vue:197: <a-form-item label="宽度">
+src\views\label\template\components\LabelTemplateEditor.vue:207: <a-form-item label="高度">
+src\views\label\template\components\LabelTemplateEditor.vue:218: <a-divider orientation="left" style="font-size: 12px;">操作</a-divider>
+src\views\label\template\components\LabelTemplateEditor.vue:221: 删除元素
+src\views\label\template\components\LabelTemplateEditor.vue:224: <a-empty v-else description="请选择一个元素">
+src\views\label\template\components\LabelTemplateEditor.vue:258: { type: 'text', name: '文本', icon: FontSizeOutlined },
+src\views\label\template\components\LabelTemplateEditor.vue:259: { type: 'barcode', name: '条码', icon: BarcodeOutlined },
+src\views\label\template\components\LabelTemplateEditor.vue:260: { type: 'qrcode', name: '二维码', icon: QrcodeOutlined },
+src\views\label\template\components\LabelTemplateEditor.vue:261: { type: 'image', name: '图片', icon: PictureOutlined }
+src\views\label\template\components\LabelTemplateEditor.vue:265: { key: 'materialCode', label: '物料编码' },
+src\views\label\template\components\LabelTemplateEditor.vue:266: { key: 'materialName', label: '物料名称' },
+src\views\label\template\components\LabelTemplateEditor.vue:267: { key: 'lotNo', label: '批次号' },
+src\views\label\template\components\LabelTemplateEditor.vue:268: { key: 'quantity', label: '数量' },
+src\views\label\template\components\LabelTemplateEditor.vue:269: { key: 'printTime', label: '打印时间' },
+src\views\label\template\components\LabelTemplateEditor.vue:270: { key: 'supplierName', label: '供应商名称' },
+src\views\label\template\components\LabelTemplateEditor.vue:271: { key: 'customerName', label: '客户名称' },
+src\views\label\template\components\LabelTemplateEditor.vue:272: { key: 'factoryName', label: '工厂名称' }
+src\views\label\template\components\LabelTemplateEditor.vue:462: console.log('预览数据:', JSON.stringify(elements.value))
+src\views\label\template\components\LabelTemplateEditor.vue:467: 'text': '文本',
+src\views\label\template\components\LabelTemplateEditor.vue:468: 'barcode': '条码',
+src\views\label\template\components\LabelTemplateEditor.vue:469: 'qrcode': '二维码',
+src\views\label\template\components\LabelTemplateEditor.vue:470: 'image': '图片',
+src\views\label\template\components\LabelTemplateEditor.vue:471: 'field': '数据字段'
+src\views\label\template\components\LabelTemplateEditor.vue:509: console.error('解析模板 JSON 失败', e)
+src\views\label\template\components\TemplateDetailDrawer.vue:5: title="模板详情"
+src\views\label\template\components\TemplateDetailDrawer.vue:10: <a-button @click="drawerVisible = false">关闭</a-button>
+src\views\label\template\components\TemplateDetailDrawer.vue:14: <a-descriptions-item label="模板编码">
+src\views\label\template\components\TemplateDetailDrawer.vue:17: <a-descriptions-item label="模板名称">
+src\views\label\template\components\TemplateDetailDrawer.vue:20: <a-descriptions-item label="模板类型">
+src\views\label\template\components\TemplateDetailDrawer.vue:25: <a-descriptions-item label="模板版本">
+src\views\label\template\components\TemplateDetailDrawer.vue:28: <a-descriptions-item label="是否默认">
+src\views\label\template\components\TemplateDetailDrawer.vue:29: <a-tag v-if="templateData?.isDefault" color="green">是</a-tag>
+src\views\label\template\components\TemplateDetailDrawer.vue:30: <a-tag v-else color="default">否</a-tag>
+src\views\label\template\components\TemplateDetailDrawer.vue:32: <a-descriptions-item label="状态">
+src\views\label\template\components\TemplateDetailDrawer.vue:33: <a-tag v-if="templateData?.status === 1" color="green">启用</a-tag>
+src\views\label\template\components\TemplateDetailDrawer.vue:34: <a-tag v-else-if="templateData?.status === 0" color="red">禁用</a-tag>
+src\views\label\template\components\TemplateDetailDrawer.vue:35: <a-tag v-else color="default">未知</a-tag>
+src\views\label\template\components\TemplateDetailDrawer.vue:37: <a-descriptions-item label="描述" :span="2">
+src\views\label\template\components\TemplateDetailDrawer.vue:40: <a-descriptions-item label="创建人">
+src\views\label\template\components\TemplateDetailDrawer.vue:43: <a-descriptions-item label="创建时间">
+src\views\label\template\components\TemplateDetailDrawer.vue:46: <a-descriptions-item label="更新人">
+src\views\label\template\components\TemplateDetailDrawer.vue:49: <a-descriptions-item label="更新时间">
+src\views\label\template\components\TemplateDetailDrawer.vue:73: PRODUCT: '产品标签',
+src\views\label\template\components\TemplateDetailDrawer.vue:74: MATERIAL: '物料标签',
+src\views\label\template\components\TemplateDetailDrawer.vue:75: BATCH: '批次标签',
+src\views\label\template\components\TemplateDetailDrawer.vue:76: SUPPLIER: '供应商标签',
+src\views\label\template\components\TemplateDetailDrawer.vue:77: CUSTOMER_MARK: '客户唛头',
+src\views\label\template\components\TemplateDetailDrawer.vue:78: WORKSTATION: '工位标签',
+src\views\label\template\components\TemplateDetailDrawer.vue:79: EQUIPMENT: '设备标签',
+src\views\label\template\components\TemplateDetailDrawer.vue:80: LOCATION: '库位标签'
+src\views\label\template\components\TemplateFormDialog.vue:13: <a-card title="基本信息" size="small" class="section-card">
+src\views\label\template\components\TemplateFormDialog.vue:16: <a-form-item label="模板编码" required>
+src\views\label\template\components\TemplateFormDialog.vue:19: placeholder="请输入模板编码"
+src\views\label\template\components\TemplateFormDialog.vue:25: <a-form-item label="模板名称" required>
+src\views\label\template\components\TemplateFormDialog.vue:28: placeholder="请输入模板名称"
+src\views\label\template\components\TemplateFormDialog.vue:36: <a-form-item label="模板类型" required>
+src\views\label\template\components\TemplateFormDialog.vue:39: placeholder="请选择模板类型"
+src\views\label\template\components\TemplateFormDialog.vue:42: <a-tag color="blue">产品标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:45: <a-tag color="orange">物料标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:48: <a-tag color="purple">批次标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:51: <a-tag color="cyan">供应商标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:54: <a-tag color="pink">客户唛头</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:57: <a-tag color="green">工位标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:60: <a-tag color="volcano">设备标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:63: <a-tag color="geekblue">库位标签</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:69: <a-form-item label="模板版本">
+src\views\label\template\components\TemplateFormDialog.vue:72: placeholder="如: v1.0"
+src\views\label\template\components\TemplateFormDialog.vue:81: <a-form-item label="状态">
+src\views\label\template\components\TemplateFormDialog.vue:84: <a-tag color="green">启用</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:87: <a-tag color="red">禁用</a-tag>
+src\views\label\template\components\TemplateFormDialog.vue:93: <a-form-item label="设为默认">
+src\views\label\template\components\TemplateFormDialog.vue:96: checked-children="是"
+src\views\label\template\components\TemplateFormDialog.vue:97: un-checked-children="否"
+src\views\label\template\components\TemplateFormDialog.vue:103: <a-form-item label="描述">
+src\views\label\template\components\TemplateFormDialog.vue:106: placeholder="请输入模板描述"
+src\views\label\template\components\TemplateFormDialog.vue:115: <a-card title="模板内容设计" size="small" class="section-card" style="margin-top: 16px;">
+src\views\label\template\components\TemplateFormDialog.vue:126: <a-button @click="handleCancel">取消</a-button>
+src\views\label\template\components\TemplateFormDialog.vue:128: {{ props.templateData ? '保存修改' : '创建模板' }}
+src\views\label\template\components\TemplateFormDialog.vue:156: props.templateData ? '编辑标签模板' : '新增标签模板'
+src\views\label\template\components\TemplateFormDialog.vue:198: message.error('获取模板详情失败')
+src\views\label\template\components\TemplateFormDialog.vue:220: message.warning('请输入模板编码')
+src\views\label\template\components\TemplateFormDialog.vue:224: message.warning('请输入模板名称')
+src\views\label\template\components\TemplateFormDialog.vue:228: message.warning('请选择模板类型')
+src\views\label\template\components\TemplateFormDialog.vue:241: message.success('更新成功')
+src\views\label\template\components\TemplateFormDialog.vue:244: message.success('创建成功')
+src\views\label\template\components\TemplateFormDialog.vue:249: message.error(props.templateData ? '更新失败' : '创建失败')
+src\views\label\template\index.vue:13: <PlusOutlined /> 新增模板
+src\views\label\template\index.vue:16: <DeleteOutlined /> 批量删除
+src\views\label\template\index.vue:22: <a-tag v-if="record.isDefault" color="green">是</a-tag>
+src\views\label\template\index.vue:23: <a-tag v-else color="default">否</a-tag>
+src\views\label\template\index.vue:27: <a-tag v-if="record.status === 1" color="green">启用</a-tag>
+src\views\label\template\index.vue:28: <a-tag v-else-if="record.status === 0" color="red">禁用</a-tag>
+src\views\label\template\index.vue:29: <a-tag v-else color="default">未知</a-tag>
+src\views\label\template\index.vue:35: <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+src\views\label\template\index.vue:36: <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
+src\views\label\template\index.vue:39: 更多 <DownOutlined />
+src\views\label\template\index.vue:43: <a-menu-item @click="handleSetDefault(record)">设为默认</a-menu-item>
+src\views\label\template\index.vue:44: <a-menu-item @click="handleCopy(record)">复制模板</a-menu-item>
+src\views\label\template\index.vue:46: <a-menu-item danger @click="handleDelete(record)">删除</a-menu-item>
+src\views\label\template\index.vue:88: { label: '启用', value: 1, color: 'green' },
+src\views\label\template\index.vue:89: { label: '禁用', value: 0, color: 'red' }
+src\views\label\template\index.vue:92: { label: '产品标签', value: 'PRODUCT', color: 'blue' },
+src\views\label\template\index.vue:93: { label: '物料标签', value: 'MATERIAL', color: 'orange' },
+src\views\label\template\index.vue:94: { label: '批次标签', value: 'BATCH', color: 'purple' }
+src\views\label\template\index.vue:113: console.log('新增模板')
+src\views\label\template\index.vue:120: console.log('编辑模板:', record)
+src\views\label\template\index.vue:127: console.log('查看模板:', record)
+src\views\label\template\index.vue:135: title: '确认删除',
+src\views\label\template\index.vue:136: content: `确定要删除模板"${record.templateName}"吗？`,
+src\views\label\template\index.vue:137: okText: '确定',
+src\views\label\template\index.vue:138: cancelText: '取消',
+src\views\label\template\index.vue:149: title: '确认批量删除',
+src\views\label\template\index.vue:150: content: `确定要删除选中的 ${selectedRowKeys.value.length} 个模板吗？`,
+src\views\label\template\index.vue:151: okText: '确定',
+src\views\label\template\index.vue:152: cancelText: '取消',
+src\views\label\template\index.vue:164: title: '确认设置',
+src\views\label\template\index.vue:165: content: `确定要将"${record.templateName}"设为该类型的默认模板吗？`,
+src\views\label\template\index.vue:166: okText: '确定',
+src\views\label\template\index.vue:167: cancelText: '取消',
+src\views\label\template\index.vue:178: message.info('复制功能待实现')
+src\views\profile\index.vue:84: :model="password表单"
+src\views\profile\index.vue:94: <a-input-password v-model:value="password表单.oldPassword" />
+src\views\profile\index.vue:105: <a-input-password v-model:value="password表单.newPassword" />
+src\views\profile\index.vue:116: <a-input-password v-model:value="password表单.confirmPassword" />
+src\views\profile\index.vue:227: const password表单 = reactive({
+src\views\profile\index.vue:268: console.error('淇濆瓨澶辫触:', error)
+src\views\profile\index.vue:286: oldPassword: password表单.oldPassword,
+src\views\profile\index.vue:287: newPassword: password表单.newPassword,
+src\views\profile\index.vue:291: password表单.oldPassword = ''
+src\views\profile\index.vue:292: password表单.newPassword = ''
+src\views\profile\index.vue:293: password表单.confirmPassword = ''
+src\views\profile\index.vue:324: if (value !== password表单.newPassword) {
+src\views\report\components\ReportDesigner.vue:15: message="提示"
+src\views\report\components\ReportDesigner.vue:16: description="在报表设计器中完成设计后，请点击保存按钮。关闭此窗口将自动刷新列表。"
+src\views\report\components\ReportDesigner.vue:70: return `${engineName} 报表设计器`
+src\views\report\components\ReportDesigner.vue:82: console.log('报表设计器加载完成')
+src\views\report\components\ReportDesigner.vue:90: emit('ok') // 关闭时也触发 ok 事件，刷新列表
+src\views\report\components\ReportForm.vue:17: <a-form-item label="报表名称" name="name">
+src\views\report\components\ReportForm.vue:20: placeholder="请输入报表名称"
+src\views\report\components\ReportForm.vue:26: <a-form-item label="报表编码" name="code">
+src\views\report\components\ReportForm.vue:29: placeholder="请输入报表编码，首字母必须为字母，可包含字母、数字和下划线"
+src\views\report\components\ReportForm.vue:36: <a-form-item label="引擎类型" name="engineType">
+src\views\report\components\ReportForm.vue:47: <a-form-item label="报表分类" name="categoryId">
+src\views\report\components\ReportForm.vue:51: placeholder="请选择报表分类"
+src\views\report\components\ReportForm.vue:58: <a-form-item label="数据源" name="datasourceId">
+src\views\report\components\ReportForm.vue:62: placeholder="请选择数据源"
+src\views\report\components\ReportForm.vue:68: <a-form-item label="报表状态" name="status">
+src\views\report\components\ReportForm.vue:70: <a-radio :value="1">启用</a-radio>
+src\views\report\components\ReportForm.vue:71: <a-radio :value="0">禁用</a-radio>
+src\views\report\components\ReportForm.vue:75: <a-form-item label="备注" name="remark">
+src\views\report\components\ReportForm.vue:78: placeholder="请输入备注"
+src\views\report\components\ReportForm.vue:120: const formTitle = computed(() => (form.id ? '编辑报表' : '新增报表'))
+src\views\report\components\ReportForm.vue:136: { required: true, message: '请输入报表名称', trigger: 'blur' },
+src\views\report\components\ReportForm.vue:137: { max: 100, message: '报表名称不能超过 100 个字符', trigger: 'blur' },
+src\views\report\components\ReportForm.vue:140: { required: true, message: '请输入报表编码', trigger: 'blur' },
+src\views\report\components\ReportForm.vue:143: message: '报表编码必须以字母开头，且只能包含字母、数字和下划线',
+src\views\report\components\ReportForm.vue:146: { max: 50, message: '报表编码不能超过 50 个字符', trigger: 'blur' },
+src\views\report\components\ReportForm.vue:148: engineType: [{ required: true, message: '请选择引擎类型', trigger: 'change' }],
+src\views\report\components\ReportForm.vue:196: console.error('保存报表失败', error)
+src\views\report\components\ReportPreview.vue:14: message="提示"
+src\views\report\components\ReportPreview.vue:15: description="以下为报表预览效果，可通过 URL 参数传递查询条件。"
+src\views\report\components\ReportPreview.vue:68: return `${engineName} 报表预览`
+src\views\report\components\ReportPreview.vue:80: console.log('报表预览加载完成')
+src\views\report\datasource\index.vue:19: 新增数据源
+src\views\report\datasource\index.vue:46: 编辑
+src\views\report\datasource\index.vue:52: 连接测试
+src\views\report\datasource\index.vue:59: 删除
+src\views\report\datasource\index.vue:80: <a-form-item label="数据源名称" name="name">
+src\views\report\datasource\index.vue:83: placeholder="请输入数据源名称"
+src\views\report\datasource\index.vue:89: <a-form-item label="数据源编码" name="code">
+src\views\report\datasource\index.vue:92: placeholder="请输入数据源编码，首字母必须为字母，可包含字母、数字和下划线"
+src\views\report\datasource\index.vue:99: <a-form-item label="数据库类型" name="type">
+src\views\report\datasource\index.vue:102: placeholder="请选择数据库类型"
+src\views\report\datasource\index.vue:113: <a-form-item label="连接地址 URL" name="url">
+src\views\report\datasource\index.vue:116: placeholder="请输入数据库连接地址 URL"
+src\views\report\datasource\index.vue:123: <a-form-item label="用户名" name="username">
+src\views\report\datasource\index.vue:126: placeholder="请输入数据库用户名"
+src\views\report\datasource\index.vue:131: <a-form-item label="密码" name="password">
+src\views\report\datasource\index.vue:134: placeholder="请输入数据库密码"
+src\views\report\datasource\index.vue:139: <a-form-item label="驱动类名" name="driverClass">
+src\views\report\datasource\index.vue:142: placeholder="请输入数据库驱动类名"
+src\views\report\datasource\index.vue:148: <a-form-item label="连接池配置" name="poolConfig">
+src\views\report\datasource\index.vue:151: placeholder="请输入连接池配置 JSON 字符串，如无特殊需求可留空"
+src\views\report\datasource\index.vue:158: <a-form-item label="状态" name="status">
+src\views\report\datasource\index.vue:160: <a-radio :value="1">启用</a-radio>
+src\views\report\datasource\index.vue:161: <a-radio :value="0">禁用</a-radio>
+src\views\report\datasource\index.vue:165: <a-form-item label="备注" name="remark">
+src\views\report\datasource\index.vue:168: placeholder="请输入备注"
+src\views\report\datasource\index.vue:216: const formTitle = computed(() => (form.id ? '编辑数据源' : '新增数据源'))
+src\views\report\datasource\index.vue:220: { required: true, message: '请输入数据源名称', trigger: 'blur' },
+src\views\report\datasource\index.vue:221: { max: 100, message: '数据源名称不能超过 100 个字符', trigger: 'blur' },
+src\views\report\datasource\index.vue:224: { required: true, message: '请输入数据源编码', trigger: 'blur' },
+src\views\report\datasource\index.vue:227: message: '数据源编码必须以字母开头，且只能包含字母、数字和下划线',
+src\views\report\datasource\index.vue:230: { max: 50, message: '数据源编码不能超过 50 个字符', trigger: 'blur' },
+src\views\report\datasource\index.vue:232: type: [{ required: true, message: '请选择数据库类型', trigger: 'change' }],
+src\views\report\datasource\index.vue:234: { required: true, message: '请输入数据库连接地址 URL', trigger: 'blur' },
+src\views\report\datasource\index.vue:235: { max: 500, message: 'URL 不能超过 500 个字符', trigger: 'blur' },
+src\views\report\datasource\index.vue:238: { required: true, message: '请输入数据库用户名', trigger: 'blur' },
+src\views\report\datasource\index.vue:239: { max: 100, message: '用户名不能超过 100 个字符', trigger: 'blur' },
+src\views\report\datasource\index.vue:256: tableName: '数据源管理',
+src\views\report\datasource\index.vue:262: { field: 'name', title: '数据源名称', width: 180, align: 'left' },
+src\views\report\datasource\index.vue:263: { field: 'code', title: '数据源编码', width: 150, align: 'left' },
+src\views\report\datasource\index.vue:264: { field: 'type', title: '数据库类型', width: 120, align: 'center', dictCode: 'dbType' },
+src\views\report\datasource\index.vue:265: { field: 'url', title: '连接地址 URL', width: 300, align: 'left' },
+src\views\report\datasource\index.vue:266: { field: 'username', title: '用户名', width: 120, align: 'center' },
+src\views\report\datasource\index.vue:267: { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+src\views\report\datasource\index.vue:268: { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+src\views\report\datasource\index.vue:269: { field: 'action', title: '操作', width: 220, align: 'center', fixed: 'right' },
+src\views\report\datasource\index.vue:272: { field: 'name', label: '数据源名称', queryType: 'input', queryOperator: 'like' },
+src\views\report\datasource\index.vue:273: { field: 'code', label: '数据源编码', queryType: 'input', queryOperator: 'like' },
+src\views\report\datasource\index.vue:274: { field: 'type', label: '数据库类型', queryType: 'select', queryOperator: 'eq', dictCode: 'dbType' },
+src\views\report\datasource\index.vue:275: { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+src\views\report\datasource\index.vue:353: console.error('加载数据源分页数据失败', error)
+src\views\report\datasource\index.vue:409: title: '提示',
+src\views\report\datasource\index.vue:410: content: `确定要删除数据源“${record.name}”吗？`,
+src\views\report\datasource\index.vue:411: okText: '确定',
+src\views\report\datasource\index.vue:412: cancelText: '取消',
+src\views\report\datasource\index.vue:418: console.error('删除失败', error)
+src\views\report\datasource\index.vue:428: console.error('连接测试失败', error)
+src\views\report\datasource\index.vue:442: console.error('保存数据源失败', error)
+src\views\report\index.vue:19: 新增
+src\views\report\index.vue:46: 编辑
+src\views\report\index.vue:52: 设计器
+src\views\report\index.vue:58: 预览
+src\views\report\index.vue:65: 删除
+src\views\report\index.vue:141: tableName: '报表模板管理',
+src\views\report\index.vue:146: { field: 'id', title: '报表 ID', width: 100, align: 'center' },
+src\views\report\index.vue:147: { field: 'name', title: '报表名称', width: 200, align: 'left' },
+src\views\report\index.vue:148: { field: 'code', title: '报表编码', width: 150, align: 'left' },
+src\views\report\index.vue:149: { field: 'engineType', title: '引擎类型', width: 120, align: 'center', dictCode: 'engineType' },
+src\views\report\index.vue:150: { field: 'categoryName', title: '分类', width: 120, align: 'center' },
+src\views\report\index.vue:151: { field: 'datasourceName', title: '数据源', width: 120, align: 'center' },
+src\views\report\index.vue:152: { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+src\views\report\index.vue:153: { field: 'remark', title: '备注', width: 200, align: 'left' },
+src\views\report\index.vue:154: { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+src\views\report\index.vue:155: { field: 'action', title: '操作', width: 280, align: 'center', fixed: 'right' },
+src\views\report\index.vue:158: { field: 'name', label: '报表名称', queryType: 'input', queryOperator: 'like' },
+src\views\report\index.vue:159: { field: 'code', label: '报表编码', queryType: 'input', queryOperator: 'like' },
+src\views\report\index.vue:160: { field: 'engineType', label: '引擎类型', queryType: 'select', queryOperator: 'eq', dictCode: 'engineType' },
+src\views\report\index.vue:161: { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+src\views\report\index.vue:213: console.error('加载报表分页数据失败:', error)
+src\views\report\index.vue:226: console.error('加载分类树失败:', error)
+src\views\report\index.vue:239: console.error('加载数据源列表失败:', error)
+src\views\report\index.vue:276: title: '提示',
+src\views\report\index.vue:277: content: `确定要删除报表“${record.name}”吗？`,
+src\views\report\index.vue:278: okText: '确定',
+src\views\report\index.vue:279: cancelText: '取消',
+src\views\report\index.vue:285: console.error('删除报表失败:', error)
+src\views\system\androidVersion\index.vue:12: <a-button type="primary" @click="openUploadDialog">上传版本</a-button>
+src\views\system\androidVersion\index.vue:18: {{ record.status === 1 ? '启用' : '禁用' }}
+src\views\system\androidVersion\index.vue:28: <a :href="normalizeMediaUrl(record.fileUrl)" target="_blank">下载</a>
+src\views\system\androidVersion\index.vue:29: <a @click="copyText(record.fileUrl)">复制链接</a>
+src\views\system\androidVersion\index.vue:36: <a @click="openEditDialog(record)">编辑</a>
+src\views\system\androidVersion\index.vue:37: <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+src\views\system\androidVersion\index.vue:44: :title="dialogMode === 'upload' ? '上传安卓版本' : '编辑安卓版本'"
+src\views\system\androidVersion\index.vue:56: <a-form-item label="版本号" name="versionCode">
+src\views\system\androidVersion\index.vue:65: <a-form-item label="版本名称" name="versionName">
+src\views\system\androidVersion\index.vue:66: <a-input v-model:value="formData.versionName" placeholder="例如 1.0.1" />
+src\views\system\androidVersion\index.vue:69: <a-form-item v-if="dialogMode === 'edit'" label="状态" name="status">
+src\views\system\androidVersion\index.vue:71: <a-radio :value="1">启用</a-radio>
+src\views\system\androidVersion\index.vue:72: <a-radio :value="0">禁用</a-radio>
+src\views\system\androidVersion\index.vue:76: <a-form-item v-if="dialogMode === 'upload'" label="APK 文件" name="file">
+src\views\system\androidVersion\index.vue:84: <a-button :disabled="saving">选择 APK</a-button>
+src\views\system\androidVersion\index.vue:91: <a-form-item v-if="dialogMode === 'upload' && uploadTask.uploadId" label="上传进度">
+src\views\system\androidVersion\index.vue:96: <span>{{ uploadTask.uploadedChunks }}/{{ uploadTask.totalChunks }} 分片</span>
+src\views\system\androidVersion\index.vue:98: <a-button v-if="saving" size="small" danger @click="handleCancelUpload">取消上传</a-button>
+src\views\system\androidVersion\index.vue:102: <a-form-item label="更新日志" name="changelog">
+src\views\system\androidVersion\index.vue:106: placeholder="请输入本次版本更新内容"
+src\views\system\androidVersion\index.vue:155: statusText: '等待上传',
+src\views\system\androidVersion\index.vue:167: versionCode: [{ required: true, message: '请输入版本号', trigger: 'change' }],
+src\views\system\androidVersion\index.vue:168: versionName: [{ required: true, message: '请输入版本名称', trigger: 'blur' }],
+src\views\system\androidVersion\index.vue:202: uploadTask.statusText = '等待上传'
+src\views\system\androidVersion\index.vue:227: message.error('只能上传 APK 文件')
+src\views\system\androidVersion\index.vue:238: message.error('请先选择 APK 文件')
+src\views\system\androidVersion\index.vue:247: message.success('安卓版本上传成功')
+src\views\system\androidVersion\index.vue:259: uploadTask.statusText = '初始化上传任务'
+src\views\system\androidVersion\index.vue:280: throw new Error('上传已取消')
+src\views\system\androidVersion\index.vue:292: uploadTask.statusText = '合并安装包'
+src\views\system\androidVersion\index.vue:296: uploadTask.statusText = '上传完成'
+src\views\system\androidVersion\index.vue:303: uploadTask.statusText = `上传分片 ${chunkIndex + 1}/${uploadTask.totalChunks || ''}`
+src\views\system\androidVersion\index.vue:310: uploadTask.statusText = `分片 ${chunkIndex + 1} 重试 ${retry}/${MAX_RETRY - 1}`
+src\views\system\androidVersion\index.vue:324: uploadTask.statusText = '已取消'
+src\views\system\androidVersion\index.vue:334: uploadTask.statusText = task.status === 'FAILED' ? (task.errorMessage || '上传失败') : '上传中'
+src\views\system\androidVersion\index.vue:381: title: '确定删除该版本吗？',
+src\views\system\androidVersion\index.vue:382: content: '删除后将无法恢复。',
+src\views\system\androidVersion\index.vue:383: okText: '确定',
+src\views\system\androidVersion\index.vue:384: cancelText: '取消',
+src\views\system\androidVersion\index.vue:397: message.success('下载链接已复制')
+src\views\system\config\index.vue:24: module-name="系统配置Logo"
+src\views\system\config\index.vue:315: <a-select-option value="bcrypt">BCrypt（推荐，不可逆哈希）</a-select-option>
+src\views\system\config\index.vue:316: <a-select-option value="argon2">Argon2（高安全哈希）</a-select-option>
+src\views\system\config\index.vue:319: <a-select-option value="sm4">SM4（国密对称加密）</a-select-option>
+src\views\system\config\index.vue:320: <a-select-option value="aes">AES-256-GCM（对称加密）</a-select-option>
+src\views\system\config\index.vue:321: <a-select-option value="sm2">SM2（国密非对称加密）</a-select-option>
+src\views\system\config\index.vue:322: <a-select-option value="rsa">RSA-2048（非对称加密）</a-select-option>
+src\views\system\config\index.vue:374: <a-select-option value="SM2">SM2（国密非对称加密）</a-select-option>
+src\views\system\config\index.vue:400: <a-tab-pane key="personalHomepage" tab="个人首页">
+src\views\system\config\index.vue:422: title="个人首页默认配置"
+src\views\system\config\index.vue:423: description="维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。"
+src\views\system\config\index.vue:684: <div class="form-item-hint">128位（32字符Hex）</div>
+src\views\system\config\index.vue:691: <div class="form-item-hint">256位（64字符Hex）</div>
+src\views\system\config\index.vue:705: <a-select-option :value="2048">RSA-2048（推荐）</a-select-option>
+src\views\system\config\index.vue:706: <a-select-option :value="4096">RSA-4096（高安全）</a-select-option>
+src\views\system\config\index.vue:737: <a-select-option value="aes">AES-256-GCM（国际标准，推荐）</a-select-option>
+src\views\system\config\index.vue:738: <a-select-option value="sm4">SM4-CBC（国密标准）</a-select-option>
+src\views\system\config\index.vue:747: <a-select-option value="SM4">SM4（国密标准，默认）</a-select-option>
+src\views\system\config\index.vue:748: <a-select-option value="AES">AES-256-GCM（国际标准）</a-select-option>
+src\views\system\config\index.vue:1060: title: '个人首页',
+src\views\system\config\index.vue:1061: desc: '个人工作台默认布局',
+src\views\system\config\index.vue:1066: title: '基础信息',
+src\views\system\config\index.vue:1067: desc: '供应商与编码规则首页',
+src\views\system\config\index.vue:1072: title: '审批管理',
+src\views\system\config\index.vue:1073: desc: '审批工作台首页',
+src\views\system\config\index.vue:1078: title: '系统管理',
+src\views\system\config\index.vue:1079: desc: '系统运行与配置首页',
+src\views\system\config\index.vue:1692: moduleName: '系统配置',
+src\views\system\config\index.vue:1725: moduleName: '系统配置',
+src\views\system\dashboard\index.vue:19: <span class="stat-suffix">人</span>
+src\views\system\dashboard\index.vue:33: <span class="stat-suffix">个</span>
+src\views\system\dashboard\index.vue:47: <span class="stat-suffix">个</span>
+src\views\system\dashboard\index.vue:61: <span class="stat-suffix">人</span>
+src\views\system\dashboard\index.vue:308: title: '操作时间',
+src\views\system\dashboard\index.vue:314: title: '操作人',
+src\views\system\dashboard\index.vue:320: title: '操作模块',
+src\views\system\dashboard\index.vue:326: title: '操作内容',
+src\views\system\dashboard\index.vue:332: title: '状态',
+src\views\system\dashboard\index.vue:343: title: '登录时间',
+src\views\system\dashboard\index.vue:349: title: '用户名',
+src\views\system\dashboard\index.vue:355: title: 'IP 地址',
+src\views\system\dashboard\index.vue:361: title: '登录地点',
+src\views\system\dashboard\index.vue:367: title: '状态',
+src\views\system\dashboard\index.vue:424: message.warning('租户信息缺失')
+src\views\system\dashboard\index.vue:432: console.error('加载统计数据失败:', error)
+src\views\system\dashboard\index.vue:433: message.error('加载统计数据失败')
+src\views\system\dashboard\index.vue:451: console.error('加载服务器信息失败:', error)
+src\views\system\dashboard\index.vue:464: console.error('加载 JVM 内存分区数据失败:', error)
+src\views\system\dashboard\index.vue:477: console.error('加载服务内存数据失败:', error)
+src\views\system\dashboard\index.vue:489: console.error('加载操作日志失败:', error)
+src\views\system\dashboard\index.vue:501: console.error('加载登录日志失败:', error)
+src\views\system\dashboard\index.vue:659: name: '内存使用',
+src\views\system\dashboard\index.vue:859: const label = serverInfo.value.mapLocationName || '服务器位置'
+src\views\system\dashboard\index.vue:870: console.warn('[Dashboard] 中国地图数据加载失败，将显示占位提示', e)
+src\views\system\dashboard\index.vue:903: name: '位置',
+src\views\system\dashboard\index.vue:942: text: '地图数据加载失败\n请检查网络或稍后重试',
+src\views\system\department\index.vue:304: console.error('加载部门详情失败', e)
+src\views\system\department\index.vue:391: console.error('保存失败', e)
+src\views\system\department\index.vue:415: console.error('删除失败', e)
+src\views\system\dict\index.vue:14: <a-button data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">新增字典</a-button>
+src\views\system\dict\index.vue:37: <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
+src\views\system\dict\index.vue:38: <a @click="handleEdit(record)">编辑</a>
+src\views\system\dict\index.vue:39: <a style="color: #ff4d4f" @click="handleDelete(record)">删除</a>
+src\views\system\dict\index.vue:52: <a-form-item label="字典名称" name="dictName">
+src\views\system\dict\index.vue:53: <a-input v-model:value="form.dictName" placeholder="请输入字典名称" />
+src\views\system\dict\index.vue:56: <a-form-item label="所属模块" name="moduleId">
+src\views\system\dict\index.vue:62: placeholder="请选择所属模块"
+src\views\system\dict\index.vue:66: <a-form-item v-if="!isChildNode" label="字典编码" name="dictCode">
+src\views\system\dict\index.vue:67: <a-input v-model:value="form.dictCode" placeholder="请输入字典编码" />
+src\views\system\dict\index.vue:70: <a-form-item v-else label="字典值" name="dictValue">
+src\views\system\dict\index.vue:71: <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
+src\views\system\dict\index.vue:74: <a-form-item v-if="isChildNode" label="国际化配置" name="dictValueI18nJson">
+src\views\system\dict\index.vue:78: placeholder="请输入字典值（可点击右侧地球图标配置多语言）"
+src\views\system\dict\index.vue:82: <a-form-item v-if="isChildNode" label="标签样式">
+src\views\system\dict\index.vue:86: <a-form-item label="排序号" name="orderNum">
+src\views\system\dict\index.vue:90: <a-form-item label="状态" name="status">
+src\views\system\dict\index.vue:98: <a-form-item label="备注" name="remark">
+src\views\system\dict\index.vue:99: <a-textarea v-model:value="form.remark" :rows="3" placeholder="请输入备注" />
+src\views\system\dict\index.vue:134: tableName: '字典管理',
+src\views\system\dict\index.vue:139: { field: 'dictCode', title: '字典编码', width: 180, align: 'left' },
+src\views\system\dict\index.vue:140: { field: 'dictName', title: '字典名称', width: 180, align: 'left' },
+src\views\system\dict\index.vue:141: { field: 'moduleId', title: '模块', width: 140, align: 'center', dictCode: 'moduleId' },
+src\views\system\dict\index.vue:142: { field: 'dictValue', title: '字典值', width: 180, align: 'left' },
+src\views\system\dict\index.vue:143: { field: 'orderNum', title: '排序', width: 90, align: 'center' },
+src\views\system\dict\index.vue:144: { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+src\views\system\dict\index.vue:145: { field: 'remark', title: '备注', width: 220, align: 'left' },
+src\views\system\dict\index.vue:146: { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+src\views\system\dict\index.vue:147: { field: 'action', title: '操作', width: 180, align: 'center', fixed: 'right' },
+src\views\system\dict\index.vue:150: { field: 'dictCode', label: '字典编码', queryType: 'input', queryOperator: 'like' },
+src\views\system\dict\index.vue:151: { field: 'dictName', label: '字典名称', queryType: 'input', queryOperator: 'like' },
+src\views\system\dict\index.vue:152: { field: 'moduleId', label: '模块', queryType: 'select', queryOperator: 'eq', dictCode: 'moduleId' },
+src\views\system\dict\index.vue:171: dictName: [{ required: true, message: '请输入字典名称', trigger: 'blur' }],
+src\views\system\dict\index.vue:172: dictCode: isChildNode.value ? [] : [{ required: true, message: '请输入字典编码', trigger: 'blur' }],
+src\views\system\dict\index.vue:173: dictValue: isChildNode.value ? [{ required: true, message: '请输入字典值', trigger: 'blur' }] : [],
+src\views\system\dict\index.vue:174: status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+src\views\system\dict\index.vue:281: dialogTitle.value = row ? '新增字典子项' : '新增字典类型'
+src\views\system\dict\index.vue:289: dialogTitle.value = '编辑字典'
+src\views\system\dict\index.vue:308: title: '提示',
+src\views\system\dict\index.vue:309: content: '确定要删除该字典吗？',
+src\views\system\dict\index.vue:310: okText: '确定',
+src\views\system\dict\index.vue:311: cancelText: '取消',
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:18: <a-tab-pane key="main" tab="主信息">
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:71: <a-tab-pane key="details" tab="明细信息">
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:116: v-model:value="detail.date表单at"
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:117: :placeholder="t('system.encodeRule.date表单atPlaceholder')"
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:132: <span>起始值</span>
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:136: placeholder="如 1"
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:145: <span>流水位数</span>
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:149: placeholder="如 6"
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:159: 初始值是第一个流水号，流水位数不足时会补零，例如初始值 1、位数 6 会生成 000001。
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:224: import { message, type 表单Instance, type 表单Rule } from 'ant-design-vue'
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:264: const formRef = ref<表单Instance>()
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:266: interface EncodeRule表单Detail extends Omit<EncodeRuleDetail, 'segmentType'> {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:268: date表单at?: string
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:274: interface EncodeRule表单Model {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:281: ruleDetails: EncodeRule表单Detail[]
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:285: const form = reactive<EncodeRule表单Model>({
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:320: const formRules: Record<string, 表单Rule[]> = {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:333: const detailRules: 表单Rule[] = [
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:343: if (value.segmentType === 'DATE' && !value.date表单at) {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:344: return Promise.reject(t('system.encodeRule.date表单atRequired'))
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:365: function mapBackendDetailTo表单(detail: EncodeRuleDetail): EncodeRule表单Detail {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:380: date表单at: formType === 'DATE' ? (detail?.segmentValue || '') : undefined,
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:388: function map表单DetailToBackend(detail: EncodeRule表单Detail, index: number): EncodeRuleDetail {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:398: ? (detail.date表单at || detail.segmentValue || '')
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:415: function reset表单() {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:438: form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailTo表单(detail))
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:441: console.error('加载规则详情失败:', error)
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:448: const newDetail: EncodeRule表单Detail = {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:472: function handleSegmentTypeChange(detail: EncodeRule表单Detail) {
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:476: detail.date表单at = undefined
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:482: detail.date表单at = 'YYYYMMDD'
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:488: detail.date表单at = undefined
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:494: detail.date表单at = undefined
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:528: detailList: (form.ruleDetails || []).map((detail, index) => map表单DetailToBackend(detail, index)),
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:536: console.error('保存失败:', error)
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:543: reset表单()
+src\views\system\encodeRule\components\EncodeRuleFormDialog.vue:553: reset表单()
+src\views\system\encodeRule\index.vue:222: console.error('生成编码失败:', error)
+src\views\system\excelExportConfig\index.vue:25: {{ normalizeBoolean(record.enabled) ? t('common.enabled', '启用') : t('common.disabled', '禁用') }}
+src\views\system\excelExportConfig\index.vue:31: {{ normalizeBoolean(record.enableTotal) ? t('common.yes', '是') : t('common.no', '否') }}
+src\views\system\excelExportConfig\index.vue:158: <a-button type="link" size="small" :disabled="index === 0" @click="moveItem(index, -1)">上移</a-button>
+src\views\system\excelExportConfig\index.vue:159: <a-button type="link" size="small" :disabled="index === editForm.items.length - 1" @click="moveItem(index, 1)">下移</a-button>
+src\views\system\excelExportConfig\index.vue:160: <a-button type="link" size="small" danger @click="removeItem(record._k)">删除</a-button>
+src\views\system\excelExportConfig\index.vue:185: const i18nPlaceholder = '{"zh-CN":"标题"}'
+src\views\system\excelExportConfig\index.vue:334: console.error('加载导出配置列表失败', error)
+src\views\system\excelExportConfig\index.vue:360: console.error('加载导出配置详情失败', error)
+src\views\system\excelExportConfig\index.vue:407: console.error('删除导出配置失败', error)
+src\views\system\excelExportConfig\index.vue:450: console.error('保存导出配置失败', error)
+src\views\system\excelImportConfig\index.vue:141: console.error('加载导入配置列表失败', error)
+src\views\system\excelImportConfig\index.vue:158: console.error('加载导入配置详情失败', error)
+src\views\system\excelImportConfig\index.vue:171: message.error('表单数据为空')
+src\views\system\excelImportConfig\index.vue:207: console.error('保存导入配置失败', error)
+src\views\system\excelImportConfig\index.vue:239: console.error('删除导入配置失败', error)
+src\views\system\excelImportConfig\index.vue:282: console.error('下载模板失败', error)
+src\views\system\i18nLanguageType\index.vue:193: console.error('加载语言配置列表失败', error)
+src\views\system\i18nLanguageType\index.vue:234: console.error('加载语言详情失败', error)
+src\views\system\i18nLanguageType\index.vue:267: console.error('保存语言配置失败', error)
+src\views\system\i18nMessage\index.vue:57: <a-form-item label="模块" name="module">
+src\views\system\i18nMessage\index.vue:58: <a-input v-model:value="form.module" placeholder="请输入模块编码" />
+src\views\system\i18nMessage\index.vue:60: <a-form-item label="消息编码" name="promptCode">
+src\views\system\i18nMessage\index.vue:61: <a-input v-model:value="form.promptCode" placeholder="请输入消息编码" />
+src\views\system\i18nMessage\index.vue:63: <a-form-item label="多语言内容" name="textI18nJson">
+src\views\system\i18nMessage\index.vue:69: placeholder="请输入消息内容，点击右侧图标配置多语言"
+src\views\system\i18nMessage\index.vue:73: <a-form-item label="状态" name="enabled">
+src\views\system\i18nMessage\index.vue:79: <a-form-item label="版本" name="version">
+src\views\system\i18nMessage\index.vue:123: module: [{ required: true, message: '请输入模块编码', trigger: 'blur' }],
+src\views\system\i18nMessage\index.vue:124: promptCode: [{ required: true, message: '请输入消息编码', trigger: 'blur' }],
+src\views\system\i18nMessage\index.vue:125: textI18nJson: [{ required: true, message: '请配置多语言内容', trigger: 'change' }],
+src\views\system\i18nMessage\index.vue:130: tableName: '多语言消息',
+src\views\system\i18nMessage\index.vue:135: { field: 'module', title: '模块', width: 160, align: 'left' },
+src\views\system\i18nMessage\index.vue:136: { field: 'promptCode', title: '消息编码', width: 220, align: 'left' },
+src\views\system\i18nMessage\index.vue:137: { field: 'textI18nJson', title: '当前语言内容', width: 280, align: 'left', ellipsis: true },
+src\views\system\i18nMessage\index.vue:139: { field: 'version', title: '版本', width: 90, align: 'center' },
+src\views\system\i18nMessage\index.vue:144: { field: 'module', label: '模块', queryType: 'input', queryOperator: 'like' },
+src\views\system\i18nMessage\index.vue:145: { field: 'promptCode', label: '消息编码', queryType: 'input', queryOperator: 'like' },
+src\views\system\i18nMessage\index.vue:177: console.error('加载多语言消息失败', error)
+src\views\system\i18nMessage\index.vue:197: dialogTitle.value = '新增多语言消息'
+src\views\system\i18nMessage\index.vue:203: dialogTitle.value = '编辑多语言消息'
+src\views\system\i18nMessage\index.vue:214: console.error('加载多语言消息详情失败', error)
+src\views\system\i18nMessage\index.vue:215: message.error('加载详情失败')
+src\views\system\i18nMessage\index.vue:222: content: '确认删除该多语言消息吗？',
+src\views\system\i18nMessage\index.vue:247: console.error('保存多语言消息失败', error)
+src\views\system\loginLog\index.vue:41: tableName: '登录日志',
+src\views\system\loginLog\index.vue:46: { field: 'account', title: '登录账号', width: 140, align: 'left' },
+src\views\system\loginLog\index.vue:47: { field: 'status', title: '登录状态', width: 110, align: 'center', dictCode: 'status' },
+src\views\system\loginLog\index.vue:48: { field: 'loginTime', title: '登录时间', width: 180, align: 'center' },
+src\views\system\loginLog\index.vue:49: { field: 'loginIp', title: '登录 IP', width: 150, align: 'left' },
+src\views\system\loginLog\index.vue:50: { field: 'loginRegion', title: '归属地', width: 180, align: 'left' },
+src\views\system\loginLog\index.vue:51: { field: 'userAgent', title: '浏览器 UA', width: 220, align: 'left', ellipsis: true },
+src\views\system\loginLog\index.vue:52: { field: 'reason', title: '失败原因', width: 160, align: 'left', ellipsis: true },
+src\views\system\loginLog\index.vue:55: { field: 'account', label: '登录账号', queryType: 'input', queryOperator: 'like' },
+src\views\system\loginLog\index.vue:56: { field: 'status', label: '登录状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+src\views\system\loginLog\index.vue:57: { field: 'loginTime', label: '登录时间', queryType: 'dateRange', queryOperator: 'between' },
+src\views\system\menu\index.vue:6: <a-tab-pane key="B" tab="B端" />
+src\views\system\menu\index.vue:7: <a-tab-pane key="C" tab="C端" />
+src\views\system\menu\index.vue:80: v-if="resolve状态Tag(record.status)"
+src\views\system\menu\index.vue:81: :color="resolve状态Tag(record.status)?.color"
+src\views\system\menu\index.vue:82: :style="resolve状态Tag(record.status)?.style"
+src\views\system\menu\index.vue:84: {{ resolve状态Tag(record.status)?.label }}
+src\views\system\menu\index.vue:339: type Menu表单Data = {
+src\views\system\menu\index.vue:438: function createDefault表单(moduleId = activeModuleId.value): Menu表单Data {
+src\views\system\menu\index.vue:459: const formData = ref<Menu表单Data>(createDefault表单())
+src\views\system\menu\index.vue:494: function normalize状态ForTag(value: unknown): number {
+src\views\system\menu\index.vue:498: function resolve状态Tag(value: unknown) {
+src\views\system\menu\index.vue:499: const normalizedValue = normalize状态ForTag(value)
+src\views\system\menu\index.vue:546: const expected状态 = normalizeBoolean(filters.status)
+src\views\system\menu\index.vue:550: && (expected状态 === undefined || normalizeBoolean(node.status) === expected状态)
+src\views\system\menu\index.vue:578: status: normalize状态ForTag(node.status),
+src\views\system\menu\index.vue:659: function resolveMenuNameForSave(nameI18nJson: string, 降级方案Name = '') {
+src\views\system\menu\index.vue:660: const resolved = getI18nValue(nameI18nJson, 降级方案Name)
+src\views\system\menu\index.vue:669: return 降级方案Name?.trim?.() || ''
+src\views\system\menu\index.vue:696: formData.value = createDefault表单()
+src\views\system\menu\index.vue:706: ...createDefault表单(String(detail?.moduleId || activeModuleId.value)),
+src\views\system\menu\index.vue:748: formData.value = createDefault表单()
+src\views\system\menu\index.vue:796: formData.value = createDefault表单()
+src\views\system\menu\index.vue:882: formData.value = createDefault表单(activeModuleId.value)
+src\views\system\message\index.vue:5: <a-form-item label="消息类型">
+src\views\system\message\index.vue:6: <a-select v-model:value="searchForm.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
+src\views\system\message\index.vue:7: <a-select-option value="NOTICE">通知</a-select-option>
+src\views\system\message\index.vue:8: <a-select-option value="WARNING">预警</a-select-option>
+src\views\system\message\index.vue:9: <a-select-option value="ALARM">告警</a-select-option>
+src\views\system\message\index.vue:12: <a-form-item label="状态">
+src\views\system\message\index.vue:13: <a-select v-model:value="searchForm.status" placeholder="请选择状态" allow-clear style="width: 120px">
+src\views\system\message\index.vue:14: <a-select-option :value="0">未读</a-select-option>
+src\views\system\message\index.vue:15: <a-select-option :value="1">已读</a-select-option>
+src\views\system\message\index.vue:18: <a-form-item label="标题">
+src\views\system\message\index.vue:19: <a-input v-model:value="searchForm.title" placeholder="请输入标题" allow-clear />
+src\views\system\message\index.vue:25: 查询
+src\views\system\message\index.vue:29: 重置
+src\views\system\message\index.vue:33: 全部已读
+src\views\system\message\index.vue:73: <span>发送人：{{ item.senderName }}</span>
+src\views\system\message\index.vue:74: <span>发送时间：{{ item.createTime }}</span>
+src\views\system\message\index.vue:75: <span v-if="item.readTime">阅读时间：{{ item.readTime }}</span>
+src\views\system\message\index.vue:81: 标记已读
+src\views\system\message\index.vue:84: 查看详情
+src\views\system\message\index.vue:94: title="消息详情"
+src\views\system\message\index.vue:100: <a-descriptions-item label="消息标题">
+src\views\system\message\index.vue:103: <a-descriptions-item label="消息类型">
+src\views\system\message\index.vue:108: <a-descriptions-item label="消息内容">
+src\views\system\message\index.vue:111: <a-descriptions-item label="发送人">
+src\views\system\message\index.vue:114: <a-descriptions-item label="发送时间">
+src\views\system\message\index.vue:117: <a-descriptions-item v-if="currentMessage.readTime" label="阅读时间">
+src\views\system\message\index.vue:120: <a-descriptions-item v-if="currentMessage.linkUrl" label="相关链接">
+src\views\system\message\index.vue:162: showTotal: (total: number) => `共 ${total} 条`,
+src\views\system\message\index.vue:184: NOTICE: '通知',
+src\views\system\message\index.vue:185: WARNING: '预警',
+src\views\system\message\index.vue:186: ALARM: '告警',
+src\views\system\message\index.vue:212: console.error('加载消息列表失败', error)
+src\views\system\message\index.vue:248: console.error('标记消息已读失败', error)
+src\views\system\message\index.vue:259: console.error('标记已读失败', error)
+src\views\system\message\index.vue:268: console.error('全部标记已读失败', error)
+src\views\system\messageTemplate\index.vue:317: const resolveI18nText = (i18nJson?: string, 降级方案 = '') => {
+src\views\system\messageTemplate\index.vue:318: return getI18nValue(i18nJson, 降级方案).trim()
+src\views\system\messageTemplate\index.vue:321: const ensureI18nJsonValue = (i18nJson?: string, 降级方案 = '') => {
+src\views\system\messageTemplate\index.vue:325: const text = 降级方案.trim()
+src\views\system\messageTemplate\index.vue:329: const normalize表单Data = (data: any) => {
+src\views\system\messageTemplate\index.vue:403: const validate表单 = () => {
+src\views\system\messageTemplate\index.vue:509: const 降级方案Title = resolveI18nText(formData.templateNameI18nJson, formData.templateName)
+src\views\system\messageTemplate\index.vue:521: title: 降级方案Title,
+src\views\system\messageTemplate\index.vue:526: const title = renderPlaceholderText(rawTitle, placeholderValues) || 降级方案Title
+src\views\system\messageTemplate\index.vue:592: const reset表单Data = () => {
+src\views\system\messageTemplate\index.vue:611: reset表单Data()
+src\views\system\messageTemplate\index.vue:619: Object.assign(formData, normalize表单Data(res))
+src\views\system\messageTemplate\index.vue:678: if (!validate表单()) {
+src\views\system\module\index.vue:81: <a-form-item label="模块编码" name="code">
+src\views\system\module\index.vue:84: placeholder="请输入模块编码"
+src\views\system\module\index.vue:90: <a-form-item label="模块名称" name="nameI18nJson">
+src\views\system\module\index.vue:94: placeholder="请输入模块名称"
+src\views\system\module\index.vue:98: 点击输入框右侧的地球图标可配置多语言
+src\views\system\module\index.vue:103: <a-form-item label="图标" name="icon">
+src\views\system\module\index.vue:106: placeholder="请选择或输入图标名称"
+src\views\system\module\index.vue:111: <a-form-item label="排序号" name="orderNum">
+src\views\system\module\index.vue:114: placeholder="请输入排序号"
+src\views\system\module\index.vue:120: <a-form-item label="是否可见" name="visible">
+src\views\system\module\index.vue:122: <a-radio :value="1">显示</a-radio>
+src\views\system\module\index.vue:123: <a-radio :value="0">隐藏</a-radio>
+src\views\system\module\index.vue:183: tableName: '模块管理',
+src\views\system\module\index.vue:188: { field: 'name', title: '模块名称', minWidth: 160, ellipsis: true },
+src\views\system\module\index.vue:189: { field: 'code', title: '模块编码', width: 140 },
+src\views\system\module\index.vue:190: { field: 'description', title: '描述', minWidth: 160, ellipsis: true },
+src\views\system\module\index.vue:191: { field: 'status', title: '状态', width: 90, dictCode: 'status' },
+src\views\system\module\index.vue:192: { field: 'createBy', title: '创建人', width: 120 },
+src\views\system\module\index.vue:193: { field: 'createTime', title: '创建时间', width: 180 },
+src\views\system\module\index.vue:194: { field: 'updateTime', title: '更新时间', width: 180 },
+src\views\system\module\index.vue:195: { field: 'action', title: '操作', width: 140 },
+src\views\system\module\index.vue:198: { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
+src\views\system\module\index.vue:199: { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
+src\views\system\module\index.vue:200: { field: 'description', label: '描述', queryType: 'input', queryOperator: 'like' },
+src\views\system\module\index.vue:201: { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
+src\views\system\module\index.vue:279: console.error('加载模块列表失败:', error)
+src\views\system\module\index.vue:293: title: '确认删除',
+src\views\system\module\index.vue:294: content: '确定要删除该模块吗？',
+src\views\system\module\index.vue:295: okText: '确定',
+src\views\system\module\index.vue:296: cancelText: '取消',
+src\views\system\module\index.vue:306: title: '确认删除',
+src\views\system\module\index.vue:307: content: `确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？`,
+src\views\system\module\index.vue:308: okText: '确定',
+src\views\system\module\index.vue:309: cancelText: '取消',
+src\views\system\online\index.vue:29: 批量强制下线
+src\views\system\online\index.vue:51: 强制下线
+src\views\system\online\index.vue:81: { value: 'B', label: 'B端', color: 'blue' },
+src\views\system\online\index.vue:82: { value: 'C', label: 'C端', color: 'green' },
+src\views\system\online\index.vue:83: { value: 'THIRD_PARTY', label: '第三方', color: 'orange' },
+src\views\system\online\index.vue:91: { key: 'ALL', label: `全部 (${tabCounts.value.ALL || 0})` },
+src\views\system\online\index.vue:92: { key: 'B', label: `B端 (${tabCounts.value.B || 0})` },
+src\views\system\online\index.vue:93: { key: 'C', label: `C端 (${tabCounts.value.C || 0})` },
+src\views\system\online\index.vue:94: { key: 'THIRD_PARTY', label: `第三方 (${tabCounts.value.THIRD_PARTY || 0})` },
+src\views\system\online\index.vue:99: tableName: '在线用户',
+src\views\system\online\index.vue:104: { field: 'account', title: '账号', width: 160, align: 'left' },
+src\views\system\online\index.vue:105: { field: 'username', title: '用户名', width: 160, align: 'left' },
+src\views\system\online\index.vue:106: { field: 'loginTerminal', title: '登录端', width: 120, align: 'center', dictCode: 'loginTerminal' },
+src\views\system\online\index.vue:107: { field: 'tenantName', title: '租户', width: 180, align: 'left' },
+src\views\system\online\index.vue:108: { field: 'lastLoginTime', title: '最后登录时间', width: 180, align: 'center' },
+src\views\system\online\index.vue:109: { field: 'lastLoginIp', title: '最后登录 IP', width: 150, align: 'left' },
+src\views\system\online\index.vue:110: { field: 'lastLoginRegion', title: '登录地区', width: 160, align: 'left' },
+src\views\system\online\index.vue:111: { field: 'ttlSeconds', title: '会话剩余时长', width: 140, align: 'center' },
+src\views\system\online\index.vue:112: { field: 'action', title: '操作', width: 120, align: 'center', fixed: 'right' },
+src\views\system\online\index.vue:115: { field: 'account', label: '账号', queryType: 'input', queryOperator: 'like' },
+src\views\system\online\index.vue:150: console.error('加载在线用户 Tab 计数失败', error)
+src\views\system\online\index.vue:174: console.error('查询在线用户失败', error)
+src\views\system\online\index.vue:187: if (n < 0) return '长期'
+src\views\system\online\index.vue:202: title: '确认强制下线',
+src\views\system\online\index.vue:203: content: '该操作会使对应会话立即失效。',
+src\views\system\online\index.vue:204: okText: '确定',
+src\views\system\online\index.vue:205: cancelText: '取消',
+src\views\system\online\index.vue:217: title: '确认批量强制下线',
+src\views\system\online\index.vue:218: content: `将对选中的 ${selectedRowKeys.value.length} 个会话执行强制下线。`,
+src\views\system\online\index.vue:219: okText: '确定',
+src\views\system\online\index.vue:220: cancelText: '取消',
+src\views\system\operationLog\index.vue:29: <a-button type="link" size="small" @click="openPayloadPreview('request', record)">查看详情</a-button>
+src\views\system\operationLog\index.vue:30: <a-tooltip title="复制请求参数">
+src\views\system\operationLog\index.vue:40: <a-button type="link" size="small" @click="openPayloadPreview('response', record)">查看详情</a-button>
+src\views\system\operationLog\index.vue:41: <a-tooltip title="复制响应结果">
+src\views\system\operationLog\index.vue:68: <a-button type="link" size="small" @click="handleViewDetail(record)">详情</a-button>
+src\views\system\operationLog\index.vue:76: <a-modal v-model:open="detailVisible" :title="t('operationLog.detailTitle', '操作日志详情')" :width="900" :footer="null">
+src\views\system\operationLog\index.vue:78: <a-descriptions-item label="用户名称">{{ currentRecord.username || '-' }}</a-descriptions-item>
+src\views\system\operationLog\index.vue:79: <a-descriptions-item label="账号">{{ resolveAccount(currentRecord) }}</a-descriptions-item>
+src\views\system\operationLog\index.vue:80: <a-descriptions-item label="操作时间">{{ formatDateTime(currentRecord.operationTime) }}</a-descriptions-item>
+src\views\system\operationLog\index.vue:81: <a-descriptions-item label="模块">{{ currentRecord.module || '-' }}</a-descriptions-item>
+src\views\system\operationLog\index.vue:82: <a-descriptions-item label="操作类型">
+src\views\system\operationLog\index.vue:87: <a-descriptions-item label="请求方法">{{ currentRecord.requestMethod || '-' }}</a-descriptions-item>
+src\views\system\operationLog\index.vue:88: <a-descriptions-item label="响应状态">
+src\views\system\operationLog\index.vue:93: <a-descriptions-item label="请求 URL" :span="2">
+src\views\system\operationLog\index.vue:96: <a-descriptions-item label="IP 地址">{{ currentRecord.ip || '-' }}</a-descriptions-item>
+src\views\system\operationLog\index.vue:97: <a-descriptions-item label="耗时">
+src\views\system\operationLog\index.vue:100: <a-descriptions-item label="操作详情" :span="2" v-if="currentRecord.detailText">
+src\views\system\operationLog\index.vue:103: <a-descriptions-item label="错误堆栈" :span="2" v-if="currentRecord.errorStack">
+src\views\system\operationLog\index.vue:135: { label: '新增', value: 'ADD' },
+src\views\system\operationLog\index.vue:136: { label: '新增', value: 'CREATE' },
+src\views\system\operationLog\index.vue:137: { label: '修改', value: 'EDIT' },
+src\views\system\operationLog\index.vue:138: { label: '修改', value: 'UPDATE' },
+src\views\system\operationLog\index.vue:139: { label: '删除', value: 'DELETE' },
+src\views\system\operationLog\index.vue:140: { label: '查询', value: 'QUERY' },
+src\views\system\operationLog\index.vue:141: { label: '导出', value: 'EXPORT' },
+src\views\system\operationLog\index.vue:142: { label: '导入', value: 'IMPORT' },
+src\views\system\operationLog\index.vue:143: { label: '登录', value: 'LOGIN' },
+src\views\system\operationLog\index.vue:144: { label: '登出', value: 'LOGOUT' },
+src\views\system\operationLog\index.vue:150: tableName: '操作日志',
+src\views\system\operationLog\index.vue:155: { field: 'username', title: '用户名称', width: 120, align: 'left', ellipsis: true },
+src\views\system\operationLog\index.vue:156: { field: 'account', title: '账号', width: 140, align: 'center', ellipsis: true },
+src\views\system\operationLog\index.vue:157: { field: 'module', title: '模块', width: 150, align: 'left', ellipsis: true },
+src\views\system\operationLog\index.vue:158: { field: 'operationType', title: '操作类型', width: 100, align: 'center' },
+src\views\system\operationLog\index.vue:159: { field: 'requestMethod', title: '请求方法', width: 100, align: 'center' },
+src\views\system\operationLog\index.vue:160: { field: 'requestUrl', title: '请求 URL', width: 220, align: 'left', ellipsis: true },
+src\views\system\operationLog\index.vue:161: { field: 'requestParams', title: '请求参数', width: 140, align: 'center' },
+src\views\system\operationLog\index.vue:162: { field: 'responseStatus', title: '响应状态', width: 100, align: 'center' },
+src\views\system\operationLog\index.vue:163: { field: 'responseResult', title: '响应结果', width: 140, align: 'center' },
+src\views\system\operationLog\index.vue:164: { field: 'costTime', title: '耗时', width: 90, align: 'center' },
+src\views\system\operationLog\index.vue:165: { field: 'ip', title: 'IP 地址', width: 140, align: 'left' },
+src\views\system\operationLog\index.vue:166: { field: 'operationTime', title: '操作时间', width: 180, align: 'center' },
+src\views\system\operationLog\index.vue:167: { field: 'action', title: '操作', width: 100, align: 'center', fixed: 'right' },
+src\views\system\operationLog\index.vue:170: { field: 'username', label: '用户名称', queryType: 'input', queryOperator: 'like' },
+src\views\system\operationLog\index.vue:171: { field: 'account', label: '账号', queryType: 'input', queryOperator: 'like' },
+src\views\system\operationLog\index.vue:172: { field: 'module', label: '模块', queryType: 'input', queryOperator: 'like' },
+src\views\system\operationLog\index.vue:173: { field: 'operationTime', label: '操作时间', queryType: 'dateRange', queryOperator: 'between' },
+src\views\system\operationLog\index.vue:202: responseStatus: item.responseStatus ?? item['response状态'],
+src\views\system\operationLog\index.vue:213: payloadTitle.value = type === 'request' ? '请求参数' : '响应结果'
+src\views\system\operationLog\index.vue:221: responseStatus: record.responseStatus ?? record['response状态'],
+src\views\system\operationLog\index.vue:229: message.success('复制成功')
+src\views\system\operationLog\index.vue:232: message.error('复制失败')
+src\views\system\position\index.vue:7: <div class="card-title">组织架构</div>
+src\views\system\position\index.vue:75: :title="isEdit ? '编辑岗位' : '新增岗位'"
+src\views\system\position\index.vue:87: <a-form-item label="所属部门" name="departmentId">
+src\views\system\position\index.vue:93: placeholder="请选择所属部门"
+src\views\system\position\index.vue:104: <a-form-item label="岗位名称" name="positionName">
+src\views\system\position\index.vue:107: placeholder="请输入岗位名称"
+src\views\system\position\index.vue:111: <a-form-item label="岗位编码" name="positionCode">
+src\views\system\position\index.vue:114: placeholder="请输入岗位编码"
+src\views\system\position\index.vue:119: <a-form-item label="岗位级别" name="positionLevel">
+src\views\system\position\index.vue:122: placeholder="请选择岗位级别"
+src\views\system\position\index.vue:135: <a-form-item label="排序号" name="orderNum">
+src\views\system\position\index.vue:139: placeholder="请输入排序号"
+src\views\system\position\index.vue:151: <a-form-item label="备注" name="remark">
+src\views\system\position\index.vue:154: placeholder="请输入备注"
+src\views\system\position\index.vue:191: const search表单 = ref({
+src\views\system\position\index.vue:210: { field: 'positionName', title: '岗位名称', width: 180, align: 'left' },
+src\views\system\position\index.vue:211: { field: 'positionCode', title: '岗位编码', width: 140, align: 'left' },
+src\views\system\position\index.vue:212: { field: 'positionLevel', title: '岗位级别', width: 120, align: 'center', dictCode: 'positionLevel' },
+src\views\system\position\index.vue:213: { field: 'orderNum', title: '排序', width: 90, align: 'center' },
+src\views\system\position\index.vue:214: { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
+src\views\system\position\index.vue:215: { field: 'remark', title: '备注', width: 220, align: 'left' },
+src\views\system\position\index.vue:216: { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
+src\views\system\position\index.vue:217: { field: 'action', title: '操作', width: 160, align: 'center', fixed: 'right' }
+src\views\system\position\index.vue:220: { field: 'positionName', label: '岗位名称', queryType: 'input', queryOperator: 'like' },
+src\views\system\position\index.vue:221: { field: 'positionCode', label: '岗位编码', queryType: 'input', queryOperator: 'like' },
+src\views\system\position\index.vue:222: { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+src\views\system\position\index.vue:247: ...search表单.value,
+src\views\system\position\index.vue:256: console.error('加载岗位列表失败', e)
+src\views\system\position\index.vue:281: departmentId: [{ required: true, message: '请选择所属部门', trigger: 'change' }],
+src\views\system\position\index.vue:282: positionName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
+src\views\system\position\index.vue:283: positionCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }]
+src\views\system\position\index.vue:295: search表单.value.departmentId = keys[0]
+src\views\system\position\index.vue:297: search表单.value.departmentId = undefined
+src\views\system\position\index.vue:327: const currentDeptId = search表单.value.departmentId
+src\views\system\position\index.vue:328: search表单.value = {
+src\views\system\position\index.vue:344: const defaultDeptId = search表单.value.departmentId
+src\views\system\position\index.vue:408: console.error('保存失败', e)
+src\views\system\position\index.vue:426: console.error('删除失败', e)
+src\views\system\role\index.vue:87: v-if="resolve状态Tag(record.status)"
+src\views\system\role\index.vue:88: :color="resolve状态Tag(record.status)?.color"
+src\views\system\role\index.vue:89: :style="resolve状态Tag(record.status)?.style"
+src\views\system\role\index.vue:91: {{ resolve状态Tag(record.status)?.label }}
+src\views\system\role\index.vue:182: skip-text="跳过引导"
+src\views\system\role\index.vue:222: tableName: '角色管理',
+src\views\system\role\index.vue:227: { field: 'roleName', title: '角色名称', minWidth: 160, ellipsis: true },
+src\views\system\role\index.vue:228: { field: 'roleCode', title: '角色编码', width: 140 },
+src\views\system\role\index.vue:229: { field: 'description', title: '描述', minWidth: 180, ellipsis: true },
+src\views\system\role\index.vue:230: { field: 'status', title: '状态', width: 100, dictCode: 'status' },
+src\views\system\role\index.vue:231: { field: 'createBy', title: '创建人', width: 120 },
+src\views\system\role\index.vue:232: { field: 'createTime', title: '创建时间', width: 180 },
+src\views\system\role\index.vue:233: { field: 'updateTime', title: '更新时间', width: 180 },
+src\views\system\role\index.vue:234: { field: 'action', title: '操作', width: 220, fixed: 'right' }
+src\views\system\role\index.vue:237: { field: 'roleName', label: '角色名称', queryType: 'input', queryOperator: 'like' },
+src\views\system\role\index.vue:238: { field: 'roleCode', label: '角色编码', queryType: 'input', queryOperator: 'like' },
+src\views\system\role\index.vue:239: { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
+src\views\system\role\index.vue:260: function normalizeRole状态Record(row: any) {
+src\views\system\role\index.vue:283: function resolve状态Tag(value: unknown) {
+src\views\system\role\index.vue:316: const records = (res.records || []).map((r: any) => normalizeRole状态Record(r))
+src\views\system\role\MenuGrant.vue:29: <a-tab-pane key="B" tab="B端菜单" />
+src\views\system\role\MenuGrant.vue:30: <a-tab-pane key="C" tab="C端菜单" />
+src\views\system\role\MenuGrant.vue:96: v-if="resolve状态Tag(record.status)"
+src\views\system\role\MenuGrant.vue:97: :color="resolve状态Tag(record.status)?.color"
+src\views\system\role\MenuGrant.vue:98: :style="resolve状态Tag(record.status)?.style"
+src\views\system\role\MenuGrant.vue:100: {{ resolve状态Tag(record.status)?.label }}
+src\views\system\role\MenuGrant.vue:190: function normalize状态ForTag(value: unknown): number {
+src\views\system\role\MenuGrant.vue:200: function resolve状态Tag(value: unknown) {
+src\views\system\role\MenuGrant.vue:201: const normalizedValue = normalize状态ForTag(value)
+src\views\system\role\MenuGrant.vue:394: status: normalize状态ForTag(node.status),
+src\views\system\tableConfig\index.vue:18: <a-radio-button :value="false">租户配置</a-radio-button>
+src\views\system\tableConfig\index.vue:19: <a-radio-button :value="true">公共配置</a-radio-button>
+src\views\system\tableConfig\index.vue:27: 拉取公共配置
+src\views\system\tableConfig\index.vue:159: message.success(`已拉取 ${Number(count || 0)} 条公共配置`)
+src\views\system\tableConfig\index.vue:174: message.error('当前记录缺少配置ID，无法加载编辑详情，请先刷新列表或确认后端列表接口已返回id')
+src\views\system\tenant\index.vue:277: console.error('加载租户选项失败:', e)
+src\views\system\tenant\index.vue:403: console.error('查询初始化任务失败:', e)
+src\views\system\tenant\index.vue:425: const retryDelay = 500 // 毫秒
+src\views\system\tenant\index.vue:432: console.log('查询到任务:', task)
+src\views\system\tenant\index.vue:438: console.log('等待任务创建...', i + 1)
+src\views\system\tenant\index.vue:440: console.error('查询任务失败:', e)
+src\views\system\tenantMessageWhitelist\index.vue:213: console.error('加载租户列表失败:', error)
+src\views\system\user\components\UserDetail.vue:4: title="用户详情"
+src\views\system\user\components\UserDetail.vue:10: <a-descriptions-item label="用户名">
+src\views\system\user\components\UserDetail.vue:13: <a-descriptions-item label="账号">
+src\views\system\user\components\UserDetail.vue:16: <a-descriptions-item label="邮箱">
+src\views\system\user\components\UserDetail.vue:19: <a-descriptions-item label="手机号">
+src\views\system\user\components\UserDetail.vue:22: <a-descriptions-item label="关联员工ID">
+src\views\system\user\components\UserDetail.vue:25: <a-descriptions-item label="用户来源">
+src\views\system\user\components\UserDetail.vue:28: <a-descriptions-item label="性别">
+src\views\system\user\components\UserDetail.vue:31: <a-descriptions-item label="入职时间">
+src\views\system\user\components\UserDetail.vue:34: <a-descriptions-item label="所属部门">
+src\views\system\user\components\UserDetail.vue:37: <a-descriptions-item label="岗位">
+src\views\system\user\components\UserDetail.vue:40: <a-descriptions-item label="状态">
+src\views\system\user\components\UserDetail.vue:43: <a-descriptions-item label="创建时间">
+src\views\system\user\components\UserDetail.vue:46: <a-descriptions-item label="最后登录时间">
+src\views\system\user\components\UserDetail.vue:49: <a-descriptions-item label="最后登录IP">
+src\views\system\user\components\UserDetail.vue:52: <a-descriptions-item label="最后登录地区">
+src\views\system\user\components\UserDetail.vue:57: <a-divider orientation="left">关联租户</a-divider>
+src\views\system\user\components\UserDetail.vue:67: <a-tag v-if="record.isDefault" color="blue">默认</a-tag>
+src\views\system\user\components\UserDetail.vue:68: <a-tag v-else>非默认</a-tag>
+src\views\system\user\components\UserDetail.vue:76: <a-divider orientation="left">附属信息</a-divider>
+src\views\system\user\components\UserDetail.vue:79: <a-descriptions-item label="政治面貌">
+src\views\system\user\components\UserDetail.vue:82: <a-descriptions-item label="学历">
+src\views\system\user\components\UserDetail.vue:85: <a-descriptions-item label="籍贯">
+src\views\system\user\components\UserDetail.vue:88: <a-descriptions-item label="个人简介">
+src\views\system\user\components\UserDetail.vue:91: <a-descriptions-item label="家庭住址" :span="2">
+src\views\system\user\components\UserDetail.vue:94: <a-descriptions-item label="紧急联系人">
+src\views\system\user\components\UserDetail.vue:97: <a-descriptions-item label="紧急联系电话">
+src\views\system\user\components\UserDetail.vue:100: <a-descriptions-item label="介绍人" :span="2">
+src\views\system\user\components\UserDetail.vue:106: <a-divider orientation="left">工作经历</a-divider>
+src\views\system\user\components\UserDetail.vue:122: <a-button @click="visible = false">关闭</a-button>
+src\views\system\user\components\UserDetail.vue:152: { title: '租户 ID', dataIndex: 'tenantId', key: 'tenantId', width: 180 },
+src\views\system\user\components\UserDetail.vue:153: { title: '是否默认', dataIndex: 'isDefault', key: 'isDefault', width: 100 },
+src\views\system\user\components\UserDetail.vue:154: { title: '最后使用时间', dataIndex: 'lastUsed', key: 'lastUsed', width: 160 },
+src\views\system\user\components\UserDetail.vue:174: message.error('加载用户详情失败')
+src\views\system\user\components\UserFormDialog.vue:4: :title="isEdit ? '编辑用户' : '新增用户'"
+src\views\system\user\components\UserFormDialog.vue:11: <a-tab-pane key="basic" tab="基础信息">
+src\views\system\user\components\UserFormDialog.vue:21: <a-form-item label="账号" name="account">
+src\views\system\user\components\UserFormDialog.vue:24: placeholder="请输入账号"
+src\views\system\user\components\UserFormDialog.vue:30: <a-form-item label="用户名" name="username">
+src\views\system\user\components\UserFormDialog.vue:33: placeholder="请输入用户名"
+src\views\system\user\components\UserFormDialog.vue:38: <a-form-item label="邮箱" name="email">
+src\views\system\user\components\UserFormDialog.vue:41: placeholder="请输入邮箱"
+src\views\system\user\components\UserFormDialog.vue:46: <a-form-item label="手机号" name="phone">
+src\views\system\user\components\UserFormDialog.vue:49: placeholder="请输入手机号"
+src\views\system\user\components\UserFormDialog.vue:57: <a-form-item label="性别" name="gender">
+src\views\system\user\components\UserFormDialog.vue:66: <a-form-item label="入职时间" name="entryDate">
+src\views\system\user\components\UserFormDialog.vue:69: placeholder="请选择入职时间"
+src\views\system\user\components\UserFormDialog.vue:79: <a-form-item label="所属部门" name="departmentId">
+src\views\system\user\components\UserFormDialog.vue:82: placeholder="请选择部门"
+src\views\system\user\components\UserFormDialog.vue:92: <a-form-item label="岗位" name="positionId">
+src\views\system\user\components\UserFormDialog.vue:95: placeholder="请选择岗位"
+src\views\system\user\components\UserFormDialog.vue:109: <a-form-item label="关联员工ID" name="employeeId">
+src\views\system\user\components\UserFormDialog.vue:112: placeholder="请输入关联员工ID"
+src\views\system\user\components\UserFormDialog.vue:117: <a-form-item label="用户来源">
+src\views\system\user\components\UserFormDialog.vue:125: <a-form-item label="状态" name="status">
+src\views\system\user\components\UserFormDialog.vue:137: <a-tab-pane key="profile" tab="附属信息（可选）">
+src\views\system\user\components\UserFormDialog.vue:146: <a-form-item label="政治面貌">
+src\views\system\user\components\UserFormDialog.vue:149: placeholder="请选择政治面貌"
+src\views\system\user\components\UserFormDialog.vue:159: <a-form-item label="学历">
+src\views\system\user\components\UserFormDialog.vue:162: placeholder="请选择学历"
+src\views\system\user\components\UserFormDialog.vue:175: <a-form-item label="籍贯">
+src\views\system\user\components\UserFormDialog.vue:178: placeholder="请输入籍贯"
+src\views\system\user\components\UserFormDialog.vue:186: <a-form-item label="个人简介" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
+src\views\system\user\components\UserFormDialog.vue:189: placeholder="请输入个人简介"
+src\views\system\user\components\UserFormDialog.vue:198: <a-form-item label="家庭住址" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
+src\views\system\user\components\UserFormDialog.vue:201: placeholder="请输入家庭住址"
+src\views\system\user\components\UserFormDialog.vue:209: <a-form-item label="紧急联系人">
+src\views\system\user\components\UserFormDialog.vue:212: placeholder="请输入紧急联系人"
+src\views\system\user\components\UserFormDialog.vue:217: <a-form-item label="紧急联系电话">
+src\views\system\user\components\UserFormDialog.vue:220: placeholder="请输入紧急联系电话"
+src\views\system\user\components\UserFormDialog.vue:228: <a-form-item label="介绍人">
+src\views\system\user\components\UserFormDialog.vue:231: placeholder="请输入介绍人"
+src\views\system\user\components\UserFormDialog.vue:237: <a-divider orientation="left">工作经历</a-divider>
+src\views\system\user\components\UserFormDialog.vue:246: <a-form-item label="公司名称" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
+src\views\system\user\components\UserFormDialog.vue:249: placeholder="请输入公司名称"
+src\views\system\user\components\UserFormDialog.vue:254: <a-form-item label="职位" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+src\views\system\user\components\UserFormDialog.vue:257: placeholder="请输入职位"
+src\views\system\user\components\UserFormDialog.vue:263: 删除
+src\views\system\user\components\UserFormDialog.vue:270: <a-form-item label="开始时间" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
+src\views\system\user\components\UserFormDialog.vue:273: placeholder="请选择开始时间"
+src\views\system\user\components\UserFormDialog.vue:280: <a-form-item label="结束时间" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+src\views\system\user\components\UserFormDialog.vue:283: placeholder="请选择结束时间"
+src\views\system\user\components\UserFormDialog.vue:293: <a-form-item label="工作描述" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
+src\views\system\user\components\UserFormDialog.vue:296: placeholder="请输入工作描述"
+src\views\system\user\components\UserFormDialog.vue:308: 添加工作经历
+src\views\system\user\components\UserFormDialog.vue:362: userSourceText: '本站新增',
+src\views\system\user\components\UserFormDialog.vue:389: const userSourceDisplayText = computed(() => formData.userSourceText || '本站新增')
+src\views\system\user\components\UserFormDialog.vue:400: { required: true, message: '请输入账号', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:401: { min: 3, max: 20, message: '账号长度需在 3-20 个字符之间', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:404: { required: true, message: '请输入用户名', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:405: { min: 2, max: 20, message: '用户名长度需在 2-20 个字符之间', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:408: { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:411: { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:414: { pattern: /^\d*$/, message: '关联员工ID必须为数字', trigger: 'blur' },
+src\views\system\user\components\UserFormDialog.vue:472: message.error('加载用户数据失败')
+src\views\system\user\components\UserFormDialog.vue:491: userSourceText: '本站新增',
+src\views\system\user\components\UserFormDialog.vue:556: message.warning('请完善基础信息')
+src\views\system\user\components\UserFormDialog.vue:580: message.error('操作失败')
+src\views\system\user\components\UserProfileForm.vue:10: <a-form-item label="政治面貌">
+src\views\system\user\components\UserProfileForm.vue:12: v-model:value="profileData.political状态"
+src\views\system\user\components\UserProfileForm.vue:13: placeholder="请选择政治面貌"
+src\views\system\user\components\UserProfileForm.vue:16: <a-select-option value="群众">群众</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:17: <a-select-option value="共青团员">共青团员</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:18: <a-select-option value="中共党员">中共党员</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:19: <a-select-option value="民主党派">民主党派</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:20: <a-select-option value="无党派人士">无党派人士</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:26: <a-form-item label="学历">
+src\views\system\user\components\UserProfileForm.vue:29: placeholder="请选择学历"
+src\views\system\user\components\UserProfileForm.vue:32: <a-select-option value="小学">小学</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:33: <a-select-option value="初中">初中</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:34: <a-select-option value="高中">高中</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:35: <a-select-option value="中专">中专</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:36: <a-select-option value="大专">大专</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:37: <a-select-option value="本科">本科</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:38: <a-select-option value="硕士">硕士</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:39: <a-select-option value="博士">博士</a-select-option>
+src\views\system\user\components\UserProfileForm.vue:47: <a-form-item label="家庭住址" :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
+src\views\system\user\components\UserProfileForm.vue:50: placeholder="请输入家庭住址"
+src\views\system\user\components\UserProfileForm.vue:58: <a-form-item label="紧急联系人">
+src\views\system\user\components\UserProfileForm.vue:61: placeholder="请输入紧急联系人"
+src\views\system\user\components\UserProfileForm.vue:67: <a-form-item label="紧急联系电话">
+src\views\system\user\components\UserProfileForm.vue:70: placeholder="请输入紧急联系电话"
+src\views\system\user\components\UserProfileForm.vue:78: <a-form-item label="介绍人">
+src\views\system\user\components\UserProfileForm.vue:81: placeholder="请输入介绍人"
+src\views\system\user\components\UserProfileForm.vue:88: <a-divider orientation="left">工作经历</a-divider>
+src\views\system\user\components\UserProfileForm.vue:97: <a-form-item label="公司名称" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
+src\views\system\user\components\UserProfileForm.vue:100: placeholder="请输入公司名称"
+src\views\system\user\components\UserProfileForm.vue:106: <a-form-item label="职位" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+src\views\system\user\components\UserProfileForm.vue:109: placeholder="请输入职位"
+src\views\system\user\components\UserProfileForm.vue:120: 删除
+src\views\system\user\components\UserProfileForm.vue:127: <a-form-item label="开始时间" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
+src\views\system\user\components\UserProfileForm.vue:130: placeholder="请选择开始时间"
+src\views\system\user\components\UserProfileForm.vue:138: <a-form-item label="结束时间" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+src\views\system\user\components\UserProfileForm.vue:141: placeholder="请选择结束时间"
+src\views\system\user\components\UserProfileForm.vue:151: <a-form-item label="工作描述" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
+src\views\system\user\components\UserProfileForm.vue:154: placeholder="请输入工作描述"
+src\views\system\user\components\UserProfileForm.vue:166: 添加工作经历
+src\views\system\user\components\UserRoleAssignDialog.vue:165: title: t('system.user.roleAssign.assigned状态'),
+src\views\system\userTableConfig\index.vue:5: <a-form-item label="表格编码">
+src\views\system\userTableConfig\index.vue:8: placeholder="请输入表格编码"
+src\views\system\userTableConfig\index.vue:30: message="说明"
+src\views\system\userTableConfig\index.vue:31: description="当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。"
+src\views\system\userTableConfig\index.vue:54: {{ record.userConfigured ? '已配置' : '未配置' }}
+src\views\system\userTableConfig\index.vue:71: 重置
+src\views\system\userTableConfig\index.vue:82: title="编辑用户列设置"
+src\views\system\userTableConfig\index.vue:89: <a-form-item label="表格编码">
+src\views\system\userTableConfig\index.vue:93: <a-form-item label="分页大小">
+src\views\system\userTableConfig\index.vue:128: 上移
+src\views\system\userTableConfig\index.vue:135: 下移
+src\views\system\userTableConfig\index.vue:209: title: '表格编码',
+src\views\system\userTableConfig\index.vue:215: title: '表格名称',
+src\views\system\userTableConfig\index.vue:222: title: '默认分页大小',
+src\views\system\userTableConfig\index.vue:229: title: '用户分页大小',
+src\views\system\userTableConfig\index.vue:235: title: '配置状态',
+src\views\system\userTableConfig\index.vue:241: title: '配置版本',
+src\views\system\userTableConfig\index.vue:248: title: '最后更新时间',
+src\views\system\userTableConfig\index.vue:263: title: '字段名',
+src\views\system\userTableConfig\index.vue:269: title: '标题',
+src\views\system\userTableConfig\index.vue:276: title: '显示',
+src\views\system\userTableConfig\index.vue:282: title: '排序',
+src\views\system\userTableConfig\index.vue:288: title: '移动',
+src\views\system\userTableConfig\index.vue:416: message.error('未找到对应的基础表格配置')
+src\views\system\userTableConfig\index.vue:431: message.error('加载用户列设置失败')
+src\views\system\userTableConfig\index.vue:439: message.error('表格编码不能为空')
+src\views\system\userTableConfig\index.vue:444: message.error('列配置不能为空')
+src\views\system\userTableConfig\index.vue:476: title: '确认重置',
+src\views\system\userTableConfig\index.vue:477: content: `确认重置表格 [${record.tableCode}] 的当前用户列设置吗？重置后将恢复为租户或默认表格配置。`,
+src\views\system\userTableConfig\index.vue:478: okText: '确认',
+src\views\system\userTableConfig\index.vue:479: cancelText: '取消',
+src\views\workflow\dashboard\index.vue:263: <span class="detail-summary-label">活跃实例数</span>
+src\views\workflow\dashboard\index.vue:267: <span class="detail-summary-label">超时标记</span>
+src\views\workflow\dashboard\index.vue:268: <span class="detail-summary-value">{{ currentRecord.timeoutFlag ? '是' : '否' }}</span>
+src\views\workflow\dashboard\index.vue:271: <span class="detail-summary-label">委托命中</span>
+src\views\workflow\dashboard\index.vue:272: <span class="detail-summary-value">{{ currentRecord.delegated ? '是' : '否' }}</span>
+src\views\workflow\dashboard\index.vue:275: <span class="detail-summary-label">转交命中</span>
+src\views\workflow\dashboard\index.vue:276: <span class="detail-summary-value">{{ currentRecord.transferred ? '是' : '否' }}</span>
+src\views\workflow\dashboard\index.vue:280: 最近动作：{{ currentRecord.latestActionSummary }}
+src\views\workflow\dashboard\index.vue:325: import { use权限Store } from '@/stores/permission'
+src\views\workflow\dashboard\index.vue:335: const permissionStore = use权限Store()
+src\views\workflow\dashboard\index.vue:362: permissionStore.has权限('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
+src\views\workflow\dashboard\index.vue:365: permissionStore.has权限('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
+src\views\workflow\dashboard\index.vue:642: if (content.includes('请假') || content.includes('leave') || content.includes('hr')) return 'hr'
+src\views\workflow\dashboard\index.vue:643: if (content.includes('合同') || content.includes('contract')) return 'contract'
+src\views\workflow\dashboard\index.vue:644: if (content.includes('费用') || content.includes('expense') || content.includes('报销')) return 'finance'
+src\views\workflow\dashboard\index.vue:645: if (content.includes('项目') || content.includes('project')) return 'project'
+src\views\workflow\execution\startForm.vue:81: <div class="selected-approver-panel__title">发起人自选审批人</div>
+src\views\workflow\execution\startForm.vue:227: message.warning('请选择至少一位审批人')
+src\views\workflow\form\SupplierReviewForm.vue:6: <h3>{{ formState.supplierFullName || '供应商资质审查' }}</h3>
+src\views\workflow\form\SupplierReviewForm.vue:7: <span>{{ formState.supplierCode || '请选择待审供应商' }}</span>
+src\views\workflow\form\SupplierReviewForm.vue:21: <a-form-item v-if="!readonly" label="待审供应商" name="supplierId">
+src\views\workflow\form\SupplierReviewForm.vue:29: placeholder="请选择待审供应商"
+src\views\workflow\form\SupplierReviewForm.vue:35: <a-descriptions-item label="供应商ID">{{ displayValue(formState.supplierId) }}</a-descriptions-item>
+src\views\workflow\form\SupplierReviewForm.vue:36: <a-descriptions-item label="供应商编码">{{ displayValue(formState.supplierCode) }}</a-descriptions-item>
+src\views\workflow\form\SupplierReviewForm.vue:37: <a-descriptions-item label="供应商名称">{{ displayValue(formState.supplierFullName) }}</a-descriptions-item>
+src\views\workflow\form\SupplierReviewForm.vue:38: <a-descriptions-item label="审查状态">
+src\views\workflow\form\SupplierReviewForm.vue:46: <div class="supplier-review-form__section-title">资质摘要</div>
+src\views\workflow\form\SupplierReviewForm.vue:47: <a-empty v-if="!qualificationItems.length" description="暂无资质" />
+src\views\workflow\form\SupplierReviewForm.vue:111: supplierId: [{ required: true, message: '请选择待审供应商', trigger: 'change' }],
+src\views\workflow\form\SupplierReviewForm.vue:162: message.error(error?.message || '加载待审供应商失败')
+src\views\workflow\form\SupplierReviewForm.vue:178: message.error(error?.message || '加载供应商详情失败')
+src\views\workflow\form\SupplierReviewForm.vue:193: message.warning('请选择待审供应商')
+src\views\workflow\form\SupplierReviewForm.vue:212: return '暂无资质'
+src\views\workflow\form\SupplierReviewForm.vue:215: .map(item => `${item.qualificationType || '-'}/${item.certificateNo || '-'}/${item.valid === false ? '无效' : '有效'}`)
+src\views\workflow\form\SupplierReviewForm.vue:223: .filter(item => item && item !== '暂无资质')
+src\views\workflow\form\SupplierReviewForm.vue:236: 0: '无需审查',
+src\views\workflow\form\SupplierReviewForm.vue:237: 1: '未审查',
+src\views\workflow\form\SupplierReviewForm.vue:238: 2: '审查中',
+src\views\workflow\form\SupplierReviewForm.vue:239: 3: '已审查',
+src\views\workflow\governance\compensation\index.vue:15: message="补偿中心"
+src\views\workflow\governance\compensation\index.vue:16: description="集中处理未激活待办实例与超时待办实例，作为审批流三期治理能力的运营入口。"
+src\views\workflow\governance\compensation\index.vue:26: <a-tag v-if="record.timeoutFlag" color="orange">超时待重试</a-tag>
+src\views\workflow\governance\compensation\index.vue:27: <a-tag v-if="hasInactiveCandidate(record)" color="blue">未激活待补偿</a-tag>
+src\views\workflow\governance\compensation\index.vue:28: <a-tag v-if="record.delegated" color="cyan">命中委托</a-tag>
+src\views\workflow\governance\compensation\index.vue:29: <a-tag v-if="record.transferred" color="purple">命中转交</a-tag>
+src\views\workflow\governance\compensation\index.vue:40: 查看详情
+src\views\workflow\governance\compensation\index.vue:43: 补偿激活
+src\views\workflow\governance\compensation\index.vue:46: 重试超时
+src\views\workflow\governance\compensation\index.vue:54: title="补偿详情"
+src\views\workflow\governance\compensation\index.vue:88: <span class="summary-label">激活待办数</span>
+src\views\workflow\governance\compensation\index.vue:92: <span class="summary-label">超时标记</span>
+src\views\workflow\governance\compensation\index.vue:93: <span class="summary-value">{{ currentRecord.timeoutFlag ? '是' : '否' }}</span>
+src\views\workflow\governance\compensation\index.vue:96: <span class="summary-label">命中委托</span>
+src\views\workflow\governance\compensation\index.vue:97: <span class="summary-value">{{ currentRecord.delegated ? '是' : '否' }}</span>
+src\views\workflow\governance\compensation\index.vue:100: <span class="summary-label">命中转交</span>
+src\views\workflow\governance\compensation\index.vue:101: <span class="summary-value">{{ currentRecord.transferred ? '是' : '否' }}</span>
+src\views\workflow\governance\compensation\index.vue:106: <a-tag v-if="currentRecord.timeoutFlag" color="orange">当前执行单存在超时实例</a-tag>
+src\views\workflow\governance\compensation\index.vue:107: <a-tag v-if="hasInactiveCandidate(currentRecord)" color="blue">当前执行单存在未激活待办实例</a-tag>
+src\views\workflow\governance\compensation\index.vue:108: <a-tag v-if="currentRecord.delegated" color="cyan">轨迹中存在委托动作</a-tag>
+src\views\workflow\governance\compensation\index.vue:109: <a-tag v-if="currentRecord.transferred" color="purple">轨迹中存在转交动作</a-tag>
+src\views\workflow\governance\compensation\index.vue:113: 最近动作：{{ currentRecord.latestActionSummary }}
+src\views\workflow\governance\compensation\index.vue:193: message.error(error.message || '加载补偿中心列表失败')
+src\views\workflow\governance\compensation\index.vue:243: message.error(error.message || '加载补偿详情失败')
+src\views\workflow\governance\compensation\index.vue:249: title: '确认执行补偿激活',
+src\views\workflow\governance\compensation\index.vue:250: content: `将尝试激活执行单【${record.taskName}】的首个未激活待办实例。`,
+src\views\workflow\governance\compensation\index.vue:254: message.success('补偿激活已执行')
+src\views\workflow\governance\compensation\index.vue:257: message.error(error.message || '补偿激活失败')
+src\views\workflow\governance\compensation\index.vue:265: title: '确认执行超时重试',
+src\views\workflow\governance\compensation\index.vue:266: content: `将尝试处理执行单【${record.taskName}】下所有已超时实例。`,
+src\views\workflow\governance\compensation\index.vue:270: message.success('超时重试已执行')
+src\views\workflow\governance\compensation\index.vue:273: message.error(error.message || '超时重试失败')
+src\views\workflow\myTask\pending.vue:20: 批量同意
+src\views\workflow\myTask\pending.vue:27: 批量转交
+src\views\workflow\myTask\pending.vue:34: 批量催办
+src\views\workflow\myTask\pending.vue:77: 转交
+src\views\workflow\myTask\pending.vue:85: 加签
+src\views\workflow\myTask\pending.vue:168: <a-form-item label="处理范围">
+src\views\workflow\myTask\pending.vue:172: <a-form-item label="接收人" name="receiverIds">
+src\views\workflow\myTask\pending.vue:176: <a-form-item label="说明" name="comment">
+src\views\workflow\myTask\pending.vue:180: placeholder="请输入处理说明"
+src\views\workflow\myTask\pending.vue:292: throw new Error('请选择指定用户作为接收人')
+src\views\workflow\myTask\pending.vue:295: throw new Error('请选择接收人')
+src\views\workflow\myTask\pending.vue:326: transfer: '转交审批',
+src\views\workflow\myTask\pending.vue:327: addSign: '加签审批人',
+src\views\workflow\myTask\pending.vue:328: batchTransfer: '批量转交',
+src\views\workflow\myTask\pending.vue:335: return `已选 ${selectedExecutionIds.value.length} 条待办`
+src\views\workflow\myTask\pending.vue:443: message.warning('当前待办未找到可转交的审批实例，请刷新后重试')
+src\views\workflow\myTask\pending.vue:461: message.warning('当前待办未找到可加签的审批实例，请刷新后重试')
+src\views\workflow\myTask\pending.vue:478: message.warning('请先选择待办')
+src\views\workflow\myTask\pending.vue:551: message.warning('请选择接收人')
+src\views\workflow\myTask\pending.vue:559: message.warning('当前转交数据不完整，请关闭后重试')
+src\views\workflow\myTask\pending.vue:571: message.warning('当前加签数据不完整，请关闭后重试')
+src\views\workflow\myTask\pending.vue:590: message.success('处理成功')
+src\views\workflow\myTask\pending.vue:599: message.error(error.message || '处理失败')
+src\views\workflow\myTask\pending.vue:622: message.warning('请先选择待办')
+src\views\workflow\myTask\pending.vue:629: comment: '批量同意',
+src\views\workflow\myTask\pending.vue:632: message.success('批量同意成功')
+src\views\workflow\myTask\pending.vue:636: message.error(error.message || '批量同意失败')
+src\views\workflow\myTask\pending.vue:642: message.warning('请先选择待办')
+src\views\workflow\myTask\pending.vue:648: comment: '批量催办',
+src\views\workflow\myTask\pending.vue:651: message.success('批量催办已发送')
+src\views\workflow\myTask\pending.vue:654: message.error(error.message || '批量催办失败')
+src\views\workflow\taskConfig\components\LowCodeFormDesigner.vue:87: 'FormCreate Ant Design Vue 设计器，支持组件尺寸、事件、布局、定位和更多官方组件。'
+src\views\workflow\taskConfig\nodes.vue:216: <a-form-item label="超时小时">
+src\views\workflow\taskConfig\nodes.vue:226: <a-form-item label="超时动作">
+src\views\workflow\taskConfig\nodes.vue:242: <a-form-item label="上级层级">
+src\views\workflow\taskConfig\nodes.vue:252: <a-form-item label="通过阈值">
+src\views\workflow\taskConfig\nodes.vue:587: { label: '仅提醒', value: 1 },
+src\views\workflow\taskConfig\nodes.vue:588: { label: '自动通过', value: 2 },
+src\views\workflow\taskConfig\nodes.vue:589: { label: '自动转交', value: 3 }
+src\views\workflow\taskConfig\nodes.vue:1467: ruleName: '默认规则',

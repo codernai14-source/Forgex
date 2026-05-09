@@ -164,7 +164,7 @@
       :steps="systemGuideSteps"
       :auto-start="systemGuideAutoStart"
       :start-key="systemGuideStartKey"
-      skip-text="跳过引导"
+      :skip-text="t('common.guide.skip')"
       :show-skip-all="true"
       @open="handleSystemGuideOpen"
       @close="handleSystemGuideClose"
@@ -176,7 +176,7 @@
     <!-- 消息通知抽屉 -->
     <a-drawer
       v-model:open="messageDrawerOpen"
-      title="消息通知"
+      :title="t('layout.messageCenter.title')"
       placement="right"
       width="520"
       class="fx-message-drawer"
@@ -185,20 +185,20 @@
         <a-tabs v-model:activeKey="activeMessageTab" @change="handleMessageTabChange">
           <a-tab-pane key="SYSTEM">
             <template #tab>
-              <span>系统通知</span>
+              <span>{{ t('layout.messageCenter.system') }}</span>
               <a-badge :count="messageCounts.SYSTEM" :number-style="{ backgroundColor: '#1677ff' }" />
             </template>
           </a-tab-pane>
           <a-tab-pane key="MESSAGE">
             <template #tab>
-              <span>消息通知</span>
+              <span>{{ t('layout.messageCenter.message') }}</span>
               <a-badge :count="messageCounts.MESSAGE" :number-style="{ backgroundColor: '#52c41a' }" />
             </template>
           </a-tab-pane>
         </a-tabs>
 
         <div v-if="currentMessageList.length === 0" class="fx-message-empty">
-          <a-empty :description="activeMessageTab === 'SYSTEM' ? '暂无系统通知' : '暂无消息通知'" />
+          <a-empty :description="activeMessageTab === 'SYSTEM' ? t('layout.messageCenter.emptySystem') : t('layout.messageCenter.emptyMessage')" />
         </div>
         <div v-else class="fx-message-list">
           <div
@@ -210,7 +210,7 @@
             <div class="fx-message-item__header">
               <div class="fx-message-title">{{ msg.title }}</div>
               <a-tag :color="msg.category === 'SYSTEM' ? 'blue' : 'green'">
-                {{ msg.category === 'SYSTEM' ? '系统通知' : '消息通知' }}
+                {{ msg.category === 'SYSTEM' ? t('layout.messageCenter.system') : t('layout.messageCenter.message') }}
               </a-tag>
             </div>
             <div class="fx-message-content">{{ msg.content }}</div>
@@ -419,16 +419,16 @@
 
     <a-modal
       v-model:open="messageSendOpen"
-      title="发送站内消息"
+      :title="t('layout.messageCenter.sendTitle')"
       :confirm-loading="false"
       @ok="handleMessageSend"
     >
       <a-form layout="vertical">
-        <a-form-item label="接收用户" required>
+        <a-form-item :label="t('layout.messageCenter.receiverUser')" required>
           <a-input
             v-model:value="selectedUserName"
             readonly
-            placeholder="点击选择用户"
+            :placeholder="t('layout.messageCenter.selectUserPlaceholder')"
             @click="openUserSelectModal"
           >
             <template #suffix>
@@ -437,16 +437,16 @@
           </a-input>
         </a-form-item>
 
-        <a-form-item label="标题" required>
-          <a-input v-model:value="messageSendForm.title" placeholder="请输入消息标题" />
+        <a-form-item :label="t('layout.messageCenter.messageTitle')" required>
+          <a-input v-model:value="messageSendForm.title" :placeholder="t('layout.messageCenter.messageTitlePlaceholder')" />
         </a-form-item>
 
-        <a-form-item label="内容" required>
-          <a-textarea v-model:value="messageSendForm.content" :rows="4" placeholder="请输入消息内容" />
+        <a-form-item :label="t('layout.messageCenter.content')" required>
+          <a-textarea v-model:value="messageSendForm.content" :rows="4" :placeholder="t('layout.messageCenter.contentPlaceholder')" />
         </a-form-item>
 
-        <a-form-item label="跳转链接">
-          <a-input v-model:value="messageSendForm.linkUrl" placeholder="可选，点击消息后跳转的链接" />
+        <a-form-item :label="t('layout.messageCenter.linkUrl')">
+          <a-input v-model:value="messageSendForm.linkUrl" :placeholder="t('layout.messageCenter.linkUrlPlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -454,13 +454,13 @@
     <!-- 用户选择弹窗 -->
     <a-modal
       v-model:open="userSelectOpen"
-      title="选择用户"
+      :title="t('layout.messageCenter.selectUserTitle')"
       width="600px"
       @ok="confirmUserSelect"
     >
       <a-input-search
         v-model:value="userSearchKeyword"
-        placeholder="搜索用户名或账号"
+        :placeholder="t('layout.messageCenter.searchUserPlaceholder')"
         style="margin-bottom: 16px"
         @search="searchUsers"
       />
@@ -921,27 +921,10 @@ const MAX_ROUTE_VISIT_STATS_COUNT = 200
 const HORIZONTAL_MENU_CHILD_LIMIT = 6
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
-const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
-  'zh-CN': {
-    'workflow.execution.startApproval': '发起审批',
-    'integration.title': '接口平台',
-    'integration.home.title': '接口平台首页',
-  },
-  'en-US': {
-    'workflow.execution.startApproval': 'Start Approval',
-    'integration.title': 'Integration Platform',
-    'integration.home.title': 'Integration Home',
-  },
-  'ja-JP': {
-    'workflow.execution.startApproval': '承認を開始',
-    'integration.title': 'Integration Platform',
-    'integration.home.title': 'Integration Home',
-  },
-  'ko-KR': {
-    'workflow.execution.startApproval': '결재 시작',
-    'integration.title': 'Integration Platform',
-    'integration.home.title': 'Integration Home',
-  },
+const ROUTE_TITLE_FALLBACK_KEYS: Record<string, string> = {
+  'workflow.execution.startApproval': 'workflow.execution.startTitle',
+  'integration.title': 'integration.title',
+  'integration.home.title': 'integration.home.title',
 }
 
 function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
@@ -984,11 +967,11 @@ const userSearchKeyword = ref('')
 
 const currentMessageList = computed(() => messageLists.value[activeMessageTab.value] || [])
 
-const userSelectColumns = [
-  { title: '用户名', dataIndex: 'username', width: 120 },
-  { title: '账号', dataIndex: 'account', width: 120 },
-  { title: '部门', dataIndex: 'departmentName', ellipsis: true }
-]
+const userSelectColumns = computed(() => [
+  { title: t('layout.messageCenter.userName'), dataIndex: 'username', width: 120 },
+  { title: t('layout.messageCenter.account'), dataIndex: 'account', width: 120 },
+  { title: t('layout.messageCenter.department'), dataIndex: 'departmentName', ellipsis: true },
+])
 
 const antdLocale = computed(() => {
   const key = String(currentLocale.value || locale.value || '')
@@ -1005,7 +988,7 @@ const systemConfig = ref<SystemBasicConfig>({
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
-  loginPageTitle: '欢迎来到 FORGEX_MOM',
+  loginPageTitle: 'FORGEX_MOM',
   loginPageSubtitle: '',
   loginBackgroundType: 'image',
   loginBackgroundVideo: '/loading.mp4',
@@ -1300,8 +1283,8 @@ function resolveMenuTitle(rawTitle: unknown): string {
     if (translated !== title) {
       return translated
     }
-    const localeKey = String(currentLocale.value || locale.value || 'zh-CN')
-    return ROUTE_TITLE_FALLBACKS[localeKey]?.[title] || ROUTE_TITLE_FALLBACKS['zh-CN']?.[title] || title
+    const fallbackKey = ROUTE_TITLE_FALLBACK_KEYS[title]
+    return fallbackKey ? t(fallbackKey) : title
   }
   return title
 }
@@ -1750,7 +1733,7 @@ async function onTenantChange(tenantId: string) {
 
   const account = currentUser.value.account || currentAccount.value || sessionStorage.getItem('account') || ''
   if (!account) {
-    message.warning('当前账号信息缺失，请重新登录')
+    message.warning(t('layout.tenant.currentAccountMissing'))
     return
   }
 
@@ -1789,10 +1772,10 @@ async function onTenantChange(tenantId: string) {
 
     await loadTenantOptions()
     await router.push(PERSONAL_HOME_PATH)
-    message.success('租户切换成功')
+    message.success(t('layout.tenant.switchSuccess'))
   } catch (error) {
     console.error('[MainLayout] 切换租户失败:', error)
-    message.error('切换租户失败，请稍后重试')
+    message.error(t('layout.tenant.switchFailed'))
   } finally {
     switchingTenantId.value = ''
   }
@@ -2322,7 +2305,7 @@ function onUserMenuClick(key: string) {
   }
   
   if (key === 'resetPassword') {
-    message.info('重置密码功能暂未实现')
+    message.info(t('layout.user.resetPasswordNotReady'))
   }
 }
 
@@ -2528,15 +2511,15 @@ function openMessageNotification(m: SysMessageVO) {
 
 async function handleMessageSend() {
   if (!messageSendForm.value.receiverUserId) {
-    message.warning('请选择接收用户')
+    message.warning(t('layout.messageCenter.selectReceiverWarning'))
     return
   }
   if (!messageSendForm.value.title) {
-    message.warning('请输入消息标题')
+    message.warning(t('layout.messageCenter.titleRequired'))
     return
   }
   if (!messageSendForm.value.content) {
-    message.warning('请输入消息内容')
+    message.warning(t('layout.messageCenter.contentRequired'))
     return
   }
 
@@ -2557,7 +2540,7 @@ async function handleMessageSend() {
       content: messageSendForm.value.content,
       linkUrl: messageSendForm.value.linkUrl,
     } as any)
-    message.success('发送成功')
+    message.success(t('layout.messageCenter.sendSuccess'))
     await refreshMessageCenter(messageDrawerOpen.value)
     // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
     if (newId != null && isSendToSelf) {
@@ -2624,7 +2607,7 @@ function onUserSelectChange(keys: string[]) {
  */
 function confirmUserSelect() {
   if (selectedUserIds.value.length === 0) {
-    message.warning('请选择用户')
+    message.warning(t('layout.messageCenter.selectUserWarning'))
     return
   }
   const selectedUser = userSelectList.value.find(u => String(u.id) === selectedUserIds.value[0])

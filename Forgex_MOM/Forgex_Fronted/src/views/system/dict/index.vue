@@ -5,13 +5,12 @@
       table-code="DictTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :dynamic-table-config="dynamicTableConfig"
       :default-expand-all-rows="true"
       :show-query-form="true"
       row-key="id"
     >
       <template #toolbar>
-        <a-button data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">新增字典</a-button>
+        <a-button data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">{{ $tl('新增字典') }}</a-button>
       </template>
 
       <template #moduleId="{ record }">
@@ -34,9 +33,9 @@
 
       <template #action="{ record }">
         <a-space>
-          <a v-if="!record.dictValue" @click="handleAdd(record)">新增子项</a>
-          <a @click="handleEdit(record)">编辑</a>
-          <a style="color: #ff4d4f" @click="handleDelete(record)">删除</a>
+          <a v-if="!record.dictValue" @click="handleAdd(record)">{{ $tl('新增子项') }}</a>
+          <a @click="handleEdit(record)">{{ $tl('编辑') }}</a>
+          <a style="color: #ff4d4f" @click="handleDelete(record)">{{ $tl('删除') }}</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -49,45 +48,45 @@
       @cancel="handleDialogClose"
     >
       <a-form ref="formRef" :model="form" :rules="formRules" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-        <a-form-item label="字典名称" name="dictName">
-          <a-input v-model:value="form.dictName" placeholder="请输入字典名称" />
+        <a-form-item :label="$tl('字典名称')" name="dictName">
+          <a-input v-model:value="form.dictName" :placeholder="$tl('请输入字典名称')" />
         </a-form-item>
 
-        <a-form-item label="所属模块" name="moduleId">
+        <a-form-item :label="$tl('所属模块')" name="moduleId">
           <a-select
             v-model:value="form.moduleId"
             :options="moduleOptions"
             :disabled="isChildNode"
             allow-clear
-            placeholder="请选择所属模块"
+            :placeholder="$tl('请选择所属模块')"
           />
         </a-form-item>
 
-        <a-form-item v-if="!isChildNode" label="字典编码" name="dictCode">
-          <a-input v-model:value="form.dictCode" placeholder="请输入字典编码" />
+        <a-form-item v-if="!isChildNode" :label="$tl('字典编码')" name="dictCode">
+          <a-input v-model:value="form.dictCode" :placeholder="$tl('请输入字典编码')" />
         </a-form-item>
 
-        <a-form-item v-else label="字典值" name="dictValue">
-          <a-input v-model:value="form.dictValue" placeholder="请输入字典值" />
+        <a-form-item v-else :label="$tl('字典值')" name="dictValue">
+          <a-input v-model:value="form.dictValue" :placeholder="$tl('请输入字典值')" />
         </a-form-item>
 
-        <a-form-item v-if="isChildNode" label="国际化配置" name="dictValueI18nJson">
+        <a-form-item v-if="isChildNode" :label="$tl('国际化配置')" name="dictValueI18nJson">
           <I18nInput
             v-model="form.dictValueI18nJson"
             mode="simple"
-            placeholder="请输入字典值（可点击右侧地球图标配置多语言）"
+            :placeholder="$tl('请输入字典值（可点击右侧地球图标配置多语言）')"
           />
         </a-form-item>
 
-        <a-form-item v-if="isChildNode" label="标签样式">
+        <a-form-item v-if="isChildNode" :label="$tl('标签样式')">
           <TagStyleConfig ref="tagStyleConfigRef" />
         </a-form-item>
 
-        <a-form-item label="排序号" name="orderNum">
+        <a-form-item :label="$tl('排序号')" name="orderNum">
           <a-input-number v-model:value="form.orderNum" :min="0" style="width: 100%" />
         </a-form-item>
 
-        <a-form-item label="状态" name="status">
+        <a-form-item :label="$tl('状态')" name="status">
           <a-radio-group v-model:value="form.status">
             <a-radio v-for="option in statusOptions" :key="option.value" :value="option.value">
               {{ option.label }}
@@ -95,8 +94,8 @@
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item label="备注" name="remark">
-          <a-textarea v-model:value="form.remark" :rows="3" placeholder="请输入备注" />
+        <a-form-item :label="$tl('备注')" name="remark">
+          <a-textarea v-model:value="form.remark" :rows="3" :placeholder="$tl('请输入备注')" />
         </a-form-item>
       </a-form>
     </BaseFormDialog>
@@ -107,13 +106,12 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { Modal, type FormInstance, type Rule } from 'ant-design-vue'
 import http from '@/api/http'
-import { listModules } from '@/api/system/module'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { listModules } from '@/api/system/module'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
-import { useDict } from '@/hooks/useDict'
+import { useDict } from '@/hooks/useDict'import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { dictItems: statusOptions } = useDict('status')
 
@@ -129,30 +127,6 @@ const dictOptions = computed(() => ({
   moduleId: moduleOptions.value,
 }))
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'DictTable',
-  tableName: '字典管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'dictCode', title: '字典编码', width: 180, align: 'left' },
-    { field: 'dictName', title: '字典名称', width: 180, align: 'left' },
-    { field: 'moduleId', title: '模块', width: 140, align: 'center', dictCode: 'moduleId' },
-    { field: 'dictValue', title: '字典值', width: 180, align: 'left' },
-    { field: 'orderNum', title: '排序', width: 90, align: 'center' },
-    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
-    { field: 'remark', title: '备注', width: 220, align: 'left' },
-    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 180, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'dictCode', label: '字典编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'dictName', label: '字典名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'moduleId', label: '模块', queryType: 'select', queryOperator: 'eq', dictCode: 'moduleId' },
-  ],
-  version: 1,
-}))
 
 const form = reactive({
   id: null as number | null,
@@ -168,10 +142,10 @@ const form = reactive({
 })
 
 const formRules = computed<Record<string, Rule[]>>(() => ({
-  dictName: [{ required: true, message: '请输入字典名称', trigger: 'blur' }],
-  dictCode: isChildNode.value ? [] : [{ required: true, message: '请输入字典编码', trigger: 'blur' }],
-  dictValue: isChildNode.value ? [{ required: true, message: '请输入字典值', trigger: 'blur' }] : [],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  dictName: [{ required: true, message: translateLegacyText('请输入字典名称'), trigger: 'blur' }],
+  dictCode: isChildNode.value ? [] : [{ required: true, message: translateLegacyText('请输入字典编码'), trigger: 'blur' }],
+  dictValue: isChildNode.value ? [{ required: true, message: translateLegacyText('请输入字典值'), trigger: 'blur' }] : [],
+  status: [{ required: true, message: translateLegacyText('请选择状态'), trigger: 'change' }],
 }))
 
 const isChildNode = computed(() => !!(form.parentId && form.parentId > 0))
@@ -278,7 +252,7 @@ function openDialog() {
 
 function handleAdd(row: any) {
   resetForm()
-  dialogTitle.value = row ? '新增字典子项' : '新增字典类型'
+  dialogTitle.value = row ? translateLegacyText('新增字典子项') : translateLegacyText('新增字典类型')
   form.parentId = row ? Number(row.id) : 0
   form.moduleId = row?.moduleId != null ? Number(row.moduleId) : undefined
   openDialog()
@@ -286,7 +260,7 @@ function handleAdd(row: any) {
 
 function handleEdit(row: any) {
   resetForm()
-  dialogTitle.value = '编辑字典'
+  dialogTitle.value = translateLegacyText('编辑字典')
   form.id = Number(row.id)
   form.parentId = Number(row.parentId || 0)
   form.moduleId = row?.moduleId != null ? Number(row.moduleId) : undefined
@@ -305,10 +279,10 @@ function handleEdit(row: any) {
 
 function handleDelete(row: any) {
   Modal.confirm({
-    title: '提示',
-    content: '确定要删除该字典吗？',
-    okText: '确定',
-    cancelText: '取消',
+    title: translateLegacyText('提示'),
+    content: translateLegacyText('确定要删除该字典吗？'),
+    okText: translateLegacyText('确定'),
+    cancelText: translateLegacyText('取消'),
     onOk: async () => {
       await http.post('/sys/dict/delete', { id: row.id })
       await tableRef.value?.refresh?.()

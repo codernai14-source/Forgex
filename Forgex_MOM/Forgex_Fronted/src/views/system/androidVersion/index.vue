@@ -9,13 +9,13 @@
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openUploadDialog">上传版本</a-button>
+          <a-button type="primary" @click="openUploadDialog">{{ t('common.add') }}</a-button>
         </a-space>
       </template>
 
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'green' : 'default'">
-          {{ record.status === 1 ? '启用' : '禁用' }}
+          {{ record.status === 1 ? t('common.enabled') : t('common.disabled') }}
         </a-tag>
       </template>
 
@@ -25,23 +25,23 @@
 
       <template #fileUrl="{ record }">
         <a-space v-if="record.fileUrl">
-          <a :href="normalizeMediaUrl(record.fileUrl)" target="_blank">下载</a>
-          <a @click="copyText(record.fileUrl)">复制链接</a>
+          <a :href="normalizeMediaUrl(record.fileUrl)" target="_blank">{{ t('common.download') }}</a>
+          <a @click="copyText(record.fileUrl)">{{ t('common.copyLink') }}</a>
         </a-space>
         <span v-else>-</span>
       </template>
 
       <template #action="{ record }">
         <a-space>
-          <a @click="openEditDialog(record)">编辑</a>
-          <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+          <a @click="openEditDialog(record)">{{ t('common.edit') }}</a>
+          <a style="color: #ff4d4f" @click="handleDelete(record.id)">{{ t('common.delete') }}</a>
         </a-space>
       </template>
     </FxDynamicTable>
 
     <BaseFormDialog
       v-model:open="dialogVisible"
-      :title="dialogMode === 'upload' ? '上传安卓版本' : '编辑安卓版本'"
+      :title="dialogMode === 'upload' ? t('system.androidVersion.uploadTitle') : t('system.androidVersion.editTitle')"
       :loading="saving"
       :width="720"
       @submit="handleSubmit"
@@ -53,7 +53,7 @@
         :label-col="{ span: 5 }"
         :wrapper-col="{ span: 18 }"
       >
-        <a-form-item label="版本号" name="versionCode">
+        <a-form-item :label="t('system.androidVersion.versionCode')" name="versionCode">
           <a-input-number
             v-model:value="formData.versionCode"
             :min="1"
@@ -62,18 +62,18 @@
           />
         </a-form-item>
 
-        <a-form-item label="版本名称" name="versionName">
-          <a-input v-model:value="formData.versionName" placeholder="例如 1.0.1" />
+        <a-form-item :label="t('system.androidVersion.versionName')" name="versionName">
+          <a-input v-model:value="formData.versionName" :placeholder="t('system.androidVersion.versionNamePlaceholder')" />
         </a-form-item>
 
-        <a-form-item v-if="dialogMode === 'edit'" label="状态" name="status">
+        <a-form-item v-if="dialogMode === 'edit'" :label="t('common.status')" name="status">
           <a-radio-group v-model:value="formData.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
+            <a-radio :value="1">{{ t('common.enabled') }}</a-radio>
+            <a-radio :value="0">{{ t('common.disabled') }}</a-radio>
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item v-if="dialogMode === 'upload'" label="APK 文件" name="file">
+        <a-form-item v-if="dialogMode === 'upload'" :label="t('system.androidVersion.apkFile')" name="file">
           <a-upload
             :before-upload="beforeUpload"
             :show-upload-list="true"
@@ -81,29 +81,29 @@
             :disabled="saving"
             accept=".apk,application/vnd.android.package-archive"
           >
-            <a-button :disabled="saving">选择 APK</a-button>
+            <a-button :disabled="saving">{{ t('system.androidVersion.chooseApk') }}</a-button>
           </a-upload>
           <div v-if="selectedFile" class="file-hint">
             {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
           </div>
         </a-form-item>
 
-        <a-form-item v-if="dialogMode === 'upload' && uploadTask.uploadId" label="上传进度">
+        <a-form-item v-if="dialogMode === 'upload' && uploadTask.uploadId" :label="t('system.androidVersion.uploadProgress')">
           <div class="upload-progress">
             <a-progress :percent="uploadTask.progress" :status="uploadTask.status === 'FAILED' ? 'exception' : undefined" />
             <div class="upload-progress__meta">
               <span>{{ uploadTask.statusText }}</span>
-              <span>{{ uploadTask.uploadedChunks }}/{{ uploadTask.totalChunks }} 分片</span>
+              <span>{{ uploadTask.uploadedChunks }}/{{ uploadTask.totalChunks }} {{ t('system.androidVersion.chunkCount') }}</span>
             </div>
-            <a-button v-if="saving" size="small" danger @click="handleCancelUpload">取消上传</a-button>
+            <a-button v-if="saving" size="small" danger @click="handleCancelUpload">{{ t('system.androidVersion.cancelUpload') }}</a-button>
           </div>
         </a-form-item>
 
-        <a-form-item label="更新日志" name="changelog">
+        <a-form-item :label="t('system.androidVersion.changelog')" name="changelog">
           <a-textarea
             v-model:value="formData.changelog"
             :rows="5"
-            placeholder="请输入本次版本更新内容"
+            :placeholder="t('system.androidVersion.changelogPlaceholder')"
           />
         </a-form-item>
       </a-form>
@@ -114,10 +114,11 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import {
-  cancelAndroidVersionUpload,
+cancelAndroidVersionUpload,
   completeAndroidVersionUpload,
   deleteAndroidVersion,
   getAndroidVersionPage,
@@ -140,6 +141,7 @@ const TASK_STORAGE_PREFIX = 'fx-android-version-upload:'
 
 const tableRef = ref()
 const formRef = ref()
+const { t } = useI18n()
 const dialogVisible = ref(false)
 const saving = ref(false)
 const dialogMode = ref<DialogMode>('upload')
@@ -152,7 +154,7 @@ const uploadTask = reactive({
   uploadedChunks: 0,
   totalChunks: 0,
   status: '',
-  statusText: '等待上传',
+  statusText: '',
 })
 
 const formData = reactive<AndroidVersionSaveParam>({
@@ -164,8 +166,8 @@ const formData = reactive<AndroidVersionSaveParam>({
 })
 
 const rules = computed(() => ({
-  versionCode: [{ required: true, message: '请输入版本号', trigger: 'change' }],
-  versionName: [{ required: true, message: '请输入版本名称', trigger: 'blur' }],
+  versionCode: [{ required: true, message: t('system.androidVersion.versionCodeRequired'), trigger: 'change' }],
+  versionName: [{ required: true, message: t('system.androidVersion.versionNameRequired'), trigger: 'blur' }],
 }))
 
 async function handleRequest(payload: {
@@ -199,7 +201,7 @@ function resetUploadTask() {
   uploadTask.uploadedChunks = 0
   uploadTask.totalChunks = 0
   uploadTask.status = ''
-  uploadTask.statusText = '等待上传'
+  uploadTask.statusText = t('system.androidVersion.waitingUpload')
   cancelRequested.value = false
 }
 
@@ -224,7 +226,7 @@ function openEditDialog(record: AndroidVersionItem) {
 function beforeUpload(file: File) {
   const isApk = file.name.toLowerCase().endsWith('.apk')
   if (!isApk) {
-    message.error('只能上传 APK 文件')
+    message.error(t('system.androidVersion.apkOnly'))
     return false
   }
   selectedFile.value = file
@@ -235,7 +237,7 @@ function beforeUpload(file: File) {
 async function handleSubmit() {
   await formRef.value?.validate?.()
   if (dialogMode.value === 'upload' && !selectedFile.value) {
-    message.error('请先选择 APK 文件')
+    message.error(t('system.androidVersion.selectApkFirst'))
     return
   }
 
@@ -244,7 +246,7 @@ async function handleSubmit() {
   try {
     if (dialogMode.value === 'upload' && selectedFile.value) {
       await uploadByChunks(selectedFile.value)
-      message.success('安卓版本上传成功')
+      message.success(t('system.androidVersion.uploadSuccess'))
     } else {
       await updateAndroidVersion(formData)
     }
@@ -256,7 +258,7 @@ async function handleSubmit() {
 }
 
 async function uploadByChunks(file: File) {
-  uploadTask.statusText = '初始化上传任务'
+  uploadTask.statusText = t('system.androidVersion.initializingUpload')
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
   const cacheKey = getUploadCacheKey(file)
   let task = await restoreUploadTask(cacheKey, file)
@@ -277,7 +279,7 @@ async function uploadByChunks(file: File) {
   const uploadedSet = new Set(status.uploadedChunks || [])
   for (let index = 0; index < totalChunks; index++) {
     if (cancelRequested.value) {
-      throw new Error('上传已取消')
+      throw new Error(t('system.androidVersion.uploadCancelled'))
     }
     if (uploadedSet.has(index)) {
       continue
@@ -289,25 +291,32 @@ async function uploadByChunks(file: File) {
     syncUploadTask(status)
   }
 
-  uploadTask.statusText = '合并安装包'
+  uploadTask.statusText = t('system.androidVersion.mergingPackage')
   await completeAndroidVersionUpload(task.uploadId, formData)
   localStorage.removeItem(cacheKey)
   uploadTask.progress = 100
-  uploadTask.statusText = '上传完成'
+  uploadTask.statusText = t('system.androidVersion.uploadCompleted')
 }
 
 async function uploadChunkWithRetry(uploadId: string, chunkIndex: number, chunk: Blob): Promise<AndroidUploadTask> {
   let lastError: any
   for (let retry = 1; retry <= MAX_RETRY; retry++) {
     try {
-      uploadTask.statusText = `上传分片 ${chunkIndex + 1}/${uploadTask.totalChunks || ''}`
+      uploadTask.statusText = t('system.androidVersion.uploadingChunk', {
+        current: chunkIndex + 1,
+        total: uploadTask.totalChunks || '',
+      })
       return await uploadAndroidVersionChunk(uploadId, chunkIndex, chunk)
     } catch (error) {
       lastError = error
       if (retry >= MAX_RETRY) {
         break
       }
-      uploadTask.statusText = `分片 ${chunkIndex + 1} 重试 ${retry}/${MAX_RETRY - 1}`
+      uploadTask.statusText = t('system.androidVersion.chunkRetry', {
+        current: chunkIndex + 1,
+        retry,
+        max: MAX_RETRY - 1,
+      })
     }
   }
   throw lastError
@@ -321,7 +330,7 @@ async function handleCancelUpload() {
       localStorage.removeItem(getUploadCacheKey(selectedFile.value))
     }
   }
-  uploadTask.statusText = '已取消'
+  uploadTask.statusText = t('system.androidVersion.cancelled')
   saving.value = false
 }
 
@@ -331,7 +340,9 @@ function syncUploadTask(task: AndroidUploadTask) {
   uploadTask.totalChunks = task.totalChunks || uploadTask.totalChunks
   uploadTask.status = task.status
   uploadTask.progress = task.totalChunks ? Math.floor((uploadTask.uploadedChunks / task.totalChunks) * 100) : 0
-  uploadTask.statusText = task.status === 'FAILED' ? (task.errorMessage || '上传失败') : '上传中'
+  uploadTask.statusText = task.status === 'FAILED'
+    ? (task.errorMessage || t('system.androidVersion.uploadFailed'))
+    : t('system.androidVersion.uploading')
 }
 
 async function calculateFileHash(file: File) {
@@ -378,10 +389,10 @@ function handleDelete(id?: number) {
     return
   }
   Modal.confirm({
-    title: '确定删除该版本吗？',
-    content: '删除后将无法恢复。',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('system.androidVersion.deleteConfirmTitle'),
+    content: t('message.deleteConfirmContent'),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: async () => {
       await deleteAndroidVersion(id)
       tableRef.value?.refresh?.()
@@ -394,7 +405,7 @@ async function copyText(text?: string) {
     return
   }
   await navigator.clipboard.writeText(normalizeMediaUrl(text))
-  message.success('下载链接已复制')
+  message.success(t('system.androidVersion.downloadLinkCopied'))
 }
 
 function formatFileSize(size?: number) {

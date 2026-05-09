@@ -2,11 +2,13 @@ import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { getModulePage, deleteModule, batchDeleteModules } from '@/api/system/module'
 import type { Module, ModuleQuery } from '../types'
+import i18n from '@/locales'
 
 /**
  * 模块列表逻辑封装
  */
 export function useModule() {
+  const t = i18n.global.t
   const loading = ref(false)
   const dataSource = ref<Module[]>([])
   const total = ref(0)
@@ -88,7 +90,7 @@ export function useModule() {
    */
   const handleBatchDelete = async () => {
     if (selectedRowKeys.value.length === 0) {
-      message.warning('请选择要删除的模块')
+      message.warning(t('system.module.message.selectModuleToDelete'))
       return
     }
 

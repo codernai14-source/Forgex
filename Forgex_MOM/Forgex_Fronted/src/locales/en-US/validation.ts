@@ -7,6 +7,7 @@ export default {
   // Required Validation
   required: 'This field is required',
   requiredField: '{field} is required',
+  requiredFieldFallback: '{field} is required',
   
   // 格式校验
   invalidEmail: 'Please enter a valid email address',

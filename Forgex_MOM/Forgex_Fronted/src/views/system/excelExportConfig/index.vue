@@ -4,7 +4,6 @@
       ref="tableRef"
       table-code="ExcelExportConfigTable"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       row-key="id"
       :show-query-form="true"
@@ -22,13 +21,13 @@
 
       <template #enabled="{ record }">
         <a-tag :color="normalizeBoolean(record.enabled) ? 'success' : 'default'">
-          {{ normalizeBoolean(record.enabled) ? t('common.enabled', '启用') : t('common.disabled', '禁用') }}
+          {{ normalizeBoolean(record.enabled) ? t('common.enabled', $tl('启用')) : t('common.disabled', $tl('禁用')) }}
         </a-tag>
       </template>
 
       <template #enableTotal="{ record }">
         <a-tag :color="normalizeBoolean(record.enableTotal) ? 'processing' : 'default'">
-          {{ normalizeBoolean(record.enableTotal) ? t('common.yes', '是') : t('common.no', '否') }}
+          {{ normalizeBoolean(record.enableTotal) ? t('common.yes', $tl('是')) : t('common.no', $tl('否')) }}
         </a-tag>
       </template>
 
@@ -155,9 +154,9 @@
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-space :size="4">
-                  <a-button type="link" size="small" :disabled="index === 0" @click="moveItem(index, -1)">上移</a-button>
-                  <a-button type="link" size="small" :disabled="index === editForm.items.length - 1" @click="moveItem(index, 1)">下移</a-button>
-                  <a-button type="link" size="small" danger @click="removeItem(record._k)">删除</a-button>
+                  <a-button type="link" size="small" :disabled="index === 0" @click="moveItem(index, -1)">{{ $tl('上移') }}</a-button>
+                  <a-button type="link" size="small" :disabled="index === editForm.items.length - 1" @click="moveItem(index, 1)">{{ $tl('下移') }}</a-button>
+                  <a-button type="link" size="small" danger @click="removeItem(record._k)">{{ $tl('删除') }}</a-button>
                 </a-space>
               </template>
             </template>
@@ -172,17 +171,16 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal, type FormInstance } from 'ant-design-vue'
-import { useDict } from '@/hooks/useDict'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { useDict } from '@/hooks/useDict'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
-import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'
+import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n()
 const { dictItems: yesNoOptions } = useDict('yes_no')
 
-const i18nPlaceholder = '{"zh-CN":"标题"}'
+const i18nPlaceholder = translateLegacyText('{"zh-CN":"标题"}')
 const headerStylePlaceholder = '{"fontWeight":"bold"}'
 const cellStylePlaceholder = '{"align":"left"}'
 
@@ -206,29 +204,6 @@ const dictOptions = computed(() => ({
   enabled: yesNoOptions.value,
 }))
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'ExcelExportConfigTable',
-  tableName: t('system.excel.exportConfigTitle'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'tableName', title: t('system.excel.tableName'), minWidth: 180, align: 'left' },
-    { field: 'tableCode', title: t('system.excel.tableCode'), width: 180, align: 'left' },
-    { field: 'title', title: t('system.excel.title'), minWidth: 160, align: 'left' },
-    { field: 'subtitle', title: t('system.excel.subtitle'), minWidth: 160, align: 'left' },
-    { field: 'exportFormat', title: t('system.excel.exportFormat'), width: 120, align: 'center' },
-    { field: 'enabled', title: t('system.excel.enabled'), width: 120, align: 'center' },
-    { field: 'enableTotal', title: t('system.excel.enableTotal'), width: 120, align: 'center' },
-    { field: 'action', title: t('common.action'), width: 140, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'tableName', label: t('system.excel.tableName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'tableCode', label: t('system.excel.tableCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'enabled', label: t('system.excel.enabled'), queryType: 'select', queryOperator: 'eq', dictCode: 'enabled' },
-  ],
-  version: 1,
-}))
 
 const basicRules = {
   tableName: [{ required: true, message: t('system.excel.message.pleaseInputTableName'), trigger: 'blur' }],

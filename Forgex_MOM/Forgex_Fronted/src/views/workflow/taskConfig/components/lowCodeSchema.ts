@@ -1,4 +1,5 @@
 import type { Options, Rule } from '@form-create/ant-design-vue'
+import i18n from '@/locales'
 
 export type LowCodeFieldComponent =
   | 'input'
@@ -390,7 +391,11 @@ function legacyFieldsToRules(fields: LowCodeFieldSchema[]): FormCreateRule[] {
       options: field.options,
       value: field.defaultValue,
       validate: field.required
-        ? [{ required: true, message: `${field.label || field.key}不能为空`, trigger: 'change' }]
+        ? [{
+            required: true,
+            message: String(i18n.global.t('validation.requiredField', { field: field.label || field.key })),
+            trigger: 'change',
+          }]
         : [],
       info: field.help,
     } as FormCreateRule

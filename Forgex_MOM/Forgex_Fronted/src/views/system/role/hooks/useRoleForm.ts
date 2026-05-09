@@ -3,6 +3,7 @@ import { message } from 'ant-design-vue'
 import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 import { addRole, updateRole } from '@/api/system/role'
 import type { Role } from '../types'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 export const useRoleForm = (onSuccess: () => void) => {
   const formRef = ref<FormInstance>()
@@ -20,15 +21,15 @@ export const useRoleForm = (onSuccess: () => void) => {
 
   const rules: Record<string, Rule[]> = {
     roleCode: [
-      { required: true, message: '请输入角色编码', trigger: 'blur' },
-      { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '角色编码必须以字母开头，且只能包含字母、数字和下划线', trigger: 'blur' },
+      { required: true, message: translateLegacyText('请输入角色编码'), trigger: 'blur' },
+      { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: translateLegacyText('角色编码必须以字母开头，且只能包含字母、数字和下划线'), trigger: 'blur' },
     ],
     roleName: [
-      { required: true, message: '请输入角色名称', trigger: 'blur' },
-      { max: 50, message: '角色名称长度不能超过 50 个字符', trigger: 'blur' },
+      { required: true, message: translateLegacyText('请输入角色名称'), trigger: 'blur' },
+      { max: 50, message: translateLegacyText('角色名称长度不能超过 50 个字符'), trigger: 'blur' },
     ],
-    description: [{ max: 200, message: '描述长度不能超过 200 个字符', trigger: 'blur' }],
-    status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+    description: [{ max: 200, message: translateLegacyText('描述长度不能超过 200 个字符'), trigger: 'blur' }],
+    status: [{ required: true, message: translateLegacyText('请选择状态'), trigger: 'change' }],
   }
 
   function openAdd() {
@@ -65,7 +66,7 @@ export const useRoleForm = (onSuccess: () => void) => {
     } catch (error) {
       console.error('角色表单提交失败:', error)
       if (!(error as any)?.errorFields) {
-        message.error('提交角色信息失败')
+        message.error(translateLegacyText('提交角色信息失败'))
       }
     } finally {
       loading.value = false

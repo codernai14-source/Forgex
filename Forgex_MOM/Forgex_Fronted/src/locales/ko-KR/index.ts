@@ -12,8 +12,14 @@ import profile from './profile'
 import operationLog from './operationLog'
 import integration from './integration'
 import basic from './basic'
+import auth from './auth'
+import guide from './guide'
+import label from './label'
+import report from './report'
+import zhCN from '../zh-CN'
+import { mergeWithFallback } from '../mergeWithFallback'
 
-export default {
+export default mergeWithFallback(zhCN, {
   common,
   layout,
   validation,
@@ -22,7 +28,11 @@ export default {
   workflow,
   integration,
   basic,
+  auth,
+  guide,
+  label,
+  report,
   personalHomepage,
   profile,
   operationLog,
-}
+})

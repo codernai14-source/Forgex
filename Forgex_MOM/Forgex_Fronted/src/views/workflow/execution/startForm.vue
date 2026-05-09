@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="start-form-page">
     <div class="page-head">
       <div>
@@ -78,7 +78,7 @@
             />
 
             <div v-if="needsSelectedApprovers" class="selected-approver-panel">
-              <div class="selected-approver-panel__title">发起人自选审批人</div>
+              <div class="selected-approver-panel__title">{{ t('workflow.execution.startForm.selectedApprovers') }}</div>
               <ReceiverSelector v-model:modelValue="selectedApproverModel" />
             </div>
           </div>
@@ -224,7 +224,7 @@ async function handleSubmit() {
         .filter(item => Number.isFinite(item) && item > 0)
     }
     if (needsSelectedApprovers.value && !params.selectedApprovers?.length) {
-      message.warning('请选择至少一位审批人')
+      message.warning(t('workflow.execution.startForm.selectAtLeastOneApprover'))
       return
     }
     const executionId = dynamicFormRef.value?.startWorkflow

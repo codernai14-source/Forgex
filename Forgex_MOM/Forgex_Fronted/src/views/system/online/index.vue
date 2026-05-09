@@ -10,7 +10,6 @@
       :show-query-form="true"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :dynamic-table-config="dynamicTableConfig"
       :row-selection="{
         selectedRowKeys,
         onChange: handleSelectionChange
@@ -19,14 +18,14 @@
     >
       <template #toolbar>
         <a-space :size="8">
-        <a-button
-          data-guide-id="sys-online-kickout"
-          v-permission="'sys:online:kickout'"
+          <a-button
+            data-guide-id="sys-online-kickout"
+            v-permission="'sys:online:kickout'"
             danger
             :disabled="selectedRowKeys.length === 0"
             @click="handleBatchKickout"
           >
-            批量强制下线
+            {{ t('system.online.action.batchKickout') }}
           </a-button>
         </a-space>
       </template>
@@ -43,12 +42,8 @@
       </template>
 
       <template #action="{ record }">
-        <a
-          v-permission="'sys:online:kickout'"
-          style="color: #ff4d4f"
-          @click="handleKickout(record.token)"
-        >
-          强制下线
+        <a v-permission="'sys:online:kickout'" style="color: #ff4d4f" @click="handleKickout(record.token)">
+          {{ t('system.online.action.kickout') }}
         </a>
       </template>
     </FxDynamicTable>
@@ -58,13 +53,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { kickoutOnlineUser, listOnlineUsers } from '@/api/system/online'
 import { useUserStore } from '@/stores/user'
 
 type TerminalKey = 'ALL' | 'B' | 'C' | 'THIRD_PARTY'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const tableRef = ref()
 const selectedRowKeys = ref<string[]>([])
@@ -77,45 +73,22 @@ const tabCounts = ref<Record<TerminalKey, number>>({
   THIRD_PARTY: 0,
 })
 
-const terminalOptions = [
-  { value: 'B', label: 'B端', color: 'blue' },
-  { value: 'C', label: 'C端', color: 'green' },
-  { value: 'THIRD_PARTY', label: '第三方', color: 'orange' },
-]
+const terminalOptions = computed(() => [
+  { value: 'B', label: t('system.online.terminal.b'), color: 'blue' },
+  { value: 'C', label: t('system.online.terminal.c'), color: 'green' },
+  { value: 'THIRD_PARTY', label: t('system.online.terminal.thirdParty'), color: 'orange' },
+])
 
 const dictOptions = computed(() => ({
-  loginTerminal: terminalOptions.map(({ value, label }) => ({ value, label })),
+  loginTerminal: terminalOptions.value.map(({ value, label }) => ({ value, label })),
 }))
 
 const terminalTabs = computed(() => [
-  { key: 'ALL', label: `全部 (${tabCounts.value.ALL || 0})` },
-  { key: 'B', label: `B端 (${tabCounts.value.B || 0})` },
-  { key: 'C', label: `C端 (${tabCounts.value.C || 0})` },
-  { key: 'THIRD_PARTY', label: `第三方 (${tabCounts.value.THIRD_PARTY || 0})` },
+  { key: 'ALL', label: `${t('system.online.terminal.all')} (${tabCounts.value.ALL || 0})` },
+  { key: 'B', label: `${t('system.online.terminal.b')} (${tabCounts.value.B || 0})` },
+  { key: 'C', label: `${t('system.online.terminal.c')} (${tabCounts.value.C || 0})` },
+  { key: 'THIRD_PARTY', label: `${t('system.online.terminal.thirdParty')} (${tabCounts.value.THIRD_PARTY || 0})` },
 ])
-
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'OnlineUserTable',
-  tableName: '在线用户',
-  tableType: 'NORMAL',
-  rowKey: 'token',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'account', title: '账号', width: 160, align: 'left' },
-    { field: 'username', title: '用户名', width: 160, align: 'left' },
-    { field: 'loginTerminal', title: '登录端', width: 120, align: 'center', dictCode: 'loginTerminal' },
-    { field: 'tenantName', title: '租户', width: 180, align: 'left' },
-    { field: 'lastLoginTime', title: '最后登录时间', width: 180, align: 'center' },
-    { field: 'lastLoginIp', title: '最后登录 IP', width: 150, align: 'left' },
-    { field: 'lastLoginRegion', title: '登录地区', width: 160, align: 'left' },
-    { field: 'ttlSeconds', title: '会话剩余时长', width: 140, align: 'center' },
-    { field: 'action', title: '操作', width: 120, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'account', label: '账号', queryType: 'input', queryOperator: 'like' },
-  ],
-  version: 1,
-}))
 
 function getTenantId() {
   return Number(userStore.tenantId || sessionStorage.getItem('tenantId') || 1)
@@ -147,12 +120,12 @@ async function fetchTabCounts(query: Record<string, any> = {}) {
       THIRD_PARTY: Number(thirdRes?.total || 0),
     }
   } catch (error) {
-    console.error('加载在线用户 Tab 计数失败', error)
+    console.error('Failed to load online user tab counts', error)
   }
 }
 
 function resolveTerminalMeta(value: string) {
-  return terminalOptions.find((item) => item.value === value)
+  return terminalOptions.value.find((item) => item.value === value)
 }
 
 const handleRequest = async (payload: {
@@ -171,7 +144,7 @@ const handleRequest = async (payload: {
     const total = typeof res.total === 'number' ? res.total : parseInt(String(res.total) || '0', 10)
     return { records: res.records || [], total }
   } catch (error) {
-    console.error('查询在线用户失败', error)
+    console.error('Failed to query online users', error)
     return { records: [], total: 0 }
   }
 }
@@ -184,11 +157,11 @@ function formatTtl(ttl: any) {
   if (ttl == null) return '-'
   const n = Number(ttl)
   if (Number.isNaN(n)) return '-'
-  if (n < 0) return '长期'
-  const m = Math.floor(n / 60)
-  const s = Math.floor(n % 60)
-  if (m <= 0) return `${s}s`
-  return `${m}m ${s}s`
+  if (n < 0) return t('system.online.ttl.longTerm')
+  const minute = Math.floor(n / 60)
+  const second = Math.floor(n % 60)
+  if (minute <= 0) return t('system.online.ttl.second', { count: second })
+  return t('system.online.ttl.minuteSecond', { minute, second })
 }
 
 function handleTerminalChange() {
@@ -199,10 +172,10 @@ function handleTerminalChange() {
 function handleKickout(token: string) {
   if (!token) return
   Modal.confirm({
-    title: '确认强制下线',
-    content: '该操作会使对应会话立即失效。',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('system.online.confirm.kickoutTitle'),
+    content: t('system.online.confirm.kickoutContent'),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: async () => {
       await kickoutOnlineUser({ token })
       await tableRef.value?.refresh?.()
@@ -214,10 +187,10 @@ function handleKickout(token: string) {
 function handleBatchKickout() {
   if (selectedRowKeys.value.length === 0) return
   Modal.confirm({
-    title: '确认批量强制下线',
-    content: `将对选中的 ${selectedRowKeys.value.length} 个会话执行强制下线。`,
-    okText: '确定',
-    cancelText: '取消',
+    title: t('system.online.confirm.batchKickoutTitle'),
+    content: t('system.online.confirm.batchKickoutContent', { count: selectedRowKeys.value.length }),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: async () => {
       await Promise.all(selectedRowKeys.value.map((token) => kickoutOnlineUser({ token }, { showSuccessMessage: false })))
       selectedRowKeys.value = []
@@ -230,7 +203,6 @@ function handleBatchKickout() {
 
 <style scoped lang="less">
 .online-user-container {
-  /* 去掉 padding: 20px，当前由 MainLayout 的 .fx-content-inner 统一处理 */
   display: flex;
   flex-direction: column;
   height: 100%;

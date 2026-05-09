@@ -6,13 +6,13 @@
         :data-guide-id="item.guideId"
         @click="event => handleActionClick(item, event)"
       >
-        {{ item.label }}
+        {{ resolveActionLabel(item.label) }}
       </a>
     </template>
 
     <a-dropdown v-if="overflowActions.length > 0" :trigger="['click']">
       <a class="fx-action-group__more" @click.prevent>
-        {{ moreLabel }}
+        {{ resolvedMoreLabel }}
         <DownOutlined />
       </a>
       <template #overlay>
@@ -24,7 +24,7 @@
             :data-guide-id="item.guideId"
             @click="() => handleMenuActionClick(item)"
           >
-            <span :class="getActionClass(item)">{{ item.label }}</span>
+            <span :class="getActionClass(item)">{{ resolveActionLabel(item.label) }}</span>
           </a-menu-item>
         </a-menu>
       </template>
@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { DownOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { use权限Store } from '@/stores/permission'
 
 export interface ActionItem {
@@ -56,11 +57,17 @@ const props = withDefaults(
   }>(),
   {
     maxInline: 3,
-    moreLabel: '更多',
+    moreLabel: undefined,
   },
 )
 
 const permissionStore = use权限Store()
+const { t, te } = useI18n()
+const resolvedMoreLabel = computed(() => props.moreLabel || t('common.more'))
+
+function resolveActionLabel(label: string) {
+  return te(label) ? t(label) : label
+}
 
 function hasPermission(permission?: string) {
   if (!permission) {
@@ -124,8 +131,13 @@ function handleMenuActionClick(item: ActionItem) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 8px;
-  white-space: nowrap;
+  row-gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .fx-action-group__item,
@@ -133,6 +145,8 @@ function handleMenuActionClick(item: ActionItem) {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .fx-action-group__item--danger {

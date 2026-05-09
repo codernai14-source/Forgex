@@ -14,10 +14,19 @@ export default {
   delete: '삭제',
   export: '내보내기',
   resetPassword: '비밀번호 재설정',
+  syncThirdParty: '서드파티 동기화',
+  pullThirdParty: '서드파티에서 가져오기',
   lockUser: '사용자 잠금',
   unlockUser: '사용자 잠금 해제',
   assignRole: '역할 할당',
   viewDetail: '상세 보기',
+
+  userSource: {
+    siteCreate: '사이트 생성',
+    siteImport: '사이트 가져오기',
+    thirdPartySync: '서드파티 동기화',
+    selfRegister: '자가 등록',
+  },
 
   // 역할 할당 팝업
   roleAssign: {

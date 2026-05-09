@@ -241,7 +241,7 @@ const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   mode: 'simple',
   type: 'input',
-  placeholder: '请输入',
+  placeholder: '',
   defaultLang: 'zh-CN',
   rows: 4,
   showPlaceholders: false,

@@ -84,6 +84,7 @@ import {
   type FxTableColumn,
   type UserColumnItem,
 } from '@/api/system/tableConfig'
+import { resolveI18nText } from '@/utils/i18n'
 
 const MIN_COLUMN_WIDTH = 60
 const MAX_COLUMN_WIDTH = 800
@@ -154,7 +155,7 @@ function normalizeLocalOrder() {
 function toLocalColumn(col: FxTableColumn, index: number): LocalColumn {
   return {
     field: col.field,
-    title: col.title || col.field,
+    title: resolveI18nText(col.titleI18nJson ?? col.title, col.title || col.field),
     visible: col.field === ACTION_FIELD ? true : col.visible !== false,
     order: col.order ?? index,
     width: normalizeColumnWidth(col.width),

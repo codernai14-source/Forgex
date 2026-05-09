@@ -1,60 +1,60 @@
 <template>
   <a-drawer
     v-model:open="visible"
-    title="用户详情"
+    :title="$tl('用户详情')"
     width="720"
     :body-style="{ paddingBottom: '80px' }"
   >
     <a-spin :spinning="loading">
       <a-descriptions :column="2" bordered>
-        <a-descriptions-item label="用户名">
+        <a-descriptions-item :label="$tl('用户名')">
           {{ userDetail?.username || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="账号">
+        <a-descriptions-item :label="$tl('账号')">
           {{ userDetail?.account || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="邮箱">
+        <a-descriptions-item :label="$tl('邮箱')">
           {{ userDetail?.email || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="手机号">
+        <a-descriptions-item :label="$tl('手机号')">
           {{ userDetail?.phone || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="关联员工ID">
+        <a-descriptions-item :label="$tl('关联员工ID')">
           {{ userDetail?.employeeId || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="用户来源">
+        <a-descriptions-item :label="$tl('用户来源')">
           {{ userDetail?.userSourceText || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="性别">
+        <a-descriptions-item :label="$tl('性别')">
           {{ userDetail?.genderText || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="入职时间">
+        <a-descriptions-item :label="$tl('入职时间')">
           {{ userDetail?.entryDate || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="所属部门">
+        <a-descriptions-item :label="$tl('所属部门')">
           {{ userDetail?.departmentName || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="岗位">
+        <a-descriptions-item :label="$tl('岗位')">
           {{ userDetail?.positionName || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="状态">
+        <a-descriptions-item :label="$tl('状态')">
           {{ userDetail?.statusText || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="创建时间">
+        <a-descriptions-item :label="$tl('创建时间')">
           {{ userDetail?.createTime || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="最后登录时间">
+        <a-descriptions-item :label="$tl('最后登录时间')">
           {{ userDetail?.lastLoginTime || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="最后登录IP">
+        <a-descriptions-item :label="$tl('最后登录IP')">
           {{ userDetail?.lastLoginIp || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="最后登录地区">
+        <a-descriptions-item :label="$tl('最后登录地区')">
           {{ userDetail?.lastLoginRegion || '-' }}
         </a-descriptions-item>
       </a-descriptions>
 
-      <a-divider orientation="left">关联租户</a-divider>
+      <a-divider orientation="left">{{ $tl('关联租户') }}</a-divider>
 
       <a-table
         :columns="tenantColumns"
@@ -64,8 +64,8 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'isDefault'">
-            <a-tag v-if="record.isDefault" color="blue">默认</a-tag>
-            <a-tag v-else>非默认</a-tag>
+            <a-tag v-if="record.isDefault" color="blue">{{ $tl('默认') }}</a-tag>
+            <a-tag v-else>{{ $tl('非默认') }}</a-tag>
           </template>
           <template v-else-if="column.key === 'lastUsed'">
             {{ record.lastUsed || '-' }}
@@ -73,37 +73,37 @@
         </template>
       </a-table>
 
-      <a-divider orientation="left">附属信息</a-divider>
+      <a-divider orientation="left">{{ $tl('附属信息') }}</a-divider>
 
       <a-descriptions :column="2" bordered v-if="userDetail?.profile">
-        <a-descriptions-item label="政治面貌">
+        <a-descriptions-item :label="$tl('政治面貌')">
           {{ userDetail.profile.politicalStatus || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="学历">
+        <a-descriptions-item :label="$tl('学历')">
           {{ userDetail.profile.education || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="籍贯">
+        <a-descriptions-item :label="$tl('籍贯')">
           {{ userDetail.profile.birthPlace || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="个人简介">
+        <a-descriptions-item :label="$tl('个人简介')">
           {{ userDetail.profile.intro || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="家庭住址" :span="2">
+        <a-descriptions-item :label="$tl('家庭住址')" :span="2">
           {{ userDetail.profile.homeAddress || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="紧急联系人">
+        <a-descriptions-item :label="$tl('紧急联系人')">
           {{ userDetail.profile.emergencyContact || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="紧急联系电话">
+        <a-descriptions-item :label="$tl('紧急联系电话')">
           {{ userDetail.profile.emergencyPhone || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="介绍人" :span="2">
+        <a-descriptions-item :label="$tl('介绍人')" :span="2">
           {{ userDetail.profile.referrer || '-' }}
         </a-descriptions-item>
       </a-descriptions>
 
       <template v-if="userDetail?.profile?.workHistory && userDetail.profile.workHistory.length > 0">
-        <a-divider orientation="left">工作经历</a-divider>
+        <a-divider orientation="left">{{ $tl('工作经历') }}</a-divider>
 
         <a-timeline>
           <a-timeline-item
@@ -119,7 +119,7 @@
     </a-spin>
 
     <template #footer>
-      <a-button @click="visible = false">关闭</a-button>
+      <a-button @click="visible = false">{{ $tl('关闭') }}</a-button>
     </template>
   </a-drawer>
 </template>
@@ -128,7 +128,7 @@
 import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
-import type { User } from '../types'
+import type { User } from '../types'import { translateLegacyText } from '@/utils/legacyI18n'
 
 interface Props {
   open: boolean
@@ -149,9 +149,9 @@ const loading = ref(false)
 const userDetail = ref<User | null>(null)
 
 const tenantColumns = [
-  { title: '租户 ID', dataIndex: 'tenantId', key: 'tenantId', width: 180 },
-  { title: '是否默认', dataIndex: 'isDefault', key: 'isDefault', width: 100 },
-  { title: '最后使用时间', dataIndex: 'lastUsed', key: 'lastUsed', width: 160 },
+  { title: translateLegacyText('租户 ID'), dataIndex: 'tenantId', key: 'tenantId', width: 180 },
+  { title: translateLegacyText('是否默认'), dataIndex: 'isDefault', key: 'isDefault', width: 100 },
+  { title: translateLegacyText('最后使用时间'), dataIndex: 'lastUsed', key: 'lastUsed', width: 160 },
 ]
 
 watch(() => props.open, async (val) => {
@@ -171,7 +171,7 @@ async function loadUserDetail() {
   try {
     userDetail.value = await userApi.getUserDetail(props.userId)
   } catch {
-    message.error('加载用户详情失败')
+    message.error(translateLegacyText('加载用户详情失败'))
   } finally {
     loading.value = false
   }

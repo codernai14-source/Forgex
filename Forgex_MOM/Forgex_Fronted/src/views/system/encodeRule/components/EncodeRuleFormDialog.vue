@@ -15,7 +15,7 @@
       :wrapper-col="{ span: 16 }"
     >
       <a-tabs v-model:active-key="activeTab">
-        <a-tab-pane key="main" tab="主信息">
+        <a-tab-pane key="main" :tab="$tl('主信息')">
       <a-form-item :label="t('system.encodeRule.ruleName')" name="ruleName">
         <a-input
           v-model:value="form.ruleName"
@@ -68,7 +68,7 @@
       </a-form-item>
         </a-tab-pane>
       
-        <a-tab-pane key="details" tab="明细信息">
+        <a-tab-pane key="details" :tab="$tl('明细信息')">
       
       <a-form-item :wrapper-col="{ offset: 6, span: 16 }">
         <a-button type="dashed" block @click="handleAddDetail">
@@ -114,7 +114,7 @@
                 <a-input
                   v-else-if="detail.segmentType === 'DATE'"
                   v-model:value="detail.date表单at"
-                  :placeholder="t('system.encodeRule.date表单atPlaceholder')"
+                  :placeholder="t($tl('system.encodeRule.date表单atPlaceholder'))"
                 />
                 <a-input
                   v-else
@@ -129,11 +129,11 @@
               <a-row :gutter="8">
                 <a-col :span="12">
                   <div class="seq-field">
-                    <span>起始值</span>
+                    <span>{{ $tl('起始值') }}</span>
                     <a-form-item :name="['ruleDetails', index, 'seqStart']" no-style>
                       <a-input-number
                         v-model:value="detail.seqStart"
-                        placeholder="如 1"
+                        :placeholder="$tl('如 1')"
                         :min="0"
                         style="width: 100%"
                       />
@@ -142,11 +142,11 @@
                 </a-col>
                 <a-col :span="12">
                   <div class="seq-field">
-                    <span>流水位数</span>
+                    <span>{{ $tl('流水位数') }}</span>
                     <a-form-item :name="['ruleDetails', index, 'seqLength']" no-style>
                       <a-input-number
                         v-model:value="detail.seqLength"
-                        placeholder="如 6"
+                        :placeholder="$tl('如 6')"
                         :min="1"
                         :max="20"
                         style="width: 100%"
@@ -156,7 +156,7 @@
                 </a-col>
               </a-row>
               <a-typography-text type="secondary" class="seq-help">
-                初始值是第一个流水号，流水位数不足时会补零，例如初始值 1、位数 6 会生成 000001。
+                {{ $tl('初始值是第一个流水号，流水位数不足时会补零，例如初始值 1、位数 6 会生成 000001。') }}
               </a-typography-text>
             </a-col>
             
