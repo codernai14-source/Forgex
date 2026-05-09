@@ -183,6 +183,12 @@ import workflowRoutes from '@/router/workflow'
 - 使用统一的 `http` 客户端
 - 错误处理统一使用 `message.error()`
 
+### 国际化规范
+- 审批管理模块页面按钮、表格操作、发起页入口、待办/已办/我发起操作统一维护在 `src/locales/{lang}/workflow.ts`。
+- 审批任务配置页使用 `workflow.taskConfig`，发起审批页使用 `workflow.execution`，我的任务页面使用 `workflow.myTask`，审批首页使用 `workflow.dashboard`。
+- 使用 `FxDynamicTable` 的页面会显示公共列设置按钮，该按钮文案维护在 `src/locales/{lang}/system/tableConfig.ts` 的 `columnSetting` 分组。
+- 新增审批页面按钮或操作文案时，需要同步覆盖 `zh-CN`、`zh-TW`、`en-US`、`ko-KR`、`ja-JP` 五套语言，避免繁体、韩语、日语回退为简体或英文。
+
 ## 常见问题
 
 ### Q1: 如何添加自定义表单？
