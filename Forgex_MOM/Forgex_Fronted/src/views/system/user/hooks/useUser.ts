@@ -1,7 +1,7 @@
-/**
- * 用户列表逻辑封装
+﻿/**
+ * 鐢ㄦ埛鍒楄〃閫昏緫灏佽
  * 
- * 封装用户管理页面的核心业务逻辑，包括列表查询、分页、删除、导出等功能。
+ * 灏佽鐢ㄦ埛绠＄悊椤甸潰鐨勬牳蹇冧笟鍔￠€昏緫锛屽寘鎷垪琛ㄦ煡璇€佸垎椤点€佸垹闄ゃ€佸鍑虹瓑鍔熻兘銆?
  *
  * @author Forgex
  * @version 1.0.0
@@ -16,26 +16,26 @@ import type { User, UserQuery } from '../types'
 const { t } = useI18n()
 
 /**
- * 用户管理逻辑封装
+ * 鐢ㄦ埛绠＄悊閫昏緫灏佽
  * 
- * @returns 包含用户列表状态和操作方法的对象
+ * @returns 鍖呭惈鐢ㄦ埛鍒楄〃鐘舵€佸拰鎿嶄綔鏂规硶鐨勫璞?
  */
 export function useUser() {
-  // 加载状态
+  // 鍔犺浇鐘舵€?
   const loading = ref(false)
   
-  // 用户列表
+  // 鐢ㄦ埛鍒楄〃
   const userList = ref<User[]>([])
   
-  // 分页信息
+  // 鍒嗛〉淇℃伅
   const pagination = reactive({
     current: 1,
     pageSize: 10,
     total: 0,
   })
   
-  // 查询条件
-  const query表单 = reactive<Partial<UserQuery>>({
+  // 鏌ヨ鏉′欢
+  const query琛ㄥ崟 = reactive<Partial<UserQuery>>({
     username: '',
     phone: '',
     departmentId: undefined,
@@ -43,20 +43,20 @@ export function useUser() {
     status: undefined,
   })
   
-  // 选中的用户 ID 列表
+  // 閫変腑鐨勭敤鎴?ID 鍒楄〃
   const selectedRowKeys = ref<string[]>([])
   
   /**
-   * 获取用户列表
+   * 鑾峰彇鐢ㄦ埛鍒楄〃
    *
-   * 执行步骤：
-   * 1. 设置加载状态为 true
-   * 2. 构建查询参数（合并查询条件和分页信息）
-   * 3. 调用 userApi.getUserList 接口
-   * 4. 更新用户列表和分页总数
-   * 5. 重置加载状态
+   * 鎵ц姝ラ锛?
+   * 1. 璁剧疆鍔犺浇鐘舵€佷负 true
+   * 2. 鏋勫缓鏌ヨ鍙傛暟锛堝悎骞舵煡璇㈡潯浠跺拰鍒嗛〉淇℃伅锛?
+   * 3. 璋冪敤 userApi.getUserList 鎺ュ彛
+   * 4. 鏇存柊鐢ㄦ埛鍒楄〃鍜屽垎椤垫€绘暟
+   * 5. 閲嶇疆鍔犺浇鐘舵€?
    *
-   * @throws 查询失败时显示错误提示
+   * @throws 鏌ヨ澶辫触鏃舵樉绀洪敊璇彁绀?
    */
   async function fetchUserList() {
     loading.value = true
@@ -67,11 +67,11 @@ export function useUser() {
   }
   
   /**
-   * 搜索
+   * 鎼滅储
    *
-   * 执行步骤：
-   * 1. 重置分页到第一页
-   * 2. 调用 fetchUserList 重新查询
+   * 鎵ц姝ラ锛?
+   * 1. 閲嶇疆鍒嗛〉鍒扮涓€椤?
+   * 2. 璋冪敤 fetchUserList 閲嶆柊鏌ヨ
    */
   function handleSearch() {
     pagination.current = 1
@@ -79,15 +79,15 @@ export function useUser() {
   }
   
   /**
-   * 重置搜索
+   * 閲嶇疆鎼滅储
    *
-   * 执行步骤：
-   * 1. 清空查询条件
-   * 2. 重置分页到第一页
-   * 3. 调用 fetchUserList 重新查询
+   * 鎵ц姝ラ锛?
+   * 1. 娓呯┖鏌ヨ鏉′欢
+   * 2. 閲嶇疆鍒嗛〉鍒扮涓€椤?
+   * 3. 璋冪敤 fetchUserList 閲嶆柊鏌ヨ
    */
   function handleReset() {
-    Object.assign(query表单, {
+    Object.assign(query琛ㄥ崟, {
       username: '',
       phone: '',
       departmentId: undefined,
@@ -99,14 +99,14 @@ export function useUser() {
   }
   
   /**
-   * 分页改变
+   * 鍒嗛〉鏀瑰彉
    *
-   * 执行步骤：
-   * 1. 更新当前页码和每页条数
-   * 2. 调用 fetchUserList 重新查询
+   * 鎵ц姝ラ锛?
+   * 1. 鏇存柊褰撳墠椤电爜鍜屾瘡椤垫潯鏁?
+   * 2. 璋冪敤 fetchUserList 閲嶆柊鏌ヨ
    *
-   * @param page 新的页码
-   * @param pageSize 新的每页条数
+   * @param page 鏂扮殑椤电爜
+   * @param pageSize 鏂扮殑姣忛〉鏉℃暟
    */
   function handlePageChange(page: number, pageSize: number) {
     pagination.current = page
@@ -115,15 +115,15 @@ export function useUser() {
   }
   
   /**
-   * 删除用户
+   * 鍒犻櫎鐢ㄦ埛
    *
-   * 执行步骤：
-   * 1. 显示确认对话框
-   * 2. 用户确认后调用 deleteUser 接口
-   * 3. 删除成功后刷新列表
+   * 鎵ц姝ラ锛?
+   * 1. 鏄剧ず纭瀵硅瘽妗?
+   * 2. 鐢ㄦ埛纭鍚庤皟鐢?deleteUser 鎺ュ彛
+   * 3. 鍒犻櫎鎴愬姛鍚庡埛鏂板垪琛?
    *
-   * @param id 用户 ID
-   * @throws 删除失败时在控制台输出错误
+   * @param id 鐢ㄦ埛 ID
+   * @throws 鍒犻櫎澶辫触鏃跺湪鎺у埗鍙拌緭鍑洪敊璇?
    */
   async function handleDelete(id: string) {
     Modal.confirm({
@@ -141,15 +141,15 @@ export function useUser() {
   }
   
   /**
-   * 批量删除用户
+   * 鎵归噺鍒犻櫎鐢ㄦ埛
    *
-   * 执行步骤：
-   * 1. 检查是否有选中的用户
-   * 2. 显示确认对话框
-   * 3. 用户确认后调用 batchDeleteUsers 接口
-   * 4. 删除成功后清空选中状态并刷新列表
+   * 鎵ц姝ラ锛?
+   * 1. 妫€鏌ユ槸鍚︽湁閫変腑鐨勭敤鎴?
+   * 2. 鏄剧ず纭瀵硅瘽妗?
+   * 3. 鐢ㄦ埛纭鍚庤皟鐢?batchDeleteUsers 鎺ュ彛
+   * 4. 鍒犻櫎鎴愬姛鍚庢竻绌洪€変腑鐘舵€佸苟鍒锋柊鍒楄〃
    *
-   * @throws 删除失败时在控制台输出错误
+   * @throws 鍒犻櫎澶辫触鏃跺湪鎺у埗鍙拌緭鍑洪敊璇?
    */
   async function handleBatchDelete() {
     if (selectedRowKeys.value.length === 0) {
@@ -173,14 +173,14 @@ export function useUser() {
   }
   
   /**
-   * 重置密码
+   * 閲嶇疆瀵嗙爜
    *
-   * 执行步骤：
-   * 1. 显示确认对话框（提示默认密码）
-   * 2. 用户确认后调用 resetPassword 接口
+   * 鎵ц姝ラ锛?
+   * 1. 鏄剧ず纭瀵硅瘽妗嗭紙鎻愮ず榛樿瀵嗙爜锛?
+   * 2. 鐢ㄦ埛纭鍚庤皟鐢?resetPassword 鎺ュ彛
    *
-   * @param id 用户 ID
-   * @throws 重置失败时在控制台输出错误
+   * @param id 鐢ㄦ埛 ID
+   * @throws 閲嶇疆澶辫触鏃跺湪鎺у埗鍙拌緭鍑洪敊璇?
    */
   async function handleResetPassword(id: string) {
     Modal.confirm({
@@ -193,63 +193,63 @@ export function useUser() {
   }
   
   /**
-   * 更新用户状态
+   * 鏇存柊鐢ㄦ埛鐘舵€?
    *
-   * 执行步骤：
-   * 1. 显示确认对话框
-   * 2. 用户确认后调用 updateUser状态 接口
-   * 3. 更新成功后刷新列表
+   * 鎵ц姝ラ锛?
+   * 1. 鏄剧ず纭瀵硅瘽妗?
+   * 2. 鐢ㄦ埛纭鍚庤皟鐢?updateUser鐘舵€?鎺ュ彛
+   * 3. 鏇存柊鎴愬姛鍚庡埛鏂板垪琛?
    *
-   * @param id 用户 ID
-   * @param status 新状态（true=启用，false=禁用）
-   * @throws 更新失败时在控制台输出错误
+   * @param id 鐢ㄦ埛 ID
+   * @param status 鏂扮姸鎬侊紙true=鍚敤锛宖alse=绂佺敤锛?
+   * @throws 鏇存柊澶辫触鏃跺湪鎺у埗鍙拌緭鍑洪敊璇?
    */
-  async function handleUpdate状态(id: string, status: boolean) {
+  async function handleUpdate鐘舵€?id: string, status: boolean) {
     const actionText = status ? t('system.user.statusActive') : t('system.user.statusInactive')
     Modal.confirm({
       title: t('common.confirm'),
       content: `${t('common.confirm')}${actionText}${t('common.confirmDeleteMessage')}`,
       onOk: async () => {
         try {
-          await userApi.updateUser状态(id, status)
+          await userApi.updateUser鐘舵€?id, status)
           fetchUserList()
         } catch (error) {
-          console.error(t('system.user.message.update状态Failed'), error)
+          console.error(t('system.user.message.updateStatusFailed'), error)
         }
       },
     })
   }
   
   /**
-   * 选择改变
+   * 閫夋嫨鏀瑰彉
    *
-   * 执行步骤：
-   * 1. 更新选中的用户 ID 列表
+   * 鎵ц姝ラ锛?
+   * 1. 鏇存柊閫変腑鐨勭敤鎴?ID 鍒楄〃
    *
-   * @param keys 选中的用户 ID 列表
+   * @param keys 閫変腑鐨勭敤鎴?ID 鍒楄〃
    */
   function handleSelectionChange(keys: string[]) {
     selectedRowKeys.value = keys
   }
   
   /**
-   * 导出用户
+   * 瀵煎嚭鐢ㄦ埛
    *
-   * 执行步骤：
-   * 1. 设置加载状态为 true
-   * 2. 调用 exportUsers 导出接口
-   * 3. 创建 Blob 对象
-   * 4. 创建临时下载链接
-   * 5. 触发下载
-   * 6. 清理临时对象
-   * 7. 重置加载状态
+   * 鎵ц姝ラ锛?
+   * 1. 璁剧疆鍔犺浇鐘舵€佷负 true
+   * 2. 璋冪敤 exportUsers 瀵煎嚭鎺ュ彛
+   * 3. 鍒涘缓 Blob 瀵硅薄
+   * 4. 鍒涘缓涓存椂涓嬭浇閾炬帴
+   * 5. 瑙﹀彂涓嬭浇
+   * 6. 娓呯悊涓存椂瀵硅薄
+   * 7. 閲嶇疆鍔犺浇鐘舵€?
    *
-   * @throws 导出失败时在控制台输出错误
+   * @throws 瀵煎嚭澶辫触鏃跺湪鎺у埗鍙拌緭鍑洪敊璇?
    */
   async function handleExport() {
     try {
       loading.value = true
-      const resp: any = await userApi.exportUsers(query表单)
+      const resp: any = await userApi.exportUsers(query琛ㄥ崟)
       const blob = new Blob([resp.data], { type: resp.headers?.['content-type'] || 'application/octet-stream' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -270,7 +270,7 @@ export function useUser() {
     loading,
     userList,
     pagination,
-    query表单,
+    query琛ㄥ崟,
     selectedRowKeys,
     fetchUserList,
     handleSearch,
@@ -279,7 +279,7 @@ export function useUser() {
     handleDelete,
     handleBatchDelete,
     handleResetPassword,
-    handleUpdate状态,
+    handleUpdate鐘舵€?
     handleSelectionChange,
     handleExport,
   }

@@ -1,43 +1,58 @@
-/**
- * 租户管理翻译 - 中文注释
- */
 export default {
-  title: 'Tenant Management',
-  list: 'Tenant List',
-  detail: 'Tenant Detail',
-  
-  // 表格列
-  tenantId: 'Tenant ID',
-  tenantName: 'Tenant Name',
-  tenantCode: 'Tenant Code',
-  tenantType: 'Tenant Type',
+  title: '테넌트 관리',
+  list: '테넌트 목록',
+  detail: '테넌트 상세',
+  tenantId: '테넌트 ID',
+  tenantName: '테넌트 이름',
+  tenantCode: '테넌트 코드',
+  tenantType: '테넌트 유형',
   logo: 'Logo',
-  description: 'Description',
-  status: '状态',
-  createTime: 'Create Time',
-  
-  // 表单
+  description: '설명',
+  status: '상태',
+  createTime: '생성 시간',
+  logoModuleName: '테넌트 Logo',
   form: {
-    addTenant: 'Add Tenant',
-    editTenant: 'Edit Tenant',
-    tenantName: 'Please enter tenant name',
-    tenantCode: 'Please enter tenant code',
-    tenantType: 'Please select tenant type',
-    description: 'Please enter description',
-    status: 'Please select status',
+    addTenant: '테넌트 추가',
+    editTenant: '테넌트 편집',
+    tenantName: '테넌트 이름을 입력하세요',
+    tenantCode: '테넌트 코드를 입력하세요',
+    tenantType: '테넌트 유형을 선택하세요',
+    description: '설명을 입력하세요',
+    status: '상태를 선택하세요',
+    parentTenant: '상위 테넌트를 선택하세요',
   },
-  
-  // Tenant Type
   type: {
-    main: 'Main Tenant',
-    customer: 'Customer Tenant',
+    main: '메인 테넌트',
+    customer: '고객 테넌트',
+    supplier: '공급사 테넌트',
+    partner: '파트너 테넌트',
   },
-  
-  // 消息
+  parentTenant: '상위 테넌트',
+  parentTenantPlaceholder: '상위 테넌트를 선택하세요(선택 사항)',
+  noParentTenant: '상위 테넌트 없음',
+  initProgress: {
+    title: '테넌트 생성 진행률',
+    success: '초기화가 완료되었습니다',
+    failed: '초기화에 실패했습니다',
+    currentStepUnknown: '작업 진행률을 기다리는 중...',
+    connectFailed: '서버 연결에 실패했습니다. 페이지를 새로고침한 뒤 다시 시도하세요.',
+    fetchFailed: '작업 상태를 가져오지 못했습니다',
+    steps: {
+      module: '시스템 모듈 복사',
+      menu: '메뉴 권한 복사',
+      role: '관리자 역할 생성',
+      user: '관리자 계정 생성',
+      bindRole: '사용자 역할 연결',
+      bindMenu: '역할 메뉴 연결',
+      template: '템플릿 설정 동기화',
+      tableConfig: '테이블 설정 동기화',
+    },
+  },
   message: {
-    deleteConfirm: 'Are you sure you want to delete this tenant?',
-    deleteSuccess: 'Tenant deleted successfully',
-    saveSuccess: 'Tenant saved successfully',
-    tenantCodeExists: 'Tenant code already exists',
+    deleteConfirm: '이 테넌트를 삭제하시겠습니까?',
+    deleteSuccess: '테넌트가 삭제되었습니다',
+    saveSuccess: '테넌트가 저장되었습니다',
+    tenantCodeExists: '테넌트 코드가 이미 존재합니다',
+    loadListFailed: '테넌트 목록을 불러오지 못했습니다',
   },
 }

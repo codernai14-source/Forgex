@@ -5,7 +5,6 @@
       table-code="ReportTemplateTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :dynamic-table-config="dynamicTableConfig"
       :show-query-form="true"
       row-key="id"
     >
@@ -16,7 +15,7 @@
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          新增
+          {{ t('common.add') }}
         </a-button>
       </template>
 
@@ -43,26 +42,26 @@
             v-permission="'report:template:edit'"
             @click="handleEdit(record)"
           >
-            编辑
+            {{ t('common.edit') }}
           </a>
           <a
             v-permission="'report:template:design'"
             @click="handleDesigner(record)"
           >
-            设计器
+            {{ t('report.actions.designer') }}
           </a>
           <a
             v-permission="'report:template:preview'"
             @click="handlePreview(record)"
           >
-            预览
+            {{ t('report.actions.preview') }}
           </a>
           <a
             v-permission="'report:template:delete'"
             style="color: #ff4d4f"
             @click="handleDelete(record)"
           >
-            删除
+            {{ t('common.delete') }}
           </a>
         </a-space>
       </template>
@@ -95,8 +94,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
 import type {
   ReportCategory,
   ReportDatasource,
@@ -115,6 +114,7 @@ import ReportForm from './components/ReportForm.vue'
 import ReportPreview from './components/ReportPreview.vue'
 
 const { dictItems: statusOptions } = useDict('status')
+const { t } = useI18n()
 
 const tableRef = ref()
 const formVisible = ref(false)
@@ -136,32 +136,6 @@ const dictOptions = computed(() => ({
   ],
 }))
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'ReportTemplateTable',
-  tableName: '报表模板管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  columns: [
-    { field: 'id', title: '报表 ID', width: 100, align: 'center' },
-    { field: 'name', title: '报表名称', width: 200, align: 'left' },
-    { field: 'code', title: '报表编码', width: 150, align: 'left' },
-    { field: 'engineType', title: '引擎类型', width: 120, align: 'center', dictCode: 'engineType' },
-    { field: 'categoryName', title: '分类', width: 120, align: 'center' },
-    { field: 'datasourceName', title: '数据源', width: 120, align: 'center' },
-    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
-    { field: 'remark', title: '备注', width: 200, align: 'left' },
-    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 280, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'name', label: '报表名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'code', label: '报表编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'engineType', label: '引擎类型', queryType: 'select', queryOperator: 'eq', dictCode: 'engineType' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
-  ],
-  version: 1,
-}))
 
 function resolveEngineTypeLabel(value: string) {
   if (value === 'UREPORT') return 'UReport2'
@@ -210,7 +184,7 @@ const handleRequest = async (payload: {
       total: Number(res.total || 0),
     }
   } catch (error) {
-    console.error('加载报表分页数据失败:', error)
+    console.error('[Report] Failed to load report page:', error)
     return {
       records: [],
       total: 0,
@@ -223,7 +197,7 @@ async function loadCategories() {
     const categories: ReportCategory[] = await getCategoryTree({})
     categoryOptions.value = flattenTreeToOptions(categories)
   } catch (error) {
-    console.error('加载分类树失败:', error)
+    console.error('[Report] Failed to load category tree:', error)
     categoryOptions.value = []
   }
 }
@@ -236,7 +210,7 @@ async function loadDatasources() {
       value: item.id,
     }))
   } catch (error) {
-    console.error('加载数据源列表失败:', error)
+    console.error('[Report] Failed to load datasource list:', error)
     datasourceOptions.value = []
   }
 }
@@ -273,16 +247,16 @@ function handleEdit(record: ReportTemplate) {
 
 function handleDelete(record: ReportTemplate) {
   Modal.confirm({
-    title: '提示',
-    content: `确定要删除报表“${record.name}”吗？`,
-    okText: '确定',
-    cancelText: '取消',
+    title: t('common.tip'),
+    content: t('report.messages.deleteConfirm', { name: record.name }),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         await remove(record.id)
         await tableRef.value?.refresh?.()
       } catch (error) {
-        console.error('删除报表失败:', error)
+        console.error('[Report] Failed to delete report:', error)
       }
     },
   })

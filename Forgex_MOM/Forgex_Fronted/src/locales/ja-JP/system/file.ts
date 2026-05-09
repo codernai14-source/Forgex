@@ -1,0 +1,15 @@
+export default {
+  title: 'File Management',
+  moduleCode: 'Module Code',
+  moduleName: 'Module Name',
+  fileName: 'File Name',
+  fileType: 'File Type',
+  fileUrl: 'File URL',
+  fileSize: 'File Size',
+  uploadBy: 'Uploaded By',
+  uploadTime: 'Upload Time',
+  openFile: 'Open File',
+  copyUrl: 'Copy URL',
+  copied: 'File URL copied',
+  emptyUrl: 'File URL is empty',
+}

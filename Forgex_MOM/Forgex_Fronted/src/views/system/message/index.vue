@@ -2,35 +2,35 @@
   <div class="message-list-page">
     <a-card :bordered="false" class="search-card">
       <a-form layout="inline" :model="searchForm">
-        <a-form-item label="消息类型">
-          <a-select v-model:value="searchForm.messageType" placeholder="请选择消息类型" allow-clear style="width: 150px">
-            <a-select-option value="NOTICE">通知</a-select-option>
-            <a-select-option value="WARNING">预警</a-select-option>
-            <a-select-option value="ALARM">告警</a-select-option>
+        <a-form-item :label="$tl('消息类型')">
+          <a-select v-model:value="searchForm.messageType" :placeholder="$tl('请选择消息类型')" allow-clear style="width: 150px">
+            <a-select-option value="NOTICE">{{ $tl('通知') }}</a-select-option>
+            <a-select-option value="WARNING">{{ $tl('预警') }}</a-select-option>
+            <a-select-option value="ALARM">{{ $tl('告警') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="状态">
-          <a-select v-model:value="searchForm.status" placeholder="请选择状态" allow-clear style="width: 120px">
-            <a-select-option :value="0">未读</a-select-option>
-            <a-select-option :value="1">已读</a-select-option>
+        <a-form-item :label="$tl('状态')">
+          <a-select v-model:value="searchForm.status" :placeholder="$tl('请选择状态')" allow-clear style="width: 120px">
+            <a-select-option :value="0">{{ $tl('未读') }}</a-select-option>
+            <a-select-option :value="1">{{ $tl('已读') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="标题">
-          <a-input v-model:value="searchForm.title" placeholder="请输入标题" allow-clear />
+        <a-form-item :label="$tl('标题')">
+          <a-input v-model:value="searchForm.title" :placeholder="$tl('请输入标题')" allow-clear />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              查询
+              {{ $tl('查询') }}
             </a-button>
             <a-button @click="handleReset">
               <template #icon><ReloadOutlined /></template>
-              重置
+              {{ $tl('重置') }}
             </a-button>
             <a-button @click="handleMarkAllRead">
               <template #icon><CheckOutlined /></template>
-              全部已读
+              {{ $tl('全部已读') }}
             </a-button>
           </a-space>
         </a-form-item>
@@ -70,18 +70,18 @@
               <template #description>
                 <div class="message-content">{{ item.content }}</div>
                 <div class="message-meta">
-                  <span>发送人：{{ item.senderName }}</span>
-                  <span>发送时间：{{ item.createTime }}</span>
-                  <span v-if="item.readTime">阅读时间：{{ item.readTime }}</span>
+                  <span>{{ $tl('发送人') }}：{{ item.senderName }}</span>
+                  <span>{{ $tl('发送时间') }}：{{ item.createTime }}</span>
+                  <span v-if="item.readTime">{{ $tl('阅读时间') }}：{{ item.readTime }}</span>
                 </div>
               </template>
             </a-list-item-meta>
             <template #actions>
               <a-button v-if="item.status === 0" type="link" size="small" @click.stop="handleMarkRead(item)">
-                标记已读
+                {{ $tl('标记已读') }}
               </a-button>
               <a-button v-if="item.linkUrl" type="link" size="small" @click.stop="handleGoToLink(item)">
-                查看详情
+                {{ $tl('查看详情') }}
               </a-button>
             </template>
           </a-list-item>
@@ -91,33 +91,33 @@
 
     <a-modal
       v-model:open="detailVisible"
-      title="消息详情"
+      :title="$tl('消息详情')"
       width="600px"
       :footer="null"
     >
       <div v-if="currentMessage" class="message-detail">
         <a-descriptions :column="1" bordered>
-          <a-descriptions-item label="消息标题">
+          <a-descriptions-item :label="$tl('消息标题')">
             {{ currentMessage.title }}
           </a-descriptions-item>
-          <a-descriptions-item label="消息类型">
+          <a-descriptions-item :label="$tl('消息类型')">
             <a-tag :color="getMessageTypeColor(currentMessage.messageType)">
               {{ getMessageTypeText(currentMessage.messageType) }}
             </a-tag>
           </a-descriptions-item>
-          <a-descriptions-item label="消息内容">
+          <a-descriptions-item :label="$tl('消息内容')">
             <div style="white-space: pre-wrap">{{ currentMessage.content }}</div>
           </a-descriptions-item>
-          <a-descriptions-item label="发送人">
+          <a-descriptions-item :label="$tl('发送人')">
             {{ currentMessage.senderName }}
           </a-descriptions-item>
-          <a-descriptions-item label="发送时间">
+          <a-descriptions-item :label="$tl('发送时间')">
             {{ currentMessage.createTime }}
           </a-descriptions-item>
-          <a-descriptions-item v-if="currentMessage.readTime" label="阅读时间">
+          <a-descriptions-item v-if="currentMessage.readTime" :label="$tl('阅读时间')">
             {{ currentMessage.readTime }}
           </a-descriptions-item>
-          <a-descriptions-item v-if="currentMessage.linkUrl" label="相关链接">
+          <a-descriptions-item v-if="currentMessage.linkUrl" :label="$tl('相关链接')">
             <a :href="currentMessage.linkUrl" target="_blank">{{ currentMessage.linkUrl }}</a>
           </a-descriptions-item>
         </a-descriptions>
@@ -141,6 +141,7 @@ import {
   markMessageRead,
   pageMessage,
 } from '@/api/message'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const searchForm = reactive({
   messageType: undefined,
@@ -159,7 +160,7 @@ const pagination = reactive({
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`,
+  showTotal: (total: number) => translateLegacyText(`共 ${total} 条`),
   onChange: (page: number, pageSize: number) => {
     pagination.current = page
     pagination.pageSize = pageSize
@@ -181,9 +182,9 @@ function getMessageTypeColor(type: string) {
 
 function getMessageTypeText(type: string) {
   const textMap: Record<string, string> = {
-    NOTICE: '通知',
-    WARNING: '预警',
-    ALARM: '告警',
+    NOTICE: translateLegacyText('通知'),
+    WARNING: translateLegacyText('预警'),
+    ALARM: translateLegacyText('告警'),
   }
   return textMap[type] || type
 }

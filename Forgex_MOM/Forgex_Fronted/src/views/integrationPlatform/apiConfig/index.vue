@@ -21,7 +21,6 @@
         ref="tableRef"
         :table-code="'ApiConfigTable'"
         :request="handleRequest"
-        :dynamic-table-config="dynamicTableConfig"
         :dict-options="dictOptions"
         :show-query-form="true"
         row-key="id"
@@ -99,8 +98,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal } from 'ant-design-vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiConfigFormDialog from './components/ApiConfigFormDialog.vue'
 import ApiParamConfigDialog from './components/ApiParamConfigDialog.vue'
@@ -136,26 +134,6 @@ const dictOptions = {
   ],
 }
 
-const dynamicTableConfig: Partial<FxTableConfig> = {
-  columns: [
-    { field: 'apiCode', title: t('integration.apiConfig.apiCode'), width: 180, align: 'left', visible: true },
-    { field: 'apiName', title: t('integration.apiConfig.apiName'), width: 200, align: 'left', ellipsis: true, visible: true },
-    { field: 'direction', title: t('integration.apiConfig.direction'), width: 120, align: 'center', visible: true },
-    { field: 'apiPath', title: t('integration.apiConfig.apiPath'), width: 220, align: 'left', ellipsis: true, visible: true },
-    { field: 'callMethod', title: t('integration.apiConfig.callMethod'), width: 120, align: 'center', visible: true },
-    { field: 'targetUrl', title: t('integration.apiConfig.targetUrl'), width: 240, align: 'left', ellipsis: true, visible: true },
-    { field: 'callCount', title: t('integration.apiConfig.callCount'), width: 110, align: 'center', visible: true },
-    { field: 'status', title: t('integration.apiConfig.status'), width: 100, align: 'center', visible: true },
-    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center', visible: true },
-    { field: 'action', title: t('common.action'), width: 220, align: 'center', fixed: 'right', visible: true },
-  ],
-  queryFields: [
-    { field: 'apiCode', label: t('integration.apiConfig.apiCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'apiName', label: t('integration.apiConfig.apiName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'direction', label: t('integration.apiConfig.direction'), queryType: 'select', queryOperator: 'eq', dictCode: 'integrationDirection' },
-    { field: 'status', label: t('integration.apiConfig.status'), queryType: 'select', queryOperator: 'eq', dictCode: 'integrationStatus' },
-  ],
-}
 
 async function handleRequest(payload: {
   page: { current: number; pageSize: number }

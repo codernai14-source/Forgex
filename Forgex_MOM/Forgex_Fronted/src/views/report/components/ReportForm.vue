@@ -14,26 +14,26 @@
       :label-col="{ span: 5 }"
       :wrapper-col="{ span: 16, offset: 1 }"
     >
-      <a-form-item label="报表名称" name="name">
+      <a-form-item :label="$tl('报表名称')" name="name">
         <a-input
           v-model:value="form.name"
-          placeholder="请输入报表名称"
+          :placeholder="$tl('请输入报表名称')"
           maxlength="100"
           show-count
         />
       </a-form-item>
 
-      <a-form-item label="报表编码" name="code">
+      <a-form-item :label="$tl('报表编码')" name="code">
         <a-input
           v-model:value="form.code"
-          placeholder="请输入报表编码，首字母必须为字母，可包含字母、数字和下划线"
+          :placeholder="$tl('请输入报表编码，首字母必须为字母，可包含字母、数字和下划线')"
           maxlength="50"
           show-count
           :disabled="!!form.id"
         />
       </a-form-item>
 
-      <a-form-item label="引擎类型" name="engineType">
+      <a-form-item :label="$tl('引擎类型')" name="engineType">
         <a-radio-group v-model:value="form.engineType">
           <a-radio value="UREPORT">
             <a-tag color="blue">UReport2</a-tag>
@@ -44,38 +44,38 @@
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item label="报表分类" name="categoryId">
+      <a-form-item :label="$tl('报表分类')" name="categoryId">
         <a-tree-select
           v-model:value="form.categoryId"
           :tree-data="categoryTreeData"
-          placeholder="请选择报表分类"
+          :placeholder="$tl('请选择报表分类')"
           allow-clear
           tree-node-filter-prop="label"
           show-search
         />
       </a-form-item>
 
-      <a-form-item label="数据源" name="datasourceId">
+      <a-form-item :label="$tl('数据源')" name="datasourceId">
         <a-select
           v-model:value="form.datasourceId"
           :options="datasourceSelectOptions"
-          placeholder="请选择数据源"
+          :placeholder="$tl('请选择数据源')"
           allow-clear
           show-search
         />
       </a-form-item>
 
-      <a-form-item label="报表状态" name="status">
+      <a-form-item :label="$tl('报表状态')" name="status">
         <a-radio-group v-model:value="form.status">
-          <a-radio :value="1">启用</a-radio>
-          <a-radio :value="0">禁用</a-radio>
+          <a-radio :value="1">{{ $tl('启用') }}</a-radio>
+          <a-radio :value="0">{{ $tl('禁用') }}</a-radio>
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item label="备注" name="remark">
+      <a-form-item :label="$tl('备注')" name="remark">
         <a-textarea
           v-model:value="form.remark"
-          placeholder="请输入备注"
+          :placeholder="$tl('请输入备注')"
           :rows="3"
           maxlength="500"
           show-count
@@ -89,7 +89,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { type FormInstance } from 'ant-design-vue'
 import type { ReportTemplate, ReportSaveDTO } from '@/report/types'
-import { save } from '@/api/report'
+import { save } from '@/api/report'import { translateLegacyText } from '@/utils/legacyI18n'
 
 interface Props {
   open: boolean
@@ -117,7 +117,7 @@ const visible = computed({
 })
 
 const formRef = ref<FormInstance>()
-const formTitle = computed(() => (form.id ? '编辑报表' : '新增报表'))
+const formTitle = computed(() => (form.id ? translateLegacyText('编辑报表') : translateLegacyText('新增报表')))
 
 const form = reactive<ReportSaveDTO>({
   id: undefined,
@@ -133,19 +133,19 @@ const form = reactive<ReportSaveDTO>({
 
 const formRules = {
   name: [
-    { required: true, message: '请输入报表名称', trigger: 'blur' },
-    { max: 100, message: '报表名称不能超过 100 个字符', trigger: 'blur' },
+    { required: true, message: translateLegacyText('请输入报表名称'), trigger: 'blur' },
+    { max: 100, message: translateLegacyText('报表名称不能超过 100 个字符'), trigger: 'blur' },
   ],
   code: [
-    { required: true, message: '请输入报表编码', trigger: 'blur' },
+    { required: true, message: translateLegacyText('请输入报表编码'), trigger: 'blur' },
     {
       pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-      message: '报表编码必须以字母开头，且只能包含字母、数字和下划线',
+      message: translateLegacyText('报表编码必须以字母开头，且只能包含字母、数字和下划线'),
       trigger: 'blur',
     },
-    { max: 50, message: '报表编码不能超过 50 个字符', trigger: 'blur' },
+    { max: 50, message: translateLegacyText('报表编码不能超过 50 个字符'), trigger: 'blur' },
   ],
-  engineType: [{ required: true, message: '请选择引擎类型', trigger: 'change' }],
+  engineType: [{ required: true, message: translateLegacyText('请选择引擎类型'), trigger: 'change' }],
 }
 
 const categoryTreeData = computed(() => {

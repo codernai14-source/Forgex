@@ -7,7 +7,6 @@
       :dict-options="dictOptions"
       :scroll="{ x: 1800 }"
       :show-query-form="true"
-      :dynamic-table-config="fallbackConfig"
     >
       <template #toolbar>
         <a-button data-guide-id="sys-operation-log-export" @click="handleExport" v-permission="'sys:operation-log:export'">
@@ -26,8 +25,8 @@
 
       <template #requestParams="{ record }">
         <a-space size="small">
-          <a-button type="link" size="small" @click="openPayloadPreview('request', record)">查看详情</a-button>
-          <a-tooltip title="复制请求参数">
+          <a-button type="link" size="small" @click="openPayloadPreview('request', record)">{{ $tl('查看详情') }}</a-button>
+          <a-tooltip :title="$tl('复制请求参数')">
             <a-button type="text" size="small" @click="copyPayload(record.requestParams)">
               <template #icon><CopyOutlined /></template>
             </a-button>
@@ -37,8 +36,8 @@
 
       <template #responseResult="{ record }">
         <a-space size="small">
-          <a-button type="link" size="small" @click="openPayloadPreview('response', record)">查看详情</a-button>
-          <a-tooltip title="复制响应结果">
+          <a-button type="link" size="small" @click="openPayloadPreview('response', record)">{{ $tl('查看详情') }}</a-button>
+          <a-tooltip :title="$tl('复制响应结果')">
             <a-button type="text" size="small" @click="copyPayload(record.responseResult)">
               <template #icon><CopyOutlined /></template>
             </a-button>
@@ -65,7 +64,7 @@
       </template>
 
       <template #action="{ record }">
-        <a-button type="link" size="small" @click="handleViewDetail(record)">详情</a-button>
+        <a-button type="link" size="small" @click="handleViewDetail(record)">{{ $tl('详情') }}</a-button>
       </template>
     </FxDynamicTable>
 
@@ -73,34 +72,34 @@
       <pre class="detail-json-block">{{ payloadContent }}</pre>
     </a-modal>
 
-    <a-modal v-model:open="detailVisible" :title="t('operationLog.detailTitle', '操作日志详情')" :width="900" :footer="null">
+    <a-modal v-model:open="detailVisible" :title="t('operationLog.detailTitle', $tl('操作日志详情'))" :width="900" :footer="null">
       <a-descriptions :column="2" bordered v-if="currentRecord">
-        <a-descriptions-item label="用户名称">{{ currentRecord.username || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="账号">{{ resolveAccount(currentRecord) }}</a-descriptions-item>
-        <a-descriptions-item label="操作时间">{{ formatDateTime(currentRecord.operationTime) }}</a-descriptions-item>
-        <a-descriptions-item label="模块">{{ currentRecord.module || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="操作类型">
+        <a-descriptions-item :label="$tl('用户名称')">{{ currentRecord.username || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="$tl('账号')">{{ resolveAccount(currentRecord) }}</a-descriptions-item>
+        <a-descriptions-item :label="$tl('操作时间')">{{ formatDateTime(currentRecord.operationTime) }}</a-descriptions-item>
+        <a-descriptions-item :label="$tl('模块')">{{ currentRecord.module || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="$tl('操作类型')">
           <a-tag :color="getOperationTypeColor(currentRecord.operationType)">
             {{ getOperationTypeText(currentRecord.operationType) }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="请求方法">{{ currentRecord.requestMethod || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="响应状态">
+        <a-descriptions-item :label="$tl('请求方法')">{{ currentRecord.requestMethod || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="$tl('响应状态')">
           <a-tag :color="currentRecord.responseStatus === 200 ? 'success' : 'error'">
             {{ currentRecord.responseStatus ?? '-' }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="请求 URL" :span="2">
+        <a-descriptions-item :label="$tl('请求 URL')" :span="2">
           <a-typography-text copyable>{{ currentRecord.requestUrl || '-' }}</a-typography-text>
         </a-descriptions-item>
-        <a-descriptions-item label="IP 地址">{{ currentRecord.ip || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="耗时">
+        <a-descriptions-item :label="$tl('IP 地址')">{{ currentRecord.ip || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="$tl('耗时')">
           <span :style="{ color: getCostTimeColor(currentRecord.costTime) }">{{ currentRecord.costTime }}ms</span>
         </a-descriptions-item>
-        <a-descriptions-item label="操作详情" :span="2" v-if="currentRecord.detailText">
+        <a-descriptions-item :label="$tl('操作详情')" :span="2" v-if="currentRecord.detailText">
           {{ currentRecord.detailText }}
         </a-descriptions-item>
-        <a-descriptions-item label="错误堆栈" :span="2" v-if="currentRecord.errorStack">
+        <a-descriptions-item :label="$tl('错误堆栈')" :span="2" v-if="currentRecord.errorStack">
           <pre class="detail-json-block detail-json-block--error">{{ currentRecord.errorStack }}</pre>
         </a-descriptions-item>
         <a-descriptions-item label="User-Agent" :span="2">
@@ -117,9 +116,8 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { CopyOutlined, ExportOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
-import { exportOperationLog, pageOperationLog } from '@/api/operationLog'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { exportOperationLog, pageOperationLog } from '@/api/operationLog'import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n()
 
@@ -132,48 +130,19 @@ const payloadContent = ref('-')
 
 const dictOptions = computed(() => ({
   operationType: [
-    { label: '新增', value: 'ADD' },
-    { label: '新增', value: 'CREATE' },
-    { label: '修改', value: 'EDIT' },
-    { label: '修改', value: 'UPDATE' },
-    { label: '删除', value: 'DELETE' },
-    { label: '查询', value: 'QUERY' },
-    { label: '导出', value: 'EXPORT' },
-    { label: '导入', value: 'IMPORT' },
-    { label: '登录', value: 'LOGIN' },
-    { label: '登出', value: 'LOGOUT' },
+    { label: translateLegacyText('新增'), value: 'ADD' },
+    { label: translateLegacyText('新增'), value: 'CREATE' },
+    { label: translateLegacyText('修改'), value: 'EDIT' },
+    { label: translateLegacyText('修改'), value: 'UPDATE' },
+    { label: translateLegacyText('删除'), value: 'DELETE' },
+    { label: translateLegacyText('查询'), value: 'QUERY' },
+    { label: translateLegacyText('导出'), value: 'EXPORT' },
+    { label: translateLegacyText('导入'), value: 'IMPORT' },
+    { label: translateLegacyText('登录'), value: 'LOGIN' },
+    { label: translateLegacyText('登出'), value: 'LOGOUT' },
   ],
 }))
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'OperationLogTable',
-  tableName: '操作日志',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'username', title: '用户名称', width: 120, align: 'left', ellipsis: true },
-    { field: 'account', title: '账号', width: 140, align: 'center', ellipsis: true },
-    { field: 'module', title: '模块', width: 150, align: 'left', ellipsis: true },
-    { field: 'operationType', title: '操作类型', width: 100, align: 'center' },
-    { field: 'requestMethod', title: '请求方法', width: 100, align: 'center' },
-    { field: 'requestUrl', title: '请求 URL', width: 220, align: 'left', ellipsis: true },
-    { field: 'requestParams', title: '请求参数', width: 140, align: 'center' },
-    { field: 'responseStatus', title: '响应状态', width: 100, align: 'center' },
-    { field: 'responseResult', title: '响应结果', width: 140, align: 'center' },
-    { field: 'costTime', title: '耗时', width: 90, align: 'center' },
-    { field: 'ip', title: 'IP 地址', width: 140, align: 'left' },
-    { field: 'operationTime', title: '操作时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 100, align: 'center', fixed: 'right' },
-  ],
-  queryFields: [
-    { field: 'username', label: '用户名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'account', label: '账号', queryType: 'input', queryOperator: 'like' },
-    { field: 'module', label: '模块', queryType: 'input', queryOperator: 'like' },
-    { field: 'operationTime', label: '操作时间', queryType: 'dateRange', queryOperator: 'between' },
-  ],
-  version: 1,
-}))
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -210,7 +179,7 @@ function resolveAccount(record: any) {
 }
 
 function openPayloadPreview(type: 'request' | 'response', record: any) {
-  payloadTitle.value = type === 'request' ? '请求参数' : '响应结果'
+  payloadTitle.value = type === 'request' ? translateLegacyText('请求参数') : translateLegacyText('响应结果')
   payloadContent.value = formatJson(type === 'request' ? record.requestParams : record.responseResult)
   payloadVisible.value = true
 }
@@ -226,10 +195,10 @@ function handleViewDetail(record: any) {
 async function copyPayload(payload?: string) {
   try {
     await navigator.clipboard.writeText(payload || '')
-    message.success('复制成功')
+    message.success(translateLegacyText('复制成功'))
   } catch (error) {
     console.error(error)
-    message.error('复制失败')
+    message.error(translateLegacyText('复制失败'))
   }
 }
 

@@ -5,7 +5,6 @@
       :table-code="'UserTable'"
       :show-query-form="true"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       :row-selection="{
         selectedRowKeys,
@@ -18,10 +17,10 @@
             {{ t('system.user.add') }}
           </a-button>
           <a-button data-guide-id="sys-user-sync-third-party" v-permission="'sys:user:syncThirdParty'" @click="handleSyncThirdParty">
-            同步第三方
+            {{ t('system.user.syncThirdParty') }}
           </a-button>
           <a-button data-guide-id="sys-user-pull-third-party" v-permission="'sys:user:pullThirdParty'" @click="handlePullThirdParty">
-            从第三方拉取
+            {{ t('system.user.pullThirdParty') }}
           </a-button>
           <a-button data-guide-id="sys-user-import" v-permission="'sys:user:import'" @click="importDialogVisible = true">
             {{ t('system.excel.commonImport.title') }}
@@ -75,7 +74,7 @@
 
       <template #action="{ record }">
         <div class="user-action-cell">
-          <FxActionGroup :actions="getUserRowActions(record)" :max-inline="5" />
+          <FxActionGroup :actions="getUserRowActions(record)" :max-inline="3" />
         </div>
       </template>
     </fx-dynamic-table>
@@ -119,19 +118,18 @@ import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
 import { exportUsers, userApi } from '@/api/system/user'
-import { downloadBlobResponse, normalizeUserQuery, normalizeUserStatus } from '@/utils/user'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { downloadBlobResponse, normalizeUserQuery, normalizeUserStatus } from '@/utils/user'
 import type { Department, Position, UserQuery } from './types'
 
 const { t } = useI18n()
 const { dictItems: userSourceOptions } = useDict('user_source')
 
-const USER_SOURCE_FALLBACK_OPTIONS = [
-  { label: '站点创建', value: 1 },
-  { label: '站点导入', value: 2 },
-  { label: '第三方同步', value: 3 },
-  { label: '自主注册', value: 4 },
-]
+const userSourceFallbackOptions = computed(() => [
+  { label: t('system.user.userSource.siteCreate'), value: 1 },
+  { label: t('system.user.userSource.siteImport'), value: 2 },
+  { label: t('system.user.userSource.thirdPartySync'), value: 3 },
+  { label: t('system.user.userSource.selfRegister'), value: 4 },
+])
 
 const departmentTreeData = ref<Department[]>([])
 const positionList = ref<Position[]>([])
@@ -151,26 +149,28 @@ const dictOptions = ref<Record<string, any[]>>({
   positionId: [],
   roleId: [],
   role_ids: [],
-  userSource: USER_SOURCE_FALLBACK_OPTIONS,
-  user_source: USER_SOURCE_FALLBACK_OPTIONS,
+  userSource: [],
+  user_source: [],
   status: [
     { label: t('system.user.statusActive'), value: true },
     { label: t('system.user.statusInactive'), value: false },
   ],
 })
 
-const dynamicTableConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'UserTable',
-  columns: [
-    { field: 'action', title: t('common.action'), width: 260, align: 'center', fixed: 'right' },
-  ],
-}))
 
 watch(userSourceOptions, (value) => {
-  const options = value?.length ? value : USER_SOURCE_FALLBACK_OPTIONS
+  const options = value?.length ? value : userSourceFallbackOptions.value
   dictOptions.value.userSource = options
   dictOptions.value.user_source = options
 }, { immediate: true })
+
+watch(userSourceFallbackOptions, (value) => {
+  if (userSourceOptions.value?.length) {
+    return
+  }
+  dictOptions.value.userSource = value
+  dictOptions.value.user_source = value
+})
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }

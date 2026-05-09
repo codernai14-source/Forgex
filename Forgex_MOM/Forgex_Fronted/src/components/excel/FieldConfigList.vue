@@ -79,10 +79,10 @@
         <template v-else-if="column.key === 'action'">
           <a-space :size="4">
             <a-button type="link" size="small" :disabled="index === 0" @click="moveUp(index)">
-              {{ t('common.moveUp', '上移') }}
+              {{ t('common.moveUp') }}
             </a-button>
             <a-button type="link" size="small" :disabled="index === fields.length - 1" @click="moveDown(index)">
-              {{ t('common.moveDown', '下移') }}
+              {{ t('common.moveDown') }}
             </a-button>
             <a-button type="link" size="small" danger @click="removeField(index)">
               {{ t('common.delete') }}

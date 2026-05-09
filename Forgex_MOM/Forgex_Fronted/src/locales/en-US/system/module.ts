@@ -23,6 +23,10 @@ export default {
     moduleName: 'Please enter module name',
     icon: 'Please enter icon name',
     orderNum: 'Please enter order number',
+    moduleCodePattern: 'Only letters, numbers, and underscores are allowed. Length 2-50.',
+    moduleNameI18nRequired: 'Please configure the module name in at least one language',
+    orderNumNumber: 'Order number must be numeric',
+    status: 'Please select status',
   },
   
   // 操作
@@ -34,5 +38,6 @@ export default {
     deleteSuccess: 'Module deleted successfully',
     saveSuccess: 'Module saved successfully',
     moduleCodeExists: 'Module code already exists',
+    selectModuleToDelete: 'Please select modules to delete',
   },
 }

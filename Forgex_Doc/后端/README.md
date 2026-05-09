@@ -73,10 +73,13 @@
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
-| RedisHelper 工具类 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis 工具.md) |
-| 缓存操作 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis 工具.md) |
-| 分布式锁 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis 工具.md) |
-| Key 命名规范 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis 工具.md) |
+| RedisHelper 工具类 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
+| 缓存操作 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
+| 分布式锁 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
+| Key 命名规范 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
+| 缓存策略最佳实践 | 已支持 | Forgex_Common | [缓存策略使用方式](./公共能力/缓存策略使用方式.md) |
+| API 接口文档 | 已支持 | Forgex_Common / 各业务模块 | [API 接口文档使用方式](./公共能力/API接口文档使用方式.md) |
+| 性能优化指南 | 已支持 | 全部后端服务 | [性能优化使用方式](./公共能力/性能优化使用方式.md) |
 
 ### 2.7 数据字典
 
@@ -182,8 +185,11 @@
 - **提示消息**：`CommonPrompt` / 各模块 Prompt 枚举 / 租户模板消息
 - **国际化**：`LangContext` + `RMessageI18nAdvice`
 - **Redis 缓存**：`RedisHelper`
+- **缓存策略**：Key、TTL、失效、Caffeine + Redis
+- **API 文档**：springdoc-openapi / Swagger 注解
+- **性能优化**：分页、索引、批量、缓存和慢查询
 
-对应入口：[统一返回与国际化](./配置与审计/统一返回与国际化.md)、[通用消息与提示](./配置与审计/通用消息与提示.md)、[Redis 工具](./公共能力/Redis 工具.md)
+对应入口：[统一返回与国际化](./配置与审计/统一返回与国际化.md)、[通用消息与提示](./配置与审计/通用消息与提示.md)、[Redis 工具](./公共能力/Redis工具.md)、[缓存策略使用方式](./公共能力/缓存策略使用方式.md)、[API 接口文档使用方式](./公共能力/API接口文档使用方式.md)、[性能优化使用方式](./公共能力/性能优化使用方式.md)
 
 ### 3.2 做租户与权限相关功能
 
@@ -234,6 +240,9 @@
 | 异常体系 | `BusinessException`、`I18nBusinessException` |
 | 多租户上下文 | `TenantContext`、`UserContext`、`TenantIgnoreRegistry` |
 | Redis 工具 | `com.forgex.common.util.RedisHelper` |
+| 缓存策略 | `RedisHelper`、`DictCacheConfig`、`DictCacheInvalidationListener` |
+| API 文档 | springdoc-openapi、`@Tag`、`@Operation`、`@Schema` |
+| 性能优化 | 分页查询、索引设计、批量处理、慢查询定位 |
 | 动态表格 | `CommonTableController`、`FxTableConfigService`、`FxUserTableConfigService` |
 | 权限校验 | `@RequirePerm`、`PermissionInterceptor` |
 | 加密 Provider | `CryptoProviders`、`CryptoPasswordProvider` |

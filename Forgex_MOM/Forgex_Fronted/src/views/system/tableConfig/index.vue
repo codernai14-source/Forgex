@@ -15,8 +15,8 @@
       <template #toolbar>
         <a-space :size="8">
           <a-radio-group v-model:value="publicConfig" button-style="solid" @change="handleModeChange">
-            <a-radio-button :value="false">租户配置</a-radio-button>
-            <a-radio-button :value="true">公共配置</a-radio-button>
+            <a-radio-button :value="false">{{ $tl('租户配置') }}</a-radio-button>
+            <a-radio-button :value="true">{{ $tl('公共配置') }}</a-radio-button>
           </a-radio-group>
           <a-button
             data-guide-id="sys-table-config-pull-public"
@@ -24,7 +24,7 @@
             v-permission="'sys:tableConfig:add'"
             @click="handlePullPublic"
           >
-            拉取公共配置
+            {{ $tl('拉取公共配置') }}
           </a-button>
           <a-button
             data-guide-id="sys-table-config-add"
@@ -91,8 +91,9 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import TableConfigFormDialog from './components/TableConfigFormDialog.vue'
+import { translateLegacyText } from '@/utils/legacyI18n'
 import {
-  batchDeleteTableConfig,
+batchDeleteTableConfig,
   deleteTableConfig,
   getTableConfigList,
   pullPublicTableConfig,
@@ -156,7 +157,7 @@ function handleModeChange() {
 async function handlePullPublic() {
   try {
     const count = await pullPublicTableConfig()
-    message.success(`已拉取 ${Number(count || 0)} 条公共配置`)
+    message.success(translateLegacyText(`已拉取 ${Number(count || 0)} 条公共配置`))
     tableRef.value?.refresh?.()
   } catch (error) {
     console.error('pull public table config failed:', error)
@@ -171,7 +172,7 @@ function openAddDialog() {
 
 function openEditDialog(record: TableConfigItem) {
   if (!record.id) {
-    message.error('当前记录缺少配置ID，无法加载编辑详情，请先刷新列表或确认后端列表接口已返回id')
+    message.error(translateLegacyText('当前记录缺少配置ID，无法加载编辑详情，请先刷新列表或确认后端列表接口已返回id'))
     return
   }
   isEdit.value = true

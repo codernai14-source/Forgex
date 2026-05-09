@@ -976,7 +976,8 @@ onMounted(async () => {
   border-color: #4b5563;
   border-radius: 8px;
   background: var(--auth-field-bg) !important;
-  color: #f8fafc !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1007,12 +1008,14 @@ onMounted(async () => {
 }
 
 .register-form :deep(.ant-input-password input),
-.register-form :deep(.ant-input-affix-wrapper .ant-input) {
+.register-form :deep(.ant-input-affix-wrapper .ant-input),
+.register-form :deep(.ant-input-affix-wrapper > input.ant-input) {
   min-height: auto;
   border: 0;
   background: transparent !important;
   box-shadow: none;
-  color: #f8fafc !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   caret-color: var(--primary-color);
 }
 
@@ -1022,7 +1025,7 @@ onMounted(async () => {
 .register-form :deep(.ant-input-affix-wrapper input:-webkit-autofill),
 .register-form :deep(.ant-input-affix-wrapper input:-webkit-autofill:hover),
 .register-form :deep(.ant-input-affix-wrapper input:-webkit-autofill:focus) {
-  -webkit-text-fill-color: #e5e7eb !important;
+  -webkit-text-fill-color: #ffffff !important;
   caret-color: var(--primary-color);
   box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
   -webkit-box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;

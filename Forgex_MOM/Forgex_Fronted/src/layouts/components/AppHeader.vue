@@ -47,7 +47,7 @@
           <template #icon>
             <SearchOutlined />
           </template>
-          <span class="search-text">搜索</span>
+          <span class="search-text">{{ t('layout.search') }}</span>
           <span class="search-shortcut">Ctrl+K</span>
         </a-button>
 
@@ -109,14 +109,14 @@
           <template #content>
             <div class="android-version-popover">
               <div v-if="androidLoading" class="android-version-popover__loading">
-                正在加载最新版本...
+                {{ t('layout.android.loading') }}
               </div>
               <div v-else-if="latestAndroidVersion" class="android-version-popover__content">
                 <div class="android-version-popover__title">
                   Android {{ latestAndroidVersion.versionName }}
                 </div>
                 <div class="android-version-popover__meta">
-                  版本号：{{ latestAndroidVersion.versionCode }}
+                  {{ t('layout.android.versionCode', { code: latestAndroidVersion.versionCode }) }}
                 </div>
                 <div v-if="latestAndroidVersion.changelog" class="android-version-popover__changelog">
                   {{ latestAndroidVersion.changelog }}
@@ -130,11 +130,11 @@
                   target="_blank"
                   class="android-version-popover__link"
                 >
-                  下载 APK
+                  {{ t('layout.android.downloadApk') }}
                 </a>
               </div>
               <div v-else class="android-version-popover__empty">
-                暂无可用安卓版本
+                {{ t('layout.android.empty') }}
               </div>
             </div>
           </template>
@@ -160,6 +160,38 @@
           </template>
         </a-button>
 
+        <!-- 租户切换按钮 -->
+        <a-dropdown
+          placement="bottomRight"
+          trigger="click"
+          :disabled="tenantLoading || tenantOptions.length === 0"
+        >
+          <a-button
+            type="text"
+            class="header-btn header-btn--icon tenant-switch-btn"
+            :title="tenantSwitchTitle"
+            :loading="tenantLoading"
+          >
+            <template #icon>
+              <ApartmentOutlined />
+            </template>
+          </a-button>
+          <template #overlay>
+            <a-menu :selected-keys="currentTenantId ? [`tenant:${currentTenantId}`] : []" @click="onTenantMenuClick">
+              <a-menu-item
+                v-for="tenant in tenantOptions"
+                :key="`tenant:${tenant.id}`"
+                :disabled="tenant.id === currentTenantId || switchingTenantId === tenant.id"
+              >
+                <div class="tenant-menu-item">
+                  <span class="tenant-menu-item__name">{{ tenant.name || tenant.id }}</span>
+                  <CheckOutlined v-if="tenant.id === currentTenantId" class="tenant-menu-item__check" />
+                </div>
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+
         <!-- 用户下拉菜单 -->
         <a-dropdown placement="bottomRight">
           <div class="user-dropdown-trigger fx-guide-user-menu">
@@ -176,47 +208,31 @@
             >
               {{ userInitial }}
             </a-avatar>
-            <span class="user-name">{{ user.name || user.account || '未登录' }}</span>
+            <span class="user-name">{{ user.name || user.account || t('layout.user.notLoggedIn') }}</span>
             <DownOutlined class="user-dropdown-icon" />
           </div>
           <template #overlay>
             <a-menu @click="onUserMenuClick">
               <a-menu-item key="profile">
                 <UserOutlined />
-                <span>个人信息</span>
+                <span>{{ t('layout.user.profile') }}</span>
               </a-menu-item>
               <a-menu-item key="password">
                 <KeyOutlined />
-                <span>修改密码</span>
+                <span>{{ t('layout.user.changePassword') }}</span>
               </a-menu-item>
               <a-menu-item key="guide">
                 <InfoCircleOutlined />
-                <span>引导设置</span>
+                <span>{{ t('layout.user.guideSettings') }}</span>
               </a-menu-item>
-              <a-menu-sub-menu key="tenant" :disabled="tenantLoading || tenantOptions.length === 0">
-                <template #title>
-                  <ApartmentOutlined />
-                  <span>选择租户</span>
-                </template>
-                <a-menu-item
-                  v-for="tenant in tenantOptions"
-                  :key="`tenant:${tenant.id}`"
-                  :disabled="tenant.id === currentTenantId || switchingTenantId === tenant.id"
-                >
-                  <div class="tenant-menu-item">
-                    <span class="tenant-menu-item__name">{{ tenant.name || tenant.id }}</span>
-                    <CheckOutlined v-if="tenant.id === currentTenantId" class="tenant-menu-item__check" />
-                  </div>
-                </a-menu-item>
-              </a-menu-sub-menu>
               <a-menu-item key="messageSend">
                 <MailOutlined />
-                <span>发送消息</span>
+                <span>{{ t('layout.user.sendMessage') }}</span>
               </a-menu-item>
               <a-menu-divider />
               <a-menu-item key="logout">
                 <LogoutOutlined />
-                <span>退出登录</span>
+                <span>{{ t('layout.user.logout') }}</span>
               </a-menu-item>
             </a-menu>
           </template>
@@ -228,6 +244,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getIcon } from '../../utils/icon'
 import {
   SearchOutlined,
@@ -251,6 +268,8 @@ import type { LocaleCode } from '../../locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 import { normalizeMediaUrl } from '@/utils/media'
 import QRCode from 'qrcode/lib/browser'
+
+const { t } = useI18n()
 
 interface Module {
   code: string
@@ -440,6 +459,16 @@ const currentLanguageLabel = computed(() => {
   return getLanguageDisplayName(languageList.value.find((lang) => lang.langCode === currentLocale.value))
 })
 
+const tenantSwitchTitle = computed(() => {
+  if (props.tenantLoading) {
+    return t('layout.tenant.loading')
+  }
+  if (props.tenantOptions.length === 0) {
+    return t('layout.tenant.empty')
+  }
+  return t('layout.tenant.switch')
+})
+
 function getLanguageLabel(language: LanguageType): string {
   return getLanguageDisplayName(language)
 }
@@ -484,6 +513,13 @@ const onUserMenuClick = (info: any) => {
       return
     }
     emit('user-menu-click', key)
+  }
+}
+
+const onTenantMenuClick = (info: any) => {
+  const key = String(info?.key || '')
+  if (key.startsWith('tenant:')) {
+    emit('tenant-change', key.slice('tenant:'.length))
   }
 }
 
@@ -645,6 +681,12 @@ const onMessageClick = () => {
   justify-content: center;
   min-width: 32px;
   padding-inline: 8px;
+}
+
+.tenant-switch-btn {
+  :deep(.anticon) {
+    font-size: calc(var(--fx-font-size, 14px) * 1.15);
+  }
 }
 
 .lang-switch-icon {

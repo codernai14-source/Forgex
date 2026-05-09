@@ -4,7 +4,6 @@
       ref="tableRef"
       :table-code="'ThirdSystemTable'"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       :show-query-form="true"
       row-key="id"
@@ -69,8 +68,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal } from 'ant-design-vue'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+import { Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ThirdSystemFormDialog from './components/ThirdSystemFormDialog.vue'
 import ThirdSystemAuthDialog from './components/ThirdSystemAuthDialog.vue'
@@ -104,22 +102,6 @@ const currentFormData = ref<ThirdSystemSubmit>({
   status: 1,
 })
 
-const dynamicTableConfig: Partial<FxTableConfig> = {
-  columns: [
-    { field: 'systemCode', title: t('integration.thirdSystem.systemCode'), width: 180, align: 'left', visible: true },
-    { field: 'systemName', title: t('integration.thirdSystem.systemName'), width: 220, align: 'left', visible: true },
-    { field: 'ipAddress', title: t('integration.thirdSystem.ipAddress'), width: 200, align: 'left', ellipsis: true, visible: true },
-    { field: 'contactInfo', title: t('integration.thirdSystem.contactInfo'), width: 220, align: 'left', ellipsis: true, visible: true },
-    { field: 'status', title: t('integration.thirdSystem.status'), width: 120, align: 'center', visible: true },
-    { field: 'createTime', title: t('common.createTime'), width: 180, align: 'center', visible: true },
-    { field: 'action', title: t('common.action'), width: 180, align: 'center', fixed: 'right', visible: true },
-  ],
-  queryFields: [
-    { field: 'systemCode', label: t('integration.thirdSystem.systemCode'), queryType: 'input', queryOperator: 'like' },
-    { field: 'systemName', label: t('integration.thirdSystem.systemName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: t('integration.thirdSystem.status'), queryType: 'select', queryOperator: 'eq', dictCode: 'thirdSystemStatus' },
-  ],
-}
 
 const dictOptions = {
   thirdSystemStatus: [

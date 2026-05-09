@@ -1,43 +1,58 @@
-/**
- * 租户管理翻译 - 中文注释
- */
 export default {
-  title: 'Tenant Management',
-  list: 'Tenant List',
-  detail: 'Tenant Detail',
-  
-  // 表格列
-  tenantId: 'Tenant ID',
-  tenantName: 'Tenant Name',
-  tenantCode: 'Tenant Code',
-  tenantType: 'Tenant Type',
+  title: 'テナント管理',
+  list: 'テナント一覧',
+  detail: 'テナント詳細',
+  tenantId: 'テナントID',
+  tenantName: 'テナント名',
+  tenantCode: 'テナントコード',
+  tenantType: 'テナント種別',
   logo: 'Logo',
-  description: 'Description',
-  status: '状态',
-  createTime: 'Create Time',
-  
-  // 表单
+  description: '説明',
+  status: 'ステータス',
+  createTime: '作成日時',
+  logoModuleName: 'テナント Logo',
   form: {
-    addTenant: 'Add Tenant',
-    editTenant: 'Edit Tenant',
-    tenantName: 'Please enter tenant name',
-    tenantCode: 'Please enter tenant code',
-    tenantType: 'Please select tenant type',
-    description: 'Please enter description',
-    status: 'Please select status',
+    addTenant: 'テナント追加',
+    editTenant: 'テナント編集',
+    tenantName: 'テナント名を入力してください',
+    tenantCode: 'テナントコードを入力してください',
+    tenantType: 'テナント種別を選択してください',
+    description: '説明を入力してください',
+    status: 'ステータスを選択してください',
+    parentTenant: '親テナントを選択してください',
   },
-  
-  // Tenant Type
   type: {
-    main: 'Main Tenant',
-    customer: 'Customer Tenant',
+    main: 'メインテナント',
+    customer: '顧客テナント',
+    supplier: 'サプライヤーテナント',
+    partner: 'パートナーテナント',
   },
-  
-  // 消息
+  parentTenant: '親テナント',
+  parentTenantPlaceholder: '親テナントを選択してください（任意）',
+  noParentTenant: '親テナントなし',
+  initProgress: {
+    title: 'テナント作成進捗',
+    success: '初期化が完了しました',
+    failed: '初期化に失敗しました',
+    currentStepUnknown: 'タスク進捗を待機しています...',
+    connectFailed: 'サーバーに接続できませんでした。ページを更新して再試行してください。',
+    fetchFailed: 'タスク状態の取得に失敗しました',
+    steps: {
+      module: 'システムモジュールをコピー',
+      menu: 'メニュー権限をコピー',
+      role: '管理者ロールを作成',
+      user: '管理者アカウントを作成',
+      bindRole: 'ユーザーロールを紐付け',
+      bindMenu: 'ロールメニューを紐付け',
+      template: 'テンプレート設定を同期',
+      tableConfig: 'テーブル設定を同期',
+    },
+  },
   message: {
-    deleteConfirm: 'Are you sure you want to delete this tenant?',
-    deleteSuccess: 'Tenant deleted successfully',
-    saveSuccess: 'Tenant saved successfully',
-    tenantCodeExists: 'Tenant code already exists',
+    deleteConfirm: 'このテナントを削除しますか？',
+    deleteSuccess: 'テナントを削除しました',
+    saveSuccess: 'テナントを保存しました',
+    tenantCodeExists: 'テナントコードは既に存在します',
+    loadListFailed: 'テナント一覧の読み込みに失敗しました',
   },
 }

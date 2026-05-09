@@ -11,16 +11,6 @@ export enum TenantTypeEnum {
 }
 
 /**
- * 租户类型标签映射
- */
-export const TenantTypeLabels: Record<TenantTypeEnum, string> = {
-  [TenantTypeEnum.MAIN_TENANT]: '主租户',
-  [TenantTypeEnum.CUSTOMER_TENANT]: '客户租户',
-  [TenantTypeEnum.SUPPLIER_TENANT]: '供应商租户',
-  [TenantTypeEnum.PARTNER_TENANT]: '合作伙伴租户'
-}
-
-/**
  * 租户查询参数
  */
 export interface TenantQueryDTO {

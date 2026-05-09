@@ -36,13 +36,14 @@
           </span>
         </template>
       </a-tree>
-      <a-empty v-else description="暂无数据" />
+      <a-empty v-else :description="$t('common.noData')" />
     </a-spin>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { 
   PlusOutlined,
@@ -54,6 +55,8 @@ import {
 } from '@ant-design/icons-vue'
 import { getDepartmentTree } from '@/api/system/department'
 import type { Department } from '@/views/system/department/types'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** 是否显示新增按钮，默认 true */
@@ -96,7 +99,7 @@ async function loadTree() {
     const data = await getDepartmentTree({ tenantId: tid })
     treeData.value = data || []
   } catch (e) {
-    message.error('加载组织架构失败')
+    message.error(t('system.department.message.loadTreeFailed'))
   } finally {
     loading.value = false
   }

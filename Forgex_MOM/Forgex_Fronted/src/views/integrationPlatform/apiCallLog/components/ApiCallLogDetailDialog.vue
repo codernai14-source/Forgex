@@ -8,10 +8,10 @@
   >
     <a-spin :spinning="loading">
       <a-descriptions :column="2" bordered>
-        <a-descriptions-item label="接口名称">
+        <a-descriptions-item :label="$tl('接口名称')">
           {{ detail?.apiName || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="接口编码">
+        <a-descriptions-item :label="$tl('接口编码')">
           {{ detail?.apiCode || '-' }}
         </a-descriptions-item>
         <a-descriptions-item :label="t('integration.apiCallLog.callDirection')">
@@ -28,19 +28,19 @@
         <a-descriptions-item :label="t('integration.apiCallLog.costTimeMs')">
           {{ detail?.costTimeMs ?? '-' }}ms
         </a-descriptions-item>
-        <a-descriptions-item label="链路ID">
+        <a-descriptions-item :label="$tl('链路ID')">
           {{ detail?.traceId || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="任务ID">
+        <a-descriptions-item :label="$tl('任务ID')">
           {{ detail?.taskId || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="调用模式">
+        <a-descriptions-item :label="$tl('调用模式')">
           {{ detail?.invokeMode || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="响应编码">
+        <a-descriptions-item :label="$tl('响应编码')">
           {{ detail?.responseCode || '-' }}
         </a-descriptions-item>
-        <a-descriptions-item label="结果类型">
+        <a-descriptions-item :label="$tl('结果类型')">
           {{ detail?.resultType || '-' }}
         </a-descriptions-item>
         <a-descriptions-item :label="t('integration.apiCallLog.callTime')">
@@ -53,9 +53,9 @@
 
       <div class="payload-section">
         <div class="payload-header">
-          <span>组装前参数</span>
+          <span>{{ $tl('组装前参数') }}</span>
           <a-button type="text" size="small" @click="copyPayload(detail?.rawRequestData)">
-            复制组装前参数
+            {{ $tl('复制组装前参数') }}
           </a-button>
         </div>
         <pre class="json-block">{{ formatJson(detail?.rawRequestData) }}</pre>
@@ -63,9 +63,9 @@
 
       <div class="payload-section">
         <div class="payload-header">
-          <span>组装后参数</span>
+          <span>{{ $tl('组装后参数') }}</span>
           <a-button type="text" size="small" @click="copyPayload(detail?.assembledRequestData)">
-            复制组装后参数
+            {{ $tl('复制组装后参数') }}
           </a-button>
         </div>
         <pre class="json-block">{{ formatJson(detail?.assembledRequestData) }}</pre>
@@ -75,7 +75,7 @@
         <div class="payload-header">
           <span>{{ t('integration.apiCallLog.responseData') }}</span>
           <a-button type="text" size="small" @click="copyPayload(detail?.responseData)">
-            复制响应结果
+            {{ $tl('复制响应结果') }}
           </a-button>
         </div>
         <pre class="json-block">{{ formatJson(detail?.responseData) }}</pre>
@@ -89,7 +89,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
-import { getApiCallLogDetail, type ApiCallLogItem } from '@/api/system/integration'
+import { getApiCallLogDetail, type ApiCallLogItem } from '@/api/system/integration'import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n({ useScope: 'global' })
 const visible = ref(false)
@@ -113,15 +113,15 @@ async function open(data: ApiCallLogItem) {
 async function copyPayload(payload?: string) {
   try {
     await navigator.clipboard.writeText(payload || '')
-    message.success('复制成功')
+    message.success(translateLegacyText('复制成功'))
   } catch (error) {
     console.error(error)
-    message.error('复制失败')
+    message.error(translateLegacyText('复制失败'))
   }
 }
 
 function formatJson(value?: string) {
-  if (!value) return '暂无数据'
+  if (!value) return translateLegacyText('暂无数据')
   try {
     return JSON.stringify(JSON.parse(value), null, 2)
   } catch {

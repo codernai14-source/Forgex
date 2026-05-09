@@ -1,24 +1,24 @@
 <template>
   <div class="receiver-selector">
-    <a-form-item label="接收类型" required>
-      <a-select 
-        v-model:value="localReceiver.receiverType" 
-        placeholder="请选择接收类型"
+    <a-form-item :label="t('common.receiverSelector.receiverType')" required>
+      <a-select
+        v-model:value="localReceiver.receiverType"
+        :placeholder="t('common.receiverSelector.selectReceiverType')"
         @change="handleTypeChange"
       >
-        <a-select-option value="USER">指定用户</a-select-option>
-        <a-select-option value="ROLE">角色</a-select-option>
-        <a-select-option value="DEPT">部门</a-select-option>
-        <a-select-option value="POSITION">职位</a-select-option>
-        <a-select-option value="CUSTOM">自定义</a-select-option>
+        <a-select-option value="USER">{{ t('common.receiverSelector.typeUser') }}</a-select-option>
+        <a-select-option value="ROLE">{{ t('common.receiverSelector.typeRole') }}</a-select-option>
+        <a-select-option value="DEPT">{{ t('common.receiverSelector.typeDept') }}</a-select-option>
+        <a-select-option value="POSITION">{{ t('common.receiverSelector.typePosition') }}</a-select-option>
+        <a-select-option value="CUSTOM">{{ t('common.receiverSelector.typeCustom') }}</a-select-option>
       </a-select>
     </a-form-item>
-    
+
     <a-form-item v-if="localReceiver.receiverType !== 'CUSTOM'" :label="getReceiverLabel()" required>
       <a-select
         v-model:value="localReceiver.receiverIds"
         mode="multiple"
-        :placeholder="`请选择${getReceiverLabel()}`"
+        :placeholder="t('common.receiverSelector.selectReceiver', { label: getReceiverLabel() })"
         :options="receiverOptions"
         :loading="loading"
         :filter-option="filterOption"
@@ -27,15 +27,15 @@
         @change="handleReceiverChange"
       >
         <template #notFoundContent>
-          <a-empty :description="loading ? '加载中...' : '暂无数据'" />
+          <a-empty :description="loading ? t('common.loading') : t('common.noData')" />
         </template>
       </a-select>
     </a-form-item>
-    
-    <a-form-item v-else label="说明">
+
+    <a-form-item v-else :label="t('common.description')">
       <a-alert
-        message="自定义类型"
-        description="选择自定义类型后，接收人将由后端程序在运行时动态指定，无需在此处配置具体接收人。"
+        :message="t('common.receiverSelector.customTitle')"
+        :description="t('common.receiverSelector.customDescription')"
         type="info"
         show-icon
       />
@@ -44,8 +44,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { getRoleList } from '@/api/system/role'
 import { listDepartments } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
@@ -57,132 +58,113 @@ interface Receiver {
 }
 
 interface Props {
-  /** v-model 绑定的接收人对象，包含接收类型和接收人 ID 列表 */
   modelValue: Receiver
 }
 
 const props = defineProps<Props>()
-
 const emit = defineEmits<{
-  /**
-   * 接收人更新事件
-   * 触发时机：用户修改接收类型或接收人列表时触发
-   * @param value 新的接收人对象
-   */
   'update:modelValue': [value: Receiver]
 }>()
 
+const { t } = useI18n()
 const localReceiver = ref<Receiver>({ ...props.modelValue })
 const loading = ref(false)
 const receiverOptions = ref<Array<{ label: string; value: string }>>([])
 
-// 获取接收人标签
-const getReceiverLabel = () => {
+function getReceiverLabel() {
   const labelMap: Record<string, string> = {
-    USER: '用户',
-    ROLE: '角色',
-    DEPT: '部门',
-    POSITION: '职位'
+    USER: t('common.receiverSelector.labelUser'),
+    ROLE: t('common.receiverSelector.labelRole'),
+    DEPT: t('common.receiverSelector.labelDept'),
+    POSITION: t('common.receiverSelector.labelPosition'),
   }
-  return labelMap[localReceiver.value.receiverType || ''] || '接收人'
+  return labelMap[localReceiver.value.receiverType || ''] || t('common.receiverSelector.receiver')
 }
 
-// 过滤选项
-const filterOption = (input: string, option: any) => {
-  return option.label.toLowerCase().includes(input.toLowerCase())
+function filterOption(input: string, option: any) {
+  return String(option?.label || '').toLowerCase().includes(input.toLowerCase())
 }
 
-// 加载接收人选项
-const loadReceiverOptions = async () => {
+async function loadReceiverOptions() {
   if (!localReceiver.value.receiverType) {
     receiverOptions.value = []
     return
   }
-  
+
   loading.value = true
   try {
-    let data: any[] = []
-    
+    let data: Array<{ label: string; value: string }> = []
+
     switch (localReceiver.value.receiverType) {
-      case 'USER':
+      case 'USER': {
         const userRes = await getUserList({ pageNum: 1, pageSize: 1000 })
         data = (userRes.records || []).map((item: any) => ({
           label: `${item.username}(${item.account})`,
-          value: String(item.id)
+          value: String(item.id),
         }))
         break
-        
-      case 'ROLE':
+      }
+      case 'ROLE': {
         const roleRes = await getRoleList({})
         data = (roleRes || []).map((item: any) => ({
           label: item.roleName,
-          value: String(item.id)
+          value: String(item.id),
         }))
         break
-        
-      case 'DEPT':
+      }
+      case 'DEPT': {
         const deptRes = await listDepartments({})
         data = (deptRes || []).map((item: any) => ({
           label: item.deptName,
-          value: String(item.id)
+          value: String(item.id),
         }))
         break
-        
-      case 'POSITION':
+      }
+      case 'POSITION': {
         const posRes = await listPositions({})
         data = (posRes || []).map((item: any) => ({
           label: item.positionName,
-          value: String(item.id)
+          value: String(item.id),
         }))
         break
+      }
     }
-    
+
     receiverOptions.value = data
   } catch (error) {
-    console.error('加载接收人选项失败:', error)
-    message.error('加载接收人选项失败')
+    console.error('[ReceiverSelector] load receiver options failed:', error)
+    message.error(t('common.receiverSelector.loadFailed'))
   } finally {
     loading.value = false
   }
 }
 
-// 接收类型变化
-const handleTypeChange = () => {
+function handleTypeChange() {
   localReceiver.value.receiverIds = []
   if (localReceiver.value.receiverType !== 'CUSTOM') {
-    loadReceiverOptions()
+    void loadReceiverOptions()
   }
   emitChange()
 }
 
-// 接收人变化
-const handleReceiverChange = () => {
+function handleReceiverChange() {
   emitChange()
 }
 
-// 触发变化
-const emitChange = () => {
+function emitChange() {
   emit('update:modelValue', { ...localReceiver.value })
 }
 
-// 监听外部值变化
 watch(() => props.modelValue, (newVal) => {
   localReceiver.value = { ...newVal }
   if (newVal.receiverType && newVal.receiverType !== 'CUSTOM') {
-    loadReceiverOptions()
+    void loadReceiverOptions()
   }
 }, { deep: true })
 
-// 初始化
 onMounted(() => {
   if (localReceiver.value.receiverType && localReceiver.value.receiverType !== 'CUSTOM') {
-    loadReceiverOptions()
+    void loadReceiverOptions()
   }
 })
 </script>
-
-<style scoped lang="less">
-.receiver-selector {
-  // 样式可以根据需要添加
-}
-</style>

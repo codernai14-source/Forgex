@@ -113,6 +113,17 @@
   gap: 8px;
 }
 
+.fx-table-toolbar-left :deep(.ant-space) {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.fx-table-toolbar-left :deep(.ant-btn) {
+  min-height: 32px;
+  height: auto;
+  white-space: normal;
+}
+
 .fx-table-toolbar-right {
   display: flex;
   align-items: flex-start;
@@ -156,6 +167,20 @@
 
 .fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th) {
   position: relative;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-cell-fix-right),
+.fx-dynamic-table-wrap :deep(.ant-table-cell-fix-left) {
+  background: var(--fx-bg-container, #ffffff);
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-tbody > tr > td.ant-table-cell-fix-right) {
+  z-index: 2;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-cell-fix-right .fx-action-group) {
+  max-width: 100%;
+  justify-content: flex-start;
 }
 
 .fx-dynamic-table-wrap :deep(.fx-table-th-title) {

@@ -1,5 +1,6 @@
 import i18n, { getLocale, type LocaleCode } from '@/locales'
 import legacyTextMessages from '@/locales/legacyText'
+import staticViewTextMessages from '@/locales/staticViewText'
 import { watch } from 'vue'
 
 type TranslatePattern = {
@@ -44,6 +45,60 @@ const legacyPatterns: TranslatePattern[] = [
       'zh-TW': '客戶租戶已建立：{0}',
       'ja-JP': '顧客テナントを作成しました: {0}',
       'ko-KR': '고객 테넌트 생성됨: {0}',
+    },
+  },
+  {
+    match: /^确定要删除(.+)[“"](.+)[”"]吗？$/,
+    values: {
+      'en-US': 'Delete {0} "{1}"?',
+      'zh-TW': '確定要刪除{0}「{1}」嗎？',
+      'ja-JP': '{0}「{1}」を削除しますか？',
+      'ko-KR': '{0} "{1}"을(를) 삭제하시겠습니까?',
+    },
+  },
+  {
+    match: /^确定要删除(.+)\s*["“](.+)["”]\s*吗？$/,
+    values: {
+      'en-US': 'Delete {0} "{1}"?',
+      'zh-TW': '確定要刪除{0}「{1}」嗎？',
+      'ja-JP': '{0}「{1}」を削除しますか？',
+      'ko-KR': '{0} "{1}"을(를) 삭제하시겠습니까?',
+    },
+  },
+  {
+    match: /^确定要删除选中的\s+(\d+)\s+个(.+)吗？$/,
+    values: {
+      'en-US': 'Delete the selected {0} {1}?',
+      'zh-TW': '確定要刪除選中的 {0} 個{1}嗎？',
+      'ja-JP': '選択した {0} 件の{1}を削除しますか？',
+      'ko-KR': '선택한 {0}개의 {1}을(를) 삭제하시겠습니까?',
+    },
+  },
+  {
+    match: /^确定删除该绑定关系吗？（(.+)）$/,
+    values: {
+      'en-US': 'Delete this binding relation? ({0})',
+      'zh-TW': '確定刪除此綁定關係嗎？（{0}）',
+      'ja-JP': 'このバインド関係を削除しますか？（{0}）',
+      'ko-KR': '이 바인딩 관계를 삭제하시겠습니까? ({0})',
+    },
+  },
+  {
+    match: /^确定要将["“](.+)["”]设为该类型的默认模板吗？$/,
+    values: {
+      'en-US': 'Set "{0}" as the default template for this type?',
+      'zh-TW': '確定要將「{0}」設為該類型的預設模板嗎？',
+      'ja-JP': '「{0}」をこのタイプの既定テンプレートに設定しますか？',
+      'ko-KR': '"{0}"을(를) 이 유형의 기본 템플릿으로 설정하시겠습니까?',
+    },
+  },
+  {
+    match: /^将对选中的\s+(\d+)\s+个会话执行强制下线。$/,
+    values: {
+      'en-US': 'Force offline the selected {0} sessions.',
+      'zh-TW': '將對選中的 {0} 個會話執行強制下線。',
+      'ja-JP': '選択した {0} 件のセッションを強制オフラインにします。',
+      'ko-KR': '선택한 {0}개 세션을 강제 오프라인 처리합니다.',
     },
   },
   {
@@ -103,7 +158,7 @@ function translateNormalizedText(text: string, locale: LocaleCode): string {
     return text
   }
 
-  const entry = legacyTextMessages[trimmed]
+  const entry = legacyTextMessages[trimmed] || staticViewTextMessages[trimmed]
   if (entry?.[locale]) {
     return entry[locale] as string
   }

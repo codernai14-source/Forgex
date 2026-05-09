@@ -4,27 +4,27 @@
     <a-row :gutter="16" style="height: calc(100vh - 280px); min-height: 600px;">
       <!-- 左侧：组件面板 -->
       <a-col :span="5">
-        <a-card title="组件库" size="small" class="panel-card">
+        <a-card :title="$tl('组件库')" size="small" class="panel-card">
           <template #title>
             <div class="panel-title">
               <AppstoreOutlined />
-              <span>组件库</span>
+              <span>{{ $tl('组件库') }}</span>
             </div>
           </template>
           <a-collapse v-model:activeKey="activeKeys" :bordered="false">
-            <a-collapse-panel key="basic" header="基础组件">
+            <a-collapse-panel key="basic" :header="$tl('基础组件')">
               <div v-for="comp in basicComponents" :key="comp.type"
                    class="component-item"
                    draggable="true"
                    @dragstart="handleDragStart(comp)">
                 <div class="component-content">
                   <component :is="comp.icon" style="font-size: 18px;" />
-                  <span class="component-name">{{ comp.name }}</span>
+                  <span class="component-name">{{ t(comp.nameKey) }}</span>
                 </div>
               </div>
             </a-collapse-panel>
 
-            <a-collapse-panel key="data" header="数据字段">
+            <a-collapse-panel key="data" :header="$tl('数据字段')">
               <div v-for="field in availableFields" :key="field.key"
                    class="field-item"
                    draggable="true"
@@ -44,16 +44,16 @@
 
       <!-- 中间：画布区域 -->
       <a-col :span="13">
-        <a-card title="画布预览" size="small" class="panel-card">
+        <a-card :title="$tl('画布预览')" size="small" class="panel-card">
           <template #title>
             <div class="panel-title">
               <EditOutlined />
-              <span>画布预览</span>
+              <span>{{ $tl('画布预览') }}</span>
             </div>
           </template>
           <template #extra>
             <a-space size="small">
-              <a-tooltip title="纸张尺寸">
+              <a-tooltip :title="$tl('纸张尺寸')">
                 <a-select v-model:value="canvasConfig.paperSize" style="width: 130px" size="small">
                   <a-select-option value="60x40">60×40 mm</a-select-option>
                   <a-select-option value="80x60">80×60 mm</a-select-option>
@@ -63,11 +63,11 @@
               </a-tooltip>
               <a-button size="small" @click="handlePreview">
                 <template #icon><EyeOutlined /></template>
-                预览
+                {{ $tl('预览') }}
               </a-button>
               <a-button size="small" danger @click="handleClearCanvas">
                 <template #icon><DeleteOutlined /></template>
-                清空
+                {{ $tl('清空') }}
               </a-button>
             </a-space>
           </template>
@@ -80,8 +80,8 @@
               <div class="label-canvas" :style="labelSizeStyle">
                 <div v-if="elements.length === 0" class="empty-tip">
                   <InboxOutlined style="font-size: 48px; color: #d9d9d9; margin-bottom: 16px;" />
-                  <div class="empty-text">拖拽组件到此处</div>
-                  <div class="empty-hint">从左侧选择组件或数据字段，拖拽到画布中</div>
+                  <div class="empty-text">{{ $tl('拖拽组件到此处') }}</div>
+                  <div class="empty-hint">{{ $tl('从左侧选择组件或数据字段，拖拽到画布中') }}</div>
                 </div>
                 <div v-for="el in elements" :key="el.id"
                      class="canvas-element"
@@ -92,19 +92,19 @@
                   <div class="element-content">
                     <template v-if="el.type === 'text'">
                       <FontSizeOutlined />
-                      <span>{{ el.content || '文本' }}</span>
+                  <span>{{ el.content || t('label.template.editor.elementTypes.text') }}</span>
                     </template>
                     <template v-else-if="el.type === 'barcode'">
                       <BarcodeOutlined />
-                      <span>{{ el.content || '条码' }}</span>
+                  <span>{{ el.content || t('label.template.editor.elementTypes.barcode') }}</span>
                     </template>
                     <template v-else-if="el.type === 'qrcode'">
                       <QrcodeOutlined />
-                      <span>{{ el.content || '二维码' }}</span>
+                  <span>{{ el.content || t('label.template.editor.elementTypes.qrcode') }}</span>
                     </template>
                     <template v-else-if="el.type === 'image'">
                       <PictureOutlined />
-                      <span>{{ el.content || '图片' }}</span>
+                  <span>{{ el.content || t('label.template.editor.elementTypes.image') }}</span>
                     </template>
                     <template v-else-if="el.type === 'field'">
                       <FieldStringOutlined />
@@ -130,30 +130,30 @@
 
       <!-- 右侧：属性面板 -->
       <a-col :span="6">
-        <a-card title="属性配置" size="small" class="panel-card">
+        <a-card :title="$tl('属性配置')" size="small" class="panel-card">
           <template #title>
             <div class="panel-title">
               <SettingOutlined />
-              <span>属性配置</span>
+              <span>{{ $tl('属性配置') }}</span>
             </div>
           </template>
           <a-form v-if="selectedElement" layout="vertical" size="small">
-            <a-divider orientation="left" style="font-size: 12px;">基本信息</a-divider>
-            <a-form-item label="元素类型">
+            <a-divider orientation="left" style="font-size: 12px;">{{ $tl('基本信息') }}</a-divider>
+            <a-form-item :label="$tl('元素类型')">
               <a-tag :color="getTypeColor(selectedElement.type)">
                 {{ getTypeName(selectedElement.type) }}
               </a-tag>
             </a-form-item>
             
             <template v-if="selectedElement.type === 'text' || selectedElement.type === 'field'">
-              <a-form-item label="文本内容">
+              <a-form-item :label="$tl('文本内容')">
                 <a-textarea 
                   v-model:value="selectedElement.content" 
-                  placeholder="输入文本内容"
+                  :placeholder="$tl('输入文本内容')"
                   :rows="2"
                 />
               </a-form-item>
-              <a-form-item label="字体大小">
+              <a-form-item :label="$tl('字体大小')">
                 <a-input-number 
                   v-model:value="selectedElement.fontSize" 
                   :min="8" 
@@ -162,19 +162,19 @@
                   addon-after="px"
                 />
               </a-form-item>
-              <a-form-item label="字体粗细">
+              <a-form-item :label="$tl('字体粗细')">
                 <a-select v-model:value="selectedElement.fontWeight" style="width: 100%">
-                  <a-select-option :value="400">常规</a-select-option>
-                  <a-select-option :value="600">加粗</a-select-option>
-                  <a-select-option :value="700">粗体</a-select-option>
+                  <a-select-option :value="400">{{ $tl('常规') }}</a-select-option>
+                  <a-select-option :value="600">{{ $tl('加粗') }}</a-select-option>
+                  <a-select-option :value="700">{{ $tl('粗体') }}</a-select-option>
                 </a-select>
               </a-form-item>
             </template>
 
-            <a-divider orientation="left" style="font-size: 12px;">位置尺寸</a-divider>
+            <a-divider orientation="left" style="font-size: 12px;">{{ $tl('位置尺寸') }}</a-divider>
             <a-row :gutter="8">
               <a-col :span="12">
-                <a-form-item label="X 坐标">
+                <a-form-item :label="$tl('X 坐标')">
                   <a-input-number 
                     v-model:value="selectedElement.x" 
                     style="width: 100%"
@@ -183,7 +183,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="12">
-                <a-form-item label="Y 坐标">
+                <a-form-item :label="$tl('Y 坐标')">
                   <a-input-number 
                     v-model:value="selectedElement.y" 
                     style="width: 100%"
@@ -194,7 +194,7 @@
             </a-row>
             <a-row :gutter="8">
               <a-col :span="12">
-                <a-form-item label="宽度">
+                <a-form-item :label="$tl('宽度')">
                   <a-input-number 
                     v-model:value="selectedElement.width" 
                     :min="10" 
@@ -204,7 +204,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="12">
-                <a-form-item label="高度">
+                <a-form-item :label="$tl('高度')">
                   <a-input-number 
                     v-model:value="selectedElement.height" 
                     :min="10" 
@@ -215,13 +215,13 @@
               </a-col>
             </a-row>
 
-            <a-divider orientation="left" style="font-size: 12px;">操作</a-divider>
+            <a-divider orientation="left" style="font-size: 12px;">{{ $tl('操作') }}</a-divider>
             <a-button danger block @click="deleteElement">
               <template #icon><DeleteOutlined /></template>
-              删除元素
+              {{ $tl('删除元素') }}
             </a-button>
           </a-form>
-          <a-empty v-else description="请选择一个元素">
+          <a-empty v-else :description="$tl('请选择一个元素')">
             <template #image>
               <PictureOutlined style="font-size: 64px; color: #d9d9d9;" />
             </template>
@@ -234,8 +234,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, type CSSProperties } from 'vue'
-import { 
-  AppstoreOutlined, EditOutlined, SettingOutlined, 
+import { useI18n } from 'vue-i18n'
+import { translateLegacyText } from '@/utils/legacyI18n'
+import {
+AppstoreOutlined, EditOutlined, SettingOutlined, 
   FontSizeOutlined, BarcodeOutlined, QrcodeOutlined, 
   PictureOutlined, EyeOutlined, DeleteOutlined,
   FieldStringOutlined, InboxOutlined
@@ -247,6 +249,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
+const { t } = useI18n()
 const activeKeys = ref(['basic', 'data'])
 const elements = ref<any[]>([])
 const selectedElement = ref<any>(null)
@@ -255,21 +258,21 @@ const canvasConfig = ref({
 })
 
 const basicComponents = [
-  { type: 'text', name: '文本', icon: FontSizeOutlined },
-  { type: 'barcode', name: '条码', icon: BarcodeOutlined },
-  { type: 'qrcode', name: '二维码', icon: QrcodeOutlined },
-  { type: 'image', name: '图片', icon: PictureOutlined }
+  { type: 'text', nameKey: 'label.template.editor.elementTypes.text', icon: FontSizeOutlined },
+  { type: 'barcode', nameKey: 'label.template.editor.elementTypes.barcode', icon: BarcodeOutlined },
+  { type: 'qrcode', nameKey: 'label.template.editor.elementTypes.qrcode', icon: QrcodeOutlined },
+  { type: 'image', nameKey: 'label.template.editor.elementTypes.image', icon: PictureOutlined }
 ]
 
 const availableFields = [
-  { key: 'materialCode', label: '物料编码' },
-  { key: 'materialName', label: '物料名称' },
-  { key: 'lotNo', label: '批次号' },
-  { key: 'quantity', label: '数量' },
-  { key: 'printTime', label: '打印时间' },
-  { key: 'supplierName', label: '供应商名称' },
-  { key: 'customerName', label: '客户名称' },
-  { key: 'factoryName', label: '工厂名称' }
+  { key: 'materialCode', label: translateLegacyText('物料编码') },
+  { key: 'materialName', label: translateLegacyText('物料名称') },
+  { key: 'lotNo', label: translateLegacyText('批次号') },
+  { key: 'quantity', label: translateLegacyText('数量') },
+  { key: 'printTime', label: translateLegacyText('打印时间') },
+  { key: 'supplierName', label: translateLegacyText('供应商名称') },
+  { key: 'customerName', label: translateLegacyText('客户名称') },
+  { key: 'factoryName', label: translateLegacyText('工厂名称') }
 ]
 
 const labelSizeStyle = computed(() => {
@@ -464,11 +467,11 @@ function handlePreview() {
 
 function getTypeName(type: string): string {
   const names: Record<string, string> = {
-    'text': '文本',
-    'barcode': '条码',
-    'qrcode': '二维码',
-    'image': '图片',
-    'field': '数据字段'
+    'text': t('label.template.editor.elementTypes.text'),
+    'barcode': t('label.template.editor.elementTypes.barcode'),
+    'qrcode': t('label.template.editor.elementTypes.qrcode'),
+    'image': t('label.template.editor.elementTypes.image'),
+    'field': t('label.template.editor.elementTypes.field')
   }
   return names[type] || type
 }

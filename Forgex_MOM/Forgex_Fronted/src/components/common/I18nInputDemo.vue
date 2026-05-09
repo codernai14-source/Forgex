@@ -1,26 +1,26 @@
 <template>
   <div class="i18n-input-demo">
-    <a-card title="I18nInput 组件示例" :bordered="false">
+    <a-card :title="t('common.i18nInputDemo.title')" :bordered="false">
       <a-space direction="vertical" :size="24" style="width: 100%">
         <div class="demo-section">
-          <h3>示例 1：简单模式</h3>
-          <p class="description">适合在表单中使用，提供一个输入框和多语言配置按钮。</p>
+          <h3>{{ t('common.i18nInputDemo.simpleTitle') }}</h3>
+          <p class="description">{{ t('common.i18nInputDemo.simpleDesc') }}</p>
 
           <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 16 }">
-            <a-form-item label="菜单名称">
+            <a-form-item :label="t('common.i18nInputDemo.menuName')">
               <I18nInput
                 v-model="form1.nameI18nJson"
                 mode="simple"
-                placeholder="请输入菜单名称"
+                :placeholder="t('common.i18nInputDemo.menuNamePlaceholder')"
               />
             </a-form-item>
 
-            <a-form-item label="当前 JSON">
+            <a-form-item :label="t('common.i18nInputDemo.currentJson')">
               <a-textarea
                 :value="form1.nameI18nJson"
                 :rows="3"
                 disabled
-                placeholder="这里会显示生成后的 JSON"
+                :placeholder="t('common.i18nInputDemo.jsonPlaceholder')"
               />
             </a-form-item>
           </a-form>
@@ -29,18 +29,18 @@
         <a-divider />
 
         <div class="demo-section">
-          <h3>示例 2：表格模式</h3>
-          <p class="description">直接显示多语言表格，适合独立的多语言配置页面。</p>
+          <h3>{{ t('common.i18nInputDemo.tableTitle') }}</h3>
+          <p class="description">{{ t('common.i18nInputDemo.tableDesc') }}</p>
 
           <I18nInput v-model="form2.dictValueI18nJson" mode="table" />
 
           <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 16 }" style="margin-top: 16px">
-            <a-form-item label="当前 JSON">
+            <a-form-item :label="t('common.i18nInputDemo.currentJson')">
               <a-textarea
                 :value="form2.dictValueI18nJson"
                 :rows="3"
                 disabled
-                placeholder="这里会显示生成后的 JSON"
+                :placeholder="t('common.i18nInputDemo.jsonPlaceholder')"
               />
             </a-form-item>
           </a-form>
@@ -49,35 +49,35 @@
         <a-divider />
 
         <div class="demo-section">
-          <h3>示例 3：表单集成</h3>
-          <p class="description">模拟菜单管理表单中的多语言输入场景。</p>
+          <h3>{{ t('common.i18nInputDemo.formTitle') }}</h3>
+          <p class="description">{{ t('common.i18nInputDemo.formDesc') }}</p>
 
           <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 16 }">
-            <a-form-item label="菜单名称" required>
+            <a-form-item :label="t('common.i18nInputDemo.menuName')" required>
               <I18nInput
                 v-model="menuForm.nameI18nJson"
                 mode="simple"
-                placeholder="请输入菜单名称"
+                :placeholder="t('common.i18nInputDemo.menuNamePlaceholder')"
               />
             </a-form-item>
 
-            <a-form-item label="菜单路径">
-              <a-input v-model:value="menuForm.path" placeholder="请输入菜单路径" />
+            <a-form-item :label="t('common.i18nInputDemo.menuPath')">
+              <a-input v-model:value="menuForm.path" :placeholder="t('common.i18nInputDemo.menuPathPlaceholder')" />
             </a-form-item>
 
-            <a-form-item label="菜单图标">
-              <a-input v-model:value="menuForm.icon" placeholder="请输入图标名称" />
+            <a-form-item :label="t('common.i18nInputDemo.menuIcon')">
+              <a-input v-model:value="menuForm.icon" :placeholder="t('common.i18nInputDemo.menuIconPlaceholder')" />
             </a-form-item>
 
-            <a-form-item label="排序号">
+            <a-form-item :label="t('common.i18nInputDemo.orderNum')">
               <a-input-number v-model:value="menuForm.orderNum" :min="0" style="width: 100%" />
             </a-form-item>
 
             <a-form-item :wrapper-col="{ offset: 4, span: 16 }">
               <a-space>
-                <a-button type="primary" @click="handleSubmit">提交</a-button>
-                <a-button @click="handleReset">重置</a-button>
-                <a-button @click="handleViewJson">查看 JSON</a-button>
+                <a-button type="primary" @click="handleSubmit">{{ t('common.submit') }}</a-button>
+                <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
+                <a-button @click="handleViewJson">{{ t('common.i18nInputDemo.viewJson') }}</a-button>
               </a-space>
             </a-form-item>
           </a-form>
@@ -87,15 +87,15 @@
 
     <a-modal
       v-model:open="jsonModalVisible"
-      title="JSON 内容预览"
+      :title="t('common.i18nInputDemo.jsonPreview')"
       width="600px"
       :footer="null"
     >
       <a-descriptions bordered :column="1">
-        <a-descriptions-item label="菜单名称多语言 JSON">
-          <pre>{{ menuForm.nameI18nJson || '未配置' }}</pre>
+        <a-descriptions-item :label="t('common.i18nInputDemo.menuNameJson')">
+          <pre>{{ menuForm.nameI18nJson || t('common.i18nInputDemo.notConfigured') }}</pre>
         </a-descriptions-item>
-        <a-descriptions-item label="完整表单数据">
+        <a-descriptions-item :label="t('common.i18nInputDemo.formData')">
           <pre>{{ JSON.stringify(menuForm, null, 2) }}</pre>
         </a-descriptions-item>
       </a-descriptions>
@@ -105,8 +105,11 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import I18nInput from './I18nInput.vue'
+
+const { t } = useI18n()
 
 const form1 = reactive({
   nameI18nJson: '',
@@ -127,11 +130,11 @@ const jsonModalVisible = ref(false)
 
 const handleSubmit = () => {
   if (!menuForm.nameI18nJson) {
-    message.warning('请先配置菜单名称的多语言内容')
+    message.warning(t('common.i18nInputDemo.needConfig'))
     return
   }
 
-  message.success('提交成功')
+  message.success(t('common.submit'))
   console.log('menu form data:', menuForm)
 }
 
@@ -140,7 +143,7 @@ const handleReset = () => {
   menuForm.path = ''
   menuForm.icon = ''
   menuForm.orderNum = 0
-  message.info('表单已重置')
+  message.info(t('common.reset'))
 }
 
 const handleViewJson = () => {
@@ -166,11 +169,11 @@ const handleViewJson = () => {
   }
 
   pre {
-    background: #f5f5f5;
-    padding: 12px;
-    border-radius: 4px;
-    overflow-x: auto;
     margin: 0;
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 4px;
+    background: #f5f5f5;
   }
 }
 </style>
