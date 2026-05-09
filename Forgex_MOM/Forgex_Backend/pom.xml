@@ -39,6 +39,7 @@
         <aliyun-oss.version>3.17.4</aliyun-oss.version>
         <minio.version>8.5.7</minio.version>
         <aliyun-sms.version>2.0.24</aliyun-sms.version>
+        <ip2region.version>2.7.0</ip2region.version>
         <!-- 报表引擎版本 -->
         <ureport.version>2.2.10</ureport.version>
         <jimureport.version>1.9.0</jimureport.version>
@@ -158,6 +159,11 @@
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>ip2region</artifactId>
+                <version>${ip2region.version}</version>
             </dependency>
             <!-- Apache POI（Excel 读写） -->
             <dependency>
