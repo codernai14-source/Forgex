@@ -2,13 +2,13 @@
   <div class="material-page">
     <div class="page-header">
       <div>
-        <a-tag color="blue">基础数据</a-tag>
-        <h1>物料管理</h1>
-        <p>统一维护全部物料，并按物料类型快速筛选。</p>
+        <a-tag color="blue">{{ t('basic.material.sectionTag') }}</a-tag>
+        <h1>{{ t('basic.material.title') }}</h1>
+        <p>{{ t('basic.material.description') }}</p>
       </div>
       <a-space>
         <a-button v-permission="'basic:material:add'" type="primary" @click="openCreate">
-          <PlusOutlined /> 新增物料
+          <PlusOutlined /> {{ t('basic.material.add') }}
         </a-button>
       </a-space>
     </div>
@@ -22,7 +22,6 @@
       table-code="MaterialTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :fallback-config="tableFallbackConfig"
       row-key="id"
     >
       <template #materialType="{ record }">
@@ -33,7 +32,7 @@
 
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'success' : 'default'">
-          {{ record.status === 1 ? '启用' : '停用' }}
+          {{ record.status === 1 ? t('common.enable') : t('common.disable') }}
         </a-tag>
       </template>
 
@@ -45,34 +44,34 @@
 
       <template #action="{ record }">
         <a-space>
-          <a v-permission="'basic:material:query'" @click="openDetail(record)">详情</a>
-          <a v-permission="'basic:material:edit'" @click="openEdit(record)">编辑</a>
-          <a v-permission="'basic:material:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+          <a v-permission="'basic:material:query'" @click="openDetail(record)">{{ t('common.detail') }}</a>
+          <a v-permission="'basic:material:edit'" @click="openEdit(record)">{{ t('common.edit') }}</a>
+          <a v-permission="'basic:material:delete'" class="danger-link" @click="handleDelete(record)">{{ t('common.delete') }}</a>
         </a-space>
       </template>
     </FxDynamicTable>
 
-    <a-modal v-model:open="detailVisible" title="物料详情" width="800px" :footer="null">
+    <a-modal v-model:open="detailVisible" :title="t('basic.material.detail')" width="800px" :footer="null">
       <a-descriptions bordered :column="2" size="small">
-        <a-descriptions-item label="物料编码">{{ detailData.materialCode || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="物料名称">{{ detailData.materialName || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="物料类型">{{ labelOf(materialTypeOptions, detailData.materialType) }}</a-descriptions-item>
-        <a-descriptions-item label="物料分类">{{ detailData.materialCategory || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="规格型号">{{ detailData.specification || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="计量单位">{{ detailData.unit || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="品牌">{{ detailData.brand || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="状态">
+        <a-descriptions-item :label="t('basic.material.fields.code')">{{ detailData.materialCode || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.name')">{{ detailData.materialName || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.type')">{{ labelOf(materialTypeOptions, detailData.materialType) }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.category')">{{ detailData.materialCategory || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.specification')">{{ detailData.specification || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.unit')">{{ detailData.unit || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.brand')">{{ detailData.brand || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.status')">
           <a-tag :color="detailData.status === 1 ? 'success' : 'default'">
-            {{ detailData.status === 1 ? '启用' : '停用' }}
+            {{ detailData.status === 1 ? t('common.enable') : t('common.disable') }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="审批状态">
+        <a-descriptions-item :label="t('basic.material.fields.approvalStatus')">
           <a-tag :color="approvalStatusColor(detailData.approvalStatus)">
             {{ labelOf(approvalStatusOptions, detailData.approvalStatus) }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="详细描述" :span="2">{{ detailData.description || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.remark')" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('basic.material.fields.description')" :span="2">{{ detailData.description || '-' }}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
 
@@ -87,42 +86,42 @@
       <a-form :model="form" layout="vertical">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="物料编码" required>
-              <a-input v-model:value="form.materialCode" placeholder="请输入物料编码" />
+            <a-form-item :label="t('basic.material.fields.code')" required>
+              <a-input v-model:value="form.materialCode" :placeholder="t('basic.material.placeholder.code')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="物料名称" required>
-              <a-input v-model:value="form.materialName" placeholder="请输入物料名称" />
+            <a-form-item :label="t('basic.material.fields.name')" required>
+              <a-input v-model:value="form.materialName" :placeholder="t('basic.material.placeholder.name')" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="物料类型" required>
+            <a-form-item :label="t('basic.material.fields.type')" required>
               <a-select
                 v-model:value="form.materialType"
                 :disabled="activeTab !== ALL_TAB"
                 :options="materialTypeOptions"
-                placeholder="请选择物料类型"
+                :placeholder="t('basic.material.placeholder.type')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="物料分类">
-              <a-input v-model:value="form.materialCategory" placeholder="请输入物料分类" />
+            <a-form-item :label="t('basic.material.fields.category')">
+              <a-input v-model:value="form.materialCategory" :placeholder="t('basic.material.placeholder.category')" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="规格型号">
-              <a-input v-model:value="form.specification" placeholder="请输入规格型号" />
+            <a-form-item :label="t('basic.material.fields.specification')">
+              <a-input v-model:value="form.specification" :placeholder="t('basic.material.placeholder.specification')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="计量单位">
-              <a-select v-model:value="form.unit" placeholder="请选择计量单位" allow-clear show-search>
+            <a-form-item :label="t('basic.material.fields.unit')">
+              <a-select v-model:value="form.unit" :placeholder="t('basic.material.placeholder.unit')" allow-clear show-search>
                 <a-select-option v-for="item in unitOptions" :key="item.id" :value="item.unitName">
                   {{ item.unitName }} ({{ item.unitSymbol }})
                 </a-select-option>
@@ -132,21 +131,21 @@
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="品牌">
-              <a-input v-model:value="form.brand" placeholder="请输入品牌" />
+            <a-form-item :label="t('basic.material.fields.brand')">
+              <a-input v-model:value="form.brand" :placeholder="t('basic.material.placeholder.brand')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="状态">
+            <a-form-item :label="t('basic.material.fields.status')">
               <a-select v-model:value="form.status" :options="statusOptions" />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="备注">
-          <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+        <a-form-item :label="t('basic.material.fields.remark')">
+          <a-textarea v-model:value="form.remark" :rows="2" :placeholder="t('basic.material.placeholder.remark')" />
         </a-form-item>
-        <a-form-item label="详细描述">
-          <a-textarea v-model:value="form.description" :rows="3" placeholder="请输入详细描述" />
+        <a-form-item :label="t('basic.material.fields.description')">
+          <a-textarea v-model:value="form.description" :rows="3" :placeholder="t('basic.material.placeholder.description')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -157,9 +156,12 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { materialApi, type MaterialPageParam } from '@/api/basic/material'
 import { getAllUnits } from '@/api/basic/unit'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+
+const { t } = useI18n()
 
 const ALL_TAB = 'ALL'
 const DEFAULT_MATERIAL_TYPE = 'RAW_MATERIAL'
@@ -173,39 +175,39 @@ const isEdit = ref(false)
 const detailData = ref<any>({})
 const unitOptions = ref<any[]>([])
 
-const materialTabs = [
-  { value: ALL_TAB, label: '全部' },
-  { value: 'RAW_MATERIAL', label: '原材料' },
-  { value: 'SEMI_FINISHED', label: '半成品' },
-  { value: 'FINISHED_GOODS', label: '成品' },
-]
+const materialTabs = computed(() => [
+  { value: ALL_TAB, label: t('basic.material.tabs.all') },
+  { value: 'RAW_MATERIAL', label: t('basic.material.types.raw') },
+  { value: 'SEMI_FINISHED', label: t('basic.material.types.semiFinished') },
+  { value: 'FINISHED_GOODS', label: t('basic.material.types.finished') },
+])
 
-const materialTypeOptions = [
-  { value: 'RAW_MATERIAL', label: '原材料' },
-  { value: 'SEMI_FINISHED', label: '半成品' },
-  { value: 'FINISHED_GOODS', label: '成品' },
-  { value: 'OTHER', label: '其它' },
-]
+const materialTypeOptions = computed(() => [
+  { value: 'RAW_MATERIAL', label: t('basic.material.types.raw') },
+  { value: 'SEMI_FINISHED', label: t('basic.material.types.semiFinished') },
+  { value: 'FINISHED_GOODS', label: t('basic.material.types.finished') },
+  { value: 'OTHER', label: t('basic.material.types.other') },
+])
 
-const approvalStatusOptions = [
-  { value: 'NO_APPROVAL_REQUIRED', label: '无需审批' },
-  { value: 'PENDING', label: '待审批' },
-  { value: 'APPROVED', label: '已审批' },
-  { value: 'REJECTED', label: '已驳回' },
-]
+const approvalStatusOptions = computed(() => [
+  { value: 'NO_APPROVAL_REQUIRED', label: t('basic.material.approval.noApprovalRequired') },
+  { value: 'PENDING', label: t('basic.material.approval.pending') },
+  { value: 'APPROVED', label: t('basic.material.approval.approved') },
+  { value: 'REJECTED', label: t('basic.material.approval.rejected') },
+])
 
-const statusOptions = [
-  { value: 1, label: '启用' },
-  { value: 0, label: '停用' },
-]
+const statusOptions = computed(() => [
+  { value: 1, label: t('common.enable') },
+  { value: 0, label: t('common.disable') },
+])
 
 const dictOptions = computed(() => ({
-  materialType: materialTypeOptions,
-  material_type: materialTypeOptions,
-  status: statusOptions,
-  common_status: statusOptions,
-  approvalStatus: approvalStatusOptions,
-  material_approval_status: approvalStatusOptions,
+  materialType: materialTypeOptions.value,
+  material_type: materialTypeOptions.value,
+  status: statusOptions.value,
+  common_status: statusOptions.value,
+  approvalStatus: approvalStatusOptions.value,
+  material_approval_status: approvalStatusOptions.value,
 }))
 
 const form = reactive<any>({
@@ -222,33 +224,7 @@ const form = reactive<any>({
   description: '',
 })
 
-const tableFallbackConfig = {
-  tableCode: 'MaterialTable',
-  tableName: '物料管理',
-  tableType: 'BUSINESS',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  columns: [
-    { field: 'materialCode', title: '物料编码', width: 140, visible: true, order: 1 },
-    { field: 'materialName', title: '物料名称', width: 180, visible: true, order: 2 },
-    { field: 'materialType', title: '物料类型', width: 120, visible: true, order: 3 },
-    { field: 'materialCategory', title: '物料分类', width: 140, visible: true, order: 4 },
-    { field: 'specification', title: '规格型号', width: 160, visible: true, ellipsis: true, order: 5 },
-    { field: 'unit', title: '计量单位', width: 100, visible: true, order: 6 },
-    { field: 'brand', title: '品牌', width: 120, visible: true, order: 7 },
-    { field: 'status', title: '状态', width: 90, visible: true, order: 8 },
-    { field: 'approvalStatus', title: '审批状态', width: 120, visible: true, order: 9 },
-    { field: 'createTime', title: '创建时间', width: 180, visible: true, order: 10 },
-    { field: 'action', title: '操作', width: 180, fixed: 'right', visible: true, order: 99 },
-  ],
-  queryFields: [
-    { field: 'materialCode', label: '物料编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'materialName', label: '物料名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'materialCategory', label: '物料分类', queryType: 'input', queryOperator: 'like' },
-  ],
-}
-
-const dialogTitle = computed(() => (isEdit.value ? '编辑物料' : '新增物料'))
+const dialogTitle = computed(() => (isEdit.value ? t('basic.material.edit') : t('basic.material.add')))
 
 async function handleRequest(payload: {
   page: { current: number; pageSize: number }
@@ -311,17 +287,17 @@ function openDetail(record: any) {
 
 async function handleSave() {
   if (!form.materialCode || !form.materialName || !form.materialType) {
-    message.warning('请填写必填项')
+    message.warning(t('validation.required'))
     return
   }
   saving.value = true
   try {
     if (isEdit.value) {
       await materialApi.update(form)
-      message.success('更新成功')
+      message.success(t('common.updateSuccess'))
     } else {
       await materialApi.create(form)
-      message.success('创建成功')
+      message.success(t('common.createSuccess'))
     }
     dialogVisible.value = false
     tableRef.value?.refresh?.()
@@ -332,18 +308,18 @@ async function handleSave() {
 
 function handleDelete(record: any) {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除物料 "${record.materialName}" 吗？`,
+    title: t('common.delete'),
+    content: t('basic.material.confirmDelete', { name: record.materialName || '' }),
     onOk: async () => {
       await materialApi.delete({ id: record.id })
-      message.success('删除成功')
+      message.success(t('common.deleteSuccess'))
       tableRef.value?.refresh?.()
     },
   })
 }
 
-function labelOf(options: any[], value: any) {
-  const item = options.find(option => option.value === value)
+function labelOf(options: Array<{ value: string; label: string }>, value: any) {
+  const item = options.find((option) => option.value === value)
   return item ? item.label : (value || '-')
 }
 
@@ -371,7 +347,7 @@ onMounted(async () => {
   try {
     const res: any = await getAllUnits()
     unitOptions.value = Array.isArray(res) ? res : (res?.data || [])
-  } catch (e) {
+  } catch {
     unitOptions.value = []
   }
 })
@@ -394,24 +370,27 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  padding: 10px 0 0;
 }
 
 .page-header h1 {
-  margin: 8px 0 4px;
+  margin: 6px 0 4px;
   font-size: 20px;
+  line-height: 1.25;
   font-weight: 600;
 }
 
 .page-header p {
   margin: 0;
   color: #666;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .material-tabs {
   flex-shrink: 0;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .material-page :deep(.fx-dynamic-table) {
@@ -421,15 +400,5 @@ onMounted(async () => {
 
 .danger-link {
   color: #ff4d4f;
-}
-
-@media (max-width: 768px) {
-  .material-page {
-    padding: 16px;
-  }
-
-  .page-header {
-    flex-direction: column;
-  }
 }
 </style>

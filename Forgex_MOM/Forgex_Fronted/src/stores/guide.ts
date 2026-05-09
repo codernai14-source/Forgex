@@ -6,6 +6,7 @@ import type { GuidePreferenceConfig, GuideState, GuideStatus } from '@/types/gui
 function createDefaultGuidePreference(): GuidePreferenceConfig {
   return {
     babyModeEnabled: false,
+    systemPageGuideDisabled: false,
     guideStates: {},
   }
 }
@@ -13,6 +14,7 @@ function createDefaultGuidePreference(): GuidePreferenceConfig {
 function normalizeGuidePreference(config?: Partial<GuidePreferenceConfig> | null): GuidePreferenceConfig {
   return {
     babyModeEnabled: config?.babyModeEnabled === true,
+    systemPageGuideDisabled: config?.systemPageGuideDisabled === true,
     guideStates: config?.guideStates && typeof config.guideStates === 'object'
       ? { ...config.guideStates }
       : {},
@@ -36,6 +38,7 @@ export const useGuideStore = defineStore('guide', () => {
   const sessionOverrides = ref<Record<string, GuideState>>({})
 
   const babyModeEnabled = computed(() => preference.value.babyModeEnabled === true)
+  const systemPageGuideDisabled = computed(() => preference.value.systemPageGuideDisabled === true)
 
   function getMergedGuideState(guideCode: string): GuideState | undefined {
     if (!guideCode) {
@@ -59,6 +62,13 @@ export const useGuideStore = defineStore('guide', () => {
       return true
     }
     return state.status === 'PENDING'
+  }
+
+  function shouldAutoStartSystemPageGuide(guideCode: string, version?: string): boolean {
+    if (systemPageGuideDisabled.value && !babyModeEnabled.value) {
+      return false
+    }
+    return shouldAutoStartGuide(guideCode, version)
   }
 
   async function loadPreference(force = false) {
@@ -120,6 +130,15 @@ export const useGuideStore = defineStore('guide', () => {
   async function setBabyModeEnabled(enabled: boolean) {
     const next = normalizeGuidePreference(preference.value)
     next.babyModeEnabled = enabled
+    if (enabled) {
+      next.systemPageGuideDisabled = false
+    }
+    await persistPreference(next)
+  }
+
+  async function setSystemPageGuideDisabled(disabled: boolean) {
+    const next = normalizeGuidePreference(preference.value)
+    next.systemPageGuideDisabled = disabled
     await persistPreference(next)
   }
 
@@ -181,10 +200,13 @@ export const useGuideStore = defineStore('guide', () => {
     saving,
     currentGuideCode,
     babyModeEnabled,
+    systemPageGuideDisabled,
     loadPreference,
     persistPreference,
     setBabyModeEnabled,
+    setSystemPageGuideDisabled,
     shouldAutoStartGuide,
+    shouldAutoStartSystemPageGuide,
     getMergedGuideState,
     markGuideSkipped,
     markGuideCompleted,

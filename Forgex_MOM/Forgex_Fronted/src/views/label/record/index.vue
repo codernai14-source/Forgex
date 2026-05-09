@@ -1,10 +1,9 @@
-<template>
+﻿<template>
   <div class="page-container">
     <FxDynamicTable
         ref="tableRef"
         :request="loadData"
         table-code="LabelPrintRecordTable"
-        :fallback-config="fallbackConfig"
     >
       <!-- 自定义列渲染 -->
       <template #templateType="{ record }">
@@ -12,15 +11,15 @@
       </template>
 
       <template #isReprint="{ record }">
-        <a-tag v-if="record.isReprint" color="orange">补打</a-tag>
-        <a-tag v-else color="green">首次</a-tag>
+        <a-tag v-if="record.isReprint" color="orange">{{ t('label.record.reprint') }}</a-tag>
+        <a-tag v-else color="green">{{ t('label.record.firstPrint') }}</a-tag>
       </template>
 
       <!-- 行操作 -->
       <template #action="{ record }">
         <a-space>
-          <a @click="handleView(record)">详情</a>
-          <a @click="handleReprint(record)">补打</a>
+          <a @click="handleView(record)">{{ t('common.detail') }}</a>
+          <a @click="handleReprint(record)">{{ t('label.record.reprint') }}</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -28,54 +27,54 @@
     <!-- 详情弹窗 -->
     <a-drawer
         v-model:open="detailVisible"
-        title="打印记录详情"
+        :title="t('label.record.detailTitle')"
         width="900px"
         placement="right"
     >
       <a-descriptions :column="2" bordered size="small">
-        <a-descriptions-item label="打印流水号">
+        <a-descriptions-item :label="t('label.record.printNo')">
           <a-tag color="blue">{{ detailData.printNo }}</a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="模板类型">
+        <a-descriptions-item :label="t('label.record.templateType')">
           <a-tag color="blue">{{ getTemplateTypeName(detailData.templateType) }}</a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="模板名称">{{ detailData.templateName }}</a-descriptions-item>
-        <a-descriptions-item label="模板版本">v{{ detailData.templateVersion }}</a-descriptions-item>
-        <a-descriptions-item label="条码号">
+        <a-descriptions-item :label="t('label.record.templateName')">{{ detailData.templateName }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.templateVersion')">v{{ detailData.templateVersion }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.barcodeNo')">
           <a-tag>{{ detailData.barcodeNo || '-' }}</a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="LOT号">{{ detailData.lotNo || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="批次号">{{ detailData.batchNo || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="物料编码">{{ detailData.materialCode || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="物料名称">{{ detailData.materialName || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="打印张数">
-          <a-tag color="green">{{ detailData.printCount }} 张</a-tag>
+        <a-descriptions-item :label="t('label.record.lotNo')">{{ detailData.lotNo || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.batchNo')">{{ detailData.batchNo || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.materialCode')">{{ detailData.materialCode || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.materialName')">{{ detailData.materialName || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.printCount')">
+          <a-tag color="green">{{ detailData.printCount }} {{ t('label.record.sheetUnit') }}</a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="打印类型">
-          <a-tag v-if="detailData.printType === 'REPRINT'" color="orange">补打</a-tag>
-          <a-tag v-else color="green">正常打印</a-tag>
+        <a-descriptions-item :label="t('label.record.printType')">
+          <a-tag v-if="detailData.printType === 'REPRINT'" color="orange">{{ t('label.record.reprint') }}</a-tag>
+          <a-tag v-else color="green">{{ t('label.record.normalPrint') }}</a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="操作人">{{ detailData.operatorName }}</a-descriptions-item>
-        <a-descriptions-item label="打印时间">{{ detailData.printTime }}</a-descriptions-item>
-        <a-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.operator')">{{ detailData.operatorName }}</a-descriptions-item>
+        <a-descriptions-item :label="t('label.record.printTime')">{{ detailData.printTime }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.remark')" :span="2">{{ detailData.remark || '-' }}</a-descriptions-item>
       </a-descriptions>
 
       <!-- 打印数据快照 -->
       <div class="snapshot-section">
         <a-divider orientation="left">
-          <DatabaseOutlined /> 打印数据快照
+          <DatabaseOutlined /> {{ t('label.record.snapshot') }}
         </a-divider>
 
         <a-tabs v-model:activeKey="snapshotActiveKey" type="card" size="small">
           <!-- JSON 视图 -->
-          <a-tab-pane key="json" tab="JSON 格式">
+          <a-tab-pane key="json" :tab="t('label.record.jsonFormat')">
             <div class="snapshot-container">
               <pre class="json-viewer">{{ formattedSnapshot }}</pre>
             </div>
           </a-tab-pane>
 
           <!-- 表格视图 -->
-          <a-tab-pane key="table" tab="表格视图" v-if="snapshotDataArray.length > 0">
+          <a-tab-pane key="table" :tab="t('label.record.tableView')" v-if="snapshotDataArray.length > 0">
             <a-table
                 :columns="snapshotColumns"
                 :data-source="snapshotDataArray"
@@ -96,10 +95,10 @@
       <!-- 打印结果 JSON -->
       <div class="snapshot-section" v-if="detailData.printResultJson">
         <a-divider orientation="left">
-          <FileTextOutlined /> 打印结果模板
+          <FileTextOutlined /> {{ t('label.record.printResultTemplate') }}
         </a-divider>
         <a-collapse v-model:activeKey="resultCollapseKey">
-          <a-collapse-panel key="1" header="查看打印模板内容">
+          <a-collapse-panel key="1" :header="t('label.record.viewPrintTemplateContent')">
             <div class="snapshot-container">
               <pre class="json-viewer">{{ formattedPrintResult }}</pre>
             </div>
@@ -109,9 +108,9 @@
 
       <template #footer>
         <a-space>
-          <a-button @click="detailVisible = false">关闭</a-button>
+          <a-button @click="detailVisible = false">{{ t('common.close') }}</a-button>
           <a-button type="primary" @click="handleReprintFromDetail">
-            <PrinterOutlined /> 补打
+            <PrinterOutlined /> {{ t('label.record.reprint') }}
           </a-button>
         </a-space>
       </template>
@@ -121,11 +120,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { DatabaseOutlined, FileTextOutlined, PrinterOutlined } from '@ant-design/icons-vue'
 import { labelRecordApi } from '@/api/label/record'
-import { labelPrintApi } from '@/api/label/print'
-
+import { labelPrintApi } from '@/api/label/print'
+const { t } = useI18n()
 const tableRef = ref()
 const detailVisible = ref(false)
 const detailData = ref<any>({})
@@ -135,35 +135,6 @@ const resultCollapseKey = ref([])
 /**
  * 打印记录表格降级配置
  */
-const fallbackConfig = ref({
-  tableName: '打印记录',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'printNo', title: '打印流水号', width: 180, align: 'center' },
-    { field: 'templateName', title: '模板名称', width: 150, align: 'center' },
-    { field: 'templateType', title: '模板类型', width: 120, align: 'center' },
-    { field: 'barcodeNo', title: '条码号', width: 160, align: 'center' },
-    { field: 'materialCode', title: '物料编码', width: 130, align: 'center' },
-    { field: 'materialName', title: '物料名称', width: 150, align: 'center' },
-    { field: 'lotNo', title: 'LOT号', width: 130, align: 'center' },
-    { field: 'batchNo', title: '批次号', width: 130, align: 'center' },
-    { field: 'printCount', title: '打印张数', width: 100, align: 'center' },
-    { field: 'operatorName', title: '操作人', width: 100, align: 'center' },
-    { field: 'printTime', title: '打印时间', width: 170, align: 'center', sortable: true },
-    { field: 'printType', title: '打印类型', width: 100, align: 'center' },
-    { field: 'remark', title: '备注', width: 150, align: 'center', ellipsis: true },
-    { field: 'action', title: '操作', width: 140, align: 'center', fixed: 'right' }
-  ],
-  queryFields: [
-    { field: 'printNo', label: '打印流水号', queryType: 'input' },
-    { field: 'templateType', label: '模板类型', queryType: 'select' },
-    { field: 'barcodeNo', label: '条码号', queryType: 'input' },
-    { field: 'materialCode', label: '物料编码', queryType: 'input' },
-    { field: 'materialName', label: '物料名称', queryType: 'input' },
-    { field: 'printTime', label: '打印时间', queryType: 'dateRange' }
-  ]
-})
 
 // 加载数据
 async function loadData(params: any) {
@@ -188,7 +159,7 @@ async function handleView(record: any) {
     detailData.value = res
     detailVisible.value = true
   } catch (e) {
-    message.error('加载详情失败')
+    message.error(t('label.record.loadDetailFailed'))
   }
 }
 
@@ -199,10 +170,10 @@ async function handleReprint(record: any) {
       recordId: record.id,
       reprintCount: 1
     })
-    message.success('补打成功')
+    message.success(t('label.record.reprintSuccess'))
     tableRef.value?.reload()
   } catch (e: any) {
-    message.error(e.message || '补打失败')
+    message.error(e.message || t('label.record.reprintFailed'))
   }
 }
 
@@ -213,26 +184,26 @@ async function handleReprintFromDetail() {
       recordId: detailData.value.id,
       reprintCount: 1
     })
-    message.success('补打成功')
+    message.success(t('label.record.reprintSuccess'))
     detailVisible.value = false
     tableRef.value?.reload()
   } catch (e: any) {
-    message.error(e.message || '补打失败')
+    message.error(e.message || t('label.record.reprintFailed'))
   }
 }
 
 // 获取模板类型名称
 function getTemplateTypeName(type: string) {
   const typeMap: Record<string, string> = {
-    INCOMING: '来料标签',
-    PRODUCT: '产品标签',
-    LOT: 'LOT批次标签',
-    CUSTOMER_MARK: '客户唛头',
-    SPQ_INNER: 'SPQ内箱标签',
-    PQ_OUTER: 'PQ外箱标签',
-    ENG_CARD_PACKAGE: '工程卡包装标签',
-    WORKSTATION: '工位标识标签',
-    EQUIPMENT: '设备标识标签'
+    INCOMING: t('label.templateTypes.INCOMING'),
+    PRODUCT: t('label.templateTypes.PRODUCT'),
+    LOT: t('label.templateTypes.LOT'),
+    CUSTOMER_MARK: t('label.templateTypes.CUSTOMER_MARK'),
+    SPQ_INNER: t('label.templateTypes.SPQ_INNER'),
+    PQ_OUTER: t('label.templateTypes.PQ_OUTER'),
+    ENG_CARD_PACKAGE: t('label.templateTypes.ENG_CARD_PACKAGE'),
+    WORKSTATION: t('label.templateTypes.WORKSTATION'),
+    EQUIPMENT: t('label.templateTypes.EQUIPMENT')
   }
   return typeMap[type] || type
 }
@@ -240,13 +211,13 @@ function getTemplateTypeName(type: string) {
 // 格式化快照 JSON
 const formattedSnapshot = computed(() => {
   try {
-    if (!detailData.value.dataSnapshot) return '暂无快照数据'
+    if (!detailData.value.dataSnapshot) return t('label.record.noSnapshotData')
     const data = typeof detailData.value.dataSnapshot === 'string'
         ? JSON.parse(detailData.value.dataSnapshot)
         : detailData.value.dataSnapshot
     return JSON.stringify(data, null, 2)
   } catch {
-    return detailData.value.dataSnapshot || '暂无快照数据'
+    return detailData.value.dataSnapshot || t('label.record.noSnapshotData')
   }
 })
 
@@ -301,14 +272,14 @@ const snapshotColumns = computed(() => {
   if (keys.length === 2 && keys.includes('fieldName')) {
     // 键值对格式
     return [
-      { title: '序号', dataIndex: 'index', width: 60, align: 'center' },
-      { title: '字段名', dataIndex: 'fieldName', width: 200 },
-      { title: '字段值', dataIndex: 'fieldValue' }
+      { title: t('label.record.sequence'), dataIndex: 'index', width: 60, align: 'center' },
+      { title: t('label.record.fieldName'), dataIndex: 'fieldName', width: 200 },
+      { title: t('label.record.fieldValue'), dataIndex: 'fieldValue' }
     ]
   } else {
     // 对象数组格式
     return [
-      { title: '序号', dataIndex: 'index', width: 60, align: 'center' },
+      { title: t('label.record.sequence'), dataIndex: 'index', width: 60, align: 'center' },
       ...keys.map(key => ({
         title: key,
         dataIndex: key,
@@ -363,3 +334,4 @@ const snapshotColumns = computed(() => {
   background-color: #fafafa;
 }
 </style>
+

@@ -2,34 +2,28 @@
   <div class="packaging-page">
     <div class="page-header">
       <div>
-        <a-tag color="blue">基础数据</a-tag>
-        <h1>包装方式管理</h1>
-        <p>统一维护物料的包装方式信息，支持多种包装规格和材质配置。</p>
+        <a-tag color="blue">{{ t('basic.packaging.sectionTag') }}</a-tag>
+        <h1>{{ t('basic.packaging.title') }}</h1>
+        <p>{{ t('basic.packaging.description') }}</p>
       </div>
       <a-space>
         <a-button v-permission="'basic:packaging:add'" type="primary" @click="openCreate">
-          <PlusOutlined /> 新增包装
+          <PlusOutlined /> {{ t('basic.packaging.add') }}
         </a-button>
       </a-space>
     </div>
 
-    <FxDynamicTable
-      ref="tableRef"
-      table-code="BasicPackagingTypeTable"
-      :request="handleRequest"
-      :fallback-config="tableFallbackConfig"
-      row-key="id"
-    >
+    <FxDynamicTable ref="tableRef" table-code="BasicPackagingTypeTable" :request="handleRequest" row-key="id">
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'success' : 'default'">
-          {{ record.status === 1 ? '启用' : '禁用' }}
+          {{ record.status === 1 ? t('common.enable') : t('common.disable') }}
         </a-tag>
       </template>
 
       <template #action="{ record }">
         <a-space>
-          <a v-permission="'basic:packaging:edit'" @click="openEdit(record)">编辑</a>
-          <a v-permission="'basic:packaging:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+          <a v-permission="'basic:packaging:edit'" @click="openEdit(record)">{{ t('common.edit') }}</a>
+          <a v-permission="'basic:packaging:delete'" class="danger-link" @click="handleDelete(record)">{{ t('common.delete') }}</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -45,82 +39,79 @@
       <a-form :model="form" layout="vertical">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="包装方式编码" required>
-              <a-input v-model:value="form.packagingCode" placeholder="请输入包装方式编码" />
+            <a-form-item :label="t('basic.packaging.fields.code')" required>
+              <a-input v-model:value="form.packagingCode" :placeholder="t('basic.packaging.placeholder.code')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="包装方式名称" required>
-              <a-input v-model:value="form.packagingName" placeholder="请输入包装方式名称" />
+            <a-form-item :label="t('basic.packaging.fields.name')" required>
+              <a-input v-model:value="form.packagingName" :placeholder="t('basic.packaging.placeholder.name')" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="包装材料">
-              <a-select v-model:value="form.packagingMaterial" placeholder="请选择包装材料" allow-clear>
-                <a-select-option value="carton">纸箱</a-select-option>
-                <a-select-option value="wooden_box">木箱</a-select-option>
-                <a-select-option value="pallet">托盘</a-select-option>
-                <a-select-option value="iron_drum">铁桶</a-select-option>
-                <a-select-option value="plastic_bag">塑料袋</a-select-option>
-                <a-select-option value="bubble_wrap">气泡膜</a-select-option>
-                <a-select-option value="other">其它</a-select-option>
+            <a-form-item :label="t('basic.packaging.fields.material')">
+              <a-select v-model:value="form.packagingMaterial" :placeholder="t('basic.packaging.placeholder.material')" allow-clear>
+                <a-select-option value="carton">{{ t('basic.packaging.materials.carton') }}</a-select-option>
+                <a-select-option value="wooden_box">{{ t('basic.packaging.materials.woodenBox') }}</a-select-option>
+                <a-select-option value="pallet">{{ t('basic.packaging.materials.pallet') }}</a-select-option>
+                <a-select-option value="iron_drum">{{ t('basic.packaging.materials.ironDrum') }}</a-select-option>
+                <a-select-option value="plastic_bag">{{ t('basic.packaging.materials.plasticBag') }}</a-select-option>
+                <a-select-option value="bubble_wrap">{{ t('basic.packaging.materials.bubbleWrap') }}</a-select-option>
+                <a-select-option value="other">{{ t('basic.packaging.materials.other') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="单位成本">
-              <a-input-number v-model:value="form.unitCost" :min="0" :precision="2" style="width: 100%" placeholder="单位成本" />
+            <a-form-item :label="t('basic.packaging.fields.unitCost')">
+              <a-input-number v-model:value="form.unitCost" :min="0" :precision="2" style="width: 100%" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item label="长度(mm)">
+            <a-form-item :label="t('basic.packaging.fields.lengthMm')">
               <a-input-number v-model:value="form.lengthMm" :min="0" :precision="2" style="width: 100%" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="宽度(mm)">
+            <a-form-item :label="t('basic.packaging.fields.widthMm')">
               <a-input-number v-model:value="form.widthMm" :min="0" :precision="2" style="width: 100%" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="高度(mm)">
+            <a-form-item :label="t('basic.packaging.fields.heightMm')">
               <a-input-number v-model:value="form.heightMm" :min="0" :precision="2" style="width: 100%" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="包装自重(kg)">
+            <a-form-item :label="t('basic.packaging.fields.weightKg')">
               <a-input-number v-model:value="form.weightKg" :min="0" :precision="2" style="width: 100%" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="最大承重(kg)">
+            <a-form-item :label="t('basic.packaging.fields.maxLoadKg')">
               <a-input-number v-model:value="form.maxLoadKg" :min="0" :precision="2" style="width: 100%" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="状态">
-              <a-select v-model:value="form.status" style="width: 100%">
-                <a-select-option :value="1">启用</a-select-option>
-                <a-select-option :value="0">禁用</a-select-option>
-              </a-select>
+            <a-form-item :label="t('basic.packaging.fields.status')">
+              <a-select v-model:value="form.status" :options="statusOptions" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="排序号">
+            <a-form-item :label="t('basic.packaging.fields.sortOrder')">
               <a-input-number v-model:value="form.sortOrder" :min="0" style="width: 100%" />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="备注">
-          <a-textarea v-model:value="form.remark" :rows="2" placeholder="请输入备注" />
+        <a-form-item :label="t('basic.packaging.fields.remark')">
+          <a-textarea v-model:value="form.remark" :rows="2" :placeholder="t('basic.packaging.placeholder.remark')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -128,16 +119,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { message, Modal } from 'ant-design-vue';
-import { PlusOutlined } from '@ant-design/icons-vue';
-import { createPackagingType, updatePackagingType, deletePackagingType, getPackagingTypePage } from '@/api/basic/packaging';
-import FxDynamicTable from '@/components/common/FxDynamicTable.vue';
+import { computed, reactive, ref } from 'vue'
+import { message, Modal } from 'ant-design-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
+import { createPackagingType, deletePackagingType, getPackagingTypePage, updatePackagingType } from '@/api/basic/packaging'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 
-const tableRef = ref();
-const dialogVisible = ref(false);
-const saving = ref(false);
-const isEdit = ref(false);
+const { t } = useI18n()
+
+const tableRef = ref()
+const dialogVisible = ref(false)
+const saving = ref(false)
+const isEdit = ref(false)
 
 const form = reactive<any>({
   id: null,
@@ -153,99 +147,86 @@ const form = reactive<any>({
   status: 1,
   sortOrder: 0,
   remark: '',
-});
+})
 
-const tableFallbackConfig = ref({
-  columns: [
-    { title: '包装编码', dataIndex: 'packagingCode', key: 'packagingCode', width: 120 },
-    { title: '包装名称', dataIndex: 'packagingName', key: 'packagingName', width: 120 },
-    { title: '包装材料', dataIndex: 'packagingMaterial', key: 'packagingMaterial', width: 100 },
-    { title: '尺寸(mm)', key: 'dimensions', width: 150, customRender: ({ record }: any) => {
-      const parts = [record.lengthMm, record.widthMm, record.heightMm].filter(Boolean);
-      return parts.length ? parts.join(' × ') : '-';
-    }},
-    { title: '自重(kg)', dataIndex: 'weightKg', key: 'weightKg', width: 90 },
-    { title: '承重(kg)', dataIndex: 'maxLoadKg', key: 'maxLoadKg', width: 90 },
-    { title: '单位成本', dataIndex: 'unitCost', key: 'unitCost', width: 100 },
-    { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 80 },
-    { title: '状态', dataIndex: 'status', key: 'status', slotName: 'status', width: 80 },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '操作', key: 'action', slotName: 'action', width: 150, fixed: 'right' },
-  ],
-});
+const statusOptions = computed(() => [
+  { value: 1, label: t('common.enable') },
+  { value: 0, label: t('common.disable') },
+])
 
-function handleRequest(params: any) {
+const dialogTitle = computed(() => (isEdit.value ? t('basic.packaging.dialog.edit') : t('basic.packaging.dialog.create')))
+
+function handleRequest(payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+}) {
   return getPackagingTypePage({
-    pageNum: params.pageNum || 1,
-    pageSize: params.pageSize || 10,
-    ...params,
-  });
+    pageNum: payload.page.current,
+    pageSize: payload.page.pageSize,
+    ...payload.query,
+  })
 }
 
 function resetForm() {
-  form.id = null;
-  form.packagingCode = '';
-  form.packagingName = '';
-  form.packagingMaterial = '';
-  form.lengthMm = null;
-  form.widthMm = null;
-  form.heightMm = null;
-  form.weightKg = null;
-  form.maxLoadKg = null;
-  form.unitCost = null;
-  form.status = 1;
-  form.sortOrder = 0;
-  form.remark = '';
+  form.id = null
+  form.packagingCode = ''
+  form.packagingName = ''
+  form.packagingMaterial = ''
+  form.lengthMm = null
+  form.widthMm = null
+  form.heightMm = null
+  form.weightKg = null
+  form.maxLoadKg = null
+  form.unitCost = null
+  form.status = 1
+  form.sortOrder = 0
+  form.remark = ''
 }
 
-const dialogTitle = ref('');
-
 function openCreate() {
-  resetForm();
-  isEdit.value = false;
-  dialogTitle.value = '新增包装方式';
-  dialogVisible.value = true;
+  resetForm()
+  isEdit.value = false
+  dialogVisible.value = true
 }
 
 function openEdit(record: any) {
-  resetForm();
-  Object.assign(form, record);
-  isEdit.value = true;
-  dialogTitle.value = '编辑包装方式';
-  dialogVisible.value = true;
+  resetForm()
+  Object.assign(form, record)
+  isEdit.value = true
+  dialogVisible.value = true
 }
 
 async function handleSave() {
   if (!form.packagingCode || !form.packagingName) {
-    message.warning('请填写必填项');
-    return;
+    message.warning(t('validation.required'))
+    return
   }
-  saving.value = true;
+  saving.value = true
   try {
     if (isEdit.value) {
-      await updatePackagingType(form);
-      message.success('更新成功');
+      await updatePackagingType(form)
+      message.success(t('common.updateSuccess'))
     } else {
-      await createPackagingType(form);
-      message.success('创建成功');
+      await createPackagingType(form)
+      message.success(t('common.createSuccess'))
     }
-    dialogVisible.value = false;
-    tableRef.value?.refresh?.();
+    dialogVisible.value = false
+    tableRef.value?.refresh?.()
   } finally {
-    saving.value = false;
+    saving.value = false
   }
 }
 
 function handleDelete(record: any) {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除包装方式"${record.packagingName}"吗？`,
+    title: t('common.delete'),
+    content: t('basic.packaging.confirmDelete', { name: record.packagingName || '' }),
     onOk: async () => {
-      await deletePackagingType([record.id]);
-      message.success('删除成功');
-      tableRef.value?.refresh?.();
+      await deletePackagingType(record.id)
+      message.success(t('common.deleteSuccess'))
+      tableRef.value?.refresh?.()
     },
-  });
+  })
 }
 </script>
 
@@ -253,21 +234,25 @@ function handleDelete(record: any) {
 .packaging-page {
   padding: 24px;
 }
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
 }
+
 .page-header h1 {
   margin: 8px 0 4px;
   font-size: 20px;
   font-weight: 600;
 }
+
 .page-header p {
   color: #666;
   font-size: 14px;
 }
+
 .danger-link {
   color: #ff4d4f;
 }

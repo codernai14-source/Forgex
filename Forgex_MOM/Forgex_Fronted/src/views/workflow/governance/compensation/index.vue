@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-wrap">
     <fx-dynamic-table
       ref="tableRef"
@@ -12,8 +12,8 @@
         <a-alert
           type="info"
           show-icon
-          message="补偿中心"
-          description="集中处理未激活待办实例与超时待办实例，作为审批流三期治理能力的运营入口。"
+          :message="t('workflow.compensation.title')"
+          :description="t('workflow.compensation.description')"
         />
       </template>
 
@@ -23,10 +23,10 @@
 
       <template #governanceTag="{ record }">
         <a-space wrap size="small">
-          <a-tag v-if="record.timeoutFlag" color="orange">超时待重试</a-tag>
-          <a-tag v-if="hasInactiveCandidate(record)" color="blue">未激活待补偿</a-tag>
-          <a-tag v-if="record.delegated" color="cyan">命中委托</a-tag>
-          <a-tag v-if="record.transferred" color="purple">命中转交</a-tag>
+          <a-tag v-if="record.timeoutFlag" color="orange">{{ t('workflow.compensation.tags.timeoutRetry') }}</a-tag>
+          <a-tag v-if="hasInactiveCandidate(record)" color="blue">{{ t('workflow.compensation.tags.inactiveCandidate') }}</a-tag>
+          <a-tag v-if="record.delegated" color="cyan">{{ t('workflow.compensation.tags.delegated') }}</a-tag>
+          <a-tag v-if="record.transferred" color="purple">{{ t('workflow.compensation.tags.transferred') }}</a-tag>
         </a-space>
       </template>
 
@@ -37,13 +37,13 @@
       <template #action="{ record }">
         <a-space>
           <a-button type="link" size="small" @click="handleViewDetail(record)">
-            查看详情
+            {{ t('workflow.compensation.viewDetail') }}
           </a-button>
           <a-button type="link" size="small" @click="handleCompensate(record)">
-            补偿激活
+            {{ t('workflow.compensation.compensate') }}
           </a-button>
           <a-button type="link" size="small" @click="handleRetryTimeout(record)">
-            重试超时
+            {{ t('workflow.compensation.retryTimeout') }}
           </a-button>
         </a-space>
       </template>
@@ -51,7 +51,7 @@
 
     <a-drawer
       v-model:open="detailDrawerVisible"
-      title="补偿详情"
+      :title="t('workflow.compensation.detailTitle')"
       :width="920"
       :body-style="{ paddingBottom: '80px' }"
     >
@@ -85,32 +85,32 @@
 
         <div class="summary-grid">
           <div class="summary-item">
-            <span class="summary-label">激活待办数</span>
+            <span class="summary-label">{{ t('workflow.compensation.activePendingCount') }}</span>
             <span class="summary-value">{{ currentRecord.activeInstanceCount ?? 0 }}</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">超时标记</span>
-            <span class="summary-value">{{ currentRecord.timeoutFlag ? '是' : '否' }}</span>
+            <span class="summary-label">{{ t('workflow.dashboard.timeoutFlag') }}</span>
+            <span class="summary-value">{{ currentRecord.timeoutFlag ? t('common.yes') : t('common.no') }}</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">命中委托</span>
-            <span class="summary-value">{{ currentRecord.delegated ? '是' : '否' }}</span>
+            <span class="summary-label">{{ t('workflow.compensation.delegatedHit') }}</span>
+            <span class="summary-value">{{ currentRecord.delegated ? t('common.yes') : t('common.no') }}</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">命中转交</span>
-            <span class="summary-value">{{ currentRecord.transferred ? '是' : '否' }}</span>
+            <span class="summary-label">{{ t('workflow.compensation.transferredHit') }}</span>
+            <span class="summary-value">{{ currentRecord.transferred ? t('common.yes') : t('common.no') }}</span>
           </div>
         </div>
 
         <div class="governance-tags">
-          <a-tag v-if="currentRecord.timeoutFlag" color="orange">当前执行单存在超时实例</a-tag>
-          <a-tag v-if="hasInactiveCandidate(currentRecord)" color="blue">当前执行单存在未激活待办实例</a-tag>
-          <a-tag v-if="currentRecord.delegated" color="cyan">轨迹中存在委托动作</a-tag>
-          <a-tag v-if="currentRecord.transferred" color="purple">轨迹中存在转交动作</a-tag>
+          <a-tag v-if="currentRecord.timeoutFlag" color="orange">{{ t('workflow.compensation.detailTags.timeout') }}</a-tag>
+          <a-tag v-if="hasInactiveCandidate(currentRecord)" color="blue">{{ t('workflow.compensation.detailTags.inactive') }}</a-tag>
+          <a-tag v-if="currentRecord.delegated" color="cyan">{{ t('workflow.compensation.detailTags.delegated') }}</a-tag>
+          <a-tag v-if="currentRecord.transferred" color="purple">{{ t('workflow.compensation.detailTags.transferred') }}</a-tag>
         </div>
 
         <div v-if="currentRecord.latestActionSummary" class="latest-action">
-          最近动作：{{ currentRecord.latestActionSummary }}
+          {{ t('workflow.dashboard.latestAction', { action: currentRecord.latestActionSummary }) }}
         </div>
 
         <a-divider />
@@ -129,12 +129,6 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 审批流补偿中心页。
- * 1. 承接未激活实例补偿与超时重试两类治理动作。
- * 2. 复用执行单详情、实例轨迹和动作日志展示能力。
- * 3. 为三期运营治理提供统一人工处理入口。
- */
 import { computed, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -190,7 +184,7 @@ const handleRequest = async (payload: {
     const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
     return { records: data.records || [], total }
   } catch (error: any) {
-    message.error(error.message || '加载补偿中心列表失败')
+    message.error(error.message || t('workflow.compensation.loadListFailed'))
     return { records: [], total: 0 }
   }
 }
@@ -240,21 +234,21 @@ async function handleViewDetail(record: WfExecutionDTO) {
     await loadExecutionDetail(record.id)
     detailDrawerVisible.value = true
   } catch (error: any) {
-    message.error(error.message || '加载补偿详情失败')
+    message.error(error.message || t('workflow.compensation.loadDetailFailed'))
   }
 }
 
 async function handleCompensate(record: WfExecutionDTO) {
   Modal.confirm({
-    title: '确认执行补偿激活',
-    content: `将尝试激活执行单【${record.taskName}】的首个未激活待办实例。`,
+    title: t('workflow.compensation.confirmCompensateTitle'),
+    content: t('workflow.compensation.confirmCompensateContent', { taskName: record.taskName }),
     async onOk() {
       try {
         await compensateExecution({ executionId: record.id })
-        message.success('补偿激活已执行')
+        message.success(t('workflow.compensation.compensateSuccess'))
         await refreshCurrentRecord(record)
       } catch (error: any) {
-        message.error(error.message || '补偿激活失败')
+        message.error(error.message || t('workflow.compensation.compensateFailed'))
       }
     },
   })
@@ -262,15 +256,15 @@ async function handleCompensate(record: WfExecutionDTO) {
 
 async function handleRetryTimeout(record: WfExecutionDTO) {
   Modal.confirm({
-    title: '确认执行超时重试',
-    content: `将尝试处理执行单【${record.taskName}】下所有已超时实例。`,
+    title: t('workflow.compensation.confirmRetryTitle'),
+    content: t('workflow.compensation.confirmRetryContent', { taskName: record.taskName }),
     async onOk() {
       try {
         await retryTimeoutJobs({ executionId: record.id })
-        message.success('超时重试已执行')
+        message.success(t('workflow.compensation.retrySuccess'))
         await refreshCurrentRecord(record)
       } catch (error: any) {
-        message.error(error.message || '超时重试失败')
+        message.error(error.message || t('workflow.compensation.retryFailed'))
       }
     },
   })

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @version 1.0.0
  * @since 2026-04-25
  */
-@FeignClient(name = "forgex-integration", contextId = "integrationInternalSupplierFeignClient", path = "/api/integration/internal/supplier")
+@FeignClient(name = "forgex-integration", contextId = "integrationInternalSupplierFeignClient", path = "/integration/internal/supplier")
 public interface IntegrationInternalSupplierFeignClient {
 
     /**

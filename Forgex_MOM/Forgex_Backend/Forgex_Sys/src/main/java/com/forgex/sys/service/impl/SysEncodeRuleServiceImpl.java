@@ -38,16 +38,15 @@ import com.forgex.sys.service.ISysEncodeRuleService;
 import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.connection.ExpirationOptions;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -103,6 +102,11 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * Redis StringTemplate，用于原子递增操作
      */
     private final StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * Redisson 客户端，用于设置编码序列 Key 过期时间。
+     */
+    private final RedissonClient redissonClient;
 
     /**
      * Redis Key 前缀：编码规则序列号
@@ -654,12 +658,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         }
 
         if (expireSeconds > 0) {
-            stringRedisTemplate.execute((RedisCallback<Boolean>) connection ->
-                connection.keyCommands().expire(
-                    redisKey.getBytes(StandardCharsets.UTF_8),
-                    expireSeconds,
-                    ExpirationOptions.Condition.ALWAYS)
-            );
+            redissonClient.getBucket(redisKey).expire(Duration.ofSeconds(expireSeconds));
         }
     }
 

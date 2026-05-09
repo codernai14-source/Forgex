@@ -30,7 +30,7 @@ import java.util.Map;
  */
 @Tag(name = "客户主数据", description = "客户主数据管理接口")
 @RestController
-@RequestMapping("/basic/customer")
+@RequestMapping("/customer")
 @RequiredArgsConstructor
 public class CustomerController {
 

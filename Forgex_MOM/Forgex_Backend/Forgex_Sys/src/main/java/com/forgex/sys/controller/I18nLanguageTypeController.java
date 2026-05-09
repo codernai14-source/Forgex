@@ -25,7 +25,7 @@ import java.util.Map;
  * @see FxI18nLanguageType
  */
 @RestController
-@RequestMapping("/sys/i18n/languageType")
+@RequestMapping("/i18n/languageType")
 @RequiredArgsConstructor
 public class I18nLanguageTypeController {
 

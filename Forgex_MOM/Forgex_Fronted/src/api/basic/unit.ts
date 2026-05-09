@@ -30,6 +30,7 @@ export interface UnitPageParam {
   pageNum?: number
   pageSize?: number
   unitTypeId?: number
+  unitTypeName?: string
   unitCode?: string
   unitName?: string
 }

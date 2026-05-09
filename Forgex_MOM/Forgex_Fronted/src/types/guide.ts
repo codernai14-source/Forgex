@@ -8,6 +8,7 @@ export interface GuideState {
 
 export interface GuidePreferenceConfig {
   babyModeEnabled: boolean
+  systemPageGuideDisabled?: boolean
   guideStates: Record<string, GuideState>
 }
 

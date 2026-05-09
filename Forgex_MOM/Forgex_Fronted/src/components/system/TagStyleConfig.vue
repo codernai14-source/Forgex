@@ -3,55 +3,55 @@
     <!-- 颜色和图标在同一行 -->
     <div class="tag-style-row">
       <div class="tag-style-field">
-        <label class="tag-style-label">标签颜色</label>
+        <label class="tag-style-label">{{ t('common.tagStyle.color') }}</label>
         <a-select
           v-model:value="formData.color"
-          placeholder="请选择标签颜色"
+          :placeholder="t('common.tagStyle.selectColor')"
           allowClear
           show-search
           :filter-option="filterOption"
         >
-          <a-select-opt-group label="状态颜色">
+          <a-select-opt-group :label="t('common.tagStyle.statusColors')">
             <a-select-option value="success">
-              <a-tag color="success">成功</a-tag>
+              <a-tag color="success">{{ t('common.success') }}</a-tag>
             </a-select-option>
             <a-select-option value="processing">
-              <a-tag color="processing">进行中</a-tag>
+              <a-tag color="processing">{{ t('common.processing') }}</a-tag>
             </a-select-option>
             <a-select-option value="error">
-              <a-tag color="error">失败</a-tag>
+              <a-tag color="error">{{ t('common.failed') }}</a-tag>
             </a-select-option>
             <a-select-option value="warning">
-              <a-tag color="warning">警告</a-tag>
+              <a-tag color="warning">{{ t('common.warning') }}</a-tag>
             </a-select-option>
             <a-select-option value="default">
-              <a-tag color="default">默认</a-tag>
+              <a-tag color="default">{{ t('common.default') }}</a-tag>
             </a-select-option>
           </a-select-opt-group>
-          <a-select-opt-group label="预设颜色">
+          <a-select-opt-group :label="t('common.tagStyle.presetColors')">
             <a-select-option value="pink">
-              <a-tag color="pink">粉色</a-tag>
+              <a-tag color="pink">{{ t('common.tagStyle.colors.pink') }}</a-tag>
             </a-select-option>
             <a-select-option value="red">
-              <a-tag color="red">红色</a-tag>
+              <a-tag color="red">{{ t('common.tagStyle.colors.red') }}</a-tag>
             </a-select-option>
             <a-select-option value="orange">
-              <a-tag color="orange">橙色</a-tag>
+              <a-tag color="orange">{{ t('common.tagStyle.colors.orange') }}</a-tag>
             </a-select-option>
             <a-select-option value="green">
-              <a-tag color="green">绿色</a-tag>
+              <a-tag color="green">{{ t('common.tagStyle.colors.green') }}</a-tag>
             </a-select-option>
             <a-select-option value="cyan">
-              <a-tag color="cyan">青色</a-tag>
+              <a-tag color="cyan">{{ t('common.tagStyle.colors.cyan') }}</a-tag>
             </a-select-option>
             <a-select-option value="blue">
-              <a-tag color="blue">蓝色</a-tag>
+              <a-tag color="blue">{{ t('common.tagStyle.colors.blue') }}</a-tag>
             </a-select-option>
             <a-select-option value="purple">
-              <a-tag color="purple">紫色</a-tag>
+              <a-tag color="purple">{{ t('common.tagStyle.colors.purple') }}</a-tag>
             </a-select-option>
           </a-select-opt-group>
-          <a-select-opt-group label="自定义颜色">
+          <a-select-opt-group :label="t('common.tagStyle.customColors')">
             <a-select-option value="#f50">
               <a-tag color="#f50">#f50</a-tag>
             </a-select-option>
@@ -69,61 +69,61 @@
       </div>
 
       <div class="tag-style-field">
-        <label class="tag-style-label">图标</label>
+        <label class="tag-style-label">{{ t('common.tagStyle.icon') }}</label>
         <a-select
           v-model:value="formData.icon"
-          placeholder="请选择图标"
+          :placeholder="t('common.tagStyle.selectIcon')"
           allowClear
           show-search
           :filter-option="filterOption"
         >
           <a-select-option value="CheckCircleOutlined">
             <template #label>
-              <span><CheckCircleOutlined /> 成功图标</span>
+              <span><CheckCircleOutlined /> {{ t('common.tagStyle.icons.success') }}</span>
             </template>
-            成功图标
+            {{ t('common.tagStyle.icons.success') }}
           </a-select-option>
           <a-select-option value="CloseCircleOutlined">
             <template #label>
-              <span><CloseCircleOutlined /> 失败图标</span>
+              <span><CloseCircleOutlined /> {{ t('common.tagStyle.icons.failed') }}</span>
             </template>
-            失败图标
+            {{ t('common.tagStyle.icons.failed') }}
           </a-select-option>
           <a-select-option value="ExclamationCircleOutlined">
             <template #label>
-              <span><ExclamationCircleOutlined /> 警告图标</span>
+              <span><ExclamationCircleOutlined /> {{ t('common.tagStyle.icons.warning') }}</span>
             </template>
-            警告图标
+            {{ t('common.tagStyle.icons.warning') }}
           </a-select-option>
           <a-select-option value="SyncOutlined">
             <template #label>
-              <span><SyncOutlined /> 加载图标</span>
+              <span><SyncOutlined /> {{ t('common.tagStyle.icons.loading') }}</span>
             </template>
-            加载图标
+            {{ t('common.tagStyle.icons.loading') }}
           </a-select-option>
           <a-select-option value="ClockCircleOutlined">
             <template #label>
-              <span><ClockCircleOutlined /> 等待图标</span>
+              <span><ClockCircleOutlined /> {{ t('common.tagStyle.icons.pending') }}</span>
             </template>
-            等待图标
+            {{ t('common.tagStyle.icons.pending') }}
           </a-select-option>
           <a-select-option value="InfoCircleOutlined">
             <template #label>
-              <span><InfoCircleOutlined /> 信息图标</span>
+              <span><InfoCircleOutlined /> {{ t('common.tagStyle.icons.info') }}</span>
             </template>
-            信息图标
+            {{ t('common.tagStyle.icons.info') }}
           </a-select-option>
           <a-select-option value="CheckOutlined">
             <template #label>
-              <span><CheckOutlined /> 勾选图标</span>
+              <span><CheckOutlined /> {{ t('common.tagStyle.icons.check') }}</span>
             </template>
-            勾选图标
+            {{ t('common.tagStyle.icons.check') }}
           </a-select-option>
           <a-select-option value="CloseOutlined">
             <template #label>
-              <span><CloseOutlined /> 关闭图标</span>
+              <span><CloseOutlined /> {{ t('common.tagStyle.icons.close') }}</span>
             </template>
-            关闭图标
+            {{ t('common.tagStyle.icons.close') }}
           </a-select-option>
         </a-select>
       </div>
@@ -131,15 +131,15 @@
 
     <!-- 预览区域 -->
     <div class="tag-style-preview">
-      <label class="tag-style-label">预览</label>
+      <label class="tag-style-label">{{ t('common.preview') }}</label>
       <div class="tag-style-preview-content">
         <a-tag v-if="formData.color" :color="formData.color">
           <template v-if="currentIconComponent" #icon>
             <component :is="currentIconComponent" />
           </template>
-          示例标签
+          {{ t('common.tagStyle.exampleTag') }}
         </a-tag>
-        <span v-else class="tag-style-preview-empty">请先配置标签样式</span>
+        <span v-else class="tag-style-preview-empty">{{ t('common.tagStyle.emptyPreview') }}</span>
       </div>
     </div>
   </div>
@@ -147,6 +147,7 @@
 
 <script setup lang="ts">
 import { reactive, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getIcon } from '@/utils/icon'
 import {
   CheckCircleOutlined,
@@ -168,6 +169,8 @@ const formData = reactive<TagStyleForm>({
   color: undefined,
   icon: undefined,
 })
+
+const { t } = useI18n()
 
 /**
  * 当前选中的图标组件

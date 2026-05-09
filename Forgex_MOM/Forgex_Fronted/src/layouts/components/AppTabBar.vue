@@ -36,11 +36,11 @@
           <a-menu @click="onQuickAction">
             <a-menu-item key="closeOthers">
               <CloseCircleOutlined />
-              <span>关闭其他</span>
+              <span>{{ t('layout.tab.closeOthers') }}</span>
             </a-menu-item>
             <a-menu-item key="closeAll">
               <CloseSquareOutlined />
-              <span>关闭所有</span>
+              <span>{{ t('layout.tab.closeAll') }}</span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -66,29 +66,29 @@
         <a-menu @click="onContextMenuClick">
           <a-menu-item key="refresh">
             <SyncOutlined />
-            <span>刷新</span>
+            <span>{{ t('layout.tab.refresh') }}</span>
           </a-menu-item>
           <a-menu-item key="close" :disabled="!contextTab?.closable">
             <CloseOutlined />
-            <span>关闭</span>
+            <span>{{ t('layout.tab.close') }}</span>
           </a-menu-item>
           <a-menu-divider />
           <a-menu-item key="closeOthers">
             <CloseCircleOutlined />
-            <span>关闭其他</span>
+            <span>{{ t('layout.tab.closeOthers') }}</span>
           </a-menu-item>
           <a-menu-item key="closeLeft">
             <VerticalLeftOutlined />
-            <span>关闭左侧</span>
+            <span>{{ t('layout.tab.closeLeft') }}</span>
           </a-menu-item>
           <a-menu-item key="closeRight">
             <VerticalRightOutlined />
-            <span>关闭右侧</span>
+            <span>{{ t('layout.tab.closeRight') }}</span>
           </a-menu-item>
           <a-menu-divider />
           <a-menu-item key="closeAll">
             <CloseSquareOutlined />
-            <span>关闭所有</span>
+            <span>{{ t('layout.tab.closeAll') }}</span>
           </a-menu-item>
         </a-menu>
       </template>
@@ -98,6 +98,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -107,6 +108,8 @@ import {
   CloseSquareOutlined,
   MoreOutlined
 } from '@ant-design/icons-vue'
+
+const { t } = useI18n()
 
 interface Tab {
   key: string

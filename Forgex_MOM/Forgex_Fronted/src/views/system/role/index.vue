@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-wrap">
     <template v-if="activeView === 'list'">
       <fx-dynamic-table
@@ -7,7 +7,6 @@
         :table-code="'RoleTable'"
         :show-query-form="true"
         :request="handleRequest"
-        :fallback-config="fallbackConfig"
         :dict-options="dictOptions"
         :row-selection="{
           selectedRowKeys,
@@ -84,11 +83,11 @@
 
         <template #status="{ record }">
           <a-tag
-            v-if="resolve状态Tag(record.status)"
-            :color="resolve状态Tag(record.status)?.color"
-            :style="resolve状态Tag(record.status)?.style"
+            v-if="resolveStatusTag(record.status)"
+            :color="resolveStatusTag(record.status)?.color"
+            :style="resolveStatusTag(record.status)?.style"
           >
-            {{ resolve状态Tag(record.status)?.label }}
+            {{ resolveStatusTag(record.status)?.label }}
           </a-tag>
           <span v-else>{{ record.status ?? '-' }}</span>
         </template>
@@ -179,11 +178,13 @@
         :version="embeddedGrantGuideVersion"
         :steps="embeddedGrantGuideSteps"
         :auto-start="embeddedGrantGuideAutoStart"
-        skip-text="跳过引导"
+        :skip-text="t('common.guide.skip')"
+        :show-skip-all="true"
         @open="handleEmbeddedGrantGuideOpen"
         @close="handleEmbeddedGrantGuideClose"
         @finish="handleEmbeddedGrantGuideFinish"
         @skip="handleEmbeddedGrantGuideSkip"
+        @skip-all="handleEmbeddedGrantGuideSkipAll"
       />
     </template>
   </div>
@@ -206,7 +207,6 @@ import { getRolePage, addRole, updateRole, deleteRole, batchDeleteRoles } from '
 import { resolveSystemPageGuide } from '@/guide/systemPageGuides'
 import { useDict } from '@/hooks/useDict'
 import { useGuideStore } from '@/stores/guide'
-import type { FxTableConfig } from '@/api/system/tableConfig'
 import type { FxGuideStep } from '@/types/guide'
 import type { Role } from './types'
 
@@ -215,29 +215,6 @@ const { dictItems: statusOptions } = useDict('status')
 const dictOptions = computed(() => ({ status: statusOptions.value }))
 const guideStore = useGuideStore()
 
-const fallbackConfig = computed<Partial<FxTableConfig>>(() => ({
-  tableCode: 'RoleTable',
-  tableName: '角色管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'roleName', title: '角色名称', minWidth: 160, ellipsis: true },
-    { field: 'roleCode', title: '角色编码', width: 140 },
-    { field: 'description', title: '描述', minWidth: 180, ellipsis: true },
-    { field: 'status', title: '状态', width: 100, dictCode: 'status' },
-    { field: 'createBy', title: '创建人', width: 120 },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'updateTime', title: '更新时间', width: 180 },
-    { field: 'action', title: '操作', width: 220, fixed: 'right' }
-  ],
-  queryFields: [
-    { field: 'roleName', label: '角色名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'roleCode', label: '角色编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
-  ],
-  version: 1
-}))
 
 const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
@@ -255,7 +232,7 @@ function resolveTenantId(): string {
   return currentTenantId.value || sessionStorage.getItem('tenantId') || ''
 }
 
-function normalizeRole状态Record(row: any) {
+function normalizeRoleStatusRecord(row: any) {
   const s = row?.status
   let num: number
   if (typeof s === 'boolean') {
@@ -278,7 +255,7 @@ function normalizeBoolean(value: unknown): number {
   return value ? 1 : 0
 }
 
-function resolve状态Tag(value: unknown) {
+function resolveStatusTag(value: unknown) {
   const normalizedValue = normalizeBoolean(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
@@ -311,7 +288,7 @@ const handleRequest = async (params: any) => {
       pageNum: params.page?.current,
       pageSize: params.page?.pageSize,
     })
-    const records = (res.records || []).map((r: any) => normalizeRole状态Record(r))
+    const records = (res.records || []).map((r: any) => normalizeRoleStatusRecord(r))
     return {
       success: true,
       data: records,
@@ -468,7 +445,7 @@ async function syncEmbeddedGrantGuide(view: 'list' | 'menuGrant' | 'userGrant') 
   embeddedGrantGuideSteps.value = guideConfig.steps
   await guideStore.loadPreference()
   await nextTick()
-  embeddedGrantGuideAutoStart.value = guideStore.shouldAutoStartGuide(
+  embeddedGrantGuideAutoStart.value = guideStore.shouldAutoStartSystemPageGuide(
     guideConfig.guideCode,
     guideConfig.version,
   )
@@ -500,6 +477,16 @@ async function handleEmbeddedGrantGuideSkip(
   guideStore.finishCurrentGuide()
 }
 
+async function handleEmbeddedGrantGuideSkipAll(
+  guideCode = embeddedGrantGuideCode.value,
+  version = embeddedGrantGuideVersion.value,
+) {
+  await guideStore.markGuideSkipped(guideCode, version)
+  await guideStore.setSystemPageGuideDisabled(true)
+  embeddedGrantGuideAutoStart.value = false
+  guideStore.finishCurrentGuide()
+}
+
 function navigateToMenuGrant(role: Role) {
   openGrantView('menuGrant', role)
 }
@@ -509,7 +496,7 @@ function navigateToUserGrant(role: Role) {
 }
 
 function handleGrantSaved() {
-  // 保留当前嵌入页面，用户可以手动返回
+  // 淇濈暀褰撳墠宓屽叆椤甸潰锛岀敤鎴峰彲浠ユ墜鍔ㄨ繑鍥?
 }
 
 onMounted(async () => {
@@ -557,3 +544,4 @@ watch(
   min-height: 0;
 }
 </style>
+

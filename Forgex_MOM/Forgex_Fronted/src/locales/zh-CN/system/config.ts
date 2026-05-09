@@ -8,6 +8,7 @@ export default {
   tabSecurity: '安全验证',
   tabEmail: '邮件配置',
   tabUpload: '文件上传',
+  tabPersonalHomepage: '个人首页',
 
   systemName: '系统名称',
   systemNamePlaceholder: '请输入系统名称',
@@ -193,4 +194,41 @@ export default {
   tdeKeyringPlugin: '密钥环插件',
   tdeKeyringNotDetected: '未检测到',
   tdeInfoMessage: 'TDE（数据库透明加密）需要在数据库服务器层面配置，无法通过此页面操作。详见 TDE 配置指南。',
+
+  // 密码存储策略选项
+  passwordBcrypt: 'BCrypt（推荐，不可逆哈希）',
+  passwordArgon2: 'Argon2（高安全哈希）',
+  passwordSm4: 'SM4（国密对称加密）',
+  passwordAes: 'AES-256-GCM（对称加密）',
+  passwordSm2: 'SM2（国密非对称加密）',
+  passwordRsa: 'RSA-2048（非对称加密）',
+
+  // 传输加密选项
+  transportSm2: 'SM2（国密非对称加密）',
+
+  // 加密密钥提示
+  sm4KeyHint: '128位（32字符Hex）',
+  aesKeyHint: '256位（64字符Hex）',
+  rsaKey2048: 'RSA-2048（推荐）',
+  rsaKey4096: 'RSA-4096（高安全）',
+
+  // 文件加密算法选项
+  fileEncryptAes: 'AES-256-GCM（国际标准，推荐）',
+  fileEncryptSm4: 'SM4-CBC（国密标准）',
+
+  // 字段加密算法选项
+  fieldEncryptSm4: 'SM4（国密标准，默认）',
+  fieldEncryptAes: 'AES-256-GCM（国际标准）',
+
+  // 个人首页模块卡片
+  homepagePersonal: '个人首页',
+  homepagePersonalDesc: '个人工作台默认布局',
+  homepageBasic: '基础信息',
+  homepageBasicDesc: '供应商与编码规则首页',
+  homepageApproval: '审批管理',
+  homepageApprovalDesc: '审批工作台首页',
+  homepageSys: '系统管理',
+  homepageSysDesc: '系统运行与配置首页',
+  homepageDefaultConfig: '个人首页默认配置',
+  homepageDefaultDesc: '维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。',
 }

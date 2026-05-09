@@ -36,7 +36,7 @@ import java.util.Map;
  * @see IApiParamConfigService
  */
 @RestController
-@RequestMapping("/api/integration/param-config")
+@RequestMapping("/param-config")
 @RequiredArgsConstructor
 @Tag(name = "接口参数配置管理", description = "接口参数树配置")
 public class ApiParamConfigController {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div
     class="low-code-form-designer"
     :class="{ 'low-code-form-designer--dark': isDarkTheme }"
@@ -83,10 +83,7 @@ const lastSerialized = ref('')
 const isDarkTheme = ref(false)
 let themeObserver: MutationObserver | null = null
 
-const headerDescription = computed(() =>
-  'FormCreate Ant Design Vue 设计器，支持组件尺寸、事件、布局、定位和更多官方组件。'
-)
-
+const headerDescription = computed(() => t('workflow.taskConfig.lowCodeDesigner.headerDescription'))
 const designerConfig = computed<Config>(() => ({
   showEventForm: true,
   showStyleForm: true,
@@ -587,3 +584,5 @@ function handleClear() {
   border-bottom: 1px solid #2d3748 !important;
 }
 </style>
+
+

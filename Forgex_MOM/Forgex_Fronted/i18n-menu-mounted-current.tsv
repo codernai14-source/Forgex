@@ -1,0 +1,229 @@
+﻿user	SystemUser	用户管理	{"en-US": "Users", "ja-JP": "ユーザー管理", "ko-KR": "사용자 관리", "zh-CN": "用户管理", "zh-TW": "用戶管理"}
+role	SystemRole	角色管理	{"en-US": "Roles", "ja-JP": "ロール管理", "ko-KR": "역할 관리", "zh-CN": "角色管理", "zh-TW": "角色管理"}
+NULL	NULL	新增用户	{"en-US": "Add User", "ja-JP": "ユーザー追加", "ko-KR": "사용자 추가", "zh-CN": "新增用户", "zh-TW": "新增用戶"}
+NULL	NULL	新增角色	{"en-US": "Add Role", "ja-JP": "ロール追加", "ko-KR": "역할 추가", "zh-CN": "新增角色", "zh-TW": "新增角色"}
+NULL	NULL	新增模块	{"en-US": "Add Module", "ja-JP": "モジュール追加", "ko-KR": "모듈 추가", "zh-CN": "新增模块", "zh-TW": "新增模塊"}
+NULL	NULL	新增菜单	{"en-US": "Add Menu", "ja-JP": "メニュー追加", "ko-KR": "메뉴 추가", "zh-CN": "新增菜单", "zh-TW": "新增選單"}
+NULL	NULL	新增部门	{"en-US": "Add Department", "ja-JP": "部門追加", "ko-KR": "부서 추가", "zh-CN": "新增部门", "zh-TW": "新增部門"}
+NULL	NULL	新增职位	{"en-US": "Add Position", "ja-JP": "職位追加", "ko-KR": "직위 추가", "zh-CN": "新增职位", "zh-TW": "新增職位"}
+dashboard	SystemDashboard	系统管理主页	{"en-US": "Dashboard", "ja-JP": "ダッシュボード", "ko-KR": "대시보드", "zh-CN": "系统管理主页", "zh-TW": "系統管理主頁"}
+NULL	NULL	查看导出配置	{"en-US": "View Export Config", "ja-JP": "エクスポート設定表示", "ko-KR": "내보내기 설정 보기", "zh-CN": "查看导出配置", "zh-TW": "查看匯出設定"}
+NULL	NULL	查看导入配置	{"en-US": "View Import Config", "ja-JP": "インポート設定表示", "ko-KR": "가져오기 설정 보기", "zh-CN": "查看导入配置", "zh-TW": "查看匯入設定"}
+NULL	NULL	新增字典	{"en-US": "Add Dictionary", "ja-JP": "辞書追加", "ko-KR": "사전 추가", "zh-CN": "新增字典", "zh-TW": "新增字典"}
+NULL	NULL	新增字典类型	{"en-US": "Add Dict Type", "ja-JP": "辞書タイプ追加", "ko-KR": "사전 유형 추가", "zh-CN": "新增字典类型", "zh-TW": "新增字典類型"}
+NULL	NULL	新增表格配置	{"en-US": "Add Table Config", "ja-JP": "テーブル設定追加", "ko-KR": "테이블 설정 추가", "zh-CN": "新增表格配置", "zh-TW": "新增表格設定"}
+NULL	NULL	删除登录日志	{"en-US": "Delete Login Log", "ja-JP": "ログインログ削除", "ko-KR": "로그인 로그 삭제", "zh-CN": "删除登录日志", "zh-TW": "刪除登錄日誌"}
+NULL	NULL	踢下线	{"en-US": "Kick Offline", "ja-JP": "オフラインキック", "ko-KR": "오프라인 강제 종료", "zh-CN": "踢下线", "zh-TW": "踢下線"}
+NULL	NULL	新增租户	{"en-US": "Add Tenant", "ja-JP": "テナント追加", "ko-KR": "테넌트 추가", "zh-CN": "新增租户", "zh-TW": "新增租戶"}
+config	SystemConfig	系统配置	{"en-US": "System Config", "ja-JP": "システム設定", "ko-KR": "시스템 설정", "zh-CN": "系统配置", "zh-TW": "系統設定"}
+view	NULL	查看配置	{"en-US": "View Config", "ja-JP": "設定表示", "ko-KR": "설정 보기", "zh-CN": "查看配置", "zh-TW": "查看設定"}
+NULL	NULL	查询	{"en-US": "Query", "ja-JP": "クエリ", "ko-KR": "Query", "zh-CN": "查询", "zh-TW": "查詢"}
+NULL	NULL	新增	{"en-US": "Create", "ja-JP": "作成", "ko-KR": "Create", "zh-CN": "新增", "zh-TW": "新增"}
+NULL	NULL	新增审批任务	{"en-US": "Add Task Config", "ja-JP": "承認タスク追加", "ko-KR": "승인 작업 추가", "zh-CN": "新增审批任务", "zh-TW": "新增審批任務"}
+NULL	NULL	同意审批	{"en-US": "Approve", "ja-JP": "承認", "ko-KR": "승인", "zh-CN": "同意审批", "zh-TW": "同意審批"}
+NULL	NULL	撤销审批	{"en-US": "Cancel Execution", "ja-JP": "承認取消", "ko-KR": "승인 취소", "zh-CN": "撤销审批", "zh-TW": "撤銷審批"}
+menu-grant/:roleId	SystemRoleMenuGrant	菜单授权	{"en-US": "menu-grant/:roleId", "ja-JP": "菜单授权", "ko-KR": "menu-grant/:roleId", "zh-CN": "菜单授权", "zh-TW": "菜单授权"}
+menu-grant/:roleId	SystemRoleMenuGrant	菜单授权	{"en-US": "menu-grant/:roleId", "ja-JP": "菜单授权", "ko-KR": "menu-grant/:roleId", "zh-CN": "菜单授权", "zh-TW": "菜单授权"}
+dashboard	BasicDashboard	基础信息主页	{"en-US": "Basic Dashboard", "ja-JP": "基本情報ホーム", "ko-KR": "기본 정보 홈", "zh-CN": "基础信息主页", "zh-TW": "基礎資訊首頁"}
+NULL	NULL	新增	{"en-US": "Add", "ja-JP": "追加", "ko-KR": "추가", "zh-CN": "新增", "zh-TW": "新增"}
+NULL	NULL	新增	{"en-US": "Add", "ja-JP": "追加", "ko-KR": "추가", "zh-CN": "新增", "zh-TW": "新增"}
+NULL	NULL	新增多语言消息	{"en-US": "sys:i18nMessage:add", "ja-JP": "新增多语言消息", "ko-KR": "sys:i18nMessage:add", "zh-CN": "新增多语言消息", "zh-TW": "新增多语言消息"}
+	NULL	新增邀请码	{"en-US": "sys:invite-code:add", "ja-JP": "新增邀请码", "ko-KR": "sys:invite-code:add", "zh-CN": "新增邀请码", "zh-TW": "新增邀请码"}
+NULL	NULL	新增系统	{"en-US": "Add System", "ja-JP": "システム追加", "ko-KR": "시스템 추가", "zh-CN": "新增系统", "zh-TW": "新增系統"}
+NULL	NULL	新增接口	{"en-US": "Add API", "ja-JP": "API追加", "ko-KR": "API 추가", "zh-CN": "新增接口", "zh-TW": "新增介面"}
+template	LabelTemplate	标签模板	{"en-US": "Label Template", "ja-JP": "ラベルテンプレート", "ko-KR": "라벨 템플릿", "zh-CN": "标签模板", "zh-TW": "標籤模板"}
+NULL	NULL	新增模板	{"en-US": "label:template:add", "ja-JP": "新增模板", "ko-KR": "label:template:add", "zh-CN": "新增模板", "zh-TW": "新增模板"}
+NULL	NULL	执行打印	{"en-US": "label:print:execute", "ja-JP": "执行打印", "ko-KR": "label:print:execute", "zh-CN": "执行打印", "zh-TW": "执行打印"}
+NULL	NULL	查看详情	{"en-US": "label:record:query", "ja-JP": "查看详情", "ko-KR": "label:record:query", "zh-CN": "查看详情", "zh-TW": "查看详情"}
+NULL	NULL	新增绑定	{"en-US": "label:binding:add", "ja-JP": "新增绑定", "ko-KR": "label:binding:add", "zh-CN": "新增绑定", "zh-TW": "新增绑定"}
+NULL	NULL	文件上传	{"en-US": "sys:file:upload", "ja-JP": "文件上传", "ko-KR": "sys:file:upload", "zh-CN": "文件上传", "zh-TW": "文件上传"}
+NULL	NULL	代码预览	{"en-US": "sys:codegen:preview", "ja-JP": "代码预览", "ko-KR": "sys:codegen:preview", "zh-CN": "代码预览", "zh-TW": "代码预览"}
+NULL	NULL	查询	{"en-US": "sys:codegenDatasource:page", "ja-JP": "查询", "ko-KR": "sys:codegenDatasource:page", "zh-CN": "查询", "zh-TW": "查询"}
+codegen	SystemCodegen	代码生成	{"en-US": "Code Generation", "ja-JP": "コード生成", "ko-KR": "코드 생성", "zh-CN": "代码生成", "zh-TW": "程式碼生成"}
+NULL	NULL	查询	{"en-US": "Query", "ja-JP": "検索", "ko-KR": "조회", "zh-CN": "查询", "zh-TW": "查詢"}
+NULL	NULL	查询	{"en-US": "查询", "ja-JP": "查询", "ko-KR": "查询", "zh-CN": "查询", "zh-TW": "查询"}
+NULL	NULL	新增物料	{"en-US": "Add Material", "ja-JP": "Add Material", "ko-KR": "Add Material", "zh-CN": "新增物料", "zh-TW": "新增物料"}
+NULL	NULL	查询	{"en-US": "Query", "ja-JP": "検索", "ko-KR": "조회", "zh-CN": "查询", "zh-TW": "查詢"}
+view	NULL	查询	{"en-US": "Query", "ja-JP": "照会", "ko-KR": "조회", "zh-CN": "查询", "zh-TW": "查詢"}
+department	SystemDepartment	部门管理	{"en-US": "Departments", "ja-JP": "部門管理", "ko-KR": "부서 관리", "zh-CN": "部门管理", "zh-TW": "部門管理"}
+NULL	NULL	编辑用户	{"en-US": "Edit User", "ja-JP": "ユーザー編集", "ko-KR": "사용자 편집", "zh-CN": "编辑用户", "zh-TW": "編輯用戶"}
+NULL	NULL	编辑角色	{"en-US": "Edit Role", "ja-JP": "ロール編集", "ko-KR": "역할 편집", "zh-CN": "编辑角色", "zh-TW": "編輯角色"}
+NULL	NULL	编辑模块	{"en-US": "Edit Module", "ja-JP": "モジュール編集", "ko-KR": "모듈 편집", "zh-CN": "编辑模块", "zh-TW": "編輯模塊"}
+NULL	NULL	编辑菜单	{"en-US": "Edit Menu", "ja-JP": "メニュー編集", "ko-KR": "메뉴 편집", "zh-CN": "编辑菜单", "zh-TW": "編輯選單"}
+NULL	NULL	编辑部门	{"en-US": "Edit Department", "ja-JP": "部門編集", "ko-KR": "부서 편집", "zh-CN": "编辑部门", "zh-TW": "編輯部門"}
+NULL	NULL	编辑职位	{"en-US": "Edit Position", "ja-JP": "職位編集", "ko-KR": "직위 편집", "zh-CN": "编辑职位", "zh-TW": "編輯職位"}
+NULL	NULL	编辑导出配置	{"en-US": "Edit Export Config", "ja-JP": "エクスポート設定編集", "ko-KR": "내보내기 설정 편집", "zh-CN": "编辑导出配置", "zh-TW": "編輯匯出設定"}
+NULL	NULL	编辑导入配置	{"en-US": "Edit Import Config", "ja-JP": "インポート設定編集", "ko-KR": "가져오기 설정 편집", "zh-CN": "编辑导入配置", "zh-TW": "編輯匯入設定"}
+NULL	NULL	编辑字典	{"en-US": "Edit Dictionary", "ja-JP": "辞書編集", "ko-KR": "사전 편집", "zh-CN": "编辑字典", "zh-TW": "編輯字典"}
+NULL	NULL	编辑字典类型	{"en-US": "Edit Dict Type", "ja-JP": "辞書タイプ編集", "ko-KR": "사전 유형 편집", "zh-CN": "编辑字典类型", "zh-TW": "編輯字典類型"}
+NULL	NULL	编辑表格配置	{"en-US": "Edit Table Config", "ja-JP": "テーブル設定編集", "ko-KR": "테이블 설정 편집", "zh-CN": "编辑表格配置", "zh-TW": "編輯表格設定"}
+NULL	NULL	批量删除登录日志	{"en-US": "Batch Delete Login Logs", "ja-JP": "一括削除ログインログ", "ko-KR": "일괄 삭제 로그인 로그", "zh-CN": "批量删除登录日志", "zh-TW": "批量刪除登錄日誌"}
+online	SystemOnline	在线用户	{"en-US": "Online Users", "ja-JP": "オンラインユーザー", "ko-KR": "온라인 사용자", "zh-CN": "在线用户", "zh-TW": "在線用戶"}
+NULL	NULL	批量踢下线	{"en-US": "Batch Kick Offline", "ja-JP": "一括オフラインキック", "ko-KR": "일괄 오프라인 강제 종료", "zh-CN": "批量踢下线", "zh-TW": "批量踢下線"}
+tenant	SystemTenant	租户管理	{"en-US": "Tenants", "ja-JP": "テナント管理", "ko-KR": "테넌트 관리", "zh-CN": "租户管理", "zh-TW": "租戶管理"}
+NULL	NULL	编辑租户	{"en-US": "Edit Tenant", "ja-JP": "テナント編集", "ko-KR": "테넌트 편집", "zh-CN": "编辑租户", "zh-TW": "編輯租戶"}
+organization	SystemOrganization	组织架构	{"en-US": "Organization", "ja-JP": "組織構成", "ko-KR": "조직 구조", "zh-CN": "组织架构", "zh-TW": "組織架構"}
+edit	NULL	编辑配置	{"en-US": "Edit Config", "ja-JP": "設定編集", "ko-KR": "설정 편집", "zh-CN": "编辑配置", "zh-TW": "編輯設定"}
+NULL	NULL	导出	{"en-US": "Export", "ja-JP": "エクスポート", "ko-KR": "Export", "zh-CN": "导出", "zh-TW": "匯出"}
+NULL	NULL	修改	{"en-US": "Update", "ja-JP": "更新", "ko-KR": "Update", "zh-CN": "修改", "zh-TW": "修改"}
+NULL	NULL	编辑审批任务	{"en-US": "Edit Task Config", "ja-JP": "承認タスク編集", "ko-KR": "승인 작업 편집", "zh-CN": "编辑审批任务", "zh-TW": "編輯審批任務"}
+NULL	NULL	驳回审批	{"en-US": "Reject", "ja-JP": "却下", "ko-KR": "거부", "zh-CN": "驳回审批", "zh-TW": "駁回審批"}
+role	SystemRole	角色管理	{"en-US": "role", "ja-JP": "角色管理", "ko-KR": "role", "zh-CN": "角色管理", "zh-TW": "角色管理"}
+user-grant/:roleId	SystemRoleUserGrant	人员授权	{"en-US": "user-grant/:roleId", "ja-JP": "人员授权", "ko-KR": "user-grant/:roleId", "zh-CN": "人员授权", "zh-TW": "人员授权"}
+user-grant/:roleId	SystemRoleUserGrant	人员授权	{"en-US": "user-grant/:roleId", "ja-JP": "人员授权", "ko-KR": "user-grant/:roleId", "zh-CN": "人员授权", "zh-TW": "人员授权"}
+NULL	NULL	编辑	{"en-US": "Edit", "ja-JP": "編集", "ko-KR": "수정", "zh-CN": "编辑", "zh-TW": "編輯"}
+NULL	NULL	编辑	{"en-US": "Edit", "ja-JP": "編集", "ko-KR": "수정", "zh-CN": "编辑", "zh-TW": "編輯"}
+NULL	NULL	编辑多语言消息	{"en-US": "sys:i18nMessage:edit", "ja-JP": "编辑多语言消息", "ko-KR": "sys:i18nMessage:edit", "zh-CN": "编辑多语言消息", "zh-TW": "编辑多语言消息"}
+	NULL	停用邀请码	{"en-US": "sys:invite-code:edit", "ja-JP": "停用邀请码", "ko-KR": "sys:invite-code:edit", "zh-CN": "停用邀请码", "zh-TW": "停用邀请码"}
+NULL	NULL	编辑系统	{"en-US": "Edit System", "ja-JP": "システム編集", "ko-KR": "시스템 편집", "zh-CN": "编辑系统", "zh-TW": "編輯系統"}
+NULL	NULL	编辑接口	{"en-US": "Edit API", "ja-JP": "API編集", "ko-KR": "API 편집", "zh-CN": "编辑接口", "zh-TW": "編輯介面"}
+print	LabelPrint	标签打印	{"en-US": "Label Print", "ja-JP": "ラベル印刷", "ko-KR": "라벨 인쇄", "zh-CN": "标签打印", "zh-TW": "標籤打印"}
+NULL	NULL	编辑模板	{"en-US": "label:template:edit", "ja-JP": "编辑模板", "ko-KR": "label:template:edit", "zh-CN": "编辑模板", "zh-TW": "编辑模板"}
+NULL	NULL	打印设置	{"en-US": "label:print:settings", "ja-JP": "打印设置", "ko-KR": "label:print:settings", "zh-CN": "打印设置", "zh-TW": "打印设置"}
+NULL	NULL	补打	{"en-US": "label:print:reprint", "ja-JP": "补打", "ko-KR": "label:print:reprint", "zh-CN": "补打", "zh-TW": "补打"}
+NULL	NULL	编辑绑定	{"en-US": "label:binding:edit", "ja-JP": "编辑绑定", "ko-KR": "label:binding:edit", "zh-CN": "编辑绑定", "zh-TW": "编辑绑定"}
+NULL	NULL	下载ZIP	{"en-US": "sys:codegen:download", "ja-JP": "下载ZIP", "ko-KR": "sys:codegen:download", "zh-CN": "下载ZIP", "zh-TW": "下载ZIP"}
+NULL	NULL	新增	{"en-US": "sys:codegenDatasource:save", "ja-JP": "新增", "ko-KR": "sys:codegenDatasource:save", "zh-CN": "新增", "zh-TW": "新增"}
+codegenDatasource	SystemCodegenDatasource	代码生成数据源	{"en-US": "Codegen Datasource", "ja-JP": "コード生成データソース", "ko-KR": "코드 생성 데이터소스", "zh-CN": "代码生成数据源", "zh-TW": "程式碼生成資料來源"}
+NULL	NULL	预览	{"en-US": "sys:codegen:preview", "ja-JP": "预览", "ko-KR": "sys:codegen:preview", "zh-CN": "预览", "zh-TW": "预览"}
+NULL	NULL	保存	{"en-US": "sys:codegenDatasource:save", "ja-JP": "保存", "ko-KR": "sys:codegenDatasource:save", "zh-CN": "保存", "zh-TW": "保存"}
+NULL	NULL	保存配置	{"en-US": "sys:codegen:save", "ja-JP": "保存配置", "ko-KR": "sys:codegen:save", "zh-CN": "保存配置", "zh-TW": "保存配置"}
+NULL	NULL	新增	{"en-US": "Add", "ja-JP": "追加", "ko-KR": "추가", "zh-CN": "新增", "zh-TW": "新增"}
+NULL	NULL	新增	{"en-US": "新增", "ja-JP": "新增", "ko-KR": "新增", "zh-CN": "新增", "zh-TW": "新增"}
+NULL	NULL	编辑物料	{"en-US": "Edit Material", "ja-JP": "Edit Material", "ko-KR": "Edit Material", "zh-CN": "编辑物料", "zh-TW": "编辑物料"}
+NULL	NULL	新增	{"en-US": "Add", "ja-JP": "追加", "ko-KR": "추가", "zh-CN": "新增", "zh-TW": "新增"}
+add	NULL	上传版本	{"en-US": "Upload Version", "ja-JP": "バージョンアップロード", "ko-KR": "버전 업로드", "zh-CN": "上传版本", "zh-TW": "上傳版本"}
+menu	SystemMenu	菜单管理	{"en-US": "Menus", "ja-JP": "メニュー管理", "ko-KR": "메뉴 관리", "zh-CN": "菜单管理", "zh-TW": "選單管理"}
+position	SystemPosition	职位管理	{"en-US": "Positions", "ja-JP": "職位管理", "ko-KR": "직위 관리", "zh-CN": "职位管理", "zh-TW": "職位管理"}
+NULL	NULL	删除用户	{"en-US": "Delete User", "ja-JP": "ユーザー削除", "ko-KR": "사용자 삭제", "zh-CN": "删除用户", "zh-TW": "刪除用戶"}
+NULL	NULL	删除角色	{"en-US": "Delete Role", "ja-JP": "ロール削除", "ko-KR": "역할 삭제", "zh-CN": "删除角色", "zh-TW": "刪除角色"}
+NULL	NULL	删除模块	{"en-US": "Delete Module", "ja-JP": "モジュール削除", "ko-KR": "모듈 삭제", "zh-CN": "删除模块", "zh-TW": "刪除模塊"}
+NULL	NULL	删除菜单	{"en-US": "Delete Menu", "ja-JP": "メニュー削除", "ko-KR": "메뉴 삭제", "zh-CN": "删除菜单", "zh-TW": "刪除選單"}
+NULL	NULL	删除部门	{"en-US": "Delete Department", "ja-JP": "部門削除", "ko-KR": "부서 삭제", "zh-CN": "删除部门", "zh-TW": "刪除部門"}
+NULL	NULL	删除职位	{"en-US": "Delete Position", "ja-JP": "職位削除", "ko-KR": "직위 삭제", "zh-CN": "删除职位", "zh-TW": "刪除職位"}
+NULL	NULL	删除导出配置	{"en-US": "Delete Export Config", "ja-JP": "エクスポート設定削除", "ko-KR": "내보내기 설정 삭제", "zh-CN": "删除导出配置", "zh-TW": "刪除匯出設定"}
+NULL	NULL	删除导入配置	{"en-US": "Delete Import Config", "ja-JP": "インポート設定削除", "ko-KR": "가져오기 설정 삭제", "zh-CN": "删除导入配置", "zh-TW": "刪除匯入設定"}
+NULL	NULL	删除字典	{"en-US": "Delete Dictionary", "ja-JP": "辞書削除", "ko-KR": "사전 삭제", "zh-CN": "删除字典", "zh-TW": "刪除字典"}
+NULL	NULL	删除字典类型	{"en-US": "Delete Dict Type", "ja-JP": "辞書タイプ削除", "ko-KR": "사전 유형 삭제", "zh-CN": "删除字典类型", "zh-TW": "刪除字典類型"}
+NULL	NULL	删除表格配置	{"en-US": "Delete Table Config", "ja-JP": "テーブル設定削除", "ko-KR": "테이블 설정 삭제", "zh-CN": "删除表格配置", "zh-TW": "刪除表格設定"}
+NULL	NULL	导出登录日志	{"en-US": "Export Login Logs", "ja-JP": "ログインログエクスポート", "ko-KR": "로그인 로그 내보내기", "zh-CN": "导出登录日志", "zh-TW": "匯出登錄日誌"}
+NULL	NULL	导出在线用户	{"en-US": "Export Online Users", "ja-JP": "オンラインユーザーエクスポート", "ko-KR": "온라인 사용자 내보내기", "zh-CN": "导出在线用户", "zh-TW": "匯出在線用戶"}
+NULL	NULL	删除租户	{"en-US": "Delete Tenant", "ja-JP": "テナント削除", "ko-KR": "테넌트 삭제", "zh-CN": "删除租户", "zh-TW": "刪除租戶"}
+authorization	SystemAuthorization	授权管理	{"en-US": "Authorization", "ja-JP": "認可管理", "ko-KR": "인증 관리", "zh-CN": "授权管理", "zh-TW": "授權管理"}
+operationLog	SystemOperationLog	操作日志	{"en-US": "Operation Log", "ja-JP": "操作ログ", "ko-KR": "Operation Log", "zh-CN": "操作日志", "zh-TW": "操作日誌"}
+NULL	NULL	删除	{"en-US": "Delete", "ja-JP": "削除", "ko-KR": "Delete", "zh-CN": "删除", "zh-TW": "刪除"}
+NULL	NULL	删除审批任务	{"en-US": "Delete Task Config", "ja-JP": "承認タスク削除", "ko-KR": "승인 작업 삭제", "zh-CN": "删除审批任务", "zh-TW": "刪除審批任務"}
+NULL	NULL	删除	{"en-US": "Delete", "ja-JP": "削除", "ko-KR": "삭제", "zh-CN": "删除", "zh-TW": "刪除"}
+NULL	NULL	删除	{"en-US": "Delete", "ja-JP": "削除", "ko-KR": "삭제", "zh-CN": "删除", "zh-TW": "刪除"}
+NULL	NULL	删除多语言消息	{"en-US": "sys:i18nMessage:delete", "ja-JP": "删除多语言消息", "ko-KR": "sys:i18nMessage:delete", "zh-CN": "删除多语言消息", "zh-TW": "删除多语言消息"}
+	NULL	删除邀请码	{"en-US": "sys:invite-code:delete", "ja-JP": "删除邀请码", "ko-KR": "sys:invite-code:delete", "zh-CN": "删除邀请码", "zh-TW": "删除邀请码"}
+NULL	NULL	删除系统	{"en-US": "Delete System", "ja-JP": "システム削除", "ko-KR": "시스템 삭제", "zh-CN": "删除系统", "zh-TW": "刪除系統"}
+NULL	NULL	删除接口	{"en-US": "Delete API", "ja-JP": "API削除", "ko-KR": "API 삭제", "zh-CN": "删除接口", "zh-TW": "刪除介面"}
+record	LabelRecord	打印记录	{"en-US": "Print Record", "ja-JP": "印刷記録", "ko-KR": "인쇄 기록", "zh-CN": "打印记录", "zh-TW": "打印記錄"}
+NULL	NULL	删除模板	{"en-US": "label:template:delete", "ja-JP": "删除模板", "ko-KR": "label:template:delete", "zh-CN": "删除模板", "zh-TW": "删除模板"}
+NULL	NULL	删除绑定	{"en-US": "label:binding:delete", "ja-JP": "删除绑定", "ko-KR": "label:binding:delete", "zh-CN": "删除绑定", "zh-TW": "删除绑定"}
+NULL	NULL	删除	{"en-US": "sys:codegenDatasource:delete", "ja-JP": "删除", "ko-KR": "sys:codegenDatasource:delete", "zh-CN": "删除", "zh-TW": "删除"}
+NULL	NULL	下载ZIP	{"en-US": "sys:codegen:download", "ja-JP": "下载ZIP", "ko-KR": "sys:codegen:download", "zh-CN": "下载ZIP", "zh-TW": "下载ZIP"}
+NULL	NULL	删除	{"en-US": "sys:codegenDatasource:delete", "ja-JP": "删除", "ko-KR": "sys:codegenDatasource:delete", "zh-CN": "删除", "zh-TW": "删除"}
+NULL	NULL	编辑	{"en-US": "Edit", "ja-JP": "編集", "ko-KR": "편집", "zh-CN": "编辑", "zh-TW": "編輯"}
+NULL	NULL	编辑	{"en-US": "编辑", "ja-JP": "编辑", "ko-KR": "编辑", "zh-CN": "编辑", "zh-TW": "编辑"}
+NULL	NULL	删除物料	{"en-US": "Delete Material", "ja-JP": "Delete Material", "ko-KR": "Delete Material", "zh-CN": "删除物料", "zh-TW": "删除物料"}
+NULL	NULL	编辑	{"en-US": "Edit", "ja-JP": "編集", "ko-KR": "편집", "zh-CN": "编辑", "zh-TW": "編輯"}
+edit	NULL	编辑	{"en-US": "Edit", "ja-JP": "編集", "ko-KR": "편집", "zh-CN": "编辑", "zh-TW": "編輯"}
+module	SystemModule	模块管理	{"en-US": "Modules", "ja-JP": "モジュール管理", "ko-KR": "모듈 관리", "zh-CN": "模块管理", "zh-TW": "模塊管理"}
+NULL	NULL	批量删除用户	{"en-US": "Batch Delete Users", "ja-JP": "一括削除ユーザー", "ko-KR": "일괄 삭제 사용자", "zh-CN": "批量删除用户", "zh-TW": "批量刪除用戶"}
+NULL	NULL	批量删除角色	{"en-US": "Batch Delete Roles", "ja-JP": "一括削除ロール", "ko-KR": "일괄 삭제 역할", "zh-CN": "批量删除角色", "zh-TW": "批量刪除角色"}
+NULL	NULL	批量删除模块	{"en-US": "Batch Delete Modules", "ja-JP": "一括削除モジュール", "ko-KR": "일괄 삭제 모듈", "zh-CN": "批量删除模块", "zh-TW": "批量刪除模塊"}
+NULL	NULL	批量删除菜单	{"en-US": "Batch Delete Menus", "ja-JP": "一括削除メニュー", "ko-KR": "일괄 삭제 메뉴", "zh-CN": "批量删除菜单", "zh-TW": "批量刪除選單"}
+NULL	NULL	批量删除职位	{"en-US": "Batch Delete Positions", "ja-JP": "一括削除職位", "ko-KR": "일괄 삭제 직위", "zh-CN": "批量删除职位", "zh-TW": "批量刪除職位"}
+NULL	NULL	批量删除字典	{"en-US": "Batch Delete Dictionaries", "ja-JP": "一括削除辞書", "ko-KR": "일괄 삭제 사전", "zh-CN": "批量删除字典", "zh-TW": "批量刪除字典"}
+NULL	NULL	批量删除字典类型	{"en-US": "Batch Delete Dict Types", "ja-JP": "一括削除辞書タイプ", "ko-KR": "일괄 삭제 사전 유형", "zh-CN": "批量删除字典类型", "zh-TW": "批量刪除字典類型"}
+NULL	NULL	批量删除表格配置	{"en-US": "Batch Delete Table Configs", "ja-JP": "一括削除テーブル設定", "ko-KR": "일괄 삭제 테이블 설정", "zh-CN": "批量删除表格配置", "zh-TW": "批量刪除表格設定"}
+NULL	NULL	批量删除租户	{"en-US": "Batch Delete Tenants", "ja-JP": "一括削除テナント", "ko-KR": "일괄 삭제 테넌트", "zh-CN": "批量删除租户", "zh-TW": "批量刪除租戶"}
+messageTemplate	SystemMessageTemplate	消息模板	{"en-US": "Message Template", "ja-JP": "メッセージテンプレート", "ko-KR": "Message Template", "zh-CN": "消息模板", "zh-TW": "消息模板"}
+NULL	NULL	配置审批流程	{"en-US": "Configure Workflow", "ja-JP": "承認フロー設定", "ko-KR": "승인 흐름 구성", "zh-CN": "配置审批流程", "zh-TW": "配置審批流程"}
+NULL	NULL	查看	{"en-US": "View", "ja-JP": "表示", "ko-KR": "보기", "zh-CN": "查看", "zh-TW": "查看"}
+NULL	NULL	设为默认	{"en-US": "Set Default", "ja-JP": "既定に設定", "ko-KR": "기본값으로 설정", "zh-CN": "设为默认", "zh-TW": "設為預設"}
+	NULL	查看使用记录	{"en-US": "sys:invite-code:record:view", "ja-JP": "查看使用记录", "ko-KR": "sys:invite-code:record:view", "zh-CN": "查看使用记录", "zh-TW": "查看使用记录"}
+NULL	NULL	批量删除	{"en-US": "Batch Delete", "ja-JP": "一括削除", "ko-KR": "일괄 삭제", "zh-CN": "批量删除", "zh-TW": "批次刪除"}
+NULL	NULL	配置参数	{"en-US": "Configure Parameters", "ja-JP": "パラメータ設定", "ko-KR": "매개변수 설정", "zh-CN": "配置参数", "zh-TW": "配置參數"}
+binding	LabelBinding	模板绑定	{"en-US": "Template Binding", "ja-JP": "テンプレートバインディング", "ko-KR": "템플릿 바인딩", "zh-CN": "模板绑定", "zh-TW": "模板綁定"}
+NULL	NULL	批量删除	{"en-US": "label:template:batchDelete", "ja-JP": "批量删除", "ko-KR": "label:template:batchDelete", "zh-CN": "批量删除", "zh-TW": "批量删除"}
+NULL	NULL	绑定管理	{"en-US": "label:binding:manage", "ja-JP": "绑定管理", "ko-KR": "label:binding:manage", "zh-CN": "绑定管理", "zh-TW": "绑定管理"}
+NULL	NULL	测试连接	{"en-US": "sys:codegenDatasource:test", "ja-JP": "测试连接", "ko-KR": "sys:codegenDatasource:test", "zh-CN": "测试连接", "zh-TW": "测试连接"}
+NULL	NULL	测试连接	{"en-US": "sys:codegenDatasource:test", "ja-JP": "测试连接", "ko-KR": "sys:codegenDatasource:test", "zh-CN": "测试连接", "zh-TW": "测试连接"}
+NULL	NULL	删除	{"en-US": "Delete", "ja-JP": "削除", "ko-KR": "삭제", "zh-CN": "删除", "zh-TW": "刪除"}
+NULL	NULL	删除	{"en-US": "删除", "ja-JP": "删除", "ko-KR": "删除", "zh-CN": "删除", "zh-TW": "删除"}
+NULL	NULL	删除	{"en-US": "Delete", "ja-JP": "削除", "ko-KR": "삭제", "zh-CN": "删除", "zh-TW": "刪除"}
+delete	NULL	删除	{"en-US": "Delete", "ja-JP": "削除", "ko-KR": "삭제", "zh-CN": "删除", "zh-TW": "刪除"}
+NULL	NULL	重置密码	{"en-US": "Reset Password", "ja-JP": "パスワードリセット", "ko-KR": "비밀번호 재설정", "zh-CN": "重置密码", "zh-TW": "重置密碼"}
+NULL	NULL	菜单授权	{"en-US": "Menu Authorization", "ja-JP": "メニュー認可", "ko-KR": "메뉴 인증", "zh-CN": "菜单授权", "zh-TW": "選單授權"}
+NULL	NULL	导出字典	{"en-US": "Export Dictionary", "ja-JP": "辞書エクスポート", "ko-KR": "사전 내보내기", "zh-CN": "导出字典", "zh-TW": "匯出字典"}
+NULL	NULL	导出字典类型	{"en-US": "Export Dict Types", "ja-JP": "辞書タイプエクスポート", "ko-KR": "사전 유형 내보내기", "zh-CN": "导出字典类型", "zh-TW": "匯出字典類型"}
+NULL	NULL	导出表格配置	{"en-US": "Export Table Config", "ja-JP": "テーブル設定エクスポート", "ko-KR": "테이블 설정 내보내기", "zh-CN": "导出表格配置", "zh-TW": "匯出表格設定"}
+NULL	NULL	导出租户	{"en-US": "Export Tenants", "ja-JP": "テナントエクスポート", "ko-KR": "테넌트 내보내기", "zh-CN": "导出租户", "zh-TW": "匯出租戶"}
+tenantMessageWhitelist	SystemTenantMessageWhitelist	租户消息白名单	{"en-US": "Tenant Message Whitelist", "ja-JP": "テナントメッセージホワイトリスト", "ko-KR": "Tenant Message Whitelist", "zh-CN": "租户消息白名单", "zh-TW": "租戶消息白名單"}
+dashboard	ApprovalDashboard	审批工作台	{"en-US": "Approval Dashboard", "ja-JP": "承認ダッシュボード", "ko-KR": "승인 대시보드", "zh-CN": "审批工作台", "zh-TW": "審批工作台"}
+dashboard	ApprovalDashboard	审批工作台	{"en-US": "Approval Dashboard", "ja-JP": "承認ダッシュボード", "ko-KR": "승인 대시보드", "zh-CN": "审批工作台", "zh-TW": "審批工作台"}
+NULL	NULL	测试	{"en-US": "Test", "ja-JP": "テスト", "ko-KR": "테스트", "zh-CN": "测试", "zh-TW": "測試"}
+NULL	NULL	导入	{"en-US": "Import", "ja-JP": "インポート", "ko-KR": "가져오기", "zh-CN": "导入", "zh-TW": "導入"}
+integration	IntegrationHome	接口平台主页	{"en-US": "Integration Platform Home", "ja-JP": "接口平台主页", "ko-KR": "接口平台主页", "zh-CN": "接口平台主页", "zh-TW": "接口平台主页"}
+NULL	NULL	授权	{"en-US": "Authorization", "ja-JP": "認証", "ko-KR": "권한 설정", "zh-CN": "授权", "zh-TW": "授權"}
+NULL	NULL	配置映射	{"en-US": "Configure Mapping", "ja-JP": "マッピング設定", "ko-KR": "매핑 설정", "zh-CN": "配置映射", "zh-TW": "配置映射"}
+NULL	NULL	查看模板	{"en-US": "label:template:view", "ja-JP": "查看模板", "ko-KR": "label:template:view", "zh-CN": "查看模板", "zh-TW": "查看模板"}
+excelConfig	NULL	Excel配置	{"en-US": "Excel Config", "ja-JP": "Excel設定", "ko-KR": "Excel 설정", "zh-CN": "Excel配置", "zh-TW": "Excel配置"}
+NULL	NULL	删除	{"en-US": "sys:codegen:delete", "ja-JP": "删除", "ko-KR": "sys:codegen:delete", "zh-CN": "删除", "zh-TW": "删除"}
+NULL	NULL	导入	{"en-US": "Import", "ja-JP": "インポート", "ko-KR": "가져오기", "zh-CN": "导入", "zh-TW": "匯入"}
+NULL	NULL	生成租户	{"en-US": "生成租户", "ja-JP": "生成租户", "ko-KR": "生成租户", "zh-CN": "生成租户", "zh-TW": "生成租户"}
+NULL	NULL	导出用户	{"en-US": "Export Users", "ja-JP": "ユーザーエクスポート", "ko-KR": "사용자 내보내기", "zh-CN": "导出用户", "zh-TW": "匯出用戶"}
+NULL	NULL	绑定人员	{"en-US": "sys:role:authUser", "ja-JP": "绑定人员", "ko-KR": "sys:role:authUser", "zh-CN": "绑定人员", "zh-TW": "绑定人员"}
+NULL	NULL	生成编码	{"en-US": "Generate Code", "ja-JP": "コード生成", "ko-KR": "코드 생성", "zh-CN": "生成编码", "zh-TW": "生成編碼"}
+NULL	NULL	下载模板	{"en-US": "Download Template", "ja-JP": "テンプレートをダウンロード", "ko-KR": "템플릿 다운로드", "zh-CN": "下载模板", "zh-TW": "下載模板"}
+NULL	NULL	设为默认	{"en-US": "label:template:setDefault", "ja-JP": "设为默认", "ko-KR": "label:template:setDefault", "zh-CN": "设为默认", "zh-TW": "设为默认"}
+NULL	NULL	导出	{"en-US": "Export", "ja-JP": "エクスポート", "ko-KR": "내보내기", "zh-CN": "导出", "zh-TW": "匯出"}
+NULL	NULL	发起审批	{"en-US": "发起审批", "ja-JP": "发起审批", "ko-KR": "发起审批", "zh-CN": "发起审批", "zh-TW": "发起审批"}
+androidVersion	SystemAndroidVersion	安卓版本管理	{"en-US": "Android Version", "ja-JP": "Androidバージョン管理", "ko-KR": "안드로이드 버전 관리", "zh-CN": "安卓版本管理", "zh-TW": "安卓版本管理"}
+NULL	NULL	分配角色	{"en-US": "Assign Roles", "ja-JP": "ロール割り当て", "ko-KR": "역할 할당", "zh-CN": "分配角色", "zh-TW": "分配角色"}
+dict	SystemDict	字典管理	{"en-US": "Dictionary", "ja-JP": "辞書管理", "ko-KR": "사전 관리", "zh-CN": "字典管理", "zh-TW": "字典管理"}
+NULL	NULL	复制模板	{"en-US": "label:template:copy", "ja-JP": "复制模板", "ko-KR": "label:template:copy", "zh-CN": "复制模板", "zh-TW": "复制模板"}
+NULL	NULL	生成租户	{"en-US": "Generate Tenant", "ja-JP": "テナント生成", "ko-KR": "테넌트 생성", "zh-CN": "生成租户", "zh-TW": "產生租戶"}
+NULL	NULL	模板管理	{"en-US": "label:template:manage", "ja-JP": "模板管理", "ko-KR": "label:template:manage", "zh-CN": "模板管理", "zh-TW": "模板管理"}
+pageTableConfig	NULL	页表配置	{"en-US": "Page Table Config", "ja-JP": "ページテーブル設定", "ko-KR": "페이지 테이블 설정", "zh-CN": "页表配置", "zh-TW": "頁表配置"}
+NULL	NULL	同步第三方	{"en-US": "Sync Third Party", "ja-JP": "第三方同期", "ko-KR": "제3자 동기화", "zh-CN": "同步第三方", "zh-TW": "同步第三方"}
+NULL	NULL	发起审查	{"en-US": "Start Review", "ja-JP": "審査開始", "ko-KR": "심사 시작", "zh-CN": "发起审查", "zh-TW": "發起審查"}
+loginLog	SystemLoginLog	登录日志	{"en-US": "Login Logs", "ja-JP": "ログインログ", "ko-KR": "로그인 로그", "zh-CN": "登录日志", "zh-TW": "登錄日誌"}
+NULL	NULL	从第三方拉取	{"en-US": "Pull From Third Party", "ja-JP": "第三方から取得", "ko-KR": "제3자에서 가져오기", "zh-CN": "从第三方拉取", "zh-TW": "從第三方拉取"}
+NULL	NULL	同步第三方	{"en-US": "Sync Third Party", "ja-JP": "サードパーティ同期", "ko-KR": "타사 동기화", "zh-CN": "同步第三方", "zh-TW": "同步第三方"}
+excelImportConfig	SystemExcelImportConfig	导入配置	{"en-US": "Import Config", "ja-JP": "インポート設定", "ko-KR": "가져오기 설정", "zh-CN": "导入配置", "zh-TW": "匯入設定"}
+NULL	NULL	下载导入模板	{"en-US": "Download Import Template", "ja-JP": "インポートテンプレートダウンロード", "ko-KR": "가져오기 템플릿 다운로드", "zh-CN": "下载导入模板", "zh-TW": "下載匯入模板"}
+tableConfig	SystemTableConfig	表格配置	{"en-US": "Table Config", "ja-JP": "テーブル設定", "ko-KR": "테이블 설정", "zh-CN": "表格配置", "zh-TW": "表格設定"}
+taskConfig	ApprovalTaskConfig	审批任务配置	{"en-US": "Task Config", "ja-JP": "承認タスク設定", "ko-KR": "승인 작업 구성", "zh-CN": "审批任务配置", "zh-TW": "審批任務配置"}
+encodeRule	BasicEncodeRule	编码规则管理	{"en-US": "Encoding Rule Management", "ja-JP": "採番ルール管理", "ko-KR": "인코딩 규칙 관리", "zh-CN": "编码规则管理", "zh-TW": "編碼規則管理"}
+i18nLanguageType	SystemI18nLanguageType	语言配置	{"en-US": "Language Configuration", "ja-JP": "言語設定", "ko-KR": "언어 설정", "zh-CN": "语言配置", "zh-TW": "語言設定"}
+thirdSystem	IntegrationThirdSystem	第三方系统管理	{"en-US": "Third System Management", "ja-JP": "サードパーティシステム管理", "ko-KR": "타사 시스템 관리", "zh-CN": "第三方系统管理", "zh-TW": "第三方系統管理"}
+label	NULL	标签管理	{"en-US": "Label Management", "ja-JP": "ラベル管理", "ko-KR": "라벨 관리", "zh-CN": "标签管理", "zh-TW": "標籤管理"}
+NULL	NULL	导入用户	{"en-US": "Import Users", "ja-JP": "ユーザーインポート", "ko-KR": "사용자 가져오기", "zh-CN": "导入用户", "zh-TW": "導入用戶"}
+NULL	NULL	导出登录日志	{"en-US": "Export Login Logs", "ja-JP": "ログインログエクスポート", "ko-KR": "로그인 로그 내보내기", "zh-CN": "导出登录日志", "zh-TW": "匯出登錄日誌"}
+maintenance	SystemMaintenance	系统运维	{"en-US": "System Maintenance", "ja-JP": "システム運用", "ko-KR": "시스템 운영", "zh-CN": "系统运维", "zh-TW": "系統運維"}
+NULL	NULL	下载模板	{"en-US": "Download Template", "ja-JP": "テンプレートダウンロード", "ko-KR": "템플릿 다운로드", "zh-CN": "下载模板", "zh-TW": "下載模板"}
+NULL	NULL	导出用户	{"en-US": "Export Users", "ja-JP": "ユーザーエクスポート", "ko-KR": "사용자 내보내기", "zh-CN": "导出用户", "zh-TW": "匯出用戶"}
+inviteCode	SystemInviteCode	邀请码管理	{"en-US": "Invite Code Management", "ja-JP": "招待コード管理", "ko-KR": "초대 코드 관리", "zh-CN": "邀请码管理", "zh-TW": "邀請碼管理"}
+excelExportConfig	SystemExcelExportConfig	导出配置	{"en-US": "Export Config", "ja-JP": "エクスポート設定", "ko-KR": "내보내기 설정", "zh-CN": "导出配置", "zh-TW": "匯出設定"}
+userTableConfig	SystemUserTableConfig	用户列设置	{"en-US": "User Table Config", "ja-JP": "ユーザー列設定", "ko-KR": "사용자 열 설정", "zh-CN": "用户列设置", "zh-TW": "用戶列設置"}
+execution/start	ApprovalExecutionStart	发起审批	{"en-US": "Start Approval", "ja-JP": "承認開始", "ko-KR": "승인 시작", "zh-CN": "发起审批", "zh-TW": "發起審批"}
+i18nMessage	SystemI18nMessage	多语言消息	{"en-US": "I18n Message", "ja-JP": "多言語メッセージ", "ko-KR": "다국어 메시지", "zh-CN": "多语言消息", "zh-TW": "多語言訊息"}
+apiConfig	IntegrationApiConfig	接口配置管理	{"en-US": "API Config Management", "ja-JP": "API設定管理", "ko-KR": "API 설정 관리", "zh-CN": "接口配置管理", "zh-TW": "介面設定管理"}
+supplier	BasicSupplier	供应商管理	{"en-US": "Supplier Management", "ja-JP": "サプライヤー管理", "ko-KR": "공급업체 관리", "zh-CN": "供应商管理", "zh-TW": "供應商管理"}
+my/pending	ApprovalMyPending	我的待办	{"en-US": "My Pending", "ja-JP": "私の保留中", "ko-KR": "내 대기", "zh-CN": "我的待办", "zh-TW": "我的待辦"}
+apiCallLog	IntegrationApiCallLog	调用记录查询	{"en-US": "API Call Log", "ja-JP": "API呼び出しログ", "ko-KR": "API 호출 로그", "zh-CN": "调用记录查询", "zh-TW": "呼叫記錄查詢"}
+customer	BasicCustomer	客户管理	{"en-US": "Customer Management", "ja-JP": "顧客管理", "ko-KR": "고객 관리", "zh-CN": "客户管理", "zh-TW": "客戶管理"}
+my/processed	ApprovalMyProcessed	我已处理	{"en-US": "My Processed", "ja-JP": "処理済み", "ko-KR": "처리 완료", "zh-CN": "我已处理", "zh-TW": "我已處理"}
+material	BasicMaterial	物料管理	{"en-US": "Material Management", "ja-JP": "品目管理", "ko-KR": "자재 관리", "zh-CN": "物料管理", "zh-TW": "物料管理"}
+my/initiated	ApprovalMyInitiated	我发起的	{"en-US": "My Initiated", "ja-JP": "開始した", "ko-KR": "시작한", "zh-CN": "我发起的", "zh-TW": "我發起的"}
+unit	BasicUnit	计量单位	{"en-US": "Units of Measure", "ja-JP": "計量単位", "ko-KR": "계량 단위", "zh-CN": "计量单位", "zh-TW": "計量單位"}
+i18nConfig	NULL	多语言配置	{"en-US": "I18n Config", "ja-JP": "多言語設定", "ko-KR": "다국어 설정", "zh-CN": "多语言配置", "zh-TW": "多語言設定"}
+/system/codegen	SystemCodegen	在线开发	{"en-US": "/system/codegen", "ja-JP": "在线开发", "ko-KR": "/system/codegen", "zh-CN": "在线开发", "zh-TW": "在线开发"}
+/system/codegenDatasource	SystemCodegenDatasource	代码生成数据源	{"en-US": "/system/codegenDatasource", "ja-JP": "代码生成数据源", "ko-KR": "/system/codegenDatasource", "zh-CN": "代码生成数据源", "zh-TW": "代码生成数据源"}
+file	SystemFile	文件管理	{"en-US": "File Management", "ja-JP": "ファイル管理", "ko-KR": "파일 관리", "zh-CN": "文件管理", "zh-TW": "檔案管理"}
+onlineDev	NULL	在线开发	{"en-US": "onlineDev", "ja-JP": "在线开发", "ko-KR": "onlineDev", "zh-CN": "在线开发", "zh-TW": "在线开发"}
+dictType	SystemDictType	字典类型管理	{"en-US": "Dict Types", "ja-JP": "辞書タイプ", "ko-KR": "사전 유형", "zh-CN": "字典类型管理", "zh-TW": "字典類型管理"}

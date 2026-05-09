@@ -27,7 +27,7 @@ import java.util.List;
  * 提供忽略租户上下文的管理与诊断接口，用于临时绕过租户过滤执行系统任务。
  */
 @RestController
-@RequestMapping({"/sys/tenant/ignore","/sys/tenant-ignore"})
+@RequestMapping({"/tenant/ignore","/tenant-ignore"})
 public class SysTenantIgnoreController {
     @Autowired
     private SysTenantIgnoreService service;

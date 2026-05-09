@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <a-modal
     v-model:open="visible"
     :title="t('system.user.assignRole')"
@@ -7,7 +7,7 @@
     @ok="handleOk"
     @cancel="handleCancel"
   >
-    <!-- 用户信息区域 -->
+    <!-- 鐢ㄦ埛淇℃伅鍖哄煙 -->
     <div class="user-info-header">
       <a-descriptions :column="2" size="small" bordered>
         <a-descriptions-item :label="t('system.user.username')">
@@ -19,7 +19,7 @@
       </a-descriptions>
     </div>
 
-    <!-- 搜索与操作栏 -->
+    <!-- 鎼滅储涓庢搷浣滄爮 -->
     <div class="role-toolbar">
       <a-input-search
         v-model:value="searchKeyword"
@@ -37,7 +37,7 @@
       </a-space>
     </div>
 
-    <!-- 角色表格 -->
+    <!-- 瑙掕壊琛ㄦ牸 -->
     <a-table
       :columns="columns"
       :data-source="filteredRoleList"
@@ -72,7 +72,7 @@
       </template>
     </a-table>
 
-    <!-- 底部统计信息 -->
+    <!-- 搴曢儴缁熻淇℃伅 -->
     <div class="role-summary">
       {{ t('system.user.roleAssign.summary', { total: allRoleList.length, selected: selectedRoleIds.length }) }}
     </div>
@@ -81,14 +81,14 @@
 
 <script setup lang="ts">
 /**
- * 用户分配角色弹窗（增强版）
+ * 鐢ㄦ埛鍒嗛厤瑙掕壊寮圭獥锛堝寮虹増锛?
  *
- * 功能说明：
- * 1. 打开弹窗时加载当前租户下的角色列表
- * 2. 加载该用户在当前租户下已分配的角色ID
- * 3. 表格形式展示所有角色，勾选框标记已分配角色
- * 4. 支持搜索、全选、清空操作
- * 5. 保存后提交到后端，后端以"先删后插"方式保存 sys_user_role
+ * 鍔熻兘璇存槑锛?
+ * 1. 鎵撳紑寮圭獥鏃跺姞杞藉綋鍓嶇鎴蜂笅鐨勮鑹插垪琛?
+ * 2. 鍔犺浇璇ョ敤鎴峰湪褰撳墠绉熸埛涓嬪凡鍒嗛厤鐨勮鑹睮D
+ * 3. 琛ㄦ牸褰㈠紡灞曠ず鎵€鏈夎鑹诧紝鍕鹃€夋鏍囪宸插垎閰嶈鑹?
+ * 4. 鏀寔鎼滅储銆佸叏閫夈€佹竻绌烘搷浣?
+ * 5. 淇濆瓨鍚庢彁浜ゅ埌鍚庣锛屽悗绔互"鍏堝垹鍚庢彃"鏂瑰紡淇濆瓨 sys_user_role
  *
  * @author Forgex
  * @version 2.0.0
@@ -101,13 +101,13 @@ import { getRoleList } from '@/api/system/role'
 import { useUserStore } from '@/stores/user'
 
 interface Props {
-  /** 对话框是否打开 */
+  /** 瀵硅瘽妗嗘槸鍚︽墦寮€ */
   open: boolean
-  /** 用户 ID */
+  /** 鐢ㄦ埛 ID */
   userId?: string
-  /** 用户名 */
+  /** 鐢ㄦ埛鍚?*/
   userName?: string
-  /** 用户账号 */
+  /** 鐢ㄦ埛璐﹀彿 */
   userAccount?: string
 }
 
@@ -141,7 +141,7 @@ interface RoleRecord {
 }
 
 /**
- * 表格列定义
+ * 琛ㄦ牸鍒楀畾涔?
  */
 const columns = computed(() => [
   {
@@ -162,14 +162,14 @@ const columns = computed(() => [
     width: 100,
   },
   {
-    title: t('system.user.roleAssign.assigned状态'),
+    title: t('system.user.roleAssign.assignedStatus'),
     dataIndex: 'assigned',
     width: 100,
   },
 ])
 
 /**
- * 将角色 ID 转为字符串（避免 snowflake ID 转 Number 时精度丢失）
+ * 灏嗚鑹?ID 杞负瀛楃涓诧紙閬垮厤 snowflake ID 杞?Number 鏃剁簿搴︿涪澶憋級
  */
 function toValidRoleId(value: unknown): string | null {
   if (value == null) return null
@@ -178,7 +178,7 @@ function toValidRoleId(value: unknown): string | null {
 }
 
 /**
- * 规范化角色列表
+ * 瑙勮寖鍖栬鑹插垪琛?
  */
 function normalizeRoleList(roleList: any[]): RoleRecord[] {
   const uniqueIds = new Set<string>()
@@ -201,7 +201,7 @@ function normalizeRoleList(roleList: any[]): RoleRecord[] {
 }
 
 /**
- * 规范化已分配角色 ID
+ * 瑙勮寖鍖栧凡鍒嗛厤瑙掕壊 ID
  */
 function normalizeSelectedRoleIds(roleIds: unknown[]): string[] {
   const uniqueIds = new Set<string>()
@@ -217,7 +217,7 @@ function normalizeSelectedRoleIds(roleIds: unknown[]): string[] {
 }
 
 /**
- * 过滤后的角色列表（搜索）
+ * 杩囨护鍚庣殑瑙掕壊鍒楄〃锛堟悳绱級
  */
 const filteredRoleList = computed(() => {
   if (!searchKeyword.value) {
@@ -287,7 +287,7 @@ function handleClearAll() {
 }
 
 /**
- * 点击"确定"保存分配结果
+ * 鐐瑰嚮"纭畾"淇濆瓨鍒嗛厤缁撴灉
  */
 async function handleOk() {
   if (!props.userId) {

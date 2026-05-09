@@ -38,7 +38,13 @@ file:
   upload:
     path: ${FORGEX_UPLOAD_DIR:${FORGEX_HOME:C:/forgex}/data/uploads}
   access:
-    prefix: /files
+    prefix: /sys/files
+
+android-version:
+  upload:
+    temp-dir: ${FORGEX_ANDROID_VERSION_UPLOAD_TEMP_DIR:${FORGEX_HOME:C:/forgex}/data/tmp/android-version}
+    expire-hours: ${FORGEX_ANDROID_VERSION_UPLOAD_EXPIRE_HOURS:24}
+    cleanup-cron: ${FORGEX_ANDROID_VERSION_UPLOAD_CLEANUP_CRON:0 0 * * * ?}
 
 logging:
   pattern:
@@ -50,6 +56,8 @@ logging:
 
 server:
   port: ${FORGEX_SYS_PORT:9002}
+  servlet:
+    context-path: /sys
 
 forgex:
   deployment:

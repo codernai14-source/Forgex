@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @author Forgex Team
  * @version 1.0.0
  */
-@FeignClient(name = "forgex-integration", contextId = "integrationInternalFeignClient", path = "/api/integration/internal/user")
+@FeignClient(name = "forgex-integration", contextId = "integrationInternalFeignClient", path = "/integration/internal/user")
 public interface IntegrationInternalFeignClient {
 
     /**

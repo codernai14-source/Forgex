@@ -3,17 +3,17 @@
     <div class="supplier-page__header">
       <div>
         <a-tag color="blue">Master Data</a-tag>
-        <h1>供应商主数据</h1>
-        <p>统一维护供应商共享主数据，并为租户创建、接口同步和资质审查提供数据来源。</p>
+        <h1>{{ $tl('供应商主数据') }}</h1>
+        <p>{{ $tl('统一维护供应商共享主数据，并为租户创建、接口同步和资质审查提供数据来源。') }}</p>
       </div>
       <a-space wrap>
         <a-button v-permission="'basic:supplier:import'" @click="importDialogVisible = true">
           <UploadOutlined />
           {{ t('system.excel.commonImport.title') }}
         </a-button>
-        <a-button v-permission="'basic:supplier:export'" @click="handleExport">导出</a-button>
-        <a-button v-permission="'basic:supplier:sync'" @click="handleSync">同步第三方</a-button>
-        <a-button v-permission="'basic:supplier:add'" type="primary" @click="openCreate">新增供应商</a-button>
+        <a-button v-permission="'basic:supplier:export'" @click="handleExport">{{ $tl('导出') }}</a-button>
+        <a-button v-permission="'basic:supplier:sync'" @click="handleSync">{{ $tl('同步第三方') }}</a-button>
+        <a-button v-permission="'basic:supplier:add'" type="primary" @click="openCreate">{{ $tl('新增供应商') }}</a-button>
       </a-space>
     </div>
 
@@ -22,7 +22,6 @@
       table-code="SupplierMasterTable"
       :request="handleRequest"
       :dict-options="dictOptions"
-      :fallback-config="tableFallbackConfig"
       row-key="id"
     >
       <template #logoUrl="{ record }">
@@ -56,7 +55,7 @@
 
       <template #hasRelatedTenant="{ record }">
         <a-tag :color="isTenantLinked(record) ? 'green' : 'default'">
-          {{ isTenantLinked(record) ? '已关联' : '未关联' }}
+          {{ isTenantLinked(record) ? $tl('已关联') : $tl('未关联') }}
         </a-tag>
       </template>
 
@@ -68,21 +67,21 @@
 
       <template #action="{ record }">
         <a-space>
-          <a v-permission="'basic:supplier:query'" @click="openDetail(record)">详情</a>
-          <a v-permission="'basic:supplier:edit'" @click="openEdit(record)">编辑</a>
+          <a v-permission="'basic:supplier:query'" @click="openDetail(record)">{{ $tl('详情') }}</a>
+          <a v-permission="'basic:supplier:edit'" @click="openEdit(record)">{{ $tl('编辑') }}</a>
           <a
             v-permission="'basic:supplier:generateTenant'"
             :class="{ disabled: isTenantLinked(record) }"
             @click="handleGenerateTenant(record)"
           >
-            生成租户
+            {{ $tl('生成租户') }}
           </a>
           <a
             v-permission="'basic:supplier:review'"
             :class="{ disabled: record.reviewStatus !== 1 }"
             @click="handleStartReview(record)"
           >
-            发起审查
+            {{ $tl('发起审查') }}
           </a>
           <a
             v-permission="'basic:supplier:delete'"
@@ -90,7 +89,7 @@
             :class="{ disabled: isTenantLinked(record) }"
             @click="handleDelete(record)"
           >
-            删除
+            {{ $tl('删除') }}
           </a>
         </a-space>
       </template>
@@ -107,30 +106,30 @@
       @cancel="handleEditorCancel"
     >
       <a-tabs v-model:active-key="activeTab">
-        <a-tab-pane key="main" tab="主数据">
+        <a-tab-pane key="main" :tab="$tl('主数据')">
           <a-form ref="formRef" :model="form" layout="vertical">
             <a-row :gutter="16">
               <a-col :span="8">
-                <a-form-item label="自动生成编码">
+                <a-form-item :label="$tl('自动生成编码')">
                   <a-switch v-model:checked="form.autoGenerateCode" :disabled="!!form.id || readonly" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="供应商编码" required>
+                <a-form-item :label="$tl('供应商编码')" required>
                   <a-input
                     v-model:value="form.supplierCode"
                     :disabled="!!form.id || readonly || form.autoGenerateCode"
-                    :placeholder="form.autoGenerateCode ? '保存时按编码规则自动生成' : '请输入供应商编码'"
+                    :placeholder="form.autoGenerateCode ? $tl('保存时按编码规则自动生成') : $tl('请输入供应商编码')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="供应商全称" required>
+                <a-form-item :label="$tl('供应商全称')" required>
                   <a-input v-model:value="form.supplierFullName" :disabled="readonly" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="供应商Logo">
+                <a-form-item :label="$tl('供应商Logo')">
                   <a-upload
                     :show-upload-list="false"
                     :before-upload="handleLogoUpload"
@@ -140,33 +139,33 @@
                     <div class="logo-uploader">
                       <a-avatar v-if="form.logoUrl" shape="square" :size="52" :src="form.logoUrl" />
                       <PlusOutlined v-else />
-                      <span>{{ form.logoUrl ? '更换Logo' : '上传Logo' }}</span>
+                      <span>{{ form.logoUrl ? $tl('更换Logo') : $tl('上传Logo') }}</span>
                     </div>
                   </a-upload>
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="简称">
+                <a-form-item :label="$tl('简称')">
                   <a-input v-model:value="form.supplierShortName" :disabled="readonly" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="英文名">
+                <a-form-item :label="$tl('英文名')">
                   <a-input v-model:value="form.englishName" :disabled="readonly" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="主联系人">
+                <a-form-item :label="$tl('主联系人')">
                   <a-input v-model:value="form.primaryContact" :disabled="readonly" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="联系电话">
+                <a-form-item :label="$tl('联系电话')">
                   <a-input v-model:value="form.contactPhone" :disabled="readonly" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="合作状态">
+                <a-form-item :label="$tl('合作状态')">
                   <a-select v-model:value="form.cooperationStatus" :disabled="readonly" allow-clear>
                     <a-select-option v-for="item in cooperationOptions" :key="String(item.value)" :value="item.value">
                       {{ item.label }}
@@ -175,7 +174,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="信用等级">
+                <a-form-item :label="$tl('信用等级')">
                   <a-select v-model:value="form.creditLevel" :disabled="readonly" allow-clear>
                     <a-select-option v-for="item in creditOptions" :key="String(item.value)" :value="item.value">
                       {{ item.label }}
@@ -184,7 +183,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="风险等级">
+                <a-form-item :label="$tl('风险等级')">
                   <a-select v-model:value="form.riskLevel" :disabled="readonly" allow-clear>
                     <a-select-option v-for="item in riskOptions" :key="String(item.value)" :value="item.value">
                       {{ item.label }}
@@ -193,7 +192,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="分级">
+                <a-form-item :label="$tl('分级')">
                   <a-select v-model:value="form.supplierLevel" :disabled="readonly" allow-clear>
                     <a-select-option v-for="item in levelOptions" :key="String(item.value)" :value="item.value">
                       {{ item.label }}
@@ -202,12 +201,12 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="关联租户编号">
+                <a-form-item :label="$tl('关联租户编号')">
                   <a-input v-model:value="form.relatedTenantCode" disabled />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="审查状态">
+                <a-form-item :label="$tl('审查状态')">
                   <a-select v-model:value="form.reviewStatus" :disabled="readonly" allow-clear>
                     <a-select-option v-for="item in reviewOptions" :key="String(item.value)" :value="item.value">
                       {{ item.label }}
@@ -216,12 +215,12 @@
                 </a-form-item>
               </a-col>
               <a-col :span="24">
-                <a-form-item label="现地址">
+                <a-form-item :label="$tl('现地址')">
                   <a-textarea v-model:value="form.currentAddress" :disabled="readonly" :rows="2" />
                 </a-form-item>
               </a-col>
               <a-col :span="24">
-                <a-form-item label="备注">
+                <a-form-item :label="$tl('备注')">
                   <a-textarea v-model:value="form.remark" :disabled="readonly" :rows="2" />
                 </a-form-item>
               </a-col>
@@ -229,25 +228,25 @@
           </a-form>
         </a-tab-pane>
 
-        <a-tab-pane key="detail" tab="详情信息">
+        <a-tab-pane key="detail" :tab="$tl('详情信息')">
           <a-row :gutter="16">
             <a-col :span="8">
-              <a-form-item label="法人代表">
+              <a-form-item :label="$tl('法人代表')">
                 <a-input v-model:value="form.detail!.legalRepresentative" :disabled="readonly" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="注册资本">
+              <a-form-item :label="$tl('注册资本')">
                 <a-input-number v-model:value="form.detail!.registeredCapital" :disabled="readonly" class="full-width" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="成立日期">
+              <a-form-item :label="$tl('成立日期')">
                 <a-date-picker v-model:value="form.detail!.establishmentDate" :disabled="readonly" value-format="YYYY-MM-DD" class="full-width" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="企业性质">
+              <a-form-item :label="$tl('企业性质')">
                 <a-select v-model:value="form.detail!.enterpriseNature" :disabled="readonly" allow-clear>
                   <a-select-option v-for="item in enterpriseNatureOptions" :key="String(item.value)" :value="item.value">
                     {{ item.label }}
@@ -256,7 +255,7 @@
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="行业分类">
+              <a-form-item :label="$tl('行业分类')">
                 <a-select v-model:value="form.detail!.industryCategory" :disabled="readonly" allow-clear>
                   <a-select-option v-for="item in industryOptions" :key="String(item.value)" :value="item.value">
                     {{ item.label }}
@@ -265,27 +264,27 @@
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="邮箱">
+              <a-form-item :label="$tl('邮箱')">
                 <a-input v-model:value="form.detail!.email" :disabled="readonly" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="税号">
+              <a-form-item :label="$tl('税号')">
                 <a-input v-model:value="form.detail!.taxNumber" :disabled="readonly" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="开户银行">
+              <a-form-item :label="$tl('开户银行')">
                 <a-input v-model:value="form.detail!.bankName" :disabled="readonly" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="银行账号">
+              <a-form-item :label="$tl('银行账号')">
                 <a-input v-model:value="form.detail!.bankAccount" :disabled="readonly" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="发票类型">
+              <a-form-item :label="$tl('发票类型')">
                 <a-select v-model:value="form.detail!.invoiceType" :disabled="readonly" allow-clear>
                   <a-select-option v-for="item in invoiceOptions" :key="String(item.value)" :value="item.value">
                     {{ item.label }}
@@ -294,62 +293,62 @@
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item label="默认税率">
+              <a-form-item :label="$tl('默认税率')">
                 <a-input-number v-model:value="form.detail!.defaultTaxRate" :disabled="readonly" :min="0" :max="100" class="full-width" />
               </a-form-item>
             </a-col>
             <a-col :span="24">
-              <a-form-item label="注册地址">
+              <a-form-item :label="$tl('注册地址')">
                 <a-textarea v-model:value="form.detail!.registeredAddress" :disabled="readonly" :rows="2" />
               </a-form-item>
             </a-col>
             <a-col :span="24">
-              <a-form-item label="经营地址">
+              <a-form-item :label="$tl('经营地址')">
                 <a-textarea v-model:value="form.detail!.businessAddress" :disabled="readonly" :rows="2" />
               </a-form-item>
             </a-col>
           </a-row>
         </a-tab-pane>
 
-        <a-tab-pane key="contacts" tab="联系人">
+        <a-tab-pane key="contacts" :tab="$tl('联系人')">
           <div class="sub-toolbar">
-            <a-button v-if="!readonly" type="dashed" @click="addContact">新增联系人</a-button>
+            <a-button v-if="!readonly" type="dashed" @click="addContact">{{ $tl('新增联系人') }}</a-button>
           </div>
           <a-table :data-source="form.contactList" :pagination="false" row-key="__rowKey" size="small">
-            <a-table-column title="姓名">
+            <a-table-column :title="$tl('姓名')">
               <template #default="{ record }">
                 <a-input v-model:value="record.contactName" :disabled="readonly" />
               </template>
             </a-table-column>
-            <a-table-column title="电话">
+            <a-table-column :title="$tl('电话')">
               <template #default="{ record }">
                 <a-input v-model:value="record.contactPhone" :disabled="readonly" />
               </template>
             </a-table-column>
-            <a-table-column title="职位">
+            <a-table-column :title="$tl('职位')">
               <template #default="{ record }">
                 <a-input v-model:value="record.contactPosition" :disabled="readonly" />
               </template>
             </a-table-column>
-            <a-table-column title="邮箱">
+            <a-table-column :title="$tl('邮箱')">
               <template #default="{ record }">
                 <a-input v-model:value="record.contactEmail" :disabled="readonly" />
               </template>
             </a-table-column>
-            <a-table-column v-if="!readonly" title="操作" width="90">
+            <a-table-column v-if="!readonly" :title="$tl('操作')" width="90">
               <template #default="{ index }">
-                <a class="danger-link" @click="removeContact(index)">删除</a>
+                <a class="danger-link" @click="removeContact(index)">{{ $tl('删除') }}</a>
               </template>
             </a-table-column>
           </a-table>
         </a-tab-pane>
 
-        <a-tab-pane key="qualifications" tab="资质">
+        <a-tab-pane key="qualifications" :tab="$tl('资质')">
           <div class="sub-toolbar">
-            <a-button v-if="!readonly" type="dashed" @click="addQualification">新增资质</a-button>
+            <a-button v-if="!readonly" type="dashed" @click="addQualification">{{ $tl('新增资质') }}</a-button>
           </div>
           <a-table :data-source="form.qualificationList" :pagination="false" row-key="__rowKey" size="small">
-            <a-table-column title="资质类型">
+            <a-table-column :title="$tl('资质类型')">
               <template #default="{ record }">
                 <a-select v-model:value="record.qualificationType" :disabled="readonly" allow-clear class="full-width">
                   <a-select-option v-for="item in qualificationTypeOptions" :key="String(item.value)" :value="item.value">
@@ -358,34 +357,34 @@
                 </a-select>
               </template>
             </a-table-column>
-            <a-table-column title="证书编号">
+            <a-table-column :title="$tl('证书编号')">
               <template #default="{ record }">
                 <a-input v-model:value="record.certificateNo" :disabled="readonly" />
               </template>
             </a-table-column>
-            <a-table-column title="发证日期">
+            <a-table-column :title="$tl('发证日期')">
               <template #default="{ record }">
                 <a-date-picker v-model:value="record.issueDate" :disabled="readonly" value-format="YYYY-MM-DD" class="full-width" />
               </template>
             </a-table-column>
-            <a-table-column title="有效期至">
+            <a-table-column :title="$tl('有效期至')">
               <template #default="{ record }">
                 <a-date-picker v-model:value="record.expireDate" :disabled="readonly" value-format="YYYY-MM-DD" class="full-width" />
               </template>
             </a-table-column>
-            <a-table-column title="附件">
+            <a-table-column :title="$tl('附件')">
               <template #default="{ record }">
-                <a-input v-model:value="record.attachment" :disabled="readonly" placeholder="文件标识或 URL" />
+                <a-input v-model:value="record.attachment" :disabled="readonly" :placeholder="$tl('文件标识或 URL')" />
               </template>
             </a-table-column>
-            <a-table-column title="有效" width="90">
+            <a-table-column :title="$tl('有效')" width="90">
               <template #default="{ record }">
                 <a-switch v-model:checked="record.valid" :disabled="readonly" />
               </template>
             </a-table-column>
-            <a-table-column v-if="!readonly" title="操作" width="90">
+            <a-table-column v-if="!readonly" :title="$tl('操作')" width="90">
               <template #default="{ index }">
-                <a class="danger-link" @click="removeQualification(index)">删除</a>
+                <a class="danger-link" @click="removeQualification(index)">{{ $tl('删除') }}</a>
               </template>
             </a-table-column>
           </a-table>
@@ -412,7 +411,7 @@ import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import { uploadFile } from '@/api/system/file'
 import { supplierApi, type Supplier, type SupplierContact, type SupplierPageParam, type SupplierQualification } from '@/api/basic/supplier'
 import { useDict, type DictItemOption } from '@/hooks/useDict'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/stores/app'import { translateLegacyText } from '@/utils/legacyI18n'
 
 type OptionValue = string | number | boolean
 
@@ -432,28 +431,28 @@ const form = ref<Supplier>(createEmptySupplier())
 const importDialogVisible = ref(false)
 
 const fallbackCooperationOptions: OptionItem[] = [
-  { label: '潜在', value: '1' },
-  { label: '正式', value: '2' },
-  { label: '暂停', value: '3' },
-  { label: '淘汰', value: '4' },
+  { label: translateLegacyText('潜在'), value: '1' },
+  { label: translateLegacyText('正式'), value: '2' },
+  { label: translateLegacyText('暂停'), value: '3' },
+  { label: translateLegacyText('淘汰'), value: '4' },
 ]
 const fallbackCreditOptions: OptionItem[] = ['A', 'B', 'C', 'D'].map(item => ({ label: item, value: item }))
 const fallbackLevelOptions: OptionItem[] = [
-  { label: '战略', value: '1' },
-  { label: '核心', value: '2' },
-  { label: '一般', value: '3' },
+  { label: translateLegacyText('战略'), value: '1' },
+  { label: translateLegacyText('核心'), value: '2' },
+  { label: translateLegacyText('一般'), value: '3' },
 ]
 const fallbackReviewOptions: OptionItem[] = [
-  { label: '无需审查', value: 0 },
-  { label: '未审查', value: 1 },
-  { label: '审查中', value: 2 },
-  { label: '已审查', value: 3 },
+  { label: translateLegacyText('无需审查'), value: 0 },
+  { label: translateLegacyText('未审查'), value: 1 },
+  { label: translateLegacyText('审查中'), value: 2 },
+  { label: translateLegacyText('已审查'), value: 3 },
 ]
 const fallbackEnterpriseNatureOptions: OptionItem[] = [
-  { label: '国企', value: '1' },
-  { label: '民营', value: '2' },
-  { label: '外资', value: '3' },
-  { label: '合资', value: '4' },
+  { label: translateLegacyText('国企'), value: '1' },
+  { label: translateLegacyText('民营'), value: '2' },
+  { label: translateLegacyText('外资'), value: '3' },
+  { label: translateLegacyText('合资'), value: '4' },
 ]
 
 const { dictItems: cooperationDictItems } = useDict('supplier_cooperation_status')
@@ -502,43 +501,17 @@ const dictOptions = computed<Record<string, any[]>>(() => ({
   reviewStatus: reviewOptions.value,
   supplier_review_status: reviewOptions.value,
   hasRelatedTenant: [
-    { label: '已关联', value: true },
-    { label: '未关联', value: false },
+    { label: translateLegacyText('已关联'), value: true },
+    { label: translateLegacyText('未关联'), value: false },
   ],
 }))
 
-const tableFallbackConfig = {
-  tableCode: 'SupplierMasterTable',
-  tableName: '供应商主数据',
-  tableType: 'BUSINESS',
-  rowKey: 'id',
-  defaultPageSize: 10,
-  version: 1,
-  queryFields: [
-    { field: 'supplierCode', label: '供应商编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'supplierFullName', label: '供应商名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'cooperationStatus', label: '合作状态', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_cooperation_status' },
-    { field: 'reviewStatus', label: '审查状态', queryType: 'select', queryOperator: 'eq', dictCode: 'supplier_review_status' },
-  ],
-  columns: [
-    { field: 'logoUrl', title: 'Logo', width: 80, align: 'center', visible: true, order: 1 },
-    { field: 'supplierCode', title: '供应商编码', width: 140, visible: true, order: 2 },
-    { field: 'supplierFullName', title: '供应商名称', width: 240, visible: true, order: 3 },
-    { field: 'cooperationStatus', title: '合作状态', width: 110, dictCode: 'supplier_cooperation_status', visible: true, order: 4 },
-    { field: 'creditRisk', title: '信用/风险', width: 160, visible: true, order: 5 },
-    { field: 'supplierLevel', title: '分级', width: 100, dictCode: 'supplier_level', visible: true, order: 6 },
-    { field: 'hasRelatedTenant', title: '关联租户', width: 120, visible: true, order: 7 },
-    { field: 'reviewStatus', title: '审查状态', width: 120, dictCode: 'supplier_review_status', visible: true, order: 8 },
-    { field: 'createTime', title: '创建时间', width: 180, visible: true, order: 9 },
-    { field: 'action', title: '操作', width: 330, fixed: 'right', visible: true, order: 10 },
-  ],
-}
 
 const editorTitle = computed(() => {
   if (readonly.value) {
-    return '供应商详情'
+    return translateLegacyText('供应商详情')
   }
-  return form.value.id ? '编辑供应商' : '新增供应商'
+  return form.value.id ? translateLegacyText('编辑供应商') : translateLegacyText('新增供应商')
 })
 
 function createEmptySupplier(): Supplier {
@@ -612,12 +585,12 @@ async function handleSave() {
   }
   const autoGenerate = Boolean(form.value.autoGenerateCode) && !form.value.id
   if (!autoGenerate && !form.value.supplierCode?.trim()) {
-    message.warning('供应商编码不能为空')
+    message.warning(translateLegacyText('供应商编码不能为空'))
     activeTab.value = 'main'
     return
   }
   if (!form.value.supplierFullName?.trim()) {
-    message.warning('供应商全称不能为空')
+    message.warning(translateLegacyText('供应商全称不能为空'))
     activeTab.value = 'main'
     return
   }
@@ -671,12 +644,12 @@ function removeQualification(index: number) {
 
 function handleDelete(record: Supplier) {
   if (isTenantLinked(record)) {
-    message.warning('已关联租户的供应商不允许删除')
+    message.warning(translateLegacyText('已关联租户的供应商不允许删除'))
     return
   }
   Modal.confirm({
-    title: '确认删除供应商？',
-    content: `删除后会同步删除 ${record.supplierFullName} 的详情、联系人和资质信息。`,
+    title: translateLegacyText('确认删除供应商？'),
+    content: translateLegacyText(`删除后会同步删除 ${record.supplierFullName} 的详情、联系人和资质信息。`),
     async onOk() {
       await supplierApi.delete(record.id!)
       await tableRef.value?.refresh?.()
@@ -689,13 +662,13 @@ async function handleGenerateTenant(record: Supplier) {
     return
   }
   const tenantCode = await supplierApi.generateTenant(record.id!)
-  message.success(`供应商租户已关联：${tenantCode}`)
+  message.success(translateLegacyText(`供应商租户已关联：${tenantCode}`))
   await tableRef.value?.refresh?.()
 }
 
 async function handleStartReview(record: Supplier) {
   if (record.reviewStatus !== 1) {
-    message.warning('仅未审查供应商允许发起审查')
+    message.warning(translateLegacyText('仅未审查供应商允许发起审查'))
     return
   }
   await supplierApi.startReview(record.id!)
@@ -704,7 +677,7 @@ async function handleStartReview(record: Supplier) {
 
 async function handleSync() {
   const result = await supplierApi.syncThirdParty({ payload: {} })
-  message.success(`同步完成：总数 ${result.totalCount || 0}，失败 ${result.failedCount || 0}`)
+  message.success(translateLegacyText(`同步完成：总数 ${result.totalCount || 0}，失败 ${result.failedCount || 0}`))
 }
 
 async function handleImportSuccess() {
@@ -778,8 +751,8 @@ function reviewColor(value?: number) {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 16px;
-  padding: 24px 28px;
+  margin-bottom: 12px;
+  padding: 14px 18px;
   border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.18));
   border-radius: 8px;
   background: var(--fx-bg-container, #ffffff);
@@ -792,14 +765,17 @@ function reviewColor(value?: number) {
 }
 
 .supplier-page__header h1 {
-  margin: 10px 0 8px;
+  margin: 6px 0 4px;
   color: var(--fx-text-primary, #111827);
-  font-size: 28px;
+  font-size: 22px;
+  line-height: 1.25;
 }
 
 .supplier-page__header p {
   margin: 0;
   color: var(--fx-text-secondary, #64748b);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .supplier-name {
@@ -850,7 +826,7 @@ function reviewColor(value?: number) {
   .supplier-page__header {
     align-items: flex-start;
     flex-direction: column;
-    padding: 18px;
+    padding: 14px;
   }
 }
 </style>

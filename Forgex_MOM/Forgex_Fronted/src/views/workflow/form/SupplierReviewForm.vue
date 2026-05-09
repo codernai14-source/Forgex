@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="supplier-review-form">
     <div class="supplier-review-form__header">
       <div>
-        <p class="supplier-review-form__eyebrow">Supplier Review</p>
-        <h3>{{ formState.supplierFullName || '供应商资质审查' }}</h3>
-        <span>{{ formState.supplierCode || '请选择待审供应商' }}</span>
+        <p class="supplier-review-form__eyebrow">{{ t('workflow.supplierReview.eyebrow') }}</p>
+        <h3>{{ formState.supplierFullName || t('workflow.supplierReview.title') }}</h3>
+        <span>{{ formState.supplierCode || t('workflow.supplierReview.selectSupplier') }}</span>
       </div>
       <a-tag :color="reviewStatusColor(formState.currentReviewStatus)">
         {{ reviewStatusText(formState.currentReviewStatus) }}
@@ -18,7 +18,7 @@
       :rules="rules"
       class="supplier-review-form__body"
     >
-      <a-form-item v-if="!readonly" label="待审供应商" name="supplierId">
+      <a-form-item v-if="!readonly" :label="t('workflow.supplierReview.pendingSupplier')" name="supplierId">
         <a-select
           v-model:value="formState.supplierId"
           :loading="loadingSuppliers"
@@ -26,16 +26,16 @@
           :filter-option="filterSupplierOption"
           show-search
           allow-clear
-          placeholder="请选择待审供应商"
+          :placeholder="t('workflow.supplierReview.selectSupplier')"
           @change="handleSupplierChange"
         />
       </a-form-item>
 
       <a-descriptions bordered :column="2" size="small">
-        <a-descriptions-item label="供应商ID">{{ displayValue(formState.supplierId) }}</a-descriptions-item>
-        <a-descriptions-item label="供应商编码">{{ displayValue(formState.supplierCode) }}</a-descriptions-item>
-        <a-descriptions-item label="供应商名称">{{ displayValue(formState.supplierFullName) }}</a-descriptions-item>
-        <a-descriptions-item label="审查状态">
+        <a-descriptions-item :label="t('workflow.supplierReview.supplierId')">{{ displayValue(formState.supplierId) }}</a-descriptions-item>
+        <a-descriptions-item :label="t('workflow.supplierReview.supplierCode')">{{ displayValue(formState.supplierCode) }}</a-descriptions-item>
+        <a-descriptions-item :label="t('workflow.supplierReview.supplierName')">{{ displayValue(formState.supplierFullName) }}</a-descriptions-item>
+        <a-descriptions-item :label="t('workflow.supplierReview.reviewStatusLabel')">
           <a-tag :color="reviewStatusColor(formState.currentReviewStatus)">
             {{ reviewStatusText(formState.currentReviewStatus) }}
           </a-tag>
@@ -43,8 +43,8 @@
       </a-descriptions>
 
       <div class="supplier-review-form__section">
-        <div class="supplier-review-form__section-title">资质摘要</div>
-        <a-empty v-if="!qualificationItems.length" description="暂无资质" />
+        <div class="supplier-review-form__section-title">{{ t('workflow.supplierReview.qualificationSummary') }}</div>
+        <a-empty v-if="!qualificationItems.length" :description="t('workflow.supplierReview.noQualification')" />
         <div v-else class="supplier-review-form__summary">
           <a-tag v-for="item in qualificationItems" :key="item">{{ item }}</a-tag>
         </div>
@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { supplierApi, type Supplier } from '@/api/basic/supplier'
 
 export interface SupplierReviewFormModel {
@@ -88,6 +89,7 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: SupplierReviewFormModel): void
 }>()
 
+const { t } = useI18n({ useScope: 'global' })
 const readonly = computed(() => Boolean(props.readonly))
 const formRef = ref()
 const supplierOptions = ref<Supplier[]>([])
@@ -108,7 +110,7 @@ const formState = reactive<SupplierReviewFormModel>({
 })
 
 const rules = {
-  supplierId: [{ required: true, message: '请选择待审供应商', trigger: 'change' }],
+  supplierId: [{ required: true, message: t('workflow.supplierReview.selectSupplier'), trigger: 'change' }],
 }
 
 const supplierSelectOptions = computed<SelectOption[]>(() => supplierOptions.value
@@ -159,7 +161,7 @@ async function loadSupplierOptions() {
   try {
     supplierOptions.value = await supplierApi.list({ reviewStatus: 1 })
   } catch (error: any) {
-    message.error(error?.message || '加载待审供应商失败')
+    message.error(error?.message || t('workflow.supplierReview.loadSuppliersFailed'))
   } finally {
     loadingSuppliers.value = false
   }
@@ -175,7 +177,7 @@ async function handleSupplierChange(value?: number) {
     const detail = await supplierApi.detail({ id: Number(value) })
     applySupplier(detail)
   } catch (error: any) {
-    message.error(error?.message || '加载供应商详情失败')
+    message.error(error?.message || t('workflow.supplierReview.loadSupplierDetailFailed'))
   }
 }
 
@@ -190,7 +192,7 @@ function applySupplier(supplier: Supplier) {
 async function validate() {
   await formRef.value?.validate()
   if (!formState.supplierId) {
-    message.warning('请选择待审供应商')
+    message.warning(t('workflow.supplierReview.selectSupplier'))
     throw new Error('supplier-required')
   }
   return { ...formState }
@@ -209,10 +211,10 @@ function reset() {
 function buildQualificationSummary(supplier: Supplier) {
   const list = supplier.qualificationList || []
   if (!list.length) {
-    return '暂无资质'
+    return t('workflow.supplierReview.noQualification')
   }
   return list
-    .map(item => `${item.qualificationType || '-'}/${item.certificateNo || '-'}/${item.valid === false ? '无效' : '有效'}`)
+    .map(item => `${item.qualificationType || '-'}/${item.certificateNo || '-'}/${item.valid === false ? t('workflow.supplierReview.invalid') : t('workflow.supplierReview.valid')}`)
     .join('; ')
 }
 
@@ -220,7 +222,7 @@ function splitSummary(value?: string) {
   return String(value || '')
     .split(';')
     .map(item => item.trim())
-    .filter(item => item && item !== '暂无资质')
+    .filter(item => item && item !== t('workflow.supplierReview.noQualification'))
 }
 
 function filterSupplierOption(input: string, option?: SelectOption) {
@@ -233,10 +235,10 @@ function displayValue(value?: string | number) {
 
 function reviewStatusText(value?: number) {
   const map: Record<number, string> = {
-    0: '无需审查',
-    1: '未审查',
-    2: '审查中',
-    3: '已审查',
+    0: t('workflow.supplierReview.reviewStatus.noReviewRequired'),
+    1: t('workflow.supplierReview.reviewStatus.notReviewed'),
+    2: t('workflow.supplierReview.reviewStatus.reviewing'),
+    3: t('workflow.supplierReview.reviewStatus.reviewed'),
   }
   return map[Number(value)] || '-'
 }

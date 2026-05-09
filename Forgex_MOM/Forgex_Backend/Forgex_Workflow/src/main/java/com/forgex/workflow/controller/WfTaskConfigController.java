@@ -47,7 +47,7 @@ import java.util.Set;
  */
 @Slf4j
 @RestController
-@RequestMapping("/wf/task/config")
+@RequestMapping("/task/config")
 @RequiredArgsConstructor
 public class WfTaskConfigController {
 

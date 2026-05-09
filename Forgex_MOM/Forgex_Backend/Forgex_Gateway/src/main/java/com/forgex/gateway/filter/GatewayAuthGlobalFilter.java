@@ -153,7 +153,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/api/integration/third-authorization/check-ip-whitelist/")) {
             return false;
         }
-        if (path.startsWith("/api/files/") && (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method))) {
+        if (path.startsWith("/api/sys/files/") && (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method))) {
             return false;
         }
         if (path.startsWith("/api/integration/api-config/")
@@ -166,9 +166,10 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         }
         return path.startsWith("/api/sys/")
                 || path.startsWith("/api/basic/")
-                || path.startsWith("/api/files/")
-                || path.startsWith("/api/app/")
+                || path.startsWith("/api/sys/files/")
+                || path.startsWith("/api/sys/app/")
                 || path.startsWith("/api/wf/")
+                || path.startsWith("/api/integration/")
                 || path.startsWith("/api/report/");
     }
 

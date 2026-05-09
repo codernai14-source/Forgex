@@ -220,6 +220,7 @@ import dayjs from 'dayjs'
 import { DownOutlined } from '@ant-design/icons-vue'
 import { getTableConfig, saveUserColumns, type FxTableConfig, type FxTableColumn, type UserColumnItem } from '@/api/system/tableConfig'
 import { useI18n } from 'vue-i18n'
+import { resolveI18nText } from '@/utils/i18n'
 import ColumnSettingButton from './ColumnSettingButton.vue'
 
 /**
@@ -255,16 +256,6 @@ const props = withDefaults(
      * 字典选项映射，用于查询区与列展示时的下拉数据。
      */
     dictOptions?: Record<string, DictOption[]>
-
-    /**
-     * 前端兜底配置：当接口获取表格配置失败或与后端合并时使用。
-     */
-    fallbackConfig?: Partial<FxTableConfig>
-
-    /**
-     * 与 {@link fallbackConfig} 同义的动态覆盖配置（优先与 fallbackConfig 二选一传入即可）。
-     */
-    dynamicTableConfig?: Partial<FxTableConfig>
 
     /**
      * 列表数据请求函数。
@@ -317,7 +308,7 @@ const slots = useSlots()
 const hasToolbarSlot = computed(() => !!slots.toolbar)
 
 /**
- * 当前合并后的表格配置（后端 + 前端覆盖）。
+ * 当前后端表格配置。
  */
 const config = ref<FxTableConfig>()
 
@@ -345,6 +336,7 @@ const configVersion = ref(0)
 const ATag = resolveComponent('a-tag') as any
 const MIN_COLUMN_WIDTH = 60
 const MAX_COLUMN_WIDTH = 800
+const MIN_ACTION_COLUMN_WIDTH = 220
 const ACTION_FIELD = 'action'
 
 type ResizingState = {
@@ -358,30 +350,32 @@ type HeaderDragState = {
 }
 
 /**
- * 获取页面传入的本地表格配置。
+ * 规范化查询字段定义。
+ *
+ * @param fields 显式查询字段
+ * @param columns 可查询列配置
+ * @returns 可用于查询表单渲染的字段集合
  */
-function getLocalConfig() {
-  return props.dynamicTableConfig || props.fallbackConfig
+function normalizeQueryFields(fields?: any[]) {
+  return (Array.isArray(fields) ? fields : [])
+    .map((field: any) => {
+      const fallbackLabel = field?.label ?? field?.title ?? field?.field ?? field?.dataIndex ?? field?.key
+      return {
+        ...field,
+        field: field?.field ?? field?.dataIndex ?? field?.key,
+        label: resolveI18nText(field?.labelI18nJson ?? field?.titleI18nJson ?? field?.label ?? field?.title, fallbackLabel),
+        queryType: field?.queryType || 'input',
+        queryOperator: field?.queryOperator || 'like',
+      }
+    })
+    .filter((field: any) => !!field.field && !!field.label)
 }
 
-/**
- * 将局部配置补齐为组件内部可使用的完整配置。
- *
- * @param source 页面传入的局部配置
- * @returns 完整表格配置
- */
-function buildLocalConfig(source?: Partial<FxTableConfig>): FxTableConfig {
-  return {
-    tableCode: source?.tableCode || props.tableCode,
-    tableName: source?.tableName || props.tableCode,
-    tableType: source?.tableType || 'NORMAL',
-    rowKey: source?.rowKey || 'id',
-    defaultPageSize: source?.defaultPageSize || 20,
-    defaultSortJson: source?.defaultSortJson,
-    columns: source?.columns ? [...source.columns] : [],
-    queryFields: source?.queryFields ? [...source.queryFields] : [],
-    version: source?.version || 1,
-  }
+function resolveColumnTitle(column: Partial<FxTableColumn> & Record<string, any>) {
+  return resolveI18nText(
+    column?.titleI18nJson ?? column?.title,
+    column?.title ?? column?.field ?? '',
+  )
 }
 
 /**
@@ -485,6 +479,28 @@ function renderTagByDictText(dictText: any, fallbackText: any) {
   }
 
   return fallbackText
+}
+
+function resolveAuditDisplayValue(record: any, field?: string) {
+  if (!record || !field) {
+    return undefined
+  }
+  const auditNameFieldMap: Record<string, string> = {
+    createBy: 'createByName',
+    create_by: 'createByName',
+    updateBy: 'updateByName',
+    update_by: 'updateByName',
+    createdBy: 'createdByName',
+    created_by: 'createdByName',
+    updatedBy: 'updatedByName',
+    updated_by: 'updatedByName',
+  }
+  const nameField = auditNameFieldMap[field]
+  if (!nameField) {
+    return undefined
+  }
+  const nameValue = record?.[nameField]
+  return nameValue === undefined || nameValue === null || nameValue === '' ? undefined : nameValue
 }
 
 /** 内部 loading，可与外部 props.loading 合并 */
@@ -598,7 +614,7 @@ const tableColumns = computed(() => {
 
   return finalCols.map(c => {
     const columnWidth = c.field === ACTION_FIELD
-      ? c.width
+      ? Math.max(MIN_ACTION_COLUMN_WIDTH, clampWidth(Number(c.width ?? MIN_ACTION_COLUMN_WIDTH)))
       : clampWidth(Number(c.width ?? 160))
     const column: any = {
       title: renderColumnTitle(c, columnWidth),
@@ -651,6 +667,11 @@ const tableColumns = computed(() => {
           )
         }
         return value
+      }
+    } else {
+      column.customRender = ({ record }: any) => {
+        const auditDisplayValue = resolveAuditDisplayValue(record, c.field)
+        return auditDisplayValue === undefined ? record?.[c.field] : auditDisplayValue
       }
     }
 
@@ -764,35 +785,31 @@ function normalizeSorter(sorter: any) {
 }
 
 /**
- * 拉取并合并表格配置，初始化 queryModel 与分页大小。
+ * 拉取后端表格配置，初始化 queryModel 与分页大小。
  *
- * @throws 不向外抛出；失败时使用 fallback 或空配置并打日志
+ * @throws 不向外抛出；失败时使用空配置并打日志
  */
 async function loadConfig() {
-  const localConfig = getLocalConfig()
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
+    const backendColumns = normalizeColumns(backendConfig.columns || [])
+    const backendQueryFields = normalizeQueryFields(backendConfig.queryFields)
 
     // 新对象引用，确保 Vue 能检测到深层替换
     config.value = {
       ...backendConfig,
-      columns: backendConfig.columns ? [...backendConfig.columns] : [],
-      queryFields: backendConfig.queryFields ? [...backendConfig.queryFields] : [],
+      columns: backendColumns,
+      queryFields: backendQueryFields,
     }
 
     configVersion.value++
   } catch (e) {
-    config.value = buildLocalConfig(localConfig)
-    if (!localConfig?.columns?.length) {
-      console.error('[FxDynamicTable] 获取表格配置失败:', e)
-    } else {
-      console.warn('[FxDynamicTable] 后端表格配置不可用，已使用本地配置:', props.tableCode)
-    }
+    config.value = undefined
+    tableData.value = []
+    pagination.total = 0
+    console.error('[FxDynamicTable] 获取后端表格配置失败:', e)
     configVersion.value++
-  }
-
-  if (config.value?.columns?.length) {
-    config.value.columns = normalizeColumns(config.value.columns as any)
+    return false
   }
 
   pagination.pageSize = config.value?.defaultPageSize || pagination.pageSize
@@ -801,6 +818,7 @@ async function loadConfig() {
       queryModel[q.field] = undefined
     }
   }
+  return true
 }
 
 
@@ -814,7 +832,8 @@ function normalizeColumns(cols: any[]) {
   return (Array.isArray(cols) ? cols : [])
     .map((c: any) => {
       const field = c?.field ?? c?.dataIndex ?? c?.key
-      return { ...(c as any), field } as FxTableColumn
+      const title = resolveI18nText(c?.titleI18nJson ?? c?.title, c?.title ?? field)
+      return { ...(c as any), field, title } as FxTableColumn
     })
     .filter((c: any) => !!c?.field)
 }
@@ -824,7 +843,7 @@ function clampWidth(value: number) {
 }
 
 function renderColumnTitle(column: FxTableColumn, width?: number) {
-  const titleText = column.title
+  const titleText = resolveColumnTitle(column)
   if (!titleText || column.field === ACTION_FIELD) {
     return titleText
   }
@@ -1141,7 +1160,10 @@ watch(
   () => props.tableCode,
   async () => {
     pagination.current = 1
-    await loadConfig()
+    const loaded = await loadConfig()
+    if (!loaded) {
+      return
+    }
     await handleQuery(lastSorter.value)
     await nextTick()
     scheduleComputeAutoScrollY()
@@ -1151,7 +1173,10 @@ watch(
 watch(
   () => locale.value,
   async () => {
-    await loadConfig()
+    const loaded = await loadConfig()
+    if (!loaded) {
+      return
+    }
     await handleQuery(lastSorter.value)
   },
 )
@@ -1184,7 +1209,10 @@ watch(
 onMounted(async () => {
   window.addEventListener('resize', onResizeOrScroll, { passive: true })
 
-  await loadConfig()
+  const loaded = await loadConfig()
+  if (!loaded) {
+    return
+  }
   await handleQuery()
 
   // 仅在子树节点增删时重算高度，避免 style/class 抖动死循环

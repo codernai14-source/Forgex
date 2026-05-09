@@ -1,22 +1,16 @@
-/**
- * 租户管理翻译 - 中文注释
- */
 export default {
   title: 'Tenant Management',
   list: 'Tenant List',
   detail: 'Tenant Detail',
-  
-  // 表格列
   tenantId: 'Tenant ID',
   tenantName: 'Tenant Name',
   tenantCode: 'Tenant Code',
   tenantType: 'Tenant Type',
   logo: 'Logo',
   description: 'Description',
-  status: '状态',
+  status: 'Status',
   createTime: 'Create Time',
-  
-  // 表单
+  logoModuleName: 'Tenant Logo',
   form: {
     addTenant: 'Add Tenant',
     editTenant: 'Edit Tenant',
@@ -25,19 +19,40 @@ export default {
     tenantType: 'Please select tenant type',
     description: 'Please enter description',
     status: 'Please select status',
+    parentTenant: 'Please select parent tenant',
   },
-  
-  // Tenant Type
   type: {
     main: 'Main Tenant',
     customer: 'Customer Tenant',
+    supplier: 'Supplier Tenant',
+    partner: 'Partner Tenant',
   },
-  
-  // 消息
+  parentTenant: 'Parent Tenant',
+  parentTenantPlaceholder: 'Please select parent tenant (optional)',
+  noParentTenant: 'No Parent Tenant',
+  initProgress: {
+    title: 'Tenant Creation Progress',
+    success: 'Initialization completed',
+    failed: 'Initialization failed',
+    currentStepUnknown: 'Waiting for task progress...',
+    connectFailed: 'Failed to connect to the server. Refresh the page and try again.',
+    fetchFailed: 'Failed to get task status',
+    steps: {
+      module: 'Copy system modules',
+      menu: 'Copy menu permissions',
+      role: 'Create administrator role',
+      user: 'Create administrator account',
+      bindRole: 'Bind user roles',
+      bindMenu: 'Bind role menus',
+      template: 'Sync template config',
+      tableConfig: 'Sync table config',
+    },
+  },
   message: {
     deleteConfirm: 'Are you sure you want to delete this tenant?',
     deleteSuccess: 'Tenant deleted successfully',
     saveSuccess: 'Tenant saved successfully',
     tenantCodeExists: 'Tenant code already exists',
+    loadListFailed: 'Failed to load tenant list',
   },
 }

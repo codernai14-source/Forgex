@@ -41,7 +41,7 @@ public class LabelBindingController {
     /**
      * 分页查询绑定关系列表
      * <p>
-     * 接口路径：POST /label/binding/page
+     * 接口路径：POST /basic/label/binding/page
      * 需要权限：label:binding:query
      * </p>
      *
@@ -67,7 +67,7 @@ public class LabelBindingController {
     /**
      * 新增绑定关系
      * <p>
-     * 接口路径：POST /label/binding/add
+     * 接口路径：POST /basic/label/binding/add
      * 需要权限：label:binding:add
      * </p>
      *
@@ -85,7 +85,7 @@ public class LabelBindingController {
     /**
      * 修改绑定关系
      * <p>
-     * 接口路径：POST /label/binding/update
+     * 接口路径：POST /basic/label/binding/update
      * 需要权限：label:binding:edit
      * </p>
      *
@@ -112,7 +112,7 @@ public class LabelBindingController {
     /**
      * 删除绑定关系
      * <p>
-     * 接口路径：POST /label/binding/delete
+     * 接口路径：POST /basic/label/binding/delete
      * 需要权限：label:binding:delete
      * </p>
      *
@@ -131,7 +131,7 @@ public class LabelBindingController {
     /**
      * 智能匹配模板（打印核心）
      * <p>
-     * 接口路径：POST /label/template/match
+     * 接口路径：POST /basic/label/binding/match
      * 需要权限：label:template:query
      * </p>
      * <p>

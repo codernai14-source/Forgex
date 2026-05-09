@@ -51,6 +51,18 @@ export default {
   cpuCores: 'CPU コア数',
   cpuModel: 'CPU モデル',
   cores: 'コア',
+  peopleUnit: '人',
+  itemUnit: '個',
+  operationTime: '操作時間',
+  operator: '操作者',
+  operationModule: '操作モジュール',
+  operationContent: '操作内容',
+  loginTime: 'ログイン時間',
+  username: 'ユーザー名',
+  ipAddress: 'IPアドレス',
+  loginLocation: 'ログイン場所',
+  serverLocation: 'サーバー位置',
+  mapLoadFailed: '地図データの読み込みに失敗しました\nネットワークを確認するか、後でもう一度お試しください',
 
   // 日志
   recentOperationLogs: '最近の操作日志',

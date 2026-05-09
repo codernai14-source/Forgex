@@ -15,7 +15,14 @@ import dashboard from './dashboard'
 import tenant from './tenant'
 import messageTemplate from './messageTemplate'
 import tenantMessageWhitelist from './tenantMessageWhitelist'
+import i18n from './i18n'
 import encodeRule from './encodeRule'
+import file from './file'
+import codegen from './codegen'
+import codegenDatasource from './codegenDatasource'
+import inviteCode from './inviteCode'
+import androidVersion from './androidVersion'
+import online from './online'
 
 export default {
   user,
@@ -31,5 +38,12 @@ export default {
   tenant,
   messageTemplate,
   tenantMessageWhitelist,
+  i18n,
   encodeRule,
+  file,
+  codegen,
+  codegenDatasource,
+  inviteCode,
+  androidVersion,
+  online,
 }

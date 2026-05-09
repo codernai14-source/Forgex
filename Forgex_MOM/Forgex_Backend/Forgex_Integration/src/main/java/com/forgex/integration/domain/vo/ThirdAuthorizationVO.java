@@ -83,6 +83,12 @@ public class ThirdAuthorizationVO {
     private String createBy;
 
     /**
+     * 创建人名称。
+     */
+    @com.forgex.common.api.annotation.AutoFillUsername(userIdField = "createBy")
+    private String createByName;
+
+    /**
      * 更新人
      */
     private String updateBy;

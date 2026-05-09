@@ -41,6 +41,8 @@ import axios from 'axios'
 await axios.post('/api/sys/user/page', params)
 ```
 
+`http.ts` 已统一追加 `/api` 前缀，因此第一方业务 API 文件只写服务公开前缀和控制器本地路径，例如 `/sys/**`、`/basic/**`、`/wf/**`、`/integration/**`、`/report/**`，不要在 API 封装里重复手写 `/api`。
+
 推荐写法：
 
 ```ts
@@ -175,12 +177,46 @@ await http.post('/sys/file/upload', formData, {
 | `showSuccessMessage` | `true / false` | 强制控制成功提示 |
 | `silentError` | `true / false` | 静默错误消息 |
 | `customErrorMessage` | 字符串 | 覆盖默认错误提示 |
+| `loadingMode` | `'global' / 'local' / 'silent'` | 控制请求是否参与全局遮罩；表格、下拉、轮询优先使用局部或静默 |
+| `loadingDelay` | 数字，默认 `500` | 请求超过指定毫秒后才显示全局遮罩 |
+| `minVisibleDuration` | 数字，默认 `300` | 遮罩已显示且请求已结束时补足最短展示时长，避免闪烁 |
+| `actionKey` | 字符串 | 保存、提交、审批等操作的防重复请求标识 |
+| `dedupeMode` | `'drop' / 'none'` | 配置 `actionKey` 后默认复用进行中的请求；`none` 表示不去重 |
 
 示例：
 
 ```ts
 await http.post('/sys/message/read', { id }, { showSuccessMessage: false })
 await silentHttp.get('/sys/message/unread', { silentError: true })
+```
+
+## Loading 使用建议
+
+全局遮罩采用延迟显示策略：普通 `http` 请求开始时先计数，不立即显示遮罩；如果请求超过 `500ms` 仍未结束，再显示全局遮罩；遮罩显示后会一直持续到所有参与全局 loading 的请求结束。若请求在遮罩刚出现后马上结束，会补足最短展示时长，但不会在请求未结束时提前关闭遮罩。
+
+不同场景建议如下：
+
+- 页面首次进入、多接口初始化：页面层使用 `pageLoading` 或骨架屏，多接口用 `Promise.allSettled` 汇总，接口本身尽量配置 `loadingMode: 'silent'`。
+- 表格分页、查询、筛选：使用 `FxDynamicTable` 自带局部 loading，请求配置 `loadingMode: 'local'` 或直接使用组件内部 loading。
+- 保存、新增、编辑、删除、审批、提交：按钮立即进入 `loading/disabled`，接口配置 `actionKey` 防重复请求，超过 `500ms` 后再出现全局遮罩。
+- 弹窗表单：优先使用 `BaseFormDialog` 的 `confirm-loading`；短提交只显示按钮 loading，长提交可叠加全局遮罩。
+- 字典、下拉、权限、配置、消息轮询：使用 `silentHttp` 或 `loadingMode: 'silent'`，不打断整页操作。
+
+保存类接口示例：
+
+```ts
+await http.post('/basic/supplier/save', payload, {
+  showSuccessMessage: true,
+  actionKey: 'supplier:save',
+})
+```
+
+表格查询类接口示例：
+
+```ts
+await http.post('/basic/supplier/page', query, {
+  loadingMode: 'local',
+})
 ```
 
 ## 页面层推荐写法

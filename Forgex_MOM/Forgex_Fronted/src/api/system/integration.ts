@@ -196,6 +196,7 @@ export interface ApiCallLogQuery {
   pageNum?: number
   pageSize?: number
   apiConfigId?: number
+  apiName?: string
   callDirection?: IntegrationDirection
   callStatus?: string
   startTime?: string
@@ -206,16 +207,23 @@ export interface ApiCallLogQuery {
 export interface ApiCallLogItem {
   id: number
   apiConfigId?: number
+  apiName?: string
   outboundTargetId?: number
   targetSystemCode?: string
   targetSystemName?: string
+  apiCode?: string
   callDirection?: IntegrationDirection
   callerIp?: string
+  traceId?: string
+  taskId?: string
+  invokeMode?: ApiInvokeMode
   requestData?: string
   rawRequestData?: string
   assembledRequestData?: string
   responseData?: string
+  responseCode?: string
   callStatus?: string
+  resultType?: string
   errorMessage?: string
   costTimeMs?: number
   callTime?: string

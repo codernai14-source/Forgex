@@ -32,7 +32,7 @@ import java.util.List;
  * @see IApiParamMappingService
  */
 @RestController
-@RequestMapping("/api/integration/param-mapping")
+@RequestMapping("/param-mapping")
 @RequiredArgsConstructor
 @Tag(name = "接口参数映射管理", description = "接口字段映射")
 public class ApiParamMappingController {

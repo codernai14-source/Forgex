@@ -1,49 +1,58 @@
-/**
- * 租户管理翻译 - 繁体中文注释
- */
 export default {
   title: '租戶管理',
   list: '租戶列表',
   detail: '租戶詳情',
-  
-  // 表格列
   tenantId: '租戶ID',
   tenantName: '租戶名稱',
   tenantCode: '租戶編碼',
-  tenantType: '租戶類別',
+  tenantType: '租戶類型',
   logo: 'Logo',
   description: '描述',
-  status: '状态',
+  status: '狀態',
   createTime: '創建時間',
-  
-  // 表单
+  logoModuleName: '租戶 Logo',
   form: {
     addTenant: '新增租戶',
     editTenant: '編輯租戶',
     tenantName: '請輸入租戶名稱',
     tenantCode: '請輸入租戶編碼',
-    tenantType: '請選擇租戶類別',
+    tenantType: '請選擇租戶類型',
     description: '請輸入描述',
-    status: '請選擇状态',
+    status: '請選擇狀態',
     parentTenant: '請選擇父租戶',
   },
-  
-  // 租戶類型
   type: {
     main: '主租戶',
     customer: '客戶租戶',
+    supplier: '供應商租戶',
+    partner: '合作夥伴租戶',
   },
-  
-  // 父租戶
   parentTenant: '父租戶',
   parentTenantPlaceholder: '請選擇父租戶（可選）',
   noParentTenant: '無父租戶',
-  
-  // 消息
+  initProgress: {
+    title: '租戶創建進度',
+    success: '初始化完成',
+    failed: '初始化失敗',
+    currentStepUnknown: '等待任務進度...',
+    connectFailed: '連接服務器失敗，請刷新頁面後重試',
+    fetchFailed: '獲取任務狀態失敗',
+    steps: {
+      module: '複製系統模組',
+      menu: '複製菜單權限',
+      role: '創建管理員角色',
+      user: '創建管理員帳號',
+      bindRole: '綁定用戶角色',
+      bindMenu: '綁定角色菜單',
+      template: '同步模板配置',
+      tableConfig: '同步表格配置',
+    },
+  },
   message: {
     deleteConfirm: '確定要刪除該租戶嗎？',
     deleteSuccess: '刪除租戶成功',
     saveSuccess: '保存租戶成功',
     tenantCodeExists: '租戶編碼已存在',
+    loadListFailed: '加載租戶列表失敗',
   },
 }

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.api.aspect;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.api.annotation.AutoFillUsername;
 import com.forgex.common.api.feign.SysUserFeignClient;
 import com.forgex.common.exception.I18nBusinessException;
@@ -27,6 +28,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,12 +40,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 自动填充用户名切面
+ * 自动填充用户名切面。
  *
  * @author coder_nai@163.com
- * @date 2026-01-27
- *
  * @version 1.0.0
+ * @date 2026-01-27
  */
 @Slf4j
 @Aspect
@@ -54,7 +55,7 @@ public class AutoFillUsernameAspect {
     private final SysUserFeignClient sysUserFeignClient;
 
     /**
-     * 拦截并自动填充用户名。
+     * 拦截 Controller 响应并自动填充用户名。
      *
      * @param joinPoint joinpoint
      * @return 处理结果
@@ -72,45 +73,52 @@ public class AutoFillUsernameAspect {
     private void processResult(Object result) {
         try {
             Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+            List<FieldFillInfo> fillInfos = new ArrayList<>();
             if (result instanceof R) {
                 Object data = ((R<?>) result).getData();
                 if (data != null) {
-                    fillUsername(data, visited);
+                    collectUsernameFillInfos(data, visited, fillInfos);
                 }
-                return;
+            } else {
+                collectUsernameFillInfos(result, visited, fillInfos);
             }
-            fillUsername(result, visited);
+            fillFieldValues(fillInfos);
         } catch (Exception e) {
             log.error("自动填充用户名失败", e);
         }
     }
 
-    private void fillUsername(Object obj, Set<Object> visited) throws Exception {
+    private void collectUsernameFillInfos(Object obj, Set<Object> visited, List<FieldFillInfo> fillInfos) throws Exception {
         if (obj == null) {
             return;
         }
 
         if (obj instanceof Collection) {
             for (Object item : (Collection<?>) obj) {
-                fillUsername(item, visited);
+                collectUsernameFillInfos(item, visited, fillInfos);
             }
             return;
         }
 
         if (obj instanceof Map) {
             for (Object value : ((Map<?, ?>) obj).values()) {
-                fillUsername(value, visited);
+                collectUsernameFillInfos(value, visited, fillInfos);
             }
             return;
         }
 
+        if (obj instanceof IPage) {
+            collectUsernameFillInfos(((IPage<?>) obj).getRecords(), visited, fillInfos);
+            return;
+        }
+
         if (isPageObject(obj)) {
-            fillPageRecords(obj, visited);
+            collectPageRecordFillInfos(obj, visited, fillInfos);
             return;
         }
 
         Class<?> clazz = obj.getClass();
-        if (clazz.isPrimitive() || clazz.getName().startsWith("java.")) {
+        if (isSimpleValueType(clazz)) {
             return;
         }
 
@@ -118,11 +126,8 @@ public class AutoFillUsernameAspect {
             return;
         }
 
-        List<FieldFillInfo> fillInfos = collectFillInfos(obj, clazz);
-        if (!fillInfos.isEmpty()) {
-            fillFieldValues(obj, fillInfos);
-        }
-        fillNestedFields(obj, clazz, visited);
+        collectFillInfos(obj, clazz, fillInfos);
+        collectNestedFillInfos(obj, clazz, visited, fillInfos);
     }
 
     private boolean isPageObject(Object obj) {
@@ -130,19 +135,19 @@ public class AutoFillUsernameAspect {
         return className.contains("IPage") || className.contains("Page");
     }
 
-    private void fillPageRecords(Object pageObject, Set<Object> visited) throws Exception {
+    private void collectPageRecordFillInfos(Object pageObject, Set<Object> visited, List<FieldFillInfo> fillInfos) throws Exception {
         try {
-            Field recordsField = pageObject.getClass().getDeclaredField("records");
+            Field recordsField = findField(pageObject.getClass(), "records");
             recordsField.setAccessible(true);
-            fillUsername(recordsField.get(pageObject), visited);
+            collectUsernameFillInfos(recordsField.get(pageObject), visited, fillInfos);
         } catch (NoSuchFieldException ignored) {
-            // ignore
+            Method getRecordsMethod = pageObject.getClass().getMethod("getRecords");
+            collectUsernameFillInfos(getRecordsMethod.invoke(pageObject), visited, fillInfos);
         }
     }
 
-    private List<FieldFillInfo> collectFillInfos(Object obj, Class<?> clazz) throws IllegalAccessException {
-        List<FieldFillInfo> fillInfos = new ArrayList<>();
-        for (Field field : clazz.getDeclaredFields()) {
+    private void collectFillInfos(Object obj, Class<?> clazz, List<FieldFillInfo> fillInfos) throws IllegalAccessException {
+        for (Field field : getAllFields(clazz)) {
             AutoFillUsername annotation = field.getAnnotation(AutoFillUsername.class);
             if (annotation == null) {
                 continue;
@@ -150,16 +155,15 @@ public class AutoFillUsernameAspect {
             Long userId = resolveUserId(obj, clazz, annotation);
             if (userId != null) {
                 field.setAccessible(true);
-                fillInfos.add(new FieldFillInfo(field, userId, annotation.required()));
+                fillInfos.add(new FieldFillInfo(obj, field, userId, annotation.required()));
             }
         }
-        return fillInfos;
     }
 
     private Long resolveUserId(Object obj, Class<?> clazz, AutoFillUsername annotation) throws IllegalAccessException {
         String userIdFieldName = annotation.userIdField();
         try {
-            Field userIdField = clazz.getDeclaredField(userIdFieldName);
+            Field userIdField = findField(clazz, userIdFieldName);
             userIdField.setAccessible(true);
             Object userIdValue = userIdField.get(obj);
             if (userIdValue == null) {
@@ -179,7 +183,12 @@ public class AutoFillUsernameAspect {
                 return ((Integer) userIdValue).longValue();
             }
             if (userIdValue instanceof String && !((String) userIdValue).isBlank()) {
-                return Long.parseLong((String) userIdValue);
+                try {
+                    return Long.parseLong(((String) userIdValue).trim());
+                } catch (NumberFormatException e) {
+                    log.warn("鐢ㄦ埛ID瀛楁 {} 鍊间笉鏄暟瀛楋細{}", userIdFieldName, userIdValue);
+                    return null;
+                }
             }
             return null;
         } catch (NoSuchFieldException e) {
@@ -195,7 +204,11 @@ public class AutoFillUsernameAspect {
         }
     }
 
-    private void fillFieldValues(Object obj, List<FieldFillInfo> fillInfos) throws IllegalAccessException {
+    private void fillFieldValues(List<FieldFillInfo> fillInfos) throws IllegalAccessException {
+        if (fillInfos.isEmpty()) {
+            return;
+        }
+
         List<Long> userIds = fillInfos.stream()
                 .map(FieldFillInfo::getUserId)
                 .distinct()
@@ -207,11 +220,11 @@ public class AutoFillUsernameAspect {
             return;
         }
 
-        Map<Long, String> usernameMap = response.getData();
+        Map<?, ?> usernameMap = response.getData();
         for (FieldFillInfo fillInfo : fillInfos) {
-            String username = usernameMap.get(fillInfo.getUserId());
+            String username = resolveUsername(usernameMap, fillInfo.getUserId());
             if (username != null) {
-                fillInfo.getField().set(obj, username);
+                fillInfo.getField().set(fillInfo.getTarget(), username);
             } else if (fillInfo.isRequired()) {
                 throw new I18nBusinessException(
                         StatusCode.BUSINESS_ERROR,
@@ -222,9 +235,9 @@ public class AutoFillUsernameAspect {
         }
     }
 
-    private void fillNestedFields(Object obj, Class<?> clazz, Set<Object> visited) throws Exception {
-        for (Field field : clazz.getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) {
+    private void collectNestedFillInfos(Object obj, Class<?> clazz, Set<Object> visited, List<FieldFillInfo> fillInfos) throws Exception {
+        for (Field field : getAllFields(clazz)) {
+            if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
                 continue;
             }
             field.setAccessible(true);
@@ -232,44 +245,82 @@ public class AutoFillUsernameAspect {
             if (nestedValue == null) {
                 continue;
             }
-            fillUsername(nestedValue, visited);
+            collectUsernameFillInfos(nestedValue, visited, fillInfos);
         }
     }
 
+    private String resolveUsername(Map<?, ?> usernameMap, Long userId) {
+        Object username = usernameMap.get(userId);
+        if (username == null) {
+            username = usernameMap.get(String.valueOf(userId));
+        }
+        if (username == null) {
+            String userIdText = String.valueOf(userId);
+            for (Map.Entry<?, ?> entry : usernameMap.entrySet()) {
+                if (userIdText.equals(String.valueOf(entry.getKey()))) {
+                    username = entry.getValue();
+                    break;
+                }
+            }
+        }
+        return username == null ? null : String.valueOf(username);
+    }
+
+    private List<Field> getAllFields(Class<?> clazz) {
+        List<Field> fields = new ArrayList<>();
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            Collections.addAll(fields, currentClass.getDeclaredFields());
+            currentClass = currentClass.getSuperclass();
+        }
+        return fields;
+    }
+
+    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            try {
+                return currentClass.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException ignored) {
+                currentClass = currentClass.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(fieldName);
+    }
+
+    private boolean isSimpleValueType(Class<?> clazz) {
+        return clazz.isPrimitive()
+                || clazz.isEnum()
+                || clazz.getName().startsWith("java.")
+                || clazz.getName().startsWith("javax.")
+                || clazz.getName().startsWith("jakarta.");
+    }
+
     private static class FieldFillInfo {
+        private final Object target;
         private final Field field;
         private final Long userId;
         private final boolean required;
 
-        FieldFillInfo(Field field, Long userId, boolean required) {
+        FieldFillInfo(Object target, Field field, Long userId, boolean required) {
+            this.target = target;
             this.field = field;
             this.userId = userId;
             this.required = required;
         }
 
-        /**
-         * 获取字段。
-         *
-         * @return 处理结果
-         */
+        public Object getTarget() {
+            return target;
+        }
+
         public Field getField() {
             return field;
         }
 
-        /**
-         * 获取用户ID。
-         *
-         * @return 数据主键 ID
-         */
         public Long getUserId() {
             return userId;
         }
 
-        /**
-         * 判断字段是否需要填充。
-         *
-         * @return 是否处理成功
-         */
         public boolean isRequired() {
             return required;
         }

@@ -17,21 +17,21 @@
             @click="handleBatchApprove"
             v-permission="'wf:execution:approve'"
           >
-            批量同意
+            {{ t('workflow.myTask.batchApprove') }}
           </a-button>
           <a-button
             :disabled="!selectedExecutionIds.length"
             @click="openBatchTransferDialog"
             v-permission="'wf:execution:transfer'"
           >
-            批量转交
+            {{ t('workflow.myTask.batchTransfer') }}
           </a-button>
           <a-button
             :disabled="!selectedExecutionIds.length"
             @click="handleBatchRemind"
             v-permission="'wf:execution:remind'"
           >
-            批量催办
+            {{ t('workflow.myTask.batchRemind') }}
           </a-button>
         </a-space>
       </template>
@@ -74,7 +74,7 @@
             @click="openTransferDialog(record)"
             v-permission="'wf:execution:transfer'"
           >
-            转交
+            {{ t('workflow.myTask.transfer') }}
           </a-button>
           <a-button
             type="link"
@@ -82,7 +82,7 @@
             @click="openAddSignDialog(record)"
             v-permission="'wf:execution:addSign'"
           >
-            加签
+            {{ t('workflow.myTask.addSign') }}
           </a-button>
         </a-space>
       </template>
@@ -165,19 +165,19 @@
         :label-col="{ span: 4 }"
         :wrapper-col="{ span: 18 }"
       >
-        <a-form-item label="处理范围">
+        <a-form-item :label="t('workflow.myTask.actionScope')">
           <a-input :value="actionScopeText" disabled />
         </a-form-item>
 
-        <a-form-item label="接收人" name="receiverIds">
+        <a-form-item :label="t('workflow.myTask.receiver')" name="receiverIds">
           <ReceiverSelector v-model="actionReceiverModel" />
         </a-form-item>
 
-        <a-form-item label="说明" name="comment">
+        <a-form-item :label="t('workflow.myTask.actionComment')" name="comment">
           <a-textarea
             v-model:value="actionFormData.comment"
             :rows="4"
-            placeholder="请输入处理说明"
+            :placeholder="t('workflow.myTask.actionCommentPlaceholder')"
           />
         </a-form-item>
       </a-form>
@@ -197,7 +197,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { message, type TableProps } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
-  CheckOutlined,
+CheckOutlined,
   CloseOutlined,
   EyeOutlined,
 } from '@ant-design/icons-vue'
@@ -289,10 +289,10 @@ const actionRules = computed(() => ({
     {
       validator: async () => {
         if (actionReceiverModel.value.receiverType !== 'USER') {
-          throw new Error('请选择指定用户作为接收人')
+          throw new Error(t('workflow.myTask.selectUserReceiver'))
         }
         if (!actionReceiverModel.value.receiverIds.length) {
-          throw new Error('请选择接收人')
+          throw new Error(t('workflow.myTask.selectReceiver'))
         }
       },
       trigger: 'change',
@@ -323,16 +323,16 @@ const rowSelection = computed<TableProps['rowSelection']>(() => ({
 
 const actionDialogTitle = computed(() => {
   const titleMap: Record<'transfer' | 'addSign' | 'batchTransfer', string> = {
-    transfer: '转交审批',
-    addSign: '加签审批人',
-    batchTransfer: '批量转交',
+    transfer: t('workflow.myTask.transferApproval'),
+    addSign: t('workflow.myTask.addSignApprover'),
+    batchTransfer: t('workflow.myTask.batchTransfer'),
   }
   return titleMap[actionMode.value]
 })
 
 const actionScopeText = computed(() => {
   if (actionMode.value === 'batchTransfer') {
-    return `已选 ${selectedExecutionIds.value.length} 条待办`
+    return t('workflow.myTask.selectedPendingCount', { count: selectedExecutionIds.value.length })
   }
   return actionRecord.value?.taskName || '-'
 })
@@ -440,7 +440,7 @@ function resetActionDialog() {
 function openTransferDialog(record: WfExecutionDTO) {
   const instance = findCurrentUserInstance(record)
   if (!instance) {
-    message.warning('当前待办未找到可转交的审批实例，请刷新后重试')
+    message.warning(t('workflow.myTask.transferInstanceMissing'))
     return
   }
   actionMode.value = 'transfer'
@@ -458,7 +458,7 @@ function openTransferDialog(record: WfExecutionDTO) {
 function openAddSignDialog(record: WfExecutionDTO) {
   const instance = findCurrentUserInstance(record)
   if (!instance) {
-    message.warning('当前待办未找到可加签的审批实例，请刷新后重试')
+    message.warning(t('workflow.myTask.addSignInstanceMissing'))
     return
   }
   actionMode.value = 'addSign'
@@ -475,7 +475,7 @@ function openAddSignDialog(record: WfExecutionDTO) {
 
 function openBatchTransferDialog() {
   if (!selectedExecutionIds.value.length) {
-    message.warning('请先选择待办')
+    message.warning(t('workflow.myTask.selectPendingFirst'))
     return
   }
   actionMode.value = 'batchTransfer'
@@ -548,7 +548,7 @@ async function handleActionSubmit() {
     await actionFormRef.value?.validate()
     const targetApproverId = Number(actionReceiverModel.value.receiverIds[0])
     if (!targetApproverId) {
-      message.warning('请选择接收人')
+      message.warning(t('workflow.myTask.selectReceiver'))
       return
     }
 
@@ -556,7 +556,7 @@ async function handleActionSubmit() {
 
     if (actionMode.value === 'transfer') {
       if (!actionRecord.value || !actionInstance.value) {
-        message.warning('当前转交数据不完整，请关闭后重试')
+        message.warning(t('workflow.myTask.transferDataIncomplete'))
         return
       }
       const params: WfExecutionTransferParam = {
@@ -568,7 +568,7 @@ async function handleActionSubmit() {
       await transfer(params)
     } else if (actionMode.value === 'addSign') {
       if (!actionRecord.value || !actionInstance.value) {
-        message.warning('当前加签数据不完整，请关闭后重试')
+        message.warning(t('workflow.myTask.addSignDataIncomplete'))
         return
       }
       const params: WfExecutionAddSignParam = {
@@ -587,7 +587,7 @@ async function handleActionSubmit() {
       await batchTransfer(params)
     }
 
-    message.success('处理成功')
+    message.success(t('workflow.myTask.actionSuccess'))
     actionDialogVisible.value = false
     resetActionDialog()
     clearSelection()
@@ -596,7 +596,7 @@ async function handleActionSubmit() {
     if (error?.errorFields) {
       return
     }
-    message.error(error.message || '处理失败')
+    message.error(error.message || t('workflow.myTask.actionFailed'))
   } finally {
     actionSubmitting.value = false
   }
@@ -619,39 +619,39 @@ function clearSelection() {
 
 async function handleBatchApprove() {
   if (!selectedExecutionIds.value.length) {
-    message.warning('请先选择待办')
+    message.warning(t('workflow.myTask.selectPendingFirst'))
     return
   }
   try {
     const params: WfExecutionBatchApproveParam = {
       executionIds: [...selectedExecutionIds.value],
       approveStatus: 1,
-      comment: '批量同意',
+      comment: t('workflow.myTask.batchApprove'),
     }
     await batchApprove(params)
-    message.success('批量同意成功')
+    message.success(t('workflow.myTask.batchApproveSuccess'))
     clearSelection()
     await tableRef.value?.refresh?.()
   } catch (error: any) {
-    message.error(error.message || '批量同意失败')
+    message.error(error.message || t('workflow.myTask.batchApproveFailed'))
   }
 }
 
 async function handleBatchRemind() {
   if (!selectedExecutionIds.value.length) {
-    message.warning('请先选择待办')
+    message.warning(t('workflow.myTask.selectPendingFirst'))
     return
   }
   try {
     const params: WfExecutionRemindParam = {
       executionIds: [...selectedExecutionIds.value],
-      comment: '批量催办',
+      comment: t('workflow.myTask.batchRemind'),
     }
     await batchRemind(params)
-    message.success('批量催办已发送')
+    message.success(t('workflow.myTask.batchRemindSent'))
     clearSelection()
   } catch (error: any) {
-    message.error(error.message || '批量催办失败')
+    message.error(error.message || t('workflow.myTask.batchRemindFailed'))
   }
 }
 

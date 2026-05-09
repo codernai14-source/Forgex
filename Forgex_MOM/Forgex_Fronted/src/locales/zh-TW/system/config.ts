@@ -8,6 +8,7 @@ export default {
   tabSecurity: '安全驗證',
   tabEmail: '郵件配置',
   tabUpload: '文件上傳',
+  tabPersonalHomepage: '個人首頁',
 
   systemName: '系統名稱',
   systemNamePlaceholder: '請輸入系統名稱',
@@ -193,4 +194,41 @@ export default {
   tdeKeyringPlugin: '金鑰環外掛',
   tdeKeyringNotDetected: '未偵測到',
   tdeInfoMessage: 'TDE（資料庫透明加密）需要在資料庫伺服器層面配置，無法透過此頁面操作。詳見 TDE 配置指南。',
+
+  // 密碼儲存策略選項
+  passwordBcrypt: 'BCrypt（推薦，不可逆雜湊）',
+  passwordArgon2: 'Argon2（高安全雜湊）',
+  passwordSm4: 'SM4（國密對稱加密）',
+  passwordAes: 'AES-256-GCM（對稱加密）',
+  passwordSm2: 'SM2（國密非對稱加密）',
+  passwordRsa: 'RSA-2048（非對稱加密）',
+
+  // 傳輸加密選項
+  transportSm2: 'SM2（國密非對稱加密）',
+
+  // 加密金鑰提示
+  sm4KeyHint: '128位（32字元Hex）',
+  aesKeyHint: '256位（64字元Hex）',
+  rsaKey2048: 'RSA-2048（推薦）',
+  rsaKey4096: 'RSA-4096（高安全）',
+
+  // 檔案加密演算法選項
+  fileEncryptAes: 'AES-256-GCM（國際標準，推薦）',
+  fileEncryptSm4: 'SM4-CBC（國密標準）',
+
+  // 欄位加密演算法選項
+  fieldEncryptSm4: 'SM4（國密標準，預設）',
+  fieldEncryptAes: 'AES-256-GCM（國際標準）',
+
+  // 首頁模組卡片
+  homepagePersonal: '個人首頁',
+  homepagePersonalDesc: '個人工作檯預設佈局',
+  homepageBasic: '基礎資訊',
+  homepageBasicDesc: '供應商與編碼規則首頁',
+  homepageApproval: '審批管理',
+  homepageApprovalDesc: '審批工作檯首頁',
+  homepageSys: '系統管理',
+  homepageSysDesc: '系統運行與配置首頁',
+  homepageDefaultConfig: '個人首頁預設配置',
+  homepageDefaultDesc: '維護公共級和當前租戶級的預設佈局，所有使用者都能存取個人首頁，並以此作為初始門戶。',
 }

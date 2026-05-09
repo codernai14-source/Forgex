@@ -126,6 +126,8 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 
 查询区不是写死的，而是根据 `config.queryFields` 动态渲染。
 
+当后端表格配置存在但未维护查询字段时，组件会从页面传入的 `fallbackConfig.queryFields` / `dynamicTableConfig.queryFields` 补齐查询区；如果列配置本身带有 `queryable: true`，也会按列的 `field/title/queryType/queryOperator/dictCode` 生成兜底查询字段。补齐时按 `field` 去重，后端已有查询字段保持优先，页面兜底只追加缺失项，避免公共配置遗漏导致业务页面完全不显示查询区域。
+
 当前内置支持的查询控件类型包括：
 
 - `input`
@@ -180,6 +182,12 @@ dictOptions.status
 - 页面却写成了 `#statusText`
 
 这种情况下插槽不会生效。
+
+## 审计字段展示
+
+`FxDynamicTable` 对常见审计字段内置姓名展示兜底：当列字段为 `createBy`、`updateBy`、`createdBy`、`updatedBy`，或历史配置里的 `create_by`、`update_by`、`created_by`、`updated_by` 时，如果当前记录同时存在对应的 `createByName`、`updateByName`、`createdByName`、`updatedByName`，表格优先显示姓名字段；姓名字段为空时继续显示原字段值，保证 `createBy` 等 ID 字段语义不被改写。
+
+字典列仍按 `dictField` / `dictCode` 的内置字典渲染优先处理，审计字段兜底只作用于普通文本列。
 
 ## request 协议设计
 

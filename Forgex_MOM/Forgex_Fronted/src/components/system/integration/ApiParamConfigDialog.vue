@@ -15,15 +15,15 @@
         <a-space>
           <a-button @click="handleImportJson">
             <template #icon><ImportOutlined /></template>
-            导入 JSON
+            {{ t('integration.paramConfig.importJson') }}
           </a-button>
           <a-button @click="handleExportJson">
             <template #icon><ExportOutlined /></template>
-            导出 JSON
+            {{ t('integration.paramConfig.exportJson') }}
           </a-button>
           <a-button type="primary" @click="handleAddField">
             <template #icon><PlusOutlined /></template>
-            添加字段
+            {{ t('common.add') }}
           </a-button>
         </a-space>
       </div>
@@ -40,11 +40,11 @@
       <!-- Tabs 标签页 -->
       <a-tabs v-model:activeKey="activeTab" class="config-tabs">
         <!-- 本系统参数配置 -->
-        <a-tab-pane key="source" tab="本系统参数配置">
+        <a-tab-pane key="source" :tab="t('integration.paramConfig.sourceTab')">
           <div class="tab-content">
             <a-alert
-              message="提示"
-              description="配置本系统（调用方）的参数结构，支持导入 JSON 文件或手动添加字段"
+              :message="t('common.tip')"
+              :description="t('integration.paramConfig.sourceDesc')"
               type="info"
               show-icon
               class="mb-2"
@@ -62,11 +62,11 @@
         </a-tab-pane>
 
         <!-- 对方系统参数配置 -->
-        <a-tab-pane key="target" tab="对方系统参数配置">
+        <a-tab-pane key="target" :tab="t('integration.paramConfig.targetTab')">
           <div class="tab-content">
             <a-alert
-              message="提示"
-              description="配置对方系统（被调用方）的参数结构，支持导入 API 文档提供的 JSON Schema"
+              :message="t('common.tip')"
+              :description="t('integration.paramConfig.targetDesc')"
               type="info"
               show-icon
               class="mb-2"
@@ -84,11 +84,11 @@
         </a-tab-pane>
 
         <!-- 参数映射配置 -->
-        <a-tab-pane key="mapping" tab="参数映射配置">
+        <a-tab-pane key="mapping" :tab="t('integration.paramConfig.mappingTab')">
           <div class="tab-content">
             <a-alert
-              message="提示"
-              description="配置本系统参数与对方系统参数之间的映射关系，支持转换规则"
+              :message="t('common.tip')"
+              :description="t('integration.paramConfig.mappingDesc')"
               type="info"
               show-icon
               class="mb-2"
@@ -97,11 +97,11 @@
             <div class="mapping-toolbar">
               <a-button type="primary" @click="handleAddMapping">
                 <template #icon><PlusOutlined /></template>
-                添加映射
+                {{ t('integration.paramConfig.addMapping') }}
               </a-button>
               <a-button @click="handleBatchMapping">
                 <template #icon><ThunderboltOutlined /></template>
-                自动映射
+                {{ t('integration.mapping.autoMatch') }}
               </a-button>
             </div>
 
@@ -120,7 +120,7 @@
                   <a-tree-select
                     v-model:value="record.sourcePath"
                     :tree-data="sourceTreeSelectData"
-                    placeholder="选择源字段"
+                    :placeholder="t('integration.mapping.sourceUnselected')"
                     allow-clear
                     tree-default-expand-all
                     style="width: 100%"
@@ -133,7 +133,7 @@
                   <a-tree-select
                     v-model:value="record.targetPath"
                     :tree-data="targetTreeSelectData"
-                    placeholder="选择目标字段"
+                    :placeholder="t('integration.mapping.targetUnselected')"
                     allow-clear
                     tree-default-expand-all
                     style="width: 100%"
@@ -145,13 +145,13 @@
                 <template v-if="column.key === 'transformType'">
                   <a-select
                     v-model:value="record.transformType"
-                    placeholder="选择转换类型"
+                    :placeholder="t('integration.paramConfig.selectTransformType')"
                     style="width: 100%"
                     @change="handleTransformTypeChange(record)"
                   >
-                    <a-select-option value="DIRECT">直接映射</a-select-option>
-                    <a-select-option value="FUNCTION">函数转换</a-select-option>
-                    <a-select-option value="CONSTANT">常量值</a-select-option>
+                    <a-select-option value="DIRECT">{{ t('integration.paramConfig.transformTypeOptions.direct') }}</a-select-option>
+                    <a-select-option value="FUNCTION">{{ t('integration.paramConfig.transformTypeOptions.function') }}</a-select-option>
+                    <a-select-option value="CONSTANT">{{ t('integration.paramConfig.transformTypeOptions.constant') }}</a-select-option>
                   </a-select>
                 </template>
 
@@ -159,7 +159,7 @@
                 <template v-if="column.key === 'transformRule'">
                   <a-input
                     v-model:value="record.transformRule"
-                    placeholder="输入转换规则或常量值"
+                    :placeholder="t('integration.paramConfig.transformRulePlaceholder')"
                     v-if="record.transformType"
                   />
                 </template>
@@ -187,39 +187,39 @@
     @cancel="handleFieldDialogCancel"
   >
     <a-form :model="fieldForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-      <a-form-item label="字段名称" required>
-        <a-input v-model:value="fieldForm.title" placeholder="请输入字段名称" />
+      <a-form-item :label="t('integration.paramConfig.fieldTitle')" required>
+        <a-input v-model:value="fieldForm.title" :placeholder="t('integration.paramConfig.fieldTitlePlaceholder')" />
       </a-form-item>
       
-      <a-form-item label="字段类型" required>
-        <a-select v-model:value="fieldForm.type" placeholder="请选择字段类型">
-          <a-select-option value="FIELD">字段 (FIELD)</a-select-option>
-          <a-select-option value="OBJECT">对象 (OBJECT)</a-select-option>
-          <a-select-option value="ARRAY">数组 (ARRAY)</a-select-option>
+      <a-form-item :label="t('integration.paramConfig.fieldType')" required>
+        <a-select v-model:value="fieldForm.type" :placeholder="t('integration.paramConfig.fieldTypePlaceholder')">
+          <a-select-option value="FIELD">{{ t('integration.paramConfig.fieldKind.field') }}</a-select-option>
+          <a-select-option value="OBJECT">{{ t('integration.paramConfig.fieldKind.object') }}</a-select-option>
+          <a-select-option value="ARRAY">{{ t('integration.paramConfig.fieldKind.array') }}</a-select-option>
         </a-select>
       </a-form-item>
       
-      <a-form-item label="数据类型" v-if="fieldForm.type === 'FIELD'">
-        <a-select v-model:value="fieldForm.dataType" placeholder="请选择数据类型">
-          <a-select-option value="STRING">字符串</a-select-option>
-          <a-select-option value="NUMBER">数字</a-select-option>
-          <a-select-option value="BOOLEAN">布尔</a-select-option>
-          <a-select-option value="NULL">空值</a-select-option>
+      <a-form-item :label="t('integration.paramConfig.dataType')" v-if="fieldForm.type === 'FIELD'">
+        <a-select v-model:value="fieldForm.dataType" :placeholder="t('integration.paramConfig.dataTypePlaceholder')">
+          <a-select-option value="STRING">{{ t('integration.paramConfig.dataTypeKind.string') }}</a-select-option>
+          <a-select-option value="NUMBER">{{ t('integration.paramConfig.dataTypeKind.number') }}</a-select-option>
+          <a-select-option value="BOOLEAN">{{ t('integration.paramConfig.dataTypeKind.boolean') }}</a-select-option>
+          <a-select-option value="NULL">{{ t('integration.paramConfig.dataTypeKind.null') }}</a-select-option>
         </a-select>
       </a-form-item>
       
-      <a-form-item label="字段值" v-if="fieldForm.type === 'FIELD'">
-        <a-input v-model:value="fieldForm.value" placeholder="请输入字段值" />
+      <a-form-item :label="t('integration.paramConfig.fieldValue')" v-if="fieldForm.type === 'FIELD'">
+        <a-input v-model:value="fieldForm.value" :placeholder="t('integration.paramConfig.fieldValuePlaceholder')" />
       </a-form-item>
       
-      <a-form-item label="是否必填">
+      <a-form-item :label="t('integration.paramConfig.required')">
         <a-switch v-model:checked="fieldForm.required" />
       </a-form-item>
       
-      <a-form-item label="字段描述">
+      <a-form-item :label="t('integration.paramConfig.fieldRemark')">
         <a-textarea
           v-model:value="fieldForm.description"
-          placeholder="请输入字段描述"
+          :placeholder="t('integration.paramConfig.fieldRemarkPlaceholder')"
           :rows="3"
         />
       </a-form-item>
@@ -242,6 +242,7 @@
  */
 
 import { ref, computed, watch, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import {
   PlusOutlined,
@@ -334,10 +335,10 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: 'API 参数配置',
+  title: '',
   width: '1200px',
-  okText: '保存',
-  cancelText: '取消',
+  okText: '',
+  cancelText: '',
   visible: false,
   sourceData: () => [],
   targetData: () => [],
@@ -345,6 +346,11 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
+const { t } = useI18n({ useScope: 'global' });
+
+const title = computed(() => props.title || t('integration.paramConfig.title'));
+const okText = computed(() => props.okText || t('common.save'));
+const cancelText = computed(() => props.cancelText || t('common.cancel'));
 
 /**
  * 弹窗可见状态
@@ -403,44 +409,44 @@ const fieldForm = ref({
 /**
  * 映射表格列配置
  */
-const mappingColumns = [
+const mappingColumns = computed(() => [
   {
-    title: '源字段',
+    title: t('integration.mapping.sourcePath'),
     dataIndex: 'sourcePath',
     key: 'sourcePath',
     width: 250
   },
   {
-    title: '目标字段',
+    title: t('integration.mapping.targetPath'),
     dataIndex: 'targetPath',
     key: 'targetPath',
     width: 250
   },
   {
-    title: '转换类型',
+    title: t('integration.paramConfig.transformType'),
     dataIndex: 'transformType',
     key: 'transformType',
     width: 120
   },
   {
-    title: '转换规则',
+    title: t('integration.paramConfig.transformRule'),
     dataIndex: 'transformRule',
     key: 'transformRule',
     width: 200
   },
   {
-    title: '操作',
+    title: t('common.action'),
     key: 'action',
     width: 80,
     fixed: 'right' as const
   }
-];
+]);
 
 /**
  * 计算字段编辑弹窗标题
  */
 const fieldDialogTitle = computed(() => {
-  return fieldForm.value.editNodeKey ? '编辑字段' : '添加字段';
+  return fieldForm.value.editNodeKey ? t('integration.paramConfig.editField') : t('integration.paramConfig.addField');
 });
 
 /**
@@ -542,9 +548,9 @@ function handleFileChange(event: Event) {
         targetTreeData.value = treeData;
       }
       
-      message.success('JSON 导入成功');
+      message.success(t('integration.paramConfig.importSuccess'));
     } catch (error) {
-      message.error('JSON 解析失败，请检查文件格式');
+      message.error(t('integration.paramConfig.parseJsonFailed'));
       console.error('JSON 导入失败:', error);
     }
     
@@ -562,7 +568,7 @@ function handleExportJson() {
   const treeData = activeTab.value === 'source' ? sourceTreeData.value : targetTreeData.value;
   
   if (!treeData || treeData.length === 0) {
-    message.warning('暂无数据可导出');
+    message.warning(t('integration.paramConfig.noDataToExport'));
     return;
   }
   
@@ -574,11 +580,11 @@ function handleExportJson() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${activeTab.value === 'source' ? '本系统' : '对方系统'}_参数配置_${new Date().getTime()}.json`;
+  link.download = `${activeTab.value === 'source' ? 'source' : 'target'}_param_config_${new Date().getTime()}.json`;
   link.click();
   
   URL.revokeObjectURL(url);
-  message.success('JSON 导出成功');
+  message.success(t('integration.paramConfig.exportSuccess'));
 }
 
 /**
@@ -609,7 +615,7 @@ function handleAddSourceNode(parentKey: string) {
 function handleEditSourceNode(key: string) {
   const node = findNodeByPath(sourceTreeData.value, key);
   if (!node) {
-    message.error('节点不存在');
+    message.error(t('integration.paramConfig.nodeNotFound'));
     return;
   }
   
@@ -635,9 +641,9 @@ function handleEditSourceNode(key: string) {
 function handleDeleteSourceNode(key: string) {
   const success = removeNode(sourceTreeData.value, key);
   if (success) {
-    message.success('删除成功');
+    message.success(t('common.deleteSuccess'));
   } else {
-    message.error('删除失败');
+    message.error(t('common.operationFailed'));
   }
 }
 
@@ -660,7 +666,7 @@ function handleAddTargetNode(parentKey: string) {
 function handleEditTargetNode(key: string) {
   const node = findNodeByPath(targetTreeData.value, key);
   if (!node) {
-    message.error('节点不存在');
+    message.error(t('integration.paramConfig.nodeNotFound'));
     return;
   }
   
@@ -686,9 +692,9 @@ function handleEditTargetNode(key: string) {
 function handleDeleteTargetNode(key: string) {
   const success = removeNode(targetTreeData.value, key);
   if (success) {
-    message.success('删除成功');
+    message.success(t('common.deleteSuccess'));
   } else {
-    message.error('删除失败');
+    message.error(t('common.operationFailed'));
   }
 }
 
@@ -720,7 +726,7 @@ function handleBatchMapping() {
   const targetFields = getLeafNodes(targetTreeData.value);
   
   if (sourceFields.length === 0 || targetFields.length === 0) {
-    message.warning('请先配置源字段和目标字段');
+    message.warning(t('integration.paramConfig.needSourceAndTarget'));
     return;
   }
   
@@ -741,7 +747,7 @@ function handleBatchMapping() {
         targetName: matchedTarget.title,
         transformType: 'DIRECT',
         transformRule: '',
-        remark: '自动映射'
+        remark: t('integration.mapping.autoMatch')
       };
       
       mappingList.value.push(mapping);
@@ -750,9 +756,9 @@ function handleBatchMapping() {
   });
   
   if (matchCount > 0) {
-    message.success(`自动映射成功，共匹配 ${matchCount} 个字段`);
+    message.success(t('integration.mapping.autoMatchApplied', { count: matchCount }));
   } else {
-    message.info('未找到匹配的字段，请手动添加映射');
+    message.info(t('integration.mapping.autoMatchNoResult'));
   }
 }
 
@@ -763,7 +769,7 @@ function handleBatchMapping() {
  */
 function handleDeleteMapping(index: number) {
   mappingList.value.splice(index, 1);
-  message.success('删除成功');
+  message.success(t('common.deleteSuccess'));
 }
 
 /**
@@ -802,10 +808,10 @@ function handleTargetPathChange(record: ParamMapping) {
 function handleTransformTypeChange(record: ParamMapping) {
   if (record.transformType === 'CONSTANT') {
     record.transformRule = '';
-    message.info('请在转换规则中输入常量值');
+    message.info(t('integration.paramConfig.inputConstantValue'));
   } else if (record.transformType === 'FUNCTION') {
     record.transformRule = '';
-    message.info('请在转换规则中输入函数表达式');
+    message.info(t('integration.paramConfig.inputFunctionExpression'));
   }
 }
 
@@ -815,12 +821,12 @@ function handleTransformTypeChange(record: ParamMapping) {
 function handleFieldDialogOk() {
   // 校验必填字段
   if (!fieldForm.value.title) {
-    message.warning('请输入字段名称');
+    message.warning(t('integration.paramConfig.fieldTitlePlaceholder'));
     return;
   }
   
   if (!fieldForm.value.type) {
-    message.warning('请选择字段类型');
+    message.warning(t('integration.paramConfig.fieldTypePlaceholder'));
     return;
   }
   
@@ -855,17 +861,17 @@ function handleFieldDialogOk() {
     // 编辑模式
     const success = updateNode(targetTree, fieldForm.value.editNodeKey, newNode);
     if (success) {
-      message.success('更新成功');
+      message.success(t('common.updateSuccess'));
     } else {
-      message.error('更新失败');
+      message.error(t('common.operationFailed'));
     }
   } else {
     // 新增模式
     const success = addNode(targetTree, fieldForm.value.parentKey || 'root', newNode);
     if (success) {
-      message.success('添加成功');
+      message.success(t('common.addSuccess'));
     } else {
-      message.error('添加失败，父节点不存在');
+      message.error(t('integration.paramConfig.addFailedParentMissing'));
     }
   }
   
@@ -888,7 +894,7 @@ async function handleSubmit() {
   try {
     // 校验映射关系
     if (mappingList.value.length === 0) {
-      message.warning('请至少添加一条映射关系');
+      message.warning(t('integration.paramConfig.needMapping'));
       submitting.value = false;
       return;
     }
@@ -896,7 +902,7 @@ async function handleSubmit() {
     // 校验必填字段
     for (const mapping of mappingList.value) {
       if (!mapping.sourcePath || !mapping.targetPath) {
-        message.warning('请完善所有映射关系');
+        message.warning(t('integration.paramConfig.completeMappings'));
         submitting.value = false;
         return;
       }
@@ -909,10 +915,10 @@ async function handleSubmit() {
       mappingData: mappingList.value
     });
     
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     dialogVisible.value = false;
   } catch (error) {
-    message.error('保存失败');
+    message.error(t('common.saveFailed'));
     console.error('保存失败:', error);
   } finally {
     submitting.value = false;

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="fx-icon-picker">
     <a-input-group compact>
       <a-input
@@ -19,7 +19,7 @@
 
     <a-modal
       v-model:open="open"
-      :title="title"
+      :title="resolvedTitle"
       width="720px"
       :footer="null"
       destroy-on-close
@@ -28,7 +28,7 @@
       <a-input
         v-model:value="keyword"
         allow-clear
-        :placeholder="searchPlaceholder"
+        :placeholder="resolvedSearchPlaceholder"
         style="margin-bottom: 12px"
       />
       <div class="fx-icon-picker-grid">
@@ -56,6 +56,7 @@
  * @version 1.0.0
  */
 import { computed, ref, watch, type Component } from 'vue'
+import { useI18n } from 'vue-i18n'
 import * as Icons from '@ant-design/icons-vue'
 import { AppstoreOutlined } from '@ant-design/icons-vue'
 
@@ -75,7 +76,7 @@ const props = withDefaults(
   {
     value: '',
     placeholder: '',
-    title: '选择图标',
+    title: '',
     searchPlaceholder: '',
     maxlength: 100
   }
@@ -93,6 +94,9 @@ const emit = defineEmits<{
 const open = ref(false)
 const keyword = ref('')
 const innerValue = ref(props.value || '')
+const { t } = useI18n()
+const resolvedTitle = computed(() => props.title || t('common.iconPicker.title'))
+const resolvedSearchPlaceholder = computed(() => props.searchPlaceholder || t('common.iconPicker.searchPlaceholder'))
 
 watch(
   () => props.value,
@@ -188,3 +192,4 @@ function select(name: string) {
   line-height: 1.2;
 }
 </style>
+

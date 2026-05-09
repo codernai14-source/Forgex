@@ -91,6 +91,50 @@
     )
   </insert>
 
+  <select id="tableExists" resultType="long">
+    SELECT COUNT(1)
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = #{tableName}
+  </select>
+
+  <update id="createMonthTable">
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      `id` bigint NOT NULL COMMENT 'primary key',
+      `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT 'tenant id',
+      `api_config_id` bigint NOT NULL COMMENT 'api config id',
+      `outbound_target_id` bigint NULL DEFAULT NULL COMMENT 'outbound target id',
+      `target_system_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'target system code',
+      `target_system_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'target system name',
+      `api_code` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'api code',
+      `call_direction` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'call direction',
+      `caller_ip` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'caller ip',
+      `trace_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'trace id',
+      `task_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'task id',
+      `invoke_mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'invoke mode',
+      `request_data` json NULL COMMENT 'request payload',
+      `raw_request_data` json NULL COMMENT 'raw request payload',
+      `assembled_request_data` json NULL COMMENT 'assembled request payload',
+      `response_data` json NULL COMMENT 'response payload',
+      `response_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'response code',
+      `call_status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'call status',
+      `result_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'result type',
+      `error_message` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'error message',
+      `cost_time_ms` int NOT NULL DEFAULT 0 COMMENT 'cost time ms',
+      `call_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'call time',
+      `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
+      `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'create by',
+      `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
+      `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'update by',
+      `deleted` tinyint NOT NULL DEFAULT 0 COMMENT 'deleted flag',
+      PRIMARY KEY (`id`),
+      KEY `idx_api_config_id` (`api_config_id`),
+      KEY `idx_call_time` (`call_time`),
+      KEY `idx_call_status` (`call_status`),
+      KEY `idx_tenant_id` (`tenant_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='api call log table'
+  </update>
+
   <select id="selectFromTable" resultMap="ApiCallLogResultMap">
     SELECT
       id,
@@ -167,6 +211,39 @@
       <if test="endTime != null">
         AND call_time <![CDATA[<=]]> #{endTime}
       </if>
+  </select>
+
+  <select id="selectByIdFromTable" resultMap="ApiCallLogResultMap">
+    SELECT
+      id,
+      tenant_id,
+      api_config_id,
+      outbound_target_id,
+      target_system_code,
+      target_system_name,
+      api_code,
+      call_direction,
+      caller_ip,
+      trace_id,
+      task_id,
+      invoke_mode,
+      request_data,
+      raw_request_data,
+      assembled_request_data,
+      response_data,
+      response_code,
+      call_status,
+      result_type,
+      error_message,
+      cost_time_ms,
+      call_time,
+      create_time,
+      create_by,
+      update_time,
+      update_by
+    FROM ${tableName}
+    WHERE id = #{id}
+    LIMIT 1
   </select>
 
 </mapper>

@@ -8,6 +8,7 @@ export default {
   tabSecurity: 'Security',
   tabEmail: 'Email',
   tabUpload: 'File Upload',
+  tabPersonalHomepage: 'Personal Homepage',
 
   systemName: 'System Name',
   systemNamePlaceholder: 'Enter system name',
@@ -86,7 +87,7 @@ export default {
   transportCrypto: 'Transport Encryption',
   transportCryptoDesc: 'Configure transport-layer encryption algorithm and key pair for client-server communication.',
   transportAlgorithm: 'Algorithm',
-  transportCipher: 'Cipher 表单at',
+  transportCipher: 'Cipher Format',
   transportPublicKey: 'Public Key',
   transportPublicKeyPlaceholder: 'Enter Base64 public key',
   transportPrivateKey: 'Private Key',
@@ -193,4 +194,41 @@ export default {
   tdeKeyringPlugin: 'Keyring Plugin',
   tdeKeyringNotDetected: 'Not detected',
   tdeInfoMessage: 'TDE (Transparent Data Encryption) must be configured at the database server level and cannot be managed from this page. See the TDE Configuration Guide.',
+
+  // Password storage strategy options
+  passwordBcrypt: 'BCrypt (Recommended, irreversible hash)',
+  passwordArgon2: 'Argon2 (High security hash)',
+  passwordSm4: 'SM4 (Chinese national symmetric encryption)',
+  passwordAes: 'AES-256-GCM (Symmetric encryption)',
+  passwordSm2: 'SM2 (Chinese national asymmetric encryption)',
+  passwordRsa: 'RSA-2048 (Asymmetric encryption)',
+
+  // Transport encryption options
+  transportSm2: 'SM2 (Chinese national asymmetric encryption)',
+
+  // Encryption key hints
+  sm4KeyHint: '128-bit (32-char Hex)',
+  aesKeyHint: '256-bit (64-char Hex)',
+  rsaKey2048: 'RSA-2048 (Recommended)',
+  rsaKey4096: 'RSA-4096 (High security)',
+
+  // File encryption algorithm options
+  fileEncryptAes: 'AES-256-GCM (International standard, recommended)',
+  fileEncryptSm4: 'SM4-CBC (Chinese national standard)',
+
+  // Field encryption algorithm options
+  fieldEncryptSm4: 'SM4 (Chinese national standard, default)',
+  fieldEncryptAes: 'AES-256-GCM (International standard)',
+
+  // Homepage module cards
+  homepagePersonal: 'Personal Homepage',
+  homepagePersonalDesc: 'Personal workspace default layout',
+  homepageBasic: 'Basic Information',
+  homepageBasicDesc: 'Supplier and encoding rule homepage',
+  homepageApproval: 'Approval Management',
+  homepageApprovalDesc: 'Approval workspace homepage',
+  homepageSys: 'System Management',
+  homepageSysDesc: 'System operation and configuration homepage',
+  homepageDefaultConfig: 'Personal Homepage Default Config',
+  homepageDefaultDesc: 'Manage public-level and tenant-level default layouts. All users can access the personal homepage using this as the initial portal.',
 }

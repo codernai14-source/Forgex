@@ -30,7 +30,7 @@ import java.util.List;
  * @since 2026-04-14
  */
 @RestController
-@RequestMapping("/api/integration/api-config")
+@RequestMapping("/api-config")
 @RequiredArgsConstructor
 @Tag(name = "接口配置管理", description = "提供接口配置的增删改查、启用/停用等功能")
 public class ApiConfigController {

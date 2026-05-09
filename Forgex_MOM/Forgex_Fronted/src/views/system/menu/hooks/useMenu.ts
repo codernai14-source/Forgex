@@ -1,3 +1,4 @@
+import { translateLegacyText } from '@/utils/legacyI18n'
 /**
  * 菜单列表逻辑封装
  * 
@@ -79,7 +80,7 @@ export function useMenu() {
       loading.value = true
       const tenantId = sessionStorage.getItem('tenantId')
       if (!tenantId) {
-        message.error('租户信息缺失')
+        message.error(translateLegacyText('租户信息缺失'))
         return
       }
       
@@ -144,10 +145,10 @@ export function useMenu() {
    */
   const handleDelete = async (id: string) => {
     Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除该菜单吗？删除后将同时删除其子菜单和按钮权限。',
-      okText: '确定',
-      cancelText: '取消',
+      title: translateLegacyText('确认删除'),
+      content: translateLegacyText('确定要删除该菜单吗？删除后将同时删除其子菜单和按钮权限。'),
+      okText: translateLegacyText('确定'),
+      cancelText: translateLegacyText('取消'),
       onOk: async () => {
         await deleteMenu(id)
         loadMenuList()
@@ -166,15 +167,15 @@ export function useMenu() {
    */
   const handleBatchDelete = () => {
     if (selectedRowKeys.value.length === 0) {
-      message.warning('请选择要删除的菜单')
+      message.warning(translateLegacyText('请选择要删除的菜单'))
       return
     }
     
     Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除选中的 ${selectedRowKeys.value.length} 个菜单吗？`,
-      okText: '确定',
-      cancelText: '取消',
+      title: translateLegacyText('确认删除'),
+      content: translateLegacyText(`确定要删除选中的 ${selectedRowKeys.value.length} 个菜单吗？`),
+      okText: translateLegacyText('确定'),
+      cancelText: translateLegacyText('取消'),
       onOk: async () => {
         await batchDeleteMenus(selectedRowKeys.value)
         selectedRowKeys.value = []

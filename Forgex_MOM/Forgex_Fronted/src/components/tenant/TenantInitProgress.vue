@@ -1,189 +1,99 @@
 <template>
   <a-modal
     v-model:open="visible"
-    title="租户创建进度"
+    :title="t('system.tenant.initProgress.title')"
     :footer="null"
     :closable="false"
     width="600px"
   >
     <div class="progress-container">
-      <!-- 进度条 -->
-      <a-progress
-        :percent="progress"
-        :status="task状态"
-        :format="formatProgress"
-      />
-      
-      <!-- 当前步骤 -->
+      <a-progress :percent="progress" :status="taskStatus" :format="formatProgress" />
+
       <div class="current-step">
         <a-spin :spinning="loading">
-          {{ currentStep }}
+          {{ currentStepLabel }}
         </a-spin>
       </div>
-      
-      <!-- 详细步骤列表 -->
+
       <a-timeline class="step-timeline">
-        <a-timeline-item
-          v-for="step in steps"
-          :key="step.key"
-          :color="getStepColor(step)"
-        >
+        <a-timeline-item v-for="step in steps" :key="step.key" :color="getStepColor(step)">
           <template #dot>
-            <CheckCircleOutlined v-if="step.status === 'finished'" style="color: #52c41a;" />
-            <LoadingOutlined v-else-if="step.status === 'processing'" style="color: #1890ff;" />
-            <CloseCircleOutlined v-else style="color: #d9d9d9;" />
+            <CheckCircleOutlined v-if="step.status === 'finished'" style="color: #52c41a" />
+            <LoadingOutlined v-else-if="step.status === 'processing'" style="color: #1890ff" />
+            <CloseCircleOutlined v-else style="color: #d9d9d9" />
           </template>
           {{ step.name }}
         </a-timeline-item>
       </a-timeline>
-      
-      <!-- 错误信息 -->
+
       <a-alert
         v-if="errorMessage"
         type="error"
         :message="errorMessage"
         show-icon
-        style="margin-top: 16px;"
+        style="margin-top: 16px"
       />
     </div>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-/**
- * 租户初始化进度组件
- *
- * 功能：
- * 1. 通过 SSE 实时订阅租户初始化任务进度
- * 2. 可视化展示初始化进度和步骤
- * 3. 支持成功/失败状态显示
- *
- * @author Forgex Team
- * @version 1.0.0
- */
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { 
-  CheckCircleOutlined, 
-  LoadingOutlined, 
-  CloseCircleOutlined 
-} from '@ant-design/icons-vue'
-import { subscribeTaskProgress, getTaskDetail, type ProgressPushData } from '@/api/system/tenantInitTask'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons-vue'
+import { getTaskDetail, subscribeTaskProgress, type ProgressPushData } from '@/api/system/tenantInitTask'
 
-/**
- * 步骤接口定义
- */
 interface Step {
-  /** 步骤标识 */
   key: string
-  /** 步骤名称 */
   name: string
-  /** 步骤状态 */
   status: 'waiting' | 'processing' | 'finished'
 }
 
-/**
- * 组件 Props 定义
- */
-const props = defineProps<{
-  /** 任务 ID */
-  taskId: number
-}>()
+const props = defineProps<{ taskId: number }>()
+const emit = defineEmits<{ (e: 'finish'): void }>()
+const { t } = useI18n()
 
-/**
- * 组件事件定义
- */
-const emit = defineEmits<{
-  /** 初始化完成事件 */
-  (e: 'finish'): void
-}>()
-
-/**
- * 模态框显示状态
- */
 const visible = ref(true)
-
-/**
- * 加载状态
- */
 const loading = ref(true)
-
-/**
- * 当前进度百分比
- */
 const progress = ref(0)
-
-/**
- * 当前步骤描述
- */
-const currentStep = ref('')
-
-/**
- * 任务状态：active-进行中，exception-异常，success-成功
- */
-const task状态 = ref<'active' | 'exception' | 'success'>('active')
-
-/**
- * 错误信息
- */
+const currentStepText = ref('')
+const taskStatus = ref<'active' | 'exception' | 'success'>('active')
 const errorMessage = ref('')
-
-/**
- * SSE 事件源实例
- */
 let eventSource: EventSource | null = null
 
-/**
- * 初始化步骤列表
- */
 const steps = reactive<Step[]>([
-  { key: 'module', name: '复制系统模块', status: 'waiting' },
-  { key: 'menu', name: '复制菜单权限', status: 'waiting' },
-  { key: 'role', name: '创建管理员角色', status: 'waiting' },
-  { key: 'user', name: '创建管理员账号', status: 'waiting' },
-  { key: 'bind_role', name: '绑定用户角色', status: 'waiting' },
-  { key: 'bind_menu', name: '绑定角色菜单', status: 'waiting' },
-  { key: 'template', name: '同步模板配置', status: 'waiting' },
-  { key: 'table_config', name: '同步表格配置', status: 'waiting' }
+  { key: 'module', name: t('system.tenant.initProgress.steps.module'), status: 'waiting' },
+  { key: 'menu', name: t('system.tenant.initProgress.steps.menu'), status: 'waiting' },
+  { key: 'role', name: t('system.tenant.initProgress.steps.role'), status: 'waiting' },
+  { key: 'user', name: t('system.tenant.initProgress.steps.user'), status: 'waiting' },
+  { key: 'bind_role', name: t('system.tenant.initProgress.steps.bindRole'), status: 'waiting' },
+  { key: 'bind_menu', name: t('system.tenant.initProgress.steps.bindMenu'), status: 'waiting' },
+  { key: 'template', name: t('system.tenant.initProgress.steps.template'), status: 'waiting' },
+  { key: 'table_config', name: t('system.tenant.initProgress.steps.tableConfig'), status: 'waiting' },
 ])
 
-/**
- * 格式化进度显示文本
- *
- * @param percent 进度百分比
- * @returns 格式化后的文本
- */
 const formatProgress = (percent?: number) => {
-  if (task状态.value === 'success') {
-    return '初始化完成'
-  } else if (task状态.value === 'exception') {
-    return '初始化失败'
-  }
-  return `${percent}%`
+  if (taskStatus.value === 'success') return t('system.tenant.initProgress.success')
+  if (taskStatus.value === 'exception') return t('system.tenant.initProgress.failed')
+  return `${percent || 0}%`
 }
 
-/**
- * 获取步骤颜色
- *
- * @param step 步骤对象
- * @returns 颜色值
- */
-const getStepColor = (step: Step) => {
+const currentStepLabel = computed(() => currentStepText.value || t('system.tenant.initProgress.currentStepUnknown'))
+
+function getStepColor(step: Step) {
   if (step.status === 'finished') return 'green'
   if (step.status === 'processing') return 'blue'
   return 'gray'
 }
 
-/**
- * 更新步骤状态
- *
- * @param stepName 当前步骤名称
- */
-const updateStep状态 = (stepName: string) => {
-  const stepIndex = steps.findIndex(s => stepName.includes(s.name))
-  steps.forEach((step, index) => {
-    if (index < stepIndex) {
+function updateStepStatus(stepName: string) {
+  const index = steps.findIndex(step => stepName.includes(step.name))
+  steps.forEach((step, i) => {
+    if (index === -1) {
+      step.status = 'waiting'
+    } else if (i < index) {
       step.status = 'finished'
-    } else if (index === stepIndex) {
+    } else if (i === index) {
       step.status = 'processing'
     } else {
       step.status = 'waiting'
@@ -191,92 +101,66 @@ const updateStep状态 = (stepName: string) => {
   })
 }
 
-/**
- * 初始化 SSE 连接
- */
-const initSSE = async () => {
+async function initSSE() {
   try {
-    // 先获取任务详情，了解当前状态
     const taskDetail = await getTaskDetail(props.taskId)
     if (taskDetail) {
       progress.value = taskDetail.progress || 0
-      currentStep.value = taskDetail.currentStep || ''
-      
-      // 如果任务已完成或失败，直接显示结果
+      currentStepText.value = taskDetail.currentStep || ''
+
       if (taskDetail.status === 'SUCCESS') {
-        task状态.value = 'success'
+        taskStatus.value = 'success'
         loading.value = false
         setTimeout(() => {
           visible.value = false
           emit('finish')
-        }, 1500)
+        }, 1200)
         return
-      } else if (taskDetail.status === 'FAILED') {
-        task状态.value = 'exception'
-        errorMessage.value = taskDetail.errorMessage || '初始化失败'
+      }
+
+      if (taskDetail.status === 'FAILED') {
+        taskStatus.value = 'exception'
+        errorMessage.value = taskDetail.errorMessage || t('system.tenant.initProgress.failed')
         loading.value = false
         return
       }
     }
-    
-    // 创建 SSE 连接
+
     eventSource = subscribeTaskProgress(props.taskId)
-    
-    // 监听消息
-    eventSource.onmessage = (event) => {
+    eventSource.onmessage = event => {
       const data = JSON.parse(event.data) as ProgressPushData
       progress.value = data.progress
-      currentStep.value = data.currentStep
-      
-      // 更新步骤状态
-      updateStep状态(data.currentStep)
-      
-      // 检查是否完成
-      if (data.progress === 100) {
-        task状态.value = 'success'
+      currentStepText.value = data.currentStep
+      updateStepStatus(data.currentStep)
+      if (data.progress >= 100) {
+        taskStatus.value = 'success'
         loading.value = false
         setTimeout(() => {
           visible.value = false
           emit('finish')
-        }, 1500)
+        }, 1200)
       }
     }
-    
-    // 监听错误
     eventSource.onerror = () => {
-      console.error('SSE 连接错误')
-      task状态.value = 'exception'
-      errorMessage.value = '连接服务器失败，请刷新页面后重试'
+      taskStatus.value = 'exception'
+      errorMessage.value = t('system.tenant.initProgress.connectFailed')
       loading.value = false
-      
-      if (eventSource) {
-        eventSource.close()
-        eventSource = null
-      }
+      eventSource?.close()
+      eventSource = null
     }
   } catch (error) {
-    console.error('初始化 SSE 失败:', error)
-    task状态.value = 'exception'
-    errorMessage.value = '获取任务状态失败'
+    console.error('Tenant init SSE failed:', error)
+    taskStatus.value = 'exception'
+    errorMessage.value = t('system.tenant.initProgress.fetchFailed')
     loading.value = false
   }
 }
 
-/**
- * 组件挂载时初始化
- */
-onMounted(() => {
-  initSSE()
-})
+onMounted(initSSE)
 
-/**
- * 组件卸载时清理资源
- */
 onUnmounted(() => {
-  if (eventSource) {
-    eventSource.close()
-    eventSource = null
-  }
+  eventSource?.close()
+  eventSource = null
 })
 </script>
 

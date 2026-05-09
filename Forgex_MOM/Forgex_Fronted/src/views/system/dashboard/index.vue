@@ -16,7 +16,7 @@
               <UserOutlined />
             </template>
             <template #suffix>
-              <span class="stat-suffix">人</span>
+              <span class="stat-suffix">{{ $t('system.dashboard.peopleUnit') }}</span>
             </template>
           </a-statistic>
         </a-card>
@@ -30,7 +30,7 @@
               <TeamOutlined />
             </template>
             <template #suffix>
-              <span class="stat-suffix">个</span>
+              <span class="stat-suffix">{{ $t('system.dashboard.itemUnit') }}</span>
             </template>
           </a-statistic>
         </a-card>
@@ -44,7 +44,7 @@
               <AppstoreOutlined />
             </template>
             <template #suffix>
-              <span class="stat-suffix">个</span>
+              <span class="stat-suffix">{{ $t('system.dashboard.itemUnit') }}</span>
             </template>
           </a-statistic>
         </a-card>
@@ -58,7 +58,7 @@
               <WifiOutlined />
             </template>
             <template #suffix>
-              <span class="stat-suffix">人</span>
+              <span class="stat-suffix">{{ $t('system.dashboard.peopleUnit') }}</span>
             </template>
           </a-statistic>
         </a-card>
@@ -202,7 +202,7 @@ import dayjs from 'dayjs'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import {
-  UserOutlined,
+UserOutlined,
   TeamOutlined,
   AppstoreOutlined,
   WifiOutlined
@@ -305,31 +305,31 @@ const serviceMemoryData = ref<any[]>([])
 const operationLogs = ref<any[]>([])
 const operationLogColumns = [
   {
-    title: '操作时间',
+    title: t('system.dashboard.operationTime'),
     dataIndex: 'operationTime',
     key: 'operationTime',
     width: 160
   },
   {
-    title: '操作人',
+    title: t('system.dashboard.operator'),
     dataIndex: 'operatorName',
     key: 'operatorName',
     width: 100
   },
   {
-    title: '操作模块',
+    title: t('system.dashboard.operationModule'),
     dataIndex: 'operationModule',
     key: 'operationModule',
     width: 120
   },
   {
-    title: '操作内容',
+    title: t('system.dashboard.operationContent'),
     dataIndex: 'operationDescription',
     key: 'operationDescription',
     ellipsis: true
   },
   {
-    title: '状态',
+    title: t('common.status'),
     dataIndex: 'status',
     key: 'status',
     width: 80
@@ -340,31 +340,31 @@ const operationLogColumns = [
 const loginLogs = ref<any[]>([])
 const loginLogColumns = [
   {
-    title: '登录时间',
+    title: t('system.dashboard.loginTime'),
     dataIndex: 'loginTime',
     key: 'loginTime',
     width: 160
   },
   {
-    title: '用户名',
+    title: t('system.dashboard.username'),
     dataIndex: 'username',
     key: 'username',
     width: 100
   },
   {
-    title: 'IP 地址',
+    title: t('system.dashboard.ipAddress'),
     dataIndex: 'ipAddress',
     key: 'ipAddress',
     width: 140
   },
   {
-    title: '登录地点',
+    title: t('system.dashboard.loginLocation'),
     dataIndex: 'loginLocation',
     key: 'loginLocation',
     ellipsis: true
   },
   {
-    title: '状态',
+    title: t('common.status'),
     dataIndex: 'status',
     key: 'status',
     width: 80
@@ -421,7 +421,7 @@ const getThemeColors = () => {
 const loadStatistics = async () => {
   const tenantId = sessionStorage.getItem('tenantId')
   if (!tenantId) {
-    message.warning('租户信息缺失')
+    message.warning(t('system.dashboard.tenantInfoMissing'))
     return
   }
 
@@ -429,8 +429,8 @@ const loadStatistics = async () => {
     const data = await getDashboardStatistics({ tenantId })
     statistics.value = data || statistics.value
   } catch (error) {
-    console.error('加载统计数据失败:', error)
-    message.error('加载统计数据失败')
+    console.error('[Dashboard] Failed to load statistics:', error)
+    message.error(t('system.dashboard.loadStatisticsFailed'))
   }
 }
 
@@ -448,7 +448,7 @@ const loadServerInfo = async () => {
       updateCpuChart(Number.isFinite(cpu) ? cpu : 0)
     }
   } catch (error) {
-    console.error('加载服务器信息失败:', error)
+    console.error('[Dashboard] Failed to load server info:', error)
   }
 }
 
@@ -461,7 +461,7 @@ const loadModuleMemoryUsage = async () => {
     moduleUsageData.value = Array.isArray(data) ? data : []
     updateModuleChart()
   } catch (error) {
-    console.error('加载 JVM 内存分区数据失败:', error)
+    console.error('[Dashboard] Failed to load JVM memory data:', error)
   }
 }
 
@@ -474,7 +474,7 @@ const loadServiceMemoryUsage = async () => {
     serviceMemoryData.value = data || []
     updateMemoryChart()
   } catch (error) {
-    console.error('加载服务内存数据失败:', error)
+    console.error('[Dashboard] Failed to load service memory data:', error)
   }
 }
 
@@ -486,7 +486,7 @@ const loadRecentOperationLogs = async () => {
     const data = await getRecentOperationLogs({ size: 5 })
     operationLogs.value = Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('加载操作日志失败:', error)
+    console.error('[Dashboard] Failed to load operation logs:', error)
   }
 }
 
@@ -498,7 +498,7 @@ const loadRecentLoginLogs = async () => {
     const data = await getRecentLoginLogs({ size: 5 })
     loginLogs.value = Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('加载登录日志失败:', error)
+    console.error('[Dashboard] Failed to load login logs:', error)
   }
 }
 
@@ -656,7 +656,7 @@ const initMemoryChart = () => {
     },
     series: [
       {
-        name: '内存使用',
+        name: t('system.dashboard.memoryUsage'),
         type: 'pie',
         center: ['50%', '44%'],
         // 放大环形：相对容器更大，底部预留给图例
@@ -856,7 +856,7 @@ const initMapChart = async () => {
   const colors = getThemeColors()
   const lng = Number(serverInfo.value.mapLongitude)
   const lat = Number(serverInfo.value.mapLatitude)
-  const label = serverInfo.value.mapLocationName || '服务器位置'
+  const label = serverInfo.value.mapLocationName || t('system.dashboard.serverLocation')
 
   let geoReady = false
   try {
@@ -867,7 +867,7 @@ const initMapChart = async () => {
       geoReady = true
     }
   } catch (e) {
-    console.warn('[Dashboard] 中国地图数据加载失败，将显示占位提示', e)
+    console.warn('[Dashboard] Failed to load China map data, fallback placeholder will be shown', e)
   }
 
   if (geoReady) {
@@ -900,7 +900,7 @@ const initMapChart = async () => {
       },
       series: [
         {
-          name: '位置',
+          name: t('system.dashboard.location'),
           type: 'effectScatter',
           coordinateSystem: 'geo',
           data: [
@@ -939,7 +939,7 @@ const initMapChart = async () => {
     mapChart.setOption({
       backgroundColor: colors.chartBg,
       title: {
-        text: '地图数据加载失败\n请检查网络或稍后重试',
+        text: t('system.dashboard.mapLoadFailed'),
         left: 'center',
         top: 'middle',
         textStyle: {

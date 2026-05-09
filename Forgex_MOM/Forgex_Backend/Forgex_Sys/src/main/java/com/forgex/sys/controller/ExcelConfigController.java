@@ -47,7 +47,7 @@ import java.util.Set;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/excel")
+@RequestMapping("/excel")
 @RequiredArgsConstructor
 public class ExcelConfigController {
 
