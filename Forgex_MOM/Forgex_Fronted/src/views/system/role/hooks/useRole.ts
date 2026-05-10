@@ -2,6 +2,7 @@ import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { getRoleList, deleteRole, batchDeleteRoles } from '@/api/system/role'
 import type { Role } from '../types'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 export const useRole = () => {
   const loading = ref(false)
@@ -56,7 +57,7 @@ export const useRole = () => {
    */
   const handleBatchDelete = async () => {
     if (selectedRowKeys.value.length === 0) {
-      message.warning('请选择要删除的角色')
+      message.warning(translateLegacyText('请选择要删除的角色'))
       return
     }
 

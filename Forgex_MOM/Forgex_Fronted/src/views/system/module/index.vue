@@ -5,7 +5,6 @@
       table-code="ModuleTable"
       :show-query-form="true"
       :request="handleRequest"
-      :dynamic-table-config="dynamicTableConfig"
       :dict-options="dictOptions"
       :row-selection="{
         selectedRowKeys,
@@ -78,49 +77,49 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
       >
-        <a-form-item label="模块编码" name="code">
+        <a-form-item :label="$tl('模块编码')" name="code">
           <a-input
             v-model:value="formData.code"
-            placeholder="请输入模块编码"
+            :placeholder="$tl('请输入模块编码')"
             :disabled="isEdit"
             :maxlength="50"
           />
         </a-form-item>
 
-        <a-form-item label="模块名称" name="nameI18nJson">
+        <a-form-item :label="$tl('模块名称')" name="nameI18nJson">
           <I18nInput
             v-model="formData.nameI18nJson"
             mode="simple"
-            placeholder="请输入模块名称"
+            :placeholder="$tl('请输入模块名称')"
           />
           <template #extra>
             <span style="color: #999; font-size: 12px">
-              点击输入框右侧的地球图标可配置多语言
+              {{ $tl('点击输入框右侧的地球图标可配置多语言') }}
             </span>
           </template>
         </a-form-item>
 
-        <a-form-item label="图标" name="icon">
+        <a-form-item :label="$tl('图标')" name="icon">
           <IconPicker
             v-model:value="formData.icon"
-            placeholder="请选择或输入图标名称"
+            :placeholder="$tl('请选择或输入图标名称')"
             :maxlength="100"
           />
         </a-form-item>
 
-        <a-form-item label="排序号" name="orderNum">
+        <a-form-item :label="$tl('排序号')" name="orderNum">
           <a-input-number
             v-model:value="formData.orderNum"
-            placeholder="请输入排序号"
+            :placeholder="$tl('请输入排序号')"
             :min="0"
             style="width: 100%"
           />
         </a-form-item>
 
-        <a-form-item label="是否可见" name="visible">
+        <a-form-item :label="$tl('是否可见')" name="visible">
           <a-radio-group v-model:value="formData.visible">
-            <a-radio :value="1">显示</a-radio>
-            <a-radio :value="0">隐藏</a-radio>
+            <a-radio :value="1">{{ $tl('显示') }}</a-radio>
+            <a-radio :value="0">{{ $tl('隐藏') }}</a-radio>
           </a-radio-group>
         </a-form-item>
 
@@ -145,7 +144,7 @@ import { getModulePage } from '@/api/system/module'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 import { useModule } from './hooks/useModule'
-import { useModuleForm } from './hooks/useModuleForm'
+import { useModuleForm } from './hooks/useModuleForm'import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { dictItems: statusOptions } = useDict('status')
 const { dictItems: visibleOptions } = useDict('visible')
@@ -178,30 +177,6 @@ const dictOptions = computed(() => ({
   visible: visibleOptions.value,
 }))
 
-const dynamicTableConfig = computed(() => ({
-  tableCode: 'ModuleTable',
-  tableName: '模块管理',
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'name', title: '模块名称', minWidth: 160, ellipsis: true },
-    { field: 'code', title: '模块编码', width: 140 },
-    { field: 'description', title: '描述', minWidth: 160, ellipsis: true },
-    { field: 'status', title: '状态', width: 90, dictCode: 'status' },
-    { field: 'createBy', title: '创建人', width: 120 },
-    { field: 'createTime', title: '创建时间', width: 180 },
-    { field: 'updateTime', title: '更新时间', width: 180 },
-    { field: 'action', title: '操作', width: 140 },
-  ],
-  queryFields: [
-    { field: 'name', label: '模块名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'code', label: '模块编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'description', label: '描述', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
-  ],
-  version: 1,
-}))
 
 function normalizeModuleStatusRecord(row: any) {
   const status = row?.status
@@ -290,10 +265,10 @@ async function handleFormSubmit() {
 
 function handleDeleteConfirm(id: string) {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除该模块吗？',
-    okText: '确定',
-    cancelText: '取消',
+    title: translateLegacyText('确认删除'),
+    content: translateLegacyText('确定要删除该模块吗？'),
+    okText: translateLegacyText('确定'),
+    cancelText: translateLegacyText('取消'),
     onOk: async () => {
       await handleDelete(id)
       await tableRef.value?.refresh?.()
@@ -303,10 +278,10 @@ function handleDeleteConfirm(id: string) {
 
 function handleBatchDeleteConfirm() {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？`,
-    okText: '确定',
-    cancelText: '取消',
+    title: translateLegacyText('确认删除'),
+    content: translateLegacyText(`确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？`),
+    okText: translateLegacyText('确定'),
+    cancelText: translateLegacyText('取消'),
     onOk: async () => {
       await handleBatchDelete()
       await tableRef.value?.refresh?.()

@@ -7,6 +7,7 @@ export default {
   // 必填校验
   required: '此项为必填项',
   requiredField: '{field}不能为空',
+  requiredFieldFallback: '{field}不能为空',
 
   // 格式校验
   invalidEmail: '请输入有效的邮箱地址',

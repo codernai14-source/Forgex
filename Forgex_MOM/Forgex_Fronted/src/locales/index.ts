@@ -17,6 +17,12 @@ import koKR from './ko-KR'
  */
 export type LocaleCode = 'zh-CN' | 'en-US' | 'zh-TW' | 'ja-JP' | 'ko-KR'
 
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    $tl: (text: string, locale?: LocaleCode) => string
+  }
+}
+
 // 语言包映射。
 const messages = {
   'zh-CN': zhCN,

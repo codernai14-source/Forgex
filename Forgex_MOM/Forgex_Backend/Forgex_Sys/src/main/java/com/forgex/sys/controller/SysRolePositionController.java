@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see SysRoleUserController
  */
 @RestController
-@RequestMapping("/sys/role/position")
+@RequestMapping("/role/position")
 @RequiredArgsConstructor
 public class SysRolePositionController {
 

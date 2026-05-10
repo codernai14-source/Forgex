@@ -406,3 +406,77 @@ CREATE TABLE `fx_third_system`  (
 INSERT INTO `fx_third_system` VALUES (2045037285200052226, 'cs', 'cs', '192.168.0.24', '', '', 1, 1993479636925403138, '2026-04-17 15:10:58', 'admin', '2026-04-17 15:10:58', 'admin', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================
+-- 2026-05 api call log fixes
+-- ============================
+DROP TABLE IF EXISTS `fx_api_call_log_202604`;
+CREATE TABLE `fx_api_call_log_202604`  (
+  `id` bigint NOT NULL COMMENT 'primary key',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT 'tenant id',
+  `api_config_id` bigint NOT NULL COMMENT 'api config id',
+  `outbound_target_id` bigint NULL DEFAULT NULL COMMENT 'outbound target id',
+  `target_system_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'target system code',
+  `target_system_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'target system name',
+  `api_code` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'api code',
+  `call_direction` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'call direction',
+  `caller_ip` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'caller ip',
+  `trace_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'trace id',
+  `task_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'task id',
+  `invoke_mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'invoke mode',
+  `request_data` json NULL COMMENT 'request payload',
+  `raw_request_data` json NULL COMMENT 'raw request payload',
+  `assembled_request_data` json NULL COMMENT 'assembled request payload',
+  `response_data` json NULL COMMENT 'response payload',
+  `response_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'response code',
+  `call_status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'call status',
+  `result_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'result type',
+  `error_message` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'error message',
+  `cost_time_ms` int NOT NULL DEFAULT 0 COMMENT 'cost time ms',
+  `call_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'call time',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'create by',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'update by',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT 'deleted flag',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_api_config_id`(`api_config_id` ASC) USING BTREE,
+  INDEX `idx_call_time`(`call_time` ASC) USING BTREE,
+  INDEX `idx_call_status`(`call_status` ASC) USING BTREE,
+  INDEX `idx_tenant_id`(`tenant_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'api call log table 2026-04' ROW_FORMAT = Dynamic;
+
+CREATE TABLE IF NOT EXISTS `fx_api_call_log_202605`  (
+  `id` bigint NOT NULL COMMENT 'primary key',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT 'tenant id',
+  `api_config_id` bigint NOT NULL COMMENT 'api config id',
+  `outbound_target_id` bigint NULL DEFAULT NULL COMMENT 'outbound target id',
+  `target_system_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'target system code',
+  `target_system_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'target system name',
+  `api_code` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'api code',
+  `call_direction` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'call direction',
+  `caller_ip` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'caller ip',
+  `trace_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'trace id',
+  `task_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'task id',
+  `invoke_mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'invoke mode',
+  `request_data` json NULL COMMENT 'request payload',
+  `raw_request_data` json NULL COMMENT 'raw request payload',
+  `assembled_request_data` json NULL COMMENT 'assembled request payload',
+  `response_data` json NULL COMMENT 'response payload',
+  `response_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'response code',
+  `call_status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'call status',
+  `result_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'result type',
+  `error_message` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'error message',
+  `cost_time_ms` int NOT NULL DEFAULT 0 COMMENT 'cost time ms',
+  `call_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'call time',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'create by',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'update by',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT 'deleted flag',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_api_config_id`(`api_config_id` ASC) USING BTREE,
+  INDEX `idx_call_time`(`call_time` ASC) USING BTREE,
+  INDEX `idx_call_status`(`call_status` ASC) USING BTREE,
+  INDEX `idx_tenant_id`(`tenant_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'api call log table 2026-05' ROW_FORMAT = Dynamic;

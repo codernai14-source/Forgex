@@ -18,12 +18,13 @@ import { permission } from './directives/permission'
 import FxDynamicTable from './components/common/FxDynamicTable.vue'
 import MessageNotification from './components/Notification/MessageNotification.vue'
 import { useUserStore } from './stores/user'
-import { installLegacyI18nBridge } from './utils/legacyI18n'
+import { installLegacyI18nBridge, translateLegacyText } from './utils/legacyI18n'
 
 /**
  * 创建 Vue 应用实例
  */
 const app = createApp(App)
+app.config.globalProperties.$tl = translateLegacyText
 
 /**
  * 创建 Pinia 状态管理实例

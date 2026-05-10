@@ -19,6 +19,8 @@ export default {
   status: '状态',
   createTime: '创建时间',
   updateTime: '更新时间',
+  createBy: '创建人',
+  updateBy: '更新人',
   
   // 表单
   form: {
@@ -38,10 +40,12 @@ export default {
   // 操作
   childDept: '子部门',
   addRootDept: '新增根部门',
+  emptySelectTip: '请选择左侧部门查看详情',
   
   // 消息
   message: {
-    deleteConfirm: '确定要删除该部门吗？',
+    
+    loadTreeFailed: '????????',deleteConfirm: '确定要删除该部门吗？',
     deleteSuccess: '删除部门成功',
     saveSuccess: '保存部门成功',
     deptCodeExists: '部门编码已存在',

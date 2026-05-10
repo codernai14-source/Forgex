@@ -51,6 +51,18 @@ export default {
   cpuCores: 'CPU Cores',
   cpuModel: 'CPU Model',
   cores: 'Cores',
+  peopleUnit: 'People',
+  itemUnit: 'Items',
+  operationTime: 'Operation Time',
+  operator: 'Operator',
+  operationModule: 'Operation Module',
+  operationContent: 'Operation Content',
+  loginTime: 'Login Time',
+  username: 'Username',
+  ipAddress: 'IP Address',
+  loginLocation: 'Login Location',
+  serverLocation: 'Server Location',
+  mapLoadFailed: 'Map data failed to load\nPlease check the network or try again later',
 
   // Logs
   recentOperationLogs: 'Recent Operation Logs',

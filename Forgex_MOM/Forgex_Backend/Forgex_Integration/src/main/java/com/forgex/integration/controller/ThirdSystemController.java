@@ -31,7 +31,7 @@ import java.util.List;
  * @since 2026-04-14
  */
 @RestController
-@RequestMapping("/api/integration/third-system")
+@RequestMapping("/third-system")
 @RequiredArgsConstructor
 @Tag(name = "第三方系统管理", description = "提供第三方系统的增删改查等功能")
 public class ThirdSystemController {

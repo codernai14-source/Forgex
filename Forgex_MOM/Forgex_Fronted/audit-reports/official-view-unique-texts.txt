@@ -1,0 +1,1030 @@
+默认 Aa123456	src/views/auth/init-wizard/index.vue:21
+选择用户	src/views/auth/init-wizard/index.vue:92, src/views/auth/init-wizard/index.vue:105
+选择租户	src/views/auth/init-wizard/index.vue:95, src/views/auth/init-wizard/index.vue:108
+选择角色	src/views/auth/init-wizard/index.vue:111
+编辑租户	src/views/auth/init-wizard/index.vue:129
+租户名称	src/views/auth/init-wizard/index.vue:132
+租户编码	src/views/auth/init-wizard/index.vue:134
+租户简介	src/views/auth/init-wizard/index.vue:136
+高：必须包含字母、数字、符号	src/views/auth/init-wizard/index.vue:177
+普通：必须包含数字和字母	src/views/auth/init-wizard/index.vue:178
+低：仅数字	src/views/auth/init-wizard/index.vue:179
+验证码已关闭	src/views/auth/init-wizard/index.vue:182
+滑块验证码：提升人机识别，降低误拦	src/views/auth/init-wizard/index.vue:183
+图片验证码：拦截暴力尝试	src/views/auth/init-wizard/index.vue:183
+BCrypt：不可逆哈希，安全与性能平衡	src/views/auth/init-wizard/index.vue:187
+Argon2：内存硬耗型不可逆哈希（Argon2id）	src/views/auth/init-wizard/index.vue:188
+scrypt：抗GPU/ASIC的不可逆哈希	src/views/auth/init-wizard/index.vue:189
+PBKDF2：迭代不可逆哈希（HmacSHA256）	src/views/auth/init-wizard/index.vue:190
+默认租户	src/views/auth/init-wizard/index.vue:204, src/views/auth/init-wizard/index.vue:218, src/views/auth/init-wizard/index.vue:270
+您的系统开发供应商，专注MOM系统开发与交付，是您可以信赖的专业合作伙伴！	src/views/auth/init-wizard/index.vue:207, src/views/auth/init-wizard/index.vue:219
+租户标识	src/views/auth/init-wizard/index.vue:224
+名称	src/views/auth/init-wizard/index.vue:226, src/views/auth/init-wizard/index.vue:131
+编码	src/views/auth/init-wizard/index.vue:227, src/views/auth/init-wizard/index.vue:133
+简介	src/views/auth/init-wizard/index.vue:228, src/views/auth/init-wizard/index.vue:135
+操作	src/views/auth/init-wizard/index.vue:229, src/views/basic/currency/index.vue:133, src/views/basic/currency/index.vue:137, src/views/basic/currency/index.vue:142, src/views/basic/customer/index.vue:176
+上传失败	src/views/auth/init-wizard/index.vue:294, src/views/system/androidVersion/index.vue:334
+初始化完成	src/views/auth/init-wizard/index.vue:329
+初始化失败	src/views/auth/init-wizard/index.vue:332
+密码与验证码安全策略初始化	src/views/auth/init-wizard/index.vue:6
+请选择密码强度、初始密码、验证码与加密方式	src/views/auth/init-wizard/index.vue:7
+密码强度	src/views/auth/init-wizard/index.vue:10
+高	src/views/auth/init-wizard/index.vue:13, src/views/label/binding/index.vue:97
+普通	src/views/auth/init-wizard/index.vue:14, src/views/basic/currency/index.vue:34, src/views/basic/customer/index.vue:250
+低	src/views/auth/init-wizard/index.vue:15, src/views/label/binding/index.vue:99
+初始密码	src/views/auth/init-wizard/index.vue:19
+此值用于所有用户初始密码，重置密码将恢复为此值	src/views/auth/init-wizard/index.vue:20
+验证码	src/views/auth/init-wizard/index.vue:24
+开启验证码	src/views/auth/init-wizard/index.vue:25
+图片验证码	src/views/auth/init-wizard/index.vue:28
+滑块验证码	src/views/auth/init-wizard/index.vue:29
+密码加密方式	src/views/auth/init-wizard/index.vue:33
+用户、角色、租户初始化	src/views/auth/init-wizard/index.vue:48
+选择用户与角色，配置租户与关联关系	src/views/auth/init-wizard/index.vue:49
+用户	src/views/auth/init-wizard/index.vue:52
+admin（默认）	src/views/auth/init-wizard/index.vue:54
+dev 系统开发者	src/views/auth/init-wizard/index.vue:55
+test 系统测试员	src/views/auth/init-wizard/index.vue:56
+custom 客户账号	src/views/auth/init-wizard/index.vue:57
+客户账号默认为 custom，不支持在此创建更多客户用户	src/views/auth/init-wizard/index.vue:59
+角色	src/views/auth/init-wizard/index.vue:62
+系统管理员	src/views/auth/init-wizard/index.vue:64
+开发者	src/views/auth/init-wizard/index.vue:65
+测试	src/views/auth/init-wizard/index.vue:66
+客户	src/views/auth/init-wizard/index.vue:67, src/views/label/print/index.vue:64
+租户	src/views/auth/init-wizard/index.vue:71, src/views/system/online/index.vue:107
+添加 Forgex 租户	src/views/auth/init-wizard/index.vue:73
+添加 客户 租户	src/views/auth/init-wizard/index.vue:74
+无	src/views/auth/init-wizard/index.vue:80
+编辑	src/views/auth/init-wizard/index.vue:83, src/views/basic/currency/index.vue:23, src/views/basic/currency/index.vue:38, src/views/basic/currency/index.vue:52, src/views/basic/customer/index.vue:41
+移除	src/views/auth/init-wizard/index.vue:84
+用户租户关联	src/views/auth/init-wizard/index.vue:90
+删除	src/views/auth/init-wizard/index.vue:98, src/views/auth/init-wizard/index.vue:114, src/views/basic/currency/index.vue:26, src/views/basic/currency/index.vue:40, src/views/basic/currency/index.vue:54
+添加关联	src/views/auth/init-wizard/index.vue:100, src/views/auth/init-wizard/index.vue:116
+用户角色关联	src/views/auth/init-wizard/index.vue:103
+菜单初始化	src/views/auth/init-wizard/index.vue:122
+预留，暂不做实现	src/views/auth/init-wizard/index.vue:123
+提交初始化	src/views/auth/init-wizard/index.vue:125
+选择文件	src/views/auth/init-wizard/index.vue:139
+取消	src/views/auth/init-wizard/index.vue:147, src/views/label/binding/index.vue:74, src/views/label/template/components/TemplateFormDialog.vue:126, src/views/label/template/index.vue:126, src/views/label/template/index.vue:138
+保存	src/views/auth/init-wizard/index.vue:148
+微信	src/views/auth/login/index.vue:114
+閽夐拤	src/views/auth/login/index.vue:117
+logo-降级方案	src/views/auth/login/index.vue:142
+欢迎来到 FORGEX_MOM	src/views/auth/login/index.vue:327
+[Login] 权限s stored to Pinia:	src/views/auth/login/index.vue:610
+閫夋嫨绉熸埛澶辫触:	src/views/auth/login/index.vue:649
+币种主数据	src/views/basic/currency/index.vue:17, src/views/basic/currency/index.vue:130
+本位币	src/views/basic/currency/index.vue:19, src/views/basic/currency/index.vue:75, src/views/basic/currency/index.vue:132
+外币	src/views/basic/currency/index.vue:19
+启用	src/views/basic/currency/index.vue:20, src/views/basic/currency/index.vue:25, src/views/basic/currency/index.vue:35, src/views/basic/currency/index.vue:128, src/views/basic/material/finished/index.vue:25
+禁用	src/views/basic/currency/index.vue:20, src/views/basic/currency/index.vue:25, src/views/basic/currency/index.vue:35, src/views/basic/currency/index.vue:128, src/views/basic/material/finished/index.vue:25
+汇率类型	src/views/basic/currency/index.vue:32, src/views/basic/currency/index.vue:98, src/views/basic/currency/index.vue:135, src/views/basic/currency/index.vue:140
+默认	src/views/basic/currency/index.vue:34, src/views/basic/currency/index.vue:86, src/views/basic/currency/index.vue:137, src/views/label/print/index.vue:25, src/views/system/user/components/UserDetail.vue:67
+汇率明细	src/views/basic/currency/index.vue:46, src/views/basic/currency/index.vue:139
+操作日志	src/views/basic/currency/index.vue:60, src/views/system/operationLog/index.vue:150
+编辑币种	src/views/basic/currency/index.vue:65
+新增币种	src/views/basic/currency/index.vue:65, src/views/basic/currency/index.vue:10
+币种编码	src/views/basic/currency/index.vue:68, src/views/basic/currency/index.vue:131
+数字编码	src/views/basic/currency/index.vue:69
+小数位	src/views/basic/currency/index.vue:70, src/views/basic/currency/index.vue:132
+中文名称	src/views/basic/currency/index.vue:71, src/views/basic/currency/index.vue:131
+英文名称	src/views/basic/currency/index.vue:72, src/views/basic/currency/index.vue:131
+符号	src/views/basic/currency/index.vue:73, src/views/basic/currency/index.vue:132
+国家/地区	src/views/basic/currency/index.vue:74
+备注	src/views/basic/currency/index.vue:76, src/views/basic/currency/index.vue:103, src/views/basic/material/finished/index.vue:68, src/views/basic/material/finished/index.vue:132, src/views/basic/material/finished/index.vue:196
+编辑汇率类型	src/views/basic/currency/index.vue:81
+新增汇率类型	src/views/basic/currency/index.vue:81, src/views/basic/currency/index.vue:11
+类型编码	src/views/basic/currency/index.vue:84, src/views/basic/currency/index.vue:136
+类型名称	src/views/basic/currency/index.vue:85, src/views/basic/currency/index.vue:136
+状态	src/views/basic/currency/index.vue:87, src/views/basic/currency/index.vue:133, src/views/basic/currency/index.vue:137, src/views/basic/material/finished/index.vue:58, src/views/basic/material/finished/index.vue:124
+业务场景	src/views/basic/currency/index.vue:88, src/views/basic/currency/index.vue:136
+编辑汇率	src/views/basic/currency/index.vue:93
+新增汇率	src/views/basic/currency/index.vue:93, src/views/basic/currency/index.vue:12
+源币种	src/views/basic/currency/index.vue:96
+目标币种	src/views/basic/currency/index.vue:97
+生效日期	src/views/basic/currency/index.vue:99, src/views/basic/currency/index.vue:140
+失效日期	src/views/basic/currency/index.vue:100, src/views/basic/currency/index.vue:141
+汇率值	src/views/basic/currency/index.vue:101, src/views/basic/currency/index.vue:141
+组织ID	src/views/basic/currency/index.vue:102
+币种对	src/views/basic/currency/index.vue:140
+审批状态	src/views/basic/currency/index.vue:141, src/views/basic/customer/index.vue:118, src/views/basic/customer/index.vue:274, src/views/basic/customer/index.vue:284, src/views/basic/material/finished/index.vue:63
+汇率日志	src/views/basic/currency/index.vue:144
+汇率ID	src/views/basic/currency/index.vue:145
+操作类型	src/views/basic/currency/index.vue:145, src/views/system/operationLog/index.vue:82, src/views/system/operationLog/index.vue:158
+操作内容	src/views/basic/currency/index.vue:145, src/views/system/dashboard/index.vue:309
+操作时间	src/views/basic/currency/index.vue:145, src/views/system/dashboard/index.vue:291, src/views/system/operationLog/index.vue:80, src/views/system/operationLog/index.vue:166, src/views/system/operationLog/index.vue:173
+确认删除币种？	src/views/basic/currency/index.vue:208
+确认删除汇率类型？	src/views/basic/currency/index.vue:210
+已发起审批	src/views/basic/currency/index.vue:211
+确认删除汇率？	src/views/basic/currency/index.vue:212
+待审批	src/views/basic/currency/index.vue:213, src/views/basic/material/index.vue:192
+已生效	src/views/basic/currency/index.vue:213
+已驳回	src/views/basic/currency/index.vue:213, src/views/basic/customer/index.vue:236, src/views/basic/material/finished/index.vue:184, src/views/basic/material/index.vue:194, src/views/basic/material/raw/index.vue:186
+审批中	src/views/basic/currency/index.vue:213, src/views/basic/customer/index.vue:234
+币种与汇率管理	src/views/basic/currency/index.vue:6
+维护 ISO 币种、汇率类型、汇率生效记录和操作日志。	src/views/basic/currency/index.vue:7
+{{ record.isBaseCurrency ? '本位币' : '外币' }}	src/views/basic/currency/index.vue:19
+{{ record.status === 1 ? '启用' : '禁用' }}	src/views/basic/currency/index.vue:20, src/views/basic/currency/index.vue:35
+设为本位币	src/views/basic/currency/index.vue:24
+{{ record.status === 1 ? '禁用' : '启用' }}	src/views/basic/currency/index.vue:25
+{{ record.isDefault ? '默认' : '普通' }}	src/views/basic/currency/index.vue:34
+设为默认	src/views/basic/currency/index.vue:39, src/views/label/template/components/TemplateFormDialog.vue:93, src/views/label/template/index.vue:43
+发起审批	src/views/basic/currency/index.vue:53
+已关联	src/views/basic/customer/index.vue:30, src/views/basic/customer/index.vue:258, src/views/basic/supplier/index.vue:59, src/views/basic/supplier/index.vue:505
+未关联	src/views/basic/customer/index.vue:30, src/views/basic/customer/index.vue:258, src/views/basic/supplier/index.vue:59, src/views/basic/supplier/index.vue:506
+主数据	src/views/basic/customer/index.vue:79, src/views/basic/supplier/index.vue:110
+自动生成编码	src/views/basic/customer/index.vue:83, src/views/basic/supplier/index.vue:114
+客户编码	src/views/basic/customer/index.vue:88, src/views/basic/customer/index.vue:268, src/views/basic/customer/index.vue:279
+客户全称	src/views/basic/customer/index.vue:93
+客户简称	src/views/basic/customer/index.vue:98
+客户价值等级	src/views/basic/customer/index.vue:103
+客户信用等级	src/views/basic/customer/index.vue:108
+经营状态	src/views/basic/customer/index.vue:113, src/views/basic/customer/index.vue:272, src/views/basic/customer/index.vue:283
+是否关联租户	src/views/basic/customer/index.vue:123
+关联租户编码	src/views/basic/customer/index.vue:128
+运输方式	src/views/basic/customer/index.vue:133
+支付条件	src/views/basic/customer/index.vue:138
+国家	src/views/basic/customer/index.vue:143
+企业性质	src/views/basic/customer/index.vue:148, src/views/basic/supplier/index.vue:250
+实际经营地址	src/views/basic/customer/index.vue:153
+收款地址	src/views/basic/customer/index.vue:158
+收货地址	src/views/basic/customer/index.vue:163
+联系人	src/views/basic/customer/index.vue:170, src/views/basic/customer/index.vue:173, src/views/basic/supplier/index.vue:314
+职位	src/views/basic/customer/index.vue:174, src/views/basic/supplier/index.vue:329, src/views/system/user/components/UserFormDialog.vue:254, src/views/system/user/components/UserProfileForm.vue:106
+联系方式	src/views/basic/customer/index.vue:175
+发票抬头	src/views/basic/customer/index.vue:179
+全称	src/views/basic/customer/index.vue:181
+税号	src/views/basic/customer/index.vue:182, src/views/basic/supplier/index.vue:273
+开票必备	src/views/basic/customer/index.vue:183
+注册地址	src/views/basic/customer/index.vue:184, src/views/basic/supplier/index.vue:302
+注册电话	src/views/basic/customer/index.vue:185
+开户行	src/views/basic/customer/index.vue:186
+银行账号	src/views/basic/customer/index.vue:187, src/views/basic/supplier/index.vue:283
+其它信息	src/views/basic/customer/index.vue:190
+企业官网	src/views/basic/customer/index.vue:192
+总机电话	src/views/basic/customer/index.vue:193
+官方邮箱域名	src/views/basic/customer/index.vue:194
+传真号码	src/views/basic/customer/index.vue:195
+渠道伙伴等级	src/views/basic/customer/index.vue:196
+国标行业编码	src/views/basic/customer/index.vue:197
+注册资本	src/views/basic/customer/index.vue:198, src/views/basic/supplier/index.vue:240
+注册资本币种	src/views/basic/customer/index.vue:199
+实缴资本	src/views/basic/customer/index.vue:200
+实缴资本币种	src/views/basic/customer/index.vue:201
+经营范围	src/views/basic/customer/index.vue:202
+战略客户	src/views/basic/customer/index.vue:225
+重点客户	src/views/basic/customer/index.vue:226
+普通客户	src/views/basic/customer/index.vue:227
+小微客户	src/views/basic/customer/index.vue:228
+存续	src/views/basic/customer/index.vue:231
+在业	src/views/basic/customer/index.vue:231
+吊销	src/views/basic/customer/index.vue:231
+注销	src/views/basic/customer/index.vue:231
+迁入	src/views/basic/customer/index.vue:231
+迁出	src/views/basic/customer/index.vue:231
+未提交	src/views/basic/customer/index.vue:233
+已通过	src/views/basic/customer/index.vue:235
+国企	src/views/basic/customer/index.vue:239, src/views/basic/supplier/index.vue:453
+民企	src/views/basic/customer/index.vue:240
+外资	src/views/basic/customer/index.vue:241, src/views/basic/supplier/index.vue:455
+合资	src/views/basic/customer/index.vue:242, src/views/basic/supplier/index.vue:456
+事业单位	src/views/basic/customer/index.vue:243
+政府机构	src/views/basic/customer/index.vue:244
+核心	src/views/basic/customer/index.vue:247, src/views/basic/supplier/index.vue:443
+金牌	src/views/basic/customer/index.vue:248
+银牌	src/views/basic/customer/index.vue:249
+客户主数据	src/views/basic/customer/index.vue:263, src/views/basic/customer/index.vue:6
+客户名称	src/views/basic/customer/index.vue:269, src/views/basic/customer/index.vue:280, src/views/label/template/components/LabelTemplateEditor.vue:271
+价值等级	src/views/basic/customer/index.vue:270, src/views/basic/customer/index.vue:281
+信用等级	src/views/basic/customer/index.vue:271, src/views/basic/customer/index.vue:282, src/views/basic/supplier/index.vue:178, src/views/basic/supplier/index.vue:522
+关联租户	src/views/basic/customer/index.vue:273, src/views/basic/customer/index.vue:285, src/views/basic/supplier/index.vue:533, src/views/system/user/components/UserDetail.vue:57
+创建时间	src/views/basic/customer/index.vue:275, src/views/basic/material/index.vue:241, src/views/basic/supplier/index.vue:535, src/views/label/template/components/TemplateDetailDrawer.vue:43, src/views/report/datasource/index.vue:268
+客户详情	src/views/basic/customer/index.vue:289
+编辑客户	src/views/basic/customer/index.vue:289
+新增客户	src/views/basic/customer/index.vue:289, src/views/basic/customer/index.vue:10
+客户编码不能为空	src/views/basic/customer/index.vue:331
+客户全称不能为空	src/views/basic/customer/index.vue:335
+确认删除客户？	src/views/basic/customer/index.vue:363
+客户租户已创建：${tenantCode}	src/views/basic/customer/index.vue:373
+维护客户基础信息、联系人、发票抬头、经营扩展信息和客户租户关联。	src/views/basic/customer/index.vue:7
+详情	src/views/basic/customer/index.vue:40, src/views/basic/material/finished/index.vue:37, src/views/basic/material/index.vue:48, src/views/basic/material/raw/index.vue:37, src/views/basic/material/semi-finished/index.vue:37
+新增联系人	src/views/basic/customer/index.vue:171, src/views/basic/supplier/index.vue:316
+成品详情	src/views/basic/material/finished/index.vue:46
+物料编码	src/views/basic/material/finished/index.vue:51, src/views/basic/material/finished/index.vue:84, src/views/basic/material/finished/index.vue:189, src/views/basic/material/index.vue:57, src/views/basic/material/index.vue:90
+物料名称	src/views/basic/material/finished/index.vue:52, src/views/basic/material/finished/index.vue:89, src/views/basic/material/finished/index.vue:190, src/views/basic/material/index.vue:58, src/views/basic/material/index.vue:95
+物料类型	src/views/basic/material/finished/index.vue:53, src/views/basic/material/index.vue:59, src/views/basic/material/index.vue:102, src/views/basic/material/index.vue:234, src/views/basic/material/index.vue:247
+物料分类	src/views/basic/material/finished/index.vue:54, src/views/basic/material/finished/index.vue:96, src/views/basic/material/index.vue:60, src/views/basic/material/index.vue:112, src/views/basic/material/index.vue:235
+规格型号	src/views/basic/material/finished/index.vue:55, src/views/basic/material/finished/index.vue:101, src/views/basic/material/finished/index.vue:191, src/views/basic/material/index.vue:61, src/views/basic/material/index.vue:119
+计量单位	src/views/basic/material/finished/index.vue:56, src/views/basic/material/finished/index.vue:108, src/views/basic/material/finished/index.vue:192, src/views/basic/material/index.vue:62, src/views/basic/material/index.vue:124
+品牌	src/views/basic/material/finished/index.vue:57, src/views/basic/material/finished/index.vue:117, src/views/basic/material/finished/index.vue:193, src/views/basic/material/index.vue:63, src/views/basic/material/index.vue:135
+详细描述	src/views/basic/material/finished/index.vue:69, src/views/basic/material/finished/index.vue:135, src/views/basic/material/index.vue:75, src/views/basic/material/index.vue:148, src/views/basic/material/raw/index.vue:70
+请输入物料编码	src/views/basic/material/finished/index.vue:85, src/views/basic/material/index.vue:91, src/views/basic/material/raw/index.vue:87, src/views/basic/material/semi-finished/index.vue:85
+请输入物料名称	src/views/basic/material/finished/index.vue:90, src/views/basic/material/index.vue:96, src/views/basic/material/raw/index.vue:92, src/views/basic/material/semi-finished/index.vue:90
+请输入物料分类	src/views/basic/material/finished/index.vue:97, src/views/basic/material/index.vue:113, src/views/basic/material/raw/index.vue:99, src/views/basic/material/semi-finished/index.vue:97
+请输入规格型号	src/views/basic/material/finished/index.vue:102, src/views/basic/material/index.vue:120, src/views/basic/material/raw/index.vue:104, src/views/basic/material/semi-finished/index.vue:102
+请选择计量单位	src/views/basic/material/finished/index.vue:109, src/views/basic/material/index.vue:125, src/views/basic/material/raw/index.vue:111, src/views/basic/material/semi-finished/index.vue:109
+请输入品牌	src/views/basic/material/finished/index.vue:118, src/views/basic/material/index.vue:136, src/views/basic/material/raw/index.vue:120, src/views/basic/material/semi-finished/index.vue:118
+请输入备注	src/views/basic/material/finished/index.vue:133, src/views/basic/material/index.vue:146, src/views/basic/material/raw/index.vue:135, src/views/basic/material/semi-finished/index.vue:133, src/views/basic/packaging/index.vue:123
+请输入详细描述	src/views/basic/material/finished/index.vue:136, src/views/basic/material/index.vue:149, src/views/basic/material/raw/index.vue:138, src/views/basic/material/semi-finished/index.vue:136
+原材料	src/views/basic/material/finished/index.vue:174, src/views/basic/material/index.vue:178, src/views/basic/material/index.vue:184, src/views/basic/material/raw/index.vue:176, src/views/basic/material/semi-finished/index.vue:174
+半成品	src/views/basic/material/finished/index.vue:175, src/views/basic/material/index.vue:179, src/views/basic/material/index.vue:185, src/views/basic/material/raw/index.vue:177, src/views/basic/material/semi-finished/index.vue:175
+成品	src/views/basic/material/finished/index.vue:176, src/views/basic/material/index.vue:180, src/views/basic/material/index.vue:186, src/views/basic/material/raw/index.vue:178, src/views/basic/material/semi-finished/index.vue:176
+其它	src/views/basic/material/finished/index.vue:177, src/views/basic/material/index.vue:187, src/views/basic/material/raw/index.vue:179, src/views/basic/material/semi-finished/index.vue:177, src/views/basic/packaging/index.vue:68
+无需审批	src/views/basic/material/finished/index.vue:181, src/views/basic/material/index.vue:191, src/views/basic/material/raw/index.vue:183, src/views/basic/material/semi-finished/index.vue:181
+未审批	src/views/basic/material/finished/index.vue:182, src/views/basic/material/raw/index.vue:184, src/views/basic/material/semi-finished/index.vue:182
+已审批	src/views/basic/material/finished/index.vue:183, src/views/basic/material/index.vue:193, src/views/basic/material/raw/index.vue:185, src/views/basic/material/semi-finished/index.vue:183
+新增成品	src/views/basic/material/finished/index.vue:244
+编辑成品	src/views/basic/material/finished/index.vue:252
+请填写必填项	src/views/basic/material/finished/index.vue:263, src/views/basic/material/index.vue:319, src/views/basic/material/raw/index.vue:265, src/views/basic/material/semi-finished/index.vue:263, src/views/basic/packaging/index.vue:220
+更新成功	src/views/basic/material/finished/index.vue:270, src/views/basic/material/index.vue:326, src/views/basic/material/raw/index.vue:272, src/views/basic/material/semi-finished/index.vue:270, src/views/basic/packaging/index.vue:227
+创建成功	src/views/basic/material/finished/index.vue:273, src/views/basic/material/index.vue:329, src/views/basic/material/raw/index.vue:275, src/views/basic/material/semi-finished/index.vue:273, src/views/basic/packaging/index.vue:230
+确认删除	src/views/basic/material/finished/index.vue:284, src/views/basic/material/index.vue:340, src/views/basic/material/raw/index.vue:286, src/views/basic/material/semi-finished/index.vue:284, src/views/basic/packaging/index.vue:241
+删除成功	src/views/basic/material/finished/index.vue:288, src/views/basic/material/index.vue:344, src/views/basic/material/raw/index.vue:290, src/views/basic/material/semi-finished/index.vue:288, src/views/basic/packaging/index.vue:245
+确定要删除成品"${record.materialName}"吗？	src/views/basic/material/finished/index.vue:285
+基础数据	src/views/basic/material/finished/index.vue:5, src/views/basic/material/index.vue:5, src/views/basic/material/raw/index.vue:5, src/views/basic/material/semi-finished/index.vue:5, src/views/basic/packaging/index.vue:5
+成品管理	src/views/basic/material/finished/index.vue:6
+管理成品物料信息，支持新增、编辑、删除和审批操作。	src/views/basic/material/finished/index.vue:7
+停用	src/views/basic/material/index.vue:36, src/views/basic/material/index.vue:66, src/views/basic/material/index.vue:199
+物料详情	src/views/basic/material/index.vue:55, src/views/basic/material/raw/index.vue:47
+请选择物料类型	src/views/basic/material/index.vue:107
+全部	src/views/basic/material/index.vue:177
+物料管理	src/views/basic/material/index.vue:227, src/views/basic/material/index.vue:6
+编辑物料	src/views/basic/material/index.vue:256
+新增物料	src/views/basic/material/index.vue:256
+确定要删除物料 "${record.materialName}" 吗？	src/views/basic/material/index.vue:341
+统一维护全部物料，并按物料类型快速筛选。	src/views/basic/material/index.vue:7
+新增原材料	src/views/basic/material/raw/index.vue:246
+编辑原材料	src/views/basic/material/raw/index.vue:254
+确定要删除物料"${record.materialName}"吗？	src/views/basic/material/raw/index.vue:287
+物料管理（原材料）	src/views/basic/material/raw/index.vue:6
+管理原材料物料信息，支持新增、编辑、删除和审批操作。	src/views/basic/material/raw/index.vue:7
+半成品详情	src/views/basic/material/semi-finished/index.vue:46
+新增半成品	src/views/basic/material/semi-finished/index.vue:244
+编辑半成品	src/views/basic/material/semi-finished/index.vue:252
+确定要删除半成品"${record.materialName}"吗？	src/views/basic/material/semi-finished/index.vue:285
+半成品管理	src/views/basic/material/semi-finished/index.vue:6
+管理半成品物料信息，支持新增、编辑、删除和审批操作。	src/views/basic/material/semi-finished/index.vue:7
+包装方式编码	src/views/basic/packaging/index.vue:48
+请输入包装方式编码	src/views/basic/packaging/index.vue:49
+包装方式名称	src/views/basic/packaging/index.vue:53
+请输入包装方式名称	src/views/basic/packaging/index.vue:54
+包装材料	src/views/basic/packaging/index.vue:60, src/views/basic/packaging/index.vue:162
+请选择包装材料	src/views/basic/packaging/index.vue:61
+单位成本	src/views/basic/packaging/index.vue:73, src/views/basic/packaging/index.vue:74, src/views/basic/packaging/index.vue:169
+长度(mm)	src/views/basic/packaging/index.vue:80
+宽度(mm)	src/views/basic/packaging/index.vue:85
+高度(mm)	src/views/basic/packaging/index.vue:90
+包装自重(kg)	src/views/basic/packaging/index.vue:97
+最大承重(kg)	src/views/basic/packaging/index.vue:102
+排序号	src/views/basic/packaging/index.vue:117, src/views/system/dict/index.vue:86, src/views/system/module/index.vue:111, src/views/system/position/index.vue:135
+包装编码	src/views/basic/packaging/index.vue:160
+包装名称	src/views/basic/packaging/index.vue:161
+尺寸(mm)	src/views/basic/packaging/index.vue:163
+自重(kg)	src/views/basic/packaging/index.vue:167
+承重(kg)	src/views/basic/packaging/index.vue:168
+排序	src/views/basic/packaging/index.vue:170, src/views/system/dict/index.vue:143, src/views/system/position/index.vue:203, src/views/system/userTableConfig/index.vue:282
+新增包装方式	src/views/basic/packaging/index.vue:206
+编辑包装方式	src/views/basic/packaging/index.vue:214
+确定要删除包装方式"${record.packagingName}"吗？	src/views/basic/packaging/index.vue:242
+包装方式管理	src/views/basic/packaging/index.vue:6
+统一维护物料的包装方式信息，支持多种包装规格和材质配置。	src/views/basic/packaging/index.vue:7
+纸箱	src/views/basic/packaging/index.vue:62
+木箱	src/views/basic/packaging/index.vue:63
+托盘	src/views/basic/packaging/index.vue:64
+铁桶	src/views/basic/packaging/index.vue:65
+塑料袋	src/views/basic/packaging/index.vue:66
+气泡膜	src/views/basic/packaging/index.vue:67
+供应商编码	src/views/basic/supplier/index.vue:119, src/views/basic/supplier/index.vue:518, src/views/basic/supplier/index.vue:528, src/views/workflow/form/SupplierReviewForm.vue:36
+保存时按编码规则自动生成	src/views/basic/supplier/index.vue:123
+请输入供应商编码	src/views/basic/supplier/index.vue:123
+供应商全称	src/views/basic/supplier/index.vue:128
+供应商Logo	src/views/basic/supplier/index.vue:133, src/views/basic/supplier/index.vue:652
+更换Logo	src/views/basic/supplier/index.vue:143
+上传Logo	src/views/basic/supplier/index.vue:143
+简称	src/views/basic/supplier/index.vue:149
+英文名	src/views/basic/supplier/index.vue:154
+主联系人	src/views/basic/supplier/index.vue:159
+联系电话	src/views/basic/supplier/index.vue:164
+合作状态	src/views/basic/supplier/index.vue:169, src/views/basic/supplier/index.vue:520, src/views/basic/supplier/index.vue:530
+风险等级	src/views/basic/supplier/index.vue:187, src/views/basic/supplier/index.vue:523
+分级	src/views/basic/supplier/index.vue:196, src/views/basic/supplier/index.vue:532
+关联租户编号	src/views/basic/supplier/index.vue:205
+审查状态	src/views/basic/supplier/index.vue:210, src/views/basic/supplier/index.vue:524, src/views/basic/supplier/index.vue:534, src/views/workflow/form/SupplierReviewForm.vue:38
+现地址	src/views/basic/supplier/index.vue:219
+详情信息	src/views/basic/supplier/index.vue:232
+法人代表	src/views/basic/supplier/index.vue:235
+成立日期	src/views/basic/supplier/index.vue:245
+行业分类	src/views/basic/supplier/index.vue:259
+邮箱	src/views/basic/supplier/index.vue:268, src/views/basic/supplier/index.vue:334, src/views/system/user/components/UserDetail.vue:16, src/views/system/user/components/UserFormDialog.vue:38
+开户银行	src/views/basic/supplier/index.vue:278
+发票类型	src/views/basic/supplier/index.vue:288
+默认税率	src/views/basic/supplier/index.vue:297
+经营地址	src/views/basic/supplier/index.vue:307
+姓名	src/views/basic/supplier/index.vue:319
+电话	src/views/basic/supplier/index.vue:324
+资质	src/views/basic/supplier/index.vue:347
+资质类型	src/views/basic/supplier/index.vue:352
+证书编号	src/views/basic/supplier/index.vue:361
+发证日期	src/views/basic/supplier/index.vue:366
+有效期至	src/views/basic/supplier/index.vue:371
+附件	src/views/basic/supplier/index.vue:376
+文件标识或 URL	src/views/basic/supplier/index.vue:378
+有效	src/views/basic/supplier/index.vue:381, src/views/workflow/form/SupplierReviewForm.vue:215
+潜在	src/views/basic/supplier/index.vue:435
+正式	src/views/basic/supplier/index.vue:436
+暂停	src/views/basic/supplier/index.vue:437
+淘汰	src/views/basic/supplier/index.vue:438
+战略	src/views/basic/supplier/index.vue:442
+一般	src/views/basic/supplier/index.vue:444
+无需审查	src/views/basic/supplier/index.vue:447, src/views/workflow/form/SupplierReviewForm.vue:236
+未审查	src/views/basic/supplier/index.vue:448, src/views/workflow/form/SupplierReviewForm.vue:237
+审查中	src/views/basic/supplier/index.vue:449, src/views/workflow/form/SupplierReviewForm.vue:238
+已审查	src/views/basic/supplier/index.vue:450, src/views/workflow/form/SupplierReviewForm.vue:239
+民营	src/views/basic/supplier/index.vue:454
+供应商主数据	src/views/basic/supplier/index.vue:512, src/views/basic/supplier/index.vue:6
+供应商名称	src/views/basic/supplier/index.vue:519, src/views/basic/supplier/index.vue:529, src/views/label/template/components/LabelTemplateEditor.vue:270, src/views/workflow/form/SupplierReviewForm.vue:37
+供应商分级	src/views/basic/supplier/index.vue:521
+信用/风险	src/views/basic/supplier/index.vue:531
+供应商详情	src/views/basic/supplier/index.vue:542
+编辑供应商	src/views/basic/supplier/index.vue:544
+新增供应商	src/views/basic/supplier/index.vue:544, src/views/basic/supplier/index.vue:16
+供应商编码不能为空	src/views/basic/supplier/index.vue:618
+供应商全称不能为空	src/views/basic/supplier/index.vue:623
+已关联租户的供应商不允许删除	src/views/basic/supplier/index.vue:677
+确认删除供应商？	src/views/basic/supplier/index.vue:681
+仅未审查供应商允许发起审查	src/views/basic/supplier/index.vue:701
+供应商主数据.xlsx	src/views/basic/supplier/index.vue:720
+供应商租户已关联：${tenantCode}	src/views/basic/supplier/index.vue:695
+同步完成：总数 ${result.totalCount || 0}，失败 ${result.failedCount || 0}	src/views/basic/supplier/index.vue:710
+统一维护供应商共享主数据，并为租户创建、接口同步和资质审查提供数据来源。	src/views/basic/supplier/index.vue:7
+导出	src/views/basic/supplier/index.vue:14, src/views/system/operationLog/index.vue:141
+同步第三方	src/views/basic/supplier/index.vue:15
+{{ form.logoUrl ? '更换Logo' : '上传Logo' }}	src/views/basic/supplier/index.vue:143
+新增资质	src/views/basic/supplier/index.vue:349
+计量单位主数据	src/views/basic/unit/index.vue:247
+加载收藏管理列表失败:	src/views/home/favorite-management/index.vue:124
+批量取消收藏失败:	src/views/home/favorite-management/index.vue:170
+取消单条收藏失败:	src/views/home/favorite-management/index.vue:195
+保存收藏排序失败:	src/views/home/favorite-management/index.vue:211
+接口名称	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:11
+接口编码	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:14
+链路ID	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:31
+任务ID	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:34
+调用模式	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:37
+响应编码	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:40
+结果类型	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:43
+复制成功	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:116, src/views/integrationPlatform/apiCallLog/index.vue:140, src/views/system/operationLog/index.vue:229
+复制失败	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:119, src/views/integrationPlatform/apiCallLog/index.vue:143, src/views/system/operationLog/index.vue:232
+暂无数据	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:124
+组装前参数	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:56
+组装后参数	src/views/integrationPlatform/apiCallLog/components/ApiCallLogDetailDialog.vue:66
+复制组装前参数	src/views/integrationPlatform/apiCallLog/index.vue:38
+复制组装后参数	src/views/integrationPlatform/apiCallLog/index.vue:51
+复制响应结果	src/views/integrationPlatform/apiCallLog/index.vue:64, src/views/system/operationLog/index.vue:41
+选择模板	src/views/label/binding/components/BindingFormDialog.vue:11, src/views/label/print/index.vue:21
+请选择模板	src/views/label/binding/components/BindingFormDialog.vue:14, src/views/label/binding/components/BindingFormDialog.vue:182
+绑定类型	src/views/label/binding/components/BindingFormDialog.vue:28
+请选择绑定类型	src/views/label/binding/components/BindingFormDialog.vue:29, src/views/label/binding/components/BindingFormDialog.vue:186
+绑定值	src/views/label/binding/components/BindingFormDialog.vue:42
+工厂	src/views/label/binding/components/BindingFormDialog.vue:49, src/views/label/print/index.vue:36
+不填表示全局生效	src/views/label/binding/components/BindingFormDialog.vue:52
+优先级	src/views/label/binding/components/BindingFormDialog.vue:66
+编辑绑定关系	src/views/label/binding/components/BindingFormDialog.vue:114
+新增绑定关系	src/views/label/binding/components/BindingFormDialog.vue:114
+BindingFormDialog visible 变化:	src/views/label/binding/components/BindingFormDialog.vue:130
+填充编辑数据:	src/views/label/binding/components/BindingFormDialog.vue:143
+请输入物料编码（如：MAT001）	src/views/label/binding/components/BindingFormDialog.vue:165
+请输入供应商编码（如：SUP001）	src/views/label/binding/components/BindingFormDialog.vue:166
+请输入客户编码（如：CUS001）	src/views/label/binding/components/BindingFormDialog.vue:167
+请先选择绑定类型	src/views/label/binding/components/BindingFormDialog.vue:169
+模板选择功能开发中	src/views/label/binding/components/BindingFormDialog.vue:173
+工厂选择功能开发中	src/views/label/binding/components/BindingFormDialog.vue:177
+请输入绑定值	src/views/label/binding/components/BindingFormDialog.vue:190
+请选择优先级	src/views/label/binding/components/BindingFormDialog.vue:194
+更新失败	src/views/label/binding/components/BindingFormDialog.vue:220, src/views/label/template/components/TemplateFormDialog.vue:248
+创建失败	src/views/label/binding/components/BindingFormDialog.vue:220, src/views/label/template/components/TemplateFormDialog.vue:248
+模板 ID: {{ formData.templateId }}	src/views/label/binding/components/BindingFormDialog.vue:24
+按物料匹配	src/views/label/binding/components/BindingFormDialog.vue:31
+按供应商匹配	src/views/label/binding/components/BindingFormDialog.vue:34
+按客户匹配	src/views/label/binding/components/BindingFormDialog.vue:37
+工厂 ID: {{ formData.factoryId }}	src/views/label/binding/components/BindingFormDialog.vue:62
+高 (1)	src/views/label/binding/components/BindingFormDialog.vue:69
+中 (2)	src/views/label/binding/components/BindingFormDialog.vue:72
+低 (3)	src/views/label/binding/components/BindingFormDialog.vue:75
+新增绑定	src/views/label/binding/index.vue:58
+编辑绑定:	src/views/label/binding/index.vue:64
+确定	src/views/label/binding/index.vue:73, src/views/label/template/index.vue:125, src/views/label/template/index.vue:137, src/views/label/template/index.vue:150, src/views/report/datasource/index.vue:411
+智能匹配执行成功	src/views/label/binding/index.vue:85
+智能匹配失败	src/views/label/binding/index.vue:88
+中	src/views/label/binding/index.vue:98
+确定删除该绑定关系吗？（${record.bindingType}: ${record.bindingValue}）	src/views/label/binding/index.vue:72
+标签打印	src/views/label/print/index.vue:3
+打印类型	src/views/label/print/index.vue:6, src/views/label/record/index.vue:54, src/views/label/record/index.vue:152
+请选择标签类型	src/views/label/print/index.vue:7
+不选则自动匹配	src/views/label/print/index.vue:22
+打印张数	src/views/label/print/index.vue:31, src/views/label/record/index.vue:51, src/views/label/record/index.vue:149
+请选择工厂	src/views/label/print/index.vue:37
+物料	src/views/label/print/index.vue:47
+请选择物料	src/views/label/print/index.vue:48
+供应商	src/views/label/print/index.vue:56
+请选择供应商	src/views/label/print/index.vue:57
+请选择客户	src/views/label/print/index.vue:65
+工程卡号	src/views/label/print/index.vue:75
+输入工程卡号自动填充	src/views/label/print/index.vue:76
+打印数据	src/views/label/print/index.vue:80, src/views/label/print/index.vue:73
+打印数据 JSON 格式	src/views/label/print/index.vue:81
+打印预览	src/views/label/print/index.vue:100
+加载模板失败	src/views/label/print/index.vue:165
+工程卡自动填充功能待实现	src/views/label/print/index.vue:170
+请选择打印类型	src/views/label/print/index.vue:177, src/views/label/print/index.vue:202
+预览失败	src/views/label/print/index.vue:197
+打印成功	src/views/label/print/index.vue:219
+打印失败	src/views/label/print/index.vue:221
+加载工厂列表失败	src/views/label/print/index.vue:250
+加载物料列表失败	src/views/label/print/index.vue:258
+加载供应商列表失败	src/views/label/print/index.vue:266
+加载客户列表失败	src/views/label/print/index.vue:274
+来料标签	src/views/label/print/index.vue:8, src/views/label/record/index.vue:215
+产品标签	src/views/label/print/index.vue:9, src/views/label/record/index.vue:216, src/views/label/template/components/TemplateDetailDrawer.vue:73, src/views/label/template/components/TemplateFormDialog.vue:42, src/views/label/template/index.vue:90
+LOT批次标签	src/views/label/print/index.vue:10, src/views/label/record/index.vue:217
+客户唛头	src/views/label/print/index.vue:11, src/views/label/record/index.vue:218, src/views/label/template/components/TemplateDetailDrawer.vue:77, src/views/label/template/components/TemplateFormDialog.vue:54
+SPQ内箱标签	src/views/label/print/index.vue:12, src/views/label/record/index.vue:219
+PQ外箱标签	src/views/label/print/index.vue:13, src/views/label/record/index.vue:220
+工程卡包装标签	src/views/label/print/index.vue:14, src/views/label/record/index.vue:221
+工位标识标签	src/views/label/print/index.vue:15, src/views/label/record/index.vue:222
+设备标识标签	src/views/label/print/index.vue:16, src/views/label/record/index.vue:223
+绑定维度（智能匹配使用）	src/views/label/print/index.vue:45
+重置	src/views/label/print/index.vue:93
+打印记录详情	src/views/label/record/index.vue:31
+打印流水号	src/views/label/record/index.vue:36, src/views/label/record/index.vue:141, src/views/label/record/index.vue:157
+模板类型	src/views/label/record/index.vue:39, src/views/label/record/index.vue:143, src/views/label/record/index.vue:158, src/views/label/template/components/TemplateDetailDrawer.vue:20, src/views/label/template/components/TemplateFormDialog.vue:36
+模板名称	src/views/label/record/index.vue:42, src/views/label/record/index.vue:142, src/views/label/template/components/TemplateDetailDrawer.vue:17, src/views/label/template/components/TemplateFormDialog.vue:25
+模板版本	src/views/label/record/index.vue:43, src/views/label/template/components/TemplateDetailDrawer.vue:25, src/views/label/template/components/TemplateFormDialog.vue:69
+条码号	src/views/label/record/index.vue:44, src/views/label/record/index.vue:144, src/views/label/record/index.vue:159
+LOT号	src/views/label/record/index.vue:47, src/views/label/record/index.vue:147
+批次号	src/views/label/record/index.vue:48, src/views/label/record/index.vue:148, src/views/label/template/components/LabelTemplateEditor.vue:267
+操作人	src/views/label/record/index.vue:58, src/views/label/record/index.vue:150, src/views/system/dashboard/index.vue:297
+打印时间	src/views/label/record/index.vue:59, src/views/label/record/index.vue:151, src/views/label/record/index.vue:162, src/views/label/template/components/LabelTemplateEditor.vue:269
+JSON 格式	src/views/label/record/index.vue:71
+表格视图	src/views/label/record/index.vue:78
+查看打印模板内容	src/views/label/record/index.vue:102
+打印记录	src/views/label/record/index.vue:137
+加载详情失败	src/views/label/record/index.vue:185, src/views/system/i18nMessage/index.vue:215
+补打成功	src/views/label/record/index.vue:194, src/views/label/record/index.vue:206
+补打失败	src/views/label/record/index.vue:197, src/views/label/record/index.vue:210
+暂无快照数据	src/views/label/record/index.vue:229, src/views/label/record/index.vue:235
+序号	src/views/label/record/index.vue:279, src/views/label/record/index.vue:285
+字段名	src/views/label/record/index.vue:280, src/views/system/userTableConfig/index.vue:263
+字段值	src/views/label/record/index.vue:281
+补打	src/views/label/record/index.vue:15, src/views/label/record/index.vue:23, src/views/label/record/index.vue:55
+首次	src/views/label/record/index.vue:16
+{{ detailData.printCount }} 张	src/views/label/record/index.vue:52
+正常打印	src/views/label/record/index.vue:56
+关闭	src/views/label/record/index.vue:112, src/views/label/template/components/TemplateDetailDrawer.vue:10, src/views/system/user/components/UserDetail.vue:122
+组件库	src/views/label/template/components/LabelTemplateEditor.vue:7, src/views/label/template/components/LabelTemplateEditor.vue:11
+基础组件	src/views/label/template/components/LabelTemplateEditor.vue:15
+数据字段	src/views/label/template/components/LabelTemplateEditor.vue:27, src/views/label/template/components/LabelTemplateEditor.vue:470
+画布预览	src/views/label/template/components/LabelTemplateEditor.vue:47, src/views/label/template/components/LabelTemplateEditor.vue:51
+纸张尺寸	src/views/label/template/components/LabelTemplateEditor.vue:56
+文本	src/views/label/template/components/LabelTemplateEditor.vue:95, src/views/label/template/components/LabelTemplateEditor.vue:258, src/views/label/template/components/LabelTemplateEditor.vue:466
+条码	src/views/label/template/components/LabelTemplateEditor.vue:99, src/views/label/template/components/LabelTemplateEditor.vue:259, src/views/label/template/components/LabelTemplateEditor.vue:467
+二维码	src/views/label/template/components/LabelTemplateEditor.vue:103, src/views/label/template/components/LabelTemplateEditor.vue:260, src/views/label/template/components/LabelTemplateEditor.vue:468
+图片	src/views/label/template/components/LabelTemplateEditor.vue:107, src/views/label/template/components/LabelTemplateEditor.vue:261, src/views/label/template/components/LabelTemplateEditor.vue:469
+属性配置	src/views/label/template/components/LabelTemplateEditor.vue:133, src/views/label/template/components/LabelTemplateEditor.vue:137
+元素类型	src/views/label/template/components/LabelTemplateEditor.vue:142
+文本内容	src/views/label/template/components/LabelTemplateEditor.vue:149
+输入文本内容	src/views/label/template/components/LabelTemplateEditor.vue:152
+字体大小	src/views/label/template/components/LabelTemplateEditor.vue:156
+字体粗细	src/views/label/template/components/LabelTemplateEditor.vue:165
+X 坐标	src/views/label/template/components/LabelTemplateEditor.vue:177
+Y 坐标	src/views/label/template/components/LabelTemplateEditor.vue:186
+宽度	src/views/label/template/components/LabelTemplateEditor.vue:197
+高度	src/views/label/template/components/LabelTemplateEditor.vue:207
+请选择一个元素	src/views/label/template/components/LabelTemplateEditor.vue:224
+数量	src/views/label/template/components/LabelTemplateEditor.vue:268
+工厂名称	src/views/label/template/components/LabelTemplateEditor.vue:272
+预览数据:	src/views/label/template/components/LabelTemplateEditor.vue:461
+解析模板 JSON 失败	src/views/label/template/components/LabelTemplateEditor.vue:504
+拖拽组件到此处	src/views/label/template/components/LabelTemplateEditor.vue:83
+从左侧选择组件或数据字段，拖拽到画布中	src/views/label/template/components/LabelTemplateEditor.vue:84
+{{ el.content || '文本' }}	src/views/label/template/components/LabelTemplateEditor.vue:95
+{{ el.content || '条码' }}	src/views/label/template/components/LabelTemplateEditor.vue:99
+{{ el.content || '二维码' }}	src/views/label/template/components/LabelTemplateEditor.vue:103
+{{ el.content || '图片' }}	src/views/label/template/components/LabelTemplateEditor.vue:107
+基本信息	src/views/label/template/components/LabelTemplateEditor.vue:141, src/views/label/template/components/TemplateFormDialog.vue:13
+常规	src/views/label/template/components/LabelTemplateEditor.vue:167
+加粗	src/views/label/template/components/LabelTemplateEditor.vue:168
+粗体	src/views/label/template/components/LabelTemplateEditor.vue:169
+位置尺寸	src/views/label/template/components/LabelTemplateEditor.vue:174
+模板详情	src/views/label/template/components/TemplateDetailDrawer.vue:5
+模板编码	src/views/label/template/components/TemplateDetailDrawer.vue:14, src/views/label/template/components/TemplateFormDialog.vue:16
+是否默认	src/views/label/template/components/TemplateDetailDrawer.vue:28, src/views/system/user/components/UserDetail.vue:153
+描述	src/views/label/template/components/TemplateDetailDrawer.vue:37, src/views/label/template/components/TemplateFormDialog.vue:103, src/views/system/module/index.vue:190, src/views/system/module/index.vue:200, src/views/system/role/index.vue:229
+创建人	src/views/label/template/components/TemplateDetailDrawer.vue:40, src/views/system/module/index.vue:192, src/views/system/role/index.vue:231
+更新人	src/views/label/template/components/TemplateDetailDrawer.vue:46
+更新时间	src/views/label/template/components/TemplateDetailDrawer.vue:49, src/views/system/module/index.vue:194, src/views/system/role/index.vue:233
+物料标签	src/views/label/template/components/TemplateDetailDrawer.vue:74, src/views/label/template/components/TemplateFormDialog.vue:45, src/views/label/template/index.vue:91
+批次标签	src/views/label/template/components/TemplateDetailDrawer.vue:75, src/views/label/template/components/TemplateFormDialog.vue:48, src/views/label/template/index.vue:92
+供应商标签	src/views/label/template/components/TemplateDetailDrawer.vue:76, src/views/label/template/components/TemplateFormDialog.vue:51
+工位标签	src/views/label/template/components/TemplateDetailDrawer.vue:78, src/views/label/template/components/TemplateFormDialog.vue:57
+设备标签	src/views/label/template/components/TemplateDetailDrawer.vue:79, src/views/label/template/components/TemplateFormDialog.vue:60
+库位标签	src/views/label/template/components/TemplateDetailDrawer.vue:80, src/views/label/template/components/TemplateFormDialog.vue:63
+是	src/views/label/template/components/TemplateDetailDrawer.vue:29, src/views/label/template/components/TemplateFormDialog.vue:96, src/views/label/template/index.vue:22, src/views/system/excelExportConfig/index.vue:31, src/views/workflow/dashboard/index.vue:268
+否	src/views/label/template/components/TemplateDetailDrawer.vue:30, src/views/label/template/components/TemplateFormDialog.vue:97, src/views/label/template/index.vue:23, src/views/system/excelExportConfig/index.vue:31, src/views/workflow/dashboard/index.vue:268
+未知	src/views/label/template/components/TemplateDetailDrawer.vue:35, src/views/label/template/index.vue:29
+请输入模板编码	src/views/label/template/components/TemplateFormDialog.vue:19, src/views/label/template/components/TemplateFormDialog.vue:219
+请输入模板名称	src/views/label/template/components/TemplateFormDialog.vue:28, src/views/label/template/components/TemplateFormDialog.vue:223
+请选择模板类型	src/views/label/template/components/TemplateFormDialog.vue:39, src/views/label/template/components/TemplateFormDialog.vue:227
+如: v1.0	src/views/label/template/components/TemplateFormDialog.vue:72
+请输入模板描述	src/views/label/template/components/TemplateFormDialog.vue:106
+模板内容设计	src/views/label/template/components/TemplateFormDialog.vue:115
+保存修改	src/views/label/template/components/TemplateFormDialog.vue:128
+创建模板	src/views/label/template/components/TemplateFormDialog.vue:128
+编辑标签模板	src/views/label/template/components/TemplateFormDialog.vue:156
+新增标签模板	src/views/label/template/components/TemplateFormDialog.vue:156
+获取模板详情失败	src/views/label/template/components/TemplateFormDialog.vue:198
+新增模板	src/views/label/template/index.vue:107
+编辑模板:	src/views/label/template/index.vue:112
+查看模板:	src/views/label/template/index.vue:117
+确认批量删除	src/views/label/template/index.vue:135
+确认设置	src/views/label/template/index.vue:148
+复制功能待实现	src/views/label/template/index.vue:159
+确定要删除模板"${record.templateName}"吗？	src/views/label/template/index.vue:124
+确定要删除选中的 ${selectedRowKeys.value.length} 个模板吗？	src/views/label/template/index.vue:136
+确定要将"${record.templateName}"设为该类型的默认模板吗？	src/views/label/template/index.vue:149
+查看	src/views/label/template/index.vue:35
+复制模板	src/views/label/template/index.vue:44
+password表单	src/views/profile/index.vue:84
+password表单.oldPassword	src/views/profile/index.vue:94
+password表单.newPassword	src/views/profile/index.vue:105
+password表单.confirmPassword	src/views/profile/index.vue:116
+淇濆瓨澶辫触:	src/views/profile/index.vue:258
+提示	src/views/report/components/ReportDesigner.vue:15, src/views/report/components/ReportPreview.vue:14, src/views/report/datasource/index.vue:409, src/views/report/index.vue:276, src/views/system/dict/index.vue:308
+在报表设计器中完成设计后，请点击保存按钮。关闭此窗口将自动刷新列表。	src/views/report/components/ReportDesigner.vue:16
+报表设计器加载完成	src/views/report/components/ReportDesigner.vue:82
+${engineName} 报表设计器	src/views/report/components/ReportDesigner.vue:70
+报表名称	src/views/report/components/ReportForm.vue:17, src/views/report/index.vue:147, src/views/report/index.vue:158
+请输入报表名称	src/views/report/components/ReportForm.vue:20, src/views/report/components/ReportForm.vue:136
+报表编码	src/views/report/components/ReportForm.vue:26, src/views/report/index.vue:148, src/views/report/index.vue:159
+请输入报表编码，首字母必须为字母，可包含字母、数字和下划线	src/views/report/components/ReportForm.vue:29
+引擎类型	src/views/report/components/ReportForm.vue:36, src/views/report/index.vue:149, src/views/report/index.vue:160
+报表分类	src/views/report/components/ReportForm.vue:47
+请选择报表分类	src/views/report/components/ReportForm.vue:51
+数据源	src/views/report/components/ReportForm.vue:58, src/views/report/index.vue:151
+请选择数据源	src/views/report/components/ReportForm.vue:62
+报表状态	src/views/report/components/ReportForm.vue:68
+编辑报表	src/views/report/components/ReportForm.vue:120
+新增报表	src/views/report/components/ReportForm.vue:120
+报表名称不能超过 100 个字符	src/views/report/components/ReportForm.vue:137
+请输入报表编码	src/views/report/components/ReportForm.vue:140
+报表编码必须以字母开头，且只能包含字母、数字和下划线	src/views/report/components/ReportForm.vue:143
+报表编码不能超过 50 个字符	src/views/report/components/ReportForm.vue:146
+请选择引擎类型	src/views/report/components/ReportForm.vue:148
+保存报表失败	src/views/report/components/ReportForm.vue:196
+以下为报表预览效果，可通过 URL 参数传递查询条件。	src/views/report/components/ReportPreview.vue:15
+报表预览加载完成	src/views/report/components/ReportPreview.vue:80
+${engineName} 报表预览	src/views/report/components/ReportPreview.vue:68
+数据源名称	src/views/report/datasource/index.vue:80, src/views/report/datasource/index.vue:262, src/views/report/datasource/index.vue:272
+请输入数据源名称	src/views/report/datasource/index.vue:83, src/views/report/datasource/index.vue:220
+数据源编码	src/views/report/datasource/index.vue:89, src/views/report/datasource/index.vue:263, src/views/report/datasource/index.vue:273
+请输入数据源编码，首字母必须为字母，可包含字母、数字和下划线	src/views/report/datasource/index.vue:92
+数据库类型	src/views/report/datasource/index.vue:99, src/views/report/datasource/index.vue:264, src/views/report/datasource/index.vue:274
+请选择数据库类型	src/views/report/datasource/index.vue:102, src/views/report/datasource/index.vue:232
+连接地址 URL	src/views/report/datasource/index.vue:113, src/views/report/datasource/index.vue:265
+请输入数据库连接地址 URL	src/views/report/datasource/index.vue:116, src/views/report/datasource/index.vue:234
+用户名	src/views/report/datasource/index.vue:123, src/views/report/datasource/index.vue:266, src/views/system/dashboard/index.vue:330, src/views/system/online/index.vue:105, src/views/system/user/components/UserDetail.vue:10
+请输入数据库用户名	src/views/report/datasource/index.vue:126, src/views/report/datasource/index.vue:238
+密码	src/views/report/datasource/index.vue:131
+请输入数据库密码	src/views/report/datasource/index.vue:134
+驱动类名	src/views/report/datasource/index.vue:139
+请输入数据库驱动类名	src/views/report/datasource/index.vue:142
+连接池配置	src/views/report/datasource/index.vue:148
+请输入连接池配置 JSON 字符串，如无特殊需求可留空	src/views/report/datasource/index.vue:151
+编辑数据源	src/views/report/datasource/index.vue:216
+新增数据源	src/views/report/datasource/index.vue:216
+数据源名称不能超过 100 个字符	src/views/report/datasource/index.vue:221
+请输入数据源编码	src/views/report/datasource/index.vue:224
+数据源编码必须以字母开头，且只能包含字母、数字和下划线	src/views/report/datasource/index.vue:227
+数据源编码不能超过 50 个字符	src/views/report/datasource/index.vue:230
+URL 不能超过 500 个字符	src/views/report/datasource/index.vue:235
+用户名不能超过 100 个字符	src/views/report/datasource/index.vue:239
+数据源管理	src/views/report/datasource/index.vue:256
+加载数据源分页数据失败	src/views/report/datasource/index.vue:353
+删除失败	src/views/report/datasource/index.vue:418, src/views/system/department/index.vue:375, src/views/system/position/index.vue:379
+连接测试失败	src/views/report/datasource/index.vue:428
+保存数据源失败	src/views/report/datasource/index.vue:442
+确定要删除数据源“${record.name}”吗？	src/views/report/datasource/index.vue:410
+报表模板管理	src/views/report/index.vue:141
+报表 ID	src/views/report/index.vue:146
+分类	src/views/report/index.vue:150
+加载报表分页数据失败:	src/views/report/index.vue:213
+加载分类树失败:	src/views/report/index.vue:226
+加载数据源列表失败:	src/views/report/index.vue:239
+删除报表失败:	src/views/report/index.vue:285
+上传安卓版本	src/views/system/androidVersion/index.vue:44
+编辑安卓版本	src/views/system/androidVersion/index.vue:44
+版本号	src/views/system/androidVersion/index.vue:56
+版本名称	src/views/system/androidVersion/index.vue:65
+例如 1.0.1	src/views/system/androidVersion/index.vue:66
+APK 文件	src/views/system/androidVersion/index.vue:76
+上传进度	src/views/system/androidVersion/index.vue:91
+更新日志	src/views/system/androidVersion/index.vue:102
+请输入本次版本更新内容	src/views/system/androidVersion/index.vue:106
+等待上传	src/views/system/androidVersion/index.vue:155, src/views/system/androidVersion/index.vue:202
+请输入版本号	src/views/system/androidVersion/index.vue:167
+请输入版本名称	src/views/system/androidVersion/index.vue:168
+只能上传 APK 文件	src/views/system/androidVersion/index.vue:227
+请先选择 APK 文件	src/views/system/androidVersion/index.vue:238
+安卓版本上传成功	src/views/system/androidVersion/index.vue:247
+初始化上传任务	src/views/system/androidVersion/index.vue:259
+上传已取消	src/views/system/androidVersion/index.vue:280
+合并安装包	src/views/system/androidVersion/index.vue:292
+上传完成	src/views/system/androidVersion/index.vue:296
+已取消	src/views/system/androidVersion/index.vue:324
+上传中	src/views/system/androidVersion/index.vue:334
+确定删除该版本吗？	src/views/system/androidVersion/index.vue:380
+删除后将无法恢复。	src/views/system/androidVersion/index.vue:381
+下载链接已复制	src/views/system/androidVersion/index.vue:396
+上传分片 ${chunkIndex + 1}/${uploadTask.totalChunks || ''}	src/views/system/androidVersion/index.vue:303
+分片 ${chunkIndex + 1} 重试 ${retry}/${MAX_RETRY - 1}	src/views/system/androidVersion/index.vue:310
+上传版本	src/views/system/androidVersion/index.vue:12
+下载	src/views/system/androidVersion/index.vue:28
+复制链接	src/views/system/androidVersion/index.vue:29
+选择 APK	src/views/system/androidVersion/index.vue:84
+{{ uploadTask.uploadedChunks }}/{{ uploadTask.totalChunks }} 分片	src/views/system/androidVersion/index.vue:96
+取消上传	src/views/system/androidVersion/index.vue:98
+系统配置Logo	src/views/system/config/index.vue:24
+操作模块	src/views/system/dashboard/index.vue:303
+登录时间	src/views/system/dashboard/index.vue:324, src/views/system/loginLog/index.vue:48, src/views/system/loginLog/index.vue:57
+IP 地址	src/views/system/dashboard/index.vue:336, src/views/system/operationLog/index.vue:96, src/views/system/operationLog/index.vue:165
+登录地点	src/views/system/dashboard/index.vue:342
+租户信息缺失	src/views/system/dashboard/index.vue:394
+加载统计数据失败:	src/views/system/dashboard/index.vue:402
+加载统计数据失败	src/views/system/dashboard/index.vue:403
+加载服务器信息失败:	src/views/system/dashboard/index.vue:419
+加载 JVM 内存分区数据失败:	src/views/system/dashboard/index.vue:430
+加载服务内存数据失败:	src/views/system/dashboard/index.vue:441
+加载操作日志失败:	src/views/system/dashboard/index.vue:451
+加载登录日志失败:	src/views/system/dashboard/index.vue:461
+内存使用	src/views/system/dashboard/index.vue:612
+服务器位置	src/views/system/dashboard/index.vue:801
+[Dashboard] 中国地图数据加载失败，将显示占位提示	src/views/system/dashboard/index.vue:812
+位置	src/views/system/dashboard/index.vue:845
+地图数据加载失败\n请检查网络或稍后重试	src/views/system/dashboard/index.vue:884
+人	src/views/system/dashboard/index.vue:19, src/views/system/dashboard/index.vue:61
+个	src/views/system/dashboard/index.vue:33, src/views/system/dashboard/index.vue:47
+加载部门详情失败	src/views/system/department/index.vue:282
+保存失败	src/views/system/department/index.vue:354, src/views/system/position/index.vue:364
+字典名称	src/views/system/dict/index.vue:52, src/views/system/dict/index.vue:140, src/views/system/dict/index.vue:151
+请输入字典名称	src/views/system/dict/index.vue:53, src/views/system/dict/index.vue:171
+所属模块	src/views/system/dict/index.vue:56
+请选择所属模块	src/views/system/dict/index.vue:62
+字典编码	src/views/system/dict/index.vue:66, src/views/system/dict/index.vue:139, src/views/system/dict/index.vue:150
+请输入字典编码	src/views/system/dict/index.vue:67, src/views/system/dict/index.vue:172
+字典值	src/views/system/dict/index.vue:70, src/views/system/dict/index.vue:142
+请输入字典值	src/views/system/dict/index.vue:71, src/views/system/dict/index.vue:173
+国际化配置	src/views/system/dict/index.vue:74
+请输入字典值（可点击右侧地球图标配置多语言）	src/views/system/dict/index.vue:78
+标签样式	src/views/system/dict/index.vue:82
+字典管理	src/views/system/dict/index.vue:134
+模块	src/views/system/dict/index.vue:141, src/views/system/dict/index.vue:152, src/views/system/i18nMessage/index.vue:57, src/views/system/i18nMessage/index.vue:135, src/views/system/i18nMessage/index.vue:144
+请选择状态	src/views/system/dict/index.vue:174, src/views/system/message/index.vue:13
+新增字典子项	src/views/system/dict/index.vue:281
+新增字典类型	src/views/system/dict/index.vue:281
+编辑字典	src/views/system/dict/index.vue:289
+确定要删除该字典吗？	src/views/system/dict/index.vue:309
+新增字典	src/views/system/dict/index.vue:14
+新增子项	src/views/system/dict/index.vue:37
+主信息	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:18
+明细信息	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:71
+detail.date表单at	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:116
+system.encodeRule.date表单atPlaceholder	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:117
+如 1	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:136
+如 6	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:149
+system.encodeRule.date表单atRequired	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:318
+加载规则详情失败:	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:409
+保存失败:	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:490
+起始值	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:132
+流水位数	src/views/system/encodeRule/components/EncodeRuleFormDialog.vue:145
+生成编码失败:	src/views/system/encodeRule/index.vue:215
+标题	src/views/system/excelExportConfig/index.vue:185, src/views/system/message/index.vue:18, src/views/system/userTableConfig/index.vue:269
+加载导出配置列表失败	src/views/system/excelExportConfig/index.vue:334
+加载导出配置详情失败	src/views/system/excelExportConfig/index.vue:360
+删除导出配置失败	src/views/system/excelExportConfig/index.vue:407
+保存导出配置失败	src/views/system/excelExportConfig/index.vue:450
+上移	src/views/system/excelExportConfig/index.vue:158
+下移	src/views/system/excelExportConfig/index.vue:159
+加载导入配置列表失败	src/views/system/excelImportConfig/index.vue:141
+加载导入配置详情失败	src/views/system/excelImportConfig/index.vue:158
+表单数据为空	src/views/system/excelImportConfig/index.vue:171
+保存导入配置失败	src/views/system/excelImportConfig/index.vue:207
+删除导入配置失败	src/views/system/excelImportConfig/index.vue:239
+下载模板失败	src/views/system/excelImportConfig/index.vue:281
+加载语言配置列表失败	src/views/system/i18nLanguageType/index.vue:193
+加载语言详情失败	src/views/system/i18nLanguageType/index.vue:234
+保存语言配置失败	src/views/system/i18nLanguageType/index.vue:267
+请输入模块编码	src/views/system/i18nMessage/index.vue:58, src/views/system/i18nMessage/index.vue:123, src/views/system/module/index.vue:84
+消息编码	src/views/system/i18nMessage/index.vue:60, src/views/system/i18nMessage/index.vue:136, src/views/system/i18nMessage/index.vue:145
+请输入消息编码	src/views/system/i18nMessage/index.vue:61, src/views/system/i18nMessage/index.vue:124
+多语言内容	src/views/system/i18nMessage/index.vue:63
+请输入消息内容，点击右侧图标配置多语言	src/views/system/i18nMessage/index.vue:69
+版本	src/views/system/i18nMessage/index.vue:79, src/views/system/i18nMessage/index.vue:139
+请配置多语言内容	src/views/system/i18nMessage/index.vue:125
+多语言消息	src/views/system/i18nMessage/index.vue:130
+当前语言内容	src/views/system/i18nMessage/index.vue:137
+加载多语言消息失败	src/views/system/i18nMessage/index.vue:177
+新增多语言消息	src/views/system/i18nMessage/index.vue:197
+编辑多语言消息	src/views/system/i18nMessage/index.vue:203
+加载多语言消息详情失败	src/views/system/i18nMessage/index.vue:214
+确认删除该多语言消息吗？	src/views/system/i18nMessage/index.vue:222
+保存多语言消息失败	src/views/system/i18nMessage/index.vue:247
+登录日志	src/views/system/loginLog/index.vue:41
+登录账号	src/views/system/loginLog/index.vue:46, src/views/system/loginLog/index.vue:55
+登录状态	src/views/system/loginLog/index.vue:47, src/views/system/loginLog/index.vue:56
+登录 IP	src/views/system/loginLog/index.vue:49
+归属地	src/views/system/loginLog/index.vue:50
+浏览器 UA	src/views/system/loginLog/index.vue:51
+失败原因	src/views/system/loginLog/index.vue:52
+B端	src/views/system/menu/index.vue:6, src/views/system/online/index.vue:81
+C端	src/views/system/menu/index.vue:7, src/views/system/online/index.vue:82
+resolve状态Tag(record.status)	src/views/system/menu/index.vue:80, src/views/system/role/index.vue:87, src/views/system/role/MenuGrant.vue:85
+resolve状态Tag(record.status)?.color	src/views/system/menu/index.vue:81, src/views/system/role/index.vue:88, src/views/system/role/MenuGrant.vue:86
+resolve状态Tag(record.status)?.style	src/views/system/menu/index.vue:82, src/views/system/role/index.vue:89, src/views/system/role/MenuGrant.vue:87
+消息类型	src/views/system/message/index.vue:5, src/views/system/message/index.vue:103
+请选择消息类型	src/views/system/message/index.vue:6
+请输入标题	src/views/system/message/index.vue:19
+消息详情	src/views/system/message/index.vue:94
+消息标题	src/views/system/message/index.vue:100
+消息内容	src/views/system/message/index.vue:108
+发送人	src/views/system/message/index.vue:111
+发送时间	src/views/system/message/index.vue:114
+阅读时间	src/views/system/message/index.vue:117
+相关链接	src/views/system/message/index.vue:120
+通知	src/views/system/message/index.vue:184, src/views/system/message/index.vue:7
+预警	src/views/system/message/index.vue:185, src/views/system/message/index.vue:8
+告警	src/views/system/message/index.vue:186, src/views/system/message/index.vue:9
+加载消息列表失败	src/views/system/message/index.vue:212
+标记消息已读失败	src/views/system/message/index.vue:248
+标记已读失败	src/views/system/message/index.vue:259
+全部标记已读失败	src/views/system/message/index.vue:268
+共 ${total} 条	src/views/system/message/index.vue:162
+未读	src/views/system/message/index.vue:14
+已读	src/views/system/message/index.vue:15
+发送人：{{ item.senderName }}	src/views/system/message/index.vue:73
+发送时间：{{ item.createTime }}	src/views/system/message/index.vue:74
+阅读时间：{{ item.readTime }}	src/views/system/message/index.vue:75
+模块编码	src/views/system/module/index.vue:81, src/views/system/module/index.vue:189, src/views/system/module/index.vue:199
+模块名称	src/views/system/module/index.vue:90, src/views/system/module/index.vue:188, src/views/system/module/index.vue:198
+请输入模块名称	src/views/system/module/index.vue:94
+图标	src/views/system/module/index.vue:103
+请选择或输入图标名称	src/views/system/module/index.vue:106
+请输入排序号	src/views/system/module/index.vue:114, src/views/system/position/index.vue:139
+是否可见	src/views/system/module/index.vue:120
+模块管理	src/views/system/module/index.vue:183
+加载模块列表失败:	src/views/system/module/index.vue:279
+确定要删除该模块吗？	src/views/system/module/index.vue:294
+确定要删除选中的 ${selectedRowKeys.value.length} 个模块吗？	src/views/system/module/index.vue:307
+显示	src/views/system/module/index.vue:122, src/views/system/userTableConfig/index.vue:276
+隐藏	src/views/system/module/index.vue:123
+第三方	src/views/system/online/index.vue:83
+在线用户	src/views/system/online/index.vue:99
+账号	src/views/system/online/index.vue:104, src/views/system/online/index.vue:115, src/views/system/operationLog/index.vue:79, src/views/system/operationLog/index.vue:156, src/views/system/operationLog/index.vue:171
+登录端	src/views/system/online/index.vue:106
+最后登录时间	src/views/system/online/index.vue:108, src/views/system/user/components/UserDetail.vue:46
+最后登录 IP	src/views/system/online/index.vue:109
+登录地区	src/views/system/online/index.vue:110
+会话剩余时长	src/views/system/online/index.vue:111
+加载在线用户 Tab 计数失败	src/views/system/online/index.vue:150
+查询在线用户失败	src/views/system/online/index.vue:174
+长期	src/views/system/online/index.vue:187
+确认强制下线	src/views/system/online/index.vue:202
+该操作会使对应会话立即失效。	src/views/system/online/index.vue:203
+确认批量强制下线	src/views/system/online/index.vue:217
+全部 (${tabCounts.value.ALL || 0})	src/views/system/online/index.vue:91
+B端 (${tabCounts.value.B || 0})	src/views/system/online/index.vue:92
+C端 (${tabCounts.value.C || 0})	src/views/system/online/index.vue:93
+第三方 (${tabCounts.value.THIRD_PARTY || 0})	src/views/system/online/index.vue:94
+复制请求参数	src/views/system/operationLog/index.vue:30
+操作日志详情	src/views/system/operationLog/index.vue:76
+用户名称	src/views/system/operationLog/index.vue:78, src/views/system/operationLog/index.vue:155, src/views/system/operationLog/index.vue:170
+请求方法	src/views/system/operationLog/index.vue:87, src/views/system/operationLog/index.vue:159
+响应状态	src/views/system/operationLog/index.vue:88, src/views/system/operationLog/index.vue:162
+请求 URL	src/views/system/operationLog/index.vue:93, src/views/system/operationLog/index.vue:160
+耗时	src/views/system/operationLog/index.vue:97, src/views/system/operationLog/index.vue:164
+操作详情	src/views/system/operationLog/index.vue:100
+错误堆栈	src/views/system/operationLog/index.vue:103
+新增	src/views/system/operationLog/index.vue:135, src/views/system/operationLog/index.vue:136
+修改	src/views/system/operationLog/index.vue:137, src/views/system/operationLog/index.vue:138
+查询	src/views/system/operationLog/index.vue:140
+导入	src/views/system/operationLog/index.vue:142
+登录	src/views/system/operationLog/index.vue:143
+登出	src/views/system/operationLog/index.vue:144
+请求参数	src/views/system/operationLog/index.vue:161, src/views/system/operationLog/index.vue:213
+响应结果	src/views/system/operationLog/index.vue:163, src/views/system/operationLog/index.vue:213
+response状态	src/views/system/operationLog/index.vue:202, src/views/system/operationLog/index.vue:221
+查看详情	src/views/system/operationLog/index.vue:29, src/views/system/operationLog/index.vue:40
+编辑岗位	src/views/system/position/index.vue:75
+新增岗位	src/views/system/position/index.vue:75
+所属部门	src/views/system/position/index.vue:87, src/views/system/user/components/UserDetail.vue:34, src/views/system/user/components/UserFormDialog.vue:79
+请选择所属部门	src/views/system/position/index.vue:93, src/views/system/position/index.vue:263
+岗位名称	src/views/system/position/index.vue:104, src/views/system/position/index.vue:200, src/views/system/position/index.vue:210
+请输入岗位名称	src/views/system/position/index.vue:107, src/views/system/position/index.vue:264
+岗位编码	src/views/system/position/index.vue:111, src/views/system/position/index.vue:201, src/views/system/position/index.vue:211
+请输入岗位编码	src/views/system/position/index.vue:114, src/views/system/position/index.vue:265
+岗位级别	src/views/system/position/index.vue:119, src/views/system/position/index.vue:202
+请选择岗位级别	src/views/system/position/index.vue:122
+加载岗位列表失败	src/views/system/position/index.vue:242
+组织架构	src/views/system/position/index.vue:7
+跳过引导	src/views/system/role/index.vue:182
+角色管理	src/views/system/role/index.vue:222
+角色名称	src/views/system/role/index.vue:227, src/views/system/role/index.vue:237
+角色编码	src/views/system/role/index.vue:228, src/views/system/role/index.vue:238
+B端菜单	src/views/system/role/MenuGrant.vue:18
+C端菜单	src/views/system/role/MenuGrant.vue:19
+当前记录缺少配置ID，无法加载编辑详情，请先刷新列表或确认后端列表接口已返回id	src/views/system/tableConfig/index.vue:174
+已拉取 ${Number(count || 0)} 条公共配置	src/views/system/tableConfig/index.vue:159
+租户配置	src/views/system/tableConfig/index.vue:18
+公共配置	src/views/system/tableConfig/index.vue:19
+加载租户选项失败:	src/views/system/tenant/index.vue:266
+查询初始化任务失败:	src/views/system/tenant/index.vue:375
+查询到任务:	src/views/system/tenant/index.vue:400
+等待任务创建...	src/views/system/tenant/index.vue:404
+查询任务失败:	src/views/system/tenant/index.vue:406
+加载租户列表失败:	src/views/system/tenantMessageWhitelist/index.vue:207
+用户详情	src/views/system/user/components/UserDetail.vue:4
+手机号	src/views/system/user/components/UserDetail.vue:19, src/views/system/user/components/UserFormDialog.vue:46
+关联员工ID	src/views/system/user/components/UserDetail.vue:22, src/views/system/user/components/UserFormDialog.vue:109
+用户来源	src/views/system/user/components/UserDetail.vue:25, src/views/system/user/components/UserFormDialog.vue:117
+性别	src/views/system/user/components/UserDetail.vue:28, src/views/system/user/components/UserFormDialog.vue:57
+入职时间	src/views/system/user/components/UserDetail.vue:31, src/views/system/user/components/UserFormDialog.vue:66
+岗位	src/views/system/user/components/UserDetail.vue:37, src/views/system/user/components/UserFormDialog.vue:92
+最后登录IP	src/views/system/user/components/UserDetail.vue:49
+最后登录地区	src/views/system/user/components/UserDetail.vue:52
+政治面貌	src/views/system/user/components/UserDetail.vue:79, src/views/system/user/components/UserFormDialog.vue:146, src/views/system/user/components/UserProfileForm.vue:10
+学历	src/views/system/user/components/UserDetail.vue:82, src/views/system/user/components/UserFormDialog.vue:159, src/views/system/user/components/UserProfileForm.vue:26
+籍贯	src/views/system/user/components/UserDetail.vue:85, src/views/system/user/components/UserFormDialog.vue:175
+个人简介	src/views/system/user/components/UserDetail.vue:88, src/views/system/user/components/UserFormDialog.vue:186
+家庭住址	src/views/system/user/components/UserDetail.vue:91, src/views/system/user/components/UserFormDialog.vue:198, src/views/system/user/components/UserProfileForm.vue:47
+紧急联系人	src/views/system/user/components/UserDetail.vue:94, src/views/system/user/components/UserFormDialog.vue:209, src/views/system/user/components/UserProfileForm.vue:58
+紧急联系电话	src/views/system/user/components/UserDetail.vue:97, src/views/system/user/components/UserFormDialog.vue:217, src/views/system/user/components/UserProfileForm.vue:67
+介绍人	src/views/system/user/components/UserDetail.vue:100, src/views/system/user/components/UserFormDialog.vue:228, src/views/system/user/components/UserProfileForm.vue:78
+租户 ID	src/views/system/user/components/UserDetail.vue:152
+最后使用时间	src/views/system/user/components/UserDetail.vue:154
+加载用户详情失败	src/views/system/user/components/UserDetail.vue:174
+非默认	src/views/system/user/components/UserDetail.vue:68
+附属信息	src/views/system/user/components/UserDetail.vue:76
+工作经历	src/views/system/user/components/UserDetail.vue:106, src/views/system/user/components/UserFormDialog.vue:237, src/views/system/user/components/UserProfileForm.vue:88
+编辑用户	src/views/system/user/components/UserFormDialog.vue:4
+新增用户	src/views/system/user/components/UserFormDialog.vue:4
+基础信息	src/views/system/user/components/UserFormDialog.vue:11
+请输入账号	src/views/system/user/components/UserFormDialog.vue:24, src/views/system/user/components/UserFormDialog.vue:398
+请输入用户名	src/views/system/user/components/UserFormDialog.vue:33, src/views/system/user/components/UserFormDialog.vue:402
+请输入邮箱	src/views/system/user/components/UserFormDialog.vue:41
+请输入手机号	src/views/system/user/components/UserFormDialog.vue:49
+请选择入职时间	src/views/system/user/components/UserFormDialog.vue:69
+请选择部门	src/views/system/user/components/UserFormDialog.vue:82
+请选择岗位	src/views/system/user/components/UserFormDialog.vue:95
+请输入关联员工ID	src/views/system/user/components/UserFormDialog.vue:112
+附属信息（可选）	src/views/system/user/components/UserFormDialog.vue:137
+请选择政治面貌	src/views/system/user/components/UserFormDialog.vue:149, src/views/system/user/components/UserProfileForm.vue:13
+请选择学历	src/views/system/user/components/UserFormDialog.vue:162, src/views/system/user/components/UserProfileForm.vue:29
+请输入籍贯	src/views/system/user/components/UserFormDialog.vue:178
+请输入个人简介	src/views/system/user/components/UserFormDialog.vue:189
+请输入家庭住址	src/views/system/user/components/UserFormDialog.vue:201, src/views/system/user/components/UserProfileForm.vue:50
+请输入紧急联系人	src/views/system/user/components/UserFormDialog.vue:212, src/views/system/user/components/UserProfileForm.vue:61
+请输入紧急联系电话	src/views/system/user/components/UserFormDialog.vue:220, src/views/system/user/components/UserProfileForm.vue:70
+请输入介绍人	src/views/system/user/components/UserFormDialog.vue:231, src/views/system/user/components/UserProfileForm.vue:81
+公司名称	src/views/system/user/components/UserFormDialog.vue:246, src/views/system/user/components/UserProfileForm.vue:97
+请输入公司名称	src/views/system/user/components/UserFormDialog.vue:249, src/views/system/user/components/UserProfileForm.vue:100
+请输入职位	src/views/system/user/components/UserFormDialog.vue:257, src/views/system/user/components/UserProfileForm.vue:109
+开始时间	src/views/system/user/components/UserFormDialog.vue:270, src/views/system/user/components/UserProfileForm.vue:127
+请选择开始时间	src/views/system/user/components/UserFormDialog.vue:273, src/views/system/user/components/UserProfileForm.vue:130
+结束时间	src/views/system/user/components/UserFormDialog.vue:280, src/views/system/user/components/UserProfileForm.vue:138
+请选择结束时间	src/views/system/user/components/UserFormDialog.vue:283, src/views/system/user/components/UserProfileForm.vue:141
+工作描述	src/views/system/user/components/UserFormDialog.vue:293, src/views/system/user/components/UserProfileForm.vue:151
+请输入工作描述	src/views/system/user/components/UserFormDialog.vue:296, src/views/system/user/components/UserProfileForm.vue:154
+本站新增	src/views/system/user/components/UserFormDialog.vue:362, src/views/system/user/components/UserFormDialog.vue:387, src/views/system/user/components/UserFormDialog.vue:489
+账号长度需在 3-20 个字符之间	src/views/system/user/components/UserFormDialog.vue:399
+用户名长度需在 2-20 个字符之间	src/views/system/user/components/UserFormDialog.vue:403
+请输入正确的邮箱格式	src/views/system/user/components/UserFormDialog.vue:406
+请输入正确的手机号	src/views/system/user/components/UserFormDialog.vue:409
+关联员工ID必须为数字	src/views/system/user/components/UserFormDialog.vue:412
+加载用户数据失败	src/views/system/user/components/UserFormDialog.vue:470
+请完善基础信息	src/views/system/user/components/UserFormDialog.vue:554
+操作失败	src/views/system/user/components/UserFormDialog.vue:578
+profileData.political状态	src/views/system/user/components/UserProfileForm.vue:12
+群众	src/views/system/user/components/UserProfileForm.vue:16, src/views/system/user/components/UserProfileForm.vue:16
+共青团员	src/views/system/user/components/UserProfileForm.vue:17, src/views/system/user/components/UserProfileForm.vue:17
+中共党员	src/views/system/user/components/UserProfileForm.vue:18, src/views/system/user/components/UserProfileForm.vue:18
+民主党派	src/views/system/user/components/UserProfileForm.vue:19, src/views/system/user/components/UserProfileForm.vue:19
+无党派人士	src/views/system/user/components/UserProfileForm.vue:20, src/views/system/user/components/UserProfileForm.vue:20
+小学	src/views/system/user/components/UserProfileForm.vue:32, src/views/system/user/components/UserProfileForm.vue:32
+初中	src/views/system/user/components/UserProfileForm.vue:33, src/views/system/user/components/UserProfileForm.vue:33
+高中	src/views/system/user/components/UserProfileForm.vue:34, src/views/system/user/components/UserProfileForm.vue:34
+中专	src/views/system/user/components/UserProfileForm.vue:35, src/views/system/user/components/UserProfileForm.vue:35
+大专	src/views/system/user/components/UserProfileForm.vue:36, src/views/system/user/components/UserProfileForm.vue:36
+本科	src/views/system/user/components/UserProfileForm.vue:37, src/views/system/user/components/UserProfileForm.vue:37
+硕士	src/views/system/user/components/UserProfileForm.vue:38, src/views/system/user/components/UserProfileForm.vue:38
+博士	src/views/system/user/components/UserProfileForm.vue:39, src/views/system/user/components/UserProfileForm.vue:39
+system.user.roleAssign.assigned状态	src/views/system/user/components/UserRoleAssignDialog.vue:151
+表格编码	src/views/system/userTableConfig/index.vue:5, src/views/system/userTableConfig/index.vue:89, src/views/system/userTableConfig/index.vue:209
+请输入表格编码	src/views/system/userTableConfig/index.vue:8
+说明	src/views/system/userTableConfig/index.vue:30, src/views/workflow/myTask/pending.vue:176
+当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。	src/views/system/userTableConfig/index.vue:31
+已配置	src/views/system/userTableConfig/index.vue:54
+未配置	src/views/system/userTableConfig/index.vue:54
+编辑用户列设置	src/views/system/userTableConfig/index.vue:82
+分页大小	src/views/system/userTableConfig/index.vue:93
+表格名称	src/views/system/userTableConfig/index.vue:215
+默认分页大小	src/views/system/userTableConfig/index.vue:222
+用户分页大小	src/views/system/userTableConfig/index.vue:229
+配置状态	src/views/system/userTableConfig/index.vue:235
+配置版本	src/views/system/userTableConfig/index.vue:241
+最后更新时间	src/views/system/userTableConfig/index.vue:248
+移动	src/views/system/userTableConfig/index.vue:288
+未找到对应的基础表格配置	src/views/system/userTableConfig/index.vue:416
+加载用户列设置失败	src/views/system/userTableConfig/index.vue:431
+表格编码不能为空	src/views/system/userTableConfig/index.vue:439
+列配置不能为空	src/views/system/userTableConfig/index.vue:444
+确认重置	src/views/system/userTableConfig/index.vue:476
+确认	src/views/system/userTableConfig/index.vue:478
+确认重置表格 [${record.tableCode}] 的当前用户列设置吗？重置后将恢复为租户或默认表格配置。	src/views/system/userTableConfig/index.vue:477
+请假	src/views/workflow/dashboard/index.vue:642
+合同	src/views/workflow/dashboard/index.vue:643
+费用	src/views/workflow/dashboard/index.vue:644
+报销	src/views/workflow/dashboard/index.vue:644
+项目	src/views/workflow/dashboard/index.vue:645
+活跃实例数	src/views/workflow/dashboard/index.vue:263
+超时标记	src/views/workflow/dashboard/index.vue:267, src/views/workflow/governance/compensation/index.vue:92
+{{ currentRecord.timeoutFlag ? '是' : '否' }}	src/views/workflow/dashboard/index.vue:268, src/views/workflow/governance/compensation/index.vue:93
+委托命中	src/views/workflow/dashboard/index.vue:271
+{{ currentRecord.delegated ? '是' : '否' }}	src/views/workflow/dashboard/index.vue:272, src/views/workflow/governance/compensation/index.vue:97
+转交命中	src/views/workflow/dashboard/index.vue:275
+{{ currentRecord.transferred ? '是' : '否' }}	src/views/workflow/dashboard/index.vue:276, src/views/workflow/governance/compensation/index.vue:101
+请选择至少一位审批人	src/views/workflow/execution/startForm.vue:227
+发起人自选审批人	src/views/workflow/execution/startForm.vue:81
+供应商资质审查	src/views/workflow/form/SupplierReviewForm.vue:6
+请选择待审供应商	src/views/workflow/form/SupplierReviewForm.vue:7, src/views/workflow/form/SupplierReviewForm.vue:29, src/views/workflow/form/SupplierReviewForm.vue:111, src/views/workflow/form/SupplierReviewForm.vue:193
+待审供应商	src/views/workflow/form/SupplierReviewForm.vue:21
+供应商ID	src/views/workflow/form/SupplierReviewForm.vue:35
+暂无资质	src/views/workflow/form/SupplierReviewForm.vue:47, src/views/workflow/form/SupplierReviewForm.vue:212, src/views/workflow/form/SupplierReviewForm.vue:223
+加载待审供应商失败	src/views/workflow/form/SupplierReviewForm.vue:162
+加载供应商详情失败	src/views/workflow/form/SupplierReviewForm.vue:178
+无效	src/views/workflow/form/SupplierReviewForm.vue:215
+{{ formState.supplierFullName || '供应商资质审查' }}	src/views/workflow/form/SupplierReviewForm.vue:6
+{{ formState.supplierCode || '请选择待审供应商' }}	src/views/workflow/form/SupplierReviewForm.vue:7
+资质摘要	src/views/workflow/form/SupplierReviewForm.vue:46
+补偿中心	src/views/workflow/governance/compensation/index.vue:15
+集中处理未激活待办实例与超时待办实例，作为审批流三期治理能力的运营入口。	src/views/workflow/governance/compensation/index.vue:16
+补偿详情	src/views/workflow/governance/compensation/index.vue:54
+加载补偿中心列表失败	src/views/workflow/governance/compensation/index.vue:188
+加载补偿详情失败	src/views/workflow/governance/compensation/index.vue:238
+确认执行补偿激活	src/views/workflow/governance/compensation/index.vue:244
+补偿激活已执行	src/views/workflow/governance/compensation/index.vue:249
+补偿激活失败	src/views/workflow/governance/compensation/index.vue:252
+确认执行超时重试	src/views/workflow/governance/compensation/index.vue:260
+超时重试已执行	src/views/workflow/governance/compensation/index.vue:265
+超时重试失败	src/views/workflow/governance/compensation/index.vue:268
+将尝试激活执行单【${record.taskName}】的首个未激活待办实例。	src/views/workflow/governance/compensation/index.vue:245
+将尝试处理执行单【${record.taskName}】下所有已超时实例。	src/views/workflow/governance/compensation/index.vue:261
+超时待重试	src/views/workflow/governance/compensation/index.vue:26
+未激活待补偿	src/views/workflow/governance/compensation/index.vue:27
+命中委托	src/views/workflow/governance/compensation/index.vue:28, src/views/workflow/governance/compensation/index.vue:96
+命中转交	src/views/workflow/governance/compensation/index.vue:29, src/views/workflow/governance/compensation/index.vue:100
+激活待办数	src/views/workflow/governance/compensation/index.vue:88
+当前执行单存在超时实例	src/views/workflow/governance/compensation/index.vue:106
+当前执行单存在未激活待办实例	src/views/workflow/governance/compensation/index.vue:107
+轨迹中存在委托动作	src/views/workflow/governance/compensation/index.vue:108
+轨迹中存在转交动作	src/views/workflow/governance/compensation/index.vue:109
+处理范围	src/views/workflow/myTask/pending.vue:168
+接收人	src/views/workflow/myTask/pending.vue:172
+请输入处理说明	src/views/workflow/myTask/pending.vue:180
+请选择指定用户作为接收人	src/views/workflow/myTask/pending.vue:292
+请选择接收人	src/views/workflow/myTask/pending.vue:295, src/views/workflow/myTask/pending.vue:551
+转交审批	src/views/workflow/myTask/pending.vue:326
+加签审批人	src/views/workflow/myTask/pending.vue:327
+批量转交	src/views/workflow/myTask/pending.vue:328
+当前待办未找到可转交的审批实例，请刷新后重试	src/views/workflow/myTask/pending.vue:443
+当前待办未找到可加签的审批实例，请刷新后重试	src/views/workflow/myTask/pending.vue:461
+请先选择待办	src/views/workflow/myTask/pending.vue:478, src/views/workflow/myTask/pending.vue:622, src/views/workflow/myTask/pending.vue:642
+当前转交数据不完整，请关闭后重试	src/views/workflow/myTask/pending.vue:559
+当前加签数据不完整，请关闭后重试	src/views/workflow/myTask/pending.vue:571
+处理成功	src/views/workflow/myTask/pending.vue:590
+处理失败	src/views/workflow/myTask/pending.vue:599
+批量同意	src/views/workflow/myTask/pending.vue:629
+批量同意成功	src/views/workflow/myTask/pending.vue:632
+批量同意失败	src/views/workflow/myTask/pending.vue:636
+批量催办	src/views/workflow/myTask/pending.vue:648
+批量催办已发送	src/views/workflow/myTask/pending.vue:651
+批量催办失败	src/views/workflow/myTask/pending.vue:654
+已选 ${selectedExecutionIds.value.length} 条待办	src/views/workflow/myTask/pending.vue:335
+FormCreate Ant Design Vue 设计器，支持组件尺寸、事件、布局、定位和更多官方组件。	src/views/workflow/taskConfig/components/LowCodeFormDesigner.vue:87
+超时小时	src/views/workflow/taskConfig/nodes.vue:216
+超时动作	src/views/workflow/taskConfig/nodes.vue:226
+上级层级	src/views/workflow/taskConfig/nodes.vue:242
+通过阈值	src/views/workflow/taskConfig/nodes.vue:252
+仅提醒	src/views/workflow/taskConfig/nodes.vue:587
+自动通过	src/views/workflow/taskConfig/nodes.vue:588
+自动转交	src/views/workflow/taskConfig/nodes.vue:589
+默认规则	src/views/workflow/taskConfig/nodes.vue:1467

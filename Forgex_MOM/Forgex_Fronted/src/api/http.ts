@@ -9,6 +9,9 @@ import { message, Modal } from 'ant-design-vue'
 import i18n, { getLocale } from '../locales'
 import { translateLegacyContent, translateLegacyText } from '@/utils/legacyI18n'
 
+type FxLoadingMode = 'global' | 'local' | 'silent'
+type FxDedupeMode = 'drop' | 'none'
+
 /**
  * Forgex 请求扩展配置
  *
@@ -21,6 +24,11 @@ export interface FxRequestConfig extends AxiosRequestConfig {
   showSuccessMessage?: boolean
   silentError?: boolean
   customErrorMessage?: string
+  loadingMode?: FxLoadingMode
+  loadingDelay?: number
+  minVisibleDuration?: number
+  actionKey?: string
+  dedupeMode?: FxDedupeMode
 }
 
 /**
@@ -43,6 +51,8 @@ export interface FxHttpClient {
 const sessionLoginStateKeys = ['account', 'tenantId', 'permissions']
 const localLoginCacheKeys = ['fx-dynamic-routes', 'fx-dynamic-modules']
 const backendToastSuppressWindow = 300
+const defaultLoadingDelay = 500
+const defaultMinVisibleDuration = 300
 const originalMessageSuccess = typeof message.success === 'function' ? message.success.bind(message) : undefined
 const originalMessageError = typeof message.error === 'function' ? message.error.bind(message) : undefined
 const recentBackendToast = {
@@ -50,6 +60,7 @@ const recentBackendToast = {
   timestamp: 0,
 }
 let backendToastDepth = 0
+const pendingActions = new Map<string, Promise<any>>()
 
 function shouldSuppressFrontendMessage(type: 'success' | 'error'): boolean {
   return backendToastDepth === 0
@@ -137,6 +148,12 @@ const rawHttp = axios.create({
  * 用于控制全局加载指示器的显示和隐藏
  */
 let activeReq = 0
+let loadingTimer: ReturnType<typeof window.setTimeout> | undefined
+let hideTimer: ReturnType<typeof window.setTimeout> | undefined
+let globalLoadingVisible = false
+let globalLoadingShownAt = 0
+let currentLoadingDelay = defaultLoadingDelay
+let currentMinVisibleDuration = defaultMinVisibleDuration
 
 /**
  * 登录弹窗状态
@@ -313,6 +330,133 @@ function shouldShowSuccessMessage(resp: any, httpInstance: any, backendMessage: 
   return shouldShowSuccessByPath(url)
 }
 
+function isGlobalLoaderEnabled() {
+  try {
+    const raw = localStorage.getItem('fx-layout-config')
+    if (raw) {
+      const cfgObj = JSON.parse(raw)
+      return cfgObj?.loadingIndicatorEnabled !== false
+    }
+  } catch (e) {
+  }
+  return true
+}
+
+function getGlobalLoader() {
+  const gl = (window as any).__globalLoader
+  if (gl && typeof gl.show === 'function' && typeof gl.hide === 'function') {
+    return gl
+  }
+  return undefined
+}
+
+function shouldUseGlobalLoading(cfg: any) {
+  return cfg?.loadingMode !== 'silent' && cfg?.loadingMode !== 'local' && isGlobalLoaderEnabled()
+}
+
+function normalizeDuration(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback
+}
+
+function showGlobalLoading() {
+  loadingTimer = undefined
+  if (activeReq <= 0 || globalLoadingVisible) {
+    return
+  }
+
+  const gl = getGlobalLoader()
+  if (!gl) {
+    return
+  }
+
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+    hideTimer = undefined
+  }
+  globalLoadingVisible = true
+  globalLoadingShownAt = Date.now()
+  gl.show()
+}
+
+function startGlobalLoading(cfg: any) {
+  if (!shouldUseGlobalLoading(cfg)) {
+    cfg.__fxGlobalLoading = false
+    return
+  }
+
+  cfg.__fxGlobalLoading = true
+  activeReq++
+  currentLoadingDelay = normalizeDuration(cfg?.loadingDelay, defaultLoadingDelay)
+  currentMinVisibleDuration = normalizeDuration(cfg?.minVisibleDuration, defaultMinVisibleDuration)
+
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+    hideTimer = undefined
+  }
+
+  if (!globalLoadingVisible && !loadingTimer) {
+    loadingTimer = window.setTimeout(showGlobalLoading, currentLoadingDelay)
+  }
+}
+
+function stopGlobalLoading(cfg: any) {
+  if (!cfg?.__fxGlobalLoading) {
+    return
+  }
+
+  cfg.__fxGlobalLoading = false
+  activeReq = Math.max(0, activeReq - 1)
+  if (activeReq > 0) {
+    return
+  }
+
+  if (loadingTimer) {
+    clearTimeout(loadingTimer)
+    loadingTimer = undefined
+  }
+
+  if (!globalLoadingVisible) {
+    return
+  }
+
+  const elapsed = Date.now() - globalLoadingShownAt
+  const remaining = Math.max(0, currentMinVisibleDuration - elapsed)
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+  }
+  hideTimer = window.setTimeout(() => {
+    hideTimer = undefined
+    if (activeReq > 0) {
+      return
+    }
+
+    const gl = getGlobalLoader()
+    globalLoadingVisible = false
+    gl?.hide()
+  }, remaining)
+}
+
+function injectCommonHeaders(cfg: any) {
+  const locale = getLocale()
+  const tenantId = sessionStorage.getItem('tenantId')
+  const headersAny: any = cfg.headers || {}
+  if (typeof headersAny.set === 'function') {
+    headersAny.set('Accept-Language', locale)
+    headersAny.set('X-Lang', locale)
+    if (tenantId) {
+      headersAny.set('X-Tenant-Id', tenantId)
+    }
+  } else {
+    headersAny['Accept-Language'] = locale
+    headersAny['X-Lang'] = locale
+    if (tenantId) {
+      headersAny['X-Tenant-Id'] = tenantId
+    }
+  }
+  cfg.headers = headersAny
+  return cfg
+}
+
 /**
  * 请求拦截器（带全局遮罩）
  * 在发送请求前执行，主要用于：
@@ -320,51 +464,8 @@ function shouldShowSuccessMessage(resp: any, httpInstance: any, backendMessage: 
  * 2. 根据配置显示全局加载指示器
  */
 http.interceptors.request.use(cfg => {
-  // 增加活跃请求计数
-  activeReq++
-  
-  // 获取全局加载器实例
-  const gl = (window as any).__globalLoader
-  let enableLoader = true
-  
-  // 检查本地存储中的加载指示器配置
-  try {
-    const raw = localStorage.getItem('fx-layout-config')
-    if (raw) {
-      const cfgObj = JSON.parse(raw)
-      if (cfgObj && cfgObj.loadingIndicatorEnabled === false) {
-        enableLoader = false
-      }
-    }
-  } catch (e) {
-    // 解析失败时默认显示加载指示器
-  }
-  
-  // 如果允许显示且加载器存在，则显示加载指示器
-  if (enableLoader && gl && typeof gl.show === 'function') {
-    gl.show()
-  }
-  
-  // 添加语言头
-  const locale = getLocale()
-  const tenantId = sessionStorage.getItem('tenantId')
-  const headersAny: any = cfg.headers || {}
-  if (typeof headersAny.set === 'function') {
-    headersAny.set('Accept-Language', locale)
-    headersAny.set('X-Lang', locale)
-    if (tenantId) {
-      headersAny.set('X-Tenant-Id', tenantId)
-    }
-  } else {
-    headersAny['Accept-Language'] = locale
-    headersAny['X-Lang'] = locale
-    if (tenantId) {
-      headersAny['X-Tenant-Id'] = tenantId
-    }
-  }
-  cfg.headers = headersAny
-  
-  return cfg
+  startGlobalLoading(cfg as any)
+  return injectCommonHeaders(cfg)
 })
 
 /**
@@ -372,26 +473,7 @@ http.interceptors.request.use(cfg => {
  * 用于后台接口，不显示全局加载指示器
  */
 silentHttp.interceptors.request.use(cfg => {
-  // 添加语言头
-  const locale = getLocale()
-  const tenantId = sessionStorage.getItem('tenantId')
-  const headersAny: any = cfg.headers || {}
-  if (typeof headersAny.set === 'function') {
-    headersAny.set('Accept-Language', locale)
-    headersAny.set('X-Lang', locale)
-    if (tenantId) {
-      headersAny.set('X-Tenant-Id', tenantId)
-    }
-  } else {
-    headersAny['Accept-Language'] = locale
-    headersAny['X-Lang'] = locale
-    if (tenantId) {
-      headersAny['X-Tenant-Id'] = tenantId
-    }
-  }
-  cfg.headers = headersAny
-  
-  return cfg
+  return injectCommonHeaders(cfg)
 })
 
 /**
@@ -503,25 +585,50 @@ function mergeRequestConfig(defaults?: FxRequestConfig, config?: FxRequestConfig
   }
 }
 
+function requestWithDedupe<T>(key: string | undefined, mode: FxDedupeMode | undefined, request: () => Promise<T>) {
+  if (!key || mode === 'none') {
+    return request()
+  }
+
+  const running = pendingActions.get(key)
+  if (running) {
+    return running as Promise<T>
+  }
+
+  const promise = request().finally(() => {
+    if (pendingActions.get(key) === promise) {
+      pendingActions.delete(key)
+    }
+  })
+  pendingActions.set(key, promise)
+  return promise
+}
+
 function createHttpClient(instance: AxiosInstance, defaults?: FxRequestConfig): FxHttpClient {
   return {
     request<T = any>(config: FxRequestConfig) {
-      return instance.request<T, T>(mergeRequestConfig(defaults, config))
+      const merged = mergeRequestConfig(defaults, config)
+      return requestWithDedupe<T>(merged.actionKey, merged.dedupeMode, () => instance.request<T, T>(merged))
     },
     get<T = any>(url: string, config?: FxRequestConfig) {
-      return instance.get<T, T>(url, mergeRequestConfig(defaults, config))
+      const merged = mergeRequestConfig(defaults, config)
+      return requestWithDedupe<T>(merged.actionKey, merged.dedupeMode, () => instance.get<T, T>(url, merged))
     },
     delete<T = any>(url: string, config?: FxRequestConfig) {
-      return instance.delete<T, T>(url, mergeRequestConfig(defaults, config))
+      const merged = mergeRequestConfig(defaults, config)
+      return requestWithDedupe<T>(merged.actionKey, merged.dedupeMode, () => instance.delete<T, T>(url, merged))
     },
     post<T = any>(url: string, data?: any, config?: FxRequestConfig) {
-      return instance.post<T, T>(url, data, mergeRequestConfig(defaults, config))
+      const merged = mergeRequestConfig(defaults, config)
+      return requestWithDedupe<T>(merged.actionKey, merged.dedupeMode, () => instance.post<T, T>(url, data, merged))
     },
     put<T = any>(url: string, data?: any, config?: FxRequestConfig) {
-      return instance.put<T, T>(url, data, mergeRequestConfig(defaults, config))
+      const merged = mergeRequestConfig(defaults, config)
+      return requestWithDedupe<T>(merged.actionKey, merged.dedupeMode, () => instance.put<T, T>(url, data, merged))
     },
     patch<T = any>(url: string, data?: any, config?: FxRequestConfig) {
-      return instance.patch<T, T>(url, data, mergeRequestConfig(defaults, config))
+      const merged = mergeRequestConfig(defaults, config)
+      return requestWithDedupe<T>(merged.actionKey, merged.dedupeMode, () => instance.patch<T, T>(url, data, merged))
     }
   }
 }
@@ -530,8 +637,17 @@ function createHttpClient(instance: AxiosInstance, defaults?: FxRequestConfig): 
  * 响应拦截器 - 业务逻辑处理（带全局遮罩）
  */
 http.interceptors.response.use(
-  async resp => handleResponse(resp, http),
-  handleError
+  async resp => {
+    try {
+      return await handleResponse(resp, http)
+    } finally {
+      stopGlobalLoading(resp.config as any)
+    }
+  },
+  err => {
+    stopGlobalLoading(err?.config as any)
+    return handleError(err)
+  }
 )
 
 /**
@@ -546,36 +662,6 @@ silentHttp.interceptors.response.use(
  * 响应拦截器 - 加载指示器处理（仅用于带全局遮罩的http实例）
  * 用于控制全局加载指示器的隐藏，无论请求成功或失败
  */
-http.interceptors.response.use(
-  r => {
-    // 减少活跃请求计数（确保不小于0）
-    activeReq = Math.max(0, activeReq - 1)
-    
-    // 当所有请求完成时，隐藏加载指示器
-    if (activeReq === 0) {
-      const gl = (window as any).__globalLoader
-      if (gl && typeof gl.hide === 'function') {
-        gl.hide()
-      }
-    }
-    
-    return r
-  },
-  e => {
-    // 错误情况下也需要减少活跃请求计数
-    activeReq = Math.max(0, activeReq - 1)
-    
-    // 当所有请求完成时，隐藏加载指示器
-    if (activeReq === 0) {
-      const gl = (window as any).__globalLoader
-      if (gl && typeof gl.hide === 'function') {
-        gl.hide()
-      }
-    }
-    
-    return Promise.reject(e)
-  }
-)
 
 /**
  * 默认请求客户端

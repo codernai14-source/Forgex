@@ -45,8 +45,12 @@ export default {
       'Control whether the system guide should appear automatically, and replay the system guide when needed.',
     babyModeTitle: 'Enable Baby Mode',
     babyModeDesc: 'When enabled, guides that were completed or skipped can be shown again proactively.',
+    systemPageGuideTitle: 'System Page Guides',
+    systemPageGuideDesc:
+      'When disabled, later system management pages will no longer auto-open guides. The current page is not affected.',
     replayTitle: 'Replay System Guide',
-    replayDesc: 'Reset the system homepage guide to pending so it auto-plays again when you enter the homepage.',
+    replayDesc:
+      'Clear the guide disable state and reset the system homepage and system page guides to pending.',
     replayAction: 'Replay',
   },
   validation: {

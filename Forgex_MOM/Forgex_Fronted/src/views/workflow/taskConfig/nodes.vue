@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div ref="designerRootRef" class="designer-page">
     <section class="designer-topbar">
       <div>
@@ -213,7 +213,7 @@
 
               <a-row :gutter="12">
                 <a-col :span="12">
-                  <a-form-item label="超时小时">
+                  <a-form-item :label="t('workflow.taskConfig.nodes.timeoutHours')">
                     <a-input-number
                       :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.timeoutHours"
                       :min="1"
@@ -223,7 +223,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
-                  <a-form-item label="超时动作">
+                  <a-form-item :label="t('workflow.taskConfig.nodes.timeoutAction')">
                     <a-select
                       allow-clear
                       :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.timeoutAction"
@@ -239,7 +239,7 @@
 
               <a-row v-if="ensureNodeRuleConfigs(selectedNodeData)[0]?.ruleType === RULE_TYPES.SUPERIOR" :gutter="12">
                 <a-col :span="12">
-                  <a-form-item label="上级层级">
+                  <a-form-item :label="t('workflow.taskConfig.nodes.superiorLevel')">
                     <a-input-number
                       :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.superiorLevel || 1"
                       :min="1"
@@ -249,7 +249,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
-                  <a-form-item label="通过阈值">
+                  <a-form-item :label="t('workflow.taskConfig.nodes.approvalThreshold')">
                     <a-input-number
                       :value="ensureNodeRuleConfigs(selectedNodeData)[0]?.approvalThreshold"
                       :min="0"
@@ -500,7 +500,7 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import {
-  Handle,
+Handle,
   MarkerType,
   Position,
   VueFlow,
@@ -583,12 +583,6 @@ const RULE_TYPES = {
   SUPERIOR: 3
 } as const
 
-const TIMEOUT_ACTIONS = [
-  { label: '仅提醒', value: 1 },
-  { label: '自动通过', value: 2 },
-  { label: '自动转交', value: 3 }
-]
-
 const { dictItems: approveTypeDictItems } = useDict('wf_approve_type')
 const { dictItems: approverTypeDictItems } = useDict('wf_approver_type')
 const { dictItems: branchOperatorDictItems } = useDict('wf_branch_operator')
@@ -600,6 +594,12 @@ const approveTypeDescriptionMap: Record<number, string> = {
   4: 'workflow.taskConfig.nodes.approveTypeDescription.4',
   5: 'workflow.taskConfig.nodes.approveTypeDescription.5',
 }
+
+const TIMEOUT_ACTIONS = computed(() => [
+  { label: t('workflow.taskConfig.nodes.timeoutActions.remindOnly'), value: 1 },
+  { label: t('workflow.taskConfig.nodes.timeoutActions.autoApprove'), value: 2 },
+  { label: t('workflow.taskConfig.nodes.timeoutActions.autoTransfer'), value: 3 },
+])
 
 const APPROVER_TYPE_TO_RECEIVER_TYPE: Record<number, string> = {
   [APPROVER_TYPES.USER]: 'USER',
@@ -1464,7 +1464,7 @@ function updateBranchRule(index: number, patch: Partial<WfBranchRuleDTO>) {
 
 function buildDefaultRuleConfig(): WfTaskNodeRuleDTO {
   return {
-    ruleName: '默认规则',
+    ruleName: t('workflow.taskConfig.nodes.defaultRuleName'),
     ruleType: RULE_TYPES.STATIC,
     approveMode: 2,
     approvalThreshold: undefined,
@@ -2162,3 +2162,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+

@@ -23,6 +23,10 @@ export default {
     moduleName: '请输入模块名称',
     icon: '请输入图标名称',
     orderNum: '请输入排序号',
+    moduleCodePattern: '只能包含字母、数字和下划线，长度 2-50',
+    moduleNameI18nRequired: '请至少配置一种语言的模块名称',
+    orderNumNumber: '排序号必须是数字',
+    status: '请选择状态',
   },
   
   // 操作
@@ -34,5 +38,6 @@ export default {
     deleteSuccess: '删除模块成功',
     saveSuccess: '保存模块成功',
     moduleCodeExists: '模块编码已存在',
+    selectModuleToDelete: '请选择要删除的模块',
   },
 }

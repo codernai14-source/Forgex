@@ -1,14 +1,32 @@
+<p align="center">
+  <img src="Forgex_Doc/img/forgex-logo-readme.png" alt="Forgex" width="160">
+</p>
+
 # Forgex
 
 <div align="center" style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3rem;margin:10px auto 14px;width:100%;box-sizing:border-box;">
   <a href="https://gitee.com/coder_nai/forgex/stargazers" title="Gitee Stars" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark" alt="Gitee Stars"/></a>
   <a href="https://gitee.com/coder_nai/forgex/members" title="Gitee Forks" style="display:inline-block;margin:4px clamp(14px,3vw,32px);"><img src="https://gitee.com/coder_nai/forgex/badge/fork.svg?theme=dark" alt="Gitee Forks"/></a>
+<img src="https://compass.gitee.com/badge/sc3ka4w2.svg" alt="OSS Compass Analyze" />
 </div>
 
 > 面向企业级生产制造行业的全栈开发脚手架与业务中台底座
-> 文档版本：**V0.6.5**
+> 当前版本：**0.7.0 体验版**
 
 Forgex 是一个为制造业数字化项目准备的企业级全栈脚手架，重点服务需要集成 MES、WMS、QMS、设备接入、生产协同、报表分析、审批流于一体的生产制造企业MOM系统。它不是只提供登录页、菜单页和 CRUD 模板的通用后台，而是把生产制造项目里反复出现的组织权限、租户隔离、动态表格、数据字典、工作流、消息通知、报表、导入导出、文件上传、系统集成和私有化交付能力提前沉淀成平台底座。
+
+当前 0.7.0 体验版已经具备正式使用体验的基础，欢迎各位朋友通过演示环境试用，也欢迎加入交流群讨论 Forgex 的使用体验、二开方案、部署问题和后续功能规划。
+
+## 联系方式与交流群
+
+- QQ：3096821283
+- Email：coder_nai@163.com
+
+<div align="center">
+  <img src="Forgex_Doc/img/forgex-qq-group-readme.png" alt="Forgex QQ 群" width="260">
+  <br/>
+  <strong>欢迎各位朋友入群讨论</strong>
+</div>
 
 ## 演示地址
 
@@ -241,13 +259,13 @@ gradlew.bat :app:assembleDevDebug
 
 ```powershell
 cd Forgex_Build
-powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 0.6.5 -AllowDistFallback
+powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 0.7.0 -AllowDistFallback
 ```
 
 构建后主要产物：
 
-- `Forgex_Build/dist/windows/Forgex-Windows-Package-0.6.5.zip`
-- `Forgex_Build/dist/linux/forgex-linux-bundle-0.6.5.tar.gz`
+- `Forgex_Build/dist/windows/Forgex-Windows-Package-0.7.0.zip`
+- `Forgex_Build/dist/linux/forgex-linux-bundle-0.7.0.tar.gz`
 
 Windows 首次部署时，解压交付包后按安装器或 `scripts` 目录中的脚本完成安装、数据库导入、Nacos 配置导入和服务启动。已有环境升级时，使用新包中的 `scripts/upgrade.bat` 或 `scripts/upgrade.ps1` 替换应用文件，并在数据库备份后按需执行 `database-upgrade` 里的 SQL。
 
@@ -256,8 +274,8 @@ Windows 首次部署时，解压交付包后按安装器或 `scripts` 目录中�
 Linux 交付包包含前端、后端服务、Nginx 配置模板、Nacos 配置、授权客户端和部署脚本。解压后通过 `install.sh` 初始化目录和环境变量，再结合 Docker Compose 或现场服务管理方式启动后端服务。
 
 ```bash
-tar -zxvf forgex-linux-bundle-0.6.5.tar.gz
-cd forgex-linux-bundle-0.6.5
+tar -zxvf forgex-linux-bundle-0.7.0.tar.gz
+cd forgex-linux-bundle-0.7.0
 ./install.sh ACME_PROD yanshi
 ```
 
@@ -272,11 +290,6 @@ cd forgex-linux-bundle-0.6.5
 - [安卓端文档](./Forgex_Doc/安卓端/README.md)
 - [数据库文档](./Forgex_Doc/数据库/README.md)
 - [部署文档](./Forgex_Doc/部署/README.md)
-
-## 联系方式
-
-- QQ：3096821283
-- Email：coder_nai@163.com
 
 ## 许可证
 

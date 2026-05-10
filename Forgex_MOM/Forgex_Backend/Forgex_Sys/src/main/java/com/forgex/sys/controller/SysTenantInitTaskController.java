@@ -30,7 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/tenant/init/task")
+@RequestMapping("/tenant/init/task")
 @RequiredArgsConstructor
 public class SysTenantInitTaskController {
     

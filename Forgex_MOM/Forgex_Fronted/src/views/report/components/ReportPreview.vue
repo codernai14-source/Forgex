@@ -11,8 +11,8 @@
     <div class="preview-container">
       <a-alert
         v-if="showTips"
-        message="提示"
-        description="以下为报表预览效果，可通过 URL 参数传递查询条件。"
+        :message="t('common.tip')"
+        :description="t('report.preview.tip')"
         type="info"
         show-icon
         closable
@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getPreviewUrl } from '@/api/report'
 
 interface Props {
@@ -53,6 +54,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const visible = computed({
   get: () => props.open,
@@ -65,7 +67,7 @@ const iframeLoaded = ref(false)
 
 const previewTitle = computed(() => {
   const engineName = props.engineType === 'UREPORT' ? 'UReport2' : 'JimuReport'
-  return `${engineName} 报表预览`
+  return t('report.preview.title', { engineName })
 })
 
 const previewUrl = computed(() => {
@@ -77,7 +79,7 @@ const previewUrl = computed(() => {
 
 function handleIframeLoad() {
   iframeLoaded.value = true
-  console.log('报表预览加载完成')
+  console.log('[ReportPreview] iframe loaded')
 }
 
 function handleCancel() {

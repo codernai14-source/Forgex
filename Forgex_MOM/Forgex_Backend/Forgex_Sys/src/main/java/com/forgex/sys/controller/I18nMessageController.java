@@ -34,7 +34,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/i18n/message")
+@RequestMapping("/i18n/message")
 @RequiredArgsConstructor
 public class I18nMessageController {
 

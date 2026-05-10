@@ -18,12 +18,17 @@
       :show-lang-switch="layoutConfig.widgetLangSwitch"
       :show-refresh="layoutConfig.widgetRefresh"
       :user="currentUser"
+      :tenant-options="tenantOptions"
+      :current-tenant-id="currentTenantId"
+      :tenant-loading="tenantLoading"
+      :switching-tenant-id="switchingTenantId"
       @module-click="onModuleClick"
       @search-click="globalSearchVisible = true"
       @locale-change="onLocaleChange"
       @refresh="refreshPage"
       @message-click="openMessageDrawer"
       @user-menu-click="onUserMenuClick"
+      @tenant-change="onTenantChange"
       @settings-click="settingOpen = true"
     />
 
@@ -159,17 +164,19 @@
       :steps="systemGuideSteps"
       :auto-start="systemGuideAutoStart"
       :start-key="systemGuideStartKey"
-      skip-text="跳过引导"
+      :skip-text="t('common.guide.skip')"
+      :show-skip-all="true"
       @open="handleSystemGuideOpen"
       @close="handleSystemGuideClose"
       @finish="handleSystemGuideFinish"
       @skip="handleSystemGuideSkip"
+      @skip-all="handleSystemGuideSkipAll"
     />
 
     <!-- 消息通知抽屉 -->
     <a-drawer
       v-model:open="messageDrawerOpen"
-      title="消息通知"
+      :title="t('layout.messageCenter.title')"
       placement="right"
       width="520"
       class="fx-message-drawer"
@@ -178,20 +185,20 @@
         <a-tabs v-model:activeKey="activeMessageTab" @change="handleMessageTabChange">
           <a-tab-pane key="SYSTEM">
             <template #tab>
-              <span>系统通知</span>
+              <span>{{ t('layout.messageCenter.system') }}</span>
               <a-badge :count="messageCounts.SYSTEM" :number-style="{ backgroundColor: '#1677ff' }" />
             </template>
           </a-tab-pane>
           <a-tab-pane key="MESSAGE">
             <template #tab>
-              <span>消息通知</span>
+              <span>{{ t('layout.messageCenter.message') }}</span>
               <a-badge :count="messageCounts.MESSAGE" :number-style="{ backgroundColor: '#52c41a' }" />
             </template>
           </a-tab-pane>
         </a-tabs>
 
         <div v-if="currentMessageList.length === 0" class="fx-message-empty">
-          <a-empty :description="activeMessageTab === 'SYSTEM' ? '暂无系统通知' : '暂无消息通知'" />
+          <a-empty :description="activeMessageTab === 'SYSTEM' ? t('layout.messageCenter.emptySystem') : t('layout.messageCenter.emptyMessage')" />
         </div>
         <div v-else class="fx-message-list">
           <div
@@ -203,7 +210,7 @@
             <div class="fx-message-item__header">
               <div class="fx-message-title">{{ msg.title }}</div>
               <a-tag :color="msg.category === 'SYSTEM' ? 'blue' : 'green'">
-                {{ msg.category === 'SYSTEM' ? '系统通知' : '消息通知' }}
+                {{ msg.category === 'SYSTEM' ? t('layout.messageCenter.system') : t('layout.messageCenter.message') }}
               </a-tag>
             </div>
             <div class="fx-message-content">{{ msg.content }}</div>
@@ -412,16 +419,16 @@
 
     <a-modal
       v-model:open="messageSendOpen"
-      title="发送站内消息"
+      :title="t('layout.messageCenter.sendTitle')"
       :confirm-loading="false"
       @ok="handleMessageSend"
     >
       <a-form layout="vertical">
-        <a-form-item label="接收用户" required>
+        <a-form-item :label="t('layout.messageCenter.receiverUser')" required>
           <a-input
             v-model:value="selectedUserName"
             readonly
-            placeholder="点击选择用户"
+            :placeholder="t('layout.messageCenter.selectUserPlaceholder')"
             @click="openUserSelectModal"
           >
             <template #suffix>
@@ -430,16 +437,16 @@
           </a-input>
         </a-form-item>
 
-        <a-form-item label="标题" required>
-          <a-input v-model:value="messageSendForm.title" placeholder="请输入消息标题" />
+        <a-form-item :label="t('layout.messageCenter.messageTitle')" required>
+          <a-input v-model:value="messageSendForm.title" :placeholder="t('layout.messageCenter.messageTitlePlaceholder')" />
         </a-form-item>
 
-        <a-form-item label="内容" required>
-          <a-textarea v-model:value="messageSendForm.content" :rows="4" placeholder="请输入消息内容" />
+        <a-form-item :label="t('layout.messageCenter.content')" required>
+          <a-textarea v-model:value="messageSendForm.content" :rows="4" :placeholder="t('layout.messageCenter.contentPlaceholder')" />
         </a-form-item>
 
-        <a-form-item label="跳转链接">
-          <a-input v-model:value="messageSendForm.linkUrl" placeholder="可选，点击消息后跳转的链接" />
+        <a-form-item :label="t('layout.messageCenter.linkUrl')">
+          <a-input v-model:value="messageSendForm.linkUrl" :placeholder="t('layout.messageCenter.linkUrlPlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -447,13 +454,13 @@
     <!-- 用户选择弹窗 -->
     <a-modal
       v-model:open="userSelectOpen"
-      title="选择用户"
+      :title="t('layout.messageCenter.selectUserTitle')"
       width="600px"
       @ok="confirmUserSelect"
     >
       <a-input-search
         v-model:value="userSearchKeyword"
-        placeholder="搜索用户名或账号"
+        :placeholder="t('layout.messageCenter.searchUserPlaceholder')"
         style="margin-bottom: 16px"
         @search="searchUsers"
       />
@@ -487,7 +494,7 @@ import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
 import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
-import { changeLanguage } from '../api/auth/login'
+import { changeLanguage, chooseTenant, listCurrentTenants, type TenantOption } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
@@ -521,6 +528,7 @@ import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
+import { use权限Store } from '../stores/permission'
 import { getIcon } from '../utils/icon'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
@@ -532,6 +540,7 @@ const { t, locale } = useI18n()
 const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
+const permissionStore = use权限Store()
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -912,27 +921,10 @@ const MAX_ROUTE_VISIT_STATS_COUNT = 200
 const HORIZONTAL_MENU_CHILD_LIMIT = 6
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
-const ROUTE_TITLE_FALLBACKS: Record<string, Record<string, string>> = {
-  'zh-CN': {
-    'workflow.execution.startApproval': '发起审批',
-    'integration.title': '接口平台',
-    'integration.home.title': '接口平台首页',
-  },
-  'en-US': {
-    'workflow.execution.startApproval': 'Start Approval',
-    'integration.title': 'Integration Platform',
-    'integration.home.title': 'Integration Home',
-  },
-  'ja-JP': {
-    'workflow.execution.startApproval': '承認を開始',
-    'integration.title': 'Integration Platform',
-    'integration.home.title': 'Integration Home',
-  },
-  'ko-KR': {
-    'workflow.execution.startApproval': '결재 시작',
-    'integration.title': 'Integration Platform',
-    'integration.home.title': 'Integration Home',
-  },
+const ROUTE_TITLE_FALLBACK_KEYS: Record<string, string> = {
+  'workflow.execution.startApproval': 'workflow.execution.startTitle',
+  'integration.title': 'integration.title',
+  'integration.home.title': 'integration.home.title',
 }
 
 function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
@@ -949,6 +941,10 @@ function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
   })
 }
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
+const currentTenantId = ref<string>(sessionStorage.getItem('tenantId') || '')
+const tenantOptions = ref<TenantOption[]>([])
+const tenantLoading = ref(false)
+const switchingTenantId = ref('')
 const messageSendOpen = ref(false)
 const messageSendForm = ref<MessageSendForm>({
   receiverTenantId: Number(sessionStorage.getItem('tenantId') || '') || undefined,
@@ -971,11 +967,11 @@ const userSearchKeyword = ref('')
 
 const currentMessageList = computed(() => messageLists.value[activeMessageTab.value] || [])
 
-const userSelectColumns = [
-  { title: '用户名', dataIndex: 'username', width: 120 },
-  { title: '账号', dataIndex: 'account', width: 120 },
-  { title: '部门', dataIndex: 'departmentName', ellipsis: true }
-]
+const userSelectColumns = computed(() => [
+  { title: t('layout.messageCenter.userName'), dataIndex: 'username', width: 120 },
+  { title: t('layout.messageCenter.account'), dataIndex: 'account', width: 120 },
+  { title: t('layout.messageCenter.department'), dataIndex: 'departmentName', ellipsis: true },
+])
 
 const antdLocale = computed(() => {
   const key = String(currentLocale.value || locale.value || '')
@@ -992,7 +988,7 @@ const systemConfig = ref<SystemBasicConfig>({
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
-  loginPageTitle: '欢迎来到 FORGEX_MOM',
+  loginPageTitle: 'FORGEX_MOM',
   loginPageSubtitle: '',
   loginBackgroundType: 'image',
   loginBackgroundVideo: '/loading.mp4',
@@ -1176,7 +1172,8 @@ async function reportSystemMenuOpenIfNeeded(path: string) {
 
   const currentGuideConfig = resolveSystemPageGuide(normalizedPath)
   const currentGuideState = guideStore.getMergedGuideState(currentGuideConfig.guideCode)
-  if (currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled) {
+  if ((currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled)
+    && guideStore.shouldAutoStartSystemPageGuide(currentGuideConfig.guideCode, currentGuideConfig.version)) {
     reportUserMenuOpen(normalizedPath).catch(() => {})
     await startSystemGuide(currentGuideConfig)
     return
@@ -1188,6 +1185,9 @@ async function reportSystemMenuOpenIfNeeded(path: string) {
       return
     }
     const guideConfig = resolveSystemPageGuide(result.path || normalizedPath)
+    if (!guideStore.shouldAutoStartSystemPageGuide(guideConfig.guideCode, guideConfig.version)) {
+      return
+    }
     await startSystemGuide(guideConfig)
   } catch (_) {
   }
@@ -1283,8 +1283,8 @@ function resolveMenuTitle(rawTitle: unknown): string {
     if (translated !== title) {
       return translated
     }
-    const localeKey = String(currentLocale.value || locale.value || 'zh-CN')
-    return ROUTE_TITLE_FALLBACKS[localeKey]?.[title] || ROUTE_TITLE_FALLBACKS['zh-CN']?.[title] || title
+    const fallbackKey = ROUTE_TITLE_FALLBACK_KEYS[title]
+    return fallbackKey ? t(fallbackKey) : title
   }
   return title
 }
@@ -1712,19 +1712,91 @@ const currentUser = computed(() => {
   }
 })
 
+async function loadTenantOptions() {
+  tenantLoading.value = true
+  try {
+    const list = await listCurrentTenants()
+    tenantOptions.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('[MainLayout] 加载可切换租户失败:', error)
+    tenantOptions.value = []
+  } finally {
+    tenantLoading.value = false
+  }
+}
+
+async function onTenantChange(tenantId: string) {
+  const targetTenantId = String(tenantId || '')
+  if (!targetTenantId || targetTenantId === currentTenantId.value || switchingTenantId.value) {
+    return
+  }
+
+  const account = currentUser.value.account || currentAccount.value || sessionStorage.getItem('account') || ''
+  if (!account) {
+    message.warning(t('layout.tenant.currentAccountMissing'))
+    return
+  }
+
+  const targetTenant = tenantOptions.value.find(item => String(item.id) === targetTenantId)
+  switchingTenantId.value = targetTenantId
+  try {
+    const result = await chooseTenant({ account, tenantId: targetTenantId })
+    const nextTenantId = String(result?.tenantId || targetTenantId)
+
+    userStore.setUserInfo({
+      account: result?.account || account,
+      username: result?.username || result?.account || account,
+      email: result?.email,
+      phone: result?.phone,
+      avatar: result?.avatar,
+      tenantId: nextTenantId,
+      tenantName: targetTenant?.name
+    })
+    currentAccount.value = result?.account || account
+    currentTenantId.value = nextTenantId
+    sessionStorage.setItem('account', currentAccount.value)
+    sessionStorage.setItem('tenantId', nextTenantId)
+
+    const routesRes = await getRoutes({ account: currentAccount.value, tenantId: nextTenantId })
+    permissionStore.set权限s(routesRes?.buttons || [])
+    permissionStore.setRoutes(routesRes?.routes || [])
+    permissionStore.setModules(routesRes?.modules || [])
+    await injectDynamicRoutes(routesRes)
+
+    tabs.value = buildFixedTabs()
+    activeTabKey.value = PERSONAL_HOME_PATH
+    selectedKeys.value = [PERSONAL_HOME_PATH]
+    activeModuleCode.value = ''
+    openKeys.value = []
+    messageSendForm.value.receiverTenantId = Number(nextTenantId) || undefined
+
+    await loadTenantOptions()
+    await router.push(PERSONAL_HOME_PATH)
+    message.success(t('layout.tenant.switchSuccess'))
+  } catch (error) {
+    console.error('[MainLayout] 切换租户失败:', error)
+    message.error(t('layout.tenant.switchFailed'))
+  } finally {
+    switchingTenantId.value = ''
+  }
+}
+
 function canAutoStartSystemGuide() {
   if (!systemGuideReady.value) {
     return false
   }
+  if (guideStore.systemPageGuideDisabled && !guideStore.babyModeEnabled) {
+    return false
+  }
   if (currentSystemGuideCode.value !== 'system.main') {
     return pendingSystemFirstOpenGuide.value
-      && guideStore.shouldAutoStartGuide(currentSystemGuideCode.value, currentSystemGuideVersion.value)
+      && guideStore.shouldAutoStartSystemPageGuide(currentSystemGuideCode.value, currentSystemGuideVersion.value)
   }
   if (route.path !== PERSONAL_HOME_PATH) {
     return false
   }
   currentSystemGuideVersion.value = 'v1'
-  return guideStore.shouldAutoStartGuide('system.main', 'v1')
+  return guideStore.shouldAutoStartSystemPageGuide('system.main', 'v1')
 }
 
 function syncSystemGuideAutoStart() {
@@ -1765,6 +1837,14 @@ async function handleSystemGuideSkip(guideCode = currentSystemGuideCode.value, v
   guideStore.finishCurrentGuide()
 }
 
+async function handleSystemGuideSkipAll(guideCode = currentSystemGuideCode.value, version = 'v1') {
+  await guideStore.markGuideSkipped(guideCode, version)
+  await guideStore.setSystemPageGuideDisabled(true)
+  systemGuideAutoStart.value = false
+  pendingSystemFirstOpenGuide.value = false
+  guideStore.finishCurrentGuide()
+}
+
 async function loadGuidePreference() {
   await guideStore.loadPreference()
   systemGuideReady.value = true
@@ -1772,7 +1852,8 @@ async function loadGuidePreference() {
   if (normalizedPath.startsWith('/workspace/sys/')) {
     const currentGuideConfig = resolveSystemPageGuide(normalizedPath)
     const currentGuideState = guideStore.getMergedGuideState(currentGuideConfig.guideCode)
-    if (currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled) {
+    if ((currentGuideState?.status === 'PENDING' || guideStore.babyModeEnabled)
+      && guideStore.shouldAutoStartSystemPageGuide(currentGuideConfig.guideCode, currentGuideConfig.version)) {
       await startSystemGuide(currentGuideConfig)
       return
     }
@@ -2224,7 +2305,7 @@ function onUserMenuClick(key: string) {
   }
   
   if (key === 'resetPassword') {
-    message.info('重置密码功能暂未实现')
+    message.info(t('layout.user.resetPasswordNotReady'))
   }
 }
 
@@ -2430,15 +2511,15 @@ function openMessageNotification(m: SysMessageVO) {
 
 async function handleMessageSend() {
   if (!messageSendForm.value.receiverUserId) {
-    message.warning('请选择接收用户')
+    message.warning(t('layout.messageCenter.selectReceiverWarning'))
     return
   }
   if (!messageSendForm.value.title) {
-    message.warning('请输入消息标题')
+    message.warning(t('layout.messageCenter.titleRequired'))
     return
   }
   if (!messageSendForm.value.content) {
-    message.warning('请输入消息内容')
+    message.warning(t('layout.messageCenter.contentRequired'))
     return
   }
 
@@ -2459,7 +2540,7 @@ async function handleMessageSend() {
       content: messageSendForm.value.content,
       linkUrl: messageSendForm.value.linkUrl,
     } as any)
-    message.success('发送成功')
+    message.success(t('layout.messageCenter.sendSuccess'))
     await refreshMessageCenter(messageDrawerOpen.value)
     // 发给本人时立即弹出 Notification（SSE 可能因网关缓冲未即时到达；发给他人仅对方客户端展示）
     if (newId != null && isSendToSelf) {
@@ -2526,7 +2607,7 @@ function onUserSelectChange(keys: string[]) {
  */
 function confirmUserSelect() {
   if (selectedUserIds.value.length === 0) {
-    message.warning('请选择用户')
+    message.warning(t('layout.messageCenter.selectUserWarning'))
     return
   }
   const selectedUser = userSelectList.value.find(u => String(u.id) === selectedUserIds.value[0])
@@ -2558,6 +2639,7 @@ onMounted(async () => {
   await Promise.all([
     loadLayout(),
     loadGuidePreference(),
+    loadTenantOptions(),
   ])
   updateTabsByRoute(route.fullPath)
   

@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @Tag(name = "工厂管理", description = "工厂管理接口")
 @RestController
-@RequestMapping("/basic/factory")
+@RequestMapping("/factory")
 @RequiredArgsConstructor
 public class FactoryController {
 

@@ -1,10 +1,10 @@
 <template>
   <BaseFormDialog
     v-model:visible="dialogVisible"
-    :title="title"
-    :width="dialogWidth"
-    :ok-text="okText"
-    :cancel-text="cancelText"
+    :title="resolvedTitle"
+    :width="width"
+    :ok-text="resolvedOkText"
+    :cancel-text="resolvedCancelText"
     :ok-button-props="{ loading: submitting }"
     @ok="handleSubmit"
     @cancel="handleCancel"
@@ -15,15 +15,15 @@
         <a-space>
           <a-button type="primary" @click="handleAddMapping">
             <template #icon><PlusOutlined /></template>
-            添加映射
+            {{ t('integration.paramConfig.addMapping') }}
           </a-button>
           <a-button @click="handleBatchMapping">
             <template #icon><ThunderboltOutlined /></template>
-            智能匹配
+            {{ t('integration.paramConfig.smartMatch') }}
           </a-button>
           <a-button @click="handleClearAll">
             <template #icon><ClearOutlined /></template>
-            清空全部
+            {{ t('integration.paramConfig.clearAll') }}
           </a-button>
         </a-space>
       </div>
@@ -33,7 +33,7 @@
         :columns="columns"
         :data-source="mappingList"
         :pagination="pagination"
-        :scroll="{ y: 500 }"
+        :scroll="{ x: 1360, y: 500 }"
         row-key="id"
         size="middle"
         :row-class-name="getRowClassName"
@@ -50,7 +50,7 @@
               <a-tree-select
                 v-model:value="mappingList[index].sourcePath"
                 :tree-data="sourceTreeData"
-                placeholder="选择源字段"
+                :placeholder="t('integration.paramConfig.sourceFieldPlaceholder')"
                 allow-clear
                 tree-default-expand-all
                 show-search
@@ -70,7 +70,7 @@
               <a-tree-select
                 v-model:value="mappingList[index].targetPath"
                 :tree-data="targetTreeData"
-                placeholder="选择目标字段"
+                :placeholder="t('integration.paramConfig.targetFieldPlaceholder')"
                 allow-clear
                 tree-default-expand-all
                 show-search
@@ -88,7 +88,7 @@
           <template v-if="column.key === 'transformType'">
             <a-select
               v-model:value="mappingList[index].transformType"
-              placeholder="选择转换类型"
+              :placeholder="t('integration.paramConfig.selectTransformType')"
               style="width: 100%"
               :options="transformTypeOptions"
               @change="handleTransformTypeChange(index)"
@@ -110,7 +110,7 @@
                   <NumberOutlined />
                 </template>
               </a-input>
-              <a-tooltip v-if="mappingList[index].transformType === 'FUNCTION'" title="常用函数">
+              <a-tooltip v-if="mappingList[index].transformType === 'FUNCTION'" :title="t('integration.paramConfig.commonFunctions')">
                 <a-button type="text" size="small" @click="showFunctionHelp">
                   <template #icon><QuestionCircleOutlined /></template>
                 </a-button>
@@ -122,7 +122,7 @@
           <template v-if="column.key === 'remark'">
             <a-input
               v-model:value="mappingList[index].remark"
-              placeholder="备注说明"
+              :placeholder="t('integration.paramConfig.fieldRemarkPlaceholder')"
               allow-clear
             />
           </template>
@@ -134,7 +134,7 @@
                 type="link"
                 size="small"
                 @click="handleCopyMapping(index)"
-                title="复制"
+                :title="t('common.copy')"
               >
                 <template #icon><CopyOutlined /></template>
               </a-button>
@@ -143,7 +143,7 @@
                 size="small"
                 danger
                 @click="handleDeleteMapping(index)"
-                title="删除"
+                :title="t('common.delete')"
               >
                 <template #icon><DeleteOutlined /></template>
               </a-button>
@@ -156,16 +156,16 @@
           <a-table-summary>
             <a-table-summary-row>
               <a-table-summary-cell :index="0" colspan="2">
-                <strong>汇总：</strong>
+                <strong>{{ t('integration.paramConfig.summary') }}</strong>
               </a-table-summary-cell>
               <a-table-summary-cell :index="2">
-                共 {{ mappingList.length }} 条映射
+                {{ t('integration.paramConfig.mappingCount', { count: mappingList.length }) }}
               </a-table-summary-cell>
               <a-table-summary-cell :index="3" colspan="3">
                 <a-space>
-                  <span>直接映射：{{ directCount }}</span>
-                  <span>函数转换：{{ functionCount }}</span>
-                  <span>常量值：{{ constantCount }}</span>
+                  <span>{{ t('integration.paramConfig.directSummary', { count: directCount }) }}</span>
+                  <span>{{ t('integration.paramConfig.functionSummary', { count: functionCount }) }}</span>
+                  <span>{{ t('integration.paramConfig.constantSummary', { count: constantCount }) }}</span>
                 </a-space>
               </a-table-summary-cell>
             </a-table-summary-row>
@@ -175,7 +175,7 @@
 
       <!-- 字段类型提示 -->
       <a-alert
-        message="字段类型说明"
+        :message="t('integration.paramConfig.fieldTypeHelp')"
         type="info"
         show-icon
         class="mt-2"
@@ -183,15 +183,15 @@
         <template #description>
           <div class="field-type-help">
             <a-tag color="cyan">STRING</a-tag>
-            <span>字符串</span>
+            <span>{{ t('integration.paramConfig.dataTypeKind.string') }}</span>
             <a-tag color="orange" class="ml-1">NUMBER</a-tag>
-            <span>数字</span>
+            <span>{{ t('integration.paramConfig.dataTypeKind.number') }}</span>
             <a-tag color="pink" class="ml-1">BOOLEAN</a-tag>
-            <span>布尔</span>
+            <span>{{ t('integration.paramConfig.dataTypeKind.boolean') }}</span>
             <a-tag color="blue" class="ml-1">OBJECT</a-tag>
-            <span>对象</span>
+            <span>{{ t('integration.paramConfig.fieldKind.object') }}</span>
             <a-tag color="purple" class="ml-1">ARRAY</a-tag>
-            <span>数组</span>
+            <span>{{ t('integration.paramConfig.fieldKind.array') }}</span>
           </div>
         </template>
       </a-alert>
@@ -200,44 +200,44 @@
     <!-- 函数帮助弹窗 -->
     <a-modal
       v-model:visible="functionHelpVisible"
-      title="转换函数帮助"
+      :title="t('integration.paramConfig.functionHelpTitle')"
       width="700px"
       :footer="null"
     >
       <div class="function-help">
         <a-collapse>
-          <a-collapse-panel key="1" header="字符串函数">
+          <a-collapse-panel key="1" :header="t('integration.paramConfig.functionHelp.stringFunctions')">
             <ul>
-              <li><code>toUpperCase(value)</code> - 转大写</li>
-              <li><code>toLowerCase(value)</code> - 转小写</li>
-              <li><code>trim(value)</code> - 去除空格</li>
-              <li><code>substring(value, start, end)</code> - 截取字符串</li>
-              <li><code>concat(value1, value2)</code> - 拼接字符串</li>
+              <li><code>toUpperCase(value)</code> - {{ t('integration.paramConfig.functionHelp.toUpperCase') }}</li>
+              <li><code>toLowerCase(value)</code> - {{ t('integration.paramConfig.functionHelp.toLowerCase') }}</li>
+              <li><code>trim(value)</code> - {{ t('integration.paramConfig.functionHelp.trim') }}</li>
+              <li><code>substring(value, start, end)</code> - {{ t('integration.paramConfig.functionHelp.substring') }}</li>
+              <li><code>concat(value1, value2)</code> - {{ t('integration.paramConfig.functionHelp.concat') }}</li>
             </ul>
           </a-collapse-panel>
-          <a-collapse-panel key="2" header="数字函数">
+          <a-collapse-panel key="2" :header="t('integration.paramConfig.functionHelp.numberFunctions')">
             <ul>
-              <li><code>abs(value)</code> - 绝对值</li>
-              <li><code>round(value, decimals)</code> - 四舍五入</li>
-              <li><code>ceil(value)</code> - 向上取整</li>
-              <li><code>floor(value)</code> - 向下取整</li>
-              <li><code>max(value1, value2)</code> - 最大值</li>
-              <li><code>min(value1, value2)</code> - 最小值</li>
+              <li><code>abs(value)</code> - {{ t('integration.paramConfig.functionHelp.abs') }}</li>
+              <li><code>round(value, decimals)</code> - {{ t('integration.paramConfig.functionHelp.round') }}</li>
+              <li><code>ceil(value)</code> - {{ t('integration.paramConfig.functionHelp.ceil') }}</li>
+              <li><code>floor(value)</code> - {{ t('integration.paramConfig.functionHelp.floor') }}</li>
+              <li><code>max(value1, value2)</code> - {{ t('integration.paramConfig.functionHelp.max') }}</li>
+              <li><code>min(value1, value2)</code> - {{ t('integration.paramConfig.functionHelp.min') }}</li>
             </ul>
           </a-collapse-panel>
-          <a-collapse-panel key="3" header="日期函数">
+          <a-collapse-panel key="3" :header="t('integration.paramConfig.functionHelp.dateFunctions')">
             <ul>
-              <li><code>formatDate(value, format)</code> - 格式化日期</li>
-              <li><code>parseDate(value, format)</code> - 解析日期</li>
-              <li><code>dateAdd(value, days)</code> - 日期相加</li>
-              <li><code>dateDiff(date1, date2)</code> - 日期差值</li>
+              <li><code>formatDate(value, format)</code> - {{ t('integration.paramConfig.functionHelp.formatDate') }}</li>
+              <li><code>parseDate(value, format)</code> - {{ t('integration.paramConfig.functionHelp.parseDate') }}</li>
+              <li><code>dateAdd(value, days)</code> - {{ t('integration.paramConfig.functionHelp.dateAdd') }}</li>
+              <li><code>dateDiff(date1, date2)</code> - {{ t('integration.paramConfig.functionHelp.dateDiff') }}</li>
             </ul>
           </a-collapse-panel>
-          <a-collapse-panel key="4" header="逻辑函数">
+          <a-collapse-panel key="4" :header="t('integration.paramConfig.functionHelp.logicFunctions')">
             <ul>
-              <li><code>if(condition, trueValue, falseValue)</code> - 条件判断</li>
-              <li><code>coalesce(value1, value2)</code> - 返回第一个非空值</li>
-              <li><code>defaultValue(value, default)</code> - 默认值</li>
+              <li><code>if(condition, trueValue, falseValue)</code> - {{ t('integration.paramConfig.functionHelp.if') }}</li>
+              <li><code>coalesce(value1, value2)</code> - {{ t('integration.paramConfig.functionHelp.coalesce') }}</li>
+              <li><code>defaultValue(value, default)</code> - {{ t('integration.paramConfig.functionHelp.defaultValue') }}</li>
             </ul>
           </a-collapse-panel>
         </a-collapse>
@@ -261,7 +261,8 @@
  */
 
 import { ref, computed, watch } from 'vue';
-import { message } from 'ant-design-vue';
+import { useI18n } from 'vue-i18n';
+import { message, Modal } from 'ant-design-vue';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -341,10 +342,10 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: 'API 参数映射配置',
+  title: '',
   width: '1400px',
-  okText: '保存',
-  cancelText: '取消',
+  okText: '',
+  cancelText: '',
   visible: false,
   sourceData: () => [],
   targetData: () => [],
@@ -352,6 +353,12 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
+const { t } = useI18n();
+
+const resolvedTitle = computed(() => props.title || t('integration.paramConfig.mappingDialogTitle'));
+const resolvedOkText = computed(() => props.okText || t('common.save'));
+const resolvedCancelText = computed(() => props.cancelText || t('common.cancel'));
+const width = computed(() => props.width);
 
 /**
  * 弹窗可见状态
@@ -380,68 +387,68 @@ const pagination = {
   pageSize: 100,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`
+  showTotal: (total: number) => t('common.total', { total })
 };
 
 /**
  * 转换类型选项
  */
-const transformTypeOptions = [
-  { label: '直接映射', value: 'DIRECT' },
-  { label: '函数转换', value: 'FUNCTION' },
-  { label: '常量值', value: 'CONSTANT' }
-];
+const transformTypeOptions = computed(() => [
+  { label: t('integration.paramConfig.transformTypeOptions.direct'), value: 'DIRECT' },
+  { label: t('integration.paramConfig.transformTypeOptions.function'), value: 'FUNCTION' },
+  { label: t('integration.paramConfig.transformTypeOptions.constant'), value: 'CONSTANT' }
+]);
 
 /**
  * 表格列配置
  */
-const columns = [
+const columns = computed(() => [
   {
-    title: '序号',
+    title: t('common.order'),
     dataIndex: 'index',
     key: 'index',
     width: 60,
     fixed: 'left' as const
   },
   {
-    title: '源字段',
+    title: t('integration.paramConfig.sourcePath'),
     dataIndex: 'sourcePath',
     key: 'sourceField',
     width: 300,
     fixed: 'left' as const
   },
   {
-    title: '目标字段',
+    title: t('integration.paramConfig.targetPath'),
     dataIndex: 'targetPath',
     key: 'targetField',
     width: 300,
     fixed: 'left' as const
   },
   {
-    title: '转换类型',
+    title: t('integration.paramConfig.transformType'),
     dataIndex: 'transformType',
     key: 'transformType',
     width: 120
   },
   {
-    title: '转换规则',
+    title: t('integration.paramConfig.transformRule'),
     dataIndex: 'transformRule',
     key: 'transformRule',
     width: 250
   },
   {
-    title: '备注',
+    title: t('common.remark'),
     dataIndex: 'remark',
     key: 'remark',
     width: 200
   },
   {
-    title: '操作',
+    title: t('common.action'),
     key: 'action',
     width: 100,
     fixed: 'right' as const
   }
-];
+]);
 
 /**
  * 监听 visible 变化
@@ -536,12 +543,12 @@ function buildTreeSelectData(treeData: JsonTreeNode[], result: any[] = []): any[
  */
 function getNodeTitle(node: JsonTreeNode): string {
   const typeMap: Record<string, string> = {
-    'FIELD': '字段',
-    'OBJECT': '对象',
-    'ARRAY': '数组'
+    FIELD: t('integration.paramConfig.fieldKind.field'),
+    OBJECT: t('integration.paramConfig.fieldKind.object'),
+    ARRAY: t('integration.paramConfig.fieldKind.array')
   };
   
-  return `${node.title} (${typeMap[node.type] || '未知'})`;
+  return `${node.title} (${typeMap[node.type] || t('common.unknown')})`;
 }
 
 /**
@@ -597,11 +604,11 @@ function getTargetFieldType(path: string): string {
 function getTransformRulePlaceholder(transformType?: string): string {
   switch (transformType) {
     case 'FUNCTION':
-      return '输入函数表达式，如：toUpperCase(value)';
+      return t('integration.paramConfig.functionRulePlaceholder');
     case 'CONSTANT':
-      return '输入常量值';
+      return t('integration.paramConfig.constantRulePlaceholder');
     default:
-      return '无需转换规则';
+      return t('integration.paramConfig.noTransformRuleRequired');
   }
 }
 
@@ -655,12 +662,12 @@ function handleBatchMapping() {
   const targetFields = getLeafNodes(props.targetData || []);
   
   if (sourceFields.length === 0) {
-    message.warning('源系统参数为空，请先配置源系统参数');
+    message.warning(t('integration.paramConfig.sourceEmptyWarning'));
     return;
   }
   
   if (targetFields.length === 0) {
-    message.warning('目标系统参数为空，请先配置目标系统参数');
+    message.warning(t('integration.paramConfig.targetEmptyWarning'));
     return;
   }
   
@@ -682,7 +689,7 @@ function handleBatchMapping() {
         targetName: matchedTarget.title,
         transformType: 'DIRECT',
         transformRule: '',
-        remark: '智能匹配 - 字段名相同'
+        remark: t('integration.paramConfig.smartMatchExactRemark')
       };
       
       mappingList.value.push(mapping);
@@ -712,7 +719,7 @@ function handleBatchMapping() {
         targetName: matchedTarget.title,
         transformType: 'DIRECT',
         transformRule: '',
-        remark: '智能匹配 - 字段名相似'
+        remark: t('integration.paramConfig.smartMatchFuzzyRemark')
       };
       
       mappingList.value.push(mapping);
@@ -722,9 +729,9 @@ function handleBatchMapping() {
   });
   
   if (matchCount > 0) {
-    message.success(`智能匹配成功，共匹配 ${matchCount} 个字段`);
+    message.success(t('integration.paramConfig.smartMatchSuccess', { count: matchCount }));
   } else {
-    message.info('未找到匹配的字段，请手动添加映射');
+    message.info(t('integration.paramConfig.noSmartMatchResult'));
   }
 }
 
@@ -735,16 +742,17 @@ function handleClearAll() {
   if (mappingList.value.length === 0) {
     return;
   }
-  
-  // 使用 confirm 对话框
-  const confirmDialog = message.loading({
-    content: '确定要清空所有映射关系吗？此操作不可恢复。',
-    duration: 0
+
+  Modal.confirm({
+    title: t('integration.paramConfig.clearAll'),
+    content: t('integration.paramConfig.clearAllConfirm'),
+    okText: t('common.ok'),
+    cancelText: t('common.cancel'),
+    onOk: () => {
+      mappingList.value = [];
+      message.success(t('integration.paramConfig.clearAllSuccess'));
+    }
   });
-  
-  // 这里简化处理，直接清空
-  mappingList.value = [];
-  message.success('已清空所有映射关系');
 }
 
 /**
@@ -808,11 +816,11 @@ function handleCopyMapping(index: number) {
     id: `mapping_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     sourcePath: '',
     targetPath: '',
-    remark: source.remark ? `${source.remark} (复制)` : '复制'
+    remark: source.remark ? `${source.remark} (${t('common.copy')})` : t('common.copy')
   };
   
   mappingList.value.splice(index + 1, 0, newMapping);
-  message.success('复制成功');
+  message.success(t('common.copySuccess'));
 }
 
 /**
@@ -822,7 +830,7 @@ function handleCopyMapping(index: number) {
  */
 function handleDeleteMapping(index: number) {
   mappingList.value.splice(index, 1);
-  message.success('删除成功');
+  message.success(t('common.deleteSuccess'));
 }
 
 /**
@@ -864,13 +872,13 @@ async function handleSubmit() {
     );
     
     if (incompleteMappings.length > 0) {
-      message.warning(`有 ${incompleteMappings.length} 条映射关系未完善，请补充源字段和目标字段`);
+      message.warning(t('integration.paramConfig.incompleteMappingsWarning', { count: incompleteMappings.length }));
       submitting.value = false;
       return;
     }
     
     if (mappingList.value.length === 0) {
-      message.warning('请至少添加一条映射关系');
+      message.warning(t('integration.paramConfig.needAtLeastOneMapping'));
       submitting.value = false;
       return;
     }
@@ -880,11 +888,11 @@ async function handleSubmit() {
       mappingData: mappingList.value
     });
     
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     dialogVisible.value = false;
   } catch (error) {
-    message.error('保存失败');
-    console.error('保存失败:', error);
+    message.error(t('common.saveFailed'));
+    console.error('[ApiParamMappingDialog] save failed:', error);
   } finally {
     submitting.value = false;
   }

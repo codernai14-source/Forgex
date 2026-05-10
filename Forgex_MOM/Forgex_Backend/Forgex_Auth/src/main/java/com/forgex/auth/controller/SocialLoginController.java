@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see SocialLoginService
  */
 @RestController
-@RequestMapping("/auth/social")
+@RequestMapping("/social")
 @RequiredArgsConstructor
 public class SocialLoginController {
 

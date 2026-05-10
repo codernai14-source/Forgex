@@ -69,7 +69,7 @@ import java.util.Set;
  * @see ISysEncodeRuleService
  */
 @RestController
-@RequestMapping("/sys/encodeRule")
+@RequestMapping("/encodeRule")
 @RequiredArgsConstructor
 public class SysEncodeRuleController {
 

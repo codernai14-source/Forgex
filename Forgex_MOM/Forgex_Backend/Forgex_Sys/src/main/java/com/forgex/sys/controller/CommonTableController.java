@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/common/table/config")
+@RequestMapping("/common/table/config")
 @RequiredArgsConstructor
 public class CommonTableController {
     private static final int MIN_COLUMN_WIDTH = 60;

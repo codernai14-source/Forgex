@@ -12,18 +12,18 @@
       <div v-else class="upload-placeholder">
         <loading-outlined v-if="loading"></loading-outlined>
         <plus-outlined v-else></plus-outlined>
-        <div class="upload-text">上传头像</div>
+        <div class="upload-text">{{ t('common.avatarUpload.uploadAvatar') }}</div>
       </div>
     </a-upload>
     <div class="upload-tips">
-      <p>支持 JPG、PNG、GIF 格式</p>
-      <p>文件大小不超过 2MB</p>
+      <p>{{ t('common.avatarUpload.formatTip') }}</p>
+      <p>{{ t('common.avatarUpload.sizeTip') }}</p>
     </div>
 
     <!-- 裁剪弹窗 -->
     <a-modal
       v-model:open="cropperVisible"
-      title="头像裁剪"
+      :title="t('common.avatarUpload.cropTitle')"
       :width="600"
       @ok="handleCrop"
       @cancel="cancelCrop"
@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons-vue'
 import { uploadFile } from '@/api/system/file'
@@ -69,7 +70,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   moduleCode: 'sys_user_avatar',
-  moduleName: '用户头像'
+  moduleName: ''
 })
 
 const emit = defineEmits<{
@@ -80,6 +81,8 @@ const emit = defineEmits<{
 const imageUrl = ref(props.modelValue)
 const loading = ref(false)
 const uploading = ref(false)
+const { t } = useI18n()
+const resolvedModuleName = computed(() => props.moduleName || t('common.avatarUpload.defaultModuleName'))
 
 // 裁剪相关
 const cropperVisible = ref(false)
@@ -103,13 +106,13 @@ const displayUrl = computed(() => {
 function beforeUpload(file: File) {
   const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif'
   if (!isImage) {
-    message.error('只能上传 JPG、PNG、GIF 格式的图片！')
+    message.error(t('common.avatarUpload.imageTypeError'))
     return false
   }
   
   const isLt2M = file.size / 1024 / 1024 < 2
   if (!isLt2M) {
-    message.error('图片大小不能超过 2MB！')
+    message.error(t('common.avatarUpload.imageSizeError'))
     return false
   }
 
@@ -144,15 +147,15 @@ function handleCrop() {
       loading.value = true
       const url = await uploadFile(file, {
         moduleCode: props.moduleCode,
-        moduleName: props.moduleName,
+        moduleName: resolvedModuleName.value,
       })
       imageUrl.value = url
       emit('update:modelValue', url)
       emit('success', url)
       cropperVisible.value = false
     } catch (error) {
-      console.error('头像上传失败:', error)
-      message.error('头像上传失败')
+      console.error('[AvatarUpload] upload failed:', error)
+      message.error(t('common.avatarUpload.uploadFailed'))
     } finally {
       loading.value = false
       uploading.value = false

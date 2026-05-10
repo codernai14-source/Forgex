@@ -31,7 +31,7 @@ public class LocalStorageService implements FileStorageService {
     @Value("${file.upload.path:C:/forgex/data/uploads}")
     private String uploadPath;
 
-    @Value("${file.access.prefix:/files}")
+    @Value("${file.access.prefix:/sys/files}")
     private String accessPrefix;
 
     @Value("${forgex.gateway.port:9000}")
@@ -59,6 +59,9 @@ public class LocalStorageService implements FileStorageService {
             prefix = cfg.getAccessPrefix().trim();
         } else {
             prefix = accessPrefix;
+        }
+        if ("/files".equals(prefix) || "files".equals(prefix) || "/api/files".equals(prefix) || "api/files".equals(prefix)) {
+            prefix = "/sys/files";
         }
         while (prefix.endsWith("/") && prefix.length() > 1) {
             prefix = prefix.substring(0, prefix.length() - 1);
@@ -194,7 +197,7 @@ public class LocalStorageService implements FileStorageService {
         }
         String prefix = resolveAccessPrefix();
         if (!StringUtils.hasText(prefix)) {
-            prefix = "/files";
+            prefix = "/sys/files";
         }
         if (!prefix.startsWith("/")) {
             prefix = "/" + prefix;

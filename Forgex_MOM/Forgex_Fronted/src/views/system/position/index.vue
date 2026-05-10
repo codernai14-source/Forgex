@@ -4,7 +4,7 @@
       <a-row :gutter="16">
         <!-- 左侧：部门树 -->
         <a-col :span="6">
-          <div class="card-title">组织架构</div>
+          <div class="card-title">{{ $tl('组织架构') }}</div>
           <DeptTree
             ref="deptTreeRef"
             @select="onSelectNode"
@@ -20,7 +20,6 @@
               :table-code="'PositionTable'"
               :request="handleRequest"
               :dict-options="dictOptions"
-              :fallback-config="fallbackConfig"
               row-key="id"
             >
               <template #toolbar>
@@ -72,7 +71,7 @@
     <!-- 新增/编辑弹窗 -->
     <BaseFormDialog
       v-model:open="visible"
-      :title="isEdit ? '编辑岗位' : '新增岗位'"
+      :title="isEdit ? $tl('编辑岗位') : $tl('新增岗位')"
       :confirm-loading="formLoading"
       @ok="handleSubmit"
       @cancel="handleCancel"
@@ -84,13 +83,13 @@
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 19 }"
       >
-        <a-form-item label="所属部门" name="departmentId">
+        <a-form-item :label="$tl('所属部门')" name="departmentId">
            <a-tree-select
             v-model:value="formData.departmentId"
             style="width: 100%"
             :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
             :tree-data="treeData"
-            placeholder="请选择所属部门"
+            :placeholder="$tl('请选择所属部门')"
             tree-default-expand-all
             :field-names="{
               children: 'children',
@@ -101,25 +100,25 @@
           />
         </a-form-item>
 
-        <a-form-item label="岗位名称" name="positionName">
+        <a-form-item :label="$tl('岗位名称')" name="positionName">
           <a-input
             v-model:value="formData.positionName"
-            placeholder="请输入岗位名称"
+            :placeholder="$tl('请输入岗位名称')"
           />
         </a-form-item>
 
-        <a-form-item label="岗位编码" name="positionCode">
+        <a-form-item :label="$tl('岗位编码')" name="positionCode">
           <a-input
             v-model:value="formData.positionCode"
-            placeholder="请输入岗位编码"
+            :placeholder="$tl('请输入岗位编码')"
             :disabled="isEdit"
           />
         </a-form-item>
 
-        <a-form-item label="岗位级别" name="positionLevel">
+        <a-form-item :label="$tl('岗位级别')" name="positionLevel">
           <a-select
             v-model:value="formData.positionLevel"
-            placeholder="请选择岗位级别"
+            :placeholder="$tl('请选择岗位级别')"
             style="width: 100%"
           >
             <a-select-option
@@ -132,11 +131,11 @@
           </a-select>
         </a-form-item>
 
-        <a-form-item label="排序号" name="orderNum">
+        <a-form-item :label="$tl('排序号')" name="orderNum">
           <a-input-number
             v-model:value="formData.orderNum"
             :min="0"
-            placeholder="请输入排序号"
+            :placeholder="$tl('请输入排序号')"
             style="width: 100%"
           />
         </a-form-item>
@@ -148,10 +147,10 @@
           </a-radio-group>
         </a-form-item>
 
-        <a-form-item label="备注" name="remark">
+        <a-form-item :label="$tl('备注')" name="remark">
           <a-textarea
             v-model:value="formData.remark"
-            placeholder="请输入备注"
+            :placeholder="$tl('请输入备注')"
             :rows="4"
           />
         </a-form-item>
@@ -162,9 +161,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import {
-  PlusOutlined
-} from '@ant-design/icons-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import DeptTree from '@/components/system/DeptTree.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getDepartmentTree } from '@/api/system/department'
@@ -173,9 +170,9 @@ import {
   createPosition,
   updatePosition,
   deletePosition
-} from '@/api/system/position'
-import type { FxTableConfig } from '@/api/system/tableConfig'
+} from '@/api/system/position'
 import { useDict } from '@/hooks/useDict'
+import { translateLegacyText } from '@/utils/legacyI18n'
 import type { Position, PositionSaveParam } from './types'
 
 // 租户 ID
@@ -205,23 +202,6 @@ const dictOptions = ref({
   positionLevel: positionLevelOptions
 })
 
-const fallbackConfig: Partial<FxTableConfig> = {
-  columns: [
-    { field: 'positionName', title: '岗位名称', width: 180, align: 'left' },
-    { field: 'positionCode', title: '岗位编码', width: 140, align: 'left' },
-    { field: 'positionLevel', title: '岗位级别', width: 120, align: 'center', dictCode: 'positionLevel' },
-    { field: 'orderNum', title: '排序', width: 90, align: 'center' },
-    { field: 'status', title: '状态', width: 100, align: 'center', dictCode: 'status' },
-    { field: 'remark', title: '备注', width: 220, align: 'left' },
-    { field: 'createTime', title: '创建时间', width: 180, align: 'center' },
-    { field: 'action', title: '操作', width: 160, align: 'center', fixed: 'right' }
-  ],
-  queryFields: [
-    { field: 'positionName', label: '岗位名称', queryType: 'input', queryOperator: 'like' },
-    { field: 'positionCode', label: '岗位编码', queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: '状态', queryType: 'select', queryOperator: 'eq', dictCode: 'status' }
-  ]
-}
 
 /**
  * 处理表格数据请求
@@ -278,9 +258,9 @@ const formData = ref<PositionSaveParam & { departmentId?: string }>({
 
 // 表单验证规则
 const rules = {
-  departmentId: [{ required: true, message: '请选择所属部门', trigger: 'change' }],
-  positionName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
-  positionCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }]
+  departmentId: [{ required: true, message: translateLegacyText('请选择所属部门'), trigger: 'change' }],
+  positionName: [{ required: true, message: translateLegacyText('请输入岗位名称'), trigger: 'blur' }],
+  positionCode: [{ required: true, message: translateLegacyText('请输入岗位编码'), trigger: 'blur' }]
 }
 
 /**

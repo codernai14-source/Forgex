@@ -3,8 +3,8 @@
     <a-card :bordered="false" class="main-card">
       <div class="terminal-tabs">
         <a-tabs v-model:activeKey="activeTerminal" @change="handleTerminalChange">
-          <a-tab-pane key="B" tab="B端" />
-          <a-tab-pane key="C" tab="C端" />
+          <a-tab-pane key="B" :tab="$tl('B端')" />
+          <a-tab-pane key="C" :tab="$tl('C端')" />
         </a-tabs>
       </div>
       <div class="menu-layout">
@@ -27,7 +27,6 @@
             ref="tableRef"
             table-code="MenuTable"
             :request="handleRequest"
-            :fallback-config="fallbackConfig"
             :dict-options="dictOptions"
             :row-selection="{
               selectedRowKeys,
@@ -379,28 +378,6 @@ const dictOptions = computed(() => ({
   status: statusOptions.value,
 }))
 
-const fallbackConfig = computed(() => ({
-  tableCode: 'MenuTable',
-  tableName: t('system.menu.title'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'name', title: t('system.menu.menuName'), minWidth: 180, ellipsis: true },
-    { field: 'type', title: t('system.menu.menuType'), width: 90 },
-    { field: 'path', title: t('system.menu.path'), minWidth: 180, ellipsis: true },
-    { field: 'permKey', title: t('system.menu.permission'), minWidth: 180, ellipsis: true },
-    { field: 'menuMode', title: t('system.menu.menuMode'), width: 110 },
-    { field: 'status', title: t('system.menu.status'), width: 90, dictCode: 'status' },
-    { field: 'orderNum', title: t('system.menu.sort'), width: 80 },
-    { field: 'action', title: t('common.action'), width: 140 },
-  ],
-  queryFields: [
-    { field: 'name', label: t('system.menu.menuName'), queryType: 'input', queryOperator: 'like' },
-    { field: 'status', label: t('system.menu.status'), queryType: 'select', queryOperator: 'eq', dictCode: 'status' },
-  ],
-  version: 1,
-}))
 
 const formTitle = computed(() => (
   isEdit.value ? t('system.menu.form.editMenu') : t('system.menu.form.addMenu')

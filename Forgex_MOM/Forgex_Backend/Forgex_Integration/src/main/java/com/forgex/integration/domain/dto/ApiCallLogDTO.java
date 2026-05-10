@@ -24,6 +24,11 @@ public class ApiCallLogDTO {
     private Long apiConfigId;
 
     /**
+     * 接口名称。
+     */
+    private String apiName;
+
+    /**
      * 出站目标 ID。
      */
     private Long outboundTargetId;
@@ -122,6 +127,12 @@ public class ApiCallLogDTO {
      * 创建人。
      */
     private String createBy;
+
+    /**
+     * 创建人名称。
+     */
+    @com.forgex.common.api.annotation.AutoFillUsername(userIdField = "createBy")
+    private String createByName;
 
     /**
      * 创建时间。

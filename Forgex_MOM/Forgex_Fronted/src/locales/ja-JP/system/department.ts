@@ -16,9 +16,11 @@ export default {
   phone: 'Phone',
   email: 'Email',
   orderNum: 'Order Number',
-  status: '状态',
+  status: 'Status',
   createTime: 'Create Time',
   updateTime: 'Update Time',
+  createBy: 'Created By',
+  updateBy: 'Updated By',
   
   // 表单
   form: {
@@ -38,10 +40,12 @@ export default {
   // 操作
   childDept: 'Sub Department',
   addRootDept: 'Add Root Department',
+  emptySelectTip: 'Select a department on the left to view details',
   
   // 消息
   message: {
-    deleteConfirm: 'Are you sure you want to delete this department?',
+    
+    loadTreeFailed: '?????????????????',deleteConfirm: 'Are you sure you want to delete this department?',
     deleteSuccess: 'Department deleted successfully',
     saveSuccess: 'Department saved successfully',
     deptCodeExists: 'Department code already exists',

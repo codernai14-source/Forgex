@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/role/c-menu")
+@RequestMapping("/role/c-menu")
 @RequiredArgsConstructor
 public class SysRoleCMenuController {
 

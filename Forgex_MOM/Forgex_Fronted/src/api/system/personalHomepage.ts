@@ -71,13 +71,13 @@ export const MODULE_HOMEPAGE_WIDGET_KEYS = [
 ] as const
 
 const DEFAULT_WIDGET_TITLES: Record<(typeof PERSONAL_HOMEPAGE_WIDGET_KEYS)[number], string> = {
-  commonMenus: '常用菜单',
-  myFavorites: '我的收藏',
-  pendingApprovals: '我收到的审批',
-  calendar: '日历',
-  messages: '我收到的消息',
-  notices: '系统通知',
-  currentTime: '当前时间',
+  commonMenus: 'commonMenus',
+  myFavorites: 'myFavorites',
+  pendingApprovals: 'pendingApprovals',
+  calendar: 'calendar',
+  messages: 'messages',
+  notices: 'notices',
+  currentTime: 'currentTime',
 }
 
 export function createDefaultPersonalHomepageConfig(): PersonalHomepageConfig {
@@ -132,7 +132,6 @@ function createWidget(
 
 function createModuleWidget(
   key: (typeof MODULE_HOMEPAGE_WIDGET_KEYS)[number],
-  title: string,
   x: number,
   y: number,
   w: number,
@@ -141,7 +140,7 @@ function createModuleWidget(
 ): PersonalHomepageWidgetConfig {
   return {
     key,
-    title,
+    title: key,
     visible: true,
     x,
     y,
@@ -179,8 +178,8 @@ export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalH
     return {
       layout: baseLayout,
       widgets: [
-        createModuleWidget('supplierInfo', '供应商信息', 0, 0, 6, 4, 10),
-        createModuleWidget('encodeRuleInfo', '编码规则信息', 6, 0, 6, 4, 20),
+        createModuleWidget('supplierInfo', 0, 0, 6, 4, 10),
+        createModuleWidget('encodeRuleInfo', 6, 0, 6, 4, 20),
       ],
     }
   }
@@ -189,13 +188,13 @@ export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalH
     return {
       layout: baseLayout,
       widgets: [
-        createModuleWidget('approvalWeeklyTrend', '近 7 天审批趋势', 0, 0, 12, 5, 10),
-        createModuleWidget('approvalShortcuts', '快捷发起审批', 0, 5, 12, 4, 20),
-        createModuleWidget('approvalUserShare', '发起人占比', 0, 9, 7, 5, 30),
-        createModuleWidget('approvalTaskConfig', '任务配置预览', 7, 9, 5, 5, 40),
-        createModuleWidget('approvalPending', '我的待办', 0, 14, 4, 5, 50),
-        createModuleWidget('approvalProcessed', '昨日已办', 4, 14, 4, 5, 60),
-        createModuleWidget('approvalCc', '抄送我的', 8, 14, 4, 5, 70),
+        createModuleWidget('approvalWeeklyTrend', 0, 0, 12, 5, 10),
+        createModuleWidget('approvalShortcuts', 0, 5, 12, 4, 20),
+        createModuleWidget('approvalUserShare', 0, 9, 7, 5, 30),
+        createModuleWidget('approvalTaskConfig', 7, 9, 5, 5, 40),
+        createModuleWidget('approvalPending', 0, 14, 4, 5, 50),
+        createModuleWidget('approvalProcessed', 4, 14, 4, 5, 60),
+        createModuleWidget('approvalCc', 8, 14, 4, 5, 70),
       ],
     }
   }
@@ -204,14 +203,14 @@ export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalH
     return {
       layout: baseLayout,
       widgets: [
-        createModuleWidget('systemStats', '系统统计', 0, 0, 12, 2, 10),
-        createModuleWidget('systemCpu', 'CPU 使用率', 0, 2, 4, 5, 20),
-        createModuleWidget('systemMemory', '服务内存占用', 4, 2, 4, 5, 30),
-        createModuleWidget('systemJvmMemory', 'JVM 内存分区', 8, 2, 4, 5, 40),
-        createModuleWidget('systemMap', '服务器位置', 0, 7, 7, 6, 50),
-        createModuleWidget('systemServerInfo', '服务器信息', 7, 7, 5, 6, 60),
-        createModuleWidget('systemOperationLogs', '最近操作日志', 0, 13, 6, 5, 70),
-        createModuleWidget('systemLoginLogs', '最近登录日志', 6, 13, 6, 5, 80),
+        createModuleWidget('systemStats', 0, 0, 12, 2, 10),
+        createModuleWidget('systemCpu', 0, 2, 4, 5, 20),
+        createModuleWidget('systemMemory', 4, 2, 4, 5, 30),
+        createModuleWidget('systemJvmMemory', 8, 2, 4, 5, 40),
+        createModuleWidget('systemMap', 0, 7, 7, 6, 50),
+        createModuleWidget('systemServerInfo', 7, 7, 5, 6, 60),
+        createModuleWidget('systemOperationLogs', 0, 13, 6, 5, 70),
+        createModuleWidget('systemLoginLogs', 6, 13, 6, 5, 80),
       ],
     }
   }

@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/wf/callback")
+@RequestMapping("/callback")
 @RequiredArgsConstructor
 public class WfCallbackController {
 

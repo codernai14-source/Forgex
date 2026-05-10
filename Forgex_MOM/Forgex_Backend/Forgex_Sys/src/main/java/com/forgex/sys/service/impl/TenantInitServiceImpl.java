@@ -428,6 +428,16 @@ public class TenantInitServiceImpl implements ITenantInitService {
         role.setStatus(true);
         role.setTenantId(tenantId);
         roleMapper.insert(role);
+        if (role.getId() != null) {
+            String operator = String.valueOf(role.getId());
+            role.setCreateBy(operator);
+            role.setUpdateBy(operator);
+            SysRole update = new SysRole();
+            update.setId(role.getId());
+            update.setCreateBy(operator);
+            update.setUpdateBy(operator);
+            roleMapper.updateById(update);
+        }
         
         log.info("创建系统管理员角色，角色 ID：{}，租户 ID：{}", role.getId(), tenantId);
         

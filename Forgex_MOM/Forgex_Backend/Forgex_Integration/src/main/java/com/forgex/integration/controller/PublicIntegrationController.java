@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/integration/public")
+@RequestMapping("/public")
 @RequiredArgsConstructor
 @Tag(name = "集成公共接口", description = "对外统一入口与异步结果查询")
 public class PublicIntegrationController {

@@ -26,8 +26,8 @@
       </div>
       <div class="hero-panel__tabs">
         <a-tabs :active-key="activeTerminal" @change="handleTerminalChange">
-          <a-tab-pane key="B" tab="B端菜单" />
-          <a-tab-pane key="C" tab="C端菜单" />
+          <a-tab-pane key="B" :tab="$tl('B端菜单')" />
+          <a-tab-pane key="C" :tab="$tl('C端菜单')" />
         </a-tabs>
       </div>
     </section>
@@ -74,7 +74,6 @@
           ref="tableRef"
           table-code="RoleMenuGrantTable"
           :request="handleRequest"
-          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange,
@@ -171,21 +170,6 @@ const terminalModuleKnownMenuKeys = ref<Record<'B' | 'C', Record<string, string[
 
 const { dictItems: statusOptions } = useDict('status')
 
-const fallbackConfig = computed(() => ({
-  tableCode: 'RoleMenuGrantTable',
-  tableName: t('system.role.menuGrant'),
-  tableType: 'TREE',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'name', title: t('system.menu.menuName'), minWidth: 200, ellipsis: true },
-    { field: 'type', title: t('system.menu.menuType'), width: 100 },
-    { field: 'path', title: t('system.menu.path'), minWidth: 180, ellipsis: true },
-    { field: 'permKey', title: t('system.menu.permission'), minWidth: 180, ellipsis: true },
-    { field: 'status', title: t('system.menu.status'), width: 90, dictCode: 'status' },
-  ],
-  version: 1,
-}))
 
 function normalize状态ForTag(value: unknown): number {
   if (value === true || value === 1 || value === '1') {

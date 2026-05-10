@@ -76,7 +76,7 @@ import java.util.stream.Collectors;
  * @see UserValidator
  */
 @RestController
-@RequestMapping("/sys/user")
+@RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
 

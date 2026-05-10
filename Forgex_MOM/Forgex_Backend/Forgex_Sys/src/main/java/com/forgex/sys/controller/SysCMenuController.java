@@ -44,7 +44,7 @@ import java.util.Map;
  * @since 2026-04-11
  */
 @RestController
-@RequestMapping("/sys/c-menu")
+@RequestMapping("/c-menu")
 @RequiredArgsConstructor
 public class SysCMenuController {
 

@@ -168,5 +168,36 @@ export default {
     },
     todayLineZh: '今天是{month}月{day}日 {weekday}',
     onlineDuration: '在線時長',
+    zeroMinutes: '0??',
   },
+  module: {
+    mode: { editing: '編輯中', view: '瀏覽' },
+    toolbar: { exitConfig: '退出配置', hint: { edit: '拖拽卡片或調整尺寸後保存。', view: '進入配置後可以調整模塊首頁組件。' } },
+    empty: '暫無可顯示組件',
+    action: { enter: '進入' },
+    panel: { width: '寬度', height: '高度' },
+    message: { saveSuccess: '模塊首頁配置已保存', saveFailed: '保存模塊首頁配置失敗' },
+    modules: {
+      personal: { name: '個人首頁', title: '個人首頁默認配置', desc: '維護個人首頁默認佈局。' },
+      basic: { name: '基本信息', title: '基本信息主頁', desc: '集中展示基本信息模塊的主數據入口和配置狀態。' },
+      approval: { name: '審批管理', title: '審批管理主頁', desc: '集中展示審批任務、待辦入口和流程配置。' },
+      sys: { name: '系統管理', title: '系統管理主頁', desc: '集中展示系統運行、權限配置和系統參數入口。' },
+    },
+    widgets: {
+      supplierInfo: { title: '供應商信息', subtitle: '供應商主數據與准入維護', summary: '管理供應商檔案、聯繫人、資質與協同狀態。' },
+      encodeRuleInfo: { title: '編碼規則信息', subtitle: '統一編碼生成規則', summary: '維護基本信息模塊的編碼規則、流水號和測試生成。' },
+      systemOverview: { title: '系統概覽', subtitle: '組織、用戶與權限入口', summary: '快速進入用戶、角色和菜單授權等系統核心能力。' },
+      systemHealth: { title: '運行狀態', subtitle: '系統運行與安全狀態', summary: '查看在線用戶、登錄行為和系統運行相關信息。' },
+      systemLogs: { title: '操作日誌', subtitle: '系統審計與追蹤', summary: '進入登錄日誌、操作日誌等審計頁面。' },
+      systemConfig: { title: '系統配置', subtitle: '平台參數與外觀配置', summary: '維護門戶、主題、安全、郵件、上傳和首頁默認佈局。' },
+      approvalStats: { title: '審批概覽', subtitle: '審批運行概況', summary: '查看待辦、已辦和審批執行的整體情況。' },
+      approvalShortcuts: { title: '審批入口', subtitle: '發起審批與常用流程', summary: '快速進入可發起的審批任務和業務流程。' },
+      approvalPending: { title: '我的待辦', subtitle: '當前待處理審批', summary: '查看需要當前用戶處理的審批實例。' },
+      approvalTaskConfig: { title: '任務配置', subtitle: '審批任務與節點規則', summary: '配置任務表單、節點審批人和流程規則。' },
+      custom: { subtitle: '自定義組件', summary: '該組件來自已保存的模塊首頁配置。' },
+    },
+    stats: {
+      masterData: '主數據', supplierArchive: '供應商檔案', approval: '審批', admissionChange: '准入/變更', rule: '規則', byModule: '按模塊維護', capability: '能力', testGenerate: '測試/生成', user: '用戶', accountManage: '賬號管理', role: '角色', authConfig: '授權配置', status: '狀態', onlineSession: '在線/會話', security: '安全', loginAudit: '登錄審計', audit: '審計', operationLog: '操作日誌', trace: '追蹤', loginRecord: '登錄記錄', scope: '範圍', publicTenant: '公共/租戶', config: '配置', systemParams: '系統參數', pending: '待辦', myTasks: '我的任務', processed: '已辦', processRecord: '處理記錄', entry: '入口', startApproval: '發起審批', flow: '流程', taskTemplate: '任務模板', action: '動作', approveReject: '同意/駁回', task: '任務', flowConfig: '流程配置', node: '節點', approvalRule: '審批規則', type: '類型', extension: '擴展', enabled: '已啟用', pendingApproval: '待審批',
+    },
+  }
 }

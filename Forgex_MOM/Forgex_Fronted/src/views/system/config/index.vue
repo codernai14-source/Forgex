@@ -21,7 +21,7 @@
                 <AvatarUpload
                   v-model="basicConfig.systemLogo"
                   module-code="sys_config_logo"
-                  module-name="系统配置Logo"
+                  :module-name="t('system.config.systemLogo')"
                   @success="handleLogoUploadSuccess"
                 />
               </div>
@@ -312,14 +312,14 @@
               <a-form v-if="securitySubTab === 'password'" :model="securityConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
                 <a-form-item :label="t('system.config.passwordStore')" name="passwordPolicy.store">
                   <a-select v-model:value="securityConfig.passwordPolicy.store">
-                    <a-select-option value="bcrypt">BCrypt（推荐，不可逆哈希）</a-select-option>
-                    <a-select-option value="argon2">Argon2（高安全哈希）</a-select-option>
+                    <a-select-option value="bcrypt">{{ t('system.config.passwordBcrypt') }}</a-select-option>
+                    <a-select-option value="argon2">{{ t('system.config.passwordArgon2') }}</a-select-option>
                     <a-select-option value="scrypt">SCrypt</a-select-option>
                     <a-select-option value="pbkdf2">PBKDF2</a-select-option>
-                    <a-select-option value="sm4">SM4（国密对称加密）</a-select-option>
-                    <a-select-option value="aes">AES-256-GCM（对称加密）</a-select-option>
-                    <a-select-option value="sm2">SM2（国密非对称加密）</a-select-option>
-                    <a-select-option value="rsa">RSA-2048（非对称加密）</a-select-option>
+                    <a-select-option value="sm4">{{ t('system.config.passwordSm4') }}</a-select-option>
+                    <a-select-option value="aes">{{ t('system.config.passwordAes') }}</a-select-option>
+                    <a-select-option value="sm2">{{ t('system.config.passwordSm2') }}</a-select-option>
+                    <a-select-option value="rsa">{{ t('system.config.passwordRsa') }}</a-select-option>
                   </a-select>
                 </a-form-item>
                 <a-form-item :label="t('system.config.defaultPassword')" name="passwordPolicy.defaultPassword">
@@ -371,7 +371,7 @@
               <a-form v-if="securitySubTab === 'transport'" :model="securityConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
                 <a-form-item :label="t('system.config.transportAlgorithm')" name="cryptoTransport.algorithm">
                   <a-select v-model:value="securityConfig.cryptoTransport.algorithm">
-                    <a-select-option value="SM2">SM2（国密非对称加密）</a-select-option>
+                    <a-select-option value="SM2">{{ t('system.config.transportSm2') }}</a-select-option>
                   </a-select>
                 </a-form-item>
                 <a-form-item :label="t('system.config.transportCipher')" name="cryptoTransport.cipher">
@@ -397,7 +397,7 @@
           </div>
         </a-tab-pane>
 
-        <a-tab-pane key="personalHomepage" tab="个人首页">
+        <a-tab-pane key="personalHomepage" :tab="t('system.config.tabPersonalHomepage')">
           <div class="homepage-config-layout">
             <div class="homepage-module-list">
               <button
@@ -419,8 +419,8 @@
               <PersonalHomepageDesigner
                 v-if="activeHomepageModule === 'personal'"
                 mode="manage"
-                title="个人首页默认配置"
-                description="维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。"
+                :title="t('system.config.homepageDefaultConfig')"
+                :description="t('system.config.homepageDefaultDesc')"
                 :show-scope-selector="true"
               />
               <ModuleHomepageDesigner
@@ -681,14 +681,14 @@
                     <a-input-password v-model:value="cryptoConfig.sm4.keyHex" style="width: calc(100% - 120px)" :placeholder="t('system.config.sm4KeyPlaceholder')" />
                     <a-button type="primary" @click="handleGenerateSm4Key">{{ t('system.config.generateKey') }}</a-button>
                   </a-input-group>
-                  <div class="form-item-hint">128位（32字符Hex）</div>
+                  <div class="form-item-hint">{{ t('system.config.sm4KeyHint') }}</div>
                 </a-form-item>
                 <a-form-item :label="t('system.config.aesKey')" name="aes.keyHex">
                   <a-input-group compact>
                     <a-input-password v-model:value="cryptoConfig.aes.keyHex" style="width: calc(100% - 120px)" :placeholder="t('system.config.aesKeyPlaceholder')" />
                     <a-button type="primary" @click="handleGenerateAesKey">{{ t('system.config.generateKey') }}</a-button>
                   </a-input-group>
-                  <div class="form-item-hint">256位（64字符Hex）</div>
+                  <div class="form-item-hint">{{ t('system.config.aesKeyHint') }}</div>
                 </a-form-item>
                 <a-form-item :wrapper-col="{ span: 24 }">
                   <a-space>
@@ -702,8 +702,8 @@
               <a-form v-if="cryptoSubTab === 'asymmetric'" :model="cryptoConfig" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" layout="horizontal">
                 <a-form-item :label="t('system.config.rsaKeySize')" name="rsa.keySize">
                   <a-select v-model:value="cryptoConfig.rsa.keySize">
-                    <a-select-option :value="2048">RSA-2048（推荐）</a-select-option>
-                    <a-select-option :value="4096">RSA-4096（高安全）</a-select-option>
+                    <a-select-option :value="2048">{{ t('system.config.rsaKey2048') }}</a-select-option>
+                    <a-select-option :value="4096">{{ t('system.config.rsaKey4096') }}</a-select-option>
                   </a-select>
                 </a-form-item>
                 <a-form-item :label="t('system.config.rsaPublicKey')" name="rsa.publicKey">
@@ -734,8 +734,8 @@
                 </a-form-item>
                 <a-form-item :label="t('system.config.fileEncryptAlgorithm')" name="fileEncrypt.defaultAlgorithm">
                   <a-select v-model:value="cryptoConfig.fileEncrypt.defaultAlgorithm" :disabled="!cryptoConfig.fileEncrypt.enabled">
-                    <a-select-option value="aes">AES-256-GCM（国际标准，推荐）</a-select-option>
-                    <a-select-option value="sm4">SM4-CBC（国密标准）</a-select-option>
+                    <a-select-option value="aes">{{ t('system.config.fileEncryptAes') }}</a-select-option>
+                    <a-select-option value="sm4">{{ t('system.config.fileEncryptSm4') }}</a-select-option>
                   </a-select>
                 </a-form-item>
                 <a-divider orientation="left"><DatabaseOutlined /> {{ t('system.config.fieldEncrypt') }}</a-divider>
@@ -744,8 +744,8 @@
                 </a-form-item>
                 <a-form-item :label="t('system.config.fieldEncryptAlgorithm')" name="fieldEncrypt.defaultAlgorithm">
                   <a-select v-model:value="cryptoConfig.fieldEncrypt.defaultAlgorithm" :disabled="!cryptoConfig.fieldEncrypt.enabled">
-                    <a-select-option value="SM4">SM4（国密标准，默认）</a-select-option>
-                    <a-select-option value="AES">AES-256-GCM（国际标准）</a-select-option>
+                    <a-select-option value="SM4">{{ t('system.config.fieldEncryptSm4') }}</a-select-option>
+                    <a-select-option value="AES">{{ t('system.config.fieldEncryptAes') }}</a-select-option>
                   </a-select>
                 </a-form-item>
                 <a-form-item :wrapper-col="{ span: 24 }">
@@ -886,7 +886,7 @@ import type { UploadFile } from 'ant-design-vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
-  AuditOutlined,
+AuditOutlined,
   DashboardOutlined,
   DatabaseOutlined,
   DeleteOutlined,
@@ -1054,35 +1054,35 @@ const emailProviderPresets: Record<EmailProviderPreset, Partial<EmailConfig>> = 
 
 type NavOption = { value: string; titleKey: string; descKey: string }
 
-const homepageModuleCards = [
+const homepageModuleCards = computed(() => [
   {
     value: 'personal',
-    title: '个人首页',
-    desc: '个人工作台默认布局',
+    title: t('system.config.homepagePersonal'),
+    desc: t('system.config.homepagePersonalDesc'),
     icon: UserOutlined,
   },
   {
     value: 'basic',
-    title: '基础信息',
-    desc: '供应商与编码规则首页',
+    title: t('system.config.homepageBasic'),
+    desc: t('system.config.homepageBasicDesc'),
     icon: DatabaseOutlined,
   },
   {
     value: 'approval',
-    title: '审批管理',
-    desc: '审批工作台首页',
+    title: t('system.config.homepageApproval'),
+    desc: t('system.config.homepageApprovalDesc'),
     icon: AuditOutlined,
   },
   {
     value: 'sys',
-    title: '系统管理',
-    desc: '系统运行与配置首页',
+    title: t('system.config.homepageSys'),
+    desc: t('system.config.homepageSysDesc'),
     icon: SettingOutlined,
   },
-] as const
+])
 
 const activeHomepageModuleCard = computed(() => {
-  return homepageModuleCards.find(item => item.value === activeHomepageModule.value) || homepageModuleCards[0]
+  return homepageModuleCards.value.find(item => item.value === activeHomepageModule.value) || homepageModuleCards.value[0]
 })
 
 const securityNavOptions: NavOption[] = [
@@ -1111,7 +1111,7 @@ const currentUploadNav = computed(() => uploadNavOptions.find(o => o.value === f
 const currentCryptoNav = computed(() => cryptoNavOptions.find(o => o.value === cryptoSubTab.value) || cryptoNavOptions[0])
 const fileUploadPreviewUrl = computed(() => {
   const base = normalizePublicBaseUrl(fileUploadConfig.value.publicBaseUrl || runtimeDefaults.value?.recommendedPublicBaseUrl || '')
-  const prefix = normalizeAccessPrefix(fileUploadConfig.value.accessPrefix || runtimeDefaults.value?.accessPrefix || '/files')
+  const prefix = normalizeAccessPrefix(fileUploadConfig.value.accessPrefix || runtimeDefaults.value?.accessPrefix || '/sys/files')
   return base ? `${base}${prefix}/example.png` : `${prefix}/example.png`
 })
 
@@ -1167,7 +1167,7 @@ function normalizeEmailConfig(config: Partial<EmailConfig> | null | undefined): 
 function normalizeFileUploadConfig(config: Partial<FileUploadConfig> | null | undefined): FileUploadConfig {
   const defaults = createDefaultFileUploadConfig()
   const publicBaseUrl = normalizePublicBaseUrl(config?.publicBaseUrl || defaults.publicBaseUrl || '')
-  const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/files').trim()
+  const accessPrefix = String(config?.accessPrefix || defaults.accessPrefix || '/sys/files').trim()
   return {
     ...defaults,
     ...(config || {}),
@@ -1208,23 +1208,35 @@ function normalizeConfigMediaUrl(value: string): string {
     return rawValue
   }
 
-  if (rawValue.startsWith('/api/files/')) {
+  if (rawValue.startsWith('/api/sys/files/')) {
     return `${recommendedBaseUrl}${rawValue.substring('/api'.length)}`
   }
-  if (rawValue.startsWith('api/files/')) {
+  if (rawValue.startsWith('/api/files/')) {
+    return `${recommendedBaseUrl}/sys${rawValue.substring('/api'.length)}`
+  }
+  if (rawValue.startsWith('api/sys/files/')) {
     return `${recommendedBaseUrl}/${rawValue.substring('api/'.length)}`
   }
-  if (rawValue.startsWith('/files/')) {
+  if (rawValue.startsWith('api/files/')) {
+    return `${recommendedBaseUrl}/sys/${rawValue.substring('api/'.length)}`
+  }
+  if (rawValue.startsWith('/sys/files/')) {
     return `${recommendedBaseUrl}${rawValue}`
   }
-  if (rawValue.startsWith('files/')) {
+  if (rawValue.startsWith('/files/')) {
+    return `${recommendedBaseUrl}/sys${rawValue}`
+  }
+  if (rawValue.startsWith('sys/files/')) {
     return `${recommendedBaseUrl}/${rawValue}`
+  }
+  if (rawValue.startsWith('files/')) {
+    return `${recommendedBaseUrl}/sys/${rawValue}`
   }
   return rawValue
 }
 
 function normalizeAccessPrefix(value: string): string {
-  const normalized = String(value || '/files').trim().replace(/\/+$/, '') || '/files'
+  const normalized = String(value || '/sys/files').trim().replace(/\/+$/, '') || '/sys/files'
   return normalized.startsWith('/') ? normalized : `/${normalized}`
 }
 

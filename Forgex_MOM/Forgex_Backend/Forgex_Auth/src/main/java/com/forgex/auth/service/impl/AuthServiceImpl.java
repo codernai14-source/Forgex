@@ -360,6 +360,59 @@ public class AuthServiceImpl implements AuthService {
         return chooseTenantStrategyFactory.getStrategy(loginTerminal).chooseTenant(param);
     }
 
+    @Override
+    public R<List<TenantVO>> listCurrentTenants() {
+        StpUtil.checkLogin();
+        String account = StpUtil.getLoginIdAsString();
+        if (!StringUtils.hasText(account)) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+                .select(SysUser::getId, SysUser::getAccount)
+                .eq(SysUser::getAccount, account));
+        if (user == null) {
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        List<SysUserTenant> binds = userTenantMapper.selectList(new LambdaQueryWrapper<SysUserTenant>()
+                .eq(SysUserTenant::getUserId, user.getId())
+                .orderByDesc(SysUserTenant::getPrefOrder)
+                .orderByDesc(SysUserTenant::getLastUsed));
+        if (binds == null || binds.isEmpty()) {
+            return R.ok(Collections.emptyList());
+        }
+        List<Long> tenantIds = new ArrayList<>();
+        for (SysUserTenant bind : binds) {
+            if (bind.getTenantId() != null) {
+                tenantIds.add(bind.getTenantId());
+            }
+        }
+        if (tenantIds.isEmpty()) {
+            return R.ok(Collections.emptyList());
+        }
+        List<SysTenant> tenants = tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
+                .in(SysTenant::getId, tenantIds));
+        Map<Long, SysTenant> tenantMap = new HashMap<>();
+        for (SysTenant tenant : tenants) {
+            tenantMap.put(tenant.getId(), tenant);
+        }
+        List<TenantVO> vos = new ArrayList<>();
+        for (SysUserTenant bind : binds) {
+            SysTenant tenant = tenantMap.get(bind.getTenantId());
+            if (tenant == null) {
+                continue;
+            }
+            TenantVO vo = new TenantVO();
+            vo.setId(tenant.getId() == null ? null : String.valueOf(tenant.getId()));
+            vo.setName(tenant.getTenantName());
+            vo.setIntro(tenant.getDescription());
+            vo.setLogo(tenant.getLogo());
+            vo.setTenantType(tenant.getTenantType() == null ? null : tenant.getTenantType().getCode());
+            vo.setIsDefault(bind.getIsDefault());
+            vos.add(vo);
+        }
+        return R.ok(vos);
+    }
+
     /**
      * 选择登录租户。
      *

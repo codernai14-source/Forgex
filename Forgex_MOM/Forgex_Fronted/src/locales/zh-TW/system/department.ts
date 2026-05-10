@@ -16,9 +16,11 @@ export default {
   phone: '聯繫電話',
   email: '郵箱',
   orderNum: '排序號',
-  status: '状态',
+  status: '狀態',
   createTime: '創建時間',
   updateTime: '更新時間',
+  createBy: '創建人',
+  updateBy: '更新人',
   
   // 表单
   form: {
@@ -32,16 +34,18 @@ export default {
     phone: '請輸入聯繫電話',
     email: '請輸入郵箱',
     orderNum: '請輸入排序號',
-    status: '請選擇状态',
+    status: '請選擇狀態',
   },
   
   // 操作
   childDept: '子部門',
   addRootDept: '新增根部門',
+  emptySelectTip: '請選擇左側部門查看詳情',
   
   // 消息
   message: {
-    deleteConfirm: '確定要刪除該部門嗎？',
+    
+    loadTreeFailed: '????????',deleteConfirm: '確定要刪除該部門嗎？',
     deleteSuccess: '刪除部門成功',
     saveSuccess: '保存部門成功',
     deptCodeExists: '部門編碼已存在',

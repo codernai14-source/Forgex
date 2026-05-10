@@ -30,6 +30,8 @@ export interface MaterialPageParam {
     materialName?: string
     materialType?: string
     materialCategory?: string
+    unit?: string
+    brand?: string
     status?: number
     approvalStatus?: string
 }

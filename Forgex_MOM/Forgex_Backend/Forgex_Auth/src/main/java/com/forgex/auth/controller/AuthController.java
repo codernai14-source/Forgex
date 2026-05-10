@@ -60,7 +60,7 @@ import com.forgex.common.domain.config.CryptoTransportConfig;
  * @see com.forgex.auth.service.CaptchaService
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("")
 public class AuthController {
 
     /**
@@ -159,6 +159,11 @@ public class AuthController {
     public R<com.forgex.auth.domain.dto.SysUserDTO> chooseTenantAlias(@RequestBody TenantChoiceParam param) {
         // 调用主方法处理
         return authService.chooseTenant(param);
+    }
+
+    @PostMapping("/tenant/current-list")
+    public R<List<TenantVO>> listCurrentTenants() {
+        return authService.listCurrentTenants();
     }
 
     /**

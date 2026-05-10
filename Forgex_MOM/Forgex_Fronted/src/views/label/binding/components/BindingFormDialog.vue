@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <a-modal
       v-model:open="dialogVisible"
       :title="formTitle"
@@ -8,10 +8,10 @@
       @cancel="handleCancel"
   >
     <a-form :model="formData" layout="vertical">
-      <a-form-item label="选择模板" required>
+      <a-form-item :label="t('label.binding.selectTemplate')" required>
         <a-input
             v-model:value="formData.templateName"
-            placeholder="请选择模板"
+            :placeholder="t('label.binding.selectTemplate')"
             readonly
             @click="handleSelectTemplate"
         >
@@ -21,35 +21,35 @@
         </a-input>
         <div v-if="formData.templateId" class="template-info">
           <a-tag color="blue">{{ formData.templateCode }}</a-tag>
-          <span style="margin-left: 8px; font-size: 12px; color: #999;">模板 ID: {{ formData.templateId }}</span>
+          <span style="margin-left: 8px; font-size: 12px; color: #999;">{{ t('label.binding.templateId') }}: {{ formData.templateId }}</span>
         </div>
       </a-form-item>
 
-      <a-form-item label="绑定类型" required>
-        <a-select v-model:value="formData.bindingType" placeholder="请选择绑定类型">
+      <a-form-item :label="t('label.binding.bindingType')" required>
+        <a-select v-model:value="formData.bindingType" :placeholder="t('label.binding.selectBindingType')">
           <a-select-option value="MATERIAL">
-            <a-tag color="blue">按物料匹配</a-tag>
+            <a-tag color="blue">{{ t('label.binding.matchByMaterial') }}</a-tag>
           </a-select-option>
           <a-select-option value="SUPPLIER">
-            <a-tag color="green">按供应商匹配</a-tag>
+            <a-tag color="green">{{ t('label.binding.matchBySupplier') }}</a-tag>
           </a-select-option>
           <a-select-option value="CUSTOMER">
-            <a-tag color="orange">按客户匹配</a-tag>
+            <a-tag color="orange">{{ t('label.binding.matchByCustomer') }}</a-tag>
           </a-select-option>
         </a-select>
       </a-form-item>
 
-      <a-form-item label="绑定值" required>
+      <a-form-item :label="t('label.binding.bindingValue')" required>
         <a-input
             v-model:value="formData.bindingValue"
             :placeholder="getBindingValuePlaceholder()"
         />
       </a-form-item>
 
-      <a-form-item label="工厂">
+      <a-form-item :label="t('label.print.factory')">
         <a-input
             v-model:value="formData.factoryName"
-            placeholder="不填表示全局生效"
+            :placeholder="t('label.binding.globalIfEmpty')"
             readonly
             @click="handleSelectFactory"
         >
@@ -59,25 +59,25 @@
         </a-input>
         <div v-if="formData.factoryId" class="factory-info">
           <a-tag color="green">{{ formData.factoryName }}</a-tag>
-          <span style="margin-left: 8px; font-size: 12px; color: #999;">工厂 ID: {{ formData.factoryId }}</span>
+          <span style="margin-left: 8px; font-size: 12px; color: #999;">{{ t('label.binding.factoryId') }}: {{ formData.factoryId }}</span>
         </div>
       </a-form-item>
 
-      <a-form-item label="优先级" required>
+      <a-form-item :label="t('label.binding.priority')" required>
         <a-radio-group v-model:value="formData.priority">
           <a-radio :value="1">
-            <a-tag color="red">高 (1)</a-tag>
+            <a-tag color="red">{{ t('label.binding.priorityHighWithValue') }}</a-tag>
           </a-radio>
           <a-radio :value="2">
-            <a-tag color="orange">中 (2)</a-tag>
+            <a-tag color="orange">{{ t('label.binding.priorityMediumWithValue') }}</a-tag>
           </a-radio>
           <a-radio :value="3">
-            <a-tag color="blue">低 (3)</a-tag>
+            <a-tag color="blue">{{ t('label.binding.priorityLowWithValue') }}</a-tag>
           </a-radio>
         </a-radio-group>
         <div class="priority-tip">
           <InfoCircleOutlined style="color: #1890ff; margin-right: 4px;" />
-          优先级越高，匹配时越优先使用
+          {{ t('label.binding.priorityTip') }}
         </div>
       </a-form-item>
     </a-form>
@@ -88,7 +88,9 @@
 import { ref, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
-import { labelBindingApi } from '@/api/label/binding'
+import { useI18n } from 'vue-i18n'
+import { labelBindingApi } from '@/api/label/binding'
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -101,17 +103,15 @@ const submitting = ref(false)
 
 const dialogVisible = computed({
   get: () => {
-    console.log('BindingFormDialog visible get:', props.visible)
-    return props.visible
+        return props.visible
   },
   set: (val) => {
-    console.log('BindingFormDialog visible set:', val)
-    emit('update:visible', val)
+        emit('update:visible', val)
   }
 })
 
 const formTitle = computed(() =>
-    props.bindingData ? '编辑绑定关系' : '新增绑定关系'
+    props.bindingData ? t('label.binding.editTitle') : t('label.binding.addTitle')
 )
 
 const formData = ref<any>({
@@ -127,8 +127,7 @@ const formData = ref<any>({
 })
 
 watch(() => props.visible, (newVal) => {
-  console.log('BindingFormDialog visible 变化:', newVal, 'bindingData:', props.bindingData)
-  if (newVal && props.bindingData) {
+    if (newVal && props.bindingData) {
     // 编辑模式，填充数据
     formData.value = {
       id: props.bindingData.id,
@@ -141,8 +140,7 @@ watch(() => props.visible, (newVal) => {
       factoryName: props.bindingData.factoryName,
       priority: props.bindingData.priority ?? 3
     }
-    console.log('填充编辑数据:', formData.value)
-  } else if (newVal) {
+      } else if (newVal) {
     // 新增模式，重置表单
     resetForm()
   }
@@ -164,37 +162,37 @@ function resetForm() {
 
 function getBindingValuePlaceholder() {
   const placeholders: Record<string, string> = {
-    MATERIAL: '请输入物料编码（如：MAT001）',
-    SUPPLIER: '请输入供应商编码（如：SUP001）',
-    CUSTOMER: '请输入客户编码（如：CUS001）'
+    MATERIAL: t('label.binding.materialPlaceholder'),
+    SUPPLIER: t('label.binding.supplierPlaceholder'),
+    CUSTOMER: t('label.binding.customerPlaceholder')
   }
-  return placeholders[formData.value.bindingType] || '请先选择绑定类型'
+  return placeholders[formData.value.bindingType] || t('label.binding.selectBindingTypeFirst')
 }
 
 function handleSelectTemplate() {
-  message.info('模板选择功能开发中')
+  message.info(t('label.binding.templateSelectPending'))
 }
 
 function handleSelectFactory() {
-  message.info('工厂选择功能开发中')
+  message.info(t('label.binding.factorySelectPending'))
 }
 
 async function handleSubmit() {
   // 表单验证
   if (!formData.value.templateId) {
-    message.warning('请选择模板')
+    message.warning(t('label.binding.selectTemplate'))
     return
   }
   if (!formData.value.bindingType) {
-    message.warning('请选择绑定类型')
+    message.warning(t('label.binding.selectBindingType'))
     return
   }
   if (!formData.value.bindingValue) {
-    message.warning('请输入绑定值')
+    message.warning(t('label.binding.inputBindingValue'))
     return
   }
   if (!formData.value.priority) {
-    message.warning('请选择优先级')
+    message.warning(t('label.binding.selectPriority'))
     return
   }
 
@@ -207,7 +205,7 @@ async function handleSubmit() {
         priority: formData.value.priority,
         factoryId: formData.value.factoryId
       })
-      message.success('更新成功')
+      message.success(t('message.updateSuccess'))
     } else {
       // 新增模式
       await labelBindingApi.add({
@@ -217,12 +215,12 @@ async function handleSubmit() {
         factoryId: formData.value.factoryId,
         priority: formData.value.priority
       })
-      message.success('创建成功')
+      message.success(t('message.createSuccess'))
     }
     emit('success')
     dialogVisible.value = false
   } catch (error: any) {
-    message.error(error.message || (props.bindingData ? '更新失败' : '创建失败'))
+    message.error(error.message || (props.bindingData ? t('message.updateFailed') : t('message.createFailed')))
   } finally {
     submitting.value = false
   }
@@ -264,3 +262,4 @@ function handleCancel() {
   }
 }
 </style>
+

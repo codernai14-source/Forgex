@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Tag(name = "报表模板管理", description = "UReport2/JimuReport 报表模板管理接口")
 @RestController
-@RequestMapping("/api/report/template")
+@RequestMapping("/template")
 @RequiredArgsConstructor
 public class ReportTemplateController {
 

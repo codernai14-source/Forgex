@@ -93,7 +93,6 @@
           ref="tableRef"
           table-code="RoleUserGrantTable"
           :request="handleRequest"
-          :fallback-config="fallbackConfig"
           :row-selection="{
             selectedRowKeys,
             onChange: handleSelectionChange
@@ -178,21 +177,6 @@ const positionTreeFieldNames = {
   children: 'children',
 }
 
-const fallbackConfig = computed(() => ({
-  tableCode: 'RoleUserGrantTable',
-  tableName: t('system.role.userGrant'),
-  tableType: 'NORMAL',
-  rowKey: 'id',
-  defaultPageSize: 20,
-  columns: [
-    { field: 'grantType', title: t('system.role.grantType'), width: 100 },
-    { field: 'grantObject', title: t('system.role.grantObject'), minWidth: 150 },
-    { field: 'createTime', title: t('system.role.grantTime'), width: 180 },
-    { field: 'createBy', title: t('system.role.grantBy'), width: 120 },
-    { field: 'action', title: t('common.action'), width: 100 },
-  ],
-  version: 1,
-}))
 
 /**
  * 鐠侊紕鐣荤仦鐐粹偓褝绱版潻鍥ㄦ姢閸氬海娈戦悽銊﹀煕閸掓銆?

@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * 接口平台服务启动类
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Import;
  */
 @SpringBootApplication(scanBasePackages = "com.forgex")
 @EnableDiscoveryClient
+@EnableAsync
 @EnableFeignClients(clients = {AuthPermClient.class, IntegrationUserSyncFeignClient.class})
 @Import(PermissionInterceptor.class)
 @MapperScan({"com.forgex.integration.mapper", "com.forgex.common.mapper"})

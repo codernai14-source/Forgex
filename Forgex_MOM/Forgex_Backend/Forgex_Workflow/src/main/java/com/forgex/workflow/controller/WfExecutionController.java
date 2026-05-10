@@ -53,7 +53,7 @@ import java.util.Map;
  * @since 2026-04-01
  */
 @RestController
-@RequestMapping("/wf/execution")
+@RequestMapping("/execution")
 @RequiredArgsConstructor
 public class WfExecutionController {
 

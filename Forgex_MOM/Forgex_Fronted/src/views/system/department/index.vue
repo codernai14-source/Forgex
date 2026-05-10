@@ -16,7 +16,7 @@
         <a-col :span="18">
           <div class="detail-container">
             <div v-if="!selectedDept" class="empty-state">
-              <a-empty description="请选择左侧部门查看详情" />
+              <a-empty :description="$t('system.department.emptySelectTip')" />
             </div>
 
             <div v-else>
@@ -61,13 +61,13 @@
                 </div>
 
                 <a-descriptions :column="2" bordered>
-                  <a-descriptions-item label="部门编码">
+                  <a-descriptions-item :label="$t('system.department.deptCode')">
                     {{ selectedDept.deptCode }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="组织类型">
+                  <a-descriptions-item :label="$t('system.department.orgType')">
                     {{ getOrgTypeLabel(selectedDept.orgType) }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="组织层级">
+                  <a-descriptions-item :label="$t('system.department.orgLevel')">
                     {{ selectedDept.orgLevel }}
                   </a-descriptions-item>
                   <a-descriptions-item :label="$t('common.status')">
@@ -75,28 +75,28 @@
                       {{ selectedDept.statusText }}
                     </a-tag>
                   </a-descriptions-item>
-                  <a-descriptions-item label="负责人">
+                  <a-descriptions-item :label="$t('system.department.leader')">
                     {{ selectedDept.leader || '-' }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="联系电话">
+                  <a-descriptions-item :label="$t('system.department.phone')">
                     {{ selectedDept.phone || '-' }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="邮箱" :span="2">
+                  <a-descriptions-item :label="$t('system.department.email')" :span="2">
                     {{ selectedDept.email || '-' }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="排序号">
+                  <a-descriptions-item :label="$t('system.department.orderNum')">
                     {{ selectedDept.orderNum }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="创建时间">
+                  <a-descriptions-item :label="$t('common.createTime')">
                     {{ selectedDept.createTime }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="创建人">
+                  <a-descriptions-item :label="$t('system.user.createBy')">
                     {{ selectedDept.createBy || '-' }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="更新时间">
+                  <a-descriptions-item :label="$t('common.updateTime')">
                     {{ selectedDept.updateTime }}
                   </a-descriptions-item>
-                  <a-descriptions-item label="更新人">
+                  <a-descriptions-item :label="$t('system.user.updateBy')">
                     {{ selectedDept.updateBy || '-' }}
                   </a-descriptions-item>
                 </a-descriptions>
@@ -105,7 +105,7 @@
               <!-- 编辑模式 -->
               <div v-else class="edit-view">
                 <div class="edit-header">
-                  <h3>{{ formData.id ? '编辑部门' : '新增部门' }}</h3>
+                  <h3>{{ formData.id ? $t('system.department.form.editDept') : $t('system.department.form.addDept') }}</h3>
                 </div>
 
                 <a-form
@@ -115,24 +115,24 @@
                   :label-col="{ span: 6 }"
                   :wrapper-col="{ span: 16 }"
                 >
-                  <a-form-item label="部门名称" name="deptName">
+                  <a-form-item :label="$t('system.department.deptName')" name="deptName">
                     <a-input
                       v-model:value="formData.deptName"
-                      placeholder="请输入部门名称"
+                      :placeholder="$t('system.department.form.deptName')"
                     />
                   </a-form-item>
 
-                  <a-form-item label="部门编码" name="deptCode">
+                  <a-form-item :label="$t('system.department.deptCode')" name="deptCode">
                     <a-input
                       v-model:value="formData.deptCode"
-                      placeholder="请输入部门编码"
+                      :placeholder="$t('system.department.form.deptCode')"
                     />
                   </a-form-item>
 
-                  <a-form-item label="组织类型" name="orgType">
+                  <a-form-item :label="$t('system.department.orgType')" name="orgType">
                     <a-select
                       v-model:value="formData.orgType"
-                      placeholder="请选择组织类型"
+                      :placeholder="$t('system.department.form.orgType')"
                     >
                       <a-select-option v-for="option in orgTypeOptions" :key="option.value" :value="option.value">
                         {{ option.label }}
@@ -140,42 +140,42 @@
                     </a-select>
                   </a-form-item>
 
-                  <a-form-item label="组织层级" name="orgLevel">
+                  <a-form-item :label="$t('system.department.orgLevel')" name="orgLevel">
                     <a-input-number
                       v-model:value="formData.orgLevel"
                       :min="1"
                       :max="5"
-                      placeholder="请输入组织层级"
+                      :placeholder="$t('system.department.form.orgLevel')"
                       style="width: 100%"
                     />
                   </a-form-item>
 
-                  <a-form-item label="负责人" name="leader">
+                  <a-form-item :label="$t('system.department.leader')" name="leader">
                     <a-input
                       v-model:value="formData.leader"
-                      placeholder="请输入负责人"
+                      :placeholder="$t('system.department.form.leader')"
                     />
                   </a-form-item>
 
-                  <a-form-item label="联系电话" name="phone">
+                  <a-form-item :label="$t('system.department.phone')" name="phone">
                     <a-input
                       v-model:value="formData.phone"
-                      placeholder="请输入联系电话"
+                      :placeholder="$t('system.department.form.phone')"
                     />
                   </a-form-item>
 
-                  <a-form-item label="邮箱" name="email">
+                  <a-form-item :label="$t('system.department.email')" name="email">
                     <a-input
                       v-model:value="formData.email"
-                      placeholder="请输入邮箱"
+                      :placeholder="$t('system.department.form.email')"
                     />
                   </a-form-item>
 
-                  <a-form-item label="排序号" name="orderNum">
+                  <a-form-item :label="$t('system.department.orderNum')" name="orderNum">
                     <a-input-number
                       v-model:value="formData.orderNum"
                       :min="0"
-                      placeholder="请输入排序号"
+                      :placeholder="$t('system.department.form.orderNum')"
                       style="width: 100%"
                     />
                   </a-form-item>
@@ -190,10 +190,10 @@
                   <a-form-item :wrapper-col="{ offset: 6, span: 16 }">
                     <a-space>
                 <a-button data-guide-id="sys-dept-save" type="primary" :loading="saving" @click="handleSave">
-                        保存
+                        {{ $t('common.save') }}
                       </a-button>
                       <a-button @click="cancelEdit">
-                        取消
+                        {{ $t('common.cancel') }}
                       </a-button>
                     </a-space>
                   </a-form-item>
@@ -220,7 +220,8 @@
  * @version 1.0.0
  */
 import DeptTree from '@/components/system/DeptTree.vue'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   PlusOutlined,
   EditOutlined,
@@ -238,6 +239,7 @@ import type { Department, DepartmentSaveParam } from './types'
 // 租户ID
 const currentTenantId = ref<string | null>(null)
 const deptTreeRef = ref()
+const { t } = useI18n()
 
 // 选中的节点
 const selectedKeys = ref<string[]>([])
@@ -258,12 +260,12 @@ const formData = ref<DepartmentSaveParam>({
 })
 
 // 表单验证规则
-const rules = {
-  deptName: [{ required: true, message: '请输入部门名称', trigger: 'blur' }],
-  deptCode: [{ required: true, message: '请输入部门编码', trigger: 'blur' }],
-  orgType: [{ required: true, message: '请选择组织类型', trigger: 'change' }],
-  orgLevel: [{ required: true, message: '请输入组织层级', trigger: 'blur' }]
-}
+const rules = computed(() => ({
+  deptName: [{ required: true, message: t('system.department.form.deptName'), trigger: 'blur' }],
+  deptCode: [{ required: true, message: t('system.department.form.deptCode'), trigger: 'blur' }],
+  orgType: [{ required: true, message: t('system.department.form.orgType'), trigger: 'change' }],
+  orgLevel: [{ required: true, message: t('system.department.form.orgLevel'), trigger: 'blur' }]
+}))
 
 // 字典数据
 const { dictItems: orgTypeOptions } = useDict('org_type')

@@ -10,22 +10,22 @@
   >
     <a-form :model="formData" layout="vertical">
       <!-- 基本信息 -->
-      <a-card title="基本信息" size="small" class="section-card">
+      <a-card :title="$tl('基本信息')" size="small" class="section-card">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="模板编码" required>
+            <a-form-item :label="$tl('模板编码')" required>
               <a-input
                   v-model:value="formData.templateCode"
-                  placeholder="请输入模板编码"
+                  :placeholder="$tl('请输入模板编码')"
                   :disabled="!!props.templateData"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="模板名称" required>
+            <a-form-item :label="$tl('模板名称')" required>
               <a-input
                   v-model:value="formData.templateName"
-                  placeholder="请输入模板名称"
+                  :placeholder="$tl('请输入模板名称')"
               />
             </a-form-item>
           </a-col>
@@ -33,43 +33,43 @@
 
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="模板类型" required>
+            <a-form-item :label="$tl('模板类型')" required>
               <a-select
                   v-model:value="formData.templateType"
-                  placeholder="请选择模板类型"
+                  :placeholder="$tl('请选择模板类型')"
               >
                 <a-select-option value="PRODUCT">
-                  <a-tag color="blue">产品标签</a-tag>
+                  <a-tag color="blue">{{ $tl('产品标签') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="MATERIAL">
-                  <a-tag color="orange">物料标签</a-tag>
+                  <a-tag color="orange">{{ $tl('物料标签') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="BATCH">
-                  <a-tag color="purple">批次标签</a-tag>
+                  <a-tag color="purple">{{ $tl('批次标签') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="SUPPLIER">
-                  <a-tag color="cyan">供应商标签</a-tag>
+                  <a-tag color="cyan">{{ $tl('供应商标签') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="CUSTOMER_MARK">
-                  <a-tag color="pink">客户唛头</a-tag>
+                  <a-tag color="pink">{{ $tl('客户唛头') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="WORKSTATION">
-                  <a-tag color="green">工位标签</a-tag>
+                  <a-tag color="green">{{ $tl('工位标签') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="EQUIPMENT">
-                  <a-tag color="volcano">设备标签</a-tag>
+                  <a-tag color="volcano">{{ $tl('设备标签') }}</a-tag>
                 </a-select-option>
                 <a-select-option value="LOCATION">
-                  <a-tag color="geekblue">库位标签</a-tag>
+                  <a-tag color="geekblue">{{ $tl('库位标签') }}</a-tag>
                 </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="模板版本">
+            <a-form-item :label="$tl('模板版本')">
               <a-input
                   v-model:value="formData.templateVersion"
-                  placeholder="如: v1.0"
+                  :placeholder="$tl('如: v1.0')"
                   disabled
               />
             </a-form-item>
@@ -78,32 +78,32 @@
 
         <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item label="状态">
+            <a-form-item :label="$tl('状态')">
               <a-radio-group v-model:value="formData.status">
                 <a-radio :value="1">
-                  <a-tag color="green">启用</a-tag>
+                  <a-tag color="green">{{ $tl('启用') }}</a-tag>
                 </a-radio>
                 <a-radio :value="0">
-                  <a-tag color="red">禁用</a-tag>
+                  <a-tag color="red">{{ $tl('禁用') }}</a-tag>
                 </a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="设为默认">
+            <a-form-item :label="$tl('设为默认')">
               <a-switch
                   v-model:checked="formData.isDefault"
-                  checked-children="是"
-                  un-checked-children="否"
+                  :checked-children="$tl('是')"
+                  :un-checked-children="$tl('否')"
               />
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item label="描述">
+        <a-form-item :label="$tl('描述')">
           <a-textarea
               v-model:value="formData.description"
-              placeholder="请输入模板描述"
+              :placeholder="$tl('请输入模板描述')"
               :rows="3"
               :maxlength="500"
               show-count
@@ -112,7 +112,7 @@
       </a-card>
 
       <!-- 模板内容设计 -->
-      <a-card title="模板内容设计" size="small" class="section-card" style="margin-top: 16px;">
+      <a-card :title="$tl('模板内容设计')" size="small" class="section-card" style="margin-top: 16px;">
         <div class="editor-container">
           <LabelTemplateEditor
               v-model="formData.templateContent"
@@ -123,9 +123,9 @@
 
     <template #footer>
       <div class="drawer-footer">
-        <a-button @click="handleCancel">取消</a-button>
+        <a-button @click="handleCancel">{{ $tl('取消') }}</a-button>
         <a-button type="primary" :loading="submitting" @click="handleSubmit">
-          {{ props.templateData ? '保存修改' : '创建模板' }}
+          {{ props.templateData ? $tl('保存修改') : $tl('创建模板') }}
         </a-button>
       </div>
     </template>
@@ -136,7 +136,7 @@
 import { ref, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { labelTemplateApi } from '@/api/label/template'
-import LabelTemplateEditor from './LabelTemplateEditor.vue'
+import LabelTemplateEditor from './LabelTemplateEditor.vue'import { translateLegacyText } from '@/utils/legacyI18n'
 
 const props = defineProps<{
   visible: boolean
@@ -153,7 +153,7 @@ const drawerVisible = computed({
 })
 
 const drawerTitle = computed(() =>
-    props.templateData ? '编辑标签模板' : '新增标签模板'
+    props.templateData ? translateLegacyText('编辑标签模板') : translateLegacyText('新增标签模板')
 )
 
 const formData = ref<any>({
@@ -195,7 +195,7 @@ async function loadTemplateDetail() {
       isDefault: detail.isDefault ?? false
     }
   } catch (error) {
-    message.error('获取模板详情失败')
+    message.error(translateLegacyText('获取模板详情失败'))
     drawerVisible.value = false
   }
 }
@@ -217,15 +217,15 @@ function resetForm() {
 async function handleSubmit() {
   // 表单验证
   if (!formData.value.templateCode) {
-    message.warning('请输入模板编码')
+    message.warning(translateLegacyText('请输入模板编码'))
     return
   }
   if (!formData.value.templateName) {
-    message.warning('请输入模板名称')
+    message.warning(translateLegacyText('请输入模板名称'))
     return
   }
   if (!formData.value.templateType) {
-    message.warning('请选择模板类型')
+    message.warning(translateLegacyText('请选择模板类型'))
     return
   }
 
@@ -238,15 +238,15 @@ async function handleSubmit() {
 
     if (props.templateData) {
       await labelTemplateApi.update(submitData)
-      message.success('更新成功')
+      message.success(translateLegacyText('更新成功'))
     } else {
       await labelTemplateApi.add(submitData)
-      message.success('创建成功')
+      message.success(translateLegacyText('创建成功'))
     }
     emit('success')
     drawerVisible.value = false
   } catch (error) {
-    message.error(props.templateData ? '更新失败' : '创建失败')
+    message.error(props.templateData ? translateLegacyText('更新失败') : translateLegacyText('创建失败'))
   } finally {
     submitting.value = false
   }

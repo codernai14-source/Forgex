@@ -162,6 +162,8 @@ async function handleRequest(payload) {
 - 在页面把 `dictOptions` 准备好
 - 在 `request` 中正确消费 `payload.query`
 
+如果已有环境的后端表格配置暂时没有维护查询字段，页面可以通过 `fallbackConfig.queryFields` 或 `dynamicTableConfig.queryFields` 提供兜底查询项；组件会在后端查询字段为空或缺字段时自动补齐。也可以在列配置上设置 `queryable: true`、`queryType`、`queryOperator`、`dictCode`，由组件生成基础查询项。
+
 适合放到 `queryFields` 的条件通常有：
 
 - 名称关键字
@@ -231,7 +233,7 @@ async function handleRequest(payload) {
 
 - 权限过滤后操作数 `<= 3` 时，全部平铺显示。
 - 权限过滤后操作数 `> 3` 时，只显示前 3 个操作 + 1 个“更多”下拉。
-- 操作列最多只出现 4 个可见控件，避免按钮换行、挤压表格或影响固定列宽度。
+- 操作列最多只出现 4 个可见控件，默认建议保持 `max-inline <= 3`，其余动作进入“更多”下拉，避免英文等长文案挤压表格或影响固定列宽度。`FxActionGroup` 本身允许在单元格宽度内换行收束，但页面不应额外给操作格设置强制不换行样式。
 - 删除等危险操作设置 `danger: true`，禁用态设置 `disabled: true`，不要在页面里额外写换行类样式。
 - 如果行操作需要被页面引导直接定位，可以在 `ActionItem` 中传 `guideId`。被折叠到“更多”下拉里的操作默认不适合作为引导目标；必要时在页面上调大 `max-inline`。
 

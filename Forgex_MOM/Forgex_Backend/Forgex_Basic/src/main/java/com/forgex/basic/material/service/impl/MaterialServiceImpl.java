@@ -84,7 +84,13 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
             wrapper.eq(BasicMaterial::getMaterialType, param.getMaterialType());
         }
         if (StringUtils.hasText(param.getMaterialCategory())) {
-            wrapper.eq(BasicMaterial::getMaterialCategory, param.getMaterialCategory());
+            wrapper.like(BasicMaterial::getMaterialCategory, param.getMaterialCategory());
+        }
+        if (StringUtils.hasText(param.getUnit())) {
+            wrapper.like(BasicMaterial::getUnit, param.getUnit());
+        }
+        if (StringUtils.hasText(param.getBrand())) {
+            wrapper.like(BasicMaterial::getBrand, param.getBrand());
         }
         if (param.getStatus() != null) {
             wrapper.eq(BasicMaterial::getStatus, param.getStatus());
@@ -135,7 +141,13 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
                 wrapper.eq(BasicMaterial::getMaterialType, param.getMaterialType());
             }
             if (StringUtils.hasText(param.getMaterialCategory())) {
-                wrapper.eq(BasicMaterial::getMaterialCategory, param.getMaterialCategory());
+                wrapper.like(BasicMaterial::getMaterialCategory, param.getMaterialCategory());
+            }
+            if (StringUtils.hasText(param.getUnit())) {
+                wrapper.like(BasicMaterial::getUnit, param.getUnit());
+            }
+            if (StringUtils.hasText(param.getBrand())) {
+                wrapper.like(BasicMaterial::getBrand, param.getBrand());
             }
             if (param.getStatus() != null) {
                 wrapper.eq(BasicMaterial::getStatus, param.getStatus());

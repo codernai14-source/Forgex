@@ -1,6 +1,18 @@
 import http from '../http'
 
 /**
+ * 登录和切换租户时使用的租户选项。
+ */
+export interface TenantOption {
+  id: string
+  name: string
+  logo?: string
+  intro?: string
+  isDefault?: boolean
+  tenantType?: string
+}
+
+/**
  * 登录 API
  * @param data 登录请求参数
  * @param data.account 账号
@@ -46,6 +58,13 @@ export interface ChosenUserInfo {
  */
 export function chooseTenant(data: { tenantId: string; account: string }) {
   return http.post<ChosenUserInfo>('/auth/choose-tenant', data)
+}
+
+/**
+ * 查询当前登录用户可切换的租户列表。
+ */
+export function listCurrentTenants() {
+  return http.post<TenantOption[]>('/auth/tenant/current-list', {})
 }
 
 /**

@@ -36,6 +36,8 @@ spring:
 
 server:
   port: ${FORGEX_INTEGRATION_PORT:9007}
+  servlet:
+    context-path: /integration
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

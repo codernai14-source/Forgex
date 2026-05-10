@@ -36,7 +36,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/sys/codegen/meta")
+@RequestMapping("/codegen/meta")
 @RequiredArgsConstructor
 public class CodegenMetaController {
 

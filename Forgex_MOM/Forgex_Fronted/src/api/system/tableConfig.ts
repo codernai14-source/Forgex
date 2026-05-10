@@ -3,6 +3,7 @@ import http from '../http'
 export interface FxTableColumn {
   field: string
   title: string
+  titleI18nJson?: string | Record<string, string>
   align?: 'left' | 'center' | 'right'
   width?: number
   fixed?: 'left' | 'right'
@@ -23,6 +24,9 @@ export interface FxTableColumn {
 export interface FxTableQueryField {
   field: string
   label: string
+  labelI18nJson?: string | Record<string, string>
+  title?: string
+  titleI18nJson?: string | Record<string, string>
   queryType: string
   queryOperator: string
   dictCode?: string

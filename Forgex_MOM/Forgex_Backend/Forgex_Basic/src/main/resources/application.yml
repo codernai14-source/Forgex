@@ -38,6 +38,8 @@ logging:
     root: INFO
 server:
   port: ${FORGEX_BASIC_PORT:9003}
+  servlet:
+    context-path: /basic
 
 forgex:
   deployment:

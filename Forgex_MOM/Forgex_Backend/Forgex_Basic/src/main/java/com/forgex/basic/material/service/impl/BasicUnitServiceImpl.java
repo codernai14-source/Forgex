@@ -405,7 +405,7 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
     }
 
     private LambdaQueryWrapper<BasicUnit> unitWrapper(UnitPageParam param) {
-        return new LambdaQueryWrapper<BasicUnit>()
+        LambdaQueryWrapper<BasicUnit> wrapper = new LambdaQueryWrapper<BasicUnit>()
                 .eq(BasicUnit::getTenantId, currentTenant())
                 .eq(BasicUnit::getDeleted, false)
                 .eq(param.getUnitTypeId() != null, BasicUnit::getUnitTypeId, param.getUnitTypeId())
@@ -413,6 +413,21 @@ public class BasicUnitServiceImpl extends ServiceImpl<BasicUnitMapper, BasicUnit
                 .like(StringUtils.hasText(param.getUnitName()), BasicUnit::getUnitName, param.getUnitName())
                 .orderByAsc(BasicUnit::getUnitCode)
                 .orderByDesc(BasicUnit::getCreateTime);
+        if (StringUtils.hasText(param.getUnitTypeName())) {
+            List<Long> typeIds = unitTypeMapper.selectList(new LambdaQueryWrapper<BasicUnitType>()
+                            .eq(BasicUnitType::getTenantId, currentTenant())
+                            .eq(BasicUnitType::getDeleted, false)
+                            .like(BasicUnitType::getUnitTypeName, param.getUnitTypeName()))
+                    .stream()
+                    .map(BasicUnitType::getId)
+                    .toList();
+            if (typeIds.isEmpty()) {
+                wrapper.eq(BasicUnit::getId, -1L);
+            } else {
+                wrapper.in(BasicUnit::getUnitTypeId, typeIds);
+            }
+        }
+        return wrapper;
     }
 
     private void validateType(UnitTypeParam param, boolean create) {
