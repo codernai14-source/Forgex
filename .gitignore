@@ -62,3 +62,4 @@ hs_err_pid*
 /forgex/license/request-info.json
 /forgex/data/
 /Forgex_MOM/Forgex_Backend/Forgex_Common/target/classes/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+/Forgex_erp/

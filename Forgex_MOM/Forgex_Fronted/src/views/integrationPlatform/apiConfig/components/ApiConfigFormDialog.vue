@@ -191,7 +191,12 @@
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item :label="t('integration.apiConfig.targetUrl')" :name="['outboundTargets', index, 'targetUrl']">
-                <a-input v-model:value="target.targetUrl" :placeholder="t('integration.apiConfig.form.targetUrl')" />
+                <a-input
+                  v-model:value="target.targetUrl"
+                  :placeholder="t('integration.apiConfig.form.targetUrl')"
+                >
+                  <template #addonBefore>{{ resolveTargetHost(target.thirdSystemId) }}</template>
+                </a-input>
               </a-form-item>
             </a-col>
             <a-col :span="12">
@@ -479,6 +484,21 @@ function handleTargetSystemChange(target: ApiOutboundTargetSubmit, value?: numbe
   target.targetName = target.targetName || option.record.systemName
 }
 
+function resolveTargetHost(thirdSystemId?: number) {
+  const option = thirdSystemOptions.value.find(item => item.value === thirdSystemId)
+  const host = option?.record.ipAddress?.trim()
+  return host || t('integration.apiConfig.thirdSystem')
+}
+
+function validateTargetRoute(targetUrl?: string) {
+  const value = targetUrl?.trim() || ''
+  if (/^https?:\/\//i.test(value)) {
+    message.error(t('integration.apiConfig.form.targetRouteOnly'))
+    return false
+  }
+  return true
+}
+
 function normalizeTargets() {
   return (formState.outboundTargets || [])
     .filter(target => target.thirdSystemId || target.targetUrl || target.targetCode)
@@ -516,6 +536,10 @@ async function handleSubmit() {
 
     if (formState.direction === 'OUTBOUND' && (!payload.outboundTargets || payload.outboundTargets.length === 0)) {
       message.error(t('integration.apiConfig.form.targetRequired'))
+      return
+    }
+
+    if (formState.direction === 'OUTBOUND' && payload.outboundTargets?.some(target => !validateTargetRoute(target.targetUrl))) {
       return
     }
 

@@ -9,7 +9,6 @@
           v-model:value="defaultValue"
           :placeholder="placeholder"
           :rows="rows"
-          @update:value="handleSimpleChange"
         />
         <div class="textarea-actions">
           <GlobalOutlined
@@ -40,7 +39,6 @@
         v-else
         v-model:value="defaultValue"
         :placeholder="placeholder"
-        @update:value="handleSimpleChange"
       >
         <template #suffix>
           <GlobalOutlined 
@@ -76,13 +74,11 @@
               v-model:value="record.value"
               :placeholder="t('common.i18nInput.placeholder', { lang: record.langName })"
               :rows="rows"
-              @update:value="handleTableChange"
             />
             <a-input
               v-else
               v-model:value="record.value"
               :placeholder="t('common.i18nInput.placeholder', { lang: record.langName })"
-              @update:value="handleTableChange"
             />
           </template>
         </template>
@@ -265,6 +261,7 @@ const simpleTextareaRef = ref<any>(null)
 const modalTextareaRefs = ref<Record<string, any>>({})
 const lastFocusedModalLang = ref<string>('')
 const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 900)
+const syncingFromModel = ref(false)
 
 // 表格数据
 interface TableRow {
@@ -343,7 +340,6 @@ function insertPlaceholderAtSimple(placeholder: string) {
     const end = textareaEl.selectionEnd ?? start
     const text = defaultValue.value
     defaultValue.value = text.substring(0, start) + placeholder + text.substring(end)
-    handleSimpleChange(defaultValue.value)
     // 恢复光标
     setTimeout(() => {
       textareaEl.focus()
@@ -352,7 +348,6 @@ function insertPlaceholderAtSimple(placeholder: string) {
   } else {
     // 降级方案：追加到末尾
     defaultValue.value += placeholder
-    handleSimpleChange(defaultValue.value)
   }
 }
 
@@ -423,6 +418,7 @@ const loadLanguages = async () => {
  * 初始化表格数据
  */
 const initTableData = () => {
+  syncingFromModel.value = true
   const i18nObj = parseI18nJson(props.modelValue)
   
   const data = languages.value.map(lang => ({
@@ -441,6 +437,9 @@ const initTableData = () => {
   if (defaultLang) {
     defaultValue.value = i18nObj[defaultLang.langCode] || ''
   }
+  queueMicrotask(() => {
+    syncingFromModel.value = false
+  })
 }
 
 /**
@@ -495,6 +494,20 @@ const handleTableChange = () => {
     emitChange()
   })
 }
+
+watch(defaultValue, (value) => {
+  if (syncingFromModel.value) {
+    return
+  }
+  handleSimpleChange(value)
+})
+
+watch(tableData, () => {
+  if (syncingFromModel.value || props.mode !== 'table') {
+    return
+  }
+  handleTableChange()
+}, { deep: true })
 
 /**
  * 弹窗确定

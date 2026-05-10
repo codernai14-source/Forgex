@@ -102,6 +102,8 @@
       @select="onGlobalSearchSelect"
     />
 
+    <SystemNoticePopup />
+
     <a-drawer
       v-model:open="horizontalMenuDrawerOpen"
       placement="top"
@@ -519,6 +521,7 @@ import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
 import FxGuideTour from '../components/common/FxGuideTour.vue'
+import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
 import { useAntdTheme } from '../theme/antdTheme'

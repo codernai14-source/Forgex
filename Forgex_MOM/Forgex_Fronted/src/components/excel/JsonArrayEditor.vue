@@ -15,6 +15,8 @@
         :pagination="false"
         size="small"
         bordered
+        row-key="_key"
+        :scroll="{ x: 560 }"
       >
         <template #bodyCell="{ column, record, index }">
           <!-- 值列 -->
@@ -208,6 +210,7 @@ initOptions()
 <style scoped lang="less">
 .json-array-editor {
   width: 100%;
+  min-width: 0;
   
   .header-actions {
     display: flex;
@@ -221,6 +224,14 @@ initOptions()
       color: rgba(0, 0, 0, 0.85);
     }
   }
+
+  :deep(.ant-card-body) {
+    padding: 12px;
+  }
+
+  :deep(.ant-input) {
+    min-width: 0;
+  }
   
   .json-preview {
     background-color: #f5f5f5;
@@ -233,7 +244,9 @@ initOptions()
     color: #333;
     white-space: pre-wrap;
     word-wrap: break-word;
+    overflow: auto;
     min-height: 100px;
+    max-height: 220px;
     margin-top: 8px;
   }
 }

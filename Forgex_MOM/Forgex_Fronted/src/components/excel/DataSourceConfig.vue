@@ -313,13 +313,23 @@ onMounted(() => {
 <style scoped lang="less">
 .data-source-config {
   width: 100%;
+  min-width: 0;
   
   .json-editor-wrapper {
     width: 100%;
+    min-width: 680px;
   }
   
   :deep(.ant-form-item) {
     margin-bottom: 16px;
+  }
+
+  :deep(.ant-form-item-label) {
+    white-space: nowrap;
+  }
+
+  :deep(.ant-form-item-control) {
+    min-width: 0;
   }
 }
 </style>

@@ -4,11 +4,16 @@ import cn.hutool.json.JSONUtil;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.integration.domain.dto.ApiConfigDTO;
+import com.forgex.integration.domain.dto.ApiOutboundTargetDTO;
+import com.forgex.integration.domain.dto.ThirdSystemDTO;
 import com.forgex.integration.domain.model.ApiDefinitionSnapshot;
 import com.forgex.integration.domain.model.ApiExecutionContext;
 import com.forgex.integration.domain.model.OutboundRequestDefinition;
 import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.service.IApiOutboundExecutor;
+import com.forgex.integration.service.IThirdSystemService;
+import java.net.URI;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,48 +24,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
-import java.util.Map;
-
 /**
  * 出站接口执行器实现。
- * <p>
- * 根据出站请求定义渲染 URL、查询参数、请求头和请求体，并通过集成专用 RestTemplate 发起 HTTP 调用。
- * </p>
  *
  * @author coder_nai@163.com
  * @version 1.0.0
  * @since 2026-04-01
- * @see IApiOutboundExecutor
  */
 @Service
 @RequiredArgsConstructor
 public class ApiOutboundExecutorImpl implements IApiOutboundExecutor {
 
-    /**
-     * 集成平台出站请求 RestTemplate。
-     */
     private final RestTemplate integrationRestTemplate;
+    private final IThirdSystemService thirdSystemService;
 
-    /**
-     * 执行出站调用。
-     *
-     * @param snapshot          接口定义快照
-     * @param context           执行上下文
-     * @param requestDefinition 出站请求定义
-     * @return 第三方响应体
-     */
     @Override
     public Object execute(ApiDefinitionSnapshot snapshot, ApiExecutionContext context, OutboundRequestDefinition requestDefinition) {
         ApiConfigDTO config = snapshot.getApiConfig();
-        String url = requestDefinition.getTargetUrl();
-        if (!StringUtils.hasText(url)) {
-            url = config.getTargetUrl();
+        String rawTarget = requestDefinition.getTargetUrl();
+        if (!StringUtils.hasText(rawTarget)) {
+            rawTarget = config.getTargetUrl();
         }
-        if (!StringUtils.hasText(url)) {
+        if (!StringUtils.hasText(rawTarget)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
                 IntegrationPromptEnum.API_ROUTE_FAILED, "targetUrl is empty");
         }
+        String url = resolveTargetUrl(snapshot, context, rawTarget);
         String renderedUrl = renderPath(url, requestDefinition.getPathVariables());
         if (!requestDefinition.getQuery().isEmpty()) {
             StringBuilder builder = new StringBuilder(renderedUrl);
@@ -89,13 +78,58 @@ public class ApiOutboundExecutorImpl implements IApiOutboundExecutor {
         return response.getBody();
     }
 
-    /**
-     * 渲染路径变量。
-     *
-     * @param url           原始 URL
-     * @param pathVariables 路径变量
-     * @return 渲染后的 URL
-     */
+    private String resolveTargetUrl(ApiDefinitionSnapshot snapshot, ApiExecutionContext context, String rawTarget) {
+        if (isAbsoluteUrl(rawTarget)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.API_ROUTE_FAILED, "targetUrl only supports route path");
+        }
+        ApiOutboundTargetDTO currentTarget = resolveCurrentTarget(snapshot, context);
+        if (currentTarget == null || currentTarget.getThirdSystemId() == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.API_ROUTE_FAILED, "thirdSystemId is empty");
+        }
+        ThirdSystemDTO thirdSystem = thirdSystemService.getThirdSystemById(currentTarget.getThirdSystemId());
+        if (thirdSystem == null || !StringUtils.hasText(thirdSystem.getIpAddress())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.API_ROUTE_FAILED, "third system ipAddress is empty");
+        }
+        return normalizeThirdSystemHost(thirdSystem.getIpAddress()) + normalizeTargetRoute(rawTarget);
+    }
+
+    private ApiOutboundTargetDTO resolveCurrentTarget(ApiDefinitionSnapshot snapshot, ApiExecutionContext context) {
+        if (snapshot == null || snapshot.getOutboundTargets() == null || context == null || context.getOutboundTargetId() == null) {
+            return null;
+        }
+        return snapshot.getOutboundTargets().stream()
+            .filter(item -> item != null && context.getOutboundTargetId().equals(item.getId()))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private boolean isAbsoluteUrl(String url) {
+        String value = url == null ? "" : url.trim().toLowerCase();
+        return value.startsWith("http://") || value.startsWith("https://");
+    }
+
+    private String normalizeThirdSystemHost(String ipAddress) {
+        String host = ipAddress.trim();
+        if (!host.startsWith("http://") && !host.startsWith("https://")) {
+            host = "http://" + host;
+        }
+        while (host.endsWith("/")) {
+            host = host.substring(0, host.length() - 1);
+        }
+        return host;
+    }
+
+    private String normalizeTargetRoute(String route) {
+        String normalized = route.trim();
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        return normalized;
+    }
+
     private String renderPath(String url, Map<String, String> pathVariables) {
         String result = url;
         for (Map.Entry<String, String> entry : pathVariables.entrySet()) {
@@ -104,12 +138,6 @@ public class ApiOutboundExecutorImpl implements IApiOutboundExecutor {
         return result;
     }
 
-    /**
-     * 解析 HTTP 方法。
-     *
-     * @param method HTTP 方法字符串
-     * @return HTTP 方法
-     */
     private HttpMethod resolveMethod(String method) {
         if (!StringUtils.hasText(method)) {
             return HttpMethod.POST;
@@ -117,12 +145,6 @@ public class ApiOutboundExecutorImpl implements IApiOutboundExecutor {
         return HttpMethod.valueOf(method.toUpperCase());
     }
 
-    /**
-     * 解析请求内容类型。
-     *
-     * @param contentType 内容类型字符串
-     * @return 媒体类型
-     */
     private MediaType resolveContentType(String contentType) {
         if (!StringUtils.hasText(contentType)) {
             return MediaType.APPLICATION_JSON;

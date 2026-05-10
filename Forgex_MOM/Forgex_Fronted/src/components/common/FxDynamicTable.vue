@@ -293,6 +293,8 @@ const props = withDefaults(
     tableHeightRatio?: number
   }>(),
   {
+    /** 查询区属于表格配置驱动能力，默认展示；业务页显式传入 false 时隐藏 */
+    showQueryForm: true,
     /** 列设置属于表格公共能力，默认展示，不依赖菜单按钮权限 */
     showColumnSetting: true,
   },
@@ -663,7 +665,7 @@ const tableColumns = computed(() => {
           return h(
             ATag,
             { color: dictItem.tagStyle?.color || dictItem.color || 'blue', style },
-            dictItem.label,
+            () => dictItem.label,
           )
         }
         return value
