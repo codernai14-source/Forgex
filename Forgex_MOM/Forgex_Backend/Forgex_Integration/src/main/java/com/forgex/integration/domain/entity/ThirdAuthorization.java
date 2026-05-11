@@ -1,6 +1,8 @@
 package com.forgex.integration.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
@@ -47,13 +49,27 @@ public class ThirdAuthorization extends BaseEntity {
     private String tokenValue;
 
     /**
+     * Token 有效期类型：DAY-按天，MONTH-按月，YEAR-按年，CUSTOM-指定时间，FOREVER-无期限
+     */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private String tokenExpireType;
+
+    /**
      * Token 有效期（小时）
      */
+    /**
+     * Token 有效期数值，配合 DAY/MONTH/YEAR 使用
+     */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private Integer tokenExpireValue;
+
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Integer tokenExpireHours;
 
     /**
      * Token 过期时间
      */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private LocalDateTime tokenExpireTime;
 
     /**

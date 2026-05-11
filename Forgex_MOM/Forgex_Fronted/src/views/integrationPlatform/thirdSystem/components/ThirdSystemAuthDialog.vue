@@ -10,13 +10,14 @@
       <a-form-item :label="t('integration.thirdSystem.form.authType')" name="authType">
         <a-radio-group v-model:value="formState.authType">
           <a-radio value="TOKEN">Token</a-radio>
-          <a-radio value="WHITELIST">IP Whitelist</a-radio>
+          <a-radio value="WHITELIST">{{ t('integration.thirdSystem.form.authWhitelist') }}</a-radio>
+          <a-radio value="TOKEN_WHITELIST">{{ t('integration.thirdSystem.form.authTokenWhitelist') }}</a-radio>
         </a-radio-group>
       </a-form-item>
 
-      <template v-if="formState.authType === 'TOKEN'">
+      <template v-if="supportToken">
         <a-row :gutter="16">
-          <a-col :span="16">
+          <a-col :span="24">
             <a-form-item :label="t('integration.thirdSystem.form.tokenValue')" name="tokenValue">
               <a-input
                 v-model:value="formState.tokenValue"
@@ -24,24 +25,49 @@
               />
             </a-form-item>
           </a-col>
+        </a-row>
 
+        <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item :label="t('integration.thirdSystem.form.tokenExpireHours')" name="tokenExpireHours">
+            <a-form-item :label="t('integration.thirdSystem.form.tokenExpireType')" name="tokenExpireType">
+              <a-select v-model:value="formState.tokenExpireType">
+                <a-select-option value="DAY">{{ t('integration.thirdSystem.form.expireDay') }}</a-select-option>
+                <a-select-option value="MONTH">{{ t('integration.thirdSystem.form.expireMonth') }}</a-select-option>
+                <a-select-option value="YEAR">{{ t('integration.thirdSystem.form.expireYear') }}</a-select-option>
+                <a-select-option value="CUSTOM">{{ t('integration.thirdSystem.form.expireCustom') }}</a-select-option>
+                <a-select-option value="FOREVER">{{ t('integration.thirdSystem.form.expireForever') }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+
+          <a-col v-if="needExpireValue" :span="8">
+            <a-form-item :label="t('integration.thirdSystem.form.tokenExpireValue')" name="tokenExpireValue">
               <a-input-number
-                v-model:value="formState.tokenExpireHours"
+                v-model:value="formState.tokenExpireValue"
                 :min="1"
-                :max="8760"
-                :placeholder="t('integration.thirdSystem.form.tokenExpireHoursPlaceholder')"
+                :max="999"
+                :placeholder="t('integration.thirdSystem.form.tokenExpireValuePlaceholder')"
+                style="width: 100%"
+              />
+            </a-form-item>
+          </a-col>
+
+          <a-col v-if="formState.tokenExpireType === 'CUSTOM'" :span="16">
+            <a-form-item :label="t('integration.thirdSystem.form.tokenExpireTime')" name="tokenExpireTime">
+              <a-date-picker
+                v-model:value="tokenExpireDate"
+                show-time
+                value-format="YYYY-MM-DD HH:mm:ss"
                 style="width: 100%"
               />
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-button @click="handleGenerateToken">Generate Token</a-button>
+        <a-button @click="handleGenerateToken">{{ t('integration.thirdSystem.form.generateToken') }}</a-button>
       </template>
 
-      <template v-else>
+      <template v-if="supportWhitelist">
         <a-alert
           type="info"
           show-icon
@@ -114,16 +140,34 @@ const formState = reactive<ThirdAuthorizationSubmit>({
   thirdSystemId: 0,
   authType: 'TOKEN',
   tokenValue: '',
-  tokenExpireHours: 24,
+  tokenExpireType: 'DAY',
+  tokenExpireValue: 1,
+  tokenExpireTime: '',
   whitelistIps: '',
   status: 1,
   remark: '',
 })
 
+const supportToken = computed(() => formState.authType === 'TOKEN' || formState.authType === 'TOKEN_WHITELIST')
+const supportWhitelist = computed(() => formState.authType === 'WHITELIST' || formState.authType === 'TOKEN_WHITELIST')
+const needExpireValue = computed(() => ['DAY', 'MONTH', 'YEAR'].includes(formState.tokenExpireType || ''))
+const tokenExpireDate = computed({
+  get: () => formState.tokenExpireTime,
+  set: (value?: string) => {
+    formState.tokenExpireTime = value || ''
+  },
+})
+
 const rules = computed(() => ({
   authType: [{ required: true, message: t('integration.thirdSystem.form.authType'), trigger: 'change' }],
-  whitelistIps: formState.authType === 'WHITELIST'
+  whitelistIps: supportWhitelist.value
     ? [{ required: true, message: t('integration.thirdSystem.form.whitelistIps'), trigger: 'blur' }]
+    : [],
+  tokenExpireValue: supportToken.value && needExpireValue.value
+    ? [{ required: true, message: t('integration.thirdSystem.form.tokenExpireValuePlaceholder'), trigger: 'blur' }]
+    : [],
+  tokenExpireTime: supportToken.value && formState.tokenExpireType === 'CUSTOM'
+    ? [{ required: true, message: t('integration.thirdSystem.form.tokenExpireTimePlaceholder'), trigger: 'change' }]
     : [],
 }))
 
@@ -137,7 +181,10 @@ watch(
     formState.id = undefined
     formState.authType = 'TOKEN'
     formState.tokenValue = ''
-    formState.tokenExpireHours = 24
+    formState.tokenExpireType = 'DAY'
+    formState.tokenExpireValue = 1
+    formState.tokenExpireHours = undefined
+    formState.tokenExpireTime = ''
     formState.whitelistIps = ''
     formState.status = 1
     formState.remark = ''
@@ -154,7 +201,12 @@ async function handleGenerateToken() {
   if (!props.systemId) {
     return
   }
-  formState.tokenValue = await generateThirdAuthorizationToken(props.systemId, formState.tokenExpireHours)
+  const tokenValue = await generateThirdAuthorizationToken(props.systemId, buildPayload())
+  const detail = await getThirdAuthorizationBySystemId(props.systemId)
+  if (detail) {
+    Object.assign(formState, detail)
+  }
+  formState.tokenValue = tokenValue
 }
 
 async function handleSubmit() {
@@ -164,11 +216,7 @@ async function handleSubmit() {
   try {
     loading.value = true
     await formRef.value?.validate()
-    const payload: ThirdAuthorizationSubmit = {
-      ...formState,
-      thirdSystemId: props.systemId,
-      whitelistIps: formState.authType === 'WHITELIST' ? formState.whitelistIps?.trim() : '',
-    }
+    const payload = buildPayload()
     if (payload.id) {
       await updateThirdAuthorization(payload)
     } else {
@@ -177,6 +225,18 @@ async function handleSubmit() {
     emit('success')
   } finally {
     loading.value = false
+  }
+}
+
+function buildPayload(): ThirdAuthorizationSubmit {
+  return {
+    ...formState,
+    thirdSystemId: props.systemId || 0,
+    tokenValue: supportToken.value ? formState.tokenValue : '',
+    tokenExpireType: supportToken.value ? formState.tokenExpireType : undefined,
+    tokenExpireValue: supportToken.value && needExpireValue.value ? formState.tokenExpireValue : undefined,
+    tokenExpireTime: supportToken.value && formState.tokenExpireType === 'CUSTOM' ? formState.tokenExpireTime : undefined,
+    whitelistIps: supportWhitelist.value ? formState.whitelistIps?.trim() : '',
   }
 }
 </script>

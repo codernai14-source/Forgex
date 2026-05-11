@@ -43,8 +43,18 @@ public class ThirdAuthorizationVO {
     private String tokenValue;
 
     /**
+     * Token 有效期类型：DAY-按天，MONTH-按月，YEAR-按年，CUSTOM-指定时间，FOREVER-无期限
+     */
+    private String tokenExpireType;
+
+    /**
      * Token 有效期（小时）
      */
+    /**
+     * Token 有效期数值，配合 DAY/MONTH/YEAR 使用
+     */
+    private Integer tokenExpireValue;
+
     private Integer tokenExpireHours;
 
     /**

@@ -27,6 +27,7 @@ import com.forgex.integration.service.IApiTaskResultService;
 import com.forgex.integration.service.IApiTaskService;
 import com.forgex.integration.service.IThirdAuthorizationService;
 import com.forgex.integration.spi.ApiInboundInterpreter;
+import com.forgex.common.service.i18n.I18nMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -100,6 +102,11 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
     private final IThirdAuthorizationService thirdAuthorizationService;
 
     /**
+     * 国际化消息解析服务。
+     */
+    private final I18nMessageService i18nMessageService;
+
+    /**
      * 集成同步执行线程池。
      */
     private final ThreadPoolTaskExecutor integrationSyncExecutor;
@@ -119,17 +126,11 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.API_CONFIG_NOT_FOUND, apiCode);
         }
         ApiExecutionContext context = newContext(snapshot.getApiConfig(), null, null, callerIp, null);
-        String token = rawPayload == null ? null : String.valueOf(rawPayload.getOrDefault("token", ""));
-        if (token != null && !token.isBlank() && !thirdAuthorizationService.validateToken(token)) {
+        if (!authorizeInbound(snapshot.getApiConfig(), rawPayload, callerIp)) {
+            String authFailedMessage = resolveMessage(IntegrationPromptEnum.API_AUTH_FAILED);
             writeLog(snapshot.getApiConfig(), context, rawPayload, null, null,
-                ApiResultTypeEnum.AUTH_FAIL.name(), "FAIL", "authorization failed", 0);
-            return IntegrationExecuteResult.builder()
-                .accepted(false)
-                .success(false)
-                .status("AUTH_FAIL")
-                .resultType(ApiResultTypeEnum.AUTH_FAIL.name())
-                .errorMessage("authorization failed")
-                .build();
+                ApiResultTypeEnum.AUTH_FAIL.name(), "FAIL", authFailedMessage, 0);
+            throw new I18nBusinessException(StatusCode.UNAUTHORIZED, IntegrationPromptEnum.API_AUTH_FAILED);
         }
         Map<String, Object> assembled = apiParamAssembler.assembleInbound(snapshot, rawPayload);
         ApiInvokeModeEnum mode = ApiInvokeModeEnum.fromValue(snapshot.getApiConfig().getInvokeMode());
@@ -264,9 +265,15 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
                 .syncResults(List.of(targetResult))
                 .build();
         } catch (Exception ex) {
+            I18nBusinessException businessException = unwrapI18nBusinessException(ex);
+            String errorMessage = resolveExceptionMessage(ex);
             writeLog(snapshot.getApiConfig(), context, rawPayload, assembledPayload, null,
-                ApiResultTypeEnum.SYSTEM_FAIL.name(), "FAIL", ex.getMessage(), (int) (System.currentTimeMillis() - start));
-            throw new IllegalStateException("execute inbound sync failed", ex);
+                ApiResultTypeEnum.SYSTEM_FAIL.name(), "FAIL", errorMessage, (int) (System.currentTimeMillis() - start));
+            if (businessException != null) {
+                throw businessException;
+            }
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.API_INBOUND_EXECUTE_FAILED, errorMessage);
         }
     }
 
@@ -277,6 +284,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
         long start = System.currentTimeMillis();
         try {
             Object result = apiOutboundExecutor.execute(snapshot, context, assembled);
+            result = applyOutboundResponseMapping(snapshot, context, result);
             writeLog(snapshot.getApiConfig(), context, rawPayload, assembled, result,
                 ApiResultTypeEnum.SUCCESS.name(), "SUCCESS", null, (int) (System.currentTimeMillis() - start));
             return IntegrationTargetResult.builder()
@@ -291,8 +299,9 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
                 .data(result)
                 .build();
         } catch (Exception ex) {
+            String errorMessage = resolveExceptionMessage(ex);
             writeLog(snapshot.getApiConfig(), context, rawPayload, assembled, null,
-                ApiResultTypeEnum.SYSTEM_FAIL.name(), "FAIL", ex.getMessage(), (int) (System.currentTimeMillis() - start));
+                ApiResultTypeEnum.SYSTEM_FAIL.name(), "FAIL", errorMessage, (int) (System.currentTimeMillis() - start));
             return IntegrationTargetResult.builder()
                 .accepted(true)
                 .success(false)
@@ -302,7 +311,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
                 .traceId(context.getTraceId())
                 .status("FAIL")
                 .resultType(ApiResultTypeEnum.SYSTEM_FAIL.name())
-                .errorMessage(ex.getMessage())
+                .errorMessage(errorMessage)
                 .build();
         }
     }
@@ -320,6 +329,112 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
             .data(result.getData())
             .syncResults(List.of(result))
             .build();
+    }
+
+    private Object applyOutboundResponseMapping(ApiDefinitionSnapshot snapshot,
+                                                ApiExecutionContext context,
+                                                Object result) {
+        ApiOutboundTargetDTO target = resolveOutboundTarget(snapshot, context);
+        if (target == null || result == null) {
+            return result;
+        }
+        Map<String, Object> responsePayload = objectMapper.convertValue(result, new TypeReference<>() {});
+        Map<String, Object> unwrapped = unwrapResponsePayload(responsePayload);
+        Map<String, Object> mapped = apiParamAssembler.assembleOutboundResponse(snapshot, unwrapped, target);
+        return mapped.isEmpty() ? result : mapped;
+    }
+
+    private boolean authorizeInbound(ApiConfigDTO config, Map<String, Object> rawPayload, String callerIp) {
+        String authType = config.getAuthType();
+        if (authType == null || authType.isBlank() || "NONE".equalsIgnoreCase(authType)) {
+            return true;
+        }
+        Long thirdSystemId = resolveThirdSystemId(config, rawPayload);
+        if (thirdSystemId != null && thirdAuthorizationService.checkIpWhitelist(thirdSystemId, callerIp)) {
+            return true;
+        }
+        if (thirdSystemId == null && thirdAuthorizationService.checkAnyIpWhitelist(callerIp)) {
+            return true;
+        }
+        String token = readToken(rawPayload);
+        return thirdSystemId == null
+            ? thirdAuthorizationService.validateToken(token)
+            : thirdAuthorizationService.validateToken(thirdSystemId, token);
+    }
+
+    @SuppressWarnings("unchecked")
+    private String readToken(Map<String, Object> rawPayload) {
+        if (rawPayload == null || rawPayload.isEmpty()) {
+            return null;
+        }
+        Object token = rawPayload.get("token");
+        if (token == null) {
+            token = rawPayload.get("authToken");
+        }
+        if (token == null) {
+            Object authorization = rawPayload.get("authorization");
+            if (authorization instanceof Map<?, ?> authorizationMap) {
+                token = ((Map<String, Object>) authorizationMap).get("token");
+            }
+        }
+        return token == null ? null : String.valueOf(token);
+    }
+
+    private Long resolveThirdSystemId(ApiConfigDTO config, Map<String, Object> rawPayload) {
+        Long payloadSystemId = readLong(rawPayload, "thirdSystemId");
+        if (payloadSystemId == null) {
+            payloadSystemId = readLong(rawPayload, "third_system_id");
+        }
+        if (payloadSystemId != null) {
+            return payloadSystemId;
+        }
+        if (config.getAuthConfig() == null || config.getAuthConfig().isBlank()) {
+            return null;
+        }
+        try {
+            Map<String, Object> authConfig = objectMapper.readValue(config.getAuthConfig(), new TypeReference<>() {});
+            Object value = authConfig.get("thirdSystemId");
+            if (value == null) {
+                value = authConfig.get("third_system_id");
+            }
+            return value == null ? null : Long.valueOf(String.valueOf(value));
+        } catch (Exception ex) {
+            log.warn("parse inbound auth config failed, apiCode={}, authConfig={}", config.getApiCode(), config.getAuthConfig(), ex);
+            return null;
+        }
+    }
+
+    private Long readLong(Map<String, Object> rawPayload, String key) {
+        if (rawPayload == null || !rawPayload.containsKey(key)) {
+            return null;
+        }
+        Object value = rawPayload.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return null;
+        }
+        return Long.valueOf(String.valueOf(value));
+    }
+
+    private ApiOutboundTargetDTO resolveOutboundTarget(ApiDefinitionSnapshot snapshot, ApiExecutionContext context) {
+        if (snapshot == null || snapshot.getOutboundTargets() == null || context == null || context.getOutboundTargetId() == null) {
+            return null;
+        }
+        return snapshot.getOutboundTargets().stream()
+            .filter(item -> item != null && context.getOutboundTargetId().equals(item.getId()))
+            .findFirst()
+            .orElse(null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> unwrapResponsePayload(Map<String, Object> responsePayload) {
+        if (responsePayload == null) {
+            return Map.of();
+        }
+        Object data = responsePayload.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            return (Map<String, Object>) dataMap;
+        }
+        return new LinkedHashMap<>(responsePayload);
     }
 
     private ApiExecutionContext newContext(ApiConfigDTO config,
@@ -380,6 +495,38 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
         } catch (Exception ex) {
             log.warn("buffer integration log failed", ex);
         }
+    }
+
+    private String resolveExceptionMessage(Exception ex) {
+        I18nBusinessException businessException = unwrapI18nBusinessException(ex);
+        if (businessException != null) {
+            String message = i18nMessageService.resolve(businessException.getMsg(), businessException.getMsgArgs());
+            if (message != null && !message.isBlank()) {
+                return message;
+            }
+            return businessException.getMessage();
+        }
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            message = ex.getClass().getSimpleName();
+        }
+        return resolveMessage(IntegrationPromptEnum.API_OUTBOUND_EXECUTE_FAILED, message);
+    }
+
+    private I18nBusinessException unwrapI18nBusinessException(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof I18nBusinessException businessException) {
+                return businessException;
+            }
+            current = current.getCause();
+        }
+        return null;
+    }
+
+    private String resolveMessage(IntegrationPromptEnum prompt, Object... args) {
+        String message = i18nMessageService.resolve(prompt, args);
+        return message == null || message.isBlank() ? prompt.getDefaultTemplate() : message;
     }
 
     private IntegrationTargetResult toTargetResult(ApiTaskSubmitResult submitResult) {

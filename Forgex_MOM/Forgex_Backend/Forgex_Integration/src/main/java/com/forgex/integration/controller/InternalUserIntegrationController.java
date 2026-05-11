@@ -68,7 +68,7 @@ public class InternalUserIntegrationController {
     public R<UserThirdPartyPullResultDTO> pullUsers(@RequestBody UserThirdPartyInvokeDTO request) {
         try {
             TenantContext.set(request.getTenantId());
-            IntegrationExecuteResult result = integrationFacade.invoke(request.getApiCode(), request.getPayload());
+            IntegrationExecuteResult result = integrationFacade.invoke(request.getApiCode(), buildPullPayload(request));
             List<UserThirdPartySyncDTO> users = extractUsers(result == null ? null : result.getData());
             UserThirdPartySyncRequestDTO syncRequest = new UserThirdPartySyncRequestDTO();
             syncRequest.setTenantId(request.getTenantId());
@@ -98,6 +98,17 @@ public class InternalUserIntegrationController {
         }
         payload.put("tenantId", request.getTenantId());
         payload.put("users", users);
+        return payload;
+    }
+
+    private Map<String, Object> buildPullPayload(UserThirdPartyInvokeDTO request) {
+        Map<String, Object> payload = request.getPayload();
+        if (payload == null) {
+            payload = new LinkedHashMap<>();
+            request.setPayload(payload);
+        }
+        payload.put("tenantId", request.getTenantId());
+        payload.putIfAbsent("includeDisabled", Boolean.TRUE);
         return payload;
     }
 

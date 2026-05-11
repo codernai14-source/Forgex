@@ -6,7 +6,7 @@
       row-key="_key"
       :pagination="false"
       size="small"
-      :scroll="{ x: 2060 }"
+      :scroll="{ x: 1760 }"
     >
       <template #bodyCell="{ column, record, index }">
         <!-- 字段名称 -->
@@ -182,7 +182,7 @@ const columns = computed(() => [
     title: t('common.dataSourceConfig.dataSourceType'),
     key: 'dataSourceConfig',
     dataIndex: 'dataSourceConfig',
-    width: 760
+    width: 420
   },
   {
     title: t('system.excel.required'),

@@ -121,7 +121,7 @@ public class ApiOutboundTargetServiceImpl extends ServiceImpl<ApiOutboundTargetM
         String value = targetUrl == null ? "" : targetUrl.trim().toLowerCase();
         if (value.startsWith("http://") || value.startsWith("https://")) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
-                IntegrationPromptEnum.API_ROUTE_FAILED, "targetUrl only supports route path");
+                IntegrationPromptEnum.API_TARGET_ROUTE_ONLY_PATH);
         }
     }
 

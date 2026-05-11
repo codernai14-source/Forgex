@@ -32,18 +32,18 @@
           <a
             v-if="record.status !== 'PUBLISHED'"
             v-permission="'sys:notice:publish'"
-            @click="handlePublish(record)"
+            @click="handlePublishAction(record)"
           >
             发布
           </a>
           <a
             v-else
             v-permission="'sys:notice:publish'"
-            @click="handleDisable(record)"
+            @click="handleDisableAction(record)"
           >
             停用
           </a>
-          <a v-permission="'sys:notice:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+          <a v-permission="'sys:notice:delete'" class="danger-link" @click="handleDeleteAction(record)">删除</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -55,7 +55,7 @@
       :loading="saving"
       :mask-closable="true"
       :body-style="{ maxHeight: '74vh', overflowY: 'auto' }"
-      @submit="handleSave"
+      @submit="handleSaveSubmit"
       @cancel="dialogVisible = false"
     >
       <a-form layout="vertical" :model="form">
@@ -145,11 +145,13 @@ import { message, Modal } from 'ant-design-vue'
 import type { UploadProps } from 'ant-design-vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import type { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
+import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { uploadFile } from '@/api/system/file'
 import { noticeApi, type NoticeScope, type NoticeStatus, type SysNotice, type SysNoticeAttachment, type SysNoticePageParam } from '@/api/system/notice'
 
+const { t } = useI18n()
 const tableRef = ref()
 const dialogVisible = ref(false)
 const saving = ref(false)
@@ -317,6 +319,74 @@ function labelOf(options: Array<{ label: string; value: any }>, value: any) {
 
 function statusColor(status?: NoticeStatus) {
   return ({ DRAFT: 'default', PUBLISHED: 'green', DISABLED: 'red' } as Record<string, string>)[status || ''] || 'default'
+}
+
+function dispatchSystemNoticeRefresh() {
+  if (typeof window === 'undefined') {
+    return
+  }
+  window.dispatchEvent(new CustomEvent('fx:system-notice-refresh'))
+}
+
+async function handleSaveSubmit() {
+  if (readonly.value) {
+    dialogVisible.value = false
+    return
+  }
+  if (!form.value.title?.trim()) {
+    message.warning(t('system.notice.titleRequired'))
+    return
+  }
+  if (!form.value.contentHtml?.trim()) {
+    message.warning(t('system.notice.contentRequired'))
+    return
+  }
+  saving.value = true
+  try {
+    await noticeApi.save(form.value)
+    message.success(t('system.notice.saveSuccess'))
+    dispatchSystemNoticeRefresh()
+    dialogVisible.value = false
+    await tableRef.value?.refresh?.()
+  } finally {
+    saving.value = false
+  }
+}
+
+function handlePublishAction(record: SysNotice) {
+  Modal.confirm({
+    title: t('system.notice.confirmPublish'),
+    async onOk() {
+      await noticeApi.publish(record.id!)
+      message.success(t('system.notice.publishSuccess'))
+      dispatchSystemNoticeRefresh()
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleDisableAction(record: SysNotice) {
+  Modal.confirm({
+    title: t('system.notice.confirmDisable'),
+    async onOk() {
+      await noticeApi.disable(record.id!)
+      message.success(t('system.notice.disableSuccess'))
+      dispatchSystemNoticeRefresh()
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleDeleteAction(record: SysNotice) {
+  Modal.confirm({
+    title: t('system.notice.confirmDelete'),
+    async onOk() {
+      await noticeApi.delete(record.id!)
+      message.success(t('system.notice.deleteSuccess'))
+      dispatchSystemNoticeRefresh()
+      await tableRef.value?.refresh?.()
+    },
+  })
 }
 
 onBeforeUnmount(() => {

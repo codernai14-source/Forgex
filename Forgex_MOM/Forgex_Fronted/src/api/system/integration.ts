@@ -2,7 +2,8 @@ import http from '../http'
 
 export type IntegrationDirection = 'INBOUND' | 'OUTBOUND'
 export type ParamDirection = 'REQUEST' | 'RESPONSE'
-export type AuthorizationType = 'WHITELIST' | 'TOKEN'
+export type AuthorizationType = 'WHITELIST' | 'TOKEN' | 'TOKEN_WHITELIST'
+export type TokenExpireType = 'DAY' | 'MONTH' | 'YEAR' | 'CUSTOM' | 'FOREVER' | 'HOURS'
 export type CallMethod = 'HTTP' | 'TCP'
 export type NodeType = 'OBJECT' | 'ARRAY' | 'FIELD'
 export type ApiInvokeMode = 'SYNC' | 'ASYNC'
@@ -42,7 +43,10 @@ export interface ThirdAuthorizationSubmit {
   thirdSystemId: number
   authType: AuthorizationType
   tokenValue?: string
+  tokenExpireType?: TokenExpireType
+  tokenExpireValue?: number
   tokenExpireHours?: number
+  tokenExpireTime?: string
   whitelistIps?: string
   status?: number
   remark?: string
@@ -50,7 +54,6 @@ export interface ThirdAuthorizationSubmit {
 
 export interface ThirdAuthorizationItem extends ThirdAuthorizationSubmit {
   systemName?: string
-  tokenExpireTime?: string
   createTime?: string
   updateTime?: string
 }
@@ -281,9 +284,8 @@ export function updateThirdAuthorization(payload: ThirdAuthorizationSubmit) {
   return http.post('/integration/third-authorization/update', payload)
 }
 
-export function generateThirdAuthorizationToken(thirdSystemId: number, expireHours?: number) {
-  const query = expireHours ? `?expireHours=${expireHours}` : ''
-  return http.post<string>(`/integration/third-authorization/generate-token/${thirdSystemId}${query}`)
+export function generateThirdAuthorizationToken(thirdSystemId: number, payload?: Partial<ThirdAuthorizationSubmit>) {
+  return http.post<string>(`/integration/third-authorization/generate-token/${thirdSystemId}`, payload ?? {})
 }
 
 export function getApiConfigList(query: ApiConfigQuery) {

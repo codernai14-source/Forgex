@@ -38,6 +38,10 @@ export interface SysNoticePageParam {
   startTime?: string[]
 }
 
+export interface SysNoticeQueryParam {
+  maxCount?: number
+}
+
 export const noticeApi = {
   page(params: SysNoticePageParam) {
     return http.post<{ records: SysNotice[]; total: number }>('/sys/notice/page', params)
@@ -59,6 +63,9 @@ export const noticeApi = {
   },
   popupList() {
     return silentHttp.post<SysNotice[]>('/sys/notice/popup/list', {})
+  },
+  activeList(params?: SysNoticeQueryParam) {
+    return silentHttp.post<SysNotice[]>('/sys/notice/active/list', params || {})
   },
   ackPopup(noticeId: number) {
     return silentHttp.post('/sys/notice/popup/ack', { noticeId })

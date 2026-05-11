@@ -21,7 +21,7 @@
       <div class="notice-popup__content" v-html="currentNotice.contentHtml"></div>
 
       <div v-if="currentNotice.attachments?.length" class="notice-popup__attachments">
-        <div class="notice-popup__attachments-title">附件</div>
+        <div class="notice-popup__attachments-title">{{ t('system.notice.popup.attachment') }}</div>
         <a
           v-for="item in currentNotice.attachments"
           :key="`${item.fileUrl}-${item.fileName}`"
@@ -34,7 +34,7 @@
       </div>
 
       <div class="notice-popup__footer">
-        <a-button type="primary" @click="ackCurrent">我知道了</a-button>
+        <a-button type="primary" @click="ackCurrent">{{ t('system.notice.popup.acknowledge') }}</a-button>
       </div>
     </div>
   </a-modal>
@@ -43,10 +43,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { noticeApi, type SysNotice, type NoticeScope } from '@/api/system/notice'
+import { useI18n } from 'vue-i18n'
+import { noticeApi, type NoticeScope, type SysNotice } from '@/api/system/notice'
 import { PERSONAL_HOME_PATH } from '@/router'
 import { normalizeMediaUrl } from '@/utils/media'
 
+const { t } = useI18n()
 const route = useRoute()
 const visible = ref(false)
 const notices = ref<SysNotice[]>([])
@@ -63,6 +65,15 @@ watch(
     }
   },
   { immediate: true },
+)
+
+watch(
+  () => visible.value,
+  (open) => {
+    if (!open) {
+      return
+    }
+  },
 )
 
 async function loadPopupNotices() {
@@ -93,10 +104,13 @@ async function ackCurrent() {
   visible.value = false
   notices.value = []
   activeIndex.value = 0
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('fx:system-notice-refresh'))
+  }
 }
 
 function scopeText(scope?: NoticeScope) {
-  return scope === 'PUBLIC' ? '公共通知' : '租户通知'
+  return scope === 'PUBLIC' ? t('system.notice.popup.publicScope') : t('system.notice.popup.tenantScope')
 }
 </script>
 

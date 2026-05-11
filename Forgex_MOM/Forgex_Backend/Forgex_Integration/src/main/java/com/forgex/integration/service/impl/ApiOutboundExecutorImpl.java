@@ -47,7 +47,7 @@ public class ApiOutboundExecutorImpl implements IApiOutboundExecutor {
         }
         if (!StringUtils.hasText(rawTarget)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
-                IntegrationPromptEnum.API_ROUTE_FAILED, "targetUrl is empty");
+                IntegrationPromptEnum.API_TARGET_ROUTE_REQUIRED);
         }
         String url = resolveTargetUrl(snapshot, context, rawTarget);
         String renderedUrl = renderPath(url, requestDefinition.getPathVariables());
@@ -75,23 +75,31 @@ public class ApiOutboundExecutorImpl implements IApiOutboundExecutor {
             entity,
             String.class
         );
-        return response.getBody();
+        String responseBody = response.getBody();
+        if (!StringUtils.hasText(responseBody)) {
+            return null;
+        }
+        try {
+            return JSONUtil.parseObj(responseBody);
+        } catch (Exception ignored) {
+            return responseBody;
+        }
     }
 
     private String resolveTargetUrl(ApiDefinitionSnapshot snapshot, ApiExecutionContext context, String rawTarget) {
         if (isAbsoluteUrl(rawTarget)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
-                IntegrationPromptEnum.API_ROUTE_FAILED, "targetUrl only supports route path");
+                IntegrationPromptEnum.API_TARGET_ROUTE_ONLY_PATH);
         }
         ApiOutboundTargetDTO currentTarget = resolveCurrentTarget(snapshot, context);
         if (currentTarget == null || currentTarget.getThirdSystemId() == null) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
-                IntegrationPromptEnum.API_ROUTE_FAILED, "thirdSystemId is empty");
+                IntegrationPromptEnum.API_OUTBOUND_TARGET_REQUIRED);
         }
         ThirdSystemDTO thirdSystem = thirdSystemService.getThirdSystemById(currentTarget.getThirdSystemId());
         if (thirdSystem == null || !StringUtils.hasText(thirdSystem.getIpAddress())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
-                IntegrationPromptEnum.API_ROUTE_FAILED, "third system ipAddress is empty");
+                IntegrationPromptEnum.API_THIRD_SYSTEM_IP_REQUIRED);
         }
         return normalizeThirdSystemHost(thirdSystem.getIpAddress()) + normalizeTargetRoute(rawTarget);
     }
