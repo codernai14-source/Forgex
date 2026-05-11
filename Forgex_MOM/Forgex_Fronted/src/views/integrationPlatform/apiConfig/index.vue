@@ -56,10 +56,37 @@
         </template>
 
         <template #apiPath="{ record }">
-          <span v-if="record.direction === 'INBOUND'">
-            {{ record.apiPath || '/integration/public/invoke' }}
-          </span>
-          <span v-else>-</span>
+          <a-space direction="vertical" :size="2" class="path-cell">
+            <template v-if="record.direction === 'INBOUND'">
+              <span>{{ record.apiPath || '/integration/public/invoke' }}</span>
+            </template>
+            <template v-else>
+              <span
+                v-for="(path, index) in getOutboundTargetPaths(record)"
+                :key="`${record.id || record.apiCode}-path-${index}`"
+              >
+                {{ path }}
+              </span>
+              <span v-if="getOutboundTargetPaths(record).length === 0">-</span>
+            </template>
+          </a-space>
+        </template>
+
+        <template #targetUrl="{ record }">
+          <a-space direction="vertical" :size="2" class="target-cell">
+            <template v-if="record.direction === 'OUTBOUND'">
+              <span
+                v-for="(url, index) in getOutboundTargetUrls(record)"
+                :key="`${record.id || record.apiCode}-url-${index}`"
+              >
+                {{ url }}
+              </span>
+              <span v-if="getOutboundTargetUrls(record).length === 0">{{ record.targetUrl || '-' }}</span>
+            </template>
+            <template v-else>
+              <span>{{ record.targetUrl || '-' }}</span>
+            </template>
+          </a-space>
         </template>
 
         <template #status="{ record }">
@@ -197,6 +224,24 @@ function backToList() {
   editor.mode = 'list'
   editor.apiConfig = undefined
   editor.isEdit = false
+}
+
+function getOutboundTargetUrls(record: ApiConfigItem) {
+  const urls = (record.outboundTargets || [])
+    .map(item => item.targetUrl?.trim())
+    .filter((value): value is string => Boolean(value))
+  return urls.length ? urls : (record.targetUrl ? [record.targetUrl] : [])
+}
+
+function getOutboundTargetPaths(record: ApiConfigItem) {
+  return getOutboundTargetUrls(record).map(url => {
+    try {
+      const parsed = new URL(url)
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/'
+    } catch {
+      return url
+    }
+  })
 }
 
 function handleDelete(id: number) {

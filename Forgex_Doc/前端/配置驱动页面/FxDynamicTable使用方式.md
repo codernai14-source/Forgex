@@ -21,6 +21,7 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 Forgex_MOM/Forgex_Fronted/src/views/integrationPlatform/thirdSystem/index.vue
 Forgex_MOM/Forgex_Fronted/src/views/system/messageTemplate/index.vue
 Forgex_MOM/Forgex_Fronted/src/views/system/menu/index.vue
+Forgex_MOM/Forgex_Fronted/src/views/system/notice/index.vue
 ```
 
 ## 页面接入步骤
@@ -32,6 +33,8 @@ Forgex_MOM/Forgex_Fronted/src/views/system/menu/index.vue
 3. 页面实现 `request(payload)` 方法
 4. 页面准备好 `dictOptions`
 5. 需要自定义渲染的列再补同名插槽
+
+查询区由后端 `fx_table_column_config` 控制。列配置中 `queryable = 1` 时，组件会把该列纳入查询区域，并按 `query_type`、`query_operator`、`dict_code` 渲染输入框、下拉框或日期区间。基础资料的客户、供应商、物料页面继续复用现有页面代码，只需要在数据库配置里打开常用字段查询项，例如编码、名称、状态、审批状态和等级类字段。
 
 ## 最小接入示例
 
@@ -162,7 +165,9 @@ async function handleRequest(payload) {
 - 在页面把 `dictOptions` 准备好
 - 在 `request` 中正确消费 `payload.query`
 
-如果已有环境的后端表格配置暂时没有维护查询字段，页面可以通过 `fallbackConfig.queryFields` 或 `dynamicTableConfig.queryFields` 提供兜底查询项；组件会在后端查询字段为空或缺字段时自动补齐。也可以在列配置上设置 `queryable: true`、`queryType`、`queryOperator`、`dictCode`，由组件生成基础查询项。
+查询区必须来自后端表格配置返回的 `queryFields`。页面不要依赖本地兜底查询项，也不要在表格组件外再维护一套平行查询配置。若页面需要查询区，必须先在后台配置里把对应字段补齐，再由 `FxDynamicTable` 统一渲染。
+
+如果某个页面确实不需要查询区，显式传 `:show-query-form="false"`；未传时默认显示。
 
 适合放到 `queryFields` 的条件通常有：
 
