@@ -222,7 +222,7 @@ public class SysTenantServiceImpl implements SysTenantService {
                 tenant.getId(), tenant.getTenantName(), tenant.getTenantType());
 
         // 初始化租户数据（模块、菜单、角色、用户）
-        tenantInitService.initTenant(tenant.getId(), tenant.getTenantName(), param.getTenantType());
+        tenantInitService.initTenant(tenant.getId(), tenant.getTenantName(), tenant.getTenantCode(), param.getTenantType());
 
         return tenant.getId();
     }

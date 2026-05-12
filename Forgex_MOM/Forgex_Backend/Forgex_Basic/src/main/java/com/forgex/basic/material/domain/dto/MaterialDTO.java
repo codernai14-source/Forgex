@@ -109,6 +109,15 @@ public class MaterialDTO {
     private List<MaterialExtendVO> extendList;
 
     /**
+     * 结构化附属信息值列表。
+     * <p>
+     * 前端按字段结构录入后提交，后端序列化到 extend_json 保存。
+     * </p>
+     */
+    @Schema(description = "结构化附属信息值列表")
+    private List<MaterialExtendFieldValueDTO> extendValueList;
+
+    /**
      * 状态：0-禁用，1-启用
      */
     @Schema(description = "状态")

@@ -3,6 +3,7 @@ package com.forgex.basic.material.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.service.excel.FxExcelImportHandler;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.basic.material.domain.dto.MaterialDTO;
@@ -10,9 +11,16 @@ import com.forgex.basic.material.domain.param.MaterialPageParam;
 import com.forgex.basic.material.domain.response.MaterialDetailResponse;
 import com.forgex.basic.material.domain.vo.MaterialVO;
 import com.forgex.basic.material.service.IMaterialService;
+import com.forgex.common.api.dto.MaterialAggregateDTO;
+import com.forgex.common.api.dto.MaterialThirdPartyInvokeDTO;
+import com.forgex.common.api.dto.MaterialThirdPartySyncRequestDTO;
+import com.forgex.common.api.dto.MaterialThirdPartySyncResultDTO;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,6 +65,8 @@ import java.util.Map;
 public class BasicMaterialController {
 
     private final IMaterialService materialService;
+    @Qualifier("basicMaterialImportHandler")
+    private final FxExcelImportHandler basicMaterialImportHandler;
 
     /**
      * 分页查询物料列表
@@ -312,5 +322,64 @@ public class BasicMaterialController {
         }
 
         return R.ok();
+    }
+
+    /**
+     * 同步物料到第三方系统。
+     *
+     * @param request 同步请求
+     * @return 同步结果
+     */
+    @Operation(summary = "同步物料到第三方")
+    @RequirePerm("basic:material:sync")
+    @PostMapping("/sync-third-party")
+    public R<MaterialThirdPartySyncResultDTO> syncThirdParty(@RequestBody(required = false) MaterialThirdPartyInvokeDTO request) {
+        return R.ok(CommonPrompt.SYNC_SUCCESS, materialService.syncToThirdParty(request));
+    }
+
+    /**
+     * 从第三方拉取物料。
+     *
+     * @param request 拉取请求
+     * @return 写入结果
+     */
+    @Operation(summary = "从第三方拉取物料")
+    @RequirePerm("basic:material:pullThirdParty")
+    @PostMapping("/pull-from-third-party")
+    public R<MaterialThirdPartySyncResultDTO> pullFromThirdParty(@RequestBody(required = false) MaterialThirdPartyInvokeDTO request) {
+        return R.ok(CommonPrompt.SYNC_SUCCESS, materialService.pullFromThirdParty(request));
+    }
+
+    /**
+     * 内部接口：同步第三方物料数据。
+     *
+     * @param request 同步请求
+     * @return 写入结果
+     */
+    @PostMapping("/internal/sync-third-party-materials")
+    public R<MaterialThirdPartySyncResultDTO> internalSyncThirdPartyMaterials(@RequestBody MaterialThirdPartySyncRequestDTO request) {
+        return R.ok(materialService.syncThirdPartyMaterials(request));
+    }
+
+    /**
+     * 内部接口：导出第三方物料数据。
+     *
+     * @param request 导出请求
+     * @return 物料聚合数据
+     */
+    @PostMapping("/internal/export-third-party-materials")
+    public R<List<MaterialAggregateDTO>> internalExportThirdPartyMaterials(@RequestBody MaterialThirdPartySyncRequestDTO request) {
+        return R.ok(materialService.exportThirdPartyMaterials(request));
+    }
+
+    /**
+     * 内部接口：执行物料公共导入。
+     *
+     * @param param 导入参数
+     * @return 导入结果
+     */
+    @PostMapping("/internal/import/execute")
+    public R<FxExcelImportResultDTO> internalImportExecute(@RequestBody FxExcelImportExecuteParam param) {
+        return R.ok(basicMaterialImportHandler.handle(param));
     }
 }
