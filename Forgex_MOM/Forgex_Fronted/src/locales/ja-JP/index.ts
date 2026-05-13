@@ -19,8 +19,29 @@ import report from './report'
 import zhCN from '../zh-CN'
 import { mergeWithFallback } from '../mergeWithFallback'
 
+const commonOverrides = mergeWithFallback(zhCN.common, {
+  ...common,
+  moveUp: '上へ',
+  moveDown: '下へ',
+  jsonArrayEditor: {
+    structuredView: '構造化ビュー',
+    rawJson: '元の JSON',
+    emptyData: 'データなし',
+    invalidJson: 'JSON データが無効です。構造化ビューで修正して保存してください',
+    detailTitle: 'JSON データ詳細',
+  },
+  dataSourceConfig: {
+    viewDetail: 'データ詳細',
+    detailTitle: 'データソース JSON 詳細',
+    summaryEmpty: 'データなし',
+    summaryCount: '{count} 件のデータ',
+    summaryInvalid: 'JSON データが無効です',
+    summaryHint: 'データ詳細をクリックして確認・編集してください',
+  },
+})
+
 export default mergeWithFallback(zhCN, {
-  common,
+  common: commonOverrides,
   layout,
   validation,
   message,

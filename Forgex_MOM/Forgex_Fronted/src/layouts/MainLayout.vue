@@ -102,6 +102,8 @@
       @select="onGlobalSearchSelect"
     />
 
+    <SystemNoticePopup />
+
     <a-drawer
       v-model:open="horizontalMenuDrawerOpen"
       placement="top"
@@ -197,24 +199,24 @@
           </a-tab-pane>
         </a-tabs>
 
-        <div v-if="currentMessageList.length === 0" class="fx-message-empty">
+        <div v-if="currentDrawerList.length === 0" class="fx-message-empty">
           <a-empty :description="activeMessageTab === 'SYSTEM' ? t('layout.messageCenter.emptySystem') : t('layout.messageCenter.emptyMessage')" />
         </div>
         <div v-else class="fx-message-list">
           <div
-            v-for="msg in currentMessageList"
+            v-for="msg in currentDrawerList"
             :key="msg.id"
             class="fx-message-item"
-            @click="handleMessageItemClick(msg)"
+            @click="activeMessageTab === 'SYSTEM' ? handleNoticeItemClick(msg as SysNotice) : handleMessageItemClick(msg as SysMessageVO)"
           >
             <div class="fx-message-item__header">
               <div class="fx-message-title">{{ msg.title }}</div>
-              <a-tag :color="msg.category === 'SYSTEM' ? 'blue' : 'green'">
-                {{ msg.category === 'SYSTEM' ? t('layout.messageCenter.system') : t('layout.messageCenter.message') }}
+              <a-tag :color="activeMessageTab === 'SYSTEM' ? 'blue' : 'green'">
+                {{ activeMessageTab === 'SYSTEM' ? t('layout.messageCenter.system') : t('layout.messageCenter.message') }}
               </a-tag>
             </div>
-            <div class="fx-message-content">{{ msg.content }}</div>
-            <div class="fx-message-time">{{ msg.createTime }}</div>
+            <div class="fx-message-content">{{ activeMessageTab === 'SYSTEM' ? ((msg as SysNotice).summary || (msg as SysNotice).contentHtml || '') : (msg as SysMessageVO).content }}</div>
+            <div class="fx-message-time">{{ activeMessageTab === 'SYSTEM' ? formatNoticeDisplayTime(msg as SysNotice) : (msg as SysMessageVO).createTime }}</div>
           </div>
         </div>
       </a-spin>
@@ -500,9 +502,11 @@ import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
 import { setLocale, type LocaleCode } from '../locales'
 import { getUnreadMessageCount, listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
+import { noticeApi, type SysNotice } from '../api/system/notice'
 import { reportUserMenuOpen, reportUserMenuVisit } from '../api/system/personalHomepage'
 import { getUserList } from '../api/system/user'
 import { useSse } from '../hooks/useSse'
+import { resolveMenuTitle, resolveModuleDisplayName } from '../utils/menuI18n'
 
 import {
   SearchOutlined,
@@ -519,6 +523,7 @@ import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
 import FxGuideTour from '../components/common/FxGuideTour.vue'
+import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
 import { useAntdTheme } from '../theme/antdTheme'
@@ -665,9 +670,10 @@ const messageCounts = ref<Record<MessageCategory, number>>({
   MESSAGE: 0,
 })
 const messageLists = ref<Record<MessageCategory, SysMessageVO[]>>({
-  SYSTEM: [],
   MESSAGE: [],
+  SYSTEM: [],
 })
+const systemNoticeList = ref<SysNotice[]>([])
 const FONT_SIZE_MIN = 14
 const FONT_SIZE_MAX = 28
 const FONT_SIZE_DEFAULT = 14
@@ -921,11 +927,6 @@ const MAX_ROUTE_VISIT_STATS_COUNT = 200
 const HORIZONTAL_MENU_CHILD_LIMIT = 6
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
-const ROUTE_TITLE_FALLBACK_KEYS: Record<string, string> = {
-  'workflow.execution.startApproval': 'workflow.execution.startTitle',
-  'integration.title': 'integration.title',
-  'integration.home.title': 'integration.home.title',
-}
 
 function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
   if (typeof document === 'undefined') {
@@ -965,7 +966,12 @@ const selectedUserName = ref('')
 const selectedUserAccount = ref('')
 const userSearchKeyword = ref('')
 
-const currentMessageList = computed(() => messageLists.value[activeMessageTab.value] || [])
+const currentMessageList = computed(() => messageLists.value.MESSAGE || [])
+const currentDrawerList = computed<Array<SysMessageVO | SysNotice>>(() => (
+  activeMessageTab.value === 'SYSTEM'
+    ? systemNoticeList.value
+    : currentMessageList.value
+))
 
 const userSelectColumns = computed(() => [
   { title: t('layout.messageCenter.userName'), dataIndex: 'username', width: 120 },
@@ -1251,66 +1257,6 @@ const headerHiddenByScroll = ref(false)
 const lastScrollY = ref(typeof window !== 'undefined' ? window.scrollY || 0 : 0)
 
 const showHeader = computed(() => layoutConfig.value.headerVisible && !headerHiddenByScroll.value)
-
-/**
- * 将后端路由返回的标题转换为当前语言的显示文案。
- * <p>
- * 兼容两种数据来源：
- * <ul>
- *   <li>后端已按语言解析后的"直出文本"（直接返回原值）</li>
- *   <li>后端返回的是 i18n key（如 system.xxx / common.xxx），则使用 t() 翻译</li>
- * </ul>
- * </p>
- *
- * @param rawTitle 原始标题（可能为 i18n key 或直出文本）
- * @return 当前语言下的标题文本
- */
-function resolveMenuTitle(rawTitle: unknown): string {
-  const title = String(rawTitle ?? '')
-  if (!title) {
-    return ''
-  }
-  // 支持 system. / common. / layout. / profile. / workflow. / message. / integration. 等前缀
-  if (title.startsWith('system.') || 
-      title.startsWith('common.') || 
-      title.startsWith('layout.') || 
-      title.startsWith('profile.') || 
-      title.startsWith('workflow.') || 
-      title.startsWith('message.') || 
-      title.startsWith('integration.') ||
-      title.includes('.')) {
-    const translated = t(title)
-    if (translated !== title) {
-      return translated
-    }
-    const fallbackKey = ROUTE_TITLE_FALLBACK_KEYS[title]
-    return fallbackKey ? t(fallbackKey) : title
-  }
-  return title
-}
-
-function resolveModuleDisplayName(moduleCode: string, rawName?: unknown): string {
-  const normalizedCode = String(moduleCode || '').trim()
-  const normalizedName = String(rawName ?? '').trim()
-  const moduleTitleKey = normalizedCode ? `${normalizedCode}.title` : ''
-
-  if (moduleTitleKey) {
-    const translated = resolveMenuTitle(moduleTitleKey)
-    if (translated && translated !== moduleTitleKey) {
-      return translated
-    }
-  }
-
-  if (normalizedName) {
-    const translatedName = resolveMenuTitle(normalizedName)
-    if (translatedName && translatedName !== normalizedName) {
-      return translatedName
-    }
-    return normalizedName
-  }
-
-  return normalizedCode
-}
 
 function handleScroll() {
   if (layoutConfig.value.headerMode !== 'hide-on-scroll') {
@@ -2023,7 +1969,11 @@ async function openMessageDrawer() {
   await refreshMessageCenter(true)
 }
 
-function handleOpenMessageDrawerEvent() {
+function handleOpenMessageDrawerEvent(event?: Event) {
+  const detail = (event as CustomEvent<{ tab?: MessageCategory } | undefined>)?.detail
+  if (detail?.tab) {
+    activeMessageTab.value = normalizeMessageCategory(detail.tab)
+  }
   openMessageDrawer()
 }
 
@@ -2037,10 +1987,15 @@ function handleOpenGlobalSearchEvent() {
 async function loadMessages(category: MessageCategory = activeMessageTab.value) {
   messageLoading.value = true
   try {
-    const list = await listUnreadMessages(20, category)
+    if (category === 'SYSTEM') {
+      const list = await noticeApi.activeList({ maxCount: 20 })
+      systemNoticeList.value = Array.isArray(list) ? list : []
+      return
+    }
+    const list = await listUnreadMessages(20, 'MESSAGE')
     messageLists.value = {
       ...messageLists.value,
-      [category]: Array.isArray(list) ? list : [],
+      MESSAGE: Array.isArray(list) ? list : [],
     }
   } catch (error) {
     console.error('加载消息列表失败:', error)
@@ -2067,13 +2022,16 @@ function dispatchMessageRefreshEvent() {
 
 async function refreshMessageCounts() {
   try {
-    const [systemCount, messageCount] = await Promise.all([
-      getUnreadMessageCount('SYSTEM'),
+    const [systemNoticeListResult, messageCount] = await Promise.all([
+      noticeApi.activeList({ maxCount: 100 }),
       getUnreadMessageCount('MESSAGE'),
     ])
     messageCounts.value = {
-      SYSTEM: Number(systemCount || 0),
+      SYSTEM: Array.isArray(systemNoticeListResult) ? systemNoticeListResult.length : 0,
       MESSAGE: Number(messageCount || 0),
+    }
+    if (Array.isArray(systemNoticeListResult)) {
+      systemNoticeList.value = systemNoticeListResult
     }
     dispatchMessageRefreshEvent()
   } catch (error) {
@@ -2089,15 +2047,18 @@ async function refreshMessageCenter(reloadCurrentList = false) {
 }
 
 function removeMessageFromList(messageId: number, category: MessageCategory) {
-  const currentList = messageLists.value[category] || []
+  const currentList = messageLists.value.MESSAGE || []
   messageLists.value = {
     ...messageLists.value,
-    [category]: currentList.filter(item => item.id !== messageId),
+    MESSAGE: currentList.filter(item => item.id !== messageId),
   }
 }
 
 function prependMessageToList(messageRecord: SysMessageVO) {
   const category = normalizeMessageCategory(messageRecord.category)
+  if (category === 'SYSTEM') {
+    return
+  }
   const currentList = messageLists.value[category] || []
   if (currentList.some(item => item.id === messageRecord.id)) {
     return
@@ -2118,7 +2079,7 @@ async function handleMessageTabChange(key: string) {
 }
 
 async function handleMessageItemClick(messageRecord: SysMessageVO) {
-  const category = normalizeMessageCategory(messageRecord.category)
+  const category: MessageCategory = 'MESSAGE'
   try {
     await markMessageRead(messageRecord.id, { showSuccessMessage: false })
     removeMessageFromList(messageRecord.id, category)
@@ -2136,6 +2097,18 @@ async function handleMessageItemClick(messageRecord: SysMessageVO) {
   }
 }
 
+function handleNoticeItemClick(noticeRecord: SysNotice) {
+  if (!noticeRecord?.id) {
+    return
+  }
+  router.push({ name: 'SystemNotice' }).catch(() => {})
+  messageDrawerOpen.value = false
+}
+
+function formatNoticeDisplayTime(noticeRecord: SysNotice) {
+  return noticeRecord.startTime || noticeRecord.createTime || ''
+}
+
 function handleMessageReceivedEvent(event: Event) {
   const detail = (event as CustomEvent<SysMessageVO | undefined>).detail
   if (!detail || !detail.id) {
@@ -2149,6 +2122,10 @@ function handleMessageReceivedEvent(event: Event) {
   if (messageDrawerOpen.value && activeMessageTab.value === normalized.category) {
     prependMessageToList(normalized)
   }
+  refreshMessageCenter(messageDrawerOpen.value).catch(() => {})
+}
+
+function handleSystemNoticeRefreshEvent() {
   refreshMessageCenter(messageDrawerOpen.value).catch(() => {})
 }
 
@@ -2226,6 +2203,9 @@ function onGlobalSearchSelect(menuKey: string, path: string) {
 }
 
 async function onLocaleChange(val: string) {
+  if (!val || val === currentLocale.value) {
+    return
+  }
   // 保存原始语言设置，以便失败时恢复
   const originalLocale = currentLocale.value
   
@@ -2263,8 +2243,11 @@ async function onLocaleChange(val: string) {
     }
     
     console.log('[MainLayout] 语言切换成功:', val)
-    
-    // 注意：FxDynamicTable 组件会通过 watch(locale) 自动重新加载配置
+
+    if (typeof window !== 'undefined') {
+      window.location.reload()
+      return
+    }
   } catch (e) {
     console.error('[MainLayout] 语言切换失败:', e)
     // 语言切换失败时，恢复到原来的语言设置
@@ -2635,6 +2618,7 @@ onMounted(async () => {
     window.addEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
+    window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
   await Promise.all([
     loadLayout(),
@@ -2653,11 +2637,8 @@ onMounted(async () => {
   await refreshMessageCounts()
 
   try {
-    const [systemUnread, normalUnread] = await Promise.all([
-      listUnreadMessages(10, 'SYSTEM'),
-      listUnreadMessages(10, 'MESSAGE'),
-    ])
-    ;[...(Array.isArray(systemUnread) ? systemUnread : []), ...(Array.isArray(normalUnread) ? normalUnread : [])]
+    const normalUnread = await listUnreadMessages(10, 'MESSAGE')
+    ;[...(Array.isArray(normalUnread) ? normalUnread : [])]
       .forEach((m) => openMessageNotification(m as SysMessageVO))
   } catch (_) {}
 
@@ -2670,6 +2651,7 @@ onUnmounted(() => {
     window.removeEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
+    window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
   closeMessageSse()
 })

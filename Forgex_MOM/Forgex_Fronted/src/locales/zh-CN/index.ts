@@ -18,6 +18,12 @@ import label from './label'
 import report from './report'
 
 export default {
+  sys: {
+    title: '系统管理',
+  },
+  approval: {
+    title: '审批管理',
+  },
   common,
   layout,
   validation,

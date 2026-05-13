@@ -28,6 +28,27 @@
   overflow: hidden;
 }
 
+.api-config-panel--param {
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.api-config-panel--param > .ant-spin-nested-loading,
+.api-config-panel--param > .ant-spin-nested-loading > .ant-spin-container {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+
+.api-config-param-content {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
 .panel-header {
   flex-shrink: 0;
   display: flex;

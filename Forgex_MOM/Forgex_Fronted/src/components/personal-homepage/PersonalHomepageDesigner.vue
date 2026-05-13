@@ -159,8 +159,8 @@
                           <component :is="getMenuIcon(menuItem.icon)" class="menu-grid__icon" />
                         </span>
                         <span class="menu-grid__content">
-                          <span class="menu-grid__title">{{ menuItem.title }}</span>
-                          <span class="menu-grid__module">{{ menuItem.moduleName }}</span>
+                          <span class="menu-grid__title">{{ getMenuTitle(menuItem) }}</span>
+                          <span class="menu-grid__module">{{ getMenuModuleName(menuItem) }}</span>
                         </span>
                       </button>
                     </div>
@@ -187,8 +187,8 @@
                           <component :is="getMenuIcon(menuItem.icon)" class="menu-grid__icon" />
                         </span>
                         <span class="menu-grid__content">
-                          <span class="menu-grid__title">{{ menuItem.title }}</span>
-                          <span class="menu-grid__module">{{ menuItem.moduleName }}</span>
+                          <span class="menu-grid__title">{{ getMenuTitle(menuItem) }}</span>
+                          <span class="menu-grid__module">{{ getMenuModuleName(menuItem) }}</span>
                         </span>
                       </button>
                     </div>
@@ -259,11 +259,11 @@
                         :key="record.id"
                         type="button"
                         class="list-block__item"
-                        @click="openMessage(record)"
+                        @click="openNotice(record)"
                       >
                         <span class="list-block__title">{{ record.title }}</span>
-                        <span class="list-block__meta">{{ record.bizType || record.type || $t('personalHomepage.components.notices.systemType') }}</span>
-                        <span class="list-block__time">{{ record.createTime || '-' }}</span>
+                        <span class="list-block__meta">{{ getNoticeScopeLabel(record.scope) }}</span>
+                        <span class="list-block__time">{{ formatNoticeTime(record) }}</span>
                       </button>
                     </div>
                     <a-empty v-else :description="getWidgetEmptyText('notices')" />
@@ -376,12 +376,14 @@ import {
   type PersonalHomepageScopeLevel,
   type PersonalHomepageSummaryVO,
 } from '@/api/system/personalHomepage'
-import { listUnreadMessages, markMessageRead, SYS_MESSAGE_DEFAULT_TYPE, type SysMessageVO } from '@/api/system/message'
+import { listUnreadMessages, markMessageRead, type SysMessageVO } from '@/api/system/message'
+import { noticeApi, type SysNotice } from '@/api/system/notice'
 import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
 import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH } from '@/router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { useUserStore } from '@/stores/user'
 import { getIcon } from '@/utils/icon'
+import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
 
 const { t, locale } = useI18n()
 
@@ -432,6 +434,7 @@ const commonMenuItems = ref<PersonalMenuEntry[]>([])
 const favoriteMenuItems = ref<PersonalMenuEntry[]>([])
 const pendingApprovals = ref<WfExecutionDTO[]>([])
 const unreadMessages = ref<SysMessageVO[]>([])
+const activeNotices = ref<SysNotice[]>([])
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const now = ref(dayjs())
 const syncingGrid = ref(false)
@@ -657,18 +660,13 @@ const favoriteMenuPathSet = computed(() => {
 
 const inboxMessages = computed(() => {
   const limit = toNumber(findWidget('messages')?.params.limit, defaultLimit('messages'))
-  return unreadMessages.value.filter(item => !isNoticeMessage(item)).slice(0, Math.max(limit, 0))
+  return unreadMessages.value.slice(0, Math.max(limit, 0))
 })
 
 const noticeMessages = computed(() => {
   const limit = toNumber(findWidget('notices')?.params.limit, defaultLimit('notices'))
-  return unreadMessages.value.filter(isNoticeMessage).slice(0, Math.max(limit, 0))
+  return activeNotices.value.slice(0, Math.max(limit, 0))
 })
-
-function isNoticeMessage(messageItem: SysMessageVO) {
-  const messageType = String(messageItem?.messageType || SYS_MESSAGE_DEFAULT_TYPE).toUpperCase()
-  return ['NOTICE', 'WARNING', 'ALARM'].includes(messageType)
-}
 
 function formatIntlDate(value: Date, options: Intl.DateTimeFormatOptions) {
   const localeValue = String(locale.value || 'zh-CN')
@@ -863,6 +861,7 @@ async function loadWidgetData() {
     loadFavoriteMenus(),
     loadPendingApprovals(),
     loadUnreadMessages(),
+    loadActiveNotices(),
   ])
 }
 
@@ -914,14 +913,27 @@ async function loadUnreadMessages() {
   const requestLimit = Math.max(
     10,
     toNumber(findWidget('messages')?.params.limit, defaultLimit('messages')),
-    toNumber(findWidget('notices')?.params.limit, defaultLimit('notices')),
   )
   try {
-    const list = await listUnreadMessages(requestLimit)
+    const list = await listUnreadMessages(requestLimit, 'MESSAGE')
     unreadMessages.value = Array.isArray(list) ? list : []
   } catch (error) {
     console.error('加载未读消息失败:', error)
     unreadMessages.value = []
+  }
+}
+
+async function loadActiveNotices() {
+  const requestLimit = Math.max(
+    10,
+    toNumber(findWidget('notices')?.params.limit, defaultLimit('notices')),
+  )
+  try {
+    const list = await noticeApi.activeList({ maxCount: requestLimit })
+    activeNotices.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('鍔犺浇绯荤粺閫氱煡澶辫触:', error)
+    activeNotices.value = []
   }
 }
 
@@ -1016,8 +1028,12 @@ function openWidgetMore(widgetKey: string) {
     router.push(approvalRoutePaths.myPending).catch(() => {})
     return
   }
-  if (widgetKey === 'messages' || widgetKey === 'notices') {
-    window.dispatchEvent(new CustomEvent('fx:open-message-drawer'))
+  if (widgetKey === 'messages') {
+    window.dispatchEvent(new CustomEvent('fx:open-message-drawer', { detail: { tab: 'MESSAGE' } }))
+    return
+  }
+  if (widgetKey === 'notices') {
+    window.dispatchEvent(new CustomEvent('fx:open-message-drawer', { detail: { tab: 'SYSTEM' } }))
   }
 }
 
@@ -1026,6 +1042,19 @@ function openMenu(path: string) {
     return
   }
   router.push(path).catch(() => {})
+}
+
+function getMenuTitle(menuItem: PersonalMenuEntry) {
+  return resolveMenuDisplayName({
+    path: menuItem.path,
+    title: menuItem.title,
+    moduleCode: menuItem.moduleCode,
+    moduleName: menuItem.moduleName,
+  })
+}
+
+function getMenuModuleName(menuItem: PersonalMenuEntry) {
+  return resolveModuleDisplayName(menuItem.moduleCode, menuItem.moduleName)
 }
 
 async function handleToggleFavorite(menuItem: PersonalMenuEntry) {
@@ -1056,7 +1085,28 @@ async function openMessage(record: SysMessageVO) {
     router.push(record.linkUrl).catch(() => {})
     return
   }
-  window.dispatchEvent(new CustomEvent('fx:open-message-drawer'))
+  window.dispatchEvent(new CustomEvent('fx:open-message-drawer', { detail: { tab: 'MESSAGE' } }))
+}
+
+function openNotice(record: SysNotice) {
+  if (!record?.id) {
+    return
+  }
+  window.dispatchEvent(new CustomEvent('fx:open-message-drawer', { detail: { tab: 'SYSTEM' } }))
+}
+
+function getNoticeScopeLabel(scope?: string) {
+  if (scope === 'PUBLIC') {
+    return t('system.notice.center.scopePublic')
+  }
+  if (scope === 'TENANT') {
+    return t('system.notice.center.scopeTenant')
+  }
+  return t('personalHomepage.components.notices.systemType')
+}
+
+function formatNoticeTime(record: SysNotice) {
+  return formatDateTime(record.startTime || record.createTime)
 }
 
 function formatDateTime(value?: string) {
@@ -1080,6 +1130,10 @@ function handleMessageEvent(event: Event) {
   if (detail && (String(detail.bizType || '').toUpperCase().startsWith('WF_') || String(detail.linkUrl || '').includes('/workspace/approval/'))) {
     loadPendingApprovals()
   }
+}
+
+function handleSystemNoticeRefresh() {
+  loadActiveNotices()
 }
 
 watch(scopeLevel, () => {
@@ -1124,6 +1178,7 @@ onMounted(() => {
   }, 1000)
   window.addEventListener('resize', handleResize)
   window.addEventListener('fx:message-received', handleMessageEvent as EventListener)
+  window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefresh as EventListener)
 })
 
 onUnmounted(() => {
@@ -1132,6 +1187,7 @@ onUnmounted(() => {
   }
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('fx:message-received', handleMessageEvent as EventListener)
+  window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefresh as EventListener)
 })
 </script>
 

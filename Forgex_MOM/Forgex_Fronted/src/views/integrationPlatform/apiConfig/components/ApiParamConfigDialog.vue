@@ -427,11 +427,11 @@ const flatRequestFields = computed(() => flattenFields(requestRoot.value))
 const flatResponseFields = computed(() => flattenFields(responseRoot.value))
 
 const fieldOptions = computed(() => {
-  const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const sourceFields = resolveMappingSourceFields()
+  const targetFields = resolveMappingTargetFields()
   return {
-    source: sourceFields.map(field => ({ label: `${field.fieldPath} (${field.fieldType || '-'})`, value: field.fieldPath })),
-    target: targetFields.map(field => ({ label: `${field.fieldPath} (${field.fieldType || '-'})`, value: field.fieldPath })),
+    source: sourceFields.map(field => ({ label: buildFieldOptionLabel(field), value: field.fieldPath })),
+    target: targetFields.map(field => ({ label: buildFieldOptionLabel(field), value: field.fieldPath })),
   }
 })
 
@@ -441,9 +441,15 @@ const warnings = computed(() => {
     result.push(t('integration.common.typeMismatch'))
   }
   const targetMapped = new Set(mappingRows.value.map(row => row.targetFieldPath).filter(Boolean))
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const targetFields = resolveMappingTargetFields()
   if (targetFields.some(field => field.required === 1 && !targetMapped.has(field.fieldPath))) {
     result.push(t('integration.common.unmappedRequired'))
+  }
+  if (mappingRows.value.some(row => row.sourceFieldPath && !findFieldByPath(row.sourceFieldPath))) {
+    result.push(t('integration.mapping.sourcePathMissing'))
+  }
+  if (mappingRows.value.some(row => row.targetFieldPath && !findFieldByPath(row.targetFieldPath))) {
+    result.push(t('integration.mapping.targetPathMissing'))
   }
   return result
 })
@@ -797,8 +803,8 @@ function handleAddMapping() {
 }
 
 function handleAutoMatch() {
-  const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const sourceFields = resolveMappingSourceFields()
+  const targetFields = resolveMappingTargetFields()
   const existingSources = new Set(mappingRows.value.map(row => row.sourceFieldPath).filter(Boolean))
   const existingTargets = new Set(mappingRows.value.map(row => row.targetFieldPath).filter(Boolean))
   const suggestions: ParamMappingRow[] = []
@@ -842,13 +848,51 @@ function syncMappingMeta(index: number) {
   if (!row) {
     return
   }
-  const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
-  const source = sourceFields.find(field => field.fieldPath === row.sourceFieldPath)
-  const target = targetFields.find(field => field.fieldPath === row.targetFieldPath)
+  const source = findFieldByPath(row.sourceFieldPath)
+  const target = findFieldByPath(row.targetFieldPath)
   row.sourceType = source?.fieldType
   row.targetType = target?.fieldType
   row.required = target?.required === 1
+}
+
+function findFieldByPath(fieldPath?: string) {
+  if (!fieldPath) {
+    return undefined
+  }
+  const fields = [...flatRequestFields.value, ...flatResponseFields.value]
+  return fields.find(field => field.fieldPath === fieldPath)
+}
+
+function resolveMappingSourceFields() {
+  if (!isOutbound.value) {
+    return mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
+  }
+  return mergeFields(flatResponseFields.value, flatRequestFields.value)
+}
+
+function resolveMappingTargetFields() {
+  if (!isOutbound.value) {
+    return mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  }
+  return mergeFields(flatRequestFields.value, flatResponseFields.value)
+}
+
+function mergeFields(...groups: ApiParamConfigItem[][]) {
+  const exists = new Set<string>()
+  const result: ApiParamConfigItem[] = []
+  groups.flat().forEach(field => {
+    if (!field.fieldPath || exists.has(field.fieldPath)) {
+      return
+    }
+    exists.add(field.fieldPath)
+    result.push(field)
+  })
+  return result
+}
+
+function buildFieldOptionLabel(field: ApiParamConfigItem) {
+  const side = field.direction === 'REQUEST' ? '请求' : '响应'
+  return `[${side}] ${field.fieldPath} (${field.fieldType || '-'})`
 }
 
 function syncAllMappingMeta() {
@@ -861,6 +905,14 @@ async function handleSaveAll() {
   }
   if (isOutbound.value && !activeOutboundTargetId.value) {
     message.warning(t('integration.paramConfig.selectTarget'))
+    return
+  }
+  const missingRow = mappingRows.value.find(row =>
+    (row.sourceFieldPath && !findFieldByPath(row.sourceFieldPath))
+    || (row.targetFieldPath && !findFieldByPath(row.targetFieldPath)),
+  )
+  if (missingRow) {
+    message.warning(t('integration.mapping.pathMissingBeforeSave'))
     return
   }
 
@@ -978,6 +1030,12 @@ function isMappableNode(node: ApiParamConfigItem) {
   color: var(--fx-text-primary, #111827);
 }
 
+.api-param-config-shell:not(.ant-modal) {
+  height: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
 :deep(.ant-spin-nested-loading),
 :deep(.ant-spin-container) {
   display: flex;
@@ -1012,10 +1070,11 @@ function isMappableNode(node: ApiParamConfigItem) {
 }
 
 .param-config-layout {
-  flex: 1 1 340px;
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 300px;
+  height: min(380px, 42vh);
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -1037,9 +1096,9 @@ function isMappableNode(node: ApiParamConfigItem) {
 }
 
 .mapping-panel {
-  flex: 0 0 330px;
+  flex: 0 0 auto;
   min-height: 280px;
-  max-height: 38vh;
+  max-height: none;
   overflow-x: hidden;
   overflow-y: auto;
 }

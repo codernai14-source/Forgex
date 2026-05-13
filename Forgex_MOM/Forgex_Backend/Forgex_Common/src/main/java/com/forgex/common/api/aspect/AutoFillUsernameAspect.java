@@ -30,12 +30,15 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,13 +115,13 @@ public class AutoFillUsernameAspect {
             return;
         }
 
-        if (isPageObject(obj)) {
-            collectPageRecordFillInfos(obj, visited, fillInfos);
+        Class<?> clazz = obj.getClass();
+        if (!isBusinessObjectType(clazz)) {
             return;
         }
 
-        Class<?> clazz = obj.getClass();
-        if (isSimpleValueType(clazz)) {
+        if (isPageObject(obj)) {
+            collectPageRecordFillInfos(obj, visited, fillInfos);
             return;
         }
 
@@ -154,7 +157,7 @@ public class AutoFillUsernameAspect {
             }
             Long userId = resolveUserId(obj, clazz, annotation);
             if (userId != null) {
-                field.setAccessible(true);
+                makeAccessible(field);
                 fillInfos.add(new FieldFillInfo(obj, field, userId, annotation.required()));
             }
         }
@@ -164,7 +167,7 @@ public class AutoFillUsernameAspect {
         String userIdFieldName = annotation.userIdField();
         try {
             Field userIdField = findField(clazz, userIdFieldName);
-            userIdField.setAccessible(true);
+            makeAccessible(userIdField);
             Object userIdValue = userIdField.get(obj);
             if (userIdValue == null) {
                 if (annotation.required()) {
@@ -186,7 +189,9 @@ public class AutoFillUsernameAspect {
                 try {
                     return Long.parseLong(((String) userIdValue).trim());
                 } catch (NumberFormatException e) {
-                    log.warn("鐢ㄦ埛ID瀛楁 {} 鍊间笉鏄暟瀛楋細{}", userIdFieldName, userIdValue);
+                    if (annotation.required()) {
+                        log.warn("用户ID字段 {} 的值不是数字: {}", userIdFieldName, userIdValue);
+                    }
                     return null;
                 }
             }
@@ -240,7 +245,10 @@ public class AutoFillUsernameAspect {
             if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
                 continue;
             }
-            field.setAccessible(true);
+            if (!canInspectField(field)) {
+                continue;
+            }
+            makeAccessible(field);
             Object nestedValue = field.get(obj);
             if (nestedValue == null) {
                 continue;
@@ -288,12 +296,44 @@ public class AutoFillUsernameAspect {
         throw new NoSuchFieldException(fieldName);
     }
 
+    private void makeAccessible(Field field) {
+        field.setAccessible(true);
+    }
+
+    private boolean canInspectField(Field field) {
+        Class<?> type = field.getType();
+        if (isSimpleValueType(type)) {
+            return false;
+        }
+        if (Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type) || IPage.class.isAssignableFrom(type)) {
+            return true;
+        }
+        return isBusinessObjectType(type);
+    }
+
+    private boolean isBusinessObjectType(Class<?> clazz) {
+        return !isSimpleValueType(clazz)
+                && !clazz.isArray()
+                && !clazz.getName().startsWith("java.")
+                && !clazz.getName().startsWith("javax.")
+                && !clazz.getName().startsWith("jakarta.")
+                && !clazz.getName().startsWith("sun.")
+                && !clazz.getName().startsWith("jdk.")
+                && !clazz.getName().startsWith("com.sun.");
+    }
+
     private boolean isSimpleValueType(Class<?> clazz) {
-        return clazz.isPrimitive()
+        return clazz == null
+                || clazz.isPrimitive()
                 || clazz.isEnum()
-                || clazz.getName().startsWith("java.")
-                || clazz.getName().startsWith("javax.")
-                || clazz.getName().startsWith("jakarta.");
+                || CharSequence.class.isAssignableFrom(clazz)
+                || Number.class.isAssignableFrom(clazz)
+                || Boolean.class == clazz
+                || Character.class == clazz
+                || Date.class.isAssignableFrom(clazz)
+                || Temporal.class.isAssignableFrom(clazz)
+                || Optional.class.isAssignableFrom(clazz)
+                || Class.class == clazz;
     }
 
     private static class FieldFillInfo {

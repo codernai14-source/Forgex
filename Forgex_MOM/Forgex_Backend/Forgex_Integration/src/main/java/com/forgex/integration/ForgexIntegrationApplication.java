@@ -1,6 +1,8 @@
 package com.forgex.integration;
 
 import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.api.feign.IntegrationMaterialSyncFeignClient;
+import com.forgex.common.api.feign.IntegrationSupplierSyncFeignClient;
 import com.forgex.common.api.feign.IntegrationUserSyncFeignClient;
 import com.forgex.common.security.perm.PermissionInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
@@ -24,7 +26,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication(scanBasePackages = "com.forgex")
 @EnableDiscoveryClient
 @EnableAsync
-@EnableFeignClients(clients = {AuthPermClient.class, IntegrationUserSyncFeignClient.class})
+@EnableFeignClients(clients = {
+        AuthPermClient.class,
+        IntegrationUserSyncFeignClient.class,
+        IntegrationSupplierSyncFeignClient.class,
+        IntegrationMaterialSyncFeignClient.class
+})
 @Import(PermissionInterceptor.class)
 @MapperScan({"com.forgex.integration.mapper", "com.forgex.common.mapper"})
 public class ForgexIntegrationApplication {

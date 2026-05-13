@@ -372,6 +372,11 @@ function openEdit(record: TenantDTO) {
   formRef.value?.resetFields()
 }
 
+function handleCancel() {
+  dialogVisible.value = false
+  formRef.value?.resetFields()
+}
+
 async function handleSave() {
   try {
     await formRef.value?.validate()

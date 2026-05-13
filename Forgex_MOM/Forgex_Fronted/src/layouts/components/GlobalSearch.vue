@@ -110,6 +110,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { pinyin } from 'pinyin-pro'
 import { getIcon } from '../../utils/icon'
+import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
 import {
   SearchOutlined,
   CloseCircleOutlined,
@@ -449,22 +450,29 @@ const flatMenus = computed(() => {
   
   const flatten = (menus: MenuItem[], parentPath: string[] = [], currentModuleName = '') => {
     for (const menu of menus) {
-      const nextModuleName = menu.moduleName || currentModuleName || (menu.type === 'dir' && parentPath.length === 0 ? menu.title : '')
+      const resolvedTitle = resolveMenuDisplayName({
+        path: menu.path,
+        title: menu.title,
+        moduleCode: menu.moduleCode,
+        moduleName: menu.moduleName,
+      })
+      const resolvedModuleName = resolveModuleDisplayName(menu.moduleCode, menu.moduleName)
+      const nextModuleName = resolvedModuleName || currentModuleName || (menu.type === 'dir' && parentPath.length === 0 ? resolvedTitle : '')
 
       // 只搜索菜单类型，不搜索按钮
       if (menu.type === 'menu') {
-        const breadcrumb = [...parentPath, menu.title].join(' / ')
-        const titleTokens = buildPinyinTokens(menu.title)
+        const breadcrumb = [...parentPath, resolvedTitle].join(' / ')
+        const titleTokens = buildPinyinTokens(resolvedTitle)
         const moduleTokens = buildPinyinTokens(nextModuleName)
         result.push({
           key: menu.key,
-          title: menu.title,
+          title: resolvedTitle,
           icon: menu.icon,
           path: menu.path,
           breadcrumb,
           moduleName: nextModuleName,
-          titleNormalized: normalizeSearchValue(menu.title),
-          titleCompact: normalizeCompactValue(menu.title),
+          titleNormalized: normalizeSearchValue(resolvedTitle),
+          titleCompact: normalizeCompactValue(resolvedTitle),
           moduleNormalized: normalizeSearchValue(nextModuleName),
           moduleCompact: normalizeCompactValue(nextModuleName),
           breadcrumbNormalized: normalizeSearchValue(breadcrumb),
@@ -479,7 +487,7 @@ const flatMenus = computed(() => {
       
       // 递归处理子菜单
       if (menu.children && menu.children.length > 0) {
-        flatten(menu.children, [...parentPath, menu.title], nextModuleName)
+        flatten(menu.children, [...parentPath, resolvedTitle], nextModuleName)
       }
     }
   }

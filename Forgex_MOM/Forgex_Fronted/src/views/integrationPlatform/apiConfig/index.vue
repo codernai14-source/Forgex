@@ -9,12 +9,16 @@
         <a-button @click="backToList">{{ t('common.back') }}</a-button>
       </div>
 
-      <ApiParamConfigDialog
-        :open="true"
-        :api-config="editor.apiConfig"
-        :page-mode="true"
-        @update:open="handleParamOpenChange"
-      />
+      <a-spin :spinning="paramConfigLoading">
+        <ApiParamConfigDialog
+          v-if="editor.apiConfig"
+          class="api-config-param-content"
+          :open="true"
+          :api-config="editor.apiConfig"
+          :page-mode="true"
+          @update:open="handleParamOpenChange"
+        />
+      </a-spin>
     </section>
     <section v-else class="api-config-panel">
       <fx-dynamic-table
@@ -56,10 +60,37 @@
         </template>
 
         <template #apiPath="{ record }">
-          <span v-if="record.direction === 'INBOUND'">
-            {{ record.apiPath || '/integration/public/invoke' }}
-          </span>
-          <span v-else>-</span>
+          <a-space direction="vertical" :size="2" class="path-cell">
+            <template v-if="record.direction === 'INBOUND'">
+              <span>{{ record.apiPath || '/integration/public/invoke' }}</span>
+            </template>
+            <template v-else>
+              <span
+                v-for="(path, index) in getOutboundTargetPaths(record)"
+                :key="`${record.id || record.apiCode}-path-${index}`"
+              >
+                {{ path }}
+              </span>
+              <span v-if="getOutboundTargetPaths(record).length === 0">-</span>
+            </template>
+          </a-space>
+        </template>
+
+        <template #targetUrl="{ record }">
+          <a-space direction="vertical" :size="2" class="target-cell">
+            <template v-if="record.direction === 'OUTBOUND'">
+              <span
+                v-for="(url, index) in getOutboundTargetUrls(record)"
+                :key="`${record.id || record.apiCode}-url-${index}`"
+              >
+                {{ url }}
+              </span>
+              <span v-if="getOutboundTargetUrls(record).length === 0">{{ record.targetUrl || '-' }}</span>
+            </template>
+            <template v-else>
+              <span>{{ record.targetUrl || '-' }}</span>
+            </template>
+          </a-space>
         </template>
 
         <template #status="{ record }">
@@ -98,7 +129,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiConfigFormDialog from './components/ApiConfigFormDialog.vue'
 import ApiParamConfigDialog from './components/ApiParamConfigDialog.vue'
@@ -107,6 +138,7 @@ import {
   deleteApiConfig,
   disableApiConfig,
   enableApiConfig,
+  getApiConfigDetail,
   getApiConfigList,
 } from '@/api/system/integration'
 import type { ApiConfigItem, IntegrationDirection } from '@/api/system/integration'
@@ -117,6 +149,7 @@ const { t } = useI18n({ useScope: 'global' })
 const tableRef = ref<InstanceType<typeof FxDynamicTable>>()
 const selectedRowKeys = ref<number[]>([])
 const formDialogVisible = ref(false)
+const paramConfigLoading = ref(false)
 const editor = reactive<ApiConfigEditorState>({
   mode: 'list',
   isEdit: false,
@@ -187,16 +220,48 @@ function handleFormSuccess(record?: ApiConfigItem) {
   void tableRef.value?.refresh?.()
 }
 
-function openParamConfig(record: ApiConfigItem) {
+async function openParamConfig(record: ApiConfigItem) {
   editor.mode = 'param'
   editor.isEdit = true
-  editor.apiConfig = record
+  editor.apiConfig = undefined
+  paramConfigLoading.value = true
+  try {
+    const detail = record.id ? await getApiConfigDetail(record.id) : record
+    editor.apiConfig = {
+      ...record,
+      ...detail,
+      outboundTargets: detail.outboundTargets || record.outboundTargets || [],
+    }
+  } catch {
+    message.error(t('integration.common.loadFailed'))
+    editor.apiConfig = record
+  } finally {
+    paramConfigLoading.value = false
+  }
 }
 
 function backToList() {
   editor.mode = 'list'
   editor.apiConfig = undefined
   editor.isEdit = false
+}
+
+function getOutboundTargetUrls(record: ApiConfigItem) {
+  const urls = (record.outboundTargets || [])
+    .map(item => item.targetUrl?.trim())
+    .filter((value): value is string => Boolean(value))
+  return urls.length ? urls : (record.targetUrl ? [record.targetUrl] : [])
+}
+
+function getOutboundTargetPaths(record: ApiConfigItem) {
+  return getOutboundTargetUrls(record).map(url => {
+    try {
+      const parsed = new URL(url)
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/'
+    } catch {
+      return url
+    }
+  })
 }
 
 function handleDelete(id: number) {

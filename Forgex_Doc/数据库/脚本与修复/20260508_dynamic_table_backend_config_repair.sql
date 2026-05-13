@@ -16,7 +16,7 @@ CREATE TEMPORARY TABLE tmp_fx_table_cfg_20260508 (
   table_type VARCHAR(20) NOT NULL DEFAULT 'BUSINESS',
   row_key VARCHAR(64) NOT NULL DEFAULT 'id',
   page_size INT NOT NULL DEFAULT 10
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO tmp_fx_table_cfg_20260508(table_code, zh_cn, en_us, zh_tw, ja_jp, ko_kr) VALUES
 ('CurrencyMasterTable', '币种主数据', 'Currency Master Data', '幣別主資料', '通貨マスターデータ', '통화 마스터 데이터'),
@@ -53,7 +53,9 @@ SELECT
 FROM tmp_fx_table_cfg_20260508 c
 WHERE NOT EXISTS (
   SELECT 1 FROM fx_table_config t
-  WHERE t.tenant_id = 0 AND t.table_code = c.table_code AND t.deleted = 0
+  WHERE t.tenant_id = 0
+    AND t.table_code COLLATE utf8mb4_general_ci = c.table_code COLLATE utf8mb4_general_ci
+    AND t.deleted = 0
 );
 
 INSERT INTO fx_table_config (
@@ -73,8 +75,15 @@ SELECT
   'i18n_repair',
   0
 FROM fx_table_config s
-WHERE s.tenant_id = 0 AND s.table_code = 'SupplierMasterTable' AND s.deleted = 0
-  AND NOT EXISTS (SELECT 1 FROM fx_table_config t WHERE t.tenant_id = 0 AND t.table_code = 'basic_supplier' AND t.deleted = 0)
+WHERE s.tenant_id = 0
+  AND s.table_code COLLATE utf8mb4_general_ci = 'SupplierMasterTable' COLLATE utf8mb4_general_ci
+  AND s.deleted = 0
+  AND NOT EXISTS (
+    SELECT 1 FROM fx_table_config t
+    WHERE t.tenant_id = 0
+      AND t.table_code COLLATE utf8mb4_general_ci = 'basic_supplier' COLLATE utf8mb4_general_ci
+      AND t.deleted = 0
+  )
 LIMIT 1;
 
 INSERT INTO fx_table_config (
@@ -94,8 +103,15 @@ SELECT
   'i18n_repair',
   0
 FROM fx_table_config s
-WHERE s.tenant_id = 0 AND s.table_code = 'UserTable' AND s.deleted = 0
-  AND NOT EXISTS (SELECT 1 FROM fx_table_config t WHERE t.tenant_id = 0 AND t.table_code = 'sys_user' AND t.deleted = 0)
+WHERE s.tenant_id = 0
+  AND s.table_code COLLATE utf8mb4_general_ci = 'UserTable' COLLATE utf8mb4_general_ci
+  AND s.deleted = 0
+  AND NOT EXISTS (
+    SELECT 1 FROM fx_table_config t
+    WHERE t.tenant_id = 0
+      AND t.table_code COLLATE utf8mb4_general_ci = 'sys_user' COLLATE utf8mb4_general_ci
+      AND t.deleted = 0
+  )
 LIMIT 1;
 
 DROP TEMPORARY TABLE IF EXISTS tmp_fx_table_col_20260508;
@@ -116,7 +132,7 @@ CREATE TEMPORARY TABLE tmp_fx_table_col_20260508 (
   dict_code_val VARCHAR(100) NULL,
   ellipsis_val TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY(table_code, field_name)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO tmp_fx_table_col_20260508 VALUES
 ('CurrencyMasterTable','currencyCode','币种编码','Currency Code','幣別編碼','通貨コード','통화 코드',120,NULL,1,1,'input','like',NULL,0),
@@ -288,7 +304,10 @@ SELECT
 FROM tmp_fx_table_col_20260508 c
 WHERE NOT EXISTS (
   SELECT 1 FROM fx_table_column_config t
-  WHERE t.tenant_id = 0 AND t.table_code = c.table_code AND t.field = c.field_name AND t.deleted = 0
+  WHERE t.tenant_id = 0
+    AND t.table_code COLLATE utf8mb4_general_ci = c.table_code COLLATE utf8mb4_general_ci
+    AND t.field COLLATE utf8mb4_general_ci = c.field_name COLLATE utf8mb4_general_ci
+    AND t.deleted = 0
 );
 
 INSERT INTO fx_table_column_config (
@@ -319,10 +338,15 @@ SELECT
   'i18n_repair',
   0
 FROM fx_table_column_config s
-WHERE s.tenant_id = 0 AND s.table_code = 'SupplierMasterTable' AND s.deleted = 0
+WHERE s.tenant_id = 0
+  AND s.table_code COLLATE utf8mb4_general_ci = 'SupplierMasterTable' COLLATE utf8mb4_general_ci
+  AND s.deleted = 0
   AND NOT EXISTS (
     SELECT 1 FROM fx_table_column_config t
-    WHERE t.tenant_id = 0 AND t.table_code = 'basic_supplier' AND t.field = s.field AND t.deleted = 0
+    WHERE t.tenant_id = 0
+      AND t.table_code COLLATE utf8mb4_general_ci = 'basic_supplier' COLLATE utf8mb4_general_ci
+      AND t.field COLLATE utf8mb4_general_ci = s.field COLLATE utf8mb4_general_ci
+      AND t.deleted = 0
   );
 
 INSERT INTO fx_table_column_config (
@@ -353,10 +377,15 @@ SELECT
   'i18n_repair',
   0
 FROM fx_table_column_config s
-WHERE s.tenant_id = 0 AND s.table_code = 'UserTable' AND s.deleted = 0
+WHERE s.tenant_id = 0
+  AND s.table_code COLLATE utf8mb4_general_ci = 'UserTable' COLLATE utf8mb4_general_ci
+  AND s.deleted = 0
   AND NOT EXISTS (
     SELECT 1 FROM fx_table_column_config t
-    WHERE t.tenant_id = 0 AND t.table_code = 'sys_user' AND t.field = s.field AND t.deleted = 0
+    WHERE t.tenant_id = 0
+      AND t.table_code COLLATE utf8mb4_general_ci = 'sys_user' COLLATE utf8mb4_general_ci
+      AND t.field COLLATE utf8mb4_general_ci = s.field COLLATE utf8mb4_general_ci
+      AND t.deleted = 0
   );
 
 DROP TEMPORARY TABLE IF EXISTS tmp_fx_table_col_20260508;

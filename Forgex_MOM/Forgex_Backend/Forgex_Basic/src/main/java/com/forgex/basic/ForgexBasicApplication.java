@@ -15,6 +15,7 @@ package com.forgex.basic;
 
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.api.feign.IntegrationInternalMaterialFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
@@ -43,6 +44,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
         AuthPermClient.class,
         SysTenantFeignClient.class,
         WorkflowExecutionFeignClient.class,
+        IntegrationInternalMaterialFeignClient.class,
         IntegrationInternalSupplierFeignClient.class
 })
 /**
