@@ -16,7 +16,7 @@ export interface DictTreeNode {
  * @param params 查询参数
  */
 export function getDictList(params?: any) {
-  return http.get('/sys/dict/tree', params)
+  return http.post('/sys/dict/tree', params || {})
 }
 
 /**
@@ -24,5 +24,5 @@ export function getDictList(params?: any) {
  * @param params 查询参数
  */
 export function getDictTree(params?: any) {
-  return http.get('/sys/dict/tree', params)
+  return http.post('/sys/dict/tree', params || {})
 }

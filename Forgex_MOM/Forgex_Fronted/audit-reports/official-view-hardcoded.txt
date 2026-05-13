@@ -60,6 +60,41 @@ views/system/messageTemplate/index.vue:526: const title = renderPlaceholderText(
 views/system/messageTemplate/index.vue:611: reset表单Data()
 views/system/messageTemplate/index.vue:619: Object.assign(formData, normalize表单Data(res))
 views/system/messageTemplate/index.vue:678: if (!validate表单()) {
+views/system/notice/index.vue:12: <a-button v-permission="'sys:notice:add'" type="primary" @click="openCreate">新增通知</a-button>
+views/system/notice/index.vue:25: <a-tag :color="record.forceRemind ? 'orange' : 'default'">{{ record.forceRemind ? '是' : '否' }}</a-tag>
+views/system/notice/index.vue:30: <a v-permission="'sys:notice:view'" @click="openDetail(record)">详情</a>
+views/system/notice/index.vue:31: <a v-permission="'sys:notice:edit'" @click="openEdit(record)">编辑</a>
+views/system/notice/index.vue:37: 发布
+views/system/notice/index.vue:44: 停用
+views/system/notice/index.vue:46: <a v-permission="'sys:notice:delete'" class="danger-link" @click="handleDelete(record)">删除</a>
+views/system/notice/index.vue:64: <a-form-item label="通知标题" required>
+views/system/notice/index.vue:69: <a-form-item label="通知范围" required>
+views/system/notice/index.vue:74: <a-form-item label="状态">
+views/system/notice/index.vue:79: <a-form-item label="生效时间">
+views/system/notice/index.vue:84: <a-form-item label="失效时间">
+views/system/notice/index.vue:89: <a-form-item label="排序">
+views/system/notice/index.vue:94: <a-form-item label="强提醒">
+views/system/notice/index.vue:99: <a-form-item label="摘要">
+views/system/notice/index.vue:104: <a-form-item label="通知内容" required>
+views/system/notice/index.vue:124: <a-form-item label="附件">
+views/system/notice/index.vue:131: <a-button v-if="!readonly">上传附件</a-button>
+views/system/notice/index.vue:161: { label: '公共', value: 'PUBLIC' },
+views/system/notice/index.vue:162: { label: '租户', value: 'TENANT' },
+views/system/notice/index.vue:165: { label: '草稿', value: 'DRAFT' },
+views/system/notice/index.vue:166: { label: '已发布', value: 'PUBLISHED' },
+views/system/notice/index.vue:167: { label: '已停用', value: 'DISABLED' },
+views/system/notice/index.vue:175: { label: '是', value: true },
+views/system/notice/index.vue:176: { label: '否', value: false },
+views/system/notice/index.vue:179: const dialogTitle = computed(() => readonly.value ? '通知详情' : form.value.id ? '编辑通知' : '新增通知')
+views/system/notice/index.vue:182: name: item.fileName || item.fileUrl || `附件${index + 1}`,
+views/system/notice/index.vue:188: placeholder: '请输入通知内容',
+views/system/notice/index.vue:192: const url = await uploadFile(file, { moduleCode: 'sys_notice', moduleName: '系统通知图片' })
+views/system/notice/index.vue:250: message.warning('通知标题不能为空')
+views/system/notice/index.vue:254: message.warning('通知内容不能为空')
+views/system/notice/index.vue:268: const url = await uploadFile(file, { moduleCode: 'sys_notice', moduleName: '系统通知附件' })
+views/system/notice/index.vue:286: title: '确认发布该通知？',
+views/system/notice/index.vue:296: title: '确认停用该通知？',
+views/system/notice/index.vue:306: title: '确认删除该通知？',
 views/system/operationLog/index.vue:171: responseStatus: item.responseStatus ?? item['response状态'],
 views/system/operationLog/index.vue:190: responseStatus: record.responseStatus ?? record['response状态'],
 views/system/position/index.vue:227: ...search表单.value,

@@ -35,4 +35,16 @@ public interface IApiParamAssembler {
     OutboundRequestDefinition assembleOutbound(ApiDefinitionSnapshot snapshot,
                                                Map<String, Object> rawPayload,
                                                ApiOutboundTargetDTO target);
+
+    /**
+     * 组装出站响应参数。
+     *
+     * @param snapshot   接口定义快照
+     * @param rawPayload 第三方原始响应
+     * @param target     出站目标配置
+     * @return 平台内部响应结构
+     */
+    Map<String, Object> assembleOutboundResponse(ApiDefinitionSnapshot snapshot,
+                                                 Map<String, Object> rawPayload,
+                                                 ApiOutboundTargetDTO target);
 }

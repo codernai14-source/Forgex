@@ -5,6 +5,7 @@ import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ThirdAuthorizationDTO;
 import com.forgex.integration.domain.param.ThirdAuthorizationParam;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.service.IThirdAuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -144,7 +145,7 @@ public class ThirdAuthorizationController {
     @Operation(summary = "创建第三方授权", description = "新增第三方授权信息")
     public R<Void> createThirdAuthorization(@RequestBody @Validated ThirdAuthorizationDTO dto) {
         thirdAuthorizationService.createThirdAuthorization(dto);
-        return R.ok();
+        return R.ok(IntegrationPromptEnum.THIRD_AUTH_CREATE_SUCCESS);
     }
 
     /**
@@ -166,7 +167,7 @@ public class ThirdAuthorizationController {
     @Operation(summary = "更新第三方授权", description = "修改第三方授权信息")
     public R<Void> updateThirdAuthorization(@RequestBody @Validated ThirdAuthorizationDTO dto) {
         thirdAuthorizationService.updateThirdAuthorization(dto);
-        return R.ok();
+        return R.ok(IntegrationPromptEnum.THIRD_AUTH_UPDATE_SUCCESS);
     }
 
     /**
@@ -187,7 +188,7 @@ public class ThirdAuthorizationController {
     @Operation(summary = "删除第三方授权", description = "逻辑删除第三方授权")
     public R<Void> deleteThirdAuthorization(@PathVariable Long id) {
         thirdAuthorizationService.deleteThirdAuthorization(id);
-        return R.ok();
+        return R.ok(IntegrationPromptEnum.THIRD_AUTH_DELETE_SUCCESS);
     }
 
     /**
@@ -208,7 +209,7 @@ public class ThirdAuthorizationController {
     @Operation(summary = "批量删除第三方授权", description = "批量删除多个第三方授权")
     public R<Void> batchDeleteThirdAuthorizations(@RequestBody List<Long> ids) {
         thirdAuthorizationService.batchDeleteThirdAuthorizations(ids);
-        return R.ok();
+        return R.ok(IntegrationPromptEnum.THIRD_AUTH_BATCH_DELETE_SUCCESS);
     }
 
     /**
@@ -229,11 +230,12 @@ public class ThirdAuthorizationController {
     @PostMapping("/generate-token/{thirdSystemId}")
     @Operation(summary = "生成 Token", description = "为指定第三方系统生成新的 Token")
     public R<String> generateToken(@PathVariable Long thirdSystemId,
-                                   @RequestParam(required = false) Integer expireHours) {
-        String tokenValue = thirdAuthorizationService.generateToken(thirdSystemId, expireHours);
-        R<String> result = R.ok(tokenValue);
-        result.setMessage("Token 生成成功");
-        return result;
+                                   @RequestParam(required = false) Integer expireHours,
+                                   @RequestBody(required = false) ThirdAuthorizationDTO dto) {
+        String tokenValue = dto == null
+            ? thirdAuthorizationService.generateToken(thirdSystemId, expireHours)
+            : thirdAuthorizationService.generateToken(thirdSystemId, dto);
+        return R.ok(IntegrationPromptEnum.THIRD_AUTH_TOKEN_GENERATED, tokenValue);
     }
 
     /**
@@ -252,9 +254,8 @@ public class ThirdAuthorizationController {
     @Operation(summary = "校验 Token", description = "校验 Token 是否有效")
     public R<Boolean> validateToken(@RequestParam String tokenValue) {
         boolean isValid = thirdAuthorizationService.validateToken(tokenValue);
-        R<Boolean> result = R.ok(isValid);
-        result.setMessage(isValid ? "Token 有效" : "Token 无效");
-        return result;
+        return R.ok(isValid ? IntegrationPromptEnum.THIRD_AUTH_TOKEN_VALID : IntegrationPromptEnum.THIRD_AUTH_TOKEN_INVALID,
+            isValid);
     }
 
     /**
@@ -282,9 +283,8 @@ public class ThirdAuthorizationController {
         }
 
         boolean inWhitelist = thirdAuthorizationService.checkIpWhitelist(thirdSystemId, ipAddress);
-        R<Boolean> result = R.ok(inWhitelist);
-        result.setMessage(inWhitelist ? "IP 在白名单中" : "IP 不在白名单中");
-        return result;
+        return R.ok(inWhitelist ? IntegrationPromptEnum.THIRD_AUTH_IP_IN_WHITELIST : IntegrationPromptEnum.THIRD_AUTH_IP_NOT_IN_WHITELIST,
+            inWhitelist);
     }
 
     /**
@@ -307,6 +307,6 @@ public class ThirdAuthorizationController {
     public R<Void> refreshTokenExpire(@RequestParam String tokenValue,
                                       @RequestParam Integer expireHours) {
         thirdAuthorizationService.refreshTokenExpire(tokenValue, expireHours);
-        return R.ok();
+        return R.ok(IntegrationPromptEnum.THIRD_AUTH_REFRESH_TOKEN_SUCCESS);
     }
 }

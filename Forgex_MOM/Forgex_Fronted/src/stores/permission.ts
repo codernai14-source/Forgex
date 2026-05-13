@@ -228,3 +228,5 @@ export const use权限Store = defineStore('permission', () => {
   //   paths: ['permissions', 'routes', 'modules']
   // }
 })
+
+export const usePermissionStore = use权限Store

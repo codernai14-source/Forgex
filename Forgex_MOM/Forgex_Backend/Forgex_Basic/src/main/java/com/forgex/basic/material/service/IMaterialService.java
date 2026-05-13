@@ -7,6 +7,12 @@ import com.forgex.basic.material.domain.entity.BasicMaterial;
 import com.forgex.basic.material.domain.param.MaterialPageParam;
 import com.forgex.basic.material.domain.response.MaterialDetailResponse;
 import com.forgex.basic.material.domain.vo.MaterialVO;
+import com.forgex.common.api.dto.MaterialAggregateDTO;
+import com.forgex.common.api.dto.MaterialThirdPartyInvokeDTO;
+import com.forgex.common.api.dto.MaterialThirdPartySyncRequestDTO;
+import com.forgex.common.api.dto.MaterialThirdPartySyncResultDTO;
+import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
+import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -77,5 +83,47 @@ public interface IMaterialService extends IService<BasicMaterial> {
      */
     @Transactional(rollbackFor = Exception.class)
     void deleteMaterial(Long tenantId, Long id);
+
+    /**
+     * 同步物料到第三方系统。
+     *
+     * @param request 第三方调用请求
+     * @return 同步结果
+     */
+    MaterialThirdPartySyncResultDTO syncToThirdParty(MaterialThirdPartyInvokeDTO request);
+
+    /**
+     * 从第三方系统拉取物料。
+     *
+     * @param request 第三方调用请求
+     * @return 写入结果
+     */
+    MaterialThirdPartySyncResultDTO pullFromThirdParty(MaterialThirdPartyInvokeDTO request);
+
+    /**
+     * 写入第三方物料数据。
+     *
+     * @param request 同步请求
+     * @return 写入结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    MaterialThirdPartySyncResultDTO syncThirdPartyMaterials(MaterialThirdPartySyncRequestDTO request);
+
+    /**
+     * 导出第三方同步使用的物料聚合数据。
+     *
+     * @param request 导出请求
+     * @return 物料聚合数据
+     */
+    List<MaterialAggregateDTO> exportThirdPartyMaterials(MaterialThirdPartySyncRequestDTO request);
+
+    /**
+     * 执行公共导入。
+     *
+     * @param param 公共导入参数
+     * @return 导入结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param);
 }
 

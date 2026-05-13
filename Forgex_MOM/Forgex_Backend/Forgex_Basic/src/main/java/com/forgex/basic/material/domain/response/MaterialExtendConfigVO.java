@@ -40,6 +40,12 @@ public class MaterialExtendConfigVO {
     private String moduleName;
 
     /**
+     * 物料类型
+     */
+    @Schema(description = "物料类型")
+    private String materialType;
+
+    /**
      * 字段名称（英文标识）
      */
     @Schema(description = "字段名称")

@@ -99,6 +99,7 @@ public class ApiOutboundTargetServiceImpl extends ServiceImpl<ApiOutboundTargetM
             if (dto == null || dto.getThirdSystemId() == null || !StringUtils.hasText(dto.getTargetUrl())) {
                 continue;
             }
+            validateTargetRoute(dto.getTargetUrl());
             ApiOutboundTarget entity = new ApiOutboundTarget();
             BeanUtils.copyProperties(dto, entity);
             entity.setId(null);
@@ -113,6 +114,14 @@ public class ApiOutboundTargetServiceImpl extends ServiceImpl<ApiOutboundTargetM
             fillTargetInfo(entity);
             this.save(entity);
             order++;
+        }
+    }
+
+    private void validateTargetRoute(String targetUrl) {
+        String value = targetUrl == null ? "" : targetUrl.trim().toLowerCase();
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.API_TARGET_ROUTE_ONLY_PATH);
         }
     }
 

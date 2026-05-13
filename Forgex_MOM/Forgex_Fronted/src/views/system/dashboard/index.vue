@@ -216,6 +216,7 @@ import {
   getRecentLoginLogs
 } from '@/api/system/dashboard'
 import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
+import { resolveModuleDisplayName } from '@/utils/menuI18n'
 
 const { t } = useI18n()
 const legacyWidgetKeys = ['systemOverview', 'systemHealth', 'systemLogs', 'systemConfig']
@@ -820,7 +821,7 @@ const initModuleChart = () => {
 const updateModuleChart = () => {
   if (!moduleChart) return
 
-  const moduleNames = moduleUsageData.value.map(item => String(item.moduleName ?? ''))
+  const moduleNames = moduleUsageData.value.map(item => resolveModuleDisplayName(String(item.moduleCode ?? ''), item.moduleName))
   const memoryMb = moduleUsageData.value.map(item => Number(item.memoryUsageMb) || 0)
 
   moduleChart.setOption({

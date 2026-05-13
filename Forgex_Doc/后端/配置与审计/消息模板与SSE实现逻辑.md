@@ -21,6 +21,7 @@
 | 模板消息发送实现 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/impl/TemplateMessageServiceImpl.java` | 渲染模板、落消息、推 SSE |
 | 模板配置同步实现 | `Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/service/template/TemplateConfigServiceImpl.java` | 公共模板同步到租户、响应模板/MQ 模板/导出模板同步 |
 | SSE 管理服务 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/SseEmitterService.java` | 建连、心跳、清理、定向推送 |
+| 系统通知接口 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/controller/SysNoticeController.java` | 系统通知分页、保存、发布/停用、首页待弹列表、用户确认 |
 
 ## 数据模型
 
@@ -32,6 +33,14 @@
 - `SysMessage`
 - `SysResponseMessageTemplate`
 - `SysMqMessageTemplate`
+
+系统通知使用独立的数据模型：
+
+- `SysNotice`：通知标题、公共/租户范围、富文本 HTML、摘要、状态、生效失效时间、排序和强提醒标识
+- `SysNoticeAttachment`：通知附件文件名、URL、大小和类型
+- `SysNoticeUserRecord`：用户弹窗确认记录，用于同一用户同一通知只弹一次
+
+公共通知以 `scope = PUBLIC`、`tenant_id = 0` 保存，租户通知以 `scope = TENANT`、当前租户 ID 保存。查询时服务层临时跳过 MyBatis 租户拦截，并由业务条件显式限定“公共或当前租户”，避免公共通知被当前租户拦截条件过滤。
 
 可以把它理解为两层：
 

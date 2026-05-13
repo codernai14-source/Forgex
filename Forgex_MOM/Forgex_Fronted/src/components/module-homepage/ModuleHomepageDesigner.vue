@@ -300,13 +300,13 @@ const moduleMeta = computed(() => {
       desc: t('personalHomepage.module.modules.basic.desc'),
     },
     approval: {
-      name: t('personalHomepage.module.modules.approval.name'),
-      title: t('personalHomepage.module.modules.approval.title'),
+      name: t('approval.title'),
+      title: t('approval.title'),
       desc: t('personalHomepage.module.modules.approval.desc'),
     },
     sys: {
-      name: t('personalHomepage.module.modules.sys.name'),
-      title: t('personalHomepage.module.modules.sys.title'),
+      name: t('sys.title'),
+      title: t('sys.title'),
       desc: t('personalHomepage.module.modules.sys.desc'),
     },
   }

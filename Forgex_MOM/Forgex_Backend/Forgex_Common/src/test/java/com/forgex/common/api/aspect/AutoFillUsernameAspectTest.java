@@ -8,11 +8,13 @@ import lombok.Data;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -97,6 +99,31 @@ class AutoFillUsernameAspectTest {
         assertEquals("admin", dto.getCreateByName());
     }
 
+    @Test
+    void shouldSkipJdkValueFieldsWhenFillingNestedBusinessObject() throws Throwable {
+        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin")));
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        WrapperDTO wrapper = new WrapperDTO(new AuditDTO("1"), Charset.defaultCharset());
+
+        aspect.around(joinPointReturning(R.ok(wrapper)));
+
+        assertEquals("admin", wrapper.getAudit().getCreateByName());
+        verify(userFeignClient, times(1)).getUsernameMap(List.of(1L));
+    }
+
+    @Test
+    void shouldSkipNonNumericOptionalUserIdWithoutQuerying() throws Throwable {
+        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AuditDTO dto = new AuditDTO("admin");
+
+        aspect.around(joinPointReturning(R.ok(dto)));
+
+        assertEquals(null, dto.getCreateByName());
+        verify(userFeignClient, never()).getUsernameMap(anyList());
+    }
+
     private ProceedingJoinPoint joinPointReturning(Object result) throws Throwable {
         ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
         when(joinPoint.proceed()).thenReturn(result);
@@ -144,5 +171,11 @@ class AutoFillUsernameAspectTest {
         StringKeyAuditDTO(String createBy) {
             this.createBy = createBy;
         }
+    }
+
+    @Data
+    private static class WrapperDTO {
+        private final AuditDTO audit;
+        private final Charset charset;
     }
 }

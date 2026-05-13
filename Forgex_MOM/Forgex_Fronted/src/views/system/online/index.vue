@@ -32,7 +32,7 @@
 
       <template #loginTerminal="{ record }">
         <a-tag v-if="resolveTerminalMeta(record.loginTerminal)" :color="resolveTerminalMeta(record.loginTerminal)?.color">
-          {{ resolveTerminalMeta(record.loginTerminal)?.label }}
+          {{ resolveTerminalLabel(record.loginTerminal) }}
         </a-tag>
         <span v-else>{{ record.loginTerminal || '-' }}</span>
       </template>
@@ -124,8 +124,17 @@ async function fetchTabCounts(query: Record<string, any> = {}) {
   }
 }
 
-function resolveTerminalMeta(value: string) {
-  return terminalOptions.value.find((item) => item.value === value)
+function normalizeTerminalValue(value: any) {
+  return String(value ?? '').trim().toUpperCase()
+}
+
+function resolveTerminalMeta(value: any) {
+  const normalized = normalizeTerminalValue(value)
+  return terminalOptions.value.find((item) => item.value === normalized)
+}
+
+function resolveTerminalLabel(value: any) {
+  return resolveTerminalMeta(value)?.label || String(value || '-')
 }
 
 const handleRequest = async (payload: {

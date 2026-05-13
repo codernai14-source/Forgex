@@ -3,7 +3,9 @@ package com.forgex.basic.material.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.forgex.basic.material.domain.entity.BasicMaterialExtendConfig;
+import com.forgex.basic.material.domain.param.MaterialExtendFieldSortParam;
 import com.forgex.basic.material.domain.response.MaterialExtendConfigVO;
+import com.forgex.basic.material.domain.response.MaterialExtendSchemaVO;
 
 import java.util.List;
 
@@ -35,6 +37,18 @@ public interface IMaterialExtendConfigService extends IService<BasicMaterialExte
     IPage<MaterialExtendConfigVO> pageExtendConfigs(Long tenantId, String module, Integer pageNum, Integer pageSize);
 
     /**
+     * 分页查询扩展配置列表
+     *
+     * @param tenantId 租户 ID
+     * @param module 模块编码（可选）
+     * @param materialType 物料类型（可选）
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 扩展配置分页列表
+     */
+    IPage<MaterialExtendConfigVO> pageExtendConfigs(Long tenantId, String module, String materialType, Integer pageNum, Integer pageSize);
+
+    /**
      * 根据模块查询扩展配置列表
      *
      * @param tenantId 租户 ID
@@ -42,6 +56,26 @@ public interface IMaterialExtendConfigService extends IService<BasicMaterialExte
      * @return 扩展配置 VO 列表
      */
     List<MaterialExtendConfigVO> getConfigsByModule(Long tenantId, String module);
+
+    /**
+     * 根据模块和物料类型查询启用的扩展配置列表
+     *
+     * @param tenantId 租户 ID
+     * @param module 模块编码
+     * @param materialType 物料类型
+     * @return 扩展配置 VO 列表
+     */
+    List<MaterialExtendConfigVO> getConfigsByScope(Long tenantId, String module, String materialType);
+
+    /**
+     * 查询指定模块和物料类型的结构。
+     *
+     * @param tenantId 租户 ID
+     * @param module 模块编码
+     * @param materialType 物料类型
+     * @return 结构视图
+     */
+    MaterialExtendSchemaVO getSchema(Long tenantId, String module, String materialType);
 
     /**
      * 根据 ID 查询扩展配置详情
@@ -93,4 +127,12 @@ public interface IMaterialExtendConfigService extends IService<BasicMaterialExte
      * @param status 状态（0=禁用，1=启用）
      */
     void updateConfigStatus(Long tenantId, Long id, Integer status);
+
+    /**
+     * 保存字段排序。
+     *
+     * @param tenantId 租户 ID
+     * @param items 排序项
+     */
+    void sortConfigs(Long tenantId, List<MaterialExtendFieldSortParam.Item> items);
 }

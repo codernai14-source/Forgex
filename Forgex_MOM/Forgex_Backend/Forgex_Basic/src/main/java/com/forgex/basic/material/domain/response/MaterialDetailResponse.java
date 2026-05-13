@@ -82,6 +82,13 @@ public class MaterialDetailResponse {
      */
     @Schema(description = "扩展信息列表")
     private List<MaterialExtendVO> extendList;
+
+    /**
+     * 附属信息可视化列表。
+     */
+    @Schema(description = "附属信息可视化列表")
+    private List<MaterialExtendViewVO> extendViewList;
+
     /**
      * 扩展字段条目
      */

@@ -29,6 +29,8 @@ export default {
   confirm: 'Confirm',
   view: 'View',
   detail: 'Detail',
+  moveUp: 'Move up',
+  moveDown: 'Move down',
   action: 'Action',
   more: 'More',
   copy: 'Copy',
@@ -186,6 +188,11 @@ export default {
     labelPlaceholder: 'Please enter option label',
     columnValue: 'Option Value',
     columnLabel: 'Option Label',
+    structuredView: 'Structured View',
+    rawJson: 'Raw JSON',
+    emptyData: 'No data',
+    invalidJson: 'Invalid JSON data. Please fix it in the structured view and save.',
+    detailTitle: 'JSON Data Details',
     jsonPreview: 'JSON Preview',
   },
   
@@ -218,6 +225,12 @@ export default {
     providerCode: 'Provider Code',
     providerField: 'Provider Field',
     dataSourceJson: 'Data Source JSON',
+    viewDetail: 'Data Details',
+    detailTitle: 'Data Source JSON Details',
+    summaryEmpty: 'No data',
+    summaryCount: '{count} items',
+    summaryInvalid: 'Invalid JSON data',
+    summaryHint: 'Click Data Details to view and edit',
   },
 
   // 状态

@@ -55,9 +55,9 @@
 			  <span class="favorite-menu-cell__icon"><component :is="getMenuIcon(record.icon)" /></span>
 			  <div class="favorite-menu-cell__content">
 				<button type="button" class="favorite-menu-cell__title" @click="openMenu(record.path)">
-				  {{ record.title }}
+				  {{ getMenuTitle(record) }}
 				</button>
-				<span class="favorite-menu-cell__module">{{ record.moduleName }}</span>
+				<span class="favorite-menu-cell__module">{{ getMenuModuleName(record) }}</span>
 			  </div>
 			</div>
 		  </template>
@@ -106,6 +106,7 @@ import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, ReloadOutlined, Sav
 import { batchCancelUserFavoriteMenus, getUserFavoriteManageMenus, sortUserFavoriteMenus, type PersonalMenuEntry } from '@/api/system/personalHomepage'
 import { PERSONAL_HOME_PATH } from '@/router'
 import { getIcon } from '@/utils/icon'
+import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -169,6 +170,19 @@ function openMenu(path: string) {
   router.push(path).catch(() => {})
 }
 
+function getMenuTitle(record: PersonalMenuEntry) {
+  return resolveMenuDisplayName({
+    path: record.path,
+    title: record.title,
+    moduleCode: record.moduleCode,
+    moduleName: record.moduleName,
+  })
+}
+
+function getMenuModuleName(record: PersonalMenuEntry) {
+  return resolveModuleDisplayName(record.moduleCode, record.moduleName)
+}
+
 /**
  * 调整本地列表顺序。
  *
@@ -226,7 +240,7 @@ function handleSingleCancel(record: PersonalMenuEntry) {
   }
   Modal.confirm({
 	title: t('personalHomepage.management.confirm.singleCancelTitle'),
-	content: t('personalHomepage.management.confirm.singleCancelContent', { title: record.title || path }),
+	content: t('personalHomepage.management.confirm.singleCancelContent', { title: getMenuTitle(record) || path }),
 	okButtonProps: { danger: true },
 	onOk: async () => {
 	  try {
