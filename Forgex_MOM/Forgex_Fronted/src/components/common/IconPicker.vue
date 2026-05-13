@@ -153,43 +153,5 @@ function select(name: string) {
 }
 </script>
 
-<style scoped lang="less">
-.fx-icon-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-  max-height: 420px;
-  overflow: auto;
-}
-
-.fx-icon-picker-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 20px;
-  transition: background 0.2s;
-}
-
-.fx-icon-picker-item:hover {
-  background: #f5f5f5;
-}
-
-.fx-icon-picker-item.active {
-  border-color: #fa8c16;
-  background: #fff7e6;
-}
-
-.fx-icon-picker-item .lbl {
-  font-size: 11px;
-  color: #666;
-  text-align: center;
-  word-break: break-all;
-  line-height: 1.2;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/common/icon-picker.less"></style>
 

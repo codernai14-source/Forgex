@@ -1,0 +1,76 @@
+/**
+ * JSON 树形查看器样式
+ */
+.json-tree-viewer {
+  width: 100%;
+  padding: 12px;
+  background-color: #fafafa;
+  border-radius: 4px;
+
+  .empty-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
+
+  :deep(.ant-tree) {
+    background: transparent;
+    
+    .ant-tree-treenode {
+      padding: 4px 0;
+    }
+  }
+
+  .tree-node-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    .node-title {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .node-type-tag,
+    .node-required-tag,
+    .node-datatype-tag {
+      margin: 0;
+    }
+
+    .node-value {
+      color: #1890ff;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .node-description {
+      color: #999;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    .node-actions {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity 0.2s;
+
+      .tree-node-content:hover & {
+        opacity: 1;
+      }
+    }
+  }
+}

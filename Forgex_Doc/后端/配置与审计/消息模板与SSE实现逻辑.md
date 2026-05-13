@@ -99,19 +99,26 @@
 
 ## 接收人解析机制
 
-`TemplateMessageServiceImpl.resolveReceiverUserIds()` 目前真实支持最完整的是：
+`TemplateMessageServiceImpl.resolveReceiverUserIds()` 会把模板接收人配置解析成最终用户 ID。当前稳定支持：
 
 - `USER`
-
-以下类型当前会记录提示日志，但未完整展开为用户列表：
-
 - `ROLE`
 - `DEPT`
 - `POSITION`
 
-以下类型表示“调用时动态传入”：
+解析规则：
+
+- `USER`：按配置的用户 ID 过滤当前租户内启用、未删除用户
+- `ROLE`：调用用户服务按角色 ID 展开用户
+- `DEPT`：调用用户服务按部门 ID 展开用户
+- `POSITION`：调用用户服务按岗位 ID 展开用户
+- 多条接收人规则会合并去重
+
+以下类型表示“调用时动态传入”，模板配置本身不展开用户：
 
 - `CUSTOM`
+
+MQ 场景下，如果模板存在 `CUSTOM` 接收人且请求中传入 `receiverUserIds`，会优先使用请求中的动态接收人；否则继续尝试解析模板配置。
 
 ## 站内消息接口链路
 
@@ -208,7 +215,7 @@
 
 1. 模板未启用
 2. 内容表未配置 `INTERNAL`
-3. 接收人类型不是当前已实现的解析类型
+3. 接收人配置无法解析出当前租户内启用用户
 4. 调用时没有租户上下文
 
 ### SSE 建连成功但页面没有新消息

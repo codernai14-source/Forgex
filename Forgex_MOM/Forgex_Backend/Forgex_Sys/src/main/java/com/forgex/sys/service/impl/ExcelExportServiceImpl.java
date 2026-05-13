@@ -15,6 +15,7 @@ package com.forgex.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
+import com.forgex.common.security.LoginFailureReasonResolver;
 import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.tenant.TenantContext;
@@ -230,7 +231,7 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         m.put("userAgent", log.getUserAgent());
         m.put("loginTime", log.getLoginTime());
         m.put("status", log.getStatus());
-        m.put("reason", log.getReason());
+        m.put("reason", LoginFailureReasonResolver.resolve(log.getReason()));
         return m;
     }
 

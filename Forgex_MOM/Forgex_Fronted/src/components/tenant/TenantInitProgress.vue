@@ -164,31 +164,4 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.progress-container {
-  padding: 20px;
-}
-
-.current-step {
-  margin: 24px 0;
-  text-align: center;
-  font-size: 16px;
-  color: #1890ff;
-  min-height: 24px;
-}
-
-.step-timeline {
-  margin-top: 24px;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 4px;
-}
-
-.step-timeline :deep(.ant-timeline-item) {
-  padding-bottom: 12px;
-}
-
-.step-timeline :deep(.ant-timeline-item-content) {
-  font-size: 14px;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/tenant/tenant-init-progress.less"></style>

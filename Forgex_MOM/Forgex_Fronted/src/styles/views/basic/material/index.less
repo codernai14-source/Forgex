@@ -1,0 +1,129 @@
+.material-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--material-page-bg);
+}
+
+.material-page--light {
+  --material-page-bg:
+    linear-gradient(180deg, color-mix(in srgb, var(--fx-primary, #1677ff) 8%, #f8fafc), #eef3f8);
+  --material-header-bg:
+    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 12%, #ffffff), var(--fx-bg-container, #ffffff));
+}
+
+.material-page--dark {
+  --material-page-bg:
+    linear-gradient(180deg, color-mix(in srgb, var(--fx-primary, #1677ff) 14%, #111827), #05070b);
+  --material-header-bg:
+    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 18%, #111827), var(--fx-bg-container, #111827));
+}
+
+.material-page__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 12px;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 20%, var(--fx-border-color, #e5e7eb));
+  border-radius: 8px;
+  background: var(--material-header-bg);
+  box-shadow: var(--fx-shadow-secondary, 0 10px 28px rgba(15, 23, 42, 0.06));
+}
+
+.material-page__header h1 {
+  margin: 6px 0 4px;
+  color: var(--fx-text-primary, #111827);
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.material-page__header p {
+  margin: 0;
+  color: var(--fx-text-secondary, #64748b);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.material-tabs {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.material-page :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.extend-toolbar,
+.config-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.extend-toolbar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.extend-toolbar strong {
+  color: var(--fx-text-primary, #111827);
+}
+
+.extend-toolbar span {
+  color: var(--fx-text-secondary, #64748b);
+  font-size: 12px;
+}
+
+.extend-module-tabs {
+  min-height: 360px;
+}
+
+.field-control,
+.full-width {
+  width: 100%;
+}
+
+.config-filter {
+  justify-content: flex-start;
+}
+
+.config-select {
+  width: 180px;
+}
+
+.unknown-collapse {
+  margin-top: 12px;
+}
+
+.danger-link {
+  color: #ff4d4f;
+}
+
+@media (max-width: 768px) {
+  .material-page {
+    padding: 12px;
+  }
+
+  .material-page__header,
+  .extend-toolbar,
+  .config-filter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .config-select {
+    width: 100%;
+  }
+}

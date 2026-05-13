@@ -241,8 +241,4 @@ function buildPayload(): ThirdAuthorizationSubmit {
 }
 </script>
 
-<style scoped lang="less">
-.auth-tip {
-  margin-bottom: 16px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/thirdSystem/components/third-system-auth-dialog.less"></style>

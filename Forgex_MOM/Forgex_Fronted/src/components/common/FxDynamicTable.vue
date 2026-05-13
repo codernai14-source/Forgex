@@ -208,7 +208,7 @@
  * 动态表格组件。
  * <p>
  * 基于后端表格配置自动生成查询表单与表格列，支持字典选项、列设置与自定义插槽。
- * 样式抽取至 {@code src/styles/fx-dynamic-table.less}。
+ * 样式抽取至 {@code src/styles/components/common/fx-dynamic-table.less}。
  * </p>
  *
  * @author Forgex Team
@@ -1253,4 +1253,4 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped lang="less" src="@/styles/fx-dynamic-table.less"></style>
+<style scoped lang="less" src="@/styles/components/common/fx-dynamic-table.less"></style>

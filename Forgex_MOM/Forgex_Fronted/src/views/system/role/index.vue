@@ -515,33 +515,5 @@ watch(
 )
 </script>
 
-<style scoped>
-.page-wrap {
-  padding: 16px;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.role-table {
-  flex: 1;
-  min-height: 0;
-}
-
-.grant-header {
-  margin-bottom: 12px;
-}
-
-.grant-header__title {
-  color: var(--fx-text-primary, #111827);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.grant-content {
-  flex: 1;
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/role/index.less"></style>
 

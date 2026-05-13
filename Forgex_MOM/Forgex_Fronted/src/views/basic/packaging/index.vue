@@ -230,30 +230,4 @@ function handleDelete(record: any) {
 }
 </script>
 
-<style scoped>
-.packaging-page {
-  padding: 24px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  margin: 8px 0 4px;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.page-header p {
-  color: #666;
-  font-size: 14px;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/basic/packaging/index.less"></style>

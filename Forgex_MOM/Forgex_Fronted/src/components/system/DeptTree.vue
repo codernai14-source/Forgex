@@ -122,38 +122,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.tree-container {
-  border-right: 1px solid var(--border-color-split, #f0f0f0);
-  padding-right: 16px;
-  height: 100%;
-  min-height: 500px;
-  /* Remove explicit background to inherit from parent (e.g. Card) which handles Dark Mode */
-  background: transparent; 
-  color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-}
-
-.tree-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color-split, #f0f0f0);
-}
-
-.tree-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--fx-text-primary, #000); /* Ensure high contrast default */
-}
-
-/* Dark mode override if not handled by CSS variables automatically */
-:root[data-theme='dark'] .tree-title {
-  color: #fff;
-}
-
-.disabled-node {
-  color: var(--text-color-secondary, #999);
-}
-</style>
+<style scoped lang="less" src="@/styles/components/system/dept-tree.less"></style>

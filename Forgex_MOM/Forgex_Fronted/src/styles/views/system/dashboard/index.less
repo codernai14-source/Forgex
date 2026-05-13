@@ -1,0 +1,129 @@
+/* 使用 MainLayout 注入的 --fx-* 变量，与 ConfigProvider 主题一致 */
+.system-dashboard {
+  height: 100%;
+  min-height: 0;
+  background: transparent;
+  transition: background 0.3s;
+
+  &--stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .stat-card {
+      border-radius: var(--fx-radius-lg, 8px);
+      box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
+      transition: all 0.3s;
+      background: var(--fx-bg-container, #ffffff);
+      height: 100%;
+
+      &:hover {
+        box-shadow: var(--fx-shadow-secondary, 0 4px 16px rgba(0, 0, 0, 0.12));
+        transform: translateY(-2px);
+      }
+
+      :deep(.ant-statistic-title) {
+        font-size: 14px;
+        color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
+      }
+
+      :deep(.ant-statistic-content) {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+      }
+
+      .stat-suffix {
+        font-size: 14px;
+        margin-left: 4px;
+        color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
+      }
+    }
+
+  .chart-card {
+      border-radius: var(--fx-radius-lg, 8px);
+      box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
+      height: 100%;
+      background: var(--fx-bg-container, #ffffff);
+      color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+
+      :deep(.ant-card-head) {
+        font-size: 16px;
+        font-weight: 600;
+        border-bottom: 1px solid var(--fx-border-color, #e5e7eb);
+        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+        background: transparent;
+      }
+
+      :deep(.ant-card-body) {
+        background: var(--fx-bg-container, #ffffff);
+        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+        height: calc(100% - 57px);
+        overflow: hidden;
+      }
+
+      .echart-container {
+        height: 100%;
+        min-height: 220px;
+        width: 100%;
+      }
+
+      /** 服务内存饼图：略增高容器，便于环形放大且与底部图例留白 */
+      .memory-chart-echart {
+        min-height: 260px;
+      }
+
+      .map-container {
+        height: 100%;
+        min-height: 280px;
+        overflow: hidden;
+        border-radius: var(--fx-radius, 6px);
+        background: var(--fx-bg-container, #ffffff);
+      }
+
+      :deep(.ant-descriptions-item-label) {
+        font-weight: 500;
+        width: 120px;
+        color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
+      }
+
+      :deep(.ant-descriptions-item-content) {
+        word-break: break-all;
+        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+      }
+
+      :deep(.ant-table) {
+        background: transparent;
+
+        .ant-table-thead > tr > th {
+          background: var(--fx-fill-alter, #f9fafb);
+          color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+          border-color: var(--fx-border-color, #e5e7eb);
+        }
+
+        .ant-table-tbody > tr {
+          &:hover {
+            background: var(--fx-fill, #f3f4f6);
+          }
+        }
+
+        .ant-table-tbody > tr > td {
+          color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
+          border-color: var(--fx-border-color, #e5e7eb);
+        }
+      }
+  }
+}
+
+@media (max-width: 992px) {
+  .system-dashboard--stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .system-dashboard--stats {
+    grid-template-columns: 1fr;
+  }
+}

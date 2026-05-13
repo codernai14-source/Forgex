@@ -248,8 +248,4 @@ watch(
 )
 </script>
 
-<style scoped lang="less">
-.field-toolbar {
-  margin-bottom: 16px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/excelImportConfig/components/excel-import-config-modal.less"></style>

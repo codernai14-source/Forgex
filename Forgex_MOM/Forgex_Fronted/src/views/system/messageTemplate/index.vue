@@ -694,19 +694,4 @@ const handleModalCancel = () => {
 }
 </script>
 
-<style scoped lang="less">
-.message-template-page {
-  padding: 16px;
-  background: var(--fx-bg-layout);
-}
-
-.receiver-item,
-.content-item {
-  margin-bottom: 16px;
-}
-
-.field-hint {
-  color: var(--fx-text-secondary);
-  font-size: 12px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/messageTemplate/index.less"></style>

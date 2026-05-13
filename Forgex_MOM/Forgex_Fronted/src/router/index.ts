@@ -268,6 +268,7 @@ const modulePathMap: Record<string, string> = {
   'approval': 'workflow',
   'integration': 'integrationPlatform',
   'label': 'label',
+  'job': 'job',
 }
 
 /**
@@ -339,6 +340,14 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       SystemRole: '../views/system/role/index.vue',
       SystemRoleMenuGrant: '../views/system/role/MenuGrant.vue',
       SystemRoleUserGrant: '../views/system/role/UserGrant.vue',
+      JobDashboard: '../views/job/dashboard/index.vue',
+      JobTask: '../views/job/task/index.vue',
+      JobLog: '../views/job/log/index.vue',
+      JobInstance: '../views/job/instance/index.vue',
+      JobRetry: '../views/job/retry/index.vue',
+      JobAlarm: '../views/job/alarm/index.vue',
+      JobAlarmLog: '../views/job/alarmLog/index.vue',
+      JobWorkflow: '../views/job/workflow/index.vue',
       ApprovalDashboard: '../views/workflow/dashboard/index.vue',
     }
     if (normalizedName && stableComponentMap[normalizedName]) {
@@ -550,10 +559,9 @@ export async function injectDynamicRoutes(payload: any) {
     const normalized = raw.replace(/^\//, '').replace(/\//g, ':')
     return `dyn:${normalized}`
   }
-
   // 閬嶅巻璺敱鏁版嵁锛屾敞鍐屽姩鎬佽矾鐢便€?
   for (const routeItem of routesPayload) {
-    const moduleCode = routeItem.path
+    const moduleCode = String(routeItem.path || '').replace(/^\/+|\/+$/g, '')
     const children = Array.isArray(routeItem.children) ? routeItem.children : []
     const registeredModulePaths = new Set<string>()
 
@@ -565,7 +573,9 @@ export async function injectDynamicRoutes(payload: any) {
         }
 
         const relativePath = parentPath ? `${parentPath}/${childPath}` : childPath
-        const fullPath = `${moduleCode}/${relativePath}`
+        const routeModuleCode = moduleCode
+        const routeRelativePath = relativePath
+        const fullPath = `${routeModuleCode}/${routeRelativePath}`
         const menuType = c?.meta?.type || c?.type
 
         if (menuType === 'catalog') {
@@ -577,10 +587,10 @@ export async function injectDynamicRoutes(payload: any) {
         r.addRoute('Workspace', {
           path: fullPath,
           name: routeName,
-          component: loadComponent(c.component, moduleCode, relativePath),
+          component: loadComponent(c.component, routeModuleCode, routeRelativePath),
           meta: {
             ...c.meta,
-            module: moduleCode
+            module: routeModuleCode
           }
         })
         injectedRouteNames.add(routeName)

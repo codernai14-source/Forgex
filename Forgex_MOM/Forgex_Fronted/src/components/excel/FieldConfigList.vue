@@ -326,18 +326,4 @@ watch(() => props.modelValue, (newVal) => {
 initFields()
 </script>
 
-<style scoped lang="less">
-.field-config-list {
-  width: 100%;
-
-  :deep(.ant-table) {
-    .ant-table-cell {
-      vertical-align: top;
-    }
-
-    .ant-table-cell-fix-right {
-      background: #fff;
-    }
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/components/excel/field-config-list.less"></style>

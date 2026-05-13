@@ -170,7 +170,8 @@ import {
   createPosition,
   updatePosition,
   deletePosition
-} from '@/api/system/position'
+} from '@/api/system/position'
+
 import { useDict } from '@/hooks/useDict'
 import { translateLegacyText } from '@/utils/legacyI18n'
 import type { Position, PositionSaveParam } from './types'
@@ -417,98 +418,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.page-wrap {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.content-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.content-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-}
-
-.content-card :deep(.ant-row) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.content-card :deep(.ant-col) {
-  min-height: 0;
-}
-
-.table-area {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.table-area :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: var(--fx-text-primary, #1d2129);
-}
-
-.search-area {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.detail-container {
-  padding-left: 16px;
-  height: 100%;
-  overflow-y: auto;
-}
-
-:deep(.fx-query-form) {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-:deep(.fx-query-fields-container) {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  position: relative;
-}
-
-:deep(.fx-query-fields) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  width: 100%;
-}
-
-:deep(.fx-query-fields :deep(.ant-form-item)) {
-  margin: 0;
-}
-
-:deep(.fx-query-actions) {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  margin-top: 12px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/position/index.less"></style>

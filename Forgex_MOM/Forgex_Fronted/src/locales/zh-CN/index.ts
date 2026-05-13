@@ -16,6 +16,7 @@ import auth from './auth'
 import guide from './guide'
 import label from './label'
 import report from './report'
+import job from './job'
 
 export default {
   sys: {
@@ -36,6 +37,7 @@ export default {
   guide,
   label,
   report,
+  job,
   personalHomepage,
   profile,
   operationLog,

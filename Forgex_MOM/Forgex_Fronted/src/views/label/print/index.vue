@@ -113,7 +113,8 @@ import { labelTemplateApi } from '@/api/label/template'
 import { factoryApi } from '@/api/basic/factory'
 import { materialApi } from '@/api/basic/material'
 import { supplierApi } from '@/api/basic/supplier'
-import { customerApi } from '@/api/basic/customer'
+import { customerApi } from '@/api/basic/customer'
+
 const { t } = useI18n()
 
 // 表单数据
@@ -321,17 +322,5 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.page-container {
-  padding: 16px;
-  height: 100%;
-}
-
-.preview-container {
-  border: 1px solid #d9d9d9;
-  padding: 16px;
-  min-height: 400px;
-  background: #fafafa;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/print/index.less"></style>
 

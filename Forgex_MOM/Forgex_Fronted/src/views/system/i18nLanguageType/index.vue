@@ -264,12 +264,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.i18n-language-type-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/i18nLanguageType/index.less"></style>

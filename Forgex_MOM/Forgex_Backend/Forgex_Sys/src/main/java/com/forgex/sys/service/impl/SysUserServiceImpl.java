@@ -595,6 +595,34 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
+     * 按用户 ID 查询有效用户 ID 列表。
+     * <p>
+     * 供消息模板、工作流等配置型场景把静态用户配置校验为当前租户内可用用户。
+     * </p>
+     *
+     * @param tenantId 租户 ID
+     * @param userIds  用户 ID 列表
+     * @return 去重后的有效用户 ID 列表
+     */
+    @Override
+    public List<Long> listValidUserIds(Long tenantId, List<Long> userIds) {
+        if (tenantId == null || userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                .select(SysUser::getId)
+                .eq(SysUser::getTenantId, tenantId)
+                .eq(SysUser::getDeleted, false)
+                .eq(SysUser::getStatus, true)
+                .in(SysUser::getId, userIds))
+            .stream()
+            .map(SysUser::getId)
+            .filter(id -> id != null && id > 0)
+            .distinct()
+            .collect(Collectors.toList());
+    }
+
+    /**
      * 按部门 ID 查询用户 ID 列表。
      * <p>
      * 供工作流审批节点按部门匹配审批人使用。
@@ -653,6 +681,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                 .select(SysUser::getId)
                 .in(SysUser::getId, userIds)
+                .eq(SysUser::getTenantId, tenantId)
                 .eq(SysUser::getDeleted, false)
                 .eq(SysUser::getStatus, true))
             .stream()

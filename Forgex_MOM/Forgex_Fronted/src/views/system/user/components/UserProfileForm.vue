@@ -239,13 +239,4 @@ defineExpose({
 })
 </script>
 
-<style scoped lang="less">
-.work-history-item {
-  padding: 16px;
-  margin-bottom: 16px;
-  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #fafafa));
-  border-radius: var(--fx-radius, 6px);
-  border: 1px solid var(--fx-border-color, #f0f0f0);
-  box-shadow: var(--fx-shadow-secondary, 0 1px 2px rgba(0, 0, 0, 0.08));
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/user/components/user-profile-form.less"></style>

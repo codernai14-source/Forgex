@@ -106,12 +106,14 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { Modal, type FormInstance, type Rule } from 'ant-design-vue'
 import http from '@/api/http'
-import { listModules } from '@/api/system/module'
+import { listModules } from '@/api/system/module'
+
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
-import { useDict } from '@/hooks/useDict'import { translateLegacyText } from '@/utils/legacyI18n'
+import { useDict } from '@/hooks/useDict'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { dictItems: statusOptions } = useDict('status')
 
@@ -315,12 +317,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="less">
-.dict-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/dict/index.less"></style>

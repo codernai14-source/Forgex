@@ -237,7 +237,8 @@ import {
   disableInviteCode,
   deleteInviteCode,
   getInviteRecordPage,
-} from '@/api/system/inviteCode'
+} from '@/api/system/inviteCode'
+
 import type { InviteCodeSaveParam, InviteRecord } from './types'
 
 const currentTenantId = ref<string | null>(null)
@@ -503,33 +504,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.page-wrap {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.content-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.content-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-}
-
-.table-area {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/inviteCode/index.less"></style>

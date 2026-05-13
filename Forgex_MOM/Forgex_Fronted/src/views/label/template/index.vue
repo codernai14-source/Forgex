@@ -73,7 +73,8 @@ import { PlusOutlined, DeleteOutlined, DownOutlined } from '@ant-design/icons-vu
 import { useI18n } from 'vue-i18n'
 import { labelTemplateApi } from '@/api/label/template'
 import TemplateFormDialog from './components/TemplateFormDialog.vue'
-import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue'const { t } = useI18n()
+import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue'
+const { t } = useI18n()
 const tableRef = ref()
 const formVisible = ref(false)
 const detailVisible = ref(false)
@@ -183,10 +184,5 @@ function handleFormSuccess() {
 }
 </script>
 
-<style scoped lang="less">
-.page-container {
-  padding: 16px;
-  height: 100%;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/template/index.less"></style>
 
