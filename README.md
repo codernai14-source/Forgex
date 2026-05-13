@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Forgex_Doc/img/forgex-logo-readme.png" alt="Forgex" width="160">
+  <img src="Forgex_Doc/img/forgex.png" alt="Forgex" width="160">
 </p>
 
 # Forgex
