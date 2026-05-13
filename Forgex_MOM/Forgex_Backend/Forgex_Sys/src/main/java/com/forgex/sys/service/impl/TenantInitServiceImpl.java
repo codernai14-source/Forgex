@@ -25,6 +25,7 @@ import com.forgex.sys.domain.entity.SysRole;
 import com.forgex.sys.domain.entity.SysRoleMenu;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserRole;
+import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.domain.entity.SysTenantInitTask;
 import com.forgex.sys.domain.entity.SysTenantMenuCopyRule;
@@ -34,6 +35,7 @@ import com.forgex.sys.mapper.SysRoleMapper;
 import com.forgex.sys.mapper.SysRoleMenuMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
+import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.mapper.SysTenantMenuCopyRuleMapper;
 import com.forgex.sys.mapper.SysTenantInitTaskMapper;
@@ -42,9 +44,11 @@ import com.forgex.sys.service.SsePushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -84,6 +88,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
     private final SysRoleMapper roleMapper;
     private final SysUserMapper userMapper;
     private final SysUserRoleMapper userRoleMapper;
+    private final SysUserTenantMapper userTenantMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysTenantMapper tenantMapper;
     private final SysTenantMenuCopyRuleMapper tenantMenuCopyRuleMapper;
@@ -94,7 +99,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
 
     @Override
     @Async("tenantInitExecutor")
-    public void initTenant(Long tenantId, String tenantName, TenantTypeEnum tenantType) {
+    public void initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType) {
         log.info("开始异步初始化租户，租户 ID：{}，租户名称：{}，租户类型：{}", tenantId, tenantName, tenantType);
         
         // 创建初始化任务
@@ -131,15 +136,16 @@ public class TenantInitServiceImpl implements ITenantInitService {
             updateTaskProgress(task, 50, "正在创建管理员账号...");
             Long userId;
             if (TenantTypeEnum.MAIN_TENANT.equals(tenantType)) {
-                userId = createAdminUser(null, tenantName, "admin");
+                userId = createAdminUser(tenantId, tenantName, "admin");
             } else {
                 // 根据租户 ID 和编码生成唯一账号
-                String dynamicAccount = generateDynamicAccount(tenantId, tenantName);
+                String dynamicAccount = generateDynamicAccount(tenantId, tenantCode);
                 userId = createAdministratorUser(tenantId, tenantName, dynamicAccount);
             }
             
             // 5. 绑定用户角色（进度 60%）
             updateTaskProgress(task, 60, "正在绑定用户角色...");
+            bindUserToTenant(userId, tenantId);
             bindUserToRole(userId, roleId, tenantId);
             
             // 6. 绑定角色菜单（进度 70%）
@@ -185,12 +191,19 @@ public class TenantInitServiceImpl implements ITenantInitService {
      * 生成动态管理员账号
      * 规则：admin_{tenantCode}_{tenantId 后 4 位}
      */
-    private String generateDynamicAccount(Long tenantId, String tenantName) {
-        String tenantCode = tenantName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+    private String generateDynamicAccount(Long tenantId, String tenantCode) {
+        String sourceCode = StringUtils.hasText(tenantCode) ? tenantCode : "tenant";
+        String normalizedCode = sourceCode.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        if (!StringUtils.hasText(normalizedCode)) {
+            normalizedCode = "tenant";
+        }
+        if (normalizedCode.length() > 39) {
+            normalizedCode = normalizedCode.substring(0, 39);
+        }
         String suffix = String.valueOf(tenantId).substring(Math.max(0, String.valueOf(tenantId).length() - 4));
-        return "admin_" + tenantCode + "_" + suffix;
+        return "admin_" + normalizedCode + "_" + suffix;
     }
-    
+
     /**
      * 从模板租户复制系统模块到新租户
      */
@@ -333,7 +346,13 @@ public class TenantInitServiceImpl implements ITenantInitService {
         LambdaQueryWrapper<SysTenantMenuCopyRule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenantMenuCopyRule::getTenantType, tenantType.getCode())
                .eq(SysTenantMenuCopyRule::getEnabled, true);
-        List<SysTenantMenuCopyRule> rules = tenantMenuCopyRuleMapper.selectList(wrapper);
+        List<SysTenantMenuCopyRule> rules;
+        try {
+            rules = tenantMenuCopyRuleMapper.selectList(wrapper);
+        } catch (DataAccessException e) {
+            log.warn("读取租户菜单复制规则失败，按空规则继续初始化，租户类型：{}", tenantType, e);
+            return Collections.emptyList();
+        }
         if (rules == null || rules.isEmpty()) {
             return Collections.emptyList();
         }
@@ -494,6 +513,31 @@ public class TenantInitServiceImpl implements ITenantInitService {
     }
     
     /**
+     * 将初始化管理员账号绑定到目标租户。
+     */
+    private void bindUserToTenant(Long userId, Long tenantId) {
+        if (userId == null || tenantId == null) {
+            return;
+        }
+        SysUserTenant existing = userTenantMapper.selectOne(new LambdaQueryWrapper<SysUserTenant>()
+                .eq(SysUserTenant::getUserId, userId)
+                .eq(SysUserTenant::getTenantId, tenantId)
+                .last("LIMIT 1"));
+        if (existing != null) {
+            return;
+        }
+        SysUserTenant userTenant = new SysUserTenant();
+        userTenant.setUserId(userId);
+        userTenant.setTenantId(tenantId);
+        userTenant.setPrefOrder(1);
+        userTenant.setIsDefault(true);
+        userTenant.setLastUsed(LocalDateTime.now());
+        userTenantMapper.insert(userTenant);
+
+        log.info("绑定用户到租户，用户 ID：{}，租户 ID：{}", userId, tenantId);
+    }
+
+    /**
      * 将角色关联到菜单
      */
     private void bindRoleToMenus(Long roleId, List<Long> menuIds, Long tenantId) {
@@ -510,8 +554,8 @@ public class TenantInitServiceImpl implements ITenantInitService {
 
     private String encryptDefaultPassword() {
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, null);
-        String store = policy == null || !org.springframework.util.StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
-        String defaultPassword = policy == null || !org.springframework.util.StringUtils.hasText(policy.getDefaultPassword())
+        String store = policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
+        String defaultPassword = policy == null || !StringUtils.hasText(policy.getDefaultPassword())
             ? "Aa123456"
             : policy.getDefaultPassword();
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
