@@ -20,6 +20,9 @@ export default {
   langEnUs: 'English',
   search: '搜索',
   refresh: '刷新',
+  loading: {
+    thinking: 'Forgex正在加载您所需的任何内容，请稍等',
+  },
   openSettings: '布局设置',
   settingTitle: '布局与主题设置',
   settingSubtitle: '调整导航布局、主题色等外观偏好',
@@ -122,6 +125,8 @@ export default {
   tenant: {
     loading: '租户加载中',
     empty: '暂无可切换租户',
+    /** 顶栏账户区内租户分组标题（与用户信息合并展示） */
+    environment: '当前环境',
     switch: '切换租户',
     currentAccountMissing: '当前账号信息缺失，请重新登录',
     switchSuccess: '租户切换成功',
@@ -137,6 +142,10 @@ export default {
     logout: '退出登录',
   },
   tab: {
+    /** 「⋯」菜单内：超出可视区域的标签列表标题 */
+    overflowTabs: '不可见标签',
+    /** 「⋯」菜单内筛选溢出标签 */
+    filterOverflowTabs: '筛选标签页',
     refresh: '刷新',
     close: '关闭',
     closeOthers: '关闭其他',

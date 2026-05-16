@@ -182,11 +182,11 @@
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
 }
 
-.fx-dynamic-table-wrap :deep(.ant-spin-nested-loading),
 .fx-dynamic-table-wrap :deep(.ant-spin-container),
 .fx-dynamic-table-wrap :deep(.ant-table),
 .fx-dynamic-table-wrap :deep(.ant-table-container) {
@@ -278,8 +278,9 @@
   user-select: none;
 }
 
-/* 分页区域间距 */
+/* 分页区域间距（flex-shrink 避免在纵向填满布局中被挤出可视区） */
 .fx-table-pagination {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;

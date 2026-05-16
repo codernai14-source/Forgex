@@ -45,6 +45,21 @@ public class HomepageComponentQueryParam extends BaseGetParam {
     private String keyword;
 
     /**
+     * 组件编码。
+     */
+    private String componentCode;
+
+    /**
+     * 组件名称。
+     */
+    private String componentName;
+
+    /**
+     * 分类名称。
+     */
+    private String categoryName;
+
+    /**
      * 是否启用。
      */
     private Boolean enabled;

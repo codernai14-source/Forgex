@@ -14,29 +14,47 @@
       v-if="showModuleNav"
       class="app-header-middle fx-guide-module-nav"
     >
-      <a-menu
-        mode="horizontal"
-        :selected-keys="props.activeModuleCode ? [props.activeModuleCode] : []"
-        class="module-menu"
-        @click="onModuleClick"
-      >
-        <a-menu-item
-          v-for="mod in modules"
-          :key="mod.code"
-          class="module-menu-item"
+      <div class="module-nav-scroll-shell">
+        <div
+          class="module-nav-scroll-fade module-nav-scroll-fade--left"
+          :class="{ 'is-active': moduleNavScroll.showLeft }"
+          aria-hidden="true"
+        />
+        <div
+          ref="moduleNavScrollRef"
+          class="module-nav-scroll-track"
+          @scroll="onModuleNavScroll"
         >
-          <template #icon>
-            <FxIcon v-if="mod.icon" :name="mod.icon" />
-            <AppstoreOutlined v-else />
-          </template>
-          <span>{{ mod.name }}</span>
-        </a-menu-item>
-      </a-menu>
+          <a-menu
+            mode="horizontal"
+            :selected-keys="props.activeModuleCode ? [props.activeModuleCode] : []"
+            class="module-menu"
+            @click="onModuleClick"
+          >
+            <a-menu-item
+              v-for="mod in modules"
+              :key="mod.code"
+              class="module-menu-item"
+            >
+              <template #icon>
+                <FxIcon v-if="mod.icon" :name="mod.icon" />
+                <AppstoreOutlined v-else />
+              </template>
+              <span>{{ mod.name }}</span>
+            </a-menu-item>
+          </a-menu>
+        </div>
+        <div
+          class="module-nav-scroll-fade module-nav-scroll-fade--right"
+          :class="{ 'is-active': moduleNavScroll.showRight }"
+          aria-hidden="true"
+        />
+      </div>
     </div>
 
-    <!-- 右侧：搜索 + 工具按钮 + 用户菜单 -->
+    <!-- 右侧：高频工具 | 低频工具 | 账户（租户并入用户下拉） -->
     <div class="app-header-right fx-guide-header-actions">
-      <a-space :size="12">
+      <div class="header-actions-group header-actions-group--primary">
         <!-- 全局搜索按钮 -->
         <a-button
           v-if="showSearch"
@@ -55,7 +73,7 @@
         <a-badge :count="unreadCount" :overflow-count="99">
           <a-button
             type="text"
-            class="header-btn fx-guide-message-trigger"
+            class="header-btn header-btn--icon fx-guide-message-trigger"
             @click="onMessageClick"
           >
             <template #icon>
@@ -63,7 +81,11 @@
             </template>
           </a-button>
         </a-badge>
+      </div>
 
+      <span class="header-actions-divider" role="presentation" aria-hidden="true" />
+
+      <div class="header-actions-group header-actions-group--secondary">
         <!-- 语言切换 -->
         <a-dropdown v-if="showLangSwitch" placement="bottomRight" trigger="click">
           <a-button
@@ -141,7 +163,7 @@
 
           <a-button
             type="text"
-            class="header-btn fx-guide-refresh-trigger"
+            class="header-btn header-btn--icon fx-guide-refresh-trigger"
           >
             <template #icon>
               <AndroidOutlined />
@@ -152,47 +174,19 @@
         <!-- 布局设置按钮 -->
         <a-button
           type="text"
-          class="header-btn fx-guide-settings-trigger"
+          class="header-btn header-btn--icon fx-guide-settings-trigger"
           @click="onSettingsClick"
         >
           <template #icon>
             <SettingOutlined />
           </template>
         </a-button>
+      </div>
 
-        <!-- 租户切换按钮 -->
-        <a-dropdown
-          placement="bottomRight"
-          trigger="click"
-          :disabled="tenantLoading || tenantOptions.length === 0"
-        >
-          <a-button
-            type="text"
-            class="header-btn header-btn--icon tenant-switch-btn"
-            :title="tenantSwitchTitle"
-            :loading="tenantLoading"
-          >
-            <template #icon>
-              <ApartmentOutlined />
-            </template>
-          </a-button>
-          <template #overlay>
-            <a-menu :selected-keys="currentTenantId ? [`tenant:${currentTenantId}`] : []" @click="onTenantMenuClick">
-              <a-menu-item
-                v-for="tenant in tenantOptions"
-                :key="`tenant:${tenant.id}`"
-                :disabled="tenant.id === currentTenantId || switchingTenantId === tenant.id"
-              >
-                <div class="tenant-menu-item">
-                  <span class="tenant-menu-item__name">{{ tenant.name || tenant.id }}</span>
-                  <CheckOutlined v-if="tenant.id === currentTenantId" class="tenant-menu-item__check" />
-                </div>
-              </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
+      <span class="header-actions-divider" role="presentation" aria-hidden="true" />
 
-        <!-- 用户下拉菜单 -->
+      <div class="header-actions-group header-actions-group--account">
+        <!-- 用户下拉（内含租户切换：当前环境） -->
         <a-dropdown placement="bottomRight">
           <div class="user-dropdown-trigger fx-guide-user-menu">
             <a-avatar
@@ -208,11 +202,35 @@
             >
               {{ userInitial }}
             </a-avatar>
-            <span class="user-name">{{ user.name || user.account || t('layout.user.notLoggedIn') }}</span>
+            <div class="user-dropdown-text">
+              <span class="user-name">{{ user.name || user.account || t('layout.user.notLoggedIn') }}</span>
+              <span v-if="currentTenantSubtitle" class="user-tenant-line">{{ currentTenantSubtitle }}</span>
+            </div>
             <DownOutlined class="user-dropdown-icon" />
           </div>
           <template #overlay>
             <a-menu @click="onUserMenuClick">
+              <a-menu-item-group
+                v-if="tenantOptions.length > 0"
+                :title="t('layout.tenant.environment')"
+              >
+                <a-menu-item
+                  v-for="tenant in tenantOptions"
+                  :key="`tenant:${tenant.id}`"
+                  :disabled="
+                    tenant.id === currentTenantId ||
+                    switchingTenantId === tenant.id ||
+                    tenantLoading
+                  "
+                >
+                  <div class="tenant-inline-menu-item">
+                    <ApartmentOutlined />
+                    <span class="tenant-inline-menu-item__name">{{ tenant.name || tenant.id }}</span>
+                    <CheckOutlined v-if="tenant.id === currentTenantId" class="tenant-inline-menu-item__check" />
+                  </div>
+                </a-menu-item>
+              </a-menu-item-group>
+              <a-menu-divider v-if="tenantOptions.length > 0" />
               <a-menu-item key="profile">
                 <UserOutlined />
                 <span>{{ t('layout.user.profile') }}</span>
@@ -237,13 +255,13 @@
             </a-menu>
           </template>
         </a-dropdown>
-      </a-space>
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FxIcon from '@/components/common/FxIcon.vue'
 import {
@@ -388,6 +406,84 @@ const unreadCount = ref(0)
 // 定时器
 let unreadCountTimer: any = null
 
+/**
+ * 顶栏中部模块导航横向滚动容器（用于渐变遮罩与滚动检测）
+ */
+const moduleNavScrollRef = ref<HTMLElement | null>(null)
+
+/**
+ * 模块导航横向滚动时左右渐变遮罩显隐状态
+ */
+const moduleNavScroll = reactive({
+  showLeft: false,
+  showRight: false,
+})
+
+let moduleNavResizeObserver: ResizeObserver | null = null
+
+/**
+ * 根据滚动位置更新模块导航两侧渐变遮罩
+ */
+function updateModuleNavScrollFade() {
+  const el = moduleNavScrollRef.value
+  if (!el) {
+    moduleNavScroll.showLeft = false
+    moduleNavScroll.showRight = false
+    return
+  }
+  const { scrollLeft, scrollWidth, clientWidth } = el
+  moduleNavScroll.showLeft = scrollLeft > 4
+  moduleNavScroll.showRight = scrollLeft + clientWidth < scrollWidth - 4
+}
+
+/**
+ * 模块导航滚动事件：同步渐变遮罩
+ */
+function onModuleNavScroll() {
+  updateModuleNavScrollFade()
+}
+
+/**
+ * 绑定模块导航滚动区域的尺寸监听，便于模块增减或窗口缩放后更新遮罩
+ */
+function bindModuleNavScrollObservers() {
+  moduleNavResizeObserver?.disconnect()
+  moduleNavResizeObserver = null
+  nextTick(() => {
+    updateModuleNavScrollFade()
+    const el = moduleNavScrollRef.value
+    if (el && typeof ResizeObserver !== 'undefined') {
+      moduleNavResizeObserver = new ResizeObserver(() => updateModuleNavScrollFade())
+      moduleNavResizeObserver.observe(el)
+    }
+  })
+}
+
+/**
+ * 是否显示顶栏中部模块导航（混合 / 顶部布局且有模块数据）
+ */
+const showModuleNav = computed(() => {
+  return (props.layoutMode === 'mix' || props.layoutMode === 'top') && props.modules.length > 0
+})
+
+watch(showModuleNav, visible => {
+  if (visible) {
+    bindModuleNavScrollObservers()
+  } else {
+    moduleNavResizeObserver?.disconnect()
+    moduleNavResizeObserver = null
+  }
+})
+
+watch(
+  () => props.modules.map(m => `${m.code}:${m.name}`).join('|'),
+  () => {
+    if (showModuleNav.value) {
+      bindModuleNavScrollObservers()
+    }
+  },
+)
+
 // 加载语言列表
 const loadLanguageList = async () => {
   try {
@@ -430,6 +526,10 @@ onMounted(() => {
   loadLanguageList()
   loadUnreadCount()
 
+  if (showModuleNav.value) {
+    bindModuleNavScrollObservers()
+  }
+
   if (typeof window !== 'undefined') {
     window.addEventListener('fx:message-refresh', loadUnreadCount as EventListener)
   }
@@ -442,17 +542,15 @@ onMounted(() => {
 
 // 组件卸载时清除定时器
 onUnmounted(() => {
+  moduleNavResizeObserver?.disconnect()
+  moduleNavResizeObserver = null
+
   if (unreadCountTimer) {
     clearInterval(unreadCountTimer)
   }
   if (typeof window !== 'undefined') {
     window.removeEventListener('fx:message-refresh', loadUnreadCount as EventListener)
   }
-})
-
-// 是否显示模块导航
-const showModuleNav = computed(() => {
-  return (props.layoutMode === 'mix' || props.layoutMode === 'top') && props.modules.length > 0
 })
 
 const currentLanguageLabel = computed(() => {
@@ -467,6 +565,18 @@ const tenantSwitchTitle = computed(() => {
     return t('layout.tenant.empty')
   }
   return t('layout.tenant.switch')
+})
+
+/**
+ * 账户区副标题：当前租户名称（租户切换并入用户下拉后在触发器上展示）
+ */
+const currentTenantSubtitle = computed(() => {
+  const id = props.currentTenantId
+  if (!id || !props.tenantOptions?.length) {
+    return ''
+  }
+  const row = props.tenantOptions.find(x => String(x.id) === String(id))
+  return row?.name ? String(row.name) : String(row?.id || '')
 })
 
 function getLanguageLabel(language: LanguageType): string {
@@ -513,13 +623,6 @@ const onUserMenuClick = (info: any) => {
       return
     }
     emit('user-menu-click', key)
-  }
-}
-
-const onTenantMenuClick = (info: any) => {
-  const key = String(info?.key || '')
-  if (key.startsWith('tenant:')) {
-    emit('tenant-change', key.slice('tenant:'.length))
   }
 }
 

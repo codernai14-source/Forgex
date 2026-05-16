@@ -20,6 +20,9 @@ export default {
   langEnUs: '英語',
   search: '検索',
   refresh: '更新',
+  loading: {
+    thinking: 'Forgex が必要なコンテンツを読み込んでいます。しばらくお待ちください。',
+  },
   openSettings: 'レイアウト設定',
   settingTitle: 'レイアウトとテーマ設定',
   settingSubtitle: 'ナビゲーションレイアウト、テーマカラー、外観設定を調整します',
@@ -122,6 +125,7 @@ export default {
   tenant: {
     loading: 'テナント読み込み中',
     empty: '切り替え可能なテナントがありません',
+    environment: '環境',
     switch: 'テナント切替',
     currentAccountMissing: '現在のアカウント情報がありません。再ログインしてください。',
     switchSuccess: 'テナントの切替に成功しました',
@@ -137,6 +141,8 @@ export default {
     logout: 'ログアウト',
   },
   tab: {
+    overflowTabs: '画面外タブ',
+    filterOverflowTabs: 'タブを絞り込み',
     refresh: '更新',
     close: '閉じる',
     closeOthers: '他を閉じる',

@@ -5,6 +5,8 @@
   min-height: 0;
   padding: 16px;
   box-sizing: border-box;
+  /* 仅裁横轴；纵向 avoid hidden，否则会裁掉底部独立分页栏 */
+  overflow-x: hidden;
 }
 
 .content-card {
@@ -25,9 +27,46 @@
 .content-card :deep(.ant-row) {
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
+  /* 左右两栏竖直等高，便于 FxDynamicTable 计算纵向 scroll 且与左侧树对齐 */
+  align-items: stretch;
 }
 
-.content-card :deep(.ant-col) {
+/* 等高双栏：Ant Col 设为纵向 flex，避免右侧表格按内容高度溢出左侧视觉底线 */
+.content-card :deep(.ant-col.position-page__sidebar),
+.content-card :deep(.ant-col.position-page__main) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.position-page__sidebar .card-title {
+  flex-shrink: 0;
+}
+
+.position-page__sidebar :deep(.tree-container) {
+  flex: 1 1 auto;
+  /* 覆盖 DeptTree 默认 min-height:500px，否则行高随左侧占位抬升、与右侧不同步 */
+  min-height: 0 !important;
+  height: auto;
+  overflow-y: auto;
+}
+
+/**
+ * 右侧：表格区占满与左侧同高的列容器。
+ */
+.position-page__main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  /* 锁住列高，分页与 FxDynamicTable 同屏；超出由表体 scroll.y 消化 */
+  overflow: hidden;
+}
+
+.position-page__main .table-area {
+  flex: 1 1 auto;
   min-height: 0;
 }
 

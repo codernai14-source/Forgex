@@ -158,6 +158,14 @@ export function generateCSSVariables(
     // ==================== 填充与页签 ====================
     '--fx-tab-bg': isDark ? '#14161a' : tokens.colorFillAlter,
     '--fx-tab-hover-bg': isDark ? tokens.colorBgContainer : tokens.colorFill,
+    /** 标签栏容器底色（继承自主布局 rootStyle，避免 scoped 样式退回浅色 #fafafa） */
+    '--fx-tabbar-bg': isDark ? '#151922' : tokens.colorFillAlter,
+    /** 标签栏内未选中 Tab 胶囊底色 */
+    '--fx-tab-chip-bg': isDark ? 'rgba(255, 255, 255, 0.06)' : tokens.colorFillAlter,
+    /** 标签栏内 Tab 悬停底色 */
+    '--fx-tab-chip-hover-bg': isDark ? 'rgba(255, 255, 255, 0.1)' : tokens.colorFill,
+    /** 当前选中 Tab 胶囊底色（深色下略高于标签栏条，避免发白块） */
+    '--fx-tab-active-bg': isDark ? tokens.colorBgElevated : tokens.colorBgContainer,
     '--fx-fill': tokens.colorFill,
     '--fx-fill-secondary': tokens.colorFillSecondary,
     '--fx-fill-alter': tokens.colorFillAlter,

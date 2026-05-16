@@ -1,4 +1,3 @@
-
 package com.forgex.basic.material.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -12,10 +11,9 @@ import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 
 /**
- * 包装方式实体类
+ * 包装规格实体类。
  * <p>
- * 对应数据库表：basic_packaging_type
- * 用于存储物料包装方式信息，支持多种包装规格和材质
+ * 对应数据库表：basic_packaging_type，用于维护箱、桶、卷、盒、袋等包装规格主数据。
  * </p>
  *
  * @author ForGexTeam
@@ -29,81 +27,92 @@ import java.math.BigDecimal;
 public class BasicPackagingType extends BaseEntity {
 
     /**
-     * 主键 ID（雪花算法生成）
+     * 主键 ID。
      */
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 包装方式编码（租户内唯一）
+     * 包装规格编码，租户内唯一。
      */
     @TableField("packaging_code")
     private String packagingCode;
 
     /**
-     * 包装方式名称
+     * 包装规格名称。
      */
     @TableField("packaging_name")
     private String packagingName;
 
     /**
-     * 包装材料（纸箱/木箱/托盘/铁桶等）
+     * 包装规格类型，取值来自字典 packaging_spec_type。
      */
-    @TableField("packaging_material")
-    private String packagingMaterial;
+    @TableField("packaging_spec_type")
+    private String packagingSpecType;
 
     /**
-     * 长度（mm）
+     * 长度。
      */
-    @TableField("length_mm")
-    private BigDecimal lengthMm;
+    @TableField("length_value")
+    private BigDecimal lengthValue;
 
     /**
-     * 宽度（mm）
+     * 宽度。
      */
-    @TableField("width_mm")
-    private BigDecimal widthMm;
+    @TableField("width_value")
+    private BigDecimal widthValue;
 
     /**
-     * 高度（mm）
+     * 高度。
      */
-    @TableField("height_mm")
-    private BigDecimal heightMm;
+    @TableField("height_value")
+    private BigDecimal heightValue;
 
     /**
-     * 包装自重（kg）
+     * 尺寸单位 ID，关联 basic_unit。
      */
-    @TableField("weight_kg")
-    private BigDecimal weightKg;
+    @TableField("size_unit_id")
+    private Long sizeUnitId;
 
     /**
-     * 最大承重（kg）
+     * 包装容积。
      */
-    @TableField("max_load_kg")
-    private BigDecimal maxLoadKg;
+    @TableField("volume_value")
+    private BigDecimal volumeValue;
 
     /**
-     * 单位成本
+     * 容积单位 ID，关联 basic_unit。
      */
-    @TableField("unit_cost")
-    private BigDecimal unitCost;
+    @TableField("volume_unit_id")
+    private Long volumeUnitId;
 
     /**
-     * 状态：0-禁用，1-启用
+     * 重量。
+     */
+    @TableField("weight_value")
+    private BigDecimal weightValue;
+
+    /**
+     * 重量单位 ID，关联 basic_unit。
+     */
+    @TableField("weight_unit_id")
+    private Long weightUnitId;
+
+    /**
+     * 状态：0-禁用，1-启用。
      */
     @TableField("status")
     private Integer status;
 
     /**
-     * 排序号
+     * 排序号。
      */
     @TableField("sort_order")
     private Integer sortOrder;
 
     /**
-     * 备注
+     * 备注。
      */
     @TableField("remark")
     private String remark;
-
 }

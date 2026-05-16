@@ -5,6 +5,10 @@
  * @version 1.0.0
  */
 export default {
+  loading: {
+    thinking: 'Forgex正在載入您所需的任何內容，請稍候',
+  },
+
   // Hero 区
   hero: {
     eyebrow: '個人工作台',
@@ -28,6 +32,7 @@ export default {
     resetDefault: '恢復默認',
     saveLayout: '保存佈局',
     componentLibrary: '組件庫',
+    componentConfig: '個人組件配置',
     hint: {
       edit: '拖拽和縮放組件後可直接保存',
       view: '切換到編輯模式後可調整組件佈局',
@@ -157,6 +162,17 @@ export default {
   },
 
   // 摘要卡片
+  componentConfig: {
+    title: '個人首頁組件配置',
+    desc: '維護目前使用者可見的首頁組件，支援收藏、新增和移除個人組件。',
+    empty: '目前沒有可配置的個人首頁組件',
+    addSuccess: '已新增到個人首頁',
+    removeSuccess: '已從個人首頁移除',
+    stats: {
+      count: '共 {count} 個分組',
+    },
+  },
+
   summary: {
     greeting: {
       honorificMale: '先生',

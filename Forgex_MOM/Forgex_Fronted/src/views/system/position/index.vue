@@ -1,18 +1,19 @@
 <template>
-  <div class="page-wrap">
+  <div class="page-wrap fx-sys-position-page">
     <a-card class="content-card" :bordered="false">
       <a-row :gutter="16">
         <!-- 左侧：部门树 -->
-        <a-col :span="6">
+        <a-col :span="6" class="position-page__sidebar">
           <div class="card-title">{{ $tl('组织架构') }}</div>
           <DeptTree
             ref="deptTreeRef"
+            :show-title-bar="false"
             @select="onSelectNode"
           />
         </a-col>
 
         <!-- 右侧：职位列表 -->
-        <a-col :span="18">
+        <a-col :span="18" class="position-page__main">
             <!-- 操作按钮和表格 -->
           <div class="table-area">
             <fx-dynamic-table
@@ -419,3 +420,16 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="less" src="@/styles/views/system/position/index.less"></style>
+
+<style lang="less">
+/*
+ * 覆盖工作台 MainLayout：.fx-page-wrapper > * 默认 flex:1 0 auto（flex-shrink:0），
+ * 职位页无法在可视区内纵向收缩，右侧表格会把分页推到组织架构可视区域之下。
+ */
+.fx-page-wrapper > .page-wrap.fx-sys-position-page {
+  flex: 1 1 auto !important;
+  flex-shrink: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+</style>

@@ -523,6 +523,9 @@ export interface HomepageComponentQueryParam {
   moduleCode?: string
   scopeLevel?: 'PUBLIC' | 'TENANT' | 'USER'
   keyword?: string
+  componentCode?: string
+  componentName?: string
+  categoryName?: string
   enabled?: boolean
   pageNum?: number
   pageSize?: number
@@ -594,11 +597,23 @@ export function saveHomepageComponent(data: HomepageComponentSaveParam) {
 }
 
 export function deleteHomepageComponent(id: number) {
-  return http.post<boolean>('/sys/homepage/component/delete', { id })
+  return http.post<boolean>('/sys/homepage/component/delete-tenant', { id })
+}
+
+export function deleteTenantHomepageComponent(id: number) {
+  return http.post<boolean>('/sys/homepage/component/delete-tenant', { id })
+}
+
+export function deletePublicHomepageComponent(id: number) {
+  return http.post<boolean>('/sys/homepage/component/delete-public', { id })
 }
 
 export function listEffectiveHomepageComponents(params: HomepageComponentQueryParam = {}) {
   return http.post<HomepageComponentVO[]>('/sys/homepage/component/effective/list', params)
+}
+
+export function listPersonalHomepageComponents(params: HomepageComponentQueryParam = {}) {
+  return http.post<HomepageComponentVO[]>('/sys/homepage/component/personal/list', params)
 }
 
 export function favoriteHomepageComponent(data: HomepageComponentPreferenceParam) {

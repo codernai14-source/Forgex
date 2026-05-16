@@ -4,16 +4,21 @@
   justify-content: space-between;
   height: 56px;
   padding: 0 16px;
+  /** 顶栏右侧：图标组内 / 组与分隔线之间统一间距（替代 a-space 与 divider 不对称 margin） */
+  --fx-header-actions-gap: 10px;
+  /** 取消 Layout Header 默认大行高，避免右侧触发区域（含下拉）继承后出现「文字贴上沿」的视觉错位 */
+  line-height: normal;
   background: var(--fx-header-bg, #ffffff);
+  /** 模块导航横向渐变遮罩与顶栏底色对齐 */
+  --fx-module-scroll-mask: var(--fx-header-bg, #ffffff);
   border-bottom: 0;
-  // 移除边框，由 main-layout.less 中的 .fx-header 统一管理
-  // border-bottom: 1px solid var(--fx-border-color, #f0f0f0);
-  // box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 :global(html[data-theme='dark']) .app-header,
 :global(body[data-theme='dark']) .app-header {
-  background: #14161a;
+  /** 略深一度，与标签栏形成层级（对齐 DESIGN.md hairline 分隔思路） */
+  background: #0c0e12;
+  --fx-module-scroll-mask: #0c0e12;
 }
 
 :global(html[data-theme='dark']) .app-header :deep(.ant-layout-header),
@@ -61,14 +66,82 @@
   align-items: center;
   justify-content: flex-start;
   margin: 0 24px;
-  overflow: hidden;
+  min-width: 0;
+}
+
+/** 模块导航：横向滚动 + 两侧渐变遮罩提示可滑动 */
+.module-nav-scroll-shell {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.module-nav-scroll-track {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.module-nav-scroll-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.module-nav-scroll-fade.is-active {
+  opacity: 1;
+}
+
+.module-nav-scroll-fade--left {
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    var(--fx-module-scroll-mask, var(--fx-header-bg, #ffffff)) 0%,
+    transparent 100%
+  );
+}
+
+.module-nav-scroll-fade--right {
+  right: 0;
+  background: linear-gradient(
+    270deg,
+    var(--fx-module-scroll-mask, var(--fx-header-bg, #ffffff)) 0%,
+    transparent 100%
+  );
+}
+
+:global(html[data-theme='dark']) .module-nav-scroll-track::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .module-menu {
   border-bottom: none;
   background: transparent;
-  width: 100%;
-  min-width: 0;
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
   
   :deep(.ant-menu-item) {
     border-bottom: none;
@@ -110,6 +183,68 @@
 .app-header-right {
   display: flex;
   align-items: center;
+  /** 占满顶栏纵向高度，便于账户区等块与 56px 顶栏中线对齐 */
+  align-self: stretch;
+  flex-shrink: 0;
+  /** 主工具区 | 竖线 | 次要图标 | 竖线 | 账户，间距与组内图标 gap 一致 */
+  gap: var(--fx-header-actions-gap, 10px);
+}
+
+/** 顶栏右侧分组竖线（hairline）；水平占位由父级 flex gap 承担，避免再叠加 14px margin 造成「距竖线突然变宽」 */
+.header-actions-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  align-self: center;
+  background: var(--fx-border-color, rgba(148, 163, 184, 0.38));
+  opacity: 0.9;
+}
+
+.header-actions-group {
+  display: flex;
+  align-items: center;
+
+  /** 搜索/消息、语言/Android/设置：统一列间距（与 app-header-right gap 同源变量） */
+  &--primary,
+  &--secondary {
+    gap: var(--fx-header-actions-gap, 10px);
+  }
+
+  /** Badge 作为 flex 子项时保持与图标按钮垂直居中 */
+  &--primary :deep(.ant-badge) {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  /** 下拉 / 气泡根节点参与 flex gap，避免 Space + 包裹层双重留白导致间距参差 */
+  &--secondary :deep(.ant-dropdown),
+  &--secondary :deep(.ant-popover) {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  /** 账户区与低频工具图标拉开间距，避免头像区挤压 */
+  &--account {
+    margin-left: 0;
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+
+    /**
+     * 用户下拉触发器会合并 ant-dropdown-trigger，与 vc-trigger 组合使用时保证整块按 flex 中线对齐
+     *
+     * @see AppHeader.vue 中 a-dropdown 默认插槽触发节点
+     */
+    :deep(.ant-dropdown-trigger) {
+      display: inline-flex !important;
+      align-items: center !important;
+      line-height: 1 !important;
+    }
+  }
 }
 
 .header-btn {
@@ -137,16 +272,14 @@
   border-radius: 4px;
 }
 
-.header-btn--icon {
+/** 纯图标顶栏按钮：固定占位，保证地球/Android/齿轮与竖线相邻时间距视觉一致（覆盖 ant-btn-text 默认横向 padding） */
+.app-header .header-btn.header-btn--icon.ant-btn {
   justify-content: center;
+  align-items: center;
   min-width: 32px;
-  padding-inline: 8px;
-}
-
-.tenant-switch-btn {
-  :deep(.anticon) {
-    font-size: calc(var(--fx-font-size, 14px) * 1.15);
-  }
+  width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
 .lang-switch-icon {
@@ -240,21 +373,79 @@
 }
 
 .user-dropdown-trigger {
-  display: flex;
+  /** ant-dropdown-trigger 与此类共存时使用 inline-flex，避免匿名行盒基线对齐顶偏 */
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: 10px;
+  padding: 4px 12px;
+  min-height: 40px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background 0.2s;
-  
+
   &:hover {
     background: rgba(0, 0, 0, 0.04);
   }
 }
 
+.user-dropdown-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  /** 与头像高度对齐，单行昵称时仍在块内垂直居中 */
+  min-height: 32px;
+  min-width: 0;
+  gap: 0;
+}
+
+.user-tenant-line {
+  margin-top: 1px;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--fx-header-shortcut-color, #9ca3af);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tenant-inline-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 208px;
+}
+
+.tenant-inline-menu-item__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tenant-inline-menu-item__check {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--fx-theme-color, #1677ff);
+}
+
+:global(html[data-theme='dark']) .user-dropdown-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .user-avatar {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+
+  :deep(.ant-avatar) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+  }
 }
 
 .user-avatar-default {
@@ -263,18 +454,24 @@
   font-weight: 600;
 }
 
-.user-name {
+.user-dropdown-text .user-name {
   font-size: var(--fx-font-size, 14px);
   color: var(--fx-header-color, #1f2937);
-  max-width: 120px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.3;
 }
 
 .user-dropdown-icon {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex-shrink: 0;
   font-size: calc(var(--fx-font-size, 14px) * 0.85);
   color: #9ca3af;
+  line-height: 1;
 }
 
 :global(html[data-theme='light']) .module-menu,
@@ -299,7 +496,11 @@
     display: none;
   }
   
-  .user-name {
+  .user-dropdown-text .user-name {
+    display: none;
+  }
+
+  .user-tenant-line {
     display: none;
   }
   

@@ -2789,6 +2789,13 @@ onMounted(async () => {
   } catch (_) {}
 
   connectMessageSse()
+
+  const bootstrapLoader = (window as any).__globalLoader
+  if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
+    window.requestAnimationFrame(() => {
+      bootstrapLoader.hide()
+    })
+  }
 })
 
 onUnmounted(() => {

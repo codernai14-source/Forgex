@@ -20,6 +20,9 @@ export default {
   langEnUs: 'English',
   search: 'Search',
   refresh: 'Refresh',
+  loading: {
+    thinking: 'Forgex is loading everything you need. Please wait.',
+  },
   openSettings: 'Layout Settings',
   settingTitle: 'Layout & Theme Settings',
   settingSubtitle: 'Customize navigation layout, theme color, and appearance',
@@ -122,6 +125,7 @@ export default {
   tenant: {
     loading: 'Loading tenants',
     empty: 'No switchable tenant',
+    environment: 'Environment',
     switch: 'Switch tenant',
     currentAccountMissing: 'Current account information is missing. Please sign in again.',
     switchSuccess: 'Tenant switched successfully',
@@ -137,6 +141,8 @@ export default {
     logout: 'Logout',
   },
   tab: {
+    overflowTabs: 'Tabs outside view',
+    filterOverflowTabs: 'Filter tabs',
     refresh: 'Refresh',
     close: 'Close',
     closeOthers: 'Close Others',

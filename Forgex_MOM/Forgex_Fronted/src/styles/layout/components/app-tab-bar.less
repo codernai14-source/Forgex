@@ -1,9 +1,10 @@
 .app-tabbar {
   display: flex;
   align-items: center;
-  height: 40px;
+  height: 42px;
   padding: 0 8px;
-  background: var(--fx-header-bg, #ffffff);
+  /** 由 MainLayout 注入 --fx-tabbar-bg；兜底继承页面布局底色，避免出现默认浅色白条 */
+  background: var(--fx-tabbar-bg, var(--fx-bg-layout));
   border-top: 1px solid var(--fx-top-divider-color, var(--fx-border-color, #f0f0f0));
   border-bottom: 0;
   overflow: hidden;
@@ -11,7 +12,7 @@
 
 :global(html[data-theme='dark']) .app-tabbar,
 :global(body[data-theme='dark']) .app-tabbar {
-  background: #14161a;
+  border-top-color: var(--fx-border-color, rgba(148, 163, 184, 0.14));
 }
 
 .tabbar-inner {
@@ -21,18 +22,86 @@
   gap: 4px;
   overflow-x: auto;
   overflow-y: hidden;
-  
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.38) rgba(0, 0, 0, 0.06);
+
   &::-webkit-scrollbar {
-    height: 4px;
+    height: 6px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
-    
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+
     &:hover {
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.32);
     }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+}
+
+:global(html[data-theme='dark']) .tabbar-inner {
+  scrollbar-color: rgba(255, 255, 255, 0.26) rgba(255, 255, 255, 0.08);
+}
+
+:global(html[data-theme='dark']) .tabbar-inner::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+:global(html[data-theme='dark']) .tabbar-inner::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+:global(html[data-theme='dark']) .tabbar-inner::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tabbar-more-panel {
+  min-width: 220px;
+  max-width: min(92vw, 360px);
+  max-height: min(70vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px 4px 6px;
+
+  &__search {
+    padding: 0 8px 8px;
+  }
+
+  &__search-icon {
+    font-size: 13px;
+    color: var(--fx-text-secondary, rgba(0, 0, 0, 0.45));
+  }
+
+  :deep(.tabbar-more-menu) {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    max-height: none;
+  }
+
+  :deep(.ant-menu-item-group-title) {
+    padding-inline: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fx-text-secondary, rgba(0, 0, 0, 0.55));
+  }
+}
+
+.tabbar-overflow-menu-item {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+
+  &__title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -63,29 +132,29 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 32px;
+  height: 34px;
   padding: 0 12px;
   font-size: 13px;
   color: var(--fx-text-color, #4b5563);
-  background: var(--fx-tab-bg, #f3f4f6);
+  background: var(--fx-tab-chip-bg, var(--fx-tab-bg, #f3f4f6));
   border-radius: 6px 6px 0 0;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
   transition: all 0.2s;
-  
+
   &:hover {
     color: var(--fx-theme-color, #1677ff);
-    background: var(--fx-tab-hover-bg, #e5e7eb);
+    background: var(--fx-tab-chip-hover-bg, var(--fx-tab-hover-bg, #e5e7eb));
   }
-  
+
   &.tab-item-active {
     color: var(--fx-theme-color, #1677ff);
-    background: var(--fx-content-bg, #ffffff);
+    background: var(--fx-tab-active-bg, var(--fx-content-bg, #ffffff));
     border-bottom: 2px solid var(--fx-theme-color, #1677ff);
     font-weight: 500;
   }
-  
+
   &.tab-item-dragging {
     opacity: 0.5;
   }

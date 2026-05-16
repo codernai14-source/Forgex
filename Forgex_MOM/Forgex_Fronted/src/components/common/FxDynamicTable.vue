@@ -765,8 +765,13 @@ function computeAutoScrollY() {
   const buffer = 2
   const y = Math.floor(available - headerHeight - buffer)
 
-  // 过小则不设纵向滚动，避免表格被压扁
-  const nextY = y > 100 ? y : undefined
+  /*
+   * 原阈值 100 在「分页条 + 表头占用后」剩余可视区小于约 120px 时会导致 autoScrollY 失效，
+   * a-table 以自然高度铺满全部行数，整块区域撑高并被上层 overflow:hidden（如工作台页）
+   * 裁切到底部独立分页组件之外，表现为分页器消失。
+   * 降低到 48，仅过滤极端无效高度。
+   */
+  const nextY = y >= 48 ? y : undefined
   if (autoScrollY.value === nextY) return
   autoScrollY.value = nextY
 }

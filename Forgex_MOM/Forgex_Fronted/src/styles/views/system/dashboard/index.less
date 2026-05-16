@@ -48,6 +48,50 @@
       background: var(--fx-bg-container, #ffffff);
       color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
 
+      /** 仪表盘可视化卡片：顶部微弱高光 + 大号圆角容器感（对齐 Ant Design Pro 卡片层级） */
+      &--viz {
+        overflow: hidden;
+        border: 1px solid var(--fx-border-secondary, rgba(0, 0, 0, 0.06));
+        box-shadow:
+          var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.06)),
+          0 1px 0 rgba(255, 255, 255, 0.65) inset;
+
+        :deep(.ant-card-head) {
+          border-bottom-color: transparent;
+          padding-bottom: 4px;
+
+          &::after {
+            content: '';
+            display: block;
+            margin-top: 10px;
+            height: 1px;
+            background: linear-gradient(
+              90deg,
+              transparent,
+              var(--fx-border-color, #e5e7eb),
+              transparent
+            );
+            opacity: 0.85;
+          }
+        }
+
+        :deep(.ant-card-body) {
+          padding-top: 4px;
+          background-image:
+            radial-gradient(
+              ellipse 95% 72% at 50% -18%,
+              rgba(24, 144, 255, 0.07),
+              transparent 58%
+            ),
+            radial-gradient(
+              ellipse 70% 55% at 100% 85%,
+              rgba(82, 196, 26, 0.045),
+              transparent 52%
+            );
+          background-color: var(--fx-bg-container, #ffffff);
+        }
+      }
+
       :deep(.ant-card-head) {
         font-size: 16px;
         font-weight: 600;
@@ -125,5 +169,26 @@
 @media (max-width: 576px) {
   .system-dashboard--stats {
     grid-template-columns: 1fr;
+  }
+}
+
+/** 深色主题下弱化浅色 inset 高光，避免卡片边缘发灰 */
+:root[data-theme='dark'] .system-dashboard .chart-card--viz {
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  :deep(.ant-card-body) {
+    background-image:
+      radial-gradient(
+        ellipse 95% 72% at 50% -18%,
+        rgba(24, 144, 255, 0.11),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 70% 55% at 100% 85%,
+        rgba(82, 196, 26, 0.06),
+        transparent 52%
+      );
   }
 }

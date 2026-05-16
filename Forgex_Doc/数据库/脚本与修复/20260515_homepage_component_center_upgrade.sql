@@ -369,3 +369,156 @@ WHERE p.deleted = 0
     SELECT 1 FROM `sys_role_permission` rp
     WHERE rp.role_id = @ADMIN_ROLE_ID AND rp.permission_id = p.id
   );
+
+-- 2026-05-16 add complete homepage component catalog, split delete perms,
+-- personal component config entry, and FxDynamicTable metadata. Safe to rerun.
+
+INSERT INTO `sys_homepage_component_category`
+(`tenant_id`,`category_code`,`category_name`,`module_code`,`remark`,`create_time`,`update_time`,`create_by`,`update_by`,`deleted`)
+SELECT 0, seed.category_code, seed.category_name, seed.module_code, seed.remark, @NOW, @NOW, @OPERATOR, @OPERATOR, 0
+FROM (
+  SELECT 'personal_common' AS category_code, 'Personal Common' AS category_name, 'personal' AS module_code, 'Personal homepage components' AS remark
+  UNION ALL SELECT 'basic_common', 'Basic Data', 'basic', 'Basic data homepage components'
+  UNION ALL SELECT 'approval_common', 'Approval', 'approval', 'Approval homepage components'
+  UNION ALL SELECT 'sys_runtime', 'System Runtime', 'sys', 'System management homepage components'
+) seed
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_homepage_component_category` c
+  WHERE c.tenant_id = 0 AND c.module_code = seed.module_code AND c.category_code = seed.category_code
+);
+
+INSERT INTO `sys_homepage_component_config`
+(`tenant_id`,`category_id`,`scope_level`,`component_code`,`component_name`,`component_path`,`icon`,`use_desc`,`default_params_json`,`enabled`,`order_num`,`remark`,`create_time`,`update_time`,`create_by`,`update_by`,`deleted`)
+SELECT 0, cat.id, 'PUBLIC', seed.component_code, seed.component_name, seed.component_path, seed.icon, seed.use_desc, seed.default_params_json, 1, seed.order_num, seed.remark, @NOW, @NOW, @OPERATOR, @OPERATOR, 0
+FROM (
+  SELECT 'personal' AS module_code, 'personal_common' AS category_code, 'commonMenus' AS component_code, 'Common Menus' AS component_name, 'commonMenus' AS component_path, 'AppstoreOutlined' AS icon, 'Top common menus' AS use_desc, '{"limit":6,"showMore":true}' AS default_params_json, 10 AS order_num, 'Personal homepage common menus' AS remark
+  UNION ALL SELECT 'personal','personal_common','myFavorites','My Favorites','myFavorites','StarOutlined','User favorite menus','{"limit":6,"showMore":true}',20,'Personal homepage favorites'
+  UNION ALL SELECT 'personal','personal_common','pendingApprovals','Pending Approvals','pendingApprovals','CheckCircleOutlined','Pending approval tasks','{"limit":6,"showMore":true}',30,'Personal homepage pending approvals'
+  UNION ALL SELECT 'personal','personal_common','calendar','Calendar','calendar','CalendarOutlined','Calendar widget','{}',40,'Personal homepage calendar'
+  UNION ALL SELECT 'personal','personal_common','messages','Messages','messages','MessageOutlined','User messages','{"limit":10,"showMore":true}',50,'Personal homepage messages'
+  UNION ALL SELECT 'personal','personal_common','notices','Notices','notices','BellOutlined','System notices','{"limit":10,"showMore":true}',60,'Personal homepage notices'
+  UNION ALL SELECT 'personal','personal_common','currentTime','Current Time','currentTime','ClockCircleOutlined','Current date and time','{}',70,'Personal homepage time'
+  UNION ALL SELECT 'basic','basic_common','supplierInfo','Supplier Information','supplierInfo','TeamOutlined','Supplier master data','{}',10,'Basic homepage supplier information'
+  UNION ALL SELECT 'basic','basic_common','encodeRuleInfo','Encoding Rules','encodeRuleInfo','NumberOutlined','Encoding rule configuration','{}',20,'Basic homepage encode rules'
+  UNION ALL SELECT 'approval','approval_common','approvalWeeklyTrend','Approval Weekly Trend','approvalWeeklyTrend','LineChartOutlined','Approval weekly trend','{}',10,'Approval homepage weekly trend'
+  UNION ALL SELECT 'approval','approval_common','approvalShortcuts','Approval Shortcuts','approvalShortcuts','ThunderboltOutlined','Approval shortcuts','{}',20,'Approval homepage shortcuts'
+  UNION ALL SELECT 'approval','approval_common','approvalUserShare','Approval User Share','approvalUserShare','PieChartOutlined','Approval user share','{}',30,'Approval homepage user share'
+  UNION ALL SELECT 'approval','approval_common','approvalTaskConfig','Approval Task Config','approvalTaskConfig','SettingOutlined','Approval task configuration','{}',40,'Approval homepage task config'
+  UNION ALL SELECT 'approval','approval_common','approvalPending','Pending Tasks','approvalPending','ClockCircleOutlined','Pending approval tasks','{}',50,'Approval homepage pending tasks'
+  UNION ALL SELECT 'approval','approval_common','approvalProcessed','Processed Tasks','approvalProcessed','CheckCircleOutlined','Processed approval tasks','{}',60,'Approval homepage processed tasks'
+  UNION ALL SELECT 'approval','approval_common','approvalCc','CC Tasks','approvalCc','MailOutlined','Approval CC tasks','{}',70,'Approval homepage CC tasks'
+  UNION ALL SELECT 'sys','sys_runtime','systemStats','System Stats','systemStats','DashboardOutlined','System statistics','{}',10,'System homepage statistics'
+  UNION ALL SELECT 'sys','sys_runtime','systemCpu','CPU','systemCpu','FundProjectionScreenOutlined','CPU usage','{}',20,'System homepage CPU'
+  UNION ALL SELECT 'sys','sys_runtime','systemMemory','Memory','systemMemory','DatabaseOutlined','Memory usage','{}',30,'System homepage memory'
+  UNION ALL SELECT 'sys','sys_runtime','systemJvmMemory','JVM Memory','systemJvmMemory','CodeOutlined','JVM memory usage','{}',40,'System homepage JVM memory'
+  UNION ALL SELECT 'sys','sys_runtime','systemMap','System Map','systemMap','GlobalOutlined','System map','{}',50,'System homepage map'
+  UNION ALL SELECT 'sys','sys_runtime','systemServerInfo','Server Info','systemServerInfo','CloudServerOutlined','Server information','{}',60,'System homepage server info'
+  UNION ALL SELECT 'sys','sys_runtime','systemOperationLogs','Operation Logs','systemOperationLogs','FileTextOutlined','Operation logs','{}',70,'System homepage operation logs'
+  UNION ALL SELECT 'sys','sys_runtime','systemLoginLogs','Login Logs','systemLoginLogs','LoginOutlined','Login logs','{}',80,'System homepage login logs'
+) seed
+INNER JOIN `sys_homepage_component_category` cat
+  ON cat.tenant_id = 0 AND cat.module_code = seed.module_code AND cat.category_code = seed.category_code
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_homepage_component_config` c
+  WHERE c.scope_level = 'PUBLIC' AND c.tenant_id = 0 AND c.component_code = seed.component_code
+);
+
+SET @WORKSPACE_HOME_PARENT_ID := COALESCE(
+  (SELECT id FROM `sys_menu` WHERE deleted = 0 AND tenant_id = @SYS_TENANT_ID AND component_key = 'PersonalHomepage' ORDER BY id LIMIT 1),
+  (SELECT id FROM `sys_menu` WHERE deleted = 0 AND tenant_id = @SYS_TENANT_ID AND path IN ('home','workspace') ORDER BY id LIMIT 1),
+  @ONLINE_DEV_PARENT_ID
+);
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT @SYS_TENANT_ID, 'PUBLIC', @SYS_MODULE_ID, @WORKSPACE_HOME_PARENT_ID, 'menu', 'home/component-config', 'Personal Homepage Component Config',
+       JSON_OBJECT('zh-CN','个人首页组件配置','zh-TW','個人首頁組件配置','en-US','Personal Homepage Components','ja-JP','個人ホームページコンポーネント','ko-KR','개인 홈페이지 컴포넌트'),
+       'AppstoreOutlined', 'PersonalHomepageComponentConfig', 'sys:homepageComponent:personalList', 20, 1, 1, @NOW, @OPERATOR, @NOW, @OPERATOR, 0, 3, 'embedded', NULL
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_menu` m
+  WHERE m.deleted = 0 AND m.tenant_id = @SYS_TENANT_ID AND m.component_key = 'PersonalHomepageComponentConfig'
+);
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT @SYS_TENANT_ID, 'PUBLIC', @SYS_MODULE_ID, @HOMEPAGE_COMPONENT_MENU_ID, 'button', seed.path, seed.name, seed.name_i18n_json,
+       NULL, NULL, seed.perm_key, seed.order_num, 1, 1, @NOW, @OPERATOR, @NOW, @OPERATOR, 0, 3, 'embedded', NULL
+FROM (
+  SELECT 'delete-tenant' AS path, 'Delete Tenant Component' AS name, JSON_OBJECT('zh-CN','删除租户组件','zh-TW','刪除租戶組件','en-US','Delete Tenant Component','ja-JP','テナントコンポーネント削除','ko-KR','테넌트 컴포넌트 삭제') AS name_i18n_json, 'sys:homepageComponent:deleteTenant' AS perm_key, 41 AS order_num
+  UNION ALL SELECT 'delete-public', 'Delete Public Component', JSON_OBJECT('zh-CN','删除公共组件','zh-TW','刪除公共組件','en-US','Delete Public Component','ja-JP','共通コンポーネント削除','ko-KR','공통 컴포넌트 삭제'), 'sys:homepageComponent:deletePublic', 42
+  UNION ALL SELECT 'personal-list', 'Personal Component List', JSON_OBJECT('zh-CN','个人组件列表','zh-TW','個人組件列表','en-US','Personal Component List','ja-JP','個人コンポーネント一覧','ko-KR','개인 컴포넌트 목록'), 'sys:homepageComponent:personalList', 43
+) seed
+WHERE @HOMEPAGE_COMPONENT_MENU_ID IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` btn
+    WHERE btn.deleted = 0 AND btn.parent_id = @HOMEPAGE_COMPONENT_MENU_ID AND btn.perm_key = seed.perm_key
+  );
+
+INSERT INTO `sys_permission`
+(`permission_name`,`permission_key`,`url`,`method`,`tenant_id`,`create_time`,`update_time`,`deleted`)
+SELECT seed.permission_name, seed.permission_key, seed.url, 'POST', 0, @NOW, @NOW, 0
+FROM (
+  SELECT 'Delete Tenant Homepage Component' AS permission_name, 'sys:homepageComponent:deleteTenant' AS permission_key, '/sys/homepage/component/delete-tenant' AS url
+  UNION ALL SELECT 'Delete Public Homepage Component', 'sys:homepageComponent:deletePublic', '/sys/homepage/component/delete-public'
+  UNION ALL SELECT 'Personal Homepage Component List', 'sys:homepageComponent:personalList', '/sys/homepage/component/personal/list'
+) seed
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_permission` p WHERE p.permission_key = seed.permission_key
+);
+
+USE `forgex_common`;
+
+INSERT INTO `fx_table_config`
+(`tenant_id`,`table_code`,`table_name_i18n_json`,`table_type`,`row_key`,`default_page_size`,`enabled`,`version`,`create_by`,`create_time`,`update_by`,`update_time`,`deleted`)
+SELECT 0, 'SystemHomepageComponentTable',
+       '{"zh-CN":"首页组件目录","zh-TW":"首頁組件目錄","en-US":"Homepage Component Catalog","ja-JP":"ホームページコンポーネント一覧","ko-KR":"홈페이지 컴포넌트 목록"}',
+       'BUSINESS', 'id', 10, 1, 1, @OPERATOR, @NOW, @OPERATOR, @NOW, 0
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1 FROM `fx_table_config`
+  WHERE `tenant_id` = 0 AND `table_code` = 'SystemHomepageComponentTable' AND `deleted` = 0
+);
+
+INSERT INTO `fx_table_column_config`
+(`tenant_id`,`table_code`,`field`,`title_i18n_json`,`align`,`width`,`fixed`,`ellipsis`,`sortable`,`sorter_field`,`queryable`,`query_type`,`query_operator`,`dict_code`,`render_type`,`perm_key`,`order_num`,`enabled`,`create_by`,`create_time`,`update_by`,`update_time`,`deleted`)
+SELECT 0,'SystemHomepageComponentTable',seed.field,seed.title_i18n_json,seed.align,seed.width,seed.fixed,seed.ellipsis,seed.sortable,seed.sorter_field,seed.queryable,seed.query_type,seed.query_operator,seed.dict_code,seed.render_type,seed.perm_key,seed.order_num,1,@OPERATOR,@NOW,@OPERATOR,@NOW,0
+FROM (
+  SELECT 'componentCode' AS field, '{"zh-CN":"组件编码","zh-TW":"組件編碼","en-US":"Component Code","ja-JP":"コンポーネントコード","ko-KR":"컴포넌트 코드"}' AS title_i18n_json, 'left' AS align, 180 AS width, NULL AS fixed, 0 AS ellipsis, 1 AS sortable, 'componentCode' AS sorter_field, 1 AS queryable, 'input' AS query_type, 'like' AS query_operator, NULL AS dict_code, NULL AS render_type, NULL AS perm_key, 1 AS order_num
+  UNION ALL SELECT 'componentName','{"zh-CN":"组件名称","zh-TW":"組件名稱","en-US":"Component Name","ja-JP":"コンポーネント名","ko-KR":"컴포넌트명"}','left',180,NULL,1,1,'componentName',1,'input','like',NULL,NULL,NULL,2
+  UNION ALL SELECT 'categoryName','{"zh-CN":"分类","zh-TW":"分類","en-US":"Category","ja-JP":"カテゴリ","ko-KR":"분류"}','left',160,NULL,0,1,'categoryName',1,'input','like',NULL,'tag',NULL,3
+  UNION ALL SELECT 'moduleCode','{"zh-CN":"模块","zh-TW":"模組","en-US":"Module","ja-JP":"モジュール","ko-KR":"모듈"}','center',120,NULL,0,1,'moduleCode',1,'input','eq',NULL,NULL,NULL,4
+  UNION ALL SELECT 'scopeLevel','{"zh-CN":"层级","zh-TW":"層級","en-US":"Scope","ja-JP":"スコープ","ko-KR":"범위"}','center',120,NULL,0,1,'scopeLevel',0,NULL,NULL,NULL,'tag',NULL,5
+  UNION ALL SELECT 'enabled','{"zh-CN":"启用","zh-TW":"啟用","en-US":"Enabled","ja-JP":"有効","ko-KR":"활성화"}','center',100,NULL,0,1,'enabled',1,'select','eq','common_status','tag',NULL,6
+  UNION ALL SELECT 'orderNum','{"zh-CN":"排序","zh-TW":"排序","en-US":"Order","ja-JP":"並び順","ko-KR":"정렬"}','right',100,NULL,0,1,'orderNum',0,NULL,NULL,NULL,NULL,NULL,7
+  UNION ALL SELECT 'action','{"zh-CN":"操作","zh-TW":"操作","en-US":"Action","ja-JP":"操作","ko-KR":"작업"}','center',220,'right',0,0,NULL,0,NULL,NULL,NULL,NULL,NULL,99
+) seed
+WHERE NOT EXISTS (
+  SELECT 1 FROM `fx_table_column_config`
+  WHERE `tenant_id` = 0 AND `table_code` = 'SystemHomepageComponentTable' AND `field` = seed.field AND `deleted` = 0
+);
+
+USE `forgex_admin`;
+
+INSERT INTO `sys_role_menu` (`tenant_id`,`role_id`,`menu_id`)
+SELECT @SYS_TENANT_ID, @ADMIN_ROLE_ID, m.id
+FROM `sys_menu` m
+WHERE m.deleted = 0
+  AND m.tenant_id = @SYS_TENANT_ID
+  AND (m.component_key = 'PersonalHomepageComponentConfig' OR m.perm_key LIKE 'sys:homepageComponent:%')
+  AND @ADMIN_ROLE_ID IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_role_menu` rm
+    WHERE rm.tenant_id = @SYS_TENANT_ID AND rm.role_id = @ADMIN_ROLE_ID AND rm.menu_id = m.id
+  );
+
+INSERT INTO `sys_role_permission` (`role_id`,`permission_id`)
+SELECT @ADMIN_ROLE_ID, p.id
+FROM `sys_permission` p
+WHERE p.deleted = 0
+  AND p.permission_key LIKE 'sys:homepageComponent:%'
+  AND @ADMIN_ROLE_ID IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_role_permission` rp
+    WHERE rp.role_id = @ADMIN_ROLE_ID AND rp.permission_id = p.id
+  );

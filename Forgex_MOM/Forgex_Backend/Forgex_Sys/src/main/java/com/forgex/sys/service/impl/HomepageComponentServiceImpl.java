@@ -67,16 +67,23 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
         List<SysHomepageComponentPreference> preferences = listPreferences(userId, currentTenantId, moduleCode, condition.getCategoryId());
         if (!preferences.isEmpty()) {
             return preferences.stream()
-                .filter(item -> matchesKeyword(item.getComponentCode(), item.getComponentName(), item.getUseDesc(), condition.getKeyword()))
                 .map(this::toPreferenceVO)
+                .filter(item -> matchesQuery(item, condition))
+                .filter(item -> matchesScope(item.getScopeLevel(), condition.getScopeLevel()))
                 .sorted(componentComparator())
                 .collect(Collectors.toList());
         }
         return listBaseEffectiveConfigs(currentTenantId, condition).stream()
             .filter(config -> Boolean.TRUE.equals(config.getEnabled()))
             .map(config -> toConfigVO(config, config.getScopeLevel()))
+            .filter(item -> matchesScope(item.getScopeLevel(), condition.getScopeLevel()))
             .sorted(componentComparator())
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<HomepageComponentVO> listPersonalComponents(Long userId, Long tenantId, HomepageComponentQueryParam param) {
+        return listEffectiveComponents(userId, tenantId, param);
     }
 
     @Override
@@ -115,6 +122,12 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteComponent(Long id, Long tenantId) {
+        return deleteComponent(id, tenantId, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteComponent(Long id, Long tenantId, String scopeLevel) {
         if (id == null) {
             return false;
         }
@@ -122,7 +135,14 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
         if (entity == null) {
             return true;
         }
+        String resolvedScope = StringUtils.hasText(scopeLevel) ? scopeLevel.trim().toUpperCase() : entity.getScopeLevel();
+        if (!StringUtils.hasText(entity.getScopeLevel()) || !entity.getScopeLevel().equalsIgnoreCase(resolvedScope)) {
+            return false;
+        }
         if (SCOPE_TENANT.equalsIgnoreCase(entity.getScopeLevel()) && !Objects.equals(entity.getTenantId(), safeTenantId(tenantId))) {
+            return false;
+        }
+        if (SCOPE_PUBLIC.equalsIgnoreCase(entity.getScopeLevel()) && !SCOPE_PUBLIC.equalsIgnoreCase(resolvedScope)) {
             return false;
         }
         return configMapper.deleteById(id) > 0;
@@ -208,6 +228,8 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
         wrapper.eq(SysHomepageComponentConfig::getTenantId, tenantId);
         wrapper.eq(param.getCategoryId() != null, SysHomepageComponentConfig::getCategoryId, param.getCategoryId());
         wrapper.eq(param.getEnabled() != null, SysHomepageComponentConfig::getEnabled, param.getEnabled());
+        wrapper.like(StringUtils.hasText(param.getComponentCode()), SysHomepageComponentConfig::getComponentCode, trim(param.getComponentCode()));
+        wrapper.like(StringUtils.hasText(param.getComponentName()), SysHomepageComponentConfig::getComponentName, trim(param.getComponentName()));
         if (StringUtils.hasText(param.getCategoryCode()) || StringUtils.hasText(param.getModuleCode())) {
             List<Long> categoryIds = findCategoryIds(param.getCategoryCode(), param.getModuleCode(), null);
             if (categoryIds.isEmpty()) {
@@ -216,11 +238,21 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
                 wrapper.in(SysHomepageComponentConfig::getCategoryId, categoryIds);
             }
         }
+        if (StringUtils.hasText(param.getCategoryName())) {
+            List<Long> categoryIds = findCategoryIdsByKeyword(param.getCategoryName());
+            if (categoryIds.isEmpty()) {
+                wrapper.eq(SysHomepageComponentConfig::getId, -1L);
+            } else {
+                wrapper.in(SysHomepageComponentConfig::getCategoryId, categoryIds);
+            }
+        }
         if (StringUtils.hasText(param.getKeyword())) {
             String keyword = param.getKeyword().trim();
+            List<Long> categoryIds = findCategoryIdsByKeyword(keyword);
             wrapper.and(item -> item.like(SysHomepageComponentConfig::getComponentCode, keyword)
                 .or().like(SysHomepageComponentConfig::getComponentName, keyword)
-                .or().like(SysHomepageComponentConfig::getUseDesc, keyword));
+                .or().like(SysHomepageComponentConfig::getUseDesc, keyword)
+                .or(categoryIds != null && !categoryIds.isEmpty(), query -> query.in(SysHomepageComponentConfig::getCategoryId, categoryIds)));
         }
         wrapper.orderByAsc(SysHomepageComponentConfig::getOrderNum).orderByAsc(SysHomepageComponentConfig::getId);
         return wrapper;
@@ -391,6 +423,18 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
         return categoryMapper.selectList(wrapper).stream().map(SysHomepageComponentCategory::getId).collect(Collectors.toList());
     }
 
+    private List<Long> findCategoryIdsByKeyword(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return new ArrayList<>();
+        }
+        String value = keyword.trim();
+        LambdaQueryWrapper<SysHomepageComponentCategory> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(SysHomepageComponentCategory::getCategoryCode, value)
+            .or().like(SysHomepageComponentCategory::getCategoryName, value)
+            .or().like(SysHomepageComponentCategory::getModuleCode, value);
+        return categoryMapper.selectList(wrapper).stream().map(SysHomepageComponentCategory::getId).collect(Collectors.toList());
+    }
+
     private SysHomepageComponentConfig findConfigByCode(Long tenantId, String scopeLevel, String componentCode) {
         if (!StringUtils.hasText(componentCode)) {
             return null;
@@ -467,6 +511,45 @@ public class HomepageComponentServiceImpl implements HomepageComponentService {
         }
         String value = keyword.trim().toLowerCase();
         return containsIgnoreCase(code, value) || containsIgnoreCase(name, value) || containsIgnoreCase(useDesc, value);
+    }
+
+    private boolean matchesQuery(HomepageComponentVO item, HomepageComponentQueryParam param) {
+        if (item == null || param == null) {
+            return true;
+        }
+        return matchesKeyword(
+            join(item.getComponentCode(), item.getCategoryCode()),
+            join(item.getComponentName(), item.getCategoryName(), item.getModuleCode()),
+            item.getUseDesc(),
+            param.getKeyword()
+        )
+            && matchesText(item.getComponentCode(), param.getComponentCode())
+            && matchesText(item.getComponentName(), param.getComponentName())
+            && matchesText(item.getCategoryName(), param.getCategoryName());
+    }
+
+    private boolean matchesScope(String scopeLevel, String queryScopeLevel) {
+        if (!StringUtils.hasText(queryScopeLevel)) {
+            return true;
+        }
+        return StringUtils.hasText(scopeLevel) && scopeLevel.equalsIgnoreCase(queryScopeLevel.trim());
+    }
+
+    private boolean matchesText(String text, String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return true;
+        }
+        return containsIgnoreCase(text, keyword.trim().toLowerCase());
+    }
+
+    private String join(String... values) {
+        return java.util.Arrays.stream(values)
+            .filter(StringUtils::hasText)
+            .collect(Collectors.joining(" "));
+    }
+
+    private String trim(String value) {
+        return StringUtils.hasText(value) ? value.trim() : value;
     }
 
     private boolean containsIgnoreCase(String text, String keyword) {

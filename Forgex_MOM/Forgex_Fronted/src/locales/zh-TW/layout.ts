@@ -20,6 +20,9 @@ export default {
   langEnUs: 'English',
   search: '搜尋',
   refresh: '重新整理',
+  loading: {
+    thinking: 'Forgex正在載入您所需的任何內容，請稍候',
+  },
   openSettings: '佈局設定',
   settingTitle: '佈局與主題設定',
   settingSubtitle: '調整導航佈局、主題色等外觀偏好',
@@ -122,6 +125,7 @@ export default {
   tenant: {
     loading: '租戶載入中',
     empty: '暫無可切換租戶',
+    environment: '目前環境',
     switch: '切換租戶',
     currentAccountMissing: '目前帳號資訊缺失，請重新登入',
     switchSuccess: '租戶切換成功',
@@ -137,6 +141,8 @@ export default {
     logout: '登出',
   },
   tab: {
+    overflowTabs: '不可見標籤',
+    filterOverflowTabs: '篩選標籤頁',
     refresh: '重新整理',
     close: '關閉',
     closeOthers: '關閉其他',

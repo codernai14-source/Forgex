@@ -1,38 +1,31 @@
 /**
- * 表单校验翻译 - 中文注释
- * 
- * Contains form validation messages
+ * 表单校验提示 - 日语界面文案
  */
 export default {
-  // Required Validation
-  required: 'This field is required',
-  requiredField: '{field} is required',
-  
-  // 格式校验
-  invalidEmail: 'Please enter a valid email address',
-  invalidPhone: 'Please enter a valid phone number',
-  invalidUrl: 'Please enter a valid URL',
-  invalidNumber: 'Please enter a valid number',
-  invalidInteger: 'Please enter an integer',
-  invalidDate: 'Please enter a valid date',
-  
-  // 长度校验
-  minLength: 'Length must be at least {min} characters',
-  maxLength: 'Length must not exceed {max} characters',
-  rangeLength: 'Length must be between {min} and {max} characters',
-  
-  // 数值校验
-  minValue: 'Value must be at least {min}',
-  maxValue: 'Value must not exceed {max}',
-  rangeValue: 'Value must be between {min} and {max}',
-  
-  // 密码校验
-  passwordMismatch: 'Passwords do not match',
-  passwordWeak: 'Password is too weak',
-  passwordRequirement: 'Password must contain uppercase, lowercase, numbers and special characters',
-  
-  // 其他校验
-  duplicateValue: 'This value already exists',
-  invalid表单at: 'Invalid format',
-  selectAtLeastOne: 'Please select at least one item',
+  required: '必須項目です',
+  requiredField: '{field}は入力してください',
+  requiredFieldFallback: '{field}は入力してください',
+
+  invalidEmail: '有効なメールアドレスを入力してください',
+  invalidPhone: '有効な電話番号を入力してください',
+  invalidUrl: '有効な URL を入力してください',
+  invalidNumber: '有効な数値を入力してください',
+  invalidInteger: '整数を入力してください',
+  invalidDate: '有効な日付を入力してください',
+
+  minLength: '{min}文字以上で入力してください',
+  maxLength: '{max}文字を超えないでください',
+  rangeLength: '{min}～{max}文字の範囲で入力してください',
+
+  minValue: '値は{min}以上である必要があります',
+  maxValue: '値は{max}を超えてはいけません',
+  rangeValue: '値は{min}～{max}の範囲である必要があります',
+
+  passwordMismatch: 'パスワードが一致しません',
+  passwordWeak: 'パスワードが弱すぎます',
+  passwordRequirement: 'パスワードには大文字・小文字・数字・記号を含めてください',
+
+  duplicateValue: 'この値は既に存在します',
+  invalid表单at: '形式が正しくありません',
+  selectAtLeastOne: '1件以上選択してください',
 }

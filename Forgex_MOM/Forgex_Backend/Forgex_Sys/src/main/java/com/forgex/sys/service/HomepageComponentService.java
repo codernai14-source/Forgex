@@ -30,6 +30,11 @@ public interface HomepageComponentService {
     List<HomepageComponentVO> listEffectiveComponents(Long userId, Long tenantId, HomepageComponentQueryParam param);
 
     /**
+     * 查询当前用户个人首页组件配置。
+     */
+    List<HomepageComponentVO> listPersonalComponents(Long userId, Long tenantId, HomepageComponentQueryParam param);
+
+    /**
      * 保存组件配置。
      */
     Long saveComponent(HomepageComponentSaveParam param, Long tenantId);
@@ -38,6 +43,11 @@ public interface HomepageComponentService {
      * 删除组件配置。
      */
     boolean deleteComponent(Long id, Long tenantId);
+
+    /**
+     * 按范围删除组件配置。
+     */
+    boolean deleteComponent(Long id, Long tenantId, String scopeLevel);
 
     /**
      * 租户拉取公共组件配置。

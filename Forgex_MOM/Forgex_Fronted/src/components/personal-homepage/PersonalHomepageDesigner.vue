@@ -74,6 +74,12 @@
           </template>
           {{ $t('personalHomepage.toolbar.componentLibrary') }}
         </a-button>
+        <a-button v-if="editMode && mode === 'current'" @click="openPersonalComponentConfig">
+          <template #icon>
+            <SettingOutlined />
+          </template>
+          {{ $t('personalHomepage.toolbar.componentConfig') }}
+        </a-button>
         <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
           <template #icon>
             <SaveOutlined />
@@ -387,72 +393,77 @@
             <a-empty :description="$t('personalHomepage.library.empty')" />
           </div>
           <div v-else class="component-library">
-            <section v-for="group in componentGroups" :key="group.key" class="component-library__group">
-              <div class="component-library__group-header">
-                <h4>{{ group.label }}</h4>
-                <span>{{ group.items.length }}</span>
-              </div>
-              <div class="component-library__grid">
-                <article
-                  v-for="componentItem in group.items"
-                  :key="componentItem.componentCode"
-                  class="component-library__item"
-                  :class="{
-                    'component-library__item--selected': componentItem.selected && !componentItem.removed,
-                    'component-library__item--removed': componentItem.removed,
-                  }"
-                >
-                  <header class="component-library__item-header">
-                    <div class="component-library__icon">
-                      <FxIcon :name="componentItem.icon" :size="18" />
-                    </div>
-                    <div class="component-library__title">
-                      <strong>{{ componentItem.componentName }}</strong>
-                      <span>{{ componentItem.componentCode }}</span>
-                    </div>
-                  </header>
-                  <p class="component-library__desc">{{ componentItem.useDesc || componentItem.remark || '-' }}</p>
-                  <div class="component-library__meta">
-                    <a-tag v-if="componentItem.scopeLevel">{{ componentItem.scopeLevel }}</a-tag>
-                    <a-tag v-if="componentItem.favorite" color="gold">{{ $t('personalHomepage.library.favorite') }}</a-tag>
-                    <a-tag v-if="componentItem.selected && !componentItem.removed" color="green">{{ $t('personalHomepage.library.selected') }}</a-tag>
-                    <a-tag v-if="componentItem.removed" color="red">{{ $t('personalHomepage.library.removed') }}</a-tag>
+            <a-collapse ghost :bordered="false">
+              <a-collapse-panel v-for="group in componentGroups" :key="group.key">
+                <template #header>
+                  <div class="component-library__group-header">
+                    <h4>{{ group.label }}</h4>
+                    <span>{{ group.items.length }}</span>
                   </div>
-                  <div class="component-library__actions">
-                    <a-button size="small" @click="toggleFavorite(componentItem)">
-                      <template #icon>
-                        <StarFilled v-if="componentItem.favorite" />
-                        <StarOutlined v-else />
-                      </template>
-                    </a-button>
-                    <a-button
-                      size="small"
-                      type="primary"
-                      :disabled="componentItem.selected && !componentItem.removed"
-                      @click="addComponentToHomepage(componentItem)"
-                    >
-                      <template #icon>
-                        <PlusOutlined />
-                      </template>
-                    </a-button>
-                    <a-button
-                      size="small"
-                      danger
-                      :disabled="componentItem.removed"
-                      @click="removeComponentFromHomepage(componentItem)"
-                    >
-                      <template #icon>
-                        <DeleteOutlined />
-                      </template>
-                    </a-button>
-                  </div>
-                </article>
-              </div>
-            </section>
+                </template>
+                <div class="component-library__grid">
+                  <article
+                    v-for="componentItem in group.items"
+                    :key="componentItem.componentCode"
+                    class="component-library__item"
+                    :class="{
+                      'component-library__item--selected': componentItem.selected && !componentItem.removed,
+                      'component-library__item--removed': componentItem.removed,
+                    }"
+                  >
+                    <header class="component-library__item-header">
+                      <div class="component-library__icon">
+                        <FxIcon :name="componentItem.icon" :size="18" />
+                      </div>
+                      <div class="component-library__title">
+                        <strong>{{ componentItem.componentName }}</strong>
+                        <span>{{ componentItem.componentCode }}</span>
+                      </div>
+                    </header>
+                    <p class="component-library__desc">{{ componentItem.useDesc || componentItem.remark || '-' }}</p>
+                    <div class="component-library__meta">
+                      <a-tag v-if="componentItem.scopeLevel">{{ componentItem.scopeLevel }}</a-tag>
+                      <a-tag v-if="componentItem.favorite" color="gold">{{ $t('personalHomepage.library.favorite') }}</a-tag>
+                      <a-tag v-if="componentItem.selected && !componentItem.removed" color="green">{{ $t('personalHomepage.library.selected') }}</a-tag>
+                      <a-tag v-if="componentItem.removed" color="red">{{ $t('personalHomepage.library.removed') }}</a-tag>
+                    </div>
+                    <div class="component-library__actions">
+                      <a-button size="small" @click="toggleFavorite(componentItem)">
+                        <template #icon>
+                          <StarFilled v-if="componentItem.favorite" />
+                          <StarOutlined v-else />
+                        </template>
+                      </a-button>
+                      <a-button
+                        size="small"
+                        type="primary"
+                        :disabled="componentItem.selected && !componentItem.removed"
+                        @click="addComponentToHomepage(componentItem)"
+                      >
+                        <template #icon>
+                          <PlusOutlined />
+                        </template>
+                      </a-button>
+                      <a-button
+                        size="small"
+                        danger
+                        :disabled="componentItem.removed"
+                        @click="removeComponentFromHomepage(componentItem)"
+                      >
+                        <template #icon>
+                          <DeleteOutlined />
+                        </template>
+                      </a-button>
+                    </div>
+                  </article>
+                </div>
+              </a-collapse-panel>
+            </a-collapse>
           </div>
         </a-spin>
       </a-space>
     </a-drawer>
+
   </div>
 </template>
 
@@ -777,7 +788,7 @@ const componentGroups = computed(() => {
     }
     const keyword = componentSearchKeyword.value.trim().toLowerCase()
     if (keyword) {
-      const matched = [item.componentCode, item.componentName, item.useDesc, item.categoryName]
+      const matched = [item.componentCode, item.componentName, item.useDesc, item.categoryName, item.categoryCode]
         .filter(Boolean)
         .some(text => String(text).toLowerCase().includes(keyword))
       if (!matched) {
@@ -1029,6 +1040,10 @@ async function saveConfig() {
 function openComponentLibrary() {
   componentLibraryOpen.value = true
   loadComponentLibrary()
+}
+
+function openPersonalComponentConfig() {
+  router.push('/workspace/home/component-config').catch(() => {})
 }
 
 async function loadComponentLibrary() {

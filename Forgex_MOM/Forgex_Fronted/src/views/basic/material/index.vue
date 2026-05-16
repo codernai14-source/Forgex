@@ -261,6 +261,58 @@
               </a-tab-pane>
             </a-tabs>
           </a-tab-pane>
+
+          <a-tab-pane key="packaging" :tab="t('basic.material.editorTabs.packaging')">
+            <a-spin :spinning="packagingRelationLoading">
+              <a-row :gutter="16">
+                <a-col :xs="24" :md="8">
+                  <a-form-item :label="t('basic.material.packaging.small')">
+                    <a-select
+                      v-model:value="packagingRelation.smallPackagingTypeId"
+                      :disabled="readonly"
+                      :options="packagingTypeOptions"
+                      :placeholder="t('basic.material.packaging.placeholder')"
+                      allow-clear
+                      show-search
+                      :filter-option="filterOption"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :md="8">
+                  <a-form-item :label="t('basic.material.packaging.medium')">
+                    <a-select
+                      v-model:value="packagingRelation.mediumPackagingTypeId"
+                      :disabled="readonly"
+                      :options="packagingTypeOptions"
+                      :placeholder="t('basic.material.packaging.placeholder')"
+                      allow-clear
+                      show-search
+                      :filter-option="filterOption"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :md="8">
+                  <a-form-item :label="t('basic.material.packaging.large')">
+                    <a-select
+                      v-model:value="packagingRelation.largePackagingTypeId"
+                      :disabled="readonly"
+                      :options="packagingTypeOptions"
+                      :placeholder="t('basic.material.packaging.placeholder')"
+                      allow-clear
+                      show-search
+                      :filter-option="filterOption"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-descriptions bordered size="small" :column="1" class="packaging-preview">
+                <a-descriptions-item :label="t('basic.material.packaging.preview')">
+                  {{ packagingPreviewText }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </a-spin>
+          </a-tab-pane>
         </a-tabs>
       </a-spin>
     </BaseFormDialog>
@@ -434,6 +486,13 @@ import {
   type MaterialExtendViewField,
   type MaterialPageParam,
 } from '@/api/basic/material'
+import {
+  getAllPackagingTypes,
+  listPackagingByMaterial,
+  savePackagingByMaterial,
+  type MaterialPackagingRelation,
+  type PackagingType,
+} from '@/api/basic/packaging'
 import { getAllUnits } from '@/api/basic/unit'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
@@ -448,6 +507,11 @@ const DEFAULT_MATERIAL_TYPE = 'RAW_MATERIAL'
 
 type ExtendEditorModule = MaterialExtendView & { fields: Array<MaterialExtendViewField & { __module: string }> }
 type MaterialForm = Partial<Material> & { extendViewList: ExtendEditorModule[] }
+type PackagingRelationForm = {
+  smallPackagingTypeId?: number | null
+  mediumPackagingTypeId?: number | null
+  largePackagingTypeId?: number | null
+}
 
 const tableRef = ref()
 const activeFilterTab = ref(ALL_TAB)
@@ -457,11 +521,13 @@ const editorLoading = ref(false)
 const saving = ref(false)
 const syncingThirdParty = ref(false)
 const pullingThirdParty = ref(false)
+const packagingRelationLoading = ref(false)
 const isEdit = ref(false)
 const readonly = ref(false)
 const editorTab = ref('main')
 const activeExtendModule = ref('PURCHASE')
 const unitOptions = ref<any[]>([])
+const packagingTypes = ref<PackagingType[]>([])
 const fieldDetailVisible = ref(false)
 const selectedField = ref<MaterialExtendViewField | null>(null)
 const configVisible = ref(false)
@@ -506,6 +572,12 @@ const form = reactive<MaterialForm>({
   extendViewList: [],
 })
 
+const packagingRelation = reactive<PackagingRelationForm>({
+  smallPackagingTypeId: null,
+  mediumPackagingTypeId: null,
+  largePackagingTypeId: null,
+})
+
 const configFormRequired = computed({
   get: () => configForm.required === 1,
   set: (value: boolean) => {
@@ -538,6 +610,20 @@ const statusOptions = computed(() => [
   { value: 1, label: t('common.enable') },
   { value: 0, label: t('common.disable') },
 ])
+
+const packagingTypeOptions = computed(() => packagingTypes.value.map((item) => ({
+  value: item.id,
+  label: `${item.packagingCode || ''} ${item.packagingName || ''}`.trim(),
+})))
+
+const packagingPreviewText = computed(() => {
+  const segments = [
+    `${t('basic.material.packaging.small')}: ${packagingName(packagingRelation.smallPackagingTypeId)}`,
+    `${t('basic.material.packaging.medium')}: ${packagingName(packagingRelation.mediumPackagingTypeId)}`,
+    `${t('basic.material.packaging.large')}: ${packagingName(packagingRelation.largePackagingTypeId)}`,
+  ]
+  return segments.join(' / ')
+})
 
 const extendModuleOptions = computed(() => [
   { value: 'PURCHASE', label: t('basic.material.extend.modules.purchase') },
@@ -628,6 +714,13 @@ function resetForm() {
     description: '',
     extendViewList: [],
   })
+  resetPackagingRelation()
+}
+
+function resetPackagingRelation() {
+  packagingRelation.smallPackagingTypeId = null
+  packagingRelation.mediumPackagingTypeId = null
+  packagingRelation.largePackagingTypeId = null
 }
 
 async function openCreate() {
@@ -657,6 +750,7 @@ async function openEditor(record: any, readonlyMode: boolean) {
   try {
     const result = await materialApi.detail({ id: record.id })
     applyEditorData({ ...record, ...normalizeDetail(result) })
+    await loadMaterialPackaging(form.id)
   } finally {
     editorLoading.value = false
   }
@@ -685,6 +779,9 @@ function applyEditorData(data: any) {
     description: data.description || '',
     extendViewList: normalizeExtendViewList(data.extendViewList || []),
   })
+  packagingRelation.smallPackagingTypeId = null
+  packagingRelation.mediumPackagingTypeId = null
+  packagingRelation.largePackagingTypeId = null
 }
 
 async function reloadEditorExtendSchema() {
@@ -721,6 +818,40 @@ async function reloadEditorExtendSchema() {
     form.extendViewList = modules
   } finally {
     editorLoading.value = false
+  }
+}
+
+async function loadPackagingTypes() {
+  if (packagingTypes.value.length) {
+    return
+  }
+  const result: any = await getAllPackagingTypes()
+  packagingTypes.value = Array.isArray(result) ? result : (result?.records || [])
+}
+
+async function loadMaterialPackaging(materialId?: number) {
+  resetPackagingRelation()
+  if (!materialId) {
+    return
+  }
+  packagingRelationLoading.value = true
+  try {
+    await loadPackagingTypes()
+    const result: any = await listPackagingByMaterial(materialId)
+    const rows: MaterialPackagingRelation[] = Array.isArray(result) ? result : (result?.records || [])
+    rows.forEach((item) => {
+      if (item.packagingSlot === 'SMALL') {
+        packagingRelation.smallPackagingTypeId = item.packagingTypeId || null
+      } else if (item.packagingSlot === 'MEDIUM') {
+        packagingRelation.mediumPackagingTypeId = item.packagingTypeId || null
+      } else if (item.packagingSlot === 'LARGE') {
+        packagingRelation.largePackagingTypeId = item.packagingTypeId || null
+      }
+    })
+  } catch {
+    resetPackagingRelation()
+  } finally {
+    packagingRelationLoading.value = false
   }
 }
 
@@ -782,8 +913,17 @@ async function handleSave() {
       await materialApi.update(payload)
       message.success(t('common.updateSuccess'))
     } else {
-      await materialApi.create(payload)
+      const createdId = await materialApi.create(payload)
+      form.id = createdId
       message.success(t('common.createSuccess'))
+    }
+    if (form.id) {
+      await savePackagingByMaterial({
+        materialId: form.id,
+        smallPackagingTypeId: packagingRelation.smallPackagingTypeId,
+        mediumPackagingTypeId: packagingRelation.mediumPackagingTypeId,
+        largePackagingTypeId: packagingRelation.largePackagingTypeId,
+      })
     }
     editorVisible.value = false
     tableRef.value?.refresh?.()
@@ -966,6 +1106,14 @@ function handleDelete(record: any) {
   })
 }
 
+function packagingSlotOptions() {
+  return [
+    { value: 'SMALL', label: t('basic.material.packaging.small') },
+    { value: 'MEDIUM', label: t('basic.material.packaging.medium') },
+    { value: 'LARGE', label: t('basic.material.packaging.large') },
+  ]
+}
+
 async function handleSyncThirdParty() {
   syncingThirdParty.value = true
   try {
@@ -995,6 +1143,18 @@ function handleImportSuccess() {
 function labelOf(options: Array<{ value: string | number; label: string }>, value: any) {
   const item = options.find((option) => option.value === value)
   return item ? item.label : (value || '-')
+}
+
+function packagingName(id?: number | null) {
+  if (!id) {
+    return '-'
+  }
+  const item = packagingTypes.value.find((packaging) => packaging.id === id)
+  return item ? `${item.packagingCode || ''} ${item.packagingName || ''}`.trim() : '-'
+}
+
+function filterOption(input: string, option: any) {
+  return String(option?.label || '').toLowerCase().includes(input.toLowerCase())
 }
 
 function fieldTypeLabel(type: string) {
@@ -1031,9 +1191,14 @@ function materialTypeColor(type: string) {
 onMounted(async () => {
   try {
     const res: any = await getAllUnits()
-    unitOptions.value = Array.isArray(res) ? res : (res?.data || [])
+    unitOptions.value = Array.isArray(res) ? res : (res?.records || res?.data || [])
   } catch {
     unitOptions.value = []
+  }
+  try {
+    await loadPackagingTypes()
+  } catch {
+    packagingTypes.value = []
   }
 })
 </script>

@@ -5,6 +5,10 @@
  * @version 1.0.0
  */
 export default {
+  loading: {
+    thinking: 'Forgex가 필요한 모든 내용을 불러오는 중입니다. 잠시만 기다려 주세요.',
+  },
+
   // 头部区域
   hero: {
     eyebrow: '개인 워크스페이스',
@@ -28,6 +32,7 @@ export default {
     resetDefault: '초기값으로 리셋',
     saveLayout: '레이아웃 저장',
     componentLibrary: '컴포넌트 라이브러리',
+    componentConfig: '개인 컴포넌트 설정',
     hint: {
       edit: '컴포넌트를 드래그하여 크기 변경 후 직접 저장하세요',
       view: '편집 모드로 전환하여 컴포넌트 레이아웃을 조정하세요',
@@ -157,6 +162,17 @@ export default {
   },
 
   // 摘要卡片
+  componentConfig: {
+    title: '개인 홈페이지 컴포넌트 설정',
+    desc: '현재 사용자의 홈페이지 컴포넌트를 관리하고 즐겨찾기, 추가, 제거를 수행합니다.',
+    empty: '설정 가능한 개인 홈페이지 컴포넌트가 없습니다',
+    addSuccess: '개인 홈페이지에 추가했습니다',
+    removeSuccess: '개인 홈페이지에서 제거했습니다',
+    stats: {
+      count: '{count}개 그룹',
+    },
+  },
+
   summary: {
     greeting: {
       honorificMale: '님',
