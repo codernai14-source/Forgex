@@ -49,6 +49,10 @@ export default {
   tabBarStyle: '标签栏样式',
   tabBarCard: '卡片',
   tabBarLine: '线条',
+  /** 布局设置：标签栏数量上限，0 表示不限制 */
+  tabBarMax: '最多打开标签数',
+  /** 布局设置：标签数量说明 */
+  tabBarMaxHint: '填 0 表示不限制；大于 0 时超出上限将优先关闭未固定且非当前页的标签。',
   widgets: '小部件',
   widgetRefresh: '启用刷新按钮',
   widgetSearch: '启用全局搜索',
@@ -142,10 +146,16 @@ export default {
     logout: '退出登录',
   },
   tab: {
-    /** 「⋯」菜单内：超出可视区域的标签列表标题 */
+    /** 「⋯」菜单内：全部已打开标签列表标题 */
+    allTabs: '全部标签',
+    /** 「⋯」菜单内搜索已打开标签 */
+    filterAllTabs: '搜索已打开标签',
+    /** 「⋯」菜单内：超出可视区域的标签列表标题（兼容旧文案键） */
     overflowTabs: '不可见标签',
-    /** 「⋯」菜单内筛选溢出标签 */
+    /** 「⋯」菜单内筛选溢出标签（兼容旧文案键） */
     filterOverflowTabs: '筛选标签页',
+    pin: '固定标签',
+    unpin: '取消固定',
     refresh: '刷新',
     close: '关闭',
     closeOthers: '关闭其他',

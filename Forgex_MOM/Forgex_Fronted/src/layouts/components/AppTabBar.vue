@@ -29,6 +29,7 @@
           class="tab-icon"
           :size="14"
         />
+        <PushpinFilled v-if="tab.pinned" class="tab-pin-icon" />
         <span class="tab-title">{{ tab.title }}</span>
         <CloseOutlined
           v-if="tab.closable"
@@ -50,12 +51,12 @@
         </a-button>
         <template #overlay>
           <div class="tabbar-more-panel">
-            <div v-if="clippedTabsList.length > 0" class="tabbar-more-panel__search">
+            <div v-if="tabs.length > 1" class="tabbar-more-panel__search">
               <a-input
                 v-model:value="overflowTabSearch"
                 allow-clear
                 size="small"
-                :placeholder="t('layout.tab.filterOverflowTabs')"
+                :placeholder="t('layout.tab.filterAllTabs')"
               >
                 <template #prefix>
                   <SearchOutlined class="tabbar-more-panel__search-icon" />
@@ -64,11 +65,11 @@
             </div>
             <a-menu class="tabbar-more-menu" @click="onQuickAction">
               <a-menu-item-group
-                v-if="overflowTabsFiltered.length > 0"
-                :title="t('layout.tab.overflowTabs')"
+                v-if="allTabsFiltered.length > 0"
+                :title="t('layout.tab.allTabs')"
               >
                 <a-menu-item
-                  v-for="tab in overflowTabsFiltered"
+                  v-for="tab in allTabsFiltered"
                   :key="'overflow-tab:' + tab.key"
                   class="tabbar-overflow-menu-item"
                 >
@@ -79,10 +80,12 @@
                     class="tab-icon"
                     :size="14"
                   />
+                  <PushpinFilled v-if="tab.pinned" class="tabbar-overflow-pin" />
                   <span class="tabbar-overflow-menu-item__title">{{ tab.title }}</span>
+                  <CheckOutlined v-if="tab.key === activeKey" class="tabbar-overflow-active-check" />
                 </a-menu-item>
               </a-menu-item-group>
-              <a-menu-divider v-if="overflowTabsFiltered.length > 0" />
+              <a-menu-divider v-if="allTabsFiltered.length > 0" />
               <a-menu-item key="closeOthers">
                 <CloseCircleOutlined />
                 <span>{{ t('layout.tab.closeOthers') }}</span>
@@ -118,6 +121,13 @@
             <SyncOutlined />
             <span>{{ t('layout.tab.refresh') }}</span>
           </a-menu-item>
+          <a-menu-item
+            v-if="contextTab && contextTab.key !== PERSONAL_HOME_PATH"
+            key="pin"
+          >
+            <PushpinOutlined />
+            <span>{{ contextTab.pinned ? t('layout.tab.unpin') : t('layout.tab.pin') }}</span>
+          </a-menu-item>
           <a-menu-item key="close" :disabled="!contextTab?.closable">
             <CloseOutlined />
             <span>{{ t('layout.tab.close') }}</span>
@@ -150,6 +160,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FxIcon from '@/components/common/FxIcon.vue'
+import { PERSONAL_HOME_PATH } from '@/router'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -158,17 +169,23 @@ import {
   VerticalRightOutlined,
   CloseSquareOutlined,
   MoreOutlined,
-  SearchOutlined
+  SearchOutlined,
+  PushpinOutlined,
+  PushpinFilled,
+  CheckOutlined
 } from '@ant-design/icons-vue'
 
 const { t } = useI18n()
 
+/** 与 MainLayout {@link LayoutTab} 对齐的标签数据结构 */
 interface Tab {
   key: string
   title: string
   path: string
   icon?: string
   closable: boolean
+  /** 固定标签：不可拖动关闭按钮关闭，需右键取消固定 */
+  pinned?: boolean
 }
 
 interface AppTabBarProps {
@@ -222,6 +239,12 @@ const emit = defineEmits<{
    * @param tab 参考标签页对象（关闭其他/左侧/右侧时使用）
    */
   'tabs-close': [action: 'others' | 'left' | 'right' | 'all', tab?: Tab]
+  /**
+   * 切换标签固定状态
+   *
+   * @param tab 目标标签
+   */
+  'tab-pin': [tab: Tab]
 }>()
 
 // 拖拽相关
@@ -304,15 +327,12 @@ function scheduleMeasureClippedTabs() {
   })
 }
 
-/** 当前不可见的 Tab 列表（保持路由顺序） */
-const clippedTabsList = computed(() =>
-  props.tabs.filter(tab => clippedTabKeys.value.includes(tab.key)),
-)
-
-/** 「⋯」中展示的溢出 Tab（支持关键字筛选标题 / 路径） */
-const overflowTabsFiltered = computed(() => {
+/**
+ * 「⋯」中展示的**全部**已打开标签（支持关键字筛选标题 / 路径），避免用户误以为仅「滚出视野」的标签才算打开。
+ */
+const allTabsFiltered = computed(() => {
   const q = overflowTabSearch.value.trim().toLowerCase()
-  const base = clippedTabsList.value
+  const base = props.tabs
   if (!q) {
     return base
   }
@@ -377,7 +397,7 @@ const onTabClose = (tab: Tab) => {
 
 // 拖拽开始
 const onDragStart = (tab: Tab, event: DragEvent) => {
-  if (!props.draggable || !tab.closable) {
+  if (!props.draggable || !tab.closable || tab.pinned) {
     event.preventDefault()
     return
   }
@@ -456,6 +476,9 @@ const onContextMenuClick = (info: any) => {
   switch (key) {
     case 'refresh':
       emit('tab-refresh', contextTab.value)
+      break
+    case 'pin':
+      emit('tab-pin', contextTab.value)
       break
     case 'close':
       if (contextTab.value.closable) {

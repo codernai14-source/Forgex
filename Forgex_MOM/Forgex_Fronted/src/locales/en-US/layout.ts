@@ -49,6 +49,9 @@ export default {
   tabBarStyle: 'Tab Bar Style',
   tabBarCard: 'Card',
   tabBarLine: 'Line',
+  tabBarMax: 'Max open tabs',
+  tabBarMaxHint:
+    'Use 0 for unlimited. When greater than 0, oldest unpinned tabs (except the current page) close first.',
   widgets: 'Widgets',
   widgetRefresh: 'Enable Refresh Button',
   widgetSearch: 'Enable Global Search',
@@ -141,8 +144,12 @@ export default {
     logout: 'Logout',
   },
   tab: {
+    allTabs: 'All open tabs',
+    filterAllTabs: 'Search open tabs',
     overflowTabs: 'Tabs outside view',
     filterOverflowTabs: 'Filter tabs',
+    pin: 'Pin tab',
+    unpin: 'Unpin tab',
     refresh: 'Refresh',
     close: 'Close',
     closeOthers: 'Close Others',

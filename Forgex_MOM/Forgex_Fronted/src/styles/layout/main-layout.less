@@ -161,7 +161,7 @@
 
 :global(html[data-theme='dark']),
 :global(body[data-theme='dark']) {
-  background: #14161a;
+  background: var(--fx-shell-bg, #0c0e12);
 }
 
 :global(.fx-theme-reveal-overlay) {
@@ -194,7 +194,7 @@
 :global(:root[data-theme='dark']) {
   .fx-main-layout {
     ::-webkit-scrollbar-track {
-      background: #14161a;
+      background: var(--fx-shell-bg, #0c0e12);
     }
 
     ::-webkit-scrollbar-thumb {
@@ -208,26 +208,39 @@
 }
 
 :global(:root[data-theme='dark']) .fx-content {
-  background: #14161a;
+  background: var(--fx-content-bg, var(--fx-shell-bg, #0c0e12));
 }
 
 :global(:root[data-theme='dark']) {
+  /** 主内容槽位：与导航区分色 */
   .fx-main-layout,
   .fx-main-content-wrapper,
-  .fx-content-layout,
-  .app-header,
-  .app-tabbar,
-  .tabbar-inner,
-  .tabbar-actions,
+  .fx-content-layout {
+    background: var(--fx-shell-bg, #0c0e12);
+  }
+
+  /** 导航壳：顶栏 / 标签栏 / 侧栏（变量 {@code --fx-chrome-bg}） */
   .app-sidebar,
   .app-sidebar-wrapper,
   .app-sidebar-mini,
   .fx-header,
   .fx-tabbar,
   .fx-sider,
-  .fx-sider-mini,
+  .fx-sider-mini {
+    background: var(--fx-chrome-bg, var(--fx-header-bg, #1c1e22));
+  }
+
   .fx-footer {
-    background: #14161a;
+    background: var(--fx-shell-bg, #0c0e12);
+  }
+
+  /**
+   * 顶栏、标签栏不与此处内容区底色绑死，交由 {@code --fx-header-bg} / {@code --fx-tabbar-bg}（cssVariables）与各组件 less 控制，
+   * 避免出现「顶栏 #0c0e12、标签栏 #151922」等与变量不一致的色差。
+   */
+  .tabbar-inner,
+  .tabbar-actions {
+    background: transparent;
   }
 
   .sidebar-menu,
@@ -434,6 +447,15 @@
   text-align: right;
 }
 
+/** 布局抽屉内辅助说明（如标签数量 0 的含义） */
+.fx-setting-hint-text {
+  margin: -4px 0 12px;
+  padding-left: 100px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--fx-text-tertiary, rgba(0, 0, 0, 0.45));
+}
+
 .fx-tabbar {
   display: flex;
   align-items: center;
@@ -561,7 +583,13 @@
 .fx-header-middle :deep(.ant-menu-item-selected),
 .fx-header-middle :deep(.ant-menu-submenu-selected) {
   color: var(--fx-primary, #1677ff);
-  border-bottom: 2px solid var(--fx-primary, #1677ff);
+  /** 与 AppHeader 模块菜单一致：不绘制底边指示线，仅靠主题色与背景区分 */
+  border-bottom: none !important;
+}
+
+.fx-header-middle :deep(.ant-menu-item::after),
+.fx-header-middle :deep(.ant-menu-submenu-title::after) {
+  display: none !important;
 }
 
 .fx-user-entry {

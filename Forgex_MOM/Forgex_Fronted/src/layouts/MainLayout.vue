@@ -57,6 +57,7 @@
           :draggable="layoutConfig.tabBarDraggable"
           @tab-click="onTabClick"
           @tab-close="onTabClose"
+          @tab-pin="onTabPin"
           @tab-drag="onTabDrag"
           @tab-refresh="onTabRefresh"
           @tabs-close="onTabsClose"
@@ -362,6 +363,17 @@
                 <span>{{ t('layout.tabBarEnabled') }}</span>
                 <a-switch v-model:checked="layoutConfig.tabBarEnabled" />
               </div>
+              <div class="fx-setting-row">
+                <span>{{ t('layout.tabBarMax') }}</span>
+                <a-input-number
+                  v-model:value="layoutConfig.tabBarMax"
+                  :min="0"
+                  :max="200"
+                  :precision="0"
+                  style="width: 200px"
+                />
+              </div>
+              <p class="fx-setting-hint-text">{{ t('layout.tabBarMaxHint') }}</p>
             </div>
           </a-tab-pane>
           <a-tab-pane :tab="t('layout.tabCommon')" key="common">
@@ -598,6 +610,8 @@ interface LayoutTab {
   title: string
   icon?: string
   closable: boolean
+  /** 用户固定的标签：不参与自动淘汰，默认不可关闭（需右键取消固定） */
+  pinned?: boolean
 }
 
 interface ThemeModeOption {
@@ -640,7 +654,8 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   headerMode: 'fixed',
   headerMenuAlign: 'left',
   tabBarEnabled: true,
-  tabBarMax: 10,
+  /** 0 表示不限制打开标签数量，避免误认为「标签消失」仅为溢出菜单可见 */
+  tabBarMax: 0,
   tabBarDraggable: true,
   tabBarShowIcon: true,
   tabBarStyle: 'chrome',
@@ -923,6 +938,9 @@ const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
 const tabs = ref<LayoutTab[]>([])
 const activeTabKey = ref<string>('')
+/** 用户固定的标签路径列表（与 {@link LayoutTab#pinned} 同步） */
+const PINNED_TAB_KEYS_STORAGE_KEY = 'fx-pinned-tab-keys'
+
 const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
 const ROUTE_VISIT_STATS_STORAGE_KEY = 'fx-route-visit-stats'
 const MAX_RECENT_ROUTE_COUNT = 20
@@ -1216,6 +1234,48 @@ function ensureFixedTabs(tabList: LayoutTab[]) {
   return [...fixedTabs, ...otherTabs]
 }
 
+/** 单个用户本地最多持久化的固定标签数量上限 */
+const MAX_PINNED_TAB_KEYS = 80
+
+/**
+ * 读取本地持久化的固定标签路径列表。
+ *
+ * @returns 已规范化且位于 {@code /workspace} 下的路径，不包含个人首页
+ */
+function getPinnedTabKeys(): string[] {
+  try {
+    const raw = localStorage.getItem(PINNED_TAB_KEYS_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return [...new Set(
+      parsed
+        .map((item: unknown) => normalizeWorkspacePath(String(item || '')))
+        .filter(item => item.startsWith('/workspace') && item !== PERSONAL_HOME_PATH),
+    )].slice(0, MAX_PINNED_TAB_KEYS)
+  } catch (error) {
+    console.error('[MainLayout] Failed to parse pinned tabs:', error)
+    return []
+  }
+}
+
+/**
+ * 持久化固定标签路径列表。
+ *
+ * @param keys 路径 key 列表（会先规范化、去重并裁剪上限）
+ */
+function savePinnedTabKeys(keys: string[]) {
+  try {
+    const normalized = [...new Set(keys.map(k => normalizeWorkspacePath(String(k || ''))))]
+      .filter(k => k.startsWith('/workspace') && k !== PERSONAL_HOME_PATH)
+      .slice(0, MAX_PINNED_TAB_KEYS)
+    localStorage.setItem(PINNED_TAB_KEYS_STORAGE_KEY, JSON.stringify(normalized))
+  } catch (error) {
+    console.error('[MainLayout] Failed to save pinned tabs:', error)
+  }
+}
+
 function getRecentRoutes(): string[] {
   try {
     const raw = localStorage.getItem(RECENT_ROUTE_STORAGE_KEY)
@@ -1345,6 +1405,8 @@ function removeTabsByKeys(keys: string[]) {
     return
   }
   keys.forEach(removeRecentRoute)
+  const pinnedRemain = getPinnedTabKeys().filter(k => !keys.includes(k))
+  savePinnedTabKeys(pinnedRemain)
   tabs.value = ensureFixedTabs(tabs.value.filter(tab => !keys.includes(tab.key)))
 }
 
@@ -1992,11 +2054,13 @@ function buildModuleDashboardTitle(moduleCode: string): string {
  * 更新所有标签的标题
  */
 function updateAllTabTitles() {
+  const pinnedSet = new Set(getPinnedTabKeys())
   tabs.value = ensureFixedTabs(tabs.value.map(tab => ({
     ...tab,
+    pinned: pinnedSet.has(tab.key),
     title: resolveTabTitle(tab.key),
     icon: resolveTabIcon(tab.key),
-    closable: tab.key !== PERSONAL_HOME_PATH,
+    closable: tab.key !== PERSONAL_HOME_PATH && !pinnedSet.has(tab.key),
   })))
 }
 
@@ -2063,7 +2127,9 @@ function normalizeLayoutConfig(raw: any): LayoutConfig {
     headerMode: cfg.headerMode === 'auto' || cfg.headerMode === 'hide-on-scroll' ? cfg.headerMode : 'fixed',
     headerMenuAlign: cfg.headerMenuAlign === 'center' || cfg.headerMenuAlign === 'right' ? cfg.headerMenuAlign : 'left',
     tabBarEnabled: !!cfg.tabBarEnabled,
-    tabBarMax: typeof cfg.tabBarMax === 'number' && cfg.tabBarMax > 0 ? cfg.tabBarMax : DEFAULT_LAYOUT_CONFIG.tabBarMax,
+    tabBarMax: typeof cfg.tabBarMax === 'number' && Number.isFinite(cfg.tabBarMax) && cfg.tabBarMax >= 0 && cfg.tabBarMax <= 200
+      ? Math.floor(cfg.tabBarMax)
+      : DEFAULT_LAYOUT_CONFIG.tabBarMax,
     tabBarDraggable: !!cfg.tabBarDraggable,
     tabBarShowIcon: !!cfg.tabBarShowIcon,
     tabBarStyle: cfg.tabBarStyle === 'card' ? 'card' : 'chrome',
@@ -2452,12 +2518,15 @@ function updateTabsByRoute(path: string) {
   // 如果我们希望 tab 保持激活状态，我们需要让 activeTabKey 也指向无参数路径
   activeTabKey.value = pathWithoutQuery
 
+  const pinnedSet = new Set(getPinnedTabKeys())
+
   let nextTabs = ensureFixedTabs(
     tabs.value.map(tab => ({
       ...tab,
+      pinned: pinnedSet.has(tab.key),
       title: resolveTabTitle(tab.key),
       icon: resolveTabIcon(tab.key),
-      closable: tab.key !== PERSONAL_HOME_PATH,
+      closable: tab.key !== PERSONAL_HOME_PATH && !pinnedSet.has(tab.key),
     })),
   )
   if (pathWithoutQuery !== PERSONAL_HOME_PATH) {
@@ -2467,18 +2536,23 @@ function updateTabsByRoute(path: string) {
         path: pathWithoutQuery,
         title: resolveTabTitle(pathWithoutQuery),
         icon: resolveTabIcon(pathWithoutQuery),
-        closable: true,
+        pinned: pinnedSet.has(pathWithoutQuery),
+        closable: pathWithoutQuery !== PERSONAL_HOME_PATH && !pinnedSet.has(pathWithoutQuery),
       })
     }
 
-    const maxTabs = Math.max(layoutConfig.value.tabBarMax || 10, 1)
-    while (nextTabs.length > maxTabs) {
-      const removeIndex = nextTabs.findIndex(tab => tab.closable && tab.key !== pathWithoutQuery)
-      if (removeIndex === -1) {
-        break
+    const maxTabs = layoutConfig.value.tabBarMax
+    if (typeof maxTabs === 'number' && maxTabs > 0) {
+      while (nextTabs.length > maxTabs) {
+        const removeIndex = nextTabs.findIndex(
+          tab => tab.closable && tab.key !== pathWithoutQuery && !tab.pinned,
+        )
+        if (removeIndex === -1) {
+          break
+        }
+        removeRecentRoute(nextTabs[removeIndex].key)
+        nextTabs.splice(removeIndex, 1)
       }
-      removeRecentRoute(nextTabs[removeIndex].key)
-      nextTabs.splice(removeIndex, 1)
     }
   }
 
@@ -2552,6 +2626,10 @@ function onTabClick(tab: { key: string }) {
 function onTabClose(tab: { key: string }) {
   const key = tab.key
   if (!key || key === PERSONAL_HOME_PATH) return
+  const meta = tabs.value.find(t => t.key === key)
+  if (meta?.pinned) {
+    return
+  }
   const idx = tabs.value.findIndex(t => t.key === key)
   if (idx === -1) return
   const isActive = activeTabKey.value === key
@@ -2578,6 +2656,31 @@ function onTabDrag(fromIndex: number, toIndex: number) {
   tabs.value.splice(toIndex, 0, moved)
 }
 
+function onTabPin(tab: LayoutTab) {
+  if (!tab?.key || tab.key === PERSONAL_HOME_PATH) {
+    return
+  }
+  const path = normalizeWorkspacePath(tab.key)
+  const nextPinned = !tab.pinned
+  const keys = new Set(getPinnedTabKeys())
+  if (nextPinned) {
+    keys.add(path)
+  } else {
+    keys.delete(path)
+  }
+  savePinnedTabKeys([...keys])
+  tabs.value = tabs.value.map(t => {
+    if (t.key !== path) {
+      return t
+    }
+    return {
+      ...t,
+      pinned: nextPinned,
+      closable: path !== PERSONAL_HOME_PATH && !nextPinned,
+    }
+  })
+}
+
 function onTabRefresh(tab: { key: string }) {
   const key = tab.key
   if (key === route.fullPath) {
@@ -2594,7 +2697,7 @@ function onTabsClose(action: 'others' | 'left' | 'right' | 'all', tab?: { key: s
   
   if (action === 'others' && key) {
     const removedKeys = tabs.value
-      .filter(t => t.key !== key && t.key !== PERSONAL_HOME_PATH)
+      .filter(t => t.key !== key && t.key !== PERSONAL_HOME_PATH && !t.pinned)
       .map(t => t.key)
     removeTabsByKeys(removedKeys)
     if (key !== route.fullPath) {

@@ -16,9 +16,11 @@
 
 :global(html[data-theme='dark']) .app-header,
 :global(body[data-theme='dark']) .app-header {
-  /** 略深一度，与标签栏形成层级（对齐 DESIGN.md hairline 分隔思路） */
-  background: #0c0e12;
-  --fx-module-scroll-mask: #0c0e12;
+  /**
+   * 顶栏底色由全局 {@code --fx-header-bg} 注入（见 cssVariables），此处仅同步横向滚动渐变遮罩，
+   * 避免出现硬编码与标签栏底色不一致。
+   */
+  --fx-module-scroll-mask: var(--fx-header-bg, #1c1e22);
 }
 
 :global(html[data-theme='dark']) .app-header :deep(.ant-layout-header),
@@ -137,14 +139,23 @@
 }
 
 .module-menu {
-  border-bottom: none;
+  border-bottom: none !important;
   background: transparent;
   flex-wrap: nowrap;
   width: max-content;
   min-width: 100%;
-  
+
+  /**
+   * Ant Design Vue 横向菜单选中项默认通过 ::after 绘制底部分割指示线；
+   * 模块导航仅依赖主题色与背景区分选中，故关闭该指示线。
+   */
+  :deep(.ant-menu-item::after),
+  :deep(.ant-menu-submenu-title::after) {
+    display: none !important;
+  }
+
   :deep(.ant-menu-item) {
-    border-bottom: none;
+    border-bottom: none !important;
     font-size: var(--fx-font-size, 14px);
     min-width: auto;
     max-width: none;
@@ -158,7 +169,7 @@
     
     &.ant-menu-item-selected {
       color: var(--fx-theme-color, #1677ff);
-      border-bottom: none;
+      border-bottom: none !important;
       background: var(--fx-header-module-active-bg, rgba(22, 119, 255, 0.1));
     }
     

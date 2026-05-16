@@ -120,6 +120,18 @@ export function generateCSSVariables(
   const fontSize = layoutConfig.fontSize || '14px'
   const contentWidth = layoutConfig.contentWidth === 'fixed' ? '1200px' : '100%'
   const isDark = tokens.colorBgBase.toLowerCase() === '#14161a'
+  /**
+   * 深色模式外壳分层：
+   * <ul>
+   *   <li>{@code fxChromeNavDark}：顶栏、标签栏、一级/二级侧栏</li>
+   *   <li>{@code fxContentBgDark}：内容区最外层槽位（layout/bg-layout），与导航区分层</li>
+   * </ul>
+   */
+  const fxChromeNavDark = '#1c1e22'
+  const fxContentBgDark = '#0c0e12'
+  /** 浅色下导航与内容槽位均用容器底色 */
+  const fxChromeBg = isDark ? fxChromeNavDark : tokens.colorBgContainer
+  const fxShellBg = isDark ? fxContentBgDark : tokens.colorBgContainer
   const themeColorSoft = withAlpha(primaryColor, 0.12, tokens.colorPrimaryBg)
   const themeColorSoftStrong = withAlpha(primaryColor, 0.18, tokens.colorPrimaryBgHover)
   const textSecondarySoft = withAlpha(tokens.colorTextSecondary, 0.24, tokens.colorBorder)
@@ -127,18 +139,22 @@ export function generateCSSVariables(
 
   return {
     // ==================== 布局背景 ====================
-    '--fx-layout-bg': tokens.colorBgBase,
+    /** 内容区与全局 layout 槽位底色（深色 {@link fxContentBgDark}） */
+    '--fx-shell-bg': fxShellBg,
+    /** 顶栏、标签栏、侧栏导航壳底色（深色 {@link fxChromeNavDark}） */
+    '--fx-chrome-bg': fxChromeBg,
+    '--fx-layout-bg': isDark ? fxShellBg : tokens.colorBgBase,
     '--fx-layout-color': tokens.colorText,
     '--fx-bg-base': tokens.colorBgBase,
-    '--fx-bg-layout': tokens.colorBgLayout,
+    '--fx-bg-layout': isDark ? fxShellBg : tokens.colorBgLayout,
 
     // ==================== 容器背景 ====================
-    '--fx-header-bg': isDark ? '#14161a' : tokens.colorBgContainer,
+    '--fx-header-bg': fxChromeBg,
     '--fx-header-color': tokens.colorText,
-    '--fx-sider-bg': isDark ? '#14161a' : tokens.colorBgContainer,
-    '--fx-sider-mini-bg': isDark ? '#14161a' : tokens.colorBgContainer,
-    '--fx-content-bg': isDark ? '#14161a' : tokens.colorBgContainer,
-    '--fx-footer-bg': isDark ? '#14161a' : tokens.colorBgContainer,
+    '--fx-sider-bg': fxChromeBg,
+    '--fx-sider-mini-bg': fxChromeBg,
+    '--fx-content-bg': fxShellBg,
+    '--fx-footer-bg': fxShellBg,
     '--fx-top-divider-color': tokens.colorBorderSecondary,
     '--fx-bg-container': tokens.colorBgContainer,
     '--fx-bg-elevated': tokens.colorBgElevated,
@@ -155,14 +171,28 @@ export function generateCSSVariables(
     '--fx-text-tertiary': tokens.colorTextTertiary,
     '--fx-text-disabled': tokens.colorTextDisabled,
 
+    /** 深色下 Ant Menu 子级面板不再叠加深灰底，与侧栏槽位一致 */
+    '--fx-sidebar-menu-sub-bg': isDark ? 'transparent' : tokens.colorFillSecondary,
+
     // ==================== 填充与页签 ====================
-    '--fx-tab-bg': isDark ? '#14161a' : tokens.colorFillAlter,
+    '--fx-tab-bg': isDark ? 'rgba(255, 255, 255, 0.08)' : tokens.colorFillAlter,
     '--fx-tab-hover-bg': isDark ? tokens.colorBgContainer : tokens.colorFill,
-    /** 标签栏容器底色（继承自主布局 rootStyle，避免 scoped 样式退回浅色 #fafafa） */
-    '--fx-tabbar-bg': isDark ? '#151922' : tokens.colorFillAlter,
-    /** 标签栏内未选中 Tab 胶囊底色 */
+    /** 标签栏容器底色：与外壳一致 */
+    '--fx-tabbar-bg': fxChromeBg,
+    /**
+     * 未选中标签底色（参考 Vben 5：与轨道融合，默认透明）
+     * @see Forgex_Fronted/src/styles/layout/components/app-tab-bar.less
+     */
+    '--fx-tab-label-idle-bg': 'transparent',
+    /** 未选中标签悬停底色（轻微提亮，不形成大块胶囊） */
+    '--fx-tab-label-idle-hover-bg': isDark ? 'rgba(255, 255, 255, 0.06)' : tokens.colorFillSecondary,
+    /** 未选中标签文字色（弱一级，区别于选中态） */
+    '--fx-tab-label-idle-color': tokens.colorTextTertiary,
+    /** 未选中标签悬停文字色 */
+    '--fx-tab-label-idle-hover-color': tokens.colorTextSecondary,
+    /** 标签栏内未选中 Tab 胶囊底色（旧版胶囊样式兼容，新标签栏优先使用 idle token） */
     '--fx-tab-chip-bg': isDark ? 'rgba(255, 255, 255, 0.06)' : tokens.colorFillAlter,
-    /** 标签栏内 Tab 悬停底色 */
+    /** 标签栏内 Tab 悬停底色（兼容旧版） */
     '--fx-tab-chip-hover-bg': isDark ? 'rgba(255, 255, 255, 0.1)' : tokens.colorFill,
     /** 当前选中 Tab 胶囊底色（深色下略高于标签栏条，避免发白块） */
     '--fx-tab-active-bg': isDark ? tokens.colorBgElevated : tokens.colorBgContainer,
