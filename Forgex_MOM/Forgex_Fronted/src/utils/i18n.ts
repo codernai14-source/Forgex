@@ -109,11 +109,6 @@ export function resolveI18nText(
     return String(globalI18n.t(trimmed))
   }
 
-  const translated = String(globalI18n.t(trimmed))
-  if (translated && translated !== trimmed) {
-    return translated
-  }
-
   const legacyTranslated = translateLegacyText(raw, langCode as any)
   if (legacyTranslated && legacyTranslated !== raw) {
     return legacyTranslated

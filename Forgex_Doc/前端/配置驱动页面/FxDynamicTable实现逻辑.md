@@ -126,7 +126,9 @@ Forgex_MOM/Forgex_Fronted/src/api/system/tableConfig.ts
 
 查询区不是写死的，而是根据 `config.queryFields` 动态渲染。
 
-当后端表格配置存在但未维护查询字段时，组件会从页面传入的 `fallbackConfig.queryFields` / `dynamicTableConfig.queryFields` 补齐查询区；如果列配置本身带有 `queryable: true`，也会按列的 `field/title/queryType/queryOperator/dictCode` 生成兜底查询字段。补齐时按 `field` 去重，后端已有查询字段保持优先，页面兜底只追加缺失项，避免公共配置遗漏导致业务页面完全不显示查询区域。
+查询区只消费后端返回的 `queryFields`。如果接口返回的 `queryFields` 为空，组件不在前端自行补齐查询项；应回到 `fx_table_config` / `fx_table_column_config` 等后端表格配置链路修正字段。
+
+`showQueryForm` 是 Boolean prop，必须通过 `withDefaults` 保持默认值为 `true`。未传 `showQueryForm` 时表示显示查询区，只有业务页面显式传入 `:show-query-form="false"` 才隐藏。排查“接口已经返回 `queryFields`，但页面 DOM 没有 `.fx-query-card`”时，应优先检查该渲染开关和 Boolean prop 默认值，不要用前端或后端硬编码兜底查询字段绕过问题。
 
 当前内置支持的查询控件类型包括：
 

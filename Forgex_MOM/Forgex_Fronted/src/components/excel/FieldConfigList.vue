@@ -6,7 +6,7 @@
       row-key="_key"
       :pagination="false"
       size="small"
-      :scroll="{ x: 1500 }"
+      :scroll="{ x: 2060 }"
     >
       <template #bodyCell="{ column, record, index }">
         <!-- 字段名称 -->
@@ -182,7 +182,7 @@ const columns = computed(() => [
     title: t('common.dataSourceConfig.dataSourceType'),
     key: 'dataSourceConfig',
     dataIndex: 'dataSourceConfig',
-    width: 360
+    width: 760
   },
   {
     title: t('system.excel.required'),
@@ -333,6 +333,10 @@ initFields()
   :deep(.ant-table) {
     .ant-table-cell {
       vertical-align: top;
+    }
+
+    .ant-table-cell-fix-right {
+      background: #fff;
     }
   }
 }

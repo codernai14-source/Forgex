@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -91,6 +92,10 @@ public class InternalUserIntegrationController {
 
     private Map<String, Object> buildSyncPayload(UserThirdPartyInvokeDTO request, List<UserThirdPartySyncDTO> users) {
         Map<String, Object> payload = request.getPayload();
+        if (payload == null) {
+            payload = new LinkedHashMap<>();
+            request.setPayload(payload);
+        }
         payload.put("tenantId", request.getTenantId());
         payload.put("users", users);
         return payload;
@@ -98,19 +103,51 @@ public class InternalUserIntegrationController {
 
     @SuppressWarnings("unchecked")
     private List<UserThirdPartySyncDTO> extractUsers(Object data) {
-        if (data instanceof List<?>) {
-            return ((List<?>) data).stream()
+        Object normalized = unwrapResponseData(data);
+        if (normalized instanceof String text) {
+            normalized = parseJsonString(text);
+        }
+        if (normalized instanceof List<?>) {
+            return ((List<?>) normalized).stream()
                 .map(this::convertUser)
                 .filter(java.util.Objects::nonNull)
                 .toList();
         }
-        if (data instanceof Map<?, ?> map && map.get("users") instanceof List<?>) {
-            return ((List<?>) map.get("users")).stream()
-                .map(this::convertUser)
-                .filter(java.util.Objects::nonNull)
-                .toList();
+        if (normalized instanceof Map<?, ?> map) {
+            Object users = map.get("users");
+            if (users instanceof String text) {
+                users = parseJsonString(text);
+            }
+            if (users instanceof List<?>) {
+                return ((List<?>) users).stream()
+                    .map(this::convertUser)
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            }
         }
         return Collections.emptyList();
+    }
+
+    private Object unwrapResponseData(Object data) {
+        Object current = data;
+        if (current instanceof String text) {
+            current = parseJsonString(text);
+        }
+        if (current instanceof Map<?, ?> map && map.containsKey("data")) {
+            return map.get("data");
+        }
+        return current;
+    }
+
+    private Object parseJsonString(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(text, Object.class);
+        } catch (Exception ignored) {
+            return text;
+        }
     }
 
     private UserThirdPartySyncDTO convertUser(Object source) {
