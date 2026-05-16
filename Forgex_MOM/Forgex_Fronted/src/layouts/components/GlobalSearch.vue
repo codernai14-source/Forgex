@@ -48,7 +48,7 @@
             @mouseenter="activeIndex = index"
           >
             <div class="result-icon">
-              <component v-if="item.icon" :is="getIcon(item.icon)" />
+              <FxIcon v-if="item.icon" :name="item.icon" />
               <FileOutlined v-else />
             </div>
             <div class="result-content">
@@ -109,7 +109,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { pinyin } from 'pinyin-pro'
-import { getIcon } from '../../utils/icon'
+import FxIcon from '@/components/common/FxIcon.vue'
 import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
 import {
   SearchOutlined,

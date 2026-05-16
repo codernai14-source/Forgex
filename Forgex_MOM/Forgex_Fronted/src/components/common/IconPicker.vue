@@ -11,8 +11,7 @@
       />
       <a-button type="default" @click="open = true">
         <template #icon>
-          <component :is="previewIcon" v-if="previewIcon" />
-          <AppstoreOutlined v-else />
+          <FxIcon :name="innerValue" />
         </template>
       </a-button>
     </a-input-group>
@@ -33,14 +32,14 @@
       />
       <div class="fx-icon-picker-grid">
         <div
-          v-for="name in filteredNames"
-          :key="name"
+          v-for="item in filteredIcons"
+          :key="item.name"
           class="fx-icon-picker-item"
-          :class="{ active: name === innerValue }"
-          @click="select(name)"
+          :class="{ active: item.name === innerValue }"
+          @click="select(item.name)"
         >
-          <component :is="iconMap[name]" />
-          <span class="lbl">{{ name }}</span>
+          <FxIcon :name="item.name" :size="22" />
+          <span class="lbl">{{ item.name }}</span>
         </div>
       </div>
     </a-modal>
@@ -55,10 +54,11 @@
  * @author Forgex Team
  * @version 1.0.0
  */
-import { computed, ref, watch, type Component } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as Icons from '@ant-design/icons-vue'
-import { AppstoreOutlined } from '@ant-design/icons-vue'
+import FxIcon from './FxIcon.vue'
+import { ICONIFY_PRESET_NAMES } from '@/utils/icon'
 
 const props = withDefaults(
   defineProps<{
@@ -106,7 +106,7 @@ watch(
 )
 
 /** 排除非图标导出 */
-const iconNames = computed(() => {
+const antIconNames = computed(() => {
   return Object.keys(Icons).filter(
     k =>
       k.endsWith('Outlined') ||
@@ -115,31 +115,19 @@ const iconNames = computed(() => {
   )
 })
 
-const iconMap = computed(() => {
-  const m: Record<string, Component> = {}
-  for (const name of iconNames.value) {
-    const c = (Icons as any)[name]
-    if (typeof c === 'object' || typeof c === 'function') {
-      m[name] = c as Component
-    }
-  }
-  return m
+const iconItems = computed(() => {
+  return [
+    ...ICONIFY_PRESET_NAMES.map(name => ({ name, type: 'iconify' })),
+    ...antIconNames.value.map(name => ({ name, type: 'ant' })),
+  ]
 })
 
-const filteredNames = computed(() => {
+const filteredIcons = computed(() => {
   const q = keyword.value.trim().toLowerCase()
   if (!q) {
-    return iconNames.value
+    return iconItems.value
   }
-  return iconNames.value.filter(n => n.toLowerCase().includes(q))
-})
-
-const previewIcon = computed(() => {
-  const n = innerValue.value
-  if (!n) {
-    return undefined
-  }
-  return (Icons as any)[n] as Component | undefined
+  return iconItems.value.filter(item => item.name.toLowerCase().includes(q))
 })
 
 function onInputChange() {

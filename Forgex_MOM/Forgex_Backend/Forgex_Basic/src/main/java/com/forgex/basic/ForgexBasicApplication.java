@@ -20,6 +20,7 @@ import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
 import com.forgex.common.feign.client.EncodeRuleFeignClient;
+import com.forgex.sys.service.impl.SysModuleServiceImpl;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -54,8 +55,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @version 1.0.0
  */
 @EnableAsync
-@Import(DynamicDataSourceAutoConfiguration.class)
-@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper"})
+@Import({DynamicDataSourceAutoConfiguration.class, SysModuleServiceImpl.class})
+@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper", "com.forgex.sys.mapper"})
 public class ForgexBasicApplication {
 
     /**

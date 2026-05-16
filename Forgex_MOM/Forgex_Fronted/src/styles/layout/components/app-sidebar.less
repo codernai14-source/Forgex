@@ -5,6 +5,15 @@
   overflow: hidden;
 }
 
+:global(html[data-theme='dark']) .app-sidebar-wrapper,
+:global(body[data-theme='dark']) .app-sidebar-wrapper,
+:global(html[data-theme='dark']) .app-sidebar,
+:global(body[data-theme='dark']) .app-sidebar,
+:global(html[data-theme='dark']) .app-sidebar-mini,
+:global(body[data-theme='dark']) .app-sidebar-mini {
+  background: #14161a;
+}
+
 .app-sidebar-mini {
   background: var(--fx-sider-mini-bg, #161720);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -151,19 +160,57 @@
 }
 
 .app-sidebar {
+  position: relative;
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
   min-height: 0;
   overflow: hidden;
   
-  :deep(.ant-layout-sider-trigger) {
-    background: rgba(0, 0, 0, 0.2);
-    color: rgba(255, 255, 255, 0.85);
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
+  :deep(.ant-layout-sider-children) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
+
+  :deep(.ant-layout-sider-trigger) {
+    display: none;
+  }
+}
+
+.app-sidebar-collapse-btn {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 7px;
+  background: var(--fx-fill-secondary, rgba(255, 255, 255, 0.06));
+  color: var(--fx-text-secondary, rgba(255, 255, 255, 0.72));
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--fx-theme-color, #1677ff) 44%, transparent);
+    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+    color: var(--fx-theme-color, #1677ff);
+  }
+
+  :deep(.anticon) {
+    transition: transform 0.2s ease;
+  }
+
+  &--collapsed :deep(.anticon) {
+    transform: rotate(180deg);
+  }
+}
+
+.app-sidebar :deep(.sidebar-menu) {
+  padding-bottom: 52px;
 }
 
 .app-sidebar-wrapper--vertical {
@@ -192,6 +239,7 @@
 }
 
 .sidebar-menu {
+  flex: 1;
   height: 100%;
   min-height: 0;
   background: transparent;

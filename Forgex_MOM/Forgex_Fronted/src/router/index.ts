@@ -76,6 +76,12 @@ const routes: RouteRecordRaw[] = [
         name: 'SystemConfig',
         component: () => import('../views/system/config/index.vue'),
         meta: { title: 'system.config.title', module: 'sys' }
+      },
+      {
+        path: 'sys/onlineDev/homepage-component',
+        name: 'SystemHomepageComponent',
+        component: () => import('../views/system/homepageComponent/index.vue'),
+        meta: { title: 'system.homepageComponent.title', module: 'sys' }
       }
     ]
   },
@@ -314,6 +320,8 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       LabelPrint: '../views/label/print/index.vue',
       LabelRecord: '../views/label/record/index.vue',
       LabelBinding: '../views/label/binding/index.vue',
+      LabelType: '../views/label/type/index.vue',
+      LabelField: '../views/label/field/index.vue',
     }
     if (normalizedName && specialComponentMap[normalizedName]) {
       const mappedPath = specialComponentMap[normalizedName]
@@ -334,6 +342,7 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       BasicMaterialSemiFinished: '../views/basic/material/index.vue',
       BasicMaterialFinished: '../views/basic/material/index.vue',
       SystemDashboard: '../views/system/dashboard/index.vue',
+      SystemHomepageComponent: '../views/system/homepageComponent/index.vue',
       SystemAndroidVersion: '../views/system/androidVersion/index.vue',
       SystemNotice: '../views/system/notice/index.vue',
       SystemPosition: '../views/system/position/index.vue',

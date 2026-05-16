@@ -17,6 +17,13 @@
         @dragend="onDragEnd"
         @contextmenu.prevent="onContextMenu(tab, $event)"
       >
+        <FxIcon
+          v-if="tab.icon"
+          :name="tab.icon"
+          :fallback="false"
+          class="tab-icon"
+          :size="14"
+        />
         <span class="tab-title">{{ tab.title }}</span>
         <CloseOutlined
           v-if="tab.closable"
@@ -99,6 +106,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import FxIcon from '@/components/common/FxIcon.vue'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -115,6 +123,7 @@ interface Tab {
   key: string
   title: string
   path: string
+  icon?: string
   closable: boolean
 }
 

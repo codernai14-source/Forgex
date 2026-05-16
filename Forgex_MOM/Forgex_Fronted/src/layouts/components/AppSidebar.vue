@@ -22,7 +22,7 @@
         >
           <div class="mini-menu-content">
             <span class="mini-menu-icon-shell">
-              <component v-if="menu.icon" :is="getIcon(menu.icon)" class="mini-menu-icon" />
+              <FxIcon v-if="menu.icon" :name="menu.icon" class="mini-menu-icon" />
               <AppstoreOutlined v-else-if="menu.type === 'module'" class="mini-menu-icon" />
               <FolderOutlined v-else-if="menu.children?.length" class="mini-menu-icon" />
               <FileOutlined v-else class="mini-menu-icon" />
@@ -40,7 +40,6 @@
       :collapsible="true"
       :width="mainSiderWidth"
       :collapsed-width="64"
-      @collapse="onCollapse"
     >
       <a-menu
         mode="inline"
@@ -57,17 +56,26 @@
           :item="item"
         />
       </a-menu>
+      <button
+        type="button"
+        class="app-sidebar-collapse-btn"
+        :class="{ 'app-sidebar-collapse-btn--collapsed': collapsed }"
+        @click="onCollapse(!collapsed)"
+      >
+        <LeftOutlined />
+      </button>
     </a-layout-sider>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { getIcon } from '../../utils/icon'
+import FxIcon from '@/components/common/FxIcon.vue'
 import {
   AppstoreOutlined,
   FolderOutlined,
   FileOutlined,
+  LeftOutlined,
 } from '@ant-design/icons-vue'
 import SidebarMenuNode, { type SidebarMenuNodeItem } from './SidebarMenuNode.vue'
 

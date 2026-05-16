@@ -26,7 +26,7 @@
           class="module-menu-item"
         >
           <template #icon>
-            <component v-if="mod.icon" :is="getIcon(mod.icon)" />
+            <FxIcon v-if="mod.icon" :name="mod.icon" />
             <AppstoreOutlined v-else />
           </template>
           <span>{{ mod.name }}</span>
@@ -245,7 +245,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getIcon } from '../../utils/icon'
+import FxIcon from '@/components/common/FxIcon.vue'
 import {
   SearchOutlined,
   BellOutlined,

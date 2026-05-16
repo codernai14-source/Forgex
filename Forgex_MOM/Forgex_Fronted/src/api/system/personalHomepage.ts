@@ -516,3 +516,108 @@ export function reportUserMenuOpen(path: string, payload: Partial<PersonalMenuEn
   return http.post<UserMenuOpenReportVO>('/sys/menu/personal/open/report', { ...payload, path })
 }
 
+export interface HomepageComponentQueryParam {
+  id?: number
+  categoryId?: number
+  categoryCode?: string
+  moduleCode?: string
+  scopeLevel?: 'PUBLIC' | 'TENANT' | 'USER'
+  keyword?: string
+  enabled?: boolean
+  pageNum?: number
+  pageSize?: number
+}
+
+export interface HomepageComponentSaveParam {
+  id?: number
+  categoryId?: number
+  categoryCode?: string
+  categoryName?: string
+  moduleCode?: string
+  scopeLevel?: 'PUBLIC' | 'TENANT'
+  componentCode: string
+  componentName: string
+  componentPath?: string
+  icon?: string
+  useDesc?: string
+  defaultParamsJson?: string
+  enabled?: boolean
+  orderNum?: number
+  remark?: string
+}
+
+export interface HomepageComponentPreferenceParam {
+  componentCode: string
+  favorite?: boolean
+  moduleCode?: string
+}
+
+export interface HomepageComponentPullParam {
+  moduleCode?: string
+  categoryId?: number
+}
+
+export interface HomepageComponentVO {
+  id?: number
+  categoryId?: number
+  categoryCode?: string
+  categoryName?: string
+  moduleCode?: string
+  componentCode: string
+  componentName: string
+  componentPath?: string
+  icon?: string
+  useDesc?: string
+  scopeLevel?: 'PUBLIC' | 'TENANT' | 'USER'
+  sourceScope?: string
+  favorite?: boolean
+  selected?: boolean
+  removed?: boolean
+  enabled?: boolean
+  orderNum?: number
+  params?: string
+  defaultParamsJson?: string
+  remark?: string
+}
+
+export interface HomepageComponentListResult {
+  records: HomepageComponentVO[]
+  total?: number
+}
+
+export function pageHomepageComponents(params: HomepageComponentQueryParam) {
+  return http.post<any>('/sys/homepage/component/page', params)
+}
+
+export function saveHomepageComponent(data: HomepageComponentSaveParam) {
+  return http.post<number>('/sys/homepage/component/save', data)
+}
+
+export function deleteHomepageComponent(id: number) {
+  return http.post<boolean>('/sys/homepage/component/delete', { id })
+}
+
+export function listEffectiveHomepageComponents(params: HomepageComponentQueryParam = {}) {
+  return http.post<HomepageComponentVO[]>('/sys/homepage/component/effective/list', params)
+}
+
+export function favoriteHomepageComponent(data: HomepageComponentPreferenceParam) {
+  return http.post<boolean>('/sys/homepage/component/favorite', data)
+}
+
+export function addHomepageComponent(data: HomepageComponentPreferenceParam) {
+  return http.post<boolean>('/sys/homepage/component/add', data)
+}
+
+export function removeHomepageComponent(data: HomepageComponentPreferenceParam) {
+  return http.post<boolean>('/sys/homepage/component/remove', data)
+}
+
+export function pullPublicHomepageComponents(data: HomepageComponentPullParam = {}) {
+  return http.post<number>('/sys/homepage/component/pull-public', data)
+}
+
+export function pullTenantHomepageComponents(data: HomepageComponentPullParam = {}) {
+  return http.post<number>('/sys/homepage/component/pull-tenant', data)
+}
+

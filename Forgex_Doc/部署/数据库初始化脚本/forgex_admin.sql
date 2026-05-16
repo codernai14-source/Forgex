@@ -1598,7 +1598,7 @@ CREATE TABLE `sys_menu`  (
   INDEX `idx_sys_menu_parent`(`parent_id` ASC) USING BTREE,
   INDEX `idx_menu_mode`(`menu_mode` ASC) USING BTREE,
   INDEX `idx_tenant_type`(`tenant_type` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3000000000000000557 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单/目录/按钮表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3000000000000000563 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单/目录/按钮表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_menu
@@ -1863,6 +1863,12 @@ INSERT INTO `sys_menu` VALUES (3000000000000000553, 1993479636925403138, 'PUBLIC
 INSERT INTO `sys_menu` VALUES (3000000000000000554, 1993479636925403138, 'PUBLIC', 1, 3000000000000000551, 'button', NULL, '编辑系统通知', '{\"en-US\": \"Edit System Notice\", \"ja-JP\": \"システム通知編集\", \"ko-KR\": \"시스템 알림 편집\", \"zh-CN\": \"编辑系统通知\", \"zh-TW\": \"編輯系統通知\"}', NULL, NULL, 'sys:notice:edit', 3, 1, 1, '2026-05-10 21:26:44', 'codex', '2026-05-10 22:56:46', 'codex', 0, 3, 'embedded', NULL);
 INSERT INTO `sys_menu` VALUES (3000000000000000555, 1993479636925403138, 'PUBLIC', 1, 3000000000000000551, 'button', NULL, '删除系统通知', '{\"en-US\": \"Delete System Notice\", \"ja-JP\": \"システム通知削除\", \"ko-KR\": \"시스템 알림 삭제\", \"zh-CN\": \"删除系统通知\", \"zh-TW\": \"刪除系統通知\"}', NULL, NULL, 'sys:notice:delete', 4, 1, 1, '2026-05-10 21:26:44', 'codex', '2026-05-10 22:56:46', 'codex', 0, 3, 'embedded', NULL);
 INSERT INTO `sys_menu` VALUES (3000000000000000556, 1993479636925403138, 'PUBLIC', 1, 3000000000000000551, 'button', NULL, '发布/停用系统通知', '{\"en-US\": \"Publish or Disable System Notice\", \"ja-JP\": \"システム通知公開/無効化\", \"ko-KR\": \"시스템 알림 게시/중지\", \"zh-CN\": \"发布/停用系统通知\", \"zh-TW\": \"發布/停用系統通知\"}', NULL, NULL, 'sys:notice:publish', 5, 1, 1, '2026-05-10 21:26:44', 'codex', '2026-05-10 22:56:46', 'codex', 0, 3, 'embedded', NULL);
+INSERT INTO `sys_menu` VALUES (3000000000000000557, 1993479636925403138, 'PUBLIC', 1, 3000000000000000443, 'menu', 'homepage-component', '首页组件目录', '{\"en-US\": \"Homepage Components\", \"ja-JP\": \"ホームページコンポーネント\", \"ko-KR\": \"홈페이지 컴포넌트\", \"zh-CN\": \"首页组件目录\", \"zh-TW\": \"首頁組件目錄\"}', 'AppstoreOutlined', 'SystemHomepageComponent', 'sys:homepageComponent:view', 3, 1, 1, '2026-05-15 00:00:00', 'codex', '2026-05-15 00:00:00', 'codex', 0, 2, 'embedded', NULL);
+INSERT INTO `sys_menu` VALUES (3000000000000000558, 1993479636925403138, 'PUBLIC', 1, 3000000000000000557, 'button', 'view', '查看', '{\"en-US\": \"View\", \"ja-JP\": \"表示\", \"ko-KR\": \"조회\", \"zh-CN\": \"查看\", \"zh-TW\": \"查看\"}', NULL, NULL, 'sys:homepageComponent:view', 1, 1, 1, '2026-05-15 00:00:00', 'codex', '2026-05-15 00:00:00', 'codex', 0, 3, 'embedded', NULL);
+INSERT INTO `sys_menu` VALUES (3000000000000000559, 1993479636925403138, 'PUBLIC', 1, 3000000000000000557, 'button', 'add', '新增', '{\"en-US\": \"Add\", \"ja-JP\": \"追加\", \"ko-KR\": \"추가\", \"zh-CN\": \"新增\", \"zh-TW\": \"新增\"}', NULL, NULL, 'sys:homepageComponent:add', 2, 1, 1, '2026-05-15 00:00:00', 'codex', '2026-05-15 00:00:00', 'codex', 0, 3, 'embedded', NULL);
+INSERT INTO `sys_menu` VALUES (3000000000000000560, 1993479636925403138, 'PUBLIC', 1, 3000000000000000557, 'button', 'edit', '编辑', '{\"en-US\": \"Edit\", \"ja-JP\": \"編集\", \"ko-KR\": \"편집\", \"zh-CN\": \"编辑\", \"zh-TW\": \"編輯\"}', NULL, NULL, 'sys:homepageComponent:edit', 3, 1, 1, '2026-05-15 00:00:00', 'codex', '2026-05-15 00:00:00', 'codex', 0, 3, 'embedded', NULL);
+INSERT INTO `sys_menu` VALUES (3000000000000000561, 1993479636925403138, 'PUBLIC', 1, 3000000000000000557, 'button', 'delete', '删除', '{\"en-US\": \"Delete\", \"ja-JP\": \"削除\", \"ko-KR\": \"삭제\", \"zh-CN\": \"删除\", \"zh-TW\": \"刪除\"}', NULL, NULL, 'sys:homepageComponent:delete', 4, 1, 1, '2026-05-15 00:00:00', 'codex', '2026-05-15 00:00:00', 'codex', 0, 3, 'embedded', NULL);
+INSERT INTO `sys_menu` VALUES (3000000000000000562, 1993479636925403138, 'PUBLIC', 1, 3000000000000000557, 'button', 'pull-public', '拉取公共配置', '{\"en-US\": \"Pull Public Config\", \"ja-JP\": \"公開設定を取得\", \"ko-KR\": \"공용 설정 가져오기\", \"zh-CN\": \"拉取公共配置\", \"zh-TW\": \"拉取公共配置\"}', NULL, NULL, 'sys:homepageComponent:pullPublic', 5, 1, 1, '2026-05-15 00:00:00', 'codex', '2026-05-15 00:00:00', 'codex', 0, 3, 'embedded', NULL);
 
 -- ----------------------------
 -- Table structure for sys_message
@@ -2180,7 +2186,7 @@ CREATE TABLE `sys_permission`  (
   `deleted` tinyint NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `permission_key`(`permission_key` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3000000000000000566 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '权限表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3000000000000000576 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '权限表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_permission
@@ -2285,6 +2291,16 @@ INSERT INTO `sys_permission` VALUES (3000000000000000562, '新增系统通知', 
 INSERT INTO `sys_permission` VALUES (3000000000000000563, '编辑系统通知', 'sys:notice:edit', '/sys/notice/save', 'POST', 0, '2026-05-10 21:26:44', '2026-05-10 21:26:44', 0);
 INSERT INTO `sys_permission` VALUES (3000000000000000564, '删除系统通知', 'sys:notice:delete', '/sys/notice/delete', 'POST', 0, '2026-05-10 21:26:44', '2026-05-10 21:26:44', 0);
 INSERT INTO `sys_permission` VALUES (3000000000000000565, '发布/停用系统通知', 'sys:notice:publish', '/sys/notice/publish', 'POST', 0, '2026-05-10 21:26:44', '2026-05-10 21:26:44', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000566, '查看首页组件目录', 'sys:homepageComponent:view', '/sys/homepage/component/page', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000567, '新增首页组件', 'sys:homepageComponent:add', '/sys/homepage/component/save', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000568, '编辑首页组件', 'sys:homepageComponent:edit', '/sys/homepage/component/save', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000569, '删除首页组件', 'sys:homepageComponent:delete', '/sys/homepage/component/delete', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000570, '拉取公共首页组件', 'sys:homepageComponent:pullPublic', '/sys/homepage/component/pull-public', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000571, '查看可用首页组件', 'sys:homepageComponent:effectiveList', '/sys/homepage/component/effective/list', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000572, '收藏首页组件', 'sys:homepageComponent:favorite', '/sys/homepage/component/favorite', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000573, '添加组件到个人首页', 'sys:homepageComponent:addToHomepage', '/sys/homepage/component/add', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000574, '移除首页组件', 'sys:homepageComponent:remove', '/sys/homepage/component/remove', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
+INSERT INTO `sys_permission` VALUES (3000000000000000575, '拉取租户首页组件', 'sys:homepageComponent:pullTenant', '/sys/homepage/component/pull-tenant', 'POST', 0, '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0);
 
 -- ----------------------------
 -- Table structure for sys_position
@@ -2432,7 +2448,7 @@ CREATE TABLE `sys_role_menu`  (
   `menu_id` bigint NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_role_menu`(`tenant_id` ASC, `role_id` ASC, `menu_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2047520831801663552 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色菜单授权' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2047520831801663558 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色菜单授权' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_role_menu
@@ -2669,6 +2685,12 @@ INSERT INTO `sys_role_menu` VALUES (2047520831801663548, 1993479636925403138, 19
 INSERT INTO `sys_role_menu` VALUES (2047520831801663549, 1993479636925403138, 1993479637311279107, 3000000000000000554);
 INSERT INTO `sys_role_menu` VALUES (2047520831801663550, 1993479636925403138, 1993479637311279107, 3000000000000000555);
 INSERT INTO `sys_role_menu` VALUES (2047520831801663551, 1993479636925403138, 1993479637311279107, 3000000000000000556);
+INSERT INTO `sys_role_menu` VALUES (2047520831801663552, 1993479636925403138, 1993479637311279107, 3000000000000000557);
+INSERT INTO `sys_role_menu` VALUES (2047520831801663553, 1993479636925403138, 1993479637311279107, 3000000000000000558);
+INSERT INTO `sys_role_menu` VALUES (2047520831801663554, 1993479636925403138, 1993479637311279107, 3000000000000000559);
+INSERT INTO `sys_role_menu` VALUES (2047520831801663555, 1993479636925403138, 1993479637311279107, 3000000000000000560);
+INSERT INTO `sys_role_menu` VALUES (2047520831801663556, 1993479636925403138, 1993479637311279107, 3000000000000000561);
+INSERT INTO `sys_role_menu` VALUES (2047520831801663557, 1993479636925403138, 1993479637311279107, 3000000000000000562);
 INSERT INTO `sys_role_menu` VALUES (120, 1993479636925403138, 1993479637311279112, 1);
 INSERT INTO `sys_role_menu` VALUES (121, 1993479636925403138, 1993479637311279112, 2);
 INSERT INTO `sys_role_menu` VALUES (122, 1993479636925403138, 1993479637311279112, 3);
@@ -2706,6 +2728,16 @@ INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 30000000000000005
 INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000563);
 INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000564);
 INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000565);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000566);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000567);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000568);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000569);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000570);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000571);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000572);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000573);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000574);
+INSERT INTO `sys_role_permission` VALUES (1993479637311279107, 3000000000000000575);
 
 -- ----------------------------
 -- Table structure for sys_role_position
@@ -2819,6 +2851,9 @@ INSERT INTO `sys_tenant_ignore` VALUES (10, 'TABLE', 'fx_i18n_language_type', 1,
 INSERT INTO `sys_tenant_ignore` VALUES (11, 'TABLE', 'sys_notice', 1, '系统通知表由业务条件处理公共/租户范围', '2026-05-10 21:13:26', '2026-05-10 21:13:26', 0, 'codex');
 INSERT INTO `sys_tenant_ignore` VALUES (12, 'TABLE', 'sys_notice_attachment', 1, '系统通知附件表由通知范围控制可见性', '2026-05-10 21:13:26', '2026-05-10 21:13:26', 0, 'codex');
 INSERT INTO `sys_tenant_ignore` VALUES (13, 'TABLE', 'sys_notice_user_record', 1, '系统通知弹窗记录按当前用户和租户显式过滤', '2026-05-10 21:13:26', '2026-05-10 21:13:26', 0, 'codex');
+INSERT INTO `sys_tenant_ignore` VALUES (14, 'TABLE', 'sys_homepage_component_category', 1, '首页组件分类配置使用公共租户数据加载', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0, 'codex');
+INSERT INTO `sys_tenant_ignore` VALUES (15, 'TABLE', 'sys_homepage_component_config', 1, '首页组件公共/租户配置由业务层显式控制范围', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0, 'codex');
+INSERT INTO `sys_tenant_ignore` VALUES (16, 'TABLE', 'sys_homepage_component_preference', 1, '首页组件个人偏好表按用户和租户保存快照', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 0, 'codex');
 
 -- ----------------------------
 -- Table structure for sys_tenant_message_whitelist
@@ -3113,5 +3148,104 @@ CREATE TABLE `sys_user_tenant`  (
 -- ----------------------------
 INSERT INTO `sys_user_tenant` VALUES (1993479637244170253, 1993479636925403138, 02042524421577154561, 3, 1, '2026-04-22 21:55:43');
 INSERT INTO `sys_user_tenant` VALUES (1993479637244170242, 1993479636925403138, 01993479637311279106, 268, 0, '2026-05-11 09:58:36');
+
+-- ----------------------------
+-- Table structure for sys_homepage_component_category
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_homepage_component_category`;
+CREATE TABLE `sys_homepage_component_category`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `category_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '分类编码',
+  `category_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '分类名称',
+  `module_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '模块编码',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
+  `deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_component_category_code`(`tenant_id` ASC, `module_code` ASC, `category_code` ASC) USING BTREE,
+  INDEX `idx_component_category_module`(`module_code` ASC) USING BTREE,
+  INDEX `idx_component_category_tenant`(`tenant_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '首页组件分类表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_homepage_component_category
+-- ----------------------------
+INSERT INTO `sys_homepage_component_category` VALUES (1, 0, 'personal_common', '通用组件', 'personal', '个人首页通用组件分类', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0);
+
+-- ----------------------------
+-- Table structure for sys_homepage_component_config
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_homepage_component_config`;
+CREATE TABLE `sys_homepage_component_config`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `category_id` bigint NOT NULL COMMENT '分类ID',
+  `scope_level` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置层级：PUBLIC/TENANT',
+  `component_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件编码',
+  `component_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件名称',
+  `component_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件路径',
+  `icon` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '图标',
+  `use_desc` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '作用说明',
+  `default_params_json` json NULL COMMENT '默认参数JSON',
+  `enabled` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  `order_num` int NOT NULL DEFAULT 0 COMMENT '排序号',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
+  `deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_component_scope_code`(`scope_level` ASC, `tenant_id` ASC, `component_code` ASC) USING BTREE,
+  INDEX `idx_component_category`(`category_id` ASC) USING BTREE,
+  INDEX `idx_component_scope_tenant`(`scope_level` ASC, `tenant_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '首页组件公共/租户配置表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_homepage_component_config
+-- ----------------------------
+INSERT INTO `sys_homepage_component_config` VALUES
+(1, 0, 1, 'PUBLIC', 'commonMenus', '常用菜单', 'commonMenus', 'AppstoreOutlined', '系统自动统计的固定 Top 6 菜单', '{"limit":6,"showMore":true}', 1, 10, '首页常用菜单卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0),
+(2, 0, 1, 'PUBLIC', 'myFavorites', '我的收藏', 'myFavorites', 'StarOutlined', '我主动收藏的快捷入口', '{"limit":6,"showMore":true}', 1, 20, '首页收藏卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0),
+(3, 0, 1, 'PUBLIC', 'pendingApprovals', '我收到的审批', 'pendingApprovals', 'ClockCircleOutlined', '我收到的审批待办', '{"limit":6,"showMore":true}', 1, 30, '审批待办卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0),
+(4, 0, 1, 'PUBLIC', 'calendar', '日历', 'calendar', 'CalendarOutlined', '本地日历视图', '{}', 1, 40, '日历卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0),
+(5, 0, 1, 'PUBLIC', 'messages', '我收到的消息', 'messages', 'MessageOutlined', '用户发给我的站内消息', '{"limit":10,"showMore":true}', 1, 50, '消息卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0),
+(6, 0, 1, 'PUBLIC', 'notices', '系统通知', 'notices', 'BellOutlined', '审批与系统类通知', '{"limit":10,"showMore":true}', 1, 60, '系统通知卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0),
+(7, 0, 1, 'PUBLIC', 'currentTime', '当前时间', 'currentTime', 'ClockCircleOutlined', '当前日期与时间', '{}', 1, 70, '时间卡片', '2026-05-15 00:00:00', '2026-05-15 00:00:00', 'codex', 'codex', 0);
+
+-- ----------------------------
+-- Table structure for sys_homepage_component_preference
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_homepage_component_preference`;
+CREATE TABLE `sys_homepage_component_preference`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `category_id` bigint NOT NULL COMMENT '分类ID',
+  `source_component_id` bigint NULL DEFAULT NULL COMMENT '来源组件ID',
+  `component_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件编码快照',
+  `component_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件名称快照',
+  `component_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件路径快照',
+  `icon` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '图标快照',
+  `use_desc` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '作用说明快照',
+  `favorite` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否收藏',
+  `removed` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否移除',
+  `order_num` int NOT NULL DEFAULT 0 COMMENT '排序号',
+  `params_json` json NULL COMMENT '个人参数JSON',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
+  `deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_component_preference_code`(`tenant_id` ASC, `user_id` ASC, `component_code` ASC) USING BTREE,
+  INDEX `idx_component_preference_category`(`category_id` ASC) USING BTREE,
+  INDEX `idx_component_preference_user`(`tenant_id` ASC, `user_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '首页组件个人偏好表' ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;

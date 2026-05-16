@@ -86,7 +86,7 @@
             </template>
 
             <template #icon="{ record }">
-              <component v-if="record.icon" :is="getIcon(record.icon)" />
+              <FxIcon v-if="record.icon" :name="record.icon" />
               <span v-else>-</span>
             </template>
 
@@ -296,6 +296,7 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import IconPicker from '@/components/common/IconPicker.vue'
+import FxIcon from '@/components/common/FxIcon.vue'
 import { listModules } from '@/api/system/module'
 import {
   addMenu,
@@ -312,7 +313,6 @@ import {
   updateMenu,
 } from '@/api/system/menu'
 import { useDict } from '@/hooks/useDict'
-import { getIcon } from '@/utils/icon'
 import { getI18nValue } from '@/utils/i18n'
 
 type MenuTreeRecord = {

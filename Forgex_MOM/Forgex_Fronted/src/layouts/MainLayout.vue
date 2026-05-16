@@ -128,7 +128,8 @@
           @click="onHorizontalMenuClick(item)"
         >
           <span class="fx-horizontal-menu-card__icon">
-            <component :is="resolveMenuIcon(item)" />
+            <FxIcon v-if="item.icon" :name="item.icon" />
+            <component v-else :is="resolveMenuIcon(item)" />
           </span>
           <span class="fx-horizontal-menu-card__body">
             <span class="fx-horizontal-menu-card__title" :title="item.title">{{ item.title }}</span>
@@ -256,7 +257,7 @@
                     type="button"
                     class="fx-mode-card"
                     :class="{ 'fx-mode-card--active': layoutConfig.themeMode === mode.value }"
-                    @click="layoutConfig.themeMode = mode.value"
+                    @click="onThemeModeChange(mode.value)"
                   >
                     <component :is="mode.icon" class="fx-mode-card__icon" />
                     <span class="fx-mode-card__label">{{ mode.label }}</span>
@@ -523,6 +524,7 @@ import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
 import FxGuideTour from '../components/common/FxGuideTour.vue'
+import FxIcon from '../components/common/FxIcon.vue'
 import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
@@ -534,7 +536,6 @@ import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
 import { use权限Store } from '../stores/permission'
-import { getIcon } from '../utils/icon'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
@@ -595,6 +596,7 @@ interface LayoutTab {
   key: string
   path: string
   title: string
+  icon?: string
   closable: boolean
 }
 
@@ -677,6 +679,7 @@ const systemNoticeList = ref<SysNotice[]>([])
 const FONT_SIZE_MIN = 14
 const FONT_SIZE_MAX = 28
 const FONT_SIZE_DEFAULT = 14
+const THEME_REVEAL_DURATION = 520
 const settingDrawerRootStyle = {
   position: 'absolute',
 } as const
@@ -927,18 +930,144 @@ const MAX_ROUTE_VISIT_STATS_COUNT = 200
 const HORIZONTAL_MENU_CHILD_LIMIT = 6
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
+const skipThemeRevealWatcher = ref(false)
+
+function applyThemeVariablesToElement(target: HTMLElement, styleMap: Record<string, unknown>) {
+  Object.entries(styleMap).forEach(([key, value]) => {
+    if (!key.startsWith('--fx-') || value == null) {
+      return
+    }
+    target.style.setProperty(key, String(value))
+  })
+}
 
 function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
   if (typeof document === 'undefined') {
     return
   }
 
-  const root = document.documentElement
-  Object.entries(styleMap).forEach(([key, value]) => {
-    if (!key.startsWith('--fx-') || value == null) {
+  applyThemeVariablesToElement(document.documentElement, styleMap)
+}
+
+function applyDocumentTheme(mode: 'light' | 'dark') {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  document.documentElement.setAttribute('data-theme', mode)
+  document.documentElement.style.colorScheme = mode
+  if (document.body) {
+    document.body.setAttribute('data-theme', mode)
+    document.body.style.colorScheme = mode
+  }
+}
+
+function getLayoutElement(): HTMLElement | null {
+  const target = layoutRootRef.value
+  if (!target) {
+    return null
+  }
+  if (target instanceof HTMLElement) {
+    return target
+  }
+  const el = target.$el
+  return el instanceof HTMLElement ? el : null
+}
+
+function runThemeRevealTransition(
+  previousMode: 'light' | 'dark',
+  nextMode: 'light' | 'dark',
+  applyNextTheme?: () => void,
+) {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    applyNextTheme?.()
+    applyDocumentTheme(nextMode)
+    return
+  }
+
+  const layoutEl = getLayoutElement()
+  if (!layoutEl) {
+    applyNextTheme?.()
+    applyDocumentTheme(nextMode)
+    return
+  }
+
+  const nextTokens = nextMode === 'dark' ? darkTokens : lightTokens
+  const nextStyleMap = generateCSSVariablesWithCache(nextTokens, {
+    ...layoutConfig.value,
+    themeMode: nextMode,
+  })
+  const overlay = document.createElement('div')
+  const snapshot = layoutEl.cloneNode(true) as HTMLElement
+  overlay.className = 'fx-theme-reveal-overlay'
+  overlay.setAttribute('aria-hidden', 'true')
+  overlay.dataset.theme = nextMode
+  overlay.style.background = nextTokens.colorBgBase
+  overlay.style.colorScheme = nextMode
+  overlay.style.clipPath = 'circle(0 at 100% 0)'
+  overlay.style.webkitClipPath = 'circle(0 at 100% 0)'
+  applyThemeVariablesToElement(overlay, nextStyleMap as Record<string, unknown>)
+  snapshot.classList.add('fx-theme-reveal-overlay__content')
+  snapshot.setAttribute('aria-hidden', 'true')
+  applyThemeVariablesToElement(snapshot, nextStyleMap as Record<string, unknown>)
+  overlay.appendChild(snapshot)
+  document.body.appendChild(overlay)
+
+  const width = window.innerWidth
+  const height = window.innerHeight
+  const radius = Math.ceil(Math.sqrt(width * width + height * height) * 1.05)
+  const cleanup = () => {
+    overlay.remove()
+  }
+  const commitTheme = () => {
+    layoutEl.classList.add('fx-theme-reveal-running')
+    applyThemeVariablesToElement(document.documentElement, nextStyleMap as Record<string, unknown>)
+    applyNextTheme?.()
+    applyDocumentTheme(nextMode)
+    requestAnimationFrame(() => {
+      layoutEl.classList.remove('fx-theme-reveal-running')
+      cleanup()
+    })
+  }
+
+  requestAnimationFrame(() => {
+    const supportsClipPath = typeof CSS !== 'undefined'
+      && typeof CSS.supports === 'function'
+      && CSS.supports('clip-path', 'circle(0 at 100% 0)')
+    if (supportsClipPath) {
+      overlay.style.transition = [
+        `clip-path ${THEME_REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        `-webkit-clip-path ${THEME_REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      ].join(', ')
+      requestAnimationFrame(() => {
+        overlay.style.clipPath = `circle(${radius}px at 100% 0)`
+        overlay.style.webkitClipPath = `circle(${radius}px at 100% 0)`
+      })
+      window.setTimeout(commitTheme, THEME_REVEAL_DURATION + 80)
       return
     }
-    root.style.setProperty(key, String(value))
+
+    overlay.style.transition = 'opacity 220ms ease'
+    overlay.style.opacity = '1'
+    window.setTimeout(commitTheme, 240)
+  })
+}
+
+function onThemeModeChange(mode: LayoutConfig['themeMode']) {
+  if (layoutConfig.value.themeMode === mode) {
+    return
+  }
+
+  const previousMode = resolvedMode.value
+  const nextMode = resolveThemeMode(mode, systemTheme.value)
+  if (previousMode === nextMode) {
+    layoutConfig.value.themeMode = mode
+    return
+  }
+
+  skipThemeRevealWatcher.value = true
+  runThemeRevealTransition(previousMode, nextMode, () => {
+    layoutConfig.value.themeMode = mode
   })
 }
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
@@ -1076,6 +1205,7 @@ function buildFixedTabs() {
     key: PERSONAL_HOME_PATH,
     path: PERSONAL_HOME_PATH,
     title: resolveTabTitle(PERSONAL_HOME_PATH),
+    icon: resolveTabIcon(PERSONAL_HOME_PATH),
     closable: false,
   }]
 }
@@ -1220,13 +1350,17 @@ function removeTabsByKeys(keys: string[]) {
 
 watch(
   resolvedMode,
-  mode => {
-    document.documentElement.setAttribute('data-theme', mode)
-    document.documentElement.style.colorScheme = mode
-    if (typeof document !== 'undefined' && document.body) {
-      document.body.setAttribute('data-theme', mode)
-      document.body.style.colorScheme = mode
+  (mode, previousMode) => {
+    if (skipThemeRevealWatcher.value) {
+      skipThemeRevealWatcher.value = false
+      applyDocumentTheme(mode)
+      return
     }
+    if (previousMode && previousMode !== mode) {
+      runThemeRevealTransition(previousMode, mode)
+      return
+    }
+    applyDocumentTheme(mode)
   },
   { immediate: true },
 )
@@ -1632,9 +1766,6 @@ function isHorizontalMenuActive(item: SidebarMenuItem) {
 }
 
 function resolveMenuIcon(item: SidebarMenuItem) {
-  if (item.icon) {
-    return getIcon(item.icon)
-  }
   if (item.type === 'module') {
     return AppstoreOutlined
   }
@@ -1832,6 +1963,18 @@ function resolveTabTitle(tabKey: string): string {
   return buildTitleFromRoute(clean)
 }
 
+function resolveTabIcon(tabKey: string): string {
+  const clean = normalizeWorkspacePath(tabKey)
+  const resolved = router.resolve(clean)
+  const matchedRouteWithIcon = [...resolved.matched].reverse().find(item => item.meta && item.meta.icon)
+  if (matchedRouteWithIcon?.meta?.icon) {
+    return String(matchedRouteWithIcon.meta.icon)
+  }
+  const moduleCode = clean.match(/^\/workspace\/([^/]+)/)?.[1]
+  const module = moduleList.value.find(item => item.code === moduleCode)
+  return module?.icon || 'appstore'
+}
+
 /**
  * 各模块"工作台"页签标题
  * <p>
@@ -1852,6 +1995,7 @@ function updateAllTabTitles() {
   tabs.value = ensureFixedTabs(tabs.value.map(tab => ({
     ...tab,
     title: resolveTabTitle(tab.key),
+    icon: resolveTabIcon(tab.key),
     closable: tab.key !== PERSONAL_HOME_PATH,
   })))
 }
@@ -2312,6 +2456,7 @@ function updateTabsByRoute(path: string) {
     tabs.value.map(tab => ({
       ...tab,
       title: resolveTabTitle(tab.key),
+      icon: resolveTabIcon(tab.key),
       closable: tab.key !== PERSONAL_HOME_PATH,
     })),
   )
@@ -2321,6 +2466,7 @@ function updateTabsByRoute(path: string) {
         key: pathWithoutQuery,
         path: pathWithoutQuery,
         title: resolveTabTitle(pathWithoutQuery),
+        icon: resolveTabIcon(pathWithoutQuery),
         closable: true,
       })
     }

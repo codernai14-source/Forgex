@@ -27,10 +27,26 @@ export default {
     refresh: '刷新',
     resetDefault: '恢復默認',
     saveLayout: '保存佈局',
+    componentLibrary: '組件庫',
     hint: {
       edit: '拖拽和縮放組件後可直接保存',
       view: '切換到編輯模式後可調整組件佈局',
     },
+  },
+
+  library: {
+    title: '首頁組件庫',
+    searchPlaceholder: '按編碼、名稱、作用搜尋',
+    scopeAll: '全部',
+    scopePublic: '公共',
+    scopeTenant: '租戶',
+    scopeUser: '個人',
+    defaultGroup: '預設分類',
+    empty: '暫無可選組件',
+    favorite: '已收藏',
+    selected: '已新增',
+    removed: '已移除',
+    customPlaceholder: '該組件由前端註冊組件承載，目錄僅維護可選範圍。',
   },
 
   // 配置面板

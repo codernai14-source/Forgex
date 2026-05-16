@@ -119,6 +119,7 @@ export function generateCSSVariables(
   const radius = `${layoutConfig.borderRadius}px`
   const fontSize = layoutConfig.fontSize || '14px'
   const contentWidth = layoutConfig.contentWidth === 'fixed' ? '1200px' : '100%'
+  const isDark = tokens.colorBgBase.toLowerCase() === '#14161a'
   const themeColorSoft = withAlpha(primaryColor, 0.12, tokens.colorPrimaryBg)
   const themeColorSoftStrong = withAlpha(primaryColor, 0.18, tokens.colorPrimaryBgHover)
   const textSecondarySoft = withAlpha(tokens.colorTextSecondary, 0.24, tokens.colorBorder)
@@ -132,12 +133,13 @@ export function generateCSSVariables(
     '--fx-bg-layout': tokens.colorBgLayout,
 
     // ==================== 容器背景 ====================
-    '--fx-header-bg': tokens.colorBgContainer,
+    '--fx-header-bg': isDark ? '#14161a' : tokens.colorBgContainer,
     '--fx-header-color': tokens.colorText,
-    '--fx-sider-bg': tokens.colorBgContainer,
-    '--fx-sider-mini-bg': tokens.colorBgContainer,
-    '--fx-content-bg': tokens.colorBgContainer,
-    '--fx-footer-bg': tokens.colorBgContainer,
+    '--fx-sider-bg': isDark ? '#14161a' : tokens.colorBgContainer,
+    '--fx-sider-mini-bg': isDark ? '#14161a' : tokens.colorBgContainer,
+    '--fx-content-bg': isDark ? '#14161a' : tokens.colorBgContainer,
+    '--fx-footer-bg': isDark ? '#14161a' : tokens.colorBgContainer,
+    '--fx-top-divider-color': tokens.colorBorderSecondary,
     '--fx-bg-container': tokens.colorBgContainer,
     '--fx-bg-elevated': tokens.colorBgElevated,
 
@@ -154,8 +156,8 @@ export function generateCSSVariables(
     '--fx-text-disabled': tokens.colorTextDisabled,
 
     // ==================== 填充与页签 ====================
-    '--fx-tab-bg': tokens.colorFillAlter,
-    '--fx-tab-hover-bg': tokens.colorFill,
+    '--fx-tab-bg': isDark ? '#14161a' : tokens.colorFillAlter,
+    '--fx-tab-hover-bg': isDark ? tokens.colorBgContainer : tokens.colorFill,
     '--fx-fill': tokens.colorFill,
     '--fx-fill-secondary': tokens.colorFillSecondary,
     '--fx-fill-alter': tokens.colorFillAlter,

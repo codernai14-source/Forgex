@@ -27,10 +27,26 @@ export default {
     refresh: '刷新',
     resetDefault: '恢复默认',
     saveLayout: '保存布局',
+    componentLibrary: '组件库',
     hint: {
       edit: '拖拽和缩放组件后可直接保存',
       view: '切换到编辑模式后可调整组件布局',
     },
+  },
+
+  library: {
+    title: '首页组件库',
+    searchPlaceholder: '按编码、名称、作用搜索',
+    scopeAll: '全部',
+    scopePublic: '公共',
+    scopeTenant: '租户',
+    scopeUser: '个人',
+    defaultGroup: '默认分类',
+    empty: '暂无可选组件',
+    favorite: '已收藏',
+    selected: '已添加',
+    removed: '已移除',
+    customPlaceholder: '该组件由前端注册组件承载，目录仅维护可选范围。',
   },
 
   // 配置面板

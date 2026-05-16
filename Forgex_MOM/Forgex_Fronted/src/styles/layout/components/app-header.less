@@ -5,9 +5,22 @@
   height: 56px;
   padding: 0 16px;
   background: var(--fx-header-bg, #ffffff);
+  border-bottom: 0;
   // 移除边框，由 main-layout.less 中的 .fx-header 统一管理
   // border-bottom: 1px solid var(--fx-border-color, #f0f0f0);
   // box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='dark']) .app-header,
+:global(body[data-theme='dark']) .app-header {
+  background: #14161a;
+}
+
+:global(html[data-theme='dark']) .app-header :deep(.ant-layout-header),
+:global(body[data-theme='dark']) .app-header :deep(.ant-layout-header),
+:global(html[data-theme='dark']) .module-menu,
+:global(body[data-theme='dark']) .module-menu {
+  background: transparent;
 }
 
 .app-header-left {

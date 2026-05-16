@@ -9,18 +9,22 @@
   background: var(--material-page-bg);
 }
 
+/**
+ * 浅色模式：页面与标题区背景统一使用布局/容器主题变量，不再使用主色 color-mix 渐变。
+ */
 .material-page--light {
-  --material-page-bg:
-    linear-gradient(180deg, color-mix(in srgb, var(--fx-primary, #1677ff) 8%, #f8fafc), #eef3f8);
-  --material-header-bg:
-    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 12%, #ffffff), var(--fx-bg-container, #ffffff));
+  --material-page-bg: var(--fx-bg-layout, #f3f4f6);
+  --material-header-bg: var(--fx-bg-container, #ffffff);
 }
 
 .material-page--dark {
-  --material-page-bg:
-    linear-gradient(180deg, color-mix(in srgb, var(--fx-primary, #1677ff) 14%, #111827), #05070b);
-  --material-header-bg:
-    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 18%, #111827), var(--fx-bg-container, #111827));
+  --material-page-bg: var(--fx-bg-base, #14161a);
+  --material-header-bg: var(--fx-bg-container, #1c1e24);
+}
+
+:global(body[data-theme='dark']) .material-page {
+  --material-page-bg: var(--fx-bg-base, #14161a);
+  --material-header-bg: var(--fx-bg-container, #1c1e24);
 }
 
 .material-page__header {

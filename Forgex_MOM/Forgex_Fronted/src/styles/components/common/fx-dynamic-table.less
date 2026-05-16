@@ -22,6 +22,27 @@
   border-radius: var(--fx-radius-lg, 8px);
 }
 
+:global(body[data-theme='dark']) .fx-card {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
+/**
+ * 查询条件卡片（{@code fx-query-card}）与表格卡片共用 {@code fx-card}。
+ * <p>
+ * Ant Design Vue 在暗色算法下会为 {@code .ant-card-body} 单独计算偏冷的容器底色，
+ * 若仅设置外层 {@code .ant-card} 背景则视觉上仍为「蓝灰条带」；此处与 {@code fx-table-card}
+ * 一并拉回 {@code --fx-bg-container}，与布局 {@code #14161a} 中性基底一致。
+ * </p>
+ *
+ * @see FxDynamicTable.vue 顶部查询 {@code a-card} 与下方表格 {@code a-card}
+ */
+:global(html[data-theme='dark']) .fx-card :deep(.ant-card-head),
+:global(html[data-theme='dark']) .fx-card :deep(.ant-card-body),
+:global(body[data-theme='dark']) .fx-card :deep(.ant-card-head),
+:global(body[data-theme='dark']) .fx-card :deep(.ant-card-body) {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
 .fx-query-form {
   display: flex;
   flex-direction: column;
@@ -73,6 +94,10 @@
   justify-content: flex-start;
 }
 
+:global(body[data-theme='dark']) .fx-query-row-extra {
+  border-top-color: var(--fx-border-color, #383e4a);
+}
+
 .fx-query-row-extra :deep(.ant-form-item) {
   margin: 0;
   margin-bottom: 16px;
@@ -102,6 +127,10 @@
   flex-shrink: 0;
   overflow-x: auto;
   overflow-y: visible;
+}
+
+:global(body[data-theme='dark']) .fx-table-toolbar-row {
+  background: var(--fx-bg-container, #1c1e24);
 }
 
 .fx-table-toolbar-left {
@@ -140,6 +169,10 @@
   height: 100%;
   padding: 0 16px 16px 16px;
   box-sizing: border-box;
+}
+
+:global(body[data-theme='dark']) .fx-table-content {
+  background: var(--fx-bg-container, #1c1e24);
 }
 
 .fx-dynamic-table-wrap {
@@ -253,6 +286,10 @@
   justify-content: flex-end;
   /* 顶部 12px，其余为 0（外层已有 padding） */
   padding: 12px 0 0 0;
+}
+
+:global(body[data-theme='dark']) .fx-table-pagination {
+  background: var(--fx-bg-container, #1c1e24);
 }
 
 .fx-table-pagination :deep(.ant-pagination) {

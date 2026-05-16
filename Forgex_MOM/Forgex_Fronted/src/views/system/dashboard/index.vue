@@ -406,7 +406,7 @@ const getThemeColors = () => {
     textColorSecondary: getThemeToken('--fx-text-secondary', isDark.value ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'),
     borderColor: getThemeToken('--fx-border-color', isDark.value ? '#303030' : '#f0f0f0'),
     axisLineColor: isDark.value ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-    splitLineColor: getThemeToken('--fx-border-secondary', isDark.value ? '#1e293b' : '#eeeeee'),
+    splitLineColor: getThemeToken('--fx-border-secondary', isDark.value ? '#2f3540' : '#eeeeee'),
     tooltipBg: isDark.value ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.96)',
     
     // 图表背景色

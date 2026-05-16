@@ -27,10 +27,26 @@ export default {
     refresh: 'Refresh',
     resetDefault: 'Reset to Default',
     saveLayout: 'Save Layout',
+    componentLibrary: 'Component Library',
     hint: {
       edit: 'Drag and resize components, then save directly',
       view: 'Switch to edit mode to adjust component layout',
     },
+  },
+
+  library: {
+    title: 'Homepage Component Library',
+    searchPlaceholder: 'Search by code, name, or purpose',
+    scopeAll: 'All',
+    scopePublic: 'Public',
+    scopeTenant: 'Tenant',
+    scopeUser: 'Personal',
+    defaultGroup: 'Default Group',
+    empty: 'No available components',
+    favorite: 'Favorite',
+    selected: 'Added',
+    removed: 'Removed',
+    customPlaceholder: 'This widget is rendered by a frontend registered component; the catalog only controls availability.',
   },
 
   // Configuration Panel

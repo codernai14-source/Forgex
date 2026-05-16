@@ -68,6 +68,12 @@
           </template>
           {{ $t('personalHomepage.toolbar.resetDefault') }}
         </a-button>
+        <a-button v-if="editMode && mode === 'current'" @click="openComponentLibrary">
+          <template #icon>
+            <AppstoreOutlined />
+          </template>
+          {{ $t('personalHomepage.toolbar.componentLibrary') }}
+        </a-button>
         <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
           <template #icon>
             <SaveOutlined />
@@ -275,6 +281,20 @@
                       <div class="clock-widget__date">{{ nowDate }}</div>
                     </div>
                   </template>
+                  <template v-else>
+                    <div class="custom-widget">
+                      <div class="custom-widget__icon">
+                        <FxIcon :name="getComponentWidgetMeta(item.i)?.icon" :size="24" />
+                      </div>
+                      <div class="custom-widget__content">
+                        <div class="custom-widget__title">{{ getWidgetTitle(item.i) }}</div>
+                        <div class="custom-widget__desc">
+                          {{ getComponentWidgetMeta(item.i)?.useDesc || getWidgetSubtitle(item.i) || $t('personalHomepage.library.customPlaceholder') }}
+                        </div>
+                        <div class="custom-widget__code">{{ item.i }}</div>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </article>
             </GridItem>
@@ -332,6 +352,107 @@
         </div>
       </aside>
     </div>
+
+    <a-drawer
+      v-model:open="componentLibraryOpen"
+      :title="$t('personalHomepage.library.title')"
+      width="720"
+      destroy-on-close
+      placement="right"
+      :body-style="{ padding: '16px' }"
+    >
+      <a-space direction="vertical" style="width: 100%" :size="12">
+        <a-input-search
+          v-model:value="componentSearchKeyword"
+          allow-clear
+          :placeholder="$t('personalHomepage.library.searchPlaceholder')"
+          @search="loadComponentLibrary"
+        />
+        <a-space wrap>
+          <a-radio-group v-model:value="componentScopeFilter" button-style="solid" @change="loadComponentLibrary">
+            <a-radio-button value="ALL">{{ $t('personalHomepage.library.scopeAll') }}</a-radio-button>
+            <a-radio-button value="PUBLIC">{{ $t('personalHomepage.library.scopePublic') }}</a-radio-button>
+            <a-radio-button value="TENANT">{{ $t('personalHomepage.library.scopeTenant') }}</a-radio-button>
+            <a-radio-button value="USER">{{ $t('personalHomepage.library.scopeUser') }}</a-radio-button>
+          </a-radio-group>
+          <a-button :loading="libraryLoading" @click="loadComponentLibrary">
+            <template #icon>
+              <ReloadOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.refresh') }}
+          </a-button>
+        </a-space>
+        <a-spin :spinning="libraryLoading">
+          <div v-if="componentGroups.length === 0" class="designer-empty">
+            <a-empty :description="$t('personalHomepage.library.empty')" />
+          </div>
+          <div v-else class="component-library">
+            <section v-for="group in componentGroups" :key="group.key" class="component-library__group">
+              <div class="component-library__group-header">
+                <h4>{{ group.label }}</h4>
+                <span>{{ group.items.length }}</span>
+              </div>
+              <div class="component-library__grid">
+                <article
+                  v-for="componentItem in group.items"
+                  :key="componentItem.componentCode"
+                  class="component-library__item"
+                  :class="{
+                    'component-library__item--selected': componentItem.selected && !componentItem.removed,
+                    'component-library__item--removed': componentItem.removed,
+                  }"
+                >
+                  <header class="component-library__item-header">
+                    <div class="component-library__icon">
+                      <FxIcon :name="componentItem.icon" :size="18" />
+                    </div>
+                    <div class="component-library__title">
+                      <strong>{{ componentItem.componentName }}</strong>
+                      <span>{{ componentItem.componentCode }}</span>
+                    </div>
+                  </header>
+                  <p class="component-library__desc">{{ componentItem.useDesc || componentItem.remark || '-' }}</p>
+                  <div class="component-library__meta">
+                    <a-tag v-if="componentItem.scopeLevel">{{ componentItem.scopeLevel }}</a-tag>
+                    <a-tag v-if="componentItem.favorite" color="gold">{{ $t('personalHomepage.library.favorite') }}</a-tag>
+                    <a-tag v-if="componentItem.selected && !componentItem.removed" color="green">{{ $t('personalHomepage.library.selected') }}</a-tag>
+                    <a-tag v-if="componentItem.removed" color="red">{{ $t('personalHomepage.library.removed') }}</a-tag>
+                  </div>
+                  <div class="component-library__actions">
+                    <a-button size="small" @click="toggleFavorite(componentItem)">
+                      <template #icon>
+                        <StarFilled v-if="componentItem.favorite" />
+                        <StarOutlined v-else />
+                      </template>
+                    </a-button>
+                    <a-button
+                      size="small"
+                      type="primary"
+                      :disabled="componentItem.selected && !componentItem.removed"
+                      @click="addComponentToHomepage(componentItem)"
+                    >
+                      <template #icon>
+                        <PlusOutlined />
+                      </template>
+                    </a-button>
+                    <a-button
+                      size="small"
+                      danger
+                      :disabled="componentItem.removed"
+                      @click="removeComponentFromHomepage(componentItem)"
+                    >
+                      <template #icon>
+                        <DeleteOutlined />
+                      </template>
+                    </a-button>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </a-spin>
+      </a-space>
+    </a-drawer>
   </div>
 </template>
 
@@ -346,8 +467,10 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   DragOutlined,
   MessageOutlined,
+  PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
@@ -360,22 +483,28 @@ import dayjs from 'dayjs'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
 import { normalizeMediaUrl } from '@/utils/media'
 import {
+  addHomepageComponent,
   createDefaultPersonalHomepageConfig,
+  favoriteHomepageComponent,
   getCurrentPersonalHomepageConfig,
   getManagePersonalHomepageConfig,
   getPersonalHomepageSummary,
   getUserCommonMenus,
   getUserFavoriteMenus,
+  listEffectiveHomepageComponents,
   mergePersonalHomepageConfig,
+  removeHomepageComponent,
   resetCurrentPersonalHomepageConfig,
   saveCurrentPersonalHomepageConfig,
   saveManagePersonalHomepageConfig,
   toggleUserFavoriteMenu,
+  type HomepageComponentVO,
   type PersonalHomepageConfig,
   type PersonalMenuEntry,
   type PersonalHomepageScopeLevel,
   type PersonalHomepageSummaryVO,
 } from '@/api/system/personalHomepage'
+import FxIcon from '@/components/common/FxIcon.vue'
 import { listUnreadMessages, markMessageRead, type SysMessageVO } from '@/api/system/message'
 import { noticeApi, type SysNotice } from '@/api/system/notice'
 import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
@@ -439,6 +568,11 @@ const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWid
 const now = ref(dayjs())
 const syncingGrid = ref(false)
 const summary = ref<PersonalHomepageSummaryVO | null>(null)
+const componentLibraryOpen = ref(false)
+const libraryLoading = ref(false)
+const componentSearchKeyword = ref('')
+const componentScopeFilter = ref<'ALL' | 'PUBLIC' | 'TENANT' | 'USER'>('ALL')
+const componentLibrary = ref<HomepageComponentVO[]>([])
 let clockTimer: number | undefined
 const MAX_COMMON_MENU_COUNT = 6
 
@@ -560,6 +694,16 @@ const widgetMetaMap: Record<string, { icon: any }> = {
   currentTime: { icon: ClockCircleOutlined },
 }
 
+const widgetDefaults: Record<string, { x: number; y: number; w: number; h: number; orderNum: number; minW: number; minH: number }> = {
+  commonMenus: { x: 0, y: 0, w: 6, h: 4, orderNum: 10, minW: 2, minH: 2 },
+  myFavorites: { x: 0, y: 4, w: 6, h: 4, orderNum: 20, minW: 2, minH: 2 },
+  pendingApprovals: { x: 6, y: 0, w: 6, h: 4, orderNum: 30, minW: 2, minH: 2 },
+  calendar: { x: 6, y: 4, w: 3, h: 4, orderNum: 40, minW: 2, minH: 2 },
+  currentTime: { x: 9, y: 4, w: 3, h: 3, orderNum: 50, minW: 2, minH: 2 },
+  messages: { x: 0, y: 8, w: 6, h: 4, orderNum: 60, minW: 2, minH: 2 },
+  notices: { x: 6, y: 8, w: 6, h: 4, orderNum: 70, minW: 2, minH: 2 },
+}
+
 // 国际化：组件标题
 const widgetTitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.title',
@@ -624,6 +768,44 @@ const orderedWidgets = computed(() => {
 })
 
 const visibleWidgets = computed(() => orderedWidgets.value.filter(widget => widget.visible))
+
+const componentGroups = computed(() => {
+  const groups = new Map<string, { key: string; label: string; items: HomepageComponentVO[] }>()
+  for (const item of componentLibrary.value) {
+    if (componentScopeFilter.value !== 'ALL' && item.scopeLevel !== componentScopeFilter.value) {
+      continue
+    }
+    const keyword = componentSearchKeyword.value.trim().toLowerCase()
+    if (keyword) {
+      const matched = [item.componentCode, item.componentName, item.useDesc, item.categoryName]
+        .filter(Boolean)
+        .some(text => String(text).toLowerCase().includes(keyword))
+      if (!matched) {
+        continue
+      }
+    }
+    const key = item.categoryCode || item.categoryName || 'default'
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        label: item.categoryName || item.categoryCode || t('personalHomepage.library.defaultGroup'),
+        items: [],
+      })
+    }
+    groups.get(key)!.items.push(item)
+  }
+  return Array.from(groups.values()).map(group => ({
+    ...group,
+    items: group.items.sort((left, right) => {
+      const leftOrder = Number(left.orderNum ?? 0)
+      const rightOrder = Number(right.orderNum ?? 0)
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder
+      }
+      return left.componentCode.localeCompare(right.componentCode)
+    }),
+  }))
+})
 
 const currentColNum = computed(() => {
   if (viewportWidth.value < 768) {
@@ -737,6 +919,10 @@ function getWidgetEmptyText(widgetKey: string) {
   return i18nKey ? t(i18nKey) : ''
 }
 
+function getComponentWidgetMeta(componentCode: string) {
+  return componentLibrary.value.find(item => item.componentCode === componentCode) || null
+}
+
 function findWidget(widgetKey: string) {
   return config.value.widgets.find(widget => widget.key === widgetKey)
 }
@@ -837,6 +1023,121 @@ async function saveConfig() {
     console.error('保存个人首页配置失败:', error)
   } finally {
     saving.value = false
+  }
+}
+
+function openComponentLibrary() {
+  componentLibraryOpen.value = true
+  loadComponentLibrary()
+}
+
+async function loadComponentLibrary() {
+  if (props.mode !== 'current') {
+    componentLibrary.value = []
+    return
+  }
+  libraryLoading.value = true
+  try {
+    const list = await listEffectiveHomepageComponents({
+      moduleCode: props.moduleCode,
+      keyword: componentSearchKeyword.value || undefined,
+      scopeLevel: componentScopeFilter.value === 'ALL' ? undefined : componentScopeFilter.value,
+    })
+    componentLibrary.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('load homepage component library failed:', error)
+    componentLibrary.value = []
+  } finally {
+    libraryLoading.value = false
+  }
+}
+
+function getWidgetDefaultLayout(widgetKey: string) {
+  const maxY = Math.max(0, ...config.value.widgets.map(item => Number(item.y || 0) + Number(item.h || 3)))
+  return widgetDefaults[widgetKey] || {
+    x: 0,
+    y: maxY,
+    w: 6,
+    h: 4,
+    orderNum: Math.max(0, ...config.value.widgets.map(item => Number(item.orderNum || 0))) + 10,
+    minW: 3,
+    minH: 2,
+  }
+}
+
+function safeParseParams(params?: string) {
+  if (!params) {
+    return {}
+  }
+  try {
+    return JSON.parse(params)
+  } catch (error) {
+    return {}
+  }
+}
+
+function ensureWidgetExists(componentItem: HomepageComponentVO) {
+  const existing = findWidget(componentItem.componentCode)
+  if (existing) {
+    return existing
+  }
+  const defaults = getWidgetDefaultLayout(componentItem.componentCode)
+  const widget = {
+    key: componentItem.componentCode,
+    title: componentItem.componentName,
+    visible: true,
+    x: defaults.x,
+    y: defaults.y,
+    w: defaults.w,
+    h: defaults.h,
+    minW: defaults.minW,
+    minH: defaults.minH,
+    orderNum: defaults.orderNum,
+    params: safeParseParams(componentItem.params),
+  }
+  config.value.widgets = [...config.value.widgets, widget]
+  syncGridFromConfig()
+  return widget
+}
+
+async function toggleFavorite(componentItem: HomepageComponentVO) {
+  try {
+    await favoriteHomepageComponent({
+      componentCode: componentItem.componentCode,
+      favorite: !componentItem.favorite,
+      moduleCode: props.moduleCode,
+    })
+    await loadComponentLibrary()
+  } catch (error) {
+    console.error('toggle homepage component favorite failed:', error)
+  }
+}
+
+async function addComponentToHomepage(componentItem: HomepageComponentVO) {
+  try {
+    await addHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: props.moduleCode })
+    const widget = ensureWidgetExists(componentItem)
+    widget.visible = true
+    widget.title = componentItem.componentName
+    syncGridFromConfig()
+    await loadComponentLibrary()
+  } catch (error) {
+    console.error('add homepage component failed:', error)
+  }
+}
+
+async function removeComponentFromHomepage(componentItem: HomepageComponentVO) {
+  try {
+    await removeHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: props.moduleCode })
+    config.value.widgets = config.value.widgets.map(widget => (
+      widget.key === componentItem.componentCode
+        ? { ...widget, visible: false }
+        : widget
+    ))
+    syncGridFromConfig()
+    await loadComponentLibrary()
+  } catch (error) {
+    console.error('remove homepage component failed:', error)
   }
 }
 

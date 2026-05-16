@@ -4,8 +4,14 @@
   height: 40px;
   padding: 0 8px;
   background: var(--fx-header-bg, #ffffff);
-  border-bottom: 1px solid var(--fx-border-color, #f0f0f0);
+  border-top: 1px solid var(--fx-top-divider-color, var(--fx-border-color, #f0f0f0));
+  border-bottom: 0;
   overflow: hidden;
+}
+
+:global(html[data-theme='dark']) .app-tabbar,
+:global(body[data-theme='dark']) .app-tabbar {
+  background: #14161a;
 }
 
 .tabbar-inner {
@@ -90,6 +96,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tab-icon {
+  color: currentColor;
 }
 
 .tab-close {
