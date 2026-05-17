@@ -15,6 +15,8 @@ package com.forgex.basic;
 
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.api.feign.CalendarReminderFeignClient;
+import com.forgex.common.api.feign.IntegrationInternalEmployeeFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalMaterialFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
@@ -43,8 +45,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableFeignClients(clients = {
         EncodeRuleFeignClient.class,
         AuthPermClient.class,
+        CalendarReminderFeignClient.class,
         SysTenantFeignClient.class,
         WorkflowExecutionFeignClient.class,
+        IntegrationInternalEmployeeFeignClient.class,
         IntegrationInternalMaterialFeignClient.class,
         IntegrationInternalSupplierFeignClient.class
 })

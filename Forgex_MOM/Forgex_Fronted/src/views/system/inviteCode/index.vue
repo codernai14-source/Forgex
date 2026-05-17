@@ -1,90 +1,72 @@
-<!--
-  - Copyright 2026 coder_nai@163.com
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  - http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  -->
-
 <template>
-  <div class="page-wrap">
-    <a-card class="content-card" :bordered="false">
-      <div class="table-area">
-        <fx-dynamic-table
-          ref="tableRef"
-          :table-code="'InviteCodeTable'"
-          :request="handleRequest"
-          :dict-options="dictOptions"
-          row-key="id"
-        >
-          <template #toolbar>
-            <a-space>
-              <a-button data-guide-id="sys-invite-add" type="primary" @click="openAdd" v-permission="'sys:invite-code:add'">
-                <template #icon><PlusOutlined /></template>
-                {{ t('system.inviteCode.add') }}
-              </a-button>
-            </a-space>
-          </template>
+  <div class="page-wrap fx-sys-invite-code-page">
+    <div class="table-area">
+      <fx-dynamic-table
+        ref="tableRef"
+        table-code="InviteCodeTable"
+        :request="handleRequest"
+        :dict-options="dictOptions"
+        row-key="id"
+      >
+        <template #toolbar>
+          <a-space>
+            <a-button data-guide-id="sys-invite-add" type="primary" @click="openAdd" v-permission="'sys:invite-code:add'">
+              <template #icon><PlusOutlined /></template>
+              {{ t('system.inviteCode.add') }}
+            </a-button>
+          </a-space>
+        </template>
 
-          <template #status="{ record }">
-            <a-tag :color="getStatusColor(record)">
-              {{ getStatusText(record) }}
-            </a-tag>
-          </template>
+        <template #status="{ record }">
+          <a-tag :color="getStatusColor(record)">
+            {{ getStatusText(record) }}
+          </a-tag>
+        </template>
 
-          <template #action="{ record }">
-            <a-space wrap>
-              <a-button type="link" size="small" @click="copyCode(record.inviteCode)">
-                {{ t('common.copy') }}
-              </a-button>
-              <a-button type="link" size="small" @click="showRecords(record)">
-                {{ t('common.usageRecord') }}
-              </a-button>
-              <a-popconfirm
-                :title="t('system.inviteCode.confirmDisable')"
-                :ok-text="t('common.confirm')"
-                :cancel-text="t('common.cancel')"
-                @confirm="handleDisable(record.id)"
+        <template #action="{ record }">
+          <a-space wrap>
+            <a-button type="link" size="small" @click="copyCode(record.inviteCode)">
+              {{ t('common.copy') }}
+            </a-button>
+            <a-button type="link" size="small" @click="showRecords(record)">
+              {{ t('common.usageRecord') }}
+            </a-button>
+            <a-popconfirm
+              :title="t('system.inviteCode.confirmDisable')"
+              :ok-text="t('common.confirm')"
+              :cancel-text="t('common.cancel')"
+              @confirm="handleDisable(record.id)"
+              :disabled="record.status !== true"
+            >
+              <a-button
+                type="link"
+                size="small"
+                danger
+                v-permission="'sys:invite-code:edit'"
                 :disabled="record.status !== true"
               >
-                <a-button
-                  type="link"
-                  size="small"
-                  danger
-                  v-permission="'sys:invite-code:edit'"
-                  :disabled="record.status !== true"
-                >
-                  {{ t('common.disable') }}
-                </a-button>
-              </a-popconfirm>
-              <a-popconfirm
-                :title="t('system.inviteCode.confirmDelete')"
-                :ok-text="t('common.confirm')"
-                :cancel-text="t('common.cancel')"
-                @confirm="handleDelete(record.id)"
+                {{ t('common.disable') }}
+              </a-button>
+            </a-popconfirm>
+            <a-popconfirm
+              :title="t('system.inviteCode.confirmDelete')"
+              :ok-text="t('common.confirm')"
+              :cancel-text="t('common.cancel')"
+              @confirm="handleDelete(record.id)"
+            >
+              <a-button
+                type="link"
+                size="small"
+                danger
+                v-permission="'sys:invite-code:delete'"
               >
-                <a-button
-                  type="link"
-                  size="small"
-                  danger
-                  v-permission="'sys:invite-code:delete'"
-                >
-                  {{ t('common.delete') }}
-                </a-button>
-              </a-popconfirm>
-            </a-space>
-          </template>
-        </fx-dynamic-table>
-      </div>
-    </a-card>
+                {{ t('common.delete') }}
+              </a-button>
+            </a-popconfirm>
+          </a-space>
+        </template>
+      </fx-dynamic-table>
+    </div>
 
     <BaseFormDialog
       v-model:open="addVisible"
@@ -108,11 +90,7 @@
             :tree-data="treeData"
             :placeholder="t('system.inviteCode.form.department')"
             tree-default-expand-all
-            :field-names="{
-              children: 'children',
-              label: 'deptName',
-              value: 'id',
-            }"
+            :field-names="{ children: 'children', label: 'deptName', value: 'id' }"
             allow-clear
           />
         </a-form-item>
@@ -231,14 +209,7 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
-import {
-  getInviteCodePage,
-  createInviteCode,
-  disableInviteCode,
-  deleteInviteCode,
-  getInviteRecordPage,
-} from '@/api/system/inviteCode'
-
+import { getInviteCodePage, createInviteCode, disableInviteCode, deleteInviteCode, getInviteRecordPage } from '@/api/system/inviteCode'
 import type { InviteCodeSaveParam, InviteRecord } from './types'
 
 const currentTenantId = ref<string | null>(null)
@@ -256,12 +227,7 @@ const dictOptions = reactive<Record<string, any[]>>({
   role: [],
 })
 
-
-const handleRequest = async (payload: {
-  page: { current: number; pageSize: number }
-  query: Record<string, any>
-  sorter?: { field?: string; order?: string }
-}) => {
+const handleRequest = async (payload: { page: { current: number; pageSize: number }; query: Record<string, any>; sorter?: { field?: string; order?: string } }) => {
   if (!currentTenantId.value) {
     return { records: [], total: 0 }
   }
@@ -305,14 +271,12 @@ const formLoading = ref(false)
 const formRef = ref()
 const codeVisible = ref(false)
 const createdCode = ref('')
-
 const formData = ref<InviteCodeSaveParam>({
   departmentId: '',
   roleId: '',
   expireTime: '',
   maxRegisterCount: 10,
 })
-
 const rules = computed(() => ({
   departmentId: [{ required: true, message: t('system.inviteCode.form.department'), trigger: 'change' }],
   roleId: [{ required: true, message: t('system.inviteCode.form.role'), trigger: 'change' }],
@@ -466,14 +430,8 @@ async function loadRoles() {
   if (!currentTenantId.value) return
   try {
     const data = await getRoleList({ tenantId: currentTenantId.value, status: true })
-    roleList.value = (Array.isArray(data) ? data : []).map((role: any) => ({
-      ...role,
-      id: String(role.id),
-    }))
-    dictOptions.role = roleList.value.map((role: any) => ({
-      label: role.roleName,
-      value: role.id,
-    }))
+    roleList.value = (Array.isArray(data) ? data : []).map((role: any) => ({ ...role, id: String(role.id) }))
+    dictOptions.role = roleList.value.map((role: any) => ({ label: role.roleName, value: role.id }))
   } catch (e) {
     console.error(e)
   }

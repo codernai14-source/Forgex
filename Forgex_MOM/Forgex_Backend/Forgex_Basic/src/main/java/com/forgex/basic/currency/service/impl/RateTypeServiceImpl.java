@@ -9,6 +9,7 @@ import com.forgex.basic.currency.mapper.MdmExchangeRateTypeMapper;
 import com.forgex.basic.currency.service.IRateTypeService;
 import com.forgex.basic.enums.BasicPromptEnum;
 import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,7 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
     public Long create(MdmExchangeRateType param) {
         validate(param, true);
         param.setRateTypeCode(normalizeCode(param.getRateTypeCode()));
-        param.setTenantId(PUBLIC_TENANT_ID);
+        param.setTenantId(currentTenant());
         param.setStatus(param.getStatus() == null ? 1 : param.getStatus());
         param.setIsDefault(Boolean.TRUE.equals(param.getIsDefault()));
         if (Boolean.TRUE.equals(param.getIsDefault())) {
@@ -93,7 +94,7 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
             clearDefault(param.getId());
         }
         param.setRateTypeCode(exists.getRateTypeCode());
-        param.setTenantId(PUBLIC_TENANT_ID);
+        param.setTenantId(exists.getTenantId() == null ? currentTenant() : exists.getTenantId());
         rateTypeMapper.updateById(param);
         return true;
     }
@@ -193,6 +194,11 @@ public class RateTypeServiceImpl extends ServiceImpl<MdmExchangeRateTypeMapper, 
 
     private String normalizeCode(String value) {
         return StringUtils.hasText(value) ? value.trim().toUpperCase() : null;
+    }
+
+    private Long currentTenant() {
+        Long tenantId = TenantContext.get();
+        return tenantId == null ? PUBLIC_TENANT_ID : tenantId;
     }
 
     private I18nBusinessException ex(BasicPromptEnum prompt) {

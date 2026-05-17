@@ -3,42 +3,32 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
+}
+
+.position-page__layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.position-page__sidebar,
+.position-page__main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.position-page__sidebar {
   padding: 16px;
-  box-sizing: border-box;
-  /* 仅裁横轴；纵向 avoid hidden，否则会裁掉底部独立分页栏 */
-  overflow-x: hidden;
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+  overflow: hidden;
 }
 
-.content-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.content-card :deep(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-}
-
-.content-card :deep(.ant-row) {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-  /* 左右两栏竖直等高，便于 FxDynamicTable 计算纵向 scroll 且与左侧树对齐 */
-  align-items: stretch;
-}
-
-/* 等高双栏：Ant Col 设为纵向 flex，避免右侧表格按内容高度溢出左侧视觉底线 */
-.content-card :deep(.ant-col.position-page__sidebar),
-.content-card :deep(.ant-col.position-page__main) {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
+:global(body[data-theme='dark']) .position-page__sidebar {
+  background: var(--fx-bg-container, #1c1e24);
 }
 
 .position-page__sidebar .card-title {
@@ -47,34 +37,18 @@
 
 .position-page__sidebar :deep(.tree-container) {
   flex: 1 1 auto;
-  /* 覆盖 DeptTree 默认 min-height:500px，否则行高随左侧占位抬升、与右侧不同步 */
   min-height: 0 !important;
   height: auto;
   overflow-y: auto;
 }
 
-/**
- * 右侧：表格区占满与左侧同高的列容器。
- */
-.position-page__main {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1 1 auto;
-  /* 锁住列高，分页与 FxDynamicTable 同屏；超出由表体 scroll.y 消化 */
-  overflow: hidden;
-}
-
-.position-page__main .table-area {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
+.position-page__main .table-area,
 .table-area {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
 }
 
 .table-area :deep(.fx-dynamic-table) {
@@ -89,44 +63,6 @@
   color: var(--fx-text-primary, #1d2129);
 }
 
-.search-area {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.detail-container {
-  padding-left: 16px;
-  height: 100%;
-  overflow-y: auto;
-}
-
-:deep(.fx-query-form) {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-:deep(.fx-query-fields-container) {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  position: relative;
-}
-
-:deep(.fx-query-fields) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  width: 100%;
-}
-
-:deep(.fx-query-fields :deep(.ant-form-item)) {
-  margin: 0;
-}
-
-:deep(.fx-query-actions) {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  margin-top: 12px;
+:deep(.fx-query-card) {
+  flex-shrink: 0;
 }

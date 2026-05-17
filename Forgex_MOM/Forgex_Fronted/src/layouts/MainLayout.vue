@@ -555,6 +555,7 @@ import type { FxGuideStep } from '../types/guide'
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
+const isFallbackRoute = computed(() => route.path.startsWith('/workspace/fallback/'))
 const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
@@ -2357,21 +2358,31 @@ function resetLayout() {
   layoutConfig.value = { ...DEFAULT_LAYOUT_CONFIG }
 }
 
+function applyCachedLayoutConfig() {
+  const cached = localStorage.getItem('fx-layout-config')
+  if (!cached) {
+    return false
+  }
+  try {
+    const parsed = JSON.parse(cached)
+    layoutConfig.value = normalizeLayoutConfig(parsed)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 async function loadLayout() {
   const account = sessionStorage.getItem('account')
   const tenantId = sessionStorage.getItem('tenantId')
+  const hasCachedLayout = applyCachedLayoutConfig()
   if (!account || !tenantId) {
-    layoutConfig.value = { ...DEFAULT_LAYOUT_CONFIG }
+    if (!hasCachedLayout) {
+      layoutConfig.value = { ...DEFAULT_LAYOUT_CONFIG }
+    }
     return
   }
   try {
-    const cached = localStorage.getItem('fx-layout-config')
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached)
-        layoutConfig.value = normalizeLayoutConfig(parsed)
-      } catch (e) {}
-    }
     const res = await getUserLayoutStyle({ account, tenantId })
     if (res) {
       layoutConfig.value = normalizeLayoutConfig(res)
@@ -2868,6 +2879,17 @@ onMounted(async () => {
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
+  }
+  if (isFallbackRoute.value) {
+    await loadLayout()
+    updateTabsByRoute(route.fullPath)
+    const bootstrapLoader = (window as any).__globalLoader
+    if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
+      window.requestAnimationFrame(() => {
+        bootstrapLoader.hide()
+      })
+    }
+    return
   }
   await Promise.all([
     loadLayout(),

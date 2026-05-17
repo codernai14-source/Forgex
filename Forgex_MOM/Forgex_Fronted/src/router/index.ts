@@ -40,6 +40,15 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
 }
 
 /**
+ * 空视图组件
+ * 用于路由组件加载失败时的默认显示。
+ */
+const EmptyView = {
+  name: 'RouteEmptyView',
+  render: () => h('div', { style: 'padding:16px;color:#9ca3af;' }, 'Page not available yet')
+}
+
+/**
  * 静态路由配置
  * 定义应用基础路由，包括登录页、初始化页、工作区和重定向路由。
  */
@@ -78,6 +87,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'profile.title', module: 'sys' } // 个人信息页
       },
       {
+        path: 'fallback/:kind(403|404|offline)',
+        name: 'WorkspaceFallback',
+        component: () => import('../views/fallback/index.vue'),
+        meta: { title: 'fallback.404.title', hidden: true }
+      },
+      {
         path: 'sys/config',
         name: 'SystemConfig',
         component: () => import('../views/system/config/index.vue'),
@@ -88,6 +103,12 @@ const routes: RouteRecordRaw[] = [
         name: 'SystemHomepageComponent',
         component: () => import('../views/system/homepageComponent/index.vue'),
         meta: { title: 'system.homepageComponent.title', module: 'sys' }
+      },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'WorkspaceNotFound',
+        component: EmptyView,
+        meta: { hidden: true, dynamicPending: true }
       }
     ]
   },
@@ -128,6 +149,10 @@ const routes: RouteRecordRaw[] = [
         next('/workspace') // 默认重定向到工作区
       }
     }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/workspace/fallback/404'
   }
 ]
 
@@ -144,6 +169,55 @@ const router = createRouter({
  * 用于防止路由恢复过程中出现无限循环。
  */
 let isRestoringRoutes = false
+const pendingRouteRestoreAttempts = new Map<string, number>()
+
+async function restoreDynamicRoutes(
+  account: string,
+  tenantId: string,
+  permissionStore: ReturnType<typeof usePermissionStore>,
+  forceBackend = false,
+) {
+  if (isRestoringRoutes) {
+    return false
+  }
+
+  isRestoringRoutes = true
+
+  try {
+    if (!forceBackend) {
+      const cached = permissionStore.restoreRoutesAndModules()
+
+      if (cached.routes.length > 0 || cached.modules.length > 0) {
+        console.log('[Guard] Restoring routes from cache')
+        await injectDynamicRoutes({
+          routes: cached.routes,
+          modules: cached.modules
+        })
+        return true
+      }
+    }
+
+    console.log('[Guard] Fetching routes from backend')
+    const payload = await getRoutes({ account, tenantId })
+    if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules)) {
+      console.log('[Guard] Routes fetched from backend successfully')
+
+      if (payload.buttons) {
+        permissionStore.setPermissions(payload.buttons)
+      }
+
+      await injectDynamicRoutes(payload)
+      return true
+    }
+
+    return false
+  } catch (error) {
+    console.error('[Guard] Route restoration failed:', error)
+    return false
+  } finally {
+    isRestoringRoutes = false
+  }
+}
 
 /**
  * 全局路由守卫
@@ -186,66 +260,48 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  if (to.path.startsWith('/workspace/fallback/')) {
+    next()
+    return
+  }
+
   // 如果未登录，跳转到登录页
   if (!account || !tenantId) {
     next('/login')
     return
   }
 
-  // 如果动态路由为空且不在恢复过程中，尝试恢复路由
-  if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
-    isRestoringRoutes = true
-
-    try {
-      // 优先从缓存恢复，避免不必要的 API 调用
-      const cached = permissionStore.restoreRoutesAndModules()
-
-      if (cached.routes.length > 0 || cached.modules.length > 0) {
-        console.log('[Guard] Restoring routes from cache')
-        
-        // 重新注入动态路由
-        await injectDynamicRoutes({
-          routes: cached.routes,
-          modules: cached.modules
+  if (to.name === 'WorkspaceNotFound' && to.meta?.dynamicPending) {
+    const restoreAttempts = pendingRouteRestoreAttempts.get(to.fullPath) || 0
+    if (restoreAttempts < 2) {
+      pendingRouteRestoreAttempts.set(to.fullPath, restoreAttempts + 1)
+      const restored = await restoreDynamicRoutes(account, tenantId, permissionStore, restoreAttempts > 0)
+      if (restored) {
+        next({
+          path: to.path,
+          query: to.query,
+          hash: to.hash,
+          replace: true
         })
-
-        isRestoringRoutes = false
-        // 路由已恢复，重新导航到目标路由
-        next({ ...to, replace: true })
         return
       }
+    }
 
-      // 如果缓存为空，尝试从后端获取
-      console.log('[Guard] No cached routes, fetching from backend')
-      try {
-        const payload = await getRoutes({ account, tenantId })
-        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules)) {
-          console.log('[Guard] Routes fetched from backend successfully')
-          
-          // 保存权限按钮
-          if (payload.buttons) {
-            permissionStore.setPermissions(payload.buttons)
-          }
-          
-          await injectDynamicRoutes(payload)
-          isRestoringRoutes = false
-          next({ ...to, replace: true })
-          return
-        }
-      } catch (e) {
-        console.error('[Guard] Failed to fetch routes from backend:', e)
-      }
+    pendingRouteRestoreAttempts.delete(to.fullPath)
+    next('/workspace/fallback/404')
+    return
+  }
 
-      // 如果都失败了，跳转到登录页
-      isRestoringRoutes = false
-      next('/login')
-      return
-    } catch (error) {
-      console.error('[Guard] Route restoration failed:', error)
-      isRestoringRoutes = false
-      next('/login')
+  // 如果动态路由为空且不在恢复过程中，尝试恢复路由
+  if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
+    const restored = await restoreDynamicRoutes(account, tenantId, permissionStore)
+    if (restored) {
+      next({ ...to, replace: true })
       return
     }
+
+    next('/login')
+    return
   }
 
   // 访问 /workspace 根路径时，重定向到个人主页
@@ -255,19 +311,12 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 如果已登录且路由已注入，直接放行
+  pendingRouteRestoreAttempts.delete(to.fullPath)
+  pendingRouteRestoreAttempts.delete(to.path)
   next()
 })
 
 export default router
-
-/**
- * 空视图组件
- * 用于路由组件加载失败时的默认显示。
- */
-const EmptyView = {
-  name: 'RouteEmptyView',
-  render: () => h('div', { style: 'padding:16px;color:#9ca3af;' }, 'Page not available yet')
-}
 
 /**
  * 模块代码映射
@@ -340,10 +389,17 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
     const stableComponentMap: Record<string, string> = {
       BasicDashboard: '../views/basic/dashboard/index.vue',
       BasicCustomer: '../views/basic/customer/index.vue',
+      BasicEmployee: '../views/basic/employee/index.vue',
+      BasicShift: '../views/basic/shift/index.vue',
       BasicSupplier: '../views/basic/supplier/index.vue',
+      BasicTeam: '../views/basic/team/index.vue',
+      BasicWorkshop: '../views/basic/workshop/index.vue',
+      BasicCurrency: '../views/basic/currency/index.vue',
       BasicEncodeRule: '../views/basic/encodeRule/index.vue',
       BasicMaterial: '../views/basic/material/index.vue',
+      BasicPackaging: '../views/basic/packaging/index.vue',
       BasicUnit: '../views/basic/unit/index.vue',
+      BasicWorkCalendar: '../views/basic/workCalendar/index.vue',
       BasicMaterialRaw: '../views/basic/material/index.vue',
       BasicMaterialSemiFinished: '../views/basic/material/index.vue',
       BasicMaterialFinished: '../views/basic/material/index.vue',

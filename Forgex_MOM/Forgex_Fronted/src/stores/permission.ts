@@ -7,7 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-const ROUTE_CACHE_VERSION = '20260513-job-menu-module-v1'
+const ROUTE_CACHE_VERSION = '20260517-basic-menu-route-v2'
 
 export const use权限Store = defineStore('permission', () => {
   // ============ State ============
@@ -69,6 +69,8 @@ export const use权限Store = defineStore('permission', () => {
     sessionStorage.setItem('permissions', JSON.stringify(perms))
   }
 
+  const setPermissions = set权限s
+
   /**
    * 添加权限。
    */
@@ -78,6 +80,8 @@ export const use权限Store = defineStore('permission', () => {
       sessionStorage.setItem('permissions', JSON.stringify(permissions.value))
     }
   }
+
+  const addPermission = add权限
 
   /**
    * 移除权限。
@@ -89,6 +93,8 @@ export const use权限Store = defineStore('permission', () => {
       sessionStorage.setItem('permissions', JSON.stringify(permissions.value))
     }
   }
+
+  const removePermission = remove权限
 
   /**
    * 设置路由列表。
@@ -209,11 +215,17 @@ export const use权限Store = defineStore('permission', () => {
     has权限,
     hasAny权限,
     hasAll权限s,
+    hasPermission: has权限,
+    hasAnyPermission: hasAny权限,
+    hasAllPermissions: hasAll权限s,
 
     // 操作
     set权限s,
+    setPermissions,
     add权限,
+    addPermission,
     remove权限,
+    removePermission,
     setRoutes,
     setModules,
     clear权限s,

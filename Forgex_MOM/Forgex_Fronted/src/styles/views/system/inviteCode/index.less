@@ -3,18 +3,10 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 16px;
-  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.content-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.content-card :deep(.ant-card-body) {
+.table-area {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -22,7 +14,7 @@
   height: 100%;
 }
 
-.table-area {
+.table-area :deep(.fx-dynamic-table) {
   flex: 1 1 auto;
   min-height: 0;
 }

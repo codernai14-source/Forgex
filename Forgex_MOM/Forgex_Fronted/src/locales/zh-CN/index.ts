@@ -17,6 +17,7 @@ import guide from './guide'
 import label from './label'
 import report from './report'
 import job from './job'
+import fallback from './fallback'
 
 export default {
   sys: {
@@ -38,6 +39,7 @@ export default {
   label,
   report,
   job,
+  fallback,
   personalHomepage,
   profile,
   operationLog,
