@@ -20,6 +20,7 @@ import com.forgex.basic.enums.BasicPromptEnum;
 import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
 import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
@@ -96,7 +97,7 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         param.setSourceCurrencyCode(normalizeCode(param.getSourceCurrencyCode()));
         param.setTargetCurrencyCode(normalizeCode(param.getTargetCurrencyCode()));
         param.setRateTypeCode(normalizeCode(param.getRateTypeCode()));
-        param.setTenantId(PUBLIC_TENANT_ID);
+        param.setTenantId(currentTenant());
         param.setApproveStatus(param.getApproveStatus() == null ? APPROVE_PENDING : param.getApproveStatus());
         param.setExpireDate(param.getExpireDate() == null ? FOREVER : param.getExpireDate());
         ensureNoOverlap(param, null);
@@ -120,7 +121,7 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         exists.setSourceCurrencyCode(normalizeCode(param.getSourceCurrencyCode()));
         exists.setTargetCurrencyCode(normalizeCode(param.getTargetCurrencyCode()));
         exists.setRateTypeCode(normalizeCode(param.getRateTypeCode()));
-        exists.setTenantId(PUBLIC_TENANT_ID);
+        exists.setTenantId(exists.getTenantId() == null ? currentTenant() : exists.getTenantId());
         exists.setExpireDate(param.getExpireDate() == null ? FOREVER : param.getExpireDate());
         ensureNoOverlap(exists, exists.getId());
         exchangeRateMapper.updateById(exists);
@@ -359,12 +360,17 @@ public class ExchangeRateServiceImpl extends ServiceImpl<MdmCurrencyExchangeRate
         log.setRateId(rateId);
         log.setOperationType(type);
         log.setOperationContent(content);
-        log.setTenantId(PUBLIC_TENANT_ID);
+        log.setTenantId(currentTenant());
         logMapper.insert(log);
     }
 
     private String normalizeCode(String value) {
         return StringUtils.hasText(value) ? value.trim().toUpperCase() : null;
+    }
+
+    private Long currentTenant() {
+        Long tenantId = TenantContext.get();
+        return tenantId == null ? PUBLIC_TENANT_ID : tenantId;
     }
 
     private I18nBusinessException ex(BasicPromptEnum prompt) {

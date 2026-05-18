@@ -128,7 +128,8 @@
 import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { userApi } from '@/api/system/user'
-import type { User } from '../types'import { translateLegacyText } from '@/utils/legacyI18n'
+import type { User } from '../types'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 interface Props {
   open: boolean
@@ -178,9 +179,4 @@ async function loadUserDetail() {
 }
 </script>
 
-<style scoped lang="less">
-:deep(.ant-descriptions-item-label) {
-  width: 120px;
-  font-weight: 500;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/user/components/user-detail.less"></style>

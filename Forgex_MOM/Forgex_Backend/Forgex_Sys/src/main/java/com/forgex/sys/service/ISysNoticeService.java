@@ -72,6 +72,8 @@ public interface ISysNoticeService extends IService<SysNotice> {
      */
     List<SysNoticeDTO> listPopupNotices();
 
+    List<SysNoticeDTO> listActiveNotices(Integer maxCount);
+
     /**
      * 确认当前用户已弹出通知。
      *

@@ -45,7 +45,8 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, ThunderboltOutlined } from '@ant-design/icons-vue'
 import { labelBindingApi } from '@/api/label/binding'
-import BindingFormDialog from './components/BindingFormDialog.vue'
+import BindingFormDialog from './components/BindingFormDialog.vue'
+
 const { t } = useI18n()
 const tableRef = ref()
 const formVisible = ref(false)
@@ -105,11 +106,6 @@ function getPriorityColor(priority: number) {
 }
 </script>
 
-<style scoped lang="less">
-.page-container {
-  padding: 16px;
-  height: 100%;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/binding/index.less"></style>
 
 

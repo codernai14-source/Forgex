@@ -1,0 +1,77 @@
+.api-config-management {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.api-config-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.api-config-panel--editor,
+.api-config-panel--param {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.api-config-panel--param > :last-child {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.api-config-panel--param {
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.api-config-panel--param > .ant-spin-nested-loading,
+.api-config-panel--param > .ant-spin-nested-loading > .ant-spin-container {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+
+.api-config-param-content {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
+.panel-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: 20px;
+  background: var(--fx-bg-container, #ffffff);
+  box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
+
+  h2 {
+    margin: 0 0 4px;
+    color: var(--fx-text-primary, #111827);
+  }
+
+  p {
+    margin: 0;
+    color: var(--fx-text-secondary, #6b7280);
+  }
+}
+
+.danger-link {
+  color: #ff4d4f;
+}

@@ -136,7 +136,8 @@
 import { ref, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { labelTemplateApi } from '@/api/label/template'
-import LabelTemplateEditor from './LabelTemplateEditor.vue'import { translateLegacyText } from '@/utils/legacyI18n'
+import LabelTemplateEditor from './LabelTemplateEditor.vue'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const props = defineProps<{
   visible: boolean
@@ -258,40 +259,4 @@ function handleCancel() {
 }
 </script>
 
-<style scoped lang="less">
-.section-card {
-  :deep(.ant-card-head) {
-    background-color: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  :deep(.ant-card-body) {
-    padding: 16px;
-  }
-}
-
-.editor-container {
-  min-height: 400px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.drawer-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-:deep(.ant-form-item-label > label) {
-  font-weight: 500;
-}
-
-:deep(.ant-select-selector) {
-  .ant-tag {
-    margin-right: 0;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/template/components/template-form-dialog.less"></style>

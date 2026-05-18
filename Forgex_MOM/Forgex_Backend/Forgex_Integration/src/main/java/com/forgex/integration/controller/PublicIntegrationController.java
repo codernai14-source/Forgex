@@ -1,6 +1,7 @@
 package com.forgex.integration.controller;
 
 import com.forgex.common.web.R;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.dto.ApiTaskResultDTO;
 import com.forgex.integration.domain.model.IntegrationExecuteResult;
 import com.forgex.integration.domain.param.PublicInvokeRequest;
@@ -60,7 +61,7 @@ public class PublicIntegrationController {
     public R<ApiTaskResultDTO> queryTask(@PathVariable String taskId) {
         ApiTaskResultDTO result = ((ApiGatewayServiceImpl) apiGatewayService).getTaskResult(taskId);
         if (result == null) {
-            return R.fail();
+            return R.fail(IntegrationPromptEnum.API_TASK_NOT_FOUND);
         }
         return R.ok(result);
     }

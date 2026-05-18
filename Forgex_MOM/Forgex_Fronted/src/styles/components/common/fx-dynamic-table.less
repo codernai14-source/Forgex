@@ -1,0 +1,303 @@
+/**
+ * FxDynamicTable 公共动态表格组件样式。
+ * <p>
+ * 由 {@code FxDynamicTable.vue} 通过 {@code scoped} 引入，类名仅作用于该组件根节点子树。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @see src/components/common/FxDynamicTable.vue
+ */
+
+.fx-dynamic-table {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.fx-card {
+  background: var(--fx-bg-container, #ffffff);
+  border-radius: var(--fx-radius-lg, 8px);
+}
+
+:global(body[data-theme='dark']) .fx-card {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
+/**
+ * 查询条件卡片（{@code fx-query-card}）与表格卡片共用 {@code fx-card}。
+ * <p>
+ * Ant Design Vue 在暗色算法下会为 {@code .ant-card-body} 单独计算偏冷的容器底色，
+ * 若仅设置外层 {@code .ant-card} 背景则视觉上仍为「蓝灰条带」；此处与 {@code fx-table-card}
+ * 一并拉回 {@code --fx-bg-container}，与布局 {@code #14161a} 中性基底一致。
+ * </p>
+ *
+ * @see FxDynamicTable.vue 顶部查询 {@code a-card} 与下方表格 {@code a-card}
+ */
+:global(html[data-theme='dark']) .fx-card :deep(.ant-card-head),
+:global(html[data-theme='dark']) .fx-card :deep(.ant-card-body),
+:global(body[data-theme='dark']) .fx-card :deep(.ant-card-head),
+:global(body[data-theme='dark']) .fx-card :deep(.ant-card-body) {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
+.fx-query-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.fx-query-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+}
+
+.fx-query-row-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex: 1;
+  max-width: calc(100% - 200px);
+}
+
+.fx-query-row-content :deep(.ant-form-item) {
+  margin: 0;
+  margin-bottom: 0;
+}
+
+.fx-query-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.fx-query-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.fx-query-row-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fx-border-color, #e8e8e8);
+  width: 100%;
+  justify-content: flex-start;
+}
+
+:global(body[data-theme='dark']) .fx-query-row-extra {
+  border-top-color: var(--fx-border-color, #383e4a);
+}
+
+.fx-query-row-extra :deep(.ant-form-item) {
+  margin: 0;
+  margin-bottom: 16px;
+}
+
+.fx-table-card {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fx-table-card :deep(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* 工具栏与列设置同一行：左侧工具栏、右侧列设置 */
+.fx-table-toolbar-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 8px 16px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+:global(body[data-theme='dark']) .fx-table-toolbar-row {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
+.fx-table-toolbar-left {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.fx-table-toolbar-left :deep(.ant-space) {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.fx-table-toolbar-left :deep(.ant-btn) {
+  min-height: 32px;
+  height: auto;
+  white-space: normal;
+}
+
+.fx-table-toolbar-right {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* 表格内容区：与上方工具栏留出间距（toolbar-row 已设 margin-bottom） */
+.fx-table-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+}
+
+:global(body[data-theme='dark']) .fx-table-content {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
+.fx-dynamic-table-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-spin-container),
+.fx-dynamic-table-wrap :deep(.ant-table),
+.fx-dynamic-table-wrap :deep(.ant-table-container) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table) {
+  max-width: 100%;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th) {
+  position: relative;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-cell-fix-right),
+.fx-dynamic-table-wrap :deep(.ant-table-cell-fix-left) {
+  background: var(--fx-bg-container, #ffffff);
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-tbody > tr > td.ant-table-cell-fix-right) {
+  z-index: 2;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-cell-fix-right .fx-action-group) {
+  max-width: 100%;
+  justify-content: flex-start;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-title) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  padding-right: 8px;
+  cursor: grab;
+  user-select: none;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-title:active) {
+  cursor: grabbing;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-title.is-dragging) {
+  opacity: 0.65;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-title-text) {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-resize-handle) {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  bottom: -12px;
+  width: 10px;
+  cursor: col-resize;
+  z-index: 3;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-resize-handle::after) {
+  position: absolute;
+  top: 20%;
+  right: 4px;
+  bottom: 20%;
+  width: 1px;
+  background: transparent;
+  content: '';
+  transition: background-color 0.2s;
+}
+
+.fx-dynamic-table-wrap :deep(.fx-table-th-resize-handle:hover::after) {
+  background: var(--fx-primary, #1677ff);
+}
+
+:global(.fx-column-resizing) {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+:global(.fx-column-header-dragging) {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+/* 分页区域间距（flex-shrink 避免在纵向填满布局中被挤出可视区） */
+.fx-table-pagination {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  /* 顶部 12px，其余为 0（外层已有 padding） */
+  padding: 12px 0 0 0;
+}
+
+:global(body[data-theme='dark']) .fx-table-pagination {
+  background: var(--fx-bg-container, #1c1e24);
+}
+
+.fx-table-pagination :deep(.ant-pagination) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* 分页控件之间的间距 */
+  gap: 16px;
+}

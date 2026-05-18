@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,7 +52,7 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
     @Override
     public Map<String, Object> assembleInbound(ApiDefinitionSnapshot snapshot, Map<String, Object> rawPayload) {
         Map<String, Object> source = rawPayload == null ? Map.of() : rawPayload;
-        return applyMappings(snapshot.getInboundMappings(), source);
+        return applyBodyMappings(snapshot.getInboundMappings(), source);
     }
 
     /**
@@ -112,6 +113,18 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
             .build();
     }
 
+    @Override
+    public Map<String, Object> assembleOutboundResponse(ApiDefinitionSnapshot snapshot,
+                                                        Map<String, Object> rawPayload,
+                                                        ApiOutboundTargetDTO target) {
+        List<ApiParamMappingDTO> mappings = resolveResponseMappings(snapshot, target);
+        if (mappings == null || mappings.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Object> source = rawPayload == null ? Map.of() : rawPayload;
+        return applyBodyMappings(mappings, source);
+    }
+
     private List<ApiParamMappingDTO> resolveOutboundMappings(ApiDefinitionSnapshot snapshot, ApiOutboundTargetDTO target) {
         if (target == null) {
             return snapshot.getOutboundMappings();
@@ -125,13 +138,26 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
             .toList();
     }
 
-    private Map<String, Object> applyMappings(List<ApiParamMappingDTO> mappings, Map<String, Object> source) {
+    private List<ApiParamMappingDTO> resolveResponseMappings(ApiDefinitionSnapshot snapshot, ApiOutboundTargetDTO target) {
+        List<ApiParamMappingDTO> mappings = snapshot.getInboundMappings();
+        if (target == null || mappings == null) {
+            return mappings == null ? List.of() : mappings;
+        }
+        return mappings.stream()
+            .filter(item -> target.getId().equals(item.getOutboundTargetId()))
+            .toList();
+    }
+
+    private Map<String, Object> applyBodyMappings(List<ApiParamMappingDTO> mappings, Map<String, Object> source) {
         Map<String, Object> target = new LinkedHashMap<>();
         if (mappings == null || mappings.isEmpty()) {
             target.putAll(source);
             return target;
         }
         for (ApiParamMappingDTO mapping : mappings) {
+            if (ApiMappingTargetScopeEnum.fromValue(mapping.getTargetScope()) != ApiMappingTargetScopeEnum.BODY) {
+                continue;
+            }
             Object value = resolveValue(mapping, source);
             if (value == null) {
                 continue;
@@ -146,12 +172,37 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
         Object value = switch (valueType) {
             case CONSTANT -> mapping.getConstantValue();
             case DEFAULT -> mapping.getDefaultValue();
-            case SOURCE -> getNestedValue(source, mapping.getSourceFieldPath());
+            case SOURCE -> resolveSourceValue(mapping.getSourceFieldPath(), mapping.getTargetFieldPath(), source);
         };
         if (value == null && StringUtils.hasText(mapping.getDefaultValue())) {
             value = mapping.getDefaultValue();
         }
         return applyTransform(mapping.getTransformRule(), value);
+    }
+
+    private Object resolveSourceValue(String sourcePath, String targetPath, Map<String, Object> source) {
+        CollectionMappingPath collectionPath = resolveCollectionMappingPath(sourcePath, targetPath, source);
+        if (collectionPath == null) {
+            return getNestedValue(source, sourcePath);
+        }
+        Object collectionValue = getNestedValue(source, collectionPath.sourceCollectionPath());
+        if (!(collectionValue instanceof List<?> sourceList)) {
+            return null;
+        }
+        List<Object> result = new ArrayList<>();
+        for (Object item : sourceList) {
+            if (!(item instanceof Map<?, ?> itemMap)) {
+                continue;
+            }
+            Object leafValue = getNestedValue(castMap(itemMap), collectionPath.sourceLeafPath());
+            if (leafValue == null) {
+                continue;
+            }
+            Map<String, Object> targetItem = new LinkedHashMap<>();
+            setNestedValue(targetItem, collectionPath.targetLeafPath(), leafValue);
+            result.add(targetItem);
+        }
+        return result;
     }
 
     private Object applyTransform(String rule, Object value) {
@@ -188,6 +239,9 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
         }
         Object current = source;
         for (String part : path.split("\\.")) {
+            if ("root".equals(part)) {
+                continue;
+            }
             if (!(current instanceof Map<?, ?> map)) {
                 return null;
             }
@@ -204,9 +258,17 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
         if (!StringUtils.hasText(path)) {
             return;
         }
+        List<String> normalizedParts = normalizePath(path);
+        if (value instanceof List<?> list && normalizedParts.size() > 1 && isListOfMap(list)) {
+            mergeCollectionValue(target, normalizedParts.get(0), list);
+            return;
+        }
         String[] parts = path.split("\\.");
         Map<String, Object> current = target;
         for (int i = 0; i < parts.length - 1; i++) {
+            if ("root".equals(parts[i])) {
+                continue;
+            }
             Object child = current.get(parts[i]);
             if (!(child instanceof Map<?, ?>)) {
                 child = new LinkedHashMap<String, Object>();
@@ -214,7 +276,91 @@ public class ApiParamAssemblerImpl implements IApiParamAssembler {
             }
             current = (Map<String, Object>) child;
         }
-        current.put(parts[parts.length - 1], value);
+        String lastPart = parts[parts.length - 1];
+        if (!"root".equals(lastPart)) {
+            current.put(lastPart, value);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void mergeCollectionValue(Map<String, Object> target, String collectionName, List<?> value) {
+        Object existingValue = target.get(collectionName);
+        List<Map<String, Object>> merged = new ArrayList<>();
+        if (existingValue instanceof List<?> existingList) {
+            for (Object existingItem : existingList) {
+                if (existingItem instanceof Map<?, ?> existingMap) {
+                    merged.add(new LinkedHashMap<>((Map<String, Object>) existingMap));
+                } else {
+                    merged.add(new LinkedHashMap<>());
+                }
+            }
+        }
+        for (int i = 0; i < value.size(); i++) {
+            while (merged.size() <= i) {
+                merged.add(new LinkedHashMap<>());
+            }
+            Object item = value.get(i);
+            if (item instanceof Map<?, ?> itemMap) {
+                merged.get(i).putAll((Map<String, Object>) itemMap);
+            }
+        }
+        target.put(collectionName, merged);
+    }
+
+    private boolean isListOfMap(List<?> value) {
+        return !value.isEmpty() && value.stream().allMatch(item -> item instanceof Map<?, ?>);
+    }
+
+    private CollectionMappingPath resolveCollectionMappingPath(String sourcePath, String targetPath, Map<String, Object> source) {
+        List<String> sourceParts = normalizePath(sourcePath);
+        List<String> targetParts = normalizePath(targetPath);
+        if (sourceParts.size() < 2 || targetParts.size() < 2) {
+            return null;
+        }
+        for (int i = sourceParts.size() - 2; i >= 0; i--) {
+            String collectionPath = joinPath(sourceParts, 0, i + 1);
+            Object value = getNestedValue(source, collectionPath);
+            if (value instanceof List<?> && targetParts.size() > 1) {
+                int targetCollectionIndex = Math.min(i, targetParts.size() - 2);
+                return new CollectionMappingPath(
+                    collectionPath,
+                    joinPath(sourceParts, i + 1, sourceParts.size()),
+                    joinPath(targetParts, targetCollectionIndex + 1, targetParts.size())
+                );
+            }
+        }
+        return null;
+    }
+
+    private List<String> normalizePath(String path) {
+        if (!StringUtils.hasText(path)) {
+            return List.of();
+        }
+        List<String> parts = new ArrayList<>();
+        for (String part : path.split("\\.")) {
+            if (!StringUtils.hasText(part) || "root".equals(part)) {
+                continue;
+            }
+            parts.add(part);
+        }
+        return parts;
+    }
+
+    private String joinPath(List<String> parts, int start, int end) {
+        if (parts == null || parts.isEmpty() || start >= end) {
+            return "";
+        }
+        return String.join(".", parts.subList(Math.max(0, start), Math.min(parts.size(), end)));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castMap(Map<?, ?> map) {
+        return (Map<String, Object>) map;
+    }
+
+    private record CollectionMappingPath(String sourceCollectionPath,
+                                         String sourceLeafPath,
+                                         String targetLeafPath) {
     }
 
     /**

@@ -5,6 +5,10 @@
  * @version 1.0.0
  */
 export default {
+  loading: {
+    thinking: 'Forgex正在載入您所需的任何內容，請稍候',
+  },
+
   // Hero 区
   hero: {
     eyebrow: '個人工作台',
@@ -27,10 +31,27 @@ export default {
     refresh: '刷新',
     resetDefault: '恢復默認',
     saveLayout: '保存佈局',
+    componentLibrary: '組件庫',
+    componentConfig: '個人組件配置',
     hint: {
       edit: '拖拽和縮放組件後可直接保存',
       view: '切換到編輯模式後可調整組件佈局',
     },
+  },
+
+  library: {
+    title: '首頁組件庫',
+    searchPlaceholder: '按編碼、名稱、作用搜尋',
+    scopeAll: '全部',
+    scopePublic: '公共',
+    scopeTenant: '租戶',
+    scopeUser: '個人',
+    defaultGroup: '預設分類',
+    empty: '暫無可選組件',
+    favorite: '已收藏',
+    selected: '已新增',
+    removed: '已移除',
+    customPlaceholder: '該組件由前端註冊組件承載，目錄僅維護可選範圍。',
   },
 
   // 配置面板
@@ -141,6 +162,17 @@ export default {
   },
 
   // 摘要卡片
+  componentConfig: {
+    title: '個人首頁組件配置',
+    desc: '維護目前使用者可見的首頁組件，支援收藏、新增和移除個人組件。',
+    empty: '目前沒有可配置的個人首頁組件',
+    addSuccess: '已新增到個人首頁',
+    removeSuccess: '已從個人首頁移除',
+    stats: {
+      count: '共 {count} 個分組',
+    },
+  },
+
   summary: {
     greeting: {
       honorificMale: '先生',

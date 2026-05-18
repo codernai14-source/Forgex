@@ -316,26 +316,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.user-info-header {
-  margin-bottom: 16px;
-}
-
-.role-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.role-name {
-  font-weight: 500;
-}
-
-.role-summary {
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--fx-text-secondary, #6b7280);
-  text-align: right;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/user/components/user-role-assign-dialog.less"></style>

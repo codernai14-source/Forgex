@@ -1,7 +1,8 @@
 <template>
   <a-sub-menu v-if="hasChildren" :key="item.key">
     <template #icon>
-      <component :is="menuIcon" />
+      <FxIcon v-if="item.icon" :name="item.icon" />
+      <component v-else :is="menuIcon" />
     </template>
     <template #title>
       <span class="menu-text" :title="item.title">{{ item.title }}</span>
@@ -14,7 +15,8 @@
   </a-sub-menu>
   <a-menu-item v-else :key="item.key">
     <template #icon>
-      <component :is="menuIcon" />
+      <FxIcon v-if="item.icon" :name="item.icon" />
+      <component v-else :is="menuIcon" />
     </template>
     <span class="menu-text" :title="item.title">{{ item.title }}</span>
   </a-menu-item>
@@ -23,7 +25,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { FolderOutlined, FileOutlined } from '@ant-design/icons-vue'
-import { getIcon } from '../../utils/icon'
+import FxIcon from '@/components/common/FxIcon.vue'
 
 export interface SidebarMenuNodeItem {
   key: string
@@ -46,9 +48,6 @@ const hasChildren = computed(() => Array.isArray(props.item.children) && props.i
 const childItems = computed(() => props.item.children || [])
 
 const menuIcon = computed(() => {
-  if (props.item.icon) {
-    return getIcon(props.item.icon)
-  }
   return hasChildren.value ? FolderOutlined : FileOutlined
 })
 </script>

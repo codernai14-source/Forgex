@@ -4,6 +4,8 @@ import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.basic.label.domain.param.LabelPrintExecuteParam;
+import com.forgex.basic.label.domain.param.LabelPrintRenderParam;
+import com.forgex.basic.label.domain.vo.LabelRenderVO;
 import com.forgex.basic.label.service.LabelPrintService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -85,6 +87,13 @@ public class LabelPrintController {
         List<String> previewResults = labelPrintService.previewPrint(param, tenantId);
 
         return R.ok(previewResults);
+    }
+
+    @Operation(summary = "标签渲染", description = "按模板编码和任意实体数据返回前端可直接渲染的模板")
+    @RequirePerm("label:print:execute")
+    @PostMapping("/render")
+    public R<LabelRenderVO> render(@RequestBody @Validated LabelPrintRenderParam param) {
+        return R.ok(labelPrintService.render(param, TenantContext.get()));
     }
 
     /**

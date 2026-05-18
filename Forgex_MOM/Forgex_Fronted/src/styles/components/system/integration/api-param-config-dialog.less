@@ -1,0 +1,43 @@
+/**
+ * API 参数配置弹窗样式
+ */
+.api-param-config-dialog {
+  .toolbar {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #fafafa;
+    border-radius: 4px;
+  }
+
+  .config-tabs {
+    :deep(.ant-tabs-content) {
+      background-color: #fff;
+    }
+
+    .tab-content {
+      padding: 16px;
+
+      .mb-2 {
+        margin-bottom: 16px;
+      }
+
+      .mapping-toolbar {
+        margin-bottom: 16px;
+        display: flex;
+        gap: 8px;
+      }
+
+      :deep(.ant-table) {
+        font-size: 13px;
+        
+        .ant-select {
+          font-size: 13px;
+        }
+        
+        .ant-input {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}

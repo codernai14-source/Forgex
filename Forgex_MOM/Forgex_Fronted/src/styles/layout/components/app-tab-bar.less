@@ -1,0 +1,235 @@
+.app-tabbar {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 8px;
+  /** 与顶栏共用 --fx-tabbar-bg / --fx-header-bg，避免标签栏条与顶栏色差 */
+  background: var(--fx-tabbar-bg, var(--fx-header-bg, var(--fx-bg-layout)));
+  border-top: 1px solid var(--fx-top-divider-color, var(--fx-border-color, #f0f0f0));
+  border-bottom: 0;
+  overflow: hidden;
+}
+
+:global(html[data-theme='dark']) .app-tabbar,
+:global(body[data-theme='dark']) .app-tabbar {
+  border-top-color: var(--fx-border-color, rgba(148, 163, 184, 0.14));
+}
+
+.tabbar-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  /** 与 Vben 5 类似：标签块之间留出间隙，避免连成一体 */
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.38) rgba(0, 0, 0, 0.06);
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.32);
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+}
+
+:global(html[data-theme='dark']) .tabbar-inner {
+  scrollbar-color: rgba(255, 255, 255, 0.26) rgba(255, 255, 255, 0.08);
+}
+
+:global(html[data-theme='dark']) .tabbar-inner::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+:global(html[data-theme='dark']) .tabbar-inner::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+:global(html[data-theme='dark']) .tabbar-inner::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tabbar-more-panel {
+  min-width: 220px;
+  max-width: min(92vw, 360px);
+  max-height: min(70vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px 4px 6px;
+
+  &__search {
+    padding: 0 8px 8px;
+  }
+
+  &__search-icon {
+    font-size: 13px;
+    color: var(--fx-text-secondary, rgba(0, 0, 0, 0.45));
+  }
+
+  :deep(.tabbar-more-menu) {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    max-height: none;
+  }
+
+  :deep(.ant-menu-item-group-title) {
+    padding-inline: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fx-text-secondary, rgba(0, 0, 0, 0.55));
+  }
+}
+
+.tabbar-overflow-menu-item {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+
+  &__title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.tabbar-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid var(--fx-border-color, #f0f0f0);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--fx-text-color, #4b5563);
+  
+  &:hover {
+    color: var(--fx-theme-color, #1677ff);
+    background: rgba(22, 119, 255, 0.08);
+  }
+}
+
+/**
+ * 标签项：未选中态参考 Vben 5（透明融入标签栏轨道 + 次要字色）；选中态为独立圆角卡片。
+ */
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--fx-tab-label-idle-color, var(--fx-text-tertiary, rgba(0, 0, 0, 0.45)));
+  background: var(--fx-tab-label-idle-bg, transparent);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.2s ease, background-color 0.2s ease;
+
+  &:hover:not(.tab-item-active) {
+    color: var(--fx-tab-label-idle-hover-color, var(--fx-text-secondary, rgba(0, 0, 0, 0.65)));
+    background: var(--fx-tab-label-idle-hover-bg, rgba(0, 0, 0, 0.04));
+  }
+
+  &.tab-item-active {
+    color: var(--fx-theme-color, #1677ff);
+    background: var(--fx-tab-active-bg, var(--fx-content-bg, #ffffff));
+    font-weight: 500;
+    /** 选中态以卡片底色区分轨道，不再依赖底边线（与 Vben 5 选中胶囊一致） */
+    box-shadow: var(
+      --fx-tab-active-shadow,
+      0 1px 2px rgba(15, 23, 42, 0.06)
+    );
+  }
+
+  &.tab-item-dragging {
+    opacity: 0.5;
+  }
+}
+
+:global(html[data-theme='dark']) .tab-item.tab-item-active,
+:global(body[data-theme='dark']) .tab-item.tab-item-active {
+  box-shadow: var(
+    --fx-tab-active-shadow-dark,
+    0 1px 2px rgba(0, 0, 0, 0.45)
+  );
+}
+
+.tab-title {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-icon {
+  color: currentColor;
+}
+
+.tab-pin-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--fx-theme-color, #1677ff);
+  opacity: 0.92;
+}
+
+.tabbar-overflow-pin {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--fx-theme-color, #1677ff);
+}
+
+.tabbar-overflow-active-check {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--fx-theme-color, #1677ff);
+}
+
+.tab-close {
+  flex-shrink: 0;
+  font-size: 12px;
+  opacity: 0.7;
+  transition: all 0.2s;
+  
+  &:hover {
+    opacity: 1;
+    color: #ef4444;
+  }
+}
+
+// 响应式适配
+@media (max-width: 768px) {
+  .app-tabbar {
+    padding: 0 4px;
+  }
+  
+  .tab-item {
+    padding: 0 8px;
+  }
+  
+  .tab-title {
+    max-width: 80px;
+  }
+}

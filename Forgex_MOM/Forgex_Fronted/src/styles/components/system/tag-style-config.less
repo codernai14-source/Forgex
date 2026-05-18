@@ -1,0 +1,53 @@
+.tag-style-config {
+  .tag-style-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .tag-style-field {
+    flex: 1;
+    min-width: 0;
+
+    .tag-style-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--fx-text-primary, #1f1f1f);
+      font-weight: 500;
+    }
+  }
+
+  .tag-style-preview {
+    .tag-style-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--fx-text-primary, #1f1f1f);
+      font-weight: 500;
+    }
+
+    .tag-style-preview-content {
+      padding: 12px 16px;
+      background: var(--fx-bg-layout, #f5f5f5);
+      border-radius: 6px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+
+      .tag-style-preview-empty {
+        color: var(--fx-text-disabled, #999);
+        font-size: 14px;
+      }
+    }
+  }
+
+  :deep(.ant-select) {
+    width: 100%;
+  }
+
+  :deep(.ant-select-selection-item) {
+    display: flex;
+    align-items: center;
+  }
+}

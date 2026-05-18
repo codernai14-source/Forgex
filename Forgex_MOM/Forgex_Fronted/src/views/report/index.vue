@@ -291,14 +291,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="less">
-.report-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  padding: 16px;
-  background-color: #fff;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/report/index.less"></style>

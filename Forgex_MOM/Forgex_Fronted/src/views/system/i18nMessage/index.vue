@@ -89,7 +89,8 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import I18nInput from '@/components/common/I18nInput.vue'
+import I18nInput from '@/components/common/I18nInput.vue'
+
 import { translateLegacyText } from '@/utils/legacyI18n'
 import {
 createI18nMessage,
@@ -228,19 +229,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.i18n-message-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.text-preview {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/i18nMessage/index.less"></style>

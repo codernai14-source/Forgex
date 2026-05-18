@@ -3,6 +3,8 @@ package com.forgex.integration.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.web.StatusCode;
 import com.forgex.integration.config.IntegrationProperties;
 import com.forgex.integration.domain.entity.ApiTask;
 import com.forgex.integration.domain.entity.ApiTaskResult;
@@ -11,6 +13,7 @@ import com.forgex.integration.domain.model.ApiExecutionContext;
 import com.forgex.integration.domain.model.ApiTaskSubmitResult;
 import com.forgex.integration.domain.model.OutboundRequestDefinition;
 import com.forgex.integration.enums.ApiTaskStatusEnum;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.mapper.ApiTaskMapper;
 import com.forgex.integration.service.IApiTaskResultService;
 import com.forgex.integration.service.IApiTaskService;
@@ -116,7 +119,8 @@ public class ApiTaskServiceImpl extends ServiceImpl<ApiTaskMapper, ApiTask> impl
                 .targetSystemName(context.getTargetSystemName())
                 .build();
         } catch (Exception ex) {
-            throw new IllegalStateException("submit api task failed", ex);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.API_TASK_SUBMIT_FAILED, ex.getMessage());
         }
     }
 

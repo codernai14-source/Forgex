@@ -246,7 +246,10 @@ export interface LayoutConfig {
   headerMenuAlign: 'left' | 'center' | 'right'
   /** 是否启用标签栏 */
   tabBarEnabled: boolean
-  /** 标签栏最大数量 */
+  /**
+   * 标签栏最大数量。
+   * <p>{@code 0} 表示不限制（打开的标签不会因数量被自动关闭）。</p>
+   */
   tabBarMax: number
   /** 标签栏是否可拖拽 */
   tabBarDraggable: boolean

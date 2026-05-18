@@ -2,6 +2,7 @@ package com.forgex.common.web;
 
 import com.forgex.common.i18n.I18nPrompt;
 import com.forgex.common.service.i18n.I18nMessageService;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -31,6 +32,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
  */
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
     private final I18nMessageService i18nMessageService;
 
@@ -53,13 +55,13 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
             String message = r.getMessage();
 
             if (prompt != null) {
-                Object[] args = parseArgs(message);
-                String resolved = i18nMessageService.resolve(prompt, args);
+                Object[] args = r.getI18n() == null ? parseArgs(message) : r.getI18n().getArgs();
+                String resolved = safeResolve(prompt, args);
                 if (resolved != null) {
                     r.setMessage(resolved);
                 }
             } else if (r.getI18n() != null && !StringUtils.hasText(r.getMessage())) {
-                String resolved = i18nMessageService.resolve(
+                String resolved = safeResolve(
                         r.getI18n().getModule(),
                         r.getI18n().getCode(),
                         r.getI18n().getArgs()
@@ -72,6 +74,31 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
             r.setI18n(null);
         }
         return body;
+    }
+
+    private String safeResolve(I18nPrompt prompt, Object[] args) {
+        try {
+            String resolved = i18nMessageService.resolve(prompt, args);
+            if (StringUtils.hasText(resolved)) {
+                return resolved;
+            }
+            return prompt == null ? null : prompt.getDefaultTemplate();
+        } catch (Exception ex) {
+            log.warn("resolve response i18n message failed, module={}, code={}",
+                    prompt == null ? null : prompt.getModule(),
+                    prompt == null ? null : prompt.getPromptCode(),
+                    ex);
+            return prompt == null ? null : prompt.getDefaultTemplate();
+        }
+    }
+
+    private String safeResolve(String module, String code, Object[] args) {
+        try {
+            return i18nMessageService.resolve(module, code, args);
+        } catch (Exception ex) {
+            log.warn("resolve response i18n message failed, module={}, code={}", module, code, ex);
+            return null;
+        }
     }
 
     /**

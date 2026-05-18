@@ -1,0 +1,247 @@
+.role-grant-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  background: var(--fx-bg-layout, #f9fafb);
+
+  .hero-panel {
+    margin-bottom: 12px;
+    padding: 14px 16px 10px;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--fx-primary, #1677ff) 72%, #ffffff 28%) 0%,
+      color-mix(in srgb, var(--fx-primary-active, #0958d9) 82%, #020617 18%) 100%
+    );
+    border-radius: 8px;
+    color: #fff;
+
+    &__main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    &__copy {
+      min-width: 0;
+    }
+
+    &__eyebrow {
+      margin: 0 0 4px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    &__desc {
+      font-size: 14px;
+      opacity: 0.8;
+      margin: 0;
+    }
+
+    &__role {
+      flex: 0 0 auto;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      text-align: right;
+    }
+
+    &__role-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 12px;
+      line-height: 1.3;
+      opacity: 0.76;
+    }
+
+    &__role-name {
+      display: block;
+      overflow: hidden;
+      color: #fff;
+      font-size: 16px;
+      line-height: 1.4;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__tabs {
+      margin-top: 8px;
+
+      :deep(.ant-tabs-nav) {
+        margin-bottom: 0;
+        &::before {
+          border-bottom-color: rgba(255, 255, 255, 0.24);
+        }
+      }
+
+      :deep(.ant-tabs-tab) {
+        padding: 8px 0;
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+        color: #fff;
+      }
+    }
+  }
+
+  .board {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    background: var(--fx-bg-container, #ffffff);
+    border-radius: 8px;
+    border: 1px solid var(--fx-border-color, #e5e7eb);
+    box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
+
+    .sidebar {
+      width: 240px;
+      border-right: 1px solid var(--fx-border-color, #e5e7eb);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+
+      .panel {
+        flex: 1;
+        overflow-y: auto;
+
+        &__title {
+          font-size: 16px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: var(--fx-text-primary, #111827);
+        }
+      }
+
+      .filter-item {
+        display: block;
+        width: 100%;
+        padding: 9px 12px;
+        margin-bottom: 6px;
+        border: none;
+        background: var(--fx-bg-elevated, #ffffff);
+        color: var(--fx-text-primary, #111827);
+        border-radius: 4px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover {
+          background: var(--fx-fill, #f3f4f6);
+        }
+
+        &--active {
+          background: var(--fx-primary, #1677ff);
+          color: #fff;
+        }
+      }
+    }
+
+    .content-panel {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 12px;
+
+        :deep(.ant-input-search) {
+          width: 320px;
+          max-width: 50%;
+        }
+      }
+
+      :deep(.fx-dynamic-table) {
+        flex: 1;
+        min-height: 0;
+        gap: 0;
+      }
+
+      :deep(.fx-table-toolbar-row) {
+        padding: 6px 8px;
+      }
+
+      :deep(.fx-table-card) {
+        flex: 1;
+        min-height: 0;
+      }
+
+      :deep(.fx-table-card > .ant-card-body) {
+        height: 100%;
+      }
+
+      :deep(.fx-table-content) {
+        height: 100%;
+      }
+
+      :deep(.ant-table) {
+        background: var(--fx-bg-container, #ffffff);
+        color: var(--fx-text-primary, #111827);
+      }
+
+      :deep(.ant-table-thead > tr > th) {
+        background: var(--fx-fill-alter, #f9fafb);
+        color: var(--fx-text-secondary, #4b5563);
+      }
+
+      :deep(.ant-table-tbody > tr > td) {
+        color: var(--fx-text-primary, #111827);
+        border-bottom: 1px solid var(--fx-border-secondary, #f3f4f6);
+      }
+
+      :deep(.ant-table-tbody > tr:hover > td) {
+        background: var(--fx-fill, #f3f4f6);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px;
+
+    .hero-panel {
+      &__main {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      &__role {
+        max-width: none;
+        text-align: left;
+      }
+    }
+
+    .board {
+      flex-direction: column;
+
+      .sidebar {
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--fx-border-color, #e5e7eb);
+      }
+
+      .content-panel {
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+
+          :deep(.ant-input-search) {
+            width: 100%;
+            max-width: none;
+          }
+        }
+      }
+    }
+  }
+}

@@ -118,7 +118,8 @@ import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
 import { exportUsers, userApi } from '@/api/system/user'
-import { downloadBlobResponse, normalizeUserQuery, normalizeUserStatus } from '@/utils/user'
+import { downloadBlobResponse, normalizeUserQuery, normalizeUserStatus } from '@/utils/user'
+
 import type { Department, Position, UserQuery } from './types'
 
 const { t } = useI18n()
@@ -386,4 +387,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="less" src="@/styles/system-user.less"></style>
+<style scoped lang="less" src="@/styles/views/system/user/index.less"></style>

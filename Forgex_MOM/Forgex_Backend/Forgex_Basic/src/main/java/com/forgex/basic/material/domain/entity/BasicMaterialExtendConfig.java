@@ -40,6 +40,13 @@ public class BasicMaterialExtendConfig extends BaseEntity {
     private String module;
 
     /**
+     * 物料类型
+     * RAW_MATERIAL=原材料，SEMI_FINISHED=半成品，FINISHED_GOODS=成品，OTHER=其他
+     */
+    @TableField("material_type")
+    private String materialType;
+
+    /**
      * 字段名称（英文标识）
      */
     @TableField("field_name")

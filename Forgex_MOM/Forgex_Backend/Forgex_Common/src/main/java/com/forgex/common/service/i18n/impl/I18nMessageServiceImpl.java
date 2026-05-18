@@ -92,11 +92,16 @@ public class I18nMessageServiceImpl implements I18nMessageService {
     }
 
     private String resolveTemplate(String module, String promptCode, String defaultTemplate) {
-        FxI18nMessage row = i18nMessageMapper.selectOne(new LambdaQueryWrapper<FxI18nMessage>()
-                .eq(FxI18nMessage::getModule, module)
-                .eq(FxI18nMessage::getPromptCode, promptCode)
-                .eq(FxI18nMessage::getDeleted, 0)
-                .last("limit 1"));
+        FxI18nMessage row;
+        try {
+            row = i18nMessageMapper.selectOne(new LambdaQueryWrapper<FxI18nMessage>()
+                    .eq(FxI18nMessage::getModule, module)
+                    .eq(FxI18nMessage::getPromptCode, promptCode)
+                    .eq(FxI18nMessage::getDeleted, 0)
+                    .last("limit 1"));
+        } catch (Exception e) {
+            return getDefaultTemplateByLang(defaultTemplate);
+        }
         if (row == null || Boolean.FALSE.equals(row.getEnabled())) {
             // 如果没有找到翻译记录，直接返回对应语言的默认模板
             return getDefaultTemplateByLang(defaultTemplate);

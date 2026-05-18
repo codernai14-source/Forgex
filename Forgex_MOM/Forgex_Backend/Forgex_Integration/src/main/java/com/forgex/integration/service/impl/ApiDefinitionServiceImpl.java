@@ -122,7 +122,7 @@ public class ApiDefinitionServiceImpl implements IApiDefinitionService {
         List<ApiOutboundTargetDTO> targets = apiOutboundTargetService.listEnabledByApiConfigId(config.getId());
         List<ApiParamConfigDTO> requestTree = safeTree(config.getId(), null, "REQUEST");
         List<ApiParamConfigDTO> responseTree = safeTree(config.getId(), null, "RESPONSE");
-        List<ApiParamMappingDTO> inboundMappings = listMappings(config.getId(), null, "INBOUND");
+        List<ApiParamMappingDTO> inboundMappings = loadInboundMappings(config.getId(), targets);
         List<ApiParamMappingDTO> outboundMappings = loadOutboundMappings(config.getId(), targets);
 
         ApiDefinitionSnapshot snapshot = ApiDefinitionSnapshot.builder()
@@ -208,6 +208,18 @@ public class ApiDefinitionServiceImpl implements IApiDefinitionService {
             for (ApiOutboundTargetDTO target : targets) {
                 if (target != null && target.getId() != null) {
                     mappings.addAll(listMappings(apiConfigId, target.getId(), "OUTBOUND"));
+                }
+            }
+        }
+        return mappings;
+    }
+
+    private List<ApiParamMappingDTO> loadInboundMappings(Long apiConfigId, List<ApiOutboundTargetDTO> targets) {
+        List<ApiParamMappingDTO> mappings = new java.util.ArrayList<>(listMappings(apiConfigId, null, "INBOUND"));
+        if (targets != null) {
+            for (ApiOutboundTargetDTO target : targets) {
+                if (target != null && target.getId() != null) {
+                    mappings.addAll(listMappings(apiConfigId, target.getId(), "INBOUND"));
                 }
             }
         }

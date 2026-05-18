@@ -116,8 +116,10 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { CopyOutlined, ExportOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { exportOperationLog, pageOperationLog } from '@/api/operationLog'import { translateLegacyText } from '@/utils/legacyI18n'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+
+import { exportOperationLog, pageOperationLog } from '@/api/operationLog'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n()
 
@@ -268,33 +270,4 @@ function formatJson(jsonStr: string) {
 }
 </script>
 
-<style scoped lang="less">
-.operation-log-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.detail-json-block {
-  max-height: 420px;
-  margin: 0;
-  overflow: auto;
-  padding: 10px 12px;
-  border-radius: var(--fx-radius, 6px);
-  border: 1px solid var(--fx-border-color, #d9d9d9);
-  background: linear-gradient(180deg, var(--fx-bg-elevated, #ffffff), var(--fx-fill-secondary, #f5f5f5));
-  color: var(--fx-text-primary, #1f1f1f);
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: Consolas, 'Courier New', monospace;
-}
-
-.detail-json-block--error {
-  max-height: 300px;
-  border-color: var(--fx-error, #cf1322);
-  background: linear-gradient(180deg, var(--fx-error-bg, #fff2f0), var(--fx-fill-secondary, #f5f5f5));
-  color: var(--fx-error, #cf1322);
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/operationLog/index.less"></style>

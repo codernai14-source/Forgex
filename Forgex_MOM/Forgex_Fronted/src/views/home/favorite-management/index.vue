@@ -55,9 +55,9 @@
 			  <span class="favorite-menu-cell__icon"><component :is="getMenuIcon(record.icon)" /></span>
 			  <div class="favorite-menu-cell__content">
 				<button type="button" class="favorite-menu-cell__title" @click="openMenu(record.path)">
-				  {{ record.title }}
+				  {{ getMenuTitle(record) }}
 				</button>
-				<span class="favorite-menu-cell__module">{{ record.moduleName }}</span>
+				<span class="favorite-menu-cell__module">{{ getMenuModuleName(record) }}</span>
 			  </div>
 			</div>
 		  </template>
@@ -106,6 +106,7 @@ import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, ReloadOutlined, Sav
 import { batchCancelUserFavoriteMenus, getUserFavoriteManageMenus, sortUserFavoriteMenus, type PersonalMenuEntry } from '@/api/system/personalHomepage'
 import { PERSONAL_HOME_PATH } from '@/router'
 import { getIcon } from '@/utils/icon'
+import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -169,6 +170,19 @@ function openMenu(path: string) {
   router.push(path).catch(() => {})
 }
 
+function getMenuTitle(record: PersonalMenuEntry) {
+  return resolveMenuDisplayName({
+    path: record.path,
+    title: record.title,
+    moduleCode: record.moduleCode,
+    moduleName: record.moduleName,
+  })
+}
+
+function getMenuModuleName(record: PersonalMenuEntry) {
+  return resolveModuleDisplayName(record.moduleCode, record.moduleName)
+}
+
 /**
  * 调整本地列表顺序。
  *
@@ -226,7 +240,7 @@ function handleSingleCancel(record: PersonalMenuEntry) {
   }
   Modal.confirm({
 	title: t('personalHomepage.management.confirm.singleCancelTitle'),
-	content: t('personalHomepage.management.confirm.singleCancelContent', { title: record.title || path }),
+	content: t('personalHomepage.management.confirm.singleCancelContent', { title: getMenuTitle(record) || path }),
 	okButtonProps: { danger: true },
 	onOk: async () => {
 	  try {
@@ -262,104 +276,5 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.favorite-management-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.favorite-management-page__hero,
-.favorite-management-page__toolbar,
-.favorite-management-page__table-wrap {
-  border-radius: 20px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  background: var(--fx-bg-container, #ffffff);
-  box-shadow: var(--fx-shadow-secondary, 0 12px 32px rgba(15, 23, 42, 0.08));
-}
-
-.favorite-management-page__hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 24px;
-}
-
-.favorite-management-page__title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.favorite-management-page__desc {
-  margin: 8px 0 0;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.favorite-management-page__toolbar,
-.favorite-management-page__table-wrap {
-  padding: 16px 20px;
-}
-
-.favorite-menu-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.favorite-menu-cell__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  color: var(--fx-primary, #1677ff);
-  background: color-mix(in srgb, var(--fx-primary-soft, #eff6ff) 82%, var(--fx-bg-elevated, #f8fafc));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 14%, transparent);
-}
-
-:global(html[data-theme='light']) .favorite-management-page .favorite-menu-cell__icon {
-  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
-}
-
-:global(html[data-theme='dark']) .favorite-management-page .favorite-menu-cell__icon {
-  background: color-mix(in srgb, var(--fx-primary-soft-strong, rgba(22, 119, 255, 0.18)) 78%, var(--fx-bg-elevated, #1f2937));
-}
-
-.favorite-menu-cell__content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.favorite-menu-cell__title {
-  width: fit-content;
-  max-width: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--fx-text-primary, #111827);
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-}
-
-.favorite-menu-cell__title:hover {
-  color: var(--fx-primary, #1677ff);
-}
-
-.favorite-menu-cell__module {
-  color: var(--fx-text-secondary, #6b7280);
-  font-size: 12px;
-}
-
-@media (max-width: 768px) {
-  .favorite-management-page__hero {
-	flex-direction: column;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/home/favorite-management/index.less"></style>
 

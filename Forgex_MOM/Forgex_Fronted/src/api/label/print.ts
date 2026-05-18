@@ -20,5 +20,9 @@ export const labelPrintApi = {
      */
     reprint(params: any) {
         return http.post('/basic/label/record/reprint', params)
+    },
+
+    render(params: any) {
+        return http.post('/basic/label/print/render', params)
     }
 }

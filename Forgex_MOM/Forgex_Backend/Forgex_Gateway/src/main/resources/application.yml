@@ -44,6 +44,15 @@ spring:
             locator:
               enabled: true
               lower-case-service-id: true
+              predicates:
+                - name: Path
+                  args:
+                    pattern: "'/api/' + serviceId.replace('forgex-', '') + '/**'"
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: "'/api/' + serviceId.replace('forgex-', '') + '/?(?<remaining>.*)'"
+                    replacement: "'/' + serviceId.replace('forgex-', '') + '/$\\{remaining}'"
           globalcors:
             add-to-simple-url-handler-mapping: true
             cors-configurations:

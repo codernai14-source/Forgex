@@ -128,6 +128,18 @@ public interface IThirdAuthorizationService extends IService<ThirdAuthorization>
     String generateToken(Long thirdSystemId, Integer expireHours);
 
     /**
+     * 生成 Token。
+     * <p>
+     * 支持按天、月、年、指定时间和无期限生成 Token，并同步保存第三方授权配置。
+     * </p>
+     *
+     * @param thirdSystemId 第三方系统 ID
+     * @param dto Token 有效期配置
+     * @return 生成的 Token 值
+     */
+    String generateToken(Long thirdSystemId, ThirdAuthorizationDTO dto);
+
+    /**
      * 校验 Token 是否有效
      * <p>
      * 校验 Token 是否存在、是否过期、是否启用
@@ -137,6 +149,15 @@ public interface IThirdAuthorizationService extends IService<ThirdAuthorization>
      * @return true-有效，false-无效
      */
     boolean validateToken(String tokenValue);
+
+    /**
+     * 校验指定第三方系统的 Token 是否有效。
+     *
+     * @param thirdSystemId 第三方系统 ID
+     * @param tokenValue Token 值
+     * @return true-有效，false-无效
+     */
+    boolean validateToken(Long thirdSystemId, String tokenValue);
 
     /**
      * 校验 IP 是否在白名单中
@@ -149,6 +170,14 @@ public interface IThirdAuthorizationService extends IService<ThirdAuthorization>
      * @return true-在白名单中，false-不在白名单中
      */
     boolean checkIpWhitelist(Long thirdSystemId, String ipAddress);
+
+    /**
+     * 校验调用 IP 是否命中任意启用的第三方白名单授权。
+     *
+     * @param ipAddress 调用方 IP
+     * @return true-命中白名单，false-未命中
+     */
+    boolean checkAnyIpWhitelist(String ipAddress);
 
     /**
      * 刷新 Token 有效期

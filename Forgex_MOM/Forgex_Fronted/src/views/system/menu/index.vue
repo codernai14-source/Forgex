@@ -86,7 +86,7 @@
             </template>
 
             <template #icon="{ record }">
-              <component v-if="record.icon" :is="getIcon(record.icon)" />
+              <FxIcon v-if="record.icon" :name="record.icon" />
               <span v-else>-</span>
             </template>
 
@@ -296,6 +296,7 @@ import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import IconPicker from '@/components/common/IconPicker.vue'
+import FxIcon from '@/components/common/FxIcon.vue'
 import { listModules } from '@/api/system/module'
 import {
   addMenu,
@@ -312,7 +313,6 @@ import {
   updateMenu,
 } from '@/api/system/menu'
 import { useDict } from '@/hooks/useDict'
-import { getIcon } from '@/utils/icon'
 import { getI18nValue } from '@/utils/i18n'
 
 type MenuTreeRecord = {
@@ -887,108 +887,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="less">
-.menu-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 16px;
-  box-sizing: border-box;
-
-  .main-card {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-
-    :deep(.ant-card-body) {
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-height: 0;
-      height: 100%;
-    }
-  }
-
-  .terminal-tabs {
-    padding: 12px 16px 0;
-    border-bottom: 1px solid var(--fx-border-color);
-    background: var(--fx-bg-container);
-  }
-
-  .menu-layout {
-    display: flex;
-    flex: 1 1 auto;
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-
-    .module-tabs {
-      width: 140px;
-      flex-shrink: 0;
-      border-right: 1px solid var(--fx-border-color);
-      background: var(--fx-bg-container);
-      min-height: 0;
-
-      :deep(.ant-tabs) {
-        height: 100%;
-
-        .ant-tabs-nav {
-          margin: 0;
-          width: 100%;
-        }
-
-        .ant-tabs-nav-list {
-          width: 100%;
-        }
-
-        .ant-tabs-tab {
-          padding: 12px 24px;
-          margin: 0;
-          width: 100%;
-          justify-content: flex-start;
-          transition: all 0.3s;
-
-          &:hover {
-            background: var(--fx-tab-hover-bg);
-          }
-
-          &.ant-tabs-tab-active {
-            background: var(--fx-tab-bg);
-
-            .ant-tabs-tab-btn {
-              color: var(--fx-theme-color, #1677ff);
-            }
-          }
-        }
-      }
-    }
-
-    .content-area {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      padding: 12px 16px 8px;
-      background: var(--fx-bg-container);
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-
-      :deep(.fx-dynamic-table) {
-        flex: 1 1 auto;
-        min-height: 0;
-      }
-    }
-  }
-
-  .danger-link {
-    color: #ff4d4f;
-
-    &:hover {
-      color: #ff7875;
-    }
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/menu/index.less"></style>

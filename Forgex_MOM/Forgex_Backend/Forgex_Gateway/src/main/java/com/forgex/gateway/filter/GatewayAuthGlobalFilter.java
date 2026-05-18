@@ -170,6 +170,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
                 || path.startsWith("/api/sys/app/")
                 || path.startsWith("/api/wf/")
                 || path.startsWith("/api/integration/")
+                || path.startsWith("/api/job/")
                 || path.startsWith("/api/report/");
     }
 

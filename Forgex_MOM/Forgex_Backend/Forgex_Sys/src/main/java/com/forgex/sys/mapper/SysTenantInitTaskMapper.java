@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.forgex.sys.domain.entity.SysTenantInitTask;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -24,5 +25,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @version 1.0.0
  */
 @Mapper
+@DS("common")
 public interface SysTenantInitTaskMapper extends BaseMapper<SysTenantInitTask> {
 }

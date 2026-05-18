@@ -1,6 +1,7 @@
 <template>
   <div class="tree-container">
-    <div class="tree-header">
+    <!-- 顶部标题栏：业务页可自行关闭，避免出现与外层页面标题重复的「双层标题」。 -->
+    <div v-if="showTitleBar" class="tree-header">
       <span class="tree-title">{{ $t('system.department.title') }}</span>
       <a-button
         type="primary"
@@ -58,10 +59,29 @@ import type { Department } from '@/views/system/department/types'
 
 const { t } = useI18n()
 
-const props = defineProps<{
-  /** 是否显示新增按钮，默认 true */
-  showAdd?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    /**
+     * 是否显示顶部标题栏区域内的「新增」按钮。
+     * <p>
+     * 未传入时不在标题栏展示新增按钮。
+     * </p>
+     */
+    showAdd?: boolean
+    /**
+     * 是否显示顶部标题栏（含部门标题与可选的新增按钮所在行）。
+     * <p>
+     * 在职位管理等已自带页面分区标题的场景，可设为 false，避免与外层的部门标题译文重复。
+     * </p>
+     *
+     * @defaultValue true
+     */
+    showTitleBar?: boolean
+  }>(),
+  {
+    showTitleBar: true,
+  },
+)
 
 const emit = defineEmits<{
   /**
@@ -122,38 +142,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.tree-container {
-  border-right: 1px solid var(--border-color-split, #f0f0f0);
-  padding-right: 16px;
-  height: 100%;
-  min-height: 500px;
-  /* Remove explicit background to inherit from parent (e.g. Card) which handles Dark Mode */
-  background: transparent; 
-  color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-}
-
-.tree-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color-split, #f0f0f0);
-}
-
-.tree-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--fx-text-primary, #000); /* Ensure high contrast default */
-}
-
-/* Dark mode override if not handled by CSS variables automatically */
-:root[data-theme='dark'] .tree-title {
-  color: #fff;
-}
-
-.disabled-node {
-  color: var(--text-color-secondary, #999);
-}
-</style>
+<style scoped lang="less" src="@/styles/components/system/dept-tree.less"></style>

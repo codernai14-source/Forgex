@@ -13,11 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.job;
 
+import com.forgex.sys.ForgexSysApplication;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -39,18 +42,31 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  *   <li>消息推送：定时推送通知消息</li>
  *   <li>数据同步：定期同步外部数据</li>
  * </ul>
+ * <p>
+ * 组件扫描说明：本模块依赖 Sys 模块（Forgex_Sys）jar 时需扫描 {@code com.forgex.sys} 下的业务 Bean，
+ * 但必须排除 Sys 模块的启动类 {@link ForgexSysApplication}。
+ * 该启动类同样带有 {@link EnableFeignClients}，若被载入会与 {@code com.forgex.common.api.config.FeignConfig}
+ * 中对 {@code com.forgex.common.api.feign} 的扫描重复注册 Feign Bean（例如
+ * {@code authFeignClient.FeignClientSpecification}），导致启动失败。
+ * </p>
  *
  * @author Forgex Team
  * @version 1.0.0
  * @see org.springframework.scheduling.annotation.Scheduled
  * @see org.springframework.scheduling.annotation.EnableAsync
+ * @see com.forgex.sys.ForgexSysApplication
  */
-@SpringBootApplication(scanBasePackages = {"com.forgex.job", "com.forgex.common"})
+@SpringBootApplication(
+    scanBasePackages = {"com.forgex.job", "com.forgex.common", "com.forgex.sys"},
+    excludeFilters = @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = ForgexSysApplication.class
+    ))
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.forgex.common.feign.client")
 @EnableAsync
 @EnableScheduling
-@MapperScan({"com.forgex.job.mapper", "com.forgex.common.mapper"})
+@MapperScan({"com.forgex.job.mapper", "com.forgex.common.mapper", "com.forgex.sys.mapper"})
 public class ForgexJobApplication {
     /**
      * 应用入口

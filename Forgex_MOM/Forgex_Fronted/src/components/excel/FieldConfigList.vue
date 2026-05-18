@@ -6,7 +6,7 @@
       row-key="_key"
       :pagination="false"
       size="small"
-      :scroll="{ x: 2060 }"
+      :scroll="{ x: 1760 }"
     >
       <template #bodyCell="{ column, record, index }">
         <!-- 字段名称 -->
@@ -182,7 +182,7 @@ const columns = computed(() => [
     title: t('common.dataSourceConfig.dataSourceType'),
     key: 'dataSourceConfig',
     dataIndex: 'dataSourceConfig',
-    width: 760
+    width: 420
   },
   {
     title: t('system.excel.required'),
@@ -326,18 +326,4 @@ watch(() => props.modelValue, (newVal) => {
 initFields()
 </script>
 
-<style scoped lang="less">
-.field-config-list {
-  width: 100%;
-
-  :deep(.ant-table) {
-    .ant-table-cell {
-      vertical-align: top;
-    }
-
-    .ant-table-cell-fix-right {
-      background: #fff;
-    }
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/components/excel/field-config-list.less"></style>

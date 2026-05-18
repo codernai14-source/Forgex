@@ -89,7 +89,8 @@ import dayjs from 'dayjs'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiCallLogDetailDialog from './components/ApiCallLogDetailDialog.vue'
 import { getApiCallLogList } from '@/api/system/integration'
-import type { ApiCallLogItem, IntegrationDirection } from '@/api/system/integration'import { translateLegacyText } from '@/utils/legacyI18n'
+import type { ApiCallLogItem, IntegrationDirection } from '@/api/system/integration'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -156,8 +157,4 @@ function formatDateTime(dateTime?: string) {
 }
 </script>
 
-<style scoped lang="less">
-.api-call-log-page {
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/apiCallLog/index.less"></style>

@@ -9,6 +9,7 @@ import com.forgex.sys.domain.entity.SysNotice;
 import com.forgex.sys.domain.param.IdParam;
 import com.forgex.sys.domain.param.SysNoticeAckParam;
 import com.forgex.sys.domain.param.SysNoticePageParam;
+import com.forgex.sys.domain.param.SysNoticeQueryParam;
 import com.forgex.sys.domain.param.SysNoticeSaveParam;
 import com.forgex.sys.service.ISysNoticeService;
 import lombok.RequiredArgsConstructor;
@@ -118,6 +119,11 @@ public class SysNoticeController {
     @PostMapping("/popup/list")
     public R<List<SysNoticeDTO>> popupList() {
         return R.ok(noticeService.listPopupNotices());
+    }
+
+    @PostMapping("/active/list")
+    public R<List<SysNoticeDTO>> activeList(@RequestBody(required = false) SysNoticeQueryParam param) {
+        return R.ok(noticeService.listActiveNotices(param == null ? null : param.getMaxCount()));
     }
 
     /**
