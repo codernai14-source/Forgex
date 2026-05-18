@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -125,6 +126,15 @@ public class LabelBindingController {
     public R<Void> delete(@RequestBody @Validated IdParam param) {
         Long tenantId = TenantContext.get();
         labelBindingService.deleteBinding(param.getId(), tenantId);
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
+    }
+
+    @Operation(summary = "批量删除标签绑定", description = "批量逻辑删除多个绑定关系")
+    @RequirePerm("label:binding:batchDelete")
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, List<Long>> body) {
+        Long tenantId = TenantContext.get();
+        labelBindingService.batchDeleteBindings(body.get("ids"), tenantId);
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
 

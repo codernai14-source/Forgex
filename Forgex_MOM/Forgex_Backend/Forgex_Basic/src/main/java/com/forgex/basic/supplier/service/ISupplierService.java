@@ -80,6 +80,14 @@ public interface ISupplierService extends IService<BasicSupplier> {
     Boolean delete(Long id);
 
     /**
+     * 批量删除供应商。
+     *
+     * @param ids 供应商 ID 集合
+     * @return 是否成功
+     */
+    Boolean batchDelete(List<Long> ids);
+
+    /**
      * 生成供应商租户。
      *
      * @param id 供应商 ID

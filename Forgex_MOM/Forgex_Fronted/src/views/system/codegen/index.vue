@@ -155,11 +155,4 @@ function pageTypeLabel(pageType?: string) {
 }
 </script>
 
-<style scoped lang="less">
-.codegen-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/codegen/index.less"></style>

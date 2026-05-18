@@ -5,6 +5,8 @@
         ref="tableRef"
         :request="loadData"
         table-code="LabelBindingTable"
+        row-key="id"
+        :row-selection="rowSelection"
     >
       <template #toolbar>
         <a-space>
@@ -14,6 +16,7 @@
           <a-button @click="handleMatchTemplate">
             <ThunderboltOutlined /> {{ t('label.binding.smartMatch') }}
           </a-button>
+          <a-button v-permission="'label:binding:batchDelete'" danger :disabled="!selectedCount" @click="handleBatchDelete">{{ t('common.batchDelete') }}</a-button>
         </a-space>
       </template>
 
@@ -45,9 +48,12 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, ThunderboltOutlined } from '@ant-design/icons-vue'
 import { labelBindingApi } from '@/api/label/binding'
-import BindingFormDialog from './components/BindingFormDialog.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
+import BindingFormDialog from './components/BindingFormDialog.vue'
+
 const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const formVisible = ref(false)
 const currentBinding = ref<any>(null)
 
@@ -73,6 +79,21 @@ function handleDelete(record: any) {
     cancelText: t('common.cancel'),
     onOk: async () => {
       await labelBindingApi.delete(record.id)
+      tableRef.value?.reload()
+    }
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
+    onOk: async () => {
+      await labelBindingApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       tableRef.value?.reload()
     }
   })
@@ -105,11 +126,6 @@ function getPriorityColor(priority: number) {
 }
 </script>
 
-<style scoped lang="less">
-.page-container {
-  padding: 16px;
-  height: 100%;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/binding/index.less"></style>
 
 

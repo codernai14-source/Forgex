@@ -228,13 +228,4 @@ function approveLabel(value?: number) {
 function approveColor(value?: number) { return ({ 0: 'orange', 1: 'green', 2: 'red', 3: 'processing' } as Record<number, string>)[Number(value)] || 'default' }
 </script>
 
-<style scoped lang="less">
-.currency-page { min-height: 100%; padding: 20px; background: var(--fx-bg-layout, #f8fafc); }
-.page-header { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; padding: 24px 28px; border: 1px solid var(--fx-border-color, #e5e7eb); border-radius: 8px; background: var(--fx-bg-container, #fff); }
-.page-header h1 { margin: 10px 0 8px; font-size: 28px; }
-.page-header p { margin: 0; color: var(--fx-text-secondary, #64748b); }
-.danger-link { color: #ff4d4f; }
-.disabled { color: var(--fx-text-disabled, #bfbfbf); cursor: not-allowed; pointer-events: none; }
-.full-width { width: 100%; }
-@media (max-width: 768px) { .currency-page { padding: 12px; } .page-header { flex-direction: column; padding: 18px; } }
-</style>
+<style scoped lang="less" src="@/styles/views/basic/currency/index.less"></style>

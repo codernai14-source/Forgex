@@ -28,6 +28,7 @@ import com.forgex.sys.mapper.SysMessageMapper;
 import com.forgex.sys.mapper.SysMessageTemplateContentMapper;
 import com.forgex.sys.mapper.SysMessageTemplateMapper;
 import com.forgex.sys.mapper.SysMessageTemplateReceiverMapper;
+import com.forgex.sys.service.ISysUserService;
 import com.forgex.sys.service.SseEmitterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -103,6 +104,11 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
      * SSE 推送服务。
      */
     private final SseEmitterService sseEmitterService;
+
+    /**
+     * 用户查询服务。
+     */
+    private final ISysUserService userService;
 
     /**
      * JSON 序列化工具。
@@ -323,8 +329,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     /**
      * 解析模板接收人配置，转换为用户 ID 列表。
      * <p>
-     * 当前仅真正支持 {@code USER} 类型。
-     * {@code ROLE}、{@code DEPT}、{@code POSITION} 仍保留待实现提示。
+     * 支持按用户、角色、部门、岗位配置接收人，并统一过滤为当前租户内启用且未删除的用户。
      * {@code CUSTOM} 表示由调用方在运行时动态传入，这里不读取模板中的 receiverIds。
      * </p>
      *
@@ -332,6 +337,12 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
      * @return 解析出的用户 ID 列表
      */
     private List<Long> resolveReceiverUserIds(List<SysMessageTemplateReceiver> receivers) {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            log.warn("Current tenantId is null, cannot resolve message template receivers");
+            return Collections.emptyList();
+        }
+
         Set<Long> userIds = new LinkedHashSet<>();
 
         for (SysMessageTemplateReceiver receiver : receivers) {
@@ -339,15 +350,17 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
             List<Long> ids = parseReceiverIds(receiver.getReceiverIds());
 
             if ("USER".equals(receiverType)) {
-                userIds.addAll(ids);
+                userIds.addAll(userService.listValidUserIds(tenantId, ids));
             } else if ("ROLE".equals(receiverType)) {
-                log.warn("ROLE 类型接收人解析暂未实现: receiverIds={}", ids);
+                userIds.addAll(userService.listUserIdsByRoleIds(tenantId, ids));
             } else if ("DEPT".equals(receiverType)) {
-                log.warn("DEPT 类型接收人解析暂未实现: receiverIds={}", ids);
+                userIds.addAll(userService.listUserIdsByDeptIds(tenantId, ids));
             } else if ("POSITION".equals(receiverType)) {
-                log.warn("POSITION 类型接收人解析暂未实现: receiverIds={}", ids);
+                userIds.addAll(userService.listUserIdsByPositionIds(tenantId, ids));
             } else if ("CUSTOM".equals(receiverType)) {
                 log.debug("CUSTOM 类型接收人由调用方动态传入，跳过模板 receiverIds: templateReceiverId={}", receiver.getId());
+            } else {
+                log.warn("未知消息模板接收人类型: receiverType={}, receiverIds={}", receiverType, ids);
             }
         }
 

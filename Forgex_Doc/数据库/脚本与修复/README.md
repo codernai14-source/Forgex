@@ -25,6 +25,12 @@
 | `20260508_i18n_five_language_repair.sql` | `forgex_admin`、`forgex_common` | 幂等补齐菜单、字典、动态表格、提示消息相关 JSON 字段的五语言键；不新增表结构，执行前按脚本头部说明导出备份。 |
 | `20260512_material_import_sync_upgrade.sql` | `forgex_common`、`forgex_admin`、`forgex_integration` | 幂等补齐物料公共导入模板、附属字段结构表 `basic_material_extend_schema`、附属字段配置权限、物料导入/第三方拉取/第三方同步按钮权限，以及 `basic_material_sync`、`basic_material_pull` 默认接口编码。 |
 | `20260512_supplier_tenant_login_fix.sql` | `forgex_common`、`forgex_admin` | 幂等补齐供应商生成租户后的初始化任务表、菜单复制规则、管理员账号、`sys_user_tenant` 租户绑定、管理员角色和系统菜单授权；用于修复已生成但无法登录的供应商租户。 |
+| `20260515_label_template_refactor.sql` | `forgex_admin`、`forgex_common` | 幂等补齐标签类型、标签字段、标签模板主表、标签模板详情表、导入配置、菜单与权限；用于支撑标签模板重构与打印渲染链路。 |
+| `20260515_label_menu_permission_seed.sql` | `forgex_admin` | 幂等补齐标签类型、标签字段菜单，以及标签模块当前后端权限、默认管理员菜单/权限授权。 |
+| `20260516_packaging_spec_three_slot_upgrade.sql` | `forgex_admin`、`forgex_common` | 幂等升级包装规格管理：补齐 `basic_packaging_type` 新字段、创建 `basic_material_packaging_relation` 三槽关联表、迁移旧包装材质到新包装规格类型、补齐包装菜单权限、字典和 `BasicPackagingTypeTable` 公共表格配置。 |
+| `20260517_basic_currency_encode_rule_menu_permission_fix.sql` | `forgex_admin` | 幂等修复基础信息下币种管理菜单、编码规则页面入口和权限授权数据，确保编码规则作为页面而不是目录展示。 |
+| `20260517_basic_currency_table_fix.sql` | `forgex_admin` | 幂等创建币种管理依赖的 `mdm_currency`、`mdm_exchange_rate_type`、`mdm_currency_exchange_rate`、`mdm_exchange_rate_log` 表，并补齐当前租户默认币种和汇率类型种子数据。 |
+| `20260518_seed_basic_units_and_currency_rates.sql` | `forgex_admin` | 幂等初始化公共租户和默认租户的常见计量单位分类、固定换算关系、常见币种，以及 CNY 到常见外币的 BOOKING 有效汇率。 |
 
 ## 四、推荐阅读方式
 

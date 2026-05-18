@@ -61,7 +61,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal, message } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
+
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ExcelImportConfigModal from './components/ExcelImportConfigModal.vue'
 import { translateLegacyText } from '@/utils/legacyI18n'
@@ -272,12 +273,4 @@ async function showBlobError(blob: Blob) {
 }
 </script>
 
-<style scoped lang="less">
-.excel-import-config {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/excelImportConfig/index.less"></style>

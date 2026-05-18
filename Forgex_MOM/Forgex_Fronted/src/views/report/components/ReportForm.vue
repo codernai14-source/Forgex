@@ -89,7 +89,8 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { type FormInstance } from 'ant-design-vue'
 import type { ReportTemplate, ReportSaveDTO } from '@/report/types'
-import { save } from '@/api/report'import { translateLegacyText } from '@/utils/legacyI18n'
+import { save } from '@/api/report'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 interface Props {
   open: boolean
@@ -223,4 +224,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less"></style>
+

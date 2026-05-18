@@ -1,6 +1,6 @@
-<template>
+﻿<template>
   <div class="tag-style-config">
-    <!-- 颜色和图标在同一行 -->
+    <!-- 棰滆壊鍜屽浘鏍囧湪鍚屼竴琛?-->
     <div class="tag-style-row">
       <div class="tag-style-field">
         <label class="tag-style-label">{{ t('common.tagStyle.color') }}</label>
@@ -129,13 +129,13 @@
       </div>
     </div>
 
-    <!-- 预览区域 -->
+    <!-- 棰勮鍖哄煙 -->
     <div class="tag-style-preview">
       <label class="tag-style-label">{{ t('common.preview') }}</label>
       <div class="tag-style-preview-content">
         <a-tag v-if="formData.color" :color="formData.color">
-          <template v-if="currentIconComponent" #icon>
-            <component :is="currentIconComponent" />
+          <template v-if="formData.icon" #icon>
+            <FxIcon :name="formData.icon" :fallback="false" />
           </template>
           {{ t('common.tagStyle.exampleTag') }}
         </a-tag>
@@ -146,9 +146,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getIcon } from '@/utils/icon'
+import FxIcon from '@/components/common/FxIcon.vue'
 import {
   CheckCircleOutlined,
   CheckOutlined,
@@ -173,15 +173,8 @@ const formData = reactive<TagStyleForm>({
 const { t } = useI18n()
 
 /**
- * 当前选中的图标组件
- */
-const currentIconComponent = computed(() => {
-  return getIcon(formData.icon)
-})
-
-/**
- * 获取标签样式 JSON 字符串
- * @returns 标签样式 JSON 字符串
+ * 鑾峰彇鏍囩鏍峰紡 JSON 瀛楃涓?
+ * @returns 鏍囩鏍峰紡 JSON 瀛楃涓?
  */
 const getTagStyleJson = (): string => {
   const data: TagStyleForm = {}
@@ -195,8 +188,8 @@ const getTagStyleJson = (): string => {
 }
 
 /**
- * 设置标签样式
- * @param json 标签样式 JSON 字符串
+ * 璁剧疆鏍囩鏍峰紡
+ * @param json 鏍囩鏍峰紡 JSON 瀛楃涓?
  */
 const setTagStyleJson = (json: string) => {
   if (!json || json.trim() === '') {
@@ -206,11 +199,11 @@ const setTagStyleJson = (json: string) => {
   }
   try {
     const data = JSON.parse(json)
-    // 直接赋值触发响应式更新
+    // 鐩存帴璧嬪€艰Е鍙戝搷搴斿紡鏇存柊
     formData.color = data.color || undefined
     formData.icon = data.icon || undefined
   } catch (e) {
-    console.error('[TagStyleConfig] 解析标签样式失败:', e, json)
+    console.error('[TagStyleConfig] 瑙ｆ瀽鏍囩鏍峰紡澶辫触:', e, json)
   }
 }
 
@@ -225,58 +218,5 @@ defineExpose({
 })
 </script>
 
-<style scoped lang="less">
-.tag-style-config {
-  .tag-style-row {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
-  }
+<style scoped lang="less" src="@/styles/components/system/tag-style-config.less"></style>
 
-  .tag-style-field {
-    flex: 1;
-    min-width: 0;
-
-    .tag-style-label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: var(--fx-text-primary, #1f1f1f);
-      font-weight: 500;
-    }
-  }
-
-  .tag-style-preview {
-    .tag-style-label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: var(--fx-text-primary, #1f1f1f);
-      font-weight: 500;
-    }
-
-    .tag-style-preview-content {
-      padding: 12px 16px;
-      background: var(--fx-bg-layout, #f5f5f5);
-      border-radius: 6px;
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-
-      .tag-style-preview-empty {
-        color: var(--fx-text-disabled, #999);
-        font-size: 14px;
-      }
-    }
-  }
-
-  :deep(.ant-select) {
-    width: 100%;
-  }
-
-  :deep(.ant-select-selection-item) {
-    display: flex;
-    align-items: center;
-  }
-}
-</style>

@@ -46,8 +46,19 @@
       table-code="MaterialTable"
       :request="handleRequest"
       :dict-options="dictOptions"
+      :row-selection="rowSelection"
       row-key="id"
     >
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:material:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #materialType="{ record }">
         <a-tag :color="materialTypeColor(record.materialType)">
           {{ labelOf(materialTypeOptions, record.materialType) }}
@@ -261,6 +272,58 @@
               </a-tab-pane>
             </a-tabs>
           </a-tab-pane>
+
+          <a-tab-pane key="packaging" :tab="t('basic.material.editorTabs.packaging')">
+            <a-spin :spinning="packagingRelationLoading">
+              <a-row :gutter="16">
+                <a-col :xs="24" :md="8">
+                  <a-form-item :label="t('basic.material.packaging.small')">
+                    <a-select
+                      v-model:value="packagingRelation.smallPackagingTypeId"
+                      :disabled="readonly"
+                      :options="packagingTypeOptions"
+                      :placeholder="t('basic.material.packaging.placeholder')"
+                      allow-clear
+                      show-search
+                      :filter-option="filterOption"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :md="8">
+                  <a-form-item :label="t('basic.material.packaging.medium')">
+                    <a-select
+                      v-model:value="packagingRelation.mediumPackagingTypeId"
+                      :disabled="readonly"
+                      :options="packagingTypeOptions"
+                      :placeholder="t('basic.material.packaging.placeholder')"
+                      allow-clear
+                      show-search
+                      :filter-option="filterOption"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :md="8">
+                  <a-form-item :label="t('basic.material.packaging.large')">
+                    <a-select
+                      v-model:value="packagingRelation.largePackagingTypeId"
+                      :disabled="readonly"
+                      :options="packagingTypeOptions"
+                      :placeholder="t('basic.material.packaging.placeholder')"
+                      allow-clear
+                      show-search
+                      :filter-option="filterOption"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-descriptions bordered size="small" :column="1" class="packaging-preview">
+                <a-descriptions-item :label="t('basic.material.packaging.preview')">
+                  {{ packagingPreviewText }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </a-spin>
+          </a-tab-pane>
         </a-tabs>
       </a-spin>
     </BaseFormDialog>
@@ -434,10 +497,18 @@ import {
   type MaterialExtendViewField,
   type MaterialPageParam,
 } from '@/api/basic/material'
+import {
+  getAllPackagingTypes,
+  listPackagingByMaterial,
+  savePackagingByMaterial,
+  type MaterialPackagingRelation,
+  type PackagingType,
+} from '@/api/basic/packaging'
 import { getAllUnits } from '@/api/basic/unit'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { useAppStore } from '@/stores/app'
 
 const { t } = useI18n()
@@ -448,8 +519,14 @@ const DEFAULT_MATERIAL_TYPE = 'RAW_MATERIAL'
 
 type ExtendEditorModule = MaterialExtendView & { fields: Array<MaterialExtendViewField & { __module: string }> }
 type MaterialForm = Partial<Material> & { extendViewList: ExtendEditorModule[] }
+type PackagingRelationForm = {
+  smallPackagingTypeId?: number | null
+  mediumPackagingTypeId?: number | null
+  largePackagingTypeId?: number | null
+}
 
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const activeFilterTab = ref(ALL_TAB)
 const editorVisible = ref(false)
 const importDialogVisible = ref(false)
@@ -457,11 +534,13 @@ const editorLoading = ref(false)
 const saving = ref(false)
 const syncingThirdParty = ref(false)
 const pullingThirdParty = ref(false)
+const packagingRelationLoading = ref(false)
 const isEdit = ref(false)
 const readonly = ref(false)
 const editorTab = ref('main')
 const activeExtendModule = ref('PURCHASE')
 const unitOptions = ref<any[]>([])
+const packagingTypes = ref<PackagingType[]>([])
 const fieldDetailVisible = ref(false)
 const selectedField = ref<MaterialExtendViewField | null>(null)
 const configVisible = ref(false)
@@ -506,6 +585,12 @@ const form = reactive<MaterialForm>({
   extendViewList: [],
 })
 
+const packagingRelation = reactive<PackagingRelationForm>({
+  smallPackagingTypeId: null,
+  mediumPackagingTypeId: null,
+  largePackagingTypeId: null,
+})
+
 const configFormRequired = computed({
   get: () => configForm.required === 1,
   set: (value: boolean) => {
@@ -538,6 +623,20 @@ const statusOptions = computed(() => [
   { value: 1, label: t('common.enable') },
   { value: 0, label: t('common.disable') },
 ])
+
+const packagingTypeOptions = computed(() => packagingTypes.value.map((item) => ({
+  value: item.id,
+  label: `${item.packagingCode || ''} ${item.packagingName || ''}`.trim(),
+})))
+
+const packagingPreviewText = computed(() => {
+  const segments = [
+    `${t('basic.material.packaging.small')}: ${packagingName(packagingRelation.smallPackagingTypeId)}`,
+    `${t('basic.material.packaging.medium')}: ${packagingName(packagingRelation.mediumPackagingTypeId)}`,
+    `${t('basic.material.packaging.large')}: ${packagingName(packagingRelation.largePackagingTypeId)}`,
+  ]
+  return segments.join(' / ')
+})
 
 const extendModuleOptions = computed(() => [
   { value: 'PURCHASE', label: t('basic.material.extend.modules.purchase') },
@@ -628,6 +727,13 @@ function resetForm() {
     description: '',
     extendViewList: [],
   })
+  resetPackagingRelation()
+}
+
+function resetPackagingRelation() {
+  packagingRelation.smallPackagingTypeId = null
+  packagingRelation.mediumPackagingTypeId = null
+  packagingRelation.largePackagingTypeId = null
 }
 
 async function openCreate() {
@@ -657,6 +763,7 @@ async function openEditor(record: any, readonlyMode: boolean) {
   try {
     const result = await materialApi.detail({ id: record.id })
     applyEditorData({ ...record, ...normalizeDetail(result) })
+    await loadMaterialPackaging(form.id)
   } finally {
     editorLoading.value = false
   }
@@ -685,6 +792,9 @@ function applyEditorData(data: any) {
     description: data.description || '',
     extendViewList: normalizeExtendViewList(data.extendViewList || []),
   })
+  packagingRelation.smallPackagingTypeId = null
+  packagingRelation.mediumPackagingTypeId = null
+  packagingRelation.largePackagingTypeId = null
 }
 
 async function reloadEditorExtendSchema() {
@@ -721,6 +831,40 @@ async function reloadEditorExtendSchema() {
     form.extendViewList = modules
   } finally {
     editorLoading.value = false
+  }
+}
+
+async function loadPackagingTypes() {
+  if (packagingTypes.value.length) {
+    return
+  }
+  const result: any = await getAllPackagingTypes()
+  packagingTypes.value = Array.isArray(result) ? result : (result?.records || [])
+}
+
+async function loadMaterialPackaging(materialId?: number) {
+  resetPackagingRelation()
+  if (!materialId) {
+    return
+  }
+  packagingRelationLoading.value = true
+  try {
+    await loadPackagingTypes()
+    const result: any = await listPackagingByMaterial(materialId)
+    const rows: MaterialPackagingRelation[] = Array.isArray(result) ? result : (result?.records || [])
+    rows.forEach((item) => {
+      if (item.packagingSlot === 'SMALL') {
+        packagingRelation.smallPackagingTypeId = item.packagingTypeId || null
+      } else if (item.packagingSlot === 'MEDIUM') {
+        packagingRelation.mediumPackagingTypeId = item.packagingTypeId || null
+      } else if (item.packagingSlot === 'LARGE') {
+        packagingRelation.largePackagingTypeId = item.packagingTypeId || null
+      }
+    })
+  } catch {
+    resetPackagingRelation()
+  } finally {
+    packagingRelationLoading.value = false
   }
 }
 
@@ -782,8 +926,17 @@ async function handleSave() {
       await materialApi.update(payload)
       message.success(t('common.updateSuccess'))
     } else {
-      await materialApi.create(payload)
+      const createdId = await materialApi.create(payload)
+      form.id = createdId
       message.success(t('common.createSuccess'))
+    }
+    if (form.id) {
+      await savePackagingByMaterial({
+        materialId: form.id,
+        smallPackagingTypeId: packagingRelation.smallPackagingTypeId,
+        mediumPackagingTypeId: packagingRelation.mediumPackagingTypeId,
+        largePackagingTypeId: packagingRelation.largePackagingTypeId,
+      })
     }
     editorVisible.value = false
     tableRef.value?.refresh?.()
@@ -966,6 +1119,28 @@ function handleDelete(record: any) {
   })
 }
 
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await materialApi.batchDelete({ ids: selectedRowKeys.value })
+      message.success(t('common.deleteSuccess'))
+      clearSelection()
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function packagingSlotOptions() {
+  return [
+    { value: 'SMALL', label: t('basic.material.packaging.small') },
+    { value: 'MEDIUM', label: t('basic.material.packaging.medium') },
+    { value: 'LARGE', label: t('basic.material.packaging.large') },
+  ]
+}
+
 async function handleSyncThirdParty() {
   syncingThirdParty.value = true
   try {
@@ -995,6 +1170,18 @@ function handleImportSuccess() {
 function labelOf(options: Array<{ value: string | number; label: string }>, value: any) {
   const item = options.find((option) => option.value === value)
   return item ? item.label : (value || '-')
+}
+
+function packagingName(id?: number | null) {
+  if (!id) {
+    return '-'
+  }
+  const item = packagingTypes.value.find((packaging) => packaging.id === id)
+  return item ? `${item.packagingCode || ''} ${item.packagingName || ''}`.trim() : '-'
+}
+
+function filterOption(input: string, option: any) {
+  return String(option?.label || '').toLowerCase().includes(input.toLowerCase())
 }
 
 function fieldTypeLabel(type: string) {
@@ -1031,141 +1218,16 @@ function materialTypeColor(type: string) {
 onMounted(async () => {
   try {
     const res: any = await getAllUnits()
-    unitOptions.value = Array.isArray(res) ? res : (res?.data || [])
+    unitOptions.value = Array.isArray(res) ? res : (res?.records || res?.data || [])
   } catch {
     unitOptions.value = []
+  }
+  try {
+    await loadPackagingTypes()
+  } catch {
+    packagingTypes.value = []
   }
 })
 </script>
 
-<style scoped>
-.material-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 20px;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: var(--material-page-bg);
-}
-
-.material-page--light {
-  --material-page-bg:
-    linear-gradient(180deg, color-mix(in srgb, var(--fx-primary, #1677ff) 8%, #f8fafc), #eef3f8);
-  --material-header-bg:
-    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 12%, #ffffff), var(--fx-bg-container, #ffffff));
-}
-
-.material-page--dark {
-  --material-page-bg:
-    linear-gradient(180deg, color-mix(in srgb, var(--fx-primary, #1677ff) 14%, #111827), #05070b);
-  --material-header-bg:
-    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 18%, #111827), var(--fx-bg-container, #111827));
-}
-
-.material-page__header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 12px;
-  padding: 14px 18px;
-  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 20%, var(--fx-border-color, #e5e7eb));
-  border-radius: 8px;
-  background: var(--material-header-bg);
-  box-shadow: var(--fx-shadow-secondary, 0 10px 28px rgba(15, 23, 42, 0.06));
-}
-
-.material-page__header h1 {
-  margin: 6px 0 4px;
-  color: var(--fx-text-primary, #111827);
-  font-size: 22px;
-  line-height: 1.25;
-  font-weight: 600;
-}
-
-.material-page__header p {
-  margin: 0;
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.material-tabs {
-  flex-shrink: 0;
-  margin-bottom: 8px;
-}
-
-.material-page :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.extend-toolbar,
-.config-filter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.extend-toolbar > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.extend-toolbar strong {
-  color: var(--fx-text-primary, #111827);
-}
-
-.extend-toolbar span {
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 12px;
-}
-
-.extend-module-tabs {
-  min-height: 360px;
-}
-
-.field-control,
-.full-width {
-  width: 100%;
-}
-
-.config-filter {
-  justify-content: flex-start;
-}
-
-.config-select {
-  width: 180px;
-}
-
-.unknown-collapse {
-  margin-top: 12px;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-
-@media (max-width: 768px) {
-  .material-page {
-    padding: 12px;
-  }
-
-  .material-page__header,
-  .extend-toolbar,
-  .config-filter {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .config-select {
-    width: 100%;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/basic/material/index.less"></style>

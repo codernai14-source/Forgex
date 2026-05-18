@@ -586,5 +586,5 @@ function handleCancel() {
 }
 </script>
 
-<style scoped lang="less" src="@/styles/system-user-form.less"></style>
+<style scoped lang="less" src="@/styles/views/system/user/components/user-form-dialog.less"></style>
 

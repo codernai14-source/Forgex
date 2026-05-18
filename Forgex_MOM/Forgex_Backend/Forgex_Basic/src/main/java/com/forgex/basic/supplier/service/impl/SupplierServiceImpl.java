@@ -239,6 +239,18 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
         return true;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchDelete(List<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return true;
+        }
+        for (Long id : ids) {
+            delete(id);
+        }
+        return true;
+    }
+
     /**
      * 生成关联租户。
      *

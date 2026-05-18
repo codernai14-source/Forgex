@@ -394,47 +394,4 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped lang="less">
-.system-notice-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.system-notice-page :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.notice-editor-toolbar {
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-bottom: 0;
-}
-
-.notice-editor {
-  min-height: 320px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-}
-
-.notice-readonly-content {
-  min-height: 180px;
-  padding: 12px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 8px;
-  line-height: 1.7;
-
-  :deep(img) {
-    max-width: 100%;
-    height: auto;
-  }
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-
-.full-width {
-  width: 100%;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/notice/index.less"></style>

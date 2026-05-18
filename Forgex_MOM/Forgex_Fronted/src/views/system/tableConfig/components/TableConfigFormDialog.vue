@@ -308,9 +308,4 @@ watch(
 )
 </script>
 
-<style scoped>
-:deep(.ant-tabs-content) {
-  max-height: 600px;
-  overflow-y: auto;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/tableConfig/components/table-config-form-dialog.less"></style>

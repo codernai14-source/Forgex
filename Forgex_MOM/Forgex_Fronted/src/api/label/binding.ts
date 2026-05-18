@@ -29,6 +29,10 @@ export const labelBindingApi = {
         return http.post('/basic/label/binding/delete', { id })
     },
 
+    batchDelete(ids: number[]) {
+        return http.post('/basic/label/binding/batchDelete', { ids })
+    },
+
     /**
      * 智能匹配模板（打印核心）
      */

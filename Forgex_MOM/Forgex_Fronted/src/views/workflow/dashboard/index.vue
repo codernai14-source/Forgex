@@ -324,7 +324,7 @@ import {
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
 import { use权限Store } from '@/stores/permission'
 import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
-import './index.less'
+import '@/styles/views/workflow/dashboard/index.less'
 
 const SHORTCUT_LIMIT = 5
 const TASK_CONFIG_PREVIEW_LIMIT = 6

@@ -134,17 +134,18 @@ public class AutoFillUsernameAspect {
     }
 
     private boolean isPageObject(Object obj) {
-        String className = obj.getClass().getName();
-        return className.contains("IPage") || className.contains("Page");
+        return hasField(obj.getClass(), "records") || hasNoArgMethod(obj.getClass(), "getRecords");
     }
 
     private void collectPageRecordFillInfos(Object pageObject, Set<Object> visited, List<FieldFillInfo> fillInfos) throws Exception {
-        try {
-            Field recordsField = findField(pageObject.getClass(), "records");
+        Field recordsField = findFieldIfExists(pageObject.getClass(), "records");
+        if (recordsField != null) {
             recordsField.setAccessible(true);
             collectUsernameFillInfos(recordsField.get(pageObject), visited, fillInfos);
-        } catch (NoSuchFieldException ignored) {
-            Method getRecordsMethod = pageObject.getClass().getMethod("getRecords");
+            return;
+        }
+        Method getRecordsMethod = findNoArgMethodIfExists(pageObject.getClass(), "getRecords");
+        if (getRecordsMethod != null) {
             collectUsernameFillInfos(getRecordsMethod.invoke(pageObject), visited, fillInfos);
         }
     }
@@ -285,6 +286,14 @@ public class AutoFillUsernameAspect {
     }
 
     private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        Field field = findFieldIfExists(clazz, fieldName);
+        if (field != null) {
+            return field;
+        }
+        throw new NoSuchFieldException(fieldName);
+    }
+
+    private Field findFieldIfExists(Class<?> clazz, String fieldName) {
         Class<?> currentClass = clazz;
         while (currentClass != null && currentClass != Object.class) {
             try {
@@ -293,7 +302,24 @@ public class AutoFillUsernameAspect {
                 currentClass = currentClass.getSuperclass();
             }
         }
-        throw new NoSuchFieldException(fieldName);
+        return null;
+    }
+
+    private boolean hasField(Class<?> clazz, String fieldName) {
+        return findFieldIfExists(clazz, fieldName) != null;
+    }
+
+    private Method findNoArgMethodIfExists(Class<?> clazz, String methodName) {
+        try {
+            Method method = clazz.getMethod(methodName);
+            return method.getParameterCount() == 0 ? method : null;
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+    private boolean hasNoArgMethod(Class<?> clazz, String methodName) {
+        return findNoArgMethodIfExists(clazz, methodName) != null;
     }
 
     private void makeAccessible(Field field) {
@@ -314,12 +340,7 @@ public class AutoFillUsernameAspect {
     private boolean isBusinessObjectType(Class<?> clazz) {
         return !isSimpleValueType(clazz)
                 && !clazz.isArray()
-                && !clazz.getName().startsWith("java.")
-                && !clazz.getName().startsWith("javax.")
-                && !clazz.getName().startsWith("jakarta.")
-                && !clazz.getName().startsWith("sun.")
-                && !clazz.getName().startsWith("jdk.")
-                && !clazz.getName().startsWith("com.sun.");
+                && clazz.getName().startsWith("com.forgex.");
     }
 
     private boolean isSimpleValueType(Class<?> clazz) {

@@ -9,6 +9,7 @@ import com.forgex.basic.currency.mapper.MdmCurrencyMapper;
 import com.forgex.basic.currency.service.ICurrencyService;
 import com.forgex.basic.enums.BasicPromptEnum;
 import com.forgex.common.exception.I18nBusinessException;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.StatusCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -80,7 +81,7 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
     public Long create(MdmCurrency param) {
         validate(param, true);
         param.setCurrencyCode(normalizeCode(param.getCurrencyCode()));
-        param.setTenantId(PUBLIC_TENANT_ID);
+        param.setTenantId(currentTenant());
         param.setStatus(param.getStatus() == null ? 1 : param.getStatus());
         param.setIsBaseCurrency(Boolean.TRUE.equals(param.getIsBaseCurrency()));
         if (Boolean.TRUE.equals(param.getIsBaseCurrency())) {
@@ -108,7 +109,7 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
             clearBaseCurrency(param.getId());
         }
         param.setCurrencyCode(exists.getCurrencyCode());
-        param.setTenantId(PUBLIC_TENANT_ID);
+        param.setTenantId(exists.getTenantId() == null ? currentTenant() : exists.getTenantId());
         currencyMapper.updateById(param);
         return true;
     }
@@ -236,6 +237,11 @@ public class CurrencyServiceImpl extends ServiceImpl<MdmCurrencyMapper, MdmCurre
 
     private String normalizeCode(String value) {
         return StringUtils.hasText(value) ? value.trim().toUpperCase() : null;
+    }
+
+    private Long currentTenant() {
+        Long tenantId = TenantContext.get();
+        return tenantId == null ? PUBLIC_TENANT_ID : tenantId;
     }
 
     private I18nBusinessException ex(BasicPromptEnum prompt) {

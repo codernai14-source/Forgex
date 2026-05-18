@@ -210,20 +210,4 @@ function handleBatchKickout() {
 }
 </script>
 
-<style scoped lang="less">
-.online-user-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.terminal-tabs {
-  flex: 0 0 auto;
-
-  :deep(.ant-tabs-nav) {
-    margin-bottom: 12px;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/online/index.less"></style>

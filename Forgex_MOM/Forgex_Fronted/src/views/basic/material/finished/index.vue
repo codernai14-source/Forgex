@@ -13,7 +13,17 @@
       </a-space>
     </div>
 
-    <FxDynamicTable ref="tableRef" table-code="FinishedGoodsMaterialTable" :request="handleRequest" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="FinishedGoodsMaterialTable" :request="handleRequest" :row-selection="rowSelection" row-key="id">
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:material:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'success' : 'default'">
           {{ record.status === 1 ? t('common.enable') : t('common.disable') }}
@@ -134,10 +144,12 @@ import { useI18n } from 'vue-i18n'
 import { materialApi } from '@/api/basic/material'
 import { getAllUnits } from '@/api/basic/unit'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 
 const { t } = useI18n()
 
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const saving = ref(false)
@@ -269,6 +281,20 @@ function handleDelete(record: any) {
   })
 }
 
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await materialApi.batchDelete({ ids: selectedRowKeys.value })
+      message.success(t('common.deleteSuccess'))
+      clearSelection()
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+
 onMounted(async () => {
   try {
     const res: any = await getAllUnits()
@@ -279,37 +305,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.material-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 24px;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.page-header {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  margin: 8px 0 4px;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.page-header p {
-  color: #666;
-  font-size: 14px;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/basic/material/finished/index.less"></style>

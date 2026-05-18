@@ -5,6 +5,10 @@
  * @version 1.0.0
  */
 export default {
+  loading: {
+    thinking: 'Forgex正在加载您所需的任何内容，请稍等',
+  },
+
   // Hero 区
   hero: {
     eyebrow: '个人工作台',
@@ -27,10 +31,27 @@ export default {
     refresh: '刷新',
     resetDefault: '恢复默认',
     saveLayout: '保存布局',
+    componentLibrary: '组件库',
+    componentConfig: '个人组件配置',
     hint: {
       edit: '拖拽和缩放组件后可直接保存',
       view: '切换到编辑模式后可调整组件布局',
     },
+  },
+
+  library: {
+    title: '首页组件库',
+    searchPlaceholder: '按编码、名称、作用搜索',
+    scopeAll: '全部',
+    scopePublic: '公共',
+    scopeTenant: '租户',
+    scopeUser: '个人',
+    defaultGroup: '默认分类',
+    empty: '暂无可选组件',
+    favorite: '已收藏',
+    selected: '已添加',
+    removed: '已移除',
+    customPlaceholder: '该组件由前端注册组件承载，目录仅维护可选范围。',
   },
 
   // 配置面板
@@ -137,6 +158,17 @@ export default {
       singleCancelFailed: '取消收藏失败',
       sortSaveSuccess: '收藏排序已保存',
       sortSaveFailed: '保存收藏排序失败',
+    },
+  },
+
+  componentConfig: {
+    title: '个人首页组件配置',
+    desc: '统一维护当前用户可见的首页组件，支持收藏、添加和移除个人组件。',
+    empty: '当前没有可配置的个人首页组件',
+    addSuccess: '已添加到个人首页',
+    removeSuccess: '已从个人首页移除',
+    stats: {
+      count: '共 {count} 个分组',
     },
   },
 

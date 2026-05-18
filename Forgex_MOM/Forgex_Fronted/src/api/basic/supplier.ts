@@ -188,6 +188,10 @@ export const supplierApi = {
     return http.post('/basic/supplier/delete', { id })
   },
 
+  batchDelete(ids: number[]) {
+    return http.post<boolean>('/basic/supplier/batchDelete', { ids })
+  },
+
   /**
    * 生成供应商租户。
    */

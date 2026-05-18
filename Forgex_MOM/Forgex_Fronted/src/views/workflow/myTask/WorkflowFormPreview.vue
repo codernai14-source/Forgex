@@ -135,29 +135,4 @@ async function loadTaskConfigFallback(): Promise<WfTaskConfigDTO | null> {
 }
 </script>
 
-<style scoped>
-.workflow-form-preview {
-  min-height: 240px;
-}
-
-.json-fallback {
-  padding: 16px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: var(--fx-radius, 8px);
-  background: var(--fx-fill-secondary, #f5f5f5);
-}
-
-.json-fallback__alert {
-  margin-bottom: 12px;
-}
-
-.json-fallback pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
-  font-family: var(--fx-font-family-mono, 'Courier New', Courier, monospace);
-  font-size: 12px;
-  line-height: 1.6;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/workflow/myTask/workflow-form-preview.less"></style>

@@ -108,6 +108,9 @@ export const customerApi = {
   delete(id: number) {
     return http.post('/basic/customer/delete', { id })
   },
+  batchDelete(ids: number[]) {
+    return http.post<boolean>('/basic/customer/batchDelete', { ids })
+  },
   generateTenant(id: number) {
     return http.post<string>('/basic/customer/generate-tenant', { id })
   },

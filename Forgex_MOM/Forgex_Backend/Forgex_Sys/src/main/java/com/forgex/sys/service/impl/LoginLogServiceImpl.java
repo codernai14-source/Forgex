@@ -16,6 +16,7 @@ package com.forgex.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.security.LoginFailureReasonResolver;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.TenantContextIgnore;
 import com.forgex.sys.domain.dto.LoginLogQueryDTO;
@@ -89,7 +90,7 @@ public class LoginLogServiceImpl implements ILoginLogService {
             loginLog.setUserAgent(userAgent);
             loginLog.setLoginTime(LocalDateTime.now());
             loginLog.setStatus(0); // 失败
-            loginLog.setReason(reason);
+            loginLog.setReason(LoginFailureReasonResolver.resolve(reason));
             loginLog.setCreateTime(LocalDateTime.now());
             
             loginLogMapper.insert(loginLog);
@@ -136,6 +137,7 @@ public class LoginLogServiceImpl implements ILoginLogService {
         IPage<LoginLogVO> voPage = loginLogPage.convert(loginLog -> {
             LoginLogVO vo = new LoginLogVO();
             BeanUtils.copyProperties(loginLog, vo);
+            vo.setReason(LoginFailureReasonResolver.resolve(loginLog.getReason()));
             return vo;
         });
         

@@ -308,7 +308,7 @@ public class BasicMaterialController {
      *         - message: 操作结果消息
      */
     @Operation(summary = "批量删除物料", description = "批量逻辑删除物料")
-    @RequirePerm("basic:material:delete")
+    @RequirePerm("basic:material:batchDelete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody Map<String, List<Long>> body) {
         List<Long> ids = body.get("ids");

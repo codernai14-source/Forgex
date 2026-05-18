@@ -124,7 +124,8 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { DatabaseOutlined, FileTextOutlined, PrinterOutlined } from '@ant-design/icons-vue'
 import { labelRecordApi } from '@/api/label/record'
-import { labelPrintApi } from '@/api/label/print'
+import { labelPrintApi } from '@/api/label/print'
+
 const { t } = useI18n()
 const tableRef = ref()
 const detailVisible = ref(false)
@@ -290,48 +291,5 @@ const snapshotColumns = computed(() => {
 })
 </script>
 
-<style scoped lang="less">
-.page-container {
-  padding: 16px;
-  height: 100%;
-}
-
-.snapshot-section {
-  margin-top: 24px;
-
-  :deep(.ant-divider-inner-text) {
-    font-size: 14px;
-    font-weight: 500;
-    color: #1890ff;
-  }
-}
-
-.snapshot-container {
-  background: #f5f5f5;
-  border: 1px solid #e8e8e8;
-  border-radius: 4px;
-  max-height: 400px;
-  overflow-y: auto;
-
-  .json-viewer {
-    padding: 16px;
-    margin: 0;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 12px;
-    line-height: 1.6;
-    color: #333;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-}
-
-:deep(.ant-tabs-tab) {
-  font-size: 13px;
-}
-
-:deep(.ant-descriptions-item-label) {
-  font-weight: 500;
-  background-color: #fafafa;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/record/index.less"></style>
 

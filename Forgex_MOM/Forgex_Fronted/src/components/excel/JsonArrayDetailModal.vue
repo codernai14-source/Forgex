@@ -121,30 +121,4 @@ watch(
 )
 </script>
 
-<style scoped lang="less">
-.json-array-detail-modal {
-  &__alert {
-    margin-bottom: 12px;
-  }
-
-  &__empty {
-    padding: 24px 0 8px;
-  }
-
-  &__preview {
-    min-height: 320px;
-    margin: 0;
-    padding: 16px;
-    border: 1px solid #d9d9d9;
-    border-radius: 8px;
-    background: #fafafa;
-    color: rgba(0, 0, 0, 0.88);
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow: auto;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/components/excel/json-array-detail-modal.less"></style>

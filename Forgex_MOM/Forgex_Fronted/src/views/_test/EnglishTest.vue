@@ -252,18 +252,5 @@ const formData = reactive({
 })
 </script>
 
-<style scoped>
-.english-test-page {
-  padding: 24px;
-}
-
-.test-card {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.test-section {
-  margin-top: 16px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/_test/english-test.less"></style>
 

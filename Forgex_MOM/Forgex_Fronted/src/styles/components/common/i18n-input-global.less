@@ -1,0 +1,35 @@
+.i18n-input-modal-wrap {
+  overflow: hidden;
+
+  .ant-modal {
+    top: 0;
+    max-width: calc(100vw - 48px);
+    margin: 24px auto;
+    padding-bottom: 0;
+  }
+
+  .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+  }
+
+  .ant-modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+:deep(.ant-table) {
+  .lang-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .lang-icon {
+      font-size: 18px;
+    }
+  }
+}
