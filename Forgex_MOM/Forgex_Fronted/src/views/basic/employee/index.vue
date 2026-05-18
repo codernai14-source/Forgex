@@ -13,7 +13,17 @@
       </a-space>
     </div>
 
-    <FxDynamicTable ref="tableRef" table-code="BasicEmployeeTable" :request="handleRequest" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="BasicEmployeeTable" :request="handleRequest" :row-selection="rowSelection" row-key="id">
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:employee:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #employeeName="{ record }">
         <div class="master-name">
           <strong>{{ record.employeeName }}</strong>
@@ -60,14 +70,18 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { listDepartments } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { employeeApi, type Employee } from '@/api/basic/employee'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const visible = ref(false)
 const saving = ref(false)
 const form = ref<Employee>(emptyForm())
@@ -132,6 +146,19 @@ function handleDelete(record: Employee) {
     title: '确认删除该人员？',
     async onOk() {
       await employeeApi.delete(record.id!)
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await employeeApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })

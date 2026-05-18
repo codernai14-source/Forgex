@@ -54,6 +54,7 @@
           v-for="item in currentMenus"
           :key="item.key"
           :item="item"
+          @submenu-title-click="onSubmenuTitleClick"
         />
       </a-menu>
       <button
@@ -221,14 +222,14 @@ function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = [
 }
 
 function findFirstNavigableMenu(menu: MenuItem): MenuItem | null {
-  if (!menu.children?.length && menu.path) {
-    return menu
-  }
   for (const child of menu.children || []) {
     const found = findFirstNavigableMenu(child)
     if (found) {
       return found
     }
+  }
+  if (!menu.children?.length && !['catalog', 'module', 'button'].includes(menu.type) && menu.path) {
+    return menu
   }
   return null
 }
@@ -245,6 +246,7 @@ function onFirstLevelMenuClick(info: any) {
     const firstTarget = findFirstNavigableMenu(clickedMenu)
     if (firstTarget?.path) {
       selectedKeys.value = [firstTarget.path]
+      emit('menu-click', firstTarget.path)
     }
     return
   }
@@ -255,11 +257,28 @@ function onFirstLevelMenuClick(info: any) {
 function onMenuClick(info: any) {
   const key = String(info.key || '')
   const clickedMenu = findMenuByKey(currentMenus.value, key) || findMenuByKey(props.menus, key)
-  if (!key || clickedMenu?.children?.length) {
+  if (!key) {
+    return
+  }
+
+  if (clickedMenu?.children?.length) {
+    const firstTarget = findFirstNavigableMenu(clickedMenu)
+    if (firstTarget?.path) {
+      selectedKeys.value = [firstTarget.path]
+      emit('menu-click', firstTarget.path)
+    }
     return
   }
 
   emit('menu-click', clickedMenu?.path || key)
+}
+
+function onSubmenuTitleClick(menu: MenuItem) {
+  const firstTarget = findFirstNavigableMenu(menu)
+  if (firstTarget?.path) {
+    selectedKeys.value = [firstTarget.path]
+    emit('menu-click', firstTarget.path)
+  }
 }
 
 function onOpenChange(keys: string[]) {

@@ -90,3 +90,10 @@ INSERT INTO sys_menu (
 )
 SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '删除', '{"zh-CN":"删除","en-US":"Delete"}', NULL, NULL, '${ctx.permKeyPrefix}:delete', 5, 1, 1, NOW(), NOW(), 0
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:delete' AND deleted = 0);
+
+INSERT INTO sys_menu (
+    tenant_id, module_id, parent_id, type, menu_level, path, name, name_i18n_json,
+    icon, component_key, perm_key, order_num, visible, status, create_time, update_time, deleted
+)
+SELECT @TENANT_ID, NULL, @MENU_ID, 'button', 3, NULL, '批量删除', '{"zh-CN":"批量删除","en-US":"Batch Delete"}', NULL, NULL, '${ctx.permKeyPrefix}:batchDelete', 6, 1, 1, NOW(), NOW(), 0
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE tenant_id = @TENANT_ID AND parent_id = @MENU_ID AND perm_key = '${ctx.permKeyPrefix}:batchDelete' AND deleted = 0);

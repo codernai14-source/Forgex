@@ -9,7 +9,6 @@ USE `forgex_admin`;
 
 SET @script_user := '20260517_basic_employee_shift_team';
 SET @now := NOW();
-SET @public_tenant_id := 1993479636925403138;
 
 CREATE TABLE IF NOT EXISTS `basic_workshop` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -166,6 +165,10 @@ SET @basic_module_id := COALESCE(
   (SELECT module_id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'BasicSupplier' ORDER BY id LIMIT 1),
   5
 );
+SET @public_tenant_id := COALESCE(
+  (SELECT tenant_id FROM `sys_module` WHERE id = @basic_module_id LIMIT 1),
+  1
+);
 SET @basic_parent_id := 0;
 SET @admin_role_id := COALESCE(
   (SELECT id FROM `sys_role` WHERE deleted = 0 AND tenant_id = @public_tenant_id AND role_key = 'admin' ORDER BY id LIMIT 1),
@@ -192,7 +195,7 @@ WHERE @basic_parent_id IS NOT NULL
 INSERT INTO `sys_menu`
 (`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
 SELECT parent.tenant_id, parent.tenant_type, parent.module_id, parent.id, 'button', item.path, item.name, item.name_i18n_json, NULL, item.component_key,
-       item.perm_key, item.order_num, 0, 1, @now, @script_user, @now, @script_user, 0, 3, 'embedded', NULL
+       item.perm_key, item.order_num, 0, 1, @now, @script_user, @now, @script_user, 0, 2, 'embedded', NULL
 FROM (
   SELECT 'BasicWorkshop' parent_key, 'query' path, '车间查询' name, '{"zh-CN":"查询","zh-TW":"查詢","en-US":"Query","ja-JP":"検索","ko-KR":"조회"}' name_i18n_json, NULL component_key, 'basic:workshop:query' perm_key, 1 order_num
   UNION ALL SELECT 'BasicWorkshop', 'add', '车间新增', '{"zh-CN":"新增","zh-TW":"新增","en-US":"Add","ja-JP":"追加","ko-KR":"추가"}', NULL, 'basic:workshop:add', 2
@@ -218,6 +221,7 @@ JOIN `sys_menu` parent ON parent.deleted = 0 AND parent.component_key = item.par
 WHERE NOT EXISTS (
   SELECT 1 FROM `sys_menu` existing
   WHERE existing.deleted = 0
+    AND existing.parent_id = parent.id
     AND existing.perm_key = item.perm_key
 );
 
@@ -369,7 +373,7 @@ USE `forgex_integration`;
 
 SET @script_user := '20260517_basic_employee_shift_team';
 SET @now := NOW();
-SET @tenant_id := 1993479636925403138;
+SET @tenant_id := COALESCE(@public_tenant_id, 1);
 
 INSERT INTO `fx_api_config` (
   api_code, api_name, api_desc, direction, api_path, processor_bean, call_method,

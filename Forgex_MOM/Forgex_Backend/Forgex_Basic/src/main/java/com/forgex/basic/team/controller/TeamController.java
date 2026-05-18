@@ -65,7 +65,7 @@ public class TeamController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, teamService.delete(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
-    @RequirePerm("basic:team:delete")
+    @RequirePerm("basic:team:batchDelete")
     @PostMapping("/batchDelete")
     public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
         return R.ok(CommonPrompt.DELETE_SUCCESS, teamService.batchDelete(params.get("ids")));

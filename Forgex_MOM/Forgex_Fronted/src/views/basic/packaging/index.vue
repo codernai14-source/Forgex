@@ -6,11 +6,6 @@
         <h1>{{ t('basic.packaging.title') }}</h1>
         <p>{{ t('basic.packaging.description') }}</p>
       </div>
-      <a-space>
-        <a-button v-permission="'basic:packaging:add'" type="primary" @click="openCreate">
-          <PlusOutlined /> {{ t('basic.packaging.add') }}
-        </a-button>
-      </a-space>
     </div>
 
     <FxDynamicTable
@@ -18,8 +13,29 @@
       table-code="BasicPackagingTypeTable"
       :request="handleRequest"
       :dict-options="dictOptions"
+      :row-selection="rowSelection"
+      :query-first-row-count="3"
       row-key="id"
     >
+      <template #toolbar>
+        <a-space wrap>
+          <a-button v-permission="'basic:packaging:add'" type="primary" @click="openCreate">
+            <PlusOutlined /> {{ t('basic.packaging.add') }}
+          </a-button>
+          <a-button
+            v-permission="'basic:packaging:delete'"
+            danger
+            :disabled="!selectedRowKeys.length"
+            @click="handleBatchDelete"
+          >
+            {{ t('common.batchDelete') }}
+          </a-button>
+          <span v-if="selectedRowKeys.length" class="selection-summary">
+            {{ t('common.selectedCount', { count: selectedRowKeys.length }) }}
+          </span>
+        </a-space>
+      </template>
+
       <template #packagingSpecType="{ record }">
         <a-tag>{{ labelOf(packagingSpecTypeOptions, record.packagingSpecType) }}</a-tag>
       </template>
@@ -228,9 +244,11 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import type { TableProps } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
+  batchDeletePackagingType,
   createPackagingType,
   deletePackagingRelation,
   deletePackagingType,
@@ -260,6 +278,8 @@ const saving = ref(false)
 const relationSaving = ref(false)
 const relationLoading = ref(false)
 const isEdit = ref(false)
+const selectedRowKeys = ref<number[]>([])
+const selectedRows = ref<PackagingType[]>([])
 const unitOptions = ref<any[]>([])
 const materialOptions = ref<any[]>([])
 const relationList = ref<MaterialPackagingRelation[]>([])
@@ -337,6 +357,20 @@ const relationColumns = computed(() => [
   { title: t('common.action'), key: 'action', width: 90 },
 ])
 
+const rowSelection = computed<TableProps['rowSelection']>(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  preserveSelectedRowKeys: false,
+  onChange: (keys, rows) => {
+    selectedRowKeys.value = keys.map(key => Number(key)).filter(key => Number.isFinite(key))
+    selectedRows.value = rows as PackagingType[]
+  },
+}))
+
+function clearSelection() {
+  selectedRowKeys.value = []
+  selectedRows.value = []
+}
+
 function handleRequest(payload: {
   page: { current: number; pageSize: number }
   query: Record<string, any>
@@ -404,6 +438,7 @@ async function handleSave() {
       message.success(t('common.createSuccess'))
     }
     dialogVisible.value = false
+    clearSelection()
     tableRef.value?.refresh?.()
   } finally {
     saving.value = false
@@ -417,6 +452,24 @@ function handleDelete(record: PackagingType) {
     onOk: async () => {
       await deletePackagingType(record.id!)
       message.success(t('common.deleteSuccess'))
+      clearSelection()
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  const ids = selectedRowKeys.value
+  if (!ids.length) {
+    return
+  }
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: ids.length }),
+    onOk: async () => {
+      await batchDeletePackagingType(ids)
+      message.success(t('common.deleteSuccess'))
+      clearSelection()
       tableRef.value?.refresh?.()
     },
   })

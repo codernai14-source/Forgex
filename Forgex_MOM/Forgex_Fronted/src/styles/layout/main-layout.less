@@ -813,6 +813,7 @@
   flex: 1;
   overflow: hidden; /* 改为 hidden，防止整个内容区滚动 */
   padding: 0;       /* 移除默认 padding（如果有的话） */
+  position: relative;
 }
 .fx-content-inner {
   display: flex;
@@ -830,6 +831,27 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+.fx-back-top {
+  position: absolute;
+  right: 28px;
+  bottom: 28px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+}
+
+.fx-back-top-fade-enter-active,
+.fx-back-top-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fx-back-top-fade-enter-from,
+.fx-back-top-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 .fx-horizontal-menu-drawer__header {

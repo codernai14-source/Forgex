@@ -1,23 +1,41 @@
 .packaging-page {
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 18px;
+  gap: 14px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .page-header h1 {
-  margin: 8px 0 4px;
+  margin: 6px 0 4px;
+  color: var(--fx-text-primary, #111827);
   font-size: 20px;
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .page-header p {
-  color: #666;
+  margin: 0;
+  color: var(--fx-text-secondary, #64748b);
   font-size: 14px;
+  line-height: 1.5;
+}
+
+.packaging-page :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.selection-summary {
+  color: var(--fx-text-secondary, #64748b);
+  font-size: 13px;
 }
 
 .danger-link {

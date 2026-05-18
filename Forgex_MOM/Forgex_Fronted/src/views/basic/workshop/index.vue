@@ -11,7 +11,17 @@
       </a-space>
     </div>
 
-    <FxDynamicTable ref="tableRef" table-code="BasicWorkshopTable" :request="handleRequest" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="BasicWorkshopTable" :request="handleRequest" :row-selection="rowSelection" row-key="id">
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:workshop:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #workshopName="{ record }">
         <div class="master-name">
           <strong>{{ record.workshopName }}</strong>
@@ -50,13 +60,17 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { factoryApi } from '@/api/basic/factory'
 import { workshopApi, type Workshop } from '@/api/basic/workshop'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const visible = ref(false)
 const saving = ref(false)
 const form = ref<Workshop>(emptyForm())
@@ -97,6 +111,19 @@ function handleDelete(record: Workshop) {
     title: '确认删除该车间？',
     async onOk() {
       await workshopApi.delete(record.id!)
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await workshopApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })

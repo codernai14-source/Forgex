@@ -6,17 +6,19 @@
       :request="handleRequest"
       :dynamic-table-config="tableConfig"
       :show-query-form="true"
+      :row-selection="rowSelection"
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openCreate">新增</a-button>
+          <a-button v-permission="'${ctx.permKeyPrefix}:batchDelete'" danger :disabled="!selectedCount" @click="handleBatchDelete">批量删除</a-button>
+          <a-button v-permission="'${ctx.permKeyPrefix}:add'" type="primary" @click="openCreate">新增</a-button>
         </a-space>
       </template>
       <template #action="{ record }">
         <a-space>
-          <a @click="openDetail(record)">详情</a>
-          <a @click="openEdit(record)">编辑</a>
-          <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+          <a v-permission="'${ctx.permKeyPrefix}:query'" @click="openDetail(record)">详情</a>
+          <a v-permission="'${ctx.permKeyPrefix}:edit'" @click="openEdit(record)">编辑</a>
+          <a v-permission="'${ctx.permKeyPrefix}:delete'" style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -43,9 +45,11 @@ import { computed, reactive, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
-import { page${ctx.entityName}, detail${ctx.entityName}, create${ctx.entityName}, update${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
+import { page${ctx.entityName}, detail${ctx.entityName}, create${ctx.entityName}, update${ctx.entityName}, delete${ctx.entityName}, batchDelete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
 
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const formRef = ref()
 const formVisible = ref(false)
 const isEdit = ref(false)
@@ -141,6 +145,19 @@ function handleDelete(id: number) {
     content: '确定要删除这条记录吗？',
     onOk: async () => {
       await delete${ctx.entityName}(id)
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedCount.value} 条数据吗？`,
+    onOk: async () => {
+      await batchDelete${ctx.entityName}(selectedRowKeys.value)
+      clearSelection()
       tableRef.value?.refresh?.()
     },
   })
