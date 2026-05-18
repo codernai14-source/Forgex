@@ -1,38 +1,38 @@
 /**
- * 模块管理翻译 - 中文注释
+ * 模块管理 - 日语界面文案
  */
 export default {
-  // 页面标题
-  title: 'Module Management',
-  list: 'Module List',
-  detail: 'Module Detail',
-  
-  // 表格列
-  moduleName: 'Module Name',
-  moduleCode: 'Module Code',
-  icon: 'Icon',
-  orderNum: 'Order Number',
-  createTime: 'Create Time',
-  updateTime: 'Update Time',
-  
-  // 表单
+  title: 'モジュール管理',
+  list: 'モジュール一覧',
+  detail: 'モジュール詳細',
+
+  moduleName: 'モジュール名',
+  moduleCode: 'モジュールコード',
+  icon: 'アイコン',
+  orderNum: '表示順',
+  createTime: '作成日時',
+  updateTime: '更新日時',
+
   form: {
-    addModule: 'Add Module',
-    editModule: 'Edit Module',
-    moduleCode: 'Please enter module code',
-    moduleName: 'Please enter module name',
-    icon: 'Please enter icon name',
-    orderNum: 'Please enter order number',
+    addModule: 'モジュールを追加',
+    editModule: 'モジュールを編集',
+    moduleCode: 'モジュールコードを入力してください',
+    moduleName: 'モジュール名を入力してください',
+    icon: 'アイコン名を入力してください',
+    orderNum: '表示順を入力してください',
+    moduleCodePattern: '英数字とアンダースコアのみ、2～50文字',
+    moduleNameI18nRequired: '少なくとも1言語のモジュール名を設定してください',
+    orderNumNumber: '表示順は数値である必要があります',
+    status: '状態を選択してください',
   },
-  
-  // 操作
-  addModule: 'Add',
-  
-  // 消息
+
+  addModule: '追加',
+
   message: {
-    deleteConfirm: 'Are you sure you want to delete this module?',
-    deleteSuccess: 'Module deleted successfully',
-    saveSuccess: 'Module saved successfully',
-    moduleCodeExists: 'Module code already exists',
+    deleteConfirm: 'このモジュールを削除してもよろしいですか？',
+    deleteSuccess: 'モジュールを削除しました',
+    saveSuccess: 'モジュールを保存しました',
+    moduleCodeExists: 'このモジュールコードは既に存在します',
+    selectModuleToDelete: '削除するモジュールを選択してください',
   },
 }

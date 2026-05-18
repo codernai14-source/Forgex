@@ -16,6 +16,7 @@ package com.forgex.auth.service.impl;
 import com.forgex.auth.domain.entity.LoginLog;
 import com.forgex.auth.mapper.LoginLogMapper;
 import com.forgex.auth.service.LoginLogService;
+import com.forgex.common.security.LoginFailureReasonResolver;
 import com.forgex.common.security.LogoutReason;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +108,7 @@ public class LoginLogServiceImpl implements LoginLogService {
             loginLog.setUserAgent(userAgent);
             loginLog.setLoginTime(LocalDateTime.now());
             loginLog.setStatus(0);
-            loginLog.setReason(reason);
+            loginLog.setReason(LoginFailureReasonResolver.resolve(reason));
             loginLog.setCreateTime(LocalDateTime.now());
             loginLogMapper.insert(loginLog);
             log.info("record login failure, account={}, ip={}, reason={}", account, ip, reason);

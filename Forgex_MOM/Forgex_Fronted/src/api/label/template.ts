@@ -29,7 +29,19 @@ export const labelTemplateApi = {
         return http.post('/basic/label/template/setDefault', { id, templateType })
     },
 
-    getPlaceholders(tenantId?: number) {
-        return http.post('/basic/label/template/placeholders', { tenantId })
+    preview(id: number) {
+        return http.post('/basic/label/template/preview', { id })
+    },
+
+    designDetail(id: number) {
+        return http.post('/basic/label/template/design/detail', { id })
+    },
+
+    saveDesign(params: any) {
+        return http.post('/basic/label/template/design/save', params)
+    },
+
+    render(params: any) {
+        return http.post('/basic/label/print/render', params)
     }
 }

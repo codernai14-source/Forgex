@@ -19,6 +19,7 @@ import com.forgex.basic.material.domain.vo.MaterialVO;
 import com.forgex.basic.material.mapper.BasicMaterialExtendMapper;
 import com.forgex.basic.material.mapper.BasicMaterialMapper;
 import com.forgex.basic.material.service.IMaterialExtendConfigService;
+import com.forgex.basic.material.service.IMaterialPackagingRelationService;
 import com.forgex.basic.material.service.IMaterialService;
 import com.forgex.basic.material.util.MaterialCodeGenerator;
 import com.forgex.common.api.dto.MaterialAggregateDTO;
@@ -71,6 +72,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
     private final BasicMaterialMapper materialMapper;
     private final BasicMaterialExtendMapper materialExtendMapper;
     private final IMaterialExtendConfigService extendConfigService;
+    private final IMaterialPackagingRelationService materialPackagingRelationService;
     private final MaterialCodeGenerator materialCodeGenerator;
     private final IntegrationInternalMaterialFeignClient integrationInternalMaterialFeignClient;
 
@@ -212,6 +214,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
         requireMaterial(tenantId, id);
         materialMapper.deleteById(id);
         deleteExtends(id, tenantId);
+        materialPackagingRelationService.deleteByMaterialId(tenantId, id);
         log.info("删除物料成功，materialId={}", id);
     }
 

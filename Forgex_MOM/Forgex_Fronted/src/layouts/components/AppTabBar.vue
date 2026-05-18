@@ -1,9 +1,14 @@
 <template>
   <div ref="tabbarRootRef" class="app-tabbar fx-guide-tabbar">
-    <div class="tabbar-inner fx-guide-tabbar-list">
+    <div
+      ref="tabbarInnerRef"
+      class="tabbar-inner fx-guide-tabbar-list"
+      @scroll="scheduleMeasureClippedTabs"
+    >
       <div
         v-for="tab in tabs"
         :key="tab.key"
+        :ref="el => bindTabBarTabEl(tab.key, el)"
         class="tab-item"
         :class="{
           'tab-item-active': tab.key === activeKey,
@@ -17,6 +22,14 @@
         @dragend="onDragEnd"
         @contextmenu.prevent="onContextMenu(tab, $event)"
       >
+        <FxIcon
+          v-if="tab.icon"
+          :name="tab.icon"
+          :fallback="false"
+          class="tab-icon"
+          :size="14"
+        />
+        <PushpinFilled v-if="tab.pinned" class="tab-pin-icon" />
         <span class="tab-title">{{ tab.title }}</span>
         <CloseOutlined
           v-if="tab.closable"
@@ -28,21 +41,61 @@
 
     <!-- 右侧操作按钮 -->
     <div class="tabbar-actions">
-      <a-dropdown placement="bottomRight" :get-popup-container="getPopupContainer">
+      <a-dropdown
+        placement="bottomRight"
+        :get-popup-container="getPopupContainer"
+        @open-change="onOverflowDropdownOpenChange"
+      >
         <a-button type="text" size="small" class="action-btn">
           <MoreOutlined />
         </a-button>
         <template #overlay>
-          <a-menu @click="onQuickAction">
-            <a-menu-item key="closeOthers">
-              <CloseCircleOutlined />
-              <span>{{ t('layout.tab.closeOthers') }}</span>
-            </a-menu-item>
-            <a-menu-item key="closeAll">
-              <CloseSquareOutlined />
-              <span>{{ t('layout.tab.closeAll') }}</span>
-            </a-menu-item>
-          </a-menu>
+          <div class="tabbar-more-panel">
+            <div v-if="tabs.length > 1" class="tabbar-more-panel__search">
+              <a-input
+                v-model:value="overflowTabSearch"
+                allow-clear
+                size="small"
+                :placeholder="t('layout.tab.filterAllTabs')"
+              >
+                <template #prefix>
+                  <SearchOutlined class="tabbar-more-panel__search-icon" />
+                </template>
+              </a-input>
+            </div>
+            <a-menu class="tabbar-more-menu" @click="onQuickAction">
+              <a-menu-item-group
+                v-if="allTabsFiltered.length > 0"
+                :title="t('layout.tab.allTabs')"
+              >
+                <a-menu-item
+                  v-for="tab in allTabsFiltered"
+                  :key="'overflow-tab:' + tab.key"
+                  class="tabbar-overflow-menu-item"
+                >
+                  <FxIcon
+                    v-if="tab.icon"
+                    :name="tab.icon"
+                    :fallback="false"
+                    class="tab-icon"
+                    :size="14"
+                  />
+                  <PushpinFilled v-if="tab.pinned" class="tabbar-overflow-pin" />
+                  <span class="tabbar-overflow-menu-item__title">{{ tab.title }}</span>
+                  <CheckOutlined v-if="tab.key === activeKey" class="tabbar-overflow-active-check" />
+                </a-menu-item>
+              </a-menu-item-group>
+              <a-menu-divider v-if="allTabsFiltered.length > 0" />
+              <a-menu-item key="closeOthers">
+                <CloseCircleOutlined />
+                <span>{{ t('layout.tab.closeOthers') }}</span>
+              </a-menu-item>
+              <a-menu-item key="closeAll">
+                <CloseSquareOutlined />
+                <span>{{ t('layout.tab.closeAll') }}</span>
+              </a-menu-item>
+            </a-menu>
+          </div>
         </template>
       </a-dropdown>
     </div>
@@ -67,6 +120,13 @@
           <a-menu-item key="refresh">
             <SyncOutlined />
             <span>{{ t('layout.tab.refresh') }}</span>
+          </a-menu-item>
+          <a-menu-item
+            v-if="contextTab && contextTab.key !== PERSONAL_HOME_PATH"
+            key="pin"
+          >
+            <PushpinOutlined />
+            <span>{{ contextTab.pinned ? t('layout.tab.unpin') : t('layout.tab.pin') }}</span>
           </a-menu-item>
           <a-menu-item key="close" :disabled="!contextTab?.closable">
             <CloseOutlined />
@@ -97,8 +157,10 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import FxIcon from '@/components/common/FxIcon.vue'
+import { PERSONAL_HOME_PATH } from '@/router'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -106,16 +168,24 @@ import {
   VerticalLeftOutlined,
   VerticalRightOutlined,
   CloseSquareOutlined,
-  MoreOutlined
+  MoreOutlined,
+  SearchOutlined,
+  PushpinOutlined,
+  PushpinFilled,
+  CheckOutlined
 } from '@ant-design/icons-vue'
 
 const { t } = useI18n()
 
+/** 与 MainLayout {@link LayoutTab} 对齐的标签数据结构 */
 interface Tab {
   key: string
   title: string
   path: string
+  icon?: string
   closable: boolean
+  /** 固定标签：不可拖动关闭按钮关闭，需右键取消固定 */
+  pinned?: boolean
 }
 
 interface AppTabBarProps {
@@ -169,6 +239,12 @@ const emit = defineEmits<{
    * @param tab 参考标签页对象（关闭其他/左侧/右侧时使用）
    */
   'tabs-close': [action: 'others' | 'left' | 'right' | 'all', tab?: Tab]
+  /**
+   * 切换标签固定状态
+   *
+   * @param tab 目标标签
+   */
+  'tab-pin': [tab: Tab]
 }>()
 
 // 拖拽相关
@@ -177,6 +253,119 @@ const dragFromIndex = ref<number>(-1)
 
 // 容器引用（用于稳定挂载下拉层，避免切页/卸载时访问失效的 $el）
 const tabbarRootRef = ref<HTMLElement | null>(null)
+
+/** 标签横向滚动容器：用于判定哪些 Tab 完全滚出可视区域 */
+const tabbarInnerRef = ref<HTMLElement | null>(null)
+
+/** 标签 DOM 引用（tab.key → 元素），用于几何判定溢出 */
+const tabElByKey = new Map<string, HTMLElement>()
+
+/** 完全不在可视区域内的 Tab key 列表（需在「⋯」中列出） */
+const clippedTabKeys = ref<string[]>([])
+
+/** 「⋯」面板内筛选溢出标签关键字 */
+const overflowTabSearch = ref('')
+
+let clippedTabsMeasureRaf: number | null = null
+
+let tabbarResizeObserver: ResizeObserver | null = null
+
+/**
+ * 绑定单个 Tab 项的根元素引用（Vue ref 回调）
+ *
+ * @param key 标签 key
+ * @param el DOM 或卸载时的 null
+ */
+function bindTabBarTabEl(key: string, el: unknown) {
+  if (!el || typeof el === 'boolean') {
+    tabElByKey.delete(key)
+    scheduleMeasureClippedTabs()
+    return
+  }
+  const node = el as HTMLElement
+  if (node && node.nodeType === Node.ELEMENT_NODE) {
+    tabElByKey.set(key, node)
+    scheduleMeasureClippedTabs()
+  }
+}
+
+/**
+ * 测量当前完全滚出可视区域的 Tab（双通道：横向滚动仍可通过「⋯」直达）
+ */
+function measureClippedTabs() {
+  const root = tabbarInnerRef.value
+  if (!root) {
+    clippedTabKeys.value = []
+    return
+  }
+  const rootRect = root.getBoundingClientRect()
+  const clipped: string[] = []
+  for (const tab of props.tabs) {
+    const el = tabElByKey.get(tab.key)
+    if (!el) {
+      continue
+    }
+    const r = el.getBoundingClientRect()
+    const fullyOutside = r.right <= rootRect.left + 1 || r.left >= rootRect.right - 1
+    if (fullyOutside) {
+      clipped.push(tab.key)
+    }
+  }
+  clippedTabKeys.value = clipped
+}
+
+/**
+ * rAF 合并测量，避免滚动事件高频触发
+ */
+function scheduleMeasureClippedTabs() {
+  if (clippedTabsMeasureRaf != null) {
+    cancelAnimationFrame(clippedTabsMeasureRaf)
+  }
+  clippedTabsMeasureRaf = requestAnimationFrame(() => {
+    clippedTabsMeasureRaf = null
+    measureClippedTabs()
+  })
+}
+
+/**
+ * 「⋯」中展示的**全部**已打开标签（支持关键字筛选标题 / 路径），避免用户误以为仅「滚出视野」的标签才算打开。
+ */
+const allTabsFiltered = computed(() => {
+  const q = overflowTabSearch.value.trim().toLowerCase()
+  const base = props.tabs
+  if (!q) {
+    return base
+  }
+  return base.filter(tab => {
+    const title = (tab.title || '').toLowerCase()
+    const path = (tab.path || '').toLowerCase()
+    return title.includes(q) || path.includes(q)
+  })
+})
+
+/**
+ * 「⋯」下拉开关：关闭时清空筛选；打开时复查溢出列表
+ *
+ * @param open 是否展开
+ */
+function onOverflowDropdownOpenChange(open: boolean) {
+  if (!open) {
+    overflowTabSearch.value = ''
+  } else {
+    scheduleMeasureClippedTabs()
+  }
+}
+
+function bindTabbarResizeObserver() {
+  tabbarResizeObserver?.disconnect()
+  tabbarResizeObserver = null
+  const root = tabbarInnerRef.value
+  if (!root || typeof ResizeObserver === 'undefined') {
+    return
+  }
+  tabbarResizeObserver = new ResizeObserver(() => scheduleMeasureClippedTabs())
+  tabbarResizeObserver.observe(root)
+}
 
 // 右键菜单相关
 const contextMenuVisible = ref(false)
@@ -208,7 +397,7 @@ const onTabClose = (tab: Tab) => {
 
 // 拖拽开始
 const onDragStart = (tab: Tab, event: DragEvent) => {
-  if (!props.draggable || !tab.closable) {
+  if (!props.draggable || !tab.closable || tab.pinned) {
     event.preventDefault()
     return
   }
@@ -288,6 +477,9 @@ const onContextMenuClick = (info: any) => {
     case 'refresh':
       emit('tab-refresh', contextTab.value)
       break
+    case 'pin':
+      emit('tab-pin', contextTab.value)
+      break
     case 'close':
       if (contextTab.value.closable) {
         emit('tab-close', contextTab.value)
@@ -313,7 +505,16 @@ const onContextMenuClick = (info: any) => {
 // 快速操作
 const onQuickAction = (info: any) => {
   const key = info.key as string
-  
+
+  if (key.startsWith('overflow-tab:')) {
+    const tabKey = key.slice('overflow-tab:'.length)
+    const tab = props.tabs.find(item => item.key === tabKey)
+    if (tab) {
+      emit('tab-click', tab)
+    }
+    return
+  }
+
   switch (key) {
     case 'closeOthers':
       // 找到当前激活的标签
@@ -329,144 +530,53 @@ const onQuickAction = (info: any) => {
 }
 
 watch(
-  () => props.tabs.map(tab => tab.key),
-  tabKeys => {
+  () => props.tabs,
+  tabs => {
+    const tabKeys = tabs.map(tab => tab.key)
     if (contextTab.value && !tabKeys.includes(contextTab.value.key)) {
       closeContextMenu()
     }
+    nextTick(() => {
+      scheduleMeasureClippedTabs()
+    })
+  },
+  { deep: true },
+)
+
+watch(
+  () => props.activeKey,
+  () => {
+    nextTick(() => scheduleMeasureClippedTabs())
   },
 )
 
 onMounted(() => {
   document.addEventListener('mousedown', handleDocumentPointerDown)
   document.addEventListener('keydown', handleDocumentKeydown)
+
+  nextTick(() => {
+    bindTabbarResizeObserver()
+    scheduleMeasureClippedTabs()
+  })
+
+  window.addEventListener('resize', scheduleMeasureClippedTabs)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentPointerDown)
   document.removeEventListener('keydown', handleDocumentKeydown)
+  window.removeEventListener('resize', scheduleMeasureClippedTabs)
+
+  tabbarResizeObserver?.disconnect()
+  tabbarResizeObserver = null
+
+  if (clippedTabsMeasureRaf != null) {
+    cancelAnimationFrame(clippedTabsMeasureRaf)
+    clippedTabsMeasureRaf = null
+  }
+
+  tabElByKey.clear()
 })
 </script>
 
-<style scoped lang="less">
-.app-tabbar {
-  display: flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 8px;
-  background: var(--fx-header-bg, #ffffff);
-  border-bottom: 1px solid var(--fx-border-color, #f0f0f0);
-  overflow: hidden;
-}
-
-.tabbar-inner {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
-  }
-}
-
-.tabbar-actions {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  margin-left: 8px;
-  padding-left: 8px;
-  border-left: 1px solid var(--fx-border-color, #f0f0f0);
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--fx-text-color, #4b5563);
-  
-  &:hover {
-    color: var(--fx-theme-color, #1677ff);
-    background: rgba(22, 119, 255, 0.08);
-  }
-}
-
-.tab-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  font-size: 13px;
-  color: var(--fx-text-color, #4b5563);
-  background: var(--fx-tab-bg, #f3f4f6);
-  border-radius: 6px 6px 0 0;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-  transition: all 0.2s;
-  
-  &:hover {
-    color: var(--fx-theme-color, #1677ff);
-    background: var(--fx-tab-hover-bg, #e5e7eb);
-  }
-  
-  &.tab-item-active {
-    color: var(--fx-theme-color, #1677ff);
-    background: var(--fx-content-bg, #ffffff);
-    border-bottom: 2px solid var(--fx-theme-color, #1677ff);
-    font-weight: 500;
-  }
-  
-  &.tab-item-dragging {
-    opacity: 0.5;
-  }
-}
-
-.tab-title {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tab-close {
-  flex-shrink: 0;
-  font-size: 12px;
-  opacity: 0.7;
-  transition: all 0.2s;
-  
-  &:hover {
-    opacity: 1;
-    color: #ef4444;
-  }
-}
-
-// 响应式适配
-@media (max-width: 768px) {
-  .app-tabbar {
-    padding: 0 4px;
-  }
-  
-  .tab-item {
-    padding: 0 8px;
-  }
-  
-  .tab-title {
-    max-width: 80px;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/layout/components/app-tab-bar.less"></style>

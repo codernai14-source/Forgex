@@ -57,6 +57,7 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("basic_customer_contact");
         IGNORE_TABLES.add("basic_customer_invoice");
         IGNORE_TABLES.add("basic_customer_extra");
+        IGNORE_TABLES.add("basic_work_calendar_day");
     }
 
     /**
@@ -154,5 +155,6 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("basic_customer_contact");
         IGNORE_TABLES.add("basic_customer_invoice");
         IGNORE_TABLES.add("basic_customer_extra");
+        IGNORE_TABLES.add("basic_work_calendar_day");
     }
 }

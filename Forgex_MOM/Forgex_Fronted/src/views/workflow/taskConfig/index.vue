@@ -465,24 +465,4 @@ function handleDialogCancel() {
 }
 </script>
 
-<style scoped>
-.page-wrap {
-  height: 100%;
-}
-
-.version-cell {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.version-hint {
-  color: #d97706;
-  font-size: 12px;
-}
-
-.remark-text {
-  color: #4b5563;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/workflow/taskConfig/index.less"></style>

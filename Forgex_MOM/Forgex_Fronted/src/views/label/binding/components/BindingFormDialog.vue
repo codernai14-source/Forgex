@@ -89,7 +89,8 @@ import { ref, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { labelBindingApi } from '@/api/label/binding'
+import { labelBindingApi } from '@/api/label/binding'
+
 const { t } = useI18n()
 
 const props = defineProps<{
@@ -232,34 +233,5 @@ function handleCancel() {
 }
 </script>
 
-<style scoped lang="less">
-.template-info,
-.factory-info {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.priority-tip {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background-color: #e6f7ff;
-  border: 1px solid #91d5ff;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #1890ff;
-}
-
-:deep(.ant-form-item-label > label) {
-  font-weight: 500;
-}
-
-:deep(.ant-select-selector) {
-  .ant-tag {
-    margin-right: 0;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/label/binding/components/binding-form-dialog.less"></style>
 

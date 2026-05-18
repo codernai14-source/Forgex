@@ -57,6 +57,7 @@
           :draggable="layoutConfig.tabBarDraggable"
           @tab-click="onTabClick"
           @tab-close="onTabClose"
+          @tab-pin="onTabPin"
           @tab-drag="onTabDrag"
           @tab-refresh="onTabRefresh"
           @tabs-close="onTabsClose"
@@ -86,6 +87,20 @@
               </router-view>
             </div>
           </div>
+          <Transition name="fx-back-top-fade">
+            <a-button
+              v-if="showBackTop"
+              class="fx-back-top"
+              shape="circle"
+              type="primary"
+              :title="t('common.backTop')"
+              @click="scrollCurrentPageToTop"
+            >
+              <template #icon>
+                <ArrowUpOutlined />
+              </template>
+            </a-button>
+          </Transition>
         </a-layout-content>
         
         <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
@@ -128,7 +143,8 @@
           @click="onHorizontalMenuClick(item)"
         >
           <span class="fx-horizontal-menu-card__icon">
-            <component :is="resolveMenuIcon(item)" />
+            <FxIcon v-if="item.icon" :name="item.icon" />
+            <component v-else :is="resolveMenuIcon(item)" />
           </span>
           <span class="fx-horizontal-menu-card__body">
             <span class="fx-horizontal-menu-card__title" :title="item.title">{{ item.title }}</span>
@@ -256,7 +272,7 @@
                     type="button"
                     class="fx-mode-card"
                     :class="{ 'fx-mode-card--active': layoutConfig.themeMode === mode.value }"
-                    @click="layoutConfig.themeMode = mode.value"
+                    @click="onThemeModeChange(mode.value)"
                   >
                     <component :is="mode.icon" class="fx-mode-card__icon" />
                     <span class="fx-mode-card__label">{{ mode.label }}</span>
@@ -361,6 +377,17 @@
                 <span>{{ t('layout.tabBarEnabled') }}</span>
                 <a-switch v-model:checked="layoutConfig.tabBarEnabled" />
               </div>
+              <div class="fx-setting-row">
+                <span>{{ t('layout.tabBarMax') }}</span>
+                <a-input-number
+                  v-model:value="layoutConfig.tabBarMax"
+                  :min="0"
+                  :max="200"
+                  :precision="0"
+                  style="width: 200px"
+                />
+              </div>
+              <p class="fx-setting-hint-text">{{ t('layout.tabBarMaxHint') }}</p>
             </div>
           </a-tab-pane>
           <a-tab-pane :tab="t('layout.tabCommon')" key="common">
@@ -515,7 +542,8 @@ import {
   DesktopOutlined,
   AppstoreOutlined,
   FolderOutlined,
-  FileOutlined
+  FileOutlined,
+  ArrowUpOutlined,
 } from '@ant-design/icons-vue'
 
 import AppHeader from './components/AppHeader.vue'
@@ -523,6 +551,7 @@ import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
 import FxGuideTour from '../components/common/FxGuideTour.vue'
+import FxIcon from '../components/common/FxIcon.vue'
 import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
@@ -534,7 +563,6 @@ import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
 import { use权限Store } from '../stores/permission'
-import { getIcon } from '../utils/icon'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
@@ -542,6 +570,7 @@ import type { FxGuideStep } from '../types/guide'
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
+const isFallbackRoute = computed(() => route.path.startsWith('/workspace/fallback/'))
 const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
@@ -595,7 +624,10 @@ interface LayoutTab {
   key: string
   path: string
   title: string
+  icon?: string
   closable: boolean
+  /** 用户固定的标签：不参与自动淘汰，默认不可关闭（需右键取消固定） */
+  pinned?: boolean
 }
 
 interface ThemeModeOption {
@@ -638,7 +670,8 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   headerMode: 'fixed',
   headerMenuAlign: 'left',
   tabBarEnabled: true,
-  tabBarMax: 10,
+  /** 0 表示不限制打开标签数量，避免误认为「标签消失」仅为溢出菜单可见 */
+  tabBarMax: 0,
   tabBarDraggable: true,
   tabBarShowIcon: true,
   tabBarStyle: 'chrome',
@@ -677,6 +710,7 @@ const systemNoticeList = ref<SysNotice[]>([])
 const FONT_SIZE_MIN = 14
 const FONT_SIZE_MAX = 28
 const FONT_SIZE_DEFAULT = 14
+const THEME_REVEAL_DURATION = 520
 const settingDrawerRootStyle = {
   position: 'absolute',
 } as const
@@ -920,6 +954,9 @@ const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
 const tabs = ref<LayoutTab[]>([])
 const activeTabKey = ref<string>('')
+/** 用户固定的标签路径列表（与 {@link LayoutTab#pinned} 同步） */
+const PINNED_TAB_KEYS_STORAGE_KEY = 'fx-pinned-tab-keys'
+
 const RECENT_ROUTE_STORAGE_KEY = 'fx-recent-routes'
 const ROUTE_VISIT_STATS_STORAGE_KEY = 'fx-route-visit-stats'
 const MAX_RECENT_ROUTE_COUNT = 20
@@ -927,18 +964,144 @@ const MAX_ROUTE_VISIT_STATS_COUNT = 200
 const HORIZONTAL_MENU_CHILD_LIMIT = 6
 const globalSearchVisible = ref(false)
 const currentLocale = ref<string>((localStorage.getItem('fx-locale') as string) || (locale.value as string))
+const skipThemeRevealWatcher = ref(false)
+
+function applyThemeVariablesToElement(target: HTMLElement, styleMap: Record<string, unknown>) {
+  Object.entries(styleMap).forEach(([key, value]) => {
+    if (!key.startsWith('--fx-') || value == null) {
+      return
+    }
+    target.style.setProperty(key, String(value))
+  })
+}
 
 function syncThemeVariablesToDocument(styleMap: Record<string, unknown>) {
   if (typeof document === 'undefined') {
     return
   }
 
-  const root = document.documentElement
-  Object.entries(styleMap).forEach(([key, value]) => {
-    if (!key.startsWith('--fx-') || value == null) {
+  applyThemeVariablesToElement(document.documentElement, styleMap)
+}
+
+function applyDocumentTheme(mode: 'light' | 'dark') {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  document.documentElement.setAttribute('data-theme', mode)
+  document.documentElement.style.colorScheme = mode
+  if (document.body) {
+    document.body.setAttribute('data-theme', mode)
+    document.body.style.colorScheme = mode
+  }
+}
+
+function getLayoutElement(): HTMLElement | null {
+  const target = layoutRootRef.value
+  if (!target) {
+    return null
+  }
+  if (target instanceof HTMLElement) {
+    return target
+  }
+  const el = target.$el
+  return el instanceof HTMLElement ? el : null
+}
+
+function runThemeRevealTransition(
+  previousMode: 'light' | 'dark',
+  nextMode: 'light' | 'dark',
+  applyNextTheme?: () => void,
+) {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    applyNextTheme?.()
+    applyDocumentTheme(nextMode)
+    return
+  }
+
+  const layoutEl = getLayoutElement()
+  if (!layoutEl) {
+    applyNextTheme?.()
+    applyDocumentTheme(nextMode)
+    return
+  }
+
+  const nextTokens = nextMode === 'dark' ? darkTokens : lightTokens
+  const nextStyleMap = generateCSSVariablesWithCache(nextTokens, {
+    ...layoutConfig.value,
+    themeMode: nextMode,
+  })
+  const overlay = document.createElement('div')
+  const snapshot = layoutEl.cloneNode(true) as HTMLElement
+  overlay.className = 'fx-theme-reveal-overlay'
+  overlay.setAttribute('aria-hidden', 'true')
+  overlay.dataset.theme = nextMode
+  overlay.style.background = nextTokens.colorBgBase
+  overlay.style.colorScheme = nextMode
+  overlay.style.clipPath = 'circle(0 at 100% 0)'
+  overlay.style.webkitClipPath = 'circle(0 at 100% 0)'
+  applyThemeVariablesToElement(overlay, nextStyleMap as Record<string, unknown>)
+  snapshot.classList.add('fx-theme-reveal-overlay__content')
+  snapshot.setAttribute('aria-hidden', 'true')
+  applyThemeVariablesToElement(snapshot, nextStyleMap as Record<string, unknown>)
+  overlay.appendChild(snapshot)
+  document.body.appendChild(overlay)
+
+  const width = window.innerWidth
+  const height = window.innerHeight
+  const radius = Math.ceil(Math.sqrt(width * width + height * height) * 1.05)
+  const cleanup = () => {
+    overlay.remove()
+  }
+  const commitTheme = () => {
+    layoutEl.classList.add('fx-theme-reveal-running')
+    applyThemeVariablesToElement(document.documentElement, nextStyleMap as Record<string, unknown>)
+    applyNextTheme?.()
+    applyDocumentTheme(nextMode)
+    requestAnimationFrame(() => {
+      layoutEl.classList.remove('fx-theme-reveal-running')
+      cleanup()
+    })
+  }
+
+  requestAnimationFrame(() => {
+    const supportsClipPath = typeof CSS !== 'undefined'
+      && typeof CSS.supports === 'function'
+      && CSS.supports('clip-path', 'circle(0 at 100% 0)')
+    if (supportsClipPath) {
+      overlay.style.transition = [
+        `clip-path ${THEME_REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        `-webkit-clip-path ${THEME_REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      ].join(', ')
+      requestAnimationFrame(() => {
+        overlay.style.clipPath = `circle(${radius}px at 100% 0)`
+        overlay.style.webkitClipPath = `circle(${radius}px at 100% 0)`
+      })
+      window.setTimeout(commitTheme, THEME_REVEAL_DURATION + 80)
       return
     }
-    root.style.setProperty(key, String(value))
+
+    overlay.style.transition = 'opacity 220ms ease'
+    overlay.style.opacity = '1'
+    window.setTimeout(commitTheme, 240)
+  })
+}
+
+function onThemeModeChange(mode: LayoutConfig['themeMode']) {
+  if (layoutConfig.value.themeMode === mode) {
+    return
+  }
+
+  const previousMode = resolvedMode.value
+  const nextMode = resolveThemeMode(mode, systemTheme.value)
+  if (previousMode === nextMode) {
+    layoutConfig.value.themeMode = mode
+    return
+  }
+
+  skipThemeRevealWatcher.value = true
+  runThemeRevealTransition(previousMode, nextMode, () => {
+    layoutConfig.value.themeMode = mode
   })
 }
 const currentAccount = ref<string>(sessionStorage.getItem('account') || '')
@@ -1076,6 +1239,7 @@ function buildFixedTabs() {
     key: PERSONAL_HOME_PATH,
     path: PERSONAL_HOME_PATH,
     title: resolveTabTitle(PERSONAL_HOME_PATH),
+    icon: resolveTabIcon(PERSONAL_HOME_PATH),
     closable: false,
   }]
 }
@@ -1084,6 +1248,48 @@ function ensureFixedTabs(tabList: LayoutTab[]) {
   const fixedTabs = buildFixedTabs()
   const otherTabs = tabList.filter(tab => tab.key !== PERSONAL_HOME_PATH)
   return [...fixedTabs, ...otherTabs]
+}
+
+/** 单个用户本地最多持久化的固定标签数量上限 */
+const MAX_PINNED_TAB_KEYS = 80
+
+/**
+ * 读取本地持久化的固定标签路径列表。
+ *
+ * @returns 已规范化且位于 {@code /workspace} 下的路径，不包含个人首页
+ */
+function getPinnedTabKeys(): string[] {
+  try {
+    const raw = localStorage.getItem(PINNED_TAB_KEYS_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return [...new Set(
+      parsed
+        .map((item: unknown) => normalizeWorkspacePath(String(item || '')))
+        .filter(item => item.startsWith('/workspace') && item !== PERSONAL_HOME_PATH),
+    )].slice(0, MAX_PINNED_TAB_KEYS)
+  } catch (error) {
+    console.error('[MainLayout] Failed to parse pinned tabs:', error)
+    return []
+  }
+}
+
+/**
+ * 持久化固定标签路径列表。
+ *
+ * @param keys 路径 key 列表（会先规范化、去重并裁剪上限）
+ */
+function savePinnedTabKeys(keys: string[]) {
+  try {
+    const normalized = [...new Set(keys.map(k => normalizeWorkspacePath(String(k || ''))))]
+      .filter(k => k.startsWith('/workspace') && k !== PERSONAL_HOME_PATH)
+      .slice(0, MAX_PINNED_TAB_KEYS)
+    localStorage.setItem(PINNED_TAB_KEYS_STORAGE_KEY, JSON.stringify(normalized))
+  } catch (error) {
+    console.error('[MainLayout] Failed to save pinned tabs:', error)
+  }
 }
 
 function getRecentRoutes(): string[] {
@@ -1215,18 +1421,24 @@ function removeTabsByKeys(keys: string[]) {
     return
   }
   keys.forEach(removeRecentRoute)
+  const pinnedRemain = getPinnedTabKeys().filter(k => !keys.includes(k))
+  savePinnedTabKeys(pinnedRemain)
   tabs.value = ensureFixedTabs(tabs.value.filter(tab => !keys.includes(tab.key)))
 }
 
 watch(
   resolvedMode,
-  mode => {
-    document.documentElement.setAttribute('data-theme', mode)
-    document.documentElement.style.colorScheme = mode
-    if (typeof document !== 'undefined' && document.body) {
-      document.body.setAttribute('data-theme', mode)
-      document.body.style.colorScheme = mode
+  (mode, previousMode) => {
+    if (skipThemeRevealWatcher.value) {
+      skipThemeRevealWatcher.value = false
+      applyDocumentTheme(mode)
+      return
     }
+    if (previousMode && previousMode !== mode) {
+      runThemeRevealTransition(previousMode, mode)
+      return
+    }
+    applyDocumentTheme(mode)
   },
   { immediate: true },
 )
@@ -1255,8 +1467,43 @@ const pageTransitionName = computed(() =>
 
 const headerHiddenByScroll = ref(false)
 const lastScrollY = ref(typeof window !== 'undefined' ? window.scrollY || 0 : 0)
+const showBackTop = ref(false)
+let pageScrollEl: HTMLElement | null = null
 
 const showHeader = computed(() => layoutConfig.value.headerVisible && !headerHiddenByScroll.value)
+
+function resolveCurrentPageScrollEl() {
+  if (typeof document === 'undefined') {
+    return null
+  }
+  return document.querySelector('.fx-page-wrapper') as HTMLElement | null
+}
+
+function updateBackTopVisible() {
+  const el = resolveCurrentPageScrollEl()
+  showBackTop.value = !!el && el.scrollTop > 240
+}
+
+function handlePageScroll() {
+  updateBackTopVisible()
+}
+
+function bindCurrentPageScroll() {
+  const nextEl = resolveCurrentPageScrollEl()
+  if (pageScrollEl === nextEl) {
+    updateBackTopVisible()
+    return
+  }
+  pageScrollEl?.removeEventListener('scroll', handlePageScroll)
+  pageScrollEl = nextEl
+  pageScrollEl?.addEventListener('scroll', handlePageScroll, { passive: true })
+  updateBackTopVisible()
+}
+
+function scrollCurrentPageToTop() {
+  const el = pageScrollEl || resolveCurrentPageScrollEl()
+  el?.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 function handleScroll() {
   if (layoutConfig.value.headerMode !== 'hide-on-scroll') {
@@ -1632,9 +1879,6 @@ function isHorizontalMenuActive(item: SidebarMenuItem) {
 }
 
 function resolveMenuIcon(item: SidebarMenuItem) {
-  if (item.icon) {
-    return getIcon(item.icon)
-  }
   if (item.type === 'module') {
     return AppstoreOutlined
   }
@@ -1832,6 +2076,18 @@ function resolveTabTitle(tabKey: string): string {
   return buildTitleFromRoute(clean)
 }
 
+function resolveTabIcon(tabKey: string): string {
+  const clean = normalizeWorkspacePath(tabKey)
+  const resolved = router.resolve(clean)
+  const matchedRouteWithIcon = [...resolved.matched].reverse().find(item => item.meta && item.meta.icon)
+  if (matchedRouteWithIcon?.meta?.icon) {
+    return String(matchedRouteWithIcon.meta.icon)
+  }
+  const moduleCode = clean.match(/^\/workspace\/([^/]+)/)?.[1]
+  const module = moduleList.value.find(item => item.code === moduleCode)
+  return module?.icon || 'appstore'
+}
+
 /**
  * 各模块"工作台"页签标题
  * <p>
@@ -1849,10 +2105,13 @@ function buildModuleDashboardTitle(moduleCode: string): string {
  * 更新所有标签的标题
  */
 function updateAllTabTitles() {
+  const pinnedSet = new Set(getPinnedTabKeys())
   tabs.value = ensureFixedTabs(tabs.value.map(tab => ({
     ...tab,
+    pinned: pinnedSet.has(tab.key),
     title: resolveTabTitle(tab.key),
-    closable: tab.key !== PERSONAL_HOME_PATH,
+    icon: resolveTabIcon(tab.key),
+    closable: tab.key !== PERSONAL_HOME_PATH && !pinnedSet.has(tab.key),
   })))
 }
 
@@ -1893,6 +2152,7 @@ watch(
 
     updateTabsByRoute(path)
     syncSystemGuideAutoStart()
+    void nextTick(bindCurrentPageScroll)
   },
   { immediate: true }
 )
@@ -1919,7 +2179,9 @@ function normalizeLayoutConfig(raw: any): LayoutConfig {
     headerMode: cfg.headerMode === 'auto' || cfg.headerMode === 'hide-on-scroll' ? cfg.headerMode : 'fixed',
     headerMenuAlign: cfg.headerMenuAlign === 'center' || cfg.headerMenuAlign === 'right' ? cfg.headerMenuAlign : 'left',
     tabBarEnabled: !!cfg.tabBarEnabled,
-    tabBarMax: typeof cfg.tabBarMax === 'number' && cfg.tabBarMax > 0 ? cfg.tabBarMax : DEFAULT_LAYOUT_CONFIG.tabBarMax,
+    tabBarMax: typeof cfg.tabBarMax === 'number' && Number.isFinite(cfg.tabBarMax) && cfg.tabBarMax >= 0 && cfg.tabBarMax <= 200
+      ? Math.floor(cfg.tabBarMax)
+      : DEFAULT_LAYOUT_CONFIG.tabBarMax,
     tabBarDraggable: !!cfg.tabBarDraggable,
     tabBarShowIcon: !!cfg.tabBarShowIcon,
     tabBarStyle: cfg.tabBarStyle === 'card' ? 'card' : 'chrome',
@@ -2147,21 +2409,31 @@ function resetLayout() {
   layoutConfig.value = { ...DEFAULT_LAYOUT_CONFIG }
 }
 
+function applyCachedLayoutConfig() {
+  const cached = localStorage.getItem('fx-layout-config')
+  if (!cached) {
+    return false
+  }
+  try {
+    const parsed = JSON.parse(cached)
+    layoutConfig.value = normalizeLayoutConfig(parsed)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 async function loadLayout() {
   const account = sessionStorage.getItem('account')
   const tenantId = sessionStorage.getItem('tenantId')
+  const hasCachedLayout = applyCachedLayoutConfig()
   if (!account || !tenantId) {
-    layoutConfig.value = { ...DEFAULT_LAYOUT_CONFIG }
+    if (!hasCachedLayout) {
+      layoutConfig.value = { ...DEFAULT_LAYOUT_CONFIG }
+    }
     return
   }
   try {
-    const cached = localStorage.getItem('fx-layout-config')
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached)
-        layoutConfig.value = normalizeLayoutConfig(parsed)
-      } catch (e) {}
-    }
     const res = await getUserLayoutStyle({ account, tenantId })
     if (res) {
       layoutConfig.value = normalizeLayoutConfig(res)
@@ -2308,11 +2580,15 @@ function updateTabsByRoute(path: string) {
   // 如果我们希望 tab 保持激活状态，我们需要让 activeTabKey 也指向无参数路径
   activeTabKey.value = pathWithoutQuery
 
+  const pinnedSet = new Set(getPinnedTabKeys())
+
   let nextTabs = ensureFixedTabs(
     tabs.value.map(tab => ({
       ...tab,
+      pinned: pinnedSet.has(tab.key),
       title: resolveTabTitle(tab.key),
-      closable: tab.key !== PERSONAL_HOME_PATH,
+      icon: resolveTabIcon(tab.key),
+      closable: tab.key !== PERSONAL_HOME_PATH && !pinnedSet.has(tab.key),
     })),
   )
   if (pathWithoutQuery !== PERSONAL_HOME_PATH) {
@@ -2321,18 +2597,24 @@ function updateTabsByRoute(path: string) {
         key: pathWithoutQuery,
         path: pathWithoutQuery,
         title: resolveTabTitle(pathWithoutQuery),
-        closable: true,
+        icon: resolveTabIcon(pathWithoutQuery),
+        pinned: pinnedSet.has(pathWithoutQuery),
+        closable: pathWithoutQuery !== PERSONAL_HOME_PATH && !pinnedSet.has(pathWithoutQuery),
       })
     }
 
-    const maxTabs = Math.max(layoutConfig.value.tabBarMax || 10, 1)
-    while (nextTabs.length > maxTabs) {
-      const removeIndex = nextTabs.findIndex(tab => tab.closable && tab.key !== pathWithoutQuery)
-      if (removeIndex === -1) {
-        break
+    const maxTabs = layoutConfig.value.tabBarMax
+    if (typeof maxTabs === 'number' && maxTabs > 0) {
+      while (nextTabs.length > maxTabs) {
+        const removeIndex = nextTabs.findIndex(
+          tab => tab.closable && tab.key !== pathWithoutQuery && !tab.pinned,
+        )
+        if (removeIndex === -1) {
+          break
+        }
+        removeRecentRoute(nextTabs[removeIndex].key)
+        nextTabs.splice(removeIndex, 1)
       }
-      removeRecentRoute(nextTabs[removeIndex].key)
-      nextTabs.splice(removeIndex, 1)
     }
   }
 
@@ -2406,6 +2688,10 @@ function onTabClick(tab: { key: string }) {
 function onTabClose(tab: { key: string }) {
   const key = tab.key
   if (!key || key === PERSONAL_HOME_PATH) return
+  const meta = tabs.value.find(t => t.key === key)
+  if (meta?.pinned) {
+    return
+  }
   const idx = tabs.value.findIndex(t => t.key === key)
   if (idx === -1) return
   const isActive = activeTabKey.value === key
@@ -2432,6 +2718,31 @@ function onTabDrag(fromIndex: number, toIndex: number) {
   tabs.value.splice(toIndex, 0, moved)
 }
 
+function onTabPin(tab: LayoutTab) {
+  if (!tab?.key || tab.key === PERSONAL_HOME_PATH) {
+    return
+  }
+  const path = normalizeWorkspacePath(tab.key)
+  const nextPinned = !tab.pinned
+  const keys = new Set(getPinnedTabKeys())
+  if (nextPinned) {
+    keys.add(path)
+  } else {
+    keys.delete(path)
+  }
+  savePinnedTabKeys([...keys])
+  tabs.value = tabs.value.map(t => {
+    if (t.key !== path) {
+      return t
+    }
+    return {
+      ...t,
+      pinned: nextPinned,
+      closable: path !== PERSONAL_HOME_PATH && !nextPinned,
+    }
+  })
+}
+
 function onTabRefresh(tab: { key: string }) {
   const key = tab.key
   if (key === route.fullPath) {
@@ -2448,7 +2759,7 @@ function onTabsClose(action: 'others' | 'left' | 'right' | 'all', tab?: { key: s
   
   if (action === 'others' && key) {
     const removedKeys = tabs.value
-      .filter(t => t.key !== key && t.key !== PERSONAL_HOME_PATH)
+      .filter(t => t.key !== key && t.key !== PERSONAL_HOME_PATH && !t.pinned)
       .map(t => t.key)
     removeTabsByKeys(removedKeys)
     if (key !== route.fullPath) {
@@ -2620,12 +2931,27 @@ onMounted(async () => {
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
+  if (isFallbackRoute.value) {
+    await loadLayout()
+    updateTabsByRoute(route.fullPath)
+    await nextTick()
+    bindCurrentPageScroll()
+    const bootstrapLoader = (window as any).__globalLoader
+    if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
+      window.requestAnimationFrame(() => {
+        bootstrapLoader.hide()
+      })
+    }
+    return
+  }
   await Promise.all([
     loadLayout(),
     loadGuidePreference(),
     loadTenantOptions(),
   ])
   updateTabsByRoute(route.fullPath)
+  await nextTick()
+  bindCurrentPageScroll()
   
   try {
     const config = await getSystemBasicConfig()
@@ -2643,6 +2969,13 @@ onMounted(async () => {
   } catch (_) {}
 
   connectMessageSse()
+
+  const bootstrapLoader = (window as any).__globalLoader
+  if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
+    window.requestAnimationFrame(() => {
+      bootstrapLoader.hide()
+    })
+  }
 })
 
 onUnmounted(() => {
@@ -2653,456 +2986,11 @@ onUnmounted(() => {
     window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
+  pageScrollEl?.removeEventListener('scroll', handlePageScroll)
+  pageScrollEl = null
   closeMessageSse()
 })
 </script>
 
-<style scoped lang="less">
-@import '../styles/main-layout.less';
-</style>
+<style scoped lang="less" src="@/styles/layout/main-layout.less"></style>
 
-
-<style scoped lang="less">
-.fx-main-layout {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.fx-main-content-wrapper {
-  flex: 1;
-  overflow: hidden;
-}
-
-.fx-content-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-/* 关键修改开始 */
-.fx-content {
-  flex: 1;
-  overflow: hidden; /* 改为 hidden，防止整个内容区滚动 */
-  padding: 0;       /* 移除默认 padding（如果有的话） */
-}
-.fx-content-inner {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 16px;            /* 统一页面内边距（可根据需要调整） */
-  box-sizing: border-box;   /* 让 padding 包含在 height 100% 内 */
-  position: relative;       /* 为 watermark 绝对定位提供参考 */
-}
-
-.fx-guide-content {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.fx-horizontal-menu-drawer__header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.fx-horizontal-menu-drawer__title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--fx-text-primary, #1f2937);
-  line-height: 1.4;
-}
-
-.fx-horizontal-menu-drawer__subtitle {
-  font-size: 12px;
-  color: var(--fx-text-tertiary, #9ca3af);
-}
-
-.fx-horizontal-menu-drawer {
-  :deep(.ant-drawer-body) {
-    padding: 14px 16px 18px;
-    background: var(--fx-bg-container, #ffffff);
-  }
-}
-
-.fx-horizontal-module-panel__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
-  gap: 10px;
-}
-
-.fx-horizontal-menu-card {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  min-height: 70px;
-  padding: 10px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 8px;
-  background: var(--fx-bg-elevated, #ffffff);
-  color: var(--fx-text-primary, #1f2937);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover,
-  &--active {
-    border-color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-  }
-}
-
-.fx-horizontal-menu-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  color: var(--fx-primary, #1677ff);
-  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
-  font-size: 17px;
-}
-
-.fx-horizontal-menu-card__body {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.fx-horizontal-menu-card__title {
-  overflow: hidden;
-  color: var(--fx-text-primary, #1f2937);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fx-horizontal-menu-card__meta {
-  color: var(--fx-text-tertiary, #9ca3af);
-  font-size: 12px;
-  line-height: 1.3;
-}
-
-.fx-horizontal-menu-card__children {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.fx-horizontal-menu-card__child {
-  max-width: 100%;
-  height: 24px;
-  padding: 0 8px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 8px;
-  background: var(--fx-bg-container, #ffffff);
-  color: var(--fx-text-secondary, #6b7280);
-  font-size: 12px;
-  line-height: 22px;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  &:hover,
-  &--active {
-    border-color: var(--fx-primary, #1677ff);
-    color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
-  }
-}
-
-@media (max-width: 768px) {
-  .fx-horizontal-module-panel__grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==================== 卡片选择器样式（Vben5 风格） =================== */
-
-.fx-setting-section {
-  margin-bottom: 20px;
-}
-
-.fx-setting-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  color: var(--fx-text-primary, #1f2937);
-}
-
-.fx-setting-title--sub {
-  margin-top: 8px;
-  margin-bottom: 14px;
-}
-
-.fx-card-grid {
-  display: grid;
-  gap: 10px;
-  
-  &--mode {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  &--color {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  &--layout {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* 主题模式卡片 */
-.fx-setting-row--slider {
-  align-items: center;
-}
-
-.fx-setting-slider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-
-  :deep(.ant-slider) {
-    flex: 1;
-    margin: 0;
-  }
-}
-
-.fx-setting-slider__value {
-  min-width: 48px;
-  color: var(--fx-text-secondary, #6b7280);
-  font-size: 12px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.fx-mode-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 8px;
-  border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
-  border-radius: 8px;
-  background: var(--fx-bg-container, #ffffff);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  outline: none;
-
-  &:hover {
-    border-color: var(--fx-primary, #1677ff);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
-  }
-
-  &--active {
-    border-color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
-
-    .fx-mode-card__icon {
-      color: var(--fx-primary, #1677ff);
-    }
-
-    .fx-mode-card__label {
-      color: var(--fx-primary, #1677ff);
-      font-weight: 600;
-    }
-  }
-
-  &__icon {
-    font-size: 22px;
-    color: var(--fx-text-secondary, #6b7280);
-    transition: color 0.25s ease;
-  }
-
-  &__label {
-    font-size: 12px;
-    color: var(--fx-text-secondary, #6b7280);
-    transition: all 0.25s ease;
-  }
-}
-
-/* 主题颜色卡片 */
-.fx-color-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 8px;
-  border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
-  border-radius: 8px;
-  background: var(--fx-bg-container, #ffffff);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  outline: none;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  &--active {
-    border-color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
-
-    .fx-color-card__label {
-      font-weight: 600;
-      color: var(--fx-primary, #1677ff);
-    }
-  }
-
-  &__swatch {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid rgba(0, 0, 0, 0.08);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  }
-
-  &:hover &__swatch {
-    transform: scale(1.1);
-  }
-
-  &--active &__swatch {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-primary, #1677ff) 20%, transparent), 0 2px 8px rgba(0, 0, 0, 0.18);
-  }
-
-  &__label {
-    font-size: 11px;
-    color: var(--fx-text-tertiary, #6b7280);
-    transition: all 0.25s ease;
-  }
-}
-
-/* 布局模式卡片 */
-.fx-layout-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 8px;
-  border: 2px solid var(--fx-border-color, rgba(148, 163, 184, 0.2));
-  border-radius: 8px;
-  background: var(--fx-bg-container, #ffffff);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  outline: none;
-
-  &:hover {
-    border-color: var(--fx-primary, #1677ff);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
-  }
-
-  &--active {
-    border-color: var(--fx-primary, #1677ff);
-    background: var(--fx-primary-soft, rgba(22, 119, 255, 0.08));
-
-    .fx-layout-card__label {
-      color: var(--fx-primary, #1677ff);
-      font-weight: 600;
-    }
-
-    .fx-layout-card__preview {
-      color: var(--fx-primary, #1677ff);
-    }
-  }
-
-  &__preview {
-    width: 72px;
-    height: 48px;
-    color: var(--fx-text-tertiary, #9ca3af);
-    transition: color 0.25s ease;
-    
-    :deep(svg) {
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  &__label {
-    font-size: 12px;
-    color: var(--fx-text-secondary, #6b7280);
-    transition: all 0.25s ease;
-  }
-}
-
-/* 消息通知抽屉 */
-.fx-message-drawer {
-  :deep(.ant-drawer-body) {
-    padding: 16px;
-  }
-}
-
-.fx-message-empty {
-  padding: 40px 0;
-  text-align: center;
-}
-
-.fx-message-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.fx-message-item {
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--fx-bg-elevated, #f5f5f5);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--fx-primary-bg, rgba(22, 119, 255, 0.08));
-  }
-}
-
-.fx-message-item__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.fx-message-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--fx-text-primary, #1f2937);
-  margin-bottom: 4px;
-}
-
-.fx-message-content {
-  font-size: 13px;
-  color: var(--fx-text-secondary, #6b7280);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.fx-message-time {
-  font-size: 12px;
-  color: var(--fx-text-tertiary, #9ca3af);
-  margin-top: 6px;
-}
-</style>

@@ -396,6 +396,15 @@ public interface ISysUserService extends IService<SysUser> {
     FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param);
 
     /**
+     * 按用户 ID 查询有效用户 ID 列表。
+     *
+     * @param tenantId 租户 ID
+     * @param userIds 用户ids
+     * @return 列表数据
+     */
+    List<Long> listValidUserIds(Long tenantId, List<Long> userIds);
+
+    /**
      * 执行sys用户的列表用户idsbydeptids操作。
      *
      * @param tenantId 租户 ID

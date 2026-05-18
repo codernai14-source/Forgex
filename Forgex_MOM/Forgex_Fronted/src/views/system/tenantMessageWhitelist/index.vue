@@ -321,11 +321,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.tenant-message-whitelist-container {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/tenantMessageWhitelist/index.less"></style>

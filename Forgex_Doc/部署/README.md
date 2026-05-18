@@ -164,6 +164,8 @@ Windows 服务器首次部署时，中间件和业务服务按以下顺序处理
 4. 在开始菜单 `Forgex` 目录运行 `导入 Nacos 配置`，脚本会创建/复用 `yanshi` 命名空间，并导入 `nacos/DEFAULT_GROUP` 下的配置文件。
 5. 打开 Forgex 控制中心，点击启动全部服务。
 
+`forgex_admin.sql` 包含首页组件目录三张表：`sys_homepage_component_category`、`sys_homepage_component_config`、`sys_homepage_component_preference`，并预置个人首页通用组件分类和公共组件清单。三张表已写入 `sys_tenant_ignore`，由业务层按公共、租户、个人规则显式过滤，避免租户拦截器影响公共配置拉取。
+
 `import-database.bat` 默认使用 Nacos 数据源配置中的 MySQL 账号密码；当前交付配置默认是 `root / 123456`。如服务器密码不同，可运行：
 
 ```powershell

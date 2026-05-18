@@ -229,12 +229,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.encode-rule-management {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/encodeRule/index.less"></style>

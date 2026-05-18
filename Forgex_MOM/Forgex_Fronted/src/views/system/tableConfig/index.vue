@@ -222,12 +222,4 @@ async function handleToggleStatus(id: number, enabled: boolean) {
 }
 </script>
 
-<style scoped lang="less">
-.table-config-management {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/tableConfig/index.less"></style>

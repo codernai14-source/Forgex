@@ -1,6 +1,6 @@
 ﻿/**
- * 璺敱閰嶇疆鏂囦欢
- * 璐熻矗瀹氫箟搴旂敤璺敱瑙勫垯銆佽矾鐢卞畧鍗拰鍔ㄦ€佽矾鐢辨敞鍏ラ€昏緫銆?
+ * 路由配置文件
+ * 负责定义应用路由规则、路由守卫和动态路由注入逻辑。
  * @author Forgex Team
  * @version 1.0.0
  */
@@ -40,18 +40,27 @@ const localModuleRoutes: Record<string, LocalModuleRouteDefinition[]> = {
 }
 
 /**
- * 闈欐€佽矾鐢遍厤缃?
- * 瀹氫箟搴旂敤鍩虹璺敱锛屽寘鎷櫥褰曢〉銆佸垵濮嬪寲椤点€佸伐浣滃尯鍜岄噸瀹氬悜璺敱銆?
+ * 空视图组件
+ * 用于路由组件加载失败时的默认显示。
+ */
+const EmptyView = {
+  name: 'RouteEmptyView',
+  render: () => h('div', { style: 'padding:16px;color:#9ca3af;' }, 'Page not available yet')
+}
+
+/**
+ * 静态路由配置
+ * 定义应用基础路由，包括登录页、初始化页、工作区和重定向路由。
  */
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/login' }, // 榛樿閲嶅畾鍚戝埌鐧诲綍椤?
-  { path: '/login', component: () => import('../views/auth/login/index.vue') }, // 鐧诲綍椤?
+  { path: '/', redirect: '/login' }, // 默认重定向到登录页
+  { path: '/login', component: () => import('../views/auth/login/index.vue') }, // 登录页
   { path: '/register', component: () => import('../views/auth/register/index.vue') },
-  { path: '/init', component: () => import('../views/auth/init-wizard/index.vue') }, // 鍒濆鍖栧悜瀵奸〉
+  { path: '/init', component: () => import('../views/auth/init-wizard/index.vue') }, // 初始化向导页
   {
     path: '/workspace',
     name: 'Workspace',
-    component: () => import('../layouts/MainLayout.vue'), // 涓诲竷灞€缁勪欢
+    component: () => import('../layouts/MainLayout.vue'), // 主布局组件
     children: [
       {
         path: 'home',
@@ -66,16 +75,40 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'layout.favoriteManagement' }
       },
       {
+        path: 'home/component-config',
+        name: 'PersonalComponentConfig',
+        component: () => import('../views/home/component-config/index.vue'),
+        meta: { title: 'personalHomepage.componentConfig.title' }
+      },
+      {
         path: 'profile',
         name: 'UserProfile',
         component: () => import('../views/profile/index.vue'),
-        meta: { title: 'profile.title', module: 'sys' } // 涓汉淇℃伅椤?
+        meta: { title: 'profile.title', module: 'sys' } // 个人信息页
+      },
+      {
+        path: 'fallback/:kind(403|404|offline)',
+        name: 'WorkspaceFallback',
+        component: () => import('../views/fallback/index.vue'),
+        meta: { title: 'fallback.404.title', hidden: true }
       },
       {
         path: 'sys/config',
         name: 'SystemConfig',
         component: () => import('../views/system/config/index.vue'),
         meta: { title: 'system.config.title', module: 'sys' }
+      },
+      {
+        path: 'sys/onlineDev/homepage-component',
+        name: 'SystemHomepageComponent',
+        component: () => import('../views/system/homepageComponent/index.vue'),
+        meta: { title: 'system.homepageComponent.title', module: 'sys' }
+      },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'WorkspaceNotFound',
+        component: EmptyView,
+        meta: { hidden: true, dynamicPending: true }
       }
     ]
   },
@@ -98,7 +131,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'execution/start/:taskCode',
-        name: 'WorkflowExecutionStart琛ㄥ崟',
+        name: 'WorkflowExecutionStartForm',
         component: () => import('../views/workflow/execution/startForm.vue'),
         meta: { title: 'workflow.execution.startApproval', module: 'approval', hidden: true }
       }
@@ -111,44 +144,97 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       const target = (to.query as any)?.to as string | undefined
       if (target) {
-        next(target) // 閲嶅畾鍚戝埌鐩爣璺緞
+        next(target) // 重定向到目标路径
       } else {
-        next('/workspace') // 榛樿閲嶅畾鍚戝埌宸ヤ綔鍖?
+        next('/workspace') // 默认重定向到工作区
       }
     }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/workspace/fallback/404'
   }
 ]
 
 /**
- * 鍒涘缓璺敱瀹炰緥
+ * 创建路由实例
  */
 const router = createRouter({
-  history: createWebHistory(), // 娴ｈ法鏁?HTML5 History 妯″紡
-  routes // 娉ㄥ唽闈欐€佽矾鐢?
+  history: createWebHistory(), // 使用 HTML5 History 模式
+  routes // 注册静态路由
 })
 
 /**
- * 璺敱鎭㈠鐘舵€佹爣璁?
- * 鐢ㄤ簬闃叉璺敱鎭㈠杩囩▼涓嚭鐜版棤闄愬惊鐜€?
+ * 路由恢复状态标记
+ * 用于防止路由恢复过程中出现无限循环。
  */
 let isRestoringRoutes = false
+const pendingRouteRestoreAttempts = new Map<string, number>()
+
+async function restoreDynamicRoutes(
+  account: string,
+  tenantId: string,
+  permissionStore: ReturnType<typeof usePermissionStore>,
+  forceBackend = false,
+) {
+  if (isRestoringRoutes) {
+    return false
+  }
+
+  isRestoringRoutes = true
+
+  try {
+    if (!forceBackend) {
+      const cached = permissionStore.restoreRoutesAndModules()
+
+      if (cached.routes.length > 0 || cached.modules.length > 0) {
+        console.log('[Guard] Restoring routes from cache')
+        await injectDynamicRoutes({
+          routes: cached.routes,
+          modules: cached.modules
+        })
+        return true
+      }
+    }
+
+    console.log('[Guard] Fetching routes from backend')
+    const payload = await getRoutes({ account, tenantId })
+    if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules)) {
+      console.log('[Guard] Routes fetched from backend successfully')
+
+      if (payload.buttons) {
+        permissionStore.setPermissions(payload.buttons)
+      }
+
+      await injectDynamicRoutes(payload)
+      return true
+    }
+
+    return false
+  } catch (error) {
+    console.error('[Guard] Route restoration failed:', error)
+    return false
+  } finally {
+    isRestoringRoutes = false
+  }
+}
 
 /**
- * 鍏ㄥ眬璺敱瀹堝崼
- * 妫€鏌ョ櫥褰曠姸鎬佸拰鍔ㄦ€佽矾鐢憋紝瀹炵幇璺敱鎷︽埅鍜屾潈闄愭帶鍒躲€?
- * @param to 鐩爣璺敱
- * @param from 鏉ユ簮璺敱
- * @param next 璺敱璺宠浆鍑芥暟
+ * 全局路由守卫
+ * 检查登录状态和动态路由，实现路由拦截和权限控制。
+ * @param to 目标路由
+ * @param from 来源路由
+ * @param next 路由跳转函数
  */
 router.beforeEach(async (to, from, next) => {
   console.log('[Guard] Navigating to:', to.path, 'from:', from.path)
 
-  // 鑾峰彇浼氳瘽淇℃伅
+  // 获取会话信息
   const account = sessionStorage.getItem('account')
   const tenantId = sessionStorage.getItem('tenantId')
   const permissionStore = usePermissionStore()
 
-  // 濡傛灉璁块棶鐧诲綍椤垫垨鍒濆鍖栭〉锛岀洿鎺ユ斁琛屻€?
+  // 如果访问登录页、注册页或初始化页，直接放行
   if (to.path === '/login' || to.path === '/register' || to.path === '/init') {
     next()
     return
@@ -174,92 +260,67 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 濡傛灉鏈櫥褰曪紝璺宠浆鍒扮櫥褰曢〉銆?
+  if (to.path.startsWith('/workspace/fallback/')) {
+    next()
+    return
+  }
+
+  // 如果未登录，跳转到登录页
   if (!account || !tenantId) {
     next('/login')
     return
   }
 
-  // 濡傛灉鍔ㄦ€佽矾鐢变负绌轰笖涓嶅湪鎭㈠杩囩▼涓紝灏濊瘯鎭㈠璺敱銆?
-  if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
-    isRestoringRoutes = true
-
-    try {
-      // 浼樺厛浠庣紦瀛樻仮澶嶏紝閬垮厤涓嶅繀瑕佺殑 API 璋冪敤銆?
-      const cached = permissionStore.restoreRoutesAndModules()
-
-      if (cached.routes.length > 0 || cached.modules.length > 0) {
-        console.log('[Guard] Restoring routes from cache')
-        
-        // 閲嶆柊娉ㄥ叆鍔ㄦ€佽矾鐢便€?
-        await injectDynamicRoutes({
-          routes: cached.routes,
-          modules: cached.modules
+  if (to.name === 'WorkspaceNotFound' && to.meta?.dynamicPending) {
+    const restoreAttempts = pendingRouteRestoreAttempts.get(to.fullPath) || 0
+    if (restoreAttempts < 2) {
+      pendingRouteRestoreAttempts.set(to.fullPath, restoreAttempts + 1)
+      const restored = await restoreDynamicRoutes(account, tenantId, permissionStore, restoreAttempts > 0)
+      if (restored) {
+        next({
+          path: to.path,
+          query: to.query,
+          hash: to.hash,
+          replace: true
         })
-
-        isRestoringRoutes = false
-        // 璺敱宸叉仮澶嶏紝閲嶆柊瀵艰埅鍒扮洰鏍囪矾鐢便€?
-        next({ ...to, replace: true })
         return
       }
-
-      // 濡傛灉缂撳瓨涓虹┖锛屽皾璇曚粠鍚庣鑾峰彇銆?
-      console.log('[Guard] No cached routes, fetching from backend')
-      try {
-        const payload = await getRoutes({ account, tenantId })
-        if (payload && Array.isArray(payload.routes) && Array.isArray(payload.modules)) {
-          console.log('[Guard] Routes fetched from backend successfully')
-          
-          // 鐎涙ê鍋嶉弶鍐娣団剝浼?
-          if (payload.buttons) {
-            permissionStore.setPermissions(payload.buttons)
-          }
-          
-          await injectDynamicRoutes(payload)
-          isRestoringRoutes = false
-          next({ ...to, replace: true })
-          return
-        }
-      } catch (e) {
-        console.error('[Guard] Failed to fetch routes from backend:', e)
-      }
-
-      // 濡傛灉閮藉け璐ヤ簡锛岃烦杞埌鐧诲綍椤点€?
-      isRestoringRoutes = false
-      next('/login')
-      return
-    } catch (error) {
-      console.error('[Guard] Route restoration failed:', error)
-      isRestoringRoutes = false
-      next('/login')
-      return
     }
+
+    pendingRouteRestoreAttempts.delete(to.fullPath)
+    next('/workspace/fallback/404')
+    return
   }
 
-  // 婵″倹鐏夌拋鍧楁６ /workspace 鏍硅矾寰勶紝閲嶅畾鍚戝埌绯荤粺绠＄悊涓婚〉
+  // 如果动态路由为空且不在恢复过程中，尝试恢复路由
+  if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
+    const restored = await restoreDynamicRoutes(account, tenantId, permissionStore)
+    if (restored) {
+      next({ ...to, replace: true })
+      return
+    }
+
+    next('/login')
+    return
+  }
+
+  // 访问 /workspace 根路径时，重定向到个人主页
   if (to.path === '/workspace' || to.path === '/workspace/') {
     next(PERSONAL_HOME_PATH)
     return
   }
 
-  // 濡傛灉宸茬櫥褰曚笖璺敱宸叉敞鍏ワ紝鐩存帴鏀捐
+  // 如果已登录且路由已注入，直接放行
+  pendingRouteRestoreAttempts.delete(to.fullPath)
+  pendingRouteRestoreAttempts.delete(to.path)
   next()
 })
 
 export default router
 
 /**
- * 绌鸿鍥剧粍浠?
- * 鐢ㄤ簬璺敱缁勪欢鍔犺浇澶辫触鏃剁殑榛樿鏄剧ず銆?
- */
-const EmptyView = {
-  name: 'RouteEmptyView',
-  render: () => h('div', { style: 'padding:16px;color:#9ca3af;' }, 'Page not available yet')
-}
-
-/**
- * 妯″潡浠ｇ爜鏄犲皠
- * 灏嗗悗绔ā鍧椾唬鐮佹槧灏勫埌鍓嶇鐩綍銆?
+ * 模块代码映射
+ * 将后端模块代码映射到前端目录。
  */
 const modulePathMap: Record<string, string> = {
   'sys': 'system',
@@ -268,11 +329,12 @@ const modulePathMap: Record<string, string> = {
   'approval': 'workflow',
   'integration': 'integrationPlatform',
   'label': 'label',
+  'job': 'job',
 }
 
 /**
- * 瀹℃壒妯″潡鑿滃崟 component key 涓庣洰褰曠粨鏋勭殑闈欐€佹槧灏勩€?
- * 涓庢暟鎹簱鑴氭湰涓殑 component_key 淇濇寔涓€鑷淬€?
+ * 审批模块菜单 component key 与目录结构的静态映射。
+ * 与数据库脚本中的 component_key 保持一致。
  */
 const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalDashboard: () => import('../views/workflow/dashboard/index.vue'),
@@ -287,13 +349,13 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
 const viewModules = import.meta.glob('../views/**/*.vue') as Record<string, () => Promise<any>>
 
 /**
- * 鍔ㄦ€佸鍏ョ粍浠躲€?
- * 绾﹀畾缁勪欢鍚嶆牸寮忎负 ModulePage锛屼緥濡?SystemUser銆丼ysDashboard銆?
- * 鑷姩鏄犲皠鍒?../views/{module}/{page}.vue銆?
+ * 动态导入组件。
+ * 约定组件名称格式为 ModulePage，例如 SystemUser、SysDashboard。
+ * 自动映射到 ../views/{module}/{page}.vue。
  *
- * @param componentName 缁勪欢鍚嶇О锛屼緥濡?"SystemUser"銆?SysDashboard"
- * @returns 鍔ㄦ€佸鍏ョ殑缁勪欢
- * @throws {Error} 缁勪欢鍔犺浇澶辫触鏃舵姏鍑洪敊璇?
+ * @param componentName 组件名称，例如 "SystemUser"、"SysDashboard"
+ * @returns 动态导入的组件
+ * @throws {Error} 组件加载失败时抛出错误
  */
 function loadComponent(componentName: string, moduleHint?: string, routePathHint?: string) {
   try {
@@ -313,6 +375,8 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       LabelPrint: '../views/label/print/index.vue',
       LabelRecord: '../views/label/record/index.vue',
       LabelBinding: '../views/label/binding/index.vue',
+      LabelType: '../views/label/type/index.vue',
+      LabelField: '../views/label/field/index.vue',
     }
     if (normalizedName && specialComponentMap[normalizedName]) {
       const mappedPath = specialComponentMap[normalizedName]
@@ -325,20 +389,36 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
     const stableComponentMap: Record<string, string> = {
       BasicDashboard: '../views/basic/dashboard/index.vue',
       BasicCustomer: '../views/basic/customer/index.vue',
+      BasicEmployee: '../views/basic/employee/index.vue',
+      BasicShift: '../views/basic/shift/index.vue',
       BasicSupplier: '../views/basic/supplier/index.vue',
+      BasicTeam: '../views/basic/team/index.vue',
+      BasicWorkshop: '../views/basic/workshop/index.vue',
+      BasicCurrency: '../views/basic/currency/index.vue',
       BasicEncodeRule: '../views/basic/encodeRule/index.vue',
       BasicMaterial: '../views/basic/material/index.vue',
+      BasicPackaging: '../views/basic/packaging/index.vue',
       BasicUnit: '../views/basic/unit/index.vue',
+      BasicWorkCalendar: '../views/basic/workCalendar/index.vue',
       BasicMaterialRaw: '../views/basic/material/index.vue',
       BasicMaterialSemiFinished: '../views/basic/material/index.vue',
       BasicMaterialFinished: '../views/basic/material/index.vue',
       SystemDashboard: '../views/system/dashboard/index.vue',
+      SystemHomepageComponent: '../views/system/homepageComponent/index.vue',
       SystemAndroidVersion: '../views/system/androidVersion/index.vue',
       SystemNotice: '../views/system/notice/index.vue',
       SystemPosition: '../views/system/position/index.vue',
       SystemRole: '../views/system/role/index.vue',
       SystemRoleMenuGrant: '../views/system/role/MenuGrant.vue',
       SystemRoleUserGrant: '../views/system/role/UserGrant.vue',
+      JobDashboard: '../views/job/dashboard/index.vue',
+      JobTask: '../views/job/task/index.vue',
+      JobLog: '../views/job/log/index.vue',
+      JobInstance: '../views/job/instance/index.vue',
+      JobRetry: '../views/job/retry/index.vue',
+      JobAlarm: '../views/job/alarm/index.vue',
+      JobAlarmLog: '../views/job/alarmLog/index.vue',
+      JobWorkflow: '../views/job/workflow/index.vue',
       ApprovalDashboard: '../views/workflow/dashboard/index.vue',
     }
     if (normalizedName && stableComponentMap[normalizedName]) {
@@ -483,36 +563,36 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
 }
 
 /**
- * 鍔ㄦ€佹ā鍧楀垪琛ㄣ€?
- * 瀛樺偍浠庡悗绔幏鍙栫殑妯″潡淇℃伅
+ * 动态模块列表。
+ * 存储从后端获取的模块信息
  */
 export const dynamicModules = ref<any[]>([])
 
 /**
- * 鍔ㄦ€佽矾鐢卞垪琛ㄣ€?
- * 瀛樺偍浠庡悗绔幏鍙栫殑璺敱淇℃伅
+ * 动态路由列表。
+ * 存储从后端获取的路由信息
  */
 export const dynamicRoutes = ref<any[]>([])
 
 /**
- * 宸叉敞鍏ョ殑鍔ㄦ€佽矾鐢卞悕绉伴泦鍚堛€?
- * <p>
- * 鐢ㄤ簬閲嶆柊娉ㄥ叆鏃舵竻鐞嗘棫璺敱锛岄伩鍏嶈矾鐢辫褰曢噸澶嶅鑷撮〉闈㈤渶瑕佸埛鏂版墠鐢熸晥銆?
+ * 已注入的动态路由名称集合。
+ * 用于重新注入时清理旧路由，避免路由记录重复。
+ * 否则可能导致页面需要刷新后路由变更才生效。
  * </p>
  */
 const injectedRouteNames = new Set<string>()
 
 /**
- * 鍔ㄦ€佽矾鐢辨敞鍏ュ嚱鏁般€?
- * 鏍规嵁鍚庣杩斿洖鐨勮矾鐢辨暟鎹紝鍔ㄦ€佹敞鍐岃矾鐢卞埌璺敱瀹炰緥銆?
+ * 动态路由注入函数。
+ * 根据后端返回的路由数据，动态注册路由到路由实例。
  *
- * @param payload 鍖呭惈妯″潡鍜岃矾鐢辨暟鎹殑璐熻浇
+ * @param payload 包含模块和路由数据的负载
  * @returns Promise<void>
  */
 export async function injectDynamicRoutes(payload: any) {
   const r = router
 
-  // 閲嶆柊娉ㄥ叆鍓嶅厛娓呯悊鏃х殑鍔ㄦ€佽矾鐢憋紝閬垮厤鏃ц矾鐢辫褰曟畫鐣欍€?
+  // 重新注入前先清理旧的动态路由，避免旧路由记录残留
   if (injectedRouteNames.size > 0) {
     for (const name of injectedRouteNames) {
       try {
@@ -529,17 +609,17 @@ export async function injectDynamicRoutes(payload: any) {
     injectedRouteNames.clear()
   }
 
-  // 瑙ｆ瀽妯″潡鍜岃矾鐢辨暟鎹€?
+  // 解析模块和路由数据
   const mods = Array.isArray(payload?.modules) ? payload.modules : []
   const routesPayload = Array.isArray(payload?.routes)
     ? JSON.parse(JSON.stringify(payload.routes))
     : []
 
-  // 鏇存柊鍔ㄦ€佹ā鍧楀拰璺敱鍒楄〃銆?
+  // 更新动态模块和路由列表
   dynamicModules.value = mods
   dynamicRoutes.value = routesPayload
 
-  // 缂撳瓨鍒?Pinia store锛屼細鑷姩鎸佷箙鍖栧埌 localStorage銆?
+  // 缓存到 Pinia store，会自动持久化到 localStorage
   const permissionStore = usePermissionStore()
   permissionStore.setRoutes(routesPayload)
   permissionStore.setModules(mods)
@@ -550,10 +630,9 @@ export async function injectDynamicRoutes(payload: any) {
     const normalized = raw.replace(/^\//, '').replace(/\//g, ':')
     return `dyn:${normalized}`
   }
-
-  // 閬嶅巻璺敱鏁版嵁锛屾敞鍐屽姩鎬佽矾鐢便€?
+  // 遍历路由数据，注册动态路由
   for (const routeItem of routesPayload) {
-    const moduleCode = routeItem.path
+    const moduleCode = String(routeItem.path || '').replace(/^\/+|\/+$/g, '')
     const children = Array.isArray(routeItem.children) ? routeItem.children : []
     const registeredModulePaths = new Set<string>()
 
@@ -565,7 +644,9 @@ export async function injectDynamicRoutes(payload: any) {
         }
 
         const relativePath = parentPath ? `${parentPath}/${childPath}` : childPath
-        const fullPath = `${moduleCode}/${relativePath}`
+        const routeModuleCode = moduleCode
+        const routeRelativePath = relativePath
+        const fullPath = `${routeModuleCode}/${routeRelativePath}`
         const menuType = c?.meta?.type || c?.type
 
         if (menuType === 'catalog') {
@@ -577,10 +658,10 @@ export async function injectDynamicRoutes(payload: any) {
         r.addRoute('Workspace', {
           path: fullPath,
           name: routeName,
-          component: loadComponent(c.component, moduleCode, relativePath),
+          component: loadComponent(c.component, routeModuleCode, routeRelativePath),
           meta: {
             ...c.meta,
-            module: moduleCode
+            module: routeModuleCode
           }
         })
         injectedRouteNames.add(routeName)
@@ -615,7 +696,7 @@ export async function injectDynamicRoutes(payload: any) {
 
   }
 
-  // 閬嶅巻鎵€鏈夊凡娉ㄥ唽璺敱锛岃皟璇曟椂鍙湪姝ゅ杈撳嚭銆?
+  // 遍历所有已注册路由，调试时可在此处输出
 
   r.getRoutes().forEach(route => {
     if (route.path.includes('workspace')) {

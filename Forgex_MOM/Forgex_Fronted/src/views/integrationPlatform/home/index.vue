@@ -12,19 +12,4 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n({ useScope: 'global' })
 </script>
 
-<style scoped lang="less">
-.integration-home {
-  min-height: 100%;
-}
-
-.integration-home__card {
-  min-height: 320px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.integration-home__card :deep(.ant-card-body) {
-  width: 100%;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/home/index.less"></style>

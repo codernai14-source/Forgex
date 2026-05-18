@@ -7,6 +7,7 @@ import com.forgex.common.web.R;
 import lombok.Data;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -121,6 +122,17 @@ class AutoFillUsernameAspectTest {
         aspect.around(joinPointReturning(R.ok(dto)));
 
         assertEquals(null, dto.getCreateByName());
+        verify(userFeignClient, never()).getUsernameMap(anyList());
+    }
+
+    @Test
+    void shouldSkipFrameworkReturnObject() throws Throwable {
+        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+
+        Object result = aspect.around(joinPointReturning(new SseEmitter(0L)));
+
+        assertEquals(SseEmitter.class, result.getClass());
         verify(userFeignClient, never()).getUsernameMap(anyList());
     }
 

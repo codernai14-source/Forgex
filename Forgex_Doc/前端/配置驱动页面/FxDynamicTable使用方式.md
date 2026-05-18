@@ -403,6 +403,34 @@ async function handleRequest(payload) {
 1. `request` 是否真正使用了 `payload.query`
 2. 是否在外部又维护了另一份分页和查询状态，导致混乱
 
+## 查询区首行数量与批量选择
+
+`FxDynamicTable` 支持通过 `queryFirstRowCount` 控制查询区第一行展示的查询条件数量，默认值为 `3`，组件内部会限制在 `1-6` 之间。超过首行数量的查询条件会进入展开区域，由“展开/收起”按钮控制显示。
+
+```vue
+<FxDynamicTable
+  table-code="BasicPackagingTypeTable"
+  :request="handleRequest"
+  :query-first-row-count="3"
+  row-key="id"
+/>
+```
+
+页面需要复选和批量操作时，通过 Ant Design Vue 的 `rowSelection` 传入选择状态。批量删除按钮应放在 `toolbar` 插槽中，按钮权限沿用对应业务模块的删除权限，删除成功后清空选择并刷新表格。
+
+```vue
+<FxDynamicTable
+  :row-selection="rowSelection"
+  row-key="id"
+>
+  <template #toolbar>
+    <a-button danger :disabled="!selectedRowKeys.length" @click="handleBatchDelete">
+      {{ t('common.batchDelete') }}
+    </a-button>
+  </template>
+</FxDynamicTable>
+```
+
 ## 关联文档
 
 - [FxDynamicTable实现逻辑](./FxDynamicTable实现逻辑.md)

@@ -23,7 +23,18 @@
       :request="handleRequest"
       :dict-options="dictOptions"
       row-key="id"
+      :row-selection="rowSelection"
     >
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:supplier:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #logoUrl="{ record }">
         <a-avatar v-if="record.logoUrl" shape="square" :size="32" :src="record.logoUrl" />
         <span v-else>-</span>
@@ -410,8 +421,10 @@ import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import { uploadFile } from '@/api/system/file'
 import { supplierApi, type Supplier, type SupplierContact, type SupplierPageParam, type SupplierQualification } from '@/api/basic/supplier'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { useDict, type DictItemOption } from '@/hooks/useDict'
-import { useAppStore } from '@/stores/app'import { translateLegacyText } from '@/utils/legacyI18n'
+import { useAppStore } from '@/stores/app'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 type OptionValue = string | number | boolean
 
@@ -423,6 +436,7 @@ interface OptionItem {
 const appStore = useAppStore()
 const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const saving = ref(false)
 const editorVisible = ref(false)
 const activeTab = ref('main')
@@ -657,6 +671,19 @@ function handleDelete(record: Supplier) {
   })
 }
 
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await supplierApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
 async function handleGenerateTenant(record: Supplier) {
   if (isTenantLinked(record)) {
     return
@@ -721,112 +748,4 @@ function reviewColor(value?: number) {
 }
 </script>
 
-<style scoped lang="less">
-.supplier-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 100%;
-  padding: 20px;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: var(--supplier-page-bg);
-}
-
-.supplier-page--light {
-  --supplier-page-bg:
-    radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--fx-primary, #1677ff) 12%, transparent), transparent 28%),
-    linear-gradient(180deg, var(--fx-bg-layout, #f8fafc), #eef3f8);
-}
-
-.supplier-page--dark {
-  --supplier-page-bg:
-    radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent), transparent 28%),
-    linear-gradient(180deg, #111827 0%, #0b1220 46%, #05070b 100%);
-}
-
-.supplier-page__header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 12px;
-  padding: 14px 18px;
-  border: 1px solid var(--fx-border-color, rgba(148, 163, 184, 0.18));
-  border-radius: 8px;
-  background: var(--fx-bg-container, #ffffff);
-  box-shadow: var(--fx-shadow-secondary, 0 10px 28px rgba(15, 23, 42, 0.06));
-}
-
-.supplier-page :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.supplier-page__header h1 {
-  margin: 6px 0 4px;
-  color: var(--fx-text-primary, #111827);
-  font-size: 22px;
-  line-height: 1.25;
-}
-
-.supplier-page__header p {
-  margin: 0;
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.supplier-name {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.supplier-name span {
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 12px;
-}
-
-.logo-uploader {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 54px;
-  color: var(--fx-text-secondary, #64748b);
-  cursor: pointer;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-
-.disabled {
-  color: var(--fx-text-disabled, #bfbfbf);
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.sub-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
-@media (max-width: 768px) {
-  .supplier-page {
-    padding: 12px;
-  }
-
-  .supplier-page__header {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 14px;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/basic/supplier/index.less"></style>

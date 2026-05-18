@@ -307,4 +307,4 @@ async function handleToggleStatus(record: ApiConfigItem, checked: boolean) {
 }
 </script>
 
-<style scoped lang="less" src="@/styles/integration-api-config.less"></style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/apiConfig/index.less"></style>

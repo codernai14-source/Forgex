@@ -1,54 +1,49 @@
 /**
- * 部门管理翻译 - 中文注释
+ * 部门管理 - 日语界面文案
  */
 export default {
-  // 页面标题
-  title: 'Department Management',
-  list: 'Department List',
-  detail: 'Department Detail',
-  
-  // 表格列
-  deptName: 'Department Name',
-  deptCode: 'Department Code',
-  orgType: 'Organization Type',
-  orgLevel: 'Organization Level',
-  leader: 'Leader',
-  phone: 'Phone',
-  email: 'Email',
-  orderNum: 'Order Number',
-  status: 'Status',
-  createTime: 'Create Time',
-  updateTime: 'Update Time',
-  createBy: 'Created By',
-  updateBy: 'Updated By',
-  
-  // 表单
+  title: '部門管理',
+  list: '部門一覧',
+  detail: '部門詳細',
+
+  deptName: '部門名',
+  deptCode: '部門コード',
+  orgType: '組織種別',
+  orgLevel: '組織階層',
+  leader: '責任者',
+  phone: '電話番号',
+  email: 'メール',
+  orderNum: '表示順',
+  status: '状態',
+  createTime: '作成日時',
+  updateTime: '更新日時',
+  createBy: '作成者',
+  updateBy: '更新者',
+
   form: {
-    addDept: 'Add Department',
-    editDept: 'Edit Department',
-    deptName: 'Please enter department name',
-    deptCode: 'Please enter department code',
-    orgType: 'Please select organization type',
-    orgLevel: 'Please enter organization level',
-    leader: 'Please enter leader',
-    phone: 'Please enter phone number',
-    email: 'Please enter email',
-    orderNum: 'Please enter order number',
-    status: 'Please select status',
+    addDept: '部門を追加',
+    editDept: '部門を編集',
+    deptName: '部門名を入力してください',
+    deptCode: '部門コードを入力してください',
+    orgType: '組織種別を選択してください',
+    orgLevel: '組織階層を入力してください',
+    leader: '責任者を入力してください',
+    phone: '電話番号を入力してください',
+    email: 'メールを入力してください',
+    orderNum: '表示順を入力してください',
+    status: '状態を選択してください',
   },
-  
-  // 操作
-  childDept: 'Sub Department',
-  addRootDept: 'Add Root Department',
-  emptySelectTip: 'Select a department on the left to view details',
-  
-  // 消息
+
+  childDept: '子部門',
+  addRootDept: 'ルート部門を追加',
+  emptySelectTip: '詳細を表示するには左側で部門を選択してください',
+
   message: {
-    
-    loadTreeFailed: '?????????????????',deleteConfirm: 'Are you sure you want to delete this department?',
-    deleteSuccess: 'Department deleted successfully',
-    saveSuccess: 'Department saved successfully',
-    deptCodeExists: 'Department code already exists',
-    hasChildren: 'This department has sub-departments and cannot be deleted',
+    loadTreeFailed: '組織ツリーの読み込みに失敗しました',
+    deleteConfirm: 'この部門を削除してもよろしいですか？',
+    deleteSuccess: '部門を削除しました',
+    saveSuccess: '部門を保存しました',
+    deptCodeExists: 'この部門コードは既に存在します',
+    hasChildren: '子部門があるため削除できません',
   },
 }

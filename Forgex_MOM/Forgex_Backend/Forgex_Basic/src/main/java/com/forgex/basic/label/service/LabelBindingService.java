@@ -8,6 +8,8 @@ import com.forgex.basic.label.domain.param.LabelBindingSaveParam;
 import com.forgex.basic.label.domain.vo.BindingVO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 标签绑定 Service 接口
  * <p>
@@ -65,6 +67,8 @@ public interface LabelBindingService extends IService<LabelBinding> {
      * @param tenantId 租户 ID
      */
     void deleteBinding(Long id, Long tenantId);
+
+    void batchDeleteBindings(List<Long> ids, Long tenantId);
 
     /**
      * 根据绑定条件匹配模板

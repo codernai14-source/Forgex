@@ -67,8 +67,25 @@
         ref="tableRef"
         table-code="BasicUnitTable"
         :request="handleRequest"
+        :row-selection="rowSelection"
         row-key="id"
       >
+        <template #toolbar>
+          <a-space wrap>
+            <a-button
+              v-permission="'basic:unit:delete'"
+              danger
+              :disabled="!selectedRowKeys.length"
+              @click="handleBatchUnitDelete"
+            >
+              {{ t('common.batchDelete') }}
+            </a-button>
+            <span v-if="selectedRowKeys.length" class="selection-summary">
+              {{ t('common.selectedCount', { count: selectedRowKeys.length }) }}
+            </span>
+          </a-space>
+        </template>
+
         <template #action="{ record }">
           <a-space>
             <a v-permission="'basic:unit:edit'" @click="openUnitEdit(record)">{{ t('common.edit') }}</a>
@@ -194,10 +211,12 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
+import type { TableProps } from 'ant-design-vue'
 import { MoreOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { type UnitConversion, type UnitMaster, type UnitTypeNode, unitApi } from '@/api/basic/unit'import { translateLegacyText } from '@/utils/legacyI18n'
+import { type UnitConversion, type UnitMaster, type UnitTypeNode, unitApi } from '@/api/basic/unit'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 type TreeNode = {
   key: number
@@ -221,6 +240,8 @@ const treeData = ref<TreeNode[]>([])
 const selectedTypeKeys = ref<number[]>([])
 const selectedTypeId = ref<number>()
 const selectedTypeName = ref('')
+const selectedRowKeys = ref<number[]>([])
+const selectedRows = ref<UnitMaster[]>([])
 const typeDialogVisible = ref(false)
 const unitDialogVisible = ref(false)
 const conversionVisible = ref(false)
@@ -264,6 +285,20 @@ const targetUnitOptions = computed(() => unitOptions.value
     value: item.id,
   })))
 
+const rowSelection = computed<TableProps['rowSelection']>(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  preserveSelectedRowKeys: false,
+  onChange: (keys, rows) => {
+    selectedRowKeys.value = keys.map(key => Number(key)).filter(key => Number.isFinite(key))
+    selectedRows.value = rows as UnitMaster[]
+  },
+}))
+
+function clearSelection() {
+  selectedRowKeys.value = []
+  selectedRows.value = []
+}
+
 function toTreeNodes(nodes: UnitTypeNode[]): TreeNode[] {
   return (nodes || []).map(node => ({
     key: node.id ?? ROOT_PARENT_ID,
@@ -300,6 +335,7 @@ async function loadTypeTree() {
       selectedTypeName.value = selected.unitTypeName
     }
   }
+  clearSelection()
   await tableRef.value?.refresh?.()
 }
 
@@ -308,6 +344,7 @@ function handleTypeSelect(keys: any[], info: any) {
   selectedTypeId.value = node?.id
   selectedTypeName.value = node?.unitTypeName || ''
   selectedTypeKeys.value = node?.id ? [node.id] : []
+  clearSelection()
   tableRef.value?.refresh?.()
 }
 
@@ -434,6 +471,7 @@ async function saveUnit() {
     }
     unitDialogVisible.value = false
     await reloadUnits()
+    clearSelection()
     await tableRef.value?.refresh?.()
   } finally {
     saving.value = false
@@ -447,6 +485,25 @@ function handleUnitDelete(record: UnitMaster) {
     async onOk() {
       await unitApi.delete(record.id!)
       await reloadUnits()
+      clearSelection()
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchUnitDelete() {
+  const ids = selectedRowKeys.value
+  if (!ids.length) {
+    return
+  }
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: ids.length }),
+    async onOk() {
+      await unitApi.batchDelete(ids)
+      message.success(t('common.deleteSuccess'))
+      await reloadUnits()
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })
@@ -516,141 +573,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="less">
-.unit-page {
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 16px;
-  height: 100%;
-  min-height: 0;
-  padding: 20px;
-  box-sizing: border-box;
-  overflow: hidden;
-  background: var(--fx-bg-layout, #f8fafc);
-}
-
-.unit-type-panel,
-.unit-main-panel {
-  min-height: 0;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 8px;
-  background: var(--fx-bg-container, #fff);
-}
-
-.unit-type-panel {
-  display: flex;
-  flex-direction: column;
-  padding: 14px;
-  overflow: hidden;
-}
-
-.unit-type-toolbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.unit-type-toolbar h2 {
-  margin: 0 0 4px;
-  font-size: 16px;
-}
-
-.unit-type-toolbar span {
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 12px;
-}
-
-.unit-type-panel :deep(.ant-tree) {
-  flex: 1 1 auto;
-  overflow: auto;
-  background: transparent;
-}
-
-.type-tree-node {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-}
-
-.type-node-more {
-  color: var(--fx-text-secondary, #64748b);
-  opacity: 0;
-}
-
-.type-tree-node:hover .type-node-more {
-  opacity: 1;
-}
-
-.unit-main-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.unit-main-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 12px 18px 8px;
-}
-
-.unit-main-header h1 {
-  margin: 6px 0 4px;
-  color: var(--fx-text-primary, #111827);
-  font-size: 22px;
-  line-height: 1.25;
-}
-
-.unit-main-header p {
-  margin: 0;
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.unit-main-panel :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-
-.danger-menu-item {
-  color: #ff4d4f;
-}
-
-.conversion-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.full-width {
-  width: 100%;
-}
-
-@media (max-width: 960px) {
-  .unit-page {
-    grid-template-columns: 1fr;
-    overflow: auto;
-  }
-
-  .unit-type-panel {
-    min-height: 260px;
-  }
-
-  .unit-main-header {
-    flex-direction: column;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/basic/unit/index.less"></style>

@@ -1,0 +1,74 @@
+.packaging-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 18px;
+  gap: 14px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+
+.page-header h1 {
+  margin: 6px 0 4px;
+  color: var(--fx-text-primary, #111827);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--fx-text-secondary, #64748b);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.packaging-page :deep(.fx-dynamic-table) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.selection-summary {
+  color: var(--fx-text-secondary, #64748b);
+  font-size: 13px;
+}
+
+.danger-link {
+  color: #ff4d4f;
+}
+
+.full-control {
+  width: 100%;
+}
+
+.relation-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 140px auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.slot-select {
+  width: 140px;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .relation-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .slot-select {
+    width: 100%;
+  }
+}

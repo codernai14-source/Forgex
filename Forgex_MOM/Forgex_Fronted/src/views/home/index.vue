@@ -12,9 +12,4 @@
 import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 </script>
 
-<style scoped>
-.personal-home-view {
-  /* 让个人主页设计器在主布局内容区内撑满高度。 */
-  min-height: 100%;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/home/index.less"></style>

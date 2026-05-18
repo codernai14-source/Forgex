@@ -68,6 +68,18 @@
           </template>
           {{ $t('personalHomepage.toolbar.resetDefault') }}
         </a-button>
+        <a-button v-if="editMode && mode === 'current'" @click="openComponentLibrary">
+          <template #icon>
+            <AppstoreOutlined />
+          </template>
+          {{ $t('personalHomepage.toolbar.componentLibrary') }}
+        </a-button>
+        <a-button v-if="editMode && mode === 'current'" @click="openPersonalComponentConfig">
+          <template #icon>
+            <SettingOutlined />
+          </template>
+          {{ $t('personalHomepage.toolbar.componentConfig') }}
+        </a-button>
         <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
           <template #icon>
             <SaveOutlined />
@@ -275,6 +287,20 @@
                       <div class="clock-widget__date">{{ nowDate }}</div>
                     </div>
                   </template>
+                  <template v-else>
+                    <div class="custom-widget">
+                      <div class="custom-widget__icon">
+                        <FxIcon :name="getComponentWidgetMeta(item.i)?.icon" :size="24" />
+                      </div>
+                      <div class="custom-widget__content">
+                        <div class="custom-widget__title">{{ getWidgetTitle(item.i) }}</div>
+                        <div class="custom-widget__desc">
+                          {{ getComponentWidgetMeta(item.i)?.useDesc || getWidgetSubtitle(item.i) || $t('personalHomepage.library.customPlaceholder') }}
+                        </div>
+                        <div class="custom-widget__code">{{ item.i }}</div>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </article>
             </GridItem>
@@ -332,6 +358,112 @@
         </div>
       </aside>
     </div>
+
+    <a-drawer
+      v-model:open="componentLibraryOpen"
+      :title="$t('personalHomepage.library.title')"
+      width="720"
+      destroy-on-close
+      placement="right"
+      :body-style="{ padding: '16px' }"
+    >
+      <a-space direction="vertical" style="width: 100%" :size="12">
+        <a-input-search
+          v-model:value="componentSearchKeyword"
+          allow-clear
+          :placeholder="$t('personalHomepage.library.searchPlaceholder')"
+          @search="loadComponentLibrary"
+        />
+        <a-space wrap>
+          <a-radio-group v-model:value="componentScopeFilter" button-style="solid" @change="loadComponentLibrary">
+            <a-radio-button value="ALL">{{ $t('personalHomepage.library.scopeAll') }}</a-radio-button>
+            <a-radio-button value="PUBLIC">{{ $t('personalHomepage.library.scopePublic') }}</a-radio-button>
+            <a-radio-button value="TENANT">{{ $t('personalHomepage.library.scopeTenant') }}</a-radio-button>
+            <a-radio-button value="USER">{{ $t('personalHomepage.library.scopeUser') }}</a-radio-button>
+          </a-radio-group>
+          <a-button :loading="libraryLoading" @click="loadComponentLibrary">
+            <template #icon>
+              <ReloadOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.refresh') }}
+          </a-button>
+        </a-space>
+        <a-spin :spinning="libraryLoading">
+          <div v-if="componentGroups.length === 0" class="designer-empty">
+            <a-empty :description="$t('personalHomepage.library.empty')" />
+          </div>
+          <div v-else class="component-library">
+            <a-collapse ghost :bordered="false">
+              <a-collapse-panel v-for="group in componentGroups" :key="group.key">
+                <template #header>
+                  <div class="component-library__group-header">
+                    <h4>{{ group.label }}</h4>
+                    <span>{{ group.items.length }}</span>
+                  </div>
+                </template>
+                <div class="component-library__grid">
+                  <article
+                    v-for="componentItem in group.items"
+                    :key="componentItem.componentCode"
+                    class="component-library__item"
+                    :class="{
+                      'component-library__item--selected': componentItem.selected && !componentItem.removed,
+                      'component-library__item--removed': componentItem.removed,
+                    }"
+                  >
+                    <header class="component-library__item-header">
+                      <div class="component-library__icon">
+                        <FxIcon :name="componentItem.icon" :size="18" />
+                      </div>
+                      <div class="component-library__title">
+                        <strong>{{ componentItem.componentName }}</strong>
+                        <span>{{ componentItem.componentCode }}</span>
+                      </div>
+                    </header>
+                    <p class="component-library__desc">{{ componentItem.useDesc || componentItem.remark || '-' }}</p>
+                    <div class="component-library__meta">
+                      <a-tag v-if="componentItem.scopeLevel">{{ componentItem.scopeLevel }}</a-tag>
+                      <a-tag v-if="componentItem.favorite" color="gold">{{ $t('personalHomepage.library.favorite') }}</a-tag>
+                      <a-tag v-if="componentItem.selected && !componentItem.removed" color="green">{{ $t('personalHomepage.library.selected') }}</a-tag>
+                      <a-tag v-if="componentItem.removed" color="red">{{ $t('personalHomepage.library.removed') }}</a-tag>
+                    </div>
+                    <div class="component-library__actions">
+                      <a-button size="small" @click="toggleFavorite(componentItem)">
+                        <template #icon>
+                          <StarFilled v-if="componentItem.favorite" />
+                          <StarOutlined v-else />
+                        </template>
+                      </a-button>
+                      <a-button
+                        size="small"
+                        type="primary"
+                        :disabled="componentItem.selected && !componentItem.removed"
+                        @click="addComponentToHomepage(componentItem)"
+                      >
+                        <template #icon>
+                          <PlusOutlined />
+                        </template>
+                      </a-button>
+                      <a-button
+                        size="small"
+                        danger
+                        :disabled="componentItem.removed"
+                        @click="removeComponentFromHomepage(componentItem)"
+                      >
+                        <template #icon>
+                          <DeleteOutlined />
+                        </template>
+                      </a-button>
+                    </div>
+                  </article>
+                </div>
+              </a-collapse-panel>
+            </a-collapse>
+          </div>
+        </a-spin>
+      </a-space>
+    </a-drawer>
+
   </div>
 </template>
 
@@ -346,8 +478,10 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   DragOutlined,
   MessageOutlined,
+  PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
@@ -360,22 +494,28 @@ import dayjs from 'dayjs'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
 import { normalizeMediaUrl } from '@/utils/media'
 import {
+  addHomepageComponent,
   createDefaultPersonalHomepageConfig,
+  favoriteHomepageComponent,
   getCurrentPersonalHomepageConfig,
   getManagePersonalHomepageConfig,
   getPersonalHomepageSummary,
   getUserCommonMenus,
   getUserFavoriteMenus,
+  listEffectiveHomepageComponents,
   mergePersonalHomepageConfig,
+  removeHomepageComponent,
   resetCurrentPersonalHomepageConfig,
   saveCurrentPersonalHomepageConfig,
   saveManagePersonalHomepageConfig,
   toggleUserFavoriteMenu,
+  type HomepageComponentVO,
   type PersonalHomepageConfig,
   type PersonalMenuEntry,
   type PersonalHomepageScopeLevel,
   type PersonalHomepageSummaryVO,
 } from '@/api/system/personalHomepage'
+import FxIcon from '@/components/common/FxIcon.vue'
 import { listUnreadMessages, markMessageRead, type SysMessageVO } from '@/api/system/message'
 import { noticeApi, type SysNotice } from '@/api/system/notice'
 import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
@@ -439,6 +579,11 @@ const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWid
 const now = ref(dayjs())
 const syncingGrid = ref(false)
 const summary = ref<PersonalHomepageSummaryVO | null>(null)
+const componentLibraryOpen = ref(false)
+const libraryLoading = ref(false)
+const componentSearchKeyword = ref('')
+const componentScopeFilter = ref<'ALL' | 'PUBLIC' | 'TENANT' | 'USER'>('ALL')
+const componentLibrary = ref<HomepageComponentVO[]>([])
 let clockTimer: number | undefined
 const MAX_COMMON_MENU_COUNT = 6
 
@@ -560,6 +705,16 @@ const widgetMetaMap: Record<string, { icon: any }> = {
   currentTime: { icon: ClockCircleOutlined },
 }
 
+const widgetDefaults: Record<string, { x: number; y: number; w: number; h: number; orderNum: number; minW: number; minH: number }> = {
+  commonMenus: { x: 0, y: 0, w: 6, h: 4, orderNum: 10, minW: 2, minH: 2 },
+  myFavorites: { x: 0, y: 4, w: 6, h: 4, orderNum: 20, minW: 2, minH: 2 },
+  pendingApprovals: { x: 6, y: 0, w: 6, h: 4, orderNum: 30, minW: 2, minH: 2 },
+  calendar: { x: 6, y: 4, w: 3, h: 4, orderNum: 40, minW: 2, minH: 2 },
+  currentTime: { x: 9, y: 4, w: 3, h: 3, orderNum: 50, minW: 2, minH: 2 },
+  messages: { x: 0, y: 8, w: 6, h: 4, orderNum: 60, minW: 2, minH: 2 },
+  notices: { x: 6, y: 8, w: 6, h: 4, orderNum: 70, minW: 2, minH: 2 },
+}
+
 // 国际化：组件标题
 const widgetTitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.title',
@@ -624,6 +779,44 @@ const orderedWidgets = computed(() => {
 })
 
 const visibleWidgets = computed(() => orderedWidgets.value.filter(widget => widget.visible))
+
+const componentGroups = computed(() => {
+  const groups = new Map<string, { key: string; label: string; items: HomepageComponentVO[] }>()
+  for (const item of componentLibrary.value) {
+    if (componentScopeFilter.value !== 'ALL' && item.scopeLevel !== componentScopeFilter.value) {
+      continue
+    }
+    const keyword = componentSearchKeyword.value.trim().toLowerCase()
+    if (keyword) {
+      const matched = [item.componentCode, item.componentName, item.useDesc, item.categoryName, item.categoryCode]
+        .filter(Boolean)
+        .some(text => String(text).toLowerCase().includes(keyword))
+      if (!matched) {
+        continue
+      }
+    }
+    const key = item.categoryCode || item.categoryName || 'default'
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        label: item.categoryName || item.categoryCode || t('personalHomepage.library.defaultGroup'),
+        items: [],
+      })
+    }
+    groups.get(key)!.items.push(item)
+  }
+  return Array.from(groups.values()).map(group => ({
+    ...group,
+    items: group.items.sort((left, right) => {
+      const leftOrder = Number(left.orderNum ?? 0)
+      const rightOrder = Number(right.orderNum ?? 0)
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder
+      }
+      return left.componentCode.localeCompare(right.componentCode)
+    }),
+  }))
+})
 
 const currentColNum = computed(() => {
   if (viewportWidth.value < 768) {
@@ -737,6 +930,10 @@ function getWidgetEmptyText(widgetKey: string) {
   return i18nKey ? t(i18nKey) : ''
 }
 
+function getComponentWidgetMeta(componentCode: string) {
+  return componentLibrary.value.find(item => item.componentCode === componentCode) || null
+}
+
 function findWidget(widgetKey: string) {
   return config.value.widgets.find(widget => widget.key === widgetKey)
 }
@@ -837,6 +1034,125 @@ async function saveConfig() {
     console.error('保存个人首页配置失败:', error)
   } finally {
     saving.value = false
+  }
+}
+
+function openComponentLibrary() {
+  componentLibraryOpen.value = true
+  loadComponentLibrary()
+}
+
+function openPersonalComponentConfig() {
+  router.push('/workspace/home/component-config').catch(() => {})
+}
+
+async function loadComponentLibrary() {
+  if (props.mode !== 'current') {
+    componentLibrary.value = []
+    return
+  }
+  libraryLoading.value = true
+  try {
+    const list = await listEffectiveHomepageComponents({
+      moduleCode: props.moduleCode,
+      keyword: componentSearchKeyword.value || undefined,
+      scopeLevel: componentScopeFilter.value === 'ALL' ? undefined : componentScopeFilter.value,
+    })
+    componentLibrary.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error('load homepage component library failed:', error)
+    componentLibrary.value = []
+  } finally {
+    libraryLoading.value = false
+  }
+}
+
+function getWidgetDefaultLayout(widgetKey: string) {
+  const maxY = Math.max(0, ...config.value.widgets.map(item => Number(item.y || 0) + Number(item.h || 3)))
+  return widgetDefaults[widgetKey] || {
+    x: 0,
+    y: maxY,
+    w: 6,
+    h: 4,
+    orderNum: Math.max(0, ...config.value.widgets.map(item => Number(item.orderNum || 0))) + 10,
+    minW: 3,
+    minH: 2,
+  }
+}
+
+function safeParseParams(params?: string) {
+  if (!params) {
+    return {}
+  }
+  try {
+    return JSON.parse(params)
+  } catch (error) {
+    return {}
+  }
+}
+
+function ensureWidgetExists(componentItem: HomepageComponentVO) {
+  const existing = findWidget(componentItem.componentCode)
+  if (existing) {
+    return existing
+  }
+  const defaults = getWidgetDefaultLayout(componentItem.componentCode)
+  const widget = {
+    key: componentItem.componentCode,
+    title: componentItem.componentName,
+    visible: true,
+    x: defaults.x,
+    y: defaults.y,
+    w: defaults.w,
+    h: defaults.h,
+    minW: defaults.minW,
+    minH: defaults.minH,
+    orderNum: defaults.orderNum,
+    params: safeParseParams(componentItem.params),
+  }
+  config.value.widgets = [...config.value.widgets, widget]
+  syncGridFromConfig()
+  return widget
+}
+
+async function toggleFavorite(componentItem: HomepageComponentVO) {
+  try {
+    await favoriteHomepageComponent({
+      componentCode: componentItem.componentCode,
+      favorite: !componentItem.favorite,
+      moduleCode: props.moduleCode,
+    })
+    await loadComponentLibrary()
+  } catch (error) {
+    console.error('toggle homepage component favorite failed:', error)
+  }
+}
+
+async function addComponentToHomepage(componentItem: HomepageComponentVO) {
+  try {
+    await addHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: props.moduleCode })
+    const widget = ensureWidgetExists(componentItem)
+    widget.visible = true
+    widget.title = componentItem.componentName
+    syncGridFromConfig()
+    await loadComponentLibrary()
+  } catch (error) {
+    console.error('add homepage component failed:', error)
+  }
+}
+
+async function removeComponentFromHomepage(componentItem: HomepageComponentVO) {
+  try {
+    await removeHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: props.moduleCode })
+    config.value.widgets = config.value.widgets.map(widget => (
+      widget.key === componentItem.componentCode
+        ? { ...widget, visible: false }
+        : widget
+    ))
+    syncGridFromConfig()
+    await loadComponentLibrary()
+  } catch (error) {
+    console.error('remove homepage component failed:', error)
   }
 }
 
@@ -1191,584 +1507,4 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.personal-homepage-designer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 100%;
-  color: var(--fx-text-primary, #111827);
-}
-
-.designer-hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 24px 28px;
-  border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 14%, var(--fx-border-color, #d9d9d9));
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--fx-primary, #1677ff) 16%, transparent), transparent 40%),
-    linear-gradient(135deg, var(--fx-bg-container, #ffffff), var(--fx-bg-elevated, #f8fafc));
-  box-shadow: var(--fx-shadow-secondary, 0 12px 32px rgba(15, 23, 42, 0.08));
-}
-
-.designer-hero__user {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.designer-hero__avatar {
-  flex-shrink: 0;
-}
-
-.designer-hero__info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.designer-hero__greeting {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.designer-hero__subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: var(--fx-text-secondary, #6b7280);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.designer-hero__stats {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-}
-
-.designer-hero__stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.designer-hero__eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--fx-primary, #1677ff);
-}
-
-.designer-hero__title {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.1;
-}
-
-.designer-hero__desc {
-  max-width: 720px;
-  margin: 12px 0 0;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.designer-hero__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.designer-badge {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: var(--fx-primary, #1677ff);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.designer-badge--soft {
-  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
-  color: var(--fx-primary, #1677ff);
-  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent);
-}
-
-.designer-toolbar,
-.designer-panel__card {
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 20px;
-  background: var(--fx-bg-container, #ffffff);
-  box-shadow: var(--fx-shadow-secondary, 0 12px 32px rgba(15, 23, 42, 0.08));
-}
-
-.designer-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
-}
-
-.designer-toolbar__hint {
-  font-size: 12px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.designer-content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
-  min-height: 0;
-}
-
-.designer-content:has(.designer-panel) {
-  grid-template-columns: minmax(0, 1fr) 320px;
-}
-
-.designer-stage {
-  min-width: 0;
-  padding: 18px;
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--fx-bg-layout, #f8fafc) 88%, transparent), var(--fx-bg-layout, #f8fafc)),
-    linear-gradient(135deg, color-mix(in srgb, var(--fx-primary, #1677ff) 6%, transparent), transparent 55%);
-  border: 1px solid color-mix(in srgb, var(--fx-border-color, #d9d9d9) 80%, transparent);
-}
-
-.designer-grid {
-  min-height: 720px;
-}
-
-.designer-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 420px;
-  border: 1px dashed var(--fx-border-color, #d1d5db);
-  border-radius: 20px;
-  background: var(--fx-bg-container, #ffffff);
-}
-
-.widget-card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  border-radius: 18px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  background: var(--fx-bg-container, #ffffff);
-  box-shadow: var(--fx-shadow-secondary, 0 10px 24px rgba(15, 23, 42, 0.08));
-  overflow: hidden;
-}
-
-.widget-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 85%, transparent);
-}
-
-.widget-card__title-wrap {
-  display: flex;
-  gap: 10px;
-  min-width: 0;
-}
-
-.widget-card__icon {
-  margin-top: 2px;
-  font-size: 18px;
-  color: var(--fx-primary, #1677ff);
-}
-
-.widget-card__title {
-  margin: 0;
-  font-size: 16px;
-}
-
-.widget-card__subtitle {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.widget-card__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.widget-card__actions .ant-btn-link {
-  color: var(--fx-primary, #1677ff);
-  transition: color 0.3s ease;
-}
-
-.widget-card__actions .ant-btn-link:hover {
-  color: var(--fx-primary-hover, #4096ff);
-}
-
-.widget-card__actions .ant-btn-link:active {
-  color: var(--fx-primary-active, #0958d9);
-}
-
-.widget-card__drag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--fx-bg-elevated, #f3f4f6);
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.widget-card__body {
-  flex: 1;
-  min-height: 0;
-  padding: 16px 18px 18px;
-}
-
-.widget-card__body--scrollable {
-  overflow-y: auto;
-}
-
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  align-content: start;
-}
-
-.menu-grid__item,
-.list-block__item {
-  width: 100%;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.menu-grid__item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 72px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, var(--fx-bg-elevated, #f8fafc), var(--fx-bg-container, #ffffff));
-  border: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 82%, transparent);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease, background 0.3s ease;
-}
-
-.menu-grid__item:hover,
-.list-block__item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--fx-primary, #1677ff) 12%, rgba(0, 0, 0, 0.08));
-  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 36%, var(--fx-border-color, #e5e7eb));
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--fx-bg-elevated, #f8fafc) 88%, var(--fx-primary-bg, #eff6ff)),
-    var(--fx-bg-container, #ffffff)
-  );
-}
-
-.menu-grid__favorite-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  color: var(--fx-text-tertiary, #9ca3af);
-  background: color-mix(in srgb, var(--fx-bg-container, #ffffff) 88%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-border-color, #e5e7eb) 72%, transparent);
-  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-
-  &:hover {
-    color: var(--fx-theme-color, #1677ff);
-    background: var(--fx-primary-soft, #eff6ff);
-    transform: scale(1.05);
-  }
-}
-
-.menu-grid__favorite-btn--active {
-  color: var(--fx-theme-color, #1677ff);
-  background: var(--fx-primary-soft, #eff6ff);
-}
-
-.menu-grid__item--favorite {
-  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 24%, var(--fx-border-color, #e5e7eb));
-}
-
-.menu-grid__icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  color: var(--fx-primary, #1677ff);
-  background: color-mix(in srgb, var(--fx-primary-soft, #eff6ff) 82%, var(--fx-bg-elevated, #f8fafc));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-primary, #1677ff) 14%, transparent);
-}
-
-:global(html[data-theme='light']) .personal-homepage-designer .designer-badge--soft {
-  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
-  color: var(--fx-primary, #1677ff);
-  border-color: color-mix(in srgb, var(--fx-primary, #1677ff) 18%, transparent);
-}
-
-:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__favorite-btn:hover,
-:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__favorite-btn--active,
-:global(html[data-theme='light']) .personal-homepage-designer .menu-grid__icon-wrap {
-  background: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
-}
-
-:global(html[data-theme='dark']) .personal-homepage-designer .designer-badge--soft,
-:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__favorite-btn:hover,
-:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__favorite-btn--active,
-:global(html[data-theme='dark']) .personal-homepage-designer .menu-grid__icon-wrap {
-  background: color-mix(in srgb, var(--fx-primary-soft-strong, rgba(22, 119, 255, 0.18)) 78%, var(--fx-bg-elevated, #1f2937));
-}
-
-.menu-grid__icon {
-  font-size: 18px;
-}
-
-.menu-grid__content {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.menu-grid__title,
-.list-block__title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 600;
-  color: var(--fx-text-primary, #111827);
-}
-
-.menu-grid__module,
-.list-block__meta,
-.list-block__time {
-  font-size: 12px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.menu-grid__module {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  max-width: 100%;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--fx-fill-secondary, #f3f4f6) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 72%, transparent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.list-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.list-block__item {
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--fx-bg-elevated, #f8fafc);
-  border: 1px solid color-mix(in srgb, var(--fx-primary, #1677ff) 15%, var(--fx-border-color, #e5e7eb));
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease, background 0.3s ease;
-}
-
-.calendar-widget {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-}
-
-.calendar-widget__month {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.calendar-widget__weekdays,
-.calendar-widget__days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.calendar-widget__weekdays {
-  font-size: 12px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.calendar-widget__weekdays span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.calendar-widget__day {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--fx-bg-elevated, #f8fafc);
-}
-
-.calendar-widget__day--muted {
-  color: var(--fx-text-tertiary, #9ca3af);
-}
-
-.calendar-widget__day--today {
-  background: var(--fx-primary, #1677ff);
-  color: #fff;
-  font-weight: 700;
-}
-
-.clock-widget {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  height: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--fx-primary, #1677ff), color-mix(in srgb, var(--fx-primary, #1677ff) 68%, #0ea5e9));
-  color: #fff;
-}
-
-.clock-widget__time {
-  font-size: 38px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.clock-widget__date {
-  font-size: 14px;
-  opacity: 0.92;
-}
-
-.designer-panel__card {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
-.designer-panel__header {
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--fx-border-color, #e5e7eb);
-}
-
-.designer-panel__header h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.designer-panel__header span {
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.designer-panel__body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-}
-
-.widget-setting {
-  padding: 14px 14px 12px;
-  border-radius: 16px;
-  background: var(--fx-bg-elevated, #f8fafc);
-  border: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 80%, transparent);
-}
-
-.widget-setting--disabled {
-  opacity: 0.72;
-}
-
-.widget-setting__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.widget-setting__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-
-.widget-setting__fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.widget-setting__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--fx-text-secondary, #6b7280);
-}
-
-.widget-setting__field--switch {
-  justify-content: space-between;
-}
-
-@media (max-width: 1280px) {
-  .designer-content {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .designer-hero,
-  .designer-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .menu-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .widget-setting__fields {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/components/personal-homepage/personal-homepage-designer.less"></style>

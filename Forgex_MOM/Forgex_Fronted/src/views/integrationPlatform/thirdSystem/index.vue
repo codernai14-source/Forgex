@@ -68,7 +68,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal } from 'ant-design-vue'
+import { Modal } from 'ant-design-vue'
+
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ThirdSystemFormDialog from './components/ThirdSystemFormDialog.vue'
 import ThirdSystemAuthDialog from './components/ThirdSystemAuthDialog.vue'
@@ -218,12 +219,4 @@ async function handleAuthSuccess() {
 }
 </script>
 
-<style scoped lang="less">
-.integration-page {
-  min-height: 0;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/thirdSystem/index.less"></style>

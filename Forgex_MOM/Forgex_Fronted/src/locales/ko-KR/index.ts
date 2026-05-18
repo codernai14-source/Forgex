@@ -16,6 +16,8 @@ import auth from './auth'
 import guide from './guide'
 import label from './label'
 import report from './report'
+import job from './job'
+import fallback from './fallback'
 import zhCN from '../zh-CN'
 import { mergeWithFallback } from '../mergeWithFallback'
 
@@ -53,6 +55,8 @@ export default mergeWithFallback(zhCN, {
   guide,
   label,
   report,
+  job,
+  fallback,
   personalHomepage,
   profile,
   operationLog,

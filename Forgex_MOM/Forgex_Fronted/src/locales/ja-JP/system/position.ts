@@ -1,38 +1,33 @@
 /**
- * 岗位管理翻译 - 中文注释
+ * 岗位管理 - 日语界面文案
  */
 export default {
-  // 页面标题
-  title: 'Position Management',
-  list: 'Position List',
-  detail: 'Position Detail',
-  
-  // 表格列
-  positionName: 'Position Name',
-  positionCode: 'Position Code',
-  department: 'Department',
-  status: '状态',
-  createTime: 'Create Time',
-  updateTime: 'Update Time',
-  
-  // 表单
+  title: '職位管理',
+  list: '職位一覧',
+  detail: '職位詳細',
+
+  positionName: '職位名',
+  positionCode: '職位コード',
+  department: '所属部門',
+  status: '状態',
+  createTime: '作成日時',
+  updateTime: '更新日時',
+
   form: {
-    addPosition: 'Add Position',
-    editPosition: 'Edit Position',
-    positionName: 'Please enter position name',
-    positionCode: 'Please enter position code',
-    department: 'Please select department',
-    status: 'Please select status',
+    addPosition: '職位を追加',
+    editPosition: '職位を編集',
+    positionName: '職位名を入力してください',
+    positionCode: '職位コードを入力してください',
+    department: '所属部門を選択してください',
+    status: '状態を選択してください',
   },
-  
-  // 操作
-  addPosition: 'Add Position',
-  
-  // 消息
+
+  addPosition: '職位を追加',
+
   message: {
-    deleteConfirm: 'Are you sure you want to delete this position?',
-    deleteSuccess: 'Position deleted successfully',
-    saveSuccess: 'Position saved successfully',
-    positionCodeExists: 'Position code already exists',
+    deleteConfirm: 'この職位を削除してもよろしいですか？',
+    deleteSuccess: '職位を削除しました',
+    saveSuccess: '職位を保存しました',
+    positionCodeExists: 'この職位コードは既に存在します',
   },
 }

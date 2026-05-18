@@ -90,10 +90,15 @@ int count = templateMessageService.sendByTemplate(
 int count = templateMessageService.sendByTemplate("SYSTEM_NOTICE", dataMap);
 ```
 
-但当前最稳定的接收人类型是：
+当前稳定支持的模板接收人类型是：
 
 - `USER`
+- `ROLE`
+- `DEPT`
+- `POSITION`
 - `CUSTOM`
+
+其中 `USER/ROLE/DEPT/POSITION` 会在发送时解析为当前租户内启用、未删除的用户；`CUSTOM` 适合由调用方在运行时动态传入用户 ID。
 
 ### 4. 拉取公共模板
 
@@ -129,6 +134,9 @@ POST /sys/message-template/pull-public
 建议按当前实现能力使用：
 
 - 固定几个人：配 `USER`
+- 按职责组发：配 `ROLE`
+- 按组织范围发：配 `DEPT`
+- 按岗位发：配 `POSITION`
 - 调用时动态传：配 `CUSTOM`
 
 ## SSE 如何使用

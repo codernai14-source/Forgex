@@ -160,8 +160,4 @@ function handleCancel() {
 }
 </script>
 
-<style scoped>
-.drawer-footer {
-  text-align: right;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/common/base-form-dialog.less"></style>

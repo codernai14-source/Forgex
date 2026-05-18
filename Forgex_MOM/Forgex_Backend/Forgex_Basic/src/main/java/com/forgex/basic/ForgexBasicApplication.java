@@ -15,11 +15,14 @@ package com.forgex.basic;
 
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.api.feign.CalendarReminderFeignClient;
+import com.forgex.common.api.feign.IntegrationInternalEmployeeFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalMaterialFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
 import com.forgex.common.feign.client.EncodeRuleFeignClient;
+import com.forgex.sys.service.impl.SysModuleServiceImpl;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -42,8 +45,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableFeignClients(clients = {
         EncodeRuleFeignClient.class,
         AuthPermClient.class,
+        CalendarReminderFeignClient.class,
         SysTenantFeignClient.class,
         WorkflowExecutionFeignClient.class,
+        IntegrationInternalEmployeeFeignClient.class,
         IntegrationInternalMaterialFeignClient.class,
         IntegrationInternalSupplierFeignClient.class
 })
@@ -54,8 +59,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @version 1.0.0
  */
 @EnableAsync
-@Import(DynamicDataSourceAutoConfiguration.class)
-@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper"})
+@Import({DynamicDataSourceAutoConfiguration.class, SysModuleServiceImpl.class})
+@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper", "com.forgex.sys.mapper"})
 public class ForgexBasicApplication {
 
     /**

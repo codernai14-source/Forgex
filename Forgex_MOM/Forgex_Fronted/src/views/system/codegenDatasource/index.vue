@@ -141,11 +141,4 @@ function handleDialogSuccess() {
 }
 </script>
 
-<style scoped lang="less">
-.codegen-datasource-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/codegenDatasource/index.less"></style>

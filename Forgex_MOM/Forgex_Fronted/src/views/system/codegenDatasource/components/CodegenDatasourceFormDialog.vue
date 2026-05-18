@@ -255,39 +255,4 @@ watch(
 )
 </script>
 
-<style scoped lang="less">
-.datasource-form {
-  :deep(.ant-form-item) {
-    margin-bottom: 16px;
-  }
-
-  :deep(.ant-form-item-label) {
-    padding-bottom: 6px;
-    text-align: left;
-  }
-
-  :deep(.ant-form-item-control-input) {
-    min-height: auto;
-  }
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 16px;
-}
-
-.form-item {
-  min-width: 0;
-}
-
-.full-row {
-  grid-column: 1 / -1;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-start;
-  padding-top: 4px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/codegenDatasource/components/codegen-datasource-form-dialog.less"></style>

@@ -1,138 +1,133 @@
-﻿
 <template>
   <div class="page-container">
-    <FxDynamicTable
-        ref="tableRef"
-        table-code="LabelTemplateTable"
-        :request="loadData"
-        :dict-options="dictOptions"
-        :row-selection="rowSelection"
-    >
+    <FxDynamicTable ref="tableRef" table-code="LabelTemplateTable" :request="loadData" row-key="id" :row-selection="rowSelection">
       <template #toolbar>
-        <a-button type="primary" @click="handleAdd">
-          <PlusOutlined /> {{ t('label.template.addTemplate') }}
-        </a-button>
-        <a-button danger @click="handleBatchDelete" :disabled="!selectedRowKeys.length">
-          <DeleteOutlined /> {{ t('common.batchDelete') }}
-        </a-button>
+        <a-button v-permission="'label:template:batchDelete'" danger :disabled="!selectedCount" @click="handleBatchDelete">{{ t('common.batchDelete') }}</a-button>
+        <a-button type="primary" @click="openCreate"><PlusOutlined /> 新增</a-button>
       </template>
-
-      <!-- 自定义列渲染 -->
-      <template #isDefault="{ record }">
-        <a-tag v-if="record.isDefault" color="green">{{ t('common.yes') }}</a-tag>
-        <a-tag v-else color="default">{{ t('common.no') }}</a-tag>
+      <template #isEnabled="{ record }">
+        <a-tag :color="record.isEnabled ? 'green' : 'default'">{{ record.isEnabled ? '启用' : '停用' }}</a-tag>
       </template>
-
-      <template #status="{ record }">
-        <a-tag v-if="record.status === 1" color="green">{{ t('common.enabled') }}</a-tag>
-        <a-tag v-else-if="record.status === 0" color="red">{{ t('common.disabled') }}</a-tag>
-        <a-tag v-else color="default">{{ t('common.unknown') }}</a-tag>
-      </template>
-
-      <!-- 行操作 -->
       <template #action="{ record }">
         <a-space>
-          <a-button type="link" size="small" @click="handleView(record)">{{ t('common.view') }}</a-button>
-          <a-button type="link" size="small" @click="handleEdit(record)">{{ t('common.edit') }}</a-button>
-          <a-dropdown>
-            <a-button type="link" size="small">
-              {{ t('common.more') }} <DownOutlined />
-            </a-button>
-            <template #overlay>
-              <a-menu>
-                <a-menu-item @click="handleSetDefault(record)">{{ t('label.template.setDefault') }}</a-menu-item>
-                <a-menu-item @click="handleCopy(record)">{{ t('label.template.copyTemplate') }}</a-menu-item>
-                <a-menu-divider />
-                <a-menu-item danger @click="handleDelete(record)">{{ t('common.delete') }}</a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
+          <a @click="openDesigner(record)">设计</a>
+          <a @click="openPreview(record)">预览</a>
+          <a @click="openEdit(record)">编辑</a>
+          <a class="danger-link" @click="handleDelete(record)">删除</a>
         </a-space>
       </template>
     </FxDynamicTable>
 
-    <!-- 新增/编辑弹窗 -->
-    <TemplateFormDialog
-        v-model:visible="formVisible"
-        :template-data="currentTemplate"
-        @success="handleFormSuccess"
-    />
+    <a-modal v-model:open="editorVisible" :title="editorTitle" width="680px" @ok="handleSubmit">
+      <a-form :model="form" layout="vertical">
+        <a-row :gutter="12">
+          <a-col :span="12"><a-form-item label="模板编码" required><a-input v-model:value="form.templateCode" :disabled="!!editingId" /></a-form-item></a-col>
+          <a-col :span="12"><a-form-item label="模板名称" required><a-input v-model:value="form.templateName" /></a-form-item></a-col>
+        </a-row>
+        <a-row :gutter="12">
+          <a-col :span="12"><a-form-item label="标签类型"><a-select v-model:value="form.typeId" allow-clear :options="typeOptions" /></a-form-item></a-col>
+          <a-col :span="12"><a-form-item label="纸张规格"><a-input v-model:value="form.paperSize" /></a-form-item></a-col>
+        </a-row>
+        <a-row :gutter="12">
+          <a-col :span="12"><a-form-item label="纸张宽度(mm)"><a-input-number v-model:value="form.paperWidth" :min="10" style="width:100%" /></a-form-item></a-col>
+          <a-col :span="12"><a-form-item label="纸张高度(mm)"><a-input-number v-model:value="form.paperHeight" :min="10" style="width:100%" /></a-form-item></a-col>
+        </a-row>
+        <a-form-item label="是否启用"><a-switch v-model:checked="form.isEnabled" /></a-form-item>
+        <a-form-item label="描述"><a-textarea v-model:value="form.description" :rows="3" /></a-form-item>
+      </a-form>
+    </a-modal>
 
-    <!-- 查看详情抽屉 -->
-    <TemplateDetailDrawer
-        v-model:visible="detailVisible"
-        :template-data="currentTemplate"
-    />
+    <a-drawer v-model:open="designerVisible" title="标签模板设计" width="100vw" :body-style="{ padding: 0 }" destroy-on-close>
+      <LabelTemplateEditor v-if="designerTemplate" :template="designerTemplate" @saved="handleDesignerSaved" />
+    </a-drawer>
+
+    <a-modal v-model:open="previewVisible" title="模板预览" width="900px" :footer="null">
+      <div v-if="previewData" class="preview-wrap">
+        <LabelPreview :template="previewData" />
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { message, Modal } from 'ant-design-vue'
-import { PlusOutlined, DeleteOutlined, DownOutlined } from '@ant-design/icons-vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Modal } from 'ant-design-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import { labelTemplateApi } from '@/api/label/template'
-import TemplateFormDialog from './components/TemplateFormDialog.vue'
-import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue'const { t } = useI18n()
+import { labelTypeApi } from '@/api/label/type'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
+import LabelTemplateEditor from './components/LabelTemplateEditor.vue'
+import LabelPreview from './components/LabelPreview.vue'
+
+const { t } = useI18n()
 const tableRef = ref()
-const formVisible = ref(false)
-const detailVisible = ref(false)
-const currentTemplate = ref<any>(null)
-const selectedRowKeys = ref<number[]>([])
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
+const editorVisible = ref(false)
+const designerVisible = ref(false)
+const previewVisible = ref(false)
+const editorTitle = ref('新增标签模板')
+const editingId = ref<number | null>(null)
+const designerTemplate = ref<any>(null)
+const previewData = ref<any>(null)
+const typeOptions = ref<any[]>([])
+const form = ref<any>({})
 
-/**
- * 字典选项配置
- */
-const dictOptions = computed(() => ({
-  common_status: [
-    { label: t('common.enabled'), value: 1, color: 'green' },
-    { label: t('common.disabled'), value: 0, color: 'red' }
-  ],
-  template_type: [
-    { label: t('label.templateTypes.PRODUCT'), value: 'PRODUCT', color: 'blue' },
-    { label: t('label.templateTypes.MATERIAL'), value: 'MATERIAL', color: 'orange' },
-    { label: t('label.templateTypes.BATCH'), value: 'BATCH', color: 'purple' }
-  ]
-}))
+function defaultForm() {
+  return { templateCode: '', templateName: '', typeId: undefined, paperSize: 'CUSTOM', paperWidth: 100, paperHeight: 60, isEnabled: true, description: '' }
+}
 
-const rowSelection = ref({
-  selectedRowKeys: selectedRowKeys.value,
-  onChange: (keys: number[]) => {
-    selectedRowKeys.value = keys
-    rowSelection.value.selectedRowKeys = keys
-  }
-})
-
-// 加载数据
 function loadData(params: any) {
   return labelTemplateApi.page(params)
 }
 
-// 新增
-function handleAdd() {
-  currentTemplate.value = null
-  formVisible.value = true
+async function loadTypes() {
+  const res = await labelTypeApi.options()
+  typeOptions.value = (res || []).map((item: any) => ({ label: item.typeName, value: item.id }))
 }
 
-// 编辑
-function handleEdit(record: any) {
-  currentTemplate.value = record
-  formVisible.value = true
+function openCreate() {
+  editingId.value = null
+  form.value = defaultForm()
+  editorTitle.value = '新增标签模板'
+  editorVisible.value = true
 }
 
-// 查看
-function handleView(record: any) {
-  currentTemplate.value = record
-  detailVisible.value = true
+function openEdit(record: any) {
+  editingId.value = record.id
+  form.value = { ...defaultForm(), ...record }
+  editorTitle.value = '编辑标签模板'
+  editorVisible.value = true
 }
 
-// 删除
+async function handleSubmit() {
+  if (editingId.value) {
+    await labelTemplateApi.update({ id: editingId.value, ...form.value })
+  } else {
+    await labelTemplateApi.add(form.value)
+  }
+  editorVisible.value = false
+  tableRef.value?.reload()
+}
+
+async function openDesigner(record: any) {
+  designerTemplate.value = await labelTemplateApi.designDetail(record.id)
+  designerVisible.value = true
+}
+
+function handleDesignerSaved() {
+  designerVisible.value = false
+  tableRef.value?.reload()
+}
+
+async function openPreview(record: any) {
+  previewData.value = await labelTemplateApi.preview(record.id)
+  previewVisible.value = true
+}
+
 function handleDelete(record: any) {
   Modal.confirm({
-    title: t('message.deleteConfirmTitle'),
-    content: t('label.template.deleteConfirm', { name: record.templateName }),
-    okText: t('common.confirm'),
-    cancelText: t('common.cancel'),
+    title: '确认删除？',
     onOk: async () => {
       await labelTemplateApi.delete(record.id)
       tableRef.value?.reload()
@@ -140,53 +135,30 @@ function handleDelete(record: any) {
   })
 }
 
-// 批量删除
 function handleBatchDelete() {
+  if (!selectedCount.value) return
   Modal.confirm({
-    title: t('message.deleteConfirmTitle'),
-    content: t('label.template.batchDeleteConfirm', { count: selectedRowKeys.value.length }),
-    okText: t('common.confirm'),
-    cancelText: t('common.cancel'),
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
     onOk: async () => {
       await labelTemplateApi.batchDelete(selectedRowKeys.value)
-      selectedRowKeys.value = []
+      clearSelection()
       tableRef.value?.reload()
     }
   })
 }
 
-// 设为默认
-function handleSetDefault(record: any) {
-  Modal.confirm({
-    title: t('label.template.setDefaultConfirmTitle'),
-    content: t('label.template.setDefaultConfirm', { name: record.templateName }),
-    okText: t('common.confirm'),
-    cancelText: t('common.cancel'),
-    onOk: async () => {
-      await labelTemplateApi.setDefault(record.id, record.templateType)
-      tableRef.value?.reload()
-    }
-  })
-}
-
-// 复制模板
-function handleCopy(record: any) {
-  // TODO: 实现复制模板逻辑
-  message.info(t('label.template.copyPending'))
-}
-
-// 表单提交成功
-function handleFormSuccess() {
-  selectedRowKeys.value = []
-  rowSelection.value.selectedRowKeys = []
-  tableRef.value?.reload()
-}
+onMounted(loadTypes)
 </script>
 
-<style scoped lang="less">
-.page-container {
-  padding: 16px;
-  height: 100%;
+<style scoped>
+.preview-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background: #f5f5f5;
+}
+.danger-link {
+  color: #ff4d4f;
 }
 </style>
-

@@ -5,6 +5,10 @@
  * @version 1.0.0
  */
 export default {
+  loading: {
+    thinking: 'Forgex が必要なコンテンツを読み込んでいます。しばらくお待ちください。',
+  },
+
   // 头部区域
   hero: {
     eyebrow: 'パーソナルワークスペース',
@@ -27,10 +31,27 @@ export default {
     refresh: '更新',
     resetDefault: '初期値にリセット',
     saveLayout: 'レイアウト保存',
+    componentLibrary: 'コンポーネント庫',
+    componentConfig: '個人コンポーネント設定',
     hint: {
       edit: 'コンポーネントをドラッグしてサイズ変更後、直接保存できます',
       view: '編集モードに切り替えてコンポーネントのレイアウトを調整できます',
     },
+  },
+
+  library: {
+    title: 'ホームページコンポーネント庫',
+    searchPlaceholder: 'コード、名称、用途で検索',
+    scopeAll: 'すべて',
+    scopePublic: '共通',
+    scopeTenant: 'テナント',
+    scopeUser: '個人',
+    defaultGroup: '既定分類',
+    empty: '選択可能なコンポーネントがありません',
+    favorite: 'お気に入り',
+    selected: '追加済み',
+    removed: '削除済み',
+    customPlaceholder: 'このコンポーネントはフロントエンド登録コンポーネントで描画され、一覧は選択可能範囲のみ管理します。',
   },
 
   // 设置面板
@@ -141,6 +162,17 @@ export default {
   },
 
   // 摘要卡片
+  componentConfig: {
+    title: '個人ホームページコンポーネント設定',
+    desc: '現在のユーザーが利用できるホームページコンポーネントを管理し、お気に入り、追加、削除を行えます。',
+    empty: '設定できる個人ホームページコンポーネントがありません',
+    addSuccess: '個人ホームページに追加しました',
+    removeSuccess: '個人ホームページから削除しました',
+    stats: {
+      count: '{count} グループ',
+    },
+  },
+
   summary: {
     greeting: {
       honorificMale: '様',
