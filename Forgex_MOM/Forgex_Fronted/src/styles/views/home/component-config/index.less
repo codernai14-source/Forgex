@@ -1,0 +1,147 @@
+.component-config-page {
+  padding: 16px;
+}
+
+.component-config-page__hero,
+.component-config-page__toolbar,
+.component-config-page__body {
+  border: 1px solid var(--fx-border-color, #2b3445);
+  border-radius: 12px;
+  background: var(--fx-bg-container, #171b24);
+}
+
+.component-config-page__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.component-config-page__title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.component-config-page__desc {
+  margin: 8px 0 0;
+  color: var(--fx-text-secondary, #9ca3af);
+}
+
+.component-config-page__toolbar {
+  margin-top: 16px;
+  padding: 14px 16px;
+}
+
+.component-config-page__body {
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.component-config-page__group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.component-config-page__group-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.component-config-page__group-header span {
+  color: var(--fx-text-secondary, #9ca3af);
+}
+
+.component-config-page__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.component-config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 176px;
+  padding: 14px;
+  border: 1px solid var(--fx-border-color, #2b3445);
+  border-radius: 10px;
+  background: var(--fx-bg-elevated, #1e2430);
+}
+
+.component-config-card--removed {
+  opacity: 0.72;
+}
+
+.component-config-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.component-config-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: var(--fx-primary, #ff7a1a);
+  background: color-mix(in srgb, var(--fx-primary, #ff7a1a) 14%, transparent);
+}
+
+.component-config-card__title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.component-config-card__title strong,
+.component-config-card__title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.component-config-card__title span {
+  font-size: 12px;
+  color: var(--fx-text-secondary, #9ca3af);
+}
+
+.component-config-card__desc {
+  flex: 1;
+  margin: 0;
+  color: var(--fx-text-secondary, #9ca3af);
+}
+
+.component-config-card__meta,
+.component-config-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.component-config-card__actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 1200px) {
+  .component-config-page__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .component-config-page__hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .component-config-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -50,5 +50,5 @@ public interface ITenantInitService {
      * @param tenantName 租户名称
      * @param tenantType 租户类型
      */
-    void initTenant(Long tenantId, String tenantName, TenantTypeEnum tenantType);
+    void initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType);
 }

@@ -21,7 +21,7 @@
       <div class="notice-popup__content" v-html="currentNotice.contentHtml"></div>
 
       <div v-if="currentNotice.attachments?.length" class="notice-popup__attachments">
-        <div class="notice-popup__attachments-title">附件</div>
+        <div class="notice-popup__attachments-title">{{ t('system.notice.popup.attachment') }}</div>
         <a
           v-for="item in currentNotice.attachments"
           :key="`${item.fileUrl}-${item.fileName}`"
@@ -34,7 +34,7 @@
       </div>
 
       <div class="notice-popup__footer">
-        <a-button type="primary" @click="ackCurrent">我知道了</a-button>
+        <a-button type="primary" @click="ackCurrent">{{ t('system.notice.popup.acknowledge') }}</a-button>
       </div>
     </div>
   </a-modal>
@@ -43,10 +43,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { noticeApi, type SysNotice, type NoticeScope } from '@/api/system/notice'
+import { useI18n } from 'vue-i18n'
+import { noticeApi, type NoticeScope, type SysNotice } from '@/api/system/notice'
 import { PERSONAL_HOME_PATH } from '@/router'
 import { normalizeMediaUrl } from '@/utils/media'
 
+const { t } = useI18n()
 const route = useRoute()
 const visible = ref(false)
 const notices = ref<SysNotice[]>([])
@@ -63,6 +65,15 @@ watch(
     }
   },
   { immediate: true },
+)
+
+watch(
+  () => visible.value,
+  (open) => {
+    if (!open) {
+      return
+    }
+  },
 )
 
 async function loadPopupNotices() {
@@ -93,67 +104,14 @@ async function ackCurrent() {
   visible.value = false
   notices.value = []
   activeIndex.value = 0
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('fx:system-notice-refresh'))
+  }
 }
 
 function scopeText(scope?: NoticeScope) {
-  return scope === 'PUBLIC' ? '公共通知' : '租户通知'
+  return scope === 'PUBLIC' ? t('system.notice.popup.publicScope') : t('system.notice.popup.tenantScope')
 }
 </script>
 
-<style scoped lang="less">
-.notice-popup {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.notice-popup__head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  h2 {
-    margin: 0;
-    color: var(--fx-text-primary, #111827);
-    font-size: 20px;
-    line-height: 1.35;
-  }
-}
-
-.notice-popup__time {
-  color: var(--fx-text-tertiary, #9ca3af);
-  font-size: 12px;
-}
-
-.notice-popup__content {
-  max-height: 48vh;
-  overflow: auto;
-  color: var(--fx-text-primary, #1f2937);
-  line-height: 1.7;
-
-  :deep(img) {
-    max-width: 100%;
-    height: auto;
-  }
-}
-
-.notice-popup__attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 8px;
-  background: var(--fx-bg-elevated, #f8fafc);
-}
-
-.notice-popup__attachments-title {
-  color: var(--fx-text-secondary, #64748b);
-  font-size: 12px;
-}
-
-.notice-popup__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/system/system-notice-popup.less"></style>

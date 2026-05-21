@@ -97,25 +97,4 @@ watch(
 )
 </script>
 
-<style scoped lang="less">
-.preview-container {
-  display: flex;
-  flex-direction: column;
-  height: calc(85vh - 120px);
-  min-height: 0;
-  
-  .iframe-wrapper {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    border: 1px solid #d9d9d9;
-    border-radius: 2px;
-    
-    .preview-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/report/components/report-preview.less"></style>

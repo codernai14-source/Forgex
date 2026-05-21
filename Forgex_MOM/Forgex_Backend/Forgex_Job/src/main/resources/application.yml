@@ -8,6 +8,7 @@ spring:
       - nacos:redis.yml
       - optional:nacos:rocketmq.yml
       - optional:nacos:sa-token.yml
+      - optional:nacos:job.yml
   cloud:
     nacos:
       discovery:
@@ -59,4 +60,6 @@ mq:
     enabled: false
 server:
   port: ${FORGEX_JOB_PORT:9004}
+  servlet:
+    context-path: /job
 

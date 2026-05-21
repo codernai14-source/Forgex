@@ -89,7 +89,8 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
-import { getApiCallLogDetail, type ApiCallLogItem } from '@/api/system/integration'import { translateLegacyText } from '@/utils/legacyI18n'
+import { getApiCallLogDetail, type ApiCallLogItem } from '@/api/system/integration'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n({ useScope: 'global' })
 const visible = ref(false)
@@ -140,36 +141,4 @@ function formatDisplayDateTime(dateTime?: string) {
 defineExpose({ open })
 </script>
 
-<style scoped>
-.payload-section {
-  margin-top: 16px;
-}
-
-.payload-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.json-block {
-  max-height: 320px;
-  margin: 0;
-  overflow: auto;
-  padding: 12px;
-  border: 1px solid var(--fx-border-color, #d9d9d9);
-  border-radius: 8px;
-  background: var(--fx-fill-secondary, #f8fafc);
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: Consolas, 'Courier New', monospace;
-  font-size: 12px;
-}
-
-.json-block--error {
-  color: #cf1322;
-  background: #fff2f0;
-  border-color: #ffa39e;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/apiCallLog/components/api-call-log-detail-dialog.less"></style>

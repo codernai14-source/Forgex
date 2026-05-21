@@ -1,0 +1,358 @@
+.fx-fallback-page {
+  --fallback-canvas: var(--fx-bg-container, #ffffff);
+  --fallback-surface: var(--fx-bg-elevated, #ffffff);
+  --fallback-surface-2: var(--fx-fill-alter, #f9fafb);
+  --fallback-border: var(--fx-border-color, #e5e7eb);
+  --fallback-border-strong: var(--fx-border-secondary, #d9d9d9);
+  --fallback-ink: var(--fx-text-primary, #1f2937);
+  --fallback-muted: var(--fx-text-secondary, #4b5563);
+  --fallback-subtle: var(--fx-text-tertiary, #6b7280);
+  --fallback-accent: var(--fx-primary, #1677ff);
+  --fallback-accent-hover: var(--fx-primary-hover, #4096ff);
+  --fallback-accent-soft: var(--fx-primary-soft, rgba(22, 119, 255, 0.12));
+  --fallback-accent-strong: var(--fx-primary-soft-strong, rgba(22, 119, 255, 0.18));
+  --fallback-panel-highlight: rgba(255, 255, 255, 0.72);
+  --fallback-ghost-code: rgba(31, 41, 55, 0.08);
+  --fallback-cell-border: rgba(31, 41, 55, 0.035);
+
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--fallback-ink);
+  background:
+    linear-gradient(180deg, var(--fallback-panel-highlight), transparent 34%),
+    var(--fallback-canvas);
+  border-radius: var(--fx-radius-lg, 8px);
+  overflow: hidden;
+}
+
+.fx-fallback-page__shell {
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(280px, 1fr) minmax(220px, 280px);
+  align-items: center;
+  gap: 32px;
+}
+
+.fx-fallback-page__visual {
+  position: relative;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fx-fallback-orbit {
+  position: absolute;
+  inset: 28px;
+  border: 1px solid var(--fallback-accent-strong);
+  border-radius: 999px;
+  transform: rotate(-12deg);
+}
+
+.fx-fallback-orbit__dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--fallback-subtle);
+
+  &:nth-child(2) {
+    top: 22px;
+    right: 64px;
+  }
+
+  &:nth-child(3) {
+    bottom: 38px;
+    left: 52px;
+  }
+}
+
+.fx-fallback-orbit__dot--primary {
+  top: 58px;
+  left: 40px;
+  width: 10px;
+  height: 10px;
+  background: var(--fallback-accent);
+  box-shadow: 0 0 0 6px var(--fallback-accent-soft);
+}
+
+.fx-fallback-console {
+  position: relative;
+  width: 240px;
+  padding: 16px;
+  border: 1px solid var(--fallback-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--fallback-panel-highlight), transparent), var(--fallback-surface);
+  box-shadow:
+    var(--fx-shadow, 0 8px 24px rgba(15, 23, 42, 0.08)),
+    0 1px 0 var(--fallback-panel-highlight) inset;
+  z-index: 1;
+}
+
+.fx-fallback-console__bar {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--fallback-border);
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--fallback-border-strong);
+
+    &:first-child {
+      background: var(--fallback-accent);
+    }
+  }
+}
+
+.fx-fallback-console__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 18px 0;
+}
+
+.fx-fallback-console__cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--fallback-surface-2);
+  border: 1px solid var(--fallback-cell-border);
+}
+
+.fx-fallback-console__cell--active {
+  background: var(--fallback-accent-soft);
+  border-color: var(--fallback-accent);
+}
+
+.fx-fallback-console__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  padding: 4px 10px;
+  color: var(--fallback-muted);
+  border: 1px solid var(--fallback-border);
+  border-radius: 999px;
+  background: var(--fallback-surface-2);
+  font-size: 12px;
+}
+
+.fx-fallback-console__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--fallback-accent);
+}
+
+.fx-fallback-code {
+  position: absolute;
+  right: 14px;
+  bottom: 16px;
+  color: var(--fallback-ghost-code);
+  font-size: 104px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.fx-fallback-page__content {
+  min-width: 0;
+
+  h1 {
+    margin: 0;
+    color: var(--fallback-ink);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+
+  p {
+    max-width: 520px;
+    margin: 16px 0 0;
+    color: var(--fallback-subtle);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+}
+
+.fx-fallback-page__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--fallback-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fx-fallback-page__indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--fallback-accent);
+  box-shadow: 0 0 0 5px var(--fallback-accent-soft);
+}
+
+.fx-fallback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+
+  :deep(.ant-btn) {
+    min-height: 38px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  :deep(.ant-btn-primary) {
+    background: var(--fallback-accent);
+    border-color: var(--fallback-accent);
+
+    &:hover,
+    &:focus {
+      background: var(--fallback-accent-hover);
+      border-color: var(--fallback-accent-hover);
+    }
+  }
+
+  :deep(.ant-btn-default) {
+    color: var(--fallback-ink);
+    background: var(--fallback-surface);
+    border-color: var(--fallback-border-strong);
+
+    &:hover,
+    &:focus {
+      color: var(--fallback-ink);
+      background: var(--fallback-surface-2);
+      border-color: var(--fallback-border-strong);
+    }
+  }
+}
+
+.fx-fallback-page__panel {
+  align-self: stretch;
+  padding: 18px;
+  border: 1px solid var(--fallback-border);
+  border-radius: 12px;
+  background: var(--fallback-surface);
+  box-shadow:
+    var(--fx-shadow, 0 8px 24px rgba(15, 23, 42, 0.08)),
+    0 1px 0 var(--fallback-panel-highlight) inset;
+}
+
+:global(:root[data-theme='dark'] .fx-fallback-page) {
+  --fallback-canvas: #010102;
+  --fallback-surface: #0f1011;
+  --fallback-surface-2: #141516;
+  --fallback-border: #23252a;
+  --fallback-border-strong: #34343a;
+  --fallback-ink: #f7f8f8;
+  --fallback-muted: #d0d6e0;
+  --fallback-subtle: #8a8f98;
+  --fallback-accent: var(--fx-primary, #5e6ad2);
+  --fallback-accent-hover: var(--fx-primary-hover, #828fff);
+  --fallback-accent-soft: var(--fx-primary-soft, rgba(94, 106, 210, 0.16));
+  --fallback-accent-strong: var(--fx-primary-soft-strong, rgba(94, 106, 210, 0.28));
+  --fallback-panel-highlight: rgba(255, 255, 255, 0.035);
+  --fallback-ghost-code: rgba(247, 248, 248, 0.08);
+  --fallback-cell-border: rgba(255, 255, 255, 0.035);
+}
+
+.fx-fallback-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--fallback-border);
+  color: var(--fallback-muted);
+
+  strong {
+    color: var(--fallback-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+.fx-fallback-panel__list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.fx-fallback-panel__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--fallback-subtle);
+  line-height: 1.5;
+}
+
+.fx-fallback-panel__mark {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--fallback-accent);
+}
+
+.fx-fallback-page--offline {
+  .fx-fallback-console__pulse,
+  .fx-fallback-page__indicator,
+  .fx-fallback-panel__mark,
+  .fx-fallback-orbit__dot--primary {
+    animation: fx-fallback-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes fx-fallback-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1100px) {
+  .fx-fallback-page__shell {
+    grid-template-columns: minmax(260px, 340px) minmax(280px, 1fr);
+  }
+
+  .fx-fallback-page__panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .fx-fallback-page {
+    padding: 20px;
+  }
+
+  .fx-fallback-page__shell {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .fx-fallback-page__visual {
+    min-height: 260px;
+  }
+
+  .fx-fallback-page__content {
+    h1 {
+      font-size: 30px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+}

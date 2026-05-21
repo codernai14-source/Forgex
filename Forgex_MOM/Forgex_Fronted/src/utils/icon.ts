@@ -12,6 +12,47 @@ const legacyIconMap: Record<string, string> = {
   appstore: 'AppstoreOutlined',
 }
 
+export const ICONIFY_PRESET_NAMES = [
+  'lucide:layout-dashboard',
+  'lucide:settings',
+  'lucide:users',
+  'lucide:user',
+  'lucide:building-2',
+  'lucide:factory',
+  'lucide:boxes',
+  'lucide:package',
+  'lucide:tag',
+  'lucide:printer',
+  'lucide:file-text',
+  'lucide:database',
+  'lucide:table-2',
+  'lucide:workflow',
+  'lucide:shield-check',
+  'lucide:key-round',
+  'lucide:bell',
+  'lucide:search',
+  'lucide:link',
+  'lucide:plug',
+  'lucide:chart-no-axes-combined',
+  'lucide:clipboard-list',
+  'lucide:circle-gauge',
+  'lucide:wrench',
+  'lucide:book-open',
+  'lucide:languages',
+  'lucide:monitor',
+  'lucide:moon',
+  'lucide:sun',
+  'lucide:folder',
+  'lucide:file',
+] as const
+
+export function isIconifyName(iconName?: string): boolean {
+  if (!iconName) {
+    return false
+  }
+  return /^[a-z0-9-]+:[a-z0-9][a-z0-9-:]*$/i.test(iconName.trim())
+}
+
 /**
  * 根据图标名称获取图标组件
  * @param iconName 图标名称，直接使用 Ant Design 的完整组件名（如 'UserOutlined'）
@@ -22,10 +63,15 @@ export function getIcon(iconName?: string): Component | null {
     return null
   }
 
-  let resolvedName = iconName
+  const normalizedName = iconName.trim()
+  if (isIconifyName(normalizedName)) {
+    return null
+  }
 
-  if (!(resolvedName in Icons) && legacyIconMap[iconName]) {
-    resolvedName = legacyIconMap[iconName]
+  let resolvedName = normalizedName
+
+  if (!(resolvedName in Icons) && legacyIconMap[normalizedName]) {
+    resolvedName = legacyIconMap[normalizedName]
   }
 
   const icon = Icons[resolvedName as keyof typeof Icons]
@@ -47,7 +93,9 @@ export function hasIcon(iconName?: string): boolean {
   if (!iconName) {
     return false
   }
-  return iconName in Icons
+  const normalizedName = iconName.trim()
+  const legacyName = legacyIconMap[normalizedName]
+  return isIconifyName(normalizedName) || normalizedName in Icons || Boolean(legacyName && legacyName in Icons)
 }
 
 /**

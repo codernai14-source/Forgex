@@ -569,39 +569,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.detail-item {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--fx-border-color, #d9d9d9);
-  border-radius: 4px;
-  margin-bottom: 12px;
-  background-color: var(--fx-content-bg, #fafafa);
-  
-  &:hover {
-    border-color: var(--fx-theme-color, #1890ff);
-    background-color: var(--fx-tab-hover-bg, #f0f5ff);
-  }
-}
-
-.seq-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.seq-field span,
-.seq-help {
-  font-size: 12px;
-}
-
-.seq-field span {
-  color: var(--fx-text-secondary, #64748b);
-}
-
-.seq-help {
-  display: block;
-  margin-top: 6px;
-  line-height: 1.5;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/encodeRule/components/encode-rule-form-dialog.less"></style>

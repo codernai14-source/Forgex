@@ -1,797 +1,322 @@
-
 <template>
-  <div class="template-editor">
-    <a-row :gutter="16" style="height: calc(100vh - 280px); min-height: 600px;">
-      <!-- 左侧：组件面板 -->
-      <a-col :span="5">
-        <a-card :title="$tl('组件库')" size="small" class="panel-card">
-          <template #title>
-            <div class="panel-title">
-              <AppstoreOutlined />
-              <span>{{ $tl('组件库') }}</span>
-            </div>
-          </template>
-          <a-collapse v-model:activeKey="activeKeys" :bordered="false">
-            <a-collapse-panel key="basic" :header="$tl('基础组件')">
-              <div v-for="comp in basicComponents" :key="comp.type"
-                   class="component-item"
-                   draggable="true"
-                   @dragstart="handleDragStart(comp)">
-                <div class="component-content">
-                  <component :is="comp.icon" style="font-size: 18px;" />
-                  <span class="component-name">{{ t(comp.nameKey) }}</span>
-                </div>
-              </div>
-            </a-collapse-panel>
+  <div class="designer">
+    <aside class="designer__left">
+      <section>
+        <h3>模板属性</h3>
+        <a-form layout="vertical" size="small">
+          <a-form-item label="模板编码"><a-input :value="template.templateCode" disabled /></a-form-item>
+          <a-form-item label="模板名称"><a-input :value="template.templateName" disabled /></a-form-item>
+          <a-row :gutter="8">
+            <a-col :span="12"><a-form-item label="宽(mm)"><a-input-number :value="template.paperWidth" disabled style="width:100%" /></a-form-item></a-col>
+            <a-col :span="12"><a-form-item label="高(mm)"><a-input-number :value="template.paperHeight" disabled style="width:100%" /></a-form-item></a-col>
+          </a-row>
+        </a-form>
+      </section>
+      <section>
+        <h3>组件库</h3>
+        <button v-for="item in componentTypes" :key="item.type" class="component-button" type="button" @click="addComponent(item.type)">
+          <component :is="item.icon" />
+          <span>{{ item.label }}</span>
+        </button>
+      </section>
+      <a-button type="primary" block :loading="saving" @click="handleSave">保存设计</a-button>
+    </aside>
 
-            <a-collapse-panel key="data" :header="$tl('数据字段')">
-              <div v-for="field in availableFields" :key="field.key"
-                   class="field-item"
-                   draggable="true"
-                   @dragstart="handleFieldDragStart(field)">
-                <div class="field-content">
-                  <div class="field-label">
-                    <FieldStringOutlined />
-                    <span>{{ field.label }}</span>
-                  </div>
-                  <code class="field-key">{{ field.key }}</code>
-                </div>
-              </div>
-            </a-collapse-panel>
-          </a-collapse>
-        </a-card>
-      </a-col>
-
-      <!-- 中间：画布区域 -->
-      <a-col :span="13">
-        <a-card :title="$tl('画布预览')" size="small" class="panel-card">
-          <template #title>
-            <div class="panel-title">
-              <EditOutlined />
-              <span>{{ $tl('画布预览') }}</span>
-            </div>
-          </template>
-          <template #extra>
-            <a-space size="small">
-              <a-tooltip :title="$tl('纸张尺寸')">
-                <a-select v-model:value="canvasConfig.paperSize" style="width: 130px" size="small">
-                  <a-select-option value="60x40">60×40 mm</a-select-option>
-                  <a-select-option value="80x60">80×60 mm</a-select-option>
-                  <a-select-option value="100x80">100×80 mm</a-select-option>
-                  <a-select-option value="120x80">120×80 mm</a-select-option>
-                </a-select>
-              </a-tooltip>
-              <a-button size="small" @click="handlePreview">
-                <template #icon><EyeOutlined /></template>
-                {{ $tl('预览') }}
-              </a-button>
-              <a-button size="small" danger @click="handleClearCanvas">
-                <template #icon><DeleteOutlined /></template>
-                {{ $tl('清空') }}
-              </a-button>
-            </a-space>
-          </template>
-
-          <div class="canvas-wrapper">
-            <div class="canvas-container"
-                 @drop="handleDrop"
-                 @dragover.prevent
-                 @click="selectElement(null)">
-              <div class="label-canvas" :style="labelSizeStyle">
-                <div v-if="elements.length === 0" class="empty-tip">
-                  <InboxOutlined style="font-size: 48px; color: #d9d9d9; margin-bottom: 16px;" />
-                  <div class="empty-text">{{ $tl('拖拽组件到此处') }}</div>
-                  <div class="empty-hint">{{ $tl('从左侧选择组件或数据字段，拖拽到画布中') }}</div>
-                </div>
-                <div v-for="el in elements" :key="el.id"
-                     class="canvas-element"
-                     :class="{ active: selectedElement?.id === el.id }"
-                     :style="getElementStyle(el)"
-                     @click.stop="selectElement(el)"
-                     @mousedown="startDrag($event, el)">
-                  <div class="element-content">
-                    <template v-if="el.type === 'text'">
-                      <FontSizeOutlined />
-                  <span>{{ el.content || t('label.template.editor.elementTypes.text') }}</span>
-                    </template>
-                    <template v-else-if="el.type === 'barcode'">
-                      <BarcodeOutlined />
-                  <span>{{ el.content || t('label.template.editor.elementTypes.barcode') }}</span>
-                    </template>
-                    <template v-else-if="el.type === 'qrcode'">
-                      <QrcodeOutlined />
-                  <span>{{ el.content || t('label.template.editor.elementTypes.qrcode') }}</span>
-                    </template>
-                    <template v-else-if="el.type === 'image'">
-                      <PictureOutlined />
-                  <span>{{ el.content || t('label.template.editor.elementTypes.image') }}</span>
-                    </template>
-                    <template v-else-if="el.type === 'field'">
-                      <FieldStringOutlined />
-                      <span class="field-tag">{{ el.fieldKey || el.content }}</span>
-                    </template>
-                  </div>
-                  <div class="element-resize-handle" v-if="selectedElement?.id === el.id">
-                    <div class="resize-handle resize-n" @mousedown.stop="startResize($event, el, 'n')"></div>
-                    <div class="resize-handle resize-s" @mousedown.stop="startResize($event, el, 's')"></div>
-                    <div class="resize-handle resize-e" @mousedown.stop="startResize($event, el, 'e')"></div>
-                    <div class="resize-handle resize-w" @mousedown.stop="startResize($event, el, 'w')"></div>
-                    <div class="resize-handle resize-ne" @mousedown.stop="startResize($event, el, 'ne')"></div>
-                    <div class="resize-handle resize-nw" @mousedown.stop="startResize($event, el, 'nw')"></div>
-                    <div class="resize-handle resize-se" @mousedown.stop="startResize($event, el, 'se')"></div>
-                    <div class="resize-handle resize-sw" @mousedown.stop="startResize($event, el, 'sw')"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <main class="designer__stage">
+      <div class="canvas-scroll">
+        <div class="label-canvas" :style="canvasStyle" @click="selectedId = ''">
+          <div
+            v-for="item in details"
+            :key="item.clientId"
+            class="design-item"
+            :class="{ active: item.clientId === selectedId }"
+            :style="itemStyle(item)"
+            @mousedown.stop="startMove($event, item)"
+            @click.stop="selectedId = item.clientId"
+          >
+            <span v-if="isLine(item)"></span>
+            <img v-else-if="item.componentType === 'IMAGE' && item.componentContent" :src="item.componentContent" />
+            <span v-else>{{ itemText(item) }}</span>
+            <i class="resize-handle" @mousedown.stop="startResize($event, item)"></i>
           </div>
-        </a-card>
-      </a-col>
+        </div>
+      </div>
+    </main>
 
-      <!-- 右侧：属性面板 -->
-      <a-col :span="6">
-        <a-card :title="$tl('属性配置')" size="small" class="panel-card">
-          <template #title>
-            <div class="panel-title">
-              <SettingOutlined />
-              <span>{{ $tl('属性配置') }}</span>
-            </div>
+    <aside class="designer__right">
+      <template v-if="selected">
+        <h3>组件属性</h3>
+        <a-form layout="vertical" size="small">
+          <a-form-item label="组件类型"><a-input :value="selected.componentType" disabled /></a-form-item>
+          <a-form-item v-if="selected.componentType === 'TEXT'" label="数据来源">
+            <a-segmented v-model:value="selected.dataSource" :options="dataSourceOptions" />
+          </a-form-item>
+          <a-form-item v-if="selected.dataSource === 'FIELD'" label="业务字段">
+            <a-select v-model:value="selected.fieldCode" :options="fieldOptions" show-search />
+          </a-form-item>
+          <a-form-item v-else-if="!isLine(selected)" label="固定内容">
+            <a-textarea v-model:value="selected.componentContent" :rows="3" />
+          </a-form-item>
+          <a-row :gutter="8">
+            <a-col :span="12"><a-form-item label="X(mm)"><a-input-number v-model:value="selected.positionX" style="width:100%" /></a-form-item></a-col>
+            <a-col :span="12"><a-form-item label="Y(mm)"><a-input-number v-model:value="selected.positionY" style="width:100%" /></a-form-item></a-col>
+          </a-row>
+          <a-row :gutter="8">
+            <a-col :span="12"><a-form-item label="宽(mm)"><a-input-number v-model:value="selected.componentWidth" :min="1" style="width:100%" /></a-form-item></a-col>
+            <a-col :span="12"><a-form-item label="高(mm)"><a-input-number v-model:value="selected.componentHeight" :min="1" style="width:100%" /></a-form-item></a-col>
+          </a-row>
+          <template v-if="selected.componentType === 'TEXT'">
+            <a-row :gutter="8">
+              <a-col :span="12"><a-form-item label="字号"><a-input-number v-model:value="styleModel.fontSize" :min="6" :max="72" style="width:100%" /></a-form-item></a-col>
+              <a-col :span="12"><a-form-item label="字重"><a-select v-model:value="styleModel.fontWeight" :options="weightOptions" /></a-form-item></a-col>
+            </a-row>
+            <a-form-item label="对齐"><a-segmented v-model:value="styleModel.textAlign" :options="alignOptions" /></a-form-item>
           </template>
-          <a-form v-if="selectedElement" layout="vertical" size="small">
-            <a-divider orientation="left" style="font-size: 12px;">{{ $tl('基本信息') }}</a-divider>
-            <a-form-item :label="$tl('元素类型')">
-              <a-tag :color="getTypeColor(selectedElement.type)">
-                {{ getTypeName(selectedElement.type) }}
-              </a-tag>
-            </a-form-item>
-            
-            <template v-if="selectedElement.type === 'text' || selectedElement.type === 'field'">
-              <a-form-item :label="$tl('文本内容')">
-                <a-textarea 
-                  v-model:value="selectedElement.content" 
-                  :placeholder="$tl('输入文本内容')"
-                  :rows="2"
-                />
-              </a-form-item>
-              <a-form-item :label="$tl('字体大小')">
-                <a-input-number 
-                  v-model:value="selectedElement.fontSize" 
-                  :min="8" 
-                  :max="72" 
-                  style="width: 100%"
-                  addon-after="px"
-                />
-              </a-form-item>
-              <a-form-item :label="$tl('字体粗细')">
-                <a-select v-model:value="selectedElement.fontWeight" style="width: 100%">
-                  <a-select-option :value="400">{{ $tl('常规') }}</a-select-option>
-                  <a-select-option :value="600">{{ $tl('加粗') }}</a-select-option>
-                  <a-select-option :value="700">{{ $tl('粗体') }}</a-select-option>
-                </a-select>
-              </a-form-item>
-            </template>
-
-            <a-divider orientation="left" style="font-size: 12px;">{{ $tl('位置尺寸') }}</a-divider>
-            <a-row :gutter="8">
-              <a-col :span="12">
-                <a-form-item :label="$tl('X 坐标')">
-                  <a-input-number 
-                    v-model:value="selectedElement.x" 
-                    style="width: 100%"
-                    addon-after="px"
-                  />
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item :label="$tl('Y 坐标')">
-                  <a-input-number 
-                    v-model:value="selectedElement.y" 
-                    style="width: 100%"
-                    addon-after="px"
-                  />
-                </a-form-item>
-              </a-col>
-            </a-row>
-            <a-row :gutter="8">
-              <a-col :span="12">
-                <a-form-item :label="$tl('宽度')">
-                  <a-input-number 
-                    v-model:value="selectedElement.width" 
-                    :min="10" 
-                    style="width: 100%"
-                    addon-after="px"
-                  />
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item :label="$tl('高度')">
-                  <a-input-number 
-                    v-model:value="selectedElement.height" 
-                    :min="10" 
-                    style="width: 100%"
-                    addon-after="px"
-                  />
-                </a-form-item>
-              </a-col>
-            </a-row>
-
-            <a-divider orientation="left" style="font-size: 12px;">{{ $tl('操作') }}</a-divider>
-            <a-button danger block @click="deleteElement">
-              <template #icon><DeleteOutlined /></template>
-              {{ $tl('删除元素') }}
-            </a-button>
-          </a-form>
-          <a-empty v-else :description="$tl('请选择一个元素')">
-            <template #image>
-              <PictureOutlined style="font-size: 64px; color: #d9d9d9;" />
-            </template>
-          </a-empty>
-        </a-card>
-      </a-col>
-    </a-row>
+          <a-button danger block @click="deleteSelected">删除组件</a-button>
+        </a-form>
+      </template>
+      <a-empty v-else description="请选择组件" />
+    </aside>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, type CSSProperties } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { translateLegacyText } from '@/utils/legacyI18n'
-import {
-AppstoreOutlined, EditOutlined, SettingOutlined, 
-  FontSizeOutlined, BarcodeOutlined, QrcodeOutlined, 
-  PictureOutlined, EyeOutlined, DeleteOutlined,
-  FieldStringOutlined, InboxOutlined
-} from '@ant-design/icons-vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { message } from 'ant-design-vue'
+import { BarcodeOutlined, FontSizeOutlined, PictureOutlined, QrcodeOutlined, MinusOutlined, ColumnHeightOutlined } from '@ant-design/icons-vue'
+import { labelFieldApi } from '@/api/label/field'
+import { labelTemplateApi } from '@/api/label/template'
 
-const props = defineProps<{
-  modelValue: string
-}>()
-
-const emit = defineEmits(['update:modelValue', 'change'])
-
-const { t } = useI18n()
-const activeKeys = ref(['basic', 'data'])
-const elements = ref<any[]>([])
-const selectedElement = ref<any>(null)
-const canvasConfig = ref({
-  paperSize: '60x40'
-})
-
-const basicComponents = [
-  { type: 'text', nameKey: 'label.template.editor.elementTypes.text', icon: FontSizeOutlined },
-  { type: 'barcode', nameKey: 'label.template.editor.elementTypes.barcode', icon: BarcodeOutlined },
-  { type: 'qrcode', nameKey: 'label.template.editor.elementTypes.qrcode', icon: QrcodeOutlined },
-  { type: 'image', nameKey: 'label.template.editor.elementTypes.image', icon: PictureOutlined }
+const props = defineProps<{ template: any }>()
+const emit = defineEmits<{ (e: 'saved'): void }>()
+const scale = 4
+const saving = ref(false)
+const selectedId = ref('')
+const fieldOptions = ref<any[]>([])
+const details = ref<any[]>([])
+const dataSourceOptions = [{ label: '固定值', value: 'FIXED' }, { label: '业务字段', value: 'FIELD' }]
+const weightOptions = [{ label: '常规', value: 400 }, { label: '加粗', value: 700 }]
+const alignOptions = [{ label: '左', value: 'left' }, { label: '中', value: 'center' }, { label: '右', value: 'right' }]
+const componentTypes = [
+  { type: 'TEXT', label: '文本框', icon: FontSizeOutlined },
+  { type: 'BARCODE', label: '条形码', icon: BarcodeOutlined },
+  { type: 'QRCODE', label: '二维码', icon: QrcodeOutlined },
+  { type: 'IMAGE', label: '图片', icon: PictureOutlined },
+  { type: 'HORIZONTAL_LINE', label: '横线', icon: MinusOutlined },
+  { type: 'VERTICAL_LINE', label: '竖线', icon: ColumnHeightOutlined }
 ]
 
-const availableFields = [
-  { key: 'materialCode', label: translateLegacyText('物料编码') },
-  { key: 'materialName', label: translateLegacyText('物料名称') },
-  { key: 'lotNo', label: translateLegacyText('批次号') },
-  { key: 'quantity', label: translateLegacyText('数量') },
-  { key: 'printTime', label: translateLegacyText('打印时间') },
-  { key: 'supplierName', label: translateLegacyText('供应商名称') },
-  { key: 'customerName', label: translateLegacyText('客户名称') },
-  { key: 'factoryName', label: translateLegacyText('工厂名称') }
-]
-
-const labelSizeStyle = computed(() => {
-  const sizes: Record<string, string> = {
-    '60x40': 'width: 227px; height: 151px',
-    '80x60': 'width: 302px; height: 227px',
-    '100x80': 'width: 378px; height: 302px',
-    '120x80': 'width: 453px; height: 302px'
+const selected = computed(() => details.value.find(item => item.clientId === selectedId.value))
+const canvasStyle = computed(() => ({ width: `${props.template.paperWidth * scale}px`, height: `${props.template.paperHeight * scale}px` }))
+const styleModel = computed({
+  get() {
+    return selected.value?.styleJson ? JSON.parse(selected.value.styleJson) : { fontSize: 12, fontWeight: 400, textAlign: 'left' }
+  },
+  set(value) {
+    if (selected.value) selected.value.styleJson = JSON.stringify(value)
   }
-  return sizes[canvasConfig.value.paperSize] || sizes['60x40']
 })
 
-let draggedItem: any = null
-let isDragging = false
-let dragOffset = { x: 0, y: 0 }
-let isResizing = false
-let resizeData: any = null
-
-function handleDragStart(comp: any) {
-  draggedItem = { type: 'component', data: comp }
-}
-
-function handleFieldDragStart(field: any) {
-  draggedItem = { type: 'field', data: field }
-}
-
-function handleDrop(e: DragEvent) {
-  e.preventDefault()
-  if (!draggedItem) return
-
-  const canvas = document.querySelector('.label-canvas') as HTMLElement
-  if (!canvas) return
-
-  const rect = canvas.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-
-  if (draggedItem.type === 'component') {
-    const newElement = {
-      id: Date.now().toString(),
-      type: draggedItem.data.type,
-      content: '',
-      x: Math.max(0, x - 50),
-      y: Math.max(0, y - 20),
-      width: 100,
-      height: 30,
-      fontSize: 14,
-      fontWeight: 400
-    }
-    elements.value.push(newElement)
-    selectedElement.value = newElement
-  } else if (draggedItem.type === 'field') {
-    const newElement = {
-      id: Date.now().toString(),
-      type: 'field',
-      fieldKey: draggedItem.data.key,
-      content: `{${draggedItem.data.key}}`,
-      x: Math.max(0, x - 50),
-      y: Math.max(0, y - 20),
-      width: 120,
-      height: 30,
-      fontSize: 14,
-      fontWeight: 400
-    }
-    elements.value.push(newElement)
-    selectedElement.value = newElement
-  }
-
-  draggedItem = null
-}
-
-function selectElement(el: any) {
-  selectedElement.value = el
-}
-
-function getElementStyle(el: any): CSSProperties {
-  return {
-    position: 'absolute',
-    left: el.x + 'px',
-    top: el.y + 'px',
-    width: el.width + 'px',
-    height: el.height + 'px',
-    fontSize: el.fontSize + 'px',
-    fontWeight: el.fontWeight || 400,
-    border: selectedElement?.id === el.id ? '2px solid #1890ff' : '1px dashed #d9d9d9',
-    cursor: 'move',
-    padding: '4px',
-    overflow: 'hidden',
-    backgroundColor: selectedElement?.id === el.id ? 'rgba(24, 144, 255, 0.05)' : 'transparent',
-    zIndex: selectedElement?.id === el.id ? 10 : 1
-  }
-}
-
-function startDrag(e: MouseEvent, el: any) {
-  isDragging = true
-  dragOffset.x = e.clientX - el.x
-  dragOffset.y = e.clientY - el.y
-  
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return
-    const canvas = document.querySelector('.label-canvas') as HTMLElement
-    if (!canvas) return
-    
-    const rect = canvas.getBoundingClientRect()
-    const newX = e.clientX - rect.left - 50
-    const newY = e.clientY - rect.top - 10
-    
-    el.x = Math.max(0, Math.min(newX, rect.width - el.width))
-    el.y = Math.max(0, Math.min(newY, rect.height - el.height))
-  }
-  
-  const handleMouseUp = () => {
-    isDragging = false
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-  
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-}
-
-function startResize(e: MouseEvent, el: any, direction: string) {
-  isResizing = true
-  resizeData = {
-    element: el,
-    direction,
-    startX: e.clientX,
-    startY: e.clientY,
-    startWidth: el.width,
-    startHeight: el.height,
-    startXPos: el.x,
-    startYPos: el.y
-  }
-  
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isResizing || !resizeData) return
-    
-    const dx = e.clientX - resizeData.startX
-    const dy = e.clientY - resizeData.startY
-    
-    if (resizeData.direction.includes('e')) {
-      el.width = Math.max(20, resizeData.startWidth + dx)
-    }
-    if (resizeData.direction.includes('w')) {
-      const newWidth = resizeData.startWidth - dx
-      if (newWidth >= 20) {
-        el.width = newWidth
-        el.x = resizeData.startXPos + dx
-      }
-    }
-    if (resizeData.direction.includes('s')) {
-      el.height = Math.max(20, resizeData.startHeight + dy)
-    }
-    if (resizeData.direction.includes('n')) {
-      const newHeight = resizeData.startHeight - dy
-      if (newHeight >= 20) {
-        el.height = newHeight
-        el.y = resizeData.startYPos + dy
-      }
-    }
-  }
-  
-  const handleMouseUp = () => {
-    isResizing = false
-    resizeData = null
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-  
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-}
-
-function deleteElement() {
-  if (!selectedElement.value) return
-  const index = elements.value.findIndex(el => el.id === selectedElement.value.id)
-  if (index > -1) {
-    elements.value.splice(index, 1)
-    selectedElement.value = null
-  }
-}
-
-function handleClearCanvas() {
-  elements.value = []
-  selectedElement.value = null
-}
-
-function handlePreview() {
-  // TODO: 实现预览功能
-  console.log('预览数据:', JSON.stringify(elements.value))
-}
-
-function getTypeName(type: string): string {
-  const names: Record<string, string> = {
-    'text': t('label.template.editor.elementTypes.text'),
-    'barcode': t('label.template.editor.elementTypes.barcode'),
-    'qrcode': t('label.template.editor.elementTypes.qrcode'),
-    'image': t('label.template.editor.elementTypes.image'),
-    'field': t('label.template.editor.elementTypes.field')
-  }
-  return names[type] || type
-}
-
-function getTypeColor(type: string): string {
-  const colors: Record<string, string> = {
-    'text': 'blue',
-    'barcode': 'purple',
-    'qrcode': 'cyan',
-    'image': 'orange',
-    'field': 'green'
-  }
-  return colors[type] || 'default'
-}
-
-// 监听元素变化，更新 JSON
-watch(elements, (val) => {
-  const json = JSON.stringify({
-    elements: val,
-    config: canvasConfig.value
-  })
-  emit('update:modelValue', json)
-  emit('change', json)
+watch(styleModel, value => {
+  if (selected.value) selected.value.styleJson = JSON.stringify(value)
 }, { deep: true })
 
-// 初始化时解析 JSON
-watch(() => props.modelValue, (val) => {
-  if (val && val !== '{}') {
-    try {
-      const data = JSON.parse(val)
-      if (data.elements) {
-        elements.value = data.elements
-      }
-      if (data.config) {
-        canvasConfig.value = data.config
-      }
-    } catch (e) {
-      console.error('解析模板 JSON 失败', e)
-    }
+function normalizeDetail(item: any, index: number) {
+  return {
+    clientId: item.id ? `id-${item.id}` : `tmp-${Date.now()}-${index}`,
+    componentType: item.componentType || 'TEXT',
+    positionX: item.positionX ?? 5,
+    positionY: item.positionY ?? 5,
+    componentWidth: item.componentWidth ?? 30,
+    componentHeight: item.componentHeight ?? 10,
+    componentContent: item.content ?? item.componentContent ?? '',
+    dataSource: item.dataSource || 'FIXED',
+    fieldCode: item.fieldCode,
+    styleJson: item.styleJson || JSON.stringify({ fontSize: 12, fontWeight: 400, textAlign: 'left' }),
+    sortNo: item.sortNo ?? index
   }
-}, { immediate: true })
+}
+
+function addComponent(type: string) {
+  const detail = normalizeDetail({ componentType: type }, details.value.length)
+  if (type === 'HORIZONTAL_LINE') detail.componentHeight = 1
+  if (type === 'VERTICAL_LINE') detail.componentWidth = 1
+  if (type === 'TEXT') detail.componentContent = '文本'
+  details.value.push(detail)
+  selectedId.value = detail.clientId
+}
+
+function isLine(item: any) {
+  return item.componentType === 'HORIZONTAL_LINE' || item.componentType === 'VERTICAL_LINE'
+}
+
+function itemText(item: any) {
+  if (item.dataSource === 'FIELD') return `{${item.fieldCode || 'field'}}`
+  if (item.componentType === 'BARCODE') return item.componentContent || 'BARCODE'
+  if (item.componentType === 'QRCODE') return item.componentContent || 'QRCODE'
+  return item.componentContent || item.componentType
+}
+
+function itemStyle(item: any) {
+  const style = item.styleJson ? JSON.parse(item.styleJson) : {}
+  return {
+    left: `${item.positionX * scale}px`,
+    top: `${item.positionY * scale}px`,
+    width: `${item.componentWidth * scale}px`,
+    height: `${item.componentHeight * scale}px`,
+    fontSize: `${style.fontSize || 12}px`,
+    fontWeight: style.fontWeight || 400,
+    textAlign: style.textAlign || 'left',
+    background: isLine(item) ? '#111' : '#fff',
+    border: item.clientId === selectedId.value ? '1px solid #1677ff' : '1px dashed #bfbfbf'
+  }
+}
+
+function startMove(e: MouseEvent, item: any) {
+  selectedId.value = item.clientId
+  const startX = e.clientX
+  const startY = e.clientY
+  const originX = item.positionX
+  const originY = item.positionY
+  const move = (event: MouseEvent) => {
+    item.positionX = Math.max(0, Math.round(originX + (event.clientX - startX) / scale))
+    item.positionY = Math.max(0, Math.round(originY + (event.clientY - startY) / scale))
+  }
+  const up = () => {
+    window.removeEventListener('mousemove', move)
+    window.removeEventListener('mouseup', up)
+  }
+  window.addEventListener('mousemove', move)
+  window.addEventListener('mouseup', up)
+}
+
+function startResize(e: MouseEvent, item: any) {
+  const startX = e.clientX
+  const startY = e.clientY
+  const originW = item.componentWidth
+  const originH = item.componentHeight
+  const move = (event: MouseEvent) => {
+    item.componentWidth = Math.max(1, Math.round(originW + (event.clientX - startX) / scale))
+    item.componentHeight = Math.max(1, Math.round(originH + (event.clientY - startY) / scale))
+  }
+  const up = () => {
+    window.removeEventListener('mousemove', move)
+    window.removeEventListener('mouseup', up)
+  }
+  window.addEventListener('mousemove', move)
+  window.addEventListener('mouseup', up)
+}
+
+function deleteSelected() {
+  details.value = details.value.filter(item => item.clientId !== selectedId.value)
+  selectedId.value = ''
+}
+
+async function handleSave() {
+  saving.value = true
+  try {
+    await labelTemplateApi.saveDesign({
+      templateId: props.template.id,
+      templateCode: props.template.templateCode,
+      details: details.value.map((item, index) => ({ ...item, sortNo: index }))
+    })
+    message.success('保存成功')
+    emit('saved')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function loadFields() {
+  const res = await labelFieldApi.options()
+  fieldOptions.value = (res || []).map((item: any) => ({ label: item.label, value: item.value }))
+}
+
+onMounted(() => {
+  details.value = (props.template.components || []).map(normalizeDetail)
+  loadFields()
+})
 </script>
 
-<style scoped lang="less">
-.template-editor {
-  height: 100%;
-  background: #f5f5f5;
+<style scoped>
+.designer {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  height: calc(100vh - 56px);
+  background: #f5f7fb;
+}
+.designer__left,
+.designer__right {
   padding: 16px;
-
-  .panel-card {
-    height: 100%;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-    :deep(.ant-card-head) {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 8px 8px 0 0;
-      padding: 12px 16px;
-      border-bottom: none;
-
-      .ant-card-head-title {
-        font-weight: 600;
-        font-size: 14px;
-      }
-    }
-
-    :deep(.ant-card-body) {
-      padding: 12px;
-      height: calc(100% - 57px);
-      overflow-y: auto;
-    }
-  }
-
-  .panel-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .anticon {
-      font-size: 16px;
-    }
-  }
-
-  .component-item {
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 6px;
-    cursor: move;
-    transition: all 0.3s;
-    border: 1px solid transparent;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      border-color: #667eea;
-    }
-
-    .component-content {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .component-name {
-        font-size: 13px;
-        font-weight: 500;
-      }
-    }
-  }
-
-  .field-item {
-    padding: 8px 10px;
-    margin-bottom: 6px;
-    background: #fff;
-    border-radius: 4px;
-    cursor: move;
-    transition: all 0.3s;
-    border: 1px solid #e8e8e8;
-
-    &:hover {
-      background: #e6f7ff;
-      border-color: #1890ff;
-      transform: translateX(4px);
-    }
-
-    .field-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      .field-label {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
-        color: #333;
-      }
-
-      .field-key {
-        font-size: 11px;
-        color: #888;
-        background: #f5f5f5;
-        padding: 2px 6px;
-        border-radius: 3px;
-        align-self: flex-start;
-      }
-    }
-  }
-
-  .canvas-wrapper {
-    height: calc(100% - 50px);
-    overflow: auto;
-    background: #f0f2f5;
-    border-radius: 4px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .canvas-container {
-    min-width: 100%;
-    min-height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .label-canvas {
-      background: white;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-      position: relative;
-      transition: all 0.3s;
-      border: 1px solid #d9d9d9;
-
-      .empty-tip {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        color: #999;
-
-        .empty-text {
-          font-size: 16px;
-          margin-bottom: 8px;
-          color: #666;
-        }
-
-        .empty-hint {
-          font-size: 13px;
-          color: #999;
-        }
-      }
-
-      .canvas-element {
-        background: rgba(255, 255, 255, 0.9);
-        transition: all 0.2s;
-
-        .element-content {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          height: 100%;
-          color: #333;
-
-          .field-tag {
-            font-family: 'Courier New', monospace;
-            background: #e6f7ff;
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 1px dashed #1890ff;
-          }
-        }
-
-        &:hover {
-          border-color: #40a9ff !important;
-          background: rgba(24, 144, 255, 0.08);
-        }
-
-        &.active {
-          border-color: #1890ff !important;
-          background: rgba(24, 144, 255, 0.1);
-          box-shadow: 0 2px 12px rgba(24, 144, 255, 0.3);
-        }
-
-        .element-resize-handle {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          pointer-events: none;
-
-          .resize-handle {
-            position: absolute;
-            background: #1890ff;
-            pointer-events: all;
-            opacity: 0;
-            transition: opacity 0.2s;
-
-            &.resize-n, &.resize-s {
-              left: 10%;
-              right: 10%;
-              height: 6px;
-              cursor: ns-resize;
-            }
-
-            &.resize-e, &.resize-w {
-              top: 10%;
-              bottom: 10%;
-              width: 6px;
-              cursor: ew-resize;
-            }
-
-            &.resize-ne, &.resize-nw, &.resize-se, &.resize-sw {
-              width: 8px;
-              height: 8px;
-              border-radius: 50%;
-              cursor: pointer;
-            }
-
-            &.resize-n { top: -3px; }
-            &.resize-s { bottom: -3px; }
-            &.resize-e { right: -3px; }
-            &.resize-w { left: -3px; }
-            &.resize-ne { top: -4px; right: -4px; }
-            &.resize-nw { top: -4px; left: -4px; }
-            &.resize-se { bottom: -4px; right: -4px; }
-            &.resize-sw { bottom: -4px; left: -4px; }
-          }
-
-          &:hover .resize-handle {
-            opacity: 1;
-          }
-        }
-      }
-    }
-  }
-
-  :deep(.ant-collapse) {
-    border: none;
-    background: transparent;
-
-    .ant-collapse-item {
-      border: none;
-      margin-bottom: 8px;
-
-      .ant-collapse-header {
-        background: #fafafa;
-        border-radius: 4px;
-        padding: 8px 12px;
-        font-weight: 500;
-      }
-
-      .ant-collapse-content {
-        .ant-collapse-content-box {
-          padding: 8px 4px;
-        }
-      }
-    }
-  }
-
-  :deep(.ant-form-item) {
-    margin-bottom: 12px;
-
-    .ant-form-item-label > label {
-      font-weight: 500;
-      color: #333;
-    }
-  }
-
-  :deep(.ant-input-number) {
-    width: 100%;
-  }
-
-  :deep(.ant-divider) {
-    margin: 12px 0;
-    font-size: 12px;
-    color: #888;
-  }
+  background: #fff;
+  overflow: auto;
+  border-right: 1px solid #e8e8e8;
+}
+.designer__right {
+  border-right: 0;
+  border-left: 1px solid #e8e8e8;
+}
+h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+section {
+  margin-bottom: 18px;
+}
+.component-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.designer__stage {
+  overflow: hidden;
+  padding: 24px;
+}
+.canvas-scroll {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.label-canvas {
+  position: relative;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  box-shadow: 0 12px 32px rgba(0,0,0,.08);
+}
+.design-item {
+  position: absolute;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  cursor: move;
+  user-select: none;
+}
+.design-item span {
+  width: 100%;
+  padding: 1px 3px;
+  white-space: pre-wrap;
+}
+.design-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  right: -4px;
+  bottom: -4px;
+  background: #1677ff;
+  cursor: nwse-resize;
 }
 </style>

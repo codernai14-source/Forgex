@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
 import com.forgex.integration.domain.dto.ApiCallLogDTO;
+import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.domain.param.ApiCallLogParam;
 import com.forgex.integration.service.IApiCallLogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,9 +55,7 @@ public class ApiCallLogController {
     ) {
         ApiCallLogDTO dto = apiCallLogService.getCallLogById(id, parseCallTime(callTime));
         if (dto == null) {
-            R<ApiCallLogDTO> result = R.fail();
-            result.setMessage("调用记录不存在");
-            return result;
+            return R.fail(IntegrationPromptEnum.CALL_LOG_NOT_FOUND);
         }
         return R.ok(dto);
     }

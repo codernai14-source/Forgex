@@ -113,6 +113,11 @@ if (!(message as any).__fxBackendToastPatched) {
  */
 const reloadCodes = [602] // 602: 未登录或登录过期
 
+function isFallbackPage() {
+  return typeof window !== 'undefined'
+    && window.location.pathname.startsWith('/workspace/fallback/')
+}
+
 /**
  * 创建带拦截器的axios实例（带全局遮罩）
  * 用于处理普通API请求，会显示全局loading
@@ -526,6 +531,10 @@ async function handleResponse(resp: any, httpInstance: any) {
       }
     }
     
+    if (isFallbackPage()) {
+      return Promise.reject(data)
+    }
+
     // 显示登录失效弹窗
     if (!loginBack.open) {
       loginBack.open = true

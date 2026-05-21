@@ -151,8 +151,4 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-.message-notification {
-  display: none;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/Notification/message-notification.less"></style>

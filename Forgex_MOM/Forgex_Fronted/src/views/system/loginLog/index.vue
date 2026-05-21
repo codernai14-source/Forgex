@@ -20,7 +20,9 @@ import { message } from 'ant-design-vue'
 import http from '@/api/http'
 import { useUserStore } from '@/stores/user'
 import { exportLoginLog } from '@/api/system/excel'
-import FxDynamicTable from '@/components/common/FxDynamicTable.vue'import { translateLegacyText } from '@/utils/legacyI18n'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -85,18 +87,4 @@ const handleExport = async () => {
 }
 </script>
 
-<style scoped lang="less">
-.login-log-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.login-log-container :deep(.fx-dynamic-table) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/loginLog/index.less"></style>

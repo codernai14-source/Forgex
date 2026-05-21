@@ -144,7 +144,8 @@ import { getModulePage } from '@/api/system/module'
 import { useDict } from '@/hooks/useDict'
 import { getI18nValue } from '@/utils/i18n'
 import { useModule } from './hooks/useModule'
-import { useModuleForm } from './hooks/useModuleForm'import { translateLegacyText } from '@/utils/legacyI18n'
+import { useModuleForm } from './hooks/useModuleForm'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { dictItems: statusOptions } = useDict('status')
 const { dictItems: visibleOptions } = useDict('visible')
@@ -294,11 +295,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="less">
-.module-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/module/index.less"></style>

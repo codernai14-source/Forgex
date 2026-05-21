@@ -126,36 +126,4 @@ function handleMenuActionClick(item: ActionItem) {
 }
 </script>
 
-<style scoped lang="less">
-.fx-action-group {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  row-gap: 4px;
-  max-width: 100%;
-  min-width: 0;
-  white-space: normal;
-  line-height: 1.5;
-}
-
-.fx-action-group__item,
-.fx-action-group__more {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  white-space: nowrap;
-}
-
-.fx-action-group__item--danger {
-  color: #ff4d4f;
-}
-
-.fx-action-group__item--disabled {
-  color: var(--fx-text-disabled, #bfbfbf);
-  cursor: not-allowed;
-  pointer-events: none;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/common/fx-action-group.less"></style>

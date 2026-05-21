@@ -151,29 +151,4 @@ const handleViewJson = () => {
 }
 </script>
 
-<style scoped lang="less">
-.i18n-input-demo {
-  padding: 24px;
-
-  .demo-section {
-    h3 {
-      margin-bottom: 8px;
-      color: #1890ff;
-    }
-
-    .description {
-      margin-bottom: 16px;
-      color: #666;
-      font-size: 14px;
-    }
-  }
-
-  pre {
-    margin: 0;
-    padding: 12px;
-    overflow-x: auto;
-    border-radius: 4px;
-    background: #f5f5f5;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/components/common/i18n-input-demo.less"></style>

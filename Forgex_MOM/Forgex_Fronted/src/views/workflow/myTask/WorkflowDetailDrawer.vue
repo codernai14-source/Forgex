@@ -100,8 +100,4 @@ function formatDateTime(dateTime?: string): string {
 }
 </script>
 
-<style scoped>
-.detail-trace {
-  margin-top: 16px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/workflow/myTask/workflow-detail-drawer.less"></style>

@@ -23,6 +23,8 @@ import codegenDatasource from './codegenDatasource'
 import inviteCode from './inviteCode'
 import androidVersion from './androidVersion'
 import online from './online'
+import notice from './notice'
+import homepageComponent from './homepageComponent'
 
 export default {
   user,
@@ -46,4 +48,6 @@ export default {
   inviteCode,
   androidVersion,
   online,
+  notice,
+  homepageComponent,
 }

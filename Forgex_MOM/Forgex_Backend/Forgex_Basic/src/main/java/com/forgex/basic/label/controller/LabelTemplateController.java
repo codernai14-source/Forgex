@@ -11,6 +11,8 @@ import com.forgex.basic.label.domain.param.IdParam;
 import com.forgex.basic.label.domain.param.LabelTemplateQueryParam;
 import com.forgex.basic.label.domain.param.LabelTemplateSaveParam;
 import com.forgex.basic.label.domain.param.LabelTemplateUpdateParam;
+import com.forgex.basic.label.domain.param.LabelTemplateDesignSaveParam;
+import com.forgex.basic.label.domain.vo.LabelTemplateDesignVO;
 import com.forgex.basic.label.domain.vo.TemplateVO;
 import com.forgex.basic.label.service.LabelTemplateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -184,5 +186,27 @@ public class LabelTemplateController {
         Long tenantId = TenantContext.get();
         labelTemplateService.setDefaultTemplate(id, templateType, tenantId);
         return R.ok();
+    }
+
+    @Operation(summary = "模板预览")
+    @RequirePerm("label:template:query")
+    @PostMapping("/preview")
+    public R<LabelTemplateDesignVO> preview(@RequestBody @Validated IdParam param) {
+        return R.ok(labelTemplateService.preview(param.getId(), TenantContext.get()));
+    }
+
+    @Operation(summary = "查询模板设计详情")
+    @RequirePerm("label:template:query")
+    @PostMapping("/design/detail")
+    public R<LabelTemplateDesignVO> designDetail(@RequestBody @Validated IdParam param) {
+        return R.ok(labelTemplateService.getDesignDetail(param.getId(), TenantContext.get()));
+    }
+
+    @Operation(summary = "保存模板设计")
+    @RequirePerm("label:template:edit")
+    @PostMapping("/design/save")
+    public R<Void> saveDesign(@RequestBody @Validated LabelTemplateDesignSaveParam param) {
+        labelTemplateService.saveDesign(param, TenantContext.get());
+        return R.ok(CommonPrompt.SAVE_SUCCESS);
     }
 }

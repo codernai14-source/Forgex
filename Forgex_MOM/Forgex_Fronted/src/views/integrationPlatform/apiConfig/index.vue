@@ -9,12 +9,16 @@
         <a-button @click="backToList">{{ t('common.back') }}</a-button>
       </div>
 
-      <ApiParamConfigDialog
-        :open="true"
-        :api-config="editor.apiConfig"
-        :page-mode="true"
-        @update:open="handleParamOpenChange"
-      />
+      <a-spin :spinning="paramConfigLoading">
+        <ApiParamConfigDialog
+          v-if="editor.apiConfig"
+          class="api-config-param-content"
+          :open="true"
+          :api-config="editor.apiConfig"
+          :page-mode="true"
+          @update:open="handleParamOpenChange"
+        />
+      </a-spin>
     </section>
     <section v-else class="api-config-panel">
       <fx-dynamic-table
@@ -125,7 +129,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Modal } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ApiConfigFormDialog from './components/ApiConfigFormDialog.vue'
 import ApiParamConfigDialog from './components/ApiParamConfigDialog.vue'
@@ -134,6 +138,7 @@ import {
   deleteApiConfig,
   disableApiConfig,
   enableApiConfig,
+  getApiConfigDetail,
   getApiConfigList,
 } from '@/api/system/integration'
 import type { ApiConfigItem, IntegrationDirection } from '@/api/system/integration'
@@ -144,6 +149,7 @@ const { t } = useI18n({ useScope: 'global' })
 const tableRef = ref<InstanceType<typeof FxDynamicTable>>()
 const selectedRowKeys = ref<number[]>([])
 const formDialogVisible = ref(false)
+const paramConfigLoading = ref(false)
 const editor = reactive<ApiConfigEditorState>({
   mode: 'list',
   isEdit: false,
@@ -214,10 +220,24 @@ function handleFormSuccess(record?: ApiConfigItem) {
   void tableRef.value?.refresh?.()
 }
 
-function openParamConfig(record: ApiConfigItem) {
+async function openParamConfig(record: ApiConfigItem) {
   editor.mode = 'param'
   editor.isEdit = true
-  editor.apiConfig = record
+  editor.apiConfig = undefined
+  paramConfigLoading.value = true
+  try {
+    const detail = record.id ? await getApiConfigDetail(record.id) : record
+    editor.apiConfig = {
+      ...record,
+      ...detail,
+      outboundTargets: detail.outboundTargets || record.outboundTargets || [],
+    }
+  } catch {
+    message.error(t('integration.common.loadFailed'))
+    editor.apiConfig = record
+  } finally {
+    paramConfigLoading.value = false
+  }
 }
 
 function backToList() {
@@ -287,4 +307,4 @@ async function handleToggleStatus(record: ApiConfigItem, checked: boolean) {
 }
 </script>
 
-<style scoped lang="less" src="@/styles/integration-api-config.less"></style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/apiConfig/index.less"></style>

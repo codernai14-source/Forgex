@@ -171,11 +171,13 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal, type FormInstance } from 'ant-design-vue'
-import { useDict } from '@/hooks/useDict'
+import { useDict } from '@/hooks/useDict'
+
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
-import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'import { translateLegacyText } from '@/utils/legacyI18n'
+import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'
+import { translateLegacyText } from '@/utils/legacyI18n'
 
 const { t } = useI18n()
 const { dictItems: yesNoOptions } = useDict('yes_no')
@@ -430,16 +432,4 @@ async function handleSave() {
 }
 </script>
 
-<style scoped lang="less">
-.excel-config-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.field-toolbar {
-  margin-bottom: 12px;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/excelExportConfig/index.less"></style>

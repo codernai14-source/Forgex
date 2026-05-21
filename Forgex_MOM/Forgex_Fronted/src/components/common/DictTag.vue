@@ -1,7 +1,7 @@
 <template>
   <a-tag v-if="displayItem" :color="displayItem.tagStyle?.color">
-    <template v-if="iconComponent" #icon>
-      <component :is="iconComponent" />
+    <template v-if="displayItem.tagStyle?.icon" #icon>
+      <FxIcon :name="displayItem.tagStyle.icon" :fallback="false" />
     </template>
     {{ displayItem.label }}
   </a-tag>
@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getIcon } from '@/utils/icon'
+import FxIcon from './FxIcon.vue'
 import type { DictItemOption } from '@/hooks/useDict'
 
 interface Props {
@@ -33,5 +33,4 @@ const displayItem = computed(() => {
   return props.items.find(item => String(item?.value ?? '') === normalizedValue) || null
 })
 
-const iconComponent = computed(() => getIcon(displayItem.value?.tagStyle?.icon))
 </script>

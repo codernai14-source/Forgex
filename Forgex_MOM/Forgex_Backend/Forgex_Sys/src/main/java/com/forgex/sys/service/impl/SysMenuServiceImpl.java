@@ -204,7 +204,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         List<SysMenu> menus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getTenantId, tenantId)
                 .in(SysMenu::getId, menuIds)
-                .eq(SysMenu::getVisible, true)
+                .and(wrapper -> wrapper.eq(SysMenu::getVisible, true).or().eq(SysMenu::getType, "button"))
                 .eq(SysMenu::getStatus, true)
                 .orderByAsc(SysMenu::getOrderNum));
         if (menus.isEmpty()) {
@@ -1453,7 +1453,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         List<SysMenu> menus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getTenantId, tenantId)
                 .in(SysMenu::getId, menuIds)
-                .eq(SysMenu::getVisible, true)
+                .and(wrapper -> wrapper.eq(SysMenu::getVisible, true).or().eq(SysMenu::getType, "button"))
                 .eq(SysMenu::getStatus, true)
                 .orderByAsc(SysMenu::getOrderNum));
         if (menus.isEmpty()) {

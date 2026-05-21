@@ -427,11 +427,11 @@ const flatRequestFields = computed(() => flattenFields(requestRoot.value))
 const flatResponseFields = computed(() => flattenFields(responseRoot.value))
 
 const fieldOptions = computed(() => {
-  const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const sourceFields = resolveMappingSourceFields()
+  const targetFields = resolveMappingTargetFields()
   return {
-    source: sourceFields.map(field => ({ label: `${field.fieldPath} (${field.fieldType || '-'})`, value: field.fieldPath })),
-    target: targetFields.map(field => ({ label: `${field.fieldPath} (${field.fieldType || '-'})`, value: field.fieldPath })),
+    source: sourceFields.map(field => ({ label: buildFieldOptionLabel(field), value: field.fieldPath })),
+    target: targetFields.map(field => ({ label: buildFieldOptionLabel(field), value: field.fieldPath })),
   }
 })
 
@@ -441,9 +441,15 @@ const warnings = computed(() => {
     result.push(t('integration.common.typeMismatch'))
   }
   const targetMapped = new Set(mappingRows.value.map(row => row.targetFieldPath).filter(Boolean))
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const targetFields = resolveMappingTargetFields()
   if (targetFields.some(field => field.required === 1 && !targetMapped.has(field.fieldPath))) {
     result.push(t('integration.common.unmappedRequired'))
+  }
+  if (mappingRows.value.some(row => row.sourceFieldPath && !findFieldByPath(row.sourceFieldPath))) {
+    result.push(t('integration.mapping.sourcePathMissing'))
+  }
+  if (mappingRows.value.some(row => row.targetFieldPath && !findFieldByPath(row.targetFieldPath))) {
+    result.push(t('integration.mapping.targetPathMissing'))
   }
   return result
 })
@@ -797,8 +803,8 @@ function handleAddMapping() {
 }
 
 function handleAutoMatch() {
-  const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  const sourceFields = resolveMappingSourceFields()
+  const targetFields = resolveMappingTargetFields()
   const existingSources = new Set(mappingRows.value.map(row => row.sourceFieldPath).filter(Boolean))
   const existingTargets = new Set(mappingRows.value.map(row => row.targetFieldPath).filter(Boolean))
   const suggestions: ParamMappingRow[] = []
@@ -842,13 +848,51 @@ function syncMappingMeta(index: number) {
   if (!row) {
     return
   }
-  const sourceFields = mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
-  const targetFields = mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
-  const source = sourceFields.find(field => field.fieldPath === row.sourceFieldPath)
-  const target = targetFields.find(field => field.fieldPath === row.targetFieldPath)
+  const source = findFieldByPath(row.sourceFieldPath)
+  const target = findFieldByPath(row.targetFieldPath)
   row.sourceType = source?.fieldType
   row.targetType = target?.fieldType
   row.required = target?.required === 1
+}
+
+function findFieldByPath(fieldPath?: string) {
+  if (!fieldPath) {
+    return undefined
+  }
+  const fields = [...flatRequestFields.value, ...flatResponseFields.value]
+  return fields.find(field => field.fieldPath === fieldPath)
+}
+
+function resolveMappingSourceFields() {
+  if (!isOutbound.value) {
+    return mappingDirection.value === 'INBOUND' ? flatRequestFields.value : flatResponseFields.value
+  }
+  return mergeFields(flatResponseFields.value, flatRequestFields.value)
+}
+
+function resolveMappingTargetFields() {
+  if (!isOutbound.value) {
+    return mappingDirection.value === 'INBOUND' ? flatResponseFields.value : flatRequestFields.value
+  }
+  return mergeFields(flatRequestFields.value, flatResponseFields.value)
+}
+
+function mergeFields(...groups: ApiParamConfigItem[][]) {
+  const exists = new Set<string>()
+  const result: ApiParamConfigItem[] = []
+  groups.flat().forEach(field => {
+    if (!field.fieldPath || exists.has(field.fieldPath)) {
+      return
+    }
+    exists.add(field.fieldPath)
+    result.push(field)
+  })
+  return result
+}
+
+function buildFieldOptionLabel(field: ApiParamConfigItem) {
+  const side = field.direction === 'REQUEST' ? '请求' : '响应'
+  return `[${side}] ${field.fieldPath} (${field.fieldType || '-'})`
 }
 
 function syncAllMappingMeta() {
@@ -861,6 +905,14 @@ async function handleSaveAll() {
   }
   if (isOutbound.value && !activeOutboundTargetId.value) {
     message.warning(t('integration.paramConfig.selectTarget'))
+    return
+  }
+  const missingRow = mappingRows.value.find(row =>
+    (row.sourceFieldPath && !findFieldByPath(row.sourceFieldPath))
+    || (row.targetFieldPath && !findFieldByPath(row.targetFieldPath)),
+  )
+  if (missingRow) {
+    message.warning(t('integration.mapping.pathMissingBeforeSave'))
     return
   }
 
@@ -967,224 +1019,4 @@ function isMappableNode(node: ApiParamConfigItem) {
 }
 </script>
 
-<style scoped lang="less">
-.api-param-config-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  color: var(--fx-text-primary, #111827);
-}
-
-:deep(.ant-spin-nested-loading),
-:deep(.ant-spin-container) {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-}
-
-.toolbar {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 16px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 18px;
-  background: var(--fx-bg-container, #ffffff);
-}
-
-.toolbar__info {
-  h3 {
-    margin: 0 0 4px;
-    color: var(--fx-text-primary, #111827);
-  }
-
-  p {
-    margin: 0;
-    color: var(--fx-text-secondary, #64748b);
-  }
-}
-
-.param-config-layout {
-  flex: 1 1 340px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  min-height: 300px;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.param-panel,
-.mapping-panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 16px;
-  border: 1px solid var(--fx-border-color, #e5e7eb);
-  border-radius: 18px;
-  background: var(--fx-bg-container, #ffffff);
-  overflow: hidden;
-}
-
-.param-panel {
-  max-height: 100%;
-}
-
-.mapping-panel {
-  flex: 0 0 330px;
-  min-height: 280px;
-  max-height: 38vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.panel-header {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 14px;
-
-  h3 {
-    margin: 0 0 4px;
-    color: var(--fx-text-primary, #111827);
-  }
-
-  p {
-    margin: 0;
-    color: var(--fx-text-secondary, #64748b);
-  }
-}
-
-.field-cell {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-}
-
-.field-cell--root {
-  font-weight: 600;
-  color: var(--fx-text-primary, #111827);
-}
-
-.mapping-alert,
-.preview-toolbar,
-.preview-tree {
-  margin-bottom: 12px;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-
-.tree-table {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.mapping-table {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.tree-table :deep(.ant-spin-nested-loading),
-.tree-table :deep(.ant-spin-container),
-.mapping-table :deep(.ant-spin-nested-loading),
-.mapping-table :deep(.ant-spin-container) {
-  height: 100%;
-  min-height: 0;
-}
-
-.tree-table :deep(.ant-table-content) {
-  max-height: 100%;
-  overflow: auto !important;
-}
-
-.mapping-table :deep(.ant-table-content) {
-  width: 100%;
-  overflow-x: auto !important;
-}
-
-.mapping-table :deep(.ant-table-body) {
-  overflow: auto !important;
-}
-
-.mapping-table :deep(.ant-table table) {
-  min-width: 1180px;
-  table-layout: fixed !important;
-}
-
-:deep(.ant-table-wrapper),
-:deep(.ant-table),
-:deep(.ant-table-container),
-:deep(.ant-table-content),
-:deep(.ant-table-body) {
-  background: transparent !important;
-  color: var(--fx-text-primary, #111827) !important;
-}
-
-:deep(.ant-table-thead > tr > th) {
-  background: var(--fx-bg-elevated, var(--fx-fill-secondary, #f8fafc)) !important;
-  color: var(--fx-text-primary, #111827) !important;
-  border-bottom: 1px solid var(--fx-border-color, #e5e7eb) !important;
-}
-
-:deep(.ant-table-tbody > tr > td) {
-  background: transparent !important;
-  color: var(--fx-text-primary, #111827) !important;
-  border-bottom: 1px solid var(--fx-border-color, #e5e7eb) !important;
-}
-
-:deep(.ant-table-tbody > tr.ant-table-row:hover > td) {
-  background: color-mix(in srgb, var(--fx-primary, #1677ff) 6%, var(--fx-bg-container, #ffffff)) !important;
-}
-
-:deep(.ant-input),
-:deep(.ant-input-affix-wrapper),
-:deep(.ant-input-textarea textarea),
-:deep(.ant-select-selector) {
-  background: var(--fx-bg-container, #ffffff) !important;
-  color: var(--fx-text-primary, #111827) !important;
-  border-color: var(--fx-border-color, #e5e7eb) !important;
-}
-
-:deep(.ant-input::placeholder),
-:deep(.ant-input-textarea textarea::placeholder),
-:deep(.ant-select-selection-placeholder) {
-  color: var(--fx-text-tertiary, #9ca3af) !important;
-}
-
-:deep(.ant-select-selection-item),
-:deep(.ant-select-arrow),
-:deep(.ant-empty-description),
-:deep(.ant-alert-message),
-:deep(.ant-tree),
-:deep(.ant-tree-node-content-wrapper) {
-  color: var(--fx-text-primary, #111827) !important;
-}
-
-:deep(.ant-alert) {
-  background: color-mix(in srgb, var(--fx-warning, #faad14) 10%, var(--fx-bg-container, #ffffff)) !important;
-  border-color: color-mix(in srgb, var(--fx-warning, #faad14) 25%, var(--fx-border-color, #e5e7eb)) !important;
-}
-
-@media (max-width: 1280px) {
-  .toolbar,
-  .param-config-layout {
-    grid-template-columns: 1fr;
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/integrationPlatform/apiConfig/components/api-param-config-dialog.less"></style>

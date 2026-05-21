@@ -180,7 +180,8 @@ import { computed, onMounted, reactive, ref, nextTick } from 'vue'
 import { Modal, type FormInstance } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { useDict } from '@/hooks/useDict'
+import { useDict } from '@/hooks/useDict'
+
 import type { ReportDatasource, ReportDatasourceParam, DatasourceSaveDTO } from '@/report/types'
 import { translateLegacyText } from '@/utils/legacyI18n'
 import {
@@ -427,14 +428,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="less">
-.datasource-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  padding: 16px;
-  background-color: #fff;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/report/datasource/index.less"></style>

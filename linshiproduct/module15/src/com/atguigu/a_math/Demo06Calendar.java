@@ -9,8 +9,8 @@ public class Demo06Calendar {
         int i = sc.nextInt();
         Calendar c = Calendar.getInstance();
         c.set(i,2,1);
-        c.add(Calendar.DAY_OF_MONTH,-1);
-        int i1 = c.get(Calendar.DAY_OF_MONTH);
+        c.add(Calendar.DATE,-1);
+        int i1 = c.DAY_OF_MONTH;
         if (i1==29){
             System.out.println("闰年");
         }else {

@@ -279,37 +279,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.material-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 24px;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.page-header {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  margin: 8px 0 4px;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.page-header p {
-  color: #666;
-  font-size: 14px;
-}
-
-.danger-link {
-  color: #ff4d4f;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/basic/material/finished/index.less"></style>

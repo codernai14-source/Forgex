@@ -1,0 +1,28 @@
+forgex:
+  job:
+    enabled: true
+    scheduler:
+      scan-interval-ms: 1000
+      look-ahead-seconds: 1
+      lock-wait-ms: 100
+      lock-lease-seconds: 30
+      misfire-threshold-seconds: 60
+    executor:
+      core-pool-size: 10
+      max-pool-size: 50
+      queue-capacity: 1000
+      shutdown-await-seconds: 30
+    instance:
+      heartbeat-interval-ms: 5000
+      offline-threshold-seconds: 30
+    log:
+      stack-max-length: 2000
+      retain-days: 30
+    security:
+      script-enabled: false
+      http-whitelist:
+        - "http://127.0.0.1"
+        - "http://localhost"
+      script-directory-whitelist: []
+    workflow:
+      max-depth: 100

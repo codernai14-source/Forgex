@@ -100,16 +100,4 @@ defineExpose({
 })
 </script>
 
-<style scoped lang="less">
-.file-management {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.file-link {
-  word-break: break-all;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/file/index.less"></style>

@@ -10,18 +10,19 @@
     :body-style="bodyStyle"
     :wrap-class-name="wrapClassName"
     :mask-closable="maskClosable"
+    :footer="footer === false ? null : undefined"
     @ok="handleSubmit"
     @cancel="handleCancel"
   >
     <slot />
     
-    <template #footer>
+    <template v-if="footer !== false" #footer>
       <a-space>
         <a-button @click="handleCancel">
-          {{ $t('common.cancel') }}
+          {{ cancelText || $t('common.cancel') }}
         </a-button>
-        <a-button type="primary" :loading="loading" @click="handleSubmit">
-          {{ $t('common.confirm') }}
+        <a-button v-if="!readonly" type="primary" :loading="loading" @click="handleSubmit">
+          {{ okText || $t('common.confirm') }}
         </a-button>
       </a-space>
     </template>
@@ -40,14 +41,14 @@
   >
     <slot />
     
-    <template #footer>
+    <template v-if="footer !== false" #footer>
       <div class="drawer-footer">
         <a-space>
           <a-button @click="handleCancel">
-            {{ $t('common.cancel') }}
+            {{ cancelText || $t('common.cancel') }}
           </a-button>
-          <a-button type="primary" :loading="loading" @click="handleSubmit">
-            {{ $t('common.confirm') }}
+          <a-button v-if="!readonly" type="primary" :loading="loading" @click="handleSubmit">
+            {{ okText || $t('common.confirm') }}
           </a-button>
         </a-space>
       </div>
@@ -89,6 +90,14 @@ interface Props {
   wrapClassName?: string
   /** 是否允许点击遮罩关闭，默认 true 以保持管理页新增编辑弹窗交互一致 */
   maskClosable?: boolean
+  /** 是否显示底部操作区，false 时隐藏底部 */
+  footer?: boolean
+  /** 只读模式，只展示关闭按钮 */
+  readonly?: boolean
+  /** 确认按钮文案 */
+  okText?: string
+  /** 取消/关闭按钮文案 */
+  cancelText?: string
 }
 
 interface Emits {
@@ -124,6 +133,10 @@ const props = withDefaults(defineProps<Props>(), {
   bodyStyle: undefined,
   wrapClassName: '',
   maskClosable: true,
+  footer: true,
+  readonly: false,
+  okText: '',
+  cancelText: '',
 })
 
 const emit = defineEmits<Emits>()
@@ -147,8 +160,4 @@ function handleCancel() {
 }
 </script>
 
-<style scoped>
-.drawer-footer {
-  text-align: right;
-}
-</style>
+<style scoped lang="less" src="@/styles/components/common/base-form-dialog.less"></style>

@@ -17,7 +17,6 @@
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.0.0.0-preview</spring-cloud-alibaba.version>
         <sa-token.version>1.44.0</sa-token.version>
-        <snailjob.version>1.8.1</snailjob.version>
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <jsqlparser.version>5.3</jsqlparser.version>
         <mybatis-plus-join.version>1.5.4</mybatis-plus-join.version>
@@ -82,23 +81,6 @@
                 <groupId>cn.dev33</groupId>
                 <artifactId>sa-token-redisson-spring-boot-starter</artifactId>
                 <version>${sa-token.version}</version>
-            </dependency>
-
-            <!-- Snail-Job -->
-            <dependency>
-                <groupId>com.aizuda</groupId>
-                <artifactId>snail-job-client-starter</artifactId>
-                <version>${snailjob.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aizuda</groupId>
-                <artifactId>snail-job-client-retry-core</artifactId>
-                <version>${snailjob.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aizuda</groupId>
-                <artifactId>snail-job-client-job-core</artifactId>
-                <version>${snailjob.version}</version>
             </dependency>
             <!-- Tianai Captcha 滑块验证码 -->
             <dependency>

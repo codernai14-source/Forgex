@@ -188,15 +188,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.page-wrap {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-</style>
+<style scoped lang="less" src="@/styles/views/workflow/myTask/initiated.less"></style>

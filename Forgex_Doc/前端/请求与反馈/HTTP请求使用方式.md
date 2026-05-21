@@ -41,7 +41,7 @@ import axios from 'axios'
 await axios.post('/api/sys/user/page', params)
 ```
 
-`http.ts` 已统一追加 `/api` 前缀，因此第一方业务 API 文件只写服务公开前缀和控制器本地路径，例如 `/sys/**`、`/basic/**`、`/wf/**`、`/integration/**`、`/report/**`，不要在 API 封装里重复手写 `/api`。
+`http.ts` 已统一追加 `/api` 前缀，因此第一方业务 API 文件只写服务公开前缀和控制器本地路径，例如 `/sys/**`、`/basic/**`、`/wf/**`、`/integration/**`、`/job/**`、`/report/**`，不要在 API 封装里重复手写 `/api`。新增业务服务时，前端仍按模块前缀调用，例如 `/job/workflow/page`，最终外部路径为 `/api/job/workflow/page`。
 
 推荐写法：
 

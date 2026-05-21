@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice> implements ISysNoticeService {
 
+    private static final int DEFAULT_ACTIVE_NOTICE_LIMIT = 20;
     private static final String SCOPE_PUBLIC = "PUBLIC";
     private static final String SCOPE_TENANT = "TENANT";
     private static final String STATUS_DRAFT = "DRAFT";
@@ -171,17 +172,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         return runWithTenantIgnore(() -> {
             Long tenantId = currentTenantId();
             Long userId = currentUserId();
-            LocalDateTime now = LocalDateTime.now();
-            LambdaQueryWrapper<SysNotice> wrapper = new LambdaQueryWrapper<SysNotice>()
-                    .eq(SysNotice::getStatus, STATUS_PUBLISHED)
-                    .and(w -> w.eq(SysNotice::getScope, SCOPE_PUBLIC)
-                            .or()
-                            .and(t -> t.eq(SysNotice::getScope, SCOPE_TENANT).eq(SysNotice::getTenantId, tenantId)))
-                    .and(w -> w.isNull(SysNotice::getStartTime).or().le(SysNotice::getStartTime, now))
-                    .and(w -> w.isNull(SysNotice::getEndTime).or().ge(SysNotice::getEndTime, now))
-                    .orderByAsc(SysNotice::getOrderNum)
-                    .orderByDesc(SysNotice::getCreateTime);
-            List<SysNotice> notices = noticeMapper.selectList(wrapper);
+            List<SysNotice> notices = listEffectiveNoticeEntities(tenantId, null);
             if (notices == null || notices.isEmpty()) {
                 return List.of();
             }
@@ -240,6 +231,11 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         });
     }
 
+    @Override
+    public List<SysNoticeDTO> listActiveNotices(Integer maxCount) {
+        return runWithTenantIgnore(() -> fillAttachments(listEffectiveNoticeEntities(currentTenantId(), maxCount)));
+    }
+
     private LambdaQueryWrapper<SysNotice> buildPageWrapper(SysNoticePageParam param) {
         Long tenantId = currentTenantId();
         LambdaQueryWrapper<SysNotice> wrapper = new LambdaQueryWrapper<SysNotice>()
@@ -287,6 +283,35 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
                     .set(SysNotice::getStatus, status));
             return null;
         });
+    }
+
+    private List<SysNotice> listEffectiveNoticeEntities(Long tenantId, Integer maxCount) {
+        LocalDateTime now = LocalDateTime.now();
+        LambdaQueryWrapper<SysNotice> wrapper = new LambdaQueryWrapper<SysNotice>()
+                .eq(SysNotice::getStatus, STATUS_PUBLISHED)
+                .and(w -> w.eq(SysNotice::getScope, SCOPE_PUBLIC)
+                        .or()
+                        .and(t -> t.eq(SysNotice::getScope, SCOPE_TENANT).eq(SysNotice::getTenantId, tenantId)))
+                .and(w -> w.isNull(SysNotice::getStartTime).or().le(SysNotice::getStartTime, now))
+                .and(w -> w.isNull(SysNotice::getEndTime).or().ge(SysNotice::getEndTime, now))
+                .orderByAsc(SysNotice::getOrderNum)
+                .orderByDesc(SysNotice::getCreateTime);
+        Integer safeMaxCount = normalizeActiveNoticeMaxCount(maxCount);
+        if (safeMaxCount != null) {
+            wrapper.last("limit " + safeMaxCount);
+        }
+        List<SysNotice> notices = noticeMapper.selectList(wrapper);
+        return notices == null ? List.of() : notices;
+    }
+
+    private Integer normalizeActiveNoticeMaxCount(Integer maxCount) {
+        if (maxCount == null) {
+            return DEFAULT_ACTIVE_NOTICE_LIMIT;
+        }
+        if (maxCount <= 0) {
+            return null;
+        }
+        return Math.min(maxCount, 100);
     }
 
     private void replaceAttachments(Long noticeId, Long tenantId, List<SysNoticeAttachmentDTO> attachments) {

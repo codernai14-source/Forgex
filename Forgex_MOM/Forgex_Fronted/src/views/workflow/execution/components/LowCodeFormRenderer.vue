@@ -118,16 +118,4 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-.low-code-form-renderer {
-  width: 100%;
-}
-
-.low-code-form-renderer :deep(.form-create) {
-  width: 100%;
-}
-
-.low-code-form-renderer :deep(.ant-form-item:last-child) {
-  margin-bottom: 0;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/workflow/execution/components/low-code-form-renderer.less"></style>

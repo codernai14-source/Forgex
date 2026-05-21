@@ -5,6 +5,10 @@
  * @version 1.0.0
  */
 export default {
+  loading: {
+    thinking: 'Forgex is loading everything you need. Please wait.',
+  },
+
   // Hero Section
   hero: {
     eyebrow: 'Personal Workspace',
@@ -27,10 +31,27 @@ export default {
     refresh: 'Refresh',
     resetDefault: 'Reset to Default',
     saveLayout: 'Save Layout',
+    componentLibrary: 'Component Library',
+    componentConfig: 'Personal Component Config',
     hint: {
       edit: 'Drag and resize components, then save directly',
       view: 'Switch to edit mode to adjust component layout',
     },
+  },
+
+  library: {
+    title: 'Homepage Component Library',
+    searchPlaceholder: 'Search by code, name, or purpose',
+    scopeAll: 'All',
+    scopePublic: 'Public',
+    scopeTenant: 'Tenant',
+    scopeUser: 'Personal',
+    defaultGroup: 'Default Group',
+    empty: 'No available components',
+    favorite: 'Favorite',
+    selected: 'Added',
+    removed: 'Removed',
+    customPlaceholder: 'This widget is rendered by a frontend registered component; the catalog only controls availability.',
   },
 
   // Configuration Panel
@@ -137,6 +158,17 @@ export default {
       singleCancelFailed: 'Failed to remove favorite',
       sortSaveSuccess: 'Favorite order saved',
       sortSaveFailed: 'Failed to save favorite order',
+    },
+  },
+
+  componentConfig: {
+    title: 'Personal Homepage Component Config',
+    desc: 'Manage the current user homepage components, including personal add, remove, and favorite actions.',
+    empty: 'No configurable personal homepage components',
+    addSuccess: 'Added to personal homepage',
+    removeSuccess: 'Removed from personal homepage',
+    stats: {
+      count: '{count} groups',
     },
   },
 

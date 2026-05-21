@@ -44,6 +44,36 @@ public class LabelTemplate extends BaseEntity {
     private String templateName;
 
     /**
+     * 标签类型 ID
+     */
+    @TableField("type_id")
+    private Long typeId;
+
+    /**
+     * 纸张宽度，单位 mm
+     */
+    @TableField("paper_width")
+    private Integer paperWidth;
+
+    /**
+     * 纸张高度，单位 mm
+     */
+    @TableField("paper_height")
+    private Integer paperHeight;
+
+    /**
+     * 纸张规格
+     */
+    @TableField("paper_size")
+    private String paperSize;
+
+    /**
+     * 是否启用：0-否，1-是
+     */
+    @TableField("is_enabled")
+    private Boolean isEnabled;
+
+    /**
      * 模板类型
      * MATERIAL=物料标签，PRODUCT=产品标签，LOT=LOT标签，INCOMING=来料标签，
      * SUPPLIER=供应商标签，CUSTOMER_MARK=客户唛头，CUSTOMER_LABEL=客户定制标签，

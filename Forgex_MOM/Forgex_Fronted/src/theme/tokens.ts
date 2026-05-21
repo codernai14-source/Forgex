@@ -138,15 +138,16 @@ export const lightTokens: ThemeTokens = {
 /**
  * 暗色主题 Token 配置
  * 
- * 基于 Tailwind Slate 色系，针对暗色模式优化对比度和舒适度。
- * 采用深色背景和高对比度文本，减少视觉疲劳。
+ * 文本与功能色参考 Slate 对比度；背景与填充采用与设计约定的页面基底（{@link ThemeTokens.colorBgBase}，`#14161a`）
+ * 一致的中性灰阶层次，表格与卡片使用 {@link ThemeTokens.colorBgContainer} 等 Token，
+ * 避免出现 Slate 蓝灰（如历史 `#1e293b`）与页面基底并置时的「蓝底」偏差。
  * 
  * @remarks
  * 颜色体系：
  * - 品牌色：保持与浅色模式一致的拂晓蓝
- * - 文本色：Slate 系列高对比度颜色（e2e8f0 到 334155）
- * - 背景色：从深到浅的三层结构（0f1419 → 1a1f26 → 242a33）
- * - 边框色：适度的 Slate 色系
+ * - 文本色：高对比度层次（e2e8f0 到 334155）
+ * - 背景色：中性深灰三层结构（14161a → 1c1e24 → 262a32）
+ * - 边框与填充：中性灰，避免过量饱和蓝色相
  * 
  * 对比度标准：
  * - 主文本对比度 ≥ 7:1（WCAG AAA 标准）
@@ -165,7 +166,7 @@ export const lightTokens: ThemeTokens = {
  * import { darkTokens } from './tokens'
  * 
  * // 使用暗色主题 Token
- * const bgColor = darkTokens.colorBgBase // '#0f1419'
+ * const bgColor = darkTokens.colorBgBase // '#14161a'
  * const textColor = darkTokens.colorText // '#e2e8f0'
  * ```
  */
@@ -204,24 +205,26 @@ export const darkTokens: ThemeTokens = {
   colorTextDisabled: '#334155',   // 禁用文本
   
   // ==================== 背景色 ====================
-  colorBgBase: '#0f1419',         // 页面背景 - 最深
-  colorBgContainer: '#1a1f26',    // 容器背景 - 适度
-  colorBgElevated: '#242a33',     // 浮层背景 - 最亮
-  colorBgLayout: '#141920',       // 布局背景
-  colorBgSpotlight: '#1e2329',    // 聚焦背景
+  // 与 `Forgex_Doc/前端/基础设施/主题与样式体系使用方式.md` 中基底 #14161a 保持同色相的中性灰阶，
+  // 避免沿用 Tailwind Slate（如 #1e293b）导致的「蓝底」观感。
+  colorBgBase: '#14161a',         // 页面背景 - 最深
+  colorBgContainer: '#1c1e24',    // 容器背景（卡片、表格）
+  colorBgElevated: '#262a32',     // 浮层背景 - 最亮
+  colorBgLayout: '#14161a',       // 布局背景
+  colorBgSpotlight: '#22262e',    // 聚焦背景
   colorBgMask: 'rgba(0, 0, 0, 0.65)', // 遮罩背景
   
   // ==================== 边框色 ====================
-  colorBorder: '#2d3748',         // 主边框
-  colorBorderSecondary: '#1e293b', // 次要边框
-  colorSplit: '#334155',          // 分割线
+  colorBorder: '#383e4a',         // 主边框
+  colorBorderSecondary: '#2f3540', // 次要边框
+  colorSplit: '#3d4450',          // 分割线
   
   // ==================== 填充色 ====================
-  colorFill: '#1e293b',           // 主填充
-  colorFillSecondary: '#1a1f26',  // 次要填充
-  colorFillTertiary: '#141920',   // 三级填充
-  colorFillQuaternary: '#0f1419', // 四级填充
-  colorFillAlter: '#1e293b',      // 表头背景
+  colorFill: '#2c323d',           // 主填充（表格行 hover 等，对应 --fx-fill）
+  colorFillSecondary: '#242a34',  // 次要填充（Ant Design Table rowHoverBg 暗色）
+  colorFillTertiary: '#1a1e26',   // 三级填充
+  colorFillQuaternary: '#12161c', // 四级填充
+  colorFillAlter: '#262c36',      // 表头背景（对应 --fx-fill-alter）
   
   // ==================== 字体（与浅色模式一致）====================
   fontSize: 14,

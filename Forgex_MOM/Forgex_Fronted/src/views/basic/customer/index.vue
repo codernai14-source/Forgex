@@ -212,7 +212,8 @@ import { Modal, message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import { customerApi, type Customer, type CustomerContact, type CustomerPageParam } from '@/api/basic/customer'
+import { customerApi, type Customer, type CustomerContact, type CustomerPageParam } from '@/api/basic/customer'
+
 const { t } = useI18n()
 const tableRef = ref()
 const editorVisible = ref(false)
@@ -368,17 +369,4 @@ function approvalColor(value?: number) {
 }
 </script>
 
-<style scoped lang="less">
-.master-page { display: flex; flex-direction: column; height: 100%; min-height: 100%; padding: 20px; overflow: hidden; box-sizing: border-box; background: var(--fx-bg-layout, #f8fafc); }
-.page-header { flex-shrink: 0; display: flex; justify-content: space-between; gap: 20px; margin-bottom: 12px; padding: 14px 18px; border: 1px solid var(--fx-border-color, #e5e7eb); border-radius: 8px; background: var(--fx-bg-container, #fff); }
-.page-header h1 { margin: 6px 0 4px; font-size: 22px; line-height: 1.25; }
-.page-header p { margin: 0; color: var(--fx-text-secondary, #64748b); font-size: 13px; line-height: 1.5; }
-.master-page :deep(.fx-dynamic-table) { flex: 1 1 auto; min-height: 0; }
-.name-cell { display: flex; flex-direction: column; gap: 4px; }
-.name-cell span { color: var(--fx-text-secondary, #64748b); font-size: 12px; }
-.danger-link { color: #ff4d4f; }
-.disabled { color: var(--fx-text-disabled, #bfbfbf); cursor: not-allowed; pointer-events: none; }
-.sub-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
-.full-width { width: 100%; }
-@media (max-width: 768px) { .master-page { padding: 12px; } .page-header { flex-direction: column; padding: 14px; } }
-</style>
+<style scoped lang="less" src="@/styles/views/basic/customer/index.less"></style>

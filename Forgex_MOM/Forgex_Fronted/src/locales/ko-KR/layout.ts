@@ -20,6 +20,9 @@ export default {
   langEnUs: '영어',
   search: '검색',
   refresh: '새로고침',
+  loading: {
+    thinking: 'Forgex가 필요한 모든 내용을 불러오는 중입니다. 잠시만 기다려 주세요.',
+  },
   openSettings: '레이아웃 설정',
   settingTitle: '레이아웃 및 테마 설정',
   settingSubtitle: '내비게이션 레이아웃, 테마 색상 및 외관을 조정합니다',
@@ -46,6 +49,9 @@ export default {
   tabBarStyle: '탭 바 스타일',
   tabBarCard: '카드',
   tabBarLine: '라인',
+  tabBarMax: '최대 탭 수',
+  tabBarMaxHint:
+    '0이면 제한 없음. 0보다 크면 초과 시 고정되지 않은 탭부터 닫습니다(현재 페이지 제외).',
   widgets: '위젯',
   widgetRefresh: '새로고침 버튼 활성화',
   widgetSearch: '전역 검색 활성화',
@@ -122,6 +128,7 @@ export default {
   tenant: {
     loading: '테넌트 로딩 중',
     empty: '전환 가능한 테넌트가 없습니다',
+    environment: '환경',
     switch: '테넌트 전환',
     currentAccountMissing: '현재 계정 정보가 없습니다. 다시 로그인해 주세요.',
     switchSuccess: '테넌트 전환 성공',
@@ -137,6 +144,12 @@ export default {
     logout: '로그아웃',
   },
   tab: {
+    allTabs: '열려 있는 모든 탭',
+    filterAllTabs: '열린 탭 검색',
+    overflowTabs: '보이지 않는 탭',
+    filterOverflowTabs: '탭 검색',
+    pin: '탭 고정',
+    unpin: '고정 해제',
     refresh: '새로고침',
     close: '닫기',
     closeOthers: '다른 것 닫기',

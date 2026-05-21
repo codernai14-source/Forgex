@@ -11,6 +11,7 @@ import com.forgex.integration.domain.entity.ApiParamMapping;
 import com.forgex.integration.domain.param.ApiParamMappingParam;
 import com.forgex.integration.enums.IntegrationPromptEnum;
 import com.forgex.integration.mapper.ApiParamMappingMapper;
+import com.forgex.integration.service.IApiParamConfigService;
 import com.forgex.integration.service.IApiParamMappingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMapper, ApiParamMapping>
     implements IApiParamMappingService {
+
+    private static final String BODY_SCOPE = "BODY";
+
+    /**
+     * 接口参数配置服务。
+     */
+    private final IApiParamConfigService apiParamConfigService;
 
     /**
      * 查询字段映射列表。
@@ -247,6 +255,31 @@ public class ApiParamMappingServiceImpl extends ServiceImpl<ApiParamMappingMappe
         }
         if (!hasText(dto.getDirection())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, IntegrationPromptEnum.PARAM_DIRECTION_REQUIRED);
+        }
+        validateBodyFieldPathExists(dto, dto.getSourceFieldPath(), "sourceFieldPath");
+        validateBodyFieldPathExists(dto, dto.getTargetFieldPath(), "targetFieldPath");
+    }
+
+    private void validateBodyFieldPathExists(ApiParamMappingDTO dto, String fieldPath, String fieldRole) {
+        String targetScope = hasText(dto.getTargetScope()) ? dto.getTargetScope() : BODY_SCOPE;
+        if (!BODY_SCOPE.equalsIgnoreCase(targetScope) || !hasText(fieldPath)) {
+            return;
+        }
+        boolean existsInRequest = apiParamConfigService.getByFieldPath(
+            dto.getApiConfigId(),
+            dto.getOutboundTargetId(),
+            fieldPath,
+            "REQUEST"
+        ) != null;
+        boolean existsInResponse = apiParamConfigService.getByFieldPath(
+            dto.getApiConfigId(),
+            dto.getOutboundTargetId(),
+            fieldPath,
+            "RESPONSE"
+        ) != null;
+        if (!existsInRequest && !existsInResponse) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR,
+                IntegrationPromptEnum.PARAM_CONFIG_NOT_FOUND, fieldRole + "=" + fieldPath);
         }
     }
 

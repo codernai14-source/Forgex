@@ -1,53 +1,46 @@
 /**
- * 消息翻译 - 中文注释
- * 
- * Contains success, failure, warning messages
+ * 全局消息提示 - 日语界面文案
  */
 export default {
-  // 成功提示
-  saveSuccess: 'Saved successfully',
-  deleteSuccess: 'Deleted successfully',
-  updateSuccess: 'Updated successfully',
-  createSuccess: 'Created successfully',
-  submitSuccess: 'Submitted successfully',
-  importSuccess: 'Imported successfully',
-  exportSuccess: 'Exported successfully',
-  operationSuccess: 'Operation successful',
-  
-  // 失败提示
-  saveFailed: 'Save failed',
-  deleteFailed: 'Delete failed',
-  updateFailed: 'Update failed',
-  createFailed: 'Create failed',
-  submitFailed: 'Submit failed',
-  importFailed: 'Import failed',
-  exportFailed: 'Export failed',
-  operationFailed: 'Operation failed',
-  loadFailed: 'Load failed',
-  
-  // 确认提示
-  deleteConfirm: 'Are you sure you want to delete?',
-  deleteConfirmTitle: 'Delete Confirmation',
-  deleteConfirmContent: 'This action cannot be undone. Are you sure you want to delete?',
-  saveConfirm: 'Are you sure you want to save?',
-  submitConfirm: 'Are you sure you want to submit?',
-  resetConfirm: 'Are you sure you want to reset?',
-  
-  // 警告提示
-  unsavedChanges: 'Unsaved changes',
-  unsavedChangesConfirm: 'You have unsaved changes. Are you sure you want to leave?',
-  networkError: 'Network error. Please check your connection',
-  serverError: 'Server error. Please try again later',
-  gatewayError: 'Gateway error. Please try again later',
-  permissionDenied: '权限 denied',
-  sessionExpired: 'Session expired. Please login again',
-  tipTitle: 'Notice',
-  relogin: 'Login again',
-  downloadFailedOrNotFound: 'Download failed or file not found',
-  
-  // 其他提示
-  processing: 'Processing...',
-  pleaseWait: 'Please wait...',
-  no权限: 'You do not have permission to perform this action',
-  dataNotFound: 'Data not found',
+  saveSuccess: '保存しました',
+  deleteSuccess: '削除しました',
+  updateSuccess: '更新しました',
+  createSuccess: '作成しました',
+  submitSuccess: '送信しました',
+  importSuccess: 'インポートに成功しました',
+  exportSuccess: 'エクスポートに成功しました',
+  operationSuccess: '操作が完了しました',
+
+  saveFailed: '保存に失敗しました',
+  deleteFailed: '削除に失敗しました',
+  updateFailed: '更新に失敗しました',
+  createFailed: '作成に失敗しました',
+  submitFailed: '送信に失敗しました',
+  importFailed: 'インポートに失敗しました',
+  exportFailed: 'エクスポートに失敗しました',
+  operationFailed: '操作に失敗しました',
+  loadFailed: '読み込みに失敗しました',
+
+  deleteConfirm: '削除してもよろしいですか？',
+  deleteConfirmTitle: '削除の確認',
+  deleteConfirmContent: '削除後は元に戻せません。続行しますか？',
+  saveConfirm: '保存してもよろしいですか？',
+  submitConfirm: '送信してもよろしいですか？',
+  resetConfirm: 'リセットしてもよろしいですか？',
+
+  unsavedChanges: '未保存の変更があります',
+  unsavedChangesConfirm: '未保存の変更があります。このまま離れますか？',
+  networkError: 'ネットワークエラーです。接続を確認してください',
+  serverError: 'サーバーエラーです。しばらくしてから再度お試しください',
+  gatewayError: 'ゲートウェイエラーです。しばらくしてから再度お試しください',
+  permissionDenied: '権限がありません',
+  sessionExpired: 'セッションの有効期限が切れました。再ログインしてください',
+  tipTitle: 'お知らせ',
+  relogin: '再ログイン',
+  downloadFailedOrNotFound: 'ダウンロードに失敗したか、ファイルが存在しません',
+
+  processing: '処理中...',
+  pleaseWait: 'しばらくお待ちください...',
+  no权限: 'この操作を行う権限がありません',
+  dataNotFound: 'データが見つかりません',
 }

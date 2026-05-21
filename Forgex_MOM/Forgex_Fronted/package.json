@@ -15,6 +15,7 @@
     "@formily/antdv-x3": "latest",
     "@formily/core": "^2.3.7",
     "@formily/vue": "^2.3.7",
+    "@iconify/vue": "^5.0.0",
     "@tresjs/cientos": "^5.2.1",
     "@tresjs/core": "^5.2.1",
     "@vue-flow/background": "^1.3.2",

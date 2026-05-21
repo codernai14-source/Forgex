@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 03/05/2026 18:03:58
+ Date: 12/05/2026 14:00:38
 */
 
 SET NAMES utf8mb4;
@@ -253,7 +253,7 @@ CREATE TABLE `wf_task_config`  (
 -- ----------------------------
 -- Records of wf_task_config
 -- ----------------------------
-INSERT INTO `wf_task_config` VALUES (1, 1993479636925403138, '2026-04-04 18:36:04', NULL, '2026-04-07 20:18:40', '1993479637244170242', 0, '请假审批', '{\"zh-CN\":\"请假审批\",\"en-US\":\"Leave Approval\",\"zh-TW\":\"請假審批\",\"ja-JP\":\"休暇承認\",\"ko-KR\":\"휴가 승인\"}', 'LEAVE_APPROVAL_DEMO', 'general', 'leaveApprovalInterpreter', NULL, NULL, 1, '/workflow/form/leave', NULL, 1, 1, 'ARCHIVED', '演示流程：用户发起 -> admin 审核 -> 结束', NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `wf_task_config` VALUES (1, 1993479636925403138, '2026-04-04 18:36:04', '1993479637244170242', '2026-05-06 17:29:21', '1993479637244170242', 0, '请假审批', '{\"zh-CN\":\"请假审批\",\"en-US\":\"Leave Approval\",\"zh-TW\":\"請假審批\",\"ja-JP\":\"休暇承認\",\"ko-KR\":\"휴가 승인\"}', 'LEAVE_APPROVAL_DEMO', 'general', 'leaveApprovalInterpreter', NULL, NULL, 1, '/workflow/form/leave', NULL, 1, 1, 'ARCHIVED', '演示流程：用户发起 -> admin 审核 -> 结束', NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `wf_task_config` VALUES (4, 1993479636925403138, '2026-04-04 21:49:50', '1993479637244170242', '2026-04-07 20:18:40', '1993479637244170242', 0, '请假审批', '{\"en-US\":\"Leave Approval\",\"zh-CN\":\"请假审批\"}', 'LEAVE_APPROVAL_DEMO', 'general', 'leaveApprovalInterpreter', NULL, NULL, 1, '/workflow/form/leave', NULL, 1, 2, 'PUBLISHED', '演示流程：用户发起 -> admin 审核 -> 结束', NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `wf_task_config` VALUES (5, 1993479636925403138, '2026-04-05 11:48:34', '1993479637244170242', '2026-04-07 20:18:40', '1993479637244170242', 0, '请假审批', '{\"zh-CN\":\"请假审批\",\"en-US\":\"Leave Approval\",\"zh-TW\":\"請假審批\",\"ja-JP\":\"休暇承認\",\"ko-KR\":\"휴가 승인\"}', 'LEAVE_APPROVAL_DEMO', 'general', 'leaveApprovalInterpreter', NULL, NULL, 1, '/workflow/form/leave', '{\"version\":\"1.0.0\",\"fields\":[]}', 1, 3, 'DRAFT', '演示流程：用户发起 -> admin 审核 -> 结束', NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `wf_task_config` VALUES (6, 1993479636925403138, '2026-04-15 17:42:42', '1993479637244170242', '2026-04-15 17:42:42', '1993479637244170242', 0, 'xa', NULL, 'cs', 'general', 'cs', NULL, NULL, 2, NULL, '{\"version\":\"3.0.0\",\"formCreateVersion\":\"ant-design-vue\",\"designerType\":\"form-create\",\"rule\":[{\"type\":\"input\",\"field\":\"Fl98mo2ne143afc\",\"title\":\"输入框\",\"info\":\"\",\"$required\":false,\"_fc_id\":\"id_Ffahmo2ne143agc\",\"name\":\"ref_Fer6mo2ne143ahc\",\"_fc_drag_tag\":\"input\",\"display\":true,\"hidden\":false},{\"type\":\"input\",\"field\":\"field_1\",\"title\":\"字段 1\",\"col\":{\"span\":12},\"_fc_id\":\"id_Fby5mo2mrz4iabc\",\"name\":\"ref_Fa42mo2mrz4iacc\",\"_fc_drag_tag\":\"input\",\"display\":true,\"hidden\":false}],\"option\":{\"form\":{\"layout\":\"vertical\",\"labelAlign\":\"right\",\"size\":\"middle\",\"colon\":false,\"labelCol\":{\"style\":{\"width\":\"120px\"}},\"wrapperCol\":{\"span\":24}},\"row\":{\"gutter\":16},\"submitBtn\":{\"show\":false,\"innerText\":\"提交\"},\"resetBtn\":{\"show\":false,\"innerText\":\"重置\"}}}', 1, 1, 'ARCHIVED', NULL, NULL, NULL, NULL, NULL, NULL);

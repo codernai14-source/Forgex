@@ -472,41 +472,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.page-wrap {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.tenant-logo-upload {
-  display: inline-block;
-}
-
-.tenant-logo-upload :deep(.avatar-upload) {
-  align-items: flex-start;
-}
-
-.tenant-logo-upload :deep(.avatar-upload .avatar-uploader .ant-upload) {
-  width: 160px;
-  height: 80px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.tenant-logo-upload :deep(.avatar-upload .avatar-image) {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: #fafafa;
-}
-
-.tenant-logo-upload :deep(.avatar-upload .upload-tips) {
-  margin-top: 8px;
-  text-align: left;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/tenant/index.less"></style>

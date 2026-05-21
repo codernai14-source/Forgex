@@ -67,7 +67,7 @@
 
     <template #systemCpu>
       <div class="system-dashboard">
-        <a-card :title="$t('system.dashboard.cpuUsage')" :bordered="false" class="chart-card">
+        <a-card :title="$t('system.dashboard.cpuUsage')" :bordered="false" class="chart-card chart-card--viz">
           <div ref="cpuChartRef" class="echart-container"></div>
         </a-card>
       </div>
@@ -75,7 +75,7 @@
 
     <template #systemMemory>
       <div class="system-dashboard">
-        <a-card :title="$t('system.dashboard.memoryUsage')" :bordered="false" class="chart-card">
+        <a-card :title="$t('system.dashboard.memoryUsage')" :bordered="false" class="chart-card chart-card--viz">
           <div ref="memoryChartRef" class="echart-container memory-chart-echart"></div>
         </a-card>
       </div>
@@ -83,7 +83,7 @@
 
     <template #systemJvmMemory>
       <div class="system-dashboard">
-        <a-card :title="$t('system.dashboard.moduleMemoryUsage')" :bordered="false" class="chart-card">
+        <a-card :title="$t('system.dashboard.moduleMemoryUsage')" :bordered="false" class="chart-card chart-card--viz">
           <div ref="moduleChartRef" class="echart-container"></div>
         </a-card>
       </div>
@@ -216,6 +216,7 @@ import {
   getRecentLoginLogs
 } from '@/api/system/dashboard'
 import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
+import { resolveModuleDisplayName } from '@/utils/menuI18n'
 
 const { t } = useI18n()
 const legacyWidgetKeys = ['systemOverview', 'systemHealth', 'systemLogs', 'systemConfig']
@@ -383,20 +384,43 @@ let moduleChart: echarts.ECharts | null = null
 let mapChart: echarts.ECharts | null = null
 
 /**
- * 获取主题配色
+ * JVM 柱状图渐变（大厂仪表盘常用横向高光渐变）
+ *
+ * @param colors 主题色板
+ * @returns ECharts 线性渐变对象
+ */
+function buildJvmBarGradient(colors: ReturnType<typeof getThemeColors>) {
+  return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+    { offset: 0, color: colors.jvmBarStart },
+    { offset: 0.45, color: colors.primary },
+    { offset: 1, color: colors.jvmBarEnd }
+  ])
+}
+
+/**
+ * 获取主题配色（含图表语义色，便于仪表盘统一层级）
  */
 const getThemeColors = () => {
   const colors = {
     // 主题色
     primary: '#1890ff',
+    primaryStrong: '#096dd9',
     success: '#52c41a',
     warning: '#faad14',
     purple: '#722ed1',
     cyan: '#13c2c2',
+    teal: '#36cfc9',
     blue: '#1890ff',
     green: '#52c41a',
     orange: '#fa8c16',
     yellow: '#fadb14',
+
+    /** JVM 条形渐变两端（略偏冷色与青色，增强科技感） */
+    jvmBarStart: '#0958d9',
+    jvmBarEnd: '#5cdbd3',
+
+    /** CPU 表盘底色轨道 */
+    gaugeTrack: '',
     
     // 根据主题调整的颜色
     bgColor: getThemeToken('--fx-layout-bg', isDark.value ? '#0f172a' : '#ffffff'),
@@ -405,13 +429,15 @@ const getThemeColors = () => {
     textColorSecondary: getThemeToken('--fx-text-secondary', isDark.value ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'),
     borderColor: getThemeToken('--fx-border-color', isDark.value ? '#303030' : '#f0f0f0'),
     axisLineColor: isDark.value ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-    splitLineColor: getThemeToken('--fx-border-secondary', isDark.value ? '#1e293b' : '#eeeeee'),
+    splitLineColor: getThemeToken('--fx-border-secondary', isDark.value ? '#2f3540' : '#eeeeee'),
     tooltipBg: isDark.value ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.96)',
     
     // 图表背景色
     chartBg: getThemeToken('--fx-bg-container', isDark.value ? '#141414' : '#ffffff')
   }
-  
+
+  colors.gaugeTrack = isDark.value ? 'rgba(255, 255, 255, 0.14)' : '#e9eef5'
+
   return colors
 }
 
@@ -503,7 +529,7 @@ const loadRecentLoginLogs = async () => {
 }
 
 /**
- * 初始化 CPU 使用率仪表盘
+ * 初始化 CPU 使用率仪表盘（双层语义：浅色轨道 + 渐变进度与柔和投影）
  */
 const initCpuChart = () => {
   if (!cpuChartRef.value) return
@@ -511,79 +537,132 @@ const initCpuChart = () => {
   cpuChart = echarts.init(cpuChartRef.value)
 
   const colors = getThemeColors()
+  const gaugeGradient = new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+    { offset: 0, color: colors.primaryStrong },
+    { offset: 0.55, color: colors.primary },
+    { offset: 1, color: colors.teal }
+  ])
+
   const option: EChartsOption = {
-    backgroundColor: colors.chartBg,
+    backgroundColor: 'transparent',
+    animationDuration: 680,
+    animationEasing: 'cubicOut',
     series: [
       {
         type: 'gauge',
-        startAngle: 180,
-        endAngle: 0,
+        z: 1,
         min: 0,
         max: 100,
         splitNumber: 5,
-        itemStyle: {
-          color: colors.primary,
-          shadowColor: 'rgba(0,138,255,0.45)',
-          shadowBlur: 10,
-          shadowOffsetX: 2,
-          shadowOffsetY: 2
-        },
-        progress: {
-          show: true,
-          roundCap: true,
-          width: 18
-        },
-        pointer: {
-          icon: 'path://M2090.36389,615.30999 L2090.36389,615.30999 C2091.48372,615.30999 2092.40383,616.194028 2092.44859,617.312956 L2096.90698,728.755929 C2097.05155,732.369577 2094.2393,735.416212 2090.62566,735.56078 C2090.53845,735.564269 2090.45117,735.566014 2090.36389,735.566014 L2090.36389,735.566014 C2086.74736,735.566014 2083.81557,732.63423 2083.81557,729.017692 C2083.81557,728.930412 2083.81732,728.84314 2083.82081,728.755929 L2088.27916,617.312956 C2088.32399,616.194028 2089.24411,615.30999 2090.36389,615.30999 Z',
-          length: '75%',
-          width: 16,
-          offsetCenter: [0, '5%']
-        },
+        radius: '108%',
+        center: ['50%', '68%'],
+        startAngle: 180,
+        endAngle: 0,
         axisLine: {
           roundCap: true,
           lineStyle: {
-            width: 18,
-            color: [[1, colors.primary]]
+            width: 22,
+            color: [[1, colors.gaugeTrack]]
           }
         },
         axisTick: {
           splitNumber: 2,
+          distance: -28,
+          length: 7,
           lineStyle: {
-            width: 2,
-            color: isDark.value ? '#666666' : '#999999'
+            width: 1,
+            color: colors.axisLineColor
           }
         },
         splitLine: {
-          length: 12,
+          distance: -32,
+          length: 11,
           lineStyle: {
-            width: 3,
-            color: isDark.value ? '#666666' : '#999999'
+            width: 2,
+            color: colors.axisLineColor,
+            cap: 'round'
           }
         },
         axisLabel: {
-          distance: 25,
+          distance: -42,
           color: colors.textColorSecondary,
-          fontSize: 12
+          fontSize: 11,
+          fontWeight: 500
+        },
+        pointer: { show: false },
+        anchor: { show: false },
+        detail: { show: false },
+        progress: { show: false },
+        title: { show: false }
+      },
+      {
+        type: 'gauge',
+        z: 2,
+        min: 0,
+        max: 100,
+        splitNumber: 5,
+        radius: '108%',
+        center: ['50%', '68%'],
+        startAngle: 180,
+        endAngle: 0,
+        itemStyle: {
+          shadowBlur: 22,
+          shadowColor: 'rgba(24, 144, 255, 0.35)'
+        },
+        progress: {
+          show: true,
+          overlap: false,
+          roundCap: true,
+          width: 22,
+          clip: false,
+          itemStyle: {
+            borderWidth: 0,
+            color: gaugeGradient
+          }
+        },
+        axisLine: {
+          roundCap: true,
+          lineStyle: {
+            width: 22,
+            color: [[1, 'transparent']]
+          }
+        },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        axisLabel: { show: false },
+        pointer: {
+          icon: 'path://M2090.36389,615.30999 L2090.36389,615.30999 C2091.48372,615.30999 2092.40383,616.194028 2092.44859,617.312956 L2096.90698,728.755929 C2097.05155,732.369577 2094.2393,735.416212 2090.62566,735.56078 C2090.53845,735.564269 2090.45117,735.566014 2090.36389,735.566014 L2090.36389,735.566014 C2086.74736,735.566014 2083.81557,732.63423 2083.81557,729.017692 C2083.81557,728.930412 2083.81732,728.84314 2083.82081,728.755929 L2088.27916,617.312956 C2088.32399,616.194028 2089.24411,615.30999 2090.36389,615.30999 Z',
+          length: '72%',
+          width: 13,
+          offsetCenter: [0, '-4%'],
+          itemStyle: {
+            color: '#ffffff',
+            shadowBlur: 10,
+            shadowColor: 'rgba(15, 23, 42, 0.35)'
+          }
         },
         anchor: {
           show: true,
           showAbove: true,
-          size: 25,
+          size: 18,
           itemStyle: {
-            borderWidth: 10,
+            borderWidth: 6,
+            borderColor: '#ffffff',
             color: colors.primary
           }
         },
-        // 卡片标题已说明「CPU 使用率」，此处关闭避免与百分比数字、指针重叠
         title: {
           show: false
         },
         detail: {
           valueAnimation: true,
-          fontSize: 20,
-          offsetCenter: [0, '58%'],
+          fontSize: 22,
+          fontWeight: 700,
+          offsetCenter: [0, '52%'],
           formatter: '{value}%',
-          color: colors.primary
+          color: colors.textColor,
+          fontFamily:
+            'Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif'
         },
         data: [
           {
@@ -609,6 +688,7 @@ const updateCpuChart = (cpuUsage: number) => {
   const safe = Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0
   cpuChart.setOption({
     series: [
+      {},
       {
         data: [
           {
@@ -617,7 +697,12 @@ const updateCpuChart = (cpuUsage: number) => {
           }
         ],
         detail: {
-          color: colors.primary
+          color: colors.textColor
+        },
+        anchor: {
+          itemStyle: {
+            color: colors.primary
+          }
         }
       }
     ]
@@ -633,66 +718,112 @@ const initMemoryChart = () => {
   memoryChart = echarts.init(memoryChartRef.value)
 
   const colors = getThemeColors()
+
+  const sliceColors = isDark.value
+    ? [
+        new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+          { offset: 0, color: '#1677ff' },
+          { offset: 1, color: '#69b1ff' }
+        ]),
+        new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+          { offset: 0, color: '#389e0d' },
+          { offset: 1, color: '#95de64' }
+        ]),
+        new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+          { offset: 0, color: '#d48806' },
+          { offset: 1, color: '#ffc069' }
+        ])
+      ]
+    : [
+        new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+          { offset: 0, color: '#0958d9' },
+          { offset: 1, color: '#4096ff' }
+        ]),
+        new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+          { offset: 0, color: '#237804' },
+          { offset: 1, color: '#73d13d' }
+        ]),
+        new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+          { offset: 0, color: '#d46b08' },
+          { offset: 1, color: '#ffc069' }
+        ])
+      ]
+
   const option: EChartsOption = {
-    backgroundColor: colors.chartBg,
+    backgroundColor: 'transparent',
+    animationDuration: 760,
+    animationEasing: 'cubicOut',
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} MB ({d}%)',
       backgroundColor: colors.tooltipBg,
+      borderWidth: 1,
+      borderColor: colors.borderColor,
+      padding: [10, 14],
+      extraCssText: 'border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,0.12);',
       textStyle: {
-        color: colors.textColor
-      },
-      borderColor: colors.borderColor
+        color: colors.textColor,
+        fontSize: 13
+      }
     },
     legend: {
       orient: 'horizontal',
       left: 'center',
-      bottom: 8,
-      itemGap: 14,
+      bottom: 6,
+      itemGap: 20,
+      itemWidth: 10,
+      itemHeight: 10,
+      icon: 'roundRect',
       textStyle: {
         fontSize: 12,
-        color: colors.textColorSecondary
+        color: colors.textColorSecondary,
+        fontWeight: 500,
+        padding: [0, 0, 0, 4]
       }
     },
     series: [
       {
         name: t('system.dashboard.memoryUsage'),
         type: 'pie',
-        center: ['50%', '44%'],
-        // 放大环形：相对容器更大，底部预留给图例
-        radius: ['38%', '66%'],
+        center: ['50%', '46%'],
+        radius: ['44%', '70%'],
+        padAngle: 1.2,
         avoidLabelOverlap: true,
-        // 过窄扇区仍显示标签（仅 3 块时一般可读）
-        minShowLabelAngle: 2,
+        minShowLabelAngle: 4,
         itemStyle: {
-          borderRadius: 5,
+          borderRadius: 8,
           borderColor: colors.chartBg,
-          borderWidth: 2
+          borderWidth: 3,
+          shadowBlur: isDark.value ? 18 : 14,
+          shadowColor: isDark.value ? 'rgba(0, 0, 0, 0.45)' : 'rgba(15, 23, 42, 0.08)'
         },
-        // 扇区上直接展示占用比例（与 tooltip 中 {d}% 一致）
         label: {
           show: true,
           position: 'inside',
           formatter: '{d}%',
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: 700,
           color: '#ffffff',
-          textShadowColor: 'rgba(0,0,0,0.35)',
-          textShadowBlur: 4
+          textShadowColor: 'rgba(0, 0, 0, 0.45)',
+          textShadowBlur: 6
         },
         labelLine: {
           show: false
         },
         emphasis: {
+          scale: true,
+          scaleSize: 6,
+          itemStyle: {
+            shadowBlur: 28,
+            shadowOffsetY: 4,
+            shadowColor: 'rgba(24, 144, 255, 0.35)'
+          },
           label: {
-            show: true,
-            fontSize: 16
+            fontSize: 15
           }
         },
         data: [],
-        color: isDark.value 
-          ? ['#1890ff', '#52c41a', '#fa8c16']
-          : ['#1890ff', '#52c41a', '#fa8c16']
+        color: sliceColors
       }
     ]
   }
@@ -729,45 +860,64 @@ const initModuleChart = () => {
   moduleChart = echarts.init(moduleChartRef.value)
 
   const colors = getThemeColors()
+  const barGradient = buildJvmBarGradient(colors)
+
   const option: EChartsOption = {
-    backgroundColor: colors.chartBg,
+    backgroundColor: 'transparent',
+    animationDuration: 620,
+    animationEasing: 'cubicOut',
     tooltip: {
       trigger: 'axis',
       axisPointer: {
-        type: 'shadow'
+        type: 'shadow',
+        shadowStyle: {
+          color: isDark.value ? 'rgba(255,255,255,0.06)' : 'rgba(24, 144, 255, 0.08)'
+        }
       },
       backgroundColor: colors.tooltipBg,
+      borderWidth: 1,
       borderColor: colors.borderColor,
+      padding: [10, 14],
+      extraCssText: 'border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,0.12);',
       textStyle: {
-        color: colors.textColor
+        color: colors.textColor,
+        fontSize: 13
       }
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      top: '10%',
+      left: '4%',
+      right: '5%',
+      bottom: '6%',
+      top: '8%',
       containLabel: true
     },
     xAxis: {
       type: 'value',
       name: t('system.dashboard.memoryMb'),
+      nameGap: 10,
       nameTextStyle: {
-        color: colors.textColorSecondary
+        color: colors.textColorSecondary,
+        fontSize: 12,
+        fontWeight: 500,
+        align: 'left'
       },
       axisLine: {
         show: true,
         lineStyle: {
-          color: colors.axisLineColor
+          color: colors.axisLineColor,
+          width: 1
         }
       },
       axisLabel: {
-        color: colors.textColorSecondary
+        color: colors.textColorSecondary,
+        fontSize: 11,
+        margin: 10
       },
       splitLine: {
         show: true,
         lineStyle: {
-          color: colors.splitLineColor
+          color: colors.splitLineColor,
+          type: [4, 6]
         }
       }
     },
@@ -775,13 +925,20 @@ const initModuleChart = () => {
       type: 'category',
       data: [],
       axisLine: {
-        show: true,
-        lineStyle: {
-          color: colors.axisLineColor
-        }
+        show: false
+      },
+      axisTick: {
+        show: false
       },
       axisLabel: {
-        color: colors.textColorSecondary
+        color: colors.textColorSecondary,
+        fontSize: 11,
+        fontWeight: 500,
+        margin: 14,
+        formatter(value: string) {
+          const text = String(value || '')
+          return text.length > 18 ? `${text.slice(0, 18)}…` : text
+        }
       },
       splitLine: {
         show: false
@@ -792,20 +949,28 @@ const initModuleChart = () => {
         name: t('system.dashboard.memoryMb'),
         type: 'bar',
         data: [],
-        barWidth: '50%',
+        barCategoryGap: '38%',
+        barMaxWidth: 22,
         itemStyle: {
-          borderRadius: [0, 4, 4, 0],
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#1890ff' },
-            { offset: 0.5, color: '#13c2c2' },
-            { offset: 1, color: '#1890ff' }
-          ])
+          borderRadius: [0, 8, 8, 0],
+          color: barGradient,
+          shadowBlur: 16,
+          shadowColor: 'rgba(24, 144, 255, 0.22)',
+          shadowOffsetY: 3
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 26,
+            shadowColor: 'rgba(24, 144, 255, 0.45)'
+          }
         },
         label: {
           show: true,
           position: 'right',
+          distance: 10,
           color: colors.textColorSecondary,
-          fontSize: 12
+          fontSize: 11,
+          fontWeight: 600
         }
       }
     ]
@@ -820,7 +985,7 @@ const initModuleChart = () => {
 const updateModuleChart = () => {
   if (!moduleChart) return
 
-  const moduleNames = moduleUsageData.value.map(item => String(item.moduleName ?? ''))
+  const moduleNames = moduleUsageData.value.map(item => resolveModuleDisplayName(String(item.moduleCode ?? ''), item.moduleName))
   const memoryMb = moduleUsageData.value.map(item => Number(item.memoryUsageMb) || 0)
 
   moduleChart.setOption({
@@ -1084,134 +1249,4 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped lang="less">
-/* 使用 MainLayout 注入的 --fx-* 变量，与 ConfigProvider 主题一致 */
-.system-dashboard {
-  height: 100%;
-  min-height: 0;
-  background: transparent;
-  transition: background 0.3s;
-
-  &--stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .stat-card {
-      border-radius: var(--fx-radius-lg, 8px);
-      box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
-      transition: all 0.3s;
-      background: var(--fx-bg-container, #ffffff);
-      height: 100%;
-
-      &:hover {
-        box-shadow: var(--fx-shadow-secondary, 0 4px 16px rgba(0, 0, 0, 0.12));
-        transform: translateY(-2px);
-      }
-
-      :deep(.ant-statistic-title) {
-        font-size: 14px;
-        color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
-      }
-
-      :deep(.ant-statistic-content) {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-      }
-
-      .stat-suffix {
-        font-size: 14px;
-        margin-left: 4px;
-        color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
-      }
-    }
-
-  .chart-card {
-      border-radius: var(--fx-radius-lg, 8px);
-      box-shadow: var(--fx-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
-      height: 100%;
-      background: var(--fx-bg-container, #ffffff);
-      color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-
-      :deep(.ant-card-head) {
-        font-size: 16px;
-        font-weight: 600;
-        border-bottom: 1px solid var(--fx-border-color, #e5e7eb);
-        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-        background: transparent;
-      }
-
-      :deep(.ant-card-body) {
-        background: var(--fx-bg-container, #ffffff);
-        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-        height: calc(100% - 57px);
-        overflow: hidden;
-      }
-
-      .echart-container {
-        height: 100%;
-        min-height: 220px;
-        width: 100%;
-      }
-
-      /** 服务内存饼图：略增高容器，便于环形放大且与底部图例留白 */
-      .memory-chart-echart {
-        min-height: 260px;
-      }
-
-      .map-container {
-        height: 100%;
-        min-height: 280px;
-        overflow: hidden;
-        border-radius: var(--fx-radius, 6px);
-        background: var(--fx-bg-container, #ffffff);
-      }
-
-      :deep(.ant-descriptions-item-label) {
-        font-weight: 500;
-        width: 120px;
-        color: var(--fx-text-secondary, rgba(0, 0, 0, 0.65));
-      }
-
-      :deep(.ant-descriptions-item-content) {
-        word-break: break-all;
-        color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-      }
-
-      :deep(.ant-table) {
-        background: transparent;
-
-        .ant-table-thead > tr > th {
-          background: var(--fx-fill-alter, #f9fafb);
-          color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-          border-color: var(--fx-border-color, #e5e7eb);
-        }
-
-        .ant-table-tbody > tr {
-          &:hover {
-            background: var(--fx-fill, #f3f4f6);
-          }
-        }
-
-        .ant-table-tbody > tr > td {
-          color: var(--fx-text-primary, rgba(0, 0, 0, 0.85));
-          border-color: var(--fx-border-color, #e5e7eb);
-        }
-      }
-  }
-}
-
-@media (max-width: 992px) {
-  .system-dashboard--stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 576px) {
-  .system-dashboard--stats {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+<style scoped lang="less" src="@/styles/views/system/dashboard/index.less"></style>
