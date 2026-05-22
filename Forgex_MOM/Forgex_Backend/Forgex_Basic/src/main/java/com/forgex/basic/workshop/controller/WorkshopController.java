@@ -66,7 +66,7 @@ public class WorkshopController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, workshopService.delete(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
-    @RequirePerm("basic:workshop:delete")
+    @RequirePerm("basic:workshop:batchDelete")
     @PostMapping("/batchDelete")
     public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
         return R.ok(CommonPrompt.DELETE_SUCCESS, workshopService.batchDelete(params.get("ids")));

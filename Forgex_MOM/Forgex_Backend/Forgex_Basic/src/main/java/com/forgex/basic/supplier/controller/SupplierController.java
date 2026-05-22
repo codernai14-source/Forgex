@@ -134,6 +134,13 @@ public class SupplierController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, supplierService.delete(id));
     }
 
+    @Operation(summary = "批量删除供应商")
+    @RequirePerm("basic:supplier:batchDelete")
+    @PostMapping("/batchDelete")
+    public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
+        return R.ok(CommonPrompt.DELETE_SUCCESS, supplierService.batchDelete(params.get("ids")));
+    }
+
     /**
      * 导出供应商主数据 Excel。
      *

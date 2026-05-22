@@ -5,9 +5,11 @@
       table-code="LabelTypeTable"
       :request="loadData"
       row-key="id"
+      :row-selection="rowSelection"
     >
       <template #toolbar>
         <a-space>
+          <a-button v-permission="'label:type:batchDelete'" danger :disabled="!selectedCount" @click="handleBatchDelete">{{ t('common.batchDelete') }}</a-button>
           <a-button type="primary" @click="openCreate">
             <PlusOutlined /> 新增
           </a-button>
@@ -47,11 +49,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { labelTypeApi } from '@/api/label/type'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const editorVisible = ref(false)
 const editorTitle = ref('新增标签类型')
 const editingId = ref<number | null>(null)
@@ -108,6 +114,19 @@ function handleDelete(record: any) {
     title: '确认删除？',
     onOk: async () => {
       await labelTypeApi.delete(record.id)
+      tableRef.value?.reload()
+    }
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await labelTypeApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       tableRef.value?.reload()
     }
   })

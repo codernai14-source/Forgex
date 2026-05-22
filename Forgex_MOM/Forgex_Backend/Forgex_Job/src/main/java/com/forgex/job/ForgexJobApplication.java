@@ -56,11 +56,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @see org.springframework.scheduling.annotation.EnableAsync
  * @see com.forgex.sys.ForgexSysApplication
  */
-@SpringBootApplication(
-    scanBasePackages = {"com.forgex.job", "com.forgex.common", "com.forgex.sys"},
+@SpringBootApplication
+@ComponentScan(
+    basePackages = {"com.forgex.job", "com.forgex.common", "com.forgex.sys"},
     excludeFilters = @ComponentScan.Filter(
-            type = FilterType.ASSIGNABLE_TYPE,
-            classes = ForgexSysApplication.class
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = ForgexSysApplication.class
     ))
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.forgex.common.feign.client")

@@ -11,7 +11,17 @@
       </a-space>
     </div>
 
-    <FxDynamicTable ref="tableRef" table-code="BasicTeamTable" :request="handleRequest" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="BasicTeamTable" :request="handleRequest" :row-selection="rowSelection" row-key="id">
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:team:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #teamName="{ record }">
         <div class="master-name">
           <strong>{{ record.teamName }}</strong>
@@ -78,15 +88,19 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { employeeApi, type Employee } from '@/api/basic/employee'
 import { shiftApi } from '@/api/basic/shift'
 import { teamApi, type Team, type TeamEmployee } from '@/api/basic/team'
 import { workshopApi } from '@/api/basic/workshop'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const visible = ref(false)
 const saving = ref(false)
 const readonly = ref(false)
@@ -167,6 +181,19 @@ function handleDelete(record: Team) {
     title: '确认删除该班组？',
     async onOk() {
       await teamApi.delete(record.id!)
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await teamApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })

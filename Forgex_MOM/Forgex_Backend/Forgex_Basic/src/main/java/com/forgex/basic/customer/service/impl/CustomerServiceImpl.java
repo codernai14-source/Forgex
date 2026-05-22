@@ -186,6 +186,18 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
         return true;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchDelete(List<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return true;
+        }
+        for (Long id : ids) {
+            delete(id);
+        }
+        return true;
+    }
+
     /**
      * 生成关联租户。
      *

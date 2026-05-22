@@ -23,7 +23,18 @@
       :request="handleRequest"
       :dict-options="dictOptions"
       row-key="id"
+      :row-selection="rowSelection"
     >
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:supplier:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #logoUrl="{ record }">
         <a-avatar v-if="record.logoUrl" shape="square" :size="32" :src="record.logoUrl" />
         <span v-else>-</span>
@@ -410,6 +421,7 @@ import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import { uploadFile } from '@/api/system/file'
 import { supplierApi, type Supplier, type SupplierContact, type SupplierPageParam, type SupplierQualification } from '@/api/basic/supplier'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { useDict, type DictItemOption } from '@/hooks/useDict'
 import { useAppStore } from '@/stores/app'
 import { translateLegacyText } from '@/utils/legacyI18n'
@@ -424,6 +436,7 @@ interface OptionItem {
 const appStore = useAppStore()
 const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const saving = ref(false)
 const editorVisible = ref(false)
 const activeTab = ref('main')
@@ -653,6 +666,19 @@ function handleDelete(record: Supplier) {
     content: translateLegacyText(`删除后会同步删除 ${record.supplierFullName} 的详情、联系人和资质信息。`),
     async onOk() {
       await supplierApi.delete(record.id!)
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await supplierApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })

@@ -87,6 +87,20 @@
               </router-view>
             </div>
           </div>
+          <Transition name="fx-back-top-fade">
+            <a-button
+              v-if="showBackTop"
+              class="fx-back-top"
+              shape="circle"
+              type="primary"
+              :title="t('common.backTop')"
+              @click="scrollCurrentPageToTop"
+            >
+              <template #icon>
+                <ArrowUpOutlined />
+              </template>
+            </a-button>
+          </Transition>
         </a-layout-content>
         
         <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
@@ -528,7 +542,8 @@ import {
   DesktopOutlined,
   AppstoreOutlined,
   FolderOutlined,
-  FileOutlined
+  FileOutlined,
+  ArrowUpOutlined,
 } from '@ant-design/icons-vue'
 
 import AppHeader from './components/AppHeader.vue'
@@ -1452,8 +1467,43 @@ const pageTransitionName = computed(() =>
 
 const headerHiddenByScroll = ref(false)
 const lastScrollY = ref(typeof window !== 'undefined' ? window.scrollY || 0 : 0)
+const showBackTop = ref(false)
+let pageScrollEl: HTMLElement | null = null
 
 const showHeader = computed(() => layoutConfig.value.headerVisible && !headerHiddenByScroll.value)
+
+function resolveCurrentPageScrollEl() {
+  if (typeof document === 'undefined') {
+    return null
+  }
+  return document.querySelector('.fx-page-wrapper') as HTMLElement | null
+}
+
+function updateBackTopVisible() {
+  const el = resolveCurrentPageScrollEl()
+  showBackTop.value = !!el && el.scrollTop > 240
+}
+
+function handlePageScroll() {
+  updateBackTopVisible()
+}
+
+function bindCurrentPageScroll() {
+  const nextEl = resolveCurrentPageScrollEl()
+  if (pageScrollEl === nextEl) {
+    updateBackTopVisible()
+    return
+  }
+  pageScrollEl?.removeEventListener('scroll', handlePageScroll)
+  pageScrollEl = nextEl
+  pageScrollEl?.addEventListener('scroll', handlePageScroll, { passive: true })
+  updateBackTopVisible()
+}
+
+function scrollCurrentPageToTop() {
+  const el = pageScrollEl || resolveCurrentPageScrollEl()
+  el?.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 function handleScroll() {
   if (layoutConfig.value.headerMode !== 'hide-on-scroll') {
@@ -2102,6 +2152,7 @@ watch(
 
     updateTabsByRoute(path)
     syncSystemGuideAutoStart()
+    void nextTick(bindCurrentPageScroll)
   },
   { immediate: true }
 )
@@ -2883,6 +2934,8 @@ onMounted(async () => {
   if (isFallbackRoute.value) {
     await loadLayout()
     updateTabsByRoute(route.fullPath)
+    await nextTick()
+    bindCurrentPageScroll()
     const bootstrapLoader = (window as any).__globalLoader
     if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
       window.requestAnimationFrame(() => {
@@ -2897,6 +2950,8 @@ onMounted(async () => {
     loadTenantOptions(),
   ])
   updateTabsByRoute(route.fullPath)
+  await nextTick()
+  bindCurrentPageScroll()
   
   try {
     const config = await getSystemBasicConfig()
@@ -2931,6 +2986,8 @@ onUnmounted(() => {
     window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
+  pageScrollEl?.removeEventListener('scroll', handlePageScroll)
+  pageScrollEl = null
   closeMessageSse()
 })
 </script>

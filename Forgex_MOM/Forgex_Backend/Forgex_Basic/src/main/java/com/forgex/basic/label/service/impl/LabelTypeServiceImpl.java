@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -87,6 +88,17 @@ public class LabelTypeServiceImpl extends ServiceImpl<LabelTypeMapper, LabelType
         labelTypeMapper.update(null, new LambdaUpdateWrapper<LabelType>()
                 .eq(LabelType::getId, id)
                 .set(LabelType::getDeleted, true));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchDeleteTypes(List<Long> ids, Long tenantId) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        for (Long id : ids) {
+            deleteType(id, tenantId);
+        }
     }
 
     @Override

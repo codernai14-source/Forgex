@@ -347,6 +347,12 @@ Forgex_MOM/Forgex_Fronted/src/components/common/ColumnSettingButton.vue
 2. 列字段名是否稳定
 3. 是否切换了用户或租户，导致读取到不同层级配置
 
+## 查询区布局与选择透传
+
+查询区首行渲染数量由 `queryFirstRowCount` prop 控制，默认保持历史行为显示 3 个查询条件。组件会将传入值限制在 `1-6`，并把 `config.queryFields` 拆分为 `primaryQueryFields` 与 `extraQueryFields`；仅当存在额外条件时才显示展开按钮。
+
+表格复选能力不在公共组件内维护业务状态，而是继续透传 Ant Design Vue `rowSelection`。业务页面负责维护 `selectedRowKeys`、发起批量删除、清空选择和刷新表格，公共组件只负责把 `rowSelection` 传给内部 `a-table`。
+
 ## 关联文档
 
 - [FxDynamicTable使用方式](./FxDynamicTable使用方式.md)

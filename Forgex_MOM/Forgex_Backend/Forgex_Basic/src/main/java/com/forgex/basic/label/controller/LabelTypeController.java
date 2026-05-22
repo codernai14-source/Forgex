@@ -68,6 +68,14 @@ public class LabelTypeController {
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
 
+    @Operation(summary = "批量删除标签类型")
+    @RequirePerm("label:type:batchDelete")
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, List<Long>> body) {
+        labelTypeService.batchDeleteTypes(body.get("ids"), TenantContext.get());
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
+    }
+
     @Operation(summary = "启停标签类型")
     @RequirePerm("label:type:edit")
     @PostMapping("/enable")

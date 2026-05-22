@@ -113,6 +113,13 @@ public class CustomerController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, customerService.delete(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
+    @Operation(summary = "批量删除客户")
+    @RequirePerm("basic:customer:batchDelete")
+    @PostMapping("/batchDelete")
+    public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
+        return R.ok(CommonPrompt.DELETE_SUCCESS, customerService.batchDelete(params.get("ids")));
+    }
+
     /**
      * 创建客户租户。
      *

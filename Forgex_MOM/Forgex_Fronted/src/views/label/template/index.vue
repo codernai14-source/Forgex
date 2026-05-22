@@ -1,7 +1,8 @@
 <template>
   <div class="page-container">
-    <FxDynamicTable ref="tableRef" table-code="LabelTemplateTable" :request="loadData" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="LabelTemplateTable" :request="loadData" row-key="id" :row-selection="rowSelection">
       <template #toolbar>
+        <a-button v-permission="'label:template:batchDelete'" danger :disabled="!selectedCount" @click="handleBatchDelete">{{ t('common.batchDelete') }}</a-button>
         <a-button type="primary" @click="openCreate"><PlusOutlined /> 新增</a-button>
       </template>
       <template #isEnabled="{ record }">
@@ -50,14 +51,18 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { labelTemplateApi } from '@/api/label/template'
 import { labelTypeApi } from '@/api/label/type'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import LabelTemplateEditor from './components/LabelTemplateEditor.vue'
 import LabelPreview from './components/LabelPreview.vue'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const editorVisible = ref(false)
 const designerVisible = ref(false)
 const previewVisible = ref(false)
@@ -125,6 +130,19 @@ function handleDelete(record: any) {
     title: '确认删除？',
     onOk: async () => {
       await labelTemplateApi.delete(record.id)
+      tableRef.value?.reload()
+    }
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await labelTemplateApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       tableRef.value?.reload()
     }
   })

@@ -13,7 +13,7 @@
         <div class="fx-query-row">
           <!-- 第一行查询条件，最多展示 3 项 -->
           <div class="fx-query-row-content">
-            <template v-for="(q, index) in config.queryFields.slice(0, 3)" :key="q.field">
+            <template v-for="q in primaryQueryFields" :key="q.field">
               <a-form-item :label="q.label">
                 <a-input
                   v-if="q.queryType === 'input'"
@@ -63,7 +63,7 @@
           <!-- 查询操作区 -->
           <div class="fx-query-actions-row">
             <!-- 展开/收起按钮 -->
-            <div v-if="config.queryFields.length > 3" class="fx-query-toggle">
+            <div v-if="extraQueryFields.length" class="fx-query-toggle">
               <a-button
                 type="text"
                 @click="isQueryExpanded = !isQueryExpanded"
@@ -84,7 +84,7 @@
 
         <!-- 展开后显示的附加查询条件 -->
         <div v-if="isQueryExpanded" class="fx-query-row fx-query-row-extra">
-          <template v-for="(q, index) in config.queryFields.slice(3)" :key="q.field">
+          <template v-for="q in extraQueryFields" :key="q.field">
             <a-form-item :label="q.label">
               <a-input
                 v-if="q.queryType === 'input'"
@@ -288,6 +288,11 @@ const props = withDefaults(
     showColumnSetting?: boolean
 
     /**
+     * 查询区第一行展示的查询条件数量，取值范围 1-6。
+     */
+    queryFirstRowCount?: number
+
+    /**
      * 已废弃（旧版按视口比例分配高度），仅为兼容保留，请勿新业务依赖。
      */
     tableHeightRatio?: number
@@ -297,6 +302,7 @@ const props = withDefaults(
     showQueryForm: true,
     /** 列设置属于表格公共能力，默认展示，不依赖菜单按钮权限 */
     showColumnSetting: true,
+    queryFirstRowCount: 3,
   },
 )
 
@@ -329,6 +335,22 @@ const columnSettingColumns = computed(() => config.value?.columns ?? [])
 const showColumnSettingBar = computed(
   () => !!config.value?.columns?.length && props.showColumnSetting !== false,
 )
+
+const resolvedQueryFirstRowCount = computed(() => {
+  const count = Number(props.queryFirstRowCount)
+  if (!Number.isFinite(count)) {
+    return 3
+  }
+  return Math.max(1, Math.min(6, Math.floor(count)))
+})
+
+const primaryQueryFields = computed(() => {
+  return (config.value?.queryFields || []).slice(0, resolvedQueryFirstRowCount.value)
+})
+
+const extraQueryFields = computed(() => {
+  return (config.value?.queryFields || []).slice(resolvedQueryFirstRowCount.value)
+})
 
 /**
  * 配置版本号，用于强制刷新表格与查询区的 key。

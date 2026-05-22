@@ -13,7 +13,17 @@
       </a-space>
     </div>
 
-    <FxDynamicTable ref="tableRef" table-code="FinishedGoodsMaterialTable" :request="handleRequest" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="FinishedGoodsMaterialTable" :request="handleRequest" :row-selection="rowSelection" row-key="id">
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:material:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #status="{ record }">
         <a-tag :color="record.status === 1 ? 'success' : 'default'">
           {{ record.status === 1 ? t('common.enable') : t('common.disable') }}
@@ -134,10 +144,12 @@ import { useI18n } from 'vue-i18n'
 import { materialApi } from '@/api/basic/material'
 import { getAllUnits } from '@/api/basic/unit'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 
 const { t } = useI18n()
 
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const saving = ref(false)
@@ -264,6 +276,20 @@ function handleDelete(record: any) {
     onOk: async () => {
       await materialApi.delete({ id: record.id })
       message.success(t('common.deleteSuccess'))
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await materialApi.batchDelete({ ids: selectedRowKeys.value })
+      message.success(t('common.deleteSuccess'))
+      clearSelection()
       tableRef.value?.refresh?.()
     },
   })

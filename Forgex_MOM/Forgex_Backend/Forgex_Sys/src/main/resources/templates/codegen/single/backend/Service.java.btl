@@ -5,6 +5,8 @@ import ${ctx.packageName}.domain.entity.${ctx.entityName};
 import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
 import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
 
+import java.util.List;
+
 /**
  * ${ctx.mainTableComment} 服务接口
  *
@@ -22,4 +24,6 @@ public interface ${ctx.entityName}Service {
     void update(${ctx.entityName}SaveParam param);
 
     void delete(${ctx.mainPkJavaType!"Long"} id);
+
+    void batchDelete(List<${ctx.mainPkJavaType!"Long"}> ids);
 }

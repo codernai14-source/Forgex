@@ -60,6 +60,14 @@ public interface ICustomerService extends IService<BasicCustomer> {
      * @return 是否处理成功
      */
     Boolean delete(Long id);
+
+    /**
+     * 批量删除数据。
+     *
+     * @param ids 主键 ID 集合
+     * @return 是否处理成功
+     */
+    Boolean batchDelete(List<Long> ids);
     /**
      * 生成关联租户。
      *

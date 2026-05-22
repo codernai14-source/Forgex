@@ -113,7 +113,7 @@ public class BasicPackagingTypeController {
      * @param body 请求体，包含 ids
      * @return 统一响应
      */
-    @RequirePerm("basic:packaging:delete")
+    @RequirePerm("basic:packaging:batchDelete")
     @PostMapping("/batchDelete")
     @OperationLog(module = "basic", menuPath = "/basic/packaging", operationType = OperationType.DELETE)
     public R<Void> batchDelete(@RequestBody Map<String, List<Long>> body) {

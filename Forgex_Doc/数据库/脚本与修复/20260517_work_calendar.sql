@@ -7,7 +7,6 @@ USE `forgex_admin`;
 
 SET @script_user := '20260517_work_calendar';
 SET @now := NOW();
-SET @public_tenant_id := 1993479636925403138;
 
 CREATE TABLE IF NOT EXISTS `basic_work_calendar_day` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
@@ -81,11 +80,15 @@ CREATE TABLE IF NOT EXISTS `basic_work_calendar_user_event` (
   KEY `idx_work_calendar_user_event_type` (`tenant_id`, `owner_user_id`, `record_type`, `deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作日历个人日程';
 
-SET @basic_parent_id := COALESCE(
-  (SELECT id FROM `sys_menu` WHERE deleted = 0 AND path = 'basic' ORDER BY id LIMIT 1),
-  (SELECT id FROM `sys_menu` WHERE deleted = 0 AND name IN ('基础信息', '基础资料') ORDER BY id LIMIT 1)
+SET @basic_module_id := COALESCE(
+  (SELECT id FROM `sys_module` WHERE deleted = 0 AND code = 'basic' ORDER BY id LIMIT 1),
+  (SELECT module_id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'BasicDashboard' ORDER BY id LIMIT 1),
+  5
 );
-SET @basic_module_id := COALESCE((SELECT module_id FROM `sys_menu` WHERE id = @basic_parent_id LIMIT 1), 2);
+SET @public_tenant_id := COALESCE(
+  (SELECT tenant_id FROM `sys_module` WHERE id = @basic_module_id LIMIT 1),
+  1
+);
 SET @admin_role_id := COALESCE(
   (SELECT id FROM `sys_role` WHERE deleted = 0 AND tenant_id = @public_tenant_id AND role_key = 'admin' ORDER BY id LIMIT 1),
   (SELECT id FROM `sys_role` WHERE deleted = 0 AND role_key = 'admin' ORDER BY id LIMIT 1)
@@ -93,11 +96,11 @@ SET @admin_role_id := COALESCE(
 
 INSERT INTO `sys_menu`
 (`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
-SELECT @public_tenant_id, 'PUBLIC', @basic_module_id, @basic_parent_id, 'menu', 'workCalendar', '工作日历',
+SELECT @public_tenant_id, 'PUBLIC', @basic_module_id, 0, 'menu', 'workCalendar', '工作日历',
        JSON_OBJECT('zh-CN','工作日历','zh-TW','工作日曆','en-US','Work Calendar','ja-JP','稼働カレンダー','ko-KR','작업 달력'),
-       'CalendarOutlined', 'BasicWorkCalendar', 'basic:workCalendar:query', 80, 1, 1, @now, @script_user, @now, @script_user, 0, 2, 'embedded', NULL
+       'CalendarOutlined', 'BasicWorkCalendar', 'basic:workCalendar:query', 57, 1, 1, @now, @script_user, @now, @script_user, 0, 1, 'embedded', NULL
 FROM DUAL
-WHERE @basic_parent_id IS NOT NULL
+WHERE @basic_module_id IS NOT NULL
   AND NOT EXISTS (
     SELECT 1 FROM `sys_menu` WHERE deleted = 0 AND component_key = 'BasicWorkCalendar'
   );
