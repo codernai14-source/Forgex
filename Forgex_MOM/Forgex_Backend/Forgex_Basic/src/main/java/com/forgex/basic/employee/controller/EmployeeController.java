@@ -71,7 +71,7 @@ public class EmployeeController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, employeeService.delete(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
-    @RequirePerm("basic:employee:delete")
+    @RequirePerm("basic:employee:batchDelete")
     @PostMapping("/batchDelete")
     public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
         return R.ok(CommonPrompt.DELETE_SUCCESS, employeeService.batchDelete(params.get("ids")));

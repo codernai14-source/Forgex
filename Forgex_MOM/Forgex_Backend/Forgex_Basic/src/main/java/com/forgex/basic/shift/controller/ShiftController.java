@@ -65,7 +65,7 @@ public class ShiftController {
         return R.ok(CommonPrompt.DELETE_SUCCESS, shiftService.delete(Long.valueOf(String.valueOf(params.get("id")))));
     }
 
-    @RequirePerm("basic:shift:delete")
+    @RequirePerm("basic:shift:batchDelete")
     @PostMapping("/batchDelete")
     public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
         return R.ok(CommonPrompt.DELETE_SUCCESS, shiftService.batchDelete(params.get("ids")));

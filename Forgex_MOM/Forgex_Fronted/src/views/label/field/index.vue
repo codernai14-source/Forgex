@@ -1,8 +1,9 @@
 <template>
   <div class="page-container">
-    <FxDynamicTable ref="tableRef" table-code="LabelFieldTable" :request="loadData" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="LabelFieldTable" :request="loadData" row-key="id" :row-selection="rowSelection">
       <template #toolbar>
         <a-space>
+          <a-button v-permission="'label:field:batchDelete'" danger :disabled="!selectedCount" @click="handleBatchDelete">{{ t('common.batchDelete') }}</a-button>
           <a-button type="primary" @click="openCreate"><PlusOutlined /> 新增</a-button>
           <a-button @click="importVisible = true">导入</a-button>
         </a-space>
@@ -49,13 +50,17 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import { labelFieldApi } from '@/api/label/field'
 import { getModuleList } from '@/api/system/module'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const editorVisible = ref(false)
 const editorTitle = ref('新增标签字段')
 const importVisible = ref(false)
@@ -111,6 +116,19 @@ function handleDelete(record: any) {
     title: '确认删除？',
     onOk: async () => {
       await labelFieldApi.delete(record.id)
+      tableRef.value?.reload()
+    }
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await labelFieldApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       tableRef.value?.reload()
     }
   })

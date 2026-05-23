@@ -7,6 +7,7 @@ SET NAMES utf8mb4;
 USE `forgex_admin`;
 
 SET @script_user := '20260516_packaging_spec_three_slot_upgrade';
+SET @now := NOW();
 
 CREATE TABLE IF NOT EXISTS `basic_packaging_type` (
   `id` bigint NOT NULL COMMENT '主键 ID',
@@ -44,6 +45,9 @@ SET @ddl := IF(@has_packaging_spec_type = 0,
   'SELECT 1'
 );
 PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+ALTER TABLE `basic_packaging_type`
+  MODIFY COLUMN `packaging_spec_type` varchar(50) DEFAULT NULL COMMENT '包装规格类型：BOX=箱，BUCKET=桶，ROLL=卷，CASE=盒，BAG=袋';
 
 SET @has_length_value := (
   SELECT COUNT(1) FROM information_schema.COLUMNS
@@ -128,7 +132,7 @@ PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 UPDATE `basic_packaging_type`
 SET
   `packaging_spec_type` = CASE
-    WHEN `packaging_spec_type` IS NOT NULL AND `packaging_spec_type` <> '' THEN `packaging_spec_type`
+    WHEN `packaging_spec_type` IN ('BOX', 'BUCKET', 'ROLL', 'CASE', 'BAG') THEN `packaging_spec_type`
     WHEN `packaging_material` IN ('wooden_box', 'carton') THEN 'BOX'
     WHEN `packaging_material` IN ('iron_drum') THEN 'BUCKET'
     WHEN `packaging_material` IN ('plastic_bag') THEN 'BAG'
@@ -158,7 +162,118 @@ CREATE TABLE IF NOT EXISTS `basic_material_packaging_relation` (
   KEY `idx_material_packaging_type` (`tenant_id`,`packaging_type_id`,`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='物料包装规格三槽关联表';
 
-USE `forgex_common`;
+SET @basic_module_id := COALESCE(
+  (SELECT `id` FROM `sys_module` WHERE `deleted` = 0 AND `code` = 'basic' ORDER BY `id` LIMIT 1),
+  (SELECT `module_id` FROM `sys_menu` WHERE `deleted` = 0 AND `component_key` = 'BasicDashboard' ORDER BY `id` LIMIT 1),
+  5
+);
+SET @public_tenant_id := COALESCE(
+  (SELECT `tenant_id` FROM `sys_module` WHERE `id` = @basic_module_id LIMIT 1),
+  1
+);
+SET @admin_role_id := (
+  SELECT `id`
+  FROM `sys_role`
+  WHERE `deleted` = 0
+    AND `tenant_id` = @public_tenant_id
+    AND `role_key` = 'admin'
+  ORDER BY `id`
+  LIMIT 1
+);
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT @public_tenant_id, 'PUBLIC', @basic_module_id, 0, 'menu', 'packaging', '包装方式',
+       JSON_OBJECT('zh-CN','包装方式','zh-TW','包裝方式','en-US','Packaging','ja-JP','包装方式','ko-KR','포장 방식'),
+       'InboxOutlined', 'BasicPackaging', 'basic:packaging:query', 56, 1, 1, @now, @script_user, @now, @script_user, 0, 1, 'embedded', NULL
+FROM DUAL
+WHERE @basic_module_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` WHERE `deleted` = 0 AND `component_key` = 'BasicPackaging'
+  );
+
+UPDATE `sys_menu`
+SET
+  `tenant_id` = @public_tenant_id,
+  `tenant_type` = 'PUBLIC',
+  `module_id` = @basic_module_id,
+  `parent_id` = 0,
+  `type` = 'menu',
+  `path` = 'packaging',
+  `name` = '包装方式',
+  `name_i18n_json` = JSON_OBJECT('zh-CN','包装方式','zh-TW','包裝方式','en-US','Packaging','ja-JP','包装方式','ko-KR','포장 방식'),
+  `icon` = 'InboxOutlined',
+  `perm_key` = 'basic:packaging:query',
+  `order_num` = 56,
+  `visible` = 1,
+  `status` = 1,
+  `menu_level` = 1,
+  `menu_mode` = 'embedded',
+  `update_time` = @now,
+  `update_by` = @script_user
+WHERE `deleted` = 0 AND `component_key` = 'BasicPackaging';
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT @public_tenant_id, 'PUBLIC', @basic_module_id, parent.`id`, 'button', seed.`path`, seed.`name`, seed.`name_i18n_json`, NULL, NULL,
+       seed.`perm_key`, seed.`order_num`, 1, 1, @now, @script_user, @now, @script_user, 0, 2, 'embedded', NULL
+FROM (
+  SELECT 'query' AS `path`, '包装方式查询' AS `name`, JSON_OBJECT('zh-CN','查询','zh-TW','查詢','en-US','Query','ja-JP','検索','ko-KR','조회') AS `name_i18n_json`, 'basic:packaging:query' AS `perm_key`, 1 AS `order_num`
+  UNION ALL SELECT 'add', '包装方式新增', JSON_OBJECT('zh-CN','新增','zh-TW','新增','en-US','Add','ja-JP','追加','ko-KR','추가'), 'basic:packaging:add', 2
+  UNION ALL SELECT 'edit', '包装方式编辑', JSON_OBJECT('zh-CN','编辑','zh-TW','編輯','en-US','Edit','ja-JP','編集','ko-KR','편집'), 'basic:packaging:edit', 3
+  UNION ALL SELECT 'delete', '包装方式删除', JSON_OBJECT('zh-CN','删除','zh-TW','刪除','en-US','Delete','ja-JP','削除','ko-KR','삭제'), 'basic:packaging:delete', 4
+) seed
+JOIN `sys_menu` parent ON parent.`deleted` = 0 AND parent.`component_key` = 'BasicPackaging'
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM `sys_menu` existing
+  WHERE existing.`deleted` = 0
+    AND existing.`parent_id` = parent.`id`
+    AND existing.`perm_key` = seed.`perm_key`
+);
+
+INSERT INTO `sys_permission`
+(`permission_name`,`permission_key`,`url`,`method`,`tenant_id`,`create_time`,`update_time`,`deleted`)
+SELECT seed.`permission_name`, seed.`permission_key`, seed.`url`, 'POST', 0, @now, @now, 0
+FROM (
+  SELECT '包装方式查询' AS `permission_name`, 'basic:packaging:query' AS `permission_key`, '/basic/packaging/page' AS `url`
+  UNION ALL SELECT '包装方式新增', 'basic:packaging:add', '/basic/packaging/create'
+  UNION ALL SELECT '包装方式编辑', 'basic:packaging:edit', '/basic/packaging/update'
+  UNION ALL SELECT '包装方式删除', 'basic:packaging:delete', '/basic/packaging/delete'
+) seed
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM `sys_permission` existing
+  WHERE existing.`deleted` = 0
+    AND existing.`permission_key` = seed.`permission_key`
+);
+
+INSERT INTO `sys_role_menu` (`tenant_id`,`role_id`,`menu_id`)
+SELECT @public_tenant_id, @admin_role_id, m.`id`
+FROM `sys_menu` m
+WHERE @admin_role_id IS NOT NULL
+  AND m.`deleted` = 0
+  AND (m.`component_key` = 'BasicPackaging' OR m.`perm_key` LIKE 'basic:packaging:%')
+  AND NOT EXISTS (
+    SELECT 1
+    FROM `sys_role_menu` rm
+    WHERE rm.`tenant_id` = @public_tenant_id
+      AND rm.`role_id` = @admin_role_id
+      AND rm.`menu_id` = m.`id`
+  );
+
+INSERT INTO `sys_role_permission` (`role_id`,`permission_id`)
+SELECT @admin_role_id, p.`id`
+FROM `sys_permission` p
+WHERE @admin_role_id IS NOT NULL
+  AND p.`deleted` = 0
+  AND p.`permission_key` LIKE 'basic:packaging:%'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM `sys_role_permission` rp
+    WHERE rp.`role_id` = @admin_role_id
+      AND rp.`permission_id` = p.`id`
+  );
 
 SET @dict_root_id := 5000000000000000600;
 
@@ -166,7 +281,7 @@ INSERT INTO `sys_dict`
 (`id`,`parent_id`,`dict_name`,`dict_code`,`module_id`,`dict_value`,`dict_value_i18n_json`,`node_path`,`level`,`children_count`,`order_num`,`status`,`remark`,`tenant_id`,`create_by`,`create_time`,`update_by`,`update_time`,`deleted`,`tag_style_json`)
 SELECT @dict_root_id, 0, '包装规格类型', 'packaging_spec_type', NULL, NULL,
        JSON_OBJECT('zh-CN','包装规格类型','en-US','Packaging Spec Type','zh-TW','包裝規格類型','ja-JP','包装仕様タイプ','ko-KR','포장 규격 유형'),
-       'packaging_spec_type', 1, 5, 360, 1, '包装规格主数据类型字典', 0, @script_user, NOW(), @script_user, NOW(), 0, NULL
+       'packaging_spec_type', 1, 5, 360, 1, '包装规格主数据类型字典', 0, 0, NOW(), 0, NOW(), 0, NULL
 FROM DUAL
 WHERE NOT EXISTS (
   SELECT 1 FROM `sys_dict` WHERE `tenant_id` = 0 AND `dict_code` = 'packaging_spec_type' AND `parent_id` = 0 AND `deleted` = 0
@@ -182,7 +297,7 @@ INSERT INTO `sys_dict`
 (`id`,`parent_id`,`dict_name`,`dict_code`,`module_id`,`dict_value`,`dict_value_i18n_json`,`node_path`,`level`,`children_count`,`order_num`,`status`,`remark`,`tenant_id`,`create_by`,`create_time`,`update_by`,`update_time`,`deleted`,`tag_style_json`)
 SELECT seed.id, @dict_root_id, seed.dict_name, seed.dict_code, NULL, seed.dict_value,
        JSON_OBJECT('zh-CN', seed.zh_cn, 'en-US', seed.en_us, 'zh-TW', seed.zh_tw, 'ja-JP', seed.ja_jp, 'ko-KR', seed.ko_kr),
-       CONCAT('packaging_spec_type/', LOWER(seed.dict_value)), 2, 0, seed.order_num, 1, '包装规格类型', 0, @script_user, NOW(), @script_user, NOW(), 0,
+       CONCAT('packaging_spec_type/', LOWER(seed.dict_value)), 2, 0, seed.order_num, 1, '包装规格类型', 0, 0, NOW(), 0, NOW(), 0,
        JSON_OBJECT('color', seed.color)
 FROM (
   SELECT 5000000000000000601 id, '箱' dict_name, 'packaging_spec_type_box' dict_code, 'BOX' dict_value, '箱' zh_cn, 'Box' en_us, '箱' zh_tw, '箱' ja_jp, '상자' ko_kr, 1 order_num, 'blue' color
@@ -195,6 +310,8 @@ WHERE NOT EXISTS (
   SELECT 1 FROM `sys_dict` t
   WHERE t.`tenant_id` = 0 AND t.`parent_id` = @dict_root_id AND t.`dict_value` = seed.dict_value AND t.`deleted` = 0
 );
+
+USE `forgex_common`;
 
 INSERT INTO `fx_table_config`
 (`tenant_id`,`table_code`,`table_name_i18n_json`,`table_type`,`row_key`,`default_page_size`,`enabled`,`version`,`create_by`,`create_time`,`update_by`,`update_time`,`deleted`)
@@ -240,3 +357,10 @@ WHERE `tenant_id` = 0 AND `table_code` = 'BasicPackagingTypeTable' AND `field` =
 UPDATE `fx_table_column_config`
 SET `queryable` = 1, `query_type` = 'select', `query_operator` = 'eq', `dict_code` = 'common_status', `render_type` = 'tag', `sorter_field` = 'status', `update_by` = @script_user, `update_time` = NOW()
 WHERE `tenant_id` = 0 AND `table_code` = 'BasicPackagingTypeTable' AND `field` = 'status' AND `deleted` = 0;
+
+UPDATE `fx_table_column_config`
+SET `enabled` = 0, `queryable` = 0, `update_by` = @script_user, `update_time` = NOW()
+WHERE `tenant_id` = 0
+  AND `table_code` = 'BasicPackagingTypeTable'
+  AND `field` IN ('packagingMaterial', 'lengthMm', 'widthMm', 'heightMm', 'weightKg', 'maxLoadKg', 'unitCost')
+  AND `deleted` = 0;

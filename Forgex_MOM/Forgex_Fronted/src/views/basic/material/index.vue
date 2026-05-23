@@ -46,8 +46,19 @@
       table-code="MaterialTable"
       :request="handleRequest"
       :dict-options="dictOptions"
+      :row-selection="rowSelection"
       row-key="id"
     >
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:material:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #materialType="{ record }">
         <a-tag :color="materialTypeColor(record.materialType)">
           {{ labelOf(materialTypeOptions, record.materialType) }}
@@ -497,6 +508,7 @@ import { getAllUnits } from '@/api/basic/unit'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { useAppStore } from '@/stores/app'
 
 const { t } = useI18n()
@@ -514,6 +526,7 @@ type PackagingRelationForm = {
 }
 
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const activeFilterTab = ref(ALL_TAB)
 const editorVisible = ref(false)
 const importDialogVisible = ref(false)
@@ -1101,6 +1114,20 @@ function handleDelete(record: any) {
     onOk: async () => {
       await materialApi.delete({ id: record.id })
       message.success(t('common.deleteSuccess'))
+      tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    onOk: async () => {
+      await materialApi.batchDelete({ ids: selectedRowKeys.value })
+      message.success(t('common.deleteSuccess'))
+      clearSelection()
       tableRef.value?.refresh?.()
     },
   })

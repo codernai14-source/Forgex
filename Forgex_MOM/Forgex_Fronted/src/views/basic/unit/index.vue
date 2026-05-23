@@ -67,8 +67,25 @@
         ref="tableRef"
         table-code="BasicUnitTable"
         :request="handleRequest"
+        :row-selection="rowSelection"
         row-key="id"
       >
+        <template #toolbar>
+          <a-space wrap>
+            <a-button
+              v-permission="'basic:unit:delete'"
+              danger
+              :disabled="!selectedRowKeys.length"
+              @click="handleBatchUnitDelete"
+            >
+              {{ t('common.batchDelete') }}
+            </a-button>
+            <span v-if="selectedRowKeys.length" class="selection-summary">
+              {{ t('common.selectedCount', { count: selectedRowKeys.length }) }}
+            </span>
+          </a-space>
+        </template>
+
         <template #action="{ record }">
           <a-space>
             <a v-permission="'basic:unit:edit'" @click="openUnitEdit(record)">{{ t('common.edit') }}</a>
@@ -194,6 +211,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
+import type { TableProps } from 'ant-design-vue'
 import { MoreOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
@@ -222,6 +240,8 @@ const treeData = ref<TreeNode[]>([])
 const selectedTypeKeys = ref<number[]>([])
 const selectedTypeId = ref<number>()
 const selectedTypeName = ref('')
+const selectedRowKeys = ref<number[]>([])
+const selectedRows = ref<UnitMaster[]>([])
 const typeDialogVisible = ref(false)
 const unitDialogVisible = ref(false)
 const conversionVisible = ref(false)
@@ -265,6 +285,20 @@ const targetUnitOptions = computed(() => unitOptions.value
     value: item.id,
   })))
 
+const rowSelection = computed<TableProps['rowSelection']>(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  preserveSelectedRowKeys: false,
+  onChange: (keys, rows) => {
+    selectedRowKeys.value = keys.map(key => Number(key)).filter(key => Number.isFinite(key))
+    selectedRows.value = rows as UnitMaster[]
+  },
+}))
+
+function clearSelection() {
+  selectedRowKeys.value = []
+  selectedRows.value = []
+}
+
 function toTreeNodes(nodes: UnitTypeNode[]): TreeNode[] {
   return (nodes || []).map(node => ({
     key: node.id ?? ROOT_PARENT_ID,
@@ -301,6 +335,7 @@ async function loadTypeTree() {
       selectedTypeName.value = selected.unitTypeName
     }
   }
+  clearSelection()
   await tableRef.value?.refresh?.()
 }
 
@@ -309,6 +344,7 @@ function handleTypeSelect(keys: any[], info: any) {
   selectedTypeId.value = node?.id
   selectedTypeName.value = node?.unitTypeName || ''
   selectedTypeKeys.value = node?.id ? [node.id] : []
+  clearSelection()
   tableRef.value?.refresh?.()
 }
 
@@ -435,6 +471,7 @@ async function saveUnit() {
     }
     unitDialogVisible.value = false
     await reloadUnits()
+    clearSelection()
     await tableRef.value?.refresh?.()
   } finally {
     saving.value = false
@@ -448,6 +485,25 @@ function handleUnitDelete(record: UnitMaster) {
     async onOk() {
       await unitApi.delete(record.id!)
       await reloadUnits()
+      clearSelection()
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchUnitDelete() {
+  const ids = selectedRowKeys.value
+  if (!ids.length) {
+    return
+  }
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: ids.length }),
+    async onOk() {
+      await unitApi.batchDelete(ids)
+      message.success(t('common.deleteSuccess'))
+      await reloadUnits()
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })

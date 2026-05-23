@@ -2,7 +2,7 @@
   <div class="work-calendar-page">
     <div class="calendar-toolbar">
       <div class="toolbar-title">
-        <a-tag color="blue">Manufacturing Calendar</a-tag>
+        <a-tag class="calendar-brand-tag">Manufacturing Calendar</a-tag>
         <h1>工作日历</h1>
         <p>{{ currentYear }} 年 {{ currentMonth }} 月 · {{ monthSummary }}</p>
       </div>

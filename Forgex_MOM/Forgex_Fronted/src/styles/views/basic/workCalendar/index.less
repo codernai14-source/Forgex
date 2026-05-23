@@ -1,7 +1,8 @@
 .work-calendar-page {
   min-height: 100%;
   padding: 20px;
-  background: #f7f8fa;
+  background: var(--fx-content-bg, var(--fx-bg-layout, #f7f8fa));
+  color: var(--fx-text-primary, #1f2937);
 }
 
 .calendar-toolbar,
@@ -12,24 +13,32 @@
   justify-content: space-between;
   gap: 16px;
   padding: 18px 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: var(--fx-radius-lg, 8px);
+  background: var(--fx-bg-container, #fff);
+  box-shadow: var(--fx-shadow, none);
 }
 
 .calendar-toolbar {
   margin-bottom: 12px;
 }
 
+.calendar-brand-tag {
+  border-color: var(--fx-primary-soft-strong, #bae0ff);
+  background: var(--fx-primary-soft, #e6f4ff);
+  color: var(--fx-primary, #1677ff);
+}
+
 .toolbar-title h1 {
   margin: 8px 0 4px;
   font-size: 26px;
   line-height: 1.2;
+  color: var(--fx-text-primary, #1f2937);
 }
 
 .toolbar-title p {
   margin: 0;
-  color: #64748b;
+  color: var(--fx-text-secondary, #64748b);
 }
 
 .calendar-filters {
@@ -38,10 +47,11 @@
 }
 
 .calendar-shell {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--fx-border-color, #e5e7eb);
+  border-radius: var(--fx-radius-lg, 8px);
   overflow: hidden;
-  background: #fff;
+  background: var(--fx-bg-container, #fff);
+  box-shadow: var(--fx-shadow, none);
 }
 
 .weekday-row,
@@ -55,9 +65,9 @@
   display: flex;
   align-items: center;
   padding: 0 12px;
-  border-right: 1px solid #eef0f3;
-  background: #fbfbfc;
-  color: #475569;
+  border-right: 1px solid var(--fx-border-secondary, #eef0f3);
+  background: var(--fx-fill-alter, #fbfbfc);
+  color: var(--fx-text-secondary, #475569);
   font-weight: 600;
 }
 
@@ -65,25 +75,26 @@
   min-height: 142px;
   padding: 10px;
   border: 0;
-  border-top: 1px solid #eef0f3;
-  border-right: 1px solid #eef0f3;
-  background: #fff;
+  border-top: 1px solid var(--fx-border-secondary, #eef0f3);
+  border-right: 1px solid var(--fx-border-secondary, #eef0f3);
+  background: var(--fx-bg-container, #fff);
+  color: var(--fx-text-primary, #1f2937);
   text-align: left;
   cursor: pointer;
   transition: background .16s ease, box-shadow .16s ease;
 }
 
 .day-cell:hover {
-  background: #f8fafc;
+  background: var(--fx-fill-secondary, #f8fafc);
 }
 
 .day-cell.muted {
-  background: #fbfbfc;
-  color: #94a3b8;
+  background: var(--fx-fill-alter, #fbfbfc);
+  color: var(--fx-text-tertiary, #94a3b8);
 }
 
 .day-cell.selected {
-  box-shadow: inset 0 0 0 2px #1677ff;
+  box-shadow: inset 0 0 0 2px var(--fx-primary, #1677ff);
 }
 
 .day-cell.today .day-head strong {
@@ -93,8 +104,12 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #111827;
+  background: var(--fx-primary, #1677ff);
   color: #fff;
+}
+
+.day-head span {
+  color: var(--fx-text-tertiary, #64748b);
 }
 
 .day-head,
@@ -125,11 +140,11 @@
   width: 100%;
   height: 24px;
   padding: 0 8px;
-  border: 0;
-  border-radius: 6px;
+  border: 1px solid var(--fx-primary-soft-strong, #bae0ff);
+  border-radius: var(--fx-radius, 6px);
   overflow: hidden;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--fx-primary-soft, #eff6ff);
+  color: var(--fx-primary, #1d4ed8);
   font-size: 12px;
   line-height: 24px;
   text-align: left;
@@ -139,16 +154,17 @@
 
 .event-pill span {
   margin-right: 6px;
-  color: #64748b;
+  color: var(--fx-text-secondary, #64748b);
 }
 
 .event-pill.tenant {
-  background: #f0fdf4;
-  color: #047857;
+  border-color: color-mix(in srgb, var(--fx-success, #52c41a) 32%, transparent);
+  background: var(--fx-success-bg, #f0fdf4);
+  color: var(--fx-success, #047857);
 }
 
 .event-list em {
-  color: #64748b;
+  color: var(--fx-text-secondary, #64748b);
   font-size: 12px;
   font-style: normal;
 }
@@ -161,12 +177,13 @@
 .agenda-head h2 {
   margin: 0;
   font-size: 16px;
+  color: var(--fx-text-primary, #1f2937);
 }
 
 .selected-strip {
   flex: 1;
   min-height: 32px;
-  color: #64748b;
+  color: var(--fx-text-secondary, #64748b);
 }
 
 .drawer-actions {

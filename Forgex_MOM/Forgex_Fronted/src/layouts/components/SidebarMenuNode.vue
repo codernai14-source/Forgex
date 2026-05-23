@@ -1,5 +1,5 @@
 <template>
-  <a-sub-menu v-if="hasChildren" :key="item.key">
+  <a-sub-menu v-if="hasChildren" :key="item.key" @titleClick="onTitleClick">
     <template #icon>
       <FxIcon v-if="item.icon" :name="item.icon" />
       <component v-else :is="menuIcon" />
@@ -11,6 +11,7 @@
       v-for="child in childItems"
       :key="child.key"
       :item="child"
+      @submenu-title-click="emit('submenu-title-click', $event)"
     />
   </a-sub-menu>
   <a-menu-item v-else :key="item.key">
@@ -44,10 +45,18 @@ const props = defineProps<{
   item: SidebarMenuNodeItem
 }>()
 
+const emit = defineEmits<{
+  'submenu-title-click': [item: SidebarMenuNodeItem]
+}>()
+
 const hasChildren = computed(() => Array.isArray(props.item.children) && props.item.children.length > 0)
 const childItems = computed(() => props.item.children || [])
 
 const menuIcon = computed(() => {
   return hasChildren.value ? FolderOutlined : FileOutlined
 })
+
+function onTitleClick() {
+  emit('submenu-title-click', props.item)
+}
 </script>

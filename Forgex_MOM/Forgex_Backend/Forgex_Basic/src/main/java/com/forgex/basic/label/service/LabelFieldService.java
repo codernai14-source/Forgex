@@ -25,6 +25,8 @@ public interface LabelFieldService extends IService<LabelField> {
 
     void deleteField(Long id, Long tenantId);
 
+    void batchDeleteFields(List<Long> ids, Long tenantId);
+
     boolean existsByCode(String fieldCode, Long moduleId, Long tenantId);
 
     boolean existsByCodeExcludeId(String fieldCode, Long moduleId, Long excludeId, Long tenantId);

@@ -95,7 +95,7 @@ public class BasicUnitController {
      * @param body 请求体，包含 id
      * @return 统一响应结果
      */
-    @RequirePerm("basic:unit:delete")
+    @RequirePerm("basic:unit:batchDelete")
     @PostMapping("/type/delete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
     public R<Boolean> deleteType(@RequestBody Map<String, Object> body) {
@@ -182,7 +182,7 @@ public class BasicUnitController {
      * @param body 请求体，包含 ids
      * @return 统一响应结果
      */
-    @RequirePerm("basic:unit:delete")
+    @RequirePerm("basic:unit:batchDelete")
     @PostMapping("/batchDelete")
     @OperationLog(module = "basic", menuPath = "/basic/unit", operationType = OperationType.DELETE)
     public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> body) {

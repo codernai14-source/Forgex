@@ -16,6 +16,9 @@ export const labelFieldApi = {
   delete(id: number) {
     return http.post('/basic/label/field/delete', { id })
   },
+  batchDelete(ids: number[]) {
+    return http.post('/basic/label/field/batchDelete', { ids })
+  },
   enable(id: number, isEnabled: boolean) {
     return http.post('/basic/label/field/enable', { id, isEnabled })
   },

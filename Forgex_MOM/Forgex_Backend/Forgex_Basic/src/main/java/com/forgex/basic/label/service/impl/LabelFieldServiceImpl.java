@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -103,6 +104,17 @@ public class LabelFieldServiceImpl extends ServiceImpl<LabelFieldMapper, LabelFi
         labelFieldMapper.update(null, new LambdaUpdateWrapper<LabelField>()
                 .eq(LabelField::getId, id)
                 .set(LabelField::getDeleted, true));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchDeleteFields(List<Long> ids, Long tenantId) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        for (Long id : ids) {
+            deleteField(id, tenantId);
+        }
     }
 
     @Override

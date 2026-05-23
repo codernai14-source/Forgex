@@ -11,7 +11,17 @@
       </a-space>
     </div>
 
-    <FxDynamicTable ref="tableRef" table-code="BasicShiftTable" :request="handleRequest" row-key="id">
+    <FxDynamicTable ref="tableRef" table-code="BasicShiftTable" :request="handleRequest" :row-selection="rowSelection" row-key="id">
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:shift:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #shiftName="{ record }">
         <div class="master-name">
           <strong>{{ record.shiftName }}</strong>
@@ -76,12 +86,16 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { shiftApi, type Shift, type ShiftPeriod } from '@/api/basic/shift'
 
+const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const visible = ref(false)
 const saving = ref(false)
 const readonly = ref(false)
@@ -142,6 +156,19 @@ function handleDelete(record: Shift) {
     title: '确认删除该班次？',
     async onOk() {
       await shiftApi.delete(record.id!)
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await shiftApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })

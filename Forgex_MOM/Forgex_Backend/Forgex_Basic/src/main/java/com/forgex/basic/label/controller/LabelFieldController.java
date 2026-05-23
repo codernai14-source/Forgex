@@ -69,6 +69,14 @@ public class LabelFieldController {
         return R.ok(CommonPrompt.DELETE_SUCCESS);
     }
 
+    @Operation(summary = "批量删除标签字段")
+    @RequirePerm("label:field:batchDelete")
+    @PostMapping("/batchDelete")
+    public R<Void> batchDelete(@RequestBody Map<String, List<Long>> body) {
+        labelFieldService.batchDeleteFields(body.get("ids"), TenantContext.get());
+        return R.ok(CommonPrompt.DELETE_SUCCESS);
+    }
+
     @Operation(summary = "启停标签字段")
     @RequirePerm("label:field:edit")
     @PostMapping("/enable")

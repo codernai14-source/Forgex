@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -231,6 +232,17 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
         binding.setDeleted(true);
         labelBindingMapper.updateById(binding);
         log.info("删除绑定关系成功，绑定 ID: {}", id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchDeleteBindings(List<Long> ids, Long tenantId) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        for (Long id : ids) {
+            deleteBinding(id, tenantId);
+        }
     }
 
     /**

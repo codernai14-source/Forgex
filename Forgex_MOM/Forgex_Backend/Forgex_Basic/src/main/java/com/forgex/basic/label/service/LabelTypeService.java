@@ -22,6 +22,8 @@ public interface LabelTypeService extends IService<LabelType> {
 
     void deleteType(Long id, Long tenantId);
 
+    void batchDeleteTypes(List<Long> ids, Long tenantId);
+
     boolean existsByCode(String typeCode, Long tenantId);
 
     boolean existsByCodeExcludeId(String typeCode, Long excludeId, Long tenantId);

@@ -154,7 +154,7 @@ public class LabelTemplateController {
      * @return {@link R} 统一返回结构
      */
     @Operation(summary = "批量删除模板", description = "批量逻辑删除多个模板")
-    @RequirePerm("label:template:delete")
+    @RequirePerm("label:template:batchDelete")
     @PostMapping("/batchDelete")
     public R<Void> batchDelete(@RequestBody @Validated BatchIdsParam param) {
         Long tenantId = TenantContext.get();

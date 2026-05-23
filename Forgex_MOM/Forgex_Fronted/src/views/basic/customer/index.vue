@@ -17,7 +17,18 @@
       :request="handleRequest"
       :dict-options="dictOptions"
       row-key="id"
+      :row-selection="rowSelection"
     >
+      <template #toolbar>
+        <a-button
+          v-permission="'basic:customer:batchDelete'"
+          danger
+          :disabled="!selectedCount"
+          @click="handleBatchDelete"
+        >
+          {{ t('common.batchDelete') }}
+        </a-button>
+      </template>
       <template #customerFullName="{ record }">
         <div class="name-cell">
           <strong>{{ record.customerFullName || record.customerName }}</strong>
@@ -212,10 +223,12 @@ import { Modal, message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { customerApi, type Customer, type CustomerContact, type CustomerPageParam } from '@/api/basic/customer'
 
 const { t } = useI18n()
 const tableRef = ref()
+const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const editorVisible = ref(false)
 const saving = ref(false)
 const readonly = ref(false)
@@ -344,6 +357,19 @@ function handleDelete(record: Customer) {
     title: t('basic.customer.confirmDeleteCustomer'),
     async onOk() {
       await customerApi.delete(record.id!)
+      await tableRef.value?.refresh?.()
+    },
+  })
+}
+
+function handleBatchDelete() {
+  if (!selectedCount.value) return
+  Modal.confirm({
+    title: t('common.confirmBatchDelete'),
+    content: t('common.confirmBatchDeleteMessage', { count: selectedCount.value }),
+    async onOk() {
+      await customerApi.batchDelete(selectedRowKeys.value)
+      clearSelection()
       await tableRef.value?.refresh?.()
     },
   })
