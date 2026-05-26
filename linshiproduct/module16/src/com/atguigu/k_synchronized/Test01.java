@@ -1,4 +1,4 @@
-package com.atguigu.j_synchronized;
+package com.atguigu.k_synchronized;
 
 public class Test01 {
     public static void main(String[] args) {

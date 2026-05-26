@@ -1,4 +1,4 @@
-package com.atguigu.j_synchronized;
+package com.atguigu.k_synchronized;
 
 public class Ticket implements Runnable {
     int ticket = 100;
