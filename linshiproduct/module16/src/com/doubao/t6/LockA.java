@@ -1,0 +1,5 @@
+package com.doubao.t6;
+
+public class LockA {
+
+}
