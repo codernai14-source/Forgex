@@ -23,8 +23,8 @@ public class ${ctx.subEntityName}ServiceImpl implements ${ctx.subEntityName}Serv
     public IPage<${ctx.subEntityName}> page(${ctx.subEntityName}PageParam param) {
         Page<${ctx.subEntityName}> page = new Page<>(param.getPageNum(), param.getPageSize());
         LambdaQueryWrapper<${ctx.subEntityName}> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(${ctx.subEntityName}::get${ctx.subFkJavaField?cap_first}, param.get${ctx.entityName}Id());
-        wrapper.orderByDesc(${ctx.subEntityName}::get${ctx.subDefaultSortJavaField?cap_first});
+        wrapper.eq(${ctx.subEntityName}::get${ctx.subFkJavaFieldCapital}, param.get${ctx.entityName}Id());
+        wrapper.orderByDesc(${ctx.subEntityName}::get${ctx.subDefaultSortJavaFieldCapital});
         return ${ctx.subEntityNameLower}Mapper.selectPage(page, wrapper);
     }
 

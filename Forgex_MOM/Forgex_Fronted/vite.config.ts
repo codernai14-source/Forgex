@@ -13,6 +13,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: '0.0.0.0',
     port: 5173,
     fs: {
       strict: false,
@@ -21,15 +22,15 @@ export default defineConfig({
         resolve(__dirname, '../../doc')
       ]
     },
-        proxy: {
-          '/api/label': {
-            target: 'http://localhost:9000',
-            changeOrigin: true
-          },
-          '/api': {
-            target: 'http://localhost:9000',
-            changeOrigin: true
-          }
-        }
+    proxy: {
+      '/api/label': {
+        target: 'http://localhost:9000',
+        changeOrigin: true
+      },
+      '/api': {
+        target: 'http://localhost:9000',
+        changeOrigin: true
+      }
+    }
   }
 })

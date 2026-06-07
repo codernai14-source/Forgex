@@ -127,9 +127,6 @@ function handleDelete(id?: number) {
 async function handleTestRow(record: CodegenDatasourceItem) {
   await testCodegenDatasource({
     id: record.id,
-    jdbcUrl: record.jdbcUrl,
-    username: record.username,
-    dbType: record.dbType,
   })
 }
 

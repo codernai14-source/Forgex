@@ -20,6 +20,12 @@
         </a-space>
       </template>
     </FxDynamicTable>
+
+    <${ctx.entityName}FormDialog
+      v-model:open="formVisible"
+      :record-id="currentId"
+      @success="handleDialogSuccess"
+    />
   </div>
 </template>
 
@@ -29,9 +35,12 @@ import { useRouter } from 'vue-router'
 import { Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { page${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+import ${ctx.entityName}FormDialog from './components/${ctx.entityName}FormDialog.vue'
 
 const router = useRouter()
 const tableRef = ref()
+const formVisible = ref(false)
+const currentId = ref<number>()
 const tableConfig = computed(() => ({
   tableCode: '${ctx.mainTableCode}',
   tableName: '${ctx.menuName}',
@@ -61,11 +70,22 @@ const handleRequest = async (payload: any) => {
   return { records: result.records || [], total: result.total || 0 }
 }
 
-function openCreate() {}
-function openEdit(_record: any) {}
+function openCreate() {
+  currentId.value = undefined
+  formVisible.value = true
+}
+
+function openEdit(record: any) {
+  currentId.value = record.id
+  formVisible.value = true
+}
 
 function openDetailPage(record: any) {
-  router.push(`/${ctx.moduleName}/${ctx.entityNameLower}/detail/${record.id}`)
+  router.push('/${ctx.moduleName}/${ctx.entityNameLower}/detail/' + record.id)
+}
+
+function handleDialogSuccess() {
+  tableRef.value?.refresh?.()
 }
 
 function handleDelete(id: number) {
@@ -79,3 +99,5 @@ function handleDelete(id: number) {
   })
 }
 </script>
+
+<style scoped lang="less" src="@/styles/views/${ctx.moduleName}/${ctx.entityNameLower}/index.less"></style>

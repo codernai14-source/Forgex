@@ -1,0 +1,102 @@
+<template>
+  <BaseFormDialog
+    v-model:open="dialogVisible"
+    :title="dialogTitle"
+    :loading="submitting"
+    width="860px"
+    @submit="handleSubmit"
+    @cancel="handleCancel"
+  >
+    <a-form ref="formRef" :model="formData" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+<% for(column in ctx.mainFormColumns){ %>
+      <a-form-item label="${column.columnComment!column.columnName}">
+        <a-input v-if="'${column.formType}' === 'input'" v-model:value="formData.${column.javaFieldName}" />
+        <a-textarea v-else-if="'${column.formType}' === 'textarea'" v-model:value="formData.${column.javaFieldName}" :rows="3" />
+        <a-input-number v-else-if="'${column.formType}' === 'number'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
+        <a-date-picker v-else-if="'${column.formType}' === 'date'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
+        <a-date-picker v-else-if="'${column.formType}' === 'datetime'" v-model:value="formData.${column.javaFieldName}" show-time style="width: 100%" />
+        <a-input v-else v-model:value="formData.${column.javaFieldName}" />
+      </a-form-item>
+<% } %>
+    </a-form>
+  </BaseFormDialog>
+</template>
+
+<script setup lang="ts">
+import { computed, reactive, ref, watch } from 'vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import { detail${ctx.entityName}, create${ctx.entityName}, update${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+
+interface Props {
+  open: boolean
+  recordId?: number
+  currentTreeId?: number
+}
+
+interface Emits {
+  (e: 'update:open', value: boolean): void
+  (e: 'success'): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
+
+const formRef = ref()
+const submitting = ref(false)
+const formData = reactive<any>({ id: undefined, currentTreeId: undefined })
+
+const dialogVisible = computed({
+  get: () => props.open,
+  set: (value: boolean) => emit('update:open', value),
+})
+
+const isEdit = computed(() => !!props.recordId)
+const dialogTitle = computed(() => (isEdit.value ? '编辑' : '新增'))
+
+function resetForm() {
+  Object.keys(formData).forEach((key) => delete formData[key])
+  formData.id = undefined
+  formData.currentTreeId = props.currentTreeId
+}
+
+async function loadDetail() {
+  resetForm()
+  if (!props.recordId) {
+    return
+  }
+  const result = await detail${ctx.entityName}(props.recordId)
+  Object.assign(formData, result || {})
+  formData.currentTreeId = props.currentTreeId
+}
+
+async function handleSubmit() {
+  submitting.value = true
+  try {
+    formData.currentTreeId = props.currentTreeId
+    if (isEdit.value) {
+      await update${ctx.entityName}(formData)
+    } else {
+      await create${ctx.entityName}(formData)
+    }
+    dialogVisible.value = false
+    emit('success')
+  } finally {
+    submitting.value = false
+  }
+}
+
+function handleCancel() {
+  resetForm()
+}
+
+watch(
+  () => props.open,
+  async (open) => {
+    if (open) {
+      await loadDetail()
+    } else {
+      resetForm()
+    }
+  },
+)
+</script>
