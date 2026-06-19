@@ -162,7 +162,15 @@
       </div>
 
       <!-- 数据表格 -->
-      <div ref="tableContentRef" class="fx-table-content" data-guide-id="fx-table-content">
+      <div
+        ref="tableContentRef"
+        class="fx-table-content"
+        :class="{ 'is-loading': resolvedLoading }"
+        data-guide-id="fx-table-content"
+      >
+        <div v-if="resolvedLoading" class="fx-table-loading-mask">
+          <a-spin :tip="t('common.loading')" />
+        </div>
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
             :key="`table-${configVersion}`"

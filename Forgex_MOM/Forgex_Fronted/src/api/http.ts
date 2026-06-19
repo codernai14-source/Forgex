@@ -51,7 +51,7 @@ export interface FxHttpClient {
 const sessionLoginStateKeys = ['account', 'tenantId', 'permissions']
 const localLoginCacheKeys = ['fx-dynamic-routes', 'fx-dynamic-modules']
 const backendToastSuppressWindow = 300
-const defaultLoadingDelay = 500
+const defaultLoadingDelay = 180
 const defaultMinVisibleDuration = 300
 const originalMessageSuccess = typeof message.success === 'function' ? message.success.bind(message) : undefined
 const originalMessageError = typeof message.error === 'function' ? message.error.bind(message) : undefined
