@@ -303,7 +303,7 @@ import {
   getSystemBasicConfig,
   type SystemBasicConfig,
 } from '@/api/system/config'
-import { register, checkInviteCode, getPublicKey } from '@/api/auth/login'
+import { register, checkInviteCode } from '@/api/auth/login'
 import {
   captchaImage as getImageCaptcha,
   captchaSlider,
@@ -313,7 +313,7 @@ import { listEnabledLanguages, type LanguageType } from '@/api/system/i18n'
 import { getAvailableLocales, getLocale, setLocale, type LocaleCode } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 import { normalizeMediaUrl } from '@/utils/media'
-import { sm2 } from 'sm-crypto'
+import { encryptSensitiveText } from '@/utils/crypto'
 
 interface SliderCaptchaChallenge {
   id: string
@@ -358,7 +358,6 @@ const selectedLang = ref<LocaleCode>(getLocale())
 const captchaMode = ref<CaptchaMode>('none')
 const captchaImage = ref('')
 const captchaId = ref('')
-const publicKeyCache = ref('')
 
 const checkingInvite = ref(false)
 const inviteValid = ref<boolean | null>(null)
@@ -607,15 +606,13 @@ async function handleRegister() {
     await formRef.value?.validate()
     submitting.value = true
 
-    let pwdToSend = formData.password
+    let pwdToSend = ''
     try {
-      if (!publicKeyCache.value) {
-        publicKeyCache.value = await getPublicKey() as string
-      }
-      if (publicKeyCache.value) {
-        pwdToSend = sm2.doEncrypt(formData.password, publicKeyCache.value, 1)
-      }
-    } catch (_) {}
+      pwdToSend = await encryptSensitiveText(formData.password)
+    } catch (e: any) {
+      message.error(e?.message || i18nT('common.operationFailed'))
+      return
+    }
 
     await register({
       account: formData.account.trim(),
@@ -752,9 +749,6 @@ onMounted(async () => {
   await loadLanguages()
   await loadCaptchaMode()
 
-  try {
-    publicKeyCache.value = await getPublicKey() as string
-  } catch (_) {}
 })
 </script>
 

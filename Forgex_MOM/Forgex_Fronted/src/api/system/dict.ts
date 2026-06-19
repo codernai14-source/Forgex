@@ -26,3 +26,7 @@ export function getDictList(params?: any) {
 export function getDictTree(params?: any) {
   return http.post('/sys/dict/tree', params || {})
 }
+
+export function pullPublicDicts() {
+  return http.post('/sys/dict/pull-public')
+}

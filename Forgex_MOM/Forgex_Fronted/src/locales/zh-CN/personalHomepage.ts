@@ -121,6 +121,25 @@ export default {
   },
 
   // 收藏管理页面
+  share: {
+    create: '\u751f\u6210\u5206\u4eab\u7801',
+    import: '\u5bfc\u5165\u5e03\u5c40',
+    shareTitle: '\u5e03\u5c40\u5206\u4eab\u7801',
+    importTitle: '\u5bfc\u5165\u5e03\u5c40\u5206\u4eab\u7801',
+    shareCode: '\u5206\u4eab\u7801',
+    inputPlaceholder: '\u8bf7\u8f93\u5165\u5206\u4eab\u7801',
+    copy: '\u590d\u5236',
+    preview: '\u9884\u89c8',
+    apply: '\u5e94\u7528\u5230\u5f53\u524d\u8349\u7a3f',
+    moduleCode: '\u6a21\u5757',
+    createTime: '\u751f\u6210\u65f6\u95f4',
+    createSuccess: '\u5206\u4eab\u7801\u5df2\u751f\u6210',
+    createFailed: '\u751f\u6210\u5206\u4eab\u7801\u5931\u8d25',
+    copySuccess: '\u5206\u4eab\u7801\u5df2\u590d\u5236',
+    previewFailed: '\u5206\u4eab\u7801\u65e0\u6548\u6216\u4e0d\u5c5e\u4e8e\u5f53\u524d\u79df\u6237',
+    importApplied: '\u5df2\u5bfc\u5165\u5230\u5f53\u524d\u8349\u7a3f\uff0c\u8bf7\u4fdd\u5b58\u5e03\u5c40\u540e\u751f\u6548',
+  },
+
   management: {
     title: '收藏管理',
     desc: '统一维护我的收藏菜单，支持调整首页展示顺序和批量取消收藏。',

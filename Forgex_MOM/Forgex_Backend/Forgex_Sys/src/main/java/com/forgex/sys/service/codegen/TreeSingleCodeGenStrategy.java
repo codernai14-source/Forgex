@@ -57,6 +57,7 @@ public class TreeSingleCodeGenStrategy extends AbstractCodeGenStrategy {
         List<CodegenRenderFileDTO> files = newFiles();
         String javaPath = "backend/" + context.getPackageName().replace('.', '/');
         String viewPath = "frontend/src/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
+        String stylePath = "frontend/src/styles/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
         String apiPath = "frontend/src/api/" + context.getModuleName();
         String androidBasePath = "android/" + context.getAndroidFeatureKey();
 
@@ -75,6 +76,9 @@ public class TreeSingleCodeGenStrategy extends AbstractCodeGenStrategy {
         addFile(files, "backend", javaPath + "/domain/param/" + context.getEntityName() + "SaveParam.java",
             "tree-single/backend/SaveParam.java.btl", context);
         addFile(files, "frontend", viewPath + "/index.vue", "tree-single/frontend/index.vue.btl", context);
+        addFile(files, "frontend", viewPath + "/components/" + context.getEntityName() + "FormDialog.vue",
+            "tree-single/frontend/FormDialog.vue.btl", context);
+        addFile(files, "frontend", stylePath + "/index.less", "tree-single/frontend/index.less.btl", context);
         addFile(files, "frontend", apiPath + "/" + context.getEntityNameLower() + ".ts", "tree-single/frontend/api.ts.btl", context);
         addFile(files, "sql", "sql/01_menu_permission.sql", "tree-single/sql/menu_permission.sql.btl", context);
         addFile(files, "sql", "sql/02_table_config.sql", "tree-single/sql/table_config.sql.btl", context);

@@ -121,6 +121,25 @@ export default {
   },
 
   // お気に入り管理ページ
+  share: {
+    create: '共有コードを作成',
+    import: 'レイアウトをインポート',
+    shareTitle: 'レイアウト共有コード',
+    importTitle: 'レイアウト共有コードをインポート',
+    shareCode: '共有コード',
+    inputPlaceholder: '共有コードを入力',
+    copy: 'コピー',
+    preview: 'プレビュー',
+    apply: '現在の下書きに適用',
+    moduleCode: 'モジュール',
+    createTime: '作成日時',
+    createSuccess: '共有コードを作成しました',
+    createFailed: '共有コードの作成に失敗しました',
+    copySuccess: '共有コードをコピーしました',
+    previewFailed: '共有コードが無効、または現在のテナントに属していません',
+    importApplied: '現在の下書きにインポートしました。保存後に反映されます。',
+  },
+
   management: {
     title: 'お気に入り管理',
     desc: 'お気に入りメニューをまとめて管理し、表示順の調整や一括解除を行えます。',

@@ -121,6 +121,25 @@ export default {
   },
 
   // 즐겨찾기 관리 페이지
+  share: {
+    create: '공유 코드 생성',
+    import: '레이아웃 가져오기',
+    shareTitle: '레이아웃 공유 코드',
+    importTitle: '레이아웃 공유 코드 가져오기',
+    shareCode: '공유 코드',
+    inputPlaceholder: '공유 코드를 입력하세요',
+    copy: '복사',
+    preview: '미리보기',
+    apply: '현재 초안에 적용',
+    moduleCode: '모듈',
+    createTime: '생성 시각',
+    createSuccess: '공유 코드가 생성되었습니다',
+    createFailed: '공유 코드 생성에 실패했습니다',
+    copySuccess: '공유 코드가 복사되었습니다',
+    previewFailed: '유효하지 않은 공유 코드이거나 현재 테넌트에 속하지 않습니다',
+    importApplied: '현재 초안에 가져왔습니다. 레이아웃을 저장해야 반영됩니다.',
+  },
+
   management: {
     title: '즐겨찾기 관리',
     desc: '즐겨찾기 메뉴를 한 곳에서 관리하고, 홈 표시 순서 조정과 일괄 해제를 지원합니다.',

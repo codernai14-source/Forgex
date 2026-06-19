@@ -121,6 +121,25 @@ export default {
   },
 
   // Favorite Management Page
+  share: {
+    create: 'Create Share Code',
+    import: 'Import Layout',
+    shareTitle: 'Layout Share Code',
+    importTitle: 'Import Layout Share Code',
+    shareCode: 'Share Code',
+    inputPlaceholder: 'Enter a share code',
+    copy: 'Copy',
+    preview: 'Preview',
+    apply: 'Apply to Draft',
+    moduleCode: 'Module',
+    createTime: 'Created At',
+    createSuccess: 'Share code created',
+    createFailed: 'Failed to create share code',
+    copySuccess: 'Share code copied',
+    previewFailed: 'Invalid share code or it does not belong to this tenant',
+    importApplied: 'Imported into the current draft. Save the layout to make it effective.',
+  },
+
   management: {
     title: 'Favorite Management',
     desc: 'Manage all favorite menus in one place, including homepage order and batch removal.',

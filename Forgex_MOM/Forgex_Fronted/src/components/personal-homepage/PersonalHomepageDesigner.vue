@@ -1,8 +1,8 @@
 <template>
   <div class="personal-homepage-designer">
-    <!-- Hero 区：根据模式显示不同内容 -->
+    <!-- Hero 閸栫尨绱伴弽瑙勫祦濡€崇础閺勫墽銇氭稉宥呮倱閸愬懎顔?-->
     <div class="designer-hero">
-      <!-- 鏅€氭ā寮忥細鏄剧ず鐢ㄦ埛鎽樿淇℃伅 -->
+      <!-- 闁哄拋鍣ｉ埀顒佺鑶╃€殿喖楠忕槐浼村及閸撗佷粵闁活潿鍔嶉崺娑㈠箺濡娲ｅǎ鍥ｅ墲娴?-->
       <div v-if="mode === 'current'" class="designer-hero__user">
         <div class="designer-hero__avatar">
           <a-avatar :size="64" :src="heroAvatarSrc || undefined">
@@ -26,71 +26,75 @@
           </div>
         </div>
       </div>
-      <!-- 管理模式：显示标题和描述 -->
+      <!-- 缁狅紕鎮婂Ο鈥崇础閿涙碍妯夌粈鐑樼垼妫版ê鎷伴幓蹇氬牚 -->
       <div v-else>
         <p class="designer-hero__eyebrow">{{ $t('personalHomepage.hero.eyebrow') }}</p>
         <h2 class="designer-hero__title">{{ resolvedTitle }}</h2>
         <p class="designer-hero__desc">{{ resolvedDescription }}</p>
       </div>
-      <div class="designer-hero__meta">
-        <span class="designer-badge">{{ $t('personalHomepage.hero.badge.default') }}</span>
-        <span class="designer-badge designer-badge--soft">{{ scopeLabel }}</span>
-      </div>
-    </div>
-
-    <!-- 宸ュ叿鏍?-->
-    <div class="designer-toolbar">
-      <a-space wrap>
+      <div class="designer-hero__actions">
         <a-select
           v-if="mode === 'manage' && showScopeSelector"
           v-model:value="scopeLevel"
-          style="width: 160px"
+          class="designer-hero__scope"
         >
           <a-select-option value="TENANT">{{ $t('personalHomepage.hero.badge.tenant') }}</a-select-option>
           <a-select-option value="PUBLIC">{{ $t('personalHomepage.hero.badge.public') }}</a-select-option>
         </a-select>
-        <a-button @click="toggleEditMode">
-          <template #icon>
-            <SettingOutlined />
-          </template>
-          {{ editMode ? $t('personalHomepage.toolbar.exitMode') : $t('personalHomepage.toolbar.editMode') }}
-        </a-button>
-        <a-button @click="reloadConfig">
-          <template #icon>
-            <ReloadOutlined />
-          </template>
-          {{ $t('personalHomepage.toolbar.refresh') }}
-        </a-button>
-        <!-- 浠呭湪缂栬緫鎬佹樉绀轰互涓嬫寜閽?-->
-        <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
-          <template #icon>
-            <UndoOutlined />
-          </template>
-          {{ $t('personalHomepage.toolbar.resetDefault') }}
-        </a-button>
-        <a-button v-if="editMode && mode === 'current'" @click="openComponentLibrary">
-          <template #icon>
-            <AppstoreOutlined />
-          </template>
-          {{ $t('personalHomepage.toolbar.componentLibrary') }}
-        </a-button>
-        <a-button v-if="editMode && mode === 'current'" @click="openPersonalComponentConfig">
-          <template #icon>
-            <SettingOutlined />
-          </template>
-          {{ $t('personalHomepage.toolbar.componentConfig') }}
-        </a-button>
-        <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
-          <template #icon>
-            <SaveOutlined />
-          </template>
-          {{ $t('personalHomepage.toolbar.saveLayout') }}
-        </a-button>
-      </a-space>
-      <div class="designer-toolbar__hint">
-        <span>{{ editMode ? $t('personalHomepage.toolbar.hint.edit') : $t('personalHomepage.toolbar.hint.view') }}</span>
+        <a-space wrap>
+          <a-button @click="toggleEditMode">
+            <template #icon>
+              <SettingOutlined />
+            </template>
+            {{ editMode ? $t('personalHomepage.toolbar.exitMode') : $t('personalHomepage.toolbar.editMode') }}
+          </a-button>
+          <a-button @click="reloadConfig">
+            <template #icon>
+              <ReloadOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.refresh') }}
+          </a-button>
+          <a-button v-if="editMode" :loading="sharing" @click="createShareCode">
+            <template #icon>
+              <ShareAltOutlined />
+            </template>
+            {{ $t('personalHomepage.share.create') }}
+          </a-button>
+          <a-button v-if="editMode" @click="openImportLayout">
+            <template #icon>
+              <ImportOutlined />
+            </template>
+            {{ $t('personalHomepage.share.import') }}
+          </a-button>
+          <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
+            <template #icon>
+              <UndoOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.resetDefault') }}
+          </a-button>
+          <a-button v-if="editMode && mode === 'current'" @click="openComponentLibrary">
+            <template #icon>
+              <AppstoreOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.componentLibrary') }}
+          </a-button>
+          <a-button v-if="editMode && mode === 'current'" @click="openPersonalComponentConfig">
+            <template #icon>
+              <SettingOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.componentConfig') }}
+          </a-button>
+          <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            {{ $t('personalHomepage.toolbar.saveLayout') }}
+          </a-button>
+        </a-space>
       </div>
     </div>
+
+    <!-- 鐎规悶鍎遍崣鍧楀冀?-->
 
     <div class="designer-content">
       <section class="designer-stage">
@@ -308,7 +312,7 @@
         </a-spin>
       </section>
 
-      <!-- 閰嶇疆闈㈡澘锛氫粎鍦ㄧ紪杈戞€佹樉绀?-->
+      <!-- 闂佹澘绉堕悿鍡涙閵忊剝绶查柨娑欑煯缁酣宕烽妸褏妞介弶鍫熷灦閳ь兛鐒﹀Ο澶岀矆?-->
       <aside v-if="editMode" class="designer-panel">
         <div class="designer-panel__card">
           <div class="designer-panel__header">
@@ -358,6 +362,45 @@
         </div>
       </aside>
     </div>
+
+    <a-modal v-model:open="shareModalOpen" :title="$t('personalHomepage.share.shareTitle')" :footer="null">
+      <a-input-group compact>
+        <a-input v-model:value="shareCode" readonly style="width: calc(100% - 88px)" />
+        <a-button style="width: 88px" @click="copyShareCode">
+          {{ $t('personalHomepage.share.copy') }}
+        </a-button>
+      </a-input-group>
+    </a-modal>
+
+    <a-modal
+      v-model:open="importModalOpen"
+      :title="$t('personalHomepage.share.importTitle')"
+      :ok-text="$t('personalHomepage.share.apply')"
+      :ok-button-props="{ disabled: !importPreview }"
+      :confirm-loading="importLoading"
+      @ok="applyImportLayout"
+    >
+      <a-space direction="vertical" style="width: 100%" :size="12">
+        <a-input-search
+          v-model:value="importCode"
+          allow-clear
+          :placeholder="$t('personalHomepage.share.inputPlaceholder')"
+          :loading="importLoading"
+          @search="previewImportLayout"
+        />
+        <a-descriptions v-if="importPreview" size="small" bordered :column="1">
+          <a-descriptions-item :label="$t('personalHomepage.share.shareCode')">
+            {{ importPreview.shareCode }}
+          </a-descriptions-item>
+          <a-descriptions-item :label="$t('personalHomepage.share.moduleCode')">
+            {{ importPreview.moduleCode }}
+          </a-descriptions-item>
+          <a-descriptions-item :label="$t('personalHomepage.share.createTime')">
+            {{ importPreview.createTime || '-' }}
+          </a-descriptions-item>
+        </a-descriptions>
+      </a-space>
+    </a-modal>
 
     <a-drawer
       v-model:open="componentLibraryOpen"
@@ -480,11 +523,13 @@ import {
   ClockCircleOutlined,
   DeleteOutlined,
   DragOutlined,
+  ImportOutlined,
   MessageOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
+  ShareAltOutlined,
   StarFilled,
   StarOutlined,
   UndoOutlined,
@@ -492,9 +537,11 @@ import {
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
+import { message } from 'ant-design-vue'
 import { normalizeMediaUrl } from '@/utils/media'
 import {
   addHomepageComponent,
+  createHomepageLayoutShare,
   createDefaultPersonalHomepageConfig,
   favoriteHomepageComponent,
   getCurrentPersonalHomepageConfig,
@@ -504,12 +551,14 @@ import {
   getUserFavoriteMenus,
   listEffectiveHomepageComponents,
   mergePersonalHomepageConfig,
+  previewHomepageLayoutShare,
   removeHomepageComponent,
   resetCurrentPersonalHomepageConfig,
   saveCurrentPersonalHomepageConfig,
   saveManagePersonalHomepageConfig,
   toggleUserFavoriteMenu,
   type HomepageComponentVO,
+  type HomepageLayoutShareVO,
   type PersonalHomepageConfig,
   type PersonalMenuEntry,
   type PersonalHomepageScopeLevel,
@@ -529,6 +578,7 @@ const { t, locale } = useI18n()
 
 interface PersonalHomepageDesignerProps {
   mode: 'current' | 'manage'
+  moduleCode?: string
   title?: string
   description?: string
   initialScopeLevel?: Exclude<PersonalHomepageScopeLevel, 'USER'>
@@ -554,6 +604,7 @@ interface CalendarCell {
 }
 
 const props = withDefaults(defineProps<PersonalHomepageDesignerProps>(), {
+  moduleCode: 'personal',
   title: '',
   description: '',
   initialScopeLevel: 'TENANT',
@@ -584,22 +635,29 @@ const libraryLoading = ref(false)
 const componentSearchKeyword = ref('')
 const componentScopeFilter = ref<'ALL' | 'PUBLIC' | 'TENANT' | 'USER'>('ALL')
 const componentLibrary = ref<HomepageComponentVO[]>([])
+const shareModalOpen = ref(false)
+const shareCode = ref('')
+const sharing = ref(false)
+const importModalOpen = ref(false)
+const importCode = ref('')
+const importPreview = ref<HomepageLayoutShareVO | null>(null)
+const importLoading = ref(false)
 let clockTimer: number | undefined
 const MAX_COMMON_MENU_COUNT = 6
 
 /**
- * 解析用户头像地址，与 {@link MainLayout} 涓《閮ㄥご鍍忚鍒欎繚鎸佷竴鑷淬€?
- * <p>鐩稿璺緞浼氳ˉ鍏ㄤ负缃戝叧 `/api` 鍓嶇紑锛屼究浜?a-avatar 鐩存帴鍔犺浇銆?/p>
+ * 鐟欙絾鐎介悽銊﹀煕婢舵潙鍎氶崷鏉挎絻閿涘奔绗?{@link MainLayout} 濞戞搩鍙冮妴濠囨焾閵娿儯浠堥柛宥呯箺椤宕氬▎搴ｇ闁归晲妞掔粩鎾嚊濞ｎ兘鍋?
+ * <p>闁烩晝顭堥顔炬崉椤栨氨绐炲ù鍏间亢钘熼柛蹇嬪妺鐠愮喓绱旈幋婵嗗綘 `/api` 闁告挸绉剁槐鎴︽晬鐏炶偐鈹掑ù?a-avatar 闁烩晛鐡ㄧ敮鎾礉閻樼儤绁伴柕?/p>
  *
- * @param raw 鍚庣鎴?Store 涓殑鍘熷璺緞
- * @returns 鍙姹傜殑瀹屾暣 URL锛涙棤鏁堟椂涓虹┖瀛楃涓?
+ * @param raw 闁告艾娴烽顒勫箣?Store 濞戞搩鍘惧▓鎴﹀储閻斿娼楅悹渚灠缁?
+ * @returns 闁告瑯鍨甸顒€效閸屾粍鐣遍悗鐟版湰閺?URL闁挎稒绋掑Λ銈夊极閸喐顦у☉鎾规閳规牜鈧稒顨堥浣圭▔?
  */
 function resolveUserAvatarSrc(raw?: string | null): string {
   return normalizeMediaUrl(raw)
 }
 
 /**
- * 涓汉棣栭〉 Hero 鍖哄睍绀虹敤澶村儚锛堟憳瑕佹帴鍙ｄ紭鍏堬紝缂哄け鏃跺洖閫€鍒板綋鍓嶇櫥褰曠敤鎴蜂俊鎭級銆?
+ * 濞戞搩浜欏Ч澶嬶純閺嶎厹鈧?Hero 闁告牕鎼惈宥囩矆閾忚鏆忓鑸垫綑閸庢岸鏁嶉崼鐔稿枀閻熸洑鐒︾敮鎾矗閿濆嫮鍠橀柛蹇撶墳缁辨繄绱撻崫鍕╀杭闁哄啳娉涘ú鏍焻閳ь剟宕氶弶璺ㄧЪ闁告挸绉跺▍銉ㄣ亹閺囩姵鏆忛柟纾嬫腹娣囧﹪骞侀銈囩闁?
  */
 const heroAvatarSrc = computed(() => {
   const raw = summary.value?.avatar || userStore.userInfo?.avatar
@@ -607,7 +665,7 @@ const heroAvatarSrc = computed(() => {
 })
 
 /**
- * 闂€欒灞曠ず鍚嶏細鎽樿鏄电О浼樺厛锛屽叾娆′负 Store 涓殑鐢ㄦ埛鍚嶃€佽处鍙枫€?
+ * 闂傚偆鍠栭埀顒佺懆椤曘垻浠﹂弴鐘粵闁告艾绋勭槐浼村箺濡娲ｉ柡鍕暩琚ㄥù鍏济崢娑㈡晬鐏炶棄寰撴繛鍡忊偓鑼剁 Store 濞戞搩鍘惧▓鎴︽偨閵婏箑鐓曢柛姘Р閳ь兛娴囨径鍕矗閺嬵偀鍋?
  */
 const displayNameForHero = computed(() => {
   return (
@@ -618,13 +676,13 @@ const displayNameForHero = computed(() => {
   )
 })
 
-/** 闂€欐椂娈碉細鏃╂櫒 / 涓嬪崍 / 澶滈棿锛堜笌鍚庣鎽樿鏈嶅姟鏃舵鍒掑垎涓€鑷达級 */
+/** 闂傚偆鍠栭埀顒佺懄濡炲倸鈻撶喊澶岀獥闁哄啠鏅滃▍?/ 濞戞挸顑呭畷?/ 濠㈣埖绮撳Λ鍧楁晬閸粎鐟㈤柛姘捣椤忣剟骞楀Ο娆炬矗闁哄牆绉存慨鐔煎籍閼告鍞介柛鎺撳笒閸ㄥ孩绋夐埀顒勬嚊鏉堝墽绀?*/
 type GreetingPhase = 'morning' | 'afternoon' | 'evening'
 
 /**
- * 鏍规嵁褰撳墠鏈湴鏃堕棿璁＄畻闂€欐椂娈点€?
+ * 闁哄秷顫夊畵浣姐亹閹惧啿顤呴柡鍫墮濠€鎾籍閸洘锛熼悹渚婄磿閻ｅ姊婚灏栧亾濞嗘劖顦ф繛鍫㈠仯閳?
  *
- * @see now 由时钟定时刷新，跨时段会自动更新文案
+ * @see now 閻㈣鲸妞傞柦鐔风暰閺冭泛鍩涢弬甯礉鐠恒劍妞傚▓鍏哥窗閼奉亜濮╅弴瀛樻煀閺傚洦顢?
  */
 const greetingPhase = computed<GreetingPhase>(() => {
   const hour = now.value.hour()
@@ -638,7 +696,7 @@ const greetingPhase = computed<GreetingPhase>(() => {
 })
 
 /**
- * 涓枃鍦烘櫙涓嬬殑绉拌皳鍚庣紑锛堝厛鐢?/ 濂冲＋锛夛紱鏈煡鎬у埆鏃朵负绌恒€?
+ * 濞戞搩鍘介弸鍐捶閻戞ɑ鐝☉鎾愁儑濞堟垹绮旈幏宀€姣橀柛姘捣缁辨垿鏁嶉崼婵嗗弗闁?/ 濠靛倸鍟块敍瀣晬婢舵稓骞㈤柡鍫簽閻擄繝骞€瑜嶉崺鍡涘籍閺堜絻绀嬬紒灞句航閳?
  */
 const honorificZh = computed(() => {
   const g = summary.value?.gender
@@ -652,7 +710,7 @@ const honorificZh = computed(() => {
 })
 
 /**
- * 鍥介檯鍖栦富闂€欒锛氬皧鏁殑濮撳悕绉拌皳 + 鍒嗘椂娈甸棶鍊欎笌缁撴潫璇紱鑻辨枃鍒?Mr./Ms./鏃犵О璋撲笁绉嶅彞寮忋€?
+ * 闁搞儰绮欏顖炲礌閺嶏箑鐦滈梻鍌ゅ枛閳ь剚鐟ㄩ銏ゆ晬濮橆剛姣€闁轰緡鍓涘▓鎴炴叏閹捐櫕鍊崇紒澶嬪閻?+ 闁告帒妫欏鍌氣枔閻㈠憡锛栭柛濠冪懁缁楀瞼绱掗幘瀛樺皢閻犲浂鍙忕槐閬嶆嚐鏉堛劍鐎柛?Mr./Ms./闁哄啰濮疯ⅷ閻犲鎸风粭浣虹矓瀹ュ懎缍栫€殿喖绻堥埀?
  */
 const heroGreetingLine = computed(() => {
   const name = displayNameForHero.value
@@ -678,7 +736,7 @@ const heroGreetingLine = computed(() => {
 })
 
 /**
- * 浠婃棩鏃ユ湡涓庢槦鏈熷壇鏍囬锛堜笌鐣岄潰璇█涓€鑷达級銆?
+ * 濞寸姴锕ュΛ鈺呭籍閵夛附鍩傚☉鎾冲濡诧箓寮甸悢宄邦棇闁哄秴娲。浠嬫晬閸粎鐟㈤柣锝呯焸濞兼壆鎷犻鈾€鏋呭☉鎾亾闁肩柉鎻槐姘跺Υ?
  */
 const heroDateSubtitle = computed(() => {
   const d = now.value
@@ -715,7 +773,7 @@ const widgetDefaults: Record<string, { x: number; y: number; w: number; h: numbe
   notices: { x: 6, y: 8, w: 6, h: 4, orderNum: 70, minW: 2, minH: 2 },
 }
 
-// 国际化：组件标题
+// 閸ヤ粙妾崠鏍电窗缂佸嫪娆㈤弽鍥暯
 const widgetTitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.title',
   myFavorites: 'personalHomepage.components.myFavorites.title',
@@ -726,7 +784,7 @@ const widgetTitleMap: Record<string, string> = {
   currentTime: 'personalHomepage.components.currentTime.title',
 }
 
-// 鍥介檯鍖栵細缁勪欢鍓爣棰?
+// 闁搞儰绮欏顖炲礌閺嶇數绐楃紓浣稿濞嗐垽宕滈娑氬灱濡?
 const widgetSubtitleMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.subtitle',
   myFavorites: 'personalHomepage.components.myFavorites.subtitle',
@@ -737,7 +795,7 @@ const widgetSubtitleMap: Record<string, string> = {
   currentTime: 'personalHomepage.components.currentTime.subtitle',
 }
 
-// 鍥介檯鍖栵細绌虹姸鎬佹枃妗?
+// 闁搞儰绮欏顖炲礌閺嶇數绐楃紒宀冩婵悂骞€娴ｈ鐎俊?
 const widgetEmptyMap: Record<string, string> = {
   commonMenus: 'personalHomepage.components.commonMenus.empty',
   myFavorites: 'personalHomepage.components.myFavorites.empty',
@@ -760,12 +818,7 @@ const resolvedDescription = computed(() => {
   return props.mode === 'manage' ? t('personalHomepage.hero.descManage') : t('personalHomepage.hero.desc')
 })
 
-const scopeLabel = computed(() => {
-  if (props.mode === 'current') {
-    return t('personalHomepage.hero.badge.user')
-  }
-  return scopeLevel.value === 'PUBLIC' ? t('personalHomepage.hero.badge.public') : t('personalHomepage.hero.badge.tenant')
-})
+const homepageModuleCode = computed(() => props.moduleCode || 'personal')
 
 const orderedWidgets = computed(() => {
   return [...config.value.widgets].sort((left, right) => {
@@ -828,16 +881,14 @@ const currentColNum = computed(() => {
   return config.value.layout.colNum || 12
 })
 
-const currentRowHeight = computed(() => config.value.layout.rowHeight || 72)
+const currentRowHeight = computed(() => config.value.layout.rowHeight || 64)
 
 const gridMargin = computed<[number, number]>(() => [
-  config.value.layout.marginX || 16,
-  config.value.layout.marginY || 16,
+  config.value.layout.marginX || 10,
+  config.value.layout.marginY || 10,
 ])
 
-const commonMenus = computed(() => {
-  return commonMenuItems.value.slice(0, MAX_COMMON_MENU_COUNT)
-})
+const commonMenus = computed(() => commonMenuItems.value.slice(0, MAX_COMMON_MENU_COUNT))
 
 const favoriteMenus = computed(() => {
   const limit = Math.min(
@@ -847,9 +898,7 @@ const favoriteMenus = computed(() => {
   return favoriteMenuItems.value.slice(0, limit)
 })
 
-const favoriteMenuPathSet = computed(() => {
-  return new Set(favoriteMenuItems.value.map(item => String(item.path || '')))
-})
+const favoriteMenuPathSet = computed(() => new Set(favoriteMenuItems.value.map(item => String(item.path || ''))))
 
 const inboxMessages = computed(() => {
   const limit = toNumber(findWidget('messages')?.params.limit, defaultLimit('messages'))
@@ -986,18 +1035,21 @@ function toBoolean(value: unknown, fallbackValue: boolean) {
 
 function toggleEditMode() {
   editMode.value = !editMode.value
+  requestAnimationFrame(() => {
+    syncGridFromConfig()
+  })
 }
 
 async function reloadConfig() {
   loading.value = true
   try {
+    const options = { moduleCode: homepageModuleCode.value }
     const remoteConfig = props.mode === 'current'
-      ? await getCurrentPersonalHomepageConfig()
-      : await getManagePersonalHomepageConfig(scopeLevel.value)
+      ? await getCurrentPersonalHomepageConfig(options)
+      : await getManagePersonalHomepageConfig(scopeLevel.value, options)
     config.value = mergePersonalHomepageConfig(remoteConfig)
     syncGridFromConfig()
     await loadWidgetData()
-    // 加载摘要信息
     if (props.mode === 'current') {
       await loadSummary()
     }
@@ -1023,18 +1075,77 @@ async function saveConfig() {
   saving.value = true
   try {
     const payload = mergePersonalHomepageConfig(config.value)
+    const options = { moduleCode: homepageModuleCode.value }
     if (props.mode === 'current') {
-      await saveCurrentPersonalHomepageConfig(payload)
+      await saveCurrentPersonalHomepageConfig(payload, options)
     } else {
-      await saveManagePersonalHomepageConfig(scopeLevel.value, payload)
+      await saveManagePersonalHomepageConfig(scopeLevel.value, payload, options)
     }
     config.value = payload
     syncGridFromConfig()
+    message.success(t('personalHomepage.message.saveSuccess'))
   } catch (error) {
     console.error('保存个人首页配置失败:', error)
+    message.error(t('personalHomepage.message.saveFailed'))
   } finally {
     saving.value = false
   }
+}
+
+async function createShareCode() {
+  sharing.value = true
+  try {
+    const payload = mergePersonalHomepageConfig(config.value)
+    const result = await createHomepageLayoutShare({
+      moduleCode: homepageModuleCode.value,
+      config: payload,
+    })
+    shareCode.value = result.shareCode
+    shareModalOpen.value = true
+  } finally {
+    sharing.value = false
+  }
+}
+
+function openImportLayout() {
+  importCode.value = ''
+  importPreview.value = null
+  importModalOpen.value = true
+}
+
+async function previewImportLayout() {
+  const code = importCode.value.trim()
+  if (!code) {
+    importPreview.value = null
+    return
+  }
+  importLoading.value = true
+  try {
+    importPreview.value = await previewHomepageLayoutShare({
+      shareCode: code,
+      moduleCode: homepageModuleCode.value,
+    })
+  } finally {
+    importLoading.value = false
+  }
+}
+
+function applyImportLayout() {
+  if (!importPreview.value?.config) {
+    return
+  }
+  config.value = mergePersonalHomepageConfig(importPreview.value.config)
+  syncGridFromConfig()
+  importModalOpen.value = false
+  message.success(t('personalHomepage.share.applySuccess'))
+}
+
+async function copyShareCode() {
+  if (!shareCode.value) {
+    return
+  }
+  await navigator.clipboard?.writeText(shareCode.value)
+  message.success(t('personalHomepage.share.copySuccess'))
 }
 
 function openComponentLibrary() {
@@ -1054,7 +1165,7 @@ async function loadComponentLibrary() {
   libraryLoading.value = true
   try {
     const list = await listEffectiveHomepageComponents({
-      moduleCode: props.moduleCode,
+      moduleCode: homepageModuleCode.value,
       keyword: componentSearchKeyword.value || undefined,
       scopeLevel: componentScopeFilter.value === 'ALL' ? undefined : componentScopeFilter.value,
     })
@@ -1120,7 +1231,7 @@ async function toggleFavorite(componentItem: HomepageComponentVO) {
     await favoriteHomepageComponent({
       componentCode: componentItem.componentCode,
       favorite: !componentItem.favorite,
-      moduleCode: props.moduleCode,
+      moduleCode: homepageModuleCode.value,
     })
     await loadComponentLibrary()
   } catch (error) {
@@ -1130,7 +1241,7 @@ async function toggleFavorite(componentItem: HomepageComponentVO) {
 
 async function addComponentToHomepage(componentItem: HomepageComponentVO) {
   try {
-    await addHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: props.moduleCode })
+    await addHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: homepageModuleCode.value })
     const widget = ensureWidgetExists(componentItem)
     widget.visible = true
     widget.title = componentItem.componentName
@@ -1143,7 +1254,7 @@ async function addComponentToHomepage(componentItem: HomepageComponentVO) {
 
 async function removeComponentFromHomepage(componentItem: HomepageComponentVO) {
   try {
-    await removeHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: props.moduleCode })
+    await removeHomepageComponent({ componentCode: componentItem.componentCode, moduleCode: homepageModuleCode.value })
     config.value.widgets = config.value.widgets.map(widget => (
       widget.key === componentItem.componentCode
         ? { ...widget, visible: false }
@@ -1162,10 +1273,12 @@ async function resetToDefault() {
   }
   saving.value = true
   try {
-    await resetCurrentPersonalHomepageConfig()
+    await resetCurrentPersonalHomepageConfig({ moduleCode: homepageModuleCode.value })
     await reloadConfig()
+    message.success(t('personalHomepage.message.resetSuccess'))
   } catch (error) {
     console.error('恢复默认布局失败:', error)
+    message.error(t('personalHomepage.message.resetFailed'))
   } finally {
     saving.value = false
   }
@@ -1248,7 +1361,7 @@ async function loadActiveNotices() {
     const list = await noticeApi.activeList({ maxCount: requestLimit })
     activeNotices.value = Array.isArray(list) ? list : []
   } catch (error) {
-    console.error('鍔犺浇绯荤粺閫氱煡澶辫触:', error)
+    console.error('加载系统通知失败:', error)
     activeNotices.value = []
   }
 }
@@ -1431,7 +1544,6 @@ function formatDateTime(value?: string) {
   }
   return dayjs(value).format('MM-DD HH:mm')
 }
-
 
 function handleResize() {
   viewportWidth.value = window.innerWidth

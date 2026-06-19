@@ -117,6 +117,7 @@
 | 字典缓存（二级） | 已支持 | Forgex_Sys | [数据字典与日志](./配置与审计/数据字典与日志.md) |
 | 字典国际化 | 已支持 | Forgex_Sys | [数据字典与日志](./配置与审计/数据字典与日志.md) |
 | 首页组件目录 | 已支持 | Forgex_Sys | [编码规则、授权与初始化](./配置与审计/编码规则、授权与初始化.md) |
+| 首页布局分享码 | 已支持 | Forgex_Sys | `POST /sys/homepage/share/create`、`POST /sys/homepage/share/preview` |
 
 ### 2.7.1 业务编码生成（按规则生成单号）
 

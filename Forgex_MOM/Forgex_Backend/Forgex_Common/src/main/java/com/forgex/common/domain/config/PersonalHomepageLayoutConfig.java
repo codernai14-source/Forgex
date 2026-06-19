@@ -61,9 +61,9 @@ public class PersonalHomepageLayoutConfig {
     public static PersonalHomepageLayoutConfig defaults() {
         PersonalHomepageLayoutConfig config = new PersonalHomepageLayoutConfig();
         config.setColNum(12);
-        config.setRowHeight(72);
-        config.setMarginX(16);
-        config.setMarginY(16);
+        config.setRowHeight(64);
+        config.setMarginX(10);
+        config.setMarginY(10);
         config.setTabletColNum(8);
         config.setMobileColNum(4);
         return config;

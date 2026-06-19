@@ -36,16 +36,19 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -59,6 +62,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DictServiceImpl implements IDictService {
+
+    private static final long PUBLIC_TENANT_ID = 0L;
 
     @Autowired
     private SysDictMapper dictMapper;
@@ -83,6 +88,7 @@ public class DictServiceImpl implements IDictService {
         List<DictTreeVO> roots = getDictTree(tenantId).stream()
                 .filter(root -> matchRootNode(root, query))
                 .collect(Collectors.toList());
+        sortRoots(roots, query);
         long safePageNum = query.getPageNum() == null || query.getPageNum() <= 0 ? 1 : query.getPageNum();
         long safePageSize = query.getPageSize() == null || query.getPageSize() <= 0 ? 20 : query.getPageSize();
 
@@ -114,23 +120,10 @@ public class DictServiceImpl implements IDictService {
             log.warn("读取字典缓存失败：{}", cacheKey, e);
         }
 
-        SysDict dictType = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
-                .eq(tenantId != null, SysDict::getTenantId, tenantId)
-                .eq(SysDict::getDeleted, false)
-                .eq(SysDict::getDictCode, dictCode)
-                .eq(SysDict::getParentId, 0L)
-                .last("limit 1"));
-        if (dictType == null) {
+        List<SysDict> dictItems = listMergedDictItemsByCode(dictCode, tenantId);
+        if (dictItems.isEmpty()) {
             return new ArrayList<>();
         }
-
-        List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(tenantId != null, SysDict::getTenantId, tenantId)
-                .eq(SysDict::getDeleted, false)
-                .eq(SysDict::getParentId, dictType.getId())
-                .eq(SysDict::getStatus, 1)
-                .orderByAsc(SysDict::getOrderNum)
-                .orderByAsc(SysDict::getId));
 
         List<DictItemVO> items = new ArrayList<>();
         for (SysDict dict : dictItems) {
@@ -162,22 +155,10 @@ public class DictServiceImpl implements IDictService {
             log.warn("读取字典缓存失败：{}", cacheKey, e);
         }
 
-        SysDict node = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
-                .eq(tenantId != null, SysDict::getTenantId, tenantId)
-                .eq(SysDict::getDeleted, false)
-                .eq(SysDict::getNodePath, nodePath)
-                .last("limit 1"));
-        if (node == null) {
+        List<SysDict> dictItems = listMergedDictItemsByPath(nodePath, tenantId);
+        if (dictItems.isEmpty()) {
             return new ArrayList<>();
         }
-
-        List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
-                .eq(tenantId != null, SysDict::getTenantId, tenantId)
-                .eq(SysDict::getDeleted, false)
-                .eq(SysDict::getParentId, node.getId())
-                .eq(SysDict::getStatus, 1)
-                .orderByAsc(SysDict::getOrderNum)
-                .orderByAsc(SysDict::getId));
 
         List<DictItemVO> items = new ArrayList<>();
         for (SysDict dict : dictItems) {
@@ -365,10 +346,36 @@ public class DictServiceImpl implements IDictService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int pullPublicDicts(Long tenantId) {
+        if (tenantId == null || tenantId == PUBLIC_TENANT_ID) {
+            return 0;
+        }
+        List<SysDict> publicDicts = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getTenantId, PUBLIC_TENANT_ID)
+                .eq(SysDict::getDeleted, false)
+                .orderByAsc(SysDict::getParentId)
+                .orderByAsc(SysDict::getOrderNum)
+                .orderByAsc(SysDict::getId));
+        if (publicDicts.isEmpty()) {
+            return 0;
+        }
+
+        Map<Long, List<SysDict>> childrenMap = publicDicts.stream()
+                .collect(Collectors.groupingBy(item -> normalizeParentId(item.getParentId()), LinkedHashMap::new, Collectors.toList()));
+        int[] createdCount = new int[] {0};
+        for (SysDict root : childrenMap.getOrDefault(0L, Collections.emptyList())) {
+            copyPublicNode(root, tenantId, 0L, childrenMap, createdCount);
+        }
+        clearDictCache(null, tenantId);
+        return createdCount[0];
+    }
+
+    @Override
     public void clearDictCache(String dictCode, Long tenantId) {
         try {
-            String prefix = "dict:" + tenantId + ":";
-            Set<String> keys = redisTemplate.keys(prefix + "*");
+            String pattern = tenantId == null || tenantId == PUBLIC_TENANT_ID ? "dict:*" : "dict:" + tenantId + ":*";
+            Set<String> keys = redisTemplate.keys(pattern);
             if (keys != null && !keys.isEmpty()) {
                 redisTemplate.delete(keys);
             }
@@ -391,10 +398,129 @@ public class DictServiceImpl implements IDictService {
             DictTreeVO vo = new DictTreeVO();
             BeanUtils.copyProperties(dict, vo);
             vo.setModuleName(moduleNameMap.get(dict.getModuleId()));
+            vo.setPublicConfig(Objects.equals(dict.getTenantId(), PUBLIC_TENANT_ID));
             vo.setChildren(new ArrayList<>());
             result.add(vo);
         }
         return result;
+    }
+
+    private List<SysDict> listMergedDictItemsByCode(String dictCode, Long tenantId) {
+        List<SysDict> rootNodes = new ArrayList<>();
+        SysDict publicRoot = findRootByCode(dictCode, PUBLIC_TENANT_ID);
+        if (publicRoot != null) {
+            rootNodes.add(publicRoot);
+        }
+        if (tenantId != null && tenantId != PUBLIC_TENANT_ID) {
+            SysDict tenantRoot = findRootByCode(dictCode, tenantId);
+            if (tenantRoot != null) {
+                rootNodes.add(tenantRoot);
+            }
+        }
+        return mergeDictItems(rootNodes);
+    }
+
+    private List<SysDict> listMergedDictItemsByPath(String nodePath, Long tenantId) {
+        List<SysDict> nodes = new ArrayList<>();
+        SysDict publicNode = findNodeByPath(nodePath, PUBLIC_TENANT_ID);
+        if (publicNode != null) {
+            nodes.add(publicNode);
+        }
+        if (tenantId != null && tenantId != PUBLIC_TENANT_ID) {
+            SysDict tenantNode = findNodeByPath(nodePath, tenantId);
+            if (tenantNode != null) {
+                nodes.add(tenantNode);
+            }
+        }
+        return mergeDictItems(nodes);
+    }
+
+    private SysDict findRootByCode(String dictCode, Long tenantId) {
+        return dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getDictCode, dictCode)
+                .eq(SysDict::getParentId, 0L)
+                .last("limit 1"));
+    }
+
+    private SysDict findNodeByPath(String nodePath, Long tenantId) {
+        return dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getNodePath, nodePath)
+                .last("limit 1"));
+    }
+
+    private List<SysDict> mergeDictItems(List<SysDict> parents) {
+        if (parents == null || parents.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Map<String, SysDict> merged = new LinkedHashMap<>();
+        for (SysDict parent : parents) {
+            List<SysDict> dictItems = dictMapper.selectList(new LambdaQueryWrapper<SysDict>()
+                    .eq(SysDict::getTenantId, parent.getTenantId())
+                    .eq(SysDict::getDeleted, false)
+                    .eq(SysDict::getParentId, parent.getId())
+                    .eq(SysDict::getStatus, 1)
+                    .orderByAsc(SysDict::getOrderNum)
+                    .orderByAsc(SysDict::getId));
+            for (SysDict dict : dictItems) {
+                String key = StringUtils.hasText(dict.getDictValue()) ? dict.getDictValue() : String.valueOf(dict.getId());
+                merged.put(key, dict);
+            }
+        }
+        return new ArrayList<>(merged.values());
+    }
+
+    private SysDict copyPublicNode(SysDict publicNode, Long tenantId, Long targetParentId,
+                                   Map<Long, List<SysDict>> childrenMap, int[] createdCount) {
+        SysDict targetNode = findTenantNode(publicNode, tenantId, targetParentId);
+        if (targetNode == null) {
+            SysDict parent = targetParentId != null && targetParentId > 0 ? requireTenantDict(targetParentId, tenantId) : null;
+            targetNode = new SysDict();
+            BeanUtils.copyProperties(publicNode, targetNode);
+            targetNode.setId(null);
+            targetNode.setTenantId(tenantId);
+            targetNode.setParentId(normalizeParentId(targetParentId));
+            targetNode.setDeleted(false);
+            targetNode.setNodePath(parent == null ? publicNode.getDictCode() : parent.getNodePath() + "/" + publicNode.getDictCode());
+            targetNode.setLevel(parent == null ? 1 : ((parent.getLevel() == null ? 1 : parent.getLevel()) + 1));
+            targetNode.setChildrenCount(0);
+            targetNode.setCreateTime(LocalDateTime.now());
+            targetNode.setUpdateTime(LocalDateTime.now());
+            targetNode.setCreateBy(null);
+            targetNode.setUpdateBy(null);
+            dictMapper.insert(targetNode);
+            createdCount[0]++;
+            if (parent != null) {
+                dictMapper.update(null, new LambdaUpdateWrapper<SysDict>()
+                        .eq(SysDict::getId, parent.getId())
+                        .eq(SysDict::getTenantId, tenantId)
+                        .eq(SysDict::getDeleted, false)
+                        .setSql("children_count = children_count + 1")
+                        .set(SysDict::getUpdateTime, LocalDateTime.now()));
+            }
+        }
+
+        for (SysDict child : childrenMap.getOrDefault(publicNode.getId(), Collections.emptyList())) {
+            copyPublicNode(child, tenantId, targetNode.getId(), childrenMap, createdCount);
+        }
+        return targetNode;
+    }
+
+    private SysDict findTenantNode(SysDict publicNode, Long tenantId, Long parentId) {
+        LambdaQueryWrapper<SysDict> wrapper = new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getTenantId, tenantId)
+                .eq(SysDict::getDeleted, false)
+                .eq(SysDict::getParentId, normalizeParentId(parentId))
+                .eq(SysDict::getDictCode, publicNode.getDictCode());
+        if (StringUtils.hasText(publicNode.getDictValue())) {
+            wrapper.eq(SysDict::getDictValue, publicNode.getDictValue());
+        } else {
+            wrapper.and(w -> w.isNull(SysDict::getDictValue).or().eq(SysDict::getDictValue, ""));
+        }
+        return dictMapper.selectOne(wrapper.last("limit 1"));
     }
 
     private Map<Long, String> loadModuleNameMap(List<SysDict> dicts) {
@@ -458,6 +584,45 @@ public class DictServiceImpl implements IDictService {
             return false;
         }
         return query.getModuleId() == null || Objects.equals(root.getModuleId(), query.getModuleId());
+    }
+
+    private void sortRoots(List<DictTreeVO> roots, DictPageParam query) {
+        if (roots == null || roots.size() <= 1 || !StringUtils.hasText(query.getOrderBy())) {
+            return;
+        }
+        Comparator<DictTreeVO> comparator = resolveRootComparator(query.getOrderBy());
+        if (comparator == null) {
+            return;
+        }
+        if ("desc".equalsIgnoreCase(query.getOrderDirection())) {
+            comparator = comparator.reversed();
+        }
+        roots.sort(comparator.thenComparing(vo -> vo.getId() == null ? 0L : vo.getId()));
+    }
+
+    private Comparator<DictTreeVO> resolveRootComparator(String orderBy) {
+        switch (orderBy) {
+            case "dictCode":
+                return Comparator.comparing(vo -> defaultString(vo.getDictCode()), String.CASE_INSENSITIVE_ORDER);
+            case "dictName":
+                return Comparator.comparing(vo -> defaultString(vo.getDictName()), String.CASE_INSENSITIVE_ORDER);
+            case "moduleId":
+                return Comparator.comparing(vo -> vo.getModuleId() == null ? 0L : vo.getModuleId());
+            case "orderNum":
+                return Comparator.comparing(vo -> vo.getOrderNum() == null ? 0 : vo.getOrderNum());
+            case "status":
+                return Comparator.comparing(vo -> vo.getStatus() == null ? 0 : vo.getStatus());
+            case "createTime":
+                return Comparator.comparing(DictTreeVO::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "updateTime":
+                return Comparator.comparing(DictTreeVO::getUpdateTime, Comparator.nullsLast(Comparator.naturalOrder()));
+            default:
+                return null;
+        }
+    }
+
+    private String defaultString(String value) {
+        return value == null ? "" : value;
     }
 
     private boolean containsIgnoreCase(String source, String keyword) {
