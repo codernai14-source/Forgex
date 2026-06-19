@@ -30,4 +30,12 @@ public interface IWorkshopService extends IService<BasicWorkshop> {
     Boolean delete(Long id);
 
     Boolean batchDelete(List<Long> ids);
+
+    /**
+     * 根据工厂 ID 查询启用的车间列表（通常用于下拉）。
+     *
+     * @param factoryId 工厂 ID
+     * @return 启用状态的车间列表
+     */
+    List<WorkshopDTO> listByFactory(Long factoryId);
 }
