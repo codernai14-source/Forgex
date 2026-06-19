@@ -31,6 +31,7 @@
 | `20260517_basic_currency_encode_rule_menu_permission_fix.sql` | `forgex_admin` | 幂等修复基础信息下币种管理菜单、编码规则页面入口和权限授权数据，确保编码规则作为页面而不是目录展示。 |
 | `20260517_basic_currency_table_fix.sql` | `forgex_admin` | 幂等创建币种管理依赖的 `mdm_currency`、`mdm_exchange_rate_type`、`mdm_currency_exchange_rate`、`mdm_exchange_rate_log` 表，并补齐当前租户默认币种和汇率类型种子数据。 |
 | `20260518_seed_basic_units_and_currency_rates.sql` | `forgex_admin` | 幂等初始化公共租户和默认租户的常见计量单位分类、固定换算关系、常见币种，以及 CNY 到常见外币的 BOOKING 有效汇率。 |
+| `20260619_factory_modeling.sql` | `forgex_admin`、`forgex_common` | 幂等补齐工厂建模四级主数据：产线 / 工段 / 工序三张新表，车间扩展「车间类型 / 负责人」字段，5 个字典（prod_line_type / workshop_type / process_type / report_type / qc_trigger_point），以及产线 / 工段 / 工序三个菜单 + 按钮权限 + 动态表格列配置。 |
 
 ## 四、推荐阅读方式
 
