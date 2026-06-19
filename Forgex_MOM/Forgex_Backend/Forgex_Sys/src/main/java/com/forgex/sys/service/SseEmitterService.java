@@ -158,6 +158,19 @@ public class SseEmitterService {
     }
 
     /**
+     * 向指定租户所有在线用户广播事件。
+     *
+     * @param tenantId 租户ID；为空时广播给所有租户
+     * @param event 事件名
+     * @param data 消息数据
+     */
+    public void sendToTenant(Long tenantId, String event, Object data) {
+        connections.keySet().stream()
+                .filter(key -> tenantId == null || key.startsWith(tenantId + ":"))
+                .forEach(key -> sendToConnections(key, event, data));
+    }
+
+    /**
      * 向指定连接发送消息
      */
     private void sendToConnections(String key, String event, Object data) {

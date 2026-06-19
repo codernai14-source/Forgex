@@ -121,6 +121,25 @@ export default {
   },
 
   // 收藏管理頁面
+  share: {
+    create: '\u751f\u6210\u5206\u4eab\u78bc',
+    import: '\u532f\u5165\u4f48\u5c40',
+    shareTitle: '\u4f48\u5c40\u5206\u4eab\u78bc',
+    importTitle: '\u532f\u5165\u4f48\u5c40\u5206\u4eab\u78bc',
+    shareCode: '\u5206\u4eab\u78bc',
+    inputPlaceholder: '\u8acb\u8f38\u5165\u5206\u4eab\u78bc',
+    copy: '\u8907\u88fd',
+    preview: '\u9810\u89bd',
+    apply: '\u5957\u7528\u5230\u76ee\u524d\u8349\u7a3f',
+    moduleCode: '\u6a21\u7d44',
+    createTime: '\u7522\u751f\u6642\u9593',
+    createSuccess: '\u5206\u4eab\u78bc\u5df2\u7522\u751f',
+    createFailed: '\u7522\u751f\u5206\u4eab\u78bc\u5931\u6557',
+    copySuccess: '\u5206\u4eab\u78bc\u5df2\u8907\u88fd',
+    previewFailed: '\u5206\u4eab\u78bc\u7121\u6548\u6216\u4e0d\u5c6c\u65bc\u76ee\u524d\u79df\u6236',
+    importApplied: '\u5df2\u532f\u5165\u5230\u76ee\u524d\u8349\u7a3f\uff0c\u8acb\u5132\u5b58\u4f48\u5c40\u5f8c\u751f\u6548',
+  },
+
   management: {
     title: '收藏管理',
     desc: '統一維護我的收藏菜單，支持調整首頁展示順序與批量取消收藏。',

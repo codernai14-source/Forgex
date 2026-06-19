@@ -224,6 +224,13 @@
 
 .fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th) {
   position: relative;
+  padding-top: var(--fx-table-header-padding-y, 10px);
+  padding-bottom: var(--fx-table-header-padding-y, 10px);
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-tbody > tr > td) {
+  padding-top: var(--fx-table-cell-padding-y, 10px);
+  padding-bottom: var(--fx-table-cell-padding-y, 10px);
 }
 
 .fx-dynamic-table-wrap :deep(.ant-table-cell-fix-right),

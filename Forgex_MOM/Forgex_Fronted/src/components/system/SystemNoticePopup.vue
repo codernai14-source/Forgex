@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { noticeApi, type NoticeScope, type SysNotice } from '@/api/system/notice'
@@ -54,26 +54,63 @@ const visible = ref(false)
 const notices = ref<SysNotice[]>([])
 const activeIndex = ref(0)
 const loading = ref(false)
+let refreshTimer: number | null = null
+let visibilityHandler: (() => void) | null = null
+let refreshHandler: ((event?: Event) => void) | null = null
 
 const currentNotice = computed(() => notices.value[activeIndex.value])
 
-watch(
-  () => route.path,
-  async (path) => {
-    if (path === PERSONAL_HOME_PATH) {
-      await loadPopupNotices()
-    }
-  },
-  { immediate: true },
-)
+function clearRefreshTimer() {
+  if (refreshTimer != null && typeof window !== 'undefined') {
+    window.clearTimeout(refreshTimer)
+  }
+  refreshTimer = null
+}
+
+function schedulePopupRefresh() {
+  if (typeof window === 'undefined') return
+  clearRefreshTimer()
+  refreshTimer = window.setTimeout(() => {
+    refreshTimer = null
+    void loadPopupNotices()
+  }, 300)
+}
+
+function shouldRefreshPopup() {
+  return route.path === PERSONAL_HOME_PATH && typeof document !== 'undefined' && !document.hidden
+}
+
+function handleSystemNoticeRefreshEvent() {
+  if (shouldRefreshPopup()) {
+    schedulePopupRefresh()
+  }
+}
+
+function handleTenantChangedEvent() {
+  notices.value = []
+  activeIndex.value = 0
+  visible.value = false
+  if (shouldRefreshPopup()) {
+    schedulePopupRefresh()
+  }
+}
+
+function handleVisibilityChange() {
+  if (!document.hidden && shouldRefreshPopup()) {
+    schedulePopupRefresh()
+  }
+}
+
+function handleRouteChange(path: string) {
+  if (path === PERSONAL_HOME_PATH) {
+    schedulePopupRefresh()
+  }
+}
 
 watch(
-  () => visible.value,
-  (open) => {
-    if (!open) {
-      return
-    }
-  },
+  () => route.path,
+  (path) => handleRouteChange(path),
+  { immediate: true },
 )
 
 async function loadPopupNotices() {
@@ -90,6 +127,29 @@ async function loadPopupNotices() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    refreshHandler = handleSystemNoticeRefreshEvent
+    visibilityHandler = handleVisibilityChange
+    window.addEventListener('fx:system-notice-refresh', refreshHandler as EventListener)
+    document.addEventListener('visibilitychange', visibilityHandler)
+    window.addEventListener('fx:tenant-changed', handleTenantChangedEvent as EventListener)
+  }
+})
+
+onBeforeUnmount(() => {
+  clearRefreshTimer()
+  if (typeof window !== 'undefined') {
+    if (refreshHandler) {
+      window.removeEventListener('fx:system-notice-refresh', refreshHandler as EventListener)
+    }
+    if (visibilityHandler) {
+      document.removeEventListener('visibilitychange', visibilityHandler)
+    }
+    window.removeEventListener('fx:tenant-changed', handleTenantChangedEvent as EventListener)
+  }
+})
 
 async function ackCurrent() {
   const notice = currentNotice.value

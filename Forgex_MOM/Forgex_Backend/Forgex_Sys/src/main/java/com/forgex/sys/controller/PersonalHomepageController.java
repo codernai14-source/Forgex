@@ -6,9 +6,13 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
+import com.forgex.sys.domain.param.HomepageLayoutShareCreateParam;
+import com.forgex.sys.domain.param.HomepageLayoutSharePreviewParam;
 import com.forgex.sys.domain.param.PersonalHomepageManageParam;
 import com.forgex.sys.domain.param.PersonalHomepageSaveParam;
+import com.forgex.sys.domain.vo.HomepageLayoutShareVO;
 import com.forgex.sys.domain.vo.PersonalHomepageSummaryVO;
+import com.forgex.sys.service.HomepageLayoutShareService;
 import com.forgex.sys.service.PersonalHomepageSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
@@ -36,6 +40,8 @@ public class PersonalHomepageController {
     private final PersonalHomepageConfigService personalHomepageConfigService;
 
     private final PersonalHomepageSummaryService personalHomepageSummaryService;
+
+    private final HomepageLayoutShareService homepageLayoutShareService;
 
     /**
      * 获取当前用户个人首页配置。
@@ -144,6 +150,52 @@ public class PersonalHomepageController {
      *
      * @return 摘要信息VO
      */
+    /**
+     * 创建当前租户内可读取的首页布局分享码。
+     *
+     * @param param 分享码创建参数
+     * @return 分享码信息
+     */
+    @PostMapping("/share/create")
+    public R<HomepageLayoutShareVO> createShare(@RequestBody HomepageLayoutShareCreateParam param) {
+        Long userId = UserContext.get();
+        Long tenantId = TenantContext.get();
+        if (userId == null || tenantId == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        if (param == null || param.getConfig() == null) {
+            return R.fail(CommonPrompt.PARAM_EMPTY);
+        }
+        return R.ok(homepageLayoutShareService.createShare(tenantId, param.getModuleCode(), param.getConfig()));
+    }
+
+    /**
+     * 按分享码预览当前租户内首页布局配置。
+     *
+     * @param param 分享码预览参数
+     * @return 分享码对应的布局配置
+     */
+    @PostMapping("/share/preview")
+    public R<HomepageLayoutShareVO> previewShare(@RequestBody HomepageLayoutSharePreviewParam param) {
+        Long userId = UserContext.get();
+        Long tenantId = TenantContext.get();
+        if (userId == null || tenantId == null) {
+            return R.fail(CommonPrompt.NOT_LOGIN);
+        }
+        if (param == null || !StringUtils.hasText(param.getShareCode())) {
+            return R.fail(CommonPrompt.PARAM_EMPTY);
+        }
+        HomepageLayoutShareVO share = homepageLayoutShareService.previewShare(
+                tenantId,
+                param.getShareCode(),
+                param.getModuleCode()
+        );
+        if (share == null) {
+            return R.fail(CommonPrompt.NOT_FOUND);
+        }
+        return R.ok(share);
+    }
+
     @GetMapping("/summary")
     public R<PersonalHomepageSummaryVO> getSummary() {
         Long userId = UserContext.get();
