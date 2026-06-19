@@ -5,6 +5,7 @@
       class="fx-main-layout" 
       :style="rootStyle"
       :data-font-size="layoutConfig.fontSize"
+      :data-table-row-density="layoutConfig.tableRowDensity"
     >
     <!-- 使用新的 AppHeader 组件 -->
   <AppHeader
@@ -303,7 +304,6 @@
                 <span>{{ t('layout.fontSize') }}</span>
                 <div class="fx-setting-slider">
                   <a-slider v-model:value="fontSizeSliderValue" :min="FONT_SIZE_MIN" :max="FONT_SIZE_MAX" />
-                  <span class="fx-setting-slider__value">{{ fontSizeLabel }}</span>
                 </div>
               </div>
 
@@ -407,6 +407,13 @@
                   <a-select-option value="modal">{{ t('layout.formModeModal') }}</a-select-option>
                   <a-select-option value="drawer">{{ t('layout.formModeDrawer') }}</a-select-option>
                 </a-select>
+              </div>
+              <div class="fx-setting-row">
+                <span>{{ t('layout.tableRowDensity') }}</span>
+                <a-segmented
+                  v-model:value="layoutConfig.tableRowDensity"
+                  :options="tableRowDensityOptions"
+                />
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.animateEnabled') }}</span>
@@ -686,6 +693,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   watermarkText: 'FORGEX_MOM',
   animateEnabled: true,
   loadingIndicatorEnabled: true,
+  tableRowDensity: 'normal',
   pageTransition: 'horizontal',
   footerCopyrightEnabled: true
 }
@@ -880,12 +888,11 @@ const fontSizeSliderValue = computed({
   },
 })
 
-const fontSizeLabel = computed(() => {
-  const value = fontSizeSliderValue.value
-  if (value <= 14) return t('layout.fontSizeSmall')
-  if (value >= 18) return t('layout.fontSizeLarge')
-  return t('layout.fontSizeDefault')
-})
+const tableRowDensityOptions = computed(() => [
+  { label: t('layout.tableRowDensityComfortable'), value: 'comfortable' },
+  { label: t('layout.tableRowDensityNormal'), value: 'normal' },
+  { label: t('layout.tableRowDensityCompact'), value: 'compact' },
+])
 
 /**
  * 布局模式选项配置
@@ -1959,6 +1966,7 @@ async function onTenantChange(tenantId: string) {
     activeModuleCode.value = ''
     openKeys.value = []
     messageSendForm.value.receiverTenantId = Number(nextTenantId) || undefined
+    window.dispatchEvent(new CustomEvent('fx:tenant-changed', { detail: { tenantId: nextTenantId } }))
 
     await loadTenantOptions()
     await router.push(PERSONAL_HOME_PATH)
@@ -2196,6 +2204,9 @@ function normalizeLayoutConfig(raw: any): LayoutConfig {
     watermarkText: typeof cfg.watermarkText === 'string' && cfg.watermarkText ? cfg.watermarkText : DEFAULT_LAYOUT_CONFIG.watermarkText,
     animateEnabled: cfg.animateEnabled !== false,
     loadingIndicatorEnabled: cfg.loadingIndicatorEnabled !== false,
+    tableRowDensity: cfg.tableRowDensity === 'comfortable' || cfg.tableRowDensity === 'compact'
+      ? cfg.tableRowDensity
+      : 'normal',
     pageTransition: cfg.pageTransition === 'fade' ? 'fade' : 'horizontal',
     footerCopyrightEnabled: !!cfg.footerCopyrightEnabled
   }
@@ -2917,6 +2928,10 @@ const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessage
   url: '/api/sys/message/stream',
   onEvent: (name, data) => {
     if (name !== 'message') return
+    if ((data as any)?.category === 'SYSTEM_NOTICE_REFRESH') {
+      window.dispatchEvent(new CustomEvent('fx:system-notice-refresh', { detail: data }))
+      return
+    }
     if (!data || !(data as any).id) return
     openMessageNotification(data as any)
     window.dispatchEvent(new CustomEvent('fx:message-received', { detail: data }))

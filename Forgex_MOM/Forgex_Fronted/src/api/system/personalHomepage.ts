@@ -35,6 +35,23 @@ export interface PersonalHomepageConfig {
   widgets: PersonalHomepageWidgetConfig[]
 }
 
+export interface HomepageLayoutShareCreateParam {
+  moduleCode?: string
+  config: PersonalHomepageConfig
+}
+
+export interface HomepageLayoutSharePreviewParam {
+  moduleCode?: string
+  shareCode: string
+}
+
+export interface HomepageLayoutShareVO {
+  shareCode: string
+  moduleCode: string
+  config: PersonalHomepageConfig
+  createTime?: string
+}
+
 export const PERSONAL_HOMEPAGE_WIDGET_KEYS = [
   'commonMenus',
   'myFavorites',
@@ -84,9 +101,9 @@ export function createDefaultPersonalHomepageConfig(): PersonalHomepageConfig {
   return {
     layout: {
       colNum: 12,
-      rowHeight: 72,
-      marginX: 16,
-      marginY: 16,
+      rowHeight: 64,
+      marginX: 10,
+      marginY: 10,
       tabletColNum: 8,
       mobileColNum: 4,
     },
@@ -380,6 +397,14 @@ export function saveManagePersonalHomepageConfig(
   options: HomepageConfigRequestOptions = {},
 ) {
   return http.post<boolean>('/sys/homepage/manage/save', { ...options, scopeLevel, config })
+}
+
+export function createHomepageLayoutShare(data: HomepageLayoutShareCreateParam) {
+  return http.post<HomepageLayoutShareVO>('/sys/homepage/share/create', data)
+}
+
+export function previewHomepageLayoutShare(data: HomepageLayoutSharePreviewParam) {
+  return http.post<HomepageLayoutShareVO>('/sys/homepage/share/preview', data)
 }
 
 /**

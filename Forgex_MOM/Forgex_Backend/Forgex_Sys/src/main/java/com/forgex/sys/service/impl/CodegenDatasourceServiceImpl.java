@@ -17,6 +17,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import cn.hutool.crypto.asymmetric.KeyType;
+import cn.hutool.crypto.asymmetric.SM2;
+import com.forgex.common.config.ConfigService;
+import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.CodegenDatasourceDTO;
@@ -30,9 +34,9 @@ import com.forgex.sys.service.ICodegenDatasourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
@@ -53,6 +57,8 @@ public class CodegenDatasourceServiceImpl
     implements ICodegenDatasourceService {
 
     private final SysCodegenDatasourceMapper datasourceMapper;
+
+    private final ConfigService configService;
 
     /**
      * 分页查询代码生成数据源。
@@ -99,11 +105,17 @@ public class CodegenDatasourceServiceImpl
      * @return 数据主键 ID
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Long saveDatasource(CodegenDatasourceSaveParam param) {
         validateSaveParam(param);
         SysCodegenDatasource entity = param.getId() == null ? new SysCodegenDatasource() : requireEntity(param.getId());
+        String existingPassword = entity.getPassword();
+        String password = decryptTransportPassword(param.getPassword());
         BeanUtils.copyProperties(param, entity);
+        if (StringUtils.hasText(password)) {
+            entity.setPassword(password);
+        } else {
+            entity.setPassword(existingPassword);
+        }
         if (entity.getEnabled() == null) {
             entity.setEnabled(Boolean.TRUE);
         }
@@ -117,7 +129,6 @@ public class CodegenDatasourceServiceImpl
      * @param id 主键 ID
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void deleteDatasource(Long id) {
         requireEntity(id);
         datasourceMapper.deleteById(id);
@@ -136,12 +147,18 @@ public class CodegenDatasourceServiceImpl
         }
         String jdbcUrl = param.getJdbcUrl();
         String username = param.getUsername();
-        String password = param.getPassword();
-        if (!StringUtils.hasText(jdbcUrl) && param.getId() != null) {
+        String password = decryptTransportPassword(param.getPassword());
+        if (param.getId() != null) {
             SysCodegenDatasource entity = requireEntity(param.getId());
-            jdbcUrl = entity.getJdbcUrl();
-            username = entity.getUsername();
-            password = entity.getPassword();
+            if (!StringUtils.hasText(jdbcUrl)) {
+                jdbcUrl = entity.getJdbcUrl();
+            }
+            if (!StringUtils.hasText(username)) {
+                username = entity.getUsername();
+            }
+            if (!StringUtils.hasText(password)) {
+                password = entity.getPassword();
+            }
         }
         if (!StringUtils.hasText(jdbcUrl) || !StringUtils.hasText(username)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_DATASOURCE_PARAM_EMPTY);
@@ -205,5 +222,26 @@ public class CodegenDatasourceServiceImpl
         CodegenDatasourceDTO dto = new CodegenDatasourceDTO();
         BeanUtils.copyProperties(entity, dto);
         return dto;
+    }
+
+    private String decryptTransportPassword(String password) {
+        if (!StringUtils.hasText(password)) {
+            return null;
+        }
+        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
+        if (cryptoCfg == null || !StringUtils.hasText(cryptoCfg.getPrivateKey())
+            || !"SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_DATASOURCE_PASSWORD_DECRYPT_FAILED);
+        }
+        try {
+            SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
+            if ("BCD".equalsIgnoreCase(cryptoCfg.getCipher())) {
+                byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
+                return new String(plain, StandardCharsets.UTF_8);
+            }
+            return sm2.decryptStr(password, KeyType.PrivateKey);
+        } catch (Exception ex) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_DATASOURCE_PASSWORD_DECRYPT_FAILED);
+        }
     }
 }

@@ -6,52 +6,54 @@
         <h2 class="module-homepage-hero__title">{{ resolvedTitle }}</h2>
         <p class="module-homepage-hero__desc">{{ resolvedDescription }}</p>
       </div>
-      <div class="module-homepage-hero__meta">
-        <span class="module-homepage-badge">{{ scopeLabel }}</span>
-        <span class="module-homepage-badge module-homepage-badge--soft">
-          {{ editMode ? t('personalHomepage.module.mode.editing') : t('personalHomepage.module.mode.view') }}
-        </span>
-      </div>
-    </div>
-
-    <div class="module-homepage-toolbar" data-guide-id="module-homepage-toolbar">
-      <a-space wrap>
+      <div class="module-homepage-hero__actions">
         <a-select
           v-if="mode === 'manage' && showScopeSelector"
           v-model:value="scopeLevel"
-          style="width: 160px"
+          class="module-homepage-hero__scope"
         >
           <a-select-option value="TENANT">{{ t('personalHomepage.hero.badge.tenant') }}</a-select-option>
           <a-select-option value="PUBLIC">{{ t('personalHomepage.hero.badge.public') }}</a-select-option>
         </a-select>
-        <a-button @click="toggleEditMode">
-          <template #icon>
-            <SettingOutlined />
-          </template>
-          {{ editMode ? t('personalHomepage.module.toolbar.exitConfig') : t('personalHomepage.toolbar.editMode') }}
-        </a-button>
-        <a-button @click="reloadConfig">
-          <template #icon>
-            <ReloadOutlined />
-          </template>
-          {{ t('personalHomepage.toolbar.refresh') }}
-        </a-button>
-        <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
-          <template #icon>
-            <UndoOutlined />
-          </template>
-          {{ t('personalHomepage.toolbar.resetDefault') }}
-        </a-button>
-        <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
-          <template #icon>
-            <SaveOutlined />
-          </template>
-          {{ t('personalHomepage.toolbar.saveLayout') }}
-        </a-button>
-      </a-space>
-      <span class="module-homepage-toolbar__hint">
-        {{ editMode ? t('personalHomepage.module.toolbar.hint.edit') : t('personalHomepage.module.toolbar.hint.view') }}
-      </span>
+        <a-space wrap>
+          <a-button @click="toggleEditMode">
+            <template #icon>
+              <SettingOutlined />
+            </template>
+            {{ editMode ? t('personalHomepage.module.toolbar.exitConfig') : t('personalHomepage.toolbar.editMode') }}
+          </a-button>
+          <a-button @click="reloadConfig">
+            <template #icon>
+              <ReloadOutlined />
+            </template>
+            {{ t('personalHomepage.toolbar.refresh') }}
+          </a-button>
+          <a-button v-if="editMode" :loading="sharing" @click="createShareCode">
+            <template #icon>
+              <ShareAltOutlined />
+            </template>
+            {{ t('personalHomepage.share.create') }}
+          </a-button>
+          <a-button v-if="editMode" @click="openImportLayout">
+            <template #icon>
+              <ImportOutlined />
+            </template>
+            {{ t('personalHomepage.share.import') }}
+          </a-button>
+          <a-button v-if="editMode && mode === 'current'" @click="resetToDefault">
+            <template #icon>
+              <UndoOutlined />
+            </template>
+            {{ t('personalHomepage.toolbar.resetDefault') }}
+          </a-button>
+          <a-button v-if="editMode" type="primary" :loading="saving" @click="saveConfig">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            {{ t('personalHomepage.toolbar.saveLayout') }}
+          </a-button>
+        </a-space>
+      </div>
     </div>
 
     <div class="module-homepage-content" :class="{ 'module-homepage-content--editing': editMode }">
@@ -186,6 +188,45 @@
         </div>
       </aside>
     </div>
+
+    <a-modal v-model:open="shareModalOpen" :title="t('personalHomepage.share.shareTitle')" :footer="null">
+      <a-input-group compact>
+        <a-input v-model:value="shareCode" readonly style="width: calc(100% - 88px)" />
+        <a-button style="width: 88px" @click="copyShareCode">
+          {{ t('personalHomepage.share.copy') }}
+        </a-button>
+      </a-input-group>
+    </a-modal>
+
+    <a-modal
+      v-model:open="importModalOpen"
+      :title="t('personalHomepage.share.importTitle')"
+      :ok-text="t('personalHomepage.share.apply')"
+      :ok-button-props="{ disabled: !importPreview }"
+      :confirm-loading="importLoading"
+      @ok="applyImportLayout"
+    >
+      <a-space direction="vertical" style="width: 100%" :size="12">
+        <a-input-search
+          v-model:value="importCode"
+          allow-clear
+          :placeholder="t('personalHomepage.share.inputPlaceholder')"
+          :loading="importLoading"
+          @search="previewImportLayout"
+        />
+        <a-descriptions v-if="importPreview" size="small" bordered :column="1">
+          <a-descriptions-item :label="t('personalHomepage.share.shareCode')">
+            {{ importPreview.shareCode }}
+          </a-descriptions-item>
+          <a-descriptions-item :label="t('personalHomepage.share.moduleCode')">
+            {{ importPreview.moduleCode }}
+          </a-descriptions-item>
+          <a-descriptions-item :label="t('personalHomepage.share.createTime')">
+            {{ importPreview.createTime || '-' }}
+          </a-descriptions-item>
+        </a-descriptions>
+      </a-space>
+    </a-modal>
   </div>
 </template>
 
@@ -207,23 +248,28 @@ import {
   DragOutlined,
   FileTextOutlined,
   HddOutlined,
+  ImportOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
   SaveOutlined,
   SettingOutlined,
+  ShareAltOutlined,
   TeamOutlined,
   ThunderboltOutlined,
   UndoOutlined,
 } from '@ant-design/icons-vue'
 import { GridItem, GridLayout } from 'vue-grid-layout-v3'
 import {
+  createHomepageLayoutShare,
   createDefaultModuleHomepageConfig,
   getCurrentPersonalHomepageConfig,
   getManagePersonalHomepageConfig,
   mergeModuleHomepageConfig,
+  previewHomepageLayoutShare,
   resetCurrentPersonalHomepageConfig,
   saveCurrentPersonalHomepageConfig,
   saveManagePersonalHomepageConfig,
+  type HomepageLayoutShareVO,
   type ModuleHomepageCode,
   type PersonalHomepageConfig,
   type PersonalHomepageScopeLevel,
@@ -284,6 +330,13 @@ const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWid
 const config = ref<PersonalHomepageConfig>(createDefaultModuleHomepageConfig(props.moduleCode))
 const gridLayout = ref<GridLayoutItem[]>([])
 const syncingGrid = ref(false)
+const shareModalOpen = ref(false)
+const shareCode = ref('')
+const sharing = ref(false)
+const importModalOpen = ref(false)
+const importCode = ref('')
+const importPreview = ref<HomepageLayoutShareVO | null>(null)
+const importLoading = ref(false)
 
 const normalizedModuleCode = computed<ModuleHomepageCode>(() => normalizeModuleCode(props.moduleCode))
 
@@ -315,12 +368,6 @@ const moduleMeta = computed(() => {
 
 const resolvedTitle = computed(() => props.title || moduleMeta.value.title)
 const resolvedDescription = computed(() => props.description || moduleMeta.value.desc)
-const scopeLabel = computed(() => {
-  if (props.mode === 'current') {
-    return t('personalHomepage.hero.badge.user')
-  }
-  return scopeLevel.value === 'PUBLIC' ? t('personalHomepage.hero.badge.public') : t('personalHomepage.hero.badge.tenant')
-})
 
 const orderedWidgets = computed(() => {
   return [...config.value.widgets].sort((left, right) => {
@@ -347,25 +394,26 @@ const currentColNum = computed(() => {
   return config.value.layout.colNum || 12
 })
 
-const currentRowHeight = computed(() => config.value.layout.rowHeight || 72)
+const currentRowHeight = computed(() => config.value.layout.rowHeight || 64)
+
 const gridMargin = computed<[number, number]>(() => [
-  config.value.layout.marginX || 16,
-  config.value.layout.marginY || 16,
+  config.value.layout.marginX || 10,
+  config.value.layout.marginY || 10,
 ])
 
-function normalizeModuleCode(moduleCode?: string | null): ModuleHomepageCode {
-  const normalized = String(moduleCode || 'personal').trim().toLowerCase()
-  if (!normalized || normalized === 'personal') {
-    return 'personal'
-  }
-  if (normalized === 'system') {
+function normalizeModuleCode(code: string): ModuleHomepageCode {
+  const normalized = String(code || 'basic').trim().toLowerCase()
+  if (normalized === 'sys' || normalized === 'system') {
     return 'sys'
   }
-  if (normalized === 'workflow') {
+  if (normalized === 'approval' || normalized === 'workflow') {
     return 'approval'
   }
-  if (normalized === 'basic' || normalized === 'approval' || normalized === 'sys') {
-    return normalized
+  if (normalized === 'personal') {
+    return 'personal'
+  }
+  if (normalized === 'basic') {
+    return 'basic'
   }
   return 'basic'
 }
@@ -586,6 +634,62 @@ async function saveConfig() {
   } finally {
     saving.value = false
   }
+}
+
+async function createShareCode() {
+  sharing.value = true
+  try {
+    const payload = mergeModuleHomepageConfig(config.value, normalizedModuleCode.value)
+    const result = await createHomepageLayoutShare({
+      moduleCode: normalizedModuleCode.value,
+      config: payload,
+    })
+    shareCode.value = result.shareCode
+    shareModalOpen.value = true
+  } finally {
+    sharing.value = false
+  }
+}
+
+function openImportLayout() {
+  importCode.value = ''
+  importPreview.value = null
+  importModalOpen.value = true
+}
+
+async function previewImportLayout() {
+  const code = importCode.value.trim()
+  if (!code) {
+    importPreview.value = null
+    return
+  }
+  importLoading.value = true
+  try {
+    importPreview.value = await previewHomepageLayoutShare({
+      shareCode: code,
+      moduleCode: normalizedModuleCode.value,
+    })
+  } finally {
+    importLoading.value = false
+  }
+}
+
+function applyImportLayout() {
+  if (!importPreview.value?.config) {
+    return
+  }
+  config.value = mergeModuleHomepageConfig(importPreview.value.config, normalizedModuleCode.value)
+  syncGridFromConfig()
+  importModalOpen.value = false
+  message.success(t('personalHomepage.share.applySuccess'))
+}
+
+async function copyShareCode() {
+  if (!shareCode.value) {
+    return
+  }
+  await navigator.clipboard?.writeText(shareCode.value)
+  message.success(t('personalHomepage.share.copySuccess'))
 }
 
 async function resetToDefault() {

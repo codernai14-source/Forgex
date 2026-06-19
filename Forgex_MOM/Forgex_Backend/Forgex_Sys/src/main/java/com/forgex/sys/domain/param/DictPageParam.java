@@ -13,4 +13,6 @@ public class DictPageParam extends BaseGetParam {
     private String dictName;
 
     private Long moduleId;
+
+    private Boolean publicConfig;
 }

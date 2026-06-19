@@ -61,6 +61,11 @@ const recentBackendToast = {
 }
 let backendToastDepth = 0
 const pendingActions = new Map<string, Promise<any>>()
+const tableSortHeaders = {
+  tableCode: 'X-Fx-Table-Code',
+  sortField: 'X-Fx-Sort-Field',
+  sortOrder: 'X-Fx-Sort-Order',
+}
 
 function shouldSuppressFrontendMessage(type: 'success' | 'error'): boolean {
   return backendToastDepth === 0
@@ -462,6 +467,36 @@ function injectCommonHeaders(cfg: any) {
   return cfg
 }
 
+function setHeader(headers: any, key: string, value: any) {
+  if (value === undefined || value === null || value === '') return
+  if (typeof headers.set === 'function') {
+    headers.set(key, String(value))
+  } else {
+    headers[key] = String(value)
+  }
+}
+
+function injectTableSortHeaders(cfg: any) {
+  const method = String(cfg.method || 'get').toLowerCase()
+  const source = method === 'get' ? cfg.params : cfg.data
+  if (!source || typeof source !== 'object') return cfg
+
+  const tableCode = source.__fxTableCode
+  const sortField = source.sortField || source.orderBy
+  const sortOrder = source.sortOrder || source.orderDirection
+  if (Object.prototype.hasOwnProperty.call(source, '__fxTableCode')) {
+    delete source.__fxTableCode
+  }
+
+  if (!tableCode || !sortField || !sortOrder) return cfg
+  const headersAny: any = cfg.headers || {}
+  setHeader(headersAny, tableSortHeaders.tableCode, tableCode)
+  setHeader(headersAny, tableSortHeaders.sortField, sortField)
+  setHeader(headersAny, tableSortHeaders.sortOrder, sortOrder)
+  cfg.headers = headersAny
+  return cfg
+}
+
 /**
  * 请求拦截器（带全局遮罩）
  * 在发送请求前执行，主要用于：
@@ -470,7 +505,7 @@ function injectCommonHeaders(cfg: any) {
  */
 http.interceptors.request.use(cfg => {
   startGlobalLoading(cfg as any)
-  return injectCommonHeaders(cfg)
+  return injectCommonHeaders(injectTableSortHeaders(cfg))
 })
 
 /**
@@ -478,7 +513,7 @@ http.interceptors.request.use(cfg => {
  * 用于后台接口，不显示全局加载指示器
  */
 silentHttp.interceptors.request.use(cfg => {
-  return injectCommonHeaders(cfg)
+  return injectCommonHeaders(injectTableSortHeaders(cfg))
 })
 
 /**

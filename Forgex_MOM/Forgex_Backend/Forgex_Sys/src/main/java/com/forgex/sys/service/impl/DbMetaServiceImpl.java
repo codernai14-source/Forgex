@@ -133,9 +133,9 @@ public class DbMetaServiceImpl implements DbMetaService {
                     column.setIsAutoIncrement("auto_increment".equalsIgnoreCase(rs.getString("EXTRA")));
                     column.setIsNullable("YES".equalsIgnoreCase(rs.getString("IS_NULLABLE")));
                     column.setDefaultValue(rs.getString("COLUMN_DEFAULT"));
-                    column.setCharacterMaximumLength((Long) rs.getObject("CHARACTER_MAXIMUM_LENGTH"));
-                    column.setNumericPrecision((Integer) rs.getObject("NUMERIC_PRECISION"));
-                    column.setNumericScale((Integer) rs.getObject("NUMERIC_SCALE"));
+                    column.setCharacterMaximumLength(toLong(rs.getObject("CHARACTER_MAXIMUM_LENGTH")));
+                    column.setNumericPrecision(toInteger(rs.getObject("NUMERIC_PRECISION")));
+                    column.setNumericScale(toInteger(rs.getObject("NUMERIC_SCALE")));
                     column.setJavaFieldName(toJavaFieldName(columnName));
                     String javaType = toJavaType(column.getDataType());
                     column.setJavaType(javaType);
@@ -143,10 +143,15 @@ public class DbMetaServiceImpl implements DbMetaService {
                     column.setNeedImport(needImport(javaType));
                     columns.add(column);
                 }
+                if (columns.isEmpty()) {
+                    throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TABLE_NOT_FOUND, tableName);
+                }
                 return columns;
             }
+        } catch (I18nBusinessException ex) {
+            throw ex;
         } catch (Exception ex) {
-            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_TABLE_NOT_FOUND, tableName);
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.CODEGEN_DATASOURCE_TEST_FAILED, ex.getMessage());
         }
     }
 
@@ -198,6 +203,26 @@ public class DbMetaServiceImpl implements DbMetaService {
             }
         }
         return builder.toString();
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.valueOf(value.toString());
+    }
+
+    private Integer toInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return Integer.valueOf(value.toString());
     }
 
     private String toJavaType(String dbType) {

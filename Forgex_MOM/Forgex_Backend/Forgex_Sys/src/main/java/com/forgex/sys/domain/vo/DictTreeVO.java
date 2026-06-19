@@ -65,6 +65,9 @@ public class DictTreeVO {
      */
     private String moduleName;
 
+    /** 是否公共配置 */
+    private Boolean publicConfig;
+
     /**
      * dict价值国际化json。
      */

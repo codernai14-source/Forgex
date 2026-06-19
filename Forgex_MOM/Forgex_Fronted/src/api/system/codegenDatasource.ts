@@ -50,10 +50,10 @@ export interface CodegenDatasourceSaveParam {
  */
 export interface CodegenDatasourceTestParam {
   id?: number
-  jdbcUrl: string
-  username: string
+  jdbcUrl?: string
+  username?: string
   password?: string
-  dbType: string
+  dbType?: string
 }
 
 /**

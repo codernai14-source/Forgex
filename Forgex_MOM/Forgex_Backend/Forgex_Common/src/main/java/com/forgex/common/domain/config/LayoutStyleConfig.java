@@ -120,6 +120,9 @@ public class LayoutStyleConfig {
     /** 是否启用页面加载指示器 */
     private Boolean loadingIndicatorEnabled;
 
+    /** 表格行高密度：comfortable/normal/compact */
+    private String tableRowDensity;
+
     /** 页面切换动画：horizontal/fade */
     private String pageTransition;
 
@@ -163,6 +166,7 @@ public class LayoutStyleConfig {
         cfg.setWatermarkText("FORGEX_MOM");
         cfg.setAnimateEnabled(Boolean.TRUE);
         cfg.setLoadingIndicatorEnabled(Boolean.TRUE);
+        cfg.setTableRowDensity("normal");
         cfg.setPageTransition("horizontal");
 
         cfg.setFooterCopyrightEnabled(Boolean.TRUE);

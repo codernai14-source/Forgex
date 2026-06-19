@@ -40,10 +40,3 @@ server:
   port: ${FORGEX_BASIC_PORT:9003}
   servlet:
     context-path: /basic
-
-forgex:
-  deployment:
-    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
-    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
-    home: ${FORGEX_HOME:C:/forgex}
-    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:C:/forgex}/logs}

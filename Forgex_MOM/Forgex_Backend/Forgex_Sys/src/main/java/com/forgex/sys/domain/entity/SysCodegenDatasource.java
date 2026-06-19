@@ -15,6 +15,7 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.crypto.FieldEncrypt;
 import lombok.Data;
 
 /**
@@ -61,6 +62,7 @@ public class SysCodegenDatasource extends BaseEntity {
     /**
      * 密码
      */
+    @FieldEncrypt(algorithm = "SM4")
     private String password;
 
     /**

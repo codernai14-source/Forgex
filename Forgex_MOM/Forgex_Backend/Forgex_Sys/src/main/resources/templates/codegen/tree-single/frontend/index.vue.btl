@@ -39,39 +39,28 @@
       </a-row>
     </a-card>
 
-    <BaseFormDialog v-model:open="formVisible" :title="dialogTitle" :loading="submitting" @submit="handleSubmit">
-      <a-form ref="formRef" :model="formData" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
-<% for(column in ctx.mainFormColumns){ %>
-        <a-form-item label="${column.columnComment!column.columnName}">
-          <a-input v-if="'${column.formType}' === 'input'" v-model:value="formData.${column.javaFieldName}" />
-          <a-textarea v-else-if="'${column.formType}' === 'textarea'" v-model:value="formData.${column.javaFieldName}" :rows="3" />
-          <a-input-number v-else-if="'${column.formType}' === 'number'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
-          <a-date-picker v-else-if="'${column.formType}' === 'date'" v-model:value="formData.${column.javaFieldName}" style="width: 100%" />
-          <a-date-picker v-else-if="'${column.formType}' === 'datetime'" v-model:value="formData.${column.javaFieldName}" show-time style="width: 100%" />
-          <a-input v-else v-model:value="formData.${column.javaFieldName}" />
-        </a-form-item>
-<% } %>
-      </a-form>
-    </BaseFormDialog>
+    <${ctx.entityName}FormDialog
+      v-model:open="formVisible"
+      :record-id="currentId"
+      :current-tree-id="selectedTreeId"
+      @success="handleDialogSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Modal, message } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
-import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
-import { tree${ctx.entityName}, page${ctx.entityName}, detail${ctx.entityName}, create${ctx.entityName}, update${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+import { tree${ctx.entityName}, page${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+import ${ctx.entityName}FormDialog from './components/${ctx.entityName}FormDialog.vue'
 
 const tableRef = ref()
-const formRef = ref()
 const treeData = ref<any[]>([])
 const selectedTreeId = ref<number | undefined>()
 const selectedKeys = computed(() => (selectedTreeId.value ? [selectedTreeId.value] : []))
 const formVisible = ref(false)
-const isEdit = ref(false)
-const submitting = ref(false)
-const formData = reactive<any>({ id: undefined, currentTreeId: undefined })
+const currentId = ref<number>()
 
 const tableConfig = computed(() => ({
   tableCode: '${ctx.mainTableCode}',
@@ -92,8 +81,6 @@ const tableConfig = computed(() => ({
   ],
   version: 1,
 }))
-
-const dialogTitle = computed(() => (isEdit.value ? '编辑' : '新增'))
 
 onMounted(async () => {
   await loadTree()
@@ -118,41 +105,19 @@ function handleTreeSelect(keys: (string | number)[]) {
   tableRef.value?.refresh?.()
 }
 
-function resetForm() {
-  Object.keys(formData).forEach((key) => delete formData[key])
-  formData.id = undefined
-  formData.currentTreeId = selectedTreeId.value
-}
-
 function openCreate() {
-  resetForm()
-  isEdit.value = false
+  currentId.value = undefined
   formVisible.value = true
 }
 
-async function openEdit(record: any) {
-  resetForm()
-  const result = await detail${ctx.entityName}(record.id)
-  Object.assign(formData, result || {})
-  formData.currentTreeId = selectedTreeId.value
-  isEdit.value = true
+function openEdit(record: any) {
+  currentId.value = record.id
   formVisible.value = true
 }
 
-async function handleSubmit() {
-  submitting.value = true
-  try {
-    if (isEdit.value) {
-      await update${ctx.entityName}(formData)
-    } else {
-      await create${ctx.entityName}(formData)
-    }
-    formVisible.value = false
-    await loadTree()
-    tableRef.value?.refresh?.()
-  } finally {
-    submitting.value = false
-  }
+async function handleDialogSuccess() {
+  await loadTree()
+  tableRef.value?.refresh?.()
 }
 
 function handleDelete(id: number) {
@@ -172,16 +137,4 @@ function handleDelete(id: number) {
 }
 </script>
 
-<style scoped lang="less">
-.tree-panel {
-  min-height: 520px;
-  padding-right: 12px;
-  border-right: 1px solid #f0f0f0;
-}
-
-.tree-panel__title {
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: 600;
-}
-</style>
+<style scoped lang="less" src="@/styles/views/${ctx.moduleName}/${ctx.entityNameLower}/index.less"></style>
