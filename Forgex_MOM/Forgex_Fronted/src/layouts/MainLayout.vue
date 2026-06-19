@@ -308,9 +308,11 @@
               </div>
 
               <!-- 圆角大小滑块 -->
-              <div class="fx-setting-row">
+              <div class="fx-setting-row fx-setting-row--slider">
                 <span>{{ t('layout.borderRadius') }}</span>
-                <a-slider v-model:value="layoutConfig.borderRadius" :min="0" :max="16" style="width: 180px" />
+                <div class="fx-setting-slider">
+                  <a-slider v-model:value="layoutConfig.borderRadius" :min="0" :max="16" />
+                </div>
               </div>
             </div>
           </a-tab-pane>
@@ -342,7 +344,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.contentWidth') }}</span>
-                <a-select v-model:value="layoutConfig.contentWidth" style="width: 200px">
+                <a-select v-model:value="layoutConfig.contentWidth" class="fx-setting-control">
                   <a-select-option value="fluid">{{ t('layout.contentWidthFluid') }}</a-select-option>
                   <a-select-option value="fixed">{{ t('layout.contentWidthFixed') }}</a-select-option>
                 </a-select>
@@ -356,7 +358,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.headerMode') }}</span>
-                <a-select v-model:value="layoutConfig.headerMode" style="width: 200px">
+                <a-select v-model:value="layoutConfig.headerMode" class="fx-setting-control">
                   <a-select-option value="fixed">{{ t('layout.headerModeFixed') }}</a-select-option>
                   <a-select-option value="auto">{{ t('layout.headerModeAuto') }}</a-select-option>
                   <a-select-option value="hide-on-scroll">{{ t('layout.headerModeHideOnScroll') }}</a-select-option>
@@ -364,7 +366,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.headerMenuAlign') }}</span>
-                <a-select v-model:value="layoutConfig.headerMenuAlign" style="width: 200px">
+                <a-select v-model:value="layoutConfig.headerMenuAlign" class="fx-setting-control">
                   <a-select-option value="left">{{ t('layout.headerMenuAlignLeft') }}</a-select-option>
                   <a-select-option value="center">{{ t('layout.headerMenuAlignCenter') }}</a-select-option>
                   <a-select-option value="right">{{ t('layout.headerMenuAlignRight') }}</a-select-option>
@@ -378,16 +380,20 @@
                 <a-switch v-model:checked="layoutConfig.tabBarEnabled" />
               </div>
               <div class="fx-setting-row">
-                <span>{{ t('layout.tabBarMax') }}</span>
+                <span class="fx-setting-label-with-help">
+                  {{ t('layout.tabBarMax') }}
+                  <a-tooltip :title="t('layout.tabBarMaxHint')">
+                    <QuestionCircleOutlined class="fx-setting-help-icon" />
+                  </a-tooltip>
+                </span>
                 <a-input-number
                   v-model:value="layoutConfig.tabBarMax"
                   :min="0"
                   :max="200"
                   :precision="0"
-                  style="width: 200px"
+                  class="fx-setting-control"
                 />
               </div>
-              <p class="fx-setting-hint-text">{{ t('layout.tabBarMaxHint') }}</p>
             </div>
           </a-tab-pane>
           <a-tab-pane :tab="t('layout.tabCommon')" key="common">
@@ -399,11 +405,11 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.watermarkText') }}</span>
-                <a-input v-model:value="layoutConfig.watermarkText" style="width: 200px" />
+                <a-input v-model:value="layoutConfig.watermarkText" class="fx-setting-control" />
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.formMode') }}</span>
-                <a-select v-model:value="appStore.formMode" style="width: 200px">
+                <a-select v-model:value="appStore.formMode" class="fx-setting-control">
                   <a-select-option value="modal">{{ t('layout.formModeModal') }}</a-select-option>
                   <a-select-option value="drawer">{{ t('layout.formModeDrawer') }}</a-select-option>
                 </a-select>
@@ -412,6 +418,7 @@
                 <span>{{ t('layout.tableRowDensity') }}</span>
                 <a-segmented
                   v-model:value="layoutConfig.tableRowDensity"
+                  class="fx-setting-segmented"
                   :options="tableRowDensityOptions"
                 />
               </div>
@@ -421,7 +428,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.pageTransition') }}</span>
-                <a-select v-model:value="layoutConfig.pageTransition" style="width: 200px">
+                <a-select v-model:value="layoutConfig.pageTransition" class="fx-setting-control">
                   <a-select-option value="horizontal">{{ t('layout.pageTransitionHorizontal') }}</a-select-option>
                   <a-select-option value="fade">{{ t('layout.pageTransitionFade') }}</a-select-option>
                 </a-select>
@@ -551,6 +558,7 @@ import {
   FolderOutlined,
   FileOutlined,
   ArrowUpOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons-vue'
 
 import AppHeader from './components/AppHeader.vue'

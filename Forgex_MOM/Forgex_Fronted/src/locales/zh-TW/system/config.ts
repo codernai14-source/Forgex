@@ -229,6 +229,8 @@ export default {
   homepageApprovalDesc: '審批工作檯首頁',
   homepageSys: '系統管理',
   homepageSysDesc: '系統運行與配置首頁',
+  homepageIntegration: 'Integration Platform',
+  homepageIntegrationDesc: 'External API capability dashboard',
   homepageDefaultConfig: '個人首頁預設配置',
   homepageDefaultDesc: '維護公共級和當前租戶級的預設佈局，所有使用者都能存取個人首頁，並以此作為初始門戶。',
 }

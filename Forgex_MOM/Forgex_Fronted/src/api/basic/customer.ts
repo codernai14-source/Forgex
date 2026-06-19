@@ -89,6 +89,20 @@ export interface CustomerPageParam {
   status?: number
 }
 
+export interface CustomerThirdPartyInvoke {
+  apiCode?: string
+  tenantId?: number
+  payload?: Record<string, any>
+}
+
+export interface CustomerThirdPartySyncResult {
+  totalCount: number
+  createdCount: number
+  updatedCount: number
+  failedCount: number
+  failedCustomerCodes: string[]
+}
+
 export const customerApi = {
   page(params: CustomerPageParam) {
     return http.post('/basic/customer/page', params)
@@ -116,5 +130,14 @@ export const customerApi = {
   },
   startApproval(customerId: number, selectedApprovers?: number[]) {
     return http.post<number>('/basic/customer/approval/start', { customerId, selectedApprovers })
+  },
+  syncThirdParty(request?: CustomerThirdPartyInvoke) {
+    return http.post<CustomerThirdPartySyncResult>('/basic/customer/sync-third-party', request || { payload: {} })
+  },
+  pullFromThirdParty(request?: CustomerThirdPartyInvoke) {
+    return http.post<CustomerThirdPartySyncResult>('/basic/customer/pull-from-third-party', request || { payload: {} })
+  },
+  export(params?: Partial<CustomerPageParam>) {
+    return http.post('/basic/customer/export', params || {}, { responseType: 'blob' })
   },
 }

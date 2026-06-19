@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 基本情報モジュール翻訳 - 日本語。
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '顧客正式名は必須です',
     confirmDeleteCustomer: 'この顧客を削除しますか？',
     customerTenantCreated: '顧客テナントを作成しました: {code}',
+    pullSuccess: '顧客の外部取得が完了しました。{total} 件を処理し、{failed} 件失敗しました。',
+    syncSuccess: '顧客の外部同期が完了しました。{total} 件を処理し、{failed} 件失敗しました。',
     tabs: {
       main: 'マスタデータ',
       contacts: '連絡先',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '品目コード',
+      autoGenerateCode: 'コード自動生成',
       name: '品目名',
       type: '品目タイプ',
       category: '品目カテゴリ',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '品目コードを入力してください',
+      autoCode: '有効にすると保存時に採番ルールで自動生成されます',
       name: '品目名を入力してください',
       type: '品目タイプを選択してください',
       category: '品目カテゴリを入力してください',

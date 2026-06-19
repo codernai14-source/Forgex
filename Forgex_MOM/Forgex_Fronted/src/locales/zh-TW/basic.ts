@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 基礎資訊模組翻譯 - 繁體中文。
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '客戶全稱不能為空',
     confirmDeleteCustomer: '確認刪除客戶？',
     customerTenantCreated: '客戶租戶已建立：{code}',
+    pullSuccess: '客戶第三方拉取完成，共處理 {total} 筆，失敗 {failed} 筆',
+    syncSuccess: '客戶第三方同步完成，共處理 {total} 筆，失敗 {failed} 筆',
     tabs: {
       main: '主資料',
       contacts: '聯絡人',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '物料代碼',
+      autoGenerateCode: '自動產生代碼',
       name: '物料名稱',
       type: '物料類型',
       category: '物料分類',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '請輸入物料代碼',
+      autoCode: '開啟後保存時由編碼規則自動產生',
       name: '請輸入物料名稱',
       type: '請選擇物料類型',
       category: '請輸入物料分類',

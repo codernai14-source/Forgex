@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 基础信息模块翻译 - 中文。
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '客户全称不能为空',
     confirmDeleteCustomer: '确认删除客户？',
     customerTenantCreated: '客户租户已创建：{code}',
+    pullSuccess: '客户第三方拉取完成，共处理 {total} 条，失败 {failed} 条',
+    syncSuccess: '客户第三方同步完成，共处理 {total} 条，失败 {failed} 条',
     tabs: {
       main: '主数据',
       contacts: '联系人',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '物料编码',
+      autoGenerateCode: '自动生成编码',
       name: '物料名称',
       type: '物料类型',
       category: '物料分类',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '请输入物料编码',
+      autoCode: '开启后保存时由编码规则自动生成',
       name: '请输入物料名称',
       type: '请选择物料类型',
       category: '请输入物料分类',

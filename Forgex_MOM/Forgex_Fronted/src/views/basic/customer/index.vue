@@ -7,6 +7,29 @@
         <p>{{ t('basic.customer.subtitle') }}</p>
       </div>
       <a-space wrap>
+        <a-button v-permission="'basic:customer:import'" @click="importDialogVisible = true">
+          <UploadOutlined />
+          {{ t('system.excel.commonImport.title') }}
+        </a-button>
+        <a-button v-permission="'basic:customer:export'" @click="handleExport">
+          {{ t('common.export') }}
+        </a-button>
+        <a-button
+          v-permission="'basic:customer:pullThirdParty'"
+          :loading="pullingThirdParty"
+          @click="handlePullThirdParty"
+        >
+          <CloudDownloadOutlined />
+          {{ t('basic.material.pullThirdParty') }}
+        </a-button>
+        <a-button
+          v-permission="'basic:customer:sync'"
+          :loading="syncingThirdParty"
+          @click="handleSyncThirdParty"
+        >
+          <CloudSyncOutlined />
+          {{ t('basic.material.syncThirdParty') }}
+        </a-button>
         <a-button v-permission="'basic:customer:add'" type="primary" @click="openCreate">{{ t('basic.customer.addCustomer') }}</a-button>
       </a-space>
     </div>
@@ -214,15 +237,23 @@
         </a-tab-pane>
       </a-tabs>
     </BaseFormDialog>
+
+    <CommonImportDialog
+      v-model:open="importDialogVisible"
+      table-code="basic_customer"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
+import { CloudDownloadOutlined, CloudSyncOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import CommonImportDialog from '@/components/excel/CommonImportDialog.vue'
 import { useBatchTableSelection } from '@/hooks/useBatchTableSelection'
 import { customerApi, type Customer, type CustomerContact, type CustomerPageParam } from '@/api/basic/customer'
 
@@ -230,7 +261,10 @@ const { t } = useI18n()
 const tableRef = ref()
 const { selectedRowKeys, selectedCount, rowSelection, clearSelection } = useBatchTableSelection<number>()
 const editorVisible = ref(false)
+const importDialogVisible = ref(false)
 const saving = ref(false)
+const syncingThirdParty = ref(false)
+const pullingThirdParty = ref(false)
 const readonly = ref(false)
 const activeTab = ref('main')
 const form = ref<Customer>(emptyCustomer())
@@ -384,6 +418,47 @@ async function handleGenerateTenant(record: Customer) {
 async function handleStartApproval(record: Customer) {
   await customerApi.startApproval(record.id!)
   await tableRef.value?.refresh?.()
+}
+
+async function handleSyncThirdParty() {
+  syncingThirdParty.value = true
+  try {
+    const result = await customerApi.syncThirdParty({ payload: {} })
+    message.success(t('basic.customer.syncSuccess', { total: result.totalCount || 0, failed: result.failedCount || 0 }))
+  } finally {
+    syncingThirdParty.value = false
+  }
+}
+
+async function handlePullThirdParty() {
+  pullingThirdParty.value = true
+  try {
+    const result = await customerApi.pullFromThirdParty({ payload: {} })
+    message.success(t('basic.customer.pullSuccess', { total: result.totalCount || 0, failed: result.failedCount || 0 }))
+    await tableRef.value?.refresh?.()
+  } finally {
+    pullingThirdParty.value = false
+  }
+}
+
+function handleImportSuccess() {
+  importDialogVisible.value = false
+  tableRef.value?.refresh?.()
+}
+
+async function handleExport() {
+  const query = tableRef.value?.getQuery?.() || {}
+  const response: any = await customerApi.export(query)
+  downloadBlob(response?.data || response, '客户主数据.xlsx')
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 function labelOf(options: any[], value: any) {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 기본 정보 모듈 번역 - 한국어.
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '고객 전체명은 필수입니다',
     confirmDeleteCustomer: '이 고객을 삭제하시겠습니까?',
     customerTenantCreated: '고객 테넌트가 생성되었습니다: {code}',
+    pullSuccess: '고객 타사 가져오기가 완료되었습니다. {total}건 처리, {failed}건 실패.',
+    syncSuccess: '고객 타사 동기화가 완료되었습니다. {total}건 처리, {failed}건 실패.',
     tabs: {
       main: '마스터 데이터',
       contacts: '담당자',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '자재 코드',
+      autoGenerateCode: '코드 자동 생성',
       name: '자재명',
       type: '자재 유형',
       category: '자재 분류',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '자재 코드를 입력하세요',
+      autoCode: '활성화하면 저장 시 인코딩 규칙으로 자동 생성됩니다',
       name: '자재명을 입력하세요',
       type: '자재 유형을 선택하세요',
       category: '자재 분류를 입력하세요',

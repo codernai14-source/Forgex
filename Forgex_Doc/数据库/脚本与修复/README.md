@@ -34,6 +34,10 @@
 | `20260619_factory_modeling.sql` | `forgex_admin`、`forgex_common` | 幂等补齐工厂建模四级主数据：产线 / 工段 / 工序三张新表，车间扩展「车间类型 / 负责人」字段，5 个字典（prod_line_type / workshop_type / process_type / report_type / qc_trigger_point），以及产线 / 工段 / 工序三个菜单 + 按钮权限 + 动态表格列配置。位置：`2026-06-19/` |
 | `20260619_factory_modeling_complete.sql` | `forgex_admin` | 在 `20260619_factory_modeling.sql` 基础上补齐：①「基础数据 → 工厂建模」目录菜单（id=504/505）② 车间 5 + 产线 8 + 工段 9 + 工序 8 共 30 项 `sys_permission` ③ admin 角色（id=1）菜单与接口权限授权 ④ `sys_role_menu` 重复行清理（按 `(role_id, menu_id)` 保留最早一条）。位置：`2026-06-19/` |
 
+
+| `20260619_factory_modeling.sql` | `forgex_admin`、`forgex_common` | 幂等补齐工厂建模四级主数据。位置：`2026-06-19/` |
+| `20260619_factory_modeling_complete.sql` | `forgex_admin` | 在 `20260619_factory_modeling.sql` 基础上补齐：基础数据/工厂建模菜单、30 项 `sys_permission`、admin 角色赋权、`sys_role_menu` 重复行清理。位置：`2026-06-19/` |
+
 ## 四、推荐阅读方式
 
 1. 首次部署先阅读 [部署文档](../../部署/README.md) 和数据库初始化说明
