@@ -110,7 +110,7 @@ More detail: [frontend docs](./Forgex_Doc/前端/README.md) and [theme README](.
 - Node.js 18+
 - MySQL 8.0+
 - Redis 6.0+
-- Nacos 2.x
+- Nacos 3.2.2 (server/API main port `8848`, console default `8080`, client gRPC default `9848`)
 - RocketMQ 5.x
 
 ### Backend

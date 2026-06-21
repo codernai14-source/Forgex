@@ -208,7 +208,7 @@ forgex
 - Node.js 18+
 - MySQL 8.0+
 - Redis 6.0+
-- Nacos 2.x
+- Nacos 3.2.2（服务/API 主端口 `8848`，控制台默认 `8080`，客户端 gRPC 默认 `9848`）
 - RocketMQ 5.x
 
 ### 💾 初始化数据库

@@ -281,7 +281,7 @@ docker compose up -d
 | `FORGEX_UPLOAD_DIR` | 上传目录 | `/opt/Forgex_ACME_PROD/data/uploads` 或 `C:/forgex/data/uploads` |
 | `FORGEX_LOG_DIR` | 日志目录 | `/opt/Forgex_ACME_PROD/logs` 或 `C:/forgex/logs` |
 | `FORGEX_BACKUP_DIR` | 备份目录 | `/opt/Forgex_ACME_PROD/backup` |
-| `FORGEX_NACOS_ADDR` | Nacos 地址 | `127.0.0.1:8848` |
+| `FORGEX_NACOS_ADDR` | Nacos 服务/API 主端口地址，Nacos 3.2.2 下后端客户端仍填写 `8848`，不要填写控制台端口 `8080` | `127.0.0.1:8848` |
 | `FORGEX_REDIS_ADDR` | Redis 地址 | `127.0.0.1:6379` |
 | `FORGEX_MYSQL_URL` | MySQL URL | `jdbc:mysql://127.0.0.1:3306/forgex` |
 | `FORGEX_VERSION` | 应用版本 | `1.0.0` |
@@ -307,6 +307,17 @@ docker compose up -d
 4. 因此日志目录统一通过 `FORGEX_LOG_DIR` / `forgex.deployment.log-dir` 控制，上传目录与日志目录的配置方式是不同的。
 
 ## 七、Nacos 配置
+
+当前部署基线使用 **Nacos 3.2.2**。Forgex 后端通过 Spring Cloud Alibaba Nacos 客户端连接 Nacos，`FORGEX_NACOS_ADDR` 仍填写服务/API 主端口，例如 `127.0.0.1:8848`。Nacos 3.x 将控制台端口独立为默认 `8080`，浏览器访问控制台时使用 `http://Nacos服务器IP:8080`，不要把控制台端口写入后端服务的 `FORGEX_NACOS_ADDR`。
+
+Nacos 3.2.2 常用端口约定如下：
+
+| 端口 | 用途 | Forgex 使用方式 |
+|---|---|---|
+| `8848` | Nacos 服务/API 主端口 | 后端 `FORGEX_NACOS_ADDR` 和导入脚本 `-NacosAddr` 使用此端口 |
+| `8080` | Nacos 3.x 独立控制台端口 | 仅用于浏览器访问 Nacos 控制台 |
+| `9848` | 客户端 gRPC 端口，默认按主端口 `8848 + 1000` 计算 | 后端客户端会按主端口自动计算；跨服务器、防火墙、VIP 或 Nginx 转发时需要放通或做 TCP 转发 |
+| `9849` / `7848` | Nacos 服务端内部通信端口 | 集群部署按 Nacos 服务器间通信需求放通，不对公网暴露 |
 
 Nacos 配置示例存放在 `nacos配置/DEFAULT_GROUP/` 目录：
 
