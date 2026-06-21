@@ -2,6 +2,8 @@
 -- ${ctx.menuName} 主子表返回消息模板初始化
 -- ================================================
 
+USE forgex_common;
+
 SET @TENANT_ID = 0;
 
 INSERT INTO sys_response_message_template (

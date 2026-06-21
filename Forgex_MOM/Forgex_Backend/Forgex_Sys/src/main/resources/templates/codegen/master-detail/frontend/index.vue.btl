@@ -5,18 +5,19 @@
       :table-code="'${ctx.mainTableCode}'"
       :request="handleRequest"
       :dynamic-table-config="tableConfig"
+      :dict-options="dictOptions"
       :show-query-form="true"
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openCreate">新增</a-button>
+          <a-button v-permission="'${ctx.permKeyPrefix}:create'" type="primary" @click="openCreate">新增</a-button>
         </a-space>
       </template>
       <template #action="{ record }">
         <a-space>
-          <a @click="openDetailPage(record)">明细</a>
-          <a @click="openEdit(record)">编辑</a>
-          <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+          <a v-permission="'${ctx.permKeyPrefix}:detail'" @click="openDetailPage(record)">明细</a>
+          <a v-permission="'${ctx.permKeyPrefix}:update'" @click="openEdit(record)">编辑</a>
+          <a v-permission="'${ctx.permKeyPrefix}:delete'" style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -34,6 +35,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useDict } from '@/hooks/useDict'
 import { page${ctx.entityName}, delete${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
 import ${ctx.entityName}FormDialog from './components/${ctx.entityName}FormDialog.vue'
 
@@ -41,6 +43,17 @@ const router = useRouter()
 const tableRef = ref()
 const formVisible = ref(false)
 const currentId = ref<number>()
+const dictItemRefs: Record<string, any> = {
+<% for(dictCode in ctx.mainDictCodes){ %>
+  '${dictCode}': useDict('${dictCode}').dictItems,
+<% } %>
+}
+
+const dictOptions = computed(() => ({
+<% for(dictCode in ctx.mainDictCodes){ %>
+  '${dictCode}': dictItemRefs['${dictCode}'].value,
+<% } %>
+}))
 const tableConfig = computed(() => ({
   tableCode: '${ctx.mainTableCode}',
   tableName: '${ctx.menuName}',
@@ -49,13 +62,13 @@ const tableConfig = computed(() => ({
   defaultPageSize: 20,
   columns: [
 <% for(column in ctx.mainTableColumns){ %>
-    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}' },
+    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}'<% if(column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != ""){ %>, dictCode: '${column.dictCode}'<% } %> },
 <% } %>
     { field: 'action', title: '操作', width: 200, align: 'center' },
   ],
   queryFields: [
 <% for(column in ctx.mainQueryColumns){ %>
-    { field: '${column.javaFieldName}', label: '${column.columnComment!column.columnName}', queryType: '${column.queryType}', queryOperator: '${column.queryOperator}' },
+    { field: '${column.javaFieldName}', label: '${column.columnComment!column.columnName}', queryType: '${column.queryType}', queryOperator: '${column.queryOperator}'<% if(column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != ""){ %>, dictCode: '${column.dictCode}'<% } %> },
 <% } %>
   ],
   version: 1,

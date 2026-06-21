@@ -3,6 +3,8 @@
 -- i18n_prefix: ${ctx.i18nPrefix}
 -- ================================================
 
+USE forgex_common;
+
 SET @TENANT_ID = 0;
 SET @MODULE = '${ctx.moduleName}';
 

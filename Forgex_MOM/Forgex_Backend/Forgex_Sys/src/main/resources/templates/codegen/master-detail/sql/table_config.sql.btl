@@ -4,6 +4,8 @@
 -- sub_table_code: ${ctx.subTableCode}
 -- ================================================
 
+USE forgex_common;
+
 SET @TENANT_ID = 0;
 
 INSERT INTO fx_table_config (

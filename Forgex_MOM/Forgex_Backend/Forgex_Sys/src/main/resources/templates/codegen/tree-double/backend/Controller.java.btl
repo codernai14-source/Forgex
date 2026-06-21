@@ -1,11 +1,12 @@
 package ${ctx.packageName}.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
-import ${ctx.packageName}.domain.entity.${ctx.entityName};
-import ${ctx.packageName}.domain.entity.${ctx.treeEntityName};
 import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
 import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+import ${ctx.packageName}.domain.vo.${ctx.entityName}VO;
+import ${ctx.packageName}.domain.vo.${ctx.treeEntityName}VO;
 import ${ctx.packageName}.service.${ctx.entityName}Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,33 +30,39 @@ public class ${ctx.entityName}Controller {
     private final ${ctx.entityName}Service ${ctx.entityNameLower}Service;
 
     @PostMapping("/tree")
-    public R<List<${ctx.treeEntityName}>> tree() {
+    @RequirePerm("${ctx.permKeyPrefix}:tree")
+    public R<List<${ctx.treeEntityName}VO>> tree() {
         return R.ok(${ctx.entityNameLower}Service.tree());
     }
 
     @PostMapping("/page")
-    public R<IPage<${ctx.entityName}>> page(@RequestBody(required = false) ${ctx.entityName}PageParam param) {
+    @RequirePerm("${ctx.permKeyPrefix}:page")
+    public R<IPage<${ctx.entityName}VO>> page(@RequestBody(required = false) ${ctx.entityName}PageParam param) {
         return R.ok(${ctx.entityNameLower}Service.page(param == null ? new ${ctx.entityName}PageParam() : param));
     }
 
     @PostMapping("/detail")
-    public R<${ctx.entityName}> detail(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
+    @RequirePerm("${ctx.permKeyPrefix}:detail")
+    public R<${ctx.entityName}VO> detail(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
         return R.ok(${ctx.entityNameLower}Service.detail(id));
     }
 
     @PostMapping("/create")
+    @RequirePerm("${ctx.permKeyPrefix}:create")
     public R<Void> create(@RequestBody ${ctx.entityName}SaveParam param) {
         ${ctx.entityNameLower}Service.save(param);
         return R.ok();
     }
 
     @PostMapping("/update")
+    @RequirePerm("${ctx.permKeyPrefix}:update")
     public R<Void> update(@RequestBody ${ctx.entityName}SaveParam param) {
         ${ctx.entityNameLower}Service.update(param);
         return R.ok();
     }
 
     @PostMapping("/delete")
+    @RequirePerm("${ctx.permKeyPrefix}:delete")
     public R<Void> delete(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
         ${ctx.entityNameLower}Service.delete(id);
         return R.ok();

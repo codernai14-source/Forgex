@@ -26,6 +26,10 @@ public class BasicWorkshop extends BaseEntity {
     @TableField("workshop_name")
     private String workshopName;
 
+    /** 顺序号。 */
+    @TableField("sort_order")
+    private Integer sortOrder;
+
     /** 所属工厂 ID。 */
     @TableField("factory_id")
     private Long factoryId;

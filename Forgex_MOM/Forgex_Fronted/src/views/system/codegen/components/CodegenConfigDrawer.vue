@@ -291,10 +291,10 @@
             size="small"
             row-key="columnName"
             bordered
-            :scroll="{ x: 1900 }"
+            :scroll="{ x: 3400 }"
           >
             <template #bodyCell="{ column, record }">
-              <ColumnEditorCell :column="column" :record="record" :query-type-options="queryTypeOptions" :query-operator-options="queryOperatorOptions" :form-type-options="formTypeOptions" :sort-direction-options="sortDirectionOptions" :dict-tree-options="dictTreeOptions" />
+              <ColumnEditorCell :column="column" :record="record" :query-type-options="queryTypeOptions" :query-operator-options="queryOperatorOptions" :form-type-options="formTypeOptions" :option-source-type-options="optionSourceTypeOptions" :sort-direction-options="sortDirectionOptions" :dict-tree-options="dictTreeOptions" />
             </template>
           </a-table>
         </a-card>
@@ -312,10 +312,10 @@
             size="small"
             row-key="columnName"
             bordered
-            :scroll="{ x: 1900 }"
+            :scroll="{ x: 3400 }"
           >
             <template #bodyCell="{ column, record }">
-              <ColumnEditorCell :column="column" :record="record" :query-type-options="queryTypeOptions" :query-operator-options="queryOperatorOptions" :form-type-options="formTypeOptions" :sort-direction-options="sortDirectionOptions" :dict-tree-options="dictTreeOptions" />
+              <ColumnEditorCell :column="column" :record="record" :query-type-options="queryTypeOptions" :query-operator-options="queryOperatorOptions" :form-type-options="formTypeOptions" :option-source-type-options="optionSourceTypeOptions" :sort-direction-options="sortDirectionOptions" :dict-tree-options="dictTreeOptions" />
             </template>
           </a-table>
         </a-card>
@@ -333,10 +333,10 @@
             size="small"
             row-key="columnName"
             bordered
-            :scroll="{ x: 1900 }"
+            :scroll="{ x: 3400 }"
           >
             <template #bodyCell="{ column, record }">
-              <ColumnEditorCell :column="column" :record="record" :query-type-options="queryTypeOptions" :query-operator-options="queryOperatorOptions" :form-type-options="formTypeOptions" :sort-direction-options="sortDirectionOptions" :dict-tree-options="dictTreeOptions" />
+              <ColumnEditorCell :column="column" :record="record" :query-type-options="queryTypeOptions" :query-operator-options="queryOperatorOptions" :form-type-options="formTypeOptions" :option-source-type-options="optionSourceTypeOptions" :sort-direction-options="sortDirectionOptions" :dict-tree-options="dictTreeOptions" />
             </template>
           </a-table>
         </a-card>
@@ -415,6 +415,7 @@ import {
   type CodegenConfigItem,
   type CodegenConfigSaveParam,
 } from '@/api/system/codegenConfig'
+import type { CodegenOptionSourceType } from '@/api/system/codegen'
 
 interface Props {
   open: boolean
@@ -435,6 +436,11 @@ interface FileTreeNode {
 interface SelectOption {
   label: string
   value: string
+}
+
+interface OptionSourceTypeOption {
+  label: string
+  value: CodegenOptionSourceType
 }
 
 interface TreeSelectOption {
@@ -473,6 +479,7 @@ const ColumnEditorCell = defineComponent({
     queryTypeOptions: { type: Array as () => SelectOption[], required: true },
     queryOperatorOptions: { type: Array as () => SelectOption[], required: true },
     formTypeOptions: { type: Array as () => SelectOption[], required: true },
+    optionSourceTypeOptions: { type: Array as () => OptionSourceTypeOption[], required: true },
     sortDirectionOptions: { type: Array as () => SelectOption[], required: true },
     dictTreeOptions: { type: Array as () => TreeSelectOption[], required: true },
   },
@@ -494,6 +501,67 @@ const ColumnEditorCell = defineComponent({
       if (key === 'queryType') return h(Select, { ...selectProps, value: record.queryType, options: props.queryTypeOptions, 'onUpdate:value': (value: string) => (record.queryType = value) })
       if (key === 'queryOperator') return h(Select, { ...selectProps, value: record.queryOperator, options: props.queryOperatorOptions, 'onUpdate:value': (value: string) => (record.queryOperator = value) })
       if (key === 'formType') return h(Select, { ...selectProps, value: record.formType, options: props.formTypeOptions, 'onUpdate:value': (value: string) => (record.formType = value) })
+      if (key === 'optionSourceType') return h(Select, {
+        ...selectProps,
+        value: record.optionSourceType,
+        options: props.optionSourceTypeOptions,
+        allowClear: true,
+        'onUpdate:value': (value: CodegenOptionSourceType | undefined) => {
+          record.optionSourceType = value
+          if (value === 'DICT') {
+            record.queryType = 'select'
+            record.formType = 'select'
+            record.queryOperator = 'eq'
+          }
+          if (value === 'API') {
+            record.queryType = 'select'
+            record.formType = record.formType === 'treeSelect' ? 'treeSelect' : 'select'
+            record.queryOperator = 'eq'
+            record.optionApiMethod = record.optionApiMethod || 'GET'
+            record.optionParamsJson = record.optionParamsJson || '{}'
+            record.optionResponsePath = record.optionResponsePath || 'data'
+            record.optionLabelField = record.optionLabelField || 'label'
+            record.optionValueField = record.optionValueField || 'value'
+            record.optionChildrenField = record.optionChildrenField || 'children'
+          }
+        },
+      })
+      if (key === 'optionApiMethod') return h(Select, {
+        ...selectProps,
+        value: record.optionApiMethod || 'GET',
+        options: [
+          { label: 'GET', value: 'GET' },
+          { label: 'POST', value: 'POST' },
+        ],
+        'onUpdate:value': (value: string) => (record.optionApiMethod = value),
+      })
+      if ([
+        'optionApiUrl',
+        'optionParamsJson',
+        'optionResponsePath',
+        'optionLabelField',
+        'optionValueField',
+        'optionChildrenField',
+      ].includes(key)) return h(Input, {
+        value: (record as any)[key],
+        size: 'small',
+        class: 'codegen-drawer__cell-control',
+        'onUpdate:value': (value: string) => {
+          ;(record as any)[key] = value
+          if (key === 'optionApiUrl' && value) {
+            record.optionSourceType = 'API'
+            record.queryType = 'select'
+            record.formType = record.formType === 'treeSelect' ? 'treeSelect' : 'select'
+            record.queryOperator = 'eq'
+            record.optionApiMethod = record.optionApiMethod || 'GET'
+            record.optionParamsJson = record.optionParamsJson || '{}'
+            record.optionResponsePath = record.optionResponsePath || 'data'
+            record.optionLabelField = record.optionLabelField || 'label'
+            record.optionValueField = record.optionValueField || 'value'
+            record.optionChildrenField = record.optionChildrenField || 'children'
+          }
+        },
+      })
       if (key === 'dictCode') return h(TreeSelect, {
         value: record.dictCode || undefined,
         class: 'codegen-drawer__cell-control',
@@ -507,6 +575,7 @@ const ColumnEditorCell = defineComponent({
         'onUpdate:value': (value?: string) => {
           record.dictCode = value || ''
           if (value) {
+            record.optionSourceType = 'DICT'
             record.queryType = 'select'
             record.formType = 'select'
             record.queryOperator = 'eq'
@@ -639,11 +708,17 @@ const queryOperatorOptions = [
   { label: t('system.codegen.option.operatorLt'), value: 'lt' },
 ]
 
+const optionSourceTypeOptions = [
+  { label: t('system.codegen.option.optionSourceDict'), value: 'DICT' },
+  { label: t('system.codegen.option.optionSourceApi'), value: 'API' },
+]
+
 const formTypeOptions = [
   { label: t('system.codegen.option.formInput'), value: 'input' },
   { label: t('system.codegen.option.formTextarea'), value: 'textarea' },
   { label: t('system.codegen.option.formNumber'), value: 'number' },
   { label: t('system.codegen.option.formSelect'), value: 'select' },
+  { label: t('system.codegen.option.formTreeSelect'), value: 'treeSelect' },
   { label: t('system.codegen.option.formDate'), value: 'date' },
   { label: t('system.codegen.option.formDateTime'), value: 'datetime' },
 ]
@@ -689,6 +764,14 @@ const columnEditorColumns = computed(() => [
   { title: t('system.codegen.queryOperator'), dataIndex: 'queryOperator', key: 'queryOperator', width: 150 },
   { title: t('system.codegen.formType'), dataIndex: 'formType', key: 'formType', width: 170 },
   { title: t('system.codegen.dictCode'), dataIndex: 'dictCode', key: 'dictCode', width: 240 },
+  { title: t('system.codegen.optionSourceType'), dataIndex: 'optionSourceType', key: 'optionSourceType', width: 130 },
+  { title: t('system.codegen.optionApiUrl'), dataIndex: 'optionApiUrl', key: 'optionApiUrl', width: 240 },
+  { title: t('system.codegen.optionApiMethod'), dataIndex: 'optionApiMethod', key: 'optionApiMethod', width: 120 },
+  { title: t('system.codegen.optionParamsJson'), dataIndex: 'optionParamsJson', key: 'optionParamsJson', width: 240 },
+  { title: t('system.codegen.optionResponsePath'), dataIndex: 'optionResponsePath', key: 'optionResponsePath', width: 150 },
+  { title: t('system.codegen.optionLabelField'), dataIndex: 'optionLabelField', key: 'optionLabelField', width: 120 },
+  { title: t('system.codegen.optionValueField'), dataIndex: 'optionValueField', key: 'optionValueField', width: 120 },
+  { title: t('system.codegen.optionChildrenField'), dataIndex: 'optionChildrenField', key: 'optionChildrenField', width: 140 },
   { title: t('system.codegen.defaultSort'), dataIndex: 'defaultSort', key: 'defaultSort', width: 100, align: 'center' },
   { title: t('system.codegen.sortDirection'), dataIndex: 'sortDirection', key: 'sortDirection', width: 120 },
 ])
@@ -991,6 +1074,13 @@ function enhanceColumns(columns: CodegenColumnConfig[]) {
     tableShow: item.tableShow ?? true,
     formShow: item.formShow ?? (!item.isPrimaryKey && !item.isAutoIncrement),
     required: item.required ?? !item.isNullable,
+    optionSourceType: item.optionSourceType || (item.optionApiUrl ? 'API' : item.dictCode ? 'DICT' : undefined),
+    optionApiMethod: item.optionApiMethod || (item.optionApiUrl ? 'GET' : undefined),
+    optionParamsJson: item.optionParamsJson || (item.optionApiUrl ? '{}' : undefined),
+    optionResponsePath: item.optionResponsePath || (item.optionApiUrl ? 'data' : undefined),
+    optionLabelField: item.optionLabelField || (item.optionApiUrl ? 'label' : undefined),
+    optionValueField: item.optionValueField || (item.optionApiUrl ? 'value' : undefined),
+    optionChildrenField: item.optionChildrenField || (item.optionApiUrl ? 'children' : undefined),
     queryType: item.queryType || inferQueryType(item),
     queryOperator: item.queryOperator || inferQueryOperator(item),
     formType: item.formType || inferFormType(item),
@@ -1063,7 +1153,7 @@ function toColumnOptions(columns: CodegenColumnConfig[]) {
 }
 
 function inferQueryType(column: CodegenColumnConfig) {
-  if (column.dictCode) {
+  if (isOptionColumn(column)) {
     return 'select'
   }
   if (column.javaType === 'LocalDate' || column.javaType === 'LocalDateTime') {
@@ -1073,14 +1163,14 @@ function inferQueryType(column: CodegenColumnConfig) {
 }
 
 function inferQueryOperator(column: CodegenColumnConfig) {
-  if (column.javaType === 'String' && !column.dictCode) {
+  if (column.javaType === 'String' && !isOptionColumn(column)) {
     return 'like'
   }
   return 'eq'
 }
 
 function inferFormType(column: CodegenColumnConfig) {
-  if (column.dictCode) {
+  if (isOptionColumn(column)) {
     return 'select'
   }
   if (column.javaType === 'LocalDateTime') {
@@ -1093,6 +1183,10 @@ function inferFormType(column: CodegenColumnConfig) {
     return 'number'
   }
   return 'input'
+}
+
+function isOptionColumn(column: CodegenColumnConfig) {
+  return !!(column.dictCode || column.optionSourceType || column.optionApiUrl)
 }
 
 function detectPrimaryKey(columns: CodegenColumnConfig[]) {

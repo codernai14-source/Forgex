@@ -65,6 +65,10 @@ public class TreeDoubleCodeGenStrategy extends AbstractCodeGenStrategy {
             "tree-double/backend/Entity.java.btl", context);
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getTreeEntityName() + ".java",
             "tree-double/backend/TreeEntity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "tree-double/backend/VO.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getTreeEntityName() + "VO.java",
+            "tree-double/backend/TreeVO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "tree-double/backend/Controller.java.btl", context);
         addFile(files, "backend", javaPath + "/service/" + context.getEntityName() + "Service.java",

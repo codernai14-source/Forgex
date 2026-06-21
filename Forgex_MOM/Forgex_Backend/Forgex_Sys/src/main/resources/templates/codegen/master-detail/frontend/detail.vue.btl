@@ -5,18 +5,19 @@
       :table-code="'${ctx.subTableCode}'"
       :request="handleRequest"
       :dynamic-table-config="tableConfig"
+      :dict-options="dictOptions"
       :show-query-form="false"
     >
       <template #toolbar>
         <a-space :size="8">
-          <a-button type="primary" @click="openCreate">新增</a-button>
+          <a-button v-permission="'${ctx.permKeyPrefix}:subCreate'" type="primary" @click="openCreate">新增</a-button>
         </a-space>
       </template>
       <template #action="{ record }">
         <a-space>
-          <a @click="openDetail(record)">详情</a>
-          <a @click="openEdit(record)">编辑</a>
-          <a style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
+          <a v-permission="'${ctx.permKeyPrefix}:subDetail'" @click="openDetail(record)">详情</a>
+          <a v-permission="'${ctx.permKeyPrefix}:subUpdate'" @click="openEdit(record)">编辑</a>
+          <a v-permission="'${ctx.permKeyPrefix}:subDelete'" style="color: #ff4d4f" @click="handleDelete(record.id)">删除</a>
         </a-space>
       </template>
     </FxDynamicTable>
@@ -36,6 +37,7 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Modal } from 'ant-design-vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
+import { useDict } from '@/hooks/useDict'
 import { page${ctx.subEntityName}, delete${ctx.subEntityName} } from '@/api/${ctx.moduleName}/${ctx.subEntityNameLower}'
 import ${ctx.subEntityName}FormDialog from './components/${ctx.subEntityName}FormDialog.vue'
 
@@ -45,6 +47,18 @@ const formVisible = ref(false)
 const formReadonly = ref(false)
 const currentId = ref<number>()
 const mainId = computed(() => Number(route.params.id))
+const dictItemRefs: Record<string, any> = {
+<% for(dictCode in ctx.subDictCodes){ %>
+  '${dictCode}': useDict('${dictCode}').dictItems,
+<% } %>
+}
+
+const dictOptions = computed(() => ({
+<% for(dictCode in ctx.subDictCodes){ %>
+  '${dictCode}': dictItemRefs['${dictCode}'].value,
+<% } %>
+}))
+
 const tableConfig = computed(() => ({
   tableCode: '${ctx.subTableCode}',
   tableName: '${ctx.subTableComment}',
@@ -53,7 +67,7 @@ const tableConfig = computed(() => ({
   defaultPageSize: 20,
   columns: [
 <% for(column in ctx.subTableColumns){ %>
-    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}' },
+    { field: '${column.javaFieldName}', title: '${column.columnComment!column.columnName}', width: ${column.width}, align: '${column.align}'<% if(column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != ""){ %>, dictCode: '${column.dictCode}'<% } %> },
 <% } %>
     { field: 'action', title: '操作', width: 180, align: 'center' },
   ],

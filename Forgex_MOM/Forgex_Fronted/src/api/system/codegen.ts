@@ -4,6 +4,7 @@ import { getLocale } from '@/locales'
 
 export type CodegenPageType = 'SINGLE' | 'MASTER_DETAIL' | 'TREE_SINGLE' | 'TREE_DOUBLE'
 export type CodegenGenerateItem = 'backend' | 'frontend' | 'sql' | 'android'
+export type CodegenOptionSourceType = 'DICT' | 'API'
 
 /**
  * 元数据选项
@@ -37,6 +38,14 @@ export interface CodegenColumnConfig {
   queryType?: string
   queryOperator?: string
   dictCode?: string
+  optionSourceType?: CodegenOptionSourceType
+  optionApiUrl?: string
+  optionApiMethod?: string
+  optionParamsJson?: string
+  optionResponsePath?: string
+  optionLabelField?: string
+  optionValueField?: string
+  optionChildrenField?: string
   formType?: string
   required?: boolean
   width?: number

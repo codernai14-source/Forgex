@@ -63,6 +63,8 @@ public class TreeSingleCodeGenStrategy extends AbstractCodeGenStrategy {
 
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getEntityName() + ".java",
             "tree-single/backend/Entity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "tree-single/backend/VO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "tree-single/backend/Controller.java.btl", context);
         addFile(files, "backend", javaPath + "/service/" + context.getEntityName() + "Service.java",
