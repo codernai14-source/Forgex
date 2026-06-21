@@ -162,7 +162,15 @@
       </div>
 
       <!-- 数据表格 -->
-      <div ref="tableContentRef" class="fx-table-content" data-guide-id="fx-table-content">
+      <div
+        ref="tableContentRef"
+        class="fx-table-content"
+        :class="{ 'is-loading': resolvedLoading }"
+        data-guide-id="fx-table-content"
+      >
+        <div v-if="resolvedLoading" class="fx-table-loading-mask">
+          <a-spin :tip="t('common.loading')" />
+        </div>
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
             :key="`table-${configVersion}`"
@@ -246,6 +254,11 @@ const props = withDefaults(
      * 表格编码，用于拉取后端表格配置。
      */
     tableCode: string
+
+    /**
+     * 本地动态表格配置。后端配置暂不可用时作为兜底配置使用，适合代码生成预览页。
+     */
+    dynamicTableConfig?: FxTableConfig
 
     /**
      * 行主键字段名，或返回主键的函数。
@@ -839,26 +852,38 @@ function normalizeSorterQuery(sorter: any) {
  * @throws 不向外抛出；失败时使用空配置并打日志
  */
 async function loadConfig() {
+  const localConfig = props.dynamicTableConfig
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
     const backendColumns = normalizeColumns(backendConfig.columns || [])
-    const backendQueryFields = normalizeQueryFields(backendConfig.queryFields)
+    const useLocalConfig = !!localConfig && backendColumns.length === 0
+    const resolvedConfig = useLocalConfig ? localConfig : backendConfig
+    const resolvedColumns = useLocalConfig ? normalizeColumns(localConfig.columns || []) : backendColumns
+    const resolvedQueryFields = normalizeQueryFields(resolvedConfig.queryFields || [])
 
     // 新对象引用，确保 Vue 能检测到深层替换
     config.value = {
-      ...backendConfig,
-      columns: backendColumns,
-      queryFields: backendQueryFields,
+      ...resolvedConfig,
+      columns: resolvedColumns,
+      queryFields: resolvedQueryFields,
     }
 
     configVersion.value++
   } catch (e) {
-    config.value = undefined
-    tableData.value = []
-    pagination.total = 0
+    if (localConfig) {
+      config.value = {
+        ...localConfig,
+        columns: normalizeColumns(localConfig.columns || []),
+        queryFields: normalizeQueryFields(localConfig.queryFields || []),
+      }
+    } else {
+      config.value = undefined
+      tableData.value = []
+      pagination.total = 0
+    }
     console.error('[FxDynamicTable] 获取后端表格配置失败:', e)
     configVersion.value++
-    return false
+    return !!localConfig
   }
 
   pagination.pageSize = config.value?.defaultPageSize || pagination.pageSize
@@ -1237,6 +1262,22 @@ watch(
     await nextTick()
     scheduleComputeAutoScrollY()
   },
+)
+
+watch(
+  () => props.dynamicTableConfig,
+  async () => {
+    if (!props.dynamicTableConfig) {
+      return
+    }
+    pagination.current = 1
+    const loaded = await loadConfig()
+    if (!loaded) {
+      return
+    }
+    await handleQuery(lastSorter.value)
+  },
+  { deep: true },
 )
 
 watch(

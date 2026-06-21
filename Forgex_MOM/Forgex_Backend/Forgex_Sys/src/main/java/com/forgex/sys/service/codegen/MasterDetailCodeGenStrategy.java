@@ -63,6 +63,10 @@ public class MasterDetailCodeGenStrategy extends AbstractCodeGenStrategy {
             "master-detail/backend/MainEntity.java.btl", context);
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getSubEntityName() + ".java",
             "master-detail/backend/SubEntity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "master-detail/backend/MainVO.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getSubEntityName() + "VO.java",
+            "master-detail/backend/SubVO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "master-detail/backend/MainController.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getSubEntityName() + "Controller.java",

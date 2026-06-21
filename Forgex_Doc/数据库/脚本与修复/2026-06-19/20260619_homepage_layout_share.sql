@@ -1,4 +1,5 @@
 SET NAMES utf8mb4;
+USE `forgex_admin`;
 
 CREATE TABLE IF NOT EXISTS `sys_homepage_layout_share` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',

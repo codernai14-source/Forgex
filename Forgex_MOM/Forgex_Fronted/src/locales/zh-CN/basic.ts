@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 基础信息模块翻译 - 中文。
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '客户全称不能为空',
     confirmDeleteCustomer: '确认删除客户？',
     customerTenantCreated: '客户租户已创建：{code}',
+    pullSuccess: '客户第三方拉取完成，共处理 {total} 条，失败 {failed} 条',
+    syncSuccess: '客户第三方同步完成，共处理 {total} 条，失败 {failed} 条',
     tabs: {
       main: '主数据',
       contacts: '联系人',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '物料编码',
+      autoGenerateCode: '自动生成编码',
       name: '物料名称',
       type: '物料类型',
       category: '物料分类',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '请输入物料编码',
+      autoCode: '开启后保存时由编码规则自动生成',
       name: '请输入物料名称',
       type: '请选择物料类型',
       category: '请输入物料分类',
@@ -363,5 +367,86 @@ export default {
     roll: '卷',
     case: '盒',
     bag: '袋',
+  },
+  productionLine: {
+    title: '产线管理',
+    subtitle: '维护产线编码、所属车间、产线类型、负责人和启用状态，为工段 / 工序建模提供基础。',
+    addProductionLine: '新增产线',
+    editProductionLine: '编辑产线',
+    codeRequired: '产线编码不能为空',
+    nameRequired: '产线名称不能为空',
+    confirmDelete: '确认删除该产线？',
+    fields: {
+      code: '产线编码',
+      name: '产线名称',
+      workshop: '所属车间',
+      type: '产线类型',
+      manager: '负责人',
+      sortOrder: '排序号',
+      status: '状态',
+      remark: '备注',
+    },
+    placeholder: {
+      code: '请输入产线编码',
+      name: '请输入产线名称',
+      workshop: '请选择所属车间',
+      type: '请选择产线类型',
+      manager: '请选择负责人',
+      remark: '请输入备注',
+    },
+  },
+  workSection: {
+    title: '工段管理',
+    subtitle: '维护工段编码、所属车间 / 产线、顺序号和启用状态，是产线下级作业组织。',
+    addWorkSection: '新增工段',
+    editWorkSection: '编辑工段',
+    codeRequired: '工段编码不能为空',
+    nameRequired: '工段名称不能为空',
+    confirmDelete: '确认删除该工段？',
+    fields: {
+      code: '工段编码',
+      name: '工段名称',
+      workshop: '所属车间',
+      productionLine: '所属产线',
+      sortOrder: '顺序号',
+      status: '状态',
+      remark: '备注',
+    },
+    placeholder: {
+      code: '请输入工段编码',
+      name: '请输入工段名称',
+      workshop: '请选择所属车间',
+      productionLine: '请选择所属产线',
+      remark: '请输入备注',
+    },
+  },
+  process: {
+    title: '工序管理',
+    subtitle: '维护工序编码、所属工段、工序类型、报工方式、质检触发点和启用状态。',
+    addProcess: '新增工序',
+    editProcess: '编辑工序',
+    codeRequired: '工序编码不能为空',
+    nameRequired: '工序名称不能为空',
+    confirmDelete: '确认删除该工序？',
+    fields: {
+      code: '工序编码',
+      name: '工序名称',
+      workSection: '所属工段',
+      processType: '工序类型',
+      reportType: '报工方式',
+      qcTriggerPoint: '质检触发点',
+      sortOrder: '顺序号',
+      status: '状态',
+      remark: '备注',
+    },
+    placeholder: {
+      code: '请输入工序编码',
+      name: '请输入工序名称',
+      workSection: '请选择所属工段',
+      processType: '请选择工序类型',
+      reportType: '请选择报工方式',
+      qcTriggerPoint: '请选择质检触发点',
+      remark: '请输入备注',
+    },
   },
 }

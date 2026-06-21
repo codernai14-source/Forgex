@@ -1,7 +1,7 @@
 # 部署文档导航
 
-> 版本：**V0.6.5**
-> 更新时间：**2026-04-22**
+> 版本：**V0.6.6**
+> 更新时间：**2026-06-21**
 
 本目录用于统一维护 Forgex 的部署、授权、环境配置与交付说明。
 
@@ -44,7 +44,7 @@ Forgex_Build 是 Forgex 的统一交付工程，负责生成交付物：
 
 前端为 Vue/Vite 项目，构建交付包时会自动在 `Forgex_MOM/Forgex_Fronted` 执行 `npm run build`，并将生成的 `dist` 静态文件复制到交付包的 `frontend/` 目录。若未安装 Node.js/npm，或前端构建失败，交付收集会直接失败，避免把旧版 `dist` 打入安装包。
 
-交付包会同时携带 `database-init/` 和 `database-upgrade/` 两类数据库脚本。`database-init/` 用于首次初始化，`database-upgrade/` 由构建工程从 `doc/sql/upgrade` 收集，用于已有环境执行数据库升级 SQL。现场升级前必须先备份数据库，再按升级包内 SQL 文件名顺序执行需要的脚本。
+交付包会同时携带 `database-init/` 和 `database-upgrade/` 两类数据库脚本。`database-init/` 用于首次初始化，`database-upgrade/` 由构建工程收集，用于已有环境执行数据库升级 SQL。现场升级前必须先备份数据库，再按升级包内 SQL 文件名顺序执行需要的脚本。
 
 Windows 交付包会把 `Forgex_Build/shared/nginx/windows` 中的 Windows 版 Nginx 运行时复制到安装包的 `nginx/` 目录，并同时带上 `nginx/forgex.conf.template`。安装阶段会基于前端端口、网关端口和安装目录生成 `nginx/forgex.conf`，控制中心启动前端时优先使用安装目录内置的 `nginx/nginx.exe`。
 
@@ -249,7 +249,7 @@ docker compose up -d
 | job | 9004 | 任务调度服务，需授权目录挂载 |
 | workflow | 9005 | 工作流服务 |
 | integration | 9007 | 集成服务 |
-| report | 8084 | 报表服务 |
+| report | 9006 | 报表服务 |
 
 ### 5.5 部署脚本清单
 
@@ -269,8 +269,10 @@ docker compose up -d
 |---|---|---|
 | `FORGEX_INSTANCE_CODE` | 实例编码 | `ACME_PROD` |
 | `FORGEX_DEPLOYMENT_PROFILE` | 部署环境展示标识，不再驱动 Spring profile；客户 Windows 安装器仅允许 `prod` / `yanshi` | `prod` |
-| `FORGEX_NACOS_NAMESPACE` | Nacos 命名空间 | `forgex_dev` |
+| `FORGEX_NACOS_NAMESPACE` | Nacos 命名空间 | `dev` |
 | `FORGEX_NACOS_GROUP` | Nacos 分组 | `DEFAULT_GROUP` |
+| `FORGEX_NACOS_USERNAME` | Nacos 用户名 | `nacos` |
+| `FORGEX_NACOS_PASSWORD` | Nacos 密码 | `123456` |
 | `FORGEX_NACOS_DISCOVERY_IP` | 服务注册到 Nacos 的 IP，开发环境建议固定 | `127.0.0.1` |
 | `FORGEX_DATASOURCE_CONFIG` | 默认数据源 Nacos 配置文件名 | `datasource-forgex-dev.yml` |
 | `FORGEX_INTEGRATION_DATASOURCE_CONFIG` | 集成平台数据源 Nacos 配置文件名 | `datasource-forgex-integration-dev.yml` |
@@ -279,7 +281,7 @@ docker compose up -d
 | `FORGEX_UPLOAD_DIR` | 上传目录 | `/opt/Forgex_ACME_PROD/data/uploads` 或 `C:/forgex/data/uploads` |
 | `FORGEX_LOG_DIR` | 日志目录 | `/opt/Forgex_ACME_PROD/logs` 或 `C:/forgex/logs` |
 | `FORGEX_BACKUP_DIR` | 备份目录 | `/opt/Forgex_ACME_PROD/backup` |
-| `FORGEX_NACOS_ADDR` | Nacos 地址 | `127.0.0.1:8848` |
+| `FORGEX_NACOS_ADDR` | Nacos 服务/API 主端口地址，Nacos 3.2.2 下后端客户端仍填写 `8848`，不要填写控制台端口 `8080` | `127.0.0.1:8848` |
 | `FORGEX_REDIS_ADDR` | Redis 地址 | `127.0.0.1:6379` |
 | `FORGEX_MYSQL_URL` | MySQL URL | `jdbc:mysql://127.0.0.1:3306/forgex` |
 | `FORGEX_VERSION` | 应用版本 | `1.0.0` |
@@ -295,7 +297,7 @@ docker compose up -d
 | `FORGEX_JOB_PORT` | 9004 | 任务调度端口 |
 | `FORGEX_INTEGRATION_PORT` | 9007 | 集成服务端口 |
 | `FORGEX_WORKFLOW_PORT` | 9005 | 工作流端口 |
-| `FORGEX_REPORT_PORT` | 8084 | 报表服务端口 |
+| `FORGEX_REPORT_PORT` | 9006 | 报表服务端口 |
 
 ### 6.3 上传目录与日志目录说明
 
@@ -305,6 +307,17 @@ docker compose up -d
 4. 因此日志目录统一通过 `FORGEX_LOG_DIR` / `forgex.deployment.log-dir` 控制，上传目录与日志目录的配置方式是不同的。
 
 ## 七、Nacos 配置
+
+当前部署基线使用 **Nacos 3.2.2**。Forgex 后端通过 Spring Cloud Alibaba Nacos 客户端连接 Nacos，`FORGEX_NACOS_ADDR` 仍填写服务/API 主端口，例如 `127.0.0.1:8848`。Nacos 3.x 将控制台端口独立为默认 `8080`，浏览器访问控制台时使用 `http://Nacos服务器IP:8080`，不要把控制台端口写入后端服务的 `FORGEX_NACOS_ADDR`。
+
+Nacos 3.2.2 常用端口约定如下：
+
+| 端口 | 用途 | Forgex 使用方式 |
+|---|---|---|
+| `8848` | Nacos 服务/API 主端口 | 后端 `FORGEX_NACOS_ADDR` 和导入脚本 `-NacosAddr` 使用此端口 |
+| `8080` | Nacos 3.x 独立控制台端口 | 仅用于浏览器访问 Nacos 控制台 |
+| `9848` | 客户端 gRPC 端口，默认按主端口 `8848 + 1000` 计算 | 后端客户端会按主端口自动计算；跨服务器、防火墙、VIP 或 Nginx 转发时需要放通或做 TCP 转发 |
+| `9849` / `7848` | Nacos 服务端内部通信端口 | 集群部署按 Nacos 服务器间通信需求放通，不对公网暴露 |
 
 Nacos 配置示例存放在 `nacos配置/DEFAULT_GROUP/` 目录：
 

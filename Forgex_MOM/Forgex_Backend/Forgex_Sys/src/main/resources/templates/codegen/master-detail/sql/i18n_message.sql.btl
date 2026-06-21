@@ -2,6 +2,8 @@
 -- ${ctx.menuName} 主子表 i18n 初始化
 -- ================================================
 
+USE forgex_common;
+
 SET @TENANT_ID = 0;
 SET @MODULE = '${ctx.moduleName}';
 

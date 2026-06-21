@@ -17,7 +17,7 @@ Forgex_Integration 是 Forgex 微服务架构下的接口平台模块，提供�
 - **后端**：Spring Boot 3.5.6 + MyBatis-Plus + MPJ
 - **前端**：Vue3 + TypeScript + Ant Design Vue
 - **数据库**：MySQL 8.0
-- **服务端口**：8084
+- **服务端口**：9007
 
 ---
 
@@ -37,9 +37,9 @@ Forgex_Integration 是 Forgex 微服务架构下的接口平台模块，提供�
 **数据库**：`forgex_integration`（独立数据库）
 
 **SQL 脚本**：
-- `doc/sql/20260414_create_database_integration.sql` - 创建数据库
-- `doc/sql/20260414_create_integration_module.sql` - 创建表结构
-- `doc/sql/20260414_init_integration_module_menu.sql` - 菜单和表格配置
+- `Forgex_Doc/部署/数据库初始化脚本/forgex_integration.sql` - 首次部署导入接口平台数据库
+- `Forgex_Doc/数据库/脚本与修复/sql_fix/20260511_integration_authorization_expire_and_whitelist.sql` - 授权有效期与白名单修复
+- `Forgex_Doc/数据库/脚本与修复/sql_fix/20260511_integration_i18n_error_messages.sql` - 接口平台提示消息修复
 
 ### 2.2 后端基础架构 ✅
 
@@ -92,10 +92,9 @@ Forgex_Integration/
 ### 2.4 菜单和表格配置 ✅
 
 SQL 脚本位置：
-- `doc/sql/20260414_init_integration_module_menu.sql`
-- `doc/sql/20260427_fix_integration_menu_level.sql`
-- `doc/sql/20260427_fix_integration_menu_level_navicat_safe.sql`
-- `doc/sql/20260427_fix_integration_menu_level_simple.sql`
+- `Forgex_Doc/部署/数据库初始化脚本/forgex_admin.sql`
+- `Forgex_Doc/数据库/脚本与修复/sql_fix/20260516_fix_basic_integration_menu_and_tenant.sql`
+- `Forgex_Doc/数据库/脚本与修复/2026-06-19/20260619_integration_homepage_component_catalog.sql`
 
 **已配置菜单**：
 - 接口平台主页（根菜单）
@@ -223,18 +222,11 @@ SQL 脚本位置：
 **重要**：接口平台模块使用独立的数据库 `forgex_integration`。
 
 ```bash
-# 步骤 1：创建数据库
-# 方法 1：使用命令行
-mysql -u root -p < doc/sql/20260414_create_database_integration.sql
+# 步骤 1：导入接口平台独立数据库脚本
+mysql -u root -p < Forgex_Doc/部署/数据库初始化脚本/forgex_integration.sql
 
-# 方法 2：使用 MySQL 客户端
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS forgex_integration DEFAULT CHARACTER SET utf8mb4;"
-
-# 步骤 2：创建表结构
-mysql -u root -p forgex_integration < doc/sql/20260414_create_integration_module.sql
-
-# 步骤 3：初始化菜单和表格配置
-mysql -u root -p forgex_admin < doc/sql/20260414_init_integration_module_menu.sql
+# 步骤 2：初始化菜单和表格配置
+mysql -u root -p forgex_admin < Forgex_Doc/部署/数据库初始化脚本/forgex_admin.sql
 ```
 
 **验证数据库**：

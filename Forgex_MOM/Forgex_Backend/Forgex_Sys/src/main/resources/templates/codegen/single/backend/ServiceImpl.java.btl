@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import ${ctx.packageName}.domain.entity.${ctx.entityName};
 import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
 import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+import ${ctx.packageName}.domain.vo.${ctx.entityName}VO;
 import ${ctx.packageName}.mapper.${ctx.entityName}Mapper;
 import ${ctx.packageName}.service.${ctx.entityName}Service;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
     private final ${ctx.entityName}Mapper ${ctx.entityNameLower}Mapper;
 
     @Override
-    public IPage<${ctx.entityName}> page(${ctx.entityName}PageParam param) {
+    public IPage<${ctx.entityName}VO> page(${ctx.entityName}PageParam param) {
         Page<${ctx.entityName}> page = new Page<>(param.getPageNum(), param.getPageSize());
         LambdaQueryWrapper<${ctx.entityName}> wrapper = new LambdaQueryWrapper<>();
 <% for(column in ctx.mainQueryColumns){ %>
@@ -39,12 +40,12 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
         }
 <% } %>
         wrapper.orderByDesc(${ctx.entityName}::get${ctx.mainPkJavaFieldCapital});
-        return ${ctx.entityNameLower}Mapper.selectPage(page, wrapper);
+        return ${ctx.entityNameLower}Mapper.selectPage(page, wrapper).convert(this::toVO);
     }
 
     @Override
-    public ${ctx.entityName} detail(${ctx.mainPkJavaType!"Long"} id) {
-        return ${ctx.entityNameLower}Mapper.selectById(id);
+    public ${ctx.entityName}VO detail(${ctx.mainPkJavaType!"Long"} id) {
+        return toVO(${ctx.entityNameLower}Mapper.selectById(id));
     }
 
     @Override
@@ -78,5 +79,14 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
         for (${ctx.mainPkJavaType!"Long"} id : ids) {
             delete(id);
         }
+    }
+
+    private ${ctx.entityName}VO toVO(${ctx.entityName} entity) {
+        if (entity == null) {
+            return null;
+        }
+        ${ctx.entityName}VO vo = new ${ctx.entityName}VO();
+        BeanUtils.copyProperties(entity, vo);
+        return vo;
     }
 }

@@ -229,6 +229,8 @@ export default {
   homepageApprovalDesc: 'Approval workspace homepage',
   homepageSys: 'System Management',
   homepageSysDesc: 'System operation and configuration homepage',
+  homepageIntegration: 'Integration Platform',
+  homepageIntegrationDesc: 'External API capability dashboard',
   homepageDefaultConfig: 'Personal Homepage Default Config',
   homepageDefaultDesc: 'Manage public-level and tenant-level default layouts. All users can access the personal homepage using this as the initial portal.',
 }

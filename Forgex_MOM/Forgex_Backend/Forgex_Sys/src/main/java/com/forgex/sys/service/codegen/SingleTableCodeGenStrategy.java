@@ -62,6 +62,8 @@ public class SingleTableCodeGenStrategy extends AbstractCodeGenStrategy {
         String androidBasePath = "android/" + context.getAndroidFeatureKey();
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getEntityName() + ".java",
             "single/backend/Entity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "single/backend/VO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "single/backend/Controller.java.btl", context);
         addFile(files, "backend", javaPath + "/service/" + context.getEntityName() + "Service.java",

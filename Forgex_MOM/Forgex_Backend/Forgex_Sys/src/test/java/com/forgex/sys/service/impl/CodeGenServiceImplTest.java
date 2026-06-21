@@ -82,7 +82,63 @@ class CodeGenServiceImplTest {
         CodegenPreviewVO preview = service.preview(buildSingleRequest());
         assertNotNull(preview);
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().startsWith("android/basic/")));
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().endsWith("/domain/vo/BizCategoryVO.java")));
         assertGeneratedFrontendFiles(preview, "basic", "bizCategory", "BizCategory");
+    }
+
+    @Test
+    void previewSingleShouldGenerateDictTextAndApiOptionLoader() {
+        CodeGenRequestDTO request = buildSingleRequest();
+        ColumnMetaDTO statusColumn = column("status", "status", "String", false, false, true);
+        statusColumn.setDictCode("biz.status");
+        statusColumn.setQueryType(null);
+        statusColumn.setQueryOperator(null);
+        statusColumn.setFormType(null);
+
+        ColumnMetaDTO ownerColumn = column("owner_id", "ownerId", "Long", false, false, true);
+        ownerColumn.setOptionSourceType("API");
+        ownerColumn.setOptionApiUrl("/basic/owner/tree");
+        ownerColumn.setOptionApiMethod("get");
+        ownerColumn.setOptionParamsJson("{\"enabled\":true}");
+        ownerColumn.setOptionResponsePath("records");
+        ownerColumn.setOptionLabelField("ownerName");
+        ownerColumn.setOptionValueField("id");
+        ownerColumn.setOptionChildrenField("children");
+        ownerColumn.setFormType("treeSelect");
+
+        request.setMainColumns(List.of(
+            column("id", "id", "Long", true, false, false),
+            statusColumn,
+            ownerColumn
+        ));
+
+        CodegenPreviewVO preview = service.preview(request);
+        String vo = preview.getFiles().stream()
+            .filter(file -> file.getPath().endsWith("/domain/vo/BizCategoryVO.java"))
+            .findFirst()
+            .orElseThrow()
+            .getContent();
+        assertTrue(vo.contains("@DictI18n(nodePathConst = \"biz.status\", targetField = \"statusText\")"));
+        assertTrue(vo.contains("private String statusText;"));
+        assertFalse(vo.contains("ownerIdText"));
+
+        String form = preview.getFiles().stream()
+            .filter(file -> file.getPath().endsWith("/components/BizCategoryFormDialog.vue"))
+            .findFirst()
+            .orElseThrow()
+            .getContent();
+        assertTrue(form.contains("http.get<any>('/basic/owner/tree', { params })"));
+        assertTrue(form.contains("normalizeOptions(result, 'records', 'ownerName', 'id', 'children')"));
+        assertTrue(form.contains("field-names=\"{ label: 'label', value: 'value', children: 'children' }\""));
+
+        String index = preview.getFiles().stream()
+            .filter(file -> file.getPath().endsWith("/index.vue"))
+            .findFirst()
+            .orElseThrow()
+            .getContent();
+        assertFalse(index.contains("模板渲染失败"));
+        assertTrue(index.contains("'biz.status': useDict('biz.status').dictItems"));
     }
 
     @Test

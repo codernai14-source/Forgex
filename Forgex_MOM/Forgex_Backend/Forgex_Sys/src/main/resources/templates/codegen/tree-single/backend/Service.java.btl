@@ -1,9 +1,9 @@
 package ${ctx.packageName}.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import ${ctx.packageName}.domain.entity.${ctx.entityName};
 import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
 import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+import ${ctx.packageName}.domain.vo.${ctx.entityName}VO;
 
 import java.util.List;
 
@@ -15,11 +15,11 @@ import java.util.List;
  */
 public interface ${ctx.entityName}Service {
 
-    List<${ctx.entityName}> tree();
+    List<${ctx.entityName}VO> tree();
 
-    IPage<${ctx.entityName}> page(${ctx.entityName}PageParam param);
+    IPage<${ctx.entityName}VO> page(${ctx.entityName}PageParam param);
 
-    ${ctx.entityName} detail(${ctx.mainPkJavaType!"Long"} id);
+    ${ctx.entityName}VO detail(${ctx.mainPkJavaType!"Long"} id);
 
     void save(${ctx.entityName}SaveParam param);
 

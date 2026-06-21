@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.ServiceProcess;
 using System.Text.Json;
+using FxLicenseCore.Models;
 using FxLicenseCore.Services;
 using FxLicenseCore.Utilities;
 
@@ -324,820 +325,102 @@ internal static class CommandRunner
     }
 }
 
-internal sealed class MainForm : Form
-{
-    private readonly ForgexControlConfig _config;
-    private readonly ForgexServiceManager _serviceManager;
-    private readonly FrontendWebServer _webServer;
-    private readonly RequestInfoService _requestInfoService = new();
-    private readonly LicenseImportService _licenseImportService = new();
-    private readonly MachineFingerprintService _machineFingerprintService = new();
-    private readonly Label _summaryLabel = new();
-    private readonly Label _machineCodeLabel = new();
-    private readonly ComboBox _languageComboBox = new();
-    private readonly TextBox _machineCodeTextBox = new();
-    private readonly TextBox _logTextBox = new();
-    private readonly DataGridView _serviceGrid = new();
-    private readonly System.Windows.Forms.Timer _timer = new();
-    private readonly Dictionary<Control, string> _localizedControls = [];
-    private string _language = ResolveDefaultLanguage();
-
-    public MainForm(string installRoot)
-    {
-        _config = ForgexControlConfig.Load(installRoot);
-        _serviceManager = new ForgexServiceManager(_config);
-        _webServer = new FrontendWebServer(_config);
-
-        StartPosition = FormStartPosition.CenterScreen;
-        Width = 1000;
-        Height = 720;
-        MinimumSize = new Size(860, 560);
-
-        BuildUi();
-        ApplyLanguage();
-        RefreshView();
-
-        _timer.Interval = 5000;
-        _timer.Tick += (_, _) => SafeUiAction(RefreshServiceGrid);
-        _timer.Start();
-    }
-
-    private void BuildUi()
-    {
-        var root = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 5,
-            Padding = new Padding(14)
-        };
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 48));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 52));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-        var headerPanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            ColumnCount = 2,
-            AutoSize = true
-        };
-        headerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        headerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-
-        _summaryLabel.AutoSize = true;
-        _summaryLabel.Font = new Font(Font, FontStyle.Bold);
-        _summaryLabel.Anchor = AnchorStyles.Left;
-        headerPanel.Controls.Add(_summaryLabel, 0, 0);
-
-        var languagePanel = new FlowLayoutPanel
-        {
-            AutoSize = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            Anchor = AnchorStyles.Right,
-            WrapContents = false
-        };
-        languagePanel.Controls.Add(new Label
-        {
-            Text = "Language / 语言",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left,
-            Padding = new Padding(0, 5, 8, 0)
-        });
-        _languageComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-        _languageComboBox.Width = 115;
-        _languageComboBox.Items.AddRange(["中文", "English"]);
-        _languageComboBox.SelectedIndex = _language.Equals("zh", StringComparison.OrdinalIgnoreCase) ? 0 : 1;
-        _languageComboBox.SelectedIndexChanged += (_, _) =>
-        {
-            _language = _languageComboBox.SelectedIndex == 0 ? "zh" : "en";
-            ApplyLanguage();
-            RefreshServiceGrid();
-            AppendLog(T("logLanguageChanged"));
-        };
-        languagePanel.Controls.Add(_languageComboBox);
-        headerPanel.Controls.Add(languagePanel, 1, 0);
-        root.Controls.Add(headerPanel, 0, 0);
-
-        var machinePanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            ColumnCount = 2,
-            AutoSize = true,
-            Padding = new Padding(0, 12, 0, 8)
-        };
-        machinePanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        machinePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        _machineCodeLabel.AutoSize = true;
-        _machineCodeLabel.Anchor = AnchorStyles.Left;
-        _machineCodeLabel.Padding = new Padding(0, 4, 12, 0);
-        machinePanel.Controls.Add(_machineCodeLabel, 0, 0);
-        _machineCodeTextBox.Dock = DockStyle.Fill;
-        _machineCodeTextBox.ReadOnly = true;
-        machinePanel.Controls.Add(_machineCodeTextBox, 1, 0);
-        root.Controls.Add(machinePanel, 0, 1);
-
-        _serviceGrid.Dock = DockStyle.Fill;
-        _serviceGrid.ReadOnly = true;
-        _serviceGrid.AllowUserToAddRows = false;
-        _serviceGrid.AllowUserToDeleteRows = false;
-        _serviceGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        _serviceGrid.RowHeadersVisible = false;
-        _serviceGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        _serviceGrid.MultiSelect = false;
-        _serviceGrid.ReadOnly = true;
-        _serviceGrid.Columns.Add("serviceId", "");
-        _serviceGrid.Columns.Add("status", "");
-        _serviceGrid.Columns.Add("port", "");
-        _serviceGrid.Columns.Add("jarPath", "");
-        _serviceGrid.SelectionChanged += (_, _) => UpdateServiceActionButtons();
-        root.Controls.Add(_serviceGrid, 0, 2);
-
-        _logTextBox.Dock = DockStyle.Fill;
-        _logTextBox.Multiline = true;
-        _logTextBox.ReadOnly = true;
-        _logTextBox.ScrollBars = ScrollBars.Vertical;
-        root.Controls.Add(_logTextBox, 0, 3);
-
-        var buttonPanel = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            Padding = new Padding(0, 10, 0, 0)
-        };
-        buttonPanel.Controls.Add(CreateButton("generateRequest", GenerateRequest));
-        buttonPanel.Controls.Add(CreateButton("importLicense", ImportLicense));
-        buttonPanel.Controls.Add(CreateButton("startWeb", StartWeb));
-        buttonPanel.Controls.Add(CreateButton("stopWeb", StopWeb));
-        buttonPanel.Controls.Add(CreateButton("openWeb", OpenWeb));
-        buttonPanel.Controls.Add(CreateButton("startSelectedService", StartSelectedService));
-        buttonPanel.Controls.Add(CreateButton("stopSelectedService", StopSelectedService));
-        buttonPanel.Controls.Add(CreateButton("restartSelectedService", RestartSelectedService));
-        buttonPanel.Controls.Add(CreateButton("openSelectedLogDir", OpenSelectedServiceLogDirectory));
-        buttonPanel.Controls.Add(CreateButton("startAll", StartAll));
-        buttonPanel.Controls.Add(CreateButton("stopAll", StopAll));
-        buttonPanel.Controls.Add(CreateButton("refresh", RefreshView));
-        buttonPanel.Controls.Add(CreateButton("openInstallFolder", OpenInstallFolder));
-        root.Controls.Add(buttonPanel, 0, 4);
-
-        UpdateServiceActionButtons();
-
-        Controls.Add(root);
-    }
-
-    private Button CreateButton(string textKey, Action action)
-    {
-        var button = new Button
-        {
-            AutoSize = true,
-            Height = 32,
-            Margin = new Padding(0, 0, 8, 0)
-        };
-        _localizedControls[button] = textKey;
-        button.Click += (_, _) => SafeUiAction(action);
-        return button;
-    }
-
-    private void SafeUiAction(Action action)
-    {
-        try
-        {
-            action();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void RefreshView()
-    {
-        ApplyLanguage();
-        _machineCodeTextBox.Text = _machineFingerprintService.ResolveMachineCode();
-        RefreshServiceGrid();
-        AppendLog(T("logViewRefreshed"));
-    }
-
-    private void RefreshServiceGrid()
-    {
-        var selectedServiceId = _serviceGrid.CurrentRow is null
-            ? null
-            : Convert.ToString(_serviceGrid.CurrentRow.Cells["serviceId"].Value);
-
-        _serviceGrid.Rows.Clear();
-        foreach (var service in _config.Services.OrderBy(item => item.StartOrder))
-        {
-            _serviceGrid.Rows.Add(
-                service.ServiceId,
-                LocalizeStatus(_serviceManager.GetStatus(service)),
-                service.Port,
-                service.JarPath);
-        }
-
-        _serviceGrid.Rows.Add(
-            "web",
-            LocalizeStatus(_webServer.GetStatus()),
-            _config.FrontendPort,
-            _config.FrontendDir);
-
-        RestoreSelectedServiceRow(selectedServiceId);
-        UpdateServiceActionButtons();
-    }
-
-    private async void GenerateRequest()
-    {
-        try
-        {
-            var outputPath = Path.Combine(_config.LicenseDir, "request-info.json");
-            var info = await _requestInfoService.GenerateAsync(
-                _config.Product,
-                "standard",
-                _config.InstanceCode,
-                "FXC",
-                null,
-                outputPath);
-
-            _machineCodeTextBox.Text = info.MachineCode;
-            AppendLog(TFormat("logRequestGenerated", outputPath));
-            AppendLog(TFormat("logCustomerCode", info.CustomerCode));
-            MessageBox.Show(
-                this,
-                TFormat("requestGeneratedMessage", outputPath),
-                T("licenseTitle"),
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private async void ImportLicense()
-    {
-        try
-        {
-            using var dialog = new OpenFileDialog
-            {
-                Title = T("selectLicenseTitle"),
-                Filter = T("licenseFilter"),
-                CheckFileExists = true
-            };
-
-            if (dialog.ShowDialog(this) != DialogResult.OK)
-            {
-                return;
-            }
-
-            await _licenseImportService.ImportLicenseFileAsync(dialog.FileName, _config.LicenseDir);
-            AppendLog(TFormat("logLicenseImported", dialog.FileName));
-            MessageBox.Show(
-                this,
-                TFormat("licenseImportedMessage", _config.LicenseDir),
-                T("licenseTitle"),
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void StartAll()
-    {
-        try
-        {
-            _webServer.Start(AppendRuntimeLog);
-            _serviceManager.StartAll(AppendRuntimeLog);
-            RefreshServiceGrid();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void StartSelectedService()
-    {
-        ExecuteSelectedServiceAction(service =>
-        {
-            if (service.ServiceId.Equals("web", StringComparison.OrdinalIgnoreCase))
-            {
-                _webServer.Start(AppendRuntimeLog);
-                return;
-            }
-
-            _serviceManager.StartService(service.ServiceId, AppendRuntimeLog);
-        });
-    }
-
-    private void StopSelectedService()
-    {
-        ExecuteSelectedServiceAction(service =>
-        {
-            if (service.ServiceId.Equals("web", StringComparison.OrdinalIgnoreCase))
-            {
-                _webServer.Stop(AppendRuntimeLog);
-                return;
-            }
-
-            _serviceManager.StopService(service.ServiceId, AppendRuntimeLog);
-        });
-    }
-
-    private void RestartSelectedService()
-    {
-        ExecuteSelectedServiceAction(service =>
-        {
-            if (service.ServiceId.Equals("web", StringComparison.OrdinalIgnoreCase))
-            {
-                _webServer.Stop(AppendRuntimeLog);
-                _webServer.Start(AppendRuntimeLog);
-                return;
-            }
-
-            _serviceManager.RestartService(service.ServiceId, AppendRuntimeLog);
-        });
-    }
-
-    private void OpenSelectedServiceLogDirectory()
-    {
-        ExecuteSelectedServiceAction(service =>
-        {
-            var logDir = ResolveLogDirectory(service.ServiceId);
-            Directory.CreateDirectory(logDir);
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = logDir,
-                UseShellExecute = true
-            });
-        });
-    }
-
-    private string ResolveLogDirectory(string serviceId)
-    {
-        if (serviceId.Equals("web", StringComparison.OrdinalIgnoreCase))
-        {
-            var nginxLogDir = Path.Combine(_config.LogDir, "nginx");
-            return Directory.Exists(nginxLogDir) ? nginxLogDir : Path.Combine(_config.LogDir, "web");
-        }
-
-        return _serviceManager.GetServiceLogDirectory(serviceId);
-    }
-
-    private void StopAll()
-    {
-        try
-        {
-            _serviceManager.StopAll(AppendRuntimeLog);
-            _webServer.Stop(AppendRuntimeLog);
-            RefreshServiceGrid();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void OpenInstallFolder()
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = _config.InstallRoot,
-                UseShellExecute = true
-            });
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void StartWeb()
-    {
-        try
-        {
-            _webServer.Start(AppendRuntimeLog);
-            RefreshServiceGrid();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void StopWeb()
-    {
-        try
-        {
-            _webServer.Stop(AppendRuntimeLog);
-            RefreshServiceGrid();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void OpenWeb()
-    {
-        try
-        {
-            _webServer.Start(AppendRuntimeLog);
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = $"http://127.0.0.1:{_config.FrontendPort}/",
-                UseShellExecute = true
-            });
-            RefreshServiceGrid();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private void ExecuteSelectedServiceAction(Action<ForgexServiceConfig> action)
-    {
-        try
-        {
-            var service = GetSelectedService();
-            if (service is null)
-            {
-                throw new InvalidOperationException(T("selectServicePrompt"));
-            }
-
-            action(service);
-            RefreshServiceGrid();
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-    }
-
-    private ForgexServiceConfig? GetSelectedService()
-    {
-        if (_serviceGrid.CurrentRow is null || _serviceGrid.CurrentRow.IsNewRow)
-        {
-            return null;
-        }
-
-        var serviceId = Convert.ToString(_serviceGrid.CurrentRow.Cells["serviceId"].Value);
-        if (string.IsNullOrWhiteSpace(serviceId) || serviceId.Equals("web", StringComparison.OrdinalIgnoreCase))
-        {
-            return new ForgexServiceConfig
-            {
-                ServiceId = "web",
-                LogDir = Path.Combine(_config.LogDir, "web"),
-                JarPath = _config.FrontendDir
-            };
-        }
-
-        return _config.Services.FirstOrDefault(item => item.ServiceId.Equals(serviceId, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private void RestoreSelectedServiceRow(string? selectedServiceId)
-    {
-        if (_serviceGrid.Rows.Count == 0)
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(selectedServiceId))
-        {
-            _serviceGrid.Rows[0].Selected = true;
-            _serviceGrid.CurrentCell = _serviceGrid.Rows[0].Cells["serviceId"];
-            return;
-        }
-
-        foreach (DataGridViewRow row in _serviceGrid.Rows)
-        {
-            if (string.Equals(Convert.ToString(row.Cells["serviceId"].Value), selectedServiceId, StringComparison.OrdinalIgnoreCase))
-            {
-                row.Selected = true;
-                _serviceGrid.CurrentCell = row.Cells["serviceId"];
-                return;
-            }
-        }
-    }
-
-    private void UpdateServiceActionButtons()
-    {
-        var hasSelection = GetSelectedService() is not null;
-        foreach (var item in _localizedControls)
-        {
-            if (item.Value is "startSelectedService" or "stopSelectedService" or "restartSelectedService" or "openSelectedLogDir")
-            {
-                item.Key.Enabled = hasSelection;
-            }
-        }
-    }
-
-    private void AppendLog(string message)
-    {
-        _logTextBox.AppendText($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
-    }
-
-    private void AppendRuntimeLog(string message)
-    {
-        AppendLog(LocalizeRuntimeLog(message));
-    }
-
-    private void ShowError(Exception ex)
-    {
-        ControlCenterDiagnostics.Write(_config.InstallRoot, "Control center action failed", ex);
-        AppendLog(ex.Message);
-        MessageBox.Show(this, ex.Message, T("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-    }
-
-    private void ApplyLanguage()
-    {
-        Text = T("windowTitle");
-        _summaryLabel.Text = TFormat("summary", _config.InstanceCode, _config.DeployProfile, _config.InstallRoot);
-        _machineCodeLabel.Text = T("machineCode");
-
-        if (_serviceGrid.Columns.Count >= 4)
-        {
-            _serviceGrid.Columns["serviceId"]!.HeaderText = T("gridService");
-            _serviceGrid.Columns["status"]!.HeaderText = T("gridStatus");
-            _serviceGrid.Columns["port"]!.HeaderText = T("gridPort");
-            _serviceGrid.Columns["jarPath"]!.HeaderText = T("gridJar");
-        }
-
-        foreach (var item in _localizedControls)
-        {
-            item.Key.Text = T(item.Value);
-        }
-    }
-
-    private string T(string key)
-    {
-        return ControlCenterText.Resolve(_language, key);
-    }
-
-    private string TFormat(string key, params object[] args)
-    {
-        return string.Format(System.Globalization.CultureInfo.CurrentCulture, T(key), args);
-    }
-
-    private string LocalizeStatus(string status)
-    {
-        if (!_language.Equals("zh", StringComparison.OrdinalIgnoreCase))
-        {
-            return status;
-        }
-
-        if (status.StartsWith("Running(pid:", StringComparison.OrdinalIgnoreCase))
-        {
-            return status.Replace("Running", "运行中", StringComparison.OrdinalIgnoreCase);
-        }
-
-        return status switch
-        {
-            "Running" => "运行中",
-            "Stopped" => "已停止",
-            "NotInstalled" => "未安装",
-            "StartPending" => "启动中",
-            "StopPending" => "停止中",
-            "PausePending" => "暂停中",
-            "Paused" => "已暂停",
-            "ContinuePending" => "恢复中",
-            _ => status
-        };
-    }
-
-    private string LocalizeRuntimeLog(string message)
-    {
-        if (!_language.Equals("zh", StringComparison.OrdinalIgnoreCase))
-        {
-            return message;
-        }
-
-        if (message.Equals("Nginx executable or config not found. Falling back to built-in web server.", StringComparison.OrdinalIgnoreCase))
-        {
-            return "未找到 Nginx 程序或配置，已切换为内置前端服务。";
-        }
-
-        if (message.Equals("Nginx executable or config not found.", StringComparison.OrdinalIgnoreCase))
-        {
-            return "未找到 Nginx 程序或配置。";
-        }
-
-        const string nginxAlreadyRunning = "Nginx already running at ";
-        if (message.StartsWith(nginxAlreadyRunning, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"Nginx 已在 {message[nginxAlreadyRunning.Length..]} 运行。";
-        }
-
-        const string nginxStarted = "Nginx started: ";
-        if (message.StartsWith(nginxStarted, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"Nginx 已启动：{message[nginxStarted.Length..]}";
-        }
-
-        if (message.Equals("Nginx has no pid file.", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Nginx 没有 pid 文件。";
-        }
-
-        const string nginxStopped = "Nginx stopped, pid ";
-        if (message.StartsWith(nginxStopped, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"Nginx 已停止，pid {message[nginxStopped.Length..]}";
-        }
-
-        const string nginxPidNotRunningPrefix = "Nginx pid ";
-        const string nginxPidNotRunningSuffix = " was not running.";
-        if (message.StartsWith(nginxPidNotRunningPrefix, StringComparison.OrdinalIgnoreCase)
-            && message.EndsWith(nginxPidNotRunningSuffix, StringComparison.OrdinalIgnoreCase))
-        {
-            var pid = message[nginxPidNotRunningPrefix.Length..^nginxPidNotRunningSuffix.Length];
-            return $"Nginx pid {pid} 未运行。";
-        }
-
-        const string webAlreadyRunning = "Web server already running at ";
-        if (message.StartsWith(webAlreadyRunning, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"前端服务已在 {message[webAlreadyRunning.Length..]} 运行。";
-        }
-
-        const string webStarted = "Web server started: ";
-        if (message.StartsWith(webStarted, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"前端服务已启动：{message[webStarted.Length..]}";
-        }
-
-        if (message.Equals("Web server has no pid file.", StringComparison.OrdinalIgnoreCase))
-        {
-            return "前端服务没有 pid 文件。";
-        }
-
-        const string webStopped = "Web server stopped, pid ";
-        if (message.StartsWith(webStopped, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"前端服务已停止，pid {message[webStopped.Length..]}";
-        }
-
-        const string webPidNotRunningPrefix = "Web server pid ";
-        const string webPidNotRunningSuffix = " was not running.";
-        if (message.StartsWith(webPidNotRunningPrefix, StringComparison.OrdinalIgnoreCase)
-            && message.EndsWith(webPidNotRunningSuffix, StringComparison.OrdinalIgnoreCase))
-        {
-            var pid = message[webPidNotRunningPrefix.Length..^webPidNotRunningSuffix.Length];
-            return $"前端服务 pid {pid} 未运行。";
-        }
-
-        const string webPortPrefix = "Web port ";
-        const string webPortSuffix = " is already in use.";
-        if (message.StartsWith(webPortPrefix, StringComparison.OrdinalIgnoreCase)
-            && message.EndsWith(webPortSuffix, StringComparison.OrdinalIgnoreCase))
-        {
-            var port = message[webPortPrefix.Length..^webPortSuffix.Length];
-            return $"前端端口 {port} 已被占用。";
-        }
-
-        var firstSpace = message.IndexOf(' ');
-        if (firstSpace <= 0)
-        {
-            return message;
-        }
-
-        var serviceId = message[..firstSpace];
-        var detail = message[(firstSpace + 1)..];
-        if (detail.Equals("already running.", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已在运行。";
-        }
-
-        if (detail.Equals("started by Windows service.", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已通过 Windows 服务启动。";
-        }
-
-        if (detail.Equals("already stopped.", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已停止。";
-        }
-
-        if (detail.Equals("stopped by Windows service.", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已通过 Windows 服务停止。";
-        }
-
-        const string failedToStart = "failed to start: ";
-        if (detail.StartsWith(failedToStart, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 启动失败：{detail[failedToStart.Length..]}";
-        }
-
-        const string failedToStop = "failed to stop: ";
-        if (detail.StartsWith(failedToStop, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 停止失败：{detail[failedToStop.Length..]}";
-        }
-
-        const string jarNotFound = "skipped, jar not found: ";
-        if (detail.StartsWith(jarNotFound, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已跳过，未找到 Jar：{detail[jarNotFound.Length..]}";
-        }
-
-        const string runningWithPid = "already running with pid ";
-        if (detail.StartsWith(runningWithPid, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已在运行，pid {detail[runningWithPid.Length..]}";
-        }
-
-        const string startedProcess = "started in process mode, pid ";
-        if (detail.StartsWith(startedProcess, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已按进程模式启动，pid {detail[startedProcess.Length..]}";
-        }
-
-        if (detail.Equals("has no pid file.", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 没有 pid 文件。";
-        }
-
-        const string stoppedPid = "stopped, pid ";
-        if (detail.StartsWith(stoppedPid, StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{serviceId} 已停止，pid {detail[stoppedPid.Length..]}";
-        }
-
-        const string pidNotRunningSuffix = " was not running.";
-        var pidMarker = detail.IndexOf(" pid ", StringComparison.OrdinalIgnoreCase);
-        if (pidMarker >= 0 && detail.EndsWith(pidNotRunningSuffix, StringComparison.OrdinalIgnoreCase))
-        {
-            var pid = detail[(pidMarker + 5)..^pidNotRunningSuffix.Length];
-            return $"{serviceId} pid {pid} 未运行。";
-        }
-
-        return message;
-    }
-
-    private static string ResolveDefaultLanguage()
-    {
-        return System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("zh", StringComparison.OrdinalIgnoreCase)
-            ? "zh"
-            : "en";
-    }
-}
-
 internal static class ControlCenterText
 {
     private static readonly Dictionary<string, string> Zh = new(StringComparer.OrdinalIgnoreCase)
     {
         ["windowTitle"] = "Forgex 控制中心",
         ["summary"] = "实例：{0}    环境：{1}    安装目录：{2}",
+        ["language"] = "语言",
+        ["frontendTab"] = "前端",
+        ["backendTab"] = "后端",
+        ["licenseTab"] = "授权",
         ["machineCode"] = "机器码",
         ["gridService"] = "服务",
         ["gridStatus"] = "状态",
         ["gridPort"] = "端口",
+        ["gridPath"] = "路径",
         ["gridJar"] = "Jar",
+        ["stopService"] = "停止服务",
+        ["startService"] = "启动服务",
+        ["updateService"] = "更新",
+        ["openLogFolder"] = "打开日志文件夹",
+        ["gridActivatedAt"] = "导入时间",
+        ["gridLicenseId"] = "授权编号",
+        ["gridCustomerCode"] = "客户编码",
+        ["gridEdition"] = "版本",
+        ["gridEffectiveAt"] = "生效时间",
+        ["gridExpireAt"] = "到期时间",
+        ["gridModules"] = "模块",
         ["startSelectedService"] = "启动选中服务",
         ["stopSelectedService"] = "停止选中服务",
         ["restartSelectedService"] = "重启选中服务",
         ["openSelectedLogDir"] = "打开选中日志目录",
         ["selectServicePrompt"] = "请先在服务列表中选择一个服务。",
-        ["generateRequest"] = "生成授权申请",
-        ["importLicense"] = "导入授权",
+        ["generateRequest"] = "获取授权文件 / 生成申请授权文件",
+        ["importLicense"] = "导入授权文件",
         ["startWeb"] = "启动前端",
         ["stopWeb"] = "停止前端",
         ["openWeb"] = "打开前端",
-        ["startAll"] = "启动全部",
-        ["stopAll"] = "停止全部",
+        ["startAll"] = "启动全部服务",
+        ["stopAll"] = "停止全部服务",
+        ["startBackendAll"] = "启动后端全部服务",
         ["refresh"] = "刷新",
         ["openInstallFolder"] = "打开安装目录",
         ["licenseTitle"] = "Forgex 授权",
         ["selectLicenseTitle"] = "选择 license.lic",
         ["licenseFilter"] = "Forgex 授权文件 (*.lic)|*.lic|所有文件 (*.*)|*.*",
+        ["jarFilter"] = "Java Jar 文件 (*.jar)|*.jar|所有文件 (*.*)|*.*",
+        ["selectBackendJarTitle"] = "选择 {0} 的新 Jar 文件",
         ["requestGeneratedMessage"] = "授权申请文件已生成：\r\n{0}",
         ["licenseImportedMessage"] = "授权文件已导入到：\r\n{0}",
+        ["backendJarUpdatedMessage"] = "{0} 已更新：\r\n{1}",
+        ["licenseDuration"] = "授权期限",
+        ["licenseExpireAt"] = "到期时间",
+        ["licenseRecords"] = "授权记录",
+        ["licenseMissing"] = "未找到当前授权文件。",
+        ["licenseInvalid"] = "当前授权文件解析失败：{0}",
+        ["licenseUnknown"] = "未知",
+        ["licensePermanent"] = "永久",
+        ["licenseDurationDays"] = "{0} 天",
+        ["licenseSummary"] = "授权编号：{0}    客户编码：{1}    版本：{2}    模块：{3}",
         ["logViewRefreshed"] = "视图已刷新。",
         ["logLanguageChanged"] = "界面语言已切换。",
         ["logRequestGenerated"] = "授权申请文件已生成：{0}",
         ["logCustomerCode"] = "客户编码：{0}",
-        ["logLicenseImported"] = "授权文件已从 {0} 导入"
+        ["logLicenseImported"] = "授权文件已从 {0} 导入",
+        ["logLicenseHistoryFailed"] = "授权记录读取失败：{0}",
+        ["logBackendJarUpdated"] = "{0} Jar 已更新：{1}",
+        ["logBackendJarBackup"] = "旧 Jar 已备份：{0}"
     };
 
     private static readonly Dictionary<string, string> En = new(StringComparer.OrdinalIgnoreCase)
     {
         ["windowTitle"] = "Forgex Control Center",
         ["summary"] = "Instance: {0}    Profile: {1}    Install Root: {2}",
+        ["language"] = "Language",
+        ["frontendTab"] = "Frontend",
+        ["backendTab"] = "Backend",
+        ["licenseTab"] = "License",
         ["machineCode"] = "Machine Code",
         ["gridService"] = "Service",
         ["gridStatus"] = "Status",
         ["gridPort"] = "Port",
+        ["gridPath"] = "Path",
         ["gridJar"] = "Jar",
-        ["generateRequest"] = "Generate Request",
-        ["importLicense"] = "Import License",
+        ["stopService"] = "Stop",
+        ["startService"] = "Start",
+        ["updateService"] = "Update",
+        ["openLogFolder"] = "Open Logs",
+        ["gridActivatedAt"] = "Imported At",
+        ["gridLicenseId"] = "License ID",
+        ["gridCustomerCode"] = "Customer Code",
+        ["gridEdition"] = "Edition",
+        ["gridEffectiveAt"] = "Effective At",
+        ["gridExpireAt"] = "Expire At",
+        ["gridModules"] = "Modules",
+        ["generateRequest"] = "Generate Request File",
+        ["importLicense"] = "Import License File",
         ["startWeb"] = "Start Web",
         ["stopWeb"] = "Stop Web",
         ["openWeb"] = "Open Web",
@@ -1145,21 +428,37 @@ internal static class ControlCenterText
         ["stopSelectedService"] = "Stop Selected",
         ["restartSelectedService"] = "Restart Selected",
         ["openSelectedLogDir"] = "Open Selected Logs",
-        ["startAll"] = "Start All",
-        ["stopAll"] = "Stop All",
+        ["startAll"] = "Start All Services",
+        ["stopAll"] = "Stop All Services",
+        ["startBackendAll"] = "Start All Backend",
         ["refresh"] = "Refresh",
         ["openInstallFolder"] = "Open Install Folder",
         ["selectServicePrompt"] = "Select a service in the service list first.",
         ["licenseTitle"] = "Forgex License",
         ["selectLicenseTitle"] = "Select license.lic",
         ["licenseFilter"] = "Forgex license (*.lic)|*.lic|All files (*.*)|*.*",
+        ["jarFilter"] = "Java Jar (*.jar)|*.jar|All files (*.*)|*.*",
+        ["selectBackendJarTitle"] = "Select new Jar for {0}",
         ["requestGeneratedMessage"] = "Request file generated:\r\n{0}",
         ["licenseImportedMessage"] = "License imported to:\r\n{0}",
+        ["backendJarUpdatedMessage"] = "{0} updated:\r\n{1}",
+        ["licenseDuration"] = "Duration",
+        ["licenseExpireAt"] = "Expire At",
+        ["licenseRecords"] = "License Records",
+        ["licenseMissing"] = "Current license file was not found.",
+        ["licenseInvalid"] = "Current license parse failed: {0}",
+        ["licenseUnknown"] = "Unknown",
+        ["licensePermanent"] = "Permanent",
+        ["licenseDurationDays"] = "{0} days",
+        ["licenseSummary"] = "License ID: {0}    Customer Code: {1}    Edition: {2}    Modules: {3}",
         ["logViewRefreshed"] = "View refreshed.",
         ["logLanguageChanged"] = "Language switched.",
         ["logRequestGenerated"] = "Request file generated: {0}",
         ["logCustomerCode"] = "Customer code: {0}",
-        ["logLicenseImported"] = "License imported from {0}"
+        ["logLicenseImported"] = "License imported from {0}",
+        ["logLicenseHistoryFailed"] = "License history read failed: {0}",
+        ["logBackendJarUpdated"] = "{0} Jar updated: {1}",
+        ["logBackendJarBackup"] = "Old Jar backed up: {0}"
     };
 
     public static string Resolve(string language, string key)
@@ -1191,6 +490,56 @@ internal static class ControlCenterDiagnostics
             // Diagnostics must never crash the control center.
         }
     }
+}
+
+internal static class ControlCenterLicenseReader
+{
+    public static LicensePayload? ReadCurrentLicense(string licenseDirectory)
+    {
+        var licensePath = Path.Combine(licenseDirectory, "license.lic");
+        if (!File.Exists(licensePath))
+        {
+            return null;
+        }
+
+        var licenseText = File.ReadAllText(licensePath, JsonHelper.Utf8NoBom);
+        var payloadJson = System.Text.Encoding.UTF8.GetString(KeyMaterialHelper.DecodePayload(licenseText));
+        return JsonSerializer.Deserialize<LicensePayload>(payloadJson, JsonHelper.Options)
+               ?? throw new InvalidOperationException("license.lic payload parse failed.");
+    }
+
+    public static IReadOnlyList<LicenseActivationHistoryRecord> ReadHistory(string licenseDirectory)
+    {
+        var historyPath = Path.Combine(licenseDirectory, "activation-history.json");
+        if (!File.Exists(historyPath))
+        {
+            return [];
+        }
+
+        var json = File.ReadAllText(historyPath, JsonHelper.Utf8NoBom);
+        return JsonSerializer.Deserialize<List<LicenseActivationHistoryRecord>>(json, JsonHelper.Options) ?? [];
+    }
+}
+
+internal sealed class LicenseActivationHistoryRecord
+{
+    public string ActivatedAt { get; set; } = "";
+
+    public string LicenseId { get; set; } = "";
+
+    public string CustomerCode { get; set; } = "";
+
+    public string MachineCode { get; set; } = "";
+
+    public string EffectiveAt { get; set; } = "";
+
+    public string? ExpireAt { get; set; }
+
+    public string Edition { get; set; } = "";
+
+    public List<string> Modules { get; set; } = [];
+
+    public string LicensePath { get; set; } = "";
 }
 
 internal sealed class ProcessLogRelay : IDisposable
@@ -1270,6 +619,8 @@ internal sealed class ProcessLogRelay : IDisposable
     }
 }
 
+internal sealed record ServiceJarUpdateResult(string TargetPath, string? BackupPath);
+
 internal sealed class ForgexServiceManager
 {
     private readonly ForgexControlConfig _config;
@@ -1346,6 +697,71 @@ internal sealed class ForgexServiceManager
 
         Stop(service, log);
         Start(service, log);
+    }
+
+    public ServiceJarUpdateResult UpdateServiceJar(string serviceId, string sourceJarPath, Action<string> log)
+    {
+        if (!TryGetService(serviceId, out var service) || service is null)
+        {
+            throw new InvalidOperationException($"Service not found: {serviceId}");
+        }
+
+        if (string.IsNullOrWhiteSpace(sourceJarPath) || !File.Exists(sourceJarPath))
+        {
+            throw new FileNotFoundException("Source jar not found.", sourceJarPath);
+        }
+
+        if (string.IsNullOrWhiteSpace(service.JarPath))
+        {
+            throw new InvalidOperationException($"Jar path is not configured for service: {serviceId}");
+        }
+
+        var targetPath = service.JarPath;
+        if (string.Equals(
+                Path.GetFullPath(sourceJarPath),
+                Path.GetFullPath(targetPath),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Source jar is already the configured jar for service: {serviceId}");
+        }
+
+        var wasRunning = GetStatus(service).Contains("Running", StringComparison.OrdinalIgnoreCase);
+        if (wasRunning)
+        {
+            Stop(service, log);
+        }
+
+        var targetDirectory = Path.GetDirectoryName(targetPath);
+        if (!string.IsNullOrWhiteSpace(targetDirectory))
+        {
+            Directory.CreateDirectory(targetDirectory);
+        }
+
+        string? backupPath = null;
+        if (File.Exists(targetPath))
+        {
+            var backupRoot = string.IsNullOrWhiteSpace(_config.BackupDir)
+                ? Path.Combine(_config.InstallRoot, "backup")
+                : _config.BackupDir;
+            var backupDirectory = Path.Combine(
+                backupRoot,
+                $"service-update-{DateTime.Now:yyyyMMddHHmmss}",
+                service.ServiceId);
+            Directory.CreateDirectory(backupDirectory);
+            backupPath = Path.Combine(backupDirectory, Path.GetFileName(targetPath));
+            File.Copy(targetPath, backupPath, overwrite: true);
+            log($"{service.ServiceId} old jar backed up: {backupPath}");
+        }
+
+        File.Copy(sourceJarPath, targetPath, overwrite: true);
+        log($"{service.ServiceId} jar updated: {targetPath}");
+
+        if (wasRunning)
+        {
+            Start(service, log);
+        }
+
+        return new ServiceJarUpdateResult(targetPath, backupPath);
     }
 
     public string GetStatus(ForgexServiceConfig service)

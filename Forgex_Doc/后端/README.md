@@ -1,7 +1,7 @@
 # 后端文档导航
 
-> 版本：**V0.6.6**
-> 更新时间：**2026-05-17**
+> 版本：**V0.6.7**
+> 更新时间：**2026-06-21**
 
 本页为 Forgex 后端文档的**唯一推荐入口**（历史文件 [后端公共能力与核心功能手册](./后端公共能力与核心功能手册.md) 已重定向至此，请勿在手册文件中追加正文）。
 
@@ -294,10 +294,10 @@
 | Forgex_Auth | 9001 | 用户认证、Token 管理、登录注册 |
 | Forgex_Sys | 9002 | 系统管理、用户管理、角色权限、数据字典 |
 | Forgex_Basic | 9003 | 基础业务扩展、物料管理 |
-| Forgex_Integration | 9004 | 第三方系统集成、API 配置、调用日志 |
+| Forgex_Integration | 9007 | 第三方系统集成、API 配置、调用日志 |
 | Forgex_Job | 9004 | 定时任务与异步执行骨架 |
 | Forgex_Workflow | 9005 | 工作流引擎、审批流程 |
-| Forgex_Report | 8084 | 报表中心、UReport2、JimuReport |
+| Forgex_Report | 9006 | 报表中心、UReport2、JimuReport |
 
 ## 七、说明
 

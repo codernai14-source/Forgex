@@ -1,7 +1,7 @@
 import http from '../http'
 
 export type PersonalHomepageScopeLevel = 'PUBLIC' | 'TENANT' | 'USER'
-export type ModuleHomepageCode = 'personal' | 'basic' | 'approval' | 'sys'
+export type ModuleHomepageCode = 'personal' | 'basic' | 'approval' | 'sys' | 'integration'
 
 export interface HomepageConfigRequestOptions {
   moduleCode?: string
@@ -64,7 +64,8 @@ export const PERSONAL_HOMEPAGE_WIDGET_KEYS = [
 
 export const MODULE_HOMEPAGE_WIDGET_KEYS = [
   'supplierInfo',
-  'encodeRuleInfo',
+  'customerInfo',
+  'workCalendarInfo',
   'systemOverview',
   'systemHealth',
   'systemLogs',
@@ -85,6 +86,12 @@ export const MODULE_HOMEPAGE_WIDGET_KEYS = [
   'approvalUserShare',
   'approvalProcessed',
   'approvalCc',
+  'integrationSummary',
+  'integrationStatusComparison',
+  'integrationStatusPie',
+  'integrationCallTrend',
+  'integrationTopApis',
+  'integrationRecentFailures',
 ] as const
 
 const DEFAULT_WIDGET_TITLES: Record<(typeof PERSONAL_HOMEPAGE_WIDGET_KEYS)[number], string> = {
@@ -170,6 +177,58 @@ function createModuleWidget(
   }
 }
 
+function upgradeBasicHomepageWidgets(widgets: PersonalHomepageWidgetConfig[]): PersonalHomepageWidgetConfig[] {
+  const supplierWidget = widgets.find(widget => widget.key === 'supplierInfo')
+  const customerWidget = widgets.find(widget => widget.key === 'customerInfo')
+  const calendarWidget = widgets.find(widget => widget.key === 'workCalendarInfo')
+  const isLegacyThreeColumnLayout =
+    supplierWidget &&
+    customerWidget &&
+    calendarWidget &&
+    Number(supplierWidget.x) === 0 &&
+    Number(customerWidget.x) === 4 &&
+    Number(calendarWidget.x) === 8 &&
+    Number(supplierWidget.y) === 0 &&
+    Number(customerWidget.y) === 0 &&
+    Number(calendarWidget.y) === 0 &&
+    Number(supplierWidget.w) <= 4 &&
+    Number(customerWidget.w) <= 4 &&
+    Number(calendarWidget.w) <= 4
+
+  return widgets.map(widget => {
+    if (!['supplierInfo', 'customerInfo', 'workCalendarInfo'].includes(widget.key)) {
+      return widget
+    }
+
+    const nextWidget = { ...widget }
+    if (isLegacyThreeColumnLayout) {
+      if (widget.key === 'supplierInfo') {
+        Object.assign(nextWidget, { x: 0, y: 0, w: 6, h: Math.max(Number(widget.h || 0), 4) })
+      }
+      if (widget.key === 'customerInfo') {
+        Object.assign(nextWidget, { x: 6, y: 0, w: 6, h: Math.max(Number(widget.h || 0), 4) })
+      }
+      if (widget.key === 'workCalendarInfo') {
+        Object.assign(nextWidget, { x: 0, y: 4, w: 12, h: Math.max(Number(widget.h || 0), 5) })
+      }
+    }
+
+    if (widget.key === 'supplierInfo' || widget.key === 'customerInfo') {
+      nextWidget.minW = Math.max(Number(nextWidget.minW || 0), 5)
+      nextWidget.minH = Math.max(Number(nextWidget.minH || 0), 3)
+    }
+
+    if (widget.key === 'workCalendarInfo') {
+      nextWidget.w = Math.max(Number(nextWidget.w || 0), 8)
+      nextWidget.h = Math.max(Number(nextWidget.h || 0), 5)
+      nextWidget.minW = Math.max(Number(nextWidget.minW || 0), 8)
+      nextWidget.minH = Math.max(Number(nextWidget.minH || 0), 5)
+    }
+
+    return nextWidget
+  })
+}
+
 function normalizeModuleCode(moduleCode?: string | null): ModuleHomepageCode {
   const normalized = String(moduleCode || 'personal').trim().toLowerCase()
   if (!normalized || normalized === 'personal') {
@@ -181,7 +240,7 @@ function normalizeModuleCode(moduleCode?: string | null): ModuleHomepageCode {
   if (normalized === 'workflow') {
     return 'approval'
   }
-  if (normalized === 'basic' || normalized === 'approval' || normalized === 'sys') {
+  if (normalized === 'basic' || normalized === 'approval' || normalized === 'sys' || normalized === 'integration') {
     return normalized
   }
   return 'personal'
@@ -196,7 +255,8 @@ export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalH
       layout: baseLayout,
       widgets: [
         createModuleWidget('supplierInfo', 0, 0, 6, 4, 10),
-        createModuleWidget('encodeRuleInfo', 6, 0, 6, 4, 20),
+        createModuleWidget('customerInfo', 6, 0, 6, 4, 20),
+        createModuleWidget('workCalendarInfo', 0, 4, 12, 5, 30),
       ],
     }
   }
@@ -228,6 +288,25 @@ export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalH
         createModuleWidget('systemServerInfo', 7, 7, 5, 6, 60),
         createModuleWidget('systemOperationLogs', 0, 13, 6, 5, 70),
         createModuleWidget('systemLoginLogs', 6, 13, 6, 5, 80),
+      ],
+    }
+  }
+
+  if (normalized === 'integration') {
+    return {
+      layout: {
+        ...baseLayout,
+        rowHeight: 62,
+        marginX: 8,
+        marginY: 8,
+      },
+      widgets: [
+        createModuleWidget('integrationSummary', 0, 0, 12, 2, 10),
+        createModuleWidget('integrationStatusComparison', 0, 2, 6, 5, 20),
+        createModuleWidget('integrationStatusPie', 6, 2, 6, 5, 30),
+        createModuleWidget('integrationCallTrend', 0, 7, 12, 4, 40),
+        createModuleWidget('integrationTopApis', 0, 11, 6, 4, 50),
+        createModuleWidget('integrationRecentFailures', 6, 11, 6, 4, 60),
       ],
     }
   }
@@ -316,6 +395,7 @@ export function mergeModuleHomepageConfig(
   const defaults = createDefaultModuleHomepageConfig(normalized)
   const rawWidgets = Array.isArray(config?.widgets) ? config.widgets : []
   const rawWidgetMap = new Map(rawWidgets.map(widget => [String(widget?.key || ''), widget]))
+  const retiredWidgetKeys = new Set(normalized === 'basic' ? ['encodeRuleInfo'] : [])
 
   const widgets = defaults.widgets.map(defaultWidget => {
     const currentWidget = rawWidgetMap.get(defaultWidget.key)
@@ -333,7 +413,7 @@ export function mergeModuleHomepageConfig(
 
   rawWidgets.forEach(widget => {
     const key = String(widget?.key || '')
-    if (!key || widgets.some(item => item.key === key)) {
+    if (!key || retiredWidgetKeys.has(key) || widgets.some(item => item.key === key)) {
       return
     }
     widgets.push({
@@ -351,7 +431,9 @@ export function mergeModuleHomepageConfig(
     })
   })
 
-  widgets.sort((left, right) => {
+  const normalizedWidgets = normalized === 'basic' ? upgradeBasicHomepageWidgets(widgets) : widgets
+
+  normalizedWidgets.sort((left, right) => {
     const leftOrder = Number(left.orderNum ?? 0)
     const rightOrder = Number(right.orderNum ?? 0)
     if (leftOrder !== rightOrder) {
@@ -365,7 +447,7 @@ export function mergeModuleHomepageConfig(
       ...defaults.layout,
       ...(config?.layout || {}),
     },
-    widgets,
+    widgets: normalizedWidgets,
   }
 }
 
