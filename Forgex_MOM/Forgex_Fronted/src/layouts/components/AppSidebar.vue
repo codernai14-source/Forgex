@@ -54,7 +54,11 @@
           v-for="item in currentMenus"
           :key="item.key"
           :item="item"
+          :active-path="activeKey"
+          :favorite-paths="props.favoritePaths"
+          :favorite-loading-path="props.favoriteLoadingPath"
           @submenu-title-click="onSubmenuTitleClick"
+          @favorite-toggle="onFavoriteToggle"
         />
       </a-menu>
       <button
@@ -97,6 +101,8 @@ interface AppSidebarProps {
   layoutMode?: 'vertical' | 'vertical-mix' | 'top' | 'mix'
   collapsed?: boolean
   doubleColumn?: boolean
+  favoritePaths?: string[]
+  favoriteLoadingPath?: string
 }
 
 const props = withDefaults(defineProps<AppSidebarProps>(), {
@@ -107,11 +113,14 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
   layoutMode: 'vertical',
   collapsed: false,
   doubleColumn: false,
+  favoritePaths: () => [],
+  favoriteLoadingPath: '',
 })
 
 const emit = defineEmits<{
   'menu-click': [menuKey: string]
   'collapse-change': [collapsed: boolean]
+  'favorite-toggle': [path: string]
 }>()
 
 const selectedKeys = ref<string[]>([])
@@ -207,20 +216,6 @@ function findMenuByKey(menus: MenuItem[], key: string): MenuItem | null {
   return null
 }
 
-function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = []): MenuItem[] | null {
-  for (const menu of menus) {
-    const currentPath = [...parentPath, menu]
-    if (menu.key === key || menu.path === key) {
-      return currentPath
-    }
-    const found = findMenuPath(menu.children || [], key, currentPath)
-    if (found) {
-      return found
-    }
-  }
-  return null
-}
-
 function findFirstNavigableMenu(menu: MenuItem): MenuItem | null {
   for (const child of menu.children || []) {
     const found = findFirstNavigableMenu(child)
@@ -232,6 +227,24 @@ function findFirstNavigableMenu(menu: MenuItem): MenuItem | null {
     return menu
   }
   return null
+}
+
+function findMenuPath(menus: MenuItem[], key: string, parentPath: MenuItem[] = []): MenuItem[] | null {
+  for (const menu of menus) {
+    const currentPath = [...parentPath, menu]
+    if (normalizePath(menu.path) === normalizePath(key) || menu.key === key) {
+      return currentPath
+    }
+    const found = findMenuPath(menu.children || [], key, currentPath)
+    if (found) {
+      return found
+    }
+  }
+  return null
+}
+
+function normalizePath(path?: string | null) {
+  return String(path || '').split('?')[0].split('#')[0]
 }
 
 function onFirstLevelMenuClick(info: any) {
@@ -287,6 +300,13 @@ function onOpenChange(keys: string[]) {
 
 function onCollapse(collapsed: boolean) {
   emit('collapse-change', collapsed)
+}
+
+function onFavoriteToggle(path: string) {
+  const normalized = normalizePath(path)
+  if (normalized && normalized !== props.favoriteLoadingPath) {
+    emit('favorite-toggle', normalized)
+  }
 }
 </script>
 <style scoped lang="less" src="@/styles/layout/components/app-sidebar.less"></style>

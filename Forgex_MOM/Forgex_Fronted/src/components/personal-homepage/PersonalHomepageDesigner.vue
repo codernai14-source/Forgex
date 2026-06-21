@@ -570,6 +570,7 @@ import { noticeApi, type SysNotice } from '@/api/system/notice'
 import { pageMyPending, type WfExecutionDTO } from '@/api/workflow/execution'
 import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH } from '@/router'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
+import { dispatchMenuFavoritesRefresh, listenMenuFavoritesRefresh } from '@/composables/useMenuFavorites'
 import { useUserStore } from '@/stores/user'
 import { getIcon } from '@/utils/icon'
 import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
@@ -643,6 +644,7 @@ const importCode = ref('')
 const importPreview = ref<HomepageLayoutShareVO | null>(null)
 const importLoading = ref(false)
 let clockTimer: number | undefined
+let stopMenuFavoritesRefresh: (() => void) | null = null
 const MAX_COMMON_MENU_COUNT = 6
 
 /**
@@ -1322,6 +1324,13 @@ async function loadFavoriteMenus() {
   }
 }
 
+async function refreshMenuFavoriteWidgets() {
+  await Promise.all([
+    loadCommonMenus(),
+    loadFavoriteMenus(),
+  ])
+}
+
 async function loadPendingApprovals() {
   const pendingWidget = findWidget('pendingApprovals')
   if (!pendingWidget?.visible) {
@@ -1492,8 +1501,8 @@ async function handleToggleFavorite(menuItem: PersonalMenuEntry) {
     return
   }
   try {
-    await toggleUserFavoriteMenu(path)
-    await loadFavoriteMenus()
+    const nextFavorite = await toggleUserFavoriteMenu(path)
+    dispatchMenuFavoritesRefresh(path, typeof nextFavorite === 'boolean' ? nextFavorite : undefined)
   } catch (error) {
     console.error('切换收藏菜单失败:', error)
   }
@@ -1607,6 +1616,9 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   window.addEventListener('fx:message-received', handleMessageEvent as EventListener)
   window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefresh as EventListener)
+  stopMenuFavoritesRefresh = listenMenuFavoritesRefresh(() => {
+    void refreshMenuFavoriteWidgets()
+  })
 })
 
 onUnmounted(() => {
@@ -1616,6 +1628,8 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('fx:message-received', handleMessageEvent as EventListener)
   window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefresh as EventListener)
+  stopMenuFavoritesRefresh?.()
+  stopMenuFavoritesRefresh = null
 })
 </script>
 

@@ -14,6 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * 消息 ViewModel (离线增强版)。
+ *
+ * 适配离线 Repository:
+ * - load: 在线刷新/离线缓存均返回数据, UI 标注离线模式
+ * - markRead: 乐观更新 UI (立即标记已读), 离线操作入队 SyncManager 自动同步
+ */
 @HiltViewModel
 class MessageViewModel @Inject constructor(
     private val messageRepository: MessageRepository
@@ -24,6 +31,12 @@ class MessageViewModel @Inject constructor(
 
     private var loadedEntryMode: MessageEntryMode? = null
 
+    /**
+     * 加载消息列表。
+     *
+     * @param entryMode 入口模式
+     * @param force 是否强制刷新
+     */
     fun load(entryMode: MessageEntryMode, force: Boolean = false) {
         if (!force && loadedEntryMode == entryMode && _uiState.value.messages.isNotEmpty()) {
             return
@@ -40,7 +53,8 @@ class MessageViewModel @Inject constructor(
                             isLoading = false,
                             errorMessage = null,
                             errorText = null,
-                            messages = result.data
+                            messages = result.data,
+                            isFromCache = false
                         )
                     }
                 }
@@ -51,7 +65,8 @@ class MessageViewModel @Inject constructor(
                             isLoading = false,
                             errorMessage = result.message,
                             errorText = result.appText,
-                            messages = emptyList()
+                            messages = emptyList(),
+                            isFromCache = false
                         )
                     }
                 }
@@ -63,6 +78,15 @@ class MessageViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 标记消息已读 (乐观更新)。
+     *
+     * 离线时 Repository 先更新本地缓存并入队 SyncManager, 始终返回 Success。
+     * UI 立即显示"已读", 用户无感知离线。
+     *
+     * @param messageId 消息 ID
+     * @param entryMode 当前入口模式 (用于刷新列表)
+     */
     fun markRead(messageId: Long, entryMode: MessageEntryMode) {
         if (messageId <= 0L || _uiState.value.readingIds.contains(messageId)) {
             return
@@ -70,9 +94,22 @@ class MessageViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(readingIds = it.readingIds + messageId) }
+
+            // 乐观更新: 立即在 UI 中标记已读
+            _uiState.update { uiState ->
+                val updatedMessages = uiState.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        msg.copy(status = 1)
+                    } else {
+                        msg
+                    }
+                }
+                uiState.copy(messages = updatedMessages)
+            }
+
             when (val result = messageRepository.markRead(messageId)) {
                 is AppResult.Success -> {
-                    load(entryMode, force = true)
+                    // 乐观更新成功, 无需强制刷新 (本地缓存已更新)
                 }
 
                 is AppResult.Error -> {

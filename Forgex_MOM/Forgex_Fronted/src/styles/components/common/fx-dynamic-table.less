@@ -246,6 +246,16 @@
   position: relative;
   padding-top: var(--fx-table-header-padding-y, 10px);
   padding-bottom: var(--fx-table-header-padding-y, 10px);
+  text-align: center;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th .ant-table-column-sorters) {
+  justify-content: center;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th .ant-table-column-title) {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .fx-dynamic-table-wrap :deep(.ant-table-tbody > tr > td) {
@@ -271,6 +281,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   min-width: 0;
   width: 100%;
   padding-right: 8px;

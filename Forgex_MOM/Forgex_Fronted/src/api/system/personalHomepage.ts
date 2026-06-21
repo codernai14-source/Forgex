@@ -229,6 +229,46 @@ function upgradeBasicHomepageWidgets(widgets: PersonalHomepageWidgetConfig[]): P
   })
 }
 
+function upgradeApprovalHomepageWidgets(widgets: PersonalHomepageWidgetConfig[]): PersonalHomepageWidgetConfig[] {
+  const widgetMap = new Map(widgets.map(widget => [widget.key, widget]))
+  const isLegacyApprovalLayout =
+    Number(widgetMap.get('approvalWeeklyTrend')?.x) === 0 &&
+    Number(widgetMap.get('approvalWeeklyTrend')?.y) === 0 &&
+    Number(widgetMap.get('approvalWeeklyTrend')?.w) === 12 &&
+    Number(widgetMap.get('approvalShortcuts')?.x) === 0 &&
+    Number(widgetMap.get('approvalShortcuts')?.y) === 5 &&
+    Number(widgetMap.get('approvalShortcuts')?.w) === 12 &&
+    Number(widgetMap.get('approvalUserShare')?.x) === 0 &&
+    Number(widgetMap.get('approvalUserShare')?.y) === 9 &&
+    Number(widgetMap.get('approvalTaskConfig')?.x) === 7 &&
+    Number(widgetMap.get('approvalTaskConfig')?.y) === 9
+
+  const balancedLayout: Partial<Record<(typeof MODULE_HOMEPAGE_WIDGET_KEYS)[number], Pick<PersonalHomepageWidgetConfig, 'x' | 'y' | 'w' | 'h'>>> = {
+    approvalWeeklyTrend: { x: 0, y: 0, w: 8, h: 5 },
+    approvalShortcuts: { x: 8, y: 0, w: 4, h: 5 },
+    approvalUserShare: { x: 0, y: 5, w: 6, h: 5 },
+    approvalTaskConfig: { x: 6, y: 5, w: 6, h: 5 },
+    approvalPending: { x: 0, y: 10, w: 4, h: 5 },
+    approvalProcessed: { x: 4, y: 10, w: 4, h: 5 },
+    approvalCc: { x: 8, y: 10, w: 4, h: 5 },
+  }
+
+  return widgets.map(widget => {
+    const targetLayout = balancedLayout[widget.key as (typeof MODULE_HOMEPAGE_WIDGET_KEYS)[number]]
+    if (!targetLayout) {
+      return widget
+    }
+
+    const nextWidget = {
+      ...widget,
+      ...(isLegacyApprovalLayout ? targetLayout : {}),
+    }
+    nextWidget.minW = Math.max(Number(nextWidget.minW || 0), Math.min(Number(nextWidget.w || targetLayout.w), 3))
+    nextWidget.minH = Math.max(Number(nextWidget.minH || 0), 2)
+    return nextWidget
+  })
+}
+
 function normalizeModuleCode(moduleCode?: string | null): ModuleHomepageCode {
   const normalized = String(moduleCode || 'personal').trim().toLowerCase()
   if (!normalized || normalized === 'personal') {
@@ -263,15 +303,20 @@ export function createDefaultModuleHomepageConfig(moduleCode: string): PersonalH
 
   if (normalized === 'approval') {
     return {
-      layout: baseLayout,
+      layout: {
+        ...baseLayout,
+        rowHeight: 62,
+        marginX: 8,
+        marginY: 8,
+      },
       widgets: [
-        createModuleWidget('approvalWeeklyTrend', 0, 0, 12, 5, 10),
-        createModuleWidget('approvalShortcuts', 0, 5, 12, 4, 20),
-        createModuleWidget('approvalUserShare', 0, 9, 7, 5, 30),
-        createModuleWidget('approvalTaskConfig', 7, 9, 5, 5, 40),
-        createModuleWidget('approvalPending', 0, 14, 4, 5, 50),
-        createModuleWidget('approvalProcessed', 4, 14, 4, 5, 60),
-        createModuleWidget('approvalCc', 8, 14, 4, 5, 70),
+        createModuleWidget('approvalWeeklyTrend', 0, 0, 8, 5, 10),
+        createModuleWidget('approvalShortcuts', 8, 0, 4, 5, 20),
+        createModuleWidget('approvalUserShare', 0, 5, 6, 5, 30),
+        createModuleWidget('approvalTaskConfig', 6, 5, 6, 5, 40),
+        createModuleWidget('approvalPending', 0, 10, 4, 5, 50),
+        createModuleWidget('approvalProcessed', 4, 10, 4, 5, 60),
+        createModuleWidget('approvalCc', 8, 10, 4, 5, 70),
       ],
     }
   }
@@ -431,7 +476,13 @@ export function mergeModuleHomepageConfig(
     })
   })
 
-  const normalizedWidgets = normalized === 'basic' ? upgradeBasicHomepageWidgets(widgets) : widgets
+  let normalizedWidgets = widgets
+  if (normalized === 'basic') {
+    normalizedWidgets = upgradeBasicHomepageWidgets(normalizedWidgets)
+  }
+  if (normalized === 'approval') {
+    normalizedWidgets = upgradeApprovalHomepageWidgets(normalizedWidgets)
+  }
 
   normalizedWidgets.sort((left, right) => {
     const leftOrder = Number(left.orderNum ?? 0)
