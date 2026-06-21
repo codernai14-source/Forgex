@@ -672,6 +672,10 @@ public class InitServiceImpl implements InitService {
                         new String[]{"basic:customer:add", "新增客户", "Add Customer"},
                         new String[]{"basic:customer:edit", "编辑客户", "Edit Customer"},
                         new String[]{"basic:customer:delete", "删除客户", "Delete Customer"},
+                        new String[]{"basic:customer:import", "导入客户", "Import Customer"},
+                        new String[]{"basic:customer:export", "导出客户", "Export Customer"},
+                        new String[]{"basic:customer:pullThirdParty", "从第三方拉取客户", "Pull Customers"},
+                        new String[]{"basic:customer:sync", "同步客户到第三方", "Sync Customers"},
                         new String[]{"basic:customer:generateTenant", "生成客户租户", "Generate Customer Tenant"},
                         new String[]{"basic:customer:approval", "客户审批", "Approve Customer"}
                 ));

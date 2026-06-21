@@ -235,9 +235,12 @@ export default {
       basic: { name: '基本情報', title: '基本情報ホーム', desc: '基本情報モジュールのマスターデータ入口と設定状態をまとめて表示します。' },
       approval: { name: '承認管理', title: '承認管理ホーム', desc: '承認タスク、保留中の入口、ワークフロー設定をまとめて表示します。' },
       sys: { name: 'システム管理', title: 'システム管理ホーム', desc: 'システム稼働状況、権限設定、システムパラメータ入口をまとめて提供します。' },
+      integration: { name: 'Integration Platform', title: 'Integration Platform Home', desc: 'Shows external system access, API capabilities, call quality and recent exceptions.' },
     },
     widgets: {
       supplierInfo: { title: 'サプライヤー情報', subtitle: 'サプライヤーマスターデータと登録管理', summary: 'サプライヤープロファイル、連絡先、資格、協業状態を管理します。' },
+      customerInfo: { title: '顧客情報', subtitle: '顧客マスターデータと連携管理', summary: '顧客プロファイル、連絡先、請求情報、外部同期状態を管理します。' },
+      workCalendarInfo: { title: '稼働カレンダー', subtitle: '稼働日と休日の管理', summary: '基本情報モジュールの稼働日、休日、スケジュールイベントを管理します。' },
       encodeRuleInfo: { title: '採番ルール', subtitle: '統一コード生成ルール', summary: '基本情報モジュールの採番ルール、連番、テスト生成を管理します。' },
       systemOverview: { title: 'システム概要', subtitle: '組織、ユーザー、権限入口', summary: 'ユーザー、ロール、メニュー権限など主要なシステム機能へ素早くアクセスします。' },
       systemHealth: { title: '稼働状態', subtitle: 'システム稼働とセキュリティ状態', summary: 'オンラインユーザー、ログイン動作、システム稼働関連情報を確認します。' },
@@ -247,10 +250,15 @@ export default {
       approvalShortcuts: { title: '承認入口', subtitle: '承認開始とよく使うフロー', summary: '開始可能な承認タスクと業務フローへ素早く移動します。' },
       approvalPending: { title: '自分の保留タスク', subtitle: '現在処理待ちの承認', summary: '現在のユーザーが処理する必要のある承認インスタンスを確認します。' },
       approvalTaskConfig: { title: 'タスク設定', subtitle: '承認タスクとノードルール', summary: 'タスクフォーム、ノード承認者、ワークフロールールを設定します。' },
+      integrationSummary: { title: 'Integration Overview', subtitle: 'External systems and API capability', summary: 'Shows third-party systems, external APIs, daily calls and success rate.' },
+      integrationStatusComparison: { title: 'Success/Failure Comparison', subtitle: 'Successful and failed API calls', summary: 'Compares successful and failed calls in the current statistical window.' },
+      integrationStatusPie: { title: 'Call Status Share', subtitle: 'Call result distribution', summary: 'Shows the share of call statuses for API monitoring.' },
+      integrationCallTrend: { title: 'Call Trend', subtitle: 'Call volume over the last 14 days', summary: 'Tracks total, successful and failed calls by date.' },
+      integrationTopApis: { title: 'Top APIs', subtitle: 'Most frequently called APIs', summary: 'Lists high-frequency external APIs and their call quality.' },
+      integrationRecentFailures: { title: 'Recent Failures', subtitle: 'Latest failed calls', summary: 'Shows recent failed calls for troubleshooting and audit.' },
       custom: { subtitle: 'カスタムウィジェット', summary: '保存済みのモジュールホーム設定から取得したウィジェットです。' },
     },
-    stats: {
-      masterData: 'マスターデータ', supplierArchive: 'サプライヤープロファイル', approval: '承認', admissionChange: '登録/変更', rule: 'ルール', byModule: 'モジュール別', capability: '機能', testGenerate: 'テスト/生成', user: 'ユーザー', accountManage: 'アカウント管理', role: 'ロール', authConfig: '権限設定', status: '状態', onlineSession: 'オンライン/セッション', security: 'セキュリティ', loginAudit: 'ログイン監査', audit: '監査', operationLog: '操作ログ', trace: '追跡', loginRecord: 'ログイン記録', scope: '範囲', publicTenant: '共通/テナント', config: '設定', systemParams: 'システムパラメータ', pending: '保留', myTasks: '自分のタスク', processed: '処理済み', processRecord: '処理記録', entry: '入口', startApproval: '承認開始', flow: 'フロー', taskTemplate: 'タスクテンプレート', action: '操作', approveReject: '承認/却下', task: 'タスク', flowConfig: 'フロー設定', node: 'ノード', approvalRule: '承認ルール', type: 'タイプ', extension: '拡張', enabled: '有効', pendingApproval: '承認待ち',
+    stats: {      masterData: 'マスターデータ', customerArchive: '顧客プロファイル', integration: '連携', thirdPartySync: '外部同期', calendar: 'カレンダー', workdayMaintain: '稼働日管理', event: 'イベント', holidayShift: '休日振替', supplierArchive: 'サプライヤープロファイル', approval: '承認', admissionChange: '登録/変更', rule: 'ルール', byModule: 'モジュール別', capability: '機能', testGenerate: 'テスト/生成', user: 'ユーザー', accountManage: 'アカウント管理', role: 'ロール', authConfig: '権限設定', status: '状態', onlineSession: 'オンライン/セッション', security: 'セキュリティ', loginAudit: 'ログイン監査', audit: '監査', operationLog: '操作ログ', trace: '追跡', loginRecord: 'ログイン記録', scope: '範囲', publicTenant: '共通/テナント', config: '設定', systemParams: 'システムパラメータ', pending: '保留', myTasks: '自分のタスク', processed: '処理済み', processRecord: '処理記録', entry: '入口', startApproval: '承認開始', flow: 'フロー', taskTemplate: 'タスクテンプレート', action: '操作', approveReject: '承認/却下', task: 'タスク', flowConfig: 'フロー設定', node: 'ノード', approvalRule: '承認ルール', type: 'タイプ', extension: '拡張', enabled: '有効', pendingApproval: '承認待ち', externalApi: 'External APIs', success: 'Success', callSuccess: 'Call success', fail: 'Failure', callFail: 'Call failure', callStatus: 'Call status', callTrace: 'Call trace', trend: 'Trend', last14Days: 'Last 14 days', call: 'Call', callCount: 'Call count', api: 'API', hotApi: 'Hot API', successRate: 'Success rate', quality: 'Quality', exception: 'Exception', failureTrace: 'Failure trace', callAudit: 'Call audit',
     },
   }
 }

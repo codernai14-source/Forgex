@@ -14,6 +14,8 @@
         <a-input v-if="'${column.formType}' === 'input'" v-model:value="formData.${column.javaFieldName}" :disabled="readonly" />
         <a-textarea v-else-if="'${column.formType}' === 'textarea'" v-model:value="formData.${column.javaFieldName}" :rows="3" :disabled="readonly" />
         <a-input-number v-else-if="'${column.formType}' === 'number'" v-model:value="formData.${column.javaFieldName}" :disabled="readonly" style="width: 100%" />
+        <a-select v-else-if="'${column.formType}' === 'select'" v-model:value="formData.${column.javaFieldName}" :options="${column.javaFieldName}Options" :disabled="readonly" allow-clear show-search option-filter-prop="label" style="width: 100%" />
+        <a-tree-select v-else-if="'${column.formType}' === 'treeSelect'" v-model:value="formData.${column.javaFieldName}" :tree-data="${column.javaFieldName}Options" :field-names="{ label: 'label', value: 'value', children: 'children' }" :disabled="readonly" allow-clear show-search tree-default-expand-all style="width: 100%" />
         <a-date-picker v-else-if="'${column.formType}' === 'date'" v-model:value="formData.${column.javaFieldName}" :disabled="readonly" style="width: 100%" />
         <a-date-picker v-else-if="'${column.formType}' === 'datetime'" v-model:value="formData.${column.javaFieldName}" :disabled="readonly" show-time style="width: 100%" />
         <a-input v-else v-model:value="formData.${column.javaFieldName}" :disabled="readonly" />
@@ -24,9 +26,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { detail${ctx.entityName}, create${ctx.entityName}, update${ctx.entityName} } from '@/api/${ctx.moduleName}/${ctx.entityNameLower}'
+import http from '@/api/http'
+
+type OptionNode = {
+  label: string
+  value: any
+  children?: OptionNode[]
+}
 
 interface Props {
   open: boolean
@@ -47,6 +56,9 @@ const emit = defineEmits<Emits>()
 const formRef = ref()
 const submitting = ref(false)
 const formData = reactive<any>({ id: undefined })
+<% for(column in ctx.mainFormColumns){ if(column.formType == "select" || column.formType == "treeSelect"){ %>
+const ${column.javaFieldName}Options = ref<OptionNode[]>(<% if(column.javaType == "Boolean"){ %>[{ label: '是', value: true }, { label: '否', value: false }]<% } else { %>[]<% } %>)
+<% }} %>
 
 const dialogVisible = computed({
   get: () => props.open,
@@ -96,6 +108,66 @@ function handleCancel() {
   resetForm()
 }
 
+function parseOptionParams(raw: string) {
+  if (!raw) {
+    return {}
+  }
+  try {
+    return JSON.parse(raw)
+  } catch (error) {
+    return {}
+  }
+}
+
+function getByPath(source: any, path: string) {
+  if (!path) {
+    return source
+  }
+  return path.split('.').filter(Boolean).reduce((data, key) => data?.[key], source) ?? source
+}
+
+function normalizeOptions(source: any, responsePath: string, labelField: string, valueField: string, childrenField: string): OptionNode[] {
+  const resolved = getByPath(source, responsePath)
+  const rows = Array.isArray(resolved) ? resolved : Array.isArray(source) ? source : []
+  return rows
+    .map((item: any) => {
+      const childrenSource = item?.[childrenField]
+      const children = Array.isArray(childrenSource) ? normalizeOptions(childrenSource, '', labelField, valueField, childrenField) : []
+      return {
+        label: String(item?.[labelField] ?? item?.label ?? item?.name ?? item?.title ?? ''),
+        value: item?.[valueField] ?? item?.value ?? item?.id,
+        ...(children.length ? { children } : {}),
+      }
+    })
+    .filter(item => item.value !== undefined && item.value !== null)
+}
+<% for(column in ctx.mainFormColumns){ if((column.formType == "select" || column.formType == "treeSelect") && column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != ""){ %>
+
+async function load${column.javaFieldNameCapital}Options() {
+  const result = await http.post<OptionNode[]>('/sys/dict/items', { dictCode: '${column.dictCode}' })
+  ${column.javaFieldName}Options.value = normalizeOptions(result, '', 'label', 'value', 'children')
+}
+<% } else if((column.formType == "select" || column.formType == "treeSelect") && column.optionSourceType == "API" && column.optionApiUrl != null && column.optionApiUrl != ""){ %>
+
+async function load${column.javaFieldNameCapital}Options() {
+  const params = parseOptionParams('${column.optionParamsJson}')
+<% if(column.optionApiMethod == "GET"){ %>
+  const result = await http.get<any>('${column.optionApiUrl}', { params })
+<% } else { %>
+  const result = await http.post<any>('${column.optionApiUrl}', params)
+<% } %>
+  ${column.javaFieldName}Options.value = normalizeOptions(result, '${column.optionResponsePath}', '${column.optionLabelField}', '${column.optionValueField}', '${column.optionChildrenField}')
+}
+<% }} %>
+
+async function loadOptions() {
+  await Promise.all([
+<% for(column in ctx.mainFormColumns){ if((column.formType == "select" || column.formType == "treeSelect") && ((column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != "") || (column.optionSourceType == "API" && column.optionApiUrl != null && column.optionApiUrl != ""))){ %>
+    load${column.javaFieldNameCapital}Options(),
+<% }} %>
+  ])
+}
+
 watch(
   () => props.open,
   async (open) => {
@@ -106,4 +178,6 @@ watch(
     }
   },
 )
+
+onMounted(loadOptions)
 </script>

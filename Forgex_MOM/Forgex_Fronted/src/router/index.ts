@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 路由配置文件
  * 负责定义应用路由规则、路由守卫和动态路由注入逻辑。
  * @author Forgex Team
@@ -394,6 +394,9 @@ function loadComponent(componentName: string, moduleHint?: string, routePathHint
       BasicSupplier: '../views/basic/supplier/index.vue',
       BasicTeam: '../views/basic/team/index.vue',
       BasicWorkshop: '../views/basic/workshop/index.vue',
+      BasicProductionLine: '../views/basic/productionLine/index.vue',
+      BasicWorkSection: '../views/basic/workSection/index.vue',
+      BasicProcess: '../views/basic/process/index.vue',
       BasicCurrency: '../views/basic/currency/index.vue',
       BasicEncodeRule: '../views/basic/encodeRule/index.vue',
       BasicMaterial: '../views/basic/material/index.vue',

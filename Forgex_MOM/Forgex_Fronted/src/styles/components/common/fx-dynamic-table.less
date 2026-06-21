@@ -186,6 +186,7 @@
 
 /* 表格内容区：与上方工具栏留出间距（toolbar-row 已设 margin-bottom） */
 .fx-table-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -193,6 +194,25 @@
   height: 100%;
   padding: 0 16px 16px 16px;
   box-sizing: border-box;
+}
+
+.fx-table-content.is-loading {
+  pointer-events: none;
+}
+
+.fx-table-loading-mask {
+  position: absolute;
+  inset: 0 16px 16px 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(1px);
+}
+
+:global(body[data-theme='dark']) .fx-table-loading-mask {
+  background: rgba(20, 22, 26, 0.72);
 }
 
 :global(body[data-theme='dark']) .fx-table-content {

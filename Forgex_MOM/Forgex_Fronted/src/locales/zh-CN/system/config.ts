@@ -229,6 +229,8 @@ export default {
   homepageApprovalDesc: '审批工作台首页',
   homepageSys: '系统管理',
   homepageSysDesc: '系统运行与配置首页',
+  homepageIntegration: '接口平台',
+  homepageIntegrationDesc: '对外接口能力工作台',
   homepageDefaultConfig: '个人首页默认配置',
   homepageDefaultDesc: '维护公共级和当前租户级的默认布局，所有用户都能访问个人首页，并按这里作为初始门户。',
 }

@@ -178,7 +178,7 @@ await http.post('/sys/file/upload', formData, {
 | `silentError` | `true / false` | 静默错误消息 |
 | `customErrorMessage` | 字符串 | 覆盖默认错误提示 |
 | `loadingMode` | `'global' / 'local' / 'silent'` | 控制请求是否参与全局遮罩；表格、下拉、轮询优先使用局部或静默 |
-| `loadingDelay` | 数字，默认 `500` | 请求超过指定毫秒后才显示全局遮罩 |
+| `loadingDelay` | 数字，默认 `180` | 请求超过指定毫秒后才显示全局遮罩 |
 | `minVisibleDuration` | 数字，默认 `300` | 遮罩已显示且请求已结束时补足最短展示时长，避免闪烁 |
 | `actionKey` | 字符串 | 保存、提交、审批等操作的防重复请求标识 |
 | `dedupeMode` | `'drop' / 'none'` | 配置 `actionKey` 后默认复用进行中的请求；`none` 表示不去重 |
@@ -192,7 +192,7 @@ await silentHttp.get('/sys/message/unread', { silentError: true })
 
 ## Loading 使用建议
 
-全局遮罩采用延迟显示策略：普通 `http` 请求开始时先计数，不立即显示遮罩；如果请求超过 `500ms` 仍未结束，再显示全局遮罩；遮罩显示后会一直持续到所有参与全局 loading 的请求结束。若请求在遮罩刚出现后马上结束，会补足最短展示时长，但不会在请求未结束时提前关闭遮罩。
+全局遮罩采用延迟显示策略：普通 `http` 请求开始时先计数，不立即显示遮罩；如果请求超过 `180ms` 仍未结束，再显示全局遮罩；遮罩显示后会一直持续到所有参与全局 loading 的请求结束。若请求在遮罩刚出现后马上结束，会补足最短展示时长，但不会在请求未结束时提前关闭遮罩。
 
 不同场景建议如下：
 

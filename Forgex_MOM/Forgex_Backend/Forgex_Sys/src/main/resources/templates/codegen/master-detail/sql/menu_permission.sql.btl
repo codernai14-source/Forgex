@@ -3,6 +3,8 @@
 -- 主页面路径: ${ctx.menuPath}
 -- ================================================
 
+USE forgex_admin;
+
 SET @TENANT_ID = 0;
 SET @MENU_PATH = '${ctx.menuPath}';
 

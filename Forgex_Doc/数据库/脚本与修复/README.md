@@ -1,9 +1,9 @@
 # 数据库 · 初始化与升级说明
 
-> 版本：**V0.6.5**
-> 更新时间：**2026-04-13**
+> 版本：**V0.6.6**
+> 更新时间：**2026-06-21**
 
-本分类只说明正式交付中的数据库初始化与升级执行原则。开发过程中的阶段性 SQL、诊断脚本和排查资料统一放在 `doc/` 目录，不放入 `Forgex_Doc` 文档中心。
+本分类说明正式交付中的数据库初始化、升级执行原则，以及已有环境专项修复脚本。初始化脚本统一维护在 `Forgex_Doc/部署/数据库初始化脚本/`，阶段性修复和诊断 SQL 统一维护在本目录。
 
 ## 一、主入口
 
@@ -16,7 +16,7 @@
 |---|---|
 | `Forgex_Doc/部署/数据库初始化脚本/` | 首次部署使用的数据库初始化脚本说明 |
 | `database-upgrade/` | 交付包内的数据库升级 SQL 目录 |
-| `doc/sql/upgrade/` | 构建升级包时收集 `database-upgrade/` 的源码目录 |
+| `Forgex_Doc/数据库/脚本与修复/` | 已有环境专项修复、诊断和阶段性升级 SQL |
 
 ## 三、专项修复脚本
 
@@ -31,6 +31,12 @@
 | `20260517_basic_currency_encode_rule_menu_permission_fix.sql` | `forgex_admin` | 幂等修复基础信息下币种管理菜单、编码规则页面入口和权限授权数据，确保编码规则作为页面而不是目录展示。 |
 | `20260517_basic_currency_table_fix.sql` | `forgex_admin` | 幂等创建币种管理依赖的 `mdm_currency`、`mdm_exchange_rate_type`、`mdm_currency_exchange_rate`、`mdm_exchange_rate_log` 表，并补齐当前租户默认币种和汇率类型种子数据。 |
 | `20260518_seed_basic_units_and_currency_rates.sql` | `forgex_admin` | 幂等初始化公共租户和默认租户的常见计量单位分类、固定换算关系、常见币种，以及 CNY 到常见外币的 BOOKING 有效汇率。 |
+| `20260619_factory_modeling.sql` | `forgex_admin`、`forgex_common` | 幂等补齐工厂建模四级主数据：产线 / 工段 / 工序三张新表，车间扩展「车间类型 / 负责人」字段，5 个字典（prod_line_type / workshop_type / process_type / report_type / qc_trigger_point），以及产线 / 工段 / 工序三个菜单 + 按钮权限 + 动态表格列配置。位置：`2026-06-19/` |
+| `20260619_factory_modeling_complete.sql` | `forgex_admin` | 在 `20260619_factory_modeling.sql` 基础上补齐：①「基础数据 → 工厂建模」目录菜单（id=504/505）② 车间 5 + 产线 8 + 工段 9 + 工序 8 共 30 项 `sys_permission` ③ admin 角色（id=1）菜单与接口权限授权 ④ `sys_role_menu` 重复行清理（按 `(role_id, menu_id)` 保留最早一条）。位置：`2026-06-19/` |
+
+
+| `20260619_factory_modeling.sql` | `forgex_admin`、`forgex_common` | 幂等补齐工厂建模四级主数据。位置：`2026-06-19/` |
+| `20260619_factory_modeling_complete.sql` | `forgex_admin` | 在 `20260619_factory_modeling.sql` 基础上补齐：基础数据/工厂建模菜单、30 项 `sys_permission`、admin 角色赋权、`sys_role_menu` 重复行清理。位置：`2026-06-19/` |
 
 ## 四、推荐阅读方式
 

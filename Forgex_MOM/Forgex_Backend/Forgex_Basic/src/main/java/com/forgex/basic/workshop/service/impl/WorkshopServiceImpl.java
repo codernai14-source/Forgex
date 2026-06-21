@@ -107,6 +107,31 @@ public class WorkshopServiceImpl extends ServiceImpl<BasicWorkshopMapper, BasicW
         return true;
     }
 
+    /**
+     * 根据工厂 ID 查询启用的车间列表（仅返回状态为启用的车间）。
+     * <p>
+     * 用于前端产线下拉按工厂过滤车间时调用，结果默认按 sortOrder 升序、createTime 倒序排列。
+     * </p>
+     *
+     * @param factoryId 工厂 ID
+     * @return 启用状态的车间列表
+     */
+    @Override
+    public List<WorkshopDTO> listByFactory(Long factoryId) {
+        if (factoryId == null) {
+            return List.of();
+        }
+        return workshopMapper.selectList(new LambdaQueryWrapper<BasicWorkshop>()
+                        .eq(BasicWorkshop::getFactoryId, factoryId)
+                        .eq(BasicWorkshop::getStatus, true)
+                        .eq(BasicWorkshop::getDeleted, false)
+                        .orderByAsc(BasicWorkshop::getSortOrder)
+                        .orderByDesc(BasicWorkshop::getCreateTime))
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
     private LambdaQueryWrapper<BasicWorkshop> buildWrapper(WorkshopPageParam param) {
         return new LambdaQueryWrapper<BasicWorkshop>()
                 .eq(BasicWorkshop::getDeleted, false)

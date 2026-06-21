@@ -107,7 +107,7 @@ sessionStorage.getItem('tenantId')
 
 ```text
 请求发起 -> activeReq++，但不立即显示遮罩
-请求超过 loadingDelay（默认 500ms）仍未结束 -> 显示全局 loading
+请求超过 loadingDelay（默认 180ms）仍未结束 -> 显示全局 loading
 请求结束 -> activeReq--
 activeReq 为 0 -> 关闭全局 loading
 ```
@@ -130,7 +130,7 @@ activeReq 为 0 -> 关闭全局 loading
 | `silentError` | 是否静默错误提示 |
 | `customErrorMessage` | 自定义错误提示文案 |
 | `loadingMode` | loading 策略：`global` 参与全局遮罩，`local` 由页面或组件处理，`silent` 不显示全局遮罩 |
-| `loadingDelay` | 全局遮罩延迟显示时间，默认 `500ms` |
+| `loadingDelay` | 全局遮罩延迟显示时间，默认 `180ms` |
 | `minVisibleDuration` | 全局遮罩已显示后的最短展示时间，默认 `300ms` |
 | `actionKey` | 保存、提交、审批等操作的防重复请求标识 |
 | `dedupeMode` | 去重策略，默认复用同一个 `actionKey` 的进行中请求，`none` 表示不去重 |

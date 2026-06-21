@@ -3,6 +3,7 @@ package com.forgex.sys.service.impl;
 import cn.hutool.json.JSONUtil;
 import com.forgex.sys.domain.dto.CodeGenRequestDTO;
 import com.forgex.sys.domain.dto.CodegenDatasourceDTO;
+import com.forgex.sys.domain.dto.ColumnMetaDTO;
 import com.forgex.sys.domain.entity.SysCodegenConfig;
 import com.forgex.sys.domain.entity.SysCodegenDatasource;
 import com.forgex.sys.domain.param.CodegenConfigSaveParam;
@@ -72,6 +73,18 @@ class CodegenConfigServiceImplTest {
         param.setMenuName("产品");
         param.setAndroidFeatureKey("categoryBiz");
         param.setGenerateItems(List.of("backend", "frontend", "sql", "android"));
+        ColumnMetaDTO optionColumn = new ColumnMetaDTO();
+        optionColumn.setColumnName("category_id");
+        optionColumn.setJavaFieldName("categoryId");
+        optionColumn.setOptionSourceType("api");
+        optionColumn.setOptionApiUrl("/basic/category/tree");
+        optionColumn.setOptionApiMethod("post");
+        optionColumn.setOptionParamsJson("{\"enabled\":true}");
+        optionColumn.setOptionResponsePath("records");
+        optionColumn.setOptionLabelField("categoryName");
+        optionColumn.setOptionValueField("id");
+        optionColumn.setOptionChildrenField("children");
+        param.setMainColumns(List.of(optionColumn));
 
         Long id = service.saveConfig(param);
         assertEquals(99L, id);
@@ -81,6 +94,7 @@ class CodegenConfigServiceImplTest {
         assertNotNull(saved.getConfigJson());
         assertTrue(saved.getConfigJson().contains("\"treeFilterColumn\":\"category_id\""));
         assertTrue(saved.getConfigJson().contains("\"androidFeatureKey\":\"categoryBiz\""));
+        assertTrue(saved.getConfigJson().contains("\"optionApiUrl\":\"/basic/category/tree\""));
 
         when(mapper.selectById(99L)).thenReturn(saved);
         CodeGenRequestDTO request = service.buildRequest(99L);
@@ -89,5 +103,8 @@ class CodegenConfigServiceImplTest {
         assertEquals("category_id", request.getTreeFilterColumn());
         assertEquals("categoryBiz", request.getAndroidFeatureKey());
         assertEquals(List.of("backend", "frontend", "sql", "android"), request.getGenerateItems());
+        assertEquals("API", request.getMainColumns().get(0).getOptionSourceType());
+        assertEquals("POST", request.getMainColumns().get(0).getOptionApiMethod());
+        assertEquals("records", request.getMainColumns().get(0).getOptionResponsePath());
     }
 }

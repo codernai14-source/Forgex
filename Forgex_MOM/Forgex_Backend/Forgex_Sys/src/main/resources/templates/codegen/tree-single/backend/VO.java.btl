@@ -1,0 +1,47 @@
+package ${ctx.packageName}.domain.vo;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.forgex.common.base.BaseEntity;
+import com.forgex.common.dict.DictI18n;
+<% for(importItem in imports){ %>
+import ${importItem};
+<% } %>
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ${ctx.mainTableComment} VO
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class ${ctx.entityName}VO extends BaseEntity {
+<% for(column in ctx.mainColumns){ if(!column.isBaseField){ %>
+
+    /**
+     * ${column.columnComment!column.columnName}
+     */
+<% if(column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != ""){ %>
+    @DictI18n(nodePathConst = "${column.dictCode}", targetField = "${column.javaFieldName}Text")
+<% } %>
+    private ${column.javaType} ${column.javaFieldName};
+<% if(column.optionSourceType == "DICT" && column.dictCode != null && column.dictCode != ""){ %>
+
+    /**
+     * ${column.columnComment!column.columnName} text
+     */
+    private String ${column.javaFieldName}Text;
+<% } %>
+<% }} %>
+
+    /**
+     * Children
+     */
+    private List<${ctx.entityName}VO> children = new ArrayList<>();
+}
