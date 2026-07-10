@@ -82,7 +82,63 @@ class CodeGenServiceImplTest {
         CodegenPreviewVO preview = service.preview(buildSingleRequest());
         assertNotNull(preview);
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().startsWith("android/basic/")));
-        assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().equals("frontend/src/views/basic/bizCategory/index.vue")));
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().endsWith("/domain/vo/BizCategoryVO.java")));
+        assertGeneratedFrontendFiles(preview, "basic", "bizCategory", "BizCategory");
+    }
+
+    @Test
+    void previewSingleShouldGenerateDictTextAndApiOptionLoader() {
+        CodeGenRequestDTO request = buildSingleRequest();
+        ColumnMetaDTO statusColumn = column("status", "status", "String", false, false, true);
+        statusColumn.setDictCode("biz.status");
+        statusColumn.setQueryType(null);
+        statusColumn.setQueryOperator(null);
+        statusColumn.setFormType(null);
+
+        ColumnMetaDTO ownerColumn = column("owner_id", "ownerId", "Long", false, false, true);
+        ownerColumn.setOptionSourceType("API");
+        ownerColumn.setOptionApiUrl("/basic/owner/tree");
+        ownerColumn.setOptionApiMethod("get");
+        ownerColumn.setOptionParamsJson("{\"enabled\":true}");
+        ownerColumn.setOptionResponsePath("records");
+        ownerColumn.setOptionLabelField("ownerName");
+        ownerColumn.setOptionValueField("id");
+        ownerColumn.setOptionChildrenField("children");
+        ownerColumn.setFormType("treeSelect");
+
+        request.setMainColumns(List.of(
+            column("id", "id", "Long", true, false, false),
+            statusColumn,
+            ownerColumn
+        ));
+
+        CodegenPreviewVO preview = service.preview(request);
+        String vo = preview.getFiles().stream()
+            .filter(file -> file.getPath().endsWith("/domain/vo/BizCategoryVO.java"))
+            .findFirst()
+            .orElseThrow()
+            .getContent();
+        assertTrue(vo.contains("@DictI18n(nodePathConst = \"biz.status\", targetField = \"statusText\")"));
+        assertTrue(vo.contains("private String statusText;"));
+        assertFalse(vo.contains("ownerIdText"));
+
+        String form = preview.getFiles().stream()
+            .filter(file -> file.getPath().endsWith("/components/BizCategoryFormDialog.vue"))
+            .findFirst()
+            .orElseThrow()
+            .getContent();
+        assertTrue(form.contains("http.get<any>('/basic/owner/tree', { params })"));
+        assertTrue(form.contains("normalizeOptions(result, 'records', 'ownerName', 'id', 'children')"));
+        assertTrue(form.contains("field-names=\"{ label: 'label', value: 'value', children: 'children' }\""));
+
+        String index = preview.getFiles().stream()
+            .filter(file -> file.getPath().endsWith("/index.vue"))
+            .findFirst()
+            .orElseThrow()
+            .getContent();
+        assertFalse(index.contains("模板渲染失败"));
+        assertTrue(index.contains("'biz.status': useDict('biz.status').dictItems"));
     }
 
     @Test
@@ -90,6 +146,7 @@ class CodeGenServiceImplTest {
         CodegenPreviewVO preview = service.preview(buildTreeSingleRequest());
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().contains("android/category/")));
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().endsWith("/controller/BizCategoryController.java")));
+        assertGeneratedFrontendFiles(preview, "basic", "bizCategory", "BizCategory");
         assertFalse(preview.getFiles().stream().anyMatch(file -> file.getContent().contains("模板渲染失败")));
     }
 
@@ -99,6 +156,7 @@ class CodeGenServiceImplTest {
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().endsWith("/domain/entity/BizProduct.java")));
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().endsWith("/domain/entity/BizTree.java")));
         assertTrue(preview.getFiles().stream().anyMatch(file -> file.getPath().startsWith("android/categoryBiz/")));
+        assertGeneratedFrontendFiles(preview, "basic", "bizProduct", "BizProduct");
     }
 
     @Test
@@ -106,6 +164,18 @@ class CodeGenServiceImplTest {
         byte[] zipBytes = service.generateZip(buildTreeDoubleRequest());
         assertNotNull(zipBytes);
         assertTrue(zipBytes.length > 0);
+    }
+
+    @Test
+    void previewMasterDetailShouldContainSplitFrontendFiles() {
+        CodegenPreviewVO preview = service.preview(buildMasterDetailRequest());
+        assertGeneratedFrontendFiles(preview, "basic", "bizCategory", "BizCategory");
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().equals("frontend/src/views/basic/bizCategory/detail.vue")));
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().equals("frontend/src/views/basic/bizCategory/components/BizCategoryDetailFormDialog.vue")));
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().equals("frontend/src/styles/views/basic/bizCategory/detail.less")));
     }
 
     @Test
@@ -133,6 +203,15 @@ class CodeGenServiceImplTest {
             return;
         }
         when(dbMetaService.listColumns(Mockito.any(), eq("forgex_admin"), eq(tableName))).thenReturn(mainColumns());
+    }
+
+    private void assertGeneratedFrontendFiles(CodegenPreviewVO preview, String moduleName, String entityNameLower, String entityName) {
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().equals("frontend/src/views/" + moduleName + "/" + entityNameLower + "/index.vue")));
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().equals("frontend/src/views/" + moduleName + "/" + entityNameLower + "/components/" + entityName + "FormDialog.vue")));
+        assertTrue(preview.getFiles().stream().anyMatch(file ->
+            file.getPath().equals("frontend/src/styles/views/" + moduleName + "/" + entityNameLower + "/index.less")));
     }
 
     private void mockTreeTable(String tableName) {
@@ -192,6 +271,16 @@ class CodeGenServiceImplTest {
         request.setTreeFilterColumn("category_id");
         request.setGenerateItems(List.of("backend", "frontend", "sql", "android"));
         request.setAndroidFeatureKey("categoryBiz");
+        return request;
+    }
+
+    private CodeGenRequestDTO buildMasterDetailRequest() {
+        CodeGenRequestDTO request = baseRequest("MASTER_DETAIL", "biz_category");
+        request.setSubTableName("biz_category_detail");
+        request.setSubEntityName("BizCategoryDetail");
+        request.setSubPkColumn("id");
+        request.setSubFkColumn("biz_category_id");
+        request.setGenerateItems(List.of("backend", "frontend", "sql"));
         return request;
     }
 

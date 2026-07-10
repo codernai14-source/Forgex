@@ -97,7 +97,7 @@
  * 提供用户收藏菜单的集中管理能力，包括查看全部收藏、调整顺序、单条或批量取消收藏。
  * </p>
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -105,6 +105,7 @@ import { message, Modal } from 'ant-design-vue'
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, ReloadOutlined, SaveOutlined, StarFilled } from '@ant-design/icons-vue'
 import { batchCancelUserFavoriteMenus, getUserFavoriteManageMenus, sortUserFavoriteMenus, type PersonalMenuEntry } from '@/api/system/personalHomepage'
 import { PERSONAL_HOME_PATH } from '@/router'
+import { dispatchMenuFavoritesRefresh, listenMenuFavoritesRefresh } from '@/composables/useMenuFavorites'
 import { getIcon } from '@/utils/icon'
 import { resolveMenuDisplayName, resolveModuleDisplayName } from '@/utils/menuI18n'
 
@@ -117,6 +118,7 @@ const savingSort = ref(false)
 const sortChanged = ref(false)
 const favoriteMenus = ref<PersonalMenuEntry[]>([])
 const selectedRowKeys = ref<string[]>([])
+let stopMenuFavoritesRefresh: (() => void) | null = null
 
 /** 表格勾选配置，用于给批量取消收藏提供路径列表。 */
 const rowSelection = computed(() => ({
@@ -218,6 +220,7 @@ function handleBatchCancel() {
 		message.success(t('personalHomepage.management.message.batchCancelSuccess'))
 		selectedRowKeys.value = []
 		await loadFavoriteMenus()
+		dispatchMenuFavoritesRefresh()
 	  } catch (error) {
 		console.error('批量取消收藏失败:', error)
 		message.error(t('personalHomepage.management.message.batchCancelFailed'))
@@ -247,6 +250,7 @@ function handleSingleCancel(record: PersonalMenuEntry) {
 		await batchCancelUserFavoriteMenus([path])
 		message.success(t('personalHomepage.management.message.singleCancelSuccess'))
 		await loadFavoriteMenus()
+		dispatchMenuFavoritesRefresh(path, false)
 	  } catch (error) {
 		console.error('取消单条收藏失败:', error)
 		message.error(t('personalHomepage.management.message.singleCancelFailed'))
@@ -263,6 +267,7 @@ async function handleSaveSort() {
 	message.success(t('personalHomepage.management.message.sortSaveSuccess'))
 	sortChanged.value = false
 	await loadFavoriteMenus()
+	dispatchMenuFavoritesRefresh()
   } catch (error) {
 	console.error('保存收藏排序失败:', error)
 	message.error(t('personalHomepage.management.message.sortSaveFailed'))
@@ -273,6 +278,14 @@ async function handleSaveSort() {
 
 onMounted(() => {
   loadFavoriteMenus()
+  stopMenuFavoritesRefresh = listenMenuFavoritesRefresh(() => {
+	void loadFavoriteMenus()
+  })
+})
+
+onUnmounted(() => {
+  stopMenuFavoritesRefresh?.()
+  stopMenuFavoritesRefresh = null
 })
 </script>
 

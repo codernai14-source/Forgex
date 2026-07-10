@@ -209,6 +209,7 @@ export interface ThemeTokens {
  * - `system`: 跟随系统主题
  */
 export type ThemeMode = 'light' | 'dark' | 'system'
+export type TableRowDensity = 'comfortable' | 'normal' | 'compact'
 
 /**
  * 布局配置接口
@@ -279,6 +280,8 @@ export interface LayoutConfig {
   animateEnabled: boolean
   /** 是否启用加载指示器 */
   loadingIndicatorEnabled: boolean
+  /** 表格行高密度 */
+  tableRowDensity: TableRowDensity
   /** 页面切换动画：水平滑动或渐隐 */
   pageTransition: 'horizontal' | 'fade'
   /** 是否显示页脚版权信息 */

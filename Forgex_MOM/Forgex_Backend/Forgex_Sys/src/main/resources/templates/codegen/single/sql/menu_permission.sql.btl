@@ -4,6 +4,8 @@
 -- 业务编码: ${ctx.bizName}
 -- ================================================
 
+USE forgex_admin;
+
 SET @TENANT_ID = 0;
 SET @MODULE_CODE = '${ctx.moduleName}';
 SET @MENU_PATH = '${ctx.menuPath}';

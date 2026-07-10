@@ -886,7 +886,8 @@ import type { UploadFile } from 'ant-design-vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
-AuditOutlined,
+  AuditOutlined,
+  ApiOutlined,
   DashboardOutlined,
   DatabaseOutlined,
   DeleteOutlined,
@@ -943,7 +944,7 @@ const { t } = useI18n()
 const activeTab = ref('system')
 const securitySubTab = ref('captcha')
 const cryptoSubTab = ref('symmetric')
-const activeHomepageModule = ref<'personal' | 'basic' | 'approval' | 'sys'>('personal')
+const activeHomepageModule = ref<'personal' | 'basic' | 'approval' | 'sys' | 'integration'>('personal')
 const loading = ref(false)
 const previewVisible = ref(false)
 
@@ -1078,6 +1079,12 @@ const homepageModuleCards = computed(() => [
     title: t('system.config.homepageSys'),
     desc: t('system.config.homepageSysDesc'),
     icon: SettingOutlined,
+  },
+  {
+    value: 'integration',
+    title: t('system.config.homepageIntegration'),
+    desc: t('system.config.homepageIntegrationDesc'),
+    icon: ApiOutlined,
   },
 ])
 

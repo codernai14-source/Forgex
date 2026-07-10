@@ -9,7 +9,7 @@
       data-guide-id="fx-table-query"
       :body-style="{ padding: '12px' }"
     >
-      <a-form layout="inline" :model="queryModel" class="fx-query-form">
+      <a-form layout="inline" :model="queryModel" class="fx-query-form" @keyup.enter="handleQueryEnter">
         <div class="fx-query-row">
           <!-- 第一行查询条件，最多展示 3 项 -->
           <div class="fx-query-row-content">
@@ -162,7 +162,15 @@
       </div>
 
       <!-- 数据表格 -->
-      <div ref="tableContentRef" class="fx-table-content" data-guide-id="fx-table-content">
+      <div
+        ref="tableContentRef"
+        class="fx-table-content"
+        :class="{ 'is-loading': resolvedLoading }"
+        data-guide-id="fx-table-content"
+      >
+        <div v-if="resolvedLoading" class="fx-table-loading-mask">
+          <a-spin :tip="t('common.loading')" />
+        </div>
         <div ref="tableWrapRef" class="fx-dynamic-table-wrap" :style="tableWrapStyle">
           <a-table
             :key="`table-${configVersion}`"
@@ -246,6 +254,11 @@ const props = withDefaults(
      * 表格编码，用于拉取后端表格配置。
      */
     tableCode: string
+
+    /**
+     * 本地动态表格配置。后端配置暂不可用时作为兜底配置使用，适合代码生成预览页。
+     */
+    dynamicTableConfig?: FxTableConfig
 
     /**
      * 行主键字段名，或返回主键的函数。
@@ -593,7 +606,7 @@ const tableContentRef = ref<HTMLElement | null>(null)
 const tableWrapRef = ref<HTMLElement | null>(null)
 const paginationRef = ref<HTMLElement | null>(null)
 const autoScrollY = ref<number | undefined>(undefined)
-const lastSorter = ref<any>(undefined)
+const lastSorter = ref<{ field: string; order: string } | undefined>(undefined)
 
 let computeScrollYRafPending = false
 let mutationObserver: MutationObserver | null = null
@@ -640,15 +653,18 @@ const tableColumns = computed(() => {
     const columnWidth = c.field === ACTION_FIELD
       ? Math.max(MIN_ACTION_COLUMN_WIDTH, clampWidth(Number(c.width ?? MIN_ACTION_COLUMN_WIDTH)))
       : clampWidth(Number(c.width ?? 160))
+    const columnAlign = c.align || 'center'
+    const titleColumn = { ...c, align: columnAlign }
     const column: any = {
-      title: renderColumnTitle(c, columnWidth),
+      title: renderColumnTitle(titleColumn, columnWidth),
       dataIndex: c.field,
       key: c.field,
-      align: c.align,
+      align: columnAlign,
       width: columnWidth,
       fixed: c.field === ACTION_FIELD ? (c.fixed || 'right') : c.fixed,
       ellipsis: c.ellipsis,
       sorter: !!c.sortable,
+      sorterField: c.sorterField || c.field,
     }
 
     // dictField：后端单独字典字段，优先级高于 dictCode
@@ -807,10 +823,27 @@ function computeAutoScrollY() {
 function normalizeSorter(sorter: any) {
   if (!sorter) return undefined
   if (Array.isArray(sorter)) sorter = sorter[0]
-  const field = sorter?.field || sorter?.columnKey
+  const field = sorter?.column?.sorterField || sorter?.columnKey || sorter?.field
   const order = sorter?.order
-  if (!field && !order) return undefined
+  if (!field || !order) return undefined
   return { field, order }
+}
+
+function normalizeSorterQuery(sorter: any) {
+  const normalized = normalizeSorter(sorter)
+  if (!normalized) return {}
+  const direction = normalized.order === 'ascend'
+    ? 'asc'
+    : normalized.order === 'descend'
+      ? 'desc'
+      : undefined
+  if (!direction) return {}
+  return {
+    sortField: normalized.field,
+    sortOrder: direction,
+    orderBy: normalized.field,
+    orderDirection: direction,
+  }
 }
 
 /**
@@ -819,26 +852,38 @@ function normalizeSorter(sorter: any) {
  * @throws 不向外抛出；失败时使用空配置并打日志
  */
 async function loadConfig() {
+  const localConfig = props.dynamicTableConfig
   try {
     const backendConfig = await getTableConfig({ tableCode: props.tableCode })
     const backendColumns = normalizeColumns(backendConfig.columns || [])
-    const backendQueryFields = normalizeQueryFields(backendConfig.queryFields)
+    const useLocalConfig = !!localConfig && backendColumns.length === 0
+    const resolvedConfig = useLocalConfig ? localConfig : backendConfig
+    const resolvedColumns = useLocalConfig ? normalizeColumns(localConfig.columns || []) : backendColumns
+    const resolvedQueryFields = normalizeQueryFields(resolvedConfig.queryFields || [])
 
     // 新对象引用，确保 Vue 能检测到深层替换
     config.value = {
-      ...backendConfig,
-      columns: backendColumns,
-      queryFields: backendQueryFields,
+      ...resolvedConfig,
+      columns: resolvedColumns,
+      queryFields: resolvedQueryFields,
     }
 
     configVersion.value++
   } catch (e) {
-    config.value = undefined
-    tableData.value = []
-    pagination.total = 0
+    if (localConfig) {
+      config.value = {
+        ...localConfig,
+        columns: normalizeColumns(localConfig.columns || []),
+        queryFields: normalizeQueryFields(localConfig.queryFields || []),
+      }
+    } else {
+      config.value = undefined
+      tableData.value = []
+      pagination.total = 0
+    }
     console.error('[FxDynamicTable] 获取后端表格配置失败:', e)
     configVersion.value++
-    return false
+    return !!localConfig
   }
 
   pagination.pageSize = config.value?.defaultPageSize || pagination.pageSize
@@ -1076,10 +1121,18 @@ function normalizeQuery() {
 async function handleQuery(sorter?: any) {
   loading.value = true
   try {
+    if (arguments.length > 0) {
+      lastSorter.value = normalizeSorter(sorter)
+    }
+    const normalizedSorter = lastSorter.value
     const res = await props.request({
       page: { current: pagination.current, pageSize: pagination.pageSize },
-      query: normalizeQuery(),
-      sorter: normalizeSorter(sorter),
+      query: {
+        __fxTableCode: props.tableCode,
+        ...normalizeQuery(),
+        ...normalizeSorterQuery(normalizedSorter),
+      },
+      sorter: normalizedSorter,
     })
     const anyRes: any = res as any
     const records = anyRes?.records ?? anyRes?.data ?? []
@@ -1100,6 +1153,19 @@ function handleReset() {
   for (const k of Object.keys(queryModel)) {
     queryModel[k] = undefined
   }
+  pagination.current = 1
+  handleQuery(lastSorter.value)
+}
+
+function handleQueryEnter(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null
+  if (!target || target.tagName.toLowerCase() !== 'input') {
+    return
+  }
+  if (target.closest('.ant-select') || target.closest('.ant-picker')) {
+    return
+  }
+  event.preventDefault()
   pagination.current = 1
   handleQuery(lastSorter.value)
 }
@@ -1167,7 +1233,6 @@ function handleColumnChange(columns: FxTableColumn[]) {
 }
 
 const handleTableChange: TableProps['onChange'] = (pag, _filters, sorter) => {
-  lastSorter.value = sorter
   handleQuery(sorter)
 }
 
@@ -1197,6 +1262,22 @@ watch(
     await nextTick()
     scheduleComputeAutoScrollY()
   },
+)
+
+watch(
+  () => props.dynamicTableConfig,
+  async () => {
+    if (!props.dynamicTableConfig) {
+      return
+    }
+    pagination.current = 1
+    const loaded = await loadConfig()
+    if (!loaded) {
+      return
+    }
+    await handleQuery(lastSorter.value)
+  },
+  { deep: true },
 )
 
 watch(

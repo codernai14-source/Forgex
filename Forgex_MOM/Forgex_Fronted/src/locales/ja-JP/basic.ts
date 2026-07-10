@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 基本情報モジュール翻訳 - 日本語。
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '顧客正式名は必須です',
     confirmDeleteCustomer: 'この顧客を削除しますか？',
     customerTenantCreated: '顧客テナントを作成しました: {code}',
+    pullSuccess: '顧客の外部取得が完了しました。{total} 件を処理し、{failed} 件失敗しました。',
+    syncSuccess: '顧客の外部同期が完了しました。{total} 件を処理し、{failed} 件失敗しました。',
     tabs: {
       main: 'マスタデータ',
       contacts: '連絡先',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '品目コード',
+      autoGenerateCode: 'コード自動生成',
       name: '品目名',
       type: '品目タイプ',
       category: '品目カテゴリ',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '品目コードを入力してください',
+      autoCode: '有効にすると保存時に採番ルールで自動生成されます',
       name: '品目名を入力してください',
       type: '品目タイプを選択してください',
       category: '品目カテゴリを入力してください',
@@ -337,5 +341,86 @@ export default {
     roll: '巻',
     case: '盒',
     bag: '袋',
+  },
+  productionLine: {
+    title: '生産ライン管理',
+    subtitle: '生産ラインのコード、所属工場、タイプ、担当者、有効状態を管理し、工段 / 工程モデリングの基礎を提供します。',
+    addProductionLine: '生産ライン追加',
+    editProductionLine: '生産ライン編集',
+    codeRequired: '生産ラインコードは必須です',
+    nameRequired: '生産ライン名は必須です',
+    confirmDelete: 'この生産ラインを削除しますか？',
+    fields: {
+      code: '生産ラインコード',
+      name: '生産ライン名',
+      workshop: '所属工場',
+      type: '生産ラインタイプ',
+      manager: '担当者',
+      sortOrder: '並び順',
+      status: 'ステータス',
+      remark: '備考',
+    },
+    placeholder: {
+      code: '生産ラインコードを入力してください',
+      name: '生産ライン名を入力してください',
+      workshop: '所属工場を選択してください',
+      type: '生産ラインタイプを選択してください',
+      manager: '担当者を選択してください',
+      remark: '備考を入力してください',
+    },
+  },
+  workSection: {
+    title: '工段管理',
+    subtitle: '工段のコード、所属工場 / 生産ライン、並び順、有効状態を管理します。',
+    addWorkSection: '工段追加',
+    editWorkSection: '工段編集',
+    codeRequired: '工段コードは必須です',
+    nameRequired: '工段名は必須です',
+    confirmDelete: 'この工段を削除しますか？',
+    fields: {
+      code: '工段コード',
+      name: '工段名',
+      workshop: '所属工場',
+      productionLine: '所属生産ライン',
+      sortOrder: '並び順',
+      status: 'ステータス',
+      remark: '備考',
+    },
+    placeholder: {
+      code: '工段コードを入力してください',
+      name: '工段名を入力してください',
+      workshop: '所属工場を選択してください',
+      productionLine: '所属生産ラインを選択してください',
+      remark: '備考を入力してください',
+    },
+  },
+  process: {
+    title: '工程管理',
+    subtitle: '工程のコード、所属工段、工程タイプ、報告方式、QC トリガー、有効状態を管理します。',
+    addProcess: '工程追加',
+    editProcess: '工程編集',
+    codeRequired: '工程コードは必須です',
+    nameRequired: '工程名は必須です',
+    confirmDelete: 'この工程を削除しますか？',
+    fields: {
+      code: '工程コード',
+      name: '工程名',
+      workSection: '所属工段',
+      processType: '工程タイプ',
+      reportType: '報告方式',
+      qcTriggerPoint: 'QC トリガー',
+      sortOrder: '並び順',
+      status: 'ステータス',
+      remark: '備考',
+    },
+    placeholder: {
+      code: '工程コードを入力してください',
+      name: '工程名を入力してください',
+      workSection: '所属工段を選択してください',
+      processType: '工程タイプを選択してください',
+      reportType: '報告方式を選択してください',
+      qcTriggerPoint: 'QC トリガーを選択してください',
+      remark: '備考を入力してください',
+    },
   },
 }

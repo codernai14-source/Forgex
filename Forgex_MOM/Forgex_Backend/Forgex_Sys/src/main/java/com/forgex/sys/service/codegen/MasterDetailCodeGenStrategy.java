@@ -57,11 +57,16 @@ public class MasterDetailCodeGenStrategy extends AbstractCodeGenStrategy {
         List<CodegenRenderFileDTO> files = newFiles();
         String javaPath = "backend/" + context.getPackageName().replace('.', '/');
         String viewPath = "frontend/src/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
+        String stylePath = "frontend/src/styles/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
         String apiPath = "frontend/src/api/" + context.getModuleName();
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getEntityName() + ".java",
             "master-detail/backend/MainEntity.java.btl", context);
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getSubEntityName() + ".java",
             "master-detail/backend/SubEntity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "master-detail/backend/MainVO.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getSubEntityName() + "VO.java",
+            "master-detail/backend/SubVO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "master-detail/backend/MainController.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getSubEntityName() + "Controller.java",
@@ -88,6 +93,12 @@ public class MasterDetailCodeGenStrategy extends AbstractCodeGenStrategy {
             "master-detail/backend/SubSaveParam.java.btl", context);
         addFile(files, "frontend", viewPath + "/index.vue", "master-detail/frontend/index.vue.btl", context);
         addFile(files, "frontend", viewPath + "/detail.vue", "master-detail/frontend/detail.vue.btl", context);
+        addFile(files, "frontend", viewPath + "/components/" + context.getEntityName() + "FormDialog.vue",
+            "master-detail/frontend/MainFormDialog.vue.btl", context);
+        addFile(files, "frontend", viewPath + "/components/" + context.getSubEntityName() + "FormDialog.vue",
+            "master-detail/frontend/SubFormDialog.vue.btl", context);
+        addFile(files, "frontend", stylePath + "/index.less", "master-detail/frontend/index.less.btl", context);
+        addFile(files, "frontend", stylePath + "/detail.less", "master-detail/frontend/detail.less.btl", context);
         addFile(files, "frontend", apiPath + "/" + context.getEntityNameLower() + ".ts", "master-detail/frontend/main-api.ts.btl", context);
         addFile(files, "frontend", apiPath + "/" + context.getSubEntityNameLower() + ".ts", "master-detail/frontend/sub-api.ts.btl", context);
         addFile(files, "sql", "sql/01_menu_permission.sql", "master-detail/sql/menu_permission.sql.btl", context);

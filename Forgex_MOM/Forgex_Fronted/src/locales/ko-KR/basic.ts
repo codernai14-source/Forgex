@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 기본 정보 모듈 번역 - 한국어.
  */
 export default {
@@ -132,6 +132,8 @@ export default {
     customerFullNameRequired: '고객 전체명은 필수입니다',
     confirmDeleteCustomer: '이 고객을 삭제하시겠습니까?',
     customerTenantCreated: '고객 테넌트가 생성되었습니다: {code}',
+    pullSuccess: '고객 타사 가져오기가 완료되었습니다. {total}건 처리, {failed}건 실패.',
+    syncSuccess: '고객 타사 동기화가 완료되었습니다. {total}건 처리, {failed}건 실패.',
     tabs: {
       main: '마스터 데이터',
       contacts: '담당자',
@@ -194,6 +196,7 @@ export default {
     },
     fields: {
       code: '자재 코드',
+      autoGenerateCode: '코드 자동 생성',
       name: '자재명',
       type: '자재 유형',
       category: '자재 분류',
@@ -207,6 +210,7 @@ export default {
     },
     placeholder: {
       code: '자재 코드를 입력하세요',
+      autoCode: '활성화하면 저장 시 인코딩 규칙으로 자동 생성됩니다',
       name: '자재명을 입력하세요',
       type: '자재 유형을 선택하세요',
       category: '자재 분류를 입력하세요',
@@ -337,5 +341,86 @@ export default {
     roll: '롤',
     case: '케이스',
     bag: '봉투',
+  },
+  productionLine: {
+    title: '생산라인 관리',
+    subtitle: '생산라인 코드, 소속 공장, 타입, 담당자, 사용 여부를 관리하여 공정부서 / 공정 모델링의 기초를 제공합니다.',
+    addProductionLine: '생산라인 추가',
+    editProductionLine: '생산라인 편집',
+    codeRequired: '생산라인 코드는 필수입니다',
+    nameRequired: '생산라인 이름은 필수입니다',
+    confirmDelete: '이 생산라인을 삭제하시겠습니까?',
+    fields: {
+      code: '생산라인 코드',
+      name: '생산라인 이름',
+      workshop: '소속 공장',
+      type: '생산라인 타입',
+      manager: '담당자',
+      sortOrder: '정렬 순서',
+      status: '상태',
+      remark: '비고',
+    },
+    placeholder: {
+      code: '생산라인 코드를 입력하세요',
+      name: '생산라인 이름을 입력하세요',
+      workshop: '소속 공장을 선택하세요',
+      type: '생산라인 타입을 선택하세요',
+      manager: '담당자를 선택하세요',
+      remark: '비고를 입력하세요',
+    },
+  },
+  workSection: {
+    title: '공정 구역 관리',
+    subtitle: '공정 구역 코드, 소속 공장 / 생산라인, 정렬 순서, 사용 여부를 관리합니다.',
+    addWorkSection: '공정 구역 추가',
+    editWorkSection: '공정 구역 편집',
+    codeRequired: '공정 구역 코드는 필수입니다',
+    nameRequired: '공정 구역 이름은 필수입니다',
+    confirmDelete: '이 공정 구역을 삭제하시겠습니까?',
+    fields: {
+      code: '공정 구역 코드',
+      name: '공정 구역 이름',
+      workshop: '소속 공장',
+      productionLine: '소속 생산라인',
+      sortOrder: '정렬 순서',
+      status: '상태',
+      remark: '비고',
+    },
+    placeholder: {
+      code: '공정 구역 코드를 입력하세요',
+      name: '공정 구역 이름을 입력하세요',
+      workshop: '소속 공장을 선택하세요',
+      productionLine: '소속 생산라인을 선택하세요',
+      remark: '비고를 입력하세요',
+    },
+  },
+  process: {
+    title: '공정 관리',
+    subtitle: '공정 코드, 소속 구역, 공정 타입, 보고 방식, QC 트리거, 사용 여부를 관리합니다.',
+    addProcess: '공정 추가',
+    editProcess: '공정 편집',
+    codeRequired: '공정 코드는 필수입니다',
+    nameRequired: '공정 이름은 필수입니다',
+    confirmDelete: '이 공정을 삭제하시겠습니까?',
+    fields: {
+      code: '공정 코드',
+      name: '공정 이름',
+      workSection: '소속 구역',
+      processType: '공정 타입',
+      reportType: '보고 방식',
+      qcTriggerPoint: 'QC 트리거',
+      sortOrder: '정렬 순서',
+      status: '상태',
+      remark: '비고',
+    },
+    placeholder: {
+      code: '공정 코드를 입력하세요',
+      name: '공정 이름을 입력하세요',
+      workSection: '소속 구역을 선택하세요',
+      processType: '공정 타입을 선택하세요',
+      reportType: '보고 방식을 선택하세요',
+      qcTriggerPoint: 'QC 트리거를 선택하세요',
+      remark: '비고를 입력하세요',
+    },
   },
 }

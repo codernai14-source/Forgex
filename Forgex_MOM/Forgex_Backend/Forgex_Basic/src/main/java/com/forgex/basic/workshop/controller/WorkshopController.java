@@ -71,4 +71,33 @@ public class WorkshopController {
     public R<Boolean> batchDelete(@RequestBody Map<String, List<Long>> params) {
         return R.ok(CommonPrompt.DELETE_SUCCESS, workshopService.batchDelete(params.get("ids")));
     }
+
+    /**
+     * 根据工厂 ID 查询启用的车间列表（下拉数据源，无需按钮权限）。
+     * <p>
+     * 路径使用绝对路径 {@code /basic/workshop/listByFactory}，避免与现有 {@code /workshop} 控制器前缀冲突，
+     * 与 sys_permission 中的接口配置保持一致。
+     * </p>
+     *
+     * @param params 请求参数，键：factoryId
+     * @return 启用状态的车间列表
+     */
+    @PostMapping("/basic/workshop/listByFactory")
+    public R<List<WorkshopDTO>> listByFactory(@RequestBody Map<String, Object> params) {
+        Long factoryId = toLong(params.get("factoryId"));
+        return R.ok(workshopService.listByFactory(factoryId));
+    }
+
+    /**
+     * 将任意对象安全转换为 Long。
+     */
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.valueOf(String.valueOf(value));
+    }
 }

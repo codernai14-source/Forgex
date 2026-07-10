@@ -57,10 +57,13 @@ public class SingleTableCodeGenStrategy extends AbstractCodeGenStrategy {
         List<CodegenRenderFileDTO> files = newFiles();
         String javaPath = "backend/" + context.getPackageName().replace('.', '/');
         String viewPath = "frontend/src/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
+        String stylePath = "frontend/src/styles/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
         String apiPath = "frontend/src/api/" + context.getModuleName();
         String androidBasePath = "android/" + context.getAndroidFeatureKey();
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getEntityName() + ".java",
             "single/backend/Entity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "single/backend/VO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "single/backend/Controller.java.btl", context);
         addFile(files, "backend", javaPath + "/service/" + context.getEntityName() + "Service.java",
@@ -74,6 +77,9 @@ public class SingleTableCodeGenStrategy extends AbstractCodeGenStrategy {
         addFile(files, "backend", javaPath + "/domain/param/" + context.getEntityName() + "SaveParam.java",
             "single/backend/SaveParam.java.btl", context);
         addFile(files, "frontend", viewPath + "/index.vue", "single/frontend/index.vue.btl", context);
+        addFile(files, "frontend", viewPath + "/components/" + context.getEntityName() + "FormDialog.vue",
+            "single/frontend/FormDialog.vue.btl", context);
+        addFile(files, "frontend", stylePath + "/index.less", "single/frontend/index.less.btl", context);
         addFile(files, "frontend", apiPath + "/" + context.getEntityNameLower() + ".ts", "single/frontend/api.ts.btl", context);
         addFile(files, "sql", "sql/01_menu_permission.sql", "single/sql/menu_permission.sql.btl", context);
         addFile(files, "sql", "sql/02_table_config.sql", "single/sql/table_config.sql.btl", context);

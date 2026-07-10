@@ -1,0 +1,3 @@
+.${ctx.subEntityNameLower}-detail-page {
+  height: 100%;
+}

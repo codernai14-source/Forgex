@@ -426,6 +426,11 @@ public class CodeGenContextDTO {
     private List<ColumnMetaDTO> mainTableColumns = new ArrayList<>();
 
     /**
+     * 主表字典编码集合。
+     */
+    private List<String> mainDictCodes = new ArrayList<>();
+
+    /**
      * 树表查询列集合。
      */
     private List<ColumnMetaDTO> treeQueryColumns = new ArrayList<>();
@@ -441,6 +446,11 @@ public class CodeGenContextDTO {
     private List<ColumnMetaDTO> treeTableColumns = new ArrayList<>();
 
     /**
+     * 树表字典编码集合。
+     */
+    private List<String> treeDictCodes = new ArrayList<>();
+
+    /**
      * 子表查询列集合。
      */
     private List<ColumnMetaDTO> subQueryColumns = new ArrayList<>();
@@ -454,6 +464,11 @@ public class CodeGenContextDTO {
      * 子表列表列集合。
      */
     private List<ColumnMetaDTO> subTableColumns = new ArrayList<>();
+
+    /**
+     * 子表字典编码集合。
+     */
+    private List<String> subDictCodes = new ArrayList<>();
 
     /**
      * 模板渲染需要引入的 Java 类名集合。

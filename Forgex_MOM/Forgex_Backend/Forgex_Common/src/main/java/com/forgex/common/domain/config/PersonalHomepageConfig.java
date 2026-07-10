@@ -68,7 +68,8 @@ public class PersonalHomepageConfig {
         return switch (normalizedModuleCode) {
             case "basic" -> ofWidgets(
                     PersonalHomepageWidgetConfig.of("supplierInfo", "供应商信息", 0, 0, 6, 4, 10, 6),
-                    PersonalHomepageWidgetConfig.of("encodeRuleInfo", "编码规则信息", 6, 0, 6, 4, 20, 6)
+                    PersonalHomepageWidgetConfig.of("customerInfo", "客户信息", 6, 0, 6, 4, 20, 6),
+                    PersonalHomepageWidgetConfig.of("workCalendarInfo", "工作日历", 0, 4, 12, 5, 30, 12)
             );
             case "sys", "system" -> ofWidgets(
                     PersonalHomepageWidgetConfig.of("systemOverview", "系统概览", 0, 0, 6, 4, 10, 6),

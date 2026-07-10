@@ -10,7 +10,11 @@
       row-key="id"
     >
       <template #toolbar>
-        <a-button data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">{{ $tl('新增字典') }}</a-button>
+        <a-space wrap>
+          <a-segmented v-model:value="dictScope" :options="dictScopeOptions" @change="handleScopeChange" />
+          <a-button v-if="isTenantScope" @click="handlePullPublic">{{ $tl('拉取公共配置') }}</a-button>
+          <a-button v-if="isTenantScope" data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">{{ $tl('新增字典') }}</a-button>
+        </a-space>
       </template>
 
       <template #moduleId="{ record }">
@@ -32,11 +36,12 @@
       </template>
 
       <template #action="{ record }">
-        <a-space>
+        <a-space v-if="isTenantScope">
           <a v-if="!record.dictValue" @click="handleAdd(record)">{{ $tl('新增子项') }}</a>
           <a @click="handleEdit(record)">{{ $tl('编辑') }}</a>
           <a style="color: #ff4d4f" @click="handleDelete(record)">{{ $tl('删除') }}</a>
         </a-space>
+        <a-tag v-else color="blue">{{ $tl('公共配置') }}</a-tag>
       </template>
     </FxDynamicTable>
 
@@ -104,7 +109,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
-import { Modal, type FormInstance, type Rule } from 'ant-design-vue'
+import { message, Modal, type FormInstance, type Rule } from 'ant-design-vue'
 import http from '@/api/http'
 import { listModules } from '@/api/system/module'
 
@@ -123,6 +128,12 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const tagStyleConfigRef = ref()
 const moduleOptions = ref<Array<{ label: string; value: number }>>([])
+const dictScope = ref<'tenant' | 'public'>('tenant')
+const dictScopeOptions = computed(() => [
+  { label: translateLegacyText('当前租户'), value: 'tenant' },
+  { label: translateLegacyText('公共'), value: 'public' },
+])
+const isTenantScope = computed(() => dictScope.value === 'tenant')
 
 const dictOptions = computed(() => ({
   status: statusOptions.value,
@@ -197,12 +208,12 @@ const handleRequest = async (payload: {
   query: Record<string, any>
 }) => {
   try {
+    const query = payload.query || {}
     const res = await http.post('/sys/dict/page', {
       pageNum: payload.page.current,
       pageSize: payload.page.pageSize,
-      dictCode: payload.query?.dictCode,
-      dictName: payload.query?.dictName,
-      moduleId: payload.query?.moduleId,
+      ...query,
+      publicConfig: dictScope.value === 'public',
     })
     return {
       records: mapDictTreeNodes(res?.records || []),
@@ -215,6 +226,24 @@ const handleRequest = async (payload: {
       total: 0,
     }
   }
+}
+
+async function handleScopeChange() {
+  await tableRef.value?.refresh?.()
+}
+
+function handlePullPublic() {
+  Modal.confirm({
+    title: translateLegacyText('提示'),
+    content: translateLegacyText('确定要将公共字典配置拉取到当前租户吗？已有租户配置不会被覆盖。'),
+    okText: translateLegacyText('确定'),
+    cancelText: translateLegacyText('取消'),
+    onOk: async () => {
+      const count = await http.post('/sys/dict/pull-public')
+      message.success(translateLegacyText(`已拉取公共配置，新增 ${Number(count || 0)} 个节点`))
+      await tableRef.value?.refresh?.()
+    },
+  })
 }
 
 async function loadModules() {
@@ -253,6 +282,10 @@ function openDialog() {
 }
 
 function handleAdd(row: any) {
+  if (!isTenantScope.value) {
+    message.warning(translateLegacyText('公共配置视图为只读，请切换到当前租户后拉取或维护配置'))
+    return
+  }
   resetForm()
   dialogTitle.value = row ? translateLegacyText('新增字典子项') : translateLegacyText('新增字典类型')
   form.parentId = row ? Number(row.id) : 0
@@ -261,6 +294,10 @@ function handleAdd(row: any) {
 }
 
 function handleEdit(row: any) {
+  if (!isTenantScope.value) {
+    message.warning(translateLegacyText('公共配置视图为只读，请切换到当前租户后拉取或维护配置'))
+    return
+  }
   resetForm()
   dialogTitle.value = translateLegacyText('编辑字典')
   form.id = Number(row.id)
@@ -280,6 +317,10 @@ function handleEdit(row: any) {
 }
 
 function handleDelete(row: any) {
+  if (!isTenantScope.value) {
+    message.warning(translateLegacyText('公共配置视图为只读，请切换到当前租户后拉取或维护配置'))
+    return
+  }
   Modal.confirm({
     title: translateLegacyText('提示'),
     content: translateLegacyText('确定要删除该字典吗？'),
@@ -293,6 +334,10 @@ function handleDelete(row: any) {
 }
 
 async function handleSubmit() {
+  if (!isTenantScope.value) {
+    message.warning(translateLegacyText('公共配置视图为只读，请切换到当前租户后拉取或维护配置'))
+    return
+  }
   await formRef.value?.validate()
   const tagStyleJson = tagStyleConfigRef.value?.getTagStyleJson() || ''
   const url = form.id ? '/sys/dict/update' : '/sys/dict/create'

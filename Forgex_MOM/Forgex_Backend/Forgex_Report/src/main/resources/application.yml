@@ -22,11 +22,15 @@ spring:
   cloud:
     nacos:
       discovery:
+        username: ${FORGEX_NACOS_USERNAME:nacos}
+        password: ${FORGEX_NACOS_PASSWORD:123456}
         server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
         namespace: ${FORGEX_NACOS_NAMESPACE:dev}
         group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
         ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
       config:
+        username: ${FORGEX_NACOS_USERNAME:nacos}
+        password: ${FORGEX_NACOS_PASSWORD:123456}
         server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
         namespace: ${FORGEX_NACOS_NAMESPACE:dev}
         group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
@@ -49,11 +53,6 @@ logging:
     com.forgex.report: ${FORGEX_REPORT_LOG_LEVEL:INFO}
 
 forgex:
-  deployment:
-    profile: ${FORGEX_DEPLOYMENT_PROFILE:dev}
-    instance-code: ${FORGEX_INSTANCE_CODE:DEFAULT}
-    home: ${FORGEX_HOME:C:/forgex}
-    log-dir: ${FORGEX_LOG_DIR:${FORGEX_HOME:C:/forgex}/logs}
   report:
     template-path: templates/report
     enable-ureport: true

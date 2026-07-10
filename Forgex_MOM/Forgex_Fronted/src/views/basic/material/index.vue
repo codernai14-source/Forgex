@@ -106,9 +106,18 @@
           <a-tab-pane key="main" :tab="t('basic.material.editorTabs.main')">
             <a-form :model="form" layout="vertical">
               <a-row :gutter="16">
+                <a-col v-if="!isEdit && !readonly" :xs="24" :md="12">
+                  <a-form-item :label="t('basic.material.fields.autoGenerateCode')">
+                    <a-switch v-model:checked="form.autoGenerateCode" />
+                  </a-form-item>
+                </a-col>
                 <a-col :xs="24" :md="12">
                   <a-form-item :label="t('basic.material.fields.code')" required>
-                    <a-input v-model:value="form.materialCode" :disabled="readonly" :placeholder="t('basic.material.placeholder.code')" />
+                    <a-input
+                      v-model:value="form.materialCode"
+                      :disabled="readonly || (!isEdit && form.autoGenerateCode)"
+                      :placeholder="form.autoGenerateCode && !isEdit ? t('basic.material.placeholder.autoCode') : t('basic.material.placeholder.code')"
+                    />
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :md="12">
@@ -518,7 +527,7 @@ const ALL_TAB = 'ALL'
 const DEFAULT_MATERIAL_TYPE = 'RAW_MATERIAL'
 
 type ExtendEditorModule = MaterialExtendView & { fields: Array<MaterialExtendViewField & { __module: string }> }
-type MaterialForm = Partial<Material> & { extendViewList: ExtendEditorModule[] }
+type MaterialForm = Partial<Material> & { extendViewList: ExtendEditorModule[]; autoGenerateCode?: boolean }
 type PackagingRelationForm = {
   smallPackagingTypeId?: number | null
   mediumPackagingTypeId?: number | null
@@ -573,6 +582,7 @@ const configForm = reactive<MaterialExtendConfig>({
 const form = reactive<MaterialForm>({
   id: undefined,
   materialCode: '',
+  autoGenerateCode: true,
   materialName: '',
   materialType: DEFAULT_MATERIAL_TYPE,
   materialCategory: '',
@@ -716,6 +726,7 @@ function resetForm() {
   Object.assign(form, {
     id: undefined,
     materialCode: '',
+    autoGenerateCode: true,
     materialName: '',
     materialType: currentCreateType(),
     materialCategory: '',
@@ -781,6 +792,7 @@ function applyEditorData(data: any) {
   Object.assign(form, {
     id: data.id,
     materialCode: data.materialCode || '',
+    autoGenerateCode: false,
     materialName: data.materialName || '',
     materialType: data.materialType || DEFAULT_MATERIAL_TYPE,
     materialCategory: data.materialCategory || '',
@@ -906,7 +918,8 @@ function handleEditorSubmit() {
 }
 
 async function handleSave() {
-  if (!form.materialCode || !form.materialName || !form.materialType) {
+  const autoGenerate = Boolean(form.autoGenerateCode) && !isEdit.value
+  if ((!autoGenerate && !form.materialCode) || !form.materialName || !form.materialType) {
     message.warning(t('validation.required'))
     return
   }
@@ -915,10 +928,11 @@ async function handleSave() {
 
   saving.value = true
   try {
-    const payload = {
-      ...form,
-      materialCode: form.materialCode?.trim(),
-      materialName: form.materialName?.trim(),
+      const payload = {
+        ...form,
+        materialCode: autoGenerate ? '' : form.materialCode?.trim(),
+        autoGenerateCode: autoGenerate,
+        materialName: form.materialName?.trim(),
       extendValueList,
       extendViewList: undefined,
     }

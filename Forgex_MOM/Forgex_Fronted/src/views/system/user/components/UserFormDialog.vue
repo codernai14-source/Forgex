@@ -7,6 +7,7 @@
     @submit="handleSubmit"
     @cancel="handleCancel"
   >
+    <a-spin :spinning="loading" :tip="t('common.loading')" wrapper-class-name="sys-user-form-spin">
     <a-tabs v-model:activeKey="activeTab" type="card" class="sys-user-form-dialog">
       <a-tab-pane key="basic" :tab="t('system.user.tabs.basic')">
         <a-form
@@ -312,6 +313,7 @@
         </a-form>
       </a-tab-pane>
     </a-tabs>
+    </a-spin>
   </BaseFormDialog>
 </template>
 
@@ -471,6 +473,7 @@ async function loadUserData() {
     })
   } catch {
     message.error(t('system.user.message.loadDetailFailed'))
+  } finally {
     loading.value = false
   }
 }

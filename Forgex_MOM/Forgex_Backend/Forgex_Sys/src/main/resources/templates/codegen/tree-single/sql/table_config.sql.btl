@@ -3,6 +3,8 @@
 -- table_code: ${ctx.mainTableCode}
 -- ================================================
 
+USE forgex_common;
+
 SET @TENANT_ID = 0;
 SET @TABLE_CODE = '${ctx.mainTableCode}';
 

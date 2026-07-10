@@ -121,6 +121,25 @@ export default {
   },
 
   // Favorite Management Page
+  share: {
+    create: 'Create Share Code',
+    import: 'Import Layout',
+    shareTitle: 'Layout Share Code',
+    importTitle: 'Import Layout Share Code',
+    shareCode: 'Share Code',
+    inputPlaceholder: 'Enter a share code',
+    copy: 'Copy',
+    preview: 'Preview',
+    apply: 'Apply to Draft',
+    moduleCode: 'Module',
+    createTime: 'Created At',
+    createSuccess: 'Share code created',
+    createFailed: 'Failed to create share code',
+    copySuccess: 'Share code copied',
+    previewFailed: 'Invalid share code or it does not belong to this tenant',
+    importApplied: 'Imported into the current draft. Save the layout to make it effective.',
+  },
+
   management: {
     title: 'Favorite Management',
     desc: 'Manage all favorite menus in one place, including homepage order and batch removal.',
@@ -214,11 +233,14 @@ export default {
     modules: {
       personal: { name: 'Personal Homepage', title: 'Personal Homepage Default Config', desc: 'Maintain the default personal homepage layout.' },
       basic: { name: 'Basic Information', title: 'Basic Information Homepage', desc: 'Central entry for master data and configuration status in Basic Information.' },
-      approval: { name: 'Approval', title: 'Approval Homepage', desc: 'Central view for approval tasks, pending entries, and workflow configuration.' },
-      sys: { name: 'System Management', title: 'System Management Homepage', desc: 'Central entry for system runtime, permissions, and system parameters.' },
-    },
+        approval: { name: 'Approval', title: 'Approval Homepage', desc: 'Central view for approval tasks, pending entries, and workflow configuration.' },
+        sys: { name: 'System Management', title: 'System Management Homepage', desc: 'Central entry for system runtime, permissions, and system parameters.' },
+        integration: { name: 'Integration Platform', title: 'Integration Dashboard', desc: 'Shows external API capabilities, call trends, and abnormal call status.' },
+      },
     widgets: {
       supplierInfo: { title: 'Supplier Information', subtitle: 'Supplier master data and admission maintenance', summary: 'Manage supplier profiles, contacts, qualifications, and collaboration status.' },
+      customerInfo: { title: 'Customer Information', subtitle: 'Customer master data and integration maintenance', summary: 'Manage customer profiles, contacts, invoice data, and third-party sync status.' },
+      workCalendarInfo: { title: 'Work Calendar', subtitle: 'Workday and holiday maintenance', summary: 'Maintain workdays, holidays, and scheduling events for Basic Information.' },
       encodeRuleInfo: { title: 'Encoding Rules', subtitle: 'Unified code generation rules', summary: 'Maintain encoding rules, serial numbers, and test generation for basic information.' },
       systemOverview: { title: 'System Overview', subtitle: 'Organization, users, and permission entries', summary: 'Quick access to users, roles, menu grants, and other core system capabilities.' },
       systemHealth: { title: 'Runtime Status', subtitle: 'System runtime and security status', summary: 'View online users, login behavior, and system runtime information.' },
@@ -226,12 +248,18 @@ export default {
       systemConfig: { title: 'System Config', subtitle: 'Platform parameters and appearance settings', summary: 'Maintain portal, theme, security, mail, upload, and default homepage layout settings.' },
       approvalStats: { title: 'Approval Overview', subtitle: 'Approval operation summary', summary: 'View pending, processed, and overall approval execution status.' },
       approvalShortcuts: { title: 'Approval Entry', subtitle: 'Start approvals and common flows', summary: 'Quickly open approval tasks and business workflows that can be started.' },
-      approvalPending: { title: 'My Pending Tasks', subtitle: 'Current pending approvals', summary: 'View approval instances that require the current user to process.' },
-      approvalTaskConfig: { title: 'Task Config', subtitle: 'Approval tasks and node rules', summary: 'Configure task forms, node approvers, and workflow rules.' },
-      custom: { subtitle: 'Custom Widget', summary: 'This widget comes from a saved module homepage configuration.' },
-    },
-    stats: {
-      masterData: 'Master Data', supplierArchive: 'Supplier Profiles', approval: 'Approval', admissionChange: 'Admission/Change', rule: 'Rule', byModule: 'By Module', capability: 'Capability', testGenerate: 'Test/Generate', user: 'User', accountManage: 'Account Management', role: 'Role', authConfig: 'Authorization Config', status: 'Status', onlineSession: 'Online/Session', security: 'Security', loginAudit: 'Login Audit', audit: 'Audit', operationLog: 'Operation Logs', trace: 'Trace', loginRecord: 'Login Records', scope: 'Scope', publicTenant: 'Public/Tenant', config: 'Config', systemParams: 'System Parameters', pending: 'Pending', myTasks: 'My Tasks', processed: 'Processed', processRecord: 'Processing Records', entry: 'Entry', startApproval: 'Start Approval', flow: 'Flow', taskTemplate: 'Task Templates', action: 'Action', approveReject: 'Approve/Reject', task: 'Task', flowConfig: 'Flow Config', node: 'Node', approvalRule: 'Approval Rules', type: 'Type', extension: 'Extension', enabled: 'Enabled', pendingApproval: 'Pending Approval',
-    },
+        approvalPending: { title: 'My Pending Tasks', subtitle: 'Current pending approvals', summary: 'View approval instances that require the current user to process.' },
+        approvalTaskConfig: { title: 'Task Config', subtitle: 'Approval tasks and node rules', summary: 'Configure task forms, node approvers, and workflow rules.' },
+        integrationSummary: { title: 'API Capability Summary', subtitle: 'Third-party systems and external APIs', summary: 'Shows third-party systems, API directions, today calls, and success rate.' },
+        integrationStatusComparison: { title: 'Success/Fail Comparison', subtitle: 'Call result comparison', summary: 'Compares successful and failed calls in the last 14 days.' },
+        integrationStatusPie: { title: 'Call Status Share', subtitle: 'Status structure analysis', summary: 'Shows success, failure, and other call status proportions.' },
+        integrationCallTrend: { title: 'Call Trend', subtitle: 'Last 14 days call curve', summary: 'Shows total, successful, and failed call trends over time.' },
+        integrationTopApis: { title: 'Top APIs', subtitle: 'API call popularity', summary: 'Shows APIs with the most calls and their success rates.' },
+        integrationRecentFailures: { title: 'Recent Failed Calls', subtitle: 'Abnormal call tracing', summary: 'Shows recent failed calls, error messages, and cost time.' },
+        custom: { subtitle: 'Custom Widget', summary: 'This widget comes from a saved module homepage configuration.' },
+      },
+      stats: {
+        masterData: 'Master Data', supplierArchive: 'Supplier Profiles', customerArchive: 'Customer Profiles', integration: 'Integration', thirdPartySync: 'Third-party Sync', calendar: 'Calendar', workdayMaintain: 'Workday Maintenance', event: 'Event', holidayShift: 'Holiday/Shift', approval: 'Approval', admissionChange: 'Admission/Change', rule: 'Rule', byModule: 'By Module', capability: 'Capability', externalApi: 'External APIs', testGenerate: 'Test/Generate', user: 'User', accountManage: 'Account Management', role: 'Role', authConfig: 'Authorization Config', status: 'Status', onlineSession: 'Online/Session', security: 'Security', loginAudit: 'Login Audit', audit: 'Audit', operationLog: 'Operation Logs', trace: 'Trace', loginRecord: 'Login Records', scope: 'Scope', publicTenant: 'Public/Tenant', config: 'Config', systemParams: 'System Parameters', pending: 'Pending', myTasks: 'My Tasks', processed: 'Processed', processRecord: 'Processing Records', entry: 'Entry', startApproval: 'Start Approval', flow: 'Flow', taskTemplate: 'Task Templates', action: 'Action', approveReject: 'Approve/Reject', task: 'Task', flowConfig: 'Flow Config', node: 'Node', approvalRule: 'Approval Rules', type: 'Type', extension: 'Extension', enabled: 'Enabled', pendingApproval: 'Pending Approval', success: 'Success', callSuccess: 'Call Success', fail: 'Fail', callFail: 'Call Fail', callStatus: 'Call Status', callTrace: 'Call Trace', trend: 'Trend', last14Days: 'Last 14 Days', call: 'Call', callCount: 'Call Count', api: 'API', hotApi: 'Hot APIs', successRate: 'Success Rate', quality: 'Quality', exception: 'Exception', failureTrace: 'Failure Trace', callAudit: 'Call Audit',
+      },
   }
 }

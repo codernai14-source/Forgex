@@ -119,6 +119,13 @@ export function generateCSSVariables(
   const radius = `${layoutConfig.borderRadius}px`
   const fontSize = layoutConfig.fontSize || '14px'
   const contentWidth = layoutConfig.contentWidth === 'fixed' ? '1200px' : '100%'
+  const tableDensity = layoutConfig.tableRowDensity || 'normal'
+  const tableDensityMap = {
+    comfortable: { cellPaddingY: '14px', headerPaddingY: '12px', paginationMarginY: '14px' },
+    normal: { cellPaddingY: '10px', headerPaddingY: '10px', paginationMarginY: '12px' },
+    compact: { cellPaddingY: '6px', headerPaddingY: '6px', paginationMarginY: '8px' },
+  } as const
+  const tableDensityVars = tableDensityMap[tableDensity] || tableDensityMap.normal
   const isDark = tokens.colorBgBase.toLowerCase() === '#14161a'
   /**
    * 深色模式外壳分层：
@@ -240,6 +247,9 @@ export function generateCSSVariables(
     '--fx-control-height': `${tokens.controlHeight}px`,
     '--fx-control-height-lg': `${tokens.controlHeightLG}px`,
     '--fx-control-height-sm': `${tokens.controlHeightSM}px`,
+    '--fx-table-cell-padding-y': tableDensityVars.cellPaddingY,
+    '--fx-table-header-padding-y': tableDensityVars.headerPaddingY,
+    '--fx-table-pagination-margin-y': tableDensityVars.paginationMarginY,
 
     // ==================== 间距 ====================
     '--fx-padding': `${tokens.padding}px`,
@@ -297,7 +307,7 @@ export function generateCSSVariablesWithCache(
   tokens: ThemeTokens,
   layoutConfig: LayoutConfig
 ): CSSProperties {
-  const cacheKey = `${tokens.colorBgBase}-${tokens.colorBgContainer}-${tokens.colorBgElevated}-${layoutConfig.themeMode}-${layoutConfig.fontSize}-${layoutConfig.borderRadius}-${layoutConfig.themeColor}`
+  const cacheKey = `${tokens.colorBgBase}-${tokens.colorBgContainer}-${tokens.colorBgElevated}-${layoutConfig.themeMode}-${layoutConfig.fontSize}-${layoutConfig.borderRadius}-${layoutConfig.themeColor}-${layoutConfig.tableRowDensity}`
 
   if (cssVariablesCache.has(cacheKey)) {
     return cssVariablesCache.get(cacheKey)!

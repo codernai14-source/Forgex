@@ -63,3 +63,8 @@ hs_err_pid*
 /forgex/data/
 /Forgex_MOM/Forgex_Backend/Forgex_Common/target/classes/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
 /Forgex_erp/
+
+# Local IDE and assistant workspace files
+**/.vs/
+*.csproj.user
+/.workbuddy/

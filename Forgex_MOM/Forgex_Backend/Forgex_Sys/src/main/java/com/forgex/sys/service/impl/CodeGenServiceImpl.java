@@ -69,6 +69,8 @@ public class CodeGenServiceImpl implements CodeGenService {
     private static final String GENERATE_FRONTEND = "frontend";
     private static final String GENERATE_SQL = "sql";
     private static final String GENERATE_ANDROID = "android";
+    private static final String OPTION_SOURCE_DICT = "DICT";
+    private static final String OPTION_SOURCE_API = "API";
 
     private static final Set<String> BASE_ENTITY_FIELDS = new HashSet<>(
         List.of("id", "tenant_id", "create_time", "create_by", "update_time", "update_by", "deleted")
@@ -333,12 +335,15 @@ public class CodeGenServiceImpl implements CodeGenService {
         context.setMainQueryColumns(filterQueryColumns(mainColumns));
         context.setMainFormColumns(filterFormColumns(mainColumns));
         context.setMainTableColumns(filterTableColumns(mainColumns));
+        context.setMainDictCodes(collectDictCodes(mainColumns));
         context.setTreeQueryColumns(filterQueryColumns(treeColumns));
         context.setTreeFormColumns(filterTreeFormColumns(treeColumns, context));
         context.setTreeTableColumns(filterTableColumns(treeColumns));
+        context.setTreeDictCodes(collectDictCodes(treeColumns));
         context.setSubQueryColumns(filterQueryColumns(subColumns));
         context.setSubFormColumns(filterFormColumns(subColumns));
         context.setSubTableColumns(filterTableColumns(subColumns));
+        context.setSubDictCodes(collectDictCodes(subColumns));
 
         String subDefaultSortColumn = resolveSubDefaultSortColumn(subColumns);
         context.setSubDefaultSortColumn(subDefaultSortColumn);
@@ -359,11 +364,12 @@ public class CodeGenServiceImpl implements CodeGenService {
     private List<ColumnMetaDTO> withDefaultColumnFeatures(List<ColumnMetaDTO> columns) {
         for (ColumnMetaDTO column : columns) {
             column.setIsBaseField(BASE_ENTITY_FIELDS.contains(column.getColumnName()));
+            normalizeOptionSource(column);
             if (!StringUtils.hasText(column.getQueryType())) {
-                column.setQueryType(resolveQueryType(column.getJavaType()));
+                column.setQueryType(resolveQueryType(column));
             }
             if (!StringUtils.hasText(column.getQueryOperator())) {
-                column.setQueryOperator("String".equals(column.getJavaType()) ? "like" : "eq");
+                column.setQueryOperator(resolveQueryOperator(column));
             }
             if (!StringUtils.hasText(column.getFormType())) {
                 column.setFormType(resolveFormType(column));
@@ -397,6 +403,62 @@ public class CodeGenServiceImpl implements CodeGenService {
             }
         }
         return columns;
+    }
+
+    private boolean hasDictField(ColumnMetaDTO column) {
+        return column != null && StringUtils.hasText(column.getDictCode());
+    }
+
+    private List<String> collectDictCodes(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return List.of();
+        }
+        Set<String> dictCodes = new java.util.LinkedHashSet<>();
+        for (ColumnMetaDTO column : columns) {
+            if (hasDictField(column)) {
+                dictCodes.add(column.getDictCode());
+            }
+        }
+        return new ArrayList<>(dictCodes);
+    }
+
+    private void normalizeOptionSource(ColumnMetaDTO column) {
+        if (column == null) {
+            return;
+        }
+        if (!StringUtils.hasText(column.getOptionSourceType())) {
+            if (StringUtils.hasText(column.getOptionApiUrl())) {
+                column.setOptionSourceType(OPTION_SOURCE_API);
+            } else if (StringUtils.hasText(column.getDictCode())) {
+                column.setOptionSourceType(OPTION_SOURCE_DICT);
+            }
+        }
+        if (StringUtils.hasText(column.getOptionSourceType())) {
+            column.setOptionSourceType(column.getOptionSourceType().toUpperCase(Locale.ROOT));
+        }
+
+        if (OPTION_SOURCE_API.equalsIgnoreCase(column.getOptionSourceType())) {
+            if (!StringUtils.hasText(column.getOptionApiMethod())) {
+                column.setOptionApiMethod("GET");
+            } else {
+                column.setOptionApiMethod(column.getOptionApiMethod().toUpperCase(Locale.ROOT));
+            }
+            if (!StringUtils.hasText(column.getOptionParamsJson())) {
+                column.setOptionParamsJson("{}");
+            }
+            if (!StringUtils.hasText(column.getOptionResponsePath())) {
+                column.setOptionResponsePath("data");
+            }
+            if (!StringUtils.hasText(column.getOptionLabelField())) {
+                column.setOptionLabelField("label");
+            }
+            if (!StringUtils.hasText(column.getOptionValueField())) {
+                column.setOptionValueField("value");
+            }
+            if (!StringUtils.hasText(column.getOptionChildrenField())) {
+                column.setOptionChildrenField("children");
+            }
+        }
     }
 
     private void validateMainSubRelation(List<ColumnMetaDTO> mainColumns, List<ColumnMetaDTO> subColumns, CodeGenRequestDTO req) {
@@ -589,7 +651,11 @@ public class CodeGenServiceImpl implements CodeGenService {
         return imports;
     }
 
-    private String resolveQueryType(String javaType) {
+    private String resolveQueryType(ColumnMetaDTO column) {
+        if (isOptionColumn(column)) {
+            return "select";
+        }
+        String javaType = column == null ? null : column.getJavaType();
         if ("LocalDate".equals(javaType) || "LocalDateTime".equals(javaType)) {
             return "date";
         }
@@ -597,6 +663,9 @@ public class CodeGenServiceImpl implements CodeGenService {
     }
 
     private String resolveFormType(ColumnMetaDTO column) {
+        if (isOptionColumn(column)) {
+            return "select";
+        }
         String javaType = column.getJavaType();
         if ("LocalDate".equals(javaType)) {
             return "date";
@@ -615,6 +684,22 @@ public class CodeGenServiceImpl implements CodeGenService {
             return "textarea";
         }
         return "input";
+    }
+
+    private String resolveQueryOperator(ColumnMetaDTO column) {
+        if (isOptionColumn(column)) {
+            return "eq";
+        }
+        return "String".equals(column == null ? null : column.getJavaType()) ? "like" : "eq";
+    }
+
+    private boolean isOptionColumn(ColumnMetaDTO column) {
+        if (column == null) {
+            return false;
+        }
+        return hasDictField(column)
+            || StringUtils.hasText(column.getOptionSourceType())
+            || StringUtils.hasText(column.getOptionApiUrl());
     }
 
     private Integer resolveWidth(String javaType) {

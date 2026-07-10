@@ -114,6 +114,46 @@ public class ColumnMetaDTO {
     private String dictCode;
 
     /**
+     * 选项源类型（DICT / API）
+     */
+    private String optionSourceType;
+
+    /**
+     * 接口地址
+     */
+    private String optionApiUrl;
+
+    /**
+     * 接口请求方法
+     */
+    private String optionApiMethod;
+
+    /**
+     * 接口固定参数 JSON
+     */
+    private String optionParamsJson;
+
+    /**
+     * 接口响应数组路径
+     */
+    private String optionResponsePath;
+
+    /**
+     * 标签字段
+     */
+    private String optionLabelField;
+
+    /**
+     * 值字段
+     */
+    private String optionValueField;
+
+    /**
+     * 子节点字段
+     */
+    private String optionChildrenField;
+
+    /**
      * 表单类型（input、textarea、number、select、date、datetime 等）
      */
     private String formType;
