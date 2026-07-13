@@ -2,6 +2,8 @@
 -- ${ctx.menuName} tree-double menu and permission init
 -- ================================================
 
+USE forgex_admin;
+
 SET @TENANT_ID = 0;
 SET @MENU_PATH = '${ctx.menuPath}';
 SET @MENU_NAME = '${ctx.menuName}';

@@ -229,6 +229,8 @@ export default {
   homepageApprovalDesc: '承認ワークスペースのホームページ',
   homepageSys: 'システム管理',
   homepageSysDesc: 'システムの運用と設定のホームページ',
+  homepageIntegration: 'Integration Platform',
+  homepageIntegrationDesc: 'External API capability dashboard',
   homepageDefaultConfig: '個人ホームページのデフォルト設定',
   homepageDefaultDesc: 'パブリックレベルとテナントレベルのデフォルトレイアウトを管理します。すべてのユーザーがこの設定を初期ポータルとして個人ホームページにアクセスできます。',
 }

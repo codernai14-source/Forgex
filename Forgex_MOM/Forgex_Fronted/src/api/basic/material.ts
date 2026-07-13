@@ -3,6 +3,7 @@ import http from '@/api/http'
 export interface Material {
     id?: number
     materialCode: string
+    autoGenerateCode?: boolean
     materialName: string
     materialType: string
     materialCategory?: string

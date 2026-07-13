@@ -236,6 +236,66 @@ export interface ApiCallLogItem {
   updateTime?: string
 }
 
+export interface IntegrationDashboardSummary {
+  totalThirdSystems: number
+  enabledThirdSystems: number
+  totalApis: number
+  enabledApis: number
+  inboundApis: number
+  outboundApis: number
+  todayCalls: number
+  totalCalls: number
+  successCalls: number
+  failCalls: number
+  successRate: number
+}
+
+export interface IntegrationDashboardChartItem {
+  name: string
+  value: number
+}
+
+export interface IntegrationDashboardTrendItem {
+  date: string
+  total: number
+  success: number
+  fail: number
+}
+
+export interface IntegrationDashboardTopApi {
+  apiConfigId?: number
+  apiCode?: string
+  apiName?: string
+  callDirection?: IntegrationDirection
+  totalCalls: number
+  successCalls: number
+  failCalls: number
+  successRate: number
+}
+
+export interface IntegrationDashboardFailureItem {
+  id: number
+  apiConfigId?: number
+  apiCode?: string
+  apiName?: string
+  callDirection?: IntegrationDirection
+  callStatus?: string
+  errorMessage?: string
+  callerIp?: string
+  callTime?: string
+  costTimeMs?: number
+}
+
+export interface IntegrationDashboardOverview {
+  summary: IntegrationDashboardSummary
+  directionStats: IntegrationDashboardChartItem[]
+  statusComparison: IntegrationDashboardChartItem[]
+  statusPie: IntegrationDashboardChartItem[]
+  callTrend: IntegrationDashboardTrendItem[]
+  topApis: IntegrationDashboardTopApi[]
+  recentFailures: IntegrationDashboardFailureItem[]
+}
+
 export function getThirdSystemList(query: ThirdSystemQuery) {
   return http.post<{ records: ThirdSystemItem[]; total: number }>('/integration/third-system/page', query)
 }
@@ -369,6 +429,10 @@ export function getApiCallLogDetail(id: number, callTime: string) {
   return http.get<ApiCallLogItem>(`/integration/call-log/detail/${id}?${search.toString()}`)
 }
 
+export function getIntegrationDashboardOverview() {
+  return http.get<IntegrationDashboardOverview>('/integration/dashboard/overview')
+}
+
 export const integrationApi = {
   getThirdSystemList,
   listThirdSystems,
@@ -401,4 +465,5 @@ export const integrationApi = {
   batchSaveApiParamMappings,
   getApiCallLogList,
   getApiCallLogDetail,
+  getIntegrationDashboardOverview,
 }

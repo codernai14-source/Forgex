@@ -3,9 +3,9 @@ package ${ctx.packageName}.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
-import ${ctx.packageName}.domain.entity.${ctx.entityName};
 import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
 import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+import ${ctx.packageName}.domain.vo.${ctx.entityName}VO;
 import ${ctx.packageName}.service.${ctx.entityName}Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,13 +31,13 @@ public class ${ctx.entityName}Controller {
 
     @PostMapping("/page")
     @RequirePerm("${ctx.permKeyPrefix}:page")
-    public R<IPage<${ctx.entityName}>> page(@RequestBody(required = false) ${ctx.entityName}PageParam param) {
+    public R<IPage<${ctx.entityName}VO>> page(@RequestBody(required = false) ${ctx.entityName}PageParam param) {
         return R.ok(${ctx.entityNameLower}Service.page(param == null ? new ${ctx.entityName}PageParam() : param));
     }
 
     @PostMapping("/detail")
     @RequirePerm("${ctx.permKeyPrefix}:detail")
-    public R<${ctx.entityName}> detail(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
+    public R<${ctx.entityName}VO> detail(@RequestBody ${ctx.mainPkJavaType!"Long"} id) {
         return R.ok(${ctx.entityNameLower}Service.detail(id));
     }
 

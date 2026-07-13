@@ -87,6 +87,14 @@ public interface IDictService {
     void deleteDict(Long id, Long tenantId);
 
     /**
+     * 拉取公共字典到当前租户。
+     *
+     * @param tenantId 当前租户ID
+     * @return 新增节点数
+     */
+    int pullPublicDicts(Long tenantId);
+
+    /**
      * 清除字典缓存
      *
      * @param dictCode 字典编码

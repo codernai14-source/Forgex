@@ -112,6 +112,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { message, type FormInstance, type Rule } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
+import { encryptSensitiveText } from '@/utils/crypto'
 import {
   getCodegenDatasourceDetail,
   saveCodegenDatasource,
@@ -212,7 +213,7 @@ async function handleTestConnection() {
       id: formData.id,
       jdbcUrl: formData.jdbcUrl,
       username: formData.username,
-      password: formData.password,
+      password: formData.password ? await encryptSensitiveText(formData.password) : undefined,
       dbType: formData.dbType,
     })
     message.success(t('system.codegenDatasource.testSuccess'))
@@ -225,7 +226,11 @@ async function handleSubmit() {
   await formRef.value?.validate()
   submitLoading.value = true
   try {
-    await saveCodegenDatasource({ ...formData })
+    const payload = {
+      ...formData,
+      password: formData.password ? await encryptSensitiveText(formData.password) : undefined,
+    }
+    await saveCodegenDatasource(payload)
     emit('success')
     dialogVisible.value = false
   } finally {

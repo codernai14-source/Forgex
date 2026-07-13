@@ -229,6 +229,8 @@ export default {
   homepageApprovalDesc: '승인 워크스페이스 홈페이지',
   homepageSys: '시스템 관리',
   homepageSysDesc: '시스템 운영 및 구성 홈페이지',
+  homepageIntegration: 'Integration Platform',
+  homepageIntegrationDesc: 'External API capability dashboard',
   homepageDefaultConfig: '개인 홈페이지 기본 설정',
   homepageDefaultDesc: '공급자 수준 및 테넌트 수준의 기본 레이아웃을 관리합니다. 모든 사용자가 이 설정을 초기 포털로 사용하여 개인 홈페이지에 접근할 수 있습니다.',
 }

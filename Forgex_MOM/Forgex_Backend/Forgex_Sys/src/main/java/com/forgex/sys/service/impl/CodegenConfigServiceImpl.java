@@ -20,10 +20,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
-import com.forgex.sys.domain.dto.CodeGenRequestDTO;
-import com.forgex.sys.domain.dto.CodegenConfigDTO;
-import com.forgex.sys.domain.dto.CodegenConfigQueryDTO;
-import com.forgex.sys.domain.dto.CodegenDatasourceDTO;
+import com.forgex.sys.domain.dto.*;
 import com.forgex.sys.domain.entity.SysCodegenConfig;
 import com.forgex.sys.domain.entity.SysCodegenDatasource;
 import com.forgex.sys.domain.param.CodegenConfigSaveParam;
@@ -303,6 +300,9 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         request.setMainColumns(param.getMainColumns());
         request.setTreeColumns(param.getTreeColumns());
         request.setSubColumns(param.getSubColumns());
+        normalizeColumnOptionFields(request.getMainColumns());
+        normalizeColumnOptionFields(request.getTreeColumns());
+        normalizeColumnOptionFields(request.getSubColumns());
         return request;
     }
 
@@ -310,7 +310,11 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
         if (!StringUtils.hasText(json)) {
             return new CodeGenRequestDTO();
         }
-        return JSONUtil.toBean(json, CodeGenRequestDTO.class);
+        CodeGenRequestDTO request = JSONUtil.toBean(json, CodeGenRequestDTO.class);
+        normalizeColumnOptionFields(request.getMainColumns());
+        normalizeColumnOptionFields(request.getTreeColumns());
+        normalizeColumnOptionFields(request.getSubColumns());
+        return request;
     }
 
     private CodegenConfigDTO toDTO(SysCodegenConfig entity) {
@@ -378,6 +382,23 @@ public class CodegenConfigServiceImpl extends ServiceImpl<SysCodegenConfigMapper
 
     private String normalizePageType(String pageType) {
         return StringUtils.hasText(pageType) ? pageType.toUpperCase(Locale.ROOT) : pageType;
+    }
+
+    private void normalizeColumnOptionFields(List<ColumnMetaDTO> columns) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return;
+        }
+        for (ColumnMetaDTO column : columns) {
+            if (column == null) {
+                continue;
+            }
+            if (StringUtils.hasText(column.getOptionSourceType())) {
+                column.setOptionSourceType(column.getOptionSourceType().toUpperCase(Locale.ROOT));
+            }
+            if (StringUtils.hasText(column.getOptionApiMethod())) {
+                column.setOptionApiMethod(column.getOptionApiMethod().toUpperCase(Locale.ROOT));
+            }
+        }
     }
 
     private String defaultText(String value, String defaultValue) {

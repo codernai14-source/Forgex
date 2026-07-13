@@ -5,6 +5,7 @@
       class="fx-main-layout" 
       :style="rootStyle"
       :data-font-size="layoutConfig.fontSize"
+      :data-table-row-density="layoutConfig.tableRowDensity"
     >
     <!-- 使用新的 AppHeader 组件 -->
   <AppHeader
@@ -34,19 +35,22 @@
 
     <a-layout class="fx-main-content-wrapper">
       <!-- 使用新的侧边栏组件 -->
-      <AppSidebar
-        v-if="shouldShowSidebar"
-        :menus="sidebarMenus"
-        :modules="moduleList"
-        :active-key="normalizeWorkspacePath(route.fullPath)"
-        :active-module-code="activeModuleCode"
-        :layout-mode="layoutConfig.layoutMode"
-        :collapsed="siderCollapsed"
-        :double-column="sidebarDoubleColumn"
-        @module-click="onModuleClick"
-        @menu-click="onMenuClick"
-        @collapse-change="onCollapse"
-      />
+        <AppSidebar
+          v-if="shouldShowSidebar"
+          :menus="sidebarMenus"
+          :modules="moduleList"
+          :active-key="normalizeWorkspacePath(route.fullPath)"
+          :active-module-code="activeModuleCode"
+          :layout-mode="layoutConfig.layoutMode"
+          :collapsed="siderCollapsed"
+          :double-column="sidebarDoubleColumn"
+          :favorite-paths="menuFavoritePathList"
+          :favorite-loading-path="menuFavoriteTogglingPath"
+          @module-click="onModuleClick"
+          @menu-click="onMenuClick"
+          @favorite-toggle="onSidebarFavoriteToggle"
+          @collapse-change="onCollapse"
+        />
 
       <a-layout class="fx-content-layout">
         <!-- 使用新的 AppTabBar 组件 -->
@@ -55,15 +59,17 @@
           :tabs="tabs"
           :active-key="activeTabKey"
           :draggable="layoutConfig.tabBarDraggable"
+          :favorite-paths="menuFavoritePathList"
           @tab-click="onTabClick"
           @tab-close="onTabClose"
           @tab-pin="onTabPin"
+          @tab-favorite="onTabFavorite"
           @tab-drag="onTabDrag"
           @tab-refresh="onTabRefresh"
           @tabs-close="onTabsClose"
         />
 
-        <a-layout-content class="fx-content">
+        <a-layout-content class="fx-content" @contextmenu="onContentContextMenu">
          <div class="fx-content-inner">
             <div v-if="layoutConfig.watermarkEnabled" class="fx-watermark-container">
               <div class="fx-watermark" v-for="i in 12" :key="i">
@@ -102,12 +108,37 @@
             </a-button>
           </Transition>
         </a-layout-content>
-        
-        <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
-          {{ systemConfig.copyright }}
-        </div>
       </a-layout>
     </a-layout>
+
+    <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
+      {{ systemConfig.copyright }}
+    </div>
+
+    <a-dropdown
+      v-model:open="contentFavoriteMenuVisible"
+      :trigger="[]"
+      :get-popup-container="getSettingDrawerContainer"
+    >
+      <div
+        :style="{
+          position: 'fixed',
+          left: contentFavoriteMenuPosition.x + 'px',
+          top: contentFavoriteMenuPosition.y + 'px',
+          width: '1px',
+          height: '1px'
+        }"
+      />
+      <template #overlay>
+        <a-menu @click="onContentFavoriteMenuClick">
+          <a-menu-item key="favorite" :disabled="!currentFavoritePath || !!menuFavoriteTogglingPath">
+            <StarFilled v-if="isCurrentPathFavorite" />
+            <StarOutlined v-else />
+            <span>{{ isCurrentPathFavorite ? '取消收藏本页' : '收藏本页' }}</span>
+          </a-menu-item>
+        </a-menu>
+      </template>
+    </a-dropdown>
 
     <!-- 使用新的 GlobalSearch 组件 -->
     <GlobalSearch
@@ -303,14 +334,15 @@
                 <span>{{ t('layout.fontSize') }}</span>
                 <div class="fx-setting-slider">
                   <a-slider v-model:value="fontSizeSliderValue" :min="FONT_SIZE_MIN" :max="FONT_SIZE_MAX" />
-                  <span class="fx-setting-slider__value">{{ fontSizeLabel }}</span>
                 </div>
               </div>
 
               <!-- 圆角大小滑块 -->
-              <div class="fx-setting-row">
+              <div class="fx-setting-row fx-setting-row--slider">
                 <span>{{ t('layout.borderRadius') }}</span>
-                <a-slider v-model:value="layoutConfig.borderRadius" :min="0" :max="16" style="width: 180px" />
+                <div class="fx-setting-slider">
+                  <a-slider v-model:value="layoutConfig.borderRadius" :min="0" :max="16" />
+                </div>
               </div>
             </div>
           </a-tab-pane>
@@ -342,7 +374,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.contentWidth') }}</span>
-                <a-select v-model:value="layoutConfig.contentWidth" style="width: 200px">
+                <a-select v-model:value="layoutConfig.contentWidth" class="fx-setting-control">
                   <a-select-option value="fluid">{{ t('layout.contentWidthFluid') }}</a-select-option>
                   <a-select-option value="fixed">{{ t('layout.contentWidthFixed') }}</a-select-option>
                 </a-select>
@@ -356,7 +388,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.headerMode') }}</span>
-                <a-select v-model:value="layoutConfig.headerMode" style="width: 200px">
+                <a-select v-model:value="layoutConfig.headerMode" class="fx-setting-control">
                   <a-select-option value="fixed">{{ t('layout.headerModeFixed') }}</a-select-option>
                   <a-select-option value="auto">{{ t('layout.headerModeAuto') }}</a-select-option>
                   <a-select-option value="hide-on-scroll">{{ t('layout.headerModeHideOnScroll') }}</a-select-option>
@@ -364,7 +396,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.headerMenuAlign') }}</span>
-                <a-select v-model:value="layoutConfig.headerMenuAlign" style="width: 200px">
+                <a-select v-model:value="layoutConfig.headerMenuAlign" class="fx-setting-control">
                   <a-select-option value="left">{{ t('layout.headerMenuAlignLeft') }}</a-select-option>
                   <a-select-option value="center">{{ t('layout.headerMenuAlignCenter') }}</a-select-option>
                   <a-select-option value="right">{{ t('layout.headerMenuAlignRight') }}</a-select-option>
@@ -378,16 +410,20 @@
                 <a-switch v-model:checked="layoutConfig.tabBarEnabled" />
               </div>
               <div class="fx-setting-row">
-                <span>{{ t('layout.tabBarMax') }}</span>
+                <span class="fx-setting-label-with-help">
+                  {{ t('layout.tabBarMax') }}
+                  <a-tooltip :title="t('layout.tabBarMaxHint')">
+                    <QuestionCircleOutlined class="fx-setting-help-icon" />
+                  </a-tooltip>
+                </span>
                 <a-input-number
                   v-model:value="layoutConfig.tabBarMax"
                   :min="0"
                   :max="200"
                   :precision="0"
-                  style="width: 200px"
+                  class="fx-setting-control"
                 />
               </div>
-              <p class="fx-setting-hint-text">{{ t('layout.tabBarMaxHint') }}</p>
             </div>
           </a-tab-pane>
           <a-tab-pane :tab="t('layout.tabCommon')" key="common">
@@ -399,14 +435,22 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.watermarkText') }}</span>
-                <a-input v-model:value="layoutConfig.watermarkText" style="width: 200px" />
+                <a-input v-model:value="layoutConfig.watermarkText" class="fx-setting-control" />
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.formMode') }}</span>
-                <a-select v-model:value="appStore.formMode" style="width: 200px">
+                <a-select v-model:value="appStore.formMode" class="fx-setting-control">
                   <a-select-option value="modal">{{ t('layout.formModeModal') }}</a-select-option>
                   <a-select-option value="drawer">{{ t('layout.formModeDrawer') }}</a-select-option>
                 </a-select>
+              </div>
+              <div class="fx-setting-row">
+                <span>{{ t('layout.tableRowDensity') }}</span>
+                <a-segmented
+                  v-model:value="layoutConfig.tableRowDensity"
+                  class="fx-setting-segmented"
+                  :options="tableRowDensityOptions"
+                />
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.animateEnabled') }}</span>
@@ -414,7 +458,7 @@
               </div>
               <div class="fx-setting-row">
                 <span>{{ t('layout.pageTransition') }}</span>
-                <a-select v-model:value="layoutConfig.pageTransition" style="width: 200px">
+                <a-select v-model:value="layoutConfig.pageTransition" class="fx-setting-control">
                   <a-select-option value="horizontal">{{ t('layout.pageTransitionHorizontal') }}</a-select-option>
                   <a-select-option value="fade">{{ t('layout.pageTransitionFade') }}</a-select-option>
                 </a-select>
@@ -544,6 +588,9 @@ import {
   FolderOutlined,
   FileOutlined,
   ArrowUpOutlined,
+  QuestionCircleOutlined,
+  StarFilled,
+  StarOutlined,
 } from '@ant-design/icons-vue'
 
 import AppHeader from './components/AppHeader.vue'
@@ -555,6 +602,7 @@ import FxIcon from '../components/common/FxIcon.vue'
 import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
+import { normalizeFavoritePath, useMenuFavorites } from '../composables/useMenuFavorites'
 import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
@@ -686,6 +734,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   watermarkText: 'FORGEX_MOM',
   animateEnabled: true,
   loadingIndicatorEnabled: true,
+  tableRowDensity: 'normal',
   pageTransition: 'horizontal',
   footerCopyrightEnabled: true
 }
@@ -880,12 +929,11 @@ const fontSizeSliderValue = computed({
   },
 })
 
-const fontSizeLabel = computed(() => {
-  const value = fontSizeSliderValue.value
-  if (value <= 14) return t('layout.fontSizeSmall')
-  if (value >= 18) return t('layout.fontSizeLarge')
-  return t('layout.fontSizeDefault')
-})
+const tableRowDensityOptions = computed(() => [
+  { label: t('layout.tableRowDensityComfortable'), value: 'comfortable' },
+  { label: t('layout.tableRowDensityNormal'), value: 'normal' },
+  { label: t('layout.tableRowDensityCompact'), value: 'compact' },
+])
 
 /**
  * 布局模式选项配置
@@ -954,6 +1002,15 @@ const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
 const tabs = ref<LayoutTab[]>([])
 const activeTabKey = ref<string>('')
+const {
+  favoritePathSet: menuFavoritePathSet,
+  togglingPath: menuFavoriteTogglingPath,
+  loadFavorites: loadMenuFavorites,
+  isFavorite: isMenuFavorite,
+  toggleFavorite: toggleMenuFavorite,
+} = useMenuFavorites()
+const contentFavoriteMenuVisible = ref(false)
+const contentFavoriteMenuPosition = ref({ x: 0, y: 0 })
 /** 用户固定的标签路径列表（与 {@link LayoutTab#pinned} 同步） */
 const PINNED_TAB_KEYS_STORAGE_KEY = 'fx-pinned-tab-keys'
 
@@ -1187,6 +1244,86 @@ const resolvedMode = computed(() =>
 
 function normalizeWorkspacePath(path: string) {
   return String(path || '').split('?')[0]
+}
+
+const menuFavoritePathList = computed(() => Array.from(menuFavoritePathSet.value))
+const currentFavoritePath = computed(() => normalizeFavoritePath(route.fullPath || route.path))
+const isCurrentPathFavorite = computed(() => isMenuFavorite(currentFavoritePath.value))
+
+function shouldIgnoreContentContextMenu(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+  return Boolean(target.closest([
+    '.ant-dropdown',
+    '.ant-modal',
+    '.ant-drawer',
+    '.ant-select-dropdown',
+    '.ant-picker-dropdown',
+    '.app-tabbar',
+    '.app-sidebar-wrapper',
+    'input',
+    'textarea',
+    '[contenteditable="true"]',
+  ].join(',')))
+}
+
+function onContentContextMenu(event: MouseEvent) {
+  if (!currentFavoritePath.value || shouldIgnoreContentContextMenu(event.target)) {
+    return
+  }
+  event.preventDefault()
+  contentFavoriteMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contentFavoriteMenuVisible.value = true
+}
+
+async function toggleFavoritePath(path?: string | null) {
+  const normalized = normalizeFavoritePath(path)
+  if (!normalized) {
+    return
+  }
+  try {
+    const favorite = await toggleMenuFavorite(normalized)
+    message.success(favorite ? '已收藏本页' : '已取消收藏')
+  } catch (error) {
+    console.error('[MainLayout] Toggle favorite failed:', error)
+    message.error('收藏操作失败')
+  }
+}
+
+function onContentFavoriteMenuClick(info: any) {
+  if (info?.key === 'favorite') {
+    void toggleFavoritePath(currentFavoritePath.value)
+  }
+  contentFavoriteMenuVisible.value = false
+}
+
+function onSidebarFavoriteToggle(path: string) {
+  void toggleFavoritePath(path)
+}
+
+function onTabFavorite(tab: LayoutTab) {
+  void toggleFavoritePath(tab?.path || tab?.key)
+}
+
+function closeContentFavoriteMenu() {
+  contentFavoriteMenuVisible.value = false
+}
+
+function handleDocumentPointerDown(event: MouseEvent) {
+  if (contentFavoriteMenuVisible.value) {
+    const target = event.target as HTMLElement | null
+    if (target?.closest('.ant-dropdown')) {
+      return
+    }
+    closeContentFavoriteMenu()
+  }
+}
+
+function handleDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    closeContentFavoriteMenu()
+  }
 }
 
 function getPendingClosedTabKeys(query: Record<string, unknown>) {
@@ -1959,6 +2096,7 @@ async function onTenantChange(tenantId: string) {
     activeModuleCode.value = ''
     openKeys.value = []
     messageSendForm.value.receiverTenantId = Number(nextTenantId) || undefined
+    window.dispatchEvent(new CustomEvent('fx:tenant-changed', { detail: { tenantId: nextTenantId } }))
 
     await loadTenantOptions()
     await router.push(PERSONAL_HOME_PATH)
@@ -2118,6 +2256,7 @@ function updateAllTabTitles() {
 watch(
   () => route.fullPath,
   (path, previousPath) => {
+    closeContentFavoriteMenu()
     consumePendingTabCloseSignal()
     if (shouldAutoClosePreviousTab(String(previousPath || ''), path)) {
       removeTabsByKeys([normalizeWorkspacePath(String(previousPath || ''))])
@@ -2196,6 +2335,9 @@ function normalizeLayoutConfig(raw: any): LayoutConfig {
     watermarkText: typeof cfg.watermarkText === 'string' && cfg.watermarkText ? cfg.watermarkText : DEFAULT_LAYOUT_CONFIG.watermarkText,
     animateEnabled: cfg.animateEnabled !== false,
     loadingIndicatorEnabled: cfg.loadingIndicatorEnabled !== false,
+    tableRowDensity: cfg.tableRowDensity === 'comfortable' || cfg.tableRowDensity === 'compact'
+      ? cfg.tableRowDensity
+      : 'normal',
     pageTransition: cfg.pageTransition === 'fade' ? 'fade' : 'horizontal',
     footerCopyrightEnabled: !!cfg.footerCopyrightEnabled
   }
@@ -2917,6 +3059,10 @@ const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessage
   url: '/api/sys/message/stream',
   onEvent: (name, data) => {
     if (name !== 'message') return
+    if ((data as any)?.category === 'SYSTEM_NOTICE_REFRESH') {
+      window.dispatchEvent(new CustomEvent('fx:system-notice-refresh', { detail: data }))
+      return
+    }
     if (!data || !(data as any).id) return
     openMessageNotification(data as any)
     window.dispatchEvent(new CustomEvent('fx:message-received', { detail: data }))
@@ -2924,7 +3070,10 @@ const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessage
 })
 
 onMounted(async () => {
+  void loadMenuFavorites()
   if (typeof window !== 'undefined') {
+    document.addEventListener('mousedown', handleDocumentPointerDown)
+    document.addEventListener('keydown', handleDocumentKeydown)
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
@@ -2980,6 +3129,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
+    document.removeEventListener('mousedown', handleDocumentPointerDown)
+    document.removeEventListener('keydown', handleDocumentKeydown)
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)

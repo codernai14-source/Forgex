@@ -133,6 +133,10 @@
   flex-shrink: 0;
 }
 
+.mini-menu-content {
+  position: relative;
+}
+
 .mini-menu-icon {
   font-size: 19px;
   margin: 0;
@@ -230,7 +234,7 @@
     }
   }
 
-  .menu-text {
+  :deep(.menu-text) {
     display: block;
     white-space: nowrap;
     word-break: keep-all;
@@ -296,6 +300,8 @@
     }
     
     .ant-menu-title-content {
+      width: 100%;
+      min-width: 0;
       color: inherit !important;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -304,6 +310,7 @@
       flex: 1;
       display: flex;
       align-items: center;
+      box-sizing: border-box;
     }
   }
   
@@ -375,8 +382,18 @@
 }
 
 // 菜单文字样式
-.menu-text {
+:deep(.menu-title-shell) {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+:deep(.menu-text) {
+  flex: 1;
   max-width: 100%;
+  min-width: 0;
   line-height: 1.35;
   vertical-align: middle;
   display: -webkit-box;
@@ -386,6 +403,50 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   word-break: break-all;
+}
+
+:deep(.menu-favorite) {
+  flex: 0 0 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  opacity: 0;
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: none;
+  transition: flex-basis 0.18s ease, width 0.18s ease, margin-left 0.18s ease, opacity 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+}
+
+:deep(.menu-favorite:hover) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:deep(.ant-menu-item:hover .menu-favorite),
+:deep(.ant-menu-submenu-title:hover .menu-favorite),
+:deep(.ant-menu-item-selected .menu-favorite),
+:deep(.ant-menu-submenu-selected > .ant-menu-submenu-title .menu-favorite) {
+  flex-basis: 22px;
+  width: 22px;
+  margin-left: auto;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:deep(.menu-favorite--active) {
+  flex-basis: 22px;
+  width: 22px;
+  margin-left: auto;
+  color: #facc15;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 // 涓€绾ц彍鍗曟爣棰樻牱寮忥紙鏀寔澶氳鏄剧ず锛?

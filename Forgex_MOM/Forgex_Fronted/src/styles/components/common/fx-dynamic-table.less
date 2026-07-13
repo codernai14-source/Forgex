@@ -186,6 +186,7 @@
 
 /* 表格内容区：与上方工具栏留出间距（toolbar-row 已设 margin-bottom） */
 .fx-table-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -193,6 +194,25 @@
   height: 100%;
   padding: 0 16px 16px 16px;
   box-sizing: border-box;
+}
+
+.fx-table-content.is-loading {
+  pointer-events: none;
+}
+
+.fx-table-loading-mask {
+  position: absolute;
+  inset: 0 16px 16px 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(1px);
+}
+
+:global(body[data-theme='dark']) .fx-table-loading-mask {
+  background: rgba(20, 22, 26, 0.72);
 }
 
 :global(body[data-theme='dark']) .fx-table-content {
@@ -224,6 +244,23 @@
 
 .fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th) {
   position: relative;
+  padding-top: var(--fx-table-header-padding-y, 10px);
+  padding-bottom: var(--fx-table-header-padding-y, 10px);
+  text-align: center;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th .ant-table-column-sorters) {
+  justify-content: center;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-thead > tr > th .ant-table-column-title) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.fx-dynamic-table-wrap :deep(.ant-table-tbody > tr > td) {
+  padding-top: var(--fx-table-cell-padding-y, 10px);
+  padding-bottom: var(--fx-table-cell-padding-y, 10px);
 }
 
 .fx-dynamic-table-wrap :deep(.ant-table-cell-fix-right),
@@ -244,6 +281,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   min-width: 0;
   width: 100%;
   padding-right: 8px;

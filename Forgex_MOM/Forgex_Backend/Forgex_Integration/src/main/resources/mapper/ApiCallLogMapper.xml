@@ -246,4 +246,86 @@
     LIMIT 1
   </select>
 
+  <select id="countDashboardStatusFromTable" resultType="com.forgex.integration.domain.vo.IntegrationDashboardChartItemVO">
+    SELECT
+      call_status AS name,
+      COUNT(1) AS value
+    FROM ${tableName}
+    WHERE tenant_id = #{tenantId}
+      AND deleted = 0
+      <if test="startTime != null">
+        AND call_time <![CDATA[>=]]> #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND call_time <![CDATA[<=]]> #{endTime}
+      </if>
+    GROUP BY call_status
+  </select>
+
+  <select id="countDashboardTrendFromTable" resultType="com.forgex.integration.domain.vo.IntegrationDashboardTrendItemVO">
+    SELECT
+      DATE_FORMAT(call_time, '%Y-%m-%d') AS date,
+      COUNT(1) AS total,
+      SUM(CASE WHEN call_status = 'SUCCESS' THEN 1 ELSE 0 END) AS success,
+      SUM(CASE WHEN call_status = 'FAIL' THEN 1 ELSE 0 END) AS fail
+    FROM ${tableName}
+    WHERE tenant_id = #{tenantId}
+      AND deleted = 0
+      <if test="startTime != null">
+        AND call_time <![CDATA[>=]]> #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND call_time <![CDATA[<=]]> #{endTime}
+      </if>
+    GROUP BY DATE_FORMAT(call_time, '%Y-%m-%d')
+    ORDER BY date ASC
+  </select>
+
+  <select id="countDashboardTopApisFromTable" resultType="com.forgex.integration.domain.vo.IntegrationDashboardTopApiVO">
+    SELECT
+      api_config_id AS apiConfigId,
+      api_code AS apiCode,
+      call_direction AS callDirection,
+      COUNT(1) AS totalCalls,
+      SUM(CASE WHEN call_status = 'SUCCESS' THEN 1 ELSE 0 END) AS successCalls,
+      SUM(CASE WHEN call_status = 'FAIL' THEN 1 ELSE 0 END) AS failCalls
+    FROM ${tableName}
+    WHERE tenant_id = #{tenantId}
+      AND deleted = 0
+      <if test="startTime != null">
+        AND call_time <![CDATA[>=]]> #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND call_time <![CDATA[<=]]> #{endTime}
+      </if>
+    GROUP BY api_config_id, api_code, call_direction
+    ORDER BY totalCalls DESC, successCalls DESC
+    LIMIT #{limit}
+  </select>
+
+  <select id="selectDashboardFailuresFromTable" resultType="com.forgex.integration.domain.vo.IntegrationDashboardFailureVO">
+    SELECT
+      id,
+      api_config_id AS apiConfigId,
+      api_code AS apiCode,
+      call_direction AS callDirection,
+      call_status AS callStatus,
+      error_message AS errorMessage,
+      caller_ip AS callerIp,
+      call_time AS callTime,
+      cost_time_ms AS costTimeMs
+    FROM ${tableName}
+    WHERE tenant_id = #{tenantId}
+      AND deleted = 0
+      AND call_status = 'FAIL'
+      <if test="startTime != null">
+        AND call_time <![CDATA[>=]]> #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND call_time <![CDATA[<=]]> #{endTime}
+      </if>
+    ORDER BY call_time DESC, id DESC
+    LIMIT #{limit}
+  </select>
+
 </mapper>

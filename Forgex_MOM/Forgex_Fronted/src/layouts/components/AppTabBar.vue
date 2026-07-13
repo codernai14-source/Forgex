@@ -123,6 +123,14 @@
           </a-menu-item>
           <a-menu-item
             v-if="contextTab && contextTab.key !== PERSONAL_HOME_PATH"
+            key="favorite"
+          >
+            <StarFilled v-if="isContextTabFavorite" />
+            <StarOutlined v-else />
+            <span>{{ isContextTabFavorite ? '取消收藏本页' : '收藏本页' }}</span>
+          </a-menu-item>
+          <a-menu-item
+            v-if="contextTab && contextTab.key !== PERSONAL_HOME_PATH"
             key="pin"
           >
             <PushpinOutlined />
@@ -161,6 +169,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FxIcon from '@/components/common/FxIcon.vue'
 import { PERSONAL_HOME_PATH } from '@/router'
+import { normalizeFavoritePath } from '@/composables/useMenuFavorites'
 import {
   CloseOutlined,
   SyncOutlined,
@@ -172,7 +181,9 @@ import {
   SearchOutlined,
   PushpinOutlined,
   PushpinFilled,
-  CheckOutlined
+  CheckOutlined,
+  StarFilled,
+  StarOutlined
 } from '@ant-design/icons-vue'
 
 const { t } = useI18n()
@@ -197,13 +208,15 @@ interface AppTabBarProps {
   draggable?: boolean
   /** 最大标签页数量，默认 10 */
   maxTabs?: number
+  favoritePaths?: string[]
 }
 
 const props = withDefaults(defineProps<AppTabBarProps>(), {
   tabs: () => [],
   activeKey: '',
   draggable: true,
-  maxTabs: 10
+  maxTabs: 10,
+  favoritePaths: () => [],
 })
 
 const emit = defineEmits<{
@@ -232,6 +245,7 @@ const emit = defineEmits<{
    * @param tab 要刷新的标签页对象
    */
   'tab-refresh': [tab: Tab]
+  'tab-favorite': [tab: Tab]
   /**
    * 批量关闭标签页事件
    * 触发时机：用户右键菜单或快速操作选择关闭时触发
@@ -371,6 +385,16 @@ function bindTabbarResizeObserver() {
 const contextMenuVisible = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 const contextTab = ref<Tab | null>(null)
+const favoritePathSet = computed(() => new Set(
+  (props.favoritePaths || [])
+    .map(path => normalizeFavoritePath(path))
+    .filter(Boolean),
+))
+const contextTabFavoritePath = computed(() => normalizeFavoritePath(contextTab.value?.path || contextTab.value?.key))
+const isContextTabFavorite = computed(() => {
+  const path = contextTabFavoritePath.value
+  return !!path && favoritePathSet.value.has(path)
+})
 
 const closeContextMenu = () => {
   contextMenuVisible.value = false
@@ -476,6 +500,9 @@ const onContextMenuClick = (info: any) => {
   switch (key) {
     case 'refresh':
       emit('tab-refresh', contextTab.value)
+      break
+    case 'favorite':
+      emit('tab-favorite', contextTab.value)
       break
     case 'pin':
       emit('tab-pin', contextTab.value)

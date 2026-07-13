@@ -623,7 +623,10 @@ public class WfEngineServiceImpl implements IWfEngineService {
 
         JSONArray array = JSON.parseArray(approverIds);
         List<Long> idList = array.stream()
+                .filter(Objects::nonNull)
                 .map(item -> Long.valueOf(item.toString()))
+                .filter(id -> id != null && id > 0)
+                .distinct()
                 .collect(Collectors.toList());
 
         switch (approverType) {

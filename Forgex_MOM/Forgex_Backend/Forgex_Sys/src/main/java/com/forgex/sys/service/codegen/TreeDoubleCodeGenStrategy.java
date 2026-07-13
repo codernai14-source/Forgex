@@ -57,6 +57,7 @@ public class TreeDoubleCodeGenStrategy extends AbstractCodeGenStrategy {
         List<CodegenRenderFileDTO> files = newFiles();
         String javaPath = "backend/" + context.getPackageName().replace('.', '/');
         String viewPath = "frontend/src/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
+        String stylePath = "frontend/src/styles/views/" + context.getModuleName() + "/" + context.getEntityNameLower();
         String apiPath = "frontend/src/api/" + context.getModuleName();
         String androidBasePath = "android/" + context.getAndroidFeatureKey();
 
@@ -64,6 +65,10 @@ public class TreeDoubleCodeGenStrategy extends AbstractCodeGenStrategy {
             "tree-double/backend/Entity.java.btl", context);
         addFile(files, "backend", javaPath + "/domain/entity/" + context.getTreeEntityName() + ".java",
             "tree-double/backend/TreeEntity.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getEntityName() + "VO.java",
+            "tree-double/backend/VO.java.btl", context);
+        addFile(files, "backend", javaPath + "/domain/vo/" + context.getTreeEntityName() + "VO.java",
+            "tree-double/backend/TreeVO.java.btl", context);
         addFile(files, "backend", javaPath + "/controller/" + context.getEntityName() + "Controller.java",
             "tree-double/backend/Controller.java.btl", context);
         addFile(files, "backend", javaPath + "/service/" + context.getEntityName() + "Service.java",
@@ -79,6 +84,9 @@ public class TreeDoubleCodeGenStrategy extends AbstractCodeGenStrategy {
         addFile(files, "backend", javaPath + "/domain/param/" + context.getEntityName() + "SaveParam.java",
             "tree-double/backend/SaveParam.java.btl", context);
         addFile(files, "frontend", viewPath + "/index.vue", "tree-double/frontend/index.vue.btl", context);
+        addFile(files, "frontend", viewPath + "/components/" + context.getEntityName() + "FormDialog.vue",
+            "tree-double/frontend/FormDialog.vue.btl", context);
+        addFile(files, "frontend", stylePath + "/index.less", "tree-double/frontend/index.less.btl", context);
         addFile(files, "frontend", apiPath + "/" + context.getEntityNameLower() + ".ts", "tree-double/frontend/api.ts.btl", context);
         addFile(files, "sql", "sql/01_menu_permission.sql", "tree-double/sql/menu_permission.sql.btl", context);
         addFile(files, "sql", "sql/02_table_config.sql", "tree-double/sql/table_config.sql.btl", context);

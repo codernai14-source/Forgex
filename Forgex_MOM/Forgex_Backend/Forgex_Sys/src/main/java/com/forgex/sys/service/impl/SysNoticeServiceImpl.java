@@ -22,6 +22,7 @@ import com.forgex.sys.mapper.SysNoticeAttachmentMapper;
 import com.forgex.sys.mapper.SysNoticeMapper;
 import com.forgex.sys.mapper.SysNoticeUserRecordMapper;
 import com.forgex.sys.service.ISysNoticeService;
+import com.forgex.sys.service.SseEmitterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -54,10 +56,12 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
     private static final String STATUS_DRAFT = "DRAFT";
     private static final String STATUS_PUBLISHED = "PUBLISHED";
     private static final String STATUS_DISABLED = "DISABLED";
+    private static final String EVENT_SYSTEM_NOTICE_REFRESH = "SYSTEM_NOTICE_REFRESH";
 
     private final SysNoticeMapper noticeMapper;
     private final SysNoticeAttachmentMapper attachmentMapper;
     private final SysNoticeUserRecordMapper userRecordMapper;
+    private final SseEmitterService sseEmitterService;
 
     /**
      * 分页查询系统通知。
@@ -120,6 +124,9 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
             }
             saveOrUpdate(notice);
             replaceAttachments(notice.getId(), notice.getTenantId(), param.getAttachments());
+            if (STATUS_PUBLISHED.equals(notice.getStatus())) {
+                broadcastNoticeRefresh(notice);
+            }
             return notice.getId();
         });
     }
@@ -138,6 +145,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
             noticeMapper.deleteById(id);
             attachmentMapper.delete(new LambdaQueryWrapper<SysNoticeAttachment>()
                     .eq(SysNoticeAttachment::getNoticeId, id));
+            broadcastNoticeRefresh(notice);
             return null;
         });
     }
@@ -281,8 +289,25 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
             noticeMapper.update(null, new LambdaUpdateWrapper<SysNotice>()
                     .eq(SysNotice::getId, id)
                     .set(SysNotice::getStatus, status));
+            if (STATUS_PUBLISHED.equals(status) || STATUS_DISABLED.equals(status)) {
+                notice.setStatus(status);
+                broadcastNoticeRefresh(notice);
+            }
             return null;
         });
+    }
+
+    private void broadcastNoticeRefresh(SysNotice notice) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("category", EVENT_SYSTEM_NOTICE_REFRESH);
+        payload.put("noticeId", notice.getId());
+        payload.put("scope", notice.getScope());
+        payload.put("tenantId", notice.getTenantId());
+        if (SCOPE_PUBLIC.equals(notice.getScope())) {
+            sseEmitterService.sendToTenant(null, "message", payload);
+            return;
+        }
+        sseEmitterService.sendToTenant(notice.getTenantId(), "message", payload);
     }
 
     private List<SysNotice> listEffectiveNoticeEntities(Long tenantId, Integer maxCount) {

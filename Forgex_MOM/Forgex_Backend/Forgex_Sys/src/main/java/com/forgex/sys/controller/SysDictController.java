@@ -43,15 +43,15 @@ public class SysDictController {
 
     @RequirePerm("sys:dict:view")
     @PostMapping("/tree")
-    public R<List<DictTreeVO>> tree() {
-        return R.ok(dictService.getDictTree(getCurrentTenantId()));
+    public R<List<DictTreeVO>> tree(@RequestBody(required = false) DictPageParam param) {
+        return R.ok(dictService.getDictTree(resolveScopeTenantId(param)));
     }
 
     @RequirePerm("sys:dict:view")
     @PostMapping("/page")
     public R<IPage<DictTreeVO>> page(@RequestBody(required = false) DictPageParam param) {
         DictPageParam query = param == null ? new DictPageParam() : param;
-        return R.ok(dictService.pageDictTree(getCurrentTenantId(), query));
+        return R.ok(dictService.pageDictTree(resolveScopeTenantId(query), query));
     }
 
     @PostMapping("/items")
@@ -97,6 +97,16 @@ public class SysDictController {
         }
         dictService.deleteDict(id, getCurrentTenantId());
         return R.ok(CommonPrompt.DELETE_SUCCESS, true);
+    }
+
+    @RequirePerm("sys:dict:add")
+    @PostMapping("/pull-public")
+    public R<Integer> pullPublic() {
+        return R.ok(CommonPrompt.CREATE_SUCCESS, dictService.pullPublicDicts(getCurrentTenantId()));
+    }
+
+    private Long resolveScopeTenantId(DictPageParam param) {
+        return param != null && Boolean.TRUE.equals(param.getPublicConfig()) ? 0L : getCurrentTenantId();
     }
 
     private Long getCurrentTenantId() {

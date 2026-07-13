@@ -1,0 +1,100 @@
+sequenceDiagram
+    autonumber
+    participant VM as MessageViewModel
+    participant Repo as MessageRepository
+    participant Cache as MessageCacheDao
+    participant SM as SyncManager
+    participant Coord as SyncCoordinator
+    participant Queue as SyncQueueDao
+    participant NM as NetworkMonitor
+    participant WM as WorkManager
+    participant Worker as SyncWorker
+    participant HTTP as OkHttpClient
+    participant Server as Forgex Backend
+
+    %% ===== Phase 1: Offline Write + Enqueue =====
+    rect rgb(255, 245, 230)
+        Note over VM, Queue: Phase 1 — 离线写入 + 入队
+        VM->>Repo: markRead(messageId=42)
+        Repo->>Cache: markRead(id=42)
+        Note over Cache: 本地缓存立即更新<br/>msgStatus=1(已读)
+        Repo->>SM: enqueueReadReceipt(messageId=42)
+        SM->>Coord: enqueue(SyncOperation.MESSAGE_MARK_READ)
+        Coord->>Queue: insert(SyncQueueEntity{<br/>  operationType=MESSAGE_MARK_READ,<br/>  method=POST,<br/>  path="sys/message/read",<br/>  payload='{"id":42}',<br/>  status=PENDING,<br/>  retryCount=0})
+        Queue-->>Coord: queueId=1
+        Coord-->>SM: queued(1)
+        SM-->>Repo: enqueued
+        Repo-->>VM: AppResult.Success(true)
+        Note over VM: UI 立即显示已读<br/>用户无感知离线
+    end
+
+    %% ===== Phase 2: Network Restored → Trigger Sync =====
+    rect rgb(230, 245, 255)
+        Note over NM, WM: Phase 2 — 网络恢复 → 触发同步
+        NM-->>Coord: isOnline = true (Flow emit)
+        Coord->>WM: enqueueUniqueWork(<br/>  "forgex_sync",<br/>  OneTimeWorkRequest[SyncWorker],<br/>  Constraints(NETWORK_CONNECTED))
+        WM-->>Coord: enqueued
+    end
+
+    %% ===== Phase 3: SyncWorker Executes =====
+    rect rgb(230, 255, 230)
+        Note over Worker, Server: Phase 3 — Worker 执行同步
+        Worker->>Queue: findPending(limit=50)
+        Queue-->>Worker: [SyncQueueEntity(id=1, ...)]
+        Worker->>Queue: markSyncing([1])
+        Note over Queue: status: PENDING -> SYNCING
+
+        Worker->>Worker: buildRequest(entity)<br/>POST baseUrl + "sys/message/read"<br/>body = '{"id":42}'
+        Worker->>HTTP: newCall(request)
+        Note over HTTP: AuthInterceptor 注入 Token<br/>TenantInterceptor 注入 tenantId<br/>LanguageInterceptor 注入 Accept-Language
+        HTTP->>Server: POST /api/sys/message/read
+        Server-->>HTTP: 200 {"code":200,"data":true}
+        HTTP-->>Worker: Response(200)
+
+        Worker->>Worker: conflictResolver.resolve(entity, response)
+        Note over Worker: LWW: 服务端 200 -> ConflictResult.ACCEPT_SERVER
+        Worker->>Queue: updateStatus(1, SYNCED)
+        Note over Queue: status: SYNCING -> SYNCED
+        Worker->>Queue: deleteSynced()
+        Worker-->>WM: Result.success()
+    end
+
+    %% ===== Phase 4: Error / Retry Scenario =====
+    rect rgb(255, 230, 230)
+        Note over Worker, Server: Phase 4 — 失败重试场景
+        Worker->>Queue: findPending(limit=50)
+        Queue-->>Worker: [SyncQueueEntity(id=2, retryCount=2)]
+        Worker->>Queue: markSyncing([2])
+        Worker->>HTTP: POST /api/sys/message/read
+        HTTP->>Server: POST /api/sys/message/read
+        Server-->>HTTP: 500 Internal Server Error
+        HTTP-->>Worker: Response(500)
+
+        Worker->>Worker: conflictResolver.resolve(entity, response)
+        Note over Worker: 非 2xx -> ConflictResult.RETRY
+        Worker->>Queue: incrementRetry(2, "HTTP 500")
+        Note over Queue: retryCount: 2->3, status: SYNCING->PENDING<br/>(3 < maxRetry=5, 允许重试)
+        Worker-->>WM: Result.retry()
+        Note over WM: WorkManager 按 backoff 策略<br/>自动延迟重试
+    end
+
+    %% ===== Phase 5: Max Retry Exceeded =====
+    rect rgb(255, 220, 220)
+        Note over Worker, Queue: Phase 5 — 超过重试上限
+        Worker->>Queue: findPending(limit=50)
+        Queue-->>Worker: [SyncQueueEntity(id=3, retryCount=5)]
+        Worker->>HTTP: POST /api/sys/message/read
+        Server-->>HTTP: 500
+        HTTP-->>Worker: Response(500)
+        Worker->>Queue: updateStatus(3, FAILED)
+        Note over Queue: retryCount >= maxRetry<br/>status: PENDING -> FAILED<br/>lastError 记录原因
+        Worker-->>WM: Result.failure()
+    end
+
+    %% ===== Phase 6: Periodic Sync (Background) =====
+    rect rgb(240, 240, 255)
+        Note over WM, Worker: Phase 6 — 周期性同步（15分钟）
+        WM-->>Worker: PeriodicWorkRequest 触发
+        Worker->>Queue: findPending(limit=50)
+        Note over Worker: 与 Phase 3 相同流程<br/>处理所有 PENDING 记录
+    end

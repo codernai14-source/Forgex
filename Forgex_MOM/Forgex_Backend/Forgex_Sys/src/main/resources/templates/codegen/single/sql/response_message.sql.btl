@@ -3,6 +3,8 @@
 -- perm_prefix: ${ctx.permKeyPrefix}
 -- ================================================
 
+USE forgex_common;
+
 SET @TENANT_ID = 0;
 
 INSERT INTO sys_response_message_template (

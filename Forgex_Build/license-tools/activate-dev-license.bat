@@ -12,17 +12,20 @@ if "%ACTIVE_PROFILE%"=="" (
     echo [Forgex] Current profile is not dev. Script stopped.
     echo [Forgex] Current FORGEX_PROFILE=%FORGEX_PROFILE%
     echo [Forgex] This script is only for local development use.
+    pause
     exit /b 1
 )
 
 if /I not "%ACTIVE_PROFILE%"=="dev" (
     echo [Forgex] Active profile is not dev. Script stopped.
+    pause
     exit /b 1
 )
 
 where dotnet >nul 2>nul
 if errorlevel 1 (
     echo [Forgex] dotnet SDK was not found. Please install .NET SDK 9 first.
+    pause
     exit /b 1
 )
 
@@ -57,6 +60,7 @@ echo [Forgex] Building license tools...
 dotnet build "%SOLUTION_PATH%" >nul
 if errorlevel 1 (
     echo [Forgex] License tools build failed.
+    pause
     exit /b 1
 )
 
@@ -65,7 +69,8 @@ if not exist "%DEV_KEYS_DIR%\private-key.pkcs8.base64" (
     dotnet run --project "%GENERATOR_PROJECT%" -- gen-keypair --out-dir "%DEV_KEYS_DIR%"
     if errorlevel 1 (
         echo [Forgex] Failed to generate local dev key pair.
-        exit /b 1
+        pause
+    exit /b 1
     )
 )
 
@@ -76,7 +81,8 @@ if exist "%REQUEST_INFO_PATH%" (
     dotnet run --project "%REQUEST_PROJECT%" -- generate-request --output "%REQUEST_INFO_PATH%" --instance-code "%FORGEX_INSTANCE_CODE%" --edition dev
     if errorlevel 1 (
         echo [Forgex] Failed to generate request-info.json.
-        exit /b 1
+        pause
+    exit /b 1
     )
 )
 
@@ -84,6 +90,7 @@ echo [Forgex] Issuing local development license...
 dotnet run --project "%GENERATOR_PROJECT%" -- issue --request-info "%REQUEST_INFO_PATH%" --private-key "%DEV_KEYS_DIR%\private-key.pkcs8.base64" --output "%LICENSE_PATH%" --customer-name "Forgex Development" --edition dev --modules gateway,auth,sys,basic,job,integration,workflow,report --duration-days 3650 --remark "DEV_ONLY_LOCAL_LICENSE"
 if errorlevel 1 (
     echo [Forgex] Failed to issue development license.
+    pause
     exit /b 1
 )
 
@@ -91,6 +98,7 @@ echo [Forgex] Importing development license...
 dotnet run --project "%REQUEST_PROJECT%" -- import-license --license-file "%LICENSE_PATH%" --target-dir "%FORGEX_LICENSE_DIR%"
 if errorlevel 1 (
     echo [Forgex] Failed to import development license.
+    pause
     exit /b 1
 )
 
@@ -99,6 +107,7 @@ set "FORGEX_LICENSE_ENABLED=true"
 copy /Y "%DEV_KEYS_DIR%\public-key.base64" "%PUBLIC_KEY_PATH%" >nul
 if errorlevel 1 (
     echo [Forgex] Failed to copy public key to license directory.
+    pause
     exit /b 1
 )
 
@@ -122,5 +131,7 @@ echo [Forgex] Public key file: %PUBLIC_KEY_PATH%
 echo [Forgex] FORGEX_PROFILE has been written as user env var: dev
 echo [Forgex] FORGEX_LICENSE_PUBLIC_KEY has been cleared to avoid malformed env value issues.
 echo [Forgex] Restart Gateway and Sys services before login.
+echo.
+pause
 
 exit /b 0

@@ -236,26 +236,12 @@ public class AuthServiceImpl implements AuthService {
             return lockResult;
         }
 
-        // 如果配置了 SM2 加密传输，则解密密码
-        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
-        if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
-            try {
-                // 创建 SM2 解密对象
-                SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
-                // 获取密码加密格式配置
-                String cipherFmt = cryptoCfg.getCipher();
-                // 根据加密格式选择对应的解密方式
-                if ("BCD".equalsIgnoreCase(cipherFmt)) {
-                    // BCD 编码格式
-                    byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
-                    password = new String(plain, StandardCharsets.UTF_8);
-                } else {
-                    // 其他格式直接解密为字符串
-                    password = sm2.decryptStr(password, KeyType.PrivateKey);
-                }
-            } catch (Exception ignored) {
-                // 解密失败时忽略异常
-            }
+        try {
+            password = decryptTransportPassword(password);
+        } catch (IllegalStateException ex) {
+            log.warn("Login failed: password transport decrypt failed, account={}", account);
+            loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "password transport decrypt failed");
+            return R.fail(AuthPromptEnum.PASSWORD_TRANSPORT_DECRYPT_FAILED);
         }
 
         // 根据账号查询用户信息
@@ -676,6 +662,24 @@ public class AuthServiceImpl implements AuthService {
             return provider.hash(rawPassword);
         }
         throw new IllegalStateException("Unsupported password store: " + provider.name());
+    }
+
+    private String decryptTransportPassword(String password) {
+        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
+        if (cryptoCfg == null || !StringUtils.hasText(cryptoCfg.getPrivateKey())
+                || !"SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
+            throw new IllegalStateException("SM2 transport crypto is not configured");
+        }
+        try {
+            SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
+            if ("BCD".equalsIgnoreCase(cryptoCfg.getCipher())) {
+                byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
+                return new String(plain, StandardCharsets.UTF_8);
+            }
+            return sm2.decryptStr(password, KeyType.PrivateKey);
+        } catch (Exception ex) {
+            throw new IllegalStateException("SM2 transport password decrypt failed", ex);
+        }
     }
 
     /**
@@ -1349,22 +1353,12 @@ public class AuthServiceImpl implements AuthService {
             return R.fail(CommonPrompt.ACCOUNT_ALREADY_EXISTS);
         }
 
-        // 5. 如果配置了 SM2 加密传输，则解密密码
-        String rawPassword = password;
-        CryptoTransportConfig cryptoCfg = configService.getJson("security.crypto.transport", CryptoTransportConfig.class, null);
-        if (cryptoCfg != null && StringUtils.hasText(cryptoCfg.getPrivateKey()) && "SM2".equalsIgnoreCase(cryptoCfg.getAlgorithm())) {
-            try {
-                SM2 sm2 = new SM2(cryptoCfg.getPrivateKey(), cryptoCfg.getPublicKey());
-                String cipherFmt = cryptoCfg.getCipher();
-                if ("BCD".equalsIgnoreCase(cipherFmt)) {
-                    byte[] plain = sm2.decryptFromBcd(password, KeyType.PrivateKey);
-                    rawPassword = new String(plain, StandardCharsets.UTF_8);
-                } else {
-                    rawPassword = sm2.decryptStr(password, KeyType.PrivateKey);
-                }
-            } catch (Exception ignored) {
-                // 解密失败时忽略异常
-            }
+        // 5. 解密 SM2 传输密码
+        String rawPassword;
+        try {
+            rawPassword = decryptTransportPassword(password);
+        } catch (IllegalStateException ex) {
+            return R.fail(AuthPromptEnum.PASSWORD_TRANSPORT_DECRYPT_FAILED);
         }
 
         // 6. 加密密码

@@ -121,6 +121,25 @@ export default {
   },
 
   // 즐겨찾기 관리 페이지
+  share: {
+    create: '공유 코드 생성',
+    import: '레이아웃 가져오기',
+    shareTitle: '레이아웃 공유 코드',
+    importTitle: '레이아웃 공유 코드 가져오기',
+    shareCode: '공유 코드',
+    inputPlaceholder: '공유 코드를 입력하세요',
+    copy: '복사',
+    preview: '미리보기',
+    apply: '현재 초안에 적용',
+    moduleCode: '모듈',
+    createTime: '생성 시각',
+    createSuccess: '공유 코드가 생성되었습니다',
+    createFailed: '공유 코드 생성에 실패했습니다',
+    copySuccess: '공유 코드가 복사되었습니다',
+    previewFailed: '유효하지 않은 공유 코드이거나 현재 테넌트에 속하지 않습니다',
+    importApplied: '현재 초안에 가져왔습니다. 레이아웃을 저장해야 반영됩니다.',
+  },
+
   management: {
     title: '즐겨찾기 관리',
     desc: '즐겨찾기 메뉴를 한 곳에서 관리하고, 홈 표시 순서 조정과 일괄 해제를 지원합니다.',
@@ -216,9 +235,12 @@ export default {
       basic: { name: '기본 정보', title: '기본 정보 홈', desc: '기본 정보 모듈의 마스터 데이터 진입점과 설정 상태를 한곳에서 확인합니다.' },
       approval: { name: '승인 관리', title: '승인 관리 홈', desc: '승인 작업, 대기 항목, 워크플로 설정을 한곳에서 확인합니다.' },
       sys: { name: '시스템 관리', title: '시스템 관리 홈', desc: '시스템 실행 상태, 권한 설정, 시스템 파라미터 진입점을 한곳에서 제공합니다.' },
+      integration: { name: 'Integration Platform', title: 'Integration Platform Home', desc: 'Shows external system access, API capabilities, call quality and recent exceptions.' },
     },
     widgets: {
       supplierInfo: { title: '공급업체 정보', subtitle: '공급업체 마스터 데이터 및 등록 관리', summary: '공급업체 프로필, 연락처, 자격 및 협업 상태를 관리합니다.' },
+      customerInfo: { title: '고객 정보', subtitle: '고객 마스터 데이터 및 연동 관리', summary: '고객 프로필, 연락처, 세금계산서 정보 및 타사 동기화 상태를 관리합니다.' },
+      workCalendarInfo: { title: '근무 캘린더', subtitle: '근무일 및 휴일 관리', summary: '기본 정보 모듈의 근무일, 휴일 및 일정 이벤트를 관리합니다.' },
       encodeRuleInfo: { title: '인코딩 규칙', subtitle: '통합 코드 생성 규칙', summary: '기본 정보 모듈의 인코딩 규칙, 일련번호 및 테스트 생성을 관리합니다.' },
       systemOverview: { title: '시스템 개요', subtitle: '조직, 사용자 및 권한 진입점', summary: '사용자, 역할, 메뉴 권한 등 핵심 시스템 기능에 빠르게 접근합니다.' },
       systemHealth: { title: '실행 상태', subtitle: '시스템 실행 및 보안 상태', summary: '온라인 사용자, 로그인 동작, 시스템 실행 관련 정보를 확인합니다.' },
@@ -228,10 +250,15 @@ export default {
       approvalShortcuts: { title: '승인 진입점', subtitle: '승인 시작 및 자주 쓰는 흐름', summary: '시작 가능한 승인 작업과 업무 흐름으로 빠르게 이동합니다.' },
       approvalPending: { title: '내 대기 작업', subtitle: '현재 처리 대기 승인', summary: '현재 사용자가 처리해야 하는 승인 인스턴스를 확인합니다.' },
       approvalTaskConfig: { title: '작업 설정', subtitle: '승인 작업 및 노드 규칙', summary: '작업 양식, 노드 승인자, 워크플로 규칙을 설정합니다.' },
+      integrationSummary: { title: 'Integration Overview', subtitle: 'External systems and API capability', summary: 'Shows third-party systems, external APIs, daily calls and success rate.' },
+      integrationStatusComparison: { title: 'Success/Failure Comparison', subtitle: 'Successful and failed API calls', summary: 'Compares successful and failed calls in the current statistical window.' },
+      integrationStatusPie: { title: 'Call Status Share', subtitle: 'Call result distribution', summary: 'Shows the share of call statuses for API monitoring.' },
+      integrationCallTrend: { title: 'Call Trend', subtitle: 'Call volume over the last 14 days', summary: 'Tracks total, successful and failed calls by date.' },
+      integrationTopApis: { title: 'Top APIs', subtitle: 'Most frequently called APIs', summary: 'Lists high-frequency external APIs and their call quality.' },
+      integrationRecentFailures: { title: 'Recent Failures', subtitle: 'Latest failed calls', summary: 'Shows recent failed calls for troubleshooting and audit.' },
       custom: { subtitle: '사용자 정의 위젯', summary: '저장된 모듈 홈 설정에서 가져온 위젯입니다.' },
     },
-    stats: {
-      masterData: '마스터 데이터', supplierArchive: '공급업체 프로필', approval: '승인', admissionChange: '등록/변경', rule: '규칙', byModule: '모듈별', capability: '기능', testGenerate: '테스트/생성', user: '사용자', accountManage: '계정 관리', role: '역할', authConfig: '권한 설정', status: '상태', onlineSession: '온라인/세션', security: '보안', loginAudit: '로그인 감사', audit: '감사', operationLog: '작업 로그', trace: '추적', loginRecord: '로그인 기록', scope: '범위', publicTenant: '공용/테넌트', config: '설정', systemParams: '시스템 파라미터', pending: '대기', myTasks: '내 작업', processed: '처리 완료', processRecord: '처리 기록', entry: '진입점', startApproval: '승인 시작', flow: '흐름', taskTemplate: '작업 템플릿', action: '작업', approveReject: '승인/반려', task: '작업', flowConfig: '흐름 설정', node: '노드', approvalRule: '승인 규칙', type: '유형', extension: '확장', enabled: '사용', pendingApproval: '승인 대기',
+    stats: {      masterData: '마스터 데이터', customerArchive: '고객 프로필', integration: '연동', thirdPartySync: '타사 동기화', calendar: '캘린더', workdayMaintain: '근무일 관리', event: '이벤트', holidayShift: '휴일 대체', supplierArchive: '공급업체 프로필', approval: '승인', admissionChange: '등록/변경', rule: '규칙', byModule: '모듈별', capability: '기능', testGenerate: '테스트/생성', user: '사용자', accountManage: '계정 관리', role: '역할', authConfig: '권한 설정', status: '상태', onlineSession: '온라인/세션', security: '보안', loginAudit: '로그인 감사', audit: '감사', operationLog: '작업 로그', trace: '추적', loginRecord: '로그인 기록', scope: '범위', publicTenant: '공용/테넌트', config: '설정', systemParams: '시스템 파라미터', pending: '대기', myTasks: '내 작업', processed: '처리 완료', processRecord: '처리 기록', entry: '진입점', startApproval: '승인 시작', flow: '흐름', taskTemplate: '작업 템플릿', action: '작업', approveReject: '승인/반려', task: '작업', flowConfig: '흐름 설정', node: '노드', approvalRule: '승인 규칙', type: '유형', extension: '확장', enabled: '사용', pendingApproval: '승인 대기', externalApi: 'External APIs', success: 'Success', callSuccess: 'Call success', fail: 'Failure', callFail: 'Call failure', callStatus: 'Call status', callTrace: 'Call trace', trend: 'Trend', last14Days: 'Last 14 days', call: 'Call', callCount: 'Call count', api: 'API', hotApi: 'Hot API', successRate: 'Success rate', quality: 'Quality', exception: 'Exception', failureTrace: 'Failure trace', callAudit: 'Call audit',
     },
   }
 }

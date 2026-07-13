@@ -7,6 +7,8 @@ import ${ctx.packageName}.domain.entity.${ctx.entityName};
 import ${ctx.packageName}.domain.entity.${ctx.treeEntityName};
 import ${ctx.packageName}.domain.param.${ctx.entityName}PageParam;
 import ${ctx.packageName}.domain.param.${ctx.entityName}SaveParam;
+import ${ctx.packageName}.domain.vo.${ctx.entityName}VO;
+import ${ctx.packageName}.domain.vo.${ctx.treeEntityName}VO;
 import ${ctx.packageName}.mapper.${ctx.entityName}Mapper;
 import ${ctx.packageName}.service.${ctx.entityName}Service;
 import lombok.RequiredArgsConstructor;
@@ -34,30 +36,30 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
     private final ${ctx.entityName}Mapper ${ctx.entityNameLower}Mapper;
 
     @Override
-    public List<${ctx.treeEntityName}> tree() {
-        return buildTree(${ctx.entityNameLower}Mapper.selectTreeList());
+    public List<${ctx.treeEntityName}VO> tree() {
+        return buildTree(${ctx.entityNameLower}Mapper.selectTreeList().stream().map(this::toTreeVO).toList());
     }
 
     @Override
-    public IPage<${ctx.entityName}> page(${ctx.entityName}PageParam param) {
+    public IPage<${ctx.entityName}VO> page(${ctx.entityName}PageParam param) {
         Page<${ctx.entityName}> page = new Page<>(param.getPageNum(), param.getPageSize());
         LambdaQueryWrapper<${ctx.entityName}> wrapper = new LambdaQueryWrapper<>();
-<% for(column in ctx.mainQueryColumns){ %>
+        <% for(column in ctx.mainQueryColumns){ %>
         if (param.get${column.javaFieldNameCapital}() != null <% if(column.javaType == "String"){ %> && StringUtils.hasText(param.get${column.javaFieldNameCapital}())<% } %>) {
             wrapper.${column.queryOperator == "like" ? "like" : "eq"}(${ctx.entityName}::get${column.javaFieldNameCapital}, param.get${column.javaFieldNameCapital}());
         }
 <% } %>
         if (param.getCurrentTreeId() == null) {
-            return new Page<>(param.getPageNum(), param.getPageSize());
+            return new Page<${ctx.entityName}VO>(param.getPageNum(), param.getPageSize());
         }
         wrapper.eq(${ctx.entityName}::get${ctx.treeFilterJavaFieldCapital}, param.getCurrentTreeId());
         wrapper.orderByDesc(${ctx.entityName}::get${ctx.mainPkJavaFieldCapital});
-        return ${ctx.entityNameLower}Mapper.selectPage(page, wrapper);
+        return ${ctx.entityNameLower}Mapper.selectPage(page, wrapper).convert(this::toVO);
     }
 
     @Override
-    public ${ctx.entityName} detail(${ctx.mainPkJavaType!"Long"} id) {
-        return ${ctx.entityNameLower}Mapper.selectById(id);
+    public ${ctx.entityName}VO detail(${ctx.mainPkJavaType!"Long"} id) {
+        return toVO(${ctx.entityNameLower}Mapper.selectById(id));
     }
 
     @Override
@@ -86,23 +88,23 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
         ${ctx.entityNameLower}Mapper.deleteById(id);
     }
 
-    private List<${ctx.treeEntityName}> buildTree(List<${ctx.treeEntityName}> nodes) {
+    private List<${ctx.treeEntityName}VO> buildTree(List<${ctx.treeEntityName}VO> nodes) {
         if (CollectionUtils.isEmpty(nodes)) {
             return List.of();
         }
-        Map<${ctx.treePkJavaType!"Long"}, ${ctx.treeEntityName}> nodeMap = new LinkedHashMap<>();
-        List<${ctx.treeEntityName}> roots = new ArrayList<>();
-        for (${ctx.treeEntityName} node : nodes) {
+        Map<${ctx.treePkJavaType!"Long"}, ${ctx.treeEntityName}VO> nodeMap = new LinkedHashMap<>();
+        List<${ctx.treeEntityName}VO> roots = new ArrayList<>();
+        for (${ctx.treeEntityName}VO node : nodes) {
             nodeMap.put(node.get${ctx.treePkJavaFieldCapital}(), node);
             node.setChildren(new ArrayList<>());
         }
-        for (${ctx.treeEntityName} node : nodes) {
+        for (${ctx.treeEntityName}VO node : nodes) {
             ${ctx.treeParentJavaType!ctx.treePkJavaType!"Long"} parentId = node.get${ctx.treeParentJavaFieldCapital}();
             if (parentId == null || parentId.equals(${ctx.treeRootValueLiteral!"0"})) {
                 roots.add(node);
                 continue;
             }
-            ${ctx.treeEntityName} parent = nodeMap.get(parentId);
+            ${ctx.treeEntityName}VO parent = nodeMap.get(parentId);
             if (parent == null) {
                 roots.add(node);
                 continue;
@@ -110,5 +112,23 @@ public class ${ctx.entityName}ServiceImpl implements ${ctx.entityName}Service {
             parent.getChildren().add(node);
         }
         return roots;
+    }
+
+    private ${ctx.entityName}VO toVO(${ctx.entityName} entity) {
+        if (entity == null) {
+            return null;
+        }
+        ${ctx.entityName}VO vo = new ${ctx.entityName}VO();
+        BeanUtils.copyProperties(entity, vo);
+        return vo;
+    }
+
+    private ${ctx.treeEntityName}VO toTreeVO(${ctx.treeEntityName} entity) {
+        if (entity == null) {
+            return null;
+        }
+        ${ctx.treeEntityName}VO vo = new ${ctx.treeEntityName}VO();
+        BeanUtils.copyProperties(entity, vo);
+        return vo;
     }
 }

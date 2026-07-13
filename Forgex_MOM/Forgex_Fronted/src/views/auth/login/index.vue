@@ -241,7 +241,6 @@ import { useI18n } from 'vue-i18n'
 import {
   login,
   chooseTenant,
-  getPublicKey,
   getSocialAuthorizeUrl,
   updateTenantPreferences,
   type TenantOption
@@ -252,7 +251,7 @@ import router, { PERSONAL_HOME_PATH, injectDynamicRoutes } from '../../../router
 import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
-import { sm2 } from 'sm-crypto'
+import { encryptSensitiveText } from '@/utils/crypto'
 import { useUserStore } from '@/stores/user'
 import { use权限Store } from '@/stores/permission'
 import type { SystemBasicConfig } from '../../../api/system/config'
@@ -321,7 +320,6 @@ const sliderChallenge = ref<SliderCaptchaChallenge | null>(null)
 const sliderValue = ref(0)
 const sliderTrackStartAt = ref(0)
 const logging = ref(false)
-const publicKeyCache = ref<string>('')
 const showSort = ref(false)
 const languages = ref<LanguageType[]>([])
 const selectedLang = ref<string>(getLocale())
@@ -534,16 +532,13 @@ async function onPreLogin() {
     tenantOpen.value = false
     tenants.value = []
     chosenTenant.value = null
-    let pwdToSend = password.value
+    let pwdToSend = ''
     try {
-      if (!publicKeyCache.value) {
-        publicKeyCache.value = await getPublicKey()
-      }
-      if (publicKeyCache.value) {
-        const cipherHex = sm2.doEncrypt(password.value, publicKeyCache.value, 1)
-        pwdToSend = cipherHex
-      }
-    } catch (e) {}
+      pwdToSend = await encryptSensitiveText(password.value)
+    } catch (e: any) {
+      message.error(e?.message || i18nT('common.operationFailed'))
+      return
+    }
     const res = await login({
       account: account.value,
       password: pwdToSend,

@@ -1,0 +1,30 @@
+package ${ctx.packageName}.domain.vo;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ${ctx.treeTableComment} tree VO
+ *
+ * @author ${ctx.author}
+ * @since ${ctx.date}
+ */
+@Data
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class ${ctx.treeEntityName}VO {
+<% for(column in ctx.treeColumns){ if(!column.isBaseField){ %>
+
+    /**
+     * ${column.columnComment!column.columnName}
+     */
+    private ${column.javaType} ${column.javaFieldName};
+<% }} %>
+
+    /**
+     * Children
+     */
+    private List<${ctx.treeEntityName}VO> children = new ArrayList<>();
+}
