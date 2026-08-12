@@ -1744,7 +1744,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                         .forEach(fallbackLanguages::add);
             }
         } catch (Exception ex) {
-            log.warn("加载启用语言列表失败，菜单国际化将使用默认兜底", ex);
+            log.error("加载启用语言列表失败，菜单国际化将使用默认兜底", ex);
         }
         fallbackLanguages.add("zh-CN");
         fallbackLanguages.add("zh");

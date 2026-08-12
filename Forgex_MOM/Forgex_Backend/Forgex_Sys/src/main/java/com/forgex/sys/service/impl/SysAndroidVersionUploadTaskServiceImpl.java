@@ -200,7 +200,7 @@ public class SysAndroidVersionUploadTaskServiceImpl
                     updateById(task);
                 }
             } catch (IOException e) {
-                log.warn("Clean expired android upload task failed, uploadId={}", task.getUploadId(), e);
+                log.error("Clean expired android upload task failed, uploadId={}", task.getUploadId(), e);
             }
         }
     }

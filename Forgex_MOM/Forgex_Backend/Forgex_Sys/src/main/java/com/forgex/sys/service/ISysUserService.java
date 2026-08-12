@@ -18,14 +18,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.dto.UserThirdPartyPullResultDTO;
 import com.forgex.common.api.dto.UserThirdPartySyncDTO;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
-import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.domain.dto.SysUserQueryDTO;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.vo.SysUserVO;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -378,22 +375,6 @@ public interface ISysUserService extends IService<SysUser> {
      */
     UserThirdPartyPullResultDTO syncThirdPartyUsers(Long tenantId, List<UserThirdPartySyncDTO> users);
 
-    /**
-     * 执行sys用户的导入users操作。
-     *
-     * @param tenantId 租户 ID
-     * @param file 文件
-     * @return 处理结果
-     */
-    UserThirdPartyPullResultDTO importUsers(Long tenantId, MultipartFile file) throws Exception;
-
-    /**
-     * 执行公共导入。
-     *
-     * @param param 公共导入参数
-     * @return 导入结果
-     */
-    FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param);
 
     /**
      * 按用户 ID 查询有效用户 ID 列表。
@@ -430,4 +411,14 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 列表数据
      */
     List<Long> listUserIdsByPositionIds(Long tenantId, List<Long> positionIds);
+
+    /**
+     * 解析发起人的第 N 级直属上级用户 ID。
+     *
+     * @param tenantId 租户 ID
+     * @param userId 发起人用户 ID
+     * @param level 上溯级数，1 表示直接上级
+     * @return 上级用户 ID 列表，无法解析时为空列表
+     */
+    List<Long> resolveSuperiorUserIds(Long tenantId, Long userId, Integer level);
 }

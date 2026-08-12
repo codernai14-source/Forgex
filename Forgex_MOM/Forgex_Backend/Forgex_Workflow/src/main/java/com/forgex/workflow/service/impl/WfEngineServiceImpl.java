@@ -63,9 +63,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -430,7 +432,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
      * </ol>
      *
      * @param executionId 执行记录 ID
-     * @param status 最终状态：2-审批完成，3-已撤销
+     * @param status 最终状态：2=审批完成，3=已驳回，4=已撤销
      * @throws I18nBusinessException 当执行记录不存在时抛出业务异常
      * @see WfTaskExecution
      */
@@ -505,7 +507,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
                 .distinct()
                 .toArray(Long[]::new);
         if (approvers.length == 0) {
-            log.warn("审批节点未匹配到有效审批人，阻止自动流转，executionId={}, nodeId={}", execution.getId(), node.getId());
+            log.error("审批节点未匹配到有效审批人，阻止自动流转，executionId={}, nodeId={}", execution.getId(), node.getId());
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_NODE_APPROVER_RESOLVE_EMPTY);
         }
 
@@ -652,7 +654,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (result.getCode() == 200 && result.getData() != null) {
                 return result.getData();
             }
-            log.warn("审批人部门匹配返回异常，tenantId={}, deptIds={}, result={}",
+            log.error("审批人部门匹配返回异常，tenantId={}, deptIds={}, result={}",
                     getCurrentTenantId(), deptIds, JSON.toJSONString(result));
         } catch (Exception ex) {
             log.error("根据部门查询审批人失败，deptIds={}", deptIds, ex);
@@ -666,7 +668,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (result.getCode() == 200 && result.getData() != null) {
                 return result.getData();
             }
-            log.warn("审批人角色匹配返回异常，tenantId={}, roleIds={}, result={}",
+            log.error("审批人角色匹配返回异常，tenantId={}, roleIds={}, result={}",
                     getCurrentTenantId(), roleIds, JSON.toJSONString(result));
         } catch (Exception ex) {
             log.error("根据角色查询审批人失败，roleIds={}", roleIds, ex);
@@ -680,7 +682,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
             if (result.getCode() == 200 && result.getData() != null) {
                 return result.getData();
             }
-            log.warn("审批人岗位匹配返回异常，tenantId={}, positionIds={}, result={}",
+            log.error("审批人岗位匹配返回异常，tenantId={}, positionIds={}, result={}",
                     getCurrentTenantId(), positionIds, JSON.toJSONString(result));
         } catch (Exception ex) {
             log.error("根据职位查询审批人失败，positionIds={}", positionIds, ex);
@@ -750,7 +752,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
                     return false;
             }
         } catch (Exception ex) {
-            log.warn("分支条件计算失败，field={}, operator={}, value={}", field, operator, value, ex);
+            log.error("分支条件计算失败，field={}, operator={}, value={}", field, operator, value, ex);
             return false;
         }
     }
@@ -799,7 +801,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
         List<WfTaskNodeRuleDTO> rules = loadNodeRuleConfigs(node.getId(), execution.getTenantId());
         List<ResolvedApprover> resolvedApprovers = resolveApproversForNode(node, execution, rules);
         if (resolvedApprovers.isEmpty()) {
-            log.warn("审批节点未匹配到有效审批人，tenantId={}, executionId={}, taskCode={}, nodeId={}, nodeName={}, approveType={}, rules={}",
+            log.error("审批节点未匹配到有效审批人，tenantId={}, executionId={}, taskCode={}, nodeId={}, nodeName={}, approveType={}, rules={}",
                     execution.getTenantId(),
                     execution.getId(),
                     execution.getTaskCode(),
@@ -910,6 +912,8 @@ public class WfEngineServiceImpl implements IWfEngineService {
             dto.setAllowTransfer(rule.getAllowTransfer());
             dto.setAllowDelegate(rule.getAllowDelegate());
             dto.setAllowRecall(rule.getAllowRecall());
+            dto.setFallbackApproverIds(parseJsonApproverIds(rule.getFallbackApproverIds()));
+            dto.setExtraConfig(rule.getExtraConfig());
             dto.setApprovers(new ArrayList<>(approverDTOs));
             return dto;
         }).collect(Collectors.toList());
@@ -945,7 +949,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
                 if (approver == null || approver.getApproverType() == null) {
                     continue;
                 }
-                for (Long approverId : resolveApproverIdsByRule(approver, execution)) {
+                for (Long approverId : resolveApproverIdsByRule(approver, rule, execution)) {
                     if (approverId == null || !deduplicated.add(approverId)) {
                         continue;
                     }
@@ -995,7 +999,7 @@ public class WfEngineServiceImpl implements IWfEngineService {
         return approver;
     }
 
-    private List<Long> resolveApproverIdsByRule(WfNodeApproverDTO approver, WfTaskExecution execution) {
+    private List<Long> resolveApproverIdsByRule(WfNodeApproverDTO approver, WfTaskNodeRuleDTO rule, WfTaskExecution execution) {
         if (approver.getApproverType() == null) {
             return Collections.emptyList();
         }
@@ -1006,9 +1010,33 @@ public class WfEngineServiceImpl implements IWfEngineService {
             }
             return approver.getApproverIds() == null ? Collections.emptyList() : approver.getApproverIds();
         }
+        if (Objects.equals(approver.getApproverType(), WorkflowConstants.ApproverType.SUPERIOR)) {
+            Integer level = rule == null ? null : rule.getSuperiorLevel();
+            return resolveSuperiorApproverIds(execution.getInitiatorId(), level);
+        }
         return parseApproverIds(approver.getApproverType(),
                 JSON.toJSONString(approver.getApproverIds() == null ? Collections.emptyList() : approver.getApproverIds()),
                 execution.getTenantId());
+    }
+
+    private List<Long> resolveSuperiorApproverIds(Long initiatorUserId, Integer level) {
+        if (initiatorUserId == null) {
+            return Collections.emptyList();
+        }
+        Map<String, Object> request = new HashMap<>();
+        request.put("initiatorUserId", initiatorUserId);
+        request.put("level", level == null ? 1 : level);
+        try {
+            R<List<Long>> result = sysUserClient.resolveSuperiorUserIds(request);
+            if (result != null && result.getCode() == StatusCode.SUCCESS && result.getData() != null) {
+                return result.getData();
+            }
+            log.warn("上级审批解析返回异常，initiatorUserId={}, level={}, result={}",
+                    initiatorUserId, level, JSON.toJSONString(result));
+        } catch (Exception ex) {
+            log.error("上级审批解析失败，initiatorUserId={}, level={}", initiatorUserId, level, ex);
+        }
+        return Collections.emptyList();
     }
 
     private List<Long> parseJsonApproverIds(String approverIds) {

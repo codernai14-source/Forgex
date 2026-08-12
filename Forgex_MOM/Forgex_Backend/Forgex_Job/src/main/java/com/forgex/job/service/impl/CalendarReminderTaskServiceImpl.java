@@ -152,7 +152,7 @@ public class CalendarReminderTaskServiceImpl extends ServiceImpl<SysCalendarRemi
             task.setNextRetryTime(LocalDateTime.now().plusMinutes(Math.max(1, sendCount * 5L)));
         }
         reminderTaskMapper.updateById(task);
-        log.warn("日历提醒发送失败 taskId={}", task.getId(), ex);
+        log.error("日历提醒发送失败 taskId={}", task.getId(), ex);
     }
 
     private void cancelBySource(String sourceType, Long sourceId, Long tenantId) {

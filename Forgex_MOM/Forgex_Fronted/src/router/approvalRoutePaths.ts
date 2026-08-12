@@ -16,6 +16,8 @@ export const approvalRoutePaths = {
   myPending: `${APPROVAL_ROUTE_BASE}/my/pending`,
   myProcessed: `${APPROVAL_ROUTE_BASE}/my/processed`,
   myInitiated: `${APPROVAL_ROUTE_BASE}/my/initiated`,
+  myCc: `${APPROVAL_ROUTE_BASE}/my/cc`,
+  delegateSettings: `${APPROVAL_ROUTE_BASE}/my/delegate-settings`,
   compensationCenter: `${APPROVAL_ROUTE_BASE}/governance/compensation`,
 }
 

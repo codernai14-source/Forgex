@@ -31,26 +31,26 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component("emptyApprovalInterpreter")
 public class EmptyApprovalInterpreter implements IApprovalInterpreter {
-    
+
     @Override
     public void onStart(ApprovalContext context) {
-        log.debug("审批开始：taskCode={}, executionId={}", context.getTaskCode(), context.getExecutionId());
+        log.info("审批开始：taskCode={}, executionId={}", context.getTaskCode(), context.getExecutionId());
     }
-    
+
     @Override
     public void onApprove(ApprovalContext context) {
-        log.debug("审批通过：executionId={}, nodeId={}, approver={}", 
+        log.info("审批通过：executionId={}, nodeId={}, approver={}",
                 context.getExecutionId(), context.getCurrentNodeId(), context.getApproverName());
     }
-    
+
     @Override
     public void onReject(ApprovalContext context) {
-        log.debug("审批驳回：executionId={}, nodeId={}, reason={}", 
+        log.info("审批驳回：executionId={}, nodeId={}, reason={}",
                 context.getExecutionId(), context.getCurrentNodeId(), context.getComment());
     }
-    
+
     @Override
     public void onEnd(ApprovalContext context) {
-        log.debug("审批结束：executionId={}, status={}", context.getExecutionId(), context.getStatus());
+        log.info("审批结束：executionId={}, status={}", context.getExecutionId(), context.getStatus());
     }
 }

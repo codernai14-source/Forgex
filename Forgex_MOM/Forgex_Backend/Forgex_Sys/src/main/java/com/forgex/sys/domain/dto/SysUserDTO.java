@@ -98,6 +98,11 @@ public class SysUserDTO {
     private Long employeeId;
 
     /**
+     * 直属上级用户 ID。
+     */
+    private Long superiorUserId;
+
+    /**
      * 用户来源。
      */
     private Integer userSource;

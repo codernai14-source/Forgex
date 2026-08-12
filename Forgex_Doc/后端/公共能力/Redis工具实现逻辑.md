@@ -1,8 +1,8 @@
-# Redis 工具实现逻辑
+﻿# Redis 工具实现逻辑
 
 > 分类：后端 / 公共能力
-> 版本：**V0.6.5**
-> 更新时间：**2026-04-22**
+> 版本：**V0.8.5**
+> 更新时间：**2026-08-12**
 
 本文重点解释 Forgex 中 Redis 工具的实现逻辑，包括 `RedisHelper` 工具类、分布式锁机制、字典二级缓存架构、以及 Redis Pub/Sub 缓存失效机制。
 
@@ -10,11 +10,11 @@
 
 | 能力 | 代码位置 | 说明 |
 |---|---|---|
-| Redis 工具类 | `Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/util/RedisHelper.java` | 基础字符串/JSON 操作封装 |
+| Redis 工具类 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/util/RedisHelper.java` | 基础字符串/JSON 操作封装 |
 | Redisson 客户端 | `Forgex_MOM/Forgex_Backend/Forgex_Auth/src/main/java/com/forgex/auth/service/impl/AuthServiceImpl.java` | 分布式锁、原子计数器 |
-| 字典缓存配置 | `Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/config/DictCacheConfig.java` | Caffeine + Redis 二级缓存 |
-| 缓存失效监听 | `Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/dict/DictCacheInvalidationListener.java` | Redis Pub/Sub 消息监听 |
-| 字典国际化解析 | `Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/dict/DictI18nResolver.java` | 三级缓存查询链路 |
+| 字典缓存配置 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/config/DictCacheConfig.java` | Caffeine + Redis 二级缓存 |
+| 缓存失效监听 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/dict/DictCacheInvalidationListener.java` | Redis Pub/Sub 消息监听 |
+| 字典国际化解析 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/dict/DictI18nResolver.java` | 三级缓存查询链路 |
 
 ## 一、RedisHelper 工具类实现
 

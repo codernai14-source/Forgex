@@ -682,6 +682,10 @@ async function handleSubmit() {
       importConfig: config.value,
       importData: importData.value,
     })
+    if (Number(result.value?.failedCount || 0) > 0) {
+      message.error(t('system.excel.importFail'))
+      return
+    }
     message.success(t('system.excel.commonImport.importSuccess'))
     emit('success', result.value)
   } finally {

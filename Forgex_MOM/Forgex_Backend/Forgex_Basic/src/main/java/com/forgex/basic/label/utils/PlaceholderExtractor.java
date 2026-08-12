@@ -142,7 +142,7 @@ public class PlaceholderExtractor {
         }
 
         if (!missingFields.isEmpty()) {
-            log.warn("打印数据缺少字段: {}", missingFields);
+            log.error("打印数据缺少字段: {}", missingFields);
         }
 
         return missingFields;

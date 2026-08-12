@@ -52,7 +52,7 @@ public class TemplateMessageRocketMqConsumer implements RocketMQListener<String>
     @Override
     public void onMessage(String messageJson) {
         if (!StringUtils.hasText(messageJson)) {
-            log.warn("RocketMQ 模板消息内容为空");
+            log.error("RocketMQ 模板消息内容为空");
             return;
         }
 

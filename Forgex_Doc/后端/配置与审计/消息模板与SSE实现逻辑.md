@@ -1,8 +1,8 @@
-# 消息模板与SSE实现逻辑
+﻿# 消息模板与SSE实现逻辑
 
 > 分类：后端 / 配置与审计
-> 版本：**V0.6.5**
-> 更新时间：**2026-04-17**
+> 版本：**V0.8.5**
+> 更新时间：**2026-08-12**
 
 本文重点解释四条链路：
 
@@ -19,7 +19,7 @@
 | 站内消息接口 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/controller/SysMessageController.java` | 发送、未读、已读、分页、按模板发送 |
 | SSE 建连接口 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/controller/SysMessageSseController.java` | `GET /sys/message/stream` |
 | 模板消息发送实现 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/impl/TemplateMessageServiceImpl.java` | 渲染模板、落消息、推 SSE |
-| 模板配置同步实现 | `Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/service/template/TemplateConfigServiceImpl.java` | 公共模板同步到租户、响应模板/MQ 模板/导出模板同步 |
+| 模板配置同步实现 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/service/template/TemplateConfigServiceImpl.java` | 公共模板同步到租户、响应模板/MQ 模板/导出模板同步 |
 | SSE 管理服务 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/SseEmitterService.java` | 建连、心跳、清理、定向推送 |
 | 系统通知接口 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/controller/SysNoticeController.java` | 系统通知分页、保存、发布/停用、首页待弹列表、用户确认 |
 

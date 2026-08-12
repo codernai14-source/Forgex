@@ -399,7 +399,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
             }
             return value == null ? null : Long.valueOf(String.valueOf(value));
         } catch (Exception ex) {
-            log.warn("parse inbound auth config failed, apiCode={}, authConfig={}", config.getApiCode(), config.getAuthConfig(), ex);
+            log.error("parse inbound auth config failed, apiCode={}, authConfig={}", config.getApiCode(), config.getAuthConfig(), ex);
             return null;
         }
     }
@@ -493,7 +493,7 @@ public class ApiGatewayServiceImpl implements IApiGatewayService {
             logEntity.setCallTime(LocalDateTime.now());
             apiLogBufferService.buffer(logEntity);
         } catch (Exception ex) {
-            log.warn("buffer integration log failed", ex);
+            log.error("buffer integration log failed", ex);
         }
     }
 

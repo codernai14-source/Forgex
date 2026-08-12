@@ -9,7 +9,10 @@
       :show-query-form="true"
     >
       <template #status="{ record }">
-        <DictTag :value="record.status" :items="executionStatusOptions" :fallback-text="getStatusText(record.status)" />
+        <a-tag v-if="isCanceledByInitiator(record)" color="red">
+          {{ t('workflow.myTask.historyStatus.canceled') }}
+        </a-tag>
+        <DictTag v-else :value="record.status" :items="executionStatusOptions" :fallback-text="getStatusText(record.status)" />
       </template>
 
       <template #startTime="{ record }">
@@ -65,7 +68,7 @@
       :width="900"
       :footer="null"
     >
-      <WorkflowTracePanel :instances="[]" :action-logs="currentActionLogs" />
+      <WorkflowTracePanel :record="currentRecord" :instances="currentInstances" :action-logs="currentActionLogs" />
     </a-modal>
   </div>
 </template>
@@ -140,6 +143,10 @@ const handleRequest = async (payload: {
 
 function getStatusText(status?: number): string {
   return getDictItemLabel(executionStatusOptions.value, status, t('workflow.myTask.unknownStatus'))
+}
+
+function isCanceledByInitiator(record: WfExecutionDTO): boolean {
+  return record.status === 4
 }
 
 function formatDateTime(dateTime?: string): string {

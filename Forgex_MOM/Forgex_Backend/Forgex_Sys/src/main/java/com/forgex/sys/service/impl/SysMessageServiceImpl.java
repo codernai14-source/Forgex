@@ -104,7 +104,7 @@ public class SysMessageServiceImpl implements SysMessageService {
             receiverTenantId = senderTenantId;
         } else if ("EXTERNAL".equals(scope) && !receiverTenantId.equals(senderTenantId)) {
             if (!checkCrossTenantPermission(senderTenantId, receiverTenantId)) {
-                log.warn("跨租户消息发送被拒绝: senderTenantId={}, receiverTenantId={}",
+                log.error("跨租户消息发送被拒绝: senderTenantId={}, receiverTenantId={}",
                         senderTenantId, receiverTenantId);
                 throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.MSG_NO_PERMISSION);
             }

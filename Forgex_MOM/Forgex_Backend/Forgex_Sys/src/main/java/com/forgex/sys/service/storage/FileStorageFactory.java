@@ -96,7 +96,7 @@ public class FileStorageFactory {
             if ("LOCAL".equals(type) || StringUtils.hasText(uploadConfig.getProviderConfigJson())) {
                 return new StorageResolved(type, uploadConfig.getProviderConfigJson(), null);
             }
-            log.warn("file.upload.settings ignored because providerConfigJson is empty for storageType={}", type);
+            log.error("file.upload.settings ignored because providerConfigJson is empty for storageType={}", type);
         }
 
         SysFileStorage cfg = storageConfigService.getDefault();

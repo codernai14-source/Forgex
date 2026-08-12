@@ -1,11 +1,7 @@
 <template>
   <span class="fx-action-group">
     <template v-for="item in inlineActions" :key="item.key">
-      <a
-        :class="getActionClass(item)"
-        :data-guide-id="item.guideId"
-        @click="event => handleActionClick(item, event)"
-      >
+      <a :class="getActionClass(item)" :data-guide-id="item.guideId" @click="event => handleActionClick(item, event)">
         {{ resolveActionLabel(item.label) }}
       </a>
     </template>
@@ -36,7 +32,7 @@
 import { computed } from 'vue'
 import { DownOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { use权限Store } from '@/stores/permission'
+import { usePermissionStore } from '@/stores/permission'
 
 export interface ActionItem {
   key: string
@@ -61,7 +57,7 @@ const props = withDefaults(
   },
 )
 
-const permissionStore = use权限Store()
+const permissionStore = usePermissionStore()
 const { t, te } = useI18n()
 const resolvedMoreLabel = computed(() => props.moreLabel || t('common.more'))
 
@@ -73,7 +69,7 @@ function hasPermission(permission?: string) {
   if (!permission) {
     return true
   }
-  const checker = permissionStore.has权限 as any
+  const checker = permissionStore.hasPermission as any
   if (typeof checker === 'function') {
     return checker(permission)
   }
@@ -83,10 +79,7 @@ function hasPermission(permission?: string) {
   return false
 }
 
-const visibleActions = computed(() => (
-  props.actions.filter(item => !item.hidden && hasPermission(item.permission))
-))
-
+const visibleActions = computed(() => props.actions.filter(item => !item.hidden && hasPermission(item.permission)))
 const inlineLimit = computed(() => Math.max(Number(props.maxInline || 3), 1))
 const inlineActions = computed(() => {
   if (visibleActions.value.length <= inlineLimit.value) {

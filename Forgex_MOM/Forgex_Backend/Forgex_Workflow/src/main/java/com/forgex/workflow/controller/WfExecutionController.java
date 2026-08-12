@@ -15,8 +15,10 @@ package com.forgex.workflow.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
+import com.forgex.common.api.dto.WorkflowTimeoutScanRequestDTO;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.workflow.domain.dto.WfApprovalActionLogDTO;
 import com.forgex.workflow.domain.dto.WfApprovalInstanceDTO;
@@ -30,7 +32,9 @@ import com.forgex.workflow.domain.param.WfExecutionBatchRemindParam;
 import com.forgex.workflow.domain.param.WfExecutionBatchTransferParam;
 import com.forgex.workflow.domain.param.WfExecutionCompensateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
+import com.forgex.workflow.domain.param.WfExecutionDelegateParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
+import com.forgex.workflow.domain.param.WfExecutionRecallParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
 import com.forgex.workflow.domain.param.WfExecutionTransferParam;
 import com.forgex.workflow.enums.WorkflowPromptEnum;
@@ -93,6 +97,36 @@ public class WfExecutionController {
     }
 
     /**
+     * 内部接口：扫描并处理超时审批实例。
+     * <p>
+     * 供定时任务模块跨服务触发工作流超时补偿。定时任务线程没有 HTTP 请求上下文，
+     * 租户 ID 通过请求体显式传入，此处临时设置到 {@link TenantContext} 后再执行扫描。
+     * </p>
+     *
+     * @param request 超时扫描请求，包含租户 ID
+     * @return 是否处理成功
+     */
+    @PostMapping("/internal/timeout/scan")
+    public R<Boolean> scanTimeoutInstances(@RequestBody WorkflowTimeoutScanRequestDTO request) {
+        if (request == null || request.getTenantId() == null) {
+            return R.ok(Boolean.FALSE);
+        }
+        Long previousTenant = TenantContext.get();
+        try {
+            TenantContext.set(request.getTenantId());
+            WfExecutionCompensateParam param = new WfExecutionCompensateParam();
+            param.setExecutionId(request.getExecutionId());
+            return R.ok(executionService.retryTimeoutJobs(param));
+        } finally {
+            if (previousTenant == null) {
+                TenantContext.clear();
+            } else {
+                TenantContext.set(previousTenant);
+            }
+        }
+    }
+
+    /**
      * 审批通过
      * <p>
      * 对当前待办审批任务进行审批通过操作，流转到下一节点或结束流程
@@ -149,10 +183,11 @@ public class WfExecutionController {
     /**
      * 加签审批任务。
      * <p>
-     * 在当前审批节点增加审批人，支持前加签和后加签
+     * 在当前审批节点并行追加一名审批人，与当前审批人同时处于待办状态（并行加签）。
+     * 暂不支持前加签 / 后加签的顺序语义，如需顺序加签请另行立项。
      * </p>
      *
-     * @param param 加签参数，包含执行 ID、加签用户 ID、加签类型（前加签/后加签）、加签意见等（必填）
+     * @param param 加签参数，包含执行 ID、审批实例 ID、加签审批人 ID、加签意见等（必填）
      * @return 是否加签成功
      * @throws I18nBusinessException 当参数校验失败或加签失败时抛出业务异常
      * @see IWfExecutionService#addSign(WfExecutionAddSignParam) 审批加签服务方法
@@ -162,6 +197,34 @@ public class WfExecutionController {
     @RequirePerm("wf:execution:addSign")
     public R<Boolean> addSign(@Validated @RequestBody WfExecutionAddSignParam param) {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.addSign(param));
+    }
+
+    /**
+     * 委托单条审批待办。
+     *
+     * @param param 单条委托参数
+     * @return 是否委托成功
+     * @see IWfExecutionService#delegate(WfExecutionDelegateParam)
+     */
+    @PostMapping("/delegate")
+    @RequirePerm("wf:execution:delegate")
+    public R<Boolean> delegate(@Validated @RequestBody WfExecutionDelegateParam param) {
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.delegate(param));
+    }
+
+    /**
+     * 审批人撤回。
+     * <p>
+     * 撤回当前审批人已提交但尚未流转到后续节点的审批意见，并将审批实例重新回到待办。
+     * </p>
+     *
+     * @param param 撤回参数，包含执行 ID、审批实例 ID、撤回说明
+     * @return 是否撤回成功
+     */
+    @PostMapping("/recall")
+    @RequirePerm("wf:execution:recall")
+    public R<Boolean> recall(@Validated @RequestBody WfExecutionRecallParam param) {
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.recall(param));
     }
 
     /**
@@ -267,7 +330,7 @@ public class WfExecutionController {
      * @see WfExecutionDelegateSaveParam 委托保存参数
      */
     @PostMapping("/delegate/save")
-    @RequirePerm("wf:execution:approve")
+    @RequirePerm("wf:execution:delegate")
     public R<Boolean> saveDelegate(@Validated @RequestBody WfExecutionDelegateSaveParam param) {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.saveDelegate(param));
     }
@@ -284,7 +347,7 @@ public class WfExecutionController {
      * @see IWfExecutionService#cancelDelegate(Long) 取消审批委托服务方法
      */
     @PostMapping("/delegate/cancel")
-    @RequirePerm("wf:execution:approve")
+    @RequirePerm("wf:execution:delegate")
     public R<Boolean> cancelDelegate(@RequestBody Map<String, Object> params) {
         Long delegatorUserId = Long.valueOf(params.get("delegatorUserId").toString());
         return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.cancelDelegate(delegatorUserId));
@@ -430,7 +493,7 @@ public class WfExecutionController {
      * @see WfExecutionQueryParam 审批执行查询参数
      */
     @PostMapping("/my/cc")
-    @RequirePerm("wf:dashboard:view")
+    @RequirePerm("wf:myTask:cc")
     public R<Page<WfExecutionDTO>> pageMyCc(@RequestBody WfExecutionQueryParam param) {
         return R.ok(executionService.pageMyCc(param));
     }

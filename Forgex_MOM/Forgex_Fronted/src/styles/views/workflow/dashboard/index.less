@@ -23,16 +23,44 @@
 
   .section-card,
   .dash-card {
-    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    border-radius: 8px;
     border: 1px solid var(--fx-border-color, #e5e7eb);
     background: color-mix(in srgb, var(--fx-bg-container, #ffffff) 96%, white);
     box-shadow: var(--fx-shadow-secondary, 0 12px 28px rgba(15, 23, 42, 0.08));
-    height: 100%;
     overflow: hidden;
 
+    :deep(.ant-card-head) {
+      flex: 0 0 auto;
+      min-height: 52px;
+      padding: 0 18px;
+    }
+
+    :deep(.ant-card-head-wrapper) {
+      min-height: 52px;
+    }
+
+    :deep(.ant-card-head-title) {
+      min-width: 0;
+      padding: 12px 0;
+    }
+
+    :deep(.ant-card-extra) {
+      min-width: 0;
+      padding: 12px 0;
+    }
+
     :deep(.ant-card-body) {
-      height: calc(100% - 57px);
-      overflow: auto;
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-height: 0;
+      height: auto;
+      padding: 16px 18px;
+      overflow: hidden;
     }
   }
 
@@ -73,6 +101,7 @@
   }
 
   .section-intro {
+    flex: 0 0 auto;
     margin: 0 0 18px;
     color: var(--fx-text-secondary, #6b7280);
     font-size: 13px;
@@ -80,34 +109,46 @@
   }
 
   .chart-block {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 180px;
     width: 100%;
-    height: calc(100% - 48px);
-    min-height: 220px;
+    height: auto;
   }
 
   .chart-block-pie {
-    min-height: 240px;
+    min-height: 200px;
   }
 
   .section-empty {
-    padding: 24px 0 8px;
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 12px 0;
   }
 
   .shortcut-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
+    flex: 1 1 auto;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-content: start;
+    gap: 10px;
+    min-height: 0;
+    overflow: auto;
   }
 
   .shortcut-card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
     width: 100%;
-    min-height: 176px;
-    padding: 14px;
+    min-height: 104px;
+    padding: 12px;
     border: 1px solid color-mix(in srgb, var(--fx-border-color, #e5e7eb) 90%, white);
-    border-radius: 16px;
+    border-radius: 8px;
     background: linear-gradient(180deg, color-mix(in srgb, var(--fx-bg-elevated, #f8fafc) 86%, white), var(--fx-bg-container, #ffffff));
     cursor: pointer;
     text-align: left;
@@ -121,9 +162,9 @@
   }
 
   .shortcut-card__icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,8 +180,11 @@
   .shortcut-card__icon--violet { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
 
   .shortcut-card__body {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-width: 0;
+    min-height: 0;
   }
 
   .shortcut-card__name {
@@ -151,13 +195,13 @@
   }
 
   .shortcut-card__remark {
-    min-height: 40px;
-    margin: 6px 0 10px;
+    min-height: 0;
+    margin: 4px 0 8px;
     color: var(--fx-text-secondary, #6b7280);
     line-height: 1.6;
     font-size: 12px;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -190,9 +234,12 @@
 
   .config-list,
   .task-list {
+    flex: 1 1 auto;
+    min-height: 0;
     list-style: none;
     margin: 0;
     padding: 0;
+    overflow: auto;
   }
 
   .config-item {
@@ -282,9 +329,14 @@
   }
 
   .empty-hint {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
     color: var(--fx-text-tertiary, #9ca3af);
     text-align: center;
-    padding: 32px 8px;
+    padding: 16px 8px;
     font-size: 14px;
   }
 
@@ -357,7 +409,7 @@
     }
 
     .chart-block-pie {
-      height: 320px;
+      min-height: 240px;
     }
 
     .config-item__head,
@@ -387,7 +439,7 @@
     }
 
     .shortcut-card {
-      min-height: 164px;
+      min-height: 104px;
     }
   }
 }

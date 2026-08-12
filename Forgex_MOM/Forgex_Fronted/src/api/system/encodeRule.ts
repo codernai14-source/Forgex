@@ -7,6 +7,11 @@ export interface EncodeRuleDetail {
   segmentType?: string
   segmentValue?: string
   connector?: string
+  segmentLength?: number
+  dateFormat?: string
+  sequenceStart?: number
+  paddingChar?: string
+  paddingSide?: 'LEFT' | 'RIGHT'
   isRequired?: boolean
   conditionExpression?: string
   remark?: string
@@ -20,7 +25,7 @@ export interface EncodeRule {
   ruleCode?: string
   module?: string
   prefix?: string
-  date表单at?: string
+  dateFormat?: string
   serialLength?: number
   resetCycle?: string
   currentSerial?: number
@@ -57,7 +62,7 @@ export interface SaveEncodeRuleParam {
   isEnabled?: boolean
   remark?: string
   prefix?: string
-  date表单at?: string
+  dateFormat?: string
   serialLength?: number
   resetCycle?: string
   sortOrder?: number

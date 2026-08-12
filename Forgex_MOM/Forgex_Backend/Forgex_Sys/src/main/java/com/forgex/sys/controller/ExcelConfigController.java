@@ -19,6 +19,7 @@ import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
 import com.forgex.sys.domain.dto.ExcelLoginLogExportDTO;
+import com.forgex.sys.domain.dto.ExcelOperationLogExportDTO;
 import com.forgex.sys.domain.dto.ExcelUserExportDTO;
 import com.forgex.sys.domain.param.ExcelExportConfigPageParam;
 import com.forgex.sys.domain.param.ExcelImportConfigPageParam;
@@ -27,12 +28,15 @@ import com.forgex.sys.domain.param.TableCodeParam;
 import com.forgex.sys.service.ExcelExportService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
@@ -216,7 +220,7 @@ public class ExcelConfigController {
 
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + excelExportService.getSafeFilename(filename));
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + safeFilename(filename));
             response.getOutputStream().write(bytes);
             response.flushBuffer();
         } catch (Exception ex) {
@@ -246,6 +250,12 @@ public class ExcelConfigController {
         requireImportPermission(config);
         param.setImportConfig(config);
         FxExcelImportResultDTO result = excelImportExecuteService.execute(param);
+        if (result != null && result.getFailedCount() != null && result.getFailedCount() > 0) {
+            return R.fail(ExcelPromptEnum.EXCEL_IMPORT_FAILED, result);
+        }
+        if (result == null) {
+            result = new FxExcelImportResultDTO();
+        }
         return R.okWithArgsAndData(ExcelPromptEnum.EXCEL_IMPORT_EXECUTE_SUCCESS,
                 result,
                 result.getTotalCount(),
@@ -263,8 +273,8 @@ public class ExcelConfigController {
      */
     @RequirePerm("sys:excel:export:loginLog")
     @PostMapping("/export/loginLog")
-    public void exportLoginLog(@RequestBody ExcelLoginLogExportDTO body, HttpServletResponse response) {
-        excelExportService.exportLoginLog(body, response);
+    public ResponseEntity<InputStreamResource> exportLoginLog(@RequestBody ExcelLoginLogExportDTO body) {
+        return excelExportService.exportLoginLog(body);
     }
 
     /**
@@ -275,8 +285,14 @@ public class ExcelConfigController {
      */
     @RequirePerm({"sys:user:export", "sys:excel:export:user"})
     @PostMapping("/export/user")
-    public void exportUser(@RequestBody ExcelUserExportDTO body, HttpServletResponse response) {
-        excelExportService.exportUser(body, response);
+    public ResponseEntity<InputStreamResource> exportUser(@RequestBody ExcelUserExportDTO body) {
+        return excelExportService.exportUser(body);
+    }
+
+    @RequirePerm("sys:excel:export:operationLog")
+    @PostMapping("/export/operationLog")
+    public ResponseEntity<InputStreamResource> exportOperationLog(@RequestBody ExcelOperationLogExportDTO body) {
+        return excelExportService.exportOperationLog(body);
     }
 
     /**
@@ -353,5 +369,13 @@ public class ExcelConfigController {
             return "";
         }
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private String safeFilename(String filename) {
+        try {
+            return URLEncoder.encode(filename, StandardCharsets.UTF_8.name()).replace("+", "%20");
+        } catch (Exception e) {
+            return filename;
+        }
     }
 }

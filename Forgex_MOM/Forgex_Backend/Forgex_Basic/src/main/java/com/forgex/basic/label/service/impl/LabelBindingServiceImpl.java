@@ -309,7 +309,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
             Long templateId = findBindingByValue(factoryId, templateType,
                     MatchPriorityEnum.MATERIAL.getCode(), String.valueOf(materialId), tenantId);
             if (templateId != null) {
-                log.debug("按物料匹配成功，物料ID: {}, 模板ID: {}", materialId, templateId);
+                log.info("按物料匹配成功，物料ID: {}, 模板ID: {}", materialId, templateId);
                 return templateId;
             }
         }
@@ -319,7 +319,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
             Long templateId = findBindingByValue(factoryId, templateType,
                     MatchPriorityEnum.SUPPLIER.getCode(), String.valueOf(supplierId), tenantId);
             if (templateId != null) {
-                log.debug("按供应商匹配成功，供应商ID: {}, 模板ID: {}", supplierId, templateId);
+                log.info("按供应商匹配成功，供应商ID: {}, 模板ID: {}", supplierId, templateId);
                 return templateId;
             }
         }
@@ -329,7 +329,7 @@ public class LabelBindingServiceImpl extends ServiceImpl<LabelBindingMapper, Lab
             Long templateId = findBindingByValue(factoryId, templateType,
                     MatchPriorityEnum.CUSTOMER.getCode(), String.valueOf(customerId), tenantId);
             if (templateId != null) {
-                log.debug("按客户匹配成功，客户ID: {}, 模板ID: {}", customerId, templateId);
+                log.info("按客户匹配成功，客户ID: {}, 模板ID: {}", customerId, templateId);
                 return templateId;
             }
         }

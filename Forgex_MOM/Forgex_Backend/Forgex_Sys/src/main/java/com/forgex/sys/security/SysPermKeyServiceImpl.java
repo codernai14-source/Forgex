@@ -82,7 +82,7 @@ public class SysPermKeyServiceImpl implements PermKeyService {
             if (!normalized.isEmpty()) {
                 return normalized;
             }
-            log.warn("Local permission keys are empty, fallback to Auth service. userId={}, tenantId={}", userId, tenantId);
+            log.error("Local permission keys are empty, fallback to Auth service. userId={}, tenantId={}", userId, tenantId);
         } catch (Exception e) {
             log.error("Local permission key query failed, fallback to Auth service. userId={}, tenantId={}", userId, tenantId, e);
         }
@@ -103,7 +103,7 @@ public class SysPermKeyServiceImpl implements PermKeyService {
                 }
             }
 
-            log.warn("Auth permission key query returned empty. userId={}, tenantId={}, msg={}",
+            log.error("Auth permission key query returned empty. userId={}, tenantId={}, msg={}",
                     userId,
                     tenantId,
                     result != null ? result.getMessage() : "null response");

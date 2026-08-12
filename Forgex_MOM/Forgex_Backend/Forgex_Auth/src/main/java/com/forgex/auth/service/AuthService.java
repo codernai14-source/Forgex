@@ -17,6 +17,7 @@ import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.dto.SysUserDTO;
 import com.forgex.auth.domain.vo.TenantVO;
+import com.forgex.auth.domain.vo.LoginResultVO;
 import com.forgex.common.web.R;
 
 import java.util.List;
@@ -64,7 +65,7 @@ public interface AuthService {
      * @see com.forgex.auth.domain.param.LoginParam
      * @see com.forgex.auth.domain.vo.TenantVO
      */
-    R<List<TenantVO>> login(LoginParam param);
+    R<LoginResultVO> login(LoginParam param);
 
     /**
      * 选择租户，设置上下文

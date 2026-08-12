@@ -243,7 +243,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
             try {
                 deleteThirdSystem(id);
             } catch (I18nBusinessException e) {
-                log.warn("删除第三方系统失败：ID={}, 原因：{}", id, e.getMessage());
+                log.error("删除第三方系统失败：ID={}, 原因：{}", id, e.getMessage());
             }
         }
     }
@@ -272,7 +272,7 @@ public class ThirdSystemServiceImpl extends ServiceImpl<ThirdSystemMapper, Third
         try {
             return StpUtil.getLoginIdAsString();
         } catch (NotLoginException e) {
-            log.warn("当前用户未登录，使用系统默认用户");
+            log.error("当前用户未登录，使用系统默认用户");
             return "system";
         }
     }

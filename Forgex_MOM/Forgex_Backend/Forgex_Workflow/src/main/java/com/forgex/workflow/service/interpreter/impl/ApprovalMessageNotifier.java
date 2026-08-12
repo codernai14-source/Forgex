@@ -71,7 +71,7 @@ public class ApprovalMessageNotifier implements IApprovalInterpreter {
             // 获取任务配置
             WfTaskConfig taskConfig = taskConfigMapper.selectById(context.getTaskConfigId());
             if (taskConfig == null) {
-                log.warn("任务配置不存在，无法发送开始通知：taskConfigId={}", context.getTaskConfigId());
+                log.error("任务配置不存在，无法发送开始通知：taskConfigId={}", context.getTaskConfigId());
                 return;
             }
             
@@ -109,14 +109,14 @@ public class ApprovalMessageNotifier implements IApprovalInterpreter {
             // 获取执行记录
             WfTaskExecution execution = executionMapper.selectById(context.getExecutionId());
             if (execution == null) {
-                log.warn("执行记录不存在，无法发送通过通知：executionId={}", context.getExecutionId());
+                log.error("执行记录不存在，无法发送通过通知：executionId={}", context.getExecutionId());
                 return;
             }
             
             // 获取任务配置
             WfTaskConfig taskConfig = taskConfigMapper.selectById(execution.getTaskConfigId());
             if (taskConfig == null) {
-                log.warn("任务配置不存在，无法发送通过通知：taskConfigId={}", execution.getTaskConfigId());
+                log.error("任务配置不存在，无法发送通过通知：taskConfigId={}", execution.getTaskConfigId());
                 return;
             }
             
@@ -154,14 +154,14 @@ public class ApprovalMessageNotifier implements IApprovalInterpreter {
             // 获取执行记录
             WfTaskExecution execution = executionMapper.selectById(context.getExecutionId());
             if (execution == null) {
-                log.warn("执行记录不存在，无法发送驳回通知：executionId={}", context.getExecutionId());
+                log.error("执行记录不存在，无法发送驳回通知：executionId={}", context.getExecutionId());
                 return;
             }
             
             // 获取任务配置
             WfTaskConfig taskConfig = taskConfigMapper.selectById(execution.getTaskConfigId());
             if (taskConfig == null) {
-                log.warn("任务配置不存在，无法发送驳回通知：taskConfigId={}", execution.getTaskConfigId());
+                log.error("任务配置不存在，无法发送驳回通知：taskConfigId={}", execution.getTaskConfigId());
                 return;
             }
             
@@ -199,14 +199,14 @@ public class ApprovalMessageNotifier implements IApprovalInterpreter {
             // 获取执行记录
             WfTaskExecution execution = executionMapper.selectById(context.getExecutionId());
             if (execution == null) {
-                log.warn("执行记录不存在，无法发送完成通知：executionId={}", context.getExecutionId());
+                log.error("执行记录不存在，无法发送完成通知：executionId={}", context.getExecutionId());
                 return;
             }
             
             // 获取任务配置
             WfTaskConfig taskConfig = taskConfigMapper.selectById(execution.getTaskConfigId());
             if (taskConfig == null) {
-                log.warn("任务配置不存在，无法发送完成通知：taskConfigId={}", execution.getTaskConfigId());
+                log.error("任务配置不存在，无法发送完成通知：taskConfigId={}", execution.getTaskConfigId());
                 return;
             }
             
@@ -388,8 +388,8 @@ public class ApprovalMessageNotifier implements IApprovalInterpreter {
      */
     private String buildApprovalLink(String linkBaseUrl, Long executionId) {
         if (!hasText(linkBaseUrl)) {
-            // 默认使用前端审批详情页面
-            linkBaseUrl = "http://localhost:5173/workflow/approval/detail/";
+            log.warn("审批消息链接未配置 linkBaseUrl，使用相对路径，executionId={}", executionId);
+            return "/workspace/approval/my/initiated?executionId=" + executionId;
         }
         
         // 确保 URL 以 / 结尾

@@ -129,6 +129,6 @@ public class LoginLogServiceImpl implements LoginLogService {
     @Async
     @Override
     public void recordLogoutByToken(String tokenValue, LogoutReason logoutReason) {
-        log.debug("skip recording logout info into login log, tokenValue={}, reason={}", tokenValue, logoutReason);
+        log.info("skip recording logout info into login log, tokenValue={}, reason={}", tokenValue, logoutReason);
     }
 }

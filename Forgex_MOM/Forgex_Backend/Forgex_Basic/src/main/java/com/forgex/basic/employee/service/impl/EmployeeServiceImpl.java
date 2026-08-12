@@ -159,7 +159,7 @@ public class EmployeeServiceImpl extends ServiceImpl<BasicEmployeeMapper, BasicE
             try {
                 upsertUser(employee, result);
             } catch (Exception ex) {
-                log.warn("同步人员到用户失败，employeeNo={}", employee == null ? null : employee.getEmployeeNo(), ex);
+                log.error("同步人员到用户失败，employeeNo={}", employee == null ? null : employee.getEmployeeNo(), ex);
                 result.getFailedEmployeeNos().add(employee == null ? "UNKNOWN" : employee.getEmployeeNo());
             }
         }
@@ -194,7 +194,7 @@ public class EmployeeServiceImpl extends ServiceImpl<BasicEmployeeMapper, BasicE
                     result.setUpdatedCount(result.getUpdatedCount() + 1);
                 }
             } catch (Exception ex) {
-                log.warn("同步第三方人员失败，employeeNo={}", employeeNo, ex);
+                log.error("同步第三方人员失败，employeeNo={}", employeeNo, ex);
                 result.setFailedCount(result.getFailedCount() + 1);
                 result.getFailedEmployeeNos().add(StringUtils.hasText(employeeNo) ? employeeNo : "UNKNOWN");
             }

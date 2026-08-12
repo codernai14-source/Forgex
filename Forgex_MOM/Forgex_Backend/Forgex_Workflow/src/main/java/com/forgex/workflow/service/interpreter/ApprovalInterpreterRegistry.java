@@ -67,7 +67,7 @@ public class ApprovalInterpreterRegistry {
                 log.info("加载审批解释器：{}", key);
                 return interpreter;
             } catch (Exception e) {
-                log.warn("审批解释器不存在：{}", key);
+                log.error("审批解释器不存在：{}", key);
                 return null;
             }
         });

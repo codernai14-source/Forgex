@@ -17,6 +17,7 @@
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.0.0.0-preview</spring-cloud-alibaba.version>
         <sa-token.version>1.44.0</sa-token.version>
+        <redisson.version>3.52.0</redisson.version>
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <jsqlparser.version>5.3</jsqlparser.version>
         <mybatis-plus-join.version>1.5.4</mybatis-plus-join.version>
@@ -81,6 +82,23 @@
                 <groupId>cn.dev33</groupId>
                 <artifactId>sa-token-redisson-spring-boot-starter</artifactId>
                 <version>${sa-token.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.redisson</groupId>
+                        <artifactId>redisson-spring-boot-starter</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- 统一覆盖 Sa-Token 默认 Redisson，适配 Spring Data Redis 3.5.x -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${redisson.version}</version>
             </dependency>
             <!-- Tianai Captcha 滑块验证码 -->
             <dependency>
@@ -251,10 +269,24 @@
     </dependencyManagement>
 
     <modules>
+        <module>Forgex_Common_Contract</module>
+        <module>Forgex_Common_Core</module>
+        <module>Forgex_Domain_Contract</module>
+        <module>Forgex_Auth_Api</module>
+        <module>Forgex_Sys_Api</module>
+        <module>Forgex_Basic_Api</module>
+        <module>Forgex_Job_Api</module>
+        <module>Forgex_Workflow_Api</module>
+        <module>Forgex_Integration_Api</module>
+        <module>Forgex_Common_Web</module>
+        <module>Forgex_Common_Data</module>
+        <module>Forgex_Common_Crypto</module>
+        <module>Forgex_Common_Excel</module>
+        <module>Forgex_Common_Infra</module>
+        <module>Forgex_Common</module>
         <module>Forgex_Auth</module>
         <module>Forgex_Sys</module>
         <module>Forgex_Basic</module>
-        <module>Forgex_Common</module>
         <module>Forgex_Gateway</module>
         <module>Forgex_Job</module>
         <module>Forgex_Workflow</module>

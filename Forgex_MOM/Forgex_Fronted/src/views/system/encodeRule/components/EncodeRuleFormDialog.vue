@@ -113,8 +113,8 @@
                 />
                 <a-input
                   v-else-if="detail.segmentType === 'DATE'"
-                  v-model:value="detail.date表单at"
-                  :placeholder="t($tl('system.encodeRule.date表单atPlaceholder'))"
+                  v-model:value="detail.dateFormat"
+                  :placeholder="t('system.encodeRule.dateFormatPlaceholder')"
                 />
                 <a-input
                   v-else
@@ -187,6 +187,51 @@
                   <DeleteOutlined />
                 </a-button>
               </a-space>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16" v-if="detail.segmentType === 'SEQ'" class="sequence-options">
+            <a-col :span="6">
+              <div class="seq-field">
+                <span>{{ $tl('补位字符') }}</span>
+                <a-input
+                  v-model:value="detail.paddingChar"
+                  :maxlength="10"
+                  :placeholder="$tl('如 0')"
+                />
+              </div>
+            </a-col>
+            <a-col :span="6">
+              <div class="seq-field">
+                <span>{{ $tl('补位方向') }}</span>
+                <a-select v-model:value="detail.paddingSide" style="width: 100%">
+                  <a-select-option value="LEFT">{{ $tl('左侧') }}</a-select-option>
+                  <a-select-option value="RIGHT">{{ $tl('右侧') }}</a-select-option>
+                </a-select>
+              </div>
+            </a-col>
+            <a-col :span="8">
+              <div class="seq-field">
+                <span>{{ $tl('连接符') }}</span>
+                <a-input
+                  v-model:value="detail.connector"
+                  :maxlength="10"
+                  :placeholder="$tl('如 - 或 /')"
+                />
+              </div>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16" v-else class="sequence-options">
+            <a-col :span="8">
+              <div class="seq-field">
+                <span>{{ $tl('连接符') }}</span>
+                <a-input
+                  v-model:value="detail.connector"
+                  :maxlength="10"
+                  :placeholder="$tl('如 - 或 /')"
+                />
+              </div>
             </a-col>
           </a-row>
           
@@ -265,7 +310,7 @@ const formRef = ref<表单Instance>()
 
 interface EncodeRule表单Detail extends Omit<EncodeRuleDetail, 'segmentType'> {
   segmentType?: 'FIXED' | 'DATE' | 'SEQ' | 'CUSTOM'
-  date表单at?: string
+  dateFormat?: string
   seqStart?: number
   seqLength?: number
   seqResetType?: number
@@ -303,10 +348,15 @@ const statusRadioOptions = computed(() =>
 )
 
 const segmentTypeSelectOptions = computed(() =>
-  (segmentTypeDictItems.value || []).map((item: { label: string; value: string | number }) => ({
-    label: item.label,
-    value: String(item.value),
-  })),
+  (segmentTypeDictItems.value || []).map((item: { label: string; value: string | number }) => {
+    const backendType = String(item.value).toUpperCase()
+    const value = backendType === 'SEQUENCE' || backendType === 'SERIAL'
+      ? 'SEQ'
+      : backendType === 'VARIABLE' || backendType === 'EXPRESSION'
+        ? 'CUSTOM'
+        : backendType
+    return { label: item.label, value }
+  }),
 )
 
 const seqResetTypeSelectOptions = computed(() =>
@@ -340,8 +390,8 @@ const detailRules: 表单Rule[] = [
       if (value.segmentType === 'FIXED' && !value.segmentValue) {
         return Promise.reject(t('system.encodeRule.segmentValueRequired'))
       }
-      if (value.segmentType === 'DATE' && !value.date表单at) {
-        return Promise.reject(t('system.encodeRule.date表单atRequired'))
+      if (value.segmentType === 'DATE' && !value.dateFormat) {
+        return Promise.reject(t('system.encodeRule.dateFormatRequired'))
       }
       if (value.segmentType === 'SEQ') {
         if (!value.seqStart && value.seqStart !== 0) {
@@ -362,12 +412,32 @@ const dialogTitle = computed(() => {
   return props.isEdit ? t('system.encodeRule.edit') : t('system.encodeRule.add')
 })
 
-function mapBackendDetailTo表单(detail: EncodeRuleDetail): EncodeRule表单Detail {
+function resetCycleToValue(resetCycle?: string): number {
+  const values: Record<string, number> = {
+    NEVER: 0,
+    YEARLY: 1,
+    MONTHLY: 2,
+    DAILY: 3,
+  }
+  return values[String(resetCycle || 'NEVER').toUpperCase()] ?? 0
+}
+
+function resetValueToCycle(value?: number): string {
+  const cycles: Record<number, string> = {
+    0: 'NEVER',
+    1: 'YEARLY',
+    2: 'MONTHLY',
+    3: 'DAILY',
+  }
+  return cycles[value ?? 0] || 'NEVER'
+}
+
+function mapBackendDetailTo表单(detail: EncodeRuleDetail, resetCycle?: string): EncodeRule表单Detail {
   const backendType = String(detail?.segmentType || '').toUpperCase()
   const formType =
-    backendType === 'SERIAL'
+    backendType === 'SERIAL' || backendType === 'SEQUENCE'
       ? 'SEQ'
-      : backendType === 'EXPRESSION'
+      : backendType === 'EXPRESSION' || backendType === 'VARIABLE'
         ? 'CUSTOM'
         : backendType || 'FIXED'
 
@@ -377,7 +447,12 @@ function mapBackendDetailTo表单(detail: EncodeRuleDetail): EncodeRule表单Det
     segmentOrder: detail?.segmentOrder,
     segmentType: formType,
     segmentValue: detail?.segmentValue || detail?.conditionExpression || '',
-    date表单at: formType === 'DATE' ? (detail?.segmentValue || '') : undefined,
+    dateFormat: formType === 'DATE' ? (detail?.dateFormat || detail?.segmentValue || '') : undefined,
+    seqStart: formType === 'SEQ' ? (detail?.sequenceStart ?? 1) : undefined,
+    seqLength: formType === 'SEQ' ? (detail?.segmentLength ?? 6) : undefined,
+    seqResetType: formType === 'SEQ' ? resetCycleToValue(resetCycle) : undefined,
+    paddingChar: formType === 'SEQ' ? (detail?.paddingChar || '0') : undefined,
+    paddingSide: formType === 'SEQ' ? (detail?.paddingSide || 'LEFT') : undefined,
     remark: detail?.remark || '',
     connector: detail?.connector,
     isRequired: detail?.isRequired,
@@ -389,13 +464,13 @@ function map表单DetailToBackend(detail: EncodeRule表单Detail, index: number)
   const formType = String(detail?.segmentType || 'FIXED').toUpperCase()
   const backendType =
     formType === 'SEQ'
-      ? 'SERIAL'
+      ? 'SEQUENCE'
       : formType === 'CUSTOM'
-        ? 'EXPRESSION'
+        ? 'VARIABLE'
         : formType
 
   const segmentValue = formType === 'DATE'
-    ? (detail.date表单at || detail.segmentValue || '')
+    ? (detail.dateFormat || detail.segmentValue || '')
     : (detail.segmentValue || '')
 
   return {
@@ -405,8 +480,13 @@ function map表单DetailToBackend(detail: EncodeRule表单Detail, index: number)
     segmentType: backendType,
     segmentValue,
     connector: detail.connector,
+    segmentLength: formType === 'SEQ' ? detail.seqLength : undefined,
+    dateFormat: formType === 'DATE' ? detail.dateFormat : undefined,
+    sequenceStart: formType === 'SEQ' ? detail.seqStart : undefined,
+    paddingChar: formType === 'SEQ' ? (detail.paddingChar || '0') : undefined,
+    paddingSide: formType === 'SEQ' ? (detail.paddingSide || 'LEFT') : undefined,
     isRequired: detail.isRequired ?? true,
-    conditionExpression: backendType === 'EXPRESSION' ? (detail.conditionExpression || segmentValue) : undefined,
+    conditionExpression: backendType === 'VARIABLE' ? (detail.conditionExpression || segmentValue) : undefined,
     remark: detail.remark || '',
   }
 }
@@ -435,7 +515,7 @@ async function loadRuleDetail() {
     form.businessType = data.module || ''
     form.description = ''
     form.status = data.isEnabled === false ? 0 : 1
-    form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailTo表单(detail))
+    form.ruleDetails = (data.detailList || []).map((detail) => mapBackendDetailTo表单(detail, data.resetCycle))
     form.remark = data.remark || ''
   } catch (error) {
     console.error('加载规则详情失败:', error)
@@ -473,25 +553,27 @@ function handleSegmentTypeChange(detail: EncodeRule表单Detail) {
   // 根据段类型清空或设置默认值
   if (detail.segmentType === 'FIXED') {
     detail.segmentValue = ''
-    detail.date表单at = undefined
+    detail.dateFormat = undefined
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
   } else if (detail.segmentType === 'DATE') {
     detail.segmentValue = undefined
-    detail.date表单at = 'YYYYMMDD'
+    detail.dateFormat = 'yyyyMMdd'
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
   } else if (detail.segmentType === 'SEQ') {
     detail.segmentValue = undefined
-    detail.date表单at = undefined
+    detail.dateFormat = undefined
     detail.seqStart = 1
     detail.seqLength = 6
     detail.seqResetType = 0
+    detail.paddingChar = '0'
+    detail.paddingSide = 'LEFT'
   } else if (detail.segmentType === 'CUSTOM') {
     detail.segmentValue = ''
-    detail.date表单at = undefined
+    detail.dateFormat = undefined
     detail.seqStart = undefined
     detail.seqLength = undefined
     detail.seqResetType = undefined
@@ -508,6 +590,12 @@ async function handleSubmit() {
       message.warning(t('system.encodeRule.detailRequired'))
       return
     }
+
+    if (!form.ruleDetails.some(detail => detail.segmentType === 'SEQ')) {
+      message.warning($tl('编码规则必须包含流水段'))
+      activeTab.value = 'details'
+      return
+    }
     
     // 校验明细的序号连续性
     const orders = form.ruleDetails.map((d, i) => d.segmentOrder || (i + 1))
@@ -518,6 +606,7 @@ async function handleSubmit() {
       }
     }
     
+    const sequenceDetail = form.ruleDetails.find(detail => detail.segmentType === 'SEQ')
     const requestPayload: SaveEncodeRuleParam = {
       id: form.id,
       ruleCode: form.ruleCode,
@@ -525,6 +614,7 @@ async function handleSubmit() {
       module: form.businessType,
       isEnabled: form.status === 1,
       remark: form.remark,
+      resetCycle: resetValueToCycle(sequenceDetail?.seqResetType),
       detailList: (form.ruleDetails || []).map((detail, index) => map表单DetailToBackend(detail, index)),
     }
 

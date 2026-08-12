@@ -377,7 +377,7 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                     result.setUpdatedCount(result.getUpdatedCount() + 1);
                 }
             } catch (Exception ex) {
-                log.warn("同步供应商失败，supplierCode={}", supplierCode, ex);
+                log.error("同步供应商失败，supplierCode={}", supplierCode, ex);
                 result.setFailedCount(result.getFailedCount() + 1);
                 result.getFailedSupplierCodes().add(StringUtils.hasText(supplierCode) ? supplierCode : "UNKNOWN");
             }
@@ -558,7 +558,7 @@ public class SupplierServiceImpl extends ServiceImpl<BasicSupplierMapper, BasicS
                 validateAggregate(aggregate);
                 handleSupplierAggregate(mode, aggregate, result);
             } catch (Exception ex) {
-                log.warn("公共导入供应商失败，supplierCode={}", supplierCode, ex);
+                log.error("公共导入供应商失败，supplierCode={}", supplierCode, ex);
                 result.addError(StringUtils.hasText(supplierCode) ? supplierCode : "UNKNOWN");
             }
         }

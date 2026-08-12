@@ -1,8 +1,8 @@
-# FxDynamicTable 实现逻辑
+﻿# FxDynamicTable 实现逻辑
 
 > 分类：前端 / 配置驱动页面
-> 版本：**V0.6.5**
-> 更新时间：**2026-04-17**
+> 版本：**V0.8.5**
+> 更新时间：**2026-08-12**
 
 本文档说明 `FxDynamicTable` 在 Forgex 中的真实实现方式，包括配置来源、前后端调用链路、列设置合并逻辑，以及实际代码所在位置。
 
@@ -45,8 +45,8 @@ Forgex_MOM/Forgex_Fronted/src/views/system/menu/index.vue
 ### 后端配置服务
 
 ```text
-Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/service/table/impl/FxTableConfigServiceImpl.java
-Forgex_MOM/Forgex_Backend/Forgex_Common/src/main/java/com/forgex/common/service/table/impl/FxUserTableConfigServiceImpl.java
+Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/service/table/impl/FxTableConfigServiceImpl.java
+Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/service/table/impl/FxUserTableConfigServiceImpl.java
 ```
 
 ## 核心对象与字段

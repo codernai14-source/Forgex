@@ -347,6 +347,18 @@ export default {
     },
   },
   myTask: {
+    process: 'Process',
+    processApproval: 'Process Approval',
+    processAction: 'Action',
+    noAvailableAction: 'No processing action is available for this pending task',
+    processInstanceMissing: 'This pending approval instance is no longer valid. Please refresh and try again.',
+    actionLabels: {
+      approve: 'Approve',
+      reject: 'Reject',
+      addSign: 'Add Sign',
+      transfer: 'Transfer',
+      delegate: 'Delegate',
+    },
     approve: 'Approve',
     reject: 'Reject',
     detail: 'Detail',

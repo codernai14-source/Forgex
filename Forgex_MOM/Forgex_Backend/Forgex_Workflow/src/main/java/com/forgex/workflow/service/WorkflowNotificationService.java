@@ -6,6 +6,7 @@ import com.forgex.common.mq.message.TemplateMessageSender;
 import com.forgex.workflow.client.SysMessageClient;
 import com.forgex.workflow.client.dto.SysMessageSendRequest;
 import com.forgex.workflow.domain.entity.WfTaskExecution;
+import com.forgex.workflow.domain.entity.WfTaskExecutionDetail;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,8 @@ import java.util.Set;
  *   <li>WF_APPROVED：审批通过通知</li>
  *   <li>WF_REJECTED：审批驳回通知</li>
  *   <li>WF_FINISHED：审批完成通知</li>
+ *   <li>WF_REMIND：审批催办通知</li>
+ *   <li>WF_RECALL：审批撤回通知</li>
  * </ul>
  *
  * @author coder_nai@163.com
@@ -70,6 +73,8 @@ public class WorkflowNotificationService {
     private static final String BIZ_TYPE_APPROVED = "WF_APPROVED";
     private static final String BIZ_TYPE_REJECTED = "WF_REJECTED";
     private static final String BIZ_TYPE_FINISHED = "WF_FINISHED";
+    private static final String BIZ_TYPE_REMIND = "WF_REMIND";
+    private static final String BIZ_TYPE_RECALL = "WF_RECALL";
 
     /**
      * 审批待办通知模板编码。
@@ -90,6 +95,16 @@ public class WorkflowNotificationService {
      * 审批完成通知模板编码。
      */
     private static final String TEMPLATE_FINISHED = "WF_FINISHED";
+
+    /**
+     * 审批催办通知模板编码。
+     */
+    private static final String TEMPLATE_REMIND = "WF_REMIND";
+
+    /**
+     * 审批撤回通知模板编码。
+     */
+    private static final String TEMPLATE_RECALL = "WF_RECALL";
 
     private static final String APPROVAL_PENDING_LINK = "/workspace/approval/my/pending";
     private static final String APPROVAL_INITIATED_LINK = "/workspace/approval/my/initiated";
@@ -148,6 +163,47 @@ public class WorkflowNotificationService {
             String content = buildPendingContent(execution, node);
             sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
                     APPROVAL_PENDING_LINK, BIZ_TYPE_PENDING, MESSAGE_TYPE_NOTICE, execution.getId(), TEMPLATE_PENDING);
+        }
+    }
+
+    /**
+     * 催办待审批人。
+     * <p>
+     * 向仍处于待办状态的审批人重新推送提醒消息，链路与待办通知一致：
+     * 优先模板消息，失败时降级直发。
+     * </p>
+     *
+     * @param execution   审批执行记录
+     * @param node        当前激活的审批节点
+     * @param approverIds 待处理人 ID 列表
+     */
+    public void notifyRemind(WfTaskExecution execution, WfTaskNodeConfig node, List<Long> approverIds) {
+        if (execution == null || node == null || approverIds == null || approverIds.isEmpty()) {
+            return;
+        }
+
+        List<Long> receiverIds = approverIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (receiverIds.isEmpty()) {
+            return;
+        }
+
+        Map<String, Object> dataMap = buildPendingDataMap(execution, node);
+
+        TemplateSendResult templateResult = trySendByTemplate(
+                TEMPLATE_REMIND, execution.getTenantId(), receiverIds, dataMap, BIZ_TYPE_REMIND, execution.getId());
+        if (templateResult == TemplateSendResult.SUCCESS) {
+            return;
+        }
+        if (templateResult == TemplateSendResult.AUTH_MISSING || templateResult == TemplateSendResult.AUTH_FAILED) {
+            return;
+        }
+
+        if (templateResult == TemplateSendResult.FAILED) {
+            log.info("模板消息发送失败，降级为直发模式: templateCode={}", TEMPLATE_REMIND);
+            String title = "【审批催办】" + defaultTaskName(execution);
+            String content = buildRemindContent(execution, node);
+            sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
+                    APPROVAL_PENDING_LINK, BIZ_TYPE_REMIND, MESSAGE_TYPE_WARNING, execution.getId(), TEMPLATE_REMIND);
         }
     }
 
@@ -269,6 +325,36 @@ public class WorkflowNotificationService {
     }
 
     /**
+     * 通知发起人和同节点其他审批人审批意见已被撤回。
+     *
+     * @param execution    审批执行记录
+     * @param detail       当前审批节点详情
+     * @param operatorName 撤回人名称
+     * @param comment      撤回说明
+     * @param receiverIds  接收人 ID 列表
+     */
+    public void notifyRecall(WfTaskExecution execution,
+                             WfTaskExecutionDetail detail,
+                             String operatorName,
+                             String comment,
+                             List<Long> receiverIds) {
+        if (execution == null || receiverIds == null || receiverIds.isEmpty()) {
+            return;
+        }
+        List<Long> distinctReceiverIds = receiverIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (distinctReceiverIds.isEmpty()) {
+            return;
+        }
+        String title = "【审批撤回】" + defaultTaskName(execution);
+        String content = buildRecallContent(execution, detail, operatorName, comment);
+        sendToUsersDirectly(execution.getTenantId(), distinctReceiverIds, title, content,
+                APPROVAL_INITIATED_LINK, BIZ_TYPE_RECALL, MESSAGE_TYPE_NOTICE, execution.getId(), TEMPLATE_RECALL);
+    }
+
+    /**
      * 尝试使用模板发送消息。
      *
      * @param templateCode 模板编码
@@ -303,7 +389,7 @@ public class WorkflowNotificationService {
                     executionId);
             return TemplateSendResult.SUCCESS;
         } catch (Exception ex) {
-            log.warn("模板消息投递到MQ失败: templateCode={}, tenantId={}, executionId={}",
+            log.error("模板消息投递到MQ失败: templateCode={}, tenantId={}, executionId={}",
                     templateCode, tenantId, executionId, ex);
             return TemplateSendResult.FAILED;
         }
@@ -373,7 +459,7 @@ public class WorkflowNotificationService {
             R<Long> result = sysMessageClient.send(request);
             if (result == null || result.getCode() != 200) {
                 if (isAuthFailure(result == null ? null : result.getMessage())) {
-                    log.warn("工作流通知发送鉴权失败，已跳过: executionId={}, templateCode={}, receiverUserId={}, code={}, message={}",
+                    log.error("工作流通知发送鉴权失败，已跳过: executionId={}, templateCode={}, receiverUserId={}, code={}, message={}",
                             executionId,
                             templateCode,
                             request.getReceiverUserId(),
@@ -381,7 +467,7 @@ public class WorkflowNotificationService {
                             result == null ? null : result.getMessage());
                     return;
                 }
-                log.warn("工作流通知发送失败，executionId={}, templateCode={}, receiverUserId={}, code={}, message={}",
+                log.error("工作流通知发送失败，executionId={}, templateCode={}, receiverUserId={}, code={}, message={}",
                         executionId,
                         templateCode,
                         request.getReceiverUserId(),
@@ -390,11 +476,11 @@ public class WorkflowNotificationService {
             }
         } catch (Exception ex) {
             if (isAuthFailure(ex.getMessage())) {
-                log.warn("工作流通知发送异常且鉴权失败，已跳过: executionId={}, templateCode={}, receiverUserId={}, title={}",
+                log.error("工作流通知发送异常且鉴权失败，已跳过: executionId={}, templateCode={}, receiverUserId={}, title={}",
                         executionId, templateCode, request.getReceiverUserId(), request.getTitle(), ex);
                 return;
             }
-            log.warn("工作流通知发送异常，executionId={}, templateCode={}, receiverUserId={}, title={}",
+            log.error("工作流通知发送异常，executionId={}, templateCode={}, receiverUserId={}, title={}",
                     executionId, templateCode, request.getReceiverUserId(), request.getTitle(), ex);
         }
     }
@@ -402,7 +488,7 @@ public class WorkflowNotificationService {
     private boolean hasAuthContext(Long executionId, String templateCode, Long receiverUserId) {
         if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
             List<String> missingHeaders = List.of("RequestContext", HEADER_USER_ID, HEADER_TENANT_ID);
-            log.warn("工作流通知鉴权上下文缺失，跳过发送: executionId={}, templateCode={}, receiverUserId={}, missingHeaders={}",
+            log.error("工作流通知鉴权上下文缺失，跳过发送: executionId={}, templateCode={}, receiverUserId={}, missingHeaders={}",
                     executionId, templateCode, receiverUserId, missingHeaders);
             return false;
         }
@@ -420,7 +506,7 @@ public class WorkflowNotificationService {
         }
 
         if (!missingHeaders.isEmpty()) {
-            log.warn("工作流通知鉴权上下文缺失，跳过发送: executionId={}, templateCode={}, receiverUserId={}, missingHeaders={}",
+            log.error("工作流通知鉴权上下文缺失，跳过发送: executionId={}, templateCode={}, receiverUserId={}, missingHeaders={}",
                     executionId, templateCode, receiverUserId, missingHeaders);
             return false;
         }
@@ -524,6 +610,18 @@ public class WorkflowNotificationService {
     }
 
     /**
+     * 构建审批催办通知内容（直发模式）。
+     */
+    private String buildRemindContent(WfTaskExecution execution, WfTaskNodeConfig node) {
+        return new StringBuilder()
+                .append("发起人：").append(defaultText(execution.getInitiatorName(), "系统"))
+                .append("\n当前节点：").append(defaultText(node.getNodeName(), "审批节点"))
+                .append("\n发起时间：").append(formatTime(execution.getStartTime()))
+                .append("\n提示：该审批仍在等待您处理，请尽快审批")
+                .toString();
+    }
+
+    /**
      * 构建审批通过通知内容（直发模式）。
      */
     private String buildApprovedContent(WfTaskExecution execution, String currentNode,
@@ -566,6 +664,24 @@ public class WorkflowNotificationService {
                 .append("\n完成时间：").append(formatTime(execution.getEndTime()))
                 .append("\n处理结果：审批完成")
                 .toString();
+    }
+
+    /**
+     * 构建审批撤回通知内容（直发模式）。
+     */
+    private String buildRecallContent(WfTaskExecution execution,
+                                      WfTaskExecutionDetail detail,
+                                      String operatorName,
+                                      String comment) {
+        StringBuilder content = new StringBuilder()
+                .append("审批名称：").append(defaultTaskName(execution))
+                .append("\n审批节点：").append(defaultText(detail == null ? null : detail.getNodeName(), "审批节点"))
+                .append("\n撤回人：").append(defaultText(operatorName, "系统"))
+                .append("\n处理结果：审批意见已撤回");
+        if (StringUtils.hasText(comment)) {
+            content.append("\n撤回说明：").append(comment.trim());
+        }
+        return content.toString();
     }
 
     // ==================== 工具方法 ====================

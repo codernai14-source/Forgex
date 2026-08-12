@@ -1,6 +1,6 @@
-# API 接口文档使用方式
+﻿# API 接口文档使用方式
 
-> 版本：**V0.6.5**
+> 版本：**V0.8.5**
 
 Forgex 后端使用 springdoc-openapi / Swagger 注解沉淀接口说明。新增或调整 Controller、DTO、Param、VO 时，应同步维护 OpenAPI 注解，保证前后端联调时能通过接口文档理解请求和响应结构。
 

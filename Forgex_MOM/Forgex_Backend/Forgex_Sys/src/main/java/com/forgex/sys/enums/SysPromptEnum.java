@@ -151,6 +151,7 @@ public enum SysPromptEnum implements I18nPrompt {
     ENCODE_RULE_GENERATE_SUCCESS("ENCODE_RULE_GENERATE_SUCCESS", "编码生成成功"),
     ENCODE_RULE_GENERATE_FAILED("ENCODE_RULE_GENERATE_FAILED", "编码生成失败"),
     ENCODE_RULE_DETAIL_REQUIRED("ENCODE_RULE_DETAIL_REQUIRED", "编码规则明细不能为空"),
+    ENCODE_RULE_DETAIL_INVALID("ENCODE_RULE_DETAIL_INVALID", "编码规则明细配置不合法：{0}"),
 
     // ========== 用户校验（Validator 层）==========
     USER_ACCOUNT_EMPTY("USER_ACCOUNT_EMPTY", "用户账号不能为空"),

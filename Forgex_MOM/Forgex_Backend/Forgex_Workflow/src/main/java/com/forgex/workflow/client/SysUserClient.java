@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 系统服务用户 Feign 客户端。
@@ -59,4 +60,13 @@ public interface SysUserClient {
      */
     @PostMapping("/sys/user/internal/listUserIdsByPositionIds")
     R<List<Long>> listUserIdsByPositionIds(@RequestBody List<Long> positionIds);
+
+    /**
+     * 根据发起人解析第 N 级直属上级用户 ID。
+     *
+     * @param request 请求体，包含 initiatorUserId 和 level
+     * @return 用户 ID 列表
+     */
+    @PostMapping("/sys/user/internal/resolveSuperiorUserIds")
+    R<List<Long>> resolveSuperiorUserIds(@RequestBody Map<String, Object> request);
 }

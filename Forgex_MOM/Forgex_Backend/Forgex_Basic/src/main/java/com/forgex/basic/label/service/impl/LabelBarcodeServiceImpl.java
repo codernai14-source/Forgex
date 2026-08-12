@@ -65,7 +65,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
         // 2. 确保唯一性（最多重试 10 次）
         int retry = 0;
         while (existsByBarcodeNo(barcodeNo, tenantId) && retry < 10) {
-            log.warn("条码号重复，重新生成: {}", barcodeNo);
+            log.error("条码号重复，重新生成: {}", barcodeNo);
             barcodeNo = generateBarcodeByStrategy(param);
             retry++;
         }
@@ -120,7 +120,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
      */
     @Override
     public IPage<BarcodeVO> pageBarcodes(BarcodeQueryParam param, Long tenantId) {
-        log.debug("分页查询条码，页码: {}, 每页: {}", param.getPageNum(), param.getPageSize());
+        log.info("分页查询条码，页码: {}, 每页: {}", param.getPageNum(), param.getPageSize());
 
         Page<LabelBarcode> page = new Page<>(param.getPageNum(), param.getPageSize());
         LambdaQueryWrapper<LabelBarcode> wrapper = buildQueryWrapper(param, tenantId);
@@ -130,7 +130,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
         // 转换为 VO
         IPage<BarcodeVO> voPage = result.convert(this::convertToVO);
 
-        log.debug("查询完成，共 {} 条记录", voPage.getTotal());
+        log.info("查询完成，共 {} 条记录", voPage.getTotal());
         return voPage;
     }
 
@@ -147,7 +147,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
      */
     @Override
     public BarcodeVO getByBarcodeNo(String barcodeNo, Long tenantId) {
-        log.debug("根据条码号查询: {}", barcodeNo);
+        log.info("根据条码号查询: {}", barcodeNo);
 
         LambdaQueryWrapper<LabelBarcode> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(LabelBarcode::getBarcodeNo, barcodeNo)
@@ -327,7 +327,7 @@ public class LabelBarcodeServiceImpl extends ServiceImpl<LabelBarcodeMapper, Lab
     @Override
     public List<BarcodeVO> queryByBusinessData(Long materialId, String lotNo, String businessScene,
                                                Long factoryId, Long tenantId) {
-        log.debug("条码反查，物料ID: {}, LOT号: {}, 业务场景: {}", materialId, lotNo, businessScene);
+        log.info("条码反查，物料ID: {}, LOT号: {}, 业务场景: {}", materialId, lotNo, businessScene);
 
         LambdaQueryWrapper<LabelBarcode> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(LabelBarcode::getTenantId, tenantId);

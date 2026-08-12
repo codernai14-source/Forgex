@@ -384,7 +384,7 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
                     .map(com.forgex.sys.domain.entity.SysUserRole::getRoleId)
                     .collect(Collectors.toList()));
         } catch (Exception e) {
-            log.warn("查询用户角色失败: userId={}, error={}", userId, e.getMessage());
+            log.error("查询用户角色失败: userId={}, error={}", userId, e.getMessage());
             return Collections.emptyList();
         }
     }

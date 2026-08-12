@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.forgex</groupId><artifactId>Forgex_Backend</artifactId><version>1.0.0</version></parent>
+    <artifactId>Forgex_Domain_Contract</artifactId>
+    <name>Forgex_Domain_Contract</name>
+    <description>DTO-only cross-service domain contracts</description>
+    <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Common_Contract</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-annotations</artifactId></dependency>
+        <dependency><groupId>jakarta.validation</groupId><artifactId>jakarta.validation-api</artifactId></dependency>
+        <dependency><groupId>com.baomidou</groupId><artifactId>mybatis-plus-annotation</artifactId><version>${mybatis-plus.version}</version></dependency>
+    </dependencies>
+</project>

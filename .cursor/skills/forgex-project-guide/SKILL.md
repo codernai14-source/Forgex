@@ -27,15 +27,12 @@ Before changing Forgex code or docs:
 
 Backend services currently include:
 
-- `Forgex_Common`
-- `Forgex_Gateway`
-- `Forgex_Auth`
-- `Forgex_Sys`
-- `Forgex_Job`
-- `Forgex_Basic`
-- `Forgex_Integration`
-- `Forgex_Workflow`
-- `Forgex_Report`
+- `Forgex_Gateway` / `Forgex_Auth` / `Forgex_Sys` / `Forgex_Job` / `Forgex_Basic` / `Forgex_Integration` / `Forgex_Workflow` / `Forgex_Report`
+- Common split libs: `Forgex_Common_Contract` / `Core` / `Web` / `Data` / `Crypto` / `Excel` / `Infra`
+- Contracts: `Forgex_Domain_Contract` + `Forgex_*_Api` (Auth/Sys/Basic/Job/Workflow/Integration)
+- `Forgex_Common` remains a migration-only aggregate (no implementation sources); prefer precise dependencies
+
+For module dependency selection, read `Forgex_Doc\后端\公共能力\Common模块化拆分与二开指南.md`.
 
 ## Skill Selection
 

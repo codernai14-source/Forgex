@@ -59,6 +59,7 @@ data class AuthUiState(
     val errorText: AppText? = null,
     val step: AuthStep = AuthStep.LOGIN,
     val tenants: List<TenantVO> = emptyList(),
+    val interactionCode: String = "",
     val selectedTenantId: String? = null,
     val latestAccountScanResult: FxScanResult? = null,
     val latestTenantScanResult: FxScanResult? = null

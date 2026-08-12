@@ -9,6 +9,7 @@ import { h, ref } from 'vue'
 import { usePermissionStore } from '../stores/permission'
 import { getRoutes } from '../api/system/route'
 import { APPROVAL_ROUTE_BASE, LEGACY_APPROVAL_ROUTE_BASE, approvalRoutePaths } from './approvalRoutePaths'
+import { shouldRestoreDynamicRoutes } from './routeState.mts'
 
 export const PERSONAL_HOME_PATH = '/workspace/home'
 export const FAVORITE_MANAGEMENT_PATH = '/workspace/home/favorites'
@@ -169,7 +170,12 @@ const router = createRouter({
  * 用于防止路由恢复过程中出现无限循环。
  */
 let isRestoringRoutes = false
+let initializedRouteContext = ''
 const pendingRouteRestoreAttempts = new Map<string, number>()
+
+function buildRouteContext(account: string, tenantId: string) {
+  return `${account}:${tenantId}`
+}
 
 async function restoreDynamicRoutes(
   account: string,
@@ -293,7 +299,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 如果动态路由为空且不在恢复过程中，尝试恢复路由
-  if (dynamicRoutes.value.length === 0 && !isRestoringRoutes) {
+  const routeContextInitialized = initializedRouteContext === buildRouteContext(account, tenantId)
+  if (shouldRestoreDynamicRoutes(dynamicRoutes.value.length, isRestoringRoutes, routeContextInitialized)) {
     const restored = await restoreDynamicRoutes(account, tenantId, permissionStore)
     if (restored) {
       next({ ...to, replace: true })
@@ -343,6 +350,8 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
   ApprovalMyProcessed: () => import('../views/workflow/myTask/processed.vue'),
   ApprovalMyInitiated: () => import('../views/workflow/myTask/initiated.vue'),
+  ApprovalMyCc: () => import('../views/workflow/myTask/myCc.vue'),
+  ApprovalDelegateSettings: () => import('../views/workflow/myTask/delegateSettings.vue'),
   ApprovalCompensationCenter: () => import('../views/workflow/governance/compensation/index.vue'),
 }
 
@@ -621,6 +630,9 @@ export async function injectDynamicRoutes(payload: any) {
   // 更新动态模块和路由列表
   dynamicModules.value = mods
   dynamicRoutes.value = routesPayload
+  const account = sessionStorage.getItem('account') || ''
+  const tenantId = sessionStorage.getItem('tenantId') || ''
+  initializedRouteContext = account && tenantId ? buildRouteContext(account, tenantId) : ''
 
   // 缓存到 Pinia store，会自动持久化到 localStorage
   const permissionStore = usePermissionStore()

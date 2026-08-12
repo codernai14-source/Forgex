@@ -376,7 +376,7 @@ public class IntegrationDashboardServiceImpl implements IIntegrationDashboardSer
             .filter(tableName -> {
                 boolean exists = apiCallLogTableService.tableExists(tableName);
                 if (!exists) {
-                    log.warn("Api call log month table does not exist, skip dashboard query: {}", tableName);
+                    log.error("Api call log month table does not exist, skip dashboard query: {}", tableName);
                 }
                 return exists;
             })

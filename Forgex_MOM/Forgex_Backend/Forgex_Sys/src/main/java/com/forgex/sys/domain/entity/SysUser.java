@@ -118,6 +118,14 @@ public class SysUser extends BaseEntity {
     private Long employeeId;
 
     /**
+     * 直属上级用户 ID。
+     * <p>
+     * 人到人的上级关系，用于工作流上级审批按层级逐级上溯。
+     * </p>
+     */
+    private Long superiorUserId;
+
+    /**
      * 用户来源。
      */
     private Integer userSource;
