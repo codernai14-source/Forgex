@@ -12,8 +12,9 @@ import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.mapper.SysOperationLogMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.service.ExcelExportService;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -86,8 +87,8 @@ public class SysOperationLogController {
      */
     @RequirePerm("sys:operation-log:export")
     @PostMapping("/export")
-    public void export(@RequestBody ExcelOperationLogExportDTO body, HttpServletResponse response) {
-        excelExportService.exportOperationLog(body, response);
+    public ResponseEntity<InputStreamResource> export(@RequestBody ExcelOperationLogExportDTO body) {
+        return excelExportService.exportOperationLog(body);
     }
 
     /**

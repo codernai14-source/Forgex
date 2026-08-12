@@ -252,12 +252,12 @@ public class ProductionLineServiceImpl extends ServiceImpl<BasicProductionLineMa
         if (StringUtils.hasText(param.getProductionLineType())) {
             // 字典项合法性校验：当前仅做存在性占位判断，由 DictService 统一调度
             // 实际项目可注入 DictService 校验 dictValue 是否存在，校验失败时抛出 PRODUCTION_LINE_TYPE_INVALID
-            log.debug("validate productionLineType={}", param.getProductionLineType());
+            log.info("validate productionLineType={}", param.getProductionLineType());
         }
         // 负责人校验：当前由 manager_employee_id 关联员工主数据，校验逻辑待 Auth/User 模块接入后启用
         // 占位校验：仅记录日志，不阻断保存
         if (param.getManagerEmployeeId() != null) {
-            log.debug("validate managerEmployeeId={}", param.getManagerEmployeeId());
+            log.info("validate managerEmployeeId={}", param.getManagerEmployeeId());
         }
     }
 

@@ -174,6 +174,8 @@
           <a-button
             type="primary"
             @click="confirmTenant"
+            :loading="tenantConfirming"
+            :disabled="tenantConfirming"
             class="action-btn primary"
             >{{ i18nT('common.login.chooseIdentity') }}</a-button
           >
@@ -235,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -253,7 +255,7 @@ import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { encryptSensitiveText } from '@/utils/crypto'
 import { useUserStore } from '@/stores/user'
-import { use权限Store } from '@/stores/permission'
+import { usePermissionStore } from '@/stores/permission'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
@@ -299,7 +301,7 @@ interface SliderTrackPayload {
 
 // 初始化登录和租户选择流程共用的状态仓库。
 const userStore = useUserStore()
-const permissionStore = use权限Store()
+const permissionStore = usePermissionStore()
 
 const { t: i18nT } = useI18n({ useScope: 'global' })
 
@@ -311,6 +313,7 @@ const captchaId = ref('')
 const imageBase64 = ref('')
 const mode = ref<'none' | 'image' | 'slider'>('none')
 const tenants = ref<TenantOption[]>([])
+const interactionCode = ref('')
 const tenantOpen = ref(false)
 const chosenTenant = ref<string | null>(null)
 const sliderOpen = ref(false)
@@ -320,6 +323,7 @@ const sliderChallenge = ref<SliderCaptchaChallenge | null>(null)
 const sliderValue = ref(0)
 const sliderTrackStartAt = ref(0)
 const logging = ref(false)
+const tenantConfirming = ref(false)
 const showSort = ref(false)
 const languages = ref<LanguageType[]>([])
 const selectedLang = ref<string>(getLocale())
@@ -531,6 +535,7 @@ async function onPreLogin() {
     logging.value = true
     tenantOpen.value = false
     tenants.value = []
+    interactionCode.value = ''
     chosenTenant.value = null
     let pwdToSend = ''
     try {
@@ -545,7 +550,8 @@ async function onPreLogin() {
       captcha: captcha.value,
       captchaId: mode.value === 'image' ? captchaId.value : undefined
     })
-    tenants.value = Array.isArray(res) ? res : []
+    tenants.value = Array.isArray(res?.tenants) ? res.tenants : []
+    interactionCode.value = res?.interactionCode || ''
     if (tenants.value.length > 0) {
       tenantOpen.value = true
     } else {
@@ -573,9 +579,8 @@ async function onOAuth(platform: 'WECHAT' | 'DINGTALK') {
 }
 
 async function confirmTenant() {
-  console.log('[Login] confirmTenant called, chosenTenant:', chosenTenant.value)
-  
-  if (!chosenTenant.value) {
+  if (!chosenTenant.value || tenantConfirming.value) {
+    if (tenantConfirming.value) return
     message.warning(i18nT('common.login.msg.selectTenantFirst'))
     return
   }
@@ -585,44 +590,48 @@ async function confirmTenant() {
     tenantOpen.value = false
     return
   }
+  const transitionLoader = (window as any).__fxLoginTransitionLoader
+  let loadingHandedOff = false
+  tenantConfirming.value = true
+  transitionLoader?.show?.()
+
   try {
     const result = await chooseTenant({ 
       tenantId: chosenTenant.value,
-      account: account.value
+      account: account.value,
+      interactionCode: interactionCode.value
     })
+    interactionCode.value = ''
     // 后端会返回当前租户上下文，认证信息仍通过 Cookie 维持。
     if (result && result.account) {
       // 先缓存当前用户信息，便于外层框架立即渲染头像和名称。
+      const nextTenantId = String(result.tenantId || chosenTenant.value)
       userStore.setUserInfo({
         account: result.account,
         username: result.username || result.account || account.value,
         email: result.email,
         phone: result.phone,
         avatar: result.avatar,
-        tenantId: String(result.tenantId || chosenTenant.value),
+        tenantId: nextTenantId,
         tenantName: current.name
       })
       
       // 将账号和租户写入 sessionStorage，供路由守卫和刷新恢复使用。
       sessionStorage.setItem('account', result.account)
-      sessionStorage.setItem('tenantId', String(result.tenantId || chosenTenant.value))
+      sessionStorage.setItem('tenantId', nextTenantId)
       
       // 确认租户后再拉取该租户下的路由配置。
       const routesRes = await getRoutes({
-        account: account.value,
-        tenantId: chosenTenant.value
+        account: result.account,
+        tenantId: nextTenantId
       })
-      
-      console.log('[Login] Routes response:', routesRes)
       
       // 进入系统前先保存按钮级权限，避免页面初次渲染缺权限数据。
       if (routesRes && routesRes.buttons) {
-        permissionStore.set权限s(routesRes.buttons)
-        console.log('[Login] 权限s stored to Pinia:', routesRes.buttons)
+        permissionStore.setPermissions(routesRes.buttons)
       } else {
         // 后端未返回权限时主动清空，避免沿用旧租户的残留权限。
-        permissionStore.set权限s([])
-        console.log('[Login] No permissions found, stored empty array')
+        permissionStore.setPermissions([])
       }
       
       // 保存路由和模块信息，供菜单渲染与路由控制使用。
@@ -635,39 +644,30 @@ async function confirmTenant() {
       
       await injectDynamicRoutes(routesRes)
       
-      console.log('[Login] Dynamic routes injected successfully')
-      
-      tenantOpen.value = false
-      console.log('[Login] Tenant dialog closed')
-      
       if (remember.value) {
         localStorage.setItem('fx-remember-account', account.value)
       } else {
         localStorage.removeItem('fx-remember-account')
       }
       
-      // 等待动态路由注册完成，再执行页面跳转。
-      await nextTick()
-      await router.isReady()
-      console.log('[Login] Router is ready')
-      
-      // 租户上下文准备完成后，进入个人主页入口。
-      const targetPath = PERSONAL_HOME_PATH
-      
-      console.log('[Login] Navigating to:', targetPath)
-      
-      // 路由准备完成后直接跳转，不再额外延迟。
-      router.push(targetPath).then(() => {
-        console.log('[Login] Navigation completed')
-      }).catch((err) => {
-        console.error('[Login] Navigation error:', err)
-      })
+      // 主框架挂载完成后会释放加载层，整个初始化过程不会回闪登录页。
+      await router.replace(PERSONAL_HOME_PATH)
+      loadingHandedOff = true
     } else {
       message.error(i18nT('common.login.msg.chooseTenantFailed'))
     }
   } catch (e: any) {
-    // 请求拦截器已经提示过错误，这里只保留调试日志。
-    console.error('閫夋嫨绉熸埛澶辫触:', e)
+    interactionCode.value = ''
+    tenantOpen.value = false
+    tenants.value = []
+    chosenTenant.value = null
+    console.error('[Login] 选择租户或初始化系统失败:', e)
+    message.error(i18nT('common.login.msg.chooseTenantFailed'))
+  } finally {
+    tenantConfirming.value = false
+    if (!loadingHandedOff) {
+      transitionLoader?.hide?.()
+    }
   }
 }
 

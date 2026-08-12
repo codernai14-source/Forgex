@@ -187,7 +187,7 @@ public class OssStorageService implements FileStorageService {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    log.warn("关闭输入流失败", e);
+                    log.error("关闭输入流失败", e);
                 }
             }
             if (ossClient != null) {
@@ -208,7 +208,7 @@ public class OssStorageService implements FileStorageService {
             
             // 检查文件是否存在
             if (!ossClient.doesObjectExist(bucketName, filePath)) {
-                log.warn("文件不存在，无需删除: {}", filePath);
+                log.error("文件不存在，无需删除: {}", filePath);
                 return false;
             }
             

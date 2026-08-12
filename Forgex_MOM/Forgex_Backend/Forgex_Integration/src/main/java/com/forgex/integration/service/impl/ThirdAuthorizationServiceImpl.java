@@ -244,7 +244,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     @Override
     public boolean validateToken(Long thirdSystemId, String tokenValue) {
         if (!hasText(tokenValue)) {
-            log.warn("Token 为空，校验失败");
+            log.error("Token 为空，校验失败");
             return false;
         }
         LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();
@@ -256,11 +256,11 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
 
         ThirdAuthorization authorization = thirdAuthorizationMapper.selectOne(wrapper);
         if (authorization == null || !supportsToken(authorization.getAuthType())) {
-            log.warn("Token 不存在或授权方式不支持 Token：thirdSystemId={}, tokenValue={}", thirdSystemId, tokenValue);
+            log.error("Token 不存在或授权方式不支持 Token：thirdSystemId={}, tokenValue={}", thirdSystemId, tokenValue);
             return false;
         }
         if (authorization.getTokenExpireTime() != null && LocalDateTime.now().isAfter(authorization.getTokenExpireTime())) {
-            log.warn("Token 已过期：tokenValue={}, expireTime={}", tokenValue, authorization.getTokenExpireTime());
+            log.error("Token 已过期：tokenValue={}, expireTime={}", tokenValue, authorization.getTokenExpireTime());
             return false;
         }
         return true;
@@ -269,7 +269,7 @@ public class ThirdAuthorizationServiceImpl extends ServiceImpl<ThirdAuthorizatio
     @Override
     public boolean checkIpWhitelist(Long thirdSystemId, String ipAddress) {
         if (thirdSystemId == null || !hasText(ipAddress)) {
-            log.warn("参数无效：thirdSystemId={}, ipAddress={}", thirdSystemId, ipAddress);
+            log.error("参数无效：thirdSystemId={}, ipAddress={}", thirdSystemId, ipAddress);
             return false;
         }
         LambdaQueryWrapper<ThirdAuthorization> wrapper = new LambdaQueryWrapper<>();

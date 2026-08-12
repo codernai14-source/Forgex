@@ -5,6 +5,44 @@
 
 ---
 
+## V0.8.5 (2026-08-12) — 公共模块拆分与工作流增强
+
+### 架构
+
+- **Forgex_Common 模块化拆分**：拆为 `Common_Contract` / `Core` / `Web` / `Data` / `Crypto` / `Excel` / `Infra`，共享 DTO 下沉 `Domain_Contract`，内部 Feign 按提供方归属各 `*_Api`
+- 业务服务改为**精确 Maven 依赖**；`Forgex_Common` 仅保留为迁移期兼容聚合（无实现源码）
+- 正式文档同步：新增《Common 模块化拆分与二开指南》，更新架构、内部服务契约与模块映射
+
+### 工作流
+
+- **审批人撤回**（`/wf/execution/recall`，区别于发起人撤销 cancel）
+- **委托**：待办单条委托 + 委托设置；节点 `allowDelegate` 与权限双校验
+- **超时扫描 Job**：`workflowTimeoutScanJob` → Feign `/wf/execution/internal/timeout/scan`
+- **抄送列表**、待办动作「权限 ∩ 节点能力」策略（`ApprovalNodeActionPolicy` / `pendingActionModel`）
+- 待办加签/转交/委托按钮权限种子脚本：`20260812_workflow_pending_action_permissions.sql`
+
+### 组织与用户
+
+- 用户表新增 **直属上级** `sys_user.superior_user_id`
+- 内部解析 `POST /sys/user/internal/resolveSuperiorUserIds`，工作流支持 `ApproverType.SUPERIOR`
+- 说明：管理端表单与用户 Excel 导入暂未接入上级字段（需 API/SQL 维护）
+
+### 认证
+
+- 登录与选租户拆分：**`interactionCode` 短期交互码**，选租户时校验并消费
+
+### 导入导出 / 编码规则
+
+- Excel 公共能力归属 `Forgex_Common_Excel`；用户导入专节明确 `tableCode=sys_user` 与 COVER 语义
+- 编码规则明细校验/渲染拆分（`EncodeRuleDetailValidator` / `EncodeRuleRenderer`）
+
+### 文档
+
+- `Forgex_Doc` 文档版本统一升至 **V0.8.5**
+- 纠正工作流「无直属上级」等过时结论；补齐二开入口与脚本登记
+
+---
+
 ## V0.8.0 (2026-06) — 正式生产版 🎯
 
 ### 新增功能

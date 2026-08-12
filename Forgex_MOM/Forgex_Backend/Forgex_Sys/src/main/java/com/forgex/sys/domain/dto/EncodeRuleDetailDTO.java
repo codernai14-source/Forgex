@@ -70,6 +70,31 @@ public class EncodeRuleDetailDTO {
     private String connector;
 
     /**
+     * 段长度。
+     */
+    private Integer segmentLength;
+
+    /**
+     * 日期格式。
+     */
+    private String dateFormat;
+
+    /**
+     * 序列号起始值。
+     */
+    private Integer sequenceStart;
+
+    /**
+     * 补位字符。
+     */
+    private String paddingChar;
+
+    /**
+     * 补位方向。
+     */
+    private String paddingSide;
+
+    /**
      * 是否必填
      */
     private Boolean isRequired;

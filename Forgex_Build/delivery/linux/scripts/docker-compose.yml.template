@@ -1,4 +1,82 @@
 services:
+  # ======================== 中间件服务 (仅 dev/test, 生产用外部) ========================
+  # 以下中间件服务标注 profiles, 生产环境不启用, 使用外部中间件。
+  # dev/test 环境通过 --profile dev 启用。
+
+  mysql:
+    image: mysql:8.0
+    profiles: ["dev", "test"]
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-forgex}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-forgex}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: Asia/Shanghai
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${FORGEX_MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["dev", "test"]
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${FORGEX_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nacos:
+    image: nacos/nacos-server:v2.4.3-slim
+    profiles: ["dev", "test"]
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: ${MYSQL_DATABASE:-forgex}
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-forgex}
+      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false
+      JVM_XMS: 256m
+      JVM_XMX: 256m
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_AUTH_KEY:-forgex}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_AUTH_VALUE:-forgex}
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN:-SecretKey012345678901234567890123456789012345678901234567890123456789}
+    ports:
+      - "${FORGEX_NACOS_PORT:-8848}:8848"
+      - "9848:9848"
+    volumes:
+      - nacos_data:/home/nacos/data
+      - nacos_logs:/home/nacos/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8848/nacos/v1/console/health/readiness || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+
+  # ======================== 业务服务 ========================
+
   gateway:
     image: forgex/forgex-gateway:${FORGEX_VERSION:-1.0.0}
     environment:
@@ -13,6 +91,15 @@ services:
     volumes:
       - ${FORGEX_LICENSE_DIR}:${FORGEX_LICENSE_DIR}:ro
       - ${FORGEX_LOG_DIR}/gateway:/app/logs
+    depends_on:
+      - nacos
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9000/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   auth:
     image: forgex/forgex-auth:${FORGEX_VERSION:-1.0.0}
@@ -26,6 +113,14 @@ services:
       - "${FORGEX_AUTH_PORT}:9001"
     volumes:
       - ${FORGEX_LOG_DIR}/auth:/app/logs
+    depends_on:
+      - gateway
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9001/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   sys:
     image: forgex/forgex-sys:${FORGEX_VERSION:-1.0.0}
@@ -37,12 +132,21 @@ services:
       FORGEX_NACOS_ADDR: ${FORGEX_NACOS_ADDR}
       FORGEX_REDIS_ADDR: ${FORGEX_REDIS_ADDR}
       FORGEX_MYSQL_URL: ${FORGEX_MYSQL_URL}
+      FORGEX_KMS_MASTER_KEY_FILE: ${FORGEX_KMS_MASTER_KEY_FILE:-${FORGEX_LICENSE_DIR}/kms.key}
     ports:
       - "${FORGEX_SYS_PORT}:9002"
     volumes:
       - ${FORGEX_LICENSE_DIR}:${FORGEX_LICENSE_DIR}:ro
       - ${FORGEX_UPLOAD_DIR}:${FORGEX_UPLOAD_DIR}
       - ${FORGEX_LOG_DIR}/sys:/app/logs
+    depends_on:
+      - auth
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9002/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   basic:
     image: forgex/forgex-basic:${FORGEX_VERSION:-1.0.0}
@@ -56,6 +160,14 @@ services:
       - "${FORGEX_BASIC_PORT}:9003"
     volumes:
       - ${FORGEX_LOG_DIR}/basic:/app/logs
+    depends_on:
+      - sys
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9003/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   job:
     image: forgex/forgex-job:${FORGEX_VERSION:-1.0.0}
@@ -71,6 +183,14 @@ services:
     volumes:
       - ${FORGEX_LICENSE_DIR}:${FORGEX_LICENSE_DIR}:ro
       - ${FORGEX_LOG_DIR}/job:/app/logs
+    depends_on:
+      - basic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9004/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   integration:
     image: forgex/forgex-integration:${FORGEX_VERSION:-1.0.0}
@@ -84,6 +204,14 @@ services:
       - "${FORGEX_INTEGRATION_PORT}:9007"
     volumes:
       - ${FORGEX_LOG_DIR}/integration:/app/logs
+    depends_on:
+      - job
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9007/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   workflow:
     image: forgex/forgex-workflow:${FORGEX_VERSION:-1.0.0}
@@ -97,6 +225,14 @@ services:
       - "${FORGEX_WORKFLOW_PORT}:9005"
     volumes:
       - ${FORGEX_LOG_DIR}/workflow:/app/logs
+    depends_on:
+      - integration
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9005/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   report:
     image: forgex/forgex-report:${FORGEX_VERSION:-1.0.0}
@@ -111,3 +247,21 @@ services:
       - "${FORGEX_REPORT_PORT}:8084"
     volumes:
       - ${FORGEX_LOG_DIR}/report:/app/logs
+    depends_on:
+      - workflow
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8084/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  nacos_data:
+    driver: local
+  nacos_logs:
+    driver: local

@@ -90,11 +90,34 @@ public class CryptoConfig {
 
     /**
      * KMS 密钥管理配置。
+     * <p>
+     * 主密钥自 V0.8.0 起改为外部注入（环境变量 / 密钥文件），不再落库。
+     * 此处的 {@code masterSource} / {@code masterKeyFile} 仅作为展示与默认值声明，
+     * 实际读取逻辑由 {@code KmsServiceImpl} 按环境变量优先级处理。
      */
     @Data
     public static class KmsConfig {
-        /** KMS 主密钥（64字符Hex，256位） */
+        /**
+         * 主密钥来源，默认 {@code env}。
+         * <ul>
+         *   <li>{@code env}：从环境变量 {@code FORGEX_KMS_MASTER_KEY_HEX} 读取</li>
+         *   <li>{@code file}：从 {@code FORGEX_KMS_MASTER_KEY_FILE} 指定的文件读取，
+         *       未设则默认 {@code ${FORGEX_LICENSE_DIR}/kms.key}</li>
+         * </ul>
+         */
+        private String masterSource = "env";
+
+        /** 主密钥文件路径（仅 file 来源时使用，默认空表示取 ${FORGEX_LICENSE_DIR}/kms.key） */
+        private String masterKeyFile = "";
+
+        /**
+         * KMS 主密钥（64字符Hex，256位）。
+         * <p>
+         * 注意：自 V0.8.0 起该字段仅用于 B 端配置展示，不再作为实际主密钥来源。
+         * 实际主密钥从外部环境变量或密钥文件注入。
+         */
         private String masterKeyHex = "";
+
         /** 密钥轮换提醒天数 */
         private int rotateRemindDays = 90;
     }

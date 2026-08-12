@@ -31,7 +31,7 @@ public class LogoutAuditServiceImpl implements LogoutAuditService {
     @Override
     public boolean recordLogoutByToken(String tokenValue, LogoutReason logoutReason) {
         // 登录日志已收敛为登录事件，不再记录登出时间和登出原因。
-        log.debug("skip auth logout audit for login log, tokenValue={}, reason={}", tokenValue, logoutReason);
+        log.info("skip auth logout audit for login log, tokenValue={}, reason={}", tokenValue, logoutReason);
         return true;
     }
 }

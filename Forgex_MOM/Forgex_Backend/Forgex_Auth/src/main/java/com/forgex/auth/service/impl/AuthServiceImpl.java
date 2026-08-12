@@ -26,6 +26,7 @@ import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.dto.SysUserDTO;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.vo.TenantVO;
+import com.forgex.auth.domain.vo.LoginResultVO;
 import com.forgex.auth.mapper.SysRolePermMapper;
 import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
@@ -35,6 +36,8 @@ import com.forgex.auth.mapper.SysInviteCodeMapper;
 import com.forgex.auth.mapper.SysInviteRegisterRecordMapper;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.LoginLogService;
+import com.forgex.auth.service.LoginInteractionCodeService;
+import com.forgex.auth.service.TenantSelectionAuthorizationService;
 import com.forgex.auth.strategy.AuthTerminalConstants;
 import com.forgex.auth.strategy.LoginTypeConstants;
 import com.forgex.auth.strategy.captcha.CaptchaStrategyFactory;
@@ -159,6 +162,10 @@ public class AuthServiceImpl implements AuthService {
     private ChooseTenantStrategyFactory chooseTenantStrategyFactory;
     @Autowired
     private CaptchaStrategyFactory captchaStrategyFactory;
+    @Autowired
+    private LoginInteractionCodeService loginInteractionCodeService;
+    @Autowired
+    private TenantSelectionAuthorizationService tenantSelectionAuthorizationService;
 
 
     /**
@@ -192,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
      * @see com.forgex.common.domain.config.CaptchaConfig
      */
     @Override
-    public R<List<TenantVO>> login(LoginParam param) {
+    public R<LoginResultVO> login(LoginParam param) {
         String loginTerminal = resolveLoginTerminal(param == null ? null : param.getLoginTerminal());
         String loginType = resolveLoginType(param == null ? null : param.getLoginType());
         if (param != null) {
@@ -208,7 +215,7 @@ public class AuthServiceImpl implements AuthService {
      * @param param 请求参数
      * @return 统一响应结果
      */
-    public R<List<TenantVO>> doAccountPasswordLogin(LoginParam param) {
+    public R<LoginResultVO> doAccountPasswordLogin(LoginParam param) {
         // 获取账号信息
         String account = param == null ? null : param.getAccount();
         // 获取密码信息
@@ -223,14 +230,14 @@ public class AuthServiceImpl implements AuthService {
 
         // 校验账号和密码不能为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
-            log.warn("Login failed: account or password is empty");
+            log.error("Login failed: account or password is empty");
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account or password is empty");
             return R.fail(CommonPrompt.ACCOUNT_OR_PASSWORD_EMPTY);
         }
 
         LoginSecurityConfig loginSecurityConfig = getLoginSecurityConfig();
-        R<List<TenantVO>> lockResult = checkLoginLocked(account, loginSecurityConfig);
+        R<LoginResultVO> lockResult = checkLoginLocked(account, loginSecurityConfig);
         if (lockResult != null) {
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account is locked");
             return lockResult;
@@ -239,7 +246,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             password = decryptTransportPassword(password);
         } catch (IllegalStateException ex) {
-            log.warn("Login failed: password transport decrypt failed, account={}", account);
+            log.error("Login failed: password transport decrypt failed, account={}", account);
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "password transport decrypt failed");
             return R.fail(AuthPromptEnum.PASSWORD_TRANSPORT_DECRYPT_FAILED);
         }
@@ -251,7 +258,7 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUser::getAccount, idKey));
         // 如果用户不存在
         if (user == null) {
-            log.warn("用户登录失败：用户不存在 account={}", idKey);
+            log.error("用户登录失败：用户不存在 account={}", idKey);
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "user not found");
             recordLoginFailureState(account, loginSecurityConfig);
@@ -267,7 +274,7 @@ public class AuthServiceImpl implements AuthService {
         // 验证密码
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
-            log.warn("用户登录失败：密码错误 account={}", account);
+            log.error("用户登录失败：密码错误 account={}", account);
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "password incorrect");
             recordLoginFailureState(account, loginSecurityConfig);
@@ -280,7 +287,7 @@ public class AuthServiceImpl implements AuthService {
         CaptchaValidationResult captchaValidationResult = captchaStrategyFactory.getStrategy(mode).validate(param);
         if (!captchaValidationResult.isSuccess()) {
             String logMessage = captchaValidationResult.getLogMessage();
-            log.warn("验证码校验失败：{} account={}", logMessage, account);
+            log.error("验证码校验失败：{} account={}", logMessage, account);
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, logMessage);
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(captchaValidationResult.getPrompt());
@@ -299,8 +306,9 @@ public class AuthServiceImpl implements AuthService {
         for (SysUserTenant b : binds) tenantIds.add(b.getTenantId());
         // 如果用户没有绑定任何租户
         if (tenantIds.isEmpty()) {
-            log.warn("用户登录成功，但未绑定任何租户 account={}", account);
-            return R.ok(Collections.emptyList());
+            log.error("用户登录成功，但未绑定任何租户 account={}", account);
+            String interactionCode = loginInteractionCodeService.issue(user.getId(), account, param.getLoginTerminal());
+            return R.ok(new LoginResultVO(interactionCode, Collections.emptyList()));
         }
         // 查询租户详细信息
         List<SysTenant> tenants = tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
@@ -319,7 +327,8 @@ public class AuthServiceImpl implements AuthService {
             vos.add(vo);
         }
         log.info("用户登录成功：account={}, tenants={}", idKey, vos.size());
-        return R.ok(vos);
+        String interactionCode = loginInteractionCodeService.issue(user.getId(), account, param.getLoginTerminal());
+        return R.ok(new LoginResultVO(interactionCode, vos));
     }
 
 
@@ -425,6 +434,12 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .last("limit 1"));
         if (bind == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_BOUND_TO_TENANT);
+        String loginTerminal = resolveLoginTerminal(param == null ? null : param.getLoginTerminal());
+        String interactionCode = param == null ? null : param.getInteractionCode();
+        if (!tenantSelectionAuthorizationService.authorize(
+                user.getId(), account, loginTerminal, interactionCode)) {
+            return R.fail(StatusCode.NOT_LOGIN, AuthPromptEnum.LOGIN_INTERACTION_EXPIRED);
+        }
         // 执行登录
         StpUtil.login(idKey);
         // 获取 Token
@@ -459,7 +474,7 @@ public class AuthServiceImpl implements AuthService {
                 tenantId,
                 idKey,
                 token,
-                resolveLoginTerminal(param == null ? null : param.getLoginTerminal()),
+                loginTerminal,
                 clientIp,
                 userAgent
         );
@@ -709,7 +724,7 @@ public class AuthServiceImpl implements AuthService {
      * @return 如果账号被锁定返回错误响应，否则返回 null
      * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
      */
-    private R<List<TenantVO>> checkLoginLocked(String account, LoginSecurityConfig config) {
+    private R<LoginResultVO> checkLoginLocked(String account, LoginSecurityConfig config) {
         if (!StringUtils.hasText(account) || config == null || config.getLockMinutes() == null || config.getLockMinutes() <= 0) {
             return null;
         }
@@ -760,7 +775,7 @@ public class AuthServiceImpl implements AuthService {
                 failCounter.delete();
             }
         } catch (Exception e) {
-            log.warn("记录登录失败状态失败：account={}", account, e);
+            log.error("记录登录失败状态失败：account={}", account, e);
         }
     }
 
@@ -781,7 +796,7 @@ public class AuthServiceImpl implements AuthService {
             redissonClient.getAtomicLong(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey).delete();
             redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).delete();
         } catch (Exception e) {
-            log.warn("清除登录失败状态失败：account={}", account, e);
+            log.error("清除登录失败状态失败：account={}", account, e);
         }
     }
 
@@ -819,7 +834,7 @@ public class AuthServiceImpl implements AuthService {
             }
             return Math.max(1L, (ttlMillis + 999L) / 1000L);
         } catch (Exception e) {
-            log.warn("读取 Redis 键 TTL 失败：key={}", key, e);
+            log.error("读取 Redis 键 TTL 失败：key={}", key, e);
             return null;
         }
     }
@@ -858,7 +873,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             writeLoginSession(StpUtil.getSession(), userId, tenantId, account);
         } catch (Exception e) {
-            log.warn("写入兼容登录会话失败：account={}, token={}", account, token, e);
+            log.error("写入兼容登录会话失败：account={}, token={}", account, token, e);
         }
     }
 
@@ -953,7 +968,7 @@ public class AuthServiceImpl implements AuthService {
             }
             redis.delete(legacyKey);
         } catch (Exception e) {
-            log.warn("缓存在线用户会话失败：account={}, tenantId={}, token={}", account, tenantId, token, e);
+            log.error("缓存在线用户会话失败：account={}, tenantId={}, token={}", account, tenantId, token, e);
         }
     }
 
@@ -1077,7 +1092,7 @@ public class AuthServiceImpl implements AuthService {
                 redis.delete(buildOnlineUserKey(tenantId, userId, tokenValue));
                 log.info("清除在线用户缓存：userId={}, tenantId={}, token={}", userId, tenantId, tokenValue);
             } catch (Exception e) {
-                log.warn("清除在线用户缓存失败：{}", e.getMessage());
+                log.error("清除在线用户缓存失败：{}", e.getMessage());
             }
         }
         if (tenantId != null && userId != null) {
@@ -1108,7 +1123,7 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
         } catch (Exception e) {
-            log.warn("清除在线用户缓存失败：{}", e.getMessage());
+            log.error("清除在线用户缓存失败：{}", e.getMessage());
         }
     }
 
@@ -1137,7 +1152,7 @@ public class AuthServiceImpl implements AuthService {
             try {
                 tokenValue = StpUtil.getTokenValue();
             } catch (Exception e) {
-                log.debug("获取 Token 失败：{}", e.getMessage());
+                log.info("获取 Token 失败：{}", e.getMessage());
             }
 
             // 从 Session 中获取用户信息
@@ -1165,7 +1180,7 @@ public class AuthServiceImpl implements AuthService {
                     }
                 }
             } catch (Exception e) {
-                log.debug("获取 Session 失败：{}", e.getMessage());
+                log.info("获取 Session 失败：{}", e.getMessage());
             }
 
             // 获取账号
@@ -1176,7 +1191,7 @@ public class AuthServiceImpl implements AuthService {
                 try {
                     loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
                 } catch (Exception e) {
-                    log.warn("记录登出日志失败：{}", e.getMessage());
+                    log.error("记录登出日志失败：{}", e.getMessage());
                 }
             }
 
@@ -1187,7 +1202,7 @@ public class AuthServiceImpl implements AuthService {
             try {
                 StpUtil.logout();
             } catch (Exception e) {
-                log.debug("Sa-Token 登出失败：{}", e.getMessage());
+                log.info("Sa-Token 登出失败：{}", e.getMessage());
             }
 
             log.info("用户登出成功：account={}", account);
@@ -1221,7 +1236,7 @@ public class AuthServiceImpl implements AuthService {
                 return request.getRemoteAddr();
             }
         } catch (Exception e) {
-            log.warn("Get client IP failed", e);
+            log.error("Get client IP failed", e);
         }
         return "unknown";
     }
@@ -1247,7 +1262,7 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
         } catch (Exception e) {
-            log.warn("Get User-Agent failed", e);
+            log.error("Get User-Agent failed", e);
         }
         return "unknown";
     }

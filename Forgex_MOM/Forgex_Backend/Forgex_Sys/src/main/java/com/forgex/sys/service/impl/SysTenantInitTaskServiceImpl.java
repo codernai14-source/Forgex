@@ -63,7 +63,7 @@ public class SysTenantInitTaskServiceImpl implements SysTenantInitTaskService {
             // 推送进度到前端
             ssePushService.pushProgress(taskId.toString(), progress, currentStep);
             
-            log.debug("更新任务进度，taskId: {}, progress: {}, currentStep: {}", taskId, progress, currentStep);
+            log.info("更新任务进度，taskId: {}, progress: {}, currentStep: {}", taskId, progress, currentStep);
         }
     }
     
@@ -110,7 +110,7 @@ public class SysTenantInitTaskServiceImpl implements SysTenantInitTaskService {
                .last("limit 1");
         
         SysTenantInitTask task = tenantInitTaskMapper.selectOne(wrapper);
-        log.debug("根据租户 ID 查询任务，tenantId: {}, taskId: {}", tenantId, task != null ? task.getId() : null);
+        log.info("根据租户 ID 查询任务，tenantId: {}, taskId: {}", tenantId, task != null ? task.getId() : null);
         return task;
     }
 }

@@ -289,7 +289,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
                     result.setUpdatedCount(result.getUpdatedCount() + 1);
                 }
             } catch (Exception ex) {
-                log.warn("同步物料失败，materialCode={}", materialCode, ex);
+                log.error("同步物料失败，materialCode={}", materialCode, ex);
                 result.setFailedCount(result.getFailedCount() + 1);
                 result.getFailedMaterialCodes().add(StringUtils.hasText(materialCode) ? materialCode : "UNKNOWN");
             }
@@ -338,7 +338,7 @@ public class MaterialServiceImpl extends ServiceImpl<BasicMaterialMapper, BasicM
                 validateAggregate(aggregate);
                 handleImportAggregate(tenantId, mode, aggregate, result);
             } catch (Exception ex) {
-                log.warn("公共导入物料失败，materialCode={}", materialCode, ex);
+                log.error("公共导入物料失败，materialCode={}", materialCode, ex);
                 result.addError(StringUtils.hasText(materialCode) ? materialCode : "UNKNOWN");
             }
         }

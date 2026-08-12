@@ -112,6 +112,11 @@ public class SysUserVO extends BaseEntity {
     private Long employeeId;
 
     /**
+     * 直属上级用户 ID。
+     */
+    private Long superiorUserId;
+
+    /**
      * 用户来源。
      */
     @DictI18n(nodePathConst = "user_source", targetField = "userSourceText")

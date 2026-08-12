@@ -2,6 +2,7 @@
 
 import com.forgex.mobile.core.common.result.AppResult
 import com.forgex.mobile.core.network.model.auth.SysUserDTO
+import com.forgex.mobile.core.network.model.auth.LoginResult
 import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
 import com.forgex.mobile.core.network.model.auth.TenantVO
 import com.forgex.mobile.core.network.model.menu.UserRoutesVO
@@ -17,7 +18,7 @@ interface AuthRepository {
         captcha: String? = null,
         captchaId: String? = null,
         publicKey: String? = null
-    ): AppResult<List<TenantVO>>
+    ): AppResult<LoginResult>
 
     suspend fun loadCaptchaMode(): AppResult<CaptchaMode>
 
@@ -40,7 +41,8 @@ interface AuthRepository {
 
     suspend fun chooseTenant(
         tenantId: String,
-        account: String
+        account: String,
+        interactionCode: String
     ): AppResult<SysUserDTO>
 
     suspend fun loadUserRoutes(account: String): AppResult<UserRoutesVO>

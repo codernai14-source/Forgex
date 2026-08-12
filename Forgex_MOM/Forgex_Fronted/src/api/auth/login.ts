@@ -12,6 +12,19 @@ export interface TenantOption {
   tenantType?: string
 }
 
+/** 账号凭据校验后的短期登录结果。 */
+export interface LoginResult {
+  interactionCode: string
+  tenants: TenantOption[]
+}
+
+/** 租户选择请求。首次登录必须携带 interactionCode。 */
+export interface TenantChoiceRequest {
+  tenantId: string
+  account: string
+  interactionCode?: string
+}
+
 /**
  * 登录 API
  * @param data 登录请求参数
@@ -23,7 +36,7 @@ export interface TenantOption {
  * @throws 登录失败时抛出异常
  */
 export function login(data: { account: string; password: string; captcha?: string; captchaId?: string }) {
-  return http.post('/auth/login', data)
+  return http.post<LoginResult>('/auth/login', data)
 }
 
 /**
@@ -56,7 +69,7 @@ export interface ChosenUserInfo {
  * @returns 选择租户后的用户信息
  * @throws 选择失败时抛出异常
  */
-export function chooseTenant(data: { tenantId: string; account: string }) {
+export function chooseTenant(data: TenantChoiceRequest) {
   return http.post<ChosenUserInfo>('/auth/choose-tenant', data)
 }
 

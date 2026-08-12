@@ -1,7 +1,7 @@
-# 后端文档导航
+﻿# 后端文档导航
 
-> 版本：**V0.6.7**
-> 更新时间：**2026-06-21**
+> 版本：**V0.8.5**
+> 更新时间：**2026-08-12**
 
 本页为 Forgex 后端文档的**唯一推荐入口**（历史文件 [后端公共能力与核心功能手册](./后端公共能力与核心功能手册.md) 已重定向至此，请勿在手册文件中追加正文）。
 
@@ -9,7 +9,7 @@
 
 ## 零点五、架构说明（精要）
 
-后端采用 **Spring Boot 3 + Spring Cloud Alibaba** 多服务架构：统一经 **API 网关**暴露对外接口，下游按领域拆分为认证、系统平台、工作流、报表、基础业务扩展、集成平台、任务调度等微服务；**租户、用户、语言**等请求级上下文由 `Forgex_Common` 统一承载并在各服务复用。
+后端采用 **Spring Boot 3 + Spring Cloud Alibaba** 多服务架构：统一经 **API 网关**暴露对外接口，下游按领域拆分为认证、系统平台、工作流、报表、基础业务扩展、集成平台、任务调度等微服务；**租户、用户、语言**等请求级上下文由公共模块（`Forgex_Common_Core` 等）统一承载并在各服务复用。原单体 `Forgex_Common` 已拆为 Contract/Core/Web/Data/Crypto/Excel/Infra + Domain_Contract + 各服务 `*_Api`，详见 [Common 模块化拆分与二开指南](./公共能力/Common模块化拆分与二开指南.md)。
 
 - **仓库结构、分层原则、与前端/移动端协作**：见 [项目架构设计文档](../开发规范/架构设计/项目架构设计文档.md)（含后端 §四、前端 §五）。
 - **各服务端口与职责速查**：见本文 [第六节 后端服务列表](#六后端服务列表)。
@@ -39,6 +39,7 @@
 | API 接口文档 | [进入](./公共能力/API接口文档实现逻辑.md) | [进入](./公共能力/API接口文档使用方式.md) |
 | 性能优化 | [进入](./公共能力/性能优化实现逻辑.md) | [进入](./公共能力/性能优化使用方式.md) |
 | 业务编码生成 | [进入](./公共能力/业务编码生成实现逻辑.md) | [进入](./公共能力/业务编码生成使用方式.md) |
+| Common 模块化拆分与二开 | [进入](./公共能力/Common模块化拆分与二开指南.md) | [进入](./公共能力/Common模块化拆分与二开指南.md) |
 
 ## 二、能力总览
 
@@ -50,25 +51,26 @@
 | 注册（邀请码） | 已支持 | Forgex_Auth | [认证授权](./身份与权限/认证授权.md) |
 | 登出 | 已支持 | Forgex_Auth | [认证授权](./身份与权限/认证授权.md) |
 | 验证码（图片/滑块） | 已支持 | Forgex_Auth | [认证授权](./身份与权限/认证授权.md) |
-| 密码策略（bcrypt/SM2/SM4） | 已支持 | Forgex_Common | [加密功能](./模块专题/加密功能.md) |
-| 权限校验（@RequirePerm） | 已支持 | Forgex_Common | [认证授权](./身份与权限/认证授权.md) |
+| 密码策略（bcrypt/SM2/SM4） | 已支持 | Forgex_Common_Crypto | [加密功能](./模块专题/加密功能.md) |
+| 权限校验（@RequirePerm） | 已支持 | Forgex_Common_Infra / Auth | [认证授权](./身份与权限/认证授权.md) |
 | 动态路由 | 已支持 | Forgex_Auth | [认证授权](./身份与权限/认证授权.md) |
 
 ### 2.2 多租户
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
-| 租户隔离（行级） | 已支持 | Forgex_Common | [多租户](./租户与上下文/多租户.md) |
-| 租户上下文传递 | 已支持 | Forgex_Common | [多租户](./租户与上下文/多租户.md) |
-| 租户忽略配置 | 已支持 | Forgex_Common | [多租户](./租户与上下文/多租户.md) |
-| 公共配置回退 | 已支持 | Forgex_Common | [多租户](./租户与上下文/多租户.md) |
-| 异步任务上下文透传 | 已支持 | Forgex_Common | [多租户](./租户与上下文/多租户.md) |
+| 租户隔离（行级） | 已支持 | Forgex_Common_Data | [多租户](./租户与上下文/多租户.md) |
+| 租户上下文传递 | 已支持 | Forgex_Common_Core / Web | [多租户](./租户与上下文/多租户.md) |
+| 租户忽略配置 | 已支持 | Forgex_Common_Data | [多租户](./租户与上下文/多租户.md) |
+| 公共配置回退 | 已支持 | Forgex_Common_Infra | [多租户](./租户与上下文/多租户.md) |
+| 异步任务上下文透传 | 已支持 | Forgex_Common_Core | [多租户](./租户与上下文/多租户.md) |
 
 ### 2.3 用户与角色
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
 | 用户管理（CRUD） | 已支持 | Forgex_Sys | [用户与角色](./身份与权限/用户与角色.md) |
+| 直属上级（superior_user_id） | 已支持 | Forgex_Sys | [用户与角色](./身份与权限/用户与角色.md)；工作流 `SUPERIOR` 审批人规则可用 |
 | 角色管理 | 已支持 | Forgex_Sys | [用户与角色](./身份与权限/用户与角色.md) |
 | 部门管理 | 已支持 | Forgex_Sys | [用户与角色](./身份与权限/用户与角色.md) |
 | 职位管理 | 已支持 | Forgex_Sys | [用户与角色](./身份与权限/用户与角色.md) |
@@ -79,12 +81,12 @@
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
-| 统一响应 `R<T>` | 已支持 | Forgex_Common | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
-| 状态码管理 | 已支持 | Forgex_Common | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
-| 业务异常 | 已支持 | Forgex_Common | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
-| 国际化异常 | 已支持 | Forgex_Common | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
-| 请求级多语言 | 已支持 | Forgex_Common | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
-| 异常消息翻译 | 已支持 | Forgex_Common | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
+| 统一响应 `R<T>` | 已支持 | Forgex_Common_Contract | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
+| 状态码管理 | 已支持 | Forgex_Common_Contract | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
+| 业务异常 | 已支持 | Forgex_Common_Contract | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
+| 国际化异常 | 已支持 | Forgex_Common_Contract | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
+| 请求级多语言 | 已支持 | Forgex_Common_Core / Web | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
+| 异常消息翻译 | 已支持 | Forgex_Common_Infra | [统一返回与国际化](./配置与审计/统一返回与国际化.md) |
 
 ### 2.5 通用消息
 
@@ -100,13 +102,14 @@
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
-| RedisHelper 工具类 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
-| 缓存操作 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
-| 分布式锁 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
-| Key 命名规范 | 已支持 | Forgex_Common | [Redis 工具](./公共能力/Redis工具.md) |
-| 缓存策略最佳实践 | 已支持 | Forgex_Common | [缓存策略使用方式](./公共能力/缓存策略使用方式.md) |
-| API 接口文档 | 已支持 | Forgex_Common / 各业务模块 | [API 接口文档使用方式](./公共能力/API接口文档使用方式.md) |
+| RedisHelper 工具类 | 已支持 | Forgex_Common_Infra | [Redis 工具](./公共能力/Redis工具.md) |
+| 缓存操作 | 已支持 | Forgex_Common_Infra | [Redis 工具](./公共能力/Redis工具.md) |
+| 分布式锁 | 已支持 | Forgex_Common_Infra | [Redis 工具](./公共能力/Redis工具.md) |
+| Key 命名规范 | 已支持 | Forgex_Common_Infra | [Redis 工具](./公共能力/Redis工具.md) |
+| 缓存策略最佳实践 | 已支持 | Forgex_Common_Infra | [缓存策略使用方式](./公共能力/缓存策略使用方式.md) |
+| API 接口文档 | 已支持 | 各业务模块 + 公共注解约定 | [API 接口文档使用方式](./公共能力/API接口文档使用方式.md) |
 | 性能优化指南 | 已支持 | 全部后端服务 | [性能优化使用方式](./公共能力/性能优化使用方式.md) |
+| 内部服务契约 | 已支持 | Domain_Contract + `*_Api` | [内部服务接口开放说明](./公共能力/内部服务接口开放说明.md) / [Common 模块化拆分](./公共能力/Common模块化拆分与二开指南.md) |
 
 ### 2.7 数据字典
 
@@ -124,29 +127,29 @@
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
 | 规则维护 | 已支持 | Forgex_Sys | [编码规则、授权与初始化](./配置与审计/编码规则、授权与初始化.md) |
-| 业务侧调用 `EncodeUtils` | 已支持 | Forgex_Common | [业务编码生成使用方式](./公共能力/业务编码生成使用方式.md) |
+| 业务侧调用 `EncodeUtils` | 已支持 | Forgex_Sys_Api / Sys | [业务编码生成使用方式](./公共能力/业务编码生成使用方式.md) |
 
 ### 2.8 加密功能
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
-| 密码存储加密 | 已支持 | Forgex_Common | [加密功能](./模块专题/加密功能.md) |
-| 传输加密（SM2） | 已支持 | Forgex_Common | [加密功能](./模块专题/加密功能.md) |
-| 字段透明加密 | 已支持 | Forgex_Common | [加密功能](./模块专题/加密功能.md) |
-| 文件加密 | 已支持 | Forgex_Common | [加密功能](./模块专题/加密功能.md) |
+| 密码存储加密 | 已支持 | Forgex_Common_Crypto | [加密功能](./模块专题/加密功能.md) |
+| 传输加密（SM2） | 已支持 | Forgex_Common_Crypto | [加密功能](./模块专题/加密功能.md) |
+| 字段透明加密 | 已支持 | Forgex_Common_Crypto | [加密功能](./模块专题/加密功能.md) |
+| 文件加密 | 已支持 | Forgex_Common_Crypto | [加密功能](./模块专题/加密功能.md) |
 | KMS 密钥管理 | 已支持 | Forgex_Sys | [加密功能](./模块专题/加密功能.md) |
-| Provider 扩展 | 已支持 | Forgex_Common | [加密功能](./模块专题/加密功能.md) |
+| Provider 扩展 | 已支持 | Forgex_Common_Crypto | [加密功能](./模块专题/加密功能.md) |
 
 ### 2.9 导入导出
 
 | 功能 | 状态 | 模块 | 文档入口 |
 |---|---|---|---|
-| Excel 导出配置 | 已支持 | Forgex_Common | [导入导出](./模块专题/导入导出.md) |
-| Excel 导入配置 | 已支持 | Forgex_Common | [导入导出](./模块专题/导入导出.md) |
-| 模板下载 | 已支持 | Forgex_Common | [导入导出](./模块专题/导入导出.md) |
-| 数据校验 | 已支持 | Forgex_Common | [导入导出](./模块专题/导入导出.md) |
-| 下拉选项 Provider | 已支持 | Forgex_Common | [导入导出](./模块专题/导入导出.md) |
-| 多语言列名 | 已支持 | Forgex_Common | [导入导出](./模块专题/导入导出.md) |
+| Excel 导出配置 | 已支持 | Forgex_Common_Excel / Sys | [导入导出](./模块专题/导入导出.md) |
+| Excel 导入配置 | 已支持 | Forgex_Common_Excel / Sys | [导入导出](./模块专题/导入导出.md) |
+| 模板下载 | 已支持 | Forgex_Common_Excel / Sys | [导入导出](./模块专题/导入导出.md) |
+| 数据校验 | 已支持 | Forgex_Common_Excel | [导入导出](./模块专题/导入导出.md) |
+| 下拉选项 Provider | 已支持 | Forgex_Common_Excel | [导入导出](./模块专题/导入导出.md) |
+| 多语言列名 | 已支持 | Forgex_Common_Excel | [导入导出](./模块专题/导入导出.md) |
 
 ### 2.10 文件上传
 
@@ -185,8 +188,11 @@
 |---|---|---|---|
 | 流程配置 | 已支持 | Forgex_Workflow | [工作流](./模块专题/工作流.md) |
 | 发起审批 | 已支持 | Forgex_Workflow | [工作流](./模块专题/工作流.md)；业务侧 Feign 与回调完整示例见 [工作流使用方式](./模块专题/工作流使用方式.md) §2.4 |
-| 审批处理 | 已支持 | Forgex_Workflow | [工作流](./模块专题/工作流.md) |
-| 待办/已办 | 已支持 | Forgex_Workflow | [工作流](./模块专题/工作流.md) |
+| 审批处理（通过/驳回/转交/加签/委托） | 已支持 | Forgex_Workflow | [工作流使用方式](./模块专题/工作流使用方式.md) |
+| 审批撤回 | 已支持 | Forgex_Workflow | `POST /wf/execution/recall`（节点 `allowRecall`） |
+| 超时扫描补偿 | 已支持 | Forgex_Job + Workflow | Job `workflowTimeoutScanJob` → `/wf/execution/internal/timeout/scan` |
+| 直属上级审批人 | 已支持 | Sys + Workflow | `ApproverType.SUPERIOR` + `superior_user_id` |
+| 待办/已办/抄送 | 已支持 | Forgex_Workflow | [工作流](./模块专题/工作流.md) |
 | 回调注册 | 已支持 | Forgex_Workflow | [工作流](./模块专题/工作流.md) |
 | 报表分类 | 已支持 | Forgex_Report | [报表中心](./模块专题/报表中心.md) |
 | 报表数据源 | 已支持 | Forgex_Report | [报表中心](./模块专题/报表中心.md) |
@@ -208,7 +214,7 @@
 |---|---|---|---|
 | 登录日志 | 已支持 | Forgex_Auth | [数据字典与日志](./配置与审计/数据字典与日志.md) |
 | 操作日志 | 已支持 | Forgex_Sys | [数据字典与日志](./配置与审计/数据字典与日志.md) |
-| 审计字段自动填充 | 已支持 | Forgex_Common | [多租户](./租户与上下文/多租户.md) |
+| 审计字段自动填充 | 已支持 | Forgex_Common_Data | [多租户](./租户与上下文/多租户.md) |
 
 ## 三、建议阅读路径
 
@@ -267,24 +273,23 @@
 
 ## 五、当前后端公共方法/能力沉淀重点
 
-| 主题 | 关键类 / 关键入口 |
-|---|---|
-| 统一响应 | `com.forgex.common.web.R` |
-| 状态码 | `com.forgex.common.web.StatusCode` |
-| 通用提示枚举 | `com.forgex.common.i18n.CommonPrompt` |
-| 国际化上下文 | `LangContext`、`LangWebInterceptor`、`I18nMessageService` |
-| 异常体系 | `BusinessException`、`I18nBusinessException` |
-| 多租户上下文 | `TenantContext`、`UserContext`、`TenantIgnoreRegistry` |
-| Redis 工具 | `com.forgex.common.util.RedisHelper` |
-| 缓存策略 | `RedisHelper`、`DictCacheConfig`、`DictCacheInvalidationListener` |
-| API 文档 | springdoc-openapi、`@Tag`、`@Operation`、`@Schema` |
-| 性能优化 | 分页查询、索引设计、批量处理、慢查询定位 |
-| 动态表格 | `CommonTableController`、`FxTableConfigService`、`FxUserTableConfigService` |
-| 权限校验 | `@RequirePerm`、`PermissionInterceptor` |
-| 加密 Provider | `CryptoProviders`、`CryptoPasswordProvider` |
-| 文件存储 | `FileStorageService`、`FileStorageFactory` |
-| 导入导出 | `ExcelConfigService`、`ExcelFileService` |
-| 日志 | 登录日志/操作日志相关服务与注解/AOP |
+| 主题 | 关键类 / 关键入口 | 模块归属 |
+|---|---|---|
+| 统一响应 | `com.forgex.common.web.R` | `Forgex_Common_Contract` |
+| 状态码 | `com.forgex.common.web.StatusCode` | `Forgex_Common_Contract` |
+| 通用提示枚举 | `com.forgex.common.i18n.CommonPrompt` | `Forgex_Common_Contract` |
+| 国际化上下文 | `LangContext`、`LangWebInterceptor`、`I18nMessageService` | Core / Web / Infra |
+| 异常体系 | `BusinessException`、`I18nBusinessException`、`GlobalExceptionHandler` | Contract / Infra |
+| 多租户上下文 | `TenantContext`、`UserContext`、`TenantIgnoreRegistry` | Core / Data |
+| Redis 工具 | `com.forgex.common.util.RedisHelper` | Infra |
+| 动态表格 | `CommonTableController`、`FxTableConfigService` | Infra / Sys |
+| 权限校验 | `@RequirePerm`、`PermissionInterceptor` | Infra / Auth |
+| 加密 Provider | `CryptoProviders`、`CryptoPasswordProvider` | Crypto |
+| 导入导出 | `ExcelConfigService`、`FxExcelImportHandler` | Excel |
+| 内部 Feign | `com.forgex.common.api.feign.*` | 各 `*_Api` |
+| 共享 DTO | `com.forgex.common.api.dto.*` | `Forgex_Domain_Contract` |
+
+完整依赖选型见 [Common 模块化拆分与二开指南](./公共能力/Common模块化拆分与二开指南.md)。
 
 ## 六、后端服务列表
 
@@ -299,6 +304,8 @@
 | Forgex_Workflow | 9005 | 工作流引擎、审批流程 |
 | Forgex_Report | 9006 | 报表中心、UReport2、JimuReport |
 
+另有不可独立启动的库模块：`Forgex_Common_*`、`Forgex_Domain_Contract`、`Forgex_*_Api`，以及迁移期兼容聚合 `Forgex_Common`。
+
 ## 七、说明
 
-本目录负责输出 V0.6.5 的**清晰能力列表**和**正式导航入口**；更细的能力说明优先继续补到 `Forgex_Doc` 的分类页与镜像页中。
+本目录负责输出清晰能力列表和正式导航入口；更细的能力说明优先继续补到 `Forgex_Doc` 的分类页与镜像页中。公共模块拆分后，文档中的“所属模块=Forgex_Common”应理解为“公共能力域”，具体 artifact 以 [Common 模块化拆分与二开指南](./公共能力/Common模块化拆分与二开指南.md) 为准。

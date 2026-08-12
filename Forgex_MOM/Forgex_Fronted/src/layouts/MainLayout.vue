@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-config-provider :theme="antdTheme" :locale="antdLocale">
     <a-layout 
       ref="layoutRootRef"
@@ -35,19 +35,22 @@
 
     <a-layout class="fx-main-content-wrapper">
       <!-- 使用新的侧边栏组件 -->
-      <AppSidebar
-        v-if="shouldShowSidebar"
-        :menus="sidebarMenus"
-        :modules="moduleList"
-        :active-key="normalizeWorkspacePath(route.fullPath)"
-        :active-module-code="activeModuleCode"
-        :layout-mode="layoutConfig.layoutMode"
-        :collapsed="siderCollapsed"
-        :double-column="sidebarDoubleColumn"
-        @module-click="onModuleClick"
-        @menu-click="onMenuClick"
-        @collapse-change="onCollapse"
-      />
+        <AppSidebar
+          v-if="shouldShowSidebar"
+          :menus="sidebarMenus"
+          :modules="moduleList"
+          :active-key="normalizeWorkspacePath(route.fullPath)"
+          :active-module-code="activeModuleCode"
+          :layout-mode="layoutConfig.layoutMode"
+          :collapsed="siderCollapsed"
+          :double-column="sidebarDoubleColumn"
+          :favorite-paths="menuFavoritePathList"
+          :favorite-loading-path="menuFavoriteTogglingPath"
+          @module-click="onModuleClick"
+          @menu-click="onMenuClick"
+          @favorite-toggle="onSidebarFavoriteToggle"
+          @collapse-change="onCollapse"
+        />
 
       <a-layout class="fx-content-layout">
         <!-- 使用新的 AppTabBar 组件 -->
@@ -56,15 +59,17 @@
           :tabs="tabs"
           :active-key="activeTabKey"
           :draggable="layoutConfig.tabBarDraggable"
+          :favorite-paths="menuFavoritePathList"
           @tab-click="onTabClick"
           @tab-close="onTabClose"
           @tab-pin="onTabPin"
+          @tab-favorite="onTabFavorite"
           @tab-drag="onTabDrag"
           @tab-refresh="onTabRefresh"
           @tabs-close="onTabsClose"
         />
 
-        <a-layout-content class="fx-content">
+        <a-layout-content class="fx-content" @contextmenu="onContentContextMenu">
          <div class="fx-content-inner">
             <div v-if="layoutConfig.watermarkEnabled" class="fx-watermark-container">
               <div class="fx-watermark" v-for="i in 12" :key="i">
@@ -103,12 +108,37 @@
             </a-button>
           </Transition>
         </a-layout-content>
-        
-        <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
-          {{ systemConfig.copyright }}
-        </div>
       </a-layout>
     </a-layout>
+
+    <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
+      {{ systemConfig.copyright }}
+    </div>
+
+    <a-dropdown
+      v-model:open="contentFavoriteMenuVisible"
+      :trigger="[]"
+      :get-popup-container="getSettingDrawerContainer"
+    >
+      <div
+        :style="{
+          position: 'fixed',
+          left: contentFavoriteMenuPosition.x + 'px',
+          top: contentFavoriteMenuPosition.y + 'px',
+          width: '1px',
+          height: '1px'
+        }"
+      />
+      <template #overlay>
+        <a-menu @click="onContentFavoriteMenuClick">
+          <a-menu-item key="favorite" :disabled="!currentFavoritePath || !!menuFavoriteTogglingPath">
+            <StarFilled v-if="isCurrentPathFavorite" />
+            <StarOutlined v-else />
+            <span>{{ isCurrentPathFavorite ? '取消收藏本页' : '收藏本页' }}</span>
+          </a-menu-item>
+        </a-menu>
+      </template>
+    </a-dropdown>
 
     <!-- 使用新的 GlobalSearch 组件 -->
     <GlobalSearch
@@ -559,6 +589,8 @@ import {
   FileOutlined,
   ArrowUpOutlined,
   QuestionCircleOutlined,
+  StarFilled,
+  StarOutlined,
 } from '@ant-design/icons-vue'
 
 import AppHeader from './components/AppHeader.vue'
@@ -570,6 +602,7 @@ import FxIcon from '../components/common/FxIcon.vue'
 import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
 // 导入新的主题系统
 import { useSystemTheme, resolveThemeMode } from '../composables/useSystemTheme'
+import { normalizeFavoritePath, useMenuFavorites } from '../composables/useMenuFavorites'
 import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
@@ -577,7 +610,7 @@ import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
-import { use权限Store } from '../stores/permission'
+import { usePermissionStore } from '../stores/permission'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
@@ -589,7 +622,7 @@ const isFallbackRoute = computed(() => route.path.startsWith('/workspace/fallbac
 const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
-const permissionStore = use权限Store()
+const permissionStore = usePermissionStore()
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -969,6 +1002,15 @@ const selectedKeys = ref<string[]>([])
 const activeModuleCode = ref<string>('')
 const tabs = ref<LayoutTab[]>([])
 const activeTabKey = ref<string>('')
+const {
+  favoritePathSet: menuFavoritePathSet,
+  togglingPath: menuFavoriteTogglingPath,
+  loadFavorites: loadMenuFavorites,
+  isFavorite: isMenuFavorite,
+  toggleFavorite: toggleMenuFavorite,
+} = useMenuFavorites()
+const contentFavoriteMenuVisible = ref(false)
+const contentFavoriteMenuPosition = ref({ x: 0, y: 0 })
 /** 用户固定的标签路径列表（与 {@link LayoutTab#pinned} 同步） */
 const PINNED_TAB_KEYS_STORAGE_KEY = 'fx-pinned-tab-keys'
 
@@ -1202,6 +1244,86 @@ const resolvedMode = computed(() =>
 
 function normalizeWorkspacePath(path: string) {
   return String(path || '').split('?')[0]
+}
+
+const menuFavoritePathList = computed(() => Array.from(menuFavoritePathSet.value))
+const currentFavoritePath = computed(() => normalizeFavoritePath(route.fullPath || route.path))
+const isCurrentPathFavorite = computed(() => isMenuFavorite(currentFavoritePath.value))
+
+function shouldIgnoreContentContextMenu(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+  return Boolean(target.closest([
+    '.ant-dropdown',
+    '.ant-modal',
+    '.ant-drawer',
+    '.ant-select-dropdown',
+    '.ant-picker-dropdown',
+    '.app-tabbar',
+    '.app-sidebar-wrapper',
+    'input',
+    'textarea',
+    '[contenteditable="true"]',
+  ].join(',')))
+}
+
+function onContentContextMenu(event: MouseEvent) {
+  if (!currentFavoritePath.value || shouldIgnoreContentContextMenu(event.target)) {
+    return
+  }
+  event.preventDefault()
+  contentFavoriteMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contentFavoriteMenuVisible.value = true
+}
+
+async function toggleFavoritePath(path?: string | null) {
+  const normalized = normalizeFavoritePath(path)
+  if (!normalized) {
+    return
+  }
+  try {
+    const favorite = await toggleMenuFavorite(normalized)
+    message.success(favorite ? '已收藏本页' : '已取消收藏')
+  } catch (error) {
+    console.error('[MainLayout] Toggle favorite failed:', error)
+    message.error('收藏操作失败')
+  }
+}
+
+function onContentFavoriteMenuClick(info: any) {
+  if (info?.key === 'favorite') {
+    void toggleFavoritePath(currentFavoritePath.value)
+  }
+  contentFavoriteMenuVisible.value = false
+}
+
+function onSidebarFavoriteToggle(path: string) {
+  void toggleFavoritePath(path)
+}
+
+function onTabFavorite(tab: LayoutTab) {
+  void toggleFavoritePath(tab?.path || tab?.key)
+}
+
+function closeContentFavoriteMenu() {
+  contentFavoriteMenuVisible.value = false
+}
+
+function handleDocumentPointerDown(event: MouseEvent) {
+  if (contentFavoriteMenuVisible.value) {
+    const target = event.target as HTMLElement | null
+    if (target?.closest('.ant-dropdown')) {
+      return
+    }
+    closeContentFavoriteMenu()
+  }
+}
+
+function handleDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    closeContentFavoriteMenu()
+  }
 }
 
 function getPendingClosedTabKeys(query: Record<string, unknown>) {
@@ -1963,7 +2085,7 @@ async function onTenantChange(tenantId: string) {
     sessionStorage.setItem('tenantId', nextTenantId)
 
     const routesRes = await getRoutes({ account: currentAccount.value, tenantId: nextTenantId })
-    permissionStore.set权限s(routesRes?.buttons || [])
+    permissionStore.setPermissions(routesRes?.buttons || [])
     permissionStore.setRoutes(routesRes?.routes || [])
     permissionStore.setModules(routesRes?.modules || [])
     await injectDynamicRoutes(routesRes)
@@ -2134,6 +2256,7 @@ function updateAllTabTitles() {
 watch(
   () => route.fullPath,
   (path, previousPath) => {
+    closeContentFavoriteMenu()
     consumePendingTabCloseSignal()
     if (shouldAutoClosePreviousTab(String(previousPath || ''), path)) {
       removeTabsByKeys([normalizeWorkspacePath(String(previousPath || ''))])
@@ -2947,62 +3070,68 @@ const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessage
 })
 
 onMounted(async () => {
+  void loadMenuFavorites()
   if (typeof window !== 'undefined') {
+    document.addEventListener('mousedown', handleDocumentPointerDown)
+    document.addEventListener('keydown', handleDocumentKeydown)
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
-  if (isFallbackRoute.value) {
-    await loadLayout()
+  try {
+    if (isFallbackRoute.value) {
+      await loadLayout()
+      updateTabsByRoute(route.fullPath)
+      await nextTick()
+      bindCurrentPageScroll()
+      return
+    }
+
+    await Promise.all([
+      loadLayout(),
+      loadGuidePreference(),
+      loadTenantOptions(),
+    ])
     updateTabsByRoute(route.fullPath)
     await nextTick()
     bindCurrentPageScroll()
+
+    try {
+      const config = await getSystemBasicConfig()
+      if (config) {
+        systemConfig.value = { ...config }
+      }
+    } catch (_) {}
+
+    await refreshMessageCounts()
+
+    try {
+      const normalUnread = await listUnreadMessages(10, 'MESSAGE')
+      ;[...(Array.isArray(normalUnread) ? normalUnread : [])]
+        .forEach((m) => openMessageNotification(m as SysMessageVO))
+    } catch (_) {}
+
+    connectMessageSse()
+  } finally {
     const bootstrapLoader = (window as any).__globalLoader
+    const transitionLoader = (window as any).__fxLoginTransitionLoader
     if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
       window.requestAnimationFrame(() => {
         bootstrapLoader.hide()
+        transitionLoader?.hide?.()
       })
+    } else {
+      transitionLoader?.hide?.()
     }
-    return
-  }
-  await Promise.all([
-    loadLayout(),
-    loadGuidePreference(),
-    loadTenantOptions(),
-  ])
-  updateTabsByRoute(route.fullPath)
-  await nextTick()
-  bindCurrentPageScroll()
-  
-  try {
-    const config = await getSystemBasicConfig()
-    if (config) {
-      systemConfig.value = { ...config }
-    }
-  } catch (_) {}
-
-  await refreshMessageCounts()
-
-  try {
-    const normalUnread = await listUnreadMessages(10, 'MESSAGE')
-    ;[...(Array.isArray(normalUnread) ? normalUnread : [])]
-      .forEach((m) => openMessageNotification(m as SysMessageVO))
-  } catch (_) {}
-
-  connectMessageSse()
-
-  const bootstrapLoader = (window as any).__globalLoader
-  if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
-    window.requestAnimationFrame(() => {
-      bootstrapLoader.hide()
-    })
   }
 })
 
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
+    document.removeEventListener('mousedown', handleDocumentPointerDown)
+    document.removeEventListener('keydown', handleDocumentKeydown)
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('fx:open-message-drawer', handleOpenMessageDrawerEvent)
     window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)

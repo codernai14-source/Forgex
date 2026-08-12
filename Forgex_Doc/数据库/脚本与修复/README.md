@@ -1,7 +1,7 @@
-# 数据库 · 初始化与升级说明
+﻿# 数据库 · 初始化与升级说明
 
-> 版本：**V0.6.6**
-> 更新时间：**2026-06-21**
+> 版本：**V0.8.5**
+> 更新时间：**2026-08-12**
 
 本分类说明正式交付中的数据库初始化、升级执行原则，以及已有环境专项修复脚本。初始化脚本统一维护在 `Forgex_Doc/部署/数据库初始化脚本/`，阶段性修复和诊断 SQL 统一维护在本目录。
 
@@ -37,6 +37,10 @@
 
 | `20260619_factory_modeling.sql` | `forgex_admin`、`forgex_common` | 幂等补齐工厂建模四级主数据。位置：`2026-06-19/` |
 | `20260619_factory_modeling_complete.sql` | `forgex_admin` | 在 `20260619_factory_modeling.sql` 基础上补齐：基础数据/工厂建模菜单、30 项 `sys_permission`、admin 角色赋权、`sys_role_menu` 重复行清理。位置：`2026-06-19/` |
+| `20260812_sys_user_superior_user_id.sql` | `forgex_admin` | 幂等为 `sys_user` 补齐直属上级字段 `superior_user_id`，支撑工作流 `ApproverType.SUPERIOR`。位置：`sql_fix/` |
+| `20260812_sys_user_superior_user_id_rollback.sql` | `forgex_admin` | 回滚直属上级字段。位置：`sql_fix/` |
+| `20260812_workflow_pending_action_permissions.sql` | `forgex_admin` | 幂等为待办页 `ApprovalMyPending` 补齐加签/转交/委托按钮权限，并同步给已有审批/驳回权限角色。位置：`sql_fix/` |
+| `20260812_workflow_pending_action_permissions_rollback.sql` | `forgex_admin` | 回滚待办动作按钮权限种子。位置：`sql_fix/` |
 
 ## 四、推荐阅读方式
 

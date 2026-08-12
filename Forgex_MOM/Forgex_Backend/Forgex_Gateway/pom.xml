@@ -49,11 +49,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-        <!-- Common模块 -->
+        <!-- 网关仅依赖公共契约和许可证/会话基础设施 -->
         <dependency>
             <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Common</artifactId>
-            <version>1.0.0</version>
+            <artifactId>Forgex_Common_Contract</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.forgex</groupId>
+            <artifactId>Forgex_Common_Infra</artifactId>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -70,13 +75,10 @@
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-redisson-spring-boot-starter</artifactId>
         </dependency>
-        <!-- 显式升级 Redisson 版本，解决 Spring Boot 3.5.x + Spring Data Redis 3.5.x 兼容性问题 -->
-        <!-- Spring Data Redis 3.5.x 需要 redisson-spring-data-35 模块，该模块在 Redisson 3.46.0+ 提供 -->
-        <!-- 参考: https://github.com/redisson/redisson/issues/5755 -->
+        <!-- 使用父 POM 统一管理的 Redisson 版本，适配 Spring Data Redis 3.5.x -->
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
-            <version>3.46.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>

@@ -30,6 +30,18 @@
             <template #icon><HistoryOutlined /></template>
             {{ $t('workflow.myTask.history') }}
           </a-button>
+          <a-popconfirm
+            v-if="findRecallableInstance(record)"
+            :title="t('workflow.myTask.confirmRecall')"
+            :ok-text="$t('common.confirm')"
+            :cancel-text="$t('common.cancel')"
+            @confirm="handleRecall(record)"
+          >
+            <a-button type="link" size="small" danger v-permission="'wf:execution:recall'">
+              <template #icon><UndoOutlined /></template>
+              {{ $t('workflow.myTask.recall') }}
+            </a-button>
+          </a-popconfirm>
         </a-space>
       </template>
     </fx-dynamic-table>
@@ -48,7 +60,7 @@
       :width="900"
       :footer="null"
     >
-      <WorkflowTracePanel :instances="[]" :action-logs="currentActionLogs" />
+      <WorkflowTracePanel :record="currentRecord" :instances="currentInstances" :action-logs="currentActionLogs" />
     </a-modal>
   </div>
 </template>
@@ -57,12 +69,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import { EyeOutlined, HistoryOutlined } from '@ant-design/icons-vue'
+import { EyeOutlined, HistoryOutlined, UndoOutlined } from '@ant-design/icons-vue'
 import {
   getExecutionDetail,
   listApprovalActionLogs,
   listApprovalInstances,
   pageMyProcessed,
+  recall,
   type WfApprovalActionLogDTO,
   type WfApprovalInstanceDTO,
   type WfExecutionDTO,
@@ -70,12 +83,14 @@ import {
 import DictTag from '@/components/common/DictTag.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
+import { useUserStore } from '@/stores/user'
 import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
 import WorkflowTracePanel from './WorkflowTracePanel.vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
+const userStore = useUserStore()
 
 const tableRef = ref()
 const loading = ref(false)
@@ -129,6 +144,23 @@ function formatDateTime(dateTime?: string): string {
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
 }
 
+function resolveCurrentUserId(): number | undefined {
+  return userStore.userInfo?.id ? Number(userStore.userInfo.id) : undefined
+}
+
+function findRecallableInstance(record: WfExecutionDTO): WfApprovalInstanceDTO | undefined {
+  const currentUserId = resolveCurrentUserId()
+  if (!currentUserId || record.status !== 1) {
+    return undefined
+  }
+  return (record.currentApprovalInstances || []).find((item) =>
+    item.approverId === currentUserId &&
+    item.status === 1 &&
+    item.nodeId === record.currentNodeId &&
+    item.allowRecall === true,
+  )
+}
+
 function handleViewDetail(record: WfExecutionDTO) {
   currentRecord.value = record
   detailDrawerVisible.value = true
@@ -139,6 +171,21 @@ async function handleViewHistory(record: WfExecutionDTO) {
   currentRecord.value = record
   historyModalVisible.value = true
   await loadExecutionTrace(record.id)
+}
+
+async function handleRecall(record: WfExecutionDTO) {
+  const instance = findRecallableInstance(record)
+  if (!instance) {
+    message.warning(t('workflow.myTask.recallNotAvailable'))
+    return
+  }
+  try {
+    await recall({ executionId: record.id, approvalInstanceId: instance.id })
+    message.success(t('workflow.myTask.recallSuccess'))
+    await tableRef.value?.refresh?.()
+  } catch (error: any) {
+    message.error(error.message || t('workflow.myTask.recallFailed'))
+  }
 }
 
 async function loadExecutionTrace(executionId: number) {

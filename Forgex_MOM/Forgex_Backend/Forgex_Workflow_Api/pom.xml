@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.forgex</groupId><artifactId>Forgex_Backend</artifactId><version>1.0.0</version></parent>
+    <artifactId>Forgex_Workflow_Api</artifactId><name>Forgex_Workflow_Api</name>
+    <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Common_Contract</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Domain_Contract</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-openfeign-core</artifactId></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-web</artifactId></dependency>
+    </dependencies>
+</project>

@@ -21,7 +21,7 @@ export default {
   search: '搜索',
   refresh: '刷新',
   loading: {
-    thinking: 'Forgex正在加载您所需的任何内容，请稍等',
+    thinking: 'Forgex正在加载您所需的内容',
   },
   openSettings: '布局设置',
   settingTitle: '布局与主题设置',

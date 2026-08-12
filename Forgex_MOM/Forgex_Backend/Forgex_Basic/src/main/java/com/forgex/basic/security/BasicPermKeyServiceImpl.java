@@ -71,7 +71,7 @@ public class BasicPermKeyServiceImpl implements PermKeyService {
                         .filter(StringUtils::hasText)
                         .collect(Collectors.toCollection(LinkedHashSet::new));
             }
-            log.warn("Basic permission query returned empty. userId={}, tenantId={}, msg={}",
+            log.error("Basic permission query returned empty. userId={}, tenantId={}, msg={}",
                     userId,
                     tenantId,
                     result != null ? result.getMessage() : "null response");

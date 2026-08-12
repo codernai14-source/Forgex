@@ -165,7 +165,7 @@ public class ApiDefinitionServiceImpl implements IApiDefinitionService {
                 .map(this::toDto)
                 .toList();
         } catch (Exception ex) {
-            log.warn("load api param tree failed, apiConfigId={}, outboundTargetId={}, direction={}",
+            log.error("load api param tree failed, apiConfigId={}, outboundTargetId={}, direction={}",
                 apiConfigId, outboundTargetId, direction, ex);
             return Collections.emptyList();
         }

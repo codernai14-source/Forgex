@@ -70,6 +70,8 @@ dependencies {
     implementation(project(":core:component"))
     implementation(project(":core:navigation"))
     implementation(project(":core:device"))
+    implementation(project(":core:database"))
+    implementation(project(":core:sync"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:home"))
     implementation(project(":feature:workflow"))
@@ -96,6 +98,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    kapt(libs.androidx.hilt.compiler)
     testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
 }

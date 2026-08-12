@@ -221,7 +221,7 @@ public class ReportDatasourceServiceImpl extends ServiceImpl<ReportDatasourceMap
                 try {
                     conn.close();
                 } catch (Exception e) {
-                    log.warn("关闭数据库连接失败", e);
+                    log.error("关闭数据库连接失败", e);
                 }
             }
         }

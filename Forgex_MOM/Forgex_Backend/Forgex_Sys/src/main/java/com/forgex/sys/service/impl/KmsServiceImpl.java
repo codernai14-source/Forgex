@@ -18,7 +18,6 @@ package com.forgex.sys.service.impl;
 import cn.hutool.core.util.HexUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.forgex.common.config.ConfigService;
 import com.forgex.common.crypto.RSAPasswordProvider;
 import com.forgex.sys.domain.entity.SysKmsKey;
 import com.forgex.sys.domain.entity.SysKmsKeyLog;
@@ -33,35 +32,52 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Map;
 
 /**
  * 密钥管理服务实现（KMS）。
  * <p>
  * 使用主密钥（Master Key）对所有业务密钥进行 AES-256-GCM 加密后存储到数据库。
- * 主密钥从 ConfigService 的 {@code security.kms.master} 配置中读取，首次使用时自动生成。
+ * 主密钥从外部注入，按优先级读取：
+ * <ol>
+ *   <li>环境变量 {@code FORGEX_KMS_MASTER_KEY_HEX}（hex 字符串，解码为 32 字节）</li>
+ *   <li>环境变量 {@code FORGEX_KMS_MASTER_KEY_FILE} 指向的密钥文件；未设则默认 {@code ${FORGEX_LICENSE_DIR}/kms.key}</li>
+ * </ol>
+ * 主密钥不再落库，缺失时启动直接失败并输出生成指引，杜绝主密钥与业务密钥同库存储。
  * <p>
  * 所有密钥操作均记录到审计日志表 {@code sys_kms_key_log}。
  *
  * @author Forgex Team
- * @version 1.0.0
+ * @version 1.1.0
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class KmsServiceImpl implements KmsService {
 
-    private static final String MASTER_KEY_CONFIG = "security.kms.master";
+    /** 主密钥 hex 环境变量名 */
+    private static final String ENV_MASTER_KEY_HEX = "FORGEX_KMS_MASTER_KEY_HEX";
+    /** 主密钥文件路径环境变量名 */
+    private static final String ENV_MASTER_KEY_FILE = "FORGEX_KMS_MASTER_KEY_FILE";
+    /** 密钥文件默认目录环境变量名 */
+    private static final String ENV_LICENSE_DIR = "FORGEX_LICENSE_DIR";
+    /** 默认密钥文件名 */
+    private static final String DEFAULT_KEY_FILE_NAME = "kms.key";
     private static final int MASTER_KEY_SIZE = 32; // 256 bits
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 128;
 
     private final SysKmsKeyMapper kmsKeyMapper;
     private final SysKmsKeyLogMapper kmsKeyLogMapper;
-    private final ConfigService configService;
+
+    /** 主密钥缓存，首次加载后复用，避免每次加解密重复读取文件 */
+    private volatile byte[] cachedMasterKey;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -208,22 +224,144 @@ public class KmsServiceImpl implements KmsService {
     // ======================== 主密钥管理 ========================
 
     /**
-     * 获取主密钥（从配置库读取，不存在则自动生成）。
+     * 获取主密钥（从外部环境变量或密钥文件读取，不再落库）。
+     * <p>
+     * 读取优先级：
+     * <ol>
+     *   <li>环境变量 {@code FORGEX_KMS_MASTER_KEY_HEX}（hex 字符串，解码为 32 字节）</li>
+     *   <li>环境变量 {@code FORGEX_KMS_MASTER_KEY_FILE} 指向的密钥文件（读取 hex 内容）；
+     *       若未设该变量则默认尝试 {@code ${FORGEX_LICENSE_DIR}/kms.key}</li>
+     * </ol>
+     * 主密钥缺失或长度不符时抛 {@link IllegalStateException}，启动直接失败。
+     * <p>
+     * 加载后缓存到 {@link #cachedMasterKey}，避免每次加解密重复读取文件。
+     *
+     * @return 32 字节主密钥
      */
     private byte[] getMasterKey() {
-        Map m = configService.getJson(MASTER_KEY_CONFIG, Map.class, null);
-        String keyHex = m == null ? null : (String) m.get("keyHex");
-        if (keyHex == null || keyHex.isEmpty()) {
-            log.info("KMS: 主密钥不存在，自动生成...");
-            byte[] key = new byte[MASTER_KEY_SIZE];
-            new SecureRandom().nextBytes(key);
-            keyHex = HexUtil.encodeHexStr(key);
-            java.util.Map<String, String> cfg = new java.util.HashMap<>();
-            cfg.put("keyHex", keyHex);
-            configService.setJson(MASTER_KEY_CONFIG, cfg);
-            log.info("KMS: 主密钥已生成并保存到配置库");
+        byte[] cached = cachedMasterKey;
+        if (cached != null) {
+            return cached;
         }
-        return HexUtil.decodeHex(keyHex);
+        synchronized (this) {
+            if (cachedMasterKey != null) {
+                return cachedMasterKey;
+            }
+            byte[] key = loadMasterKeyFromExternal();
+            cachedMasterKey = key;
+            return key;
+        }
+    }
+
+    /**
+     * 按优先级从外部加载主密钥，校验长度后返回。
+     *
+     * @return 32 字节主密钥
+     * @throws IllegalStateException 主密钥缺失或长度不符
+     */
+    private byte[] loadMasterKeyFromExternal() {
+        String keyHex = resolveMasterKeyHex();
+        byte[] key;
+        try {
+            key = HexUtil.decodeHex(keyHex);
+        } catch (Exception e) {
+            throw new IllegalStateException(buildMissingKeyMessage("主密钥 hex 解码失败: " + e.getMessage()), e);
+        }
+        if (key.length != MASTER_KEY_SIZE) {
+            throw new IllegalStateException(buildMissingKeyMessage(
+                    "主密钥长度必须为 " + MASTER_KEY_SIZE + " 字节(256 位), 当前为 " + key.length + " 字节"));
+        }
+        log.info("KMS: 主密钥已加载(来源: {})", describeKeySource());
+        return key;
+    }
+
+    /**
+     * 按优先级解析主密钥 hex 字符串。
+     * <p>
+     * 优先级 1: 环境变量 {@code FORGEX_KMS_MASTER_KEY_HEX}。
+     * 优先级 2: {@code FORGEX_KMS_MASTER_KEY_FILE} 指向的文件; 未设则默认 {@code ${FORGEX_LICENSE_DIR}/kms.key}。
+     *
+     * @return 主密钥 hex 字符串
+     * @throws IllegalStateException 所有来源均未提供主密钥
+     */
+    private String resolveMasterKeyHex() {
+        // 优先级 1: 环境变量 FORGEX_KMS_MASTER_KEY_HEX
+        String hex = System.getenv(ENV_MASTER_KEY_HEX);
+        if (hex != null && !hex.isEmpty()) {
+            return hex.trim();
+        }
+
+        // 优先级 2: 密钥文件
+        String filePath = System.getenv(ENV_MASTER_KEY_FILE);
+        if (filePath == null || filePath.isEmpty()) {
+            // 默认尝试 ${FORGEX_LICENSE_DIR}/kms.key
+            String licenseDir = System.getenv(ENV_LICENSE_DIR);
+            if (licenseDir != null && !licenseDir.isEmpty()) {
+                filePath = Paths.get(licenseDir, DEFAULT_KEY_FILE_NAME).toString();
+            }
+        }
+
+        if (filePath != null && !filePath.isEmpty()) {
+            Path path = Paths.get(filePath);
+            if (Files.isReadable(path)) {
+                try {
+                    String content = Files.readString(path, StandardCharsets.UTF_8).trim();
+                    if (!content.isEmpty()) {
+                        return content;
+                    }
+                } catch (Exception e) {
+                    throw new IllegalStateException(buildMissingKeyMessage(
+                            "读取主密钥文件失败: " + filePath + ", 原因: " + e.getMessage()), e);
+                }
+            }
+        }
+
+        throw new IllegalStateException(buildMissingKeyMessage(null));
+    }
+
+    /**
+     * 描述当前主密钥来源(仅日志展示, 不泄露密钥内容)。
+     *
+     * @return 来源描述
+     */
+    private String describeKeySource() {
+        String hex = System.getenv(ENV_MASTER_KEY_HEX);
+        if (hex != null && !hex.isEmpty()) {
+            return "环境变量 " + ENV_MASTER_KEY_HEX;
+        }
+        String filePath = System.getenv(ENV_MASTER_KEY_FILE);
+        if (filePath != null && !filePath.isEmpty()) {
+            return "文件 " + filePath;
+        }
+        String licenseDir = System.getenv(ENV_LICENSE_DIR);
+        if (licenseDir != null && !licenseDir.isEmpty()) {
+            return "文件 " + Paths.get(licenseDir, DEFAULT_KEY_FILE_NAME);
+        }
+        return "未知";
+    }
+
+    /**
+     * 构建主密钥缺失的错误消息, 包含生成与配置指引。
+     *
+     * @param detail 具体错误细节, 可为 null
+     * @return 完整错误消息
+     */
+    private String buildMissingKeyMessage(String detail) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("KMS: 主密钥未配置, 服务无法启动。");
+        if (detail != null && !detail.isEmpty()) {
+            sb.append(" 原因: ").append(detail).append("。");
+        }
+        sb.append("\n请按以下步骤配置主密钥:");
+        sb.append("\n  1. 使用密钥生成工具生成 32 字节主密钥:");
+        sb.append("\n     bash gen-kms-master-key.sh -o ${FORGEX_LICENSE_DIR}/kms.key");
+        sb.append("\n  2. 方式一(文件, 推荐): 将密钥写入文件并设置环境变量:");
+        sb.append("\n     export FORGEX_KMS_MASTER_KEY_FILE=${FORGEX_LICENSE_DIR}/kms.key");
+        sb.append("\n     (默认即读取 ${FORGEX_LICENSE_DIR}/kms.key, 可不设该变量)");
+        sb.append("\n  3. 方式二(环境变量, 适用容器/K8s Secret):");
+        sb.append("\n     export FORGEX_KMS_MASTER_KEY_HEX=<64位hex字符串>");
+        sb.append("\n  4. 主密钥必须为 32 字节(64 位 hex 字符), 详见 KMS 主密钥管理文档。");
+        return sb.toString();
     }
 
     /**
@@ -316,7 +454,7 @@ public class KmsServiceImpl implements KmsService {
             logEntry.setOperateTime(LocalDateTime.now());
             kmsKeyLogMapper.insert(logEntry);
         } catch (Exception e) {
-            log.warn("KMS: 审计日志写入失败 action={}, alias={}", action, alias, e);
+            log.error("KMS: 审计日志写入失败 action={}, alias={}", action, alias, e);
         }
     }
 }

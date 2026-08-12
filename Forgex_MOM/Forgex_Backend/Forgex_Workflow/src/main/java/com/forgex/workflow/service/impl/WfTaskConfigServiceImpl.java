@@ -1399,7 +1399,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         graph.setNodes(nodes);
         graph.setEdges(edges);
         if (!replacedNodeKeys.isEmpty()) {
-            log.warn("克隆已发布流程为草稿时自动修复了边界节点异常，taskCode={}, replacements={}",
+            log.error("克隆已发布流程为草稿时自动修复了边界节点异常，taskCode={}, replacements={}",
                     graph.getTaskCode(), replacedNodeKeys);
         }
         return graph;

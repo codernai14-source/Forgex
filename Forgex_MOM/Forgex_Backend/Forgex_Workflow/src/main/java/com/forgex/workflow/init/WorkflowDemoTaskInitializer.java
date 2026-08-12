@@ -61,7 +61,7 @@ public class WorkflowDemoTaskInitializer {
         try {
             List<WorkflowAdminSeedUserDTO> adminUsers = workflowAdminSeedMapper.listActiveAdminUsers();
             if (adminUsers == null || adminUsers.isEmpty()) {
-                log.warn("未查询到可用的 admin 账号，跳过请假审批演示任务初始化");
+                log.error("未查询到可用的 admin 账号，跳过请假审批演示任务初始化");
                 return;
             }
 

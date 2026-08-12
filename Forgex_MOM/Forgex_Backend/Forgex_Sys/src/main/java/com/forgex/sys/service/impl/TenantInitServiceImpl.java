@@ -71,7 +71,7 @@ import java.util.concurrent.Executor;
  *   <li>其它租户：根据租户 ID 和编码动态生成唯一账号（admin_{tenantCode}_{后 4 位}），默认密码 Aa123456</li>
  * </ul>
  * </p>
- * 
+ *
  * @author Forgex Team
  * @version 2.0.0
  * @see com.forgex.sys.service.ITenantInitService
@@ -101,7 +101,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
     @Async("tenantInitExecutor")
     public void initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType) {
         log.info("开始异步初始化租户，租户 ID：{}，租户名称：{}，租户类型：{}", tenantId, tenantName, tenantType);
-        
+
         // 创建初始化任务
         SysTenantInitTask task = new SysTenantInitTask();
         task.setTenantId(tenantId);
@@ -111,27 +111,27 @@ public class TenantInitServiceImpl implements ITenantInitService {
         task.setProgress(0);
         task.setCurrentStep("等待初始化开始");
         tenantInitTaskMapper.insert(task);
-        
+
         String taskId = task.getId().toString();
-        
+
         try {
             // 更新状态为运行中
             task.setStatus("RUNNING");
             task.setStartTime(LocalDateTime.now());
             tenantInitTaskMapper.updateById(task);
-            
+
             // 1. 复制系统模块（进度 10%）
             updateTaskProgress(task, 10, "正在复制系统模块...");
             Long moduleId = copyModuleToTenant(tenantId);
-            
+
             // 2. 复制菜单（进度 30%）
             updateTaskProgress(task, 30, "正在复制菜单权限...");
             List<Long> menuIds = copyMenusToTenant(tenantId, moduleId, tenantType);
-            
+
             // 3. 创建管理员角色（进度 40%）
             updateTaskProgress(task, 40, "正在创建管理员角色...");
             Long roleId = createAdminRole(tenantId);
-            
+
             // 4. 创建管理员账号（进度 50%）
             updateTaskProgress(task, 50, "正在创建管理员账号...");
             Long userId;
@@ -142,39 +142,39 @@ public class TenantInitServiceImpl implements ITenantInitService {
                 String dynamicAccount = generateDynamicAccount(tenantId, tenantCode);
                 userId = createAdministratorUser(tenantId, tenantName, dynamicAccount);
             }
-            
+
             // 5. 绑定用户角色（进度 60%）
             updateTaskProgress(task, 60, "正在绑定用户角色...");
             bindUserToTenant(userId, tenantId);
             bindUserToRole(userId, roleId, tenantId);
-            
+
             // 6. 绑定角色菜单（进度 70%）
             updateTaskProgress(task, 70, "正在绑定角色菜单...");
             bindRoleToMenus(roleId, menuIds, tenantId);
-            
+
             // 7. 完成（进度 100%）
             updateTaskProgress(task, 100, "初始化完成");
             task.setStatus("SUCCESS");
             task.setEndTime(LocalDateTime.now());
             tenantInitTaskMapper.updateById(task);
-            
+
             // 推送成功消息
             ssePushService.pushComplete(taskId, true, "租户初始化成功");
-            
+
             log.info("租户初始化成功，租户 ID：{}，任务 ID：{}", tenantId, taskId);
-            
+
         } catch (Exception e) {
             log.error("租户初始化失败，租户 ID：{}，任务 ID：{}", tenantId, taskId, e);
             task.setStatus("FAILED");
             task.setErrorMessage(e.getMessage());
             task.setEndTime(LocalDateTime.now());
             tenantInitTaskMapper.updateById(task);
-            
+
             // 推送失败消息
             ssePushService.pushComplete(taskId, false, "初始化失败：" + e.getMessage());
         }
     }
-    
+
     /**
      * 更新任务进度
      */
@@ -182,11 +182,11 @@ public class TenantInitServiceImpl implements ITenantInitService {
         task.setProgress(progress);
         task.setCurrentStep(currentStep);
         tenantInitTaskMapper.updateById(task);
-        
+
         // 推送进度到前端
         ssePushService.pushProgress(task.getId().toString(), progress, currentStep);
     }
-    
+
     /**
      * 生成动态管理员账号
      * 规则：admin_{tenantCode}_{tenantId 后 4 位}
@@ -210,7 +210,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
     private Long copyModuleToTenant(Long tenantId) {
         Long templateTenantId = findTemplateTenantId(tenantId);
         if (templateTenantId == null) {
-            log.warn("复制系统模块失败：未找到可作为模板的主租户，租户 ID：{}", tenantId);
+            log.error("复制系统模块失败：未找到可作为模板的主租户，租户 ID：{}", tenantId);
             return null;
         }
 
@@ -219,37 +219,37 @@ public class TenantInitServiceImpl implements ITenantInitService {
                .eq(SysModule::getCode, "sys")
                .eq(SysModule::getDeleted, false)
                .last("LIMIT 1");
-        
+
         SysModule sysModule = moduleMapper.selectOne(wrapper);
         if (sysModule == null) {
-            log.warn("复制系统模块失败：模板租户下未找到 sys 模块，模板租户 ID：{}", templateTenantId);
+            log.error("复制系统模块失败：模板租户下未找到 sys 模块，模板租户 ID：{}", templateTenantId);
             return null;
         }
-        
+
         SysModule newModule = new SysModule();
         BeanUtils.copyProperties(sysModule, newModule);
         newModule.setId(null);
         newModule.setTenantId(tenantId);
         moduleMapper.insert(newModule);
-        
-        log.info("复制系统模块到租户，模板租户 ID：{}，新模块 ID：{}，新租户 ID：{}", 
+
+        log.info("复制系统模块到租户，模板租户 ID：{}，新模块 ID：{}，新租户 ID：{}",
                 templateTenantId, newModule.getId(), tenantId);
-        
+
         return newModule.getId();
     }
-    
+
     /**
      * 复制系统模块下的菜单到新租户
      */
     private List<Long> copyMenusToTenant(Long tenantId, Long moduleId, TenantTypeEnum tenantType) {
         if (moduleId == null) {
-            log.warn("复制系统菜单失败：模块 ID 为空，租户 ID：{}", tenantId);
+            log.error("复制系统菜单失败：模块 ID 为空，租户 ID：{}", tenantId);
             return List.of();
         }
 
         Long templateTenantId = findTemplateTenantId(tenantId);
         if (templateTenantId == null) {
-            log.warn("复制系统菜单失败：未找到可作为模板的主租户，租户 ID：{}", tenantId);
+            log.error("复制系统菜单失败：未找到可作为模板的主租户，租户 ID：{}", tenantId);
             return List.of();
         }
 
@@ -261,7 +261,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
                      .last("LIMIT 1");
         SysModule templateModule = moduleMapper.selectOne(moduleWrapper);
         if (templateModule == null) {
-            log.warn("复制系统菜单失败：模板租户下未找到 sys 模块，模板租户 ID：{}", templateTenantId);
+            log.error("复制系统菜单失败：模板租户下未找到 sys 模块，模板租户 ID：{}", templateTenantId);
             return List.of();
         }
 
@@ -270,11 +270,11 @@ public class TenantInitServiceImpl implements ITenantInitService {
         wrapper.eq(SysMenu::getTenantId, templateTenantId)
                .eq(SysMenu::getModuleId, templateModule.getId())
                .eq(SysMenu::getDeleted, false);
-        
+
         List<SysMenu> templateMenus = menuMapper.selectList(wrapper);
-        
+
         if (templateMenus.isEmpty()) {
-            log.warn("复制系统菜单失败：模板租户下未找到系统菜单，模板租户 ID：{}，模块 ID：{}", 
+            log.error("复制系统菜单失败：模板租户下未找到系统菜单，模板租户 ID：{}，模块 ID：{}",
                     templateTenantId, templateModule.getId());
             return List.of();
         }
@@ -288,14 +288,14 @@ public class TenantInitServiceImpl implements ITenantInitService {
             if (isMenuExcluded(templateMenu, excludedPermPrefixes)) {
                 continue;
             }
-            
+
             // 排除规则 2：根据租户类型过滤（新增逻辑）
             if (!matchesTenantType(templateMenu, tenantType)) {
-                log.debug("菜单租户类型不匹配，跳过复制，菜单 ID：{}，菜单 permKey：{}，菜单 tenantType：{}", 
+                log.info("菜单租户类型不匹配，跳过复制，菜单 ID：{}，菜单 permKey：{}，菜单 tenantType：{}",
                         templateMenu.getId(), templateMenu.getPermKey(), templateMenu.getTenantType());
                 continue;
             }
-            
+
             Long templateId = templateMenu.getId();
             SysMenu newMenu = new SysMenu();
             BeanUtils.copyProperties(templateMenu, newMenu);
@@ -311,12 +311,12 @@ public class TenantInitServiceImpl implements ITenantInitService {
             if (isMenuExcluded(templateMenu, excludedPermPrefixes)) {
                 continue;
             }
-            
+
             // 跳过租户类型不匹配的菜单
             if (!matchesTenantType(templateMenu, tenantType)) {
                 continue;
             }
-            
+
             Long templateId = templateMenu.getId();
             Long templateParentId = templateMenu.getParentId();
             if (templateParentId == null || templateParentId == 0L) {
@@ -333,9 +333,9 @@ public class TenantInitServiceImpl implements ITenantInitService {
         }
 
         List<Long> newMenuIds = new ArrayList<>(idMap.values());
-        log.info("复制系统菜单到租户成功，模板租户 ID：{}，新租户 ID：{}，菜单数量：{}", 
+        log.info("复制系统菜单到租户成功，模板租户 ID：{}，新租户 ID：{}，菜单数量：{}",
                 templateTenantId, tenantId, newMenuIds.size());
-        
+
         return newMenuIds;
     }
 
@@ -350,7 +350,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         try {
             rules = tenantMenuCopyRuleMapper.selectList(wrapper);
         } catch (DataAccessException e) {
-            log.warn("读取租户菜单复制规则失败，按空规则继续初始化，租户类型：{}", tenantType, e);
+            log.error("读取租户菜单复制规则失败，按空规则继续初始化，租户类型：{}", tenantType, e);
             return Collections.emptyList();
         }
         if (rules == null || rules.isEmpty()) {
@@ -385,7 +385,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         }
         return false;
     }
-    
+
     /**
      * 判断菜单是否匹配租户类型
      * <p>
@@ -401,18 +401,18 @@ public class TenantInitServiceImpl implements ITenantInitService {
         if (menu == null) {
             return false;
         }
-        
+
         // 菜单的 tenantType 为 "PUBLIC" 或 null，表示适用于所有租户类型
         String menuTenantType = menu.getTenantType();
         if (menuTenantType == null || menuTenantType.trim().isEmpty() || "PUBLIC".equals(menuTenantType)) {
             return true;
         }
-        
+
         // 精确匹配租户类型
         if (tenantType == null) {
             return false;
         }
-        
+
         return menuTenantType.equals(tenantType.name());
     }
 
@@ -426,7 +426,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
                .last("LIMIT 1");
         SysTenant mainTenant = tenantMapper.selectOne(wrapper);
         if (mainTenant == null) {
-            log.warn("未找到主租户，无法作为菜单/模块模板");
+            log.error("未找到主租户，无法作为菜单/模块模板");
             return null;
         }
         if (currentTenantId != null && currentTenantId.equals(mainTenant.getId())) {
@@ -435,7 +435,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         }
         return mainTenant.getId();
     }
-    
+
     /**
      * 创建系统管理员角色
      */
@@ -457,12 +457,12 @@ public class TenantInitServiceImpl implements ITenantInitService {
             update.setUpdateBy(operator);
             roleMapper.updateById(update);
         }
-        
+
         log.info("创建系统管理员角色，角色 ID：{}，租户 ID：{}", role.getId(), tenantId);
-        
+
         return role.getId();
     }
-    
+
     /**
      * 创建 admin 用户（主租户专用）
      */
@@ -475,12 +475,12 @@ public class TenantInitServiceImpl implements ITenantInitService {
         user.setStatus(true);
         user.setTenantId(tenantId);
         userMapper.insert(user);
-        
+
         log.info("创建{}用户，用户 ID：{}，租户 ID：{}", account, user.getId(), tenantId);
-        
+
         return user.getId();
     }
-    
+
     /**
      * 创建 administrator 用户（其它租户专用）
      */
@@ -493,12 +493,12 @@ public class TenantInitServiceImpl implements ITenantInitService {
         user.setStatus(true);
         user.setTenantId(tenantId);
         userMapper.insert(user);
-        
+
         log.info("创建 administrator 用户，用户 ID：{}，租户 ID：{}，账号：{}", user.getId(), tenantId, account);
-        
+
         return user.getId();
     }
-    
+
     /**
      * 将用户关联到角色
      */
@@ -508,10 +508,10 @@ public class TenantInitServiceImpl implements ITenantInitService {
         userRole.setRoleId(roleId);
         userRole.setTenantId(tenantId);
         userRoleMapper.insert(userRole);
-        
+
         log.info("绑定用户到角色，用户 ID：{}，角色 ID：{}，租户 ID：{}", userId, roleId, tenantId);
     }
-    
+
     /**
      * 将初始化管理员账号绑定到目标租户。
      */
@@ -548,7 +548,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
             roleMenu.setTenantId(tenantId);
             roleMenuMapper.insert(roleMenu);
         }
-        
+
         log.info("绑定角色到菜单，角色 ID：{}，菜单数量：{}，租户 ID：{}", roleId, menuIds.size(), tenantId);
     }
 

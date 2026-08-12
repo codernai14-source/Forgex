@@ -322,7 +322,7 @@ import {
   type WfTaskConfigSummaryDTO,
 } from '@/api/workflow/taskConfig'
 import { approvalRoutePaths } from '@/router/approvalRoutePaths'
-import { use权限Store } from '@/stores/permission'
+import { usePermissionStore } from '@/stores/permission'
 import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
 import '@/styles/views/workflow/dashboard/index.less'
 
@@ -332,7 +332,7 @@ const RECENT_TASK_STORAGE_KEY = 'workflow-recent-task-codes'
 
 const { t } = useI18n()
 const router = useRouter()
-const permissionStore = use权限Store()
+const permissionStore = usePermissionStore()
 
 const summaryLoading = ref(false)
 const analyticsLoading = ref(false)
@@ -359,10 +359,10 @@ function hasAccessibleRoute(path: string) {
 }
 
 const canStartExecution = computed(() =>
-  permissionStore.has权限('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
+  permissionStore.hasPermission('wf:execution:start') || hasAccessibleRoute(approvalRoutePaths.executionStartList),
 )
 const canViewTaskConfig = computed(() =>
-  permissionStore.has权限('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
+  permissionStore.hasPermission('wf:taskConfig:view') || hasAccessibleRoute(approvalRoutePaths.taskConfigList),
 )
 const hiddenWidgetKeys = computed(() => [
   'approvalStats',

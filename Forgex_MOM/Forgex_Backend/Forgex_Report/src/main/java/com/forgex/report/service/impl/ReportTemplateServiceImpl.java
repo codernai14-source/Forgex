@@ -346,7 +346,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
                     dto.setCategoryName(category.getName());
                 }
             } catch (Exception e) {
-                log.warn("获取分类信息失败", e);
+                log.error("获取分类信息失败", e);
             }
         }
 
@@ -358,7 +358,7 @@ public class ReportTemplateServiceImpl extends ServiceImpl<ReportTemplateMapper,
                     dto.setDatasourceName(datasource.getName());
                 }
             } catch (Exception e) {
-                log.warn("获取数据源信息失败", e);
+                log.error("获取数据源信息失败", e);
             }
         }
 

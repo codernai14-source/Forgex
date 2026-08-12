@@ -20,10 +20,13 @@ import java.time.LocalDateTime;
  *   <li>1=审批通过</li>
  *   <li>2=审批驳回</li>
  *   <li>3=转交</li>
- *   <li>4=委托</li>
- *   <li>5=加签</li>
- *   <li>6=超时处理</li>
- *   <li>7=撤回</li>
+ *   <li>4=加签</li>
+ *   <li>5=委托</li>
+ *   <li>6=超时自动通过</li>
+ *   <li>7=超时自动转交</li>
+ *   <li>8=系统关闭</li>
+ *   <li>9=催办提醒</li>
+ *   <li>10=审批撤回</li>
  * </ul>
  *
  * @author coder_nai@163.com
@@ -88,10 +91,13 @@ public class WfTaskApprovalActionLog {
      * 1=审批通过<br>
      * 2=审批驳回<br>
      * 3=转交<br>
-     * 4=委托<br>
-     * 5=加签<br>
-     * 6=超时处理<br>
-     * 7=撤回
+     * 4=加签<br>
+     * 5=委托<br>
+     * 6=超时自动通过<br>
+     * 7=超时自动转交<br>
+     * 8=系统关闭<br>
+     * 9=催办提醒<br>
+     * 10=审批撤回
      * </p>
      */
     private Integer actionType;

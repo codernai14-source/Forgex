@@ -63,6 +63,10 @@ public class WorkflowConstants {
         public static final Integer PROCESSING = 1;
         public static final Integer COMPLETED = 2;
         public static final Integer REJECTED = 3;
+        /**
+         * 已撤销：发起人主动取消审批时使用，与 REJECTED 区分。
+         */
+        public static final Integer CANCELLED = 4;
     }
 
     public static class NodeStatus {
@@ -99,6 +103,14 @@ public class WorkflowConstants {
         public static final Integer TIMEOUT_PASS = 6;
         public static final Integer TIMEOUT_TRANSFER = 7;
         public static final Integer SYSTEM_CLOSE = 8;
+        /**
+         * 催办提醒：发送提醒通知，不改变审批实例状态。
+         */
+        public static final Integer REMIND = 9;
+        /**
+         * 审批人撤回：撤回自己已提交的审批意见，将实例回退至待办。
+         */
+        public static final Integer RECALL = 10;
     }
 
     public static class TimeoutAction {

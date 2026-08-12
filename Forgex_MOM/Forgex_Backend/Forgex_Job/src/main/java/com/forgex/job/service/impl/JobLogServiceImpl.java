@@ -14,8 +14,6 @@ import com.forgex.job.service.IJobLogService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -112,9 +110,7 @@ public class JobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog> i
         if (throwable == null) {
             return null;
         }
-        StringWriter writer = new StringWriter();
-        throwable.printStackTrace(new PrintWriter(writer));
-        return writer.toString();
+        return throwable.toString();
     }
 
     private String truncate(String value, int maxLength) {

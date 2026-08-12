@@ -19,6 +19,7 @@ import com.forgex.auth.domain.param.SliderValidateParam;
 import com.forgex.auth.domain.param.ChangeLanguageParam;
 import com.forgex.auth.domain.param.RegisterParam;
 import com.forgex.auth.domain.vo.TenantVO;
+import com.forgex.auth.domain.vo.LoginResultVO;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.config.ConfigService;
@@ -109,7 +110,7 @@ public class AuthController {
      * @see TenantVO
      */
     @PostMapping("/login")
-    public R<List<TenantVO>> login(@RequestBody LoginParam param) {
+    public R<LoginResultVO> login(@RequestBody LoginParam param) {
         // 委派给服务层处理登录逻辑
         return authService.login(param);
     }

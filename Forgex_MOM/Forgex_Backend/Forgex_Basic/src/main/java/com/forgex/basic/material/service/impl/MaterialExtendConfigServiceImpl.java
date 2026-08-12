@@ -406,7 +406,7 @@ public class MaterialExtendConfigServiceImpl extends ServiceImpl<BasicMaterialEx
             }
             return options;
         } catch (Exception e) {
-            log.warn("解析字段选项 JSON 失败: {}", fieldOptions, e);
+            log.error("解析字段选项 JSON 失败: {}", fieldOptions, e);
             return Collections.emptyList();
         }
     }

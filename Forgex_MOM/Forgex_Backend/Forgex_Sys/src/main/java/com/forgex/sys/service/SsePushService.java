@@ -110,14 +110,14 @@ public class SsePushService {
         if (emitter != null) {
             try {
                 emitter.send(data);
-                log.debug("推送 SSE 消息成功：{}, data: {}", clientId, data);
+                log.info("推送 SSE 消息成功：{}, data: {}", clientId, data);
             } catch (IOException e) {
                 log.error("推送 SSE 消息失败：{}", clientId, e);
                 emitter.completeWithError(e);
                 emitters.remove(clientId);
             }
         } else {
-            log.warn("未找到 SSE 连接：{}", clientId);
+            log.error("未找到 SSE 连接：{}", clientId);
         }
     }
     
@@ -205,14 +205,14 @@ public class SsePushService {
                         heartbeat.put("type", "heartbeat");
                         heartbeat.put("timestamp", System.currentTimeMillis());
                         emitter.send(heartbeat);
-                        log.debug("发送 SSE 心跳：{}", clientId);
+                        log.info("发送 SSE 心跳：{}", clientId);
                     }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.debug("心跳线程中断：{}", clientId);
+                log.info("心跳线程中断：{}", clientId);
             } catch (IOException e) {
-                log.debug("心跳发送失败，连接已断开：{}", clientId);
+                log.info("心跳发送失败，连接已断开：{}", clientId);
                 emitters.remove(clientId);
             }
         });

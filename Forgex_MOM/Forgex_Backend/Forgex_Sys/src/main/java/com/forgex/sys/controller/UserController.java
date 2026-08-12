@@ -398,6 +398,24 @@ public class UserController {
     }
 
     /**
+     * 按发起人解析第 N 级直属上级用户 ID。
+     *
+     * @param request 请求体，含 initiatorUserId 与 level
+     * @return 上级用户 ID 列表
+     */
+    @PostMapping("/internal/resolveSuperiorUserIds")
+    public R<List<Long>> resolveSuperiorUserIds(@RequestBody Map<String, Object> request) {
+        Long tenantId = resolveCurrentTenantId();
+        if (tenantId == null || request == null || request.get("initiatorUserId") == null) {
+            return R.ok(List.of());
+        }
+        Long initiatorUserId = Long.valueOf(String.valueOf(request.get("initiatorUserId")));
+        Object levelRaw = request.get("level");
+        Integer level = levelRaw == null ? null : Integer.valueOf(String.valueOf(levelRaw));
+        return R.ok(userService.resolveSuperiorUserIds(tenantId, initiatorUserId, level));
+    }
+
+    /**
      * 内部接口：根据用户 ID 查询用户基础信息。
      *
      * @param userId 用户 ID

@@ -78,7 +78,7 @@ public class ClientIpPropagationFilter implements GlobalFilter, Ordered {
             .header(HEADER_CLIENT_IP, clientIp)
             .build();
         
-        log.debug("客户端真实 IP: {}, 请求路径: {}", clientIp, request.getURI().getPath());
+        log.info("客户端真实 IP: {}, 请求路径: {}", clientIp, request.getURI().getPath());
         
         // 继续处理
         return chain.filter(exchange.mutate().request(newRequest).build());
@@ -114,7 +114,7 @@ public class ClientIpPropagationFilter implements GlobalFilter, Ordered {
             if (ips.length > 0) {
                 String ip = ips[0].trim();
                 if (StringUtils.hasText(ip) && !UNKNOWN_IP.equalsIgnoreCase(ip)) {
-                    log.debug("从 X-Forwarded-For 提取 IP: {}", ip);
+                    log.info("从 X-Forwarded-For 提取 IP: {}", ip);
                     return ip;
                 }
             }
@@ -123,7 +123,7 @@ public class ClientIpPropagationFilter implements GlobalFilter, Ordered {
         // 2. 其次从 X-Real-IP 获取（Nginx 代理场景）
         String xRealIp = headers.getFirst(HEADER_X_REAL_IP);
         if (StringUtils.hasText(xRealIp) && !UNKNOWN_IP.equalsIgnoreCase(xRealIp)) {
-            log.debug("从 X-Real-IP 提取 IP: {}", xRealIp);
+            log.info("从 X-Real-IP 提取 IP: {}", xRealIp);
             return xRealIp;
         }
         
@@ -131,12 +131,12 @@ public class ClientIpPropagationFilter implements GlobalFilter, Ordered {
         InetSocketAddress remoteAddress = request.getRemoteAddress();
         if (remoteAddress != null && remoteAddress.getAddress() != null) {
             String ip = remoteAddress.getAddress().getHostAddress();
-            log.debug("从 RemoteAddress 提取 IP: {}", ip);
+            log.info("从 RemoteAddress 提取 IP: {}", ip);
             return ip;
         }
         
         // 4. 都获取不到，返回 unknown
-        log.warn("无法提取客户端真实 IP，请求路径: {}", request.getURI().getPath());
+        log.error("无法提取客户端真实 IP，请求路径: {}", request.getURI().getPath());
         return UNKNOWN_IP;
     }
     

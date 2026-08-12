@@ -6,6 +6,7 @@ import com.forgex.common.api.feign.IntegrationMaterialSyncFeignClient;
 import com.forgex.common.api.feign.IntegrationSupplierSyncFeignClient;
 import com.forgex.common.api.feign.IntegrationUserSyncFeignClient;
 import com.forgex.common.security.perm.PermissionInterceptor;
+import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,6 +25,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @version 1.0
  * @since 2026-04-14
  */
+@Slf4j
 @SpringBootApplication(scanBasePackages = "com.forgex")
 @EnableDiscoveryClient
 @EnableAsync
@@ -40,8 +42,8 @@ public class ForgexIntegrationApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ForgexIntegrationApplication.class, args);
-        System.out.println("========================================");
-        System.out.println("Forgex Integration Service Started Successfully!");
-        System.out.println("========================================");
+        log.info("========================================");
+        log.info("Forgex Integration Service Started Successfully!");
+        log.info("========================================");
     }
 }
