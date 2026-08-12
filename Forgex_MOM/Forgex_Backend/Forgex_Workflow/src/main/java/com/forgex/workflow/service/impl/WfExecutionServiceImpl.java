@@ -47,6 +47,7 @@ import com.forgex.workflow.domain.param.WfExecutionBatchRemindParam;
 import com.forgex.workflow.domain.param.WfExecutionBatchTransferParam;
 import com.forgex.workflow.domain.param.WfExecutionCompensateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
+import com.forgex.workflow.domain.param.WfExecutionDelegateParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionRecallParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
@@ -63,6 +64,7 @@ import com.forgex.workflow.mapper.WfTaskExecutionMapper;
 import com.forgex.workflow.mapper.WfTaskNodeRuleMapper;
 import com.forgex.workflow.service.IWfEngineService;
 import com.forgex.workflow.service.IWfExecutionService;
+import com.forgex.workflow.service.ApprovalNodeActionPolicy;
 import com.forgex.workflow.service.WorkflowNotificationService;
 import com.forgex.workflow.service.handler.ApprovalActionHandlerFactory;
 import com.forgex.workflow.service.handler.ApprovalActionHandlerType;
@@ -149,6 +151,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     private final UserInfoService userInfoService;
     private final ApprovalInterpreterRegistry interpreterRegistry;
     private final WorkflowNotificationService workflowNotificationService;
+    private final ApprovalNodeActionPolicy approvalNodeActionPolicy;
     /**
      * 延迟获取动作处理器工厂，避免“执行服务 -> 工厂 -> 处理器 -> 执行服务”循环依赖。
      */
@@ -430,6 +433,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         if (!Objects.equals(currentInstance.getApproverId(), currentUserId)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_USER_NO_PERMISSION_TRANSFER);
         }
+        approvalNodeActionPolicy.requireAllowed(currentInstance.getSourceRuleId(), ApprovalNodeActionPolicy.Action.TRANSFER);
         if (Objects.equals(currentInstance.getApproverId(), param.getTargetApproverId())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_TRANSFER_TARGET_SAME_AS_CURRENT);
         }
@@ -480,6 +484,10 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         if (!Objects.equals(currentInstance.getApproverId(), currentUserId)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_USER_NO_PERMISSION_ADD_SIGN);
         }
+        approvalNodeActionPolicy.requireAllowed(currentInstance.getSourceRuleId(), ApprovalNodeActionPolicy.Action.ADD_SIGN);
+        if (Objects.equals(currentInstance.getApproverId(), param.getTargetApproverId())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_ADD_SIGN_TARGET_SAME_AS_CURRENT);
+        }
 
         WfTaskApprovalInstance addSignInstance = buildPendingInstanceFromCurrent(currentInstance, param.getTargetApproverId());
         approvalInstanceMapper.insert(addSignInstance);
@@ -488,6 +496,43 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         insertActionLog(execution, currentInstance.getExecutionDetailId(), currentInstance.getNodeId(), currentInstance.getId(),
                 WorkflowConstants.ApprovalActionType.ADD_SIGN, currentUserId, resolveUsername(currentUserId),
                 param.getTargetApproverId(), resolveUsername(param.getTargetApproverId()), param.getComment(), JSON.toJSONString(addSignInstance));
+        return true;
+    }
+
+    /**
+     * 委托单条审批待办。
+     *
+     * @param param 单条委托参数
+     * @return 是否处理成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delegate(WfExecutionDelegateParam param) {
+        Long currentUserId = requireCurrentUserId();
+        WfTaskExecution execution = requireRunningExecution(param.getExecutionId());
+        WfTaskApprovalInstance currentInstance = requirePendingApprovalInstance(param.getApprovalInstanceId(), execution.getId());
+        if (!Objects.equals(currentInstance.getApproverId(), currentUserId)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_USER_NO_PERMISSION_DELEGATE);
+        }
+        if (currentInstance.getDelegateFromUserId() != null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_INSTANCE_ALREADY_DELEGATED);
+        }
+        approvalNodeActionPolicy.requireAllowed(currentInstance.getSourceRuleId(), ApprovalNodeActionPolicy.Action.DELEGATE);
+        if (Objects.equals(currentUserId, param.getTargetApproverId())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_DELEGATEE_SAME_AS_DELEGATOR);
+        }
+
+        closePendingTaskByInstanceId(currentInstance.getId());
+        String actionSnapshot = JSON.toJSONString(currentInstance);
+        currentInstance.setDelegateFromUserId(currentUserId);
+        currentInstance.setApproverId(param.getTargetApproverId());
+        currentInstance.setApproverName(resolveUsername(param.getTargetApproverId()));
+        approvalInstanceMapper.updateById(currentInstance);
+        createPendingTaskFromInstance(execution,
+                requireCurrentExecutionDetail(execution.getId(), currentInstance.getNodeId()), currentInstance);
+        insertActionLog(execution, currentInstance.getExecutionDetailId(), currentInstance.getNodeId(), currentInstance.getId(),
+                WorkflowConstants.ApprovalActionType.DELEGATE, currentUserId, resolveUsername(currentUserId),
+                param.getTargetApproverId(), resolveUsername(param.getTargetApproverId()), param.getComment(), actionSnapshot);
         return true;
     }
 
@@ -849,13 +894,23 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
      * @return 是否处理成功
      */
     public Boolean handleSaveDelegateAction(WfExecutionDelegateSaveParam param) {
+        Long currentUserId = requireCurrentUserId();
         validateDelegateUsers(param);
+        if (!Objects.equals(currentUserId, param.getDelegatorUserId())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_NO_PERMISSION);
+        }
         List<WfTaskApprovalInstance> pendingInstances = approvalInstanceMapper.selectList(new LambdaQueryWrapper<WfTaskApprovalInstance>()
                 .eq(WfTaskApprovalInstance::getApproverId, param.getDelegatorUserId())
                 .eq(WfTaskApprovalInstance::getDeleted, 0)
                 .eq(WfTaskApprovalInstance::getStatus, WorkflowConstants.ApprovalInstanceStatus.PENDING)
                 .eq(WfTaskApprovalInstance::getActivated, true));
         for (WfTaskApprovalInstance instance : pendingInstances) {
+            if (instance.getDelegateFromUserId() != null) {
+                throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_INSTANCE_ALREADY_DELEGATED);
+            }
+            if (!approvalNodeActionPolicy.resolve(instance.getSourceRuleId()).allowDelegate()) {
+                continue;
+            }
             WfTaskExecution execution = executionMapper.selectById(instance.getExecutionId());
             if (execution == null || !Objects.equals(execution.getStatus(), WorkflowConstants.ExecutionStatus.PROCESSING)) {
                 continue;
@@ -880,9 +935,13 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
      * @return 是否处理成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelDelegate(Long delegatorUserId) {
         if (delegatorUserId == null) {
             return true;
+        }
+        if (!Objects.equals(requireCurrentUserId(), delegatorUserId)) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_NO_PERMISSION);
         }
         List<WfTaskApprovalInstance> delegatedInstances = approvalInstanceMapper.selectList(new LambdaQueryWrapper<WfTaskApprovalInstance>()
                 .eq(WfTaskApprovalInstance::getDelegateFromUserId, delegatorUserId)
@@ -890,10 +949,17 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .eq(WfTaskApprovalInstance::getStatus, WorkflowConstants.ApprovalInstanceStatus.PENDING)
                 .eq(WfTaskApprovalInstance::getActivated, true));
         for (WfTaskApprovalInstance instance : delegatedInstances) {
+            WfTaskExecution execution = executionMapper.selectById(instance.getExecutionId());
+            if (execution == null || !Objects.equals(execution.getStatus(), WorkflowConstants.ExecutionStatus.PROCESSING)) {
+                continue;
+            }
+            closePendingTaskByInstanceId(instance.getId());
             instance.setApproverId(delegatorUserId);
             instance.setApproverName(resolveUsername(delegatorUserId));
             instance.setDelegateFromUserId(null);
             approvalInstanceMapper.updateById(instance);
+            createPendingTaskFromInstance(execution,
+                    requireCurrentExecutionDetail(execution.getId(), instance.getNodeId()), instance);
         }
         return true;
     }
@@ -1652,7 +1718,17 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         if (instance == null && targetInstanceId == null) {
             return null;
         }
-        if (instance == null || !Objects.equals(instance.getApproverId(), approverId)) {
+        boolean belongsToPendingTask = instance != null
+                && Objects.equals(instance.getId(), pendingTask.getApprovalInstanceId())
+                && Objects.equals(instance.getExecutionId(), pendingTask.getExecutionId())
+                && Objects.equals(instance.getNodeId(), pendingTask.getNodeId())
+                && Objects.equals(instance.getExecutionDetailId(), pendingTask.getExecutionDetailId());
+        boolean isActivePendingInstance = instance != null
+                && Objects.equals(instance.getStatus(), WorkflowConstants.ApprovalInstanceStatus.PENDING)
+                && Boolean.TRUE.equals(instance.getActivated());
+        if (!belongsToPendingTask
+                || !isActivePendingInstance
+                || !Objects.equals(instance.getApproverId(), approverId)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_INSTANCE_NOT_FOUND_OR_NO_PERMISSION);
         }
         return instance;
@@ -1820,7 +1896,8 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         if (instance == null || !Objects.equals(instance.getExecutionId(), executionId)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_INSTANCE_NOT_FOUND_OR_NO_PERMISSION);
         }
-        if (!Objects.equals(instance.getStatus(), WorkflowConstants.ApprovalInstanceStatus.PENDING)) {
+        if (!Objects.equals(instance.getStatus(), WorkflowConstants.ApprovalInstanceStatus.PENDING)
+                || !Boolean.TRUE.equals(instance.getActivated())) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_INSTANCE_ALREADY_PROCESSED);
         }
         return instance;
@@ -1838,12 +1915,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     }
 
     private void closePendingTaskByInstanceId(Long approvalInstanceId) {
-        WfMyTask currentTask = findPendingMyTaskByInstance(approvalInstanceId);
-        if (currentTask == null) {
-            return;
-        }
-        currentTask.setStatus(1);
-        myTaskMapper.updateById(currentTask);
+        closePendingMyTaskByInstance(approvalInstanceId);
     }
 
     private void createPendingTaskFromInstance(WfTaskExecution execution,
@@ -2062,6 +2134,10 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
             WfTaskNodeRule rule = nodeRuleMapper.selectById(entity.getSourceRuleId());
             dto.setAllowRecall(rule == null ? null : rule.getAllowRecall());
         }
+        ApprovalNodeActionPolicy.Capabilities capabilities = approvalNodeActionPolicy.resolve(entity.getSourceRuleId());
+        dto.setAllowAddSign(capabilities.allowAddSign());
+        dto.setAllowTransfer(capabilities.allowTransfer());
+        dto.setAllowDelegate(capabilities.allowDelegate());
         return dto;
     }
 

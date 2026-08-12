@@ -37,7 +37,21 @@
 }
 
 .designer-hero__avatar {
+  position: relative;
+  display: inline-flex;
   flex-shrink: 0;
+}
+
+.designer-hero__online-status {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 2px solid var(--fx-bg-container, #ffffff);
+  border-radius: 50%;
+  background: #22c55e;
 }
 
 .designer-hero__info {

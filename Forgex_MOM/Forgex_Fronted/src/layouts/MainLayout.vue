@@ -3080,50 +3080,51 @@ onMounted(async () => {
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
   }
-  if (isFallbackRoute.value) {
-    await loadLayout()
+  try {
+    if (isFallbackRoute.value) {
+      await loadLayout()
+      updateTabsByRoute(route.fullPath)
+      await nextTick()
+      bindCurrentPageScroll()
+      return
+    }
+
+    await Promise.all([
+      loadLayout(),
+      loadGuidePreference(),
+      loadTenantOptions(),
+    ])
     updateTabsByRoute(route.fullPath)
     await nextTick()
     bindCurrentPageScroll()
+
+    try {
+      const config = await getSystemBasicConfig()
+      if (config) {
+        systemConfig.value = { ...config }
+      }
+    } catch (_) {}
+
+    await refreshMessageCounts()
+
+    try {
+      const normalUnread = await listUnreadMessages(10, 'MESSAGE')
+      ;[...(Array.isArray(normalUnread) ? normalUnread : [])]
+        .forEach((m) => openMessageNotification(m as SysMessageVO))
+    } catch (_) {}
+
+    connectMessageSse()
+  } finally {
     const bootstrapLoader = (window as any).__globalLoader
+    const transitionLoader = (window as any).__fxLoginTransitionLoader
     if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
       window.requestAnimationFrame(() => {
         bootstrapLoader.hide()
+        transitionLoader?.hide?.()
       })
+    } else {
+      transitionLoader?.hide?.()
     }
-    return
-  }
-  await Promise.all([
-    loadLayout(),
-    loadGuidePreference(),
-    loadTenantOptions(),
-  ])
-  updateTabsByRoute(route.fullPath)
-  await nextTick()
-  bindCurrentPageScroll()
-  
-  try {
-    const config = await getSystemBasicConfig()
-    if (config) {
-      systemConfig.value = { ...config }
-    }
-  } catch (_) {}
-
-  await refreshMessageCounts()
-
-  try {
-    const normalUnread = await listUnreadMessages(10, 'MESSAGE')
-    ;[...(Array.isArray(normalUnread) ? normalUnread : [])]
-      .forEach((m) => openMessageNotification(m as SysMessageVO))
-  } catch (_) {}
-
-  connectMessageSse()
-
-  const bootstrapLoader = (window as any).__globalLoader
-  if (bootstrapLoader && typeof bootstrapLoader.hide === 'function') {
-    window.requestAnimationFrame(() => {
-      bootstrapLoader.hide()
-    })
   }
 })
 

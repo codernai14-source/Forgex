@@ -10,6 +10,7 @@
               <UserOutlined />
             </template>
           </a-avatar>
+          <span class="designer-hero__online-status" aria-hidden="true" />
         </div>
         <div class="designer-hero__info">
           <h2 class="designer-hero__greeting">

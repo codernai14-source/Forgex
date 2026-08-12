@@ -26,6 +26,7 @@ import com.forgex.workflow.domain.param.WfExecutionBatchRemindParam;
 import com.forgex.workflow.domain.param.WfExecutionBatchTransferParam;
 import com.forgex.workflow.domain.param.WfExecutionCompensateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
+import com.forgex.workflow.domain.param.WfExecutionDelegateParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionRecallParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
@@ -106,6 +107,14 @@ public interface IWfExecutionService {
      * @see WfExecutionAddSignParam
      */
     Boolean addSign(WfExecutionAddSignParam param);
+
+    /**
+     * 委托单条审批待办。
+     *
+     * @param param 单条委托参数
+     * @return 是否处理成功
+     */
+    Boolean delegate(WfExecutionDelegateParam param);
 
     /**
      * 审批人撤回。

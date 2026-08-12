@@ -32,6 +32,7 @@ import com.forgex.workflow.domain.param.WfExecutionBatchRemindParam;
 import com.forgex.workflow.domain.param.WfExecutionBatchTransferParam;
 import com.forgex.workflow.domain.param.WfExecutionCompensateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
+import com.forgex.workflow.domain.param.WfExecutionDelegateParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionRecallParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
@@ -196,6 +197,19 @@ public class WfExecutionController {
     @RequirePerm("wf:execution:addSign")
     public R<Boolean> addSign(@Validated @RequestBody WfExecutionAddSignParam param) {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.addSign(param));
+    }
+
+    /**
+     * 委托单条审批待办。
+     *
+     * @param param 单条委托参数
+     * @return 是否委托成功
+     * @see IWfExecutionService#delegate(WfExecutionDelegateParam)
+     */
+    @PostMapping("/delegate")
+    @RequirePerm("wf:execution:delegate")
+    public R<Boolean> delegate(@Validated @RequestBody WfExecutionDelegateParam param) {
+        return R.ok(CommonPrompt.UPDATE_SUCCESS, executionService.delegate(param));
     }
 
     /**

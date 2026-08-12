@@ -22,7 +22,6 @@ import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.TenantContextIgnore;
-import com.forgex.common.util.RedisHelper;
 import com.forgex.sys.domain.dto.EncodeRuleDTO;
 import com.forgex.sys.domain.dto.EncodeRuleDetailDTO;
 import com.forgex.sys.domain.entity.SysEncodeRule;
@@ -38,9 +37,9 @@ import com.forgex.sys.service.ISysEncodeRuleService;
 import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RAtomicLong;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -92,16 +91,6 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * 编码规则明细 Mapper
      */
     private final SysEncodeRuleDetailMapper encodeRuleDetailMapper;
-
-    /**
-     * Redis 工具类
-     */
-    private final RedisHelper redisHelper;
-
-    /**
-     * Redis StringTemplate，用于原子递增操作
-     */
-    private final StringRedisTemplate stringRedisTemplate;
 
     /**
      * Redisson 客户端，用于设置编码序列 Key 过期时间。
@@ -212,6 +201,8 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
     @Transactional(rollbackFor = Exception.class)
     public Long saveEncodeRule(EncodeRuleSaveParam param) {
         return runWithTenantIgnore(() -> {
+            EncodeRuleDetailValidator.validateAndNormalize(param.getDetailList());
+
             SysEncodeRule existRule = null;
             if (param.getId() != null) {
                 existRule = getAccessibleRuleById(param.getId());
@@ -249,22 +240,18 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             Long ruleId = rule.getId();
 
             // 保存或更新明细数据
-            if (!CollectionUtils.isEmpty(param.getDetailList())) {
-                // 先删除旧的明细数据
-                deleteDetailsByRuleId(ruleId);
-
-                // 再新增明细数据
-                List<SysEncodeRuleDetail> detailList = new ArrayList<>();
-                for (EncodeRuleDetailSaveParam detailParam : param.getDetailList()) {
-                    SysEncodeRuleDetail detail = new SysEncodeRuleDetail();
-                    BeanUtils.copyProperties(detailParam, detail);
-                    detail.setId(null);
-                    detail.setRuleId(ruleId);
-                    detail.setTenantId(rule.getTenantId());
-                    detailList.add(detail);
-                }
-                insertDetails(detailList);
+            // 先删除旧的明细数据，再按当前完整配置写入
+            deleteDetailsByRuleId(ruleId);
+            List<SysEncodeRuleDetail> detailList = new ArrayList<>();
+            for (EncodeRuleDetailSaveParam detailParam : param.getDetailList()) {
+                SysEncodeRuleDetail detail = new SysEncodeRuleDetail();
+                BeanUtils.copyProperties(detailParam, detail);
+                detail.setId(null);
+                detail.setRuleId(ruleId);
+                detail.setTenantId(rule.getTenantId());
+                detailList.add(detail);
             }
+            insertDetails(detailList);
 
             return ruleId;
         });
@@ -370,35 +357,17 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             // 构建 Redis Key
             String redisKey = buildRedisKey(rule);
 
-            // 使用 Redis INCR 原子递增获取序列号
-            Long serial = stringRedisTemplate.opsForValue().increment(redisKey);
+            // 使用 Redisson 原生原子计数，避免 Spring Data Redis 连接适配层递归
+            RAtomicLong sequence = redissonClient.getAtomicLong(redisKey);
+            long serial = sequence.incrementAndGet();
 
             // 如果是第一个序列号，设置过期时间
             if (serial == 1) {
-                setRedisKeyExpire(rule, redisKey);
+                setRedisKeyExpire(rule, sequence);
             }
 
-            // 格式化序列号
-            String formattedSerial = formatSerial(serial, rule.getSerialLength());
-
-            // 构建完整编码
-            StringBuilder code = new StringBuilder();
-
-            // 添加前缀
-            if (StringUtils.hasText(rule.getPrefix())) {
-                code.append(rule.getPrefix());
-            }
-
-            // 添加日期格式
-            if (StringUtils.hasText(rule.getDateFormat())) {
-                String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern(rule.getDateFormat()));
-                code.append(dateStr);
-            }
-
-            // 添加序列号
-            code.append(formattedSerial);
-
-            String generatedCode = code.toString();
+            List<SysEncodeRuleDetail> details = queryDetailEntitiesByRuleId(rule.getId());
+            String generatedCode = EncodeRuleRenderer.render(rule, details, serial, LocalDateTime.now());
             log.info("生成编码成功：规则代码={}, 生成编码={}", ruleCode, generatedCode);
 
             return generatedCode;
@@ -576,12 +545,16 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * @return 明细 DTO 列表
      */
     private List<EncodeRuleDetailDTO> queryDetailsByRuleId(Long ruleId) {
+        return queryDetailEntitiesByRuleId(ruleId).stream()
+            .map(this::convertToDetailDTO)
+            .collect(Collectors.toList());
+    }
+
+    private List<SysEncodeRuleDetail> queryDetailEntitiesByRuleId(Long ruleId) {
         LambdaQueryWrapper<SysEncodeRuleDetail> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysEncodeRuleDetail::getRuleId, ruleId);
         wrapper.orderByAsc(SysEncodeRuleDetail::getSegmentOrder);
-
-        List<SysEncodeRuleDetail> details = encodeRuleDetailMapper.selectList(wrapper);
-        return details.stream().map(this::convertToDetailDTO).collect(Collectors.toList());
+        return encodeRuleDetailMapper.selectList(wrapper);
     }
 
     /**
@@ -625,12 +598,12 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      * <p>根据重置周期设置不同的过期时间。</p>
      *
      * @param rule 编码规则
-     * @param redisKey Redis Key
+     * @param sequence Redis 原子流水对象
      */
-    private void setRedisKeyExpire(SysEncodeRule rule, String redisKey) {
+    private void setRedisKeyExpire(SysEncodeRule rule, RAtomicLong sequence) {
         long expireSeconds;
 
-        switch (rule.getResetCycle()) {
+        switch (rule.getResetCycle() == null ? "NEVER" : rule.getResetCycle()) {
             case "DAILY":
                 // 每日重置：设置到当天 23:59:59
                 expireSeconds = java.time.Duration.between(
@@ -658,35 +631,8 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
         }
 
         if (expireSeconds > 0) {
-            redissonClient.getBucket(redisKey).expire(Duration.ofSeconds(expireSeconds));
+            sequence.expire(Duration.ofSeconds(expireSeconds));
         }
-    }
-
-    /**
-     * 格式化序列号
-     * <p>将序列号格式化为指定长度的字符串，不足补零。</p>
-     *
-     * @param serial 序列号
-     * @param length 长度
-     * @return 格式化后的序列号
-     */
-    private String formatSerial(Long serial, Integer length) {
-        if (length == null || length <= 0) {
-            length = 4; // 默认长度为 4
-        }
-
-        String serialStr = String.valueOf(serial);
-        if (serialStr.length() >= length) {
-            return serialStr;
-        }
-
-        // 不足长度时前面补零
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length - serialStr.length(); i++) {
-            sb.append("0");
-        }
-        sb.append(serialStr);
-        return sb.toString();
     }
 
     /**
@@ -697,9 +643,8 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
      */
     private void clearRedisCache(String ruleCode) {
         String redisKey = REDIS_KEY_SERIAL_PREFIX + ruleCode;
-        // 删除所有可能的 Redis Key（带时间维度的）
-        // 实际应用中可能需要使用 SCAN 命令匹配删除
-        redisHelper.delete(redisKey);
+        redissonClient.getKeys().delete(redisKey);
+        redissonClient.getKeys().deleteByPattern(redisKey + ":*");
     }
 
     /**

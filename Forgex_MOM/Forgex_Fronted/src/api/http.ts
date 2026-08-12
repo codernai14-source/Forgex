@@ -540,32 +540,6 @@ async function handleResponse(resp: any, httpInstance: any) {
   
   // 检查是否需要重新登录
   if (needReload(code)) {
-    const cfg = resp.config as any
-    const msg = extractBackendMessage(data)
-    const account = sessionStorage.getItem('account')
-    const tenantId = sessionStorage.getItem('tenantId')
-    
-    // 检查是否可以恢复租户
-    const canRecoverTenant = 
-      !cfg.__fxTenantRecovered &&          // 未尝试过恢复租户
-      !!account &&                          // 存在账号信息
-      !!tenantId &&                         // 存在租户ID
-      (msg.includes('租户未选择') || msg.includes('租户') || msg.includes('Tenant')) // 错误信息包含租户相关内容
-    
-    if (canRecoverTenant) {
-      cfg.__fxTenantRecovered = true // 标记已尝试恢复租户
-      try {
-        // 尝试恢复租户
-        const r = await rawHttp.post('/auth/choose-tenant', { account, tenantId })
-        if (r?.data?.code === 200) {
-          // 租户恢复成功，重新发送原请求
-          return httpInstance.request(cfg)
-        }
-      } catch (e) {
-        // 恢复租户失败，继续处理登录失效
-      }
-    }
-    
     if (isFallbackPage()) {
       return Promise.reject(data)
     }

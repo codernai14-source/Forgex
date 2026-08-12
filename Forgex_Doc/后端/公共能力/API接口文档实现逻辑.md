@@ -1,6 +1,6 @@
-# API 接口文档实现逻辑
+﻿# API 接口文档实现逻辑
 
-> 版本：**V0.6.5**
+> 版本：**V0.8.5**
 
 后端根 `pom.xml` 和业务模块中已引入 Swagger annotations 与 springdoc-openapi UI 相关依赖，Controller 与领域对象通过注解生成 OpenAPI 描述。
 

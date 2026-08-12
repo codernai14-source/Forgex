@@ -3,37 +3,42 @@
  */
 import http from '../http'
 
+export type WorkflowId = string | number
+
 export interface WfApprovalInstanceDTO {
-  id: number
-  executionId: number
-  executionDetailId: number
-  nodeId: number
+  id: WorkflowId
+  executionId: WorkflowId
+  executionDetailId: WorkflowId
+  nodeId: WorkflowId
   instanceNo: string
-  approverId: number
+  approverId: WorkflowId
   approverName?: string
   approverSourceType?: number
-  sourceRuleId?: number
+  sourceRuleId?: WorkflowId
   allowRecall?: boolean
+  allowAddSign?: boolean
+  allowTransfer?: boolean
+  allowDelegate?: boolean
   status: number
   actionType?: number
   comment?: string
   approveTime?: string
   deadlineTime?: string
   activated?: boolean
-  delegateFromUserId?: number
-  transferFromUserId?: number
+  delegateFromUserId?: WorkflowId
+  transferFromUserId?: WorkflowId
 }
 
 export interface WfApprovalActionLogDTO {
-  id: number
-  executionId: number
-  executionDetailId?: number
-  nodeId?: number
-  approvalInstanceId?: number
+  id: WorkflowId
+  executionId: WorkflowId
+  executionDetailId?: WorkflowId
+  nodeId?: WorkflowId
+  approvalInstanceId?: WorkflowId
   actionType: number
-  operatorId?: number
+  operatorId?: WorkflowId
   operatorName?: string
-  targetUserId?: number
+  targetUserId?: WorkflowId
   targetUserName?: string
   actionComment?: string
   actionSnapshot?: string
@@ -41,13 +46,13 @@ export interface WfApprovalActionLogDTO {
 }
 
 export interface WfExecutionDTO {
-  id: number
-  taskConfigId: number
+  id: WorkflowId
+  taskConfigId: WorkflowId
   taskCode: string
   taskName: string
-  initiatorId: number
+  initiatorId: WorkflowId
   initiatorName: string
-  currentNodeId?: number
+  currentNodeId?: WorkflowId
   currentNodeName?: string
   formContent: string
   formType?: number
@@ -57,7 +62,7 @@ export interface WfExecutionDTO {
   endTime?: string
   status: number
   statusDesc?: string
-  tenantId: number
+  tenantId: WorkflowId
   createTime: string
   updateTime?: string
   currentApprovalInstances?: WfApprovalInstanceDTO[]
@@ -72,42 +77,49 @@ export interface WfExecutionDTO {
 export interface WfExecutionStartParam {
   taskCode: string
   formContent: string
-  selectedApprovers?: number[]
+  selectedApprovers?: WorkflowId[]
 }
 
 export interface WfExecutionApproveParam {
-  executionId: number
+  executionId: WorkflowId
   approveStatus: number
   comment?: string
   rejectType?: number
-  approvalInstanceId?: number
+  approvalInstanceId?: WorkflowId
   actionType?: number
-  targetApproverId?: number
+  targetApproverId?: WorkflowId
 }
 
 export interface WfExecutionTransferParam {
-  executionId: number
-  approvalInstanceId: number
-  targetApproverId: number
+  executionId: WorkflowId
+  approvalInstanceId: WorkflowId
+  targetApproverId: WorkflowId
   comment?: string
 }
 
 export interface WfExecutionAddSignParam {
-  executionId: number
-  approvalInstanceId: number
-  targetApproverId: number
+  executionId: WorkflowId
+  approvalInstanceId: WorkflowId
+  targetApproverId: WorkflowId
+  comment?: string
+}
+
+export interface WfExecutionDelegateParam {
+  executionId: WorkflowId
+  approvalInstanceId: WorkflowId
+  targetApproverId: WorkflowId
   comment?: string
 }
 
 export interface WfExecutionRecallParam {
-  executionId: number
-  approvalInstanceId: number
+  executionId: WorkflowId
+  approvalInstanceId: WorkflowId
   comment?: string
 }
 
 export interface WfExecutionDelegateSaveParam {
-  delegatorUserId: number
-  delegateUserId: number
+  delegatorUserId: WorkflowId
+  delegateUserId: WorkflowId
   comment?: string
 }
 
@@ -117,33 +129,33 @@ export interface WfExecutionQueryParam {
   taskCode?: string
   taskName?: string
   status?: number
-  initiatorId?: number
-  currentApproverId?: number
+  initiatorId?: WorkflowId
+  currentApproverId?: WorkflowId
   approveTimeBegin?: string
   approveTimeEnd?: string
 }
 
 export interface WfExecutionBatchApproveParam {
-  executionIds: number[]
+  executionIds: WorkflowId[]
   approveStatus: number
   comment?: string
 }
 
 export interface WfExecutionBatchTransferParam {
-  executionIds: number[]
-  targetApproverId: number
+  executionIds: WorkflowId[]
+  targetApproverId: WorkflowId
   comment?: string
 }
 
 export interface WfExecutionRemindParam {
-  executionIds: number[]
+  executionIds: WorkflowId[]
   comment?: string
 }
 
 export interface WfExecutionCompensateParam {
-  executionId?: number
-  nodeId?: number
-  approvalInstanceId?: number
+  executionId?: WorkflowId
+  nodeId?: WorkflowId
+  approvalInstanceId?: WorkflowId
   timeBegin?: string
   timeEnd?: string
 }
@@ -161,7 +173,7 @@ export interface WfDashboardWeeklyResultDTO {
 }
 
 export interface WfDashboardUserShareDTO {
-  initiatorId: number
+  initiatorId: WorkflowId
   initiatorName: string
   count: number
 }
@@ -191,6 +203,10 @@ export function addSign(params: WfExecutionAddSignParam) {
   return http.post<boolean>('/wf/execution/addSign', params)
 }
 
+export function delegate(params: WfExecutionDelegateParam) {
+  return http.post<boolean>('/wf/execution/delegate', params)
+}
+
 export function recall(params: WfExecutionRecallParam) {
   return http.post<boolean>('/wf/execution/recall', params)
 }
@@ -199,23 +215,23 @@ export function saveDelegate(params: WfExecutionDelegateSaveParam) {
   return http.post<boolean>('/wf/execution/delegate/save', params)
 }
 
-export function cancelDelegate(params: { delegatorUserId: number }) {
+export function cancelDelegate(params: { delegatorUserId: WorkflowId }) {
   return http.post<boolean>('/wf/execution/delegate/cancel', params)
 }
 
-export function cancelExecution(params: { executionId: number }) {
+export function cancelExecution(params: { executionId: WorkflowId }) {
   return http.post<boolean>('/wf/execution/cancel', params)
 }
 
-export function getExecutionDetail(params: { executionId: number }) {
+export function getExecutionDetail(params: { executionId: WorkflowId }) {
   return http.post<WfExecutionDTO>('/wf/execution/detail', params)
 }
 
-export function listApprovalInstances(params: { executionId: number }) {
+export function listApprovalInstances(params: { executionId: WorkflowId }) {
   return http.post<WfApprovalInstanceDTO[]>('/wf/execution/instances', params)
 }
 
-export function listApprovalActionLogs(params: { executionId: number }) {
+export function listApprovalActionLogs(params: { executionId: WorkflowId }) {
   return http.post<WfApprovalActionLogDTO[]>('/wf/execution/actions', params)
 }
 

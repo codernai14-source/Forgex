@@ -3,6 +3,7 @@
 import com.forgex.mobile.core.common.model.ApiResponse
 import com.forgex.mobile.core.network.model.auth.LoginCaptchaConfig
 import com.forgex.mobile.core.network.model.auth.LoginRequest
+import com.forgex.mobile.core.network.model.auth.LoginResult
 import com.forgex.mobile.core.network.model.auth.SliderCaptchaPayload
 import com.forgex.mobile.core.network.model.auth.SliderValidateRequest
 import com.forgex.mobile.core.network.model.auth.SysUserDTO
@@ -41,7 +42,7 @@ interface AuthApi {
 
     /** 账号密码登录 */
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): ApiResponse<List<TenantVO>>
+    suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResult>
 
     /** 登录后选租户 */
     @POST("auth/chooseTenant")

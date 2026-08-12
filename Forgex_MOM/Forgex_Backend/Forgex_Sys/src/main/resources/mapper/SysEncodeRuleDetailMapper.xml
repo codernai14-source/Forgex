@@ -14,6 +14,11 @@
         <result property="segmentType" column="segment_type"/>
         <result property="segmentValue" column="segment_value"/>
         <result property="connector" column="connector"/>
+        <result property="segmentLength" column="segment_length"/>
+        <result property="dateFormat" column="date_format"/>
+        <result property="sequenceStart" column="sequence_start"/>
+        <result property="paddingChar" column="padding_char"/>
+        <result property="paddingSide" column="padding_side"/>
         <result property="isRequired" column="is_required"/>
         <result property="conditionExpression" column="condition_expression"/>
         <result property="remark" column="remark"/>
@@ -30,7 +35,8 @@
     -->
     <sql id="Base_Column_List">
         id, tenant_id, rule_id, segment_order, segment_type, segment_value, 
-        connector, is_required, condition_expression, remark, create_time, 
+        connector, segment_length, date_format, sequence_start, padding_char,
+        padding_side, is_required, condition_expression, remark, create_time,
         create_by, update_time, update_by, deleted
     </sql>
 

@@ -167,6 +167,18 @@ export default {
   },
   myTask: {
     ...workflow.myTask,
+    process: '처리',
+    processApproval: '승인 처리',
+    processAction: '처리 작업',
+    noAvailableAction: '현재 대기 작업에 실행 가능한 작업이 없습니다',
+    processInstanceMissing: '현재 승인 인스턴스가 유효하지 않습니다. 새로 고침 후 다시 시도하세요',
+    actionLabels: {
+      approve: '승인',
+      reject: '반려',
+      addSign: '추가 결재',
+      transfer: '전달',
+      delegate: '위임',
+    },
     approve: '승인',
     reject: '반려',
     detail: '상세',

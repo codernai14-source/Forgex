@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.forgex</groupId><artifactId>Forgex_Backend</artifactId><version>1.0.0</version></parent>
+    <artifactId>Forgex_Common_Excel</artifactId><name>Forgex_Common_Excel</name>
+    <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Common_Contract</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Common_Core</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Common_Data</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Domain_Contract</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>cn.idev.excel</groupId><artifactId>fastexcel</artifactId></dependency>
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi-ooxml</artifactId></dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-compress</artifactId></dependency>
+        <dependency><groupId>com.baomidou</groupId><artifactId>mybatis-plus-spring-boot3-starter</artifactId></dependency>
+        <dependency><groupId>com.baomidou</groupId><artifactId>dynamic-datasource-spring-boot3-starter</artifactId></dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    </dependencies>
+</project>

@@ -1,7 +1,7 @@
-# Portainer 管理手册
+﻿# Portainer 管理手册
 
 > 分类：部署 / 运维
-> 版本：V0.8.0
+> 版本：V0.8.5
 > 关联模块：Forgex_Build/delivery/linux/scripts
 
 本文说明 Forgex 通过 Portainer 管理容器全生命周期的操作流程，包括 Stack 导入、镜像管理、日志查看、升级/回滚、API 调用与常见问题。

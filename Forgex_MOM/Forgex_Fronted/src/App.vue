@@ -1,11 +1,34 @@
 <template>
   <router-view />
   <MessageNotification />
+  <Transition name="fx-runtime-loading">
+    <div v-if="runtimeLoading" class="fx-runtime-loading fx-bootstrap-shell" role="status" aria-live="polite">
+      <div class="fx-bootstrap-shell__ambient" aria-hidden="true"></div>
+      <div class="fx-bootstrap-shell__inner">
+        <div class="fx-bootstrap-shell__ring-wrap">
+          <div class="fx-bootstrap-shell__ring" aria-hidden="true">
+            <span class="fx-bootstrap-shell__dot"></span>
+          </div>
+        </div>
+        <div class="fx-bootstrap-shell__caption">
+          <span class="fx-bootstrap-shell__eyebrow">Forgex</span>
+          <div class="fx-bootstrap-shell__rule" aria-hidden="true"></div>
+          <div class="fx-bootstrap-shell__text fx-bootstrap-shell__text-highlight">
+            {{ t('layout.loading.thinking') }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import router from './router'
+
+const { t } = useI18n({ useScope: 'global' })
+const runtimeLoading = ref(false)
 
 onMounted(() => {
   const loader = (window as any).__fxBootstrapShell || (window as any).__globalLoader
@@ -17,6 +40,14 @@ onMounted(() => {
   ;(window as any).__globalLoader = {
     show: () => {},
     hide: hideLoader,
+  }
+  ;(window as any).__fxLoginTransitionLoader = {
+    show: () => {
+      runtimeLoading.value = true
+    },
+    hide: () => {
+      runtimeLoading.value = false
+    },
   }
 
   router.isReady().then(() => {
@@ -53,6 +84,20 @@ body {
 
 #app {
   background: var(--fx-layout-bg, #f3f4f6);
+}
+
+.fx-runtime-loading {
+  z-index: 10000;
+}
+
+.fx-runtime-loading-enter-active,
+.fx-runtime-loading-leave-active {
+  transition: opacity 160ms ease;
+}
+
+.fx-runtime-loading-enter-from,
+.fx-runtime-loading-leave-to {
+  opacity: 0;
 }
 
 input,

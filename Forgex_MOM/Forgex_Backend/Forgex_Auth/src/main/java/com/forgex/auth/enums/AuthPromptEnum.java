@@ -39,6 +39,7 @@ public enum AuthPromptEnum implements I18nPrompt {
     CAPTCHA_INVALID("CAPTCHA_INVALID", "验证码无效"),
     ACCOUNT_DISABLED("ACCOUNT_DISABLED", "账号已被禁用"),
     PASSWORD_TRANSPORT_DECRYPT_FAILED("PASSWORD_TRANSPORT_DECRYPT_FAILED", "密码传输解密失败"),
+    LOGIN_INTERACTION_EXPIRED("LOGIN_INTERACTION_EXPIRED", "登录验证已过期，请重新登录"),
 
     // ========== Token 管理 ==========
     TOKEN_EXPIRED("TOKEN_EXPIRED", "Token 已过期"),

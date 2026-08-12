@@ -167,6 +167,18 @@ export default {
   },
   myTask: {
     ...workflow.myTask,
+    process: '処理',
+    processApproval: '承認を処理',
+    processAction: '処理操作',
+    noAvailableAction: 'この保留タスクで実行できる操作はありません',
+    processInstanceMissing: '承認インスタンスが無効です。更新して再試行してください',
+    actionLabels: {
+      approve: '承認',
+      reject: '却下',
+      addSign: '追加承認',
+      transfer: '転送',
+      delegate: '委任',
+    },
     approve: '承認',
     reject: '却下',
     detail: '詳細',

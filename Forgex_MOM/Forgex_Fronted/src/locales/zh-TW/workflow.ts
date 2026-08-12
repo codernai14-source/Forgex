@@ -167,6 +167,18 @@ export default {
   },
   myTask: {
     ...workflow.myTask,
+    process: '處理',
+    processApproval: '處理審批',
+    processAction: '處理動作',
+    noAvailableAction: '當前待辦沒有可執行的處理動作',
+    processInstanceMissing: '當前待辦實例已失效，請刷新後重試',
+    actionLabels: {
+      approve: '同意',
+      reject: '駁回',
+      addSign: '加簽',
+      transfer: '轉交',
+      delegate: '委託',
+    },
     approve: '同意',
     reject: '駁回',
     detail: '詳情',

@@ -2,6 +2,7 @@ package com.forgex.auth.strategy.login;
 
 import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.vo.TenantVO;
+import com.forgex.auth.domain.vo.LoginResultVO;
 import com.forgex.auth.service.impl.AuthServiceImpl;
 import com.forgex.auth.strategy.AuthTerminalConstants;
 import com.forgex.auth.strategy.LoginTypeConstants;
@@ -27,7 +28,7 @@ public class CAccountPasswordLoginStrategy implements LoginStrategy {
     }
 
     @Override
-    public R<List<TenantVO>> login(LoginParam param) {
+    public R<LoginResultVO> login(LoginParam param) {
         return authServiceProvider.getObject().doAccountPasswordLogin(param);
     }
 }

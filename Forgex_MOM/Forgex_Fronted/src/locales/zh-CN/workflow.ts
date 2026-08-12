@@ -353,6 +353,18 @@ export default {
     },
   },
   myTask: {
+    process: '处理',
+    processApproval: '处理审批',
+    processAction: '处理动作',
+    noAvailableAction: '当前待办没有可执行的处理动作',
+    processInstanceMissing: '当前待办实例已失效，请刷新后重试',
+    actionLabels: {
+      approve: '同意',
+      reject: '驳回',
+      addSign: '加签',
+      transfer: '转交',
+      delegate: '委托',
+    },
     approve: '同意',
     reject: '驳回',
     detail: '详情',

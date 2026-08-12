@@ -103,6 +103,36 @@ public class SysEncodeRuleDetail {
     private String connector;
 
     /**
+     * 段长度，序列号段用于控制补位后的总长度。
+     */
+    @TableField("segment_length")
+    private Integer segmentLength;
+
+    /**
+     * 日期段格式。
+     */
+    @TableField("date_format")
+    private String dateFormat;
+
+    /**
+     * 序列号起始值。
+     */
+    @TableField("sequence_start")
+    private Integer sequenceStart;
+
+    /**
+     * 序列号补位字符。
+     */
+    @TableField("padding_char")
+    private String paddingChar;
+
+    /**
+     * 补位方向：LEFT 或 RIGHT。
+     */
+    @TableField("padding_side")
+    private String paddingSide;
+
+    /**
      * 是否必填：false=可选，true=必填
      */
     @TableField("is_required")

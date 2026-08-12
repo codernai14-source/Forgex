@@ -638,7 +638,7 @@ class AuthViewModel @Inject constructor(
                 )
             ) {
                 is AppResult.Success -> {
-                    val tenants = result.data
+                    val tenants = result.data.tenants
                     if (tenants.isEmpty()) {
                         _uiState.update {
                             it.copy(
@@ -655,6 +655,7 @@ class AuthViewModel @Inject constructor(
                                 isLoading = false,
                                 step = AuthStep.TENANT_SELECTION,
                                 tenants = tenants,
+                                interactionCode = result.data.interactionCode,
                                 selectedTenantId = defaultTenant.id,
                                 errorMessage = null,
                                 errorText = null
@@ -704,14 +705,33 @@ class AuthViewModel @Inject constructor(
             emitErrorMessage(AppText.Resource(R.string.auth_tenant_required), null)
             return
         }
+        if (snapshot.interactionCode.isBlank()) {
+            _uiState.update {
+                it.copy(
+                    step = AuthStep.LOGIN,
+                    tenants = emptyList(),
+                    selectedTenantId = null,
+                    errorMessage = null,
+                    errorText = AppText.Resource(R.string.auth_interaction_expired)
+                )
+            }
+            emitErrorMessage(AppText.Resource(R.string.auth_interaction_expired), null)
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
 
-            when (val chooseResult = authRepository.chooseTenant(tenantId, snapshot.account)) {
+            when (
+                val chooseResult = authRepository.chooseTenant(
+                    tenantId,
+                    snapshot.account,
+                    snapshot.interactionCode
+                )
+            ) {
                 is AppResult.Success -> {
                     authRepository.loadUserRoutes(snapshot.account)
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update { it.copy(isLoading = false, interactionCode = "") }
                     _events.emit(AuthEvent.LoginCompleted)
                 }
 
@@ -719,6 +739,10 @@ class AuthViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            step = AuthStep.LOGIN,
+                            tenants = emptyList(),
+                            selectedTenantId = null,
+                            interactionCode = "",
                             errorMessage = chooseResult.message,
                             errorText = chooseResult.appText
                         )

@@ -189,19 +189,22 @@
         <!-- 用户下拉（内含租户切换：当前环境） -->
         <a-dropdown placement="bottomRight">
           <div class="user-dropdown-trigger fx-guide-user-menu">
-            <a-avatar
-              v-if="user.avatar"
-              :src="user.avatar"
-              :size="32"
-              class="user-avatar"
-            />
-            <a-avatar
-              v-else
-              :size="32"
-              class="user-avatar user-avatar-default"
-            >
-              {{ userInitial }}
-            </a-avatar>
+            <span class="user-avatar-wrapper">
+              <a-avatar
+                v-if="user.avatar"
+                :src="user.avatar"
+                :size="32"
+                class="user-avatar"
+              />
+              <a-avatar
+                v-else
+                :size="32"
+                class="user-avatar user-avatar-default"
+              >
+                {{ userInitial }}
+              </a-avatar>
+              <span class="user-online-status" aria-hidden="true" />
+            </span>
             <div class="user-dropdown-text">
               <span class="user-name">{{ user.name || user.account || t('layout.user.notLoggedIn') }}</span>
               <span v-if="currentTenantSubtitle" class="user-tenant-line">{{ currentTenantSubtitle }}</span>

@@ -30,6 +30,12 @@ import lombok.Data;
 @Data
 public class TenantChoiceParam {
     private String loginTerminal;
+
+    /**
+     * 首次选择租户时使用的短期一次性交互码。
+     * <p>已登录用户切换租户时可不传。</p>
+     */
+    private String interactionCode;
     /**
      * 选择的租户 ID
      * <p>用户要切换到的租户 ID</p>

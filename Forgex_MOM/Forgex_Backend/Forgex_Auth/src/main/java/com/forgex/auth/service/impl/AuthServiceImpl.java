@@ -26,6 +26,7 @@ import com.forgex.auth.domain.param.LoginParam;
 import com.forgex.auth.domain.dto.SysUserDTO;
 import com.forgex.auth.domain.param.TenantChoiceParam;
 import com.forgex.auth.domain.vo.TenantVO;
+import com.forgex.auth.domain.vo.LoginResultVO;
 import com.forgex.auth.mapper.SysRolePermMapper;
 import com.forgex.auth.mapper.SysTenantMapper;
 import com.forgex.auth.mapper.SysUserMapper;
@@ -35,6 +36,8 @@ import com.forgex.auth.mapper.SysInviteCodeMapper;
 import com.forgex.auth.mapper.SysInviteRegisterRecordMapper;
 import com.forgex.auth.service.AuthService;
 import com.forgex.auth.service.LoginLogService;
+import com.forgex.auth.service.LoginInteractionCodeService;
+import com.forgex.auth.service.TenantSelectionAuthorizationService;
 import com.forgex.auth.strategy.AuthTerminalConstants;
 import com.forgex.auth.strategy.LoginTypeConstants;
 import com.forgex.auth.strategy.captcha.CaptchaStrategyFactory;
@@ -159,6 +162,10 @@ public class AuthServiceImpl implements AuthService {
     private ChooseTenantStrategyFactory chooseTenantStrategyFactory;
     @Autowired
     private CaptchaStrategyFactory captchaStrategyFactory;
+    @Autowired
+    private LoginInteractionCodeService loginInteractionCodeService;
+    @Autowired
+    private TenantSelectionAuthorizationService tenantSelectionAuthorizationService;
 
 
     /**
@@ -192,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
      * @see com.forgex.common.domain.config.CaptchaConfig
      */
     @Override
-    public R<List<TenantVO>> login(LoginParam param) {
+    public R<LoginResultVO> login(LoginParam param) {
         String loginTerminal = resolveLoginTerminal(param == null ? null : param.getLoginTerminal());
         String loginType = resolveLoginType(param == null ? null : param.getLoginType());
         if (param != null) {
@@ -208,7 +215,7 @@ public class AuthServiceImpl implements AuthService {
      * @param param 请求参数
      * @return 统一响应结果
      */
-    public R<List<TenantVO>> doAccountPasswordLogin(LoginParam param) {
+    public R<LoginResultVO> doAccountPasswordLogin(LoginParam param) {
         // 获取账号信息
         String account = param == null ? null : param.getAccount();
         // 获取密码信息
@@ -230,7 +237,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         LoginSecurityConfig loginSecurityConfig = getLoginSecurityConfig();
-        R<List<TenantVO>> lockResult = checkLoginLocked(account, loginSecurityConfig);
+        R<LoginResultVO> lockResult = checkLoginLocked(account, loginSecurityConfig);
         if (lockResult != null) {
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account is locked");
             return lockResult;
@@ -300,7 +307,8 @@ public class AuthServiceImpl implements AuthService {
         // 如果用户没有绑定任何租户
         if (tenantIds.isEmpty()) {
             log.error("用户登录成功，但未绑定任何租户 account={}", account);
-            return R.ok(Collections.emptyList());
+            String interactionCode = loginInteractionCodeService.issue(user.getId(), account, param.getLoginTerminal());
+            return R.ok(new LoginResultVO(interactionCode, Collections.emptyList()));
         }
         // 查询租户详细信息
         List<SysTenant> tenants = tenantMapper.selectList(new LambdaQueryWrapper<SysTenant>()
@@ -319,7 +327,8 @@ public class AuthServiceImpl implements AuthService {
             vos.add(vo);
         }
         log.info("用户登录成功：account={}, tenants={}", idKey, vos.size());
-        return R.ok(vos);
+        String interactionCode = loginInteractionCodeService.issue(user.getId(), account, param.getLoginTerminal());
+        return R.ok(new LoginResultVO(interactionCode, vos));
     }
 
 
@@ -425,6 +434,12 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUserTenant::getTenantId, tenantId)
                 .last("limit 1"));
         if (bind == null) return R.fail(StatusCode.NOT_LOGIN, CommonPrompt.USER_NOT_BOUND_TO_TENANT);
+        String loginTerminal = resolveLoginTerminal(param == null ? null : param.getLoginTerminal());
+        String interactionCode = param == null ? null : param.getInteractionCode();
+        if (!tenantSelectionAuthorizationService.authorize(
+                user.getId(), account, loginTerminal, interactionCode)) {
+            return R.fail(StatusCode.NOT_LOGIN, AuthPromptEnum.LOGIN_INTERACTION_EXPIRED);
+        }
         // 执行登录
         StpUtil.login(idKey);
         // 获取 Token
@@ -459,7 +474,7 @@ public class AuthServiceImpl implements AuthService {
                 tenantId,
                 idKey,
                 token,
-                resolveLoginTerminal(param == null ? null : param.getLoginTerminal()),
+                loginTerminal,
                 clientIp,
                 userAgent
         );
@@ -709,7 +724,7 @@ public class AuthServiceImpl implements AuthService {
      * @return 如果账号被锁定返回错误响应，否则返回 null
      * @see com.forgex.common.domain.config.LoginSecurityConfig#getLockMinutes()
      */
-    private R<List<TenantVO>> checkLoginLocked(String account, LoginSecurityConfig config) {
+    private R<LoginResultVO> checkLoginLocked(String account, LoginSecurityConfig config) {
         if (!StringUtils.hasText(account) || config == null || config.getLockMinutes() == null || config.getLockMinutes() <= 0) {
             return null;
         }

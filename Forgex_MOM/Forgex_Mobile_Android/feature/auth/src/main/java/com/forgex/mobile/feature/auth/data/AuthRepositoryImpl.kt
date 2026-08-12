@@ -6,6 +6,7 @@ import com.forgex.mobile.core.datastore.SessionStore
 import com.forgex.mobile.core.network.api.AuthApi
 import com.forgex.mobile.core.network.api.MenuApi
 import com.forgex.mobile.core.network.model.auth.LoginRequest
+import com.forgex.mobile.core.network.model.auth.LoginResult
 import com.forgex.mobile.core.network.model.auth.SliderTrackPayload
 import com.forgex.mobile.core.network.model.auth.SliderTrackPointPayload
 import com.forgex.mobile.core.network.model.auth.SliderValidateRequest
@@ -33,7 +34,7 @@ class AuthRepositoryImpl @Inject constructor(
         captcha: String?,
         captchaId: String?,
         publicKey: String?
-    ): AppResult<List<TenantVO>> {
+    ): AppResult<LoginResult> {
         return try {
             val payloadPassword = if (publicKey.isNullOrBlank()) {
                 password
@@ -57,7 +58,12 @@ class AuthRepositoryImpl @Inject constructor(
             )
 
             if (response.isSuccess()) {
-                AppResult.Success(response.data ?: emptyList())
+                val result = response.data
+                if (result != null && result.interactionCode.isNotBlank()) {
+                    AppResult.Success(result)
+                } else {
+                    AppResult.Error(response.errorMessage(), response.code)
+                }
             } else {
                 AppResult.Error(response.errorMessage(), response.code)
             }
@@ -236,13 +242,18 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun chooseTenant(tenantId: String, account: String): AppResult<SysUserDTO> {
+    override suspend fun chooseTenant(
+        tenantId: String,
+        account: String,
+        interactionCode: String
+    ): AppResult<SysUserDTO> {
         return try {
             val response = authApi.chooseTenant(
                 TenantChoiceRequest(
                     loginTerminal = "C",
                     tenantId = tenantId,
-                    account = account
+                    account = account,
+                    interactionCode = interactionCode
                 )
             )
 

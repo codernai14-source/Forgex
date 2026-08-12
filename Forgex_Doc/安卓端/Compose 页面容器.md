@@ -1,7 +1,7 @@
-# Compose 页面容器
+﻿# Compose 页面容器
 
 > 分类：安卓端 / 专题
-> 版本：V0.8.0
+> 版本：V0.8.5
 > 关联模块：`core/ui`、`core/designsystem`、`core/device`
 
 本文说明 Forgex Android 端的设备类型识别策略（MOBILE / TABLET）、通用页面容器封装，以及主题 Token 体系。

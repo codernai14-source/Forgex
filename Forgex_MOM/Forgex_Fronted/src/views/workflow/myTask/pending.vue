@@ -47,42 +47,17 @@
       <template #action="{ record }">
         <a-space>
           <a-button
+            v-if="getAvailableActions(record).length"
             type="link"
             size="small"
-            @click="handleApprove(record)"
-            v-permission="'wf:execution:approve'"
+            @click="openProcessDialog(record)"
           >
-            <template #icon><CheckOutlined /></template>
-            {{ $t('workflow.myTask.approve') }}
-          </a-button>
-          <a-button
-            type="link"
-            size="small"
-            @click="handleReject(record)"
-            v-permission="'wf:execution:reject'"
-          >
-            <template #icon><CloseOutlined /></template>
-            {{ $t('workflow.myTask.reject') }}
+            <template #icon><FormOutlined /></template>
+            {{ $t('workflow.myTask.process') }}
           </a-button>
           <a-button type="link" size="small" @click="handleViewDetail(record)">
             <template #icon><EyeOutlined /></template>
             {{ $t('workflow.myTask.detail') }}
-          </a-button>
-          <a-button
-            type="link"
-            size="small"
-            @click="openTransferDialog(record)"
-            v-permission="'wf:execution:transfer'"
-          >
-            {{ t('workflow.myTask.transfer') }}
-          </a-button>
-          <a-button
-            type="link"
-            size="small"
-            @click="openAddSignDialog(record)"
-            v-permission="'wf:execution:addSign'"
-          >
-            {{ t('workflow.myTask.addSign') }}
           </a-button>
         </a-space>
       </template>
@@ -90,9 +65,10 @@
 
     <BaseFormDialog
       v-model:open="approveDialogVisible"
-      :title="approveAction === 'approve' ? $t('workflow.myTask.approveAgree') : $t('workflow.myTask.approveReject')"
+      :title="$t('workflow.myTask.processApproval')"
       :loading="approving"
-      :width="600"
+      :width="720"
+      :ok-text="processSubmitText"
       @submit="handleApproveSubmit"
       @cancel="handleApproveCancel"
     >
@@ -115,6 +91,14 @@
           <a-input :value="formatDateTime(currentRecord?.startTime)" disabled />
         </a-form-item>
 
+        <a-form-item :label="t('workflow.myTask.processAction')">
+          <a-radio-group v-model:value="approveAction" button-style="solid">
+            <a-radio-button v-for="action in availableActions" :key="action" :value="action">
+              {{ getActionText(action) }}
+            </a-radio-button>
+          </a-radio-group>
+        </a-form-item>
+
         <a-form-item
           v-if="approveAction === 'reject'"
           :label="t('workflow.myTask.rejectType')"
@@ -132,6 +116,14 @@
               {{ item.label }}
             </a-select-option>
           </a-select>
+        </a-form-item>
+
+        <a-form-item
+          v-if="requiresReceiver"
+          :label="t('workflow.myTask.receiver')"
+          name="receiverIds"
+        >
+          <ReceiverSelector v-model="processReceiverModel" />
         </a-form-item>
 
         <a-form-item :label="t('workflow.myTask.comment')" name="comment">
@@ -193,13 +185,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message, type TableProps } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
-CheckOutlined,
-  CloseOutlined,
   EyeOutlined,
+  FormOutlined,
 } from '@ant-design/icons-vue'
 import {
   addSign,
@@ -207,6 +198,7 @@ import {
   batchApprove,
   batchRemind,
   batchTransfer,
+  delegate,
   getExecutionDetail,
   listApprovalActionLogs,
   listApprovalInstances,
@@ -215,13 +207,13 @@ import {
   transfer,
   type WfApprovalActionLogDTO,
   type WfApprovalInstanceDTO,
-  type WfExecutionAddSignParam,
   type WfExecutionApproveParam,
   type WfExecutionBatchApproveParam,
   type WfExecutionBatchTransferParam,
+  type WfExecutionDelegateParam,
   type WfExecutionDTO,
   type WfExecutionRemindParam,
-  type WfExecutionTransferParam,
+  type WorkflowId,
 } from '@/api/workflow/execution'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import DictTag from '@/components/common/DictTag.vue'
@@ -229,14 +221,22 @@ import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
 import WorkflowFormPreview from './WorkflowFormPreview.vue'
+import {
+  idsEqual,
+  resolvePendingActions,
+  resolveReceiverId,
+  type PendingAction,
+} from './pendingActionModel.mjs'
 import dayjs from 'dayjs'
 
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
 const { dictItems: rejectTypeOptions } = useDict('wf_reject_type')
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 const tableRef = ref()
 const approveFormRef = ref()
@@ -250,12 +250,10 @@ const currentInstances = ref<WfApprovalInstanceDTO[]>([])
 const currentActionLogs = ref<WfApprovalActionLogDTO[]>([])
 const approveDialogVisible = ref(false)
 const detailDrawerVisible = ref(false)
-const approveAction = ref<'approve' | 'reject'>('approve')
+const approveAction = ref<PendingAction>('approve')
 const actionDialogVisible = ref(false)
-const actionMode = ref<'transfer' | 'addSign' | 'batchTransfer'>('transfer')
-const selectedExecutionIds = ref<number[]>([])
-const actionRecord = ref<WfExecutionDTO | null>(null)
-const actionInstance = ref<WfApprovalInstanceDTO | null>(null)
+const selectedExecutionIds = ref<WorkflowId[]>([])
+const availableActions = ref<PendingAction[]>([])
 
 const approveFormData = reactive<WfExecutionApproveParam>({
   executionId: 0,
@@ -265,7 +263,7 @@ const approveFormData = reactive<WfExecutionApproveParam>({
 })
 
 const actionFormData = reactive<{
-  executionIds: number[]
+  executionIds: WorkflowId[]
   comment: string
 }>({
   executionIds: [],
@@ -280,9 +278,43 @@ const actionReceiverModel = ref<{
   receiverIds: [],
 })
 
+const processReceiverModel = ref<{
+  receiverType?: string
+  receiverIds: string[]
+}>({
+  receiverType: 'USER',
+  receiverIds: [],
+})
+
+const requiresReceiver = computed(() => ['addSign', 'transfer', 'delegate'].includes(approveAction.value))
+const processSubmitText = computed(() => getActionText(approveAction.value))
+
+watch(approveAction, (action) => {
+  approveFormData.approveStatus = action === 'reject' ? 2 : 1
+  if (action !== 'reject') {
+    approveFormData.rejectType = undefined
+  }
+  if (!['addSign', 'transfer', 'delegate'].includes(action)) {
+    processReceiverModel.value = { receiverType: 'USER', receiverIds: [] }
+  }
+  approveFormRef.value?.clearValidate?.(['rejectType', 'receiverIds'])
+})
+
 const approveRules = computed(() => ({
   comment: [{ required: true, message: t('workflow.myTask.commentPlaceholder'), trigger: 'blur' }],
   rejectType: [{ required: true, message: t('workflow.myTask.rejectTypePlaceholder'), trigger: 'change' }],
+  receiverIds: [{
+    validator: async () => {
+      if (!requiresReceiver.value) return
+      if (processReceiverModel.value.receiverType !== 'USER') {
+        throw new Error(t('workflow.myTask.selectUserReceiver'))
+      }
+      if (!processReceiverModel.value.receiverIds.length) {
+        throw new Error(t('workflow.myTask.selectReceiver'))
+      }
+    },
+    trigger: 'change',
+  }],
 }))
 
 const actionRules = computed(() => ({
@@ -318,25 +350,12 @@ const rejectTypeSelectOptions = computed(() =>
 const rowSelection = computed<TableProps['rowSelection']>(() => ({
   selectedRowKeys: selectedExecutionIds.value,
   onChange: (keys: (string | number)[]) => {
-    selectedExecutionIds.value = keys.map((key) => Number(key))
+    selectedExecutionIds.value = [...keys]
   },
 }))
 
-const actionDialogTitle = computed(() => {
-  const titleMap: Record<'transfer' | 'addSign' | 'batchTransfer', string> = {
-    transfer: t('workflow.myTask.transferApproval'),
-    addSign: t('workflow.myTask.addSignApprover'),
-    batchTransfer: t('workflow.myTask.batchTransfer'),
-  }
-  return titleMap[actionMode.value]
-})
-
-const actionScopeText = computed(() => {
-  if (actionMode.value === 'batchTransfer') {
-    return t('workflow.myTask.selectedPendingCount', { count: selectedExecutionIds.value.length })
-  }
-  return actionRecord.value?.taskName || '-'
-})
+const actionDialogTitle = computed(() => t('workflow.myTask.batchTransfer'))
+const actionScopeText = computed(() => t('workflow.myTask.selectedPendingCount', { count: selectedExecutionIds.value.length }))
 
 const handleRequest = async (payload: {
   page: { current: number; pageSize: number }
@@ -376,23 +395,20 @@ function formatDateTime(dateTime?: string): string {
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
 }
 
-function handleApprove(record: WfExecutionDTO) {
+function openProcessDialog(record: WfExecutionDTO) {
+  const actions = getAvailableActions(record)
+  if (!actions.length) {
+    message.warning(t('workflow.myTask.noAvailableAction'))
+    return
+  }
   currentRecord.value = record
-  approveAction.value = 'approve'
+  availableActions.value = actions
+  approveAction.value = actions[0]
   approveFormData.executionId = record.id
-  approveFormData.approveStatus = 1
+  approveFormData.approveStatus = actions[0] === 'reject' ? 2 : 1
   approveFormData.comment = ''
   approveFormData.rejectType = undefined
-  approveDialogVisible.value = true
-}
-
-function handleReject(record: WfExecutionDTO) {
-  currentRecord.value = record
-  approveAction.value = 'reject'
-  approveFormData.executionId = record.id
-  approveFormData.approveStatus = 2
-  approveFormData.comment = ''
-  approveFormData.rejectType = undefined
+  processReceiverModel.value = { receiverType: 'USER', receiverIds: [] }
   approveDialogVisible.value = true
 }
 
@@ -402,8 +418,8 @@ function handleViewDetail(record: WfExecutionDTO) {
   loadExecutionTrace(record.id)
 }
 
-function resolveCurrentUserId(): number | undefined {
-  return userStore.userInfo?.id ? Number(userStore.userInfo.id) : undefined
+function resolveCurrentUserId(): WorkflowId | undefined {
+  return userStore.userInfo?.id
 }
 
 function findCurrentUserInstance(record: WfExecutionDTO): WfApprovalInstanceDTO | undefined {
@@ -412,15 +428,22 @@ function findCurrentUserInstance(record: WfExecutionDTO): WfApprovalInstanceDTO 
     return undefined
   }
   return (record.currentApprovalInstances || []).find((item) =>
-    item.approverId === currentUserId &&
+    idsEqual(item.approverId, currentUserId) &&
     item.status === 0 &&
     item.activated !== false,
   )
 }
 
+function getAvailableActions(record: WfExecutionDTO): PendingAction[] {
+  const instance = findCurrentUserInstance(record)
+  return instance ? resolvePendingActions(instance, permissionStore.hasPermission) : []
+}
+
+function getActionText(action: PendingAction): string {
+  return t(`workflow.myTask.actionLabels.${action}`)
+}
+
 function resetActionDialog() {
-  actionRecord.value = null
-  actionInstance.value = null
   actionFormData.executionIds = []
   actionFormData.comment = ''
   actionReceiverModel.value = {
@@ -429,50 +452,11 @@ function resetActionDialog() {
   }
 }
 
-function openTransferDialog(record: WfExecutionDTO) {
-  const instance = findCurrentUserInstance(record)
-  if (!instance) {
-    message.warning(t('workflow.myTask.transferInstanceMissing'))
-    return
-  }
-  actionMode.value = 'transfer'
-  actionRecord.value = record
-  actionInstance.value = instance
-  actionFormData.executionIds = [record.id]
-  actionFormData.comment = ''
-  actionReceiverModel.value = {
-    receiverType: 'USER',
-    receiverIds: [],
-  }
-  actionDialogVisible.value = true
-}
-
-function openAddSignDialog(record: WfExecutionDTO) {
-  const instance = findCurrentUserInstance(record)
-  if (!instance) {
-    message.warning(t('workflow.myTask.addSignInstanceMissing'))
-    return
-  }
-  actionMode.value = 'addSign'
-  actionRecord.value = record
-  actionInstance.value = instance
-  actionFormData.executionIds = [record.id]
-  actionFormData.comment = ''
-  actionReceiverModel.value = {
-    receiverType: 'USER',
-    receiverIds: [],
-  }
-  actionDialogVisible.value = true
-}
-
 function openBatchTransferDialog() {
   if (!selectedExecutionIds.value.length) {
     message.warning(t('workflow.myTask.selectPendingFirst'))
     return
   }
-  actionMode.value = 'batchTransfer'
-  actionRecord.value = null
-  actionInstance.value = null
   actionFormData.executionIds = [...selectedExecutionIds.value]
   actionFormData.comment = ''
   actionReceiverModel.value = {
@@ -482,7 +466,7 @@ function openBatchTransferDialog() {
   actionDialogVisible.value = true
 }
 
-async function loadExecutionTrace(executionId: number) {
+async function loadExecutionTrace(executionId: WorkflowId) {
   try {
     const [detail, instances, logs] = await Promise.all([
       getExecutionDetail({ executionId }),
@@ -502,10 +486,13 @@ async function handleApproveSubmit() {
     await approveFormRef.value?.validate()
     approving.value = true
 
+    const instance = currentRecord.value ? findCurrentUserInstance(currentRecord.value) : undefined
+
     const params: WfExecutionApproveParam = {
       executionId: approveFormData.executionId,
-      approveStatus: approveFormData.approveStatus,
+      approveStatus: approveAction.value === 'reject' ? 2 : 1,
       comment: approveFormData.comment,
+      approvalInstanceId: instance?.id,
     }
 
     if (approveAction.value === 'reject') {
@@ -514,8 +501,27 @@ async function handleApproveSubmit() {
 
     if (approveAction.value === 'approve') {
       await approve(params)
-    } else {
+    } else if (approveAction.value === 'reject') {
       await reject(params)
+    } else {
+      if (!currentRecord.value || !instance) {
+        message.warning(t('workflow.myTask.processInstanceMissing'))
+        return
+      }
+      const targetApproverId = resolveReceiverId(processReceiverModel.value.receiverIds)
+      if (!targetApproverId) {
+        message.warning(t('workflow.myTask.selectReceiver'))
+        return
+      }
+      const actionParams: WfExecutionDelegateParam = {
+        executionId: currentRecord.value.id,
+        approvalInstanceId: instance.id,
+        targetApproverId,
+        comment: approveFormData.comment,
+      }
+      if (approveAction.value === 'addSign') await addSign(actionParams)
+      if (approveAction.value === 'transfer') await transfer(actionParams)
+      if (approveAction.value === 'delegate') await delegate(actionParams)
     }
 
     approveDialogVisible.value = false
@@ -523,6 +529,8 @@ async function handleApproveSubmit() {
     currentRecord.value = null
     currentInstances.value = []
     currentActionLogs.value = []
+    availableActions.value = []
+    processReceiverModel.value = { receiverType: 'USER', receiverIds: [] }
     clearSelection()
     await tableRef.value?.refresh?.()
   } catch (error: any) {
@@ -530,6 +538,7 @@ async function handleApproveSubmit() {
       return
     }
     message.error(error.message || t('workflow.myTask.approveActionFailed'))
+    await tableRef.value?.refresh?.()
   } finally {
     approving.value = false
   }
@@ -538,7 +547,7 @@ async function handleApproveSubmit() {
 async function handleActionSubmit() {
   try {
     await actionFormRef.value?.validate()
-    const targetApproverId = Number(actionReceiverModel.value.receiverIds[0])
+    const targetApproverId = resolveReceiverId(actionReceiverModel.value.receiverIds)
     if (!targetApproverId) {
       message.warning(t('workflow.myTask.selectReceiver'))
       return
@@ -546,38 +555,12 @@ async function handleActionSubmit() {
 
     actionSubmitting.value = true
 
-    if (actionMode.value === 'transfer') {
-      if (!actionRecord.value || !actionInstance.value) {
-        message.warning(t('workflow.myTask.transferDataIncomplete'))
-        return
-      }
-      const params: WfExecutionTransferParam = {
-        executionId: actionRecord.value.id,
-        approvalInstanceId: actionInstance.value.id,
-        targetApproverId,
-        comment: actionFormData.comment,
-      }
-      await transfer(params)
-    } else if (actionMode.value === 'addSign') {
-      if (!actionRecord.value || !actionInstance.value) {
-        message.warning(t('workflow.myTask.addSignDataIncomplete'))
-        return
-      }
-      const params: WfExecutionAddSignParam = {
-        executionId: actionRecord.value.id,
-        approvalInstanceId: actionInstance.value.id,
-        targetApproverId,
-        comment: actionFormData.comment,
-      }
-      await addSign(params)
-    } else {
-      const params: WfExecutionBatchTransferParam = {
-        executionIds: [...actionFormData.executionIds],
-        targetApproverId,
-        comment: actionFormData.comment,
-      }
-      await batchTransfer(params)
+    const params: WfExecutionBatchTransferParam = {
+      executionIds: [...actionFormData.executionIds],
+      targetApproverId,
+      comment: actionFormData.comment,
     }
+    await batchTransfer(params)
 
     message.success(t('workflow.myTask.actionSuccess'))
     actionDialogVisible.value = false
@@ -597,6 +580,8 @@ async function handleActionSubmit() {
 function handleApproveCancel() {
   approveDialogVisible.value = false
   approveFormRef.value?.resetFields()
+  availableActions.value = []
+  processReceiverModel.value = { receiverType: 'USER', receiverIds: [] }
 }
 
 function handleActionCancel() {

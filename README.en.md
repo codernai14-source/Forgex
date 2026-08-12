@@ -7,11 +7,11 @@
 
 
 > Full-stack enterprise scaffold and business platform foundation for production manufacturing
-> Version: **V0.8.0** (Production Ready)
+> Version: **V0.8.5**
 
 Forgex is an enterprise-grade scaffold for manufacturing digitalization projects such as MES, WMS, QMS, equipment integration, workflow collaboration, reporting, and private deployment. It is not just a generic admin template for login, menus, and CRUD pages. Forgex packages the repetitive production concerns of enterprise systems into a reusable platform foundation: identity, tenants, permissions, dynamic tables, dictionaries, workflow, messaging, reports, import/export, file storage, integration, packaging, deployment, and upgrade support.
 
-> **V0.8.0** is production-ready: factory modeling, material management, work calendars, and full-stack platform capabilities are battle-tested and ready for real-world manufacturing operations.
+> **V0.8.5** builds on the V0.8.0 production baseline with modular Common Maven artifacts, workflow/org/login enhancements, and synced formal docs for secondary development.
 
 ## Table of Contents
 

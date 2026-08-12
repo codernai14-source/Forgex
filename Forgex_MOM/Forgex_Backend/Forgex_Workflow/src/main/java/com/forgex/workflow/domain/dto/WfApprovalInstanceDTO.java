@@ -68,6 +68,21 @@ public class WfApprovalInstanceDTO {
     private Boolean allowRecall;
 
     /**
+     * 来源规则是否允许加签。
+     */
+    private Boolean allowAddSign;
+
+    /**
+     * 来源规则是否允许转交。
+     */
+    private Boolean allowTransfer;
+
+    /**
+     * 来源规则是否允许委托。
+     */
+    private Boolean allowDelegate;
+
+    /**
      * 实例状态。
      */
     private Integer status;

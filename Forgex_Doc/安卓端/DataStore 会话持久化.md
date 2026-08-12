@@ -1,7 +1,7 @@
-# DataStore 会话持久化
+﻿# DataStore 会话持久化
 
 > 分类：安卓端 / 专题
-> 版本：V0.8.0
+> 版本：V0.8.5
 > 关联模块：`core/datastore`
 
 本文说明 Forgex Android 端如何使用 Preferences DataStore 持久化会话信息（Token、租户、用户基本信息），包括存储结构、加密策略与生命周期管理。
