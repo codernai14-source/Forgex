@@ -105,7 +105,7 @@ public interface IWfEngineService {
      * </p>
      *
      * @param executionId 执行记录 ID
-     * @param status 最终状态：2-审批完成，3-已撤销
+     * @param status 最终状态：2=审批完成，3=已驳回，4=已撤销
      * @throws I18nBusinessException 当执行记录不存在时抛出业务异常
      * @see WfTaskExecution
      */

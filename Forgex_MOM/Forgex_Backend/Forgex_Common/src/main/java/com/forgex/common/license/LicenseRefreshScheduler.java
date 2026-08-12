@@ -33,7 +33,7 @@ public class LicenseRefreshScheduler {
         try {
             licenseManager.refresh();
         } catch (Exception ex) {
-            log.warn("刷新授权缓存失败: {}", ex.getMessage());
+            log.error("刷新授权缓存失败: {}", ex.getMessage());
         }
     }
 }

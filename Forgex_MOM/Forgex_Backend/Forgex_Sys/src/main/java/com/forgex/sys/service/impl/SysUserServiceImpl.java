@@ -24,13 +24,7 @@ import com.forgex.common.config.ConfigService;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
-import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
-import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
-import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
-import com.forgex.common.enums.FxExcelImportMode;
 import com.forgex.common.enums.UserSourceEnum;
-import com.forgex.common.service.excel.ExcelConfigService;
-import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.sys.domain.dto.SysUserDTO;
@@ -51,17 +45,15 @@ import com.forgex.sys.mapper.SysUserProfileMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.ISysUserService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -93,11 +85,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 密码策略配置项编码。
      */
     private static final String KEY_SECURITY_PASSWORD_POLICY = "security.password.policy";
-
-    /**
-     * 用户导入模板对应的表格编码。
-     */
-    private static final String USER_IMPORT_TABLE_CODE = "sys_user";
 
     /**
      * 用户 Mapper。
@@ -138,16 +125,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 用户档案 Mapper。
      */
     private final SysUserProfileMapper userProfileMapper;
-
-    /**
-     * Excel 配置服务，用于读取用户导入配置。
-     */
-    private final ExcelConfigService excelConfigService;
-
-    /**
-     * Excel 文件服务，用于解析用户导入文件。
-     */
-    private final ExcelFileService excelFileService;
 
     /**
      * 分页查询用户 DTO。
@@ -509,92 +486,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 导入用户数据。
-     * <p>
-     * 根据用户导入配置解析 Excel，逐行按账号新增或更新用户。
-     * </p>
-     *
-     * @param tenantId 租户 ID
-     * @param file     导入文件
-     * @return 导入结果
-     * @throws Exception 文件读取或解析异常
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public UserThirdPartyPullResultDTO importUsers(Long tenantId, MultipartFile file) throws Exception {
-        UserThirdPartyPullResultDTO result = new UserThirdPartyPullResultDTO();
-        if (tenantId == null || file == null || file.isEmpty()) {
-            return result;
-        }
-
-        FxExcelImportConfigDTO importConfig = excelConfigService.getImportConfigByCode(USER_IMPORT_TABLE_CODE);
-        if (importConfig == null) {
-            return result;
-        }
-
-        // 使用公共导入配置解析 Excel，保持模板字段与解析字段一致。
-        List<UserImportRow> rows;
-        try (InputStream inputStream = file.getInputStream()) {
-            rows = excelFileService.parseImportFile(importConfig, inputStream, UserImportRow.class);
-        }
-        if (rows == null || rows.isEmpty()) {
-            return result;
-        }
-
-        result.setTotalCount(rows.size());
-        for (UserImportRow row : rows) {
-            if (row == null || !StringUtils.hasText(row.getAccount())) {
-                result.getFailedAccounts().add(row == null ? null : row.getAccount());
-                continue;
-            }
-            try {
-                upsertImportedUser(tenantId, row, result);
-            } catch (Exception ex) {
-                result.getFailedAccounts().add(row.getAccount());
-            }
-        }
-        return result;
-    }
-
-    /**
-     * 执行通用导入。
-     *
-     * @param param 请求参数
-     * @return 处理结果
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public FxExcelImportResultDTO executeCommonImport(FxExcelImportExecuteParam param) {
-        return handle(param);
-    }
-
-    /**
-     * 处理导入数据。
-     *
-     * @param param 请求参数
-     * @return 处理结果
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public FxExcelImportResultDTO handle(FxExcelImportExecuteParam param) {
-        FxExcelImportMode mode = FxExcelImportMode.parse(param == null ? null : param.getImportMode());
-        Long tenantId = resolveEffectiveTenantId(null);
-        List<UserImportRow> rows = toUserImportRows(param);
-        FxExcelImportResultDTO result = new FxExcelImportResultDTO();
-        result.setTotalCount(rows.size());
-        if (mode == FxExcelImportMode.COVER) {
-            coverImportedUsers(tenantId);
-        }
-        for (UserImportRow row : rows) {
-            try {
-                handleUserImportRow(tenantId, mode, row, result);
-            } catch (Exception ex) {
-                result.addError(row == null || row.getAccount() == null ? "UNKNOWN" : row.getAccount());
-            }
-        }
-        return result;
-    }
-
-    /**
      * 按用户 ID 查询有效用户 ID 列表。
      * <p>
      * 供消息模板、工作流等配置型场景把静态用户配置校验为当前租户内可用用户。
@@ -716,6 +607,50 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             .filter(id -> id != null && id > 0)
             .distinct()
             .collect(Collectors.toList());
+    }
+
+    /**
+     * 解析发起人的第 N 级直属上级用户 ID。
+     *
+     * @param tenantId 租户 ID
+     * @param initiatorUserId 发起人用户 ID
+     * @param level 上溯级数
+     * @return 上级用户 ID 列表
+     */
+    @Override
+    public List<Long> resolveSuperiorUserIds(Long tenantId, Long initiatorUserId, Integer level) {
+        if (tenantId == null || initiatorUserId == null) {
+            return Collections.emptyList();
+        }
+        int targetLevel = (level == null || level < 1) ? 1 : level;
+        Set<Long> visited = new HashSet<>();
+        visited.add(initiatorUserId);
+        Long currentUserId = initiatorUserId;
+        for (int i = 0; i < targetLevel; i++) {
+            SysUser current = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+                    .select(SysUser::getSuperiorUserId)
+                    .eq(SysUser::getId, currentUserId)
+                    .eq(SysUser::getTenantId, tenantId)
+                    .eq(SysUser::getDeleted, false));
+            if (current == null || current.getSuperiorUserId() == null) {
+                return Collections.emptyList();
+            }
+            Long superiorId = current.getSuperiorUserId();
+            if (!visited.add(superiorId)) {
+                return Collections.emptyList();
+            }
+            currentUserId = superiorId;
+        }
+        SysUser superior = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+                .select(SysUser::getId)
+                .eq(SysUser::getId, currentUserId)
+                .eq(SysUser::getTenantId, tenantId)
+                .eq(SysUser::getDeleted, false)
+                .eq(SysUser::getStatus, true));
+        if (superior == null || superior.getId() == null) {
+            return Collections.emptyList();
+        }
+        return List.of(superior.getId());
     }
 
     /**
@@ -1272,205 +1207,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 新增或更新导入用户。
-     *
-     * @param tenantId 租户 ID
-     * @param row      导入行数据
-     * @param result   导入结果统计
-     */
-    private void upsertImportedUser(Long tenantId, UserImportRow row, UserThirdPartyPullResultDTO result) {
-        SysUser existing = getByAccount(row.getAccount());
-        if (existing == null) {
-            SysUser user = new SysUser();
-            user.setAccount(row.getAccount());
-            user.setUsername(row.getUsername());
-            user.setPhone(row.getPhone());
-            user.setEmail(row.getEmail());
-            user.setEmployeeId(row.getEmployeeId());
-            user.setTenantId(tenantId);
-            user.setStatus(Boolean.TRUE);
-            user.setPassword(encryptPassword(resolveDefaultPassword()));
-            fillUserSourceIfAbsent(user, UserSourceEnum.SITE_IMPORTED);
-            userMapper.insert(user);
-            createUserTenantBinding(user.getId(), tenantId);
-            result.setCreatedCount(result.getCreatedCount() + 1);
-            return;
-        }
-
-        SysUser update = new SysUser();
-        update.setId(existing.getId());
-        update.setUsername(row.getUsername());
-        update.setPhone(row.getPhone());
-        update.setEmail(row.getEmail());
-        update.setEmployeeId(row.getEmployeeId());
-        if (existing.getUserSource() == null) {
-            update.setUserSource(UserSourceEnum.SITE_IMPORTED.getCode());
-        }
-        if (existing.getTenantId() == null) {
-            update.setTenantId(tenantId);
-        }
-        userMapper.updateById(update);
-        createUserTenantBinding(existing.getId(), tenantId);
-        result.setUpdatedCount(result.getUpdatedCount() + 1);
-    }
-
-    /**
-     * 按公共导入模式处理单行用户数据。
-     *
-     * @param tenantId 租户 ID
-     * @param mode     导入模式
-     * @param row      用户行
-     * @param result   结果统计
-     */
-    private void handleUserImportRow(Long tenantId, FxExcelImportMode mode, UserImportRow row, FxExcelImportResultDTO result) {
-        if (row == null || !StringUtils.hasText(row.getAccount())) {
-            result.addError("account");
-            return;
-        }
-        SysUser existing = getByAccount(row.getAccount());
-        if (existing == null) {
-            if (mode == FxExcelImportMode.UPDATE) {
-                result.increaseSkipped();
-                return;
-            }
-            createImportedUser(tenantId, row);
-            result.increaseCreated();
-            return;
-        }
-        if (mode == FxExcelImportMode.ADD) {
-            result.increaseSkipped();
-            return;
-        }
-        updateImportedUser(tenantId, existing, row);
-        result.increaseUpdated();
-    }
-
-    /**
-     * 新增导入用户。
-     *
-     * @param tenantId 租户 ID
-     * @param row      用户行
-     */
-    private void createImportedUser(Long tenantId, UserImportRow row) {
-        SysUser user = new SysUser();
-        user.setAccount(row.getAccount());
-        user.setUsername(row.getUsername());
-        user.setPhone(row.getPhone());
-        user.setEmail(row.getEmail());
-        user.setEmployeeId(row.getEmployeeId());
-        user.setTenantId(tenantId);
-        user.setStatus(Boolean.TRUE);
-        user.setPassword(encryptPassword(resolveDefaultPassword()));
-        fillUserSourceIfAbsent(user, UserSourceEnum.SITE_IMPORTED);
-        if (row.getUserSource() != null) {
-            user.setUserSource(row.getUserSource());
-        }
-        userMapper.insert(user);
-        createUserTenantBinding(user.getId(), tenantId);
-    }
-
-    /**
-     * 更新导入用户。
-     *
-     * @param tenantId 租户 ID
-     * @param existing 已存在用户
-     * @param row      用户行
-     */
-    private void updateImportedUser(Long tenantId, SysUser existing, UserImportRow row) {
-        SysUser update = new SysUser();
-        update.setId(existing.getId());
-        update.setUsername(row.getUsername());
-        update.setPhone(row.getPhone());
-        update.setEmail(row.getEmail());
-        update.setEmployeeId(row.getEmployeeId());
-        if (row.getUserSource() != null) {
-            update.setUserSource(row.getUserSource());
-        } else if (existing.getUserSource() == null) {
-            update.setUserSource(UserSourceEnum.SITE_IMPORTED.getCode());
-        }
-        if (existing.getTenantId() == null) {
-            update.setTenantId(tenantId);
-        }
-        userMapper.updateById(update);
-        createUserTenantBinding(existing.getId(), tenantId);
-    }
-
-    /**
-     * 覆盖导入前清理当前租户用户数据。
-     *
-     * @param tenantId 租户 ID
-     */
-    private void coverImportedUsers(Long tenantId) {
-        List<Long> userIds = listUserIdsByTenant(tenantId);
-        if (userIds.isEmpty()) {
-            return;
-        }
-        userProfileMapper.delete(new LambdaQueryWrapper<SysUserProfile>().in(SysUserProfile::getUserId, userIds));
-        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, userIds).eq(SysUserRole::getTenantId, tenantId));
-        userTenantMapper.delete(new LambdaQueryWrapper<SysUserTenant>().in(SysUserTenant::getUserId, userIds).eq(SysUserTenant::getTenantId, tenantId));
-        userMapper.delete(new LambdaQueryWrapper<SysUser>().in(SysUser::getId, userIds).eq(SysUser::getTenantId, tenantId));
-    }
-
-    /**
-     * 转换公共导入行数据。
-     *
-     * @param param 导入参数
-     * @return 用户导入行
-     */
-    private List<UserImportRow> toUserImportRows(FxExcelImportExecuteParam param) {
-        if (param == null || param.getImportData() == null) {
-            return Collections.emptyList();
-        }
-        List<Map<String, Object>> rows = param.getImportData().getOrDefault("main", Collections.emptyList());
-        return rows.stream().map(row -> {
-            UserImportRow item = new UserImportRow();
-            item.setAccount(toStringValue(row.get("account")));
-            item.setUsername(toStringValue(row.get("username")));
-            item.setPhone(toStringValue(row.get("phone")));
-            item.setEmail(toStringValue(row.get("email")));
-            item.setEmployeeId(toLongValue(row.get("employeeId")));
-            item.setUserSource(toIntegerValue(row.get("userSource")));
-            return item;
-        }).collect(Collectors.toList());
-    }
-
-    private String toStringValue(Object value) {
-        if (value == null) {
-            return null;
-        }
-        String text = String.valueOf(value).trim();
-        return StringUtils.hasText(text) ? text : null;
-    }
-
-    private Long toLongValue(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        String text = toStringValue(value);
-        if (!StringUtils.hasText(text)) {
-            return null;
-        }
-        return Long.valueOf(text);
-    }
-
-    private Integer toIntegerValue(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        String text = toStringValue(value);
-        if (!StringUtils.hasText(text)) {
-            return null;
-        }
-        return Integer.valueOf(text);
-    }
-
-    /**
      * 根据账号查询用户。
      *
      * @param account 账号
@@ -1539,40 +1275,4 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return dto;
     }
 
-    /**
-     * 用户导入行模型。
-     */
-    @Data
-    private static class UserImportRow {
-
-        /**
-         * 账号。
-         */
-        private String account;
-
-        /**
-         * 用户名。
-         */
-        private String username;
-
-        /**
-         * 手机号。
-         */
-        private String phone;
-
-        /**
-         * 邮箱。
-         */
-        private String email;
-
-        /**
-         * 员工 ID。
-         */
-        private Long employeeId;
-
-        /**
-         * 用户来源。
-         */
-        private Integer userSource;
-    }
 }

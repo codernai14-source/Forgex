@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NotLoginException.class)
     public R<Object> handleNotLogin(NotLoginException e) {
-        log.warn("未登录或登录过期: {}", e.getMessage());
+        log.error("未登录或登录过期: {}", e.getMessage());
 
         // 仅在"token 超时/过期"场景尝试回写 logout_time/logout_reason（依赖模块实现）
         try {
@@ -110,7 +110,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NotRoleException.class)
     public R<Object> handleNotRole(NotRoleException e) {
-        log.warn("无权限: {}", e.getMessage());
+        log.error("无权限: {}", e.getMessage());
         return R.fail(StatusCode.UNAUTHORIZED, CommonPrompt.NO_PERMISSION);
     }
 
@@ -138,7 +138,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public R<Object> handleBusiness(BusinessException e) {
-        log.warn("业务异常: {}", e.getMessage());
+        log.error("业务异常: {}", e.getMessage());
         Integer code = e.getCode();
         if (code == null) {
             code = StatusCode.BUSINESS_ERROR;
@@ -167,7 +167,7 @@ public class GlobalExceptionHandler {
         } else if (e instanceof HttpMessageNotReadableException hm) {
             msg = LegacyMessageTranslator.translate(hm.getMessage());
         }
-        log.warn("参数错误: {}", msg);
+        log.error("参数错误: {}", msg);
         return R.fail(StatusCode.BUSINESS_ERROR, CommonPrompt.BAD_REQUEST, msg);
     }
 

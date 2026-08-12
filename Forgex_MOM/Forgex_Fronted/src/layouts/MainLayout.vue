@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-config-provider :theme="antdTheme" :locale="antdLocale">
     <a-layout 
       ref="layoutRootRef"
@@ -610,7 +610,7 @@ import { normalizeMediaUrl } from '../utils/media'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
-import { use权限Store } from '../stores/permission'
+import { usePermissionStore } from '../stores/permission'
 import { resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
@@ -622,7 +622,7 @@ const isFallbackRoute = computed(() => route.path.startsWith('/workspace/fallbac
 const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
-const permissionStore = use权限Store()
+const permissionStore = usePermissionStore()
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -2085,7 +2085,7 @@ async function onTenantChange(tenantId: string) {
     sessionStorage.setItem('tenantId', nextTenantId)
 
     const routesRes = await getRoutes({ account: currentAccount.value, tenantId: nextTenantId })
-    permissionStore.set权限s(routesRes?.buttons || [])
+    permissionStore.setPermissions(routesRes?.buttons || [])
     permissionStore.setRoutes(routesRes?.routes || [])
     permissionStore.setModules(routesRes?.modules || [])
     await injectDynamicRoutes(routesRes)

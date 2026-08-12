@@ -88,7 +88,7 @@ public class DataAssemblyHandler {
         // 7. 数据格式化
         formatData(assembledData);
 
-        log.debug("数据组装完成，共 {} 个字段", assembledData.size());
+        log.info("数据组装完成，共 {} 个字段", assembledData.size());
         return assembledData;
     }
 
@@ -142,10 +142,10 @@ public class DataAssemblyHandler {
                 }
                 data.putIfAbsent("customerCode", card.getCustomerCode());
 
-                log.debug("补充工程卡信息成功: {}", card.getCardNo());
+                log.info("补充工程卡信息成功: {}", card.getCardNo());
             }
         } catch (Exception e) {
-            log.warn("查询工程卡信息失败，engineeringCardNo: {}", engineeringCardNo, e);
+            log.error("查询工程卡信息失败，engineeringCardNo: {}", engineeringCardNo, e);
         }
     }
 
@@ -169,10 +169,10 @@ public class DataAssemblyHandler {
                 data.putIfAbsent("specification", material.getSpecification());
                 data.putIfAbsent("unit", material.getUnit());
                 data.putIfAbsent("brand", material.getBrand());
-                log.debug("补充物料信息成功: {}", material.getMaterialName());
+                log.info("补充物料信息成功: {}", material.getMaterialName());
             }
         } catch (Exception e) {
-            log.warn("查询物料信息失败，materialId: {}", materialId, e);
+            log.error("查询物料信息失败，materialId: {}", materialId, e);
         }
     }
 
@@ -194,10 +194,10 @@ public class DataAssemblyHandler {
                 data.putIfAbsent("supplierName", supplier.getSupplierFullName());
                 data.putIfAbsent("supplierContact", supplier.getPrimaryContact());
                 data.putIfAbsent("supplierPhone", supplier.getContactPhone());
-                log.debug("补充供应商信息成功: {}", supplier.getSupplierFullName());
+                log.info("补充供应商信息成功: {}", supplier.getSupplierFullName());
             }
         } catch (Exception e) {
-            log.warn("查询供应商信息失败，supplierId: {}", supplierId, e);
+            log.error("查询供应商信息失败，supplierId: {}", supplierId, e);
         }
     }
 
@@ -219,10 +219,10 @@ public class DataAssemblyHandler {
                 data.putIfAbsent("customerName", customer.getCustomerName());
                 data.putIfAbsent("customerContact", customer.getContactPerson());
                 data.putIfAbsent("customerPhone", customer.getContactPhone());
-                log.debug("补充客户信息成功: {}", customer.getCustomerName());
+                log.info("补充客户信息成功: {}", customer.getCustomerName());
             }
         } catch (Exception e) {
-            log.warn("查询客户信息失败，customerId: {}", customerId, e);
+            log.error("查询客户信息失败，customerId: {}", customerId, e);
         }
     }
 
@@ -243,9 +243,9 @@ public class DataAssemblyHandler {
             String templateType = getStringValue(data, "templateType");
             String barcodeNo = generateBarcodeNo(templateType, data);
             data.put("barcodeNo", barcodeNo);
-            log.debug("自动生成条码号: {}", barcodeNo);
+            log.info("自动生成条码号: {}", barcodeNo);
         } catch (Exception e) {
-            log.warn("生成条码号失败", e);
+            log.error("生成条码号失败", e);
         }
     }
 
@@ -418,7 +418,7 @@ public class DataAssemblyHandler {
         }
 
         if (!missingFields.isEmpty()) {
-            log.warn("数据不完整，缺少字段: {}", missingFields);
+            log.error("数据不完整，缺少字段: {}", missingFields);
         }
 
         return missingFields;

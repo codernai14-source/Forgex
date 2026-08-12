@@ -19,6 +19,8 @@ export function getWorkflowTraceColor(actionType?: number): string {
     6: 'gold',
     7: 'cyan',
     8: 'default',
+    9: 'orange',
+    10: 'volcano',
   }
   return colorMap[actionType || 0] || 'gray'
 }
@@ -34,6 +36,8 @@ export function getWorkflowTraceText(actionType: number | undefined, t: (key: st
     6: t('workflow.myTask.historyStatus.timeoutApproved'),
     7: t('workflow.myTask.historyStatus.timeoutTransferred'),
     8: t('workflow.myTask.historyStatus.systemClosed'),
+    9: t('workflow.myTask.historyStatus.reminded'),
+    10: t('workflow.myTask.historyStatus.recalled'),
   }
   return textMap[actionType || 0] || t('workflow.myTask.unknownStatus')
 }
@@ -59,6 +63,8 @@ export function getWorkflowTraceIcon(actionType?: number): Component {
     6: ClockCircleOutlined,
     7: SwapOutlined,
     8: ClockCircleOutlined,
+    9: ClockCircleOutlined,
+    10: CloseCircleOutlined,
   }
   return iconMap[actionType || 0] || ClockCircleOutlined
 }

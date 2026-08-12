@@ -311,7 +311,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
             .filter(tableName -> {
                 boolean exists = apiCallLogTableService.tableExists(tableName);
                 if (!exists) {
-                    log.warn("Api call log month table does not exist, skip query: {}", tableName);
+                    log.error("Api call log month table does not exist, skip query: {}", tableName);
                 }
                 return exists;
             })
@@ -351,7 +351,7 @@ public class ApiCallLogServiceImpl extends ServiceImpl<ApiCallLogMapper, ApiCall
         try {
             return apiConfigService.getApiConfigById(entity.getApiConfigId()).getApiName();
         } catch (Exception ex) {
-            log.warn("Resolve api name failed, apiConfigId={}", entity.getApiConfigId(), ex);
+            log.error("Resolve api name failed, apiConfigId={}", entity.getApiConfigId(), ex);
             return null;
         }
     }

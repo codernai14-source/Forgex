@@ -85,7 +85,7 @@ public class WorkflowPermKeyServiceImpl implements PermKeyService {
             if (result != null && result.getCode() != null && result.getCode() == StatusCode.SUCCESS && result.getData() != null) {
                 return result.getData();
             }
-            log.warn("获取权限键失败：userId={}, tenantId={}, msg={}", userId, tenantId,
+            log.error("获取权限键失败：userId={}, tenantId={}, msg={}", userId, tenantId,
                     result != null ? result.getMessage() : "null response");
             return Collections.emptySet();
         } catch (Exception e) {

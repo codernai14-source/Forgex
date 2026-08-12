@@ -124,6 +124,83 @@ public class OperationLogAspect {
         }
     }
 
+    private void record(ProceedingJoinPoint pjp, OperationLog op, Object result, Throwable error, long cost) {
+        // ??OperationLogRecorder
+        OperationLogRecorder recorder = recorderProvider == null ? null : recorderProvider.getIfAvailable();
+
+        // ??recorder???????
+        if (recorder == null || op == null) {
+            return;
+        }
+
+        // ??OperationLogRecord??
+        OperationLogRecord r = new OperationLogRecord();
+
+        // ????ID???ID
+        r.setTenantId(TenantContext.get());
+        r.setUserId(UserContext.get());
+
+        // ??????????????
+        r.setModule(op.module());
+        r.setMenuPath(op.menuPath());
+        r.setOperationType(op.operationType() == null ? null : op.operationType().name());
+
+        // ???????????
+        r.setOperationTime(LocalDateTime.now());
+        r.setCostTime(cost);
+
+        // ????HTTP??
+        HttpServletRequest request = currentRequest();
+        if (request != null) {
+            // ???????URL?IP?User-Agent
+            r.setRequestMethod(request.getMethod());
+            r.setRequestUrl(request.getRequestURI());
+            r.setIp(resolveIp(request));
+            r.setUserAgent(request.getHeader("User-Agent"));
+
+            // ????????
+            String account = request.getHeader("X-Account");
+            if (StringUtils.hasText(account)) {
+                r.setUsername(account);
+            }
+        }
+
+        // ???????
+        r.setRequestParams(safeWriteArgs(pjp == null ? null : pjp.getArgs()));
+
+        // ???????
+        if (result instanceof R<?> rr) {
+            // ?????R?????data??
+            r.setResponseStatus(rr.getCode());
+            r.setResponseResult(safeWrite(rr.getData()));
+        } else if (result != null) {
+            // ??????R????????
+            r.setResponseResult(safeWrite(result));
+        }
+
+        // ?????????????
+        if (error != null) {
+            // ???????
+            r.setResponseStatus(r.getResponseStatus() == null ? 500 : r.getResponseStatus());
+
+            // ??????
+            r.setErrorStack(stack(error));
+        }
+
+        // ??????
+        if (StringUtils.hasText(op.detailTemplateCode())) {
+            r.setDetailTemplateCode(op.detailTemplateCode());
+        }
+
+        // ??????
+        if (op.detailFields() != null && op.detailFields().length > 0) {
+            r.setDetailFields(resolveDetailFields(op.detailFields(), result, pjp == null ? null : pjp.getArgs()));
+        }
+
+        // ??recorder????
+        recorder.record(r);
+    }
+
     /**
      * 记录操作日志
      * <p>
@@ -152,102 +229,7 @@ public class OperationLogAspect {
      * @param error 方法执行异常
      * @param cost 执行时间（毫秒）
      */
-    private void record(ProceedingJoinPoint pjp, OperationLog op, Object result, Throwable error, long cost) {
-        // 获取OperationLogRecorder
-        OperationLogRecorder recorder = recorderProvider == null ? null : recorderProvider.getIfAvailable();
-        
-        // 如果recorder为空，直接返回
-        if (recorder == null || op == null) {
-            return;
-        }
 
-        // 构建OperationLogRecord对象
-        OperationLogRecord r = new OperationLogRecord();
-        
-        // 设置租户ID和用户ID
-        r.setTenantId(TenantContext.get());
-        r.setUserId(UserContext.get());
-        
-        // 设置模块、菜单路径、操作类型
-        r.setModule(op.module());
-        r.setMenuPath(op.menuPath());
-        r.setOperationType(op.operationType() == null ? null : op.operationType().name());
-        
-        // 设置操作时间和执行时间
-        r.setOperationTime(LocalDateTime.now());
-        r.setCostTime(cost);
-
-        // 获取当前HTTP请求
-        HttpServletRequest request = currentRequest();
-        if (request != null) {
-            // 设置请求方法、URL、IP、User-Agent
-            r.setRequestMethod(request.getMethod());
-            r.setRequestUrl(request.getRequestURI());
-            r.setIp(resolveIp(request));
-            r.setUserAgent(request.getHeader("User-Agent"));
-            
-            // 从请求头获取账号
-            String account = request.getHeader("X-Account");
-            if (StringUtils.hasText(account)) {
-                r.setUsername(account);
-            }
-        }
-
-        // 序列化请求参数
-        r.setRequestParams(safeWriteArgs(pjp == null ? null : pjp.getArgs()));
-
-        // 序列化响应结果
-        if (result instanceof R<?> rr) {
-            // 如果结果是R类型，提取data字段
-            r.setResponseStatus(rr.getCode());
-            r.setResponseResult(safeWrite(rr.getData()));
-        } else if (result != null) {
-            // 如果结果不是R类型，直接序列化
-            r.setResponseResult(safeWrite(result));
-        }
-
-        // 如果发生异常，设置异常堆栈
-        if (error != null) {
-            // 设置响应状态码
-            r.setResponseStatus(r.getResponseStatus() == null ? 500 : r.getResponseStatus());
-            
-            // 设置异常堆栈
-            r.setErrorStack(stack(error));
-        }
-
-        // 设置详情模板
-        if (StringUtils.hasText(op.detailTemplateCode())) {
-            r.setDetailTemplateCode(op.detailTemplateCode());
-        }
-        
-        // 设置详情字段
-        if (op.detailFields() != null && op.detailFields().length > 0) {
-            r.setDetailFields(resolveDetailFields(op.detailFields(), result, pjp == null ? null : pjp.getArgs()));
-        }
-
-        // 调用recorder记录日志
-        recorder.record(r);
-    }
-
-    /**
-     * 解析详情字段
-     * <p>
-     * 从方法结果或参数中提取指定字段的值。
-     * </p>
-     * <p><strong>执行流程：</strong></p>
-     * <ol>
-     *   <li>解包结果对象（如果是R类型，提取data字段）</li>
-     *   <li>遍历字段列表</li>
-     *   <li>尝试从结果对象中读取字段值</li>
-     *   <li>如果结果对象中没有，尝试从参数中读取</li>
-     *   <li>将字段名和值添加到Map中</li>
-     * </ol>
-     * 
-     * @param fields 字段名数组
-     * @param result 方法执行结果
-     * @param args 方法参数数组
-     * @return 字段名到字段值的映射
-     */
     private Map<String, Object> resolveDetailFields(String[] fields, Object result, Object[] args) {
         // 解包结果对象
         Object root = unwrapResult(result);

@@ -2,6 +2,8 @@ package com.forgex.common.service.excel;
 
 import com.forgex.common.domain.dto.excel.FxExcelExportConfigDTO;
 import com.forgex.common.domain.dto.excel.FxExcelImportConfigDTO;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 
 import java.io.InputStream;
 import java.util.List;
@@ -53,6 +55,12 @@ public interface ExcelFileService {
      * @return 生成的导出文件字节数组；当配置为空或生成失败时返回长度为 0 的数组
      */
     byte[] buildExportFile(FxExcelExportConfigDTO config, List<Map<String, Object>> rows);
+
+    ResponseEntity<InputStreamResource> buildExportResponse(String tableCode, List<?> rows);
+
+    ResponseEntity<InputStreamResource> buildExportResponse(String tableCode, List<?> rows, String filename);
+
+    ResponseEntity<InputStreamResource> buildExportResponse(FxExcelExportConfigDTO config, List<?> rows, String filename);
 
     /**
      * 解析导入 Excel 文件为实体集合。

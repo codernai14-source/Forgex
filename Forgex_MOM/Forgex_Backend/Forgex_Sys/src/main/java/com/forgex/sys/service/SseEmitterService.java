@@ -92,7 +92,7 @@ public class SseEmitterService {
         });
         
         emitter.onTimeout(() -> {
-            log.warn("SSE连接超时: connectionId={}, tenantId={}, userId={}", connectionId, tenantId, userId);
+            log.error("SSE连接超时: connectionId={}, tenantId={}, userId={}", connectionId, tenantId, userId);
             removeConnection(key, connection);
         });
         
@@ -141,7 +141,7 @@ public class SseEmitterService {
      */
     public void sendToUser(Long tenantId, Long userId, String event, Object data) {
         if (userId == null) {
-            log.warn("用户ID为空，无法发送消息");
+            log.error("用户ID为空，无法发送消息");
             return;
         }
 
@@ -188,14 +188,14 @@ public class SseEmitterService {
                 connection.lastHeartbeat = LocalDateTime.now();
                 successCount++;
             } catch (Exception e) {
-                log.warn("发送消息失败: connectionId={}, error={}", connection.connectionId, e.getMessage());
+                log.error("发送消息失败: connectionId={}, error={}", connection.connectionId, e.getMessage());
                 removeConnection(key, connection);
                 failCount++;
             }
         }
 
         if (successCount > 0) {
-            log.debug("消息发送完成: key={}, event={}, 成功={}, 失败={}", key, event, successCount, failCount);
+            log.info("消息发送完成: key={}, event={}, 成功={}, 失败={}", key, event, successCount, failCount);
         }
     }
 
@@ -219,7 +219,7 @@ public class SseEmitterService {
         try {
             connection.emitter.complete();
         } catch (Exception e) {
-            log.debug("完成Emitter失败: connectionId={}", connection.connectionId);
+            log.info("完成Emitter失败: connectionId={}", connection.connectionId);
         }
     }
 
@@ -249,7 +249,7 @@ public class SseEmitterService {
                     connection.lastHeartbeat = LocalDateTime.now();
                     heartbeatSuccess++;
                 } catch (Exception e) {
-                    log.warn("心跳发送失败: connectionId={}, error={}", connection.connectionId, e.getMessage());
+                    log.error("心跳发送失败: connectionId={}, error={}", connection.connectionId, e.getMessage());
                     removeConnection(key, connection);
                     heartbeatFail++;
                 }
@@ -257,7 +257,7 @@ public class SseEmitterService {
         }
 
         if (totalConnections > 0) {
-            log.debug("心跳发送完成: 总连接数={}, 成功={}, 失败={}", totalConnections, heartbeatSuccess, heartbeatFail);
+            log.info("心跳发送完成: 总连接数={}, 成功={}, 失败={}", totalConnections, heartbeatSuccess, heartbeatFail);
         }
     }
 
@@ -322,7 +322,7 @@ public class SseEmitterService {
                 try {
                     connection.emitter.complete();
                 } catch (Exception e) {
-                    log.debug("关闭连接失败: connectionId={}", connection.connectionId);
+                    log.info("关闭连接失败: connectionId={}", connection.connectionId);
                 }
             }
             log.info("断开用户连接: tenantId={}, userId={}, 连接数={}", tenantId, userId, list.size());

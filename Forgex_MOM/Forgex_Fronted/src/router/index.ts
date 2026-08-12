@@ -343,6 +343,8 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalMyPending: () => import('../views/workflow/myTask/pending.vue'),
   ApprovalMyProcessed: () => import('../views/workflow/myTask/processed.vue'),
   ApprovalMyInitiated: () => import('../views/workflow/myTask/initiated.vue'),
+  ApprovalMyCc: () => import('../views/workflow/myTask/myCc.vue'),
+  ApprovalDelegateSettings: () => import('../views/workflow/myTask/delegateSettings.vue'),
   ApprovalCompensationCenter: () => import('../views/workflow/governance/compensation/index.vue'),
 }
 

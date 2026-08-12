@@ -55,6 +55,9 @@ public class SysOperationLog extends BaseEntity {
     @TableField("operation_type")
     private String operationType;
 
+    @TableField(exist = false)
+    private String operationTypeText;
+
     /**
      * 请求方法
      */

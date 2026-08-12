@@ -129,7 +129,7 @@ public class DictI18nResolver {
         // L1: 本地缓存查询（Caffeine）
         Map<String, String> result = dictLabelCache.getIfPresent(cacheKey);
         if (result != null) {
-            log.debug("字典本地缓存命中: {}", cacheKey);
+            log.info("字典本地缓存命中: {}", cacheKey);
             return result;
         }
 
@@ -140,11 +140,11 @@ public class DictI18nResolver {
                 result = objectMapper.readValue(raw, new TypeReference<Map<String, String>>() {});
                 // 写入本地缓存
                 dictLabelCache.put(cacheKey, result);
-                log.debug("字典Redis缓存命中: {}", cacheKey);
+                log.info("字典Redis缓存命中: {}", cacheKey);
                 return result;
             }
         } catch (Exception e) {
-            log.warn("Redis缓存查询失败: {}", e.getMessage());
+            log.error("Redis缓存查询失败: {}", e.getMessage());
         }
 
         // L3: 数据库查询
@@ -160,7 +160,7 @@ public class DictI18nResolver {
                 String json = objectMapper.writeValueAsString(result);
                 redis.opsForValue().set("dicti18n:" + cacheKey, json, 24, TimeUnit.HOURS);
             } catch (Exception e) {
-                log.warn("Redis缓存写入失败: {}", e.getMessage());
+                log.error("Redis缓存写入失败: {}", e.getMessage());
             }
         }
 
@@ -178,7 +178,7 @@ public class DictI18nResolver {
                         .forEach(languageCodes::add);
             }
         } catch (Exception ex) {
-            log.warn("加载启用语言列表失败，使用默认语言兜底", ex);
+            log.error("加载启用语言列表失败，使用默认语言兜底", ex);
         }
         languageCodes.add("zh-CN");
         languageCodes.add("en-US");
@@ -258,7 +258,7 @@ public class DictI18nResolver {
         // L1: 本地缓存查询
         Map<String, DictItem> result = dictItemCache.getIfPresent(cacheKey);
         if (result != null) {
-            log.debug("字典项本地缓存命中: {}", cacheKey);
+            log.info("字典项本地缓存命中: {}", cacheKey);
             return result;
         }
 
@@ -269,11 +269,11 @@ public class DictI18nResolver {
                 result = objectMapper.readValue(raw, new TypeReference<Map<String, DictItem>>() {});
                 // 写入本地缓存
                 dictItemCache.put(cacheKey, result);
-                log.debug("字典项Redis缓存命中: {}", cacheKey);
+                log.info("字典项Redis缓存命中: {}", cacheKey);
                 return result;
             }
         } catch (Exception e) {
-            log.warn("Redis缓存查询失败: {}", e.getMessage());
+            log.error("Redis缓存查询失败: {}", e.getMessage());
         }
 
         // L3: 数据库查询
@@ -289,7 +289,7 @@ public class DictI18nResolver {
                 String json = objectMapper.writeValueAsString(result);
                 redis.opsForValue().set("dictitem:" + cacheKey, json, 24, TimeUnit.HOURS);
             } catch (Exception e) {
-                log.warn("Redis缓存写入失败: {}", e.getMessage());
+                log.error("Redis缓存写入失败: {}", e.getMessage());
             }
         }
 
@@ -397,7 +397,7 @@ public class DictI18nResolver {
                 // 加载字典项
                 getChildItemMap(tenantId, nodePath);
             } catch (Exception e) {
-                log.warn("字典预热失败: nodePath={}, error={}", nodePath, e.getMessage());
+                log.error("字典预热失败: nodePath={}, error={}", nodePath, e.getMessage());
             }
         }
 

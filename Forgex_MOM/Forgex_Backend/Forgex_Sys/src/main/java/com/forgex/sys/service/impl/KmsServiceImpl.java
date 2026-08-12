@@ -454,7 +454,7 @@ public class KmsServiceImpl implements KmsService {
             logEntry.setOperateTime(LocalDateTime.now());
             kmsKeyLogMapper.insert(logEntry);
         } catch (Exception e) {
-            log.warn("KMS: 审计日志写入失败 action={}, alias={}", action, alias, e);
+            log.error("KMS: 审计日志写入失败 action={}, alias={}", action, alias, e);
         }
     }
 }

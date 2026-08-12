@@ -76,7 +76,7 @@ public class PlaceholderHandler {
         // 4. 处理基础占位符
         result = processBasicPlaceholders(result, data);
 
-        log.debug("占位符处理完成");
+        log.info("占位符处理完成");
         return result;
     }
 
@@ -303,7 +303,7 @@ public class PlaceholderHandler {
             }
             return value.toString();
         } catch (Exception e) {
-            log.warn("日期格式化失败: {}", value, e);
+            log.error("日期格式化失败: {}", value, e);
             return value.toString();
         }
     }
@@ -323,7 +323,7 @@ public class PlaceholderHandler {
             }
             return value.toString();
         } catch (Exception e) {
-            log.warn("数字格式化失败: {}", value, e);
+            log.error("数字格式化失败: {}", value, e);
             return value.toString();
         }
     }

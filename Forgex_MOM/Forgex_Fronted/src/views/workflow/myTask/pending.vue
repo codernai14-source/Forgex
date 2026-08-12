@@ -144,7 +144,7 @@
 
         <a-form-item :label="t('workflow.myTask.formContent')">
           <div class="form-content">
-            <pre>{{ formatFormContent(currentRecord?.formContent) }}</pre>
+            <WorkflowFormPreview :record="currentRecord" />
           </div>
         </a-form-item>
       </a-form>
@@ -230,6 +230,7 @@ import ReceiverSelector from '@/components/common/ReceiverSelector.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import { useUserStore } from '@/stores/user'
 import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
+import WorkflowFormPreview from './WorkflowFormPreview.vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n({ useScope: 'global' })
@@ -373,15 +374,6 @@ function getStatusText(status?: number): string {
 function formatDateTime(dateTime?: string): string {
   if (!dateTime) return '-'
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss')
-}
-
-function formatFormContent(formContent?: string): string {
-  if (!formContent) return '{}'
-  try {
-    return JSON.stringify(JSON.parse(formContent), null, 2)
-  } catch {
-    return formContent
-  }
 }
 
 function handleApprove(record: WfExecutionDTO) {

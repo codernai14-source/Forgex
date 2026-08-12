@@ -244,13 +244,13 @@ public class ProcessServiceImpl extends ServiceImpl<BasicProcessMapper, BasicPro
         }
         // 字典值校验：仅做日志占位，实际校验逻辑由 DictService 统一调度
         if (StringUtils.hasText(param.getProcessType())) {
-            log.debug("validate processType={}", param.getProcessType());
+            log.info("validate processType={}", param.getProcessType());
         }
         if (StringUtils.hasText(param.getReportType())) {
-            log.debug("validate reportType={}", param.getReportType());
+            log.info("validate reportType={}", param.getReportType());
         }
         if (StringUtils.hasText(param.getQcTriggerPoint())) {
-            log.debug("validate qcTriggerPoint={}", param.getQcTriggerPoint());
+            log.info("validate qcTriggerPoint={}", param.getQcTriggerPoint());
         }
     }
 

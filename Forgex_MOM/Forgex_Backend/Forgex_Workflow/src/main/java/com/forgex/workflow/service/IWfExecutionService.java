@@ -27,6 +27,7 @@ import com.forgex.workflow.domain.param.WfExecutionBatchTransferParam;
 import com.forgex.workflow.domain.param.WfExecutionCompensateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
+import com.forgex.workflow.domain.param.WfExecutionRecallParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
 import com.forgex.workflow.domain.param.WfExecutionTransferParam;
 
@@ -105,6 +106,17 @@ public interface IWfExecutionService {
      * @see WfExecutionAddSignParam
      */
     Boolean addSign(WfExecutionAddSignParam param);
+
+    /**
+     * 审批人撤回。
+     * <p>
+     * 审批人撤回自己在当前未推进节点上的已提交审批意见，将对应审批实例回退为待办。
+     * </p>
+     *
+     * @param param 撤回参数，包含执行 ID、审批实例 ID、撤回说明
+     * @return 撤回结果，成功返回 true
+     */
+    Boolean recall(WfExecutionRecallParam param);
 
     /**
      * 批量审批。

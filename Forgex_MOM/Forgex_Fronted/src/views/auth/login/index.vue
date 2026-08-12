@@ -253,7 +253,7 @@ import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { encryptSensitiveText } from '@/utils/crypto'
 import { useUserStore } from '@/stores/user'
-import { use权限Store } from '@/stores/permission'
+import { usePermissionStore } from '@/stores/permission'
 import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
@@ -299,7 +299,7 @@ interface SliderTrackPayload {
 
 // 初始化登录和租户选择流程共用的状态仓库。
 const userStore = useUserStore()
-const permissionStore = use权限Store()
+const permissionStore = usePermissionStore()
 
 const { t: i18nT } = useI18n({ useScope: 'global' })
 
@@ -617,11 +617,11 @@ async function confirmTenant() {
       
       // 进入系统前先保存按钮级权限，避免页面初次渲染缺权限数据。
       if (routesRes && routesRes.buttons) {
-        permissionStore.set权限s(routesRes.buttons)
+        permissionStore.setPermissions(routesRes.buttons)
         console.log('[Login] 权限s stored to Pinia:', routesRes.buttons)
       } else {
         // 后端未返回权限时主动清空，避免沿用旧租户的残留权限。
-        permissionStore.set权限s([])
+        permissionStore.setPermissions([])
         console.log('[Login] No permissions found, stored empty array')
       }
       

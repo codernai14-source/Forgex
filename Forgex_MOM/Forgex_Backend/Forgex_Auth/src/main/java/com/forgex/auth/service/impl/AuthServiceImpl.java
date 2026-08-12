@@ -223,7 +223,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 校验账号和密码不能为空
         if (!StringUtils.hasText(account) || !StringUtils.hasText(password)) {
-            log.warn("Login failed: account or password is empty");
+            log.error("Login failed: account or password is empty");
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "account or password is empty");
             return R.fail(CommonPrompt.ACCOUNT_OR_PASSWORD_EMPTY);
@@ -239,7 +239,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             password = decryptTransportPassword(password);
         } catch (IllegalStateException ex) {
-            log.warn("Login failed: password transport decrypt failed, account={}", account);
+            log.error("Login failed: password transport decrypt failed, account={}", account);
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "password transport decrypt failed");
             return R.fail(AuthPromptEnum.PASSWORD_TRANSPORT_DECRYPT_FAILED);
         }
@@ -251,7 +251,7 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUser::getAccount, idKey));
         // 如果用户不存在
         if (user == null) {
-            log.warn("用户登录失败：用户不存在 account={}", idKey);
+            log.error("用户登录失败：用户不存在 account={}", idKey);
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "user not found");
             recordLoginFailureState(account, loginSecurityConfig);
@@ -267,7 +267,7 @@ public class AuthServiceImpl implements AuthService {
         // 验证密码
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
-            log.warn("用户登录失败：密码错误 account={}", account);
+            log.error("用户登录失败：密码错误 account={}", account);
             // 记录登录失败日志
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, "password incorrect");
             recordLoginFailureState(account, loginSecurityConfig);
@@ -280,7 +280,7 @@ public class AuthServiceImpl implements AuthService {
         CaptchaValidationResult captchaValidationResult = captchaStrategyFactory.getStrategy(mode).validate(param);
         if (!captchaValidationResult.isSuccess()) {
             String logMessage = captchaValidationResult.getLogMessage();
-            log.warn("验证码校验失败：{} account={}", logMessage, account);
+            log.error("验证码校验失败：{} account={}", logMessage, account);
             loginLogService.recordLoginFailure(account, 0L, clientIp, region, userAgent, logMessage);
             recordLoginFailureState(account, loginSecurityConfig);
             return R.fail(captchaValidationResult.getPrompt());
@@ -299,7 +299,7 @@ public class AuthServiceImpl implements AuthService {
         for (SysUserTenant b : binds) tenantIds.add(b.getTenantId());
         // 如果用户没有绑定任何租户
         if (tenantIds.isEmpty()) {
-            log.warn("用户登录成功，但未绑定任何租户 account={}", account);
+            log.error("用户登录成功，但未绑定任何租户 account={}", account);
             return R.ok(Collections.emptyList());
         }
         // 查询租户详细信息
@@ -760,7 +760,7 @@ public class AuthServiceImpl implements AuthService {
                 failCounter.delete();
             }
         } catch (Exception e) {
-            log.warn("记录登录失败状态失败：account={}", account, e);
+            log.error("记录登录失败状态失败：account={}", account, e);
         }
     }
 
@@ -781,7 +781,7 @@ public class AuthServiceImpl implements AuthService {
             redissonClient.getAtomicLong(LOGIN_FAIL_COUNT_KEY_PREFIX + accountKey).delete();
             redissonClient.getBucket(LOGIN_LOCK_KEY_PREFIX + accountKey).delete();
         } catch (Exception e) {
-            log.warn("清除登录失败状态失败：account={}", account, e);
+            log.error("清除登录失败状态失败：account={}", account, e);
         }
     }
 
@@ -819,7 +819,7 @@ public class AuthServiceImpl implements AuthService {
             }
             return Math.max(1L, (ttlMillis + 999L) / 1000L);
         } catch (Exception e) {
-            log.warn("读取 Redis 键 TTL 失败：key={}", key, e);
+            log.error("读取 Redis 键 TTL 失败：key={}", key, e);
             return null;
         }
     }
@@ -858,7 +858,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             writeLoginSession(StpUtil.getSession(), userId, tenantId, account);
         } catch (Exception e) {
-            log.warn("写入兼容登录会话失败：account={}, token={}", account, token, e);
+            log.error("写入兼容登录会话失败：account={}, token={}", account, token, e);
         }
     }
 
@@ -953,7 +953,7 @@ public class AuthServiceImpl implements AuthService {
             }
             redis.delete(legacyKey);
         } catch (Exception e) {
-            log.warn("缓存在线用户会话失败：account={}, tenantId={}, token={}", account, tenantId, token, e);
+            log.error("缓存在线用户会话失败：account={}, tenantId={}, token={}", account, tenantId, token, e);
         }
     }
 
@@ -1077,7 +1077,7 @@ public class AuthServiceImpl implements AuthService {
                 redis.delete(buildOnlineUserKey(tenantId, userId, tokenValue));
                 log.info("清除在线用户缓存：userId={}, tenantId={}, token={}", userId, tenantId, tokenValue);
             } catch (Exception e) {
-                log.warn("清除在线用户缓存失败：{}", e.getMessage());
+                log.error("清除在线用户缓存失败：{}", e.getMessage());
             }
         }
         if (tenantId != null && userId != null) {
@@ -1108,7 +1108,7 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
         } catch (Exception e) {
-            log.warn("清除在线用户缓存失败：{}", e.getMessage());
+            log.error("清除在线用户缓存失败：{}", e.getMessage());
         }
     }
 
@@ -1137,7 +1137,7 @@ public class AuthServiceImpl implements AuthService {
             try {
                 tokenValue = StpUtil.getTokenValue();
             } catch (Exception e) {
-                log.debug("获取 Token 失败：{}", e.getMessage());
+                log.info("获取 Token 失败：{}", e.getMessage());
             }
 
             // 从 Session 中获取用户信息
@@ -1165,7 +1165,7 @@ public class AuthServiceImpl implements AuthService {
                     }
                 }
             } catch (Exception e) {
-                log.debug("获取 Session 失败：{}", e.getMessage());
+                log.info("获取 Session 失败：{}", e.getMessage());
             }
 
             // 获取账号
@@ -1176,7 +1176,7 @@ public class AuthServiceImpl implements AuthService {
                 try {
                     loginLogService.recordLogoutByToken(tokenValue, com.forgex.common.security.LogoutReason.MANUAL);
                 } catch (Exception e) {
-                    log.warn("记录登出日志失败：{}", e.getMessage());
+                    log.error("记录登出日志失败：{}", e.getMessage());
                 }
             }
 
@@ -1187,7 +1187,7 @@ public class AuthServiceImpl implements AuthService {
             try {
                 StpUtil.logout();
             } catch (Exception e) {
-                log.debug("Sa-Token 登出失败：{}", e.getMessage());
+                log.info("Sa-Token 登出失败：{}", e.getMessage());
             }
 
             log.info("用户登出成功：account={}", account);
@@ -1221,7 +1221,7 @@ public class AuthServiceImpl implements AuthService {
                 return request.getRemoteAddr();
             }
         } catch (Exception e) {
-            log.warn("Get client IP failed", e);
+            log.error("Get client IP failed", e);
         }
         return "unknown";
     }
@@ -1247,7 +1247,7 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
         } catch (Exception e) {
-            log.warn("Get User-Agent failed", e);
+            log.error("Get User-Agent failed", e);
         }
         return "unknown";
     }

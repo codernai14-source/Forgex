@@ -149,7 +149,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
             dto.setQueryFields(mergeUserQueryFields(tableCode, baseConfig.getQueryFields(), userConfig.getQueryConfig()));
         }
 
-        log.debug("获取用户级别表格配置成功，tableCode: {}, userId: {}, tenantId: {}",
+        log.info("获取用户级别表格配置成功，tableCode: {}, userId: {}, tenantId: {}",
                 tableCode, userId, tenantId);
 
         return dto;
@@ -240,7 +240,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
 
         FxUserTableConfig config = userTableConfigMapper.selectOne(wrapper);
         if (config == null) {
-            log.warn("删除用户级别表格配置失败，配置不存在，tableCode: {}, userId: {}, tenantId: {}",
+            log.error("删除用户级别表格配置失败，配置不存在，tableCode: {}, userId: {}, tenantId: {}",
                     tableCode, userId, tenantId);
             return false;
         }
@@ -409,7 +409,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                 }
             }
         } catch (Exception e) {
-            log.warn("解析用户列配置失败，columnConfig: {}", columnConfigJson, e);
+            log.error("解析用户列配置失败，columnConfig: {}", columnConfigJson, e);
         }
         return userColumnsMap;
     }
@@ -426,7 +426,7 @@ public class FxUserTableConfigServiceImpl implements FxUserTableConfigService {
                 queryFields == null || queryFields.isEmpty() ? baseQueryFields : queryFields
             );
         } catch (Exception e) {
-            log.warn("解析用户查询配置失败，queryConfig: {}", queryConfigJson, e);
+            log.error("解析用户查询配置失败，queryConfig: {}", queryConfigJson, e);
             return normalizeBuiltinQueryFields(tableCode, baseQueryFields);
         }
     }

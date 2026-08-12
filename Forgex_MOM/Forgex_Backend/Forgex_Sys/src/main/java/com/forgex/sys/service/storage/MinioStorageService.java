@@ -205,7 +205,7 @@ public class MinioStorageService implements FileStorageService {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    log.warn("关闭输入流失败", e);
+                    log.error("关闭输入流失败", e);
                 }
             }
         }

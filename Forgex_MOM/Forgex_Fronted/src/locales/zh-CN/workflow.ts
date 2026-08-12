@@ -415,6 +415,7 @@ export default {
       delegated: '委托',
       timeoutApproved: '超时通过',
       timeoutTransferred: '超时转交',
+      canceled: '已撤销',
       systemClosed: '系统关闭',
     },
     instanceTraceTitle: '审批实例轨迹',
@@ -429,6 +430,7 @@ export default {
     historyComment: {
       started: '发起审批',
       finished: '流程已处理完成',
+      canceled: '流程已由发起人撤销',
       rejected: '流程已驳回',
     },
     confirmCancel: '确认撤销当前审批流程吗？',

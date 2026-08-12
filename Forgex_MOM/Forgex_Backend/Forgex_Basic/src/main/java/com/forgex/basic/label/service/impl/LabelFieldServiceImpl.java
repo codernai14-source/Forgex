@@ -178,7 +178,7 @@ public class LabelFieldServiceImpl extends ServiceImpl<LabelFieldMapper, LabelFi
                     result.increaseUpdated();
                 }
             } catch (Exception ex) {
-                log.warn("标签字段导入失败，row={}", row, ex);
+                log.error("标签字段导入失败，row={}", row, ex);
                 result.addError(String.valueOf(row));
             }
         }

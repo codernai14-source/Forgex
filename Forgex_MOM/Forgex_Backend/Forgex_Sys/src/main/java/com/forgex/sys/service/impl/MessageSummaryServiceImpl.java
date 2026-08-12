@@ -64,14 +64,14 @@ public class MessageSummaryServiceImpl implements MessageSummaryService {
     @Override
     public Long pushUnreadSummary(Long userId, Long tenantId) {
         if (userId == null || tenantId == null) {
-            log.warn("用户 ID 或租户 ID 为空：userId={}, tenantId={}", userId, tenantId);
+            log.error("用户 ID 或租户 ID 为空：userId={}, tenantId={}", userId, tenantId);
             return 0L;
         }
         
         // 1. 查询未读消息数量
         Long unreadCount = getUnreadCount(userId, tenantId);
         if (unreadCount == 0) {
-            log.debug("用户未读消息为 0，不推送汇总：userId={}, tenantId={}", userId, tenantId);
+            log.info("用户未读消息为 0，不推送汇总：userId={}, tenantId={}", userId, tenantId);
             return 0L;
         }
         

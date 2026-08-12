@@ -156,7 +156,7 @@ public class SM2DecryptUtil {
     private ECPrivateKeyParameters getPrivateKeyParams(String privateKeyStr) throws Exception {
         // 第一次检查：缓存命中，直接返回
         if (cachedPrivateKey != null && privateKeyStr.equals(cachedPrivateKeyStr)) {
-            log.debug("使用缓存的私钥对象");
+            log.info("使用缓存的私钥对象");
             return cachedPrivateKey;
         }
         
@@ -164,7 +164,7 @@ public class SM2DecryptUtil {
         synchronized (this) {
             // 第二次检查：避免重复解析
             if (cachedPrivateKey != null && privateKeyStr.equals(cachedPrivateKeyStr)) {
-                log.debug("使用缓存的私钥对象（双重检查）");
+                log.info("使用缓存的私钥对象（双重检查）");
                 return cachedPrivateKey;
             }
             

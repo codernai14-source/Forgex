@@ -67,7 +67,7 @@ public class TemplateConfigServiceImpl implements TemplateConfigService {
         }
         
         // 如果没有找到模板，返回默认内容
-        log.warn("未找到模板配置，tenantId: {}, templateCode: {}", tenantId, templateCode);
+        log.error("未找到模板配置，tenantId: {}, templateCode: {}", tenantId, templateCode);
         return templateCode; // 返回模板编码作为默认值
     }
     

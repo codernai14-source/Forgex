@@ -144,7 +144,7 @@ public class FieldEncryptInterceptor implements Interceptor {
                 String encrypted = ENCRYPT_PREFIX + provider.encrypt(value);
                 meta.field.set(obj, encrypted);
             } catch (Exception e) {
-                log.warn("字段加密失败: class={}, field={}", obj.getClass().getSimpleName(), meta.field.getName(), e);
+                log.error("字段加密失败: class={}, field={}", obj.getClass().getSimpleName(), meta.field.getName(), e);
             }
         }
     }
@@ -169,7 +169,7 @@ public class FieldEncryptInterceptor implements Interceptor {
                 String decrypted = provider.decrypt(cipherText);
                 meta.field.set(obj, decrypted);
             } catch (Exception e) {
-                log.warn("字段解密失败: class={}, field={}", obj.getClass().getSimpleName(), meta.field.getName(), e);
+                log.error("字段解密失败: class={}, field={}", obj.getClass().getSimpleName(), meta.field.getName(), e);
             }
         }
     }

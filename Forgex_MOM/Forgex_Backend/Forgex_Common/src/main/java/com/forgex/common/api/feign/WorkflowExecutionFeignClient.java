@@ -1,6 +1,7 @@
 package com.forgex.common.api.feign;
 
 import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
+import com.forgex.common.api.dto.WorkflowTimeoutScanRequestDTO;
 import com.forgex.common.web.R;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,4 +28,13 @@ public interface WorkflowExecutionFeignClient {
      */
     @PostMapping("/start")
     R<Long> startExecution(@RequestBody WorkflowExecutionStartRequestDTO param);
+
+    /**
+     * 内部扫描并处理超时审批实例。
+     *
+     * @param request 超时扫描请求，包含租户 ID
+     * @return 是否处理成功
+     */
+    @PostMapping("/timeout/scan")
+    R<Boolean> scanTimeoutInstances(@RequestBody WorkflowTimeoutScanRequestDTO request);
 }

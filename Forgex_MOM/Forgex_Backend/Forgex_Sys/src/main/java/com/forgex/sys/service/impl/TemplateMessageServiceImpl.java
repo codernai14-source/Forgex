@@ -136,23 +136,23 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
 
         SysMessageTemplate template = findTemplateByCode(templateCode);
         if (template == null) {
-            log.warn("模板不存在: templateCode={}", templateCode);
+            log.error("模板不存在: templateCode={}", templateCode);
             return 0;
         }
         if (!Boolean.TRUE.equals(template.getStatus())) {
-            log.warn("模板已禁用: templateCode={}", templateCode);
+            log.error("模板已禁用: templateCode={}", templateCode);
             return 0;
         }
 
         List<SysMessageTemplateContent> contents = findTemplateContents(template.getId());
         if (contents.isEmpty()) {
-            log.warn("模板内容配置为空: templateCode={}", templateCode);
+            log.error("模板内容配置为空: templateCode={}", templateCode);
             return 0;
         }
 
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
-            log.warn("Current tenantId is null, cannot send message");
+            log.error("Current tenantId is null, cannot send message");
             return 0;
         }
 
@@ -198,19 +198,19 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
 
         SysMessageTemplate template = findTemplateByCode(templateCode);
         if (template == null) {
-            log.warn("模板不存在: templateCode={}", templateCode);
+            log.error("模板不存在: templateCode={}", templateCode);
             return 0;
         }
 
         List<SysMessageTemplateReceiver> receivers = findTemplateReceivers(template.getId());
         if (receivers.isEmpty()) {
-            log.warn("模板接收人配置为空: templateCode={}", templateCode);
+            log.error("模板接收人配置为空: templateCode={}", templateCode);
             return 0;
         }
 
         List<Long> receiverUserIds = resolveReceiverUserIds(receivers);
         if (receiverUserIds.isEmpty()) {
-            log.warn("解析后的接收人列表为空: templateCode={}", templateCode);
+            log.error("解析后的接收人列表为空: templateCode={}", templateCode);
             return 0;
         }
 
@@ -237,19 +237,19 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
 
         SysMessageTemplate template = findTemplateByCode(templateCode);
         if (template == null || !Boolean.TRUE.equals(template.getStatus())) {
-            log.warn("模板不存在或已禁用: templateCode={}", templateCode);
+            log.error("模板不存在或已禁用: templateCode={}", templateCode);
             return null;
         }
 
         List<SysMessageTemplateContent> contents = findTemplateContents(template.getId());
         if (contents.isEmpty()) {
-            log.warn("模板内容配置为空: templateCode={}", templateCode);
+            log.error("模板内容配置为空: templateCode={}", templateCode);
             return null;
         }
 
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
-            log.warn("Current tenantId is null, cannot send message");
+            log.error("Current tenantId is null, cannot send message");
             return null;
         }
 
@@ -258,7 +258,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
                 .findFirst()
                 .orElse(null);
         if (internalContent == null) {
-            log.warn("模板未配置站内消息内容: templateCode={}", templateCode);
+            log.error("模板未配置站内消息内容: templateCode={}", templateCode);
             return null;
         }
 
@@ -339,7 +339,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     private List<Long> resolveReceiverUserIds(List<SysMessageTemplateReceiver> receivers) {
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
-            log.warn("Current tenantId is null, cannot resolve message template receivers");
+            log.error("Current tenantId is null, cannot resolve message template receivers");
             return Collections.emptyList();
         }
 
@@ -358,9 +358,9 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
             } else if ("POSITION".equals(receiverType)) {
                 userIds.addAll(userService.listUserIdsByPositionIds(tenantId, ids));
             } else if ("CUSTOM".equals(receiverType)) {
-                log.debug("CUSTOM 类型接收人由调用方动态传入，跳过模板 receiverIds: templateReceiverId={}", receiver.getId());
+                log.info("CUSTOM 类型接收人由调用方动态传入，跳过模板 receiverIds: templateReceiverId={}", receiver.getId());
             } else {
-                log.warn("未知消息模板接收人类型: receiverType={}, receiverIds={}", receiverType, ids);
+                log.error("未知消息模板接收人类型: receiverType={}, receiverIds={}", receiverType, ids);
             }
         }
 
@@ -450,7 +450,7 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
                 }
             }
         } catch (Exception e) {
-            log.warn("解析多语言 JSON 失败: {}", i18nJson, e);
+            log.error("解析多语言 JSON 失败: {}", i18nJson, e);
         }
         return null;
     }
@@ -586,11 +586,11 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
     @Transactional(rollbackFor = Exception.class)
     public void processTemplateMessageFromMq(com.forgex.common.mq.message.TemplateMessageRequest request) {
         if (request == null || !StringUtils.hasText(request.getTemplateCode())) {
-            log.warn("MQ 模板消息请求为空或模板编码为空: request={}", request);
+            log.error("MQ 模板消息请求为空或模板编码为空: request={}", request);
             return;
         }
         if (request.getTenantId() == null) {
-            log.warn("MQ 模板消息缺少租户ID: templateCode={}", request.getTemplateCode());
+            log.error("MQ 模板消息缺少租户ID: templateCode={}", request.getTemplateCode());
             return;
         }
 
@@ -602,23 +602,23 @@ public class TemplateMessageServiceImpl implements TemplateMessageService {
 
             SysMessageTemplate template = findTemplateByCode(request.getTemplateCode());
             if (template == null) {
-                log.warn("模板不存在: templateCode={}", request.getTemplateCode());
+                log.error("模板不存在: templateCode={}", request.getTemplateCode());
                 return;
             }
             if (!Boolean.TRUE.equals(template.getStatus())) {
-                log.warn("模板已禁用: templateCode={}", request.getTemplateCode());
+                log.error("模板已禁用: templateCode={}", request.getTemplateCode());
                 return;
             }
 
             List<SysMessageTemplateContent> contents = findTemplateContents(template.getId());
             if (contents.isEmpty()) {
-                log.warn("模板内容配置为空: templateCode={}", request.getTemplateCode());
+                log.error("模板内容配置为空: templateCode={}", request.getTemplateCode());
                 return;
             }
 
             List<Long> receiverUserIds = resolveReceivers(template, request.getReceiverUserIds());
             if (receiverUserIds.isEmpty()) {
-                log.warn("MQ 模板消息解析出的接收人为空: templateCode={}", request.getTemplateCode());
+                log.error("MQ 模板消息解析出的接收人为空: templateCode={}", request.getTemplateCode());
                 return;
             }
 

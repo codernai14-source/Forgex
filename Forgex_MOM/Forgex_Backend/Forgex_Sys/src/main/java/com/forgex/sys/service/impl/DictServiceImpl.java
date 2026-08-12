@@ -113,11 +113,11 @@ public class DictServiceImpl implements IDictService {
         try {
             String cacheValue = redisTemplate.opsForValue().get(cacheKey);
             if (StringUtils.hasText(cacheValue)) {
-                log.debug("从缓存读取字典：{}", cacheKey);
+                log.info("从缓存读取字典：{}", cacheKey);
                 return objectMapper.readValue(cacheValue, new TypeReference<List<DictItemVO>>() {});
             }
         } catch (Exception e) {
-            log.warn("读取字典缓存失败：{}", cacheKey, e);
+            log.error("读取字典缓存失败：{}", cacheKey, e);
         }
 
         List<SysDict> dictItems = listMergedDictItemsByCode(dictCode, tenantId);
@@ -137,7 +137,7 @@ public class DictServiceImpl implements IDictService {
         try {
             redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(items), 24, TimeUnit.HOURS);
         } catch (Exception e) {
-            log.warn("写入字典缓存失败：{}", cacheKey, e);
+            log.error("写入字典缓存失败：{}", cacheKey, e);
         }
         return items;
     }
@@ -152,7 +152,7 @@ public class DictServiceImpl implements IDictService {
                 return objectMapper.readValue(cacheValue, new TypeReference<List<DictItemVO>>() {});
             }
         } catch (Exception e) {
-            log.warn("读取字典缓存失败：{}", cacheKey, e);
+            log.error("读取字典缓存失败：{}", cacheKey, e);
         }
 
         List<SysDict> dictItems = listMergedDictItemsByPath(nodePath, tenantId);
@@ -172,7 +172,7 @@ public class DictServiceImpl implements IDictService {
         try {
             redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(items), 24, TimeUnit.HOURS);
         } catch (Exception e) {
-            log.warn("写入字典缓存失败：{}", cacheKey, e);
+            log.error("写入字典缓存失败：{}", cacheKey, e);
         }
         return items;
     }
@@ -380,7 +380,7 @@ public class DictServiceImpl implements IDictService {
                 redisTemplate.delete(keys);
             }
         } catch (Exception e) {
-            log.warn("清除字典缓存失败，tenantId={}", tenantId, e);
+            log.error("清除字典缓存失败，tenantId={}", tenantId, e);
         }
     }
 
@@ -694,7 +694,7 @@ public class DictServiceImpl implements IDictService {
         try {
             return objectMapper.readValue(tagStyleJson, TagStyleVO.class);
         } catch (Exception e) {
-            log.warn("解析标签样式配置失败：{}", tagStyleJson, e);
+            log.error("解析标签样式配置失败：{}", tagStyleJson, e);
             return null;
         }
     }

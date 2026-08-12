@@ -59,11 +59,11 @@ public class JsonOptionProvider implements TemplateOptionProvider {
     @Override
     public List<TemplateOption> getOptions(TemplateOptionContext context, String dataSourceValue) {
         if (StringUtils.isBlank(dataSourceValue)) {
-            log.warn("dataSourceValue is blank, return empty options");
+            log.error("dataSourceValue is blank, return empty options");
             return new ArrayList<>();
         }
         
-        log.debug("Parse JSON options, dataSourceValue={}", dataSourceValue);
+        log.info("Parse JSON options, dataSourceValue={}", dataSourceValue);
         
         try {
             JsonNode jsonNode = objectMapper.readTree(dataSourceValue);
@@ -103,7 +103,7 @@ public class JsonOptionProvider implements TemplateOptionProvider {
                 return options;
             }
             
-            log.warn("dataSourceValue is not a JSON array: {}", dataSourceValue);
+            log.error("dataSourceValue is not a JSON array: {}", dataSourceValue);
             return new ArrayList<>();
             
         } catch (Exception e) {

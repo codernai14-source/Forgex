@@ -72,7 +72,7 @@ public class IpLocationServiceImpl implements IpLocationService {
     @Override
     public String getLocationByIp(String ip) {
         if (!StringUtils.hasText(ip) || "unknown".equalsIgnoreCase(ip)) {
-            log.warn("IP 地址为空或未知，无法解析归属地");
+            log.error("IP 地址为空或未知，无法解析归属地");
             return UNKNOWN_LOCATION;
         }
 
@@ -84,7 +84,7 @@ public class IpLocationServiceImpl implements IpLocationService {
             return PRIVATE_LOCATION;
         }
         if (normalizedIp.indexOf(':') >= 0) {
-            log.debug("当前仅使用 ip2region_v4.xdb 解析 IPv4 地址，跳过 IPv6: {}", normalizedIp);
+            log.info("当前仅使用 ip2region_v4.xdb 解析 IPv4 地址，跳过 IPv6: {}", normalizedIp);
             return UNKNOWN_LOCATION;
         }
 
@@ -95,7 +95,7 @@ public class IpLocationServiceImpl implements IpLocationService {
             }
             String region = currentSearcher.search(normalizedIp);
             String location = formatRegion(region);
-            log.debug("ip2region 解析成功: {} -> {}", normalizedIp, location);
+            log.info("ip2region 解析成功: {} -> {}", normalizedIp, location);
             return location;
         } catch (Exception e) {
             log.error("ip2region 解析失败: {}, 错误信息: {}", normalizedIp, e.getMessage(), e);
@@ -254,7 +254,7 @@ public class IpLocationServiceImpl implements IpLocationService {
         try {
             current.close();
         } catch (IOException e) {
-            log.warn("关闭 ip2region 查询器失败", e);
+            log.error("关闭 ip2region 查询器失败", e);
         }
     }
 }

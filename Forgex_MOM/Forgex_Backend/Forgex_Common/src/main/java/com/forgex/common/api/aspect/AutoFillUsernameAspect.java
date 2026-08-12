@@ -191,7 +191,7 @@ public class AutoFillUsernameAspect {
                     return Long.parseLong(((String) userIdValue).trim());
                 } catch (NumberFormatException e) {
                     if (annotation.required()) {
-                        log.warn("用户ID字段 {} 的值不是数字: {}", userIdFieldName, userIdValue);
+                        log.error("用户ID字段 {} 的值不是数字: {}", userIdFieldName, userIdValue);
                     }
                     return null;
                 }
@@ -222,7 +222,7 @@ public class AutoFillUsernameAspect {
 
         R<Map<Long, String>> response = sysUserFeignClient.getUsernameMap(userIds);
         if (response == null || response.getCode() != 200 || response.getData() == null) {
-            log.warn("批量查询用户名失败: {}", response);
+            log.error("批量查询用户名失败: {}", response);
             return;
         }
 

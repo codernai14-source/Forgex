@@ -221,7 +221,7 @@ public class WorkCalendarServiceImpl implements IWorkCalendarService {
         try {
             dayMapper.insert(entity);
         } catch (Exception ex) {
-            log.debug("工作日历日期已存在 date={}", date);
+            log.info("工作日历日期已存在 date={}", date);
         }
     }
 
@@ -272,7 +272,7 @@ public class WorkCalendarServiceImpl implements IWorkCalendarService {
                     result.put(date, info);
                 }
             } catch (Exception ex) {
-                log.warn("同步中国法定节假日失败 year={}", sourceYear, ex);
+                log.error("同步中国法定节假日失败 year={}", sourceYear, ex);
             }
         }
         return result;
@@ -381,7 +381,7 @@ public class WorkCalendarServiceImpl implements IWorkCalendarService {
                 reminderFeignClient.sync(buildUserReminder(event));
             }
         } catch (Exception ex) {
-            log.warn("同步工作日历提醒任务失败 scope={}, id={}", scope, id, ex);
+            log.error("同步工作日历提醒任务失败 scope={}, id={}", scope, id, ex);
         }
     }
 
@@ -436,7 +436,7 @@ public class WorkCalendarServiceImpl implements IWorkCalendarService {
             dto.setTenantId(currentTenantId());
             reminderFeignClient.cancel(dto);
         } catch (Exception ex) {
-            log.warn("取消工作日历提醒任务失败 sourceType={}, sourceId={}", sourceType, sourceId, ex);
+            log.error("取消工作日历提醒任务失败 sourceType={}, sourceId={}", sourceType, sourceId, ex);
         }
     }
 

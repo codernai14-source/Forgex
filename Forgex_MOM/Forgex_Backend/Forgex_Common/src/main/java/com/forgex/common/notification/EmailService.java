@@ -63,7 +63,7 @@ public class EmailService {
 
         MailClient client = resolveMailClient();
         if (!client.isAvailable()) {
-            log.warn("邮件服务未配置，跳过发送");
+            log.error("邮件服务未配置，跳过发送");
             return false;
         }
 
@@ -93,7 +93,7 @@ public class EmailService {
 
         MailClient client = resolveMailClient();
         if (!client.isAvailable()) {
-            log.warn("邮件服务未配置，跳过发送");
+            log.error("邮件服务未配置，跳过发送");
             return false;
         }
 
@@ -139,7 +139,7 @@ public class EmailService {
      */
     public int sendBatchEmail(String[] toList, String subject, String content) {
         if (toList == null || toList.length == 0) {
-            log.warn("收件人列表为空");
+            log.error("收件人列表为空");
             return 0;
         }
 

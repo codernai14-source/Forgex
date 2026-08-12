@@ -363,7 +363,7 @@ public class SysEncodeRuleServiceImpl extends ServiceImpl<SysEncodeRuleMapper, S
             SysEncodeRule rule = this.getOne(wrapper);
 
             if (rule == null) {
-                log.warn("编码规则不存在或已禁用：{}", ruleCode);
+                log.error("编码规则不存在或已禁用：{}", ruleCode);
                 throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, SysPromptEnum.ENCODE_RULE_NOT_FOUND_OR_DISABLED, ruleCode);
             }
 

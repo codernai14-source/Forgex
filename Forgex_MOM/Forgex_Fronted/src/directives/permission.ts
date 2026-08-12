@@ -1,7 +1,7 @@
 /**
- * 权限指令
+ * Permission directive
  *
- * 用于根据按钮权限控制元素显示。
+ * Shows or hides elements based on button permissions.
  *
  * @example
  * ```vue
@@ -10,18 +10,11 @@
  * ```
  */
 import { Directive, DirectiveBinding } from 'vue'
-import { use权限Store } from '@/stores/permission'
+import { usePermissionStore } from '@/stores/permission'
 
-/**
- * 判断是否拥有指定权限。
- * @param permKey 权限标识
- * @returns 是否拥有指定权限。
- */
-function has权限(permKey: string): boolean {
-  const permissionStore = use权限Store()
-
-  // Pinia setup store 中的 computed 在实例上会自动解包，这里兼容未解包的情况。
-  const checker = permissionStore.has权限
+function hasPermission(permKey: string): boolean {
+  const permissionStore = usePermissionStore()
+  const checker = permissionStore.hasPermission
   if (typeof checker === 'function') {
     return checker(permKey)
   }
@@ -31,20 +24,13 @@ function has权限(permKey: string): boolean {
   return false
 }
 
-/**
- * 权限指令。
- */
 export const permission: Directive = {
-  /**
-   * 元素挂载时检查权限。
-   */
   mounted(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
-
     const originalDisplay = el.style.display
-    ;(el as any).__v权限OriginalDisplay = originalDisplay
+    ;(el as any).__vPermissionOriginalDisplay = originalDisplay
 
-    if (value && !has权限(value)) {
+    if (value && !hasPermission(value)) {
       el.style.display = 'none'
       return
     }
@@ -52,14 +38,10 @@ export const permission: Directive = {
     el.style.display = originalDisplay
   },
 
-  /**
-   * 绑定值更新时重新检查权限。
-   */
   updated(el: HTMLElement, binding: DirectiveBinding<string>) {
     const { value } = binding
-
-    const originalDisplay = (el as any).__v权限OriginalDisplay ?? ''
-    if (value && !has权限(value)) {
+    const originalDisplay = (el as any).__vPermissionOriginalDisplay ?? ''
+    if (value && !hasPermission(value)) {
       el.style.display = 'none'
       return
     }
@@ -68,16 +50,4 @@ export const permission: Directive = {
   }
 }
 
-/**
- * Vue 权限指令。
- *
- * @example
- * ```typescript
- * import { createApp } from 'vue'
- * import { permission } from './directives/permission'
- *
- * const app = createApp(App)
- * app.directive('permission', permission)
- * ```
- */
 export default permission

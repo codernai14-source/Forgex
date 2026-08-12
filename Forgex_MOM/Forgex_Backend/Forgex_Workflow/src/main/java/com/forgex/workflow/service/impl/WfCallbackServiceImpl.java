@@ -20,8 +20,10 @@ import com.forgex.workflow.domain.entity.WfTaskExecution;
 import com.forgex.workflow.mapper.WfTaskConfigMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionMapper;
 import com.forgex.workflow.service.IWfCallbackService;
+import com.forgex.workflow.service.callback.WorkflowCallbackHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -53,6 +55,7 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
     private final WfTaskExecutionMapper executionMapper;
     private final WfTaskConfigMapper taskConfigMapper;
     private final RestTemplate restTemplate;
+    private final ApplicationContext applicationContext;
 
     /**
      * 回调注册表（也可以使用数据库存储）
@@ -117,7 +120,7 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
         if (removed != null) {
             log.info("注册工作流回调成功，taskCode={}", taskCode);
         } else {
-            log.warn("注册工作流回调失败，回调处理器未注册，taskCode={}", taskCode);
+            log.error("注册工作流回调失败，回调处理器未注册，taskCode={}", taskCode);
         }
     }
 
@@ -133,53 +136,85 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
             // 获取执行记录
             WfTaskExecution execution = executionMapper.selectById(executionId);
             if (execution == null) {
-                log.warn("审批执行记录不存在，executionId={}", executionId);
+                log.error("审批执行记录不存在，executionId={}", executionId);
                 return;
             }
 
             // 获取任务配置
             WfTaskConfig taskConfig = taskConfigMapper.selectById(execution.getTaskConfigId());
             if (taskConfig == null) {
-                log.warn("审批任务配置不存在，taskConfigId={}", execution.getTaskConfigId());
+                log.error("审批任务配置不存在，taskConfigId={}", execution.getTaskConfigId());
                 return;
             }
 
             // 获取回调配置
             CallbackConfig callbackConfig = resolveCallbackConfig(taskConfig);
-            if (callbackConfig == null || !StringUtils.hasText(callbackConfig.getCallbackUrl())) {
+            if (callbackConfig == null
+                    || (!StringUtils.hasText(callbackConfig.getCallbackUrl())
+                    && !StringUtils.hasText(callbackConfig.getCallbackBean()))) {
                 // 没有配置回调，直接返回
-                log.debug("未配置回调，taskCode={}", taskConfig.getTaskCode());
+                log.info("未配置回调，taskCode={}", taskConfig.getTaskCode());
                 return;
             }
 
             // 构建回调参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("executionId", executionId);
-            params.put("taskCode", taskConfig.getTaskCode());
-            params.put("taskName", taskConfig.getTaskName());
-            params.put("status", status);
-            params.put("formContent", execution.getFormContent());
+            Map<String, Object> params = buildCallbackParams(execution, taskConfig, status);
 
-            // 发送 HTTP 请求
-            String callbackUrl = callbackConfig.getCallbackUrl();
-            log.info("触发审批回调，executionId={}, callbackUrl={}", executionId, callbackUrl);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(params, headers);
-
-            ResponseEntity<String> response = restTemplate.postForEntity(callbackUrl, entity, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("审批回调成功，executionId={}", executionId);
-            } else {
-                log.error("审批回调失败，executionId={}, statusCode={}",
-                        executionId, response.getStatusCode());
+            boolean hasCallbackUrl = StringUtils.hasText(callbackConfig.getCallbackUrl());
+            boolean hasCallbackBean = StringUtils.hasText(callbackConfig.getCallbackBean());
+            if (hasCallbackUrl && hasCallbackBean) {
+                log.warn("审批回调同时配置 HTTP URL 与 Bean，HTTP 优先，Bean 将被忽略，taskCode={}, callbackUrl={}, callbackBean={}",
+                        taskConfig.getTaskCode(), callbackConfig.getCallbackUrl(), callbackConfig.getCallbackBean());
+            }
+            if (hasCallbackUrl) {
+                sendHttpCallback(executionId, callbackConfig.getCallbackUrl(), params);
+            } else if (hasCallbackBean) {
+                invokeBeanCallback(executionId, callbackConfig.getCallbackBean(), params);
             }
         } catch (Exception e) {
             log.error("触发审批回调异常，executionId={}", executionId, e);
             // 回调失败不影响主流程，仅记录日志
         }
+    }
+
+    private Map<String, Object> buildCallbackParams(WfTaskExecution execution,
+                                                    WfTaskConfig taskConfig,
+                                                    Integer status) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("executionId", execution.getId());
+        params.put("taskCode", taskConfig.getTaskCode());
+        params.put("taskName", taskConfig.getTaskName());
+        params.put("status", status);
+        params.put("formContent", execution.getFormContent());
+        return params;
+    }
+
+    private void sendHttpCallback(Long executionId, String callbackUrl, Map<String, Object> params) {
+        log.info("触发审批 HTTP 回调，executionId={}, callbackUrl={}", executionId, callbackUrl);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(params, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(callbackUrl, entity, String.class);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            log.info("审批 HTTP 回调成功，executionId={}", executionId);
+        } else {
+            log.error("审批 HTTP 回调失败，executionId={}, statusCode={}",
+                    executionId, response.getStatusCode());
+        }
+    }
+
+    private void invokeBeanCallback(Long executionId, String callbackBean, Map<String, Object> params) {
+        Object bean = applicationContext.getBean(callbackBean);
+        if (!(bean instanceof WorkflowCallbackHandler handler)) {
+            log.warn("审批本地回调 Bean 未实现 WorkflowCallbackHandler，executionId={}, callbackBean={}",
+                    executionId, callbackBean);
+            return;
+        }
+        handler.handle(params);
+        log.info("审批本地回调成功，executionId={}, callbackBean={}", executionId, callbackBean);
     }
 
     /**
@@ -193,7 +228,9 @@ public class WfCallbackServiceImpl implements IWfCallbackService {
      */
     private CallbackConfig resolveCallbackConfig(WfTaskConfig taskConfig) {
         CallbackConfig registeredConfig = callbackRegistry.get(taskConfig.getTaskCode());
-        if (registeredConfig != null && StringUtils.hasText(registeredConfig.getCallbackUrl())) {
+        if (registeredConfig != null
+                && (StringUtils.hasText(registeredConfig.getCallbackUrl())
+                || StringUtils.hasText(registeredConfig.getCallbackBean()))) {
             return registeredConfig;
         }
         if (!StringUtils.hasText(taskConfig.getCallbackUrl()) && !StringUtils.hasText(taskConfig.getCallbackBean())) {

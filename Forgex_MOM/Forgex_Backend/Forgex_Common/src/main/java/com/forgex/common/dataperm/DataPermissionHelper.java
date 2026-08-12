@@ -110,7 +110,7 @@ public class DataPermissionHelper {
         }
         DataPermissionInfo info = new DataPermissionInfo(dataScope, deptIds, userId);
         CACHE.put(userId, info);
-        log.debug("缓存数据权限: userId={}, dataScope={}, deptIds={}", userId, dataScope, deptIds);
+        log.info("缓存数据权限: userId={}, dataScope={}, deptIds={}", userId, dataScope, deptIds);
     }
     
     /**
@@ -121,7 +121,7 @@ public class DataPermissionHelper {
     public static void clearCache(Long userId) {
         if (userId != null) {
             CACHE.remove(userId);
-            log.debug("清除数据权限缓存: userId={}", userId);
+            log.info("清除数据权限缓存: userId={}", userId);
         }
     }
     

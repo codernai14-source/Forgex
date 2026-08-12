@@ -247,7 +247,7 @@ public class PrintSnapshotHandler {
             // record.setPrinterName(printerName);
             // record.setPrinterIp(printerIp);
             // labelPrintRecordMapper.updateById(record);
-            log.debug("更新打印机信息，记录 ID: {}, 打印机: {}", recordId, printerName);
+            log.info("更新打印机信息，记录 ID: {}, 打印机: {}", recordId, printerName);
         }
     }
 }

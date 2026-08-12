@@ -155,7 +155,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         if (userId != null) {
             FxTableConfigDTO userConfig = getUserTableConfig(tableCode, tenantId, userId);
             if (userConfig != null) {
-                log.debug("使用用户级别表格配置，tableCode: {}, userId: {}, tenantId: {}",
+                log.info("使用用户级别表格配置，tableCode: {}, userId: {}, tenantId: {}",
                         tableCode, userId, tenantId);
                 return userConfig;
             }
@@ -164,19 +164,19 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
         // 2. 查询租户级别配置
         FxTableConfigDTO tenantConfig = getTenantTableConfig(tableCode, tenantId);
         if (tenantConfig != null) {
-            log.debug("使用租户级别表格配置，tableCode: {}, tenantId: {}", tableCode, tenantId);
+            log.info("使用租户级别表格配置，tableCode: {}, tenantId: {}", tableCode, tenantId);
             return tenantConfig;
         }
 
         // 3. 查询公共配置（tenant_id=0）
         FxTableConfigDTO publicConfig = getTenantTableConfig(tableCode, 0L);
         if (publicConfig != null) {
-            log.debug("使用公共表格配置，tableCode: {}", tableCode);
+            log.info("使用公共表格配置，tableCode: {}", tableCode);
             return publicConfig;
         }
 
         // 所有配置都不存在，返回 null
-        log.debug("未找到表格配置，tableCode: {}, tenantId: {}, userId: {}", tableCode, tenantId, userId);
+        log.info("未找到表格配置，tableCode: {}, tenantId: {}, userId: {}", tableCode, tenantId, userId);
         return null;
     }
 
@@ -501,7 +501,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 }
             }
         } catch (Exception e) {
-            log.warn("解析用户列配置失败，columnConfig: {}", columnConfigJson, e);
+            log.error("解析用户列配置失败，columnConfig: {}", columnConfigJson, e);
         }
         return userColumnsMap;
     }
@@ -518,7 +518,7 @@ public class FxTableConfigServiceImpl implements FxTableConfigService {
                 queryFields == null || queryFields.isEmpty() ? baseQueryFields : queryFields
             );
         } catch (Exception e) {
-            log.warn("解析用户查询配置失败，queryConfig: {}", queryConfigJson, e);
+            log.error("解析用户查询配置失败，queryConfig: {}", queryConfigJson, e);
             return normalizeBuiltinQueryFields(tableCode, baseQueryFields);
         }
     }

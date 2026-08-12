@@ -351,7 +351,7 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
                     result.setUpdatedCount(result.getUpdatedCount() + 1);
                 }
             } catch (Exception ex) {
-                log.warn("同步客户失败，customerCode={}", customerCode, ex);
+                log.error("同步客户失败，customerCode={}", customerCode, ex);
                 result.setFailedCount(result.getFailedCount() + 1);
                 result.getFailedCustomerCodes().add(StringUtils.hasText(customerCode) ? customerCode : "UNKNOWN");
             }
@@ -473,7 +473,7 @@ public class CustomerServiceImpl extends ServiceImpl<BasicCustomerMapper, BasicC
                 validateAggregate(aggregate);
                 handleCustomerAggregate(mode, aggregate, result);
             } catch (Exception ex) {
-                log.warn("公共导入客户失败，customerCode={}", customerCode, ex);
+                log.error("公共导入客户失败，customerCode={}", customerCode, ex);
                 result.addError(StringUtils.hasText(customerCode) ? customerCode : "UNKNOWN");
             }
         }

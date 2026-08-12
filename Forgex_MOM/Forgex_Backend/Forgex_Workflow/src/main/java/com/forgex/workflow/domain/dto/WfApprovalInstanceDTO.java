@@ -63,6 +63,11 @@ public class WfApprovalInstanceDTO {
     private Long sourceRuleId;
 
     /**
+     * 来源规则是否允许审批人撤回。
+     */
+    private Boolean allowRecall;
+
+    /**
      * 实例状态。
      */
     private Integer status;

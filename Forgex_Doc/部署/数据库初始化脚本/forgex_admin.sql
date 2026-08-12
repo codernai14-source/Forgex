@@ -4159,24 +4159,26 @@ CREATE TABLE `sys_user`  (
   `avatar` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户头像URL',
   `user_source` tinyint NOT NULL DEFAULT 1 COMMENT '用户来源:1本站新增,2本站导入,3第三方同步,4自行注册',
   `employee_id` bigint NULL DEFAULT NULL COMMENT '关联员工ID',
+  `superior_user_id` bigint NULL DEFAULT NULL COMMENT '直属上级用户ID',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_account`(`account` ASC) USING BTREE,
   INDEX `idx_username`(`username` ASC) USING BTREE,
   INDEX `idx_department_id`(`department_id` ASC) USING BTREE,
   INDEX `idx_position_id`(`position_id` ASC) USING BTREE,
   INDEX `idx_user_source`(`user_source` ASC) USING BTREE,
-  INDEX `idx_employee_id`(`employee_id` ASC) USING BTREE
+  INDEX `idx_employee_id`(`employee_id` ASC) USING BTREE,
+  INDEX `idx_superior_user_id`(`superior_user_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (1, 'admin', 'admin', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin@local.com', NULL, 1, '2025-11-26 08:39:17', '1993479637244170242', '2026-05-17 19:32:42', '1993479637244170242', 0, NULL, 1, '2026-04-04', 1, 11, '0:0:0:0:0:0:0:1', '本地', '2026-05-17 19:32:42', 'http://192.168.121.1:9000/api/sys/files/f67a6d20025643c6984ba7ea1f71ff28.jpg', 1, NULL);
-INSERT INTO `sys_user` VALUES (2, 'admin_supsupp001_3140', '系统管理员', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin_supsupp001_3140@tenant.local', NULL, 1, '2026-05-12 23:18:18', '20260512_supplier_tenant_login_fix', '2026-05-16 17:33:17', '20260512_supplier_tenant_login_fix', 0, 2, NULL, NULL, NULL, NULL, '0:0:0:0:0:0:0:1', '本地', '2026-05-12 23:30:12', NULL, 1, NULL);
-INSERT INTO `sys_user` VALUES (3, 'smy', '孙明岩', '$2a$10$KPeYoW4LXUO7Zmpo/LLZWuujeXwMwtmZllcvbfShIoJrvmRKrF4oK', '', '', 1, '2026-04-10 16:45:45', '1993479637244170242', '2026-05-16 20:33:05', '1993479637244170242', 0, 1, 1, '2026-04-10', 1, 12, '0:0:0:0:0:0:0:1', '本地', '2026-05-16 20:33:05', NULL, 1, NULL);
-INSERT INTO `sys_user` VALUES (4, 'test', 'test用户', '$2a$10$U4qFzeT00nwD4BcdhQQJHeF7cF81bP0VodQVNBegEeHkFe20t2VBe', 'coderr_nai@163.com', '15866912378', 1, '2026-04-04 11:22:02', '1993479637244170242', '2026-05-16 17:52:15', '1993479637244170242', 0, NULL, 1, '2026-04-04', 18, 11, NULL, NULL, NULL, NULL, 1, NULL);
-INSERT INTO `sys_user` VALUES (5, 'test001', '测试用户1', '$2a$10$TN2WOn63RiPL.8iFvPBRZOxprURcDDWzMKYRcYEG4pu.qwVbxwUI6', 'test001@forgex.com', '13800138001', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-01', 7, 7, NULL, NULL, NULL, NULL, 1, NULL);
-INSERT INTO `sys_user` VALUES (6, 'test002', '测试用户2', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test002@forgex.com', '13800138002', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 2, '2026-01-02', 8, 8, NULL, NULL, NULL, NULL, 1, NULL);
+INSERT INTO `sys_user` VALUES (1, 'admin', 'admin', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin@local.com', NULL, 1, '2025-11-26 08:39:17', '1993479637244170242', '2026-05-17 19:32:42', '1993479637244170242', 0, NULL, 1, '2026-04-04', 1, 11, '0:0:0:0:0:0:0:1', '本地', '2026-05-17 19:32:42', 'http://192.168.121.1:9000/api/sys/files/f67a6d20025643c6984ba7ea1f71ff28.jpg', 1, NULL, NULL);
+INSERT INTO `sys_user` VALUES (2, 'admin_supsupp001_3140', '系统管理员', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin_supsupp001_3140@tenant.local', NULL, 1, '2026-05-12 23:18:18', '20260512_supplier_tenant_login_fix', '2026-05-16 17:33:17', '20260512_supplier_tenant_login_fix', 0, 2, NULL, NULL, NULL, NULL, '0:0:0:0:0:0:0:1', '本地', '2026-05-12 23:30:12', NULL, 1, NULL, NULL);
+INSERT INTO `sys_user` VALUES (3, 'smy', '孙明岩', '$2a$10$KPeYoW4LXUO7Zmpo/LLZWuujeXwMwtmZllcvbfShIoJrvmRKrF4oK', '', '', 1, '2026-04-10 16:45:45', '1993479637244170242', '2026-05-16 20:33:05', '1993479637244170242', 0, 1, 1, '2026-04-10', 1, 12, '0:0:0:0:0:0:0:1', '本地', '2026-05-16 20:33:05', NULL, 1, NULL, NULL);
+INSERT INTO `sys_user` VALUES (4, 'test', 'test用户', '$2a$10$U4qFzeT00nwD4BcdhQQJHeF7cF81bP0VodQVNBegEeHkFe20t2VBe', 'coderr_nai@163.com', '15866912378', 1, '2026-04-04 11:22:02', '1993479637244170242', '2026-05-16 17:52:15', '1993479637244170242', 0, NULL, 1, '2026-04-04', 18, 11, NULL, NULL, NULL, NULL, 1, NULL, NULL);
+INSERT INTO `sys_user` VALUES (5, 'test001', '测试用户1', '$2a$10$TN2WOn63RiPL.8iFvPBRZOxprURcDDWzMKYRcYEG4pu.qwVbxwUI6', 'test001@forgex.com', '13800138001', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-01', 7, 7, NULL, NULL, NULL, NULL, 1, NULL, NULL);
+INSERT INTO `sys_user` VALUES (6, 'test002', '测试用户2', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test002@forgex.com', '13800138002', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 2, '2026-01-02', 8, 8, NULL, NULL, NULL, NULL, 1, NULL, NULL);
 INSERT INTO `sys_user` VALUES (7, 'test003', '测试用户3', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test003@forgex.com', '13800138003', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-03', 9, 9, NULL, NULL, NULL, NULL, 1, NULL);
 
 -- ----------------------------

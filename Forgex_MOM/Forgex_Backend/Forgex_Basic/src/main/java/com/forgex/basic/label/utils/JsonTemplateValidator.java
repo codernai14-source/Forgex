@@ -134,7 +134,7 @@ public class JsonTemplateValidator {
         if (placeholders.isEmpty()) {
             result.addWarning("模板中未找到任何占位符，可能不需要动态数据");
         } else {
-            log.debug("找到 {} 个占位符: {}", placeholders.size(), placeholders);
+            log.info("找到 {} 个占位符: {}", placeholders.size(), placeholders);
         }
     }
 

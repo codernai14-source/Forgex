@@ -74,7 +74,7 @@ public class DataPermissionInterceptor implements InnerInterceptor {
         // 2. 获取当前用户ID
         Long userId = UserContext.get();
         if (userId == null) {
-            log.debug("用户未登录，跳过数据权限控制");
+            log.info("用户未登录，跳过数据权限控制");
             return;
         }
         
@@ -84,14 +84,14 @@ public class DataPermissionInterceptor implements InnerInterceptor {
             // 缓存中没有，需要查询
             permInfo = loadUserDataPermission(userId);
             if (permInfo == null) {
-                log.warn("无法获取用户数据权限信息: userId={}", userId);
+                log.error("无法获取用户数据权限信息: userId={}", userId);
                 return;
             }
         }
         
         // 4. 如果是全部数据权限，不需要过滤
         if (permInfo.getDataScope() == DataScope.ALL) {
-            log.debug("用户拥有全部数据权限，跳过过滤: userId={}", userId);
+            log.info("用户拥有全部数据权限，跳过过滤: userId={}", userId);
             return;
         }
         
@@ -103,7 +103,7 @@ public class DataPermissionInterceptor implements InnerInterceptor {
         
         // 6. 修改SQL（这里简化处理，实际应该解析SQL并添加条件）
         // 注意：完整实现需要使用JSQLParser解析SQL并修改WHERE子句
-        log.debug("应用数据权限过滤: userId={}, dataScope={}", userId, permInfo.getDataScope());
+        log.info("应用数据权限过滤: userId={}, dataScope={}", userId, permInfo.getDataScope());
     }
     
     /**
@@ -122,7 +122,7 @@ public class DataPermissionInterceptor implements InnerInterceptor {
                 }
             }
         } catch (Exception e) {
-            log.debug("获取DataPermission注解失败: {}", e.getMessage());
+            log.info("获取DataPermission注解失败: {}", e.getMessage());
         }
         return null;
     }

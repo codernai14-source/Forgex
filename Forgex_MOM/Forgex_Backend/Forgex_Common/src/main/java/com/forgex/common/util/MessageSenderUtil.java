@@ -134,7 +134,7 @@ public class MessageSenderUtil {
             String json = objectMapper.writeValueAsString(param);
             boolean success = mqSender.send("MESSAGE_SEND_TOPIC", "ASYNC_SEND", json);
             if (!success) {
-                log.warn("消息发送到MQ失败，将同步发送: templateCode={}", param.getTemplateCode());
+                log.error("消息发送到MQ失败，将同步发送: templateCode={}", param.getTemplateCode());
                 sendMessage(param);
             }
         } catch (Exception e) {

@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -119,6 +120,9 @@ public class LoginLog {
      * 失败原因
      */
     private String reason;
+
+    @TableField(exist = false)
+    private String reasonText;
     
     /**
      * 创建时间

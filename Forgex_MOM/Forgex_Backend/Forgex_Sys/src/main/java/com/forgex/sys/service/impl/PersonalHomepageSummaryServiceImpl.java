@@ -89,7 +89,7 @@ public class PersonalHomepageSummaryServiceImpl implements PersonalHomepageSumma
         // 查询用户信息
         SysUser user = userMapper.selectById(userId);
         if (user == null) {
-            log.warn("用户不存在: userId={}", userId);
+            log.error("用户不存在: userId={}", userId);
             return createEmptySummary(userId);
         }
 

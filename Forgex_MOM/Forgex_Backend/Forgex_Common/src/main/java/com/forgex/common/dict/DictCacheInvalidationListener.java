@@ -106,7 +106,7 @@ public class DictCacheInvalidationListener implements MessageListener {
 
                 log.info("本地缓存已清除: tenantId={}, nodePath={}", tenantId, nodePath);
             } else {
-                log.warn("缓存失效消息格式错误: {}", msg);
+                log.error("缓存失效消息格式错误: {}", msg);
             }
         } catch (Exception e) {
             log.error("处理缓存失效消息失败", e);
@@ -123,7 +123,7 @@ public class DictCacheInvalidationListener implements MessageListener {
                         .forEach(languageCodes::add);
             }
         } catch (Exception ex) {
-            log.warn("加载启用语言列表失败，使用默认语言兜底", ex);
+            log.error("加载启用语言列表失败，使用默认语言兜底", ex);
         }
         languageCodes.add("zh-CN");
         languageCodes.add("en-US");

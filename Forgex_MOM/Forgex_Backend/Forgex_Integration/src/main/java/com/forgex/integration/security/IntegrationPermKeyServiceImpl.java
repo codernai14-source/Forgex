@@ -57,7 +57,7 @@ public class IntegrationPermKeyServiceImpl implements PermKeyService {
                         .filter(StringUtils::hasText)
                         .collect(Collectors.toCollection(LinkedHashSet::new));
             }
-            log.warn("Integration permission query returned empty. userId={}, tenantId={}, msg={}",
+            log.error("Integration permission query returned empty. userId={}, tenantId={}, msg={}",
                     userId,
                     tenantId,
                     result != null ? result.getMessage() : "null response");

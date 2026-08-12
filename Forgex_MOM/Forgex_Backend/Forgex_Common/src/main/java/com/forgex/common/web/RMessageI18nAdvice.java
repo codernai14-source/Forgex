@@ -84,7 +84,7 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
             }
             return prompt == null ? null : prompt.getDefaultTemplate();
         } catch (Exception ex) {
-            log.warn("resolve response i18n message failed, module={}, code={}",
+            log.error("resolve response i18n message failed, module={}, code={}",
                     prompt == null ? null : prompt.getModule(),
                     prompt == null ? null : prompt.getPromptCode(),
                     ex);
@@ -96,7 +96,7 @@ public class RMessageI18nAdvice implements ResponseBodyAdvice<Object> {
         try {
             return i18nMessageService.resolve(module, code, args);
         } catch (Exception ex) {
-            log.warn("resolve response i18n message failed, module={}, code={}", module, code, ex);
+            log.error("resolve response i18n message failed, module={}, code={}", module, code, ex);
             return null;
         }
     }

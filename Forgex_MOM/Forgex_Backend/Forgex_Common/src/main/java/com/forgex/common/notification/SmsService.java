@@ -88,7 +88,7 @@ public class SmsService {
      */
     public boolean sendSms(String phoneNumber, String templateCode, Map<String, Object> templateParam) {
         if (!enabled) {
-            log.warn("短信服务未启用，跳过发送");
+            log.error("短信服务未启用，跳过发送");
             return false;
         }
 
@@ -175,7 +175,7 @@ public class SmsService {
      */
     public boolean sendBatchSms(String phoneNumbers, String templateCode, Map<String, Object> templateParam) {
         if (!enabled) {
-            log.warn("短信服务未启用，跳过发送");
+            log.error("短信服务未启用，跳过发送");
             return false;
         }
 

@@ -146,7 +146,7 @@ public class MessageSenderService {
             // 发送到MQ
             boolean success = mqSender.send("MESSAGE_SEND_TOPIC", "ASYNC_SEND", json);
             if (!success) {
-                log.warn("消息发送到MQ失败，将同步发送: templateCode={}", templateCode);
+                log.error("消息发送到MQ失败，将同步发送: templateCode={}", templateCode);
                 sendMessage(templateCode, dataMap, senderName, bizType);
             }
         } catch (Exception e) {
@@ -192,7 +192,7 @@ public class MessageSenderService {
             // 3. 解析接收人列表
             Set<Long> receiverUserIds = parseReceiverUserIds(receivers, userMapper, userRoleMapper);
             if (receiverUserIds.isEmpty()) {
-                log.warn("消息模板没有配置接收人: templateCode={}", templateCode);
+                log.error("消息模板没有配置接收人: templateCode={}", templateCode);
                 return 0;
             }
             
@@ -202,7 +202,7 @@ public class MessageSenderService {
             List<?> contents = (List<?>) invokeMethod(contentMapper, "selectList", contentWrapper);
             
             if (contents == null || contents.isEmpty()) {
-                log.warn("消息模板没有配置内容: templateCode={}", templateCode);
+                log.error("消息模板没有配置内容: templateCode={}", templateCode);
                 return 0;
             }
             
@@ -254,7 +254,7 @@ public class MessageSenderService {
                         try {
                             invokeMethod(sseEmitterService, "sendToUser", receiverUserId, message);
                         } catch (Exception e) {
-                            log.warn("SSE推送失败: receiverUserId={}, error={}", receiverUserId, e.getMessage());
+                            log.error("SSE推送失败: receiverUserId={}, error={}", receiverUserId, e.getMessage());
                         }
                     } else if ("EMAIL".equals(platform)) {
                         // 邮件：通过EmailService发送
@@ -288,27 +288,27 @@ public class MessageSenderService {
             // 获取EmailService
             Object emailService = getBean("emailService");
             if (emailService == null) {
-                log.warn("EmailService未配置，跳过邮件发送");
+                log.error("EmailService未配置，跳过邮件发送");
                 return;
             }
             
             // 检查邮件服务是否可用
             Boolean available = (Boolean) invokeMethod(emailService, "isAvailable");
             if (available == null || !available) {
-                log.warn("邮件服务不可用，跳过邮件发送");
+                log.error("邮件服务不可用，跳过邮件发送");
                 return;
             }
             
             // 查询用户邮箱
             Object user = invokeMethod(userMapper, "selectById", receiverUserId);
             if (user == null) {
-                log.warn("用户不存在，无法发送邮件: userId={}", receiverUserId);
+                log.error("用户不存在，无法发送邮件: userId={}", receiverUserId);
                 return;
             }
             
             String email = (String) getField(user, "email");
             if (!StringUtils.hasText(email)) {
-                log.warn("用户未配置邮箱，无法发送邮件: userId={}", receiverUserId);
+                log.error("用户未配置邮箱，无法发送邮件: userId={}", receiverUserId);
                 return;
             }
             
@@ -318,7 +318,7 @@ public class MessageSenderService {
             if (success != null && success) {
                 log.info("邮件发送成功: userId={}, email={}, subject={}", receiverUserId, maskEmail(email), subject);
             } else {
-                log.warn("邮件发送失败: userId={}, email={}, subject={}", receiverUserId, maskEmail(email), subject);
+                log.error("邮件发送失败: userId={}, email={}, subject={}", receiverUserId, maskEmail(email), subject);
             }
         } catch (Exception e) {
             log.error("邮件发送异常: userId={}, error={}", receiverUserId, e.getMessage(), e);
@@ -347,27 +347,27 @@ public class MessageSenderService {
             // 获取SmsService
             Object smsService = getBean("smsService");
             if (smsService == null) {
-                log.warn("SmsService未配置，跳过短信发送");
+                log.error("SmsService未配置，跳过短信发送");
                 return;
             }
             
             // 检查短信服务是否可用
             Boolean available = (Boolean) invokeMethod(smsService, "isAvailable");
             if (available == null || !available) {
-                log.warn("短信服务不可用，跳过短信发送");
+                log.error("短信服务不可用，跳过短信发送");
                 return;
             }
             
             // 查询用户手机号
             Object user = invokeMethod(userMapper, "selectById", receiverUserId);
             if (user == null) {
-                log.warn("用户不存在，无法发送短信: userId={}", receiverUserId);
+                log.error("用户不存在，无法发送短信: userId={}", receiverUserId);
                 return;
             }
             
             String phone = (String) getField(user, "phone");
             if (!StringUtils.hasText(phone)) {
-                log.warn("用户未配置手机号，无法发送短信: userId={}", receiverUserId);
+                log.error("用户未配置手机号，无法发送短信: userId={}", receiverUserId);
                 return;
             }
             
@@ -387,7 +387,7 @@ public class MessageSenderService {
                 // 使用系统配置的默认短信模板
                 templateCode = System.getProperty("aliyun.sms.notification-template-code", "");
                 if (!StringUtils.hasText(templateCode)) {
-                    log.warn("未配置短信模板CODE，无法发送短信: userId={}", receiverUserId);
+                    log.error("未配置短信模板CODE，无法发送短信: userId={}", receiverUserId);
                     return;
                 }
             }
@@ -402,7 +402,7 @@ public class MessageSenderService {
             if (success != null && success) {
                 log.info("短信发送成功: userId={}, phone={}, templateCode={}", receiverUserId, maskPhone(phone), templateCode);
             } else {
-                log.warn("短信发送失败: userId={}, phone={}, templateCode={}", receiverUserId, maskPhone(phone), templateCode);
+                log.error("短信发送失败: userId={}, phone={}, templateCode={}", receiverUserId, maskPhone(phone), templateCode);
             }
         } catch (Exception e) {
             log.error("短信发送异常: userId={}, error={}", receiverUserId, e.getMessage(), e);
@@ -553,7 +553,7 @@ public class MessageSenderService {
         try {
             return applicationContext.getBean(beanName);
         } catch (Exception e) {
-            log.warn("获取Bean失败: {}", beanName);
+            log.error("获取Bean失败: {}", beanName);
             return null;
         }
     }

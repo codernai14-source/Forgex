@@ -13,6 +13,7 @@ export interface WfApprovalInstanceDTO {
   approverName?: string
   approverSourceType?: number
   sourceRuleId?: number
+  allowRecall?: boolean
   status: number
   actionType?: number
   comment?: string
@@ -95,6 +96,12 @@ export interface WfExecutionAddSignParam {
   executionId: number
   approvalInstanceId: number
   targetApproverId: number
+  comment?: string
+}
+
+export interface WfExecutionRecallParam {
+  executionId: number
+  approvalInstanceId: number
   comment?: string
 }
 
@@ -182,6 +189,10 @@ export function transfer(params: WfExecutionTransferParam) {
 
 export function addSign(params: WfExecutionAddSignParam) {
   return http.post<boolean>('/wf/execution/addSign', params)
+}
+
+export function recall(params: WfExecutionRecallParam) {
+  return http.post<boolean>('/wf/execution/recall', params)
 }
 
 export function saveDelegate(params: WfExecutionDelegateSaveParam) {

@@ -39,8 +39,8 @@ import java.util.List;
  * 使用示例：
  * <pre>
  * TdeConfigChecker.TdeStatus status = TdeConfigChecker.check(dataSource);
- * System.out.println("TDE 已启用: " + status.isEnabled());
- * System.out.println("加密表: " + status.getEncryptedTables());
+ * log.info("TDE 已启用: {}", status.isEnabled());
+ * log.info("加密表: {}", status.getEncryptedTables());
  * </pre>
  *
  * @author Forgex Team

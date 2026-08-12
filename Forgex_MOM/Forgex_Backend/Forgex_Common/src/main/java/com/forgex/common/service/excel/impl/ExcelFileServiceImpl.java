@@ -9,9 +9,9 @@ import com.forgex.common.domain.dto.excel.FxExcelImportConfigItemDTO;
 import com.forgex.common.enums.ExcelPromptEnum;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.LangContext;
+import com.forgex.common.service.excel.ExcelConfigService;
 import com.forgex.common.service.excel.ExcelFileService;
 import com.forgex.common.web.StatusCode;
-import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -29,12 +29,22 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -45,6 +55,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,10 +83,21 @@ import java.util.Map;
  * @see FxExcelImportConfigDTO
  */
 @Service
-@RequiredArgsConstructor
 public class ExcelFileServiceImpl implements ExcelFileService {
 
     private final ObjectMapper objectMapper;
+
+    private final ExcelConfigService excelConfigService;
+
+    @Autowired
+    public ExcelFileServiceImpl(ObjectMapper objectMapper, ExcelConfigService excelConfigService) {
+        this.objectMapper = objectMapper;
+        this.excelConfigService = excelConfigService;
+    }
+
+    public ExcelFileServiceImpl(ObjectMapper objectMapper) {
+        this(objectMapper, null);
+    }
 
     /**
      * {@inheritDoc}
@@ -247,6 +269,105 @@ public class ExcelFileServiceImpl implements ExcelFileService {
             return buildCsv(config, rows);
         }
         return buildXlsx(config, rows);
+    }
+
+    @Override
+    public ResponseEntity<InputStreamResource> buildExportResponse(String tableCode, List<?> rows) {
+        return buildExportResponse(tableCode, rows, defaultExportFilename(tableCode, null));
+    }
+
+    @Override
+    public ResponseEntity<InputStreamResource> buildExportResponse(String tableCode, List<?> rows, String filename) {
+        if (excelConfigService == null) {
+            throw new IllegalStateException("ExcelConfigService is required when exporting by tableCode");
+        }
+        FxExcelExportConfigDTO config = excelConfigService.getExportConfigByCode(tableCode);
+        return buildExportResponse(config, rows, filename);
+    }
+
+    @Override
+    public ResponseEntity<InputStreamResource> buildExportResponse(FxExcelExportConfigDTO config, List<?> rows, String filename) {
+        List<Map<String, Object>> exportRows = toExportRows(rows);
+        byte[] bytes = buildExportFile(config, exportRows);
+        String resolvedFilename = ensureFileExtension(filename, config);
+        InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(bytes));
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(getExportContentType(config)))
+            .contentLength(bytes.length)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodeFilename(resolvedFilename))
+            .body(resource);
+    }
+
+    private List<Map<String, Object>> toExportRows(List<?> rows) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (rows == null || rows.isEmpty()) {
+            return result;
+        }
+        for (Object row : rows) {
+            result.add(toExportRow(row));
+        }
+        return result;
+    }
+
+    private Map<String, Object> toExportRow(Object row) {
+        if (row == null) {
+            return new HashMap<>();
+        }
+        if (row instanceof Map<?, ?> map) {
+            Map<String, Object> result = new HashMap<>();
+            map.forEach((key, value) -> result.put(String.valueOf(key), value));
+            return result;
+        }
+        Map<String, Object> result = new HashMap<>();
+        try {
+            for (PropertyDescriptor descriptor : Introspector.getBeanInfo(row.getClass(), Object.class).getPropertyDescriptors()) {
+                if (descriptor.getReadMethod() != null) {
+                    result.put(descriptor.getName(), descriptor.getReadMethod().invoke(row));
+                }
+            }
+        } catch (IntrospectionException e) {
+            return result;
+        } catch (Exception ignored) {
+        }
+        return result;
+    }
+
+    private String ensureFileExtension(String filename, FxExcelExportConfigDTO config) {
+        String baseName = StringUtils.hasText(filename) ? filename.trim() : defaultExportFilename(null, config);
+        String extension = getExportFileExtension(config);
+        if (baseName.toLowerCase().endsWith(extension)) {
+            return baseName;
+        }
+        return baseName + extension;
+    }
+
+    private String defaultExportFilename(String tableCode, FxExcelExportConfigDTO config) {
+        String prefix = StringUtils.hasText(tableCode)
+            ? tableCode.trim()
+            : config != null && StringUtils.hasText(config.getTableCode()) ? config.getTableCode().trim() : "export";
+        return prefix + "-" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
+    }
+
+    private String getExportContentType(FxExcelExportConfigDTO config) {
+        if (config != null && "csv".equalsIgnoreCase(config.getExportFormat())) {
+            return "text/csv;charset=UTF-8";
+        }
+        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    }
+
+    private String getExportFileExtension(FxExcelExportConfigDTO config) {
+        if (config != null && "csv".equalsIgnoreCase(config.getExportFormat())) {
+            return ".csv";
+        }
+        return ".xlsx";
+    }
+
+    private String encodeFilename(String filename) {
+        try {
+            return URLEncoder.encode(filename, StandardCharsets.UTF_8.name()).replace("+", "%20");
+        } catch (Exception e) {
+            return filename;
+        }
     }
 
     /**
