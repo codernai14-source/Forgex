@@ -336,6 +336,8 @@ internal static class ControlCenterText
         ["backendTab"] = "后端",
         ["licenseTab"] = "授权",
         ["machineCode"] = "机器码",
+        ["customerCode"] = "客户编号",
+        ["customerName"] = "客户名称",
         ["gridService"] = "服务",
         ["gridStatus"] = "状态",
         ["gridPort"] = "端口",
@@ -343,9 +345,13 @@ internal static class ControlCenterText
         ["gridJar"] = "Jar",
         ["stopService"] = "停止服务",
         ["startService"] = "启动服务",
+        ["restartService"] = "重启",
         ["updateService"] = "更新",
         ["openLogFolder"] = "打开日志文件夹",
         ["gridActivatedAt"] = "导入时间",
+        ["gridHistoryRequestAt"] = "申请时间",
+        ["gridHistoryIssuer"] = "授权人",
+        ["gridHistoryDuration"] = "授权年限",
         ["gridLicenseId"] = "授权编号",
         ["gridCustomerCode"] = "客户编码",
         ["gridEdition"] = "版本",
@@ -376,6 +382,9 @@ internal static class ControlCenterText
         ["licenseImportedMessage"] = "授权文件已导入到：\r\n{0}",
         ["backendJarUpdatedMessage"] = "{0} 已更新：\r\n{1}",
         ["licenseDuration"] = "授权期限",
+        ["licenseRequestAt"] = "申请时间",
+        ["licenseIssuedAt"] = "授权时间",
+        ["licenseIssuer"] = "授权人",
         ["licenseExpireAt"] = "到期时间",
         ["licenseRecords"] = "授权记录",
         ["licenseMissing"] = "未找到当前授权文件。",
@@ -383,6 +392,7 @@ internal static class ControlCenterText
         ["licenseUnknown"] = "未知",
         ["licensePermanent"] = "永久",
         ["licenseDurationDays"] = "{0} 天",
+        ["licenseDurationYears"] = "{0} 年",
         ["licenseSummary"] = "授权编号：{0}    客户编码：{1}    版本：{2}    模块：{3}",
         ["logViewRefreshed"] = "视图已刷新。",
         ["logLanguageChanged"] = "界面语言已切换。",
@@ -403,6 +413,8 @@ internal static class ControlCenterText
         ["backendTab"] = "Backend",
         ["licenseTab"] = "License",
         ["machineCode"] = "Machine Code",
+        ["customerCode"] = "Customer Code",
+        ["customerName"] = "Customer Name",
         ["gridService"] = "Service",
         ["gridStatus"] = "Status",
         ["gridPort"] = "Port",
@@ -410,9 +422,13 @@ internal static class ControlCenterText
         ["gridJar"] = "Jar",
         ["stopService"] = "Stop",
         ["startService"] = "Start",
+        ["restartService"] = "Restart",
         ["updateService"] = "Update",
         ["openLogFolder"] = "Open Logs",
         ["gridActivatedAt"] = "Imported At",
+        ["gridHistoryRequestAt"] = "Request At",
+        ["gridHistoryIssuer"] = "Issuer",
+        ["gridHistoryDuration"] = "Duration",
         ["gridLicenseId"] = "License ID",
         ["gridCustomerCode"] = "Customer Code",
         ["gridEdition"] = "Edition",
@@ -443,6 +459,9 @@ internal static class ControlCenterText
         ["licenseImportedMessage"] = "License imported to:\r\n{0}",
         ["backendJarUpdatedMessage"] = "{0} updated:\r\n{1}",
         ["licenseDuration"] = "Duration",
+        ["licenseRequestAt"] = "Request At",
+        ["licenseIssuedAt"] = "Authorized At",
+        ["licenseIssuer"] = "Issuer",
         ["licenseExpireAt"] = "Expire At",
         ["licenseRecords"] = "License Records",
         ["licenseMissing"] = "Current license file was not found.",
@@ -450,6 +469,7 @@ internal static class ControlCenterText
         ["licenseUnknown"] = "Unknown",
         ["licensePermanent"] = "Permanent",
         ["licenseDurationDays"] = "{0} days",
+        ["licenseDurationYears"] = "{0} years",
         ["licenseSummary"] = "License ID: {0}    Customer Code: {1}    Edition: {2}    Modules: {3}",
         ["logViewRefreshed"] = "View refreshed.",
         ["logLanguageChanged"] = "Language switched.",
@@ -523,7 +543,15 @@ internal static class ControlCenterLicenseReader
 
 internal sealed class LicenseActivationHistoryRecord
 {
+    public string RequestAt { get; set; } = "";
+
     public string ActivatedAt { get; set; } = "";
+
+    public string IssuedAt { get; set; } = "";
+
+    public string Issuer { get; set; } = "";
+
+    public int? DurationDays { get; set; }
 
     public string LicenseId { get; set; } = "";
 

@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json;
 using FxLicenseCore.Models;
 using FxLicenseCore.Services;
+using FxLicenseCore.Utilities;
 
 namespace ForgexControlCenter;
 
@@ -14,6 +16,7 @@ internal sealed partial class MainForm : Form
     private const string ColumnStop = "stopAction";
     private const string ColumnStart = "startAction";
     private const string ColumnUpdate = "updateAction";
+    private const string ColumnRestart = "restartAction";
     private const string ColumnLog = "logAction";
 
     private readonly ForgexControlConfig _config;
@@ -24,6 +27,7 @@ internal sealed partial class MainForm : Form
     private readonly MachineFingerprintService _machineFingerprintService = new();
     private readonly System.Windows.Forms.Timer _timer = new();
     private readonly Dictionary<Control, string> _localizedControls = [];
+    private bool _graceWarningShown;
     private string _language = ResolveDefaultLanguage();
 
     public MainForm(string installRoot)
@@ -83,6 +87,9 @@ internal sealed partial class MainForm : Form
         AddTextColumn(_frontendGrid, ColumnStatus, 20F);
         AddTextColumn(_frontendGrid, ColumnPort, 12F);
         AddTextColumn(_frontendGrid, ColumnPath, 32F);
+        AddButtonColumn(_frontendGrid, ColumnUpdate, "updateService", 8F);
+        AddButtonColumn(_frontendGrid, ColumnRestart, "restartService", 8F);
+        AddButtonColumn(_frontendGrid, ColumnLog, "openLogFolder", 8F);
         AddButtonColumn(_frontendGrid, ColumnStop, "stopService", 9F);
         AddButtonColumn(_frontendGrid, ColumnStart, "startService", 9F);
     }
@@ -97,19 +104,21 @@ internal sealed partial class MainForm : Form
         AddButtonColumn(_backendGrid, ColumnStop, "stopService", 8F);
         AddButtonColumn(_backendGrid, ColumnStart, "startService", 8F);
         AddButtonColumn(_backendGrid, ColumnUpdate, "updateService", 7F);
+        AddButtonColumn(_backendGrid, ColumnRestart, "restartService", 7F);
         AddButtonColumn(_backendGrid, ColumnLog, "openLogFolder", 11F);
     }
 
     private void BuildLicenseHistoryColumns()
     {
         _licenseHistoryGrid.Columns.Clear();
-        AddTextColumn(_licenseHistoryGrid, "activatedAt", 18F);
-        AddTextColumn(_licenseHistoryGrid, "licenseId", 22F);
-        AddTextColumn(_licenseHistoryGrid, "customerCode", 14F);
-        AddTextColumn(_licenseHistoryGrid, "edition", 10F);
-        AddTextColumn(_licenseHistoryGrid, "effectiveAt", 16F);
-        AddTextColumn(_licenseHistoryGrid, "expireAt", 16F);
-        AddTextColumn(_licenseHistoryGrid, "modules", 24F);
+        AddTextColumn(_licenseHistoryGrid, "requestAt", 15F);
+        AddTextColumn(_licenseHistoryGrid, "activatedAt", 15F);
+        AddTextColumn(_licenseHistoryGrid, "issuer", 12F);
+        AddTextColumn(_licenseHistoryGrid, "duration", 10F);
+        AddTextColumn(_licenseHistoryGrid, "expireAt", 15F);
+        AddTextColumn(_licenseHistoryGrid, "licenseId", 14F);
+        AddTextColumn(_licenseHistoryGrid, "customerCode", 12F);
+        AddTextColumn(_licenseHistoryGrid, "edition", 7F);
     }
 
     private static void AddTextColumn(DataGridView grid, string name, float fillWeight)
@@ -164,6 +173,24 @@ internal sealed partial class MainForm : Form
         }
 
         var columnName = _frontendGrid.Columns[e.ColumnIndex].Name;
+        if (columnName.Equals(ColumnUpdate, StringComparison.OrdinalIgnoreCase))
+        {
+            SafeUiAction(() => OpenFolder(_config.FrontendDir));
+            return;
+        }
+
+        if (columnName.Equals(ColumnRestart, StringComparison.OrdinalIgnoreCase))
+        {
+            SafeUiAction(() => { _webServer.Restart(AppendRuntimeLog); RefreshServiceGrid(); });
+            return;
+        }
+
+        if (columnName.Equals(ColumnLog, StringComparison.OrdinalIgnoreCase))
+        {
+            SafeUiAction(() => OpenFolder(_serviceManager.GetServiceLogDirectory("web")));
+            return;
+        }
+
         if (columnName.Equals(ColumnStop, StringComparison.OrdinalIgnoreCase))
         {
             StopWeb();
@@ -205,6 +232,12 @@ internal sealed partial class MainForm : Form
         if (columnName.Equals(ColumnUpdate, StringComparison.OrdinalIgnoreCase))
         {
             UpdateBackendService(service);
+            return;
+        }
+
+        if (columnName.Equals(ColumnRestart, StringComparison.OrdinalIgnoreCase))
+        {
+            RestartBackendService(service);
             return;
         }
 
@@ -263,14 +296,25 @@ internal sealed partial class MainForm : Form
         try
         {
             var payload = ControlCenterLicenseReader.ReadCurrentLicense(_config.LicenseDir);
+            _licenseRequestAtValueLabel.Text = FormatLicenseDate(ReadRequestGeneratedAt());
             if (payload is null)
             {
                 _licenseSummaryLabel.Text = T("licenseMissing");
                 _licenseDurationValueLabel.Text = T("licenseUnknown");
                 _licenseExpireAtValueLabel.Text = T("licenseUnknown");
+                _licenseIssuedAtValueLabel.Text = T("licenseUnknown");
+                _licenseIssuerValueLabel.Text = T("licenseUnknown");
+                _customerCodeTextBox.Text = T("licenseUnknown");
+                _customerNameTextBox.Text = T("licenseUnknown");
             }
             else
             {
+                _licenseRequestAtValueLabel.Text = FormatLicenseDate(
+                    string.IsNullOrWhiteSpace(payload.RequestAt) ? ReadRequestGeneratedAt() : payload.RequestAt);
+                _licenseIssuedAtValueLabel.Text = FormatLicenseDate(payload.IssuedAt);
+                _licenseIssuerValueLabel.Text = string.IsNullOrWhiteSpace(payload.Issuer) ? T("licenseUnknown") : payload.Issuer;
+                _customerCodeTextBox.Text = payload.CustomerCode;
+                _customerNameTextBox.Text = payload.CustomerName;
                 _licenseSummaryLabel.Text = TFormat(
                     "licenseSummary",
                     payload.LicenseId,
@@ -279,6 +323,7 @@ internal sealed partial class MainForm : Form
                     string.Join(", ", payload.Modules));
                 _licenseDurationValueLabel.Text = FormatLicenseDuration(payload);
                 _licenseExpireAtValueLabel.Text = FormatLicenseDate(payload.ExpireAt, nullAsPermanent: true);
+                ShowGracePeriodWarning(payload);
             }
         }
         catch (Exception ex)
@@ -287,9 +332,41 @@ internal sealed partial class MainForm : Form
             _licenseSummaryLabel.Text = TFormat("licenseInvalid", ex.Message);
             _licenseDurationValueLabel.Text = T("licenseUnknown");
             _licenseExpireAtValueLabel.Text = T("licenseUnknown");
+            _licenseIssuedAtValueLabel.Text = T("licenseUnknown");
+            _licenseIssuerValueLabel.Text = T("licenseUnknown");
         }
 
         RefreshLicenseHistoryGrid();
+    }
+
+    private void ShowGracePeriodWarning(LicensePayload payload)
+    {
+        if (_graceWarningShown || !payload.GraceDays.HasValue || payload.GraceDays.Value <= 0
+            || string.IsNullOrWhiteSpace(payload.ExpireAt))
+        {
+            return;
+        }
+
+        if (!DateTimeOffset.TryParse(payload.ExpireAt, CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind, out var expireAt))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.Now;
+        var graceDeadline = expireAt.AddDays(payload.GraceDays.Value);
+        if (now <= expireAt || now > graceDeadline)
+        {
+            return;
+        }
+
+        _graceWarningShown = true;
+        MessageBox.Show(
+            this,
+            $"当前授权已于 {FormatLicenseDate(payload.ExpireAt)} 到期，正在处于宽限期（{payload.GraceDays.Value} 天）。请尽快联系授权人续期。",
+            T("windowTitle"),
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning);
     }
 
     private void RefreshLicenseHistoryGrid()
@@ -311,13 +388,14 @@ internal sealed partial class MainForm : Form
         foreach (var record in records.OrderByDescending(item => ParseDateOrMin(item.ActivatedAt)))
         {
             _licenseHistoryGrid.Rows.Add(
-                FormatLicenseDate(record.ActivatedAt),
+                FormatLicenseDate(string.IsNullOrWhiteSpace(record.RequestAt) ? ReadRequestGeneratedAt() : record.RequestAt),
+                FormatLicenseDate(record.IssuedAt),
+                string.IsNullOrWhiteSpace(record.Issuer) ? T("licenseUnknown") : record.Issuer,
+                FormatLicenseDuration(record.DurationDays),
+                FormatLicenseDate(record.ExpireAt, nullAsPermanent: true),
                 record.LicenseId,
                 record.CustomerCode,
-                record.Edition,
-                FormatLicenseDate(record.EffectiveAt),
-                FormatLicenseDate(record.ExpireAt, nullAsPermanent: true),
-                string.Join(", ", record.Modules));
+                record.Edition);
         }
     }
 
@@ -335,6 +413,7 @@ internal sealed partial class MainForm : Form
                 outputPath);
 
             _machineCodeTextBox.Text = info.MachineCode;
+            _customerCodeTextBox.Text = info.CustomerCode;
             AppendLog(TFormat("logRequestGenerated", outputPath));
             AppendLog(TFormat("logCustomerCode", info.CustomerCode));
             OpenFolder(_config.LicenseDir);
@@ -440,6 +519,15 @@ internal sealed partial class MainForm : Form
         SafeUiAction(() =>
         {
             _serviceManager.StopService(service.ServiceId, AppendRuntimeLog);
+            RefreshServiceGrid();
+        });
+    }
+
+    private void RestartBackendService(ForgexServiceConfig service)
+    {
+        SafeUiAction(() =>
+        {
+            _serviceManager.RestartService(service.ServiceId, AppendRuntimeLog);
             RefreshServiceGrid();
         });
     }
@@ -578,8 +666,12 @@ internal sealed partial class MainForm : Form
         _languageLabel.Text = T("language");
         _frontendTabPage.Text = T("frontendTab");
         _backendTabPage.Text = T("backendTab");
-        _licenseTabPage.Text = T("licenseTab");
         _machineCodeLabel.Text = T("machineCode");
+        _customerCodeLabel.Text = T("customerCode");
+        _customerNameLabel.Text = T("customerName");
+        _licenseRequestAtLabel.Text = T("licenseRequestAt");
+        _licenseIssuedAtLabel.Text = T("licenseIssuedAt");
+        _licenseIssuerLabel.Text = T("licenseIssuer");
         _licenseDurationLabel.Text = T("licenseDuration");
         _licenseExpireAtLabel.Text = T("licenseExpireAt");
         _licenseRecordsLabel.Text = T("licenseRecords");
@@ -603,18 +695,20 @@ internal sealed partial class MainForm : Form
         SetButtonText(grid, ColumnStop, "stopService");
         SetButtonText(grid, ColumnStart, "startService");
         SetButtonText(grid, ColumnUpdate, "updateService");
+        SetButtonText(grid, ColumnRestart, "restartService");
         SetButtonText(grid, ColumnLog, "openLogFolder");
     }
 
     private void ApplyLicenseHistoryLanguage()
     {
+        SetHeader(_licenseHistoryGrid, "requestAt", "gridHistoryRequestAt");
         SetHeader(_licenseHistoryGrid, "activatedAt", "gridActivatedAt");
+        SetHeader(_licenseHistoryGrid, "issuer", "gridHistoryIssuer");
+        SetHeader(_licenseHistoryGrid, "duration", "gridHistoryDuration");
         SetHeader(_licenseHistoryGrid, "licenseId", "gridLicenseId");
         SetHeader(_licenseHistoryGrid, "customerCode", "gridCustomerCode");
         SetHeader(_licenseHistoryGrid, "edition", "gridEdition");
-        SetHeader(_licenseHistoryGrid, "effectiveAt", "gridEffectiveAt");
         SetHeader(_licenseHistoryGrid, "expireAt", "gridExpireAt");
-        SetHeader(_licenseHistoryGrid, "modules", "gridModules");
     }
 
     private void SetHeader(DataGridView grid, string columnName, string textKey)
@@ -662,6 +756,29 @@ internal sealed partial class MainForm : Form
         }
 
         return T("licenseUnknown");
+    }
+
+    private string FormatLicenseDuration(int? durationDays)
+    {
+        if (!durationDays.HasValue)
+        {
+            return T("licenseUnknown");
+        }
+
+        var years = durationDays.Value / 365d;
+        return TFormat("licenseDurationYears", Math.Round(years, 2));
+    }
+
+    private string? ReadRequestGeneratedAt()
+    {
+        try
+        {
+            var path = Path.Combine(_config.LicenseDir, "request-info.json");
+            if (!File.Exists(path)) return null;
+            var request = JsonSerializer.Deserialize<LicenseRequestInfo>(File.ReadAllText(path), JsonHelper.Options);
+            return request?.GeneratedAt;
+        }
+        catch { return null; }
     }
 
     private string FormatLicenseDate(string? value, bool nullAsPermanent = false)

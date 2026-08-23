@@ -46,23 +46,33 @@ export function useSse<T = any>(options: UseSseOptions<T>) {
     const es = new EventSource(options.url, { withCredentials: true })
     source.value = es
 
+    const parseEventData = (event: Event) => {
+      try {
+        const raw = (event as MessageEvent).data
+        return typeof raw === 'string' ? JSON.parse(raw) : raw
+      } catch (error) {
+        console.warn('[useSse] Failed to parse message payload:', error)
+        options.onError?.(error)
+        return undefined
+      }
+    }
+
     es.addEventListener('connected', event => {
       connecting.value = false
-      options.onEvent?.('connected', (event as MessageEvent).data as any)
+      options.onEvent?.('connected', parseEventData(event) as T)
     })
 
     es.addEventListener('heartbeat', () => {})
 
-    es.addEventListener('message', event => {
-      try {
-        const raw = (event as MessageEvent).data
-        const data = typeof raw === 'string' ? JSON.parse(raw) : raw
-        options.onEvent?.('message', data)
-      } catch (error) {
-        console.warn('[useSse] Failed to parse message payload:', error)
-        options.onError?.(error)
+    const handleNamedEvent = (eventName: string) => (event: Event) => {
+      const data = parseEventData(event)
+      if (data !== undefined) {
+        options.onEvent?.(eventName, data as T)
       }
-    })
+    }
+
+    es.addEventListener('message', handleNamedEvent('message'))
+    es.addEventListener('permission-changed', handleNamedEvent('permission-changed'))
 
     es.onerror = error => {
       connecting.value = false

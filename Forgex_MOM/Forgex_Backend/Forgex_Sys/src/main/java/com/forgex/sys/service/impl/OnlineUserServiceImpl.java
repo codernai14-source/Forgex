@@ -13,9 +13,11 @@ import com.forgex.sys.domain.dto.OnlineUserQueryDTO;
 import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.vo.OnlineUserVO;
+import com.forgex.sys.domain.vo.OnlineSessionVO;
 import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.service.IOnlineUserService;
+import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +55,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     private final SysUserMapper userMapper;
     private final SysTenantMapper tenantMapper;
     private final LogoutAuditService logoutAuditService;
+    private final ISysUserService userService;
 
     /**
      * 分页查询在线用户。
@@ -129,7 +133,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         java.util.Map<Long, SysTenant> tenantMap = tenants.stream().collect(Collectors.toMap(SysTenant::getId, t -> t, (a, b) -> a));
 
-        List<OnlineUserVO> all = userInfoList.stream().map(userInfo -> {
+        java.util.Map<String, OnlineUserVO> grouped = new LinkedHashMap<>();
+        userInfoList.forEach(userInfo -> {
             OnlineUserVO vo = new OnlineUserVO();
             vo.setToken(userInfo.token);
             vo.setUserId(userInfo.userId);
@@ -153,8 +158,34 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                 vo.setTenantName(t.getTenantName());
             }
 
-            return vo;
-        }).collect(Collectors.toList());
+            OnlineSessionVO session = new OnlineSessionVO();
+            session.setToken(userInfo.token);
+            session.setLoginTerminal(normalizeLoginTerminal(userInfo.loginTerminal));
+            session.setClientIp(userInfo.clientIp);
+            session.setLoginRegion(userInfo.loginRegion != null ? userInfo.loginRegion : vo.getLastLoginRegion());
+            session.setLoginTime(userInfo.loginTime);
+            session.setTtlSeconds(userInfo.ttlSeconds);
+
+            String groupKey = (userInfo.userId != null ? String.valueOf(userInfo.userId) : String.valueOf(userInfo.account))
+                    + ":" + String.valueOf(userInfo.tenantId);
+            OnlineUserVO existing = grouped.get(groupKey);
+            if (existing == null) {
+                vo.setSessions(new ArrayList<>());
+                vo.getSessions().add(session);
+                vo.setSessionCount(1);
+                grouped.put(groupKey, vo);
+            } else {
+                existing.getSessions().add(session);
+                existing.setSessionCount(existing.getSessions().size());
+                if (!Objects.equals(existing.getLoginTerminal(), session.getLoginTerminal())) {
+                    existing.setLoginTerminal("MULTI");
+                }
+                if (existing.getTtlSeconds() == null || (session.getTtlSeconds() != null && session.getTtlSeconds() < existing.getTtlSeconds())) {
+                    existing.setTtlSeconds(session.getTtlSeconds());
+                }
+            }
+        });
+        List<OnlineUserVO> all = new ArrayList<>(grouped.values());
 
         long total = all.size();
         long current = page.getCurrent() <= 0 ? 1 : page.getCurrent();
@@ -186,6 +217,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         return keys.stream()
                 .map(this::readOnlineUserInfo)
                 .filter(Objects::nonNull)
+                .map(info -> (info.userId != null ? String.valueOf(info.userId) : info.account) + ":" + info.tenantId)
+                .distinct()
                 .count();
     }
 
@@ -197,13 +230,33 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @see cn.dev33.satoken.stp.StpUtil#logoutByTokenValue(String)
      */
     @Override
-    public boolean kickout(String token) {
+    public boolean kickout(String token, boolean disableUser) {
         if (!StringUtils.hasText(token)) {
             return false;
+        }
+        OnlineUserInfo target = null;
+        try {
+            Set<String> targetKeys = redisTemplate.keys(ONLINE_USER_PREFIX + "*");
+            if (targetKeys != null) {
+                for (String key : targetKeys) {
+                    OnlineUserInfo info = readOnlineUserInfo(key);
+                    if (info != null && token.equals(info.token)) {
+                        target = info;
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
         }
         try {
             StpUtil.logoutByTokenValue(token);
         } catch (Exception ignored) {
+        }
+        if (disableUser && target != null && target.userId != null) {
+            try {
+                userService.updateStatus(target.userId, false);
+            } catch (Exception ignored) {
+            }
         }
         try {
             // 回写登录日志登出原因（踢下线）
@@ -244,6 +297,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             JsonNode clientIpNode = node.get("clientIp");
             JsonNode userAgentNode = node.get("userAgent");
             JsonNode loginTimeNode = node.get("loginTime");
+            JsonNode loginRegionNode = node.get("loginRegion");
             if (userIdNode != null && userIdNode.isNumber()) {
                 userInfo.userId = userIdNode.longValue();
             } else if (userIdNode != null && userIdNode.isTextual()) {
@@ -279,6 +333,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             }
             if (loginTimeNode != null && loginTimeNode.isTextual()) {
                 userInfo.loginTime = loginTimeNode.asText();
+            }
+            if (loginRegionNode != null && loginRegionNode.isTextual()) {
+                userInfo.loginRegion = loginRegionNode.asText();
             }
             return userInfo;
         } catch (Exception e) {
@@ -335,6 +392,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         private String clientIp;
         private String userAgent;
         private String loginTime;
+        private String loginRegion;
         private Long ttlSeconds;
     }
 }

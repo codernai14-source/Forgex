@@ -25,6 +25,7 @@ import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.enums.UserSourceEnum;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.sys.domain.dto.SysUserDTO;
@@ -126,6 +127,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private final SysUserProfileMapper userProfileMapper;
 
+    /** 当前实例授权管理器。 */
+    private final LicenseManager licenseManager;
+
     /**
      * 分页查询用户 DTO。
      *
@@ -202,6 +206,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             user.setPassword(encryptPassword(user.getPassword()));
         }
 
+        checkUserLimitBeforeInsert();
         userMapper.insert(user);
         createUserTenantBinding(user.getId(), effectiveTenantId);
 
@@ -1114,6 +1119,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         userTenant.setIsDefault(Boolean.TRUE);
         userTenant.setLastUsed(null);
         userTenantMapper.insert(userTenant);
+    }
+
+    /** 按当前管理库中的有效用户数校验授权上限。 */
+    private void checkUserLimitBeforeInsert() {
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getDeleted, false)
+                .eq(SysUser::getStatus, true);
+        licenseManager.checkUserLimit(userMapper.selectCount(wrapper));
     }
 
     /**

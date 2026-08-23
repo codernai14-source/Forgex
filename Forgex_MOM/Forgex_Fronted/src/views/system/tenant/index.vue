@@ -36,10 +36,10 @@
       </template>
 
       <template #parentTenantName="{ record }">
-        <span v-if="record.parentTenantId" class="text-gray-600">
+        <span v-if="record.parentTenantId" class="tenant-parent-name">
           {{ record.parentTenantName || '-' }}
         </span>
-        <span v-else class="text-gray-400">
+        <span v-else class="tenant-parent-empty">
           {{ $t('system.tenant.noParentTenant') }}
         </span>
       </template>

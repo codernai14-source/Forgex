@@ -6,6 +6,33 @@
   min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
+  color: var(--fx-text-primary, #111827);
+}
+
+// The tenant list is rendered by FxDynamicTable, so its cells are outside
+// the form's scoped styles. Explicitly bind table text to theme tokens to
+// keep tenant names and metadata readable when the dark theme is active.
+.page-wrap :deep(.ant-table),
+.page-wrap :deep(.ant-table-thead > tr > th),
+.page-wrap :deep(.ant-table-tbody > tr > td) {
+  color: var(--fx-text-primary, #111827);
+}
+
+.page-wrap :deep(.ant-table-thead > tr > th) {
+  color: var(--fx-text-secondary, #4b5563);
+}
+
+.page-wrap :deep(.ant-table-tbody > tr:hover > td),
+.page-wrap :deep(.ant-table-tbody > tr.ant-table-row-selected > td) {
+  color: var(--fx-text-primary, #111827);
+}
+
+.tenant-parent-name {
+  color: var(--fx-text-primary, #111827);
+}
+
+.tenant-parent-empty {
+  color: var(--fx-text-tertiary, #9ca3af);
 }
 
 .tenant-logo-upload {
@@ -34,9 +61,19 @@
   gap: 8px;
   min-height: 28px;
   margin-bottom: 14px;
-  color: var(--ant-color-text-heading, rgba(0, 0, 0, 0.88));
+  color: var(--fx-text-primary, var(--ant-color-text-heading, rgba(0, 0, 0, 0.88)));
   font-size: 14px;
   font-weight: 600;
+}
+
+.tenant-form :deep(.ant-form-item-label > label),
+.tenant-form :deep(.ant-form-item-required::before) {
+  color: var(--fx-text-primary, var(--ant-color-text, rgba(0, 0, 0, 0.88)));
+}
+
+.tenant-form :deep(.ant-form-item-explain),
+.tenant-form :deep(.ant-form-item-extra) {
+  color: var(--fx-text-secondary, var(--ant-color-text-secondary, rgba(0, 0, 0, 0.65)));
 }
 
 .form-section__title :deep(.anticon) {

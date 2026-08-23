@@ -24,6 +24,7 @@ import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.enums.UserSourceEnum;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
@@ -72,6 +73,7 @@ public class EmployeeServiceImpl extends ServiceImpl<BasicEmployeeMapper, BasicE
     private final SysPositionMapper positionMapper;
     private final ConfigService configService;
     private final IntegrationInternalEmployeeFeignClient integrationInternalEmployeeFeignClient;
+    private final LicenseManager licenseManager;
 
     @Override
     public Page<EmployeeDTO> page(EmployeePageParam param) {
@@ -289,6 +291,8 @@ public class EmployeeServiceImpl extends ServiceImpl<BasicEmployeeMapper, BasicE
             user.setTenantId(resolveTenantId(employee));
             user.setPassword(encryptPassword(resolveDefaultPassword()));
             user.setUserSource(UserSourceEnum.SITE_CREATED.getCode());
+            licenseManager.checkUserLimit(userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getDeleted, false)));
             userMapper.insert(user);
             createUserTenantBinding(user.getId(), user.getTenantId());
             result.setCreatedCount(result.getCreatedCount() + 1);

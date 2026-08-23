@@ -67,12 +67,18 @@ public sealed class LicenseImportService
         return new Dictionary<string, object?>
         {
             ["activatedAt"] = DateTimeOffset.Now.ToString("O"),
+            ["requestAt"] = payload.RequestAt,
+            ["issuedAt"] = payload.IssuedAt,
             ["licenseId"] = payload.LicenseId,
             ["customerCode"] = payload.CustomerCode,
+            ["issuer"] = payload.Issuer,
             ["machineCode"] = payload.MachineCode,
             ["effectiveAt"] = payload.EffectiveAt,
             ["expireAt"] = payload.ExpireAt,
+            ["durationDays"] = payload.DurationDays,
             ["edition"] = payload.Edition,
+            ["maxUsers"] = payload.MaxUsers,
+            ["maxTenants"] = payload.MaxTenants,
             ["modules"] = payload.Modules,
             ["licensePath"] = licensePath
         };

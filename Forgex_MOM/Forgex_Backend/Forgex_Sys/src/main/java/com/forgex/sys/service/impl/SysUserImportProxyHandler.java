@@ -10,6 +10,7 @@ import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
 import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.enums.FxExcelImportMode;
 import com.forgex.common.enums.UserSourceEnum;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.service.excel.FxExcelImportHandler;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
@@ -45,6 +46,7 @@ public class SysUserImportProxyHandler implements FxExcelImportHandler {
     private final SysUserRoleMapper userRoleMapper;
     private final SysUserProfileMapper userProfileMapper;
     private final ConfigService configService;
+    private final LicenseManager licenseManager;
 
     @Override
     @DSTransactional(rollbackFor = Exception.class)
@@ -104,6 +106,9 @@ public class SysUserImportProxyHandler implements FxExcelImportHandler {
         if (row.getUserSource() != null) {
             user.setUserSource(row.getUserSource());
         }
+        LambdaQueryWrapper<SysUser> countWrapper = new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getDeleted, false);
+        licenseManager.checkUserLimit(userMapper.selectCount(countWrapper));
         userMapper.insert(user);
         createUserTenantBinding(user.getId(), tenantId);
     }

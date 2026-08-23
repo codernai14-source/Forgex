@@ -32,6 +32,7 @@ try
                 Product = parser.Get("product"),
                 Edition = parser.Get("edition"),
                 CustomerName = parser.Get("customer-name"),
+                Issuer = parser.Require("issuer"),
                 Modules = parser.GetCsvList("modules", LicenseIssuingService.DefaultModules),
                 MaxUsers = parser.GetInt32("max-users"),
                 MaxTenants = parser.GetInt32("max-tenants"),
@@ -66,6 +67,7 @@ try
                   --product <产品名称>
                   --edition <版本类型>
                   --customer-name <客户名称>
+                  --issuer <授权人，必填>
                   --modules <模块列表，逗号分隔>
                   --max-users <最大用户数>
                   --max-tenants <最大租户数>

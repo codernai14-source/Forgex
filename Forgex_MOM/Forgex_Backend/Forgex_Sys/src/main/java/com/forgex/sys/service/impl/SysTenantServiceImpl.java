@@ -18,6 +18,7 @@ import com.baomidou.dynamic.datasource.tx.TransactionContext;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.enums.TenantTypeEnum;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.service.TemplateMessageService;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.dto.tenant.TenantInitResult;
@@ -73,6 +74,7 @@ public class SysTenantServiceImpl implements SysTenantService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysUserMapper userMapper;
     private final TemplateMessageService templateMessageService;
+    private final LicenseManager licenseManager;
 
     /**
      * 查询数据列表。
@@ -205,6 +207,11 @@ public class SysTenantServiceImpl implements SysTenantService {
     @Override
     @DSTransactional(rollbackFor = Exception.class)
     public Long create(SysTenantSaveParam param) {
+        // 配额按当前数据源（管理库）生效，所有未删除租户均占用授权名额。
+        LambdaQueryWrapper<SysTenant> activeTenantWrapper = new LambdaQueryWrapper<>();
+        activeTenantWrapper.eq(SysTenant::getDeleted, false);
+        licenseManager.checkTenantLimit(tenantMapper.selectCount(activeTenantWrapper));
+
         // 检查租户编码是否重复
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysTenant::getTenantCode, param.getTenantCode())

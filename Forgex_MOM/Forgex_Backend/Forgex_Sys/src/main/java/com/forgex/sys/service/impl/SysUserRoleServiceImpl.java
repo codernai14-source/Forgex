@@ -25,6 +25,7 @@ import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.mapper.SysUserTenantMapper;
 import com.forgex.sys.service.ISysUserRoleService;
+import com.forgex.sys.service.PermissionChangeNotifier;
 import com.forgex.sys.enums.SysPromptEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
     private final SysRoleMapper roleMapper;
     private final SysUserMapper userMapper;
     private final SysUserTenantMapper userTenantMapper;
+    private final PermissionChangeNotifier permissionChangeNotifier;
 
     /**
      * 查询用户在指定租户下已分配的角色 ID 列表。
@@ -120,6 +122,7 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
             bind.setTenantId(tenantId);
             userRoleMapper.insert(bind);
         }
+        permissionChangeNotifier.notifyAfterCommit(tenantId, "user-role-save");
     }
 
     /**

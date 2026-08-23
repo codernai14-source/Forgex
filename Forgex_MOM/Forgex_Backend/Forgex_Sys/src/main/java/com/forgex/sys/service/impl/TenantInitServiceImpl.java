@@ -19,6 +19,7 @@ import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.enums.TenantTypeEnum;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.sys.domain.entity.SysMenu;
 import com.forgex.sys.domain.entity.SysModule;
 import com.forgex.sys.domain.entity.SysRole;
@@ -91,6 +92,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
     private final SysTenantMenuCopyRuleMapper tenantMenuCopyRuleMapper;
     private final SysTenantInitTaskMapper tenantInitTaskMapper;
     private final ConfigService configService;
+    private final LicenseManager licenseManager;
 
     @Override
     public TenantInitResult initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType) {
@@ -472,6 +474,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
+        checkUserLimitBeforeInsert();
         userMapper.insert(user);
 
         log.info("创建{}用户，用户 ID：{}，租户 ID：{}", account, user.getId(), tenantId);
@@ -490,11 +493,17 @@ public class TenantInitServiceImpl implements ITenantInitService {
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
+        checkUserLimitBeforeInsert();
         userMapper.insert(user);
 
         log.info("创建 administrator 用户，用户 ID：{}，租户 ID：{}，账号：{}", user.getId(), tenantId, account);
 
         return user.getId();
+    }
+
+    private void checkUserLimitBeforeInsert() {
+        licenseManager.checkUserLimit(userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getDeleted, false)));
     }
 
     /**

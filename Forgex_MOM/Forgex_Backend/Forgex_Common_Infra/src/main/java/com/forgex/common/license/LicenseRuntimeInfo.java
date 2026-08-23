@@ -77,6 +77,11 @@ public class LicenseRuntimeInfo {
     private String customerName;
 
     /**
+     * 授权人。
+     */
+    private String issuer;
+
+    /**
      * 版本类型。
      */
     private String edition;
@@ -100,6 +105,11 @@ public class LicenseRuntimeInfo {
      * 签发时间。
      */
     private String issuedAt;
+
+    /**
+     * 授权申请时间。
+     */
+    private String requestAt;
 
     /**
      * 生效时间。

@@ -105,6 +105,13 @@ public class SysDictController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, dictService.pullPublicDicts(getCurrentTenantId()));
     }
 
+    @RequirePerm("sys:dict:edit")
+    @PostMapping("/refresh-cache")
+    public R<Void> refreshCache() {
+        dictService.clearDictCache(null, getCurrentTenantId());
+        return R.ok();
+    }
+
     private Long resolveScopeTenantId(DictPageParam param) {
         return param != null && Boolean.TRUE.equals(param.getPublicConfig()) ? 0L : getCurrentTenantId();
     }

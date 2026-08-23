@@ -274,6 +274,10 @@
                 <MailOutlined />
                 <span>{{ t('layout.user.sendMessage') }}</span>
               </a-menu-item>
+              <a-menu-item key="refreshPermissions" :disabled="permissionRefreshing">
+                <ReloadOutlined />
+                <span>{{ permissionRefreshing ? t('layout.user.refreshPermissionsLoading') : t('layout.user.refreshPermissions') }}</span>
+              </a-menu-item>
               <a-menu-divider />
               <a-menu-item key="logout">
                 <LogoutOutlined />
@@ -302,6 +306,7 @@ import {
   ApartmentOutlined,
   InfoCircleOutlined,
   MailOutlined,
+  ReloadOutlined,
   LogoutOutlined,
   AppstoreOutlined,
   AndroidOutlined,
@@ -360,6 +365,7 @@ interface AppHeaderProps {
   currentTenantId?: string
   tenantLoading?: boolean
   switchingTenantId?: string
+  permissionRefreshing?: boolean
 }
 
 const props = withDefaults(defineProps<AppHeaderProps>(), {
@@ -375,7 +381,8 @@ const props = withDefaults(defineProps<AppHeaderProps>(), {
   tenantOptions: () => [],
   currentTenantId: '',
   tenantLoading: false,
-  switchingTenantId: ''
+  switchingTenantId: '',
+  permissionRefreshing: false
 })
 
 const emit = defineEmits<{

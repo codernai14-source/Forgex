@@ -12,6 +12,10 @@
       <template #toolbar>
         <a-space wrap>
           <a-segmented v-model:value="dictScope" :options="dictScopeOptions" @change="handleScopeChange" />
+          <a-button v-if="isTenantScope" :loading="refreshingCache" @click="handleRefreshCache">
+            <ReloadOutlined />
+            {{ $tl('刷新缓存') }}
+          </a-button>
           <a-button v-if="isTenantScope" @click="handlePullPublic">{{ $tl('拉取公共配置') }}</a-button>
           <a-button v-if="isTenantScope" data-guide-id="sys-dict-add" type="primary" @click="handleAdd(null)">{{ $tl('新增字典') }}</a-button>
         </a-space>
@@ -110,17 +114,19 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { message, Modal, type FormInstance, type Rule } from 'ant-design-vue'
+import { ReloadOutlined } from '@ant-design/icons-vue'
 import http from '@/api/http'
 import { listModules } from '@/api/system/module'
+import { refreshDictCache } from '@/api/system/dict'
 
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
 import TagStyleConfig from '@/components/system/TagStyleConfig.vue'
-import { useDict } from '@/hooks/useDict'
+import { clearDictCache, useDict } from '@/hooks/useDict'
 import { translateLegacyText } from '@/utils/legacyI18n'
 
-const { dictItems: statusOptions } = useDict('status')
+const { dictItems: rawStatusOptions, reload: reloadStatusOptions } = useDict('status')
 
 const tableRef = ref()
 const formRef = ref<FormInstance>()
@@ -134,6 +140,18 @@ const dictScopeOptions = computed(() => [
   { label: translateLegacyText('公共'), value: 'public' },
 ])
 const isTenantScope = computed(() => dictScope.value === 'tenant')
+const refreshingCache = ref(false)
+
+function normalizeStatusValue(value: unknown): number {
+  return value === true || value === 1 || value === '1' ? 1 : 0
+}
+
+const statusOptions = computed(() =>
+  rawStatusOptions.value.map((option) => ({
+    ...option,
+    value: normalizeStatusValue(option.value),
+  })),
+)
 
 const dictOptions = computed(() => ({
   status: statusOptions.value,
@@ -183,7 +201,7 @@ function resolveModuleLabel(record: any) {
 }
 
 function resolveStatusTag(value: unknown) {
-  const normalizedValue = value === true || value === 1 || value === '1' ? 1 : 0
+  const normalizedValue = normalizeStatusValue(value)
   const dictItem = statusOptions.value.find((item) => String(item?.value) === String(normalizedValue))
   if (!dictItem) {
     return null
@@ -230,6 +248,22 @@ const handleRequest = async (payload: {
 
 async function handleScopeChange() {
   await tableRef.value?.refresh?.()
+}
+
+async function handleRefreshCache() {
+  if (refreshingCache.value) {
+    return
+  }
+  refreshingCache.value = true
+  try {
+    await refreshDictCache()
+    clearDictCache()
+    await reloadStatusOptions(true)
+    message.success(translateLegacyText('字典缓存刷新成功'))
+    await tableRef.value?.refresh?.()
+  } finally {
+    refreshingCache.value = false
+  }
 }
 
 function handlePullPublic() {

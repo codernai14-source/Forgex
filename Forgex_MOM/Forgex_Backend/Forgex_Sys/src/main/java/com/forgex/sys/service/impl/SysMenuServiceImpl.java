@@ -45,6 +45,8 @@ import com.forgex.sys.mapper.SysUserMenuOpenCountMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.ISysMenuService;
+import com.forgex.sys.service.PermissionChangeNotifier;
+import com.forgex.common.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -130,6 +132,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     private final SysUserMenuFavoriteMapper userMenuFavoriteMapper;
     private final SysUserMenuOpenCountMapper userMenuOpenCountMapper;
     private final I18nLanguageTypeService languageTypeService;
+    private final PermissionChangeNotifier permissionChangeNotifier;
 
     /**
      * 获取用户路由（仅返回当前租户、当前角色显式授权的模块/菜单/按钮）。
@@ -306,6 +309,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         SysMenu menu = new SysMenu();
         BeanUtils.copyProperties(menuDTO, menu);
         menuMapper.insert(menu);
+        permissionChangeNotifier.notifyAfterCommit(resolvePermissionTenantId(menu.getTenantId()), "menu-add");
     }
 
     /**
@@ -319,6 +323,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         SysMenu menu = new SysMenu();
         BeanUtils.copyProperties(menuDTO, menu);
         menuMapper.updateById(menu);
+        permissionChangeNotifier.notifyAfterCommit(resolvePermissionTenantId(menu.getTenantId()), "menu-update");
     }
 
     /**
@@ -329,6 +334,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMenu(Long id) {
+        SysMenu existing = menuMapper.selectById(id);
+        deleteMenuInternal(id);
+        permissionChangeNotifier.notifyAfterCommit(resolvePermissionTenantId(existing == null ? null : existing.getTenantId()), "menu-delete");
+    }
+
+    private void deleteMenuInternal(Long id) {
         menuMapper.deleteById(id);
 
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -344,9 +355,21 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteMenus(List<Long> ids) {
+        Set<Long> tenantIds = new LinkedHashSet<>();
         for (Long id : ids) {
-            deleteMenu(id);
+            SysMenu existing = menuMapper.selectById(id);
+            if (existing != null) {
+                tenantIds.add(resolvePermissionTenantId(existing.getTenantId()));
+            }
+            deleteMenuInternal(id);
         }
+        for (Long tenantId : tenantIds) {
+            permissionChangeNotifier.notifyAfterCommit(tenantId, "menu-batch-delete");
+        }
+    }
+
+    private Long resolvePermissionTenantId(Long tenantId) {
+        return tenantId != null ? tenantId : TenantContext.get();
     }
 
     /**

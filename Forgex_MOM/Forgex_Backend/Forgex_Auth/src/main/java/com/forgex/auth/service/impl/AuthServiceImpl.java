@@ -47,6 +47,7 @@ import com.forgex.auth.strategy.tenant.ChooseTenantStrategyFactory;
 import com.forgex.common.config.ConfigService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.security.LoginSessionKeys;
 import com.forgex.common.security.LoginSessionSupport;
 import com.forgex.common.tenant.TenantContext;
@@ -166,6 +167,8 @@ public class AuthServiceImpl implements AuthService {
     private LoginInteractionCodeService loginInteractionCodeService;
     @Autowired
     private TenantSelectionAuthorizationService tenantSelectionAuthorizationService;
+    @Autowired
+    private LicenseManager licenseManager;
 
 
     /**
@@ -1388,6 +1391,8 @@ public class AuthServiceImpl implements AuthService {
         newUser.setEmail(param.getEmail());
         newUser.setStatus(true);
         newUser.setUserSource(UserSourceEnum.SELF_REGISTERED.getCode());
+        licenseManager.checkUserLimit(userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getDeleted, false)));
         userMapper.insert(newUser);
 
         Long userId = newUser.getId();

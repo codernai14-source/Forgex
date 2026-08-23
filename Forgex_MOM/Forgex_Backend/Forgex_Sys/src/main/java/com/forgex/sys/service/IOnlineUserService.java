@@ -39,5 +39,5 @@ public interface IOnlineUserService {
      * @param token tokenValue
      * @return 是否执行成功
      */
-    boolean kickout(String token);
+    boolean kickout(String token, boolean disableUser);
 }

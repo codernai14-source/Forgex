@@ -3,6 +3,7 @@ package com.forgex.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.dynamic.datasource.tx.TransactionContext;
 import com.forgex.common.enums.TenantTypeEnum;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.service.TemplateMessageService;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.dto.tenant.TenantInitResult;
@@ -42,6 +43,7 @@ class SysTenantServiceImplTest {
     private SysUserRoleMapper userRoleMapper;
     private SysUserMapper userMapper;
     private TemplateMessageService templateMessageService;
+    private LicenseManager licenseManager;
     private SysTenantServiceImpl service;
 
     @BeforeEach
@@ -52,13 +54,15 @@ class SysTenantServiceImplTest {
         userRoleMapper = mock(SysUserRoleMapper.class);
         userMapper = mock(SysUserMapper.class);
         templateMessageService = mock(TemplateMessageService.class);
+        licenseManager = mock(LicenseManager.class);
         service = new SysTenantServiceImpl(
                 tenantMapper,
                 tenantInitService,
                 roleMapper,
                 userRoleMapper,
                 userMapper,
-                templateMessageService);
+                templateMessageService,
+                licenseManager);
         when(tenantMapper.selectCount(any(Wrapper.class))).thenReturn(0L);
     }
 
@@ -78,6 +82,17 @@ class SysTenantServiceImplTest {
 
         assertThrows(IllegalArgumentException.class, () -> service.create(param));
 
+        verify(tenantMapper, never()).insert(any(SysTenant.class));
+        verify(tenantInitService, never()).initTenant(any(), any(), any(), any());
+    }
+
+    @Test
+    void tenantLimitIsCheckedBeforeInsert() {
+        SysTenantSaveParam param = childTenantParam(1L);
+        org.mockito.Mockito.doThrow(new com.forgex.common.exception.BusinessException("租户上限")).when(licenseManager)
+                .checkTenantLimit(0L);
+
+        assertThrows(com.forgex.common.exception.BusinessException.class, () -> service.create(param));
         verify(tenantMapper, never()).insert(any(SysTenant.class));
         verify(tenantInitService, never()).initTenant(any(), any(), any(), any());
     }

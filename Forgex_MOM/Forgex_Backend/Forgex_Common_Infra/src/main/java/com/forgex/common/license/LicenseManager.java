@@ -2,6 +2,7 @@ package com.forgex.common.license;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forgex.common.exception.BusinessException;
 import org.springframework.util.StringUtils;
 
 import java.net.InetAddress;
@@ -119,10 +120,12 @@ public class LicenseManager {
             runtimeInfo.setLicenseId(payload.getLicenseId());
             runtimeInfo.setEdition(payload.getEdition());
             runtimeInfo.setCustomerName(payload.getCustomerName());
+            runtimeInfo.setIssuer(payload.getIssuer());
             runtimeInfo.setModules(payload.getModules());
             runtimeInfo.setMaxUsers(payload.getMaxUsers());
             runtimeInfo.setMaxTenants(payload.getMaxTenants());
             runtimeInfo.setIssuedAt(payload.getIssuedAt());
+            runtimeInfo.setRequestAt(payload.getRequestAt());
             runtimeInfo.setEffectiveAt(payload.getEffectiveAt());
             runtimeInfo.setExpireAt(payload.getExpireAt());
             runtimeInfo.setDurationDays(payload.getDurationDays());
@@ -209,6 +212,34 @@ public class LicenseManager {
      */
     public LicenseRequestInfo getRequestInfo() {
         return ensureRequestInfo();
+    }
+
+    /**
+     * 校验当前数据库中的用户数量是否仍可新增用户。
+     *
+     * @param currentCount 当前数据库中未删除且启用的用户数
+     * @throws BusinessException 达到授权上限时抛出
+     */
+    public void checkUserLimit(long currentCount) {
+        checkLimit("用户", currentCount, current().getMaxUsers());
+    }
+
+    /**
+     * 校验当前数据库中的租户数量是否仍可新增租户。
+     *
+     * @param currentCount 当前数据库中未删除且启用的租户数
+     * @throws BusinessException 达到授权上限时抛出
+     */
+    public void checkTenantLimit(long currentCount) {
+        checkLimit("租户", currentCount, current().getMaxTenants());
+    }
+
+    private void checkLimit(String resourceName, long currentCount, Integer limit) {
+        // null 表示该资源不设上限；0 仍是有效上限，可用于禁止新增。
+        if (limit == null || limit < 0 || currentCount < limit) {
+            return;
+        }
+        throw new BusinessException("授权" + resourceName + "数量已达到上限（" + limit + "）");
     }
 
     /**

@@ -23,6 +23,7 @@
       :current-tenant-id="currentTenantId"
       :tenant-loading="tenantLoading"
       :switching-tenant-id="switchingTenantId"
+      :permission-refreshing="permissionRefreshing"
       @module-click="onModuleClick"
       @search-click="globalSearchVisible = true"
       @locale-change="onLocaleChange"
@@ -565,12 +566,13 @@ import jaJP from 'ant-design-vue/es/locale/ja_JP'
 import koKR from 'ant-design-vue/es/locale/ko_KR'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
-import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
+import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes, refreshDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage, chooseTenant, listCurrentTenants, type TenantOption } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
+import { getLicenseStatus } from '../api/system/license'
 import { setLocale, type LocaleCode } from '../locales'
 import { getUnreadMessageCount, listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
 import { noticeApi, type SysNotice } from '../api/system/notice'
@@ -624,6 +626,9 @@ const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionStore()
+const permissionRefreshing = ref(false)
+let permissionRefreshPromise: Promise<boolean> | null = null
+const licenseGraceNoticeKey = 'fx-license-grace-notice'
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -2377,6 +2382,59 @@ function refreshPage() {
 }
 
 /**
+ * 刷新当前会话菜单权限，并在当前页面被撤权时回到个人主页。
+ *
+ * @param showMessage 是否显示手动操作结果
+ * @returns 是否刷新成功
+ */
+async function refreshMenuPermissions(showMessage = false): Promise<boolean> {
+  if (permissionRefreshPromise) {
+    return permissionRefreshPromise
+  }
+
+  const currentPath = route.fullPath
+  permissionRefreshing.value = true
+  permissionRefreshPromise = (async () => {
+    try {
+      const refreshed = await refreshDynamicRoutes({ silent: true })
+      if (!refreshed) {
+        throw new Error('permission refresh returned no route payload')
+      }
+
+      const revokedTabs = tabs.value
+        .filter(tab => tab.key !== PERSONAL_HOME_PATH)
+        .filter(tab => router.resolve(tab.key).name === 'WorkspaceNotFound')
+        .map(tab => tab.key)
+      removeTabsByKeys(revokedTabs)
+
+      const currentResolved = router.resolve(currentPath)
+      if (currentResolved.name === 'WorkspaceNotFound') {
+        await router.replace(PERSONAL_HOME_PATH)
+      } else {
+        updateTabsByRoute(route.fullPath)
+      }
+
+      if (showMessage) {
+        message.success(t('layout.user.refreshPermissionsSuccess'))
+      }
+      return true
+    } catch (error) {
+      console.error('[MainLayout] 菜单权限刷新失败:', error)
+      if (showMessage) {
+        message.error(t('layout.user.refreshPermissionsFailed'))
+      }
+      return false
+    } finally {
+      permissionRefreshing.value = false
+    }
+  })().finally(() => {
+    permissionRefreshPromise = null
+  })
+
+  return permissionRefreshPromise
+}
+
+/**
  * 打开消息通知抽屉
  * <p>
  * 加载当前用户收到的消息列表，并打开抽屉显示
@@ -2714,6 +2772,11 @@ function onUserMenuClick(key: string) {
     messageSendOpen.value = true
     return
   }
+
+  if (key === 'refreshPermissions') {
+    void refreshMenuPermissions(true)
+    return
+  }
   
   if (key === 'resetPassword') {
     message.info(t('layout.user.resetPasswordNotReady'))
@@ -2959,6 +3022,29 @@ function openMessageNotification(m: SysMessageVO) {
   })
 }
 
+async function checkLicenseGracePeriod() {
+  try {
+    const status = await getLicenseStatus()
+    if (!status || (status.status !== 'GRACE' && status.status !== 'EXPIRING_SOON')) return
+    const noticeKey = `${status.status}:${status.expireAt || ''}`
+    if (sessionStorage.getItem(licenseGraceNoticeKey) === noticeKey) return
+    sessionStorage.setItem(licenseGraceNoticeKey, noticeKey)
+    const isChinese = String(locale.value).toLowerCase().startsWith('zh')
+    const inGrace = status.status === 'GRACE'
+    notification.warning({
+      key: 'fx-license-grace',
+      message: isChinese ? (inGrace ? '授权已进入宽限期' : '授权即将到期') : (inGrace ? 'License is in the grace period' : 'License is expiring soon'),
+      description: status.expireAt
+        ? (isChinese ? `到期时间：${status.expireAt}` : `Expires at: ${status.expireAt}`)
+        : (isChinese ? '请联系授权人续期' : 'Please contact the issuer for renewal'),
+      placement: 'bottomRight',
+      duration: 0,
+    })
+  } catch (_) {
+    // 授权状态检查失败不影响主业务页面加载。
+  }
+}
+
 async function handleMessageSend() {
   if (!messageSendForm.value.receiverUserId) {
     message.warning(t('layout.messageCenter.selectReceiverWarning'))
@@ -3072,6 +3158,10 @@ function confirmUserSelect() {
 const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessageVO>({
   url: '/api/sys/message/stream',
   onEvent: (name, data) => {
+    if (name === 'permission-changed') {
+      void refreshMenuPermissions(false)
+      return
+    }
     if (name !== 'message') return
     if ((data as any)?.category === 'SYSTEM_NOTICE_REFRESH') {
       window.dispatchEvent(new CustomEvent('fx:system-notice-refresh', { detail: data }))
@@ -3120,6 +3210,7 @@ onMounted(async () => {
     } catch (_) {}
 
     await refreshMessageCounts()
+    await checkLicenseGracePeriod()
 
     try {
       const normalUnread = await listUnreadMessages(10, 'MESSAGE')

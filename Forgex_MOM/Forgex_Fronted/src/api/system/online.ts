@@ -33,6 +33,6 @@ export function countOnlineUsers(body: any) {
  * @param body 请求体（token）
  * @returns 是否成功
  */
-export function kickoutOnlineUser(body: any, config?: any) {
+export function kickoutOnlineUser(body: { token: string; disableUser?: boolean }, config?: any) {
   return http.post('/sys/online/kickout', body, config)
 }

@@ -60,6 +60,16 @@ public sealed class LicensePayload
     public string IssuedAt { get; set; } = string.Empty;
 
     /// <summary>
+    /// 授权申请时间。
+    /// </summary>
+    public string RequestAt { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 授权人（签发人）。
+    /// </summary>
+    public string Issuer { get; set; } = string.Empty;
+
+    /// <summary>
     /// 生效时间。
     /// </summary>
     public string EffectiveAt { get; set; } = string.Empty;

@@ -7,7 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-const ROUTE_CACHE_VERSION = '20260619-factory-modeling-menu-v1'
+const ROUTE_CACHE_VERSION = '20260823-live-permission-refresh-v1'
 
 export const usePermissionStore = defineStore('permission', () => {
   const permissions = ref<string[]>([])

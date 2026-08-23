@@ -71,6 +71,7 @@ public class OnlineUserController {
     @PostMapping("/kickout")
     public R<Boolean> kickout(@RequestBody Map<String, Object> body) {
         String token = body == null ? null : (String) body.get("token");
-        return R.ok(CommonPrompt.STOP_SUCCESS, onlineUserService.kickout(token));
+        boolean disableUser = body != null && Boolean.parseBoolean(String.valueOf(body.getOrDefault("disableUser", false)));
+        return R.ok(CommonPrompt.STOP_SUCCESS, onlineUserService.kickout(token, disableUser));
     }
 }

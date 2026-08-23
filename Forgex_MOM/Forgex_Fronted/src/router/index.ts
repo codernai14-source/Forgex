@@ -172,6 +172,7 @@ const router = createRouter({
 let isRestoringRoutes = false
 let initializedRouteContext = ''
 const pendingRouteRestoreAttempts = new Map<string, number>()
+let dynamicRouteRefreshPromise: Promise<boolean> | null = null
 
 function buildRouteContext(account: string, tenantId: string) {
   return `${account}:${tenantId}`
@@ -353,6 +354,45 @@ const approvalWorkflowComponents: Record<string, () => Promise<any>> = {
   ApprovalMyCc: () => import('../views/workflow/myTask/myCc.vue'),
   ApprovalDelegateSettings: () => import('../views/workflow/myTask/delegateSettings.vue'),
   ApprovalCompensationCenter: () => import('../views/workflow/governance/compensation/index.vue'),
+}
+
+/**
+ * 重新获取当前会话的菜单、路由和按钮权限。
+ * <p>调用方可重复触发，进行中的请求会被共享，避免 SSE 连续事件造成并发重注入。</p>
+ *
+ * @param options 当前账号、租户及是否使用静默请求
+ * @returns 是否成功更新动态权限
+ */
+export async function refreshDynamicRoutes(options: {
+  account?: string
+  tenantId?: string
+  silent?: boolean
+} = {}): Promise<boolean> {
+  if (dynamicRouteRefreshPromise) {
+    return dynamicRouteRefreshPromise
+  }
+
+  const account = options.account || sessionStorage.getItem('account') || ''
+  const tenantId = options.tenantId || sessionStorage.getItem('tenantId') || ''
+  if (!account || !tenantId) {
+    return false
+  }
+
+  dynamicRouteRefreshPromise = (async () => {
+    const payload = await getRoutes({ account, tenantId }, { silent: options.silent === true })
+    if (!payload || !Array.isArray(payload.routes) || !Array.isArray(payload.modules)) {
+      return false
+    }
+
+    const permissionStore = usePermissionStore()
+    permissionStore.setPermissions(Array.isArray(payload.buttons) ? payload.buttons : [])
+    await injectDynamicRoutes(payload)
+    return true
+  })().finally(() => {
+    dynamicRouteRefreshPromise = null
+  })
+
+  return dynamicRouteRefreshPromise
 }
 
 const viewModules = import.meta.glob('../views/**/*.vue') as Record<string, () => Promise<any>>

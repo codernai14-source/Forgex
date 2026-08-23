@@ -42,6 +42,11 @@ public class LicensePayload {
     private String customerName;
 
     /**
+     * 授权人。
+     */
+    private String issuer;
+
+    /**
      * 机器码。
      */
     private String machineCode;
@@ -65,6 +70,12 @@ public class LicensePayload {
      * 签发时间。
      */
     private String issuedAt;
+
+    /**
+     * 授权申请时间。
+     */
+    private String requestAt;
+
 
     /**
      * 生效时间。

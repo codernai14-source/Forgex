@@ -5,6 +5,7 @@ import com.forgex.common.domain.config.PasswordPolicyConfig;
 import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
 import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.enums.FxExcelImportMode;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.domain.entity.SysUserTenant;
@@ -45,7 +46,8 @@ class SysUserImportProxyHandlerTest {
             userTenantMapper,
             mock(SysUserRoleMapper.class),
             mock(SysUserProfileMapper.class),
-            configService
+            configService,
+            mock(LicenseManager.class)
         );
         TenantContext.set(100L);
     }

@@ -19,6 +19,7 @@ import com.forgex.sys.domain.dto.RolePermissionDTO;
 import com.forgex.sys.domain.entity.SysRoleMenu;
 import com.forgex.sys.mapper.SysRoleMenuMapper;
 import com.forgex.sys.service.ISysRoleMenuService;
+import com.forgex.sys.service.PermissionChangeNotifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     implements ISysRoleMenuService {
 
     private final SysRoleMenuMapper roleMenuMapper;
+    private final PermissionChangeNotifier permissionChangeNotifier;
 
     /**
      * 查询角色拥有的菜单 ID 列表
@@ -83,7 +85,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Transactional(rollbackFor = Exception.class)
     public void grantPermission(RolePermissionDTO permissionDTO) {
         // 1. 先删除当前租户下该角色原有的菜单授权
-        deleteRolePermissions(permissionDTO.getRoleId(), permissionDTO.getTenantId());
+        deleteRolePermissionsInternal(permissionDTO.getRoleId(), permissionDTO.getTenantId());
 
         // 2. 再插入新的菜单授权，并对菜单 ID 做去重处理
         if (permissionDTO.getMenuIds() != null && !permissionDTO.getMenuIds().isEmpty()) {
@@ -99,6 +101,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 roleMenuMapper.insert(roleMenu);
             }
         }
+        permissionChangeNotifier.notifyAfterCommit(permissionDTO.getTenantId(), "role-menu-grant");
     }
 
     /**
@@ -110,6 +113,11 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRolePermissions(Long roleId, Long tenantId) {
+        deleteRolePermissionsInternal(roleId, tenantId);
+        permissionChangeNotifier.notifyAfterCommit(tenantId, "role-menu-delete");
+    }
+
+    private void deleteRolePermissionsInternal(Long roleId, Long tenantId) {
         LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRoleMenu::getRoleId, roleId);
         wrapper.eq(SysRoleMenu::getTenantId, tenantId);
