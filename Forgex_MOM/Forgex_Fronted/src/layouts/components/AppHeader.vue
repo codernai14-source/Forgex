@@ -81,6 +81,30 @@
             </template>
           </a-button>
         </a-badge>
+
+        <a-popover v-model:open="speechPopoverOpen" placement="bottomRight" trigger="click">
+          <template #content>
+            <div class="header-speech-popover">
+              <div class="header-speech-popover__title">{{ t('layout.speech.title') }}</div>
+              <div class="header-speech-popover__row">
+                <span>{{ t('layout.speech.enabled') }}</span>
+                <a-switch v-model:checked="speechEnabled" @change="onSpeechEnabledChange" />
+              </div>
+              <div class="header-speech-popover__hint">{{ t('layout.speech.hint') }}</div>
+            </div>
+          </template>
+          <a-button
+            type="text"
+            class="header-btn header-btn--icon fx-guide-speech-trigger"
+            :title="t('layout.speech.buttonTitle')"
+            @click="speechPopoverOpen = true"
+          >
+            <template #icon>
+              <SoundOutlined v-if="speechEnabled" />
+              <AudioMutedOutlined v-else />
+            </template>
+          </a-button>
+        </a-popover>
       </div>
 
       <span class="header-actions-divider" role="presentation" aria-hidden="true" />
@@ -280,7 +304,9 @@ import {
   MailOutlined,
   LogoutOutlined,
   AppstoreOutlined,
-  AndroidOutlined
+  AndroidOutlined,
+  SoundOutlined,
+  AudioMutedOutlined,
 } from '@ant-design/icons-vue'
 import { getUnreadMessageCount } from '../../api/message'
 import { listEnabledLanguages, type LanguageType } from '../../api/system/i18n'
@@ -289,6 +315,7 @@ import type { LocaleCode } from '../../locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 import { normalizeMediaUrl } from '@/utils/media'
 import QRCode from 'qrcode/lib/browser'
+import { getSpeechEnabled, setSpeechEnabled } from '@/utils/messageSpeech'
 
 const { t } = useI18n()
 
@@ -405,6 +432,13 @@ const qrCodeDataUrl = ref('')
 
 // 未读消息数量
 const unreadCount = ref(0)
+const speechEnabled = ref(getSpeechEnabled())
+const speechPopoverOpen = ref(false)
+
+function onSpeechEnabledChange(value: boolean) {
+  speechEnabled.value = value
+  setSpeechEnabled(value)
+}
 
 // 定时器
 let unreadCountTimer: any = null

@@ -15,12 +15,14 @@ import { getIcon, isIconifyName } from '@/utils/icon'
 interface Props {
   name?: string
   size?: number | string
+  color?: string
   fallback?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   name: '',
   size: 16,
+  color: '',
   fallback: true,
 })
 
@@ -44,6 +46,7 @@ const iconStyle = computed(() => {
     width: size,
     height: size,
     lineHeight: size,
+    color: props.color || undefined,
     display: shouldRender.value ? 'inline-flex' : 'none',
   }
 })

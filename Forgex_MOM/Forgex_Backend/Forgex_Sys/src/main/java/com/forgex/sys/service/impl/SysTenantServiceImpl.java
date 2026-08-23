@@ -13,25 +13,39 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.sys.service.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+import com.baomidou.dynamic.datasource.tx.TransactionContext;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.enums.TenantTypeEnum;
+import com.forgex.common.service.TemplateMessageService;
+import com.forgex.common.tenant.TenantContext;
+import com.forgex.sys.domain.dto.tenant.TenantInitResult;
 import com.forgex.sys.domain.dto.tenant.SysTenantDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantQueryDTO;
 import com.forgex.sys.domain.dto.tenant.SysTenantSaveParam;
 import com.forgex.sys.domain.dto.TenantHierarchyDTO;
 import com.forgex.sys.domain.entity.SysTenant;
+import com.forgex.sys.domain.entity.SysRole;
+import com.forgex.sys.domain.entity.SysUser;
+import com.forgex.sys.domain.entity.SysUserRole;
 import com.forgex.sys.mapper.SysTenantMapper;
+import com.forgex.sys.mapper.SysRoleMapper;
+import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.SysTenantService;
 import com.forgex.sys.service.ITenantInitService;
+import com.forgex.sys.service.tenant.TenantHierarchyValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -51,8 +65,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysTenantServiceImpl implements SysTenantService {
 
+    private static final String TENANT_CREATED_TEMPLATE_CODE = "SYS_TENANT_CREATED";
+
     private final SysTenantMapper tenantMapper;
     private final ITenantInitService tenantInitService;
+    private final SysRoleMapper roleMapper;
+    private final SysUserRoleMapper userRoleMapper;
+    private final SysUserMapper userMapper;
+    private final TemplateMessageService templateMessageService;
 
     /**
      * 查询数据列表。
@@ -181,9 +201,9 @@ public class SysTenantServiceImpl implements SysTenantService {
      *
      * @param param 请求参数
      * @return 数据主键 ID
-     */
+    */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public Long create(SysTenantSaveParam param) {
         // 检查租户编码是否重复
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
@@ -194,6 +214,8 @@ public class SysTenantServiceImpl implements SysTenantService {
         if (count > 0) {
             throw new RuntimeException("租户编码已存在");
         }
+
+        SysTenant parentTenant = validateHierarchy(param.getTenantType(), param.getParentTenantId());
 
         // 如果是主租户，检查系统中是否已存在主租户
         if (TenantTypeEnum.MAIN_TENANT.equals(param.getTenantType())) {
@@ -222,7 +244,11 @@ public class SysTenantServiceImpl implements SysTenantService {
                 tenant.getId(), tenant.getTenantName(), tenant.getTenantType());
 
         // 初始化租户数据（模块、菜单、角色、用户）
-        tenantInitService.initTenant(tenant.getId(), tenant.getTenantName(), tenant.getTenantCode(), param.getTenantType());
+        TenantInitResult initResult = tenantInitService.initTenant(
+                tenant.getId(), tenant.getTenantName(), tenant.getTenantCode(), param.getTenantType());
+        if (parentTenant != null) {
+            scheduleParentAdministratorNotification(parentTenant, tenant, initResult);
+        }
 
         return tenant.getId();
     }
@@ -245,6 +271,12 @@ public class SysTenantServiceImpl implements SysTenantService {
         if (existTenant == null || existTenant.getDeleted()) {
             throw new RuntimeException("租户不存在");
         }
+
+        Long parentTenantId = TenantTypeEnum.MAIN_TENANT.equals(param.getTenantType())
+                ? null
+                : (param.getParentTenantId() != null ? param.getParentTenantId() : existTenant.getParentTenantId());
+        validateHierarchy(param.getTenantType(), parentTenantId);
+        param.setParentTenantId(parentTenantId);
 
         // 检查租户编码是否重复（排除自己）
         LambdaQueryWrapper<SysTenant> wrapper = new LambdaQueryWrapper<>();
@@ -427,5 +459,110 @@ public class SysTenantServiceImpl implements SysTenantService {
         }
 
         return dto;
+    }
+
+    /**
+     * 校验父租户规则并返回有效的父租户。
+     *
+     * @param tenantType 租户类型
+     * @param parentTenantId 父租户 ID
+     * @return 主租户实体，主租户自身无父级时返回 null
+     */
+    private SysTenant validateHierarchy(TenantTypeEnum tenantType, Long parentTenantId) {
+        SysTenant parentTenant = parentTenantId == null ? null : tenantMapper.selectById(parentTenantId);
+        boolean parentIsMainTenant = parentTenant != null
+                && !Boolean.TRUE.equals(parentTenant.getDeleted())
+                && TenantTypeEnum.MAIN_TENANT.equals(parentTenant.getTenantType());
+        TenantHierarchyValidator.validate(tenantType, parentTenantId, parentIsMainTenant);
+        return parentTenant;
+    }
+
+    /**
+     * 使用消息模板向父租户管理员发送新租户初始凭据。
+     *
+     * @param parentTenant 父租户
+     * @param tenant 新建租户
+     * @param initResult 初始化结果
+     */
+    private void scheduleParentAdministratorNotification(
+            SysTenant parentTenant, SysTenant tenant, TenantInitResult initResult) {
+        if (TransactionContext.getXID() == null) {
+            notifyParentAdministrators(parentTenant, tenant, initResult);
+            return;
+        }
+        TransactionContext.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    notifyParentAdministrators(parentTenant, tenant, initResult);
+                } catch (Exception e) {
+                    log.error("租户已创建，但父租户管理员通知发送失败，tenantId={}，parentTenantId={}",
+                            tenant.getId(), parentTenant.getId(), e);
+                }
+            }
+        });
+    }
+
+    /**
+     * 在父租户上下文中发送新租户初始凭据。
+     */
+    private void notifyParentAdministrators(SysTenant parentTenant, SysTenant tenant, TenantInitResult initResult) {
+        Long previousTenantId = TenantContext.get();
+        try {
+            TenantContext.set(parentTenant.getId());
+            List<Long> administratorUserIds = listAdministratorUserIds(parentTenant.getId());
+            if (administratorUserIds.isEmpty()) {
+                throw new IllegalStateException("父租户未配置可用的管理员账号");
+            }
+            int sentCount = templateMessageService.sendByTemplate(
+                    TENANT_CREATED_TEMPLATE_CODE,
+                    administratorUserIds,
+                    Map.of(
+                            "tenantName", tenant.getTenantName(),
+                            "tenantCode", tenant.getTenantCode(),
+                            "administratorAccount", initResult.getAdministratorAccount(),
+                            "initialPassword", initResult.getInitialPassword()),
+                    "TENANT_CREATED");
+            if (sentCount < administratorUserIds.size()) {
+                throw new IllegalStateException("租户创建通知发送失败");
+            }
+        } finally {
+            if (previousTenantId == null) {
+                TenantContext.clear();
+            } else {
+                TenantContext.set(previousTenantId);
+            }
+        }
+    }
+
+    private List<Long> listAdministratorUserIds(Long tenantId) {
+        List<Long> roleIds = roleMapper.selectList(new LambdaQueryWrapper<SysRole>()
+                        .eq(SysRole::getTenantId, tenantId)
+                        .eq(SysRole::getRoleKey, "admin")
+                        .eq(SysRole::getStatus, true)
+                        .eq(SysRole::getDeleted, false))
+                .stream()
+                .map(SysRole::getId)
+                .toList();
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> userIds = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getTenantId, tenantId)
+                        .in(SysUserRole::getRoleId, roleIds))
+                .stream()
+                .map(SysUserRole::getUserId)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                        .in(SysUser::getId, userIds)
+                        .eq(SysUser::getStatus, true)
+                        .eq(SysUser::getDeleted, false))
+                .stream()
+                .map(SysUser::getId)
+                .toList();
     }
 }

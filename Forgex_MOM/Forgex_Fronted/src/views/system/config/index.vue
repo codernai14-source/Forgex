@@ -27,6 +27,24 @@
               </div>
             </a-form-item>
 
+            <a-form-item :label="t('system.config.browserTitle')" name="browserTitle">
+              <a-input
+                v-model:value="basicConfig.browserTitle"
+                :placeholder="t('system.config.browserTitlePlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.browserIcon')" name="browserIcon">
+              <div class="system-logo-upload">
+                <AvatarUpload
+                  v-model="basicConfig.browserIcon"
+                  module-code="sys_config_browser_icon"
+                  :module-name="t('system.config.browserIcon')"
+                  @success="handleBrowserIconUploadSuccess"
+                />
+              </div>
+            </a-form-item>
+
             <a-form-item :label="t('system.config.systemVersion')" name="systemVersion">
               <a-input
                 v-model:value="basicConfig.systemVersion"
@@ -1188,6 +1206,7 @@ function normalizeSystemBasicMedia(config: SystemBasicConfig): SystemBasicConfig
   return {
     ...config,
     systemLogo: normalizeConfigMediaUrl(config.systemLogo),
+    browserIcon: normalizeConfigMediaUrl(config.browserIcon),
     loginBackgroundImage: normalizeConfigMediaUrl(config.loginBackgroundImage),
     loginBackgroundVideo: normalizeConfigMediaUrl(config.loginBackgroundVideo),
   }
@@ -1455,6 +1474,8 @@ function resetSystemConfig() {
     ...basicConfig.value,
     systemName: defaults.systemName,
     systemLogo: defaults.systemLogo,
+    browserTitle: defaults.browserTitle,
+    browserIcon: defaults.browserIcon,
     systemVersion: defaults.systemVersion,
     copyright: defaults.copyright,
     copyrightLink: defaults.copyrightLink,
@@ -1745,6 +1766,11 @@ async function handleBgImageUpload(options: any) {
 
 function handleLogoUploadSuccess(url?: string) {
   basicConfig.value.systemLogo = normalizeConfigMediaUrl(url || basicConfig.value.systemLogo)
+  message.success(t('common.uploadSuccess'))
+}
+
+function handleBrowserIconUploadSuccess(url?: string) {
+  basicConfig.value.browserIcon = normalizeConfigMediaUrl(url || basicConfig.value.browserIcon)
   message.success(t('common.uploadSuccess'))
 }
 

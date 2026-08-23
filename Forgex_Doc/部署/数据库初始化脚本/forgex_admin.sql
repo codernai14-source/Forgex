@@ -4450,4 +4450,33 @@ INSERT INTO `sys_user_tenant` VALUES (3, 1, 3, 4, 1, '2026-05-16 20:33:05');
 INSERT INTO `sys_user_tenant` VALUES (2, 2, 2, 2, 1, '2026-05-12 23:30:12');
 INSERT INTO `sys_user_tenant` VALUES (1, 1, 1, 291, 0, '2026-05-17 19:32:42');
 
+-- Tenant hierarchy and tenant-created credential message template (2026-08-19)
+UPDATE `sys_tenant` child_tenant
+JOIN (SELECT `id` FROM `sys_tenant` WHERE `tenant_type` = 'MAIN_TENANT' AND `deleted` = 0 ORDER BY `id` LIMIT 1) main_tenant
+SET child_tenant.`parent_tenant_id` = main_tenant.`id`
+WHERE child_tenant.`tenant_type` <> 'MAIN_TENANT' AND child_tenant.`deleted` = 0;
+
+INSERT INTO `sys_message_template` (
+  `tenant_id`, `template_code`, `template_name`, `template_name_i18n_json`, `template_version`,
+  `message_type`, `biz_type`, `notification_type`, `config_level`, `tenant_type`, `category`,
+  `status`, `remark`, `create_time`, `update_time`, `deleted`, `create_by`, `update_by`
+)
+SELECT `id`, 'SYS_TENANT_CREATED', '租户创建凭据通知',
+  '{"zh-CN":"租户创建凭据通知","en-US":"Tenant Credentials"}', '1.0.0',
+  'NOTICE', 'TENANT_CREATED', 'success', 'TENANT', 'MAIN_TENANT', 'SYSTEM', 1,
+  '新租户初始化成功后通知父租户管理员', NOW(), NOW(), 0, 'system', 'system'
+FROM `sys_tenant`
+WHERE `tenant_type` = 'MAIN_TENANT' AND `deleted` = 0;
+
+INSERT INTO `sys_message_template_content` (
+  `tenant_id`, `template_id`, `platform`, `content_title`, `content_title_i18n_json`,
+  `content_body`, `content_body_i18n_json`, `link_url`, `create_time`, `update_time`,
+  `deleted`, `create_by`, `update_by`
+)
+SELECT template.`tenant_id`, template.`id`, 'INTERNAL', '【租户创建成功】${tenantName}', NULL,
+  '租户编码：${tenantCode}\n管理员账号：${administratorAccount}\n初始密码：${initialPassword}\n请首次登录后立即修改密码。',
+  NULL, '/workspace/sys/tenant', NOW(), NOW(), 0, 'system', 'system'
+FROM `sys_message_template` template
+WHERE template.`template_code` = 'SYS_TENANT_CREATED' AND template.`deleted` = 0;
+
 SET FOREIGN_KEY_CHECKS = 1;

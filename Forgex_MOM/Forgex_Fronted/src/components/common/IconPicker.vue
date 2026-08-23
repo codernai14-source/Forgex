@@ -30,6 +30,19 @@
         :placeholder="resolvedSearchPlaceholder"
         style="margin-bottom: 12px"
       />
+      <a-space class="fx-icon-picker-controls" wrap>
+        <label class="fx-icon-picker-control">
+          <span>{{ t('common.iconPicker.color') }}</span>
+          <a-input v-model:value="iconColor" type="color" />
+        </label>
+        <label class="fx-icon-picker-control fx-icon-picker-control--size">
+          <span>{{ t('common.iconPicker.size') }}</span>
+          <a-input-number v-model:value="iconSize" :min="12" :max="64" />
+        </label>
+        <span class="fx-icon-picker-preview">
+          <FxIcon :name="innerValue" :size="iconSize" :color="iconColor" />
+        </span>
+      </a-space>
       <div class="fx-icon-picker-grid">
         <div
           v-for="item in filteredIcons"
@@ -38,7 +51,7 @@
           :class="{ active: item.name === innerValue }"
           @click="select(item.name)"
         >
-          <FxIcon :name="item.name" :size="22" />
+          <FxIcon :name="item.name" :size="iconSize" :color="iconColor" />
           <span class="lbl">{{ item.name }}</span>
         </div>
       </div>
@@ -72,13 +85,17 @@ const props = withDefaults(
     searchPlaceholder?: string
     /** 输入框最大长度，默认为 100 */
     maxlength?: number
+    iconColor?: string
+    iconSize?: number
   }>(),
   {
     value: '',
     placeholder: '',
     title: '',
     searchPlaceholder: '',
-    maxlength: 100
+    maxlength: 100,
+    iconColor: '#1677ff',
+    iconSize: 22,
   }
 )
 
@@ -89,11 +106,15 @@ const emit = defineEmits<{
    * @param v 新的图标名，如果为空则返回 undefined
    */
   (e: 'update:value', v: string | undefined): void
+  (e: 'update:iconColor', v: string): void
+  (e: 'update:iconSize', v: number): void
 }>()
 
 const open = ref(false)
 const keyword = ref('')
 const innerValue = ref(props.value || '')
+const iconColor = ref(props.iconColor)
+const iconSize = ref(props.iconSize)
 const { t } = useI18n()
 const resolvedTitle = computed(() => props.title || t('common.iconPicker.title'))
 const resolvedSearchPlaceholder = computed(() => props.searchPlaceholder || t('common.iconPicker.searchPlaceholder'))
@@ -104,6 +125,17 @@ watch(
     innerValue.value = v || ''
   }
 )
+
+watch(() => props.iconColor, value => {
+  iconColor.value = value || '#1677ff'
+})
+
+watch(() => props.iconSize, value => {
+  iconSize.value = value || 22
+})
+
+watch(iconColor, value => emit('update:iconColor', value))
+watch(iconSize, value => emit('update:iconSize', Number(value || 22)))
 
 /** 排除非图标导出 */
 const antIconNames = computed(() => {

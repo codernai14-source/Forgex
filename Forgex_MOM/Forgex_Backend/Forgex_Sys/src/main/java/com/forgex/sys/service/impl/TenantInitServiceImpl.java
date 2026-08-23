@@ -29,6 +29,7 @@ import com.forgex.sys.domain.entity.SysUserTenant;
 import com.forgex.sys.domain.entity.SysTenant;
 import com.forgex.sys.domain.entity.SysTenantInitTask;
 import com.forgex.sys.domain.entity.SysTenantMenuCopyRule;
+import com.forgex.sys.domain.dto.tenant.TenantInitResult;
 import com.forgex.sys.mapper.SysMenuMapper;
 import com.forgex.sys.mapper.SysModuleMapper;
 import com.forgex.sys.mapper.SysRoleMapper;
@@ -40,14 +41,11 @@ import com.forgex.sys.mapper.SysTenantMapper;
 import com.forgex.sys.mapper.SysTenantMenuCopyRuleMapper;
 import com.forgex.sys.mapper.SysTenantInitTaskMapper;
 import com.forgex.sys.service.ITenantInitService;
-import com.forgex.sys.service.SsePushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DataAccessException;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -56,13 +54,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Collections;
-import java.util.concurrent.Executor;
 
 /**
- * 租户初始化服务实现类（异步版本）
+ * 租户初始化服务实现类
  * <p>
- * 提供租户异步初始化的业务逻辑实现，用于在新增租户时自动初始化模块、菜单、角色、用户等基础数据。
- * 支持 SSE 实时进度推送，前端可查看初始化进度。
+ * 提供租户同步初始化的业务逻辑实现，用于在新增租户时自动初始化模块、菜单、角色、用户等基础数据。
+ * 初始化与租户创建共用事务，任一步骤失败时整体回滚。
  * </p>
  * <p>
  * <strong>业务规则：</strong>
@@ -93,14 +90,11 @@ public class TenantInitServiceImpl implements ITenantInitService {
     private final SysTenantMapper tenantMapper;
     private final SysTenantMenuCopyRuleMapper tenantMenuCopyRuleMapper;
     private final SysTenantInitTaskMapper tenantInitTaskMapper;
-    private final SsePushService ssePushService;
-    private final Executor tenantInitExecutor;
     private final ConfigService configService;
 
     @Override
-    @Async("tenantInitExecutor")
-    public void initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType) {
-        log.info("开始异步初始化租户，租户 ID：{}，租户名称：{}，租户类型：{}", tenantId, tenantName, tenantType);
+    public TenantInitResult initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType) {
+        log.info("开始初始化租户，租户 ID：{}，租户名称：{}，租户类型：{}", tenantId, tenantName, tenantType);
 
         // 创建初始化任务
         SysTenantInitTask task = new SysTenantInitTask();
@@ -123,10 +117,16 @@ public class TenantInitServiceImpl implements ITenantInitService {
             // 1. 复制系统模块（进度 10%）
             updateTaskProgress(task, 10, "正在复制系统模块...");
             Long moduleId = copyModuleToTenant(tenantId);
+            if (moduleId == null && !TenantTypeEnum.MAIN_TENANT.equals(tenantType)) {
+                throw new IllegalStateException("未找到主租户系统模块");
+            }
 
             // 2. 复制菜单（进度 30%）
             updateTaskProgress(task, 30, "正在复制菜单权限...");
             List<Long> menuIds = copyMenusToTenant(tenantId, moduleId, tenantType);
+            if (menuIds.isEmpty() && !TenantTypeEnum.MAIN_TENANT.equals(tenantType)) {
+                throw new IllegalStateException("未找到可复制的系统菜单");
+            }
 
             // 3. 创建管理员角色（进度 40%）
             updateTaskProgress(task, 40, "正在创建管理员角色...");
@@ -135,12 +135,15 @@ public class TenantInitServiceImpl implements ITenantInitService {
             // 4. 创建管理员账号（进度 50%）
             updateTaskProgress(task, 50, "正在创建管理员账号...");
             Long userId;
+            String administratorAccount;
+            String initialPassword = resolveDefaultPassword();
             if (TenantTypeEnum.MAIN_TENANT.equals(tenantType)) {
-                userId = createAdminUser(tenantId, tenantName, "admin");
+                administratorAccount = "admin";
+                userId = createAdminUser(tenantId, tenantName, administratorAccount, initialPassword);
             } else {
                 // 根据租户 ID 和编码生成唯一账号
-                String dynamicAccount = generateDynamicAccount(tenantId, tenantCode);
-                userId = createAdministratorUser(tenantId, tenantName, dynamicAccount);
+                administratorAccount = generateDynamicAccount(tenantId, tenantCode);
+                userId = createAdministratorUser(tenantId, tenantName, administratorAccount, initialPassword);
             }
 
             // 5. 绑定用户角色（进度 60%）
@@ -158,10 +161,8 @@ public class TenantInitServiceImpl implements ITenantInitService {
             task.setEndTime(LocalDateTime.now());
             tenantInitTaskMapper.updateById(task);
 
-            // 推送成功消息
-            ssePushService.pushComplete(taskId, true, "租户初始化成功");
-
             log.info("租户初始化成功，租户 ID：{}，任务 ID：{}", tenantId, taskId);
+            return new TenantInitResult(userId, administratorAccount, initialPassword);
 
         } catch (Exception e) {
             log.error("租户初始化失败，租户 ID：{}，任务 ID：{}", tenantId, taskId, e);
@@ -170,8 +171,7 @@ public class TenantInitServiceImpl implements ITenantInitService {
             task.setEndTime(LocalDateTime.now());
             tenantInitTaskMapper.updateById(task);
 
-            // 推送失败消息
-            ssePushService.pushComplete(taskId, false, "初始化失败：" + e.getMessage());
+            throw new IllegalStateException("租户初始化失败：" + e.getMessage(), e);
         }
     }
 
@@ -183,8 +183,6 @@ public class TenantInitServiceImpl implements ITenantInitService {
         task.setCurrentStep(currentStep);
         tenantInitTaskMapper.updateById(task);
 
-        // 推送进度到前端
-        ssePushService.pushProgress(task.getId().toString(), progress, currentStep);
     }
 
     /**
@@ -466,11 +464,11 @@ public class TenantInitServiceImpl implements ITenantInitService {
     /**
      * 创建 admin 用户（主租户专用）
      */
-    private Long createAdminUser(Long tenantId, String tenantName, String account) {
+    private Long createAdminUser(Long tenantId, String tenantName, String account, String initialPassword) {
         SysUser user = new SysUser();
         user.setAccount(account);
         user.setUsername("系统管理员");
-        user.setPassword(encryptDefaultPassword());
+        user.setPassword(encryptPassword(initialPassword));
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
@@ -484,11 +482,11 @@ public class TenantInitServiceImpl implements ITenantInitService {
     /**
      * 创建 administrator 用户（其它租户专用）
      */
-    private Long createAdministratorUser(Long tenantId, String tenantName, String account) {
+    private Long createAdministratorUser(Long tenantId, String tenantName, String account, String initialPassword) {
         SysUser user = new SysUser();
         user.setAccount(account);
         user.setUsername("系统管理员");
-        user.setPassword(encryptDefaultPassword());
+        user.setPassword(encryptPassword(initialPassword));
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
@@ -552,12 +550,16 @@ public class TenantInitServiceImpl implements ITenantInitService {
         log.info("绑定角色到菜单，角色 ID：{}，菜单数量：{}，租户 ID：{}", roleId, menuIds.size(), tenantId);
     }
 
-    private String encryptDefaultPassword() {
+    private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, null);
-        String store = policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
-        String defaultPassword = policy == null || !StringUtils.hasText(policy.getDefaultPassword())
+        return policy == null || !StringUtils.hasText(policy.getDefaultPassword())
             ? "Aa123456"
             : policy.getDefaultPassword();
+    }
+
+    private String encryptPassword(String defaultPassword) {
+        PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, null);
+        String store = policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
         CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
         if (provider.supportsEncrypt()) {
             return provider.encrypt(defaultPassword);

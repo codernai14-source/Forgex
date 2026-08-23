@@ -562,7 +562,13 @@ public class SysConfigController {
 
     private SystemBasicConfig normalizeSystemBasicConfig(SystemBasicConfig source) {
         SystemBasicConfig config = source == null ? SystemBasicConfig.defaults() : source;
+        if (!org.springframework.util.StringUtils.hasText(config.getBrowserTitle())) {
+            config.setBrowserTitle(config.getSystemName());
+        } else {
+            config.setBrowserTitle(config.getBrowserTitle().trim());
+        }
         config.setSystemLogo(normalizeConfigMediaUrl(config.getSystemLogo()));
+        config.setBrowserIcon(normalizeConfigMediaUrl(config.getBrowserIcon()));
         config.setLoginBackgroundImage(normalizeConfigMediaUrl(config.getLoginBackgroundImage()));
         config.setLoginBackgroundVideo(normalizeConfigMediaUrl(config.getLoginBackgroundVideo()));
         return config;

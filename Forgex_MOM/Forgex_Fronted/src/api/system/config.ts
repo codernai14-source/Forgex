@@ -7,6 +7,8 @@ export type LoginLayout = 'center' | 'split' | 'compact'
 export interface SystemBasicConfig {
   systemName: string
   systemLogo: string
+  browserTitle: string
+  browserIcon: string
   systemVersion: string
   copyright: string
   copyrightLink: string
@@ -114,6 +116,8 @@ export function createDefaultSystemBasicConfig(): SystemBasicConfig {
   return {
     systemName: 'FORGEX_MOM',
     systemLogo: '',
+    browserTitle: 'FORGEX_MOM',
+    browserIcon: '',
     systemVersion: '1.0.0',
     copyright: '© 2025 FORGEX_MOM',
     copyrightLink: '#',

@@ -256,6 +256,8 @@ export default {
   iconPicker: {
     title: '选择图标',
     searchPlaceholder: '搜索图标名称',
+    color: '颜色',
+    size: '大小',
   },
   tagStyle: {
     color: '标签颜色',

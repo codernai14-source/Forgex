@@ -174,6 +174,7 @@ public class SysTenantController {
         saveParam.setLogo(param.getLogo());
         saveParam.setTenantType(param.getTenantType());
         saveParam.setStatus(param.getStatus());
+        saveParam.setParentTenantId(param.getParentTenantId());
         return R.ok(tenantService.create(saveParam));
     }
 

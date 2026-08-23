@@ -12,6 +12,74 @@
   display: inline-block;
 }
 
+.tenant-form {
+  width: 100%;
+}
+
+.form-section {
+  padding: 0 0 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+}
+
+.form-section--last {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+.form-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 14px;
+  color: var(--ant-color-text-heading, rgba(0, 0, 0, 0.88));
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-section__title :deep(.anticon) {
+  color: var(--ant-color-primary, #1677ff);
+  font-size: 16px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0 20px;
+}
+
+.form-grid--two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.form-grid--brand {
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr);
+  align-items: start;
+}
+
+.tenant-form :deep(.ant-form-item) {
+  margin-bottom: 16px;
+}
+
+.tenant-form :deep(.ant-input),
+.tenant-form :deep(.ant-input-affix-wrapper),
+.tenant-form :deep(.ant-select-selector) {
+  min-height: 38px;
+}
+
+.status-field :deep(.ant-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.status-field :deep(.ant-radio-button-wrapper) {
+  flex: 1;
+  min-height: 38px;
+  line-height: 36px;
+  text-align: center;
+}
+
 .tenant-logo-upload :deep(.avatar-upload) {
   align-items: flex-start;
 }
@@ -33,4 +101,11 @@
 .tenant-logo-upload :deep(.avatar-upload .upload-tips) {
   margin-top: 8px;
   text-align: left;
+}
+
+@media (max-width: 640px) {
+  .form-grid--two,
+  .form-grid--brand {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

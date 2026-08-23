@@ -6,6 +6,40 @@
   overflow: auto;
 }
 
+.fx-icon-picker-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.fx-icon-picker-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 12px;
+}
+
+.fx-icon-picker-control input[type='color'] {
+  width: 32px;
+  height: 28px;
+  padding: 2px;
+}
+
+.fx-icon-picker-control--size :deep(.ant-input-number) {
+  width: 82px;
+}
+
+.fx-icon-picker-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
 .fx-icon-picker-item {
   display: flex;
   flex-direction: column;

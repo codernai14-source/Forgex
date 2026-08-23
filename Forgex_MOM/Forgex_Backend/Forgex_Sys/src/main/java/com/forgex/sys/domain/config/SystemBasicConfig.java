@@ -41,6 +41,18 @@ public class SystemBasicConfig {
      * 格式：Base64编码字符串或URL路径
      */
     private String systemLogo = "";
+
+    /**
+     * 浏览器标签标题。
+     * 用途：显示在浏览器标签和页面标题栏。
+     */
+    private String browserTitle = "FORGEX_MOM";
+
+    /**
+     * 浏览器标签图标。
+     * 格式：Base64 编码字符串或 URL 路径。
+     */
+    private String browserIcon = "";
     
     /**
      * 系统版本

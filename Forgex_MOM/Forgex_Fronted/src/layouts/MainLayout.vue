@@ -607,6 +607,7 @@ import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
 import { normalizeMediaUrl } from '../utils/media'
+import { applySiteBranding } from '../utils/siteBranding'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
@@ -1211,6 +1212,8 @@ const antdLocale = computed(() => {
 const systemConfig = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
   systemLogo: '',
+  browserTitle: 'FORGEX_MOM',
+  browserIcon: '',
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
@@ -1234,6 +1237,17 @@ function formatMediaUrl(value: string): string {
 
 const headerLogo = computed(() => formatMediaUrl(systemConfig.value.systemLogo))
 const headerTitle = computed(() => String(systemConfig.value.systemName || 'Forgex MOM'))
+
+watch(
+  () => [systemConfig.value.browserTitle, systemConfig.value.browserIcon, systemConfig.value.systemName],
+  () => {
+    applySiteBranding({
+      title: systemConfig.value.browserTitle || systemConfig.value.systemName,
+      icon: formatMediaUrl(systemConfig.value.browserIcon),
+    })
+  },
+  { immediate: true },
+)
 
 locale.value = currentLocale.value as any
 

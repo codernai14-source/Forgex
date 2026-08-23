@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.sys.service;
 
 import com.forgex.common.enums.TenantTypeEnum;
+import com.forgex.sys.domain.dto.tenant.TenantInitResult;
 
 /**
  * 租户初始化服务接口
@@ -48,7 +49,10 @@ public interface ITenantInitService {
      * 
      * @param tenantId 租户ID
      * @param tenantName 租户名称
+     * @param tenantCode 租户编码
      * @param tenantType 租户类型
+     * @return 初始化生成的管理员账号及初始密码
+     * @throws IllegalStateException 初始化任一步骤失败时抛出
      */
-    void initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType);
+    TenantInitResult initTenant(Long tenantId, String tenantName, String tenantCode, TenantTypeEnum tenantType);
 }

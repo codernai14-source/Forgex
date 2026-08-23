@@ -19,6 +19,12 @@ export default {
   langZhCn: '简体中文',
   langEnUs: 'English',
   search: '搜索',
+  speech: {
+    title: '消息语音播报',
+    enabled: '自动播报新消息',
+    buttonTitle: '消息语音播报设置',
+    hint: '播报消息标题、内容，并提醒及时处理。',
+  },
   refresh: '刷新',
   loading: {
     thinking: 'Forgex正在加载您所需的内容',

@@ -237,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -260,6 +260,7 @@ import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 import { normalizeMediaUrl } from '@/utils/media'
+import { applySiteBranding } from '@/utils/siteBranding'
 
 /**
  * 后端返回的滑块验证码数据结构。
@@ -331,6 +332,8 @@ const selectedLang = ref<string>(getLocale())
 const systemConfig = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
   systemLogo: '',
+  browserTitle: 'FORGEX_MOM',
+  browserIcon: '',
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
@@ -350,6 +353,15 @@ const systemConfig = ref<SystemBasicConfig>({
 })
 
 const showRegisterEntry = computed(() => systemConfig.value.showRegisterEntry !== false)
+
+watch(
+  () => [systemConfig.value.browserTitle, systemConfig.value.browserIcon, systemConfig.value.systemName],
+  () => applySiteBranding({
+    title: systemConfig.value.browserTitle || systemConfig.value.systemName,
+    icon: resolveMediaUrl(systemConfig.value.browserIcon),
+  }),
+  { immediate: true },
+)
 
 const currentLanguageLabel = computed(() => {
   return getLanguageDisplayName(languages.value.find(l => l.langCode === selectedLang.value))

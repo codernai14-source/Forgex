@@ -266,6 +266,8 @@ export default {
   iconPicker: {
     title: 'Select Icon',
     searchPlaceholder: 'Search icon name',
+    color: 'Color',
+    size: 'Size',
   },
   tagStyle: {
     color: 'Tag Color',

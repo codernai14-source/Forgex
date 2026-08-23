@@ -18,6 +18,7 @@ import { notification } from 'ant-design-vue'
 import { useSseStore } from '@/stores/sse'
 import { useRouter } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
+import { speakMessage } from '@/utils/messageSpeech'
 
 const router = useRouter()
 const sseStore = useSseStore()
@@ -27,6 +28,30 @@ const sseStore = useSseStore()
  * @description 用于组件卸载时取消 SSE 消息订阅
  */
 let unsubscribe: (() => void) | null = null
+const handledMessageKeys = new Set<string>()
+
+function handleIncomingMessage(message: any, shouldNotify = true) {
+  if (!message || typeof message !== 'object') return
+
+  const key = String(message?.id || `${message?.title || ''}:${message?.content || ''}`).trim()
+  if (key && handledMessageKeys.has(key)) return
+  if (key) {
+    handledMessageKeys.add(key)
+    if (handledMessageKeys.size > 100) {
+      handledMessageKeys.delete(handledMessageKeys.values().next().value as string)
+    }
+  }
+  if (shouldNotify) {
+    showNotification(message)
+  }
+  speakMessage(message)
+}
+
+function handleMessageReceivedEvent(event: Event) {
+  const detail = (event as CustomEvent<any>).detail
+  if (!detail || typeof detail !== 'object') return
+  handleIncomingMessage(detail, false)
+}
 
 /**
  * 图标类型映射
@@ -50,8 +75,9 @@ const iconMap: Record<string, 'success' | 'info' | 'warning' | 'error'> = {
 onMounted(() => {
   // 订阅 message 类型消息，并保存取消订阅函数
   unsubscribe = sseStore.subscribe('message', (message: any) => {
-    showNotification(message)
+    handleIncomingMessage(message)
   })
+  window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
 })
 
 /**
@@ -63,6 +89,7 @@ onUnmounted(() => {
     unsubscribe()
     unsubscribe = null
   }
+  window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
 })
 
 /**
@@ -71,6 +98,7 @@ onUnmounted(() => {
  */
 const showNotification = (message: any) => {
   const { messageType, title, content, linkUrl } = message
+  if (!title && !content) return
   
   // 根据消息类型映射图标
   const icon = iconMap[messageType] || 'info'
