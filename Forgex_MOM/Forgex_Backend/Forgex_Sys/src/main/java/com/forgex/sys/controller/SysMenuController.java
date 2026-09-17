@@ -684,6 +684,7 @@ public class SysMenuController {
      * @see com.forgex.sys.service.ISysMenuService#addMenu(SysMenuDTO)
      * @see com.forgex.sys.validator.MenuValidator#validateForAdd(SysMenuDTO)
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/menu", operationType = com.forgex.common.audit.OperationType.ADD, detailTemplateCode = "MENU_CREATE")
     @RequirePerm("sys:menu:add")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysMenuDTO menuDTO) {
@@ -751,6 +752,7 @@ public class SysMenuController {
      * @see com.forgex.sys.validator.MenuValidator#validateForUpdate(SysMenuDTO)
      */
     @RequirePerm("sys:menu:edit")
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/menu", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "MENU_UPDATE")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysMenuDTO menuDTO) {
         // 1. 数据校验
@@ -811,6 +813,7 @@ public class SysMenuController {
      * @see com.forgex.sys.validator.MenuValidator#validateForDelete(Long)
      */
     @RequirePerm("sys:menu:delete")
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/menu", operationType = com.forgex.common.audit.OperationType.DELETE, detailTemplateCode = "MENU_DELETE")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数

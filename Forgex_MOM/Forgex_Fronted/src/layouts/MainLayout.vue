@@ -94,6 +94,7 @@
               </router-view>
             </div>
           </div>
+          <GlobalHelpToolbar />
           <Transition name="fx-back-top-fade">
             <a-button
               v-if="showBackTop"
@@ -113,7 +114,15 @@
     </a-layout>
 
     <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
-      {{ systemConfig.copyright }}
+      <a
+        v-if="copyrightLink"
+        :href="copyrightLink"
+        :target="copyrightLinkIsExternal ? '_blank' : undefined"
+        :rel="copyrightLinkIsExternal ? 'noopener noreferrer' : undefined"
+      >
+        {{ systemConfig.copyright }}
+      </a>
+      <span v-else>{{ systemConfig.copyright }}</span>
     </div>
 
     <a-dropdown
@@ -599,6 +608,7 @@ import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
+import GlobalHelpToolbar from '../components/help/GlobalHelpToolbar.vue'
 import FxGuideTour from '../components/common/FxGuideTour.vue'
 import FxIcon from '../components/common/FxIcon.vue'
 import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
@@ -609,12 +619,13 @@ import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
 import { normalizeMediaUrl } from '../utils/media'
+import { normalizeWorkspacePath } from '../utils/workspacePath'
 import { applySiteBranding } from '../utils/siteBranding'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
 import { usePermissionStore } from '../stores/permission'
-import { resolveSystemPageGuide } from '../guide/systemPageGuides'
+import { hasSystemPageGuide, resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
 
@@ -1236,6 +1247,29 @@ const systemConfig = ref<SystemBasicConfig>({
   secondaryColor: '#ff2a6d'
 })
 
+/**
+ * 仅允许普通网页链接，避免将后台配置直接作为 javascript/data URL 执行。
+ */
+const copyrightLink = computed(() => normalizeCopyrightLink(systemConfig.value.copyrightLink))
+const copyrightLinkIsExternal = computed(() => {
+  const value = copyrightLink.value
+  return !!value && /^(https?:)?\/\//i.test(value)
+})
+
+function normalizeCopyrightLink(value: unknown): string {
+  const raw = String(value || '').trim()
+  if (!raw || raw === '#') {
+    return ''
+  }
+  if (/^(javascript|data|vbscript):/i.test(raw)) {
+    return ''
+  }
+  if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('/') || raw.startsWith('#')) {
+    return raw
+  }
+  return ''
+}
+
 function formatMediaUrl(value: string): string {
   return normalizeMediaUrl(value)
 }
@@ -1260,10 +1294,6 @@ locale.value = currentLocale.value as any
 const resolvedMode = computed(() => 
   resolveThemeMode(layoutConfig.value.themeMode, systemTheme.value)
 )
-
-function normalizeWorkspacePath(path: string) {
-  return String(path || '').split('?')[0]
-}
 
 const menuFavoritePathList = computed(() => Array.from(menuFavoritePathSet.value))
 const currentFavoritePath = computed(() => normalizeFavoritePath(route.fullPath || route.path))
@@ -1803,15 +1833,28 @@ function buildSearchMenuNodes(
   return result
 }
 
+/**
+ * 是否渲染左侧菜单。
+ * <p>
+ * 水平布局只使用顶栏模块入口，不显示侧栏。混合 / 水平布局在个人首页、收藏管理页也隐藏侧栏，
+ * 因为顶栏仍能切换模块。垂直、垂直双列没有顶栏模块导航，这两类页面必须保留侧栏，否则选中
+ * 垂直双列后会同时失去顶栏模块和左侧菜单，无法进入业务页。
+ * </p>
+ *
+ * @returns 当前路由和布局模式下是否显示 {@link AppSidebar}
+ */
 const shouldShowSidebar = computed(() => {
   const currentPath = normalizeWorkspacePath(route.fullPath)
-  if (layoutConfig.value.layoutMode === 'top') {
+  const layoutMode = layoutConfig.value.layoutMode
+  if (layoutMode === 'top') {
     return false
   }
-  if (currentPath === PERSONAL_HOME_PATH || currentPath === FAVORITE_MANAGEMENT_PATH) {
+  const isHomeLikePage = currentPath === PERSONAL_HOME_PATH || currentPath === FAVORITE_MANAGEMENT_PATH
+  const usesHeaderModuleNav = layoutMode === 'mix'
+  if (isHomeLikePage && usesHeaderModuleNav) {
     return false
   }
-  if (layoutConfig.value.layoutMode === 'mix' || layoutConfig.value.layoutMode === 'vertical-mix') {
+  if (layoutMode === 'mix' || layoutMode === 'vertical-mix') {
     return sidebarMenus.value.length > 0
   }
   return true
@@ -2455,6 +2498,18 @@ function handleOpenMessageDrawerEvent(event?: Event) {
 
 function handleOpenGlobalSearchEvent() {
   globalSearchVisible.value = true
+}
+
+/**
+ * 重放当前页引导。
+ */
+async function handleReplayPageGuide() {
+  const currentPath = normalizeWorkspacePath(route.fullPath || route.path)
+  if (!hasSystemPageGuide(currentPath)) {
+    return
+  }
+  const config = resolveSystemPageGuide(currentPath)
+  await startSystemGuide(config)
 }
 
 /**
@@ -3183,6 +3238,7 @@ onMounted(async () => {
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
+    window.addEventListener('fx:replay-page-guide', handleReplayPageGuide)
   }
   try {
     if (isFallbackRoute.value) {
@@ -3242,6 +3298,7 @@ onUnmounted(() => {
     window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
+    window.removeEventListener('fx:replay-page-guide', handleReplayPageGuide)
   }
   pageScrollEl?.removeEventListener('scroll', handlePageScroll)
   pageScrollEl = null

@@ -41,11 +41,19 @@
       </template>
 
       <template #avatar="{ record }">
-        <a-avatar :src="normalizeMediaUrl(record.avatar)">
-          <template #icon>
-            <UserOutlined />
-          </template>
-        </a-avatar>
+        <span class="user-avatar-cell">
+          <a-avatar :src="normalizeMediaUrl(record.avatar)">
+            <template #icon>
+              <UserOutlined />
+            </template>
+          </a-avatar>
+          <span
+            class="user-online-status"
+            :class="{ 'is-online': isUserOnline(record) }"
+            :title="isUserOnline(record) ? t('system.user.online') : t('system.user.offline')"
+            aria-hidden="true"
+          />
+        </span>
       </template>
 
       <template #role_ids="{ record }">
@@ -118,6 +126,7 @@ import { getDepartmentTree } from '@/api/system/department'
 import { listPositions } from '@/api/system/position'
 import { getRoleList } from '@/api/system/role'
 import { exportUsers, userApi } from '@/api/system/user'
+import { listOnlineUsers } from '@/api/system/online'
 import { downloadBlobResponse, normalizeUserQuery, normalizeUserStatus } from '@/utils/user'
 
 import type { Department, Position, UserQuery } from './types'
@@ -144,6 +153,7 @@ const assignRoleUserAccount = ref<string>()
 const selectedRowKeys = ref<string[]>([])
 const tableRef = ref()
 const importDialogVisible = ref(false)
+const onlineUserIds = ref<Set<string>>(new Set())
 
 const dictOptions = ref<Record<string, any[]>>({
   departmentId: [],
@@ -178,6 +188,8 @@ const handleRequest = async (payload: {
   query: Record<string, any>
   sorter?: { field?: string; order?: string }
 }) => {
+  // 用户翻页、筛选或刷新时同步一次在线集合，接口失败不会阻断用户列表。
+  void loadOnlineUserIds()
   const query = normalizeUserQuery(payload.query) as Partial<UserQuery>
   const params: any = {
     pageNum: payload.page.current,
@@ -192,6 +204,31 @@ const handleRequest = async (payload: {
   const data = await userApi.getUserList(params)
   const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
   return { records: data.records || [], total }
+}
+
+async function loadOnlineUserIds() {
+  const tenantId = sessionStorage.getItem('tenantId')
+  if (!tenantId) {
+    onlineUserIds.value = new Set()
+    return
+  }
+  try {
+    const result: any = await listOnlineUsers(
+      { current: 1, size: 10000, tenantId: Number(tenantId) },
+      { loadingMode: 'silent', silentError: true },
+    )
+    const ids = Array.isArray(result?.records)
+      ? result.records.map((record: any) => String(record.userId || '')).filter(Boolean)
+      : []
+    onlineUserIds.value = new Set(ids)
+  } catch {
+    // 在线状态不是用户列表的阻断条件，查询失败时按离线展示。
+    onlineUserIds.value = new Set()
+  }
+}
+
+function isUserOnline(record: any): boolean {
+  return !!record?.id && onlineUserIds.value.has(String(record.id))
 }
 
 async function handleExport() {
@@ -381,6 +418,7 @@ async function loadRoleList() {
 }
 
 onMounted(async () => {
+  await loadOnlineUserIds()
   await loadDepartmentTree()
   await loadPositionList()
   await loadRoleList()

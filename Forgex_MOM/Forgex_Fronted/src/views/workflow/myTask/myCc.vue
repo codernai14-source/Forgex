@@ -1,67 +1,43 @@
 <template>
-  <div v-permission="'wf:myTask:cc'" class="page-wrap">
-    <a-card :bordered="false" class="query-card" :body-style="{ padding: '12px 16px' }">
-      <a-form layout="inline" :model="queryForm" class="query-form">
-        <a-form-item :label="t('workflow.myTask.taskName')">
-          <a-input v-model:value="queryForm.taskName" allow-clear style="width: 220px" />
-        </a-form-item>
-        <a-form-item :label="t('workflow.myTask.taskCode')">
-          <a-input v-model:value="queryForm.taskCode" allow-clear style="width: 220px" />
-        </a-form-item>
-        <a-form-item :label="t('workflow.myTask.status')">
-          <a-select v-model:value="queryForm.status" allow-clear style="width: 180px">
-            <a-select-option :value="1">{{ t('workflow.dashboard.status.processing') }}</a-select-option>
-            <a-select-option :value="2">{{ t('workflow.myTask.historyStatus.approved') }}</a-select-option>
-            <a-select-option :value="3">{{ t('workflow.myTask.historyStatus.rejected') }}</a-select-option>
-            <a-select-option :value="4">{{ t('workflow.myTask.historyStatus.canceled') }}</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">{{ t('common.search') }}</a-button>
-            <a-button @click="handleReset">{{ t('common.reset') }}</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
+  <div class="page-wrap">
+    <fx-dynamic-table
+      ref="tableRef"
+      :table-code="'WfMyCcTaskTable'"
+      :request="handleRequest"
+      :dict-options="dictOptions"
+      row-key="id"
+      :show-query-form="true"
+    >
+      <template #ccTime="{ record }">
+        {{ formatDateTime(record.ccTime || record.startTime) }}
+      </template>
 
-    <a-card :bordered="false" class="table-card" :body-style="{ padding: '0' }">
-      <div class="table-toolbar">
-        <div class="table-title">{{ t('workflow.myTask.myCcTitle') }}</div>
-      </div>
-      <a-table
-        :columns="columns"
-        :data-source="dataSource"
-        :loading="loading"
-        :pagination="pagination"
-        row-key="id"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="scope">
-          <template v-if="scope.column.key === 'status'">
-            <DictTag :value="scope.record.status" :items="executionStatusOptions" :fallback-text="getStatusText(scope.record.status)" />
-          </template>
-          <template v-else-if="scope.column.key === 'startTime'">
-            {{ formatDateTime(scope.record.startTime) }}
-          </template>
-          <template v-else-if="scope.column.key === 'endTime'">
-            {{ formatDateTime(scope.record.endTime) }}
-          </template>
-          <template v-else-if="scope.column.key === 'action'">
-            <a-space>
-              <a-button type="link" size="small" @click="handleViewDetail(scope.record)">
-                <template #icon><EyeOutlined /></template>
-                {{ t('workflow.myTask.detail') }}
-              </a-button>
-              <a-button type="link" size="small" @click="handleViewTrace(scope.record)">
-                <template #icon><HistoryOutlined /></template>
-                {{ t('workflow.myTask.trace') }}
-              </a-button>
-            </a-space>
-          </template>
-        </template>
-      </a-table>
-    </a-card>
+      <template #status="{ record }">
+        <DictTag :value="record.status" :items="executionStatusOptions" :fallback-text="getStatusText(record.status)" />
+      </template>
+
+      <template #ccUnread="{ record }">
+        <span class="read-status">
+          <span v-if="record.ccUnread" class="unread-dot" />
+          <a-tag :color="record.ccUnread ? 'orange' : 'default'">
+            {{ record.ccUnread ? t('workflow.myTask.unread') : t('workflow.myTask.read') }}
+          </a-tag>
+        </span>
+      </template>
+
+      <template #action="{ record }">
+        <a-space>
+          <a-button type="link" size="small" @click="handleViewDetail(record)">
+            <template #icon><EyeOutlined /></template>
+            {{ t('workflow.myTask.detail') }}
+          </a-button>
+          <a-button type="link" size="small" @click="handleViewTrace(record)">
+            <template #icon><HistoryOutlined /></template>
+            {{ t('workflow.myTask.trace') }}
+          </a-button>
+        </a-space>
+      </template>
+    </fx-dynamic-table>
 
     <WorkflowDetailDrawer
       v-model:open="detailDrawerVisible"
@@ -78,7 +54,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+/**
+ * 我的抄送页面。
+ * <p>
+ * 能进菜单即可看表；不要用 {@code v-permission} 包整页。
+ * 前端按钮权限只收集 {@code type=button}，本页 {@code wf:myTask:cc} 挂在菜单上，
+ * 包整页会把表格 display:none，看起来像空白页。
+ * </p>
+ *
+ * @author Forgex Team
+ * @version 1.0.0
+ * @see pageMyCc
+ * @see FxDynamicTable
+ */
+import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -87,12 +76,15 @@ import {
   getExecutionDetail,
   listApprovalActionLogs,
   listApprovalInstances,
+  markReadCc,
   pageMyCc,
   type WfApprovalActionLogDTO,
   type WfApprovalInstanceDTO,
   type WfExecutionDTO,
+  type WorkflowId,
 } from '@/api/workflow/execution'
 import DictTag from '@/components/common/DictTag.vue'
+import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
 import WorkflowTracePanel from './WorkflowTracePanel.vue'
@@ -100,26 +92,39 @@ import WorkflowTracePanel from './WorkflowTracePanel.vue'
 const { t } = useI18n({ useScope: 'global' })
 const { dictItems: executionStatusOptions } = useDict('wf_execution_status')
 
+const tableRef = ref()
 const loading = ref(false)
-const dataSource = ref<WfExecutionDTO[]>([])
-const pagination = reactive({ current: 1, pageSize: 20, total: 0, showSizeChanger: true, showQuickJumper: true })
 const detailDrawerVisible = ref(false)
 const traceVisible = ref(false)
 const currentRecord = ref<WfExecutionDTO | null>(null)
 const currentInstances = ref<WfApprovalInstanceDTO[]>([])
 const currentActionLogs = ref<WfApprovalActionLogDTO[]>([])
-const queryForm = reactive({ taskName: '', taskCode: '', status: undefined as number | undefined })
 
-const columns = computed(() => ([
-  { title: t('workflow.myTask.taskName'), dataIndex: 'taskName', key: 'taskName', ellipsis: true, width: 180 },
-  { title: t('workflow.myTask.taskCode'), dataIndex: 'taskCode', key: 'taskCode', ellipsis: true, width: 180 },
-  { title: t('workflow.myTask.initiator'), dataIndex: 'initiatorName', key: 'initiatorName', width: 120 },
-  { title: t('workflow.myTask.currentNode'), dataIndex: 'currentNodeName', key: 'currentNodeName', width: 140 },
-  { title: t('workflow.myTask.status'), dataIndex: 'status', key: 'status', width: 120 },
-  { title: t('workflow.myTask.startTime'), dataIndex: 'startTime', key: 'startTime', width: 180 },
-  { title: t('workflow.myTask.endTime'), dataIndex: 'endTime', key: 'endTime', width: 180 },
-  { title: t('common.actions'), key: 'action', fixed: 'right', width: 180 },
-]))
+const dictOptions = computed(() => ({
+  status: executionStatusOptions.value,
+  wf_execution_status: executionStatusOptions.value,
+}))
+
+const handleRequest = async (payload: {
+  page: { current: number; pageSize: number }
+  query: Record<string, any>
+}) => {
+  try {
+    loading.value = true
+    const data = await pageMyCc({
+      pageNum: payload.page.current,
+      pageSize: payload.page.pageSize,
+      ...payload.query,
+    })
+    const total = typeof data.total === 'number' ? data.total : parseInt(String(data.total) || '0', 10)
+    return { records: data.records || [], total }
+  } catch (error: any) {
+    message.error(error?.message || t('workflow.myTask.loadCcFailed'))
+    return { records: [], total: 0 }
+  } finally {
+    loading.value = false
+  }
+}
 
 function getStatusText(status?: number) {
   return getDictItemLabel(executionStatusOptions.value, status, t('workflow.myTask.unknownStatus'))
@@ -129,40 +134,7 @@ function formatDateTime(value?: string) {
   return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '-'
 }
 
-function buildParams() {
-  const params: any = { pageNum: pagination.current, pageSize: pagination.pageSize }
-  if (queryForm.taskName) params.taskName = queryForm.taskName
-  if (queryForm.taskCode) params.taskCode = queryForm.taskCode
-  if (queryForm.status !== undefined) params.status = queryForm.status
-  return params
-}
-
-async function loadData() {
-  try {
-    loading.value = true
-    const data = await pageMyCc(buildParams())
-    dataSource.value = data.records || []
-    pagination.total = Number(data.total || 0)
-  } catch (error: any) {
-    message.error(error?.message || t('workflow.myTask.loadCcFailed'))
-  } finally {
-    loading.value = false
-  }
-}
-
-async function handleSearch() {
-  pagination.current = 1
-  await loadData()
-}
-
-async function handleReset() {
-  queryForm.taskName = ''
-  queryForm.taskCode = ''
-  queryForm.status = undefined
-  await handleSearch()
-}
-
-async function loadTrace(executionId: number) {
+async function loadTrace(executionId: WorkflowId) {
   const [detail, instances, logs] = await Promise.all([
     getExecutionDetail({ executionId }),
     listApprovalInstances({ executionId }),
@@ -173,52 +145,47 @@ async function loadTrace(executionId: number) {
   currentActionLogs.value = logs || []
 }
 
+async function markCurrentRead(executionId: WorkflowId) {
+  try {
+    await markReadCc({ executionId })
+    tableRef.value?.refresh?.()
+  } catch {
+    // 已读失败不阻断详情查看
+  }
+}
+
 async function handleViewDetail(record: WfExecutionDTO) {
   await loadTrace(record.id)
   detailDrawerVisible.value = true
+  await markCurrentRead(record.id)
 }
 
 async function handleViewTrace(record: WfExecutionDTO) {
   await loadTrace(record.id)
   traceVisible.value = true
+  await markCurrentRead(record.id)
 }
-
-async function handleTableChange(pag: any) {
-  pagination.current = pag.current || 1
-  pagination.pageSize = pag.pageSize || pagination.pageSize
-  await loadData()
-}
-
-onMounted(loadData)
 </script>
 
 <style scoped lang="less">
 .page-wrap {
   padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
   box-sizing: border-box;
 }
 
-.query-card,
-.table-card {
-  border-radius: 8px;
-}
-
-.table-toolbar {
-  display: flex;
+.read-status {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 6px;
 }
 
-.table-title {
-  font-weight: 600;
-  font-size: 14px;
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fa8c16;
+  flex-shrink: 0;
 }
 </style>

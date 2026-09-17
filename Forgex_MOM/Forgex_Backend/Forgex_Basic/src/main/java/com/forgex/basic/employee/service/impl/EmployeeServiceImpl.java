@@ -21,6 +21,7 @@ import com.forgex.common.config.ConfigService;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
 import com.forgex.common.enums.UserSourceEnum;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
@@ -398,14 +399,18 @@ public class EmployeeServiceImpl extends ServiceImpl<BasicEmployeeMapper, BasicE
     private PasswordPolicyConfig getPasswordPolicy() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
-        defaults.setDefaultPassword("Aa123456");
+        defaults.setMinLength(8);
+        defaults.setRequireNumbers(true);
+        defaults.setRequireUppercase(true);
+        defaults.setRequireLowercase(true);
+        defaults.setRequireSymbols(true);
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults);
         return policy == null ? defaults : policy;
     }
 
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = getPasswordPolicy();
-        return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
+        return PasswordPolicyValidator.requireConfiguredDefaultPassword(policy);
     }
 
     private String resolvePasswordStore() {
@@ -414,7 +419,7 @@ public class EmployeeServiceImpl extends ServiceImpl<BasicEmployeeMapper, BasicE
     }
 
     private String encryptPassword(String rawPassword) {
-        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(resolvePasswordStore(), configService);
         if (provider.supportsEncrypt()) {
             return provider.encrypt(rawPassword);
         }

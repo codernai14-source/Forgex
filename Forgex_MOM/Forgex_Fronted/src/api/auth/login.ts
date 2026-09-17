@@ -16,6 +16,14 @@ export interface TenantOption {
 export interface LoginResult {
   interactionCode: string
   tenants: TenantOption[]
+  /** 下一步：MFA / FORCE_CHANGE_PASSWORD */
+  nextStep?: string
+  /** MFA 挑战票据 */
+  challengeId?: string
+  /** 强制改密一次性票据 */
+  passwordTicket?: string
+  passwordExpired?: boolean
+  passwordExpireInDays?: number
 }
 
 /** 租户选择请求。首次登录必须携带 interactionCode。 */
@@ -36,7 +44,7 @@ export interface TenantChoiceRequest {
  * @throws 登录失败时抛出异常
  */
 export function login(data: { account: string; password: string; captcha?: string; captchaId?: string }) {
-  return http.post<LoginResult>('/auth/login', data)
+  return http.post<LoginResult>('/auth/login', data, { silentError: true })
 }
 
 /**

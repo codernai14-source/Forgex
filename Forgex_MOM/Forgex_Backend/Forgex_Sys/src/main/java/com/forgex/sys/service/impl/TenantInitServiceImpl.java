@@ -18,6 +18,7 @@ import com.forgex.common.config.ConfigService;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
 import com.forgex.common.enums.TenantTypeEnum;
 import com.forgex.common.license.LicenseManager;
 import com.forgex.sys.domain.entity.SysMenu;
@@ -65,8 +66,8 @@ import java.util.Collections;
  * <p>
  * <strong>业务规则：</strong>
  * <ul>
- *   <li>主租户：创建 admin 账号，默认密码 Aa123456</li>
- *   <li>其它租户：根据租户 ID 和编码动态生成唯一账号（admin_{tenantCode}_{后 4 位}），默认密码 Aa123456</li>
+ *   <li>主租户：创建 admin 账号，使用密码策略中显式配置的初始密码</li>
+ *   <li>其它租户：根据租户 ID 和编码动态生成唯一账号，并使用显式配置的初始密码</li>
  * </ul>
  * </p>
  *
@@ -471,6 +472,8 @@ public class TenantInitServiceImpl implements ITenantInitService {
         user.setAccount(account);
         user.setUsername("系统管理员");
         user.setPassword(encryptPassword(initialPassword));
+        user.setMustChangePwd(true);
+        user.setPwdUpdateTime(java.time.LocalDateTime.now());
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
@@ -490,6 +493,8 @@ public class TenantInitServiceImpl implements ITenantInitService {
         user.setAccount(account);
         user.setUsername("系统管理员");
         user.setPassword(encryptPassword(initialPassword));
+        user.setMustChangePwd(true);
+        user.setPwdUpdateTime(java.time.LocalDateTime.now());
         user.setEmail(account + "@" + tenantName + ".com");
         user.setStatus(true);
         user.setTenantId(tenantId);
@@ -561,15 +566,13 @@ public class TenantInitServiceImpl implements ITenantInitService {
 
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, null);
-        return policy == null || !StringUtils.hasText(policy.getDefaultPassword())
-            ? "Aa123456"
-            : policy.getDefaultPassword();
+        return PasswordPolicyValidator.requireConfiguredDefaultPassword(policy);
     }
 
     private String encryptPassword(String defaultPassword) {
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, null);
         String store = policy == null || !StringUtils.hasText(policy.getStore()) ? "bcrypt" : policy.getStore();
-        CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(store, configService);
         if (provider.supportsEncrypt()) {
             return provider.encrypt(defaultPassword);
         }

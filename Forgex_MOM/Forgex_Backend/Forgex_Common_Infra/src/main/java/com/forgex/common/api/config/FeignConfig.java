@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
  * @date 2026-01-27
  */
 @Configuration
-@EnableFeignClients(basePackages = "com.forgex.common.api.feign")
+@EnableFeignClients(basePackages = {"com.forgex.common.api.feign", "com.forgex.common.audit"})
 public class FeignConfig {
     // Feign 配置可以在这里添加
 }

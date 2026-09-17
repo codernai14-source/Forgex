@@ -216,7 +216,7 @@
             <span class="user-avatar-wrapper">
               <a-avatar
                 v-if="user.avatar"
-                :src="user.avatar"
+                :src="normalizeMediaUrl(user.avatar)"
                 :size="32"
                 class="user-avatar"
               />

@@ -20,6 +20,7 @@ import com.forgex.sys.domain.entity.SysRoleMenu;
 import com.forgex.sys.mapper.SysRoleMenuMapper;
 import com.forgex.sys.service.ISysRoleMenuService;
 import com.forgex.sys.service.PermissionChangeNotifier;
+import com.forgex.sys.service.ThreeRoleSeparationValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +49,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     private final SysRoleMenuMapper roleMenuMapper;
     private final PermissionChangeNotifier permissionChangeNotifier;
+    private final ThreeRoleSeparationValidator threeRoleSeparationValidator;
 
     /**
      * 查询角色拥有的菜单 ID 列表
@@ -85,6 +87,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Transactional(rollbackFor = Exception.class)
     public void grantPermission(RolePermissionDTO permissionDTO) {
         // 1. 先删除当前租户下该角色原有的菜单授权
+        threeRoleSeparationValidator.validateRoleMenus(permissionDTO.getRoleId(), permissionDTO.getMenuIds());
         deleteRolePermissionsInternal(permissionDTO.getRoleId(), permissionDTO.getTenantId());
 
         // 2. 再插入新的菜单授权，并对菜单 ID 做去重处理

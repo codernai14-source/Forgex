@@ -191,8 +191,10 @@ CREATE TABLE `basic_employee`  (
   `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
   `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
   `deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除标记：0=未删除，1=已删除',
+  `security_label` int NOT NULL DEFAULT 0 COMMENT '安全标记',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_basic_employee_no`(`tenant_id` ASC, `employee_no` ASC, `deleted` ASC) USING BTREE,
+  INDEX `idx_emp_security_label`(`security_label` ASC) USING BTREE,
   INDEX `idx_basic_employee_dept`(`tenant_id` ASC, `department_id` ASC, `deleted` ASC) USING BTREE,
   INDEX `idx_basic_employee_position`(`tenant_id` ASC, `position_id` ASC, `deleted` ASC) USING BTREE,
   INDEX `idx_basic_employee_status`(`tenant_id` ASC, `status` ASC, `deleted` ASC) USING BTREE
@@ -931,19 +933,21 @@ CREATE TABLE `basic_supplier`  (
   `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
   `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '更新人',
   `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
+  `security_label` int NOT NULL DEFAULT 0 COMMENT '安全标记',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_supplier_code_tenant`(`supplier_code` ASC, `tenant_id` ASC, `deleted` ASC) USING BTREE,
   UNIQUE INDEX `uk_basic_supplier_code`(`supplier_code` ASC) USING BTREE,
   INDEX `idx_supplier_name`(`supplier_name` ASC) USING BTREE,
   INDEX `idx_basic_supplier_status`(`cooperation_status` ASC, `review_status` ASC) USING BTREE,
-  INDEX `idx_basic_supplier_tenant_code`(`related_tenant_code` ASC) USING BTREE
+  INDEX `idx_basic_supplier_tenant_code`(`related_tenant_code` ASC) USING BTREE,
+  INDEX `idx_supplier_security_label`(`security_label` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '供应商信息表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of basic_supplier
 -- ----------------------------
-INSERT INTO `basic_supplier` VALUES (3001, 'SUPP001', '富士康科技集团', '富士康科技集团', '富士康', NULL, NULL, NULL, '供应商对接人', 'RAW_MATERIAL', '中国', '广东省', '深圳市', NULL, '供应商对接人', '13700000000', NULL, NULL, NULL, NULL, 'sup_supp001', 1, NULL, NULL, NULL, NULL, 'A', NULL, 1, NULL, -1, '2026-04-14 10:54:07', '2026-04-26 16:26:05', 'admin', '1993479637244170242', 0);
-INSERT INTO `basic_supplier` VALUES (3002, 'SUPP002', '比亚迪股份有限公司', '比亚迪股份有限公司', '比亚迪', NULL, NULL, NULL, '供应商对接人', 'PACKAGING', '中国', '广东省', '深圳市', NULL, '供应商对接人', '13700000001', NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 'A', NULL, 1, NULL, 1, '2026-04-14 10:54:07', '2026-05-06 17:29:21', 'admin', '1993479637244170242', 0);
+INSERT INTO `basic_supplier` VALUES (3001, 'SUPP001', '富士康科技集团', '富士康科技集团', '富士康', NULL, NULL, NULL, '供应商对接人', 'RAW_MATERIAL', '中国', '广东省', '深圳市', NULL, '供应商对接人', '13700000000', NULL, NULL, NULL, NULL, 'sup_supp001', 1, NULL, NULL, NULL, NULL, 'A', NULL, 1, NULL, -1, '2026-04-14 10:54:07', '2026-04-26 16:26:05', 'admin', '1993479637244170242', 0, 0);
+INSERT INTO `basic_supplier` VALUES (3002, 'SUPP002', '比亚迪股份有限公司', '比亚迪股份有限公司', '比亚迪', NULL, NULL, NULL, '供应商对接人', 'PACKAGING', '中国', '广东省', '深圳市', NULL, '供应商对接人', '13700000001', NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 'A', NULL, 1, NULL, 1, '2026-04-14 10:54:07', '2026-05-06 17:29:21', 'admin', '1993479637244170242', 0, 0);
 
 -- ----------------------------
 -- Table structure for basic_supplier_contact
@@ -4146,8 +4150,8 @@ CREATE TABLE `sys_user`  (
   `account` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '账号',
   `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '用户名',
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '密码 (加密)',
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '邮箱',
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '手机号',
+  `email` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '邮箱',
+  `phone` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '手机号',
   `status` tinyint NULL DEFAULT 1 COMMENT '状态 (1:启用, 0:禁用)',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '创建人',
@@ -4166,6 +4170,11 @@ CREATE TABLE `sys_user`  (
   `user_source` tinyint NOT NULL DEFAULT 1 COMMENT '用户来源:1本站新增,2本站导入,3第三方同步,4自行注册',
   `employee_id` bigint NULL DEFAULT NULL COMMENT '关联员工ID',
   `superior_user_id` bigint NULL DEFAULT NULL COMMENT '直属上级用户ID',
+  `pwd_update_time` datetime NULL DEFAULT NULL COMMENT '最近一次口令更新时间',
+  `must_change_pwd` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否必须下次登录修改口令：0=否，1=是',
+  `mfa_enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否已启用 MFA：0=否，1=是',
+  `security_level` int NOT NULL DEFAULT 0 COMMENT '用户密级',
+  `security_label` int NOT NULL DEFAULT 0 COMMENT '用户档案安全标记',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_account`(`account` ASC) USING BTREE,
   INDEX `idx_username`(`username` ASC) USING BTREE,
@@ -4179,13 +4188,45 @@ CREATE TABLE `sys_user`  (
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (1, 'admin', 'admin', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin@local.com', NULL, 1, '2025-11-26 08:39:17', '1993479637244170242', '2026-05-17 19:32:42', '1993479637244170242', 0, NULL, 1, '2026-04-04', 1, 11, '0:0:0:0:0:0:0:1', '本地', '2026-05-17 19:32:42', 'http://192.168.121.1:9000/api/sys/files/f67a6d20025643c6984ba7ea1f71ff28.jpg', 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (2, 'admin_supsupp001_3140', '系统管理员', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin_supsupp001_3140@tenant.local', NULL, 1, '2026-05-12 23:18:18', '20260512_supplier_tenant_login_fix', '2026-05-16 17:33:17', '20260512_supplier_tenant_login_fix', 0, 2, NULL, NULL, NULL, NULL, '0:0:0:0:0:0:0:1', '本地', '2026-05-12 23:30:12', NULL, 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (3, 'smy', '孙明岩', '$2a$10$KPeYoW4LXUO7Zmpo/LLZWuujeXwMwtmZllcvbfShIoJrvmRKrF4oK', '', '', 1, '2026-04-10 16:45:45', '1993479637244170242', '2026-05-16 20:33:05', '1993479637244170242', 0, 1, 1, '2026-04-10', 1, 12, '0:0:0:0:0:0:0:1', '本地', '2026-05-16 20:33:05', NULL, 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (4, 'test', 'test用户', '$2a$10$U4qFzeT00nwD4BcdhQQJHeF7cF81bP0VodQVNBegEeHkFe20t2VBe', 'coderr_nai@163.com', '15866912378', 1, '2026-04-04 11:22:02', '1993479637244170242', '2026-05-16 17:52:15', '1993479637244170242', 0, NULL, 1, '2026-04-04', 18, 11, NULL, NULL, NULL, NULL, 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (5, 'test001', '测试用户1', '$2a$10$TN2WOn63RiPL.8iFvPBRZOxprURcDDWzMKYRcYEG4pu.qwVbxwUI6', 'test001@forgex.com', '13800138001', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-01', 7, 7, NULL, NULL, NULL, NULL, 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (6, 'test002', '测试用户2', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test002@forgex.com', '13800138002', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 2, '2026-01-02', 8, 8, NULL, NULL, NULL, NULL, 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (7, 'test003', '测试用户3', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test003@forgex.com', '13800138003', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-03', 9, 9, NULL, NULL, NULL, NULL, 1, NULL);
+INSERT INTO `sys_user` VALUES (1, 'admin', 'admin', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin@local.com', NULL, 1, '2025-11-26 08:39:17', '1993479637244170242', '2026-05-17 19:32:42', '1993479637244170242', 0, NULL, 1, '2026-04-04', 1, 11, '0:0:0:0:0:0:0:1', '本地', '2026-05-17 19:32:42', 'http://192.168.121.1:9000/api/sys/files/f67a6d20025643c6984ba7ea1f71ff28.jpg', 1, NULL, NULL, NULL, 0, 0, 0, 0);
+INSERT INTO `sys_user` VALUES (2, 'admin_supsupp001_3140', '系统管理员', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'admin_supsupp001_3140@tenant.local', NULL, 1, '2026-05-12 23:18:18', '20260512_supplier_tenant_login_fix', '2026-05-16 17:33:17', '20260512_supplier_tenant_login_fix', 0, 2, NULL, NULL, NULL, NULL, '0:0:0:0:0:0:0:1', '本地', '2026-05-12 23:30:12', NULL, 1, NULL, NULL, NULL, 0, 0, 0, 0);
+INSERT INTO `sys_user` VALUES (3, 'smy', '孙明岩', '$2a$10$KPeYoW4LXUO7Zmpo/LLZWuujeXwMwtmZllcvbfShIoJrvmRKrF4oK', '', '', 1, '2026-04-10 16:45:45', '1993479637244170242', '2026-05-16 20:33:05', '1993479637244170242', 0, 1, 1, '2026-04-10', 1, 12, '0:0:0:0:0:0:0:1', '本地', '2026-05-16 20:33:05', NULL, 1, NULL, NULL, NULL, 0, 0, 0, 0);
+INSERT INTO `sys_user` VALUES (4, 'test', 'test用户', '$2a$10$U4qFzeT00nwD4BcdhQQJHeF7cF81bP0VodQVNBegEeHkFe20t2VBe', 'coderr_nai@163.com', '15866912378', 1, '2026-04-04 11:22:02', '1993479637244170242', '2026-05-16 17:52:15', '1993479637244170242', 0, NULL, 1, '2026-04-04', 18, 11, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, 0, 0, 0, 0);
+INSERT INTO `sys_user` VALUES (5, 'test001', '测试用户1', '$2a$10$TN2WOn63RiPL.8iFvPBRZOxprURcDDWzMKYRcYEG4pu.qwVbxwUI6', 'test001@forgex.com', '13800138001', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-01', 7, 7, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, 0, 0, 0, 0);
+INSERT INTO `sys_user` VALUES (6, 'test002', '测试用户2', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test002@forgex.com', '13800138002', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 2, '2026-01-02', 8, 8, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, 0, 0, 0, 0);
+INSERT INTO `sys_user` VALUES (7, 'test003', '测试用户3', '$2a$10$D9IQgkg4SLm8tktsy75RY.KlJBOeN1d0.VZb1PWSlepMNqQmCTuGq', 'test003@forgex.com', '13800138003', 1, '2026-01-08 10:58:58', '1993479637244170242', '2026-05-16 17:33:17', '1993479637244170242', 0, NULL, 1, '2026-01-03', 9, 9, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, 0, 0, 0, 0);
+
+-- ----------------------------
+-- Table structure for sys_user_mfa
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_user_mfa`;
+CREATE TABLE `sys_user_mfa` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+  `tenant_id` bigint NOT NULL COMMENT '租户 ID，用户级 MFA 使用 0',
+  `user_id` bigint NOT NULL COMMENT '用户 ID',
+  `secret_ciphertext` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'TOTP 密钥密文',
+  `enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否已确认启用：0=否，1=是',
+  `recovery_codes_ciphertext` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '一次性恢复码密文',
+  `created_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_mfa_user` (`tenant_id`, `user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户 MFA 密钥';
+
+-- ----------------------------
+-- Table structure for sys_user_password_history
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_user_password_history`;
+CREATE TABLE `sys_user_password_history` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+  `tenant_id` bigint NOT NULL COMMENT '租户 ID',
+  `user_id` bigint NOT NULL COMMENT '用户 ID',
+  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '历史口令哈希',
+  `created_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '写入时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_pwd_history_user` (`tenant_id`, `user_id`, `created_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户口令历史';
+
 
 -- ----------------------------
 -- Table structure for sys_user_c_menu_favorite
@@ -4478,5 +4519,216 @@ SELECT template.`tenant_id`, template.`id`, 'INTERNAL', '【租户创建成功�
   NULL, '/workspace/sys/tenant', NOW(), NOW(), 0, 'system', 'system'
 FROM `sys_message_template` template
 WHERE template.`template_code` = 'SYS_TENANT_CREATED' AND template.`deleted` = 0;
+
+-- 帮助中心：全量初始化后幂等补齐，避免新环境漏表。
+CREATE TABLE IF NOT EXISTS `sys_help_resource` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户 ID',
+  `title` varchar(200) NOT NULL COMMENT '资源标题',
+  `doc_type` varchar(20) NOT NULL COMMENT '文档类型：MANUAL=手册，VIDEO=视频',
+  `scope_type` varchar(20) NOT NULL COMMENT '范围：GLOBAL=全局，MENU=菜单覆盖',
+  `source_type` varchar(20) NOT NULL DEFAULT 'FILE' COMMENT '来源：FILE=上传文件，EXTERNAL_URL=外链',
+  `menu_id` bigint DEFAULT NULL COMMENT '绑定菜单 ID，GLOBAL 时为空',
+  `menu_path` varchar(255) DEFAULT NULL COMMENT '工作区全路径，便于按路由匹配',
+  `file_name` varchar(255) DEFAULT NULL COMMENT '原始文件名',
+  `file_url` varchar(500) DEFAULT NULL COMMENT '文件访问地址',
+  `file_ext` varchar(20) DEFAULT NULL COMMENT '文件扩展名，不含点',
+  `file_size` bigint DEFAULT NULL COMMENT '文件大小（字节）',
+  `content_type` varchar(100) DEFAULT NULL COMMENT '文件 MIME 类型',
+  `external_url` varchar(1000) DEFAULT NULL COMMENT '外链地址',
+  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '状态：0=禁用，1=启用',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序号，越小越靠前',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_by` varchar(50) DEFAULT NULL COMMENT '创建人',
+  `update_by` varchar(50) DEFAULT NULL COMMENT '更新人',
+  `deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除，1=已删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_help_type_scope_status` (`doc_type`, `scope_type`, `status`, `deleted`),
+  KEY `idx_help_menu_path` (`menu_path`, `doc_type`, `status`),
+  KEY `idx_help_tenant_status` (`tenant_id`, `status`, `deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='帮助资源（手册/视频）';
+
+SET @script_user := '20260911_sys_help_resource';
+SET @now := NOW();
+SET @sys_module_id := COALESCE(
+  (SELECT id FROM `sys_module` WHERE deleted = 0 AND code IN ('sys', 'system') ORDER BY id LIMIT 1),
+  (SELECT module_id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'SystemMaintenance' AND type = 'catalog' ORDER BY id LIMIT 1),
+  1
+);
+SET @public_tenant_id := COALESCE(
+  (SELECT tenant_id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'SystemMaintenance' AND type = 'catalog' ORDER BY id LIMIT 1),
+  1
+);
+SET @admin_role_id := COALESCE(
+  (SELECT id FROM `sys_role` WHERE deleted = 0 AND tenant_id = @public_tenant_id AND role_key = 'admin' ORDER BY id LIMIT 1),
+  (SELECT id FROM `sys_role` WHERE deleted = 0 AND role_key = 'admin' ORDER BY id LIMIT 1)
+);
+SET @maintenance_parent_id := COALESCE(
+  (SELECT id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'SystemMaintenance' AND type = 'catalog' AND tenant_id = @public_tenant_id ORDER BY id LIMIT 1),
+  (SELECT id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'SystemMaintenance' AND type = 'catalog' ORDER BY id LIMIT 1)
+);
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT @public_tenant_id, 'PUBLIC', @sys_module_id, @maintenance_parent_id, 'menu', 'helpResource', '帮助资源',
+       '{"zh-CN":"帮助资源","zh-TW":"幫助資源","en-US":"Help Resources","ja-JP":"ヘルプ資源","ko-KR":"도움말 자원"}',
+       'QuestionCircleOutlined', 'SystemHelpResource', 'sys:help:view', 12, 1, 1,
+       @now, @script_user, @now, @script_user, 0, 2, 'embedded', NULL
+WHERE @maintenance_parent_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` existing
+    WHERE existing.deleted = 0 AND existing.component_key = 'SystemHelpResource'
+  );
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT parent.tenant_id, parent.tenant_type, parent.module_id, parent.id, 'button', item.path, item.name, item.name_i18n_json,
+       NULL, NULL, item.perm_key, item.order_num, 0, 1, @now, @script_user, @now, @script_user, 0, 3, 'embedded', NULL
+FROM (
+  SELECT 'add' path, '新增帮助资源' name, '{"zh-CN":"新增","zh-TW":"新增","en-US":"Add","ja-JP":"追加","ko-KR":"추가"}' name_i18n_json, 'sys:help:add' perm_key, 1 order_num
+  UNION ALL SELECT 'edit', '编辑帮助资源', '{"zh-CN":"编辑","zh-TW":"編輯","en-US":"Edit","ja-JP":"編集","ko-KR":"편집"}', 'sys:help:edit', 2
+  UNION ALL SELECT 'delete', '删除帮助资源', '{"zh-CN":"删除","zh-TW":"刪除","en-US":"Delete","ja-JP":"削除","ko-KR":"삭제"}', 'sys:help:delete', 3
+  UNION ALL SELECT 'contactEdit', '编辑联系方式', '{"zh-CN":"编辑联系方式","zh-TW":"編輯聯絡方式","en-US":"Edit Contact","ja-JP":"連絡先編集","ko-KR":"연락처 편집"}', 'sys:help:contact:edit', 4
+) item
+JOIN `sys_menu` parent ON parent.deleted = 0 AND parent.component_key = 'SystemHelpResource'
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_menu` existing
+  WHERE existing.deleted = 0 AND existing.parent_id = parent.id AND existing.perm_key = item.perm_key
+);
+
+INSERT INTO `sys_permission`
+(`permission_name`,`permission_key`,`url`,`method`,`tenant_id`,`create_time`,`update_time`,`deleted`)
+SELECT item.permission_name, item.permission_key, item.url, 'POST', 0, @now, @now, 0
+FROM (
+  SELECT '帮助资源查询' permission_name, 'sys:help:view' permission_key, '/sys/help-resource/page' url
+  UNION ALL SELECT '帮助资源新增', 'sys:help:add', '/sys/help-resource/create'
+  UNION ALL SELECT '帮助资源编辑', 'sys:help:edit', '/sys/help-resource/update'
+  UNION ALL SELECT '帮助资源删除', 'sys:help:delete', '/sys/help-resource/delete'
+  UNION ALL SELECT '帮助联系方式编辑', 'sys:help:contact:edit', '/sys/help-contact/save'
+) item
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_permission` existing
+  WHERE existing.deleted = 0 AND existing.permission_key = item.permission_key
+);
+
+INSERT INTO `sys_role_permission` (`role_id`,`permission_id`)
+SELECT @admin_role_id, p.id
+FROM `sys_permission` p
+WHERE @admin_role_id IS NOT NULL
+  AND p.deleted = 0
+  AND p.permission_key IN ('sys:help:view', 'sys:help:add', 'sys:help:edit', 'sys:help:delete', 'sys:help:contact:edit')
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_role_permission` rp
+    WHERE rp.role_id = @admin_role_id AND rp.permission_id = p.id
+  );
+
+INSERT INTO `sys_role_menu` (`tenant_id`,`role_id`,`menu_id`)
+SELECT @public_tenant_id, @admin_role_id, m.id
+FROM `sys_menu` m
+WHERE @admin_role_id IS NOT NULL
+  AND m.deleted = 0
+  AND (
+    m.component_key = 'SystemHelpResource'
+    OR m.perm_key IN ('sys:help:view', 'sys:help:add', 'sys:help:edit', 'sys:help:delete', 'sys:help:contact:edit')
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_role_menu` rm
+    WHERE rm.tenant_id = @public_tenant_id AND rm.role_id = @admin_role_id AND rm.menu_id = m.id
+  );
+
+-- 审批节点独立抄送：菜单、权限、消息模板
+SET @wf_cc_user := '20260911_workflow_node_cc';
+SET @wf_cc_now := NOW();
+SET @wf_tenant_id := COALESCE(
+  (SELECT tenant_id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'ApprovalMyPending' ORDER BY id LIMIT 1),
+  1
+);
+SET @wf_module_id := COALESCE(
+  (SELECT module_id FROM `sys_menu` WHERE deleted = 0 AND component_key = 'ApprovalMyPending' ORDER BY id LIMIT 1),
+  3
+);
+SET @wf_admin_role_id := COALESCE(
+  (SELECT id FROM `sys_role` WHERE deleted = 0 AND tenant_id = @wf_tenant_id AND role_key = 'admin' ORDER BY id LIMIT 1),
+  (SELECT id FROM `sys_role` WHERE deleted = 0 AND role_key = 'admin' ORDER BY id LIMIT 1)
+);
+
+INSERT INTO `sys_menu`
+(`tenant_id`,`tenant_type`,`module_id`,`parent_id`,`type`,`path`,`name`,`name_i18n_json`,`icon`,`component_key`,`perm_key`,`order_num`,`visible`,`status`,`create_time`,`create_by`,`update_time`,`update_by`,`deleted`,`menu_level`,`menu_mode`,`external_url`)
+SELECT @wf_tenant_id, 'PUBLIC', @wf_module_id, 0, 'menu', 'my/cc', '我的抄送',
+       '{"zh-CN":"我的抄送","zh-TW":"我的抄送","en-US":"My CC","ja-JP":"私のCC","ko-KR":"내 참조"}',
+       'MailOutlined', 'ApprovalMyCc', 'wf:myTask:cc', 45, 1, 1,
+       @wf_cc_now, @wf_cc_user, @wf_cc_now, @wf_cc_user, 0, 1, 'embedded', NULL
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_menu` existing
+  WHERE existing.deleted = 0 AND existing.component_key = 'ApprovalMyCc'
+);
+
+INSERT INTO `sys_permission`
+(`permission_name`,`permission_key`,`url`,`method`,`tenant_id`,`create_time`,`update_time`,`deleted`)
+SELECT '我的抄送查询', 'wf:myTask:cc', '/wf/execution/my/cc', 'POST', 0, @wf_cc_now, @wf_cc_now, 0
+WHERE NOT EXISTS (
+  SELECT 1 FROM `sys_permission` existing
+  WHERE existing.deleted = 0 AND existing.permission_key = 'wf:myTask:cc'
+);
+
+INSERT INTO `sys_role_permission` (`role_id`,`permission_id`)
+SELECT @wf_admin_role_id, p.id
+FROM `sys_permission` p
+WHERE @wf_admin_role_id IS NOT NULL
+  AND p.deleted = 0
+  AND p.permission_key = 'wf:myTask:cc'
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_role_permission` rp
+    WHERE rp.role_id = @wf_admin_role_id AND rp.permission_id = p.id
+  );
+
+INSERT INTO `sys_role_menu` (`tenant_id`,`role_id`,`menu_id`)
+SELECT m.tenant_id, @wf_admin_role_id, m.id
+FROM `sys_menu` m
+WHERE @wf_admin_role_id IS NOT NULL
+  AND m.deleted = 0
+  AND m.component_key = 'ApprovalMyCc'
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_role_menu` rm
+    WHERE rm.tenant_id = m.tenant_id AND rm.role_id = @wf_admin_role_id AND rm.menu_id = m.id
+  );
+
+INSERT INTO `sys_message_template`
+(`tenant_id`,`template_code`,`template_name`,`name_i18n_json`,`version`,`level`,`icon`,`color`,`scope`,`tenant_type`,`biz_module`,`status`,`remark`,`create_time`,`update_time`,`deleted`,`create_by`,`update_by`)
+SELECT src.tenant_id, 'WF_CC', '审批抄送通知',
+       '{"zh-CN":"审批抄送通知","zh-TW":"審批抄送通知","en-US":"Approval CC Notification","ja-JP":"承認CC通知","ko-KR":"승인 참조 알림"}',
+       '1.0.0', 'NOTICE', NULL, 'info', src.scope, src.tenant_type, src.biz_module, 1,
+       '当审批节点启用抄送并进入节点时，通知被抄送人',
+       @wf_cc_now, @wf_cc_now, 0, @wf_cc_user, @wf_cc_user
+FROM `sys_message_template` src
+WHERE src.deleted = 0
+  AND src.template_code = 'WF_PENDING'
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_message_template` existing
+    WHERE existing.deleted = 0
+      AND existing.tenant_id = src.tenant_id
+      AND existing.template_code = 'WF_CC'
+  );
+
+INSERT INTO `sys_message_template_content`
+(`tenant_id`,`template_id`,`channel`,`title`,`title_i18n_json`,`content`,`content_i18n_json`,`link_url`,`create_time`,`update_time`,`deleted`,`create_by`,`update_by`)
+SELECT t.tenant_id, t.id, 'INTERNAL',
+       '【审批抄送】${taskName}',
+       '{"zh-CN":"【审批抄送】${taskName}","zh-TW":"【審批抄送】${taskName}","en-US":"[Approval CC] ${taskName}","ja-JP":"【承認CC】${taskName}","ko-KR":"【승인 참조】${taskName}"}',
+       '发起人：${initiatorName}\n当前节点：${nodeName}\n发起时间：${startTime}',
+       '{"zh-CN":"发起人：${initiatorName}\\n当前节点：${nodeName}\\n发起时间：${startTime}","zh-TW":"發起人：${initiatorName}\\n當前節點：${nodeName}\\n發起時間：${startTime}","en-US":"Initiator: ${initiatorName}\\nCurrent Node: ${nodeName}\\nStart Time: ${startTime}","ja-JP":"申請者：${initiatorName}\\n現在のノード：${nodeName}\\n開始時間：${startTime}","ko-KR":"신청자: ${initiatorName}\\n현재 단계: ${nodeName}\\n시작 시간: ${startTime}"}',
+       '/workspace/approval/my/cc',
+       @wf_cc_now, @wf_cc_now, 0, @wf_cc_user, @wf_cc_user
+FROM `sys_message_template` t
+WHERE t.deleted = 0
+  AND t.template_code = 'WF_CC'
+  AND NOT EXISTS (
+    SELECT 1 FROM `sys_message_template_content` existing
+    WHERE existing.deleted = 0
+      AND existing.template_id = t.id
+      AND existing.channel = 'INTERNAL'
+  );
 
 SET FOREIGN_KEY_CHECKS = 1;

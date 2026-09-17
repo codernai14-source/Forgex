@@ -126,6 +126,97 @@ public class SystemBasicConfig {
      * Optional values: center / split / compact
      */
     private String loginLayout = "center";
+
+    /** 左右分栏背景铺放模式：fullscreen / separated。 */
+    private String loginSplitBackgroundMode = "fullscreen";
+
+    /** 登录标题字体样式配置。 */
+    private LoginTitleStyle loginTitleStyle = new LoginTitleStyle();
+    private LoginSubtitleStyle loginSubtitleStyle = new LoginSubtitleStyle();
+
+    private Integer loginPageSubtitleFontSize = 13;
+    private String loginPageSubtitleColor = "#9ca3af";
+    private java.util.List<LoginHeroSlide> loginHeroSlides = new java.util.ArrayList<>();
+    private Integer loginHeroIntervalSeconds = 6;
+
+    private String loginFormStyle = "glass-dark";
+    private Integer loginFormOpacity = 72;
+    private Integer loginFormRadius = 20;
+    private LoginShadowStyle loginFormShadow = new LoginShadowStyle("#1e9bff", 16, 45, 0);
+    private LoginShadowStyle loginMediaShadow = new LoginShadowStyle("#0f172a", 28, 35, 0);
+
+    @Data
+    public static class LoginShadowStyle {
+        private Boolean enabled = true;
+        private String color;
+        private Integer blur;
+        private Integer opacity;
+        private Integer spread;
+
+        public LoginShadowStyle() { }
+        public LoginShadowStyle(String color, Integer blur, Integer opacity, Integer spread) {
+            this.color = color;
+            this.blur = blur;
+            this.opacity = opacity;
+            this.spread = spread;
+        }
+    }
+
+    @Data
+    public static class LoginTitleStyle {
+        /** 预设字体栈，由前端下拉写入，不接受任意 CSS。 */
+        private String fontFamily = "'Orbitron', 'Segoe UI', sans-serif";
+        /** 字号，单位 px。 */
+        private Integer fontSize = 28;
+        /** 颜色模式：solid=单色，gradient=渐变。 */
+        private String colorMode = "solid";
+        /** 单色模式下的文字颜色。 */
+        private String color = "#ffffff";
+        /** 渐变起点色。 */
+        private String gradientFrom = "#05d9e8";
+        /** 渐变终点色。 */
+        private String gradientTo = "#ff2a6d";
+        /** 渐变角度。 */
+        private Integer gradientAngle = 90;
+        /** 字重，如 normal / 600 / 700。 */
+        private String fontWeight = "600";
+        /** 字体样式，normal 或 italic。 */
+        private String fontStyle = "normal";
+        /** 字间距，单位 px。 */
+        private Integer letterSpacing = 0;
+    }
+
+    /**
+     * 登录页副标题可视化样式。
+     * <p>
+     * 副标题不做渐变，只保留字体、字号、颜色和基础排版。
+     * </p>
+     *
+     * @author Forgex Team
+     * @version 1.0.0
+     * @see LoginTitleStyle
+     */
+    @Data
+    public static class LoginSubtitleStyle {
+        /** 预设字体栈。 */
+        private String fontFamily = "";
+        /** 字号，单位 px。 */
+        private Integer fontSize = 13;
+        /** 文字颜色。 */
+        private String color = "#9ca3af";
+        /** 字重。 */
+        private String fontWeight = "normal";
+        /** 字体样式。 */
+        private String fontStyle = "normal";
+        /** 字间距，单位 px。 */
+        private Integer letterSpacing = 0;
+    }
+
+    @Data
+    public static class LoginHeroSlide {
+        private String type = "image";
+        private String url = "";
+    }
     
     /**
      * 是否显示第三方登录

@@ -11,3 +11,28 @@
   justify-content: center;
   min-width: 0;
 }
+
+.user-management :deep(.user-avatar-cell) {
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-management :deep(.user-online-status) {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 2px solid var(--fx-bg-container, #fff);
+  border-radius: 50%;
+  background: var(--fx-text-tertiary, #9ca3af);
+}
+
+.user-management :deep(.user-online-status.is-online) {
+  background: #22c55e;
+}

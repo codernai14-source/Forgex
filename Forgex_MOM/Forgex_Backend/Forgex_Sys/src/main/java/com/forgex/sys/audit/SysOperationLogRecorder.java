@@ -17,14 +17,14 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
-public class SysOperationLogRecorder implements OperationLogRecorder {
+public class SysOperationLogRecorder implements OperationLogRecorder, com.forgex.common.audit.SysLocalOperationLogRecorderMarker {
 
     private final SysOperationLogMapper logMapper;
     private final SysOperationTemplateMapper templateMapper;
     private final ObjectMapper objectMapper;
+    private final AuditChainService auditChainService;
 
     @Override
     public void record(OperationLogRecord record) {
@@ -43,6 +43,8 @@ public class SysOperationLogRecorder implements OperationLogRecorder {
         log.setRequestUrl(record.getRequestUrl());
         log.setRequestParams(record.getRequestParams());
         log.setResponseStatus(record.getResponseStatus());
+        log.setSuccess(record.getSuccess() == null || record.getSuccess());
+        auditChainService.fill(log);
         log.setResponseResult(record.getResponseResult());
         log.setErrorStack(record.getErrorStack());
         log.setOperationTime(record.getOperationTime() == null ? LocalDateTime.now() : record.getOperationTime());

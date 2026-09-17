@@ -18,6 +18,7 @@
         <div class="hero-panel__copy">
           <p class="hero-panel__eyebrow">{{ $t('system.role.menuGrant') }}</p>
           <p class="hero-panel__desc">{{ $t('system.role.menuGrantDesc') }}</p>
+          <a-alert type="info" show-icon style="margin-top: 8px" :message="$t('system.role.message.threeRoleHint')" />
         </div>
         <div class="hero-panel__role">
           <span class="hero-panel__role-label">{{ $t('system.role.roleName') }}</span>

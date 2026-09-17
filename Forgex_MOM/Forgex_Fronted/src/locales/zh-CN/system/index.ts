@@ -25,6 +25,9 @@ import androidVersion from './androidVersion'
 import online from './online'
 import notice from './notice'
 import homepageComponent from './homepageComponent'
+import kms from './kms'
+import backup from './backup'
+import helpResource from './helpResource'
 
 export default {
   user,
@@ -50,4 +53,7 @@ export default {
   online,
   notice,
   homepageComponent,
+  kms,
+  backup,
+  helpResource,
 }

@@ -13,8 +13,8 @@ import http from '../http'
  * @param body 查询参数（current/size/account/tenantId）
  * @returns 在线用户分页结果
  */
-export function listOnlineUsers(body: any) {
-  return http.post('/sys/online/list', body)
+export function listOnlineUsers(body: any, config?: Record<string, any>) {
+  return http.post('/sys/online/list', body, config)
 }
 
 /**

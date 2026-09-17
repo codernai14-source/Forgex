@@ -92,6 +92,7 @@ export default {
     missingRoleInfo: 'Role information is missing',
     saveGrantSuccess: 'Authorization saved successfully',
     saveGrantFailed: 'Failed to save authorization',
+    threeRoleHint: 'At L3, audit administrators cannot receive business write permissions, and system administrators cannot receive audit view permissions.',
     loadGrantedFailed: 'Failed to load granted list',
     selectToGrant: 'Please select objects to grant',
     grantSuccess: 'Grant successful',

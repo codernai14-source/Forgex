@@ -223,6 +223,7 @@ public class SysDepartmentController {
      * @see com.forgex.common.security.perm.RequirePerm
      * @see com.forgex.common.i18n.CommonPrompt#CREATE_SUCCESS
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/dept", operationType = com.forgex.common.audit.OperationType.ADD, detailTemplateCode = "DEPT_CREATE")
     @PostMapping("/create")
     @RequirePerm("sys:dept:add")
     public R<Void> create(@Validated @RequestBody SysDepartmentSaveParam param) {
@@ -278,6 +279,7 @@ public class SysDepartmentController {
      * @see com.forgex.common.security.perm.RequirePerm
      * @see com.forgex.common.i18n.CommonPrompt#UPDATE_SUCCESS
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/dept", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "DEPT_UPDATE")
     @PostMapping("/update")
     @RequirePerm("sys:dept:edit")
     public R<Void> update(@Validated @RequestBody SysDepartmentSaveParam param) {
@@ -325,6 +327,7 @@ public class SysDepartmentController {
      * @see com.forgex.common.i18n.CommonPrompt#DEPARTMENT_NOT_FOUND
      * @see com.forgex.common.i18n.CommonPrompt#DELETE_SUCCESS
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/dept", operationType = com.forgex.common.audit.OperationType.DELETE, detailTemplateCode = "DEPT_DELETE")
     @PostMapping("/delete")
     @RequirePerm("sys:dept:delete")
     public R<Void> delete(@RequestBody Map<String, Object> params) {

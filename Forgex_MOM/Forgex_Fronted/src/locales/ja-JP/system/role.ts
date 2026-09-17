@@ -92,6 +92,7 @@ export default {
     missingRoleInfo: 'Role information is missing',
     saveGrantSuccess: 'Authorization saved successfully',
     saveGrantFailed: 'Failed to save authorization',
+    threeRoleHint: 'レベル3では、監査管理者に業務書込権限を付与できず、システム管理者に監査閲覧権限を付与できません。',
     loadGrantedFailed: 'Failed to load granted list',
     selectToGrant: 'Please select objects to grant',
     grantSuccess: 'Grant successful',

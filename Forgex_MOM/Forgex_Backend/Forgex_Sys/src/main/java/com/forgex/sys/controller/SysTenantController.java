@@ -319,6 +319,7 @@ public class SysTenantController {
      * @throws IllegalArgumentException 当必填字段缺失时抛出
      * @see SysTenantSaveParam
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/tenant", operationType = com.forgex.common.audit.OperationType.ADD, detailTemplateCode = "TENANT_CREATE")
     @RequirePerm("sys:tenant:add")
     @PostMapping("/create")
     public R<Long> create(@Validated @RequestBody SysTenantSaveParam param) {
@@ -346,6 +347,7 @@ public class SysTenantController {
      * @throws IllegalArgumentException 当租户 ID 为空时抛出
      * @see SysTenantSaveParam
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/tenant", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "TENANT_UPDATE")
     @RequirePerm("sys:tenant:edit")
     @PostMapping("/update")
     public R<Boolean> update(@Validated @RequestBody SysTenantSaveParam param) {
@@ -372,6 +374,7 @@ public class SysTenantController {
      * @return {@link R} 包含删除是否成功的统一返回结构
      * @see CommonPrompt#DELETE_SUCCESS
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/tenant", operationType = com.forgex.common.audit.OperationType.DELETE, detailTemplateCode = "TENANT_DELETE")
     @RequirePerm("sys:tenant:delete")
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody Map<String, Object> params) {

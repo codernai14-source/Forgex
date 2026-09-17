@@ -61,4 +61,11 @@ export default {
     passwordChanged: '密码修改成功，请重新登录',
     passwordChangeFailed: '密码修改失败',
   },
+  mfaTitle: '多因素认证',
+  mfaHint: '绑定身份验证器后，登录需额外输入动态码。请妥善保存恢复码。',
+  mfaSecret: '密钥',
+  mfaBind: '开始绑定',
+  mfaConfirm: '确认绑定',
+  mfaUnbind: '解绑',
+  mfaRecovery: '恢复码',
 }

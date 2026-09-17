@@ -69,4 +69,7 @@ public class SysUserDTO {
      * <p>用户当前登录的租户 ID</p>
      */
     private Long tenantId;
+
+    private Boolean passwordExpired;
+    private Integer passwordExpireInDays;
 }

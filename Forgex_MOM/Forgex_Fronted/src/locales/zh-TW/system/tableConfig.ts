@@ -27,6 +27,21 @@ export default {
   addColumn: '添加列',
   columnRequired: '請至少添加一列配置',
   loadDetailFailed: '加載配置詳情失敗',
+  userColumnSetting: {
+    title: '編輯使用者欄位設定',
+    descriptionTitle: '說明',
+    description: '此頁面用於維護目前登入使用者的欄位偏好設定。頁面和按鈕是否可見仍取決於角色選單授權。',
+    configured: '已設定',
+    notConfigured: '未設定',
+    pageSize: '分頁大小',
+    userPageSize: '使用者分頁大小',
+    configStatus: '設定狀態',
+    version: '設定版本',
+    updateTime: '最後更新時間',
+    visible: '顯示',
+    order: '排序',
+    move: '移動',
+  },
   
   /**
    * 列设置相关
@@ -37,7 +52,10 @@ export default {
     resetSuccess: '已重置為默認配置',
     hint: '勾選顯示列，上下拖動調整順序',
     dragSort: '拖曳排序',
-    dragResize: '拖曳調整列寬'
+    dragResize: '拖曳調整列寬',
+    fixedUnset: '不固定',
+    fixedLeft: '固定到左側',
+    fixedRight: '固定到右側'
   },
   
   form: {

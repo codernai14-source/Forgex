@@ -124,13 +124,16 @@ if command -v docker >/dev/null 2>&1; then
   fi
 
   # 复制运维脚本到 scripts 目录
-  for script_file in backup.sh restore.sh upgrade.sh rollback.sh portainer-api.sh gen-kms-master-key.sh; do
+  for script_file in backup.sh restore.sh upgrade.sh rollback.sh portainer-api.sh gen-kms-master-key.sh install-backup-timer.sh forgex-backup.service forgex-backup.timer; do
     if [ -f "${SCRIPT_DIR}/${script_file}" ]; then
       cp "${SCRIPT_DIR}/${script_file}" "${FORGEX_HOME}/scripts/${script_file}"
       chmod +x "${FORGEX_HOME}/scripts/${script_file}" 2>/dev/null || true
     fi
   done
   echo "Scripts: 运维脚本已复制到 ${FORGEX_HOME}/scripts/"
+  if command -v systemctl >/dev/null 2>&1 && [ -f "${FORGEX_HOME}/scripts/install-backup-timer.sh" ]; then
+    bash "${FORGEX_HOME}/scripts/install-backup-timer.sh" || echo "Backup timer: 注册失败，可稍后手动执行 install-backup-timer.sh"
+  fi
 else
   echo "Portainer: Docker 未安装或不可用, 跳过 Portainer 部署" >&2
 fi

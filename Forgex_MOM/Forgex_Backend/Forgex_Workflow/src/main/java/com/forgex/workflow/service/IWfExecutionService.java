@@ -18,6 +18,7 @@ import com.forgex.workflow.domain.dto.WfApprovalActionLogDTO;
 import com.forgex.workflow.domain.dto.WfApprovalInstanceDTO;
 import com.forgex.workflow.domain.dto.WfDashboardAnalyticsVO;
 import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
+import com.forgex.workflow.domain.dto.WfCcRecordDTO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionAddSignParam;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
@@ -310,7 +311,7 @@ public interface IWfExecutionService {
     /**
      * 分页查询我的抄送。
      * <p>
-     * 查询当前用户抄送的所有审批实例，按审批实例更新时间降序排列。
+     * 以 {@code wf_task_cc_record} 为主表按执行单聚合；无运行时数据时并入历史 COPY 节点实例。
      * </p>
      *
      * @param param 查询参数，包含任务名称、任务编码、状态等过滤条件
@@ -319,6 +320,21 @@ public interface IWfExecutionService {
      * @see WfExecutionQueryParam
      */
     Page<WfExecutionDTO> pageMyCc(WfExecutionQueryParam param);
+
+    /**
+     * 将指定执行单下当前用户的未读抄送标为已读。
+     *
+     * @param executionId 执行单 ID
+     */
+    void markCcRead(Long executionId);
+
+    /**
+     * 查询执行单抄送人列表，供轨迹展示。
+     *
+     * @param executionId 执行单 ID
+     * @return 抄送人列表
+     */
+    List<WfCcRecordDTO> listCcByExecution(Long executionId);
 
     /**
      * 分页查询补偿中心列表。

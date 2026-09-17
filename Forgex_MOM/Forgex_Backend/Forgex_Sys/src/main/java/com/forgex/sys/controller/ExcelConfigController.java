@@ -271,6 +271,7 @@ public class ExcelConfigController {
      * @param body     导出参数
      * @param response HTTP 响应
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/login-log", operationType = com.forgex.common.audit.OperationType.DOWNLOAD, detailTemplateCode = "LOGIN_LOG_EXPORT")
     @RequirePerm("sys:excel:export:loginLog")
     @PostMapping("/export/loginLog")
     public ResponseEntity<InputStreamResource> exportLoginLog(@RequestBody ExcelLoginLogExportDTO body) {
@@ -283,12 +284,14 @@ public class ExcelConfigController {
      * @param body     导出参数
      * @param response HTTP 响应
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/user", operationType = com.forgex.common.audit.OperationType.DOWNLOAD, detailTemplateCode = "USER_EXPORT")
     @RequirePerm({"sys:user:export", "sys:excel:export:user"})
     @PostMapping("/export/user")
     public ResponseEntity<InputStreamResource> exportUser(@RequestBody ExcelUserExportDTO body) {
         return excelExportService.exportUser(body);
     }
 
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/operation-log", operationType = com.forgex.common.audit.OperationType.DOWNLOAD, detailTemplateCode = "OPERATION_LOG_EXPORT")
     @RequirePerm("sys:excel:export:operationLog")
     @PostMapping("/export/operationLog")
     public ResponseEntity<InputStreamResource> exportOperationLog(@RequestBody ExcelOperationLogExportDTO body) {

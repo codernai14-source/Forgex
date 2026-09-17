@@ -79,6 +79,10 @@ public class OperationLogRecord {
      */
     private Integer responseStatus;
 
+    private Boolean success;
+    private String recordHash;
+    private String prevHash;
+
     /**
      * 响应结果（过滤敏感信息后的JSON字符串）
      */

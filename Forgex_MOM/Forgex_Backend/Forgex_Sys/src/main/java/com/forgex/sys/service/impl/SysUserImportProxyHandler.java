@@ -6,6 +6,7 @@ import com.forgex.common.config.ConfigService;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
 import com.forgex.common.domain.dto.excel.FxExcelImportExecuteParam;
 import com.forgex.common.domain.dto.excel.FxExcelImportResultDTO;
 import com.forgex.common.enums.FxExcelImportMode;
@@ -102,6 +103,8 @@ public class SysUserImportProxyHandler implements FxExcelImportHandler {
         user.setTenantId(tenantId);
         user.setStatus(Boolean.TRUE);
         user.setPassword(encryptPassword(resolveDefaultPassword()));
+        user.setMustChangePwd(true);
+        user.setPwdUpdateTime(java.time.LocalDateTime.now());
         fillUserSourceIfAbsent(user, UserSourceEnum.SITE_IMPORTED);
         if (row.getUserSource() != null) {
             user.setUserSource(row.getUserSource());
@@ -233,7 +236,7 @@ public class SysUserImportProxyHandler implements FxExcelImportHandler {
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = getPasswordPolicy();
         String defaultPassword = policy.getDefaultPassword();
-        return StringUtils.hasText(defaultPassword) ? defaultPassword : "123456";
+        return PasswordPolicyValidator.requireConfiguredDefaultPassword(policy);
     }
 
     private String resolvePasswordStore() {
@@ -243,7 +246,7 @@ public class SysUserImportProxyHandler implements FxExcelImportHandler {
     }
 
     private String encryptPassword(String rawPassword) {
-        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(resolvePasswordStore(), configService);
         if (provider.supportsEncrypt()) {
             return provider.encrypt(rawPassword);
         }

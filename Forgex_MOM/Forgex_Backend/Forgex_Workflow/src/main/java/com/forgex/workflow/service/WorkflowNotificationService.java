@@ -52,8 +52,9 @@ import java.util.Set;
  *   <li>WF_REJECTED：审批驳回通知</li>
  *   <li>WF_FINISHED：审批完成通知</li>
  *   <li>WF_REMIND：审批催办通知</li>
- *   <li>WF_RECALL：审批撤回通知</li>
- * </ul>
+   *   <li>WF_RECALL：审批撤回通知</li>
+   *   <li>WF_CC：审批抄送通知</li>
+   * </ul>
  *
  * @author coder_nai@163.com
  * @version 1.1.0
@@ -75,6 +76,7 @@ public class WorkflowNotificationService {
     private static final String BIZ_TYPE_FINISHED = "WF_FINISHED";
     private static final String BIZ_TYPE_REMIND = "WF_REMIND";
     private static final String BIZ_TYPE_RECALL = "WF_RECALL";
+    private static final String BIZ_TYPE_CC = "WF_CC";
 
     /**
      * 审批待办通知模板编码。
@@ -106,7 +108,13 @@ public class WorkflowNotificationService {
      */
     private static final String TEMPLATE_RECALL = "WF_RECALL";
 
+    /**
+     * 审批抄送通知模板编码。
+     */
+    private static final String TEMPLATE_CC = "WF_CC";
+
     private static final String APPROVAL_PENDING_LINK = "/workspace/approval/my/pending";
+    private static final String APPROVAL_CC_LINK = "/workspace/approval/my/cc";
     private static final String APPROVAL_INITIATED_LINK = "/workspace/approval/my/initiated";
     private static final String HEADER_USER_ID = "X-User-Id";
     private static final String HEADER_TENANT_ID = "X-Tenant-Id";
@@ -136,6 +144,52 @@ public class WorkflowNotificationService {
      * @param node        当前激活的审批节点
      * @param approverIds 待处理人 ID 列表
      */
+    /**
+     * 通知被抄送人。
+     * <p>
+     * 优先模板 {@code WF_CC}，失败降级直发并跳转抄送页。异常不向外抛出。
+     * </p>
+     *
+     * @param execution 审批执行记录
+     * @param node      当前激活的审批节点
+     * @param userIds   抄送用户 ID
+     * @return 是否至少完成一次投递尝试且未因鉴权缺失直接跳过
+     */
+    public boolean notifyCcUsers(WfTaskExecution execution, WfTaskNodeConfig node, Long[] userIds) {
+        if (execution == null || node == null || userIds == null || userIds.length == 0) {
+            return true;
+        }
+
+        List<Long> receiverIds = Arrays.stream(userIds).filter(Objects::nonNull).distinct().toList();
+        if (receiverIds.isEmpty()) {
+            return true;
+        }
+
+        Map<String, Object> dataMap = buildPendingDataMap(execution, node);
+        try {
+            TemplateSendResult templateResult = trySendByTemplate(
+                    TEMPLATE_CC, execution.getTenantId(), receiverIds, dataMap, BIZ_TYPE_CC, execution.getId());
+            if (templateResult == TemplateSendResult.SUCCESS) {
+                return true;
+            }
+            if (templateResult == TemplateSendResult.AUTH_MISSING || templateResult == TemplateSendResult.AUTH_FAILED) {
+                return false;
+            }
+            if (templateResult == TemplateSendResult.FAILED) {
+                log.info("模板消息发送失败，降级为直发模式: templateCode={}", TEMPLATE_CC);
+                String title = "【审批抄送】" + defaultTaskName(execution);
+                String content = buildPendingContent(execution, node);
+                sendToUsersDirectly(execution.getTenantId(), receiverIds, title, content,
+                        APPROVAL_CC_LINK, BIZ_TYPE_CC, MESSAGE_TYPE_NOTICE, execution.getId(), TEMPLATE_CC);
+            }
+            return true;
+        } catch (Exception ex) {
+            log.error("抄送通知发送异常，不回滚审批，executionId={}, nodeId={}",
+                    execution.getId(), node.getId(), ex);
+            return false;
+        }
+    }
+
     public void notifyPendingApprovers(WfTaskExecution execution, WfTaskNodeConfig node, Long[] approverIds) {
         if (execution == null || node == null || approverIds == null || approverIds.length == 0) {
             return;

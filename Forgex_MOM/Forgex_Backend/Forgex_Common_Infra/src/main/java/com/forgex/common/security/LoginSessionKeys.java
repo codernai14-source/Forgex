@@ -11,6 +11,7 @@ public final class LoginSessionKeys {
     public static final String KEY_USER_ID = "LOGIN_USER_ID";
     public static final String KEY_TENANT_ID = "LOGIN_TENANT_ID";
     public static final String KEY_ACCOUNT = "LOGIN_ACCOUNT";
+    public static final String KEY_PASSWORD_EXPIRED = "LOGIN_PASSWORD_EXPIRED";
 
     private LoginSessionKeys() {
     }

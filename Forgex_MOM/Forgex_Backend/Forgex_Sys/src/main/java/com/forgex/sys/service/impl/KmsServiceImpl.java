@@ -211,6 +211,39 @@ public class KmsServiceImpl implements KmsService {
         }
     }
 
+    /**
+     * 导入存量明文密钥。
+     *
+     * @param alias        别名
+     * @param keyType      算法
+     * @param keySize      位数
+     * @param rawKeyBase64 明文 Base64
+     * @param description  描述
+     * @return 密钥 ID
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long importExistingKey(String alias, String keyType, int keySize, String rawKeyBase64, String description) {
+        try {
+            String encryptedValue = encryptWithMasterKey(rawKeyBase64);
+            int version = getMaxVersion(alias) + 1;
+            SysKmsKey key = new SysKmsKey();
+            key.setKeyAlias(alias);
+            key.setKeyType(keyType.toUpperCase());
+            key.setKeySize(keySize);
+            key.setEncryptedKeyValue(encryptedValue);
+            key.setKeyVersion(version);
+            key.setStatus("ACTIVE");
+            key.setDescription(description);
+            kmsKeyMapper.insert(key);
+            writeLog(key.getId(), alias, "IMPORT", "SUCCESS", null);
+            return key.getId();
+        } catch (Exception e) {
+            writeLog(null, alias, "IMPORT", "FAIL", e.getMessage());
+            throw new IllegalStateException("KMS: 存量密钥导入失败", e);
+        }
+    }
+
     @Override
     public int getMaxVersion(String alias) {
         SysKmsKey key = kmsKeyMapper.selectOne(new LambdaQueryWrapper<SysKmsKey>()

@@ -16,6 +16,7 @@ package com.forgex.auth.service.impl;
 import com.forgex.auth.domain.entity.LoginLog;
 import com.forgex.auth.mapper.LoginLogMapper;
 import com.forgex.auth.service.LoginLogService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.forgex.common.security.LoginFailureReasonResolver;
 import com.forgex.common.security.LogoutReason;
 import lombok.extern.slf4j.Slf4j;
@@ -129,6 +130,18 @@ public class LoginLogServiceImpl implements LoginLogService {
     @Async
     @Override
     public void recordLogoutByToken(String tokenValue, LogoutReason logoutReason) {
-        log.info("skip recording logout info into login log, tokenValue={}, reason={}", tokenValue, logoutReason);
+        if (tokenValue == null || tokenValue.isBlank()) return;
+        LoginLog last = loginLogMapper.selectOne(new LambdaQueryWrapper<LoginLog>()
+                .eq(LoginLog::getTokenValue, tokenValue)
+                .eq(LoginLog::getStatus, 1)
+                .isNull(LoginLog::getLogoutTime)
+                .orderByDesc(LoginLog::getLoginTime)
+                .last("limit 1"));
+        if (last == null || last.getId() == null) return;
+        LoginLog update = new LoginLog();
+        update.setId(last.getId());
+        update.setLogoutTime(LocalDateTime.now());
+        update.setLogoutReason(logoutReason == null ? LogoutReason.UNKNOWN.name() : logoutReason.name());
+        loginLogMapper.updateById(update);
     }
 }

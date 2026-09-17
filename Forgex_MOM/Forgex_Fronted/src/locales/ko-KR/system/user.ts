@@ -38,6 +38,7 @@ export default {
     assigned状态: '할당 상태',
     assigned: '할당됨',
     summary: '총 {total}개 역할, {selected}개 선택됨',
+    threeRoleHint: 'L3에서는 한 사용자가 시스템/보안/감사 관리자 중 두 개 이상의 전용 역할을 동시에 가질 수 없습니다.',
     loadFailed: '역할 데이터를 불러오지 못했습니다',
     saveFailed: '저장 실패',
     missingUserId: '사용자 ID가 없습니다',

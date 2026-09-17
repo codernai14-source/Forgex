@@ -64,6 +64,16 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
+              <a-form-item :label="t('system.user.securityLevel')" name="securityLevel" v-permission="'sys:security:view'">
+                <a-select v-model:value="formData.securityLevel" :placeholder="t('system.user.securityLevelHint')">
+                  <a-select-option :value="0">{{ t('system.user.securityLevelOptions.public') }}</a-select-option>
+                  <a-select-option :value="1">{{ t('system.user.securityLevelOptions.internal') }}</a-select-option>
+                  <a-select-option :value="2">{{ t('system.user.securityLevelOptions.secret') }}</a-select-option>
+                  <a-select-option :value="3">{{ t('system.user.securityLevelOptions.confidential') }}</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
               <a-form-item :label="t('system.user.entryDate')" name="entryDate">
                 <a-date-picker
                   v-model:value="formData.entryDate"
@@ -364,6 +374,7 @@ const formData = reactive<Partial<User>>({
   userSource: 1,
   userSourceText: t('system.user.userSource.siteCreate'),
   status: true,
+  securityLevel: 0,
 })
 
 const profileData = reactive<Partial<UserProfile>>({
@@ -457,6 +468,7 @@ async function loadUserData() {
       userSource: data.userSource,
       userSourceText: data.userSourceText || '',
       status: data.status,
+      securityLevel: data.securityLevel ?? 0,
     })
 
     const profile = data.profile || {}

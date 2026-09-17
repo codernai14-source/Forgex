@@ -35,6 +35,7 @@
 
         <WorkflowTracePanel
           class="detail-trace"
+          :record="record"
           :instances="instances"
           :action-logs="actionLogs"
           :show-action-logs="showActionLogs"

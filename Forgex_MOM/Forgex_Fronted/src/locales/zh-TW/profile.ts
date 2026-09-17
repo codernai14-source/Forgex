@@ -52,4 +52,11 @@ export default {
     passwordChanged: '密碼修改成功，請重新登入',
     passwordChangeFailed: '密碼修改失敗',
   },
+  mfaTitle: '多因素認證',
+  mfaHint: '綁定身份驗證器後，登入需額外輸入動態碼。請妥善保存復原碼。',
+  mfaSecret: '密鑰',
+  mfaBind: '開始綁定',
+  mfaConfirm: '確認綁定',
+  mfaUnbind: '解除綁定',
+  mfaRecovery: '復原碼',
 }

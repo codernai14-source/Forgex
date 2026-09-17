@@ -82,6 +82,15 @@ public class SysOperationLog extends BaseEntity {
     @TableField("response_status")
     private Integer responseStatus;
 
+    @TableField("success")
+    private Boolean success;
+
+    @TableField("record_hash")
+    private String recordHash;
+
+    @TableField("prev_hash")
+    private String prevHash;
+
     /**
      * 响应结果
      */

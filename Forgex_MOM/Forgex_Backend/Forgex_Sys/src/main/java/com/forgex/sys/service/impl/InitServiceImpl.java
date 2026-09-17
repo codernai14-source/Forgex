@@ -63,6 +63,7 @@ import cn.hutool.crypto.asymmetric.SM2;
 import cn.hutool.core.util.HexUtil;
 import com.forgex.common.domain.config.CaptchaConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
 import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.domain.config.InitStatusConfig;
 import com.forgex.common.domain.config.LoginSecurityConfig;
@@ -145,7 +146,7 @@ public class InitServiceImpl implements InitService {
         try {
             writeSecurityConfigsToCommon(param);
             PasswordPolicyConfig policyCheck = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
-            String initPwd = (param == null || param.getInitialPassword() == null || param.getInitialPassword().isEmpty()) ? "Aa123456" : param.getInitialPassword();
+            String initPwd = param == null ? null : param.getInitialPassword();
             if (!validatePassword(initPwd, policyCheck)) { return R.fail(CommonPrompt.INIT_PASSWORD_INVALID); }
             clearAdminTables(); // 清空 admin 相关业务表（忽略租户过滤，保证幂等）
             seedAdminData(param); // 重建租户、用户、角色以及绑定关系
@@ -190,10 +191,11 @@ public class InitServiceImpl implements InitService {
             pwdPolicy.setRequireLowercase(false);
             pwdPolicy.setRequireSymbols(false);
         }
-        String initPwd = (p == null || !StringUtils.hasText(p.getInitialPassword())) ? "Aa123456" : p.getInitialPassword();
-        pwdPolicy.setDefaultPassword(initPwd);
+        String initPwd = p == null ? null : p.getInitialPassword();
+        pwdPolicy.setDefaultPassword(StringUtils.hasText(initPwd) ? initPwd : null);
         String store = p == null ? null : p.getPasswordStore();
-        String storeLower = store == null ? "sm2" : store.toLowerCase();
+        String storeLower = store == null ? "bcrypt" : store.toLowerCase();
+        CryptoProviders.resolvePassword(storeLower, configService);
         pwdPolicy.setStore(storeLower);
         configService.setJson("security.password.policy", pwdPolicy);
         configService.setJson("security.login.failure", LoginSecurityConfig.defaults());
@@ -322,7 +324,7 @@ public class InitServiceImpl implements InitService {
 
         PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
         String store = policy == null ? "bcrypt" : policy.getStore();
-        String rawInitPwd = (p == null || p.getInitialPassword() == null || p.getInitialPassword().isEmpty()) ? "Aa123456" : p.getInitialPassword();
+        String rawInitPwd = PasswordPolicyValidator.requireConfiguredDefaultPassword(policy);
 
         List<SysUser> users = new ArrayList<>();
         users.add(newUser("admin", rawInitPwd, store));
@@ -935,12 +937,14 @@ public class InitServiceImpl implements InitService {
         u.setPhone(null);
         u.setStatus(true);
         String s = store == null ? "bcrypt" : store.toLowerCase();
-        CryptoPasswordProvider provider = CryptoProviders.resolve(s, configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(s, configService);
         if (provider.supportsEncrypt()) {
             u.setPassword(provider.encrypt(rawPassword));
         } else {
             u.setPassword(provider.hash(rawPassword));
         }
+        u.setMustChangePwd(true);
+        u.setPwdUpdateTime(java.time.LocalDateTime.now());
         return u;
     }
 

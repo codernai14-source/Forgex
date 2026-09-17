@@ -52,4 +52,11 @@ export default {
     passwordChanged: 'パスワードを変更しました。再度日志インしてください。',
     passwordChangeFailed: 'パスワードの変更に失敗しました',
   },
+  mfaTitle: '多要素認証',
+  mfaHint: '認証アプリをバインドすると、ログイン時にワンタイムコードが必要です。復旧コードは大切に保管してください。',
+  mfaSecret: 'シークレット',
+  mfaBind: 'バインド開始',
+  mfaConfirm: '確定',
+  mfaUnbind: '解除',
+  mfaRecovery: '復旧コード',
 }

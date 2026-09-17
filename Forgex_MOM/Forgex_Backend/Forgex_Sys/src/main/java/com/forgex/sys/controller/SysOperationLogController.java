@@ -11,6 +11,8 @@ import com.forgex.sys.domain.entity.SysOperationLog;
 import com.forgex.sys.domain.entity.SysUser;
 import com.forgex.sys.mapper.SysOperationLogMapper;
 import com.forgex.sys.mapper.SysUserMapper;
+import com.forgex.sys.audit.AuditChainService;
+import com.forgex.sys.enums.SysPromptEnum;
 import com.forgex.sys.service.ExcelExportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
@@ -59,6 +61,10 @@ public class SysOperationLogController {
      */
     private final SysUserMapper userMapper;
 
+    private final AuditChainService auditChainService;
+
+    private final com.forgex.sys.audit.SysOperationLogRecorder operationLogRecorder;
+
     /**
      * 分页查询操作日志。
      * <p>
@@ -68,6 +74,18 @@ public class SysOperationLogController {
      * @param query 查询条件
      * @return 操作日志分页结果
      */
+    /**
+     * 内部写入操作日志，供其他微服务 Feign 调用。
+     *
+     * @param record 记录
+     * @return 是否成功
+     */
+    @PostMapping("/internal/record")
+    public R<Boolean> internalRecord(@RequestBody com.forgex.common.audit.OperationLogRecord record) {
+        operationLogRecorder.record(record);
+        return R.ok(true);
+    }
+
     @PostMapping("/page")
     @RequirePerm("sys:operation-log:view")
     public R<Page<SysOperationLog>> page(@RequestBody SysOperationLogQueryDTO query) {
@@ -87,8 +105,21 @@ public class SysOperationLogController {
      */
     @RequirePerm("sys:operation-log:export")
     @PostMapping("/export")
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/operation-log", operationType = com.forgex.common.audit.OperationType.DOWNLOAD, detailTemplateCode = "OPERATION_LOG_EXPORT")
     public ResponseEntity<InputStreamResource> export(@RequestBody ExcelOperationLogExportDTO body) {
         return excelExportService.exportOperationLog(body);
+    }
+
+    /**
+     * 校验当前租户审计哈希链。
+     *
+     * @return 校验结果
+     */
+    @RequirePerm("sys:operation-log:verify")
+    @PostMapping("/verify-chain")
+    public R<Boolean> verifyChain() {
+        boolean ok = auditChainService.verify(TenantContext.get());
+        return ok ? R.ok(SysPromptEnum.AUDIT_CHAIN_OK, true) : R.fail(SysPromptEnum.AUDIT_CHAIN_BROKEN, false);
     }
 
     /**

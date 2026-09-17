@@ -706,6 +706,10 @@ public class CommonTableController {
                 if (userParam.getWidth() != null && !ACTION_FIELD.equals(baseCol.getField())) {
                     mergedCol.setWidth(clampColumnWidth(userParam.getWidth()));
                 }
+                if (userParam.getFixed() != null && !userParam.getFixed().isBlank()
+                        && ("left".equals(userParam.getFixed()) || "right".equals(userParam.getFixed()))) {
+                    mergedCol.setFixed(userParam.getFixed());
+                }
             } else {
                 // 用户没有配置该列，默认显示，排序靠后
                 mergedCol.setVisible(true);

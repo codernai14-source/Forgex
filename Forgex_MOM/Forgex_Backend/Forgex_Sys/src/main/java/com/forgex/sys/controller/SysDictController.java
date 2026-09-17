@@ -72,6 +72,7 @@ public class SysDictController {
         return R.ok(dictService.getDictItemsByPath(nodePath, getCurrentTenantId()));
     }
 
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/dict", operationType = com.forgex.common.audit.OperationType.ADD, detailTemplateCode = "DICT_CREATE")
     @RequirePerm("sys:dict:add")
     @PostMapping("/create")
     public R<Boolean> create(@RequestBody DictDTO dictDTO) {
@@ -80,6 +81,7 @@ public class SysDictController {
         return R.ok(CommonPrompt.CREATE_SUCCESS, true);
     }
 
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/dict", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "DICT_UPDATE")
     @RequirePerm("sys:dict:edit")
     @PostMapping("/update")
     public R<Boolean> update(@RequestBody DictDTO dictDTO) {
@@ -88,6 +90,7 @@ public class SysDictController {
         return R.ok(CommonPrompt.UPDATE_SUCCESS, true);
     }
 
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/dict", operationType = com.forgex.common.audit.OperationType.DELETE, detailTemplateCode = "DICT_DELETE")
     @RequirePerm("sys:dict:delete")
     @PostMapping("/delete")
     public R<Boolean> delete(@RequestBody IdParam param) {

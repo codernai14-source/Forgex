@@ -67,6 +67,7 @@ public class OnlineUserController {
      * @param body 请求体，包含 token
      * @return 是否成功
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/online", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "ONLINE_KICKOUT")
     @RequirePerm("sys:online:kickout")
     @PostMapping("/kickout")
     public R<Boolean> kickout(@RequestBody Map<String, Object> body) {

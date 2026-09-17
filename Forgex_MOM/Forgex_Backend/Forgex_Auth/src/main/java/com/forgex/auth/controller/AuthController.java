@@ -116,6 +116,19 @@ public class AuthController {
     }
 
     /**
+     * 强制修改过期或初始口令。
+     *
+     * @param body ticket / newPassword
+     * @return 登录结果
+     */
+    @PostMapping("/password/force-change")
+    public R<LoginResultVO> forceChangePassword(@RequestBody Map<String, String> body) {
+        return authService.forceChangePassword(
+                body == null ? null : body.get("ticket"),
+                body == null ? null : body.get("newPassword"));
+    }
+
+    /**
      * 选择租户接口：设置当前租户上下文
      * <p>
      * 接口路径：POST /auth/chooseTenant

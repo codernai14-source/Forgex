@@ -30,6 +30,14 @@ import lombok.Setter;
 @Setter
 @Getter
 public class PasswordPolicyConfig {
+    /** 是否启用密码有效期策略。 */
+    private Boolean expireEnabled = false;
+
+    /** 密码有效天数，启用后生效。 */
+    private Integer expireDays = 90;
+
+    /** 到期前预警天数。 */
+    private Integer expireWarnDays = 7;
     /**
      * 存储算法
      * <p>密码加密存储算法，支持 bcrypt、argon2、scrypt、pbkdf2 等。</p>
@@ -71,4 +79,33 @@ public class PasswordPolicyConfig {
      * <p>密码是否必须包含特殊符号（如!@#$% 等）。</p>
      */
     private Boolean requireSymbols;
+
+    /**
+     * 密码最大有效期（天）。
+     * <p>
+     * 0 表示不过期。等保建议 90 天。登录强制改密需合规等级 L2/L3。
+     * </p>
+     */
+    private Integer maxAgeDays;
+
+    /**
+     * 禁止复用的最近密码数量。
+     * <p>
+     * 定期改密时不允许与当前密码及最近 N 次历史密码相同。0 表示不限制。等保建议不少于 5 次。
+     * </p>
+     */
+    private Integer historyCount;
+
+    /**
+     * 是否要求首次登录修改初始密码。
+     * <p>
+     * 管理员重置或新用户使用默认密码后，下次登录强制改密。需合规等级 L2/L3。
+     * </p>
+     */
+    private Boolean forceChangeOnFirstLogin;
+
+    /**
+     * 最低密码强度等级（1-4，对应启用字符类别数量）。
+     */
+    private Integer minStrengthLevel;
 }

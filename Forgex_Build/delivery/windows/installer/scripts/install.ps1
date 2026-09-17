@@ -320,6 +320,12 @@ function Install-WinSwServices {
 
 Install-WinSwServices
 
+$registerBackup = Join-Path $PSScriptRoot "register-backup-task.ps1"
+if (Test-Path $registerBackup) {
+    $backupScript = Join-Path $PSScriptRoot "backup.ps1"
+    & $registerBackup -BackupScript $backupScript | Out-Host
+}
+
 Write-Host "Forgex Windows install root initialized: $InstallRoot"
 Write-Host "Deployment profile: $DeployProfile"
 Write-Host "Generated install config: $(Join-Path $configDir 'install-config.yml')"
